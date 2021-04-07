@@ -17925,7 +17925,7 @@ var app = (function () {
     const { Boolean: Boolean$, Error: Error$$7, Object: Object$$7, console: console$$7 } = globals;
     const file$$7 = "src/components/monitor/health/NodeHealth.svelte";
 
-    function get_each_context$$1(ctx, list, i) {
+    function get_each_context$$2(ctx, list, i) {
     	const child_ctx = ctx.slice();
     	child_ctx[3] = list[i];
     	return child_ctx;
@@ -17943,7 +17943,7 @@ var app = (function () {
     	let each_blocks$ = [];
 
     	for (let i = 0; i < each_value$.length; i += 1) {
-    		each_blocks$[i] = create_each_block$$1(get_each_context$$1(ctx, each_value$, i));
+    		each_blocks$[i] = create_each_block$$2(get_each_context$$2(ctx, each_value$, i));
     	}
 
     	const out$ = i => transition_out(each_blocks$[i], 1, 1, () => {
@@ -17988,13 +17988,13 @@ var app = (function () {
     				let i;
 
     				for (i = 0; i < each_value$.length; i += 1) {
-    					const child_ctx = get_each_context$$1(ctx, each_value$, i);
+    					const child_ctx = get_each_context$$2(ctx, each_value$, i);
 
     					if (each_blocks$[i]) {
     						each_blocks$[i].p(child_ctx, dirty);
     						transition_in(each_blocks$[i], 1);
     					} else {
-    						each_blocks$[i] = create_each_block$$1(child_ctx);
+    						each_blocks$[i] = create_each_block$$2(child_ctx);
     						each_blocks$[i].c();
     						transition_in(each_blocks$[i], 1);
     						each_blocks$[i].m(dl$, null);
@@ -18046,7 +18046,7 @@ var app = (function () {
     }
 
     // (95:8) {#each allChecks as c}
-    function create_each_block$$1(ctx) {
+    function create_each_block$$2(ctx) {
     	let check$;
     	let current;
 
@@ -18090,7 +18090,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block: block$,
-    		id: create_each_block$$1.name,
+    		id: create_each_block$$2.name,
     		type: "each",
     		source: "(95:8) {#each allChecks as c}",
     		ctx
@@ -18832,7 +18832,7 @@ var app = (function () {
     const { Error: Error$$3, Object: Object$$3, console: console$$3 } = globals;
     const file$$3 = "src/components/validators/Vals.svelte";
 
-    function get_each_context$(ctx, list, i) {
+    function get_each_context$$1(ctx, list, i) {
     	const child_ctx = ctx.slice();
     	child_ctx[2] = list[i];
     	child_ctx[4] = i;
@@ -18840,7 +18840,7 @@ var app = (function () {
     }
 
     // (48:4) {#each set as val, i}
-    function create_each_block$(ctx) {
+    function create_each_block$$1(ctx) {
     	let li$;
     	let div5$;
     	let div4$;
@@ -19030,7 +19030,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block: block$,
-    		id: create_each_block$.name,
+    		id: create_each_block$$1.name,
     		type: "each",
     		source: "(48:4) {#each set as val, i}",
     		ctx
@@ -19063,7 +19063,7 @@ var app = (function () {
     	let each_blocks$ = [];
 
     	for (let i = 0; i < each_value$.length; i += 1) {
-    		each_blocks$[i] = create_each_block$(get_each_context$(ctx, each_value$, i));
+    		each_blocks$[i] = create_each_block$$1(get_each_context$$1(ctx, each_value$, i));
     	}
 
     	const block$ = {
@@ -19144,12 +19144,12 @@ var app = (function () {
     				let i;
 
     				for (i = 0; i < each_value$.length; i += 1) {
-    					const child_ctx = get_each_context$(ctx, each_value$, i);
+    					const child_ctx = get_each_context$$1(ctx, each_value$, i);
 
     					if (each_blocks$[i]) {
     						each_blocks$[i].p(child_ctx, dirty);
     					} else {
-    						each_blocks$[i] = create_each_block$(child_ctx);
+    						each_blocks$[i] = create_each_block$$1(child_ctx);
     						each_blocks$[i].c();
     						each_blocks$[i].m(ul$, null);
     					}
@@ -19283,26 +19283,368 @@ var app = (function () {
     const { Error: Error$$2, Object: Object$$2, console: console$$2 } = globals;
     const file$$2 = "src/components/upgrade/Upgrade.svelte";
 
+    function get_each_context$(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[3] = list[i];
+    	child_ctx[5] = i;
+    	return child_ctx;
+    }
+
+    function get_each_context$_1(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[3] = list[i];
+    	child_ctx[5] = i;
+    	return child_ctx;
+    }
+
+    // (42:14) {#each voters as v, i}
+    function create_each_block$_1(ctx) {
+    	let td$;
+    	let t$_value$ = /*v*/ ctx[3] + "";
+    	let t$;
+
+    	const block$ = {
+    		c: function create() {
+    			td$ = element("td");
+    			t$ = text(t$_value$);
+    			add_location(td$, file$$2, 42, 14, 1621);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, td$, anchor);
+    			append_dev(td$, t$);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty & /*voters*/ 1 && t$_value$ !== (t$_value$ = /*v*/ ctx[3] + "")) set_data_dev(t$, t$_value$);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(td$);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block: block$,
+    		id: create_each_block$_1.name,
+    		type: "each",
+    		source: "(42:14) {#each voters as v, i}",
+    		ctx
+    	});
+
+    	return block$;
+    }
+
+    // (71:12) {#each versions as v, i}
+    function create_each_block$(ctx) {
+    	let tr$;
+    	let td0$;
+    	let t0$_value$ = /*i*/ ctx[5] + 1 + "";
+    	let t0$;
+    	let t1$;
+    	let td1$;
+    	let t2$_value$ = /*v*/ ctx[3].hash + "";
+    	let t2$;
+    	let t3$;
+    	let td2$;
+    	let t4$_value$ = /*v*/ ctx[3].vote_count + "";
+    	let t4$;
+    	let t5$;
+
+    	const block$ = {
+    		c: function create() {
+    			tr$ = element("tr");
+    			td0$ = element("td");
+    			t0$ = text(t0$_value$);
+    			t1$ = space();
+    			td1$ = element("td");
+    			t2$ = text(t2$_value$);
+    			t3$ = space();
+    			td2$ = element("td");
+    			t4$ = text(t4$_value$);
+    			t5$ = space();
+    			add_location(td0$, file$$2, 72, 16, 2356);
+    			add_location(td1$, file$$2, 73, 16, 2389);
+    			add_location(td2$, file$$2, 74, 16, 2423);
+    			add_location(tr$, file$$2, 71, 14, 2335);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, tr$, anchor);
+    			append_dev(tr$, td0$);
+    			append_dev(td0$, t0$);
+    			append_dev(tr$, t1$);
+    			append_dev(tr$, td1$);
+    			append_dev(td1$, t2$);
+    			append_dev(tr$, t3$);
+    			append_dev(tr$, td2$);
+    			append_dev(td2$, t4$);
+    			append_dev(tr$, t5$);
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(tr$);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block: block$,
+    		id: create_each_block$.name,
+    		type: "each",
+    		source: "(71:12) {#each versions as v, i}",
+    		ctx
+    	});
+
+    	return block$;
+    }
+
     function create_fragment$2(ctx) {
     	let main$;
+    	let div4$;
+    	let div1$;
+    	let div0$;
+    	let h30$;
+    	let t1$;
+    	let table0$;
+    	let tbody0$;
+    	let tr0$;
+    	let td0$;
+    	let t3$;
+    	let td1$;
+    	let t5$;
+    	let tr1$;
+    	let td2$;
+    	let t7$;
+    	let t8$;
+    	let tr2$;
+    	let td3$;
+    	let t10$;
+    	let td4$;
+    	let t12$;
+    	let div3$;
+    	let h31$;
+    	let t14$;
+    	let div2$;
+    	let table1$;
+    	let thead$;
+    	let tr3$;
+    	let th0$;
+    	let t15$;
+    	let th1$;
+    	let t17$;
+    	let th2$;
+    	let t19$;
+    	let tbody1$;
+    	let each_value$_1 = /*voters*/ ctx[0];
+    	validate_each_argument(each_value$_1);
+    	let each_blocks$_1 = [];
+
+    	for (let i = 0; i < each_value$_1.length; i += 1) {
+    		each_blocks$_1[i] = create_each_block$_1(get_each_context$_1(ctx, each_value$_1, i));
+    	}
+
+    	let each_value$ = /*versions*/ ctx[1];
+    	validate_each_argument(each_value$);
+    	let each_blocks$ = [];
+
+    	for (let i = 0; i < each_value$.length; i += 1) {
+    		each_blocks$[i] = create_each_block$(get_each_context$(ctx, each_value$, i));
+    	}
 
     	const block$ = {
     		c: function create() {
     			main$ = element("main");
-    			main$.textContent = "upgrade";
-    			add_location(main$, file$$2, 0, 0, 0);
+    			div4$ = element("div");
+    			div1$ = element("div");
+    			div0$ = element("div");
+    			h30$ = element("h3");
+    			h30$.textContent = "Proposals";
+    			t1$ = space();
+    			table0$ = element("table");
+    			tbody0$ = element("tbody");
+    			tr0$ = element("tr");
+    			td0$ = element("td");
+    			td0$.textContent = "Hash";
+    			t3$ = space();
+    			td1$ = element("td");
+    			td1$.textContent = "x";
+    			t5$ = space();
+    			tr1$ = element("tr");
+    			td2$ = element("td");
+    			td2$.textContent = "Votes";
+    			t7$ = space();
+
+    			for (let i = 0; i < each_blocks$_1.length; i += 1) {
+    				each_blocks$_1[i].c();
+    			}
+
+    			t8$ = space();
+    			tr2$ = element("tr");
+    			td3$ = element("td");
+    			td3$.textContent = "Expiry";
+    			t10$ = space();
+    			td4$ = element("td");
+    			td4$.textContent = "height";
+    			t12$ = space();
+    			div3$ = element("div");
+    			h31$ = element("h3");
+    			h31$.textContent = "Historical";
+    			t14$ = space();
+    			div2$ = element("div");
+    			table1$ = element("table");
+    			thead$ = element("thead");
+    			tr3$ = element("tr");
+    			th0$ = element("th");
+    			t15$ = space();
+    			th1$ = element("th");
+    			th1$.textContent = "Hash";
+    			t17$ = space();
+    			th2$ = element("th");
+    			th2$.textContent = "Votes";
+    			t19$ = space();
+    			tbody1$ = element("tbody");
+
+    			for (let i = 0; i < each_blocks$.length; i += 1) {
+    				each_blocks$[i].c();
+    			}
+
+    			attr_dev(h30$, "class", "uk-text-muted uk-text-center uk-text-uppercase");
+    			add_location(h30$, file$$2, 29, 8, 1278);
+    			add_location(td0$, file$$2, 36, 14, 1465);
+    			add_location(td1$, file$$2, 37, 14, 1493);
+    			add_location(tr0$, file$$2, 35, 12, 1446);
+    			add_location(td2$, file$$2, 40, 14, 1555);
+    			add_location(tr1$, file$$2, 39, 12, 1536);
+    			add_location(td3$, file$$2, 46, 14, 1705);
+    			add_location(td4$, file$$2, 47, 14, 1735);
+    			add_location(tr2$, file$$2, 45, 12, 1686);
+    			add_location(tbody0$, file$$2, 34, 10, 1426);
+    			attr_dev(table0$, "class", "uk-table");
+    			add_location(table0$, file$$2, 32, 8, 1380);
+    			attr_dev(div0$, "class", "uk-card uk-card-default uk-card-body");
+    			add_location(div0$, file$$2, 28, 6, 1219);
+    			attr_dev(div1$, "class", "uk-grid-item-match");
+    			add_location(div1$, file$$2, 27, 4, 1180);
+    			attr_dev(h31$, "class", "uk-text-muted uk-text-center uk-text-uppercase uk-text-small");
+    			add_location(h31$, file$$2, 54, 6, 1847);
+    			add_location(th0$, file$$2, 64, 14, 2165);
+    			add_location(th1$, file$$2, 65, 14, 2186);
+    			add_location(th2$, file$$2, 66, 14, 2214);
+    			add_location(tr3$, file$$2, 63, 12, 2146);
+    			add_location(thead$, file$$2, 62, 10, 2126);
+    			add_location(tbody1$, file$$2, 69, 10, 2276);
+    			attr_dev(table1$, "class", "uk-table uk-table-small uk-table-divider uk-table-responsive");
+    			attr_dev(table1$, "uk-accordion", "");
+    			add_location(table1$, file$$2, 58, 8, 1997);
+    			attr_dev(div2$, "class", "uk-overflow-auto");
+    			add_location(div2$, file$$2, 57, 6, 1958);
+    			add_location(div3$, file$$2, 53, 4, 1835);
+    			attr_dev(div4$, "class", "uk-child-width-expand@s");
+    			attr_dev(div4$, "uk-grid", "");
+    			add_location(div4$, file$$2, 26, 2, 1130);
+    			add_location(main$, file$$2, 25, 0, 1121);
     		},
     		l: function claim(nodes) {
     			throw new Error$$2("options.hydrate only works if the component was compiled with the `hydratable: true` option");
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, main$, anchor);
+    			append_dev(main$, div4$);
+    			append_dev(div4$, div1$);
+    			append_dev(div1$, div0$);
+    			append_dev(div0$, h30$);
+    			append_dev(div0$, t1$);
+    			append_dev(div0$, table0$);
+    			append_dev(table0$, tbody0$);
+    			append_dev(tbody0$, tr0$);
+    			append_dev(tr0$, td0$);
+    			append_dev(tr0$, t3$);
+    			append_dev(tr0$, td1$);
+    			append_dev(tbody0$, t5$);
+    			append_dev(tbody0$, tr1$);
+    			append_dev(tr1$, td2$);
+    			append_dev(tr1$, t7$);
+
+    			for (let i = 0; i < each_blocks$_1.length; i += 1) {
+    				each_blocks$_1[i].m(tr1$, null);
+    			}
+
+    			append_dev(tbody0$, t8$);
+    			append_dev(tbody0$, tr2$);
+    			append_dev(tr2$, td3$);
+    			append_dev(tr2$, t10$);
+    			append_dev(tr2$, td4$);
+    			append_dev(div4$, t12$);
+    			append_dev(div4$, div3$);
+    			append_dev(div3$, h31$);
+    			append_dev(div3$, t14$);
+    			append_dev(div3$, div2$);
+    			append_dev(div2$, table1$);
+    			append_dev(table1$, thead$);
+    			append_dev(thead$, tr3$);
+    			append_dev(tr3$, th0$);
+    			append_dev(tr3$, t15$);
+    			append_dev(tr3$, th1$);
+    			append_dev(tr3$, t17$);
+    			append_dev(tr3$, th2$);
+    			append_dev(table1$, t19$);
+    			append_dev(table1$, tbody1$);
+
+    			for (let i = 0; i < each_blocks$.length; i += 1) {
+    				each_blocks$[i].m(tbody1$, null);
+    			}
     		},
-    		p: noop,
+    		p: function update(ctx, [dirty]) {
+    			if (dirty & /*voters*/ 1) {
+    				each_value$_1 = /*voters*/ ctx[0];
+    				validate_each_argument(each_value$_1);
+    				let i;
+
+    				for (i = 0; i < each_value$_1.length; i += 1) {
+    					const child_ctx = get_each_context$_1(ctx, each_value$_1, i);
+
+    					if (each_blocks$_1[i]) {
+    						each_blocks$_1[i].p(child_ctx, dirty);
+    					} else {
+    						each_blocks$_1[i] = create_each_block$_1(child_ctx);
+    						each_blocks$_1[i].c();
+    						each_blocks$_1[i].m(tr1$, null);
+    					}
+    				}
+
+    				for (; i < each_blocks$_1.length; i += 1) {
+    					each_blocks$_1[i].d(1);
+    				}
+
+    				each_blocks$_1.length = each_value$_1.length;
+    			}
+
+    			if (dirty & /*versions*/ 2) {
+    				each_value$ = /*versions*/ ctx[1];
+    				validate_each_argument(each_value$);
+    				let i;
+
+    				for (i = 0; i < each_value$.length; i += 1) {
+    					const child_ctx = get_each_context$(ctx, each_value$, i);
+
+    					if (each_blocks$[i]) {
+    						each_blocks$[i].p(child_ctx, dirty);
+    					} else {
+    						each_blocks$[i] = create_each_block$(child_ctx);
+    						each_blocks$[i].c();
+    						each_blocks$[i].m(tbody1$, null);
+    					}
+    				}
+
+    				for (; i < each_blocks$.length; i += 1) {
+    					each_blocks$[i].d(1);
+    				}
+
+    				each_blocks$.length = each_value$.length;
+    			}
+    		},
     		i: noop,
     		o: noop,
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(main$);
+    			destroy_each(each_blocks$_1, detaching);
+    			destroy_each(each_blocks$, detaching);
     		}
     	};
 
@@ -19317,16 +19659,78 @@ var app = (function () {
     	return block$;
     }
 
-    function instance$$2($$self, $$props) {
+    function instance$$2($$self, $$props, $$invalidate) {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots("Upgrade", slots, []);
+
+    	var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+    		function adopt(value) {
+    			return value instanceof P
+    			? value
+    			: new P(function (resolve) {
+    						resolve(value);
+    					});
+    		}
+
+    		return new (P || (P = Promise))(function (resolve, reject) {
+    				function fulfilled(value) {
+    					try {
+    						step(generator.next(value));
+    					} catch(e) {
+    						reject(e);
+    					}
+    				}
+
+    				function rejected(value) {
+    					try {
+    						step(generator["throw"](value));
+    					} catch(e) {
+    						reject(e);
+    					}
+    				}
+
+    				function step(result) {
+    					result.done
+    					? resolve(result.value)
+    					: adopt(result.value).then(fulfilled, rejected);
+    				}
+
+    				step((generator = generator.apply(thisArg, _arguments || [])).next());
+    			});
+    	};
+
+    	let voters = [];
+    	let versions = [{ hash: "xyz", vote_count: 0 }];
+
+    	onMount(() => __awaiter(void 0, void 0, void 0, function* () {
+    		var uri = "http://" + location.host + "/chain";
+    		var sse = new EventSource(uri);
+
+    		sse.onmessage = function (msg) {
+    			let chain = JSON.parse(msg.data);
+    			$$invalidate(0, voters = chain.upgrade.validators_voted);
+    		};
+    	}));
+
     	const writable_props = [];
 
     	Object$$2.keys($$props).forEach(key => {
     		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console$$2.warn(`<Upgrade> was created with unknown prop '${key}'`);
     	});
 
-    	return [];
+    	$$self.$capture_state = () => ({ __awaiter, onMount, voters, versions });
+
+    	$$self.$inject_state = $$props => {
+    		if ("__awaiter" in $$props) __awaiter = $$props.__awaiter;
+    		if ("voters" in $$props) $$invalidate(0, voters = $$props.voters);
+    		if ("versions" in $$props) $$invalidate(1, versions = $$props.versions);
+    	};
+
+    	if ($$props && "$$inject" in $$props) {
+    		$$self.$inject_state($$props.$$inject);
+    	}
+
+    	return [voters, versions];
     }
 
     class Upgrade$ extends SvelteComponentDev {

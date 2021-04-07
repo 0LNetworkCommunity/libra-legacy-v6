@@ -191,9 +191,6 @@ default-members = [
     "storage/inspector",
 ]
 
-[profile.release]
-debug = true
-
 [profile.bench]
 debug = true
 
