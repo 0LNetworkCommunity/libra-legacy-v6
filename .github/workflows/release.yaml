@@ -22,7 +22,7 @@ jobs:
           rust-version: stable
           components: rustfmt
       - name: Build
-        run:  make deps bins
+        run:  sudo make deps bins
       - name: Upload binaries to github.com/release
         uses: svenstaro/upload-release-action@v2
         with:
