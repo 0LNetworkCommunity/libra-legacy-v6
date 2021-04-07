@@ -10,30 +10,27 @@
 //! See the `impl Configurable` below for how to specify the path to the
 //! application's configuration file.
 
-mod init;
+mod init_cmd;
 mod version;
-mod genesis_cmd;
-mod bal_cmd;
-mod resource_cmd;
-mod height_cmd;
-mod compare_cmd;
 mod monitor_cmd;
 mod mgmt_cmd;
 mod serve_cmd;
 mod restore_cmd;
+mod onboard_cmd;
+mod query_cmd;
+mod check_cmd;
+mod explorer_cmd;
 
 use self::{
-    init::StartCmd,
+    init_cmd::InitCmd,
     version::VersionCmd,
-    genesis_cmd::GenesisCmd,
-    bal_cmd::BalCmd,
-    resource_cmd::ResourceCmd,
-    height_cmd::HeightCmd,
-    compare_cmd::CompareCmd,
     monitor_cmd::MonitorCmd,
     mgmt_cmd::MgmtCmd,
     serve_cmd::ServeCmd,
     restore_cmd::RestoreCmd,
+    onboard_cmd::OnboardCmd,
+    query_cmd::QueryCmd,
+    check_cmd::CheckCmd,
 };
 
 use crate::config::OlCliConfig;
@@ -43,9 +40,10 @@ use abscissa_core::{
 use std::path::PathBuf;
 use dirs;
 use libra_global_constants::NODE_HOME;
+use crate::commands::explorer_cmd::ExplorerCMD;
 
-/// OlCli Configuration Filename
-pub const CONFIG_FILE: &str = "ol_cli.toml";
+/// Filename for all 0L configs
+pub const CONFIG_FILE: &str = "0L.toml";
 
 /// OlCli Subcommands
 #[derive(Command, Debug, Options, Runnable)]
@@ -55,31 +53,11 @@ pub enum OlCliCmd {
     Help(Help<Self>),
 
     /// The `start` subcommand
-    #[options(help = "initialize the application")]
-    Init(StartCmd),
+    #[options(help = "initialize the 0L configs")]
+    Init(InitCmd),
 
     /// The `version` subcommand
     Version(VersionCmd),
-
-    /// The `genesis` subcommand
-    #[options(help = "get files")]
-    Genesis(GenesisCmd),
-
-    /// The `bal` subcommand
-    #[options(help = "get balance")]
-    Bal(BalCmd),
-
-    /// The `resource` subcommand
-    #[options(help = "get account resources")]
-    Resource(ResourceCmd),
-
-    /// The `height` subcommand
-    #[options(help = "get blockchain height")]
-    Height(HeightCmd),
-
-    /// The `compare` subcommand
-    #[options(help = "compare sync states between two nodes")]
-    Compare(CompareCmd),
 
     /// The `monitor` subcommand
     #[options(help = "monitor the node and upstream")]
@@ -94,8 +72,25 @@ pub enum OlCliCmd {
     Serve(ServeCmd),
 
     /// The `restore` subcommand
-    #[options(help = "serve the monitor over http")]
-    Restore(RestoreCmd),
+    #[options(help = "restore the database from the epoch-archive repository")]
+    Restore(RestoreCmd), 
+
+    /// The `onboard` subcommand
+    #[options(help = "onboarding validator actions")]
+    Onboard(OnboardCmd),        
+
+    /// The `query` subcommand
+    #[options(help = "run simple queries through subcommands, prints the value to stdout")]
+    Query(QueryCmd), 
+
+    /// The `check` subcommand
+    #[options(help = "run healthcheck on the account, node, and displays some network information")]
+    Check(CheckCmd),
+
+    /// The `explorer` subcommand
+    #[options(help = "watch a block explorer monitor in terminal")]
+    Explorer(ExplorerCMD),
+
 }
 
 /// Get home path for all 0L apps

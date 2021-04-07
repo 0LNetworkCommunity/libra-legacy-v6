@@ -658,6 +658,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "cassowary"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df8670b8c7b9dae1793364eafadf7239c40d669904660c5960d74cfd80b46a53"
+
+[[package]]
 name = "cast"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -784,6 +790,7 @@ dependencies = [
  "crash-handler",
  "generate-key",
  "hex 0.4.2",
+ "keygen",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
@@ -1053,6 +1060,21 @@ dependencies = [
  "mirai-annotations",
  "proptest",
  "serde",
+]
+
+[[package]]
+name = "console"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3993e6445baa160675931ec041a5e03ca84b9c6e32a056150d3aa2bdda0a1f45"
+dependencies = [
+ "encode_unicode",
+ "lazy_static",
+ "libc",
+ "regex",
+ "terminal_size",
+ "unicode-width",
+ "winapi 0.3.9",
 ]
 
 [[package]]
@@ -1455,6 +1477,18 @@ dependencies = [
  "anyhow",
  "libra-workspace-hack",
  "regex",
+]
+
+[[package]]
+name = "dialoguer"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c9dd058f8b65922819fabb4a41e7d1964e56344042c26efbccd465202c23fa0c"
+dependencies = [
+ "console",
+ "lazy_static",
+ "tempfile",
+ "zeroize",
 ]
 
 [[package]]
@@ -2762,6 +2796,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "keygen"
+version = "0.1.0"
+dependencies = [
+ "abscissa_core",
+ "libra-types",
+ "libra-wallet",
+ "rpassword",
+]
+
+[[package]]
 name = "kube"
 version = "0.42.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3134,6 +3178,7 @@ dependencies = [
  "executor",
  "generate-key",
  "hex 0.4.2",
+ "keygen",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
@@ -3986,6 +4031,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "machine-ip"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8197ad28c61566fb74b2167563865906215fbc32c61fd866bd54e7c195eb84ed"
+
+[[package]]
 name = "many-keys-stress-test"
 version = "0.1.0"
 dependencies = [
@@ -4101,6 +4152,7 @@ dependencies = [
  "glob",
  "gumdrop",
  "hex 0.4.2",
+ "keygen",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
@@ -4110,10 +4162,13 @@ dependencies = [
  "libra-logger",
  "libra-management",
  "libra-network-address",
+ "libra-secure-storage",
  "libra-types",
  "libra-wallet",
  "libradb",
+ "machine-ip",
  "move-core-types",
+ "ol-cli",
  "once_cell",
  "regex",
  "reqwest",
@@ -4126,6 +4181,7 @@ dependencies = [
  "thiserror",
  "toml",
  "transaction-builder",
+ "url",
  "vdf",
  "vm-genesis",
  "wait-timeout",
@@ -4905,7 +4961,11 @@ name = "ol-cli"
 version = "0.1.0"
 dependencies = [
  "abscissa_core",
+ "ajson",
  "anyhow",
+ "bitflags",
+ "byteorder",
+ "cassowary",
  "chrono",
  "cli",
  "clokwerk",
@@ -4915,11 +4975,18 @@ dependencies = [
  "glob",
  "gumdrop",
  "handlebars",
+ "hex 0.4.2",
+ "keygen",
+ "libra-config",
+ "libra-genesis-tool",
  "libra-global-constants",
  "libra-json-rpc-client",
+ "libra-network-address",
  "libra-secure-storage",
  "libra-types",
- "nix 0.17.0",
+ "libra-wallet",
+ "machine-ip",
+ "nix 0.18.0",
  "num-format",
  "once_cell",
  "reqwest",
@@ -4928,18 +4995,24 @@ dependencies = [
  "rustyline",
  "serde",
  "serde_json",
+ "sm",
  "sysinfo",
+ "termion",
  "thiserror",
  "tokio",
  "toml",
+ "tui",
+ "unicode-segmentation",
+ "unicode-width",
+ "url",
  "warp",
 ]
 
 [[package]]
 name = "once_cell"
-version = "1.4.1"
+version = "1.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "260e51e7efe62b592207e9e13a68e43692a7a279171d6ba57abd208bf23645ad"
+checksum = "af8b08b04175473088b46763e51ee54da5f9a164bc162f615b91bc179dbf15a3"
 
 [[package]]
 name = "oorandom"
@@ -5673,14 +5746,13 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.3.9"
+version = "1.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c3780fcf44b193bc4d09f36d2a3c87b251da4a046c87795a0d35f4f927ad8e6"
+checksum = "957056ecddbeba1b26965114e191d2e8589ce74db242b6ea25fc4062427a5c19"
 dependencies = [
  "aho-corasick",
  "memchr",
  "regex-syntax",
- "thread_local",
 ]
 
 [[package]]
@@ -5695,9 +5767,9 @@ dependencies = [
 
 [[package]]
 name = "regex-syntax"
-version = "0.6.18"
+version = "0.6.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26412eb97c6b088a6997e05f69403a802a92d520de2f8e63c2b65f9e0f47c4e8"
+checksum = "24d5f089152e60f62d28b835fbff2cd2e8dc0baf1ac13343bef92ab7eed84548"
 
 [[package]]
 name = "remove_dir_all"
@@ -6489,6 +6561,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
 
 [[package]]
+name = "sm"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d8e4a3f3651a411045a4324773afcf10d11919a90c006b94a4178da1d18e5769"
+dependencies = [
+ "sm_macro",
+]
+
+[[package]]
+name = "sm_macro"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba245bc9067435452e4d8b9af04509929a9e99ce7273c82c2b8551e7f09ee861"
+dependencies = [
+ "proc-macro2 0.4.30",
+ "quote 0.6.13",
+ "syn 0.15.44",
+]
+
+[[package]]
 name = "smallvec"
 version = "0.6.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7025,6 +7117,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "terminal_size"
+version = "0.1.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "86ca8ced750734db02076f44132d802af0b33b09942331f4459dde8636fd2406"
+dependencies = [
+ "libc",
+ "winapi 0.3.9",
+]
+
+[[package]]
 name = "termion"
 version = "1.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7109,15 +7211,6 @@ dependencies = [
  "proc-macro2 1.0.24",
  "quote 1.0.7",
  "syn 1.0.42",
-]
-
-[[package]]
-name = "thread_local"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d40c6d1b69745a6ec6fb1ca717914848da4b44ae29d9b3080cbee91d72a69b14"
-dependencies = [
- "lazy_static",
 ]
 
 [[package]]
@@ -7451,6 +7544,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "tui"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ced152a8e9295a5b168adc254074525c17ac4a83c90b2716274cc38118bddc9"
+dependencies = [
+ "bitflags",
+ "cassowary",
+ "termion",
+ "unicode-segmentation",
+ "unicode-width",
+]
+
+[[package]]
 name = "tungstenite"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7476,6 +7582,55 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "59b11b2b5241ba34be09c3cc85a36e56e48f9888862e19cedf23336d35316ed1"
 dependencies = [
  "memchr",
+]
+
+[[package]]
+name = "txs"
+version = "0.1.0"
+dependencies = [
+ "abscissa_core",
+ "ajson",
+ "anyhow",
+ "byteorder",
+ "classgroup",
+ "cli",
+ "compiled-stdlib",
+ "criterion",
+ "dialoguer",
+ "dirs 2.0.2",
+ "glob",
+ "gumdrop",
+ "hex 0.4.2",
+ "keygen",
+ "libra-canonical-serialization",
+ "libra-config",
+ "libra-crypto",
+ "libra-genesis-tool",
+ "libra-global-constants",
+ "libra-json-rpc-types",
+ "libra-logger",
+ "libra-management",
+ "libra-network-address",
+ "libra-types",
+ "libra-wallet",
+ "libradb",
+ "move-core-types",
+ "ol-cli",
+ "once_cell",
+ "regex",
+ "reqwest",
+ "rpassword",
+ "rustyline",
+ "serde",
+ "serde_json",
+ "stdlib",
+ "storage-interface",
+ "thiserror",
+ "toml",
+ "transaction-builder",
+ "vdf",
+ "vm-genesis",
+ "wait-timeout",
 ]
 
 [[package]]
@@ -7589,6 +7744,7 @@ dependencies = [
  "idna",
  "matches",
  "percent-encoding",
+ "serde",
 ]
 
 [[package]]
@@ -8040,9 +8196,9 @@ dependencies = [
 
 [[package]]
 name = "zeroize"
-version = "1.1.0"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3cbac2ed2ba24cc90f5e06485ac8c7c1e5449fe8911aef4d8877218af021a5b8"
+checksum = "81a974bcdd357f0dca4d41677db03436324d45a4c9ed2d0b873a5a360ce41c36"
 dependencies = [
  "zeroize_derive",
 ]

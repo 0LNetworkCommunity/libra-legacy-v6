@@ -6,14 +6,18 @@
 
 
 -  [Function `reconfigure`](#0x1_Reconfigure_reconfigure)
+-  [Function `update_validator_withdrawal_limit`](#0x1_Reconfigure_update_validator_withdrawal_limit)
 
 
-<pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
+<pre><code><b>use</b> <a href="AccountLimits.md#0x1_AccountLimits">0x1::AccountLimits</a>;
+<b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
 <b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="FullnodeState.md#0x1_FullnodeState">0x1::FullnodeState</a>;
+<b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
+<b>use</b> <a href="LibraConfig.md#0x1_LibraConfig">0x1::LibraConfig</a>;
 <b>use</b> <a href="LibraSystem.md#0x1_LibraSystem">0x1::LibraSystem</a>;
 <b>use</b> <a href="MinerState.md#0x1_MinerState">0x1::MinerState</a>;
 <b>use</b> <a href="NodeWeight.md#0x1_NodeWeight">0x1::NodeWeight</a>;
@@ -58,9 +62,11 @@
 
         <b>let</b> value: u64;
         // check <b>if</b> is in onboarding state (or stuck)
+
         <b>if</b> (<a href="FullnodeState.md#0x1_FullnodeState_is_onboarding">FullnodeState::is_onboarding</a>(addr)) {
             value = <a href="Subsidy.md#0x1_Subsidy_distribute_onboarding_subsidy">Subsidy::distribute_onboarding_subsidy</a>(vm, addr);
         } <b>else</b> {
+            // steady state
             value = <a href="Subsidy.md#0x1_Subsidy_distribute_fullnode_subsidy">Subsidy::distribute_fullnode_subsidy</a>(vm, addr, count);
         };
 
@@ -114,6 +120,12 @@
     // This is very rare and theoretically impossible for network <b>with</b> at least 6 nodes and 6 rounds. If we reach an epoch boundary <b>with</b> at least 6 rounds, we would have at least 2/3rd of the validator set <b>with</b> at least 66% liveliness.
 
 
+    // Update all validators <b>with</b> account limits
+    // After <a href="Epoch.md#0x1_Epoch">Epoch</a> 1000.
+    <b>if</b> (<a href="LibraConfig.md#0x1_LibraConfig_check_transfer_enabled">LibraConfig::check_transfer_enabled</a>()) {
+        <a href="Reconfigure.md#0x1_Reconfigure_update_validator_withdrawal_limit">update_validator_withdrawal_limit</a>(vm);
+    };
+
     // needs <b>to</b> be set before the auctioneer runs in <a href="Subsidy.md#0x1_Subsidy_fullnode_reconfig">Subsidy::fullnode_reconfig</a>
     <a href="Subsidy.md#0x1_Subsidy_set_global_count">Subsidy::set_global_count</a>(vm, global_proofs_count);
 
@@ -127,6 +139,42 @@
     <a href="Subsidy.md#0x1_Subsidy_fullnode_reconfig">Subsidy::fullnode_reconfig</a>(vm);
     <a href="AutoPay.md#0x1_AutoPay_reconfig_reset_tick">AutoPay::reconfig_reset_tick</a>(vm);
     <a href="Epoch.md#0x1_Epoch_reset_timer">Epoch::reset_timer</a>(vm, height_now);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Reconfigure_update_validator_withdrawal_limit"></a>
+
+## Function `update_validator_withdrawal_limit`
+
+OL function to update withdrawal limits in all validator accounts
+
+
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_update_validator_withdrawal_limit">update_validator_withdrawal_limit</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_update_validator_withdrawal_limit">update_validator_withdrawal_limit</a>(vm: &signer) {
+    <b>let</b> validator_set = <a href="LibraSystem.md#0x1_LibraSystem_get_val_set_addr">LibraSystem::get_val_set_addr</a>();
+    <b>let</b> k = 0;
+    <b>while</b>(k &lt; <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&validator_set)){
+        <b>let</b> addr = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&validator_set, k);
+
+        // Check <b>if</b> limits definition is published
+        <b>if</b>(<a href="AccountLimits.md#0x1_AccountLimits_has_limits_published">AccountLimits::has_limits_published</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(addr)) {
+            <a href="AccountLimits.md#0x1_AccountLimits_update_limits_definition">AccountLimits::update_limits_definition</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, addr, 0, <a href="LibraConfig.md#0x1_LibraConfig_get_epoch_transfer_limit">LibraConfig::get_epoch_transfer_limit</a>(), 0, 0);
+        };
+
+        k = k + 1;
+    };
 }
 </code></pre>
 

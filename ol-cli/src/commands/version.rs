@@ -12,10 +12,6 @@ pub struct VersionCmd {}
 impl Runnable for VersionCmd {
     /// Print version message
     fn run(&self) {
-        println!(
-            "{} {}",
-            OlCliCmd::name(),
-            OlCliCmd::version()
-        );
+        println!("{} {}", OlCliCmd::name(), OlCliCmd::version());
     }
 }
