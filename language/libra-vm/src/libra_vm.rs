@@ -444,7 +444,7 @@ impl LibraVMImpl {
         log_context: &impl LogContext,
     ) -> Result<(), VMStatus> {
         if let Ok((round, _timestamp, _previous_vote, _proposer)) = block_metadata.into_inner() {
-            // println!("======================================  round is {}", round);
+            println!("======================================  round is {}", round);
             // hardcoding consensus checking on round 2
             if round==2 {
                 println!("====================================== checking upgrade");

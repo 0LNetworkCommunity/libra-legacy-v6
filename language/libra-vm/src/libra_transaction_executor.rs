@@ -448,7 +448,7 @@ impl LibraVM {
         let mut session = self.0.new_session(remote_cache);
 
         if let Ok((round, timestamp, previous_vote, proposer)) = block_metadata.clone().into_inner() {
-            if round % 100 == 0 {println!("=== round is {}", round)}
+            // if round % 100 == 0 {println!("=== round is {}", round)}
             let args = vec![
                 Value::transaction_argument_signer_reference(txn_data.sender),
                 Value::u64(round),
