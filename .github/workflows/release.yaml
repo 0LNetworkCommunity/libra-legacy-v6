@@ -22,28 +22,11 @@ jobs:
           rust-version: stable
           components: rustfmt
       - name: Build
-        run:  cargo build -p miner -p libra-node --release
-      - name: Build
-        run: cd ol-cli && cargo build -p ol-cli --release
-      - name: Upload `miner` to release
+        run:  make bins
+      - name: Upload binaries to github.com/release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/release/miner
-          tag: ${{ github.ref }}
-          overwrite: true
-      - name: Upload `libra-node` to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/release/*node
-          tag: ${{ github.ref }}
-          overwrite: true
-          file_glob: true
-      - name: Upload `ol-cli` to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/release/ol*
+          file: target/release/[a-zA-Z0-9\-]*
           tag: ${{ github.ref }}
           overwrite: true
