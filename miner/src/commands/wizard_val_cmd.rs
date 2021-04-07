@@ -50,7 +50,10 @@ impl Runnable for ValWizardCmd {
         init_cmd::initialize_validator(&wallet, &miner_config).unwrap();
         status_ok!("\nKey file written", "\n...........................\n");
 
+        // fetching the genesis files from genesis-archive
+        // unless we are skipping it, or unless we intend to rebuild.
         if !self.skip_fetch_genesis {
+            // if we are rebuilding genesis then we should skip fetching files
             if !self.rebuild_genesis  {
                 files_cmd::get_files(
                     miner_config.workspace.node_home.clone(),

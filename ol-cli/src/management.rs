@@ -71,6 +71,7 @@ pub fn kill_zombies(name: &str) {
     let process: Process = serde_json::de::from_slice(&pids_loaded).unwrap();
 
     println!("Killing zombie '{}' processes...", name);
+    println!("Will node disable any systemd services, you must disable those manually");
     use nix::sys::signal::{self, Signal};
     for pid in process.pids.iter() {
         let _res = signal::kill(nix::unistd::Pid::from_raw(*pid as i32), Signal::SIGTERM);

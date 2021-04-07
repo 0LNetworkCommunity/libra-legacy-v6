@@ -201,12 +201,16 @@ daemon:
 #### TEST SETUP ####
 
 clear:
-	if test ${DATA_PATH}/key_store.json; then \
+ifeq (${TEST}, y)
+
+	@if test -d ${DATA_PATH}; then \
 		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml; \
 	fi
-	if test -d ${DATA_PATH}/blocks; then \
+	@if test -d ${DATA_PATH}/blocks; then \
 		rm -f ${DATA_PATH}/blocks/*.json; \
 	fi
+endif
+
 
 fixture-stdlib:
 	make stdlib
