@@ -1,5 +1,5 @@
 <script lang="ts">
-  export let isTrue: bool = true;
+  export let isTrue: Boolean = true;
   export let title: string = undefined;
   export let description: string = undefined;
 </script>

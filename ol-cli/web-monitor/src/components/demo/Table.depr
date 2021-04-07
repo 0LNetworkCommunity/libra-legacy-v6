@@ -14,7 +14,7 @@
       </thead>
       <tbody>
         {#each set as val, i}
-          <tr></tr>
+          <tr>
             <td>{i + 1}</td>
             <td>{val.account_address}</td>
             <td>{val.voting_power}</td>
