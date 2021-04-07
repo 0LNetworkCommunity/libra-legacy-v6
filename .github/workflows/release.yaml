@@ -27,6 +27,6 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/release/[a-zA-Z0-9\-]*
+          file: target/release/!*.*
           tag: ${{ github.ref }}
           overwrite: true
