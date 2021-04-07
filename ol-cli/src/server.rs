@@ -55,6 +55,18 @@ pub async fn start_server() {
         warp::sse::reply(event_stream)
     });
 
+    // //GET account/ (the json api)
+    // let account = warp::path("account").and(warp::get()).map(|| {
+    //     // create server event source
+    //     let event_stream = interval(Duration::from_secs(1)).map(move |_| {
+    //         // let info = crate::chain_info::read_chain_info_cache();
+    //         sse_chain_info(info)
+    //     });
+    //     // reply using server-sent events
+    //     warp::sse::reply(event_stream)
+    // });
+
+
     //GET validators/ (the json api)
     let validators = warp::path("validators").and(warp::get()).map(|| {
         // create server event source
