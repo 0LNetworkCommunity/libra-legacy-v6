@@ -63,7 +63,7 @@ pub struct ValidatorInfo {
 
 /// fetch state from system address 0x0
 pub fn fetch_chain_info() -> (Option<ChainInfo>, Option<Vec<ValidatorInfo>>){
-    let mut client = client::default_remote_client().0.unwrap();
+    let mut client = client::pick_client();
     let (blob, _version) = client.get_account_state_blob(AccountAddress::ZERO).unwrap();
     let mut cs = ChainInfo::default();
     

@@ -361,6 +361,7 @@ impl Check {
         is_running
     }
 
+    /// check if processes are running as systemd
     pub fn check_systemd(){
               
         // Command::new("systemctl")

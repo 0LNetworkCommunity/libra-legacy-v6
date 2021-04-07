@@ -7,6 +7,8 @@ use abscissa_core::{
 use libra_types::account_address::AccountAddress;
 use std::path::PathBuf;
 
+use crate::commands;
+
 /// Toplevel entrypoint command.
 ///
 /// Handles obtaining toplevel help as well as verbosity settings.
@@ -39,6 +41,18 @@ where
     /// Account Address
     #[options(short = "a", help = "account address")]
     pub account: Option<AccountAddress>,
+
+    /// URL to send tx
+    #[options(help = "URL to send tx")]    
+    pub url: Option<String>,
+
+    /// Waypoint to connect to
+    #[options(help = "waypoint to connect to")]
+    pub waypoint: Option<String>,
+
+    /// Swarm path - get tx params from swarm
+    #[options(help = "swarm path to get tx params from")]
+    pub swarm_path: Option<PathBuf>,
 }
 
 impl<Cmd> EntryPoint<Cmd>
@@ -116,4 +130,11 @@ where
             None => Ok(config),
         }
     }
+}
+/// the entry point args
+pub type EntryPointTxsCmd = EntryPoint<commands::OlCliCmd>;
+/// get arguments passed in the entrypoin of this app, not the subcommands
+pub fn get_args() -> EntryPointTxsCmd {
+  let test: EntryPointTxsCmd = Command::from_env_args();
+  test
 }
