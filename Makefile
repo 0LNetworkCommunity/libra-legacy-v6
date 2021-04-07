@@ -171,11 +171,11 @@ genesis:
 #### NODE MANAGEMENT ####
 start:
 # run in foreground. Only for testing, use a daemon for net.
-	cargo run -p libra-node -- --config ${DATA_PATH}/validator.node.yaml
+	RUST_LOG=error cargo run -p libra-node -- --config ${DATA_PATH}/validator.node.yaml
 
 # Start a fullnode instead of a validator node
 start-full:
-	cargo run -p libra-node -- --config ${DATA_PATH}/fullnode.node.yaml
+	RUST_LOG=error cargo run -p libra-node -- --config ${DATA_PATH}/fullnode.node.yaml
 
 daemon:
 # your node's custom libra-node.service lives in ~/.0L. Take the template from libra/util and edit for your needs.
