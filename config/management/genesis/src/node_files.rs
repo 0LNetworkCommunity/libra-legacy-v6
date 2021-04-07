@@ -159,7 +159,7 @@ pub fn create_files(
 
     fn_network.discovery_method = DiscoveryMethod::Onchain;
     fn_network.listen_address = "/ip4/0.0.0.0/tcp/6179".parse().unwrap();
-
+    fn_network.identity = Identity::None;
     config.full_node_networks = vec!(fn_network);
 
     // NOTE: for future reference, "upstream" is not necessary for validator settings.
@@ -171,6 +171,7 @@ pub fn create_files(
     // Write yaml
     let yaml_path = if *fullnode_only {
         output_dir.join("fullnode.node.yaml")
+        
     } else { 
         output_dir.join("validator.node.yaml")
     };
