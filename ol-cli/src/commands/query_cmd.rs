@@ -40,6 +40,8 @@ impl Runnable for QueryCmd {
         let mut info = String::new();
         let mut display = "";
 
+
+
         // TODO: Reduce boilerplate. Serialize "balance" to cast to QueryType::Balance        
         if self.balance {
             info = get(QueryType::Balance, account);
