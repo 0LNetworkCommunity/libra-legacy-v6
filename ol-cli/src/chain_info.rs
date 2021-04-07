@@ -1,6 +1,7 @@
 //! `chain_info`
 use crate::{cache::DB_CACHE, client};
 use chrono::Utc;
+use libra_json_rpc_client::views::OracleResourceView;
 use libra_types::{account_address::AccountAddress, account_state::AccountState, waypoint::Waypoint};
 use std::convert::{TryFrom};
 use serde::{Serialize, Deserialize};
@@ -27,6 +28,8 @@ pub struct ChainInfo {
     pub epoch_progress: f64,
     /// waypoint
     pub waypoint: Option<Waypoint>,
+    /// upgrade
+    pub upgrade: Option<OracleResourceView>
 }
 
 
@@ -76,6 +79,7 @@ pub fn fetch_chain_info() -> (Option<ChainInfo>, Option<Vec<ValidatorInfo>>){
             .unwrap()
             .unwrap()
             .epoch();
+        
         cs.validator_count = account_state
             .get_validator_set()
             .unwrap()
@@ -111,6 +115,9 @@ pub fn fetch_chain_info() -> (Option<ChainInfo>, Option<Vec<ValidatorInfo>>){
         }
 
         cs.height = meta.version;
+
+        cs.upgrade = client.query_oracle_upgrade().unwrap();
+
         let chain_state = Some(cs);
 
         let validators: Vec<ValidatorInfo> = account_state
