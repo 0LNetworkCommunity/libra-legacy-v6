@@ -29,6 +29,18 @@
     return info.epochs_since_last_account_creation > 7;
   }
 </script>
+<style>
+  /* TODO: get styles to work. svelte or uikit are overriding these. */
+  .like-accordion-title {
+    display: block;
+    font-size: 1.25rem;
+    line-height: 1.4;
+    color: #333;
+    overflow: hidden;
+    margin-left: 10px;
+  }
+</style>
+
 
 <main>
   <h2
@@ -36,13 +48,8 @@
   >
     <span>{set.length} Validators</span>
   </h2>
-  <!-- <div class="uk-child-width-expand@s uk-text-center uk-text-uppercase" uk-grid>
-    <div>Account</div>
-    <div>Voting Power</div>
-    <div>Proofs in Epoch</div>
-    <div>Tower Height</div>
-  </div> -->
-  <div class="uk-accordion-title uk-text-muted">
+
+  <div class="uk-text-muted">
     <div class="uk-column-1-4 uk-child-width-expand@s uk-text-center uk-text-uppercase uk-text-light uk-text-small">
       <div>account</div>
       <div>voting power</div>
