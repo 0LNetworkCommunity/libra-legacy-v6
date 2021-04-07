@@ -7,7 +7,7 @@ use libra_config::{config::{
         NodeConfig
     }, config::OnDiskStorageConfig, config::SafetyRulesService, config::{Identity, UpstreamConfig, WaypointConfig}, network_id::NetworkId};
 
-use libra_global_constants::{OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
+use libra_global_constants::{FULLNODE_NETWORK_KEY, OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
 use libra_management::{
     config::ConfigPath,
     error::Error,
@@ -159,7 +159,11 @@ pub fn create_files(
 
     fn_network.discovery_method = DiscoveryMethod::Onchain;
     fn_network.listen_address = "/ip4/0.0.0.0/tcp/6179".parse().unwrap();
-    fn_network.identity = Identity::None;
+    fn_network.identity = Identity::from_storage(
+            FULLNODE_NETWORK_KEY.to_string(),
+            OWNER_ACCOUNT.to_string(),
+            SecureBackend::OnDiskStorage(disk_storage.clone()),
+        );
     config.full_node_networks = vec!(fn_network);
 
     // NOTE: for future reference, "upstream" is not necessary for validator settings.
