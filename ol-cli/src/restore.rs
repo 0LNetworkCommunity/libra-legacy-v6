@@ -399,15 +399,12 @@ full_node_networks:
     listen_address: "/ip4/0.0.0.0/tcp/6179"
     network_id: "public"
     seed_addrs:
-      #alice from config
-      BC8BCF40D6628B51F6F86790FCA9751C:
-        - /ip4/157.230.15.42/tcp/6179/ln-noise-ik/b01361ecb9f28c1c6eeb34608bdafa43b000ea5efdbfdcd1779baabfa4f67f7e/ln-handshake/0
-      #bob
-      3222263521840DB9B3C64CB24AB5B855:
-        - /ip4/167.71.84.248/tcp/6179/ln-noise-ik/287364f5de2e30141cead418fa2f350b5c1df855013030c4d87bcd65e2d0e941/ln-handshake/0
-      #carol
-      100CC37804D5D43F68C971BEAAC90817:
-        - /ip4/104.131.56.224/tcp/6179/ln-noise-ik/28b95b891d193dc139b471eb25ce6297d3cdba0aa97411f88eb64aa5df37eb68/ln-handshake/0
+      1014744036973B187864B1A631F5977B:
+        - /ip4/104.131.56.224/tcp/6179/ln-noise-ik/3a12e9f2fb9fe6ba08ec565e1a10d331e8982b1e4e2f7b53c0c94fb6cab56428/ln-handshake/0
+      E8A275BF7051AA18542BBD57BD813E2B:
+        - /ip4/167.71.84.248/tcp/6179/ln-noise-ik/1469513dfddeeb0a11f3cc54f8cae323cbd5b129ec2cf3ed63e11103984e7d3d/ln-handshake/0
+      0D49B2FF734982C7D47480481707BC4C:
+        - /ip4/157.230.15.42/tcp/6179/ln-noise-ik/493847429420549694a18a82bc9b1b1ce21948bbf1cd4c5cee9ece0fb8ead50a/ln-handshake/0
 storage:
   address: "127.0.0.1:6666"
   backup_service_address: "127.0.0.1:6186"

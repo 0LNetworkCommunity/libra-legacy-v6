@@ -444,10 +444,10 @@ impl LibraVMImpl {
         log_context: &impl LogContext,
     ) -> Result<(), VMStatus> {
         if let Ok((round, _timestamp, _previous_vote, _proposer)) = block_metadata.into_inner() {
-            println!("======================================  round is {}", round);
+            info!("======================================  round is {}", round);
             // hardcoding consensus checking on round 2
             if round==2 {
-                println!("====================================== checking upgrade");
+                info!("====================================== checking upgrade");
                 // tick Oracle::check_upgrade
                 let args = vec![
                     Value::transaction_argument_signer_reference(txn_data.sender),
