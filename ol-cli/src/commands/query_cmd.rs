@@ -3,7 +3,7 @@
 use abscissa_core::{Command, Options, Runnable, status_info};
 use crate::{
     commands,
-    entrypoint::EntryPoint,
+    entrypoint,
     prelude::app_config,
     query::{get, QueryType},
 };
@@ -32,11 +32,9 @@ pub struct QueryCmd {
 
 impl Runnable for QueryCmd {
     fn run(&self) {
-        type EntryPointOlCliCmd = EntryPoint<commands::OlCliCmd>;
-        let EntryPointOlCliCmd { account, .. } = Command::from_env_args();
-
+        let args = entrypoint::get_args();
         let account = 
-            if account.is_some() { account.unwrap() }
+            if args.account.is_some() { args.account.unwrap() }
             else { app_config().profile.account };
 
         let mut info = String::new();
