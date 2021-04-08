@@ -153,11 +153,11 @@ verify-gen:
 
 
 #### GENESIS  ####
-build-gen:
-	cargo run -p libra-genesis-tool --release -- genesis \
-	--chain-id ${CHAIN_ID} \
-	--shared-backend ${REMOTE} \
-	--path ${DATA_PATH}/genesis.blob
+# build-gen:
+# 	cargo run -p libra-genesis-tool --release -- genesis \
+# 	--chain-id ${CHAIN_ID} \
+# 	--shared-backend ${REMOTE} \
+# 	--path ${DATA_PATH}/genesis.blob
 
 genesis:
 	cargo run -p libra-genesis-tool --release -- files \
