@@ -196,6 +196,3 @@ debug = true
 
 [profile.bench]
 debug = true
-
-[profile.dev]
-split-debuginfo = "unpacked" # Requires rustc 1.51
