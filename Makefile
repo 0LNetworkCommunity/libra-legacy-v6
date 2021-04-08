@@ -320,15 +320,15 @@ frozen:
 
 # This will work for validator nodes alice, bob, carol. New onboarded "eve" needs to run devnet-onboard
 
-	MNEM='${MNEM}' make stop clear fix devnet-wizard start
+	MNEM='${MNEM}' make stop clear fix dev-wizard start
 
-devnet-wizard:
+dev-wizard:
 # starts config for a new miner "eve", uses the devnet github repo for ceremony
 # get genesis.blcok from MOCK genesis store OLSF/dev-genesis
 	MNEM='${MNEM}' cargo run -p miner -- val-wizard --skip-mining --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis
 
 
-devnet-join: clear fix devnet-wizard
+dev-join: clear fix devnet-wizard
 # REQUIRES MOCK GIT INFRASTRUCTURE: OLSF/dev-genesis OLSF/dev-epoch-archive
 # see `devnet-archive` below 
 # We want to simulate the onboarding/new validator fetching genesis files from the mock archive: dev-genesis-archive
