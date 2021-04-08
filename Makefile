@@ -358,7 +358,7 @@ dev-register:
 #### PERSIST THE MOCK ARCHIVES TO DEVNET INFRASTRUCTURE ####
 
 # usually do this on Alice, which has the dev-epoch-archive repo, and dev-genesis
-dev-infra: devnet dev-save-genesis dev-backup-archive
+dev-infra: genesis dev-save-genesis dev-backup-archive
 
 dev-save-genesis: set-waypoint
 	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/fixtures/genesis/${V}/
