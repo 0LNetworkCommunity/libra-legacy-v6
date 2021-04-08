@@ -328,7 +328,7 @@ dev-wizard:
 	MNEM='${MNEM}' cargo run -p miner -- val-wizard --skip-mining --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis
 
 
-dev-join: clear fix devnet-wizard
+dev-join: clear fix dev-wizard
 # REQUIRES MOCK GIT INFRASTRUCTURE: OLSF/dev-genesis OLSF/dev-epoch-archive
 # see `devnet-archive` below 
 # We want to simulate the onboarding/new validator fetching genesis files from the mock archive: dev-genesis-archive
@@ -342,7 +342,7 @@ dev-join: clear fix devnet-wizard
 
 ### FULL DEVNET E2E ####
 
-devnet: make clear fix
+devnet: clear fix
 	MNEM='${MNEM}' make genesis start
 
 dev-register: 
