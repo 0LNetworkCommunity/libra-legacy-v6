@@ -363,8 +363,8 @@ dev-infra: genesis dev-save-genesis dev-backup-archive
 dev-save-genesis: set-waypoint
 	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/fixtures/genesis/${V}/
 	git add ${SOURCE}/fixtures/genesis/${V}/
-	git commit -a -m "save genesis fixtures to ${V}"
-	git push
+	git commit -a -m "save genesis fixtures to ${V}" | true
+	git push | true
 
 dev-backup-archive:
 	cd ${HOME}/dev-epoch-archive && make devnet-backup
