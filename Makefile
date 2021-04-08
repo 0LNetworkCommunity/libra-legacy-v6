@@ -329,21 +329,18 @@ devnet-onboard: clear fix
 # mock fetch from dev-genesis repo
 	MNEM='${MNEM}' cargo r -p miner -- val-wizard --skip-mining --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis
 # mock restore backups from dev-epoch-archive
+	rm -rf ~/.0L/restore
 	cargo r -p ol-cli -- restore
 # start a node with fullnode.node.yaml configs
 	make start-full
 
 ### FULL DEVNET RESET ####
 
-devnet-reset: 
-	MNEM='${MNEM}' make devnet-reset-ceremony genesis start
 # Tests the full genesis ceremony cycle, and rebuilds all genesis and waypoints.
-
-devnet-reset-ceremony:
-# note: this uses the NS in local env to create files i.e. alice or bob
-# as a operator/owner pair.
+devnet-reset: 
 	SKIP_BLOB=y make clear fix
 	echo ${MNEM} | head -c -1 | make register
+	MNEM='${MNEM}' make devnet-reset-ceremony genesis start
 
 devnet-reset-onboard: clear 
 # fixtures needs a file that works
@@ -359,12 +356,6 @@ devnet-save-genesis: set-waypoint
 	git commit -a -m "save genesis fixtures to ${V}"
 	git push
 
-devnet-hard:
-	git reset --hard origin/${V} 
+devnet-backup-archive:
+	cd ${HOME}/dev-epoch-archive && make devnet-backup
 
-devnet-pull:
-# must be on a branch
-	git fetch && git checkout ${V} -f && git pull
-
-devnet-fullnode:
-	cargo run -p miner -- fn-wizard --path ~/.0L/
