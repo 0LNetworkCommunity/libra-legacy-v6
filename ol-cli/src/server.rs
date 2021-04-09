@@ -70,7 +70,7 @@ pub async fn start_server() {
     //GET validators/ (the json api)
     let validators = warp::path("validators").and(warp::get()).map(|| {
         // create server event source
-        let event_stream = interval(Duration::from_secs(1)).map(move |_| {
+        let event_stream = interval(Duration::from_secs(120)).map(move |_| {
             let info = crate::chain_info::read_val_info_cache();
             // TODO: Use a different data source for /explorer/ data.
             sse_val_info(info)

@@ -1,6 +1,6 @@
 <script lang="ts">
   import Check from "./Check.svelte";
-  import { onMount } from "svelte";
+  import {onMount} from "svelte";
   import {map} from "lodash";
 
   let healthData;

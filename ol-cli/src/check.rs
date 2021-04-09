@@ -314,7 +314,7 @@ impl Check {
             return (false, 0)
         };
         let delay = Metadata::compare_from_config();
-        ( delay < 10_000, delay)
+        (delay < 10_000, delay)
     }
 
     /// Check if node caught up, if so mark as caught up.

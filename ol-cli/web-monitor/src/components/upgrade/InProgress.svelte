@@ -57,7 +57,7 @@
           >
             proposal {i + 1} 
           </h5>
-          <p class="uk-text-uppercase">{proposals.length} votes / {validator_count} validators</p>
+          <p class="uk-text-uppercase uk-text-small">{proposals.length} votes / {validator_count} validators</p>
           <p>{prop.validators}</p>
         {/each}
       </div>

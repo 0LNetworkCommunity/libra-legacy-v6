@@ -19556,9 +19556,9 @@ var app = (function () {
     			t8 = text(t8_value);
     			attr_dev(h5, "class", "uk-text-muted uk-text-center uk-text-uppercase uk-text-small");
     			add_location(h5, file$3, 58, 10, 2072);
-    			attr_dev(p0, "class", "uk-text-uppercase");
+    			attr_dev(p0, "class", "uk-text-uppercase uk-text-small");
     			add_location(p0, file$3, 63, 10, 2225);
-    			add_location(p1, file$3, 64, 10, 2324);
+    			add_location(p1, file$3, 64, 10, 2338);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, h5, anchor);
