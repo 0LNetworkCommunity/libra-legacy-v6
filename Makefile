@@ -342,10 +342,10 @@ dev-join: clear fix dev-wizard
 
 ### FULL DEVNET E2E ####
 
-devnet: clear fix
+devnet:
 	MNEM='${MNEM}' make genesis start
 
-dev-register: 
+dev-register: clear fix
 	echo ${MNEM} | head -c -1 | make register
 
 # devnet-setup-onboard: clear 
