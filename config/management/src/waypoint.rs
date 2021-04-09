@@ -1,6 +1,8 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use std::path::PathBuf;
+
 use crate::{config::ConfigPath, error::Error, secure_backend::ValidatorBackend};
 use libra_global_constants::{GENESIS_WAYPOINT, WAYPOINT};
 use libra_types::waypoint::Waypoint;
