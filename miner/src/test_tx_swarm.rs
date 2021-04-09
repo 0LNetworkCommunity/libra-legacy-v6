@@ -11,7 +11,7 @@ use libra_config::config::NodeConfig;
 use libra_crypto::test_utils::KeyPair;
 use libra_types::transaction::authenticator::AuthenticationKey;
 use reqwest::Url;
-use std::{fs, path::PathBuf};
+use std::{fs, path::{Path, PathBuf}};
 use libra_genesis_tool::keyscheme::KeyScheme;
 
 /// A test harness for the submit_tx with a local swarm 
@@ -19,7 +19,8 @@ pub fn swarm_miner(swarm_path: PathBuf, persona: &Option<String>) {
     let persona = persona.clone().unwrap_or("alice".to_string());
     let tx_params = get_params_from_swarm(swarm_path, &persona).unwrap();
     let conf = load_swarm_config(&tx_params);
-    fs::remove_dir_all("./swarm_temp/blocks").unwrap();
+    let swarm_block_path = "./swarm_temp/blocks";
+    if Path::new(swarm_block_path).exists() { fs::remove_dir_all(swarm_block_path).unwrap() };
     fs::create_dir_all("./swarm_temp/blocks").unwrap();
     let filepath = format!("./fixtures/blocks/test/{}/block_0.json", persona);
     fs::copy(filepath, "./swarm_temp/blocks/block_0.json").expect("error copying file");
