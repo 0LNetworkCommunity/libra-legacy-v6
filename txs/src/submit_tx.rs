@@ -120,17 +120,18 @@ pub fn get_tx_params() -> Result<TxParams, Error> {
     }
 
     // Get/override dynamic waypoint from key_store.json
-    // TODO: make this only apply to prod
-    if Path::new(&txs_config.get_key_store_path()).exists() {
-        tx_params.waypoint = txs_config.get_waypoint().unwrap();
-    }
+    tx_params.waypoint = match waypoint {
+      Some(w) => w,
+      _ => txs_config.get_waypoint(swarm_path).unwrap()
+    };
+
 
     // Get/override some params from command line
     if url.is_some() {
-        tx_params.url = Url::parse(&url.unwrap()).unwrap();
+        tx_params.url = url.unwrap();
     }
     if waypoint.is_some() {
-        tx_params.waypoint = waypoint.unwrap().parse().unwrap();
+        tx_params.waypoint = waypoint.unwrap();
     }
 
     Ok(tx_params)
@@ -174,7 +175,8 @@ pub fn get_tx_params_from_swarm(
 }
 
 /// Gets transaction params from the 0L project root.
-pub fn get_tx_params_from_toml(config: AppConfig) -> Result<TxParams, Error> {    
+pub fn get_tx_params_from_toml(config: AppConfig) -> Result<TxParams, Error> {
+    let entry_args = entrypoint::get_args();     
     let url =  config.profile.default_node.clone().unwrap();
 
     let (auth_key, address, wallet) = keygen::account_from_prompt();
@@ -185,7 +187,7 @@ pub fn get_tx_params_from_toml(config: AppConfig) -> Result<TxParams, Error> {
         auth_key,
         address,
         url,
-        waypoint: config.get_waypoint().clone().expect("could not get waypoint"),
+        waypoint: config.get_waypoint(entry_args.swarm_path).clone().expect("could not get waypoint"),
         keypair,
         max_gas_unit_for_tx: config.tx_configs.management_txs.max_gas_unit_for_tx,
         coin_price_per_unit: config.tx_configs.management_txs.coin_price_per_unit, // in micro_gas

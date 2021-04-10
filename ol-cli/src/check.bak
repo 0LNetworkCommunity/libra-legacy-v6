@@ -235,18 +235,19 @@ impl Check {
         self.conf.profile.account.to_vec()
     }
 
-    /// Current waypoint
-    pub fn waypoint(&mut self) -> Waypoint {
-        self.client.get_state_proof().expect("Failed to get state proof"); // refresh latest state proof
-        let waypoint = self.client.waypoint();
-        match waypoint {
-            Some(w)=> {
-                //self.client = LibraClient::new(self.conf.node_url.clone(), w.clone()).unwrap();
-                w
-            },
-            None=> self.conf.get_waypoint().expect("could not get waypoint")
-        }
-    }
+    // /// Current waypoint
+    // pub fn waypoint(&mut self) -> Waypoint {
+    //     let entry_args = entrypoint::get_args();
+    //     self.client.get_state_proof().expect("Failed to get state proof"); // refresh latest state proof
+    //     let waypoint = self.client.waypoint();
+    //     match waypoint {
+    //         Some(w)=> {
+    //             //self.client = LibraClient::new(self.conf.node_url.clone(), w.clone()).unwrap();
+    //             w
+    //         },
+    //         None=> self.conf.get_waypoint(entry_args.swarm_path).expect("could not get waypoint")
+    //     }
+    // }
 
     /// is validator jailed
     pub fn is_jailed() -> bool {

@@ -1,11 +1,11 @@
 //! MinerApp Abscissa Application
 
-use crate::{commands::MinerCmd, config::MinerConfig};
+use crate::{commands::MinerCmd, config::MinerConfig, entrypoint::EntryPoint};
 use abscissa_core::{
     application::{self, AppCell},
     config, trace, Application, FrameworkError, StandardPaths,
 };
-use ol_cli::entrypoint::EntryPoint;
+// use ol_util::entrypoint::EntryPoint;
 
 /// Application state
 pub static APPLICATION: AppCell<MinerApp> = AppCell::new();

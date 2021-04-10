@@ -2,7 +2,6 @@
 
 use abscissa_core::{Command, Options, Runnable, status_info};
 use crate::{
-    commands,
     entrypoint,
     prelude::app_config,
     query::{get, QueryType},

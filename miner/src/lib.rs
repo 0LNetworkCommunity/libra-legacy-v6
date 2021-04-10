@@ -26,3 +26,4 @@ pub mod submit_tx;
 pub mod test_tx_swarm;
 pub mod backlog;
 pub mod account;
+pub mod entrypoint;

@@ -3,7 +3,7 @@
 use anyhow::Error;
 use cli::libra_client::LibraClient;
 use sysinfo::SystemExt;
-use crate::{cache::DB_CACHE, metadata::Metadata};
+use crate::{cache::DB_CACHE, entrypoint, metadata::Metadata};
 use crate::config::OlCliConfig;
 use crate::application::app_config;
 use std::str;
@@ -124,6 +124,7 @@ impl NodeHealth {
     /// Create a instance of Check
     pub fn new() -> Self {
         let conf = app_config().to_owned();
+        let entry_args = entrypoint::get_args();
         let use_local = NodeHealth::check_node_state();
 
         let url = if use_local {
@@ -144,7 +145,7 @@ impl NodeHealth {
         return Self {
             client: LibraClient::new(
                 url, 
-                conf.get_waypoint().unwrap_or_default() //default for Waypoint will not be able to connect
+                conf.get_waypoint(entry_args.swarm_path).unwrap_or_default() //default for Waypoint will not be able to connect
             ).unwrap(),
             conf,
             items: Items::init(),
@@ -242,8 +243,10 @@ impl NodeHealth {
         self.conf.profile.account.to_vec()
     }
 
+    // TODO: duplicated with Check
     /// Current monitor account
     pub fn waypoint(&mut self) -> Waypoint {
+        let entry_args = entrypoint::get_args();
         self.client.get_state_proof().expect("Failed to get state proof"); // refresh latest state proof
         let waypoint = self.client.waypoint();
         match waypoint {
@@ -251,7 +254,7 @@ impl NodeHealth {
                 //self.client = LibraClient::new(self.conf.node_url.clone(), w.clone()).unwrap();
                 w
             },
-            None=> self.conf.get_waypoint().expect("could not get waypoint")
+            None=> self.conf.get_waypoint(entry_args.swarm_path).expect("could not get waypoint")
         }
     }
 

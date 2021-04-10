@@ -26,7 +26,7 @@ fn test_waypoint() {
     file.write_all(json_data.as_bytes())
             .expect("Could not write json");
     
-    let data = s.get_waypoint();
+    let data = s.get_waypoint(None);
     dbg!(data);
     let correct: Waypoint = "0:08148a7b1ac857caee13337c77e691734899b7cc82f4968b35455fb91c060df5".parse().unwrap();
     assert_eq!(data.unwrap(), correct, "json value not equal");
