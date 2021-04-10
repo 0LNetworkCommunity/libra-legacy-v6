@@ -50,7 +50,7 @@ pub fn save_pid(name: &str, pid: u32) {
             let serialized = serde_json::to_vec(&process).unwrap();
             DB_CACHE.put(name.as_bytes(), serialized).unwrap();
         }
-        Err(e) => println!("RocksDB operational problem occured: {}", e),
+        Err(e) => println!("RocksDB operational problem occurred: {}", e),
     }
 
     // Load, update and save
@@ -92,27 +92,21 @@ pub fn create_log_file(file_name: &str) -> File {
     let logs_dir = conf.workspace.node_home.join("logs/");
     fs::create_dir_all(&logs_dir).expect("could not create logs dir");
     let logs_file = logs_dir.join([file_name, ".log"].join(""));
+    println!("Logging in file: {:?}", logs_file);
 
     File::create(logs_file).expect("could not create log file")
 }
 
 /// Start Node, as fullnode
 pub fn start_node(config_type: NodeType) -> Result<(), Error> {
-    // Stop any processes we may have started and detached from.
-    // Do not need to start
-
+    use BINARY_NODE as NODE;
     // if is running do nothing
     if node_health::NodeHealth::new().node_running() {
-        println!("Node is already running. Exiting.");
+        println!("{} is already running. Exiting.", NODE);
         return Ok(());
     }
 
-    // Create log file, and pipe stdout/err
-    let outputs = create_log_file("node");
-    let errors = outputs.try_clone().unwrap();
-
     // Start as validator or fullnode
-    // Get the yaml file
     let conf = app_config();
     let node_home = conf.workspace.node_home.to_str().unwrap();
     let config_file_name = match config_type {
@@ -120,29 +114,23 @@ pub fn start_node(config_type: NodeType) -> Result<(), Error> {
         NodeType::Fullnode => format!("{}fullnode.node.yaml", node_home),
     };
 
-    // TODO: Boilerplate, figure out how to make generic
     let child = if *IS_PROD {
-        Command::new("libra-node")
-            .arg("--config")
-            .arg(config_file_name)
-            .stdout(Stdio::from(outputs))
-            .stderr(Stdio::from(errors))
-            .spawn()
-            .expect("failed to execute child")
+        let args = vec!["--config", &config_file_name];
+        println!("Starting '{}' with args: {:?}", NODE, args.join(" "));
+        spawn_process(
+            NODE, args.as_slice(), "node", "failed to run 'libra-node', is it installed?"
+        )
     } else {
-        Command::new("cargo")
-            .args(&["r", "-p", "libra-node", "--"])
-            .arg("--config")
-            .arg(config_file_name)
-            .stdout(Stdio::from(outputs))
-            .stderr(Stdio::from(errors))
-            .spawn()
-            .expect("failed to execute child")
+        let args = vec!["r", "-p", NODE, "--", "--config", &config_file_name];
+        println!("Starting 'cargo' with args: {:?}", args.join(" "));
+        spawn_process(
+            "cargo", args.as_slice(), "node", "failed to run cargo r -p libra-node"
+        )
     };
 
     let pid = &child.id();
-    save_pid(BINARY_NODE, *pid);
-    println!("Started new '{}' with PID: {}", BINARY_NODE, pid);
+    save_pid(NODE, *pid);
+    println!("Started new with PID: {}", pid);
     Ok(())
 }
 
@@ -161,50 +149,55 @@ fn kill_all(process: &str) {
     child.wait().expect("killall did not exit");
 }
 
+/// Spawn process with some options
+fn spawn_process(
+    binary: &str, args: &[&str], log_file: &str, expect_msg: &str
+) -> std::process::Child {
+    // Create log file, and pipe stdout/err
+    let outputs = create_log_file(log_file);
+    let errors = outputs.try_clone().unwrap();
+
+    Command::new(binary)
+        .args(args)
+        .stdout(Stdio::from(outputs))
+        .stderr(Stdio::from(errors))
+        .spawn()
+        .expect(expect_msg)
+}
+
 /// Start Miner
 pub fn start_miner() {
     // Stop any processes we may have started and detached from.
     // if is running do nothing
+    use BINARY_MINER as MINER;
     if node_health::NodeHealth::new().miner_running() {
-        println!("Miner is already running. Exiting.");
-        return;
+        println!("{} is already running. Exiting.", MINER);
+        return
     }
-
-    // Create log file, and pipe stdout/err
-    let outputs = create_log_file("miner");
-    let errors = outputs.try_clone().unwrap();
 
     // if node is NOT synced, then should use a backup/upstream node
     // let url = choose_rpc_node().unwrap();
-    let use_backup = if node_health::NodeHealth::node_is_synced().0 {
-        "--backup-url"
-    } else {
-        ""
-    };
-
-    // TODO: Boilerplate, figure out how to make generic
+    let use_backup = node_health::NodeHealth::node_is_synced().0;
+    
     let child = if *IS_PROD {
-        Command::new("miner")
-            .arg("start")
-            .arg(use_backup)
-            .stdout(Stdio::from(outputs))
-            .stderr(Stdio::from(errors))
-            .spawn()
-            .expect("failed to run 'miner', is it installed?")
+        let mut args = vec!["start"];
+        if use_backup { args.push("--backup-url"); };
+        println!("Starting '{}' with args: {:?}", MINER, args.join(" "));
+        spawn_process(
+            MINER, args.as_slice(), MINER, "failed to run 'miner', is it installed?"
+        )        
     } else {
-        Command::new("cargo")
-            .args(&["r", "-p", "miner", "--"])
-            .arg("start")
-            .arg(use_backup)
-            .stdout(Stdio::from(outputs))
-            .stderr(Stdio::from(errors))
-            .spawn()
-            .expect("failed to run cargo r -p miner")
+        let mut args = vec!["r", "-p", MINER, "--", "start"];
+        if use_backup { args.push("--backup-url"); };
+        println!("Starting 'cargo' with args: {:?}", args.join(" "));
+        spawn_process(
+            "cargo", args.as_slice(), MINER, "failed to run cargo r -p miner"
+        )
     };
 
     let pid = &child.id();
-    save_pid(BINARY_MINER, *pid);
-    println!("Started new {} with PID: {}", BINARY_MINER, pid);
+    save_pid(MINER, *pid);
+    println!("Started with PID {} in the background", pid);
 }
 
 /// Stop Miner
@@ -238,7 +231,6 @@ pub fn choose_rpc_node() -> Option<Url> {
 ///
 pub fn run_validator_wizard() -> bool {
     println!("Running validator wizard");
-    // TODO: Boilerplate, figure out how to make generic
     let mut child = if *IS_PROD {
         Command::new("miner")
             .arg("val-wizard")
@@ -251,7 +243,7 @@ pub fn run_validator_wizard() -> bool {
         } else {"".to_string() };
 
         let swarm_persona = if entry_arg.swarm_persona.is_some() { 
-          format!("--swarm-path {:?}", entry_arg.swarm_persona.unwrap())
+          format!("--swarm-persona {:?}", entry_arg.swarm_persona.unwrap())
         } else {"".to_string() };
 
         Command::new("cargo")
