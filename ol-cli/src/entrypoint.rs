@@ -139,6 +139,5 @@ where
 pub type EntryPointTxsCmd = EntryPoint<commands::OlCliCmd>;
 /// get arguments passed in the entrypoin of this app, not the subcommands
 pub fn get_args() -> EntryPointTxsCmd {
-  let test: EntryPointTxsCmd = Command::from_env_args();
-  test
+  Command::from_env_args()
 }

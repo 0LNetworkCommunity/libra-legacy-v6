@@ -5,7 +5,7 @@ use reqwest::Url;
 use libra_types::waypoint::Waypoint;
 
 /// Get swarm configs from swarm files, swarm must be running
-pub fn get_swarm_configs(mut swarm_path: PathBuf) -> (Url, Waypoint) {
+pub fn get_configs(mut swarm_path: PathBuf) -> (Url, Waypoint) {
     swarm_path.push("0/node.yaml");
     let config = NodeConfig::load(&swarm_path).unwrap_or_else(
         |_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path)

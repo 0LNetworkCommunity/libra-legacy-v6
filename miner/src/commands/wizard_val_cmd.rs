@@ -4,8 +4,8 @@
 
 use abscissa_core::{Command, Options, Runnable, status_info, status_ok};
 use std::{path::PathBuf};
-use super::{files_cmd, init_cmd, keygen_cmd, manifest_cmd, zero_cmd};
-
+use super::{files_cmd, keygen_cmd, manifest_cmd, zero_cmd};
+use ol_cli::commands::init_cmd;
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ValWizardCmd {

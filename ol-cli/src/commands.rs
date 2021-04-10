@@ -10,7 +10,7 @@
 //! See the `impl Configurable` below for how to specify the path to the
 //! application's configuration file.
 
-mod init_cmd;
+pub mod init_cmd;
 mod version;
 mod mgmt_cmd;
 mod serve_cmd;

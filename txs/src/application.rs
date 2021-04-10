@@ -4,7 +4,8 @@ use abscissa_core::{
     application::{self, AppCell},
     Application, config, FrameworkError, StandardPaths, trace
 };
-use crate::{commands::TxsCmd, config::AppConfig, entrypoint::EntryPoint};
+use crate::{commands::TxsCmd, config::AppConfig};
+use ol_cli::entrypoint::EntryPoint;
 
 /// Application state
 pub static APPLICATION: AppCell<TxsApp> = AppCell::new();

@@ -6,6 +6,8 @@ use abscissa_core::{
 };
 use std::path::PathBuf;
 
+use crate::commands;
+
 /// Toplevel entrypoint command.
 ///
 /// Handles obtaining toplevel help as well as verbosity settings.
@@ -124,4 +126,12 @@ where
             None => Ok(config),
         }
     }
+}
+
+/// the entry point args
+pub type EntryPointTxsCmd = EntryPoint<commands::OlCliCmd>;
+/// get arguments passed in the entrypoin of this app, not the subcommands
+pub fn get_args() -> EntryPointTxsCmd {
+  let test: EntryPointTxsCmd = Command::from_env_args();
+  test
 }

@@ -1,9 +1,9 @@
-//! `version` subcommand
+//! `init` subcommand
 
 #![allow(clippy::never_loop)]
 
 // use std::{path::PathBuf};
-use crate::{application::app_config, config::OlCliConfig};
+use crate::{application::app_config, config::OlCliConfig, entrypoint::{self, EntryPointTxsCmd}};
 use abscissa_core::{Command, FrameworkError, Options, Runnable, config};
 use anyhow::Error;
 use libra_genesis_tool::{init, key, keyscheme::KeyScheme};
@@ -38,11 +38,13 @@ impl Runnable for InitCmd {
     }
 }
 
+/// Initializes the necessary 0L config files: 0L.toml
 pub fn initialize_miner(authkey: AuthenticationKey, account: AccountAddress, path: &Option<PathBuf>) -> Result <OlCliConfig, Error>{
-    let miner_config = OlCliConfig::init_miner_configs(authkey, account, path);
+    let EntryPointTxsCmd { swarm_path, .. } = entrypoint::get_args();
+    let miner_config = OlCliConfig::init_miner_configs(authkey, account, path, swarm_path);
     Ok(miner_config)
 }
-
+/// Initializes the necessary validator config files: genesis.blob, key_store.json
 pub fn initialize_validator(wallet: &WalletLibrary, miner_config: &OlCliConfig) -> Result <(), Error>{
     let home_dir = &miner_config.workspace.node_home;
     let keys = KeyScheme::new(wallet);

@@ -1,14 +1,14 @@
 //! Txs App submit_tx module
 #![forbid(unsafe_code)]
-
+use crate::{config::AppConfig, prelude::app_config};
 use anyhow::Error;
-use abscissa_core::{Command, status_warn, status_ok};
+use abscissa_core::{ status_warn, status_ok};
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
-use crate::{config::AppConfig, commands, entrypoint::EntryPoint};
 use libra_crypto::{
     test_utils::KeyPair,
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey}
 };
+
 use libra_config::config::NodeConfig;
 use libra_genesis_tool::keyscheme::KeyScheme;
 use libra_json_rpc_types::views::{TransactionView, VMStatusView};
@@ -19,6 +19,7 @@ use libra_types::{
 use libra_types::transaction::{
     Script, TransactionPayload, authenticator::AuthenticationKey
 };
+use ol_cli::entrypoint::{self, EntryPointTxsCmd};
 use reqwest::Url;
 use std::{fs, io::{stdout, Write}, path::{Path, PathBuf}, thread, time};
 
@@ -105,11 +106,9 @@ pub fn submit_tx(
 /// Main get tx params logic based on the design in this URL:
 /// https://github.com/OLSF/libra/blob/tx-sender/txs/README.md#txs-logic--usage
 pub fn get_tx_params() -> Result<TxParams, Error> {
-    type EntryPointTxsCmd = EntryPoint<commands::TxsCmd>;
     let EntryPointTxsCmd { 
-        url, waypoint, swarm_path, .. } = Command::from_env_args();
-
-    let txs_config = crate::prelude::app_config();
+        url, waypoint, swarm_path, .. } = entrypoint::get_args();
+    let txs_config = app_config();
     let mut tx_params: TxParams;
     if swarm_path.is_some() {
         tx_params = get_tx_params_from_swarm(

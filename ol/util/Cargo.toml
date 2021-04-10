@@ -1,11 +1,11 @@
 [package]
-name = "swarm_util"
+name = "ol-util"
 version = "0.1.0"
 authors = [""]
 edition = "2018"
 
 [dependencies]
-libra-config = { path = "../config/", version = "0.1.0" }
+libra-config = { path = "../../config/", version = "0.1.0" }
 reqwest = { version = "0.10.6", features = ["blocking", "json"], default_features = false }
-libra-types = { path = "../types/", version = "0.1.0" }
+libra-types = { path = "../../types/", version = "0.1.0" }
 

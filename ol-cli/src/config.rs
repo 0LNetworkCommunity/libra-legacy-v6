@@ -14,8 +14,8 @@ use machine_ip;
 use reqwest::Url;
 use rustyline::Editor;
 use serde::{Deserialize, Serialize};
-use std::io::Write;
-use std::{fs, net::Ipv4Addr, str::FromStr};
+use std::{fs, net::Ipv4Addr, str::FromStr, io::Write};
+use ol_util::swarm::get_configs;
 
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
 /// MinerApp Configuration
@@ -68,7 +68,7 @@ impl OlCliConfig {
         authkey: AuthenticationKey,
         account: AccountAddress,
         config_path: &Option<PathBuf>,
-        swarm_path: &Option<PathBuf>
+        swarm_path: Option<PathBuf>
     ) -> OlCliConfig {
         // TODO: Check if configs exist and warn on overwrite.
         let mut miner_configs = OlCliConfig::default();
@@ -126,7 +126,7 @@ impl OlCliConfig {
         miner_configs.profile.account = account;
         
         if swarm_path.is_some() {
-          miner_configs.profile.default_node = get_tx_params_from_swarm(entry_args.swarm_path.unwrap()).url;
+          miner_configs.profile.default_node = Some(get_configs(swarm_path.clone().unwrap()).0);
         }
 
         let toml = toml::to_string(&miner_configs).unwrap();

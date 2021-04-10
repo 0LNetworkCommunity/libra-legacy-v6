@@ -7,4 +7,4 @@
     unused_qualifications
 )]
 
-pub mod get_configs;
+pub mod swarm;

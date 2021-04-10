@@ -4999,6 +4999,7 @@ dependencies = [
  "machine-ip",
  "nix 0.18.0",
  "num-format",
+ "ol-util",
  "once_cell",
  "regex",
  "reqwest",
@@ -5018,6 +5019,15 @@ dependencies = [
  "unicode-width",
  "url",
  "warp",
+]
+
+[[package]]
+name = "ol-util"
+version = "0.1.0"
+dependencies = [
+ "libra-config",
+ "libra-types",
+ "reqwest",
 ]
 
 [[package]]
@@ -7006,15 +7016,6 @@ name = "supercow"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "171758edb47aa306a78dfa4ab9aeb5167405bd4e3dc2b64e88f6a84bbe98bd63"
-
-[[package]]
-name = "swarm_util"
-version = "0.1.0"
-dependencies = [
- "libra-config",
- "libra-types",
- "reqwest",
-]
 
 [[package]]
 name = "swiss-knife"
