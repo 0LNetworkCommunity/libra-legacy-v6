@@ -1,6 +1,6 @@
 //! Txs App submit_tx module
 #![forbid(unsafe_code)]
-use crate::{config::AppConfig, prelude::app_config};
+use crate::{config::TxsConfig, prelude::app_config};
 use anyhow::Error;
 use abscissa_core::{ status_warn, status_ok};
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
@@ -175,7 +175,7 @@ pub fn get_tx_params_from_swarm(
 }
 
 /// Gets transaction params from the 0L project root.
-pub fn get_tx_params_from_toml(config: AppConfig) -> Result<TxParams, Error> {
+pub fn get_tx_params_from_toml(config: TxsConfig) -> Result<TxParams, Error> {
     let entry_args = entrypoint::get_args();     
     let url =  config.profile.default_node.clone().unwrap();
 

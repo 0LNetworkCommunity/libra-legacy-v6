@@ -18,7 +18,7 @@ mod autopay_batch_cmd;
 
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use ol_cli::commands::CONFIG_FILE;
-use crate::config::AppConfig;
+use crate::config::TxsConfig;
 use dirs;
 use libra_global_constants::NODE_HOME;
 use self::{
@@ -63,7 +63,7 @@ pub enum TxsCmd {
 }
 
 /// This trait allows you to define how application configuration is loaded.
-impl Configurable<AppConfig> for TxsCmd {
+impl Configurable<TxsConfig> for TxsCmd {
     /// Location of the configuration file
     fn config_path(&self) -> Option<PathBuf> {
         // Check if the config file exists, and if it does not, ignore it.
