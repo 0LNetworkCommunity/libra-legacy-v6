@@ -142,7 +142,10 @@ impl OlCliConfig {
     miner_configs.profile.account = account;
     
     if swarm_path.is_some() {
-      miner_configs.profile.default_node = Some(swarm::get_configs(swarm_path.clone().unwrap()).0);
+      // miner_configs.profile.default_node = Some(swarm::get_configs(swarm_path.clone().unwrap()).0);
+      miner_configs.profile.upstream_nodes = Some(
+        vec!(swarm::get_configs(swarm_path.clone().unwrap()).0)
+      );
     }
 
     let toml = toml::to_string(&miner_configs).unwrap();

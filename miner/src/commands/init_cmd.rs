@@ -2,7 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{application::app_config};
+use crate::{application::app_config, entrypoint};
 use abscissa_core::{Command, Options, Runnable, status_warn};
 use ol_cli::commands::init_cmd;
 use std::{path::PathBuf};
@@ -24,12 +24,18 @@ impl Runnable for InitCmd {
     /// Print version message
     fn run(&self) {
         status_warn!("deprecation notice: `miner init` will be removed in favor of `ol-cli init`");
-
+        let entry_args = entrypoint::get_args();
         let (authkey, account, wallet) = keygen::account_from_prompt();
         let mut miner_config = app_config().to_owned();
         
-        if !self.skip_miner { miner_config = init_cmd::initialize_miner(authkey, account, 
-            &self.path).unwrap() };
+        if !self.skip_miner { 
+          miner_config = init_cmd::initialize_miner(
+            authkey,
+            account, 
+            &self.path, 
+            entry_args.swarm_path
+          ).unwrap() 
+        };
         if !self.skip_val { init_cmd::initialize_validator(&wallet, &miner_config).unwrap() };
     }
 }
