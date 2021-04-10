@@ -153,6 +153,7 @@ members = [
     "miner",
     "txs",
     "ol-cli",
+    "swarm_util",
 ]
 
 # NOTE: default-members is the complete list of binaries that form the "production Libra codebase". These members should

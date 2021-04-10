@@ -2,9 +2,8 @@
 
 // use miner::delay::delay_difficulty;
 // use miner::submit_tx::TxParams;
-use crate::commands::CONFIG_FILE;
+use crate::{commands::CONFIG_FILE, entrypoint};
 use abscissa_core::path::PathBuf;
-use ajson;
 use dirs;
 use libra_global_constants::NODE_HOME;
 use libra_types::{
@@ -68,13 +67,14 @@ impl OlCliConfig {
     pub fn init_miner_configs(
         authkey: AuthenticationKey,
         account: AccountAddress,
-        path: &Option<PathBuf>,
+        config_path: &Option<PathBuf>,
+        swarm_path: &Option<PathBuf>
     ) -> OlCliConfig {
         // TODO: Check if configs exist and warn on overwrite.
         let mut miner_configs = OlCliConfig::default();
 
-        miner_configs.workspace.node_home = if path.is_some() {
-            path.clone().unwrap()
+        miner_configs.workspace.node_home = if config_path.is_some() {
+            config_path.clone().unwrap()
         } else {
             dirs::home_dir().unwrap()
         };
@@ -88,8 +88,9 @@ impl OlCliConfig {
         let system_ip = machine_ip::get().unwrap().to_string();
         // println!("\nFound host IP address: {:?}\n", system_ip);
 
+        // TODO: Use `dialoguer` for this
         let ip = match rl.readline(&format!(
-            "Will you use this host, and this IP address {:?}, for your node? (y/n)",
+            "Will you use this host, and this IP address {:?}, for your node? (y/n) ",
             system_ip
         )) {
             Ok(val) => {
@@ -123,6 +124,10 @@ impl OlCliConfig {
 
         miner_configs.profile.auth_key = authkey.to_string();
         miner_configs.profile.account = account;
+        
+        if swarm_path.is_some() {
+          miner_configs.profile.default_node = get_tx_params_from_swarm(entry_args.swarm_path.unwrap()).url;
+        }
 
         let toml = toml::to_string(&miner_configs).unwrap();
         let home_path = miner_configs.workspace.node_home.clone();
@@ -232,7 +237,7 @@ impl Default for Profile {
             statement: "Protests rage across the nation".to_owned(),
             ip: "0.0.0.0".parse().unwrap(),
             default_node: Some("http://localhost:8080".parse().expect("parse url")),
-            upstream_nodes: Some(vec!["http://167.172.248.37:8080"
+            upstream_nodes: Some(vec!["http://localhost:8080"
                 .parse()
                 .expect("parse url")]),
         }

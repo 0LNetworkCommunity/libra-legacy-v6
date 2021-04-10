@@ -1,6 +1,6 @@
 //! `management` functions
 
-use crate::{cache::DB_CACHE, node_health, prelude::app_config};
+use crate::{cache::DB_CACHE, node_health, prelude::app_config, entrypoint};
 use anyhow::Error;
 use once_cell::sync::Lazy;
 use reqwest::Url;
@@ -242,14 +242,23 @@ pub fn run_validator_wizard() -> bool {
     let mut child = if *IS_PROD {
         Command::new("miner")
             .arg("val-wizard")
-            .arg("--keygen")
             .spawn()
             .expect(&format!("failed to find 'miner', is it installed?"))
     } else {
+        let entry_arg = entrypoint::get_args();
+        let swarm_arg = if entry_arg.swarm_path.is_some() { 
+          format!("--swarm-path {:?}", entry_arg.swarm_path.unwrap())
+        } else {"".to_string() };
+
+        let swarm_persona = if entry_arg.swarm_persona.is_some() { 
+          format!("--swarm-path {:?}", entry_arg.swarm_persona.unwrap())
+        } else {"".to_string() };
+
         Command::new("cargo")
             .args(&["r", "-p", "miner", "--"])
+            .arg(swarm_arg)
+            .arg(swarm_persona)
             .arg("val-wizard")
-            .arg("--keygen")
             .spawn()
             .expect(&format!("failed to run cargo r -p miner"))
     };

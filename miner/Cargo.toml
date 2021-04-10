@@ -50,6 +50,7 @@ url = { version = "^2.1", features = ["serde"]}
 libra-secure-storage = { path = "../secure/storage", version = "0.1.0" }
 machine-ip = "0.2.1"
 ol-cli = { path = "../ol-cli"}
+txs = { path = "../txs"}
 
 [dependencies.abscissa_core]
 version = "0.5.2"
