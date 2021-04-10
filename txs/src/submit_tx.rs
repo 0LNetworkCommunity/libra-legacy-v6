@@ -21,7 +21,7 @@ use libra_types::transaction::{
 };
 use ol_cli::entrypoint::{self, EntryPointTxsCmd};
 use reqwest::Url;
-use std::{fs, io::{stdout, Write}, path::{Path, PathBuf}, thread, time};
+use std::{fs, io::{stdout, Write}, path::{PathBuf}, thread, time};
 
 /// All the parameters needed for a client transaction.
 #[derive(Debug)]
