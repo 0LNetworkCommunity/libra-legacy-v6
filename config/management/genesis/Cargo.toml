@@ -46,6 +46,7 @@ keygen = { path = "../../../keygen",  version = "0.1.0" }
 hex = "0.4.2"
 dirs = "2.0.2"
 serde_json = "1"
+ol-fixtures = {path = "../../../ol/fixtures"}
 
 
 [dev-dependencies]

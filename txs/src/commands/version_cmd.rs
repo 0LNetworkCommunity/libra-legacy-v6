@@ -1,7 +1,6 @@
 //! `version` subcommand
 
 #![allow(clippy::never_loop)]
-
 use abscissa_core::{Command, Options, Runnable};
 use super::TxsCmd;
 

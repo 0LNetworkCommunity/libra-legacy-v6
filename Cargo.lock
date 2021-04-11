@@ -3204,6 +3204,7 @@ dependencies = [
  "libra-wallet",
  "libra-workspace-hack",
  "libradb",
+ "ol-fixtures",
  "rand 0.7.3",
  "rustyline",
  "serde",
@@ -5020,6 +5021,10 @@ dependencies = [
  "url",
  "warp",
 ]
+
+[[package]]
+name = "ol-fixtures"
+version = "0.1.0"
 
 [[package]]
 name = "ol-util"
