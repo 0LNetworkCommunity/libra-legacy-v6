@@ -1,7 +1,5 @@
 //! `autopay`
 
-// use abscissa_core::{Command, Options, Runnable};
-// use cli::libra_client::LibraClient;
 use libra_types::{account_address::AccountAddress};
 use serde::{Deserialize, Serialize};
 use std::{fs, path::PathBuf};
@@ -10,11 +8,18 @@ use std::{fs, path::PathBuf};
 #[serde(deny_unknown_fields)]
 /// Autopay payment instruction
 pub struct Instruction {
-  uid: u64,
-  destination: AccountAddress,
-  percentage: u64,
-  end_epoch: u64,
-  duration_epochs: Option<u64>,
+  /// unique id of instruction 
+  pub uid: u64,
+  /// destination account
+  pub destination: AccountAddress,
+  /// percentage to send
+  pub percentage: u64,
+  // TODO: fixed rate to send
+  // pub percentage: u64, 
+  /// epoch when payment instruction will stop 
+  pub end_epoch: u64,
+  /// optional duration in epochs of the instruction
+  pub duration_epochs: Option<u64>,
 }
 
 /// extract autopay instructions from json file
