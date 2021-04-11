@@ -3,11 +3,13 @@
 #![allow(clippy::never_loop)]
 
 use abscissa_core::{Command, Options, Runnable, status_info, status_ok};
-use std::{fs, path::PathBuf};
+use std::{fs, path::{Path, PathBuf}};
 use super::{files_cmd, keygen_cmd, manifest_cmd, zero_cmd};
 use ol_cli::commands::init_cmd;
+use reqwest::Url;
 use crate::entrypoint;
 use txs;
+use ol_util::autopay;
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ValWizardCmd {
@@ -30,7 +32,7 @@ pub struct ValWizardCmd {
     #[options(help = "template account.json to configure from")]
     template_url: Option<Url>,
     #[options(help = "template account.json to configure from")]
-    autpay_file: Option<Path>,
+    autopay_file: Option<PathBuf>,
 }
 
 impl Runnable for ValWizardCmd {
@@ -50,14 +52,14 @@ impl Runnable for ValWizardCmd {
         let (authkey, account, wallet) = keygen::account_from_prompt();
 
         // Fetch templates if passed
-        if let Some(url) = self.template_url {
-          let w_res = reqwest::blocking::get(url);
+        if let Some(url) = &self.template_url {
+          let w_res = reqwest::blocking::get(&url.to_string());
           
           // get autopay
         }
 
-        if let Some(path) = self.autopay_file {
-          txs::commands::autopay_batch_cmd::get_instructions(path);
+        if let Some(path) = &self.autopay_file {
+          autopay::get_instructions(path);
         }
 
 
