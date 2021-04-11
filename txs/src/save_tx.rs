@@ -82,7 +82,7 @@ fn test_save_tx() {
   let test_path = PathBuf::from("./signed_tx.json");
   save_tx(script, TxParams::test_fixtures(), test_path.clone());
 
-  let deserialized = read_tx_from_file(test_path).unwrap();
+  let deserialized = read_tx_from_file(test_path.clone()).unwrap();
   assert_eq!(
     deserialized.sender(),
     "4C613C2F4B1E67CA8D98A542EE3F59F5"
