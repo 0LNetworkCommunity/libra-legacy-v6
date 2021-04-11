@@ -47,6 +47,7 @@ vm-genesis={path="../language/tools/vm-genesis", version="0.1.0"}
 ol-cli = {path = "../ol-cli"}
 dialoguer = "0.8.0"
 ol-util = {path = "../ol/util"}
+ol-fixtures = {path = "../ol/fixtures"}
 
 
 [dependencies.abscissa_core]

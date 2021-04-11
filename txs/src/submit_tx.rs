@@ -145,13 +145,8 @@ pub fn get_tx_params_from_swarm(swarm_path: PathBuf) -> Result<TxParams, Error> 
     let (url, waypoint) = ol_util::swarm::get_configs(swarm_path);
     let cfg = app_config();
     let entry_args = entrypoint::get_args();
-    let mnem_path = format!(
-        "{}/fixtures/mnemonic/{}.mnem",
-        cfg.workspace.source_path.clone().unwrap().to_str().unwrap(),
-        entry_args.swarm_persona.unwrap().as_str()
-    );
-    let alice_mnemonic = fs::read_to_string(mnem_path).expect("Unable to read file");
-    let keys = KeyScheme::new_from_mnemonic(alice_mnemonic);
+    let mnem = ol_fixtures::get_persona_mnem(entry_args.swarm_persona.unwrap().as_str());
+    let keys = KeyScheme::new_from_mnemonic(mnem);
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
     let pubkey = keys.child_0_owner.get_public();
     let auth_key = AuthenticationKey::ed25519(&pubkey);
