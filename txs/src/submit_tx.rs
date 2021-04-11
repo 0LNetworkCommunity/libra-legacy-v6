@@ -26,8 +26,11 @@ use ol_util;
 pub struct TxParams {
     /// User's 0L authkey used in mining.
     pub auth_key: AuthenticationKey,
-    /// User's 0L account used in mining
-    pub address: AccountAddress,
+    /// Address of the signer of transaction, e.g. owner's operator
+    pub signer_address: AccountAddress,
+    /// Optional field for Miner, for operator to send owner
+    // TODO: refactor so that this is not par of the TxParams type
+    pub owner_address: AccountAddress,
     /// Url
     pub url: Url,
     /// waypoint
@@ -53,7 +56,7 @@ pub fn submit_tx(
 
     let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
     let (account_state,_) = client.get_account(
-        tx_params.address.clone(), true
+        tx_params.signer_address.clone(), true
     ).unwrap();
 
     let sequence_number = match account_state {
@@ -64,7 +67,7 @@ pub fn submit_tx(
     let txn = create_user_txn(
         &tx_params.keypair,
         TransactionPayload::Script(script),
-        tx_params.address,
+        tx_params.signer_address,
         sequence_number,
         tx_params.max_gas_unit_for_tx,
         tx_params.coin_price_per_unit,
@@ -75,8 +78,8 @@ pub fn submit_tx(
     )?;
 
     // Get account_data struct
-    let mut sender_account_data = AccountData {
-        address: tx_params.address,
+    let mut signer_account_data = AccountData {
+        address: tx_params.signer_address,
         authentication_key: Some(tx_params.auth_key.to_vec()),
         key_pair: Some(tx_params.keypair.clone()),
         sequence_number,
@@ -85,12 +88,12 @@ pub fn submit_tx(
     
     // Submit the transaction with libra_client
     match client.submit_transaction(
-        Some(&mut sender_account_data),
+        Some(&mut signer_account_data),
         txn
     ){
         Ok(_) => {
             match wait_for_tx(
-                tx_params.address, sequence_number, &mut client
+                tx_params.signer_address, sequence_number, &mut client
             ) {
                 Some(res) => Ok(res),
                 None => Err(Error::msg("No Transaction View returned"))
@@ -158,7 +161,8 @@ pub fn get_tx_params_from_swarm(
 
     let tx_params = TxParams {
         auth_key,
-        address,
+        signer_address: address,
+        owner_address: address,
         url,
         waypoint,
         keypair,
@@ -182,7 +186,8 @@ pub fn get_tx_params_from_toml(config: TxsConfig) -> Result<TxParams, Error> {
 
     let tx_params = TxParams {
         auth_key,
-        address,
+        signer_address: address,
+        owner_address: address,
         url,
         waypoint: config.get_waypoint(entry_args.swarm_path).clone().expect("could not get waypoint"),
         keypair,
@@ -198,14 +203,14 @@ pub fn get_tx_params_from_toml(config: TxsConfig) -> Result<TxParams, Error> {
 
 /// Wait for the response from the libra RPC.
 pub fn wait_for_tx(
-    sender_address: AccountAddress,
+    signer_address: AccountAddress,
     sequence_number: u64,
     client: &mut LibraClient
 ) -> Option<TransactionView> {
         println!(
             "Awaiting tx status \n\
              Submitted from account: {} with sequence number: {}",
-            sender_address, sequence_number
+            signer_address, sequence_number
         );
 
         loop {
@@ -215,7 +220,7 @@ pub fn wait_for_tx(
             stdout().flush().unwrap();
             
             match &mut client.get_txn_by_acc_seq(
-                sender_address, sequence_number, false
+                signer_address, sequence_number, false
             ){
                 Ok(Some(txn_view)) => {
                     return Some(txn_view.to_owned());
@@ -244,4 +249,34 @@ pub fn eval_tx_status(result: TransactionView) -> bool {
                 return false
         }, 
     }
+}
+
+
+impl TxParams {
+  /// creates params for unit tests
+  pub fn test_fixtures() -> TxParams {
+    // This mnemonic is hard coded into the swarm configs. see configs/config_builder
+    // let mnem_path = format!("./fixtures/mnemonic/{}.mnem", persona);
+    let mnemonic = "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse".to_string();
+    let keys = KeyScheme::new_from_mnemonic(mnemonic);
+    let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
+    let pubkey =  keys.child_0_owner.get_public();
+    let signer_auth_key = AuthenticationKey::ed25519(&pubkey);
+    let signer_address = signer_auth_key.derived_address();
+
+    let url =  Url::parse("http://localhost:8080").unwrap();
+    let waypoint: Waypoint = "0:732ea2e1c3c5ee892da11abcd1211f22c06b5cf75fd6d47a9492c21dbfc32a46".parse().unwrap();
+
+    TxParams {
+        auth_key: signer_auth_key,
+        signer_address,
+        owner_address: signer_address,
+        url,
+        waypoint,
+        keypair,
+        max_gas_unit_for_tx: 5_000,
+        coin_price_per_unit: 1, // in micro_gas
+        user_tx_timeout: 5_000,
+    }
+  }
 }
