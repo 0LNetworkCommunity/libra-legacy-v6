@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { sortBy, reverse } from "lodash";
+  import { sortBy } from "lodash";
 
   interface ValInfo {
     account_address: string;

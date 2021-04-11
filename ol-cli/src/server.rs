@@ -5,7 +5,8 @@ use futures::StreamExt;
 use std::convert::Infallible;
 use std::thread;
 use std::time::Duration;
-use tokio::time::interval;
+use std::fs;
+use tokio::{time::interval};
 use warp::{sse::ServerSentEvent, Filter};
 
 // TODO: does this need to be a separate function?
@@ -55,6 +56,20 @@ pub async fn start_server() {
         warp::sse::reply(event_stream)
     });
 
+    // let configs = warp::path("static")
+    // .and(warp::fs::file("/root/.0L/genesis_waypoint"));
+    let vals = warp::path("vals")
+    .and(warp::get()
+    .map(|| { 
+      let vals = crate::chain_info::read_val_info_cache();
+      warp::reply::json(&vals)
+     }));
+
+    let configs = warp::path("configs.json")
+    .and(warp::get()
+    .map(|| { 
+      fs::read_to_string("/root/.0L/account.json").unwrap()
+     }));
     // //GET account/ (the json api)
     // let account = warp::path("account").and(warp::get()).map(|| {
     //     // create server event source
@@ -68,9 +83,9 @@ pub async fn start_server() {
 
 
     //GET validators/ (the json api)
-    let validators = warp::path("validators").and(warp::get()).map(|| {
+    let vals_sse = warp::path("validators").and(warp::get()).map(|| {
         // create server event source
-        let event_stream = interval(Duration::from_secs(120)).map(move |_| {
+        let event_stream = interval(Duration::from_secs(60)).map(move |_| {
             let info = crate::chain_info::read_val_info_cache();
             // TODO: Use a different data source for /explorer/ data.
             sse_val_info(info)
@@ -82,6 +97,6 @@ pub async fn start_server() {
     //GET /
     let home = warp::fs::dir("/root/libra/ol-cli/web-monitor/public/");
 
-    warp::serve(home.or(check).or(chain).or(validators))
+    warp::serve(home.or(check).or(chain).or(vals_sse).or(vals).or(configs))
         .run(([0, 0, 0, 0], 3030)).await;
 }

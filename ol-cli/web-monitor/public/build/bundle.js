@@ -18931,34 +18931,34 @@ var app = (function () {
     			td7 = element("td");
     			t22 = text(t22_value);
     			t23 = space();
-    			add_location(div0, file$5, 58, 12, 2076);
-    			add_location(div1, file$5, 59, 12, 2121);
-    			add_location(div2, file$5, 60, 12, 2163);
-    			add_location(div3, file$5, 61, 12, 2214);
+    			add_location(div0, file$5, 58, 12, 2067);
+    			add_location(div1, file$5, 59, 12, 2112);
+    			add_location(div2, file$5, 60, 12, 2154);
+    			add_location(div3, file$5, 61, 12, 2205);
     			attr_dev(div4, "class", "uk-column-1-4 uk-child-width-expand@s uk-text-center");
-    			add_location(div4, file$5, 57, 10, 1997);
+    			add_location(div4, file$5, 57, 10, 1988);
     			attr_dev(div5, "class", "uk-accordion-title");
-    			add_location(div5, file$5, 56, 8, 1954);
-    			add_location(td0, file$5, 68, 16, 2409);
+    			add_location(div5, file$5, 56, 8, 1945);
+    			add_location(td0, file$5, 68, 16, 2400);
     			attr_dev(td1, "class", "uk-text-break");
-    			add_location(td1, file$5, 69, 16, 2459);
-    			add_location(tr0, file$5, 67, 14, 2388);
-    			add_location(td2, file$5, 72, 16, 2566);
+    			add_location(td1, file$5, 69, 16, 2450);
+    			add_location(tr0, file$5, 67, 14, 2379);
+    			add_location(td2, file$5, 72, 16, 2557);
     			attr_dev(td3, "class", "uk-text-break");
-    			add_location(td3, file$5, 73, 16, 2617);
-    			add_location(tr1, file$5, 71, 14, 2545);
-    			add_location(td4, file$5, 76, 16, 2722);
-    			add_location(td5, file$5, 77, 16, 2776);
-    			add_location(tr2, file$5, 75, 14, 2701);
-    			add_location(td6, file$5, 80, 16, 2875);
-    			add_location(td7, file$5, 81, 16, 2919);
-    			add_location(tr3, file$5, 79, 14, 2854);
-    			add_location(tbody, file$5, 66, 12, 2366);
+    			add_location(td3, file$5, 73, 16, 2608);
+    			add_location(tr1, file$5, 71, 14, 2536);
+    			add_location(td4, file$5, 76, 16, 2713);
+    			add_location(td5, file$5, 77, 16, 2767);
+    			add_location(tr2, file$5, 75, 14, 2692);
+    			add_location(td6, file$5, 80, 16, 2866);
+    			add_location(td7, file$5, 81, 16, 2910);
+    			add_location(tr3, file$5, 79, 14, 2845);
+    			add_location(tbody, file$5, 66, 12, 2357);
     			attr_dev(table, "class", "uk-table");
-    			add_location(table, file$5, 65, 10, 2329);
+    			add_location(table, file$5, 65, 10, 2320);
     			attr_dev(div6, "class", "uk-accordion-content");
-    			add_location(div6, file$5, 64, 8, 2284);
-    			add_location(li, file$5, 55, 6, 1941);
+    			add_location(div6, file$5, 64, 8, 2275);
+    			add_location(li, file$5, 55, 6, 1932);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, li, anchor);
@@ -19085,20 +19085,20 @@ var app = (function () {
     				each_blocks[i].c();
     			}
 
-    			add_location(span, file$5, 41, 4, 1557);
+    			add_location(span, file$5, 41, 4, 1548);
     			attr_dev(h2, "class", " uk-text-center uk-text-uppercase uk-text-muted uk-text-light uk-margin-medium-bottom");
-    			add_location(h2, file$5, 38, 2, 1447);
-    			add_location(div0, file$5, 46, 6, 1756);
-    			add_location(div1, file$5, 47, 6, 1781);
-    			add_location(div2, file$5, 48, 6, 1811);
-    			add_location(div3, file$5, 49, 6, 1844);
+    			add_location(h2, file$5, 38, 2, 1438);
+    			add_location(div0, file$5, 46, 6, 1747);
+    			add_location(div1, file$5, 47, 6, 1772);
+    			add_location(div2, file$5, 48, 6, 1802);
+    			add_location(div3, file$5, 49, 6, 1835);
     			attr_dev(div4, "class", "uk-column-1-4 uk-child-width-expand@s uk-text-center uk-text-uppercase uk-text-light uk-text-small");
-    			add_location(div4, file$5, 45, 4, 1637);
+    			add_location(div4, file$5, 45, 4, 1628);
     			attr_dev(div5, "class", "uk-text-muted");
-    			add_location(div5, file$5, 44, 2, 1605);
+    			add_location(div5, file$5, 44, 2, 1596);
     			attr_dev(ul, "uk-accordion", "");
-    			add_location(ul, file$5, 53, 2, 1891);
-    			add_location(main, file$5, 37, 0, 1438);
+    			add_location(ul, file$5, 53, 2, 1882);
+    			add_location(main, file$5, 37, 0, 1429);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -19238,7 +19238,6 @@ var app = (function () {
     		__awaiter,
     		onMount,
     		sortBy: lodash.sortBy,
-    		reverse: lodash.reverse,
     		set,
     		can_create_account
     	});
