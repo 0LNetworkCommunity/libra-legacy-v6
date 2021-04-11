@@ -231,13 +231,15 @@ pub fn choose_rpc_node() -> Option<Url> {
 ///
 pub fn run_validator_wizard() -> bool {
     println!("Running validator wizard");
+    let entry_arg = entrypoint::get_args();
+
     let mut child = if *IS_PROD {
         Command::new("miner")
             .arg("val-wizard")
             .spawn()
             .expect(&format!("failed to find 'miner', is it installed?"))
-    } else {
-        let entry_arg = entrypoint::get_args();
+    } else if entry_arg.swarm_path.is_some() {
+      // we are testing with swarm
         let swarm_arg = if entry_arg.swarm_path.is_some() { 
           format!("--swarm-path {:?}", entry_arg.swarm_path.unwrap())
         } else {"".to_string() };
@@ -253,6 +255,13 @@ pub fn run_validator_wizard() -> bool {
             .arg("val-wizard")
             .spawn()
             .expect(&format!("failed to run cargo r -p miner"))
+    } else {
+      // we are testing on devnet
+      Command::new("cargo")
+      .args(&["r", "-p", "miner", "--"])
+      .arg("val-wizard")
+      .spawn()
+      .expect(&format!("failed to run cargo r -p miner"))
     };
 
     let exit_code = child.wait().expect("failed to wait on miner");
