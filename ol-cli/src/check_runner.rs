@@ -37,7 +37,7 @@ Is Synced: {synced}
 Sync Delay: {delay}
 Node Running: {node}
 Miner Running: {miner}
-Account On Chain: {account}",
+Account On Chain: {account}\n",
     configs = checker.items.configs_exist,
     restored = checker.items.db_restored,
     synced = checker.items.is_synced,

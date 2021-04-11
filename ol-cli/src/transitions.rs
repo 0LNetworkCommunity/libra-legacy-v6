@@ -1,6 +1,8 @@
 //! 'transitions' a state machine for the onboarding stages of a new validator. Can query and/or trigger the next expected action in the onboarding process.
 
-use crate::{cache::DB_CACHE, management, node_health::NodeHealth, restore};
+use std::process::Command;
+
+use crate::{cache::DB_CACHE, entrypoint, management, node_health::NodeHealth, prelude::app_config, restore};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -249,7 +251,9 @@ impl HostState {
     /// Advance to the next state
     pub fn maybe_advance(&mut self, trigger_action: bool) -> &Self {
         let mut check = NodeHealth::new();
-
+        
+        let entry_args = entrypoint::get_args();
+        let cfg = app_config();
         // Try to advance the node state. Miner below
         match &self.node_state {
             NodeVariants::EmptyBox => {
@@ -268,9 +272,19 @@ impl HostState {
                 if check.database_bootstrapped() {
                     &self.transition(NodeAction::RestoreDb, trigger_action);
                 } else {
-                    if trigger_action {
+                    if trigger_action && entry_args.swarm_path.is_none() {
                         action_print("attempting to restore db from archive");
                         restore::fast_forward_db(false).expect("unable to fast forward db");
+                    } else if let Some(path) = entry_args.swarm_path {
+                      // swarm testing, mock restore
+                          let db_path = path.join("0/db");
+                          Command::new("rsync")
+                          .arg("-r")
+                          .arg(db_path.to_str().unwrap())
+                          .arg(cfg.workspace.node_home.to_str().unwrap())
+                          .output()
+                          .expect("failed to execute rsync");
+
                     } else {
                         println!("Database not bootstrapped, cannot advance.")
                     }
