@@ -63,5 +63,5 @@ fn test_save_tx() {
       .parse::<AccountAddress>()
       .unwrap()
   );
-  fs::remove_file(test_path);
+  fs::remove_file(test_path).unwrap();
 }
