@@ -16,7 +16,7 @@ use libra_crypto::{
 };
 use libra_genesis_tool::keyscheme::KeyScheme;
 use libra_json_rpc_types::views::{TransactionView, VMStatusView};
-use libra_types::transaction::{authenticator::AuthenticationKey, Script};
+use libra_types::{chain_id::ChainId, transaction::{authenticator::AuthenticationKey, Script}};
 use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
 
 use ol_util;
@@ -49,12 +49,14 @@ pub struct TxParams {
     pub coin_price_per_unit: u64,
     /// User's transaction timeout.
     pub user_tx_timeout: u64, // for compatibility with UTC's timestamp.
+    /// Chain id
+    pub chain_id: ChainId
 }
 
 /// wrapper which checks entry point arguments before submitting tx, possibly saving the tx script
 pub fn maybe_submit(script: Script, tx_params: &TxParams) -> Result<(), Error> {
     let entry_args = entrypoint::get_args();
-    let txn = sign_tx(script, tx_params).expect("could not sign the transaction");
+    let txn = sign_tx(&script, tx_params).expect("could not sign the transaction");
 
     if let Some(path) = entry_args.save_path {
       save_tx(txn.clone(), path);
@@ -81,7 +83,7 @@ pub fn submit_tx(script: Script, tx_params: &TxParams) -> Result<TransactionView
         None => 0,
     };
     // Sign the transaction script
-    let txn = sign_tx(script, tx_params).unwrap();
+    let txn = sign_tx(&script, tx_params).unwrap();
 
     // Get account_data struct
     let mut signer_account_data = AccountData {
@@ -165,6 +167,7 @@ pub fn get_tx_params_from_swarm(swarm_path: PathBuf) -> Result<TxParams, Error> 
         max_gas_unit_for_tx: 1_000_000,
         coin_price_per_unit: 1, // in micro_gas
         user_tx_timeout: 5_000,
+        chain_id: ChainId::new(4),
     };
 
     println!("Info: Got tx params from swarm");
@@ -193,6 +196,7 @@ pub fn get_tx_params_from_toml(config: TxsConfig) -> Result<TxParams, Error> {
         max_gas_unit_for_tx: config.tx_configs.management_txs.max_gas_unit_for_tx,
         coin_price_per_unit: config.tx_configs.management_txs.coin_price_per_unit, // in micro_gas
         user_tx_timeout: config.tx_configs.management_txs.user_tx_timeout,
+        chain_id: ChainId::new(1),
     };
 
     // println!("Info: Getting tx params from txs.toml if available, \
@@ -275,6 +279,7 @@ impl TxParams {
             max_gas_unit_for_tx: 5_000,
             coin_price_per_unit: 1, // in micro_gas
             user_tx_timeout: 5_000,
+            chain_id: ChainId::new(4), // swarm/testnet
         }
     }
 }

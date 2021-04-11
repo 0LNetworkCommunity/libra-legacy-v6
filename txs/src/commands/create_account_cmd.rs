@@ -10,7 +10,7 @@ use std::{fs, path::PathBuf};
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct CreateAccountCmd {
-    #[options(help = "path of account.json")]
+    #[options(short = "f", help = "path of account.json")]
     account_json_path: PathBuf,
 }
 
