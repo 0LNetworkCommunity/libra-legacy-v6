@@ -16,7 +16,7 @@ use libra_crypto::{
 };
 use libra_genesis_tool::keyscheme::KeyScheme;
 use libra_json_rpc_types::views::{TransactionView, VMStatusView};
-use libra_types::{chain_id::ChainId, transaction::{authenticator::AuthenticationKey, Script}};
+use libra_types::{chain_id::ChainId, transaction::{Script, SignedTransaction, authenticator::AuthenticationKey}};
 use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
 
 use ol_util;
@@ -55,21 +55,28 @@ pub struct TxParams {
 /// wrapper which checks entry point arguments before submitting tx, possibly saving the tx script
 pub fn maybe_submit(script: Script, tx_params: &TxParams) -> Result<(), Error> {
     let entry_args = entrypoint::get_args();
-    
+    let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
+    let (mut account_data, txn) = stage(script, tx_params, &mut client);
     if let Some(path) = entry_args.save_path {
       save_tx(txn.clone(), path);
     }
 
     if !entry_args.no_send {
-      return eval_tx_status(submit_tx(script, tx_params).expect("transaction failed"))
+      let res = submit_tx(
+        client,
+        txn,
+        tx_params,
+        &mut account_data,
+      ).unwrap();
+      return Ok(eval_tx_status(res).expect("transaction failed"))
     }
 
     Ok(())
 }
 
-fn prepare_tx(script: Script, tx_params: &TxParams) -> (signer_account_data, txn) {
-      let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+fn stage(script: Script, tx_params: &TxParams, client: &mut LibraClient) -> (AccountData, SignedTransaction) {
+    // let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
     let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
     let (account_state, _) = client
@@ -84,20 +91,26 @@ fn prepare_tx(script: Script, tx_params: &TxParams) -> (signer_account_data, txn
     let txn = sign_tx(&script, tx_params, sequence_number, chain_id).unwrap();
 
     // Get account_data struct
-    let mut signer_account_data = AccountData {
+    let signer_account_data = AccountData {
         address: tx_params.signer_address,
         authentication_key: Some(tx_params.auth_key.to_vec()),
         key_pair: Some(tx_params.keypair.clone()),
         sequence_number,
         status: AccountStatus::Persisted,
     };
+    (signer_account_data, txn)
 }
 /// Submit a transaction to the network.
-pub fn submit_tx(script: Script, tx_params: &TxParams) -> Result<TransactionView, Error> {
-    let (signer_account_data, txn) = prepare_tx(script, tx_params);
+pub fn submit_tx(
+  mut client: LibraClient,
+  txn: SignedTransaction,
+  tx_params: &TxParams,
+  mut signer_account_data: &mut AccountData,
+) -> Result<TransactionView, Error> {
+    // let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
     // Submit the transaction with libra_client
-    match client.submit_transaction(Some(&mut signer_account_data), txn) {
-        Ok(_) => match wait_for_tx(tx_params.signer_address, sequence_number, &mut client) {
+    match client.submit_transaction(Some(&mut signer_account_data), txn.clone()) {
+        Ok(_) => match wait_for_tx(txn.sender(), txn.sequence_number(), &mut client) {
             Some(res) => Ok(res),
             None => Err(Error::msg("No Transaction View returned")),
         },
