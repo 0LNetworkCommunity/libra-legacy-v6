@@ -1,6 +1,12 @@
 //! Txs App submit_tx module
 #![forbid(unsafe_code)]
-use crate::{config::TxsConfig, entrypoint::{self, EntryPointTxsCmd}, prelude::app_config, sign_tx::sign_tx};
+use crate::{
+    config::TxsConfig,
+    entrypoint::{self, EntryPointTxsCmd},
+    prelude::app_config,
+    save_tx::save_tx,
+    sign_tx::sign_tx,
+};
 use abscissa_core::{status_ok, status_warn};
 use anyhow::Error;
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
@@ -11,9 +17,7 @@ use libra_crypto::{
 use libra_genesis_tool::keyscheme::KeyScheme;
 use libra_json_rpc_types::views::{TransactionView, VMStatusView};
 use libra_types::transaction::{authenticator::AuthenticationKey, Script};
-use libra_types::{
-    account_address::AccountAddress, waypoint::Waypoint,
-};
+use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
 
 use ol_util;
 use reqwest::Url;
@@ -47,17 +51,24 @@ pub struct TxParams {
     pub user_tx_timeout: u64, // for compatibility with UTC's timestamp.
 }
 
-// pub fn maybe_submit() {
-//       let entry_args = entrypoint::get_args();
+/// wrapper which checks entry point arguments before submitting tx, possibly saving the tx script
+pub fn maybe_submit(script: Script, tx_params: &TxParams) -> Result<(), Error> {
+    let entry_args = entrypoint::get_args();
+    let txn = sign_tx(script, tx_params).expect("could not sign the transaction");
 
-//       if let Some(path) = entry_args.save_path {
-//         save_tx(txn.clone(), path);
-//     }
-// }
+    if let Some(path) = entry_args.save_path {
+      save_tx(txn.clone(), path);
+    }
+
+    if !entry_args.no_send {
+      return eval_tx_status(submit_tx(script, tx_params).expect("transaction failed"))
+    }
+
+    Ok(())
+}
 
 /// Submit a transaction to the network.
-pub fn submit_tx(tx_params: &TxParams, script: Script) -> Result<TransactionView, Error> {
-
+pub fn submit_tx(script: Script, tx_params: &TxParams) -> Result<TransactionView, Error> {
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
     // let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
@@ -222,16 +233,16 @@ pub fn wait_for_tx(
 }
 
 /// Evaluate the response of a submitted txs transaction.
-pub fn eval_tx_status(result: TransactionView) -> bool {
+pub fn eval_tx_status(result: TransactionView) -> Result<(), Error> {
     match result.vm_status == VMStatusView::Executed {
         true => {
             status_ok!("\nSuccess:", "transaction executed");
-            return true;
+            Ok(())
         }
         false => {
             status_warn!("Transaction failed");
-            println!("Rejected with code:{:?}", result.vm_status);
-            return false;
+            let msg = format!("Rejected with code:{:?}", result.vm_status);
+            Err(Error::msg(msg))
         }
     }
 }

@@ -2,7 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::submit_tx::{eval_tx_status, get_tx_params, submit_tx};
+use crate::submit_tx::{get_tx_params, maybe_submit};
 use abscissa_core::{Command, Options, Runnable};
 use libra_types::{account_address::AccountAddress, transaction::Script};
 use std::{fs, path::PathBuf};
@@ -14,7 +14,7 @@ pub struct CreateValidatorCmd {
     account_file: PathBuf,
 }
 
-pub fn create_user_account_script(account_json_path: &PathBuf) -> Script {
+pub fn create_validator_script(account_json_path: &PathBuf) -> Script {
     let file = fs::File::open(account_json_path).expect("file should open read only");
     let json: serde_json::Value =
         serde_json::from_reader(file).expect("file should be proper JSON");
@@ -112,11 +112,12 @@ impl Runnable for CreateValidatorCmd {
         let account_json = &self.account_file;
         let tx_params = get_tx_params().unwrap();
 
-        match submit_tx(&tx_params, create_user_account_script(account_json)) {
-            Err(err) => println!("{:?}", err),
-            Ok(res) => {
-                eval_tx_status(res);
-            }
-        }
+        maybe_submit(create_validator_script(account_json), &tx_params)
+        // match submit_tx(&tx_params, create_user_account_script(account_json)) {
+        //     Err(err) => println!("{:?}", err),
+        //     Ok(res) => {
+        //         eval_tx_status(res);
+        //     }
+        // }
     }
 }
