@@ -1,22 +1,25 @@
 //! `relay`
 
 #![forbid(unsafe_code)]
-use crate::{submit_tx::{TxParams, wait_for_tx}};
+use std::path::PathBuf;
+
+use crate::{save_tx, submit_tx::{TxParams, get_tx_params, wait_for_tx}};
 use anyhow::Error;
 use cli::{libra_client::LibraClient};
 use libra_json_rpc_types::views::{TransactionView};
-use libra_types::{account_address::AccountAddress, transaction::SignedTransaction};
+use libra_types::transaction::SignedTransaction;
 
 /// submit a previously signed tx, perhaps to be submitted by a different account than the signer account.
 pub fn relay_tx(
-    tx_params: &TxParams,
+    tx_params: TxParams,
     txn: SignedTransaction,
-    original_signer: AccountAddress,
+    // original_signer: AccountAddress,
 ) -> Result<TransactionView, Error> {
     let mut client = LibraClient::new(
-        tx_params.url.clone(), tx_params.waypoint
+        tx_params.url, tx_params.waypoint
     ).unwrap();
 
+    let original_signer = txn.sender();
     // let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
     let (account_state,_) = client.get_account(
         original_signer, true
@@ -41,4 +44,16 @@ pub fn relay_tx(
         }
         Err(err) => Err(err)
     }
+}
+
+/// submit a tx from a previously signed transaction
+pub fn relay_from_file(path: PathBuf) -> Result<(), Error>{
+  let tx_params = get_tx_params().expect("could not get tx parameters");
+  match save_tx::read_tx_from_file(path) {
+      Ok(signed_tx) => {
+        relay_tx(tx_params, signed_tx)?;
+        Ok(())
+      }
+      Err(e) => Err(e)
+  }
 }
