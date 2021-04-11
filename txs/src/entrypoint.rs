@@ -44,12 +44,20 @@ where
     pub account: Option<AccountAddress>,
 
     /// URL to send tx
-    #[options(help = "URL to send tx")]    
+    #[options(short = "u", help = "URL to send tx")]    
     pub url: Option<Url>,
 
     /// Override waypoint to connect to
-    #[options(help = "waypoint to connect to")]
+    #[options(short = "w", help = "waypoint to connect to")]
     pub waypoint: Option<Waypoint>,
+
+        /// Save the tx to file
+    #[options(short = "s", help = "save the signed tx to file")]
+    pub save_path: Option<PathBuf>,
+
+    /// Only save, don't send transaction
+    #[options(short = "n", help = "don't send the transaction, to be used with --save_path")]
+    pub no_send: bool,
 
     /// Swarm path - get tx params from swarm
     #[options(help = "swarm path to override tx params, testing only")]
@@ -58,6 +66,7 @@ where
     /// Swarm persona - what fixtures to use
     #[options(help = "use the fixtures of a persona, e.g. alice, eve")]
     pub swarm_persona: Option<String>,
+
 }
 
 impl<Cmd> EntryPoint<Cmd>

@@ -32,24 +32,14 @@ pub fn sign_tx(script: Script, tx_params: TxParams) -> Result<SignedTransaction,
 }
 
 /// Save signed transaction to file
-pub fn save_tx(script: Script, tx_params: TxParams, path: PathBuf) {
-  match serialize_tx(script, tx_params) {
-    Ok(ser) => {
-      let mut file = fs::File::create(path).unwrap();
-      file.write_all(&ser).expect("Could not write json");
-    }
-    Err(_) => {}
-  }
+pub fn save_tx(txn: SignedTransaction, path: PathBuf) {
+  let mut file = fs::File::create(path).unwrap();
+  file.write_all(&serialize_txn(txn)).expect("Could not write json");
 }
 
 /// return the bytes of a signed transaction
-pub fn serialize_tx(script: Script, tx_params: TxParams) -> Result<Vec<u8>, Error> {
-  match sign_tx(script, tx_params) {
-    Ok(signed_tx) => {
-      Ok(serde_json::to_vec(&signed_tx).expect("could not serialize tx to json"))
-    }
-    Err(e) => Err(e),
-  }
+pub fn serialize_txn(txn: SignedTransaction) -> Vec<u8> {
+  serde_json::to_vec(&txn).expect("could not serialize tx to json")
 }
 
 /// deserializes the SignedTransaction from json file
@@ -80,7 +70,8 @@ fn test_save_tx() {
   use libra_types::account_address::AccountAddress;
   let script = transaction_builder::encode_demo_e2e_script(42);
   let test_path = PathBuf::from("./signed_tx.json");
-  save_tx(script, TxParams::test_fixtures(), test_path.clone());
+  let txn = sign_tx(script, TxParams::test_fixtures()).unwrap();
+  save_tx(txn, test_path.clone());
 
   let deserialized = read_tx_from_file(test_path.clone()).unwrap();
   assert_eq!(
