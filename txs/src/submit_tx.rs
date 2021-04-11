@@ -8,8 +8,6 @@ use libra_crypto::{
     test_utils::KeyPair,
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey}
 };
-
-use libra_config::config::NodeConfig;
 use libra_genesis_tool::keyscheme::KeyScheme;
 use libra_json_rpc_types::views::{TransactionView, VMStatusView};
 use libra_types::{
@@ -139,13 +137,18 @@ pub fn get_tx_params() -> Result<TxParams, Error> {
 
 /// Extract params from a local running swarm
 pub fn get_tx_params_from_swarm(
-    mut swarm_path: PathBuf
+    swarm_path: PathBuf
 ) 
 -> Result<TxParams, Error> {
     let (url, waypoint) = ol_util::swarm::get_configs(swarm_path);
     let cfg = app_config();
     let entry_args = entrypoint::get_args();     
-    let alice_mnemonic = fs::read_to_string(format!("{:?}/fixtures/mnemonic/{:?}.mnem", cfg.workspace.source_path, entry_args.swarm_persona))
+    let mnem_path = format!(
+      "{}/fixtures/mnemonic/{}.mnem",
+      cfg.workspace.source_path.clone().unwrap().to_str().unwrap(),
+      entry_args.swarm_persona.unwrap().as_str()
+    );
+    let alice_mnemonic = fs::read_to_string(mnem_path)
         .expect("Unable to read file");
     let keys = KeyScheme::new_from_mnemonic(alice_mnemonic);
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
