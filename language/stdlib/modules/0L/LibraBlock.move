@@ -7,7 +7,6 @@ module LibraBlock {
     use 0x1::Event;
     use 0x1::LibraSystem;
     use 0x1::LibraTimestamp;
-    use 0x1::Debug::print;
     //////// 0L ////////
     use 0x1::Reconfigure;
     use 0x1::Stats;
@@ -73,11 +72,9 @@ module LibraBlock {
         previous_block_votes: vector<address>,
         proposer: address
     ) acquires BlockMetadata {
-        print(&0x2222222222222222);
         LibraTimestamp::assert_operating();
         // Operational constraint: can only be invoked by the VM.
         CoreAddresses::assert_vm(vm);
-        print(&0x2000000000000001);
         // Authorization
         assert(
             proposer == CoreAddresses::VM_RESERVED_ADDRESS() || LibraSystem::is_validator(proposer),
@@ -85,21 +82,15 @@ module LibraBlock {
         );
         //////// 0L ////////
         // increment stats
-        print(&0x2000000000000002);
 
         Stats::process_set_votes(vm, &previous_block_votes);
-        print(&0x2000000000000003);
 
         Stats::inc_prop(vm, *&proposer);
         
-        print(&0x2000000000000004);
-
         if (AutoPay::tick(vm)){
-                  print(&0x20000000000000041);
 
             AutoPay::process_autopay(vm);
         };
-        print(&0x2000000000000005);
 
         ///////////////////
 
@@ -115,17 +106,14 @@ module LibraBlock {
                 time_microseconds: timestamp,
             }
         );
-        print(&0x2000000000000006);
 
          //////// 0L ////////
         // reconfigure
         if (Epoch::epoch_finished()) {
-        print(&0x20000000000000061);
 
           // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata. But there's a circular reference there when we try.
           Reconfigure::reconfigure(vm, get_current_block_height());
         };
-        print(&0x2000000000000007);
 
     }
     spec fun block_prologue {

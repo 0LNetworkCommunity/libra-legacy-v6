@@ -22,7 +22,6 @@ use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
 use ol_util;
 use reqwest::Url;
 use std::{
-    fs,
     io::{stdout, Write},
     path::PathBuf,
     thread, time,
@@ -56,7 +55,7 @@ pub struct TxParams {
 /// wrapper which checks entry point arguments before submitting tx, possibly saving the tx script
 pub fn maybe_submit(script: Script, tx_params: &TxParams) -> Result<(), Error> {
     let entry_args = entrypoint::get_args();
-    let txn = sign_tx(&script, tx_params).expect("could not sign the transaction");
+    
 
     if let Some(path) = entry_args.save_path {
       save_tx(txn.clone(), path);
@@ -69,11 +68,10 @@ pub fn maybe_submit(script: Script, tx_params: &TxParams) -> Result<(), Error> {
     Ok(())
 }
 
-/// Submit a transaction to the network.
-pub fn submit_tx(script: Script, tx_params: &TxParams) -> Result<TransactionView, Error> {
-    let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+fn prepare_tx(script: Script, tx_params: &TxParams) -> (signer_account_data, txn) {
+      let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
-    // let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
+    let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
     let (account_state, _) = client
         .get_account(tx_params.signer_address.clone(), true)
         .unwrap();
@@ -83,7 +81,7 @@ pub fn submit_tx(script: Script, tx_params: &TxParams) -> Result<TransactionView
         None => 0,
     };
     // Sign the transaction script
-    let txn = sign_tx(&script, tx_params).unwrap();
+    let txn = sign_tx(&script, tx_params, sequence_number, chain_id).unwrap();
 
     // Get account_data struct
     let mut signer_account_data = AccountData {
@@ -93,6 +91,10 @@ pub fn submit_tx(script: Script, tx_params: &TxParams) -> Result<TransactionView
         sequence_number,
         status: AccountStatus::Persisted,
     };
+}
+/// Submit a transaction to the network.
+pub fn submit_tx(script: Script, tx_params: &TxParams) -> Result<TransactionView, Error> {
+    let (signer_account_data, txn) = prepare_tx(script, tx_params);
     // Submit the transaction with libra_client
     match client.submit_transaction(Some(&mut signer_account_data), txn) {
         Ok(_) => match wait_for_tx(tx_params.signer_address, sequence_number, &mut client) {
@@ -116,8 +118,7 @@ pub fn get_tx_params() -> Result<TxParams, Error> {
     let mut tx_params: TxParams;
     if swarm_path.is_some() {
         tx_params =
-            get_tx_params_from_swarm(swarm_path.clone().expect("needs a valid swarm temp dir"))
-                .unwrap();
+            get_tx_params_from_swarm(swarm_path.clone().expect("needs a valid swarm temp dir")).unwrap();
     } else {
         // Get from 0L.toml e.g. ~/.0L/0L.toml, or use Profile::default()
         tx_params = get_tx_params_from_toml(txs_config.clone()).unwrap();
@@ -233,6 +234,7 @@ pub fn wait_for_tx(
 
 /// Evaluate the response of a submitted txs transaction.
 pub fn eval_tx_status(result: TransactionView) -> Result<(), Error> {
+    dbg!(&result.vm_status);
     match result.vm_status == VMStatusView::Executed {
         true => {
             status_ok!("\nSuccess:", "transaction executed");

@@ -24,8 +24,6 @@ module Reconfigure {
     use 0x1::AccountLimits;
     use 0x1::GAS::GAS;
     use 0x1::LibraConfig;
-    use 0x1::Debug::print;
-
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180101
     public fun reconfigure(vm: &signer, height_now: u64) {
@@ -37,7 +35,6 @@ module Reconfigure {
         let miners = ValidatorUniverse::get_eligible_validators(vm);
         let global_proofs_count = 0;
         let k = 0;
-        print(&0x1);
         while (k < Vector::length(&miners)) {
             let addr = *Vector::borrow(&miners, k);
 
@@ -60,15 +57,11 @@ module Reconfigure {
 
             k = k + 1;
         };
-        print(&0x2);
-
         // Process outgoing validators:
         // Distribute Transaction fees and subsidy payments to all outgoing validators
         let height_start = Epoch::get_timer_height_start(vm);
 
         let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio(vm, height_start, height_now);
-        print(&0x3);
-
         if (Vector::length<address>(&outgoing_set) > 0) {
             let subsidy_units = Subsidy::calculate_subsidy(vm, height_start, height_now);
 
@@ -82,7 +75,6 @@ module Reconfigure {
         // Step 2: Jail non-performing validators
         // Step 3: Reset counters
         // Step 4: Bulk update validator set (reconfig)
-        print(&0x4);
 
         // prepare_upcoming_validator_set(vm);
         let top_accounts = NodeWeight::top_n_accounts(
@@ -100,45 +92,30 @@ module Reconfigure {
             };
             i = i+ 1;
         };
-        print(&0x5);
 
         // If the cardinality of validator_set in the next epoch is less than 4, we keep the same validator set. 
         if (Vector::length<address>(&proposed_set)<= 3) proposed_set = ValidatorUniverse::get_eligible_validators(vm);
         // Usually an issue in staging network for QA only.
         // This is very rare and theoretically impossible for network with at least 6 nodes and 6 rounds. If we reach an epoch boundary with at least 6 rounds, we would have at least 2/3rd of the validator set with at least 66% liveliness. 
 
-        print(&0x6);
-
         // Update all validators with account limits
         // After Epoch 1000. 
         if (LibraConfig::check_transfer_enabled()) {
             update_validator_withdrawal_limit(vm);
         };
-        print(&0x7);
-
         // needs to be set before the auctioneer runs in Subsidy::fullnode_reconfig
         Subsidy::set_global_count(vm, global_proofs_count);
 
         //Reset Counters
         Stats::reconfig(vm, &proposed_set);
         MinerState::reconfig(vm);
-        print(&0x8);
 
         // Reconfigure the network
         LibraSystem::bulk_update_validators(vm, proposed_set);
         // reset clocks
-        print(&0x9);
-
         Subsidy::fullnode_reconfig(vm);
-        print(&0x10);
-
         AutoPay::reconfig_reset_tick(vm);
-        print(&0x11);
-
         Epoch::reset_timer(vm, height_now);
-        print(&0x12);
-
-
     }
 
     /// OL function to update withdrawal limits in all validator accounts

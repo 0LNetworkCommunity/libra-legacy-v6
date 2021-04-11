@@ -15,6 +15,7 @@ mod create_validator_cmd;
 mod oracle_upgrade_cmd;
 mod version_cmd;
 mod autopay_batch_cmd;
+mod demo_cmd;
 
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use ol_cli::commands::CONFIG_FILE;
@@ -26,7 +27,8 @@ use self::{
     create_validator_cmd::CreateValidatorCmd,
     oracle_upgrade_cmd::OracleUpgradeCmd,
     version_cmd::VersionCmd,
-    autopay_batch_cmd::AutopayBatchCmd,    
+    autopay_batch_cmd::AutopayBatchCmd,  
+    demo_cmd::DemoCmd,
 };
 use std::path::PathBuf;
 
@@ -58,7 +60,11 @@ pub enum TxsCmd {
 
     /// The `version` subcommand
     #[options(help = "display version information")]
-    Version(VersionCmd),   
+    Version(VersionCmd),
+    
+    /// The `version` subcommand
+    #[options(help = "noop demo transaction, prints `hello world` in move")]
+    Demo(DemoCmd),  
 
 }
 
