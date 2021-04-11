@@ -1,3 +1,4 @@
+//! `ol-util`
 #![forbid(unsafe_code)]
 #![warn(
     missing_docs,
@@ -8,3 +9,4 @@
 )]
 
 pub mod swarm;
+pub mod autopay;

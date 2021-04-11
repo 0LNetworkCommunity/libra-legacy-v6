@@ -5033,6 +5033,8 @@ dependencies = [
  "libra-config",
  "libra-types",
  "reqwest",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

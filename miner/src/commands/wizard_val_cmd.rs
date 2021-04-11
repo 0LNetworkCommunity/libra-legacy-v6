@@ -3,10 +3,11 @@
 #![allow(clippy::never_loop)]
 
 use abscissa_core::{Command, Options, Runnable, status_info, status_ok};
-use std::{path::PathBuf};
+use std::{fs, path::PathBuf};
 use super::{files_cmd, keygen_cmd, manifest_cmd, zero_cmd};
 use ol_cli::commands::init_cmd;
 use crate::entrypoint;
+use txs;
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ValWizardCmd {
@@ -25,7 +26,11 @@ pub struct ValWizardCmd {
     #[options(help = "skip fetching genesis blob")]
     skip_fetch_genesis: bool, 
     #[options(help = "skip mining a block zero")]
-    skip_mining: bool,   
+    skip_mining: bool,
+    #[options(help = "template account.json to configure from")]
+    template_url: Option<Url>,
+    #[options(help = "template account.json to configure from")]
+    autpay_file: Option<Path>,
 }
 
 impl Runnable for ValWizardCmd {
@@ -40,9 +45,22 @@ impl Runnable for ValWizardCmd {
         }
 
         status_info!("\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys you can re-run this command with the flag '--keygen', or run the standalone keygen subcommand with 'miner keygen'.\n\nYour first 0L proof-of-work will be mined now. Expect this to take up to 15 minutes on modern CPUs.\n");
-
+        
         // Get credentials from prompt
         let (authkey, account, wallet) = keygen::account_from_prompt();
+
+        // Fetch templates if passed
+        if let Some(url) = self.template_url {
+          let w_res = reqwest::blocking::get(url);
+          
+          // get autopay
+        }
+
+        if let Some(path) = self.autopay_file {
+          txs::commands::autopay_batch_cmd::get_instructions(path);
+        }
+
+
 
         // Initialize Miner
         // Need to assign miner_config, because reading from app_config can only be done at startup, and it will be blank at the time of wizard executing.
