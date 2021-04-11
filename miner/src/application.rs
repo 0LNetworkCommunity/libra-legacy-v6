@@ -5,7 +5,6 @@ use abscissa_core::{
     application::{self, AppCell},
     config, trace, Application, FrameworkError, StandardPaths,
 };
-// use ol_util::entrypoint::EntryPoint;
 
 /// Application state
 pub static APPLICATION: AppCell<MinerApp> = AppCell::new();

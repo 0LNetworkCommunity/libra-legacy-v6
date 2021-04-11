@@ -186,8 +186,9 @@ pub struct Workspace {
   /// home directory of the libra node, may be the same as miner.
   pub node_home: PathBuf,
   /// Directory to store blocks in
+  pub source_path: Option<PathBuf>,
+  /// Directory to store blocks in
   pub block_dir: String,
-
   /// Path to which stdlib binaries for upgrades get built typically /language/stdlib/staged/stdlib.mv
   pub stdlib_bin_path: PathBuf,
 }
@@ -196,6 +197,7 @@ impl Default for Workspace {
   fn default() -> Self {
     Self {
       node_home: dirs::home_dir().unwrap().join(NODE_HOME),
+      source_path: Some(dirs::home_dir().unwrap().join("libra")),
       block_dir: "blocks".to_owned(),
       stdlib_bin_path: "/root/libra/language/stdlib/staged/stdlib.mv"
         .parse::<PathBuf>()

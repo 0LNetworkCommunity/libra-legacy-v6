@@ -238,23 +238,20 @@ pub fn run_validator_wizard() -> bool {
             .arg("val-wizard")
             .spawn()
             .expect(&format!("failed to find 'miner', is it installed?"))
-    } else if entry_arg.swarm_path.is_some() {
+    } else if let Some(path) = entry_arg.swarm_path {
       // we are testing with swarm
-        let swarm_arg = if entry_arg.swarm_path.is_some() { 
-          format!("--swarm-path {:?}", entry_arg.swarm_path.unwrap())
-        } else {"".to_string() };
+      let swarm_arg = path.to_str().unwrap();
+      let swarm_persona = entry_arg.swarm_persona.unwrap();
 
-        let swarm_persona = if entry_arg.swarm_persona.is_some() { 
-          format!("--swarm-persona {:?}", entry_arg.swarm_persona.unwrap())
-        } else {"".to_string() };
-
-        Command::new("cargo")
-            .args(&["r", "-p", "miner", "--"])
-            .arg(swarm_arg)
-            .arg(swarm_persona)
-            .arg("val-wizard")
-            .spawn()
-            .expect(&format!("failed to run cargo r -p miner"))
+      Command::new("cargo")
+          .args(&["r", "-p", "miner", "--"])
+          .arg("--swarm-path")
+          .arg(swarm_arg)
+          .arg("--swarm-persona")
+          .arg(swarm_persona)
+          .arg("val-wizard")
+          .spawn()
+          .expect(&format!("failed to run cargo r -p miner"))
     } else {
       // we are testing on devnet
       Command::new("cargo")

@@ -4,6 +4,8 @@ use abscissa_core::{
     Command, command::Usage, Config, Configurable, FrameworkError, 
     Options, Runnable    
 };
+use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
+use reqwest::Url;
 use std::path::PathBuf;
 
 use crate::commands;
@@ -37,18 +39,25 @@ where
 
     /// --- Customizing EntryPoint --- ///
 
-    /// Swarm path - get tx params from swarm
-    #[options(help = "swarm path to get tx params from")]
-        /// TODO: help text for swarm_path is not shown, Abscissa bug?
-    pub swarm_path: Option<PathBuf>,
+    /// Account Address
+    #[options(short = "a", help = "account address")]
+    pub account: Option<AccountAddress>,
 
     /// URL to send tx
     #[options(help = "URL to send tx")]    
-    pub url: Option<String>,
+    pub url: Option<Url>,
 
-    /// Waypoint to connect to
+    /// Override waypoint to connect to
     #[options(help = "waypoint to connect to")]
-    pub waypoint: Option<String>,
+    pub waypoint: Option<Waypoint>,
+
+    /// Swarm path - get tx params from swarm
+    #[options(help = "swarm path to override tx params, testing only")]
+    pub swarm_path: Option<PathBuf>,
+
+    /// Swarm persona - what fixtures to use
+    #[options(help = "use the fixtures of a persona, e.g. alice, eve")]
+    pub swarm_persona: Option<String>,
 }
 
 impl<Cmd> EntryPoint<Cmd>

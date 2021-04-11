@@ -1,6 +1,6 @@
 //! Txs App submit_tx module
 #![forbid(unsafe_code)]
-use crate::{config::TxsConfig, prelude::app_config};
+use crate::{config::TxsConfig, prelude::app_config, entrypoint::{self, EntryPointTxsCmd}};
 use anyhow::Error;
 use abscissa_core::{ status_warn, status_ok};
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
@@ -19,10 +19,10 @@ use libra_types::{
 use libra_types::transaction::{
     Script, TransactionPayload, authenticator::AuthenticationKey
 };
-use ol_cli::entrypoint::{self, EntryPointTxsCmd};
+
 use reqwest::Url;
 use std::{fs, io::{stdout, Write}, path::{PathBuf}, thread, time};
-
+use ol_util;
 /// All the parameters needed for a client transaction.
 #[derive(Debug)]
 pub struct TxParams {
@@ -142,16 +142,10 @@ pub fn get_tx_params_from_swarm(
     mut swarm_path: PathBuf
 ) 
 -> Result<TxParams, Error> {
-    swarm_path.push("0/node.yaml");
-    let config = NodeConfig::load(&swarm_path).unwrap_or_else(
-        |_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path)
-    );
-    let url =  Url::parse(
-        format!("http://localhost:{}", config.json_rpc.address.port()).as_str()
-    ).unwrap();
-    let waypoint = config.base.waypoint.genesis_waypoint();
-
-    let alice_mnemonic = fs::read_to_string("./fixtures/mnemonic/alice.mnem")
+    let (url, waypoint) = ol_util::swarm::get_configs(swarm_path);
+    let cfg = app_config();
+    let entry_args = entrypoint::get_args();     
+    let alice_mnemonic = fs::read_to_string(format!("{:?}/fixtures/mnemonic/{:?}.mnem", cfg.workspace.source_path, entry_args.swarm_persona))
         .expect("Unable to read file");
     let keys = KeyScheme::new_from_mnemonic(alice_mnemonic);
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());

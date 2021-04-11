@@ -7638,6 +7638,7 @@ dependencies = [
  "libradb",
  "move-core-types",
  "ol-cli",
+ "ol-util",
  "once_cell",
  "regex",
  "reqwest",
