@@ -1,6 +1,6 @@
 //! Txs App submit_tx module
 #![forbid(unsafe_code)]
-use crate::{config::TxsConfig, entrypoint::{self, EntryPointTxsCmd}, prelude::app_config, save_tx::save_tx, sign_tx::sign_tx};
+use crate::{config::TxsConfig, entrypoint::{self, EntryPointTxsCmd}, prelude::app_config, sign_tx::sign_tx};
 use abscissa_core::{status_ok, status_warn};
 use anyhow::Error;
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};

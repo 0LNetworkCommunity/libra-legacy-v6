@@ -7,6 +7,7 @@ use std::{
 use anyhow::Error;
 use libra_types::transaction::SignedTransaction;
 
+
 /// Save signed transaction to file
 pub fn save_tx(txn: SignedTransaction, path: PathBuf) {
   let mut file = fs::File::create(path).unwrap();
@@ -30,9 +31,12 @@ pub fn read_tx_from_file(path: PathBuf) -> Result<SignedTransaction, Error> {
 #[test]
 fn test_sign_tx() {
   use libra_types::account_address::AccountAddress;
+  use crate::submit_tx::TxParams;
+  use crate::sign_tx::sign_tx;
+
   let script = transaction_builder::encode_demo_e2e_script(42);
 
-  let signed = sign_tx(script, TxParams::test_fixtures()).unwrap();
+  let signed = sign_tx(script, &TxParams::test_fixtures()).unwrap();
   assert_eq!(
     signed.sender(),
     "4C613C2F4B1E67CA8D98A542EE3F59F5"
@@ -49,7 +53,7 @@ fn test_save_tx() {
 
   let script = transaction_builder::encode_demo_e2e_script(42);
   let test_path = PathBuf::from("./signed_tx.json");
-  let txn = sign_tx(script, TxParams::test_fixtures()).unwrap();
+  let txn = sign_tx(script, &TxParams::test_fixtures()).unwrap();
   save_tx(txn, test_path.clone());
 
   let deserialized = read_tx_from_file(test_path.clone()).unwrap();
