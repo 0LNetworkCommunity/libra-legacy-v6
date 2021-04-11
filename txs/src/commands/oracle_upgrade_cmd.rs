@@ -35,7 +35,7 @@ impl Runnable for OracleUpgradeCmd {
             cfg.workspace.stdlib_bin_path.clone()
         };
         
-        maybe_submit(oracle_tx_script(&path), &tx_params);
+        maybe_submit(oracle_tx_script(&path), &tx_params).unwrap();
         // match submit_tx(
         //     &tx_params, 
         //     oracle_tx_script(&path)

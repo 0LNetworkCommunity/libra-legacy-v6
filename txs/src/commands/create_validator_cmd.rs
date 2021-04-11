@@ -112,7 +112,7 @@ impl Runnable for CreateValidatorCmd {
         let account_json = &self.account_file;
         let tx_params = get_tx_params().unwrap();
 
-        maybe_submit(create_validator_script(account_json), &tx_params);
+        maybe_submit(create_validator_script(account_json), &tx_params).unwrap();
         // match submit_tx(&tx_params, create_user_account_script(account_json)) {
         //     Err(err) => println!("{:?}", err),
         //     Ok(res) => {

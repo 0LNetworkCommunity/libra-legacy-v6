@@ -4,8 +4,6 @@
 
 use abscissa_core::{Command, Options, Runnable};
 use crate::submit_tx::{get_tx_params, maybe_submit};
-use libra_types::{transaction::{Script}};
-use std::{fs, path::PathBuf};
 
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]

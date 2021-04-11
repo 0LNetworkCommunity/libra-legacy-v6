@@ -66,7 +66,6 @@ pub fn maybe_submit(script: Script, tx_params: &TxParams) -> Result<(), Error> {
       let res = submit_tx(
         client,
         txn,
-        tx_params,
         &mut account_data,
       ).unwrap();
       return Ok(eval_tx_status(res).expect("transaction failed"))
@@ -104,7 +103,6 @@ fn stage(script: Script, tx_params: &TxParams, client: &mut LibraClient) -> (Acc
 pub fn submit_tx(
   mut client: LibraClient,
   txn: SignedTransaction,
-  tx_params: &TxParams,
   mut signer_account_data: &mut AccountData,
 ) -> Result<TransactionView, Error> {
     // let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
@@ -157,7 +155,6 @@ pub fn get_tx_params() -> Result<TxParams, Error> {
 /// Extract params from a local running swarm
 pub fn get_tx_params_from_swarm(swarm_path: PathBuf) -> Result<TxParams, Error> {
     let (url, waypoint) = ol_util::swarm::get_configs(swarm_path);
-    let cfg = app_config();
     let entry_args = entrypoint::get_args();
     let mnem = ol_fixtures::get_persona_mnem(entry_args.swarm_persona.unwrap().as_str());
     let keys = KeyScheme::new_from_mnemonic(mnem);

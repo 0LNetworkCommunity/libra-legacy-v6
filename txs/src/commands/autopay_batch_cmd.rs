@@ -101,7 +101,7 @@ impl Runnable for AutopayBatchCmd {
             if Confirm::new().with_prompt("").interact().unwrap() {
                 let script = transaction_builder::encode_autopay_create_instruction_script(i.uid, i.destination, i.end_epoch, i.percentage);
 
-                maybe_submit(script,&tx_params);
+                maybe_submit(script, &tx_params).unwrap();
                 
             } else {
                 println!("skipping instruction, going to next in batch")
