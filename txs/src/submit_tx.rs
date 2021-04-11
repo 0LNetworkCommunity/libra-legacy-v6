@@ -1,11 +1,6 @@
 //! Txs App submit_tx module
 #![forbid(unsafe_code)]
-use crate::{
-    config::TxsConfig,
-    entrypoint::{self, EntryPointTxsCmd},
-    prelude::app_config,
-    save_tx::save_tx,
-};
+use crate::{config::TxsConfig, entrypoint::{self, EntryPointTxsCmd}, prelude::app_config, save_tx::save_tx, sign_tx::sign_tx};
 use abscissa_core::{status_ok, status_warn};
 use anyhow::Error;
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
@@ -15,9 +10,9 @@ use libra_crypto::{
 };
 use libra_genesis_tool::keyscheme::KeyScheme;
 use libra_json_rpc_types::views::{TransactionView, VMStatusView};
-use libra_types::transaction::{authenticator::AuthenticationKey, Script, TransactionPayload};
+use libra_types::transaction::{authenticator::AuthenticationKey, Script};
 use libra_types::{
-    account_address::AccountAddress, chain_id::ChainId, transaction::helpers::*, waypoint::Waypoint,
+    account_address::AccountAddress, waypoint::Waypoint,
 };
 
 use ol_util;
@@ -52,13 +47,20 @@ pub struct TxParams {
     pub user_tx_timeout: u64, // for compatibility with UTC's timestamp.
 }
 
+// pub fn maybe_submit() {
+//       let entry_args = entrypoint::get_args();
+
+//       if let Some(path) = entry_args.save_path {
+//         save_tx(txn.clone(), path);
+//     }
+// }
+
 /// Submit a transaction to the network.
 pub fn submit_tx(tx_params: &TxParams, script: Script) -> Result<TransactionView, Error> {
-    let entry_args = entrypoint::get_args();
 
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
-    let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
+    // let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
     let (account_state, _) = client
         .get_account(tx_params.signer_address.clone(), true)
         .unwrap();
@@ -68,18 +70,7 @@ pub fn submit_tx(tx_params: &TxParams, script: Script) -> Result<TransactionView
         None => 0,
     };
     // Sign the transaction script
-    let txn = create_user_txn(
-        &tx_params.keypair,
-        TransactionPayload::Script(script),
-        tx_params.signer_address,
-        sequence_number,
-        tx_params.max_gas_unit_for_tx,
-        tx_params.coin_price_per_unit,
-        "GAS".parse()?,
-        // for compatibility with UTC's timestamp
-        tx_params.user_tx_timeout as i64,
-        chain_id,
-    )?;
+    let txn = sign_tx(script, tx_params).unwrap();
 
     // Get account_data struct
     let mut signer_account_data = AccountData {
@@ -89,11 +80,6 @@ pub fn submit_tx(tx_params: &TxParams, script: Script) -> Result<TransactionView
         sequence_number,
         status: AccountStatus::Persisted,
     };
-
-    if let Some(path) = entry_args.save_path {
-        save_tx(txn.clone(), path);
-    }
-
     // Submit the transaction with libra_client
     match client.submit_transaction(Some(&mut signer_account_data), txn) {
         Ok(_) => match wait_for_tx(tx_params.signer_address, sequence_number, &mut client) {
