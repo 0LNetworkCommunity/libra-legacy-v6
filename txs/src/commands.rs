@@ -16,6 +16,7 @@ mod oracle_upgrade_cmd;
 mod version_cmd;
 mod autopay_batch_cmd;
 mod demo_cmd;
+mod relay_cmd;
 
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use ol_cli::commands::CONFIG_FILE;
@@ -29,6 +30,7 @@ use self::{
     version_cmd::VersionCmd,
     autopay_batch_cmd::AutopayBatchCmd,  
     demo_cmd::DemoCmd,
+    relay_cmd::RelayCmd,
 };
 use std::path::PathBuf;
 
@@ -66,6 +68,9 @@ pub enum TxsCmd {
     #[options(help = "noop demo transaction, prints `hello world` in move")]
     Demo(DemoCmd),  
 
+     /// The `version` subcommand
+    #[options(help = "submit a saved transaction from file")]
+    Relay(RelayCmd),     
 }
 
 /// This trait allows you to define how application configuration is loaded.

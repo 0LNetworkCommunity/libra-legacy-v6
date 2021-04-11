@@ -244,7 +244,6 @@ pub fn wait_for_tx(
 
 /// Evaluate the response of a submitted txs transaction.
 pub fn eval_tx_status(result: TransactionView) -> Result<(), Error> {
-    dbg!(&result.vm_status);
     match result.vm_status == VMStatusView::Executed {
         true => {
             status_ok!("\nSuccess:", "transaction executed");
