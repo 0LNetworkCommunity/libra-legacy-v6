@@ -277,6 +277,7 @@ impl HostState {
                         restore::fast_forward_db(false).expect("unable to fast forward db");
                     } else if let Some(path) = entry_args.swarm_path {
                       // swarm testing, mock restore
+                      // TODO: place waypoint in key_store, and node.yaml
                           let db_path = path.join("0/db");
                           Command::new("rsync")
                           .arg("-r")
