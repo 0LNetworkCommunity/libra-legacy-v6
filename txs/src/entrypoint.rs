@@ -4,7 +4,11 @@ use abscissa_core::{
     Command, command::Usage, Config, Configurable, FrameworkError, 
     Options, Runnable    
 };
+use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
+use reqwest::Url;
 use std::path::PathBuf;
+
+use crate::commands;
 
 /// Toplevel entrypoint command.
 ///
@@ -35,18 +39,34 @@ where
 
     /// --- Customizing EntryPoint --- ///
 
-    /// Swarm path - get tx params from swarm
-    #[options(help = "swarm path to get tx params from")]
-        /// TODO: help text for swarm_path is not shown, Abscissa bug?
-    pub swarm_path: Option<PathBuf>,
+    /// Account Address
+    #[options(short = "a", help = "account address")]
+    pub account: Option<AccountAddress>,
 
     /// URL to send tx
-    #[options(help = "URL to send tx")]    
-    pub url: Option<String>,
+    #[options(short = "u", help = "URL to send tx")]    
+    pub url: Option<Url>,
 
-    /// Waypoint to connect to
-    #[options(help = "waypoint to connect to")]
-    pub waypoint: Option<String>,
+    /// Override waypoint to connect to
+    #[options(short = "w", help = "waypoint to connect to")]
+    pub waypoint: Option<Waypoint>,
+
+        /// Save the tx to file
+    #[options(short = "s", help = "save the signed tx to file")]
+    pub save_path: Option<PathBuf>,
+
+    /// Only save, don't send transaction
+    #[options(short = "n", help = "don't send the transaction, to be used with --save_path")]
+    pub no_send: bool,
+
+    /// Swarm path - get tx params from swarm
+    #[options(help = "swarm path to override tx params, testing only")]
+    pub swarm_path: Option<PathBuf>,
+
+    /// Swarm persona - what fixtures to use
+    #[options(help = "use the fixtures of a persona, e.g. alice, eve")]
+    pub swarm_persona: Option<String>,
+
 }
 
 impl<Cmd> EntryPoint<Cmd>
@@ -124,4 +144,12 @@ where
             None => Ok(config),
         }
     }
+}
+
+/// the entry point args
+pub type EntryPointTxsCmd = EntryPoint<commands::TxsCmd>;
+/// get arguments passed in the entrypoin of this app, not the subcommands
+pub fn get_args() -> EntryPointTxsCmd {
+  let test: EntryPointTxsCmd = Command::from_env_args();
+  test
 }

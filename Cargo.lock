@@ -73,6 +73,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "abscissa_tokio"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "50b7d1a5aa670b07be20e9457b491e78022d8421d4a39939f8b01a6a16ea85dc"
+dependencies = [
+ "abscissa_core",
+ "tokio",
+]
+
+[[package]]
 name = "accumulator"
 version = "0.1.0"
 dependencies = [
@@ -2799,7 +2809,6 @@ dependencies = [
 name = "keygen"
 version = "0.1.0"
 dependencies = [
- "abscissa_core",
  "libra-types",
  "libra-wallet",
  "rpassword",
@@ -3195,6 +3204,7 @@ dependencies = [
  "libra-wallet",
  "libra-workspace-hack",
  "libradb",
+ "ol-fixtures",
  "rand 0.7.3",
  "rustyline",
  "serde",
@@ -4181,6 +4191,7 @@ dependencies = [
  "thiserror",
  "toml",
  "transaction-builder",
+ "txs",
  "url",
  "vdf",
  "vm-genesis",
@@ -4961,6 +4972,7 @@ name = "ol-cli"
 version = "0.1.0"
 dependencies = [
  "abscissa_core",
+ "abscissa_tokio",
  "ajson",
  "anyhow",
  "bitflags",
@@ -4988,7 +5000,9 @@ dependencies = [
  "machine-ip",
  "nix 0.18.0",
  "num-format",
+ "ol-util",
  "once_cell",
+ "regex",
  "reqwest",
  "resource-viewer",
  "rocksdb",
@@ -5006,6 +5020,19 @@ dependencies = [
  "unicode-width",
  "url",
  "warp",
+]
+
+[[package]]
+name = "ol-fixtures"
+version = "0.1.0"
+
+[[package]]
+name = "ol-util"
+version = "0.1.0"
+dependencies = [
+ "libra-config",
+ "libra-types",
+ "reqwest",
 ]
 
 [[package]]
@@ -7109,9 +7136,9 @@ dependencies = [
 
 [[package]]
 name = "termcolor"
-version = "1.1.0"
+version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb6bfa289a4d7c5766392812c0a1f4c1ba45afa1ad47803c11e1f407d846d75f"
+checksum = "2dfed899f0eb03f32ee8c6a0aabdb8a7949659e3466561fc0adf54e26d88c5f4"
 dependencies = [
  "winapi-util",
 ]
@@ -7616,6 +7643,8 @@ dependencies = [
  "libradb",
  "move-core-types",
  "ol-cli",
+ "ol-fixtures",
+ "ol-util",
  "once_cell",
  "regex",
  "reqwest",

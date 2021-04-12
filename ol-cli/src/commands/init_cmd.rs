@@ -1,9 +1,9 @@
-//! `version` subcommand
+//! `init` subcommand
 
 #![allow(clippy::never_loop)]
 
 // use std::{path::PathBuf};
-use crate::{application::app_config, config::OlCliConfig};
+use crate::{application::app_config, config::OlCliConfig, entrypoint};
 use abscissa_core::{Command, FrameworkError, Options, Runnable, config};
 use anyhow::Error;
 use libra_genesis_tool::{init, key, keyscheme::KeyScheme};
@@ -29,20 +29,28 @@ pub struct InitCmd {
 impl Runnable for InitCmd {
     /// Print version message
     fn run(&self) {
+        let entry_args = entrypoint::get_args();
         let (authkey, account, wallet) = keygen::account_from_prompt();
         let mut miner_config = app_config().to_owned();
         
-        if !self.skip_miner { miner_config = initialize_miner(authkey, account, 
-            &self.path).unwrap() };
+        if !self.skip_miner { 
+          miner_config = initialize_miner(
+            authkey,
+            account, 
+            &self.path, 
+            entry_args.swarm_path
+          ).unwrap() 
+        };
         if !self.skip_val { initialize_validator(&wallet, &miner_config).unwrap() };
     }
 }
 
-pub fn initialize_miner(authkey: AuthenticationKey, account: AccountAddress, path: &Option<PathBuf>) -> Result <OlCliConfig, Error>{
-    let miner_config = OlCliConfig::init_miner_configs(authkey, account, path);
+/// Initializes the necessary 0L config files: 0L.toml
+pub fn initialize_miner(authkey: AuthenticationKey, account: AccountAddress, path: &Option<PathBuf>, swarm_path: Option<PathBuf>) -> Result <OlCliConfig, Error>{
+    let miner_config = OlCliConfig::init_miner_configs(authkey, account, path, swarm_path);
     Ok(miner_config)
 }
-
+/// Initializes the necessary validator config files: genesis.blob, key_store.json
 pub fn initialize_validator(wallet: &WalletLibrary, miner_config: &OlCliConfig) -> Result <(), Error>{
     let home_dir = &miner_config.workspace.node_home;
     let keys = KeyScheme::new(wallet);

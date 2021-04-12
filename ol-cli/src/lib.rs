@@ -26,10 +26,15 @@ pub mod client;
 pub mod metadata;
 pub mod check_runner;
 pub mod management;
-pub mod check;
+pub mod node_health;
 pub mod server;
 pub mod restore;
 pub mod transitions;
 pub mod query;
+pub mod chain_info;
+pub mod cache;
+// pub mod check;
+pub mod account;
+
 /// Cli block explorer
 pub mod explorer;

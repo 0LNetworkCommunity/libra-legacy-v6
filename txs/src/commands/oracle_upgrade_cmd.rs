@@ -3,9 +3,7 @@
 #![allow(clippy::never_loop)]
 
 use abscissa_core::{Command, Options, Runnable};
-use crate::{prelude::app_config, submit_tx::{
-    submit_tx, get_tx_params, eval_tx_status
-}};
+use crate::{prelude::app_config, submit_tx::{get_tx_params, maybe_submit}};
 use libra_types::{transaction::{Script}};
 use std::{fs, io::prelude::*, path::PathBuf};
 
@@ -36,16 +34,17 @@ impl Runnable for OracleUpgradeCmd {
             let cfg = app_config();
             cfg.workspace.stdlib_bin_path.clone()
         };
-
-        match submit_tx(
-            &tx_params, 
-            oracle_tx_script(&path)
-        ) {
-            Err(err) => { println!("{:?}", err) }
-            Ok(res)  => {
-                eval_tx_status(res);
-            }
-        }
+        
+        maybe_submit(oracle_tx_script(&path), &tx_params).unwrap();
+        // match submit_tx(
+        //     &tx_params, 
+        //     oracle_tx_script(&path)
+        // ) {
+        //     Err(err) => { println!("{:?}", err) }
+        //     Ok(res)  => {
+        //         eval_tx_status(res);
+        //     }
+        // }
 
     }
 }

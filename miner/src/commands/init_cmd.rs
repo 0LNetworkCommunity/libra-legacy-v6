@@ -2,17 +2,12 @@
 
 #![allow(clippy::never_loop)]
 
-// use std::{path::PathBuf};
-use crate::{application::app_config, config::MinerConfig};
-use abscissa_core::{Command, Options, Runnable};
-use anyhow::Error;
-use libra_genesis_tool::{init, key, keyscheme::KeyScheme};
-use libra_types::{
-    account_address::AccountAddress, transaction::authenticator::AuthenticationKey
-};
+use crate::{application::app_config, entrypoint};
+use abscissa_core::{Command, Options, Runnable, status_warn};
+use ol_cli::commands::init_cmd;
 use std::{path::PathBuf};
-use libra_wallet::WalletLibrary;
 
+// TODO: duplicated for convenience, deprecate in favor of ol_cli
 /// `init` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct InitCmd {
@@ -28,27 +23,36 @@ pub struct InitCmd {
 impl Runnable for InitCmd {
     /// Print version message
     fn run(&self) {
+        status_warn!("deprecation notice: `miner init` will be removed in favor of `ol-cli init`");
+        let entry_args = entrypoint::get_args();
         let (authkey, account, wallet) = keygen::account_from_prompt();
         let mut miner_config = app_config().to_owned();
         
-        if !self.skip_miner { miner_config = initialize_miner(authkey, account, 
-            &self.path).unwrap() };
-        if !self.skip_val { initialize_validator(&wallet, &miner_config).unwrap() };
+        if !self.skip_miner { 
+          miner_config = init_cmd::initialize_miner(
+            authkey,
+            account, 
+            &self.path, 
+            entry_args.swarm_path
+          ).unwrap() 
+        };
+        if !self.skip_val { init_cmd::initialize_validator(&wallet, &miner_config).unwrap() };
     }
 }
 
-pub fn initialize_miner(authkey: AuthenticationKey, account: AccountAddress, path: &Option<PathBuf>) -> Result <MinerConfig, Error>{
-    let miner_config = MinerConfig::init_miner_configs(authkey, account, path);
-    Ok(miner_config)
-}
+// pub fn initialize_miner(authkey: AuthenticationKey, account: AccountAddress, path: &Option<PathBuf>) -> Result <MinerConfig, Error>{
+//     let EntryPointTxsCmd { swarm_path } = entrypoint::get_args();
+//     let miner_config = MinerConfig::init_miner_configs(authkey, account, path, swarm_path);
+//     Ok(miner_config)
+// }
 
-pub fn initialize_validator(wallet: &WalletLibrary, miner_config: &MinerConfig) -> Result <(), Error>{
-    let home_dir = &miner_config.workspace.node_home;
-    let keys = KeyScheme::new(wallet);
-    let namespace = miner_config.profile.auth_key.to_owned();
-    init::key_store_init(home_dir, &namespace, keys, false);
-    key::set_operator_key(home_dir, &namespace);
-    key::set_owner_key(home_dir, &namespace);
+// pub fn initialize_validator(wallet: &WalletLibrary, miner_config: &MinerConfig) -> Result <(), Error>{
+//     let home_dir = &miner_config.workspace.node_home;
+//     let keys = KeyScheme::new(wallet);
+//     let namespace = miner_config.profile.auth_key.to_owned();
+//     init::key_store_init(home_dir, &namespace, keys, false);
+//     key::set_operator_key(home_dir, &namespace);
+//     key::set_owner_key(home_dir, &namespace);
 
-    Ok(())
-}
+//     Ok(())
+// }

@@ -35,8 +35,8 @@ impl Runnable for ExplorerCMD {
         let backend = TermionBackend::new(stdout);
         let mut terminal = Terminal::new(backend).expect("Failed to initial screen");
 
-        let rpc = crate::client::default_local_client()
-            .0.expect("Failed to connect to localhost");
+        let rpc = crate::client::get_client()
+                            .expect("Failed to connect to localhost");
 
         let mut app = App::new(" Block Explorer Menu ", self.enhanced_graphics, rpc);
         app.fetch();

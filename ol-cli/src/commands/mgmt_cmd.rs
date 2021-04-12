@@ -45,6 +45,6 @@ impl Runnable for MgmtCmd {
         else if self.stop_all {
             management::stop_node();
             management::stop_miner();
-        }        
+        }
     }
 }

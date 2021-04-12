@@ -1,9 +1,7 @@
 //! 'query' 
-use cli::libra_client::LibraClient;
 use libra_json_rpc_client::views::AccountView;
 use crate::{
-  client,
-  check::Check,
+  client::pick_client,
   account_resource::get_annotate_account_blob,
   metadata::Metadata,
   
@@ -38,14 +36,14 @@ pub fn get(query_type: QueryType, account: AccountAddress) -> String {
       "0".to_string()
     },
     BlockHeight => {
-      let mut check = Check::new();
-      check.chain_height().to_string()
+      let (chain, _) = crate::chain_info::fetch_chain_info();
+      chain.unwrap().height.to_string()
     },
     SyncDelay => {
       Metadata::compare_from_config().to_string()
     },
     Resources => {
-      let resources = get_annotate_account_blob(what_client(), account)
+      let resources = get_annotate_account_blob(pick_client(), account)
       .unwrap()
       .0
       .unwrap();
@@ -57,17 +55,9 @@ pub fn get(query_type: QueryType, account: AccountAddress) -> String {
 
 
 fn get_account_view(account: AccountAddress) -> AccountView {
-    let (account_view, _) = what_client()
+    let (account_view, _) = pick_client()
       .get_account(account, true)
       .expect(&format!("could not get account at address {:?}", account));
     account_view.expect(&format!("could not get account at address {:?}", account))
 }
 
-fn what_client() -> LibraClient{
-    // check if is in sync
-    let is_synced = true;
-    let client_tuple = 
-      if is_synced { client::default_local_client() }
-      else         { client::default_remote_client() };
-    client_tuple.0.expect("could not configure a client")
-}

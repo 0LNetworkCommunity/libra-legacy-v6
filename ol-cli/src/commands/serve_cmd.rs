@@ -14,9 +14,14 @@ use crate::server;
 pub struct ServeCmd {}
 
 impl Runnable for ServeCmd {
-    /// Start the application.
-    fn run(&self) {
-        server::main();
-        println!("server started");
-    }
+  /// Start the application.
+  fn run(&self) {
+    // abscissa_tokio::run(&APPLICATION, async {
+    //   tokio::spawn(async move {
+    //     println!("starting web-monitor");
+    //     server::start_server()
+    //   })
+    // }).unwrap();
+    server::start_server();
+  }
 }

@@ -1,69 +1,53 @@
 //! `monitor` subcommand
 
-
 use std::{thread, time::{Duration}};
-use crate::{check::Check};
+use crate::{chain_info, node_health::NodeHealth};
 use std::io::{Write, stdout};
-use crossterm::{QueueableCommand, cursor};
+use crossterm::{QueueableCommand, cursor, terminal::{self, ClearType}};
 
 /// Start the node monitor
-pub fn mon(is_live: bool) {
-    let mut stdout = stdout();
+pub fn mon(is_live: bool, print: bool) {
 
-    let mut x = 0;
-    let mut checker = Check::new();
-    loop {
-        thread::sleep(Duration::from_millis(1000));
+  let mut x = 0;
+  let mut checker = NodeHealth::new();
 
-        checker.fetch_upstream_states();
-
-        // TODO: make keep cursor position
-        let sync_tuple = checker.check_sync();
-
-        let mining = match checker.miner_running() {
-            true=> "running",
-            false => "stopped"
-        };
-        let node_status = match checker.node_running() {
-            true=> "running",
-            false => "stopped"
-        };
-
-        stdout.queue(cursor::SavePosition).unwrap();
-        stdout.write(
-            format!(
-                "Test: {}, Configs Exist:{}, Is synced: {}, Sync delay: {}, Node app: {}, Miner app: {}, Account on chain: {}, Epoch: {}, Height {}, In val set:{}",
-                &x,
-                checker.configs_exist(),
-                &sync_tuple.0,
-                &sync_tuple.1,
-                node_status,
-                mining,
-                checker.accounts_exist_on_chain(),
-                checker.epoch_on_chain(),
-                checker.chain_height(),
-                checker.is_in_validator_set(),
-            ).as_bytes()
-        ).unwrap();
-
-        checker.items.write_cache();
-        
-        stdout.queue(cursor::RestorePosition).unwrap();
-        stdout.flush().unwrap();
-
-        if !is_live && x==0 { break };
-        x = x + 1;
-    }
+  loop {
+    checker.fetch_upstream_states();
+    // refresh cahce for chain_info
+    chain_info::fetch_chain_info();
+    &checker.refresh_checks();
+    &checker.items.write_cache();
+    if print { print_it(&checker) }
+    if !is_live && x==0 { break };
+    x = x + 1;
+    thread::sleep(Duration::from_millis(1000));
+  }
 }
 
 
-// // TODO: Implement loop with clockwerk
-// use clokwerk::{Scheduler, TimeUnits};
+fn print_it(checker: &NodeHealth) {
+  let mut stdout = stdout();
+  terminal::Clear(ClearType::All);
+  stdout.queue(cursor::SavePosition).unwrap();
+  stdout.write(
+      format!(
+"Configs Exist:{configs}
+DB Restored: {restored}
+Is Synced: {synced}
+Sync Delay: {delay}
+Node Running: {node}
+Miner Running: {miner}
+Account On Chain: {account}\n",
+    configs = checker.items.configs_exist,
+    restored = checker.items.db_restored,
+    synced = checker.items.is_synced,
+    delay = checker.items.sync_delay,
+    node = checker.items.node_running,
+    miner = checker.items.miner_running,
+    account = checker.items.account_created,
+    ).as_bytes()
+  ).unwrap();
 
-// /// set a timer for the monitor
-// pub fn timer () {
-//     let mut scheduler = Scheduler::new();
-//     scheduler.every(1.seconds()).run(|| println!("Periodic task"));
-
-//     let _thread_handle = scheduler.watch_thread(Duration::from_millis(100));
-// }
+  stdout.queue(cursor::RestorePosition).unwrap();
+  stdout.flush().unwrap();
+}

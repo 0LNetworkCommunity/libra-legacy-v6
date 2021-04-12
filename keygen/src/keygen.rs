@@ -1,7 +1,6 @@
 //! Key generation
 use std::env;
 
-use abscissa_core::{status_info, status_warn};
 use libra_wallet::{Mnemonic, WalletLibrary};
 use libra_types::{
   account_address::AccountAddress,
@@ -22,16 +21,12 @@ pub fn keygen() -> (AuthenticationKey, AccountAddress, WalletLibrary) {
         ...........................\n\
         {:?}\n", &account);
 
-        // TODO: Auth key is not needed anywhere.
-        // println!("0L Auth Key:\n\
-        // ...........................\n\
-        // {:?}\n", &auth_key.to_string());
-
         println!("0L mnemonic:\n\
         ...........................");
       
+        //use same styles as abscissa_info
+        println!("\x1b[1;36m{}\n\x1b[0m", &mnemonic_string.as_str());
 
-        status_info!(&mnemonic_string.as_str(), "\n");
         println!("WRITE THIS DOWN NOW. This is the last time you will see \
                   this mnemonic. It is not saved anywhere. Nobody can help \
                   you if you lose it.\n\n");
@@ -53,8 +48,8 @@ pub fn get_account_from_mnem(mnemonic_string: String)
 /// Prompts user to type mnemonic securely.
 pub fn account_from_prompt() 
   -> (AuthenticationKey, AccountAddress, WalletLibrary) {
+
     println!("Enter your 0L mnemonic:");
-    // TODO: Simplify mnemonic entry for CI/debug cases
 
     match env::var("NODE_ENV") {
       Ok(val) => {
@@ -62,10 +57,9 @@ pub fn account_from_prompt()
         
         // if we are in debugging or CI mode
         if val != "prod" && maybe_env_mnem.is_ok() {
-          status_warn!("Debugging mode, using mnemonic from env variable, $MNEM");
+          println!("Debugging mode, using mnemonic from env variable, $MNEM");
           return get_account_from_mnem(maybe_env_mnem.unwrap().trim().to_string())
         }
-        println!("Debugging mode, you can set mnemonic to env $MNEM");
       },
       _ => {}, // default to "prod" if not set
     };

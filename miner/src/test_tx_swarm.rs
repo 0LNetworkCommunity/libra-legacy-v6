@@ -11,16 +11,19 @@ use libra_config::config::NodeConfig;
 use libra_crypto::test_utils::KeyPair;
 use libra_types::transaction::authenticator::AuthenticationKey;
 use reqwest::Url;
-use std::{fs, path::PathBuf};
+use std::{fs, path::{Path, PathBuf}};
 use libra_genesis_tool::keyscheme::KeyScheme;
 
 /// A test harness for the submit_tx with a local swarm 
-pub fn swarm_miner(swarm_path: PathBuf) {
-
-    let tx_params = get_params_from_swarm(swarm_path).unwrap();
+pub fn swarm_miner(swarm_path: PathBuf, persona: &Option<String>) {
+    let persona = persona.clone().unwrap_or("alice".to_string());
+    let tx_params = get_params_from_swarm(swarm_path, &persona).unwrap();
     let conf = load_swarm_config(&tx_params);
+    let swarm_block_path = "./swarm_temp/blocks";
+    if Path::new(swarm_block_path).exists() { fs::remove_dir_all(swarm_block_path).unwrap() };
     fs::create_dir_all("./swarm_temp/blocks").unwrap();
-    fs::copy("./fixtures/blocks/test/alice/block_0.json", "./swarm_temp/blocks/block_0.json").expect("error copying file");
+    let filepath = format!("./fixtures/blocks/test/{}/block_0.json", persona);
+    fs::copy(filepath, "./swarm_temp/blocks/block_0.json").expect("error copying file");
 
     dbg!(&tx_params);
 
@@ -79,14 +82,15 @@ fn get_block_fixtures(config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
 }
 
 /// Helper to extract params from a local running swarm.
-pub fn get_params_from_swarm(mut swarm_path: PathBuf) -> Result<TxParams, Error> {
+pub fn get_params_from_swarm(mut swarm_path: PathBuf, persona: &str) -> Result<TxParams, Error> {
     swarm_path.push("0/node.yaml");
     let config = NodeConfig::load(&swarm_path)
         .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path));
 
     // This mnemonic is hard coded into the swarm configs. see configs/config_builder
-    let alice_mnemonic = "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse".to_string();
-    let keys = KeyScheme::new_from_mnemonic(alice_mnemonic);
+    let mnem_path = format!("./fixtures/mnemonic/{}.mnem", persona);
+    let mnemonic = String::from_utf8(fs::read(mnem_path).unwrap()).unwrap();
+    let keys = KeyScheme::new_from_mnemonic(mnemonic);
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
     let pubkey =  keys.child_0_owner.get_public();
     let sender_auth_key = AuthenticationKey::ed25519(&pubkey);

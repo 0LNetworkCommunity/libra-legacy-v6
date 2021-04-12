@@ -633,7 +633,7 @@ pub(crate) fn build_registry() -> RpcRegistry {
     );
     register_rpc_method!(registry, "get_network_status", get_network_status, 0, 0);
     register_rpc_method!(registry, "get_miner_state", get_miner_state, 2, 0);
-
+    register_rpc_method!(registry, "query_oracle_upgrade", query_oracle_upgrade, 1, 0);
     registry
 }
 
@@ -682,7 +682,7 @@ async fn get_miner_state(
 }
 
 /// Returns Oracle Upgrade view
-async fn _query_oracle_upgrade(
+async fn query_oracle_upgrade(
     service: JsonRpcService,
     request: JsonRpcRequest,
 ) -> Result<OracleResourceView, JsonRpcError> {
@@ -703,5 +703,5 @@ async fn _query_oracle_upgrade(
         },
         None => {}
     }
-    Err(JsonRpcError::invalid_request_with_msg("No Upgrade Oracle found.".to_string()))
+    Err(JsonRpcError::invalid_request_with_msg("No Upgrade Resource found.".to_string()))
 }

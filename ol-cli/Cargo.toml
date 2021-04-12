@@ -31,11 +31,10 @@ rustyline = "6.2.0"
 libra-json-rpc-client = { path = "../client/json-rpc", version = "0.1.0" }
 crossterm = "0.19.0"
 tokio = { version = "0.2", features = ["full"] }
-warp = "0.2"
+warp = "0.2.5"
 serde_json = "1.0"
 clokwerk = "0.3.4"
 handlebars = "3.5.3"
-# rocksdb = "0.15.0"
 futures = "0.3.6"
 nix = "*"
 libra-secure-storage = { path = "../secure/storage", version = "0.1.0" }
@@ -50,7 +49,9 @@ url = { version = "^2.1", features = ["serde"]}
 libra-genesis-tool = { path = "../config/management/genesis", version = "0.1.0" }
 libra-wallet = { path = "../testsuite/cli/libra-wallet", version = "0.1.0" }
 keygen = { path = "../keygen/", version = "0.1.0" }
-
+abscissa_tokio = "0.5"
+regex = "1"
+ol-util = { path = "../ol/util" }
 
 # Parity with Storage create
 [dependencies.rocksdb]

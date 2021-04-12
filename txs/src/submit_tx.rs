@@ -1,173 +1,179 @@
 //! Txs App submit_tx module
 #![forbid(unsafe_code)]
-
-use anyhow::Error;
-use abscissa_core::{Command, status_warn, status_ok};
-use cli::{libra_client::LibraClient, AccountData, AccountStatus};
-use crate::{config::AppConfig, commands, entrypoint::EntryPoint};
-use libra_crypto::{
-    test_utils::KeyPair,
-    ed25519::{Ed25519PrivateKey, Ed25519PublicKey}
+use crate::{
+    config::TxsConfig,
+    entrypoint::{self, EntryPointTxsCmd},
+    prelude::app_config,
+    save_tx::save_tx,
+    sign_tx::sign_tx,
 };
-use libra_config::config::NodeConfig;
+use abscissa_core::{status_ok, status_warn};
+use anyhow::Error;
+use cli::{libra_client::LibraClient, AccountData, AccountStatus};
+use libra_crypto::{
+    ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
+    test_utils::KeyPair,
+};
 use libra_genesis_tool::keyscheme::KeyScheme;
 use libra_json_rpc_types::views::{TransactionView, VMStatusView};
-use libra_types::{
-    account_address::AccountAddress, waypoint::Waypoint, 
-    transaction::helpers::*, chain_id::ChainId
-};
-use libra_types::transaction::{
-    Script, TransactionPayload, authenticator::AuthenticationKey
-};
-use reqwest::Url;
-use std::{fs, io::{stdout, Write}, path::{Path, PathBuf}, thread, time};
+use libra_types::{chain_id::ChainId, transaction::{Script, SignedTransaction, authenticator::AuthenticationKey}};
+use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
 
+use ol_util;
+use reqwest::Url;
+use std::{
+    io::{stdout, Write},
+    path::PathBuf,
+    thread, time,
+};
 /// All the parameters needed for a client transaction.
 #[derive(Debug)]
 pub struct TxParams {
     /// User's 0L authkey used in mining.
     pub auth_key: AuthenticationKey,
-    /// User's 0L account used in mining
-    pub address: AccountAddress,
+    /// Address of the signer of transaction, e.g. owner's operator
+    pub signer_address: AccountAddress,
+    /// Optional field for Miner, for operator to send owner
+    // TODO: refactor so that this is not par of the TxParams type
+    pub owner_address: AccountAddress,
     /// Url
     pub url: Url,
     /// waypoint
     pub waypoint: Waypoint,
     /// KeyPair
     pub keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey>,
-    /// User's Maximum gas_units willing to run. Different than coin. 
+    /// User's Maximum gas_units willing to run. Different than coin.
     pub max_gas_unit_for_tx: u64,
     /// User's GAS Coin price to submit transaction.
     pub coin_price_per_unit: u64,
     /// User's transaction timeout.
     pub user_tx_timeout: u64, // for compatibility with UTC's timestamp.
+    /// Chain id
+    pub chain_id: ChainId
 }
 
-/// Submit a transaction to the network.
-pub fn submit_tx(
-    tx_params: &TxParams,
-    script: Script,
-) -> Result<TransactionView, Error> {
-    let mut client = LibraClient::new(
-        tx_params.url.clone(), tx_params.waypoint
-    ).unwrap();
+/// wrapper which checks entry point arguments before submitting tx, possibly saving the tx script
+pub fn maybe_submit(script: Script, tx_params: &TxParams) -> Result<(), Error> {
+    let entry_args = entrypoint::get_args();
+    let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+
+    let (mut account_data, txn) = stage(script, tx_params, &mut client);
+    if let Some(path) = entry_args.save_path {
+      save_tx(txn.clone(), path);
+    }
+
+    if !entry_args.no_send {
+      let res = submit_tx(
+        client,
+        txn,
+        &mut account_data,
+      ).unwrap();
+      return Ok(eval_tx_status(res).expect("transaction failed"))
+    }
+
+    Ok(())
+}
+
+fn stage(script: Script, tx_params: &TxParams, client: &mut LibraClient) -> (AccountData, SignedTransaction) {
+    // let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
     let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
-    let (account_state,_) = client.get_account(
-        tx_params.address.clone(), true
-    ).unwrap();
+    let (account_state, _) = client
+        .get_account(tx_params.signer_address.clone(), true)
+        .unwrap();
 
     let sequence_number = match account_state {
         Some(av) => av.sequence_number,
         None => 0,
     };
     // Sign the transaction script
-    let txn = create_user_txn(
-        &tx_params.keypair,
-        TransactionPayload::Script(script),
-        tx_params.address,
-        sequence_number,
-        tx_params.max_gas_unit_for_tx,
-        tx_params.coin_price_per_unit,
-        "GAS".parse()?,
-        // for compatibility with UTC's timestamp
-        tx_params.user_tx_timeout as i64, 
-        chain_id,
-    )?;
+    let txn = sign_tx(&script, tx_params, sequence_number, chain_id).unwrap();
 
     // Get account_data struct
-    let mut sender_account_data = AccountData {
-        address: tx_params.address,
+    let signer_account_data = AccountData {
+        address: tx_params.signer_address,
         authentication_key: Some(tx_params.auth_key.to_vec()),
         key_pair: Some(tx_params.keypair.clone()),
         sequence_number,
         status: AccountStatus::Persisted,
     };
-    
+    (signer_account_data, txn)
+}
+/// Submit a transaction to the network.
+pub fn submit_tx(
+  mut client: LibraClient,
+  txn: SignedTransaction,
+  mut signer_account_data: &mut AccountData,
+) -> Result<TransactionView, Error> {
+    // let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
     // Submit the transaction with libra_client
-    match client.submit_transaction(
-        Some(&mut sender_account_data),
-        txn
-    ){
-        Ok(_) => {
-            match wait_for_tx(
-                tx_params.address, sequence_number, &mut client
-            ) {
-                Some(res) => Ok(res),
-                None => Err(Error::msg("No Transaction View returned"))
-            }
-        }
-        Err(err) => Err(err)
+    match client.submit_transaction(Some(&mut signer_account_data), txn.clone()) {
+        Ok(_) => match wait_for_tx(txn.sender(), txn.sequence_number(), &mut client) {
+            Some(res) => Ok(res),
+            None => Err(Error::msg("No Transaction View returned")),
+        },
+        Err(err) => Err(err),
     }
-
 }
 
 /// Main get tx params logic based on the design in this URL:
 /// https://github.com/OLSF/libra/blob/tx-sender/txs/README.md#txs-logic--usage
 pub fn get_tx_params() -> Result<TxParams, Error> {
-    type EntryPointTxsCmd = EntryPoint<commands::TxsCmd>;
-    let EntryPointTxsCmd { 
-        url, waypoint, swarm_path, .. } = Command::from_env_args();
-
-    let txs_config = crate::prelude::app_config();
+    let EntryPointTxsCmd {
+        url,
+        waypoint,
+        swarm_path,
+        ..
+    } = entrypoint::get_args();
+    let txs_config = app_config();
     let mut tx_params: TxParams;
     if swarm_path.is_some() {
-        tx_params = get_tx_params_from_swarm(
-            swarm_path.clone().expect("needs a valid swarm temp dir")
-        ).unwrap();
+        tx_params =
+            get_tx_params_from_swarm(swarm_path.clone().expect("needs a valid swarm temp dir")).unwrap();
     } else {
         // Get from 0L.toml e.g. ~/.0L/0L.toml, or use Profile::default()
-        tx_params = get_tx_params_from_toml(txs_config.clone()).unwrap();        
+        tx_params = get_tx_params_from_toml(txs_config.clone()).unwrap();
     }
 
     // Get/override dynamic waypoint from key_store.json
-    // TODO: make this only apply to prod
-    if Path::new(&txs_config.get_key_store_path()).exists() {
-        tx_params.waypoint = txs_config.get_waypoint().unwrap();
-    }
+    tx_params.waypoint = match waypoint {
+        Some(w) => w,
+        _ => txs_config.get_waypoint(swarm_path).unwrap(),
+    };
 
     // Get/override some params from command line
     if url.is_some() {
-        tx_params.url = Url::parse(&url.unwrap()).unwrap();
+        tx_params.url = url.unwrap();
     }
     if waypoint.is_some() {
-        tx_params.waypoint = waypoint.unwrap().parse().unwrap();
+        tx_params.waypoint = waypoint.unwrap();
     }
 
     Ok(tx_params)
 }
 
 /// Extract params from a local running swarm
-pub fn get_tx_params_from_swarm(
-    mut swarm_path: PathBuf
-) 
--> Result<TxParams, Error> {
-    swarm_path.push("0/node.yaml");
-    let config = NodeConfig::load(&swarm_path).unwrap_or_else(
-        |_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path)
-    );
-    let url =  Url::parse(
-        format!("http://localhost:{}", config.json_rpc.address.port()).as_str()
-    ).unwrap();
-    let waypoint = config.base.waypoint.genesis_waypoint();
-
-    let alice_mnemonic = fs::read_to_string("./fixtures/mnemonic/alice.mnem")
-        .expect("Unable to read file");
-    let keys = KeyScheme::new_from_mnemonic(alice_mnemonic);
+pub fn get_tx_params_from_swarm(swarm_path: PathBuf) -> Result<TxParams, Error> {
+    let (url, waypoint) = ol_util::swarm::get_configs(swarm_path);
+    let entry_args = entrypoint::get_args();
+    let mnem = ol_fixtures::get_persona_mnem(entry_args.swarm_persona.unwrap().as_str());
+    let keys = KeyScheme::new_from_mnemonic(mnem);
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
-    let pubkey =  keys.child_0_owner.get_public();
+    let pubkey = keys.child_0_owner.get_public();
     let auth_key = AuthenticationKey::ed25519(&pubkey);
-    let address = auth_key.derived_address();  
+    let address = auth_key.derived_address();
 
     let tx_params = TxParams {
         auth_key,
-        address,
+        signer_address: address,
+        owner_address: address,
         url,
         waypoint,
         keypair,
         max_gas_unit_for_tx: 1_000_000,
         coin_price_per_unit: 1, // in micro_gas
         user_tx_timeout: 5_000,
+        chain_id: ChainId::new(4),
     };
 
     println!("Info: Got tx params from swarm");
@@ -175,8 +181,9 @@ pub fn get_tx_params_from_swarm(
 }
 
 /// Gets transaction params from the 0L project root.
-pub fn get_tx_params_from_toml(config: AppConfig) -> Result<TxParams, Error> {    
-    let url =  config.profile.default_node.clone().unwrap();
+pub fn get_tx_params_from_toml(config: TxsConfig) -> Result<TxParams, Error> {
+    let entry_args = entrypoint::get_args();
+    let url = config.profile.default_node.clone().unwrap();
 
     let (auth_key, address, wallet) = keygen::account_from_prompt();
     let keys = KeyScheme::new_from_mnemonic(wallet.mnemonic());
@@ -184,13 +191,18 @@ pub fn get_tx_params_from_toml(config: AppConfig) -> Result<TxParams, Error> {
 
     let tx_params = TxParams {
         auth_key,
-        address,
+        signer_address: address,
+        owner_address: address,
         url,
-        waypoint: config.get_waypoint().clone().expect("could not get waypoint"),
+        waypoint: config
+            .get_waypoint(entry_args.swarm_path)
+            .clone()
+            .expect("could not get waypoint"),
         keypair,
         max_gas_unit_for_tx: config.tx_configs.management_txs.max_gas_unit_for_tx,
         coin_price_per_unit: config.tx_configs.management_txs.coin_price_per_unit, // in micro_gas
         user_tx_timeout: config.tx_configs.management_txs.user_tx_timeout,
+        chain_id: ChainId::new(1),
     };
 
     // println!("Info: Getting tx params from txs.toml if available, \
@@ -200,50 +212,80 @@ pub fn get_tx_params_from_toml(config: AppConfig) -> Result<TxParams, Error> {
 
 /// Wait for the response from the libra RPC.
 pub fn wait_for_tx(
-    sender_address: AccountAddress,
+    signer_address: AccountAddress,
     sequence_number: u64,
-    client: &mut LibraClient
+    client: &mut LibraClient,
 ) -> Option<TransactionView> {
-        println!(
-            "Awaiting tx status \n\
+    println!(
+        "Awaiting tx status \n\
              Submitted from account: {} with sequence number: {}",
-            sender_address, sequence_number
-        );
+        signer_address, sequence_number
+    );
 
-        loop {
-            thread::sleep(time::Duration::from_millis(1000));
-            // prevent all the logging the client does while 
-            // it loops through the query.
-            stdout().flush().unwrap();
-            
-            match &mut client.get_txn_by_acc_seq(
-                sender_address, sequence_number, false
-            ){
-                Ok(Some(txn_view)) => {
-                    return Some(txn_view.to_owned());
-                },
-                Err(e) => {
-                    println!("Response with error: {:?}", e);
-                },
-                _ => {
-                    print!(".");
-                }
+    loop {
+        thread::sleep(time::Duration::from_millis(1000));
+        // prevent all the logging the client does while
+        // it loops through the query.
+        stdout().flush().unwrap();
+
+        match &mut client.get_txn_by_acc_seq(signer_address, sequence_number, false) {
+            Ok(Some(txn_view)) => {
+                return Some(txn_view.to_owned());
             }
-
+            Err(e) => {
+                println!("Response with error: {:?}", e);
+            }
+            _ => {
+                print!(".");
+            }
         }
+    }
 }
 
 /// Evaluate the response of a submitted txs transaction.
-pub fn eval_tx_status(result: TransactionView) -> bool {
+pub fn eval_tx_status(result: TransactionView) -> Result<(), Error> {
     match result.vm_status == VMStatusView::Executed {
         true => {
-                status_ok!("\nSuccess:", "transaction executed");
-                return true
+            status_ok!("\nSuccess:", "transaction executed");
+            Ok(())
         }
         false => {
-                status_warn!("Transaction failed");
-                println!("Rejected with code:{:?}", result.vm_status);
-                return false
-        }, 
+            status_warn!("Transaction failed");
+            let msg = format!("Rejected with code:{:?}", result.vm_status);
+            Err(Error::msg(msg))
+        }
+    }
+}
+
+impl TxParams {
+    /// creates params for unit tests
+    pub fn test_fixtures() -> TxParams {
+        // This mnemonic is hard coded into the swarm configs. see configs/config_builder
+        // let mnem_path = format!("./fixtures/mnemonic/{}.mnem", persona);
+        let mnemonic = "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse".to_string();
+        let keys = KeyScheme::new_from_mnemonic(mnemonic);
+        let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
+        let pubkey = keys.child_0_owner.get_public();
+        let signer_auth_key = AuthenticationKey::ed25519(&pubkey);
+        let signer_address = signer_auth_key.derived_address();
+
+        let url = Url::parse("http://localhost:8080").unwrap();
+        let waypoint: Waypoint =
+            "0:732ea2e1c3c5ee892da11abcd1211f22c06b5cf75fd6d47a9492c21dbfc32a46"
+                .parse()
+                .unwrap();
+
+        TxParams {
+            auth_key: signer_auth_key,
+            signer_address,
+            owner_address: signer_address,
+            url,
+            waypoint,
+            keypair,
+            max_gas_unit_for_tx: 5_000,
+            coin_price_per_unit: 1, // in micro_gas
+            user_tx_timeout: 5_000,
+            chain_id: ChainId::new(4), // swarm/testnet
+        }
     }
 }

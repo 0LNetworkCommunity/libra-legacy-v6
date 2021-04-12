@@ -10,27 +10,25 @@
 //! See the `impl Configurable` below for how to specify the path to the
 //! application's configuration file.
 
-mod init_cmd;
+pub mod init_cmd;
 mod version;
-mod monitor_cmd;
 mod mgmt_cmd;
 mod serve_cmd;
 mod restore_cmd;
 mod onboard_cmd;
 mod query_cmd;
-mod check_cmd;
+mod health_cmd;
 mod explorer_cmd;
 
 use self::{
     init_cmd::InitCmd,
     version::VersionCmd,
-    monitor_cmd::MonitorCmd,
     mgmt_cmd::MgmtCmd,
     serve_cmd::ServeCmd,
     restore_cmd::RestoreCmd,
     onboard_cmd::OnboardCmd,
     query_cmd::QueryCmd,
-    check_cmd::CheckCmd,
+    health_cmd::HealthCmd,
 };
 
 use crate::config::OlCliConfig;
@@ -59,10 +57,6 @@ pub enum OlCliCmd {
     /// The `version` subcommand
     Version(VersionCmd),
 
-    /// The `monitor` subcommand
-    #[options(help = "monitor the node and upstream")]
-    Monitor(MonitorCmd),
-
     /// The `management` subcommand
     #[options(help = "management tools")]
     Mgmt(MgmtCmd),
@@ -85,7 +79,7 @@ pub enum OlCliCmd {
 
     /// The `check` subcommand
     #[options(help = "run healthcheck on the account, node, and displays some network information")]
-    Check(CheckCmd),
+    Health(HealthCmd),
 
     /// The `explorer` subcommand
     #[options(help = "watch a block explorer monitor in terminal")]

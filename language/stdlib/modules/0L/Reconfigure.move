@@ -24,8 +24,6 @@ module Reconfigure {
     use 0x1::AccountLimits;
     use 0x1::GAS::GAS;
     use 0x1::LibraConfig;
-
-
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180101
     public fun reconfigure(vm: &signer, height_now: u64) {
@@ -59,13 +57,11 @@ module Reconfigure {
 
             k = k + 1;
         };
-
         // Process outgoing validators:
         // Distribute Transaction fees and subsidy payments to all outgoing validators
         let height_start = Epoch::get_timer_height_start(vm);
 
         let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio(vm, height_start, height_now);
-
         if (Vector::length<address>(&outgoing_set) > 0) {
             let subsidy_units = Subsidy::calculate_subsidy(vm, height_start, height_now);
 
@@ -102,13 +98,11 @@ module Reconfigure {
         // Usually an issue in staging network for QA only.
         // This is very rare and theoretically impossible for network with at least 6 nodes and 6 rounds. If we reach an epoch boundary with at least 6 rounds, we would have at least 2/3rd of the validator set with at least 66% liveliness. 
 
-
         // Update all validators with account limits
         // After Epoch 1000. 
         if (LibraConfig::check_transfer_enabled()) {
             update_validator_withdrawal_limit(vm);
         };
-    
         // needs to be set before the auctioneer runs in Subsidy::fullnode_reconfig
         Subsidy::set_global_count(vm, global_proofs_count);
 

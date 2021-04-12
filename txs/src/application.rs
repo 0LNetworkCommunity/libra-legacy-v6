@@ -4,7 +4,7 @@ use abscissa_core::{
     application::{self, AppCell},
     Application, config, FrameworkError, StandardPaths, trace
 };
-use crate::{commands::TxsCmd, config::AppConfig, entrypoint::EntryPoint};
+use crate::{commands::TxsCmd, config::TxsConfig, entrypoint::EntryPoint};
 
 /// Application state
 pub static APPLICATION: AppCell<TxsApp> = AppCell::new();
@@ -32,7 +32,7 @@ pub fn app_config() -> config::Reader<TxsApp> {
 #[derive(Debug)]
 pub struct TxsApp {
     /// Application configuration.
-    config: Option<AppConfig>,
+    config: Option<TxsConfig>,
 
     /// Application state.
     state: application::State<Self>,
@@ -56,13 +56,13 @@ impl Application for TxsApp {
     type Cmd = EntryPoint<TxsCmd>;
 
     /// Application configuration.
-    type Cfg = AppConfig;
+    type Cfg = TxsConfig;
 
     /// Paths to resources within the application.
     type Paths = StandardPaths;
 
     /// Accessor for application configuration.
-    fn config(&self) -> &AppConfig {
+    fn config(&self) -> &TxsConfig {
         self.config.as_ref().expect("config not loaded")
     }
 

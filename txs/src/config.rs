@@ -4,7 +4,7 @@
 //! application's configuration file and/or command-line options
 //! for specifying it.
 
-pub use ol_cli::config::OlCliConfig as AppConfig;
+pub use ol_cli::config::OlCliConfig as TxsConfig;
 
 
 // use abscissa_core::path::{PathBuf};

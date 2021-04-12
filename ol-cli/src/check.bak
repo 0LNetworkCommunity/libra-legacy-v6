@@ -6,7 +6,8 @@ use sysinfo::SystemExt;
 use crate::metadata::Metadata;
 use crate::config::OlCliConfig;
 use crate::application::app_config;
-use std::str;
+use std::{process::Command, str, };
+use regex::Regex;
 use rocksdb::DB;
 use serde::{Serialize, Deserialize};
 
@@ -234,18 +235,19 @@ impl Check {
         self.conf.profile.account.to_vec()
     }
 
-    /// Current monitor account
-    pub fn waypoint(&mut self) -> Waypoint {
-        self.client.get_state_proof().expect("Failed to get state proof"); // refresh latest state proof
-        let waypoint = self.client.waypoint();
-        match waypoint {
-            Some(w)=> {
-                //self.client = LibraClient::new(self.conf.node_url.clone(), w.clone()).unwrap();
-                w
-            },
-            None=> self.conf.get_waypoint().expect("could not get waypoint")
-        }
-    }
+    // /// Current waypoint
+    // pub fn waypoint(&mut self) -> Waypoint {
+    //     let entry_args = entrypoint::get_args();
+    //     self.client.get_state_proof().expect("Failed to get state proof"); // refresh latest state proof
+    //     let waypoint = self.client.waypoint();
+    //     match waypoint {
+    //         Some(w)=> {
+    //             //self.client = LibraClient::new(self.conf.node_url.clone(), w.clone()).unwrap();
+    //             w
+    //         },
+    //         None=> self.conf.get_waypoint(entry_args.swarm_path).expect("could not get waypoint")
+    //     }
+    // }
 
     /// is validator jailed
     pub fn is_jailed() -> bool {
@@ -313,7 +315,7 @@ impl Check {
             return (false, 0)
         };
         let delay = Metadata::compare_from_config();
-        ( delay < 10_000, delay)
+        (delay < 10_000, delay)
     }
 
     /// Check if node caught up, if so mark as caught up.
@@ -354,10 +356,36 @@ impl Check {
         // First we update all information of our system struct.
         system.refresh_all();
         let ps = system.get_process_by_name(NODE_PROCESS);
-        // dbg!(&ps);
+
 
         let is_running = ps.len() > 0;
         is_running
+    }
+
+    /// check if processes are running as systemd
+    pub fn check_systemd(){
+              
+        // Command::new("systemctl")
+        //     .arg("is-active")
+        //     .arg(NODE_PROCESS)
+        //     .
+      
+    let output = Command::new("git").arg("log").arg("--oneline").output().unwrap();
+
+    if !output.status.success() {
+        panic!("Command executed with failing error code");
+    }
+
+    let pattern = Regex::new(r"(?x)
+                               ([0-9a-fA-F]+) # commit hash
+                               (.*)           # The commit message").unwrap();
+
+    String::from_utf8(output.stdout).unwrap()
+        .lines()
+        .filter_map(|line| pattern.captures(line))
+        .map(|cap| {cap[2].trim().to_string()})
+        .take(5)
+        .for_each(|x| println!("{:?}", x));
     }
     /// Check if node is running
     pub fn node_running(&mut self) -> bool {

@@ -3,16 +3,14 @@
 #![allow(clippy::never_loop)]
 
 use abscissa_core::{Command, Options, Runnable};
-use crate::{
-    submit_tx::{eval_tx_status, get_tx_params, submit_tx}
-};
+use crate::submit_tx::{get_tx_params, maybe_submit};
 use libra_types::{transaction::{Script}};
 use std::{fs, path::PathBuf};
 
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct CreateAccountCmd {
-    #[options(help = "path of account.json")]
+    #[options(short = "f", help = "path of account.json")]
     account_json_path: PathBuf,
 }
 
@@ -44,15 +42,15 @@ impl Runnable for CreateAccountCmd {
     fn run(&self) {
         let account_json = self.account_json_path.to_str().unwrap();
         let tx_params = get_tx_params().unwrap();
-
-        match submit_tx(
-            &tx_params, 
-            create_user_account_script(account_json)
-        ) {
-            Err(err) => { println!("{:?}", err) }
-            Ok(res)  => {
-                eval_tx_status(res);
-            }
-        }
+        maybe_submit(create_user_account_script(account_json), &tx_params).unwrap();
+        // match submit_tx(
+        //     &tx_params, 
+        //     create_user_account_script(account_json)
+        // ) {
+        //     Err(err) => { println!("{:?}", err) }
+        //     Ok(res)  => {
+        //         eval_tx_status(res);
+        //     }
+        // }
     }
 }

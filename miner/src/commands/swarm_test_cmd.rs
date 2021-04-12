@@ -15,10 +15,10 @@ use std::path::PathBuf;
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
 pub struct SwarmCmd {
-    #[options(help = "Test the onboading transaction.")]
-    init: bool,
     #[options(help = "The home directory where the blocks will be stored")]
-    swarm_path: Option<PathBuf>, 
+    swarm_path: Option<PathBuf>,
+    #[options(help = "The `persona` to use in the test, e.g. alice, eve")]
+    persona: Option<String>,
 }
 
 impl Runnable for SwarmCmd {
@@ -31,7 +31,7 @@ impl Runnable for SwarmCmd {
         if self.swarm_path.is_some() { path = self.swarm_path.as_ref().unwrap().to_owned() }
         else { path = PathBuf::from("./swarm_temp") }
 
-        swarm_miner(path);
+        swarm_miner(path, &self.persona);
     }
 }
 

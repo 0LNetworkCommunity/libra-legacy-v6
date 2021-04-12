@@ -4,8 +4,9 @@
 
 use abscissa_core::{Command, Options, Runnable, status_info, status_ok};
 use std::{path::PathBuf};
-use super::{files_cmd, init_cmd, keygen_cmd, manifest_cmd, zero_cmd};
-
+use super::{files_cmd, keygen_cmd, manifest_cmd, zero_cmd};
+use ol_cli::commands::init_cmd;
+use crate::entrypoint;
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ValWizardCmd {
@@ -30,6 +31,8 @@ pub struct ValWizardCmd {
 impl Runnable for ValWizardCmd {
     /// Print version message
     fn run(&self) {
+        let entry_args = entrypoint::get_args();
+
         // Keygen
         if self.keygen {
             keygen_cmd::generate_keys();
@@ -43,14 +46,22 @@ impl Runnable for ValWizardCmd {
 
         // Initialize Miner
         // Need to assign miner_config, because reading from app_config can only be done at startup, and it will be blank at the time of wizard executing.
-        let miner_config = init_cmd::initialize_miner(authkey, account, &self.path).unwrap();
+        let miner_config = init_cmd::initialize_miner(
+          authkey,
+          account,
+          &self.path,
+          entry_args.swarm_path
+        ).unwrap();
         status_ok!("\nMiner config written", "\n...........................\n");
 
         // Initialize Validator Keys
         init_cmd::initialize_validator(&wallet, &miner_config).unwrap();
         status_ok!("\nKey file written", "\n...........................\n");
 
+        // fetching the genesis files from genesis-archive
+        // unless we are skipping it, or unless we intend to rebuild.
         if !self.skip_fetch_genesis {
+            // if we are rebuilding genesis then we should skip fetching files
             if !self.rebuild_genesis  {
                 files_cmd::get_files(
                     miner_config.workspace.node_home.clone(),

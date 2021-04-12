@@ -238,7 +238,6 @@ The runtime always runs this before executing the transactions in a block.
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_operating">LibraTimestamp::assert_operating</a>();
     // Operational constraint: can only be invoked by the VM.
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
-
     // Authorization
     <b>assert</b>(
         proposer == <a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>() || <a href="LibraSystem.md#0x1_LibraSystem_is_validator">LibraSystem::is_validator</a>(proposer),
@@ -246,10 +245,13 @@ The runtime always runs this before executing the transactions in a block.
     );
     //////// 0L ////////
     // increment stats
+
     <a href="Stats.md#0x1_Stats_process_set_votes">Stats::process_set_votes</a>(vm, &previous_block_votes);
+
     <a href="Stats.md#0x1_Stats_inc_prop">Stats::inc_prop</a>(vm, *&proposer);
 
     <b>if</b> (<a href="AutoPay.md#0x1_AutoPay_tick">AutoPay::tick</a>(vm)){
+
         <a href="AutoPay.md#0x1_AutoPay_process_autopay">AutoPay::process_autopay</a>(vm);
     };
 
@@ -271,9 +273,11 @@ The runtime always runs this before executing the transactions in a block.
      //////// 0L ////////
     // reconfigure
     <b>if</b> (<a href="Epoch.md#0x1_Epoch_epoch_finished">Epoch::epoch_finished</a>()) {
+
       // TODO: We don't need <b>to</b> pass block height <b>to</b> ReconfigureOL. It should <b>use</b> the <a href="LibraBlock.md#0x1_LibraBlock_BlockMetadata">BlockMetadata</a>. But there's a circular reference there when we try.
       <a href="Reconfigure.md#0x1_Reconfigure_reconfigure">Reconfigure::reconfigure</a>(vm, <a href="LibraBlock.md#0x1_LibraBlock_get_current_block_height">get_current_block_height</a>());
-    }
+    };
+
 }
 </code></pre>
 

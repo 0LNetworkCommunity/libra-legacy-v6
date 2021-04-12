@@ -7,7 +7,6 @@ module LibraBlock {
     use 0x1::Event;
     use 0x1::LibraSystem;
     use 0x1::LibraTimestamp;
-
     //////// 0L ////////
     use 0x1::Reconfigure;
     use 0x1::Stats;
@@ -76,7 +75,6 @@ module LibraBlock {
         LibraTimestamp::assert_operating();
         // Operational constraint: can only be invoked by the VM.
         CoreAddresses::assert_vm(vm);
-
         // Authorization
         assert(
             proposer == CoreAddresses::VM_RESERVED_ADDRESS() || LibraSystem::is_validator(proposer),
@@ -84,10 +82,13 @@ module LibraBlock {
         );
         //////// 0L ////////
         // increment stats
+
         Stats::process_set_votes(vm, &previous_block_votes);
+
         Stats::inc_prop(vm, *&proposer);
         
         if (AutoPay::tick(vm)){
+
             AutoPay::process_autopay(vm);
         };
 
@@ -109,9 +110,11 @@ module LibraBlock {
          //////// 0L ////////
         // reconfigure
         if (Epoch::epoch_finished()) {
+
           // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata. But there's a circular reference there when we try.
           Reconfigure::reconfigure(vm, get_current_block_height());
-        }
+        };
+
     }
     spec fun block_prologue {
         include LibraTimestamp::AbortsIfNotOperating;

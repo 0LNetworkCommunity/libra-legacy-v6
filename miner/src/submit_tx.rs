@@ -137,6 +137,7 @@ pub fn wait_for_tx(
                 },
                 _ => {
                     print!(".");
+                    // TODO: exit after no tx confirmation in x minutes.
                 }
             }
 
