@@ -1,13 +1,13 @@
 //! Formatters for libra account creation
 use crate::block::Block;
 use libra_crypto::x25519::PublicKey;
-use libra_types::account_address::AccountAddress;
+use libra_types::{account_address::AccountAddress, transaction::SignedTransaction};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use hex::{decode, encode};
 use std::{fs::File, io::Write, path::PathBuf};
 use libra_network_address::{NetworkAddress, encrypted::{TEST_SHARED_VAL_NETADDR_KEY, TEST_SHARED_VAL_NETADDR_KEY_VERSION}};
 use libra_genesis_tool::keyscheme::KeyScheme;
-
+use ol_util::autopay::Instruction;
 
 #[derive(Serialize, Deserialize, Debug)]
 /// Configuration data necessary to initialize a validator.
@@ -34,6 +34,10 @@ pub struct ValConfigs {
     pub op_fullnode_network_addresses_string: NetworkAddress,
     /// Human readable name of account
     pub op_human_name: String,
+    /// autopay configs
+    pub autopay_batch: Option<Vec<Instruction>>,
+    /// autopay configs
+    pub autopay_signed: Option<Vec<SignedTransaction>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -65,6 +69,7 @@ impl ValConfigs {
         block: Block,
         keys: KeyScheme,
         ip_address: String,
+        autopay_batch: Option<Vec<Instruction>>
     ) -> Self {
         // let keys = KeyScheme::new_from_mnemonic(mnemonic_string);
         let owner_address = keys.child_0_owner.get_address().to_string();
@@ -100,6 +105,8 @@ impl ValConfigs {
         ).unwrap();
         let fn_addr_obj = fn_addr_obj.append_prod_protos(fn_pubkey, 0);
 
+        let autopay_signed = autopay_batch_cmd::make_vec_scripts(autopay_batch);
+        let 
         Self {
             /// Block zero of the onboarded miner
             block_zero: block,
@@ -111,6 +118,8 @@ impl ValConfigs {
             op_fullnode_network_addresses: lcs::to_bytes(&fn_addr_obj).unwrap(),
             op_fullnode_network_addresses_string: fn_addr_obj.to_owned(),
             op_human_name: format!("{}-oper", owner_address),
+            autopay_batch,
+            autopay_signed,
         }
     }
     /// Creates the json file needed for onchain account creation - validator
@@ -187,7 +196,7 @@ fn test_parse_init_file() {
 fn val_config_ip_address() {
     use libra_network_address::encrypted::EncNetworkAddress;
 
-    let block =  Block {
+    let block = Block {
         height: 0u64,
         elapsed_secs: 0u64,
         preimage: Vec::new(),

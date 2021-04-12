@@ -2,7 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::submit_tx::{get_tx_params, maybe_submit};
+use crate::{entrypoint, submit_tx::{get_tx_params, maybe_submit}};
 use abscissa_core::{Command, Options, Runnable};
 use libra_types::{account_address::AccountAddress, transaction::Script};
 use std::{fs, path::PathBuf};
@@ -109,15 +109,15 @@ pub fn create_validator_script(account_json_path: &PathBuf) -> Script {
 
 impl Runnable for CreateValidatorCmd {
     fn run(&self) {
+        let entry_args = entrypoint::get_args();
         let account_json = &self.account_file;
         let tx_params = get_tx_params().unwrap();
 
-        maybe_submit(create_validator_script(account_json), &tx_params).unwrap();
-        // match submit_tx(&tx_params, create_user_account_script(account_json)) {
-        //     Err(err) => println!("{:?}", err),
-        //     Ok(res) => {
-        //         eval_tx_status(res);
-        //     }
-        // }
+        maybe_submit(
+          create_validator_script(account_json),
+          &tx_params,
+          entry_args.no_send,
+          entry_args.save_path
+        ).unwrap();
     }
 }

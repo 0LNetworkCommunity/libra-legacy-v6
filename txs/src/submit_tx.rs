@@ -53,16 +53,16 @@ pub struct TxParams {
 }
 
 /// wrapper which checks entry point arguments before submitting tx, possibly saving the tx script
-pub fn maybe_submit(script: Script, tx_params: &TxParams) -> Result<(), Error> {
-    let entry_args = entrypoint::get_args();
+pub fn maybe_submit(script: Script, tx_params: &TxParams, no_send: bool, save_path: Option<PathBuf>) -> Result<(), Error> {
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
     let (mut account_data, txn) = stage(script, tx_params, &mut client);
-    if let Some(path) = entry_args.save_path {
+    if let Some(path) = save_path {
+      // TODO: This will not work with batch operations like autopay_batch, last one will overwrite the file.
       save_tx(txn.clone(), path);
     }
 
-    if !entry_args.no_send {
+    if !no_send {
       let res = submit_tx(
         client,
         txn,
@@ -72,6 +72,14 @@ pub fn maybe_submit(script: Script, tx_params: &TxParams) -> Result<(), Error> {
     }
 
     Ok(())
+}
+pub fn batch_wrapper(batch: Vec<Script>, tx_params: &TxParams, no_send: bool, save_path: Option<PathBuf>) {
+  batch.into_iter()
+  .enumerate()
+  .map(|(i, s)|{ 
+    maybe_submit(s, tx_params, no_send, save_path.clone())
+    // TODO: handle saving of batches to file.
+  });
 }
 
 fn stage(script: Script, tx_params: &TxParams, client: &mut LibraClient) -> (AccountData, SignedTransaction) {

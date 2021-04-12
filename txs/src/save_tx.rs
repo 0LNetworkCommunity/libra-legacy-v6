@@ -14,6 +14,13 @@ pub fn save_tx(txn: SignedTransaction, path: PathBuf) {
   file.write_all(&serialize_txn(txn)).expect("Could not write json");
 }
 
+pub fn save_batch_tx(txn: Vec<SignedTransaction>, path: PathBuf) {
+  unimplemented!();
+  // let mut file = fs::File::create(path).unwrap();
+  // file.write_all(&serialize_txn(txn)).expect("Could not write json");
+}
+
+
 /// return the bytes of a signed transaction
 pub fn serialize_txn(txn: SignedTransaction) -> Vec<u8> {
   serde_json::to_vec(&txn).expect("could not serialize tx to json")
