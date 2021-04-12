@@ -11,7 +11,7 @@ use ol_util::autopay::{self, Instruction};
 use reqwest::Url;
 use std::{fs::{self, File}, io::Write, path::PathBuf};
 use txs::{commands::autopay_batch_cmd, submit_tx};
-
+use serde_json::json;
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ValWizardCmd {
@@ -62,8 +62,8 @@ impl Runnable for ValWizardCmd {
     status_ok!("\nMiner config written", "\n...........................\n");
 
     if let Some(url) = &self.template_url {
-      let template_path = save_template(url, home_path);
-      let (epoch, wp) = get_epoch_info(template_path);
+      save_template(&url.join("account.json").unwrap(), home_path);
+      let (epoch, wp) = get_epoch_info(&url.join("epoch.json").unwrap());
 
       miner_config.chain_info.base_epoch = epoch;
       miner_config.chain_info.base_waypoint = wp;      
@@ -169,15 +169,14 @@ fn save_template(url: &Url, home_path: &PathBuf) -> PathBuf {
       g_path
 }
 
-fn get_epoch_info(path_to_template: PathBuf) -> (Option<u64>, Option<Waypoint>) {
-  let file = fs::File::open(&path_to_template)
-    .expect(&format!("{:?} should open read only", &path_to_template));
-  let json: serde_json::Value = serde_json::from_reader(file)
-    .expect(&format!("{:?} should be proper JSON", &path_to_template));
+fn get_epoch_info(url: &Url) -> (Option<u64>, Option<Waypoint>) {
+  let g_res = reqwest::blocking::get(&url.to_string());
+  let string = g_res.unwrap().text().unwrap();
+  let json = json!(string);
   let epoch = json.get("epoch").unwrap().as_u64()
-    .expect(&format!("{:?} should have epoch number", &path_to_template));
+    .expect("should have epoch number");
   let waypoint = json.get("waypoint").unwrap().as_str()
-    .expect(&format!("{:?} should have epoch number", &path_to_template));
+    .expect("should have epoch number");
 
   (Some(epoch), waypoint.parse().ok())  
 }
