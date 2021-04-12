@@ -35,7 +35,7 @@ pub struct ValConfigs {
     /// Human readable name of account
     pub op_human_name: String,
     /// autopay configs
-    pub autopay_batch: Option<Vec<Instruction>>,
+    pub autopay_instructions: Option<Vec<Instruction>>,
     /// autopay configs
     pub autopay_signed: Option<Vec<SignedTransaction>>,
 }
@@ -69,7 +69,7 @@ impl ValConfigs {
         block: Block,
         keys: KeyScheme,
         ip_address: String,
-        autopay_batch: Option<Vec<Instruction>>,
+        autopay_instructions: Option<Vec<Instruction>>,
         autopay_signed: Option<Vec<SignedTransaction>>,
     ) -> Self {
         // let keys = KeyScheme::new_from_mnemonic(mnemonic_string);
@@ -116,7 +116,7 @@ impl ValConfigs {
             op_fullnode_network_addresses: lcs::to_bytes(&fn_addr_obj).unwrap(),
             op_fullnode_network_addresses_string: fn_addr_obj.to_owned(),
             op_human_name: format!("{}-oper", owner_address),
-            autopay_batch,
+            autopay_instructions,
             autopay_signed,
         }
     }

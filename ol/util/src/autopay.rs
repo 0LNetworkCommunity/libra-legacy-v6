@@ -30,7 +30,7 @@ pub fn get_instructions(autopay_batch_file: &PathBuf) -> Vec<Instruction> {
   ));
   let json: serde_json::Value = serde_json::from_reader(file).expect("cannot parse JSON");
   let inst = json
-    .get("instructions")
+    .get("autopay_instructions")
     .expect("file should have array of instructions");
   let batch = inst.as_array().unwrap().into_iter();
 
@@ -45,7 +45,7 @@ pub fn get_instructions(autopay_batch_file: &PathBuf) -> Vec<Instruction> {
           .to_owned()
           .parse()
           .unwrap(),
-        percentage: inst["percent_int"].as_u64().unwrap(),
+        percentage: inst["percentage"].as_u64().unwrap(),
         end_epoch: inst["end_epoch"].as_u64().unwrap(),
         duration_epochs: inst["duration_epochs"].as_u64(),
       }

@@ -14,6 +14,8 @@ use num_format::{Locale, ToFormattedString};
 pub enum QueryType {
   /// Account balance
   Balance,
+  /// Epoch and waypoint
+  Epoch,
   /// Network block height
   BlockHeight,
   /// All account resources
@@ -38,6 +40,11 @@ pub fn get(query_type: QueryType, account: AccountAddress) -> String {
     BlockHeight => {
       let (chain, _) = crate::chain_info::fetch_chain_info();
       chain.unwrap().height.to_string()
+    },
+    Epoch => {
+      let (chain, _) = crate::chain_info::fetch_chain_info();
+      
+      format!("{} - WAYPOINT: {}", chain.clone().unwrap().epoch.to_string(), &chain.unwrap().waypoint.unwrap().to_string())
     },
     SyncDelay => {
       Metadata::compare_from_config().to_string()

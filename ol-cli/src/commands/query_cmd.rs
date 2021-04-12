@@ -27,6 +27,9 @@ pub struct QueryCmd {
     
     #[options(help = "resources")]
     resources: bool,
+
+    #[options(help = "epoch and waypoint")]
+    epoch: bool,
 }
 
 impl Runnable for QueryCmd {
@@ -57,6 +60,10 @@ impl Runnable for QueryCmd {
         else if self.resources {
             info = get(QueryType::Resources, account);
             display = "RESOURCES";
+        }
+        else if self.resources {
+            info = get(QueryType::Epoch, account);
+            display = "EPOCH";
         }
 
         status_info!(display, format!("{}", info));

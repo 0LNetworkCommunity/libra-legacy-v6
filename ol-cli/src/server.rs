@@ -8,7 +8,7 @@ use std::time::Duration;
 use std::fs;
 use tokio::{time::interval};
 use warp::{sse::ServerSentEvent, Filter};
-
+use serde_json::json;
 // TODO: does this need to be a separate function?
 // create server-sent event
 fn sse_check(info: node_health::Items) -> Result<impl ServerSentEvent, Infallible> {
@@ -65,11 +65,26 @@ pub async fn start_server() {
       warp::reply::json(&vals)
      }));
 
-    let configs = warp::path("configs.json")
+    let account_template = warp::path("account.json")
     .and(warp::get()
     .map(|| { 
       fs::read_to_string("/root/.0L/account.json").unwrap()
+      // let obj: Value = serde_json::from_str(&string);
+      
      }));
+
+    let epoch = warp::path("epoch.json")
+    .and(warp::get()
+    .map(|| { 
+      let ci = crate::chain_info::read_chain_info_cache();
+      let json = json!({
+        "epoch": ci.epoch.to_string(),
+        "waypoint": ci.waypoint.unwrap().to_string()
+      });
+      json.to_string()
+    }));
+
+
     // //GET account/ (the json api)
     // let account = warp::path("account").and(warp::get()).map(|| {
     //     // create server event source
@@ -97,6 +112,6 @@ pub async fn start_server() {
     //GET /
     let home = warp::fs::dir("/root/libra/ol-cli/web-monitor/public/");
 
-    warp::serve(home.or(check).or(chain).or(vals_sse).or(vals).or(configs))
+    warp::serve(home.or(check).or(chain).or(vals_sse).or(vals).or(account_template).or(epoch))
         .run(([0, 0, 0, 0], 3030)).await;
 }

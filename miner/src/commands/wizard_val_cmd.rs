@@ -31,7 +31,7 @@ pub struct ValWizardCmd {
   skip_fetch_genesis: bool,
   #[options(help = "skip mining a block zero")]
   skip_mining: bool,
-  #[options(help = "template account.json to configure from")]
+  #[options(short = "t", help = "template account.json to configure from")]
   template_url: Option<Url>,
   #[options(help = "template account.json to configure from")]
   autopay_file: Option<PathBuf>,
