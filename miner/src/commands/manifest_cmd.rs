@@ -7,6 +7,7 @@ use crate::{account, block::{build_block}, config::MinerConfig, delay};
 use libra_genesis_tool::keyscheme::KeyScheme;
 
 use abscissa_core::{Command, Options, Runnable};
+use libra_types::transaction::SignedTransaction;
 use libra_wallet::WalletLibrary;
 use ol_util::autopay::Instruction;
 use std::path::PathBuf;
@@ -36,8 +37,8 @@ impl Runnable for ManifestCmd {
             check(path);
         } else {
             let (_, _, wallet) = keygen::account_from_prompt();
-
-            write_manifest(&Some(path), wallet, None, None);
+            // TODO, include autopay template parsing
+            write_manifest(&Some(path), wallet, None, None, None);
         }
     }
 }

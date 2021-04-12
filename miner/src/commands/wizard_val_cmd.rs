@@ -5,12 +5,12 @@
 use super::{files_cmd, keygen_cmd, manifest_cmd, zero_cmd};
 use crate::entrypoint;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
-use libra_types::transaction::SignedTransaction;
+use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use ol_cli::{commands::init_cmd, config::OlCliConfig};
 use ol_util::autopay::{self, Instruction};
 use reqwest::Url;
 use std::{fs::{self, File}, io::Write, path::PathBuf};
-use txs::commands::autopay_batch_cmd;
+use txs::{commands::autopay_batch_cmd, submit_tx};
 
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -55,7 +55,7 @@ impl Runnable for ValWizardCmd {
 
     // Initialize Miner
     // Need to assign miner_config, because reading from app_config can only be done at startup, and it will be blank at the time of wizard executing.
-    let miner_config =
+    let mut miner_config =
       init_cmd::initialize_miner(authkey, account, &self.path, entry_args.swarm_path)
         .unwrap();
     let home_path = &miner_config.workspace.node_home;
@@ -63,8 +63,10 @@ impl Runnable for ValWizardCmd {
 
     if let Some(url) = &self.template_url {
       let template_path = save_template(url, home_path);
-      (miner_config.chain_info.base_epoch, miner_config.chain_info.base_waypoint) = get_epoch_info(template_path);
-      
+      let (epoch, wp) = get_epoch_info(template_path);
+
+      miner_config.chain_info.base_epoch = epoch;
+      miner_config.chain_info.base_waypoint = wp;      
       // get autopay
       status_ok!("\nTemplate saved", "\n...........................\n");
     }
@@ -105,7 +107,8 @@ impl Runnable for ValWizardCmd {
       );
     }
 
-    let (autopay_batch, autopay_signed) = get_autopay_batch(&self.template_url, &self.autopay_file, home_path);
+    /// TODO: simplify signature
+    let (autopay_batch, autopay_signed) = get_autopay_batch(&self.template_url, &self.autopay_file, home_path, miner_config);
     // Write Manifest
     manifest_cmd::write_manifest(
       &self.path,
@@ -137,9 +140,11 @@ fn get_autopay_batch(
     "autopay.json"
   };
 
-  let starting_epoch = miner_config.profile.starting_epoch();
+  let starting_epoch = miner_config.chain_info.base_epoch.unwrap();
   let instr_vec = autopay::get_instructions(&home_path.join(file_name));
-  let txn_vec = autopay_batch_cmd::process_instructions(instr_vec, starting_epoch);
+  let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone(), starting_epoch);
+  let tx_params = submit_tx::get_tx_params_from_toml(miner_config).unwrap();
+  let txn_vec= autopay_batch_cmd::sign_instructions(script_vec, 0, &tx_params);
   (
     Some(instr_vec),
     Some(txn_vec)
@@ -157,14 +162,14 @@ fn save_template(url: &Url, home_path: &PathBuf) -> PathBuf {
 }
 
 fn get_epoch_info(path_to_template: PathBuf) -> (Option<u64>, Option<Waypoint>) {
-  let file = fs::File::open(path_to_template)
-    .expect(format!("{:?} should open read only", path_to_template));
+  let file = fs::File::open(&path_to_template)
+    .expect(&format!("{:?} should open read only", &path_to_template));
   let json: serde_json::Value = serde_json::from_reader(file)
-    .expect(format!("{:?} should be proper JSON", path_to_template));
-  let epoch = json.as_u64("epoch")
-    .expect(format!("{:?} should have epoch number", path_to_template));
-  let waypoint = json.as_str("waypoint")
-    .expect(format!("{:?} should have epoch number", path_to_template));
+    .expect(&format!("{:?} should be proper JSON", &path_to_template));
+  let epoch = json.get("epoch").unwrap().as_u64()
+    .expect(&format!("{:?} should have epoch number", &path_to_template));
+  let waypoint = json.get("waypoint").unwrap().as_str()
+    .expect(&format!("{:?} should have epoch number", &path_to_template));
 
-  (Some(epoch), Some(waypoint.parse()))  
+  (Some(epoch), waypoint.parse().ok())  
 }

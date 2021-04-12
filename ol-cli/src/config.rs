@@ -214,7 +214,7 @@ pub struct ChainInfo {
   pub chain_id: String,
 
   /// Epoch from which the node started syncing
-  pub base_epoch: Option<U64>,
+  pub base_epoch: Option<u64>,
 
   /// Waypoint from which the node started syncing
   pub base_waypoint: Option<Waypoint>,
@@ -225,6 +225,7 @@ impl Default for ChainInfo {
   fn default() -> Self {
     Self {
       chain_id: "experimental".to_owned(),
+      base_epoch: Some(0),
       // Mock Waypoint. Miner complains without.
       base_waypoint: Waypoint::from_str(BASE_WAYPOINT).ok(),
     }
