@@ -78,7 +78,7 @@ pub async fn start_server() {
     .map(|| { 
       let ci = crate::chain_info::read_chain_info_cache();
       let json = json!({
-        "epoch": ci.epoch.to_string(),
+        "epoch": ci.epoch,
         "waypoint": ci.waypoint.unwrap().to_string()
       });
       json.to_string()
