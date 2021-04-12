@@ -22,6 +22,7 @@ use libra_types::{
   transaction::{authenticator::AuthenticationKey, Script, SignedTransaction},
 };
 
+use libra_wallet::WalletLibrary;
 use ol_util;
 use reqwest::Url;
 use std::{
@@ -156,7 +157,7 @@ pub fn get_tx_params() -> Result<TxParams, Error> {
     get_tx_params_from_swarm(swarm_path.clone().expect("needs a valid swarm temp dir")).unwrap()
   } else {
     // Get from 0L.toml e.g. ~/.0L/0L.toml, or use Profile::default()
-    get_tx_params_from_toml(app_config.clone()).unwrap()
+    get_tx_params_from_toml(app_config.clone(), None).unwrap()
   };
 
   // Get/override some params from entrypoint command line
@@ -199,10 +200,14 @@ pub fn get_tx_params_from_swarm(swarm_path: PathBuf) -> Result<TxParams, Error> 
 }
 
 /// Gets transaction params from the 0L project root.
-pub fn get_tx_params_from_toml(config: TxsConfig) -> Result<TxParams, Error> {
+pub fn get_tx_params_from_toml(config: TxsConfig, wallet_opt: Option<&WalletLibrary>) -> Result<TxParams, Error> {
   let url = config.profile.default_node.clone().unwrap();
-
-  let (auth_key, address, wallet) = keygen::account_from_prompt();
+  let (auth_key, address, wallet) = if let Some(wallet) = wallet_opt{
+    keygen::get_account_from_wallet(wallet)
+  } else {
+    keygen::account_from_prompt()
+  };
+  
   let keys = KeyScheme::new_from_mnemonic(wallet.mnemonic());
   let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
 

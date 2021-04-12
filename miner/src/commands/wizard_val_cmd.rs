@@ -6,12 +6,13 @@ use super::{files_cmd, keygen_cmd, manifest_cmd, zero_cmd};
 use crate::entrypoint;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
+use libra_wallet::WalletLibrary;
 use ol_cli::{commands::init_cmd, config::OlCliConfig};
 use ol_util::autopay::{self, Instruction};
 use reqwest::Url;
-use std::{fs::{self, File}, io::Write, path::PathBuf};
+use std::{fs::File, io::Write, path::PathBuf};
 use txs::{commands::autopay_batch_cmd, submit_tx};
-use serde_json::{Value, json};
+use serde_json::Value;
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ValWizardCmd {
@@ -80,6 +81,7 @@ impl Runnable for ValWizardCmd {
       &self.autopay_file, 
       home_path,
       &miner_config,
+      &wallet,
     );
 
     // Initialize Validator Keys
@@ -141,6 +143,7 @@ fn get_autopay_batch(
   file_path: &Option<PathBuf>,
   home_path: &PathBuf,
   miner_config: &OlCliConfig,
+  wallet: &WalletLibrary,
 ) -> (Option<Vec<Instruction>>, Option<Vec<SignedTransaction>>) {
   let file_name = if template.is_some() {
     "template.json"
@@ -153,7 +156,7 @@ fn get_autopay_batch(
   let starting_epoch = miner_config.chain_info.base_epoch.unwrap();
   let instr_vec = autopay::get_instructions(&home_path.join(file_name));
   let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone(), starting_epoch);
-  let tx_params = submit_tx::get_tx_params_from_toml(miner_config.to_owned()).unwrap();
+  let tx_params = submit_tx::get_tx_params_from_toml(miner_config.to_owned(), Some(wallet)).unwrap();
   let txn_vec= autopay_batch_cmd::sign_instructions(script_vec, 0, &tx_params);
   (
     Some(instr_vec),
@@ -174,9 +177,7 @@ fn save_template(url: &Url, home_path: &PathBuf) -> PathBuf {
 fn get_epoch_info(url: &Url) -> (Option<u64>, Option<Waypoint>) {
   let g_res = reqwest::blocking::get(&url.to_string());
   let string = g_res.unwrap().text().unwrap();
-  let json: Value = string.parse().unwrap();
-  dbg!(&json);
-  
+  let json: Value = string.parse().unwrap();  
   let epoch = json.get("epoch").unwrap().as_u64()
     .expect("should have epoch number");
   let waypoint = json.get("waypoint").unwrap().as_str()
