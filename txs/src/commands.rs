@@ -14,7 +14,7 @@ mod create_account_cmd;
 mod create_validator_cmd;
 mod oracle_upgrade_cmd;
 mod version_cmd;
-mod autopay_batch_cmd;
+pub mod autopay_batch_cmd;
 mod demo_cmd;
 mod relay_cmd;
 

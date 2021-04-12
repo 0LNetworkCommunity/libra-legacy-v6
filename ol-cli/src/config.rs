@@ -213,7 +213,10 @@ pub struct ChainInfo {
   /// Chain that this work is being committed to
   pub chain_id: String,
 
-  /// Waypoint for last epoch which the node is syncing from.
+  /// Epoch from which the node started syncing
+  pub base_epoch: Option<U64>,
+
+  /// Waypoint from which the node started syncing
   pub base_waypoint: Option<Waypoint>,
 }
 

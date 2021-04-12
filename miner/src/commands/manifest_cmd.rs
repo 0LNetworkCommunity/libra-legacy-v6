@@ -46,7 +46,8 @@ pub fn write_manifest(
   path: &Option<PathBuf>,
   wallet: WalletLibrary,
   wizard_config: Option<MinerConfig>,
-  autopay_batch: Option<Vec<Instruction>>
+  autopay_batch: Option<Vec<Instruction>>,
+  autopay_signed: Option<Vec<SignedTransaction>>,
 ) {
     let cfg = if wizard_config.is_some() { wizard_config.unwrap() }
     else { app_config().clone() };
@@ -63,7 +64,8 @@ pub fn write_manifest(
         block,
         keys,  
         cfg.profile.ip.to_string(),
-        autopay_batch
+        autopay_batch,
+        autopay_signed,
     ).create_manifest(miner_home);
 }
 

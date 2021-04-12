@@ -69,7 +69,8 @@ impl ValConfigs {
         block: Block,
         keys: KeyScheme,
         ip_address: String,
-        autopay_batch: Option<Vec<Instruction>>
+        autopay_batch: Option<Vec<Instruction>>,
+        autopay_signed: Option<Vec<SignedTransaction>>,
     ) -> Self {
         // let keys = KeyScheme::new_from_mnemonic(mnemonic_string);
         let owner_address = keys.child_0_owner.get_address().to_string();
@@ -104,9 +105,6 @@ impl ValConfigs {
             .to_bytes()
         ).unwrap();
         let fn_addr_obj = fn_addr_obj.append_prod_protos(fn_pubkey, 0);
-
-        let autopay_signed = autopay_batch_cmd::make_vec_scripts(autopay_batch);
-        let 
         Self {
             /// Block zero of the onboarded miner
             block_zero: block,

@@ -17,20 +17,20 @@ pub struct AutopayBatchCmd {
     autopay_batch_file: PathBuf,
 }
 
-fn get_epoch(tx_params: &TxParams) -> u64 {
-    let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+// fn get_epoch(tx_params: &TxParams) -> u64 {
+//     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
-    let (blob, _version) = client.get_account_state_blob(AccountAddress::ZERO).unwrap();
-    if let Some(account_blob) = blob {
-        let account_state = AccountState::try_from(&account_blob).unwrap();
-        return account_state
-            .get_configuration_resource()
-            .unwrap()
-            .unwrap()
-            .epoch();
-    }
-    0
-}
+//     let (blob, _version) = client.get_account_state_blob(AccountAddress::ZERO).unwrap();
+//     if let Some(account_blob) = blob {
+//         let account_state = AccountState::try_from(&account_blob).unwrap();
+//         return account_state
+//             .get_configuration_resource()
+//             .unwrap()
+//             .unwrap()
+//             .epoch();
+//     }
+//     0
+// }
 
 impl Runnable for AutopayBatchCmd {
     fn run(&self) {
@@ -40,19 +40,17 @@ impl Runnable for AutopayBatchCmd {
 
         let tx_params = get_tx_params().unwrap();
 
-        let epoch = get_epoch(&tx_params);
+        let epoch = crate::epoch::get_epoch(&tx_params);
         println!("The current epoch is: {}", epoch);
         let instructions = get_instructions(&self.autopay_batch_file);
         let scripts = process_instructions(instructions, epoch);
         batch_wrapper(scripts, &tx_params, entry_args.no_send, entry_args.save_path)
-        // TODO: Check instruction IDs are sequential.
-
 
     }
 }
 
 pub fn process_instructions(instructions: Vec<Instruction>, current_epoch: u64) -> Vec<Script> {
-        // let instructions = get_instructions(autopay_batch_file);
+        // TODO: Check instruction IDs are sequential.
         instructions.into_iter().filter_map(|i| {
             let warning = format!(
                 "Instruction {uid}:\nSend {percentage}% of your balance every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
@@ -78,6 +76,7 @@ pub fn process_instructions(instructions: Vec<Instruction>, current_epoch: u64) 
         .collect()
 }
  
+/// return a vec of signed transactions
 pub fn sign_instructions(scripts: Vec<Script>, starting_sequence_num: u64, tx_params: &TxParams) -> Vec<SignedTransaction>{
   scripts.into_iter()
   .enumerate()

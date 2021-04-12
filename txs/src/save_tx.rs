@@ -38,14 +38,14 @@ pub fn read_tx_from_file(path: PathBuf) -> Result<SignedTransaction, Error> {
 }
 #[test]
 fn test_sign_tx() {
-  use libra_types::account_address::AccountAddress;
+  use libra_types::{account_address::AccountAddress, chain_id::ChainId};
   use crate::submit_tx::TxParams;
   use crate::sign_tx::sign_tx;
 
   let script = transaction_builder::encode_demo_e2e_script(42);
 
   let signed = sign_tx(
-    script,
+    &script,
     &TxParams::test_fixtures(),
     1,
     ChainId::new(1)
