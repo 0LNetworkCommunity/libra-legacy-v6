@@ -14,7 +14,8 @@ pub fn save_tx(txn: SignedTransaction, path: PathBuf) {
   file.write_all(&serialize_txn(txn)).expect("Could not write json");
 }
 
-pub fn save_batch_tx(txn: Vec<SignedTransaction>, path: PathBuf) {
+/// TODO: save a batch of txs in one file
+pub fn save_batch_tx(_txn: Vec<SignedTransaction>, _path: PathBuf) {
   unimplemented!();
   // let mut file = fs::File::create(path).unwrap();
   // file.write_all(&serialize_txn(txn)).expect("Could not write json");

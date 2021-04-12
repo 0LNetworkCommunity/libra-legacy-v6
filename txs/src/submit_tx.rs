@@ -53,7 +53,7 @@ pub struct TxParams {
 }
 
 /// wrapper which checks entry point arguments before submitting tx, possibly saving the tx script
-pub fn maybe_submit(script: Script, tx_params: &TxParams, no_send: bool, save_path: Option<PathBuf>) -> Result<(), Error> {
+pub fn maybe_submit(script: Script, tx_params: &TxParams, no_send: bool, save_path: Option<PathBuf>) -> Result<SignedTransaction, Error> {
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
     let (mut account_data, txn) = stage(script, tx_params, &mut client);
@@ -62,22 +62,27 @@ pub fn maybe_submit(script: Script, tx_params: &TxParams, no_send: bool, save_pa
       save_tx(txn.clone(), path);
     }
 
-    if !no_send {
-      let res = submit_tx(
-        client,
-        txn,
-        &mut account_data,
-      ).unwrap();
-      return Ok(eval_tx_status(res).expect("transaction failed"))
+    if no_send {return Ok(txn)}
+
+    let res = submit_tx(
+      client,
+      txn.clone(),
+      &mut account_data,
+    ).unwrap();
+    match eval_tx_status(res) {
+        Ok(_) => Ok(txn),
+        Err(e) => Err(e)
     }
 
-    Ok(())
 }
+/// convenience for wrapping multiple transactions
 pub fn batch_wrapper(batch: Vec<Script>, tx_params: &TxParams, no_send: bool, save_path: Option<PathBuf>) {
   batch.into_iter()
   .enumerate()
-  .map(|(i, s)|{ 
-    maybe_submit(s, tx_params, no_send, save_path.clone())
+  .for_each(|(i, s)|{ 
+    // TODO: format path for batch scripts
+    let new_path = save_path.clone().unwrap().join(i.to_string());
+    maybe_submit(s, tx_params, no_send, Some(new_path)).unwrap();
     // TODO: handle saving of batches to file.
   });
 }

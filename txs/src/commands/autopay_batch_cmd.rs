@@ -4,7 +4,7 @@
 
 use abscissa_core::{Command, Options, Runnable};
 use cli::libra_client::LibraClient;
-use libra_types::{account_address::AccountAddress, account_state::AccountState, chain_id::ChainId, transaction::{Script, SignedTransaction}};
+use libra_types::{account_address::AccountAddress, account_state::AccountState, transaction::{Script, SignedTransaction}};
 
 use crate::{entrypoint, sign_tx::sign_tx, submit_tx::{get_tx_params, batch_wrapper, TxParams}};
 use dialoguer::Confirm;
