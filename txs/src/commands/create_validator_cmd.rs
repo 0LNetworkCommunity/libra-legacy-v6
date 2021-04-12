@@ -5,13 +5,16 @@
 use crate::{entrypoint, submit_tx::{get_tx_params, maybe_submit}};
 use abscissa_core::{Command, Options, Runnable};
 use libra_types::{account_address::AccountAddress, transaction::Script};
-use std::{fs, path::PathBuf};
+use reqwest::Url;
+use std::{fs::{self, File}, io::Write, path::PathBuf};
 
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct CreateValidatorCmd {
     #[options(short = "f", help = "path of account.json")]
     account_file: PathBuf,
+    #[options(short = "u", help = "onboard from URL")]
+    url: Url,
 }
 
 pub fn create_validator_script(account_json_path: &PathBuf) -> Script {
@@ -107,10 +110,24 @@ pub fn create_validator_script(account_json_path: &PathBuf) -> Script {
     // transaction_builder::encode_create_user_account_script(pre_hex, proof_hex)
 }
 
+pub fn fetch_from_web(url: &Url, path: &PathBuf) -> PathBuf {
+  let g_res = reqwest::blocking::get(&url.to_string());
+  let g_path = path.join("onboarding.json");
+  let mut g_file = File::create(&g_path).expect("couldn't create file");
+  let g_content = g_res.unwrap().bytes().unwrap().to_vec(); //.text().unwrap();
+  g_file.write_all(g_content.as_slice()).unwrap();
+  g_path
+}
+
 impl Runnable for CreateValidatorCmd {
     fn run(&self) {
         let entry_args = entrypoint::get_args();
-        let account_json = &self.account_file;
+        let account_json = if &self.account_file.is_some(){
+          &self.account_file
+        } else if &self.url {
+          path = fetch_from_web(&self.url);
+        };
+
         let tx_params = get_tx_params().unwrap();
 
         maybe_submit(

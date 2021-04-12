@@ -165,13 +165,13 @@ fn get_autopay_batch(
 }
 
 
-fn save_template(url: &Url, home_path: &PathBuf) -> PathBuf {
+pub fn save_template(url: &Url, home_path: &PathBuf) -> PathBuf {
   let g_res = reqwest::blocking::get(&url.to_string());
-      let g_path = home_path.join("template.json");
-      let mut g_file = File::create(&g_path).expect("couldn't create file");
-      let g_content = g_res.unwrap().bytes().unwrap().to_vec(); //.text().unwrap();
-      g_file.write_all(g_content.as_slice()).unwrap();
-      g_path
+  let g_path = home_path.join("template.json");
+  let mut g_file = File::create(&g_path).expect("couldn't create file");
+  let g_content = g_res.unwrap().bytes().unwrap().to_vec(); //.text().unwrap();
+  g_file.write_all(g_content.as_slice()).unwrap();
+  g_path
 }
 
 fn get_epoch_info(url: &Url) -> (Option<u64>, Option<Waypoint>) {
