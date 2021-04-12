@@ -70,6 +70,16 @@ impl Runnable for ValWizardCmd {
       // get autopay
       status_ok!("\nTemplate saved", "\n...........................\n");
     }
+
+    // Use any autopay instructions
+    // TODO: simplify signature
+    let (autopay_batch, autopay_signed) = get_autopay_batch(
+      &self.template_url, 
+      &self.autopay_file, 
+      home_path,
+      &miner_config,
+    );
+
     // Initialize Validator Keys
     init_cmd::initialize_validator(&wallet, &miner_config).unwrap();
     status_ok!("\nKey file written", "\n...........................\n");
@@ -107,13 +117,6 @@ impl Runnable for ValWizardCmd {
       );
     }
 
-    // TODO: simplify signature
-    let (autopay_batch, autopay_signed) = get_autopay_batch(
-      &self.template_url, 
-      &self.autopay_file, 
-      home_path,
-      &miner_config,
-    );
     // Write Manifest
     manifest_cmd::write_manifest(
       &self.path,

@@ -138,23 +138,16 @@ pub fn get_tx_params() -> Result<TxParams, Error> {
         swarm_path,
         ..
     } = entrypoint::get_args();
-    let txs_config = app_config();
-    let mut tx_params: TxParams;
-    if swarm_path.is_some() {
-        tx_params =
-            get_tx_params_from_swarm(swarm_path.clone().expect("needs a valid swarm temp dir")).unwrap();
+    let app_config = app_config();
+
+    let mut tx_params: TxParams = if swarm_path.is_some() {
+        get_tx_params_from_swarm(swarm_path.clone().expect("needs a valid swarm temp dir")).unwrap()
     } else {
         // Get from 0L.toml e.g. ~/.0L/0L.toml, or use Profile::default()
-        tx_params = get_tx_params_from_toml(txs_config.clone()).unwrap();
-    }
-
-    // Get/override dynamic waypoint from key_store.json
-    tx_params.waypoint = match waypoint {
-        Some(w) => w,
-        _ => txs_config.get_waypoint(swarm_path).unwrap(),
+      get_tx_params_from_toml(app_config.clone()).unwrap()
     };
 
-    // Get/override some params from command line
+    // Get/override some params from entrypoint command line
     if url.is_some() {
         tx_params.url = url.unwrap();
     }
@@ -195,7 +188,6 @@ pub fn get_tx_params_from_swarm(swarm_path: PathBuf) -> Result<TxParams, Error> 
 
 /// Gets transaction params from the 0L project root.
 pub fn get_tx_params_from_toml(config: TxsConfig) -> Result<TxParams, Error> {
-    let entry_args = entrypoint::get_args();
     let url = config.profile.default_node.clone().unwrap();
 
     let (auth_key, address, wallet) = keygen::account_from_prompt();
@@ -208,7 +200,7 @@ pub fn get_tx_params_from_toml(config: TxsConfig) -> Result<TxParams, Error> {
         owner_address: address,
         url,
         waypoint: config
-            .get_waypoint(entry_args.swarm_path)
+            .get_waypoint(None)
             .clone()
             .expect("could not get waypoint"),
         keypair,
@@ -218,8 +210,6 @@ pub fn get_tx_params_from_toml(config: TxsConfig) -> Result<TxParams, Error> {
         chain_id: ChainId::new(1),
     };
 
-    // println!("Info: Getting tx params from txs.toml if available, \
-    //           otherwise using AppConfig::Profile::default()");
     Ok(tx_params)
 }
 
