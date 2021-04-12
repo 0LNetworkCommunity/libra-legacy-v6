@@ -3,12 +3,11 @@
 #![allow(clippy::never_loop)]
 
 use abscissa_core::{Command, Options, Runnable};
-use cli::libra_client::LibraClient;
-use libra_types::{account_address::AccountAddress, account_state::AccountState, transaction::{Script, SignedTransaction}};
+use libra_types::transaction::{Script, SignedTransaction};
 
 use crate::{entrypoint, sign_tx::sign_tx, submit_tx::{get_tx_params, batch_wrapper, TxParams}};
 use dialoguer::Confirm;
-use std::{convert::TryFrom, path::PathBuf};
+use std::path::PathBuf;
 use ol_util::autopay::{Instruction, get_instructions};
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -49,6 +48,7 @@ impl Runnable for AutopayBatchCmd {
     }
 }
 
+/// Process autopay instructions in to scripts
 pub fn process_instructions(instructions: Vec<Instruction>, current_epoch: u64) -> Vec<Script> {
         // TODO: Check instruction IDs are sequential.
         instructions.into_iter().filter_map(|i| {

@@ -107,8 +107,13 @@ impl Runnable for ValWizardCmd {
       );
     }
 
-    /// TODO: simplify signature
-    let (autopay_batch, autopay_signed) = get_autopay_batch(&self.template_url, &self.autopay_file, home_path, miner_config);
+    // TODO: simplify signature
+    let (autopay_batch, autopay_signed) = get_autopay_batch(
+      &self.template_url, 
+      &self.autopay_file, 
+      home_path,
+      &miner_config,
+    );
     // Write Manifest
     manifest_cmd::write_manifest(
       &self.path,
@@ -130,9 +135,9 @@ fn get_autopay_batch(
   template: &Option<Url>,
   file_path: &Option<PathBuf>,
   home_path: &PathBuf,
-  miner_config: OlCliConfig,
+  miner_config: &OlCliConfig,
 ) -> (Option<Vec<Instruction>>, Option<Vec<SignedTransaction>>) {
-  let file_name = if let Some(url) = template {
+  let file_name = if template.is_some() {
     "template.json"
   } else if let Some(path) = file_path {
     path.to_str().unwrap()
@@ -143,7 +148,7 @@ fn get_autopay_batch(
   let starting_epoch = miner_config.chain_info.base_epoch.unwrap();
   let instr_vec = autopay::get_instructions(&home_path.join(file_name));
   let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone(), starting_epoch);
-  let tx_params = submit_tx::get_tx_params_from_toml(miner_config).unwrap();
+  let tx_params = submit_tx::get_tx_params_from_toml(miner_config.to_owned()).unwrap();
   let txn_vec= autopay_batch_cmd::sign_instructions(script_vec, 0, &tx_params);
   (
     Some(instr_vec),
