@@ -2,19 +2,19 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{entrypoint, submit_tx::{get_tx_params, maybe_submit}};
+use crate::{entrypoint, prelude::app_config, submit_tx::{get_tx_params, maybe_submit}};
 use abscissa_core::{Command, Options, Runnable};
 use libra_types::{account_address::AccountAddress, transaction::Script};
 use reqwest::Url;
 use std::{fs::{self, File}, io::Write, path::PathBuf};
 
 /// `CreateAccount` subcommand
-#[derive(Command, Debug, Default, Options)]
+#[derive(Command, Debug, Options)]
 pub struct CreateValidatorCmd {
     #[options(short = "f", help = "path of account.json")]
-    account_file: PathBuf,
+    account_file: Option<PathBuf>,
     #[options(short = "u", help = "onboard from URL")]
-    url: Url,
+    url: Option<Url>,
 }
 
 pub fn create_validator_script(account_json_path: &PathBuf) -> Script {
@@ -121,11 +121,20 @@ pub fn fetch_from_web(url: &Url, path: &PathBuf) -> PathBuf {
 
 impl Runnable for CreateValidatorCmd {
     fn run(&self) {
+      let cfg = app_config();
         let entry_args = entrypoint::get_args();
-        let account_json = if &self.account_file.is_some(){
-          &self.account_file
-        } else if &self.url {
-          path = fetch_from_web(&self.url);
+        let tmp;
+        if self.account_file.is_none() && self.url.is_none() {
+          panic!("No account file nor URL passed in CLI")
+        }
+        let account_json: &PathBuf = if self.account_file.is_some(){
+          self.account_file.as_ref().unwrap()
+        } else {
+          tmp = fetch_from_web(
+            self.url.as_ref().unwrap(), 
+            &cfg.workspace.node_home
+          ).clone();
+          &tmp
         };
 
         let tx_params = get_tx_params().unwrap();
