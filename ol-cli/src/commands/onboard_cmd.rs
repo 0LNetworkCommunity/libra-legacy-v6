@@ -43,13 +43,13 @@ impl Runnable for OnboardCmd {
 
 pub fn advance(trigger_actions: bool) {
     let mut host = transitions::HostState::init();
-    let node_state = host.maybe_advance(trigger_actions).get_state();
+    let node_state = host.node_maybe_advance(trigger_actions).get_state();
     let miner_state = host.miner_maybe_advance(trigger_actions).get_state();
 
     println!(
-        "\nNode state at exit: {:?}\nMiner state: {:?}\nNext step for node: {:?}",
+        "\nNode state at exit: {:?}\nMiner state: {:?}",
         node_state,
         miner_state,
-        host.get_next_action()
+        // host.get_next_action()
     );
 }
