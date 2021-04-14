@@ -1,9 +1,11 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
 
   let epoch: number = 0;
   let round: number = 0;
   let waypoint: string = undefined;
+  let uri = "http://" + location.host + "/chain_live";
+  let sse = new EventSource(uri);
 
   onMount(async () => {
     // var uri = "http://" + location.host + "/chain";
@@ -15,14 +17,17 @@
     //     round = data.height;
     //     waypoint = data.waypoint;
     //   });
-    var uri = "http://" + location.host + "/chain_live";
-    var sse = new EventSource(uri);
+
     sse.onmessage = function (msg) {
       let chain = JSON.parse(msg.data);
       epoch = chain.epoch;
       round = chain.height;
       waypoint = chain.waypoint;
-    }
+    };
+  });
+
+  onDestroy(() => {
+    sse.close();
   });
 </script>
 
@@ -39,7 +44,7 @@
       </tr>
       <tr>
         <td class="uk-text-uppercase">Round</td>
-        <td>{round.toLocaleString('en-ES')}</td>
+        <td>{round.toLocaleString("en-ES")}</td>
       </tr>
       <tr>
         <td class="uk-text-uppercase">Waypoint</td>

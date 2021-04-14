@@ -1,27 +1,44 @@
 <script lang="ts">
   import Check from "./Check.svelte";
-  import {onMount} from "svelte";
-  import {map} from "lodash";
+  import { onMount, onDestroy } from "svelte";
+  import { map } from "lodash";
 
   let healthData;
-
+  let uri = "http://" + location.host + "/check";
+  let sse = new EventSource(uri);
   onMount(async () => {
-    var uri = "http://" + location.host + "/check";
-    var sse = new EventSource(uri);
     sse.onmessage = function (msg) {
       healthData = JSON.parse(msg.data);
 
-      allChecks = map(allChecks, (i: CheckObj)=> {
-        if (i.id === "config") { i.is_true = healthData.configs_exist; };
-        if (i.id === "account") { i.is_true = healthData.account_created; };
-        if (i.id === "restore") { i.is_true = healthData.db_restored; };
-        if (i.id === "node") { i.is_true = healthData.node_running; };
-        if (i.id === "miner") { i.is_true = healthData.miner_running; };
-        if (i.id === "sync") { i.is_true = healthData.is_synced; };
-        if (i.id === "set") { i.is_true = healthData.validato_set; };
+      allChecks = map(allChecks, (i: CheckObj) => {
+        if (i.id === "config") {
+          i.is_true = healthData.configs_exist;
+        }
+        if (i.id === "account") {
+          i.is_true = healthData.account_created;
+        }
+        if (i.id === "restore") {
+          i.is_true = healthData.db_restored;
+        }
+        if (i.id === "node") {
+          i.is_true = healthData.node_running;
+        }
+        if (i.id === "miner") {
+          i.is_true = healthData.miner_running;
+        }
+        if (i.id === "sync") {
+          i.is_true = healthData.is_synced;
+        }
+        if (i.id === "set") {
+          i.is_true = healthData.validato_set;
+        }
         return i;
       });
     };
+  });
+
+  onDestroy(() => {
+    sse.close();
   });
 
   interface CheckObj {
@@ -55,21 +72,18 @@
       title: "Miner is running",
       description: "process `miner` has started",
       is_true: false,
-
     },
     {
       id: "node",
       title: "Node is running",
       description: "process `libra-node` has started",
       is_true: false,
-
     },
     {
       id: "sync",
       title: "Node is synced",
       description: "node is up to date with upstream",
       is_true: false,
-
     },
     {
       id: "set",
@@ -88,10 +102,13 @@
       </h3>
       <dl class="uk-description-list">
         {#each allChecks as c}
-          <Check title={c.title} description={c.description} isTrue={c.is_true} />
+          <Check
+            title={c.title}
+            description={c.description}
+            isTrue={c.is_true}
+          />
         {/each}
       </dl>
     </div>
   {/if}
-
 </main>

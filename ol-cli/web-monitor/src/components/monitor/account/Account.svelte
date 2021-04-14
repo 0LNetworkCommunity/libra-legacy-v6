@@ -1,21 +1,21 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   let account: string = undefined;
   let balance: Number = 0;
   let inValidatorSet: Boolean = false;
-
-  // let valSetText = "Jailed";
-  // if (inValidatorSet) { valSetText = "In Validator Set"};
-
+  let uri = "http://" + location.host + "/account";
+  let sse = new EventSource(uri);
   onMount(async () => {
-    var uri = "http://" + location.host + "/account";
-    var sse = new EventSource(uri);
     sse.onmessage = function (msg) {
       let json = JSON.parse(msg.data);
       account = json.address;
       balance = json.balance;
       inValidatorSet = json.is_in_validator_set;
     }
+  });
+
+  onDestroy(() => {
+    sse.close();
   });
 </script>
 
@@ -39,7 +39,7 @@
       </tr>
       <tr>
         <td class="uk-text-uppercase">In Set</td>
-        <td>{inValidatorSet}</td>
+        <td class="uk-text-uppercase">{inValidatorSet}</td>
       </tr>
     </tbody>
   </table>

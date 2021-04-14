@@ -1,14 +1,13 @@
 <script lang="ts">
-
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
 
   let proposals = [];
   let voters_count = 0;
   let validator_count = 0;
-
+  let uri = "http://" + location.host + "/chain";
+  let sse = new EventSource(uri);
+  
   onMount(async () => {
-    var uri = "http://" + location.host + "/chain";
-    var sse = new EventSource(uri);
     sse.onmessage = function (msg) {
       let chain = JSON.parse(msg.data);
       proposals = chain.upgrade.upgrade.vote_counts;
@@ -17,19 +16,20 @@
 
     /// get validator count
     // TODO: don't need to keep reading stream. can close
-    var val_url = "http://" + location.host + "/validators";
-    var val_stream = new EventSource(val_url);
+    let val_url = "http://" + location.host + "/validators";
+    let val_stream = new EventSource(val_url);
     val_stream.onmessage = function (msg) {
       let vals = JSON.parse(msg.data);
       validator_count = vals.length;
       // val_stream.close();
     };
   });
+  onDestroy(() => {
+    sse.close();
+  });
 </script>
 
-
 <main>
-  
   <div>
     <h3 class="uk-text-muted uk-text-center uk-text-uppercase">
       Voting In Progress
@@ -55,9 +55,11 @@
           <h5
             class="uk-text-muted uk-text-center uk-text-uppercase uk-text-small"
           >
-            proposal {i + 1} 
+            proposal {i + 1}
           </h5>
-          <p class="uk-text-uppercase uk-text-small">{proposals.length} votes / {validator_count} validators</p>
+          <p class="uk-text-uppercase uk-text-small">
+            {proposals.length} votes / {validator_count} validators
+          </p>
           <p>{prop.validators}</p>
         {/each}
       </div>

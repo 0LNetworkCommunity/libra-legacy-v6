@@ -79,6 +79,9 @@ var app = (function () {
     function onMount(fn) {
         get_current_component().$$.on_mount.push(fn);
     }
+    function onDestroy(fn) {
+        get_current_component().$$.on_destroy.push(fn);
+    }
 
     const dirty_components = [];
     const binding_callbacks = [];
@@ -17917,11 +17920,11 @@ var app = (function () {
 
     function get_each_context$3(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[3] = list[i];
+    	child_ctx[5] = list[i];
     	return child_ctx;
     }
 
-    // (99:2) {#if healthData}
+    // (95:2) {#if healthData}
     function create_if_block(ctx) {
     	let div;
     	let h3;
@@ -17953,11 +17956,11 @@ var app = (function () {
     			}
 
     			attr_dev(h3, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted");
-    			add_location(h3, file$9, 100, 6, 3097);
+    			add_location(h3, file$9, 96, 6, 3041);
     			attr_dev(dl, "class", "uk-description-list");
-    			add_location(dl, file$9, 103, 6, 3209);
+    			add_location(dl, file$9, 99, 6, 3153);
     			attr_dev(div, "class", "uk-card uk-card-default uk-card-body");
-    			add_location(div, file$9, 99, 4, 3040);
+    			add_location(div, file$9, 95, 4, 2984);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -18028,23 +18031,23 @@ var app = (function () {
     		block,
     		id: create_if_block.name,
     		type: "if",
-    		source: "(99:2) {#if healthData}",
+    		source: "(95:2) {#if healthData}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (105:8) {#each allChecks as c}
+    // (101:8) {#each allChecks as c}
     function create_each_block$3(ctx) {
     	let check;
     	let current;
 
     	check = new Check({
     			props: {
-    				title: /*c*/ ctx[3].title,
-    				description: /*c*/ ctx[3].description,
-    				isTrue: /*c*/ ctx[3].is_true
+    				title: /*c*/ ctx[5].title,
+    				description: /*c*/ ctx[5].description,
+    				isTrue: /*c*/ ctx[5].is_true
     			},
     			$$inline: true
     		});
@@ -18059,9 +18062,9 @@ var app = (function () {
     		},
     		p: function update(ctx, dirty) {
     			const check_changes = {};
-    			if (dirty & /*allChecks*/ 2) check_changes.title = /*c*/ ctx[3].title;
-    			if (dirty & /*allChecks*/ 2) check_changes.description = /*c*/ ctx[3].description;
-    			if (dirty & /*allChecks*/ 2) check_changes.isTrue = /*c*/ ctx[3].is_true;
+    			if (dirty & /*allChecks*/ 2) check_changes.title = /*c*/ ctx[5].title;
+    			if (dirty & /*allChecks*/ 2) check_changes.description = /*c*/ ctx[5].description;
+    			if (dirty & /*allChecks*/ 2) check_changes.isTrue = /*c*/ ctx[5].is_true;
     			check.$set(check_changes);
     		},
     		i: function intro(local) {
@@ -18082,7 +18085,7 @@ var app = (function () {
     		block,
     		id: create_each_block$3.name,
     		type: "each",
-    		source: "(105:8) {#each allChecks as c}",
+    		source: "(101:8) {#each allChecks as c}",
     		ctx
     	});
 
@@ -18098,7 +18101,7 @@ var app = (function () {
     		c: function create() {
     			main = element("main");
     			if (if_block) if_block.c();
-    			add_location(main, file$9, 97, 0, 3010);
+    			add_location(main, file$9, 93, 0, 2954);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -18199,11 +18202,10 @@ var app = (function () {
     	};
 
     	let healthData;
+    	let uri = "http://" + location.host + "/check";
+    	let sse = new EventSource(uri);
 
     	onMount(() => __awaiter(void 0, void 0, void 0, function* () {
-    		var uri = "http://" + location.host + "/check";
-    		var sse = new EventSource(uri);
-
     		sse.onmessage = function (msg) {
     			$$invalidate(0, healthData = JSON.parse(msg.data));
 
@@ -18212,47 +18214,38 @@ var app = (function () {
     					i.is_true = healthData.configs_exist;
     				}
 
-    				
-
     				if (i.id === "account") {
     					i.is_true = healthData.account_created;
     				}
-
-    				
 
     				if (i.id === "restore") {
     					i.is_true = healthData.db_restored;
     				}
 
-    				
-
     				if (i.id === "node") {
     					i.is_true = healthData.node_running;
     				}
-
-    				
 
     				if (i.id === "miner") {
     					i.is_true = healthData.miner_running;
     				}
 
-    				
-
     				if (i.id === "sync") {
     					i.is_true = healthData.is_synced;
     				}
-
-    				
 
     				if (i.id === "set") {
     					i.is_true = healthData.validato_set;
     				}
 
-    				
     				return i;
     			}));
     		};
     	}));
+
+    	onDestroy(() => {
+    		sse.close();
+    	});
 
     	let allChecks = [
     		{
@@ -18309,14 +18302,19 @@ var app = (function () {
     		__awaiter,
     		Check,
     		onMount,
+    		onDestroy,
     		map: lodash.map,
     		healthData,
+    		uri,
+    		sse,
     		allChecks
     	});
 
     	$$self.$inject_state = $$props => {
     		if ("__awaiter" in $$props) __awaiter = $$props.__awaiter;
     		if ("healthData" in $$props) $$invalidate(0, healthData = $$props.healthData);
+    		if ("uri" in $$props) uri = $$props.uri;
+    		if ("sse" in $$props) sse = $$props.sse;
     		if ("allChecks" in $$props) $$invalidate(1, allChecks = $$props.allChecks);
     	};
 
@@ -18398,25 +18396,25 @@ var app = (function () {
     			td5 = element("td");
     			t12 = text(/*waypoint*/ ctx[2]);
     			attr_dev(h3, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted");
-    			add_location(h3, file$8, 35, 2, 1503);
+    			add_location(h3, file$8, 38, 2, 1545);
     			attr_dev(td0, "class", "uk-text-uppercase");
-    			add_location(td0, file$8, 42, 8, 1654);
-    			add_location(td1, file$8, 43, 8, 1703);
-    			add_location(tr0, file$8, 41, 6, 1641);
+    			add_location(td0, file$8, 45, 8, 1696);
+    			add_location(td1, file$8, 46, 8, 1745);
+    			add_location(tr0, file$8, 44, 6, 1683);
     			attr_dev(td2, "class", "uk-text-uppercase");
-    			add_location(td2, file$8, 46, 8, 1753);
-    			add_location(td3, file$8, 47, 8, 1802);
-    			add_location(tr1, file$8, 45, 6, 1740);
+    			add_location(td2, file$8, 49, 8, 1795);
+    			add_location(td3, file$8, 50, 8, 1844);
+    			add_location(tr1, file$8, 48, 6, 1782);
     			attr_dev(td4, "class", "uk-text-uppercase");
-    			add_location(td4, file$8, 50, 8, 1874);
+    			add_location(td4, file$8, 53, 8, 1916);
     			attr_dev(td5, "class", "uk-text-break");
-    			add_location(td5, file$8, 51, 8, 1926);
-    			add_location(tr2, file$8, 49, 6, 1861);
-    			add_location(tbody, file$8, 40, 4, 1627);
+    			add_location(td5, file$8, 54, 8, 1968);
+    			add_location(tr2, file$8, 52, 6, 1903);
+    			add_location(tbody, file$8, 43, 4, 1669);
     			attr_dev(table, "class", "uk-table");
-    			add_location(table, file$8, 39, 2, 1598);
+    			add_location(table, file$8, 42, 2, 1640);
     			attr_dev(div, "class", "uk-card uk-card-default uk-card-body uk-height-1-1");
-    			add_location(div, file$8, 34, 0, 1436);
+    			add_location(div, file$8, 37, 0, 1478);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -18511,6 +18509,8 @@ var app = (function () {
     	let epoch = 0;
     	let round = 0;
     	let waypoint = undefined;
+    	let uri = "http://" + location.host + "/chain_live";
+    	let sse = new EventSource(uri);
 
     	onMount(() => __awaiter(void 0, void 0, void 0, function* () {
     		// var uri = "http://" + location.host + "/chain";
@@ -18522,10 +18522,6 @@ var app = (function () {
     		//     round = data.height;
     		//     waypoint = data.waypoint;
     		//   });
-    		var uri = "http://" + location.host + "/chain_live";
-
-    		var sse = new EventSource(uri);
-
     		sse.onmessage = function (msg) {
     			let chain = JSON.parse(msg.data);
     			$$invalidate(0, epoch = chain.epoch);
@@ -18533,6 +18529,10 @@ var app = (function () {
     			$$invalidate(2, waypoint = chain.waypoint);
     		};
     	}));
+
+    	onDestroy(() => {
+    		sse.close();
+    	});
 
     	const writable_props = [];
 
@@ -18543,9 +18543,12 @@ var app = (function () {
     	$$self.$capture_state = () => ({
     		__awaiter,
     		onMount,
+    		onDestroy,
     		epoch,
     		round,
-    		waypoint
+    		waypoint,
+    		uri,
+    		sse
     	});
 
     	$$self.$inject_state = $$props => {
@@ -18553,6 +18556,8 @@ var app = (function () {
     		if ("epoch" in $$props) $$invalidate(0, epoch = $$props.epoch);
     		if ("round" in $$props) $$invalidate(1, round = $$props.round);
     		if ("waypoint" in $$props) $$invalidate(2, waypoint = $$props.waypoint);
+    		if ("uri" in $$props) uri = $$props.uri;
+    		if ("sse" in $$props) sse = $$props.sse;
     	};
 
     	if ($$props && "$$inject" in $$props) {
@@ -18633,25 +18638,26 @@ var app = (function () {
     			td5 = element("td");
     			t12 = text(/*inValidatorSet*/ ctx[2]);
     			attr_dev(h3, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted uk-text-large");
-    			add_location(h3, file$7, 29, 2, 1329);
+    			add_location(h3, file$7, 30, 2, 1282);
     			attr_dev(td0, "class", "uk-text-uppercase");
-    			add_location(td0, file$7, 38, 8, 1505);
+    			add_location(td0, file$7, 39, 8, 1458);
     			attr_dev(td1, "class", "uk-text-break");
-    			add_location(td1, file$7, 39, 8, 1554);
-    			add_location(tr0, file$7, 37, 6, 1492);
+    			add_location(td1, file$7, 40, 8, 1507);
+    			add_location(tr0, file$7, 38, 6, 1445);
     			attr_dev(td2, "class", "uk-text-uppercase");
-    			add_location(td2, file$7, 42, 8, 1628);
-    			add_location(td3, file$7, 43, 8, 1679);
-    			add_location(tr1, file$7, 41, 6, 1615);
+    			add_location(td2, file$7, 43, 8, 1581);
+    			add_location(td3, file$7, 44, 8, 1632);
+    			add_location(tr1, file$7, 42, 6, 1568);
     			attr_dev(td4, "class", "uk-text-uppercase");
-    			add_location(td4, file$7, 46, 8, 1753);
-    			add_location(td5, file$7, 47, 8, 1803);
-    			add_location(tr2, file$7, 45, 6, 1740);
-    			add_location(tbody, file$7, 36, 4, 1478);
+    			add_location(td4, file$7, 47, 8, 1706);
+    			attr_dev(td5, "class", "uk-text-uppercase");
+    			add_location(td5, file$7, 48, 8, 1756);
+    			add_location(tr2, file$7, 46, 6, 1693);
+    			add_location(tbody, file$7, 37, 4, 1431);
     			attr_dev(table, "class", "uk-table");
-    			add_location(table, file$7, 35, 4, 1449);
+    			add_location(table, file$7, 36, 4, 1402);
     			attr_dev(div, "class", "uk-card uk-card-default uk-card-body uk-height-1-1");
-    			add_location(div, file$7, 28, 0, 1262);
+    			add_location(div, file$7, 29, 0, 1215);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -18746,13 +18752,10 @@ var app = (function () {
     	let account = undefined;
     	let balance = 0;
     	let inValidatorSet = false;
+    	let uri = "http://" + location.host + "/account";
+    	let sse = new EventSource(uri);
 
-    	// let valSetText = "Jailed";
-    	// if (inValidatorSet) { valSetText = "In Validator Set"};
     	onMount(() => __awaiter(void 0, void 0, void 0, function* () {
-    		var uri = "http://" + location.host + "/account";
-    		var sse = new EventSource(uri);
-
     		sse.onmessage = function (msg) {
     			let json = JSON.parse(msg.data);
     			$$invalidate(0, account = json.address);
@@ -18760,6 +18763,10 @@ var app = (function () {
     			$$invalidate(2, inValidatorSet = json.is_in_validator_set);
     		};
     	}));
+
+    	onDestroy(() => {
+    		sse.close();
+    	});
 
     	const writable_props = [];
 
@@ -18770,9 +18777,12 @@ var app = (function () {
     	$$self.$capture_state = () => ({
     		__awaiter,
     		onMount,
+    		onDestroy,
     		account,
     		balance,
-    		inValidatorSet
+    		inValidatorSet,
+    		uri,
+    		sse
     	});
 
     	$$self.$inject_state = $$props => {
@@ -18780,6 +18790,8 @@ var app = (function () {
     		if ("account" in $$props) $$invalidate(0, account = $$props.account);
     		if ("balance" in $$props) $$invalidate(1, balance = $$props.balance);
     		if ("inValidatorSet" in $$props) $$invalidate(2, inValidatorSet = $$props.inValidatorSet);
+    		if ("uri" in $$props) uri = $$props.uri;
+    		if ("sse" in $$props) sse = $$props.sse;
     	};
 
     	if ($$props && "$$inject" in $$props) {
@@ -19616,16 +19628,16 @@ var app = (function () {
 
     function get_each_context(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[4] = list[i];
-    	child_ctx[6] = i;
+    	child_ctx[6] = list[i];
+    	child_ctx[8] = i;
     	return child_ctx;
     }
 
-    // (58:8) {#each proposals as prop, i}
+    // (59:8) {#each proposals as prop, i}
     function create_each_block(ctx) {
     	let h5;
     	let t0;
-    	let t1_value = /*i*/ ctx[6] + 1 + "";
+    	let t1_value = /*i*/ ctx[8] + 1 + "";
     	let t1;
     	let t2;
     	let p0;
@@ -19636,7 +19648,7 @@ var app = (function () {
     	let t6;
     	let t7;
     	let p1;
-    	let t8_value = /*prop*/ ctx[4].validators + "";
+    	let t8_value = /*prop*/ ctx[6].validators + "";
     	let t8;
 
     	const block = {
@@ -19654,10 +19666,10 @@ var app = (function () {
     			p1 = element("p");
     			t8 = text(t8_value);
     			attr_dev(h5, "class", "uk-text-muted uk-text-center uk-text-uppercase uk-text-small");
-    			add_location(h5, file$3, 58, 10, 2072);
+    			add_location(h5, file$3, 59, 10, 2110);
     			attr_dev(p0, "class", "uk-text-uppercase uk-text-small");
-    			add_location(p0, file$3, 63, 10, 2225);
-    			add_location(p1, file$3, 64, 10, 2338);
+    			add_location(p0, file$3, 64, 10, 2262);
+    			add_location(p1, file$3, 67, 10, 2399);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, h5, anchor);
@@ -19676,7 +19688,7 @@ var app = (function () {
     		p: function update(ctx, dirty) {
     			if (dirty & /*proposals*/ 1 && t3_value !== (t3_value = /*proposals*/ ctx[0].length + "")) set_data_dev(t3, t3_value);
     			if (dirty & /*validator_count*/ 4) set_data_dev(t5, /*validator_count*/ ctx[2]);
-    			if (dirty & /*proposals*/ 1 && t8_value !== (t8_value = /*prop*/ ctx[4].validators + "")) set_data_dev(t8, t8_value);
+    			if (dirty & /*proposals*/ 1 && t8_value !== (t8_value = /*prop*/ ctx[6].validators + "")) set_data_dev(t8, t8_value);
     		},
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(h5);
@@ -19691,7 +19703,7 @@ var app = (function () {
     		block,
     		id: create_each_block.name,
     		type: "each",
-    		source: "(58:8) {#each proposals as prop, i}",
+    		source: "(59:8) {#each proposals as prop, i}",
     		ctx
     	});
 
@@ -19765,24 +19777,24 @@ var app = (function () {
     			}
 
     			attr_dev(h3, "class", "uk-text-muted uk-text-center uk-text-uppercase");
-    			add_location(h3, file$3, 37, 4, 1557);
+    			add_location(h3, file$3, 38, 4, 1595);
     			attr_dev(td0, "class", "uk-text-uppercase");
-    			add_location(td0, file$3, 43, 10, 1718);
-    			add_location(td1, file$3, 44, 10, 1771);
-    			add_location(tr0, file$3, 42, 8, 1703);
+    			add_location(td0, file$3, 44, 10, 1756);
+    			add_location(td1, file$3, 45, 10, 1809);
+    			add_location(tr0, file$3, 43, 8, 1741);
     			attr_dev(td2, "class", "uk-text-uppercase");
-    			add_location(td2, file$3, 47, 10, 1852);
-    			add_location(td3, file$3, 48, 10, 1909);
-    			add_location(tr1, file$3, 46, 8, 1837);
-    			add_location(tbody, file$3, 41, 6, 1687);
+    			add_location(td2, file$3, 48, 10, 1890);
+    			add_location(td3, file$3, 49, 10, 1947);
+    			add_location(tr1, file$3, 47, 8, 1875);
+    			add_location(tbody, file$3, 42, 6, 1725);
     			attr_dev(table, "class", "uk-table");
-    			add_location(table, file$3, 40, 4, 1656);
-    			add_location(hr, file$3, 53, 4, 1972);
+    			add_location(table, file$3, 41, 4, 1694);
+    			add_location(hr, file$3, 54, 4, 2010);
     			attr_dev(div0, "class", "uk-text-center");
-    			add_location(div0, file$3, 56, 6, 1996);
-    			add_location(div1, file$3, 55, 4, 1984);
-    			add_location(div2, file$3, 36, 2, 1547);
-    			add_location(main, file$3, 34, 0, 1535);
+    			add_location(div0, file$3, 57, 6, 2034);
+    			add_location(div1, file$3, 56, 4, 2022);
+    			add_location(div2, file$3, 37, 2, 1585);
+    			add_location(main, file$3, 36, 0, 1576);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -19906,11 +19918,10 @@ var app = (function () {
     	let proposals = [];
     	let voters_count = 0;
     	let validator_count = 0;
+    	let uri = "http://" + location.host + "/chain";
+    	let sse = new EventSource(uri);
 
     	onMount(() => __awaiter(void 0, void 0, void 0, function* () {
-    		var uri = "http://" + location.host + "/chain";
-    		var sse = new EventSource(uri);
-
     		sse.onmessage = function (msg) {
     			let chain = JSON.parse(msg.data);
     			$$invalidate(0, proposals = chain.upgrade.upgrade.vote_counts);
@@ -19919,15 +19930,19 @@ var app = (function () {
 
     		/// get validator count
     		// TODO: don't need to keep reading stream. can close
-    		var val_url = "http://" + location.host + "/validators";
+    		let val_url = "http://" + location.host + "/validators";
 
-    		var val_stream = new EventSource(val_url);
+    		let val_stream = new EventSource(val_url);
 
     		val_stream.onmessage = function (msg) {
     			let vals = JSON.parse(msg.data);
     			$$invalidate(2, validator_count = vals.length);
     		}; // val_stream.close();
     	}));
+
+    	onDestroy(() => {
+    		sse.close();
+    	});
 
     	const writable_props = [];
 
@@ -19938,9 +19953,12 @@ var app = (function () {
     	$$self.$capture_state = () => ({
     		__awaiter,
     		onMount,
+    		onDestroy,
     		proposals,
     		voters_count,
-    		validator_count
+    		validator_count,
+    		uri,
+    		sse
     	});
 
     	$$self.$inject_state = $$props => {
@@ -19948,6 +19966,8 @@ var app = (function () {
     		if ("proposals" in $$props) $$invalidate(0, proposals = $$props.proposals);
     		if ("voters_count" in $$props) $$invalidate(1, voters_count = $$props.voters_count);
     		if ("validator_count" in $$props) $$invalidate(2, validator_count = $$props.validator_count);
+    		if ("uri" in $$props) uri = $$props.uri;
+    		if ("sse" in $$props) sse = $$props.sse;
     	};
 
     	if ($$props && "$$inject" in $$props) {
