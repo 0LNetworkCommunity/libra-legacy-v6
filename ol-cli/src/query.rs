@@ -1,9 +1,9 @@
 //! 'query' 
-use libra_json_rpc_client::views::AccountView;
 use crate::{
   client::pick_client,
   account_resource::get_annotate_account_blob,
   metadata::Metadata,
+  account::get_account_view,
   
 };
 use libra_types::{account_address::AccountAddress};
@@ -61,10 +61,10 @@ pub fn get(query_type: QueryType, account: AccountAddress) -> String {
 }
 
 
-fn get_account_view(account: AccountAddress) -> AccountView {
-    let (account_view, _) = pick_client()
-      .get_account(account, true)
-      .expect(&format!("could not get account at address {:?}", account));
-    account_view.expect(&format!("could not get account at address {:?}", account))
-}
+// fn get_account_view(account: AccountAddress) -> AccountView {
+//     let (account_view, _) = pick_client()
+//       .get_account(account, true)
+//       .expect(&format!("could not get account at address {:?}", account));
+//     account_view.expect(&format!("could not get account at address {:?}", account))
+// }
 

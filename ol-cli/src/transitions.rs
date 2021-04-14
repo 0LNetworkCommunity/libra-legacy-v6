@@ -225,7 +225,7 @@ impl HostState {
   }
 
   /// State transition
-  pub fn onboard_transition(&mut self, action: OnboardEvents, trigger_action: bool) -> &Self {
+  pub fn onboard_transition(&mut self, action: OnboardEvents, _trigger_action: bool) -> &Self {
     use OnboardState::*;
     match action {
       OnboardEvents::Init => {}
@@ -348,10 +348,10 @@ impl HostState {
   }
     /// Advance to the next state
   pub fn node_maybe_advance(&mut self, trigger_action: bool) -> &Self {
-    let mut check = NodeHealth::new();
+    let check = NodeHealth::new();
     
-    let entry_args = entrypoint::get_args();
-    let cfg = app_config();
+    // let entry_args = entrypoint::get_args();
+    // let cfg = app_config();
     // Try to advance the node state. Miner below
     match &self.node_state {
       // TODO: Miner should have own separate state machine
