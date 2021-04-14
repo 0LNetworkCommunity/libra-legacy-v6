@@ -64,6 +64,7 @@ impl<T: AsRef<Path>> ValidatorBuilder<T> {
     /// Association uploads the validator layout to shared storage.
     fn create_layout(&self) {
         let mut layout = Layout::default();
+        //////// 0L ////////
         // layout.libra_root = LIBRA_ROOT_SHARED_NS.into();
         // layout.treasury_compliance = LIBRA_ROOT_SHARED_NS.into();
         layout.owners = (0..self.num_validators)
@@ -212,6 +213,7 @@ impl<T: AsRef<Path>> BuildSwarm for ValidatorBuilder<T> {
     fn build_swarm(&self) -> anyhow::Result<(Vec<NodeConfig>, Ed25519PrivateKey)> {
         self.create_layout();
         self.create_root();
+        //////// 0L ////////
         // let libra_root_key = Ed25519PrivateKey::generate(&mut rng);
         let libra_root_key = self
             .storage_helper

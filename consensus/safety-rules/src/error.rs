@@ -28,17 +28,17 @@ pub enum Error {
     #[error("Invalid QC: {0}")]
     InvalidQuorumCertificate(String),
     #[error("{0} is not set, SafetyRules is not initialized")]
-    NotInitialized(String),
+    NotInitialized(String),        
     #[error("Data not found in secure storage: {0}")]
-    SecureStorageMissingDataError(String),
+    SecureStorageMissingDataError(String), //////// 0L ////////
     #[error("Unexpected error returned by secure storage: {0}")]
-    SecureStorageUnexpectedError(String),
+    SecureStorageUnexpectedError(String), //////// 0L ////////
     #[error("Serialization error: {0}")]
     SerializationError(String),
     #[error("Validator key not found: {0}")]
-    ValidatorKeyNotFound(String),
+    ValidatorKeyNotFound(String), //////// 0L ////////
     #[error("The validator is not in the validator set. Address not in set: {0}")]
-    ValidatorNotInSet(String),
+    ValidatorNotInSet(String), //////// 0L ////////    
     #[error("Vote proposal missing expected signature")]
     VoteProposalSignatureNotFound,
 }
@@ -56,6 +56,7 @@ impl From<libra_secure_net::Error> for Error {
 }
 
 impl From<libra_secure_storage::Error> for Error {
+    //////// 0L ////////    
     fn from(error: libra_secure_storage::Error) -> Self {
         match error {
             libra_secure_storage::Error::PermissionDenied => {

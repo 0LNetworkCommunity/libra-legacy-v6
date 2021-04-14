@@ -23,10 +23,11 @@ pub fn recover<P: AsRef<Path>>(path: &P) -> Result<WalletLibrary> {
     let mut line = String::new();
     let _ = buffered.read_line(&mut line)?;
     let parts: Vec<&str> = line.split(DELIMITER).collect();
+    //////// 0L ////////
     // ensure!(parts.len() == 2, format!("Invalid entry '{}'", line));
     let mnemonic = Mnemonic::from(&parts[0].to_string()[..])?;
     let mut wallet = WalletLibrary::new_from_mnemonic(mnemonic);
-    wallet.generate_addresses(6)?;
+    wallet.generate_addresses(6)?; //////// 0L ////////
 
     Ok(wallet)
 }

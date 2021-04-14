@@ -164,6 +164,7 @@ impl LibraClient {
         }
     }
 
+    //////// 0L ////////
     /// Query Oracle Upgrade.
     pub fn query_oracle_upgrade(
         &mut self,
@@ -324,6 +325,7 @@ impl LibraClient {
         Ok(())
     }
 
+    //////// 0L ////////
     /// generate latest waypoint
     pub fn waypoint(&self)->Option<Waypoint> {
         let latest_epoch_change_li = match self.latest_epoch_change_li() {

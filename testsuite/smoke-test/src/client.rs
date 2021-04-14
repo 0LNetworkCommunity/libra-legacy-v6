@@ -124,6 +124,7 @@ fn test_client_waypoints() {
         .unwrap();
     let op_tool = get_op_tool(&env.validator_swarm, 1);
     let libra_root = load_libra_root_storage(&env.validator_swarm, 0);
+    //////// 0L ////////
     let _ = op_tool
         .remove_validator(peer_id, &libra_root, false)
         .unwrap();

@@ -132,7 +132,7 @@ impl ClientProxy {
         sync_on_wallet_recovery: bool,
         faucet_url: Option<String>,
         mnemonic_file: Option<String>,
-        mnemonic_string: Option<String>,
+        mnemonic_string: Option<String>, //////// 0L ////////
         waypoint: Waypoint,
     ) -> Result<Self> {
         // fail fast if url is not valid
@@ -196,11 +196,13 @@ impl ClientProxy {
             .map(|(ref_id, acc_data): (usize, &AccountData)| (acc_data.address, ref_id))
             .collect::<HashMap<AccountAddress, usize>>();
 
+        //////// 0L ////////
         let mut wallet = Self::get_libra_wallet(mnemonic_file)?;        
         // override file with entered mnemonic
         if mnemonic_string.is_some() {
             wallet = Self::get_wallet_from_mnem(&mnemonic_string.unwrap())?;
         }
+        //////// 0L end ////////
 
         Ok(ClientProxy {
             chain_id,
@@ -211,7 +213,7 @@ impl ClientProxy {
             libra_root_account,
             tc_account,
             testnet_designated_dealer_account: dd_account,
-            wallet,
+            wallet, //////// 0L ////////
             sync_on_wallet_recovery,
             temp_files: vec![],
         })
@@ -256,6 +258,7 @@ impl ClientProxy {
             println!("No user accounts");
         } else {
             for (ref index, ref account) in self.accounts.iter().enumerate() {
+                //////// 0L ////////
                 println!(
                     "User account index: {}, address: {}, sequence number: {}, status: {:?}",
                     index,
@@ -1001,6 +1004,7 @@ impl ClientProxy {
         let (receiver, receiver_auth_key_opt) =
             self.get_account_address_from_parameter(space_delim_strings[1])?;
         let receiver_auth_key = receiver_auth_key_opt.ok_or_else(|| {
+            //////// 0L ////////
             format_err!("Need authentication key to create new account via minting from faucet")
         })?;
         let mint_currency = space_delim_strings[3];
@@ -1643,7 +1647,7 @@ impl ClientProxy {
         &self,
         para: &str,
     ) -> Result<(AccountAddress, Option<AuthenticationKey>)> {
-        if para.starts_with("0x") {
+        if para.starts_with("0x") { //////// 0L ////////
             let (_, addr_hex) = para.split_at(2);
             let mut padding_prefix = String::from("00000000000000000000000000000000");
             padding_prefix.push_str(addr_hex);
@@ -1749,7 +1753,7 @@ impl ClientProxy {
     /// Recover accounts in wallets and sync state if sync_on_wallet_recovery is true.
     pub fn recover_accounts_in_wallet(&mut self) -> Result<Vec<AddressAndIndex>> {
         let wallet_addresses = self.wallet.get_addresses()?;
-        println!("length: {}", wallet_addresses.len());
+        println!("length: {}", wallet_addresses.len()); //////// 0L ////////
         let mut account_data = Vec::new();
         for address in wallet_addresses {
             account_data.push(Self::get_account_data_from_address(
@@ -1891,6 +1895,7 @@ impl ClientProxy {
         Ok(wallet)
     }
 
+    //////// 0L ////////
     /// Get wallet from mnemonic string
     fn get_wallet_from_mnem(mnemonic: &str) -> Result<WalletLibrary> {
         let mnem = Mnemonic::from(mnemonic).unwrap();
@@ -2236,7 +2241,7 @@ mod tests {
             false,
             None,
             Some(mnemonic_path),
-            None,
+            None, //////// 0L ////////
             waypoint,
         )
         .unwrap();

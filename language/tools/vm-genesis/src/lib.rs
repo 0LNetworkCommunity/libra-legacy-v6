@@ -62,15 +62,18 @@ pub static ZERO_COST_SCHEDULE: Lazy<CostTable> = Lazy::new(zero_cost_schedule);
 const ZERO_AUTH_KEY: [u8; 32] = [0; 32];
 
 pub type Name = Vec<u8>;
+
+//////// 0L ////////
 // Defines a validator owner and maps that to an operator
 pub type OperatorAssignment = (Option<Ed25519PublicKey>, Name, Script, GenesisMiningProof);
 
+//////// 0L ////////
 // Defines a validator operator and maps that to a validator (config)
 pub type OperatorRegistration = (Ed25519PublicKey, Name, Script, AccountAddress);
 
 pub fn encode_genesis_transaction(
-    libra_root_key: Option<&Ed25519PublicKey>,
-    treasury_compliance_key: Option<&Ed25519PublicKey>,
+    libra_root_key: Option<&Ed25519PublicKey>, //////// 0L ////////
+    treasury_compliance_key: Option<&Ed25519PublicKey>, //////// 0L ////////
     operator_assignments: &[OperatorAssignment],
     operator_registrations: &[OperatorRegistration],
     vm_publishing_option: Option<VMPublishingOption>,
@@ -82,6 +85,7 @@ pub fn encode_genesis_transaction(
         operator_assignments,
         operator_registrations,
         stdlib_modules(StdLibOptions::Compiled), // Must use compiled stdlib,
+        //////// 0L ////////
         vm_publishing_option
             .unwrap_or_else(|| VMPublishingOption::open()), // :)
         chain_id,
@@ -98,6 +102,7 @@ fn merge_txn_effects(
     effects_1
 }
 
+//////// 0L ////////
 pub fn encode_genesis_change_set(
     libra_root_key: Option<&Ed25519PublicKey>,
     treasury_compliance_key: Option<&Ed25519PublicKey>,
@@ -193,6 +198,7 @@ fn convert_txn_args(args: &[TransactionArgument]) -> Vec<Value> {
             TransactionArgument::Address(a) => Value::address(*a),
             TransactionArgument::Bool(b) => Value::bool(*b),
             TransactionArgument::U8Vector(v) => Value::vector_u8(v.clone()),
+            //////// 0L ////////
             TransactionArgument::AddressVector(v) => Value::vector_address(v.clone())
         })
         .collect()
@@ -248,6 +254,7 @@ fn exec_script(
         .unwrap()
 }
 
+//////// 0L ////////
 /// Create and initialize Association and Core Code accounts.
 fn create_and_initialize_main_accounts(
     session: &mut Session<StateViewCache>,
@@ -322,14 +329,14 @@ fn create_and_initialize_main_accounts(
     );
 }
 
-fn _create_and_initialize_testnet_minting(
+fn _create_and_initialize_testnet_minting( //////// 0L ////////
     session: &mut Session<StateViewCache>,
     log_context: &impl LogContext,
     public_key: &Ed25519PublicKey,
 ) {
     let genesis_auth_key = AuthenticationKey::ed25519(public_key);
     let create_dd_script = encode_create_designated_dealer_script(
-        account_config::lbr_type_tag(),
+        account_config::lbr_type_tag(), //////// 0L ////////
         0,
         account_config::testnet_dd_account_address(),
         genesis_auth_key.prefix().to_vec(),
@@ -338,7 +345,7 @@ fn _create_and_initialize_testnet_minting(
     );
 
     let mint_max_coin1_tmp = transaction_builder::encode_tiered_mint_script(
-        account_config::lbr_type_tag(),
+        account_config::lbr_type_tag(), //////// 0L ////////
         0,
         account_config::testnet_dd_account_address(),
         std::u64::MAX / 2,
@@ -357,7 +364,7 @@ fn _create_and_initialize_testnet_minting(
         account_config::treasury_compliance_account_address(),
         "DesignatedDealer",
         "update_tier",
-        vec![account_config::lbr_type_tag()],
+        vec![account_config::lbr_type_tag()], //////// 0L ////////
         vec![
             Value::transaction_argument_signer_reference(
                 account_config::treasury_compliance_account_address(),
@@ -385,6 +392,7 @@ fn _create_and_initialize_testnet_minting(
     );
 }
 
+//////// 0L ////////
 /// Creates and initializes each validator owner and validator operator. This method creates all
 /// the required accounts, sets the validator operators for each validator owner, and sets the
 /// validator config on-chain.
@@ -577,6 +585,7 @@ fn verify_genesis_write_set(events: &[ContractEvent]) {
         CreateAccountEvent::event_key(),
     );
 
+    //////// 0L ////////
     // (3) The first non-account creation event should be the new epoch event
     // let new_epoch_events: Vec<&ContractEvent> = events
     //     .iter()
@@ -616,7 +625,7 @@ pub fn test_genesis_change_set_and_validators(count: Option<usize>) -> (ChangeSe
 pub struct Validator {
     pub index: usize,
     pub key: Ed25519PrivateKey,
-    pub oper_key: Ed25519PrivateKey,
+    pub oper_key: Ed25519PrivateKey, //////// 0L ////////
     pub name: Vec<u8>,
     pub operator_address: AccountAddress,
     pub owner_address: AccountAddress,
@@ -633,14 +642,14 @@ impl Validator {
     fn gen(index: usize, rng: &mut rand::rngs::StdRng) -> Self {
         let name = index.to_string().as_bytes().to_vec();
         let key = Ed25519PrivateKey::generate(rng);
-        let oper_key = Ed25519PrivateKey::generate(rng);        
+        let oper_key = Ed25519PrivateKey::generate(rng); //////// 0L ////////      
         let operator_address = account_address::from_public_key(&oper_key.public_key());
         let owner_address = account_address::from_public_key(&key.public_key());
 
         Self {
             index,
             key,
-            oper_key,
+            oper_key, //////// 0L ////////
             name,
             operator_address,
             owner_address,
@@ -657,6 +666,7 @@ impl Validator {
             Some(self.key.public_key()),
             self.name.clone(),
             set_operator_script,
+            //////// 0L ////////
             GenesisMiningProof::default() //NOTE: For testing only
         )
     }
@@ -668,7 +678,7 @@ impl Validator {
             lcs::to_bytes(&[0u8; 0]).unwrap(),
             lcs::to_bytes(&[0u8; 0]).unwrap(),
         );
-        (
+        ( //////// 0L ////////
             self.oper_key.public_key(),
             self.name.clone(),
             script,
@@ -684,8 +694,8 @@ pub fn generate_test_genesis(
 ) -> (ChangeSet, Vec<Validator>) {
     let validators = Validator::new_set(count);
     let genesis = encode_genesis_change_set(
-        Some(&GENESIS_KEYPAIR.1),
-        Some(&GENESIS_KEYPAIR.1),
+        Some(&GENESIS_KEYPAIR.1), //////// 0L ////////
+        Some(&GENESIS_KEYPAIR.1), //////// 0L ////////
         &validators
             .iter()
             .map(|v| v.operator_assignment())
@@ -701,6 +711,7 @@ pub fn generate_test_genesis(
     (genesis, validators)
 }
 
+//////// 0L ////////
 /// Genesis subsidy to miners
 fn distribute_genesis_subsidy(
     session: &mut Session<StateViewCache>,
@@ -721,6 +732,7 @@ fn distribute_genesis_subsidy(
     )
 }
 
+//////// 0L ////////
 fn get_env() -> String {
     match env::var("NODE_ENV") {
         Ok(val) => val,
@@ -728,6 +740,7 @@ fn get_env() -> String {
     }
 }
 
+//////// 0L ////////
 // 0L Change: Necessary for genesis transaction.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -736,6 +749,7 @@ pub struct GenesisMiningProof {
     pub proof: String,
 }
 
+//////// 0L ////////
 impl Default for GenesisMiningProof {
     fn default() -> GenesisMiningProof {
 
@@ -767,8 +781,7 @@ impl Default for GenesisMiningProof {
     }
 }
 
-// 0L Changes
-
+//////// 0L ////////
 fn initialize_testnet(
     session: &mut Session<StateViewCache>,
     log_context: &impl LogContext

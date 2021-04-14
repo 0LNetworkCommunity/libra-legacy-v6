@@ -236,6 +236,7 @@ impl SafetyRules {
         ))
     }
 
+    //////// 0L ////////
     fn guarded_initialize(&mut self, proof: &EpochChangeProof) -> Result<(), Error> {
         let waypoint = self.persistent_storage.waypoint()?;
         let last_li = proof

@@ -25,7 +25,7 @@ pub enum NamedChain {
     DEVNET = 3,
     TESTING = 4,
     PREMAINNET = 5,
-    EXPERIMENTAL = 7,
+    EXPERIMENTAL = 7, //////// 0L ////////
 }
 
 impl NamedChain {
@@ -37,7 +37,7 @@ impl NamedChain {
             "DEVNET" => NamedChain::DEVNET,
             "TESTING" => NamedChain::TESTING,
             "PREMAINNET" => NamedChain::PREMAINNET,
-            "EXPERIMENTAL" => NamedChain::EXPERIMENTAL,
+            "EXPERIMENTAL" => NamedChain::EXPERIMENTAL, //////// 0L ////////
             _ => {
                 return Err(format_err!("Not a reserved chain: {:?}", s));
             }
@@ -56,7 +56,7 @@ impl NamedChain {
             3 => Ok(NamedChain::DEVNET),
             4 => Ok(NamedChain::TESTING),
             5 => Ok(NamedChain::PREMAINNET),
-            7 => Ok(NamedChain::EXPERIMENTAL),
+            7 => Ok(NamedChain::EXPERIMENTAL), //////// 0L ////////
             _ => Err(String::from("Not a named chain")),
         }
     }
@@ -130,7 +130,8 @@ impl Display for NamedChain {
                 NamedChain::MAINNET => "MAINNET",
                 NamedChain::TESTING => "TESTING",
                 NamedChain::PREMAINNET => "PREMAINNET",
-                NamedChain::EXPERIMENTAL => "EXPERIMENTAL",
+                //////// 0L ////////
+                NamedChain::EXPERIMENTAL => "EXPERIMENTAL", 
             }
         )
     }
