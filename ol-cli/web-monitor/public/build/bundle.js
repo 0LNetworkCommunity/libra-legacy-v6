@@ -17956,11 +17956,11 @@ var app = (function () {
     			}
 
     			attr_dev(h3, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted");
-    			add_location(h3, file$9, 96, 6, 3044);
+    			add_location(h3, file$9, 96, 6, 3047);
     			attr_dev(dl, "class", "uk-description-list");
-    			add_location(dl, file$9, 99, 6, 3156);
+    			add_location(dl, file$9, 99, 6, 3159);
     			attr_dev(div, "class", "uk-card uk-card-default uk-card-body");
-    			add_location(div, file$9, 95, 4, 2987);
+    			add_location(div, file$9, 95, 4, 2990);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -18101,7 +18101,7 @@ var app = (function () {
     		c: function create() {
     			main = element("main");
     			if (if_block) if_block.c();
-    			add_location(main, file$9, 93, 0, 2957);
+    			add_location(main, file$9, 93, 0, 2960);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -18256,8 +18256,8 @@ var app = (function () {
     		},
     		{
     			id: "restore",
-    			title: "DB is restored",
-    			description: "db successfully restored",
+    			title: "DB boostrapped",
+    			description: "db successfully initialized",
     			is_true: false
     		},
     		{

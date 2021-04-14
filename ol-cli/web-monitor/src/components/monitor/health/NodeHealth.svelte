@@ -57,8 +57,8 @@
     },
     {
       id: "restore",
-      title: "DB is restored",
-      description: "db successfully restored",
+      title: "DB boostrapped",
+      description: "db successfully initialized",
       is_true: false,
     },
     {
