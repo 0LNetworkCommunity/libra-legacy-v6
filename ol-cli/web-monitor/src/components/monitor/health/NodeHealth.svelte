@@ -30,7 +30,7 @@
           i.is_true = healthData.is_synced;
         }
         if (i.id === "set") {
-          i.is_true = healthData.validato_set;
+          i.is_true = healthData.validator_set;
         }
         return i;
       });
@@ -53,13 +53,13 @@
       id: "config",
       title: "Node configured",
       description: "operator files created",
-      is_true: true,
+      is_true: false,
     },
     {
       id: "restore",
       title: "DB is restored",
       description: "db successfully restored",
-      is_true: true,
+      is_true: false,
     },
     {
       id: "account",

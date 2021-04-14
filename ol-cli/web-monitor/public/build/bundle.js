@@ -17956,11 +17956,11 @@ var app = (function () {
     			}
 
     			attr_dev(h3, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted");
-    			add_location(h3, file$9, 96, 6, 3041);
+    			add_location(h3, file$9, 96, 6, 3044);
     			attr_dev(dl, "class", "uk-description-list");
-    			add_location(dl, file$9, 99, 6, 3153);
+    			add_location(dl, file$9, 99, 6, 3156);
     			attr_dev(div, "class", "uk-card uk-card-default uk-card-body");
-    			add_location(div, file$9, 95, 4, 2984);
+    			add_location(div, file$9, 95, 4, 2987);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -18101,7 +18101,7 @@ var app = (function () {
     		c: function create() {
     			main = element("main");
     			if (if_block) if_block.c();
-    			add_location(main, file$9, 93, 0, 2954);
+    			add_location(main, file$9, 93, 0, 2957);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -18235,7 +18235,7 @@ var app = (function () {
     				}
 
     				if (i.id === "set") {
-    					i.is_true = healthData.validato_set;
+    					i.is_true = healthData.validator_set;
     				}
 
     				return i;
@@ -18252,13 +18252,13 @@ var app = (function () {
     			id: "config",
     			title: "Node configured",
     			description: "operator files created",
-    			is_true: true
+    			is_true: false
     		},
     		{
     			id: "restore",
     			title: "DB is restored",
     			description: "db successfully restored",
-    			is_true: true
+    			is_true: false
     		},
     		{
     			id: "account",
@@ -18641,18 +18641,18 @@ var app = (function () {
     			add_location(h3, file$7, 30, 2, 1282);
     			attr_dev(td0, "class", "uk-text-uppercase");
     			add_location(td0, file$7, 39, 8, 1458);
-    			attr_dev(td1, "class", "uk-text-break");
+    			attr_dev(td1, "class", "uk-text-truncate");
     			add_location(td1, file$7, 40, 8, 1507);
     			add_location(tr0, file$7, 38, 6, 1445);
     			attr_dev(td2, "class", "uk-text-uppercase");
-    			add_location(td2, file$7, 43, 8, 1581);
-    			add_location(td3, file$7, 44, 8, 1632);
-    			add_location(tr1, file$7, 42, 6, 1568);
+    			add_location(td2, file$7, 43, 8, 1584);
+    			add_location(td3, file$7, 44, 8, 1635);
+    			add_location(tr1, file$7, 42, 6, 1571);
     			attr_dev(td4, "class", "uk-text-uppercase");
-    			add_location(td4, file$7, 47, 8, 1706);
+    			add_location(td4, file$7, 47, 8, 1709);
     			attr_dev(td5, "class", "uk-text-uppercase");
-    			add_location(td5, file$7, 48, 8, 1756);
-    			add_location(tr2, file$7, 46, 6, 1693);
+    			add_location(td5, file$7, 48, 8, 1759);
+    			add_location(tr2, file$7, 46, 6, 1696);
     			add_location(tbody, file$7, 37, 4, 1431);
     			attr_dev(table, "class", "uk-table");
     			add_location(table, file$7, 36, 4, 1402);
