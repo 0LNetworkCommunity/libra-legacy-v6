@@ -24,7 +24,7 @@
   <h3
     class="uk-card-title uk-text-center uk-text-uppercase uk-text-muted uk-text-large"
   >
-    Account
+    Accounts
   </h3>
 
     <table class="uk-table">

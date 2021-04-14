@@ -18613,7 +18613,7 @@ var app = (function () {
     		c: function create() {
     			div = element("div");
     			h3 = element("h3");
-    			h3.textContent = "Account";
+    			h3.textContent = "Accounts";
     			t1 = space();
     			table = element("table");
     			tbody = element("tbody");
@@ -18640,22 +18640,22 @@ var app = (function () {
     			attr_dev(h3, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted uk-text-large");
     			add_location(h3, file$7, 30, 2, 1282);
     			attr_dev(td0, "class", "uk-text-uppercase");
-    			add_location(td0, file$7, 39, 8, 1458);
+    			add_location(td0, file$7, 39, 8, 1459);
     			attr_dev(td1, "class", "uk-text-truncate");
-    			add_location(td1, file$7, 40, 8, 1507);
-    			add_location(tr0, file$7, 38, 6, 1445);
+    			add_location(td1, file$7, 40, 8, 1508);
+    			add_location(tr0, file$7, 38, 6, 1446);
     			attr_dev(td2, "class", "uk-text-uppercase");
-    			add_location(td2, file$7, 43, 8, 1584);
-    			add_location(td3, file$7, 44, 8, 1635);
-    			add_location(tr1, file$7, 42, 6, 1571);
+    			add_location(td2, file$7, 43, 8, 1585);
+    			add_location(td3, file$7, 44, 8, 1636);
+    			add_location(tr1, file$7, 42, 6, 1572);
     			attr_dev(td4, "class", "uk-text-uppercase");
-    			add_location(td4, file$7, 47, 8, 1709);
+    			add_location(td4, file$7, 47, 8, 1710);
     			attr_dev(td5, "class", "uk-text-uppercase");
-    			add_location(td5, file$7, 48, 8, 1759);
-    			add_location(tr2, file$7, 46, 6, 1696);
-    			add_location(tbody, file$7, 37, 4, 1431);
+    			add_location(td5, file$7, 48, 8, 1760);
+    			add_location(tr2, file$7, 46, 6, 1697);
+    			add_location(tbody, file$7, 37, 4, 1432);
     			attr_dev(table, "class", "uk-table");
-    			add_location(table, file$7, 36, 4, 1402);
+    			add_location(table, file$7, 36, 4, 1403);
     			attr_dev(div, "class", "uk-card uk-card-default uk-card-body uk-height-1-1");
     			add_location(div, file$7, 29, 0, 1215);
     		},
