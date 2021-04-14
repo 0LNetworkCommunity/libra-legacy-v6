@@ -1,7 +1,7 @@
 //! `monitor` subcommand
 
 use std::{thread, time::{Duration}};
-use crate::{chain_info, node_health::NodeHealth};
+use crate::{chain_info, node_health::NodeHealth, account::AccountInfo};
 use std::io::{Write, stdout};
 use crossterm::{QueueableCommand, cursor, terminal::{self, ClearType}};
 
@@ -10,12 +10,14 @@ pub fn mon(is_live: bool, print: bool) {
 
   let mut x = 0;
   let mut checker = NodeHealth::new();
+  let mut account = AccountInfo::new();
 
   loop {
     checker.fetch_upstream_states();
     // refresh cahce for chain_info
     chain_info::fetch_chain_info();
     &checker.refresh_checks();
+    &account.refresh();
     &checker.items.write_cache();
     if print { print_it(&checker) }
     if !is_live && x==0 { break };

@@ -35,22 +35,14 @@ impl AccountInfo {
 
     let node = NodeHealth::new();
     self.is_in_validator_set = node.is_in_validator_set();
-    // AccountInfo {
-    //   address: cfg.profile.account,
-    //   balance: 0,
-    //   is_in_validator_set: false
-    // }
     let as_ser = serde_json::to_vec(self).unwrap();
-
     DB_CACHE.put(ACCOUNT_INFO_DB_KEY.as_bytes(), as_ser).unwrap();
-
     self
-
   }
 
   /// get chain info from cache
   pub fn read_account_info_cache() -> AccountInfo {
-    let account_state = DB_CACHE.get(ACCOUNT_INFO_DB_KEY.as_bytes()).unwrap().expect("could not reach chain_info cache");
+    let account_state = DB_CACHE.get(ACCOUNT_INFO_DB_KEY.as_bytes()).unwrap().expect("could not reach account_info cache");
     let c: AccountInfo = serde_json::de::from_slice(&account_state.as_slice()).unwrap();
     c
   }
