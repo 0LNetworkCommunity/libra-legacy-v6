@@ -126,11 +126,11 @@ pub struct NodeHealth {
 impl NodeHealth {
     /// Create a instance of Check
     pub fn new() -> Self {
-        let cfg = app_config().to_owned();
+        let conf = app_config().to_owned();
 
         return Self {
             client: client::pick_client(),
-            cfg,
+            conf,
             items: Items::init(),
             miner_state: None,
             chain_state: None,
