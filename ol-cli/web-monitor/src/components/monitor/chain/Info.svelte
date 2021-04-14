@@ -14,7 +14,6 @@
       round = chain.height;
       waypoint = chain.waypoint;
     }
-    console.log(epoch)
   });
 </script>
 

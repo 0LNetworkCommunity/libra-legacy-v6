@@ -45,9 +45,7 @@ impl AccountInfo {
     let account_state = DB_CACHE.get(ACCOUNT_INFO_DB_KEY.as_bytes()).unwrap().expect("could not reach account_info cache");
     let c: AccountInfo = serde_json::de::from_slice(&account_state.as_slice()).unwrap();
     c
-  }
-
-
+  } 
 }
 
 /// Get the account view struct
