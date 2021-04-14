@@ -20,13 +20,31 @@
 </script>
 
 
-<div class="uk-card uk-card-default uk-card-body uk-text-center uk-height-1-1">
+<div class="uk-card uk-card-default uk-card-body uk-height-1-1">
   <h3
     class="uk-card-title uk-text-center uk-text-uppercase uk-text-muted uk-text-large"
   >
     Account
   </h3>
-  <dl class="uk-description-list">
+
+    <table class="uk-table">
+    <tbody>
+      <tr>
+        <td class="uk-text-uppercase">owner</td>
+        <td class="uk-text-break"> {account} </td>
+      </tr>
+      <tr>
+        <td class="uk-text-uppercase">balance</td>
+        <td>{balance.toLocaleString('en-ES')}</td>
+      </tr>
+      <tr>
+        <td class="uk-text-uppercase">In Set</td>
+        <td>{inValidatorSet}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- <dl class="uk-description-list">
     <dt>{account}</dt>
     <dd>owner account</dd>
     
@@ -35,5 +53,5 @@
 
     <dt> {inValidatorSet} </dt>
     <dd>in validator set</dd>
-  </dl>
+  </dl> -->
 </div>

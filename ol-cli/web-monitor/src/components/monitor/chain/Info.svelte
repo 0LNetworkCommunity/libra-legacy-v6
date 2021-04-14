@@ -6,7 +6,16 @@
   let waypoint: string = undefined;
 
   onMount(async () => {
-    var uri = "http://" + location.host + "/chain";
+    // var uri = "http://" + location.host + "/chain";
+    // await fetch(uri)
+    //   .then((r) => r.json())
+    //   .then((data) => {
+    //     // let chain = JSON.parse(data);
+    //     epoch = data.epoch;
+    //     round = data.height;
+    //     waypoint = data.waypoint;
+    //   });
+    var uri = "http://" + location.host + "/chain_live";
     var sse = new EventSource(uri);
     sse.onmessage = function (msg) {
       let chain = JSON.parse(msg.data);
@@ -25,15 +34,15 @@
   <table class="uk-table">
     <tbody>
       <tr>
-        <td>Epoch</td>
+        <td class="uk-text-uppercase">Epoch</td>
         <td> {epoch} </td>
       </tr>
       <tr>
-        <td>Round</td>
+        <td class="uk-text-uppercase">Round</td>
         <td>{round.toLocaleString('en-ES')}</td>
       </tr>
       <tr>
-        <td>Waypoint</td>
+        <td class="uk-text-uppercase">Waypoint</td>
         <td class="uk-text-break">{waypoint}</td>
       </tr>
     </tbody>

@@ -52,6 +52,8 @@ pub struct Items {
     pub is_synced: bool,
     /// how far behind is the node
     pub sync_delay: i64,
+    /// is in the validator set
+    pub validator_set: bool,
 }
 
 
@@ -65,6 +67,7 @@ impl Default for Items {
             miner_running: false,
             is_synced: false,
             sync_delay: 0,
+            validator_set: false,
         }
     }
 }
@@ -165,6 +168,7 @@ impl NodeHealth {
 
       self.items.is_synced = sync_tuple.0;
       self.items.sync_delay = sync_tuple.1;
+      self.items.validator_set = self.is_in_validator_set();
       self.items.clone()
     }
 

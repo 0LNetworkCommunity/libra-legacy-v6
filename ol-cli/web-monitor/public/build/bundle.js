@@ -17921,7 +17921,7 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (89:2) {#if healthData}
+    // (99:2) {#if healthData}
     function create_if_block(ctx) {
     	let div;
     	let h3;
@@ -17953,11 +17953,11 @@ var app = (function () {
     			}
 
     			attr_dev(h3, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted");
-    			add_location(h3, file$9, 90, 6, 2841);
+    			add_location(h3, file$9, 100, 6, 3097);
     			attr_dev(dl, "class", "uk-description-list");
-    			add_location(dl, file$9, 93, 6, 2953);
+    			add_location(dl, file$9, 103, 6, 3209);
     			attr_dev(div, "class", "uk-card uk-card-default uk-card-body");
-    			add_location(div, file$9, 89, 4, 2784);
+    			add_location(div, file$9, 99, 4, 3040);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -18028,14 +18028,14 @@ var app = (function () {
     		block,
     		id: create_if_block.name,
     		type: "if",
-    		source: "(89:2) {#if healthData}",
+    		source: "(99:2) {#if healthData}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (95:8) {#each allChecks as c}
+    // (105:8) {#each allChecks as c}
     function create_each_block$3(ctx) {
     	let check;
     	let current;
@@ -18082,7 +18082,7 @@ var app = (function () {
     		block,
     		id: create_each_block$3.name,
     		type: "each",
-    		source: "(95:8) {#each allChecks as c}",
+    		source: "(105:8) {#each allChecks as c}",
     		ctx
     	});
 
@@ -18098,7 +18098,7 @@ var app = (function () {
     		c: function create() {
     			main = element("main");
     			if (if_block) if_block.c();
-    			add_location(main, file$9, 87, 0, 2754);
+    			add_location(main, file$9, 97, 0, 3010);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -18243,6 +18243,12 @@ var app = (function () {
     				}
 
     				
+
+    				if (i.id === "set") {
+    					i.is_true = healthData.validato_set;
+    				}
+
+    				
     				return i;
     			}));
     		};
@@ -18252,7 +18258,7 @@ var app = (function () {
     		{
     			id: "config",
     			title: "Node configured",
-    			description: "node.yaml, 0L.toml, key_store.json",
+    			description: "operator files created",
     			is_true: true
     		},
     		{
@@ -18283,6 +18289,12 @@ var app = (function () {
     			id: "sync",
     			title: "Node is synced",
     			description: "node is up to date with upstream",
+    			is_true: false
+    		},
+    		{
+    			id: "set",
+    			title: "In validator set",
+    			description: "owner account is in the validator set",
     			is_true: false
     		}
     	];
@@ -18386,22 +18398,25 @@ var app = (function () {
     			td5 = element("td");
     			t12 = text(/*waypoint*/ ctx[2]);
     			attr_dev(h3, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted");
-    			add_location(h3, file$8, 26, 2, 1203);
-    			add_location(td0, file$8, 33, 8, 1354);
-    			add_location(td1, file$8, 34, 8, 1377);
-    			add_location(tr0, file$8, 32, 6, 1341);
-    			add_location(td2, file$8, 37, 8, 1427);
-    			add_location(td3, file$8, 38, 8, 1450);
-    			add_location(tr1, file$8, 36, 6, 1414);
-    			add_location(td4, file$8, 41, 8, 1522);
+    			add_location(h3, file$8, 35, 2, 1503);
+    			attr_dev(td0, "class", "uk-text-uppercase");
+    			add_location(td0, file$8, 42, 8, 1654);
+    			add_location(td1, file$8, 43, 8, 1703);
+    			add_location(tr0, file$8, 41, 6, 1641);
+    			attr_dev(td2, "class", "uk-text-uppercase");
+    			add_location(td2, file$8, 46, 8, 1753);
+    			add_location(td3, file$8, 47, 8, 1802);
+    			add_location(tr1, file$8, 45, 6, 1740);
+    			attr_dev(td4, "class", "uk-text-uppercase");
+    			add_location(td4, file$8, 50, 8, 1874);
     			attr_dev(td5, "class", "uk-text-break");
-    			add_location(td5, file$8, 42, 8, 1548);
-    			add_location(tr2, file$8, 40, 6, 1509);
-    			add_location(tbody, file$8, 31, 4, 1327);
+    			add_location(td5, file$8, 51, 8, 1926);
+    			add_location(tr2, file$8, 49, 6, 1861);
+    			add_location(tbody, file$8, 40, 4, 1627);
     			attr_dev(table, "class", "uk-table");
-    			add_location(table, file$8, 30, 2, 1298);
+    			add_location(table, file$8, 39, 2, 1598);
     			attr_dev(div, "class", "uk-card uk-card-default uk-card-body uk-height-1-1");
-    			add_location(div, file$8, 25, 0, 1136);
+    			add_location(div, file$8, 34, 0, 1436);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -18498,7 +18513,17 @@ var app = (function () {
     	let waypoint = undefined;
 
     	onMount(() => __awaiter(void 0, void 0, void 0, function* () {
-    		var uri = "http://" + location.host + "/chain";
+    		// var uri = "http://" + location.host + "/chain";
+    		// await fetch(uri)
+    		//   .then((r) => r.json())
+    		//   .then((data) => {
+    		//     // let chain = JSON.parse(data);
+    		//     epoch = data.epoch;
+    		//     round = data.height;
+    		//     waypoint = data.waypoint;
+    		//   });
+    		var uri = "http://" + location.host + "/chain_live";
+
     		var sse = new EventSource(uri);
 
     		sse.onmessage = function (msg) {
@@ -18558,18 +18583,26 @@ var app = (function () {
     	let div;
     	let h3;
     	let t1;
-    	let dl;
-    	let dt0;
-    	let t2;
-    	let dd0;
-    	let dt1;
-    	let t4_value = /*balance*/ ctx[1].toLocaleString("en-ES") + "";
+    	let table;
+    	let tbody;
+    	let tr0;
+    	let td0;
+    	let t3;
+    	let td1;
     	let t4;
-    	let dd1;
-    	let dt2;
-    	let t6;
+    	let t5;
+    	let tr1;
+    	let td2;
     	let t7;
-    	let dd2;
+    	let td3;
+    	let t8_value = /*balance*/ ctx[1].toLocaleString("en-ES") + "";
+    	let t8;
+    	let t9;
+    	let tr2;
+    	let td4;
+    	let t11;
+    	let td5;
+    	let t12;
 
     	const block = {
     		c: function create() {
@@ -18577,31 +18610,47 @@ var app = (function () {
     			h3 = element("h3");
     			h3.textContent = "Account";
     			t1 = space();
-    			dl = element("dl");
-    			dt0 = element("dt");
-    			t2 = text(/*account*/ ctx[0]);
-    			dd0 = element("dd");
-    			dd0.textContent = "owner account";
-    			dt1 = element("dt");
-    			t4 = text(t4_value);
-    			dd1 = element("dd");
-    			dd1.textContent = "balance";
-    			dt2 = element("dt");
-    			t6 = text(/*inValidatorSet*/ ctx[2]);
+    			table = element("table");
+    			tbody = element("tbody");
+    			tr0 = element("tr");
+    			td0 = element("td");
+    			td0.textContent = "owner";
+    			t3 = space();
+    			td1 = element("td");
+    			t4 = text(/*account*/ ctx[0]);
+    			t5 = space();
+    			tr1 = element("tr");
+    			td2 = element("td");
+    			td2.textContent = "balance";
     			t7 = space();
-    			dd2 = element("dd");
-    			dd2.textContent = "in validator set";
+    			td3 = element("td");
+    			t8 = text(t8_value);
+    			t9 = space();
+    			tr2 = element("tr");
+    			td4 = element("td");
+    			td4.textContent = "In Set";
+    			t11 = space();
+    			td5 = element("td");
+    			t12 = text(/*inValidatorSet*/ ctx[2]);
     			attr_dev(h3, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted uk-text-large");
-    			add_location(h3, file$7, 29, 2, 1344);
-    			add_location(dt0, file$7, 35, 4, 1498);
-    			add_location(dd0, file$7, 36, 4, 1521);
-    			add_location(dt1, file$7, 38, 4, 1553);
-    			add_location(dd1, file$7, 39, 4, 1600);
-    			add_location(dt2, file$7, 41, 4, 1622);
-    			add_location(dd2, file$7, 42, 4, 1654);
-    			attr_dev(dl, "class", "uk-description-list");
-    			add_location(dl, file$7, 34, 2, 1461);
-    			attr_dev(div, "class", "uk-card uk-card-default uk-card-body uk-text-center uk-height-1-1");
+    			add_location(h3, file$7, 29, 2, 1329);
+    			attr_dev(td0, "class", "uk-text-uppercase");
+    			add_location(td0, file$7, 38, 8, 1505);
+    			attr_dev(td1, "class", "uk-text-break");
+    			add_location(td1, file$7, 39, 8, 1554);
+    			add_location(tr0, file$7, 37, 6, 1492);
+    			attr_dev(td2, "class", "uk-text-uppercase");
+    			add_location(td2, file$7, 42, 8, 1628);
+    			add_location(td3, file$7, 43, 8, 1679);
+    			add_location(tr1, file$7, 41, 6, 1615);
+    			attr_dev(td4, "class", "uk-text-uppercase");
+    			add_location(td4, file$7, 46, 8, 1753);
+    			add_location(td5, file$7, 47, 8, 1803);
+    			add_location(tr2, file$7, 45, 6, 1740);
+    			add_location(tbody, file$7, 36, 4, 1478);
+    			attr_dev(table, "class", "uk-table");
+    			add_location(table, file$7, 35, 4, 1449);
+    			attr_dev(div, "class", "uk-card uk-card-default uk-card-body uk-height-1-1");
     			add_location(div, file$7, 28, 0, 1262);
     		},
     		l: function claim(nodes) {
@@ -18611,22 +18660,30 @@ var app = (function () {
     			insert_dev(target, div, anchor);
     			append_dev(div, h3);
     			append_dev(div, t1);
-    			append_dev(div, dl);
-    			append_dev(dl, dt0);
-    			append_dev(dt0, t2);
-    			append_dev(dl, dd0);
-    			append_dev(dl, dt1);
-    			append_dev(dt1, t4);
-    			append_dev(dl, dd1);
-    			append_dev(dl, dt2);
-    			append_dev(dt2, t6);
-    			append_dev(dt2, t7);
-    			append_dev(dl, dd2);
+    			append_dev(div, table);
+    			append_dev(table, tbody);
+    			append_dev(tbody, tr0);
+    			append_dev(tr0, td0);
+    			append_dev(tr0, t3);
+    			append_dev(tr0, td1);
+    			append_dev(td1, t4);
+    			append_dev(tbody, t5);
+    			append_dev(tbody, tr1);
+    			append_dev(tr1, td2);
+    			append_dev(tr1, t7);
+    			append_dev(tr1, td3);
+    			append_dev(td3, t8);
+    			append_dev(tbody, t9);
+    			append_dev(tbody, tr2);
+    			append_dev(tr2, td4);
+    			append_dev(tr2, t11);
+    			append_dev(tr2, td5);
+    			append_dev(td5, t12);
     		},
     		p: function update(ctx, [dirty]) {
-    			if (dirty & /*account*/ 1) set_data_dev(t2, /*account*/ ctx[0]);
-    			if (dirty & /*balance*/ 2 && t4_value !== (t4_value = /*balance*/ ctx[1].toLocaleString("en-ES") + "")) set_data_dev(t4, t4_value);
-    			if (dirty & /*inValidatorSet*/ 4) set_data_dev(t6, /*inValidatorSet*/ ctx[2]);
+    			if (dirty & /*account*/ 1) set_data_dev(t4, /*account*/ ctx[0]);
+    			if (dirty & /*balance*/ 2 && t8_value !== (t8_value = /*balance*/ ctx[1].toLocaleString("en-ES") + "")) set_data_dev(t8, t8_value);
+    			if (dirty & /*inValidatorSet*/ 4) set_data_dev(t12, /*inValidatorSet*/ ctx[2]);
     		},
     		i: noop,
     		o: noop,

@@ -18,6 +18,7 @@
         if (i.id === "node") { i.is_true = healthData.node_running; };
         if (i.id === "miner") { i.is_true = healthData.miner_running; };
         if (i.id === "sync") { i.is_true = healthData.is_synced; };
+        if (i.id === "set") { i.is_true = healthData.validato_set; };
         return i;
       });
     };
@@ -34,7 +35,7 @@
     {
       id: "config",
       title: "Node configured",
-      description: "node.yaml, 0L.toml, key_store.json",
+      description: "operator files created",
       is_true: true,
     },
     {
@@ -69,6 +70,12 @@
       description: "node is up to date with upstream",
       is_true: false,
 
+    },
+    {
+      id: "set",
+      title: "In validator set",
+      description: "owner account is in the validator set",
+      is_true: false,
     },
   ];
 </script>

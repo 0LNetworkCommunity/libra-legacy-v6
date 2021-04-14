@@ -52,7 +52,7 @@ pub async fn start_server() {
     });
 
     //GET chain/ (the json api)
-    let chain = warp::path("chain").and(warp::get()).map(|| {
+    let chain_live = warp::path("chain_live").and(warp::get()).map(|| {
         // create server event source
         let event_stream = interval(Duration::from_secs(1)).map(move |_| {
             let info = crate::chain_info::read_chain_info_cache();
@@ -69,6 +69,13 @@ pub async fn start_server() {
     .map(|| { 
       let vals = crate::chain_info::read_val_info_cache();
       warp::reply::json(&vals)
+     }));
+
+    let chain = warp::path("chain")
+    .and(warp::get()
+    .map(|| { 
+      let chain = crate::chain_info::read_chain_info_cache();
+      warp::reply::json(&chain)
      }));
 
     let account_template = warp::path("account.json")
@@ -104,7 +111,7 @@ pub async fn start_server() {
 
 
     //GET validators/ (the json api)
-    let vals_sse = warp::path("validators").and(warp::get()).map(|| {
+    let vals_live = warp::path("validators").and(warp::get()).map(|| {
         // create server event source
         let event_stream = interval(Duration::from_secs(60)).map(move |_| {
             let info = crate::chain_info::read_val_info_cache();
@@ -118,6 +125,6 @@ pub async fn start_server() {
     //GET /
     let home = warp::fs::dir("/root/libra/ol-cli/web-monitor/public/");
 
-    warp::serve(home.or(check).or(chain).or(vals_sse).or(vals).or(account_template).or(epoch).or(account))
+    warp::serve(home.or(check).or(chain).or(chain_live).or(vals_live).or(vals).or(account_template).or(epoch).or(account))
         .run(([0, 0, 0, 0], 3030)).await;
 }
