@@ -33,13 +33,15 @@ fn print_it(checker: &NodeHealth) {
   stdout.queue(cursor::SavePosition).unwrap();
   stdout.write(
       format!(
-"Configs Exist:{configs}
-DB Restored: {restored}
-Is Synced: {synced}
-Sync Delay: {delay}
-Node Running: {node}
-Miner Running: {miner}
-Account On Chain: {account}\n",
+"Configs exist:{configs}
+DB restored: {restored}
+Is synced: {synced}
+Sync delay: {delay}
+Node running: {node}
+Miner running: {miner}
+Account on chain: {account}
+In validator set: {in_set}
+\n",
     configs = checker.items.configs_exist,
     restored = checker.items.db_restored,
     synced = checker.items.is_synced,
@@ -47,6 +49,7 @@ Account On Chain: {account}\n",
     node = checker.items.node_running,
     miner = checker.items.miner_running,
     account = checker.items.account_created,
+    in_set = checker.items.validator_set,
     ).as_bytes()
   ).unwrap();
 

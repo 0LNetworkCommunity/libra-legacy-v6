@@ -3,7 +3,7 @@
 use anyhow::Error;
 use cli::libra_client::LibraClient;
 use sysinfo::SystemExt;
-use crate::{cache::DB_CACHE, entrypoint, metadata::Metadata};
+use crate::{cache::DB_CACHE, client, entrypoint, metadata::Metadata};
 use crate::config::OlCliConfig;
 use crate::application::app_config;
 use std::str;
@@ -126,31 +126,11 @@ pub struct NodeHealth {
 impl NodeHealth {
     /// Create a instance of Check
     pub fn new() -> Self {
-        let conf = app_config().to_owned();
-        let entry_args = entrypoint::get_args();
-        let use_local = NodeHealth::check_node_state();
-
-        let url = if use_local {
-            conf
-            .clone()
-            .profile
-            .default_node
-            .expect("cannot get default url")
-        } else {
-            conf.clone()
-            .profile
-            .upstream_nodes
-            .unwrap()
-            .pop()
-            .expect("cannot get upstream node url")
-        };
+        let cfg = app_config().to_owned();
 
         return Self {
-            client: LibraClient::new(
-                url, 
-                conf.get_waypoint(entry_args.swarm_path).unwrap_or_default() //default for Waypoint will not be able to connect
-            ).unwrap(),
-            conf,
+            client: client::pick_client(),
+            cfg,
             items: Items::init(),
             miner_state: None,
             chain_state: None,
@@ -295,14 +275,21 @@ impl NodeHealth {
 
     /// the owner and operator accounts exist on chain
     pub fn accounts_exist_on_chain(&mut self) -> bool {
-        let account = self.client.get_account(self.conf.profile.account, false);
-         match account {
+      let addr = self.conf.profile.account;
+      // dbg!(&addr);
+        let account = self.client.get_account(addr, false);
+        dbg!(&account); 
+        let res = match account {
             Ok((opt,_)) => match opt{
                 Some(_) => true,
                 None => false
             },
             Err(_) => false,
-        }
+        };
+
+        dbg!(res);
+
+        res
     }
 
     /// database is initialized
