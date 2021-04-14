@@ -1,6 +1,6 @@
 //! web-monitor
 
-use crate::{node_health, check_runner, chain_info};
+use crate::{account, chain_info, check_runner, node_health};
 use futures::StreamExt;
 use std::convert::Infallible;
 use std::thread;
@@ -22,6 +22,12 @@ fn sse_chain_info(info: chain_info::ChainInfo) -> Result<impl ServerSentEvent, I
 fn sse_val_info(info: Vec<chain_info::ValidatorInfo>) -> Result<impl ServerSentEvent, Infallible> {
     Ok(warp::sse::json(info))
 }
+
+fn sse_account_info(info: account::AccountInfo) -> Result<impl ServerSentEvent, Infallible> {
+    Ok(warp::sse::json(info))
+}
+
+
 
 
 /// main server
@@ -85,16 +91,16 @@ pub async fn start_server() {
     }));
 
 
-    // //GET account/ (the json api)
-    // let account = warp::path("account").and(warp::get()).map(|| {
-    //     // create server event source
-    //     let event_stream = interval(Duration::from_secs(1)).map(move |_| {
-    //         // let info = crate::chain_info::read_chain_info_cache();
-    //         sse_chain_info(info)
-    //     });
-    //     // reply using server-sent events
-    //     warp::sse::reply(event_stream)
-    // });
+    //GET account/ (the json api)
+    let account = warp::path("account").and(warp::get()).map(|| {
+        // create server event source
+        let event_stream = interval(Duration::from_secs(1)).map(move |_| {
+            let info = crate::account::AccountInfo::read_account_info_cache();
+            sse_account_info(info)
+        });
+        // reply using server-sent events
+        warp::sse::reply(event_stream)
+    });
 
 
     //GET validators/ (the json api)
@@ -112,6 +118,6 @@ pub async fn start_server() {
     //GET /
     let home = warp::fs::dir("/root/libra/ol-cli/web-monitor/public/");
 
-    warp::serve(home.or(check).or(chain).or(vals_sse).or(vals).or(account_template).or(epoch))
+    warp::serve(home.or(check).or(chain).or(vals_sse).or(vals).or(account_template).or(epoch).or(account))
         .run(([0, 0, 0, 0], 3030)).await;
 }
