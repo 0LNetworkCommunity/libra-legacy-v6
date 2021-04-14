@@ -13,7 +13,7 @@ use libra_types::transaction::authenticator::AuthenticationKey;
 use reqwest::Url;
 use std::{fs, path::{Path, PathBuf}};
 use libra_genesis_tool::keyscheme::KeyScheme;
-
+use ol_fixtures;
 /// A test harness for the submit_tx with a local swarm 
 pub fn swarm_miner(swarm_path: PathBuf, persona: &Option<String>) {
     let persona = persona.clone().unwrap_or("alice".to_string());
@@ -88,8 +88,7 @@ pub fn get_params_from_swarm(mut swarm_path: PathBuf, persona: &str) -> Result<T
         .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path));
 
     // This mnemonic is hard coded into the swarm configs. see configs/config_builder
-    let mnem_path = format!("./fixtures/mnemonic/{}.mnem", persona);
-    let mnemonic = String::from_utf8(fs::read(mnem_path).unwrap()).unwrap();
+    let mnemonic = ol_fixtures::get_persona_mnem(persona);
     let keys = KeyScheme::new_from_mnemonic(mnemonic);
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
     let pubkey =  keys.child_0_owner.get_public();
