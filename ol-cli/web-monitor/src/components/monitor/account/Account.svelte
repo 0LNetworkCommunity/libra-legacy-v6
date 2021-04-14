@@ -34,6 +34,6 @@
     <dd>balance</dd>
 
     <dt> {inValidatorSet} </dt>
-    <dd>status</dd>
+    <dd>in validator set</dd>
   </dl>
 </div>

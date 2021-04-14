@@ -30,7 +30,7 @@
       </tr>
       <tr>
         <td>Round</td>
-        <td>{round}</td>
+        <td>{round.toLocaleString('en-ES')}</td>
       </tr>
       <tr>
         <td>Waypoint</td>

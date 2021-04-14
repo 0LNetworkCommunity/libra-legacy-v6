@@ -18348,6 +18348,7 @@ var app = (function () {
     	let td2;
     	let t7;
     	let td3;
+    	let t8_value = /*round*/ ctx[1].toLocaleString("en-ES") + "";
     	let t8;
     	let t9;
     	let tr2;
@@ -18376,7 +18377,7 @@ var app = (function () {
     			td2.textContent = "Round";
     			t7 = space();
     			td3 = element("td");
-    			t8 = text(/*round*/ ctx[1]);
+    			t8 = text(t8_value);
     			t9 = space();
     			tr2 = element("tr");
     			td4 = element("td");
@@ -18392,10 +18393,10 @@ var app = (function () {
     			add_location(td2, file$8, 37, 8, 1427);
     			add_location(td3, file$8, 38, 8, 1450);
     			add_location(tr1, file$8, 36, 6, 1414);
-    			add_location(td4, file$8, 41, 8, 1498);
+    			add_location(td4, file$8, 41, 8, 1522);
     			attr_dev(td5, "class", "uk-text-break");
-    			add_location(td5, file$8, 42, 8, 1524);
-    			add_location(tr2, file$8, 40, 6, 1485);
+    			add_location(td5, file$8, 42, 8, 1548);
+    			add_location(tr2, file$8, 40, 6, 1509);
     			add_location(tbody, file$8, 31, 4, 1327);
     			attr_dev(table, "class", "uk-table");
     			add_location(table, file$8, 30, 2, 1298);
@@ -18431,7 +18432,7 @@ var app = (function () {
     		},
     		p: function update(ctx, [dirty]) {
     			if (dirty & /*epoch*/ 1) set_data_dev(t4, /*epoch*/ ctx[0]);
-    			if (dirty & /*round*/ 2) set_data_dev(t8, /*round*/ ctx[1]);
+    			if (dirty & /*round*/ 2 && t8_value !== (t8_value = /*round*/ ctx[1].toLocaleString("en-ES") + "")) set_data_dev(t8, t8_value);
     			if (dirty & /*waypoint*/ 4) set_data_dev(t12, /*waypoint*/ ctx[2]);
     		},
     		i: noop,
@@ -18589,7 +18590,7 @@ var app = (function () {
     			t6 = text(/*inValidatorSet*/ ctx[2]);
     			t7 = space();
     			dd2 = element("dd");
-    			dd2.textContent = "status";
+    			dd2.textContent = "in validator set";
     			attr_dev(h3, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted uk-text-large");
     			add_location(h3, file$7, 29, 2, 1344);
     			add_location(dt0, file$7, 35, 4, 1498);
