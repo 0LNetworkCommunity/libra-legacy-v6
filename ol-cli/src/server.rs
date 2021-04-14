@@ -42,7 +42,7 @@ pub async fn start_server() {
     let check = warp::path("check").and(warp::get()).map(|| {
         // let mut health = node_health::NodeHealth::new();
         // create server event source from Check object
-        let event_stream = interval(Duration::from_secs(1)).map(move |_| {
+        let event_stream = interval(Duration::from_secs(10)).map(move |_| {
             let items = node_health::Items::read_cache().unwrap();
             // let items = health.refresh_checks();
             sse_check(items)
@@ -54,7 +54,7 @@ pub async fn start_server() {
     //GET chain/ (the json api)
     let chain_live = warp::path("chain_live").and(warp::get()).map(|| {
         // create server event source
-        let event_stream = interval(Duration::from_secs(1)).map(move |_| {
+        let event_stream = interval(Duration::from_secs(10)).map(move |_| {
             let info = crate::chain_info::read_chain_info_cache();
             sse_chain_info(info)
         });
@@ -101,7 +101,7 @@ pub async fn start_server() {
     //GET account/ (the json api)
     let account = warp::path("account").and(warp::get()).map(|| {
         // create server event source
-        let event_stream = interval(Duration::from_secs(1)).map(move |_| {
+        let event_stream = interval(Duration::from_secs(60)).map(move |_| {
             let info = crate::account::AccountInfo::read_account_info_cache();
             sse_account_info(info)
         });
