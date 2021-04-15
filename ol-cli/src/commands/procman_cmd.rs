@@ -37,8 +37,8 @@ impl Runnable for ProcmanCmd {
 
         // did the node finish sync
         if NodeHealth::node_is_synced().0 {}
-        // is the node making progress
-        // TODO?
+        
+        // TODO: is the node making progress
 
         ////////////// MINING //////////////
         // does the account exist on chain?
