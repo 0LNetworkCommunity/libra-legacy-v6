@@ -15,13 +15,6 @@
       vote_in_progress = chain.upgrade.upgrade.validators_voted.length > 0;
     }
   });
-  // onMount(async () => {
-  //   await fetch(uri)
-  //     .then((r) => r.json())
-  //     .then((data) => {
-  //       vote_in_progress = data.upgrade.upgrade.validators_voted.length > 0;
-  //     });
-  // });
 </script>
 
 <main>

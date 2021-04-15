@@ -1,56 +1,17 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-
   let epoch: number = 0;
   let round: number = 0;
   let waypoint: string = undefined;
   import { chainInfo } from "../../../store.ts";
 
-  // onMount(async () => {
-  //   chainInfo.subscribe((info_str) => {
-  //     let chain = JSON.parse(info_str);
-  //     if (chain.upgrade) {
-  //     epoch = chain.epoch;
-  //     round = chain.height;
-  //     waypoint = chain.waypoint;
-  //     }
-
-  //   });
-  // });
-    chainInfo.subscribe((info_str) => {
-      let chain = JSON.parse(info_str);
-      if (chain.upgrade) {
+  chainInfo.subscribe((info_str) => {
+    let chain = JSON.parse(info_str);
+    if (chain.upgrade) {
       epoch = chain.epoch;
       round = chain.height;
       waypoint = chain.waypoint;
-      }
-
-    });
-  // let uri = "http://" + location.host + "/chain_live";
-  // let sse = new EventSource(uri);
-
-  // onMount(async () => {
-  //   // var uri = "http://" + location.host + "/chain";
-  //   // await fetch(uri)
-  //   //   .then((r) => r.json())
-  //   //   .then((data) => {
-  //   //     // let chain = JSON.parse(data);
-  //   //     epoch = data.epoch;
-  //   //     round = data.height;
-  //   //     waypoint = data.waypoint;
-  //   //   });
-
-  //   sse.onmessage = function (msg) {
-  //     let chain = JSON.parse(msg.data);
-  //     epoch = chain.epoch;
-  //     round = chain.height;
-  //     waypoint = chain.waypoint;
-  //   };
-  // });
-
-  // onDestroy(() => {
-  //   sse.close();
-  // });
+    }
+  });
 </script>
 
 <div class="uk-card uk-card-default uk-card-body uk-height-1-1">
