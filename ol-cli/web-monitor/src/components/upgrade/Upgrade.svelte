@@ -13,8 +13,10 @@
   import { chainInfo } from "../../store.ts";
   onMount(async () => {
     chainInfo.subscribe((info_str) => {
-      let data = JSON.parse(info_str);
-      vote_in_progress = data.upgrade.upgrade.validators_voted.length > 0;
+      let chain = JSON.parse(info_str);
+      if (chain.upgrade) {
+        vote_in_progress = chain.upgrade.upgrade.validators_voted.length > 0;
+      }
     });
   });
 

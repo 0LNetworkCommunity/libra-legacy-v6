@@ -9,10 +9,12 @@
   onMount(async () => {
     chainInfo.subscribe((info_str) => {
       let chain = JSON.parse(info_str);
-
+      if (chain.upgrade) {
       epoch = chain.epoch;
       round = chain.height;
       waypoint = chain.waypoint;
+      }
+
     });
   });
 
