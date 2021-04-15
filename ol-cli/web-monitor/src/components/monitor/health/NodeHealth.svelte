@@ -7,8 +7,6 @@
   let uri = "http://" + location.host + "/check";
   let sse = new EventSource(uri);
   onMount(async () => {
-    console.log("nodehealth mounted");
-
     sse.onmessage = function (msg) {
       healthData = JSON.parse(msg.data);
 

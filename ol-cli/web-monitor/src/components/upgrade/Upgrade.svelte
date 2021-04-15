@@ -1,8 +1,7 @@
 <script lang="ts">
   import Historical from "./Historical.svelte";
   import InProgress from "./InProgress.svelte";
-
-  import { onMount } from "svelte";
+  import { chainInfo } from "../../store.ts";
 
   let uri = "http://" + location.host + "/chain";
   let vote_in_progress = false;
@@ -10,16 +9,12 @@
 
   let current_height = 100;
 
-  import { chainInfo } from "../../store.ts";
-  onMount(async () => {
-    chainInfo.subscribe((info_str) => {
-      let chain = JSON.parse(info_str);
-      if (chain.upgrade) {
-        vote_in_progress = chain.upgrade.upgrade.validators_voted.length > 0;
-      }
-    });
+  chainInfo.subscribe((info_str) => {
+    let chain = JSON.parse(info_str);
+    if (chain.upgrade) {
+      vote_in_progress = chain.upgrade.upgrade.validators_voted.length > 0;
+    }
   });
-
   // onMount(async () => {
   //   await fetch(uri)
   //     .then((r) => r.json())

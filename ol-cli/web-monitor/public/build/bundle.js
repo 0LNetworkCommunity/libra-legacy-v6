@@ -80,9 +80,6 @@ var app = (function () {
     function onDestroy(fn) {
         get_current_component().$$.on_destroy.push(fn);
     }
-    function getContext(key) {
-        return get_current_component().$$.context.get(key);
-    }
 
     const dirty_components = [];
     const binding_callbacks = [];
@@ -17933,7 +17930,7 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (97:2) {#if healthData}
+    // (96:2) {#if healthData}
     function create_if_block$1(ctx) {
     	let div;
     	let h3;
@@ -17965,11 +17962,11 @@ var app = (function () {
     			}
 
     			attr_dev(h3, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted");
-    			add_location(h3, file$9, 98, 6, 3113);
+    			add_location(h3, file$9, 97, 6, 3074);
     			attr_dev(dl, "class", "uk-description-list");
-    			add_location(dl, file$9, 101, 6, 3225);
+    			add_location(dl, file$9, 100, 6, 3186);
     			attr_dev(div, "class", "uk-card uk-card-default uk-card-body");
-    			add_location(div, file$9, 97, 4, 3056);
+    			add_location(div, file$9, 96, 4, 3017);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -18040,14 +18037,14 @@ var app = (function () {
     		block,
     		id: create_if_block$1.name,
     		type: "if",
-    		source: "(97:2) {#if healthData}",
+    		source: "(96:2) {#if healthData}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (103:8) {#each allChecks as c}
+    // (102:8) {#each allChecks as c}
     function create_each_block$3(ctx) {
     	let check;
     	let current;
@@ -18094,7 +18091,7 @@ var app = (function () {
     		block,
     		id: create_each_block$3.name,
     		type: "each",
-    		source: "(103:8) {#each allChecks as c}",
+    		source: "(102:8) {#each allChecks as c}",
     		ctx
     	});
 
@@ -18110,7 +18107,7 @@ var app = (function () {
     		c: function create() {
     			main = element("main");
     			if (if_block) if_block.c();
-    			add_location(main, file$9, 95, 0, 3026);
+    			add_location(main, file$9, 94, 0, 2987);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -18215,8 +18212,6 @@ var app = (function () {
     	let sse = new EventSource(uri);
 
     	onMount(() => __awaiter(void 0, void 0, void 0, function* () {
-    		console.log("nodehealth mounted");
-
     		sse.onmessage = function (msg) {
     			$$invalidate(0, healthData = JSON.parse(msg.data));
 
@@ -18468,25 +18463,25 @@ var app = (function () {
     			td5 = element("td");
     			t12 = text(/*waypoint*/ ctx[2]);
     			attr_dev(h3, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted");
-    			add_location(h3, file$8, 49, 2, 1868);
+    			add_location(h3, file$8, 48, 2, 1338);
     			attr_dev(td0, "class", "uk-text-uppercase");
-    			add_location(td0, file$8, 56, 8, 2019);
-    			add_location(td1, file$8, 57, 8, 2068);
-    			add_location(tr0, file$8, 55, 6, 2006);
+    			add_location(td0, file$8, 55, 8, 1489);
+    			add_location(td1, file$8, 56, 8, 1538);
+    			add_location(tr0, file$8, 54, 6, 1476);
     			attr_dev(td2, "class", "uk-text-uppercase");
-    			add_location(td2, file$8, 60, 8, 2118);
-    			add_location(td3, file$8, 61, 8, 2167);
-    			add_location(tr1, file$8, 59, 6, 2105);
+    			add_location(td2, file$8, 59, 8, 1588);
+    			add_location(td3, file$8, 60, 8, 1637);
+    			add_location(tr1, file$8, 58, 6, 1575);
     			attr_dev(td4, "class", "uk-text-uppercase");
-    			add_location(td4, file$8, 64, 8, 2239);
+    			add_location(td4, file$8, 63, 8, 1709);
     			attr_dev(td5, "class", "uk-text-break");
-    			add_location(td5, file$8, 65, 8, 2291);
-    			add_location(tr2, file$8, 63, 6, 2226);
-    			add_location(tbody, file$8, 54, 4, 1992);
+    			add_location(td5, file$8, 64, 8, 1761);
+    			add_location(tr2, file$8, 62, 6, 1696);
+    			add_location(tbody, file$8, 53, 4, 1462);
     			attr_dev(table, "class", "uk-table");
-    			add_location(table, file$8, 53, 2, 1963);
+    			add_location(table, file$8, 52, 2, 1433);
     			attr_dev(div, "class", "uk-card uk-card-default uk-card-body uk-height-1-1");
-    			add_location(div, file$8, 48, 0, 1801);
+    			add_location(div, file$8, 47, 0, 1271);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -18541,58 +18536,29 @@ var app = (function () {
     function instance$8($$self, $$props, $$invalidate) {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots("Info", slots, []);
-
-    	var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
-    		function adopt(value) {
-    			return value instanceof P
-    			? value
-    			: new P(function (resolve) {
-    						resolve(value);
-    					});
-    		}
-
-    		return new (P || (P = Promise))(function (resolve, reject) {
-    				function fulfilled(value) {
-    					try {
-    						step(generator.next(value));
-    					} catch(e) {
-    						reject(e);
-    					}
-    				}
-
-    				function rejected(value) {
-    					try {
-    						step(generator["throw"](value));
-    					} catch(e) {
-    						reject(e);
-    					}
-    				}
-
-    				function step(result) {
-    					result.done
-    					? resolve(result.value)
-    					: adopt(result.value).then(fulfilled, rejected);
-    				}
-
-    				step((generator = generator.apply(thisArg, _arguments || [])).next());
-    			});
-    	};
-
     	let epoch = 0;
     	let round = 0;
     	let waypoint = undefined;
 
-    	onMount(() => __awaiter(void 0, void 0, void 0, function* () {
-    		chainInfo.subscribe(info_str => {
-    			let chain = JSON.parse(info_str);
+    	// onMount(async () => {
+    	//   chainInfo.subscribe((info_str) => {
+    	//     let chain = JSON.parse(info_str);
+    	//     if (chain.upgrade) {
+    	//     epoch = chain.epoch;
+    	//     round = chain.height;
+    	//     waypoint = chain.waypoint;
+    	//     }
+    	//   });
+    	// });
+    	chainInfo.subscribe(info_str => {
+    		let chain = JSON.parse(info_str);
 
-    			if (chain.upgrade) {
-    				$$invalidate(0, epoch = chain.epoch);
-    				$$invalidate(1, round = chain.height);
-    				$$invalidate(2, waypoint = chain.waypoint);
-    			}
-    		});
-    	}));
+    		if (chain.upgrade) {
+    			$$invalidate(0, epoch = chain.epoch);
+    			$$invalidate(1, round = chain.height);
+    			$$invalidate(2, waypoint = chain.waypoint);
+    		}
+    	});
 
     	const writable_props = [];
 
@@ -18601,7 +18567,6 @@ var app = (function () {
     	});
 
     	$$self.$capture_state = () => ({
-    		__awaiter,
     		onMount,
     		epoch,
     		round,
@@ -18610,7 +18575,6 @@ var app = (function () {
     	});
 
     	$$self.$inject_state = $$props => {
-    		if ("__awaiter" in $$props) __awaiter = $$props.__awaiter;
     		if ("epoch" in $$props) $$invalidate(0, epoch = $$props.epoch);
     		if ("round" in $$props) $$invalidate(1, round = $$props.round);
     		if ("waypoint" in $$props) $$invalidate(2, waypoint = $$props.waypoint);
@@ -19692,27 +19656,27 @@ var app = (function () {
 
     function get_each_context(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[7] = list[i];
-    	child_ctx[9] = i;
+    	child_ctx[6] = list[i];
+    	child_ctx[8] = i;
     	return child_ctx;
     }
 
-    // (75:8) {#each proposals as prop, i}
+    // (56:8) {#each vote_counts as prop, i}
     function create_each_block(ctx) {
     	let h5;
     	let t0;
-    	let t1_value = /*i*/ ctx[9] + 1 + "";
+    	let t1_value = /*i*/ ctx[8] + 1 + "";
     	let t1;
     	let t2;
     	let p0;
-    	let t3_value = /*proposals*/ ctx[0].length + "";
+    	let t3_value = /*vote_counts*/ ctx[0].length + "";
     	let t3;
     	let t4;
     	let t5;
     	let t6;
     	let t7;
     	let p1;
-    	let t8_value = /*prop*/ ctx[7].validators + "";
+    	let t8_value = /*prop*/ ctx[6].validators + "";
     	let t8;
 
     	const block = {
@@ -19724,16 +19688,16 @@ var app = (function () {
     			p0 = element("p");
     			t3 = text(t3_value);
     			t4 = text(" votes / ");
-    			t5 = text(/*validator_count*/ ctx[3]);
+    			t5 = text(/*validator_count*/ ctx[1]);
     			t6 = text(" validators");
     			t7 = space();
     			p1 = element("p");
     			t8 = text(t8_value);
     			attr_dev(h5, "class", "uk-text-muted uk-text-center uk-text-uppercase uk-text-small");
-    			add_location(h5, file$3, 75, 10, 2773);
+    			add_location(h5, file$3, 56, 10, 2007);
     			attr_dev(p0, "class", "uk-text-uppercase uk-text-small");
-    			add_location(p0, file$3, 80, 10, 2925);
-    			add_location(p1, file$3, 83, 10, 3062);
+    			add_location(p0, file$3, 61, 10, 2159);
+    			add_location(p1, file$3, 64, 10, 2298);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, h5, anchor);
@@ -19750,8 +19714,9 @@ var app = (function () {
     			append_dev(p1, t8);
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty & /*proposals*/ 1 && t3_value !== (t3_value = /*proposals*/ ctx[0].length + "")) set_data_dev(t3, t3_value);
-    			if (dirty & /*proposals*/ 1 && t8_value !== (t8_value = /*prop*/ ctx[7].validators + "")) set_data_dev(t8, t8_value);
+    			if (dirty & /*vote_counts*/ 1 && t3_value !== (t3_value = /*vote_counts*/ ctx[0].length + "")) set_data_dev(t3, t3_value);
+    			if (dirty & /*validator_count*/ 2) set_data_dev(t5, /*validator_count*/ ctx[1]);
+    			if (dirty & /*vote_counts*/ 1 && t8_value !== (t8_value = /*prop*/ ctx[6].validators + "")) set_data_dev(t8, t8_value);
     		},
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(h5);
@@ -19766,7 +19731,7 @@ var app = (function () {
     		block,
     		id: create_each_block.name,
     		type: "each",
-    		source: "(75:8) {#each proposals as prop, i}",
+    		source: "(56:8) {#each vote_counts as prop, i}",
     		ctx
     	});
 
@@ -19784,6 +19749,7 @@ var app = (function () {
     	let td0;
     	let t3;
     	let td1;
+    	let t4_value = /*vote_counts*/ ctx[0].length + "";
     	let t4;
     	let t5;
     	let t6;
@@ -19798,7 +19764,7 @@ var app = (function () {
     	let t12;
     	let div1;
     	let div0;
-    	let each_value = /*proposals*/ ctx[0];
+    	let each_value = /*vote_counts*/ ctx[0];
     	validate_each_argument(each_value);
     	let each_blocks = [];
 
@@ -19820,9 +19786,9 @@ var app = (function () {
     			td0.textContent = "VOTERS:";
     			t3 = space();
     			td1 = element("td");
-    			t4 = text(/*voters_count*/ ctx[1]);
+    			t4 = text(t4_value);
     			t5 = text("/");
-    			t6 = text(/*validator_count*/ ctx[3]);
+    			t6 = text(/*validator_count*/ ctx[1]);
     			t7 = space();
     			tr1 = element("tr");
     			td2 = element("td");
@@ -19841,24 +19807,24 @@ var app = (function () {
     			}
 
     			attr_dev(h3, "class", "uk-text-muted uk-text-center uk-text-uppercase");
-    			add_location(h3, file$3, 54, 4, 2243);
+    			add_location(h3, file$3, 35, 4, 1469);
     			attr_dev(td0, "class", "uk-text-uppercase");
-    			add_location(td0, file$3, 60, 10, 2404);
-    			add_location(td1, file$3, 61, 10, 2457);
-    			add_location(tr0, file$3, 59, 8, 2389);
+    			add_location(td0, file$3, 41, 10, 1630);
+    			add_location(td1, file$3, 42, 10, 1683);
+    			add_location(tr0, file$3, 40, 8, 1615);
     			attr_dev(td2, "class", "uk-text-uppercase");
-    			add_location(td2, file$3, 64, 10, 2538);
-    			add_location(td3, file$3, 65, 10, 2595);
-    			add_location(tr1, file$3, 63, 8, 2523);
-    			add_location(tbody, file$3, 58, 6, 2373);
+    			add_location(td2, file$3, 45, 10, 1770);
+    			add_location(td3, file$3, 46, 10, 1827);
+    			add_location(tr1, file$3, 44, 8, 1755);
+    			add_location(tbody, file$3, 39, 6, 1599);
     			attr_dev(table, "class", "uk-table");
-    			add_location(table, file$3, 57, 4, 2342);
-    			add_location(hr, file$3, 70, 4, 2673);
+    			add_location(table, file$3, 38, 4, 1568);
+    			add_location(hr, file$3, 51, 4, 1905);
     			attr_dev(div0, "class", "uk-text-center");
-    			add_location(div0, file$3, 73, 6, 2697);
-    			add_location(div1, file$3, 72, 4, 2685);
-    			add_location(div2, file$3, 53, 2, 2233);
-    			add_location(main, file$3, 52, 0, 2224);
+    			add_location(div0, file$3, 54, 6, 1929);
+    			add_location(div1, file$3, 53, 4, 1917);
+    			add_location(div2, file$3, 34, 2, 1459);
+    			add_location(main, file$3, 33, 0, 1450);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -19894,11 +19860,12 @@ var app = (function () {
     			}
     		},
     		p: function update(ctx, [dirty]) {
-    			if (dirty & /*voters_count*/ 2) set_data_dev(t4, /*voters_count*/ ctx[1]);
+    			if (dirty & /*vote_counts*/ 1 && t4_value !== (t4_value = /*vote_counts*/ ctx[0].length + "")) set_data_dev(t4, t4_value);
+    			if (dirty & /*validator_count*/ 2) set_data_dev(t6, /*validator_count*/ ctx[1]);
     			if (dirty & /*expiration_height*/ 4) set_data_dev(t10, /*expiration_height*/ ctx[2]);
 
-    			if (dirty & /*proposals, validator_count*/ 9) {
-    				each_value = /*proposals*/ ctx[0];
+    			if (dirty & /*vote_counts, validator_count*/ 3) {
+    				each_value = /*vote_counts*/ ctx[0];
     				validate_each_argument(each_value);
     				let i;
 
@@ -19980,23 +19947,25 @@ var app = (function () {
     			});
     	};
 
-    	let proposals = [];
-    	let voters_count = 0;
+    	let vote_counts = [];
     	let validator_count = 0;
     	let expiration_height = 0;
     	let vote_window_expired;
     	let current_height = 0;
 
-    	onMount(() => __awaiter(void 0, void 0, void 0, function* () {
-    		chainInfo.subscribe(info_str => {
-    			// console.log(info_str);
-    			let chain = JSON.parse(info_str);
+    	chainInfo.subscribe(info_str => {
+    		let chain = JSON.parse(info_str);
+    		$$invalidate(0, vote_counts = chain.upgrade.upgrade.vote_counts);
+    		$$invalidate(2, expiration_height = chain.upgrade.upgrade.vote_window);
+    		vote_window_expired = expiration_height < current_height;
+    		current_height = chain.height;
+    	});
 
-    			$$invalidate(0, proposals = chain.upgrade.upgrade.vote_counts);
-    			$$invalidate(1, voters_count = chain.upgrade.upgrade.validators_voted.length);
-    			$$invalidate(2, expiration_height = chain.upgrade.upgrade.vote_window);
-    			vote_window_expired = expiration_height < current_height;
-    			current_height = chain.height;
+    	onMount(() => __awaiter(void 0, void 0, void 0, function* () {
+    		let val_url = "http://" + location.host + "/vals";
+
+    		yield fetch(val_url).then(r => r.json()).then(data => {
+    			$$invalidate(1, validator_count = data.length);
     		});
     	}));
 
@@ -20008,23 +19977,19 @@ var app = (function () {
 
     	$$self.$capture_state = () => ({
     		__awaiter,
+    		chainInfo,
     		onMount,
-    		onDestroy,
-    		getContext,
-    		proposals,
-    		voters_count,
+    		vote_counts,
     		validator_count,
     		expiration_height,
     		vote_window_expired,
-    		current_height,
-    		chainInfo
+    		current_height
     	});
 
     	$$self.$inject_state = $$props => {
     		if ("__awaiter" in $$props) __awaiter = $$props.__awaiter;
-    		if ("proposals" in $$props) $$invalidate(0, proposals = $$props.proposals);
-    		if ("voters_count" in $$props) $$invalidate(1, voters_count = $$props.voters_count);
-    		if ("validator_count" in $$props) $$invalidate(3, validator_count = $$props.validator_count);
+    		if ("vote_counts" in $$props) $$invalidate(0, vote_counts = $$props.vote_counts);
+    		if ("validator_count" in $$props) $$invalidate(1, validator_count = $$props.validator_count);
     		if ("expiration_height" in $$props) $$invalidate(2, expiration_height = $$props.expiration_height);
     		if ("vote_window_expired" in $$props) vote_window_expired = $$props.vote_window_expired;
     		if ("current_height" in $$props) current_height = $$props.current_height;
@@ -20034,7 +19999,7 @@ var app = (function () {
     		$$self.$inject_state($$props.$$inject);
     	}
 
-    	return [proposals, voters_count, expiration_height, validator_count];
+    	return [vote_counts, validator_count, expiration_height];
     }
 
     class InProgress extends SvelteComponentDev {
@@ -20054,7 +20019,7 @@ var app = (function () {
     /* src/components/upgrade/Upgrade.svelte generated by Svelte v3.37.0 */
     const file$2 = "src/components/upgrade/Upgrade.svelte";
 
-    // (41:8) {:else}
+    // (29:8) {:else}
     function create_else_block(ctx) {
     	let div;
     	let h4;
@@ -20065,9 +20030,9 @@ var app = (function () {
     			h4 = element("h4");
     			h4.textContent = "No Current Upgrade Proposals";
     			attr_dev(h4, "class", "uk-text-uppercase uk-text-muted");
-    			add_location(h4, file$2, 42, 12, 1766);
+    			add_location(h4, file$2, 30, 12, 959);
     			attr_dev(div, "class", "uk-text-center");
-    			add_location(div, file$2, 41, 10, 1725);
+    			add_location(div, file$2, 29, 10, 918);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -20084,14 +20049,14 @@ var app = (function () {
     		block,
     		id: create_else_block.name,
     		type: "else",
-    		source: "(41:8) {:else}",
+    		source: "(29:8) {:else}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (39:8) {#if vote_in_progress}
+    // (27:8) {#if vote_in_progress}
     function create_if_block_1(ctx) {
     	let inprogress;
     	let current;
@@ -20123,14 +20088,14 @@ var app = (function () {
     		block,
     		id: create_if_block_1.name,
     		type: "if",
-    		source: "(39:8) {#if vote_in_progress}",
+    		source: "(27:8) {#if vote_in_progress}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (49:8) {#if vote_window_expired}
+    // (37:8) {#if vote_window_expired}
     function create_if_block(ctx) {
     	let div;
     	let h3;
@@ -20146,8 +20111,8 @@ var app = (function () {
     			h3.textContent = "Expired Proposals";
     			t1 = space();
     			create_component(inprogress.$$.fragment);
-    			add_location(h3, file$2, 50, 12, 1966);
-    			add_location(div, file$2, 49, 10, 1948);
+    			add_location(h3, file$2, 38, 12, 1159);
+    			add_location(div, file$2, 37, 10, 1141);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -20175,7 +20140,7 @@ var app = (function () {
     		block,
     		id: create_if_block.name,
     		type: "if",
-    		source: "(49:8) {#if vote_window_expired}",
+    		source: "(37:8) {#if vote_window_expired}",
     		ctx
     	});
 
@@ -20220,14 +20185,14 @@ var app = (function () {
     			div2 = element("div");
     			create_component(historical.$$.fragment);
     			attr_dev(div0, "class", "uk-card uk-card-default uk-card-body");
-    			add_location(div0, file$2, 37, 6, 1592);
+    			add_location(div0, file$2, 25, 6, 785);
     			attr_dev(div1, "class", "uk-grid-item-match");
-    			add_location(div1, file$2, 36, 4, 1553);
-    			add_location(div2, file$2, 56, 4, 2079);
+    			add_location(div1, file$2, 24, 4, 746);
+    			add_location(div2, file$2, 44, 4, 1272);
     			attr_dev(div3, "class", "uk-child-width-expand@s");
     			attr_dev(div3, "uk-grid", "");
-    			add_location(div3, file$2, 35, 2, 1503);
-    			add_location(main, file$2, 34, 0, 1494);
+    			add_location(div3, file$2, 23, 2, 696);
+    			add_location(main, file$2, 22, 0, 687);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -20303,57 +20268,18 @@ var app = (function () {
     function instance$2($$self, $$props, $$invalidate) {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots("Upgrade", slots, []);
-
-    	var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
-    		function adopt(value) {
-    			return value instanceof P
-    			? value
-    			: new P(function (resolve) {
-    						resolve(value);
-    					});
-    		}
-
-    		return new (P || (P = Promise))(function (resolve, reject) {
-    				function fulfilled(value) {
-    					try {
-    						step(generator.next(value));
-    					} catch(e) {
-    						reject(e);
-    					}
-    				}
-
-    				function rejected(value) {
-    					try {
-    						step(generator["throw"](value));
-    					} catch(e) {
-    						reject(e);
-    					}
-    				}
-
-    				function step(result) {
-    					result.done
-    					? resolve(result.value)
-    					: adopt(result.value).then(fulfilled, rejected);
-    				}
-
-    				step((generator = generator.apply(thisArg, _arguments || [])).next());
-    			});
-    	};
-
     	let uri = "http://" + location.host + "/chain";
     	let vote_in_progress = false;
     	let vote_window_expired = false;
     	let current_height = 100;
 
-    	onMount(() => __awaiter(void 0, void 0, void 0, function* () {
-    		chainInfo.subscribe(info_str => {
-    			let chain = JSON.parse(info_str);
+    	chainInfo.subscribe(info_str => {
+    		let chain = JSON.parse(info_str);
 
-    			if (chain.upgrade) {
-    				$$invalidate(0, vote_in_progress = chain.upgrade.upgrade.validators_voted.length > 0);
-    			}
-    		});
-    	}));
+    		if (chain.upgrade) {
+    			$$invalidate(0, vote_in_progress = chain.upgrade.upgrade.validators_voted.length > 0);
+    		}
+    	});
 
     	const writable_props = [];
 
@@ -20362,19 +20288,16 @@ var app = (function () {
     	});
 
     	$$self.$capture_state = () => ({
-    		__awaiter,
     		Historical,
     		InProgress,
-    		onMount,
+    		chainInfo,
     		uri,
     		vote_in_progress,
     		vote_window_expired,
-    		current_height,
-    		chainInfo
+    		current_height
     	});
 
     	$$self.$inject_state = $$props => {
-    		if ("__awaiter" in $$props) __awaiter = $$props.__awaiter;
     		if ("uri" in $$props) uri = $$props.uri;
     		if ("vote_in_progress" in $$props) $$invalidate(0, vote_in_progress = $$props.vote_in_progress);
     		if ("vote_window_expired" in $$props) $$invalidate(1, vote_window_expired = $$props.vote_window_expired);
