@@ -21,7 +21,7 @@ thiserror = "1"
 toml = "0.5.6"
 wait-timeout = "0.2.0"
 
-classgroup = { path = "../../verifiable_delay/classgroup", version = "^0.1.0" }
+classgroup = { path = "../../ol/verifiable_delay/classgroup", version = "^0.1.0" }
 cli = { path = "../../testsuite/cli/", version = "0.1.0" }
 compiled-stdlib = { path = "../../language/stdlib/compiled", version = "0.1.0" }
 keygen = { path = "../../keygen/", version = "0.1.0" }
@@ -42,7 +42,7 @@ reqwest = { version = "0.10.6", features = ["blocking", "json"], default_feature
 stdlib = { path = "../../language/stdlib", version = "0.1.0" }
 storage-interface= {path = "../../storage/storage-interface", version="0.1.0"}
 transaction-builder = { path = "../../language/transaction-builder", version = "0.1.0"}
-vdf = { path = "../../verifiable_delay/vdf", version = "^0.1.0" }
+vdf = { path = "../../ol/verifiable_delay/vdf", version = "^0.1.0" }
 vm-genesis={path="../../language/tools/vm-genesis", version="0.1.0"}
 ol-cli = {path = "../cli"}
 dialoguer = "0.8.0"

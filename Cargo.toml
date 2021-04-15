@@ -146,9 +146,9 @@ members = [
     "types",
     "vm-validator",
     ######### 0L #########
-    "verifiable_delay/vdf",
-    "verifiable_delay/vdf-cli",
-    "verifiable_delay/classgroup",
+    "ol/verifiable_delay/vdf",
+    "ol/verifiable_delay/vdf-cli",
+    "ol/verifiable_delay/classgroup",
     "ol/miner",
     "ol/txs",
     "ol/cli",
