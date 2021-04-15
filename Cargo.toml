@@ -55,7 +55,6 @@ members = [
     "execution/executor-types",
     "json-rpc",
     "json-rpc/types",
-    "keygen",
     "language/benchmarks",
     "language/borrow-graph",
     "language/bytecode-verifier",
@@ -154,6 +153,7 @@ members = [
     "ol/cli",
     "ol/util",
     "ol/fixtures",
+    "ol/keygen",
 ]
 
 # NOTE: default-members is the complete list of binaries that form the "production Libra codebase". These members should

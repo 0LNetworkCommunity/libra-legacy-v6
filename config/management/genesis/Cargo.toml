@@ -42,7 +42,7 @@ vm-genesis = { path = "../../../language/tools/vm-genesis", version = "0.1.0" }
 ######## 0L
 rustyline = "6.2.0"
 libra-wallet = { path = "../../../testsuite/cli/libra-wallet", version = "0.1.0"}
-keygen = { path = "../../../keygen",  version = "0.1.0" }
+keygen = { path = "../../../ol/keygen",  version = "0.1.0" }
 hex = "0.4.2"
 dirs = "2.0.2"
 serde_json = "1"
