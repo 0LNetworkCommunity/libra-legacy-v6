@@ -54,6 +54,8 @@ keygen = { path = "../keygen/", version = "0.1.0" }
 abscissa_tokio = "0.5"
 regex = "1"
 ol-util = { path = "../ol/util" }
+storage-interface = { path = "../storage/storage-interface", version = "0.1.0" }
+
 
 # Parity with Storage create
 [dependencies.rocksdb]

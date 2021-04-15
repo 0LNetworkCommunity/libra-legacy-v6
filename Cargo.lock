@@ -5014,6 +5014,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sm",
+ "storage-interface",
  "sysinfo",
  "termion",
  "thiserror",

@@ -5,7 +5,7 @@ use crate::config::OlCliConfig;
 use crate::{cache::DB_CACHE, client, entrypoint, metadata::Metadata};
 use anyhow::Error;
 use cli::libra_client::LibraClient;
-use std::str;
+use std::{path::PathBuf, str};
 use sysinfo::SystemExt;
 // use rocksdb::DB;
 use serde::{Deserialize, Serialize};
@@ -16,6 +16,7 @@ use libra_types::{account_address::AccountAddress, account_state::AccountState};
 use std::convert::TryFrom;
 use libradb::LibraDB;
 use libra_temppath::TempPath;
+use storage_interface::DbReader;
 
 // use once_cell::sync::Lazy;
 
