@@ -14,6 +14,9 @@ use libra_json_rpc_client::views::MinerStateResourceView;
 use libra_types::waypoint::Waypoint;
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
 use std::convert::TryFrom;
+use libradb::LibraDB;
+use libra_temppath::TempPath;
+
 // use once_cell::sync::Lazy;
 
 /// name of key in kv store for sync
@@ -288,14 +291,23 @@ impl NodeHealth {
     }
   }
 
-  /// database is initialized
+  /// database is initialized, Please do NOT invoke this function frequently
   pub fn database_bootstrapped(&mut self) -> bool {
-    // TODO: This only checks that the database files exist.
-    // need to check if it is "boostrapped" with db-bootstrapper
 
     let mut file = self.conf.workspace.node_home.clone();
-    file.push("db/libradb"); //TODO change file name later
-    file.exists()
+    file.push("db/libradb"); // TODO should the name be hardcoded here?
+    if file.exists() {
+      // When not committing, we open the DB as secondary so the tool is usable along side a
+      // running node on the same DB. Using a TempPath since it won't run for long.
+      let tmpdir = TempPath::new();
+      match LibraDB::open_as_secondary(file, PathBuf::from(tmpdir.path())) {
+        Ok( db)=>{
+          return db.get_latest_version().is_ok()
+        },
+        Err(_)=> { }
+      }
+    }
+    return false;
   }
 
   /// check if node is synced

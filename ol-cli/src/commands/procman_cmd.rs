@@ -19,6 +19,10 @@ impl Runnable for ProcmanCmd {
         // call http? localhost:3030
 
         // is DB bootstrapped
+        if !n.database_bootstrapped() {
+            println!("Database was NOT bootstrapped");
+            return
+        }
 
 
         // Is in validator in set?
@@ -38,7 +42,9 @@ impl Runnable for ProcmanCmd {
 
         ////////////// MINING //////////////
         // does the account exist on chain?
-        n.accounts_exist_on_chain();
+        if n.accounts_exist_on_chain() {
+            println!("Your account does NOT exist on chain.")
+        }
 
         // start miner
         management::start_miner()
