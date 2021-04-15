@@ -1,32 +1,53 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
+  import { onMount, onDestroy, getContext } from "svelte";
 
   let proposals = [];
   let voters_count = 0;
   let validator_count = 0;
-  let uri = "http://" + location.host + "/chain";
-  let sse = new EventSource(uri);
-  
+  let expiration_height = 0;
+  let vote_window_expired: Boolean;
+  let current_height = 0;
+
+  // let someObject = getContext('chainInfo')
+  // let uri = "http://" + location.host + "/chain_liv";
+  // let sse = new EventSource(uri);
+  import { chainInfo } from "../../store.ts";
   onMount(async () => {
-    sse.onmessage = function (msg) {
-      let chain = JSON.parse(msg.data);
+    chainInfo.subscribe((info_str) => {
+      // console.log(info_str);
+      let chain = JSON.parse(info_str);
       proposals = chain.upgrade.upgrade.vote_counts;
       voters_count = chain.upgrade.upgrade.validators_voted.length;
-    };
+      expiration_height = chain.upgrade.upgrade.vote_window;
+      vote_window_expired = expiration_height < current_height;
+      current_height = chain.height;
+    });
+  });
 
-    /// get validator count
-    // TODO: don't need to keep reading stream. can close
-    let val_url = "http://" + location.host + "/validators";
-    let val_stream = new EventSource(val_url);
-    val_stream.onmessage = function (msg) {
-      let vals = JSON.parse(msg.data);
-      validator_count = vals.length;
-      // val_stream.close();
-    };
-  });
-  onDestroy(() => {
-    sse.close();
-  });
+  // onMount(async () => {
+  //   // sse.onmessage = function (msg) {
+  //   //   let chain = JSON.parse(msg.data);
+  //   //   proposals = chain.upgrade.upgrade.vote_counts;
+  //   //   voters_count = chain.upgrade.upgrade.validators_voted.length;
+  //   //   expiration_height = chain.upgrade.upgrade.vote_window;
+  //   //   vote_window_expired = expiration_height < current_height;
+  //   //   current_height = chain.height;
+
+  //   // };
+
+  //   /// get validator count
+  //   // TODO: don't need to keep reading stream. can close
+  //   let val_url = "http://" + location.host + "/validators";
+  //   await fetch(val_url)
+  //   .then((r) => r.json())
+  //   .then((data) => {
+  //           validator_count = data.length;
+  //   });
+  // });
+  // onDestroy(() => {
+  //   console.log("closed");
+  //   sse.close();
+  // });
 </script>
 
 <main>
@@ -42,7 +63,7 @@
         </tr>
         <tr>
           <td class="uk-text-uppercase">EXPIRATION:</td>
-          <td> 0000 </td>
+          <td> {expiration_height} </td>
         </tr>
       </tbody>
     </table>
