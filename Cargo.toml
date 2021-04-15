@@ -151,7 +151,7 @@ members = [
     "verifiable_delay/classgroup",
     "ol/miner",
     "ol/txs",
-    "ol-cli",
+    "ol/cli",
     "ol/util",
     "ol/fixtures",
 ]
