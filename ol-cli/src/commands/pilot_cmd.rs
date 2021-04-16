@@ -15,17 +15,17 @@ impl Runnable for PilotCmd {
     fn run(&self) {
 
         println!("{} {}", OlCliCmd::name(), OlCliCmd::version());
-        let mut n = NodeHealth::new();
+        // let mut n = NodeHealth::new();
         // // Is webserver on?
         // // call http? localhost:3030
 
         // // is DB bootstrapped
-        if !n.database_bootstrapped() {
-            println!("Database was NOT bootstrapped");
-            // return
-        } else {
-          println!("Database bootstrapped");
-        }
+        // if !n.database_bootstrapped() {
+        //     println!("Database was NOT bootstrapped");
+        //     // return
+        // } else {
+        //   println!("Database bootstrapped");
+        // }
 
 
         // // Is in validator in set?
