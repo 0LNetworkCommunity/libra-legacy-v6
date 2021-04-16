@@ -11,6 +11,7 @@ use std::fs;
 use tokio::{time::interval};
 use warp::{sse::ServerSentEvent, Filter};
 use serde_json::json;
+
 // TODO: does this need to be a separate function?
 // create server-sent event
 fn sse_check(info: node_health::Items) -> Result<impl ServerSentEvent, Infallible> {

@@ -3,14 +3,24 @@ use futures::StreamExt;
 use std::convert::Infallible;
 use std::thread;
 use std::time::Duration;
-use std::fs;
+use std::{fs, path::PathBuf};
 use tokio::{time::interval};
 use warp::{sse::ServerSentEvent, Filter};
 use serde_json::json;
+use cli::libra_client::LibraClient;
+use libra_json_rpc_client::AccountAddress;
+use ol_cli::{client::pick_client, config::OlCliConfig};
+use toml;
+const DEFAULT_CONFIG_PATH: &str = "~/.0L/0L.toml";
 
 fn main() {
-    // println!("Hello, world!");
-    start_server();
+    // TODO: fetch swarm configs from command line.
+
+    let cfg = parse_configs(None);
+    let client = pick_client(None);
+
+    dbg!(cfg);
+    // start_server(client, cfg.profile.account);
 }
 
 fn sse_check(info: node_health::Items) -> Result<impl ServerSentEvent, Infallible> {
@@ -30,11 +40,11 @@ fn sse_account_info(info: account::AccountInfo) -> Result<impl ServerSentEvent, 
 }
 
 #[tokio::main]
-pub async fn start_server() {
+pub async fn start_server(client: LibraClient, address: AccountAddress) {
     // TODO: Perhaps a better way to keep the check cache fresh?
-    // thread::spawn(move || {
-    //     check_runner::mon(true, false);
-    // });
+    thread::spawn(move || {
+        check_runner::mon(client, address, true, false);
+    });
 
     //GET check/ (json api for check data)
     let check = warp::path("check").and(warp::get()).map(|| {
@@ -125,4 +135,18 @@ pub async fn start_server() {
 
     warp::serve(home.or(check).or(chain).or(chain_live).or(vals_live).or(vals).or(account_template).or(epoch).or(account))
         .run(([0, 0, 0, 0], 3030)).await;
+}
+
+
+pub fn parse_configs(path_opt: Option<PathBuf>) -> OlCliConfig {
+  
+  let toml_path = if path_opt.is_some() {
+    path_opt.unwrap()
+  } else {
+    PathBuf::from(DEFAULT_CONFIG_PATH)
+  };
+
+  let str = fs::read_to_string(&toml_path).expect(&format!("could not open file: {:?}", &toml_path));
+  let cfg: OlCliConfig = toml::from_str(&str).unwrap();
+  cfg
 }
