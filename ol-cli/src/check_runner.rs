@@ -3,11 +3,11 @@
 use std::{thread, time::{Duration}};
 use crate::{chain_info, node_health::NodeHealth, account::AccountInfo};
 use std::io::{Write, stdout};
+use cli::libra_client::LibraClient;
 use crossterm::{QueueableCommand, cursor, terminal::{self, ClearType}};
 
 /// Start the node monitor
-pub fn mon(is_live: bool, print: bool) {
-
+pub fn mon(mut client: LibraClient, is_live: bool, print: bool) {
   let mut x = 0;
   let mut checker = NodeHealth::new();
   let mut account = AccountInfo::new();
@@ -15,7 +15,7 @@ pub fn mon(is_live: bool, print: bool) {
   loop {
     checker.fetch_upstream_states();
     // refresh cahce for chain_info
-    chain_info::fetch_chain_info();
+    chain_info::fetch_chain_info(&mut client);
     &checker.refresh_checks();
     &account.refresh();
     &checker.items.write_cache();

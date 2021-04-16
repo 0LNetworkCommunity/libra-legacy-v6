@@ -1,6 +1,7 @@
 //! web-monitor
 
 use crate::{account, chain_info, check_runner, node_health};
+use cli::libra_client::LibraClient;
 use futures::StreamExt;
 use std::convert::Infallible;
 use std::thread;
@@ -32,10 +33,10 @@ fn sse_account_info(info: account::AccountInfo) -> Result<impl ServerSentEvent, 
 
 /// main server
 #[tokio::main]
-pub async fn start_server() {
+pub async fn start_server(client: LibraClient) {
     // TODO: Perhaps a better way to keep the check cache fresh?
     thread::spawn(|| {
-        check_runner::mon(true, false);
+        check_runner::mon(client, true, false);
     });
 
     //GET check/ (json api for check data)

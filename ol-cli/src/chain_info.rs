@@ -1,6 +1,7 @@
 //! `chain_info`
 use crate::{cache::DB_CACHE, client};
 use chrono::Utc;
+use cli::libra_client::LibraClient;
 use libra_json_rpc_client::views::OracleResourceView;
 use libra_types::{account_address::AccountAddress, account_state::AccountState, waypoint::Waypoint};
 use std::convert::{TryFrom};
@@ -62,8 +63,8 @@ pub struct ValidatorInfo {
 
 
 /// fetch state from system address 0x0
-pub fn fetch_chain_info() -> (Option<ChainInfo>, Option<Vec<ValidatorInfo>>){
-    let mut client = client::pick_client();
+pub fn fetch_chain_info(client: &mut LibraClient) -> (Option<ChainInfo>, Option<Vec<ValidatorInfo>>){
+    // let mut client = client::pick_client();
     let (blob, _version) = client.get_account_state_blob(AccountAddress::ZERO).unwrap();
     let mut cs = ChainInfo::default();
     

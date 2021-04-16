@@ -1,7 +1,7 @@
 //! `serve-cmd` subcommand
 
 use abscissa_core::{Command, Options, Runnable};
-use crate::server;
+use crate::{server, client};
 
 /// `serve-cmd` subcommand
 ///
@@ -22,6 +22,7 @@ impl Runnable for ServeCmd {
     //     server::start_server()
     //   })
     // }).unwrap();
-    server::start_server();
+    let client = client::pick_client();
+    server::start_server(client);
   }
 }

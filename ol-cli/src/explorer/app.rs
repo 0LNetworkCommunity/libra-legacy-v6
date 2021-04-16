@@ -133,7 +133,7 @@ impl<'a> App<'a> {
 
     /// fetch basic data for first tab
     pub fn fetch(&mut self) {
-      let (chain_info, validator_info) = chain_info::fetch_chain_info();
+      let (chain_info, validator_info) = chain_info::fetch_chain_info(&mut self.client);
       self.chain_state = chain_info;
       self.validators = validator_info.unwrap();
     }

@@ -32,10 +32,6 @@ fn sse_account_info(info: account::AccountInfo) -> Result<impl ServerSentEvent, 
     Ok(warp::sse::json(info))
 }
 
-
-
-
-/// main server
 #[tokio::main]
 pub async fn start_server() {
     // TODO: Perhaps a better way to keep the check cache fresh?

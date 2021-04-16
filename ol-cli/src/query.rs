@@ -6,6 +6,7 @@ use crate::{
   account::get_account_view,
   
 };
+use cli::libra_client::LibraClient;
 use libra_types::{account_address::AccountAddress};
 use num_format::{Locale, ToFormattedString};
 
@@ -25,7 +26,7 @@ pub enum QueryType {
 }
 
 /// Get data from a client, with a query type. Will connect to local only if in sync.
-pub fn get(query_type: QueryType, account: AccountAddress) -> String {
+pub fn get(mut client: LibraClient, query_type: QueryType, account: AccountAddress) -> String {
   use QueryType::*;
   match query_type {
     Balance => {
@@ -38,11 +39,11 @@ pub fn get(query_type: QueryType, account: AccountAddress) -> String {
       "0".to_string()
     },
     BlockHeight => {
-      let (chain, _) = crate::chain_info::fetch_chain_info();
+      let (chain, _) = crate::chain_info::fetch_chain_info(&mut client);
       chain.unwrap().height.to_string()
     },
     Epoch => {
-      let (chain, _) = crate::chain_info::fetch_chain_info();
+      let (chain, _) = crate::chain_info::fetch_chain_info(&mut client);
       
       format!("{} - WAYPOINT: {}", chain.clone().unwrap().epoch.to_string(), &chain.unwrap().waypoint.unwrap().to_string())
     },
@@ -50,7 +51,7 @@ pub fn get(query_type: QueryType, account: AccountAddress) -> String {
       Metadata::compare_from_config().to_string()
     },
     Resources => {
-      let resources = get_annotate_account_blob(pick_client(), account)
+      let resources = get_annotate_account_blob(client, account)
       .unwrap()
       .0
       .unwrap();

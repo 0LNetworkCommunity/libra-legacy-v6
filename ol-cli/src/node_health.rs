@@ -1,24 +1,23 @@
 //! `check` module
 
-use crate::application::app_config;
-use crate::config::OlCliConfig;
-use crate::{cache::DB_CACHE, client, entrypoint, metadata::Metadata};
+use crate::{
+  application::app_config,
+  config::OlCliConfig,
+  cache::DB_CACHE,
+  client,
+  entrypoint,
+  metadata::Metadata,
+};
 use anyhow::Error;
 use cli::libra_client::LibraClient;
-use std::{path::PathBuf, str};
+use libradb::LibraDB;
+use std::{str, convert::TryFrom};
 use sysinfo::SystemExt;
-// use rocksdb::DB;
 use serde::{Deserialize, Serialize};
-
 use libra_json_rpc_client::views::MinerStateResourceView;
 use libra_types::waypoint::Waypoint;
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
-use std::convert::TryFrom;
-use libradb::LibraDB;
-use libra_temppath::TempPath;
 use storage_interface::DbReader;
-
-// use once_cell::sync::Lazy;
 
 /// name of key in kv store for sync
 pub const SYNC_KEY: &str = "is_synced";
@@ -28,13 +27,6 @@ pub const NODE_PROCESS: &str = "libra-node";
 
 /// miner process name:
 pub const MINER_PROCESS: &str = "miner";
-
-// /// Construct Lazy Database instance
-// pub static DB_CACHE: Lazy<DB> = Lazy::new(||{
-//     let mut conf = app_config().to_owned();
-//     conf.workspace.node_home.push(CHECK_CACHE_PATH);
-//     DB::open_default(conf.workspace.node_home).unwrap()
-// });
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -300,12 +292,16 @@ impl NodeHealth {
     if file.exists() {
       // When not committing, we open the DB as secondary so the tool is usable along side a
       // running node on the same DB. Using a TempPath since it won't run for long.
-      let tmpdir = TempPath::new();
-      match LibraDB::open_as_secondary(file, PathBuf::from(tmpdir.path())) {
+      // let tmpdir = TempPath::new();
+      match LibraDB::open(file, true, None) {
         Ok( db)=>{
+          println!("opened db");
           return db.get_latest_version().is_ok()
         },
-        Err(_)=> { }
+        Err(_)=> { 
+          println!("err db");
+
+        }
       }
     }
     return false;
