@@ -1,6 +1,6 @@
 //! `management` functions
 
-use crate::{cache::DB_CACHE, config::OlCliConfig, entrypoint, node_health, prelude::app_config};
+use crate::{cache::DB_CACHE, config::OlCliConfig, entrypoint, node::node_health, prelude::app_config};
 use anyhow::Error;
 use once_cell::sync::Lazy;
 use reqwest::Url;

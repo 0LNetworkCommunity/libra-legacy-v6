@@ -1,7 +1,7 @@
 //! `monitor-cmd` subcommand
 
 use abscissa_core::{Command, Options, Runnable};
-use crate::explorer::event::{Events, Config, Event};
+use crate::{explorer::event::{Events, Config, Event}, node::client};
 use std::time::Duration;
 use std::io;
 use termion::{event::Key, input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
@@ -35,7 +35,7 @@ impl Runnable for ExplorerCMD {
         let backend = TermionBackend::new(stdout);
         let mut terminal = Terminal::new(backend).expect("Failed to initial screen");
 
-        let rpc = crate::client::get_client()
+        let rpc = client::get_client()
                             .expect("Failed to connect to localhost");
 
         let mut app = App::new(" Block Explorer Menu ", self.enhanced_graphics, rpc);

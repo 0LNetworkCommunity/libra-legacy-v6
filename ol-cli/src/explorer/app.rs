@@ -1,6 +1,6 @@
 
 #[allow(missing_docs)]
-use crate::chain_info;
+use crate::node::chain_info;
 use super::TabsState;
 use cli::libra_client::LibraClient;
 use libra_json_rpc_client::views::TransactionView;

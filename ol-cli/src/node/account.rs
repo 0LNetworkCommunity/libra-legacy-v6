@@ -2,8 +2,12 @@
 
 use cli::libra_client::LibraClient;
 use libra_json_rpc_client::{AccountAddress, views::AccountView};
-use crate::{cache::DB_CACHE, config::OlCliConfig, node_health::NodeHealth};
+use crate::{cache::DB_CACHE, config::OlCliConfig, node::node_health::NodeHealth};
 use serde::{Serialize, Deserialize};
+use libra_types::{account_state::AccountState, transaction::Version};
+use resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator, NullStateView};
+use anyhow::Result;
+use std::convert::TryFrom;
 
 const ACCOUNT_INFO_DB_KEY: &str = "account_info";
 
@@ -64,4 +68,24 @@ pub fn get_balance(account_view: AccountView) -> u64 {
       }
     }
     0
+}
+
+
+
+
+/// Return a full Move-annotated account resource struct
+pub fn get_annotate_account_blob(
+    mut client: LibraClient,
+    address: AccountAddress,
+) -> Result<(Option<AnnotatedAccountStateBlob>, Version)> {
+    let (blob, ver) = client.get_account_state_blob(address)?;
+    if let Some(account_blob) = blob {
+        let state_view = NullStateView::default();
+        let annotator = MoveValueAnnotator::new(&state_view);
+        let annotate_blob =
+            annotator.view_account_state(&AccountState::try_from(&account_blob)?)?;
+        Ok((Some(annotate_blob), ver))
+    } else {
+        Ok((None, ver))
+    }
 }

@@ -3,7 +3,7 @@
 use cli::libra_client::LibraClient;
 use reqwest::Url;
 use libra_json_rpc_client::views::MetadataView;
-use crate::{client::*, config::OlCliConfig};
+use crate::{node::client::*, config::OlCliConfig};
 /// Get chain Metadata
 #[derive(Debug)]
 pub struct Metadata {

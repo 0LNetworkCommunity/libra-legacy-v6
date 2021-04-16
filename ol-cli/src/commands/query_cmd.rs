@@ -4,8 +4,8 @@ use abscissa_core::{Command, Options, Runnable, status_info};
 use crate::{
     entrypoint,
     prelude::app_config,
-    query::{get, QueryType},
-    client,
+    node::query::{get, QueryType},
+    node::client,
 };
 
 /// `bal` subcommand

@@ -2,7 +2,7 @@
 
 use std::process::Command;
 
-use crate::{config::OlCliConfig, entrypoint, management, node_health::NodeHealth, prelude::app_config, restore};
+use crate::{config::OlCliConfig, entrypoint, management, node::node_health::NodeHealth, prelude::app_config, mgmt};
 use cli::libra_client::LibraClient;
 use serde::{Deserialize, Serialize};
 
@@ -315,7 +315,7 @@ impl HostState {
         } else {
           if trigger_action && entry_args.swarm_path.is_none() {
             action_print("attempting to restore db from archive");
-            restore::fast_forward_db(false).expect("unable to fast forward db");
+            mgmt::fast_forward_db(false).expect("unable to fast forward db");
           } else if let Some(path) = entry_args.swarm_path {
             // swarm testing, mock restore
             // TODO: place waypoint in key_store, and node.yaml

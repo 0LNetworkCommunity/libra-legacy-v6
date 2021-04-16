@@ -1,7 +1,7 @@
 //! `mgmt` subcommand
 
 use abscissa_core::{Command, Options, Runnable};
-use crate::management::{self, NodeType};
+use crate::mgmt::management::{self, NodeType};
 
 /// `mgmt` subcommand
 ///

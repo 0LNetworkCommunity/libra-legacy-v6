@@ -15,26 +15,17 @@
     unused_qualifications
 )]
 
+
 pub mod application;
 pub mod commands;
 pub mod config;
 pub mod entrypoint;
 pub mod error;
 pub mod prelude;
-pub mod account_resource;
 pub mod client;
-pub mod metadata;
-pub mod check_runner;
-pub mod management;
-pub mod node_health;
-pub mod server;
-pub mod restore;
+pub mod node;
+pub mod mgmt;
 pub mod transitions;
-pub mod query;
-pub mod chain_info;
 pub mod cache;
-// pub mod check;
-pub mod account;
-
-/// Cli block explorer
+pub mod check;
 pub mod explorer;

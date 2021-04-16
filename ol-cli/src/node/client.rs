@@ -6,7 +6,7 @@ use reqwest::Url;
 use libra_types::{waypoint::Waypoint};
 use anyhow::Error;
 use anyhow::{Result};
-use crate::{config::OlCliConfig, entrypoint, node_health::NodeHealth, prelude::app_config};
+use crate::{config::OlCliConfig, entrypoint, node::node_health::NodeHealth, prelude::app_config};
 
 /// returns a LibraClient instance.
 // TODO: Use app config file for params

@@ -1,6 +1,6 @@
 //! `serve-cmd` subcommand
 
-use crate::{client, entrypoint, prelude::app_config, server};
+use crate::{client, entrypoint, prelude::app_config};
 use abscissa_core::{Command, Options, Runnable};
 
 /// `serve-cmd` subcommand
