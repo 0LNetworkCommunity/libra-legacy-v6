@@ -19,7 +19,7 @@ mod onboard_cmd;
 mod query_cmd;
 mod health_cmd;
 mod explorer_cmd;
-mod procman_cmd;
+mod pilot_cmd;
 
 use self::{
     init_cmd::InitCmd,
@@ -30,7 +30,7 @@ use self::{
     onboard_cmd::OnboardCmd,
     query_cmd::QueryCmd,
     health_cmd::HealthCmd,
-    procman_cmd::ProcmanCmd
+    pilot_cmd::PilotCmd
 };
 
 use crate::config::OlCliConfig;
@@ -88,8 +88,8 @@ pub enum OlCliCmd {
     Explorer(ExplorerCMD),
 
     /// The `explorer` subcommand
-    #[options(help = "watch a block explorer monitor in terminal")]
-    Procman(ProcmanCmd),
+    #[options(help = "run the 0L services")]
+    Pilot(PilotCmd),
 }
 
 /// Get home path for all 0L apps

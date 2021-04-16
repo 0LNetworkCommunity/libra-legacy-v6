@@ -57,7 +57,7 @@ impl Runnable for ValWizardCmd {
     // Initialize Miner
     // Need to assign miner_config, because reading from app_config can only be done at startup, and it will be blank at the time of wizard executing.
     let mut miner_config =
-      init_cmd::initialize_miner(authkey, account, &self.path, entry_args.swarm_path)
+      init_cmd::initialize_miner(authkey, account, &self.path)
         .unwrap();
     let home_path = &miner_config.workspace.node_home;
     status_ok!("\nMiner config written", "\n...........................\n");

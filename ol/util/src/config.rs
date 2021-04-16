@@ -1,5 +1,7 @@
 //! OlCli Config
 
+// use miner::delay::delay_difficulty;
+// use miner::submit_tx::TxParams;
 use crate::{commands::CONFIG_FILE};
 use abscissa_core::path::PathBuf;
 use dirs;
@@ -13,8 +15,7 @@ use reqwest::Url;
 use rustyline::Editor;
 use serde::{Deserialize, Serialize};
 use std::{fs, net::Ipv4Addr, str::FromStr, io::Write};
-use ol_util::swarm;
-use libra_config::config::NodeConfig;
+use crate::swarm;
 
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
 /// MinerApp Configuration
@@ -36,7 +37,7 @@ impl OlCliConfig {
   pub fn get_waypoint(&self, swarm_path_opt: Option<PathBuf>) -> Option<Waypoint> {
     if let Some(path) = swarm_path_opt{ 
       return Some(
-        swarm::get_configs(path).1
+      swarm::get_configs(path).1
       ) 
     };
 
@@ -83,19 +84,20 @@ impl OlCliConfig {
     authkey: AuthenticationKey,
     account: AccountAddress,
     config_path: &Option<PathBuf>,
+    swarm_path: Option<PathBuf>
   ) -> OlCliConfig {
     // TODO: Check if configs exist and warn on overwrite.
-    let mut default_config = OlCliConfig::default();
+    let mut miner_configs = OlCliConfig::default();
 
-    default_config.workspace.node_home = if config_path.is_some() {
+    miner_configs.workspace.node_home = if config_path.is_some() {
       config_path.clone().unwrap()
     } else {
       dirs::home_dir().unwrap()
     };
 
-    default_config.workspace.node_home.push(NODE_HOME);
+    miner_configs.workspace.node_home.push(NODE_HOME);
 
-    fs::create_dir_all(&default_config.workspace.node_home).unwrap();
+    fs::create_dir_all(&miner_configs.workspace.node_home).unwrap();
     // Set up github token
     let mut rl = Editor::<()>::new();
 
@@ -127,84 +129,40 @@ impl OlCliConfig {
       }
     };
 
-    default_config.profile.ip = ip;
+    miner_configs.profile.ip = ip;
 
     // Get optional statement which goes into genesis block
-    default_config.profile.statement = rl
+    miner_configs.profile.statement = rl
       .readline("Enter a (fun) statement to go into your first transaction: ")
       .expect(
         "Please enter some text unique to you which will go into your block 0 preimage.",
       );
 
-    default_config.profile.auth_key = authkey.to_string();
-    default_config.profile.account = account;
+    miner_configs.profile.auth_key = authkey.to_string();
+    miner_configs.profile.account = account;
+    
+    if swarm_path.is_some() {
+      // miner_configs.profile.default_node = Some(swarm::get_configs(swarm_path.clone().unwrap()).0);
+      miner_configs.profile.upstream_nodes = Some(
+        vec!(swarm::get_configs(swarm_path.clone().unwrap()).0)
+      );
+    }
 
-    OlCliConfig::save_file(&default_config);
-
-    default_config
-  }
-
-  /// Save swarm default configs to swarm path
-  pub fn init_swarm_config(swarm_path: PathBuf) -> OlCliConfig{
-    let host_config = OlCliConfig::make_swarm_configs(swarm_path);
-    OlCliConfig::save_file(&host_config);
-    host_config
-  }
-
-  fn save_file(host_config: &OlCliConfig) {
-    let toml = toml::to_string(host_config).unwrap();
-    let home_path = host_config.workspace.node_home.clone();
-    let toml_path = home_path.join(CONFIG_FILE);
-    let file = fs::File::create(&toml_path);
+    let toml = toml::to_string(&miner_configs).unwrap();
+    let home_path = miner_configs.workspace.node_home.clone();
+    let miner_toml_path = home_path.join(CONFIG_FILE);
+    let file = fs::File::create(&miner_toml_path);
     file.unwrap()
       .write(&toml.as_bytes())
       .expect("Could not write toml file");
+
     println!(
       "\nminer app initialized, file saved to: {:?}",
-      &toml_path
+      &miner_toml_path
     );
-  }
-
-  /// get configs from swarm
-  pub fn make_swarm_configs(swarm_path: PathBuf) -> OlCliConfig {
-    let config_path = swarm_path.join("0/node.yaml");
-    let config = NodeConfig::load(&config_path).unwrap_or_else(
-        |_| panic!("Failed to load NodeConfig from file: {:?}", &config_path)
-    );
-
-    let url =  Url::parse(
-        format!("http://localhost:{}", config.json_rpc.address.port()).as_str()
-    ).unwrap();
-
-    // upstream configs
-    let upstream_config_path = swarm_path.join("1/node.yaml");
-    let upstream_config = NodeConfig::load(&upstream_config_path).unwrap_or_else(
-        |_| panic!("Failed to load NodeConfig from file: {:?}", &upstream_config_path)
-    );
-    let upstream_url =  Url::parse(
-        format!("http://localhost:{}", upstream_config.json_rpc.address.port()).as_str()
-    ).unwrap();
-    // let waypoint = config.base.waypoint.waypoint();
-
-
-    let mut cfg = OlCliConfig {
-      workspace: Workspace::default(),
-      profile: Profile::default(),
-      chain_info: ChainInfo::default(),
-      tx_configs: TxTypes::default(),
-    };
-
-    cfg.workspace.node_home = swarm_path.join("0/");
-    cfg.chain_info.base_waypoint = Some(config.base.waypoint.waypoint());
-
-    cfg.profile.account = "4C613C2F4B1E67CA8D98A542EE3F59F5".parse().unwrap(); // alice
-    cfg.profile.default_node = Some(url);
-    cfg.profile.upstream_nodes = Some(vec!(upstream_url));
-
-    cfg
+    miner_configs
   }
 }
-
 /// Default configuration settings.
 ///
 /// Note: if your needs are as simple as below, you can
@@ -276,13 +234,13 @@ impl Default for ChainInfo {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Profile {
-  /// The 0L account for the Miner and prospective validator. This is derived from auth_key
+  ///The 0L account for the Miner and prospective validator. This is derived from auth_key
   pub account: AccountAddress,
 
-  /// Miner Authorization Key for 0L Blockchain. Note: not the same as public key, nor account.
+  ///Miner Authorization Key for 0L Blockchain. Note: not the same as public key, nor account.
   pub auth_key: String,
 
-  /// An opportunity for the Miner to write a message on their genesis block.
+  ///An opportunity for the Miner to write a message on their genesis block.
   pub statement: String,
 
   /// ip address of this node. May be different from transaction URL.
