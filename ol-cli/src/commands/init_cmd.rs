@@ -10,7 +10,7 @@ use libra_genesis_tool::{init, key, keyscheme::KeyScheme};
 use libra_types::{
     account_address::AccountAddress, transaction::authenticator::AuthenticationKey
 };
-use std::{path::PathBuf};
+use std::{fs, path::PathBuf};
 use libra_wallet::WalletLibrary;
 use keygen;
 
@@ -29,9 +29,11 @@ pub struct InitCmd {
 impl Runnable for InitCmd {
     /// Print version message
     fn run(&self) {
+        
         let entry_args = entrypoint::get_args();
         if let Some(path) = entry_args.swarm_path {
-          initialize_host_swarm(path);
+          let absolute = fs::canonicalize(path).unwrap();
+          initialize_host_swarm(absolute).unwrap();
           return
         }
         
