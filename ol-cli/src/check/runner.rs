@@ -2,7 +2,7 @@
 
 use crate::{
     node::account::AccountInfo, node::chain_info,
-    node::node_health::NodeHealth,
+    node::node::Node,
 };
 
 use crossterm::{
@@ -15,7 +15,7 @@ use std::io::{stdout, Write};
 use std::{thread, time::Duration};
 
 /// Start the node monitor
-pub fn run_checks(node: NodeHealth, is_live: bool, print: bool) {
+pub fn run_checks(node: Node, is_live: bool, print: bool) {
     let mut x = 0;
     // let mut node = NodeHealth::new(Some(client.clone()), cfg);
     let mut account = AccountInfo::new(node.conf.profile.account);
@@ -38,7 +38,7 @@ pub fn run_checks(node: NodeHealth, is_live: bool, print: bool) {
     }
 }
 
-fn print_it(node: &NodeHealth) {
+fn print_it(node: &Node) {
     let mut stdout = stdout();
     terminal::Clear(ClearType::All);
     stdout.queue(cursor::SavePosition).unwrap();

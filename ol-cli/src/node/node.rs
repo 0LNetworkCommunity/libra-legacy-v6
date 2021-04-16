@@ -1,4 +1,5 @@
 //! `check` module
+use super::transitions;
 
 use crate::{
   application::app_config,
@@ -19,6 +20,8 @@ use libra_types::waypoint::Waypoint;
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
 use storage_interface::DbReader;
 
+use super::states::HostState;
+
 /// name of key in kv store for sync
 pub const SYNC_KEY: &str = "is_synced";
 
@@ -30,23 +33,25 @@ pub const MINER_PROCESS: &str = "miner";
 
 
 /// Configuration used for checks we want to make on the node
-pub struct NodeHealth {
+pub struct Node {
   /// 0L configs
   pub conf: OlCliConfig,
   /// libraclient for connecting
   pub client: Option<LibraClient>,
   /// all items we are checking. Monitor sends these to cache.
   pub items: Items,
+  pub host_state: HostState,
   chain_state: Option<AccountState>,
   miner_state: Option<MinerStateResourceView>,
 }
 
-impl NodeHealth {
+impl Node {
   /// Create a instance of Check
   pub fn new(client: Option<LibraClient>, conf: OlCliConfig) -> Self {
     return Self {
       client,
       conf,
+      host_state: HostState::init(),
       items: Items::init(),
       miner_state: None,
       chain_state: None,
@@ -57,10 +62,10 @@ impl NodeHealth {
   pub fn refresh_checks(&mut self) -> Items {
     self.items.configs_exist = self.configs_exist();
     self.items.db_restored = self.database_bootstrapped();
-    self.items.node_running = NodeHealth::node_running();
-    self.items.miner_running = NodeHealth::miner_running();
+    self.items.node_running = Node::node_running();
+    self.items.miner_running = Node::miner_running();
     self.items.account_created = self.accounts_exist_on_chain();
-    let sync_tuple = NodeHealth::node_is_synced(&self.conf);
+    let sync_tuple = Node::node_is_synced(&self.conf);
 
     self.items.is_synced = sync_tuple.0;
     self.items.sync_delay = sync_tuple.1;
@@ -234,10 +239,19 @@ impl NodeHealth {
 
   /// check if node is synced
   pub fn node_is_synced(config: &OlCliConfig) -> (bool, i64) {
-    if !NodeHealth::node_running() {
+    if !Node::node_running() {
       return (false, 0);
     };
     let delay = Metadata::compare_from_config(config);
+    (delay < 10_000, delay)
+  }
+
+    /// check if node is synced
+  pub fn is_synced(&self) -> (bool, i64) {
+    if !Node::node_running() {
+      return (false, 0);
+    };
+    let delay = Metadata::compare_from_config(&self.conf);
     (delay < 10_000, delay)
   }
 
@@ -277,12 +291,12 @@ impl NodeHealth {
   // }
   /// Check if node is running
   pub fn node_running() -> bool {
-    NodeHealth::check_process(NODE_PROCESS)
+    Node::check_process(NODE_PROCESS)
   }
 
   /// Check if miner is running
   pub fn miner_running() -> bool {
-    NodeHealth::check_process(MINER_PROCESS)
+    Node::check_process(MINER_PROCESS)
   }
 
   fn check_process(process_str: &str) -> bool {

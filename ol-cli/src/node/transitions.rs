@@ -1,138 +1,13 @@
 //! 'transitions' a state machine for the onboarding stages of a new validator. Can query and/or trigger the next expected action in the onboarding process.
 
 use std::process::Command;
-
-use crate::{config::OlCliConfig, entrypoint, management, node::node_health::NodeHealth, prelude::app_config, mgmt};
+use crate::{config::OlCliConfig, entrypoint, mgmt::{management, restore}, prelude::app_config};
 use cli::libra_client::LibraClient;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-#[serde(deny_unknown_fields)]
-/// States the account can be in
-pub enum AccountState {
-  /// doesn't exist on chain
-  None,
-  /// account created on chain
-  ExistsOnChain
-}
+use super::{node::Node, states::{MinerEvents, MinerState, NodeEvents, OnboardEvents, OnboardState, NodeState}};
 
-
-/// Events that can be taken on accounts
-pub enum AccountEvents {
-  /// initialized
-  Configured,
-  /// account created
-  Created
-}
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-#[serde(deny_unknown_fields)]
-/// All states a node can be in
-pub enum OnboardState {
-  /// Nothing is configured
-  EmptyBox,
-  /// Files initialized node.yaml, key_store.json
-  ValConfigsOk,
-  /// Database restored from backup
-  DbRestoredOk,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-#[serde(deny_unknown_fields)]
-/// All actions which can be taken on a node
-pub enum OnboardEvents {
-  /// Initialize the onboarding state
-  Init,
-  /// Create files by running wizard
-  RunWizard,
-  /// Restore the DB from state backups
-  RestoreDb,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-#[serde(deny_unknown_fields)]
-/// States the node can be in
-pub enum NodeState {
-  /// Stopped
-  Stopped,
-  /// Node is running in fullnode mode, but has not synced
-  FullnodeModeCatchup,
-  /// Database is in sync, as fullnode
-  FullnodeMode,
-  /// Node is running in validator mode
-  ValidatorMode,
-  /// Validator has fallen out of validator set, likely cannot sync,
-  /// should change to fullnode mode.
-  ValidatorOutOfSet,
-}
-
-
-
-/// Events that can be taken on a node
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-#[serde(deny_unknown_fields)]
-pub enum NodeEvents {
-  /// Start the fullnode
-  StartFullnode,
-  /// Notify the fullnode has synced
-  FullnodeSynced,
-  /// Restart the node in validator mode
-  SwitchToValidatorMode,
-  /// Notify the validator was dropped from set.
-  ValidatorDroppedFromSet,
-  /// Rejoin set
-  RejoinValidatorSet,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-#[serde(deny_unknown_fields)]
-/// All states a miner can be in
-pub enum MinerState {
-  /// Miner connected to upstream
-  Stopped,
-  /// Miner connected to upstream
-  Mining,
-}
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-#[serde(deny_unknown_fields)]
-/// Actions that impact the miner
-pub enum MinerEvents {
-  /// miner has started
-  Started,
-  /// miner failed
-  Failed,
-}
-
-#[derive(Clone, Debug)]
-/// The Current state of a node
-pub struct HostState {
-  /// client to connect with
-  conf: OlCliConfig,
-  /// client to connect with
-  client: LibraClient,
-  /// state of onboarding
-  onboard_state: OnboardState,
-  /// state of node
-  node_state: NodeState,
-  /// state of miner
-  miner_state: MinerState,
-  // trigger: OnboardEvents,
-}
-
-/// methods for host state
-impl HostState {
-  /// init
-  pub fn init(client: LibraClient, conf: OlCliConfig) -> Self {
-    Self {
-      conf,
-      client,
-      onboard_state: OnboardState::EmptyBox,
-      node_state: NodeState::Stopped,
-      miner_state: MinerState::Stopped,
-
-      // trigger: OnboardEvents::Init,
-      // check: Check::new(),
-    }
-  }
+impl Node {
 
   /// Saves the Items to cache
   // pub fn write_cache(&self) {
@@ -154,11 +29,6 @@ impl HostState {
   //   }
   // }
 
-  /// Get state
-  pub fn get_state(&self) -> (OnboardState, NodeState, MinerState) {
-    (self.onboard_state.clone(), self.node_state.clone(), self.miner_state.clone())
-  }
-
   // /// Get state
   // pub fn get_next_action(&self) -> OnboardEvents {
   //     use OnboardState::*;
@@ -177,48 +47,22 @@ impl HostState {
   /// the transitions in the miner state machine
   pub fn miner_transition(&mut self, action: MinerEvents, _trigger_action: bool) -> &Self {
     match action {
-      MinerEvents::Started => self.miner_state = MinerState::Mining,
-      MinerEvents::Failed => self.miner_state = MinerState::Stopped,
+      MinerEvents::Started => self.host_state.miner_state = MinerState::Mining,
+      MinerEvents::Failed => self.host_state.miner_state = MinerState::Stopped,
     };
     self
   }
 
   /// try to advance the state machine
-  pub fn miner_maybe_advance(&mut self, trigger_action: bool, mut node: NodeHealth) -> &Self {
-    // let mut check = NodeHealth::new(Some(self.client.clone()));
-
-    match &self.miner_state {
-      // MinerState::EmptyBox => {
-      //     if check.configs_exist() {
-      //         &self.miner_transition(MinerEvents::RanWizard, trigger_action);
-      //     }
-      //     // Note: Don't trigger any action, may conflict with validator node setup.
-      // }
-      // MinerState::ConfigsOk => {
-      //     if check.accounts_exist_on_chain() {
-      //         &self.miner_transition(MinerEvents::AccountCreated, trigger_action);
-      //     }
-      // }
-      // MinerState::AccountOnChain => {
-      //     if check.miner_running() {
-      //         &self.miner_transition(MinerEvents::Started, trigger_action);
-      //     } else {
-      //         // if the node has synced (or is otherwise advanced in onboaring)
-      //         match &self.node_state {
-      //             OnboardState::FullnodeSyncComplete => management::start_miner(),
-      //             OnboardState::ValidatorIsRunning => management::start_miner(),
-      //             OnboardState::ValidatorOutOfSet => management::start_miner(),
-      //             _ => {}
-      //         }
-      //     }
-      // }
+  pub fn miner_maybe_advance(&mut self, trigger_action: bool) -> &Self {
+    match &self.host_state.miner_state {
       MinerState::Mining => {
-        if !NodeHealth::miner_running() {
+        if !Node::miner_running() {
           &self.miner_transition(MinerEvents::Failed, trigger_action);
         }
       }
       MinerState::Stopped => {
-        if NodeHealth::miner_running() {
+        if Node::miner_running() {
           &self.miner_transition(MinerEvents::Started, trigger_action);
         } else {
           // start the miner
@@ -237,14 +81,14 @@ impl HostState {
 
       // Node has an empty box, no config files
       OnboardEvents::RunWizard => {
-        if self.onboard_state == EmptyBox {
-          self.onboard_state = ValConfigsOk;
+        if self.host_state.onboard_state == EmptyBox {
+          self.host_state.onboard_state = ValConfigsOk;
         }
       }
 
       OnboardEvents::RestoreDb => {
-        if self.onboard_state == ValConfigsOk {
-          self.onboard_state = DbRestoredOk;
+        if self.host_state.onboard_state == ValConfigsOk {
+          self.host_state.onboard_state = DbRestoredOk;
         }
       }
       }
@@ -256,31 +100,31 @@ impl HostState {
     use NodeState::*;
     match action {
       NodeEvents::StartFullnode => {
-        if self.node_state == Stopped {
-          self.node_state = FullnodeModeCatchup;
+        if self.host_state.node_state == Stopped {
+          self.host_state.node_state = FullnodeModeCatchup;
         }
 
         // if the node was previously in validator mode
-        if self.node_state == ValidatorMode || self.node_state == ValidatorOutOfSet {
-          self.node_state = FullnodeMode;
+        if self.host_state.node_state == ValidatorMode || self.host_state.node_state == ValidatorOutOfSet {
+          self.host_state.node_state = FullnodeMode;
         }
       }
 
       NodeEvents::FullnodeSynced => {
-        if self.node_state == FullnodeModeCatchup {
-          self.node_state = FullnodeMode
+        if self.host_state.node_state == FullnodeModeCatchup {
+          self.host_state.node_state = FullnodeMode
         };
       }
 
       NodeEvents::SwitchToValidatorMode => {
-        if self.node_state == FullnodeMode {
-          self.node_state = ValidatorMode
+        if self.host_state.node_state == FullnodeMode {
+          self.host_state.node_state = ValidatorMode
         };
       }
 
       NodeEvents::ValidatorDroppedFromSet => {
-        if self.node_state == ValidatorMode {
-          self.node_state = ValidatorOutOfSet
+        if self.host_state.node_state == ValidatorMode {
+          self.host_state.node_state = ValidatorOutOfSet
         };
       }
       NodeEvents::RejoinValidatorSet => {}
@@ -292,13 +136,13 @@ impl HostState {
   }
 
   /// Advance to the next state
-  pub fn onboard_maybe_advance(&mut self, trigger_action: bool, node: NodeHealth) -> &Self {    
+  pub fn onboard_maybe_advance(&mut self, trigger_action: bool) -> &Self {    
     let entry_args = entrypoint::get_args();
     let cfg = app_config();
     // Try to advance the node state. Miner below
-    match &self.onboard_state {
+    match &self.host_state.onboard_state {
       OnboardState::EmptyBox => {
-        if node.configs_exist() {
+        if self.configs_exist() {
           &self.onboard_transition(OnboardEvents::RunWizard, trigger_action);
         } else {
           if trigger_action {
@@ -310,12 +154,12 @@ impl HostState {
         };
       }
       OnboardState::ValConfigsOk => {
-        if node.database_bootstrapped() {
+        if self.database_bootstrapped() {
           &self.onboard_transition(OnboardEvents::RestoreDb, trigger_action);
         } else {
           if trigger_action && entry_args.swarm_path.is_none() {
             action_print("attempting to restore db from archive");
-            mgmt::fast_forward_db(false).expect("unable to fast forward db");
+            restore::fast_forward_db(false).expect("unable to fast forward db");
           } else if let Some(path) = entry_args.swarm_path {
             // swarm testing, mock restore
             // TODO: place waypoint in key_store, and node.yaml
@@ -350,11 +194,11 @@ impl HostState {
     self
   }
     /// Advance to the next state
-  pub fn node_maybe_advance(&mut self, trigger_action: bool, node: NodeHealth) -> &Self {
-    match &self.node_state {
+  pub fn node_maybe_advance(&mut self, trigger_action: bool) -> &Self {
+    match &self.host_state.node_state {
       // If fullnode is running try to mine (if account is created)
       NodeState::FullnodeModeCatchup => {
-        if NodeHealth::node_is_synced(&self.conf).0 {
+        if self.is_synced().0 {
           &self.node_transition(NodeEvents::FullnodeSynced, trigger_action);
         } else {
           println!("Node is not synced, cannot advance.")
@@ -366,7 +210,7 @@ impl HostState {
       // if node sync is complete, can check if is in validator set, and
       // switch to validator mode.
       NodeState::FullnodeMode => {
-        if node.is_in_validator_set() {
+        if self.is_in_validator_set() {
           // Stop node first, then restart as validator.
           management::stop_node();
 
@@ -384,7 +228,7 @@ impl HostState {
 
     self
   }
-  } 
+} 
 
 fn action_print(action_text: &str) {
   println!("Triggering expected action: {}", action_text);

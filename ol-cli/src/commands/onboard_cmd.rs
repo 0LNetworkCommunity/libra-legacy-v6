@@ -1,6 +1,6 @@
 //! `onboard-cmd` subcommand
 
-use crate::{node::client, entrypoint, prelude::app_config, transitions, node::node_health::NodeHealth};
+use crate::{node::client, entrypoint, prelude::app_config, node::transitions, node::node::Node};
 use abscissa_core::{Command, Options, Runnable};
 
 /// `onboard-cmd` subcommand
@@ -31,10 +31,10 @@ impl Runnable for OnboardCmd {
         if !self.trigger_actions {
             println!("You can pass --trigger-actions or -t to attempt the next transition\n")
         }
-        let mut host = transitions::HostState::init(client, cfg);
-        let node = NodeHealth::new(Some(client), cfg);
-        let node_state = host.node_maybe_advance(*&self.trigger_actions, node).get_state();
-        let miner_state = host.miner_maybe_advance(*&self.trigger_actions, node).get_state();
+        // let mut host = transitions::HostState::init(client, cfg);
+        let node = Node::new(Some(client), cfg);
+        let node_state = node.node_maybe_advance(*&self.trigger_actions, node).get_state();
+        let miner_state = node.miner_maybe_advance(*&self.trigger_actions, node).get_state();
 
         println!(
             "\nNode state at exit: {:?}\nMiner state: {:?}",

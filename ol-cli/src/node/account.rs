@@ -2,7 +2,7 @@
 
 use cli::libra_client::LibraClient;
 use libra_json_rpc_client::{AccountAddress, views::AccountView};
-use crate::{cache::DB_CACHE, config::OlCliConfig, node::node_health::NodeHealth};
+use crate::{cache::DB_CACHE, config::OlCliConfig, node::node::Node};
 use serde::{Serialize, Deserialize};
 use libra_types::{account_state::AccountState, transaction::Version};
 use resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator, NullStateView};
@@ -37,7 +37,7 @@ impl AccountInfo {
     let av = get_account_view(client, self.address);
     self.balance = get_balance(av);
 
-    let node = NodeHealth::new(Some(client.clone()), cfg);
+    let node = Node::new(Some(client.clone()), cfg);
     self.is_in_validator_set = node.is_in_validator_set();
     let as_ser = serde_json::to_vec(self).unwrap();
     DB_CACHE.put(ACCOUNT_INFO_DB_KEY.as_bytes(), as_ser).unwrap();

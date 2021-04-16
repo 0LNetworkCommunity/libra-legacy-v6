@@ -1,6 +1,6 @@
 //! `management` functions
 
-use crate::{cache::DB_CACHE, config::OlCliConfig, entrypoint, node::node_health, prelude::app_config};
+use crate::{cache::DB_CACHE, config::OlCliConfig, entrypoint, node::node, prelude::app_config};
 use anyhow::Error;
 use once_cell::sync::Lazy;
 use reqwest::Url;
@@ -102,7 +102,7 @@ pub fn start_node(config_type: NodeType) -> Result<(), Error> {
     use BINARY_NODE as NODE;
     // if is running do nothing
     // TODO: Get a nother check of node running
-    if node_health::NodeHealth::node_running() {
+    if node::Node::node_running() {
         println!("{} is already running. Exiting.", NODE);
         return Ok(());
     }
@@ -171,7 +171,7 @@ pub fn start_miner() {
     // Stop any processes we may have started and detached from.
     // if is running do nothing
     use BINARY_MINER as MINER;
-    if node_health::NodeHealth::miner_running() {
+    if node::Node::miner_running() {
         println!("{} is already running. Exiting.", MINER);
         return
     }
@@ -212,7 +212,7 @@ pub fn choose_rpc_node(conf: &OlCliConfig) -> Option<Url> {
 
     // check the node is in sync
     // Note this assumes that we can connect to local and to a backup.
-    if node_health::NodeHealth::node_is_synced(conf).0 {
+    if node::Node::node_is_synced(conf).0 {
         // always choose local node if in sync
         return conf.profile.default_node.clone();
     } else {

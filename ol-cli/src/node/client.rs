@@ -6,7 +6,7 @@ use reqwest::Url;
 use libra_types::{waypoint::Waypoint};
 use anyhow::Error;
 use anyhow::{Result};
-use crate::{config::OlCliConfig, entrypoint, node::node_health::NodeHealth, prelude::app_config};
+use crate::{config::OlCliConfig, entrypoint, node::node::Node, prelude::app_config};
 
 /// returns a LibraClient instance.
 // TODO: Use app config file for params
@@ -68,7 +68,7 @@ pub fn pick_client(swarm_path: Option<PathBuf>, config: &OlCliConfig) -> LibraCl
     };
 
     // check if is in sync
-    let is_synced: bool = NodeHealth::node_is_synced(config).0;
+    let is_synced: bool = Node::node_is_synced(config).0;
     let client_tuple = 
       if is_synced { default_local_client(config) }
       else         { default_remote_client(config) };
