@@ -43,20 +43,20 @@ pub fn get_client() -> Option<LibraClient> {
 
 /// get client type with defaults from toml for remote node
 pub fn default_remote_client()  ->(Result<LibraClient, Error>, Url){
-    let entry_args = entrypoint::get_args();
+    // let entry_args = entrypoint::get_args();
 
     let config = app_config();
     let remote_url = config.profile.upstream_nodes.clone().unwrap().into_iter().next().unwrap(); // upstream_node_url.clone();
-    let waypoint = config.get_waypoint(entry_args.swarm_path).expect("could not get waypoint");
+    let waypoint = config.get_waypoint(None).expect("could not get waypoint");
     (make_client(Some(remote_url.clone()), waypoint), remote_url)
 }
 
 /// get client type with defaults from toml for local node
 pub fn default_local_client()  -> (Result<LibraClient, Error>, Url){
-    let entry_args = entrypoint::get_args();
+    // let entry_args = entrypoint::get_args();
     let config = app_config().to_owned();
     let local_url = config.profile.default_node.clone().expect("could not get url from configs");
-    let waypoint = config.get_waypoint(entry_args.swarm_path).expect("could not get waypoint");
+    let waypoint = config.get_waypoint(None).expect("could not get waypoint");
     (make_client(Some(local_url.clone()), waypoint), local_url)
 }
 
@@ -67,8 +67,8 @@ pub fn swarm_test_client(swarm_path: PathBuf) -> LibraClient {
 }
 
 /// picks what URL to connect to based on sync state. Or returns the client for swarm.
-pub fn pick_client() -> LibraClient {
-    if let Some(path) = entrypoint::get_args().swarm_path {
+pub fn pick_client(swarm_path: Option<PathBuf>) -> LibraClient {
+    if let Some(path) = swarm_path {
       return swarm_test_client(path)
     };
 

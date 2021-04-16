@@ -36,7 +36,7 @@ pub struct QueryCmd {
 impl Runnable for QueryCmd {
     fn run(&self) {
         let args = entrypoint::get_args();
-        let client = client::pick_client();
+        let client = client::pick_client(args.swarm_path);
 
         let account = 
             if args.account.is_some() { args.account.unwrap() }

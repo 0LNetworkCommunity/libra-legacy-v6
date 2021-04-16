@@ -1,5 +1,6 @@
 //! `account`
 
+use cli::libra_client::LibraClient;
 use libra_json_rpc_client::{AccountAddress, views::AccountView};
 use crate::{cache::DB_CACHE, client::pick_client, node_health::NodeHealth, prelude::app_config};
 use serde::{Serialize, Deserialize};
@@ -19,21 +20,20 @@ pub struct AccountInfo {
 
 impl AccountInfo {
   /// create AccountCli
-  pub fn new() -> Self{
-    let cfg = app_config();
+  pub fn new(address: AccountAddress) -> Self{
     AccountInfo {
-      address: cfg.profile.account,
+      address,
       balance: 0,
       is_in_validator_set: false
     }
   }
 
   /// fetch new account info
-  pub fn refresh(&mut self) -> &AccountInfo {
-    let av = get_account_view(self.address);
+  pub fn refresh(&mut self, client: &mut LibraClient) -> &AccountInfo {
+    let av = get_account_view(client, self.address);
     self.balance = get_balance(av);
 
-    let node = NodeHealth::new();
+    let node = NodeHealth::new(Some(client.clone()));
     self.is_in_validator_set = node.is_in_validator_set();
     let as_ser = serde_json::to_vec(self).unwrap();
     DB_CACHE.put(ACCOUNT_INFO_DB_KEY.as_bytes(), as_ser).unwrap();
@@ -49,8 +49,8 @@ impl AccountInfo {
 }
 
 /// Get the account view struct
-pub fn get_account_view(account: AccountAddress) -> AccountView {
-    let (account_view, _) = pick_client()
+pub fn get_account_view(client: &mut LibraClient, account: AccountAddress) -> AccountView {
+    let (account_view, _) = client
       .get_account(account, true)
       .expect(&format!("could not get account at address {:?}", account));
     account_view.expect(&format!("could not get account at address {:?}", account))

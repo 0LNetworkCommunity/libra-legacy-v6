@@ -30,7 +30,7 @@ pub fn get(mut client: LibraClient, query_type: QueryType, account: AccountAddre
   use QueryType::*;
   match query_type {
     Balance => {
-      let account_view = get_account_view(account);
+      let account_view = get_account_view(&mut client, account);
       for av in account_view.balances.iter() {
         if av.currency == "GAS" {
           return av.amount.to_formatted_string(&Locale::en)

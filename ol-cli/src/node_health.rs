@@ -108,7 +108,7 @@ pub struct NodeHealth {
   /// 0L configs
   pub conf: OlCliConfig,
   /// libraclient for connecting
-  pub client: LibraClient,
+  pub client: Option<LibraClient>,
   /// all items we are checking. Monitor sends these to cache.
   pub items: Items,
   chain_state: Option<AccountState>,
@@ -117,11 +117,11 @@ pub struct NodeHealth {
 
 impl NodeHealth {
   /// Create a instance of Check
-  pub fn new() -> Self {
+  pub fn new(client: Option<LibraClient>) -> Self {
     let conf = app_config().to_owned();
 
     return Self {
-      client: client::pick_client(),
+      client,
       conf,
       items: Items::init(),
       miner_state: None,
@@ -148,7 +148,7 @@ impl NodeHealth {
     &mut self,
     address: AccountAddress,
   ) -> Result<AccountState, Error> {
-    let (blob, _ver) = self.client.get_account_state_blob(address)?;
+    let (blob, _ver) = self.client.clone().unwrap().get_account_state_blob(address)?;
     if let Some(account_blob) = blob {
       Ok(AccountState::try_from(&account_blob).unwrap())
     } else {
@@ -162,7 +162,7 @@ impl NodeHealth {
       Ok(account_state) => Some(account_state),
       Err(_) => None,
     };
-    self.miner_state = match self.client.get_miner_state(self.conf.profile.account) {
+    self.miner_state = match self.client.clone().unwrap().get_miner_state(self.conf.profile.account) {
       Ok(state) => state,
       _ => None,
     }
@@ -223,10 +223,11 @@ impl NodeHealth {
   /// Current monitor account
   pub fn waypoint(&mut self) -> Waypoint {
     let entry_args = entrypoint::get_args();
-    self.client
+    self.client.clone()
+      .unwrap() 
       .get_state_proof()
       .expect("Failed to get state proof"); // refresh latest state proof
-    let waypoint = self.client.waypoint();
+    let waypoint = self.client.clone().unwrap().waypoint();
     match waypoint {
       Some(w) => {
         //self.client = LibraClient::new(self.conf.node_url.clone(), w.clone()).unwrap();
@@ -274,7 +275,7 @@ impl NodeHealth {
   pub fn accounts_exist_on_chain(&mut self) -> bool {
     let addr = self.conf.profile.account;
     // dbg!(&addr);
-    let account = self.client.get_account(addr, false);
+    let account = self.client.clone().unwrap().get_account(addr, false);
     match account {
       Ok((opt, _)) => match opt {
         Some(_) => true,

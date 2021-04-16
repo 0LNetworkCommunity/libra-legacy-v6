@@ -1,7 +1,7 @@
 //! `monitor-cmd` subcommand
 
 use abscissa_core::{Command, Options, Runnable};
-use crate::{check_runner, client};
+use crate::{check_runner, client, entrypoint, prelude::app_config};
 
 /// `monitor-cmd` subcommand
 ///
@@ -20,8 +20,16 @@ pub struct HealthCmd {
 impl Runnable for HealthCmd {
     /// Start the application.
     fn run(&self) {
-      let client = client::pick_client();
-      check_runner::mon(client, self.live, true);
+      let args = entrypoint::get_args();
+      let address = if args.account.is_some() {
+        args.account.unwrap()
+      } else {
+        let cfg = app_config().clone();
+        cfg.profile.account
+      };
+
+      let client = client::pick_client(args.swarm_path);
+      check_runner::mon(client, address, self.live, true);
         // monitor::timer();
 
         // Your code goes here

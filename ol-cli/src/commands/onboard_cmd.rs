@@ -1,7 +1,8 @@
 //! `onboard-cmd` subcommand
 
-use crate::transitions;
+use crate::{client, entrypoint, transitions};
 use abscissa_core::{Command, Options, Runnable};
+use cli::libra_client::LibraClient;
 use std::{thread, time::Duration};
 
 /// `onboard-cmd` subcommand
@@ -26,23 +27,17 @@ pub struct OnboardCmd {
 impl Runnable for OnboardCmd {
     /// Start the application.
     fn run(&self) {
+        let args = entrypoint::get_args();
+        let client = client::pick_client(args.swarm_path);
         if !self.trigger_actions {
             println!("You can pass --trigger-actions or -t to attempt the next transition\n")
         }
-        if self.autopilot {
-            loop {
-                println!("Running onboarding autopilot\n");
-                advance(self.trigger_actions);
-                thread::sleep(Duration::from_millis(10_000));
-            }
-        } else {
-            advance(self.trigger_actions)
-        }
+        advance(client, self.trigger_actions)
     }
 }
 
-pub fn advance(trigger_actions: bool) {
-    let mut host = transitions::HostState::init();
+pub fn advance(client: LibraClient, trigger_actions: bool) {
+    let mut host = transitions::HostState::init(client);
     let node_state = host.node_maybe_advance(trigger_actions).get_state();
     let miner_state = host.miner_maybe_advance(trigger_actions).get_state();
 

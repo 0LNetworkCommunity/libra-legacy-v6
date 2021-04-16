@@ -101,7 +101,8 @@ pub fn create_log_file(file_name: &str) -> File {
 pub fn start_node(config_type: NodeType) -> Result<(), Error> {
     use BINARY_NODE as NODE;
     // if is running do nothing
-    if node_health::NodeHealth::new().node_running() {
+    // TODO: Get a nother check of node running
+    if node_health::NodeHealth::new(None).node_running() {
         println!("{} is already running. Exiting.", NODE);
         return Ok(());
     }
@@ -170,7 +171,7 @@ pub fn start_miner() {
     // Stop any processes we may have started and detached from.
     // if is running do nothing
     use BINARY_MINER as MINER;
-    if node_health::NodeHealth::new().miner_running() {
+    if node_health::NodeHealth::new(None).miner_running() {
         println!("{} is already running. Exiting.", MINER);
         return
     }

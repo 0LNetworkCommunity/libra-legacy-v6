@@ -3,6 +3,7 @@
 use crate::{account, chain_info, check_runner, node_health};
 use cli::libra_client::LibraClient;
 use futures::StreamExt;
+use libra_json_rpc_client::AccountAddress;
 use std::convert::Infallible;
 use std::thread;
 use std::time::Duration;
@@ -28,15 +29,12 @@ fn sse_account_info(info: account::AccountInfo) -> Result<impl ServerSentEvent, 
     Ok(warp::sse::json(info))
 }
 
-
-
-
 /// main server
 #[tokio::main]
-pub async fn start_server(client: LibraClient) {
+pub async fn start_server(client: LibraClient, address: AccountAddress) {
     // TODO: Perhaps a better way to keep the check cache fresh?
     thread::spawn(|| {
-        check_runner::mon(client, true, false);
+        check_runner::mon(client, address, true, false);
     });
 
     //GET check/ (json api for check data)

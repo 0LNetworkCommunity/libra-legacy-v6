@@ -3,11 +3,11 @@
 use std::process::Command;
 
 use crate::{cache::DB_CACHE, entrypoint, management, node_health::NodeHealth, prelude::app_config, restore};
+use cli::libra_client::LibraClient;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
-
 /// States the account can be in
 pub enum AccountState {
   /// doesn't exist on chain
@@ -102,10 +102,12 @@ pub enum MinerEvents {
   Failed,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-#[serde(deny_unknown_fields)]
+#[derive(Clone, Debug)]
 /// The Current state of a node
 pub struct HostState {
+  // #[serde(skip, default = "fn(){}")]
+  /// client to connect with
+  client: LibraClient,
   /// state of onboarding
   onboard_state: OnboardState,
   /// state of node
@@ -118,8 +120,9 @@ pub struct HostState {
 /// methods for host state
 impl HostState {
   /// init
-  pub fn init() -> Self {
+  pub fn init(client: LibraClient) -> Self {
     Self {
+      client,
       onboard_state: OnboardState::EmptyBox,
       node_state: NodeState::Stopped,
       miner_state: MinerState::Stopped,
@@ -130,24 +133,24 @@ impl HostState {
   }
 
   /// Saves the Items to cache
-  pub fn write_cache(&self) {
-    let serialized = serde_json::to_vec(&self.clone()).unwrap();
-    match DB_CACHE.put("onboarding", serialized) {
-      Ok(_) => {}
-      Err(err) => {
-        dbg!(&err);
-      }
-    };
-  }
+  // pub fn write_cache(&self) {
+  //   let serialized = serde_json::to_vec(&self.clone()).unwrap();
+  //   match DB_CACHE.put("onboarding", serialized) {
+  //     Ok(_) => {}
+  //     Err(err) => {
+  //       dbg!(&err);
+  //     }
+  //   };
+  // }
 
   /// Get from cache
-  pub fn read_cache() -> Option<HostState> {
-    let q = DB_CACHE.get("onboarding").unwrap().unwrap();
-    match serde_json::from_slice(&q.as_slice()) {
-      Ok(items) => Some(items),
-      Err(_) => None,
-    }
-  }
+  // pub fn read_cache() -> Option<HostState> {
+  //   let q = DB_CACHE.get("onboarding").unwrap().unwrap();
+  //   match serde_json::from_slice(&q.as_slice()) {
+  //     Ok(items) => Some(items),
+  //     Err(_) => None,
+  //   }
+  // }
 
   /// Get state
   pub fn get_state(&self) -> (OnboardState, NodeState, MinerState) {
@@ -180,7 +183,7 @@ impl HostState {
 
   /// try to advance the state machine
   pub fn miner_maybe_advance(&mut self, trigger_action: bool) -> &Self {
-    let mut check = NodeHealth::new();
+    let mut check = NodeHealth::new(Some(self.client.clone()));
 
     match &self.miner_state {
       // MinerState::EmptyBox => {
@@ -288,7 +291,7 @@ impl HostState {
 
   /// Advance to the next state
   pub fn onboard_maybe_advance(&mut self, trigger_action: bool) -> &Self {
-    let mut check = NodeHealth::new();
+    let mut check = NodeHealth::new(Some(self.client.clone()));
     
     let entry_args = entrypoint::get_args();
     let cfg = app_config();
@@ -348,7 +351,7 @@ impl HostState {
   }
     /// Advance to the next state
   pub fn node_maybe_advance(&mut self, trigger_action: bool) -> &Self {
-    let check = NodeHealth::new();
+    let check = NodeHealth::new(Some(self.client.clone()));
     
     // let entry_args = entrypoint::get_args();
     // let cfg = app_config();
