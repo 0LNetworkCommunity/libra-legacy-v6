@@ -3,7 +3,6 @@
 use crate::{client, entrypoint, transitions};
 use abscissa_core::{Command, Options, Runnable};
 use cli::libra_client::LibraClient;
-use std::{thread, time::Duration};
 
 /// `onboard-cmd` subcommand
 ///

@@ -1,5 +1,5 @@
 //! `chain_info`
-use crate::{cache::DB_CACHE, client};
+use crate::{cache::DB_CACHE};
 use chrono::Utc;
 use cli::libra_client::LibraClient;
 use libra_json_rpc_client::views::OracleResourceView;

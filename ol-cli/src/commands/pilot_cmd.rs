@@ -4,8 +4,6 @@
 
 use super::OlCliCmd;
 use abscissa_core::{Command, Options, Runnable};
-use crate::node_health::NodeHealth;
-use crate::management;
 /// `version` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct PilotCmd {}

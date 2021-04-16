@@ -1,6 +1,5 @@
 //! 'query' 
 use crate::{
-  client::pick_client,
   account_resource::get_annotate_account_blob,
   metadata::Metadata,
   account::get_account_view,

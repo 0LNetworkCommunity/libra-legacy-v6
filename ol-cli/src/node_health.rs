@@ -4,7 +4,6 @@ use crate::{
   application::app_config,
   config::OlCliConfig,
   cache::DB_CACHE,
-  client,
   entrypoint,
   metadata::Metadata,
 };

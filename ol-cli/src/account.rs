@@ -2,7 +2,7 @@
 
 use cli::libra_client::LibraClient;
 use libra_json_rpc_client::{AccountAddress, views::AccountView};
-use crate::{cache::DB_CACHE, client::pick_client, node_health::NodeHealth, prelude::app_config};
+use crate::{cache::DB_CACHE, node_health::NodeHealth};
 use serde::{Serialize, Deserialize};
 
 const ACCOUNT_INFO_DB_KEY: &str = "account_info";

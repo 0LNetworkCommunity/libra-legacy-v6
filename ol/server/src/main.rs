@@ -13,9 +13,6 @@ fn main() {
     start_server();
 }
 
-
-
-
 fn sse_check(info: node_health::Items) -> Result<impl ServerSentEvent, Infallible> {
     Ok(warp::sse::json(info))
 }
@@ -35,9 +32,9 @@ fn sse_account_info(info: account::AccountInfo) -> Result<impl ServerSentEvent, 
 #[tokio::main]
 pub async fn start_server() {
     // TODO: Perhaps a better way to keep the check cache fresh?
-    thread::spawn(|| {
-        check_runner::mon(true, false);
-    });
+    // thread::spawn(move || {
+    //     check_runner::mon(true, false);
+    // });
 
     //GET check/ (json api for check data)
     let check = warp::path("check").and(warp::get()).map(|| {

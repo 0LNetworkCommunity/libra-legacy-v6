@@ -2,7 +2,7 @@
 
 use std::process::Command;
 
-use crate::{cache::DB_CACHE, entrypoint, management, node_health::NodeHealth, prelude::app_config, restore};
+use crate::{entrypoint, management, node_health::NodeHealth, prelude::app_config, restore};
 use cli::libra_client::LibraClient;
 use serde::{Deserialize, Serialize};
 

@@ -33,7 +33,8 @@ fn sse_account_info(info: account::AccountInfo) -> Result<impl ServerSentEvent, 
 #[tokio::main]
 pub async fn start_server(client: LibraClient, address: AccountAddress) {
     // TODO: Perhaps a better way to keep the check cache fresh?
-    thread::spawn(|| {
+    
+    thread::spawn(move || {
         check_runner::mon(client, address, true, false);
     });
 
