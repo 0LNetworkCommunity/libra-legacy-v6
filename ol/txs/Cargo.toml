@@ -46,7 +46,7 @@ vdf = { path = "../../ol/verifiable_delay/vdf", version = "^0.1.0" }
 vm-genesis={path="../../language/tools/vm-genesis", version="0.1.0"}
 ol-cli = {path = "../cli"}
 dialoguer = "0.8.0"
-ol-util = {path = "../util"}
+ol-types = {path = "../types"}
 ol-fixtures = {path = "../fixtures"}
 
 

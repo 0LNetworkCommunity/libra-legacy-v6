@@ -51,7 +51,7 @@ libra-wallet = { path = "../../testsuite/cli/libra-wallet", version = "0.1.0" }
 keygen = { path = "../keygen/", version = "0.1.0" }
 abscissa_tokio = "0.5"
 regex = "1"
-ol-util = { path = "../util" }
+ol-types = { path = "../types" }
 
 # Parity with Storage create
 [dependencies.rocksdb]

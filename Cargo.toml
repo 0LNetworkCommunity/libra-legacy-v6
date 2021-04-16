@@ -151,7 +151,7 @@ members = [
     "ol/miner",
     "ol/txs",
     "ol/cli",
-    "ol/util",
+    "ol/types",
     "ol/fixtures",
     "ol/keygen",
 ]
