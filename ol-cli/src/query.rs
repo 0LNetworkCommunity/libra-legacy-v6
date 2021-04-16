@@ -1,10 +1,5 @@
 //! 'query' 
-use crate::{
-  account_resource::get_annotate_account_blob,
-  metadata::Metadata,
-  account::get_account_view,
-  
-};
+use crate::{account::get_account_view, account_resource::get_annotate_account_blob, config::OlCliConfig, metadata::Metadata};
 use cli::libra_client::LibraClient;
 use libra_types::{account_address::AccountAddress};
 use num_format::{Locale, ToFormattedString};
@@ -25,7 +20,7 @@ pub enum QueryType {
 }
 
 /// Get data from a client, with a query type. Will connect to local only if in sync.
-pub fn get(mut client: LibraClient, query_type: QueryType, account: AccountAddress) -> String {
+pub fn get(mut client: LibraClient, query_type: QueryType, account: AccountAddress, config: &OlCliConfig) -> String {
   use QueryType::*;
   match query_type {
     Balance => {
@@ -47,7 +42,7 @@ pub fn get(mut client: LibraClient, query_type: QueryType, account: AccountAddre
       format!("{} - WAYPOINT: {}", chain.clone().unwrap().epoch.to_string(), &chain.unwrap().waypoint.unwrap().to_string())
     },
     SyncDelay => {
-      Metadata::compare_from_config().to_string()
+      Metadata::compare_from_config(config).to_string()
     },
     Resources => {
       let resources = get_annotate_account_blob(client, account)

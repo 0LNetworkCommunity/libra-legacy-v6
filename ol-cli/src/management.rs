@@ -1,6 +1,6 @@
 //! `management` functions
 
-use crate::{cache::DB_CACHE, node_health, prelude::app_config, entrypoint};
+use crate::{cache::DB_CACHE, config::OlCliConfig, entrypoint, node_health, prelude::app_config};
 use anyhow::Error;
 use once_cell::sync::Lazy;
 use reqwest::Url;
@@ -102,7 +102,7 @@ pub fn start_node(config_type: NodeType) -> Result<(), Error> {
     use BINARY_NODE as NODE;
     // if is running do nothing
     // TODO: Get a nother check of node running
-    if node_health::NodeHealth::new(None).node_running() {
+    if node_health::NodeHealth::node_running() {
         println!("{} is already running. Exiting.", NODE);
         return Ok(());
     }
@@ -171,25 +171,25 @@ pub fn start_miner() {
     // Stop any processes we may have started and detached from.
     // if is running do nothing
     use BINARY_MINER as MINER;
-    if node_health::NodeHealth::new(None).miner_running() {
+    if node_health::NodeHealth::miner_running() {
         println!("{} is already running. Exiting.", MINER);
         return
     }
 
     // if node is NOT synced, then should use a backup/upstream node
     // let url = choose_rpc_node().unwrap();
-    let use_backup = node_health::NodeHealth::node_is_synced().0;
+    // let use_backup = node_health::NodeHealth::node_is_synced(config).0;
     
     let child = if *IS_PROD {
-        let mut args = vec!["start"];
-        if use_backup { args.push("--backup-url"); };
+        let args = vec!["start"];
+        // if use_backup { args.push("--backup-url"); };
         println!("Starting '{}' with args: {:?}", MINER, args.join(" "));
         spawn_process(
             MINER, args.as_slice(), MINER, "failed to run 'miner', is it installed?"
         )        
     } else {
-        let mut args = vec!["r", "-p", MINER, "--", "start"];
-        if use_backup { args.push("--backup-url"); };
+        let args = vec!["r", "-p", MINER, "--", "start"];
+        // if use_backup { args.push("--backup-url"); };
         println!("Starting 'cargo' with args: {:?}", args.join(" "));
         spawn_process(
             "cargo", args.as_slice(), MINER, "failed to run cargo r -p miner"
@@ -207,20 +207,21 @@ pub fn stop_miner() {
 }
 
 /// Choose a node to connect for rpc, local or upstream
-pub fn choose_rpc_node() -> Option<Url> {
-    let conf = app_config().to_owned();
+pub fn choose_rpc_node(conf: &OlCliConfig) -> Option<Url> {
+    // let conf = app_config().to_owned();
 
     // check the node is in sync
     // Note this assumes that we can connect to local and to a backup.
-    if node_health::NodeHealth::node_is_synced().0 {
+    if node_health::NodeHealth::node_is_synced(conf).0 {
         // always choose local node if in sync
-        return conf.profile.default_node;
+        return conf.profile.default_node.clone();
     } else {
         // otherwise use a backup
         // TODO: check all backups in vector to see which connects
         Some(
             conf.profile
                 .upstream_nodes
+                .clone()
                 .unwrap()
                 .into_iter()
                 .next()

@@ -6,7 +6,7 @@ use reqwest::Url;
 use libra_types::{waypoint::Waypoint};
 use anyhow::Error;
 use anyhow::{Result};
-use crate::{entrypoint, node_health::NodeHealth, prelude::app_config};
+use crate::{config::OlCliConfig, entrypoint, node_health::NodeHealth, prelude::app_config};
 
 /// returns a LibraClient instance.
 // TODO: Use app config file for params
@@ -42,19 +42,14 @@ pub fn get_client() -> Option<LibraClient> {
 }
 
 /// get client type with defaults from toml for remote node
-pub fn default_remote_client()  ->(Result<LibraClient, Error>, Url){
-    // let entry_args = entrypoint::get_args();
-
-    let config = app_config();
+pub fn default_remote_client(config: &OlCliConfig)  ->(Result<LibraClient, Error>, Url){
     let remote_url = config.profile.upstream_nodes.clone().unwrap().into_iter().next().unwrap(); // upstream_node_url.clone();
     let waypoint = config.get_waypoint(None).expect("could not get waypoint");
     (make_client(Some(remote_url.clone()), waypoint), remote_url)
 }
 
 /// get client type with defaults from toml for local node
-pub fn default_local_client()  -> (Result<LibraClient, Error>, Url){
-    // let entry_args = entrypoint::get_args();
-    let config = app_config().to_owned();
+pub fn default_local_client(config: &OlCliConfig)  -> (Result<LibraClient, Error>, Url){
     let local_url = config.profile.default_node.clone().expect("could not get url from configs");
     let waypoint = config.get_waypoint(None).expect("could not get waypoint");
     (make_client(Some(local_url.clone()), waypoint), local_url)
@@ -67,15 +62,15 @@ pub fn swarm_test_client(swarm_path: PathBuf) -> LibraClient {
 }
 
 /// picks what URL to connect to based on sync state. Or returns the client for swarm.
-pub fn pick_client(swarm_path: Option<PathBuf>) -> LibraClient {
+pub fn pick_client(swarm_path: Option<PathBuf>, config: &OlCliConfig) -> LibraClient {
     if let Some(path) = swarm_path {
       return swarm_test_client(path)
     };
 
     // check if is in sync
-    let is_synced: bool = NodeHealth::node_is_synced().0;
+    let is_synced: bool = NodeHealth::node_is_synced(config).0;
     let client_tuple = 
-      if is_synced { default_local_client() }
-      else         { default_remote_client() };
+      if is_synced { default_local_client(config) }
+      else         { default_remote_client(config) };
     client_tuple.0.expect("could not configure a client")
 }

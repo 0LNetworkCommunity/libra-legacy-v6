@@ -1,7 +1,7 @@
 //! `monitor-cmd` subcommand
 
 use abscissa_core::{Command, Options, Runnable};
-use crate::{check_runner, client, entrypoint, prelude::app_config};
+use crate::{check_runner, client, entrypoint, node_health::NodeHealth, prelude::app_config};
 
 /// `monitor-cmd` subcommand
 ///
@@ -21,15 +21,17 @@ impl Runnable for HealthCmd {
     /// Start the application.
     fn run(&self) {
       let args = entrypoint::get_args();
+      let cfg = app_config().clone();
       let address = if args.account.is_some() {
         args.account.unwrap()
       } else {
-        let cfg = app_config().clone();
         cfg.profile.account
       };
+      
+      let client = client::pick_client(args.swarm_path, &cfg);
+      let node = NodeHealth::new(Some(client), cfg);
 
-      let client = client::pick_client(args.swarm_path);
-      check_runner::mon(client, address, self.live, true);
+      check_runner::mon(node, self.live, true);
         // monitor::timer();
 
         // Your code goes here

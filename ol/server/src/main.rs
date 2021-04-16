@@ -11,16 +11,14 @@ use cli::libra_client::LibraClient;
 use libra_json_rpc_client::AccountAddress;
 use ol_cli::{client::pick_client, config::OlCliConfig};
 use toml;
-const DEFAULT_CONFIG_PATH: &str = "~/.0L/0L.toml";
+const DEFAULT_CONFIG_PATH: &str = "/root/.0L/0L.toml";
 
 fn main() {
     // TODO: fetch swarm configs from command line.
-
+    // TODO: fetch optional config path
     let cfg = parse_configs(None);
-    let client = pick_client(None);
-
-    dbg!(cfg);
-    // start_server(client, cfg.profile.account);
+    let client = pick_client(None, &cfg);
+    start_server(client, cfg.profile.account);
 }
 
 fn sse_check(info: node_health::Items) -> Result<impl ServerSentEvent, Infallible> {

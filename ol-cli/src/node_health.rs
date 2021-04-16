@@ -116,9 +116,7 @@ pub struct NodeHealth {
 
 impl NodeHealth {
   /// Create a instance of Check
-  pub fn new(client: Option<LibraClient>) -> Self {
-    let conf = app_config().to_owned();
-
+  pub fn new(client: Option<LibraClient>, conf: OlCliConfig) -> Self {
     return Self {
       client,
       conf,
@@ -132,10 +130,10 @@ impl NodeHealth {
   pub fn refresh_checks(&mut self) -> Items {
     self.items.configs_exist = self.configs_exist();
     self.items.db_restored = self.database_bootstrapped();
-    self.items.node_running = self.node_running();
-    self.items.miner_running = self.miner_running();
+    self.items.node_running = NodeHealth::node_running();
+    self.items.miner_running = NodeHealth::miner_running();
     self.items.account_created = self.accounts_exist_on_chain();
-    let sync_tuple = NodeHealth::node_is_synced();
+    let sync_tuple = NodeHealth::node_is_synced(&self.conf);
 
     self.items.is_synced = sync_tuple.0;
     self.items.sync_delay = sync_tuple.1;
@@ -308,11 +306,11 @@ impl NodeHealth {
   }
 
   /// check if node is synced
-  pub fn node_is_synced() -> (bool, i64) {
-    if !NodeHealth::check_node_state() {
+  pub fn node_is_synced(config: &OlCliConfig) -> (bool, i64) {
+    if !NodeHealth::node_running() {
       return (false, 0);
     };
-    let delay = Metadata::compare_from_config();
+    let delay = Metadata::compare_from_config(config);
     (delay < 10_000, delay)
   }
 
@@ -346,20 +344,18 @@ impl NodeHealth {
     }
   }
 
+  // /// Check if node is running
+  // pub fn check_node_state() -> bool {
+  //   NodeHealth::check_process(NODE_PROCESS)
+  // }
   /// Check if node is running
-  pub fn check_node_state() -> bool {
+  pub fn node_running() -> bool {
     NodeHealth::check_process(NODE_PROCESS)
-  }
-  /// Check if node is running
-  pub fn node_running(&mut self) -> bool {
-    self.items.node_running = NodeHealth::check_process(NODE_PROCESS);
-    self.items.node_running
   }
 
   /// Check if miner is running
-  pub fn miner_running(&mut self) -> bool {
-    self.items.miner_running = NodeHealth::check_process(MINER_PROCESS);
-    self.items.miner_running
+  pub fn miner_running() -> bool {
+    NodeHealth::check_process(MINER_PROCESS)
   }
 
   fn check_process(process_str: &str) -> bool {

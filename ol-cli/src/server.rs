@@ -1,6 +1,6 @@
 //! web-monitor
 
-use crate::{account, chain_info, check_runner, node_health};
+use crate::{account, chain_info, check_runner, node_health::{self, NodeHealth}};
 use cli::libra_client::LibraClient;
 use futures::StreamExt;
 use libra_json_rpc_client::AccountAddress;
@@ -32,11 +32,11 @@ fn sse_account_info(info: account::AccountInfo) -> Result<impl ServerSentEvent, 
 
 /// main server
 #[tokio::main]
-pub async fn start_server(client: LibraClient, address: AccountAddress) {
+pub async fn start_server(node: NodeHealth) {
     // TODO: Perhaps a better way to keep the check cache fresh?
     
     thread::spawn(move || {
-        check_runner::mon(client, address, true, false);
+        check_runner::mon(node, true, false);
     });
 
     //GET check/ (json api for check data)

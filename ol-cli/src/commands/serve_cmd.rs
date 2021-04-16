@@ -17,13 +17,14 @@ impl Runnable for ServeCmd {
     /// Start the application.
     fn run(&self) {
         let entry_args = entrypoint::get_args();
+        let cfg = app_config().clone();
         let address = if entry_args.account.is_some() {
             entry_args.account.unwrap()
         } else {
-            let cfg = app_config().clone();
+            
             cfg.profile.account
         };
-        let client = client::pick_client(entry_args.swarm_path);
+        let client = client::pick_client(entry_args.swarm_path, &cfg);
         server::start_server(client, address);
     }
 }

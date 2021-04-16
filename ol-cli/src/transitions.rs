@@ -2,7 +2,7 @@
 
 use std::process::Command;
 
-use crate::{entrypoint, management, node_health::NodeHealth, prelude::app_config, restore};
+use crate::{config::OlCliConfig, entrypoint, management, node_health::NodeHealth, prelude::app_config, restore};
 use cli::libra_client::LibraClient;
 use serde::{Deserialize, Serialize};
 
@@ -105,7 +105,8 @@ pub enum MinerEvents {
 #[derive(Clone, Debug)]
 /// The Current state of a node
 pub struct HostState {
-  // #[serde(skip, default = "fn(){}")]
+  /// client to connect with
+  conf: OlCliConfig,
   /// client to connect with
   client: LibraClient,
   /// state of onboarding
@@ -120,8 +121,9 @@ pub struct HostState {
 /// methods for host state
 impl HostState {
   /// init
-  pub fn init(client: LibraClient) -> Self {
+  pub fn init(client: LibraClient, conf: OlCliConfig) -> Self {
     Self {
+      conf,
       client,
       onboard_state: OnboardState::EmptyBox,
       node_state: NodeState::Stopped,
@@ -182,8 +184,8 @@ impl HostState {
   }
 
   /// try to advance the state machine
-  pub fn miner_maybe_advance(&mut self, trigger_action: bool) -> &Self {
-    let mut check = NodeHealth::new(Some(self.client.clone()));
+  pub fn miner_maybe_advance(&mut self, trigger_action: bool, mut node: NodeHealth) -> &Self {
+    // let mut check = NodeHealth::new(Some(self.client.clone()));
 
     match &self.miner_state {
       // MinerState::EmptyBox => {
@@ -211,12 +213,12 @@ impl HostState {
       //     }
       // }
       MinerState::Mining => {
-        if !check.miner_running() {
+        if !NodeHealth::miner_running() {
           &self.miner_transition(MinerEvents::Failed, trigger_action);
         }
       }
       MinerState::Stopped => {
-        if check.miner_running() {
+        if NodeHealth::miner_running() {
           &self.miner_transition(MinerEvents::Started, trigger_action);
         } else {
           // start the miner
@@ -290,15 +292,13 @@ impl HostState {
   }
 
   /// Advance to the next state
-  pub fn onboard_maybe_advance(&mut self, trigger_action: bool) -> &Self {
-    let mut check = NodeHealth::new(Some(self.client.clone()));
-    
+  pub fn onboard_maybe_advance(&mut self, trigger_action: bool, node: NodeHealth) -> &Self {    
     let entry_args = entrypoint::get_args();
     let cfg = app_config();
     // Try to advance the node state. Miner below
     match &self.onboard_state {
       OnboardState::EmptyBox => {
-        if check.configs_exist() {
+        if node.configs_exist() {
           &self.onboard_transition(OnboardEvents::RunWizard, trigger_action);
         } else {
           if trigger_action {
@@ -310,7 +310,7 @@ impl HostState {
         };
       }
       OnboardState::ValConfigsOk => {
-        if check.database_bootstrapped() {
+        if node.database_bootstrapped() {
           &self.onboard_transition(OnboardEvents::RestoreDb, trigger_action);
         } else {
           if trigger_action && entry_args.swarm_path.is_none() {
@@ -350,17 +350,11 @@ impl HostState {
     self
   }
     /// Advance to the next state
-  pub fn node_maybe_advance(&mut self, trigger_action: bool) -> &Self {
-    let check = NodeHealth::new(Some(self.client.clone()));
-    
-    // let entry_args = entrypoint::get_args();
-    // let cfg = app_config();
-    // Try to advance the node state. Miner below
+  pub fn node_maybe_advance(&mut self, trigger_action: bool, node: NodeHealth) -> &Self {
     match &self.node_state {
-      // TODO: Miner should have own separate state machine
       // If fullnode is running try to mine (if account is created)
       NodeState::FullnodeModeCatchup => {
-        if NodeHealth::node_is_synced().0 {
+        if NodeHealth::node_is_synced(&self.conf).0 {
           &self.node_transition(NodeEvents::FullnodeSynced, trigger_action);
         } else {
           println!("Node is not synced, cannot advance.")
@@ -372,7 +366,7 @@ impl HostState {
       // if node sync is complete, can check if is in validator set, and
       // switch to validator mode.
       NodeState::FullnodeMode => {
-        if check.is_in_validator_set() {
+        if node.is_in_validator_set() {
           // Stop node first, then restart as validator.
           management::stop_node();
 

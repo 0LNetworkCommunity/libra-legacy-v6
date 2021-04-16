@@ -3,9 +3,7 @@
 use cli::libra_client::LibraClient;
 use reqwest::Url;
 use libra_json_rpc_client::views::MetadataView;
-use crate::{
-    client::*,
-};
+use crate::{client::*, config::OlCliConfig};
 /// Get chain Metadata
 #[derive(Debug)]
 pub struct Metadata {
@@ -44,15 +42,15 @@ impl Metadata {
     }
 
     /// Compare the nodes from toml config.
-    pub fn compare_from_config() -> i64 {
+    pub fn compare_from_config(config: &OlCliConfig) -> i64 {
 
-        let local_client = default_local_client();
+        let local_client = default_local_client(config);
         let local = Metadata::new(
             &local_client.1,
             &mut local_client.0.unwrap()
         );
 
-        let remote_client = default_remote_client();
+        let remote_client = default_remote_client(config);
 
         let remote = Metadata::new(
             &remote_client.1,

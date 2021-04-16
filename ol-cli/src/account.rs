@@ -2,7 +2,7 @@
 
 use cli::libra_client::LibraClient;
 use libra_json_rpc_client::{AccountAddress, views::AccountView};
-use crate::{cache::DB_CACHE, node_health::NodeHealth};
+use crate::{cache::DB_CACHE, config::OlCliConfig, node_health::NodeHealth};
 use serde::{Serialize, Deserialize};
 
 const ACCOUNT_INFO_DB_KEY: &str = "account_info";
@@ -29,11 +29,11 @@ impl AccountInfo {
   }
 
   /// fetch new account info
-  pub fn refresh(&mut self, client: &mut LibraClient) -> &AccountInfo {
+  pub fn refresh(&mut self, client: &mut LibraClient, cfg: OlCliConfig) -> &AccountInfo {
     let av = get_account_view(client, self.address);
     self.balance = get_balance(av);
 
-    let node = NodeHealth::new(Some(client.clone()));
+    let node = NodeHealth::new(Some(client.clone()), cfg);
     self.is_in_validator_set = node.is_in_validator_set();
     let as_ser = serde_json::to_vec(self).unwrap();
     DB_CACHE.put(ACCOUNT_INFO_DB_KEY.as_bytes(), as_ser).unwrap();

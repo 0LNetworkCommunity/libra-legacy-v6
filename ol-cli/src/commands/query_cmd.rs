@@ -36,7 +36,9 @@ pub struct QueryCmd {
 impl Runnable for QueryCmd {
     fn run(&self) {
         let args = entrypoint::get_args();
-        let client = client::pick_client(args.swarm_path);
+        let cfg = app_config().clone();
+
+        let client = client::pick_client(args.swarm_path, &cfg);
 
         let account = 
             if args.account.is_some() { args.account.unwrap() }
@@ -47,23 +49,23 @@ impl Runnable for QueryCmd {
 
         // TODO: Reduce boilerplate. Serialize "balance" to cast to QueryType::Balance        
         if self.balance {
-            info = get(client, QueryType::Balance, account);
+            info = get(client, QueryType::Balance, account, &cfg);
             display = "BALANCE";
         } 
         else if self.blockheight {
-            info = get(client, QueryType::BlockHeight, account);
+            info = get(client, QueryType::BlockHeight, account, &cfg);
             display = "BLOCKHEIGHT";
         }
         else if self.sync_delay {
-            info = get(client, QueryType::SyncDelay, account);
+            info = get(client, QueryType::SyncDelay, account, &cfg);
             display = "SYNC-DELAY";
         } 
         else if self.resources {
-            info = get(client, QueryType::Resources, account);
+            info = get(client, QueryType::Resources, account, &cfg);
             display = "RESOURCES";
         }
         else if self.resources {
-            info = get(client, QueryType::Epoch, account);
+            info = get(client, QueryType::Epoch, account, &cfg);
             display = "EPOCH";
         }
 
