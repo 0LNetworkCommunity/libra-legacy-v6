@@ -41,7 +41,7 @@ impl Runnable for InitCmd {
         // start with a default value, or read from file if already initialized
         let mut miner_config = app_config().to_owned();
         if !self.skip_miner { 
-          miner_config = initialize_miner(
+          miner_config = initialize_host(
             authkey,
             account, 
             &self.path
@@ -52,7 +52,7 @@ impl Runnable for InitCmd {
 }
 
 /// Initializes the necessary 0L config files: 0L.toml
-pub fn initialize_miner(authkey: AuthenticationKey, account: AccountAddress, path: &Option<PathBuf>) -> Result <OlCliConfig, Error>{
+pub fn initialize_host(authkey: AuthenticationKey, account: AccountAddress, path: &Option<PathBuf>) -> Result <OlCliConfig, Error>{
     let cfg = OlCliConfig::init_miner_configs(authkey, account, path);
     Ok(cfg)
 }

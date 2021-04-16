@@ -3,7 +3,6 @@
 #![allow(clippy::never_loop)]
 
 use super::{files_cmd, keygen_cmd, manifest_cmd, zero_cmd};
-use crate::entrypoint;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use libra_wallet::WalletLibrary;
@@ -41,8 +40,6 @@ pub struct ValWizardCmd {
 impl Runnable for ValWizardCmd {
   /// Print version message
   fn run(&self) {
-    let entry_args = entrypoint::get_args();
-
     // Keygen
     if self.keygen {
       keygen_cmd::generate_keys();
@@ -57,7 +54,7 @@ impl Runnable for ValWizardCmd {
     // Initialize Miner
     // Need to assign miner_config, because reading from app_config can only be done at startup, and it will be blank at the time of wizard executing.
     let mut miner_config =
-      init_cmd::initialize_miner(authkey, account, &self.path)
+      init_cmd::initialize_host(authkey, account, &self.path)
         .unwrap();
     let home_path = &miner_config.workspace.node_home;
     status_ok!("\nMiner config written", "\n...........................\n");

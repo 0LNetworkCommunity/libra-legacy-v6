@@ -178,7 +178,7 @@ impl UserConfigs {
 #[test]
 fn test_parse_init_file() {
     use crate::account::ValConfigs;
-    let fixtures = PathBuf::from("../fixtures/onboarding/eve_init_test.json");
+    let fixtures = PathBuf::from("../ol/fixtures/onboarding/eve_init_test.json");
     let init_configs = ValConfigs::get_init_data(&fixtures).unwrap();
     assert_eq!(init_configs.op_fullnode_network_addresses, decode("2d040000000000052318072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800").unwrap(), "Could not parse network address");
 
@@ -207,6 +207,8 @@ fn val_config_ip_address() {
         block,
         eve_keys,
         "161.35.13.169".to_string(),
+        None,
+        None
     );
     
     let correct_fn_hex = "2d0400a1230da9052318072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800".to_owned();

@@ -160,7 +160,7 @@ impl OlCliConfig {
       .write(&toml.as_bytes())
       .expect("Could not write toml file");
     println!(
-      "\nminer app initialized, file saved to: {:?}",
+      "\nhost configs initialized, file saved to: {:?}",
       &toml_path
     );
   }
