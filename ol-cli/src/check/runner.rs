@@ -1,16 +1,16 @@
 //! `monitor` subcommand
 
 use crate::{
-    config::OlCliConfig, node::account::AccountInfo, node::chain_info,
+    node::account::AccountInfo, node::chain_info,
     node::node_health::NodeHealth,
 };
-use cli::libra_client::LibraClient;
+
 use crossterm::{
     cursor,
     terminal::{self, ClearType},
     QueueableCommand,
 };
-use libra_json_rpc_client::AccountAddress;
+
 use std::io::{stdout, Write};
 use std::{thread, time::Duration};
 

@@ -13,7 +13,7 @@ use cli::libra_client::LibraClient;
 use libradb::LibraDB;
 use std::{str, convert::TryFrom};
 use sysinfo::SystemExt;
-use serde::{Deserialize, Serialize};
+
 use libra_json_rpc_client::views::MinerStateResourceView;
 use libra_types::waypoint::Waypoint;
 use libra_types::{account_address::AccountAddress, account_state::AccountState};

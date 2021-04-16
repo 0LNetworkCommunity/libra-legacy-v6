@@ -6,17 +6,9 @@ use crate::{
   entrypoint,
   node::metadata::Metadata,
 };
-use anyhow::Error;
-use cli::libra_client::LibraClient;
-use libradb::LibraDB;
-use std::{str, convert::TryFrom};
+use std::{str};
 use sysinfo::SystemExt;
 use serde::{Deserialize, Serialize};
-use libra_json_rpc_client::views::MinerStateResourceView;
-use libra_types::waypoint::Waypoint;
-use libra_types::{account_address::AccountAddress, account_state::AccountState};
-use storage_interface::DbReader;
-
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
