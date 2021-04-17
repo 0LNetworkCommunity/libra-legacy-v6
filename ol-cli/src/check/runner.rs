@@ -13,19 +13,9 @@ use std::{thread, time::Duration};
 pub fn run_checks(mut node: Node, is_live: bool, print: bool) {
     let mut x = 0;
     loop {
-        dbg!("1");
-        &node.fetch_onchain_state();
-                dbg!("2");
-
         &node.refresh_chain_info();
-                dbg!("3");
-
         &node.refresh_account_info();
-                dbg!("4");
-
         &node.refresh_checks();
-                dbg!("5");
-
         &node.items.write_cache();
         if print {
             print_it(&node)

@@ -1,4 +1,4 @@
-//! `bal` subcommand
+//! `sync` subcommand
 
 use super::node::Node;
 use crate::{check::items::Items, config::OlCliConfig, node::client::*};

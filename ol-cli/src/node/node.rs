@@ -1,7 +1,5 @@
 //! `node` module
 
-
-
 use crate::{
   config::OlCliConfig,
   check::items::Items,
@@ -69,22 +67,15 @@ impl Node {
 
   /// refresh all checks
   pub fn refresh_checks(&mut self) -> Items {
-    dbg!("21");
     self.items.configs_exist = self.configs_exist();
-    dbg!("22");
     self.items.db_restored = self.database_bootstrapped();
-    dbg!("23");
     self.items.node_running = Node::node_running();
-    dbg!("24");
     self.items.miner_running = Node::miner_running();
-    dbg!("25");
     self.items.account_created = self.accounts_exist_on_chain();
-    dbg!("26");
     let sync_tuple = self.is_synced();
 
     self.items.is_synced = sync_tuple.0;
     self.items.sync_delay = sync_tuple.1;
-    dbg!("27");
     self.items.validator_set = self.is_in_validator_set();
     self.items.clone()
   }
