@@ -206,29 +206,29 @@ pub fn stop_miner() {
     kill_all(BINARY_MINER);
 }
 
-/// Choose a node to connect for rpc, local or upstream
-pub fn choose_rpc_node(conf: &OlCliConfig) -> Option<Url> {
-    // let conf = app_config().to_owned();
+// /// Choose a node to connect for rpc, local or upstream
+// pub fn choose_rpc_node(conf: &OlCliConfig) -> Option<Url> {
+//     // let conf = app_config().to_owned();
 
-    // check the node is in sync
-    // Note this assumes that we can connect to local and to a backup.
-    if node::Node::node_is_synced(conf).0 {
-        // always choose local node if in sync
-        return conf.profile.default_node.clone();
-    } else {
-        // otherwise use a backup
-        // TODO: check all backups in vector to see which connects
-        Some(
-            conf.profile
-                .upstream_nodes
-                .clone()
-                .unwrap()
-                .into_iter()
-                .next()
-                .unwrap(),
-        )
-    }
-}
+//     // check the node is in sync
+//     // Note this assumes that we can connect to local and to a backup.
+//     if node::Node::node_is_synced(conf).0 {
+//         // always choose local node if in sync
+//         return conf.profile.default_node.clone();
+//     } else {
+//         // otherwise use a backup
+//         // TODO: check all backups in vector to see which connects
+//         Some(
+//             conf.profile
+//                 .upstream_nodes
+//                 .clone()
+//                 .unwrap()
+//                 .into_iter()
+//                 .next()
+//                 .unwrap(),
+//         )
+//     }
+// }
 
 ///
 pub fn run_validator_wizard() -> bool {

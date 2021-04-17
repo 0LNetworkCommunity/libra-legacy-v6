@@ -46,7 +46,7 @@ impl OlCliConfig {
           serde_json::from_reader(file).expect("could not parse JSON in key_store.json");
         match ajson::get(&json.to_string(), "*/waypoint.value") {
           Some(value) => { 
-            println!("Waypoint: found in key_store.json");
+            dbg!("Waypoint: found in key_store.json");
 
             Some(value.to_string().parse().unwrap())
           },

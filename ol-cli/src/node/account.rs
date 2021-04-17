@@ -39,6 +39,10 @@ impl Node {
     let av = self.get_account_view();
     self.account_info.balance = get_balance(av);
     self.account_info.is_in_validator_set = self.is_in_validator_set();
+    
+    let ser = serde_json::to_vec(&self.account_info).unwrap();
+    DB_CACHE.put(ACCOUNT_INFO_DB_KEY.as_bytes(), ser).expect("could not reach account_info cache");
+
     &self.account_info
   }
 

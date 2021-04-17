@@ -4,8 +4,7 @@
 
 use crate::{
   config::OlCliConfig,
-  entrypoint,
-  node::metadata::Metadata,
+  node::metadata,
   check::items::Items,
 };
 
@@ -71,15 +70,22 @@ impl Node {
 
   /// refresh all checks
   pub fn refresh_checks(&mut self) -> Items {
+    dbg!("21");
     self.items.configs_exist = self.configs_exist();
+    dbg!("22");
     self.items.db_restored = self.database_bootstrapped();
+    dbg!("23");
     self.items.node_running = Node::node_running();
+    dbg!("24");
     self.items.miner_running = Node::miner_running();
+    dbg!("25");
     self.items.account_created = self.accounts_exist_on_chain();
-    let sync_tuple = Node::node_is_synced(&self.conf);
+    dbg!("26");
+    let sync_tuple = self.is_synced();
 
     self.items.is_synced = sync_tuple.0;
     self.items.sync_delay = sync_tuple.1;
+    dbg!("27");
     self.items.validator_set = self.is_in_validator_set();
     self.items.clone()
   }
@@ -147,10 +153,8 @@ impl Node {
     self.conf.profile.account.to_vec()
   }
 
-  // TODO: duplicated with Check
-  /// Current monitor account
+  /// Get waypoint from client
   pub fn waypoint(&mut self) -> Waypoint {
-    let entry_args = entrypoint::get_args();
     self.client
       .get_state_proof()
       .expect("Failed to get state proof"); // refresh latest state proof
@@ -161,7 +165,7 @@ impl Node {
       }
       None => self
         .conf
-        .get_waypoint(entry_args.swarm_path)
+        .get_waypoint(None)
         .expect("could not get waypoint"),
     }
   }
@@ -231,23 +235,9 @@ impl Node {
     return false;
   }
 
-  /// check if node is synced
-  pub fn node_is_synced(config: &OlCliConfig) -> (bool, i64) {
-    if !Node::node_running() {
-      return (false, 0);
-    };
-    let delay = Metadata::compare_from_config(config);
-    (delay < 10_000, delay)
-  }
 
-    /// check if node is synced
-  pub fn is_synced(&self) -> (bool, i64) {
-    if !Node::node_running() {
-      return (false, 0);
-    };
-    let delay = Metadata::compare_from_config(&self.conf);
-    (delay < 10_000, delay)
-  }
+
+
 
   // /// Check if node caught up, if so mark as caught up.
   // pub fn check_sync(&mut self) -> (bool, i64) {
@@ -262,22 +252,6 @@ impl Node {
   //     sync
   // }
 
-  /// Check if the node has ever synced
-  pub fn has_never_synced(&self) -> bool {
-    match Items::read_cache() {
-      Some(i) => !i.is_synced,
-      None => true,
-    }
-  }
-
-  /// Check if node started sync
-  pub fn node_started_sync(&self) -> bool {
-    match Items::read_cache() {
-      // has anything in the cache state
-      Some(_) => true,
-      None => false,
-    }
-  }
 
   // /// Check if node is running
   // pub fn check_node_state() -> bool {

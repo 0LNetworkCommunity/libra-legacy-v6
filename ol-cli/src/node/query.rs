@@ -1,8 +1,4 @@
 //! 'query'
-use crate::{node::metadata::Metadata};
-
-
-
 use num_format::{Locale, ToFormattedString};
 use super::node::Node;
 
@@ -49,7 +45,7 @@ impl Node {
           &chain.unwrap().waypoint.unwrap().to_string()
         )
       }
-      SyncDelay => Metadata::compare_from_config(&self.conf).to_string(),
+      SyncDelay => self.is_synced().1.to_string(),
       Resources => {
         let resources = self.get_annotate_account_blob(self.conf.profile.account)
           .unwrap()

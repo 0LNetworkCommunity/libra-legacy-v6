@@ -2,14 +2,6 @@
 
 use crate::{entrypoint, node::{client, node::Node}, prelude::app_config, server};
 use abscissa_core::{Command, Options, Runnable};
-
-/// `serve-cmd` subcommand
-///
-/// The `Options` proc macro generates an option parser based on the struct
-/// definition, and is defined in the `gumdrop` crate. See their documentation
-/// for a more comprehensive example:
-///
-/// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
 pub struct ServeCmd {}
 
