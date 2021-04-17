@@ -1,7 +1,7 @@
 //! `monitor` subcommand
 
 use crate::{
-    node::account::AccountInfo, node::chain_info,
+    node::account::AccountInfo,
     node::node::Node,
 };
 
@@ -15,17 +15,17 @@ use std::io::{stdout, Write};
 use std::{thread, time::Duration};
 
 /// Start the node monitor
-pub fn run_checks(node: Node, is_live: bool, print: bool) {
+pub fn run_checks(mut node: Node, is_live: bool, print: bool) {
     let mut x = 0;
     // let mut node = NodeHealth::new(Some(client.clone()), cfg);
-    let mut account = AccountInfo::new(node.conf.profile.account);
+    let _account = AccountInfo::new(node.conf.profile.account);
 
     loop {
         node.fetch_upstream_states();
         // refresh cahce for chain_info
-        chain_info::fetch_chain_info(&mut node.client.unwrap());
+        // chain_info::fetch_chain_info(&mut node.client.unwrap());
         &node.refresh_checks();
-        &account.refresh(&mut node.client.unwrap(), node.conf);
+        // &account.refresh(&mut node.client.unwrap(), node.conf);
         &node.items.write_cache();
         if print {
             print_it(&node)

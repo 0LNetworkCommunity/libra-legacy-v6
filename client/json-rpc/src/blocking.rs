@@ -8,15 +8,12 @@ use reqwest::{
     Url,
 };
 use std::time::Duration;
-use serde::{Deserialize, Serialize};
 
 const JSON_RPC_TIMEOUT_MS: u64 = 5_000;
 const MAX_JSON_RPC_RETRY_COUNT: u64 = 2;
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct JsonRpcClient {
     url: Url,
-    #[serde(skip)]
     client: Client,
 }
 

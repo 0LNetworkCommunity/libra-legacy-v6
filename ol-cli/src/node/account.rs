@@ -1,12 +1,12 @@
 //! `account`
 
-use cli::libra_client::LibraClient;
+
 use libra_json_rpc_client::{AccountAddress, views::AccountView};
-use crate::{cache::DB_CACHE, config::OlCliConfig, node::node::Node};
+use crate::{cache::DB_CACHE, node::node::Node};
 use serde::{Serialize, Deserialize};
 use libra_types::{account_state::AccountState, transaction::Version};
 use resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator, NullStateView};
-use anyhow::Result;
+use anyhow::{Error, Result};
 use std::convert::TryFrom;
 
 const ACCOUNT_INFO_DB_KEY: &str = "account_info";
@@ -31,17 +31,15 @@ impl AccountInfo {
       is_in_validator_set: false
     }
   }
+}
 
+impl Node {
   /// fetch new account info
-  pub fn refresh(&mut self, client: &mut LibraClient, cfg: OlCliConfig) -> &AccountInfo {
-    let av = get_account_view(client, self.address);
-    self.balance = get_balance(av);
-
-    let node = Node::new(Some(client.clone()), cfg);
-    self.is_in_validator_set = node.is_in_validator_set();
-    let as_ser = serde_json::to_vec(self).unwrap();
-    DB_CACHE.put(ACCOUNT_INFO_DB_KEY.as_bytes(), as_ser).unwrap();
-    self
+  pub fn refresh_account(&mut self) -> &AccountInfo {
+    let av = self.get_account_view();
+    self.account_info.balance = get_balance(av);
+    self.account_info.is_in_validator_set = self.is_in_validator_set();
+    &self.account_info
   }
 
   /// get chain info from cache
@@ -50,14 +48,43 @@ impl AccountInfo {
     let c: AccountInfo = serde_json::de::from_slice(&account_state.as_slice()).unwrap();
     c
   } 
-}
 
 /// Get the account view struct
-pub fn get_account_view(client: &mut LibraClient, account: AccountAddress) -> AccountView {
-    let (account_view, _) = client
+pub fn get_account_view(&self) -> AccountView {
+    let account = self.conf.profile.account;
+    let (account_view, _) = self.client
+      .clone()
       .get_account(account, true)
       .expect(&format!("could not get account at address {:?}", account));
     account_view.expect(&format!("could not get account at address {:?}", account))
+}
+
+/// Return a full Move-annotated account resource struct
+pub fn get_annotate_account_blob(&mut self, account: AccountAddress) -> Result<(Option<AnnotatedAccountStateBlob>, Version)> {
+    let (blob, ver) = self.client.get_account_state_blob(account)?;
+    if let Some(account_blob) = blob {
+        let state_view = NullStateView::default();
+        let annotator = MoveValueAnnotator::new(&state_view);
+        let annotate_blob =
+            annotator.view_account_state(&AccountState::try_from(&account_blob)?)?;
+        Ok((Some(annotate_blob), ver))
+    } else {
+        Ok((None, ver))
+    }
+}
+
+  pub fn get_account_state(
+    &mut self,
+    address: AccountAddress,
+  ) -> Result<AccountState, Error> {
+    let (blob, _ver) = self.client.clone().get_account_state_blob(address)?;
+    if let Some(account_blob) = blob {
+      Ok(AccountState::try_from(&account_blob).unwrap())
+    } else {
+      Err(Error::msg("connection to client"))
+    }
+  }
+
 }
 
 /// get balance from AccountView
@@ -73,19 +100,3 @@ pub fn get_balance(account_view: AccountView) -> u64 {
 
 
 
-/// Return a full Move-annotated account resource struct
-pub fn get_annotate_account_blob(
-    mut client: LibraClient,
-    address: AccountAddress,
-) -> Result<(Option<AnnotatedAccountStateBlob>, Version)> {
-    let (blob, ver) = client.get_account_state_blob(address)?;
-    if let Some(account_blob) = blob {
-        let state_view = NullStateView::default();
-        let annotator = MoveValueAnnotator::new(&state_view);
-        let annotate_blob =
-            annotator.view_account_state(&AccountState::try_from(&account_blob)?)?;
-        Ok((Some(annotate_blob), ver))
-    } else {
-        Ok((None, ver))
-    }
-}

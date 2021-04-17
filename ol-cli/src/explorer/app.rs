@@ -1,8 +1,9 @@
 
 #[allow(missing_docs)]
 use crate::node::chain_info;
+use crate::node::node::Node;
 use super::TabsState;
-use cli::libra_client::LibraClient;
+
 use libra_json_rpc_client::views::TransactionView;
 use libra_types::{account_state::AccountState};
 // use libra_network_address::Protocol;
@@ -22,7 +23,7 @@ pub struct Server<'a> {
 /// Explorer Application
 pub struct App<'a> {
     /// blockchain client to fetch data
-    pub client: LibraClient,
+    pub node: Node,
     /// title of app
     pub title: &'a str,
     /// should quit?
@@ -52,10 +53,10 @@ pub struct App<'a> {
 /// implementation of app
 impl<'a> App<'a> {
     /// new a instance of explorer
-    pub fn new(title: &'a str, enhanced_graphics: bool, client: LibraClient) -> App<'a> {
+    pub fn new(title: &'a str, enhanced_graphics: bool, node: Node) -> App<'a> {
         App {
+            node,
             title,
-            client,
             account_state: None,
             chain_state: None,
             should_quit: false,
@@ -110,14 +111,14 @@ impl<'a> App<'a> {
     /// fetch transactions
     pub fn fetch_txs(&mut self) {
         let latest_version = self
+            .node
             .client
             .get_metadata()
             .expect("Fail to fetch version")
             .version;
-        // if self.last_fetch_tx_version == 0 {
-        //     self.last_fetch_tx_version = latest_version - 1000 // initial start version for tx fetching
-        // };
+
         match self
+          .node
             .client
             .get_txn_by_range(self.last_fetch_tx_version, 100, true)
         {
@@ -133,7 +134,7 @@ impl<'a> App<'a> {
 
     /// fetch basic data for first tab
     pub fn fetch(&mut self) {
-      let (chain_info, validator_info) = chain_info::fetch_chain_info(&mut self.client);
+      let (chain_info, validator_info) = self.node.fetch_chain_info();
       self.chain_state = chain_info;
       self.validators = validator_info.unwrap();
     }

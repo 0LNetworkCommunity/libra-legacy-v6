@@ -1,18 +1,17 @@
 //! `check` module
-use super::transitions;
+
+
 
 use crate::{
-  application::app_config,
   config::OlCliConfig,
-  cache::DB_CACHE,
   entrypoint,
   node::metadata::Metadata,
   check::items::Items,
 };
-use anyhow::Error;
+
 use cli::libra_client::LibraClient;
 use libradb::LibraDB;
-use std::{str, convert::TryFrom};
+use std::{str};
 use sysinfo::SystemExt;
 
 use libra_json_rpc_client::views::MinerStateResourceView;
@@ -20,7 +19,7 @@ use libra_types::waypoint::Waypoint;
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
 use storage_interface::DbReader;
 
-use super::states::HostState;
+use super::{account::AccountInfo, states::HostState};
 
 /// name of key in kv store for sync
 pub const SYNC_KEY: &str = "is_synced";
@@ -37,22 +36,24 @@ pub struct Node {
   /// 0L configs
   pub conf: OlCliConfig,
   /// libraclient for connecting
-  pub client: Option<LibraClient>,
+  pub client: LibraClient,
   /// all items we are checking. Monitor sends these to cache.
   pub items: Items,
   pub host_state: HostState,
+  pub account_info: AccountInfo, /// TODO: DO WE NEED ACOUNT INFO? Redundant?
   chain_state: Option<AccountState>,
   miner_state: Option<MinerStateResourceView>,
 }
 
 impl Node {
   /// Create a instance of Check
-  pub fn new(client: Option<LibraClient>, conf: OlCliConfig) -> Self {
+  pub fn new(client: LibraClient, conf: OlCliConfig) -> Self {
     return Self {
       client,
-      conf,
+      conf: conf.clone(),
       host_state: HostState::init(),
       items: Items::init(),
+      account_info: AccountInfo::new(conf.profile.account),
       miner_state: None,
       chain_state: None,
     };
@@ -73,25 +74,15 @@ impl Node {
     self.items.clone()
   }
 
-  fn get_annotate_account_blob(
-    &mut self,
-    address: AccountAddress,
-  ) -> Result<AccountState, Error> {
-    let (blob, _ver) = self.client.clone().unwrap().get_account_state_blob(address)?;
-    if let Some(account_blob) = blob {
-      Ok(AccountState::try_from(&account_blob).unwrap())
-    } else {
-      Err(Error::msg("connection to client"))
-    }
-  }
+
 
   /// Fetch chain state from the upstream node
   pub fn fetch_upstream_states(&mut self) {
-    self.chain_state = match self.get_annotate_account_blob(AccountAddress::ZERO) {
+    self.chain_state = match self.get_account_state(AccountAddress::ZERO) {
       Ok(account_state) => Some(account_state),
       Err(_) => None,
     };
-    self.miner_state = match self.client.clone().unwrap().get_miner_state(self.conf.profile.account) {
+    self.miner_state = match self.client.clone().get_miner_state(self.conf.profile.account) {
       Ok(state) => state,
       _ => None,
     }
@@ -153,13 +144,11 @@ impl Node {
   pub fn waypoint(&mut self) -> Waypoint {
     let entry_args = entrypoint::get_args();
     self.client.clone()
-      .unwrap() 
       .get_state_proof()
       .expect("Failed to get state proof"); // refresh latest state proof
-    let waypoint = self.client.clone().unwrap().waypoint();
+    let waypoint = self.client.clone().waypoint();
     match waypoint {
       Some(w) => {
-        //self.client = LibraClient::new(self.conf.node_url.clone(), w.clone()).unwrap();
         w
       }
       None => self
@@ -204,7 +193,7 @@ impl Node {
   pub fn accounts_exist_on_chain(&mut self) -> bool {
     let addr = self.conf.profile.account;
     // dbg!(&addr);
-    let account = self.client.clone().unwrap().get_account(addr, false);
+    let account = self.client.get_account(addr, false);
     match account {
       Ok((opt, _)) => match opt {
         Some(_) => true,

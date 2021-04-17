@@ -1,73 +1,64 @@
 //! 'query'
-use crate::{
-    config::OlCliConfig,
-    node::metadata::Metadata,
-    node::{
-        account::{get_account_view, get_annotate_account_blob},
-        chain_info,
-    },
-};
+use crate::{node::metadata::Metadata};
 
-use cli::libra_client::LibraClient;
-use libra_types::account_address::AccountAddress;
+
+
 use num_format::{Locale, ToFormattedString};
+use super::node::Node;
 
 #[derive(Debug)]
 /// What query do we want to return
 pub enum QueryType {
-    /// Account balance
-    Balance,
-    /// Epoch and waypoint
-    Epoch,
-    /// Network block height
-    BlockHeight,
-    /// All account resources
-    Resources,
-    /// How far behind the local is from the upstream nodes
-    SyncDelay,
+  /// Account balance
+  Balance,
+  /// Epoch and waypoint
+  Epoch,
+  /// Network block height
+  BlockHeight,
+  /// All account resources
+  Resources,
+  /// How far behind the local is from the upstream nodes
+  SyncDelay,
 }
 
 /// Get data from a client, with a query type. Will connect to local only if in sync.
-pub fn get(
-    mut client: LibraClient,
-    query_type: QueryType,
-    account: AccountAddress,
-    config: &OlCliConfig,
-) -> String {
+impl Node {
+  pub fn get(&mut self, query_type: QueryType) -> String {
     use QueryType::*;
     match query_type {
-        Balance => {
-            let account_view = get_account_view(&mut client, account);
-            for av in account_view.balances.iter() {
-                if av.currency == "GAS" {
-                    return av.amount.to_formatted_string(&Locale::en);
-                }
-            }
-            "0".to_string()
+      Balance => {
+        let account_view = self.get_account_view();
+        for av in account_view.balances.iter() {
+          if av.currency == "GAS" {
+            return av.amount.to_formatted_string(&Locale::en);
+          }
         }
-        BlockHeight => {
-            let (chain, _) = chain_info::fetch_chain_info(&mut client);
-            chain.unwrap().height.to_string()
-        }
-        Epoch => {
-            let (chain, _) = chain_info::fetch_chain_info(&mut client);
+        "0".to_string()
+      }
+      BlockHeight => {
+        let (chain, _) = self.fetch_chain_info();
+        chain.unwrap().height.to_string()
+      }
+      Epoch => {
+        let (chain, _) = self.fetch_chain_info();
 
-            format!(
-                "{} - WAYPOINT: {}",
-                chain.clone().unwrap().epoch.to_string(),
-                &chain.unwrap().waypoint.unwrap().to_string()
-            )
-        }
-        SyncDelay => Metadata::compare_from_config(config).to_string(),
-        Resources => {
-            let resources = get_annotate_account_blob(client, account)
-                .unwrap()
-                .0
-                .unwrap();
+        format!(
+          "{} - WAYPOINT: {}",
+          chain.clone().unwrap().epoch.to_string(),
+          &chain.unwrap().waypoint.unwrap().to_string()
+        )
+      }
+      SyncDelay => Metadata::compare_from_config(&self.conf).to_string(),
+      Resources => {
+        let resources = self.get_annotate_account_blob(self.conf.profile.account)
+          .unwrap()
+          .0
+          .unwrap();
 
-            format!("{:#?}", resources).to_string()
-        }
+        format!("{:#?}", resources).to_string()
+      }
     }
+  }
 }
 
 // fn get_account_view(account: AccountAddress) -> AccountView {

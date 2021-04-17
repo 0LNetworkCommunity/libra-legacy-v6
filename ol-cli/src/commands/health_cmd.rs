@@ -22,14 +22,14 @@ impl Runnable for HealthCmd {
     fn run(&self) {
       let args = entrypoint::get_args();
       let cfg = app_config().clone();
-      let address = if args.account.is_some() {
+      let _address = if args.account.is_some() {
         args.account.unwrap()
       } else {
         cfg.profile.account
       };
       
       let client = client::pick_client(args.swarm_path, &cfg);
-      let node = Node::new(Some(client), cfg);
+      let node = Node::new(client, cfg);
 
       check::runner::run_checks(node, self.live, true);
         // monitor::timer();

@@ -1,9 +1,9 @@
 //! 'transitions' a state machine for the onboarding stages of a new validator. Can query and/or trigger the next expected action in the onboarding process.
 
 use std::process::Command;
-use crate::{config::OlCliConfig, entrypoint, mgmt::{management, restore}, prelude::app_config};
-use cli::libra_client::LibraClient;
-use serde::{Deserialize, Serialize};
+use crate::{entrypoint, mgmt::{management, restore}, prelude::app_config};
+
+
 
 use super::{node::Node, states::{MinerEvents, MinerState, NodeEvents, OnboardEvents, OnboardState, NodeState}};
 
