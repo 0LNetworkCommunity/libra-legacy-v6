@@ -4,7 +4,6 @@
 
 use crate::{
   config::OlCliConfig,
-  node::metadata,
   check::items::Items,
 };
 

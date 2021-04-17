@@ -2,9 +2,9 @@
 
 use crate::{check::items::Items, config::OlCliConfig, node::client::*};
 use cli::libra_client::LibraClient;
-use libra_json_rpc_client::views::MetadataView;
+
 use libra_types::waypoint::Waypoint;
-use reqwest::Url;
+
 use super::node::Node;
 
 impl Node {
