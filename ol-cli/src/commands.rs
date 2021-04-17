@@ -13,7 +13,7 @@
 pub mod init_cmd;
 mod version;
 mod mgmt_cmd;
-// mod serve_cmd;
+mod serve_cmd;
 mod restore_cmd;
 mod onboard_cmd;
 mod query_cmd;
@@ -25,7 +25,7 @@ use self::{
     init_cmd::InitCmd,
     version::VersionCmd,
     mgmt_cmd::MgmtCmd,
-    // serve_cmd::ServeCmd,
+    serve_cmd::ServeCmd,
     restore_cmd::RestoreCmd,
     onboard_cmd::OnboardCmd,
     query_cmd::QueryCmd,
@@ -63,9 +63,9 @@ pub enum OlCliCmd {
     #[options(help = "management tools")]
     Mgmt(MgmtCmd),
 
-    // /// The `serve` subcommand
-    // #[options(help = "serve the monitor over http")]
-    // Serve(ServeCmd),
+    /// The `serve` subcommand
+    #[options(help = "serve the monitor over http")]
+    Serve(ServeCmd),
 
     /// The `restore` subcommand
     #[options(help = "restore the database from the epoch-archive repository")]

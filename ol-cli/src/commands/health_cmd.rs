@@ -32,8 +32,5 @@ impl Runnable for HealthCmd {
       let node = Node::new(client, cfg);
 
       check::runner::run_checks(node, self.live, true);
-        // monitor::timer();
-
-        // Your code goes here
     }
 }

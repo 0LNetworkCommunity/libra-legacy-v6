@@ -32,3 +32,5 @@ pub mod cache;
 pub mod check;
 /// explorer
 pub mod explorer;
+/// web monitor server
+pub mod server;
