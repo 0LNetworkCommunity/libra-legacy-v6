@@ -219,10 +219,7 @@ impl Node {
           println!("opened db");
           return db.get_latest_version().is_ok()
         },
-        Err(_)=> { 
-          println!("err db");
-
-        }
+        Err(_)=> {}
       }
     }
     return false;

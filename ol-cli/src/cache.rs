@@ -1,15 +1,20 @@
 //! `cache`
+use std::sync::Mutex;
 use rocksdb::DB;
 use once_cell::sync::Lazy;
-use crate::prelude::app_config;
 
 /// caching database name, to be appended to node_home
-pub const CACHE_PATH: &str = "ol-system-checks";
+pub const MONITOR_DB_PATH: &str = "/tmp/0L/monitor_db";
 
 /// Construct Lazy Database instance
 pub static DB_CACHE: Lazy<DB> = Lazy::new(||{
-    let mut conf = app_config().to_owned();
-    conf.workspace.node_home.push(CACHE_PATH);
-    DB::open_default(conf.workspace.node_home).unwrap()
+    DB::open_default(MONITOR_DB_PATH).unwrap()
 });
 
+
+/// TODO: Use mutex instead of Lazy?
+/// create a mutex of db
+pub fn db_mutex() -> Mutex<DB> {
+    let db = DB::open_default(MONITOR_DB_PATH).unwrap();
+    Mutex::new(db)
+}
