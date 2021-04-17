@@ -43,7 +43,6 @@ use libra_json_rpc_client::views::{MinerStateResourceView, OracleResourceView};
 /// 3. We make another request to the remote AC service. In this case, the remote
 ///    AC will be behind us and we will reject their response as stale.
 //////// 0L ////////
-#[derive(Debug, Clone)]
 pub struct LibraClient {
     client: JsonRpcClient,
     /// The latest verified chain state.

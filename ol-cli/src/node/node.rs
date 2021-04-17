@@ -19,7 +19,7 @@ use libra_types::waypoint::Waypoint;
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
 use storage_interface::DbReader;
 
-use super::{account::AccountInfo, states::HostState};
+use super::{account::OwnerAccountView, states::HostState};
 
 /// name of key in kv store for sync
 pub const SYNC_KEY: &str = "is_synced";
@@ -40,7 +40,7 @@ pub struct Node {
   /// all items we are checking. Monitor sends these to cache.
   pub items: Items,
   pub host_state: HostState,
-  pub account_info: AccountInfo, /// TODO: DO WE NEED ACOUNT INFO? Redundant?
+  pub account_info: OwnerAccountView, /// TODO: DO WE NEED ACOUNT INFO? Redundant?
   chain_state: Option<AccountState>,
   miner_state: Option<MinerStateResourceView>,
 }
@@ -53,7 +53,7 @@ impl Node {
       conf: conf.clone(),
       host_state: HostState::init(),
       items: Items::init(),
-      account_info: AccountInfo::new(conf.profile.account),
+      account_info: OwnerAccountView::new(conf.profile.account),
       miner_state: None,
       chain_state: None,
     };
@@ -82,7 +82,7 @@ impl Node {
       Ok(account_state) => Some(account_state),
       Err(_) => None,
     };
-    self.miner_state = match self.client.clone().get_miner_state(self.conf.profile.account) {
+    self.miner_state = match self.client.get_miner_state(self.conf.profile.account) {
       Ok(state) => state,
       _ => None,
     }
@@ -143,10 +143,10 @@ impl Node {
   /// Current monitor account
   pub fn waypoint(&mut self) -> Waypoint {
     let entry_args = entrypoint::get_args();
-    self.client.clone()
+    self.client
       .get_state_proof()
       .expect("Failed to get state proof"); // refresh latest state proof
-    let waypoint = self.client.clone().waypoint();
+    let waypoint = self.client.waypoint();
     match waypoint {
       Some(w) => {
         w

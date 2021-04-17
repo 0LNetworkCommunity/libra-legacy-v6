@@ -1,4 +1,3 @@
-use ol_cli::{account, chain_info, check_runner, node_health};
 use futures::StreamExt;
 use std::convert::Infallible;
 use std::thread;
@@ -9,7 +8,7 @@ use warp::{sse::ServerSentEvent, Filter};
 use serde_json::json;
 use cli::libra_client::LibraClient;
 use libra_json_rpc_client::AccountAddress;
-use ol_cli::{client::pick_client, config::OlCliConfig};
+use ol_cli::{check::{items::Items, runner}, config::OlCliConfig, node::{account::OwnerAccountView, chain_info::{ChainView, ValidatorView, read_chain_info_cache, read_val_info_cache}, client::pick_client, node::Node}};
 use toml;
 const DEFAULT_CONFIG_PATH: &str = "/root/.0L/0L.toml";
 
@@ -18,30 +17,31 @@ fn main() {
     // TODO: fetch optional config path
     let cfg = parse_configs(None);
     let client = pick_client(None, &cfg);
-    start_server(client, cfg.profile.account);
+    let node = Node::new(client, cfg);
+    start_server(node);
 }
 
-fn sse_check(info: node_health::Items) -> Result<impl ServerSentEvent, Infallible> {
+fn sse_check(info: Items) -> Result<impl ServerSentEvent, Infallible> {
     Ok(warp::sse::json(info))
 }
 
-fn sse_chain_info(info: chain_info::ChainInfo) -> Result<impl ServerSentEvent, Infallible> {
+fn sse_chain_info(info: ChainView) -> Result<impl ServerSentEvent, Infallible> {
     Ok(warp::sse::json(info))
 }
 
-fn sse_val_info(info: Vec<chain_info::ValidatorInfo>) -> Result<impl ServerSentEvent, Infallible> {
+fn sse_val_info(info: Vec<ValidatorView>) -> Result<impl ServerSentEvent, Infallible> {
     Ok(warp::sse::json(info))
 }
 
-fn sse_account_info(info: account::AccountInfo) -> Result<impl ServerSentEvent, Infallible> {
+fn sse_account_info(info: OwnerAccountView) -> Result<impl ServerSentEvent, Infallible> {
     Ok(warp::sse::json(info))
 }
 
 #[tokio::main]
-pub async fn start_server(client: LibraClient, address: AccountAddress) {
+pub async fn start_server(node: Node) {
     // TODO: Perhaps a better way to keep the check cache fresh?
     thread::spawn(move || {
-        check_runner::mon(client, address, true, false);
+        runner::run_checks(node, true, false);
     });
 
     //GET check/ (json api for check data)
@@ -49,7 +49,7 @@ pub async fn start_server(client: LibraClient, address: AccountAddress) {
         // let mut health = node_health::NodeHealth::new();
         // create server event source from Check object
         let event_stream = interval(Duration::from_secs(10)).map(move |_| {
-            let items = node_health::Items::read_cache().unwrap();
+            let items = Items::read_cache().unwrap();
             // let items = health.refresh_checks();
             sse_check(items)
         });
@@ -61,7 +61,7 @@ pub async fn start_server(client: LibraClient, address: AccountAddress) {
     let chain_live = warp::path("chain_live").and(warp::get()).map(|| {
         // create server event source
         let event_stream = interval(Duration::from_secs(10)).map(move |_| {
-            let info = crate::chain_info::read_chain_info_cache();
+            let info = read_chain_info_cache();
             sse_chain_info(info)
         });
         // reply using server-sent events
@@ -73,14 +73,14 @@ pub async fn start_server(client: LibraClient, address: AccountAddress) {
     let vals = warp::path("vals")
     .and(warp::get()
     .map(|| { 
-      let vals = crate::chain_info::read_val_info_cache();
+      let vals = read_val_info_cache();
       warp::reply::json(&vals)
      }));
 
     let chain = warp::path("chain")
     .and(warp::get()
     .map(|| { 
-      let chain = crate::chain_info::read_chain_info_cache();
+      let chain = read_chain_info_cache();
       warp::reply::json(&chain)
      }));
 
@@ -95,7 +95,7 @@ pub async fn start_server(client: LibraClient, address: AccountAddress) {
     let epoch = warp::path("epoch.json")
     .and(warp::get()
     .map(|| { 
-      let ci = crate::chain_info::read_chain_info_cache();
+      let ci = read_chain_info_cache();
       let json = json!({
         "epoch": ci.epoch,
         "waypoint": ci.waypoint.unwrap().to_string()
@@ -108,7 +108,7 @@ pub async fn start_server(client: LibraClient, address: AccountAddress) {
     let account = warp::path("account").and(warp::get()).map(|| {
         // create server event source
         let event_stream = interval(Duration::from_secs(60)).map(move |_| {
-            let info = crate::account::AccountInfo::read_account_info_cache();
+            let info = Node::read_account_info_cache();
             sse_account_info(info)
         });
         // reply using server-sent events
@@ -120,7 +120,7 @@ pub async fn start_server(client: LibraClient, address: AccountAddress) {
     let vals_live = warp::path("validators").and(warp::get()).map(|| {
         // create server event source
         let event_stream = interval(Duration::from_secs(60)).map(move |_| {
-            let info = crate::chain_info::read_val_info_cache();
+            let info = read_val_info_cache();
             // TODO: Use a different data source for /explorer/ data.
             sse_val_info(info)
         });

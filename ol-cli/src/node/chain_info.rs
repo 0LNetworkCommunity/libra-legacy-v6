@@ -18,7 +18,7 @@ pub const VAL_INFO_DB_KEY: &str = "val_info";
 
 #[derive(Default, Clone, Debug, Deserialize, Serialize)]
 /// ChainInfo struct
-pub struct ChainInfo {
+pub struct ChainView {
   /// epoch
   pub epoch: u64,
   /// height/version
@@ -39,7 +39,7 @@ pub struct ChainInfo {
 
 #[derive(Default, Debug, Deserialize, Serialize)]
 /// Validator info struct
-pub struct ValidatorInfo {
+pub struct ValidatorView {
   /// account address
   pub account_address: String,
   /// public key
@@ -66,12 +66,12 @@ pub struct ValidatorInfo {
 
 impl Node {
   /// fetch state from system address 0x0
-  pub fn fetch_chain_info(&mut self) -> (Option<ChainInfo>, Option<Vec<ValidatorInfo>>) {
+  pub fn fetch_chain_info(&mut self) -> (Option<ChainView>, Option<Vec<ValidatorView>>) {
     // let mut client = client::pick_client();
     let (blob, _version) = self.client
       .get_account_state_blob(AccountAddress::ZERO)
       .unwrap();
-    let mut cs = ChainInfo::default();
+    let mut cs = ChainView::default();
 
     // TODO: This is duplicated with check.rs
     self.client
@@ -128,7 +128,7 @@ impl Node {
 
       let chain_state = Some(cs);
 
-      let validators: Vec<ValidatorInfo> = account_state
+      let validators: Vec<ValidatorView> = account_state
         .get_validator_set()
         .unwrap()
         .unwrap()
@@ -161,7 +161,7 @@ impl Node {
             .unwrap()
             .unwrap();
 
-          ValidatorInfo {
+          ValidatorView {
             account_address: v.account_address().to_string(),
             voting_power: v.consensus_voting_power(),
             full_node_ip,
@@ -194,21 +194,21 @@ impl Node {
   }
 }
 /// get chain info from cache
-pub fn read_chain_info_cache() -> ChainInfo {
+pub fn read_chain_info_cache() -> ChainView {
   let chain_state = DB_CACHE
     .get(CHAIN_INFO_DB_KEY.as_bytes())
     .unwrap()
     .expect("could not reach chain_info cache");
-  let c: ChainInfo = serde_json::de::from_slice(&chain_state.as_slice()).unwrap();
+  let c: ChainView = serde_json::de::from_slice(&chain_state.as_slice()).unwrap();
   c
 }
 
 /// get chain info from cache
-pub fn read_val_info_cache() -> Vec<ValidatorInfo> {
+pub fn read_val_info_cache() -> Vec<ValidatorView> {
   let val_info = DB_CACHE
     .get(VAL_INFO_DB_KEY.as_bytes())
     .unwrap()
     .expect("could not reach chain_info cache");
-  let v: Vec<ValidatorInfo> = serde_json::de::from_slice(&val_info.as_slice()).unwrap();
+  let v: Vec<ValidatorView> = serde_json::de::from_slice(&val_info.as_slice()).unwrap();
   v
 }

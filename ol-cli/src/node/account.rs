@@ -13,7 +13,7 @@ const ACCOUNT_INFO_DB_KEY: &str = "account_info";
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 /// information on the owner account of this node.
-pub struct AccountInfo {
+pub struct OwnerAccountView {
   /// account address of this node
   address: AccountAddress,
   /// balance of this node
@@ -22,10 +22,10 @@ pub struct AccountInfo {
   is_in_validator_set: bool,
 }
 
-impl AccountInfo {
+impl OwnerAccountView {
   /// create AccountCli
   pub fn new(address: AccountAddress) -> Self{
-    AccountInfo {
+    OwnerAccountView {
       address,
       balance: 0,
       is_in_validator_set: false
@@ -35,7 +35,7 @@ impl AccountInfo {
 
 impl Node {
   /// fetch new account info
-  pub fn refresh_account(&mut self) -> &AccountInfo {
+  pub fn refresh_account(&mut self) -> &OwnerAccountView {
     let av = self.get_account_view();
     self.account_info.balance = get_balance(av);
     self.account_info.is_in_validator_set = self.is_in_validator_set();
@@ -43,17 +43,16 @@ impl Node {
   }
 
   /// get chain info from cache
-  pub fn read_account_info_cache() -> AccountInfo {
+  pub fn read_account_info_cache() -> OwnerAccountView {
     let account_state = DB_CACHE.get(ACCOUNT_INFO_DB_KEY.as_bytes()).unwrap().expect("could not reach account_info cache");
-    let c: AccountInfo = serde_json::de::from_slice(&account_state.as_slice()).unwrap();
+    let c: OwnerAccountView = serde_json::de::from_slice(&account_state.as_slice()).unwrap();
     c
   } 
 
 /// Get the account view struct
-pub fn get_account_view(&self) -> AccountView {
+pub fn get_account_view(&mut self) -> AccountView {
     let account = self.conf.profile.account;
     let (account_view, _) = self.client
-      .clone()
       .get_account(account, true)
       .expect(&format!("could not get account at address {:?}", account));
     account_view.expect(&format!("could not get account at address {:?}", account))
@@ -77,7 +76,7 @@ pub fn get_annotate_account_blob(&mut self, account: AccountAddress) -> Result<(
     &mut self,
     address: AccountAddress,
   ) -> Result<AccountState, Error> {
-    let (blob, _ver) = self.client.clone().get_account_state_blob(address)?;
+    let (blob, _ver) = self.client.get_account_state_blob(address)?;
     if let Some(account_blob) = blob {
       Ok(AccountState::try_from(&account_blob).unwrap())
     } else {

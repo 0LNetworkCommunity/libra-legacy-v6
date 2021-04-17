@@ -1,7 +1,7 @@
 //! `monitor` subcommand
 
 use crate::{
-    node::account::AccountInfo,
+    node::account::OwnerAccountView,
     node::node::Node,
 };
 
@@ -18,7 +18,7 @@ use std::{thread, time::Duration};
 pub fn run_checks(mut node: Node, is_live: bool, print: bool) {
     let mut x = 0;
     // let mut node = NodeHealth::new(Some(client.clone()), cfg);
-    let _account = AccountInfo::new(node.conf.profile.account);
+    let _account = OwnerAccountView::new(node.conf.profile.account);
 
     loop {
         node.fetch_upstream_states();

@@ -41,9 +41,9 @@ pub struct App<'a> {
     /// caches for account state
     pub account_state: Option<AccountState>,
     /// caches for chain state
-    pub chain_state: Option<chain_info::ChainInfo>,
+    pub chain_state: Option<chain_info::ChainView>,
     /// caches for validator list
-    pub validators: Vec<chain_info::ValidatorInfo>,
+    pub validators: Vec<chain_info::ValidatorView>,
     /// latest fetched tx version
     pub last_fetch_tx_version: u64,
     /// transaction list
