@@ -23,6 +23,7 @@ pub enum QueryType {
 
 /// Get data from a client, with a query type. Will connect to local only if in sync.
 impl Node {
+  /// run a query
   pub fn get(&mut self, query_type: QueryType) -> String {
     use QueryType::*;
     match query_type {

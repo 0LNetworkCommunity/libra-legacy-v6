@@ -1,4 +1,4 @@
-//! `check` module
+//! `node` module
 
 
 
@@ -39,7 +39,9 @@ pub struct Node {
   pub client: LibraClient,
   /// all items we are checking. Monitor sends these to cache.
   pub items: Items,
+  /// state of the host for state machine
   pub host_state: HostState,
+  /// owner account view
   pub account_info: OwnerAccountView, /// TODO: DO WE NEED ACOUNT INFO? Redundant?
   chain_state: Option<AccountState>,
   miner_state: Option<MinerStateResourceView>,

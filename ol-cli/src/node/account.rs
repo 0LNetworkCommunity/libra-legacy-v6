@@ -71,7 +71,7 @@ pub fn get_annotate_account_blob(&mut self, account: AccountAddress) -> Result<(
         Ok((None, ver))
     }
 }
-
+  /// get any account state with client
   pub fn get_account_state(
     &mut self,
     address: AccountAddress,

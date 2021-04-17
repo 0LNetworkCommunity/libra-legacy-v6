@@ -22,8 +22,13 @@ pub mod config;
 pub mod entrypoint;
 pub mod error;
 pub mod prelude;
+/// node
 pub mod node;
+/// mgmt
 pub mod mgmt;
+/// cache
 pub mod cache;
+/// check
 pub mod check;
+/// explorer
 pub mod explorer;

@@ -1,13 +1,6 @@
 
-use crate::{
-  application::app_config,
-  config::OlCliConfig,
-  cache::DB_CACHE,
-  entrypoint,
-  node::metadata::Metadata,
-};
-use std::{str};
-use sysinfo::SystemExt;
+use crate::cache::DB_CACHE;
+use std::str;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
