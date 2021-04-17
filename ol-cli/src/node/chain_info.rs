@@ -66,7 +66,7 @@ pub struct ValidatorView {
 
 impl Node {
   /// fetch state from system address 0x0
-  pub fn fetch_chain_info(&mut self) -> (Option<ChainView>, Option<Vec<ValidatorView>>) {
+  pub fn refresh_chain_info(&mut self) -> (Option<ChainView>, Option<Vec<ValidatorView>>) {
     // let mut client = client::pick_client();
     let (blob, _version) = self.client
       .get_account_state_blob(AccountAddress::ZERO)

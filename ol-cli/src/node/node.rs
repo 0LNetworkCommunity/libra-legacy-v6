@@ -15,11 +15,11 @@ use std::{str};
 use sysinfo::SystemExt;
 
 use libra_json_rpc_client::views::MinerStateResourceView;
-use libra_types::waypoint::Waypoint;
+use libra_types::{validator_info::ValidatorInfo, waypoint::Waypoint};
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
 use storage_interface::DbReader;
 
-use super::{account::OwnerAccountView, states::HostState};
+use super::{account::OwnerAccountView, chain_info::ChainView, states::HostState};
 
 /// name of key in kv store for sync
 pub const SYNC_KEY: &str = "is_synced";
@@ -43,6 +43,12 @@ pub struct Node {
   pub host_state: HostState,
   /// owner account view
   pub account_info: OwnerAccountView, /// TODO: DO WE NEED ACOUNT INFO? Redundant?
+  /// chain view
+  pub chain_info: Option<ChainView>,
+
+  /// validator view
+  pub validator_info: Option<ValidatorInfo>,
+
   chain_state: Option<AccountState>,
   miner_state: Option<MinerStateResourceView>,
 }
@@ -56,6 +62,8 @@ impl Node {
       host_state: HostState::init(),
       items: Items::init(),
       account_info: OwnerAccountView::new(conf.profile.account),
+      chain_info: None,
+      validator_info: None,
       miner_state: None,
       chain_state: None,
     };
@@ -76,10 +84,8 @@ impl Node {
     self.items.clone()
   }
 
-
-
   /// Fetch chain state from the upstream node
-  pub fn fetch_upstream_states(&mut self) {
+  pub fn fetch_onchain_state(&mut self) {
     self.chain_state = match self.get_account_state(AccountAddress::ZERO) {
       Ok(account_state) => Some(account_state),
       Err(_) => None,

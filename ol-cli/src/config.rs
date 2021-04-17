@@ -194,9 +194,7 @@ impl OlCliConfig {
       tx_configs: TxTypes::default(),
     };
 
-    cfg.workspace.node_home = swarm_path.join("0/");
     cfg.chain_info.base_waypoint = Some(config.base.waypoint.waypoint());
-
     cfg.profile.account = "4C613C2F4B1E67CA8D98A542EE3F59F5".parse().unwrap(); // alice
     cfg.profile.default_node = Some(url);
     cfg.profile.upstream_nodes = Some(vec!(upstream_url));

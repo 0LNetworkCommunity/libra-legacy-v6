@@ -118,8 +118,9 @@ pub async fn start_server(node: Node) {
         warp::sse::reply(event_stream)
     });
 
+    let dev_web_files = "/root/libra/ol-cli/web-monitor/public/";
     //GET /
-    let home = warp::fs::dir("/root/libra/ol-cli/web-monitor/public/");
+    let home = warp::fs::dir(dev_web_files);
 
     warp::serve(home.or(check).or(chain).or(chain_live).or(vals_live).or(vals).or(account_template).or(epoch).or(account))
         .run(([0, 0, 0, 0], 3030)).await;

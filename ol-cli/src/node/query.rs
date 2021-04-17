@@ -37,11 +37,11 @@ impl Node {
         "0".to_string()
       }
       BlockHeight => {
-        let (chain, _) = self.fetch_chain_info();
+        let (chain, _) = self.refresh_chain_info();
         chain.unwrap().height.to_string()
       }
       Epoch => {
-        let (chain, _) = self.fetch_chain_info();
+        let (chain, _) = self.refresh_chain_info();
 
         format!(
           "{} - WAYPOINT: {}",

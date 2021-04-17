@@ -35,7 +35,7 @@ impl OwnerAccountView {
 
 impl Node {
   /// fetch new account info
-  pub fn refresh_account(&mut self) -> &OwnerAccountView {
+  pub fn refresh_account_info(&mut self) -> &OwnerAccountView {
     let av = self.get_account_view();
     self.account_info.balance = get_balance(av);
     self.account_info.is_in_validator_set = self.is_in_validator_set();

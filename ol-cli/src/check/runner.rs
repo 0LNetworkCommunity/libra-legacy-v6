@@ -1,31 +1,22 @@
 //! `monitor` subcommand
 
-use crate::{
-    node::account::OwnerAccountView,
-    node::node::Node,
-};
-
+use crate::node::node::Node;
 use crossterm::{
     cursor,
     terminal::{self, ClearType},
     QueueableCommand,
 };
-
 use std::io::{stdout, Write};
 use std::{thread, time::Duration};
 
 /// Start the node monitor
 pub fn run_checks(mut node: Node, is_live: bool, print: bool) {
     let mut x = 0;
-    // let mut node = NodeHealth::new(Some(client.clone()), cfg);
-    let _account = OwnerAccountView::new(node.conf.profile.account);
-
     loop {
-        node.fetch_upstream_states();
-        // refresh cahce for chain_info
-        // chain_info::fetch_chain_info(&mut node.client.unwrap());
+        &node.fetch_onchain_state();
+        &node.refresh_chain_info();
+        &node.refresh_account_info();
         &node.refresh_checks();
-        // &account.refresh(&mut node.client.unwrap(), node.conf);
         &node.items.write_cache();
         if print {
             print_it(&node)
