@@ -12,13 +12,14 @@ use ol_cli::{check::{items::Items, runner}, config::OlCliConfig, node::{account:
 use toml;
 const DEFAULT_CONFIG_PATH: &str = "/root/.0L/0L.toml";
 
-fn main() {
+#[tokio::main]
+pub async fn main() {
     // TODO: fetch swarm configs from command line.
     // TODO: fetch optional config path
     let cfg = parse_configs(None);
     let client = pick_client(None, &cfg);
     let node = Node::new(client, cfg);
-    start_server(node);
+    start_server(node).await;
 }
 
 fn sse_check(info: Items) -> Result<impl ServerSentEvent, Infallible> {
@@ -37,10 +38,9 @@ fn sse_account_info(info: OwnerAccountView) -> Result<impl ServerSentEvent, Infa
     Ok(warp::sse::json(info))
 }
 
-#[tokio::main]
 pub async fn start_server(node: Node) {
     // TODO: Perhaps a better way to keep the check cache fresh?
-    thread::spawn(move || {
+    thread::spawn(|| {
         runner::run_checks(node, true, false);
     });
 
