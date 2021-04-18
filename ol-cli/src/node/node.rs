@@ -269,28 +269,44 @@ impl Node {
             if text.contains("validator.node.yaml") {
                 return Some(NodeMode::Validator);
             }
-        }
 
-        // check as parent process
-        let mut system = sysinfo::System::new_all();
-        system.refresh_all();
-        let all_p = system.get_process_by_name(NODE_PROCESS);
-        let process = all_p
-            .into_iter()
-            .filter(|i| match i.status() {
-                ProcessStatus::Run => true,
-                _ => false,
-            })
-            .find(|i| !i.cmd().is_empty());
+            // check as parent process
+            let mut system = sysinfo::System::new_all();
+            system.refresh_all();
+            let all_p = system.get_process_by_name(NODE_PROCESS);
+            let process = all_p
+                .into_iter()
+                .filter(|i| match i.status() {
+                    ProcessStatus::Run => true,
+                    _ => false,
+                })
+                .find(|i| !i.cmd().is_empty());
 
-        if process.unwrap().cmd().contains(&"validator.node.yaml".to_owned()) {
-            return Some(NodeMode::Validator);
+            if process
+                .unwrap()
+                .cmd()
+                .contains(&"validator.node.yaml".to_owned())
+            {
+                return Some(NodeMode::Validator);
+            }
+            if process
+                .unwrap()
+                .cmd()
+                .contains(&"fullnode.node.yaml".to_owned())
+            {
+                return Some(NodeMode::Fullnode);
+            }
         }
-        if process.unwrap().cmd().contains(&"fullnode.node.yaml".to_owned()) {
-            return Some(NodeMode::Fullnode);
-        }
-
         None
+    }
+
+    /// is web monitor serving on 3030
+    pub fn is_web_monitor_serving() -> bool {
+        let out = Command::new("fuser")
+            .args(&["3030/tcp"])
+            .output()
+            .expect("could no check fuser");
+        out.status.code().unwrap() == 0
     }
 
     fn check_systemd(process_name: &str) -> bool {
