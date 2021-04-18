@@ -66,7 +66,7 @@ impl Node {
     /// refresh all checks
     pub fn refresh_checks(&mut self) -> &mut Self {
         self.items.configs_exist = self.configs_exist();
-        self.items.db_restored = self.db_bootstrapped();
+        self.items.db_restored = self.db_files_exist();
         self.items.node_running = Node::node_running();
         self.items.miner_running = Node::miner_running();
         self.items.account_created = self.accounts_exist_on_chain();

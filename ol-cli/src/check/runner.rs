@@ -13,16 +13,13 @@ use std::{thread, time::Duration};
 pub fn run_checks(mut node: Node, is_live: bool, print: bool) {
     let mut x = 0;
     loop {
+        &node.refresh_onchain_state();
         &node.refresh_chain_info();
         &node.refresh_account_info();
         &node.refresh_checks();
         &node.items.write_cache();
-        if print {
-            print_it(&node)
-        }
-        if !is_live && x == 0 {
-            break;
-        };
+        if print { print_it(&node) }
+        if !is_live && x == 0 { break; };
         x = x + 1;
         thread::sleep(Duration::from_millis(1000));
     }
@@ -35,7 +32,7 @@ fn print_it(node: &Node) {
     stdout
         .write(
             format!(
-                "Configs exist:{configs}
+"Configs exist:{configs}
 DB restored: {restored}
 Is synced: {synced}
 Sync delay: {delay}

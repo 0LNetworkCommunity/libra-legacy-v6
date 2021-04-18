@@ -22,12 +22,6 @@ impl Runnable for HealthCmd {
     fn run(&self) {
       let args = entrypoint::get_args();
       let cfg = app_config().clone();
-      let _address = if args.account.is_some() {
-        args.account.unwrap()
-      } else {
-        cfg.profile.account
-      };
-      
       let client = client::pick_client(args.swarm_path, &cfg).unwrap().0;
       let node = Node::new(client, cfg);
 

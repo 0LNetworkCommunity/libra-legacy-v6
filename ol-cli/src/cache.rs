@@ -1,5 +1,4 @@
 //! `cache`
-use std::sync::Mutex;
 use rocksdb::DB;
 use once_cell::sync::Lazy;
 

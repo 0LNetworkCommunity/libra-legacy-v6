@@ -30,7 +30,7 @@ fn sse_account_info(info: OwnerAccountView) -> Result<impl ServerSentEvent, Infa
 /// starts the web server
 pub async fn start_server(node: Node) {
     // TODO: Perhaps a better way to keep the check cache fresh?
-    thread::spawn(|| {
+    thread::spawn(|| { 
         runner::run_checks(node, true, false);
     });
 
