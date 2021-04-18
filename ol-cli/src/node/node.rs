@@ -5,7 +5,7 @@ use crate::{check::items::Items, config::OlCliConfig};
 use cli::libra_client::LibraClient;
 use libra_temppath::TempPath;
 use libradb::LibraDB;
-use std::str;
+use std::{process::Command, str};
 use sysinfo::SystemExt;
 
 use libra_json_rpc_client::views::MinerStateResourceView;
@@ -238,38 +238,36 @@ impl Node {
     // }
     /// Check if node is running
     pub fn node_running() -> bool {
-        Node::check_process(NODE_PROCESS)
+        Node::check_process(NODE_PROCESS) | Node::check_systemd(NODE_PROCESS)
     }
 
     /// Check if miner is running
     pub fn miner_running() -> bool {
-        Node::check_process(MINER_PROCESS)
+        Node::check_process(MINER_PROCESS) | Node::check_systemd(MINER_PROCESS)
     }
 
     fn check_process(process_str: &str) -> bool {
         let mut system = sysinfo::System::new_all();
         system.refresh_all();
-
         use sysinfo::ProcessExt;
         for (_, process) in system.get_processes() {
             if process.name() == process_str {
+              // TODO: doesn't always catch `miner` running, see get by name below.
                 return true;
             }
         }
-
-        false
+        // try by name (yield different results), most reliable.
+        let p = system.get_process_by_name(process_str);
+        !p.is_empty()
     }
 
-    // /// get blockchain height
-    // pub fn get_height(&mut self) -> u64 {
-
-    //     let m = Metadata::new(
-    //         &self.conf.profile.default_node.clone().unwrap(),
-    //         &mut self.client
-    //     );
-    //     if let Some(mv) = m.meta {
-    //        return mv.version
-    //     }
-    //     0
-    // }
+    fn check_systemd(process_name: &str) -> bool {
+        let out = Command::new("systemctl")
+            .arg("is-active")
+            .arg("--quiet")
+            .arg(process_name)
+            .output()
+            .expect("could no check systemctl");
+        out.status.code().unwrap() == 0 // is_active --quiet will exit 0 if the service is running normally.
+    }
 }

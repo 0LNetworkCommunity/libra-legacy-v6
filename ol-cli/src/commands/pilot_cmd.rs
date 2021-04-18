@@ -22,10 +22,10 @@ impl Runnable for PilotCmd {
         let mut node = Node::new(client, cfg);
 
         if node.db_files_exist() {
-            println!("DB files exist");
+            println!("db files exist");
         // return
         } else {
-            println!("No DB files found, try `ol restore`");
+            println!("no db files found, try `ol restore`");
         }
 
         // is DB bootstrapped
@@ -42,13 +42,18 @@ impl Runnable for PilotCmd {
         } else {
           println!("not in validator set");
         }
-        // // is node started?
-        // if n.node_running() {
-        //   println!("node is running")
-        // } else {println!("node is not running")}
-        // if n.miner_running() {
-        //   println!("miner is running")
-        // } else { println!("miner is not running") }
+        // is node started?
+        if Node::node_running() {
+          println!("node is running")
+        } else {
+          println!("node is not running")
+        }
+
+        if Node::miner_running() {
+          println!("miner is running")
+        } else { 
+          println!("miner is not running") 
+        }
 
         // // restart in validator mode
 
