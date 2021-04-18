@@ -77,9 +77,8 @@ pub fn kill_zombies(name: &str) {
         let _res = signal::kill(nix::unistd::Pid::from_raw(*pid as i32), Signal::SIGTERM);
     }
 }
-
-/// What kind of node are we starting
-pub enum NodeType {
+#[derive(Debug)]/// What kind of node are we starting
+pub enum NodeMode {
     /// Validator
     Validator,
     /// Fullnode
@@ -98,7 +97,7 @@ pub fn create_log_file(file_name: &str) -> File {
 }
 
 /// Start Node, as fullnode
-pub fn start_node(config_type: NodeType) -> Result<(), Error> {
+pub fn start_node(config_type: NodeMode) -> Result<(), Error> {
     use BINARY_NODE as NODE;
     // if is running do nothing
     // TODO: Get a nother check of node running
@@ -111,8 +110,8 @@ pub fn start_node(config_type: NodeType) -> Result<(), Error> {
     let conf = app_config();
     let node_home = conf.workspace.node_home.to_str().unwrap();
     let config_file_name = match config_type {
-        NodeType::Validator => format!("{}validator.node.yaml", node_home),
-        NodeType::Fullnode => format!("{}fullnode.node.yaml", node_home),
+        NodeMode::Validator => format!("{}validator.node.yaml", node_home),
+        NodeMode::Fullnode => format!("{}fullnode.node.yaml", node_home),
     };
 
     let child = if *IS_PROD {
@@ -134,6 +133,7 @@ pub fn start_node(config_type: NodeType) -> Result<(), Error> {
     println!("Started new with PID: {}", pid);
     Ok(())
 }
+
 
 /// Stop node, as validator
 pub fn stop_node() {

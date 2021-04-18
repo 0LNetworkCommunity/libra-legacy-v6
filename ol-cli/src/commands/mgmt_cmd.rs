@@ -1,7 +1,7 @@
 //! `mgmt` subcommand
 
 use abscissa_core::{Command, Options, Runnable};
-use crate::mgmt::management::{self, NodeType};
+use crate::mgmt::management::{self, NodeMode};
 
 /// `mgmt` subcommand
 ///
@@ -31,7 +31,7 @@ pub struct MgmtCmd {
 impl Runnable for MgmtCmd {
     fn run(&self) {
         if self.start_node {
-            management::start_node(NodeType::Fullnode).expect("could not start fullnode");
+            management::start_node(NodeMode::Fullnode).expect("could not start fullnode");
         } 
         else if self.stop_node {
             management::stop_node();            

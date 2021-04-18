@@ -214,7 +214,7 @@ impl Node {
           // Stop node first, then restart as validator.
           management::stop_node();
 
-          management::start_node(management::NodeType::Validator)
+          management::start_node(management::NodeMode::Validator)
             .expect("unable to start node in validator mode");
 
           &self.node_transition(NodeEvents::SwitchToValidatorMode, trigger_action);

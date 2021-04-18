@@ -22,6 +22,8 @@ impl Runnable for PilotCmd {
 
         let mut node = Node::new(client, cfg.clone());
 
+        
+
         if node.db_files_exist() {
             println!("db files exist");
         // return
@@ -39,7 +41,7 @@ impl Runnable for PilotCmd {
         // Is in validator in set?
 
         if node.refresh_onchain_state().is_in_validator_set() {
-          println!("in validator set");
+          println!("validator in set");
         } else {
           status_warn!("owner NOT in validator set");
         }
@@ -56,6 +58,12 @@ impl Runnable for PilotCmd {
           status_warn!("miner is NOT running");
         }
 
+        if let Some(mode) = Node::what_node_mode() {
+          println!("node running in mode: {:?}", mode);
+          // match mode {
+            
+          // }
+        };
         // restart in validator mode
 
         // restart in fullnode mode

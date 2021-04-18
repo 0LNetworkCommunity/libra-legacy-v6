@@ -1,12 +1,12 @@
 //! `node` module
 
-use crate::{check::items::Items, config::OlCliConfig};
-
+use crate::{check::items::Items, config::OlCliConfig, mgmt::management::NodeMode};
 use cli::libra_client::LibraClient;
 use libra_temppath::TempPath;
 use libradb::LibraDB;
 use std::{process::Command, str};
 use sysinfo::SystemExt;
+use sysinfo::{ProcessExt, ProcessStatus};
 
 use libra_json_rpc_client::views::MinerStateResourceView;
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
@@ -247,16 +247,50 @@ impl Node {
     fn check_process(process_str: &str) -> bool {
         let mut system = sysinfo::System::new_all();
         system.refresh_all();
-        use sysinfo::ProcessExt;
         for (_, process) in system.get_processes() {
             if process.name() == process_str {
-              // TODO: doesn't always catch `miner` running, see get by name below.
+                // TODO: doesn't always catch `miner` running, see get by name below.
                 return true;
             }
         }
         // try by name (yield different results), most reliable.
         let p = system.get_process_by_name(process_str);
         !p.is_empty()
+    }
+    /// check what mode the node is running in
+    pub fn what_node_mode() -> Option<NodeMode> {
+        // check systemd first
+        if Node::node_running() {
+            let out = Command::new("service")
+                .args(&["libra-node", "status", "| grep validatorsdf"])
+                .output()
+                .expect("could no check systemctl");
+            let text = str::from_utf8(&out.stdout.as_slice()).unwrap();
+            if text.contains("validator.node.yaml") {
+                return Some(NodeMode::Validator);
+            }
+        }
+
+        // check as parent process
+        let mut system = sysinfo::System::new_all();
+        system.refresh_all();
+        let all_p = system.get_process_by_name(NODE_PROCESS);
+        let process = all_p
+            .into_iter()
+            .filter(|i| match i.status() {
+                ProcessStatus::Run => true,
+                _ => false,
+            })
+            .find(|i| !i.cmd().is_empty());
+
+        if process.unwrap().cmd().contains(&"validator.node.yaml".to_owned()) {
+            return Some(NodeMode::Validator);
+        }
+        if process.unwrap().cmd().contains(&"fullnode.node.yaml".to_owned()) {
+            return Some(NodeMode::Fullnode);
+        }
+
+        None
     }
 
     fn check_systemd(process_name: &str) -> bool {
