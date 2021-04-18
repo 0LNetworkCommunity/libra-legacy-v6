@@ -18,8 +18,9 @@ impl Runnable for PilotCmd {
         // call http? localhost:3030
         let args = entrypoint::get_args();
         let cfg = app_config().clone();
-        let client = client::pick_client(args.swarm_path, &cfg);
-        let mut node = Node::new(client, cfg);
+        let client = client::pick_client(args.swarm_path, &cfg).unwrap().0;
+        let wp = client.waypoint().expect("should get a waypoint from client");
+        let mut node = Node::new(client, cfg.clone());
 
         if node.db_files_exist() {
             println!("db files exist");
@@ -55,25 +56,27 @@ impl Runnable for PilotCmd {
           println!("miner is not running") 
         }
 
-        // // restart in validator mode
+        // restart in validator mode
 
-        // // restart in fullnode mode
+        // restart in fullnode mode
 
-        // // did the node finish sync
-        // if NodeHealth::node_is_synced().0 {}
+        // did the node finish sync
+        if Node::cold_start_is_synced(&cfg, wp).0 {
 
-        // // TODO: is the node making progress
+        }
 
-        // ////////////// MINING //////////////
-        // // does the account exist on chain?
+        // TODO: is the node making progress
+
+        ////////////// MINING //////////////
+        // does the account exist on chain?
         // if n.accounts_exist_on_chain() {
         //     println!("Your account does NOT exist on chain.")
         // }
 
-        // // start miner
-        // // management::start_miner()
+        // start miner
+        // management::start_miner()
 
-        // // are transactions being successfully submitted?
-        // // TODO?
+        // are transactions being successfully submitted?
+        // TODO?
     }
 }

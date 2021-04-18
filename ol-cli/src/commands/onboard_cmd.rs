@@ -27,7 +27,7 @@ impl Runnable for OnboardCmd {
     fn run(&self) {
         let args = entrypoint::get_args();
         let cfg = app_config().clone();
-        let client = client::pick_client(args.swarm_path, &cfg);
+        let client = client::pick_client(args.swarm_path, &cfg).unwrap().0;
         if !self.trigger_actions {
             println!("You can pass --trigger-actions or -t to attempt the next transition\n")
         }

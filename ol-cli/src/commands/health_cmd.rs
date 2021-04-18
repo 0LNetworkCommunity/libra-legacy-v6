@@ -28,7 +28,7 @@ impl Runnable for HealthCmd {
         cfg.profile.account
       };
       
-      let client = client::pick_client(args.swarm_path, &cfg);
+      let client = client::pick_client(args.swarm_path, &cfg).unwrap().0;
       let node = Node::new(client, cfg);
 
       check::runner::run_checks(node, self.live, true);

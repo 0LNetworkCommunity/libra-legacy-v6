@@ -10,7 +10,7 @@ impl Runnable for ServeCmd {
     fn run(&self) {
         let args = entrypoint::get_args();
         let cfg = app_config().clone();
-        let client = client::pick_client(args.swarm_path, &cfg);
+        let client = client::pick_client(args.swarm_path, &cfg).unwrap().0;
         let node = Node::new(client, cfg);
         server::start_server(node);
     }

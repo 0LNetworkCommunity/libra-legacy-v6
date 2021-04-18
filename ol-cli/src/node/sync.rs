@@ -23,21 +23,21 @@ impl Node {
       return (false, 0);
     };
     let wp = self.waypoint();
-    let mut remote_client = default_remote_client(&self.conf, wp).0.unwrap();
+    let mut remote_client = default_remote_client(&self.conf, wp).unwrap().0;
     let delay = compare_client_version(&mut self.client, &mut remote_client);
     (within_thresh(delay), delay)
   }
 
   /// Compare the nodes from toml config.
   pub fn compare_from_config(config: &OlCliConfig, waypoint: Waypoint) -> Option<i64> {
-    let local_client = default_local_client(config, waypoint).0;
+    let local_client = default_local_client(config, waypoint);
 
-    let remote_client = default_remote_client(config, waypoint).0;
+    let remote_client = default_remote_client(config, waypoint);
 
-    if local_client.is_ok() && remote_client.is_ok() {
+    if local_client.is_some() && remote_client.is_some() {
       return Some(compare_client_version(
-        &mut local_client.unwrap(),
-        &mut remote_client.unwrap(),
+        &mut local_client.unwrap().0,
+        &mut remote_client.unwrap().0,
       ));
     }
     None
