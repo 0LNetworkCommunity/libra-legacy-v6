@@ -4,7 +4,7 @@
 
 use super::OlCliCmd;
 use crate::{entrypoint, node::client, node::node::Node, prelude::app_config};
-use abscissa_core::{Command, Options, Runnable};
+use abscissa_core::{Command, Options, Runnable, status_warn};
 /// `version` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct PilotCmd {}
@@ -18,15 +18,15 @@ impl Runnable for PilotCmd {
         // call http? localhost:3030
         let args = entrypoint::get_args();
         let cfg = app_config().clone();
-        let client = client::pick_client(args.swarm_path, &cfg).unwrap().0;
-        let wp = client.waypoint().expect("should get a waypoint from client");
+        let (client, wp) = client::pick_client(args.swarm_path, &cfg).expect("could not create connect a client");
+
         let mut node = Node::new(client, cfg.clone());
 
         if node.db_files_exist() {
             println!("db files exist");
         // return
         } else {
-            println!("no db files found, try `ol restore`");
+            status_warn!("NO db files found, try `ol restore`");
         }
 
         // is DB bootstrapped
@@ -41,19 +41,19 @@ impl Runnable for PilotCmd {
         if node.refresh_onchain_state().is_in_validator_set() {
           println!("in validator set");
         } else {
-          println!("not in validator set");
+          status_warn!("owner NOT in validator set");
         }
         // is node started?
         if Node::node_running() {
           println!("node is running")
         } else {
-          println!("node is not running")
+          status_warn!("node is NOT running");
         }
 
         if Node::miner_running() {
           println!("miner is running")
         } else { 
-          println!("miner is not running") 
+          status_warn!("miner is NOT running");
         }
 
         // restart in validator mode
@@ -62,16 +62,21 @@ impl Runnable for PilotCmd {
 
         // did the node finish sync
         if Node::cold_start_is_synced(&cfg, wp).0 {
-
+          println!("node is synced");
+        } else {
+          status_warn!("node is NOT Synced");
         }
 
         // TODO: is the node making progress
 
         ////////////// MINING //////////////
         // does the account exist on chain?
-        // if n.accounts_exist_on_chain() {
-        //     println!("Your account does NOT exist on chain.")
-        // }
+        if node.accounts_exist_on_chain() {
+          println!("owner account found on chain")
+        } else {
+          status_warn!("owner account does NOT exist on chain.")
+
+        }
 
         // start miner
         // management::start_miner()

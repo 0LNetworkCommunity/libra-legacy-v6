@@ -214,8 +214,6 @@ impl Node {
         // check to see no files are present
         let home_path = self.conf.workspace.node_home.clone();
         let db_path = home_path.join("db/libradb");
-        dbg!(&db_path);
-
         db_path.exists()
     }
 
