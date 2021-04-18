@@ -206,16 +206,16 @@ impl Node {
   }
 
   /// database is initialized, Please do NOT invoke this function frequently
-  pub fn database_bootstrapped(&mut self) -> bool {
+  pub fn db_bootstrapped(&mut self) -> bool {
 
     let mut file = self.conf.workspace.node_home.clone();
     file.push("db/libradb"); // TODO should the name be hardcoded here?
     if file.exists() {
       // When not committing, we open the DB as secondary so the tool is usable along side a
       // running node on the same DB. Using a TempPath since it won't run for long.
-      // let tmpdir = TempPath::new();
-      match LibraDB::open(file, true, None) {
-        Ok( db)=>{
+      let tmpdir = TempPath::new();
+      match LibraDB::open_as_secondary(file, tmpdir) {
+        Ok(db)=>{
           println!("opened db");
           return db.get_latest_version().is_ok()
         },
@@ -223,6 +223,14 @@ impl Node {
       }
     }
     return false;
+  }
+
+    /// database is initialized, Please do NOT invoke this function frequently
+  pub fn db_files_exist(&mut self) -> bool {
+    // check to see no files are present
+    let home_path = self.conf.workspace.node_home.clone();
+
+    home_path.join("db/libradb").exists()
   }
 
 
