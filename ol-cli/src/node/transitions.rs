@@ -154,7 +154,7 @@ impl Node {
         };
       }
       OnboardState::ValConfigsOk => {
-        if self.database_bootstrapped() {
+        if self.db_bootstrapped() {
           &self.onboard_transition(OnboardEvents::RestoreDb, trigger_action);
         } else {
           if trigger_action && entry_args.swarm_path.is_none() {

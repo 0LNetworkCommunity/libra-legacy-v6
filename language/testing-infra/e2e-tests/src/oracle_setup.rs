@@ -7,7 +7,7 @@ use compiled_stdlib::transaction_scripts::{StdlibScript, CompiledBytes};
 
 // NOTE: rerun fixtures with: cargo run -p stdlib --release -- --create-upgrade-payload
 const UPGRADE_DIR: Dir =
-    include_dir!("../../../fixtures/upgrade_payload/tx_scripts");
+    include_dir!("../../../ol/fixtures/upgrade_payload/tx_scripts");
 
 pub fn oracle_helper_tx(
     sender: &Account,
@@ -15,7 +15,7 @@ pub fn oracle_helper_tx(
 ) -> SignedTransaction {
     let mut args: Vec<TransactionArgument> = Vec::new();
     args.push(TransactionArgument::U64(1));
-    let stdlib_bytes = std::include_bytes!("../../../../fixtures/upgrade_payload/foo_stdlib.mv"); 
+    let stdlib_bytes = std::include_bytes!("../../../../ol/fixtures/upgrade_payload/foo_stdlib.mv"); 
     let stdlib_vec = stdlib_bytes.to_vec();
     args.push(TransactionArgument::U8Vector(stdlib_vec));
 
