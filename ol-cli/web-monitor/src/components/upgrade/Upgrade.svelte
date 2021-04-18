@@ -39,8 +39,8 @@
         {/if}
       </div>
     </div>
-    <div>
+    <!-- <div>
       <Historical />
-    </div>
+    </div> -->
   </div>
 </main>

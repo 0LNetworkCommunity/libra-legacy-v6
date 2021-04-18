@@ -94,7 +94,7 @@ pub fn get_annotate_account_blob(&mut self, account: AccountAddress) -> Result<(
 pub fn get_balance(account_view: AccountView) -> u64 {
     for av in account_view.balances.iter() {
       if av.currency == "GAS" {
-        return av.amount;//.to_formatted_string(&Locale::en)
+        return av.amount / 1_000_000;// with scaling factor for display
       }
     }
     0

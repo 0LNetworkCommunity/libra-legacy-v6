@@ -26,7 +26,7 @@
         <td> {epoch} </td>
       </tr>
       <tr>
-        <td class="uk-text-uppercase">Round</td>
+        <td class="uk-text-uppercase">Height</td>
         <td>{round.toLocaleString("en-ES")}</td>
       </tr>
       <tr>
