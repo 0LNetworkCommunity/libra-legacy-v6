@@ -12,8 +12,13 @@ impl Runnable for PilotCmd {
     fn run(&self) {
         println!("PILOT");
         let args = entrypoint::get_args();
-        let cfg = app_config().clone();
-        let (client, wp) = client::pick_client(args.swarm_path, &cfg).expect("could not create connect a client");
+        let mut cfg = app_config().clone();
+        let (client, wp) = client::pick_client(args.swarm_path.clone(), &cfg).expect("could not create connect a client");
+        if args.swarm_path.is_some(){
+            let mut tp = args.swarm_path.unwrap();
+            tp.push("0");
+            cfg.workspace.node_home = tp;
+        }
         let mut node = Node::new(client, cfg.clone());
         // Start the webserver before anything else
         if Node::is_web_monitor_serving() {
@@ -27,15 +32,15 @@ impl Runnable for PilotCmd {
             status_ok!("DB", "db files exist");
         // return
         } else {
-            status_err!("NO db files found, try `ol restore`");
+            status_err!("NO db files found {:?}, try `ol restore`", &cfg.workspace.node_home);
         }
 
         // is DB bootstrapped
-        // if node.db_bootstrapped() {
-        //     println!("Database bootstrapped");
-        // } else {
-        //     println!("Database was NOT bootstrapped");
-        // }
+        if node.db_bootstrapped(  ) {
+            status_ok!( "DB", "Database bootstrapped");
+        } else {
+            status_err!("Database was NOT bootstrapped");
+        }
 
         // Is in validator in set?
 
@@ -53,13 +58,13 @@ impl Runnable for PilotCmd {
         if let Some(mode) = Node::what_node_mode() {
           status_ok!("Mode","node running in mode: {:?}", mode);
           // match mode {
-            
+
           // }
         };
 
         if Node::miner_running() {
           status_ok!("Miner","miner is running")
-        } else { 
+        } else {
           status_warn!("miner is NOT running");
         }
 

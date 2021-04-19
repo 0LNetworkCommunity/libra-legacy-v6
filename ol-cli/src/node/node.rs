@@ -2,7 +2,6 @@
 
 use crate::{check::items::Items, config::OlCliConfig, mgmt::management::NodeMode};
 use cli::libra_client::LibraClient;
-use libra_temppath::TempPath;
 use libradb::LibraDB;
 use std::{process::Command, str};
 use sysinfo::SystemExt;
@@ -14,6 +13,7 @@ use libra_types::{validator_info::ValidatorInfo, waypoint::Waypoint};
 use storage_interface::DbReader;
 
 use super::{account::OwnerAccountView, chain_info::ChainView, states::HostState};
+use std::path::PathBuf;
 
 /// name of key in kv store for sync
 pub const SYNC_KEY: &str = "is_synced";
@@ -183,18 +183,16 @@ impl Node {
 
     /// database is initialized, Please do NOT invoke this function frequently
     pub fn db_bootstrapped(&mut self) -> bool {
-        let mut file = self.conf.workspace.node_home.clone();
-        file.push("db/libradb"); // TODO should the name be hardcoded here?
+        let mut file =  self.conf.workspace.node_home.clone();
+        file.push("db");
         if file.exists() {
             // When not committing, we open the DB as secondary so the tool is usable along side a
             // running node on the same DB. Using a TempPath since it won't run for long.
-            let tmpdir = TempPath::new().path().to_path_buf();
-            match LibraDB::open_as_secondary(file, tmpdir) {
+            match LibraDB::open(file, true, None) {
                 Ok(db) => {
-                    println!("opened db");
                     return db.get_latest_version().is_ok();
                 }
-                Err(_) => {}
+                Err(e) => { println!( "Failed to open db:{}", e )}
             }
         }
         return false;
