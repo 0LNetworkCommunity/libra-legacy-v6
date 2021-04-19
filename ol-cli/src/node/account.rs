@@ -2,7 +2,7 @@
 
 
 use libra_json_rpc_client::{AccountAddress, views::AccountView};
-use crate::{cache::DB_CACHE, node::node::Node};
+use crate::{cache::{DB_CACHE, DB_CACHE_READ}, node::node::Node};
 use serde::{Serialize, Deserialize};
 use libra_types::{account_state::AccountState, transaction::Version};
 use resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator, NullStateView};
@@ -48,7 +48,7 @@ impl Node {
 
   /// get chain info from cache
   pub fn read_account_info_cache() -> OwnerAccountView {
-    let account_state = DB_CACHE.get(ACCOUNT_INFO_DB_KEY.as_bytes()).unwrap().expect("could not reach account_info cache");
+    let account_state = DB_CACHE_READ.get(ACCOUNT_INFO_DB_KEY.as_bytes()).unwrap().expect("could not reach account_info cache");
     let c: OwnerAccountView = serde_json::de::from_slice(&account_state.as_slice()).unwrap();
     c
   } 

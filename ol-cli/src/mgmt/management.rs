@@ -1,6 +1,6 @@
 //! `management` functions
 
-use crate::{cache::DB_CACHE, entrypoint, node::node, prelude::app_config};
+use crate::{cache::{DB_CACHE, DB_CACHE_READ}, entrypoint, node::node, prelude::app_config};
 use anyhow::Error;
 use once_cell::sync::Lazy;
 
@@ -40,7 +40,7 @@ pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
 /// Save PID
 pub fn save_pid(name: &str, pid: u32) {
     // Handle empty case
-    match DB_CACHE.get(name.as_bytes()) {
+    match DB_CACHE_READ.get(name.as_bytes()) {
         Ok(Some(_value)) => { /* TODO */ }
         Ok(None) => {
             let process = Process {
@@ -54,7 +54,7 @@ pub fn save_pid(name: &str, pid: u32) {
     }
 
     // Load, update and save
-    let pids_loaded = DB_CACHE.get(name.as_bytes()).unwrap().unwrap();
+    let pids_loaded = DB_CACHE_READ.get(name.as_bytes()).unwrap().unwrap();
     let mut process: Process = serde_json::de::from_slice(&pids_loaded).unwrap();
     process.pids.insert(pid);
     let serialized = serde_json::to_vec(&process).unwrap();
@@ -63,11 +63,11 @@ pub fn save_pid(name: &str, pid: u32) {
 
 /// Kill all the processes that are running
 pub fn kill_zombies(name: &str) {
-    if DB_CACHE.get(name.as_bytes()).unwrap().is_none() {
+    if DB_CACHE_READ.get(name.as_bytes()).unwrap().is_none() {
         return;
     }
 
-    let pids_loaded = DB_CACHE.get(name.as_bytes()).unwrap().unwrap();
+    let pids_loaded = DB_CACHE_READ.get(name.as_bytes()).unwrap().unwrap();
     let process: Process = serde_json::de::from_slice(&pids_loaded).unwrap();
 
     println!("Killing zombie '{}' processes...", name);

@@ -116,7 +116,7 @@ pub struct HostState {
 /// methods for host state
 impl HostState {
   /// init
-  pub fn init() -> Self {
+  pub fn new() -> Self {
     Self {
       onboard_state: OnboardState::EmptyBox,
       node_state: NodeState::Stopped,

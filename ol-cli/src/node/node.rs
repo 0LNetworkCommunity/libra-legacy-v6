@@ -13,7 +13,7 @@ use libra_types::{validator_info::ValidatorInfo, waypoint::Waypoint};
 use storage_interface::DbReader;
 
 use super::{account::OwnerAccountView, chain_info::ChainView, states::HostState};
-use std::path::PathBuf;
+// use std::path::PathBuf;
 
 /// name of key in kv store for sync
 pub const SYNC_KEY: &str = "is_synced";
@@ -53,7 +53,7 @@ impl Node {
         return Self {
             client,
             conf: conf.clone(),
-            host_state: HostState::init(),
+            host_state: HostState::new(),
             items: Items::init(),
             account_info: OwnerAccountView::new(conf.profile.account),
             chain_info: None,

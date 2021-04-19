@@ -3,6 +3,8 @@
 #![allow(clippy::never_loop)]
 use crate::{entrypoint, node::client, node::node::Node, prelude::app_config};
 use abscissa_core::{Command, Options, Runnable, status_warn, status_ok, status_err};
+use super::OlCliCmd;
+
 /// `version` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct PilotCmd {}
@@ -10,7 +12,7 @@ pub struct PilotCmd {}
 impl Runnable for PilotCmd {
     /// Print version message
     fn run(&self) {
-        println!("PILOT");
+        println!("PILOT - {}", OlCliCmd::version());
         let args = entrypoint::get_args();
         let mut cfg = app_config().clone();
         let (client, wp) = client::pick_client(args.swarm_path.clone(), &cfg).expect("could not create connect a client");
@@ -37,9 +39,9 @@ impl Runnable for PilotCmd {
 
         // is DB bootstrapped
         if node.db_bootstrapped(  ) {
-            status_ok!( "DB", "Database bootstrapped");
+            status_ok!( "DB", "db bootstrapped");
         } else {
-            status_err!("Database was NOT bootstrapped");
+            status_err!("libradb is NOT bootstrapped, try restore");
         }
 
         // Is in validator in set?
