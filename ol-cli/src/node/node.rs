@@ -1,6 +1,6 @@
 //! `node` module
 
-use crate::{cache::Vitals, check::items::Items, config::OlCliConfig, mgmt::management::{HostProcess, NodeMode}};
+use crate::{cache::Vitals, check::items::Items, config::OlCliConfig, mgmt::management::{NodeMode}};
 use cli::libra_client::LibraClient;
 use libradb::LibraDB;
 use std::{process::Command, str};
@@ -9,10 +9,10 @@ use sysinfo::{ProcessExt, ProcessStatus};
 
 use libra_json_rpc_client::views::MinerStateResourceView;
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
-use libra_types::{validator_info::ValidatorInfo, waypoint::Waypoint};
+use libra_types::{waypoint::Waypoint};
 use storage_interface::DbReader;
 
-use super::{account::OwnerAccountView, chain_info::ChainView, states::HostState};
+use super::{account::OwnerAccountView, states::HostState};
 // use std::path::PathBuf;
 
 /// name of key in kv store for sync
