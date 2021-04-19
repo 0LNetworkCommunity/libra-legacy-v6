@@ -35,13 +35,13 @@ pub struct Node {
     /// state of the host for state machine
     pub host_state: HostState,
     /// owner account view
-    pub account_info: OwnerAccountView,
+    pub account_view: OwnerAccountView,
     /// TODO: DO WE NEED ACOUNT INFO? Redundant?
     /// chain view
-    pub chain_info: Option<ChainView>,
+    pub chain_view: Option<ChainView>,
 
     /// validator view
-    pub validator_info: Option<ValidatorInfo>,
+    pub validator_view: Option<ValidatorInfo>,
 
     chain_state: Option<AccountState>,
     miner_state: Option<MinerStateResourceView>,
@@ -55,9 +55,9 @@ impl Node {
             conf: conf.clone(),
             host_state: HostState::new(),
             items: Items::init(),
-            account_info: OwnerAccountView::new(conf.profile.account),
-            chain_info: None,
-            validator_info: None,
+            account_view: OwnerAccountView::new(conf.profile.account),
+            chain_view: None,
+            validator_view: None,
             miner_state: None,
             chain_state: None,
         };

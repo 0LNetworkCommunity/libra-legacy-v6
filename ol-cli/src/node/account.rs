@@ -37,13 +37,13 @@ impl Node {
   /// fetch new account info
   pub fn refresh_account_info(&mut self) -> &OwnerAccountView {
     let av = self.get_account_view();
-    self.account_info.balance = get_balance(av);
-    self.account_info.is_in_validator_set = self.is_in_validator_set();
+    self.account_view.balance = get_balance(av);
+    self.account_view.is_in_validator_set = self.is_in_validator_set();
     
-    let ser = serde_json::to_vec(&self.account_info).unwrap();
+    let ser = serde_json::to_vec(&self.account_view).unwrap();
     DB_CACHE.put(ACCOUNT_INFO_DB_KEY.as_bytes(), ser).expect("could not reach account_info cache");
 
-    &self.account_info
+    &self.account_view
   }
 
   /// get chain info from cache
