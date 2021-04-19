@@ -1,7 +1,7 @@
 //! `mgmt` subcommand
 
+use crate::{application::app_config, entrypoint, mgmt::management::{self, NodeMode}, node::{client, node::Node}};
 use abscissa_core::{Command, Options, Runnable};
-use crate::mgmt::management::{self, NodeMode};
 
 /// `mgmt` subcommand
 ///
@@ -23,26 +23,27 @@ pub struct MgmtCmd {
 
     #[options(no_short, help = "stop miner")]
     stop_miner: bool,
-    
+
     #[options(no_short, help = "stop node and miner")]
-    stop_all: bool,    
+    stop_all: bool,
 }
 
 impl Runnable for MgmtCmd {
     fn run(&self) {
+        let args = entrypoint::get_args();
+        let cfg = app_config().clone();
+        let client = client::pick_client(args.swarm_path, &cfg).unwrap().0;
+        let mut node = Node::new(client, cfg);
+
         if self.start_node {
-            management::start_node(NodeMode::Fullnode).expect("could not start fullnode");
-        } 
-        else if self.stop_node {
-            management::stop_node();            
-        } 
-        else if self.start_miner {
-            management::start_miner();
-        }
-        else if self.stop_miner {
+            node.start_node(NodeMode::Fullnode).expect("could not start fullnode");
+        } else if self.stop_node {
+            management::stop_node();
+        } else if self.start_miner {
+            node.start_miner();
+        } else if self.stop_miner {
             management::stop_miner();
-        }
-        else if self.stop_all {
+        } else if self.stop_all {
             management::stop_node();
             management::stop_miner();
         }

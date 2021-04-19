@@ -66,7 +66,7 @@ impl Node {
           &self.miner_transition(MinerEvents::Started, trigger_action);
         } else {
           // start the miner
-          management::start_miner();
+          self.start_miner();
         }
       }
     }
@@ -214,7 +214,7 @@ impl Node {
           // Stop node first, then restart as validator.
           management::stop_node();
 
-          management::start_node(management::NodeMode::Validator)
+          self.start_node(management::NodeMode::Validator)
             .expect("unable to start node in validator mode");
 
           &self.node_transition(NodeEvents::SwitchToValidatorMode, trigger_action);
