@@ -1,10 +1,7 @@
 //! `cache`
-use std::{fs::File, io::Write};
+use std::{fs::{self, File}, io::Write};
 use serde::{Deserialize, Serialize};
-use crate::{
-    check::items::Items,
-    node::{account::OwnerAccountView, chain_info::ChainView, node::Node},
-};
+use crate::{check::items::Items, mgmt::management::HostProcess, node::{account::OwnerAccountView, chain_info::ChainView, node::Node, states::HostState}};
 use anyhow::Error;
 use once_cell::sync::Lazy;
 use rocksdb::{Options, DB};
@@ -13,30 +10,52 @@ pub const MONITOR_DB_PATH: &str = "/tmp/0L/monitor_db";
 /// filename for monitor cache
 pub const CACHE_JSON_NAME: &str = "monitor_cache.json";
 
+/// format for storing node data to json
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-struct CacheFormat {
-    items: Items,
-    account_view: OwnerAccountView,
-    chain_view: Option<ChainView>,
+pub struct Vitals {
+    ///
+    pub items: Items,
+    ///
+    pub account_view: OwnerAccountView,
+    ///
+    pub chain_view: Option<ChainView>,
+    ///
+    pub node_proc: Option<HostProcess>,
+    ///
+    pub miner_proc: Option<HostProcess>,
+    ///
+    pub monitor_proc: Option<HostProcess>,
+    /// state of the host for state machine
+    pub host_state: HostState,
 }
 
 
 impl Node {
     /// reach the json cache
-    pub fn read_json(&mut self) -> &mut Self {
-        self
+    pub fn read_json(&mut self) -> Vitals {
+        let cache_path = self.conf.workspace.node_home.join(CACHE_JSON_NAME);
+
+        let file = fs::File::open(cache_path)
+        .expect("file should open read only");
+        let json: Vitals = serde_json::from_reader(file)
+        .expect("file should be proper JSON");
+
+        json
     }
 
     /// write json cache
     pub fn write_json(&mut self) -> Result<(), Error> {
-        let json = CacheFormat {
-            items: self.items.clone(),
-            account_view: self.account_view.clone(),
-            chain_view: self.chain_view.clone(),
-        };
+        // let json = Vitals {
+        //     items: self.vitals.items.clone(),
+        //     account_view: self.vitals.account_view.clone(),
+        //     chain_view: self.vitals.chain_view.clone(),
+        //     node_proc: self.vitals.node_proc.clone(),
+        //     miner_proc: self.vitals.miner_proc.clone(),
+        //     monitor_proc: self.vitals.monitor_proc.clone(),
+        // };
 
-        let serialized = serde_json::to_vec(&json)?;
+        let serialized = serde_json::to_vec_pretty(&self.vitals)?;
         let cache_path = self.conf.workspace.node_home.join(CACHE_JSON_NAME);
         let mut file = File::create(cache_path)?;
         file.write_all(&serialized)?;

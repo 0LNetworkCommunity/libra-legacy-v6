@@ -17,7 +17,7 @@ pub fn run_checks(mut node: Node, is_live: bool, print: bool) {
         &node.refresh_chain_info();
         &node.refresh_account_info();
         &node.refresh_checks();
-        &node.items.write_cache();
+        &node.vitals.items.write_cache();
         if print { print_it(&node) }
         if !is_live && x == 0 { break; };
         x = x + 1;
@@ -41,14 +41,14 @@ Miner running: {miner}
 Account on chain: {account}
 In validator set: {in_set}
 \n",
-                configs = node.items.configs_exist,
-                restored = node.items.db_restored,
-                synced = node.items.is_synced,
-                delay = node.items.sync_delay,
-                node = node.items.node_running,
-                miner = node.items.miner_running,
-                account = node.items.account_created,
-                in_set = node.items.validator_set,
+                configs = node.vitals.items.configs_exist,
+                restored = node.vitals.items.db_restored,
+                synced = node.vitals.items.is_synced,
+                delay = node.vitals.items.sync_delay,
+                node = node.vitals.items.node_running,
+                miner = node.vitals.items.miner_running,
+                account = node.vitals.items.account_created,
+                in_set = node.vitals.items.validator_set,
             )
             .as_bytes(),
         )

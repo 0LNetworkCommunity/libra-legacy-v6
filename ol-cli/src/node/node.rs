@@ -1,6 +1,6 @@
 //! `node` module
 
-use crate::{check::items::Items, config::OlCliConfig, mgmt::management::NodeMode};
+use crate::{cache::Vitals, check::items::Items, config::OlCliConfig, mgmt::management::{HostProcess, NodeMode}};
 use cli::libra_client::LibraClient;
 use libradb::LibraDB;
 use std::{process::Command, str};
@@ -30,21 +30,14 @@ pub struct Node {
     pub conf: OlCliConfig,
     /// libraclient for connecting
     pub client: LibraClient,
-    /// all items we are checking. Monitor sends these to cache.
-    pub items: Items,
-    /// state of the host for state machine
-    pub host_state: HostState,
-    /// owner account view
-    pub account_view: OwnerAccountView,
-    /// TODO: DO WE NEED ACOUNT INFO? Redundant?
-    /// chain view
-    pub chain_view: Option<ChainView>,
+    /// vitals
+    pub vitals: Vitals,
 
-    /// validator view
-    pub validator_view: Option<ValidatorInfo>,
-
+    // TODO: deduplicate these
     chain_state: Option<AccountState>,
     miner_state: Option<MinerStateResourceView>,
+
+
 }
 
 impl Node {
@@ -53,27 +46,40 @@ impl Node {
         return Self {
             client,
             conf: conf.clone(),
-            host_state: HostState::new(),
-            items: Items::init(),
+            
+            vitals: Vitals {
+              host_state: HostState::new(),
             account_view: OwnerAccountView::new(conf.profile.account),
             chain_view: None,
-            validator_view: None,
+            items: Items::init(),
+            node_proc: None,
+            miner_proc: None,
+            monitor_proc: None
+            },
+            // items: Items::init(),
             miner_state: None,
             chain_state: None,
+
+            // account_view: OwnerAccountView::new(conf.profile.account),
+            // chain_view: None,
+            // validator_view: None,
+            // node_proc: None,
+            // miner_proc: None,
+            // monitor_proc: None
         };
     }
 
     /// refresh all checks
     pub fn refresh_checks(&mut self) -> &mut Self {
-        self.items.configs_exist = self.configs_exist();
-        self.items.db_restored = self.db_files_exist();
-        self.items.node_running = Node::node_running();
-        self.items.miner_running = Node::miner_running();
-        self.items.account_created = self.accounts_exist_on_chain();
+        self.vitals.items.configs_exist = self.configs_exist();
+        self.vitals.items.db_restored = self.db_files_exist();
+        self.vitals.items.node_running = Node::node_running();
+        self.vitals.items.miner_running = Node::miner_running();
+        self.vitals.items.account_created = self.accounts_exist_on_chain();
         let sync_tuple = self.is_synced();
-        self.items.is_synced = sync_tuple.0;
-        self.items.sync_delay = sync_tuple.1;
-        self.items.validator_set = self.is_in_validator_set();
+        self.vitals.items.is_synced = sync_tuple.0;
+        self.vitals.items.sync_delay = sync_tuple.1;
+        self.vitals.items.validator_set = self.is_in_validator_set();
         self
     }
 
@@ -222,8 +228,8 @@ impl Node {
     //     // assert never synced
     //     if self.has_never_synced() && sync.0 {
     //         // mark as synced
-    //         self.items.is_synced = true;
-    //         self.items.write_cache();
+    //         self.vitals.items.is_synced = true;
+    //         self.vitals.items.write_cache();
     //     }
     //     sync
     // }

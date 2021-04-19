@@ -37,8 +37,8 @@ impl Runnable for OnboardCmd {
 
         println!(
             "\nNode state at exit: {:?}\nMiner state: {:?}",
-            &state.host_state.node_state,
-            &state.host_state.miner_state,
+            &state.vitals.host_state.node_state,
+            &state.vitals.host_state.miner_state,
             // host.get_next_action()
         );
     }

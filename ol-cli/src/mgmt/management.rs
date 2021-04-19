@@ -15,9 +15,10 @@ use std::{
 const BINARY_NODE: &str = "libra-node";
 const BINARY_MINER: &str = "miner";
 
+
 /// Process name and its set of PIDs ever spawned
-#[derive(Serialize, Deserialize, Debug)]
-struct Process {
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct HostProcess {
     name: String,
     pids: HashSet<u32>,
 }
@@ -43,7 +44,7 @@ pub fn save_pid(name: &str, pid: u32) {
     match DB_CACHE_READ.get(name.as_bytes()) {
         Ok(Some(_value)) => { /* TODO */ }
         Ok(None) => {
-            let process = Process {
+            let process = HostProcess {
                 name: name.to_owned(),
                 pids: vec![pid].into_iter().collect(),
             };
@@ -55,7 +56,7 @@ pub fn save_pid(name: &str, pid: u32) {
 
     // Load, update and save
     let pids_loaded = DB_CACHE_READ.get(name.as_bytes()).unwrap().unwrap();
-    let mut process: Process = serde_json::de::from_slice(&pids_loaded).unwrap();
+    let mut process: HostProcess = serde_json::de::from_slice(&pids_loaded).unwrap();
     process.pids.insert(pid);
     let serialized = serde_json::to_vec(&process).unwrap();
     let _res = DB_CACHE.put(name.as_bytes(), serialized);
@@ -68,7 +69,7 @@ pub fn kill_zombies(name: &str) {
     }
 
     let pids_loaded = DB_CACHE_READ.get(name.as_bytes()).unwrap().unwrap();
-    let process: Process = serde_json::de::from_slice(&pids_loaded).unwrap();
+    let process: HostProcess = serde_json::de::from_slice(&pids_loaded).unwrap();
 
     println!("Killing zombie '{}' processes...", name);
     println!("Will node disable any systemd services, you must disable those manually");

@@ -47,15 +47,15 @@ impl Node {
   /// the transitions in the miner state machine
   pub fn miner_transition(&mut self, action: MinerEvents, _trigger_action: bool) -> &Self {
     match action {
-      MinerEvents::Started => self.host_state.miner_state = MinerState::Mining,
-      MinerEvents::Failed => self.host_state.miner_state = MinerState::Stopped,
+      MinerEvents::Started => self.vitals.host_state.miner_state = MinerState::Mining,
+      MinerEvents::Failed => self.vitals.host_state.miner_state = MinerState::Stopped,
     };
     self
   }
 
   /// try to advance the state machine
   pub fn miner_maybe_advance(&mut self, trigger_action: bool) -> &Self {
-    match &self.host_state.miner_state {
+    match &self.vitals.host_state.miner_state {
       MinerState::Mining => {
         if !Node::miner_running() {
           &self.miner_transition(MinerEvents::Failed, trigger_action);
@@ -81,14 +81,14 @@ impl Node {
 
       // Node has an empty box, no config files
       OnboardEvents::RunWizard => {
-        if self.host_state.onboard_state == EmptyBox {
-          self.host_state.onboard_state = ValConfigsOk;
+        if self.vitals.host_state.onboard_state == EmptyBox {
+          self.vitals.host_state.onboard_state = ValConfigsOk;
         }
       }
 
       OnboardEvents::RestoreDb => {
-        if self.host_state.onboard_state == ValConfigsOk {
-          self.host_state.onboard_state = DbRestoredOk;
+        if self.vitals.host_state.onboard_state == ValConfigsOk {
+          self.vitals.host_state.onboard_state = DbRestoredOk;
         }
       }
       }
@@ -100,31 +100,31 @@ impl Node {
     use NodeState::*;
     match action {
       NodeEvents::StartFullnode => {
-        if self.host_state.node_state == Stopped {
-          self.host_state.node_state = FullnodeModeCatchup;
+        if self.vitals.host_state.node_state == Stopped {
+          self.vitals.host_state.node_state = FullnodeModeCatchup;
         }
 
         // if the node was previously in validator mode
-        if self.host_state.node_state == ValidatorMode || self.host_state.node_state == ValidatorOutOfSet {
-          self.host_state.node_state = FullnodeMode;
+        if self.vitals.host_state.node_state == ValidatorMode || self.vitals.host_state.node_state == ValidatorOutOfSet {
+          self.vitals.host_state.node_state = FullnodeMode;
         }
       }
 
       NodeEvents::FullnodeSynced => {
-        if self.host_state.node_state == FullnodeModeCatchup {
-          self.host_state.node_state = FullnodeMode
+        if self.vitals.host_state.node_state == FullnodeModeCatchup {
+          self.vitals.host_state.node_state = FullnodeMode
         };
       }
 
       NodeEvents::SwitchToValidatorMode => {
-        if self.host_state.node_state == FullnodeMode {
-          self.host_state.node_state = ValidatorMode
+        if self.vitals.host_state.node_state == FullnodeMode {
+          self.vitals.host_state.node_state = ValidatorMode
         };
       }
 
       NodeEvents::ValidatorDroppedFromSet => {
-        if self.host_state.node_state == ValidatorMode {
-          self.host_state.node_state = ValidatorOutOfSet
+        if self.vitals.host_state.node_state == ValidatorMode {
+          self.vitals.host_state.node_state = ValidatorOutOfSet
         };
       }
       NodeEvents::RejoinValidatorSet => {}
@@ -140,7 +140,7 @@ impl Node {
     let entry_args = entrypoint::get_args();
     let cfg = app_config();
     // Try to advance the node state. Miner below
-    match &self.host_state.onboard_state {
+    match &self.vitals.host_state.onboard_state {
       OnboardState::EmptyBox => {
         if self.configs_exist() {
           &self.onboard_transition(OnboardEvents::RunWizard, trigger_action);
@@ -195,7 +195,7 @@ impl Node {
   }
     /// Advance to the next state
   pub fn node_maybe_advance(&mut self, trigger_action: bool) -> &Self {
-    match &self.host_state.node_state {
+    match &self.vitals.host_state.node_state {
       // If fullnode is running try to mine (if account is created)
       NodeState::FullnodeModeCatchup => {
         if self.is_synced().0 {

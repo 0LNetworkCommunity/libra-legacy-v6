@@ -102,7 +102,7 @@ pub enum MinerEvents {
   Failed,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 /// The Current state of a node
 pub struct HostState {
   /// state of onboarding
