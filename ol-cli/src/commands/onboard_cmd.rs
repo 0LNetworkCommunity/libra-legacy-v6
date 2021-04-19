@@ -1,6 +1,6 @@
 //! `onboard-cmd` subcommand
 
-use crate::{node::client, entrypoint, prelude::app_config, node::node::Node};
+use crate::{entrypoint, node::client, node::node::Node, prelude::app_config};
 use abscissa_core::{Command, Options, Runnable};
 
 /// `onboard-cmd` subcommand

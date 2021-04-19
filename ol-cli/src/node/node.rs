@@ -1,6 +1,6 @@
 //! `node` module
 
-use crate::{cache::Vitals, check::items::Items, config::OlCliConfig, mgmt::management::{NodeMode}};
+use crate::{cache::Vitals, check::items::Items, config::OlCliConfig, mgmt::management::NodeMode};
 use cli::libra_client::LibraClient;
 use libradb::LibraDB;
 use std::{process::Command, str};
@@ -8,8 +8,8 @@ use sysinfo::SystemExt;
 use sysinfo::{ProcessExt, ProcessStatus};
 
 use libra_json_rpc_client::views::MinerStateResourceView;
+use libra_types::waypoint::Waypoint;
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
-use libra_types::{waypoint::Waypoint};
 use storage_interface::DbReader;
 
 use super::{account::OwnerAccountView, states::HostState};
@@ -36,8 +36,6 @@ pub struct Node {
     // TODO: deduplicate these
     chain_state: Option<AccountState>,
     miner_state: Option<MinerStateResourceView>,
-
-
 }
 
 impl Node {
@@ -46,26 +44,17 @@ impl Node {
         return Self {
             client,
             conf: conf.clone(),
-            
             vitals: Vitals {
-              host_state: HostState::new(),
-            account_view: OwnerAccountView::new(conf.profile.account),
-            chain_view: None,
-            items: Items::init(),
-            node_proc: None,
-            miner_proc: None,
-            monitor_proc: None
+                host_state: HostState::new(),
+                account_view: OwnerAccountView::new(conf.profile.account),
+                chain_view: None,
+                items: Items::init(),
+                node_proc: None,
+                miner_proc: None,
+                monitor_proc: None,
             },
-            // items: Items::init(),
             miner_state: None,
             chain_state: None,
-
-            // account_view: OwnerAccountView::new(conf.profile.account),
-            // chain_view: None,
-            // validator_view: None,
-            // node_proc: None,
-            // miner_proc: None,
-            // monitor_proc: None
         };
     }
 
@@ -189,7 +178,7 @@ impl Node {
 
     /// database is initialized, Please do NOT invoke this function frequently
     pub fn db_bootstrapped(&mut self) -> bool {
-        let mut file =  self.conf.workspace.node_home.clone();
+        let mut file = self.conf.workspace.node_home.clone();
         file.push("db");
         if file.exists() {
             // When not committing, we open the DB as secondary so the tool is usable along side a
@@ -198,7 +187,7 @@ impl Node {
                 Ok(db) => {
                     return db.get_latest_version().is_ok();
                 }
-                Err(e) => { println!( "Failed to open db:{}", e )}
+                Err(e) => println!("Failed to open db:{}", e),
             }
         }
         return false;
