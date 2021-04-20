@@ -1,5 +1,4 @@
 import { writable } from 'svelte/store'
-import { onMount } from 'svelte'
 
 export const chainInfo = writable('Chain');
 chainInfo.set("{}");
