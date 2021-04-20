@@ -16,4 +16,4 @@ To configure your current shell, run:\
 source $HOME/.cargo/env\
 "
 
-echo "Manually add `export RUSTC_WRAPPER=sccache` to your bash profile ~/.bashrc"
+echo "Manually add 'export RUSTC_WRAPPER=sccache' to your bash profile ~/.bashrc"
