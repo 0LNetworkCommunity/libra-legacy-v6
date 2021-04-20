@@ -17,7 +17,7 @@ pub async fn main() {
     // TODO: fetch swarm configs from command line.
     // TODO: fetch optional config path
     let cfg = parse_configs(None);
-    let client = pick_client(None, &cfg);
+    let client = pick_client(None, &cfg).unwrap().0;
     let node = Node::new(client, cfg);
     start_server(node).await;
 }
