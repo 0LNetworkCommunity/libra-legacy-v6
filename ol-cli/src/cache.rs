@@ -50,15 +50,6 @@ impl Node {
 
     /// write json cache
     pub fn write_json(&mut self) -> Result<(), Error> {
-        // let json = Vitals {
-        //     items: self.vitals.items.clone(),
-        //     account_view: self.vitals.account_view.clone(),
-        //     chain_view: self.vitals.chain_view.clone(),
-        //     node_proc: self.vitals.node_proc.clone(),
-        //     miner_proc: self.vitals.miner_proc.clone(),
-        //     monitor_proc: self.vitals.monitor_proc.clone(),
-        // };
-
         let serialized = serde_json::to_vec_pretty(&self.vitals)?;
         let cache_path = self.conf.workspace.node_home.join(CACHE_JSON_NAME);
         let mut file = File::create(cache_path)?;

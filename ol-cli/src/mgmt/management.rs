@@ -82,6 +82,37 @@ fn spawn_process(
         .expect(expect_msg)
 }
 
+/// Start Monitor
+pub fn start_monitor() {
+    // Stop any processes we may have started and detached from.
+    // if is running do nothing
+    if node::Node::is_web_monitor_serving() {
+        println!("web monitor is already running. Exiting.");
+        return
+    }
+
+    let child = if *IS_PROD {
+        // let args = vec!["start"];
+        // if use_backup { args.push("--backup-url"); };
+        println!("Starting `ol-cli serve` with args");
+        spawn_process(
+            "ol", &["serve"], "monitor", "failed to run 'ol', is it installed?"
+        )        
+    } else {
+        let args = vec!["r", "-p", "ol-cli", "--", "serve"];
+        // if use_backup { args.push("--backup-url"); };
+        println!("Starting 'cargo' with args: {:?}", args.join(" "));
+        spawn_process(
+            "cargo", args.as_slice(), "monitor", "failed to run: cargo r -p ol-cli -- serve"
+        )
+    };
+
+    let pid = &child.id();
+    save_pid("monitor", *pid);
+    println!("Started with PID {} in the background", pid);
+}
+
+
 /// start validator wizard
 pub fn run_validator_wizard() -> bool {
     println!("Running validator wizard");
