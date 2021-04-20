@@ -1,7 +1,7 @@
 //! `account`
 
 use crate::{
-    cache::{DB_CACHE, DB_CACHE_READ},
+    // cache::{DB_CACHE, DB_CACHE_READ},
     node::node::Node,
 };
 use anyhow::{Error, Result};
@@ -42,23 +42,23 @@ impl Node {
         self.vitals.account_view.balance = get_balance(av);
         self.vitals.account_view.is_in_validator_set = self.is_in_validator_set();
 
-        let ser = serde_json::to_vec(&self.vitals.account_view).unwrap();
-        DB_CACHE
-            .put(ACCOUNT_INFO_DB_KEY.as_bytes(), ser)
-            .expect("could not reach account_info cache");
+        // let ser = serde_json::to_vec(&self.vitals.account_view).unwrap();
+        // DB_CACHE
+        //     .put(ACCOUNT_INFO_DB_KEY.as_bytes(), ser)
+        //     .expect("could not reach account_info cache");
 
         &self.vitals.account_view
     }
 
-    /// get chain info from cache
-    pub fn read_account_info_cache() -> OwnerAccountView {
-        let account_state = DB_CACHE_READ
-            .get(ACCOUNT_INFO_DB_KEY.as_bytes())
-            .unwrap()
-            .expect("could not reach account_info cache");
-        let c: OwnerAccountView = serde_json::de::from_slice(&account_state.as_slice()).unwrap();
-        c
-    }
+    // /// get chain info from cache
+    // pub fn read_account_info_cache() -> OwnerAccountView {
+    //     let account_state = DB_CACHE_READ
+    //         .get(ACCOUNT_INFO_DB_KEY.as_bytes())
+    //         .unwrap()
+    //         .expect("could not reach account_info cache");
+    //     let c: OwnerAccountView = serde_json::de::from_slice(&account_state.as_slice()).unwrap();
+    //     c
+    // }
 
     /// Get the account view struct
     pub fn get_account_view(&mut self) -> AccountView {

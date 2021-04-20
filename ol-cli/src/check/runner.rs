@@ -17,7 +17,7 @@ pub fn run_checks(mut node: Node, is_live: bool, print: bool) {
         &node.refresh_chain_info();
         &node.refresh_account_info();
         &node.refresh_checks();
-        &node.vitals.items.write_cache();
+        // &node.vitals.items.write_cache();
         if print { print_it(&node) }
         if !is_live && x == 0 { break; };
         x = x + 1;

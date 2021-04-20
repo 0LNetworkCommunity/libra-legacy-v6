@@ -48,7 +48,7 @@ impl Node {
                 host_state: HostState::new(),
                 account_view: OwnerAccountView::new(conf.profile.account),
                 chain_view: None,
-                items: Items::init(),
+                items: Items::new(false),
                 node_proc: None,
                 miner_proc: None,
                 monitor_proc: None,

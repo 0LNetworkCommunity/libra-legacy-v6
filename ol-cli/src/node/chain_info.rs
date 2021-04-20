@@ -1,5 +1,4 @@
 //! `chain_info`
-use crate::cache::DB_CACHE;
 use chrono::Utc;
 
 use libra_json_rpc_client::views::OracleResourceView;
@@ -185,8 +184,8 @@ impl Node {
       let cs_ser = serde_json::to_vec(&chain_state).unwrap();
       let val_ser = serde_json::to_vec(&validators).unwrap();
 
-      DB_CACHE.put(CHAIN_INFO_DB_KEY.as_bytes(), cs_ser).unwrap();
-      DB_CACHE.put(VAL_INFO_DB_KEY.as_bytes(), val_ser).unwrap();
+      // DB_CACHE.put(CHAIN_INFO_DB_KEY.as_bytes(), cs_ser).unwrap();
+      // DB_CACHE.put(VAL_INFO_DB_KEY.as_bytes(), val_ser).unwrap();
 
       return (chain_state, Some(validators));
     }
@@ -194,22 +193,22 @@ impl Node {
     (None, None)
   }
 }
-/// get chain info from cache
-pub fn read_chain_info_cache() -> ChainView {
-  let chain_state = DB_CACHE
-    .get(CHAIN_INFO_DB_KEY.as_bytes())
-    .unwrap()
-    .expect("could not reach chain_info cache");
-  let c: ChainView = serde_json::de::from_slice(&chain_state.as_slice()).unwrap();
-  c
-}
+// get chain info from cache
+// pub fn read_chain_info_cache() -> ChainView {
+//   let chain_state = DB_CACHE
+//     .get(CHAIN_INFO_DB_KEY.as_bytes())
+//     .unwrap()
+//     .expect("could not reach chain_info cache");
+//   let c: ChainView = serde_json::de::from_slice(&chain_state.as_slice()).unwrap();
+//   c
+// }
 
-/// get chain info from cache
-pub fn read_val_info_cache() -> Vec<ValidatorView> {
-  let val_info = DB_CACHE
-    .get(VAL_INFO_DB_KEY.as_bytes())
-    .unwrap()
-    .expect("could not reach chain_info cache");
-  let v: Vec<ValidatorView> = serde_json::de::from_slice(&val_info.as_slice()).unwrap();
-  v
-}
+// /// get chain info from cache
+// pub fn read_val_info_cache() -> Vec<ValidatorView> {
+//   let val_info = DB_CACHE
+//     .get(VAL_INFO_DB_KEY.as_bytes())
+//     .unwrap()
+//     .expect("could not reach chain_info cache");
+//   let v: Vec<ValidatorView> = serde_json::de::from_slice(&val_info.as_slice()).unwrap();
+//   v
+// }
