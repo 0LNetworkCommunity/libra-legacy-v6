@@ -11,7 +11,7 @@ use resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator, NullStateVi
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
-const ACCOUNT_INFO_DB_KEY: &str = "account_info";
+// const ACCOUNT_INFO_DB_KEY: &str = "account_info";
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 /// information on the owner account of this node.

@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use tokio::{time::interval};
 use warp::{sse::ServerSentEvent, Filter};
 
-use crate::{cache::Vitals, check::{items::Items, runner}, node::{account::OwnerAccountView, chain_info::{ChainView, ValidatorView}, node::Node}};
+use crate::{cache::Vitals, check::runner, node::node::Node};
 
 
 fn sse_vitals(data: Vitals) -> Result<impl ServerSentEvent, Infallible> {

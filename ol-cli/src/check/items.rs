@@ -2,8 +2,6 @@
 // use crate::cache::{DB_CACHE, DB_CACHE_READ};
 use std::str;
 use serde::{Deserialize, Serialize};
-
-const ITEMS_KEY: &str = "items";
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 /// Steps needed to initialize a miner

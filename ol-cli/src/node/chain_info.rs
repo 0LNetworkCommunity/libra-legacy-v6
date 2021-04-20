@@ -34,9 +34,11 @@ pub struct ChainView {
   pub waypoint: Option<Waypoint>,
   /// upgrade
   pub upgrade: Option<OracleResourceView>,
+  /// validator view
+  pub validator_view: Option<Vec<ValidatorView>>,
 }
 
-#[derive(Default, Debug, Deserialize, Serialize)]
+#[derive(Default, Debug, Deserialize, Serialize, Clone)]
 /// Validator info struct
 pub struct ValidatorView {
   /// account address
@@ -126,7 +128,6 @@ impl Node {
 
       cs.upgrade = self.client.query_oracle_upgrade().unwrap();
 
-      let chain_state = Some(cs);
 
       let validators: Vec<ValidatorView> = account_state
         .get_validator_set()
@@ -179,15 +180,12 @@ impl Node {
           }
         })
         .collect();
+      
+      cs.validator_view = Some(validators.clone());
 
-      // also save to cache
-      let cs_ser = serde_json::to_vec(&chain_state).unwrap();
-      let val_ser = serde_json::to_vec(&validators).unwrap();
+      self.vitals.chain_view = Some(cs.clone());
 
-      // DB_CACHE.put(CHAIN_INFO_DB_KEY.as_bytes(), cs_ser).unwrap();
-      // DB_CACHE.put(VAL_INFO_DB_KEY.as_bytes(), val_ser).unwrap();
-
-      return (chain_state, Some(validators));
+      return (Some(cs), Some(validators));
     }
 
     (None, None)

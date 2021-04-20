@@ -1,22 +1,34 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
+  // import { onMount, onDestroy } from "svelte";
   let account: string = undefined;
   let balance: Number = 0;
   let inValidatorSet: Boolean = false;
-  let uri = "http://" + location.host + "/account";
-  let sse = new EventSource(uri);
-  onMount(async () => {
-    sse.onmessage = function (msg) {
-      let json = JSON.parse(msg.data);
-      account = json.address;
-      balance = json.balance;
-      inValidatorSet = json.is_in_validator_set;
+
+  import { chainInfo } from "../../../store.ts";
+
+  chainInfo.subscribe((info_str) => {
+    let data = JSON.parse(info_str);
+    if (data.account_view) {
+      // TODO: clean up with destructuring.
+      account = data.account_view.address;
+      balance = data.account_view.balance;
+      inValidatorSet = data.account_view.is_in_validator_set;
     }
   });
+  // let uri = "http://" + location.host + "/account";
+  // let sse = new EventSource(uri);
+  // onMount(async () => {
+  //   sse.onmessage = function (msg) {
+  //     let json = JSON.parse(msg.data);
+  //     account = json.address;
+  //     balance = json.balance;
+  //     inValidatorSet = json.is_in_validator_set;
+  //   }
+  // });
 
-  onDestroy(() => {
-    sse.close();
-  });
+  // onDestroy(() => {
+  //   sse.close();
+  // });
 </script>
 
 

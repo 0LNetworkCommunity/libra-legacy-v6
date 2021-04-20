@@ -1,7 +1,7 @@
 //! `sync` subcommand
 
 use super::node::Node;
-use crate::{check::items::Items, config::OlCliConfig, node::client::*};
+use crate::{config::OlCliConfig, node::client::*};
 use cli::libra_client::LibraClient;
 use libra_types::waypoint::Waypoint;
 

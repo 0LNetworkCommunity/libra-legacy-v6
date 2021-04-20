@@ -1,18 +1,16 @@
 <script lang="ts">
+  // TODO: Implement historical view
   import Historical from "./Historical.svelte";
   import InProgress from "./InProgress.svelte";
   import { chainInfo } from "../../store.ts";
-
-  let uri = "http://" + location.host + "/chain";
   let vote_in_progress = false;
   let vote_window_expired = false;
 
-  let current_height = 100;
-
   chainInfo.subscribe((info_str) => {
-    let chain = JSON.parse(info_str);
-    if (chain.upgrade) {
-      vote_in_progress = chain.upgrade.upgrade.validators_voted.length > 0;
+    let data = JSON.parse(info_str);
+    // TODO: find a better way to check the data is ready
+    if (data.chain_view && data.chain_view.upgrade) {
+      vote_in_progress = data.chain_view.upgrade.upgrade.validators_voted.length > 0;
     }
   });
 </script>
@@ -40,6 +38,7 @@
       </div>
     </div>
     <!-- <div>
+      TODO: Implement this
       <Historical />
     </div> -->
   </div>
