@@ -1,6 +1,6 @@
 //! `mgmt` subcommand
 
-use crate::{application::app_config, entrypoint, mgmt::management::{self, NodeMode}, node::{client, node::Node}};
+use crate::{application::app_config, entrypoint, mgmt::management::NodeMode, node::{client, node::Node}};
 use abscissa_core::{Command, Options, Runnable};
 
 /// `mgmt` subcommand
@@ -38,14 +38,14 @@ impl Runnable for MgmtCmd {
         if self.start_node {
             node.start_node(NodeMode::Fullnode).expect("could not start fullnode");
         } else if self.stop_node {
-            management::stop_node();
+            node.stop_node();
         } else if self.start_miner {
             node.start_miner();
         } else if self.stop_miner {
-            management::stop_miner();
+            node.stop_miner();
         } else if self.stop_all {
-            management::stop_node();
-            management::stop_miner();
+            node.stop_node();
+            node.stop_miner();
         }
     }
 }

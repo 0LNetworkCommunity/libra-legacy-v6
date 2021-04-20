@@ -211,8 +211,9 @@ impl Node {
       // switch to validator mode.
       NodeState::FullnodeMode => {
         if self.is_in_validator_set() {
+
           // Stop node first, then restart as validator.
-          management::stop_node();
+          self.stop_node();
 
           self.start_node(management::NodeMode::Validator)
             .expect("unable to start node in validator mode");
