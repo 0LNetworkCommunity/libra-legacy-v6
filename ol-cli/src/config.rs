@@ -154,6 +154,8 @@ impl OlCliConfig {
   fn save_file(host_config: &OlCliConfig) {
     let toml = toml::to_string(host_config).unwrap();
     let home_path = host_config.workspace.node_home.clone();
+    // create home path if doesn't exist, usually only in dev/ci environments.
+    fs::create_dir_all(&home_path).expect("could not create 0L home directory");
     let toml_path = home_path.join(CONFIG_FILE);
     let file = fs::File::create(&toml_path);
     file.unwrap()
