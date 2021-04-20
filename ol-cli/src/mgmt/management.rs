@@ -19,7 +19,7 @@ use std::{
 const BINARY_NODE: &str = "libra-node";
 const BINARY_MINER: &str = "miner";
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 /// What kind of node are we starting
 pub enum NodeMode {
     /// Validator
