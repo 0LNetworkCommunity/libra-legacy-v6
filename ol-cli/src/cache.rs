@@ -53,10 +53,3 @@ impl Vitals {
         Ok(())
     }
 }
-
-// Construct Lazy Database instance
-// pub static DB_CACHE: Lazy<DB> = Lazy::new(|| DB::open_default(MONITOR_DB_PATH).unwrap());
-
-// /// use read only access to cli cache
-// pub static DB_CACHE_READ: Lazy<DB> =
-//     Lazy::new(|| DB::open_for_read_only(&Options::default(), MONITOR_DB_PATH, true).unwrap());
