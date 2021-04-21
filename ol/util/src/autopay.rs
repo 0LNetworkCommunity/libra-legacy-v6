@@ -2,6 +2,7 @@
 
 use libra_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::{fs, path::PathBuf};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -30,7 +31,7 @@ pub fn get_instructions(autopay_batch_file: &PathBuf) -> Vec<Instruction> {
         "cannot open autopay batch file: {:?}",
         autopay_batch_file
     ));
-    let json: serde_json::Value = serde_json::from_reader(file).expect("cannot parse JSON");
+    let json: Value = serde_json::from_reader(file).expect("cannot parse autopay.json");
     let inst = json
         .get("autopay_instructions")
         .expect("file should have array of instructions");
@@ -40,9 +41,17 @@ pub fn get_instructions(autopay_batch_file: &PathBuf) -> Vec<Instruction> {
     .map(|value| {
       let readable_inst = value.to_string();
       let inst = value.as_object().expect("expected json object");
-      let percent_inflow = inst["percent_inflow"].as_u64();
-      let percent_balance =inst["percent_balance"].as_u64();
-      let fixed_payment =  inst["fixed_payment"].as_u64();
+    
+      // for percentages need to convert and scale the two decimal places
+      let percent_inflow= inst
+      .get("percent_inflow")
+      .map(|f| scale_fractional(f));
+      let percent_balance = inst
+      .get("percent_balance")
+      .map(|f| scale_fractional(f));
+
+      let fixed_payment =  inst
+      .get("fixed_payment").map(|f| f.as_u64().unwrap());
 
       if percent_inflow.is_some() || percent_balance.is_some() || fixed_payment.is_some() {
         Instruction {
@@ -53,9 +62,9 @@ pub fn get_instructions(autopay_batch_file: &PathBuf) -> Vec<Instruction> {
             .to_owned()
             .parse()
             .expect(&format!("no 'destination' found in line: {:?}", readable_inst)),
-          percent_inflow,
-          percent_balance,
-          fixed_payment,
+          percent_inflow: percent_inflow,
+          percent_balance: percent_balance,
+          fixed_payment: fixed_payment,
           end_epoch: inst["end_epoch"].as_u64().expect(&format!("no 'end_epoch' found in line: {:?}", readable_inst)),
           duration_epochs: inst["duration_epochs"].as_u64(),
         }
@@ -66,4 +75,19 @@ pub fn get_instructions(autopay_batch_file: &PathBuf) -> Vec<Instruction> {
 
     })
     .collect()
+}
+
+// convert the decimals for Move.
+// for autopay purposes percentages have two decimal places precision.
+// No rounding is applied. The third decimal is trucated.
+// the result is a integer of 4 bits.
+fn scale_fractional(fract_percent: &Value) -> u64{
+    // finish parsing the json
+    let fractional = fract_percent.as_f64().unwrap();
+    // multiply by 100 to get the desired decimal precision
+    let scaled = fractional * 100 as f64;
+    // drop the fractional part with trunc()
+    let trunc = scaled.trunc() as u64; // return max 4 digits.
+    assert!(trunc < 9999 , "percent needs to have max four digits");
+    trunc
 }
