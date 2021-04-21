@@ -259,6 +259,8 @@ endif
 	cp ./ol/fixtures/configs/${NS}.toml ${DATA_PATH}/miner.toml
 # skip mining proof zero with fixtures
 	cp ./ol/fixtures/blocks/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
+# place a dummy autopay.json in root
+	cp ./ol/fixtures/autopay/autopay_batch.json ${DATA_PATH}/autopay.json
 
 endif
 
@@ -345,13 +347,6 @@ devnet:
 
 dev-register: clear fix
 	echo ${MNEM} | head -c -1 | make register
-
-# devnet-setup-onboard: clear 
-# # fixtures needs a file that works
-# 	SKIP_BLOB=y make fix
-# 	cp ${SOURCE}/fixtures/genesis/${V}/* ~/.0L/
-# # # starts config for a new miner "eve", uses the devnet github repo for ceremony
-# 	MNEM="${MNEM}" cargo r -p miner -- val-wizard  --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis --skip-mining 
 
 #### PERSIST THE MOCK ARCHIVES TO DEVNET INFRASTRUCTURE ####
 
