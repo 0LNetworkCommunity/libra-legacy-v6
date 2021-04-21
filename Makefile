@@ -256,7 +256,7 @@ ifndef SKIP_BLOB
 	cp ./ol/fixtures/genesis/${V}/genesis_waypoint ${DATA_PATH}/
 endif
 # skip miner configuration with fixtures
-	cp ./ol/fixtures/configs/${NS}.toml ${DATA_PATH}/miner.toml
+	cp ./ol/fixtures/configs/${NS}.toml ${DATA_PATH}/0L.toml
 # skip mining proof zero with fixtures
 	cp ./ol/fixtures/blocks/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
 # place a dummy autopay.json in root
