@@ -53,9 +53,9 @@ pub fn process_instructions(instructions: Vec<Instruction>, current_epoch: u64) 
         // TODO: Check instruction IDs are sequential.
         instructions.into_iter().filter_map(|i| {
             let warning = format!(
-                "Instruction {uid}:\nSend {percentage}% of your balance every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
+                "Instruction {uid}:\nSend {percent_balance:?}% of your total balance every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
                 uid = &i.uid,
-                percentage = &i.percentage,
+                percent_balance = &i.percent_balance,
                 duration_epochs = &i.duration_epochs.unwrap(),
                 epoch_ending = &i.duration_epochs.unwrap() + current_epoch,
                 destination = &i.destination,
@@ -71,7 +71,7 @@ pub fn process_instructions(instructions: Vec<Instruction>, current_epoch: u64) 
         })
         // .collect()
         .map(|i| {
-          transaction_builder::encode_autopay_create_instruction_script(i.uid, i.destination, i.end_epoch, i.percentage)
+          transaction_builder::encode_autopay_create_instruction_script(i.uid, i.destination, i.end_epoch, i.percent_balance.unwrap())
         })
         .collect()
 }
