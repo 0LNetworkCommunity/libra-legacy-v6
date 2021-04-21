@@ -260,9 +260,6 @@ impl Node {
                 .output()
                 .expect("could not check systemctl");
             let text = str::from_utf8(&out.stdout.as_slice()).unwrap();
-
-            dbg!(&text);
-
             if text.contains("validator") {
                 return Ok(NodeMode::Validator);
             }
@@ -285,7 +282,6 @@ impl Node {
                 .find(|i| !i.cmd().is_empty());
 
             if let Some(p) = process {
-                dbg!(&p);
                 let is_val = p
                     .cmd()
                     .into_iter()
