@@ -61,7 +61,7 @@ pub fn process_backlog(config: &MinerConfig, tx_params: &TxParams, is_operator: 
                     break;
                 }
             },
-            Err(err) => println!("Submit baklog failed with: {}", err)
+            Err(err) => println!("Submit backlog failed with: {}", err)
         }
         i = i + 1;
     }

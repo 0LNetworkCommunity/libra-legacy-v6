@@ -9,11 +9,11 @@
   let current_height = 0;
 
   chainInfo.subscribe((info_str) => {
-    let chain = JSON.parse(info_str);
-    vote_counts = chain.upgrade.upgrade.vote_counts;
-    expiration_height = chain.upgrade.upgrade.vote_window;
+    let data = JSON.parse(info_str);
+    vote_counts = data.chain_view.upgrade.upgrade.vote_counts;
+    expiration_height = data.chain_view.upgrade.upgrade.vote_window;
     vote_window_expired = expiration_height < current_height;
-    current_height = chain.height;
+    current_height = data.chain_view.height;
   });
 
   onMount(async () => {

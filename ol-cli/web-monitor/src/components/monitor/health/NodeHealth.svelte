@@ -1,15 +1,17 @@
 <script lang="ts">
   import Check from "./Check.svelte";
-  import { onMount, onDestroy } from "svelte";
   import { map } from "lodash";
 
   let healthData;
-  let uri = "http://" + location.host + "/check";
-  let sse = new EventSource(uri);
-  onMount(async () => {
-    sse.onmessage = function (msg) {
-      healthData = JSON.parse(msg.data);
 
+  import { chainInfo } from "../../../store.ts";
+
+  chainInfo.subscribe((info_str) => {
+    // NOTE: Svelte store only stores strings, need to always deserialize in component.
+    let chain = JSON.parse(info_str);
+    if (chain.items) {
+      // healthData = JSON.parse(msg.data);
+      healthData = chain.items;
       allChecks = map(allChecks, (i: CheckObj) => {
         if (i.id === "config") {
           i.is_true = healthData.configs_exist;
@@ -34,12 +36,7 @@
         }
         return i;
       });
-    };
-  });
-
-  onDestroy(() => {
-    console.log("closed");
-    sse.close();
+    }
   });
 
   interface CheckObj {

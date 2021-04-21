@@ -6,10 +6,11 @@
 
   chainInfo.subscribe((info_str) => {
     let chain = JSON.parse(info_str);
-    if (chain.upgrade) {
-      epoch = chain.epoch;
-      round = chain.height;
-      waypoint = chain.waypoint;
+    if (chain.chain_view) {
+      // TODO: clean up with destructuring.
+      epoch = chain.chain_view.epoch;
+      round = chain.chain_view.height;
+      waypoint = chain.chain_view.waypoint;
     }
   });
 </script>

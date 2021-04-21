@@ -1,7 +1,7 @@
 //! `sync` subcommand
 
 use super::node::Node;
-use crate::{check::items::Items, config::OlCliConfig, node::client::*};
+use crate::{config::OlCliConfig, node::client::*};
 use cli::libra_client::LibraClient;
 use libra_types::waypoint::Waypoint;
 
@@ -42,22 +42,22 @@ impl Node {
     }
     None
   }
-  /// Check if the node has ever synced
-  pub fn has_never_synced(&self) -> bool {
-    match Items::read_cache() {
-      Some(i) => !i.is_synced,
-      None => true,
-    }
-  }
+  // /// Check if the node has ever synced
+  // pub fn has_never_synced(&self) -> bool {
+  //   match Items::read_cache() {
+  //     Some(i) => !i.is_synced,
+  //     None => true,
+  //   }
+  // }
 
-  /// Check if node started sync
-  pub fn node_started_sync(&self) -> bool {
-    match Items::read_cache() {
-      // has anything in the cache state
-      Some(_) => true,
-      None => false,
-    }
-  }
+  // /// Check if node started sync
+  // pub fn node_started_sync(&self) -> bool {
+  //   match Items::read_cache() {
+  //     // has anything in the cache state
+  //     Some(_) => true,
+  //     None => false,
+  //   }
+  // }
 }
 
 fn compare_client_version(local: &mut LibraClient, remote: &mut LibraClient) -> i64 {

@@ -17,19 +17,30 @@
   }
   
   let set: ValInfo[] = [];
-  let uri = "http://" + location.host + "/validators";
-  let sse = new EventSource(uri);
-  onMount(async () => {
 
-    sse.onmessage = function (msg) {
-      set = JSON.parse(msg.data);
-      set = sortBy(set, ["voting_power"]).reverse();
-    };
+  import { chainInfo } from "../../store.ts";
+
+  chainInfo.subscribe((info_str) => {
+    let data = JSON.parse(info_str);
+    // TODO: find a better way to check if data is ready.
+    if (data.chain_view && data.chain_view.validator_view) {
+      set = sortBy(data.chain_view.validator_view, ["voting_power"]).reverse();
+    }
   });
 
-  onDestroy(() => {
-    sse.close();
-  });
+  // let uri = "http://" + location.host + "/validators";
+  // let sse = new EventSource(uri);
+  // onMount(async () => {
+
+  //   sse.onmessage = function (msg) {
+  //     set = JSON.parse(msg.data);
+  //     set = sortBy(set, ["voting_power"]).reverse();
+  //   };
+  // });
+
+  // onDestroy(() => {
+  //   sse.close();
+  // });
 
   function can_create_account(info: ValInfo): Boolean {
     return info.epochs_since_last_account_creation > 7;

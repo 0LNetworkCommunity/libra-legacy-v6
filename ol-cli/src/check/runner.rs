@@ -11,13 +11,14 @@ use std::{thread, time::Duration};
 
 /// Start the node monitor
 pub fn run_checks(mut node: Node, is_live: bool, print: bool) {
+  let home_path = node.conf.workspace.node_home.clone();
     let mut x = 0;
     loop {
         &node.refresh_onchain_state();
         &node.refresh_chain_info();
         &node.refresh_account_info();
         &node.refresh_checks();
-        &node.vitals.items.write_cache();
+        &node.vitals.write_json(&home_path);
         if print { print_it(&node) }
         if !is_live && x == 0 { break; };
         x = x + 1;
