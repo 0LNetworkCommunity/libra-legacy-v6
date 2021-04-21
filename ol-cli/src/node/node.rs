@@ -1,6 +1,7 @@
 //! `node` module
 
 use crate::{cache::Vitals, check::items::Items, config::OlCliConfig, mgmt::management::NodeMode};
+use anyhow::Error;
 use cli::libra_client::LibraClient;
 use libradb::LibraDB;
 use std::{process::Command, str};
@@ -251,46 +252,60 @@ impl Node {
         !p.is_empty()
     }
     /// check what mode the node is running in
-    pub fn what_node_mode() -> Option<NodeMode> {
+    pub fn what_node_mode() -> Result<NodeMode, Error> {
         // check systemd first
         if Node::node_running() {
             let out = Command::new("service")
-                .args(&["libra-node", "status", "| grep validatorsdf"])
+                .args(&["libra-node", "status"])
                 .output()
-                .expect("could no check systemctl");
+                .expect("could not check systemctl");
             let text = str::from_utf8(&out.stdout.as_slice()).unwrap();
-            if text.contains("validator.node.yaml") {
-                return Some(NodeMode::Validator);
+
+            dbg!(&text);
+
+            if text.contains("validator") {
+                return Ok(NodeMode::Validator);
+            }
+            if text.contains("fullnode") {
+                return Ok(NodeMode::Fullnode);
             }
 
             // check as parent process
             let mut system = sysinfo::System::new_all();
             system.refresh_all();
             let all_p = system.get_process_by_name(NODE_PROCESS);
+            // dbg!(&all_p);
             let process = all_p
                 .into_iter()
                 .filter(|i| match i.status() {
                     ProcessStatus::Run => true,
+                    ProcessStatus::Sleep => true,
                     _ => false,
                 })
                 .find(|i| !i.cmd().is_empty());
 
-            if process
-                .unwrap()
-                .cmd()
-                .contains(&"validator.node.yaml".to_owned())
-            {
-                return Some(NodeMode::Validator);
-            }
-            if process
-                .unwrap()
-                .cmd()
-                .contains(&"fullnode.node.yaml".to_owned())
-            {
-                return Some(NodeMode::Fullnode);
+            if let Some(p) = process {
+                dbg!(&p);
+                let is_val = p
+                    .cmd()
+                    .into_iter()
+                    .find(|s| s.contains(&"validator".to_owned()))
+                    .is_some();
+                if is_val {
+                    return Ok(NodeMode::Validator);
+                }
+
+                let is_fn = p
+                    .cmd()
+                    .into_iter()
+                    .find(|s| s.contains(&"fullnode".to_owned()))
+                    .is_some();
+                if is_fn {
+                    return Ok(NodeMode::Fullnode);
+                }
             }
         }
-        None
+        Err(Error::msg("could not detect node mode"))
     }
 
     /// is web monitor serving on 3030

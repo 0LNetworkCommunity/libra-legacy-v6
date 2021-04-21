@@ -94,7 +94,7 @@ impl Runnable for PilotCmd {
                     status_warn!("node is NOT Synced");
                 }
             } else {
-                status_warn!("owner account does NOT exist on chain. Was the account creation transaction submitted?")
+                status_warn!("error trying to start miner. Owner account does NOT exist on chain. Was the account creation transaction submitted?")
             }
         }
     }
@@ -114,7 +114,7 @@ fn maybe_switch_mode(node: &mut Node, is_in_val_set: bool) {
 }
 
 fn is_this_the_right_mode(is_in_val_set: bool) -> Option<NodeMode> {
-    let mode = Node::what_node_mode().unwrap();
+    let mode = Node::what_node_mode().expect("could not detect node mode");
     status_ok!("Mode", "node running in mode: {:?}", mode);
 
     let running_in_val_mode = mode == Validator;
