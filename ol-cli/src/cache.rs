@@ -46,7 +46,7 @@ impl Vitals {
 
     /// write json cache
     pub fn write_json(&self, node_home: &PathBuf) -> Result<(), Error> {
-        let serialized = serde_json::to_vec_pretty(&self)?;
+        let serialized = serde_json::to_vec(&self)?;
         let cache_path = node_home.join(CACHE_JSON_NAME);
         let mut file = File::create(cache_path)?;
         file.write_all(&serialized)?;
