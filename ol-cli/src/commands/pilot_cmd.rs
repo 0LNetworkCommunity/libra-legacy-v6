@@ -54,29 +54,8 @@ impl Runnable for PilotCmd {
             std::process::exit(1);
         }
 
-        //////// MINER RULES ////////
+        // exit if cannot connect to any client, local or upstream.
 
-        if Node::miner_running() {
-            status_ok!("Miner", "miner is running")
-        } else {
-            status_warn!("miner is NOT running");
-            status_info!("Miner", "will try to start miner");
-
-            // does the account exist on chain? otherwise sending mining txs will fail
-            if node.accounts_exist_on_chain() {
-                status_ok!("Account", "owner account found on chain. Starting miner");
-
-                // did the node finish sync?
-                if Node::cold_start_is_synced(&cfg, wp).0 {
-                    status_ok!("Sync", "node is synced");
-                    node.start_miner();
-                } else {
-                    status_warn!("node is NOT Synced");
-                }
-            } else {
-                status_warn!("owner account does NOT exist on chain. Was the account creation transaction submitted?")
-            }
-        }
 
         let is_in_val_set = node.refresh_onchain_state().is_in_validator_set();
         match is_in_val_set {
@@ -91,6 +70,32 @@ impl Runnable for PilotCmd {
         } else {
             status_warn!("node is NOT running");
             maybe_switch_mode(&mut node, is_in_val_set)
+        }
+
+                //////// MINER RULES ////////
+
+        if Node::miner_running() {
+            status_ok!("Miner", "miner is running")
+        } else {
+            status_warn!("miner is NOT running");
+            status_info!("Miner", "will try to start miner");
+            if !Node::node_running() {
+              status_err!("Node not running. Cannot start miner if node is not running");
+            }
+            // does the account exist on chain? otherwise sending mining txs will fail
+            if node.accounts_exist_on_chain() {
+                status_ok!("Account", "owner account found on chain. Starting miner");
+
+                // did the node finish sync?
+                if Node::cold_start_is_synced(&cfg, wp).0 {
+                    status_ok!("Sync", "node is synced");
+                    node.start_miner();
+                } else {
+                    status_warn!("node is NOT Synced");
+                }
+            } else {
+                status_warn!("owner account does NOT exist on chain. Was the account creation transaction submitted?")
+            }
         }
     }
 }

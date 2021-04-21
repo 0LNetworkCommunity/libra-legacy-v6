@@ -25,7 +25,7 @@ REPO_ORG = OLSF
 
 ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
-MNEM = $(shell cat fixtures/mnemonic/${NS}.mnem)
+MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
 else
 REPO_NAME = experimental-genesis
 NODE_ENV = prod
@@ -215,7 +215,7 @@ endif
 
 fixture-stdlib:
 	make stdlib
-	cp language/stdlib/staged/stdlib.mv fixtures/stdlib/fresh_stdlib.mv
+	cp language/stdlib/staged/stdlib.mv ol/fixtures/stdlib/fresh_stdlib.mv
 
 #### HELPERS ####
 check:
@@ -252,13 +252,13 @@ ifdef TEST
 
 # skip  genesis files with fixtures, there may be no version
 ifndef SKIP_BLOB
-	cp ./fixtures/genesis/${V}/genesis.blob ${DATA_PATH}/
-	cp ./fixtures/genesis/${V}/genesis_waypoint ${DATA_PATH}/
+	cp ./ol/fixtures/genesis/${V}/genesis.blob ${DATA_PATH}/
+	cp ./ol/fixtures/genesis/${V}/genesis_waypoint ${DATA_PATH}/
 endif
 # skip miner configuration with fixtures
-	cp ./fixtures/configs/${NS}.toml ${DATA_PATH}/miner.toml
+	cp ./ol/fixtures/configs/${NS}.toml ${DATA_PATH}/miner.toml
 # skip mining proof zero with fixtures
-	cp ./fixtures/blocks/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
+	cp ./ol/fixtures/blocks/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
 
 endif
 
@@ -359,8 +359,8 @@ dev-register: clear fix
 dev-infra: dev-save-genesis dev-backup-archive
 
 dev-save-genesis: set-waypoint
-	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/fixtures/genesis/${V}/
-	git add ${SOURCE}/fixtures/genesis/${V}/
+	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/ol/fixtures/genesis/${V}/
+	git add ${SOURCE}/ol/fixtures/genesis/${V}/
 	git commit -a -m "save genesis fixtures to ${V}" | true
 	git push | true
 
