@@ -62,8 +62,8 @@ impl Runnable for ValWizardCmd {
     if let Some(url) = &self.template_url {
 
       save_template(&url.join("account.json").unwrap(), home_path);
-      let (epoch, wp) = get_epoch_info(&url.join("vitals").unwrap());
-
+      let (epoch, wp) = get_epoch_info(&url.join("epoch.json").unwrap());      
+      
       miner_config.chain_info.base_epoch = epoch;
       miner_config.chain_info.base_waypoint = wp;      
       // get autopay
@@ -172,7 +172,6 @@ pub fn save_template(url: &Url, home_path: &PathBuf) -> PathBuf {
 
 fn get_epoch_info(url: &Url) -> (Option<u64>, Option<Waypoint>) {
   let g_res = reqwest::blocking::get(&url.to_string());
-  dbg!(&g_res);
   let string = g_res.unwrap().text().unwrap();
   let json: Value = string.parse().unwrap();  
   let epoch = json.get("epoch").unwrap().as_u64()

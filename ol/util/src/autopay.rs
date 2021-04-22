@@ -41,17 +41,23 @@ pub fn get_instructions(autopay_batch_file: &PathBuf) -> Vec<Instruction> {
     .map(|value| {
       let readable_inst = value.to_string();
       let inst = value.as_object().expect("expected json object");
-    
+      dbg!(&0);
+
       // for percentages need to convert and scale the two decimal places
       let percent_inflow= inst
       .get("percent_inflow")
-      .map(|f| scale_fractional(f));
+      .and_then(|f| scale_fractional(f));
+
+      dbg!(&1);
+
       let percent_balance = inst
       .get("percent_balance")
-      .map(|f| scale_fractional(f));
+      .and_then(|f| scale_fractional(f));
+      dbg!(&2);
 
       let fixed_payment =  inst
-      .get("fixed_payment").map(|f| f.as_u64().unwrap());
+      .get("fixed_payment").and_then(|f| f.as_u64());
+      dbg!(&3);
 
       if percent_inflow.is_some() || percent_balance.is_some() || fixed_payment.is_some() {
         Instruction {
@@ -81,13 +87,22 @@ pub fn get_instructions(autopay_batch_file: &PathBuf) -> Vec<Instruction> {
 // for autopay purposes percentages have two decimal places precision.
 // No rounding is applied. The third decimal is trucated.
 // the result is a integer of 4 bits.
-fn scale_fractional(fract_percent: &Value) -> u64{
+fn scale_fractional(fract_percent: &Value) -> Option<u64>{
     // finish parsing the json
-    let fractional = fract_percent.as_f64().unwrap();
-    // multiply by 100 to get the desired decimal precision
-    let scaled = fractional * 100 as f64;
-    // drop the fractional part with trunc()
-    let trunc = scaled.trunc() as u64; // return max 4 digits.
-    assert!(trunc < 9999 , "percent needs to have max four digits");
-    trunc
+    match fract_percent.as_f64() {
+        Some(fractional) => {    // multiply by 100 to get the desired decimal precision
+          let scaled = fractional * 100 as f64;
+          // drop the fractional part with trunc()
+          let trunc = scaled.trunc() as u64; // return max 4 digits.
+          if trunc < 9999 {
+            Some(trunc)
+          } else {
+            println!("percent needs to have max four digits, skipping");
+            None
+          }
+
+        }
+        None => None
+    }
+
 }
