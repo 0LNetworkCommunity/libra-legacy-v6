@@ -16,20 +16,6 @@ pub struct AutopayBatchCmd {
     autopay_batch_file: PathBuf,
 }
 
-// fn get_epoch(tx_params: &TxParams) -> u64 {
-//     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
-
-//     let (blob, _version) = client.get_account_state_blob(AccountAddress::ZERO).unwrap();
-//     if let Some(account_blob) = blob {
-//         let account_state = AccountState::try_from(&account_blob).unwrap();
-//         return account_state
-//             .get_configuration_resource()
-//             .unwrap()
-//             .unwrap()
-//             .epoch();
-//     }
-//     0
-// }
 
 impl Runnable for AutopayBatchCmd {
     fn run(&self) {

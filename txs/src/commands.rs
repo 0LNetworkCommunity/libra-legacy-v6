@@ -70,7 +70,7 @@ pub enum TxsCmd {
 
      /// The `version` subcommand
     #[options(help = "submit a saved transaction from file")]
-    Relay(RelayCmd),     
+    Relay(RelayCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.
