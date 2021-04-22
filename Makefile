@@ -259,9 +259,10 @@ endif
 	cp ./ol/fixtures/configs/${NS}.toml ${DATA_PATH}/0L.toml
 # skip mining proof zero with fixtures
 	cp ./ol/fixtures/blocks/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
-# place a dummy autopay.json in root
+# place a mock autopay.json in root
 	cp ./ol/fixtures/autopay/autopay_batch.json ${DATA_PATH}/autopay.json
-
+# place a mock account.json in root, used as template for onboarding
+	cp ./ol/fixtures/account/${NS}.account.json ${DATA_PATH}/account.json
 endif
 
 
