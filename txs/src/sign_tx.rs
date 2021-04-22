@@ -9,10 +9,12 @@ use crate::submit_tx::TxParams;
 use anyhow::Error;
 
 /// sign a raw transaction script, and return a SignedTransaction
-pub fn sign_tx(script: &Script, tx_params: &TxParams, sequence_number: u64, chain_id: ChainId) -> Result<SignedTransaction, Error> {
-
-  
-  // TODO, how does Alice get Bob's tx sequence number?
+pub fn sign_tx(
+  script: &Script,
+  tx_params: &TxParams,
+  sequence_number: u64,
+  chain_id: ChainId,
+) -> Result<SignedTransaction, Error> {
   // sign the transaction script
   create_user_txn(
     &tx_params.keypair,
