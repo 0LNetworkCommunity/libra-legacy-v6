@@ -110,7 +110,7 @@ pub fn create_validator_script(account_json_path: &PathBuf) -> Script {
     // transaction_builder::encode_create_user_account_script(pre_hex, proof_hex)
 }
 
-pub fn fetch_from_web(url: &Url, path: &PathBuf) -> PathBuf {
+pub fn account_from_url(url: &Url, path: &PathBuf) -> PathBuf {
   let g_res = reqwest::blocking::get(&url.to_string());
   let g_path = path.join("account.json");
   let mut g_file = File::create(&g_path).expect("couldn't create file");
@@ -130,7 +130,7 @@ impl Runnable for CreateValidatorCmd {
         let account_json: &PathBuf = if self.account_file.is_some(){
           self.account_file.as_ref().unwrap()
         } else {
-          tmp = fetch_from_web(
+          tmp = account_from_url(
             self.url.as_ref().unwrap(), 
             &cfg.workspace.node_home
           ).clone();
