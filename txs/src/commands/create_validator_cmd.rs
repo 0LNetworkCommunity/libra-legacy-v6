@@ -15,7 +15,7 @@ pub struct CreateValidatorCmd {
     account_file: Option<PathBuf>,
     #[options(short = "u", help = "onboard from URL")]
     url: Option<Url>,
-}
+} 
 
 pub fn create_validator_script(account_json_path: &PathBuf) -> Script {
     let file = fs::File::open(account_json_path).expect("file should open read only");
@@ -112,7 +112,7 @@ pub fn create_validator_script(account_json_path: &PathBuf) -> Script {
 
 pub fn fetch_from_web(url: &Url, path: &PathBuf) -> PathBuf {
   let g_res = reqwest::blocking::get(&url.to_string());
-  let g_path = path.join("onboarding.json");
+  let g_path = path.join("account.json");
   let mut g_file = File::create(&g_path).expect("couldn't create file");
   let g_content = g_res.unwrap().bytes().unwrap().to_vec(); //.text().unwrap();
   g_file.write_all(g_content.as_slice()).unwrap();
