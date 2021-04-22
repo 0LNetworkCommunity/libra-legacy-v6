@@ -63,10 +63,10 @@ impl Runnable for PilotCmd {
         // is node started?
         if Node::node_running() {
             status_ok!("Node", "node is running");
-            maybe_switch_mode(&mut node, is_in_val_set).unwrap();
+            maybe_switch_mode(&mut node, is_in_val_set);
         } else {
             status_warn!("node is NOT running");
-            maybe_switch_mode(&mut node, is_in_val_set).unwrap();
+            maybe_switch_mode(&mut node, is_in_val_set);
         }
 
         //////// MINER RULES ////////
