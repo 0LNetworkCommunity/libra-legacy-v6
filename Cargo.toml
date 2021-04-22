@@ -155,7 +155,6 @@ members = [
     "ol-cli",
     "ol/util",
     "ol/fixtures",
-    "ol/server",
 ]
 
 # NOTE: default-members is the complete list of binaries that form the "production Libra codebase". These members should
