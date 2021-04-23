@@ -82,22 +82,21 @@ pub fn get_instructions(autopay_batch_file: &PathBuf) -> Vec<Instruction> {
 // for autopay purposes percentages have two decimal places precision.
 // No rounding is applied. The third decimal is trucated.
 // the result is a integer of 4 bits.
-fn scale_fractional(fract_percent: &Value) -> Option<u64>{
+fn scale_fractional(fract_percent: &Value) -> Option<u64> {
     // finish parsing the json
     match fract_percent.as_f64() {
-        Some(fractional) => {    // multiply by 100 to get the desired decimal precision
-          let scaled = fractional * 100 as f64;
-          // drop the fractional part with trunc()
-          let trunc = scaled.trunc() as u64; // return max 4 digits.
-          if trunc < 9999 {
-            Some(trunc)
-          } else {
-            println!("percent needs to have max four digits, skipping");
-            None
-          }
-
+        Some(fractional) => {
+            // multiply by 100 to get the desired decimal precision
+            let scaled = fractional * 100 as f64;
+            // drop the fractional part with trunc()
+            let trunc = scaled.trunc() as u64; // return max 4 digits.
+            if trunc < 9999 {
+                Some(trunc)
+            } else {
+                println!("percent needs to have max four digits, skipping");
+                None
+            }
         }
-        None => None
+        None => None,
     }
-
 }

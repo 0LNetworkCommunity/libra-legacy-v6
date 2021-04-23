@@ -6,7 +6,6 @@ use abscissa_core::{Command, Options, Runnable};
 use anyhow::Error;
 use libra_types::transaction::{Script, SignedTransaction};
 use libra_types::transaction::TransactionArgument;
-
 use crate::{entrypoint, sign_tx::sign_tx, submit_tx::{get_tx_params, batch_wrapper, TxParams}};
 use dialoguer::Confirm;
 use std::path::PathBuf;
