@@ -14,11 +14,11 @@ pub struct PayInstruction {
     /// percentage of new inflow of epoch
     pub percent_inflow: Option<f64>,
     /// inflow percent cast to four digit u64 for Move
-    pub percent_inflow_cast: Option<u64>,  
+    pub percent_inflow_cast: Option<u64>,
     /// percentage of total balance at transaction time
     pub percent_balance: Option<f64>,
     /// balance percent cast to four digit u64 for Move
-    pub percent_balance_cast: Option<u64>,  
+    pub percent_balance_cast: Option<u64>,
     /// percentage of total balance at transaction time
     pub fixed_payment: Option<u64>,
     /// epoch when payment instruction will stop
@@ -28,41 +28,33 @@ pub struct PayInstruction {
 }
 
 impl PayInstruction {
-/// extract autopay instructions from json file
-pub fn parse_autopay_instructions(autopay_batch_file: &PathBuf) -> Vec<PayInstruction> {
-    let file = fs::File::open(autopay_batch_file).expect(&format!(
-        "cannot open autopay batch file: {:?}",
-        autopay_batch_file
-    ));
-    let inst_vec: Vec<PayInstruction> = serde_json::from_reader(&file).expect("cannot parse autopay.json");
-    // let json: Value = serde_json::from_reader(&file).expect("cannot parse autopay.json");
-    inst_vec.into_iter()
-    .map(|mut i| {
+    /// extract autopay instructions from json file
+    pub fn parse_autopay_instructions(autopay_batch_file: &PathBuf) -> Vec<PayInstruction> {
+        let file = fs::File::open(autopay_batch_file).expect(&format!(
+            "cannot open autopay batch file: {:?}",
+            autopay_batch_file
+        ));
+        let inst_vec: Vec<PayInstruction> =
+            serde_json::from_reader(&file).expect("cannot parse autopay.json");
+        // let json: Value = serde_json::from_reader(&file).expect("cannot parse autopay.json");
+        inst_vec.into_iter()
+  .map(|mut i| {
+    // TODO: check sequential instructions by uid
 
-      // check the instruction has everything.
-      // if percent_inflow.is_some() || percent_balance.is_some() || fixed_payment.is_some() {}
-      // for percentages need to convert and scale the two decimal places
-      i.percent_inflow_cast = scale_fractional(&i.percent_inflow);
-      i.percent_balance_cast = scale_fractional(&i.percent_balance);
-
-      // let percent_balance = inst
-      // .get("percent_balance")
-      // .and_then(|f| scale_fractional(f));
-
-      // let fixed_payment =  inst
-      // .get("fixed_payment").and_then(|f| f.as_u64());
-
-      // format!("no 'destination' found in line: {:?}"
-                // uid: inst["uid"].as_u64().expect(&format!("no 'uid' found in line: {:?}", readable_inst)),
-
-      
-      i
-
-    })
-    .collect()
+    // check the object has an actual payment instruction.
+    if !i.percent_inflow.is_some() &&
+    !i.percent_balance.is_some() &&
+    !i.fixed_payment.is_some() {
+    println!("autopay instruction file not valid, skipping all transactions. Issue at instruction {:?}", i);
+    }
+    // for percentages need to convert and scale the two decimal places
+    i.percent_inflow_cast = scale_fractional(&i.percent_inflow);
+    i.percent_balance_cast = scale_fractional(&i.percent_balance);
+    i
+  })
+  .collect()
+    }
 }
-}
-
 
 // convert the decimals for Move.
 // for autopay purposes percentages have two decimal places precision.

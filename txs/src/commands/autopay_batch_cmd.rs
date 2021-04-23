@@ -10,7 +10,6 @@ use crate::{entrypoint, sign_tx::sign_tx, submit_tx::{get_tx_params, batch_wrapp
 use dialoguer::Confirm;
 use std::path::PathBuf;
 use ol_util::autopay::PayInstruction;
-/// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct AutopayBatchCmd {
     #[options(short = "f", help = "path of autopay_batch_file.json")]
@@ -76,7 +75,6 @@ pub fn sign_instructions(scripts: Vec<Script>, starting_sequence_num: u64, tx_pa
 /// checks ths instruction against the raw script for correctness.
 pub fn check_instruction_safety(instr: PayInstruction, script: Script) -> Result<(), Error>{
 
-// libra_types::transaction::TransactionArgument
   let PayInstruction {uid, destination, end_epoch, percent_balance_cast, ..} = instr;
 
   assert!(script.args()[0] == TransactionArgument::U64(uid), "not same unique id");
