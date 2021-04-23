@@ -41,23 +41,18 @@ pub fn get_instructions(autopay_batch_file: &PathBuf) -> Vec<Instruction> {
     .map(|value| {
       let readable_inst = value.to_string();
       let inst = value.as_object().expect("expected json object");
-      dbg!(&0);
 
       // for percentages need to convert and scale the two decimal places
       let percent_inflow= inst
       .get("percent_inflow")
       .and_then(|f| scale_fractional(f));
 
-      dbg!(&1);
-
       let percent_balance = inst
       .get("percent_balance")
       .and_then(|f| scale_fractional(f));
-      dbg!(&2);
 
       let fixed_payment =  inst
       .get("fixed_payment").and_then(|f| f.as_u64());
-      dbg!(&3);
 
       if percent_inflow.is_some() || percent_balance.is_some() || fixed_payment.is_some() {
         Instruction {
