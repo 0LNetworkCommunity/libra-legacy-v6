@@ -53,7 +53,7 @@ impl Runnable for InitCmd {
 
 /// Initializes the necessary 0L config files: 0L.toml
 pub fn initialize_host(authkey: AuthenticationKey, account: AccountAddress, path: &Option<PathBuf>) -> Result <OlCliConfig, Error>{
-    let cfg = OlCliConfig::init_miner_configs(authkey, account, path);
+    let cfg = OlCliConfig::init_miner_configs(authkey, account, path, );
     Ok(cfg)
 }
 

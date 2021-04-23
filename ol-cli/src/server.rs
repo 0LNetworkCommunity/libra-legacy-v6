@@ -1,3 +1,4 @@
+//! `server`  web monitor http server
 use futures::StreamExt;
 use serde_json::json;
 use std::{convert::Infallible, fs, thread, time::Duration};
