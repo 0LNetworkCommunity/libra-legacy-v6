@@ -4,7 +4,7 @@
 
 use crate::{entrypoint, prelude::app_config, submit_tx::{get_tx_params, maybe_submit}};
 use abscissa_core::{Command, Options, Runnable};
-use libra_types::{account_address::AccountAddress, transaction::Script};
+use libra_types::transaction::Script;
 use reqwest::Url;
 use std::{fs::{self, File}, io::Write, path::PathBuf};
 use ol_types::account::ValConfigs;
@@ -17,6 +17,7 @@ pub struct CreateValidatorCmd {
     url: Option<Url>,
 } 
 
+/// create validator account by submitting transaction on chain
 pub fn create_validator_script(account_json_path: &PathBuf) -> Script {
     let file_two = fs::File::open(account_json_path).expect("file should open read only");
     let account: ValConfigs = serde_json::from_reader(file_two).expect("file should be proper JSON");
@@ -100,19 +101,18 @@ pub fn create_validator_script(account_json_path: &PathBuf) -> Script {
     //     .to_vec();
 
     transaction_builder::encode_minerstate_onboarding_script(
-        account.pre_hex,
-        account.proof_hex,
-        account.ow_human_name,
-        account.op_address,
+        account.block_zero.preimage,
+        account.block_zero.proof,
+        account.ow_human_name.as_bytes().to_vec(),
+        account.op_address.parse().unwrap(),
         account.op_auth_key_prefix,
         account.op_consensus_pubkey,
         account.op_validator_network_addresses,
         account.op_fullnode_network_addresses,
-        account.op_human_name,
+        account.op_human_name.as_bytes().to_vec(),
         // my_trusted_accounts,
         // voter_trusted_accounts,
     )
-    // transaction_builder::encode_create_user_account_script(pre_hex, proof_hex)
 }
 
 pub fn account_from_url(url: &Url, path: &PathBuf) -> PathBuf {

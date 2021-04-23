@@ -10,6 +10,8 @@ use crate::{entrypoint, sign_tx::sign_tx, submit_tx::{get_tx_params, batch_wrapp
 use dialoguer::Confirm;
 use std::path::PathBuf;
 use ol_types::autopay::PayInstruction;
+
+/// command to submit a batch of autopay tx from file
 #[derive(Command, Debug, Default, Options)]
 pub struct AutopayBatchCmd {
     #[options(short = "f", help = "path of autopay_batch_file.json")]
