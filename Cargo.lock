@@ -5035,9 +5035,19 @@ version = "0.1.0"
 name = "ol-util"
 version = "0.1.0"
 dependencies = [
+ "ajson",
+ "byteorder",
+ "dirs 2.0.2",
+ "hex 0.4.2",
  "libra-config",
+ "libra-crypto",
+ "libra-genesis-tool",
+ "libra-global-constants",
+ "libra-network-address",
  "libra-types",
+ "machine-ip",
  "reqwest",
+ "rustyline",
  "serde",
  "serde_json",
 ]

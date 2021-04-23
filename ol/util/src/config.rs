@@ -1,11 +1,7 @@
 //! OlCli Config
 
-// use miner::delay::delay_difficulty;
-// use miner::submit_tx::TxParams;
-use crate::{commands::CONFIG_FILE};
-use abscissa_core::path::PathBuf;
 use dirs;
-use libra_global_constants::NODE_HOME;
+use libra_global_constants::{NODE_HOME, CONFIG_FILE};
 use libra_types::{
   account_address::AccountAddress, transaction::authenticator::AuthenticationKey,
   waypoint::Waypoint,
@@ -14,7 +10,7 @@ use machine_ip;
 use reqwest::Url;
 use rustyline::Editor;
 use serde::{Deserialize, Serialize};
-use std::{fs, net::Ipv4Addr, str::FromStr, io::Write};
+use std::{fs, io::Write, net::Ipv4Addr, path::PathBuf, str::FromStr};
 use crate::swarm;
 
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";

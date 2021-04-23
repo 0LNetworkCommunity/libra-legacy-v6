@@ -4,6 +4,7 @@ use libra_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{fs, path::PathBuf};
+use crate::account::ValConfigs;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -25,12 +26,15 @@ pub struct Instruction {
     pub duration_epochs: Option<u64>,
 }
 
+impl Instruction {
 /// extract autopay instructions from json file
 pub fn get_instructions(autopay_batch_file: &PathBuf) -> Vec<Instruction> {
     let file = fs::File::open(autopay_batch_file).expect(&format!(
         "cannot open autopay batch file: {:?}",
         autopay_batch_file
     ));
+    let val_configs: ValConfigs = serde_json::from_reader(file).expect("cannot parse autopay.json");
+
     let json: Value = serde_json::from_reader(file).expect("cannot parse autopay.json");
     let inst = json
         .get("autopay_instructions")
@@ -77,6 +81,8 @@ pub fn get_instructions(autopay_batch_file: &PathBuf) -> Vec<Instruction> {
     })
     .collect()
 }
+}
+
 
 // convert the decimals for Move.
 // for autopay purposes percentages have two decimal places precision.
