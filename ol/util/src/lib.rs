@@ -9,8 +9,7 @@
     unused_qualifications
 )]
 
-pub mod swarm;
+pub mod account;
 pub mod autopay;
 pub mod block;
 pub mod config;
-pub mod account;

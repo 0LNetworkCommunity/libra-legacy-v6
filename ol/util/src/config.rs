@@ -11,7 +11,6 @@ use reqwest::Url;
 use rustyline::Editor;
 use serde::{Deserialize, Serialize};
 use std::{fs, io::Write, net::Ipv4Addr, path::PathBuf, str::FromStr};
-use crate::swarm;
 use libra_config::config::NodeConfig;
 
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
@@ -34,7 +33,7 @@ impl OlCliConfig {
   pub fn get_waypoint(&self, swarm_path_opt: Option<PathBuf>) -> Option<Waypoint> {
     if let Some(path) = swarm_path_opt{ 
       return Some(
-        swarm::get_configs(path).1
+        get_swarm_configs(path).1
       ) 
     };
 
@@ -344,4 +343,20 @@ impl Default for TxTypes {
       },
     }
   }
+}
+
+/// Get swarm configs from swarm files, swarm must be running
+pub fn get_swarm_configs(mut swarm_path: PathBuf) -> (Url, Waypoint) {
+    swarm_path.push("0/node.yaml");
+    let config = NodeConfig::load(&swarm_path).unwrap_or_else(
+        |_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path)
+    );
+
+    let url =  Url::parse(
+        format!("http://localhost:{}", config.json_rpc.address.port()).as_str()
+    ).unwrap();
+
+    let waypoint = config.base.waypoint.waypoint();
+
+    (url, waypoint)
 }
