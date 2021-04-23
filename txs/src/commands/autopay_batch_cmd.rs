@@ -9,7 +9,7 @@ use libra_types::transaction::TransactionArgument;
 use crate::{entrypoint, sign_tx::sign_tx, submit_tx::{get_tx_params, batch_wrapper, TxParams}};
 use dialoguer::Confirm;
 use std::path::PathBuf;
-use ol_util::autopay::{Instruction, get_instructions};
+use ol_util::autopay::Instruction;
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct AutopayBatchCmd {
@@ -28,7 +28,7 @@ impl Runnable for AutopayBatchCmd {
 
         let epoch = crate::epoch::get_epoch(&tx_params);
         println!("The current epoch is: {}", epoch);
-        let instructions = get_instructions(&self.autopay_batch_file);
+        let instructions = Instruction::get_instructions(&self.autopay_batch_file);
         let scripts = process_instructions(instructions, epoch);
         batch_wrapper(scripts, &tx_params, entry_args.no_send, entry_args.save_path)
 

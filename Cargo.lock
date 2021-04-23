@@ -5039,6 +5039,7 @@ dependencies = [
  "byteorder",
  "dirs 2.0.2",
  "hex 0.4.2",
+ "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
  "libra-genesis-tool",
@@ -5050,6 +5051,7 @@ dependencies = [
  "rustyline",
  "serde",
  "serde_json",
+ "toml",
 ]
 
 [[package]]

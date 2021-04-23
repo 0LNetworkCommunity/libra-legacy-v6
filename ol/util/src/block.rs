@@ -1,11 +1,7 @@
 //! Proof block datastructure
 
-use byteorder::{LittleEndian, WriteBytesExt};
 use hex::{decode, encode};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
-// use crate::delay;
-use crate::config::OlCliConfig;
-
 /// Data structure and serialization of 0L delay proof.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Block {

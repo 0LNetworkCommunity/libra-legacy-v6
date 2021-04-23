@@ -4,8 +4,6 @@ use libra_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{fs, path::PathBuf};
-use crate::account::ValConfigs;
-
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 /// Autopay payment instruction
@@ -33,9 +31,9 @@ pub fn get_instructions(autopay_batch_file: &PathBuf) -> Vec<Instruction> {
         "cannot open autopay batch file: {:?}",
         autopay_batch_file
     ));
-    let val_configs: ValConfigs = serde_json::from_reader(file).expect("cannot parse autopay.json");
 
-    let json: Value = serde_json::from_reader(file).expect("cannot parse autopay.json");
+    let json: Value = serde_json::from_reader(&file).expect("cannot parse autopay.json");
+
     let inst = json
         .get("autopay_instructions")
         .expect("file should have array of instructions");
