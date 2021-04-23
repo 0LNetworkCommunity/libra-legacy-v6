@@ -88,6 +88,9 @@ pub fn check_instruction_safety(instr: Instruction, script: Script) -> Result<()
 
 #[test]
 fn test_instruction_script_match() {
+  
+  use libra_types::account_address::AccountAddress;
+
   let script = transaction_builder::encode_autopay_create_instruction_script(1, AccountAddress::ZERO, 100, 10);
 
   let instr = Instruction {
@@ -100,6 +103,6 @@ fn test_instruction_script_match() {
       duration_epochs: Some(10)
   };
 
-  check_instruction_safety(instr, script);
+  check_instruction_safety(instr, script).unwrap();
 
 }

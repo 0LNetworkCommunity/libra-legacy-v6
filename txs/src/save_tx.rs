@@ -48,9 +48,10 @@ fn test_sign_tx() {
 
 #[test]
 fn test_save_tx() {
+
   use crate::sign_tx::sign_tx;
   use crate::submit_tx::TxParams;
-  use libra_types::account_address::AccountAddress;
+  use libra_types::{chain_id::ChainId, account_address::AccountAddress};
 
   let script = transaction_builder::encode_demo_e2e_script(42);
   let test_path = PathBuf::from("./signed_tx.json");
