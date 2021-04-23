@@ -19,96 +19,96 @@ pub struct CreateValidatorCmd {
 
 pub fn create_validator_script(account_json_path: &PathBuf) -> Script {
     let file_two = fs::File::open(account_json_path).expect("file should open read only");
-    let test: ValConfigs = serde_json::from_reader(file_two).expect("file should be proper JSON");
-    dbg!(&test);
+    let account: ValConfigs = serde_json::from_reader(file_two).expect("file should be proper JSON");
+    dbg!(&account);
 
-    let file = fs::File::open(account_json_path).expect("file should open read only");
+    // let file = fs::File::open(account_json_path).expect("file should open read only");
 
-    let json: serde_json::Value =
-        serde_json::from_reader(file).expect("file should be proper JSON");
+    // let json: serde_json::Value =
+    //     serde_json::from_reader(file).expect("file should be proper JSON");
 
-    // Parse proof data
-    let block = json
-        .get("block_zero")
-        .expect("file should have block_zero and preimage key");
+    // // Parse proof data
+    // let block = json
+    //     .get("block_zero")
+    //     .expect("file should have block_zero and preimage key");
 
-    let preimage = block
-        .as_object()
-        .unwrap()
-        .get("preimage")
-        .unwrap()
-        .as_str()
-        .unwrap();
+    // let preimage = block
+    //     .as_object()
+    //     .unwrap()
+    //     .get("preimage")
+    //     .unwrap()
+    //     .as_str()
+    //     .unwrap();
 
-    let pre_hex = hex::decode(preimage).unwrap();
+    // let pre_hex = hex::decode(preimage).unwrap();
 
-    let proof = block
-        .as_object()
-        .unwrap()
-        .get("proof")
-        .unwrap()
-        .as_str()
-        .unwrap();
+    // let proof = block
+    //     .as_object()
+    //     .unwrap()
+    //     .get("proof")
+    //     .unwrap()
+    //     .as_str()
+    //     .unwrap();
 
-    let proof_hex = hex::decode(proof).unwrap();
+    // let proof_hex = hex::decode(proof).unwrap();
 
-    // Parse validator config data
-    let ow_human_name = json
-        .get("ow_human_name")
-        .unwrap()
-        .as_str()
-        .unwrap()
-        .as_bytes()
-        .to_vec();
+    // // Parse validator config data
+    // let ow_human_name = json
+    //     .get("ow_human_name")
+    //     .unwrap()
+    //     .as_str()
+    //     .unwrap()
+    //     .as_bytes()
+    //     .to_vec();
 
-    let op_address: AccountAddress = json
-        .get("op_address")
-        .unwrap()
-        .as_str()
-        .unwrap()
-        .parse()
-        .unwrap();
+    // let op_address: AccountAddress = json
+    //     .get("op_address")
+    //     .unwrap()
+    //     .as_str()
+    //     .unwrap()
+    //     .parse()
+    //     .unwrap();
 
-    let op_auth_key_prefix: Vec<u8> =
-        hex::decode(json.get("op_auth_key_prefix").unwrap().as_str().unwrap()).unwrap();
+    // let op_auth_key_prefix: Vec<u8> =
+    //     hex::decode(json.get("op_auth_key_prefix").unwrap().as_str().unwrap()).unwrap();
 
-    let op_consensus_pubkey: Vec<u8> =
-        hex::decode(json.get("op_consensus_pubkey").unwrap().as_str().unwrap()).unwrap();
+    // let op_consensus_pubkey: Vec<u8> =
+    //     hex::decode(json.get("op_consensus_pubkey").unwrap().as_str().unwrap()).unwrap();
 
-    let op_validator_network_addresses = hex::decode(
-        json.get("op_validator_network_addresses")
-            .unwrap()
-            .as_str()
-            .unwrap(),
-    )
-    .unwrap();
+    // let op_validator_network_addresses = hex::decode(
+    //     json.get("op_validator_network_addresses")
+    //         .unwrap()
+    //         .as_str()
+    //         .unwrap(),
+    // )
+    // .unwrap();
 
-    let op_fullnode_network_addresses = hex::decode(
-        json.get("op_fullnode_network_addresses")
-            .unwrap()
-            .as_str()
-            .unwrap(),
-    )
-    .unwrap();
+    // let op_fullnode_network_addresses = hex::decode(
+    //     json.get("op_fullnode_network_addresses")
+    //         .unwrap()
+    //         .as_str()
+    //         .unwrap(),
+    // )
+    // .unwrap();
 
-    let op_human_name = json
-        .get("op_human_name")
-        .unwrap()
-        .as_str()
-        .unwrap()
-        .as_bytes()
-        .to_vec();
+    // let op_human_name = json
+    //     .get("op_human_name")
+    //     .unwrap()
+    //     .as_str()
+    //     .unwrap()
+    //     .as_bytes()
+    //     .to_vec();
 
     transaction_builder::encode_minerstate_onboarding_script(
-        pre_hex,
-        proof_hex,
-        ow_human_name,
-        op_address,
-        op_auth_key_prefix,
-        op_consensus_pubkey,
-        op_validator_network_addresses,
-        op_fullnode_network_addresses,
-        op_human_name,
+        account.pre_hex,
+        account.proof_hex,
+        account.ow_human_name,
+        account.op_address,
+        account.op_auth_key_prefix,
+        account.op_consensus_pubkey,
+        account.op_validator_network_addresses,
+        account.op_fullnode_network_addresses,
+        account.op_human_name,
         // my_trusted_accounts,
         // voter_trusted_accounts,
     )
