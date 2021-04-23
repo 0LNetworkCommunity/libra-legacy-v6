@@ -4,7 +4,7 @@
 
 use abscissa_core::{Command, Options, Runnable};
 use anyhow::Error;
-use libra_types::{account_address::AccountAddress, transaction::{Script, SignedTransaction}};
+use libra_types::transaction::{Script, SignedTransaction};
 use libra_types::transaction::TransactionArgument;
 
 use crate::{entrypoint, sign_tx::sign_tx, submit_tx::{get_tx_params, batch_wrapper, TxParams}};
@@ -81,6 +81,9 @@ pub fn check_instruction_safety(instr: Instruction, script: Script) -> Result<()
   let Instruction {uid, destination, end_epoch, percent_balance, ..} = instr;
 
   assert!(script.args()[0] == TransactionArgument::U64(uid), "not same unique id");
+  assert!(script.args()[1] == TransactionArgument::Address(destination), "not sending to expected destination");
+  assert!(script.args()[2] == TransactionArgument::U64(end_epoch), "not the same ending epoch");
+  assert!(script.args()[3] == TransactionArgument::U64(percent_balance.unwrap()), "not the same ending epoch");
   Ok(())
 }
 

@@ -1,6 +1,6 @@
 //! `save tx`
 use anyhow::Error;
-use libra_types::{chain_id::ChainId, transaction::SignedTransaction};
+use libra_types::transaction::SignedTransaction;
 use std::{
   fs::{self, File},
   io::{BufReader, Write},
