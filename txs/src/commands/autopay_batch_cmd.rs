@@ -88,7 +88,6 @@ pub fn check_instruction_safety(instr: PayInstruction, script: Script) -> Result
 
 #[test]
 fn test_instruction_script_match() {
-  
   use libra_types::account_address::AccountAddress;
 
   let script = transaction_builder::encode_autopay_create_instruction_script(1, AccountAddress::ZERO, 100, 10);
@@ -97,7 +96,9 @@ fn test_instruction_script_match() {
       uid: 1,
       destination: AccountAddress::ZERO,
       percent_inflow: None,
-      percent_balance: Some(10),
+      percent_inflow_cast: None,
+      percent_balance: Some(10.00),
+      percent_balance_cast: None,
       fixed_payment: None,
       end_epoch: 100,
       duration_epochs: Some(10)
