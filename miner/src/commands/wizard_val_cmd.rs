@@ -7,7 +7,7 @@ use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use libra_wallet::WalletLibrary;
 use ol_cli::{commands::init_cmd, config::OlCliConfig};
-use ol_util::autopay::{self, Instruction};
+use ol_util::autopay::{self, PayInstruction};
 use reqwest::Url;
 use std::{fs::File, io::Write, path::PathBuf};
 use txs::{commands::autopay_batch_cmd, submit_tx};
@@ -140,7 +140,7 @@ fn get_autopay_batch(
   home_path: &PathBuf,
   miner_config: &OlCliConfig,
   wallet: &WalletLibrary,
-) -> (Option<Vec<Instruction>>, Option<Vec<SignedTransaction>>) {
+) -> (Option<Vec<PayInstruction>>, Option<Vec<SignedTransaction>>) {
   let file_name = if template.is_some() {
     "template.json"
   } else if let Some(path) = file_path {

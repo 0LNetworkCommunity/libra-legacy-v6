@@ -7,7 +7,7 @@ use abscissa_core::{Command, Options, Runnable};
 use libra_types::{account_address::AccountAddress, transaction::Script};
 use reqwest::Url;
 use std::{fs::{self, File}, io::Write, path::PathBuf};
-
+use ol_util::account::ValConfigs;
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Options)]
 pub struct CreateValidatorCmd {
@@ -18,7 +18,12 @@ pub struct CreateValidatorCmd {
 } 
 
 pub fn create_validator_script(account_json_path: &PathBuf) -> Script {
+    let file_two = fs::File::open(account_json_path).expect("file should open read only");
+    let test: ValConfigs = serde_json::from_reader(file_two).expect("file should be proper JSON");
+    dbg!(&test);
+
     let file = fs::File::open(account_json_path).expect("file should open read only");
+
     let json: serde_json::Value =
         serde_json::from_reader(file).expect("file should be proper JSON");
 
@@ -146,4 +151,11 @@ impl Runnable for CreateValidatorCmd {
           entry_args.save_path
         ).unwrap();
     }
+}
+
+
+#[test]
+fn test_create_val() {
+  let path = ol_fixtures::get_persona_account_json("alice").1;
+  create_validator_script(&path);
 }

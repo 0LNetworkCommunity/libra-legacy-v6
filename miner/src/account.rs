@@ -7,7 +7,7 @@ use hex::{decode, encode};
 use std::{fs::File, io::Write, path::PathBuf};
 use libra_network_address::{NetworkAddress, encrypted::{TEST_SHARED_VAL_NETADDR_KEY, TEST_SHARED_VAL_NETADDR_KEY_VERSION}};
 use libra_genesis_tool::keyscheme::KeyScheme;
-use ol_util::autopay::Instruction;
+use ol_util::autopay::PayInstruction;
 
 #[derive(Serialize, Deserialize, Debug)]
 /// Configuration data necessary to initialize a validator.
@@ -35,7 +35,7 @@ pub struct ValConfigs {
     /// Human readable name of account
     pub op_human_name: String,
     /// autopay configs
-    pub autopay_instructions: Option<Vec<Instruction>>,
+    pub autopay_instructions: Option<Vec<PayInstruction>>,
     /// autopay configs
     pub autopay_signed: Option<Vec<SignedTransaction>>,
 }
@@ -69,7 +69,7 @@ impl ValConfigs {
         block: Block,
         keys: KeyScheme,
         ip_address: String,
-        autopay_instructions: Option<Vec<Instruction>>,
+        autopay_instructions: Option<Vec<PayInstruction>>,
         autopay_signed: Option<Vec<SignedTransaction>>,
     ) -> Self {
         // let keys = KeyScheme::new_from_mnemonic(mnemonic_string);
