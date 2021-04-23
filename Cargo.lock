@@ -4180,7 +4180,7 @@ dependencies = [
  "move-core-types",
  "ol-cli",
  "ol-fixtures",
- "ol-util",
+ "ol-types",
  "once_cell",
  "regex",
  "reqwest",
@@ -5004,7 +5004,7 @@ dependencies = [
  "machine-ip",
  "nix 0.18.0",
  "num-format",
- "ol-util",
+ "ol-types",
  "once_cell",
  "regex",
  "reqwest",
@@ -5032,7 +5032,7 @@ name = "ol-fixtures"
 version = "0.1.0"
 
 [[package]]
-name = "ol-util"
+name = "ol-types"
 version = "0.1.0"
 dependencies = [
  "ajson",
@@ -7678,7 +7678,7 @@ dependencies = [
  "move-core-types",
  "ol-cli",
  "ol-fixtures",
- "ol-util",
+ "ol-types",
  "once_cell",
  "regex",
  "reqwest",

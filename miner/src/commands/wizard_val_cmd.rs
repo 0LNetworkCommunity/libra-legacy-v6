@@ -7,7 +7,8 @@ use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use libra_wallet::WalletLibrary;
 use ol_cli::{commands::init_cmd, config::OlCliConfig};
-use ol_util::autopay::{self, PayInstruction};
+use ol_types
+::autopay::{self, PayInstruction};
 use reqwest::Url;
 use std::{fs::File, io::Write, path::PathBuf};
 use txs::{commands::autopay_batch_cmd, submit_tx};

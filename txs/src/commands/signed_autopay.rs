@@ -8,7 +8,7 @@ use libra_types::transaction::{Script, SignedTransaction};
 use crate::{entrypoint, sign_tx::sign_tx, submit_tx::{get_tx_params, batch_wrapper, TxParams}};
 use dialoguer::Confirm;
 use std::path::PathBuf;
-use ol_util::autopay::{Instruction, get_instructions};
+use ol_types::autopay::{Instruction, get_instructions};
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct AutopayBatchCmd {

@@ -23,7 +23,7 @@ use libra_types::{
 };
 
 use libra_wallet::WalletLibrary;
-use ol_util;
+use ol_types;
 use reqwest::Url;
 use std::{
     io::{stdout, Write},
@@ -173,7 +173,7 @@ pub fn get_tx_params() -> Result<TxParams, Error> {
 
 /// Extract params from a local running swarm
 pub fn get_tx_params_from_swarm(swarm_path: PathBuf) -> Result<TxParams, Error> {
-    let (url, waypoint) = ol_util::config::get_swarm_configs(swarm_path);
+    let (url, waypoint) = ol_types::config::get_swarm_configs(swarm_path);
     let entry_args = entrypoint::get_args();
     let mnem = ol_fixtures::get_persona_mnem(entry_args.swarm_persona.unwrap().as_str());
     let keys = KeyScheme::new_from_mnemonic(mnem);

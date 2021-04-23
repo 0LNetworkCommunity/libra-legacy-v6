@@ -9,7 +9,7 @@ use libra_types::transaction::TransactionArgument;
 use crate::{entrypoint, sign_tx::sign_tx, submit_tx::{get_tx_params, batch_wrapper, TxParams}};
 use dialoguer::Confirm;
 use std::path::PathBuf;
-use ol_util::autopay::PayInstruction;
+use ol_types::autopay::PayInstruction;
 #[derive(Command, Debug, Default, Options)]
 pub struct AutopayBatchCmd {
     #[options(short = "f", help = "path of autopay_batch_file.json")]

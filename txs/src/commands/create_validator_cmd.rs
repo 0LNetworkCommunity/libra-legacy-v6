@@ -7,7 +7,7 @@ use abscissa_core::{Command, Options, Runnable};
 use libra_types::{account_address::AccountAddress, transaction::Script};
 use reqwest::Url;
 use std::{fs::{self, File}, io::Write, path::PathBuf};
-use ol_util::account::ValConfigs;
+use ol_types::account::ValConfigs;
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Options)]
 pub struct CreateValidatorCmd {

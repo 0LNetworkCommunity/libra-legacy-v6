@@ -1,2 +1,3 @@
 //! `config` module for all 0L settings
-pub use ol_util::config::OlCliConfig;
+pub use ol_types
+::config::OlCliConfig;

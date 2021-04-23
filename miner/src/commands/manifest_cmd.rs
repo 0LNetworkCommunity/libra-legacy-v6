@@ -9,7 +9,8 @@ use libra_genesis_tool::keyscheme::KeyScheme;
 use abscissa_core::{Command, Options, Runnable};
 use libra_types::transaction::SignedTransaction;
 use libra_wallet::WalletLibrary;
-use ol_util::autopay::PayInstruction;
+use ol_types
+::autopay::PayInstruction;
 use std::path::PathBuf;
 use crate::prelude::app_config;
 

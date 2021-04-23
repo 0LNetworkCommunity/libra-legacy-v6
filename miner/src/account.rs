@@ -7,7 +7,8 @@ use hex::{decode, encode};
 use std::{fs::File, io::Write, path::PathBuf};
 use libra_network_address::{NetworkAddress, encrypted::{TEST_SHARED_VAL_NETADDR_KEY, TEST_SHARED_VAL_NETADDR_KEY_VERSION}};
 use libra_genesis_tool::keyscheme::KeyScheme;
-use ol_util::autopay::PayInstruction;
+use ol_types
+::autopay::PayInstruction;
 
 #[derive(Serialize, Deserialize, Debug)]
 /// Configuration data necessary to initialize a validator.
