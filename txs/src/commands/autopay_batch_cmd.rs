@@ -3,7 +3,9 @@
 #![allow(clippy::never_loop)]
 
 use abscissa_core::{Command, Options, Runnable};
-use libra_types::transaction::{Script, SignedTransaction};
+use anyhow::Error;
+use libra_types::{account_address::AccountAddress, transaction::{Script, SignedTransaction}};
+use libra_types::transaction::TransactionArgument;
 
 use crate::{entrypoint, sign_tx::sign_tx, submit_tx::{get_tx_params, batch_wrapper, TxParams}};
 use dialoguer::Confirm;
@@ -36,30 +38,29 @@ impl Runnable for AutopayBatchCmd {
 
 /// Process autopay instructions in to scripts
 pub fn process_instructions(instructions: Vec<Instruction>, current_epoch: u64) -> Vec<Script> {
-        // TODO: Check instruction IDs are sequential.
-        instructions.into_iter().filter_map(|i| {
-            let warning = format!(
-                "Instruction {uid}:\nSend {percent_balance:.2?}% of your total balance every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
-                uid = &i.uid,
-                percent_balance = *&i.percent_balance.unwrap() as f64 /100f64,
-                duration_epochs = &i.duration_epochs.unwrap(),
-                epoch_ending = &i.duration_epochs.unwrap() + current_epoch,
-                destination = &i.destination,
-            );
-            println!("{}", &warning);            // check the user wants to do this.
-            match Confirm::new().with_prompt("").interact().unwrap() {
-              true => Some(i),
-              _ =>  {
-                println!("skipping instruction, going to next in batch");
-                None
-              }
-            }            
-        })
-        // .collect()
-        .map(|i| {
-          transaction_builder::encode_autopay_create_instruction_script(i.uid, i.destination, i.end_epoch, i.percent_balance.unwrap())
-        })
-        .collect()
+    // TODO: Check instruction IDs are sequential.
+    instructions.into_iter().filter_map(|i| {
+        let warning = format!(
+            "Instruction {uid}:\nSend {percent_balance:.2?}% of your total balance every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
+            uid = &i.uid,
+            percent_balance = *&i.percent_balance.unwrap() as f64 /100f64,
+            duration_epochs = &i.duration_epochs.unwrap(),
+            epoch_ending = &i.duration_epochs.unwrap() + current_epoch,
+            destination = &i.destination,
+        );
+        println!("{}", &warning);            // check the user wants to do this.
+        match Confirm::new().with_prompt("").interact().unwrap() {
+          true => Some(i),
+          _ =>  {
+            println!("skipping instruction, going to next in batch");
+            None
+          }
+        }            
+    })
+    .map(|i| {
+      transaction_builder::encode_autopay_create_instruction_script(i.uid, i.destination, i.end_epoch, i.percent_balance.unwrap())
+    })
+    .collect()
 }
  
 /// return a vec of signed transactions
@@ -71,4 +72,32 @@ pub fn sign_instructions(scripts: Vec<Script>, starting_sequence_num: u64, tx_pa
     sign_tx(&s, tx_params, seq, tx_params.chain_id).unwrap()
     })
   .collect()
+}
+
+/// checks ths instruction against the raw script for correctness.
+pub fn check_instruction_safety(instr: Instruction, script: Script) -> Result<(), Error>{
+
+// libra_types::transaction::TransactionArgument
+  let Instruction {uid, destination, end_epoch, percent_balance, ..} = instr;
+
+  assert!(script.args()[0] == TransactionArgument::U64(uid), "not same unique id");
+  Ok(())
+}
+
+#[test]
+fn test_instruction_script_match() {
+  let script = transaction_builder::encode_autopay_create_instruction_script(1, AccountAddress::ZERO, 100, 10);
+
+  let instr = Instruction {
+      uid: 1,
+      destination: AccountAddress::ZERO,
+      percent_inflow: None,
+      percent_balance: Some(10),
+      fixed_payment: None,
+      end_epoch: 100,
+      duration_epochs: Some(10)
+  };
+
+  check_instruction_safety(instr, script);
+
 }
