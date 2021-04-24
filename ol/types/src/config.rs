@@ -313,6 +313,13 @@ impl Default for Profile {
     }
   }
 }
+
+enum TxOpts {
+  Mgmt(TxPrefs),
+  Miner(TxPrefs),
+  Cheap(TxPrefs),
+}
+
 /// Transaction types used in 0L clients
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -321,6 +328,8 @@ pub struct TxTypes {
   pub management_txs: TxPrefs,
   /// Transactions related to mining: commit proof.
   pub miner_txs: TxPrefs,
+  /// Transactions related to mining: commit proof.
+  pub cheap_txs: TxPrefs,
 }
 
 /// Transaction preferences for a given type of transaction
@@ -345,6 +354,11 @@ impl Default for TxTypes {
       },
       miner_txs: TxPrefs {
         max_gas_unit_for_tx: 10_000, // miner transaction
+        coin_price_per_unit: 1,
+        user_tx_timeout: 5_000,
+      },
+      cheap_txs: TxPrefs {
+        max_gas_unit_for_tx: 1_000, // miner transaction
         coin_price_per_unit: 1,
         user_tx_timeout: 5_000,
       },

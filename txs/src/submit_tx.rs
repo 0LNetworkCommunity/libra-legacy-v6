@@ -203,6 +203,7 @@ pub fn get_tx_params_from_swarm(swarm_path: PathBuf) -> Result<TxParams, Error> 
 pub fn get_tx_params_from_toml(
     config: TxsConfig,
     wallet_opt: Option<&WalletLibrary>,
+    tx_type: ,
 ) -> Result<TxParams, Error> {
     let url = config.profile.default_node.clone().unwrap();
     let (auth_key, address, wallet) = if let Some(wallet) = wallet_opt {
