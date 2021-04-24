@@ -3,7 +3,7 @@
 use hex::{decode, encode};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 /// Data structure and serialization of 0L delay proof.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Block {
     /// Block Height
     pub height: u64,

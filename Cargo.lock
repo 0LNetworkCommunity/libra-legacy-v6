@@ -5036,6 +5036,7 @@ name = "ol-types"
 version = "0.1.0"
 dependencies = [
  "ajson",
+ "anyhow",
  "byteorder",
  "dirs 2.0.2",
  "hex 0.4.2",

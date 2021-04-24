@@ -1,8 +1,9 @@
 //! `autopay`
 
-use libra_types::account_address::AccountAddress;
+use libra_types::{account_address::AccountAddress, transaction::{Script, TransactionArgument} };
 use serde::{Deserialize, Serialize};
 use std::{fs, path::PathBuf};
+use anyhow::Error;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 /// Autopay payment instruction
@@ -53,6 +54,35 @@ impl PayInstruction {
     i
   })
   .collect()
+    }
+
+    /// checks ths instruction against the raw script for correctness.
+    pub fn check_instruction_safety(instr: PayInstruction, script: Script) -> Result<(), Error> {
+        let PayInstruction {
+            uid,
+            destination,
+            end_epoch,
+            percent_balance_cast,
+            ..
+        } = instr;
+
+        assert!(
+            script.args()[0] == TransactionArgument::U64(uid),
+            "not same unique id"
+        );
+        assert!(
+            script.args()[1] == TransactionArgument::Address(destination),
+            "not sending to expected destination"
+        );
+        assert!(
+            script.args()[2] == TransactionArgument::U64(end_epoch),
+            "not the same ending epoch"
+        );
+        assert!(
+            script.args()[3] == TransactionArgument::U64(percent_balance_cast.unwrap()),
+            "not the same ending epoch"
+        );
+        Ok(())
     }
 }
 

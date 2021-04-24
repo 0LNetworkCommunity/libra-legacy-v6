@@ -9,7 +9,7 @@ use libra_network_address::{NetworkAddress, encrypted::{TEST_SHARED_VAL_NETADDR_
 use libra_genesis_tool::keyscheme::KeyScheme;
 use crate::autopay::PayInstruction;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 /// Configuration data necessary to initialize a validator.
 pub struct ValConfigs {
     /// Block zero of the onboarded miner

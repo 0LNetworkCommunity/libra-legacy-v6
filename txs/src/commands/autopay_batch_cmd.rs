@@ -3,9 +3,7 @@
 #![allow(clippy::never_loop)]
 
 use abscissa_core::{Command, Options, Runnable};
-use anyhow::Error;
 use libra_types::transaction::{Script, SignedTransaction};
-use libra_types::transaction::TransactionArgument;
 use crate::{entrypoint, sign_tx::sign_tx, submit_tx::{get_tx_params, batch_wrapper, TxParams}};
 use dialoguer::Confirm;
 use std::path::PathBuf;
@@ -74,17 +72,17 @@ pub fn sign_instructions(scripts: Vec<Script>, starting_sequence_num: u64, tx_pa
   .collect()
 }
 
-/// checks ths instruction against the raw script for correctness.
-pub fn check_instruction_safety(instr: PayInstruction, script: Script) -> Result<(), Error>{
+// /// checks ths instruction against the raw script for correctness.
+// pub fn check_instruction_safety(instr: PayInstruction, script: Script) -> Result<(), Error>{
 
-  let PayInstruction {uid, destination, end_epoch, percent_balance_cast, ..} = instr;
+//   let PayInstruction {uid, destination, end_epoch, percent_balance_cast, ..} = instr;
 
-  assert!(script.args()[0] == TransactionArgument::U64(uid), "not same unique id");
-  assert!(script.args()[1] == TransactionArgument::Address(destination), "not sending to expected destination");
-  assert!(script.args()[2] == TransactionArgument::U64(end_epoch), "not the same ending epoch");
-  assert!(script.args()[3] == TransactionArgument::U64(percent_balance_cast.unwrap()), "not the same ending epoch");
-  Ok(())
-}
+//   assert!(script.args()[0] == TransactionArgument::U64(uid), "not same unique id");
+//   assert!(script.args()[1] == TransactionArgument::Address(destination), "not sending to expected destination");
+//   assert!(script.args()[2] == TransactionArgument::U64(end_epoch), "not the same ending epoch");
+//   assert!(script.args()[3] == TransactionArgument::U64(percent_balance_cast.unwrap()), "not the same ending epoch");
+//   Ok(())
+// }
 
 #[test]
 fn test_instruction_script_match() {
