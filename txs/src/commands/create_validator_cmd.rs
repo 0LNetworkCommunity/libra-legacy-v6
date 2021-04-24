@@ -8,8 +8,8 @@ use crate::{
     submit_tx::{get_tx_params, maybe_submit},
 };
 use abscissa_core::{Command, Options, Runnable};
-use libra_types::transaction::{Script, TransactionPayload};
-use ol_types::{account::ValConfigs, autopay::PayInstruction};
+use libra_types::transaction::Script;
+use ol_types::account::ValConfigs;
 use reqwest::Url;
 use std::{
     fs::{self, File},
@@ -30,6 +30,8 @@ pub fn create_validator_script(account_json_path: &PathBuf) -> Script {
     let file_two = fs::File::open(account_json_path).expect("file should open read only");
     let account: ValConfigs =
         serde_json::from_reader(file_two).expect("file should be proper JSON");
+
+    account.check_autopay().unwrap();
 
     transaction_builder::encode_minerstate_onboarding_script(
         account.block_zero.preimage,
@@ -55,31 +57,7 @@ pub fn account_from_url(url: &Url, path: &PathBuf) -> PathBuf {
     g_path
 }
 
-fn check_autopay(account: &ValConfigs) {
-    // let signed = &account.clone().autopay_signed.unwrap();
-    account
-        .autopay_instructions
-        .clone()
-        .expect("could not find autopay instructions")
-        .into_iter()
-        .enumerate()
-        .for_each(|(i, instr)| {
-            let signed = account.autopay_signed.clone().unwrap();
-            let tx = signed.iter().nth(i).unwrap();
-            let payload = tx.clone().into_raw_transaction().into_payload();
-            if let TransactionPayload::Script(s) = payload {
-                match PayInstruction::check_instruction_safety(instr.clone(), s.clone()) {
-                    Ok(_) => {}
-                    Err(e) => {
-                        panic!(
-                            "autopay instruction does not match signed tx args, {:?}, error: {}",
-                            instr, e
-                        );
-                    }
-                }
-            };
-        })
-}
+
 
 impl Runnable for CreateValidatorCmd {
     fn run(&self) {
