@@ -1,5 +1,8 @@
 [workspace]
-node_home = "/root/.0L"
+node_home = "/root/.0L/"
+source_path = "/root/libra"
+block_dir = "blocks"
+stdlib_bin_path = "/root/libra/language/stdlib/staged/stdlib.mv"
 
 [profile]
 account = "88E74DFED34420F2AD8032148280A84B"
@@ -7,7 +10,19 @@ auth_key = "74ea911c261e07ba0198baf4d9ac852e88e74dfed34420f2ad8032148280a84b"
 ip = "167.71.84.248"
 statement = "Protests rage across the nation"
 
+default_node = "http://localhost:8080/"
+upstream_nodes = ["http://localhost:8080/"]
+
 [chain_info]
-chain_id = "0L testnet"
-block_dir = "blocks"
-default_node = "http://localhost:8080"
+chain_id = "experimental"
+base_epoch = 0
+base_waypoint = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2"
+[tx_configs.management_txs]
+max_gas_unit_for_tx = 1000000
+coin_price_per_unit = 1
+user_tx_timeout = 5000
+
+[tx_configs.miner_txs]
+max_gas_unit_for_tx = 10000
+coin_price_per_unit = 1
+user_tx_timeout = 5000

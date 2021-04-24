@@ -1,0 +1,27 @@
+[package]
+name = "ol-types"
+version = "0.1.0"
+authors = [""]
+edition = "2018"
+
+[dependencies]
+libra-config = { path = "../../config/", version = "0.1.0" }
+reqwest = { version = "0.10.6", features = ["blocking", "json"], default_features = false }
+libra-types = { path = "../../types/", version = "0.1.0" }
+serde = { version = "1", features = ["serde_derive"] }
+serde_json = "1"
+hex = "0.4"
+byteorder = "1"
+libra-global-constants = { path = "../../config/global-constants", version = "0.1.0"}
+dirs = "2.0.2"
+machine-ip = "0.2.1"
+rustyline = "6.2.0"
+ajson = "0.2.3"
+libra-crypto = { path = "../../crypto/crypto/", version = "0.1.0" }
+libra-network-address = { path = "../../network/network-address", version = "0.1.0" }
+libra-genesis-tool = {path = "../../config/management/genesis", version = "0.1.0", features = ["testing"] }
+toml = "0.5.6"
+lcs = { path = "../../common/lcs", version = "0.1.0", package = "libra-canonical-serialization" }
+anyhow = "1.0.33"
+
+

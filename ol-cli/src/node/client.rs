@@ -61,7 +61,7 @@ pub fn default_local_client(config: &OlCliConfig,  waypoint: Waypoint)  -> Optio
 
 /// connect a swarm client
 pub fn swarm_test_client(swarm_path: PathBuf) -> Option<(LibraClient, Waypoint)> {
-    let (url, waypoint) = ol_util::swarm::get_configs(swarm_path);
+    let (url, waypoint) = ol_types::config::get_swarm_configs(swarm_path);
     match make_client(Some(url), waypoint) {
         Ok(client) => {Some((client, waypoint))}
         Err(_) => {None}

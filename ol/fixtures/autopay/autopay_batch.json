@@ -1,6 +1,6 @@
 {
   "autopay_instructions": [
-    { "uid": 1, "destination": "3DC18D1CF61FAAC6AC70E3A63F062E4B",  "percent_int": 10, "end_epoch": 100, "duration_epochs": 100},
-    { "uid": 2, "destination": "3DC18D1CF61FAAC6AC70E3A63F062E4B",  "percent_int": 1, "end_epoch": 100, "duration_epochs": 100}
+    { "uid": 1, "destination": "3DC18D1CF61FAAC6AC70E3A63F062E4B",  "percent_balance": 10, "end_epoch": 100, "duration_epochs": 100},
+    { "uid": 2, "destination": "3DC18D1CF61FAAC6AC70E3A63F062E4B",  "percent_balance": 1, "end_epoch": 100, "duration_epochs": 100}
   ]
 }
