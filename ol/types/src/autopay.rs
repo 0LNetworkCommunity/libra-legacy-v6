@@ -39,28 +39,23 @@ impl PayInstruction {
             "cannot open autopay batch file: {:?}",
             autopay_batch_file
         ));
-        // let inst_vec: Vec<PayInstruction> =
-        // serde_json::from_reader(&file).expect("cannot parse autopay.json");
         let json: Value = serde_json::from_reader(&file).expect("cannot parse autopay.json");
         let val: Value = json.get("autopay_instructions").unwrap().to_owned();
         let inst_vec: Vec<PayInstruction> = serde_json::from_value(val).unwrap();
         inst_vec.into_iter()
-  .map(|mut i| {
-    // TODO: check sequential instructions by uid
-
-    // check the object has an actual payment instruction.
-    if !i.percent_inflow.is_some() &&
-    !i.percent_balance.is_some() &&
-    !i.fixed_payment.is_some() {
-    println!("autopay instruction file not valid, skipping all transactions. Issue at instruction {:?}", i);
+        .map(|mut i| {
+            // TODO: check sequential instructions by uid
+            // check the object has an actual payment instruction.
+            if !i.percent_inflow.is_some() &&
+            !i.percent_balance.is_some() &&
+            !i.fixed_payment.is_some() {
+              println!("autopay instruction file not valid, skipping all transactions. Issue at instruction {:?}", i);
+            }
+            i.cast_scale();
+            i
+        })
+        .collect()
     }
-    // for percentages need to convert and scale the two decimal places
-    i.percent_inflow_cast = scale_fractional(&i.percent_inflow);
-    i.percent_balance_cast = scale_fractional(&i.percent_balance);
-    i
-  })
-  .collect()
-  }
 
     /// checks ths instruction against the raw script for correctness.
     pub fn check_instruction_safety(instr: PayInstruction, script: Script) -> Result<(), Error> {
@@ -85,13 +80,23 @@ impl PayInstruction {
             "not the same ending epoch"
         );
         assert!(
-            script.args()[3] == TransactionArgument::U64(percent_balance_cast.expect("cannot get percent_balance_cast")),
+            script.args()[3]
+                == TransactionArgument::U64(
+                    percent_balance_cast.expect("cannot get percent_balance_cast")
+                ),
             "not the same ending epoch"
         );
         Ok(())
     }
-}
 
+    /// add cast fields in instruction objects
+    pub fn cast_scale(&mut self) -> &Self {
+        // for percentages need to convert and scale the two decimal places
+        self.percent_inflow_cast = scale_fractional(&self.percent_inflow);
+        self.percent_balance_cast = scale_fractional(&self.percent_balance);
+        self
+    }
+}
 // convert the decimals for Move.
 // for autopay purposes percentages have two decimal places precision.
 // No rounding is applied. The third decimal is trucated.
