@@ -58,14 +58,14 @@ impl PayInstruction {
     }
 
     /// checks ths instruction against the raw script for correctness.
-    pub fn check_instruction_safety(instr: PayInstruction, script: Script) -> Result<(), Error> {
+    pub fn check_instruction_safety(&self, script: Script) -> Result<(), Error> {
         let PayInstruction {
             uid,
             destination,
             end_epoch,
             percent_balance_cast,
             ..
-        } = instr;
+        } = *self;
 
         assert!(
             script.args()[0] == TransactionArgument::U64(uid),

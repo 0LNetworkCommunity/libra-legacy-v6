@@ -72,18 +72,6 @@ pub fn sign_instructions(scripts: Vec<Script>, starting_sequence_num: u64, tx_pa
   .collect()
 }
 
-// /// checks ths instruction against the raw script for correctness.
-// pub fn check_instruction_safety(instr: PayInstruction, script: Script) -> Result<(), Error>{
-
-//   let PayInstruction {uid, destination, end_epoch, percent_balance_cast, ..} = instr;
-
-//   assert!(script.args()[0] == TransactionArgument::U64(uid), "not same unique id");
-//   assert!(script.args()[1] == TransactionArgument::Address(destination), "not sending to expected destination");
-//   assert!(script.args()[2] == TransactionArgument::U64(end_epoch), "not the same ending epoch");
-//   assert!(script.args()[3] == TransactionArgument::U64(percent_balance_cast.unwrap()), "not the same ending epoch");
-//   Ok(())
-// }
-
 #[test]
 fn test_instruction_script_match() {
   use libra_types::account_address::AccountAddress;
@@ -102,6 +90,6 @@ fn test_instruction_script_match() {
       duration_epochs: Some(10)
   };
 
-  check_instruction_safety(instr, script).unwrap();
+  instr.check_instruction_safety(script).unwrap();
 
 }
