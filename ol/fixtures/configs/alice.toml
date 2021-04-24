@@ -3,6 +3,7 @@ node_home = "/root/.0L/"
 source_path = "/root/libra"
 block_dir = "blocks"
 stdlib_bin_path = "/root/libra/language/stdlib/staged/stdlib.mv"
+db_path = "/root/.0L/db"
 
 [profile]
 account = "4C613C2F4B1E67CA8D98A542EE3F59F5"
