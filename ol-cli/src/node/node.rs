@@ -179,8 +179,7 @@ impl Node {
 
     /// database is initialized, Please do NOT invoke this function frequently
     pub fn db_bootstrapped(&mut self) -> bool {
-        let mut file = self.conf.workspace.node_home.clone();
-        file.push("db");
+        let file = self.conf.workspace.db_path.clone();
         if file.exists() {
             // When not committing, we open the DB as secondary so the tool is usable along side a
             // running node on the same DB. Using a TempPath since it won't run for long.
@@ -206,8 +205,7 @@ impl Node {
     /// database is initialized, Please do NOT invoke this function frequently
     pub fn db_files_exist(&mut self) -> bool {
         // check to see no files are present
-        let home_path = self.conf.workspace.node_home.clone();
-        let db_path = home_path.join("db/libradb");
+        let db_path = self.conf.workspace.db_path.clone().join("libradb");
         db_path.exists()
     }
 
