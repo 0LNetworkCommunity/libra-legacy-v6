@@ -45,6 +45,23 @@ pub fn relay_tx(
 }
 
 /// submit transaction from a file with batch of signed transactions
+pub fn relay_batch(batch_tx: &Vec<SignedTransaction>, tx_params: &TxParams) -> Result<(), Error> {
+ 
+    batch_tx.into_iter()
+    .for_each(|tx| {
+      match relay_tx(&tx_params, tx.to_owned()) {
+          Ok(_) => {},
+          Err(e) => {
+            let txt = format!("Transaction in batch failed unexpectedly. Other transactions in batch may have executed! Aborting.\n Tx: {:?}\n Error:\n {:?}", tx, e);
+            panic!(txt);
+          }
+          
+      }
+    });
+    Ok(())
+}
+
+/// submit transaction from a file with batch of signed transactions
 pub fn relay_from_file(path: PathBuf) -> Result<(), Error> {
   let tx_params = get_tx_params().expect("could not get tx parameters");
   match save_tx::read_tx_from_file(path) {

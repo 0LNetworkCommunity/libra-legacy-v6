@@ -5,6 +5,7 @@
 use crate::{
     entrypoint,
     prelude::app_config,
+    relay,
     submit_tx::{get_tx_params, maybe_submit},
 };
 use abscissa_core::{Command, Options, Runnable};
@@ -26,23 +27,23 @@ pub struct CreateValidatorCmd {
 }
 
 /// create validator account by submitting transaction on chain
-pub fn create_validator_script(account_json_path: &PathBuf) -> Script {
-    let file_two = fs::File::open(account_json_path).expect("file should open read only");
-    let account: ValConfigs =
-        serde_json::from_reader(file_two).expect("file should be proper JSON");
-
-    account.check_autopay().unwrap();
+pub fn create_validator_script(new_account: &ValConfigs) -> Script {
+    // let file_two = fs::File::open(account_json_path).expect("file should open read only");
+    // let account: ValConfigs =
+    //     serde_json::from_reader(file_two).expect("file should be proper JSON");
+    let new_account = new_account.to_owned();
+    new_account.check_autopay().unwrap();
 
     transaction_builder::encode_minerstate_onboarding_script(
-        account.block_zero.preimage,
-        account.block_zero.proof,
-        account.ow_human_name.as_bytes().to_vec(),
-        account.op_address.parse().unwrap(),
-        account.op_auth_key_prefix,
-        account.op_consensus_pubkey,
-        account.op_validator_network_addresses,
-        account.op_fullnode_network_addresses,
-        account.op_human_name.as_bytes().to_vec(),
+        new_account.block_zero.preimage,
+        new_account.block_zero.proof,
+        new_account.ow_human_name.as_bytes().to_vec(),
+        new_account.op_address.parse().unwrap(),
+        new_account.op_auth_key_prefix,
+        new_account.op_consensus_pubkey,
+        new_account.op_validator_network_addresses,
+        new_account.op_fullnode_network_addresses,
+        new_account.op_human_name.as_bytes().to_vec(),
         // my_trusted_accounts,
         // voter_trusted_accounts,
     )
@@ -57,8 +58,6 @@ pub fn account_from_url(url: &Url, path: &PathBuf) -> PathBuf {
     g_path
 }
 
-
-
 impl Runnable for CreateValidatorCmd {
     fn run(&self) {
         let cfg = app_config();
@@ -67,7 +66,7 @@ impl Runnable for CreateValidatorCmd {
         if self.account_file.is_none() && self.url.is_none() {
             panic!("No account file nor URL passed in CLI")
         }
-        let account_json: &PathBuf = if self.account_file.is_some() {
+        let account_json_path: &PathBuf = if self.account_file.is_some() {
             self.account_file.as_ref().unwrap()
         } else {
             tmp = account_from_url(self.url.as_ref().unwrap(), &cfg.workspace.node_home).clone();
@@ -76,13 +75,31 @@ impl Runnable for CreateValidatorCmd {
 
         let tx_params = get_tx_params().unwrap();
 
-        maybe_submit(
-            create_validator_script(account_json),
-            &tx_params,
-            entry_args.no_send,
-            entry_args.save_path,
-        )
-        .unwrap();
+        let file = fs::File::open(account_json_path).expect("file should open read only");
+        let new_account: ValConfigs =
+            serde_json::from_reader(file).expect("file should be proper JSON");
+
+        match new_account.check_autopay() {
+            Ok(_) => {
+                maybe_submit(
+                    create_validator_script(&new_account),
+                    &tx_params,
+                    entry_args.no_send,
+                    entry_args.save_path,
+                )
+                .unwrap();
+
+                // submit autopay if there are any
+                if let Some(signed_autopay_batch) = new_account.autopay_signed {
+                    relay::relay_batch(&signed_autopay_batch, &tx_params).unwrap();
+                }
+            }
+            Err(_) => {
+                println!(
+                    "cannot send atomic account creation transaction, error with: PayInstruction."
+                );
+            }
+        }
     }
 }
 
