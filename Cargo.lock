@@ -4180,7 +4180,7 @@ dependencies = [
  "move-core-types",
  "ol-cli",
  "ol-fixtures",
- "ol-util",
+ "ol-types",
  "once_cell",
  "regex",
  "reqwest",
@@ -5004,7 +5004,7 @@ dependencies = [
  "machine-ip",
  "nix 0.18.0",
  "num-format",
- "ol-util",
+ "ol-types",
  "once_cell",
  "regex",
  "reqwest",
@@ -5032,14 +5032,27 @@ name = "ol-fixtures"
 version = "0.1.0"
 
 [[package]]
-name = "ol-util"
+name = "ol-types"
 version = "0.1.0"
 dependencies = [
+ "ajson",
+ "anyhow",
+ "byteorder",
+ "dirs 2.0.2",
+ "hex 0.4.2",
+ "libra-canonical-serialization",
  "libra-config",
+ "libra-crypto",
+ "libra-genesis-tool",
+ "libra-global-constants",
+ "libra-network-address",
  "libra-types",
+ "machine-ip",
  "reqwest",
+ "rustyline",
  "serde",
  "serde_json",
+ "toml",
 ]
 
 [[package]]
@@ -7651,7 +7664,7 @@ dependencies = [
  "move-core-types",
  "ol-cli",
  "ol-fixtures",
- "ol-util",
+ "ol-types",
  "once_cell",
  "regex",
  "reqwest",

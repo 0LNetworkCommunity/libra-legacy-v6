@@ -1,16 +1,15 @@
 //! Formatters for libra account creation
 use crate::block::Block;
 use libra_crypto::x25519::PublicKey;
-use libra_types::{account_address::AccountAddress, transaction::SignedTransaction};
+use libra_types::{account_address::AccountAddress, transaction::{SignedTransaction, TransactionPayload}};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use hex::{decode, encode};
 use std::{fs::File, io::Write, path::PathBuf};
 use libra_network_address::{NetworkAddress, encrypted::{TEST_SHARED_VAL_NETADDR_KEY, TEST_SHARED_VAL_NETADDR_KEY_VERSION}};
 use libra_genesis_tool::keyscheme::KeyScheme;
-use ol_types
-::autopay::PayInstruction;
-
-#[derive(Serialize, Deserialize, Debug)]
+use crate::autopay::PayInstruction;
+use anyhow;
+#[derive(Serialize, Deserialize, Debug, Clone)]
 /// Configuration data necessary to initialize a validator.
 pub struct ValConfigs {
     /// Block zero of the onboarded miner
@@ -142,6 +141,33 @@ impl ValConfigs {
         let configs: ValConfigs = serde_json::from_reader(reader).expect("init_configs.json should deserialize");
         return Ok(configs);
     }
+
+    /// check correctness of autopay
+    pub fn check_autopay(&self) -> Result<(), anyhow::Error>{
+    self
+        .autopay_instructions
+        .clone()
+        .expect("could not find autopay instructions")
+        .into_iter()
+        .enumerate()
+        .for_each(|(i, instr)| {
+            let signed = self.autopay_signed.clone().unwrap();
+            let tx = signed.iter().nth(i).unwrap();
+            let payload = tx.clone().into_raw_transaction().into_payload();
+            if let TransactionPayload::Script(s) = payload {
+                match PayInstruction::check_instruction_safety(instr.clone(), s.clone()) {
+                    Ok(_) => {}
+                    Err(e) => {
+                        panic!(
+                            "autopay instruction does not match signed tx args, {:?}, error: {}",
+                            instr, e
+                        );
+                    }
+                }
+            };
+        });
+      Ok(())
+  }
 
 }
 

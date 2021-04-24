@@ -293,9 +293,12 @@ pub fn start_monitor(&mut self) {
         println!("Will NOT disable any systemd services, you must disable those manually");
         use nix::sys::signal::{self, Signal};
 
-        for pid in self.get_process(name).expect("no pids found").pids.iter() {
-            let _res = signal::kill(nix::unistd::Pid::from_raw(*pid as i32), Signal::SIGTERM);
+        if let Some(hp) = self.get_process(name) {
+          for pid in hp.pids.iter() {
+              let _res = signal::kill(nix::unistd::Pid::from_raw(*pid as i32), Signal::SIGTERM);
+          }
         }
+
     }
     /// Stop node, as validator
     pub fn stop_node(&self) {

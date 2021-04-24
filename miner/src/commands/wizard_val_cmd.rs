@@ -7,7 +7,8 @@ use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use libra_wallet::WalletLibrary;
 use ol_cli::{commands::init_cmd, config::OlCliConfig};
-use ol_util::autopay::{self, Instruction};
+use ol_types
+::autopay::{self, PayInstruction};
 use reqwest::Url;
 use std::{fs::File, io::Write, path::PathBuf};
 use txs::{commands::autopay_batch_cmd, submit_tx};
@@ -62,9 +63,8 @@ impl Runnable for ValWizardCmd {
     if let Some(url) = &self.template_url {
 
       save_template(&url.join("account.json").unwrap(), home_path);
-
-      let (epoch, wp) = get_epoch_info(&url.join("epoch.json").unwrap());
-
+      let (epoch, wp) = get_epoch_info(&url.join("epoch.json").unwrap());      
+      
       miner_config.chain_info.base_epoch = epoch;
       miner_config.chain_info.base_waypoint = wp;      
       // get autopay
@@ -141,7 +141,7 @@ fn get_autopay_batch(
   home_path: &PathBuf,
   miner_config: &OlCliConfig,
   wallet: &WalletLibrary,
-) -> (Option<Vec<Instruction>>, Option<Vec<SignedTransaction>>) {
+) -> (Option<Vec<PayInstruction>>, Option<Vec<SignedTransaction>>) {
   let file_name = if template.is_some() {
     "template.json"
   } else if let Some(path) = file_path {

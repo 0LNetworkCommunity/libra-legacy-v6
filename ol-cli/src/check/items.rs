@@ -1,5 +1,4 @@
-
-// use crate::cache::{DB_CACHE, DB_CACHE_READ};
+//! `items`
 use std::str;
 use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Deserialize, Serialize)]

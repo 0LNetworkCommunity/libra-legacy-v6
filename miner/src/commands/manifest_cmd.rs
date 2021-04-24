@@ -9,7 +9,8 @@ use libra_genesis_tool::keyscheme::KeyScheme;
 use abscissa_core::{Command, Options, Runnable};
 use libra_types::transaction::SignedTransaction;
 use libra_wallet::WalletLibrary;
-use ol_util::autopay::Instruction;
+use ol_types
+::autopay::PayInstruction;
 use std::path::PathBuf;
 use crate::prelude::app_config;
 
@@ -47,7 +48,7 @@ pub fn write_manifest(
   path: &Option<PathBuf>,
   wallet: WalletLibrary,
   wizard_config: Option<MinerConfig>,
-  autopay_batch: Option<Vec<Instruction>>,
+  autopay_batch: Option<Vec<PayInstruction>>,
   autopay_signed: Option<Vec<SignedTransaction>>,
 ) {
     let cfg = if wizard_config.is_some() { wizard_config.unwrap() }
