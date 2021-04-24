@@ -16,7 +16,7 @@ use libra_config::config::NodeConfig;
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
 /// MinerApp Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
+// #[serde(deny_unknown_fields)]
 pub struct OlCliConfig {
   /// Workspace config
   pub workspace: Workspace,
@@ -25,7 +25,7 @@ pub struct OlCliConfig {
   /// Chain Info for all users
   pub chain_info: ChainInfo,
   /// Transaction configurations
-  pub tx_configs: TxTypes,
+  pub tx_configs: TxConfigs,
 }
 
 impl OlCliConfig {
@@ -193,7 +193,7 @@ impl OlCliConfig {
       workspace: Workspace::default(),
       profile: Profile::default(),
       chain_info: ChainInfo::default(),
-      tx_configs: TxTypes::default(),
+      tx_configs: TxConfigs::default(),
     };
 
     cfg.workspace.db_path = db_path;
@@ -216,7 +216,7 @@ impl Default for OlCliConfig {
       workspace: Workspace::default(),
       profile: Profile::default(),
       chain_info: ChainInfo::default(),
-      tx_configs: TxTypes::default(),
+      tx_configs: TxConfigs::default(),
     }
   }
 }
@@ -313,20 +313,53 @@ impl Default for Profile {
     }
   }
 }
+
+/// Transaction types
+pub enum TxType {
+  /// critical txs
+  Critial,
+  /// management txs
+  Mgmt,
+  /// miner txs
+  Miner,
+  /// cheap txs
+  Cheap,
+}
+
 /// Transaction types used in 0L clients
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct TxTypes {
+// #[serde(deny_unknown_fields)]
+pub struct TxConfigs {
   /// Transactions related to management: val configs, onboarding, upgrade
-  pub management_txs: TxPrefs,
+  pub baseline_cost: TxCost,
+  /// Transactions related to management: val configs, onboarding, upgrade
+  pub critical_txs_cost: Option<TxCost>,
+  /// Transactions related to management: val configs, onboarding, upgrade
+  pub management_txs_cost: Option<TxCost>,
   /// Transactions related to mining: commit proof.
-  pub miner_txs: TxPrefs,
+  pub miner_txs_cost: Option<TxCost>,
+  /// Transactions related to mining: commit proof.
+  pub cheap_txs_cost: Option<TxCost>,
+}
+
+impl TxConfigs {
+  /// get the user txs cost preferences for given transaction type
+  pub fn get_cost(&self, tx_type: TxType) -> TxCost {
+    let ref baseline = self.baseline_cost.clone();
+    let cost = match tx_type {
+        TxType::Critial => self.critical_txs_cost.as_ref().unwrap_or_else(|| baseline),
+        TxType::Mgmt => self.management_txs_cost.as_ref().unwrap_or_else(|| baseline),
+        TxType::Miner => self.miner_txs_cost.as_ref().unwrap_or_else(|| baseline),
+        TxType::Cheap => self.cheap_txs_cost.as_ref().unwrap_or_else(|| baseline),
+    };
+    cost.to_owned()
+  }
 }
 
 /// Transaction preferences for a given type of transaction
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-pub struct TxPrefs {
+pub struct TxCost {
   /// Max gas units to pay per transaction
   pub max_gas_unit_for_tx: u64, // gas UNITS of computation
   /// Max coin price per unit of gas
@@ -335,19 +368,24 @@ pub struct TxPrefs {
   pub user_tx_timeout: u64, // milliseconds,
 }
 
-impl Default for TxTypes {
+impl TxCost {
+  /// create new cost object
+  pub fn new(cost: u64) -> Self {
+    TxCost {
+        max_gas_unit_for_tx: cost, // oracle upgrade transaction is expensive.
+        coin_price_per_unit: 1,
+        user_tx_timeout: 5_000,
+      }
+  }
+}
+impl Default for TxConfigs {
   fn default() -> Self {
     Self {
-      management_txs: TxPrefs {
-        max_gas_unit_for_tx: 1_000_000, // oracle upgrade transaction is expensive.
-        coin_price_per_unit: 1,
-        user_tx_timeout: 5_000,
-      },
-      miner_txs: TxPrefs {
-        max_gas_unit_for_tx: 10_000, // miner transaction
-        coin_price_per_unit: 1,
-        user_tx_timeout: 5_000,
-      },
+      baseline_cost: TxCost::new(10_000),
+      critical_txs_cost: Some(TxCost::new(1_000_000)),
+      management_txs_cost: Some(TxCost::new(100_000)),
+      miner_txs_cost: Some(TxCost::new(10_000)),
+      cheap_txs_cost: Some(TxCost::new(1_000)),
     }
   }
 }

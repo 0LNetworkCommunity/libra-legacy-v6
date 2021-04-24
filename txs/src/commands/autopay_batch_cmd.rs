@@ -7,7 +7,7 @@ use libra_types::transaction::{Script, SignedTransaction};
 use crate::{entrypoint, sign_tx::sign_tx, submit_tx::{get_tx_params, batch_wrapper, TxParams}};
 use dialoguer::Confirm;
 use std::path::PathBuf;
-use ol_types::autopay::PayInstruction;
+use ol_types::{autopay::PayInstruction, config::TxType};
 
 /// command to submit a batch of autopay tx from file
 #[derive(Command, Debug, Default, Options)]
@@ -23,7 +23,7 @@ impl Runnable for AutopayBatchCmd {
         // will not increment automatically, since this can lead to user error.
         let entry_args = entrypoint::get_args();
 
-        let tx_params = get_tx_params().unwrap();
+        let tx_params = get_tx_params(TxType::Cheap).unwrap();
 
         let epoch = crate::epoch::get_epoch(&tx_params);
         println!("The current epoch is: {}", epoch);

@@ -333,7 +333,15 @@ Attempted to send funds to an account that does not exist
         <b>let</b> percent_scaled = <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(payment.percentage, 10000);
 
         <b>let</b> amount = <a href="FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(account_bal, percent_scaled);
-        <a href="LibraAccount.md#0x1_LibraAccount_vm_make_payment">LibraAccount::vm_make_payment</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*account_addr, payment.payee, amount, x"", x"", vm);
+        <b>if</b> (amount &gt; account_bal) {
+          // deplete the account <b>if</b> greater
+          amount = amount - account_bal;
+        };
+
+        <b>if</b> (amount&gt;0) {
+          <a href="LibraAccount.md#0x1_LibraAccount_vm_make_payment">LibraAccount::vm_make_payment</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*account_addr, payment.payee, amount, x"", x"", vm);
+        }
+
       };
       // TODO: might want <b>to</b> delete inactive instructions <b>to</b> save memory
       payments_idx = payments_idx + 1;

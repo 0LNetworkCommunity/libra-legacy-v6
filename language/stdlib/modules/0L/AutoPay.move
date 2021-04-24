@@ -128,7 +128,7 @@ address 0x1{
             // Obtain the amount to pay from percentage and balance
 
             // IMPORTANT there are two digits for scaling representation.
-            // an autopay instruction of 12.34% is scalled by two orders, and represented in AutoPay as `1234`.
+            // an autopay instruction of 12.34% is scaled by two orders, and represented in AutoPay as `1234`.
 
             if (payment.percentage > 10000) break;
             let percent_scaled = FixedPoint32::create_from_rational(payment.percentage, 10000);
