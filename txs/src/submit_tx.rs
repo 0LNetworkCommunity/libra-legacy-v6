@@ -1,7 +1,7 @@
 //! Txs App submit_tx module
 #![forbid(unsafe_code)]
 use crate::{
-    config::TxsConfig,
+    config::OlCliConfig,
     entrypoint::{self, EntryPointTxsCmd},
     prelude::app_config,
     save_tx::save_tx,
@@ -23,7 +23,7 @@ use libra_types::{
 };
 
 use libra_wallet::WalletLibrary;
-use ol_types;
+use ol_types::{self, config::{TxCost, TxType}};
 use reqwest::Url;
 use std::{
     io::{stdout, Write},
@@ -46,12 +46,14 @@ pub struct TxParams {
     pub waypoint: Waypoint,
     /// KeyPair
     pub keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey>,
-    /// User's Maximum gas_units willing to run. Different than coin.
-    pub max_gas_unit_for_tx: u64,
-    /// User's GAS Coin price to submit transaction.
-    pub coin_price_per_unit: u64,
-    /// User's transaction timeout.
-    pub user_tx_timeout: u64, // for compatibility with UTC's timestamp.
+    /// tx cost and timeout info
+    pub tx_cost: TxCost,
+    // /// User's Maximum gas_units willing to run. Different than coin.
+    // pub max_gas_unit_for_tx: u64,
+    // /// User's GAS Coin price to submit transaction.
+    // pub coin_price_per_unit: u64,
+    // /// User's transaction timeout.
+    // pub user_tx_timeout: u64, // for compatibility with UTC's timestamp.
     /// Chain id
     pub chain_id: ChainId,
 }
@@ -144,7 +146,7 @@ pub fn submit_tx(
 
 /// Main get tx params logic based on the design in this URL:
 /// https://github.com/OLSF/libra/blob/tx-sender/txs/README.md#txs-logic--usage
-pub fn get_tx_params() -> Result<TxParams, Error> {
+pub fn get_tx_params(tx_type: TxType) -> Result<TxParams, Error> {
     let EntryPointTxsCmd {
         url,
         waypoint,
@@ -157,7 +159,7 @@ pub fn get_tx_params() -> Result<TxParams, Error> {
         get_tx_params_from_swarm(swarm_path.clone().expect("needs a valid swarm temp dir")).unwrap()
     } else {
         // Get from 0L.toml e.g. ~/.0L/0L.toml, or use Profile::default()
-        get_tx_params_from_toml(app_config.clone(), None).unwrap()
+        get_tx_params_from_toml(app_config.clone(), tx_type,None).unwrap()
     };
 
     // Get/override some params from entrypoint command line
@@ -189,9 +191,12 @@ pub fn get_tx_params_from_swarm(swarm_path: PathBuf) -> Result<TxParams, Error> 
         url,
         waypoint,
         keypair,
-        max_gas_unit_for_tx: 1_000_000,
-        coin_price_per_unit: 1, // in micro_gas
-        user_tx_timeout: 5_000,
+        tx_cost: TxCost {
+          max_gas_unit_for_tx: 1_000_000,
+          coin_price_per_unit: 1, // in micro_gas
+          user_tx_timeout: 5_000,
+        },
+
         chain_id: ChainId::new(4),
     };
 
@@ -201,9 +206,9 @@ pub fn get_tx_params_from_swarm(swarm_path: PathBuf) -> Result<TxParams, Error> 
 
 /// Gets transaction params from the 0L project root.
 pub fn get_tx_params_from_toml(
-    config: TxsConfig,
+    config: OlCliConfig,
+    tx_type: TxType,
     wallet_opt: Option<&WalletLibrary>,
-    tx_type: ,
 ) -> Result<TxParams, Error> {
     let url = config.profile.default_node.clone().unwrap();
     let (auth_key, address, wallet) = if let Some(wallet) = wallet_opt {
@@ -214,7 +219,7 @@ pub fn get_tx_params_from_toml(
 
     let keys = KeyScheme::new_from_mnemonic(wallet.mnemonic());
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
-
+    let tx_cost = config.tx_configs.get_cost(tx_type);
     let tx_params = TxParams {
         auth_key,
         signer_address: address,
@@ -225,9 +230,10 @@ pub fn get_tx_params_from_toml(
             .clone()
             .expect("could not get waypoint"),
         keypair,
-        max_gas_unit_for_tx: config.tx_configs.management_txs.max_gas_unit_for_tx,
-        coin_price_per_unit: config.tx_configs.management_txs.coin_price_per_unit, // in micro_gas
-        user_tx_timeout: config.tx_configs.management_txs.user_tx_timeout,
+        tx_cost: tx_cost.to_owned(),
+        // max_gas_unit_for_tx: config.tx_configs.management_txs.max_gas_unit_for_tx,
+        // coin_price_per_unit: config.tx_configs.management_txs.coin_price_per_unit, // in micro_gas
+        // user_tx_timeout: config.tx_configs.management_txs.user_tx_timeout,
         chain_id: ChainId::new(1),
     };
 
@@ -306,9 +312,10 @@ impl TxParams {
             url,
             waypoint,
             keypair,
-            max_gas_unit_for_tx: 5_000,
-            coin_price_per_unit: 1, // in micro_gas
-            user_tx_timeout: 5_000,
+            tx_cost: TxCost::new(5_000),
+            // max_gas_unit_for_tx: 5_000,
+            // coin_price_per_unit: 1, // in micro_gas
+            // user_tx_timeout: 5_000,
             chain_id: ChainId::new(4), // swarm/testnet
         }
     }

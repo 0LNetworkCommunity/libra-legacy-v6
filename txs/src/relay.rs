@@ -11,6 +11,7 @@ use anyhow::Error;
 use cli::libra_client::LibraClient;
 use libra_json_rpc_types::views::TransactionView;
 use libra_types::transaction::SignedTransaction;
+use ol_types::config::TxType;
 
 /// submit a previously signed tx, perhaps to be submitted by a different account than the signer account.
 pub fn relay_tx(
@@ -63,7 +64,8 @@ pub fn relay_batch(batch_tx: &Vec<SignedTransaction>, tx_params: &TxParams) -> R
 
 /// submit transaction from a file with batch of signed transactions
 pub fn relay_from_file(path: PathBuf) -> Result<(), Error> {
-  let tx_params = get_tx_params().expect("could not get tx parameters");
+  //NOTE: Cost does not affect relaying, that's determined in original tx
+  let tx_params = get_tx_params(TxType::Mgmt).expect("could not get tx parameters");
   match save_tx::read_tx_from_file(path) {
     Ok(batch) => {
       batch.into_iter().for_each(|tx| {

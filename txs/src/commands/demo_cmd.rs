@@ -3,6 +3,7 @@
 #![allow(clippy::never_loop)]
 
 use abscissa_core::{Command, Options, Runnable};
+use ol_types::config::TxType;
 use crate::{entrypoint, submit_tx::{get_tx_params, maybe_submit}};
 
 /// `CreateAccount` subcommand
@@ -14,7 +15,7 @@ impl Runnable for DemoCmd {
     fn run(&self) {
         let entry_args = entrypoint::get_args();
 
-        let tx_params = get_tx_params().unwrap();
+        let tx_params = get_tx_params(TxType::Cheap).unwrap();
         maybe_submit(
           transaction_builder::encode_demo_e2e_script(42),
           &tx_params,

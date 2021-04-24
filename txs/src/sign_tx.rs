@@ -21,10 +21,10 @@ pub fn sign_tx(
     TransactionPayload::Script(script.to_owned()),
     tx_params.signer_address,
     sequence_number,
-    tx_params.max_gas_unit_for_tx,
-    tx_params.coin_price_per_unit,
+    tx_params.tx_cost.max_gas_unit_for_tx,
+    tx_params.tx_cost.coin_price_per_unit,
     "GAS".parse().unwrap(),
-    tx_params.user_tx_timeout as i64, // for compatibility with UTC's timestamp.
+    tx_params.tx_cost.user_tx_timeout as i64, // for compatibility with UTC's timestamp.
     chain_id,
   )
 }

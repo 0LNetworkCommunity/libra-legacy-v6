@@ -10,7 +10,7 @@ use crate::{
 };
 use abscissa_core::{Command, Options, Runnable};
 use libra_types::transaction::Script;
-use ol_types::account::ValConfigs;
+use ol_types::{account::ValConfigs, config::TxType};
 use reqwest::Url;
 use std::{
     fs::{self, File},
@@ -73,7 +73,7 @@ impl Runnable for CreateValidatorCmd {
             &tmp
         };
 
-        let tx_params = get_tx_params().unwrap();
+        let tx_params = get_tx_params(TxType::Mgmt).unwrap();
 
         let file = fs::File::open(account_json_path).expect("file should open read only");
         let new_account: ValConfigs =
