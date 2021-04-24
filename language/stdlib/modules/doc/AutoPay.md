@@ -321,10 +321,17 @@ Attempted to send funds to an account that does not exist
       <b>if</b> (payment.end_epoch &gt;= epoch) {
         // A payment will happen now
         // Obtain the amount <b>to</b> pay from percentage and balance
-        <b>let</b> amount = <a href="FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(account_bal , <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(payment.percentage, 100));
+
+        // IMPORTANT there are two digits for scaling representation.
+        // an autopay instruction of 12.34% is scalled by two orders, and represented in <a href="AutoPay.md#0x1_AutoPay">AutoPay</a> <b>as</b> `1234`.
+
+        <b>if</b> (payment.percentage &gt; 10000) { <b>return</b> };
+        <b>let</b> percent_scaled = <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(payment.percentage, 10000);
+
+        <b>let</b> amount = <a href="FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(account_bal, percent_scaled);
         <a href="LibraAccount.md#0x1_LibraAccount_vm_make_payment">LibraAccount::vm_make_payment</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*account_addr, payment.payee, amount, x"", x"", vm);
       };
-      // ToDo: might want <b>to</b> delete inactive instructions <b>to</b> save memory
+      // TODO: might want <b>to</b> delete inactive instructions <b>to</b> save memory
       payments_idx = payments_idx + 1;
     };
     account_idx = account_idx + 1;
