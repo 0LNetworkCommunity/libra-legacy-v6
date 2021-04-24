@@ -1,10 +1,12 @@
 address 0x1 {
-
-/// Functions to initialize, accumulated, and burn transaction fees.
-
+///////////////////////////////////////////////////////////////////////////
+// 
+// File Prefix for errors: 2001
+///////////////////////////////////////////////////////////////////////////
 module TrustedAccounts {
-    use 0x1::Vector;
+    use 0x1::Errors;
     use 0x1::Signer;
+    use 0x1::Vector;
 
     resource struct Trusted {
       my_trusted_accounts: vector<address>,
@@ -28,8 +30,9 @@ module TrustedAccounts {
 
 
     //////// PUBLIC GETTERS ////////
+    // Function code: 01
     public fun get_trusted(account: address): (vector<address>, vector<address>) acquires Trusted{
-      assert(exists<Trusted>(account), 220101011000);
+      assert(exists<Trusted>(account), Errors::not_published(200101));
       let state = borrow_global<Trusted>(account);
       (*&state.my_trusted_accounts, *&state.follow_operators_trusting_accounts)
     }

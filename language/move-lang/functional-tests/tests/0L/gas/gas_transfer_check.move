@@ -17,7 +17,7 @@ fun main(account: &signer) {
 }
 }
 ////////// Transfers should fail ////////
-// check: "Keep(ABORTED { code: 1544,"
+// check: ABORTED 
 /////////////////////////////////////////
 
 // //! new-transaction

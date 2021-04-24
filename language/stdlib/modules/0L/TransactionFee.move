@@ -1,6 +1,9 @@
 address 0x1 {
 
-/// Functions to initialize, accumulated, and burn transaction fees.
+///////////////////////////////////////////////////////////////////////////
+// Functions to initialize, accumulated, and burn transaction fees.
+// File Prefix for errors: 2000
+///////////////////////////////////////////////////////////////////////////
 
 module TransactionFee {
     use 0x1::CoreAddresses;
@@ -21,7 +24,7 @@ module TransactionFee {
     }
 
     /// A `TransactionFee` resource is not in the required state
-    const ETRANSACTION_FEE: u64 = 0;
+    const ETRANSACTION_FEE: u64 = 20000;
 
     /// Called in genesis. Sets up the needed resources to collect transaction fees from the
     /// `TransactionFee` resource with the TreasuryCompliance account.

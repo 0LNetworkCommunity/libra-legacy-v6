@@ -1,7 +1,10 @@
 address 0x1 {
-
+///////////////////////////////////////////////////////////////////////////
+// File Prefix for errors: 0600
+///////////////////////////////////////////////////////////////////////////
 module FullnodeState {
   use 0x1::CoreAddresses;
+  use 0x1::Errors;
   use 0x1::Signer;
   use 0x1::Testnet::is_testnet;
   use 0x1::ValidatorConfig;
@@ -15,8 +18,9 @@ module FullnodeState {
     cumulative_subsidy: u64,
   }
 
+  //Function code: 0600
   public fun val_init(sender: &signer) {
-      assert(!exists<FullnodeCounter>(Signer::address_of(sender)), 130112011021);
+      assert(!exists<FullnodeCounter>(Signer::address_of(sender)), Errors::not_published(060001));
       move_to<FullnodeCounter>(
       sender, 
       FullnodeCounter {
@@ -31,9 +35,10 @@ module FullnodeState {
   }
 
   /// On recongfiguration events, reset.
+  //Function code:02
   public fun reconfig(vm: &signer, addr: address) acquires FullnodeCounter {
       let sender = Signer::address_of(vm);
-      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190201014010);
+      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(060001));
       let state = borrow_global_mut<FullnodeCounter>(addr);
       state.cumulative_proofs_submitted = state.cumulative_proofs_submitted + state.proofs_submitted_in_epoch;
       state.cumulative_proofs_paid = state.cumulative_proofs_paid + state.proofs_paid_in_epoch;
@@ -52,22 +57,25 @@ module FullnodeState {
   }
 
   /// Miner increments proofs by 1
+  //Function Code:03
   public fun inc_proof_by_operator(operator_sig: &signer, miner_addr: address) acquires FullnodeCounter {
-    assert(ValidatorConfig::get_operator(miner_addr) == Signer::address_of(operator_sig), 130103010020);
+    assert(ValidatorConfig::get_operator(miner_addr) == Signer::address_of(operator_sig), Errors::requires_role(0600103));
       let state = borrow_global_mut<FullnodeCounter>(miner_addr);
       state.proofs_submitted_in_epoch = state.proofs_submitted_in_epoch + 1;
   }
 
   /// VM Increments payments in epoch. Increases by `count`
+  // Function code:04
   public fun inc_payment_count(vm: &signer, addr: address, count: u64) acquires FullnodeCounter {
-    assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190201014010);
+    assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(060004));
     let state = borrow_global_mut<FullnodeCounter>(addr);
     state.proofs_paid_in_epoch = state.proofs_paid_in_epoch + count;
   }
 
-    /// VM Increments payments in epoch. Increases by `count`
+  /// VM Increments payments in epoch. Increases by `count`
+  //Function code:05
   public fun inc_payment_value(vm: &signer, addr: address, value: u64) acquires FullnodeCounter {
-    assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190201014010);
+    assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(060005));
     let state = borrow_global_mut<FullnodeCounter>(addr);
     state.subsidy_in_epoch = state.subsidy_in_epoch + value;
   }
@@ -90,6 +98,7 @@ module FullnodeState {
     state.cumulative_subsidy < 1000000
   }
 
+  //Function code:06
   public fun test_set_fullnode_fixtures(
     vm: &signer,
     addr: address,
@@ -101,7 +110,7 @@ module FullnodeState {
     cumulative_subsidy: u64,
   ) acquires FullnodeCounter {
     CoreAddresses::assert_libra_root(vm);
-    assert(is_testnet(), 130112011101);
+    assert(is_testnet(), Errors::invalid_state(060006));
 
     let state = borrow_global_mut<FullnodeCounter>(addr);
     state.proofs_submitted_in_epoch = proofs_submitted_in_epoch;

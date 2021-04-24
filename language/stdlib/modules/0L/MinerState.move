@@ -1,23 +1,26 @@
 ///////////////////////////////////////////////////////////////////
 // 0L Module
 // MinerState
+// Error Code = 1301
 ///////////////////////////////////////////////////////////////////
 
 address 0x1 {
   module MinerState {
-    use 0x1::VDF;
-    use 0x1::Vector;
+    use 0x1::Errors;
     use 0x1::CoreAddresses;
-    use 0x1::ValidatorUniverse;
-    use 0x1::Signer;
-    use 0x1::LibraConfig;
+    use 0x1::FullnodeState;
     use 0x1::Globals;
     use 0x1::Hash;
-    use 0x1::Testnet;
+    use 0x1::LibraConfig;
+    use 0x1::Signer;
     use 0x1::StagingNet;
     use 0x1::Stats;
-    use 0x1::FullnodeState;
+    use 0x1::Testnet;
     use 0x1::ValidatorConfig;
+    use 0x1::ValidatorUniverse;
+    use 0x1::VDF;
+    use 0x1::Vector;
+
     // Struct to store information about a VDF proof submitted
     struct Proof {
         challenge: vector<u8>,
@@ -73,7 +76,7 @@ address 0x1 {
 
 
     // This function is called by the OWNER the proof and commits to chain.
-    // Function index: 03
+    // Function index: 01
     // Permissions: PUBLIC, ANYONE
     public fun commit_state(
       miner_sign: &signer,
@@ -83,14 +86,14 @@ address 0x1 {
       let miner_addr = Signer::address_of(miner_sign);
 
       // Abort if not initialized.
-      assert(exists<MinerProofHistory>(miner_addr), 130103011021);
+      assert(exists<MinerProofHistory>(miner_addr), Errors::not_published(130101));
 
       // Get vdf difficulty constant. Will be different in tests than in production.
       let difficulty_constant = Globals::get_difficulty();
 
       // Skip this check on local tests, we need tests to send different difficulties.
       if (!Testnet::is_testnet()){
-        assert(&proof.difficulty == &difficulty_constant, 130103021010);
+        assert(&proof.difficulty == &difficulty_constant, Errors::invalid_argument(130102));
       };
       
       verify_and_update_state(miner_addr, proof, true);
@@ -101,7 +104,7 @@ address 0x1 {
     }
 
     // This function is called by the OPERATOR associated with node, it verifies the proof and commits to chain.
-    // Function index: 03
+    // Function index: 02
     // Permissions: PUBLIC, ANYONE
     public fun commit_state_by_operator(
       operator_sig: &signer,
@@ -112,16 +115,16 @@ address 0x1 {
       // Check the signer is in fact an operator delegated by the owner.
       
       // Get address, assumes the sender is the signer.
-      assert(ValidatorConfig::get_operator(miner_addr) == Signer::address_of(operator_sig), 130103021000);
+      assert(ValidatorConfig::get_operator(miner_addr) == Signer::address_of(operator_sig), Errors::requires_role(130102));
       // Abort if not initialized.
-      assert(exists<MinerProofHistory>(miner_addr), 130103021001);
+      assert(exists<MinerProofHistory>(miner_addr), Errors::not_published(130102));
 
       // Get vdf difficulty constant. Will be different in tests than in production.
       let difficulty_constant = Globals::get_difficulty();
 
       // Skip this check on local tests, we need tests to send different difficulties.
       if (!Testnet::is_testnet()){
-        assert(&proof.difficulty == &difficulty_constant, 130103021003);
+        assert(&proof.difficulty == &difficulty_constant, Errors::invalid_argument(130102));
       };
       
       verify_and_update_state(miner_addr, proof, true);
@@ -134,6 +137,7 @@ address 0x1 {
 
     // Function to verify a proof blob and update a MinerProofHistory
     // Permissions: private function.
+    // Function index: 03
     fun verify_and_update_state(
       miner_addr: address,
       proof: Proof,
@@ -146,11 +150,11 @@ address 0x1 {
       // only do this in steady state.
       if (steady_state) {
         //If not genesis proof, check hash 
-        assert(&proof.challenge == &miner_history.previous_proof_hash, 130108031010);      
+        assert(&proof.challenge == &miner_history.previous_proof_hash, Errors::invalid_state(130103));      
       };
 
       let valid = VDF::verify(&proof.challenge, &proof.difficulty, &proof.solution);
-      assert(valid, 130108041021);
+      assert(valid, Errors::invalid_argument(130103));
 
 
       miner_history.previous_proof_hash = Hash::sha3_256(*&proof.solution);
@@ -170,11 +174,12 @@ address 0x1 {
     // Checks that the validator has been mining above the count threshold
     // Note: this is only called on a validator successfully meeting the validation thresholds (different than mining threshold). So the function presumes the validator is in good standing for that epoch.
     // Permissions: private function
+    // Function index: 04
     fun update_metrics(account: &signer, miner_addr: address) acquires MinerProofHistory {
       // The goal of update_metrics is to confirm that a miner participated in consensus during
       // an epoch, but also that there were mining proofs submitted in that epoch.
       let sender = Signer::address_of(account);
-      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130109014010);
+      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(130104));
 
       // Miner may not have been initialized. Simply return in this case (don't abort)
       if( !exists<MinerProofHistory>(miner_addr) ) { return };
@@ -212,9 +217,10 @@ address 0x1 {
     // Get weight of validator identified by address
     // Permissions: public, only VM can call this function.
     // TODO: change this name.
+    // Function code: 05
     public fun get_validator_weight(account: &signer, miner_addr: address): u64 acquires MinerProofHistory {
       let sender = Signer::address_of(account);
-      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130110014010);
+      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(130105));
 
       // Miner may not have been initialized. (don't abort, just return 0)
       if( !exists<MinerProofHistory>(miner_addr)){
@@ -232,10 +238,11 @@ address 0x1 {
 
     // Used at end of epoch with reconfig bulk_update the MinerState with the vector of validators from current epoch.
     // Permissions: PUBLIC, ONLY VM.
+    // Function code: 06
     public fun reconfig(vm: &signer) acquires MinerProofHistory {
       // Check permissions
       let sender = Signer::address_of(vm);
-      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130111014010);
+      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(130106));
 
       // Get list of validators from ValidatorUniverse
       let eligible_validators = ValidatorUniverse::get_eligible_validators(vm);
@@ -256,11 +263,12 @@ address 0x1 {
 
     // Function to initialize miner state
     // Permissions: PUBLIC, Signer, Validator only
+    // Function code: 07
     public fun init_miner_state(miner_sig: &signer, challenge: &vector<u8>, solution: &vector<u8>) acquires MinerProofHistory {
       
       // NOTE Only Signer can update own state.
       // Should only happen once.
-      assert(!exists<MinerProofHistory>(Signer::address_of(miner_sig)), 130112011021);
+      assert(!exists<MinerProofHistory>(Signer::address_of(miner_sig)), Errors::requires_role(130107));
       // LibraAccount calls this.
       // Exception is LibraAccount which can simulate a Signer.
       // Initialize MinerProofHistory object and give to miner account
@@ -294,6 +302,7 @@ address 0x1 {
 
     // Process and check the first proof blob submitted for validity (includes correct address)
     // Permissions: PUBLIC, ANYONE. (used in onboarding transaction).
+    // Function code: 08
     public fun first_challenge_includes_address(new_account_address: address, challenge: &vector<u8>) {
       // Checks that the preimage/challenge of the FIRST VDF proof blob contains a given address.
       // This is to ensure that the same proof is not sent repeatedly, since all the minerstate is on a
@@ -306,17 +315,18 @@ address 0x1 {
 
       // Calling native function to do this parsing in rust
       // The auth_key must be at least 32 bytes long
-      assert(Vector::length(challenge) >= 32, 130113011000);
+      assert(Vector::length(challenge) >= 32, Errors::invalid_argument(130108));
       let (parsed_address, _auth_key) = VDF::extract_address_from_challenge(challenge);
       // Confirm the address is corect and included in challenge
-      assert(new_account_address == parsed_address, 130113021010);
+      assert(new_account_address == parsed_address, Errors::requires_address(130108));
     }
 
     // Get latest epoch mined by node on given address
     // Permissions: public ony VM can call this function.
+    // Function code: 09
     public fun get_miner_latest_epoch(account: &signer, addr: address): u64 acquires MinerProofHistory {
       let sender = Signer::address_of(account);
-      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130114014010);
+      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(130109));
       let addr_state = borrow_global<MinerProofHistory>(addr);
       *&addr_state.latest_epoch_mining
     }
@@ -350,7 +360,7 @@ address 0x1 {
     // TEST HELPERS //
     //////////////////
 
-    // Function index: 03
+    // Function index: 10
     // Permissions: PUBLIC, SIGNER, TEST ONLY
     public fun test_helper(
         miner_sig: &signer,
@@ -358,9 +368,9 @@ address 0x1 {
         challenge: vector<u8>,
         solution: vector<u8>
       ) acquires MinerProofHistory {
-        assert(Testnet::is_testnet(), 130102014010);
+        assert(Testnet::is_testnet(), Errors::invalid_state(130110));
         //doubly check this is in test env.
-        assert(Globals::get_epoch_length() == 60, 130102024010);
+        assert(Globals::get_epoch_length() == 60, Errors::invalid_state(130110));
 
         move_to<MinerProofHistory>(miner_sig, MinerProofHistory{
           previous_proof_hash: Vector::empty(),
@@ -384,7 +394,7 @@ address 0x1 {
 
     }
 
-    // Function index: 03
+    // Function index: 11
     // Permissions: PUBLIC, SIGNER, TEST ONLY
     public fun test_helper_operator_submits(
       operator_addr: address, // Testrunner does not allow arbitrary accounts to submit txs, need to use address, so this will differ slightly from api
@@ -395,16 +405,16 @@ address 0x1 {
       // Check the signer is in fact an operator delegated by the owner.
       
       // Get address, assumes the sender is the signer.
-      assert(ValidatorConfig::get_operator(miner_addr) == operator_addr, 130103021000);
+      assert(ValidatorConfig::get_operator(miner_addr) == operator_addr, Errors::requires_address(130111));
       // Abort if not initialized.
-      assert(exists<MinerProofHistory>(miner_addr), 130103021001);
+      assert(exists<MinerProofHistory>(miner_addr), Errors::not_published(130111));
 
       // Get vdf difficulty constant. Will be different in tests than in production.
       let difficulty_constant = Globals::get_difficulty();
 
       // Skip this check on local tests, we need tests to send different difficulties.
       if (!Testnet::is_testnet()){
-        assert(&proof.difficulty == &difficulty_constant, 130103021003);
+        assert(&proof.difficulty == &difficulty_constant, Errors::invalid_state(130111));
       };
       
       verify_and_update_state(miner_addr, proof, true);
@@ -415,57 +425,65 @@ address 0x1 {
       // FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
     }
 
+    // Function code: 12
     public fun test_helper_mock_mining(sender: &signer,  count: u64) acquires MinerProofHistory {
-      assert(Testnet::is_testnet(), 130115014011);
+      assert(Testnet::is_testnet(), Errors::invalid_state(130112));
       let state = borrow_global_mut<MinerProofHistory>(Signer::address_of(sender));
       state.count_proofs_in_epoch = count;
     }
 
+    // Function code: 13
     public fun test_helper_mock_mining_vm(vm: &signer, addr: address, count: u64) acquires MinerProofHistory {
-      assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130115014011);
+      assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(130113));
 
-      assert(Testnet::is_testnet(), 130115014011);
+      assert(Testnet::is_testnet(), Errors::invalid_state(130113));
       let state = borrow_global_mut<MinerProofHistory>(addr);
       state.count_proofs_in_epoch = count;
     }
 
     // Permissions: PUBLIC, VM, TESTING 
+    // Function code: 14
     public fun test_helper_mock_reconfig(account: &signer, miner_addr: address) acquires MinerProofHistory{
       let sender = Signer::address_of(account);
-      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130115014010);
-      assert(Testnet::is_testnet()== true, 130115014011);
+      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(130114));
+      assert(Testnet::is_testnet()== true, Errors::invalid_state(130114));
       update_metrics(account, miner_addr);
     }
 
     // Get weight of validator identified by address
     // Permissions: PUBLIC, ANYONE, TESTING 
+    // Function code: 15
     public fun test_helper_get_height(miner_addr: address): u64 acquires MinerProofHistory {
-      assert(Testnet::is_testnet()== true, 130115014011);
+      assert(Testnet::is_testnet()== true, Errors::invalid_state(130115));
 
-      assert(exists<MinerProofHistory>(miner_addr), 130115021000);
+      assert(exists<MinerProofHistory>(miner_addr), Errors::not_published(130115));
 
       let state = borrow_global<MinerProofHistory>(miner_addr);
       *&state.verified_tower_height
     }
 
+    // Function code: 16
     public fun test_helper_get_contiguous(miner_addr: address): u64 acquires MinerProofHistory {
-      assert(Testnet::is_testnet()== true, 130115014011);
+      assert(Testnet::is_testnet()== true, Errors::invalid_state(130116));
       borrow_global<MinerProofHistory>(miner_addr).contiguous_epochs_validating_and_mining
     }
 
+    // Function code: 17
     public fun test_helper_get_count(miner_addr: address): u64 acquires MinerProofHistory {
-      assert(Testnet::is_testnet()== true, 130115014011);
+      assert(Testnet::is_testnet()== true, Errors::invalid_state(130117));
       borrow_global<MinerProofHistory>(miner_addr).count_proofs_in_epoch
     }
 
+    // Function code: 18
     public fun test_helper_set_rate_limit(miner_addr: address, value: u64) acquires MinerProofHistory {
-      assert(Testnet::is_testnet()== true, 130115014011);
+      assert(Testnet::is_testnet()== true, Errors::invalid_state(130118));
       let state = borrow_global_mut<MinerProofHistory>(miner_addr);
       state.epochs_since_last_account_creation = value;
     }
 
+    // Function code: 19
     public fun test_helper_hash(miner_addr: address): vector<u8> acquires MinerProofHistory {
-      assert(Testnet::is_testnet()== true, 130115014011);
+      assert(Testnet::is_testnet()== true, Errors::invalid_state(130119));
       *&borrow_global<MinerProofHistory>(miner_addr).previous_proof_hash
     }
   }

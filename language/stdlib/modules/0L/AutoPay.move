@@ -3,7 +3,7 @@ address 0x1{
 ///////////////////////////////////////////////////////////////////////////
   // 0L Module
   // Auto Pay - 
-  // File Prefix for errors: 0101
+  // File Prefix for errors: 0100
   ///////////////////////////////////////////////////////////////////////////
     use 0x1::Vector;
     use 0x1::Option::{Self,Option};
@@ -19,7 +19,7 @@ address 0x1{
     use 0x1::Errors;
 
     /// Attempted to send funds to an account that does not exist
-    const EPAYEE_DOES_NOT_EXIST: u64 = 17;
+    const EPAYEE_DOES_NOT_EXIST: u64 = 010017;
 
     resource struct Tick {
       triggered: bool,
@@ -54,9 +54,10 @@ address 0x1{
     ///////////////////////////////
     // Public functions only OxO //
     //////////////////////////////
+    // Function code: 01
     public fun tick(vm: &signer): bool acquires Tick {
-      assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 0101014010);
-      assert(exists<Tick>(CoreAddresses::LIBRA_ROOT_ADDRESS()), 0101024010);
+      assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(010001));
+      assert(exists<Tick>(CoreAddresses::LIBRA_ROOT_ADDRESS()), Errors::not_published(010001));
       
       let tick_state = borrow_global_mut<Tick>(Signer::address_of(vm));
 
@@ -77,9 +78,9 @@ address 0x1{
     }
     // Initialize the entire autopay module by creating an empty AccountList object
     // Called in Genesis
-    // Function code 010101
+    // Function code 02
     public fun initialize(sender: &signer) {
-      assert(Signer::address_of(sender) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 0101014010);
+      assert(Signer::address_of(sender) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(010002));
       move_to<AccountList>(sender, AccountList { accounts: Vector::empty<address>(), current_epoch: 0, });
       move_to<Tick>(sender, Tick {triggered: false})
     }
@@ -89,12 +90,12 @@ address 0x1{
     // This function iterates through all autopay-enabled accounts and processes
     // any payments they have due in the current epoch from their list of payments.
     // Note: payments from epoch n are processed at the epoch_length/2
-    // Function code 010106
+    // Function code 03
     public fun process_autopay(
       vm: &signer,
     ) acquires AccountList, Data {
       // Only account 0x0 should be triggering this autopayment each block
-      assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 0101064010);
+      assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(010003));
 
       let epoch = LibraConfig::get_current_epoch();
 

@@ -1,6 +1,7 @@
 ///////////////////////////////////////////////////////////////////
 // 0L Module
 // Globals
+// Error code: 0700
 ///////////////////////////////////////////////////////////////////
 
 address 0x1 {
@@ -10,6 +11,7 @@ address 0x1 {
 module Globals {
     use 0x1::Vector;
     use 0x1::Testnet;
+    use 0x1::Errors;
     use 0x1::StagingNet;
     use 0x1::Libra;
     use 0x1::GAS;
@@ -117,7 +119,7 @@ module Globals {
     fun get_constants(): GlobalConstants {
       
       let coin_scale = 1000000; //Libra::scaling_factor<GAS::T>();
-      assert(coin_scale == Libra::scaling_factor<GAS::GAS>(), 07010110001);
+      assert(coin_scale == Libra::scaling_factor<GAS::GAS>(), Errors::invalid_argument(070001));
 
       if (Testnet::is_testnet()) {
         return GlobalConstants {

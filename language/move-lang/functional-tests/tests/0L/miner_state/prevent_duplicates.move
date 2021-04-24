@@ -42,4 +42,4 @@ script {
         MinerState::commit_state(sender, proof);
     }
 }
-// check: ABORTED 130108031010
+// check: ABORTED
