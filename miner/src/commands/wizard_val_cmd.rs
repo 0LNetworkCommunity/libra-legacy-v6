@@ -7,7 +7,7 @@ use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use libra_wallet::WalletLibrary;
 use ol_cli::{commands::init_cmd, config::OlCliConfig};
-use ol_types::autopay::PayInstruction;
+use ol_types::{autopay::PayInstruction, config::TxType};
 use reqwest::Url;
 use std::{fs::File, io::Write, path::PathBuf};
 use txs::{commands::autopay_batch_cmd, submit_tx};
@@ -152,7 +152,7 @@ fn get_autopay_batch(
   let starting_epoch = cfg.chain_info.base_epoch.unwrap();
   let instr_vec = PayInstruction::parse_autopay_instructions(&home_path.join(file_name));
   let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone(), starting_epoch);
-  let tx_params = submit_tx::get_tx_params_from_toml(cfg.to_owned(), Some(wallet)).unwrap();
+  let tx_params = submit_tx::get_tx_params_from_toml(cfg.to_owned(), TxType::Miner, Some(wallet)).unwrap();
   let txn_vec= autopay_batch_cmd::sign_instructions(script_vec, 0, &tx_params);
   (
     Some(instr_vec),
