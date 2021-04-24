@@ -16,7 +16,7 @@ use libra_config::config::NodeConfig;
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
 /// MinerApp Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
+// #[serde(deny_unknown_fields)]
 pub struct OlCliConfig {
   /// Workspace config
   pub workspace: Workspace,
@@ -328,27 +328,31 @@ pub enum TxType {
 
 /// Transaction types used in 0L clients
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
+// #[serde(deny_unknown_fields)]
 pub struct TxConfigs {
   /// Transactions related to management: val configs, onboarding, upgrade
-  pub critical_txs: TxCost,
+  pub baseline_cost: TxCost,
   /// Transactions related to management: val configs, onboarding, upgrade
-  pub management_txs: TxCost,
+  pub critical_txs_cost: Option<TxCost>,
+  /// Transactions related to management: val configs, onboarding, upgrade
+  pub management_txs_cost: Option<TxCost>,
   /// Transactions related to mining: commit proof.
-  pub miner_txs: TxCost,
+  pub miner_txs_cost: Option<TxCost>,
   /// Transactions related to mining: commit proof.
-  pub cheap_txs: TxCost,
+  pub cheap_txs_cost: Option<TxCost>,
 }
 
 impl TxConfigs {
   /// get the user txs cost preferences for given transaction type
-  pub fn get_cost(&self, tx_type: TxType) -> &TxCost {
-    match tx_type {
-        TxType::Critial => &self.critical_txs,
-        TxType::Mgmt => &self.management_txs,
-        TxType::Miner => &self.miner_txs,
-        TxType::Cheap => &self.cheap_txs,
-    }
+  pub fn get_cost(&self, tx_type: TxType) -> TxCost {
+    let ref baseline = self.baseline_cost.clone();
+    let cost = match tx_type {
+        TxType::Critial => self.critical_txs_cost.as_ref().unwrap_or_else(|| baseline),
+        TxType::Mgmt => self.management_txs_cost.as_ref().unwrap_or_else(|| baseline),
+        TxType::Miner => self.miner_txs_cost.as_ref().unwrap_or_else(|| baseline),
+        TxType::Cheap => self.cheap_txs_cost.as_ref().unwrap_or_else(|| baseline),
+    };
+    cost.to_owned()
   }
 }
 
@@ -377,10 +381,11 @@ impl TxCost {
 impl Default for TxConfigs {
   fn default() -> Self {
     Self {
-      critical_txs: TxCost::new(1_000_000),
-      management_txs: TxCost::new(100_000),
-      miner_txs: TxCost::new(10_000),
-      cheap_txs: TxCost::new(1_000),
+      baseline_cost: TxCost::new(10_000),
+      critical_txs_cost: Some(TxCost::new(1_000_000)),
+      management_txs_cost: Some(TxCost::new(100_000)),
+      miner_txs_cost: Some(TxCost::new(10_000)),
+      cheap_txs_cost: Some(TxCost::new(1_000)),
     }
   }
 }
