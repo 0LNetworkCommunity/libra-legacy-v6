@@ -134,7 +134,15 @@ address 0x1{
             let percent_scaled = FixedPoint32::create_from_rational(payment.percentage, 10000);
             
             let amount = FixedPoint32::multiply_u64(account_bal, percent_scaled);
-            LibraAccount::vm_make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
+            if (amount > account_bal) {
+              // deplete the account if greater
+              amount = amount - account_bal;
+            };
+
+            if (amount>0) {
+              LibraAccount::vm_make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
+            }
+
           };
           // TODO: might want to delete inactive instructions to save memory
           payments_idx = payments_idx + 1;
