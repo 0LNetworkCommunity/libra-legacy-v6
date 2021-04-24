@@ -54,7 +54,7 @@ impl PayInstruction {
     i
   })
   .collect()
-    }
+  }
 
     /// checks ths instruction against the raw script for correctness.
     pub fn check_instruction_safety(instr: PayInstruction, script: Script) -> Result<(), Error> {
@@ -79,7 +79,7 @@ impl PayInstruction {
             "not the same ending epoch"
         );
         assert!(
-            script.args()[3] == TransactionArgument::U64(percent_balance_cast.unwrap()),
+            script.args()[3] == TransactionArgument::U64(percent_balance_cast.expect("cannot get percent_balance_cast")),
             "not the same ending epoch"
         );
         Ok(())
