@@ -143,6 +143,7 @@ impl OlCliConfig {
 
   /// Save swarm default configs to swarm path
   pub fn init_swarm_config(swarm_path: PathBuf) -> OlCliConfig{
+    println!("init_swarm_config: {:?}", swarm_path);
     let host_config = OlCliConfig::make_swarm_configs(swarm_path);
     OlCliConfig::save_file(&host_config);
     host_config
@@ -171,6 +172,8 @@ impl OlCliConfig {
         |_| panic!("Failed to load NodeConfig from file: {:?}", &config_path)
     );
 
+    let db_path = swarm_path.join("0/db");
+
     let url =  Url::parse(
         format!("http://localhost:{}", config.json_rpc.address.port()).as_str()
     ).unwrap();
@@ -193,6 +196,7 @@ impl OlCliConfig {
       tx_configs: TxTypes::default(),
     };
 
+    cfg.workspace.db_path = db_path;
     cfg.chain_info.base_waypoint = Some(config.base.waypoint.waypoint());
     cfg.profile.account = "4C613C2F4B1E67CA8D98A542EE3F59F5".parse().unwrap(); // alice
     cfg.profile.default_node = Some(url);
@@ -227,6 +231,8 @@ pub struct Workspace {
   pub source_path: Option<PathBuf>,
   /// Directory to store blocks in
   pub block_dir: String,
+  /// Directory for the database
+  pub db_path: PathBuf,
   /// Path to which stdlib binaries for upgrades get built typically /language/stdlib/staged/stdlib.mv
   pub stdlib_bin_path: PathBuf,
 }
@@ -237,6 +243,7 @@ impl Default for Workspace {
       node_home: dirs::home_dir().unwrap().join(NODE_HOME),
       source_path: Some(dirs::home_dir().unwrap().join("libra")),
       block_dir: "blocks".to_owned(),
+      db_path: dirs::home_dir().unwrap().join(NODE_HOME).join("db"),
       stdlib_bin_path: "/root/libra/language/stdlib/staged/stdlib.mv"
         .parse::<PathBuf>()
         .unwrap(),
