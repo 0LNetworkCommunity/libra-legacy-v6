@@ -1,9 +1,13 @@
 //! `autopay`
 
-use libra_types::{account_address::AccountAddress, transaction::{Script, TransactionArgument} };
-use serde::{Deserialize, Serialize};
-use std::{fs, path::PathBuf};
 use anyhow::Error;
+use libra_types::{
+    account_address::AccountAddress,
+    transaction::{Script, TransactionArgument},
+};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use std::{fs, path::PathBuf};
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 /// Autopay payment instruction
@@ -35,9 +39,11 @@ impl PayInstruction {
             "cannot open autopay batch file: {:?}",
             autopay_batch_file
         ));
-        let inst_vec: Vec<PayInstruction> =
-            serde_json::from_reader(&file).expect("cannot parse autopay.json");
-        // let json: Value = serde_json::from_reader(&file).expect("cannot parse autopay.json");
+        // let inst_vec: Vec<PayInstruction> =
+        // serde_json::from_reader(&file).expect("cannot parse autopay.json");
+        let json: Value = serde_json::from_reader(&file).expect("cannot parse autopay.json");
+        let val: Value = json.get("autopay_instructions").unwrap().to_owned();
+        let inst_vec: Vec<PayInstruction> = serde_json::from_value(val).unwrap();
         inst_vec.into_iter()
   .map(|mut i| {
     // TODO: check sequential instructions by uid
