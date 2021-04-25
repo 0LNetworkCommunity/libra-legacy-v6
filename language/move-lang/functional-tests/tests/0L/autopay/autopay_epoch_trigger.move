@@ -13,12 +13,12 @@ script {
     AutoPay::enable_autopay(sender);
     assert(AutoPay::is_enabled(Signer::address_of(sender)), 0);
     
-    AutoPay::create_instruction(sender, 1, {{bob}}, 2, 5);
+    AutoPay::create_instruction(sender, 1, {{bob}}, 2, 500);
 
     let (payee, end_epoch, percentage) = AutoPay::query_instruction(Signer::address_of(sender), 1);
     assert(payee == {{bob}}, 1);
     assert(end_epoch == 2, 1);
-    assert(percentage == 5, 1);
+    assert(percentage == 500, 1);
   }
 }
 // check: EXECUTED
