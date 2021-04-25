@@ -1,3 +1,5 @@
+//! `ol-util`
+
 #![forbid(unsafe_code)]
 #![warn(
     missing_docs,
@@ -7,4 +9,7 @@
     unused_qualifications
 )]
 
-pub mod swarm;
+pub mod account;
+pub mod autopay;
+pub mod block;
+pub mod config;

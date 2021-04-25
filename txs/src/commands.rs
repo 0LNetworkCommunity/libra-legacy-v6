@@ -14,13 +14,13 @@ mod create_account_cmd;
 mod create_validator_cmd;
 mod oracle_upgrade_cmd;
 mod version_cmd;
-mod autopay_batch_cmd;
+pub mod autopay_batch_cmd;
 mod demo_cmd;
 mod relay_cmd;
 
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use ol_cli::commands::CONFIG_FILE;
-use crate::config::TxsConfig;
+use crate::config::OlCliConfig;
 use dirs;
 use libra_global_constants::NODE_HOME;
 use self::{
@@ -70,11 +70,11 @@ pub enum TxsCmd {
 
      /// The `version` subcommand
     #[options(help = "submit a saved transaction from file")]
-    Relay(RelayCmd),     
+    Relay(RelayCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.
-impl Configurable<TxsConfig> for TxsCmd {
+impl Configurable<OlCliConfig> for TxsCmd {
     /// Location of the configuration file
     fn config_path(&self) -> Option<PathBuf> {
         // Check if the config file exists, and if it does not, ignore it.

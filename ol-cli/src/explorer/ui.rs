@@ -202,7 +202,7 @@ fn draw_parameters<B>(f: &mut Frame<'_, B>, app: &mut App<'_>, area: Rect)
 where
     B: Backend,
 {
-    let meta = app.client.get_metadata().unwrap();
+    let meta = app.node.client.get_metadata().unwrap();
     let text = vec![
         Spans::from(vec![
             Span::from("Libra Version: "),
@@ -335,6 +335,7 @@ where
 {
     let mut items: Vec<Row<'_>> = vec![];
     let (blob, _version) = app
+        .node
         .client
         .get_account_state_blob(AccountAddress::ZERO)
         .unwrap();
