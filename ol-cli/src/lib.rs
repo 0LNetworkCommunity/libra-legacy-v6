@@ -1,11 +1,4 @@
 //! OlCli
-//!
-//! Application based on the [Abscissa] framework.
-//!
-//! [Abscissa]: https://github.com/iqlusioninc/abscissa
-
-// Tip: Deny warnings with `RUSTFLAGS="-D warnings"` environment variable in CI
-
 #![forbid(unsafe_code)]
 #![warn(
     missing_docs,
@@ -21,20 +14,9 @@ pub mod config;
 pub mod entrypoint;
 pub mod error;
 pub mod prelude;
-pub mod account_resource;
-pub mod client;
-pub mod metadata;
-pub mod check_runner;
-pub mod management;
-pub mod node_health;
-pub mod server;
-pub mod restore;
-pub mod transitions;
-pub mod query;
-pub mod chain_info;
+pub mod node;
+pub mod mgmt;
 pub mod cache;
-// pub mod check;
-pub mod account;
-
-/// Cli block explorer
+pub mod check;
 pub mod explorer;
+pub mod server;

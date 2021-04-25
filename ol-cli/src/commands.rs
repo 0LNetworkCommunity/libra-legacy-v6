@@ -19,6 +19,7 @@ mod onboard_cmd;
 mod query_cmd;
 mod health_cmd;
 mod explorer_cmd;
+mod pilot_cmd;
 
 use self::{
     init_cmd::InitCmd,
@@ -29,6 +30,7 @@ use self::{
     onboard_cmd::OnboardCmd,
     query_cmd::QueryCmd,
     health_cmd::HealthCmd,
+    pilot_cmd::PilotCmd
 };
 
 use crate::config::OlCliConfig;
@@ -85,6 +87,9 @@ pub enum OlCliCmd {
     #[options(help = "watch a block explorer monitor in terminal")]
     Explorer(ExplorerCMD),
 
+    /// The `explorer` subcommand
+    #[options(help = "run the 0L services")]
+    Pilot(PilotCmd),
 }
 
 /// Get home path for all 0L apps

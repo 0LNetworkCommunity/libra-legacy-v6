@@ -1,8 +1,7 @@
 //! `onboard-cmd` subcommand
 
-use crate::transitions;
+use crate::{entrypoint, node::client, node::node::Node, prelude::app_config};
 use abscissa_core::{Command, Options, Runnable};
-use std::{thread, time::Duration};
 
 /// `onboard-cmd` subcommand
 ///
@@ -26,30 +25,25 @@ pub struct OnboardCmd {
 impl Runnable for OnboardCmd {
     /// Start the application.
     fn run(&self) {
+        let args = entrypoint::get_args();
+        let cfg = app_config().clone();
+        let client = client::pick_client(args.swarm_path, &cfg).unwrap().0;
         if !self.trigger_actions {
             println!("You can pass --trigger-actions or -t to attempt the next transition\n")
         }
-        if self.autopilot {
-            loop {
-                println!("Running onboarding autopilot\n");
-                advance(self.trigger_actions);
-                thread::sleep(Duration::from_millis(10_000));
-            }
-        } else {
-            advance(self.trigger_actions)
-        }
+        // let mut host = transitions::HostState::init(client, cfg);
+        let mut node = Node::new(client, cfg);
+        let state = node.node_maybe_advance(self.trigger_actions);
+
+        println!(
+            "\nNode state at exit: {:?}\nMiner state: {:?}",
+            &state.vitals.host_state.node_state,
+            &state.vitals.host_state.miner_state,
+            // host.get_next_action()
+        );
     }
 }
 
-pub fn advance(trigger_actions: bool) {
-    let mut host = transitions::HostState::init();
-    let node_state = host.maybe_advance(trigger_actions).get_state();
-    let miner_state = host.miner_maybe_advance(trigger_actions).get_state();
+// pub fn advance(client: LibraClient, trigger_actions: bool, cfg) {
 
-    println!(
-        "\nNode state at exit: {:?}\nMiner state: {:?}\nNext step for node: {:?}",
-        node_state,
-        miner_state,
-        host.get_next_action()
-    );
-}
+// }

@@ -1,7 +1,7 @@
 //! `restore-cmd` subcommand
 
 use abscissa_core::{Command, Options, Runnable};
-use crate::restore;
+use crate::mgmt;
 
 /// `restore-cmd` subcommand
 ///
@@ -19,6 +19,6 @@ pub struct RestoreCmd {
 impl Runnable for RestoreCmd {
     /// Start the application.
     fn run(&self) {
-        restore::fast_forward_db(self.verbose).unwrap();
+        mgmt::restore::fast_forward_db(self.verbose).unwrap();
     }
 }
