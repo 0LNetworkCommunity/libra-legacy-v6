@@ -1,5 +1,5 @@
 //! `start` subcommand - example of how to write a subcommand
-use crate::{config::MinerConfig, test_tx_swarm::{swarm_miner, swarm_onboarding}};
+use crate::{config::MinerConfig, test_tx_swarm::{swarm_miner}};
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
@@ -15,10 +15,10 @@ use std::path::PathBuf;
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
 pub struct SwarmCmd {
-    #[options(help = "Test the onboading transaction.")]
-    init: bool,
     #[options(help = "The home directory where the blocks will be stored")]
-    swarm_path: Option<PathBuf>, 
+    swarm_path: Option<PathBuf>,
+    #[options(help = "The `persona` to use in the test, e.g. alice, eve")]
+    persona: Option<String>,
 }
 
 impl Runnable for SwarmCmd {
@@ -31,11 +31,7 @@ impl Runnable for SwarmCmd {
         if self.swarm_path.is_some() { path = self.swarm_path.as_ref().unwrap().to_owned() }
         else { path = PathBuf::from("./swarm_temp") }
 
-        if self.init {
-            swarm_onboarding(path);
-        } else {
-            swarm_miner(path);
-        }
+        swarm_miner(path, &self.persona);
     }
 }
 

@@ -1,4 +1,4 @@
-//! account: bob, 100000, 0, validator
+//! account: bob, 2000001, 0, validator
 
 //! new-transaction
 //! sender: bob
@@ -59,7 +59,7 @@ fun main(sender: &signer) {
   // Check the account exists and the balance is 0
   // TODO: Needs some balance
   print(&LibraAccount::balance<GAS>(eve_addr));
-  assert(LibraAccount::balance<GAS>(eve_addr) == 0, 7357130101081000);
+  assert(LibraAccount::balance<GAS>(eve_addr) == 1000000, 7357130101081000);
 
   // Should not automatically be in validator universe
   // Needs to mine and submit the join transaction.

@@ -3,6 +3,7 @@ address 0x1 {
 /// The `LibraAccount` module manages accounts. It defines the `LibraAccount` resource and
 /// numerous auxiliary data structures. It also defines the prolog and epilog that run
 /// before and after every transaction.
+// File Prefix for errors: 1201 used for OL errors
 
 module LibraAccount {
     use 0x1::AccountFreezing;
@@ -205,6 +206,9 @@ module LibraAccount {
     const PROLOGUE_EMODULE_NOT_ALLOWED: u64 = 1009;
     const PROLOGUE_INVALID_WRITESET_SENDER: u64 = 1010;
 
+    //////// 0L //////////
+    const BOOTSTRAP_COIN_VALUE: u64 = 1000000;
+
     /// Initialize this module. This is only callable from genesis.
     public fun initialize(
         lr_account: &signer,
@@ -262,9 +266,10 @@ module LibraAccount {
         op_validator_network_addresses: vector<u8>,
         op_fullnode_network_addresses: vector<u8>,
         op_human_name: vector<u8>,
-    ):address acquires AccountOperationsCapability {
+    ):address acquires LibraAccount, Balance, AccountOperationsCapability {
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
+
         assert(MinerState::can_create_val_account(sender_addr), 120101011001);
         let valid = VDF::verify(
             challenge,
@@ -272,6 +277,9 @@ module LibraAccount {
             solution
         );
         assert(valid, 120101011021);
+
+        // check there's enough balance for bootstrapping both operator and validator account
+        assert(balance<GAS>(sender_addr)  >= 2 * BOOTSTRAP_COIN_VALUE, Errors::limit_exceeded(EINSUFFICIENT_BALANCE));
 
         //Create Owner Account
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
@@ -291,10 +299,8 @@ module LibraAccount {
         Event::publish_generator(&new_op_account);
         ValidatorOperatorConfig::publish_with_proof(&new_op_account, op_human_name);
         add_currencies_for_account<GAS>(&new_op_account, false);
-
         // Link owner to OP
         ValidatorConfig::set_operator(&new_signer, op_address);
-
         // OP sends network info to Owner config"
         ValidatorConfig::set_config(
             &new_op_account, // signer
@@ -305,10 +311,14 @@ module LibraAccount {
         );
 
         make_account(new_signer, auth_key_prefix);
-
         make_account(new_op_account, op_auth_key_prefix);
 
         MinerState::reset_rate_limit(sender_addr);
+
+        // Transfer for owner
+        onboarding_gas_transfer<GAS>(sender, new_account_address);
+        // Transfer for operator as well
+        onboarding_gas_transfer<GAS>(sender, op_address);
         new_account_address
     }
 
@@ -718,12 +728,25 @@ module LibraAccount {
     }
 
     /// Return a unique capability granting permission to withdraw from the sender's account balance.
+    // Function code: 10 Prefix: 170110
     public fun extract_withdraw_capability(
         sender: &signer
     ): WithdrawCapability acquires LibraAccount {
-        //////// 0L //////// Transfers disabled
+        //////// 0L //////// Transfers disabled by default
+        //////// 0L //////// Transfers of 10 GAS 
+        //////// 0L //////// enabled when validator count is 100. 
         let sender_addr = Signer::address_of(sender);
-        assert(sender_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
+        if (LibraConfig::check_transfer_enabled()) {
+            if(!AccountLimits::has_limits_published<GAS>(sender_addr)){
+                AccountLimits::publish_restricted_limits_definition_OL<GAS>(sender);
+            };
+            // Check if limits window is published
+            if(!AccountLimits::has_window_published<GAS>(sender_addr)){
+                AccountLimits::publish_window_OL<GAS>(sender, sender_addr);
+            };
+        } else {
+            assert(sender_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
+        };
 
         // Abort if we already extracted the unique withdraw capability for this account.
         assert(
@@ -778,7 +801,7 @@ module LibraAccount {
     
     // 0L function for AutoPay module
     // 0L error suffix 120101
-    public fun make_payment<Token>(
+    public fun vm_make_payment<Token>(
         payer : address,
         payee: address,
         amount: u64,
@@ -787,6 +810,8 @@ module LibraAccount {
         vm: &signer
     ) acquires LibraAccount , Balance, AccountOperationsCapability {
         if (Signer::address_of(vm) != CoreAddresses::LIBRA_ROOT_ADDRESS()) return;
+        // don't try to send a 0 balance, will halt.
+        if (amount < 0) return; 
 
         // Check payee can receive funds in this currency.
         if (!exists<Balance<Token>>(payee)) return; 
@@ -823,6 +848,7 @@ module LibraAccount {
     /// The included `metadata` will appear in the `SentPaymentEvent` and `ReceivedPaymentEvent`.
     /// The `metadata_signature` will only be checked if this payment is subject to the dual
     /// attestation protocol
+    // Function code: 13 Prefix: 170113
     public fun pay_from<Token>(
         cap: &WithdrawCapability,
         payee: address,
@@ -830,6 +856,27 @@ module LibraAccount {
         metadata: vector<u8>,
         metadata_signature: vector<u8>
     ) acquires LibraAccount, Balance, AccountOperationsCapability {
+        //////// 0L //////// Transfers disabled by default
+        //////// 0L //////// Transfers of 10 GAS 
+        //////// 0L //////// enabled when validator count is 100. 
+        if (LibraConfig::check_transfer_enabled()) {
+            // Ensure that this withdrawal is compliant with the account limits on
+            // this account.
+            assert(
+                    AccountLimits::update_withdrawal_limits<Token>(
+                        amount,
+                        {{*&cap.account_address}},
+                        &borrow_global<AccountOperationsCapability>(CoreAddresses::LIBRA_ROOT_ADDRESS()).limits_cap
+                    ),
+                    Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
+                );
+    
+        } else {
+            assert(*&cap.account_address == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
+        };
+
+        
+
         deposit<Token>(
             *&cap.account_address,
             payee,
@@ -884,6 +931,36 @@ module LibraAccount {
         ensures payer == payee ==> balance<Token>(payer) == old(balance<Token>(payer));
         ensures payer != payee ==> balance<Token>(payer) == old(balance<Token>(payer)) - amount;
         ensures payer != payee ==> balance<Token>(payee) == old(balance<Token>(payee)) + amount;
+    }
+
+
+    //////// 0L ////////
+    // when a new account is created it doesn't have any gas, and cannot
+    // mine or do other operations
+    // without this the new account must wait until the next epoch change to receive the fullnode subsidy, only to then begin interacting with the network.
+    // the person submitting the account creation transaction can bootstrap the account, until the epoch change when the fullnode subsidy will be paid.
+    // This transfer option skips all account limit checks.
+    // Can be used to send a bootstrapping amout to the Owner account and/or Operator.
+    // Can only be called within this module, and by create_valiator_account_with_proof
+    fun onboarding_gas_transfer<Token>(
+        payer_sig: &signer,
+        payee: address
+    ) acquires LibraAccount, Balance, AccountOperationsCapability {
+        let payer_addr = Signer::address_of(payer_sig);
+        let account_balance = borrow_global_mut<Balance<Token>>(payer_addr);
+        let balance_coin = &mut account_balance.coin;
+        // Doubly check balance exists.
+        assert(Libra::value(balance_coin) > BOOTSTRAP_COIN_VALUE, Errors::limit_exceeded(EINSUFFICIENT_BALANCE));
+        // Should abort if the 
+        let metadata = b"onboarding transfer";
+        let coin_to_deposit = Libra::withdraw(balance_coin, BOOTSTRAP_COIN_VALUE);
+        deposit<Token>(
+            payer_addr,
+            payee,
+            coin_to_deposit,
+            metadata,
+            b""
+        );
     }
 
     /// Rotate the authentication key for the account under cap.account_address

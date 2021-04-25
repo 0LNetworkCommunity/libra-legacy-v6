@@ -17,7 +17,6 @@ use libra_network_address::{NetworkAddress, Protocol};
 use libra_types::{chain_id::ChainId, transaction::Transaction};
 use std::net::{Ipv4Addr, ToSocketAddrs};
 use structopt::StructOpt;
-use hex::*;
 #[derive(Clone, Debug, StructOpt)]
 pub struct ValidatorConfig {
     #[structopt(flatten)]
@@ -64,6 +63,7 @@ impl ValidatorConfig {
         // and encrypt the validator address.
         let validator_address =
             validator_address.append_prod_protos(validator_network_key, HANDSHAKE_VERSION);
+        dbg!(&validator_address);
 
         let encryptor = config.validator_backend().encryptor();
         let validator_addresses = encryptor
@@ -80,14 +80,14 @@ impl ValidatorConfig {
         let fullnode_address =
             fullnode_address.append_prod_protos(fullnode_network_key, HANDSHAKE_VERSION);
 
+        dbg!(&fullnode_address);
+        
         // Generate the validator config script
         let transaction_callback = if reconfigure {
             transaction_builder::encode_set_validator_config_and_reconfigure_script
         } else {
             transaction_builder::encode_register_validator_config_script
         };
-
-        dbg!(&encode(&validator_addresses));
 
         let validator_config_script = transaction_callback(
             owner_account,

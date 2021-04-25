@@ -19,6 +19,8 @@ address 0x1 {
     resource struct MinerList {
       list: vector<address>
     }
+    use 0x1::FullnodeState;
+    use 0x1::ValidatorConfig;
     // Struct to store information about a VDF proof submitted
     struct Proof {
         challenge: vector<u8>,
@@ -94,39 +96,39 @@ address 0x1 {
       Stats::init_address(vm_sig, node_addr);
     }
 
-    // Function index: 03
-    // Permissions: PUBLIC, SIGNER, TEST ONLY
-   public fun test_helper(
-      miner_sig: &signer,
-      difficulty: u64,
-      challenge: vector<u8>,
-      solution: vector<u8>
-    ) acquires MinerProofHistory, MinerList {
-      assert(Testnet::is_testnet(), 130102014010);
-      //doubly check this is in test env.
-      assert(Globals::get_epoch_length() == 60, 130102024010);
+  //   // Function index: 03
+  //   // Permissions: PUBLIC, SIGNER, TEST ONLY
+  //  public fun test_helper(
+  //     miner_sig: &signer,
+  //     difficulty: u64,
+  //     challenge: vector<u8>,
+  //     solution: vector<u8>
+  //   ) acquires MinerProofHistory, MinerList {
+  //     assert(Testnet::is_testnet(), 130102014010);
+  //     //doubly check this is in test env.
+  //     assert(Globals::get_epoch_length() == 60, 130102024010);
 
-      move_to<MinerProofHistory>(miner_sig, MinerProofHistory{
-        previous_proof_hash: Vector::empty(),
-        verified_tower_height: 0u64,
-        latest_epoch_mining: 0u64,
-        count_proofs_in_epoch: 0u64,
-        epochs_validating_and_mining: 0u64,
-        contiguous_epochs_validating_and_mining: 0u64,
-        epochs_since_last_account_creation: 10u64, // is not rate-limited
-      });
+  //     move_to<MinerProofHistory>(miner_sig, MinerProofHistory{
+  //       previous_proof_hash: Vector::empty(),
+  //       verified_tower_height: 0u64,
+  //       latest_epoch_mining: 0u64,
+  //       count_proofs_in_epoch: 0u64,
+  //       epochs_validating_and_mining: 0u64,
+  //       contiguous_epochs_validating_and_mining: 0u64,
+  //       epochs_since_last_account_creation: 10u64, // is not rate-limited
+  //     });
 
-      // Needs difficulty to test between easy and hard mode.
-      let proof = Proof {
-        challenge,
-        difficulty,  
-        solution,
-      };
+  //     // Needs difficulty to test between easy and hard mode.
+  //     let proof = Proof {
+  //       challenge,
+  //       difficulty,  
+  //       solution,
+  //     };
 
-      verify_and_update_state(Signer::address_of(miner_sig), proof, false);
-    }
+  //     verify_and_update_state(Signer::address_of(miner_sig), proof, false);
+  //   }
 
-    // This function verifies the proof and commits to chain.
+    // This function is called by the OWNER the proof and commits to chain.
     // Function index: 03
     // Permissions: PUBLIC, ANYONE
     public fun commit_state(
@@ -151,6 +153,38 @@ address 0x1 {
       };
       
       verify_and_update_state(miner_addr, proof, true);
+    }
+
+    // This function is called by the OPERATOR associated with node, it verifies the proof and commits to chain.
+    // Function index: 03
+    // Permissions: PUBLIC, ANYONE
+    public fun commit_state_by_operator(
+      operator_sig: &signer,
+      miner_addr: address, 
+      proof: Proof
+    ) acquires MinerProofHistory, MinerList {
+
+      // Check the signer is in fact an operator delegated by the owner.
+      
+      // Get address, assumes the sender is the signer.
+      assert(ValidatorConfig::get_operator(miner_addr) == Signer::address_of(operator_sig), 130103021000);
+      // Abort if not initialized.
+      assert(exists<MinerProofHistory>(miner_addr), 130103021001);
+
+      // Get vdf difficulty constant. Will be different in tests than in production.
+      let difficulty_constant = Globals::get_difficulty();
+
+      // Skip this check on local tests, we need tests to send different difficulties.
+      if (!Testnet::is_testnet()){
+        assert(&proof.difficulty == &difficulty_constant, 130103021003);
+      };
+      
+      verify_and_update_state(miner_addr, proof, true);
+      
+      // TODO: The operator mining needs its own struct to count mining.
+      // For now it is implicit there is only 1 operator per validator, and that the fullnode state is the place to count.
+      // This will require a breaking change to MinerState
+      FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
     }
 
     // Function to verify a proof blob and update a MinerProofHistory
@@ -390,6 +424,71 @@ address 0x1 {
     //////////////////
     // TEST HELPERS //
     //////////////////
+
+    // Function index: 03
+    // Permissions: PUBLIC, SIGNER, TEST ONLY
+    public fun test_helper(
+        miner_sig: &signer,
+        difficulty: u64,
+        challenge: vector<u8>,
+        solution: vector<u8>
+      ) acquires MinerProofHistory, MinerList {
+        assert(Testnet::is_testnet(), 130102014010);
+        //doubly check this is in test env.
+        assert(Globals::get_epoch_length() == 60, 130102024010);
+
+        move_to<MinerProofHistory>(miner_sig, MinerProofHistory{
+          previous_proof_hash: Vector::empty(),
+          verified_tower_height: 0u64,
+          latest_epoch_mining: 0u64,
+          count_proofs_in_epoch: 0u64,
+          epochs_validating_and_mining: 0u64,
+          contiguous_epochs_validating_and_mining: 0u64,
+          epochs_since_last_account_creation: 10u64, // is not rate-limited
+        });
+
+        // Needs difficulty to test between easy and hard mode.
+        let proof = Proof {
+          challenge,
+          difficulty,  
+          solution,
+        };
+
+        verify_and_update_state(Signer::address_of(miner_sig), proof, false);
+        FullnodeState::init(miner_sig);
+
+    }
+
+    // Function index: 03
+    // Permissions: PUBLIC, SIGNER, TEST ONLY
+    public fun test_helper_operator_submits(
+      operator_addr: address, // Testrunner does not allow arbitrary accounts to submit txs, need to use address, so this will differ slightly from api
+      miner_addr: address, 
+      proof: Proof
+    ) acquires MinerProofHistory, MinerList {
+
+      // Check the signer is in fact an operator delegated by the owner.
+      
+      // Get address, assumes the sender is the signer.
+      assert(ValidatorConfig::get_operator(miner_addr) == operator_addr, 130103021000);
+      // Abort if not initialized.
+      assert(exists<MinerProofHistory>(miner_addr), 130103021001);
+
+      // Get vdf difficulty constant. Will be different in tests than in production.
+      let difficulty_constant = Globals::get_difficulty();
+
+      // Skip this check on local tests, we need tests to send different difficulties.
+      if (!Testnet::is_testnet()){
+        assert(&proof.difficulty == &difficulty_constant, 130103021003);
+      };
+      
+      verify_and_update_state(miner_addr, proof, true);
+      
+      // TODO: The operator mining needs its own struct to count mining.
+      // For now it is implicit there is only 1 operator per validator, and that the fullnode state is the place to count.
+      // This will require a breaking change to MinerState
+      // FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
+    }
 
     public fun test_helper_mock_mining(sender: &signer,  count: u64) acquires MinerProofHistory {
       assert(Testnet::is_testnet(), 130115014011);

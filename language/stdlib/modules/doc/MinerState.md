@@ -14,8 +14,8 @@
 -  [Function `add_self_list`](#0x1_MinerState_add_self_list)
 -  [Function `increment_miners_list`](#0x1_MinerState_increment_miners_list)
 -  [Function `genesis_helper`](#0x1_MinerState_genesis_helper)
--  [Function `test_helper`](#0x1_MinerState_test_helper)
 -  [Function `commit_state`](#0x1_MinerState_commit_state)
+-  [Function `commit_state_by_operator`](#0x1_MinerState_commit_state_by_operator)
 -  [Function `verify_and_update_state`](#0x1_MinerState_verify_and_update_state)
 -  [Function `update_metrics`](#0x1_MinerState_update_metrics)
 -  [Function `node_above_thresh`](#0x1_MinerState_node_above_thresh)
@@ -29,16 +29,20 @@
 -  [Function `get_epochs_mining`](#0x1_MinerState_get_epochs_mining)
 -  [Function `get_count_in_epoch`](#0x1_MinerState_get_count_in_epoch)
 -  [Function `can_create_val_account`](#0x1_MinerState_can_create_val_account)
+-  [Function `test_helper`](#0x1_MinerState_test_helper)
+-  [Function `test_helper_operator_submits`](#0x1_MinerState_test_helper_operator_submits)
 -  [Function `test_helper_mock_mining`](#0x1_MinerState_test_helper_mock_mining)
 -  [Function `test_helper_mock_mining_vm`](#0x1_MinerState_test_helper_mock_mining_vm)
 -  [Function `test_helper_mock_reconfig`](#0x1_MinerState_test_helper_mock_reconfig)
 -  [Function `test_helper_get_height`](#0x1_MinerState_test_helper_get_height)
+-  [Function `test_helper_get_count`](#0x1_MinerState_test_helper_get_count)
 -  [Function `test_helper_get_contiguous`](#0x1_MinerState_test_helper_get_contiguous)
 -  [Function `test_helper_set_rate_limit`](#0x1_MinerState_test_helper_set_rate_limit)
 -  [Function `test_helper_hash`](#0x1_MinerState_test_helper_hash)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="FullnodeState.md#0x1_FullnodeState">0x1::FullnodeState</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="Hash.md#0x1_Hash">0x1::Hash</a>;
 <b>use</b> <a href="LibraConfig.md#0x1_LibraConfig">0x1::LibraConfig</a>;
@@ -47,6 +51,7 @@
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="VDF.md#0x1_VDF">0x1::VDF</a>;
+<b>use</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig">0x1::ValidatorConfig</a>;
 <b>use</b> <a href="Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
@@ -356,56 +361,6 @@
 
 </details>
 
-<a name="0x1_MinerState_test_helper"></a>
-
-## Function `test_helper`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper">test_helper</a>(miner_sig: &signer, difficulty: u64, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper">test_helper</a>(
-   miner_sig: &signer,
-   difficulty: u64,
-   challenge: vector&lt;u8&gt;,
-   solution: vector&lt;u8&gt;
- ) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>, <a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a> {
-   <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 130102014010);
-   //doubly check this is in test env.
-   <b>assert</b>(<a href="Globals.md#0x1_Globals_get_epoch_length">Globals::get_epoch_length</a>() == 60, 130102024010);
-
-   move_to&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_sig, <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>{
-     previous_proof_hash: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>(),
-     verified_tower_height: 0u64,
-     latest_epoch_mining: 0u64,
-     count_proofs_in_epoch: 0u64,
-     epochs_validating_and_mining: 0u64,
-     contiguous_epochs_validating_and_mining: 0u64,
-     epochs_since_last_account_creation: 10u64, // is not rate-limited
-   });
-
-   // Needs difficulty <b>to</b> test between easy and hard mode.
-   <b>let</b> proof = <a href="MinerState.md#0x1_MinerState_Proof">Proof</a> {
-     challenge,
-     difficulty,
-     solution,
-   };
-
-   <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig), proof, <b>false</b>);
- }
-</code></pre>
-
-
-
-</details>
-
 <a name="0x1_MinerState_commit_state"></a>
 
 ## Function `commit_state`
@@ -443,6 +398,55 @@
   };
 
   <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MinerState_commit_state_by_operator"></a>
+
+## Function `commit_state_by_operator`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_commit_state_by_operator">commit_state_by_operator</a>(operator_sig: &signer, miner_addr: address, proof: <a href="MinerState.md#0x1_MinerState_Proof">MinerState::Proof</a>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_commit_state_by_operator">commit_state_by_operator</a>(
+  operator_sig: &signer,
+  miner_addr: address,
+  proof: <a href="MinerState.md#0x1_MinerState_Proof">Proof</a>
+) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>, <a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a> {
+
+  // Check the signer is in fact an operator delegated by the owner.
+
+  // Get address, assumes the sender is the signer.
+  <b>assert</b>(<a href="ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(miner_addr) == <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(operator_sig), 130103021000);
+  // Abort <b>if</b> not initialized.
+  <b>assert</b>(<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr), 130103021001);
+
+  // Get vdf difficulty constant. Will be different in tests than in production.
+  <b>let</b> difficulty_constant = <a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>();
+
+  // Skip this check on local tests, we need tests <b>to</b> send different difficulties.
+  <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
+    <b>assert</b>(&proof.difficulty == &difficulty_constant, 130103021003);
+  };
+
+  <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);
+
+  // TODO: The operator mining needs its own <b>struct</b> <b>to</b> count mining.
+  // For now it is implicit there is only 1 operator per validator, and that the fullnode state is the place <b>to</b> count.
+  // This will require a breaking change <b>to</b> <a href="MinerState.md#0x1_MinerState">MinerState</a>
+  <a href="FullnodeState.md#0x1_FullnodeState_inc_proof_by_operator">FullnodeState::inc_proof_by_operator</a>(operator_sig, miner_addr);
 }
 </code></pre>
 
@@ -917,6 +921,107 @@ Public Getters ///
 
 </details>
 
+<a name="0x1_MinerState_test_helper"></a>
+
+## Function `test_helper`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper">test_helper</a>(miner_sig: &signer, difficulty: u64, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper">test_helper</a>(
+    miner_sig: &signer,
+    difficulty: u64,
+    challenge: vector&lt;u8&gt;,
+    solution: vector&lt;u8&gt;
+  ) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>, <a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a> {
+    <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 130102014010);
+    //doubly check this is in test env.
+    <b>assert</b>(<a href="Globals.md#0x1_Globals_get_epoch_length">Globals::get_epoch_length</a>() == 60, 130102024010);
+
+    move_to&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_sig, <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>{
+      previous_proof_hash: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+      verified_tower_height: 0u64,
+      latest_epoch_mining: 0u64,
+      count_proofs_in_epoch: 0u64,
+      epochs_validating_and_mining: 0u64,
+      contiguous_epochs_validating_and_mining: 0u64,
+      epochs_since_last_account_creation: 10u64, // is not rate-limited
+    });
+
+    // Needs difficulty <b>to</b> test between easy and hard mode.
+    <b>let</b> proof = <a href="MinerState.md#0x1_MinerState_Proof">Proof</a> {
+      challenge,
+      difficulty,
+      solution,
+    };
+
+    <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig), proof, <b>false</b>);
+    <a href="FullnodeState.md#0x1_FullnodeState_init">FullnodeState::init</a>(miner_sig);
+
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MinerState_test_helper_operator_submits"></a>
+
+## Function `test_helper_operator_submits`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_operator_submits">test_helper_operator_submits</a>(operator_addr: address, miner_addr: address, proof: <a href="MinerState.md#0x1_MinerState_Proof">MinerState::Proof</a>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_operator_submits">test_helper_operator_submits</a>(
+  operator_addr: address, // Testrunner does not allow arbitrary accounts <b>to</b> submit txs, need <b>to</b> <b>use</b> address, so this will differ slightly from api
+  miner_addr: address,
+  proof: <a href="MinerState.md#0x1_MinerState_Proof">Proof</a>
+) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>, <a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a> {
+
+  // Check the signer is in fact an operator delegated by the owner.
+
+  // Get address, assumes the sender is the signer.
+  <b>assert</b>(<a href="ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(miner_addr) == operator_addr, 130103021000);
+  // Abort <b>if</b> not initialized.
+  <b>assert</b>(<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr), 130103021001);
+
+  // Get vdf difficulty constant. Will be different in tests than in production.
+  <b>let</b> difficulty_constant = <a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>();
+
+  // Skip this check on local tests, we need tests <b>to</b> send different difficulties.
+  <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
+    <b>assert</b>(&proof.difficulty == &difficulty_constant, 130103021003);
+  };
+
+  <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);
+
+  // TODO: The operator mining needs its own <b>struct</b> <b>to</b> count mining.
+  // For now it is implicit there is only 1 operator per validator, and that the fullnode state is the place <b>to</b> count.
+  // This will require a breaking change <b>to</b> <a href="MinerState.md#0x1_MinerState">MinerState</a>
+  // <a href="FullnodeState.md#0x1_FullnodeState_inc_proof_by_operator">FullnodeState::inc_proof_by_operator</a>(operator_sig, miner_addr);
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_MinerState_test_helper_mock_mining"></a>
 
 ## Function `test_helper_mock_mining`
@@ -1020,6 +1125,31 @@ Public Getters ///
 
   <b>let</b> state = borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr);
   *&state.verified_tower_height
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MinerState_test_helper_get_count"></a>
+
+## Function `test_helper_get_count`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_get_count">test_helper_get_count</a>(miner_addr: address): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_get_count">test_helper_get_count</a>(miner_addr: address): u64 <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
+    <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()== <b>true</b>, 130115014011);
+    borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr).count_proofs_in_epoch
 }
 </code></pre>
 

@@ -7,12 +7,12 @@ module LibraBlock {
     use 0x1::Event;
     use 0x1::LibraSystem;
     use 0x1::LibraTimestamp;
-
     //////// 0L ////////
     use 0x1::Reconfigure;
     use 0x1::Stats;
     use 0x1::AutoPay;
     use 0x1::Epoch;
+    use 0x1::Debug::print;
 
     resource struct BlockMetadata {
         /// Height of the current block
@@ -73,29 +73,37 @@ module LibraBlock {
         previous_block_votes: vector<address>,
         proposer: address
     ) acquires BlockMetadata {
+        print(&01);
         LibraTimestamp::assert_operating();
         // Operational constraint: can only be invoked by the VM.
+        print(&02);
         CoreAddresses::assert_vm(vm);
-
         // Authorization
         assert(
             proposer == CoreAddresses::VM_RESERVED_ADDRESS() || LibraSystem::is_validator(proposer),
             Errors::requires_address(EVM_OR_VALIDATOR)
         );
+print(&03);
         //////// 0L ////////
         // increment stats
+
         Stats::process_set_votes(vm, &previous_block_votes);
+print(&04);
         Stats::inc_prop(vm, *&proposer);
-        
+print(&05);        
         if (AutoPay::tick(vm)){
+print(&06);
             AutoPay::process_autopay(vm);
         };
 
         ///////////////////
-
+print(&06);
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+print(&07);
         LibraTimestamp::update_global_time(vm, proposer, timestamp);
+print(&08);
         block_metadata_ref.height = block_metadata_ref.height + 1;
+print(&09);
         Event::emit_event<NewBlockEvent>(
             &mut block_metadata_ref.new_block_events,
             NewBlockEvent {
@@ -108,10 +116,13 @@ module LibraBlock {
 
          //////// 0L ////////
         // reconfigure
+print(&10);
         if (Epoch::epoch_finished()) {
+
           // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata. But there's a circular reference there when we try.
           Reconfigure::reconfigure(vm, get_current_block_height());
-        }
+        };
+
     }
     spec fun block_prologue {
         include LibraTimestamp::AbortsIfNotOperating;

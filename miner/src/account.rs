@@ -1,13 +1,14 @@
 //! Formatters for libra account creation
 use crate::block::Block;
 use libra_crypto::x25519::PublicKey;
-use libra_types::account_address::AccountAddress;
+use libra_types::{account_address::AccountAddress, transaction::SignedTransaction};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use hex::{decode, encode};
 use std::{fs::File, io::Write, path::PathBuf};
 use libra_network_address::{NetworkAddress, encrypted::{TEST_SHARED_VAL_NETADDR_KEY, TEST_SHARED_VAL_NETADDR_KEY_VERSION}};
 use libra_genesis_tool::keyscheme::KeyScheme;
-
+use ol_types
+::autopay::PayInstruction;
 
 #[derive(Serialize, Deserialize, Debug)]
 /// Configuration data necessary to initialize a validator.
@@ -34,6 +35,10 @@ pub struct ValConfigs {
     pub op_fullnode_network_addresses_string: NetworkAddress,
     /// Human readable name of account
     pub op_human_name: String,
+    /// autopay configs
+    pub autopay_instructions: Option<Vec<PayInstruction>>,
+    /// autopay configs
+    pub autopay_signed: Option<Vec<SignedTransaction>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -65,6 +70,8 @@ impl ValConfigs {
         block: Block,
         keys: KeyScheme,
         ip_address: String,
+        autopay_instructions: Option<Vec<PayInstruction>>,
+        autopay_signed: Option<Vec<SignedTransaction>>,
     ) -> Self {
         // let keys = KeyScheme::new_from_mnemonic(mnemonic_string);
         let owner_address = keys.child_0_owner.get_address().to_string();
@@ -99,7 +106,6 @@ impl ValConfigs {
             .to_bytes()
         ).unwrap();
         let fn_addr_obj = fn_addr_obj.append_prod_protos(fn_pubkey, 0);
-
         Self {
             /// Block zero of the onboarded miner
             block_zero: block,
@@ -111,6 +117,8 @@ impl ValConfigs {
             op_fullnode_network_addresses: lcs::to_bytes(&fn_addr_obj).unwrap(),
             op_fullnode_network_addresses_string: fn_addr_obj.to_owned(),
             op_human_name: format!("{}-oper", owner_address),
+            autopay_instructions,
+            autopay_signed,
         }
     }
     /// Creates the json file needed for onchain account creation - validator
@@ -171,7 +179,7 @@ impl UserConfigs {
 #[test]
 fn test_parse_init_file() {
     use crate::account::ValConfigs;
-    let fixtures = PathBuf::from("../fixtures/onboarding/eve_init_test.json");
+    let fixtures = PathBuf::from("../ol/fixtures/onboarding/eve_init_test.json");
     let init_configs = ValConfigs::get_init_data(&fixtures).unwrap();
     assert_eq!(init_configs.op_fullnode_network_addresses, decode("2d040000000000052318072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800").unwrap(), "Could not parse network address");
 
@@ -187,7 +195,7 @@ fn test_parse_init_file() {
 fn val_config_ip_address() {
     use libra_network_address::encrypted::EncNetworkAddress;
 
-    let block =  Block {
+    let block = Block {
         height: 0u64,
         elapsed_secs: 0u64,
         preimage: Vec::new(),
@@ -200,6 +208,8 @@ fn val_config_ip_address() {
         block,
         eve_keys,
         "161.35.13.169".to_string(),
+        None,
+        None
     );
     
     let correct_fn_hex = "2d0400a1230da9052318072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800".to_owned();

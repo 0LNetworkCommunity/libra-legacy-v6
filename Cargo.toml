@@ -55,6 +55,7 @@ members = [
     "execution/executor-types",
     "json-rpc",
     "json-rpc/types",
+    "keygen",
     "language/benchmarks",
     "language/borrow-graph",
     "language/bytecode-verifier",
@@ -149,7 +150,11 @@ members = [
     "verifiable_delay/vdf",
     "verifiable_delay/vdf-cli",
     "verifiable_delay/classgroup",
-    "miner"
+    "miner",
+    "txs",
+    "ol-cli",
+    "ol/types",
+    "ol/fixtures",
 ]
 
 # NOTE: default-members is the complete list of binaries that form the "production Libra codebase". These members should
@@ -188,8 +193,11 @@ default-members = [
     "storage/inspector",
 ]
 
-[profile.release]
-debug = true
-
 [profile.bench]
 debug = true
+
+[profile.release]
+opt-level = 'z'     # Optimize for size.
+lto = true          # Enable Link Time Optimization
+codegen-units = 1   # Reduce number of codegen units to increase optimizations.
+panic = 'abort'     # Abort on panic

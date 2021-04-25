@@ -9,7 +9,11 @@ script {
     percentage: u64,
   ) {
     let account = Signer::address_of(sender);
-    assert(AutoPay::is_enabled(account), 0);
+
+    if (!AutoPay::is_enabled(account)) {
+      AutoPay::enable_autopay(sender);
+    };
+
     AutoPay::create_instruction(
       sender, 
       uid,
@@ -17,5 +21,6 @@ script {
       end_epoch,
       percentage,
     );
+    assert(AutoPay::is_enabled(Signer::address_of(sender)), 0);
   }
 }

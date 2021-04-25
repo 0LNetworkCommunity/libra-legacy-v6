@@ -749,6 +749,24 @@
     }
   ],
   [
+    "01b7e1f8dae4215a4633ad4fe009805b6b95191dfb98aee08f0f94141b4b688f8a",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "AccountLimits",
+      "name": "Window",
+      "type_params": [
+        {
+          "Struct": {
+            "address": "00000000000000000000000000000001",
+            "module": "GAS",
+            "name": "GAS",
+            "type_params": []
+          }
+        }
+      ]
+    }
+  ],
+  [
     "01bac7708c12e42c61b6c9c8eb1a894a8ddf799e8093a0a94353bab042d57530e8",
     {
       "address": "00000000000000000000000000000001",

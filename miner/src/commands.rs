@@ -1,42 +1,28 @@
 //! MinerApp Subcommands
-//!
-//! This is where you specify the subcommands of your application.
-//!
-//! The default application comes with two subcommands:
-//!
-//! - `start`: launches the application
-//! - `version`: print application version
-//!
-//! See the `impl Configurable` below for how to specify the path to the
-//! application's configuration file.
 
 mod keygen_cmd;
 mod start_cmd;
 mod version_cmd;
-mod onboard_cmd;
 mod swarm_test_cmd;
 mod zero_cmd;
 mod ceremony_cmd;
 mod manifest_cmd;
-mod init_cmd;
 mod wizard_user_cmd;
 mod wizard_val_cmd;
 mod wizard_fn_cmd;
-mod genesis_cmd;
+mod files_cmd;
 
 use self::{
     start_cmd::StartCmd,
     version_cmd::VersionCmd,
-    onboard_cmd::OnboardCmd,
     swarm_test_cmd::SwarmCmd,
     zero_cmd::ZeroCmd,
     keygen_cmd::KeygenCmd,
     ceremony_cmd::CeremonyUtilCmd,
     wizard_user_cmd::UserWizardCmd,
-    init_cmd::InitCmd,
     wizard_val_cmd::ValWizardCmd,
     wizard_fn_cmd::FnWizardCmd,
-    genesis_cmd::GenesisCmd,
+    files_cmd::FilesCmd,
     manifest_cmd::ManifestCmd,
 };
 use crate::config::MinerConfig;
@@ -48,7 +34,7 @@ use dirs;
 use libra_global_constants::NODE_HOME;
 
 /// MinerApp Configuration Filename
-pub const CONFIG_FILE: &str = "miner.toml";
+pub const CONFIG_FILE: &str = "0L.toml";
 
 /// MinerApp Subcommands
 #[derive(Command, Debug, Options, Runnable)]
@@ -76,10 +62,6 @@ pub enum MinerCmd {
     /// The `ceremony` subcommand
     #[options(help = "wizard for genesis ceremony configurations")]
     Ceremony(CeremonyUtilCmd),
-
-    /// The `onboard` subcommand
-    #[options(help = "onboard a new miner with a block_0.json proof")]
-    Onboard(OnboardCmd),
     
     /// The `swarm` subcommand
     #[options(help = "test connection to a local swarm")]
@@ -89,25 +71,21 @@ pub enum MinerCmd {
     #[options(help = "wizard to create accounts and local configs")]
     UserWizard(UserWizardCmd),
 
-    /// The `init` subcommand
-    #[options(help = "initialize miner configs miner.toml")]
-    Init(InitCmd),
-
     /// The `val_wizard` subcommand
-    #[options(help = "run all steps for validator onboarding")]
+    #[options(help = "create all files for validator onboarding")]
     ValWizard(ValWizardCmd),
 
     /// The `fn_wizard` subcommand
-    #[options(help = "run all steps for fullnode config")]
+    #[options(help = "create all files for fullnode config")]
     FnWizard(FnWizardCmd),
     
     /// The `genesis` subcommand
-    #[options(help = "build a genesis.blob")]
-    Genesis(GenesisCmd),
+    #[options(help = "generate validator files")]
+    Files(FilesCmd),
 
-    /// The `genesis` subcommand
-    #[options(help = "build a genesis.blob")]
-    Account(ManifestCmd),
+    /// The `manifest` subcommand
+    #[options(help = "account manifest")]
+    Manifest(ManifestCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.
