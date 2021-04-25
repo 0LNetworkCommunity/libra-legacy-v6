@@ -1,23 +1,20 @@
-// Module to test bulk validator updates function in LibraSystem.move
 //! account: alice, 4000000, 0, validator
 //! account: bob, 1000000, 0, validator
 //! account: carol, 1000000, 0, validator
 //! account: dave, 1000000, 0, validator
 
 //! new-transaction
-//! sender: bob
+//! sender: alice
 script {
   use 0x1::LibraAccount;
-  // use 0x1::GAS::GAS;
   use 0x1::ValidatorConfig;
   use 0x1::TestFixtures;
   use 0x1::VDF;
-  // use 0x1::Roles;
   use 0x1::Signer;
   use 0x1::MinerState;
 
   fun main(sender: &signer) {
-    // Scenario: Bob, an existing validator, is sending a transaction for Eve, with a challenge and proof not yet submitted to the chain.
+    // Scenario: Alice, an existing validator, is sending a transaction for Eve, with a challenge and proof from eve's block_0
     let challenge = TestFixtures::eve_0_easy_chal();
     let solution = TestFixtures::eve_0_easy_sol();
     // // Parse key and check
