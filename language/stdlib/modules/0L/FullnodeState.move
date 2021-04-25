@@ -46,11 +46,11 @@ module FullnodeState {
 
   /// Miner increments proofs by 1
   /// TO
-  // public fun inc_proof(sender: &signer) acquires FullnodeCounter {
-  //   let addr = Signer::address_of(sender);
-  //     let state = borrow_global_mut<FullnodeCounter>(addr);
-  //     state.proofs_submitted_in_epoch = state.proofs_submitted_in_epoch + 1;
-  // }
+  public fun inc_proof(sender: &signer) acquires FullnodeCounter {
+      let addr = Signer::address_of(sender);
+      let state = borrow_global_mut<FullnodeCounter>(addr);
+      state.proofs_submitted_in_epoch = state.proofs_submitted_in_epoch + 1;
+  }
 
   /// Miner increments proofs by 1
   public fun inc_proof_by_operator(operator_sig: &signer, miner_addr: address) acquires FullnodeCounter {
@@ -119,6 +119,12 @@ module FullnodeState {
     state.cumulative_proofs_submitted = cumulative_proofs_submitted;
     state.cumulative_proofs_paid = cumulative_proofs_paid;
     state.cumulative_subsidy = cumulative_subsidy;
+  }
+
+  public fun mock_proof(sender: &signer, count: u64) acquires FullnodeCounter {
+    let addr = Signer::address_of(sender);
+    let state = borrow_global_mut<FullnodeCounter>(addr);
+    state.proofs_submitted_in_epoch = state.proofs_submitted_in_epoch + count;
   }
 }
 }

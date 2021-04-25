@@ -25,6 +25,7 @@ address 0x1 {
     use 0x1::Testnet::is_testnet;
     use 0x1::FullnodeState;
     use 0x1::ValidatorConfig;
+    use 0x1::Debug::print;
 
     // estimated gas unit cost for proof verification divided coin scaling factor
     // Cost for verification test/easy difficulty: 1173 / 1000000
@@ -67,7 +68,7 @@ address 0x1 {
           b"validator subsidy",
           b""
         );
-
+        print(&01);
         // refund operator tx fees for mining
         refund_operator_tx_fees(vm_sig, node_address);
         i = i + 1;
@@ -279,6 +280,7 @@ address 0x1 {
         subsidy = proposed_subsidy;
       };
 
+      if (subsidy == 0) return 0;
       let minted_coins = Libra::mint<GAS>(vm, subsidy);
       LibraAccount::vm_deposit_with_metadata<GAS>(
         vm,
@@ -406,23 +408,35 @@ address 0x1 {
 
     // Operators may run out of balance to submit txs for the Validator. This is true for mining, where the operator receives no network subsidy.
     fun refund_operator_tx_fees(vm: &signer, miner_addr: address) {
+print(&011);
         // get operator for validator
         let oper_addr = ValidatorConfig::get_operator(miner_addr);
         // count OWNER's proofs submitted
+print(&012);
         let proofs_in_epoch = FullnodeState::get_address_proof_count(miner_addr);
+print(&proofs_in_epoch);
         let cost = 0;
         // find cost from baseline
+print(&013);
         if (proofs_in_epoch > 0) {
           cost = BASELINE_TX_COST * proofs_in_epoch;
         };
         // deduct from subsidy to miner
         // send payment to operator
+print(&014);
+print(&cost);
         if (cost > 0) {
+print(&0141);
+
           let owner_balance = LibraAccount::balance<GAS>(miner_addr);
+print(&01412);
+
           if (!(owner_balance > cost)) {
+print(&014121);
+
             cost = owner_balance;
           };
-          
+print(&015);          
           LibraAccount::vm_make_payment<GAS>(
             miner_addr,
             oper_addr,
