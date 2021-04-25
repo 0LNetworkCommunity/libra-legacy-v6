@@ -15,7 +15,7 @@ pub fn oracle_helper_tx(
 ) -> SignedTransaction {
     let mut args: Vec<TransactionArgument> = Vec::new();
     args.push(TransactionArgument::U64(1));
-    let stdlib_bytes = std::include_bytes!("../../../../ol/fixtures/upgrade_payload/foo_stdlib.mv"); 
+    let stdlib_bytes = std::include_bytes!("../../../../ol/fixtures/upgrade_payload/foo_stdlib.mv");
     let stdlib_vec = stdlib_bytes.to_vec();
     args.push(TransactionArgument::U8Vector(stdlib_vec));
 
