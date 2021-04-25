@@ -1,87 +1,62 @@
-//! web-monitor
-
-use crate::{node_health, check_runner, chain_info};
+//! `server`  web monitor http server
 use futures::StreamExt;
-use std::convert::Infallible;
-use std::thread;
-use std::time::Duration;
+use serde_json::json;
+use std::{convert::Infallible, fs, thread, time::Duration};
 use tokio::time::interval;
 use warp::{sse::ServerSentEvent, Filter};
 
-// TODO: does this need to be a separate function?
-// create server-sent event
-fn sse_check(info: node_health::Items) -> Result<impl ServerSentEvent, Infallible> {
-    Ok(warp::sse::json(info))
+use crate::{cache::Vitals, check::runner, node::node::Node};
+
+fn sse_vitals(data: Vitals) -> Result<impl ServerSentEvent, Infallible> {
+    Ok(warp::sse::json(data))
 }
 
-fn sse_chain_info(info: chain_info::ChainInfo) -> Result<impl ServerSentEvent, Infallible> {
-    Ok(warp::sse::json(info))
-}
-
-fn sse_val_info(info: Vec<chain_info::ValidatorInfo>) -> Result<impl ServerSentEvent, Infallible> {
-    Ok(warp::sse::json(info))
-}
-
-
-/// main server
 #[tokio::main]
-pub async fn start_server() {
+/// starts the web server
+pub async fn start_server(node: Node) {
+    let cfg = &node.conf;
+    let node_home = cfg.clone().workspace.node_home.clone();
+    let node_home_two = cfg.clone().workspace.node_home.clone();
     // TODO: Perhaps a better way to keep the check cache fresh?
-    thread::spawn(|| {
-        check_runner::mon(true, false);
+    thread::spawn(move || {
+        runner::run_checks(node, true, false);
     });
 
     //GET check/ (json api for check data)
-    let check = warp::path("check").and(warp::get()).map(|| {
+    let vitals_route = warp::path("vitals").and(warp::get()).map(move || {
+        let path = node_home.clone();
         // let mut health = node_health::NodeHealth::new();
         // create server event source from Check object
-        let event_stream = interval(Duration::from_secs(1)).map(move |_| {
-            let items = node_health::Items::read_cache().unwrap();
+        let event_stream = interval(Duration::from_secs(10)).map(move |_| {
+            let vitals = Vitals::read_json(&path);
             // let items = health.refresh_checks();
-            sse_check(items)
+            sse_vitals(vitals)
         });
         // reply using server-sent events
         warp::sse::reply(event_stream)
     });
 
-    //GET chain/ (the json api)
-    let chain = warp::path("chain").and(warp::get()).map(|| {
-        // create server event source
-        let event_stream = interval(Duration::from_secs(1)).map(move |_| {
-            let info = crate::chain_info::read_chain_info_cache();
-            sse_chain_info(info)
+    let account_template = warp::path("account.json").and(warp::get().map(|| {
+        fs::read_to_string("/root/.0L/account.json").unwrap()
+        // let obj: Value = serde_json::from_str(&string);
+    }));
+
+    let epoch_route = warp::path("epoch.json").and(warp::get().map(move || {
+        let node_home = node_home_two.clone();
+        let vitals = Vitals::read_json(&node_home).chain_view.unwrap();
+        let json = json!({
+          "epoch": vitals.epoch,
+          "waypoint": vitals.waypoint.unwrap().to_string()
         });
-        // reply using server-sent events
-        warp::sse::reply(event_stream)
-    });
+        json.to_string()
+    }));
 
-    // //GET account/ (the json api)
-    // let account = warp::path("account").and(warp::get()).map(|| {
-    //     // create server event source
-    //     let event_stream = interval(Duration::from_secs(1)).map(move |_| {
-    //         // let info = crate::chain_info::read_chain_info_cache();
-    //         sse_chain_info(info)
-    //     });
-    //     // reply using server-sent events
-    //     warp::sse::reply(event_stream)
-    // });
-
-
-    //GET validators/ (the json api)
-    let validators = warp::path("validators").and(warp::get()).map(|| {
-        // create server event source
-        let event_stream = interval(Duration::from_secs(120)).map(move |_| {
-            let info = crate::chain_info::read_val_info_cache();
-            // TODO: Use a different data source for /explorer/ data.
-            sse_val_info(info)
-        });
-        // reply using server-sent events
-        warp::sse::reply(event_stream)
-    });
+    let dev_web_files = "/root/libra/ol-cli/web-monitor/public/";
 
     //GET /
-    let home = warp::fs::dir("/root/libra/ol-cli/web-monitor/public/");
+    let home = warp::fs::dir(dev_web_files);
 
-    warp::serve(home.or(check).or(chain).or(validators))
-        .run(([0, 0, 0, 0], 3030)).await;
+    warp::serve(home.or(account_template).or(vitals_route).or(epoch_route))
+        .run(([0, 0, 0, 0], 3030))
+        .await;
 }

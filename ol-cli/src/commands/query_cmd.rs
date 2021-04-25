@@ -4,7 +4,9 @@ use abscissa_core::{Command, Options, Runnable, status_info};
 use crate::{
     entrypoint,
     prelude::app_config,
-    query::{get, QueryType},
+    node::query::QueryType,
+    node::client,
+    node::node::Node
 };
 
 /// `bal` subcommand
@@ -27,36 +29,45 @@ pub struct QueryCmd {
     
     #[options(help = "resources")]
     resources: bool,
+
+    #[options(help = "epoch and waypoint")]
+    epoch: bool,
 }
 
 impl Runnable for QueryCmd {
     fn run(&self) {
         let args = entrypoint::get_args();
-        let account = 
+        let cfg = app_config().clone();
+        let client = client::pick_client(args.swarm_path, &cfg).unwrap().0;
+        let mut node = Node::new(client, cfg);
+
+        let _account = 
             if args.account.is_some() { args.account.unwrap() }
             else { app_config().profile.account };
 
         let mut info = String::new();
         let mut display = "";
 
-
-
         // TODO: Reduce boilerplate. Serialize "balance" to cast to QueryType::Balance        
         if self.balance {
-            info = get(QueryType::Balance, account);
+            info = node.get(QueryType::Balance);
             display = "BALANCE";
         } 
         else if self.blockheight {
-            info = get(QueryType::BlockHeight, account);
+            info = node.get(QueryType::BlockHeight);
             display = "BLOCKHEIGHT";
         }
         else if self.sync_delay {
-            info = get(QueryType::SyncDelay, account);
+            info = node.get(QueryType::SyncDelay);
             display = "SYNC-DELAY";
         } 
         else if self.resources {
-            info = get(QueryType::Resources, account);
+            info = node.get(QueryType::Resources);
             display = "RESOURCES";
+        }
+        else if self.resources {
+            info = node.get(QueryType::Epoch);
+            display = "EPOCH";
         }
 
         status_info!(display, format!("{}", info));

@@ -7,7 +7,10 @@ use crate::{account, block::{build_block}, config::MinerConfig, delay};
 use libra_genesis_tool::keyscheme::KeyScheme;
 
 use abscissa_core::{Command, Options, Runnable};
+use libra_types::transaction::SignedTransaction;
 use libra_wallet::WalletLibrary;
+use ol_types
+::autopay::PayInstruction;
 use std::path::PathBuf;
 use crate::prelude::app_config;
 
@@ -35,13 +38,19 @@ impl Runnable for ManifestCmd {
             check(path);
         } else {
             let (_, _, wallet) = keygen::account_from_prompt();
-
-            write_manifest(&Some(path), wallet, None);
+            // TODO, include autopay template parsing
+            write_manifest(&Some(path), wallet, None, None, None);
         }
     }
 }
 /// Creates an account.json file for the validator
-pub fn write_manifest(path: &Option<PathBuf>, wallet: WalletLibrary, wizard_config: Option<MinerConfig> ) {
+pub fn write_manifest(
+  path: &Option<PathBuf>,
+  wallet: WalletLibrary,
+  wizard_config: Option<MinerConfig>,
+  autopay_batch: Option<Vec<PayInstruction>>,
+  autopay_signed: Option<Vec<SignedTransaction>>,
+) {
     let cfg = if wizard_config.is_some() { wizard_config.unwrap() }
     else { app_config().clone() };
 
@@ -56,7 +65,9 @@ pub fn write_manifest(path: &Option<PathBuf>, wallet: WalletLibrary, wizard_conf
     account::ValConfigs::new(
         block,
         keys,  
-        cfg.profile.ip.to_string()
+        cfg.profile.ip.to_string(),
+        autopay_batch,
+        autopay_signed,
     ).create_manifest(miner_home);
 }
 
