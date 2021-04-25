@@ -1,13 +1,13 @@
-//! account: shashank, 1000000
-//! account: bob, 1000000
 //! account: alice, 1000000
+//! account: bob, 1000000
+//! account: carol, 1000000
 
 // We test creation of autopay, retiriving it using same and different accounts
 // Finally, we also test deleting of autopay
 
 // Test to create instruction and retrieve it
 //! new-transaction
-//! sender: shashank
+//! sender: alice
 script {
   use 0x1::AutoPay;
   use 0x1::Signer;
@@ -25,7 +25,7 @@ script {
 
 // Test to create another instruction
 //! new-transaction
-//! sender: shashank
+//! sender: carol
 script {
   use 0x1::AutoPay;
   use 0x1::Signer;
@@ -35,18 +35,3 @@ script {
     }
 }
 // check: EXECUTED
-
-// // // Test to create instruction with wrong UUID
-// //! new-transaction
-// //! sender: shashank
-// script {
-//   use 0x0::AutoPay;
-//   use 0x0::Transaction;
-//   use 0x0::Signer;
-//   fun main(sender: &signer) {
-//     AutoPay::enable_autopay();
-//     Transaction::assert(AutoPay::is_enabled(Signer::address_of(sender)), 0);
-//     AutoPay::create_instruction(2, {{bob}}, 5, 5);
-//     }
-// }
-// // check: EXECUTED
