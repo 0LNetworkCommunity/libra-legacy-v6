@@ -58,6 +58,7 @@ pub enum NoiseHandshakeError {
     #[error("noise server: client {0}: client connecting with unauthenticated peer id: {1}")]
     UnauthenticatedClient(ShortHexStr, PeerId),
 
+    //////// 0L ////////
     #[error(
         "noise server: client {0}: client's self-reported peer id and pubkey-derived peer \
          id don't match: self-reported: {1}, derived: {2}, \

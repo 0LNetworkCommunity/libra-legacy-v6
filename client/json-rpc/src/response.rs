@@ -1,5 +1,6 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
+
 use crate::views::{
     AccountStateWithProofView, AccountView, CurrencyInfoView, EventView, MetadataView,
     StateProofView, TransactionView,
@@ -23,8 +24,10 @@ pub enum JsonRpcResponse {
     CurrenciesResponse(Vec<CurrencyInfoView>),
     AccountStateWithProofResponse(AccountStateWithProofView),
     NetworkStatusResponse(Number),
+    //////// 0L ////////    
     MinerStateViewResponse(MinerStateResourceView),
     OracleResourceViewResponse(OracleResourceView),
+    //////// 0L end ////////
     UnknownResponse(Value),
 }
 
@@ -97,6 +100,7 @@ impl TryFrom<(String, Value)> for JsonRpcResponse {
                     connected_peers_count,
                 ))
             }
+            //////// 0L ////////
             "get_miner_state" => {
                 let state: MinerStateResourceView = serde_json::from_value(value)?;
                 Ok(JsonRpcResponse::MinerStateViewResponse(
@@ -109,6 +113,7 @@ impl TryFrom<(String, Value)> for JsonRpcResponse {
                     state,
                 ))
             }
+            //////// 0L end ////////
             _ => Ok(JsonRpcResponse::UnknownResponse(value)),
         }
     }
@@ -212,8 +217,7 @@ impl ResponseAsView for AccountStateWithProofView {
     }
 }
 
-/// OL Implementation
-//add by Ping
+//////// 0L ////////
 impl ResponseAsView for MinerStateResourceView {
     fn from_response(response: JsonRpcResponse) -> Result<Self> {
         if let JsonRpcResponse::MinerStateViewResponse(resp) = response {
@@ -224,7 +228,6 @@ impl ResponseAsView for MinerStateResourceView {
     }
 }
 
-//add by Ping
 impl ResponseAsView for OracleResourceView {
     fn from_response(response: JsonRpcResponse) -> Result<Self> {
         if let JsonRpcResponse::OracleResourceViewResponse(resp) = response {

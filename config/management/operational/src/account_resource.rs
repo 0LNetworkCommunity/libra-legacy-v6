@@ -57,6 +57,7 @@ pub struct RotateOperatorKey {
     json_server: Option<String>,
     #[structopt(flatten)]
     validator_config: libra_management::validator_config::ValidatorConfig,
+    //////// 0L ////////
     #[structopt(flatten)]
     auto_validate: AutoValidate,
 }
@@ -69,6 +70,7 @@ impl RotateOperatorKey {
             .config()?
             .override_json_server(&self.json_server);
         let mut storage = config.validator_backend();
+        //////// 0L ////////        
         let client = JsonRpcClientWrapper::new(config.json_server.clone());
 
         // Fetch the current on-chain auth key for the operator and the current key held in storage.
@@ -122,6 +124,7 @@ impl RotateOperatorKey {
         )?;
         let rotate_key_txn = Transaction::UserTransaction(rotate_key_txn);
 
+        //////// 0L ////////
         // Submit the transaction
         let mut transaction_context =
             client.submit_transaction(rotate_key_txn.as_signed_user_txn().unwrap().clone())?;
@@ -132,5 +135,6 @@ impl RotateOperatorKey {
             .execute(config.json_server, transaction_context)?;
 
         Ok((transaction_context, new_storage_key))
+        //////// 0L end ////////
     }
 }

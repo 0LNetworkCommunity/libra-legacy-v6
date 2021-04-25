@@ -40,6 +40,7 @@ impl ValidatorSet {
                 *info.account_address(),
                 &encryptor,
             )
+            //////// 0L ////////            
             .map_err(|e| Error::NetworkAddressDecodeError(e.to_string()))?;
 
             let config_resource = client.validator_config(*info.account_address())?;

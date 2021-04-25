@@ -30,6 +30,11 @@ use std::{fmt::Debug, io, sync::Arc};
 use tokio::runtime::Handle;
 use tokio_util::codec::{FramedRead, FramedWrite, LengthDelimitedCodec};
 
+//////// 0L ////////
+// // Rate-limit configuration for inbound messages. Allows 100 messages for every 10ms window.
+// pub const MESSAGE_RATE_LIMIT_WINDOW: Duration = Duration::from_millis(10);
+// pub const MESSAGE_RATE_LIMIT_COUNT: usize = 100;
+
 #[cfg(test)]
 mod test;
 
@@ -151,6 +156,7 @@ where
             .length_field_length(4)
             .big_endian();
 
+        //////// 0L ////////
         // Convert ReadHalf to Stream of length-delimited messages.
         let mut reader = FramedRead::new(reader, codec_builder.new_codec()).fuse();
 

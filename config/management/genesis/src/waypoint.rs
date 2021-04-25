@@ -22,9 +22,9 @@ pub struct CreateWaypoint {
     chain_id: Option<ChainId>,
     #[structopt(flatten)]
     shared_backend: SharedBackend,
+    //////// 0L ////////
     #[structopt(long)]
     genesis_path: Option<PathBuf>,
-
 }
 
 impl CreateWaypoint {
@@ -33,6 +33,7 @@ impl CreateWaypoint {
             config: self.config,
             chain_id: self.chain_id,
             backend: self.shared_backend,
+            //////// 0L ////////
             path: self.genesis_path,
         };
 

@@ -55,7 +55,6 @@ members = [
     "execution/executor-types",
     "json-rpc",
     "json-rpc/types",
-    "keygen",
     "language/benchmarks",
     "language/borrow-graph",
     "language/bytecode-verifier",
@@ -107,7 +106,6 @@ members = [
     "language/vm/serializer-tests",
     "libra-node",
     "mempool",
-    "miner",
     "network",
     "network/builder",
     "network/memsocket",
@@ -146,15 +144,16 @@ members = [
     "testsuite/smoke-test",
     "types",
     "vm-validator",
-    ######### 0L #########
-    "verifiable_delay/vdf",
-    "verifiable_delay/vdf-cli",
-    "verifiable_delay/classgroup",
+    # //////// 0L ////////
+    "keygen",
     "miner",
-    "txs",
     "ol-cli",
     "ol/types",
     "ol/fixtures",
+    "txs",
+    "verifiable_delay/classgroup",
+    "verifiable_delay/vdf",
+    "verifiable_delay/vdf-cli",
 ]
 
 # NOTE: default-members is the complete list of binaries that form the "production Libra codebase". These members should
@@ -196,6 +195,7 @@ default-members = [
 [profile.bench]
 debug = true
 
+# //////// 0L ////////
 [profile.release]
 opt-level = 'z'     # Optimize for size.
 lto = true          # Enable Link Time Optimization

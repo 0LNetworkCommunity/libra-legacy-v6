@@ -23,8 +23,6 @@ use std::{
 };
 use structopt::StructOpt;
 use vm_genesis::GenesisMiningProof;
-
-//////// 0L ////////
 use crate::keyscheme::KeyScheme;
 
 pub struct StorageHelper {
@@ -189,6 +187,7 @@ impl StorageHelper {
     self.temppath.path().to_str().unwrap()
   }
 
+  //////// 0L ////////
   // pub fn initialize_by_idx(&self, namespace: String, idx: usize) {
   //     let partial_seed = lcs::to_bytes(&idx).unwrap();
   //     let mut seed = [0u8; 32];
@@ -197,6 +196,7 @@ impl StorageHelper {
   //     self.initialize(namespace, seed);
   // }
 
+  //////// 0L ////////
   // 0L: change, initialize the 0th account with a fixture mnemonic "Alice". So we can test miner and other APIs.
   pub fn initialize_by_idx(&self, namespace: String, idx: usize) {
     // let mnem_alice = "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse".to_string();
@@ -390,6 +390,7 @@ impl StorageHelper {
     command.genesis()
   }
 
+  //////// 0L ////////
   pub fn genesis_gh(
     &self,
     chain_id: ChainId,

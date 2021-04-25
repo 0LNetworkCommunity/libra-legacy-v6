@@ -52,8 +52,9 @@ target-out-docker
 # Doc generation output
 *.md.old
 
-#0L
+# //////// 0L ////////
 swarm_temp
+
 # miner.toml
 key_store.json
 

@@ -16,7 +16,7 @@ pub enum Proposer {
 pub enum Entry {
     Proposer(Proposer),
     Timestamp(u64),
-    Round(u64),
+    Round(u64), //////// 0L ////////
 }
 
 impl FromStr for Entry {
@@ -48,6 +48,7 @@ impl FromStr for Entry {
             return Ok(Entry::Timestamp(s.parse::<u64>()?));
         }
 
+        //////// 0L ////////
         if let Some(s) = strip(s, "round:") {
             if s.is_empty() {
                 return Ok(Entry::Round(0));
@@ -82,6 +83,7 @@ impl Entry {
     }
 }
 
+//////// 0L ////////
 pub fn build_block_metadata(config: &GlobalConfig, entries: &[Entry]) -> Result<BlockMetadata> {
     let mut timestamp = None;
     let mut proposer = None;

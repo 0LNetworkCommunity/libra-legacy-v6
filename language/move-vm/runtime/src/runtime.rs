@@ -92,6 +92,7 @@ impl VMRuntime {
         data_store.publish_module(&module_id, module)
     }
 
+    //////// 0L ////////
     // 0L: currently only used by upgrade oracle
     // TODO: consider refactor this
     pub(crate) fn revise_module(

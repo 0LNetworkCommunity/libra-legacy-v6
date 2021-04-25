@@ -325,11 +325,13 @@ impl<'env> Translator<'env> {
         };
         // Duplicate declarations have been checked by the Move compiler.
         ////////// 0L //////////
+        // assert!(self.fun_table.insert(name, entry).is_none());
         let script_inserted_success = self.fun_table.insert(name, entry).is_none();
         if !*&script_inserted_success {
             println!("\n Found duplicate move tx script: {:?}", &module_id);
         }
         assert!(script_inserted_success);
+        //////// 0L end ////////        
     }
 
     /// Defines a constant.

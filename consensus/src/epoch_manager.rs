@@ -304,6 +304,7 @@ impl EpochManager {
 
         let mut safety_rules =
             MetricsSafetyRules::new(self.safety_rules_manager.client(), self.storage.clone());
+        //////// 0L ////////            
         if let Err(error) = safety_rules.perform_initialize() {
             error!(
                 epoch = epoch,
