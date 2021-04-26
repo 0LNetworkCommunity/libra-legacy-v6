@@ -17,7 +17,7 @@ script {
         // Alice is the only one that can update her mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357300101011000);
+        assert(MinerState::get_count_in_epoch({{alice}}) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -40,7 +40,7 @@ script {
         let len = Vector::length<address>(&vec);
         assert(len == 5, 7357140102011000);
 
-        MinerState::reconfig(vm);
+        MinerState::reconfig(vm, &vec);
 
         // This is the base case: check case of the validator set limit being less than universe size.
         let top_n_is_under = NodeWeight::top_n_accounts(vm, 3);

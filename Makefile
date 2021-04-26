@@ -313,6 +313,32 @@ wipe:
 stop:
 	sudo service libra-node stop
 
+debug:
+	make smoke-onboard <<< $$'${MNEM}'
+ 
+
+##### DEVNET TESTS #####
+# Quickly start a devnet with fixture files. To do a full devnet setup see 'devnet-reset' below
+
+devnet: stop clear fix devnet-keys devnet-yaml start
+# runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
+# This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
+
+devnet-keys: 
+	@printf '${MNEM}' | cargo run -p miner -- init --skip-miner
+
+devnet-yaml:
+	cargo run -p miner -- genesis
+
+devnet-onboard: clear fix
+	#starts config for a new miner "eve", uses the devnet github repo for ceremony
+	cargo r -p miner -- init --skip-miner <<< $$'${MNEM}'
+	cargo r -p miner -- genesis
+
+devnet-previous: stop clear 
+# runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
+	V=previous make fix devnet-keys devnet-yaml start
+
 
 ##### DEVNET TESTS #####
 # Quickly start a devnet with fixture files. To do a full devnet setup see 'devnet-reset' below

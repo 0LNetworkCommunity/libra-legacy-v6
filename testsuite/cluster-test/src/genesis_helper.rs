@@ -290,6 +290,7 @@ impl GenesisHelper {
     ) -> Result<Waypoint, Error> {
         let waypoint = self.create_waypoint(chain_id).await?;
 
+        //////// 0L ////////
         let args = format!(
             "
                 libra-genesis-tool

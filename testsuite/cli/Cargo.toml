@@ -40,7 +40,7 @@ resource-viewer = { path = "../../language/tools/resource-viewer", version = "0.
 compiled-stdlib = { path = "../../language/stdlib/compiled",  version = "0.1.0" }
 transaction-builder = { path = "../../language/transaction-builder", version = "0.1.0" }
 compiler = { path = "../../language/compiler",  version = "0.1.0" }
-######## 0L ########
+#//////// 0L ////////
 serde_json = "1.0.59"
 rpassword = "5.0"
 keygen = { path = "../../keygen",  version = "0.1.0" }

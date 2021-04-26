@@ -4,13 +4,13 @@
 #![forbid(unsafe_code)]
 
 mod account_resource;
-mod auto_validate;
+mod auto_validate;  //////// 0L ////////
 pub mod command;
 mod governance;
 pub mod json_rpc;
 mod keys;
 mod owner;
-mod print;
+mod print;  //////// 0L ////////
 mod validate_transaction;
 mod validator_config;
 mod validator_set;
@@ -19,10 +19,11 @@ mod network_checker;
 #[cfg(any(test, feature = "testing"))]
 pub mod test_helper;
 
-use libra_secure_json_rpc::VMStatusView;
+use libra_secure_json_rpc::VMStatusView;  //////// 0L ////////    
 use libra_types::account_address::AccountAddress;
 use serde::Serialize;
 
+//////// 0L ////////
 /// Information for validating a transaction after it's been submitted, or
 /// retrieving the execution result.
 #[derive(Debug, PartialEq, Serialize)]
@@ -36,6 +37,7 @@ pub struct TransactionContext {
 }
 
 impl TransactionContext {
+    //////// 0L ////////
     pub fn new(address: AccountAddress, sequence_number: u64) -> TransactionContext {
         TransactionContext::new_with_validation(address, sequence_number, None)
     }

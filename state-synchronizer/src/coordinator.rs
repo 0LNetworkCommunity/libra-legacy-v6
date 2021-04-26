@@ -122,6 +122,7 @@ impl PendingLedgerInfos {
         let highest_committed_li = sync_state.highest_local_li.ledger_info().version();
         let highest_synced = sync_state.highest_version_in_local_storage();
 
+        //////// 0L ////////
         // prune any pending LIs that are older than the latest local synced version
         self.pending_li_queue = self.pending_li_queue.split_off(&(highest_synced + 1));
 
@@ -731,6 +732,7 @@ impl<T: ExecutorProxyTrait> SyncCoordinator<T> {
             None
         };
         if let Some(li) = end_of_epoch_li.as_ref() {
+            //////// 0L ////////
             ensure!(
                 li.ledger_info().version() >= request.known_version,
                 "waypoint request's current_epoch (epoch {}, version {}) < waypoint request's known_version {}",
@@ -833,7 +835,7 @@ impl<T: ExecutorProxyTrait> SyncCoordinator<T> {
         debug!(
             LogSchema::event_log(LogEntry::ProcessChunkResponse, LogEvent::Received)
                 .chunk_resp(&response)
-                .peer(peer)
+                .peer(peer) //////// 0L ////////
         );
         fail_point!("state_sync::apply_chunk", |_| {
             Err(anyhow::anyhow!("Injected error in apply_chunk"))
@@ -1051,6 +1053,7 @@ impl<T: ExecutorProxyTrait> SyncCoordinator<T> {
         // Optimistically fetch the next chunk.
         let new_version =
             self.local_state.highest_version_in_local_storage() + txn_list_with_proof.len() as u64;
+        //////// 0L ////////
         // The epoch in the optimistic request (= new_epoch) should be the next epoch if the current chunk
         // is the last one in its epoch.
         let new_epoch = end_of_epoch_li
@@ -1072,6 +1075,7 @@ impl<T: ExecutorProxyTrait> SyncCoordinator<T> {
             }
         }
 
+        //////// 0L ////////
         // verify the end-of-epoch LI for the following before passing it to execution:
         // * verify end-of-epoch-li against local state
         // * verify end-of-epoch-li's version corresponds to end-of-chunk version before

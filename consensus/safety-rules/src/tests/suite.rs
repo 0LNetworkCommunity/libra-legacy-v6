@@ -664,6 +664,7 @@ fn test_validator_not_in_set(safety_rules: &Callback) {
     proof
         .ledger_info_with_sigs
         .push(a2.block().quorum_cert().ledger_info().clone());
+    //////// 0L ////////
     assert!(matches!(
         safety_rules.initialize(&proof),
         Err(Error::ValidatorNotInSet(_))

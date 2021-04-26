@@ -27,6 +27,7 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="FullnodeState.md#0x1_FullnodeState">0x1::FullnodeState</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
@@ -155,10 +156,10 @@
       vm_sig,
       node_address,
       minted_coins,
-      x"",
-      x""
+      b"validator subsidy",
+      b""
     );
-
+    print(&01);
     // refund operator tx fees for mining
     <a href="Subsidy.md#0x1_Subsidy_refund_operator_tx_fees">refund_operator_tx_fees</a>(vm_sig, node_address);
     i = i + 1;
@@ -356,8 +357,8 @@
         vm,
         node_address,
         <a href="TransactionFee.md#0x1_TransactionFee_get_transaction_fees_coins_amount">TransactionFee::get_transaction_fees_coins_amount</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, fees),
-        x"",
-        x""
+        b"transaction fees",
+        b""
     );
     i = i + 1;
   };
@@ -495,7 +496,6 @@
   };
 
   <b>if</b> (subsidy == 0) <b>return</b> 0;
-
   <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, subsidy);
   <a href="LibraAccount.md#0x1_LibraAccount_vm_deposit_with_metadata">LibraAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
     vm,
@@ -591,8 +591,8 @@
 <pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>():u64 {
   <b>let</b> epoch_length_mins = 24 * 60;
   <b>let</b> steady_state_nodes = 1000;
-  <b>let</b> target_delay = 10;
-  steady_state_nodes * (epoch_length_mins/target_delay)
+  <b>let</b> target_delay_mins = 10;
+  steady_state_nodes * (epoch_length_mins/target_delay_mins)
 }
 </code></pre>
 
@@ -781,23 +781,35 @@
 
 
 <pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_refund_operator_tx_fees">refund_operator_tx_fees</a>(vm: &signer, miner_addr: address) {
+print(&011);
     // get operator for validator
     <b>let</b> oper_addr = <a href="ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(miner_addr);
     // count OWNER's proofs submitted
+print(&012);
     <b>let</b> proofs_in_epoch = <a href="FullnodeState.md#0x1_FullnodeState_get_address_proof_count">FullnodeState::get_address_proof_count</a>(miner_addr);
+print(&proofs_in_epoch);
     <b>let</b> cost = 0;
     // find cost from baseline
+print(&013);
     <b>if</b> (proofs_in_epoch &gt; 0) {
       cost = <a href="Subsidy.md#0x1_Subsidy_BASELINE_TX_COST">BASELINE_TX_COST</a> * proofs_in_epoch;
     };
     // deduct from subsidy <b>to</b> miner
     // send payment <b>to</b> operator
+print(&014);
+print(&cost);
     <b>if</b> (cost &gt; 0) {
+print(&0141);
+
       <b>let</b> owner_balance = <a href="LibraAccount.md#0x1_LibraAccount_balance">LibraAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(miner_addr);
+print(&01412);
+
       <b>if</b> (!(owner_balance &gt; cost)) {
+print(&014121);
+
         cost = owner_balance;
       };
-
+print(&015);
       <a href="LibraAccount.md#0x1_LibraAccount_vm_make_payment">LibraAccount::vm_make_payment</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
         miner_addr,
         oper_addr,

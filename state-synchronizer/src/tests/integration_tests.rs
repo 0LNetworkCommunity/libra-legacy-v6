@@ -158,6 +158,7 @@ impl SynchronizerEnv {
         config.base.role = role;
         config.state_sync.sync_request_timeout_ms = timeout_ms;
         config.state_sync.multicast_timeout_ms = multicast_timeout_ms;
+        //////// 0L ////////
         // Too many tests expect this, so we overwrite the value
         config.state_sync.chunk_limit = 250;
 
@@ -367,6 +368,7 @@ impl SynchronizerEnv {
         conn_notifs_tx.push(sender, notif).unwrap();
     }
 
+    //////// 0L ////////
     /// Delivers next message from peer with index `sender` in this SynchronizerEnv
     /// Returns the recipient of the msg
     fn deliver_msg(&mut self, sender: (usize, usize)) -> (PeerId, Message) {
@@ -450,6 +452,7 @@ impl SynchronizerEnv {
     }
 }
 
+//////// 0L ////////
 fn check_chunk_request(msg: StateSynchronizerMsg, known_version: u64, target_version: Option<u64>) {
     match msg {
         StateSynchronizerMsg::GetChunkRequest(req) => {
@@ -462,6 +465,7 @@ fn check_chunk_request(msg: StateSynchronizerMsg, known_version: u64, target_ver
     }
 }
 
+//////// 0L ////////
 fn check_chunk_response(
     msg: StateSynchronizerMsg,
     response_li_version: u64,
@@ -682,6 +686,7 @@ fn catch_up_through_epochs_full_node() {
     assert_eq!(env.latest_li(2).ledger_info().epoch(), 10);
 }
 
+//////// 0L ////////
 #[test]
 fn catch_up_with_waypoints() {
     let mut env = SynchronizerEnv::new(3);
@@ -736,6 +741,7 @@ fn catch_up_with_waypoints() {
     assert_eq!(env.latest_li(2).ledger_info().epoch(), 19);
 }
 
+//////// 0L ////////
 #[test]
 fn test_lagging_upstream_long_poll() {
     let mut env = SynchronizerEnv::new(4);
@@ -936,6 +942,7 @@ fn test_sync_pending_ledger_infos() {
     }
 }
 
+//////// 0L ////////
 #[test]
 #[ignore] // TODO: https://github.com/libra/libra/issues/5771
 fn test_fn_failover() {
@@ -1175,6 +1182,8 @@ fn test_fn_failover() {
     }
 }
 
+
+//////// 0L ////////
 #[test]
 #[ignore]
 fn test_multicast_failover() {

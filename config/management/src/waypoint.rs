@@ -16,6 +16,7 @@ pub struct InsertWaypoint {
     validator_backend: ValidatorBackend,
     #[structopt(long)]
     waypoint: Waypoint,
+    //////// 0L ////////    
     #[structopt(long, help = "Also set the genesis waypoint")]
     set_genesis: bool,
 }
@@ -28,7 +29,7 @@ impl InsertWaypoint {
             .override_validator_backend(&self.validator_backend.validator_backend)?;
         let mut validator_storage = config.validator_backend();
         validator_storage.set(WAYPOINT, self.waypoint)?;
-        if self.set_genesis {
+        if self.set_genesis { //////// 0L ////////
             validator_storage.set(GENESIS_WAYPOINT, self.waypoint)?;
         }
         Ok(())

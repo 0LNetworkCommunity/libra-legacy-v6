@@ -447,6 +447,7 @@ impl LibraVM {
         let mut cost_strategy = CostStrategy::system(&gas_schedule, GasUnits::new(0));
         let mut session = self.0.new_session(remote_cache);
 
+        //////// 0L ////////
         if let Ok((round, timestamp, previous_vote, proposer)) = block_metadata.clone().into_inner() {
             if round % 1000 == 0 {println!("======== round is {}", round)}
             let args = vec![
@@ -473,9 +474,11 @@ impl LibraVM {
             return Err(VMStatus::Error(StatusCode::MALFORMED));
         };
 
+        //////// 0L ////////
         // Consensus checking for oracle outcome
         self.0.tick_oracle_consensus(&mut session, block_metadata.clone(), &txn_data, &mut cost_strategy, log_context)?;
         
+        //////// 0L ////////
         // Apply upgrade for Upgrade oracle
         self.0.apply_stdlib_upgrade(&mut session, &remote_cache, block_metadata.clone(), &txn_data, &mut cost_strategy, log_context)?;
 
@@ -834,6 +837,7 @@ fn convert_txn_args(args: &[TransactionArgument]) -> Vec<Value> {
             TransactionArgument::Address(a) => Value::address(*a),
             TransactionArgument::Bool(b) => Value::bool(*b),
             TransactionArgument::U8Vector(v) => Value::vector_u8(v.clone()),
+            //////// 0L ////////            
             TransactionArgument::AddressVector(v) => Value::vector_address(v.clone())
         })
         .collect()
