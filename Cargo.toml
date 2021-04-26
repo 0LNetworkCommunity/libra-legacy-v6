@@ -145,8 +145,8 @@ members = [
     "types",
     "vm-validator",
     # //////// 0L ////////
-    "keygen",
-    "miner",
+    "ol/keygen",
+    "ol/miner",
     "ol-cli",
     "ol/types",
     "ol/fixtures",
