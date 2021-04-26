@@ -3,10 +3,10 @@
 
 use abscissa_core::status_info;
 use cli::{libra_client::LibraClient};
+use ol_types::block::Block;
 use std::{fs::File, path::PathBuf};
 // use glob::glob;
 use crate::{
-    block::Block,
     config::MinerConfig,
     submit_tx::{
         TxParams, 

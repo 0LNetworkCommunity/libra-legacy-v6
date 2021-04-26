@@ -2,12 +2,15 @@
 
 #![allow(clippy::never_loop)]
 
-use super::{files_cmd, keygen_cmd, manifest_cmd, zero_cmd};
+use crate::{block::build_block, prelude::app_config};
+
+use super::{files_cmd, keygen_cmd, zero_cmd};
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
+use libra_genesis_tool::keyscheme::KeyScheme;
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use libra_wallet::WalletLibrary;
 use ol_cli::{commands::init_cmd, config::OlCliConfig};
-use ol_types::{autopay::PayInstruction, config::TxType};
+use ol_types::{account::ValConfigs, autopay::PayInstruction, config::TxType};
 use reqwest::Url;
 use std::{fs::File, io::Write, path::PathBuf};
 use txs::{commands::autopay_batch_cmd, submit_tx};
@@ -118,7 +121,7 @@ impl Runnable for ValWizardCmd {
     }
 
     // Write Manifest
-    manifest_cmd::write_manifest(
+    write_manifest(
       &self.path,
       wallet,
     Some(miner_config),
@@ -180,4 +183,33 @@ fn get_epoch_info(url: &Url) -> (Option<u64>, Option<Waypoint>) {
     .expect("should have epoch number");
 
   (Some(epoch), waypoint.parse().ok())  
+}
+
+
+/// Creates an account.json file for the validator
+fn write_manifest(
+  path: &Option<PathBuf>,
+  wallet: WalletLibrary,
+  wizard_config: Option<OlCliConfig>,
+  autopay_batch: Option<Vec<PayInstruction>>,
+  autopay_signed: Option<Vec<SignedTransaction>>,
+) {
+    let cfg = if wizard_config.is_some() { wizard_config.unwrap() }
+    else { app_config().clone() };
+
+    let miner_home = path
+    .clone()
+    .unwrap_or_else(|| cfg.workspace.node_home.clone()
+    );
+
+    let keys = KeyScheme::new(&wallet);
+    let block = build_block::parse_block_file(cfg.get_block_dir().join("block_0.json").to_owned());
+
+    ValConfigs::new(
+        block,
+        keys,  
+        cfg.profile.ip.to_string(),
+        autopay_batch,
+        autopay_signed,
+    ).create_manifest(miner_home);
 }

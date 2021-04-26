@@ -3,14 +3,13 @@
 #![allow(clippy::never_loop)]
 
 use crate::{
-    account,
     block::build_block,
     config::MinerConfig,
     delay,
 };
 use abscissa_core::{Command, Options, Runnable};
 use std::{path::PathBuf};
-
+use ol_types::account;
 /// `user-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct UserWizardCmd {

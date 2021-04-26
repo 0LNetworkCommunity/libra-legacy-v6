@@ -1,58 +1,56 @@
 //! Proof block datastructure
 
 use byteorder::{LittleEndian, WriteBytesExt};
-use hex::{decode, encode};
-use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+use hex::decode;
 use crate::delay;
 use crate::config::MinerConfig;
 
-/// Data structure and serialization of 0L delay proof.
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Block {
-    /// Block Height
-    pub height: u64,
-    /// Elapsed Time in seconds
-    pub elapsed_secs: u64,
-    /// VDF input preimage. AKA challenge
-    #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
-    pub preimage: Vec<u8>,
-    /// Data for Block
-    #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
-    /// VDF proof. AKA solution
-    pub proof: Vec<u8>,
-}
+// /// Data structure and serialization of 0L delay proof.
+// #[derive(Serialize, Deserialize, Debug)]
+// pub struct Block {
+//     /// Block Height
+//     pub height: u64,
+//     /// Elapsed Time in seconds
+//     pub elapsed_secs: u64,
+//     /// VDF input preimage. AKA challenge
+//     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
+//     pub preimage: Vec<u8>,
+//     /// Data for Block
+//     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
+//     /// VDF proof. AKA solution
+//     pub proof: Vec<u8>,
+// }
 
 
-fn as_hex<S>(data: &[u8], serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    serializer.serialize_str(&encode(data))
-}
+// fn as_hex<S>(data: &[u8], serializer: S) -> Result<S::Ok, S::Error>
+// where
+//     S: Serializer,
+// {
+//     serializer.serialize_str(&encode(data))
+// }
 
-fn from_hex<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let s: String = Deserialize::deserialize(deserializer)?;
-    // do better hex decoding than this
-    decode(s).map_err(D::Error::custom)
-}
+// fn from_hex<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
+// where
+//     D: Deserializer<'de>,
+// {
+//     let s: String = Deserialize::deserialize(deserializer)?;
+//     // do better hex decoding than this
+//     decode(s).map_err(D::Error::custom)
+// }
 
-impl Block {
+// impl Block {
 
-    /// Extract the preimage and proof from a genesis proof block_0.json
-    pub fn get_genesis_tx_data(path: &std::path::PathBuf) -> Result<(Vec<u8>,Vec<u8>),std::io::Error> {
-        let file = std::fs::File::open(path)?;
-        let reader = std::io::BufReader::new(file);
-        let block: Block = serde_json::from_reader(reader).expect("Genesis block should deserialize");
-        return Ok((block.preimage, block.proof));
-    }
-}
+//     /// Extract the preimage and proof from a genesis proof block_0.json
+//     pub fn get_genesis_tx_data(path: &std::path::PathBuf) -> Result<(Vec<u8>,Vec<u8>),std::io::Error> {
+//         let file = std::fs::File::open(path)?;
+//         let reader = std::io::BufReader::new(file);
+//         let block: Block = serde_json::from_reader(reader).expect("Genesis block should deserialize");
+//         return Ok((block.preimage, block.proof));
+//     }
+// }
 
 pub mod build_block {
     //! Functions for generating the 0L delay proof and writing data to file system.
-    use super::Block;
     use crate::config::*;
     use crate::delay::*;
     use crate::error::{Error, ErrorKind};
@@ -60,6 +58,7 @@ pub mod build_block {
     use crate::submit_tx::{submit_tx, TxParams, eval_tx_status};
     use glob::glob;
     use libra_crypto::hash::HashValue;
+    use ol_types::block::Block;
     use std::{fs, io::{BufReader, Write}, path::PathBuf, time::Instant};
 
 
