@@ -54,9 +54,9 @@ fn create(path: PathBuf, is_fix: bool, is_validator: bool, block_zero: &Option<P
 
     let block;
     if let Some(block_path) = block_zero {
-        block = build_block::parse_block_file(block_path.to_owned());
+        block = parse_block_file(block_path.to_owned());
     } else {
-        block = build_block::write_genesis(&miner_configs);
+        block = write_genesis(&miner_configs);
     }
 
     if is_validator {

@@ -2,8 +2,9 @@
 
 #![allow(clippy::never_loop)]
 use abscissa_core::{Command, Options, Runnable};
+use block::mine_genesis;
 use crate::config;
-use crate::{commands::CONFIG_FILE, block::build_block};
+use crate::{commands::CONFIG_FILE, block};
 use libra_global_constants::NODE_HOME;
 use toml;
 use std::{fs, io::Write};
@@ -53,7 +54,7 @@ impl Runnable for CeremonyUtilCmd {
             .expect("Could not write toml file");    
 
 
-        build_block::mine_genesis(&miner_configs);
+        mine_genesis(&miner_configs);
 
         println!("\nWelcome");
     }

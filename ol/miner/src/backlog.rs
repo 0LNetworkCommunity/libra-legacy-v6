@@ -14,7 +14,7 @@ use crate::{
         eval_tx_status},
 };
 use std::io::BufReader;
-use crate::block::build_block::parse_block_height;
+use crate::block::parse_block_height;
 
 /// Submit a backlog of blocks that may have been mined while network is offline. Likely not more than 1. 
 pub fn process_backlog(config: &MinerConfig, tx_params: &TxParams, is_operator: bool) {

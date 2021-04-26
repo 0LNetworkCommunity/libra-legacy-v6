@@ -294,7 +294,7 @@ pub fn util_save_tx(
 fn test_make_params() {
     let mnemonic = "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse";
     let waypoint: Waypoint =  "0:3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".parse().unwrap();
-    let mut configs_fixture = crate::block::build_block::test_make_configs_fixture();
+    let mut configs_fixture = crate::block::test_make_configs_fixture();
     configs_fixture.workspace.block_dir = "test_blocks_temp_2".to_owned();
 
     let keys = KeyScheme::new_from_mnemonic(mnemonic.to_owned());
@@ -308,7 +308,7 @@ fn test_make_params() {
 fn test_save_tx() {
     let mnemonic = "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse";
     let waypoint: Waypoint =  "0:3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".parse().unwrap();
-    let mut configs_fixture = crate::block::build_block::test_make_configs_fixture();
+    let mut configs_fixture = crate::block::test_make_configs_fixture();
     configs_fixture.workspace.block_dir = "test_blocks_temp_2".to_owned();
     let keys = KeyScheme::new_from_mnemonic(mnemonic.to_owned());
     let p = get_params(keys, waypoint, &configs_fixture, None, false);

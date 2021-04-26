@@ -1,6 +1,6 @@
 //! `start` subcommand - example of how to write a subcommand
 
-use crate::{application::app_config, block::build_block, config::MinerConfig};
+use crate::{application::app_config, block::{self, write_genesis}, config::MinerConfig};
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
 use abscissa_core::{Command, Options, Runnable};
@@ -21,5 +21,5 @@ impl Runnable for ZeroCmd {
 pub fn mine_zero(miner_config: &MinerConfig) {
     // let saved_configs = app_config();
     // dbg!(&saved_configs.profile.auth_key);
-    build_block::write_genesis(&miner_config);
+    write_genesis(&miner_config);
 }

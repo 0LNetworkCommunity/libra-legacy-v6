@@ -21,7 +21,7 @@ use libra_crypto::{
 };
 use reqwest::Url;
 use anyhow::Error;
-use crate::block::build_block::parse_block_height;
+use crate::block::parse_block_height;
 
 pub fn resubmit_backlog(home: PathBuf, config: &MinerConfig){
     //! If there are any proofs which have not been verified on-chain, send them.

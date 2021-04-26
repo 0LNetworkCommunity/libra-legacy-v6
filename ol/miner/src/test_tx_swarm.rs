@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 
 use crate::{backlog};
-use crate::block::build_block::{mine_genesis, mine_once, parse_block_height};
+use crate::block::{mine_genesis, mine_once, parse_block_height};
 use crate::config::MinerConfig;
 use crate::prelude::*;
 use crate::submit_tx::{ submit_tx, TxParams, eval_tx_status};

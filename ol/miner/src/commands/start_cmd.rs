@@ -71,7 +71,7 @@ impl Runnable for StartCmd {
 
     if !self.backlog_only {
       // Steady state.
-      let result = build_block::mine_and_submit(&cfg, tx_params, self.is_operator);
+      let result = mine_and_submit(&cfg, tx_params, self.is_operator);
       match result {
         Ok(_val) => {}
         Err(err) => {

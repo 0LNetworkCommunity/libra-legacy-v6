@@ -2,11 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{
-    block::build_block,
-    config::MinerConfig,
-    delay,
-};
+use crate::{block::{self, parse_block_file, write_genesis}, config::MinerConfig, delay};
 use abscissa_core::{Command, Options, Runnable};
 use std::{path::PathBuf};
 use ol_types::account;
@@ -56,9 +52,9 @@ fn wizard(path: PathBuf, is_fix: bool, block_zero: &Option<PathBuf>) {
     // Create block zero, if there isn't one.
     let block;
     if let Some(block_path) = block_zero {
-        block = build_block::parse_block_file(block_path.to_owned());
+        block = parse_block_file(block_path.to_owned());
     } else {
-        block = build_block::write_genesis(&miner_configs);
+        block = write_genesis(&miner_configs);
     }
 
     // Create Manifest

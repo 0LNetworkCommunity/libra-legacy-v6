@@ -2,7 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{block::build_block, prelude::app_config};
+use crate::{block::{self, parse_block_file}, prelude::app_config};
 
 use super::{files_cmd, keygen_cmd, zero_cmd};
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
@@ -203,7 +203,7 @@ fn write_manifest(
     );
 
     let keys = KeyScheme::new(&wallet);
-    let block = build_block::parse_block_file(cfg.get_block_dir().join("block_0.json").to_owned());
+    let block = parse_block_file(cfg.get_block_dir().join("block_0.json").to_owned());
 
     ValConfigs::new(
         block,
