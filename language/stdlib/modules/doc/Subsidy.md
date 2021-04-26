@@ -155,8 +155,8 @@
       vm_sig,
       node_address,
       minted_coins,
-      x"",
-      x""
+      b"validator subsidy",
+      b""
     );
 
     // refund operator tx fees for mining
@@ -356,8 +356,8 @@
         vm,
         node_address,
         <a href="TransactionFee.md#0x1_TransactionFee_get_transaction_fees_coins_amount">TransactionFee::get_transaction_fees_coins_amount</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, fees),
-        x"",
-        x""
+        b"transaction fees",
+        b""
     );
     i = i + 1;
   };
@@ -494,8 +494,6 @@
     subsidy = proposed_subsidy;
   };
 
-  <b>if</b> (subsidy == 0) <b>return</b> 0;
-
   <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, subsidy);
   <a href="LibraAccount.md#0x1_LibraAccount_vm_deposit_with_metadata">LibraAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
     vm,
@@ -591,8 +589,8 @@
 <pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>():u64 {
   <b>let</b> epoch_length_mins = 24 * 60;
   <b>let</b> steady_state_nodes = 1000;
-  <b>let</b> target_delay = 10;
-  steady_state_nodes * (epoch_length_mins/target_delay)
+  <b>let</b> target_delay_mins = 10;
+  steady_state_nodes * (epoch_length_mins/target_delay_mins)
 }
 </code></pre>
 

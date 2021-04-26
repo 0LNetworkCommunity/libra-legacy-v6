@@ -15,7 +15,7 @@ module FullnodeState {
     cumulative_subsidy: u64,
   }
 
-  public fun val_init(sender: &signer) {
+  public fun init(sender: &signer) {
       assert(!exists<FullnodeCounter>(Signer::address_of(sender)), 130112011021);
       move_to<FullnodeCounter>(
       sender, 
@@ -31,22 +31,23 @@ module FullnodeState {
   }
 
   /// On recongfiguration events, reset.
-  public fun reconfig(vm: &signer, addr: address) acquires FullnodeCounter {
+  public fun reconfig(vm: &signer, addr: address, proofs_in_epoch: u64) acquires FullnodeCounter {
       let sender = Signer::address_of(vm);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190201014010);
       let state = borrow_global_mut<FullnodeCounter>(addr);
-      state.cumulative_proofs_submitted = state.cumulative_proofs_submitted + state.proofs_submitted_in_epoch;
+      state.cumulative_proofs_submitted = state.cumulative_proofs_submitted + proofs_in_epoch;
       state.cumulative_proofs_paid = state.cumulative_proofs_paid + state.proofs_paid_in_epoch;
       state.cumulative_subsidy = state.cumulative_subsidy + state.subsidy_in_epoch;
       // reset 
-      state.proofs_submitted_in_epoch= 0;
+      state.proofs_submitted_in_epoch = proofs_in_epoch;
       state.proofs_paid_in_epoch = 0;
       state.subsidy_in_epoch = 0;
   }
 
   /// Miner increments proofs by 1
+  /// TO
   public fun inc_proof(sender: &signer) acquires FullnodeCounter {
-    let addr = Signer::address_of(sender);
+      let addr = Signer::address_of(sender);
       let state = borrow_global_mut<FullnodeCounter>(addr);
       state.proofs_submitted_in_epoch = state.proofs_submitted_in_epoch + 1;
   }
@@ -72,15 +73,10 @@ module FullnodeState {
     state.subsidy_in_epoch = state.subsidy_in_epoch + value;
   }
 
-  public fun get_address_proof_count(addr: address):u64 acquires FullnodeCounter {
-    let state = borrow_global<FullnodeCounter>(addr);
-    state.proofs_submitted_in_epoch
+  public fun is_init(addr: address): bool {
+    exists<FullnodeCounter>(addr)
   }
 
-  public fun get_cumulative_subsidy(addr: address): u64 acquires FullnodeCounter{
-    let state = borrow_global<FullnodeCounter>(addr);
-    state.cumulative_subsidy
-  }
 
   public fun is_onboarding(addr: address): bool acquires FullnodeCounter{
     let state = borrow_global<FullnodeCounter>(addr);
@@ -89,6 +85,19 @@ module FullnodeState {
     state.cumulative_proofs_paid < 2 &&
     state.cumulative_subsidy < 1000000
   }
+
+  //////// GETTERS /////////
+
+  public fun get_address_proof_count(addr:address): u64 acquires FullnodeCounter {
+    borrow_global<FullnodeCounter>(addr).proofs_submitted_in_epoch
+  }
+
+  public fun get_cumulative_subsidy(addr: address): u64 acquires FullnodeCounter{
+    let state = borrow_global<FullnodeCounter>(addr);
+    state.cumulative_subsidy
+  }
+
+  //////// TEST HELPERS /////////
 
   public fun test_set_fullnode_fixtures(
     vm: &signer,
@@ -110,6 +119,13 @@ module FullnodeState {
     state.cumulative_proofs_submitted = cumulative_proofs_submitted;
     state.cumulative_proofs_paid = cumulative_proofs_paid;
     state.cumulative_subsidy = cumulative_subsidy;
+  }
+
+  /// Testhelper
+  public fun mock_proof(sender: &signer, count: u64) acquires FullnodeCounter {
+    let addr = Signer::address_of(sender);
+    let state = borrow_global_mut<FullnodeCounter>(addr);
+    state.proofs_submitted_in_epoch = state.proofs_submitted_in_epoch + count;
   }
 }
 }

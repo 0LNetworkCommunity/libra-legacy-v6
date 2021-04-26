@@ -327,7 +327,7 @@ Attempted to send funds to an account that does not exist
         // Obtain the amount <b>to</b> pay from percentage and balance
 
         // IMPORTANT there are two digits for scaling representation.
-        // an autopay instruction of 12.34% is scalled by two orders, and represented in <a href="AutoPay.md#0x1_AutoPay">AutoPay</a> <b>as</b> `1234`.
+        // an autopay instruction of 12.34% is scaled by two orders, and represented in <a href="AutoPay.md#0x1_AutoPay">AutoPay</a> <b>as</b> `1234`.
 
         <b>if</b> (payment.percentage &gt; 10000) <b>break</b>;
         <b>let</b> percent_scaled = <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(payment.percentage, 10000);

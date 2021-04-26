@@ -8,7 +8,6 @@ address 0x1 {
     use 0x1::VDF;
     use 0x1::Vector;
     use 0x1::CoreAddresses;
-    use 0x1::ValidatorUniverse;
     use 0x1::Signer;
     use 0x1::LibraConfig;
     use 0x1::Globals;
@@ -18,6 +17,11 @@ address 0x1 {
     use 0x1::Stats;
     use 0x1::FullnodeState;
     use 0x1::ValidatorConfig;
+
+    resource struct MinerList {
+      list: vector<address>
+    }
+
     // Struct to store information about a VDF proof submitted
     struct Proof {
         challenge: vector<u8>,
@@ -36,6 +40,16 @@ address 0x1 {
         epochs_since_last_account_creation: u64
     }
 
+    public fun init_list(vm: &signer) {
+      CoreAddresses::assert_libra_root(vm);
+      move_to<MinerList>(vm, MinerList {
+        list: Vector::empty<address>()
+      });  
+    }
+
+    public fun is_init(addr: address):bool {
+      exists<MinerProofHistory>(addr)
+    }
     // Creates proof blob object from input parameters
     // Permissions: PUBLIC, ANYONE can call this function.
     public fun create_proof_blob(
@@ -50,6 +64,19 @@ address 0x1 {
       }
     }
 
+    public fun add_self_list(sender: &signer) acquires MinerList {
+      let addr = Signer::address_of(sender);
+      increment_miners_list(addr);
+    }
+    // Private, can only be called within module
+    fun increment_miners_list(miner: address) acquires MinerList {
+      if (exists<MinerList>(0x0)) {
+        let state = borrow_global_mut<MinerList>(0x0);
+        if (!Vector::contains<address>(&mut state.list, &miner)) {
+          Vector::push_back<address>(&mut state.list, miner);
+        }
+      }
+    }
     // Helper function for genesis to process genesis proofs.
     // Permissions: PUBLIC, ONLY VM, AT GENESIS.
     public fun genesis_helper (
@@ -57,7 +84,7 @@ address 0x1 {
       miner_sig: &signer,
       challenge: vector<u8>,
       solution: vector<u8>
-    ) acquires MinerProofHistory{
+    ) acquires MinerProofHistory, MinerList {
       // In rustland the vm_genesis creates a Signer for the miner. So the SENDER is not the same and the Signer.
 
       //TODO: Previously in OLv3 is_genesis() returned true. How to check that this is part of genesis? is_genesis returns false here.
@@ -70,7 +97,37 @@ address 0x1 {
       Stats::init_address(vm_sig, node_addr);
     }
 
+  //   // Function index: 03
+  //   // Permissions: PUBLIC, SIGNER, TEST ONLY
+  //  public fun test_helper(
+  //     miner_sig: &signer,
+  //     difficulty: u64,
+  //     challenge: vector<u8>,
+  //     solution: vector<u8>
+  //   ) acquires MinerProofHistory, MinerList {
+  //     assert(Testnet::is_testnet(), 130102014010);
+  //     //doubly check this is in test env.
+  //     assert(Globals::get_epoch_length() == 60, 130102024010);
 
+  //     move_to<MinerProofHistory>(miner_sig, MinerProofHistory{
+  //       previous_proof_hash: Vector::empty(),
+  //       verified_tower_height: 0u64,
+  //       latest_epoch_mining: 0u64,
+  //       count_proofs_in_epoch: 0u64,
+  //       epochs_validating_and_mining: 0u64,
+  //       contiguous_epochs_validating_and_mining: 0u64,
+  //       epochs_since_last_account_creation: 10u64, // is not rate-limited
+  //     });
+
+  //     // Needs difficulty to test between easy and hard mode.
+  //     let proof = Proof {
+  //       challenge,
+  //       difficulty,  
+  //       solution,
+  //     };
+
+  //     verify_and_update_state(Signer::address_of(miner_sig), proof, false);
+  //   }
 
     // This function is called by the OWNER the proof and commits to chain.
     // Function index: 03
@@ -78,7 +135,10 @@ address 0x1 {
     public fun commit_state(
       miner_sign: &signer,
       proof: Proof
-    ) acquires MinerProofHistory {
+    ) acquires MinerProofHistory, MinerList {
+
+      //NOTE: Does not check that the Sender is the Signer. Which we must skip for the onboarding transaction.
+
       // Get address, assumes the sender is the signer.
       let miner_addr = Signer::address_of(miner_sign);
 
@@ -94,10 +154,6 @@ address 0x1 {
       };
       
       verify_and_update_state(miner_addr, proof, true);
-
-      // TODO: This should not increment for validators in set.
-      // Including LibraSystem::is_validator causes a dependency cycling
-      FullnodeState::inc_proof(miner_sign);
     }
 
     // This function is called by the OPERATOR associated with node, it verifies the proof and commits to chain.
@@ -107,7 +163,7 @@ address 0x1 {
       operator_sig: &signer,
       miner_addr: address, 
       proof: Proof
-    ) acquires MinerProofHistory {
+    ) acquires MinerProofHistory, MinerList {
 
       // Check the signer is in fact an operator delegated by the owner.
       
@@ -138,10 +194,10 @@ address 0x1 {
       miner_addr: address,
       proof: Proof,
       steady_state: bool
-    ) acquires MinerProofHistory {
+    ) acquires MinerProofHistory, MinerList {
       // Get a mutable ref to the current state
       let miner_history = borrow_global_mut<MinerProofHistory>(miner_addr);
-
+      
       // For onboarding transaction the VDF has already been checked.
       // only do this in steady state.
       if (steady_state) {
@@ -152,6 +208,7 @@ address 0x1 {
       let valid = VDF::verify(&proof.challenge, &proof.difficulty, &proof.solution);
       assert(valid, 130108041021);
 
+      increment_miners_list(miner_addr);
 
       miner_history.previous_proof_hash = Hash::sha3_256(*&proof.solution);
       
@@ -177,7 +234,7 @@ address 0x1 {
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130109014010);
 
       // Miner may not have been initialized. Simply return in this case (don't abort)
-      if( !exists<MinerProofHistory>(miner_addr) ) { return };
+      if(!is_init(miner_addr)) { return };
 
 
       // Check that there was mining and validating in period.
@@ -204,10 +261,9 @@ address 0x1 {
       miner_history.count_proofs_in_epoch = 0u64;
     }
 
-
     public fun node_above_thresh(_account: &signer, miner_addr: address): bool acquires MinerProofHistory {
       let miner_history= borrow_global<MinerProofHistory>(miner_addr);
-      return (miner_history.count_proofs_in_epoch > Globals::get_mining_threshold())
+      miner_history.count_proofs_in_epoch > Globals::get_mining_threshold()
     }
     // Get weight of validator identified by address
     // Permissions: public, only VM can call this function.
@@ -232,19 +288,29 @@ address 0x1 {
 
     // Used at end of epoch with reconfig bulk_update the MinerState with the vector of validators from current epoch.
     // Permissions: PUBLIC, ONLY VM.
-    public fun reconfig(vm: &signer) acquires MinerProofHistory {
+    public fun reconfig(vm: &signer, migrate_eligible_validators: &vector<address>) acquires MinerProofHistory, MinerList {
       // Check permissions
       let sender = Signer::address_of(vm);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130111014010);
 
-      // Get list of validators from ValidatorUniverse
-      let eligible_validators = ValidatorUniverse::get_eligible_validators(vm);
+      // check minerlist exists, or use eligible_validators to initialize.
+      // Migration on hot upgrade
+      if (!exists<MinerList>(0x0)) {
+        move_to<MinerList>(vm, MinerList {
+          list: *migrate_eligible_validators
+        });
+      };
+
+      let minerlist_state = borrow_global_mut<MinerList>(0x0);
+
+      // // Get list of validators from ValidatorUniverse
+      // let eligible_validators = ValidatorUniverse::get_eligible_validators(vm);
 
       // Iterate through validators and call update_metrics for each validator that had proofs this epoch
-      let size = Vector::length<address>(&eligible_validators);
+      let size = Vector::length<address>(& *&minerlist_state.list); //TODO: These references are weird
       let i = 0;
       while (i < size) {
-          let val = *Vector::borrow(&eligible_validators, i);
+          let val = *Vector::borrow(& *&minerlist_state.list, i); //TODO: These references are weird
 
           // For testing: don't call update_metrics unless there is account state for the address.
           if (exists<MinerProofHistory>(val)){
@@ -252,11 +318,15 @@ address 0x1 {
           };
           i = i + 1;
       };
+
+      //reset miner list
+      minerlist_state.list = Vector::empty<address>();
+
     }
 
     // Function to initialize miner state
     // Permissions: PUBLIC, Signer, Validator only
-    public fun init_miner_state(miner_sig: &signer, challenge: &vector<u8>, solution: &vector<u8>) acquires MinerProofHistory {
+    public fun init_miner_state(miner_sig: &signer, challenge: &vector<u8>, solution: &vector<u8>) acquires MinerProofHistory, MinerList {
       
       // NOTE Only Signer can update own state.
       // Should only happen once.
@@ -280,15 +350,10 @@ address 0x1 {
         difficulty,  
         solution: *solution,
       };
-      
+
+      // TODO: should fullnode state happen here?
+      // FullnodeState::init(miner_sig);
       verify_and_update_state(Signer::address_of(miner_sig), proof, false);
-      // Subsidy::queue_fullnode_subisdy(Signer::address_of(miner_sig));
-      //also add the miner to validator universe
-      //TODO: #254 ValidatorUniverse::add_validators need to check permission.
-      // Note: this should be in LibraAccount but causes cyclic dependency.
-      ValidatorUniverse::add_validator(miner_sig);
-      FullnodeState::val_init(miner_sig);
-      FullnodeState::inc_proof(miner_sig);
     }
 
 
@@ -314,8 +379,8 @@ address 0x1 {
 
     // Get latest epoch mined by node on given address
     // Permissions: public ony VM can call this function.
-    public fun get_miner_latest_epoch(account: &signer, addr: address): u64 acquires MinerProofHistory {
-      let sender = Signer::address_of(account);
+    public fun get_miner_latest_epoch(vm: &signer, addr: address): u64 acquires MinerProofHistory {
+      let sender = Signer::address_of(vm);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130114014010);
       let addr_state = borrow_global<MinerProofHistory>(addr);
       *&addr_state.latest_epoch_mining
@@ -326,9 +391,19 @@ address 0x1 {
       state.epochs_since_last_account_creation = 0;
     }
 
-    ////////////////////
-    /// Public APIs ///
-    ///////////////////
+    //////////////////////
+    /// Public Getters ///
+    /////////////////////
+
+    // Returns number of epochs for input miner's state
+    // Permissions: PUBLIC, ANYONE
+    // TODO: Rename
+    public fun get_miner_list(): vector<address> acquires MinerList {
+      if (!exists<MinerList>(0x0)) {
+        return Vector::empty<address>()  
+      };
+      *&borrow_global<MinerList>(0x0).list
+    }
 
     // Returns number of epochs for input miner's state
     // Permissions: PUBLIC, ANYONE
@@ -337,6 +412,9 @@ address 0x1 {
       borrow_global<MinerProofHistory>(node_addr).epochs_validating_and_mining
     }
 
+    public fun get_count_in_epoch(miner_addr: address): u64 acquires MinerProofHistory {
+      borrow_global<MinerProofHistory>(miner_addr).count_proofs_in_epoch
+    }
     // Returns if the miner is above the account creation rate-limit
     // Permissions: PUBLIC, ANYONE
     // TODO: Rename
@@ -357,7 +435,7 @@ address 0x1 {
         difficulty: u64,
         challenge: vector<u8>,
         solution: vector<u8>
-      ) acquires MinerProofHistory {
+      ) acquires MinerProofHistory, MinerList {
         assert(Testnet::is_testnet(), 130102014010);
         //doubly check this is in test env.
         assert(Globals::get_epoch_length() == 60, 130102024010);
@@ -380,7 +458,7 @@ address 0x1 {
         };
 
         verify_and_update_state(Signer::address_of(miner_sig), proof, false);
-        FullnodeState::val_init(miner_sig);
+        FullnodeState::init(miner_sig);
 
     }
 
@@ -390,7 +468,7 @@ address 0x1 {
       operator_addr: address, // Testrunner does not allow arbitrary accounts to submit txs, need to use address, so this will differ slightly from api
       miner_addr: address, 
       proof: Proof
-    ) acquires MinerProofHistory {
+    ) acquires MinerProofHistory, MinerList {
 
       // Check the signer is in fact an operator delegated by the owner.
       
@@ -419,6 +497,7 @@ address 0x1 {
       assert(Testnet::is_testnet(), 130115014011);
       let state = borrow_global_mut<MinerProofHistory>(Signer::address_of(sender));
       state.count_proofs_in_epoch = count;
+      FullnodeState::mock_proof(sender, count);
     }
 
     public fun test_helper_mock_mining_vm(vm: &signer, addr: address, count: u64) acquires MinerProofHistory {
@@ -447,16 +526,16 @@ address 0x1 {
       let state = borrow_global<MinerProofHistory>(miner_addr);
       *&state.verified_tower_height
     }
+      public fun test_helper_get_count(miner_addr: address): u64 acquires MinerProofHistory {
+          assert(Testnet::is_testnet()== true, 130115014011);
+          borrow_global<MinerProofHistory>(miner_addr).count_proofs_in_epoch
+      }
 
     public fun test_helper_get_contiguous(miner_addr: address): u64 acquires MinerProofHistory {
       assert(Testnet::is_testnet()== true, 130115014011);
       borrow_global<MinerProofHistory>(miner_addr).contiguous_epochs_validating_and_mining
     }
 
-    public fun test_helper_get_count(miner_addr: address): u64 acquires MinerProofHistory {
-      assert(Testnet::is_testnet()== true, 130115014011);
-      borrow_global<MinerProofHistory>(miner_addr).count_proofs_in_epoch
-    }
 
     public fun test_helper_set_rate_limit(miner_addr: address, value: u64) acquires MinerProofHistory {
       assert(Testnet::is_testnet()== true, 130115014011);

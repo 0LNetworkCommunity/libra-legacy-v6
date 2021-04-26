@@ -129,7 +129,6 @@ fn main() {
         waypoint,
     )
     .expect("Failed to construct client.");
-    
     // Test connection to validator
     let block_metadata = client_proxy
         .test_validator_connection()
