@@ -1,4 +1,4 @@
-//! account: bob, 100000, 0, validator
+//! account: bob, 4000000, 0, validator
 
 //! new-transaction
 //! sender: bob
@@ -58,8 +58,11 @@ fun main(vm: &signer) {
   /// set the fullnode proof price to 0, to check if onboarding subsidy is given.
   Subsidy::test_set_fullnode_fixtures(vm, 0, 0, 0, 0, 0);
   Reconfigure::reconfigure(vm, 10); // need to remove testnet for this test, since testnet does not ratelimit account creation.
+  
   let bal = LibraAccount::balance<GAS>(eve_addr);
-  assert(bal == 576000, 7357401003);
+  /// we expect 1 gas (1,000,000 microgas) from bob's transfer, plus 0.576000 GAS from the first proof submitted.
+  let expected = 1000000 + 576000;
+  assert(bal == expected, 7357401003);
 
   assert(!ValidatorUniverse::exists_jailedbit(eve_addr), 7357401004);
   assert(!ValidatorUniverse::is_in_universe(eve_addr), 7357401005);
