@@ -7,6 +7,8 @@ use crate::{
     save_tx::save_tx,
     sign_tx::sign_tx,
 };
+use libra_global_constants::OPERATOR_KEY;
+use libra_secure_storage::{CryptoStorage, NamespacedStorage, OnDiskStorageInternal, Storage};
 use abscissa_core::{status_ok, status_warn};
 use anyhow::Error;
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
@@ -58,6 +60,26 @@ pub struct TxParams {
     pub chain_id: ChainId,
 }
 
+// pub struct TxParams {
+//     /// Sender's 0L authkey, may be the operator.
+//     pub sender_auth_key: AuthenticationKey,
+//     /// User's operator sender account if different than the owner account, used to send transactions
+//     pub sender_address: AccountAddress,
+//     /// User's 0L owner address, where the mining proofs go to.
+//     pub owner_address: AccountAddress,
+//     /// Url
+//     pub url: Url,
+//     /// waypoint
+//     pub waypoint: Waypoint,
+//     /// KeyPair
+//     pub keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey>,
+//     /// User's Maximum gas_units willing to run. Different than coin. 
+//     pub max_gas_unit_for_tx: u64,
+//     /// User's GAS Coin price to submit transaction.
+//     pub coin_price_per_unit: u64,
+//     /// User's transaction timeout.
+//     pub user_tx_timeout: u64, // for compatibility with UTC's timestamp.
+// }
 /// wrapper which checks entry point arguments before submitting tx, possibly saving the tx script
 pub fn maybe_submit(
     script: Script,
@@ -202,6 +224,58 @@ pub fn get_tx_params_from_swarm(swarm_path: PathBuf) -> Result<TxParams, Error> 
 
     println!("Info: Got tx params from swarm");
     Ok(tx_params)
+}
+
+/// Form tx parameters struct 
+pub fn get_oper_params(
+    waypoint: Waypoint,
+    config: &OlCliConfig,
+    tx_type: TxType,
+
+    // url_opt overrides all node configs, takes precedence over use_backup_url
+    url_opt: Option<Url>,
+    backup_url: bool,
+) -> TxParams {
+    let orig_storage = Storage::OnDiskStorage(OnDiskStorageInternal::new(config.workspace.node_home.join("key_store.json").to_owned()));
+    let storage = Storage::NamespacedStorage(
+        NamespacedStorage::new(
+            orig_storage, 
+            format!("{}-oper", &config.profile.auth_key )
+        )
+    );
+    // export_private_key_for_version
+    let privkey = storage.export_private_key(OPERATOR_KEY).expect("could not parse operator key in key_store.json");
+    
+    let keypair = KeyPair::from(privkey);
+    let pubkey =  &keypair.public_key;// keys.child_0_owner.get_public();
+    let auth_key = AuthenticationKey::ed25519(pubkey);
+    
+    let url: Url = if url_opt.is_some() { 
+        url_opt.expect("could nod parse url")
+    } else {
+        if backup_url {
+            config.profile.upstream_nodes
+            .clone()
+            .unwrap()
+            .into_iter()
+            .next()
+            .expect("no backup url provided in config toml")
+
+        } else {
+            config.profile.default_node.clone().expect("no url provided in config toml")
+        }
+    };
+    let tx_cost = config.tx_configs.get_cost(tx_type);
+    TxParams {
+        auth_key,
+        signer_address: auth_key.derived_address(),
+        owner_address: config.profile.account, // address of sender
+        url,
+        waypoint,
+        keypair,
+        tx_cost,
+        chain_id: ChainId::new(1),
+    }
 }
 
 /// Gets transaction params from the 0L project root.

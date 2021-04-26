@@ -7659,6 +7659,7 @@ dependencies = [
  "libra-logger",
  "libra-management",
  "libra-network-address",
+ "libra-secure-storage",
  "libra-types",
  "libra-wallet",
  "libradb",
