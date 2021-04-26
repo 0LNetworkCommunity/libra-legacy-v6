@@ -150,7 +150,7 @@ members = [
     "ol-cli",
     "ol/types",
     "ol/fixtures",
-    "txs",
+    "ol/txs",
     "verifiable_delay/classgroup",
     "verifiable_delay/vdf",
     "verifiable_delay/vdf-cli",
