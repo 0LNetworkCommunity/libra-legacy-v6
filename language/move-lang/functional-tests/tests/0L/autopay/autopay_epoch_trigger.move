@@ -11,7 +11,7 @@ script {
   use 0x1::Signer;
   fun main(sender: &signer) {
     AutoPay::enable_autopay(sender);
-    assert(AutoPay::is_enabled(Signer::address_of(sender)), 0);
+    assert(AutoPay::is_enabled(Signer::address_of(sender)), 73570009);
     
     // send a 5.00% instruction
     AutoPay::create_instruction(sender, 1, {{bob}}, 2, 500); 
