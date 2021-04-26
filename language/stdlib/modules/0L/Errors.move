@@ -23,7 +23,7 @@ module Errors {
     }
     spec fun make {
         pragma opaque = true;
-        ensures [concrete] result == category + (reason << 8);
+        ensures [concrete] result == reason;
         aborts_if [abstract] false;
         ensures [abstract] result == category;
     }
