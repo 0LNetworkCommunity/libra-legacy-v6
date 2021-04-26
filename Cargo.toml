@@ -147,7 +147,7 @@ members = [
     # //////// 0L ////////
     "ol/keygen",
     "ol/miner",
-    "ol-cli",
+    "ol/cli",
     "ol/types",
     "ol/fixtures",
     "ol/txs",

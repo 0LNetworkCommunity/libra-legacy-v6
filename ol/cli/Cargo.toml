@@ -18,17 +18,17 @@ gumdrop = "0.7"
 serde = { version = "1", features = ["serde_derive"] }
 thiserror = "1"
 reqwest = { version = "0.10.6", features = ["blocking", "json"], default_features = false }
-cli = { path = "../testsuite/cli/", version = "0.1.0" }
-libra-types = { path = "../types/", version= "0.1.0"}
+cli = { path = "../../testsuite/cli/", version = "0.1.0" }
+libra-types = { path = "../../types/", version= "0.1.0"}
 num-format = "0.4.0"
-resource-viewer = { path = "../language/tools/resource-viewer", version = "0.1.0" }
+resource-viewer = { path = "../../language/tools/resource-viewer", version = "0.1.0" }
 anyhow = "1.0"
-libra-global-constants = { path = "../config/global-constants", version = "0.1.0"}
+libra-global-constants = { path = "../../config/global-constants", version = "0.1.0"}
 byteorder = "1"
 dirs = "2.0.2"
 toml = "0.5.6"
 rustyline = "6.2.0"
-libra-json-rpc-client = { path = "../client/json-rpc", version = "0.1.0" }
+libra-json-rpc-client = { path = "../../client/json-rpc", version = "0.1.0" }
 crossterm = "0.19.0"
 tokio = { version = "0.2", features = ["full"] }
 warp = "0.2.5"
@@ -37,25 +37,25 @@ clokwerk = "0.3.4"
 handlebars = "3.5.3"
 futures = "0.3.6"
 nix = "*"
-libra-secure-storage = { path = "../secure/storage", version = "0.1.0" }
-libra-network-address = { path = "../network/network-address", package="libra-network-address", version="0.1.0"}
+libra-secure-storage = { path = "../../secure/storage", version = "0.1.0" }
+libra-network-address = { path = "../../network/network-address", package="libra-network-address", version="0.1.0"}
 glob = "0.3.0"
 sm = "0.9.0"
-libra-config = { path = "../config", version = "0.1.0"}
+libra-config = { path = "../../config", version = "0.1.0"}
 ajson = "0.2.3"
 hex = "0.4"
 machine-ip = "0.2.1"
 url = { version = "^2.1", features = ["serde"]}
-libra-genesis-tool = { path = "../config/management/genesis", version = "0.1.0" }
-libra-wallet = { path = "../testsuite/cli/libra-wallet", version = "0.1.0" }
-libradb = { path = "../storage/libradb", version = "0.1.0" }
-libra-temppath = { path = "../common/temppath", version = "0.1.0" }
-keygen = { path = "../ol/keygen/", version = "0.1.0" }
+libra-genesis-tool = { path = "../../config/management/genesis", version = "0.1.0" }
+libra-wallet = { path = "../../testsuite/cli/libra-wallet", version = "0.1.0" }
+libradb = { path = "../../storage/libradb", version = "0.1.0" }
+libra-temppath = { path = "../../common/temppath", version = "0.1.0" }
+keygen = { path = "../../ol/keygen/", version = "0.1.0" }
 abscissa_tokio = "0.5"
 regex = "1"
-ol-types = { path = "../ol/types"}
+ol-types = { path = "../../ol/types"}
 
-storage-interface = { path = "../storage/storage-interface", version = "0.1.0" }
+storage-interface = { path = "../../storage/storage-interface", version = "0.1.0" }
 
 
 # Parity with Storage create
