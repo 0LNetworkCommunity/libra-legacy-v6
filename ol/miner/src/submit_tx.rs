@@ -1,28 +1,25 @@
 //! MinerApp submit_tx module
 #![forbid(unsafe_code)]
-use libra_global_constants::OPERATOR_KEY;
-use libra_secure_storage::{NamespacedStorage, OnDiskStorageInternal, Storage};
-use libra_types::{waypoint::Waypoint};
-use libra_secure_storage::CryptoStorage;
-use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
-use libra_crypto::{
-    test_utils::KeyPair,
-    ed25519::{Ed25519PrivateKey, Ed25519PublicKey}
-};
+
+
+
+
+
+
 use anyhow::Error;
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
-use reqwest::Url;
-use abscissa_core::{status_warn, status_ok};
-use txs::{sign_tx::sign_tx, submit_tx::{TxParams, submit_tx}};
-use std::{io::{stdout, Write}, thread, time};
 
-use libra_types::transaction::{Script, TransactionPayload};
-use libra_types::{transaction::helpers::*};
-use crate::config::MinerConfig;
+
+use txs::{sign_tx::sign_tx, submit_tx::{TxParams, submit_tx}};
+
+
+use libra_types::transaction::{Script};
+
+
 // use compiled_stdlib::transaction_scripts;
-use libra_json_rpc_types::views::{TransactionView, VMStatusView};
+use libra_json_rpc_types::views::{TransactionView};
 use libra_types::chain_id::ChainId;
-use libra_genesis_tool::keyscheme::KeyScheme;
+
 
 // /// All the parameters needed for a client transaction.
 // #[derive(Debug)]

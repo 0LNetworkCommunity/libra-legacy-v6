@@ -4,7 +4,7 @@ use crate::config::MinerConfig;
 use crate::{backlog, block::*, entrypoint};
 use crate::{entrypoint::EntryPointTxsCmd, prelude::*};
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
-use libra_genesis_tool::keyscheme::KeyScheme;
+
 use ol_types::config::TxType;
 use reqwest::Url;
 use txs::submit_tx::tx_params;
