@@ -42,4 +42,4 @@ script {
         MinerState::commit_state(sender, proof);
     }
 }
-// check: ABORTED
+// check: VMExecutionFailure(ABORTED { code: 130103

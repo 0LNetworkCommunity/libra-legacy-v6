@@ -17,7 +17,7 @@ fun main(account: &signer) {
 }
 }
 ////////// Transfers should fail ////////
-// check: ABORTED 
+// check: VMExecutionFailure(ABORTED { code: 12016,
 /////////////////////////////////////////
 
 // //! new-transaction
