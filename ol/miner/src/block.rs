@@ -5,13 +5,14 @@ use crate::{
     delay::*,
     error::{Error, ErrorKind},
     prelude::*,
-    submit_tx::{eval_tx_status, submit_tx, TxParams},
+    submit_tx::commit_proof_tx,
 };
 use byteorder::{LittleEndian, WriteBytesExt};
 use glob::glob;
 use hex::decode;
 use libra_crypto::hash::HashValue;
 use ol_types::block::Block;
+use txs::submit_tx::{TxParams, eval_tx_status};
 use std::{
     fs,
     io::{BufReader, Write},
@@ -115,10 +116,10 @@ pub fn mine_and_submit(
             );
 
             if let Some(ref _node) = config.profile.default_node {
-                match submit_tx(&tx_params, block.preimage, block.proof, is_operator) {
+                match commit_proof_tx(&tx_params, block.preimage, block.proof, is_operator) {
                     Ok(tx_view) => match eval_tx_status(tx_view) {
-                        true => status_ok!("Success:", "Proof committed to chain"),
-                        false => status_err!("Miner transaction rejected"),
+                        Ok(_) => status_ok!("Success:", "Proof committed to chain"),
+                        Err(_) => status_err!("Miner transaction rejected"),
                     },
                     Err(err) => status_err!("Miner transaction rejected: {}", err),
                 }

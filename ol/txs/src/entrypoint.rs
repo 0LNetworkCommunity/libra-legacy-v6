@@ -47,6 +47,10 @@ where
     #[options(short = "u", help = "URL to send tx")]    
     pub url: Option<Url>,
 
+    /// Use the upstream URL in configs for sending transaction
+    #[options(help = "Use the upstream URL in configs for sending transaction")]
+    pub use_upstream_url: bool,
+
     /// Override waypoint to connect to
     #[options(short = "w", help = "waypoint to connect to")]
     pub waypoint: Option<Waypoint>,
@@ -66,6 +70,13 @@ where
     /// Swarm persona - what fixtures to use
     #[options(help = "use the fixtures of a persona, e.g. alice, eve")]
     pub swarm_persona: Option<String>,
+
+    /// The operator is sending the transaction, used in miner.
+    #[options(help = "the operator is signing and sending the transaction")]
+    pub is_operator: bool,
+
+
+    
 
 }
 

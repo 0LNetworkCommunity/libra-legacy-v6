@@ -23,7 +23,6 @@ pub mod delay;
 pub mod error;
 pub mod prelude;
 pub mod submit_tx;
-pub mod test_tx_swarm;
 pub mod backlog;
 pub mod account;
 pub mod entrypoint;

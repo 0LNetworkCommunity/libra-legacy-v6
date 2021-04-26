@@ -204,6 +204,25 @@ impl OlCliConfig {
 
     cfg
   }
+  /// choose a node to connect to, either localhost or upstream
+  pub fn what_url(&self, use_upstream_url: bool) -> Url {
+    if use_upstream_url {
+        self
+            .profile
+            .upstream_nodes
+            .clone()
+            .unwrap()
+            .into_iter()
+            .next()
+            .expect("no backup url provided in config toml")
+    } else {
+        self
+            .profile
+            .default_node
+            .clone()
+            .expect("no url provided in config toml")
+    }
+}
 }
 
 /// Default configuration settings.
@@ -219,6 +238,7 @@ impl Default for OlCliConfig {
       tx_configs: TxConfigs::default(),
     }
   }
+
 }
 
 /// Information about the Chain to mined for
@@ -405,3 +425,5 @@ pub fn get_swarm_configs(mut swarm_path: PathBuf) -> (Url, Waypoint) {
 
     (url, waypoint)
 }
+
+

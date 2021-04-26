@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use crate::{
   save_tx,
-  submit_tx::{get_tx_params, wait_for_tx, TxParams},
+  submit_tx::{tx_params_wrapper, wait_for_tx, TxParams},
 };
 use anyhow::Error;
 use cli::libra_client::LibraClient;
@@ -65,7 +65,7 @@ pub fn relay_batch(batch_tx: &Vec<SignedTransaction>, tx_params: &TxParams) -> R
 /// submit transaction from a file with batch of signed transactions
 pub fn relay_from_file(path: PathBuf) -> Result<(), Error> {
   //NOTE: Cost does not affect relaying, that's determined in original tx
-  let tx_params = get_tx_params(TxType::Mgmt).expect("could not get tx parameters");
+  let tx_params = tx_params_wrapper(TxType::Mgmt).expect("could not get tx parameters");
   match save_tx::read_tx_from_file(path) {
     Ok(batch) => {
       batch.into_iter().for_each(|tx| {

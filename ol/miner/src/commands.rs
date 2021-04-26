@@ -3,7 +3,6 @@
 mod keygen_cmd;
 mod start_cmd;
 mod version_cmd;
-mod swarm_test_cmd;
 mod zero_cmd;
 mod ceremony_cmd;
 mod wizard_user_cmd;
@@ -14,7 +13,6 @@ mod files_cmd;
 use self::{
     start_cmd::StartCmd,
     version_cmd::VersionCmd,
-    swarm_test_cmd::SwarmCmd,
     zero_cmd::ZeroCmd,
     keygen_cmd::KeygenCmd,
     ceremony_cmd::CeremonyUtilCmd,
@@ -60,10 +58,6 @@ pub enum MinerCmd {
     /// The `ceremony` subcommand
     #[options(help = "wizard for genesis ceremony configurations")]
     Ceremony(CeremonyUtilCmd),
-    
-    /// The `swarm` subcommand
-    #[options(help = "test connection to a local swarm")]
-    Swarm(SwarmCmd),
 
     /// The `user_wizard` subcommand
     #[options(help = "wizard to create accounts and local configs")]

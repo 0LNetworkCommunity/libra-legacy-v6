@@ -6,7 +6,7 @@ use crate::{
     entrypoint,
     prelude::app_config,
     relay,
-    submit_tx::{get_tx_params, maybe_submit},
+    submit_tx::{tx_params_wrapper, maybe_submit},
 };
 use abscissa_core::{Command, Options, Runnable};
 use libra_types::transaction::Script;
@@ -73,7 +73,7 @@ impl Runnable for CreateValidatorCmd {
             &tmp
         };
 
-        let tx_params = get_tx_params(TxType::Mgmt).unwrap();
+        let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
 
         let file = fs::File::open(account_json_path).expect("file should open read only");
         let new_account: ValConfigs =
@@ -103,8 +103,8 @@ impl Runnable for CreateValidatorCmd {
     }
 }
 
-#[test]
-fn test_create_val() {
-    let path = ol_fixtures::get_persona_account_json("alice").1;
-    create_validator_script(&path);
-}
+// #[test]
+// fn test_create_val() {
+//     let path = ol_fixtures::get_persona_account_json("alice").1;
+//     create_validator_script(&path);
+// }

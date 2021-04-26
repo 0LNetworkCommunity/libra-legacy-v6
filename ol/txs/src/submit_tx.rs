@@ -7,8 +7,6 @@ use crate::{
     save_tx::save_tx,
     sign_tx::sign_tx,
 };
-use libra_global_constants::OPERATOR_KEY;
-use libra_secure_storage::{CryptoStorage, NamespacedStorage, OnDiskStorageInternal, Storage};
 use abscissa_core::{status_ok, status_warn};
 use anyhow::Error;
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
@@ -17,7 +15,9 @@ use libra_crypto::{
     test_utils::KeyPair,
 };
 use libra_genesis_tool::keyscheme::KeyScheme;
+use libra_global_constants::OPERATOR_KEY;
 use libra_json_rpc_types::views::{TransactionView, VMStatusView};
+use libra_secure_storage::{CryptoStorage, NamespacedStorage, OnDiskStorageInternal, Storage};
 use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
 use libra_types::{
     chain_id::ChainId,
@@ -25,7 +25,10 @@ use libra_types::{
 };
 
 use libra_wallet::WalletLibrary;
-use ol_types::{self, config::{TxCost, TxType}};
+use ol_types::{
+    self,
+    config::{TxCost, TxType},
+};
 use reqwest::Url;
 use std::{
     io::{stdout, Write},
@@ -73,7 +76,7 @@ pub struct TxParams {
 //     pub waypoint: Waypoint,
 //     /// KeyPair
 //     pub keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey>,
-//     /// User's Maximum gas_units willing to run. Different than coin. 
+//     /// User's Maximum gas_units willing to run. Different than coin.
 //     pub max_gas_unit_for_tx: u64,
 //     /// User's GAS Coin price to submit transaction.
 //     pub coin_price_per_unit: u64,
@@ -168,26 +171,44 @@ pub fn submit_tx(
 
 /// Main get tx params logic based on the design in this URL:
 /// https://github.com/OLSF/libra/blob/tx-sender/txs/README.md#txs-logic--usage
-pub fn get_tx_params(tx_type: TxType) -> Result<TxParams, Error> {
+pub fn tx_params_wrapper(tx_type: TxType) -> Result<TxParams, Error> {
     let EntryPointTxsCmd {
         url,
         waypoint,
         swarm_path,
+        is_operator,
+        use_upstream_url,
         ..
     } = entrypoint::get_args();
-    let app_config = app_config();
+    let app_config = app_config().clone();
+    tx_params(app_config, url, waypoint, swarm_path, tx_type, is_operator, use_upstream_url)
+}
+
+/// tx_parameters format
+pub fn tx_params(
+    config: OlCliConfig,
+    url_opt: Option<Url>,
+    waypoint: Option<Waypoint>,
+    swarm_path: Option<PathBuf>,
+    tx_type: TxType,
+    is_operator: bool,
+    use_upstream_url: bool,
+) -> Result<TxParams, Error> {
+    let url = if url_opt.is_some() {url_opt.unwrap()} 
+    else {config.what_url(use_upstream_url)};
 
     let mut tx_params: TxParams = if swarm_path.is_some() {
         get_tx_params_from_swarm(swarm_path.clone().expect("needs a valid swarm temp dir")).unwrap()
     } else {
-        // Get from 0L.toml e.g. ~/.0L/0L.toml, or use Profile::default()
-        get_tx_params_from_toml(app_config.clone(), tx_type,None).unwrap()
+        if is_operator {
+            
+            get_oper_params(waypoint.unwrap(), &config, tx_type, url)
+        } else {
+            // Get from 0L.toml e.g. ~/.0L/0L.toml, or use Profile::default()
+            get_tx_params_from_toml(config.clone(), tx_type, None, url).unwrap()
+        }
     };
 
-    // Get/override some params from entrypoint command line
-    if url.is_some() {
-        tx_params.url = url.unwrap();
-    }
     if waypoint.is_some() {
         tx_params.waypoint = waypoint.unwrap();
     }
@@ -214,9 +235,9 @@ pub fn get_tx_params_from_swarm(swarm_path: PathBuf) -> Result<TxParams, Error> 
         waypoint,
         keypair,
         tx_cost: TxCost {
-          max_gas_unit_for_tx: 1_000_000,
-          coin_price_per_unit: 1, // in micro_gas
-          user_tx_timeout: 5_000,
+            max_gas_unit_for_tx: 1_000_000,
+            coin_price_per_unit: 1, // in micro_gas
+            user_tx_timeout: 5_000,
         },
 
         chain_id: ChainId::new(4),
@@ -226,45 +247,33 @@ pub fn get_tx_params_from_swarm(swarm_path: PathBuf) -> Result<TxParams, Error> 
     Ok(tx_params)
 }
 
-/// Form tx parameters struct 
+/// Form tx parameters struct
 pub fn get_oper_params(
     waypoint: Waypoint,
     config: &OlCliConfig,
     tx_type: TxType,
-
-    // url_opt overrides all node configs, takes precedence over use_backup_url
-    url_opt: Option<Url>,
-    backup_url: bool,
+    url: Url,
+    // // url_opt overrides all node configs, takes precedence over use_backup_url
+    // url_opt: Option<Url>,
+    // upstream_url: bool,
 ) -> TxParams {
-    let orig_storage = Storage::OnDiskStorage(OnDiskStorageInternal::new(config.workspace.node_home.join("key_store.json").to_owned()));
-    let storage = Storage::NamespacedStorage(
-        NamespacedStorage::new(
-            orig_storage, 
-            format!("{}-oper", &config.profile.auth_key )
-        )
-    );
+    let orig_storage = Storage::OnDiskStorage(OnDiskStorageInternal::new(
+        config.workspace.node_home.join("key_store.json").to_owned(),
+    ));
+    let storage = Storage::NamespacedStorage(NamespacedStorage::new(
+        orig_storage,
+        format!("{}-oper", &config.profile.auth_key),
+    ));
     // export_private_key_for_version
-    let privkey = storage.export_private_key(OPERATOR_KEY).expect("could not parse operator key in key_store.json");
-    
-    let keypair = KeyPair::from(privkey);
-    let pubkey =  &keypair.public_key;// keys.child_0_owner.get_public();
-    let auth_key = AuthenticationKey::ed25519(pubkey);
-    
-    let url: Url = if url_opt.is_some() { 
-        url_opt.expect("could nod parse url")
-    } else {
-        if backup_url {
-            config.profile.upstream_nodes
-            .clone()
-            .unwrap()
-            .into_iter()
-            .next()
-            .expect("no backup url provided in config toml")
+    let privkey = storage
+        .export_private_key(OPERATOR_KEY)
+        .expect("could not parse operator key in key_store.json");
 
-        } else {
-            config.profile.default_node.clone().expect("no url provided in config toml")
-        }
-    };
+    let keypair = KeyPair::from(privkey);
+    let pubkey = &keypair.public_key; // keys.child_0_owner.get_public();
+    let auth_key = AuthenticationKey::ed25519(pubkey);
+
+
     let tx_cost = config.tx_configs.get_cost(tx_type);
     TxParams {
         auth_key,
@@ -283,8 +292,9 @@ pub fn get_tx_params_from_toml(
     config: OlCliConfig,
     tx_type: TxType,
     wallet_opt: Option<&WalletLibrary>,
+    url: Url
 ) -> Result<TxParams, Error> {
-    let url = config.profile.default_node.clone().unwrap();
+    // let url = config.profile.default_node.clone().unwrap();
     let (auth_key, address, wallet) = if let Some(wallet) = wallet_opt {
         keygen::get_account_from_wallet(wallet)
     } else {
