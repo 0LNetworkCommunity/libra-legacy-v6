@@ -292,6 +292,7 @@ module LibraAccount {
 
         // NOTE: VDF verification is being called twice!
         MinerState::init_miner_state(&new_signer, challenge, solution);
+        // TODO: Should fullnode init happen here, or under MinerState::init?
         FullnodeState::init(&new_signer);
         // Create OP Account
         let new_op_account = create_signer(op_address);

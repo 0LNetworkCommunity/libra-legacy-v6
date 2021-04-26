@@ -15,12 +15,13 @@ address 0x1 {
     use 0x1::Testnet;
     use 0x1::StagingNet;
     use 0x1::Stats;
+    use 0x1::FullnodeState;
+    use 0x1::ValidatorConfig;
 
     resource struct MinerList {
       list: vector<address>
     }
-    use 0x1::FullnodeState;
-    use 0x1::ValidatorConfig;
+
     // Struct to store information about a VDF proof submitted
     struct Proof {
         challenge: vector<u8>,
@@ -349,7 +350,9 @@ address 0x1 {
         difficulty,  
         solution: *solution,
       };
-      
+
+      // TODO: should fullnode state happen here?
+      // FullnodeState::init(miner_sig);
       verify_and_update_state(Signer::address_of(miner_sig), proof, false);
     }
 
