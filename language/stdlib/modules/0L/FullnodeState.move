@@ -121,6 +121,7 @@ module FullnodeState {
     state.cumulative_subsidy = cumulative_subsidy;
   }
 
+  /// Testhelper
   public fun mock_proof(sender: &signer, count: u64) acquires FullnodeCounter {
     let addr = Signer::address_of(sender);
     let state = borrow_global_mut<FullnodeCounter>(addr);

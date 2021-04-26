@@ -494,7 +494,7 @@ address 0x1 {
       assert(Testnet::is_testnet(), 130115014011);
       let state = borrow_global_mut<MinerProofHistory>(Signer::address_of(sender));
       state.count_proofs_in_epoch = count;
-      FullnodeState::inc_proof(sender);
+      FullnodeState::mock_proof(sender, count);
     }
 
     public fun test_helper_mock_mining_vm(vm: &signer, addr: address, count: u64) acquires MinerProofHistory {
