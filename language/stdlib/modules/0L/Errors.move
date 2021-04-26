@@ -25,7 +25,7 @@ module Errors {
         pragma opaque = true;
         ensures [concrete] result == reason;
         aborts_if [abstract] false;
-        ensures [abstract] result == category;
+        ensures [abstract] result == reason;
     }
 
     /// The system is in a state where the performed operation is not allowed. Example: call to a function only allowed
