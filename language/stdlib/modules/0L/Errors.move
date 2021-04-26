@@ -16,14 +16,16 @@ address 0x1 {
 /// >TODO: determine what kind of stability guarantees we give about reasons/associated module.
 module Errors {
     /// A function to create an error from from a category and a reason.
-    fun make(category: u8, reason: u64): u64 {
-        (category as u64) + (reason << 8)
+    fun make(_category: u8, reason: u64): u64 {
+        (reason as u64)
+        //(category as u64) + (reason << 8) - native implementation
+        // Changed error codes make to easily track them in 0L. 
     }
     spec fun make {
         pragma opaque = true;
-        ensures [concrete] result == category + (reason << 8);
+        ensures [concrete] result == reason;
         aborts_if [abstract] false;
-        ensures [abstract] result == category;
+        ensures [abstract] result == reason;
     }
 
     /// The system is in a state where the performed operation is not allowed. Example: call to a function only allowed

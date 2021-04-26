@@ -9,11 +9,12 @@
 address 0x1 {
   module ValidatorUniverse {
     use 0x1::CoreAddresses;
+    use 0x1::Errors;
     use 0x1::MinerState;
     use 0x1::Signer;
     use 0x1::Testnet;
     use 0x1::Vector;
-
+    
     // resource for tracking the universe of accounts that have submitted a mined proof correctly, with the epoch number.
     resource struct ValidatorUniverse {
         validators: vector<address>
@@ -29,7 +30,7 @@ address 0x1 {
     public fun initialize(account: &signer){
       // Check for transactions sender is association
       let sender = Signer::address_of(account);
-      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 220101014010);
+      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(220101));
       move_to<ValidatorUniverse>(account, ValidatorUniverse {
           validators: Vector::empty<address>()
       });
@@ -80,7 +81,7 @@ address 0x1 {
     // A simple public function to query the EligibleValidators.
     // Function code: 03 Prefix: 220103
     public fun get_eligible_validators(vm: &signer): vector<address> acquires ValidatorUniverse {
-      assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 220101014010);
+      assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(220103));
       let state = borrow_global<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
       *&state.validators
     }

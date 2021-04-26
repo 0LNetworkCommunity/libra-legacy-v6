@@ -3,13 +3,14 @@
 // Epoch Prologue
 ///////////////////////////////////////////////////////////////////////////
 // The prologue for transitioning to next epoch after every n blocks.
-// File Prefix for errors: 1801
+// File Prefix for errors: 1800
 ///////////////////////////////////////////////////////////////////////////
 
 address 0x1 {
 module Reconfigure {
     use 0x1::Signer;
     use 0x1::CoreAddresses;
+    use 0x1::Errors;
     use 0x1::Subsidy;
     use 0x1::NodeWeight;
     use 0x1::LibraSystem;
@@ -25,9 +26,9 @@ module Reconfigure {
     use 0x1::GAS::GAS;
     use 0x1::LibraConfig;
     // This function is called by block-prologue once after n blocks.
-    // Function code: 01. Prefix: 180101
+    // Function code: 01. Prefix: 180001
     public fun reconfigure(vm: &signer, height_now: u64) {
-        assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 180101014010);
+        assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(180001));
 
         // Fullnode subsidy
         // loop through validators and pay full node subsidies.

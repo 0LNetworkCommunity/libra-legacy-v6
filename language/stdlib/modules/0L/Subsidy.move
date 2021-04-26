@@ -9,6 +9,7 @@
 address 0x1 {
   module Subsidy {
     use 0x1::CoreAddresses;
+    use 0x1::Errors;
     use 0x1::GAS::GAS;
     use 0x1::Libra;
     use 0x1::Signer;
@@ -36,14 +37,14 @@ address 0x1 {
     
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
-    // Function code: 03 Prefix: 190103
+    // Function code: 01 Prefix: 190101
     public fun process_subsidy(
       vm_sig: &signer,
       subsidy_units: u64,
       outgoing_set: &vector<address>,
       _fee_ratio: &vector<FixedPoint32>) {
       let sender = Signer::address_of(vm_sig);
-      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190101034010);
+      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(190101));
 
       // Get the split of payments from Stats.
       let len = Vector::length<address>(outgoing_set);
@@ -76,14 +77,14 @@ address 0x1 {
     }
 
 
-    // Function code: 07 Prefix: 190107
+    // Function code: 02 Prefix: 190102
     public fun calculate_subsidy(vm: &signer, height_start: u64, height_end: u64):u64 {
 
       let sender = Signer::address_of(vm);
-      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190101014010);
+      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(190102));
 
       // skip genesis
-      assert(!LibraTimestamp::is_genesis(), 190101021000);
+      assert(!LibraTimestamp::is_genesis(), Errors::invalid_state(190102));
 
       // Gets the transaction fees in the epoch
       let txn_fee_amount = TransactionFee::get_amount_to_distribute(vm);
@@ -105,7 +106,7 @@ address 0x1 {
       0u64
     }
 
-    // Function code: 04 Prefix: 190104
+    // Function code: 03 Prefix: 190103
     public fun subsidy_curve(
       subsidy_ceiling_gas: u64,
       network_density: u64,
@@ -132,11 +133,11 @@ address 0x1 {
       guaranteed_minimum
     }
 
-    // Function code: 06 Prefix: 190106
+    // Function code: 04 Prefix: 190104
     public fun genesis(vm_sig: &signer) acquires FullnodeSubsidy{
       //Need to check for association or vm account
       let vm_addr = Signer::address_of(vm_sig);
-      assert(vm_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190101044010);
+      assert(vm_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(190104));
 
       // Get eligible validators list
       let genesis_validators = ValidatorUniverse::get_eligible_validators(vm_sig);
@@ -157,18 +158,19 @@ address 0x1 {
         let subsidy_granted = distribute_onboarding_subsidy(vm_sig, node_address);
         //Confirm the calculations, and that the ending balance is incremented accordingly.
 
-        assert(LibraAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, 19010105100);
+        assert(LibraAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, Errors::invalid_argument(190104));
 
         i = i + 1;
       };
     }
-    
+
+    // Function code: 05 Prefix: 190105
     public fun process_fees(
       vm: &signer,
       outgoing_set: &vector<address>,
       _fee_ratio: &vector<FixedPoint32>,
     ){
-      assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190103014010);
+      assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(190105));
       let capability_token = LibraAccount::extract_withdraw_capability(vm);
 
       let len = Vector::length<address>(outgoing_set);
@@ -208,6 +210,7 @@ address 0x1 {
         current_proofs_verified: u64,
     }
 
+    // Function code: 06 Prefix: 190106
     public fun init_fullnode_sub(vm: &signer) {
       let genesis_validators = LibraSystem::get_val_set_addr();
       let validator_count = Vector::length(&genesis_validators);
@@ -217,7 +220,7 @@ address 0x1 {
       let ceiling = baseline_auction_units() * BASELINE_TX_COST * validator_count;
 
       Roles::assert_libra_root(vm);
-      assert(!exists<FullnodeSubsidy>(Signer::address_of(vm)), 130112011021);
+      assert(!exists<FullnodeSubsidy>(Signer::address_of(vm)), Errors::not_published(190106));
       move_to<FullnodeSubsidy>(vm, FullnodeSubsidy{
         previous_epoch_proofs: 0u64,
         current_proof_price: BASELINE_TX_COST * 24 * 8 * 3, // number of proof submisisons in 3 initial epochs.
@@ -459,7 +462,7 @@ print(&015);
       current_proofs_verified: u64,
     ) acquires FullnodeSubsidy {
       Roles::assert_libra_root(vm);
-      assert(is_testnet(), 1000);
+      assert(is_testnet(), Errors::invalid_state(190108));
       let state = borrow_global_mut<FullnodeSubsidy>(0x0);
       state.previous_epoch_proofs = previous_epoch_proofs;
       state.current_proof_price = current_proof_price;

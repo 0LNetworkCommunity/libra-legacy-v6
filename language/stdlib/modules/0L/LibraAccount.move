@@ -148,46 +148,46 @@ module LibraAccount {
     const MAX_U64: u128 = 18446744073709551615;
 
     /// The `LibraAccount` resource is not in the required state
-    const EACCOUNT: u64 = 0;
+    const EACCOUNT: u64 = 12010;
     /// The account's sequence number has exceeded the maximum representable value
-    const ESEQUENCE_NUMBER: u64 = 1;
+    const ESEQUENCE_NUMBER: u64 = 12011;
     /// Tried to deposit a coin whose value was zero
-    const ECOIN_DEPOSIT_IS_ZERO: u64 = 2;
+    const ECOIN_DEPOSIT_IS_ZERO: u64 = 12012;
     /// Tried to deposit funds that would have surpassed the account's limits
-    const EDEPOSIT_EXCEEDS_LIMITS: u64 = 3;
+    const EDEPOSIT_EXCEEDS_LIMITS: u64 = 12013;
     /// Tried to create a balance for an account whose role does not allow holding balances
-    const EROLE_CANT_STORE_BALANCE: u64 = 4;
+    const EROLE_CANT_STORE_BALANCE: u64 = 12014;
     /// The account does not hold a large enough balance in the specified currency
-    const EINSUFFICIENT_BALANCE: u64 = 5;
+    const EINSUFFICIENT_BALANCE: u64 = 12015;
     /// The withdrawal of funds would have exceeded the the account's limits
-    const EWITHDRAWAL_EXCEEDS_LIMITS: u64 = 6;
+    const EWITHDRAWAL_EXCEEDS_LIMITS: u64 = 12016;
     /// The `WithdrawCapability` for this account has already been extracted
-    const EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED: u64 = 7;
+    const EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED: u64 = 12017;
     /// The provided authentication had an invalid length
-    const EMALFORMED_AUTHENTICATION_KEY: u64 = 8;
+    const EMALFORMED_AUTHENTICATION_KEY: u64 = 12018;
     /// The `KeyRotationCapability` for this account has already been extracted
-    const EKEY_ROTATION_CAPABILITY_ALREADY_EXTRACTED: u64 = 9;
+    const EKEY_ROTATION_CAPABILITY_ALREADY_EXTRACTED: u64 = 12019;
     /// An account cannot be created at the reserved VM address of 0x0
-    const ECANNOT_CREATE_AT_VM_RESERVED: u64 = 10;
+    const ECANNOT_CREATE_AT_VM_RESERVED: u64 = 120110;
     /// The `WithdrawCapability` for this account is not extracted
-    const EWITHDRAW_CAPABILITY_NOT_EXTRACTED: u64 = 11;
+    const EWITHDRAW_CAPABILITY_NOT_EXTRACTED: u64 = 120111;
     /// Tried to add a balance in a currency that this account already has
-    const EADD_EXISTING_CURRENCY: u64 = 15;
+    const EADD_EXISTING_CURRENCY: u64 = 120115;
     /// Attempted to send funds to an account that does not exist
-    const EPAYEE_DOES_NOT_EXIST: u64 = 17;
+    const EPAYEE_DOES_NOT_EXIST: u64 = 120117;
     /// Attempted to send funds in a currency that the receiving account does not hold.
     /// e.g., `Libra<GAS>` to an account that exists, but does not have a `Balance<GAS>` resource
-    const EPAYEE_CANT_ACCEPT_CURRENCY_TYPE: u64 = 18;
+    const EPAYEE_CANT_ACCEPT_CURRENCY_TYPE: u64 = 120118;
     /// Tried to withdraw funds in a currency that the account does hold
-    const EPAYER_DOESNT_HOLD_CURRENCY: u64 = 19;
+    const EPAYER_DOESNT_HOLD_CURRENCY: u64 = 120119;
     /// An invalid amount of gas units was provided for execution of the transaction
-    const EGAS: u64 = 20;
+    const EGAS: u64 = 120120;
     /// The `AccountOperationsCapability` was not in the required state
-    const EACCOUNT_OPERATIONS_CAPABILITY: u64 = 22;
+    const EACCOUNT_OPERATIONS_CAPABILITY: u64 = 120122;
     /// The `LibraWriteSetManager` was not in the required state
-    const EWRITESET_MANAGER: u64 = 23;
+    const EWRITESET_MANAGER: u64 = 120123;
     /// An account cannot be created at the reserved core code address of 0x1
-    const ECANNOT_CREATE_AT_CORE_CODE: u64 = 24;
+    const ECANNOT_CREATE_AT_CORE_CODE: u64 = 120124;
 
     /// Prologue errors. These are separated out from the other errors in this
     /// module since they are mapped separately to major VM statuses, and are
@@ -227,6 +227,7 @@ module LibraAccount {
     // Accounts can be created permissionlessly, but they need a VDF to be submitted with the request.
 
         /////// 0L ////////
+    //Function code: 01
     public fun create_user_account_with_proof(
         challenge: &vector<u8>,
         solution: &vector<u8>,
@@ -238,7 +239,7 @@ module LibraAccount {
             solution
         );
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
-        assert(valid, 120101011021);
+        assert(valid, Errors::invalid_argument(120101));
         let new_signer = create_signer(new_account_address);
         Roles::new_user_role_with_proof(&new_signer);
         Event::publish_generator(&new_signer);
@@ -254,7 +255,7 @@ module LibraAccount {
     // Permissions: PUBLIC, ANYONE, OPEN!
     // This function has no permissions, it doesn't check the signer. And it exceptionally is moving a resource to a different account than the signer.
     // LibraAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
-
+    //Function code:02
     public fun create_validator_account_with_proof(
         sender: &signer,
         challenge: &vector<u8>,
@@ -270,13 +271,13 @@ module LibraAccount {
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
 
-        assert(MinerState::can_create_val_account(sender_addr), 120101011001);
+        assert(MinerState::can_create_val_account(sender_addr), Errors::limit_exceeded(120102));
         let valid = VDF::verify(
             challenge,
             &Globals::get_difficulty(),
             solution
         );
-        assert(valid, 120101011021);
+        assert(valid, Errors::invalid_argument(120102));
 
         // check there's enough balance for bootstrapping both operator and validator account
         assert(balance<GAS>(sender_addr)  >= 2 * BOOTSTRAP_COIN_VALUE, Errors::limit_exceeded(EINSUFFICIENT_BALANCE));
