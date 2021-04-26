@@ -2,7 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{block::{self, parse_block_file, write_genesis}, config::MinerConfig, delay};
+use crate::{block::{parse_block_file, write_genesis}, config::MinerConfig, delay};
 use abscissa_core::{Command, Options, Runnable};
 use std::{path::PathBuf};
 use ol_types::account;

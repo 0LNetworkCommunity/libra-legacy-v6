@@ -1,12 +1,12 @@
 //! Proof block datastructure
 
-use crate::config::MinerConfig;
-use crate::config::*;
-use crate::delay;
-use crate::delay::*;
-use crate::error::{Error, ErrorKind};
-use crate::prelude::*;
-use crate::submit_tx::{eval_tx_status, submit_tx, TxParams};
+use crate::{
+    config::MinerConfig,
+    delay::*,
+    error::{Error, ErrorKind},
+    prelude::*,
+    submit_tx::{eval_tx_status, submit_tx, TxParams},
+};
 use byteorder::{LittleEndian, WriteBytesExt};
 use glob::glob;
 use hex::decode;
@@ -423,7 +423,7 @@ pub fn genesis_preimage(cfg: &MinerConfig) -> Vec<u8> {
     preimage.append(&mut padded_chain_id_bytes);
 
     preimage
-        .write_u64::<LittleEndian>(delay::delay_difficulty())
+        .write_u64::<LittleEndian>(delay_difficulty())
         .unwrap();
 
     let mut padded_statements_bytes = {

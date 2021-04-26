@@ -2,7 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{block::{self, parse_block_file}, prelude::app_config};
+use crate::{block::{parse_block_file}, prelude::app_config};
 
 use super::{files_cmd, keygen_cmd, zero_cmd};
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
