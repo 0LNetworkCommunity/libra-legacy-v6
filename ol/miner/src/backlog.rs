@@ -57,7 +57,7 @@ pub fn process_backlog(config: &MinerConfig, tx_params: &TxParams, is_operator: 
         let block: Block = serde_json::from_reader(reader).unwrap();
         match commit_proof_tx(&tx_params, block.preimage, block.proof, is_operator) {
             Ok(res) => {
-                if eval_tx_status(res) == false {
+                if eval_tx_status(res).is_err(){
                     break;
                 }
             },

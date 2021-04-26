@@ -63,7 +63,7 @@ impl Runnable for StartCmd {
         } else { waypoint };
 
         let tx_params = tx_params(
-            cfg,
+            cfg.clone(),
             url,
             waypoint,
             swarm_path,
