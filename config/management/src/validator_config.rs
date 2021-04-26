@@ -17,6 +17,7 @@ use libra_network_address::{NetworkAddress, Protocol};
 use libra_types::{chain_id::ChainId, transaction::Transaction};
 use std::net::{Ipv4Addr, ToSocketAddrs};
 use structopt::StructOpt;
+
 #[derive(Clone, Debug, StructOpt)]
 pub struct ValidatorConfig {
     #[structopt(flatten)]
@@ -41,9 +42,9 @@ impl ValidatorConfig {
         fullnode_address: NetworkAddress,
         validator_address: NetworkAddress,
         reconfigure: bool,
-        disable_address_validation: bool,
+        disable_address_validation: bool, //////// 0L ////////
     ) -> Result<Transaction, Error> {
-        if !disable_address_validation {
+        if !disable_address_validation { //////// 0L ////////
             // Verify addresses
             validate_address("validator address", &validator_address)?;
             validate_address("fullnode address", &fullnode_address)?;
@@ -63,7 +64,7 @@ impl ValidatorConfig {
         // and encrypt the validator address.
         let validator_address =
             validator_address.append_prod_protos(validator_network_key, HANDSHAKE_VERSION);
-        dbg!(&validator_address);
+        dbg!(&validator_address); //////// 0L ////////
 
         let encryptor = config.validator_backend().encryptor();
         let validator_addresses = encryptor
@@ -80,7 +81,7 @@ impl ValidatorConfig {
         let fullnode_address =
             fullnode_address.append_prod_protos(fullnode_network_key, HANDSHAKE_VERSION);
 
-        dbg!(&fullnode_address);
+        dbg!(&fullnode_address); //////// 0L ////////
         
         // Generate the validator config script
         let transaction_callback = if reconfigure {

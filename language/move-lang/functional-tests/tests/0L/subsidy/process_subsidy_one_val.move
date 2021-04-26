@@ -15,8 +15,9 @@
 script {
     use 0x1::MinerState;
     fun main(sender: &signer) {
-      //NOTE: Alice is Case 1, she validates and mines. Setting up mining.
-        MinerState::test_helper_mock_mining(sender, 5);
+        //NOTE: Alice is Case 1, she validates and mines. Setting up mining.
+        let mining_proofs = 5;
+        MinerState::test_helper_mock_mining(sender, mining_proofs);
 
     }
 }
@@ -28,9 +29,9 @@ script {
 script {
     use 0x1::MinerState;
     fun main(sender: &signer) {
+        let mining_proofs = 5;
       //NOTE: Carol is Case 3, she mines but does not validate. Setting up mining.
-        MinerState::test_helper_mock_mining(sender, 5);
-
+        MinerState::test_helper_mock_mining(sender, mining_proofs);
     }
 }
 //check: EXECUTED
@@ -85,10 +86,12 @@ script {
   fun main(vm: &signer) {
     let (validators, fee_ratios) = LibraSystem::get_fee_ratio(vm, 0, 15);
     let subsidy_amount = 1000000;
-    let refund_to_operator = 4336 * 1; // from Subsidy::BASELINE_TX_COST * genesis proof for account
+    let mining_proofs = 5; // mocked above
+    let refund_to_operator = 4336 * mining_proofs; // from Subsidy::BASELINE_TX_COST * genesis proof for account
     Subsidy::process_subsidy(vm, subsidy_amount, &validators, &fee_ratios);
     print(&7357);
     print(&LibraAccount::balance<GAS>({{alice}}));
+    // starting balance + subsidy amount - refund operator tx fees for mining
     assert(LibraAccount::balance<GAS>({{alice}}) == 1 + subsidy_amount - refund_to_operator, 7357190102091000);
     // 995764
 

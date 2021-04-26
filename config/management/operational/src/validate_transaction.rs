@@ -21,6 +21,7 @@ pub struct ValidateTransaction {
 
 /// Returns `true` if we've passed by the expected sequence number
 impl ValidateTransaction {
+    //////// 0L ////////
     pub fn new(json_server: String, account_address: AccountAddress, sequence_number: u64) -> Self {
         Self {
             config: Default::default(),
@@ -30,6 +31,7 @@ impl ValidateTransaction {
         }
     }
 
+    //////// 0L ////////
     pub fn execute(&self) -> Result<TransactionContext, Error> {
         let config = self.config.load()?.override_json_server(&self.json_server);
         let vm_status = JsonRpcClientWrapper::new(config.json_server)

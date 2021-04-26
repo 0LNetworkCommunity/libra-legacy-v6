@@ -67,7 +67,7 @@ fun main(sender: &signer) {
 
 //     assert(MinerState::test_helper_get_height({{alice}}) == 1, 10009001);
 //     assert(MinerState::get_miner_latest_epoch(sender, {{alice}}) == 1, 10009002);
-//     assert(MinerState::test_helper_get_count({{alice}}) == 2, 10009003);
+//     assert(MinerState::get_count_in_epoch({{alice}}) == 2, 10009003);
 //     assert(MinerState::get_epochs_mining({{alice}}) == 0, 10009004);
 //     assert(MinerState::test_helper_get_contiguous({{alice}}) == 0, 10009005);
     
@@ -75,7 +75,7 @@ fun main(sender: &signer) {
 
 //     assert(MinerState::test_helper_get_height({{alice}}) == 1, 10009006);
 //     assert(MinerState::get_miner_latest_epoch(sender, {{alice}}) == 1, 10009007);
-//     assert(MinerState::test_helper_get_count({{alice}}) == 0, 10009008);
+//     assert(MinerState::get_count_in_epoch({{alice}}) == 0, 10009008);
 //     assert(MinerState::get_epochs_mining({{alice}}) == 1, 10009009);
 //     assert(MinerState::test_helper_get_contiguous({{alice}}) == 1, 10009010);
 

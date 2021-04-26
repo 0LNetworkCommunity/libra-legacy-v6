@@ -1,3 +1,4 @@
+//! `explorer` terminal block explorer.
 #[allow(missing_docs)]
 pub use app::App;
 

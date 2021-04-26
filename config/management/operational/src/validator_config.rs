@@ -34,6 +34,7 @@ pub struct SetValidatorConfig {
         help = "Full Node Network Address"
     )]
     fullnode_address: Option<NetworkAddress>,
+    //////// 0L ////////
     #[structopt(flatten)]
     auto_validate: AutoValidate,
     #[structopt(long, help = "Disables network address validation")]
@@ -41,6 +42,7 @@ pub struct SetValidatorConfig {
 }
 
 impl SetValidatorConfig {
+    //////// 0L ////////    
     pub fn execute(self) -> Result<TransactionContext, Error> {
         let config = self
             .validator_config
@@ -123,6 +125,7 @@ pub struct RotateKey {
     json_server: Option<String>,
     #[structopt(flatten)]
     validator_config: libra_management::validator_config::ValidatorConfig,
+	//////// 0L ////////    
     #[structopt(flatten)]
     auto_validate: AutoValidate,
 }
@@ -139,6 +142,7 @@ impl RotateKey {
             .override_json_server(&self.json_server);
         let mut storage = config.validator_backend();
         let encryptor = config.validator_backend().encryptor();
+        //////// 0L ////////
         let client = JsonRpcClientWrapper::new(config.json_server.clone());
 
         // Fetch the current on-chain validator config for the node
@@ -174,6 +178,7 @@ impl RotateKey {
             storage_key = storage.rotate_key(key_name)?;
         }
 
+        //////// 0L ////////
         // Create and set the validator config state on the blockchain.
         let set_validator_config = SetValidatorConfig {
             json_server: self.json_server.clone(),
@@ -191,6 +196,7 @@ impl RotateKey {
             .execute(config.json_server, transaction_context)?;
 
         Ok((transaction_context, storage_key))
+        //////// 0L end ////////        
     }
 }
 
@@ -320,6 +326,7 @@ impl DecryptedValidatorConfig {
 
         let validator_network_addresses = encryptor
             .decrypt(&config.validator_network_addresses, account_address)
+            //////// 0L ////////
             .unwrap_or_else(|error| {
                 println!(
                     "Unable to decode network address for account {}: {}. Using a dummy validator network address!",

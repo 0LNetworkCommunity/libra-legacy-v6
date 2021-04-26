@@ -9,7 +9,6 @@ use crate::{
 };
 use anyhow::{bail, ensure, format_err, Result};
 use std::{convert::TryFrom, sync::Arc};
-
 /// `TrustedState` keeps track of our latest trusted state, including the latest
 /// verified version and the latest verified validator set.
 #[derive(Clone, Debug)]

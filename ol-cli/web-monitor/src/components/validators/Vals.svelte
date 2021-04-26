@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { sortBy, reverse } from "lodash";
+  import { onMount, onDestroy } from "svelte";
+  import { sortBy } from "lodash";
 
   interface ValInfo {
     account_address: string;
@@ -15,19 +15,38 @@
     contiguous_epochs_validating_and_mining: Number;
     epochs_since_last_account_creation: Number;
   }
+  
   let set: ValInfo[] = [];
-  onMount(async () => {
-    var uri = "http://" + location.host + "/validators";
-    var sse = new EventSource(uri);
-    sse.onmessage = function (msg) {
-      set = JSON.parse(msg.data);
-      set = sortBy(set, ["voting_power"]).reverse();
-    };
+
+  import { chainInfo } from "../../store.ts";
+
+  chainInfo.subscribe((info_str) => {
+    let data = JSON.parse(info_str);
+    // TODO: find a better way to check if data is ready.
+    if (data.chain_view && data.chain_view.validator_view) {
+      set = sortBy(data.chain_view.validator_view, ["voting_power"]).reverse();
+    }
   });
+
+  // let uri = "http://" + location.host + "/validators";
+  // let sse = new EventSource(uri);
+  // onMount(async () => {
+
+  //   sse.onmessage = function (msg) {
+  //     set = JSON.parse(msg.data);
+  //     set = sortBy(set, ["voting_power"]).reverse();
+  //   };
+  // });
+
+  // onDestroy(() => {
+  //   sse.close();
+  // });
 
   function can_create_account(info: ValInfo): Boolean {
     return info.epochs_since_last_account_creation > 7;
   }
+
+  
 </script>
 <style>
   /* TODO: get styles to work. svelte or uikit are overriding these. */
@@ -61,7 +80,7 @@
   <ul uk-accordion>
     {#each set as val, i}
       <li>
-        <div class="uk-accordion-title">
+        <div class="uk-accordion-title uk-text-muted">
           <div class="uk-column-1-4 uk-child-width-expand@s uk-text-center">
             <div>{val.account_address}</div>
             <div>{val.voting_power}</div>

@@ -247,16 +247,12 @@ The runtime always runs this before executing the transactions in a block.
     // increment stats
 
     <a href="Stats.md#0x1_Stats_process_set_votes">Stats::process_set_votes</a>(vm, &previous_block_votes);
-
     <a href="Stats.md#0x1_Stats_inc_prop">Stats::inc_prop</a>(vm, *&proposer);
-
     <b>if</b> (<a href="AutoPay.md#0x1_AutoPay_tick">AutoPay::tick</a>(vm)){
-
         <a href="AutoPay.md#0x1_AutoPay_process_autopay">AutoPay::process_autopay</a>(vm);
     };
 
     ///////////////////
-
     <b>let</b> block_metadata_ref = borrow_global_mut&lt;<a href="LibraBlock.md#0x1_LibraBlock_BlockMetadata">BlockMetadata</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_update_global_time">LibraTimestamp::update_global_time</a>(vm, proposer, timestamp);
     block_metadata_ref.height = block_metadata_ref.height + 1;

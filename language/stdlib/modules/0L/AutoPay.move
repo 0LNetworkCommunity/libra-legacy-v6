@@ -106,27 +106,39 @@ address 0x1{
       let account_idx = 0;
 
       while (account_idx < accounts_length) {
-
         let account_addr = Vector::borrow<address>(account_list, account_idx);
-        
         // Obtain the account balance
         let account_bal = LibraAccount::balance<GAS>(*account_addr);
-        
         // Go through all payments for this account and pay 
         let payments = &mut borrow_global_mut<Data>(*account_addr).payments;
         let payments_len = Vector::length<Payment>(payments);
         let payments_idx = 0;
-        
         while (payments_idx < payments_len) {
-          let payment = Vector::borrow_mut<Payment>(payments, payments_idx);
+          let payment = Vector::borrow_mut<Payment>(payments, payments_idx);          
+          // no payments to self
+          if (&payment.payee == account_addr) break;
+
           // If payment end epoch is greater, it's not an active payment anymore, so delete it
           if (payment.end_epoch >= epoch) {
             // A payment will happen now
             // Obtain the amount to pay from percentage and balance
-            let amount = FixedPoint32::multiply_u64(account_bal , FixedPoint32::create_from_rational(payment.percentage, 100));
-            LibraAccount::vm_make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
+
+            // IMPORTANT there are two digits for scaling representation.
+            // an autopay instruction of 12.34% is scaled by two orders, and represented in AutoPay as `1234`.
+            if (payment.percentage > 10000) break;
+            let percent_scaled = FixedPoint32::create_from_rational(payment.percentage, 10000);
+            
+            let amount = FixedPoint32::multiply_u64(account_bal, percent_scaled);
+            if (amount > account_bal) {
+              // deplete the account if greater
+              amount = amount - account_bal;
+            };
+            if (amount>0) {
+              LibraAccount::vm_make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
+            }
+
           };
-          // ToDo: might want to delete inactive instructions to save memory
+          // TODO: might want to delete inactive instructions to save memory
           payments_idx = payments_idx + 1;
         };
         account_idx = account_idx + 1;

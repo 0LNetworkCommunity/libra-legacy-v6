@@ -2,122 +2,109 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::submit_tx::{get_tx_params, maybe_submit};
+use crate::{
+    entrypoint,
+    prelude::app_config,
+    relay,
+    submit_tx::{get_tx_params, maybe_submit},
+};
 use abscissa_core::{Command, Options, Runnable};
-use libra_types::{account_address::AccountAddress, transaction::Script};
-use std::{fs, path::PathBuf};
-
+use libra_types::transaction::Script;
+use ol_types::{account::ValConfigs, config::TxType};
+use reqwest::Url;
+use std::{
+    fs::{self, File},
+    io::Write,
+    path::PathBuf,
+};
 /// `CreateAccount` subcommand
-#[derive(Command, Debug, Default, Options)]
+#[derive(Command, Debug, Options)]
 pub struct CreateValidatorCmd {
     #[options(short = "f", help = "path of account.json")]
-    account_file: PathBuf,
+    account_file: Option<PathBuf>,
+    #[options(short = "u", help = "onboard from URL")]
+    url: Option<Url>,
 }
 
-pub fn create_validator_script(account_json_path: &PathBuf) -> Script {
-    let file = fs::File::open(account_json_path).expect("file should open read only");
-    let json: serde_json::Value =
-        serde_json::from_reader(file).expect("file should be proper JSON");
-
-    // Parse proof data
-    let block = json
-        .get("block_zero")
-        .expect("file should have block_zero and preimage key");
-
-    let preimage = block
-        .as_object()
-        .unwrap()
-        .get("preimage")
-        .unwrap()
-        .as_str()
-        .unwrap();
-
-    let pre_hex = hex::decode(preimage).unwrap();
-
-    let proof = block
-        .as_object()
-        .unwrap()
-        .get("proof")
-        .unwrap()
-        .as_str()
-        .unwrap();
-
-    let proof_hex = hex::decode(proof).unwrap();
-
-    // Parse validator config data
-    let ow_human_name = json
-        .get("ow_human_name")
-        .unwrap()
-        .as_str()
-        .unwrap()
-        .as_bytes()
-        .to_vec();
-
-    let op_address: AccountAddress = json
-        .get("op_address")
-        .unwrap()
-        .as_str()
-        .unwrap()
-        .parse()
-        .unwrap();
-
-    let op_auth_key_prefix: Vec<u8> =
-        hex::decode(json.get("op_auth_key_prefix").unwrap().as_str().unwrap()).unwrap();
-
-    let op_consensus_pubkey: Vec<u8> =
-        hex::decode(json.get("op_consensus_pubkey").unwrap().as_str().unwrap()).unwrap();
-
-    let op_validator_network_addresses = hex::decode(
-        json.get("op_validator_network_addresses")
-            .unwrap()
-            .as_str()
-            .unwrap(),
-    )
-    .unwrap();
-
-    let op_fullnode_network_addresses = hex::decode(
-        json.get("op_fullnode_network_addresses")
-            .unwrap()
-            .as_str()
-            .unwrap(),
-    )
-    .unwrap();
-
-    let op_human_name = json
-        .get("op_human_name")
-        .unwrap()
-        .as_str()
-        .unwrap()
-        .as_bytes()
-        .to_vec();
+/// create validator account by submitting transaction on chain
+pub fn create_validator_script(new_account: &ValConfigs) -> Script {
+    // let file_two = fs::File::open(account_json_path).expect("file should open read only");
+    // let account: ValConfigs =
+    //     serde_json::from_reader(file_two).expect("file should be proper JSON");
+    let new_account = new_account.to_owned();
+    new_account.check_autopay().unwrap();
 
     transaction_builder::encode_minerstate_onboarding_script(
-        pre_hex,
-        proof_hex,
-        ow_human_name,
-        op_address,
-        op_auth_key_prefix,
-        op_consensus_pubkey,
-        op_validator_network_addresses,
-        op_fullnode_network_addresses,
-        op_human_name,
+        new_account.block_zero.preimage,
+        new_account.block_zero.proof,
+        new_account.ow_human_name.as_bytes().to_vec(),
+        new_account.op_address.parse().unwrap(),
+        new_account.op_auth_key_prefix,
+        new_account.op_consensus_pubkey,
+        new_account.op_validator_network_addresses,
+        new_account.op_fullnode_network_addresses,
+        new_account.op_human_name.as_bytes().to_vec(),
         // my_trusted_accounts,
         // voter_trusted_accounts,
     )
-    // transaction_builder::encode_create_user_account_script(pre_hex, proof_hex)
+}
+
+pub fn account_from_url(url: &Url, path: &PathBuf) -> PathBuf {
+    let g_res = reqwest::blocking::get(&url.to_string());
+    let g_path = path.join("account.json");
+    let mut g_file = File::create(&g_path).expect("couldn't create file");
+    let g_content = g_res.unwrap().bytes().unwrap().to_vec(); //.text().unwrap();
+    g_file.write_all(g_content.as_slice()).unwrap();
+    g_path
 }
 
 impl Runnable for CreateValidatorCmd {
     fn run(&self) {
-        let account_json = &self.account_file;
-        let tx_params = get_tx_params().unwrap();
+        let cfg = app_config();
+        let entry_args = entrypoint::get_args();
+        let tmp;
+        if self.account_file.is_none() && self.url.is_none() {
+            panic!("No account file nor URL passed in CLI")
+        }
+        let account_json_path: &PathBuf = if self.account_file.is_some() {
+            self.account_file.as_ref().unwrap()
+        } else {
+            tmp = account_from_url(self.url.as_ref().unwrap(), &cfg.workspace.node_home).clone();
+            &tmp
+        };
 
-        maybe_submit(create_validator_script(account_json), &tx_params).unwrap();
-        // match submit_tx(&tx_params, create_user_account_script(account_json)) {
-        //     Err(err) => println!("{:?}", err),
-        //     Ok(res) => {
-        //         eval_tx_status(res);
-        //     }
-        // }
+        let tx_params = get_tx_params(TxType::Mgmt).unwrap();
+
+        let file = fs::File::open(account_json_path).expect("file should open read only");
+        let new_account: ValConfigs =
+            serde_json::from_reader(file).expect("file should be proper JSON");
+
+        match new_account.check_autopay() {
+            Ok(_) => {
+                maybe_submit(
+                    create_validator_script(&new_account),
+                    &tx_params,
+                    entry_args.no_send,
+                    entry_args.save_path,
+                )
+                .unwrap();
+
+                // submit autopay if there are any
+                if let Some(signed_autopay_batch) = new_account.autopay_signed {
+                    relay::relay_batch(&signed_autopay_batch, &tx_params).unwrap();
+                }
+            }
+            Err(_) => {
+                println!(
+                    "cannot send atomic account creation transaction, error with: PayInstruction."
+                );
+            }
+        }
     }
+}
+
+#[test]
+fn test_create_val() {
+    let path = ol_fixtures::get_persona_account_json("alice").1;
+    create_validator_script(&path);
 }

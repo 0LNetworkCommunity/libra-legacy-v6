@@ -101,6 +101,7 @@ fn create_test_cases() -> Vec<Test> {
                 assert_eq!(expected_hash, metadata["accumulator_root_hash"].as_str().unwrap());
             },
         },
+        //////// 0L ////////
         Test {
             name: "get metadata with older version parameter should not return version information",
             run: |env: &mut testing::Env| {

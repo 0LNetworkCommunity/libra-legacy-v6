@@ -33,3 +33,5 @@ pub const PROOF_OF_WORK_PROOF: &str = "pow_proof";
 pub const SALT_0L: &str = "0L";
 pub const SOURCE_DIR: &str = "libra/";
 pub const VDF_SECURITY_PARAM: u16 = 2048;
+/// Filename for 0L configs
+pub const CONFIG_FILE: &str = "0L.toml";

@@ -11,14 +11,15 @@ script {
   use 0x1::Signer;
   fun main(sender: &signer) {
     AutoPay::enable_autopay(sender);
-    assert(AutoPay::is_enabled(Signer::address_of(sender)), 0);
+    assert(AutoPay::is_enabled(Signer::address_of(sender)), 73570009);
     
-    AutoPay::create_instruction(sender, 1, {{bob}}, 2, 5);
+    // send a 5.00% instruction
+    AutoPay::create_instruction(sender, 1, {{bob}}, 2, 500); 
 
     let (payee, end_epoch, percentage) = AutoPay::query_instruction(Signer::address_of(sender), 1);
-    assert(payee == {{bob}}, 1);
-    assert(end_epoch == 2, 1);
-    assert(percentage == 5, 1);
+    assert(payee == {{bob}}, 73570010);
+    assert(end_epoch == 2, 73570011);
+    assert(percentage == 500, 73570012);
   }
 }
 // check: EXECUTED
@@ -32,8 +33,8 @@ script {
   fun main() {
     let alice_balance = LibraAccount::balance<GAS>({{alice}});
     let bob_balance = LibraAccount::balance<GAS>({{bob}});
-    assert(alice_balance==1000000, 1);
-    assert(bob_balance == 10000, 2);
+    assert(alice_balance == 1000000, 73570021);
+    assert(bob_balance == 10000, 73570022);
     }
 }
 // check: EXECUTED
@@ -67,8 +68,8 @@ script {
   fun main(_vm: &signer) {
     let ending_balance = LibraAccount::balance<GAS>({{alice}});
     print(&ending_balance);
-    assert(ending_balance < 1000000, 7357003);
-    assert(ending_balance == 950001, 7357004);
+    assert(ending_balance < 1000000, 73570023);
+    assert(ending_balance == 950001, 73570024);
   }
 }
 // check: EXECUTED

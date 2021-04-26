@@ -42,6 +42,7 @@ use libra_json_rpc_client::views::{MinerStateResourceView, OracleResourceView};
 ///    out-of-date replica takes its place.
 /// 3. We make another request to the remote AC service. In this case, the remote
 ///    AC will be behind us and we will reject their response as stale.
+//////// 0L ////////
 pub struct LibraClient {
     client: JsonRpcClient,
     /// The latest verified chain state.
@@ -164,6 +165,7 @@ impl LibraClient {
         }
     }
 
+    //////// 0L ////////
     /// Query Oracle Upgrade.
     pub fn query_oracle_upgrade(
         &mut self,
@@ -324,6 +326,7 @@ impl LibraClient {
         Ok(())
     }
 
+    //////// 0L ////////
     /// generate latest waypoint
     pub fn waypoint(&self)->Option<Waypoint> {
         let latest_epoch_change_li = match self.latest_epoch_change_li() {

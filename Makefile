@@ -17,9 +17,9 @@ endif
 
 # Account settings
 ifndef ACC
-ACC=$(shell toml get ${DATA_PATH}/miner.toml profile.account | tr -d '"')
+ACC=$(shell toml get ${DATA_PATH}/0L.toml profile.account | tr -d '"')
 endif
-IP=$(shell toml get ${DATA_PATH}/miner.toml profile.ip)
+IP=$(shell toml get ${DATA_PATH}/0L.toml profile.ip)
 
 # Github settings
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
@@ -27,7 +27,7 @@ REPO_ORG = OLSF
 
 ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
-MNEM = $(shell cat fixtures/mnemonic/${NS}.mnem)
+MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
 else
 REPO_NAME = experimental-genesis
 NODE_ENV = prod
@@ -81,8 +81,8 @@ ceremony:
 	export NODE_ENV=prod && miner ceremony
 
 register:
-# export ACC=$(shell toml get ${DATA_PATH}/miner.toml profile.account)
-	@echo Initializing from ${DATA_PATH}/miner.toml with account:
+# export ACC=$(shell toml get ${DATA_PATH}/0L.toml profile.account)
+	@echo Initializing from ${DATA_PATH}/0L.toml with account:
 	@echo ${ACC}
 	make init
 
@@ -218,7 +218,7 @@ endif
 
 fixture-stdlib:
 	make stdlib
-	cp language/stdlib/staged/stdlib.mv fixtures/stdlib/fresh_stdlib.mv
+	cp language/stdlib/staged/stdlib.mv ol/fixtures/stdlib/fresh_stdlib.mv
 
 #### HELPERS ####
 check:
@@ -249,20 +249,23 @@ ifdef TEST
 		rm ${DATA_PATH}/blocks/block_0.json; \
 	fi 
 
-	@if test -f ${DATA_PATH}/miner.toml; then \
-		rm ${DATA_PATH}/miner.toml; \
+	@if test -f ${DATA_PATH}/0L.toml; then \
+		rm ${DATA_PATH}/0L.toml; \
 	fi 
 
 # skip  genesis files with fixtures, there may be no version
 ifndef SKIP_BLOB
-	cp ./fixtures/genesis/${V}/genesis.blob ${DATA_PATH}/
-	cp ./fixtures/genesis/${V}/genesis_waypoint ${DATA_PATH}/
+	cp ./ol/fixtures/genesis/${V}/genesis.blob ${DATA_PATH}/
+	cp ./ol/fixtures/genesis/${V}/genesis_waypoint ${DATA_PATH}/
 endif
 # skip miner configuration with fixtures
-	cp ./fixtures/configs/${NS}.toml ${DATA_PATH}/miner.toml
+	cp ./ol/fixtures/configs/${NS}.toml ${DATA_PATH}/0L.toml
 # skip mining proof zero with fixtures
-	cp ./fixtures/blocks/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
-
+	cp ./ol/fixtures/blocks/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
+# place a mock autopay.json in root
+	cp ./ol/fixtures/autopay/${NS}.autopay_batch.json ${DATA_PATH}/autopay.json
+# place a mock account.json in root, used as template for onboarding
+	cp ./ol/fixtures/account/${NS}.account.json ${DATA_PATH}/account.json
 endif
 
 
@@ -310,6 +313,32 @@ wipe:
 stop:
 	sudo service libra-node stop
 
+debug:
+	make smoke-onboard <<< $$'${MNEM}'
+ 
+
+##### DEVNET TESTS #####
+# Quickly start a devnet with fixture files. To do a full devnet setup see 'devnet-reset' below
+
+devnet: stop clear fix devnet-keys devnet-yaml start
+# runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
+# This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
+
+devnet-keys: 
+	@printf '${MNEM}' | cargo run -p miner -- init --skip-miner
+
+devnet-yaml:
+	cargo run -p miner -- genesis
+
+devnet-onboard: clear fix
+	#starts config for a new miner "eve", uses the devnet github repo for ceremony
+	cargo r -p miner -- init --skip-miner <<< $$'${MNEM}'
+	cargo r -p miner -- genesis
+
+devnet-previous: stop clear 
+# runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
+	V=previous make fix devnet-keys devnet-yaml start
+
 
 ##### DEVNET TESTS #####
 # Quickly start a devnet with fixture files. To do a full devnet setup see 'devnet-reset' below
@@ -349,21 +378,14 @@ devnet:
 dev-register: clear fix
 	echo ${MNEM} | head -c -1 | make register
 
-# devnet-setup-onboard: clear 
-# # fixtures needs a file that works
-# 	SKIP_BLOB=y make fix
-# 	cp ${SOURCE}/fixtures/genesis/${V}/* ~/.0L/
-# # # starts config for a new miner "eve", uses the devnet github repo for ceremony
-# 	MNEM="${MNEM}" cargo r -p miner -- val-wizard  --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis --skip-mining 
-
 #### PERSIST THE MOCK ARCHIVES TO DEVNET INFRASTRUCTURE ####
 
 # usually do this on Alice, which has the dev-epoch-archive repo, and dev-genesis
 dev-infra: dev-save-genesis dev-backup-archive
 
 dev-save-genesis: set-waypoint
-	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/fixtures/genesis/${V}/
-	git add ${SOURCE}/fixtures/genesis/${V}/
+	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/ol/fixtures/genesis/${V}/
+	git add ${SOURCE}/ol/fixtures/genesis/${V}/
 	git commit -a -m "save genesis fixtures to ${V}" | true
 	git push | true
 

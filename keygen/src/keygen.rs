@@ -45,6 +45,11 @@ pub fn get_account_from_mnem(mnemonic_string: String)
       (auth_key, account, wallet)
 }
 
+/// helper to return account tuple from wallet
+pub fn get_account_from_wallet(wallet: &WalletLibrary) -> (AuthenticationKey, AccountAddress, WalletLibrary) {
+  get_account_from_mnem(wallet.mnemonic())
+}
+
 /// Prompts user to type mnemonic securely.
 pub fn account_from_prompt() 
   -> (AuthenticationKey, AccountAddress, WalletLibrary) {

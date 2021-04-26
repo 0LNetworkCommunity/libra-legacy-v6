@@ -44,6 +44,7 @@ module Vector {
     /// Aborts if `i`or `j` is out of bounds.
     native public fun swap<Element>(v: &mut vector<Element>, i: u64, j: u64);
 
+    //////// 0L ////////
     // 0L Compare Vectors for equivalence
     public fun compare<Element>(a: &vector<Element>, b: &vector<Element> ): bool {
         let i = 0;

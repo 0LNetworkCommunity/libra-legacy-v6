@@ -306,7 +306,7 @@ async fn get_metadata(service: JsonRpcService, request: JsonRpcRequest) -> Resul
     let mut script_hash_allow_list: Option<Vec<BytesView>> = None;
     let mut module_publishing_allowed: Option<bool> = None;
     let mut libra_version: Option<u64> = None;
-    if version == request.version() {
+    if version == request.version() { //////// 0L ////////
         if let Some(account) = service.get_account_state(libra_root_address(), version)? {
             if let Some(vm_publishing_option) = account.get_vm_publishing_option()? {
                 script_hash_allow_list = Some(
@@ -632,6 +632,7 @@ pub(crate) fn build_registry() -> RpcRegistry {
         0
     );
     register_rpc_method!(registry, "get_network_status", get_network_status, 0, 0);
+    //////// 0L ////////
     register_rpc_method!(registry, "get_miner_state", get_miner_state, 2, 0);
     register_rpc_method!(registry, "query_oracle_upgrade", query_oracle_upgrade, 1, 0);
     registry
@@ -655,7 +656,7 @@ fn invalid_param(index: usize, name: &str) -> JsonRpcError {
     JsonRpcError::invalid_param(index, name, type_info)
 }
 
-/// add By OL
+//////// 0L ////////
 /// Returns Miner states for a miner
 async fn get_miner_state(
     service: JsonRpcService,
@@ -681,6 +682,7 @@ async fn get_miner_state(
     Err(JsonRpcError::invalid_request_with_msg("No Miner State found.".to_string()))
 }
 
+//////// 0L ////////
 /// Returns Oracle Upgrade view
 async fn query_oracle_upgrade(
     service: JsonRpcService,

@@ -3501,6 +3501,7 @@ resource published under it. The sending <code>account</code> must be a Validato
     operator_name: vector&lt;u8&gt;,
     operator_account: address
 ) {
+    //////// 0L ////////
     <b>assert</b>(<a href="../../modules/doc/ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_get_human_name">ValidatorOperatorConfig::get_human_name</a>(operator_account) == operator_name, 111);
     <a href="../../modules/doc/ValidatorConfig.md#0x1_ValidatorConfig_set_operator">ValidatorConfig::set_operator</a>(account, operator_account);
 }
@@ -5125,6 +5126,7 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`create_validator_operator_account`](transaction_script_documentation.md#create_validator_operator_account)
 -  [`demo_e2e`](ol_demo_e2e.md#demo_e2e)
 -  [`freeze_account`](transaction_script_documentation.md#freeze_account)
+-  [`join`](ol_join_validator_set.md#join)
 -  [`minerstate_commit`](ol_miner_state_commit.md#minerstate_commit)
 -  [`minerstate_commit_by_operator`](ol_miner_state_commit_by_operator.md#minerstate_commit_by_operator)
 -  [`minerstate_helper`](ol_miner_state_helper.md#minerstate_helper)
@@ -5135,6 +5137,7 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`preburn`](transaction_script_documentation.md#preburn)
 -  [`publish_shared_ed25519_public_key`](transaction_script_documentation.md#publish_shared_ed25519_public_key)
 -  [`register_validator_config`](transaction_script_documentation.md#register_validator_config)
+-  [`remove_self`](ol_remove_self_validator_universe.md#remove_self)
 -  [`remove_validator_and_reconfigure`](transaction_script_documentation.md#remove_validator_and_reconfigure)
 -  [`rotate_authentication_key`](transaction_script_documentation.md#rotate_authentication_key)
 -  [`rotate_authentication_key_with_nonce`](transaction_script_documentation.md#rotate_authentication_key_with_nonce)

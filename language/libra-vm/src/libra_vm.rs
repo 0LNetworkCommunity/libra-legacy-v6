@@ -23,6 +23,7 @@ use libra_types::{
     transaction::{TransactionOutput, TransactionStatus},
     vm_status::{KeptVMStatus, StatusCode, VMStatus},
     write_set::{WriteOp, WriteSet, WriteSetMut},
+    //////// 0L ////////
     block_metadata::BlockMetadata,
     upgrade_payload::UpgradePayloadResource,
 };
@@ -432,6 +433,7 @@ impl LibraVMImpl {
         self.move_vm.new_session(r)
     }
 
+    //////// 0L ////////    
     // Note: currently the upgrade needs two blocks to happen: 
     // In the first block, consensus is reached and recorded; 
     // in the second block, the payload is applied and history is recorded
@@ -467,6 +469,7 @@ impl LibraVMImpl {
         Ok(())
     }
 
+    //////// 0L ////////    
     pub(crate) fn apply_stdlib_upgrade<R: RemoteCache> (
         &self,
         session: &mut Session<R>,
