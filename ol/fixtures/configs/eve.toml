@@ -17,12 +17,9 @@ upstream_nodes = ["http://localhost:8080/"]
 chain_id = "experimental"
 base_epoch = 0
 base_waypoint = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2"
-[tx_configs.management_txs]
-max_gas_unit_for_tx = 1000000
-coin_price_per_unit = 1
-user_tx_timeout = 5000
 
-[tx_configs.miner_txs]
+
+[tx_configs.baseline_cost]
 max_gas_unit_for_tx = 10000
 coin_price_per_unit = 1
 user_tx_timeout = 5000

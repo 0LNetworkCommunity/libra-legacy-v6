@@ -2,7 +2,6 @@
 
 #![allow(clippy::never_loop)]
 
-// use std::{path::PathBuf};
 use crate::{application::app_config, config::OlCliConfig, entrypoint};
 use abscissa_core::{Command, FrameworkError, Options, Runnable, config};
 use anyhow::Error;

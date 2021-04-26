@@ -23,7 +23,7 @@ max_gas_unit_for_tx = 1000000
 coin_price_per_unit = 1
 user_tx_timeout = 5000
 
-[tx_configs.miner_txs]
+[tx_configs.baseline_cost]
 max_gas_unit_for_tx = 10000
 coin_price_per_unit = 1
 user_tx_timeout = 5000

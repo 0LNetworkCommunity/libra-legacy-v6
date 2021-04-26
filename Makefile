@@ -253,11 +253,6 @@ ifdef TEST
 		rm ${DATA_PATH}/0L.toml; \
 	fi 
 
-# skip  genesis files with fixtures, there may be no version
-ifndef SKIP_BLOB
-	cp ./ol/fixtures/genesis/${V}/genesis.blob ${DATA_PATH}/
-	cp ./ol/fixtures/genesis/${V}/genesis_waypoint ${DATA_PATH}/
-endif
 # skip miner configuration with fixtures
 	cp ./ol/fixtures/configs/${NS}.toml ${DATA_PATH}/0L.toml
 # skip mining proof zero with fixtures
@@ -267,6 +262,10 @@ endif
 # place a mock account.json in root, used as template for onboarding
 	cp ./ol/fixtures/account/${NS}.account.json ${DATA_PATH}/account.json
 endif
+
+fix-genesis:
+	cp ./ol/fixtures/genesis/${V}/genesis.blob ${DATA_PATH}/
+	cp ./ol/fixtures/genesis/${V}/genesis_waypoint ${DATA_PATH}/
 
 
 #### HELPERS ####
@@ -295,10 +294,10 @@ stdlib:
 keygen:
 	cd ${DATA_PATH} && miner keygen
 
-miner-genesis:
-	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner genesis
+# miner-genesis:
+# 	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner genesis
 
-reset: stop clear fixtures init keys genesis daemon
+# reset: stop clear fixtures init keys  daemon
 
 remove-keys:
 	make stop
@@ -318,45 +317,12 @@ debug:
  
 
 ##### DEVNET TESTS #####
-# Quickly start a devnet with fixture files. To do a full devnet setup see 'devnet-reset' below
 
-devnet: stop clear fix devnet-keys devnet-yaml start
-# runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
+
+devnet: clear fix fix-genesis dev-wizard start
+# runs a smoke test from fixtures. 
+# Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 # This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
-
-devnet-keys: 
-	@printf '${MNEM}' | cargo run -p miner -- init --skip-miner
-
-devnet-yaml:
-	cargo run -p miner -- genesis
-
-devnet-onboard: clear fix
-	#starts config for a new miner "eve", uses the devnet github repo for ceremony
-	cargo r -p miner -- init --skip-miner <<< $$'${MNEM}'
-	cargo r -p miner -- genesis
-
-devnet-previous: stop clear 
-# runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
-	V=previous make fix devnet-keys devnet-yaml start
-
-
-##### DEVNET TESTS #####
-# Quickly start a devnet with fixture files. To do a full devnet setup see 'devnet-reset' below
-
-frozen: 
-# A QUICK TEST FROM FIXTURES. ASSUMES EVERYTHING WAS SETUP: new genesis-blobs, and mock archive infrastructure. For this see `devnet-archive` below 
-
-# runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
-
-# This will work for validator nodes alice, bob, carol. New onboarded "eve" needs to run devnet-onboard
-
-	MNEM='${MNEM}' make stop clear fix dev-wizard start
-
-dev-wizard:
-# starts config for a new miner "eve", uses the devnet github repo for ceremony
-# get genesis.blcok from MOCK genesis store OLSF/dev-genesis
-	MNEM='${MNEM}' cargo run -p miner -- val-wizard --skip-mining --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis
-
 
 dev-join: clear fix dev-wizard
 # REQUIRES MOCK GIT INFRASTRUCTURE: OLSF/dev-genesis OLSF/dev-epoch-archive
@@ -370,25 +336,26 @@ dev-join: clear fix dev-wizard
 # start a node with fullnode.node.yaml configs
 	make start-full
 
-### FULL DEVNET E2E ####
+dev-wizard:
+#  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
+	MNEM='${MNEM}' cargo run -p miner -- val-wizard --skip-mining --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis
 
-devnet:
-	MNEM='${MNEM}' make genesis start
-
-dev-register: clear fix
-	echo ${MNEM} | head -c -1 | make register
-
-#### PERSIST THE MOCK ARCHIVES TO DEVNET INFRASTRUCTURE ####
-
+#### DEVNET INFRASTRUCTURE ####
 # usually do this on Alice, which has the dev-epoch-archive repo, and dev-genesis
-dev-infra: dev-save-genesis dev-backup-archive
+
+# Do the ceremony: and also save the genesis fixtures, needs to happen before fix.
+dev-register: clear fix register genesis dev-save-genesis fix-genesis
+
+# Save the files to mock infrastructure i.e. devnet github
+dev-infra: dev-save-genesis dev-backup-archive dev-commit
 
 dev-save-genesis: set-waypoint
 	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/ol/fixtures/genesis/${V}/
 	git add ${SOURCE}/ol/fixtures/genesis/${V}/
-	git commit -a -m "save genesis fixtures to ${V}" | true
-	git push | true
 
 dev-backup-archive:
 	cd ${HOME}/dev-epoch-archive && make devnet-backup
 
+dev-commit:
+	git commit -a -m "save genesis fixtures to ${V}" | true
+	git push | true
