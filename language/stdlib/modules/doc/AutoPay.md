@@ -294,7 +294,6 @@ Attempted to send funds to an account that does not exist
 ) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_AccountList">AccountList</a>, <a href="AutoPay.md#0x1_AutoPay_Data">Data</a> {
   // Only account 0x0 should be triggering this autopayment each block
   <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 0101064010);
-
   <b>let</b> epoch = <a href="LibraConfig.md#0x1_LibraConfig_get_current_epoch">LibraConfig::get_current_epoch</a>();
 
   // Go through all accounts in <a href="AutoPay.md#0x1_AutoPay_AccountList">AccountList</a>
@@ -304,20 +303,15 @@ Attempted to send funds to an account that does not exist
   <b>let</b> account_idx = 0;
 
   <b>while</b> (account_idx &lt; accounts_length) {
-
     <b>let</b> account_addr = <a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(account_list, account_idx);
-
     // Obtain the account balance
     <b>let</b> account_bal = <a href="LibraAccount.md#0x1_LibraAccount_balance">LibraAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*account_addr);
-
     // Go through all payments for this account and pay
     <b>let</b> payments = &<b>mut</b> borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay_Data">Data</a>&gt;(*account_addr).payments;
     <b>let</b> payments_len = <a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>&gt;(payments);
     <b>let</b> payments_idx = 0;
-
     <b>while</b> (payments_idx &lt; payments_len) {
       <b>let</b> payment = <a href="Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>&lt;<a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>&gt;(payments, payments_idx);
-
       // no payments <b>to</b> self
       <b>if</b> (&payment.payee == account_addr) <b>break</b>;
 
@@ -328,7 +322,6 @@ Attempted to send funds to an account that does not exist
 
         // IMPORTANT there are two digits for scaling representation.
         // an autopay instruction of 12.34% is scaled by two orders, and represented in <a href="AutoPay.md#0x1_AutoPay">AutoPay</a> <b>as</b> `1234`.
-
         <b>if</b> (payment.percentage &gt; 10000) <b>break</b>;
         <b>let</b> percent_scaled = <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(payment.percentage, 10000);
 
@@ -337,7 +330,6 @@ Attempted to send funds to an account that does not exist
           // deplete the account <b>if</b> greater
           amount = amount - account_bal;
         };
-
         <b>if</b> (amount&gt;0) {
           <a href="LibraAccount.md#0x1_LibraAccount_vm_make_payment">LibraAccount::vm_make_payment</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*account_addr, payment.payee, amount, x"", x"", vm);
         }

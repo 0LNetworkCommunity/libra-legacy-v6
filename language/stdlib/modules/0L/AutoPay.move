@@ -95,7 +95,6 @@ address 0x1{
     ) acquires AccountList, Data {
       // Only account 0x0 should be triggering this autopayment each block
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 0101064010);
-
       let epoch = LibraConfig::get_current_epoch();
 
       // Go through all accounts in AccountList
@@ -105,20 +104,15 @@ address 0x1{
       let account_idx = 0;
 
       while (account_idx < accounts_length) {
-
         let account_addr = Vector::borrow<address>(account_list, account_idx);
-        
         // Obtain the account balance
         let account_bal = LibraAccount::balance<GAS>(*account_addr);
-        
         // Go through all payments for this account and pay 
         let payments = &mut borrow_global_mut<Data>(*account_addr).payments;
         let payments_len = Vector::length<Payment>(payments);
         let payments_idx = 0;
-        
         while (payments_idx < payments_len) {
-          let payment = Vector::borrow_mut<Payment>(payments, payments_idx);
-          
+          let payment = Vector::borrow_mut<Payment>(payments, payments_idx);          
           // no payments to self
           if (&payment.payee == account_addr) break;
 
@@ -129,7 +123,6 @@ address 0x1{
 
             // IMPORTANT there are two digits for scaling representation.
             // an autopay instruction of 12.34% is scaled by two orders, and represented in AutoPay as `1234`.
-
             if (payment.percentage > 10000) break;
             let percent_scaled = FixedPoint32::create_from_rational(payment.percentage, 10000);
             
@@ -138,7 +131,6 @@ address 0x1{
               // deplete the account if greater
               amount = amount - account_bal;
             };
-
             if (amount>0) {
               LibraAccount::vm_make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
             }

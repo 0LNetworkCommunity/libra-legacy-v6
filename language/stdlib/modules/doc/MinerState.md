@@ -721,6 +721,8 @@
     solution: *solution,
   };
 
+  // TODO: should fullnode state happen here?
+  // <a href="FullnodeState.md#0x1_FullnodeState_init">FullnodeState::init</a>(miner_sig);
   <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig), proof, <b>false</b>);
 }
 </code></pre>
@@ -1041,6 +1043,7 @@ Public Getters ///
   <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 130115014011);
   <b>let</b> state = borrow_global_mut&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender));
   state.count_proofs_in_epoch = count;
+  <a href="FullnodeState.md#0x1_FullnodeState_mock_proof">FullnodeState::mock_proof</a>(sender, count);
 }
 </code></pre>
 
