@@ -154,7 +154,7 @@ where
     }
 }
 /// the entry point args
-pub type EntryPointTxsCmd = EntryPoint<commands::MinerCmd>;
+pub type EntryPointTxsCmd = EntryPoint<commands::WizCmd>;
 /// get arguments passed in the entrypoin of this app, not the subcommands
 pub fn get_args() -> EntryPointTxsCmd {
   Command::from_env_args()

@@ -1,11 +1,11 @@
 //! MinerApp Abscissa Application
 
-use crate::{commands::MinerCmd, config::MinerConfig, entrypoint::EntryPoint};
+use crate::{commands::WizCmd, entrypoint::EntryPoint};
 use abscissa_core::{
     application::{self, AppCell},
     config, trace, Application, FrameworkError, StandardPaths,
 };
-
+use ol_types::config::OlCliConfig;
 /// Application state
 pub static APPLICATION: AppCell<MinerApp> = AppCell::new();
 
@@ -32,7 +32,7 @@ pub fn app_config() -> config::Reader<MinerApp> {
 #[derive(Debug)]
 pub struct MinerApp {
     /// Application configuration.
-    config: Option<MinerConfig>,
+    config: Option<OlCliConfig>,
 
     /// Application state.
     state: application::State<Self>,
@@ -53,16 +53,16 @@ impl Default for MinerApp {
 
 impl Application for MinerApp {
     /// Entrypoint command for this application.
-    type Cmd = EntryPoint<MinerCmd>;
+    type Cmd = EntryPoint<WizCmd>;
 
     /// Application configuration.
-    type Cfg = MinerConfig;
+    type Cfg = OlCliConfig;
 
     /// Paths to resources within the application.
     type Paths = StandardPaths;
 
     /// Accessor for application configuration.
-    fn config(&self) -> &MinerConfig {
+    fn config(&self) -> &OlCliConfig {
         self.config.as_ref().expect("config not loaded")
     }
 
@@ -99,7 +99,7 @@ impl Application for MinerApp {
     }
 
     /// Get tracing configuration from command-line options
-    fn tracing_config(&self, command: &EntryPoint<MinerCmd>) -> trace::Config {
+    fn tracing_config(&self, command: &EntryPoint<WizCmd>) -> trace::Config {
         if command.verbose {
             trace::Config::verbose()
         } else {

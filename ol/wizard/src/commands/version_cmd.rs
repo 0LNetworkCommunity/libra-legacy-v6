@@ -2,7 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use super::MinerCmd;
+use super::WizCmd;
 use abscissa_core::{Command, Options, Runnable};
 
 /// `version` subcommand
@@ -13,6 +13,6 @@ pub struct VersionCmd {}
 impl Runnable for VersionCmd {
     /// Print version message
     fn run(&self) {
-        println!("{} {}", MinerCmd::name(), MinerCmd::version());
+        println!("{} {}", WizCmd::name(), WizCmd::version());
     }
 }

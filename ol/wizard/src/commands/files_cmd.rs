@@ -4,11 +4,12 @@
 
 use std::{fs::File, path::{PathBuf}};
 
-use crate::{application::app_config, config::MinerConfig};
+use crate::{application::app_config};
 use abscissa_core::{Command, Options, Runnable};
 use libra_genesis_tool::node_files;
 use std::io::Write;
 
+use ol_types::config::OlCliConfig;
 /// `files` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct FilesCmd {
@@ -41,7 +42,7 @@ impl Runnable for FilesCmd {
 }
 
 pub fn genesis_files(
-    miner_config: &MinerConfig,
+    miner_config: &OlCliConfig,
     chain_id: &Option<u8>,
     github_org: &Option<String>,
     repo: &Option<String>,
