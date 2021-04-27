@@ -28,15 +28,15 @@ pub enum WizCmd {
     #[options(help = "display version information")]
     Version(VersionCmd),
 
-    /// The `user_wizard` subcommand
+    /// The `user` subcommand
     #[options(help = "wizard to create accounts and local configs")]
     User(UserWizardCmd),
 
-    /// The `val_wizard` subcommand
+    /// The `val` subcommand
     #[options(help = "create all files for validator onboarding")]
     Val(ValWizardCmd),
 
-    /// The `fn_wizard` subcommand
+    /// The `fullnode` subcommand
     #[options(help = "create all files for fullnode config")]
     Fullnode(FnWizardCmd),
 }

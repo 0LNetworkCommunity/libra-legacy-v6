@@ -3,7 +3,7 @@
 #![deny(warnings, missing_docs, trivial_casts, unused_qualifications)]
 #![forbid(unsafe_code)]
 
-use miner::application::APPLICATION;
+use wizard::application::APPLICATION;
 
 /// Boot MinerApp
 fn main() {
