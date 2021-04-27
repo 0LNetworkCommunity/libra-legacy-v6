@@ -4,10 +4,12 @@ mod version_cmd;
 mod wizard_fn_cmd;
 mod wizard_user_cmd;
 mod wizard_val_cmd;
+mod keygen_cmd;
 
 use self::{
     version_cmd::VersionCmd, wizard_fn_cmd::FnWizardCmd, wizard_user_cmd::UserWizardCmd,
     wizard_val_cmd::ValWizardCmd,
+    keygen_cmd::KeygenCmd,
 };
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use dirs;
@@ -39,6 +41,10 @@ pub enum WizCmd {
     /// The `fullnode` subcommand
     #[options(help = "create all files for fullnode config")]
     Fullnode(FnWizardCmd),
+
+    /// The `keygen` subcommand
+    #[options(help = "create new account and mnemonic")]
+    Keygen(KeygenCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

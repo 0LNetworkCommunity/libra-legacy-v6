@@ -2,7 +2,6 @@
 
 #![allow(clippy::never_loop)]
 
-use super::WizCmd;
 use abscissa_core::{Command, Options, Runnable};
 use keygen;
 /// `version` subcommand
