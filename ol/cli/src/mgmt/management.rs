@@ -6,15 +6,13 @@ use crate::{
     prelude::app_config,
 };
 use anyhow::Error;
-use once_cell::sync::Lazy;
-
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashSet,
-    env,
     fs::{self, File},
     process::{Command, Stdio},
 };
+use ol_types::config::IS_PROD;
 
 const BINARY_NODE: &str = "libra-node";
 const BINARY_MINER: &str = "miner";
@@ -36,19 +34,19 @@ pub struct HostProcess {
 }
 
 /// Check if we are in prod mode
-pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
-    match env::var("NODE_ENV") {
-        Ok(val) => {
-            match val.as_str() {
-                "prod" => true,
-                // if anything else is set by user is false
-                _ => false,
-            }
-        }
-        // default to prod if nothig is set
-        _ => true,
-    }
-});
+// pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
+//     match env::var("NODE_ENV") {
+//         Ok(val) => {
+//             match val.as_str() {
+//                 "prod" => true,
+//                 // if anything else is set by user is false
+//                 _ => false,
+//             }
+//         }
+//         // default to prod if nothig is set
+//         _ => true,
+//     }
+// });
 
 // TODO: do we need to kill zombies this way?
 
