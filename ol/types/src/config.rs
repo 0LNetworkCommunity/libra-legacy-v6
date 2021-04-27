@@ -39,8 +39,13 @@ pub static IS_CI: Lazy<bool> = Lazy::new(|| {
             match val.as_str() {
                 "prod" => false,
                 // if anything else is set by user is false
-                _ => match std::env::var("TEST").unwrap().as_str(){
-                  "y" => true,
+                _ => match std::env::var("TEST"){
+                  Ok(val) => { 
+                    match val.as_str() { 
+                      "y" => true,
+                      _ => false
+                    }
+                  },
                   _ => false
                 },
             }
