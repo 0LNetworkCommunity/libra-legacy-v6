@@ -168,7 +168,7 @@ impl AppCfg {
 
     // Get statement which goes into genesis block
     default_config.profile.statement = Input::new()
-    .with_prompt("Enter a (fun) statement to go into your first transaction: ")
+    .with_prompt("Enter a (fun) statement to go into your first transaction")
     .interact_text()
     .expect("We need some text unique to you which will go into your the first proof of your tower");
 
