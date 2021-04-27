@@ -78,7 +78,7 @@ bins:
 	cargo run -p stdlib --release
 
 # NOTE: stdlib is built for cli bindings
-	cargo build -p libra-node -p miner -p backup-cli -p ol-cli -p txs -p wizard --release
+	cargo build -p libra-node -p miner -p backup-cli -p ol-cli -p txs -p onboard --release
 
 install:
 	sudo cp -f ${SOURCE}/target/release/miner /usr/local/bin/miner
@@ -88,7 +88,7 @@ install:
 	sudo cp -f ${SOURCE}/target/release/db-backup-verify /usr/local/bin/db-backup-verify
 	sudo cp -f ${SOURCE}/target/release/ol_cli /usr/local/bin/ol
 	sudo cp -f ${SOURCE}/target/release/txs /usr/local/bin/txs
-	sudo cp -f ${SOURCE}/target/release/wizard /usr/local/bin/wizard
+	sudo cp -f ${SOURCE}/target/release/onboard /usr/local/bin/onboard
 
 
 #### GENESIS BACKEND SETUP ####
@@ -372,7 +372,7 @@ dev-join: clear fix dev-wizard
 
 dev-wizard:
 #  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
-	MNEM='${MNEM}' cargo run -p wizard -- val --skip-mining --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis
+	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis
 
 #### DEVNET INFRASTRUCTURE ####
 # usually do this on Alice, which has the dev-epoch-archive repo, and dev-genesis
