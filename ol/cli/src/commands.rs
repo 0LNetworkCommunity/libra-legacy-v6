@@ -30,7 +30,7 @@ use self::{
     onboard_cmd::OnboardCmd,
     query_cmd::QueryCmd,
     health_cmd::HealthCmd,
-    pilot_cmd::PilotCmd
+    pilot_cmd::PilotCmd,
 };
 
 use crate::config::AppCfg;
