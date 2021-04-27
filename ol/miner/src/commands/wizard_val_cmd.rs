@@ -3,7 +3,7 @@
 #![allow(clippy::never_loop)]
 
 use crate::{block::parse_block_file, prelude::app_config};
-use super::{files_cmd, zero_cmd};
+use super::{files_cmd};
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_genesis_tool::keyscheme::KeyScheme;
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
