@@ -1,10 +1,12 @@
 //! MinerApp Abscissa Application
 
-use crate::{commands::MinerCmd, config::MinerConfig, entrypoint::EntryPoint};
+use crate::{commands::MinerCmd, entrypoint::EntryPoint};
 use abscissa_core::{
     application::{self, AppCell},
     config, trace, Application, FrameworkError, StandardPaths,
 };
+
+use ol_types::config::OlCliConfig;
 
 /// Application state
 pub static APPLICATION: AppCell<MinerApp> = AppCell::new();
@@ -32,7 +34,7 @@ pub fn app_config() -> config::Reader<MinerApp> {
 #[derive(Debug)]
 pub struct MinerApp {
     /// Application configuration.
-    config: Option<MinerConfig>,
+    config: Option<OlCliConfig>,
 
     /// Application state.
     state: application::State<Self>,
@@ -56,13 +58,13 @@ impl Application for MinerApp {
     type Cmd = EntryPoint<MinerCmd>;
 
     /// Application configuration.
-    type Cfg = MinerConfig;
+    type Cfg = OlCliConfig;
 
     /// Paths to resources within the application.
     type Paths = StandardPaths;
 
     /// Accessor for application configuration.
-    fn config(&self) -> &MinerConfig {
+    fn config(&self) -> &OlCliConfig {
         self.config.as_ref().expect("config not loaded")
     }
 

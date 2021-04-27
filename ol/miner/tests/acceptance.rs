@@ -31,7 +31,7 @@ use std::time::Duration;
 /// invocations as `cargo test` executes tests in parallel by default.
 pub static RUNNER: Lazy<CmdRunner> = Lazy::new(|| CmdRunner::default());
 
-/// Use `MinerConfig::default()` value if no config or args
+/// Use `OlCliConfig::default()` value if no config or args
 #[test]
 #[ignore]
 fn start_no_args() {

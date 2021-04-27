@@ -15,15 +15,13 @@
     unused_qualifications
 )]
 
-pub mod application;
-pub mod block;
-pub mod commands;
-pub mod config;
-pub mod delay;
-pub mod error;
 pub mod prelude;
-pub mod submit_tx;
-pub mod backlog;
-pub mod account;
+pub mod application;
+pub mod commands;
 pub mod entrypoint;
-pub mod manifest;
+pub mod error;
+
+pub mod block;
+pub mod delay;
+pub mod backlog;
+pub mod commit_proof;

@@ -7,7 +7,7 @@ use miner::config;
 #[test]
 #[ignore]
 fn test_waypoint() {
-    let s = config::MinerConfig::default();
+    let s = ol_types::config::OlCliConfig::default();
 
     let path =  s.get_key_store_path();
     fs::create_dir_all(&s.workspace.node_home.clone()).unwrap();

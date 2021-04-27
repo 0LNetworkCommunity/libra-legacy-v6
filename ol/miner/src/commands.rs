@@ -3,21 +3,13 @@
 mod start_cmd;
 mod version_cmd;
 mod zero_cmd;
-mod wizard_user_cmd;
-mod wizard_val_cmd;
-mod wizard_fn_cmd;
-mod files_cmd;
 
 use self::{
     start_cmd::StartCmd,
     version_cmd::VersionCmd,
     zero_cmd::ZeroCmd,
-    wizard_user_cmd::UserWizardCmd,
-    wizard_val_cmd::ValWizardCmd,
-    wizard_fn_cmd::FnWizardCmd,
-    files_cmd::FilesCmd,
 };
-use crate::config::MinerConfig;
+use ol_types::config::OlCliConfig;
 use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
 };
@@ -47,25 +39,10 @@ pub enum MinerCmd {
     #[options(help = "display version information")]
     Version(VersionCmd),
 
-    /// The `user_wizard` subcommand
-    #[options(help = "wizard to create accounts and local configs")]
-    UserWizard(UserWizardCmd),
-
-    /// The `val_wizard` subcommand
-    #[options(help = "create all files for validator onboarding")]
-    ValWizard(ValWizardCmd),
-
-    /// The `fn_wizard` subcommand
-    #[options(help = "create all files for fullnode config")]
-    FnWizard(FnWizardCmd),
-    
-    /// The `genesis` subcommand
-    #[options(help = "generate validator files")]
-    Files(FilesCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.
-impl Configurable<MinerConfig> for MinerCmd {
+impl Configurable<OlCliConfig> for MinerCmd {
     /// Location of the configuration file
     fn config_path(&self) -> Option<PathBuf> {
         // Check if the config file exists, and if it does not, ignore it.
@@ -89,7 +66,7 @@ impl Configurable<MinerConfig> for MinerCmd {
     ///
     /// This can be safely deleted if you don't want to override config
     /// settings from command-line options.
-    fn process_config(&self, config: MinerConfig) -> Result<MinerConfig, FrameworkError> {
+    fn process_config(&self, config: OlCliConfig) -> Result<OlCliConfig, FrameworkError> {
         match self {
             MinerCmd::Start(cmd) => cmd.override_config(config),
             _ => Ok(config),
