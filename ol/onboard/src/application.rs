@@ -7,30 +7,30 @@ use abscissa_core::{
 };
 use ol_types::config::AppCfg;
 /// Application state
-pub static APPLICATION: AppCell<WizApp> = AppCell::new();
+pub static APPLICATION: AppCell<OnboardApp> = AppCell::new();
 
 /// Obtain a read-only (multi-reader) lock on the application state.
 ///
 /// Panics if the application state has not been initialized.
-pub fn app_reader() -> application::lock::Reader<WizApp> {
+pub fn app_reader() -> application::lock::Reader<OnboardApp> {
     APPLICATION.read()
 }
 
 /// Obtain an exclusive mutable lock on the application state.
-pub fn app_writer() -> application::lock::Writer<WizApp> {
+pub fn app_writer() -> application::lock::Writer<OnboardApp> {
     APPLICATION.write()
 }
 
 /// Obtain a read-only (multi-reader) lock on the application configuration.
 ///
 /// Panics if the application configuration has not been loaded.
-pub fn app_config() -> config::Reader<WizApp> {
+pub fn app_config() -> config::Reader<OnboardApp> {
     config::Reader::new(&APPLICATION)
 }
 
 /// MinerApp Application
 #[derive(Debug)]
-pub struct WizApp {
+pub struct OnboardApp {
     /// Application configuration.
     config: Option<AppCfg>,
 
@@ -42,7 +42,7 @@ pub struct WizApp {
 ///
 /// By default no configuration is loaded, and the framework state is
 /// initialized to a default, empty state (no components, threads, etc).
-impl Default for WizApp {
+impl Default for OnboardApp {
     fn default() -> Self {
         Self {
             config: None,
@@ -51,7 +51,7 @@ impl Default for WizApp {
     }
 }
 
-impl Application for WizApp {
+impl Application for OnboardApp {
     /// Entrypoint command for this application.
     type Cmd = EntryPoint<WizCmd>;
 

@@ -151,7 +151,7 @@ members = [
     "ol/types",
     "ol/fixtures",
     "ol/txs",
-    "ol/wizard",
+    "ol/onboard",
     "ol/verifiable_delay/classgroup",
     "ol/verifiable_delay/vdf",
     "ol/verifiable_delay/vdf-cli",

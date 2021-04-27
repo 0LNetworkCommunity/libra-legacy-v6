@@ -1,9 +1,9 @@
 [package]
-name = "wizard"
+name = "onboard"
 version = "0.1.0"
 edition = "2018"
 authors = ["0L contributors"]
-description = "0L Wizard"
+description = "0L onboarding wizard"
 repository = "https://github.com/OLSF/libra"
 homepage = "https://github.com/olsf/"
 
