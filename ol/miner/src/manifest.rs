@@ -2,7 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{block::parse_block_file, config::MinerConfig, delay};
+use crate::{block::parse_block_file, config::MinerConfig};
 
 use libra_genesis_tool::keyscheme::KeyScheme;
 
