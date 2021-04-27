@@ -37,9 +37,44 @@ endif
 REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
 LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
 
+RELEASE_URL=https://github.com/OLSF/libra/releases/download
+
+ifndef RELEASE
+RELEASE=$(shell curl -sL https://api.github.com/repos/OLSF/libra/releases/latest | jq -r '.assets[].browser_download_url')
+endif
+
+BINS= db-backup db-backup-verify db-restore libra-node miner ol_cli txs stdlib
+
+
+
 ##### DEPENDENCIES #####
 deps:
 	. ./util/setup.sh
+
+download:
+	@for b in ${RELEASE} ; do \
+		echo $$b ; \
+		# echo $$b | rev | cut -d"/" -f1 | rev ; \
+		curl  --progress-bar --create-dirs -o /usr/local/bin/$$(echo $$b | rev | cut -d"/" -f1 | rev) -L $$b ; \
+		echo 'downloaded to /usr/local/bin/' ; \
+		chmod 744 /usr/local/bin/$$(echo $$b | rev | cut -d"/" -f1 | rev) ;\
+	done
+
+download-old:
+	@for b in ${BINS} ; do \
+		echo $$b ; \
+		curl --create-dirs -o ${DATA_PATH}/release-${RELEASE}/$$b -L ${RELEASE_URL}/${RELEASE}/$$b ; \
+		chmod 744 ${DATA_PATH}/release-${RELEASE}/$$b ; \
+		cp ${DATA_PATH}/release-${RELEASE}/$$b  /usr/local/bin/$$b ; \
+	done
+
+uninstall:
+	@for b in ${BINS} ; do \
+		rm /usr/local/bin/$$b ; \
+	done
+
+# curl -o ${DATA_PATH}/db-backup 
+# curl --create-dirs -o ${DATA_PATH}/release-${RELEASE}/db-backup -L ${RELEASE_URL}/${RELEASE}/db-backup
 
 bins:
 # Build and install genesis tool, libra-node, and miner
