@@ -4,7 +4,7 @@
 
 use abscissa_core::{Command, Options, Runnable};
 use ol_types::config::TxType;
-use crate::{entrypoint, submit_tx::{get_tx_params, maybe_submit}};
+use crate::{entrypoint, submit_tx::{tx_params_wrapper, maybe_submit}};
 use libra_types::{transaction::{Script}};
 use std::{fs, path::PathBuf};
 
@@ -43,7 +43,7 @@ impl Runnable for CreateAccountCmd {
     fn run(&self) {
         let entry_args = entrypoint::get_args();
         let account_json = self.account_json_path.to_str().unwrap();
-        let tx_params = get_tx_params(TxType::Mgmt).unwrap();
+        let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
         maybe_submit(
           create_user_account_script(account_json),
           &tx_params,

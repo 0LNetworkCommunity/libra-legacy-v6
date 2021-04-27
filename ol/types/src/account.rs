@@ -263,3 +263,4 @@ fn val_config_ip_address() {
         dec_addrs.to_string(),
         "/ip4/161.35.13.169/tcp/6180/ln-noise-ik/151bcbc2adf48aefee3492a3c802ce35e347860f28dbcffe74068419f3b11812/ln-handshake/0".to_string());
 }
+

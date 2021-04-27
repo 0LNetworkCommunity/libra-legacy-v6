@@ -7,7 +7,7 @@
 
 #[test]
 fn test_genesis_preimage() {
-    let configs = miner::block::build_block::test_make_configs_fixture();
+    let configs = miner::block::test_make_configs_fixture();
 
     let first_preimage = miner::block::genesis_preimage(&configs);
     let encoded = hex::encode(&first_preimage);

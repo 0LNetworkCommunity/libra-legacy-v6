@@ -1,4 +1,3 @@
 //! MinerApp Config
 
-pub use ol_types
-::config::OlCliConfig as MinerConfig;
+pub use ol_types::config::OlCliConfig as MinerConfig;

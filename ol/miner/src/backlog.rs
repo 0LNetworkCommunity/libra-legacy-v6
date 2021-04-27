@@ -3,18 +3,18 @@
 
 use abscissa_core::status_info;
 use cli::{libra_client::LibraClient};
+use ol_types::block::Block;
+use txs::submit_tx::{TxParams, eval_tx_status};
 use std::{fs::File, path::PathBuf};
 // use glob::glob;
 use crate::{
-    block::Block,
     config::MinerConfig,
     submit_tx::{
-        TxParams, 
-        submit_tx,
-        eval_tx_status},
+        commit_proof_tx,
+        },
 };
 use std::io::BufReader;
-use crate::block::build_block::parse_block_height;
+use crate::block::parse_block_height;
 
 /// Submit a backlog of blocks that may have been mined while network is offline. Likely not more than 1. 
 pub fn process_backlog(config: &MinerConfig, tx_params: &TxParams, is_operator: bool) {
@@ -55,9 +55,9 @@ pub fn process_backlog(config: &MinerConfig, tx_params: &TxParams, is_operator: 
         let file = File::open(&path).expect("Could not open block file");
         let reader = BufReader::new(file);
         let block: Block = serde_json::from_reader(reader).unwrap();
-        match submit_tx(&tx_params, block.preimage, block.proof, is_operator) {
+        match commit_proof_tx(&tx_params, block.preimage, block.proof, is_operator) {
             Ok(res) => {
-                if eval_tx_status(res) == false {
+                if eval_tx_status(res).is_err(){
                     break;
                 }
             },

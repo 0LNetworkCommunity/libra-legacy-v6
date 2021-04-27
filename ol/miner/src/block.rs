@@ -1,230 +1,189 @@
 //! Proof block datastructure
 
+use crate::{
+    config::MinerConfig,
+    delay::*,
+    error::{Error, ErrorKind},
+    prelude::*,
+    submit_tx::commit_proof_tx,
+};
 use byteorder::{LittleEndian, WriteBytesExt};
-use hex::{decode, encode};
-use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
-use crate::delay;
-use crate::config::MinerConfig;
+use glob::glob;
+use hex::decode;
+use libra_crypto::hash::HashValue;
+use ol_types::block::Block;
+use txs::submit_tx::{TxParams, eval_tx_status};
+use std::{
+    fs,
+    io::{BufReader, Write},
+    path::PathBuf,
+    time::Instant,
+};
 
-/// Data structure and serialization of 0L delay proof.
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Block {
-    /// Block Height
-    pub height: u64,
-    /// Elapsed Time in seconds
-    pub elapsed_secs: u64,
-    /// VDF input preimage. AKA challenge
-    #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
-    pub preimage: Vec<u8>,
-    /// Data for Block
-    #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
-    /// VDF proof. AKA solution
-    pub proof: Vec<u8>,
+/// writes a JSON file with the vdf proof, ordered by a blockheight
+pub fn mine_genesis(config: &MinerConfig) -> Block {
+    println!("Mining Genesis Proof");
+    let preimage = genesis_preimage(&config);
+    let now = Instant::now();
+    let proof = do_delay(&preimage);
+    let elapsed_secs = now.elapsed().as_secs();
+    println!("Delay: {:?} seconds", elapsed_secs);
+    let block = Block {
+        height: 0u64,
+        elapsed_secs,
+        preimage,
+        proof,
+    };
+
+    block
 }
 
-
-fn as_hex<S>(data: &[u8], serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    serializer.serialize_str(&encode(data))
+/// Mines genesis and writes the file
+pub fn write_genesis(config: &MinerConfig) -> Block {
+    let block = mine_genesis(config);
+    //TODO: check for overwriting file...
+    write_json(&block, &config.get_block_dir());
+    println!(
+        "block zero proof mined, file saved to: {:?}",
+        &config.get_block_dir().join("block_0.json")
+    );
+    block
 }
+/// Mine one block
+pub fn mine_once(config: &MinerConfig) -> Result<Block, Error> {
+    let (_current_block_number, current_block_path) = parse_block_height(&config.get_block_dir());
+    // If there are files in path, continue mining.
+    if let Some(max_block_path) = current_block_path {
+        // current_block_path is Option type, check if destructures to Some.
+        let block_file =
+            fs::read_to_string(max_block_path).expect("Could not read latest block file in path");
 
-fn from_hex<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let s: String = Deserialize::deserialize(deserializer)?;
-    // do better hex decoding than this
-    decode(s).map_err(D::Error::custom)
-}
+        let latest_block: Block =
+            serde_json::from_str(&block_file).expect("could not deserialize latest block");
 
-impl Block {
+        let preimage = HashValue::sha3_256_of(&latest_block.proof).to_vec();
+        // Otherwise this is the first time the app is run, and it needs a genesis preimage, which comes from configs.
+        let height = latest_block.height + 1;
+        // TODO: cleanup this duplication with mine_genesis_once?
 
-    /// Extract the preimage and proof from a genesis proof block_0.json
-    pub fn get_genesis_tx_data(path: &std::path::PathBuf) -> Result<(Vec<u8>,Vec<u8>),std::io::Error> {
-        let file = std::fs::File::open(path)?;
-        let reader = std::io::BufReader::new(file);
-        let block: Block = serde_json::from_reader(reader).expect("Genesis block should deserialize");
-        return Ok((block.preimage, block.proof));
-    }
-}
-
-pub mod build_block {
-    //! Functions for generating the 0L delay proof and writing data to file system.
-    use super::Block;
-    use crate::config::*;
-    use crate::delay::*;
-    use crate::error::{Error, ErrorKind};
-    use crate::prelude::*;
-    use crate::submit_tx::{submit_tx, TxParams, eval_tx_status};
-    use glob::glob;
-    use libra_crypto::hash::HashValue;
-    use std::{fs, io::{BufReader, Write}, path::PathBuf, time::Instant};
-
-
-    /// writes a JSON file with the vdf proof, ordered by a blockheight
-    pub fn mine_genesis(config: &MinerConfig) -> Block {
-        println!("Mining Genesis Proof");
-        let preimage = super::genesis_preimage(&config);
         let now = Instant::now();
-        let proof = do_delay(&preimage);
+        let data = do_delay(&preimage);
         let elapsed_secs = now.elapsed().as_secs();
         println!("Delay: {:?} seconds", elapsed_secs);
+
         let block = Block {
-            height: 0u64,
+            height,
             elapsed_secs,
             preimage,
-            proof,
+            proof: data.clone(),
         };
 
-        block
-    }
-
-    /// Mines genesis and writes the file
-    pub fn write_genesis(config: &MinerConfig) -> Block{
-        let block = mine_genesis(config);
-        //TODO: check for overwriting file...
         write_json(&block, &config.get_block_dir());
-        println!("block zero proof mined, file saved to: {:?}", &config.get_block_dir().join("block_0.json"));
-        block
+        Ok(block)
+    // Err(ErrorKind::Io.context(format!("submit_vdf_proof_tx_to_network {:?}", block_dir)).into())
+    } else {
+        return Err(ErrorKind::Io
+            .context(format!("No files found in {:?}", &config.get_block_dir()))
+            .into());
     }
-    /// Mine one block
-    pub fn mine_once(config: &MinerConfig) -> Result<Block, Error> {
-        let (_current_block_number, current_block_path) = parse_block_height(&config.get_block_dir() );
-        // If there are files in path, continue mining.
-        if let Some(max_block_path) = current_block_path {
-            // current_block_path is Option type, check if destructures to Some.
-            let block_file = fs::read_to_string(max_block_path)
-                .expect("Could not read latest block file in path");
+}
 
-            let latest_block: Block =
-                serde_json::from_str(&block_file).expect("could not deserialize latest block");
+/// Write block to file
+pub fn mine_and_submit(
+    config: &MinerConfig,
+    tx_params: TxParams,
+    is_operator: bool,
+) -> Result<(), Error> {
+    // get the location of this miner's blocks
+    let mut blocks_dir = config.workspace.node_home.clone();
+    blocks_dir.push(&config.workspace.block_dir);
+    let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
 
-            let preimage = HashValue::sha3_256_of(&latest_block.proof).to_vec();
-            // Otherwise this is the first time the app is run, and it needs a genesis preimage, which comes from configs.
-            let height = latest_block.height + 1;
-            // TODO: cleanup this duplication with mine_genesis_once?
+    // If there are NO files in path, mine the genesis proof.
+    if current_block_number.is_none() {
+        status_err!("Genesis block_0.json not found. Exiting.");
+        std::process::exit(0);
+    } else {
+        // mine continuously from the last block in the file systems
+        let mut mining_height = current_block_number.unwrap() + 1;
+        loop {
+            status_info!(format!("Block {}", mining_height), "Mining VDF Proof");
 
-            let now = Instant::now();
-            let data = do_delay(&preimage);
-            let elapsed_secs = now.elapsed().as_secs();
-            println!("Delay: {:?} seconds", elapsed_secs);
+            let block = mine_once(&config)?;
+            status_info!(
+                "Proof mined:",
+                format!("block_{}.json created.", block.height.to_string())
+            );
 
-            let block = Block {
-                height,
-                elapsed_secs,
-                preimage,
-                proof: data.clone(),
-            };
-
-            write_json(&block, &config.get_block_dir() );
-            Ok(block)
-        // Err(ErrorKind::Io.context(format!("submit_vdf_proof_tx_to_network {:?}", block_dir)).into())
-        } else {
-            return Err(ErrorKind::Io
-                .context(format!("No files found in {:?}", &config.get_block_dir()))
-                .into());
-        }
-    }
-
-    /// Write block to file
-    pub fn mine_and_submit(
-        config: &MinerConfig,
-        tx_params: TxParams,
-        is_operator: bool,
-    ) -> Result<(), Error> {
-        // get the location of this miner's blocks
-        let mut blocks_dir = config.workspace.node_home.clone();
-        blocks_dir.push(&config.workspace.block_dir);
-        let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
-
-        // If there are NO files in path, mine the genesis proof.
-        if current_block_number.is_none() {
-            status_err!("Genesis block_0.json not found. Exiting.");
-            std::process::exit(0);
-        } else {
-            // mine continuously from the last block in the file systems
-            let mut mining_height = current_block_number.unwrap() + 1; 
-            loop {
-                status_info!(format!("Block {}", mining_height),"Mining VDF Proof");
-                
-                let block = mine_once(&config)?;
-                status_info!("Proof mined:", format!("block_{}.json created.", block.height.to_string()));
-
-                if let Some(ref _node) = config.profile.default_node {
-                    match submit_tx(&tx_params, block.preimage, block.proof, is_operator) {
-                        Ok(tx_view) => {
-                            match eval_tx_status(tx_view) {
-                                true => status_ok!("Success:", "Proof committed to chain"),
-                                false => status_err!("Miner transaction rejected")
-                            }
-                            
-                        },
-                        Err(err) => status_err!("Miner transaction rejected: {}", err)
-                    }
-
-
-                } else {
-                    return Err(ErrorKind::Config
-                        .context("No Node for submitting transactions")
-                        .into());
+            if let Some(ref _node) = config.profile.default_node {
+                match commit_proof_tx(&tx_params, block.preimage, block.proof, is_operator) {
+                    Ok(tx_view) => match eval_tx_status(tx_view) {
+                        Ok(_) => status_ok!("Success:", "Proof committed to chain"),
+                        Err(_) => status_err!("Miner transaction rejected"),
+                    },
+                    Err(err) => status_err!("Miner transaction rejected: {}", err),
                 }
-            
-                mining_height = block.height + 1;
+            } else {
+                return Err(ErrorKind::Config
+                    .context("No Node for submitting transactions")
+                    .into());
             }
+
+            mining_height = block.height + 1;
         }
     }
+}
 
-    fn write_json(block: &Block, blocks_dir: &PathBuf) {
-        if !&blocks_dir.exists() {
-            // first run, create the directory if there is none, or if the user changed the configs.
-            // note: user may have blocks but they are in a different directory than what miner.toml says.
-            fs::create_dir(&blocks_dir).unwrap();
-        };
-        // Write the file.
-        let mut latest_block_path = blocks_dir.clone();
-        latest_block_path.push(format!("block_{}.json", block.height));
-        //println!("{:?}", &latest_block_path);
-        let mut file = fs::File::create(&latest_block_path).unwrap();
-        file.write_all(serde_json::to_string(&block).unwrap().as_bytes())
-            .expect("Could not write block");
-    }
+fn write_json(block: &Block, blocks_dir: &PathBuf) {
+    if !&blocks_dir.exists() {
+        // first run, create the directory if there is none, or if the user changed the configs.
+        // note: user may have blocks but they are in a different directory than what miner.toml says.
+        fs::create_dir(&blocks_dir).unwrap();
+    };
+    // Write the file.
+    let mut latest_block_path = blocks_dir.clone();
+    latest_block_path.push(format!("block_{}.json", block.height));
+    //println!("{:?}", &latest_block_path);
+    let mut file = fs::File::create(&latest_block_path).unwrap();
+    file.write_all(serde_json::to_string(&block).unwrap().as_bytes())
+        .expect("Could not write block");
+}
 
-    /// parse the existing blocks in the miner's path. This function receives any path. Note: the path is configured in miner.toml which abscissa Configurable parses, see commands.rs.
-    pub fn parse_block_height(blocks_dir: &PathBuf) -> (Option<u64>, Option<PathBuf>) {
-        let mut max_block: Option<u64> = None;
-        let mut max_block_path = None;
+/// parse the existing blocks in the miner's path. This function receives any path. Note: the path is configured in miner.toml which abscissa Configurable parses, see commands.rs.
+pub fn parse_block_height(blocks_dir: &PathBuf) -> (Option<u64>, Option<PathBuf>) {
+    let mut max_block: Option<u64> = None;
+    let mut max_block_path = None;
 
-        // iterate through all json files in the directory.
-        for entry in glob(&format!("{}/block_*.json", blocks_dir.display()))
-            .expect("Failed to read glob pattern")
-        {
-            if let Ok(entry) = entry {
-                let file = fs::File::open(&entry).expect("Could not open block file");
-                let reader = BufReader::new(file);
-                let block: Block = serde_json::from_reader(reader).unwrap();
-                let blocknumber = block.height;
-                if max_block.is_none() {
+    // iterate through all json files in the directory.
+    for entry in glob(&format!("{}/block_*.json", blocks_dir.display()))
+        .expect("Failed to read glob pattern")
+    {
+        if let Ok(entry) = entry {
+            let file = fs::File::open(&entry).expect("Could not open block file");
+            let reader = BufReader::new(file);
+            let block: Block = serde_json::from_reader(reader).unwrap();
+            let blocknumber = block.height;
+            if max_block.is_none() {
+                max_block = Some(blocknumber);
+                max_block_path = Some(entry);
+            } else {
+                if blocknumber > max_block.unwrap() {
                     max_block = Some(blocknumber);
                     max_block_path = Some(entry);
-                } else {
-                    if blocknumber > max_block.unwrap() {
-                        max_block = Some(blocknumber);
-                        max_block_path = Some(entry);
-                    }
                 }
             }
         }
-        (max_block, max_block_path)
     }
+    (max_block, max_block_path)
+}
 
-    /// Parse a block_x.json file and return a Block
-    pub fn parse_block_file(path: PathBuf) -> Block{
-        let file = fs::File::open(&path).expect(&format!("Could not open block file: {:?}", path.to_str()));
-        let reader = BufReader::new(file);
-        serde_json::from_reader(reader).unwrap()
-    }
+/// Parse a block_x.json file and return a Block
+pub fn parse_block_file(path: PathBuf) -> Block {
+    let file =
+        fs::File::open(&path).expect(&format!("Could not open block file: {:?}", path.to_str()));
+    let reader = BufReader::new(file);
+    serde_json::from_reader(reader).unwrap()
+}
 
 /* ////////////// */
 /* / Unit tests / */
@@ -243,7 +202,6 @@ fn test_helper_clear_block_dir(blocks_dir: &PathBuf) {
 #[ignore]
 //Not really a test, just a way to generate fixtures.
 fn create_fixtures() {
-    
     use libra_wallet::WalletLibrary;
 
     // if no file is found, the block height is 0
@@ -258,7 +216,7 @@ fn create_fixtures() {
         let save_to = format!("./test_fixtures_{}/", ns);
         fs::create_dir_all(save_to.clone()).unwrap();
         let mut configs_fixture = test_make_configs_fixture();
-        configs_fixture.workspace.block_dir = save_to.clone(); 
+        configs_fixture.workspace.block_dir = save_to.clone();
 
         // mine to save_to path
         write_genesis(&configs_fixture);
@@ -270,7 +228,7 @@ fn create_fixtures() {
         let mut file = fs::File::create(&mnemonic_path).expect("Could not create file");
         file.write_all(mnemonic_string.as_bytes())
             .expect("Could not write mnemonic");
-        
+
         // create miner.toml
         //rename the path for actual fixtures
         configs_fixture.workspace.block_dir = "blocks".to_string();
@@ -278,16 +236,14 @@ fn create_fixtures() {
         let mut toml_path = PathBuf::from(save_to);
         toml_path.push("miner.toml");
         let file = fs::File::create(&toml_path);
-        file.unwrap().write(&toml.as_bytes())
+        file.unwrap()
+            .write(&toml.as_bytes())
             .expect("Could not write toml");
-
     }
 }
 
-
 #[test]
 fn test_mine_once() {
-    
     // if no file is found, the block height is 0
     let mut configs_fixture = test_make_configs_fixture();
     configs_fixture.workspace.block_dir = "test_blocks_temp_2".to_owned();
@@ -312,9 +268,9 @@ fn test_mine_once() {
     // };
 
     // Clear at start. Clearing at end can pollute the path when tests fail.
-    test_helper_clear_block_dir(&configs_fixture.get_block_dir() );
+    test_helper_clear_block_dir(&configs_fixture.get_block_dir());
 
-    let fixture_previous_proof = hex::decode("005f6371e754d98dd0230d051fce8462cd64257717e988ffbff95ed9b84d130b6ee1a97bff4eedc4cd28721b1f78358f8ce1a7f0b0a2e75a4740af0f328414daad2b3c205a82bbd334b7fc9ae70b8628fb7f02247b0c6416a25662202d8c63de116876b8fb575d2cffae9ea48bd511142ea5f737a9278106093e143f8c6b8d0dd13804ca601310c059ce1db3fd58eb3068dde0658a4e330cc8e5934ab2fe41e4b757e69b2edce436ceac8b0e801b66fcf453f36a4300c286039143e36dfbc100c5d0f40cd7d74a9421b3b8e547de5e82797f365c5524d35813820de538c6ef2ef980995d071a6fa26826335626f1b1b4ee256b67603b1b7df338b4607137bd433affba8a94c6f234defb09ef6d5cc697a73a5b57caf9ef8992ccf4ab35affd997c8294be37b1cfae93fe89781062cc50435fadc9be416279e02ba2eddbdbb659fbc60d8eb76f2bed5adf4a26c6a81f39eea20d65b81e91e52a38eab6229cb975bc75f46dfa65ada848234dd362aa086091fd95a0df21cb2a59d34b155a5105aef71c1a6c7ef340194f1ea3697ec59feb5ce3ea67a00149b36af5de44d2c3863e580267cffee49b9f5ba20104d65f5333c05839e5877006de9dd4c203953cc103faf82fb50a76856333fbe5b36fb6ea76123c343f2bd56192d5c300e17699659cea5acf5991643ba05fef2e399ca68d027a74c6c7c908c03adfa1b7f5c56d163ee37b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001").unwrap();
+    let fixture_previous_proof = decode("005f6371e754d98dd0230d051fce8462cd64257717e988ffbff95ed9b84d130b6ee1a97bff4eedc4cd28721b1f78358f8ce1a7f0b0a2e75a4740af0f328414daad2b3c205a82bbd334b7fc9ae70b8628fb7f02247b0c6416a25662202d8c63de116876b8fb575d2cffae9ea48bd511142ea5f737a9278106093e143f8c6b8d0dd13804ca601310c059ce1db3fd58eb3068dde0658a4e330cc8e5934ab2fe41e4b757e69b2edce436ceac8b0e801b66fcf453f36a4300c286039143e36dfbc100c5d0f40cd7d74a9421b3b8e547de5e82797f365c5524d35813820de538c6ef2ef980995d071a6fa26826335626f1b1b4ee256b67603b1b7df338b4607137bd433affba8a94c6f234defb09ef6d5cc697a73a5b57caf9ef8992ccf4ab35affd997c8294be37b1cfae93fe89781062cc50435fadc9be416279e02ba2eddbdbb659fbc60d8eb76f2bed5adf4a26c6a81f39eea20d65b81e91e52a38eab6229cb975bc75f46dfa65ada848234dd362aa086091fd95a0df21cb2a59d34b155a5105aef71c1a6c7ef340194f1ea3697ec59feb5ce3ea67a00149b36af5de44d2c3863e580267cffee49b9f5ba20104d65f5333c05839e5877006de9dd4c203953cc103faf82fb50a76856333fbe5b36fb6ea76123c343f2bd56192d5c300e17699659cea5acf5991643ba05fef2e399ca68d027a74c6c7c908c03adfa1b7f5c56d163ee37b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001").unwrap();
 
     let fixture_block = Block {
         /// Block Height
@@ -324,7 +280,7 @@ fn test_mine_once() {
         proof: fixture_previous_proof,
     };
 
-    write_json(&fixture_block, &configs_fixture.get_block_dir() );
+    write_json(&fixture_block, &configs_fixture.get_block_dir());
     mine_once(&configs_fixture).unwrap();
     // confirm this file was written to disk.
     let block_file = fs::read_to_string("./test_blocks_temp_2/block_1.json")
@@ -342,18 +298,17 @@ fn test_mine_once() {
         "Not the proof of the new block created"
     );
 
-    test_helper_clear_block_dir(&configs_fixture.get_block_dir() );
+    test_helper_clear_block_dir(&configs_fixture.get_block_dir());
 }
-
 
 #[test]
 fn test_mine_genesis() {
     // if no file is found, the block height is 0
     //let blocks_dir = Path::new("./test_blocks");
     let configs_fixture = test_make_configs_fixture();
-    
+
     //clear from sideffects.
-    test_helper_clear_block_dir( &configs_fixture.get_block_dir() );
+    test_helper_clear_block_dir(&configs_fixture.get_block_dir());
 
     // mine
     write_genesis(&configs_fixture);
@@ -417,10 +372,9 @@ pub fn test_make_configs_fixture() -> MinerConfig {
     cfg.workspace.node_home = PathBuf::from(".");
     cfg.workspace.block_dir = "test_blocks_temp_1".to_owned();
     cfg.chain_info.chain_id = "0L testnet".to_owned();
-    cfg.profile.auth_key = "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".to_string();
+    cfg.profile.auth_key =
+        "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".to_string();
     cfg
-}
-
 }
 
 /// Format the config file data into a fixed byte structure for easy parsing in Move/other languages
@@ -470,7 +424,7 @@ pub fn genesis_preimage(cfg: &MinerConfig) -> Vec<u8> {
     preimage.append(&mut padded_chain_id_bytes);
 
     preimage
-        .write_u64::<LittleEndian>(delay::delay_difficulty())
+        .write_u64::<LittleEndian>(delay_difficulty())
         .unwrap();
 
     let mut padded_statements_bytes = {
@@ -507,4 +461,3 @@ pub fn genesis_preimage(cfg: &MinerConfig) -> Vec<u8> {
     );
     return preimage;
 }
-

@@ -1,12 +1,8 @@
 //! MinerApp Subcommands
 
-mod keygen_cmd;
 mod start_cmd;
 mod version_cmd;
-mod swarm_test_cmd;
 mod zero_cmd;
-mod ceremony_cmd;
-mod manifest_cmd;
 mod wizard_user_cmd;
 mod wizard_val_cmd;
 mod wizard_fn_cmd;
@@ -15,15 +11,11 @@ mod files_cmd;
 use self::{
     start_cmd::StartCmd,
     version_cmd::VersionCmd,
-    swarm_test_cmd::SwarmCmd,
     zero_cmd::ZeroCmd,
-    keygen_cmd::KeygenCmd,
-    ceremony_cmd::CeremonyUtilCmd,
     wizard_user_cmd::UserWizardCmd,
     wizard_val_cmd::ValWizardCmd,
     wizard_fn_cmd::FnWizardCmd,
     files_cmd::FilesCmd,
-    manifest_cmd::ManifestCmd,
 };
 use crate::config::MinerConfig;
 use abscissa_core::{
@@ -55,18 +47,6 @@ pub enum MinerCmd {
     #[options(help = "display version information")]
     Version(VersionCmd),
 
-    /// The `keygen` subcommand
-    #[options(help = "generate keys")]
-    Keygen(KeygenCmd),
-
-    /// The `ceremony` subcommand
-    #[options(help = "wizard for genesis ceremony configurations")]
-    Ceremony(CeremonyUtilCmd),
-    
-    /// The `swarm` subcommand
-    #[options(help = "test connection to a local swarm")]
-    Swarm(SwarmCmd),
-
     /// The `user_wizard` subcommand
     #[options(help = "wizard to create accounts and local configs")]
     UserWizard(UserWizardCmd),
@@ -82,10 +62,6 @@ pub enum MinerCmd {
     /// The `genesis` subcommand
     #[options(help = "generate validator files")]
     Files(FilesCmd),
-
-    /// The `manifest` subcommand
-    #[options(help = "account manifest")]
-    Manifest(ManifestCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

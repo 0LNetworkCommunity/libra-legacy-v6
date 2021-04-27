@@ -48,6 +48,7 @@ ol-cli = {path = "../cli"}
 dialoguer = "0.8.0"
 ol-types = {path = "../../ol/types"}
 ol-fixtures = {path = "../../ol/fixtures"}
+libra-secure-storage = { path = "../../secure/storage", version = "0.1.0" }
 
 
 [dependencies.abscissa_core]
