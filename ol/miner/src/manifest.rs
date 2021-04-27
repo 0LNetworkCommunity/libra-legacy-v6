@@ -2,11 +2,11 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{account, block::parse_block_file, config::MinerConfig, delay};
+use crate::{block::parse_block_file, config::MinerConfig, delay};
 
 use libra_genesis_tool::keyscheme::KeyScheme;
 
-use abscissa_core::{Command, Options, Runnable};
+
 use libra_types::transaction::SignedTransaction;
 use libra_wallet::WalletLibrary;
 use ol_types::{account::ValConfigs, autopay::PayInstruction};
