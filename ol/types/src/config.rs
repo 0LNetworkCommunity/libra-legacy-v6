@@ -8,7 +8,6 @@ use libra_types::{
 };
 use machine_ip;
 use reqwest::Url;
-use rustyline::Editor;
 use serde::{Deserialize, Serialize};
 use std::{fs, io::Write, net::Ipv4Addr, path::PathBuf, str::FromStr};
 use libra_config::config::NodeConfig;
@@ -95,8 +94,6 @@ impl OlCliConfig {
     default_config.workspace.node_home.push(NODE_HOME);
 
     fs::create_dir_all(&default_config.workspace.node_home).unwrap();
-    // Set up github token
-    let mut rl = Editor::<()>::new();
 
     let system_ip = machine_ip::get().unwrap().to_string();
     // println!("\nFound host IP address: {:?}\n", system_ip);
