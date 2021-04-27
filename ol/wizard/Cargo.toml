@@ -30,7 +30,6 @@ txs = { path = "../txs"}
 ol-types = { path = "../../ol/types"}
 miner = { path = "../miner" }
 
-
 [dependencies.abscissa_core]
 version = "0.5.2"
 
