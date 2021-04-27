@@ -5,7 +5,7 @@
 use ol_types::{block::Block};
 use crate::prelude::app_config;
 use super::{files_cmd};
-use miner::block::write_genesis;
+
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_genesis_tool::keyscheme::KeyScheme;
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};

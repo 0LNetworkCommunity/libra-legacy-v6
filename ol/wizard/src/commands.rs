@@ -1,23 +1,19 @@
 //! MinerApp Subcommands
+mod files_cmd;
 mod version_cmd;
+mod wizard_fn_cmd;
 mod wizard_user_cmd;
 mod wizard_val_cmd;
-mod wizard_fn_cmd;
-mod files_cmd;
 
 use self::{
-    version_cmd::VersionCmd,
-    wizard_user_cmd::UserWizardCmd,
+    version_cmd::VersionCmd, wizard_fn_cmd::FnWizardCmd, wizard_user_cmd::UserWizardCmd,
     wizard_val_cmd::ValWizardCmd,
-    wizard_fn_cmd::FnWizardCmd,
 };
 use crate::config::MinerConfig;
-use abscissa_core::{
-    config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
-};
-use std::path::PathBuf;
+use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use dirs;
 use libra_global_constants::NODE_HOME;
+use std::path::PathBuf;
 
 /// MinerApp Configuration Filename
 pub const CONFIG_FILE: &str = "0L.toml";
@@ -54,8 +50,7 @@ impl Configurable<MinerConfig> for MinerCmd {
         // If you'd like for a missing configuration file to be a hard error
         // instead, always return `Some(CONFIG_FILE)` here.
 
-        let mut config_path = dirs::home_dir()
-        .unwrap();
+        let mut config_path = dirs::home_dir().unwrap();
         config_path.push(NODE_HOME);
         config_path.push(CONFIG_FILE);
 
