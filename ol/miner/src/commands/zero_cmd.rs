@@ -13,13 +13,7 @@ impl Runnable for ZeroCmd {
     /// Start the application.
     fn run(&self) {
         // Assumes the app has already been initialized.
-        let saved_configs = app_config();
-        mine_zero(&saved_configs);
+        let miner_config = app_config().clone();
+        write_genesis(&miner_config);
     }
-}
-
-pub fn mine_zero(miner_config: &MinerConfig) {
-    // let saved_configs = app_config();
-    // dbg!(&saved_configs.profile.auth_key);
-    write_genesis(&miner_config);
 }

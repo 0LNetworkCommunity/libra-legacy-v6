@@ -2,8 +2,10 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{block::parse_block_file, prelude::app_config};
-use super::{files_cmd, zero_cmd};
+use ol_types::{block::Block};
+use crate::prelude::app_config;
+use super::{files_cmd};
+use miner::block::write_genesis;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_genesis_tool::keyscheme::KeyScheme;
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
@@ -102,7 +104,7 @@ impl Runnable for ValWizardCmd {
 
         if !self.skip_mining {
             // Mine Block
-            crate::block::write_genesis(&miner_config);
+            miner::block::write_genesis(&miner_config);
             status_ok!(
                 "\nGenesis proof complete",
                 "\n...........................\n"
@@ -198,7 +200,7 @@ fn write_manifest(
         .unwrap_or_else(|| cfg.workspace.node_home.clone());
 
     let keys = KeyScheme::new(&wallet);
-    let block = parse_block_file(cfg.get_block_dir().join("block_0.json").to_owned());
+    let block = Block::parse_block_file(cfg.get_block_dir().join("block_0.json").to_owned());
 
     ValConfigs::new(
         block,
