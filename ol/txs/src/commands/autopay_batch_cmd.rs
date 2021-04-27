@@ -7,7 +7,7 @@ use libra_types::transaction::{Script, SignedTransaction};
 use crate::{entrypoint, sign_tx::sign_tx, submit_tx::{tx_params_wrapper, batch_wrapper, TxParams}};
 use dialoguer::Confirm;
 use std::path::PathBuf;
-use ol_types::{autopay::PayInstruction, config::TxType};
+use ol_types::{autopay::PayInstruction, config::{TxType, IS_CI}};
 
 /// command to submit a batch of autopay tx from file
 #[derive(Command, Debug, Default, Options)]
@@ -46,7 +46,11 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, current_epoch: u6
             epoch_ending = &i.duration_epochs.unwrap() + current_epoch,
             destination = &i.destination,
         );
-        println!("{}", &warning);            // check the user wants to do this.
+        println!("{}", &warning);
+        // accept if CI mode.
+        if *IS_CI { return Some(i) }            
+        
+        // check the user wants to do this.
         match Confirm::new().with_prompt("").interact().unwrap() {
           true => Some(i),
           _ =>  {

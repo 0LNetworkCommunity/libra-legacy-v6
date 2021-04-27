@@ -12,9 +12,44 @@ use serde::{Deserialize, Serialize};
 use std::{fs, io::Write, net::Ipv4Addr, path::PathBuf, str::FromStr};
 use libra_config::config::NodeConfig;
 use dialoguer::{Confirm, Input};
+use once_cell::sync::Lazy;
 
 
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
+
+/// Check if we are in prod mode
+pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
+    match std::env::var("NODE_ENV") {
+        Ok(val) => {
+            match val.as_str() {
+                "prod" => true,
+                // if anything else is set by user is false
+                _ => false,
+            }
+        }
+        // default to prod if nothig is set
+        _ => true,
+    }
+});
+
+/// check this is CI environment
+pub static IS_CI: Lazy<bool> = Lazy::new(|| {
+    match std::env::var("NODE_ENV") {
+        Ok(val) => {
+            match val.as_str() {
+                "prod" => false,
+                // if anything else is set by user is false
+                _ => match std::env::var("TEST").unwrap().as_str(){
+                  "y" => true,
+                  _ => false
+                },
+            }
+        }
+        // default to prod if nothig is set
+        _ => false,
+    }
+});
+
 /// MinerApp Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
 // #[serde(deny_unknown_fields)]
@@ -77,13 +112,19 @@ impl AppCfg {
   }
 
   /// Get where node key_store.json stored.
-  pub fn init_host_configs(
+  pub fn init_app_configs(
     authkey: AuthenticationKey,
     account: AccountAddress,
     config_path: &Option<PathBuf>,
   ) -> AppCfg {
+    
     // TODO: Check if configs exist and warn on overwrite.
     let mut default_config = AppCfg::default();
+    default_config.profile.auth_key = authkey.to_string();
+    default_config.profile.account = account;
+
+    // skip questionnaire if CI
+    if *IS_CI { return default_config }
 
     default_config.workspace.node_home = if config_path.is_some() {
       config_path.clone().unwrap()
@@ -123,12 +164,10 @@ impl AppCfg {
     // Get statement which goes into genesis block
     default_config.profile.statement = Input::new()
     .with_prompt("Enter a (fun) statement to go into your first transaction: ")
-    .default("Protests rage across the nation".into())
     .interact_text()
     .expect("We need some text unique to you which will go into your the first proof of your tower");
 
-    default_config.profile.auth_key = authkey.to_string();
-    default_config.profile.account = account;
+
 
     AppCfg::save_file(&default_config);
 

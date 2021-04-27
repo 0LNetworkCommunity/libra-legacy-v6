@@ -5049,6 +5049,7 @@ dependencies = [
  "libra-network-address",
  "libra-types",
  "machine-ip",
+ "once_cell",
  "reqwest",
  "rustyline",
  "serde",

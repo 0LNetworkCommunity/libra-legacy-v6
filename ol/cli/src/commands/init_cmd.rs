@@ -52,7 +52,7 @@ impl Runnable for InitCmd {
 
 /// Initializes the necessary 0L config files: 0L.toml
 pub fn initialize_host(authkey: AuthenticationKey, account: AccountAddress, path: &Option<PathBuf>) -> Result <AppCfg, Error>{
-    let cfg = AppCfg::init_host_configs(authkey, account, path, );
+    let cfg = AppCfg::init_app_configs(authkey, account, path, );
     Ok(cfg)
 }
 
