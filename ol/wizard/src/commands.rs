@@ -13,7 +13,7 @@ use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use dirs;
 use libra_global_constants::NODE_HOME;
 use std::path::PathBuf;
-use ol_types::config::OlCliConfig;
+use ol_types::config::AppCfg;
 /// MinerApp Configuration Filename
 pub const CONFIG_FILE: &str = "0L.toml";
 
@@ -42,7 +42,7 @@ pub enum WizCmd {
 }
 
 /// This trait allows you to define how application configuration is loaded.
-impl Configurable<OlCliConfig> for WizCmd {
+impl Configurable<AppCfg> for WizCmd {
     /// Location of the configuration file
     fn config_path(&self) -> Option<PathBuf> {
         // Check if the config file exists, and if it does not, ignore it.

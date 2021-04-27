@@ -2,7 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use ol_types::{block::Block, config::OlCliConfig};
+use ol_types::{block::Block, config::AppCfg};
 use libra_genesis_tool::keyscheme::KeyScheme;
 use libra_types::transaction::SignedTransaction;
 use libra_wallet::WalletLibrary;
@@ -14,7 +14,7 @@ use crate::prelude::app_config;
 pub fn write_manifest(
   path: &Option<PathBuf>,
   wallet: WalletLibrary,
-  wizard_config: Option<OlCliConfig>,
+  wizard_config: Option<AppCfg>,
   autopay_batch: Option<Vec<PayInstruction>>,
   autopay_signed: Option<Vec<SignedTransaction>>,
 ) {

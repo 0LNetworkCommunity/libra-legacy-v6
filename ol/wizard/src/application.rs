@@ -5,7 +5,7 @@ use abscissa_core::{
     application::{self, AppCell},
     config, trace, Application, FrameworkError, StandardPaths,
 };
-use ol_types::config::OlCliConfig;
+use ol_types::config::AppCfg;
 /// Application state
 pub static APPLICATION: AppCell<WizApp> = AppCell::new();
 
@@ -32,7 +32,7 @@ pub fn app_config() -> config::Reader<WizApp> {
 #[derive(Debug)]
 pub struct WizApp {
     /// Application configuration.
-    config: Option<OlCliConfig>,
+    config: Option<AppCfg>,
 
     /// Application state.
     state: application::State<Self>,
@@ -56,13 +56,13 @@ impl Application for WizApp {
     type Cmd = EntryPoint<WizCmd>;
 
     /// Application configuration.
-    type Cfg = OlCliConfig;
+    type Cfg = AppCfg;
 
     /// Paths to resources within the application.
     type Paths = StandardPaths;
 
     /// Accessor for application configuration.
-    fn config(&self) -> &OlCliConfig {
+    fn config(&self) -> &AppCfg {
         self.config.as_ref().expect("config not loaded")
     }
 

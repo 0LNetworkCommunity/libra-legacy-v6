@@ -1,6 +1,6 @@
 //! OlCli Abscissa Application
 
-use crate::{commands::OlCliCmd, config::OlCliConfig, entrypoint::EntryPoint};
+use crate::{commands::OlCliCmd, config::AppCfg, entrypoint::EntryPoint};
 use abscissa_core::{
     application::{self, AppCell},
     config, trace, Application, FrameworkError, StandardPaths,
@@ -32,7 +32,7 @@ pub fn app_config() -> config::Reader<OlCliApp> {
 #[derive(Debug)]
 pub struct OlCliApp {
     /// Application configuration.
-    config: Option<OlCliConfig>,
+    config: Option<AppCfg>,
 
     /// Application state.
     state: application::State<Self>,
@@ -56,13 +56,13 @@ impl Application for OlCliApp {
     type Cmd = EntryPoint<OlCliCmd>;
 
     /// Application configuration.
-    type Cfg = OlCliConfig;
+    type Cfg = AppCfg;
 
     /// Paths to resources within the application.
     type Paths = StandardPaths;
 
     /// Accessor for application configuration.
-    fn config(&self) -> &OlCliConfig {
+    fn config(&self) -> &AppCfg {
         self.config.as_ref().expect("config not loaded")
     }
 

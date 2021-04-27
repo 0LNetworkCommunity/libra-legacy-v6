@@ -6,7 +6,7 @@ use abscissa_core::{
     config, trace, Application, FrameworkError, StandardPaths,
 };
 
-use ol_types::config::OlCliConfig;
+use ol_types::config::AppCfg;
 
 /// Application state
 pub static APPLICATION: AppCell<MinerApp> = AppCell::new();
@@ -34,7 +34,7 @@ pub fn app_config() -> config::Reader<MinerApp> {
 #[derive(Debug)]
 pub struct MinerApp {
     /// Application configuration.
-    config: Option<OlCliConfig>,
+    config: Option<AppCfg>,
 
     /// Application state.
     state: application::State<Self>,
@@ -58,13 +58,13 @@ impl Application for MinerApp {
     type Cmd = EntryPoint<MinerCmd>;
 
     /// Application configuration.
-    type Cfg = OlCliConfig;
+    type Cfg = AppCfg;
 
     /// Paths to resources within the application.
     type Paths = StandardPaths;
 
     /// Accessor for application configuration.
-    fn config(&self) -> &OlCliConfig {
+    fn config(&self) -> &AppCfg {
         self.config.as_ref().expect("config not loaded")
     }
 

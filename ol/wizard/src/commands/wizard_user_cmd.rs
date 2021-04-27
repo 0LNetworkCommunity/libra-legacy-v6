@@ -4,7 +4,7 @@
 
 use ol_types::block::Block;
 use miner::{delay, block::write_genesis};
-use ol_types::config::OlCliConfig;
+use ol_types::config::AppCfg;
 use abscissa_core::{Command, Options, Runnable};
 use std::{path::PathBuf};
 use ol_types::account;
@@ -37,7 +37,7 @@ impl Runnable for UserWizardCmd {
 }
 
 fn wizard(path: PathBuf, is_fix: bool, block_zero: &Option<PathBuf>) {
-    let mut miner_configs = OlCliConfig::default();
+    let mut miner_configs = AppCfg::default();
     
     let (authkey, account, _) = if is_fix { 
         keygen::account_from_prompt()

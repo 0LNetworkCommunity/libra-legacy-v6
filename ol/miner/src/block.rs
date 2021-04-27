@@ -1,6 +1,6 @@
 //! Proof block datastructure
 
-use ol_types::config::OlCliConfig;
+use ol_types::config::AppCfg;
 use crate::{
     delay::*,
     error::{Error, ErrorKind},
@@ -21,7 +21,7 @@ use std::{
 };
 
 /// writes a JSON file with the vdf proof, ordered by a blockheight
-pub fn mine_genesis(config: &OlCliConfig) -> Block {
+pub fn mine_genesis(config: &AppCfg) -> Block {
     println!("Mining Genesis Proof");
     let preimage = genesis_preimage(&config);
     let now = Instant::now();
@@ -39,7 +39,7 @@ pub fn mine_genesis(config: &OlCliConfig) -> Block {
 }
 
 /// Mines genesis and writes the file
-pub fn write_genesis(config: &OlCliConfig) -> Block {
+pub fn write_genesis(config: &AppCfg) -> Block {
     let block = mine_genesis(config);
     //TODO: check for overwriting file...
     write_json(&block, &config.get_block_dir());
@@ -50,7 +50,7 @@ pub fn write_genesis(config: &OlCliConfig) -> Block {
     block
 }
 /// Mine one block
-pub fn mine_once(config: &OlCliConfig) -> Result<Block, Error> {
+pub fn mine_once(config: &AppCfg) -> Result<Block, Error> {
     let (_current_block_number, current_block_path) = parse_block_height(&config.get_block_dir());
     // If there are files in path, continue mining.
     if let Some(max_block_path) = current_block_path {
@@ -90,7 +90,7 @@ pub fn mine_once(config: &OlCliConfig) -> Result<Block, Error> {
 
 /// Write block to file
 pub fn mine_and_submit(
-    config: &OlCliConfig,
+    config: &AppCfg,
     tx_params: TxParams,
     is_operator: bool,
 ) -> Result<(), Error> {
@@ -367,8 +367,8 @@ fn test_parse_one_file() {
 }
 
 /// make fixtures for file
-pub fn test_make_configs_fixture() -> OlCliConfig {
-    let mut cfg = OlCliConfig::default();
+pub fn test_make_configs_fixture() -> AppCfg {
+    let mut cfg = AppCfg::default();
     cfg.workspace.node_home = PathBuf::from(".");
     cfg.workspace.block_dir = "test_blocks_temp_1".to_owned();
     cfg.chain_info.chain_id = "0L testnet".to_owned();
@@ -378,7 +378,7 @@ pub fn test_make_configs_fixture() -> OlCliConfig {
 }
 
 /// Format the config file data into a fixed byte structure for easy parsing in Move/other languages
-pub fn genesis_preimage(cfg: &OlCliConfig) -> Vec<u8> {
+pub fn genesis_preimage(cfg: &AppCfg) -> Vec<u8> {
     const AUTH_KEY_BYTES: usize = 32;
     const CHAIN_ID_BYTES: usize = 64;
     const STATEMENT_BYTES: usize = 1008;

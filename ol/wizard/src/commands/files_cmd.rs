@@ -9,7 +9,7 @@ use abscissa_core::{Command, Options, Runnable};
 use libra_genesis_tool::node_files;
 use std::io::Write;
 
-use ol_types::config::OlCliConfig;
+use ol_types::config::AppCfg;
 /// `files` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct FilesCmd {
@@ -42,7 +42,7 @@ impl Runnable for FilesCmd {
 }
 
 pub fn genesis_files(
-    miner_config: &OlCliConfig,
+    miner_config: &AppCfg,
     chain_id: &Option<u8>,
     github_org: &Option<String>,
     repo: &Option<String>,

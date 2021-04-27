@@ -1,7 +1,7 @@
 //! Txs App submit_tx module
 #![forbid(unsafe_code)]
 use crate::{
-    config::OlCliConfig,
+    config::AppCfg,
     entrypoint::{self, EntryPointTxsCmd},
     prelude::app_config,
     save_tx::save_tx,
@@ -186,7 +186,7 @@ pub fn tx_params_wrapper(tx_type: TxType) -> Result<TxParams, Error> {
 
 /// tx_parameters format
 pub fn tx_params(
-    config: OlCliConfig,
+    config: AppCfg,
     url_opt: Option<Url>,
     waypoint: Option<Waypoint>,
     swarm_path: Option<PathBuf>,
@@ -250,7 +250,7 @@ pub fn get_tx_params_from_swarm(swarm_path: PathBuf) -> Result<TxParams, Error> 
 /// Form tx parameters struct
 pub fn get_oper_params(
     waypoint: Waypoint,
-    config: &OlCliConfig,
+    config: &AppCfg,
     tx_type: TxType,
     url: Url,
     // // url_opt overrides all node configs, takes precedence over use_backup_url
@@ -289,7 +289,7 @@ pub fn get_oper_params(
 
 /// Gets transaction params from the 0L project root.
 pub fn get_tx_params_from_toml(
-    config: OlCliConfig,
+    config: AppCfg,
     tx_type: TxType,
     wallet_opt: Option<&WalletLibrary>,
     url: Url

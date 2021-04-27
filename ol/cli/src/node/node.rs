@@ -1,6 +1,6 @@
 //! `node` module
 
-use crate::{cache::Vitals, check::items::Items, config::OlCliConfig, mgmt::management::NodeMode};
+use crate::{cache::Vitals, check::items::Items, config::AppCfg, mgmt::management::NodeMode};
 use anyhow::Error;
 use cli::libra_client::LibraClient;
 use libradb::LibraDB;
@@ -28,7 +28,7 @@ pub const MINER_PROCESS: &str = "miner";
 /// Configuration used for checks we want to make on the node
 pub struct Node {
     /// 0L configs
-    pub conf: OlCliConfig,
+    pub conf: AppCfg,
     /// libraclient for connecting
     pub client: LibraClient,
     /// vitals
@@ -41,7 +41,7 @@ pub struct Node {
 
 impl Node {
     /// Create a instance of Check
-    pub fn new(client: LibraClient, conf: OlCliConfig) -> Self {
+    pub fn new(client: LibraClient, conf: AppCfg) -> Self {
         return Self {
             client,
             conf: conf.clone(),

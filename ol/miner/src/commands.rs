@@ -9,7 +9,7 @@ use self::{
     version_cmd::VersionCmd,
     zero_cmd::ZeroCmd,
 };
-use ol_types::config::OlCliConfig;
+use ol_types::config::AppCfg;
 use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
 };
@@ -42,7 +42,7 @@ pub enum MinerCmd {
 }
 
 /// This trait allows you to define how application configuration is loaded.
-impl Configurable<OlCliConfig> for MinerCmd {
+impl Configurable<AppCfg> for MinerCmd {
     /// Location of the configuration file
     fn config_path(&self) -> Option<PathBuf> {
         // Check if the config file exists, and if it does not, ignore it.
@@ -66,7 +66,7 @@ impl Configurable<OlCliConfig> for MinerCmd {
     ///
     /// This can be safely deleted if you don't want to override config
     /// settings from command-line options.
-    fn process_config(&self, config: OlCliConfig) -> Result<OlCliConfig, FrameworkError> {
+    fn process_config(&self, config: AppCfg) -> Result<AppCfg, FrameworkError> {
         match self {
             MinerCmd::Start(cmd) => cmd.override_config(config),
             _ => Ok(config),

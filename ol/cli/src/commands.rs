@@ -33,7 +33,7 @@ use self::{
     pilot_cmd::PilotCmd
 };
 
-use crate::config::OlCliConfig;
+use crate::config::AppCfg;
 use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
 };
@@ -101,7 +101,7 @@ pub fn home_path() -> PathBuf{
 }
 
 /// This trait allows you to define how application configuration is loaded.
-impl Configurable<OlCliConfig> for OlCliCmd {
+impl Configurable<AppCfg> for OlCliCmd {
     /// Location of the configuration file
     fn config_path(&self) -> Option<PathBuf> {
         // Check if the config file exists, and if it does not, ignore it.
@@ -124,8 +124,8 @@ impl Configurable<OlCliConfig> for OlCliCmd {
     /// settings from command-line options.
     fn process_config(
         &self,
-        config: OlCliConfig,
-    ) -> Result<OlCliConfig, FrameworkError> {
+        config: AppCfg,
+    ) -> Result<AppCfg, FrameworkError> {
         match self {
             OlCliCmd::Init(cmd) => cmd.override_config(config),
             _ => Ok(config),
