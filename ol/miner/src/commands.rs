@@ -1,10 +1,8 @@
 //! MinerApp Subcommands
 
-mod keygen_cmd;
 mod start_cmd;
 mod version_cmd;
 mod zero_cmd;
-mod ceremony_cmd;
 mod wizard_user_cmd;
 mod wizard_val_cmd;
 mod wizard_fn_cmd;
@@ -14,8 +12,6 @@ use self::{
     start_cmd::StartCmd,
     version_cmd::VersionCmd,
     zero_cmd::ZeroCmd,
-    keygen_cmd::KeygenCmd,
-    ceremony_cmd::CeremonyUtilCmd,
     wizard_user_cmd::UserWizardCmd,
     wizard_val_cmd::ValWizardCmd,
     wizard_fn_cmd::FnWizardCmd,
@@ -50,14 +46,6 @@ pub enum MinerCmd {
     /// The `version` subcommand
     #[options(help = "display version information")]
     Version(VersionCmd),
-
-    /// The `keygen` subcommand
-    #[options(help = "generate keys")]
-    Keygen(KeygenCmd),
-
-    /// The `ceremony` subcommand
-    #[options(help = "wizard for genesis ceremony configurations")]
-    Ceremony(CeremonyUtilCmd),
 
     /// The `user_wizard` subcommand
     #[options(help = "wizard to create accounts and local configs")]

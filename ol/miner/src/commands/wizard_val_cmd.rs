@@ -4,7 +4,7 @@
 
 use crate::{block::parse_block_file, prelude::app_config};
 
-use super::{files_cmd, keygen_cmd, zero_cmd};
+use super::{files_cmd, zero_cmd};
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_genesis_tool::keyscheme::KeyScheme;
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
@@ -26,8 +26,6 @@ pub struct ValWizardCmd {
     github_org: Option<String>,
     #[options(help = "repo with with genesis transactions")]
     repo: Option<String>,
-    #[options(help = "run keygen before wizard")]
-    keygen: bool,
     #[options(help = "build genesis from ceremony repo")]
     rebuild_genesis: bool,
     #[options(help = "skip fetching genesis blob")]
@@ -43,13 +41,8 @@ pub struct ValWizardCmd {
 impl Runnable for ValWizardCmd {
     /// Print version message
     fn run(&self) {
-        // Keygen
-        if self.keygen {
-            keygen_cmd::generate_keys();
-            status_ok!("\nKeys generated", "\n...........................\n");
-        }
 
-        status_info!("\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys you can re-run this command with the flag '--keygen', or run the standalone keygen subcommand with 'miner keygen'.\n\nYour first 0L proof-of-work will be mined now. Expect this to take up to 15 minutes on modern CPUs.\n");
+        status_info!("\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys, run the standalone keygen tool with 'ol keygen'.\n\nYour first 0L proof-of-work will be mined now. Expect this to take up to 15 minutes on modern CPUs.\n");
 
         // Get credentials from prompt
         let (authkey, account, wallet) = keygen::account_from_prompt();

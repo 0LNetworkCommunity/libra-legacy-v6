@@ -26,3 +26,4 @@ pub mod submit_tx;
 pub mod backlog;
 pub mod account;
 pub mod entrypoint;
+pub mod manifest;
