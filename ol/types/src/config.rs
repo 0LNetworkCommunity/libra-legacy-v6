@@ -12,6 +12,8 @@ use rustyline::Editor;
 use serde::{Deserialize, Serialize};
 use std::{fs, io::Write, net::Ipv4Addr, path::PathBuf, str::FromStr};
 use libra_config::config::NodeConfig;
+use dialoguer::{Confirm, Input};
+
 
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
 /// MinerApp Configuration
@@ -76,7 +78,7 @@ impl OlCliConfig {
   }
 
   /// Get where node key_store.json stored.
-  pub fn init_miner_configs(
+  pub fn init_host_configs(
     authkey: AuthenticationKey,
     account: AccountAddress,
     config_path: &Option<PathBuf>,
@@ -99,39 +101,34 @@ impl OlCliConfig {
     let system_ip = machine_ip::get().unwrap().to_string();
     // println!("\nFound host IP address: {:?}\n", system_ip);
 
-    // TODO: Use `dialoguer` for this
-    let ip = match rl.readline(&format!(
-      "Will you use this host, and this IP address {:?}, for your node? (y/n) ",
+    let txt = &format!(
+      "Will you use this host, and this IP address {:?}, for your node?",
       system_ip
-    )) {
-      Ok(val) => {
-        if (val == "y") | (val == "Y") {
-          system_ip
+    );
+    let ip = match Confirm::new().with_prompt(txt).interact().unwrap() {
+      true => {
+        system_ip
             .parse::<Ipv4Addr>()
             .expect("Could not parse IP address: {:?}")
-        } else {
-          let readline = rl
-            .readline("Enter the IP address of the node: ")
-            .expect("Must enter an ip address, or 0.0.0.0 as localhost");
-
-          readline
-            .parse::<Ipv4Addr>()
-            .expect("Could not parse IP address")
-        }
-      }
-      Err(_) => {
-        std::process::exit(1);
-      }
-    };
+      },
+      false =>  {
+        let input: String =  Input::new().with_prompt("Enter the IP address of the node").interact_text().unwrap();
+        input
+        .parse::<Ipv4Addr>()
+        .expect("Could not parse IP address")
+        // println!("NO");
+        // println!("skipping instruction, going to next in batch");      }
+    },
+  };
 
     default_config.profile.ip = ip;
 
-    // Get optional statement which goes into genesis block
-    default_config.profile.statement = rl
-      .readline("Enter a (fun) statement to go into your first transaction: ")
-      .expect(
-        "Please enter some text unique to you which will go into your block 0 preimage.",
-      );
+    // Get statement which goes into genesis block
+    default_config.profile.statement = Input::new()
+    .with_prompt("Enter a (fun) statement to go into your first transaction: ")
+    .default("Protests rage across the nation".into())
+    .interact_text()
+    .expect("We need some text unique to you which will go into your the first proof of your tower");
 
     default_config.profile.auth_key = authkey.to_string();
     default_config.profile.account = account;
