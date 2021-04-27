@@ -1,0 +1,22 @@
+{
+    "authors": "TonyYang <https://github.com/TonyPythoneer>, Michał Lytek <https://github.com/19majkel94>",
+    "libraryDependencies": [],
+    "moduleDependencies": [],
+    "libraryMajorVersion": 2,
+    "libraryMinorVersion": 0,
+    "typeScriptVersion": "2.0",
+    "libraryName": "pug",
+    "typingsPackageName": "pug",
+    "projectName": "https://github.com/pugjs/pug",
+    "sourceRepoURL": "https://www.github.com/DefinitelyTyped/DefinitelyTyped",
+    "sourceBranch": "master",
+    "globals": [],
+    "declaredModules": [
+        "pug"
+    ],
+    "files": [
+        "index.d.ts"
+    ],
+    "hasPackageJson": false,
+    "contentHash": "177cf130e1d3634d51c8acf0f117ba6bb2cb3d4ef8583a3e8b8c54d59845ae05"
+}

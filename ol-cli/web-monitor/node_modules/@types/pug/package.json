@@ -1,0 +1,17 @@
+{
+    "name": "@types/pug",
+    "version": "2.0.4",
+    "description": "TypeScript definitions for pug",
+    "license": "MIT",
+    "author": "TonyYang <https://github.com/TonyPythoneer>, Michał Lytek <https://github.com/19majkel94>",
+    "main": "",
+    "repository": {
+        "type": "git",
+        "url": "https://www.github.com/DefinitelyTyped/DefinitelyTyped.git"
+    },
+    "scripts": {},
+    "dependencies": {},
+    "peerDependencies": {},
+    "typesPublisherContentHash": "177cf130e1d3634d51c8acf0f117ba6bb2cb3d4ef8583a3e8b8c54d59845ae05",
+    "typeScriptVersion": "2.0"
+}

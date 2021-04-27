@@ -1,0 +1,17 @@
+# Installation
+> `npm install --save @types/pug`
+
+# Summary
+This package contains type definitions for pug (https://github.com/pugjs/pug).
+
+# Details
+Files were exported from https://www.github.com/DefinitelyTyped/DefinitelyTyped/tree/master/pug
+
+Additional Details
+ * Last updated: Fri, 30 Dec 2016 00:00:11 GMT
+ * Library Dependencies: none
+ * Module Dependencies: none
+ * Global values: none
+
+# Credits
+These definitions were written by TonyYang <https://github.com/TonyPythoneer>, Michał Lytek <https://github.com/19majkel94>.
