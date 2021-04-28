@@ -98,7 +98,7 @@ init-backend:
 layout:
 	cargo run -p libra-genesis-tool --release -- set-layout \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
-	--path ./util/set_layout_${NODE_ENV}.toml
+	--path ./ol/util/set_layout_${NODE_ENV}.toml
 
 root:
 		cargo run -p libra-genesis-tool --release -- libra-root-key \
@@ -352,13 +352,12 @@ debug:
 
 ##### DEVNET TESTS #####
 
-
 devnet: clear fix fix-genesis dev-wizard start
 # runs a smoke test from fixtures. 
 # Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 # This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
 
-dev-join: clear fix dev-wizard
+dev-join: clear fix fix-genesis dev-wizard
 # REQUIRES MOCK GIT INFRASTRUCTURE: OLSF/dev-genesis OLSF/dev-epoch-archive
 # see `devnet-archive` below 
 # We want to simulate the onboarding/new validator fetching genesis files from the mock archive: dev-genesis-archive
@@ -378,14 +377,16 @@ dev-wizard:
 # usually do this on Alice, which has the dev-epoch-archive repo, and dev-genesis
 
 # Do the ceremony: and also save the genesis fixtures, needs to happen before fix.
-dev-register: clear fix register genesis dev-save-genesis fix-genesis
+dev-register: clear fix register
+# Do a dev genesis on each node after EVERY NODE COMPLETED registration.
+dev-genesis: genesis dev-save-genesis fix-genesis
 
 # Save the files to mock infrastructure i.e. devnet github
 dev-infra: dev-save-genesis dev-backup-archive dev-commit
 
 dev-save-genesis: set-waypoint
-	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/ol/fixtures/genesis/${V}/
-	git add ${SOURCE}/ol/fixtures/genesis/${V}/
+	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/ol/devnet/genesis/${V}/
+	git add ${SOURCE}/ol/devnet/genesis/${V}/
 
 dev-backup-archive:
 	cd ${HOME}/dev-epoch-archive && make devnet-backup
