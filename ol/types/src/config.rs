@@ -141,7 +141,12 @@ impl AppCfg {
 
     fs::create_dir_all(&default_config.workspace.node_home).unwrap();
 
-    let system_ip = machine_ip::get().unwrap().to_string();
+    let system_ip = match machine_ip::get(){
+        Some(ip)=> ip.to_string(),
+        None=>{
+          "127.0.0.1".to_string()
+        }
+    };
     // println!("\nFound host IP address: {:?}\n", system_ip);
 
     let txt = &format!(
