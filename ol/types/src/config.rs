@@ -8,16 +8,52 @@ use libra_types::{
 };
 use machine_ip;
 use reqwest::Url;
-use rustyline::Editor;
 use serde::{Deserialize, Serialize};
 use std::{fs, io::Write, net::Ipv4Addr, path::PathBuf, str::FromStr};
 use libra_config::config::NodeConfig;
+use dialoguer::{Confirm, Input};
+use once_cell::sync::Lazy;
+
 
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
+
+/// Check if we are in prod mode
+pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
+    match std::env::var("NODE_ENV") {
+        Ok(val) => {
+            match val.as_str() {
+                "prod" => true,
+                // if anything else is set by user is false
+                _ => false,
+            }
+        }
+        // default to prod if nothig is set
+        _ => true,
+    }
+});
+
+/// check this is CI environment
+pub static IS_CI: Lazy<bool> = Lazy::new(|| {
+    match std::env::var("NODE_ENV") {
+        Ok(val) => {
+            match val.as_str() {
+                "prod" => false,
+                // if anything else is set by user is false
+                _ => match std::env::var("TEST").unwrap().as_str(){
+                  "y" => true,
+                  _ => false
+                },
+            }
+        }
+        // default to prod if nothig is set
+        _ => false,
+    }
+});
+
 /// MinerApp Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
 // #[serde(deny_unknown_fields)]
-pub struct OlCliConfig {
+pub struct AppCfg {
   /// Workspace config
   pub workspace: Workspace,
   /// User Profile
@@ -28,7 +64,7 @@ pub struct OlCliConfig {
   pub tx_configs: TxConfigs,
 }
 
-impl OlCliConfig {
+impl AppCfg {
   /// Gets the dynamic waypoint from libra node's key_store.json
   pub fn get_waypoint(&self, swarm_path_opt: Option<PathBuf>) -> Option<Waypoint> {
     if let Some(path) = swarm_path_opt{ 
@@ -76,13 +112,19 @@ impl OlCliConfig {
   }
 
   /// Get where node key_store.json stored.
-  pub fn init_miner_configs(
+  pub fn init_app_configs(
     authkey: AuthenticationKey,
     account: AccountAddress,
     config_path: &Option<PathBuf>,
-  ) -> OlCliConfig {
+  ) -> AppCfg {
+    
     // TODO: Check if configs exist and warn on overwrite.
-    let mut default_config = OlCliConfig::default();
+    let mut default_config = AppCfg::default();
+    default_config.profile.auth_key = authkey.to_string();
+    default_config.profile.account = account;
+
+    // skip questionnaire if CI
+    if *IS_CI { return default_config }
 
     default_config.workspace.node_home = if config_path.is_some() {
       config_path.clone().unwrap()
@@ -93,63 +135,54 @@ impl OlCliConfig {
     default_config.workspace.node_home.push(NODE_HOME);
 
     fs::create_dir_all(&default_config.workspace.node_home).unwrap();
-    // Set up github token
-    let mut rl = Editor::<()>::new();
 
     let system_ip = machine_ip::get().unwrap().to_string();
     // println!("\nFound host IP address: {:?}\n", system_ip);
 
-    // TODO: Use `dialoguer` for this
-    let ip = match rl.readline(&format!(
-      "Will you use this host, and this IP address {:?}, for your node? (y/n) ",
+    let txt = &format!(
+      "Will you use this host, and this IP address {:?}, for your node?",
       system_ip
-    )) {
-      Ok(val) => {
-        if (val == "y") | (val == "Y") {
-          system_ip
+    );
+    let ip = match Confirm::new().with_prompt(txt).interact().unwrap() {
+      true => {
+        system_ip
             .parse::<Ipv4Addr>()
             .expect("Could not parse IP address: {:?}")
-        } else {
-          let readline = rl
-            .readline("Enter the IP address of the node: ")
-            .expect("Must enter an ip address, or 0.0.0.0 as localhost");
-
-          readline
-            .parse::<Ipv4Addr>()
-            .expect("Could not parse IP address")
-        }
-      }
-      Err(_) => {
-        std::process::exit(1);
-      }
-    };
+      },
+      false =>  {
+        let input: String =  Input::new().with_prompt("Enter the IP address of the node").interact_text().unwrap();
+        input
+        .parse::<Ipv4Addr>()
+        .expect("Could not parse IP address")
+        // println!("NO");
+        // println!("skipping instruction, going to next in batch");      }
+    },
+  };
 
     default_config.profile.ip = ip;
 
-    // Get optional statement which goes into genesis block
-    default_config.profile.statement = rl
-      .readline("Enter a (fun) statement to go into your first transaction: ")
-      .expect(
-        "Please enter some text unique to you which will go into your block 0 preimage.",
-      );
+    // Get statement which goes into genesis block
+    default_config.profile.statement = Input::new()
+    .with_prompt("Enter a (fun) statement to go into your first transaction: ")
+    .interact_text()
+    .expect("We need some text unique to you which will go into your the first proof of your tower");
 
-    default_config.profile.auth_key = authkey.to_string();
-    default_config.profile.account = account;
 
-    OlCliConfig::save_file(&default_config);
+
+    AppCfg::save_file(&default_config);
 
     default_config
   }
 
   /// Save swarm default configs to swarm path
-  pub fn init_swarm_config(swarm_path: PathBuf) -> OlCliConfig{
+  pub fn init_swarm_config(swarm_path: PathBuf) -> AppCfg{
     println!("init_swarm_config: {:?}", swarm_path);
-    let host_config = OlCliConfig::make_swarm_configs(swarm_path);
-    OlCliConfig::save_file(&host_config);
+    let host_config = AppCfg::make_swarm_configs(swarm_path);
+    AppCfg::save_file(&host_config);
     host_config
   }
 
-  fn save_file(host_config: &OlCliConfig) {
+  fn save_file(host_config: &AppCfg) {
     let toml = toml::to_string(host_config).unwrap();
     let home_path = host_config.workspace.node_home.clone();
     // create home path if doesn't exist, usually only in dev/ci environments.
@@ -166,7 +199,7 @@ impl OlCliConfig {
   }
 
   /// get configs from swarm
-  pub fn make_swarm_configs(swarm_path: PathBuf) -> OlCliConfig {
+  pub fn make_swarm_configs(swarm_path: PathBuf) -> AppCfg {
     let config_path = swarm_path.join("0/node.yaml");
     let config = NodeConfig::load(&config_path).unwrap_or_else(
         |_| panic!("Failed to load NodeConfig from file: {:?}", &config_path)
@@ -189,7 +222,7 @@ impl OlCliConfig {
     // let waypoint = config.base.waypoint.waypoint();
 
 
-    let mut cfg = OlCliConfig {
+    let mut cfg = AppCfg {
       workspace: Workspace::default(),
       profile: Profile::default(),
       chain_info: ChainInfo::default(),
@@ -229,7 +262,7 @@ impl OlCliConfig {
 ///
 /// Note: if your needs are as simple as below, you can
 /// use `#[derive(Default)]` on OlCliConfig instead.
-impl Default for OlCliConfig {
+impl Default for AppCfg {
   fn default() -> Self {
     Self {
       workspace: Workspace::default(),

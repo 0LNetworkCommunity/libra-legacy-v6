@@ -60,7 +60,7 @@ download:
 		chmod 744 /usr/local/bin/$$(echo $$b | rev | cut -d"/" -f1 | rev) ;\
 	done
 
-download-old:
+download-release:
 	@for b in ${BINS} ; do \
 		echo $$b ; \
 		curl --create-dirs -o ${DATA_PATH}/release-${RELEASE}/$$b -L ${RELEASE_URL}/${RELEASE}/$$b ; \
@@ -73,23 +73,22 @@ uninstall:
 		rm /usr/local/bin/$$b ; \
 	done
 
-# curl -o ${DATA_PATH}/db-backup 
-# curl --create-dirs -o ${DATA_PATH}/release-${RELEASE}/db-backup -L ${RELEASE_URL}/${RELEASE}/db-backup
-
 bins:
 # Build and install genesis tool, libra-node, and miner
 	cargo run -p stdlib --release
 
 # NOTE: stdlib is built for cli bindings
-	cargo build -p libra-node -p miner -p backup-cli -p ol-cli -p txs --release
+	cargo build -p libra-node -p miner -p backup-cli -p ol-cli -p txs -p onboard --release
 
 install:
 	sudo cp -f ${SOURCE}/target/release/miner /usr/local/bin/miner
 	sudo cp -f ${SOURCE}/target/release/libra-node /usr/local/bin/libra-node
 	sudo cp -f ${SOURCE}/target/release/db-restore /usr/local/bin/db-restore
 	sudo cp -f ${SOURCE}/target/release/db-backup /usr/local/bin/db-backup
+	sudo cp -f ${SOURCE}/target/release/db-backup-verify /usr/local/bin/db-backup-verify
 	sudo cp -f ${SOURCE}/target/release/ol_cli /usr/local/bin/ol
 	sudo cp -f ${SOURCE}/target/release/txs /usr/local/bin/txs
+	sudo cp -f ${SOURCE}/target/release/onboard /usr/local/bin/onboard
 
 
 #### GENESIS BACKEND SETUP ####
@@ -373,7 +372,7 @@ dev-join: clear fix dev-wizard
 
 dev-wizard:
 #  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
-	MNEM='${MNEM}' cargo run -p miner -- val-wizard --skip-mining --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis
+	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis
 
 #### DEVNET INFRASTRUCTURE ####
 # usually do this on Alice, which has the dev-epoch-archive repo, and dev-genesis

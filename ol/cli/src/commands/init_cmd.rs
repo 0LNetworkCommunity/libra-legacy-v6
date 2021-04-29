@@ -2,7 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{application::app_config, config::OlCliConfig, entrypoint};
+use crate::{application::app_config, config::AppCfg, entrypoint};
 use abscissa_core::{Command, FrameworkError, Options, Runnable, config};
 use anyhow::Error;
 use libra_genesis_tool::{init, key, keyscheme::KeyScheme};
@@ -51,18 +51,18 @@ impl Runnable for InitCmd {
 }
 
 /// Initializes the necessary 0L config files: 0L.toml
-pub fn initialize_host(authkey: AuthenticationKey, account: AccountAddress, path: &Option<PathBuf>) -> Result <OlCliConfig, Error>{
-    let cfg = OlCliConfig::init_miner_configs(authkey, account, path, );
+pub fn initialize_host(authkey: AuthenticationKey, account: AccountAddress, path: &Option<PathBuf>) -> Result <AppCfg, Error>{
+    let cfg = AppCfg::init_app_configs(authkey, account, path, );
     Ok(cfg)
 }
 
 /// Initializes the necessary 0L config files: 0L.toml
-pub fn initialize_host_swarm(swarm_path: PathBuf) -> Result <OlCliConfig, Error>{
-    let cfg = OlCliConfig::init_swarm_config(swarm_path);
+pub fn initialize_host_swarm(swarm_path: PathBuf) -> Result <AppCfg, Error>{
+    let cfg = AppCfg::init_swarm_config(swarm_path);
     Ok(cfg)
 }
 /// Initializes the necessary validator config files: genesis.blob, key_store.json
-pub fn initialize_validator(wallet: &WalletLibrary, miner_config: &OlCliConfig) -> Result <(), Error>{
+pub fn initialize_validator(wallet: &WalletLibrary, miner_config: &AppCfg) -> Result <(), Error>{
     let home_dir = &miner_config.workspace.node_home;
     let keys = KeyScheme::new(wallet);
     let namespace = miner_config.profile.auth_key.to_owned();
@@ -73,11 +73,11 @@ pub fn initialize_validator(wallet: &WalletLibrary, miner_config: &OlCliConfig) 
     Ok(())
 }
 
-impl config::Override<OlCliConfig> for InitCmd {
+impl config::Override<AppCfg> for InitCmd {
     // Process the given command line options, overriding settings from
     // a configuration file using explicit flags taken from command-line
     // arguments.
-    fn override_config(&self, config: OlCliConfig) -> Result<OlCliConfig, FrameworkError> {
+    fn override_config(&self, config: AppCfg) -> Result<AppCfg, FrameworkError> {
         Ok(config)
     }
 }

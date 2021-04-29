@@ -2,14 +2,15 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{block::parse_block_file, prelude::app_config};
+use ol_types::{block::Block};
+use crate::prelude::app_config;
+use super::{files_cmd};
 
-use super::{files_cmd, zero_cmd};
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_genesis_tool::keyscheme::KeyScheme;
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use libra_wallet::WalletLibrary;
-use ol_cli::{commands::init_cmd, config::OlCliConfig};
+use ol_cli::{commands::init_cmd, config::AppCfg};
 use ol_types::{account::ValConfigs, autopay::PayInstruction, config::TxType};
 use reqwest::Url;
 use serde_json::Value;
@@ -103,7 +104,7 @@ impl Runnable for ValWizardCmd {
 
         if !self.skip_mining {
             // Mine Block
-            zero_cmd::mine_zero(&miner_config);
+            miner::block::write_genesis(&miner_config);
             status_ok!(
                 "\nGenesis proof complete",
                 "\n...........................\n"
@@ -131,7 +132,7 @@ fn get_autopay_batch(
     template: &Option<Url>,
     file_path: &Option<PathBuf>,
     home_path: &PathBuf,
-    cfg: &OlCliConfig,
+    cfg: &AppCfg,
     wallet: &WalletLibrary,
 ) -> (Option<Vec<PayInstruction>>, Option<Vec<SignedTransaction>>) {
     let file_name = if template.is_some() {
@@ -184,7 +185,7 @@ fn get_epoch_info(url: &Url) -> (Option<u64>, Option<Waypoint>) {
 fn write_manifest(
     path: &Option<PathBuf>,
     wallet: WalletLibrary,
-    wizard_config: Option<OlCliConfig>,
+    wizard_config: Option<AppCfg>,
     autopay_batch: Option<Vec<PayInstruction>>,
     autopay_signed: Option<Vec<SignedTransaction>>,
 ) {
@@ -199,7 +200,7 @@ fn write_manifest(
         .unwrap_or_else(|| cfg.workspace.node_home.clone());
 
     let keys = KeyScheme::new(&wallet);
-    let block = parse_block_file(cfg.get_block_dir().join("block_0.json").to_owned());
+    let block = Block::parse_block_file(cfg.get_block_dir().join("block_0.json").to_owned());
 
     ValConfigs::new(
         block,

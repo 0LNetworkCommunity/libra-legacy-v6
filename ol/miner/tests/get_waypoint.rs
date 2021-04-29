@@ -3,11 +3,10 @@
 #![forbid(unsafe_code)]
 use std::{fs, io::Write};
 use libra_types::waypoint::Waypoint;
-use miner::config;
 #[test]
 #[ignore]
 fn test_waypoint() {
-    let s = config::MinerConfig::default();
+    let s = ol_types::config::AppCfg::default();
 
     let path =  s.get_key_store_path();
     fs::create_dir_all(&s.workspace.node_home.clone()).unwrap();

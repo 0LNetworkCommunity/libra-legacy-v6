@@ -5038,6 +5038,7 @@ dependencies = [
  "ajson",
  "anyhow",
  "byteorder",
+ "dialoguer",
  "dirs 2.0.2",
  "hex 0.4.2",
  "libra-canonical-serialization",
@@ -5048,12 +5049,43 @@ dependencies = [
  "libra-network-address",
  "libra-types",
  "machine-ip",
+ "once_cell",
  "reqwest",
  "rustyline",
  "serde",
  "serde_json",
  "toml",
  "url",
+]
+
+[[package]]
+name = "onboard"
+version = "0.1.0"
+dependencies = [
+ "abscissa_core",
+ "anyhow",
+ "criterion",
+ "dirs 2.0.2",
+ "gumdrop",
+ "keygen",
+ "libra-genesis-tool",
+ "libra-global-constants",
+ "libra-network-address",
+ "libra-types",
+ "libra-wallet",
+ "miner",
+ "ol-cli",
+ "ol-types",
+ "once_cell",
+ "reqwest",
+ "rustyline",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "toml",
+ "transaction-builder",
+ "txs",
+ "wait-timeout",
 ]
 
 [[package]]

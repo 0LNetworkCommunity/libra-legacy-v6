@@ -6,7 +6,7 @@ use reqwest::Url;
 use libra_types::{waypoint::Waypoint};
 use anyhow::Error;
 use anyhow::{Result};
-use crate::{config::OlCliConfig, entrypoint, node::node::Node, prelude::app_config};
+use crate::{config::AppCfg, entrypoint, node::node::Node, prelude::app_config};
 
 /// returns a LibraClient instance.
 // TODO: Use app config file for params
@@ -42,7 +42,7 @@ pub fn get_client() -> Option<LibraClient> {
 }
 
 /// get client type with defaults from toml for remote node
-pub fn default_remote_client(config: &OlCliConfig, waypoint: Waypoint)  -> Option<(LibraClient, Waypoint)>{
+pub fn default_remote_client(config: &AppCfg, waypoint: Waypoint)  -> Option<(LibraClient, Waypoint)>{
     let remote_url = config.profile.upstream_nodes.clone().unwrap().into_iter().next().unwrap(); // upstream_node_url.clone();
     match make_client(Some(remote_url.clone()), waypoint) {
       Ok(client) => { Some((client, waypoint)) }
@@ -51,7 +51,7 @@ pub fn default_remote_client(config: &OlCliConfig, waypoint: Waypoint)  -> Optio
 }
 
 /// get client type with defaults from toml for local node
-pub fn default_local_client(config: &OlCliConfig,  waypoint: Waypoint)  -> Option<(LibraClient, Waypoint)>{
+pub fn default_local_client(config: &AppCfg,  waypoint: Waypoint)  -> Option<(LibraClient, Waypoint)>{
     let local_url = config.profile.default_node.clone().expect("could not get url from configs");
     match make_client(Some(local_url.clone()), waypoint) {
         Ok(client) => { Some((client, waypoint)) }
@@ -69,7 +69,7 @@ pub fn swarm_test_client(swarm_path: PathBuf) -> Option<(LibraClient, Waypoint)>
 }
 
 /// picks what URL to connect to based on sync state. Or returns the client for swarm.
-pub fn pick_client(swarm_path: Option<PathBuf>, config: &OlCliConfig) -> Option<(LibraClient, Waypoint)> {
+pub fn pick_client(swarm_path: Option<PathBuf>, config: &AppCfg) -> Option<(LibraClient, Waypoint)> {
     if let Some(path) = swarm_path {
       return swarm_test_client(path);
     };

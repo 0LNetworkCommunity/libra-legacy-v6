@@ -2,7 +2,9 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{block::{parse_block_file, write_genesis}, config::MinerConfig, delay};
+use ol_types::block::Block;
+use miner::{delay, block::write_genesis};
+use ol_types::config::AppCfg;
 use abscissa_core::{Command, Options, Runnable};
 use std::{path::PathBuf};
 use ol_types::account;
@@ -35,7 +37,7 @@ impl Runnable for UserWizardCmd {
 }
 
 fn wizard(path: PathBuf, is_fix: bool, block_zero: &Option<PathBuf>) {
-    let mut miner_configs = MinerConfig::default();
+    let mut miner_configs = AppCfg::default();
     
     let (authkey, account, _) = if is_fix { 
         keygen::account_from_prompt()
@@ -52,7 +54,7 @@ fn wizard(path: PathBuf, is_fix: bool, block_zero: &Option<PathBuf>) {
     // Create block zero, if there isn't one.
     let block;
     if let Some(block_path) = block_zero {
-        block = parse_block_file(block_path.to_owned());
+        block = Block::parse_block_file(block_path.to_owned());
     } else {
         block = write_genesis(&miner_configs);
     }

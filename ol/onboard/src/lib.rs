@@ -12,16 +12,13 @@
     rust_2018_idioms,
     trivial_casts,
     unused_lifetimes,
-    unused_qualifications
+    unused_qualifications,
+    unused_extern_crates
 )]
 
-pub mod prelude;
 pub mod application;
 pub mod commands;
-pub mod entrypoint;
 pub mod error;
-
-pub mod block;
-pub mod delay;
-pub mod backlog;
-pub mod commit_proof;
+pub mod prelude;
+pub mod entrypoint;
+pub mod manifest;

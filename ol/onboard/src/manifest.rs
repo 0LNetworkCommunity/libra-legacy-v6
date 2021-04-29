@@ -2,11 +2,8 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{block::parse_block_file, config::MinerConfig};
-
+use ol_types::{block::Block, config::AppCfg};
 use libra_genesis_tool::keyscheme::KeyScheme;
-
-
 use libra_types::transaction::SignedTransaction;
 use libra_wallet::WalletLibrary;
 use ol_types::{account::ValConfigs, autopay::PayInstruction};
@@ -17,7 +14,7 @@ use crate::prelude::app_config;
 pub fn write_manifest(
   path: &Option<PathBuf>,
   wallet: WalletLibrary,
-  wizard_config: Option<MinerConfig>,
+  wizard_config: Option<AppCfg>,
   autopay_batch: Option<Vec<PayInstruction>>,
   autopay_signed: Option<Vec<SignedTransaction>>,
 ) {
@@ -30,7 +27,7 @@ pub fn write_manifest(
     );
 
     let keys = KeyScheme::new(&wallet);
-    let block = parse_block_file(cfg.get_block_dir().join("block_0.json").to_owned());
+    let block = Block::parse_block_file(cfg.get_block_dir().join("block_0.json").to_owned());
 
     ValConfigs::new(
         block,

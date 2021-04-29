@@ -1,13 +1,13 @@
 //! `sync` subcommand
 
 use super::node::Node;
-use crate::{config::OlCliConfig, node::client::*};
+use crate::{config::AppCfg, node::client::*};
 use cli::libra_client::LibraClient;
 use libra_types::waypoint::Waypoint;
 
 impl Node {
   /// check if node is synced
-  pub fn cold_start_is_synced(config: &OlCliConfig, waypoint: Waypoint) -> (bool, Option<i64>) {
+  pub fn cold_start_is_synced(config: &AppCfg, waypoint: Waypoint) -> (bool, Option<i64>) {
     if !Node::node_running() {
       return (false, None);
     };
@@ -29,7 +29,7 @@ impl Node {
   }
 
   /// Compare the nodes from toml config.
-  pub fn compare_from_config(config: &OlCliConfig, waypoint: Waypoint) -> Option<i64> {
+  pub fn compare_from_config(config: &AppCfg, waypoint: Waypoint) -> Option<i64> {
     let local_client = default_local_client(config, waypoint);
 
     let remote_client = default_remote_client(config, waypoint);

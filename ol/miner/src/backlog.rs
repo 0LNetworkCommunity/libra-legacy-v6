@@ -6,10 +6,9 @@ use cli::{libra_client::LibraClient};
 use ol_types::block::Block;
 use txs::submit_tx::{TxParams, eval_tx_status};
 use std::{fs::File, path::PathBuf};
-// use glob::glob;
+use ol_types::config::AppCfg;
 use crate::{
-    config::MinerConfig,
-    submit_tx::{
+    commit_proof::{
         commit_proof_tx,
         },
 };
@@ -17,7 +16,7 @@ use std::io::BufReader;
 use crate::block::parse_block_height;
 
 /// Submit a backlog of blocks that may have been mined while network is offline. Likely not more than 1. 
-pub fn process_backlog(config: &MinerConfig, tx_params: &TxParams, is_operator: bool) {
+pub fn process_backlog(config: &AppCfg, tx_params: &TxParams, is_operator: bool) {
     // Getting remote miner state
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
     println!("Fetching remote tower height");

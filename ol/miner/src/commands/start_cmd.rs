@@ -1,6 +1,6 @@
 //! `start`
 
-use crate::config::MinerConfig;
+use ol_types::config::AppCfg;
 use crate::{backlog, block::*, entrypoint};
 use crate::{entrypoint::EntryPointTxsCmd, prelude::*};
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
@@ -90,11 +90,11 @@ impl Runnable for StartCmd {
     }
 }
 
-impl config::Override<MinerConfig> for StartCmd {
+impl config::Override<AppCfg> for StartCmd {
     // Process the given command line options, overriding settings from
     // a configuration file using explicit flags taken from command-line
     // arguments.
-    fn override_config(&self, config: MinerConfig) -> Result<MinerConfig, FrameworkError> {
+    fn override_config(&self, config: AppCfg) -> Result<AppCfg, FrameworkError> {
         Ok(config)
     }
 }

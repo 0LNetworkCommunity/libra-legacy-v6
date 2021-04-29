@@ -1,38 +1,36 @@
 //! MinerApp Abscissa Application
 
-use crate::{commands::MinerCmd, entrypoint::EntryPoint};
+use crate::{commands::WizCmd, entrypoint::EntryPoint};
 use abscissa_core::{
     application::{self, AppCell},
     config, trace, Application, FrameworkError, StandardPaths,
 };
-
 use ol_types::config::AppCfg;
-
 /// Application state
-pub static APPLICATION: AppCell<MinerApp> = AppCell::new();
+pub static APPLICATION: AppCell<OnboardApp> = AppCell::new();
 
 /// Obtain a read-only (multi-reader) lock on the application state.
 ///
 /// Panics if the application state has not been initialized.
-pub fn app_reader() -> application::lock::Reader<MinerApp> {
+pub fn app_reader() -> application::lock::Reader<OnboardApp> {
     APPLICATION.read()
 }
 
 /// Obtain an exclusive mutable lock on the application state.
-pub fn app_writer() -> application::lock::Writer<MinerApp> {
+pub fn app_writer() -> application::lock::Writer<OnboardApp> {
     APPLICATION.write()
 }
 
 /// Obtain a read-only (multi-reader) lock on the application configuration.
 ///
 /// Panics if the application configuration has not been loaded.
-pub fn app_config() -> config::Reader<MinerApp> {
+pub fn app_config() -> config::Reader<OnboardApp> {
     config::Reader::new(&APPLICATION)
 }
 
 /// MinerApp Application
 #[derive(Debug)]
-pub struct MinerApp {
+pub struct OnboardApp {
     /// Application configuration.
     config: Option<AppCfg>,
 
@@ -44,7 +42,7 @@ pub struct MinerApp {
 ///
 /// By default no configuration is loaded, and the framework state is
 /// initialized to a default, empty state (no components, threads, etc).
-impl Default for MinerApp {
+impl Default for OnboardApp {
     fn default() -> Self {
         Self {
             config: None,
@@ -53,9 +51,9 @@ impl Default for MinerApp {
     }
 }
 
-impl Application for MinerApp {
+impl Application for OnboardApp {
     /// Entrypoint command for this application.
-    type Cmd = EntryPoint<MinerCmd>;
+    type Cmd = EntryPoint<WizCmd>;
 
     /// Application configuration.
     type Cfg = AppCfg;
@@ -101,7 +99,7 @@ impl Application for MinerApp {
     }
 
     /// Get tracing configuration from command-line options
-    fn tracing_config(&self, command: &EntryPoint<MinerCmd>) -> trace::Config {
+    fn tracing_config(&self, command: &EntryPoint<WizCmd>) -> trace::Config {
         if command.verbose {
             trace::Config::verbose()
         } else {
