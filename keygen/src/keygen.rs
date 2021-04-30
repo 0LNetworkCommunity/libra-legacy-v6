@@ -1,7 +1,6 @@
 //! Key generation
 use std::env;
 
-use abscissa_core::{status_info, status_warn};
 use libra_wallet::{Mnemonic, WalletLibrary};
 use libra_types::{
   account_address::AccountAddress,
@@ -22,16 +21,11 @@ pub fn keygen() -> (AuthenticationKey, AccountAddress, WalletLibrary) {
         ...........................\n\
         {:?}\n", &account);
 
-        // TODO: Auth key is not needed anywhere.
-        // println!("0L Auth Key:\n\
-        // ...........................\n\
-        // {:?}\n", &auth_key.to_string());
-
         println!("0L mnemonic:\n\
         ...........................");
       
 
-        status_info!(&mnemonic_string.as_str(), "\n");
+        println!("{}\n", &mnemonic_string.as_str());
         println!("WRITE THIS DOWN NOW. This is the last time you will see \
                   this mnemonic. It is not saved anywhere. Nobody can help \
                   you if you lose it.\n\n");
@@ -62,7 +56,7 @@ pub fn account_from_prompt()
         
         // if we are in debugging or CI mode
         if val != "prod" && maybe_env_mnem.is_ok() {
-          status_warn!("Debugging mode, using mnemonic from env variable, $MNEM");
+          println!("Debugging mode, using mnemonic from env variable, $MNEM");
           return get_account_from_mnem(maybe_env_mnem.unwrap().trim().to_string())
         }
         println!("Debugging mode, you can set mnemonic to env $MNEM");
@@ -92,8 +86,6 @@ fn wallet() {
       Mnemonic::from(&mnemonic_string).unwrap()
     );
 
-    // println!("wallet\n:{:?}", wallet);
-
     let (main_addr, child_number ) = wallet.new_address().unwrap();
     println!("wallet\n:{:?} === {:x}", child_number, main_addr);
 
@@ -103,6 +95,4 @@ fn wallet() {
 
     // Expect this to be zero before we haven't populated the address map in the repo
     assert!(vec_addresses.len() == 1);
-    // Empty hashmap should be fine
-    // let mut vec_account_data = Vec::new();
 }
