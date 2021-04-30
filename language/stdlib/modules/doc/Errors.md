@@ -154,7 +154,7 @@ which requires the signer to have the role of treasury compliance.
 A function to create an error from from a category and a reason.
 
 
-<pre><code><b>fun</b> <a href="Errors.md#0x1_Errors_make">make</a>(category: u8, reason: u64): u64
+<pre><code><b>fun</b> <a href="Errors.md#0x1_Errors_make">make</a>(_category: u8, reason: u64): u64
 </code></pre>
 
 
@@ -163,8 +163,10 @@ A function to create an error from from a category and a reason.
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Errors.md#0x1_Errors_make">make</a>(category: u8, reason: u64): u64 {
-    (category <b>as</b> u64) + (reason &lt;&lt; 8)
+<pre><code><b>fun</b> <a href="Errors.md#0x1_Errors_make">make</a>(_category: u8, reason: u64): u64 {
+    (reason <b>as</b> u64)
+    //(category <b>as</b> u64) + (reason &lt;&lt; 8) - <b>native</b> implementation
+    // Changed error codes make <b>to</b> easily track them in 0L.
 }
 </code></pre>
 
@@ -178,9 +180,9 @@ A function to create an error from from a category and a reason.
 
 
 <pre><code><b>pragma</b> opaque = <b>true</b>;
-<b>ensures</b> [concrete] result == category + (reason &lt;&lt; 8);
+<b>ensures</b> [concrete] result == reason;
 <b>aborts_if</b> [abstract] <b>false</b>;
-<b>ensures</b> [abstract] result == category;
+<b>ensures</b> [abstract] result == reason;
 </code></pre>
 
 

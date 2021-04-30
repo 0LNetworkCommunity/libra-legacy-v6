@@ -124,7 +124,10 @@ impl AppCfg {
     default_config.profile.account = account;
 
     // skip questionnaire if CI
-    if *IS_CI { return default_config }
+    if *IS_CI { 
+      AppCfg::save_file(&default_config);
+      return default_config 
+    }
 
     default_config.workspace.node_home = if config_path.is_some() {
       config_path.clone().unwrap()
@@ -154,8 +157,6 @@ impl AppCfg {
         input
         .parse::<Ipv4Addr>()
         .expect("Could not parse IP address")
-        // println!("NO");
-        // println!("skipping instruction, going to next in batch");      }
     },
   };
 

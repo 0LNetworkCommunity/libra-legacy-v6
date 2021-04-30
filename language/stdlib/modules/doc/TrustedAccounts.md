@@ -3,7 +3,6 @@
 
 # Module `0x1::TrustedAccounts`
 
-Functions to initialize, accumulated, and burn transaction fees.
 
 
 -  [Resource `Trusted`](#0x1_TrustedAccounts_Trusted)
@@ -12,7 +11,8 @@ Functions to initialize, accumulated, and burn transaction fees.
 -  [Function `get_trusted`](#0x1_TrustedAccounts_get_trusted)
 
 
-<pre><code><b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
+<pre><code><b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
+<b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
@@ -122,7 +122,7 @@ Functions to initialize, accumulated, and burn transaction fees.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="TrustedAccounts.md#0x1_TrustedAccounts_get_trusted">get_trusted</a>(account: address): (vector&lt;address&gt;, vector&lt;address&gt;) <b>acquires</b> <a href="TrustedAccounts.md#0x1_TrustedAccounts_Trusted">Trusted</a>{
-  <b>assert</b>(<b>exists</b>&lt;<a href="TrustedAccounts.md#0x1_TrustedAccounts_Trusted">Trusted</a>&gt;(account), 220101011000);
+  <b>assert</b>(<b>exists</b>&lt;<a href="TrustedAccounts.md#0x1_TrustedAccounts_Trusted">Trusted</a>&gt;(account), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(200101));
   <b>let</b> state = borrow_global&lt;<a href="TrustedAccounts.md#0x1_TrustedAccounts_Trusted">Trusted</a>&gt;(account);
   (*&state.my_trusted_accounts, *&state.follow_operators_trusting_accounts)
 }
