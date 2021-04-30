@@ -446,10 +446,10 @@ impl LibraVMImpl {
         log_context: &impl LogContext,
     ) -> Result<(), VMStatus> {
         if let Ok((round, _timestamp, _previous_vote, _proposer)) = block_metadata.into_inner() {
-            print!("========  round is {}\n", round);
+            debug!("====  round is {} ====", round);
             // hardcoding consensus checking on round 2
             if round==2 {
-                info!("==== stdlib upgrade: checking for stdlib upgrade");
+                info!("==== stdlib upgrade: checking for stdlib upgrade ====");
                 // tick Oracle::check_upgrade
                 let args = vec![
                     Value::transaction_argument_signer_reference(txn_data.sender),
@@ -499,7 +499,7 @@ impl LibraVMImpl {
 
                 let payload = upgrade_payload.payload;
                 if payload.len() > 0 {
-                    info!("==== stdlib upgrade: upgrade payload elected in previous epoch");
+                    info!("==== stdlib upgrade: upgrade payload elected in previous epoch ====");
 
                     // publish the agreed stdlib
                     let new_stdlib = stdlib::import_stdlib(&payload);
@@ -517,7 +517,7 @@ impl LibraVMImpl {
                         ).expect("Failed to publish module");
                         counter += 1;
                     }
-                    info!("==== stdlib upgrade: published {} modules", counter);
+                    info!("==== stdlib upgrade: published {} modules ====", counter);
 
                     // reset the UpgradePayload
                     let args = vec![
@@ -532,7 +532,7 @@ impl LibraVMImpl {
                         cost_strategy,
                         log_context,
                     ).expect("Couldn't reset payload");
-                    info!("==== stdlib upgrade: end upgrade at time: {}", timestamp);
+                    info!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
                 }
             }
         }
