@@ -1,9 +1,6 @@
 //! `account`
 
-use crate::{
-    // cache::{DB_CACHE, DB_CACHE_READ},
-    node::node::Node,
-};
+use crate::node::node::Node;
 use anyhow::{Error, Result};
 use libra_json_rpc_client::{views::AccountView, AccountAddress};
 use libra_types::{account_state::AccountState, transaction::Version};
@@ -37,17 +34,16 @@ impl OwnerAccountView {
 
 impl Node {
     /// fetch new account info
-    pub fn refresh_account_info(&mut self) -> &OwnerAccountView {
-        let av = self.get_account_view();
-        self.vitals.account_view.balance = get_balance(av);
-        self.vitals.account_view.is_in_validator_set = self.is_in_validator_set();
+    pub fn refresh_account_info(&mut self) -> Option<&OwnerAccountView>{
+        match self.get_account_view() {
+            Some(av) => {
+                self.vitals.account_view.balance = get_balance(av);
+                self.vitals.account_view.is_in_validator_set = self.is_in_validator_set();
 
-        // let ser = serde_json::to_vec(&self.vitals.account_view).unwrap();
-        // DB_CACHE
-        //     .put(ACCOUNT_INFO_DB_KEY.as_bytes(), ser)
-        //     .expect("could not reach account_info cache");
-
-        &self.vitals.account_view
+                Some(&self.vitals.account_view)
+            }
+            None => None
+        }
     }
 
     // /// get chain info from cache
@@ -61,13 +57,15 @@ impl Node {
     // }
 
     /// Get the account view struct
-    pub fn get_account_view(&mut self) -> AccountView {
+    pub fn get_account_view(&mut self) -> Option<AccountView> {
         let account = self.conf.profile.account;
         let (account_view, _) = self
             .client
             .get_account(account, true)
             .expect(&format!("could not get account at address {:?}", account));
-        account_view.expect(&format!("could not get account at address {:?}", account))
+        account_view
+
+        // .expect(&format!("could not get account at address {:?}", account))
     }
 
     /// Return a full Move-annotated account resource struct

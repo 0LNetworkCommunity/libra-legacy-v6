@@ -24,11 +24,15 @@ impl Node {
     use QueryType::*;
     match query_type {
       Balance => {
-        let account_view = self.get_account_view();
-        for av in account_view.balances.iter() {
-          if av.currency == "GAS" {
-            return av.amount.to_formatted_string(&Locale::en);
-          }
+        match self.get_account_view() {
+            Some(account_view) => {
+              for av in account_view.balances.iter() {
+                if av.currency == "GAS" {
+                  return av.amount.to_formatted_string(&Locale::en);
+                }
+              }
+            },
+            None => {}
         }
         "0".to_string()
       }

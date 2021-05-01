@@ -16,17 +16,17 @@ pub const CACHE_JSON_NAME: &str = "monitor_cache.json";
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Vitals {
-    ///
+    /// healthcheck items
     pub items: Items,
-    ///
+    /// owner account state
     pub account_view: OwnerAccountView,
-    ///
+    /// chain metadata
     pub chain_view: Option<ChainView>,
-    ///
+    /// the node process
     pub node_proc: Option<HostProcess>,
-    ///
+    /// the miner process
     pub miner_proc: Option<HostProcess>,
-    ///
+    /// the monitor process
     pub monitor_proc: Option<HostProcess>,
     /// state of the host for state machine
     pub host_state: HostState,

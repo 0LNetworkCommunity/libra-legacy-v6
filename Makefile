@@ -358,7 +358,7 @@ devnet: clear fix fix-genesis dev-wizard start
 # Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 # This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
 
-dev-join: clear fix dev-wizard
+dev-join: clear fix fix-genesis dev-wizard
 # REQUIRES MOCK GIT INFRASTRUCTURE: OLSF/dev-genesis OLSF/dev-epoch-archive
 # see `devnet-archive` below 
 # We want to simulate the onboarding/new validator fetching genesis files from the mock archive: dev-genesis-archive

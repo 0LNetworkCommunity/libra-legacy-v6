@@ -143,15 +143,6 @@ pub fn encode_genesis_change_set(
     println!("OK create_and_initialize_main_accounts =============== ");
 
     //////// 0L ////////
-    // TODO: Replace set params by ENV with NamedChange
-    // if [NamedChain::TESTNET, NamedChain::DEVNET, NamedChain::TESTING]
-    //     .iter()
-    //     .any(|test_chain_id| test_chain_id.id() == chain_id.id())
-    // {
-    //     // if some tests need to use prod vdf values, set it with NODE_ENV=prod
-    //     dbg!(get_env());
-    // initialize_testnet(&mut session, &log_context);
-    // }
     let genesis_env = get_env();
     println!("Initializing with env: {}", genesis_env);
     if genesis_env != "prod"  {
@@ -271,10 +262,8 @@ fn create_and_initialize_main_accounts(
     } else {
         libra_root_auth_key = AuthenticationKey::new([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
     }
-    // let treasury_compliance_auth_key = AuthenticationKey::ed25519(treasury_compliance_key);
 
     let root_libra_root_address = account_config::libra_root_address();
-    // let tc_account_address = account_config::treasury_compliance_account_address();
 
     let initial_allow_list = Value::constant_vector_generic(
         publishing_option
