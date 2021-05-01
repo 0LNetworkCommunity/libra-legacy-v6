@@ -88,7 +88,6 @@ impl Runnable for PilotCmd {
                 }
                 // did the node finish sync?
                 let sync_tup = Node::cold_start_is_synced(&cfg, wp);
-                dbg!(&sync_tup);
                 if sync_tup.0 {
                     status_ok!("Sync", "node is synced");
 

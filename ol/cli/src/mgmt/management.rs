@@ -7,11 +7,7 @@ use crate::{
 };
 use anyhow::Error;
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::HashSet,
-    fs::{self, File},
-    process::{Command, Stdio},
-};
+use std::{collections::HashSet, fs::{self, File}, process::{Command, Stdio}};
 use ol_types::config::IS_PROD;
 
 const BINARY_NODE: &str = "libra-node";
@@ -151,13 +147,18 @@ impl Node {
                 "failed to run 'libra-node', is it installed?",
             )
         } else {
-            let args = vec!["r", "-p", NODE, "--", "--config", &config_file_name];
-            println!("Starting 'cargo' with args: {:?}", args.join(" "));
+            let project_root = self.conf.workspace.source_path.clone().unwrap();
+            dbg!(&project_root);
+            let debug_bin = project_root
+            .join(format!("target/debug/{}", NODE));
+            let bin_str = debug_bin.to_str().unwrap();
+            let args = vec!["--config", &config_file_name];
+            println!("Starting 'libra-node' with args: {:?}", args.join(" "));
             spawn_process(
-                "cargo",
+                bin_str,
                 args.as_slice(),
                 "node",
-                "failed to run cargo r -p libra-node",
+                &format!("failed to run {:?}", bin_str),
             )
         };
 
@@ -188,15 +189,30 @@ impl Node {
                 "failed to run 'miner', is it installed?",
             )
         } else {
-            let args = vec!["r", "-p", MINER, "--", "start"];
-            // if use_backup { args.push("--backup-url"); };
-            println!("Starting 'cargo' with args: {:?}", args.join(" "));
+
+            let project_root = self.conf.workspace.source_path.clone().unwrap();
+            let debug_bin = project_root
+            .join(format!("/target/debug/{}", MINER));
+
+            let args = vec!["start"];
+            println!("Starting 'miner' with args: {:?}", args.join(" "));
             spawn_process(
-                "cargo",
+                debug_bin.to_str().unwrap(),
                 args.as_slice(),
                 MINER,
                 "failed to run cargo r -p miner",
             )
+          
+
+            // let args = vec!["r", "-p", MINER, "--", "start"];
+            // // if use_backup { args.push("--backup-url"); };
+            // println!("Starting 'cargo' with args: {:?}", args.join(" "));
+            // spawn_process(
+            //     "cargo",
+            //     args.as_slice(),
+            //     MINER,
+            //     "failed to run cargo r -p miner",
+            // )
         };
 
         let pid = &child.id();
