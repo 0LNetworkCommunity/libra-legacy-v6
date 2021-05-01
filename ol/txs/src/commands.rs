@@ -17,6 +17,7 @@ mod version_cmd;
 pub mod autopay_batch_cmd;
 mod demo_cmd;
 mod relay_cmd;
+mod valset_cmd;
 
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use ol_cli::commands::CONFIG_FILE;
@@ -31,6 +32,7 @@ use self::{
     autopay_batch_cmd::AutopayBatchCmd,  
     demo_cmd::DemoCmd,
     relay_cmd::RelayCmd,
+    valset_cmd::ValSetCmd,
 };
 use std::path::PathBuf;
 
@@ -50,7 +52,7 @@ pub enum TxsCmd {
     #[options(help = "submit an oracle transaction to upgrade stdlib")]
     OracleUpgrade(OracleUpgradeCmd),     
 
-    /// The `autopay-new` subcommand
+    /// The `autopay-batch` subcommand
     #[options(help = "batch autopay transactions from json file")]
     AutopayBatch(AutopayBatchCmd),   
 
@@ -64,13 +66,18 @@ pub enum TxsCmd {
     #[options(help = "display version information")]
     Version(VersionCmd),
     
-    /// The `version` subcommand
+    /// The `demo` subcommand
     #[options(help = "noop demo transaction, prints `hello world` in move")]
     Demo(DemoCmd),  
 
-     /// The `version` subcommand
+     /// The `relay` subcommand
     #[options(help = "submit a saved transaction from file")]
     Relay(RelayCmd),
+
+    /// The `valset` subcommand
+    #[options(help = "join or leave the validator universe, i.e. candidate for validator set")]
+    ValSet(ValSetCmd),
+
 }
 
 /// This trait allows you to define how application configuration is loaded.
