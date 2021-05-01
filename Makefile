@@ -53,12 +53,15 @@ deps:
 
 download:
 	@for b in ${RELEASE} ; do \
-		echo $$b ; \
-		# echo $$b | rev | cut -d"/" -f1 | rev ; \
+		echo $$b | rev | cut -d"/" -f1 | rev ; \
 		curl  --progress-bar --create-dirs -o /usr/local/bin/$$(echo $$b | rev | cut -d"/" -f1 | rev) -L $$b ; \
 		echo 'downloaded to /usr/local/bin/' ; \
 		chmod 744 /usr/local/bin/$$(echo $$b | rev | cut -d"/" -f1 | rev) ;\
 	done
+
+web-files: 
+	curl --progress-bar --create-dirs -o ${DATA_PATH}/web-monitor/public.zip https://github.com/OLSF/libra/releases/download/v4.3.0-rc.0/public.zip
+	unzip ${DATA_PATH}/web-monitor/public.zip
 
 download-release:
 	@for b in ${BINS} ; do \
