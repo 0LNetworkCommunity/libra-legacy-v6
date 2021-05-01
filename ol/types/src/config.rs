@@ -164,8 +164,6 @@ impl AppCfg {
         input
         .parse::<Ipv4Addr>()
         .expect("Could not parse IP address")
-        // println!("NO");
-        // println!("skipping instruction, going to next in batch");      }
     },
   };
 

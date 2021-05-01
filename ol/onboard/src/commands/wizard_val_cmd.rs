@@ -2,9 +2,9 @@
 
 #![allow(clippy::never_loop)]
 
-use ol_types::{block::Block};
+use super::files_cmd;
 use crate::prelude::app_config;
-use super::{files_cmd};
+use ol_types::block::Block;
 
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_genesis_tool::keyscheme::KeyScheme;
@@ -42,7 +42,6 @@ pub struct ValWizardCmd {
 impl Runnable for ValWizardCmd {
     /// Print version message
     fn run(&self) {
-
         status_info!("\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys, run the standalone keygen tool with 'ol keygen'.\n\nYour first 0L proof-of-work will be mined now. Expect this to take up to 15 minutes on modern CPUs.\n");
 
         // Get credentials from prompt
@@ -50,16 +49,17 @@ impl Runnable for ValWizardCmd {
 
         // Initialize Miner
         // Need to assign miner_config, because reading from app_config can only be done at startup, and it will be blank at the time of wizard executing.
-        let mut miner_config = init_cmd::initialize_host(authkey, account, &self.path).unwrap();
-        let home_path = &miner_config.workspace.node_home;
+        let mut cfg = AppCfg::init_app_configs(authkey, account, &self.path);
+
+        let home_path = &cfg.workspace.node_home;
         status_ok!("\nMiner config written", "\n...........................\n");
 
         if let Some(url) = &self.template_url {
             save_template(&url.join("account.json").unwrap(), home_path);
             let (epoch, wp) = get_epoch_info(&url.join("epoch.json").unwrap());
 
-            miner_config.chain_info.base_epoch = epoch;
-            miner_config.chain_info.base_waypoint = wp;
+            cfg.chain_info.base_epoch = epoch;
+            cfg.chain_info.base_waypoint = wp;
             // get autopay
             status_ok!("\nTemplate saved", "\n...........................\n");
         }
@@ -70,12 +70,12 @@ impl Runnable for ValWizardCmd {
             &self.template_url,
             &self.autopay_file,
             home_path,
-            &miner_config,
+            &cfg,
             &wallet,
         );
 
         // Initialize Validator Keys
-        init_cmd::initialize_validator(&wallet, &miner_config).unwrap();
+        init_cmd::initialize_validator(&wallet, &cfg).unwrap();
         status_ok!("\nKey file written", "\n...........................\n");
 
         // fetching the genesis files from genesis-archive
@@ -93,7 +93,7 @@ impl Runnable for ValWizardCmd {
 
         // Build Genesis and node.yaml file
         files_cmd::genesis_files(
-            &miner_config,
+            &cfg,
             &self.chain_id,
             &self.github_org,
             &self.repo,
@@ -104,7 +104,7 @@ impl Runnable for ValWizardCmd {
 
         if !self.skip_mining {
             // Mine Block
-            miner::block::write_genesis(&miner_config);
+            miner::block::write_genesis(&cfg);
             status_ok!(
                 "\nGenesis proof complete",
                 "\n...........................\n"
@@ -115,7 +115,7 @@ impl Runnable for ValWizardCmd {
         write_manifest(
             &self.path,
             wallet,
-            Some(miner_config),
+            Some(cfg),
             autopay_batch,
             autopay_signed,
         );

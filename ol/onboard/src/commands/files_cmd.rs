@@ -53,7 +53,7 @@ pub fn genesis_files(
     // 0L convention is for the namespace of the operator to be appended by '-oper'
     let namespace = miner_config.profile.auth_key.clone() + "-oper";
     
-    node_files::create_files(
+    node_files::write_node_config_files(
         home_dir.clone(), 
         chain_id.unwrap_or(1),
         &github_org.clone().unwrap_or("OLSF".to_string()),
