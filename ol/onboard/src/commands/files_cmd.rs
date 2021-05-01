@@ -6,9 +6,7 @@ use std::{fs::File, path::PathBuf};
 
 use crate::application::app_config;
 use abscissa_core::{Command, Options, Runnable};
-use anyhow::Error;
 use libra_genesis_tool::node_files;
-use ol_types::config::AppCfg;
 use std::io::Write;
 /// `files` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -34,7 +32,7 @@ impl Runnable for FilesCmd {
         // 0L convention is for the namespace of the operator to be appended by '-oper'
         let namespace = miner_configs.profile.auth_key.clone() + "-oper";
 
-        let cfg = node_files::write_node_config_files(
+        node_files::write_node_config_files(
             home_dir.clone(),
             self.chain_id.unwrap_or(1),
             &self.github_org.clone().unwrap_or("OLSF".to_string()),

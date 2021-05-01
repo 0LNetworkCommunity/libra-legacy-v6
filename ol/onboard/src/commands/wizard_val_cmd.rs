@@ -37,8 +37,6 @@ pub struct ValWizardCmd {
     template_url: Option<Url>,
     #[options(help = "template account.json to configure from")]
     autopay_file: Option<PathBuf>,
-    #[options(help = "template account.json to configure from")]
-    autopay_file: Option<PathBuf>,
     #[options(help = "An upstream peer to use in 0L.toml")]
     upstream_peer: Option<Url>,
 }
@@ -111,7 +109,7 @@ impl Runnable for ValWizardCmd {
         let namespace = app_config.profile.auth_key.clone() + "-oper";
 
         // TODO: use node_config to get the seed peers and then write upstream_node vec in 0L.toml from that.
-        let node_config = node_files::write_node_config_files(
+        node_files::write_node_config_files(
             home_dir.clone(),
             self.chain_id.unwrap_or(1),
             &self.github_org.clone().unwrap_or("OLSF".to_string()),

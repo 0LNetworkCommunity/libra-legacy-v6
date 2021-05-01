@@ -6,13 +6,10 @@ use crate::{application::app_config, config::AppCfg, entrypoint};
 use abscissa_core::{Command, FrameworkError, Options, Runnable, config};
 use anyhow::Error;
 use libra_genesis_tool::{init, key, keyscheme::KeyScheme};
-use libra_types::{
-    account_address::AccountAddress, transaction::authenticator::AuthenticationKey
-};
 use std::{fs, path::PathBuf};
 use libra_wallet::WalletLibrary;
 use keygen;
-
+use url::Url;
 /// `init` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct InitCmd {
@@ -47,17 +44,17 @@ impl Runnable for InitCmd {
             account, 
             &self.upstream_peer,
             &self.path
-          ).unwrap() 
+          )
         };
         if !self.skip_val { initialize_validator(&wallet, &miner_config).unwrap() };
     }
 }
 
-/// Initializes the necessary 0L config files: 0L.toml
-pub fn initialize_host(authkey: AuthenticationKey, account: AccountAddress, path: &Option<PathBuf>) -> Result <AppCfg, Error>{
-    let cfg = AppCfg::init_app_configs(authkey, account, path, );
-    Ok(cfg)
-}
+// / Initializes the necessary 0L config files: 0L.toml
+// pub fn initialize_host(authkey: AuthenticationKey, account: AccountAddress, path: &Option<PathBuf>) -> Result <AppCfg, Error>{
+//     let cfg = AppCfg::init_app_configs(authkey, account, path, );
+//     Ok(cfg)
+// }
 
 /// Initializes the necessary 0L config files: 0L.toml
 pub fn initialize_host_swarm(swarm_path: PathBuf) -> Result <AppCfg, Error>{
