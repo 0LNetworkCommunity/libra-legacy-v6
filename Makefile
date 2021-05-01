@@ -51,7 +51,7 @@ BINS= db-backup db-backup-verify db-restore libra-node miner ol_cli txs stdlib
 deps:
 	. ./util/setup.sh
 
-download:
+download: web-files
 	@for b in ${RELEASE} ; do \
 		echo $$b | rev | cut -d"/" -f1 | rev ; \
 		curl  --progress-bar --create-dirs -o /usr/local/bin/$$(echo $$b | rev | cut -d"/" -f1 | rev) -L $$b ; \
@@ -60,7 +60,7 @@ download:
 	done
 
 web-files: 
-	curl --progress-bar --create-dirs -o ${DATA_PATH}/web-monitor/public.zip https://github.com/OLSF/libra/releases/download/v4.3.0-rc.0/public.zip
+	curl -L --progress-bar --create-dirs -o ${DATA_PATH}/web-monitor/public.zip https://github.com/OLSF/libra/releases/download/v4.3.0-rc.0/public.zip
 	unzip ${DATA_PATH}/web-monitor/public.zip
 
 download-release:
