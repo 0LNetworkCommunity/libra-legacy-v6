@@ -51,8 +51,12 @@ impl Runnable for ValWizardCmd {
 
         // Initialize Miner
         // Need to assign app_config, otherwise abscissa would use the default.
-        let mut app_config =
-            AppCfg::init_app_configs(authkey, account, &self.upstream_peer, &self.path);
+        let mut app_config = AppCfg::init_app_configs(
+                              authkey,
+                              account,
+                              &self.upstream_peer,
+                              &self.path
+                            );
 
         let home_path = &app_config.workspace.node_home;
         status_ok!("\nMiner config written", "\n...........................\n");
@@ -76,6 +80,7 @@ impl Runnable for ValWizardCmd {
             &app_config,
             &wallet,
         );
+        status_ok!("\nAutopay transactions signed", "\n...........................\n");
 
         // Initialize Validator Keys
         init_cmd::initialize_validator(&wallet, &app_config).unwrap();
