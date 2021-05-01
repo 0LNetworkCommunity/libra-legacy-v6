@@ -3,6 +3,7 @@
 #![allow(clippy::never_loop)]
 
 use abscissa_core::{Command, Options, Runnable, status_info, status_ok};
+use libra_genesis_tool::node_files;
 use std::{path::PathBuf};
 use super::{files_cmd};
 use crate::{application::app_config};
@@ -28,12 +29,12 @@ impl Runnable for FnWizardCmd {
     fn run(&self) {
 
         status_info!("\nFullnode Config Wizard", "This tool will create a fullnode.node.yaml file which is needed for the node to initialize and begin syncing. Different than validator configuration, no credentials are needed to operate a public fullnode.\n");
-        let conf = app_config().clone();
+        let cfg = app_config().clone();
 
         let output_path = if self.path.is_some() {
             self.path.clone().unwrap()
         } else {
-            conf.clone().workspace.node_home
+            cfg.clone().workspace.node_home
         };
 
         // TODO: fetch epoch backup info from epoch archive, or build genesis.
@@ -45,15 +46,32 @@ impl Runnable for FnWizardCmd {
             );
             status_ok!("\nGenesis OK", "\n...........................\n");
         }
-        // Build Genesis and node.yaml file
-        files_cmd::genesis_files(
-            &conf,
-            &self.chain_id,
-            &self.github_org,
-            &self.repo,
+        // // Build Genesis and node.yaml file
+        // files_cmd::node_config_files(
+        //     &conf,
+        //     &self.chain_id,
+        //     &self.github_org,
+        //     &self.repo,
+        //     &self.rebuild_genesis,
+        //     &true,
+        // );
+
+        let home_dir = cfg.workspace.node_home.to_owned();
+        // 0L convention is for the namespace of the operator to be appended by '-oper'
+        let namespace = cfg.profile.auth_key.clone() + "-oper";
+        
+        node_files::write_node_config_files(
+            home_dir.clone(),
+            self.chain_id.unwrap_or(1),
+            &self.github_org.clone().unwrap_or("OLSF".to_string()),
+            &self
+                .repo
+                .clone()
+                .unwrap_or("experimental-genesis".to_string()),
+            &namespace,
             &self.rebuild_genesis,
             &true,
-        );
+        ).unwrap();
         status_ok!("\nNode config OK", "\n...........................\n");
     }
 }

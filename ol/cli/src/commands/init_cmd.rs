@@ -18,6 +18,8 @@ use keygen;
 pub struct InitCmd {
     #[options(help = "home path for miner app")]
     path: Option<PathBuf>,
+    #[options(help = "An upstream peer to use in 0L.toml")]
+    upstream_peer: Option<Url>,
     #[options(help = "Skip miner app configs")]
     skip_miner: bool,
     #[options(help = "Skip validator init")]
@@ -40,9 +42,10 @@ impl Runnable for InitCmd {
         // start with a default value, or read from file if already initialized
         let mut miner_config = app_config().to_owned();
         if !self.skip_miner { 
-          miner_config = initialize_host(
+          miner_config =  AppCfg::init_app_configs(
             authkey,
             account, 
+            &self.upstream_peer,
             &self.path
           ).unwrap() 
         };

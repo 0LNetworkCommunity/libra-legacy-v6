@@ -120,6 +120,7 @@ impl AppCfg {
   pub fn init_app_configs(
     authkey: AuthenticationKey,
     account: AccountAddress,
+    upstream_peer: &Option<Url>,
     config_path: &Option<PathBuf>,
   ) -> AppCfg {
     
@@ -147,7 +148,6 @@ impl AppCfg {
           "127.0.0.1".to_string()
         }
     };
-    // println!("\nFound host IP address: {:?}\n", system_ip);
 
     let txt = &format!(
       "Will you use this host, and this IP address {:?}, for your node?",
@@ -169,13 +169,14 @@ impl AppCfg {
 
     default_config.profile.ip = ip;
 
+    if let Some(url) = upstream_peer {
+      default_config.profile.upstream_nodes = Some(vec!(url.to_owned()));
+    }
     // Get statement which goes into genesis block
     default_config.profile.statement = Input::new()
     .with_prompt("Enter a (fun) statement to go into your first transaction")
     .interact_text()
     .expect("We need some text unique to you which will go into your the first proof of your tower");
-
-
 
     AppCfg::save_file(&default_config);
 

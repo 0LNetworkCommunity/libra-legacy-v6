@@ -185,6 +185,7 @@ pub fn write_node_config_files(
     config
     .save(&yaml_path)
     .expect("Unable to save node configs");
-        
+    
+    println!("validator configurations initialized, file saved to: {:?}", &output_dir);
     Ok(config)
 }
