@@ -50,7 +50,10 @@ impl Runnable for PilotCmd {
                 }
             // return
             } else {
-                status_err!("NO db files found {:?}. Try `ol restore` to fetch backups from archive.", &cfg.workspace.node_home);
+                status_err!(
+                    "NO db files found {:?}. Try `ol restore` to fetch backups from archive.",
+                    &cfg.workspace.node_home
+                );
                 // stop loop, user needs to configure machine before pilot can work.
                 std::process::exit(1);
             }
@@ -67,8 +70,11 @@ impl Runnable for PilotCmd {
                 status_ok!("Node", "node is running");
                 maybe_switch_mode(&mut node, is_in_val_set);
             } else {
-                status_warn!("node is NOT running");
-                maybe_switch_mode(&mut node, is_in_val_set);
+                let start_mode = if is_in_val_set { Validator } else { Fullnode };
+
+                status_warn!("node is NOT running, starting in {:?} mode", start_mode);
+
+                node.start_node(start_mode).expect("could not start node");
             }
 
             //////// MINER RULES ////////
@@ -101,19 +107,19 @@ impl Runnable for PilotCmd {
 }
 
 fn maybe_switch_mode(node: &mut Node, is_in_val_set: bool) -> Option<NodeMode> {
-    let mode = Node::what_node_mode().expect("could not detect node mode");
-    status_ok!("Mode", "node running in mode: {:?}", mode);
+    let running_mode = Node::what_node_mode().expect("could not detect node mode");
+    status_ok!("Mode", "node running in mode: {:?}", running_mode);
 
-    let running_in_val_mode = mode == Validator;
+    let running_in_val_mode = running_mode == Validator;
     // Running correctly as a FULLNODE
     if !running_in_val_mode && !is_in_val_set {
-        status_ok!("Mode", "running the correct mode {:?}. Noop.", mode);
+        status_ok!("Mode", "running the correct mode {:?}. Noop.", running_mode);
         return None;
     }
     // Running correctly as a VALIDATOR
     // Do nothing, the account is in validator set, and we are running as a validator
     if running_in_val_mode && is_in_val_set {
-        status_ok!("Mode", "running the correct mode {:?}. Noop.", mode);
+        status_ok!("Mode", "running the correct mode {:?}. Noop.", running_mode);
         return None;
     }
 

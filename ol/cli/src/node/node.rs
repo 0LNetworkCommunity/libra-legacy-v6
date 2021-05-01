@@ -299,7 +299,7 @@ impl Node {
                 }
             }
         }
-        Err(Error::msg("could not detect node mode"))
+        Err(Error::msg("node is not running"))
     }
 
     /// is web monitor serving on 3030
