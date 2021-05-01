@@ -86,12 +86,13 @@ impl Runnable for PilotCmd {
                 if !Node::node_running() {
                     status_err!("Node not running. Cannot start miner if node is not running");
                 }
-                // does the account exist on chain? otherwise sending mining txs will fail
                 // did the node finish sync?
                 let sync_tup = Node::cold_start_is_synced(&cfg, wp);
                 dbg!(&sync_tup);
                 if sync_tup.0 {
                     status_ok!("Sync", "node is synced");
+
+                    // does the account exist on chain? otherwise sending mining txs will fail
                     if node.accounts_exist_on_chain() {
                         status_ok!("Account", "owner account found on chain. Starting miner");
                         node.start_miner();
