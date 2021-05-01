@@ -331,7 +331,7 @@ pub fn wait_for_tx(
     client: &mut LibraClient,
 ) -> Option<TransactionView> {
     println!(
-        "Awaiting tx status \n\
+        "\nAwaiting tx status \n\
        Submitted from account: {} with sequence number: {}",
         signer_address, sequence_number
     );
