@@ -216,9 +216,7 @@ impl Node {
         }
 
         let child = if *IS_PROD {
-            // let args = vec!["start"];
-            // if use_backup { args.push("--backup-url"); };
-            println!("Starting `ol-cli serve` with args");
+            println!("Starting `ol serve`");
             spawn_process(
                 "ol",
                 &["serve"],
@@ -227,11 +225,11 @@ impl Node {
             )
         } else {
             let project_root = self.conf.workspace.source_path.clone().unwrap();
-            let debug_bin = project_root.join("target/debug/ol-cli");
+            let debug_bin = project_root.join("target/debug/ol_cli");
             let bin_str = debug_bin.to_str().unwrap();
 
             let args = vec!["serve"];
-            println!("Starting 'ol-cli' with args: {:?}", args.join(" "));
+            println!("Starting '{}' with args: {:?}", bin_str, args.join(" "));
             spawn_process(
                 bin_str,
                 args.as_slice(),

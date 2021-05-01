@@ -37,8 +37,29 @@ pub fn draw<B: Backend>(f: &mut Frame<'_, B>, app: &mut App<'_>) {
         1 => draw_second_tab(f, app, chunks[1]),
         2 => draw_txs_tab(f, app, chunks[1]),
         3 => draw_third_tab(f, app, chunks[1]),
+        4 => draw_pilot_tab(f, app, chunks[1]),
         _ => {}
     };
+}
+
+///draw first tab
+fn draw_pilot_tab<B>(f: &mut Frame<'_, B>, app: &mut App<'_>, area: Rect)
+where
+    B: Backend,
+{
+    let chunks = Layout::default()
+        .constraints(
+            [
+                Constraint::Length(7),
+                Constraint::Min(8),
+                Constraint::Length(7),
+            ]
+            .as_ref(),
+        )
+        .split(area);
+    // draw_chain_info(f, app, chunks[0]);
+    // draw_validator_list(f, app, chunks[1]);
+    // draw_parameters(f, app, chunks[2]);
 }
 
 ///draw first tab

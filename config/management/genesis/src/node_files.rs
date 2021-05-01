@@ -137,6 +137,7 @@ pub fn write_node_config_files(
 
         c.validator_network = Some(network.clone());
 
+        c.json_rpc.address = "0.0.0.0:8080".parse().unwrap();
             // NOTE: for future reference, seed addresses are not necessary for setting a validator if on-chain discovery is used.
     
         // Consensus

@@ -31,6 +31,7 @@ impl Runnable for PilotCmd {
         }
         let mut node = Node::new(client, cfg.clone());
         loop {
+          println!("==========================================");
             // Start the webserver before anything else
             if Node::is_web_monitor_serving() {
                 status_ok!("Web", "web monitor is serving on 3030");
