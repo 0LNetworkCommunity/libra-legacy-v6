@@ -64,7 +64,7 @@ impl PayInstruction {
         })
         .collect();
 
-        if (total_pct_inflow < 1f64) && (total_pct_balance < 1f64){
+        if (total_pct_inflow < 100f64) && (total_pct_balance < 100f64){
           Ok(transformed)
         } else {
           Err(Error::msg("percentages sum greater than 100%"))
