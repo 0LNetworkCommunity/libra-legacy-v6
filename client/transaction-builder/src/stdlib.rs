@@ -696,6 +696,8 @@ pub enum ScriptCall {
 
     Join {},
 
+    Leave {},
+
     MinerstateCommit {
         challenge: Bytes,
         solution: Bytes,
@@ -911,8 +913,6 @@ pub enum ScriptCall {
         validator_network_addresses: Bytes,
         fullnode_network_addresses: Bytes,
     },
-
-    RemoveSelf {},
 
     /// # Summary
     /// This script removes a validator account from the validator set, and triggers a reconfiguration
@@ -1667,6 +1667,7 @@ impl ScriptCall {
                 to_freeze_account,
             } => encode_freeze_account_script(sliding_nonce, to_freeze_account),
             Join {} => encode_join_script(),
+            Leave {} => encode_leave_script(),
             MinerstateCommit {
                 challenge,
                 solution,
@@ -1734,7 +1735,6 @@ impl ScriptCall {
                 validator_network_addresses,
                 fullnode_network_addresses,
             ),
-            RemoveSelf {} => encode_remove_self_script(),
             RemoveValidatorAndReconfigure {
                 sliding_nonce,
                 validator_name,
@@ -2639,6 +2639,10 @@ pub fn encode_join_script() -> Script {
     Script::new(JOIN_CODE.to_vec(), vec![], vec![])
 }
 
+pub fn encode_leave_script() -> Script {
+    Script::new(LEAVE_CODE.to_vec(), vec![], vec![])
+}
+
 pub fn encode_minerstate_commit_script(challenge: Vec<u8>, solution: Vec<u8>) -> Script {
     Script::new(
         MINERSTATE_COMMIT_CODE.to_vec(),
@@ -2934,10 +2938,6 @@ pub fn encode_register_validator_config_script(
             TransactionArgument::U8Vector(fullnode_network_addresses),
         ],
     )
-}
-
-pub fn encode_remove_self_script() -> Script {
-    Script::new(REMOVE_SELF_CODE.to_vec(), vec![], vec![])
 }
 
 /// # Summary
@@ -3850,6 +3850,10 @@ fn decode_join_script(_script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::Join {})
 }
 
+fn decode_leave_script(_script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::Leave {})
+}
+
 fn decode_minerstate_commit_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::MinerstateCommit {
         challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
@@ -3930,10 +3934,6 @@ fn decode_register_validator_config_script(script: &Script) -> Option<ScriptCall
         validator_network_addresses: decode_u8vector_argument(script.args().get(2)?.clone())?,
         fullnode_network_addresses: decode_u8vector_argument(script.args().get(3)?.clone())?,
     })
-}
-
-fn decode_remove_self_script(_script: &Script) -> Option<ScriptCall> {
-    Some(ScriptCall::RemoveSelf {})
 }
 
 fn decode_remove_validator_and_reconfigure_script(script: &Script) -> Option<ScriptCall> {
@@ -4138,6 +4138,7 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
         Box::new(decode_freeze_account_script),
     );
     map.insert(JOIN_CODE.to_vec(), Box::new(decode_join_script));
+    map.insert(LEAVE_CODE.to_vec(), Box::new(decode_leave_script));
     map.insert(
         MINERSTATE_COMMIT_CODE.to_vec(),
         Box::new(decode_minerstate_commit_script),
@@ -4174,10 +4175,6 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
     map.insert(
         REGISTER_VALIDATOR_CONFIG_CODE.to_vec(),
         Box::new(decode_register_validator_config_script),
-    );
-    map.insert(
-        REMOVE_SELF_CODE.to_vec(),
-        Box::new(decode_remove_self_script),
     );
     map.insert(
         REMOVE_VALIDATOR_AND_RECONFIGURE_CODE.to_vec(),
@@ -4466,19 +4463,30 @@ const FREEZE_ACCOUNT_CODE: &[u8] = &[
 ];
 
 const JOIN_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 6, 3, 6, 35, 5, 41, 16, 7, 57, 128, 1, 8, 185, 1, 16, 0,
-    0, 0, 1, 0, 2, 0, 3, 0, 1, 0, 1, 4, 2, 3, 0, 2, 5, 2, 4, 0, 2, 6, 3, 1, 0, 2, 7, 3, 1, 0, 2, 8,
-    3, 1, 0, 2, 9, 2, 4, 0, 2, 6, 12, 5, 1, 1, 1, 6, 12, 1, 5, 0, 3, 5, 1, 3, 10, 77, 105, 110,
-    101, 114, 83, 116, 97, 116, 101, 6, 83, 105, 103, 110, 101, 114, 17, 86, 97, 108, 105, 100, 97,
-    116, 111, 114, 85, 110, 105, 118, 101, 114, 115, 101, 17, 110, 111, 100, 101, 95, 97, 98, 111,
-    118, 101, 95, 116, 104, 114, 101, 115, 104, 10, 97, 100, 100, 114, 101, 115, 115, 95, 111, 102,
-    8, 97, 100, 100, 95, 115, 101, 108, 102, 16, 101, 120, 105, 115, 116, 115, 95, 106, 97, 105,
-    108, 101, 100, 98, 105, 116, 14, 105, 115, 95, 105, 110, 95, 117, 110, 105, 118, 101, 114, 115,
-    101, 9, 105, 115, 95, 106, 97, 105, 108, 101, 100, 11, 117, 110, 106, 97, 105, 108, 95, 115,
-    101, 108, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 5, 37, 10, 0, 17, 1, 12,
-    1, 10, 0, 10, 1, 17, 0, 12, 2, 11, 2, 3, 13, 11, 0, 1, 6, 1, 0, 0, 0, 0, 0, 0, 0, 39, 10, 1,
-    17, 4, 32, 3, 18, 5, 20, 10, 0, 17, 2, 10, 1, 17, 3, 32, 3, 25, 5, 27, 10, 0, 17, 6, 10, 1, 17,
-    5, 3, 31, 5, 34, 11, 0, 17, 6, 5, 36, 11, 0, 1, 2,
+    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 6, 3, 6, 40, 5, 46, 16, 7, 62, 139, 1, 8, 201, 1, 16, 0,
+    0, 0, 1, 0, 2, 0, 3, 0, 1, 0, 1, 4, 2, 3, 0, 2, 5, 2, 4, 0, 2, 6, 3, 1, 0, 2, 7, 2, 4, 0, 2, 8,
+    3, 1, 0, 2, 9, 3, 1, 0, 2, 10, 2, 4, 0, 2, 6, 12, 5, 1, 1, 1, 6, 12, 1, 5, 0, 3, 5, 1, 3, 10,
+    77, 105, 110, 101, 114, 83, 116, 97, 116, 101, 6, 83, 105, 103, 110, 101, 114, 17, 86, 97, 108,
+    105, 100, 97, 116, 111, 114, 85, 110, 105, 118, 101, 114, 115, 101, 17, 110, 111, 100, 101, 95,
+    97, 98, 111, 118, 101, 95, 116, 104, 114, 101, 115, 104, 10, 97, 100, 100, 114, 101, 115, 115,
+    95, 111, 102, 8, 97, 100, 100, 95, 115, 101, 108, 102, 16, 101, 120, 105, 115, 116, 115, 95,
+    106, 97, 105, 108, 101, 100, 98, 105, 116, 10, 105, 110, 105, 116, 105, 97, 108, 105, 122, 101,
+    14, 105, 115, 95, 105, 110, 95, 117, 110, 105, 118, 101, 114, 115, 101, 9, 105, 115, 95, 106,
+    97, 105, 108, 101, 100, 11, 117, 110, 106, 97, 105, 108, 95, 115, 101, 108, 102, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 5, 37, 10, 0, 17, 1, 12, 1, 10, 0, 10, 1, 17, 0, 12, 2,
+    11, 2, 3, 13, 11, 0, 1, 6, 1, 0, 0, 0, 0, 0, 0, 0, 39, 10, 1, 17, 5, 32, 3, 18, 5, 20, 10, 0,
+    17, 2, 10, 1, 17, 3, 32, 3, 25, 5, 27, 10, 0, 17, 4, 10, 1, 17, 6, 3, 31, 5, 34, 11, 0, 17, 7,
+    5, 36, 11, 0, 1, 2,
+];
+
+const LEAVE_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 15, 5, 19, 8, 7, 27, 63, 8, 90, 16, 0, 0, 0, 1,
+    0, 2, 0, 1, 0, 1, 3, 1, 2, 0, 1, 4, 0, 3, 0, 1, 6, 12, 1, 5, 1, 1, 0, 6, 83, 105, 103, 110,
+    101, 114, 17, 86, 97, 108, 105, 100, 97, 116, 111, 114, 85, 110, 105, 118, 101, 114, 115, 101,
+    10, 97, 100, 100, 114, 101, 115, 115, 95, 111, 102, 14, 105, 115, 95, 105, 110, 95, 117, 110,
+    105, 118, 101, 114, 115, 101, 11, 114, 101, 109, 111, 118, 101, 95, 115, 101, 108, 102, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 13, 10, 0, 17, 0, 12, 1, 10, 1, 17, 1, 3, 7,
+    5, 10, 11, 0, 17, 2, 5, 12, 11, 0, 1, 2,
 ];
 
 const MINERSTATE_COMMIT_CODE: &[u8] = &[
@@ -4594,16 +4602,6 @@ const REGISTER_VALIDATOR_CONFIG_CODE: &[u8] = &[
     0, 1, 0, 5, 6, 12, 5, 10, 2, 10, 2, 10, 2, 0, 15, 86, 97, 108, 105, 100, 97, 116, 111, 114, 67,
     111, 110, 102, 105, 103, 10, 115, 101, 116, 95, 99, 111, 110, 102, 105, 103, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 7, 11, 0, 10, 1, 11, 2, 11, 3, 11, 4, 17, 0, 2,
-];
-
-const REMOVE_SELF_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 15, 5, 19, 8, 7, 27, 63, 8, 90, 16, 0, 0, 0, 1,
-    0, 2, 0, 1, 0, 1, 3, 1, 2, 0, 1, 4, 0, 3, 0, 1, 6, 12, 1, 5, 1, 1, 0, 6, 83, 105, 103, 110,
-    101, 114, 17, 86, 97, 108, 105, 100, 97, 116, 111, 114, 85, 110, 105, 118, 101, 114, 115, 101,
-    10, 97, 100, 100, 114, 101, 115, 115, 95, 111, 102, 14, 105, 115, 95, 105, 110, 95, 117, 110,
-    105, 118, 101, 114, 115, 101, 11, 114, 101, 109, 111, 118, 101, 95, 115, 101, 108, 102, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 13, 10, 0, 17, 0, 12, 1, 10, 1, 17, 1, 3, 7,
-    5, 10, 11, 0, 17, 2, 5, 12, 11, 0, 1, 2,
 ];
 
 const REMOVE_VALIDATOR_AND_RECONFIGURE_CODE: &[u8] = &[
