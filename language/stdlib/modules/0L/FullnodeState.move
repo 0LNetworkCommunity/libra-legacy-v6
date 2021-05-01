@@ -7,7 +7,6 @@ module FullnodeState {
   use 0x1::Errors;
   use 0x1::Signer;
   use 0x1::Testnet::is_testnet;
-  // use 0x1::ValidatorConfig;
   
   resource struct FullnodeCounter {
     proofs_submitted_in_epoch: u64,

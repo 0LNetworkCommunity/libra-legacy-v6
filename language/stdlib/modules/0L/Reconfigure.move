@@ -56,6 +56,7 @@ module Reconfigure {
             // check if is in onboarding state (or stuck)
 
             if (FullnodeState::is_onboarding(addr)) {
+              // TODO: onboarding subsidy is not necessary with onboarding transfer.
                 value = Subsidy::distribute_onboarding_subsidy(vm, addr);
             } else {
                 // steady state
