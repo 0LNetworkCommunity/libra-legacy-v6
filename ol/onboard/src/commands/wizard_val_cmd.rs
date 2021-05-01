@@ -146,7 +146,7 @@ fn get_autopay_batch(
     };
 
     let starting_epoch = cfg.chain_info.base_epoch.unwrap();
-    let instr_vec = PayInstruction::parse_autopay_instructions(&home_path.join(file_name));
+    let instr_vec = PayInstruction::parse_autopay_instructions(&home_path.join(file_name)).unwrap();
     let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone(), starting_epoch);
     let url = cfg.what_url(false);
     let tx_params =

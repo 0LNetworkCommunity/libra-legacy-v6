@@ -54,8 +54,7 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, current_epoch: u6
         match Confirm::new().with_prompt("").interact().unwrap() {
           true => Some(i),
           _ =>  {
-            println!("skipping instruction, going to next in batch");
-            None
+            panic!("Autopay configuration aborted. Check batch configuration file or template");
           }
         }            
     })
