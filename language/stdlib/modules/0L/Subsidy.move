@@ -27,6 +27,7 @@ address 0x1 {
     use 0x1::FullnodeState;
     use 0x1::ValidatorConfig;
     use 0x1::Debug::print;
+    use 0x1::MinerState;
 
     // estimated gas unit cost for proof verification divided coin scaling factor
     // Cost for verification test/easy difficulty: 1173 / 1000000
@@ -416,7 +417,7 @@ print(&011);
         let oper_addr = ValidatorConfig::get_operator(miner_addr);
         // count OWNER's proofs submitted
 print(&012);
-        let proofs_in_epoch = FullnodeState::get_address_proof_count(miner_addr);
+        let proofs_in_epoch = MinerState::get_count_in_epoch(miner_addr);
 print(&proofs_in_epoch);
         let cost = 0;
         // find cost from baseline

@@ -41,12 +41,15 @@ module Reconfigure {
 
         let global_proofs_count = 0;
         let k = 0;
+
+        // Distribute mining subsidy to fullnodes
         while (k < Vector::length(&miners)) {
             let addr = *Vector::borrow(&miners, k);
             
             if (!FullnodeState::is_init(addr)) continue; // fail-safe
 
-            let count = FullnodeState::get_address_proof_count(addr);
+            let count = MinerState::get_count_in_epoch(addr);
+            
             global_proofs_count = global_proofs_count + count;
             
             let value: u64;
