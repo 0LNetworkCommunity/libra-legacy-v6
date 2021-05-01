@@ -87,18 +87,17 @@ impl Runnable for PilotCmd {
                     status_err!("Node not running. Cannot start miner if node is not running");
                 }
                 // does the account exist on chain? otherwise sending mining txs will fail
-                if node.accounts_exist_on_chain() {
-                    status_ok!("Account", "owner account found on chain. Starting miner");
-
-                    // did the node finish sync?
-                    if Node::cold_start_is_synced(&cfg, wp).0 {
-                        status_ok!("Sync", "node is synced");
+                // did the node finish sync?
+                if Node::cold_start_is_synced(&cfg, wp).0 {
+                    status_ok!("Sync", "node is synced");
+                    if node.accounts_exist_on_chain() {
+                        status_ok!("Account", "owner account found on chain. Starting miner");
                         node.start_miner();
                     } else {
-                        status_warn!("node is NOT Synced");
+                        status_warn!("error trying to start miner. Owner account does NOT exist on chain. Was the account creation transaction submitted?")
                     }
                 } else {
-                    status_warn!("error trying to start miner. Owner account does NOT exist on chain. Was the account creation transaction submitted?")
+                    status_warn!("node is NOT Synced");
                 }
             }
             thread::sleep(Duration::from_millis(10_000));
