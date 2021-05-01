@@ -7,7 +7,9 @@ use crate::prelude::app_config;
 use super::{files_cmd};
 
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
-use libra_genesis_tool::keyscheme::KeyScheme;
+// use libra_genesis_tool::keyscheme::KeyScheme;
+use keygen::scheme::KeyScheme;
+
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use libra_wallet::WalletLibrary;
 use ol_cli::{commands::init_cmd, config::AppCfg};

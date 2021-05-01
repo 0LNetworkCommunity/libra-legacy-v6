@@ -1,23 +1,26 @@
 //! Key derivation for 0L.
 
-use libra_types::{transaction::authenticator::AuthenticationKey, account_address::AccountAddress};
-use libra_wallet::{Mnemonic, WalletLibrary, key_factory::{ChildNumber, ExtendedPrivKey}};
+use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
+use libra_wallet::{
+    key_factory::{ChildNumber, ExtendedPrivKey},
+    Mnemonic, WalletLibrary,
+};
 
 /// The key derivation used throughout 0L for configuration of validators and miners. Depended on by config/management for genesis.
 // #[derive(Debug)]
 pub struct KeyScheme {
-        /// Owner key, the main key where funds are kept
-        pub child_0_owner: ExtendedPrivKey,
-        /// Operator of node
-        pub child_1_operator: ExtendedPrivKey,
-        /// Validator network identity
-        pub child_2_val_network: ExtendedPrivKey,
-        /// Fullnode network identity
-        pub child_3_fullnode_network: ExtendedPrivKey,
-        /// Consensus key
-        pub child_4_consensus: ExtendedPrivKey,
-        /// Execution key
-        pub child_5_executor: ExtendedPrivKey,
+    /// Owner key, the main key where funds are kept
+    pub child_0_owner: ExtendedPrivKey,
+    /// Operator of node
+    pub child_1_operator: ExtendedPrivKey,
+    /// Validator network identity
+    pub child_2_val_network: ExtendedPrivKey,
+    /// Fullnode network identity
+    pub child_3_fullnode_network: ExtendedPrivKey,
+    /// Consensus key
+    pub child_4_consensus: ExtendedPrivKey,
+    /// Execution key
+    pub child_5_executor: ExtendedPrivKey,
 }
 
 impl KeyScheme {

@@ -14,7 +14,7 @@ use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     test_utils::KeyPair,
 };
-use libra_genesis_tool::keyscheme::KeyScheme;
+use keygen::scheme::KeyScheme;
 use libra_global_constants::OPERATOR_KEY;
 use libra_json_rpc_types::views::{TransactionView, VMStatusView};
 use libra_secure_storage::{CryptoStorage, NamespacedStorage, OnDiskStorageInternal, Storage};

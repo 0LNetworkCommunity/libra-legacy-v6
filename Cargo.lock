@@ -5041,6 +5041,7 @@ dependencies = [
  "dialoguer",
  "dirs 2.0.2",
  "hex 0.4.2",
+ "keygen",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
