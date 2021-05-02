@@ -69,7 +69,7 @@ impl Node {
           true
         ).unwrap();
 
-        format!("{:?}", txs)
+        format!("{:#?}", txs)
 
       }
     }
