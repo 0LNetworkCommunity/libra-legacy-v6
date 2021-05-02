@@ -12,7 +12,6 @@ use std::{
     fs::{self, File},
     process::{Command, Stdio},
 };
-use ol_types::config::IS_PROD;
 
 const BINARY_NODE: &str = "libra-node";
 const BINARY_MINER: &str = "miner";
