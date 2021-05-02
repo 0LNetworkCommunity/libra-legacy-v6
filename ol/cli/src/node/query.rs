@@ -64,7 +64,7 @@ impl Node {
         let (chain, _) = self.refresh_chain_info();
         let height = chain.unwrap().height;
         let txs = self.client.get_txn_by_range(
-          height, 
+          height - 100_000 | 0, 
           100, 
           true
         ).unwrap();
