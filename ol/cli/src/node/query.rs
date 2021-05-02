@@ -62,9 +62,12 @@ impl Node {
       }
       Txs => {
         let (chain, _) = self.refresh_chain_info();
-        let height = chain.unwrap().height;
+        let current_height = chain.unwrap().height;
+        let query_height = if current_height > 100_000 { current_height - 100_000 }
+        else { 0 };
+
         let txs = self.client.get_txn_by_range(
-          height - 100_000 | 0, 
+          query_height, 
           100, 
           true
         ).unwrap();
