@@ -1,7 +1,7 @@
 
-<a name="remove_self"></a>
+<a name="leave"></a>
 
-# Script `remove_self`
+# Script `leave`
 
 
 
@@ -14,7 +14,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ol_remove_self_validator_universe.md#remove_self">remove_self</a>(validator: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="ol_validator_universe_leave.md#leave">leave</a>(validator: &signer)
 </code></pre>
 
 
@@ -23,7 +23,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="ol_remove_self_validator_universe.md#remove_self">remove_self</a>(validator: &signer) {
+<pre><code><b>fun</b> <a href="ol_validator_universe_leave.md#leave">leave</a>(validator: &signer) {
     <b>let</b> addr = <a href="../../modules/doc/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(validator);
     <b>if</b> (<a href="../../modules/doc/ValidatorUniverse.md#0x1_ValidatorUniverse_is_in_universe">ValidatorUniverse::is_in_universe</a>(addr)) {
         <a href="../../modules/doc/ValidatorUniverse.md#0x1_ValidatorUniverse_remove_self">ValidatorUniverse::remove_self</a>(validator);
