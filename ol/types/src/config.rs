@@ -1,4 +1,4 @@
-//! OlCli Config
+//! Configs for all 0L apps.
 
 use dialoguer::{Confirm, Input};
 use dirs;
@@ -105,16 +105,21 @@ impl AppCfg {
     pub fn init_app_configs(
         authkey: AuthenticationKey,
         account: AccountAddress,
+        upstream_peer: &Option<Url>,
         config_path: &Option<PathBuf>,
     ) -> AppCfg {
         // TODO: Check if configs exist and warn on overwrite.
         let mut default_config = AppCfg::default();
         default_config.profile.auth_key = authkey.to_string();
         default_config.profile.account = account;
-
+        if let Some(url) = upstream_peer {
+            dbg!(&url);
+            default_config.profile.upstream_nodes = Some(vec![url.to_owned()]);
+        }
         // skip questionnaire if CI
         if *IS_CI {
             AppCfg::save_file(&default_config);
+
             return default_config;
         }
 
@@ -128,8 +133,10 @@ impl AppCfg {
 
         fs::create_dir_all(&default_config.workspace.node_home).unwrap();
 
-        let system_ip = machine_ip::get().unwrap().to_string();
-        // println!("\nFound host IP address: {:?}\n", system_ip);
+        let system_ip = match machine_ip::get() {
+            Some(ip) => ip.to_string(),
+            None => "127.0.0.1".to_string(),
+        };
 
         let txt = &format!(
             "Will you use this host, and this IP address {:?}, for your node?",
@@ -154,7 +161,7 @@ impl AppCfg {
 
         // Get statement which goes into genesis block
         default_config.profile.statement = Input::new()
-    .with_prompt("Enter a (fun) statement to go into your first transaction: ")
+    .with_prompt("Enter a (fun) statement to go into your first transaction")
     .interact_text()
     .expect("We need some text unique to you which will go into your the first proof of your tower");
 

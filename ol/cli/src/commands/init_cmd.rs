@@ -7,18 +7,17 @@ use abscissa_core::{Command, FrameworkError, Options, Runnable, config};
 use anyhow::Error;
 use libra_genesis_tool::{init, key};
 use keygen::scheme::KeyScheme;
-use libra_types::{
-    account_address::AccountAddress, transaction::authenticator::AuthenticationKey
-};
 use std::{fs, path::PathBuf};
 use libra_wallet::WalletLibrary;
 use keygen;
-
+use url::Url;
 /// `init` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct InitCmd {
     #[options(help = "home path for miner app")]
     path: Option<PathBuf>,
+    #[options(help = "An upstream peer to use in 0L.toml")]
+    upstream_peer: Option<Url>,
     #[options(help = "Skip miner app configs")]
     skip_miner: bool,
     #[options(help = "Skip validator init")]
@@ -41,21 +40,22 @@ impl Runnable for InitCmd {
         // start with a default value, or read from file if already initialized
         let mut miner_config = app_config().to_owned();
         if !self.skip_miner { 
-          miner_config = initialize_host(
+          miner_config =  AppCfg::init_app_configs(
             authkey,
             account, 
+            &self.upstream_peer,
             &self.path
-          ).unwrap() 
+          )
         };
         if !self.skip_val { initialize_validator(&wallet, &miner_config).unwrap() };
     }
 }
 
-/// Initializes the necessary 0L config files: 0L.toml
-pub fn initialize_host(authkey: AuthenticationKey, account: AccountAddress, path: &Option<PathBuf>) -> Result <AppCfg, Error>{
-    let cfg = AppCfg::init_app_configs(authkey, account, path, );
-    Ok(cfg)
-}
+// / Initializes the necessary 0L config files: 0L.toml
+// pub fn initialize_host(authkey: AuthenticationKey, account: AccountAddress, path: &Option<PathBuf>) -> Result <AppCfg, Error>{
+//     let cfg = AppCfg::init_app_configs(authkey, account, path, );
+//     Ok(cfg)
+// }
 
 /// Initializes the necessary 0L config files: 0L.toml
 pub fn initialize_host_swarm(swarm_path: PathBuf) -> Result <AppCfg, Error>{
