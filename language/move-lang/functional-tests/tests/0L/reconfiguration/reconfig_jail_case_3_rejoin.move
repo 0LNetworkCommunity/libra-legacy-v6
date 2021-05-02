@@ -320,7 +320,7 @@ fun main(sender: &signer) {
 
 //! new-transaction
 //! sender: eve
-stdlib_script::ol_join_validator_set
+stdlib_script::ol_validator_universe_join
 // check: "Keep(EXECUTED)"
 
 
