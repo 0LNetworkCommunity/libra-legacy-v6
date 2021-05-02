@@ -32,6 +32,9 @@ pub struct QueryCmd {
 
     #[options(help = "epoch and waypoint")]
     epoch: bool,
+
+    #[options(help = "get last 100 transactions")]
+    txs: bool,
 }
 
 impl Runnable for QueryCmd {
@@ -69,6 +72,11 @@ impl Runnable for QueryCmd {
             info = node.get(QueryType::Epoch);
             display = "EPOCH";
         }
+        else if self.txs {
+            info = node.get(QueryType::Txs);
+            display = "TRANSACTIONS";
+        }
+
 
         status_info!(display, format!("{}", info));
     }

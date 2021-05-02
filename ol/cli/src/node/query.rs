@@ -15,6 +15,8 @@ pub enum QueryType {
   Resources,
   /// How far behind the local is from the upstream nodes
   SyncDelay,
+  /// Get transaction history
+  Txs,
 }
 
 /// Get data from a client, with a query type. Will connect to local only if in sync.
@@ -57,6 +59,18 @@ impl Node {
           .unwrap();
 
         format!("{:#?}", resources).to_string()
+      }
+      Txs => {
+        let (chain, _) = self.refresh_chain_info();
+        let height = chain.unwrap().height;
+        let txs = self.client.get_txn_by_range(
+          height, 
+          100, 
+          true
+        ).unwrap();
+
+        format!("{:?}", txs)
+
       }
     }
   }
