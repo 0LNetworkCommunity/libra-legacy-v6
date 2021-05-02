@@ -5,7 +5,11 @@
 use crate::{application::app_config, config::AppCfg, entrypoint};
 use abscissa_core::{Command, FrameworkError, Options, Runnable, config};
 use anyhow::Error;
-use libra_genesis_tool::{init, key, keyscheme::KeyScheme};
+use libra_genesis_tool::{init, key};
+use keygen::scheme::KeyScheme;
+use libra_types::{
+    account_address::AccountAddress, transaction::authenticator::AuthenticationKey
+};
 use std::{fs, path::PathBuf};
 use libra_wallet::WalletLibrary;
 use keygen;

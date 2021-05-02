@@ -15,7 +15,6 @@ mod waypoint;
 pub mod init;
 pub mod node_files;
 mod mining;
-pub mod keyscheme;
 pub mod seeds;
 
 #[cfg(any(test, feature = "testing"))]

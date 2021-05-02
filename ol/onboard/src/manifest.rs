@@ -3,7 +3,9 @@
 #![allow(clippy::never_loop)]
 
 use ol_types::{block::Block, config::AppCfg};
-use libra_genesis_tool::keyscheme::KeyScheme;
+// use libra_genesis_tool::keyscheme::KeyScheme;
+use keygen::scheme::KeyScheme;
+
 use libra_types::transaction::SignedTransaction;
 use libra_wallet::WalletLibrary;
 use ol_types::{account::ValConfigs, autopay::PayInstruction};

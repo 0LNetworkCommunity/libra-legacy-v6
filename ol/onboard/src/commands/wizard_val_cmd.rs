@@ -2,12 +2,14 @@
 
 #![allow(clippy::never_loop)]
 
-use super::files_cmd;
+use ol_types::{block::Block};
 use crate::prelude::app_config;
-use ol_types::block::Block;
+use super::{files_cmd};
 
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
-use libra_genesis_tool::{keyscheme::KeyScheme, node_files};
+// use libra_genesis_tool::keyscheme::KeyScheme;
+use keygen::scheme::KeyScheme;
+
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use libra_wallet::WalletLibrary;
 use ol_cli::{commands::init_cmd, config::AppCfg};
@@ -132,7 +134,7 @@ impl Runnable for ValWizardCmd {
 
         if !self.skip_mining {
             // Mine Block
-            miner::block::write_genesis(&app_config);
+            miner::block::write_genesis(&miner_config);
             status_ok!(
                 "\nGenesis proof complete",
                 "\n...........................\n"
