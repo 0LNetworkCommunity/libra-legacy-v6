@@ -104,6 +104,7 @@ script {
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
+    use 0x1::Debug::print;
 
     fun main(_account: &signer) {
         // We are in a new epoch.
@@ -111,7 +112,13 @@ script {
         // Check the validator set is at expected size
         assert(LibraSystem::validator_set_size() == 5, 7357000180110);
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000180111);
-        assert(LibraAccount::balance<GAS>({{alice}}) == 295000001, 7357000180112);  
+        print(&LibraAccount::balance<GAS>({{alice}}));
+        
+        let starting_balance = 1;
+        let expected_subsidy = 295000000; //294978321
+        let operator_refund = 4336 * 5; // BASELINE_TX_COST * proofs = 21680
+        let ending_balance = starting_balance + expected_subsidy - operator_refund;
+        assert(LibraAccount::balance<GAS>({{alice}}) == ending_balance, 7357000180112);  
         assert(NodeWeight::proof_of_weight({{alice}}) == 1, 7357000180113);  
     }
 }
