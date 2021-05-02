@@ -1,4 +1,4 @@
-//! OlCli Config
+//! Configs for all 0L apps.
 
 use dialoguer::{Confirm, Input};
 use dirs;
