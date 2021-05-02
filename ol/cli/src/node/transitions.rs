@@ -147,7 +147,7 @@ impl Node {
         } else {
           if trigger_action {
             action_print("attempting to run wizard");
-            management::run_validator_wizard();
+            // management::run_validator_wizard();
           } else {
             println!("Config files not initialized, cannot advance.")
           }

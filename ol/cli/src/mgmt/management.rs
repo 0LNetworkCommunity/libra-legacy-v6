@@ -1,18 +1,17 @@
 //! `management` functions
 
 use crate::{
-    entrypoint,
     node::node::{self, Node},
     prelude::app_config,
 };
 use anyhow::Error;
+use ol_types::config::IS_PROD;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashSet,
     fs::{self, File},
     process::{Command, Stdio},
 };
-use ol_types::config::IS_PROD;
 
 const BINARY_NODE: &str = "libra-node";
 const BINARY_MINER: &str = "miner";
@@ -61,7 +60,6 @@ pub fn create_log_file(file_name: &str) -> File {
     File::create(logs_file).expect("could not create log file")
 }
 
-
 /// Spawn process with some options
 fn spawn_process(
     binary: &str,
@@ -81,46 +79,44 @@ fn spawn_process(
         .expect(expect_msg)
 }
 
+// /// start validator wizard
+// pub fn run_validator_wizard() -> bool {
+//     println!("Running validator wizard");
+//     let entry_arg = entrypoint::get_args();
 
+//     let mut child = if *IS_PROD {
+//         Command::new("miner")
+//             .arg("val-wizard")
+//             .spawn()
+//             .expect(&format!("failed to find 'miner', is it installed?"))
+//     } else if let Some(path) = entry_arg.swarm_path {
+//         // we are testing with swarm
+//         let swarm_arg = path.to_str().unwrap();
+//         let swarm_persona = entry_arg.swarm_persona.unwrap();
 
-/// start validator wizard
-pub fn run_validator_wizard() -> bool {
-    println!("Running validator wizard");
-    let entry_arg = entrypoint::get_args();
+//         Command::new("cargo")
+//             .args(&["r", "-p", "miner", "--"])
+//             .arg("--swarm-path")
+//             .arg(swarm_arg)
+//             .arg("--swarm-persona")
+//             .arg(swarm_persona)
+//             .arg("val-wizard")
+//             .spawn()
+//             .expect(&format!("failed to run cargo r -p miner"))
+//     } else {
+//         // we are testing on devnet
+//         Command::new("cargo")
+//             .args(&["r", "-p", "miner", "--"])
+//             .arg("val-wizard")
+//             .spawn()
+//             .expect(&format!("failed to run cargo r -p miner"))
+//     };
 
-    let mut child = if *IS_PROD {
-        Command::new("miner")
-            .arg("val-wizard")
-            .spawn()
-            .expect(&format!("failed to find 'miner', is it installed?"))
-    } else if let Some(path) = entry_arg.swarm_path {
-        // we are testing with swarm
-        let swarm_arg = path.to_str().unwrap();
-        let swarm_persona = entry_arg.swarm_persona.unwrap();
+//     let exit_code = child.wait().expect("failed to wait on miner");
+//     assert!(exit_code.success());
 
-        Command::new("cargo")
-            .args(&["r", "-p", "miner", "--"])
-            .arg("--swarm-path")
-            .arg(swarm_arg)
-            .arg("--swarm-persona")
-            .arg(swarm_persona)
-            .arg("val-wizard")
-            .spawn()
-            .expect(&format!("failed to run cargo r -p miner"))
-    } else {
-        // we are testing on devnet
-        Command::new("cargo")
-            .args(&["r", "-p", "miner", "--"])
-            .arg("val-wizard")
-            .spawn()
-            .expect(&format!("failed to run cargo r -p miner"))
-    };
-
-    let exit_code = child.wait().expect("failed to wait on miner");
-    assert!(exit_code.success());
-
-    true
-}
+//     true
+// }
 
 impl Node {
     /// Start Node, as fullnode
@@ -151,13 +147,17 @@ impl Node {
                 "failed to run 'libra-node', is it installed?",
             )
         } else {
-            let args = vec!["r", "-p", NODE, "--", "--config", &config_file_name];
-            println!("Starting 'cargo' with args: {:?}", args.join(" "));
+            let project_root = self.conf.workspace.source_path.clone().unwrap();
+            dbg!(&project_root);
+            let debug_bin = project_root.join(format!("target/debug/{}", NODE));
+            let bin_str = debug_bin.to_str().unwrap();
+            let args = vec!["--config", &config_file_name];
+            println!("Starting 'libra-node' with args: {:?}", args.join(" "));
             spawn_process(
-                "cargo",
+                bin_str,
                 args.as_slice(),
                 "node",
-                "failed to run cargo r -p libra-node",
+                &format!("failed to run {:?}", bin_str),
             )
         };
 
@@ -188,14 +188,16 @@ impl Node {
                 "failed to run 'miner', is it installed?",
             )
         } else {
-            let args = vec!["r", "-p", MINER, "--", "start"];
-            // if use_backup { args.push("--backup-url"); };
-            println!("Starting 'cargo' with args: {:?}", args.join(" "));
+            let project_root = self.conf.workspace.source_path.clone().unwrap();
+            let debug_bin = project_root.join(format!("target/debug/{}", MINER));
+            let bin_str = debug_bin.to_str().unwrap();
+            let args = vec!["start"];
+            println!("Starting 'miner' with args: {:?}", args.join(" "));
             spawn_process(
-                "cargo",
+                bin_str,
                 args.as_slice(),
                 MINER,
-                "failed to run cargo r -p miner",
+                &format!("failed to run {}", bin_str),
             )
         };
 
@@ -205,35 +207,41 @@ impl Node {
     }
 
     /// Start Monitor
-pub fn start_monitor(&mut self) {
-    // Stop any processes we may have started and detached from.
-    // if is running do nothing
-    if node::Node::is_web_monitor_serving() {
-        println!("web monitor is already running. Exiting.");
-        return
+    pub fn start_monitor(&mut self) {
+        // Stop any processes we may have started and detached from.
+        // if is running do nothing
+        if node::Node::is_web_monitor_serving() {
+            println!("web monitor is already running. Exiting.");
+            return;
+        }
+
+        let child = if *IS_PROD {
+            println!("Starting `ol serve`");
+            spawn_process(
+                "ol",
+                &["serve"],
+                "monitor",
+                "failed to run 'ol', is it installed?",
+            )
+        } else {
+            let project_root = self.conf.workspace.source_path.clone().unwrap();
+            let debug_bin = project_root.join("target/debug/ol_cli");
+            let bin_str = debug_bin.to_str().unwrap();
+
+            let args = vec!["serve"];
+            println!("Starting '{}' with args: {:?}", bin_str, args.join(" "));
+            spawn_process(
+                bin_str,
+                args.as_slice(),
+                "monitor",
+                &format!("failed to run: {}", bin_str),
+            )
+        };
+
+        let pid = &child.id();
+        self.save_pid("monitor", *pid);
+        println!("Started with PID {} in the background", pid);
     }
-
-    let child = if *IS_PROD {
-        // let args = vec!["start"];
-        // if use_backup { args.push("--backup-url"); };
-        println!("Starting `ol-cli serve` with args");
-        spawn_process(
-            "ol", &["serve"], "monitor", "failed to run 'ol', is it installed?"
-        )        
-    } else {
-        let args = vec!["r", "-p", "ol-cli", "--", "serve"];
-        // if use_backup { args.push("--backup-url"); };
-        println!("Starting 'cargo' with args: {:?}", args.join(" "));
-        spawn_process(
-            "cargo", args.as_slice(), "monitor", "failed to run: cargo r -p ol-cli -- serve"
-        )
-    };
-
-    let pid = &child.id();
-    self.save_pid("monitor", *pid);
-    println!("Started with PID {} in the background", pid);
-}
-
 
     /// Save PID
     pub fn save_pid(&mut self, proc_name: &str, pid: u32) {
@@ -292,11 +300,10 @@ pub fn start_monitor(&mut self) {
         use nix::sys::signal::{self, Signal};
 
         if let Some(hp) = self.get_process(name) {
-          for pid in hp.pids.iter() {
-              let _res = signal::kill(nix::unistd::Pid::from_raw(*pid as i32), Signal::SIGTERM);
-          }
+            for pid in hp.pids.iter() {
+                let _res = signal::kill(nix::unistd::Pid::from_raw(*pid as i32), Signal::SIGTERM);
+            }
         }
-
     }
     /// Stop node, as validator
     pub fn stop_node(&self) {

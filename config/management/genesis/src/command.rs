@@ -1,3 +1,4 @@
+use libra_config::config::NodeConfig;
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 use libra_crypto::ed25519::Ed25519PublicKey;
@@ -124,7 +125,7 @@ impl Command {
             Command::Verify(_) => self.verify(),
             //////// 0L ////////
             Command::Init(_) => self.init(),
-            Command::Files(_) => self.files(),
+            Command::Files(_) => self.files().map(|_| "Success!".to_string()),
             Command::Mining(_) => self.mining(),
         }
     }
@@ -181,7 +182,7 @@ impl Command {
     pub fn init(self) -> Result<String, Error> {
         execute_command!(self, Command::Init, CommandName::Init)
     }
-    pub fn files(self) -> Result<String, Error> {
+    pub fn files(self) -> Result<NodeConfig, Error> {
         execute_command!(self, Command::Files, CommandName::Files)
     }
     pub fn mining(self) -> Result<String, Error> {
