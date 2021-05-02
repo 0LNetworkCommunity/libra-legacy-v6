@@ -18,6 +18,8 @@ use reqwest::Url;
 use serde_json::Value;
 use std::{fs::File, io::Write, path::PathBuf};
 use txs::{commands::autopay_batch_cmd, submit_tx};
+use libra_genesis_tool::node_files;
+
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ValWizardCmd {
@@ -101,15 +103,6 @@ impl Runnable for ValWizardCmd {
             }
         }
 
-        // // Build Genesis and node.yaml file
-        // files_cmd::node_config_files(
-        //     &cfg,
-        //     &self.chain_id,
-        //     &self.github_org,
-        //     &self.repo,
-        //     &self.rebuild_genesis,
-        //     &false,
-        // );
 
         let home_dir = app_config.workspace.node_home.to_owned();
         // 0L convention is for the namespace of the operator to be appended by '-oper'
@@ -134,7 +127,7 @@ impl Runnable for ValWizardCmd {
 
         if !self.skip_mining {
             // Mine Block
-            miner::block::write_genesis(&miner_config);
+            miner::block::write_genesis(&app_config);
             status_ok!(
                 "\nGenesis proof complete",
                 "\n...........................\n"
