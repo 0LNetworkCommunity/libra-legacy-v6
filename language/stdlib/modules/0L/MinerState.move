@@ -187,7 +187,7 @@ address 0x1 {
       // TODO: The operator mining needs its own struct to count mining.
       // For now it is implicit there is only 1 operator per validator, and that the fullnode state is the place to count.
       // This will require a breaking change to MinerState
-      FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
+      // FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
     }
 
     // Function to verify a proof blob and update a MinerProofHistory
