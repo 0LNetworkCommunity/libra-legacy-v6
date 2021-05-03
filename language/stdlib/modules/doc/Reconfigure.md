@@ -60,18 +60,22 @@
 
     <b>let</b> global_proofs_count = 0;
     <b>let</b> k = 0;
+
+    // Distribute mining subsidy <b>to</b> fullnodes
     <b>while</b> (k &lt; <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&miners)) {
         <b>let</b> addr = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&miners, k);
 
         <b>if</b> (!<a href="FullnodeState.md#0x1_FullnodeState_is_init">FullnodeState::is_init</a>(addr)) <b>continue</b>; // fail-safe
 
-        <b>let</b> count = <a href="FullnodeState.md#0x1_FullnodeState_get_address_proof_count">FullnodeState::get_address_proof_count</a>(addr);
+        <b>let</b> count = <a href="MinerState.md#0x1_MinerState_get_count_in_epoch">MinerState::get_count_in_epoch</a>(addr);
+
         global_proofs_count = global_proofs_count + count;
 
         <b>let</b> value: u64;
         // check <b>if</b> is in onboarding state (or stuck)
 
         <b>if</b> (<a href="FullnodeState.md#0x1_FullnodeState_is_onboarding">FullnodeState::is_onboarding</a>(addr)) {
+          // TODO: onboarding subsidy is not necessary <b>with</b> onboarding transfer.
             value = <a href="Subsidy.md#0x1_Subsidy_distribute_onboarding_subsidy">Subsidy::distribute_onboarding_subsidy</a>(vm, addr);
         } <b>else</b> {
             // steady state

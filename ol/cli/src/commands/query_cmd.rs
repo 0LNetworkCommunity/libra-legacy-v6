@@ -41,6 +41,10 @@ pub struct QueryCmd {
 
     #[options(help = "number of txs to return, defaults to 100 txs")]
     txs_count: Option<u64>,
+
+    #[options(help = "filter by type of transaction, e.g. 'ol_miner_state_commit'")]
+    txs_type: Option<String>,
+
 }
 
 impl Runnable for QueryCmd {
@@ -83,6 +87,7 @@ impl Runnable for QueryCmd {
               account: args.account,
               txs_height: self.txs_height,
               txs_count: self.txs_count, 
+              txs_type: self.txs_type.to_owned(),
             });
             display = "TRANSACTIONS";
         }

@@ -351,6 +351,23 @@ pub enum ScriptCall {
         preburn_address: AccountAddress,
     },
 
+    CreateAccUser {
+        challenge: Bytes,
+        solution: Bytes,
+    },
+
+    CreateAccVal {
+        challenge: Bytes,
+        solution: Bytes,
+        ow_human_name: Bytes,
+        op_address: AccountAddress,
+        op_auth_key_prefix: Bytes,
+        op_consensus_pubkey: Bytes,
+        op_validator_network_addresses: Bytes,
+        op_fullnode_network_addresses: Bytes,
+        op_human_name: Bytes,
+    },
+
     /// # Summary
     /// Creates a Child VASP account with its parent being the sending account of the transaction.
     /// The sender of the transaction must be a Parent VASP account.
@@ -544,11 +561,6 @@ pub enum ScriptCall {
     /// * `Script::rotate_authentication_key_with_recovery_address`
     CreateRecoveryAddress {},
 
-    CreateUserAccount {
-        challenge: Bytes,
-        solution: Bytes,
-    },
-
     /// # Summary
     /// Creates a Validator account. This transaction can only be sent by the Libra
     /// Root account.
@@ -710,18 +722,6 @@ pub enum ScriptCall {
     },
 
     MinerstateHelper {},
-
-    MinerstateOnboarding {
-        challenge: Bytes,
-        solution: Bytes,
-        ow_human_name: Bytes,
-        op_address: AccountAddress,
-        op_auth_key_prefix: Bytes,
-        op_consensus_pubkey: Bytes,
-        op_validator_network_addresses: Bytes,
-        op_fullnode_network_addresses: Bytes,
-        op_human_name: Bytes,
-    },
 
     OlOracleTx {
         id: u64,
@@ -1591,6 +1591,31 @@ impl ScriptCall {
                 token,
                 preburn_address,
             } => encode_cancel_burn_script(token, preburn_address),
+            CreateAccUser {
+                challenge,
+                solution,
+            } => encode_create_acc_user_script(challenge, solution),
+            CreateAccVal {
+                challenge,
+                solution,
+                ow_human_name,
+                op_address,
+                op_auth_key_prefix,
+                op_consensus_pubkey,
+                op_validator_network_addresses,
+                op_fullnode_network_addresses,
+                op_human_name,
+            } => encode_create_acc_val_script(
+                challenge,
+                solution,
+                ow_human_name,
+                op_address,
+                op_auth_key_prefix,
+                op_consensus_pubkey,
+                op_validator_network_addresses,
+                op_fullnode_network_addresses,
+                op_human_name,
+            ),
             CreateChildVaspAccount {
                 coin_type,
                 child_address,
@@ -1635,10 +1660,6 @@ impl ScriptCall {
                 add_all_currencies,
             ),
             CreateRecoveryAddress {} => encode_create_recovery_address_script(),
-            CreateUserAccount {
-                challenge,
-                solution,
-            } => encode_create_user_account_script(challenge, solution),
             CreateValidatorAccount {
                 sliding_nonce,
                 new_account_address,
@@ -1678,27 +1699,6 @@ impl ScriptCall {
                 solution,
             } => encode_minerstate_commit_by_operator_script(owner_address, challenge, solution),
             MinerstateHelper {} => encode_minerstate_helper_script(),
-            MinerstateOnboarding {
-                challenge,
-                solution,
-                ow_human_name,
-                op_address,
-                op_auth_key_prefix,
-                op_consensus_pubkey,
-                op_validator_network_addresses,
-                op_fullnode_network_addresses,
-                op_human_name,
-            } => encode_minerstate_onboarding_script(
-                challenge,
-                solution,
-                ow_human_name,
-                op_address,
-                op_auth_key_prefix,
-                op_consensus_pubkey,
-                op_validator_network_addresses,
-                op_fullnode_network_addresses,
-                op_human_name,
-            ),
             OlOracleTx { id, data } => encode_ol_oracle_tx_script(id, data),
             OlReconfigBulkUpdateSetup {
                 alice,
@@ -2214,6 +2214,45 @@ pub fn encode_cancel_burn_script(token: TypeTag, preburn_address: AccountAddress
     )
 }
 
+pub fn encode_create_acc_user_script(challenge: Vec<u8>, solution: Vec<u8>) -> Script {
+    Script::new(
+        CREATE_ACC_USER_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::U8Vector(challenge),
+            TransactionArgument::U8Vector(solution),
+        ],
+    )
+}
+
+pub fn encode_create_acc_val_script(
+    challenge: Vec<u8>,
+    solution: Vec<u8>,
+    ow_human_name: Vec<u8>,
+    op_address: AccountAddress,
+    op_auth_key_prefix: Vec<u8>,
+    op_consensus_pubkey: Vec<u8>,
+    op_validator_network_addresses: Vec<u8>,
+    op_fullnode_network_addresses: Vec<u8>,
+    op_human_name: Vec<u8>,
+) -> Script {
+    Script::new(
+        CREATE_ACC_VAL_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::U8Vector(challenge),
+            TransactionArgument::U8Vector(solution),
+            TransactionArgument::U8Vector(ow_human_name),
+            TransactionArgument::Address(op_address),
+            TransactionArgument::U8Vector(op_auth_key_prefix),
+            TransactionArgument::U8Vector(op_consensus_pubkey),
+            TransactionArgument::U8Vector(op_validator_network_addresses),
+            TransactionArgument::U8Vector(op_fullnode_network_addresses),
+            TransactionArgument::U8Vector(op_human_name),
+        ],
+    )
+}
+
 /// # Summary
 /// Creates a Child VASP account with its parent being the sending account of the transaction.
 /// The sender of the transaction must be a Parent VASP account.
@@ -2444,17 +2483,6 @@ pub fn encode_create_recovery_address_script() -> Script {
     Script::new(CREATE_RECOVERY_ADDRESS_CODE.to_vec(), vec![], vec![])
 }
 
-pub fn encode_create_user_account_script(challenge: Vec<u8>, solution: Vec<u8>) -> Script {
-    Script::new(
-        CREATE_USER_ACCOUNT_CODE.to_vec(),
-        vec![],
-        vec![
-            TransactionArgument::U8Vector(challenge),
-            TransactionArgument::U8Vector(solution),
-        ],
-    )
-}
-
 /// # Summary
 /// Creates a Validator account. This transaction can only be sent by the Libra
 /// Root account.
@@ -2672,34 +2700,6 @@ pub fn encode_minerstate_commit_by_operator_script(
 
 pub fn encode_minerstate_helper_script() -> Script {
     Script::new(MINERSTATE_HELPER_CODE.to_vec(), vec![], vec![])
-}
-
-pub fn encode_minerstate_onboarding_script(
-    challenge: Vec<u8>,
-    solution: Vec<u8>,
-    ow_human_name: Vec<u8>,
-    op_address: AccountAddress,
-    op_auth_key_prefix: Vec<u8>,
-    op_consensus_pubkey: Vec<u8>,
-    op_validator_network_addresses: Vec<u8>,
-    op_fullnode_network_addresses: Vec<u8>,
-    op_human_name: Vec<u8>,
-) -> Script {
-    Script::new(
-        MINERSTATE_ONBOARDING_CODE.to_vec(),
-        vec![],
-        vec![
-            TransactionArgument::U8Vector(challenge),
-            TransactionArgument::U8Vector(solution),
-            TransactionArgument::U8Vector(ow_human_name),
-            TransactionArgument::Address(op_address),
-            TransactionArgument::U8Vector(op_auth_key_prefix),
-            TransactionArgument::U8Vector(op_consensus_pubkey),
-            TransactionArgument::U8Vector(op_validator_network_addresses),
-            TransactionArgument::U8Vector(op_fullnode_network_addresses),
-            TransactionArgument::U8Vector(op_human_name),
-        ],
-    )
 }
 
 pub fn encode_ol_oracle_tx_script(id: u64, data: Vec<u8>) -> Script {
@@ -3772,6 +3772,27 @@ fn decode_cancel_burn_script(script: &Script) -> Option<ScriptCall> {
     })
 }
 
+fn decode_create_acc_user_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::CreateAccUser {
+        challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
+        solution: decode_u8vector_argument(script.args().get(1)?.clone())?,
+    })
+}
+
+fn decode_create_acc_val_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::CreateAccVal {
+        challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
+        solution: decode_u8vector_argument(script.args().get(1)?.clone())?,
+        ow_human_name: decode_u8vector_argument(script.args().get(2)?.clone())?,
+        op_address: decode_address_argument(script.args().get(3)?.clone())?,
+        op_auth_key_prefix: decode_u8vector_argument(script.args().get(4)?.clone())?,
+        op_consensus_pubkey: decode_u8vector_argument(script.args().get(5)?.clone())?,
+        op_validator_network_addresses: decode_u8vector_argument(script.args().get(6)?.clone())?,
+        op_fullnode_network_addresses: decode_u8vector_argument(script.args().get(7)?.clone())?,
+        op_human_name: decode_u8vector_argument(script.args().get(8)?.clone())?,
+    })
+}
+
 fn decode_create_child_vasp_account_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::CreateChildVaspAccount {
         coin_type: script.ty_args().get(0)?.clone(),
@@ -3806,13 +3827,6 @@ fn decode_create_parent_vasp_account_script(script: &Script) -> Option<ScriptCal
 
 fn decode_create_recovery_address_script(_script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::CreateRecoveryAddress {})
-}
-
-fn decode_create_user_account_script(script: &Script) -> Option<ScriptCall> {
-    Some(ScriptCall::CreateUserAccount {
-        challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
-        solution: decode_u8vector_argument(script.args().get(1)?.clone())?,
-    })
 }
 
 fn decode_create_validator_account_script(script: &Script) -> Option<ScriptCall> {
@@ -3871,20 +3885,6 @@ fn decode_minerstate_commit_by_operator_script(script: &Script) -> Option<Script
 
 fn decode_minerstate_helper_script(_script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::MinerstateHelper {})
-}
-
-fn decode_minerstate_onboarding_script(script: &Script) -> Option<ScriptCall> {
-    Some(ScriptCall::MinerstateOnboarding {
-        challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
-        solution: decode_u8vector_argument(script.args().get(1)?.clone())?,
-        ow_human_name: decode_u8vector_argument(script.args().get(2)?.clone())?,
-        op_address: decode_address_argument(script.args().get(3)?.clone())?,
-        op_auth_key_prefix: decode_u8vector_argument(script.args().get(4)?.clone())?,
-        op_consensus_pubkey: decode_u8vector_argument(script.args().get(5)?.clone())?,
-        op_validator_network_addresses: decode_u8vector_argument(script.args().get(6)?.clone())?,
-        op_fullnode_network_addresses: decode_u8vector_argument(script.args().get(7)?.clone())?,
-        op_human_name: decode_u8vector_argument(script.args().get(8)?.clone())?,
-    })
 }
 
 fn decode_ol_oracle_tx_script(script: &Script) -> Option<ScriptCall> {
@@ -4105,6 +4105,14 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
         Box::new(decode_cancel_burn_script),
     );
     map.insert(
+        CREATE_ACC_USER_CODE.to_vec(),
+        Box::new(decode_create_acc_user_script),
+    );
+    map.insert(
+        CREATE_ACC_VAL_CODE.to_vec(),
+        Box::new(decode_create_acc_val_script),
+    );
+    map.insert(
         CREATE_CHILD_VASP_ACCOUNT_CODE.to_vec(),
         Box::new(decode_create_child_vasp_account_script),
     );
@@ -4119,10 +4127,6 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
     map.insert(
         CREATE_RECOVERY_ADDRESS_CODE.to_vec(),
         Box::new(decode_create_recovery_address_script),
-    );
-    map.insert(
-        CREATE_USER_ACCOUNT_CODE.to_vec(),
-        Box::new(decode_create_user_account_script),
     );
     map.insert(
         CREATE_VALIDATOR_ACCOUNT_CODE.to_vec(),
@@ -4150,10 +4154,6 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
     map.insert(
         MINERSTATE_HELPER_CODE.to_vec(),
         Box::new(decode_minerstate_helper_script),
-    );
-    map.insert(
-        MINERSTATE_ONBOARDING_CODE.to_vec(),
-        Box::new(decode_minerstate_onboarding_script),
     );
     map.insert(
         OL_ORACLE_TX_CODE.to_vec(),
@@ -4363,6 +4363,32 @@ const CANCEL_BURN_CODE: &[u8] = &[
     0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 4, 11, 0, 10, 1, 56, 0, 2,
 ];
 
+const CREATE_ACC_USER_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 4, 2, 4, 4, 3, 8, 11, 4, 19, 2, 5, 21, 26, 7, 47, 56, 8,
+    103, 16, 0, 0, 0, 1, 0, 0, 2, 0, 1, 2, 0, 1, 1, 1, 1, 3, 2, 0, 0, 0, 6, 1, 5, 1, 3, 2, 6, 10,
+    2, 6, 10, 2, 3, 6, 12, 10, 2, 10, 2, 3, 5, 1, 3, 0, 1, 8, 0, 3, 71, 65, 83, 12, 76, 105, 98,
+    114, 97, 65, 99, 99, 111, 117, 110, 116, 7, 98, 97, 108, 97, 110, 99, 101, 30, 99, 114, 101,
+    97, 116, 101, 95, 117, 115, 101, 114, 95, 97, 99, 99, 111, 117, 110, 116, 95, 119, 105, 116,
+    104, 95, 112, 114, 111, 111, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 4, 14,
+    14, 1, 14, 2, 17, 1, 12, 3, 10, 3, 56, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 33, 12, 4, 11, 4, 3, 13,
+    6, 1, 0, 0, 0, 0, 0, 0, 0, 39, 2,
+];
+
+const CREATE_ACC_VAL_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 6, 2, 6, 4, 3, 10, 16, 4, 26, 2, 5, 28, 58, 7, 86, 86,
+    8, 172, 1, 16, 0, 0, 0, 1, 0, 2, 0, 0, 2, 0, 1, 3, 0, 1, 1, 1, 1, 4, 2, 0, 0, 2, 5, 0, 3, 0, 0,
+    7, 1, 5, 1, 3, 10, 6, 12, 6, 10, 2, 6, 10, 2, 10, 2, 5, 10, 2, 10, 2, 10, 2, 10, 2, 10, 2, 1,
+    1, 10, 6, 12, 10, 2, 10, 2, 10, 2, 5, 10, 2, 10, 2, 10, 2, 10, 2, 10, 2, 5, 5, 1, 3, 1, 3, 0,
+    1, 8, 0, 3, 71, 65, 83, 12, 76, 105, 98, 114, 97, 65, 99, 99, 111, 117, 110, 116, 15, 86, 97,
+    108, 105, 100, 97, 116, 111, 114, 67, 111, 110, 102, 105, 103, 7, 98, 97, 108, 97, 110, 99,
+    101, 35, 99, 114, 101, 97, 116, 101, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 95, 97, 99,
+    99, 111, 117, 110, 116, 95, 119, 105, 116, 104, 95, 112, 114, 111, 111, 102, 8, 105, 115, 95,
+    118, 97, 108, 105, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 4, 5, 29, 11, 0, 14,
+    1, 14, 2, 11, 3, 10, 4, 11, 5, 11, 6, 11, 7, 11, 8, 11, 9, 17, 1, 12, 10, 10, 10, 17, 2, 12,
+    11, 11, 11, 3, 19, 6, 3, 0, 0, 0, 0, 0, 0, 0, 39, 10, 10, 56, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 36,
+    12, 13, 11, 13, 3, 28, 6, 4, 0, 0, 0, 0, 0, 0, 0, 39, 2,
+];
+
 const CREATE_CHILD_VASP_ACCOUNT_CODE: &[u8] = &[
     161, 28, 235, 11, 1, 0, 0, 0, 8, 1, 0, 2, 2, 2, 4, 3, 6, 22, 4, 28, 4, 5, 32, 35, 7, 67, 123,
     8, 190, 1, 16, 6, 206, 1, 4, 0, 0, 0, 1, 1, 0, 0, 2, 0, 1, 1, 1, 0, 3, 2, 3, 0, 0, 4, 4, 1, 1,
@@ -4410,17 +4436,6 @@ const CREATE_RECOVERY_ADDRESS_CODE: &[u8] = &[
     121, 95, 114, 111, 116, 97, 116, 105, 111, 110, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116,
     121, 7, 112, 117, 98, 108, 105, 115, 104, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
     3, 5, 10, 0, 11, 0, 17, 0, 17, 1, 2,
-];
-
-const CREATE_USER_ACCOUNT_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 4, 2, 4, 4, 3, 8, 11, 4, 19, 2, 5, 21, 26, 7, 47, 56, 8,
-    103, 16, 0, 0, 0, 1, 0, 0, 2, 0, 1, 2, 0, 1, 1, 1, 1, 3, 2, 0, 0, 0, 6, 1, 5, 1, 3, 2, 6, 10,
-    2, 6, 10, 2, 3, 6, 12, 10, 2, 10, 2, 3, 5, 1, 3, 0, 1, 8, 0, 3, 71, 65, 83, 12, 76, 105, 98,
-    114, 97, 65, 99, 99, 111, 117, 110, 116, 7, 98, 97, 108, 97, 110, 99, 101, 30, 99, 114, 101,
-    97, 116, 101, 95, 117, 115, 101, 114, 95, 97, 99, 99, 111, 117, 110, 116, 95, 119, 105, 116,
-    104, 95, 112, 114, 111, 111, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 4, 14,
-    14, 1, 14, 2, 17, 1, 12, 3, 10, 3, 56, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 33, 12, 4, 11, 4, 3, 13,
-    6, 1, 0, 0, 0, 0, 0, 0, 0, 39, 2,
 ];
 
 const CREATE_VALIDATOR_ACCOUNT_CODE: &[u8] = &[
@@ -4526,21 +4541,6 @@ const MINERSTATE_HELPER_CODE: &[u8] = &[
     101, 115, 116, 110, 101, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5, 6, 14, 17,
     4, 12, 1, 11, 1, 3, 8, 11, 0, 1, 6, 1, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 17, 0, 17, 2, 17, 3, 17,
     1, 2,
-];
-
-const MINERSTATE_ONBOARDING_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 6, 2, 6, 4, 3, 10, 16, 4, 26, 2, 5, 28, 58, 7, 86, 86,
-    8, 172, 1, 16, 0, 0, 0, 1, 0, 2, 0, 0, 2, 0, 1, 3, 0, 1, 1, 1, 1, 4, 2, 0, 0, 2, 5, 0, 3, 0, 0,
-    7, 1, 5, 1, 3, 10, 6, 12, 6, 10, 2, 6, 10, 2, 10, 2, 5, 10, 2, 10, 2, 10, 2, 10, 2, 10, 2, 1,
-    1, 10, 6, 12, 10, 2, 10, 2, 10, 2, 5, 10, 2, 10, 2, 10, 2, 10, 2, 10, 2, 5, 5, 1, 3, 1, 3, 0,
-    1, 8, 0, 3, 71, 65, 83, 12, 76, 105, 98, 114, 97, 65, 99, 99, 111, 117, 110, 116, 15, 86, 97,
-    108, 105, 100, 97, 116, 111, 114, 67, 111, 110, 102, 105, 103, 7, 98, 97, 108, 97, 110, 99,
-    101, 35, 99, 114, 101, 97, 116, 101, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 95, 97, 99,
-    99, 111, 117, 110, 116, 95, 119, 105, 116, 104, 95, 112, 114, 111, 111, 102, 8, 105, 115, 95,
-    118, 97, 108, 105, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 4, 5, 29, 11, 0, 14,
-    1, 14, 2, 11, 3, 10, 4, 11, 5, 11, 6, 11, 7, 11, 8, 11, 9, 17, 1, 12, 10, 10, 10, 17, 2, 12,
-    11, 11, 11, 3, 19, 6, 3, 0, 0, 0, 0, 0, 0, 0, 39, 10, 10, 56, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 36,
-    12, 13, 11, 13, 3, 28, 6, 4, 0, 0, 0, 0, 0, 0, 0, 39, 2,
 ];
 
 const OL_ORACLE_TX_CODE: &[u8] = &[

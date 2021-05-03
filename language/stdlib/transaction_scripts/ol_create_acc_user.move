@@ -4,7 +4,7 @@ script {
   use 0x1::LibraAccount;
   use 0x1::GAS::GAS;
 
-  fun create_user_account(    
+  fun create_acc_user(    
     _sender: &signer,
     challenge: vector<u8>,
     solution: vector<u8>,

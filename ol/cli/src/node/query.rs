@@ -1,5 +1,5 @@
 //! 'query'
-use libra_json_rpc_client::AccountAddress;
+use libra_json_rpc_client::{AccountAddress, views::TransactionView};
 use num_format::{Locale, ToFormattedString};
 use super::node::Node;
 
@@ -24,6 +24,8 @@ pub enum QueryType {
     txs_height: Option<u64>,
     /// limit how many txs
     txs_count: Option<u64>, 
+    /// filter by type
+    txs_type: Option<String>,
   },
 }
 
@@ -68,7 +70,7 @@ impl Node {
 
         format!("{:#?}", resources).to_string()
       }
-      Txs{account, txs_height, txs_count } => {
+      Txs{account, txs_height, txs_count, txs_type } => {
         let (chain, _) = self.refresh_chain_info();
         let current_height = chain.unwrap().height;
         let query_height = if current_height > 100_000 { current_height - 100_000 }
@@ -81,16 +83,26 @@ impl Node {
           true
         ).unwrap();
 
-        format!("{:#?}", txs)
+        if let Some(t) = txs_type {
+          let filter: Vec<TransactionView> = txs.into_iter()
+          .filter(|tv|{
+            match &tv.transaction {
+                libra_json_rpc_client::views::TransactionDataView::UserTransaction {  script, .. } => {
+                  return  script.r#type == t;
+                },
+                _ => false
+            }
+          })
+          .collect();
+          format!("{:#?}", filter)
+        } else {
+          format!("{:#?}", txs)
+        }
+
+
+        
 
       }
     }
   }
 }
-
-// fn get_account_view(account: AccountAddress) -> AccountView {
-//     let (account_view, _) = pick_client()
-//       .get_account(account, true)
-//       .expect(&format!("could not get account at address {:?}", account));
-//     account_view.expect(&format!("could not get account at address {:?}", account))
-// }
