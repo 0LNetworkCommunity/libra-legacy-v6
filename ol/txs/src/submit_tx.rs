@@ -98,15 +98,17 @@ pub fn maybe_submit(
         save_tx(txn.clone(), path);
     }
 
-    if no_send {
-        return Ok(txn);
-    }
+    if no_send {return Ok(txn);}
 
-    let res = submit_tx(client, txn.clone(), &mut account_data).unwrap();
-    match eval_tx_status(res) {
-        Ok(_) => Ok(txn),
-        Err(e) => Err(e),
-    }
+    match submit_tx(client, txn.clone(), &mut account_data) {
+      Ok(res) => {
+        match eval_tx_status(res) {
+          Ok(_) => Ok(txn),
+          Err(e) => Err(e),
+        }
+      },
+      Err(e) => Err(e), 
+  }
 }
 /// convenience for wrapping multiple transactions
 pub fn batch_wrapper(

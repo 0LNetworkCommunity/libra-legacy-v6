@@ -187,6 +187,16 @@ Attempted to send funds to an account that does not exist
 
 
 
+<a name="0x1_AutoPay_AUTOPAY_ID_EXISTS"></a>
+
+Attempting to re-use autopay id
+
+
+<pre><code><b>const</b> <a href="AutoPay.md#0x1_AutoPay_AUTOPAY_ID_EXISTS">AUTOPAY_ID_EXISTS</a>: u64 = 10019;
+</code></pre>
+
+
+
 <a name="0x1_AutoPay_EAUTOPAY_NOT_ENABLED"></a>
 
 The account does not have autopay enabled.
@@ -501,7 +511,7 @@ print(&02214);
   <b>let</b> index = <a href="AutoPay.md#0x1_AutoPay_find">find</a>(addr, uid);
   <b>if</b> (<a href="Option.md#0x1_Option_is_none">Option::is_none</a>&lt;u64&gt;(&index)) {
     // Case when the payment <b>to</b> be deleted doesn't actually exist
-    <b>assert</b>(<b>false</b>, 010105012040);
+    <b>assert</b>(<b>false</b>, <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="AutoPay.md#0x1_AutoPay_AUTOPAY_ID_EXISTS">AUTOPAY_ID_EXISTS</a>));
   };
   <b>let</b> payments = &<b>mut</b> borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay_Data">Data</a>&gt;(addr).payments;
   <a href="Vector.md#0x1_Vector_remove">Vector::remove</a>&lt;<a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>&gt;(payments, <a href="Option.md#0x1_Option_extract">Option::extract</a>&lt;u64&gt;(&<b>mut</b> index));
