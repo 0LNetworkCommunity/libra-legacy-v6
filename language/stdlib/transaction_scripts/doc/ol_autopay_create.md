@@ -34,6 +34,7 @@
 
   <b>if</b> (!<a href="../../modules/doc/AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(account)) {
     <a href="../../modules/doc/AutoPay.md#0x1_AutoPay_enable_autopay">AutoPay::enable_autopay</a>(sender);
+    // <b>assert</b>(<a href="../../modules/doc/AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(account), <a href="../../modules/doc/Errors.md#0x1_Errors_ol_tx">Errors::ol_tx</a>(EAUTOPAY_NOT_ENABLED));
   };
 
   <a href="../../modules/doc/AutoPay.md#0x1_AutoPay_create_instruction">AutoPay::create_instruction</a>(
@@ -43,7 +44,6 @@
     end_epoch,
     percentage,
   );
-  <b>assert</b>(<a href="../../modules/doc/AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(<a href="../../modules/doc/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender)), 0);
 }
 </code></pre>
 

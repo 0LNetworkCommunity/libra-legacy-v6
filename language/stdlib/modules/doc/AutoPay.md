@@ -187,6 +187,16 @@ Attempted to send funds to an account that does not exist
 
 
 
+<a name="0x1_AutoPay_EAUTOPAY_NOT_ENABLED"></a>
+
+The account does not have autopay enabled.
+
+
+<pre><code><b>const</b> <a href="AutoPay.md#0x1_AutoPay_EAUTOPAY_NOT_ENABLED">EAUTOPAY_NOT_ENABLED</a>: u64 = 10018;
+</code></pre>
+
+
+
 <a name="0x1_AutoPay_tick"></a>
 
 ## Function `tick`

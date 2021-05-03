@@ -21,6 +21,8 @@ address 0x1{
 
     /// Attempted to send funds to an account that does not exist
     const EPAYEE_DOES_NOT_EXIST: u64 = 010017;
+    /// The account does not have autopay enabled.
+    const EAUTOPAY_NOT_ENABLED: u64 = 010018;
 
     resource struct Tick {
       triggered: bool,

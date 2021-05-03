@@ -7,7 +7,8 @@
 
 
 
-<pre><code><b>use</b> <a href="../../modules/doc/GAS.md#0x1_GAS">0x1::GAS</a>;
+<pre><code><b>use</b> <a href="../../modules/doc/Debug.md#0x1_Debug">0x1::Debug</a>;
+<b>use</b> <a href="../../modules/doc/GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount">0x1::LibraAccount</a>;
 <b>use</b> <a href="../../modules/doc/ValidatorConfig.md#0x1_ValidatorConfig">0x1::ValidatorConfig</a>;
 </code></pre>
@@ -37,6 +38,7 @@
   op_human_name: vector&lt;u8&gt;,
 ) {
 
+print(&0x1);
   <b>let</b> new_account_address = <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount_create_validator_account_with_proof">LibraAccount::create_validator_account_with_proof</a>(
     sender,
     &challenge,
@@ -49,10 +51,10 @@
     op_fullnode_network_addresses,
     op_human_name,
   );
-
+print(&0x2);
   // Check the account has the Validator role
   <b>assert</b>(<a href="../../modules/doc/ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(new_account_address), 03);
-
+print(&0x3);
   // Check the account <b>exists</b> and the balance is greater than 0
   <b>assert</b>(<a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount_balance">LibraAccount::balance</a>&lt;<a href="../../modules/doc/GAS.md#0x1_GAS">GAS</a>&gt;(new_account_address) &gt; 0, 04);
 }
