@@ -295,7 +295,7 @@ ifdef TEST
 # skip mining proof zero with fixtures
 	cp ./ol/fixtures/blocks/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
 # place a mock autopay.json in root
-	cp ./ol/fixtures/autopay/${NS}.autopay_batch.json ${DATA_PATH}/
+	cp ./ol/fixtures/autopay/${NS}.autopay_batch.json ${DATA_PATH}/autopay_batch.json
 # place a mock account.json in root, used as template for onboarding
 	cp ./ol/fixtures/account/${NS}.account.json ${DATA_PATH}/account.json
 endif
