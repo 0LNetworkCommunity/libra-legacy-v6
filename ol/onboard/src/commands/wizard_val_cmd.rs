@@ -159,20 +159,23 @@ fn get_autopay_batch(
     wallet: &WalletLibrary,
 ) -> (Option<Vec<PayInstruction>>, Option<Vec<SignedTransaction>>) {
     let file_name = if template.is_some() {
+      // assumes the template was downloaded from URL
         "template.json"
     } else if let Some(path) = file_path {
         path.to_str().unwrap()
     } else {
-        "autopay.json"
+        "autopay_batch.json"
     };
 
     let starting_epoch = cfg.chain_info.base_epoch.unwrap();
     let instr_vec = PayInstruction::parse_autopay_instructions(&home_path.join(file_name)).unwrap();
     let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone(), starting_epoch);
     let url = cfg.what_url(false);
-    let tx_params =
-        submit_tx::get_tx_params_from_toml(cfg.to_owned(), TxType::Miner, Some(wallet), url)
-            .unwrap();
+    let mut tx_params =
+        submit_tx::get_tx_params_from_toml(cfg.to_owned(), TxType::Miner, Some(wallet), url).unwrap();
+    // give the tx a very long expiration, 1 day.
+    let tx_expiration_sec = 24 * 60 * 60;
+    tx_params.tx_cost.user_tx_timeout = tx_expiration_sec;
     let txn_vec = autopay_batch_cmd::sign_instructions(script_vec, 0, &tx_params);
     (Some(instr_vec), Some(txn_vec))
 }
