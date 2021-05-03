@@ -31,8 +31,9 @@ impl Runnable for InitCmd {
         
         let entry_args = entrypoint::get_args();
         if let Some(path) = entry_args.swarm_path {
+          let swarm_node_home = entrypoint::get_node_home();
           let absolute = fs::canonicalize(path).unwrap();
-          initialize_host_swarm(absolute).unwrap();
+          initialize_host_swarm(absolute, swarm_node_home).unwrap();
           return
         }
         
@@ -57,8 +58,8 @@ pub fn initialize_host(authkey: AuthenticationKey, account: AccountAddress, path
 }
 
 /// Initializes the necessary 0L config files: 0L.toml
-pub fn initialize_host_swarm(swarm_path: PathBuf) -> Result <AppCfg, Error>{
-    let cfg = AppCfg::init_swarm_config(swarm_path);
+pub fn initialize_host_swarm(swarm_path: PathBuf, node_home: PathBuf) -> Result <AppCfg, Error>{
+    let cfg = AppCfg::init_swarm_config(swarm_path, node_home);
     Ok(cfg)
 }
 /// Initializes the necessary validator config files: genesis.blob, key_store.json
