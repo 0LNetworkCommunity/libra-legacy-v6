@@ -36,7 +36,7 @@ pub fn create_user_account_script(account_json_path: &str) -> Script {
         .as_str().unwrap();
     
     let proof_hex = hex::decode(proof).unwrap();
-    transaction_builder::encode_create_user_account_script(pre_hex, proof_hex)
+    transaction_builder::encode_create_acc_user_script(pre_hex, proof_hex)
 }
 
 impl Runnable for CreateAccountCmd {    

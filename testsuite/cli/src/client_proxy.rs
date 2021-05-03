@@ -415,7 +415,7 @@ impl ClientProxy {
         let sender = self.accounts.get(sender_ref_id).unwrap();
         let sequence_number = sender.sequence_number;
 
-        let program = transaction_builder::encode_create_user_account_script(pre_hex, proof_hex);
+        let program = transaction_builder::encode_create_acc_user_script(pre_hex, proof_hex);
 
         let txn = self.create_txn_to_submit(
             TransactionPayload::Script(program),
@@ -658,7 +658,7 @@ impl ClientProxy {
         let sender = self.accounts.get(sender_ref_id).unwrap();
         let sequence_number = sender.sequence_number;
 
-        let program = transaction_builder::encode_minerstate_onboarding_script(
+        let program = transaction_builder::encode_create_acc_val_script(
             challenge,
             solution,
             ow_human_name,
