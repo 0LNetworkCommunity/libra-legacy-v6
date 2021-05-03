@@ -447,7 +447,7 @@
   // TODO: The operator mining needs its own <b>struct</b> <b>to</b> count mining.
   // For now it is implicit there is only 1 operator per validator, and that the fullnode state is the place <b>to</b> count.
   // This will require a breaking change <b>to</b> <a href="MinerState.md#0x1_MinerState">MinerState</a>
-  <a href="FullnodeState.md#0x1_FullnodeState_inc_proof_by_operator">FullnodeState::inc_proof_by_operator</a>(operator_sig, miner_addr);
+  // FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
 }
 </code></pre>
 
@@ -1017,7 +1017,7 @@ Public Getters ///
   // TODO: The operator mining needs its own <b>struct</b> <b>to</b> count mining.
   // For now it is implicit there is only 1 operator per validator, and that the fullnode state is the place <b>to</b> count.
   // This will require a breaking change <b>to</b> <a href="MinerState.md#0x1_MinerState">MinerState</a>
-  // <a href="FullnodeState.md#0x1_FullnodeState_inc_proof_by_operator">FullnodeState::inc_proof_by_operator</a>(operator_sig, miner_addr);
+  // FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
 }
 </code></pre>
 

@@ -12,6 +12,7 @@
 <pre><code><b>use</b> <a href="AccountLimits.md#0x1_AccountLimits">0x1::AccountLimits</a>;
 <b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
 <b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
@@ -53,6 +54,8 @@
     // <b>loop</b> through validators and pay full node subsidies.
     // Should happen before transactionfees get distributed.
     // There may be new validators which have not mined yet.
+print(&03100);
+
     <b>let</b> miners = <a href="MinerState.md#0x1_MinerState_get_miner_list">MinerState::get_miner_list</a>();
 
     // Migration for miner list.
@@ -60,24 +63,34 @@
 
     <b>let</b> global_proofs_count = 0;
     <b>let</b> k = 0;
+print(&03200);
+
+    // Distribute mining subsidy <b>to</b> fullnodes
     <b>while</b> (k &lt; <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&miners)) {
         <b>let</b> addr = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&miners, k);
+print(&03210);
 
         <b>if</b> (!<a href="FullnodeState.md#0x1_FullnodeState_is_init">FullnodeState::is_init</a>(addr)) <b>continue</b>; // fail-safe
 
-        <b>let</b> count = <a href="FullnodeState.md#0x1_FullnodeState_get_address_proof_count">FullnodeState::get_address_proof_count</a>(addr);
+        <b>let</b> count = <a href="MinerState.md#0x1_MinerState_get_count_in_epoch">MinerState::get_count_in_epoch</a>(addr);
+
         global_proofs_count = global_proofs_count + count;
 
         <b>let</b> value: u64;
         // check <b>if</b> is in onboarding state (or stuck)
+print(&03220);
 
         <b>if</b> (<a href="FullnodeState.md#0x1_FullnodeState_is_onboarding">FullnodeState::is_onboarding</a>(addr)) {
+print(&03221);
+
+          // TODO: onboarding subsidy is not necessary <b>with</b> onboarding transfer.
             value = <a href="Subsidy.md#0x1_Subsidy_distribute_onboarding_subsidy">Subsidy::distribute_onboarding_subsidy</a>(vm, addr);
         } <b>else</b> {
             // steady state
             value = <a href="Subsidy.md#0x1_Subsidy_distribute_fullnode_subsidy">Subsidy::distribute_fullnode_subsidy</a>(vm, addr, count);
         };
 
+print(&03230);
         <a href="FullnodeState.md#0x1_FullnodeState_inc_payment_count">FullnodeState::inc_payment_count</a>(vm, addr, count);
         <a href="FullnodeState.md#0x1_FullnodeState_inc_payment_value">FullnodeState::inc_payment_value</a>(vm, addr, value);
         <a href="FullnodeState.md#0x1_FullnodeState_reconfig">FullnodeState::reconfig</a>(vm, addr, count);
@@ -88,13 +101,18 @@
     // Distribute Transaction fees and subsidy payments <b>to</b> all outgoing validators
     <b>let</b> height_start = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>(vm);
 
+print(&03240);
+
     <b>let</b> (outgoing_set, fee_ratio) = <a href="LibraSystem.md#0x1_LibraSystem_get_fee_ratio">LibraSystem::get_fee_ratio</a>(vm, height_start, height_now);
     <b>if</b> (<a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&outgoing_set) &gt; 0) {
         <b>let</b> subsidy_units = <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, height_start, height_now);
+print(&03241);
 
         <b>if</b> (subsidy_units &gt; 0) {
             <a href="Subsidy.md#0x1_Subsidy_process_subsidy">Subsidy::process_subsidy</a>(vm, subsidy_units, &outgoing_set, &fee_ratio);
         };
+print(&03241);
+
         <a href="Subsidy.md#0x1_Subsidy_process_fees">Subsidy::process_fees</a>(vm, &outgoing_set, &fee_ratio);
     };
 

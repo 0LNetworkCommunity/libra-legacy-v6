@@ -24,6 +24,7 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
 <b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
@@ -296,14 +297,17 @@ Attempted to send funds to an account that does not exist
   <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(010003));
 
   <b>let</b> epoch = <a href="LibraConfig.md#0x1_LibraConfig_get_current_epoch">LibraConfig::get_current_epoch</a>();
+print(&02100);
 
   // Go through all accounts in <a href="AutoPay.md#0x1_AutoPay_AccountList">AccountList</a>
   // This is the list of accounts which currently have autopay enabled
   <b>let</b> account_list = &borrow_global&lt;<a href="AutoPay.md#0x1_AutoPay_AccountList">AccountList</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()).accounts;
   <b>let</b> accounts_length = <a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(account_list);
   <b>let</b> account_idx = 0;
-
+print(&02200);
   <b>while</b> (account_idx &lt; accounts_length) {
+print(&02210);
+
     <b>let</b> account_addr = <a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(account_list, account_idx);
     // Obtain the account balance
     <b>let</b> account_bal = <a href="LibraAccount.md#0x1_LibraAccount_balance">LibraAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*account_addr);
@@ -312,6 +316,8 @@ Attempted to send funds to an account that does not exist
     <b>let</b> payments_len = <a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>&gt;(payments);
     <b>let</b> payments_idx = 0;
     <b>while</b> (payments_idx &lt; payments_len) {
+print(&02211);
+
       <b>let</b> payment = <a href="Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>&lt;<a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>&gt;(payments, payments_idx);
       // no payments <b>to</b> self
       <b>if</b> (&payment.payee == account_addr) <b>break</b>;
@@ -320,11 +326,13 @@ Attempted to send funds to an account that does not exist
       <b>if</b> (payment.end_epoch &gt;= epoch) {
         // A payment will happen now
         // Obtain the amount <b>to</b> pay from percentage and balance
+print(&02212);
 
         // IMPORTANT there are two digits for scaling representation.
         // an autopay instruction of 12.34% is scaled by two orders, and represented in <a href="AutoPay.md#0x1_AutoPay">AutoPay</a> <b>as</b> `1234`.
         <b>if</b> (payment.percentage &gt; 10000) <b>break</b>;
         <b>let</b> percent_scaled = <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(payment.percentage, 10000);
+print(&02213);
 
         <b>let</b> amount = <a href="FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(account_bal, percent_scaled);
         <b>if</b> (amount &gt; account_bal) {
@@ -333,7 +341,8 @@ Attempted to send funds to an account that does not exist
         };
         <b>if</b> (amount&gt;0) {
           <a href="LibraAccount.md#0x1_LibraAccount_vm_make_payment">LibraAccount::vm_make_payment</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*account_addr, payment.payee, amount, x"", x"", vm);
-        }
+        };
+print(&02214);
 
       };
       // TODO: might want <b>to</b> delete inactive instructions <b>to</b> save memory
