@@ -35,6 +35,12 @@ pub struct QueryCmd {
 
     #[options(help = "get last 100 transactions")]
     txs: bool,
+
+    #[options(help = "height to start txs query from, defaults to -100_000 blocks")]
+    txs_height: Option<u64>,
+
+    #[options(help = "number of txs to return, defaults to 100 txs")]
+    txs_count: Option<u64>,
 }
 
 impl Runnable for QueryCmd {
@@ -73,7 +79,11 @@ impl Runnable for QueryCmd {
             display = "EPOCH";
         }
         else if self.txs {
-            info = node.get(QueryType::Txs);
+            info = node.get(QueryType::Txs {
+              account: args.account,
+              txs_height: self.txs_height,
+              txs_count: self.txs_count, 
+            });
             display = "TRANSACTIONS";
         }
 

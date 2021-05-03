@@ -1,4 +1,5 @@
 //! 'query'
+use libra_json_rpc_client::AccountAddress;
 use num_format::{Locale, ToFormattedString};
 use super::node::Node;
 
@@ -16,7 +17,14 @@ pub enum QueryType {
   /// How far behind the local is from the upstream nodes
   SyncDelay,
   /// Get transaction history
-  Txs,
+  Txs { 
+    /// account to query txs of
+    account: Option<AccountAddress>,
+    /// get transactions after this height
+    txs_height: Option<u64>,
+    /// limit how many txs
+    txs_count: Option<u64>, 
+  },
 }
 
 /// Get data from a client, with a query type. Will connect to local only if in sync.
@@ -60,15 +68,16 @@ impl Node {
 
         format!("{:#?}", resources).to_string()
       }
-      Txs => {
+      Txs{account, txs_height, txs_count } => {
         let (chain, _) = self.refresh_chain_info();
         let current_height = chain.unwrap().height;
         let query_height = if current_height > 100_000 { current_height - 100_000 }
         else { 0 };
 
-        let txs = self.client.get_txn_by_range(
-          query_height, 
-          100, 
+        let txs = self.client.get_txn_by_acc_range(
+          account.unwrap_or(self.conf.profile.account),
+          txs_height.unwrap_or(query_height),
+          txs_count.unwrap_or(100), 
           true
         ).unwrap();
 
