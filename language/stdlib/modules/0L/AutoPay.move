@@ -23,6 +23,8 @@ address 0x1{
     const EPAYEE_DOES_NOT_EXIST: u64 = 010017;
     /// The account does not have autopay enabled.
     const EAUTOPAY_NOT_ENABLED: u64 = 010018;
+    /// Attempting to re-use autopay id
+    const AUTOPAY_ID_EXISTS: u64 = 010019;
 
     resource struct Tick {
       triggered: bool,
@@ -228,7 +230,7 @@ print(&02214);
       let index = find(addr, uid);
       if (Option::is_none<u64>(&index)) {
         // Case when the payment to be deleted doesn't actually exist
-        assert(false, 010105012040);
+        assert(false, Errors::invalid_argument(AUTOPAY_ID_EXISTS));
       };
       let payments = &mut borrow_global_mut<Data>(addr).payments;
       Vector::remove<Payment>(payments, Option::extract<u64>(&mut index));
