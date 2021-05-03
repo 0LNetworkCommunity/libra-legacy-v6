@@ -317,8 +317,11 @@ impl Node {
             .arg("is-active")
             .arg("--quiet")
             .arg(process_name)
-            .output()
-            .expect("could no check systemctl");
-        out.status.code().unwrap() == 0 // is_active --quiet will exit 0 if the service is running normally.
+            .output();
+        match out {
+            Ok(o) => o.status.code().unwrap() == 0,
+            Err(_) => false,
+        }
+        //out.status.code().unwrap() == 0 // is_active --quiet will exit 0 if the service is running normally.
     }
 }

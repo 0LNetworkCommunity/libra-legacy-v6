@@ -94,13 +94,14 @@ where
         )
         .split(chunks[0]);
 
-    let paragraph = Paragraph::new(format!("{}", app.chain_state.as_ref().unwrap().epoch))
+    let cs = &app.chain_state;
+    let paragraph = Paragraph::new(format!("{}", match cs { Some(cv)=>cv.epoch, None=> 0 }))
         .style(Style::default().add_modifier(Modifier::BOLD))
         .block(Block::default().borders(Borders::ALL).title(" Epoch "))
         .alignment(Alignment::Center);
     f.render_widget(paragraph, columns[0]);
 
-    let paragraph = Paragraph::new(format!("{}", &app.chain_state.as_ref().unwrap().height))
+    let paragraph = Paragraph::new(format!("{}", match cs { Some(cv)=>cv.height, None=> 0 }))
         .style(Style::default().add_modifier(Modifier::BOLD))
         .block(Block::default().borders(Borders::ALL).title(" Version "))
         .alignment(Alignment::Center);
@@ -108,7 +109,7 @@ where
 
     let paragraph = Paragraph::new(format!(
         "{}",
-        &app.chain_state.as_ref().unwrap().validator_count
+        match cs { Some(cv)=>cv.validator_count,None=> 0 }
     ))
     .style(Style::default().add_modifier(Modifier::BOLD))
     .block(
@@ -121,7 +122,7 @@ where
 
     let paragraph = Paragraph::new(format!(
         "{}",
-        &app.chain_state.as_ref().unwrap().total_supply
+        match cs { Some(cv)=>cv.total_supply, None=> 0 }
     ))
     .style(Style::default().add_modifier(Modifier::BOLD))
     .block(
@@ -202,48 +203,51 @@ fn draw_parameters<B>(f: &mut Frame<'_, B>, app: &mut App<'_>, area: Rect)
 where
     B: Backend,
 {
-    let meta = app.node.client.get_metadata().unwrap();
-    let text = vec![
-        Spans::from(vec![
-            Span::from("Libra Version: "),
-            Span::styled(
-                format!("{}", meta.libra_version.unwrap()),
-                Style::default().add_modifier(Modifier::BOLD),
-            ),
-            Span::raw("    Chain ID: "),
-            Span::styled(
-                format!("{}", meta.chain_id),
-                Style::default().add_modifier(Modifier::BOLD),
-            ),
-        ]),
-        Spans::from(vec![
-            Span::from("Version: "),
-            Span::styled(
-                format!("{}", meta.version),
-                Style::default().add_modifier(Modifier::BOLD),
-            ),
-        ]),
-        Spans::from(vec![
-            Span::raw("Timestamp: "),
-            Span::styled(
-                format!("{}", meta.timestamp),
-                Style::default().add_modifier(Modifier::BOLD),
-            ),
-        ]),
-        Spans::from(vec![
-            Span::raw(" Root Hash: "),
-            Span::raw(meta.accumulator_root_hash),
-        ]),
-        Spans::from(format!(
-            "Allow Publish Module: {}",
-            meta.module_publishing_allowed.unwrap()
-        )),
-    ];
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .title(Span::styled(" Parameters ", Style::default()));
-    let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
-    f.render_widget(paragraph, area);
+    let metadata = app.node.client.get_metadata();
+    if metadata.is_ok() {
+        let meta = metadata.unwrap();
+        let text = vec![
+            Spans::from(vec![
+                Span::from("Libra Version: "),
+                Span::styled(
+                    format!("{}", meta.libra_version.unwrap()),
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("    Chain ID: "),
+                Span::styled(
+                    format!("{}", meta.chain_id),
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+            ]),
+            Spans::from(vec![
+                Span::from("Version: "),
+                Span::styled(
+                    format!("{}", meta.version),
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+            ]),
+            Spans::from(vec![
+                Span::raw("Timestamp: "),
+                Span::styled(
+                    format!("{}", meta.timestamp),
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+            ]),
+            Spans::from(vec![
+                Span::raw(" Root Hash: "),
+                Span::raw(meta.accumulator_root_hash),
+            ]),
+            Spans::from(format!(
+                "Allow Publish Module: {}",
+                meta.module_publishing_allowed.unwrap()
+            )),
+        ];
+        let block = Block::default()
+            .borders(Borders::ALL)
+            .title(Span::styled(" Parameters ", Style::default()));
+        let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
+        f.render_widget(paragraph, area);
+    }
 }
 
 /// draw second tab
@@ -334,11 +338,11 @@ where
     B: Backend,
 {
     let mut items: Vec<Row<'_>> = vec![];
-    let (blob, _version) = app
-        .node
-        .client
-        .get_account_state_blob(AccountAddress::ZERO)
-        .unwrap();
+    let (blob, _version) = match app.node.client
+            .get_account_state_blob(AccountAddress::ZERO) {
+        Ok(t)=>{t},
+        Err(_)=> (None, 0)
+    };
     if let Some(account_blob) = blob {
         let account_state = AccountState::try_from(&account_blob).unwrap();
         items = account_state
