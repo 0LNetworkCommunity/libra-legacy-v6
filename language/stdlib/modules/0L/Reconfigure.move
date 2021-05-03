@@ -25,6 +25,7 @@ module Reconfigure {
     use 0x1::AccountLimits;
     use 0x1::GAS::GAS;
     use 0x1::LibraConfig;
+    use 0x1::Debug::print;
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
     public fun reconfigure(vm: &signer, height_now: u64) {
@@ -34,6 +35,8 @@ module Reconfigure {
         // loop through validators and pay full node subsidies.
         // Should happen before transactionfees get distributed.
         // There may be new validators which have not mined yet.
+print(&03100);
+
         let miners = MinerState::get_miner_list();
         
         // Migration for miner list.
@@ -41,11 +44,13 @@ module Reconfigure {
 
         let global_proofs_count = 0;
         let k = 0;
+print(&03200);
 
         // Distribute mining subsidy to fullnodes
         while (k < Vector::length(&miners)) {
             let addr = *Vector::borrow(&miners, k);
-            
+print(&03210);
+          
             if (!FullnodeState::is_init(addr)) continue; // fail-safe
 
             let count = MinerState::get_count_in_epoch(addr);
@@ -54,8 +59,11 @@ module Reconfigure {
             
             let value: u64;
             // check if is in onboarding state (or stuck)
+print(&03220);
 
             if (FullnodeState::is_onboarding(addr)) {
+print(&03221);
+
               // TODO: onboarding subsidy is not necessary with onboarding transfer.
                 value = Subsidy::distribute_onboarding_subsidy(vm, addr);
             } else {
@@ -63,6 +71,7 @@ module Reconfigure {
                 value = Subsidy::distribute_fullnode_subsidy(vm, addr, count);
             };
 
+print(&03230);
             FullnodeState::inc_payment_count(vm, addr, count);
             FullnodeState::inc_payment_value(vm, addr, value);
             FullnodeState::reconfig(vm, addr, count);
@@ -73,13 +82,18 @@ module Reconfigure {
         // Distribute Transaction fees and subsidy payments to all outgoing validators
         let height_start = Epoch::get_timer_height_start(vm);
 
+print(&03240);
+
         let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio(vm, height_start, height_now);
         if (Vector::length<address>(&outgoing_set) > 0) {
             let subsidy_units = Subsidy::calculate_subsidy(vm, height_start, height_now);
+print(&03241);
 
             if (subsidy_units > 0) {
                 Subsidy::process_subsidy(vm, subsidy_units, &outgoing_set, &fee_ratio);
             };
+print(&03241);
+
             Subsidy::process_fees(vm, &outgoing_set, &fee_ratio);
         };
 
