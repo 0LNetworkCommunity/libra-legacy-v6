@@ -143,7 +143,7 @@ print(&02212);
             };
             if (amount>0) {
               LibraAccount::vm_make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
-            }
+            };
 print(&02214);
 
           };
