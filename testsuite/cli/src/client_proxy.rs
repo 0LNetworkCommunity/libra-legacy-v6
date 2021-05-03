@@ -756,12 +756,7 @@ impl ClientProxy {
  
     //////// 0L ////////
     /// creates an autopay instruction on the sending account.
-    pub fn autopay_batch(&mut self, uid: u64, payee_address: AccountAddress, end_epoch: u64, percentage: u64,) -> Result<()> {
-        // ensure!(
-        //     space_delim_strings.len() == 2,
-        //     "Invalid number of arguments to create autopay instruction. Did you pass your account address, instruction id, payee address, ending epoch, and percentage?"
-        // );
-        
+    pub fn autopay_batch(&mut self, uid: u64, payee_address: AccountAddress, end_epoch: u64, percentage: u64,) -> Result<()> {        
         // assume 0th address in wallet for transactions.
         let (sender_address, _) =
             self.get_account_address_from_parameter("0").expect("address not submitted");
@@ -843,35 +838,7 @@ impl ClientProxy {
         self.client.query_oracle_upgrade()
     }
 
-    // //////// 0L ////////
-    // /// Creates an upgrade vote. Formats the stdlib payload and calls the Oracle handler.
-    // pub fn oracle_upgrade_vote(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
-
-    //     let (sender_address, _) =
-    //         self.get_account_address_from_parameter(space_delim_strings[1]).expect("address not submitted");
-    //     let sender_ref_id = self.get_account_ref_id(&sender_address)?;
-    //     let sender = self.accounts.get(sender_ref_id).unwrap();
-    //     let sequence_number = sender.sequence_number;
-    //     let hello_world= 100u64;
-
-    //     let program = transaction_builder::encode_ol_oracle_tx_script(id, data)
-
-    //     let txn = self.create_txn_to_submit(
-    //         TransactionPayload::Script(program),
-    //         &sender,
-    //         Some(1000000),    /* max_gas_amount */
-    //         Some(1),    /* gas_unit_price */
-    //         Some("GAS".to_string()), /* gas_currency_code */
-    //     )?;
-
-    //     self.client
-    //         .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
-    //     if is_blocking {
-    //         self.wait_for_transaction(sender_address, sequence_number + 1)?;
-    //     }
-    //     Ok(())
-    // }
-
+    //////// 0L ////////
 
     /// Get the latest sequence number from validator for the account specified.
     pub fn get_sequence_number(&mut self, space_delim_strings: &[&str]) -> Result<u64> {
