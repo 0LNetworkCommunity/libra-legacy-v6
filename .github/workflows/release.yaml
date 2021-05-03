@@ -22,7 +22,7 @@ jobs:
           rust-version: stable
           components: rustfmt
       - name: Build
-        run:  make bins
+        run:  RUSTC_WRAPPER=sccache make bins
       - name: Upload binaries to github.com/release
         uses: svenstaro/upload-release-action@v2
         with:

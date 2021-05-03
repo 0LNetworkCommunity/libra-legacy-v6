@@ -34,7 +34,7 @@ pub struct PayInstruction {
 
 impl PayInstruction {
     /// extract autopay instructions from json file
-    pub fn parse_autopay_instructions(autopay_batch_file: &PathBuf) -> Vec<PayInstruction> {
+    pub fn parse_autopay_instructions(autopay_batch_file: &PathBuf) -> Result<Vec<PayInstruction>, Error> {
         let file = fs::File::open(autopay_batch_file).expect(&format!(
             "cannot open autopay batch file: {:?}",
             autopay_batch_file
@@ -42,7 +42,11 @@ impl PayInstruction {
         let json: Value = serde_json::from_reader(&file).expect("cannot parse autopay.json");
         let val: Value = json.get("autopay_instructions").unwrap().to_owned();
         let inst_vec: Vec<PayInstruction> = serde_json::from_value(val).unwrap();
-        inst_vec.into_iter()
+        
+        let mut total_pct_inflow: f64 = 0f64;
+        let mut total_pct_balance: f64 = 0f64;
+
+        let transformed = inst_vec.into_iter()
         .map(|mut i| {
             // TODO: check sequential instructions by uid
             // check the object has an actual payment instruction.
@@ -52,9 +56,19 @@ impl PayInstruction {
               println!("autopay instruction file not valid, skipping all transactions. Issue at instruction {:?}", i);
             }
             i.cast_scale();
+            if let Some(pct_in) = i.percent_inflow {total_pct_inflow = total_pct_inflow + pct_in};
+
+            if let Some(pct_bal) = i.percent_balance {total_pct_balance = total_pct_balance + pct_bal};
+
             i
         })
-        .collect()
+        .collect();
+
+        if (total_pct_inflow < 100f64) && (total_pct_balance < 100f64){
+          Ok(transformed)
+        } else {
+          Err(Error::msg("percentages sum greater than 100%"))
+        }
     }
 
     /// checks ths instruction against the raw script for correctness.

@@ -33,22 +33,12 @@ pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
 
 /// check this is CI environment
 pub static IS_CI: Lazy<bool> = Lazy::new(|| {
-    match std::env::var("NODE_ENV") {
-        Ok(val) => {
-            match val.as_str() {
-                "prod" => false,
-                // if anything else is set by user is false
-                _ => match std::env::var("TEST") {
-                    Ok(val) => match val.as_str() {
-                        "y" => true,
-                        _ => false,
-                    },
-                    _ => false,
-                },
-            }
-        }
-        // default to prod if nothig is set
-        _ => false,
+  // assume default if NODE_ENV=prod and TEST=y.
+    if std::env::var("NODE_ENV").unwrap_or("prod".to_string()) != "prod".to_string() &&
+    std::env::var("TEST").unwrap_or("n".to_string()) != "n".to_string() {
+      true
+    } else {
+      false
     }
 });
 

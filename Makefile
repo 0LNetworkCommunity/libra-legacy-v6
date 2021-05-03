@@ -301,8 +301,8 @@ ifdef TEST
 endif
 
 fix-genesis:
-	cp ./ol/fixtures/genesis/${V}/genesis.blob ${DATA_PATH}/
-	cp ./ol/fixtures/genesis/${V}/genesis_waypoint ${DATA_PATH}/
+	cp ./ol/devnet/genesis/${V}/genesis.blob ${DATA_PATH}/
+	cp ./ol/devnet/genesis/${V}/genesis_waypoint ${DATA_PATH}/
 
 
 #### HELPERS ####

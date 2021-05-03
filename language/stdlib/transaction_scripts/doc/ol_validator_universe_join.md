@@ -5,17 +5,33 @@
 
 
 
+-  [Constants](#@Constants_0)
 
 
-<pre><code><b>use</b> <a href="../../modules/doc/MinerState.md#0x1_MinerState">0x1::MinerState</a>;
+<pre><code><b>use</b> <a href="../../modules/doc/Errors.md#0x1_Errors">0x1::Errors</a>;
+<b>use</b> <a href="../../modules/doc/MinerState.md#0x1_MinerState">0x1::MinerState</a>;
 <b>use</b> <a href="../../modules/doc/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="../../modules/doc/ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 </code></pre>
 
 
 
+<a name="@Constants_0"></a>
 
-<pre><code><b>public</b> <b>fun</b> <a href="ol_join_validator_set.md#join">join</a>(validator: &signer)
+## Constants
+
+
+<a name="join_NOT_ABOVE_THRESH"></a>
+
+
+
+<pre><code><b>const</b> <a href="ol_validator_universe_join.md#join_NOT_ABOVE_THRESH">NOT_ABOVE_THRESH</a>: u64 = 1;
+</code></pre>
+
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ol_validator_universe_join.md#join">join</a>(validator: &signer)
 </code></pre>
 
 
@@ -24,17 +40,17 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="ol_join_validator_set.md#join">join</a>(validator: &signer) {
+<pre><code><b>fun</b> <a href="ol_validator_universe_join.md#join">join</a>(validator: &signer) {
     <b>let</b> addr = <a href="../../modules/doc/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(validator);
     // <b>if</b> is above threshold <b>continue</b>, or raise error.
-    <b>assert</b>(<a href="../../modules/doc/MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(validator, addr), 01);
+    <b>assert</b>(<a href="../../modules/doc/MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(validator, addr), <a href="../../modules/doc/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="ol_validator_universe_join.md#join_NOT_ABOVE_THRESH">NOT_ABOVE_THRESH</a>));
     // <b>if</b> is not in universe, add back
     <b>if</b> (!<a href="../../modules/doc/ValidatorUniverse.md#0x1_ValidatorUniverse_is_in_universe">ValidatorUniverse::is_in_universe</a>(addr)) {
         <a href="../../modules/doc/ValidatorUniverse.md#0x1_ValidatorUniverse_add_self">ValidatorUniverse::add_self</a>(validator);
     };
-    // Initiate jailbit <b>if</b> not present
+    // Initialize jailbit <b>if</b> not present
     <b>if</b> (!<a href="../../modules/doc/ValidatorUniverse.md#0x1_ValidatorUniverse_exists_jailedbit">ValidatorUniverse::exists_jailedbit</a>(addr)) {
-        <a href="../../modules/doc/ValidatorUniverse.md#0x1_ValidatorUniverse_unjail_self">ValidatorUniverse::unjail_self</a>(validator);
+        <a href="../../modules/doc/ValidatorUniverse.md#0x1_ValidatorUniverse_initialize">ValidatorUniverse::initialize</a>(validator);
     };
 
     // <b>if</b> is jailed, try <b>to</b> unjail
