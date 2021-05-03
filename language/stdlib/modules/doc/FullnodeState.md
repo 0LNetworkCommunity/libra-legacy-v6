@@ -8,8 +8,6 @@
 -  [Resource `FullnodeCounter`](#0x1_FullnodeState_FullnodeCounter)
 -  [Function `init`](#0x1_FullnodeState_init)
 -  [Function `reconfig`](#0x1_FullnodeState_reconfig)
--  [Function `inc_proof`](#0x1_FullnodeState_inc_proof)
--  [Function `inc_proof_by_operator`](#0x1_FullnodeState_inc_proof_by_operator)
 -  [Function `inc_payment_count`](#0x1_FullnodeState_inc_payment_count)
 -  [Function `inc_payment_value`](#0x1_FullnodeState_inc_payment_value)
 -  [Function `is_init`](#0x1_FullnodeState_is_init)
@@ -24,7 +22,6 @@
 <b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
-<b>use</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig">0x1::ValidatorConfig</a>;
 </code></pre>
 
 
@@ -148,61 +145,6 @@ On recongfiguration events, reset.
     state.proofs_submitted_in_epoch = proofs_in_epoch;
     state.proofs_paid_in_epoch = 0;
     state.subsidy_in_epoch = 0;
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_FullnodeState_inc_proof"></a>
-
-## Function `inc_proof`
-
-Miner increments proofs by 1
-TO
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_inc_proof">inc_proof</a>(sender: &signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_inc_proof">inc_proof</a>(sender: &signer) <b>acquires</b> <a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a> {
-    <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
-    <b>let</b> state = borrow_global_mut&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(addr);
-    state.proofs_submitted_in_epoch = state.proofs_submitted_in_epoch + 1;
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_FullnodeState_inc_proof_by_operator"></a>
-
-## Function `inc_proof_by_operator`
-
-Miner increments proofs by 1
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_inc_proof_by_operator">inc_proof_by_operator</a>(operator_sig: &signer, miner_addr: address)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_inc_proof_by_operator">inc_proof_by_operator</a>(operator_sig: &signer, miner_addr: address) <b>acquires</b> <a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a> {
-  <b>assert</b>(<a href="ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(miner_addr) == <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(operator_sig), <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(0600103));
-    <b>let</b> state = borrow_global_mut&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(miner_addr);
-    state.proofs_submitted_in_epoch = state.proofs_submitted_in_epoch + 1;
 }
 </code></pre>
 
