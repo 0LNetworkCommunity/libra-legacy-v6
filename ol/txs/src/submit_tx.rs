@@ -117,8 +117,12 @@ pub fn batch_wrapper(
 ) {
     batch.into_iter().enumerate().for_each(|(i, s)| {
         // TODO: format path for batch scripts
-        let new_path = save_path.clone().unwrap().join(i.to_string());
-        maybe_submit(s, tx_params, no_send, Some(new_path)).unwrap();
+
+        let new_path = if save_path.is_some() {
+          Some(save_path.clone().unwrap().join(i.to_string()))
+        } else {None};
+
+        maybe_submit(s, tx_params, no_send, new_path).unwrap();
         // TODO: handle saving of batches to file.
     });
 }
