@@ -1,4 +1,5 @@
 //! 'query'
+use libra_json_rpc_client::{AccountAddress, views::TransactionView};
 use num_format::{Locale, ToFormattedString};
 use super::node::Node;
 
@@ -15,6 +16,17 @@ pub enum QueryType {
   Resources,
   /// How far behind the local is from the upstream nodes
   SyncDelay,
+  /// Get transaction history
+  Txs { 
+    /// account to query txs of
+    account: Option<AccountAddress>,
+    /// get transactions after this height
+    txs_height: Option<u64>,
+    /// limit how many txs
+    txs_count: Option<u64>, 
+    /// filter by type
+    txs_type: Option<String>,
+  },
 }
 
 /// Get data from a client, with a query type. Will connect to local only if in sync.
@@ -58,13 +70,39 @@ impl Node {
 
         format!("{:#?}", resources).to_string()
       }
+      Txs{account, txs_height, txs_count, txs_type } => {
+        let (chain, _) = self.refresh_chain_info();
+        let current_height = chain.unwrap().height;
+        let query_height = if current_height > 100_000 { current_height - 100_000 }
+        else { 0 };
+
+        let txs = self.client.get_txn_by_acc_range(
+          account.unwrap_or(self.conf.profile.account),
+          txs_height.unwrap_or(query_height),
+          txs_count.unwrap_or(100), 
+          true
+        ).unwrap();
+
+        if let Some(t) = txs_type {
+          let filter: Vec<TransactionView> = txs.into_iter()
+          .filter(|tv|{
+            match &tv.transaction {
+                libra_json_rpc_client::views::TransactionDataView::UserTransaction {  script, .. } => {
+                  return  script.r#type == t;
+                },
+                _ => false
+            }
+          })
+          .collect();
+          format!("{:#?}", filter)
+        } else {
+          format!("{:#?}", txs)
+        }
+
+
+        
+
+      }
     }
   }
 }
-
-// fn get_account_view(account: AccountAddress) -> AccountView {
-//     let (account_view, _) = pick_client()
-//       .get_account(account, true)
-//       .expect(&format!("could not get account at address {:?}", account));
-//     account_view.expect(&format!("could not get account at address {:?}", account))
-// }

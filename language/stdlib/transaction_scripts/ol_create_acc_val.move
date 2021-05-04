@@ -5,7 +5,7 @@ script {
   use 0x1::GAS::GAS;
   use 0x1::ValidatorConfig;
 
-  fun minerstate_onboarding(
+  fun create_acc_val(
     sender: &signer,
     challenge: vector<u8>,
     solution: vector<u8>,
