@@ -1,7 +1,7 @@
 
-<a name="create_user_account"></a>
+<a name="create_acc_user"></a>
 
-# Script `create_user_account`
+# Script `create_acc_user`
 
 
 
@@ -14,7 +14,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ol_create_user_account.md#create_user_account">create_user_account</a>(_sender: &signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="ol_create_acc_user.md#create_acc_user">create_acc_user</a>(_sender: &signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -23,7 +23,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="ol_create_user_account.md#create_user_account">create_user_account</a>(
+<pre><code><b>fun</b> <a href="ol_create_acc_user.md#create_acc_user">create_acc_user</a>(
   _sender: &signer,
   challenge: vector&lt;u8&gt;,
   solution: vector&lt;u8&gt;,
