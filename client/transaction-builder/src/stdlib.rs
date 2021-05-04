@@ -1371,10 +1371,6 @@ pub enum ScriptCall {
         tier_index: u64,
     },
 
-    TrustedAccountUpdateTx {
-        world: u64,
-    },
-
     /// # Summary
     /// Unfreezes the account at `address`. The sending account of this transaction must be the
     /// Treasury Compliance account. After the successful execution of this transaction transactions
@@ -1805,7 +1801,6 @@ impl ScriptCall {
                 mint_amount,
                 tier_index,
             ),
-            TrustedAccountUpdateTx { world } => encode_trusted_account_update_tx_script(world),
             UnfreezeAccount {
                 sliding_nonce,
                 to_unfreeze_account,
@@ -3490,14 +3485,6 @@ pub fn encode_tiered_mint_script(
     )
 }
 
-pub fn encode_trusted_account_update_tx_script(world: u64) -> Script {
-    Script::new(
-        TRUSTED_ACCOUNT_UPDATE_TX_CODE.to_vec(),
-        vec![],
-        vec![TransactionArgument::U64(world)],
-    )
-}
-
 /// # Summary
 /// Unfreezes the account at `address`. The sending account of this transaction must be the
 /// Treasury Compliance account. After the successful execution of this transaction transactions
@@ -4021,12 +4008,6 @@ fn decode_tiered_mint_script(script: &Script) -> Option<ScriptCall> {
     })
 }
 
-fn decode_trusted_account_update_tx_script(script: &Script) -> Option<ScriptCall> {
-    Some(ScriptCall::TrustedAccountUpdateTx {
-        world: decode_u64_argument(script.args().get(0)?.clone())?,
-    })
-}
-
 fn decode_unfreeze_account_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::UnfreezeAccount {
         sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
@@ -4221,10 +4202,6 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
         Box::new(decode_tiered_mint_script),
     );
     map.insert(
-        TRUSTED_ACCOUNT_UPDATE_TX_CODE.to_vec(),
-        Box::new(decode_trusted_account_update_tx_script),
-    );
-    map.insert(
         UNFREEZE_ACCOUNT_CODE.to_vec(),
         Box::new(decode_unfreeze_account_script),
     );
@@ -4319,14 +4296,16 @@ const ADD_VALIDATOR_AND_RECONFIGURE_CODE: &[u8] = &[
 ];
 
 const AUTOPAY_CREATE_INSTRUCTION_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 20, 5, 24, 15, 7, 39, 71, 8, 110, 16, 0, 0, 0,
-    1, 1, 2, 0, 1, 0, 0, 3, 2, 3, 0, 0, 4, 0, 3, 0, 0, 5, 1, 4, 0, 1, 6, 12, 1, 5, 5, 6, 12, 3, 5,
-    3, 3, 0, 1, 1, 7, 65, 117, 116, 111, 80, 97, 121, 6, 83, 105, 103, 110, 101, 114, 10, 97, 100,
-    100, 114, 101, 115, 115, 95, 111, 102, 18, 99, 114, 101, 97, 116, 101, 95, 105, 110, 115, 116,
-    114, 117, 99, 116, 105, 111, 110, 14, 101, 110, 97, 98, 108, 101, 95, 97, 117, 116, 111, 112,
-    97, 121, 10, 105, 115, 95, 101, 110, 97, 98, 108, 101, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 1, 0, 2, 1, 17, 10, 0, 17, 0, 12, 5, 10, 5, 17, 3, 32, 3, 8, 5, 10, 10, 0, 17, 2, 11,
-    0, 10, 1, 10, 2, 10, 3, 10, 4, 17, 1, 2,
+    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 6, 3, 6, 25, 5, 31, 21, 7, 52, 84, 8, 136, 1, 16, 6,
+    152, 1, 10, 0, 0, 0, 1, 0, 2, 1, 3, 0, 0, 0, 2, 4, 1, 2, 0, 0, 5, 3, 4, 0, 0, 6, 1, 4, 0, 0, 7,
+    2, 5, 0, 1, 3, 1, 6, 12, 1, 5, 5, 6, 12, 3, 5, 3, 3, 0, 1, 1, 3, 5, 1, 3, 7, 65, 117, 116, 111,
+    80, 97, 121, 6, 69, 114, 114, 111, 114, 115, 6, 83, 105, 103, 110, 101, 114, 5, 111, 108, 95,
+    116, 120, 10, 97, 100, 100, 114, 101, 115, 115, 95, 111, 102, 18, 99, 114, 101, 97, 116, 101,
+    95, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 14, 101, 110, 97, 98, 108, 101, 95,
+    97, 117, 116, 111, 112, 97, 121, 10, 105, 115, 95, 101, 110, 97, 98, 108, 101, 100, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 8, 111, 0, 0, 0, 0, 0, 0, 0, 0, 3, 6, 29, 10, 0, 17, 1,
+    12, 5, 10, 5, 17, 4, 32, 3, 8, 5, 22, 10, 0, 17, 3, 10, 5, 17, 4, 7, 0, 17, 0, 12, 7, 12, 6,
+    11, 6, 3, 22, 11, 0, 1, 11, 7, 39, 11, 0, 10, 1, 10, 2, 10, 3, 10, 4, 17, 2, 2,
 ];
 
 const AUTOPAY_ENABLE_CODE: &[u8] = &[
@@ -4733,14 +4712,6 @@ const TIERED_MINT_CODE: &[u8] = &[
     110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 11, 116, 105, 101, 114, 101, 100, 95,
     109, 105, 110, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 3, 1, 9, 10, 0, 10,
     1, 17, 0, 11, 0, 10, 2, 10, 3, 10, 4, 56, 0, 2,
-];
-
-const TRUSTED_ACCOUNT_UPDATE_TX_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 2, 3, 2, 6, 4, 8, 4, 5, 12, 9, 7, 21, 12, 8, 33, 16, 6,
-    49, 18, 0, 0, 0, 1, 0, 1, 1, 1, 0, 3, 0, 2, 1, 6, 9, 0, 0, 1, 3, 1, 5, 5, 68, 101, 98, 117,
-    103, 5, 112, 114, 105, 110, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 16, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 225, 16, 0, 2, 3, 7, 7, 0, 12, 1, 14, 1, 56, 0, 14, 0, 56,
-    1, 2,
 ];
 
 const UNFREEZE_ACCOUNT_CODE: &[u8] = &[

@@ -5,10 +5,26 @@
 
 
 
+-  [Constants](#@Constants_0)
 
 
 <pre><code><b>use</b> <a href="../../modules/doc/AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
+<b>use</b> <a href="../../modules/doc/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../modules/doc/Signer.md#0x1_Signer">0x1::Signer</a>;
+</code></pre>
+
+
+
+<a name="@Constants_0"></a>
+
+## Constants
+
+
+<a name="autopay_create_instruction_EAUTOPAY_NOT_ENABLED"></a>
+
+
+
+<pre><code><b>const</b> <a href="ol_autopay_create.md#autopay_create_instruction_EAUTOPAY_NOT_ENABLED">EAUTOPAY_NOT_ENABLED</a>: u64 = 111;
 </code></pre>
 
 
@@ -34,7 +50,7 @@
 
   <b>if</b> (!<a href="../../modules/doc/AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(account)) {
     <a href="../../modules/doc/AutoPay.md#0x1_AutoPay_enable_autopay">AutoPay::enable_autopay</a>(sender);
-    // <b>assert</b>(<a href="../../modules/doc/AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(account), <a href="../../modules/doc/Errors.md#0x1_Errors_ol_tx">Errors::ol_tx</a>(EAUTOPAY_NOT_ENABLED));
+    <b>assert</b>(<a href="../../modules/doc/AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(account), <a href="../../modules/doc/Errors.md#0x1_Errors_ol_tx">Errors::ol_tx</a>(<a href="ol_autopay_create.md#autopay_create_instruction_EAUTOPAY_NOT_ENABLED">EAUTOPAY_NOT_ENABLED</a>));
   };
 
   <a href="../../modules/doc/AutoPay.md#0x1_AutoPay_create_instruction">AutoPay::create_instruction</a>(
