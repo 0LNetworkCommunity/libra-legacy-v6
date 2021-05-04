@@ -5,6 +5,7 @@ use abscissa_core::{
     Options, Runnable    
 };
 use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
+use libra_global_constants::NODE_HOME;
 use reqwest::Url;
 use std::path::PathBuf;
 
@@ -141,4 +142,29 @@ pub type EntryPointTxsCmd = EntryPoint<commands::OlCliCmd>;
 /// get arguments passed in the entrypoin of this app, not the subcommands
 pub fn get_args() -> EntryPointTxsCmd {
   Command::from_env_args()
+}
+
+/// returns node_home
+/// usually something like "/root/.0L"
+/// in case of swarm like "....../swarm_temp/0" for alice
+/// in case of swarm like "....../swarm_temp/1" for bob
+pub fn get_node_home() -> PathBuf {
+    let mut config_path = dirs::home_dir().unwrap();
+    config_path.push(NODE_HOME);
+
+    let entry_args = get_args();
+
+    if entry_args.swarm_path.is_some() {
+        config_path = PathBuf::from(entry_args.swarm_path.unwrap());
+        if entry_args.swarm_persona.is_some() {
+            let persona = &entry_args.swarm_persona.unwrap();
+            let all_personas = vec!["alice", "bob", "carol", "dave"];
+            let index = all_personas.iter().position(|&r| r == persona).unwrap();
+            config_path.push(index.to_string());
+        } else {
+            config_path.push("0"); // default
+        }
+    }
+
+    return config_path;
 }

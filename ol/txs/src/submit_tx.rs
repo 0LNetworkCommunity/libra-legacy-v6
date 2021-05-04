@@ -176,12 +176,13 @@ pub fn tx_params_wrapper(tx_type: TxType) -> Result<TxParams, Error> {
         url,
         waypoint,
         swarm_path,
+        swarm_persona,
         is_operator,
         use_upstream_url,
         ..
     } = entrypoint::get_args();
     let app_config = app_config().clone();
-    tx_params(app_config, url, waypoint, swarm_path, tx_type, is_operator, use_upstream_url)
+    tx_params(app_config, url, waypoint, swarm_path,swarm_persona, tx_type, is_operator, use_upstream_url)
 }
 
 /// tx_parameters format
@@ -190,6 +191,7 @@ pub fn tx_params(
     url_opt: Option<Url>,
     waypoint: Option<Waypoint>,
     swarm_path: Option<PathBuf>,
+    swarm_persona: Option<String>,
     tx_type: TxType,
     is_operator: bool,
     use_upstream_url: bool,
@@ -198,7 +200,10 @@ pub fn tx_params(
     else {config.what_url(use_upstream_url)};
 
     let mut tx_params: TxParams = if swarm_path.is_some() {
-        get_tx_params_from_swarm(swarm_path.clone().expect("needs a valid swarm temp dir")).unwrap()
+        get_tx_params_from_swarm(
+          swarm_path.clone().expect("needs a valid swarm temp dir"),
+          swarm_persona.expect("need a swarm 'persona' with credentials in fixtures.")
+        ).unwrap()
     } else {
         if is_operator {
             
@@ -217,10 +222,9 @@ pub fn tx_params(
 }
 
 /// Extract params from a local running swarm
-pub fn get_tx_params_from_swarm(swarm_path: PathBuf) -> Result<TxParams, Error> {
+pub fn get_tx_params_from_swarm(swarm_path: PathBuf, swarm_persona: String) -> Result<TxParams, Error> {
     let (url, waypoint) = ol_types::config::get_swarm_configs(swarm_path);
-    let entry_args = entrypoint::get_args();
-    let mnem = ol_fixtures::get_persona_mnem(entry_args.swarm_persona.unwrap().as_str());
+    let mnem = ol_fixtures::get_persona_mnem(&swarm_persona.as_str());
     let keys = KeyScheme::new_from_mnemonic(mnem);
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
     let pubkey = keys.child_0_owner.get_public();

@@ -33,14 +33,14 @@ use self::{
     pilot_cmd::PilotCmd,
 };
 
+use crate::entrypoint;
+use crate::commands::explorer_cmd::ExplorerCMD;
 use crate::config::AppCfg;
 use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
 };
+
 use std::path::PathBuf;
-use dirs;
-use libra_global_constants::NODE_HOME;
-use crate::commands::explorer_cmd::ExplorerCMD;
 
 /// Filename for all 0L configs
 pub const CONFIG_FILE: &str = "0L.toml";
@@ -92,14 +92,6 @@ pub enum OlCliCmd {
     Pilot(PilotCmd),
 }
 
-/// Get home path for all 0L apps
-pub fn home_path() -> PathBuf{
-    let mut config_path = dirs::home_dir().unwrap();
-    config_path.push(NODE_HOME);
-    // config_path.push(CONFIG_FILE);
-    config_path
-}
-
 /// This trait allows you to define how application configuration is loaded.
 impl Configurable<AppCfg> for OlCliCmd {
     /// Location of the configuration file
@@ -108,11 +100,14 @@ impl Configurable<AppCfg> for OlCliCmd {
         // If you'd like for a missing configuration file to be a hard error
         // instead, always return `Some(CONFIG_FILE)` here.
 
-        let mut config_path = home_path();
+        let mut config_path = entrypoint::get_node_home();
+
         config_path.push(CONFIG_FILE);
         if config_path.exists() {
+            // println!("initializing from config file: {:?}", config_path);
             Some(config_path)
         } else {
+            // println!("config file not yet existing: {:?}", config_path);
             None
         }
     }

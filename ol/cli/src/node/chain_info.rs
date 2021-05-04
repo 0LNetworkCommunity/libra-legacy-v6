@@ -69,17 +69,17 @@ impl Node {
   /// fetch state from system address 0x0
   pub fn refresh_chain_info(&mut self) -> (Option<ChainView>, Option<Vec<ValidatorView>>) {
     // let mut client = client::pick_client();
-    let (blob, _version) = self.client
-      .get_account_state_blob(AccountAddress::ZERO)
-      .unwrap();
+    let (blob, _version) = match self.client
+      .get_account_state_blob(AccountAddress::ZERO) {
+      Ok(t)=> t,
+      Err(_) => (None, 0),
+    };
     let mut cs = ChainView::default();
 
     // TODO: This is duplicated with check.rs
-    self.client
-      .get_state_proof()
-      .expect("Failed to get state proof");
+    let _ = self.client.get_state_proof();
     
-      cs.waypoint = self.client.waypoint();
+    cs.waypoint = self.client.waypoint();
 
     if let Some(account_blob) = blob {
       let account_state = AccountState::try_from(&account_blob).unwrap();
