@@ -17,7 +17,7 @@ address 0x1{
     use 0x1::Epoch;
     use 0x1::Globals;
     use 0x1::Errors;
-    use 0x1::Debug::print;
+    // use 0x1::Debug::print;
 
     /// Attempted to send funds to an account that does not exist
     const EPAYEE_DOES_NOT_EXIST: u64 = 010017;
@@ -103,16 +103,16 @@ address 0x1{
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(010003));
 
       let epoch = LibraConfig::get_current_epoch();
-print(&02100);
+// print(&02100);
 
       // Go through all accounts in AccountList
       // This is the list of accounts which currently have autopay enabled
       let account_list = &borrow_global<AccountList>(CoreAddresses::LIBRA_ROOT_ADDRESS()).accounts;
       let accounts_length = Vector::length<address>(account_list);
       let account_idx = 0;
-print(&02200);
+// print(&02200);
       while (account_idx < accounts_length) {
-print(&02210);
+// print(&02210);
 
         let account_addr = Vector::borrow<address>(account_list, account_idx);
         // Obtain the account balance
@@ -122,7 +122,7 @@ print(&02210);
         let payments_len = Vector::length<Payment>(payments);
         let payments_idx = 0;
         while (payments_idx < payments_len) {
-print(&02211);
+// print(&02211);
 
           let payment = Vector::borrow_mut<Payment>(payments, payments_idx);          
           // no payments to self
@@ -132,13 +132,13 @@ print(&02211);
           if (payment.end_epoch >= epoch) {
             // A payment will happen now
             // Obtain the amount to pay from percentage and balance
-print(&02212);
+// print(&02212);
 
             // IMPORTANT there are two digits for scaling representation.
             // an autopay instruction of 12.34% is scaled by two orders, and represented in AutoPay as `1234`.
             if (payment.percentage > 10000) break;
             let percent_scaled = FixedPoint32::create_from_rational(payment.percentage, 10000);
- print(&02213);
+//  print(&02213);
            
             let amount = FixedPoint32::multiply_u64(account_bal, percent_scaled);
             if (amount > account_bal) {
@@ -148,7 +148,7 @@ print(&02212);
             if (amount>0) {
               LibraAccount::vm_make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
             };
-print(&02214);
+// print(&02214);
 
           };
           // TODO: might want to delete inactive instructions to save memory
