@@ -23,6 +23,7 @@ pub struct SetValidatorOperator {
     chain_id: Option<ChainId>,
     #[structopt(flatten)]
     validator_backend: ValidatorBackend,
+    //////// 0L ////////
     #[structopt(flatten)]
     auto_validate: AutoValidate,
 }
@@ -50,6 +51,7 @@ impl SetValidatorOperator {
         );
 
         let signed_txn = storage.sign(libra_global_constants::OWNER_KEY, "set-operator", txn)?;
+        //////// 0L ////////
         let mut transaction_context = client.submit_transaction(signed_txn)?;
 
         // Perform auto validation if required
@@ -58,5 +60,6 @@ impl SetValidatorOperator {
             .execute(config.json_server, transaction_context)?;
 
         Ok(transaction_context)
+        //////// 0L end ////////
     }
 }

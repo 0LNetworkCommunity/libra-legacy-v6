@@ -203,6 +203,8 @@ pub enum ScriptCall {
         percentage: u64,
     },
 
+    AutopayDisable {},
+
     AutopayEnable {},
 
     /// # Summary
@@ -349,6 +351,23 @@ pub enum ScriptCall {
     CancelBurn {
         token: TypeTag,
         preburn_address: AccountAddress,
+    },
+
+    CreateAccUser {
+        challenge: Bytes,
+        solution: Bytes,
+    },
+
+    CreateAccVal {
+        challenge: Bytes,
+        solution: Bytes,
+        ow_human_name: Bytes,
+        op_address: AccountAddress,
+        op_auth_key_prefix: Bytes,
+        op_consensus_pubkey: Bytes,
+        op_validator_network_addresses: Bytes,
+        op_fullnode_network_addresses: Bytes,
+        op_human_name: Bytes,
     },
 
     /// # Summary
@@ -544,11 +563,6 @@ pub enum ScriptCall {
     /// * `Script::rotate_authentication_key_with_recovery_address`
     CreateRecoveryAddress {},
 
-    CreateUserAccount {
-        challenge: Bytes,
-        solution: Bytes,
-    },
-
     /// # Summary
     /// Creates a Validator account. This transaction can only be sent by the Libra
     /// Root account.
@@ -694,6 +708,10 @@ pub enum ScriptCall {
         to_freeze_account: AccountAddress,
     },
 
+    Join {},
+
+    Leave {},
+
     MinerstateCommit {
         challenge: Bytes,
         solution: Bytes,
@@ -706,18 +724,6 @@ pub enum ScriptCall {
     },
 
     MinerstateHelper {},
-
-    MinerstateOnboarding {
-        challenge: Bytes,
-        solution: Bytes,
-        ow_human_name: Bytes,
-        op_address: AccountAddress,
-        op_auth_key_prefix: Bytes,
-        op_consensus_pubkey: Bytes,
-        op_validator_network_addresses: Bytes,
-        op_fullnode_network_addresses: Bytes,
-        op_human_name: Bytes,
-    },
 
     OlOracleTx {
         id: u64,
@@ -1367,10 +1373,6 @@ pub enum ScriptCall {
         tier_index: u64,
     },
 
-    TrustedAccountUpdateTx {
-        world: u64,
-    },
-
     /// # Summary
     /// Unfreezes the account at `address`. The sending account of this transaction must be the
     /// Treasury Compliance account. After the successful execution of this transaction transactions
@@ -1576,6 +1578,7 @@ impl ScriptCall {
                 end_epoch,
                 percentage,
             } => encode_autopay_create_instruction_script(uid, payee, end_epoch, percentage),
+            AutopayDisable {} => encode_autopay_disable_script(),
             AutopayEnable {} => encode_autopay_enable_script(),
             Burn {
                 token,
@@ -1587,6 +1590,31 @@ impl ScriptCall {
                 token,
                 preburn_address,
             } => encode_cancel_burn_script(token, preburn_address),
+            CreateAccUser {
+                challenge,
+                solution,
+            } => encode_create_acc_user_script(challenge, solution),
+            CreateAccVal {
+                challenge,
+                solution,
+                ow_human_name,
+                op_address,
+                op_auth_key_prefix,
+                op_consensus_pubkey,
+                op_validator_network_addresses,
+                op_fullnode_network_addresses,
+                op_human_name,
+            } => encode_create_acc_val_script(
+                challenge,
+                solution,
+                ow_human_name,
+                op_address,
+                op_auth_key_prefix,
+                op_consensus_pubkey,
+                op_validator_network_addresses,
+                op_fullnode_network_addresses,
+                op_human_name,
+            ),
             CreateChildVaspAccount {
                 coin_type,
                 child_address,
@@ -1631,10 +1659,6 @@ impl ScriptCall {
                 add_all_currencies,
             ),
             CreateRecoveryAddress {} => encode_create_recovery_address_script(),
-            CreateUserAccount {
-                challenge,
-                solution,
-            } => encode_create_user_account_script(challenge, solution),
             CreateValidatorAccount {
                 sliding_nonce,
                 new_account_address,
@@ -1662,6 +1686,8 @@ impl ScriptCall {
                 sliding_nonce,
                 to_freeze_account,
             } => encode_freeze_account_script(sliding_nonce, to_freeze_account),
+            Join {} => encode_join_script(),
+            Leave {} => encode_leave_script(),
             MinerstateCommit {
                 challenge,
                 solution,
@@ -1672,27 +1698,6 @@ impl ScriptCall {
                 solution,
             } => encode_minerstate_commit_by_operator_script(owner_address, challenge, solution),
             MinerstateHelper {} => encode_minerstate_helper_script(),
-            MinerstateOnboarding {
-                challenge,
-                solution,
-                ow_human_name,
-                op_address,
-                op_auth_key_prefix,
-                op_consensus_pubkey,
-                op_validator_network_addresses,
-                op_fullnode_network_addresses,
-                op_human_name,
-            } => encode_minerstate_onboarding_script(
-                challenge,
-                solution,
-                ow_human_name,
-                op_address,
-                op_auth_key_prefix,
-                op_consensus_pubkey,
-                op_validator_network_addresses,
-                op_fullnode_network_addresses,
-                op_human_name,
-            ),
             OlOracleTx { id, data } => encode_ol_oracle_tx_script(id, data),
             OlReconfigBulkUpdateSetup {
                 alice,
@@ -1799,7 +1804,6 @@ impl ScriptCall {
                 mint_amount,
                 tier_index,
             ),
-            TrustedAccountUpdateTx { world } => encode_trusted_account_update_tx_script(world),
             UnfreezeAccount {
                 sliding_nonce,
                 to_unfreeze_account,
@@ -2046,6 +2050,10 @@ pub fn encode_autopay_create_instruction_script(
     )
 }
 
+pub fn encode_autopay_disable_script() -> Script {
+    Script::new(AUTOPAY_DISABLE_CODE.to_vec(), vec![], vec![])
+}
+
 pub fn encode_autopay_enable_script() -> Script {
     Script::new(AUTOPAY_ENABLE_CODE.to_vec(), vec![], vec![])
 }
@@ -2205,6 +2213,45 @@ pub fn encode_cancel_burn_script(token: TypeTag, preburn_address: AccountAddress
         CANCEL_BURN_CODE.to_vec(),
         vec![token],
         vec![TransactionArgument::Address(preburn_address)],
+    )
+}
+
+pub fn encode_create_acc_user_script(challenge: Vec<u8>, solution: Vec<u8>) -> Script {
+    Script::new(
+        CREATE_ACC_USER_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::U8Vector(challenge),
+            TransactionArgument::U8Vector(solution),
+        ],
+    )
+}
+
+pub fn encode_create_acc_val_script(
+    challenge: Vec<u8>,
+    solution: Vec<u8>,
+    ow_human_name: Vec<u8>,
+    op_address: AccountAddress,
+    op_auth_key_prefix: Vec<u8>,
+    op_consensus_pubkey: Vec<u8>,
+    op_validator_network_addresses: Vec<u8>,
+    op_fullnode_network_addresses: Vec<u8>,
+    op_human_name: Vec<u8>,
+) -> Script {
+    Script::new(
+        CREATE_ACC_VAL_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::U8Vector(challenge),
+            TransactionArgument::U8Vector(solution),
+            TransactionArgument::U8Vector(ow_human_name),
+            TransactionArgument::Address(op_address),
+            TransactionArgument::U8Vector(op_auth_key_prefix),
+            TransactionArgument::U8Vector(op_consensus_pubkey),
+            TransactionArgument::U8Vector(op_validator_network_addresses),
+            TransactionArgument::U8Vector(op_fullnode_network_addresses),
+            TransactionArgument::U8Vector(op_human_name),
+        ],
     )
 }
 
@@ -2438,17 +2485,6 @@ pub fn encode_create_recovery_address_script() -> Script {
     Script::new(CREATE_RECOVERY_ADDRESS_CODE.to_vec(), vec![], vec![])
 }
 
-pub fn encode_create_user_account_script(challenge: Vec<u8>, solution: Vec<u8>) -> Script {
-    Script::new(
-        CREATE_USER_ACCOUNT_CODE.to_vec(),
-        vec![],
-        vec![
-            TransactionArgument::U8Vector(challenge),
-            TransactionArgument::U8Vector(solution),
-        ],
-    )
-}
-
 /// # Summary
 /// Creates a Validator account. This transaction can only be sent by the Libra
 /// Root account.
@@ -2629,6 +2665,14 @@ pub fn encode_freeze_account_script(
     )
 }
 
+pub fn encode_join_script() -> Script {
+    Script::new(JOIN_CODE.to_vec(), vec![], vec![])
+}
+
+pub fn encode_leave_script() -> Script {
+    Script::new(LEAVE_CODE.to_vec(), vec![], vec![])
+}
+
 pub fn encode_minerstate_commit_script(challenge: Vec<u8>, solution: Vec<u8>) -> Script {
     Script::new(
         MINERSTATE_COMMIT_CODE.to_vec(),
@@ -2658,34 +2702,6 @@ pub fn encode_minerstate_commit_by_operator_script(
 
 pub fn encode_minerstate_helper_script() -> Script {
     Script::new(MINERSTATE_HELPER_CODE.to_vec(), vec![], vec![])
-}
-
-pub fn encode_minerstate_onboarding_script(
-    challenge: Vec<u8>,
-    solution: Vec<u8>,
-    ow_human_name: Vec<u8>,
-    op_address: AccountAddress,
-    op_auth_key_prefix: Vec<u8>,
-    op_consensus_pubkey: Vec<u8>,
-    op_validator_network_addresses: Vec<u8>,
-    op_fullnode_network_addresses: Vec<u8>,
-    op_human_name: Vec<u8>,
-) -> Script {
-    Script::new(
-        MINERSTATE_ONBOARDING_CODE.to_vec(),
-        vec![],
-        vec![
-            TransactionArgument::U8Vector(challenge),
-            TransactionArgument::U8Vector(solution),
-            TransactionArgument::U8Vector(ow_human_name),
-            TransactionArgument::Address(op_address),
-            TransactionArgument::U8Vector(op_auth_key_prefix),
-            TransactionArgument::U8Vector(op_consensus_pubkey),
-            TransactionArgument::U8Vector(op_validator_network_addresses),
-            TransactionArgument::U8Vector(op_fullnode_network_addresses),
-            TransactionArgument::U8Vector(op_human_name),
-        ],
-    )
 }
 
 pub fn encode_ol_oracle_tx_script(id: u64, data: Vec<u8>) -> Script {
@@ -3476,14 +3492,6 @@ pub fn encode_tiered_mint_script(
     )
 }
 
-pub fn encode_trusted_account_update_tx_script(world: u64) -> Script {
-    Script::new(
-        TRUSTED_ACCOUNT_UPDATE_TX_CODE.to_vec(),
-        vec![],
-        vec![TransactionArgument::U64(world)],
-    )
-}
-
 /// # Summary
 /// Unfreezes the account at `address`. The sending account of this transaction must be the
 /// Treasury Compliance account. After the successful execution of this transaction transactions
@@ -3733,6 +3741,10 @@ fn decode_autopay_create_instruction_script(script: &Script) -> Option<ScriptCal
     })
 }
 
+fn decode_autopay_disable_script(_script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::AutopayDisable {})
+}
+
 fn decode_autopay_enable_script(_script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::AutopayEnable {})
 }
@@ -3755,6 +3767,27 @@ fn decode_cancel_burn_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::CancelBurn {
         token: script.ty_args().get(0)?.clone(),
         preburn_address: decode_address_argument(script.args().get(0)?.clone())?,
+    })
+}
+
+fn decode_create_acc_user_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::CreateAccUser {
+        challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
+        solution: decode_u8vector_argument(script.args().get(1)?.clone())?,
+    })
+}
+
+fn decode_create_acc_val_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::CreateAccVal {
+        challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
+        solution: decode_u8vector_argument(script.args().get(1)?.clone())?,
+        ow_human_name: decode_u8vector_argument(script.args().get(2)?.clone())?,
+        op_address: decode_address_argument(script.args().get(3)?.clone())?,
+        op_auth_key_prefix: decode_u8vector_argument(script.args().get(4)?.clone())?,
+        op_consensus_pubkey: decode_u8vector_argument(script.args().get(5)?.clone())?,
+        op_validator_network_addresses: decode_u8vector_argument(script.args().get(6)?.clone())?,
+        op_fullnode_network_addresses: decode_u8vector_argument(script.args().get(7)?.clone())?,
+        op_human_name: decode_u8vector_argument(script.args().get(8)?.clone())?,
     })
 }
 
@@ -3794,13 +3827,6 @@ fn decode_create_recovery_address_script(_script: &Script) -> Option<ScriptCall>
     Some(ScriptCall::CreateRecoveryAddress {})
 }
 
-fn decode_create_user_account_script(script: &Script) -> Option<ScriptCall> {
-    Some(ScriptCall::CreateUserAccount {
-        challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
-        solution: decode_u8vector_argument(script.args().get(1)?.clone())?,
-    })
-}
-
 fn decode_create_validator_account_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::CreateValidatorAccount {
         sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
@@ -3832,6 +3858,14 @@ fn decode_freeze_account_script(script: &Script) -> Option<ScriptCall> {
     })
 }
 
+fn decode_join_script(_script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::Join {})
+}
+
+fn decode_leave_script(_script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::Leave {})
+}
+
 fn decode_minerstate_commit_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::MinerstateCommit {
         challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
@@ -3849,20 +3883,6 @@ fn decode_minerstate_commit_by_operator_script(script: &Script) -> Option<Script
 
 fn decode_minerstate_helper_script(_script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::MinerstateHelper {})
-}
-
-fn decode_minerstate_onboarding_script(script: &Script) -> Option<ScriptCall> {
-    Some(ScriptCall::MinerstateOnboarding {
-        challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
-        solution: decode_u8vector_argument(script.args().get(1)?.clone())?,
-        ow_human_name: decode_u8vector_argument(script.args().get(2)?.clone())?,
-        op_address: decode_address_argument(script.args().get(3)?.clone())?,
-        op_auth_key_prefix: decode_u8vector_argument(script.args().get(4)?.clone())?,
-        op_consensus_pubkey: decode_u8vector_argument(script.args().get(5)?.clone())?,
-        op_validator_network_addresses: decode_u8vector_argument(script.args().get(6)?.clone())?,
-        op_fullnode_network_addresses: decode_u8vector_argument(script.args().get(7)?.clone())?,
-        op_human_name: decode_u8vector_argument(script.args().get(8)?.clone())?,
-    })
 }
 
 fn decode_ol_oracle_tx_script(script: &Script) -> Option<ScriptCall> {
@@ -3999,12 +4019,6 @@ fn decode_tiered_mint_script(script: &Script) -> Option<ScriptCall> {
     })
 }
 
-fn decode_trusted_account_update_tx_script(script: &Script) -> Option<ScriptCall> {
-    Some(ScriptCall::TrustedAccountUpdateTx {
-        world: decode_u64_argument(script.args().get(0)?.clone())?,
-    })
-}
-
 fn decode_unfreeze_account_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::UnfreezeAccount {
         sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
@@ -4070,6 +4084,10 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
         Box::new(decode_autopay_create_instruction_script),
     );
     map.insert(
+        AUTOPAY_DISABLE_CODE.to_vec(),
+        Box::new(decode_autopay_disable_script),
+    );
+    map.insert(
         AUTOPAY_ENABLE_CODE.to_vec(),
         Box::new(decode_autopay_enable_script),
     );
@@ -4081,6 +4099,14 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
     map.insert(
         CANCEL_BURN_CODE.to_vec(),
         Box::new(decode_cancel_burn_script),
+    );
+    map.insert(
+        CREATE_ACC_USER_CODE.to_vec(),
+        Box::new(decode_create_acc_user_script),
+    );
+    map.insert(
+        CREATE_ACC_VAL_CODE.to_vec(),
+        Box::new(decode_create_acc_val_script),
     );
     map.insert(
         CREATE_CHILD_VASP_ACCOUNT_CODE.to_vec(),
@@ -4099,10 +4125,6 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
         Box::new(decode_create_recovery_address_script),
     );
     map.insert(
-        CREATE_USER_ACCOUNT_CODE.to_vec(),
-        Box::new(decode_create_user_account_script),
-    );
-    map.insert(
         CREATE_VALIDATOR_ACCOUNT_CODE.to_vec(),
         Box::new(decode_create_validator_account_script),
     );
@@ -4115,6 +4137,8 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
         FREEZE_ACCOUNT_CODE.to_vec(),
         Box::new(decode_freeze_account_script),
     );
+    map.insert(JOIN_CODE.to_vec(), Box::new(decode_join_script));
+    map.insert(LEAVE_CODE.to_vec(), Box::new(decode_leave_script));
     map.insert(
         MINERSTATE_COMMIT_CODE.to_vec(),
         Box::new(decode_minerstate_commit_script),
@@ -4126,10 +4150,6 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
     map.insert(
         MINERSTATE_HELPER_CODE.to_vec(),
         Box::new(decode_minerstate_helper_script),
-    );
-    map.insert(
-        MINERSTATE_ONBOARDING_CODE.to_vec(),
-        Box::new(decode_minerstate_onboarding_script),
     );
     map.insert(
         OL_ORACLE_TX_CODE.to_vec(),
@@ -4195,10 +4215,6 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
     map.insert(
         TIERED_MINT_CODE.to_vec(),
         Box::new(decode_tiered_mint_script),
-    );
-    map.insert(
-        TRUSTED_ACCOUNT_UPDATE_TX_CODE.to_vec(),
-        Box::new(decode_trusted_account_update_tx_script),
     );
     map.insert(
         UNFREEZE_ACCOUNT_CODE.to_vec(),
@@ -4295,15 +4311,27 @@ const ADD_VALIDATOR_AND_RECONFIGURE_CODE: &[u8] = &[
 ];
 
 const AUTOPAY_CREATE_INSTRUCTION_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 20, 5, 24, 19, 7, 43, 71, 8, 114, 16, 0, 0, 0,
-    1, 1, 2, 0, 1, 0, 0, 3, 2, 3, 0, 0, 4, 0, 3, 0, 0, 5, 1, 4, 0, 1, 6, 12, 1, 5, 5, 6, 12, 3, 5,
-    3, 3, 0, 1, 1, 3, 5, 1, 3, 7, 65, 117, 116, 111, 80, 97, 121, 6, 83, 105, 103, 110, 101, 114,
-    10, 97, 100, 100, 114, 101, 115, 115, 95, 111, 102, 18, 99, 114, 101, 97, 116, 101, 95, 105,
-    110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 14, 101, 110, 97, 98, 108, 101, 95, 97, 117,
-    116, 111, 112, 97, 121, 10, 105, 115, 95, 101, 110, 97, 98, 108, 101, 100, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 5, 25, 10, 0, 17, 0, 12, 5, 10, 5, 17, 3, 32, 3, 8, 5, 10, 10,
-    0, 17, 2, 10, 0, 10, 1, 10, 2, 10, 3, 10, 4, 17, 1, 11, 0, 17, 0, 17, 3, 12, 6, 11, 6, 3, 24,
-    6, 0, 0, 0, 0, 0, 0, 0, 0, 39, 2,
+    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 6, 3, 6, 25, 5, 31, 21, 7, 52, 92, 8, 144, 1, 16, 6,
+    160, 1, 10, 0, 0, 0, 1, 0, 2, 1, 3, 0, 0, 0, 2, 4, 1, 2, 0, 0, 5, 3, 4, 0, 0, 6, 1, 4, 0, 0, 7,
+    2, 5, 0, 1, 3, 1, 6, 12, 1, 5, 5, 6, 12, 3, 5, 3, 3, 0, 1, 1, 3, 5, 1, 3, 7, 65, 117, 116, 111,
+    80, 97, 121, 6, 69, 114, 114, 111, 114, 115, 6, 83, 105, 103, 110, 101, 114, 13, 105, 110, 118,
+    97, 108, 105, 100, 95, 115, 116, 97, 116, 101, 10, 97, 100, 100, 114, 101, 115, 115, 95, 111,
+    102, 18, 99, 114, 101, 97, 116, 101, 95, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110,
+    14, 101, 110, 97, 98, 108, 101, 95, 97, 117, 116, 111, 112, 97, 121, 10, 105, 115, 95, 101,
+    110, 97, 98, 108, 101, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 8, 233, 3, 0, 0,
+    0, 0, 0, 0, 0, 3, 6, 29, 10, 0, 17, 1, 12, 5, 10, 5, 17, 4, 32, 3, 8, 5, 22, 10, 0, 17, 3, 10,
+    5, 17, 4, 7, 0, 17, 0, 12, 7, 12, 6, 11, 6, 3, 22, 11, 0, 1, 11, 7, 39, 11, 0, 10, 1, 10, 2,
+    10, 3, 10, 4, 17, 2, 2,
+];
+
+const AUTOPAY_DISABLE_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 15, 5, 19, 12, 7, 31, 53, 8, 84, 16, 0, 0, 0,
+    1, 1, 2, 0, 1, 0, 0, 3, 0, 2, 0, 0, 4, 1, 3, 0, 1, 6, 12, 1, 5, 0, 1, 1, 3, 5, 1, 3, 7, 65,
+    117, 116, 111, 80, 97, 121, 6, 83, 105, 103, 110, 101, 114, 10, 97, 100, 100, 114, 101, 115,
+    115, 95, 111, 102, 15, 100, 105, 115, 97, 98, 108, 101, 95, 97, 117, 116, 111, 112, 97, 121,
+    10, 105, 115, 95, 101, 110, 97, 98, 108, 101, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 0, 0, 4, 20, 10, 0, 17, 0, 12, 1, 10, 1, 17, 2, 3, 7, 5, 10, 11, 0, 17, 1, 5, 12, 11, 0, 1,
+    10, 1, 17, 2, 12, 2, 11, 2, 3, 19, 6, 0, 0, 0, 0, 0, 0, 0, 0, 39, 2,
 ];
 
 const AUTOPAY_ENABLE_CODE: &[u8] = &[
@@ -4337,6 +4365,36 @@ const CANCEL_BURN_CODE: &[u8] = &[
     0, 0, 1, 0, 1, 1, 1, 0, 2, 2, 6, 12, 5, 0, 1, 9, 0, 12, 76, 105, 98, 114, 97, 65, 99, 99, 111,
     117, 110, 116, 11, 99, 97, 110, 99, 101, 108, 95, 98, 117, 114, 110, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 4, 11, 0, 10, 1, 56, 0, 2,
+];
+
+const CREATE_ACC_USER_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 4, 2, 4, 4, 3, 8, 11, 4, 19, 2, 5, 21, 26, 7, 47, 56, 8,
+    103, 16, 0, 0, 0, 1, 0, 0, 2, 0, 1, 2, 0, 1, 1, 1, 1, 3, 2, 0, 0, 0, 6, 1, 5, 1, 3, 2, 6, 10,
+    2, 6, 10, 2, 3, 6, 12, 10, 2, 10, 2, 3, 5, 1, 3, 0, 1, 8, 0, 3, 71, 65, 83, 12, 76, 105, 98,
+    114, 97, 65, 99, 99, 111, 117, 110, 116, 7, 98, 97, 108, 97, 110, 99, 101, 30, 99, 114, 101,
+    97, 116, 101, 95, 117, 115, 101, 114, 95, 97, 99, 99, 111, 117, 110, 116, 95, 119, 105, 116,
+    104, 95, 112, 114, 111, 111, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 4, 14,
+    14, 1, 14, 2, 17, 1, 12, 3, 10, 3, 56, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 33, 12, 4, 11, 4, 3, 13,
+    6, 1, 0, 0, 0, 0, 0, 0, 0, 39, 2,
+];
+
+const CREATE_ACC_VAL_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 8, 1, 0, 8, 2, 8, 4, 3, 12, 22, 4, 34, 4, 5, 38, 65, 7, 103, 98,
+    8, 201, 1, 16, 6, 217, 1, 54, 0, 0, 0, 1, 0, 2, 0, 3, 1, 1, 2, 0, 0, 4, 0, 1, 1, 1, 2, 5, 2, 3,
+    1, 1, 2, 6, 4, 2, 0, 3, 7, 2, 5, 0, 0, 2, 1, 8, 1, 6, 9, 0, 0, 1, 5, 1, 3, 10, 6, 12, 6, 10, 2,
+    6, 10, 2, 10, 2, 5, 10, 2, 10, 2, 10, 2, 10, 2, 10, 2, 1, 1, 10, 6, 12, 10, 2, 10, 2, 10, 2, 5,
+    10, 2, 10, 2, 10, 2, 10, 2, 10, 2, 8, 5, 5, 5, 1, 3, 5, 1, 3, 1, 8, 0, 5, 68, 101, 98, 117,
+    103, 3, 71, 65, 83, 12, 76, 105, 98, 114, 97, 65, 99, 99, 111, 117, 110, 116, 15, 86, 97, 108,
+    105, 100, 97, 116, 111, 114, 67, 111, 110, 102, 105, 103, 5, 112, 114, 105, 110, 116, 7, 98,
+    97, 108, 97, 110, 99, 101, 35, 99, 114, 101, 97, 116, 101, 95, 118, 97, 108, 105, 100, 97, 116,
+    111, 114, 95, 97, 99, 99, 111, 117, 110, 116, 95, 119, 105, 116, 104, 95, 112, 114, 111, 111,
+    102, 8, 105, 115, 95, 118, 97, 108, 105, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+    5, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 2, 5, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 6, 7, 41, 7, 0, 12,
+    11, 14, 11, 56, 0, 11, 0, 14, 1, 14, 2, 11, 3, 10, 4, 11, 5, 11, 6, 11, 7, 11, 8, 11, 9, 17, 2,
+    12, 10, 7, 1, 12, 12, 14, 12, 56, 0, 10, 10, 17, 3, 12, 13, 11, 13, 3, 27, 6, 3, 0, 0, 0, 0, 0,
+    0, 0, 39, 7, 2, 12, 15, 14, 15, 56, 0, 10, 10, 56, 1, 6, 0, 0, 0, 0, 0, 0, 0, 0, 36, 12, 16,
+    11, 16, 3, 40, 6, 4, 0, 0, 0, 0, 0, 0, 0, 39, 2,
 ];
 
 const CREATE_CHILD_VASP_ACCOUNT_CODE: &[u8] = &[
@@ -4388,17 +4446,6 @@ const CREATE_RECOVERY_ADDRESS_CODE: &[u8] = &[
     3, 5, 10, 0, 11, 0, 17, 0, 17, 1, 2,
 ];
 
-const CREATE_USER_ACCOUNT_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 4, 2, 4, 4, 3, 8, 11, 4, 19, 2, 5, 21, 26, 7, 47, 56, 8,
-    103, 16, 0, 0, 0, 1, 0, 0, 2, 0, 1, 2, 0, 1, 1, 1, 1, 3, 2, 0, 0, 0, 6, 1, 5, 1, 3, 2, 6, 10,
-    2, 6, 10, 2, 3, 6, 12, 10, 2, 10, 2, 3, 5, 1, 3, 0, 1, 8, 0, 3, 71, 65, 83, 12, 76, 105, 98,
-    114, 97, 65, 99, 99, 111, 117, 110, 116, 7, 98, 97, 108, 97, 110, 99, 101, 30, 99, 114, 101,
-    97, 116, 101, 95, 117, 115, 101, 114, 95, 97, 99, 99, 111, 117, 110, 116, 95, 119, 105, 116,
-    104, 95, 112, 114, 111, 111, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 4, 14,
-    14, 1, 14, 2, 17, 1, 12, 3, 10, 3, 56, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 33, 12, 4, 11, 4, 3, 13,
-    6, 1, 0, 0, 0, 0, 0, 0, 0, 39, 2,
-];
-
 const CREATE_VALIDATOR_ACCOUNT_CODE: &[u8] = &[
     161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 10, 5, 14, 22, 7, 36, 73, 8, 109, 16, 0, 0, 0,
     1, 1, 2, 0, 1, 0, 0, 3, 2, 1, 0, 2, 6, 12, 3, 0, 4, 6, 12, 5, 10, 2, 10, 2, 5, 6, 12, 3, 5, 10,
@@ -4438,6 +4485,35 @@ const FREEZE_ACCOUNT_CODE: &[u8] = &[
     11, 0, 10, 2, 17, 0, 2,
 ];
 
+const JOIN_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 8, 3, 8, 45, 5, 53, 18, 7, 71, 160, 1, 8, 231, 1, 16, 6,
+    247, 1, 10, 0, 0, 0, 1, 0, 2, 0, 3, 0, 4, 0, 0, 0, 1, 5, 1, 2, 0, 2, 6, 3, 4, 0, 3, 7, 3, 5, 0,
+    3, 8, 4, 2, 0, 3, 9, 3, 5, 0, 3, 10, 4, 2, 0, 3, 11, 4, 2, 0, 3, 12, 3, 5, 0, 1, 3, 2, 6, 12,
+    5, 1, 1, 1, 6, 12, 1, 5, 0, 3, 5, 1, 3, 6, 69, 114, 114, 111, 114, 115, 10, 77, 105, 110, 101,
+    114, 83, 116, 97, 116, 101, 6, 83, 105, 103, 110, 101, 114, 17, 86, 97, 108, 105, 100, 97, 116,
+    111, 114, 85, 110, 105, 118, 101, 114, 115, 101, 13, 105, 110, 118, 97, 108, 105, 100, 95, 115,
+    116, 97, 116, 101, 17, 110, 111, 100, 101, 95, 97, 98, 111, 118, 101, 95, 116, 104, 114, 101,
+    115, 104, 10, 97, 100, 100, 114, 101, 115, 115, 95, 111, 102, 8, 97, 100, 100, 95, 115, 101,
+    108, 102, 16, 101, 120, 105, 115, 116, 115, 95, 106, 97, 105, 108, 101, 100, 98, 105, 116, 10,
+    105, 110, 105, 116, 105, 97, 108, 105, 122, 101, 14, 105, 115, 95, 105, 110, 95, 117, 110, 105,
+    118, 101, 114, 115, 101, 9, 105, 115, 95, 106, 97, 105, 108, 101, 100, 11, 117, 110, 106, 97,
+    105, 108, 95, 115, 101, 108, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 8, 1, 0,
+    0, 0, 0, 0, 0, 0, 0, 3, 6, 40, 10, 0, 17, 2, 12, 1, 10, 0, 10, 1, 17, 1, 7, 0, 17, 0, 12, 3,
+    12, 2, 11, 2, 3, 16, 11, 0, 1, 11, 3, 39, 10, 1, 17, 6, 32, 3, 21, 5, 23, 10, 0, 17, 3, 10, 1,
+    17, 4, 32, 3, 28, 5, 30, 10, 0, 17, 5, 10, 1, 17, 7, 3, 34, 5, 37, 11, 0, 17, 8, 5, 39, 11, 0,
+    1, 2,
+];
+
+const LEAVE_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 15, 5, 19, 8, 7, 27, 63, 8, 90, 16, 0, 0, 0, 1,
+    0, 2, 0, 1, 0, 1, 3, 1, 2, 0, 1, 4, 0, 3, 0, 1, 6, 12, 1, 5, 1, 1, 0, 6, 83, 105, 103, 110,
+    101, 114, 17, 86, 97, 108, 105, 100, 97, 116, 111, 114, 85, 110, 105, 118, 101, 114, 115, 101,
+    10, 97, 100, 100, 114, 101, 115, 115, 95, 111, 102, 14, 105, 115, 95, 105, 110, 95, 117, 110,
+    105, 118, 101, 114, 115, 101, 11, 114, 101, 109, 111, 118, 101, 95, 115, 101, 108, 102, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 13, 10, 0, 17, 0, 12, 1, 10, 1, 17, 1, 3, 7,
+    5, 10, 11, 0, 17, 2, 5, 12, 11, 0, 1, 2,
+];
+
 const MINERSTATE_COMMIT_CODE: &[u8] = &[
     161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 2, 4, 4, 3, 8, 15, 5, 23, 24, 7, 47, 71, 8, 118, 16,
     0, 0, 0, 1, 1, 3, 2, 0, 0, 2, 0, 1, 0, 1, 4, 2, 0, 0, 1, 5, 3, 4, 0, 0, 1, 3, 2, 6, 12, 8, 0,
@@ -4473,21 +4549,6 @@ const MINERSTATE_HELPER_CODE: &[u8] = &[
     101, 115, 116, 110, 101, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5, 6, 14, 17,
     4, 12, 1, 11, 1, 3, 8, 11, 0, 1, 6, 1, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 17, 0, 17, 2, 17, 3, 17,
     1, 2,
-];
-
-const MINERSTATE_ONBOARDING_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 6, 2, 6, 4, 3, 10, 16, 4, 26, 2, 5, 28, 58, 7, 86, 86,
-    8, 172, 1, 16, 0, 0, 0, 1, 0, 2, 0, 0, 2, 0, 1, 3, 0, 1, 1, 1, 1, 4, 2, 0, 0, 2, 5, 0, 3, 0, 0,
-    7, 1, 5, 1, 3, 10, 6, 12, 6, 10, 2, 6, 10, 2, 10, 2, 5, 10, 2, 10, 2, 10, 2, 10, 2, 10, 2, 1,
-    1, 10, 6, 12, 10, 2, 10, 2, 10, 2, 5, 10, 2, 10, 2, 10, 2, 10, 2, 10, 2, 5, 5, 1, 3, 1, 3, 0,
-    1, 8, 0, 3, 71, 65, 83, 12, 76, 105, 98, 114, 97, 65, 99, 99, 111, 117, 110, 116, 15, 86, 97,
-    108, 105, 100, 97, 116, 111, 114, 67, 111, 110, 102, 105, 103, 7, 98, 97, 108, 97, 110, 99,
-    101, 35, 99, 114, 101, 97, 116, 101, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 95, 97, 99,
-    99, 111, 117, 110, 116, 95, 119, 105, 116, 104, 95, 112, 114, 111, 111, 102, 8, 105, 115, 95,
-    118, 97, 108, 105, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 4, 5, 29, 11, 0, 14,
-    1, 14, 2, 11, 3, 10, 4, 11, 5, 11, 6, 11, 7, 11, 8, 11, 9, 17, 1, 12, 10, 10, 10, 17, 2, 12,
-    11, 11, 11, 3, 19, 6, 3, 0, 0, 0, 0, 0, 0, 0, 39, 10, 10, 56, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 36,
-    12, 13, 11, 13, 3, 28, 6, 4, 0, 0, 0, 0, 0, 0, 0, 39, 2,
 ];
 
 const OL_ORACLE_TX_CODE: &[u8] = &[
@@ -4677,14 +4738,6 @@ const TIERED_MINT_CODE: &[u8] = &[
     110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 11, 116, 105, 101, 114, 101, 100, 95,
     109, 105, 110, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 3, 1, 9, 10, 0, 10,
     1, 17, 0, 11, 0, 10, 2, 10, 3, 10, 4, 56, 0, 2,
-];
-
-const TRUSTED_ACCOUNT_UPDATE_TX_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 2, 3, 2, 6, 4, 8, 4, 5, 12, 9, 7, 21, 12, 8, 33, 16, 6,
-    49, 18, 0, 0, 0, 1, 0, 1, 1, 1, 0, 3, 0, 2, 1, 6, 9, 0, 0, 1, 3, 1, 5, 5, 68, 101, 98, 117,
-    103, 5, 112, 114, 105, 110, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 16, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 225, 16, 0, 2, 3, 7, 7, 0, 12, 1, 14, 1, 56, 0, 14, 0, 56,
-    1, 2,
 ];
 
 const UNFREEZE_ACCOUNT_CODE: &[u8] = &[

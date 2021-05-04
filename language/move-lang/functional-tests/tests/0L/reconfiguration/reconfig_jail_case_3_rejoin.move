@@ -27,7 +27,7 @@ script {
         // Alice is the only one that can update her mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357180101011000);
+        assert(MinerState::get_count_in_epoch({{alice}}) == 5, 7357180101011000);
     }
 }
 //check: EXECUTED
@@ -83,7 +83,7 @@ script {
         // Alice is the only one that can update her mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357180102011000);
+        assert(MinerState::get_count_in_epoch({{eve}}) == 5, 7357180102011000);
     }
 }
 //check: EXECUTED
@@ -299,6 +299,52 @@ script {
         assert(LibraConfig::get_current_epoch() == 3, 7357180107011000);
         assert(LibraSystem::validator_set_size() == 6, 7357180105021000);
         assert(LibraSystem::is_validator({{eve}}), 7357180107031000);
+    }
+}
+//check: EXECUTED
+
+
+
+//! new-transaction
+//! sender: eve
+script {
+use 0x1::MinerState;
+// use 0x1::LibraConfig;
+fun main(sender: &signer) {
+    // Mock some mining so Eve can send rejoin tx
+    MinerState::test_helper_mock_mining(sender, 100);
+}
+}
+
+// EVE SENDS JOIN TX
+
+//! new-transaction
+//! sender: eve
+stdlib_script::ol_validator_universe_join
+// check: "Keep(EXECUTED)"
+
+
+///////////////////////////////////////////////
+///// Trigger reconfiguration at 4 seconds ////
+//! block-prologue
+//! proposer: alice
+//! block-time: 183000000
+//! round: 45
+
+///// TEST RECONFIGURATION IS HAPPENING ////
+// check: NewEpochEvent
+//////////////////////////////////////////////
+
+//! new-transaction
+//! sender: libraroot
+script {
+    use 0x1::LibraSystem;
+    use 0x1::LibraConfig;
+    fun main(_account: &signer) {
+        assert(LibraConfig::get_current_epoch() == 4, 7357180108011000);
+
+        // Finally eve is a validator again
+        assert(LibraSystem::is_validator({{eve}}), 7357180108021000);
     }
 }
 //check: EXECUTED

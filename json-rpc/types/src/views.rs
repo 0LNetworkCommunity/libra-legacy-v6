@@ -805,7 +805,7 @@ impl TryFrom<AccountStateProof> for AccountStateProofView {
     }
 }
 
-// add by Ping
+//////// 0L ////////
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct MinerStateResourceView {
     pub previous_proof_hash: BytesView,
@@ -833,7 +833,7 @@ impl TryFrom<MinerStateResource> for MinerStateResourceView {
     }
 }
 
-// add by Ping
+//////// 0L ////////
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct OracleResourceView {
     pub upgrade: UpgradeOracle,

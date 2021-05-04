@@ -6,7 +6,9 @@ DATA_PATH = ${HOME}/.0L
 CHAIN_ID = 1
 
 ifndef SOURCE
-SOURCE=${HOME}/libra
+MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+MAKEFILE_DIR := $(dir $(MAKEFILE_PATH))
+SOURCE=${MAKEFILE_DIR}
 endif
 
 ifndef V
@@ -15,9 +17,9 @@ endif
 
 # Account settings
 ifndef ACC
-ACC=$(shell toml get ${DATA_PATH}/miner.toml profile.account | tr -d '"')
+ACC=$(shell toml get ${DATA_PATH}/0L.toml profile.account | tr -d '"')
 endif
-IP=$(shell toml get ${DATA_PATH}/miner.toml profile.ip)
+IP=$(shell toml get ${DATA_PATH}/0L.toml profile.ip)
 
 # Github settings
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
@@ -25,7 +27,7 @@ REPO_ORG = OLSF
 
 ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
-MNEM = $(shell cat fixtures/mnemonic/${NS}.mnem)
+MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
 else
 REPO_NAME = experimental-genesis
 NODE_ENV = prod
@@ -35,22 +37,61 @@ endif
 REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
 LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
 
+RELEASE_URL=https://github.com/OLSF/libra/releases/download
+
+ifndef RELEASE
+RELEASE=$(shell curl -sL https://api.github.com/repos/OLSF/libra/releases/latest | jq -r '.assets[].browser_download_url')
+endif
+
+BINS= db-backup db-backup-verify db-restore libra-node miner ol_cli txs stdlib
+
+
+
 ##### DEPENDENCIES #####
 deps:
 	. ./util/setup.sh
 
-bins:
-	#Build and install genesis tool, libra-node, and miner
-	cargo run -p stdlib --release
-	# NOTE: stdlib is built for cli bindings
-	cargo build -p libra-node -p miner -p backup-cli -p ol-cli -p txs --release
+download: web-files
+	@for b in ${RELEASE} ; do \
+		echo $$b | rev | cut -d"/" -f1 | rev ; \
+		curl  --progress-bar --create-dirs -o /usr/local/bin/$$(echo $$b | rev | cut -d"/" -f1 | rev) -L $$b ; \
+		echo 'downloaded to /usr/local/bin/' ; \
+		chmod 744 /usr/local/bin/$$(echo $$b | rev | cut -d"/" -f1 | rev) ;\
+	done
 
+web-files: 
+	curl -L --progress-bar --create-dirs -o ${DATA_PATH}/web-monitor/public.zip https://github.com/OLSF/libra/releases/download/v4.3.0-rc.0/public.zip
+	unzip ${DATA_PATH}/web-monitor/public.zip
+
+download-release:
+	@for b in ${BINS} ; do \
+		echo $$b ; \
+		curl --create-dirs -o ${DATA_PATH}/release-${RELEASE}/$$b -L ${RELEASE_URL}/${RELEASE}/$$b ; \
+		chmod 744 ${DATA_PATH}/release-${RELEASE}/$$b ; \
+		cp ${DATA_PATH}/release-${RELEASE}/$$b  /usr/local/bin/$$b ; \
+	done
+
+uninstall:
+	@for b in ${BINS} ; do \
+		rm /usr/local/bin/$$b ; \
+	done
+
+bins:
+# Build and install genesis tool, libra-node, and miner
+	cargo run -p stdlib --release
+
+# NOTE: stdlib is built for cli bindings
+	cargo build -p libra-node -p miner -p backup-cli -p ol-cli -p txs -p onboard --release
+
+install:
 	sudo cp -f ${SOURCE}/target/release/miner /usr/local/bin/miner
 	sudo cp -f ${SOURCE}/target/release/libra-node /usr/local/bin/libra-node
 	sudo cp -f ${SOURCE}/target/release/db-restore /usr/local/bin/db-restore
 	sudo cp -f ${SOURCE}/target/release/db-backup /usr/local/bin/db-backup
+	sudo cp -f ${SOURCE}/target/release/db-backup-verify /usr/local/bin/db-backup-verify
 	sudo cp -f ${SOURCE}/target/release/ol_cli /usr/local/bin/ol
 	sudo cp -f ${SOURCE}/target/release/txs /usr/local/bin/txs
+	sudo cp -f ${SOURCE}/target/release/onboard /usr/local/bin/onboard
 
 
 #### GENESIS BACKEND SETUP ####
@@ -60,7 +101,7 @@ init-backend:
 layout:
 	cargo run -p libra-genesis-tool --release -- set-layout \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
-	--path ./util/set_layout_${NODE_ENV}.toml
+	--path ./ol/util/set_layout_${NODE_ENV}.toml
 
 root:
 		cargo run -p libra-genesis-tool --release -- libra-root-key \
@@ -77,8 +118,8 @@ ceremony:
 	export NODE_ENV=prod && miner ceremony
 
 register:
-# export ACC=$(shell toml get ${DATA_PATH}/miner.toml profile.account)
-	@echo Initializing from ${DATA_PATH}/miner.toml with account:
+# export ACC=$(shell toml get ${DATA_PATH}/0L.toml profile.account)
+	@echo Initializing from ${DATA_PATH}/0L.toml with account:
 	@echo ${ACC}
 	make init
 
@@ -139,11 +180,11 @@ reg:
 	--shared-backend ${REMOTE}
 	
 
-## Helpers to verify the local state.
+# Helpers to verify the local state.
 verify:
 	cargo run -p libra-genesis-tool --release --  verify \
 	--validator-backend ${LOCAL}
-	# --genesis-path ${DATA_PATH}/genesis.blob
+# --genesis-path ${DATA_PATH}/genesis.blob
 
 verify-gen:
 	cargo run -p libra-genesis-tool --release --  verify \
@@ -152,11 +193,11 @@ verify-gen:
 
 
 #### GENESIS  ####
-build-gen:
-	cargo run -p libra-genesis-tool --release -- genesis \
-	--chain-id ${CHAIN_ID} \
-	--shared-backend ${REMOTE} \
-	--path ${DATA_PATH}/genesis.blob
+# build-gen:
+# 	cargo run -p libra-genesis-tool --release -- genesis \
+# 	--chain-id ${CHAIN_ID} \
+# 	--shared-backend ${REMOTE} \
+# 	--path ${DATA_PATH}/genesis.blob
 
 genesis:
 	cargo run -p libra-genesis-tool --release -- files \
@@ -172,6 +213,10 @@ genesis:
 start:
 # run in foreground. Only for testing, use a daemon for net.
 	cargo run -p libra-node -- --config ${DATA_PATH}/validator.node.yaml
+
+# Start a fullnode instead of a validator node
+start-full:
+	cargo run -p libra-node -- --config ${DATA_PATH}/fullnode.node.yaml
 
 daemon:
 # your node's custom libra-node.service lives in ~/.0L. Take the template from libra/util and edit for your needs.
@@ -197,16 +242,20 @@ daemon:
 #### TEST SETUP ####
 
 clear:
-	if test ${DATA_PATH}/key_store.json; then \
+ifeq (${TEST}, y)
+
+	@if test -d ${DATA_PATH}; then \
 		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml; \
 	fi
-	if test -d ${DATA_PATH}/blocks; then \
+	@if test -d ${DATA_PATH}/blocks; then \
 		rm -f ${DATA_PATH}/blocks/*.json; \
 	fi
+endif
+
 
 fixture-stdlib:
 	make stdlib
-	cp language/stdlib/staged/stdlib.mv fixtures/stdlib/fresh_stdlib.mv
+	cp language/stdlib/staged/stdlib.mv ol/fixtures/stdlib/fresh_stdlib.mv
 
 #### HELPERS ####
 check:
@@ -225,9 +274,10 @@ check:
 
 fix:
 ifdef TEST
-	echo ${NS}
-	@if test ! -d ${0L_PATH}; then \
-		mkdir ${0L_PATH}; \
+	@echo NAMESPACE: ${NS}
+	@echo GENESIS: ${V}
+	@if test ! -d ${DATA_PATH}; then \
+		echo Creating Directories \
 		mkdir ${DATA_PATH}; \
 		mkdir -p ${DATA_PATH}/blocks/; \
 	fi
@@ -236,32 +286,32 @@ ifdef TEST
 		rm ${DATA_PATH}/blocks/block_0.json; \
 	fi 
 
-	@if test -f ${DATA_PATH}/miner.toml; then \
-		rm ${DATA_PATH}/miner.toml; \
+	@if test -f ${DATA_PATH}/0L.toml; then \
+		rm ${DATA_PATH}/0L.toml; \
 	fi 
 
-# skip  genesis files with fixtures, there may be no version
-ifndef SKIP_BLOB
-	cp ./fixtures/genesis/${V}/genesis.blob ${DATA_PATH}/
-	cp ./fixtures/genesis/${V}/genesis_waypoint ${DATA_PATH}/
-endif
 # skip miner configuration with fixtures
-	cp ./fixtures/configs/${NS}.toml ${DATA_PATH}/miner.toml
+	cp ./ol/fixtures/configs/${NS}.toml ${DATA_PATH}/0L.toml
 # skip mining proof zero with fixtures
-	cp ./fixtures/blocks/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
-
+	cp ./ol/fixtures/blocks/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
+# place a mock autopay.json in root
+	cp ./ol/fixtures/autopay/${NS}.autopay_batch.json ${DATA_PATH}/autopay_batch.json
+# place a mock account.json in root, used as template for onboarding
+	cp ./ol/fixtures/account/${NS}.account.json ${DATA_PATH}/account.json
 endif
+
+fix-genesis:
+	cp ./ol/devnet/genesis/${V}/genesis.blob ${DATA_PATH}/
+	cp ./ol/devnet/genesis/${V}/genesis_waypoint ${DATA_PATH}/
 
 
 #### HELPERS ####
 set-waypoint:
 	@if test -f ${DATA_PATH}/key_store.json; then \
-		jq -r '. | with_entries(select(.key|match("/waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/client_waypoint; \
+		jq -r '. | with_entries(select(.key|match("-oper/waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/client_waypoint; \
+		jq -r '. | with_entries(select(.key|match("-oper/genesis-waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/genesis_waypoint; \
 	fi
 
-	@if test ! -f ${DATA_PATH}/key_store.json; then \
-		cat ${DATA_PATH}/restore_waypoint > ${DATA_PATH}/client_waypoint; \
-	fi
 	@echo client_waypoint:
 	@cat ${DATA_PATH}/client_waypoint
 
@@ -281,10 +331,10 @@ stdlib:
 keygen:
 	cd ${DATA_PATH} && miner keygen
 
-miner-genesis:
-	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner genesis
+# miner-genesis:
+# 	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner genesis
 
-reset: stop clear fixtures init keys genesis daemon
+# reset: stop clear fixtures init keys  daemon
 
 remove-keys:
 	make stop
@@ -299,58 +349,51 @@ wipe:
 stop:
 	sudo service libra-node stop
 
+debug:
+	make smoke-onboard <<< $$'${MNEM}'
+ 
 
 ##### DEVNET TESTS #####
-# Quickly start a devnet with fixture files. To do a full devnet setup see 'devnet-reset' below
 
-devnet: 
-	MNEM='${MNEM}' make stop clear fix devnet-keys devnet-yaml start
-# runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
+devnet: clear fix fix-genesis dev-wizard start
+# runs a smoke test from fixtures. 
+# Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 # This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
 
-devnet-keys: 
-	MNEM='${MNEM}' cargo run -p miner -- init --skip-miner
+dev-join: clear fix fix-genesis dev-wizard
+# REQUIRES MOCK GIT INFRASTRUCTURE: OLSF/dev-genesis OLSF/dev-epoch-archive
+# see `devnet-archive` below 
+# We want to simulate the onboarding/new validator fetching genesis files from the mock archive: dev-genesis-archive
 
-devnet-yaml:
-	cargo run -p miner -- files
+# mock restore backups from dev-epoch-archive
+	rm -rf ~/.0L/restore
+# restore from MOCK archive OLSF/dev-epoch-archive
+	cargo r -p ol-cli -- restore
+# start a node with fullnode.node.yaml configs
+	make start-full
 
-devnet-onboard: clear fix
-	#starts config for a new miner "eve", uses the devnet github repo for ceremony
-	MNEM='${MNEM}' cargo r -p miner -- init --skip-miner
-	cargo r -p miner -- files
+dev-wizard:
+#  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
+	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis --upstream-peer http://161.35.13.169:8080
 
-### FULL DEVNET RESET ####
+#### DEVNET INFRASTRUCTURE ####
+# usually do this on Alice, which has the dev-epoch-archive repo, and dev-genesis
 
-devnet-reset: 
-	MNEM='${MNEM}' make devnet-reset-ceremony genesis start
-# Tests the full genesis ceremony cycle, and rebuilds all genesis and waypoints.
+# Do the ceremony: and also save the genesis fixtures, needs to happen before fix.
+dev-register: clear fix register
+# Do a dev genesis on each node after EVERY NODE COMPLETED registration.
+dev-genesis: genesis dev-save-genesis fix-genesis
 
-devnet-reset-ceremony:
-# note: this uses the NS in local env to create files i.e. alice or bob
-# as a operator/owner pair.
-	SKIP_BLOB=y make clear fix
-	echo ${MNEM} | head -c -1 | make register
+# Save the files to mock infrastructure i.e. devnet github
+dev-infra: dev-save-genesis dev-backup-archive dev-commit
 
-devnet-reset-onboard: clear 
-# fixtures needs a file that works
-	SKIP_BLOB=y make fix
-	cp ${SOURCE}/fixtures/genesis/${V}/* ~/.0L/
-# # starts config for a new miner "eve", uses the devnet github repo for ceremony
-	MNEM="${MNEM}" cargo r -p miner -- val-wizard  --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis --skip-mining 
+dev-save-genesis: set-waypoint
+	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/ol/devnet/genesis/${V}/
+	git add ${SOURCE}/ol/devnet/genesis/${V}/
 
-#### GIT HELPERS FOR DEVNET AUTOMATION ####
-devnet-save-genesis: set-waypoint
-	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/fixtures/genesis/${V}/
-	git add ${SOURCE}/fixtures/genesis/${V}/
-	git commit -a -m "save genesis fixtures to ${V}"
-	git push
+dev-backup-archive:
+	cd ${HOME}/dev-epoch-archive && make devnet-backup
 
-devnet-hard:
-	git reset --hard origin/${V} 
-
-devnet-pull:
-# must be on a branch
-	git fetch && git checkout ${V} -f && git pull
-
-devnet-fullnode:
-	cargo run -p miner -- fn-wizard --path ~/.0L/
+dev-commit:
+	git commit -a -m "save genesis fixtures to ${V}" | true
+	git push | true

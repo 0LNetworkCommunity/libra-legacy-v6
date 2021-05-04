@@ -22,7 +22,7 @@ script {
         // Alice is the only one that can update her mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357300101011000);
+        assert(MinerState::get_count_in_epoch({{alice}}) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -36,7 +36,7 @@ script {
         // Alice is the only one that can update her mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{bob}}) == 5, 7357300101011000);
+        assert(MinerState::get_count_in_epoch({{bob}}) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -51,7 +51,7 @@ script {
         // Alice is the only one that can update her mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{carol}}) == 5, 7357300101011000);
+        assert(MinerState::get_count_in_epoch({{carol}}) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -64,7 +64,7 @@ script {
 
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{dave}}) == 5, 7357300101011000);
+        assert(MinerState::get_count_in_epoch({{dave}}) == 5, 7357300101011000);
     }
 }
 // //check: EXECUTED
@@ -75,7 +75,7 @@ script {
     use 0x1::MinerState;
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357300101011000);
+        assert(MinerState::get_count_in_epoch({{eve}}) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -87,7 +87,7 @@ script {
 
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{frank}}) == 5, 7357300101011000);
+        assert(MinerState::get_count_in_epoch({{frank}}) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -141,7 +141,7 @@ script {
         // Alice is the only one that can update her mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357300101011000);
+        assert(MinerState::get_count_in_epoch({{alice}}) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -155,7 +155,7 @@ script {
         // Alice is the only one that can update her mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{bob}}) == 5, 7357300101011000);
+        assert(MinerState::get_count_in_epoch({{bob}}) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -170,7 +170,7 @@ script {
         // Alice is the only one that can update her mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{carol}}) == 5, 7357300101011000);
+        assert(MinerState::get_count_in_epoch({{carol}}) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -183,7 +183,7 @@ script {
 
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{dave}}) == 5, 7357300101011000);
+        assert(MinerState::get_count_in_epoch({{dave}}) == 5, 7357300101011000);
     }
 }
 // //check: EXECUTED
@@ -194,7 +194,7 @@ script {
     use 0x1::MinerState;
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357300101011000);
+        assert(MinerState::get_count_in_epoch({{eve}}) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -206,7 +206,7 @@ script {
 
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{frank}}) == 5, 7357300101011000);
+        assert(MinerState::get_count_in_epoch({{frank}}) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED

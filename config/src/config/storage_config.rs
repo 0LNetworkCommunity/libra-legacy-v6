@@ -32,7 +32,7 @@ impl Default for StorageConfig {
             dir: PathBuf::from("db"),
             grpc_max_receive_len: Some(100_000_000),
             // ~50GB state tree history (about 1 day at 100 tps)
-            prune_window: Some(10_000_000),
+            prune_window: Some(10_000_000), //////// 0L ////////
             data_dir: PathBuf::from("/opt/libra/data"),
             // Default read/write/connection timeout, in milliseconds
             timeout_ms: 30_000,

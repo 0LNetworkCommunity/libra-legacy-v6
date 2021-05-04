@@ -372,7 +372,7 @@ impl NoiseUpgrader {
                     remote_peer_short,
                     remote_peer_id,
                     derived_remote_peer_id,
-                    remote_public_key
+                    remote_public_key //////// 0L ////////
                 ));
             }
         }

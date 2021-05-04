@@ -56,12 +56,15 @@ pub enum StdlibScript {
     UpdateMintingAbility,
     UpdateDualAttestationLimit,
 
-    // 0L
+    //////// 0L ////////
     ReconfigSetup,
     OracleTx,
     MinerStateCommit,
-    MinerStateOnboarding,
-    CreateUserAccount,
+    CreateAccountVal,
+    CreateAccountUser,
+    Join,
+    Demo,
+    Leave,
     // ...add new scripts here
 }
 
@@ -106,12 +109,15 @@ impl StdlibScript {
             UpdateMintingAbility,
             UpdateDualAttestationLimit,
 
-            // 0L
+            //////// 0L ////////
             ReconfigSetup,
             OracleTx,
             MinerStateCommit,
-            MinerStateOnboarding,
-            CreateUserAccount,
+            CreateAccountVal,
+            CreateAccountUser,
+            Join,
+            Demo,
+            Leave,
             // ...add new scripts here
         ]
     }
@@ -163,10 +169,12 @@ impl StdlibScript {
 pub struct CompiledBytes(Vec<u8>);
 
 impl CompiledBytes {
+    //////// 0L ////////
     /// constructor
     pub fn new(bytes : Vec<u8>) -> Self {
         CompiledBytes(bytes)
     }
+
     /// Return the sha3-256 hash of the script bytes
     pub fn hash(&self) -> HashValue {
         Self::hash_bytes(&self.0)
@@ -241,12 +249,16 @@ impl fmt::Display for StdlibScript {
                 UpdateLibraVersion => "update_libra_version",
                 UpdateExchangeRate => "update_exchange_rate",
                 UpdateMintingAbility => "update_minting_ability",
-                // 0L
+                //////// 0L ////////
                 ReconfigSetup => "ol_reconfig_bulk_update_setup",
                 OracleTx => "ol_oracle_tx",
                 MinerStateCommit => "ol_miner_state_commit",
-                MinerStateOnboarding => "ol_miner_state_onboarding",
-                CreateUserAccount => "ol_create_user_account",
+                CreateAccountVal => "ol_create_acc_val",
+                CreateAccountUser => "ol_create_acc_user",
+                Demo => "ol_demo_e2e",
+                Join => "ol_validator_universe_join",
+                Leave => "ol_validator_universe_leave",
+
             }
         )
     }

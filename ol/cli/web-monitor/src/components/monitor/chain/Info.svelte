@@ -1,0 +1,39 @@
+<script lang="ts">
+  let epoch: number = 0;
+  let round: number = 0;
+  let waypoint: string = undefined;
+  import { chainInfo } from "../../../store.ts";
+
+  chainInfo.subscribe((info_str) => {
+    let chain = JSON.parse(info_str);
+    if (chain.chain_view) {
+      // TODO: clean up with destructuring.
+      epoch = chain.chain_view.epoch;
+      round = chain.chain_view.height;
+      waypoint = chain.chain_view.waypoint;
+    }
+  });
+</script>
+
+<div class="uk-card uk-card-default uk-card-body uk-height-1-1">
+  <h3 class="uk-card-title uk-text-center uk-text-uppercase uk-text-muted">
+    Chain
+  </h3>
+
+  <table class="uk-table">
+    <tbody>
+      <tr>
+        <td class="uk-text-uppercase">Epoch</td>
+        <td> {epoch} </td>
+      </tr>
+      <tr>
+        <td class="uk-text-uppercase">Height</td>
+        <td>{round.toLocaleString("en-ES")}</td>
+      </tr>
+      <tr>
+        <td class="uk-text-uppercase">Waypoint</td>
+        <td class="uk-text-break">{waypoint}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

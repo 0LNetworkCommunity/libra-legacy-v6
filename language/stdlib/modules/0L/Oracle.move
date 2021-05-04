@@ -1,8 +1,11 @@
 address 0x1 {
-
+///////////////////////////////////////////////////////////////////////////
+// File Prefix for errors: 1500
+///////////////////////////////////////////////////////////////////////////
   module Oracle {
     use 0x1::Vector;
     use 0x1::Signer;
+    use 0x1::Errors;
     use 0x1::Testnet;
     use 0x1::LibraSystem;
     use 0x1::Upgrade;
@@ -40,6 +43,7 @@ address 0x1 {
         consensus: VoteCount,
       }
   
+     // Function code: 01
       public fun initialize(vm: &signer) {
         if (Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS()) {
           move_to(vm, Oracles { 
@@ -64,10 +68,11 @@ address 0x1 {
         } 
       }
   
+      // Function code: 02
       public fun handler (sender: &signer, id: u64, data: vector<u8>) acquires Oracles {
         // receives payload from oracle_tx.move
         // Check the sender is a validator. 
-        assert(LibraSystem::is_validator(Signer::address_of(sender)), 11111); // TODO: error code
+        assert(LibraSystem::is_validator(Signer::address_of(sender)), Errors::requires_role(150002)); 
   
         if (id == 1) {
           upgrade_handler(sender, data);
@@ -158,8 +163,9 @@ address 0x1 {
       }
   
       // Function call for vm to check consensus
+      // Function code: 03
       public fun check_upgrade(vm: &signer) acquires Oracles {
-        assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 11111); // TODO: error code
+        assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(150003)); 
         let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::LIBRA_ROOT_ADDRESS()).upgrade;
   
         let payload = *&upgrade_oracle.consensus.data;
@@ -172,9 +178,10 @@ address 0x1 {
           enter_new_upgrade_round(upgrade_oracle, current_height);
         }
       }
-  
+
+      // Function code: 04
       public fun test_helper_query_oracle_votes(): vector<address> acquires Oracles {
-        assert(Testnet::is_testnet(), 123401011000);
+        assert(Testnet::is_testnet(), Errors::invalid_state(150004));
         let s = borrow_global<Oracles>(0x0);
         let len = Vector::length<Vote>(&s.upgrade.votes);
     

@@ -181,7 +181,27 @@
 Attempted to send funds to an account that does not exist
 
 
-<pre><code><b>const</b> <a href="AutoPay.md#0x1_AutoPay_EPAYEE_DOES_NOT_EXIST">EPAYEE_DOES_NOT_EXIST</a>: u64 = 17;
+<pre><code><b>const</b> <a href="AutoPay.md#0x1_AutoPay_EPAYEE_DOES_NOT_EXIST">EPAYEE_DOES_NOT_EXIST</a>: u64 = 10017;
+</code></pre>
+
+
+
+<a name="0x1_AutoPay_AUTOPAY_ID_EXISTS"></a>
+
+Attempting to re-use autopay id
+
+
+<pre><code><b>const</b> <a href="AutoPay.md#0x1_AutoPay_AUTOPAY_ID_EXISTS">AUTOPAY_ID_EXISTS</a>: u64 = 10019;
+</code></pre>
+
+
+
+<a name="0x1_AutoPay_EAUTOPAY_NOT_ENABLED"></a>
+
+The account does not have autopay enabled.
+
+
+<pre><code><b>const</b> <a href="AutoPay.md#0x1_AutoPay_EAUTOPAY_NOT_ENABLED">EAUTOPAY_NOT_ENABLED</a>: u64 = 10018;
 </code></pre>
 
 
@@ -202,8 +222,8 @@ Attempted to send funds to an account that does not exist
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay_tick">tick</a>(vm: &signer): bool <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_Tick">Tick</a> {
-  <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 0101014010);
-  <b>assert</b>(<b>exists</b>&lt;<a href="AutoPay.md#0x1_AutoPay_Tick">Tick</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()), 0101024010);
+  <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(010001));
+  <b>assert</b>(<b>exists</b>&lt;<a href="AutoPay.md#0x1_AutoPay_Tick">Tick</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(010001));
 
   <b>let</b> tick_state = borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay_Tick">Tick</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm));
 
@@ -264,7 +284,7 @@ Attempted to send funds to an account that does not exist
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay_initialize">initialize</a>(sender: &signer) {
-  <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 0101014010);
+  <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(010002));
   move_to&lt;<a href="AutoPay.md#0x1_AutoPay_AccountList">AccountList</a>&gt;(sender, <a href="AutoPay.md#0x1_AutoPay_AccountList">AccountList</a> { accounts: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;(), current_epoch: 0, });
   move_to&lt;<a href="AutoPay.md#0x1_AutoPay_Tick">Tick</a>&gt;(sender, <a href="AutoPay.md#0x1_AutoPay_Tick">Tick</a> {triggered: <b>false</b>})
 }
@@ -293,38 +313,58 @@ Attempted to send funds to an account that does not exist
   vm: &signer,
 ) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_AccountList">AccountList</a>, <a href="AutoPay.md#0x1_AutoPay_Data">Data</a> {
   // Only account 0x0 should be triggering this autopayment each block
-  <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 0101064010);
+  <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(010003));
 
   <b>let</b> epoch = <a href="LibraConfig.md#0x1_LibraConfig_get_current_epoch">LibraConfig::get_current_epoch</a>();
+// print(&02100);
 
   // Go through all accounts in <a href="AutoPay.md#0x1_AutoPay_AccountList">AccountList</a>
   // This is the list of accounts which currently have autopay enabled
   <b>let</b> account_list = &borrow_global&lt;<a href="AutoPay.md#0x1_AutoPay_AccountList">AccountList</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()).accounts;
   <b>let</b> accounts_length = <a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(account_list);
   <b>let</b> account_idx = 0;
-
+// print(&02200);
   <b>while</b> (account_idx &lt; accounts_length) {
+// print(&02210);
 
     <b>let</b> account_addr = <a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(account_list, account_idx);
-
     // Obtain the account balance
     <b>let</b> account_bal = <a href="LibraAccount.md#0x1_LibraAccount_balance">LibraAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*account_addr);
-
     // Go through all payments for this account and pay
     <b>let</b> payments = &<b>mut</b> borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay_Data">Data</a>&gt;(*account_addr).payments;
     <b>let</b> payments_len = <a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>&gt;(payments);
     <b>let</b> payments_idx = 0;
-
     <b>while</b> (payments_idx &lt; payments_len) {
+// print(&02211);
+
       <b>let</b> payment = <a href="Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>&lt;<a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>&gt;(payments, payments_idx);
+      // no payments <b>to</b> self
+      <b>if</b> (&payment.payee == account_addr) <b>break</b>;
+
       // If payment end epoch is greater, it's not an active payment anymore, so delete it
       <b>if</b> (payment.end_epoch &gt;= epoch) {
         // A payment will happen now
         // Obtain the amount <b>to</b> pay from percentage and balance
-        <b>let</b> amount = <a href="FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(account_bal , <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(payment.percentage, 100));
-        <a href="LibraAccount.md#0x1_LibraAccount_vm_make_payment">LibraAccount::vm_make_payment</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*account_addr, payment.payee, amount, x"", x"", vm);
+// print(&02212);
+
+        // IMPORTANT there are two digits for scaling representation.
+        // an autopay instruction of 12.34% is scaled by two orders, and represented in <a href="AutoPay.md#0x1_AutoPay">AutoPay</a> <b>as</b> `1234`.
+        <b>if</b> (payment.percentage &gt; 10000) <b>break</b>;
+        <b>let</b> percent_scaled = <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(payment.percentage, 10000);
+//  print(&02213);
+
+        <b>let</b> amount = <a href="FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(account_bal, percent_scaled);
+        <b>if</b> (amount &gt; account_bal) {
+          // deplete the account <b>if</b> greater
+          amount = amount - account_bal;
+        };
+        <b>if</b> (amount&gt;0) {
+          <a href="LibraAccount.md#0x1_LibraAccount_vm_make_payment">LibraAccount::vm_make_payment</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*account_addr, payment.payee, amount, x"", x"", vm);
+        };
+// print(&02214);
+
       };
-      // ToDo: might want <b>to</b> delete inactive instructions <b>to</b> save memory
+      // TODO: might want <b>to</b> delete inactive instructions <b>to</b> save memory
       payments_idx = payments_idx + 1;
     };
     account_idx = account_idx + 1;
@@ -357,9 +397,10 @@ Attempted to send funds to an account that does not exist
   <b>let</b> accounts = &<b>mut</b> borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay_AccountList">AccountList</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()).accounts;
   <b>if</b> (!<a href="Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(accounts, &addr)) {
     <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(accounts, addr);
+    // Initialize the instructions <a href="AutoPay.md#0x1_AutoPay_Data">Data</a> on user account state
+    move_to&lt;<a href="AutoPay.md#0x1_AutoPay_Data">Data</a>&gt;(acc, <a href="AutoPay.md#0x1_AutoPay_Data">Data</a> { payments: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>&gt;()});
   };
-  // Initialize the instructions <a href="AutoPay.md#0x1_AutoPay_Data">Data</a> on user account state
-  move_to&lt;<a href="AutoPay.md#0x1_AutoPay_Data">Data</a>&gt;(acc, <a href="AutoPay.md#0x1_AutoPay_Data">Data</a> { payments: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>&gt;()});
+
 }
 </code></pre>
 
@@ -470,7 +511,7 @@ Attempted to send funds to an account that does not exist
   <b>let</b> index = <a href="AutoPay.md#0x1_AutoPay_find">find</a>(addr, uid);
   <b>if</b> (<a href="Option.md#0x1_Option_is_none">Option::is_none</a>&lt;u64&gt;(&index)) {
     // Case when the payment <b>to</b> be deleted doesn't actually exist
-    <b>assert</b>(<b>false</b>, 010105012040);
+    <b>assert</b>(<b>false</b>, <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="AutoPay.md#0x1_AutoPay_AUTOPAY_ID_EXISTS">AUTOPAY_ID_EXISTS</a>));
   };
   <b>let</b> payments = &<b>mut</b> borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay_Data">Data</a>&gt;(addr).payments;
   <a href="Vector.md#0x1_Vector_remove">Vector::remove</a>&lt;<a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>&gt;(payments, <a href="Option.md#0x1_Option_extract">Option::extract</a>&lt;u64&gt;(&<b>mut</b> index));

@@ -23,6 +23,7 @@ use libra_types::{
     transaction::{TransactionOutput, TransactionStatus},
     vm_status::{KeptVMStatus, StatusCode, VMStatus},
     write_set::{WriteOp, WriteSet, WriteSetMut},
+    //////// 0L ////////
     block_metadata::BlockMetadata,
     upgrade_payload::UpgradePayloadResource,
 };
@@ -432,6 +433,7 @@ impl LibraVMImpl {
         self.move_vm.new_session(r)
     }
 
+    //////// 0L ////////    
     // Note: currently the upgrade needs two blocks to happen: 
     // In the first block, consensus is reached and recorded; 
     // in the second block, the payload is applied and history is recorded
@@ -444,10 +446,10 @@ impl LibraVMImpl {
         log_context: &impl LogContext,
     ) -> Result<(), VMStatus> {
         if let Ok((round, _timestamp, _previous_vote, _proposer)) = block_metadata.into_inner() {
-            println!("======================================  round is {}", round);
+            info!("0L ===============================  round is {}", round);
             // hardcoding consensus checking on round 2
             if round==2 {
-                println!("====================================== checking upgrade");
+                info!("0L ==== stdlib upgrade: checking for stdlib upgrade");
                 // tick Oracle::check_upgrade
                 let args = vec![
                     Value::transaction_argument_signer_reference(txn_data.sender),
@@ -467,6 +469,7 @@ impl LibraVMImpl {
         Ok(())
     }
 
+    //////// 0L ////////    
     pub(crate) fn apply_stdlib_upgrade<R: RemoteCache> (
         &self,
         session: &mut Session<R>,
@@ -496,7 +499,7 @@ impl LibraVMImpl {
 
                 let payload = upgrade_payload.payload;
                 if payload.len() > 0 {
-                    println!("====================================== Consensus has been reached in the previous block");
+                    info!("0L ==== stdlib upgrade: upgrade payload elected in previous epoch");
 
                     // publish the agreed stdlib
                     let new_stdlib = stdlib::import_stdlib(&payload);
@@ -514,7 +517,7 @@ impl LibraVMImpl {
                         ).expect("Failed to publish module");
                         counter += 1;
                     }
-                    println!("====================================== published {} modules", counter);
+                    info!("0L ==== stdlib upgrade: published {} modules", counter);
 
                     // reset the UpgradePayload
                     let args = vec![
@@ -529,7 +532,7 @@ impl LibraVMImpl {
                         cost_strategy,
                         log_context,
                     ).expect("Couldn't reset payload");
-                    println!("====================================== end publish module at {}", timestamp);
+                    info!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
                 }
             }
         }

@@ -1,3 +1,4 @@
+
 // This tests consensus Case 2.
 // ALICE is a validator.
 // DID validate successfully.
@@ -79,7 +80,7 @@ script {
     use 0x1::Cases;
     fun main(vm: &signer) {
         // We are in a new epoch.
-        // Check Alice is in the the correct case during reconfigure
+        // Check Bob is in the the correct case during reconfigure
         assert(Cases::get_case(vm, {{bob}}, 0, 15) == 2, 7357000180109);
     }
 }
@@ -103,6 +104,7 @@ script {
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
+    use 0x1::Debug::print;
 
     fun main(_account: &signer) {
         // We are in a new epoch.
@@ -114,6 +116,7 @@ script {
         assert(LibraSystem::is_validator({{bob}}) == true, 7357000180111);
         
         //case 2 does not get rewards.
+        print(&LibraAccount::balance<GAS>({{bob}}));
         assert(LibraAccount::balance<GAS>({{bob}}) == 1, 7357000180112);  
 
         //case 2 does not increment weight.
