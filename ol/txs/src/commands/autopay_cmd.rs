@@ -3,11 +3,11 @@
 #![allow(clippy::never_loop)]
 
 use abscissa_core::{Command, Options, Runnable};
-use libra_types::transaction::{Script, SignedTransaction};
-use crate::{entrypoint, sign_tx::sign_tx, submit_tx::{TxParams, batch_wrapper, maybe_submit, tx_params_wrapper}};
-use dialoguer::Confirm;
-use std::path::PathBuf;
-use ol_types::{autopay::PayInstruction, config::{TxType, IS_CI}};
+
+use crate::{entrypoint, submit_tx::{ maybe_submit, tx_params_wrapper}};
+
+
+use ol_types::{config::TxType};
 
 /// command to submit a batch of autopay tx from file
 #[derive(Command, Debug, Default, Options)]
