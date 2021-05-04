@@ -30,33 +30,34 @@ impl Runnable for PilotCmd {
             cfg.workspace.node_home = tp;
         }
         let mut node = Node::new(client, cfg.clone());
+
+        // Abort if the database is not set correctly.
+        if node.db_files_exist() {
+            status_ok!("DB", "db files exist");
+            // is DB bootstrapped
+            if node.db_bootstrapped() {
+                status_ok!("DB", "db bootstrapped");
+            } else {
+                status_err!("libraDB is not bootstrapped. Database needs a valid set of transactions to boot. Try `ol restore` to fetch backups from archive.");
+            }
+        // return
+        } else {
+            status_err!(
+                "NO db files found {:?}. Try `ol restore` to fetch backups from archive.",
+                &cfg.workspace.node_home
+            );
+            // stop loop, user needs to configure machine before pilot can work.
+            std::process::exit(1);
+        }
+
         loop {
-          println!("==========================================");
+            println!("==========================================");
             // Start the webserver before anything else
             if Node::is_web_monitor_serving() {
                 status_ok!("Web", "web monitor is serving on 3030");
             } else {
                 status_warn!("web monitor is NOT serving 3030. Attempting start.");
                 node.start_monitor();
-            }
-
-            if node.db_files_exist() {
-                status_ok!("DB", "db files exist");
-
-                // is DB bootstrapped
-                if node.db_bootstrapped() {
-                    status_ok!("DB", "db bootstrapped");
-                } else {
-                    status_err!("libraDB is not bootstrapped. Database needs a valid set of transactions to boot. Try `ol restore` to fetch backups from archive.");
-                }
-            // return
-            } else {
-                status_err!(
-                    "NO db files found {:?}. Try `ol restore` to fetch backups from archive.",
-                    &cfg.workspace.node_home
-                );
-                // stop loop, user needs to configure machine before pilot can work.
-                std::process::exit(1);
             }
 
             // exit if cannot connect to any client, local or upstream.

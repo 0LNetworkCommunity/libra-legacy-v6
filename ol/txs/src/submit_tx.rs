@@ -208,7 +208,8 @@ pub fn tx_params(
     let mut tx_params: TxParams = if swarm_path.is_some() {
         get_tx_params_from_swarm(
           swarm_path.clone().expect("needs a valid swarm temp dir"),
-          swarm_persona.expect("need a swarm 'persona' with credentials in fixtures.")
+          swarm_persona.expect("need a swarm 'persona' with credentials in fixtures."),
+          is_operator,
         ).unwrap()
     } else {
         if is_operator {
@@ -228,11 +229,17 @@ pub fn tx_params(
 }
 
 /// Extract params from a local running swarm
-pub fn get_tx_params_from_swarm(swarm_path: PathBuf, swarm_persona: String) -> Result<TxParams, Error> {
+pub fn get_tx_params_from_swarm(swarm_path: PathBuf, swarm_persona: String, is_operator: bool) -> Result<TxParams, Error> {
     let (url, waypoint) = ol_types::config::get_swarm_configs(swarm_path);
     let mnem = ol_fixtures::get_persona_mnem(&swarm_persona.as_str());
     let keys = KeyScheme::new_from_mnemonic(mnem);
-    let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
+    
+    let keypair = if is_operator {
+      KeyPair::from(keys.child_1_operator.get_private_key())
+    } else {
+      KeyPair::from(keys.child_0_owner.get_private_key())
+    };
+
     let pubkey = keys.child_0_owner.get_public();
     let auth_key = AuthenticationKey::ed25519(&pubkey);
     let address = auth_key.derived_address();

@@ -51,6 +51,8 @@ impl Runnable for StartCmd {
             use_upstream_url,
             ..
         } = entrypoint::get_args();
+
+        //TODO(mortonbits): In the case of swarm this needs to take from swarm_temp/0/, and not from  ~/.0L, as I think is happeneing here.
         let cfg = app_config().clone();
 
         let waypoint = if waypoint.is_none() {
