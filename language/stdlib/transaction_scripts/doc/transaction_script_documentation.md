@@ -5113,6 +5113,7 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`add_to_script_allow_list`](transaction_script_documentation.md#add_to_script_allow_list)
 -  [`add_validator_and_reconfigure`](transaction_script_documentation.md#add_validator_and_reconfigure)
 -  [`autopay_create_instruction`](ol_autopay_create.md#autopay_create_instruction)
+-  [`autopay_disable`](ol_autopay_disable.md#autopay_disable)
 -  [`autopay_enable`](ol_autopay_enable.md#autopay_enable)
 -  [`burn`](transaction_script_documentation.md#burn)
 -  [`burn_txn_fees`](transaction_script_documentation.md#burn_txn_fees)

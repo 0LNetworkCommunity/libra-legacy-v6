@@ -203,6 +203,8 @@ pub enum ScriptCall {
         percentage: u64,
     },
 
+    AutopayDisable {},
+
     AutopayEnable {},
 
     /// # Summary
@@ -1576,6 +1578,7 @@ impl ScriptCall {
                 end_epoch,
                 percentage,
             } => encode_autopay_create_instruction_script(uid, payee, end_epoch, percentage),
+            AutopayDisable {} => encode_autopay_disable_script(),
             AutopayEnable {} => encode_autopay_enable_script(),
             Burn {
                 token,
@@ -2045,6 +2048,10 @@ pub fn encode_autopay_create_instruction_script(
             TransactionArgument::U64(percentage),
         ],
     )
+}
+
+pub fn encode_autopay_disable_script() -> Script {
+    Script::new(AUTOPAY_DISABLE_CODE.to_vec(), vec![], vec![])
 }
 
 pub fn encode_autopay_enable_script() -> Script {
@@ -3734,6 +3741,10 @@ fn decode_autopay_create_instruction_script(script: &Script) -> Option<ScriptCal
     })
 }
 
+fn decode_autopay_disable_script(_script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::AutopayDisable {})
+}
+
 fn decode_autopay_enable_script(_script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::AutopayEnable {})
 }
@@ -4073,6 +4084,10 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
         Box::new(decode_autopay_create_instruction_script),
     );
     map.insert(
+        AUTOPAY_DISABLE_CODE.to_vec(),
+        Box::new(decode_autopay_disable_script),
+    );
+    map.insert(
         AUTOPAY_ENABLE_CODE.to_vec(),
         Box::new(decode_autopay_enable_script),
     );
@@ -4307,6 +4322,16 @@ const AUTOPAY_CREATE_INSTRUCTION_CODE: &[u8] = &[
     0, 0, 0, 0, 0, 3, 6, 29, 10, 0, 17, 1, 12, 5, 10, 5, 17, 4, 32, 3, 8, 5, 22, 10, 0, 17, 3, 10,
     5, 17, 4, 7, 0, 17, 0, 12, 7, 12, 6, 11, 6, 3, 22, 11, 0, 1, 11, 7, 39, 11, 0, 10, 1, 10, 2,
     10, 3, 10, 4, 17, 2, 2,
+];
+
+const AUTOPAY_DISABLE_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 15, 5, 19, 12, 7, 31, 53, 8, 84, 16, 0, 0, 0,
+    1, 1, 2, 0, 1, 0, 0, 3, 0, 2, 0, 0, 4, 1, 3, 0, 1, 6, 12, 1, 5, 0, 1, 1, 3, 5, 1, 3, 7, 65,
+    117, 116, 111, 80, 97, 121, 6, 83, 105, 103, 110, 101, 114, 10, 97, 100, 100, 114, 101, 115,
+    115, 95, 111, 102, 15, 100, 105, 115, 97, 98, 108, 101, 95, 97, 117, 116, 111, 112, 97, 121,
+    10, 105, 115, 95, 101, 110, 97, 98, 108, 101, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 0, 0, 4, 20, 10, 0, 17, 0, 12, 1, 10, 1, 17, 2, 3, 7, 5, 10, 11, 0, 17, 1, 5, 12, 11, 0, 1,
+    10, 1, 17, 2, 12, 2, 11, 2, 3, 19, 6, 0, 0, 0, 0, 0, 0, 0, 0, 39, 2,
 ];
 
 const AUTOPAY_ENABLE_CODE: &[u8] = &[
