@@ -46,6 +46,7 @@ impl Runnable for StartCmd {
             url,
             waypoint,
             swarm_path,
+            swarm_persona,
             is_operator,
             use_upstream_url,
             ..
@@ -67,6 +68,7 @@ impl Runnable for StartCmd {
             url,
             waypoint,
             swarm_path,
+            swarm_persona,
             TxType::Miner,
             is_operator,
             use_upstream_url,
