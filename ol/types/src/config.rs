@@ -170,13 +170,15 @@ impl AppCfg {
         default_config
     }
 
-    /// Save swarm default configs to swarm path
-    pub fn init_swarm_config(swarm_path: PathBuf) -> AppCfg {
-        println!("init_swarm_config: {:?}", swarm_path);
-        let host_config = AppCfg::make_swarm_configs(swarm_path);
-        AppCfg::save_file(&host_config);
-        host_config
-    }
+  /// Save swarm default configs to swarm path
+  /// swarm_path points to the swarm_temp directory
+  /// node_home to the directory of the current swarm persona
+  pub fn init_swarm_config(swarm_path: PathBuf, node_home: PathBuf) -> AppCfg{
+    // println!("init_swarm_config: {:?}", swarm_path); already logged in commands.rs
+    let host_config = AppCfg::make_swarm_configs(swarm_path, node_home);
+    AppCfg::save_file(&host_config);
+    host_config
+  }
 
     fn save_file(host_config: &AppCfg) {
         let toml = toml::to_string(host_config).unwrap();
@@ -194,13 +196,13 @@ impl AppCfg {
         );
     }
 
-    /// get configs from swarm
-    pub fn make_swarm_configs(swarm_path: PathBuf) -> AppCfg {
+  /// get configs from swarm
+  /// swarm_path points to the swarm_temp directory
+  /// node_home to the directory of the current swarm persona
+  pub fn make_swarm_configs(swarm_path: PathBuf, node_home: PathBuf) -> AppCfg {
         let config_path = swarm_path.join("0/node.yaml");
         let config = NodeConfig::load(&config_path)
             .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &config_path));
-
-        let db_path = swarm_path.join("0/db");
 
         let url =
             Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str())
@@ -231,6 +233,9 @@ impl AppCfg {
             tx_configs: TxConfigs::default(),
         };
 
+        let db_path = node_home.join("db");
+    
+        cfg.workspace.node_home = node_home;
         cfg.workspace.db_path = db_path;
         cfg.chain_info.base_waypoint = Some(config.base.waypoint.waypoint());
         cfg.profile.account = "4C613C2F4B1E67CA8D98A542EE3F59F5".parse().unwrap(); // alice

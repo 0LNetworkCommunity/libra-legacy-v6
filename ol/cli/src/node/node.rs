@@ -298,6 +298,16 @@ impl Node {
                 if is_fn {
                     return Ok(NodeMode::Fullnode);
                 }
+
+                let is_fn = p
+                    .cmd()
+                    .into_iter()
+                    .find(|s| s.contains(&"swarm".to_owned()))
+                    .is_some();
+                if is_fn {
+                    return Ok(NodeMode::Validator);
+                }
+
             }
         }
         Err(Error::msg("node is not running"))
