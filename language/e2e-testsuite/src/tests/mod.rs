@@ -41,4 +41,3 @@ mod ol_minerstate_onboarding;
 mod ol_demo;
 mod ol_autopay_enable;
 mod ol_autopay_create;
-mod ol_trusted_account_update;
