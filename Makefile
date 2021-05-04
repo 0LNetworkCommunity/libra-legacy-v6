@@ -51,14 +51,17 @@ BINS= db-backup db-backup-verify db-restore libra-node miner ol_cli txs stdlib
 deps:
 	. ./util/setup.sh
 
-download:
+download: web-files
 	@for b in ${RELEASE} ; do \
-		echo $$b ; \
-		# echo $$b | rev | cut -d"/" -f1 | rev ; \
+		echo $$b | rev | cut -d"/" -f1 | rev ; \
 		curl  --progress-bar --create-dirs -o /usr/local/bin/$$(echo $$b | rev | cut -d"/" -f1 | rev) -L $$b ; \
 		echo 'downloaded to /usr/local/bin/' ; \
 		chmod 744 /usr/local/bin/$$(echo $$b | rev | cut -d"/" -f1 | rev) ;\
 	done
+
+web-files: 
+	curl -L --progress-bar --create-dirs -o ${DATA_PATH}/web-monitor/public.zip https://github.com/OLSF/libra/releases/download/v4.3.0-rc.0/public.zip
+	unzip ${DATA_PATH}/web-monitor/public.zip
 
 download-release:
 	@for b in ${BINS} ; do \
@@ -298,8 +301,8 @@ ifdef TEST
 endif
 
 fix-genesis:
-	cp ./ol/fixtures/genesis/${V}/genesis.blob ${DATA_PATH}/
-	cp ./ol/fixtures/genesis/${V}/genesis_waypoint ${DATA_PATH}/
+	cp ./ol/devnet/genesis/${V}/genesis.blob ${DATA_PATH}/
+	cp ./ol/devnet/genesis/${V}/genesis_waypoint ${DATA_PATH}/
 
 
 #### HELPERS ####
@@ -371,7 +374,7 @@ dev-join: clear fix fix-genesis dev-wizard
 
 dev-wizard:
 #  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
-	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis
+	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis --upstream-peer http://161.35.13.169:8080
 
 #### DEVNET INFRASTRUCTURE ####
 # usually do this on Alice, which has the dev-epoch-archive repo, and dev-genesis

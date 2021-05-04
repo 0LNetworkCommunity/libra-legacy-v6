@@ -91,8 +91,6 @@ fn wallet() {
       Mnemonic::from(&mnemonic_string).unwrap()
     );
 
-    // println!("wallet\n:{:?}", wallet);
-
     let (main_addr, child_number ) = wallet.new_address().unwrap();
     println!("wallet\n:{:?} === {:x}", child_number, main_addr);
 
@@ -102,6 +100,4 @@ fn wallet() {
 
     // Expect this to be zero before we haven't populated the address map in the repo
     assert!(vec_addresses.len() == 1);
-    // Empty hashmap should be fine
-    // let mut vec_account_data = Vec::new();
 }

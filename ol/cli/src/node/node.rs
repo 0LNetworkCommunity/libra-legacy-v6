@@ -237,6 +237,7 @@ impl Node {
     }
 
     fn check_process(process_str: &str) -> bool {
+      // get processes from sysinfo
         let mut system = sysinfo::System::new_all();
         system.refresh_all();
         for (_, process) in system.get_processes() {
@@ -245,7 +246,7 @@ impl Node {
                 return true;
             }
         }
-        // try by name (yield different results), most reliable.
+        // aldo try by name (yield different results), most reliable.
         let p = system.get_process_by_name(process_str);
         !p.is_empty()
     }
@@ -326,8 +327,11 @@ impl Node {
             .arg("is-active")
             .arg("--quiet")
             .arg(process_name)
-            .output()
-            .expect("could no check systemctl");
-        out.status.code().unwrap() == 0 // is_active --quiet will exit 0 if the service is running normally.
+            .output();
+        match out {
+            Ok(o) => o.status.code().unwrap() == 0,
+            Err(_) => false,
+        }
+        //out.status.code().unwrap() == 0 // is_active --quiet will exit 0 if the service is running normally.
     }
 }

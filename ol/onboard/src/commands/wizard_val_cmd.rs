@@ -7,7 +7,9 @@ use crate::prelude::app_config;
 use super::{files_cmd};
 
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
-use libra_genesis_tool::keyscheme::KeyScheme;
+// use libra_genesis_tool::keyscheme::KeyScheme;
+use keygen::scheme::KeyScheme;
+
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use libra_wallet::WalletLibrary;
 use ol_cli::{commands::init_cmd, config::AppCfg};
@@ -16,6 +18,8 @@ use reqwest::Url;
 use serde_json::Value;
 use std::{fs::File, io::Write, path::PathBuf};
 use txs::{commands::autopay_batch_cmd, submit_tx};
+use libra_genesis_tool::node_files;
+
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ValWizardCmd {
@@ -37,29 +41,36 @@ pub struct ValWizardCmd {
     template_url: Option<Url>,
     #[options(help = "template account.json to configure from")]
     autopay_file: Option<PathBuf>,
+    #[options(help = "An upstream peer to use in 0L.toml")]
+    upstream_peer: Option<Url>,
 }
 
 impl Runnable for ValWizardCmd {
     /// Print version message
     fn run(&self) {
-
         status_info!("\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys, run the standalone keygen tool with 'ol keygen'.\n\nYour first 0L proof-of-work will be mined now. Expect this to take up to 15 minutes on modern CPUs.\n");
 
         // Get credentials from prompt
         let (authkey, account, wallet) = keygen::account_from_prompt();
 
         // Initialize Miner
-        // Need to assign miner_config, because reading from app_config can only be done at startup, and it will be blank at the time of wizard executing.
-        let mut miner_config = init_cmd::initialize_host(authkey, account, &self.path).unwrap();
-        let home_path = &miner_config.workspace.node_home;
+        // Need to assign app_config, otherwise abscissa would use the default.
+        let mut app_config = AppCfg::init_app_configs(
+                              authkey,
+                              account,
+                              &self.upstream_peer,
+                              &self.path
+                            );
+
+        let home_path = &app_config.workspace.node_home;
         status_ok!("\nMiner config written", "\n...........................\n");
 
         if let Some(url) = &self.template_url {
             save_template(&url.join("account.json").unwrap(), home_path);
             let (epoch, wp) = get_epoch_info(&url.join("epoch.json").unwrap());
 
-            miner_config.chain_info.base_epoch = epoch;
-            miner_config.chain_info.base_waypoint = wp;
+            app_config.chain_info.base_epoch = epoch;
+            app_config.chain_info.base_waypoint = wp;
             // get autopay
             status_ok!("\nTemplate saved", "\n...........................\n");
         }
@@ -70,12 +81,13 @@ impl Runnable for ValWizardCmd {
             &self.template_url,
             &self.autopay_file,
             home_path,
-            &miner_config,
+            &app_config,
             &wallet,
         );
+        status_ok!("\nAutopay transactions signed", "\n...........................\n");
 
         // Initialize Validator Keys
-        init_cmd::initialize_validator(&wallet, &miner_config).unwrap();
+        init_cmd::initialize_validator(&wallet, &app_config).unwrap();
         status_ok!("\nKey file written", "\n...........................\n");
 
         // fetching the genesis files from genesis-archive
@@ -91,20 +103,31 @@ impl Runnable for ValWizardCmd {
             }
         }
 
-        // Build Genesis and node.yaml file
-        files_cmd::genesis_files(
-            &miner_config,
-            &self.chain_id,
-            &self.github_org,
-            &self.repo,
+
+        let home_dir = app_config.workspace.node_home.to_owned();
+        // 0L convention is for the namespace of the operator to be appended by '-oper'
+        let namespace = app_config.profile.auth_key.clone() + "-oper";
+
+        // TODO: use node_config to get the seed peers and then write upstream_node vec in 0L.toml from that.
+        node_files::write_node_config_files(
+            home_dir.clone(),
+            self.chain_id.unwrap_or(1),
+            &self.github_org.clone().unwrap_or("OLSF".to_string()),
+            &self
+                .repo
+                .clone()
+                .unwrap_or("experimental-genesis".to_string()),
+            &namespace,
             &self.rebuild_genesis,
             &false,
-        );
+        )
+        .unwrap();
+
         status_ok!("\nNode config written", "\n...........................\n");
 
         if !self.skip_mining {
             // Mine Block
-            miner::block::write_genesis(&miner_config);
+            miner::block::write_genesis(&app_config);
             status_ok!(
                 "\nGenesis proof complete",
                 "\n...........................\n"
@@ -115,7 +138,7 @@ impl Runnable for ValWizardCmd {
         write_manifest(
             &self.path,
             wallet,
-            Some(miner_config),
+            Some(app_config),
             autopay_batch,
             autopay_signed,
         );
@@ -144,7 +167,7 @@ fn get_autopay_batch(
     };
 
     let starting_epoch = cfg.chain_info.base_epoch.unwrap();
-    let instr_vec = PayInstruction::parse_autopay_instructions(&home_path.join(file_name));
+    let instr_vec = PayInstruction::parse_autopay_instructions(&home_path.join(file_name)).unwrap();
     let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone(), starting_epoch);
     let url = cfg.what_url(false);
     let tx_params =
@@ -211,3 +234,4 @@ fn write_manifest(
     )
     .create_manifest(miner_home);
 }
+ 

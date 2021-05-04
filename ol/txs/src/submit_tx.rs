@@ -14,7 +14,7 @@ use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     test_utils::KeyPair,
 };
-use libra_genesis_tool::keyscheme::KeyScheme;
+use keygen::scheme::KeyScheme;
 use libra_global_constants::OPERATOR_KEY;
 use libra_json_rpc_types::views::{TransactionView, VMStatusView};
 use libra_secure_storage::{CryptoStorage, NamespacedStorage, OnDiskStorageInternal, Storage};
@@ -331,7 +331,7 @@ pub fn wait_for_tx(
     client: &mut LibraClient,
 ) -> Option<TransactionView> {
     println!(
-        "Awaiting tx status \n\
+        "\nAwaiting tx status \n\
        Submitted from account: {} with sequence number: {}",
         signer_address, sequence_number
     );

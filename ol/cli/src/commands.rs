@@ -101,30 +101,13 @@ impl Configurable<AppCfg> for OlCliCmd {
         // instead, always return `Some(CONFIG_FILE)` here.
 
         let mut config_path = entrypoint::get_node_home();
-        /*
-        dirs::home_dir().unwrap();
-        config_path.push(NODE_HOME);
-        
-        let entry_args = entrypoint::get_args();
 
-        if entry_args.swarm_path.is_some() {
-            config_path = PathBuf::from(entry_args.swarm_path.unwrap());
-            if entry_args.swarm_persona.is_some() {
-                let persona = &entry_args.swarm_persona.unwrap();
-                let all_personas = vec!["alice", "bob", "carol", "dave"];
-                let index = all_personas.iter().position(|&r| r == persona).unwrap();
-                config_path.push(index.to_string());
-            } else {
-                config_path.push("0"); // default
-            }
-        }
-*/
         config_path.push(CONFIG_FILE);
         if config_path.exists() {
-            println!("initializing from config file: {:?}", config_path);
+            // println!("initializing from config file: {:?}", config_path);
             Some(config_path)
         } else {
-            println!("config file not yet existing: {:?}", config_path);
+            // println!("config file not yet existing: {:?}", config_path);
             None
         }
     }

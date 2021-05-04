@@ -110,12 +110,13 @@ impl<'a> App<'a> {
 
     /// fetch transactions
     pub fn fetch_txs(&mut self) {
-        let latest_version = self
+        let meta = self
             .node
             .client
-            .get_metadata()
-            .expect("Fail to fetch version")
-            .version;
+            .get_metadata();
+        if meta.is_err() { return }
+        let latest_version =meta.unwrap().version;
+        self.last_fetch_tx_version = if latest_version > 1000 {latest_version-1000} else {0};
 
         match self
           .node
@@ -123,20 +124,22 @@ impl<'a> App<'a> {
             .get_txn_by_range(self.last_fetch_tx_version, 100, true)
         {
             Ok(txs) => {
-                let _ = txs.iter().map(|tv| {
-                    self.txs.push(tv.clone());
-                });
+                self.txs = txs
+                // let _ = txs.iter().map(|tv| {
+                //     self.txs.push(tv.clone());
+                // });
             }
-            Err(_) => {}
+            Err(e) => { println!("Error occurs: {}", e)}
         }
-        self.last_fetch_tx_version = latest_version;
     }
 
     /// fetch basic data for first tab
     pub fn fetch(&mut self) {
       let (chain_info, validator_info) = self.node.refresh_chain_info();
       self.chain_state = chain_info;
-      self.validators = validator_info.unwrap();
+      if validator_info.is_some() {
+          self.validators = validator_info.unwrap();
+      }
     }
 
     /// handler for key up

@@ -27,7 +27,7 @@ impl Runnable for AutopayBatchCmd {
 
         let epoch = crate::epoch::get_epoch(&tx_params);
         println!("The current epoch is: {}", epoch);
-        let instructions = PayInstruction::parse_autopay_instructions(&self.autopay_batch_file);
+        let instructions = PayInstruction::parse_autopay_instructions(&self.autopay_batch_file).unwrap();
         let scripts = process_instructions(instructions, epoch);
         batch_wrapper(scripts, &tx_params, entry_args.no_send, entry_args.save_path)
 
@@ -54,8 +54,7 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, current_epoch: u6
         match Confirm::new().with_prompt("").interact().unwrap() {
           true => Some(i),
           _ =>  {
-            println!("skipping instruction, going to next in batch");
-            None
+            panic!("Autopay configuration aborted. Check batch configuration file or template");
           }
         }            
     })

@@ -13,7 +13,7 @@
 // Carol removes herself as a validator
 //! new-transaction
 //! sender: carol
-stdlib_script::ol_remove_self_validator_universe
+stdlib_script::ol_validator_universe_leave
 // check: "Keep(EXECUTED)"
 
 
@@ -149,7 +149,7 @@ fun main(sender: &signer) {
 
 //! new-transaction
 //! sender: carol
-stdlib_script::ol_join_validator_set
+stdlib_script::ol_validator_universe_join
 // check: "Keep(EXECUTED)"
 
 
