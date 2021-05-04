@@ -7,6 +7,6 @@ script {
         if (AutoPay::is_enabled(account)) {
             AutoPay::disable_autopay(sender);
         };
-        assert(AutoPay::is_enabled(account), 0);
+        assert(!AutoPay::is_enabled(account), 010001);
     }
 }
