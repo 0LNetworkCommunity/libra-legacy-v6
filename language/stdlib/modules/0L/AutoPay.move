@@ -17,9 +17,14 @@ address 0x1{
     use 0x1::Epoch;
     use 0x1::Globals;
     use 0x1::Errors;
+    // use 0x1::Debug::print;
 
     /// Attempted to send funds to an account that does not exist
     const EPAYEE_DOES_NOT_EXIST: u64 = 010017;
+    /// The account does not have autopay enabled.
+    const EAUTOPAY_NOT_ENABLED: u64 = 010018;
+    /// Attempting to re-use autopay id
+    const AUTOPAY_ID_EXISTS: u64 = 010019;
 
     resource struct Tick {
       triggered: bool,
@@ -98,14 +103,17 @@ address 0x1{
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(010003));
 
       let epoch = LibraConfig::get_current_epoch();
+// print(&02100);
 
       // Go through all accounts in AccountList
       // This is the list of accounts which currently have autopay enabled
       let account_list = &borrow_global<AccountList>(CoreAddresses::LIBRA_ROOT_ADDRESS()).accounts;
       let accounts_length = Vector::length<address>(account_list);
       let account_idx = 0;
-
+// print(&02200);
       while (account_idx < accounts_length) {
+// print(&02210);
+
         let account_addr = Vector::borrow<address>(account_list, account_idx);
         // Obtain the account balance
         let account_bal = LibraAccount::balance<GAS>(*account_addr);
@@ -114,6 +122,8 @@ address 0x1{
         let payments_len = Vector::length<Payment>(payments);
         let payments_idx = 0;
         while (payments_idx < payments_len) {
+// print(&02211);
+
           let payment = Vector::borrow_mut<Payment>(payments, payments_idx);          
           // no payments to self
           if (&payment.payee == account_addr) break;
@@ -122,12 +132,14 @@ address 0x1{
           if (payment.end_epoch >= epoch) {
             // A payment will happen now
             // Obtain the amount to pay from percentage and balance
+// print(&02212);
 
             // IMPORTANT there are two digits for scaling representation.
             // an autopay instruction of 12.34% is scaled by two orders, and represented in AutoPay as `1234`.
             if (payment.percentage > 10000) break;
             let percent_scaled = FixedPoint32::create_from_rational(payment.percentage, 10000);
-            
+//  print(&02213);
+           
             let amount = FixedPoint32::multiply_u64(account_bal, percent_scaled);
             if (amount > account_bal) {
               // deplete the account if greater
@@ -135,7 +147,8 @@ address 0x1{
             };
             if (amount>0) {
               LibraAccount::vm_make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
-            }
+            };
+// print(&02214);
 
           };
           // TODO: might want to delete inactive instructions to save memory
@@ -158,9 +171,10 @@ address 0x1{
       let accounts = &mut borrow_global_mut<AccountList>(CoreAddresses::LIBRA_ROOT_ADDRESS()).accounts;
       if (!Vector::contains<address>(accounts, &addr)) {
         Vector::push_back<address>(accounts, addr);
+        // Initialize the instructions Data on user account state 
+        move_to<Data>(acc, Data { payments: Vector::empty<Payment>()});
       };
-      // Initialize the instructions Data on user account state 
-      move_to<Data>(acc, Data { payments: Vector::empty<Payment>()});
+
     }
 
     // An account can disable autopay on it's account
@@ -217,7 +231,7 @@ address 0x1{
       let index = find(addr, uid);
       if (Option::is_none<u64>(&index)) {
         // Case when the payment to be deleted doesn't actually exist
-        assert(false, 010105012040);
+        assert(false, Errors::invalid_argument(AUTOPAY_ID_EXISTS));
       };
       let payments = &mut borrow_global_mut<Data>(addr).payments;
       Vector::remove<Payment>(payments, Option::extract<u64>(&mut index));

@@ -88,7 +88,7 @@ impl<V: VMExecutor> GenesisCommitter<V> {
     pub fn commit(mut self) -> Result<()> {
         self.executor
             .commit_blocks(vec![genesis_block_id()], self.ledger_info_with_sigs)?;
-        info!("Genesis commited.");
+        info!("Genesis committed.");
         // DB bootstrapped, avoid anything that could fail after this.
 
         Ok(())

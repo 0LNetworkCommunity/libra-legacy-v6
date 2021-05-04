@@ -98,15 +98,17 @@ pub fn maybe_submit(
         save_tx(txn.clone(), path);
     }
 
-    if no_send {
-        return Ok(txn);
-    }
+    if no_send {return Ok(txn);}
 
-    let res = submit_tx(client, txn.clone(), &mut account_data).unwrap();
-    match eval_tx_status(res) {
-        Ok(_) => Ok(txn),
-        Err(e) => Err(e),
-    }
+    match submit_tx(client, txn.clone(), &mut account_data) {
+      Ok(res) => {
+        match eval_tx_status(res) {
+          Ok(_) => Ok(txn),
+          Err(e) => Err(e),
+        }
+      },
+      Err(e) => Err(e), 
+  }
 }
 /// convenience for wrapping multiple transactions
 pub fn batch_wrapper(
@@ -117,8 +119,12 @@ pub fn batch_wrapper(
 ) {
     batch.into_iter().enumerate().for_each(|(i, s)| {
         // TODO: format path for batch scripts
-        let new_path = save_path.clone().unwrap().join(i.to_string());
-        maybe_submit(s, tx_params, no_send, Some(new_path)).unwrap();
+
+        let new_path = if save_path.is_some() {
+          Some(save_path.clone().unwrap().join(i.to_string()))
+        } else {None};
+
+        maybe_submit(s, tx_params, no_send, new_path).unwrap();
         // TODO: handle saving of batches to file.
     });
 }

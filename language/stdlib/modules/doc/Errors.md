@@ -21,6 +21,7 @@ framework evolves.
 
 -  [Constants](#@Constants_0)
 -  [Function `make`](#0x1_Errors_make)
+-  [Function `make_ol`](#0x1_Errors_make_ol)
 -  [Function `invalid_state`](#0x1_Errors_invalid_state)
 -  [Function `requires_address`](#0x1_Errors_requires_address)
 -  [Function `requires_role`](#0x1_Errors_requires_role)
@@ -31,6 +32,8 @@ framework evolves.
 -  [Function `limit_exceeded`](#0x1_Errors_limit_exceeded)
 -  [Function `internal`](#0x1_Errors_internal)
 -  [Function `custom`](#0x1_Errors_custom)
+-  [Function `ol_tx`](#0x1_Errors_ol_tx)
+-  [Function `ol`](#0x1_Errors_ol)
 
 
 <pre><code></code></pre>
@@ -115,6 +118,25 @@ A resource is required but not published. Example: access to non-existing Accoun
 
 
 
+<a name="0x1_Errors_OL_ERR"></a>
+
+0L Error codes
+
+
+<pre><code><b>const</b> <a href="Errors.md#0x1_Errors_OL_ERR">OL_ERR</a>: u8 = 11;
+</code></pre>
+
+
+
+<a name="0x1_Errors_OL_TX_ERR"></a>
+
+
+
+<pre><code><b>const</b> <a href="Errors.md#0x1_Errors_OL_TX_ERR">OL_TX_ERR</a>: u8 = 12;
+</code></pre>
+
+
+
 <a name="0x1_Errors_REQUIRES_ADDRESS"></a>
 
 The signer of a transaction does not have the expected address for this operation. Example: a call to a function
@@ -183,6 +205,33 @@ A function to create an error from from a category and a reason.
 <b>ensures</b> [concrete] result == reason;
 <b>aborts_if</b> [abstract] <b>false</b>;
 <b>ensures</b> [abstract] result == reason;
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Errors_make_ol"></a>
+
+## Function `make_ol`
+
+A function to create an error from from a category and a reason.
+
+
+<pre><code><b>fun</b> <a href="Errors.md#0x1_Errors_make_ol">make_ol</a>(_category: u8, reason: u64): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="Errors.md#0x1_Errors_make_ol">make_ol</a>(_category: u8, reason: u64): u64 {
+    (reason <b>as</b> u64)
+    //(category <b>as</b> u64) + (reason &lt;&lt; 8) - <b>native</b> implementation
+    // Changed error codes make <b>to</b> easily track them in 0L.
+}
 </code></pre>
 
 
@@ -543,6 +592,66 @@ A function to create an error from from a category and a reason.
 <pre><code><b>pragma</b> opaque = <b>true</b>;
 <b>aborts_if</b> <b>false</b>;
 <b>ensures</b> result == <a href="Errors.md#0x1_Errors_CUSTOM">CUSTOM</a>;
+</code></pre>
+
+
+
+
+<pre><code><b>pragma</b> opaque = <b>true</b>;
+<b>aborts_if</b> <b>false</b>;
+<b>ensures</b> result == <a href="Errors.md#0x1_Errors_CUSTOM">CUSTOM</a>;
+</code></pre>
+
+
+
+
+<pre><code><b>pragma</b> opaque = <b>true</b>;
+<b>aborts_if</b> <b>false</b>;
+<b>ensures</b> result == <a href="Errors.md#0x1_Errors_CUSTOM">CUSTOM</a>;
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Errors_ol_tx"></a>
+
+## Function `ol_tx`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Errors.md#0x1_Errors_ol_tx">ol_tx</a>(reason: u64): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Errors.md#0x1_Errors_ol_tx">ol_tx</a>(reason: u64): u64 { <a href="Errors.md#0x1_Errors_make">make</a>(<a href="Errors.md#0x1_Errors_OL_TX_ERR">OL_TX_ERR</a>, reason) }
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Errors_ol"></a>
+
+## Function `ol`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Errors.md#0x1_Errors_ol">ol</a>(reason: u64): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Errors.md#0x1_Errors_ol">ol</a>(reason: u64): u64 { <a href="Errors.md#0x1_Errors_make">make</a>(<a href="Errors.md#0x1_Errors_OL_ERR">OL_ERR</a>, reason) }
 </code></pre>
 
 

@@ -385,15 +385,15 @@ pub enum TxType {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 // #[serde(deny_unknown_fields)]
 pub struct TxConfigs {
-    /// Transactions related to management: val configs, onboarding, upgrade
+    /// baseline cost
     pub baseline_cost: TxCost,
-    /// Transactions related to management: val configs, onboarding, upgrade
+    /// critical transactions cost
     pub critical_txs_cost: Option<TxCost>,
-    /// Transactions related to management: val configs, onboarding, upgrade
+    /// management transactions cost
     pub management_txs_cost: Option<TxCost>,
-    /// Transactions related to mining: commit proof.
+    /// Miner transactions cost
     pub miner_txs_cost: Option<TxCost>,
-    /// Transactions related to mining: commit proof.
+    /// Cheap or test transation costs
     pub cheap_txs_cost: Option<TxCost>,
 }
 
@@ -422,8 +422,8 @@ pub struct TxCost {
     pub max_gas_unit_for_tx: u64, // gas UNITS of computation
     /// Max coin price per unit of gas
     pub coin_price_per_unit: u64, // price in micro GAS
-    /// Time in milliseconds to timeout
-    pub user_tx_timeout: u64, // milliseconds,
+    /// Time in seconds to timeout, from now
+    pub user_tx_timeout: u64, // seconds,
 }
 
 impl TxCost {

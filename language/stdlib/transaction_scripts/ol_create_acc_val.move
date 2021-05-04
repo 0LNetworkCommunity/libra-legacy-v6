@@ -4,6 +4,7 @@ script {
   use 0x1::LibraAccount;
   use 0x1::GAS::GAS;
   use 0x1::ValidatorConfig;
+  use 0x1::Debug::print;
 
   fun create_acc_val(
     sender: &signer,
@@ -18,6 +19,7 @@ script {
     op_human_name: vector<u8>,
   ) {
 
+print(&0x1);
     let new_account_address = LibraAccount::create_validator_account_with_proof(
       sender,
       &challenge,
@@ -30,10 +32,10 @@ script {
       op_fullnode_network_addresses,
       op_human_name,
     );
-
+print(&0x2);
     // Check the account has the Validator role
     assert(ValidatorConfig::is_valid(new_account_address), 03);
-
+print(&0x3);
     // Check the account exists and the balance is greater than 0
     assert(LibraAccount::balance<GAS>(new_account_address) > 0, 04);
 }
