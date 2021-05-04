@@ -62,6 +62,7 @@
 
     <b>let</b> global_proofs_count = 0;
     <b>let</b> k = 0;
+// print(&03200);
 
     // Distribute mining subsidy <b>to</b> fullnodes
     <b>while</b> (k &lt; <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&miners)) {
@@ -79,6 +80,8 @@
 // print(&03220);
 
         <b>if</b> (<a href="FullnodeState.md#0x1_FullnodeState_is_onboarding">FullnodeState::is_onboarding</a>(addr)) {
+// print(&03221);
+
           // TODO: onboarding subsidy is not necessary <b>with</b> onboarding transfer.
             value = <a href="Subsidy.md#0x1_Subsidy_distribute_onboarding_subsidy">Subsidy::distribute_onboarding_subsidy</a>(vm, addr);
         } <b>else</b> {

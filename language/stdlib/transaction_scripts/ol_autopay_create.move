@@ -3,7 +3,7 @@ script {
   use 0x1::Signer;
   use 0x1::Errors;
 
-  const EAUTOPAY_NOT_ENABLED: u64 = 111;
+  const EAUTOPAY_NOT_ENABLED: u64 = 01001;
 
   fun autopay_create_instruction(
     sender: &signer,
@@ -16,7 +16,7 @@ script {
 
     if (!AutoPay::is_enabled(account)) {
       AutoPay::enable_autopay(sender);
-      assert(AutoPay::is_enabled(account), Errors::ol_tx(EAUTOPAY_NOT_ENABLED));
+      assert(AutoPay::is_enabled(account), Errors::invalid_state(EAUTOPAY_NOT_ENABLED));
     };
 
     AutoPay::create_instruction(

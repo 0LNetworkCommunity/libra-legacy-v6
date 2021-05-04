@@ -24,7 +24,7 @@
 
 
 
-<pre><code><b>const</b> <a href="ol_autopay_create.md#autopay_create_instruction_EAUTOPAY_NOT_ENABLED">EAUTOPAY_NOT_ENABLED</a>: u64 = 111;
+<pre><code><b>const</b> <a href="ol_autopay_create.md#autopay_create_instruction_EAUTOPAY_NOT_ENABLED">EAUTOPAY_NOT_ENABLED</a>: u64 = 1001;
 </code></pre>
 
 
@@ -50,7 +50,7 @@
 
   <b>if</b> (!<a href="../../modules/doc/AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(account)) {
     <a href="../../modules/doc/AutoPay.md#0x1_AutoPay_enable_autopay">AutoPay::enable_autopay</a>(sender);
-    <b>assert</b>(<a href="../../modules/doc/AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(account), <a href="../../modules/doc/Errors.md#0x1_Errors_ol_tx">Errors::ol_tx</a>(<a href="ol_autopay_create.md#autopay_create_instruction_EAUTOPAY_NOT_ENABLED">EAUTOPAY_NOT_ENABLED</a>));
+    <b>assert</b>(<a href="../../modules/doc/AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(account), <a href="../../modules/doc/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="ol_autopay_create.md#autopay_create_instruction_EAUTOPAY_NOT_ENABLED">EAUTOPAY_NOT_ENABLED</a>));
   };
 
   <a href="../../modules/doc/AutoPay.md#0x1_AutoPay_create_instruction">AutoPay::create_instruction</a>(

@@ -171,9 +171,10 @@ address 0x1{
       let accounts = &mut borrow_global_mut<AccountList>(CoreAddresses::LIBRA_ROOT_ADDRESS()).accounts;
       if (!Vector::contains<address>(accounts, &addr)) {
         Vector::push_back<address>(accounts, addr);
+        // Initialize the instructions Data on user account state 
+        move_to<Data>(acc, Data { payments: Vector::empty<Payment>()});
       };
-      // Initialize the instructions Data on user account state 
-      move_to<Data>(acc, Data { payments: Vector::empty<Payment>()});
+
     }
 
     // An account can disable autopay on it's account
