@@ -25,6 +25,8 @@
 
 <pre><code><b>fun</b> <a href="ol_reconfig_bulk_update_setup.md#ol_reconfig_bulk_update_setup">ol_reconfig_bulk_update_setup</a>(account: &signer, alice: address, bob: address, carol: address,
     sha: address, ram: address) {
+
+
     // Create vector of desired validators
     <b>let</b> vec = <a href="../../modules/doc/Vector.md#0x1_Vector_empty">Vector::empty</a>();
     <a href="../../modules/doc/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(&<b>mut</b> vec, alice);

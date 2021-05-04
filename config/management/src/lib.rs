@@ -41,6 +41,7 @@ macro_rules! execute_command {
 use libra_crypto::ed25519::Ed25519PublicKey;
 use std::{convert::TryInto, fs, path::PathBuf};
 
+//////// 0L ////////
 /// Reads a given ed25519 public key from file. Attempts to read the key using
 /// lcs encoding first. If this fails, attempts reading the key using hex.
 pub fn read_key_from_file(path: &PathBuf) -> Result<Ed25519PublicKey, String> {

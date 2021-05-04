@@ -19,6 +19,7 @@ use structopt::StructOpt;
 pub struct Layout {
     pub operators: Vec<String>,
     pub owners: Vec<String>,
+    //////// 0L /////////
     // pub libra_root: String,
     // pub treasury_compliance: String,
 }
@@ -92,6 +93,7 @@ mod tests {
             vec!["alice".to_string(), "bob".to_string()]
         );
         assert_eq!(layout.owners, vec!["carol".to_string()]);
+        //////// 0L /////////
         // assert_eq!(layout.libra_root, "dave");
         // assert_eq!(layout.treasury_compliance, "other_dave");
     }

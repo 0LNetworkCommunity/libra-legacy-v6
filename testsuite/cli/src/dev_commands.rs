@@ -29,7 +29,7 @@ impl Command for DevCommand {
             Box::new(DevCommandChangeLibraVersion {}),
             Box::new(DevCommandEnableCustomScript {}),
             Box::new(AddToScriptAllowList {}),
-            Box::new(DevCommandNoop {}),
+            Box::new(DevCommandNoop {}), //////// 0L ////////
         ];
         subcommand_execute(&params[0], commands, client, &params[1..]);
     }
@@ -203,6 +203,7 @@ impl Command for DevCommandChangeLibraVersion {
     }
 }
 
+//////// 0L ////////
 pub struct DevCommandNoop {}
 
 impl Command for DevCommandNoop {

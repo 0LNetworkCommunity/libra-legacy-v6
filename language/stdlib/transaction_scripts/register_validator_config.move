@@ -55,6 +55,7 @@ fun register_validator_config(
     );
  }
 
+//////// 0L ////////
 // /// Access control rule is that only the validator operator for a validator may set
 // /// call this, but there is an aborts_if in SetConfigAbortsIf that tests that directly.
 // spec fun register_validator_config {

@@ -73,6 +73,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "abscissa_tokio"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "50b7d1a5aa670b07be20e9457b491e78022d8421d4a39939f8b01a6a16ea85dc"
+dependencies = [
+ "abscissa_core",
+ "tokio",
+]
+
+[[package]]
 name = "accumulator"
 version = "0.1.0"
 dependencies = [
@@ -2799,7 +2809,6 @@ dependencies = [
 name = "keygen"
 version = "0.1.0"
 dependencies = [
- "abscissa_core",
  "libra-types",
  "libra-wallet",
  "rpassword",
@@ -3195,6 +3204,7 @@ dependencies = [
  "libra-wallet",
  "libra-workspace-hack",
  "libradb",
+ "ol-fixtures",
  "rand 0.7.3",
  "rustyline",
  "serde",
@@ -4169,6 +4179,8 @@ dependencies = [
  "machine-ip",
  "move-core-types",
  "ol-cli",
+ "ol-fixtures",
+ "ol-types",
  "once_cell",
  "regex",
  "reqwest",
@@ -4181,6 +4193,7 @@ dependencies = [
  "thiserror",
  "toml",
  "transaction-builder",
+ "txs",
  "url",
  "vdf",
  "vm-genesis",
@@ -4961,6 +4974,7 @@ name = "ol-cli"
 version = "0.1.0"
 dependencies = [
  "abscissa_core",
+ "abscissa_tokio",
  "ajson",
  "anyhow",
  "bitflags",
@@ -4983,12 +4997,16 @@ dependencies = [
  "libra-json-rpc-client",
  "libra-network-address",
  "libra-secure-storage",
+ "libra-temppath",
  "libra-types",
  "libra-wallet",
+ "libradb",
  "machine-ip",
  "nix 0.18.0",
  "num-format",
+ "ol-types",
  "once_cell",
+ "regex",
  "reqwest",
  "resource-viewer",
  "rocksdb",
@@ -4996,6 +5014,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sm",
+ "storage-interface",
  "sysinfo",
  "termion",
  "thiserror",
@@ -5006,6 +5025,68 @@ dependencies = [
  "unicode-width",
  "url",
  "warp",
+]
+
+[[package]]
+name = "ol-fixtures"
+version = "0.1.0"
+
+[[package]]
+name = "ol-types"
+version = "0.1.0"
+dependencies = [
+ "ajson",
+ "anyhow",
+ "byteorder",
+ "dialoguer",
+ "dirs 2.0.2",
+ "hex 0.4.2",
+ "keygen",
+ "libra-canonical-serialization",
+ "libra-config",
+ "libra-crypto",
+ "libra-genesis-tool",
+ "libra-global-constants",
+ "libra-network-address",
+ "libra-types",
+ "machine-ip",
+ "once_cell",
+ "reqwest",
+ "rustyline",
+ "serde",
+ "serde_json",
+ "toml",
+ "url",
+]
+
+[[package]]
+name = "onboard"
+version = "0.1.0"
+dependencies = [
+ "abscissa_core",
+ "anyhow",
+ "criterion",
+ "dirs 2.0.2",
+ "gumdrop",
+ "keygen",
+ "libra-genesis-tool",
+ "libra-global-constants",
+ "libra-network-address",
+ "libra-types",
+ "libra-wallet",
+ "miner",
+ "ol-cli",
+ "ol-types",
+ "once_cell",
+ "reqwest",
+ "rustyline",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "toml",
+ "transaction-builder",
+ "txs",
+ "wait-timeout",
 ]
 
 [[package]]
@@ -7109,9 +7190,9 @@ dependencies = [
 
 [[package]]
 name = "termcolor"
-version = "1.1.0"
+version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb6bfa289a4d7c5766392812c0a1f4c1ba45afa1ad47803c11e1f407d846d75f"
+checksum = "2dfed899f0eb03f32ee8c6a0aabdb8a7949659e3466561fc0adf54e26d88c5f4"
 dependencies = [
  "winapi-util",
 ]
@@ -7395,9 +7476,9 @@ dependencies = [
 
 [[package]]
 name = "toml"
-version = "0.5.6"
+version = "0.5.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ffc92d160b1eef40665be3a05630d003936a3bc7da7421277846c2613e92c71a"
+checksum = "a31142970826733df8241ef35dc040ef98c679ab14d7c3e54d827099b3acecaa"
 dependencies = [
  "serde",
 ]
@@ -7611,11 +7692,14 @@ dependencies = [
  "libra-logger",
  "libra-management",
  "libra-network-address",
+ "libra-secure-storage",
  "libra-types",
  "libra-wallet",
  "libradb",
  "move-core-types",
  "ol-cli",
+ "ol-fixtures",
+ "ol-types",
  "once_cell",
  "regex",
  "reqwest",

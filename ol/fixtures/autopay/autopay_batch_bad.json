@@ -1,0 +1,6 @@
+{
+  "autopay_instructions": [
+    { "uid": 2, "destination": "88E74DFED34420F2AD8032148280A84B",  "percent_balance": 10.0, "end_epoch": 100},
+    { "uid": 3, "destination": "88E74DFED34420F2AD8032148280A84B",  "percent_balance": 1.0, "end_epoch": 100}
+  ]
+}

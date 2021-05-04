@@ -19,6 +19,7 @@ pub struct ValidatorConfig {
     fullnode_address: NetworkAddress,
     #[structopt(flatten)]
     shared_backend: SharedBackend,
+    //////// 0L ////////
     #[structopt(long, help = "Disables network address validation")]
     disable_address_validation: bool,
 }
@@ -30,15 +31,16 @@ impl ValidatorConfig {
             .config()?
             .override_shared_backend(&self.shared_backend.shared_backend)?;
 
-        // Retrieve and set owner account
+        //////// 0L ////////       
         // let owner_account =
         //     libra_config::utils::validator_owner_account_from_name(self.owner_name.as_bytes());
+        // Retrieve and set owner account
         let remote_storage = config.shared_backend_with_namespace(self.owner_name.into());
         let owner_key = remote_storage.ed25519_key(OWNER_KEY)?;
         let staged_owner_auth_key = AuthenticationKey::ed25519(&owner_key);
         let owner_account = staged_owner_auth_key.derived_address();
 
-
+        //////// 0L ////////
         // This means Operators can only have 1 owner, at least at genesis.
         let mut validator_storage = config.validator_backend();
         validator_storage.set(OWNER_ACCOUNT, owner_account)?;
@@ -48,6 +50,7 @@ impl ValidatorConfig {
             self.fullnode_address,
             self.validator_address,
             false,
+            //////// 0L ////////
             self.disable_address_validation,
         )?;
 

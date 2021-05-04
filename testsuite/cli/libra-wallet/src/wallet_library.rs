@@ -51,7 +51,7 @@ impl WalletLibrary {
 
     /// Constructor that instantiates a new WalletLibrary from Mnemonic
     pub fn new_from_mnemonic(mnemonic: Mnemonic) -> Self {
-        let seed = Seed::new(&mnemonic, SALT_0L);
+        let seed = Seed::new(&mnemonic, SALT_0L); //////// 0L ////////
         WalletLibrary {
             mnemonic,
             key_factory: KeyFactory::new(&seed).unwrap(),
@@ -185,6 +185,7 @@ impl WalletLibrary {
         }
     }
 
+    //////// 0L ////////
     pub fn get_key_factory(&self) -> &KeyFactory{
         &self.key_factory
     }

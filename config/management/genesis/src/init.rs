@@ -2,7 +2,8 @@ use std::path::PathBuf;
 use libra_global_constants::NODE_HOME;
 use structopt::StructOpt;
 use libra_management::error::Error;
-use crate::{keyscheme::KeyScheme, storage_helper::StorageHelper};
+use keygen::scheme::KeyScheme;
+use crate::{storage_helper::StorageHelper};
 use dirs;
 
 #[derive(Debug, StructOpt)]

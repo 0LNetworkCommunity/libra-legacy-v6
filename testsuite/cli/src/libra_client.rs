@@ -42,6 +42,7 @@ use libra_json_rpc_client::views::{MinerStateResourceView, OracleResourceView};
 ///    out-of-date replica takes its place.
 /// 3. We make another request to the remote AC service. In this case, the remote
 ///    AC will be behind us and we will reject their response as stale.
+//////// 0L ////////
 pub struct LibraClient {
     client: JsonRpcClient,
     /// The latest verified chain state.
@@ -164,6 +165,7 @@ impl LibraClient {
         }
     }
 
+    //////// 0L ////////
     /// Query Oracle Upgrade.
     pub fn query_oracle_upgrade(
         &mut self,
@@ -324,6 +326,7 @@ impl LibraClient {
         Ok(())
     }
 
+    //////// 0L ////////
     /// generate latest waypoint
     pub fn waypoint(&self)->Option<Waypoint> {
         let latest_epoch_change_li = match self.latest_epoch_change_li() {
@@ -371,6 +374,28 @@ impl LibraClient {
         match get_response_from_batch(0, &responses)? {
             Ok(response) => Ok(TransactionView::optional_from_response(response.clone())?),
             Err(e) => bail!("Failed to get account txn with error: {:?}", e),
+        }
+    }
+
+    /// Get all transactions for an account within a range
+    pub fn get_txn_by_acc_range(
+        &mut self,
+        account: AccountAddress,
+        start_height: u64,
+        num_txs_limit: u64,
+        fetch_events: bool
+    ) -> Result<Vec<TransactionView>> {
+        let mut batch = JsonRpcBatch::new();
+        batch.add_get_account_transactions_request(account, start_height, num_txs_limit, fetch_events);
+        batch.add_get_state_proof_request(self.trusted_state.latest_version());
+
+        let responses = self.client.execute(batch)?;
+        let state_proof_view = get_response_from_batch(1, &responses)?.as_ref();
+        self.process_state_proof_response(state_proof_view)?;
+
+        match get_response_from_batch(0, &responses)? {
+            Ok(result) => Ok(TransactionView::vec_from_response(result.clone())?),
+            Err(e) => bail!("Failed to get transactions with error: {:?}", e),
         }
     }
 

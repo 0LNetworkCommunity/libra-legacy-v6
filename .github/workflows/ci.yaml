@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/cache@v2
+      - uses: actions/cache@v2.1.4
         with:
           path: |
             ~/.cargo/registry
@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/cache@v2
+      - uses: actions/cache@v2.1.4
         with:
           path: |
             ~/.cargo/registry
@@ -56,13 +56,13 @@ jobs:
             override: true
             components: rustfmt, clippy
       - name: Run Miner tests
-        run: cd miner && NODE_ENV=test cargo test
+        run: cd ol/miner && NODE_ENV=test cargo test
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/cache@v2
+      - uses: actions/cache@v2.1.4
         with:
           path: |
             ~/.cargo/registry
@@ -90,7 +90,7 @@ jobs:
   #   steps:
   #     - uses: actions/checkout@v2
   #     # Uses the cache done in the parent job (compile) with the same "key"
-  #     - uses: actions/cache@v2
+  #     - uses: actions/cache@v2.1.4
   #       with:
   #         path: |
   #           ~/.cargo/registry
@@ -106,7 +106,7 @@ jobs:
 #     steps:
 #       - uses: actions/checkout@v2
 #       # Uses the cache done in the parent job (compile) with the same "key"
-#       - uses: actions/cache@v2
+#       - uses: actions/cache@v2.1.4
 #         with:
 #           path: |
 #             ~/.cargo/registry
@@ -123,7 +123,7 @@ jobs:
   #     - uses: actions/checkout@v2
   #   # Sets up a cache to be used on other subsequent jobs.
   #   # subsequent jobs must use the "needs" field and reference this job.id "compile".
-  #     - uses: actions/cache@v2
+  #     - uses: actions/cache@v2.1.4
   #       with:
   #         path: |
   #           ~/.cargo/registry

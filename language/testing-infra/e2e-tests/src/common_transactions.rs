@@ -114,6 +114,7 @@ pub fn create_account_txn(
         .sign()
 }
 
+//////// 0L ////////
 /// Returns a transaction to create a validator account with the given arguments.
 pub fn create_validator_account_txn(
     sender: &Account,
@@ -180,6 +181,7 @@ pub fn peer_to_peer_txn(
         .sign()
 }
 
+//////// 0L ////////
 // /// Returns a transaction to register the sender as a candidate validator
 // pub fn register_validator_txn(
 //     sender: &Account,

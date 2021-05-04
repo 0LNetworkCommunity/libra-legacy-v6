@@ -201,7 +201,7 @@ Members of <code>validators</code> vector (the validator set) have unique addres
 The validator operator is not the operator for the specified validator
 
 
-<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_EINVALID_TRANSACTION_SENDER">EINVALID_TRANSACTION_SENDER</a>: u64 = 4;
+<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_EINVALID_TRANSACTION_SENDER">EINVALID_TRANSACTION_SENDER</a>: u64 = 12004;
 </code></pre>
 
 
@@ -211,7 +211,7 @@ The validator operator is not the operator for the specified validator
 Tried to add a validator to the validator set that was already in it
 
 
-<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_EALREADY_A_VALIDATOR">EALREADY_A_VALIDATOR</a>: u64 = 2;
+<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_EALREADY_A_VALIDATOR">EALREADY_A_VALIDATOR</a>: u64 = 12002;
 </code></pre>
 
 
@@ -221,7 +221,7 @@ Tried to add a validator to the validator set that was already in it
 The <code><a href="LibraSystem.md#0x1_LibraSystem_CapabilityHolder">CapabilityHolder</a></code> resource was not in the required state
 
 
-<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_ECAPABILITY_HOLDER">ECAPABILITY_HOLDER</a>: u64 = 0;
+<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_ECAPABILITY_HOLDER">ECAPABILITY_HOLDER</a>: u64 = 12000;
 </code></pre>
 
 
@@ -231,7 +231,7 @@ The <code><a href="LibraSystem.md#0x1_LibraSystem_CapabilityHolder">CapabilityHo
 Rate limited when trying to update config
 
 
-<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_ECONFIG_UPDATE_RATE_LIMITED">ECONFIG_UPDATE_RATE_LIMITED</a>: u64 = 6;
+<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_ECONFIG_UPDATE_RATE_LIMITED">ECONFIG_UPDATE_RATE_LIMITED</a>: u64 = 12006;
 </code></pre>
 
 
@@ -241,7 +241,7 @@ Rate limited when trying to update config
 Tried to add a validator with an invalid state to the validator set
 
 
-<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_EINVALID_PROSPECTIVE_VALIDATOR">EINVALID_PROSPECTIVE_VALIDATOR</a>: u64 = 1;
+<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_EINVALID_PROSPECTIVE_VALIDATOR">EINVALID_PROSPECTIVE_VALIDATOR</a>: u64 = 12001;
 </code></pre>
 
 
@@ -251,7 +251,7 @@ Tried to add a validator with an invalid state to the validator set
 An operation was attempted on an address not in the vaidator set
 
 
-<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_ENOT_AN_ACTIVE_VALIDATOR">ENOT_AN_ACTIVE_VALIDATOR</a>: u64 = 3;
+<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_ENOT_AN_ACTIVE_VALIDATOR">ENOT_AN_ACTIVE_VALIDATOR</a>: u64 = 12003;
 </code></pre>
 
 
@@ -261,7 +261,7 @@ An operation was attempted on an address not in the vaidator set
 An out of bounds index for the validator set was encountered
 
 
-<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_EVALIDATOR_INDEX">EVALIDATOR_INDEX</a>: u64 = 5;
+<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_EVALIDATOR_INDEX">EVALIDATOR_INDEX</a>: u64 = 12005;
 </code></pre>
 
 
@@ -1241,7 +1241,7 @@ Private function checks for membership of <code>addr</code> in validator set.
     new_validators: vector&lt;address&gt;
 ) <b>acquires</b> <a href="LibraSystem.md#0x1_LibraSystem_CapabilityHolder">CapabilityHolder</a> {
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_operating">LibraTimestamp::assert_operating</a>();
-    <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 1202014010);
+    <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(120001));
 
     // Either check for each validator and add/remove them or clear the current list and append the list.
     // The first way might be computationally expensive, so I choose <b>to</b> go <b>with</b> second approach.
@@ -1276,9 +1276,9 @@ Private function checks for membership of <code>addr</code> in validator set.
     };
 
     <b>let</b> next_count = <a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem_ValidatorInfo">ValidatorInfo</a>&gt;(&next_epoch_validators);
-    <b>assert</b>(next_count &gt; 0, 1202011000 );
+    <b>assert</b>(next_count &gt; 0, <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(120001) );
     // Transaction::assert(next_count &gt; n, 90000000002 );
-    <b>assert</b>(next_count == n, 1202021000 );
+    <b>assert</b>(next_count == n, <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(1200011) );
 
     // We have vector of validators - updated!
     // Next, <b>let</b> us get the current validator set for the current parameters
@@ -1341,7 +1341,7 @@ Private function checks for membership of <code>addr</code> in validator set.
          k = k + 1;
     };
 
-    <b>assert</b>(<a href="Vector.md#0x1_Vector_length">Vector::length</a>(&compliant_nodes) == <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&fee_ratios),120201014010 );
+    <b>assert</b>(<a href="Vector.md#0x1_Vector_length">Vector::length</a>(&compliant_nodes) == <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&fee_ratios),<a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(120002) );
 
     (compliant_nodes, fee_ratios)
 }

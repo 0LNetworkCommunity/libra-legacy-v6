@@ -16,6 +16,7 @@ pub static LIBRA_BLOCK_MODULE: Lazy<ModuleId> = Lazy::new(|| {
     )
 });
 
+//////// 0L ////////
 // Oracle module
 pub static ORACLE_MODULE: Lazy<ModuleId> = Lazy::new(|| {
     ModuleId::new(
@@ -29,6 +30,7 @@ pub static UPGRADE_MODULE: Lazy<ModuleId> = Lazy::new(|| {
         UPGRADE_MODULE_NAME.clone(),
     )
 });
+//////// 0L end ////////
 
 // Names for special functions and structs
 pub static SCRIPT_PROLOGUE_NAME: Lazy<Identifier> =
@@ -44,6 +46,7 @@ pub static USER_EPILOGUE_NAME: Lazy<Identifier> =
 pub static BLOCK_PROLOGUE: Lazy<Identifier> =
     Lazy::new(|| Identifier::new("block_prologue").unwrap());
 
+//////// 0L ////////
 // Oracles
 static ORACLE_MODULE_NAME: Lazy<Identifier> =
     Lazy::new(|| Identifier::new("Oracle").unwrap());
@@ -53,3 +56,4 @@ static UPGRADE_MODULE_NAME: Lazy<Identifier> =
     Lazy::new(|| Identifier::new("Upgrade").unwrap());
 pub static RESET_PAYLOAD: Lazy<Identifier> =
     Lazy::new(|| Identifier::new("reset_payload").unwrap());
+//////// 0L end ////////    

@@ -7,7 +7,7 @@ use libra_config::{config::{
         NodeConfig
     }, config::OnDiskStorageConfig, config::SafetyRulesService, config::{Identity, UpstreamConfig, WaypointConfig}, network_id::NetworkId};
 
-use libra_global_constants::{OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
+use libra_global_constants::{FULLNODE_NETWORK_KEY, OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
 use libra_management::{
     config::ConfigPath,
     error::Error,
@@ -44,8 +44,8 @@ pub struct Files {
 }
 
 impl Files {
-    pub fn execute(self) -> Result<String, Error> {
-        create_files(
+    pub fn execute(self) -> Result<NodeConfig, Error> {
+        write_node_config_files(
             self.data_path, 
             self.chain_id, 
             &self.github_org, 
@@ -57,7 +57,7 @@ impl Files {
     }
 }
 
-pub fn create_files(
+pub fn write_node_config_files(
     output_dir: PathBuf,
     chain_id: u8,
     github_org: &str,
@@ -65,8 +65,9 @@ pub fn create_files(
     namespace: &str,
     rebuild_genesis: &bool,
     fullnode_only: &bool,
-) -> Result<String, Error> {
+) -> Result<NodeConfig, Error> {
 
+    // TODO: Do we need github token path with public repo?
     let github_token_path = output_dir.join("github_token.txt");
     let chain_id = ChainId::new(chain_id);
     
@@ -136,6 +137,7 @@ pub fn create_files(
 
         c.validator_network = Some(network.clone());
 
+        c.json_rpc.address = "0.0.0.0:8080".parse().unwrap();
             // NOTE: for future reference, seed addresses are not necessary for setting a validator if on-chain discovery is used.
     
         // Consensus
@@ -159,7 +161,11 @@ pub fn create_files(
 
     fn_network.discovery_method = DiscoveryMethod::Onchain;
     fn_network.listen_address = "/ip4/0.0.0.0/tcp/6179".parse().unwrap();
-
+    fn_network.identity = Identity::from_storage(
+            FULLNODE_NETWORK_KEY.to_string(),
+            OWNER_ACCOUNT.to_string(),
+            SecureBackend::OnDiskStorage(disk_storage.clone()),
+        );
     config.full_node_networks = vec!(fn_network);
 
     // NOTE: for future reference, "upstream" is not necessary for validator settings.
@@ -171,6 +177,7 @@ pub fn create_files(
     // Write yaml
     let yaml_path = if *fullnode_only {
         output_dir.join("fullnode.node.yaml")
+        
     } else { 
         output_dir.join("validator.node.yaml")
     };
@@ -179,6 +186,7 @@ pub fn create_files(
     config
     .save(&yaml_path)
     .expect("Unable to save node configs");
-        
-    Ok(yaml_path.to_str().unwrap().to_string())
+    
+    println!("validator configurations initialized, file saved to: {:?}", &yaml_path);
+    Ok(config)
 }

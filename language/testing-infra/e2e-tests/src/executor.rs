@@ -289,6 +289,7 @@ impl FakeExecutor {
         self.apply_write_set(output.write_set());
     }
 
+    //////// 0L ////////
     // TODO: extend this func if need for future testing
     pub fn new_custom_block(&mut self, round: u64) {
         let validator_set = ValidatorSet::fetch_config(&self.data_store)

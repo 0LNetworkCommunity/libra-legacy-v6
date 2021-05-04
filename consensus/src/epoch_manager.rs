@@ -304,6 +304,7 @@ impl EpochManager {
 
         let mut safety_rules =
             MetricsSafetyRules::new(self.safety_rules_manager.client(), self.storage.clone());
+        //////// 0L ////////            
         if let Err(error) = safety_rules.perform_initialize() {
             error!(
                 epoch = epoch,
@@ -576,7 +577,7 @@ impl EpochManager {
                 Ok(_) => trace!(RoundStateLogSchema::new(round_state)),
                 Err(e) => {
                     counters::ERROR_COUNT.inc();
-                    error!(error = ?e, kind = error_kind(&e), RoundStateLogSchema::new(round_state));
+                    warn!(error = ?e, kind = error_kind(&e), RoundStateLogSchema::new(round_state));
                 }
             }
 

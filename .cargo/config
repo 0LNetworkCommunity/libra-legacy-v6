@@ -1,7 +1,3 @@
-# Dramatically increases the link performance for the eventbus
-[build]
-rustflags = ["-C", "link-arg=-fuse-ld=lld"]
-
 [alias]
 x = "run --package x --bin x --"
 xcheck = "run --package x --bin x -- check"
@@ -10,3 +6,8 @@ xfmt = "run --package x --bin x -- fmt"
 xfix = "run --package x --bin x -- fix"
 xtest = "run --package x --bin x -- test"
 xlint = "run --package x --bin x -- lint"
+
+# //////// 0L ////////
+[target.'cfg(target_os = "linux")']
+# Dramatically increases the link performance for the eventbus
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]

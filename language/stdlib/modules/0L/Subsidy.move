@@ -9,6 +9,7 @@
 address 0x1 {
   module Subsidy {
     use 0x1::CoreAddresses;
+    use 0x1::Errors;
     use 0x1::GAS::GAS;
     use 0x1::Libra;
     use 0x1::Signer;
@@ -25,6 +26,7 @@ address 0x1 {
     use 0x1::Testnet::is_testnet;
     use 0x1::FullnodeState;
     use 0x1::ValidatorConfig;
+    use 0x1::MinerState;
 
     // estimated gas unit cost for proof verification divided coin scaling factor
     // Cost for verification test/easy difficulty: 1173 / 1000000
@@ -35,14 +37,14 @@ address 0x1 {
     
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
-    // Function code: 03 Prefix: 190103
+    // Function code: 01 Prefix: 190101
     public fun process_subsidy(
       vm_sig: &signer,
       subsidy_units: u64,
       outgoing_set: &vector<address>,
       _fee_ratio: &vector<FixedPoint32>) {
       let sender = Signer::address_of(vm_sig);
-      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190101034010);
+      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(190101));
 
       // Get the split of payments from Stats.
       let len = Vector::length<address>(outgoing_set);
@@ -64,10 +66,9 @@ address 0x1 {
           vm_sig,
           node_address,
           minted_coins,
-          x"",
-          x""
+          b"validator subsidy",
+          b""
         );
-
         // refund operator tx fees for mining
         refund_operator_tx_fees(vm_sig, node_address);
         i = i + 1;
@@ -75,14 +76,14 @@ address 0x1 {
     }
 
 
-    // Function code: 07 Prefix: 190107
+    // Function code: 02 Prefix: 190102
     public fun calculate_subsidy(vm: &signer, height_start: u64, height_end: u64):u64 {
 
       let sender = Signer::address_of(vm);
-      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190101014010);
+      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(190102));
 
       // skip genesis
-      assert(!LibraTimestamp::is_genesis(), 190101021000);
+      assert(!LibraTimestamp::is_genesis(), Errors::invalid_state(190102));
 
       // Gets the transaction fees in the epoch
       let txn_fee_amount = TransactionFee::get_amount_to_distribute(vm);
@@ -104,7 +105,7 @@ address 0x1 {
       0u64
     }
 
-    // Function code: 04 Prefix: 190104
+    // Function code: 03 Prefix: 190103
     public fun subsidy_curve(
       subsidy_ceiling_gas: u64,
       network_density: u64,
@@ -131,11 +132,11 @@ address 0x1 {
       guaranteed_minimum
     }
 
-    // Function code: 06 Prefix: 190106
+    // Function code: 04 Prefix: 190104
     public fun genesis(vm_sig: &signer) acquires FullnodeSubsidy{
       //Need to check for association or vm account
       let vm_addr = Signer::address_of(vm_sig);
-      assert(vm_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190101044010);
+      assert(vm_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(190104));
 
       // Get eligible validators list
       let genesis_validators = ValidatorUniverse::get_eligible_validators(vm_sig);
@@ -156,18 +157,19 @@ address 0x1 {
         let subsidy_granted = distribute_onboarding_subsidy(vm_sig, node_address);
         //Confirm the calculations, and that the ending balance is incremented accordingly.
 
-        assert(LibraAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, 19010105100);
+        assert(LibraAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, Errors::invalid_argument(190104));
 
         i = i + 1;
       };
     }
-    
+
+    // Function code: 05 Prefix: 190105
     public fun process_fees(
       vm: &signer,
       outgoing_set: &vector<address>,
       _fee_ratio: &vector<FixedPoint32>,
     ){
-      assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190103014010);
+      assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(190105));
       let capability_token = LibraAccount::extract_withdraw_capability(vm);
 
       let len = Vector::length<address>(outgoing_set);
@@ -189,8 +191,8 @@ address 0x1 {
             vm,
             node_address,
             TransactionFee::get_transaction_fees_coins_amount<GAS>(vm, fees),
-            x"",
-            x""
+            b"transaction fees",
+            b""
         );
         i = i + 1;
       };
@@ -207,6 +209,7 @@ address 0x1 {
         current_proofs_verified: u64,
     }
 
+    // Function code: 06 Prefix: 190106
     public fun init_fullnode_sub(vm: &signer) {
       let genesis_validators = LibraSystem::get_val_set_addr();
       let validator_count = Vector::length(&genesis_validators);
@@ -216,7 +219,7 @@ address 0x1 {
       let ceiling = baseline_auction_units() * BASELINE_TX_COST * validator_count;
 
       Roles::assert_libra_root(vm);
-      assert(!exists<FullnodeSubsidy>(Signer::address_of(vm)), 130112011021);
+      assert(!exists<FullnodeSubsidy>(Signer::address_of(vm)), Errors::not_published(190106));
       move_to<FullnodeSubsidy>(vm, FullnodeSubsidy{
         previous_epoch_proofs: 0u64,
         current_proof_price: BASELINE_TX_COST * 24 * 8 * 3, // number of proof submisisons in 3 initial epochs.
@@ -280,7 +283,6 @@ address 0x1 {
       };
 
       if (subsidy == 0) return 0;
-
       let minted_coins = Libra::mint<GAS>(vm, subsidy);
       LibraAccount::vm_deposit_with_metadata<GAS>(
         vm,
@@ -316,8 +318,8 @@ address 0x1 {
     fun baseline_auction_units():u64 {
       let epoch_length_mins = 24 * 60;
       let steady_state_nodes = 1000;
-      let target_delay = 10;
-      steady_state_nodes * (epoch_length_mins/target_delay)
+      let target_delay_mins = 10;
+      steady_state_nodes * (epoch_length_mins/target_delay_mins)
     }
 
     fun auctioneer(vm: &signer) acquires FullnodeSubsidy {
@@ -344,6 +346,7 @@ address 0x1 {
       state.current_cap = ceiling;
     }
 
+    
     public fun calc_auction(
       ceiling: u64,
       baseline_auction_units: u64,
@@ -356,7 +359,6 @@ address 0x1 {
       //   FixedPoint32::create_from_raw_value(baseline_auction_units)
       // );
       let baseline_proof_price = ceiling/baseline_auction_units;
-      // print(&baseline_proof_price);
 
       // print(&FixedPoint32::get_raw_value(copy baseline_proof_price));
       // Calculate the appropriate multiplier.
@@ -410,7 +412,8 @@ address 0x1 {
         // get operator for validator
         let oper_addr = ValidatorConfig::get_operator(miner_addr);
         // count OWNER's proofs submitted
-        let proofs_in_epoch = FullnodeState::get_address_proof_count(miner_addr);
+        let proofs_in_epoch = MinerState::get_count_in_epoch(miner_addr);
+
         let cost = 0;
         // find cost from baseline
         if (proofs_in_epoch > 0) {
@@ -423,7 +426,7 @@ address 0x1 {
           if (!(owner_balance > cost)) {
             cost = owner_balance;
           };
-          
+
           LibraAccount::vm_make_payment<GAS>(
             miner_addr,
             oper_addr,
@@ -446,7 +449,7 @@ address 0x1 {
       current_proofs_verified: u64,
     ) acquires FullnodeSubsidy {
       Roles::assert_libra_root(vm);
-      assert(is_testnet(), 1000);
+      assert(is_testnet(), Errors::invalid_state(190108));
       let state = borrow_global_mut<FullnodeSubsidy>(0x0);
       state.previous_epoch_proofs = previous_epoch_proofs;
       state.current_proof_price = current_proof_price;
@@ -454,6 +457,5 @@ address 0x1 {
       state.current_subsidy_distributed = current_subsidy_distributed;
       state.current_proofs_verified = current_proofs_verified;
     }
-
 }
 }

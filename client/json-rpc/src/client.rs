@@ -116,6 +116,7 @@ impl JsonRpcBatch {
         self.add_request("get_state_proof".to_string(), vec![json!(known_version)]);
     }
 
+    //////// 0L ////////
     pub fn add_miner_state_with_proof_request(
         &mut self,
         account: AccountAddress,
@@ -141,6 +142,7 @@ impl JsonRpcBatch {
             ],
         );
     }
+    //////// 0L end ////////
 
     pub fn add_get_account_state_with_proof_request(
         &mut self,

@@ -15,6 +15,7 @@ use std::{
 use stdlib::*;
 use vm::{normalized::Module, CompiledModule};
 
+//////// 0L ////////
 // for Upgrade oracle
 /// The output path under which staged files will be put
 pub const STAGED_OUTPUT_PATH: &str = "staged";
@@ -22,6 +23,7 @@ pub const STAGED_OUTPUT_PATH: &str = "staged";
 pub const STAGED_STDLIB_NAME: &str = "stdlib";
 /// The extension for staged files
 pub const STAGED_EXTENSION: &str = "mv";
+//////// 0L end ////////
 
 // Generates the compiled stdlib and transaction scripts. Until this is run changes to the source
 // modules/scripts, and changes in the Move compiler will not be reflected in the stdlib used for
@@ -66,6 +68,7 @@ fn main() {
                 .help("generate test/stdlib.mv for upgrade oracle"),
         );
     let matches = cli.get_matches();
+    //////// 0L ////////
     // for upgrade oracle
     let create_upgrade_payload =
         matches.is_present("create-upgrade-payload");
@@ -79,6 +82,7 @@ fn main() {
         create_upgrade_payload || matches.is_present("no-compiler");
     let no_check_linking_layout_compatibility =
         create_upgrade_payload || matches.is_present("no-check-liking-layout-compatibility");
+    //////// 0L end ////////
 
     // Make sure that the current directory is `language/stdlib` from now on.
     let exec_path = std::env::args().next().expect("path of the executable");
@@ -161,6 +165,7 @@ fn main() {
         );
     }
 
+    //////// 0L ////////
     let staged_path = PathBuf::from(STAGED_OUTPUT_PATH);
     std::fs::create_dir_all(&staged_path).unwrap();
 
@@ -182,7 +187,7 @@ fn main() {
             module_file.write_all(&bytes).unwrap();
         });
     }
-
+    //////// 0L end ////////
 
     let txn_source_files =
         datatest_stable::utils::iterate_directory(Path::new(TRANSACTION_SCRIPTS));
@@ -237,7 +242,7 @@ fn main() {
         });
     }
 
-    if !create_upgrade_payload {
+    if !create_upgrade_payload { //////// 0L ////////
         time_it("Generating error explanations", || {
             build_stdlib_error_code_map()
         });

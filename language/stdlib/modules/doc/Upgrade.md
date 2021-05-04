@@ -18,6 +18,7 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
@@ -141,7 +142,7 @@ Structs for UpgradeHistory resource
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Upgrade.md#0x1_Upgrade_initialize">initialize</a>(account: &signer) {
-    <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 11111); // TODO: error code
+    <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(210001));
     move_to(account, <a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a>{payload: x""});
     move_to(account, <a href="Upgrade.md#0x1_Upgrade_UpgradeHistory">UpgradeHistory</a>{
         records: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="Upgrade.md#0x1_Upgrade_UpgradeBlobs">UpgradeBlobs</a>&gt;()},
@@ -169,8 +170,8 @@ Structs for UpgradeHistory resource
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Upgrade.md#0x1_Upgrade_set_update">set_update</a>(account: &signer, payload: vector&lt;u8&gt;) <b>acquires</b> <a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a> {
-    <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 11111); // TODO: error code
-    <b>assert</b>(<b>exists</b>&lt;<a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()), 11111); // TODO: error code
+    <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(210002));
+    <b>assert</b>(<b>exists</b>&lt;<a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(210002));
     <b>let</b> temp = borrow_global_mut&lt;<a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
     temp.payload = payload;
 }
@@ -196,8 +197,8 @@ Structs for UpgradeHistory resource
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Upgrade.md#0x1_Upgrade_reset_payload">reset_payload</a>(account: &signer) <b>acquires</b> <a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a> {
-    <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 11111); // TODO: error code
-    <b>assert</b>(<b>exists</b>&lt;<a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()), 11111); // TODO: error code
+    <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(210003));
+    <b>assert</b>(<b>exists</b>&lt;<a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(210003));
     <b>let</b> temp = borrow_global_mut&lt;<a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
     temp.payload = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u8&gt;();
 }
@@ -229,7 +230,7 @@ Structs for UpgradeHistory resource
     validators_signed: vector&lt;address&gt;,
     consensus_height: u64,
 ) <b>acquires</b> <a href="Upgrade.md#0x1_Upgrade_UpgradeHistory">UpgradeHistory</a> {
-    <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 11111); // TODO: error code
+    <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(210004));
     <b>let</b> new_record = <a href="Upgrade.md#0x1_Upgrade_UpgradeBlobs">UpgradeBlobs</a> {
         upgraded_version: upgraded_version,
         upgraded_payload: upgraded_payload,
@@ -291,7 +292,7 @@ Structs for UpgradeHistory resource
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Upgrade.md#0x1_Upgrade_has_upgrade">has_upgrade</a>(): bool <b>acquires</b> <a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a> {
-    <b>assert</b>(<b>exists</b>&lt;<a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()), 11111); // TODO: error code
+    <b>assert</b>(<b>exists</b>&lt;<a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()), <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(210005));
     !<a href="Vector.md#0x1_Vector_is_empty">Vector::is_empty</a>(&borrow_global&lt;<a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()).payload)
 }
 </code></pre>
@@ -316,7 +317,7 @@ Structs for UpgradeHistory resource
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Upgrade.md#0x1_Upgrade_get_payload">get_payload</a>(): vector&lt;u8&gt; <b>acquires</b> <a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a> {
-    <b>assert</b>(<b>exists</b>&lt;<a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()), 11111); // TODO: error code
+    <b>assert</b>(<b>exists</b>&lt;<a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()), <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(210006));
     *&borrow_global&lt;<a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()).payload
 }
 </code></pre>

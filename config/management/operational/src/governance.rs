@@ -32,6 +32,7 @@ pub struct CreateAccount {
     chain_id: Option<ChainId>,
     #[structopt(flatten)]
     validator_backend: ValidatorBackend,
+    //////// 0L ////////    
     #[structopt(flatten)]
     auto_validate: AutoValidate,
 }
@@ -67,6 +68,8 @@ impl CreateAccount {
             auth_key.prefix().to_vec(),
             self.name.as_bytes().to_vec(),
         );
+
+        //////// 0L ////////
         let mut transaction_context =
             build_and_submit_libra_root_transaction(&config, seq_num, script, action)?;
 
@@ -76,6 +79,7 @@ impl CreateAccount {
             .execute(config.json_server, transaction_context)?;
 
         Ok((transaction_context, account_address))
+        //////// 0L end ////////
     }
 }
 
@@ -118,6 +122,7 @@ struct RootValidatorOperation {
     json_server: Option<String>,
     #[structopt(flatten)]
     validator_config: libra_management::validator_config::ValidatorConfig,
+    //////// 0L ////////
     #[structopt(flatten)]
     auto_validate: AutoValidate,
 }
@@ -154,6 +159,8 @@ impl AddValidator {
             name,
             self.input.account_address,
         );
+
+        //////// 0L ////////
         let mut transaction_context =
             build_and_submit_libra_root_transaction(&config, seq_num, script, "add-validator")?;
 
@@ -164,6 +171,7 @@ impl AddValidator {
             .execute(config.json_server, transaction_context)?;
 
         Ok(transaction_context)
+        //////// 0L end ////////
     }
 }
 
@@ -191,6 +199,7 @@ impl RemoveValidator {
             self.input.account_address,
         );
 
+        //////// 0L ////////
         let mut transaction_context =
             build_and_submit_libra_root_transaction(&config, seq_num, script, "remove-validator")?;
 
@@ -201,6 +210,7 @@ impl RemoveValidator {
             .execute(config.json_server, transaction_context)?;
 
         Ok(transaction_context)
+        //////// 0L end ////////
     }
 }
 

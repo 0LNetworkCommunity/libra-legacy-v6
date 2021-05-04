@@ -10,12 +10,12 @@
 
 address 0x1 {
   module NodeWeight {
-
-    use 0x1::Vector;
-    use 0x1::ValidatorUniverse;
-    use 0x1::Signer;
-    use 0x1::MinerState;
     use 0x1::CoreAddresses;
+    use 0x1::Errors;
+    use 0x1::MinerState;
+    use 0x1::Signer;
+    use 0x1::ValidatorUniverse;
+    use 0x1::Vector;
 
     public fun proof_of_weight (node_addr: address): u64 {
       // Calculate the weight/voting power for the next round.
@@ -31,7 +31,7 @@ address 0x1 {
     // Permissions: Public, VM Only
     public fun top_n_accounts(account: &signer, n: u64): vector<address> {
 
-      assert(Signer::address_of(account) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 140101014010);
+      assert(Signer::address_of(account) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(140101));
 
       // let eligible_validators = Vector::empty<address>();
 

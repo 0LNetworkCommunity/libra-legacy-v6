@@ -26,6 +26,7 @@ impl Command for AccountCommand {
             Box::new(AccountCommandWriteRecovery {}),
             Box::new(AccountCommandMint {}),
             Box::new(AccountCommandAddCurrency {}),
+            //////// 0L ////////
             Box::new(AccountCommandCreateUser {}),
             Box::new(AccountCommandCreateVal {}),
             Box::new(AccountCommandAutopayEnable {}),
@@ -265,6 +266,7 @@ impl Command for AccountCommandUpdateValConfig {
     }
 }
 
+//////// 0L ////////
 /// 0L Sub command to create a validator account.
 pub struct AccountCommandSetOperator {}
 
