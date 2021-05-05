@@ -49,11 +49,11 @@ pub async fn start_server(node: Node) {
 
 
     let node_home = cfg.clone().workspace.node_home.clone();
-    let web_files = if !*IS_PROD {
-        // for using `npm run dev`
-      PathBuf::from("/root/libra/ol/cli/web-monitor/public/")
-    } else {
+    let web_files = if *IS_PROD {
       node_home.join("web-monitor/public/")
+        // for using `npm run dev`
+    } else {
+      PathBuf::from("/root/libra/ol/cli/web-monitor/public/")
     };
 
     //GET /
