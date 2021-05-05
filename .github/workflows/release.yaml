@@ -32,7 +32,7 @@ jobs:
           tag: ${{ github.ref }}
           overwrite: true
       - name: Web
-        run:  zip -r public.zip ol/cli/web-monitor
+        run:  zip -r web-monitor.zip ol/cli/web-monitor
       - name: Upload Web Files
         uses: svenstaro/upload-release-action@v2
         with:
