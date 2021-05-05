@@ -60,7 +60,7 @@ impl<'a> App<'a> {
             account_state: None,
             chain_state: None,
             should_quit: false,
-            tabs: TabsState::new(vec!["Overview", "Network", "Transactions", "Coin List"]),
+            tabs: TabsState::new(vec!["Pilot","Overview", "Network", "Transactions", "Coin List"]),
             show_chart: true,
             progress: 0.1,
             servers: vec![
