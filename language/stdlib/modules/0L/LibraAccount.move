@@ -2384,7 +2384,6 @@ module LibraAccount {
             metadata_signature
         );
     }
-<<<<<<< HEAD
 
     /////// TEST HELPERS //////
     // TODO: This is scary stuff.
@@ -2399,7 +2398,5 @@ module LibraAccount {
         assert(is_testnet(), 120103011021);
         destroy_signer(to_destroy);
     }
-=======
->>>>>>> autopay-escrow
 }
 }
