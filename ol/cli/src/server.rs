@@ -71,8 +71,8 @@ pub async fn start_server(node: Node) {
 
 /// Fetch updated static web files from release, for web-monitor.
 pub fn update_web(home_path: &PathBuf) {
-  let file_name = "public.zip";
-  let url = &format!("https://github.com/OLSF/libra/releases/download/v4.3.0-rc.0/{}", file_name);
+  let file_name = "web-monitor.zip";
+  let url = &format!("https://github.com/OLSF/libra/releases/latest/download/{}", file_name);
   println!("Fetching web files from, {}", url);
   let zip_path = home_path.join(file_name).to_str().unwrap().to_owned();
 
