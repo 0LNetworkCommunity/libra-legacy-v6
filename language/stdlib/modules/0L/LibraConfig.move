@@ -10,6 +10,7 @@ module LibraConfig {
     use 0x1::LibraTimestamp;
     use 0x1::Signer;
     use 0x1::Roles;
+    use 0x1::Testnet;
 
     /// A generic singleton resource that holds a value of a specific type.
     resource struct LibraConfig<Config: copyable> {
@@ -398,7 +399,11 @@ module LibraConfig {
     }
 
     public fun check_transfer_enabled(): bool acquires Configuration {
-        get_current_epoch() > 1000
+        if(Testnet::is_testnet()){
+            true
+        } else {
+            get_current_epoch() > 1000
+        }
     }
 
 }

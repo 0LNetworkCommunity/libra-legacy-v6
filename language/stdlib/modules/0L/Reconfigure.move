@@ -19,7 +19,7 @@ module Reconfigure {
     use 0x1::Vector;
     use 0x1::Stats;
     use 0x1::ValidatorUniverse;
-    use 0x1::AutoPay;
+    use 0x1::AutoPay2;
     use 0x1::Epoch;
     use 0x1::FullnodeState;
     use 0x1::AccountLimits;
@@ -159,6 +159,16 @@ module Reconfigure {
         Subsidy::set_global_count(vm, global_proofs_count);
 // print(&03280);
 
+
+        // Update all validators with account limits
+        // After Epoch 1000. 
+        if (LibraConfig::check_transfer_enabled()) {
+        update_validator_withdrawal_limit(vm);
+        };
+    
+        // needs to be set before the auctioneer runs in Subsidy::fullnode_reconfig
+        Subsidy::set_global_count(vm, global_proofs_count);
+
         //Reset Counters
         Stats::reconfig(vm, &proposed_set);
 // print(&03290);
@@ -176,7 +186,7 @@ module Reconfigure {
         Subsidy::fullnode_reconfig(vm);
 //  print(&032120);
 
-        AutoPay::reconfig_reset_tick(vm);
+        AutoPay2::reconfig_reset_tick(vm);
 //  print(&032130);
         Epoch::reset_timer(vm, height_now);
     }

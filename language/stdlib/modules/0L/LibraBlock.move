@@ -10,9 +10,10 @@ module LibraBlock {
     //////// 0L ////////
     use 0x1::Reconfigure;
     use 0x1::Stats;
-    use 0x1::AutoPay;
+    use 0x1::AutoPay2;
     use 0x1::Epoch;
-    // use 0x1::Debug::print;
+    use 0x1::GAS::GAS;
+    use 0x1::LibraAccount;
 
     resource struct BlockMetadata {
         /// Height of the current block
@@ -86,10 +87,14 @@ module LibraBlock {
 // print(&01000);
         Stats::process_set_votes(vm, &previous_block_votes);
         Stats::inc_prop(vm, *&proposer);
-// print(&02000);
-        if (AutoPay::tick(vm)){
-            AutoPay::process_autopay(vm);
+        
+        if (AutoPay2::tick(vm)){
+            //triggers autopay at beginning of each epoch 
+            //tick is reset at end of previous epoch
+            LibraAccount::process_escrow<GAS>(vm);
+            AutoPay2::process_autopay(vm);
         };
+
         ///////////////////
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(CoreAddresses::LIBRA_ROOT_ADDRESS());
         LibraTimestamp::update_global_time(vm, proposer, timestamp);
@@ -107,8 +112,6 @@ module LibraBlock {
          //////// 0L ////////
         // reconfigure
         if (Epoch::epoch_finished()) {
-// print(&03000);
-
           // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata. But there's a circular reference there when we try.
           Reconfigure::reconfigure(vm, get_current_block_height());
         };
