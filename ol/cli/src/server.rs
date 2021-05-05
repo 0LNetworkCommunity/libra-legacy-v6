@@ -71,15 +71,23 @@ pub async fn start_server(node: Node) {
 
 /// Fetch updated static web files from release, for web-monitor.
 pub fn update_web(home_path: &PathBuf) {
-  let zip_path = home_path.join("web-monitor.zip").to_str().unwrap().to_owned();
-  let args = vec!["-L", "--progress-bar", "--create-dirs", "-o", &zip_path, "https://github.com/OLSF/libra/releases/latest/download/public.zip"];
+  let file_name = "public.zip";
+  let url = &format!("https://github.com/OLSF/libra/releases/download/v4.3.0-rc.0/{}", file_name);
+  println!("Fetching web files from, {}", url);
+  let zip_path = home_path.join(file_name).to_str().unwrap().to_owned();
 
-    Command::new("curl")
-            .args(args.as_slice())
-            .output()
-            .expect("failed to download web files");
-    Command::new("unzip")
+    match Command::new("curl")
+    .arg("-L")      
+    .arg("--progress-bar")
+    .arg(format!("-o {:?}", &zip_path))  
+    .arg(url)
+    .spawn() {
+      Ok(_) => {
+        Command::new("unzip")
             .arg(&zip_path)
-            .output()
+            .spawn()
             .expect("failed to unzip web files");
+      },
+      _ => {}
+    }
 }

@@ -60,8 +60,8 @@ download: web-files
 	done
 
 web-files: 
-	curl -L --progress-bar --create-dirs -o ${DATA_PATH}/web-monitor/public.zip https://github.com/OLSF/libra/releases/latest/download/public.zip
-	unzip ${DATA_PATH}/web-monitor/public.zip
+	curl -L --progress-bar --create-dirs -o ${DATA_PATH}/web-monitor.zip https://github.com/OLSF/libra/releases/latest/download/web-monitor.zip
+	unzip ${DATA_PATH}/web-monitor.zip
 
 download-release:
 	@for b in ${BINS} ; do \
