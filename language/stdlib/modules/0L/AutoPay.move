@@ -156,7 +156,7 @@ address 0x1{
               };
               
               if (amount != 0 && amount <= account_bal) {
-                LibraAccount::make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
+                LibraAccount::vm_make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
               };
 
               // update previous balance for next calculation
