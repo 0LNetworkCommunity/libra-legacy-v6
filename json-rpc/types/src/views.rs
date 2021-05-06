@@ -32,8 +32,8 @@ use std::{
     convert::{TryFrom, TryInto},
     default::Default,
 };
-use libra_types::account_config::resources::miner_state::MinerStateResource;
-use libra_types::account_config::resources::oracle_upgrade::{UpgradeOracle, OracleResource};
+use ol_types::miner_state::MinerStateResource;
+use ol_types::oracle_upgrade::{UpgradeOracle, OracleResource};
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct AmountView {
