@@ -1,4 +1,4 @@
-//! account: shashank, 100
+//! account: alice, 100
 //! account: bob, 100
 
 // We test creation of autopay, retiriving it using same and different accounts
@@ -6,7 +6,7 @@
 
 // Test to create instruction and retrieve it
 //! new-transaction
-//! sender: shashank
+//! sender: alice
 script {
   use 0x1::AutoPay2;
   use 0x1::Signer;
@@ -29,7 +29,7 @@ script {
 script {
   use 0x1::AutoPay2;
   fun main() {
-    let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction({{shashank}}, 1);
+    let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction({{alice}}, 1);
     assert(type == 0, 1);
     assert(payee == {{bob}}, 1);
     assert(end_epoch == 2, 1);
@@ -41,7 +41,7 @@ script {
 
 // Test to create instruction and retrieve it
 //! new-transaction
-//! sender: shashank
+//! sender: alice
 script {
   use 0x1::AutoPay2;
   use 0x1::Signer;

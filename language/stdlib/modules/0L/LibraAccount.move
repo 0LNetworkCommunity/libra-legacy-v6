@@ -269,8 +269,6 @@ module LibraAccount {
             let num_payments = FIFO::len<Escrow<Token>>(payment_list);
             
             //pay out escrow until limit is reached
-            //TODO update Account limit once payment is set 
-            //TODO conver to FIFO
             while (limit_room > 0 && num_payments > 0) {
                 let Escrow<Token> {to_account, escrow} = FIFO::pop<Escrow<Token>>(payment_list);
                 let recipient_coins = borrow_global_mut<Balance<Token>>(to_account);
@@ -282,7 +280,6 @@ module LibraAccount {
                         to_account: to_account,
                         escrow: coin1,
                     };
-                    //This is pushing it to the end, it needs to go back to the beginning
                     FIFO::push_LIFO<Escrow<Token>>(payment_list, new_escrow);
                     amount_sent = amount_sent + limit_room;
                     limit_room = 0;

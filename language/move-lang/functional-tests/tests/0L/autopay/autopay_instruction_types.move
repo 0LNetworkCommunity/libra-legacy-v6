@@ -8,7 +8,7 @@
 //! account: carlos, 10000GAS, 0
 //! account: eric, 10000GAS, 0 
 
-// test runs various autopay pledge types to ensure they are being executed as expected
+// test runs various autopay instruction types to ensure they are being executed as expected
 
 //! new-transaction
 //! sender: libraroot
@@ -261,7 +261,7 @@ script {
 
     let ending_balance = LibraAccount::balance<GAS>({{carlos}});
     assert(ending_balance == 9500, 7357006);
-    //Confirm the one-shot pledge was deleted
+    //Confirm the one-shot instruction was deleted
     let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction({{carlos}}, 1);
     assert(type == 0, 1);
     assert(payee == 0x0, 1);
@@ -327,7 +327,7 @@ script {
     let ending_balance = LibraAccount::balance<GAS>({{thomas}});
     assert(ending_balance == 9600, 7357006);
 
-    // no change, one-shot pledge is finished
+    // no change, one-shot instruction is finished
     let ending_balance = LibraAccount::balance<GAS>({{carlos}});
     assert(ending_balance == 9500, 7357006);
 
@@ -344,8 +344,8 @@ script {
     let ending_balance = LibraAccount::balance<GAS>({{eric}});
     assert(ending_balance == 10500, 7357006);
 
-    //all pledges should be deleted as they expired in epoch 2, check to confirm
-    //Confirm the one-shot pledge was deleted
+    //all instructions should be deleted as they expired in epoch 2, check to confirm
+    //Confirm the one-shot instruction was deleted
     let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction({{alice}}, 1);
     assert(type == 0, 1);
     assert(payee == 0x0, 1);

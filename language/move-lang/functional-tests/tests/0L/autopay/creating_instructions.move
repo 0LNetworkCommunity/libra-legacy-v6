@@ -1,4 +1,4 @@
-//! account: shashank, 1000000
+//! account: carol, 1000000
 //! account: bob, 1000000
 //! account: alice, 1000000
 
@@ -7,7 +7,7 @@
 
 // Test to create instruction and retrieve it
 //! new-transaction
-//! sender: shashank
+//! sender: carol
 script {
   use 0x1::AutoPay2;
   use 0x1::Signer;
@@ -26,7 +26,7 @@ script {
 
 // Test to create another instruction
 //! new-transaction
-//! sender: shashank
+//! sender: carol
 script {
   use 0x1::AutoPay2;
   use 0x1::Signer;
@@ -39,7 +39,7 @@ script {
 
 // // // Test to create instruction with wrong UUID
 // //! new-transaction
-// //! sender: shashank
+// //! sender: carol
 // script {
 //   use 0x0::AutoPay2;
 //   use 0x0::Transaction;

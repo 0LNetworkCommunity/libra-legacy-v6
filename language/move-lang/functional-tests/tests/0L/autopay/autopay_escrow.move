@@ -1,7 +1,7 @@
 //! account: alice, 300GAS
 //! account: bob, 100GAS
 //! account: greg, 100GAS
-//! account: carl, 10000GAS, 0, validator
+//! account: carol, 10000GAS, 0, validator
 
 // Check autopay is triggered in block prologue correctly i.e., middle of epoch boundary
 
@@ -109,7 +109,7 @@ script {
 ///// Trigger Autopay Tick at 31 secs           ////
 /// i.e. 1 second after 1/2 epoch  /////
 //! block-prologue
-//! proposer: carl
+//! proposer: carol
 //! block-time: 31000000
 //! round: 23
 ///////////////////////////////////////////////////
@@ -120,7 +120,7 @@ script {
 ///// Trigger Autopay Tick at 31 secs           ////
 /// i.e. 1 second after 1/2 epoch  /////
 //! block-prologue
-//! proposer: carl
+//! proposer: carol
 //! block-time: 32000000
 //! round: 24
 ///////////////////////////////////////////////////
@@ -145,7 +145,7 @@ script {
 ///// Trigger Autopay Tick at 31 secs           ////
 /// i.e. 1 second after 1/2 epoch  /////
 //! block-prologue
-//! proposer: carl
+//! proposer: carol
 //! block-time: 61000000
 //! round: 65
 ///////////////////////////////////////////////////
@@ -154,7 +154,7 @@ script {
 ///// Trigger Autopay Tick at 31 secs           ////
 /// i.e. 1 second after 1/2 epoch  /////
 //! block-prologue
-//! proposer: carl
+//! proposer: carol
 //! block-time: 62000000
 //! round: 66
 ///////////////////////////////////////////////////
@@ -180,7 +180,7 @@ script {
 ///// Trigger Autopay Tick at 31 secs           ////
 /// i.e. 1 second after 1/2 epoch  /////
 //! block-prologue
-//! proposer: carl
+//! proposer: carol
 //! block-time: 122000000
 //! round: 67
 ///////////////////////////////////////////////////
@@ -189,7 +189,7 @@ script {
 ///// Trigger Autopay Tick at 31 secs           ////
 /// i.e. 1 second after 1/2 epoch  /////
 //! block-prologue
-//! proposer: carl
+//! proposer: carol
 //! block-time: 123000000
 //! round: 68
 ///////////////////////////////////////////////////
@@ -215,7 +215,7 @@ script {
 ///// Trigger Autopay Tick at 31 secs           ////
 /// i.e. 1 second after 1/2 epoch  /////
 //! block-prologue
-//! proposer: carl
+//! proposer: carol
 //! block-time: 183000000
 //! round: 69
 ///////////////////////////////////////////////////
@@ -224,7 +224,7 @@ script {
 ///// Trigger Autopay Tick at 31 secs           ////
 /// i.e. 1 second after 1/2 epoch  /////
 //! block-prologue
-//! proposer: carl
+//! proposer: carol
 //! block-time: 184000000
 //! round: 70
 ///////////////////////////////////////////////////
@@ -250,7 +250,7 @@ script {
 ///// Trigger Autopay Tick at 31 secs           ////
 /// i.e. 1 second after 1/2 epoch  /////
 //! block-prologue
-//! proposer: carl
+//! proposer: carol
 //! block-time: 244000000
 //! round: 71
 ///////////////////////////////////////////////////
@@ -259,7 +259,7 @@ script {
 ///// Trigger Autopay Tick at 31 secs           ////
 /// i.e. 1 second after 1/2 epoch  /////
 //! block-prologue
-//! proposer: carl
+//! proposer: carol
 //! block-time: 245000000
 //! round: 72
 ///////////////////////////////////////////////////
@@ -285,7 +285,7 @@ script {
 ///// Trigger Autopay Tick at 31 secs           ////
 /// i.e. 1 second after 1/2 epoch  /////
 //! block-prologue
-//! proposer: carl
+//! proposer: carol
 //! block-time: 305000000
 //! round: 73
 ///////////////////////////////////////////////////
@@ -294,7 +294,7 @@ script {
 ///// Trigger Autopay Tick at 31 secs           ////
 /// i.e. 1 second after 1/2 epoch  /////
 //! block-prologue
-//! proposer: carl
+//! proposer: carol
 //! block-time: 306000000
 //! round: 74
 ///////////////////////////////////////////////////
@@ -321,7 +321,7 @@ script {
 ///// Trigger Autopay Tick at 31 secs           ////
 /// i.e. 1 second after 1/2 epoch  /////
 //! block-prologue
-//! proposer: carl
+//! proposer: carol
 //! block-time: 366000000
 //! round: 75
 ///////////////////////////////////////////////////
@@ -330,7 +330,7 @@ script {
 ///// Trigger Autopay Tick at 31 secs           ////
 /// i.e. 1 second after 1/2 epoch  /////
 //! block-prologue
-//! proposer: carl
+//! proposer: carol
 //! block-time: 367000000
 //! round: 76
 ///////////////////////////////////////////////////
@@ -357,7 +357,7 @@ script {
 ///// Trigger Autopay Tick at 31 secs           ////
 /// i.e. 1 second after 1/2 epoch  /////
 //! block-prologue
-//! proposer: carl
+//! proposer: carol
 //! block-time: 427000000
 //! round: 77
 ///////////////////////////////////////////////////
@@ -366,7 +366,7 @@ script {
 ///// Trigger Autopay Tick at 31 secs           ////
 /// i.e. 1 second after 1/2 epoch  /////
 //! block-prologue
-//! proposer: carl
+//! proposer: carol
 //! block-time: 428000000
 //! round: 78
 ///////////////////////////////////////////////////
