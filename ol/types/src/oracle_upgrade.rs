@@ -12,7 +12,6 @@ use move_core_types::{
 use serde::{Deserialize, Serialize};
 use move_core_types::account_address::AccountAddress;
 use sha2::{Digest, Sha256};
-
 /// Struct that represents a Oracles resource
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OracleResource {
@@ -25,6 +24,7 @@ pub struct Vote {
     /// voter
     pub validator: AccountAddress,
     /// payload
+    #[serde(with = "hex")]
     pub data: Vec<u8>,
     /// version
     pub version_id: u64,
@@ -42,6 +42,7 @@ pub struct Vote {
 #[derive(Debug, Serialize, Deserialize, Clone,PartialEq)]
 pub struct VoteCount {
     /// vote payload
+    #[serde(with = "hex")]
     pub data: Vec<u8>,
     /// voters
     pub validators: Vec<AccountAddress>,
