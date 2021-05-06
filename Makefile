@@ -49,7 +49,7 @@ BINS= db-backup db-backup-verify db-restore libra-node miner ol_cli txs stdlib
 
 ##### DEPENDENCIES #####
 deps:
-	. ./util/setup.sh
+	. ./ol/util/setup.sh
 
 download: web-files
 	@for b in ${RELEASE} ; do \
