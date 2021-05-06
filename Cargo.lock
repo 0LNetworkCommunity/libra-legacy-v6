@@ -3299,6 +3299,7 @@ dependencies = [
  "move-core-types",
  "move-vm-types",
  "network",
+ "ol-types",
  "once_cell",
  "proptest",
  "rand 0.7.3",

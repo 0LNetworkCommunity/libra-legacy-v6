@@ -24,45 +24,27 @@ pub struct Vote {
     /// voter
     pub validator: AccountAddress,
     /// payload
-    #[serde(with = "hex")]
+    // #[serde(with = "hex")]
     pub data: Vec<u8>,
     /// version
     pub version_id: u64,
 }
 
-// impl Vote {
-//   // compress the data to hex
-//   pub fn compress(&mut self) -> &Self {
-//     self.data = Sha256::digest(self.data.as_slice()).to_vec();
-//     self
-//   }
-// }
-
 ///
 #[derive(Debug, Serialize, Deserialize, Clone,PartialEq)]
 pub struct VoteCount {
     /// vote payload
-    #[serde(with = "hex")]
+    // #[serde(with = "hex")]
     pub data: Vec<u8>,
     /// voters
     pub validators: Vec<AccountAddress>,
 }
-
-// impl VoteCount {
-//   // compress the data to hex
-//   pub fn compress(&mut self) -> &Self {
-//     self.data = Sha256::digest(self.data.as_slice()).to_vec();
-//     self
-//   }
-// }
-
 
 ///
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct UpgradeOracle{
     /// id of the upgrade oracle
     pub id: u64,                            // 1
-
     /// Each validator can only vote once in the current window
     pub validators_voted: Vec<AccountAddress>,  
     /// Stores counts for each suggested payload
@@ -85,6 +67,7 @@ impl UpgradeOracle {
     .into_iter()
     .map(|mut i| {
       i.data = Sha256::digest(i.data.as_slice()).to_vec();
+      dbg!(&i.data);
       i
     }).collect();
 

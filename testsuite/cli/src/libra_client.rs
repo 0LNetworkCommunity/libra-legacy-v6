@@ -173,7 +173,7 @@ impl LibraClient {
         let mut batch = JsonRpcBatch::new();
         // batch.add_miner_state_with_proof_request(account, Some(self.trusted_state.latest_version()));
         batch.add_query_oracle_upgrade_with_proof_request( None);
-
+        // dbg!("hello")
         let responses = self.client.execute(batch)?;
         match get_response_from_batch(0, &responses)? {
             Ok(result) => {

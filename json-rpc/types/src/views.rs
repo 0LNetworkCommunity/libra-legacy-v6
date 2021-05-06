@@ -837,14 +837,17 @@ impl TryFrom<MinerStateResource> for MinerStateResourceView {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct OracleResourceView {
     pub upgrade: UpgradeOracle,
+    // pub votes: Vec<Vote>,
+    // pub consensus: VoteCount,
 }
 
 impl TryFrom<OracleResource> for OracleResourceView {
     type Error = Error;
-
     fn try_from(state: OracleResource) -> Result<OracleResourceView, Error> {
-        Ok(OracleResourceView {
-            upgrade: state.upgrade
+      Ok(OracleResourceView {
+            upgrade: state.upgrade,
+            // votes: compressed.votes.clone(),
+            // consensus: compressed.consensus.clone(),
         })
     }
 }
