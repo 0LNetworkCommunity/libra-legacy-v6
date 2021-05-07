@@ -198,6 +198,7 @@ pub enum ScriptCall {
 
     AutopayCreateInstruction {
         uid: u64,
+        type: u8,
         payee: AccountAddress,
         end_epoch: u64,
         percentage: u64,
@@ -1574,10 +1575,11 @@ impl ScriptCall {
             ),
             AutopayCreateInstruction {
                 uid,
+                type,
                 payee,
                 end_epoch,
                 percentage,
-            } => encode_autopay_create_instruction_script(uid, payee, end_epoch, percentage),
+            } => encode_autopay_create_instruction_script(uid, type, payee, end_epoch, percentage),
             AutopayDisable {} => encode_autopay_disable_script(),
             AutopayEnable {} => encode_autopay_enable_script(),
             Burn {
@@ -2034,6 +2036,7 @@ pub fn encode_add_validator_and_reconfigure_script(
 
 pub fn encode_autopay_create_instruction_script(
     uid: u64,
+    type: u8, 
     payee: AccountAddress,
     end_epoch: u64,
     percentage: u64,
@@ -2043,6 +2046,7 @@ pub fn encode_autopay_create_instruction_script(
         vec![],
         vec![
             TransactionArgument::U64(uid),
+            TransactionArgument::U8(type),
             TransactionArgument::Address(payee),
             TransactionArgument::U64(end_epoch),
             TransactionArgument::U64(percentage),
@@ -3735,9 +3739,10 @@ fn decode_add_validator_and_reconfigure_script(script: &Script) -> Option<Script
 fn decode_autopay_create_instruction_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::AutopayCreateInstruction {
         uid: decode_u64_argument(script.args().get(0)?.clone())?,
-        payee: decode_address_argument(script.args().get(1)?.clone())?,
-        end_epoch: decode_u64_argument(script.args().get(2)?.clone())?,
-        percentage: decode_u64_argument(script.args().get(3)?.clone())?,
+        type: decode_u8_argument(script.args().get(1)?.clone())?,
+        payee: decode_address_argument(script.args().get(2)?.clone())?,
+        end_epoch: decode_u64_argument(script.args().get(3)?.clone())?,
+        percentage: decode_u64_argument(script.args().get(4)?.clone())?,
     })
 }
 
@@ -4310,6 +4315,7 @@ const ADD_VALIDATOR_AND_RECONFIGURE_CODE: &[u8] = &[
     2,
 ];
 
+//TODO: Does this need to change for new autopay version?
 const AUTOPAY_CREATE_INSTRUCTION_CODE: &[u8] = &[
     161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 6, 3, 6, 25, 5, 31, 21, 7, 52, 92, 8, 144, 1, 16, 6,
     160, 1, 10, 0, 0, 0, 1, 0, 2, 1, 3, 0, 0, 0, 2, 4, 1, 2, 0, 0, 5, 3, 4, 0, 0, 6, 1, 4, 0, 0, 7,
