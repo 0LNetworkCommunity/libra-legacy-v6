@@ -54,7 +54,7 @@ to detach from the `tmux` session `Ctrl-b d`
 
 1.4. Config dependencies: 
 
-using make or running the `utils/setup.sh` script directly
+using make or running the `ol/utils/setup.sh` script directly
 
 using make
 ```
@@ -64,7 +64,7 @@ make deps
 
 or run the script directly
 ```
-cd </path/to/libra/source/> && . util/setup.sh
+cd </path/to/libra/source/> && . ol/util/setup.sh
 ```
 
 After `rust` and `cargo` are installed you are prompted to set a `PATH` environment variable. 
@@ -88,7 +88,7 @@ For more details: https://github.com/OLSF/libra/wiki/OS-Dependencies
 This takes a while, run inside `tmux` or `screen` in case your session gets disconnected 
 ```
 cd </path/to/libra/source/> 
-make bins
+make bins && make install
 ```
 
 ## 2. Generate an account
@@ -105,7 +105,7 @@ to place in your first proof.
 
 ```
 # start wizard
-miner val-wizard
+miner val
 ```
 
 2.3. Send the generated `~/.0L/account.json` to someone that has GAS and can execute the account creation transaction for you.
