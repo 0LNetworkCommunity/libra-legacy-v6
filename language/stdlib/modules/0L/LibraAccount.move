@@ -369,7 +369,7 @@ module LibraAccount {
             let settings = Vector::borrow_mut<EscrowSettings>(escrow_list, idx);
             if (settings.account == account) {
                 settings.share = new_percentage;
-                break
+                return
             };
             idx = idx + 1;
         };
