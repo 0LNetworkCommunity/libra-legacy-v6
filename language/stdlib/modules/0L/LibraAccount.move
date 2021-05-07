@@ -39,6 +39,7 @@ module LibraAccount {
     use 0x1::FullnodeState;
     use 0x1::Testnet::is_testnet;
     use 0x1::FIFO;
+    use 0x1::FixedPoint32;
 
     /// An `address` is a Libra Account if it has a published LibraAccount resource.
     resource struct LibraAccount {
@@ -219,8 +220,15 @@ module LibraAccount {
     }
 
     resource struct EscrowList<Token>{
-        accounts: vector<address>
+        accounts: vector<EscrowSettings>
     }
+
+    struct EscrowSettings{
+        account: address, 
+        //what percent of your available account limit should be dedicated to autopay?
+        share: u64,
+    }
+
     //////// 0L ////////
     public fun new_escrow<Token>(
         account: &signer,
@@ -250,11 +258,11 @@ module LibraAccount {
         Roles::assert_libra_root(account);
 
         let account_list = &borrow_global<EscrowList<Token>>(CoreAddresses::LIBRA_ROOT_ADDRESS()).accounts;
-        let account_len = Vector::length<address>(account_list);
+        let account_len = Vector::length<EscrowSettings>(account_list);
         let account_idx = 0;
 
         while (account_idx < account_len) {
-            let account_addr = Vector::borrow<address>(account_list, account_idx);
+            let EscrowSettings {account: account_addr, share: percentage} = Vector::borrow<EscrowSettings>(account_list, account_idx);
 
             //get transfer limit room
             let (limit_room, withdrawal_allowed) = AccountLimits::max_withdrawal<Token>(*account_addr);
@@ -262,6 +270,8 @@ module LibraAccount {
                 account_idx = account_idx + 1;
                 continue
             };
+
+            limit_room = FixedPoint32::multiply_u64(limit_room , FixedPoint32::create_from_rational(*percentage, 100));
 
             let amount_sent: u64 = 0;
 
@@ -315,9 +325,23 @@ module LibraAccount {
                 list: FIFO::empty<Escrow<Token>>()
             });
             let escrow_list = &mut borrow_global_mut<EscrowList<Token>>(CoreAddresses::LIBRA_ROOT_ADDRESS()).accounts;
+            let idx = 0;
+            let len = Vector::length<EscrowSettings>(escrow_list);
+            let found = false;
 
-            if (!Vector::contains<address>(escrow_list, &account)){
-                Vector::push_back<address>(escrow_list, account);
+            while (idx < len) {
+                let account_addr = Vector::borrow<EscrowSettings>(escrow_list, idx).account;
+                if (account_addr == account) {
+                    found = true;
+                    break
+                };
+                idx = idx + 1;
+            };
+            if (!found){
+                //share initialized to 100
+                let default_percentage: u64 = 100;
+                let settings = EscrowSettings{ account: account, share: default_percentage};
+                Vector::push_back<EscrowSettings>(escrow_list, settings);
             };
         };
 
@@ -326,7 +350,33 @@ module LibraAccount {
     public fun initialize_escrow_root<Token>(
         sender: &signer
     ) {
-        move_to<EscrowList<Token>>(sender, EscrowList<Token>{ accounts: Vector::empty<address>()});
+        move_to<EscrowList<Token>>(sender, EscrowList<Token>{ accounts: Vector::empty<EscrowSettings>()});
+    }
+
+    public fun update_escrow_percentage<Token>(
+        sender: &signer, 
+        new_percentage: u64,
+    ) acquires EscrowList {
+        assert(new_percentage >= 50, 1);
+        assert(new_percentage <= 100, 1);
+
+        let escrow_list = &mut borrow_global_mut<EscrowList<Token>>(CoreAddresses::LIBRA_ROOT_ADDRESS()).accounts; 
+        let account = Signer::address_of(sender);
+        let idx = 0;
+        let len = Vector::length<EscrowSettings>(escrow_list);
+
+        while (idx < len) {
+            let settings = Vector::borrow_mut<EscrowSettings>(escrow_list, idx);
+            if (settings.account == account) {
+                settings.share = new_percentage;
+                break
+            };
+            idx = idx + 1;
+        };
+        //should never reach this point, if you do, autopay does not exist for the account.
+        assert(false, 1);
+
+
     }
 
 
