@@ -7,7 +7,7 @@ use crate::{
     entrypoint,
     mgmt::{
         self,
-        management::NodeMode::{self, *},
+        management::NodeMode::*,
     },
     node::client,
     node::node::Node,
@@ -83,7 +83,7 @@ pub fn pilot_db(mut node: &mut Node, verbose: bool) -> &mut Node {
     node
 }
 
-pub fn pilot_once(mut node: &mut Node, wp: Waypoint, verbose: bool) {
+pub fn pilot_once(mut node: &mut Node, wp: Waypoint, verbose: bool) -> &mut Node{
     let cfg = node.conf.to_owned();
 
     if verbose {
@@ -91,25 +91,32 @@ pub fn pilot_once(mut node: &mut Node, wp: Waypoint, verbose: bool) {
     }
     // Start the webserver before anything else
     if Node::is_web_monitor_serving() {
+        node.vitals.host_state.monitor_state = MonitorState::Serving;
+
         if verbose {
             status_ok!("Web", "web monitor is serving on 3030");
         }
     } else {
+        node.vitals.host_state.monitor_state = MonitorState::Stopped;
+
         if verbose {
             status_warn!("web monitor is NOT serving 3030. Attempting start.");
         }
         node.start_monitor();
+        node.vitals.host_state.monitor_state = MonitorState::Serving;
     }
 
-    // exit if cannot connect to any client, local or upstream.
     let is_in_val_set = node.refresh_onchain_state().is_in_validator_set();
     match is_in_val_set {
         true => {
+            node.vitals.host_state.account_state = AccountState::InSet;
             if verbose {
                 status_ok!("Node", "account is in validator set")
             }
         }
         false => {
+          // TODO: we don't know if the account exists from the is_in_validator_set check
+            node.vitals.host_state.account_state = AccountState::None;
             if verbose {
                 status_warn!("Node: account is NOT in validator set")
             }
@@ -121,23 +128,40 @@ pub fn pilot_once(mut node: &mut Node, wp: Waypoint, verbose: bool) {
         if verbose {
             status_ok!("Node", "node is running");
         }
-        maybe_switch_mode(&mut node, is_in_val_set);
+        node.vitals.host_state.node_state = maybe_switch_mode(&mut node, is_in_val_set);
     } else {
         let start_mode = if is_in_val_set { Validator } else { Fullnode };
 
         if verbose {
-            status_warn!("node is NOT running, starting in {:?} mode", start_mode);
+            status_warn!("node is NOT running, starting in {:?} mode", &start_mode);
         }
 
-        node.start_node(start_mode).expect("could not start node");
+        node.vitals.host_state.node_state = match node.start_node(start_mode.clone()) {
+            Ok(_) => {
+
+              match &start_mode {
+                Validator => NodeState::ValidatorMode,
+                Fullnode => NodeState::FullnodeMode,
+              }
+
+            }
+            Err(_) => {
+              if verbose {
+                  status_warn!(&format!("could not start node in: {:?}", &start_mode));
+              }
+              NodeState::Stopped
+            }
+        } 
     }
 
     //////// MINER RULES ////////
     if Node::miner_running() {
+        node.vitals.host_state.miner_state = MinerState::Mining;
         if verbose {
             status_ok!("Miner", "miner is running")
         }
     } else {
+      node.vitals.host_state.miner_state = MinerState::Stopped;
         if verbose {
             status_warn!("miner is NOT running");
             status_info!("Miner", "will try to start miner");
@@ -160,6 +184,8 @@ pub fn pilot_once(mut node: &mut Node, wp: Waypoint, verbose: bool) {
                     status_ok!("Account", "owner account found on chain. Starting miner");
                 }
                 node.start_miner();
+                node.vitals.host_state.miner_state = MinerState::Mining;
+
             } else {
                 if verbose {
                     status_warn!("error trying to start miner. Owner account does NOT exist on chain. Was the account creation transaction submitted?")
@@ -172,9 +198,11 @@ pub fn pilot_once(mut node: &mut Node, wp: Waypoint, verbose: bool) {
         }
     }
     thread::sleep(Duration::from_millis(10_000));
+
+    node
 }
 
-fn maybe_switch_mode(node: &mut Node, is_in_val_set: bool) -> Option<NodeMode> {
+fn maybe_switch_mode(node: &mut Node, is_in_val_set: bool) -> NodeState {
     let running_mode = Node::what_node_mode().expect("could not detect node mode");
     status_ok!("Mode", "node running in mode: {:?}", running_mode);
 
@@ -182,13 +210,13 @@ fn maybe_switch_mode(node: &mut Node, is_in_val_set: bool) -> Option<NodeMode> {
     // Running correctly as a FULLNODE
     if !running_in_val_mode && !is_in_val_set {
         status_ok!("Mode", "running the correct mode {:?}. Noop.", running_mode);
-        return None;
+        return NodeState::FullnodeMode;
     }
     // Running correctly as a VALIDATOR
     // Do nothing, the account is in validator set, and we are running as a validator
     if running_in_val_mode && is_in_val_set {
         status_ok!("Mode", "running the correct mode {:?}. Noop.", running_mode);
-        return None;
+        return NodeState::ValidatorMode;
     }
 
     // INCORRECT CASE 1: Need to change mode from Fullnode to Validator mode
@@ -197,7 +225,7 @@ fn maybe_switch_mode(node: &mut Node, is_in_val_set: bool) -> Option<NodeMode> {
         node.stop_node();
         node.start_node(Validator).expect("could not start node");
 
-        return Some(Validator);
+        return NodeState::ValidatorMode;
     }
 
     // INCORRECT CASE 2: Need to change mode from Validator to Fullnode mode
@@ -206,8 +234,8 @@ fn maybe_switch_mode(node: &mut Node, is_in_val_set: bool) -> Option<NodeMode> {
         node.stop_node();
         node.start_node(Validator).expect("could not start node");
 
-        return Some(Fullnode);
+        return NodeState::FullnodeMode;
     }
 
-    None
+    NodeState::Stopped
 }
