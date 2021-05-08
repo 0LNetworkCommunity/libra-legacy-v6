@@ -15,6 +15,7 @@ use tui::{
     },
     Frame,
 };
+use crate::node::node::Node;
 
 /// draw app
 pub fn draw<B: Backend>(f: &mut Frame<'_, B>, app: &mut App<'_>) {
@@ -33,12 +34,87 @@ pub fn draw<B: Backend>(f: &mut Frame<'_, B>, app: &mut App<'_>) {
         .select(app.tabs.index);
     f.render_widget(tabs, chunks[0]);
     match app.tabs.index {
-        0 => draw_first_tab(f, app, chunks[1]),
-        1 => draw_second_tab(f, app, chunks[1]),
-        2 => draw_txs_tab(f, app, chunks[1]),
-        3 => draw_third_tab(f, app, chunks[1]),
+        0 => draw_pilot_tab(f, app, chunks[1]),
+        1 => draw_first_tab(f, app, chunks[1]),
+        2 => draw_second_tab(f, app, chunks[1]),
+        3 => draw_txs_tab(f, app, chunks[1]),
+        4 => draw_third_tab(f, app, chunks[1]),
         _ => {}
     };
+}
+
+///draw first tab
+fn draw_pilot_tab<B>(f: &mut Frame<'_, B>, app: &mut App<'_>, area: Rect)
+    where
+        B: Backend,
+{
+    let status_webserver = if Node::is_web_monitor_serving() {
+        "web monitor is serving on 3030"
+    }else{
+        "web monitor is NOT serving 3030. "
+    };
+    let mut status_db_bootstrapped = "libraDB is not bootstrapped. Database needs a valid set of transactions to boot. Try `ol restore` to fetch backups from archive.";
+    let status_file = if app.node.db_files_exist() {
+        if app.node.db_bootstrapped() {
+            status_db_bootstrapped = "LibraDB is bootstrapped."
+        }
+        "DB files exist"
+    }else{
+        "DB files does NOT exists"
+    };
+    let text = vec![
+        Spans::from(vec![
+            Span::from("WebServer "),
+            Span::styled(
+                format!("{}", status_webserver),
+                Style::default().add_modifier(Modifier::BOLD),
+            ),
+        ]),
+        Spans::from(vec![
+            Span::from("Files Check: "),
+            Span::styled(
+                format!("{}", status_file),
+                Style::default().add_modifier(Modifier::BOLD),
+            ),
+        ]),
+        Spans::from(vec![
+            Span::raw("DB Checks: "),
+            Span::styled(
+                format!("{}", status_db_bootstrapped),
+                Style::default().add_modifier(Modifier::BOLD),
+            ),
+        ]),
+        Spans::from(vec![
+            Span::raw("Validator Checks:"),
+            Span::raw(if app.node.is_in_validator_set() {
+                "Account is in validator set"
+            }else{
+                "Account is NOT in validator set"
+            }),
+        ]),
+        Spans::from(vec![
+            Span::raw("Node Checks:"),
+            Span::raw(if Node::node_running() {
+                "Node is running"
+            }else{
+                "Node is NOT running"
+            }),
+        ]),
+        Spans::from(vec![
+            Span::raw("Miner Checks:"),
+            Span::raw(if Node::miner_running() {
+                "Miner is running"
+            }else{
+                "Miner is NOT running"
+            }),
+        ]),
+
+    ];
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .title(Span::styled(" Checks ", Style::default()));
+    let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
+    f.render_widget(paragraph, area);
 }
 
 ///draw first tab

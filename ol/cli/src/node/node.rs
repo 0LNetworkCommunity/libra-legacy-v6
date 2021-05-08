@@ -115,17 +115,11 @@ impl Node {
     }
 
     /// Get waypoint from client
-    pub fn waypoint(&mut self) -> Waypoint {
-        self.client
-            .get_state_proof()
-            .expect("Failed to get state proof"); // refresh latest state proof
-        let waypoint = self.client.waypoint();
-        match waypoint {
-            Some(w) => w,
-            None => self
-                .conf
-                .get_waypoint(None)
-                .expect("could not get waypoint"),
+    pub fn waypoint(&mut self) -> Option<Waypoint> {
+        match self.client
+            .get_state_proof() {
+            Ok(_t) => self.client.waypoint(),
+            Err(_) => None
         }
     }
 
@@ -146,7 +140,7 @@ impl Node {
                 false
             }
             None => {
-                println!("No chain state retrieved");
+                //println!("No chain state retrieved");
                 false
             }
         }
@@ -187,7 +181,7 @@ impl Node {
                 Ok(db) => {
                     return db.get_latest_version().is_ok();
                 }
-                Err(e) => println!("Failed to open db:{}", e),
+                Err(_e) => (),
             }
         }
         return false;
