@@ -20,3 +20,4 @@ pub mod cache;
 pub mod check;
 pub mod explorer;
 pub mod server;
+pub mod migrate;

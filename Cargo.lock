@@ -4990,6 +4990,7 @@ dependencies = [
  "clokwerk",
  "crossterm",
  "dirs 2.0.2",
+ "fs_extra",
  "futures 0.3.6",
  "glob",
  "gumdrop",

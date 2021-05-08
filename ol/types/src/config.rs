@@ -173,7 +173,7 @@ impl AppCfg {
   /// Save swarm default configs to swarm path
   /// swarm_path points to the swarm_temp directory
   /// node_home to the directory of the current swarm persona
-  pub fn init_swarm_config(swarm_path: PathBuf, node_home: PathBuf) -> AppCfg{
+  pub fn init_app_configs_swarm(swarm_path: PathBuf, node_home: PathBuf) -> AppCfg{
     // println!("init_swarm_config: {:?}", swarm_path); already logged in commands.rs
     let host_config = AppCfg::make_swarm_configs(swarm_path, node_home);
     AppCfg::save_file(&host_config);
