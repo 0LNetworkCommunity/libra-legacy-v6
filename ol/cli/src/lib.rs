@@ -21,3 +21,4 @@ pub mod check;
 pub mod explorer;
 pub mod server;
 pub mod migrate;
+pub mod pilot;
