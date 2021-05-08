@@ -27,8 +27,11 @@ pub enum OnboardState {
     EmptyBox,
     /// Files initialized node.yaml, key_store.json
     ValConfigsOk,
+
+    /// DB files 
+    DbFilesOk,
     /// Database restored from backup
-    DbRestoredOk,
+    DbBootstrapOk,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
