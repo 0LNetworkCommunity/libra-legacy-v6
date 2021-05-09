@@ -67,9 +67,9 @@ impl Node {
     /// Start Node, as fullnode
     pub fn start_node(&mut self, config_type: NodeMode) -> Result<(), Error> {
         use BINARY_NODE as NODE;
-        // let print_gag = Gag::stdout().unwrap();
+        let print_gag = Gag::stdout().unwrap();
         // if is running do nothing
-        // TODO: Get a nother check of node running
+        // TODO: Get another check of node running
         if node::Node::node_running() {
             println!("{} is already running. Exiting.", NODE);
             return Ok(());
@@ -110,7 +110,7 @@ impl Node {
         let pid = &child.id();
         self.save_pid(NODE, *pid);
         println!("Started new with PID: {}", pid);
-        // drop(print_gag);
+        drop(print_gag);
         Ok(())
 
     }

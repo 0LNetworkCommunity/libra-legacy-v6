@@ -58,40 +58,4 @@ impl Items {
       ..Self::default()
     }
   }
-
-  // /// Returns object in init state
-  // pub fn init() -> Items {
-  //   //TODO: Check if db exists
-  //   let items = Items::new(false);
-
-  //   // check if we can read the data, otherwise, init
-  //   match DB_CACHE_READ.get(ITEMS_KEY) {
-  //       Ok(_) => {}
-  //       Err(_) => {
-  //         // initialize the cache.
-  //         items.write_cache();
-  //       }
-  //   }
-  //   items
-  // }
-
-  // /// Saves the Items to cache
-  // pub fn write_cache(&self) {
-  //   let serialized = serde_json::to_vec(&self.clone()).unwrap();
-  //   match DB_CACHE.put(ITEMS_KEY, serialized) {
-  //     Ok(_) => {}
-  //     Err(err) => {
-  //       dbg!(&err);
-  //     }
-  //   };
-  // }
-
-  // /// Get from cache
-  // pub fn read_cache() -> Option<Items> {
-  //   let q = DB_CACHE_READ.get("items").unwrap().unwrap();
-  //   match serde_json::from_slice(&q.as_slice()) {
-  //     Ok(items) => Some(items),
-  //     Err(_) => None,
-  //   }
-  // }
 }

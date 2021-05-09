@@ -1,5 +1,4 @@
 use crate::explorer::App;
-// use crate::node::node::Node;
 use crate::{cache::Vitals};
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
 use std::convert::TryFrom;
@@ -32,11 +31,11 @@ pub fn draw<B: Backend>(f: &mut Frame<'_, B>, app: &mut App<'_>) {
         .select(app.tabs.index);
     f.render_widget(tabs, chunks[0]);
     match app.tabs.index {
-        0 => draw_pilot_tab(f, app, chunks[1]),
-        1 => draw_first_tab(f, app, chunks[1]),
-        2 => draw_second_tab(f, app, chunks[1]),
+        0 => draw_explorer_tab(f, app, chunks[1]),
+        1 => draw_pilot_tab(f, app, chunks[1]),
+        2 => draw_network_tab(f, app, chunks[1]),
         3 => draw_txs_tab(f, app, chunks[1]),
-        4 => draw_third_tab(f, app, chunks[1]),
+        4 => draw_coins_tab(f, app, chunks[1]),
         _ => {}
     };
 }
@@ -46,88 +45,73 @@ fn draw_pilot_tab<B>(f: &mut Frame<'_, B>, app: &mut App<'_>, area: Rect)
 where
     B: Backend,
 {
-    // let status_webserver = if Node::is_web_monitor_serving() {
-    //     "web monitor is serving on 3030"
-    // } else {
-    //     "web monitor is NOT serving 3030. "
-    // };
-    // let mut status_db_bootstrapped = "libraDB is not bootstrapped. Database needs a valid set of transactions to boot. Try `ol restore` to fetch backups from archive.";
-    // let status_file = if app.node.db_files_exist() {
-    //     if app.node.db_bootstrapped() {
-    //         status_db_bootstrapped = "LibraDB is bootstrapped."
-    //     }
-    //     "DB files exist"
-    // } else {
-    //     "DB files does NOT exists"
-    // };
-    // let text = vec![
-    //     Spans::from(vec![
-    //         Span::from("WebServer "),
-    //         Span::styled(
-    //             format!("{}", status_webserver),
-    //             Style::default().add_modifier(Modifier::BOLD),
-    //         ),
-    //     ]),
-    //     Spans::from(vec![
-    //         Span::from("Files Check: "),
-    //         Span::styled(
-    //             format!("{}", status_file),
-    //             Style::default().add_modifier(Modifier::BOLD),
-    //         ),
-    //     ]),
-    //     Spans::from(vec![
-    //         Span::raw("DB Checks: "),
-    //         Span::styled(
-    //             format!("{}", status_db_bootstrapped),
-    //             Style::default().add_modifier(Modifier::BOLD),
-    //         ),
-    //     ]),
-    //     Spans::from(vec![
-    //         Span::raw("Validator Checks:"),
-    //         Span::raw(if app.node.is_in_validator_set() {
-    //             "Account is in validator set"
-    //         } else {
-    //             "Account is NOT in validator set"
-    //         }),
-    //     ]),
-    //     Spans::from(vec![
-    //         Span::raw("Node Checks:"),
-    //         Span::raw(if Node::node_running() {
-    //             "Node is running"
-    //         } else {
-    //             "Node is NOT running"
-    //         }),
-    //     ]),
-    //     Spans::from(vec![
-    //         Span::raw("Miner Checks:"),
-    //         Span::raw(if Node::miner_running() {
-    //             "Miner is running"
-    //         } else {
-    //             "Miner is NOT running"
-    //         }),
-    //     ]),
-    // ];
-        let node_home = app.node.conf.clone().workspace.node_home.clone();
-        let cached_vitals = Vitals::read_json(&node_home);
-        let text = vec![
+
+    let node_home = app.node.conf.clone().workspace.node_home.clone();
+    let cached_vitals = Vitals::read_json(&node_home);
+
+    let status_webserver = if cached_vitals.items.web_running {
+        "web monitor is serving on port 3030"
+    } else {
+        "web monitor is NOT SERVING"
+    };
+    let mut status_db_bootstrapped = "LibraDB is NOT BOOTSTRAPPED";
+    
+    let status_file = if cached_vitals.items.db_files_exist {
+        if cached_vitals.items.db_restored {
+            status_db_bootstrapped = "LibraDB is bootstrapped."
+        }
+        "DB files exist"
+    } else {
+        "DB files do NOT EXIST"
+    };
+    let text = vec![
         Spans::from(vec![
-            Span::from("WebServer "),
-            Span::styled(
-                format!("test"),
-                Style::default().add_modifier(Modifier::BOLD),
-            ),
-        ])
-      ];
+            Span::from("\n WebServer "),
+            Span::raw(status_webserver),
+        ]),
+        Spans::from(vec![
+            Span::from("\n Files Check: "),
+            Span::raw(status_file),
+        ]),
+        Spans::from(vec![
+            Span::raw("\n DB Checks: "),
+            Span::raw(status_db_bootstrapped),
+        ]),
+        Spans::from(vec![
+            Span::raw("\n Validator Check: "),
+            Span::raw(if cached_vitals.items.validator_set {
+                "Account is in validator set"
+            } else {
+                "Account is NOT in validator set"
+            }),
+        ]),
+        Spans::from(vec![
+            Span::raw("\n Node Checks: "),
+            Span::raw(if cached_vitals.items.node_running {
+                "Node is running"
+            } else {
+                "Node is NOT running"
+            }),
+        ]),
+        Spans::from(vec![
+            Span::raw("\n Miner Checks: "),
+            Span::raw(if cached_vitals.items.miner_running  {
+                "Miner is running"
+            } else {
+                "Miner is NOT running"
+            }),
+        ]),
+    ];
 
     let block = Block::default()
         .borders(Borders::ALL)
-        .title(Span::styled(" Checks ", Style::default()));
+        .title(Span::styled(" Status ", Style::default()));
     let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
     f.render_widget(paragraph, area);
 }
 
 ///draw first tab
-fn draw_first_tab<B>(f: &mut Frame<'_, B>, app: &mut App<'_>, area: Rect)
+fn draw_explorer_tab<B>(f: &mut Frame<'_, B>, app: &mut App<'_>, area: Rect)
 where
     B: Backend,
 {
@@ -354,7 +338,7 @@ where
 }
 
 /// draw second tab
-fn draw_second_tab<B>(f: &mut Frame<'_, B>, app: &mut App<'_>, area: Rect)
+fn draw_network_tab<B>(f: &mut Frame<'_, B>, app: &mut App<'_>, area: Rect)
 where
     B: Backend,
 {
@@ -440,7 +424,7 @@ where
 }
 
 /// draw third tab
-fn draw_third_tab<B>(f: &mut Frame<'_, B>, app: &mut App<'_>, area: Rect)
+fn draw_coins_tab<B>(f: &mut Frame<'_, B>, app: &mut App<'_>, area: Rect)
 where
     B: Backend,
 {

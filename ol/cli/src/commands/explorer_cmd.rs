@@ -1,8 +1,8 @@
 //! `monitor-cmd` subcommand
 
 use abscissa_core::{Command, Options, Runnable};
-use crate::{application::app_config, check::{self, runner}, entrypoint, explorer::event::{Events, Config, Event}, mgmt, node::{client, node::Node}};
-use std::{thread, time::Duration};
+use crate::{application::app_config, entrypoint, explorer::event::{Events, Config, Event}, node::{client, node::Node}};
+use std::time::Duration;
 use std::io;
 use termion::{event::Key, input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
 use tui::backend::TermionBackend;
@@ -42,16 +42,18 @@ impl Runnable for ExplorerCMD {
         let mut terminal = Terminal::new(backend).expect("Failed to initial screen");
 
         let client = client::pick_client(args.swarm_path, &cfg).unwrap().0;
-        let mut node = Node::new(client, cfg);
+        let node = Node::new(client, cfg);
         
+        // TODO: optionally start explorer with the pilot process in a thread
         // Start the health check runner in background, optionally with --pilot, which starts services.
-        node.start_pilot();
+        // check if pilot or something else is already running.
+        // thread::spawn(move || {
+        //     runner::run_checks(&mut node, false, true, false);
+        // });
 
-        let mut app = App::new(" Block Explorer Menu ", self.enhanced_graphics, node);
+        let mut app = App::new(" Console ", self.enhanced_graphics, node);
         app.fetch();
         terminal.clear().unwrap();
-
-
         
         loop {
             terminal.draw(|f| ui::draw(f, &mut app))

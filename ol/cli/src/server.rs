@@ -56,12 +56,6 @@ pub async fn start_server(node: Node) {
     //GET /
     let landing = warp::fs::dir(web_files);
 
-    // TODO: Perhaps a better way to keep the check cache fresh?
-    // check if pilot or something else is already running.
-    // thread::spawn(move || {
-    //     runner::run_checks(&mut node, false, true, false);
-    // });
-
     warp::serve(landing.or(account_template).or(vitals_route).or(epoch_route))
         .run(([0, 0, 0, 0], 3030))
         .await;
