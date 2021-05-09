@@ -61,10 +61,10 @@ impl Node {
     /// refresh all checks
     pub fn refresh_checks(&mut self) -> &mut Self {
         self.vitals.items.configs_exist = self.configs_exist();
-        self.vitals.items.db_restored = self.db_files_exist();
-        // TODO: db_bootstrapped
-        // TODO: is web_monitor serving
-        // TODO: Node Mode: 
+        self.vitals.items.db_files_exist = self.db_files_exist();
+        self.vitals.items.db_restored = self.db_bootstrapped();
+        self.vitals.items.web_running = Node::is_web_monitor_serving();
+        self.vitals.items.node_mode = Node::what_node_mode().ok();
         self.vitals.items.node_running = Node::node_running();
         self.vitals.items.miner_running = Node::miner_running();
         self.vitals.items.account_created = self.accounts_exist_on_chain();
