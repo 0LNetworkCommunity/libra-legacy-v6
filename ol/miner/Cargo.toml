@@ -14,7 +14,7 @@ serde = { version = "1", features = ["serde_derive"] }
 thiserror = "1"
 classgroup = { path = "../../ol/verifiable_delay/classgroup", version = "^0.1.0" }
 vdf = { path = "../../ol/verifiable_delay/vdf", version = "^0.1.0" }
-hex = "0.4"
+hex = { version = "0.4.2", features = ["serde"] }
 byteorder = "1"
 glob = "0.3"
 serde_json = "1"

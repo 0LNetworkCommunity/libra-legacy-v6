@@ -88,7 +88,7 @@ impl Node {
 
       OnboardEvents::RestoreDb => {
         if self.vitals.host_state.onboard_state == ValConfigsOk {
-          self.vitals.host_state.onboard_state = DbRestoredOk;
+          self.vitals.host_state.onboard_state = DbBootstrapOk;
         }
       }
       }
@@ -176,7 +176,8 @@ impl Node {
           }
         }
       }
-      OnboardState::DbRestoredOk => {
+      OnboardState::DbFilesOk => {}
+      OnboardState::DbBootstrapOk => {
         // if check.node_running() {
         //   &self.onboard_transition(OnboardEvents::StartFullnode, trigger_action);
         // } else {

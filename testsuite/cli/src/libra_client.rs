@@ -173,7 +173,7 @@ impl LibraClient {
         let mut batch = JsonRpcBatch::new();
         // batch.add_miner_state_with_proof_request(account, Some(self.trusted_state.latest_version()));
         batch.add_query_oracle_upgrade_with_proof_request( None);
-
+        // dbg!("hello")
         let responses = self.client.execute(batch)?;
         match get_response_from_batch(0, &responses)? {
             Ok(result) => {
@@ -332,17 +332,18 @@ impl LibraClient {
         let latest_epoch_change_li = match self.latest_epoch_change_li() {
             Some(li) => li,
             None => {
-                println!("No epoch change LedgerInfo found");
+                // println!("No epoch change LedgerInfo found");
                 return None;
             }
         };
 
         match Waypoint::new_epoch_boundary(latest_epoch_change_li.ledger_info()) {
-            Err(e) => {
-                println!("Failed to generate a waypoint: {}", e);
+          Ok(waypoint) => Some(waypoint),  
+          Err(_) => {
+                // println!("Failed to generate a waypoint: {}", e);
                 None
             },
-            Ok(waypoint) => Some(waypoint),
+            
         }
     }
 

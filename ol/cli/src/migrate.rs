@@ -1,4 +1,4 @@
-/// ol-util
+//! migrates the AppConfig file 0L.toml
 ///
 /// tool to migrate config files
 /// should be run after version upgrade
@@ -18,14 +18,15 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::PathBuf;
 
-fn main() {
-    let node_home = dirs::home_dir().unwrap().join(NODE_HOME);
-    let config_file = node_home.join(CONFIG_FILE);
+/// Migrate the toml file
+pub fn migrate(opt_home_path: Option<PathBuf>) {
+    let home = opt_home_path.unwrap_or(dirs::home_dir().unwrap().join(NODE_HOME));
+    let config_file = home.join(CONFIG_FILE);
 
-    migrate_0l_toml(config_file, node_home);
+    migrate_toml(config_file, home);
 }
 
-fn migrate_0l_toml(config_file: PathBuf, node_home: PathBuf) {
+fn migrate_toml(config_file: PathBuf, node_home: PathBuf) {
     if !config_file.exists() {
         println!("config file: {:?} does not exist - no migration possible", config_file);
         return;
@@ -181,6 +182,7 @@ pub fn add_or_update_s(filename: &PathBuf, section: &str, attribute: &str, value
     add_or_update(filename, section, attribute, format!("\"{}\"", value));
 }
 
+/// TODO:
 pub fn add_or_update_n(filename: &PathBuf, section: &str, attribute: &str, value: i64) {
     add_or_update(filename, section, attribute, value.to_string());
 }
