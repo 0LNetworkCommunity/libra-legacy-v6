@@ -12,6 +12,7 @@ use std::{
     fs::{self, File},
     process::{Command, Stdio},
 };
+use gag::Gag;
 
 const BINARY_NODE: &str = "libra-node";
 const BINARY_MINER: &str = "miner";
@@ -66,6 +67,7 @@ impl Node {
     /// Start Node, as fullnode
     pub fn start_node(&mut self, config_type: NodeMode) -> Result<(), Error> {
         use BINARY_NODE as NODE;
+        // let print_gag = Gag::stdout().unwrap();
         // if is running do nothing
         // TODO: Get a nother check of node running
         if node::Node::node_running() {
@@ -108,11 +110,15 @@ impl Node {
         let pid = &child.id();
         self.save_pid(NODE, *pid);
         println!("Started new with PID: {}", pid);
+        // drop(print_gag);
         Ok(())
+
     }
 
     /// Start Miner
     pub fn start_miner(&mut self) {
+        let print_gag = Gag::stdout().unwrap();
+
         // Stop any processes we may have started and detached from.
         // if is running do nothing
         use BINARY_MINER as MINER;
@@ -150,6 +156,7 @@ impl Node {
         let pid = &child.id();
         self.save_pid(MINER, *pid);
         println!("Started with PID {} in the background", pid);
+        drop(print_gag);
     }
 
     /// Start Monitor
