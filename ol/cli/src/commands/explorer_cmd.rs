@@ -49,7 +49,7 @@ impl Runnable for ExplorerCMD {
         terminal.clear().unwrap();
 
         // Start the health check runner in background, optionally with --pilot, which starts services.
-        check::runner::run_checks(&mut app.node, !self.skip_pilot ,true, false);
+        check::runner::run_checks(&mut app.node, !self.skip_pilot, true, false);
 
         loop {
             terminal.draw(|f| ui::draw(f, &mut app))

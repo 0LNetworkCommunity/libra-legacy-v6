@@ -33,10 +33,6 @@ pub struct StartCmd {
         help = "Connect to upstream node, instead of default (local) node"
     )]
     url: Option<Url>,
-
-    // Option for operator to submit transactions for owner.
-    #[options(short = "o", help = "Operator will submit transactions for owner")]
-    is_operator: bool,
 }
 
 impl Runnable for StartCmd {
@@ -51,7 +47,7 @@ impl Runnable for StartCmd {
             use_upstream_url,
             ..
         } = entrypoint::get_args();
-
+        
         //TODO(mortonbits): In the case of swarm this needs to take from swarm_temp/0/, and not from  ~/.0L, as I think is happening here.
         let cfg = app_config().clone();
 
@@ -78,12 +74,13 @@ impl Runnable for StartCmd {
 
         // Check for, and submit backlog proofs.
         if !self.skip_backlog {
-            backlog::process_backlog(&cfg, &tx_params, self.is_operator);
+          // TODO: remove is_operator from signature, since tx_params has it.
+            backlog::process_backlog(&cfg, &tx_params, is_operator);
         }
 
         if !self.backlog_only {
             // Steady state.
-            let result = mine_and_submit(&cfg, tx_params, self.is_operator);
+            let result = mine_and_submit(&cfg, tx_params, is_operator);
             match result {
                 Ok(_val) => {}
                 Err(err) => {

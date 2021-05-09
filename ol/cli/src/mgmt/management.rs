@@ -123,7 +123,7 @@ impl Node {
 
         let child = if *IS_PROD {
             // start as operator, so that mnemonic is not needed.
-            let args = vec!["start", "-o"];
+            let args = vec!["-o", "start"];
             // if use_backup { args.push("--backup-url"); };
             println!("Starting '{}' with args: {:?}", MINER, args.join(" "));
             spawn_process(
@@ -137,7 +137,7 @@ impl Node {
             let debug_bin = project_root.join(format!("target/debug/{}", MINER));
             let bin_str = debug_bin.to_str().unwrap();
             // start as operator, so that mnemonic is not needed.
-            let args = vec!["start", "-o"];
+            let args = vec!["-o", "start"];
             println!("Starting 'miner' with args: {:?}", args.join(" "));
             spawn_process(
                 bin_str,
