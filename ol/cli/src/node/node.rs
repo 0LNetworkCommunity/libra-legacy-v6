@@ -121,7 +121,9 @@ impl Node {
         match self.client
             .get_state_proof() {
             Ok(_t) => self.client.waypoint(),
-            Err(_) => None
+            Err(_) => {
+              self.conf.get_waypoint(None)
+            }
         }
     }
 

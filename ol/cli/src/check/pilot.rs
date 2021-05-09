@@ -53,8 +53,6 @@ pub fn maybe_restore_db(mut node: &mut Node, verbose: bool) -> &mut Node {
 
 /// run once
 pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
-    // let print_gag = Gag::stdout().unwrap();
-
     let cfg = node.conf.to_owned();
     let wp = node.waypoint().unwrap();
     if verbose {
