@@ -1,7 +1,7 @@
 //! `monitor-cmd` subcommand
 
 use abscissa_core::{Command, Options, Runnable};
-use crate::{application::app_config, entrypoint, explorer::event::{Events, Config, Event}, node::{client, node::Node}};
+use crate::{application::app_config, check, entrypoint, explorer::event::{Events, Config, Event}, node::{client, node::Node}};
 use std::time::Duration;
 use std::io;
 use termion::{event::Key, input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
@@ -12,12 +12,17 @@ use crate::explorer::{App, ui};
 /// `explorer-cmd` subcommand
 #[derive(Command, Debug, Options)]
 pub struct ExplorerCMD {
-
+    ///
+    #[options(help = "Don't run the Pilot service to start apps")]
+    skip_pilot: bool,
+    ///
     #[options(help = "Tick rate of the screen", default="250")]
     tick_rate: u64,
-
+    ///
     #[options(help = "Using enhanced graphics", default="true")]
     enhanced_graphics: bool,
+
+
 }
 
 impl Runnable for ExplorerCMD {
@@ -42,6 +47,10 @@ impl Runnable for ExplorerCMD {
         let mut app = App::new(" Block Explorer Menu ", self.enhanced_graphics, node);
         app.fetch();
         terminal.clear().unwrap();
+
+        // Start the health check runner in background, optionally with --pilot, which starts services.
+        check::runner::run_checks(&mut app.node, !self.skip_pilot ,true, false);
+
         loop {
             terminal.draw(|f| ui::draw(f, &mut app))
                 .expect("failed to draw screen");

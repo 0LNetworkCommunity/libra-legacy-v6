@@ -10,7 +10,6 @@ use crate::{
     node::node::Node,
 };
 use abscissa_core::{status_err, status_info, status_ok, status_warn};
-use libra_types::waypoint::Waypoint;
 use std::{thread, time::Duration};
 
 /// check the db
@@ -56,9 +55,9 @@ pub fn maybe_restore_db(mut node: &mut Node, verbose: bool) -> &mut Node {
 }
 
 /// run once
-pub fn run_once(mut node: &mut Node, wp: Waypoint, verbose: bool) -> &mut Node{
+pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node{
     let cfg = node.conf.to_owned();
-
+    let wp = node.waypoint().unwrap();
     if verbose {
         println!("==========================================");
     }
