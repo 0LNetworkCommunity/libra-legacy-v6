@@ -25,7 +25,7 @@ pub const NODE_PROCESS: &str = "libra-node";
 /// miner process name:
 pub const MINER_PROCESS: &str = "miner";
 
-/// Configuration used for checks we want to make on the node
+/// Configuration and state of node, account, and host.
 pub struct Node {
     /// 0L configs
     pub conf: AppCfg,
@@ -33,7 +33,6 @@ pub struct Node {
     pub client: LibraClient,
     /// vitals
     pub vitals: Vitals,
-
     // TODO: deduplicate these
     chain_state: Option<AccountState>,
     miner_state: Option<MinerStateResourceView>,
@@ -63,6 +62,9 @@ impl Node {
     pub fn refresh_checks(&mut self) -> &mut Self {
         self.vitals.items.configs_exist = self.configs_exist();
         self.vitals.items.db_restored = self.db_files_exist();
+        // TODO: db_bootstrapped
+        // TODO: is web_monitor serving
+        // TODO: Node Mode: 
         self.vitals.items.node_running = Node::node_running();
         self.vitals.items.miner_running = Node::miner_running();
         self.vitals.items.account_created = self.accounts_exist_on_chain();

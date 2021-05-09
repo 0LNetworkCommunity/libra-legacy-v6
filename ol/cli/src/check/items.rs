@@ -1,13 +1,18 @@
 //! `items`
 use std::str;
 use serde::{Deserialize, Serialize};
+
+use crate::mgmt::management::NodeMode;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-/// Steps needed to initialize a miner
+/// Healthcheck summary items
 pub struct Items {
   /// node configs created
   pub configs_exist: bool,
-  /// current epoch
+  /// are there db files
+  pub db_files_exist: bool,
+  /// is the db boostrapped
+  // TODO: Change the name to db_bootstrapped, requires changes to web.
   pub db_restored: bool,
   /// account created
   pub account_created: bool,
@@ -15,6 +20,10 @@ pub struct Items {
   pub node_running: bool,
   /// miner running
   pub miner_running: bool,
+  /// web serving
+  pub web_running: bool,
+  /// node mode
+  pub node_mode: Option<NodeMode>,
   /// is the blockchain in sync with upstream
   pub is_synced: bool,
   /// how far behind is the node
@@ -34,6 +43,9 @@ impl Default for Items {
       is_synced: false,
       sync_delay: 0,
       validator_set: false,
+      db_files_exist: false,
+      web_running: false,
+      node_mode: None,
     }
   }
 }

@@ -8,9 +8,6 @@ use ol_types::config::IS_PROD;
 
 use crate::{cache::Vitals, check::runner, node::node::Node};
 
-fn sse_vitals(data: Vitals) -> Result<impl ServerSentEvent, Infallible> {
-    Ok(warp::sse::json(data))
-}
 
 #[tokio::main]
 /// starts the web server
@@ -60,6 +57,7 @@ pub async fn start_server(node: Node) {
     let landing = warp::fs::dir(web_files);
 
     // TODO: Perhaps a better way to keep the check cache fresh?
+    // check if pilot or something else is already running.
     thread::spawn(move || {
         runner::run_checks(node, true, false);
     });
@@ -67,6 +65,11 @@ pub async fn start_server(node: Node) {
     warp::serve(landing.or(account_template).or(vitals_route).or(epoch_route))
         .run(([0, 0, 0, 0], 3030))
         .await;
+}
+
+
+fn sse_vitals(data: Vitals) -> Result<impl ServerSentEvent, Infallible> {
+    Ok(warp::sse::json(data))
 }
 
 /// Fetch updated static web files from release, for web-monitor.

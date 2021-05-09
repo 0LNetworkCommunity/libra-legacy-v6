@@ -19,7 +19,9 @@ pub fn maybe_restore_db(mut node: &mut Node, verbose: bool) -> &mut Node {
     // let wp = node.client.waypoint().unwrap().to_owned();
     // Abort if the database is not set correctly.
     node.vitals.host_state.onboard_state = OnboardState::EmptyBox;
+    
 
+    // TODO: db.vitals.db_restored
     if node.db_files_exist() {
         node.vitals.host_state.onboard_state = OnboardState::DbFilesOk;
 
@@ -77,6 +79,7 @@ pub fn run_once(mut node: &mut Node, wp: Waypoint, verbose: bool) -> &mut Node{
         node.vitals.host_state.monitor_state = MonitorState::Serving;
     }
 
+    // TODO: vitals.items.validator_set
     let is_in_val_set = node.refresh_onchain_state().is_in_validator_set();
     match is_in_val_set {
         true => {
@@ -95,6 +98,7 @@ pub fn run_once(mut node: &mut Node, wp: Waypoint, verbose: bool) -> &mut Node{
     }
 
     // is node started?
+    // TODO: vitals.node_running
     if Node::node_running() {
         if verbose {
             status_ok!("Node", "node is running");
@@ -125,7 +129,8 @@ pub fn run_once(mut node: &mut Node, wp: Waypoint, verbose: bool) -> &mut Node{
         } 
     }
 
-    //////// MINER RULES ////////
+    //////// MINER RULES ///////
+    // TODO: vitals.node_running
     if Node::miner_running() {
         node.vitals.host_state.miner_state = MinerState::Mining;
         if verbose {
@@ -143,6 +148,7 @@ pub fn run_once(mut node: &mut Node, wp: Waypoint, verbose: bool) -> &mut Node{
             }
         }
         // did the node finish sync?
+        // vitals.items.is_synced
         let sync_tup = Node::cold_start_is_synced(&cfg, wp);
         if sync_tup.0 {
             if verbose {
@@ -150,6 +156,8 @@ pub fn run_once(mut node: &mut Node, wp: Waypoint, verbose: bool) -> &mut Node{
             }
 
             // does the account exist on chain? otherwise sending mining txs will fail
+
+            // TODO: vitals.items.account_created
             if node.accounts_exist_on_chain() {
                 if verbose {
                     status_ok!("Account", "owner account found on chain. Starting miner");
