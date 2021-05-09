@@ -1,7 +1,7 @@
 //! `monitor-cmd` subcommand
 
 use abscissa_core::{Command, Options, Runnable};
-use crate::{application::app_config, check::{self, runner}, entrypoint, explorer::event::{Events, Config, Event}, node::{client, node::Node}};
+use crate::{application::app_config, check::{self, runner}, entrypoint, explorer::event::{Events, Config, Event}, mgmt, node::{client, node::Node}};
 use std::{thread, time::Duration};
 use std::io;
 use termion::{event::Key, input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
@@ -42,16 +42,17 @@ impl Runnable for ExplorerCMD {
         let mut terminal = Terminal::new(backend).expect("Failed to initial screen");
 
         let client = client::pick_client(args.swarm_path, &cfg).unwrap().0;
-        let node = Node::new(client, cfg);
+        let mut node = Node::new(client, cfg);
+        
+        // Start the health check runner in background, optionally with --pilot, which starts services.
+        node.start_pilot();
+
         let mut app = App::new(" Block Explorer Menu ", self.enhanced_graphics, node);
         app.fetch();
         terminal.clear().unwrap();
 
-        // // Start the health check runner in background, optionally with --pilot, which starts services.
-        // let test = thread::spawn(move || {
-        //     runner::run_checks(&mut app.node, !self.skip_pilot, true, false);
-        // });
 
+        
         loop {
             terminal.draw(|f| ui::draw(f, &mut app))
                 .expect("failed to draw screen");
