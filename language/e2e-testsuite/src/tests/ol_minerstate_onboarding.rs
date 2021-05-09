@@ -54,7 +54,7 @@ fn miner_onboarding() {
     // let full_node_network_address = "192.168.0.1".as_bytes().to_vec();
     // let human_name = "1ee7".as_bytes().to_vec();
 
-    let script = transaction_builder::encode_minerstate_onboarding_script(
+    let script = transaction_builder::encode_create_acc_val_script(
         preimage,
         proof,
         "3DC18D1CF61FAAC6AC70E3A63F062E4B".as_bytes().to_vec(),

@@ -19,7 +19,8 @@ use libra_mempool::MempoolClientSender;
 use libra_trace::prelude::*;
 use libra_types::{
     account_address::AccountAddress,
-    account_config::{from_currency_code_string, libra_root_address, AccountResource, miner_state::MinerStateResource},
+    account_config::{from_currency_code_string, libra_root_address, AccountResource, 
+      },
     account_state::AccountState,
     chain_id::ChainId,
     event::EventKey,
@@ -27,6 +28,8 @@ use libra_types::{
     mempool_status::MempoolStatusCode,
     transaction::SignedTransaction,
 };
+use ol_types::miner_state::MinerStateResource;
+
 use network::counters;
 use serde::de::DeserializeOwned;
 use serde_json::Value;
@@ -39,7 +42,7 @@ use std::{
 };
 use storage_interface::{DbReader, Order};
 use libra_json_rpc_types::views::{MinerStateResourceView, OracleResourceView};
-use libra_types::account_config::resources::oracle_upgrade::OracleResource;
+use ol_types::oracle_upgrade::OracleResource;
 
 #[derive(Clone)]
 pub(crate) struct JsonRpcService {

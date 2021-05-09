@@ -18,6 +18,7 @@ pub mod autopay_batch_cmd;
 mod demo_cmd;
 mod relay_cmd;
 mod valset_cmd;
+mod autopay_cmd;
 
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use ol_cli::commands::CONFIG_FILE;
@@ -29,7 +30,8 @@ use self::{
     create_validator_cmd::CreateValidatorCmd,
     oracle_upgrade_cmd::OracleUpgradeCmd,
     version_cmd::VersionCmd,
-    autopay_batch_cmd::AutopayBatchCmd,  
+    autopay_batch_cmd::AutopayBatchCmd,
+    autopay_cmd::AutopayCmd,
     demo_cmd::DemoCmd,
     relay_cmd::RelayCmd,
     valset_cmd::ValSetCmd,
@@ -51,6 +53,10 @@ pub enum TxsCmd {
     /// The `oracle-upgrade` subcommand
     #[options(help = "submit an oracle transaction to upgrade stdlib")]
     OracleUpgrade(OracleUpgradeCmd),     
+
+    /// The `autopay` subcommand
+    #[options(help = "enable or disable autopay")]
+    Autopay(AutopayCmd),
 
     /// The `autopay-batch` subcommand
     #[options(help = "batch autopay transactions from json file")]
@@ -77,6 +83,7 @@ pub enum TxsCmd {
     /// The `valset` subcommand
     #[options(help = "join or leave the validator universe, i.e. candidate for validator set")]
     ValSet(ValSetCmd),
+
 
 }
 

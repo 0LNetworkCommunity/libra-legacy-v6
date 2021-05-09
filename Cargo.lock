@@ -2434,6 +2434,9 @@ name = "hex"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "644f9158b2f133fd50f5fb3242878846d9eb792e445c893805ff0e3824006e35"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "hkdf"
@@ -3296,6 +3299,7 @@ dependencies = [
  "move-core-types",
  "move-vm-types",
  "network",
+ "ol-types",
  "once_cell",
  "proptest",
  "rand 0.7.3",
@@ -3339,6 +3343,7 @@ dependencies = [
  "libra-workspace-hack",
  "move-core-types",
  "move-explain",
+ "ol-types",
  "serde",
  "serde_json",
  "transaction-builder",
@@ -4985,6 +4990,7 @@ dependencies = [
  "clokwerk",
  "crossterm",
  "dirs 2.0.2",
+ "fs_extra",
  "futures 0.3.6",
  "glob",
  "gumdrop",
@@ -5050,11 +5056,13 @@ dependencies = [
  "libra-network-address",
  "libra-types",
  "machine-ip",
+ "move-core-types",
  "once_cell",
  "reqwest",
  "rustyline",
  "serde",
  "serde_json",
+ "sha2 0.9.3",
  "toml",
  "url",
 ]

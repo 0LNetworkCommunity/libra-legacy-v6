@@ -49,7 +49,7 @@ BINS= db-backup db-backup-verify db-restore libra-node miner ol_cli txs stdlib
 
 ##### DEPENDENCIES #####
 deps:
-	. ./util/setup.sh
+	. ./ol/util/setup.sh
 
 download: web-files
 	@for b in ${RELEASE} ; do \
@@ -60,8 +60,8 @@ download: web-files
 	done
 
 web-files: 
-	curl -L --progress-bar --create-dirs -o ${DATA_PATH}/web-monitor/public.zip https://github.com/OLSF/libra/releases/download/v4.3.0-rc.0/public.zip
-	unzip ${DATA_PATH}/web-monitor/public.zip
+	curl -L --progress-bar --create-dirs -o ${DATA_PATH}/web-monitor.zip https://github.com/OLSF/libra/releases/latest/download/web-monitor.zip
+	unzip ${DATA_PATH}/web-monitor.zip
 
 download-release:
 	@for b in ${BINS} ; do \
@@ -295,7 +295,7 @@ ifdef TEST
 # skip mining proof zero with fixtures
 	cp ./ol/fixtures/blocks/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
 # place a mock autopay.json in root
-	cp ./ol/fixtures/autopay/${NS}.autopay_batch.json ${DATA_PATH}/autopay.json
+	cp ./ol/fixtures/autopay/${NS}.autopay_batch.json ${DATA_PATH}/autopay_batch.json
 # place a mock account.json in root, used as template for onboarding
 	cp ./ol/fixtures/account/${NS}.account.json ${DATA_PATH}/account.json
 endif

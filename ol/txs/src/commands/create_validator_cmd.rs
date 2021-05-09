@@ -34,7 +34,7 @@ pub fn create_validator_script(new_account: &ValConfigs) -> Script {
     let new_account = new_account.to_owned();
     new_account.check_autopay().unwrap();
 
-    transaction_builder::encode_minerstate_onboarding_script(
+    transaction_builder::encode_create_acc_val_script(
         new_account.block_zero.preimage,
         new_account.block_zero.proof,
         new_account.ow_human_name.as_bytes().to_vec(),

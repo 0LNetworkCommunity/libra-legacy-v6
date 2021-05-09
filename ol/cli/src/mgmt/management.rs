@@ -16,7 +16,7 @@ use std::{
 const BINARY_NODE: &str = "libra-node";
 const BINARY_MINER: &str = "miner";
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 /// What kind of node are we starting
 pub enum NodeMode {
     /// Validator
@@ -31,23 +31,6 @@ pub struct HostProcess {
     name: String,
     pids: HashSet<u32>,
 }
-
-/// Check if we are in prod mode
-// pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
-//     match env::var("NODE_ENV") {
-//         Ok(val) => {
-//             match val.as_str() {
-//                 "prod" => true,
-//                 // if anything else is set by user is false
-//                 _ => false,
-//             }
-//         }
-//         // default to prod if nothig is set
-//         _ => true,
-//     }
-// });
-
-// TODO: do we need to kill zombies this way?
 
 /// create log files
 pub fn create_log_file(file_name: &str) -> File {
@@ -78,45 +61,6 @@ fn spawn_process(
         .spawn()
         .expect(expect_msg)
 }
-
-// /// start validator wizard
-// pub fn run_validator_wizard() -> bool {
-//     println!("Running validator wizard");
-//     let entry_arg = entrypoint::get_args();
-
-//     let mut child = if *IS_PROD {
-//         Command::new("miner")
-//             .arg("val-wizard")
-//             .spawn()
-//             .expect(&format!("failed to find 'miner', is it installed?"))
-//     } else if let Some(path) = entry_arg.swarm_path {
-//         // we are testing with swarm
-//         let swarm_arg = path.to_str().unwrap();
-//         let swarm_persona = entry_arg.swarm_persona.unwrap();
-
-//         Command::new("cargo")
-//             .args(&["r", "-p", "miner", "--"])
-//             .arg("--swarm-path")
-//             .arg(swarm_arg)
-//             .arg("--swarm-persona")
-//             .arg(swarm_persona)
-//             .arg("val-wizard")
-//             .spawn()
-//             .expect(&format!("failed to run cargo r -p miner"))
-//     } else {
-//         // we are testing on devnet
-//         Command::new("cargo")
-//             .args(&["r", "-p", "miner", "--"])
-//             .arg("val-wizard")
-//             .spawn()
-//             .expect(&format!("failed to run cargo r -p miner"))
-//     };
-
-//     let exit_code = child.wait().expect("failed to wait on miner");
-//     assert!(exit_code.success());
-
-//     true
-// }
 
 impl Node {
     /// Start Node, as fullnode
@@ -178,7 +122,8 @@ impl Node {
         }
 
         let child = if *IS_PROD {
-            let args = vec!["start"];
+            // start as operator, so that mnemonic is not needed.
+            let args = vec!["start", "-o"];
             // if use_backup { args.push("--backup-url"); };
             println!("Starting '{}' with args: {:?}", MINER, args.join(" "));
             spawn_process(
@@ -191,7 +136,8 @@ impl Node {
             let project_root = self.conf.workspace.source_path.clone().unwrap();
             let debug_bin = project_root.join(format!("target/debug/{}", MINER));
             let bin_str = debug_bin.to_str().unwrap();
-            let args = vec!["start"];
+            // start as operator, so that mnemonic is not needed.
+            let args = vec!["start", "-o"];
             println!("Starting 'miner' with args: {:?}", args.join(" "));
             spawn_process(
                 bin_str,

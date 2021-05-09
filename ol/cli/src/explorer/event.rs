@@ -6,10 +6,8 @@ use std::sync::{
 };
 use std::thread;
 use std::time::Duration;
-
 use termion::event::Key;
 use termion::input::TermRead;
-
 /// Event Struct
 pub enum Event<I> {
     /// Input Event

@@ -3,11 +3,8 @@
 use crate::node::chain_info;
 use crate::node::node::Node;
 use super::TabsState;
-
 use libra_json_rpc_client::views::TransactionView;
 use libra_types::{account_state::AccountState};
-// use libra_network_address::Protocol;
-
 /// struct for fullnode list
 pub struct Server<'a> {
     /// owner name or hex address

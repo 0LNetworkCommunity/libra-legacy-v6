@@ -1,7 +1,7 @@
 //! `server`  web monitor http server
 use futures::StreamExt;
 use serde_json::json;
-use std::{convert::Infallible, fs, path::PathBuf, thread, time::Duration};
+use std::{convert::Infallible, fs, path::PathBuf, process::Command, thread, time::Duration};
 use tokio::time::interval;
 use warp::{sse::ServerSentEvent, Filter};
 use ol_types::config::IS_PROD;
@@ -49,11 +49,11 @@ pub async fn start_server(node: Node) {
 
 
     let node_home = cfg.clone().workspace.node_home.clone();
-    let web_files = if !*IS_PROD {
-        // for using `npm run dev`
-      PathBuf::from("/root/libra/ol/cli/web-monitor/public/")
-    } else {
+    let web_files = if *IS_PROD {
       node_home.join("web-monitor/public/")
+        // for using `npm run dev`
+    } else {
+      PathBuf::from("/root/libra/ol/cli/web-monitor/public/")
     };
 
     //GET /
@@ -67,4 +67,27 @@ pub async fn start_server(node: Node) {
     warp::serve(landing.or(account_template).or(vitals_route).or(epoch_route))
         .run(([0, 0, 0, 0], 3030))
         .await;
+}
+
+/// Fetch updated static web files from release, for web-monitor.
+pub fn update_web(home_path: &PathBuf) {
+  let file_name = "web-monitor.zip";
+  let url = &format!("https://github.com/OLSF/libra/releases/latest/download/{}", file_name);
+  println!("Fetching web files from, {}", url);
+  let zip_path = home_path.join(file_name).to_str().unwrap().to_owned();
+
+    match Command::new("curl")
+    .arg("-L")      
+    .arg("--progress-bar")
+    .arg(format!("-o {:?}", &zip_path))  
+    .arg(url)
+    .spawn() {
+      Ok(_) => {
+        Command::new("unzip")
+            .arg(&zip_path)
+            .spawn()
+            .expect("failed to unzip web files");
+      },
+      _ => {}
+    }
 }
