@@ -23,8 +23,10 @@ use txs::{commands::autopay_batch_cmd, submit_tx};
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ValWizardCmd {
-    #[options(help = "home path for all 0L files")]
-    path: Option<PathBuf>,
+    #[options(short = "h", help = "home path for all 0L files")]
+    home_path: Option<PathBuf>,
+    #[options(short = "a", help = "where to output the account.json file, defaults to node home")]
+    account_path: Option<PathBuf>,
     #[options(help = "id of the chain")]
     chain_id: Option<u8>,
     #[options(help = "github org of genesis repo")]
@@ -56,7 +58,7 @@ impl Runnable for ValWizardCmd {
         // Initialize Miner
         // Need to assign app_config, otherwise abscissa would use the default.
         let mut app_config =
-            AppCfg::init_app_configs(authkey, account, &self.upstream_peer, &self.path);
+            AppCfg::init_app_configs(authkey, account, &self.upstream_peer, &self.home_path);
 
         let home_path = &app_config.workspace.node_home;
         status_ok!("\nMiner config written", "\n...........................\n");
@@ -134,7 +136,7 @@ impl Runnable for ValWizardCmd {
 
         // Write Manifest
         write_manifest(
-            &self.path,
+            &self.account_path,
             wallet,
             Some(app_config),
             autopay_batch,
