@@ -44,6 +44,9 @@ where
     #[options(help = "use the fixtures of a persona, e.g. alice, eve")]
     pub swarm_persona: Option<String>,
 
+    /// The operator is sending the transaction, used in miner.
+    #[options(short = "o", help = "the operator is signing and sending the transaction")]
+    pub is_operator: bool,
 
 }
 

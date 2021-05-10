@@ -11,7 +11,7 @@ use crate::{cache::Vitals, node::node::Node};
 
 #[tokio::main]
 /// starts the web server
-pub async fn start_server(node: Node) {
+pub async fn start_server(mut node: Node, run_checks: bool) {
     let cfg = &node.conf;
 
     let node_home = cfg.clone().workspace.node_home.clone();
@@ -55,6 +55,12 @@ pub async fn start_server(node: Node) {
 
     //GET /
     let landing = warp::fs::dir(web_files);
+
+    if run_checks {
+      thread::spawn(move || {
+          runner::run_checks(&mut node, false, true, false);
+      });
+    }
 
     warp::serve(landing.or(account_template).or(vitals_route).or(epoch_route))
         .run(([0, 0, 0, 0], 3030))
