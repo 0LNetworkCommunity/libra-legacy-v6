@@ -2,14 +2,15 @@
 
 #![allow(clippy::never_loop)]
 
-use ol_types::{block::Block};
+use super::files_cmd;
 use crate::prelude::app_config;
-use super::{files_cmd};
+use ol_types::block::Block;
 
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 // use libra_genesis_tool::keyscheme::KeyScheme;
 use keygen::scheme::KeyScheme;
 
+use libra_genesis_tool::node_files;
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use libra_wallet::WalletLibrary;
 use ol_cli::{commands::init_cmd, config::AppCfg};
@@ -18,7 +19,6 @@ use reqwest::Url;
 use serde_json::Value;
 use std::{fs::File, io::Write, path::PathBuf};
 use txs::{commands::autopay_batch_cmd, submit_tx};
-use libra_genesis_tool::node_files;
 
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -55,12 +55,8 @@ impl Runnable for ValWizardCmd {
 
         // Initialize Miner
         // Need to assign app_config, otherwise abscissa would use the default.
-        let mut app_config = AppCfg::init_app_configs(
-                              authkey,
-                              account,
-                              &self.upstream_peer,
-                              &self.path
-                            );
+        let mut app_config =
+            AppCfg::init_app_configs(authkey, account, &self.upstream_peer, &self.path);
 
         let home_path = &app_config.workspace.node_home;
         status_ok!("\nMiner config written", "\n...........................\n");
@@ -84,7 +80,10 @@ impl Runnable for ValWizardCmd {
             &app_config,
             &wallet,
         );
-        status_ok!("\nAutopay transactions signed", "\n...........................\n");
+        status_ok!(
+            "\nAutopay transactions signed",
+            "\n...........................\n"
+        );
 
         // Initialize Validator Keys
         init_cmd::initialize_validator(&wallet, &app_config).unwrap();
@@ -102,7 +101,6 @@ impl Runnable for ValWizardCmd {
                 );
             }
         }
-
 
         let home_dir = app_config.workspace.node_home.to_owned();
         // 0L convention is for the namespace of the operator to be appended by '-oper'
@@ -159,7 +157,7 @@ fn get_autopay_batch(
     wallet: &WalletLibrary,
 ) -> (Option<Vec<PayInstruction>>, Option<Vec<SignedTransaction>>) {
     let file_name = if template.is_some() {
-      // assumes the template was downloaded from URL
+        // assumes the template was downloaded from URL
         "template.json"
     } else if let Some(path) = file_path {
         path.to_str().unwrap()
@@ -172,7 +170,8 @@ fn get_autopay_batch(
     let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone(), starting_epoch);
     let url = cfg.what_url(false);
     let mut tx_params =
-        submit_tx::get_tx_params_from_toml(cfg.to_owned(), TxType::Miner, Some(wallet), url).unwrap();
+        submit_tx::get_tx_params_from_toml(cfg.to_owned(), TxType::Miner, Some(wallet), url)
+            .unwrap();
     // give the tx a very long expiration, 1 day.
     let tx_expiration_sec = 24 * 60 * 60;
     tx_params.tx_cost.user_tx_timeout = tx_expiration_sec;
@@ -209,22 +208,14 @@ fn get_epoch_info(url: &Url) -> (Option<u64>, Option<Waypoint>) {
 
 /// Creates an account.json file for the validator
 fn write_manifest(
-    path: &Option<PathBuf>,
+    json_path: &Option<PathBuf>,
     wallet: WalletLibrary,
     wizard_config: Option<AppCfg>,
     autopay_batch: Option<Vec<PayInstruction>>,
     autopay_signed: Option<Vec<SignedTransaction>>,
 ) {
-    let cfg = if wizard_config.is_some() {
-        wizard_config.unwrap()
-    } else {
-        app_config().clone()
-    };
-
-    let miner_home = path
-        .clone()
-        .unwrap_or_else(|| cfg.workspace.node_home.clone());
-
+    let cfg = wizard_config.unwrap_or(app_config().clone());
+    let json_path = json_path.clone().unwrap_or(cfg.workspace.node_home.clone());
     let keys = KeyScheme::new(&wallet);
     let block = Block::parse_block_file(cfg.get_block_dir().join("block_0.json").to_owned());
 
@@ -235,6 +226,5 @@ fn write_manifest(
         autopay_batch,
         autopay_signed,
     )
-    .create_manifest(miner_home);
+    .create_manifest(json_path);
 }
- 

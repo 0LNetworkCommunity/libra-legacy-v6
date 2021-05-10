@@ -4,8 +4,6 @@ use abscissa_core::{
     Command, command::Usage, Config, Configurable, FrameworkError, 
     Options, Runnable    
 };
-use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
-use reqwest::Url;
 use std::path::PathBuf;
 
 use crate::commands;
