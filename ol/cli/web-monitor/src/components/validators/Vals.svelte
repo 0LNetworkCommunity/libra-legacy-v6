@@ -50,14 +50,14 @@
 </script>
 <style>
   /* TODO: get styles to work. svelte or uikit are overriding these. */
-  .like-accordion-title {
+  /* .like-accordion-title {
     display: block;
     font-size: 1.25rem;
     line-height: 1.4;
     color: #333;
     overflow: hidden;
     margin-left: 10px;
-  }
+  } */
 </style>
 
 

@@ -8,9 +8,9 @@
 
     <div class="uk-navbar-center">
       <ul class="uk-navbar-nav" uk-switcher="connect: .switcher-container">
-        <li class="uk-active"><a href="#">Dash</a></li>
-        <li><a href="#">Validators</a></li>
-        <li><a href="#">Upgrades</a></li>
+        <li class="uk-active">Dash</li>
+        <li>Validators</li>
+        <li>Upgrades</li>
       </ul>
     </div>
   </nav>

@@ -8,9 +8,9 @@
 
 <main class="uk-background-muted uk-height-viewport">
   <Nav />
-  <div class="uk-height-max-small">
+  <!-- <div class="uk-height-max-small">
     <Mode />
-  </div>
+  </div> -->
   <div class="uk-container uk-margin-top">
     <ul class="uk-switcher uk-margin switcher-container uk-height-large">
       <Dash />
