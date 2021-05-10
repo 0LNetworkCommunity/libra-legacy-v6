@@ -72,7 +72,7 @@ where
     pub swarm_persona: Option<String>,
 
     /// The operator is sending the transaction, used in miner.
-    #[options(help = "the operator is signing and sending the transaction")]
+    #[options(short = "o", help = "the operator is signing and sending the transaction")]
     pub is_operator: bool,
 
 }

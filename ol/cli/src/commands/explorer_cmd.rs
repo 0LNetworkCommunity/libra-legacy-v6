@@ -8,16 +8,20 @@ use termion::{event::Key, input::MouseTerminal, raw::IntoRawMode, screen::Altern
 use tui::backend::TermionBackend;
 use tui::Terminal;
 use crate::explorer::{App, ui};
-
 /// `explorer-cmd` subcommand
 #[derive(Command, Debug, Options)]
 pub struct ExplorerCMD {
-
+    ///
+    #[options(help = "Don't run the Pilot service to start apps")]
+    skip_pilot: bool,
+    ///
     #[options(help = "Tick rate of the screen", default="250")]
     tick_rate: u64,
-
+    ///
     #[options(help = "Using enhanced graphics", default="true")]
     enhanced_graphics: bool,
+
+
 }
 
 impl Runnable for ExplorerCMD {
@@ -39,9 +43,18 @@ impl Runnable for ExplorerCMD {
 
         let client = client::pick_client(args.swarm_path, &cfg).unwrap().0;
         let node = Node::new(client, cfg);
-        let mut app = App::new(" Block Explorer Menu ", self.enhanced_graphics, node);
+        
+        // TODO: optionally start explorer with the pilot process in a thread
+        // Start the health check runner in background, optionally with --pilot, which starts services.
+        // check if pilot or something else is already running.
+        // thread::spawn(move || {
+        //     runner::run_checks(&mut node, false, true, false);
+        // });
+
+        let mut app = App::new(" Console ", self.enhanced_graphics, node);
         app.fetch();
         terminal.clear().unwrap();
+        
         loop {
             terminal.draw(|f| ui::draw(f, &mut app))
                 .expect("failed to draw screen");

@@ -1,16 +1,13 @@
 //! `server`  web monitor http server
 use futures::StreamExt;
 use serde_json::json;
-use std::{convert::Infallible, fs, path::PathBuf, process::Command, thread, time::Duration};
+use std::{convert::Infallible, fs, path::PathBuf, process::Command, time::Duration};
 use tokio::time::interval;
 use warp::{sse::ServerSentEvent, Filter};
 use ol_types::config::IS_PROD;
 
-use crate::{cache::Vitals, check::runner, node::node::Node};
+use crate::{cache::Vitals, node::node::Node};
 
-fn sse_vitals(data: Vitals) -> Result<impl ServerSentEvent, Infallible> {
-    Ok(warp::sse::json(data))
-}
 
 #[tokio::main]
 /// starts the web server
@@ -59,14 +56,14 @@ pub async fn start_server(node: Node) {
     //GET /
     let landing = warp::fs::dir(web_files);
 
-    // TODO: Perhaps a better way to keep the check cache fresh?
-    thread::spawn(move || {
-        runner::run_checks(node, true, false);
-    });
-
     warp::serve(landing.or(account_template).or(vitals_route).or(epoch_route))
         .run(([0, 0, 0, 0], 3030))
         .await;
+}
+
+
+fn sse_vitals(data: Vitals) -> Result<impl ServerSentEvent, Infallible> {
+    Ok(warp::sse::json(data))
 }
 
 /// Fetch updated static web files from release, for web-monitor.

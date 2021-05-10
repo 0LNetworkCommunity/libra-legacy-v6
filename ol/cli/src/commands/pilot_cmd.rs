@@ -1,39 +1,28 @@
-//! `pilot` subcommand
+//! `monitor-cmd` subcommand
 
-#![allow(clippy::never_loop)]
-use super::OlCliCmd;
-use crate::{
-  pilot,
-    entrypoint,
-    node::client,
-    node::node::Node,
-    prelude::app_config,
-};
 use abscissa_core::{Command, Options, Runnable};
+use crate::{check, node::client, entrypoint, node::node::Node, prelude::app_config};
 
 /// `pilot` subcommand
-#[derive(Command, Debug, Default, Options)]
-pub struct PilotCmd {}
+
+#[derive(Command, Debug, Options)]
+pub struct PilotCmd {
+    /// Runs once, defaults to continuous
+    #[options(short = "o", help = "run once and exit, not continuous")]
+    once: bool,
+    /// Silent mode, defaults to verbose
+    #[options(short = "s", help = "run once and exit, not continuous")]
+    silent: bool
+}
 
 impl Runnable for PilotCmd {
-    /// Print version message
+    /// Start the application.
     fn run(&self) {
-        println!("PILOT - {}", OlCliCmd::version());
-        let args = entrypoint::get_args();
-        let verbose = true;
-        let mut cfg = app_config().clone();
-        let (client, wp) = client::pick_client(args.swarm_path.clone(), &cfg)
-            .expect("could not create connect a client");
-        if args.swarm_path.is_some() {
-            let mut tp = args.swarm_path.unwrap();
-            tp.push("0");
-            cfg.workspace.node_home = tp;
-        }
-        let mut node = Node::new(client, cfg.clone());
-        pilot::maybe_restore_db(&mut node, verbose);
+      let args = entrypoint::get_args();
+      let cfg = app_config().clone();
+      let client = client::pick_client(args.swarm_path, &cfg).unwrap().0;
+      let mut node = Node::new(client, cfg);
 
-        loop {
-            pilot::run_once(&mut node, wp, verbose);
-        }
+      check::runner::run_checks(&mut node, true ,!self.once, !self.silent);
     }
 }

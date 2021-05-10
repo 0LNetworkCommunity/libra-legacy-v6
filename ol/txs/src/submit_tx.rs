@@ -213,7 +213,6 @@ pub fn tx_params(
         ).unwrap()
     } else {
         if is_operator {
-            
             get_oper_params(waypoint.unwrap(), &config, tx_type, url)
         } else {
             // Get from 0L.toml e.g. ~/.0L/0L.toml, or use Profile::default()

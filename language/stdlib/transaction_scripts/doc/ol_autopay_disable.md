@@ -29,7 +29,7 @@
     <b>if</b> (<a href="../../modules/doc/AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(account)) {
         <a href="../../modules/doc/AutoPay.md#0x1_AutoPay_disable_autopay">AutoPay::disable_autopay</a>(sender);
     };
-    <b>assert</b>(<a href="../../modules/doc/AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(account), 0);
+    <b>assert</b>(!<a href="../../modules/doc/AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(account), 010001);
 }
 </code></pre>
 

@@ -25,7 +25,7 @@ pub const NODE_PROCESS: &str = "libra-node";
 /// miner process name:
 pub const MINER_PROCESS: &str = "miner";
 
-/// Configuration used for checks we want to make on the node
+/// Configuration and state of node, account, and host.
 pub struct Node {
     /// 0L configs
     pub conf: AppCfg,
@@ -33,7 +33,6 @@ pub struct Node {
     pub client: LibraClient,
     /// vitals
     pub vitals: Vitals,
-
     // TODO: deduplicate these
     chain_state: Option<AccountState>,
     miner_state: Option<MinerStateResourceView>,
@@ -62,7 +61,10 @@ impl Node {
     /// refresh all checks
     pub fn refresh_checks(&mut self) -> &mut Self {
         self.vitals.items.configs_exist = self.configs_exist();
-        self.vitals.items.db_restored = self.db_files_exist();
+        self.vitals.items.db_files_exist = self.db_files_exist();
+        self.vitals.items.db_restored = self.db_bootstrapped();
+        self.vitals.items.web_running = Node::is_web_monitor_serving();
+        self.vitals.items.node_mode = Node::what_node_mode().ok();
         self.vitals.items.node_running = Node::node_running();
         self.vitals.items.miner_running = Node::miner_running();
         self.vitals.items.account_created = self.accounts_exist_on_chain();
@@ -119,7 +121,9 @@ impl Node {
         match self.client
             .get_state_proof() {
             Ok(_t) => self.client.waypoint(),
-            Err(_) => None
+            Err(_) => {
+              self.conf.get_waypoint(None)
+            }
         }
     }
 

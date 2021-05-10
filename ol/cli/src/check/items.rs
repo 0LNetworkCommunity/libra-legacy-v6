@@ -1,13 +1,18 @@
 //! `items`
 use std::str;
 use serde::{Deserialize, Serialize};
+
+use crate::mgmt::management::NodeMode;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-/// Steps needed to initialize a miner
+/// Healthcheck summary items
 pub struct Items {
   /// node configs created
   pub configs_exist: bool,
-  /// current epoch
+  /// are there db files
+  pub db_files_exist: bool,
+  /// is the db boostrapped
+  // TODO: Change the name to db_bootstrapped, requires changes to web.
   pub db_restored: bool,
   /// account created
   pub account_created: bool,
@@ -15,6 +20,10 @@ pub struct Items {
   pub node_running: bool,
   /// miner running
   pub miner_running: bool,
+  /// web serving
+  pub web_running: bool,
+  /// node mode
+  pub node_mode: Option<NodeMode>,
   /// is the blockchain in sync with upstream
   pub is_synced: bool,
   /// how far behind is the node
@@ -34,6 +43,9 @@ impl Default for Items {
       is_synced: false,
       sync_delay: 0,
       validator_set: false,
+      db_files_exist: false,
+      web_running: false,
+      node_mode: None,
     }
   }
 }
@@ -46,40 +58,4 @@ impl Items {
       ..Self::default()
     }
   }
-
-  // /// Returns object in init state
-  // pub fn init() -> Items {
-  //   //TODO: Check if db exists
-  //   let items = Items::new(false);
-
-  //   // check if we can read the data, otherwise, init
-  //   match DB_CACHE_READ.get(ITEMS_KEY) {
-  //       Ok(_) => {}
-  //       Err(_) => {
-  //         // initialize the cache.
-  //         items.write_cache();
-  //       }
-  //   }
-  //   items
-  // }
-
-  // /// Saves the Items to cache
-  // pub fn write_cache(&self) {
-  //   let serialized = serde_json::to_vec(&self.clone()).unwrap();
-  //   match DB_CACHE.put(ITEMS_KEY, serialized) {
-  //     Ok(_) => {}
-  //     Err(err) => {
-  //       dbg!(&err);
-  //     }
-  //   };
-  // }
-
-  // /// Get from cache
-  // pub fn read_cache() -> Option<Items> {
-  //   let q = DB_CACHE_READ.get("items").unwrap().unwrap();
-  //   match serde_json::from_slice(&q.as_slice()) {
-  //     Ok(items) => Some(items),
-  //     Err(_) => None,
-  //   }
-  // }
 }
