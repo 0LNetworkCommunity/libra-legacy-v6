@@ -383,10 +383,13 @@ var app = (function () {
     	let div;
     	let ul;
     	let li0;
+    	let a0;
     	let t1;
     	let li1;
+    	let a1;
     	let t3;
     	let li2;
+    	let a2;
 
     	const block = {
     		c: function create() {
@@ -395,17 +398,26 @@ var app = (function () {
     			div = element("div");
     			ul = element("ul");
     			li0 = element("li");
-    			li0.textContent = "Dash";
+    			a0 = element("a");
+    			a0.textContent = "Dash";
     			t1 = space();
     			li1 = element("li");
-    			li1.textContent = "Validators";
+    			a1 = element("a");
+    			a1.textContent = "Validators";
     			t3 = space();
     			li2 = element("li");
-    			li2.textContent = "Upgrades";
+    			a2 = element("a");
+    			a2.textContent = "Upgrades";
+    			attr_dev(a0, "href", "#");
+    			add_location(a0, file$c, 10, 30, 362);
     			attr_dev(li0, "class", "uk-active");
     			add_location(li0, file$c, 10, 8, 340);
-    			add_location(li1, file$c, 11, 8, 380);
-    			add_location(li2, file$c, 12, 8, 408);
+    			attr_dev(a1, "href", "#");
+    			add_location(a1, file$c, 11, 12, 400);
+    			add_location(li1, file$c, 11, 8, 396);
+    			attr_dev(a2, "href", "#");
+    			add_location(a2, file$c, 12, 12, 444);
+    			add_location(li2, file$c, 12, 8, 440);
     			attr_dev(ul, "class", "uk-navbar-nav");
     			attr_dev(ul, "uk-switcher", "connect: .switcher-container");
     			add_location(ul, file$c, 9, 6, 262);
@@ -425,10 +437,13 @@ var app = (function () {
     			append_dev(nav, div);
     			append_dev(div, ul);
     			append_dev(ul, li0);
+    			append_dev(li0, a0);
     			append_dev(ul, t1);
     			append_dev(ul, li1);
+    			append_dev(li1, a1);
     			append_dev(ul, t3);
     			append_dev(ul, li2);
+    			append_dev(li2, a2);
     		},
     		p: noop,
     		i: noop,
@@ -18058,7 +18073,7 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (84:2) {#if healthData}
+    // (100:2) {#if healthData}
     function create_if_block$1(ctx) {
     	let div;
     	let h3;
@@ -18090,11 +18105,11 @@ var app = (function () {
     			}
 
     			attr_dev(h3, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted");
-    			add_location(h3, file$9, 85, 6, 2369);
+    			add_location(h3, file$9, 101, 6, 2928);
     			attr_dev(dl, "class", "uk-description-list");
-    			add_location(dl, file$9, 88, 6, 2481);
+    			add_location(dl, file$9, 104, 6, 3040);
     			attr_dev(div, "class", "uk-card uk-card-default uk-card-body");
-    			add_location(div, file$9, 84, 4, 2312);
+    			add_location(div, file$9, 100, 4, 2871);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -18165,14 +18180,14 @@ var app = (function () {
     		block,
     		id: create_if_block$1.name,
     		type: "if",
-    		source: "(84:2) {#if healthData}",
+    		source: "(100:2) {#if healthData}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (90:8) {#each allChecks as c}
+    // (106:8) {#each allChecks as c}
     function create_each_block$3(ctx) {
     	let check;
     	let current;
@@ -18219,7 +18234,7 @@ var app = (function () {
     		block,
     		id: create_each_block$3.name,
     		type: "each",
-    		source: "(90:8) {#each allChecks as c}",
+    		source: "(106:8) {#each allChecks as c}",
     		ctx
     	});
 
@@ -18235,7 +18250,7 @@ var app = (function () {
     		c: function create() {
     			main = element("main");
     			if (if_block) if_block.c();
-    			add_location(main, file$9, 82, 0, 2282);
+    			add_location(main, file$9, 98, 0, 2841);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -18337,6 +18352,18 @@ var app = (function () {
     					i.is_true = healthData.validator_set;
     				}
 
+    				if (i.id === "correct_mode") {
+    					i.is_true = false;
+
+    					if (healthData.validator_set) {
+    						i.is_true = healthData.node_mode == "Validator";
+    					} else {
+    						i.is_true = healthData.node_mode != "Validator";
+    					}
+
+    					i.description = ("node running in mode: ").concat(healthData.node_mode);
+    				}
+
     				return i;
     			}));
     		}
@@ -18383,6 +18410,12 @@ var app = (function () {
     			id: "set",
     			title: "In validator set",
     			description: "owner account is in the validator set",
+    			is_true: false
+    		},
+    		{
+    			id: "correct_mode",
+    			title: "Mode",
+    			description: "node running in mode: ",
     			is_true: false
     		}
     	];
