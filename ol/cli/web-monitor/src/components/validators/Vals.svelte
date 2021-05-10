@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
   import { sortBy } from "lodash";
 
   interface ValInfo {
@@ -28,20 +27,6 @@
     }
   });
 
-  // let uri = "http://" + location.host + "/validators";
-  // let sse = new EventSource(uri);
-  // onMount(async () => {
-
-  //   sse.onmessage = function (msg) {
-  //     set = JSON.parse(msg.data);
-  //     set = sortBy(set, ["voting_power"]).reverse();
-  //   };
-  // });
-
-  // onDestroy(() => {
-  //   sse.close();
-  // });
-
   function can_create_account(info: ValInfo): Boolean {
     return info.epochs_since_last_account_creation > 7;
   }
@@ -61,7 +46,7 @@
 </style>
 
 
-<main>
+<main uk-height-viewport="expand: true">
   <h2
     class=" uk-text-center uk-text-uppercase uk-text-muted uk-text-light uk-margin-medium-bottom"
   >
