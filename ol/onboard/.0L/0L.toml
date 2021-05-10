@@ -1,0 +1,43 @@
+[workspace]
+node_home = "./.0L/"
+source_path = "/root/libra"
+block_dir = "blocks"
+db_path = "/root/.0L/db"
+stdlib_bin_path = "/root/libra/language/stdlib/staged/stdlib.mv"
+
+[profile]
+account = "3DC18D1CF61FAAC6AC70E3A63F062E4B"
+auth_key = "2bffcbd0e9016013cb8ca78459f69d2b3dc18d1cf61faac6ac70e3a63f062e4b"
+statement = "asdf"
+ip = "165.227.106.10"
+default_node = "http://localhost:8080/"
+upstream_nodes = ["http://localhost:8080/"]
+
+[chain_info]
+chain_id = "experimental"
+base_epoch = 0
+base_waypoint = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2"
+[tx_configs.baseline_cost]
+max_gas_unit_for_tx = 10000
+coin_price_per_unit = 1
+user_tx_timeout = 5000
+
+[tx_configs.critical_txs_cost]
+max_gas_unit_for_tx = 1000000
+coin_price_per_unit = 1
+user_tx_timeout = 5000
+
+[tx_configs.management_txs_cost]
+max_gas_unit_for_tx = 100000
+coin_price_per_unit = 1
+user_tx_timeout = 5000
+
+[tx_configs.miner_txs_cost]
+max_gas_unit_for_tx = 10000
+coin_price_per_unit = 1
+user_tx_timeout = 5000
+
+[tx_configs.cheap_txs_cost]
+max_gas_unit_for_tx = 1000
+coin_price_per_unit = 1
+user_tx_timeout = 5000
