@@ -20,6 +20,7 @@ mod query_cmd;
 mod health_cmd;
 mod explorer_cmd;
 mod pilot_cmd;
+mod start_cmd;
 
 use self::{
     init_cmd::InitCmd,
@@ -31,6 +32,7 @@ use self::{
     query_cmd::QueryCmd,
     health_cmd::HealthCmd,
     pilot_cmd::PilotCmd,
+    start_cmd::StartCmd,
 };
 
 use crate::entrypoint;
@@ -88,8 +90,12 @@ pub enum OlCliCmd {
     Explorer(ExplorerCMD),
 
     /// The `explorer` subcommand
-    #[options(help = "run the 0L services")]
+    #[options(help = "run pilot command, which triggers needed services")]
     Pilot(PilotCmd),
+
+    /// The `start` subcommand
+    #[options(help = "start 0L services")]
+    Start(StartCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

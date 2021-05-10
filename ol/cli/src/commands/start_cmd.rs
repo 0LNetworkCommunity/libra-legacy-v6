@@ -1,11 +1,12 @@
-//! `pilot-cmd` subcommand
+//! `start-cmd` subcommand
 
 use abscissa_core::{Command, Options, Runnable};
 use crate::{check, node::client, entrypoint, node::node::Node, prelude::app_config};
 
+/// `pilot` subcommand
 
 #[derive(Command, Debug, Options)]
-pub struct PilotCmd {
+pub struct StartCmd {
     /// Runs once, defaults to continuous
     #[options(short = "o", help = "run once and exit, not continuous")]
     once: bool,
@@ -14,7 +15,7 @@ pub struct PilotCmd {
     silent: bool
 }
 
-impl Runnable for PilotCmd {
+impl Runnable for StartCmd {
     /// Start the application.
     fn run(&self) {
       let args = entrypoint::get_args();
