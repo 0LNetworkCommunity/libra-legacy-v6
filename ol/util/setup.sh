@@ -6,6 +6,9 @@ apt install -y git vim zip jq build-essential cmake clang llvm libgmp-dev secure
 curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
 PATH="$HOME/.cargo/bin:$PATH" cargo install toml-cli
 PATH="$HOME/.cargo/bin:$PATH" cargo install sccache
+# support for static linking libc
+# https://doc.rust-lang.org/edition-guide/rust-2018/platform-and-target-support/musl-support-for-fully-static-binaries.html
+# used for release automation for ubuntu compatibility
 rustup target add x86_64-unknown-linux-musl
 
 echo "Rust is installed now. Great!\
