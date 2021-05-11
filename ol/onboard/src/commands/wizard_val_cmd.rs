@@ -41,7 +41,7 @@ pub struct ValWizardCmd {
     skip_mining: bool,
     #[options(short = "u", help = "template account.json to configure from")]
     template_url: Option<Url>,
-    #[options(help = "template account.json to configure from")]
+    #[options(help = "autopay file if instructions are to be sent")]
     autopay_file: Option<PathBuf>,
     #[options(help = "An upstream peer to use in 0L.toml")]
     upstream_peer: Option<Url>,
