@@ -48,11 +48,12 @@ impl Runnable for StartCmd {
             ..
         } = entrypoint::get_args();
         
-        //TODO(mortonbits): In the case of swarm this needs to take from swarm_temp/0/, and not from  ~/.0L, as I think is happening here.
+        // config reading respects swarm setup
+        // so also cfg.get_waypoint will return correct data
         let cfg = app_config().clone();
 
         let waypoint = if waypoint.is_none() {
-            match cfg.get_waypoint(swarm_path.clone()) {
+            match cfg.get_waypoint(None) {
                 Some(w) => Some(w),
                 _ => {
                     status_err!("Cannot start without waypoint, exiting");
