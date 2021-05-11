@@ -81,7 +81,7 @@ bins:
 	cargo run -p stdlib --release
 
 # NOTE: stdlib is built for cli bindings
-	cargo build -p libra-node -p miner -p backup-cli -p ol-cli -p txs -p onboard --release
+	cargo build -p libra-node -p miner -p backup-cli -p ol-cli -p txs -p onboard --release --target x86_64-unknown-linux-musl
 
 install:
 	sudo cp -f ${SOURCE}/target/release/miner /usr/local/bin/miner
