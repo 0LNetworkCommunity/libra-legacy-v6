@@ -19,10 +19,10 @@ impl Runnable for StartCmd {
     /// Start the application.
     fn run(&self) {
       let args = entrypoint::get_args();
-      let cfg = app_config().clone();
-      let client = client::pick_client(args.swarm_path, &cfg).unwrap().0;
+      let mut cfg = app_config().clone();
+      let client = client::pick_client(args.swarm_path, &mut cfg).unwrap().0;
       let mut node = Node::new(client, cfg);
-
+      // let now = SystemTime::now();
       check::runner::run_checks(&mut node, true ,!self.once, !self.silent);
     }
 }

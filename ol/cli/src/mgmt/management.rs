@@ -12,8 +12,6 @@ use std::{
     fs::{self, File},
     process::{Command, Stdio},
 };
-use gag::Gag;
-
 const BINARY_NODE: &str = "libra-node";
 const BINARY_MINER: &str = "miner";
 
@@ -65,7 +63,7 @@ fn spawn_process(
 
 impl Node {
     /// Start Node, as fullnode
-    pub fn start_node(&mut self, config_type: NodeMode, verbose: bool) -> Result<(), Error> {
+    pub fn start_node(&mut self, config_type: NodeMode, _verbose: bool) -> Result<(), Error> {
         use BINARY_NODE as NODE;
         // if is running do nothing
         // TODO: Get another check of node running
@@ -113,7 +111,7 @@ impl Node {
     }
 
     /// Start Miner
-    pub fn start_miner(&mut self, verbose: bool) {
+    pub fn start_miner(&mut self, _verbose: bool) {
         // Stop any processes we may have started and detached from.
         // if is running do nothing
         use BINARY_MINER as MINER;
@@ -154,7 +152,7 @@ impl Node {
     }
 
     /// Start Monitor
-    pub fn start_monitor(&mut self, verbose: bool) {
+    pub fn start_monitor(&mut self, _verbose: bool) {
         // if verbose { drop(print_gag); }
         // Stop any processes we may have started and detached from.
         // if is running do nothing
