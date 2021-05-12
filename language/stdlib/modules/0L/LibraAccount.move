@@ -1035,6 +1035,49 @@ module LibraAccount {
     }
 
 
+     public fun vm_make_payment_no_limit<Token>(
+        payer : address,
+        payee: address,
+        amount: u64,
+        metadata: vector<u8>,
+        metadata_signature: vector<u8>,
+        vm: &signer
+    ) acquires LibraAccount , Balance, AccountOperationsCapability {
+        if (Signer::address_of(vm) != CoreAddresses::LIBRA_ROOT_ADDRESS()) return;
+        // don't try to send a 0 balance, will halt.
+        if (amount < 0) return; 
+
+        // Check payee can receive funds in this currency.
+        if (!exists<Balance<Token>>(payee)) return; 
+        // assert(exists<Balance<Token>>(payee), Errors::not_published(EROLE_CANT_STORE_BALANCE));
+
+        // Check there is a payer
+        if (!exists_at(payer)) return; 
+
+        // assert(exists_at(payer), Errors::not_published(EACCOUNT));
+
+        // Check the payer is in possession of withdraw token.
+        if (delegated_withdraw_capability(payer)) return; 
+
+        // assert(
+        //     !delegated_withdraw_capability(payer),
+        //     Errors::invalid_state(EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED)
+        // );
+
+        // VM can extract the withdraw token.
+        let account = borrow_global_mut<LibraAccount>(payer);
+        let cap = Option::extract(&mut account.withdraw_capability);
+        deposit<Token>(
+            cap.account_address,
+            payee,
+            withdraw_from(&cap, payee, amount, copy metadata),
+            metadata,
+            metadata_signature
+        );
+        restore_withdraw_capability(cap);
+    }
+
+
     /// Withdraw `amount` Libra<Token> from the address embedded in `WithdrawCapability` and
     /// deposits it into the `payee`'s account balance.
     /// The included `metadata` will appear in the `SentPaymentEvent` and `ReceivedPaymentEvent`.

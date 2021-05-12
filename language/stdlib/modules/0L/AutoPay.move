@@ -29,6 +29,9 @@ address 0x1{
     const AMOUNT_UNTIL: u8 = 2;
     /// send a certain amount once at the next tick payment type
     const ONE_SHOT: u8 = 3;
+
+    const MAX_NUMBER_OF_INSTRUCTIONS: u64 = 12;
+
     const EPAYEE_DOES_NOT_EXIST: u64 = 010017;
     /// The account does not have autopay enabled.
     const EAUTOPAY_NOT_ENABLED: u64 = 010018;
@@ -36,10 +39,17 @@ address 0x1{
     const AUTOPAY_ID_EXISTS: u64 = 010019;
     /// Invalid payment type given
     const INVALID_PAYMENT_TYPE: u64 = 010020;
+    /// Attempt to add instruction when too many already exist
+    const TOO_MANY_INSTRUCTIONS: u64 = 010021;
 
     resource struct Tick {
       triggered: bool,
     }
+
+    resource struct AccountLimitsEnable {
+      enabled: bool,
+    }
+
     // List of payments. Each account will own their own copy of this struct
     resource struct Data {
       payments: vector<Payment>,
@@ -67,7 +77,7 @@ address 0x1{
       // TODO: name should be a string to store a memo
       // name: u64,
       uid: u64,
-      type: u8,
+      in_type: u8,
       payee: address,
       end_epoch: u64,  // end epoch is inclusive, must just be higher than current epoch for type 3
       prev_bal: u64, //only used for type 1
@@ -102,8 +112,15 @@ address 0x1{
       assert(Signer::address_of(sender) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(010002));
       move_to<AccountList>(sender, AccountList { accounts: Vector::empty<address>(), current_epoch: 0, });
       move_to<Tick>(sender, Tick {triggered: false});
+      move_to<AccountLimitsEnable>(sender, AccountLimitsEnable {enabled: false});
 
       LibraAccount::initialize_escrow_root<GAS>(sender);
+    }
+
+    public fun enable_account_limits(sender: &signer) acquires AccountLimitsEnable {
+      assert(Signer::address_of(sender) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(010002));
+      let limits_enable = borrow_global_mut<AccountLimitsEnable>(Signer::address_of(sender));
+      limits_enable.enabled = true;
     }
 
     // This is the main function for this module. It is called once every epoch
@@ -114,7 +131,7 @@ address 0x1{
     // Function code 03
     public fun process_autopay(
       vm: &signer,
-    ) acquires AccountList, Data {
+    ) acquires AccountList, Data, AccountLimitsEnable {
       // Only account 0x0 should be triggering this autopayment each block
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(010003));
 
@@ -148,9 +165,9 @@ address 0x1{
               // IMPORTANT there are two digits for scaling representation.
              
               // an autopay instruction of 12.34% is scaled by two orders, and represented in AutoPay as `1234`.
-              let amount = if (payment.type == PERCENT_OF_BALANCE) {
+              let amount = if (payment.in_type == PERCENT_OF_BALANCE) {
                 FixedPoint32::multiply_u64(account_bal , FixedPoint32::create_from_rational(payment.amt, 10000))
-              } else if (payment.type == PERCENT_OF_CHANGE) {
+              } else if (payment.in_type == PERCENT_OF_CHANGE) {
                 if (account_bal > payment.prev_bal) {
                   FixedPoint32::multiply_u64(account_bal - payment.prev_bal, FixedPoint32::create_from_rational(payment.amt, 10000))
                 } else {
@@ -163,14 +180,18 @@ address 0x1{
               };
               
               if (amount != 0 && amount <= account_bal) {
-                LibraAccount::vm_make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
+                if (borrow_global<AccountLimitsEnable>(Signer::address_of(vm)).enabled) {
+                  LibraAccount::vm_make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
+                } else {
+                  LibraAccount::vm_make_payment_no_limit<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
+                };
               };
 
               // update previous balance for next calculation
               payment.prev_bal = LibraAccount::balance<GAS>(*account_addr);
 
               // if it's a one shot payment, delete it once it has done its job
-              if (payment.type == ONE_SHOT) {
+              if (payment.in_type == ONE_SHOT) {
                 delete_payment = true;
               }
               
@@ -208,8 +229,6 @@ address 0x1{
         // Initialize the instructions Data on user account state 
         move_to<Data>(acc, Data { payments: Vector::empty<Payment>()});
       };
-      // Initialize the instructions Data on user account state 
-      move_to<Data>(acc, Data { payments: Vector::empty<Payment>()});
 
       // Initialize Escrow data
       LibraAccount::initialize_escrow<GAS>(acc);
@@ -238,7 +257,7 @@ address 0x1{
     public fun create_instruction(
       sender: &signer, 
       uid: u64,
-      type: u8,
+      in_type: u8,
       payee: address,
       end_epoch: u64,
       amt: u64
@@ -252,16 +271,18 @@ address 0x1{
       };
       let payments = &mut borrow_global_mut<Data>(addr).payments;
 
+      assert(Vector::length<Payment>(payments) < MAX_NUMBER_OF_INSTRUCTIONS, Errors::limit_exceeded(TOO_MANY_INSTRUCTIONS));
+
       assert(LibraAccount::exists_at(payee), Errors::not_published(EPAYEE_DOES_NOT_EXIST));
 
-      assert(type <= MAX_TYPE, Errors::invalid_argument(INVALID_PAYMENT_TYPE));
+      assert(in_type <= MAX_TYPE, Errors::invalid_argument(INVALID_PAYMENT_TYPE));
 
       let account_bal = LibraAccount::balance<GAS>(addr);
 
       Vector::push_back<Payment>(payments, Payment {
         // name: name,
         uid: uid,
-        type: type,
+        in_type: in_type,
         payee: payee,
         end_epoch: end_epoch,
         prev_bal: account_bal,
@@ -307,7 +328,7 @@ address 0x1{
       } else {
         let payments = &borrow_global_mut<Data>(account).payments;
         let payment = Vector::borrow(payments, Option::extract<u64>(&mut index));
-        return (payment.type, payment.payee, payment.end_epoch, payment.amt)
+        return (payment.in_type, payment.payee, payment.end_epoch, payment.amt)
       }
     }
 

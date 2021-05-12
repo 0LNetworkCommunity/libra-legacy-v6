@@ -8,7 +8,7 @@ script {
   fun autopay_create_instruction(
     sender: &signer,
     uid: u64,
-    type: u8,
+    in_type: u8,
     payee: address,
     end_epoch: u64,
     percentage: u64,
@@ -23,7 +23,7 @@ script {
     AutoPay2::create_instruction(
       sender, 
       uid,
-      type,
+      in_type,
       payee,
       end_epoch,
       percentage,

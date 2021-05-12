@@ -11,8 +11,10 @@ script {
     use 0x1::AccountLimits;
     use 0x1::CoreAddresses;
     use 0x1::GAS::GAS;
+    use 0x1::AutoPay2;
     fun main(account: &signer) {
         AccountLimits::update_limits_definition<GAS>(account, CoreAddresses::LIBRA_ROOT_ADDRESS(), 0, 30, 0, 1);
+        AutoPay2::enable_account_limits(account);
     }
 }
 // check: "Keep(EXECUTED)"

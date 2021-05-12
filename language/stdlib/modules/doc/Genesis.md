@@ -14,7 +14,7 @@ when executing from a fresh state.
 
 
 <pre><code><b>use</b> <a href="AccountFreezing.md#0x1_AccountFreezing">0x1::AccountFreezing</a>;
-<b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
+<b>use</b> <a href="AutoPay.md#0x1_AutoPay2">0x1::AutoPay2</a>;
 <b>use</b> <a href="ChainId.md#0x1_ChainId">0x1::ChainId</a>;
 <b>use</b> <a href="DualAttestation.md#0x1_DualAttestation">0x1::DualAttestation</a>;
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
@@ -120,7 +120,7 @@ Initializes the Libra framework.
     /////// 0L /////////
     <a href="Stats.md#0x1_Stats_initialize">Stats::initialize</a>(lr_account);
     <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_initialize">ValidatorUniverse::initialize</a>(lr_account);
-    <a href="AutoPay.md#0x1_AutoPay_initialize">AutoPay::initialize</a>(lr_account);
+    <a href="AutoPay.md#0x1_AutoPay2_initialize">AutoPay2::initialize</a>(lr_account);
     <a href="Subsidy.md#0x1_Subsidy_init_fullnode_sub">Subsidy::init_fullnode_sub</a>(lr_account);
     <a href="Oracle.md#0x1_Oracle_initialize">Oracle::initialize</a>(lr_account);
     <a href="MinerState.md#0x1_MinerState_init_list">MinerState::init_list</a>(lr_account);
