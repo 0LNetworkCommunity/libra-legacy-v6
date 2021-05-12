@@ -29,11 +29,11 @@ impl Runnable for MgmtCmd {
         let mut node = Node::new(client, cfg);
 
         if self.start_node {
-            node.start_node(NodeMode::Fullnode).expect("could not start fullnode");
+            node.start_node(NodeMode::Fullnode, true).expect("could not start fullnode");
         } else if self.stop_node {
             node.stop_node();
         } else if self.start_miner {
-            node.start_miner();
+            node.start_miner(true);
         } else if self.stop_miner {
             node.stop_miner();
         } else if self.stop_all {

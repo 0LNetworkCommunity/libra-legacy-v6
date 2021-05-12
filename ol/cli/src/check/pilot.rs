@@ -71,7 +71,7 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
         if verbose {
             status_warn!("web monitor is NOT serving 3030. Attempting start.");
         }
-        node.start_monitor();
+        node.start_monitor(verbose);
         node.vitals.host_state.monitor_state = MonitorState::Serving;
     }
 
@@ -107,7 +107,7 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
             status_warn!("node is NOT running, starting in {:?} mode", &start_mode);
         }
 
-        node.vitals.host_state.node_state = match node.start_node(start_mode.clone()) {
+        node.vitals.host_state.node_state = match node.start_node(start_mode.clone(), verbose) {
             Ok(_) => match &start_mode {
                 Validator => NodeState::ValidatorMode,
                 Fullnode => NodeState::FullnodeMode,
@@ -154,7 +154,7 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
                 if verbose {
                     status_ok!("Account", "owner account found on chain. Starting miner");
                 }
-                node.start_miner();
+                node.start_miner(verbose);
                 node.vitals.host_state.miner_state = MinerState::Mining;
             } else {
                 if verbose {
@@ -204,7 +204,7 @@ fn maybe_switch_mode(node: &mut Node, is_in_val_set: bool, verbose: bool) -> Nod
             status_warn!("Mode: running the INCORRECT mode, switching to VALIDATOR mode");
         }
         node.stop_node();
-        node.start_node(Validator).expect("could not start node");
+        node.start_node(Validator, verbose).expect("could not start node");
 
         return NodeState::ValidatorMode;
     }
@@ -215,7 +215,7 @@ fn maybe_switch_mode(node: &mut Node, is_in_val_set: bool, verbose: bool) -> Nod
             status_warn!("Mode: running the INCORRECT mode, switching to FULLNODE mode");
         }
         node.stop_node();
-        node.start_node(Validator).expect("could not start node");
+        node.start_node(Validator, verbose).expect("could not start node");
 
         return NodeState::FullnodeMode;
     }

@@ -15,8 +15,9 @@ use crate::config::AppCfg;
 #[derive(Command, Debug, Options)]
 pub struct ExplorerCMD {
     ///
-    #[options(help = "Don't run the Pilot service to start apps")]
-    skip_pilot: bool,
+    #[options(short = "p", help = "Run Pilot service to start apps")]
+    // TODO: optionally don't do the pilot
+    pilot: bool,
     ///
     #[options(help = "Tick rate of the screen", default="250")]
     tick_rate: u64,
@@ -34,6 +35,7 @@ impl Runnable for ExplorerCMD {
         // TODO: optionally start explorer with the pilot process in a thread
         // Start the health check runner in background, optionally with --pilot, which starts services.
         // check if pilot or something else is already running.
+        let do_pilot = self.pilot.clone();
         thread::spawn(move || {
             let mut conf = match entrypoint::get_args().swarm_path {
                 Some(sp) => AppCfg::init_app_configs_swarm(sp.clone(), sp.join("0")),
@@ -41,9 +43,9 @@ impl Runnable for ExplorerCMD {
             };
             let client = client::pick_client( entrypoint::get_args().swarm_path, &mut conf).unwrap().0;
             let mut node = Node::new(client, conf);
-            runner::run_checks(&mut node, false, true, false);
+            runner::run_checks(&mut node, do_pilot, true, false);
         });
-
+        
 
         let args = entrypoint::get_args();
 
@@ -53,7 +55,7 @@ impl Runnable for ExplorerCMD {
         };
 
         let client = client::pick_client(args.swarm_path, &mut cfg).unwrap().0;
-        let mut node = Node::new(client, cfg);
+        let node = Node::new(client, cfg);
 
         let mut app = App::new(" Console ", self.enhanced_graphics, node);
         app.fetch();

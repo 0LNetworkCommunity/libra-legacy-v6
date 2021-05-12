@@ -3,9 +3,8 @@
 use crate::node::chain_info;
 use crate::node::node::Node;
 use super::TabsState;
-use libra_json_rpc_client::views::{TransactionView, TransactionDataView};
+use libra_json_rpc_client::views::TransactionDataView;
 use libra_types::{account_state::AccountState};
-use libra_json_rpc_client::views::TransactionDataView::UserTransaction;
 
 /// struct for fullnode list
 pub struct Server<'a> {
@@ -144,7 +143,7 @@ impl<'a> App<'a> {
             .get_txn_by_range(self.last_fetch_tx_version, 100, true)
         {
             Ok(txs) => {
-                txs.iter().map(|tv| {
+                txs.iter().for_each(|tv| {
                     match tv.clone().transaction {
                         TransactionDataView::UserTransaction {sender,
                                                              signature_scheme,
