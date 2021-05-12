@@ -252,16 +252,20 @@ impl Node {
     pub fn what_node_mode() -> Result<NodeMode, Error> {
         // check systemd first
         if Node::node_running() {
-            let out = Command::new("service")
+            let output = Command::new("service")
                 .args(&["libra-node", "status"])
-                .output()
-                .expect("could not check systemctl");
-            let text = str::from_utf8(&out.stdout.as_slice()).unwrap();
-            if text.contains("validator") {
-                return Ok(NodeMode::Validator);
-            }
-            if text.contains("fullnode") {
-                return Ok(NodeMode::Fullnode);
+                .output();
+            match output {
+                Ok(out)=> {
+                    let text = str::from_utf8(&out.stdout.as_slice()).unwrap();
+                    if text.contains("validator") {
+                        return Ok(NodeMode::Validator);
+                    }
+                    if text.contains("fullnode") {
+                        return Ok(NodeMode::Fullnode);
+                    }
+                },
+                Err(e)=> return Err(Error::from(e))
             }
 
             // check as parent process

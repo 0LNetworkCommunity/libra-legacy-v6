@@ -60,9 +60,9 @@ where
         if cached_vitals.items.db_restored {
             status_db_bootstrapped = "LibraDB is bootstrapped."
         }
-        "DB files exist"
+        "DB files exist".to_owned()
     } else {
-        "DB files do NOT EXIST"
+        format!("DB files do NOT EXIST {:?}", app.node.conf.workspace.db_path).to_owned()
     };
     let text = vec![
         Spans::from(vec![
@@ -483,18 +483,18 @@ where
         .iter()
         .map(|c| {
             let cells = vec![
-                Cell::from(Span::raw(format!("{}", c.version))),
-                Cell::from(Span::raw(format!("{:?}", c.hash))),
-                Cell::from(Span::raw(format!("{:?}", c.gas_used))),
-                Cell::from(Span::raw(format!("{:?}", c.vm_status))),
-                Cell::from(Span::raw(format!("{:?}", c.transaction))),
+                Cell::from(Span::raw(format!("{}", c.chain_id))),
+                Cell::from(Span::raw(format!("{:?}", c.sender))),
+                Cell::from(Span::raw(format!("{:?}", c.sequence_number))),
+                Cell::from(Span::raw(format!("{:?}:{:?}",c.signature_scheme ,c.signature))),
+                Cell::from(Span::raw(format!("{:?}/{:?}", c.max_gas_amount, c.gas_currency))),
             ];
             Row::new(cells)
         })
         .collect();
     let table = Table::new(items)
         .header(
-            Row::new(vec!["Version", "Hash", "Gas", "Status", "Type", "Body"])
+            Row::new(vec!["Chain ID", "Sender", "Sequence", "Status", "Signature", "Gas"])
                 .style(Style::default().fg(Color::Green)),
         )
         .block(

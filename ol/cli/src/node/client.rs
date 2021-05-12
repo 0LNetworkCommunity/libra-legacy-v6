@@ -11,10 +11,15 @@ use crate::{config::AppCfg, entrypoint, node::node::Node, prelude::app_config};
 /// returns a LibraClient instance.
 // TODO: Use app config file for params
 pub fn make_client(url: Option<Url>, waypoint: Waypoint) -> Result<LibraClient, Error> { 
-    Ok(LibraClient::new(
-        url.clone().unwrap_or("http://localhost:8080".to_owned().parse().unwrap()),
-        waypoint
-    ).unwrap())
+    match url {
+        Some(u)=> {
+            LibraClient::new(u, waypoint)
+        },
+        None=> {
+            LibraClient::new(Url::parse("http://localhost:8080")
+                                 .expect("Couldn't create libra client"), waypoint)
+        },
+    }
 }
 
 /// Experimental
@@ -60,18 +65,21 @@ pub fn default_local_client(config: &AppCfg,  waypoint: Waypoint)  -> Option<(Li
 }
 
 /// connect a swarm client
-pub fn swarm_test_client(swarm_path: PathBuf) -> Option<(LibraClient, Waypoint)> {
-    let (url, waypoint) = ol_types::config::get_swarm_configs(swarm_path);
-    match make_client(Some(url), waypoint) {
+pub fn swarm_test_client(config: &mut AppCfg, swarm_path: PathBuf) -> Option<(LibraClient, Waypoint)> {
+    let (url, waypoint) = ol_types::config::get_swarm_configs(swarm_path.clone());
+    config.profile.default_node = Some(url.clone());
+    config.profile.upstream_nodes = Some(vec![url.clone()]);
+
+    match make_client(Some(url.clone()), waypoint) {
         Ok(client) => {Some((client, waypoint))}
-        Err(_) => {None}
+        Err(_e) => {None}
     }
 }
 
 /// picks what URL to connect to based on sync state. Or returns the client for swarm.
-pub fn pick_client(swarm_path: Option<PathBuf>, config: &AppCfg) -> Option<(LibraClient, Waypoint)> {
+pub fn pick_client(swarm_path: Option<PathBuf>, config: &mut AppCfg) -> Option<(LibraClient, Waypoint)> {
     if let Some(path) = swarm_path {
-      return swarm_test_client(path);
+      return swarm_test_client(config, path);
     };
     let waypoint = config.get_waypoint(swarm_path).expect("could not get waypoint");
     // check if is in sync

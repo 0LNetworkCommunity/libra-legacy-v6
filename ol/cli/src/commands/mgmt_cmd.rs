@@ -24,8 +24,8 @@ pub struct MgmtCmd {
 impl Runnable for MgmtCmd {
     fn run(&self) {
         let args = entrypoint::get_args();
-        let cfg = app_config().clone();
-        let client = client::pick_client(args.swarm_path, &cfg).unwrap().0;
+        let mut cfg = app_config().clone();
+        let client = client::pick_client(args.swarm_path, &mut cfg).unwrap().0;
         let mut node = Node::new(client, cfg);
 
         if self.start_node {

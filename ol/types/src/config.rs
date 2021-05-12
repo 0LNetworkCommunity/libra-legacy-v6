@@ -209,7 +209,7 @@ impl AppCfg {
                 .unwrap();
 
         // upstream configs
-        let upstream_config_path = swarm_path.join("1/node.yaml");
+        let upstream_config_path = swarm_path.join("0/node.yaml");
         let upstream_config = NodeConfig::load(&upstream_config_path).unwrap_or_else(|_| {
             panic!(
                 "Failed to load NodeConfig from file: {:?}",
@@ -465,14 +465,13 @@ fn default_miner_txs_cost() -> Option<TxCost> {Some(TxCost::new(10_000)) }
 fn default_cheap_txs_cost() -> Option<TxCost> { Some(TxCost::new(1_000)) }
 
 /// Get swarm configs from swarm files, swarm must be running
-pub fn get_swarm_configs(mut swarm_path: PathBuf) -> (Url, Waypoint) {
+pub fn get_swarm_configs( mut swarm_path: PathBuf) -> (Url, Waypoint) {
     swarm_path.push("0/node.yaml");
     let config = NodeConfig::load(&swarm_path)
         .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path));
 
     let url = Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str())
         .unwrap();
-
     let waypoint = config.base.waypoint.waypoint();
 
     (url, waypoint)

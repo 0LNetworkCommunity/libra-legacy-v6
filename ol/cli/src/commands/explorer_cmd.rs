@@ -3,11 +3,14 @@
 use abscissa_core::{Command, Options, Runnable};
 use crate::{application::app_config, entrypoint, explorer::event::{Events, Config, Event}, node::{client, node::Node}};
 use std::time::Duration;
-use std::io;
+use std::{io, thread};
 use termion::{event::Key, input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
 use tui::backend::TermionBackend;
 use tui::Terminal;
 use crate::explorer::{App, ui};
+use crate::check::runner;
+use crate::config::AppCfg;
+
 /// `explorer-cmd` subcommand
 #[derive(Command, Debug, Options)]
 pub struct ExplorerCMD {
@@ -27,8 +30,33 @@ pub struct ExplorerCMD {
 impl Runnable for ExplorerCMD {
     /// Start the application.
     fn run(&self) {
-        let cfg = app_config().clone();
+
+        // TODO: optionally start explorer with the pilot process in a thread
+        // Start the health check runner in background, optionally with --pilot, which starts services.
+        // check if pilot or something else is already running.
+        thread::spawn(move || {
+            let mut conf = match entrypoint::get_args().swarm_path {
+                Some(sp) => AppCfg::init_app_configs_swarm(sp.clone(), sp.join("0")),
+                None => app_config().to_owned()
+            };
+            let client = client::pick_client( entrypoint::get_args().swarm_path, &mut conf).unwrap().0;
+            let mut node = Node::new(client, conf);
+            runner::run_checks(&mut node, false, true, false);
+        });
+
+
         let args = entrypoint::get_args();
+
+        let mut cfg = match args.swarm_path.clone() {
+            Some(sp) => AppCfg::init_app_configs_swarm(sp.clone(), sp.join("0")),
+            None => app_config().to_owned()
+        };
+
+        let client = client::pick_client(args.swarm_path, &mut cfg).unwrap().0;
+        let mut node = Node::new(client, cfg);
+
+        let mut app = App::new(" Console ", self.enhanced_graphics, node);
+        app.fetch();
 
         let events = Events::with_config(Config {
             tick_rate: Duration::from_millis(self.tick_rate),
@@ -41,18 +69,6 @@ impl Runnable for ExplorerCMD {
         let backend = TermionBackend::new(stdout);
         let mut terminal = Terminal::new(backend).expect("Failed to initial screen");
 
-        let client = client::pick_client(args.swarm_path, &cfg).unwrap().0;
-        let node = Node::new(client, cfg);
-        
-        // TODO: optionally start explorer with the pilot process in a thread
-        // Start the health check runner in background, optionally with --pilot, which starts services.
-        // check if pilot or something else is already running.
-        // thread::spawn(move || {
-        //     runner::run_checks(&mut node, false, true, false);
-        // });
-
-        let mut app = App::new(" Console ", self.enhanced_graphics, node);
-        app.fetch();
         terminal.clear().unwrap();
         
         loop {
