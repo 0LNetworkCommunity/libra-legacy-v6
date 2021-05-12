@@ -36,11 +36,15 @@ impl Node {
     use QueryType::*;
     match query_type {
       Balance => {
+        // TODO: get scaling factor from chain.
+        let scaling_factor = 1_000_000;
         match self.get_account_view() {
             Some(account_view) => {
               for av in account_view.balances.iter() {
                 if av.currency == "GAS" {
-                  return av.amount.to_formatted_string(&Locale::en);
+                  
+                  let amount = av.amount/scaling_factor ;
+                  return amount.to_formatted_string(&Locale::en);
                 }
               }
             },

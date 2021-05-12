@@ -4,8 +4,6 @@ use abscissa_core::{
     Command, command::Usage, Config, Configurable, FrameworkError, 
     Options, Runnable    
 };
-use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
-use reqwest::Url;
 use std::path::PathBuf;
 
 use crate::commands;
@@ -38,31 +36,6 @@ where
     pub command: Option<Cmd>,
 
     /// --- Customizing EntryPoint --- ///
-
-    /// Account Address
-    #[options(short = "a", help = "account address")]
-    pub account: Option<AccountAddress>,
-
-    /// URL to send tx
-    #[options(short = "u", help = "URL to send tx")]    
-    pub url: Option<Url>,
-
-    /// Use the upstream URL in configs for sending transaction
-    #[options(help = "Use the upstream URL in configs for sending transaction")]
-    pub use_upstream_url: bool,
-
-    /// Override waypoint to connect to
-    #[options(short = "w", help = "waypoint to connect to")]
-    pub waypoint: Option<Waypoint>,
-
-        /// Save the tx to file
-    #[options(short = "s", help = "save the signed tx to file")]
-    pub save_path: Option<PathBuf>,
-
-    /// Only save, don't send transaction
-    #[options(short = "n", help = "don't send the transaction, to be used with --save_path")]
-    pub no_send: bool,
-
     /// Swarm path - get tx params from swarm
     #[options(help = "swarm path to override tx params, testing only")]
     pub swarm_path: Option<PathBuf>,
