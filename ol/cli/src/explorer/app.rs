@@ -3,10 +3,8 @@
 use crate::node::chain_info;
 use crate::node::node::Node;
 use super::TabsState;
-
-use libra_json_rpc_client::views::TransactionView;
+use libra_json_rpc_client::views::TransactionDataView;
 use libra_types::{account_state::AccountState};
-// use libra_network_address::Protocol;
 
 /// struct for fullnode list
 pub struct Server<'a> {
@@ -18,6 +16,27 @@ pub struct Server<'a> {
     pub coords: (f64, f64),
     /// Status(Up or Down)
     pub status: &'a str,
+}
+
+pub struct Tx {
+    /// Sender
+    pub sender: String,
+    /// signature_scheme
+    pub signature_scheme: String,
+    /// signature
+    pub signature: String,
+    /// pubkey
+    pub public_key: String,
+    /// sequence
+    pub sequence_number: u64,
+    /// chain id
+    pub chain_id: u8,
+    /// max gas amount
+    pub max_gas_amount: u64,
+    /// gas unit price
+    pub gas_unit_price: u64,
+    /// Gas currency
+    pub gas_currency: String,
 }
 
 /// Explorer Application
@@ -47,7 +66,7 @@ pub struct App<'a> {
     /// latest fetched tx version
     pub last_fetch_tx_version: u64,
     /// transaction list
-    pub txs: Vec<TransactionView>,
+    pub txs: Vec<Tx>,
 }
 
 /// implementation of app
@@ -60,7 +79,7 @@ impl<'a> App<'a> {
             account_state: None,
             chain_state: None,
             should_quit: false,
-            tabs: TabsState::new(vec!["Overview", "Network", "Transactions", "Coin List"]),
+            tabs: TabsState::new(vec!["Overview", "Pilot", "Network", "Transactions", "Coins"]),
             show_chart: true,
             progress: 0.1,
             servers: vec![
@@ -124,10 +143,33 @@ impl<'a> App<'a> {
             .get_txn_by_range(self.last_fetch_tx_version, 100, true)
         {
             Ok(txs) => {
-                self.txs = txs
-                // let _ = txs.iter().map(|tv| {
-                //     self.txs.push(tv.clone());
-                // });
+                txs.iter().for_each(|tv| {
+                    match tv.clone().transaction {
+                        TransactionDataView::UserTransaction {sender,
+                                                             signature_scheme,
+                                                             signature,
+                                                             public_key,
+                                                             sequence_number,
+                                                             chain_id,
+                                                             max_gas_amount,
+                                                             gas_unit_price,
+                                                             gas_currency,
+                            ..} => {
+                            self.txs.push(Tx{
+                                sender,
+                                sequence_number,
+                                signature,
+                                signature_scheme,
+                                public_key,
+                                chain_id,
+                                max_gas_amount,
+                                gas_currency,
+                                gas_unit_price,
+                            });
+                        },
+                        _ => {}
+                    }
+                });
             }
             Err(e) => { println!("Error occurs: {}", e)}
         }

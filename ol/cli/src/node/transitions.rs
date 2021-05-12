@@ -66,7 +66,7 @@ impl Node {
           &self.miner_transition(MinerEvents::Started, trigger_action);
         } else {
           // start the miner
-          self.start_miner();
+          self.start_miner(true);
         }
       }
     }
@@ -88,7 +88,7 @@ impl Node {
 
       OnboardEvents::RestoreDb => {
         if self.vitals.host_state.onboard_state == ValConfigsOk {
-          self.vitals.host_state.onboard_state = DbRestoredOk;
+          self.vitals.host_state.onboard_state = DbBootstrapOk;
         }
       }
       }
@@ -176,7 +176,8 @@ impl Node {
           }
         }
       }
-      OnboardState::DbRestoredOk => {
+      OnboardState::DbFilesOk => {}
+      OnboardState::DbBootstrapOk => {
         // if check.node_running() {
         //   &self.onboard_transition(OnboardEvents::StartFullnode, trigger_action);
         // } else {
@@ -215,7 +216,7 @@ impl Node {
           // Stop node first, then restart as validator.
           self.stop_node();
 
-          self.start_node(management::NodeMode::Validator)
+          self.start_node(management::NodeMode::Validator, true)
             .expect("unable to start node in validator mode");
 
           &self.node_transition(NodeEvents::SwitchToValidatorMode, trigger_action);

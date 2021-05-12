@@ -94,7 +94,6 @@ module LibraBlock {
             LibraAccount::process_escrow<GAS>(vm);
             AutoPay2::process_autopay(vm);
         };
-
         ///////////////////
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(CoreAddresses::LIBRA_ROOT_ADDRESS());
         LibraTimestamp::update_global_time(vm, proposer, timestamp);
@@ -112,6 +111,8 @@ module LibraBlock {
          //////// 0L ////////
         // reconfigure
         if (Epoch::epoch_finished()) {
+// print(&03000);
+
           // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata. But there's a circular reference there when we try.
           Reconfigure::reconfigure(vm, get_current_block_height());
         };

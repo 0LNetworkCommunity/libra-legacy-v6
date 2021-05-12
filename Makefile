@@ -49,7 +49,32 @@ BINS= db-backup db-backup-verify db-restore libra-node miner ol_cli txs stdlib
 
 ##### DEPENDENCIES #####
 deps:
-	. ./util/setup.sh
+	. ./ol/util/setup.sh
+
+download: web-files
+	@for b in ${RELEASE} ; do \
+		echo $$b | rev | cut -d"/" -f1 | rev ; \
+		curl  --progress-bar --create-dirs -o /usr/local/bin/$$(echo $$b | rev | cut -d"/" -f1 | rev) -L $$b ; \
+		echo 'downloaded to /usr/local/bin/' ; \
+		chmod 744 /usr/local/bin/$$(echo $$b | rev | cut -d"/" -f1 | rev) ;\
+	done
+
+web-files: 
+	curl -L --progress-bar --create-dirs -o ${DATA_PATH}/web-monitor.zip https://github.com/OLSF/libra/releases/latest/download/web-monitor.zip
+	unzip ${DATA_PATH}/web-monitor.zip
+
+download-release:
+	@for b in ${BINS} ; do \
+		echo $$b ; \
+		curl --create-dirs -o ${DATA_PATH}/release-${RELEASE}/$$b -L ${RELEASE_URL}/${RELEASE}/$$b ; \
+		chmod 744 ${DATA_PATH}/release-${RELEASE}/$$b ; \
+		cp ${DATA_PATH}/release-${RELEASE}/$$b  /usr/local/bin/$$b ; \
+	done
+
+uninstall:
+	@for b in ${BINS} ; do \
+		rm /usr/local/bin/$$b ; \
+	done
 
 download: web-files
 	@for b in ${RELEASE} ; do \

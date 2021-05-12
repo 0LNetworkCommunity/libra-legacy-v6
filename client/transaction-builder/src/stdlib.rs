@@ -1579,7 +1579,7 @@ impl ScriptCall {
                 payee,
                 end_epoch,
                 percentage,
-            } => encode_autopay_create_instruction_script(uid, type, payee, end_epoch, percentage),
+            } => encode_autopay_create_instruction_script(uid, payee, end_epoch, percentage),
             AutopayDisable {} => encode_autopay_disable_script(),
             AutopayEnable {} => encode_autopay_enable_script(),
             Burn {
@@ -4336,8 +4336,8 @@ const AUTOPAY_DISABLE_CODE: &[u8] = &[
     117, 116, 111, 80, 97, 121, 6, 83, 105, 103, 110, 101, 114, 10, 97, 100, 100, 114, 101, 115,
     115, 95, 111, 102, 15, 100, 105, 115, 97, 98, 108, 101, 95, 97, 117, 116, 111, 112, 97, 121,
     10, 105, 115, 95, 101, 110, 97, 98, 108, 101, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    1, 0, 0, 4, 20, 10, 0, 17, 0, 12, 1, 10, 1, 17, 2, 3, 7, 5, 10, 11, 0, 17, 1, 5, 12, 11, 0, 1,
-    10, 1, 17, 2, 12, 2, 11, 2, 3, 19, 6, 0, 0, 0, 0, 0, 0, 0, 0, 39, 2,
+    1, 0, 0, 4, 21, 10, 0, 17, 0, 12, 1, 10, 1, 17, 2, 3, 7, 5, 10, 11, 0, 17, 1, 5, 12, 11, 0, 1,
+    10, 1, 17, 2, 32, 12, 2, 11, 2, 3, 20, 6, 17, 39, 0, 0, 0, 0, 0, 0, 39, 2,
 ];
 
 const AUTOPAY_ENABLE_CODE: &[u8] = &[

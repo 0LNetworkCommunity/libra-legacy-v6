@@ -159,16 +159,6 @@ module Reconfigure {
         Subsidy::set_global_count(vm, global_proofs_count);
 // print(&03280);
 
-
-        // Update all validators with account limits
-        // After Epoch 1000. 
-        if (LibraConfig::check_transfer_enabled()) {
-        update_validator_withdrawal_limit(vm);
-        };
-    
-        // needs to be set before the auctioneer runs in Subsidy::fullnode_reconfig
-        Subsidy::set_global_count(vm, global_proofs_count);
-
         //Reset Counters
         Stats::reconfig(vm, &proposed_set);
 // print(&03290);

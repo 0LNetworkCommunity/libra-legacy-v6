@@ -21,10 +21,10 @@ impl Runnable for HealthCmd {
     /// Start the application.
     fn run(&self) {
       let args = entrypoint::get_args();
-      let cfg = app_config().clone();
-      let client = client::pick_client(args.swarm_path, &cfg).unwrap().0;
-      let node = Node::new(client, cfg);
+      let mut cfg = app_config().clone();
+      let client = client::pick_client(args.swarm_path, &mut cfg).unwrap().0;
+      let mut node = Node::new(client, cfg);
 
-      check::runner::run_checks(node, self.live, true);
+      check::runner::run_checks(&mut node, false ,self.live, true);
     }
 }

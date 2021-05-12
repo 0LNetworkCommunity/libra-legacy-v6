@@ -77,9 +77,6 @@ var app = (function () {
     function onMount(fn) {
         get_current_component().$$.on_mount.push(fn);
     }
-    function onDestroy(fn) {
-        get_current_component().$$.on_destroy.push(fn);
-    }
 
     const dirty_components = [];
     const binding_callbacks = [];
@@ -17982,7 +17979,7 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (84:2) {#if healthData}
+    // (100:2) {#if healthData}
     function create_if_block$1(ctx) {
     	let div;
     	let h3;
@@ -18014,11 +18011,11 @@ var app = (function () {
     			}
 
     			attr_dev(h3, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted");
-    			add_location(h3, file$9, 85, 6, 2369);
+    			add_location(h3, file$9, 101, 6, 2928);
     			attr_dev(dl, "class", "uk-description-list");
-    			add_location(dl, file$9, 88, 6, 2481);
+    			add_location(dl, file$9, 104, 6, 3040);
     			attr_dev(div, "class", "uk-card uk-card-default uk-card-body");
-    			add_location(div, file$9, 84, 4, 2312);
+    			add_location(div, file$9, 100, 4, 2871);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -18089,14 +18086,14 @@ var app = (function () {
     		block,
     		id: create_if_block$1.name,
     		type: "if",
-    		source: "(84:2) {#if healthData}",
+    		source: "(100:2) {#if healthData}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (90:8) {#each allChecks as c}
+    // (106:8) {#each allChecks as c}
     function create_each_block$3(ctx) {
     	let check;
     	let current;
@@ -18143,7 +18140,7 @@ var app = (function () {
     		block,
     		id: create_each_block$3.name,
     		type: "each",
-    		source: "(90:8) {#each allChecks as c}",
+    		source: "(106:8) {#each allChecks as c}",
     		ctx
     	});
 
@@ -18159,7 +18156,7 @@ var app = (function () {
     		c: function create() {
     			main = element("main");
     			if (if_block) if_block.c();
-    			add_location(main, file$9, 82, 0, 2282);
+    			add_location(main, file$9, 98, 0, 2841);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -18261,6 +18258,18 @@ var app = (function () {
     					i.is_true = healthData.validator_set;
     				}
 
+    				if (i.id === "correct_mode") {
+    					i.is_true = false;
+
+    					if (healthData.validator_set) {
+    						i.is_true = healthData.node_mode == "Validator";
+    					} else {
+    						i.is_true = healthData.node_mode != "Validator";
+    					}
+
+    					i.description = ("node running in mode: ").concat(healthData.node_mode);
+    				}
+
     				return i;
     			}));
     		}
@@ -18307,6 +18316,12 @@ var app = (function () {
     			id: "set",
     			title: "In validator set",
     			description: "owner account is in the validator set",
+    			is_true: false
+    		},
+    		{
+    			id: "correct_mode",
+    			title: "Mode",
+    			description: "node running in mode: ",
     			is_true: false
     		}
     	];
@@ -18846,7 +18861,7 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (57:4) {#each set as val, i}
+    // (45:4) {#each set as val, i}
     function create_each_block$2(ctx) {
     	let li;
     	let div5;
@@ -18947,34 +18962,34 @@ var app = (function () {
     			td7 = element("td");
     			t22 = text(t22_value);
     			t23 = space();
-    			add_location(div0, file$5, 60, 12, 1747);
-    			add_location(div1, file$5, 61, 12, 1792);
-    			add_location(div2, file$5, 62, 12, 1834);
-    			add_location(div3, file$5, 63, 12, 1885);
+    			add_location(div0, file$5, 48, 12, 1438);
+    			add_location(div1, file$5, 49, 12, 1483);
+    			add_location(div2, file$5, 50, 12, 1525);
+    			add_location(div3, file$5, 51, 12, 1576);
     			attr_dev(div4, "class", "uk-column-1-4 uk-child-width-expand@s uk-text-center");
-    			add_location(div4, file$5, 59, 10, 1668);
+    			add_location(div4, file$5, 47, 10, 1359);
     			attr_dev(div5, "class", "uk-accordion-title uk-text-muted");
-    			add_location(div5, file$5, 58, 8, 1611);
-    			add_location(td0, file$5, 70, 16, 2080);
+    			add_location(div5, file$5, 46, 8, 1302);
+    			add_location(td0, file$5, 58, 16, 1771);
     			attr_dev(td1, "class", "uk-text-break");
-    			add_location(td1, file$5, 71, 16, 2130);
-    			add_location(tr0, file$5, 69, 14, 2059);
-    			add_location(td2, file$5, 74, 16, 2237);
+    			add_location(td1, file$5, 59, 16, 1821);
+    			add_location(tr0, file$5, 57, 14, 1750);
+    			add_location(td2, file$5, 62, 16, 1928);
     			attr_dev(td3, "class", "uk-text-break");
-    			add_location(td3, file$5, 75, 16, 2288);
-    			add_location(tr1, file$5, 73, 14, 2216);
-    			add_location(td4, file$5, 78, 16, 2393);
-    			add_location(td5, file$5, 79, 16, 2447);
-    			add_location(tr2, file$5, 77, 14, 2372);
-    			add_location(td6, file$5, 82, 16, 2546);
-    			add_location(td7, file$5, 83, 16, 2590);
-    			add_location(tr3, file$5, 81, 14, 2525);
-    			add_location(tbody, file$5, 68, 12, 2037);
+    			add_location(td3, file$5, 63, 16, 1979);
+    			add_location(tr1, file$5, 61, 14, 1907);
+    			add_location(td4, file$5, 66, 16, 2084);
+    			add_location(td5, file$5, 67, 16, 2138);
+    			add_location(tr2, file$5, 65, 14, 2063);
+    			add_location(td6, file$5, 70, 16, 2237);
+    			add_location(td7, file$5, 71, 16, 2281);
+    			add_location(tr3, file$5, 69, 14, 2216);
+    			add_location(tbody, file$5, 56, 12, 1728);
     			attr_dev(table, "class", "uk-table");
-    			add_location(table, file$5, 67, 10, 2000);
+    			add_location(table, file$5, 55, 10, 1691);
     			attr_dev(div6, "class", "uk-accordion-content");
-    			add_location(div6, file$5, 66, 8, 1955);
-    			add_location(li, file$5, 57, 6, 1598);
+    			add_location(div6, file$5, 54, 8, 1646);
+    			add_location(li, file$5, 45, 6, 1289);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, li, anchor);
@@ -19039,7 +19054,7 @@ var app = (function () {
     		block,
     		id: create_each_block$2.name,
     		type: "each",
-    		source: "(57:4) {#each set as val, i}",
+    		source: "(45:4) {#each set as val, i}",
     		ctx
     	});
 
@@ -19101,20 +19116,21 @@ var app = (function () {
     				each_blocks[i].c();
     			}
 
-    			add_location(span, file$5, 43, 4, 1214);
+    			add_location(span, file$5, 31, 4, 905);
     			attr_dev(h2, "class", " uk-text-center uk-text-uppercase uk-text-muted uk-text-light uk-margin-medium-bottom");
-    			add_location(h2, file$5, 40, 2, 1104);
-    			add_location(div0, file$5, 48, 6, 1413);
-    			add_location(div1, file$5, 49, 6, 1438);
-    			add_location(div2, file$5, 50, 6, 1468);
-    			add_location(div3, file$5, 51, 6, 1501);
+    			add_location(h2, file$5, 28, 2, 795);
+    			add_location(div0, file$5, 36, 6, 1104);
+    			add_location(div1, file$5, 37, 6, 1129);
+    			add_location(div2, file$5, 38, 6, 1159);
+    			add_location(div3, file$5, 39, 6, 1192);
     			attr_dev(div4, "class", "uk-column-1-4 uk-child-width-expand@s uk-text-center uk-text-uppercase uk-text-light uk-text-small");
-    			add_location(div4, file$5, 47, 4, 1294);
+    			add_location(div4, file$5, 35, 4, 985);
     			attr_dev(div5, "class", "uk-text-muted");
-    			add_location(div5, file$5, 46, 2, 1262);
+    			add_location(div5, file$5, 34, 2, 953);
     			attr_dev(ul, "uk-accordion", "");
-    			add_location(ul, file$5, 55, 2, 1548);
-    			add_location(main, file$5, 39, 0, 1095);
+    			add_location(ul, file$5, 43, 2, 1239);
+    			attr_dev(main, "uk-height-viewport", "expand: true");
+    			add_location(main, file$5, 27, 0, 752);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -19213,8 +19229,6 @@ var app = (function () {
     	});
 
     	$$self.$capture_state = () => ({
-    		onMount,
-    		onDestroy,
     		sortBy: lodash.sortBy,
     		set,
     		chainInfo,
@@ -20176,11 +20190,12 @@ var app = (function () {
     			create_component(vals.$$.fragment);
     			t2 = space();
     			create_component(upgrade.$$.fragment);
-    			attr_dev(ul, "class", "uk-switcher uk-margin switcher-container");
-    			add_location(ul, file$1, 10, 4, 309);
+    			attr_dev(ul, "class", "uk-switcher uk-margin switcher-container uk-height-large");
+    			add_location(ul, file$1, 10, 4, 341);
     			attr_dev(div, "class", "uk-container uk-margin-top");
-    			add_location(div, file$1, 9, 2, 264);
-    			attr_dev(main, "class", "uk-background-muted uk-height-viewport");
+    			add_location(div, file$1, 9, 2, 296);
+    			attr_dev(main, "uk-height-viewport", "expand: true");
+    			attr_dev(main, "class", "uk-background-muted uk-overflow-auto");
     			add_location(main, file$1, 7, 0, 198);
     		},
     		l: function claim(nodes) {

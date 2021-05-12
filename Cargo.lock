@@ -644,6 +644,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "bzip2"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42b7c3cbf0fa9c1b82308d57191728ca0256cb821220f4e2fd410a72ade26e3b"
+dependencies = [
+ "bzip2-sys",
+ "libc",
+]
+
+[[package]]
+name = "bzip2-sys"
+version = "0.1.10+1.0.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17fa3d1ac1ca21c5c4e36a97f3c3eb25084576f6fc47bf0139c1123434216c6c"
+dependencies = [
+ "cc",
+ "libc",
+ "pkg-config",
+]
+
+[[package]]
 name = "c_linked_list"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2133,6 +2154,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "gag"
+version = "0.1.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8cc0b9f53275dc5fada808f1d2f82e3688a6c14d735633d1590b7be8eb2307b5"
+dependencies = [
+ "libc",
+ "tempfile",
+]
+
+[[package]]
 name = "gcc"
 version = "0.3.55"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2434,6 +2465,9 @@ name = "hex"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "644f9158b2f133fd50f5fb3242878846d9eb792e445c893805ff0e3824006e35"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "hkdf"
@@ -3296,6 +3330,7 @@ dependencies = [
  "move-core-types",
  "move-vm-types",
  "network",
+ "ol-types",
  "once_cell",
  "proptest",
  "rand 0.7.3",
@@ -3339,6 +3374,7 @@ dependencies = [
  "libra-workspace-hack",
  "move-core-types",
  "move-explain",
+ "ol-types",
  "serde",
  "serde_json",
  "transaction-builder",
@@ -4985,7 +5021,9 @@ dependencies = [
  "clokwerk",
  "crossterm",
  "dirs 2.0.2",
+ "fs_extra",
  "futures 0.3.6",
+ "gag",
  "glob",
  "gumdrop",
  "handlebars",
@@ -5050,11 +5088,13 @@ dependencies = [
  "libra-network-address",
  "libra-types",
  "machine-ip",
+ "move-core-types",
  "once_cell",
  "reqwest",
  "rustyline",
  "serde",
  "serde_json",
+ "sha2 0.9.3",
  "toml",
  "url",
 ]
@@ -5087,6 +5127,7 @@ dependencies = [
  "transaction-builder",
  "txs",
  "wait-timeout",
+ "zip",
 ]
 
 [[package]]
@@ -8297,4 +8338,18 @@ dependencies = [
  "quote 1.0.7",
  "syn 1.0.42",
  "synstructure",
+]
+
+[[package]]
+name = "zip"
+version = "0.5.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c83dc9b784d252127720168abd71ea82bf8c3d96b17dc565b5e2a02854f2b27"
+dependencies = [
+ "byteorder",
+ "bzip2",
+ "crc32fast",
+ "flate2",
+ "thiserror",
+ "time 0.1.44",
 ]

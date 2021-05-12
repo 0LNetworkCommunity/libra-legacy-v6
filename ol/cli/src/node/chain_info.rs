@@ -126,7 +126,7 @@ impl Node {
 
       cs.height = meta.version;
 
-      cs.upgrade = self.client.query_oracle_upgrade().unwrap();
+      cs.upgrade = self.client.query_oracle_upgrade().expect("could not get upgrade oracle view");
 
 
       let validators: Vec<ValidatorView> = account_state
