@@ -24,7 +24,7 @@ jobs:
       - name: Build
         run:  RUSTC_WRAPPER=sccache make bins
       - name: Upload binaries to github.com/release
-        uses: svenstaro/upload-release-action@v2
+        uses: svenstaro/upload-release-action@2.2.1
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: target/release/!(*.*)
@@ -34,7 +34,7 @@ jobs:
       - name: Web
         run:  zip -r web-monitor.zip ol/cli/web-monitor
       - name: Upload Web Files
-        uses: svenstaro/upload-release-action@v2
+        uses: svenstaro/upload-release-action@2.2.1
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: web-monitor.zip
