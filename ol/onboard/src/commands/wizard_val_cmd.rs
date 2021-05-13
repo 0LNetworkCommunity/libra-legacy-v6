@@ -172,7 +172,7 @@ fn get_autopay_batch(
     let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone(), starting_epoch);
     let url = cfg.what_url(false);
     let mut tx_params =
-        submit_tx::get_tx_params_from_toml(cfg.to_owned(), TxType::Miner, Some(wallet), url)
+        submit_tx::get_tx_params_from_toml(cfg.to_owned(), TxType::Miner, Some(wallet), url, None)
             .unwrap();
     // give the tx a very long expiration, 1 day.
     let tx_expiration_sec = 24 * 60 * 60;
