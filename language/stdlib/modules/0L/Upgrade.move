@@ -99,6 +99,9 @@ address 0x1 {
         // public fun foo() {
         //     print(&0x050D1AC);
         // }
+
+        //////// FOR E2E Testing ////////
+
     }
 }
     
