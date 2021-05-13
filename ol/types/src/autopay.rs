@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{fs, path::PathBuf};
 #[derive(Clone, Debug, Deserialize, Serialize)]
-// #[serde(deny_unknown_fields)]
+#[serde(deny_unknown_fields)]
 /// Autopay payment instruction
 pub struct PayInstruction {
     /// unique id of instruction
@@ -64,7 +64,7 @@ impl PayInstruction {
         })
         .collect();
 
-        if (total_pct_inflow <= 100f64) && (total_pct_balance <= 100f64){
+        if (total_pct_inflow < 100f64) && (total_pct_balance < 100f64){
           Ok(transformed)
         } else {
           Err(Error::msg("percentages sum greater than 100%"))

@@ -38,14 +38,48 @@ impl Runnable for AutopayBatchCmd {
 pub fn process_instructions(instructions: Vec<PayInstruction>, current_epoch: u64) -> Vec<Script> {
     // TODO: Check instruction IDs are sequential.
     instructions.into_iter().filter_map(|i| {
-        let warning = format!(
-            "Instruction {uid}:\nSend {percent_balance:.2?}% of your total balance every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
+
+        let in_type = if (i.percent_balance.is_some() ) {
+          0
+        } else if (i.percent_inflow.is_some() ) {
+          1
+        } else if (i.fixed_payment.is_some() ) {
+          2
+        } else {
+          9
+        };
+
+        assert!(in_type != 9);
+
+
+        let warning = if (i.percent_balance.is_some() ) {
+          format!(
+              "Instruction {uid}:\nSend {percent_balance:.2?}% of your total balance every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
+              uid = &i.uid,
+              percent_balance = *&i.percent_balance_cast.unwrap() as f64 /100f64,
+              duration_epochs = &i.duration_epochs.unwrap(),
+              epoch_ending = &i.duration_epochs.unwrap() + current_epoch,
+              destination = &i.destination,
+          )
+        } else if (i.percent_inflow.is_some() ) {
+          format!(
+            "Instruction {uid}:\nSend {percent_balance:.2?}% of your change in balance every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
             uid = &i.uid,
             percent_balance = *&i.percent_balance_cast.unwrap() as f64 /100f64,
             duration_epochs = &i.duration_epochs.unwrap(),
             epoch_ending = &i.duration_epochs.unwrap() + current_epoch,
             destination = &i.destination,
-        );
+        )
+        } else if (i.fixed_payment.is_some() ) {
+          format!(
+            "Instruction {uid}:\nSend {total_val} every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
+            uid = &i.uid,
+            total_val = *&i.fixed_payment.unwrap(),
+            duration_epochs = &i.duration_epochs.unwrap(),
+            epoch_ending = &i.duration_epochs.unwrap() + current_epoch,
+            destination = &i.destination,
+        )
+        };
         println!("{}", &warning);
         // accept if CI mode.
         if *IS_CI { return Some(i) }            
@@ -59,7 +93,7 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, current_epoch: u6
         }            
     })
     .map(|i| {
-      transaction_builder::encode_autopay_create_instruction_script(i.uid, i.destination, i.end_epoch, i.percent_balance_cast.unwrap())
+      transaction_builder::encode_autopay_create_instruction_script(i.uid, in_type, i.destination, i.end_epoch, i.percent_balance_cast.unwrap())
     })
     .collect()
 }
