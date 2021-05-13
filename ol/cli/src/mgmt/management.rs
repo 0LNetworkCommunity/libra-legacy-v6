@@ -37,7 +37,7 @@ pub fn create_log_file(file_name: &str) -> File {
     let logs_dir = conf.workspace.node_home.join("logs/");
     fs::create_dir_all(&logs_dir).expect("could not create logs dir");
     let logs_file = logs_dir.join([file_name, ".log"].join(""));
-    println!("Logging in file: {:?}", logs_file);
+    //println!("Logging in file: {:?}", logs_file);
 
     File::create(logs_file).expect("could not create log file")
 }
@@ -68,7 +68,9 @@ impl Node {
         // if is running do nothing
         // TODO: Get another check of node running
         if node::Node::node_running() {
-            println!("{} is already running. Exiting.", NODE);
+            if !_verbose {
+                println!("{} is already running. Exiting.", NODE);
+            }
             return Ok(());
         }
 

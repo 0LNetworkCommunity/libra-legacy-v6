@@ -9,9 +9,12 @@ use crossterm::{
 };
 use std::io::{stdout, Write};
 use std::{thread, time::Duration};
+use gag::Gag;
 
 /// Start the node monitor
-pub fn run_checks(mut node: &mut Node, pilot: bool, is_live: bool, verbose: bool) { 
+pub fn run_checks(mut node: &mut Node, pilot: bool, is_live: bool, verbose: bool) {
+    // trying to add Gag here to drop print, but not work.
+    Gag::stdout().unwrap();
     if pilot {
         pilot::maybe_restore_db(&mut node, verbose);
     }
