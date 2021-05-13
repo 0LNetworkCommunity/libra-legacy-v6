@@ -118,7 +118,7 @@ fn set_up_validators(
   // borrowed from minerstate commit test, register the minerstate for the new validators
 
   // This test uses Alice's block_1 proof (../fixtures/block_1.json.stage.alice), assuming she has participated in a genesis ceremony.
-  
+
   // TODO: Get this directly from the fixtues library.
   
   let preimage = hex::decode("3190cef88aa2fb86fbfa062f62be33d08d1493e982597d7be286ab5b6d01e4b0").unwrap();
@@ -197,8 +197,8 @@ fn test_foo (sender: &Account, executor: &mut FakeExecutor, should_pass: bool) {
 }
 
 #[test]
-fn test_single_oracle_tx() {
-  // Run with: `cargo xtest -p language-e2e-tests test_single_oracle_tx -- --nocapture`
+fn test_no_quorum_on_upgrade_tx() {
+  // Run with: `/language/e2e_testsuite/ cargo t test_single_oracle_tx -- --nocapture`
   let mut executor = FakeExecutor::from_genesis_file();
 
   // create an association account and validator accounts
@@ -224,7 +224,7 @@ fn test_single_oracle_tx() {
 }
 
 #[test]
-fn test_validators_oracle_tx() {
+fn test_successful_upgrade_txs() {
   let mut executor = FakeExecutor::from_genesis_file();
 
   // create an association account and validator accounts
@@ -261,13 +261,13 @@ fn test_validators_oracle_tx() {
   // verify that the foo transaction should fail
   test_foo(&accounts.get(3).unwrap(), &mut executor, false);
 
-  // // The creation of these blocks update the stdlib
+  // The creation of these blocks update the stdlib
   executor.new_custom_block(2);
   executor.new_custom_block(2);
 
-  // // verify that the foo transaction should pass with the updated stdlib
-  // test_foo(&accounts.get(4).unwrap(), &mut executor, true);
+  // verify that the foo transaction should pass with the updated stdlib
+  test_foo(&accounts.get(4).unwrap(), &mut executor, true);
 
-  // // Checks update doesn't happen again
-  // executor.new_custom_block(2);
+  // Checks update doesn't happen again
+  executor.new_custom_block(2);
 }
