@@ -39,20 +39,10 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, current_epoch: u6
     // TODO: Check instruction IDs are sequential.
     instructions.into_iter().filter_map(|i| {
 
-        let in_type = if (i.percent_balance.is_some() ) {
-          0
-        } else if (i.percent_inflow.is_some() ) {
-          1
-        } else if (i.fixed_payment.is_some() ) {
-          2
-        } else {
-          9
-        };
-
-        assert!(in_type != 9);
+        assert!(i.in_type >= 0 && i.in_type < 3);
 
 
-        let warning = if (i.percent_balance.is_some() ) {
+        let warning = if (i.in_type == 0 ) {
           format!(
               "Instruction {uid}:\nSend {percent_balance:.2?}% of your total balance every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
               uid = &i.uid,
@@ -61,7 +51,7 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, current_epoch: u6
               epoch_ending = &i.duration_epochs.unwrap() + current_epoch,
               destination = &i.destination,
           )
-        } else if (i.percent_inflow.is_some() ) {
+        } else if (i.in_type == 1 ) {
           format!(
             "Instruction {uid}:\nSend {percent_balance:.2?}% of your change in balance every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
             uid = &i.uid,
@@ -70,7 +60,7 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, current_epoch: u6
             epoch_ending = &i.duration_epochs.unwrap() + current_epoch,
             destination = &i.destination,
         )
-        } else if (i.fixed_payment.is_some() ) {
+        } else  {
           format!(
             "Instruction {uid}:\nSend {total_val} every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
             uid = &i.uid,
@@ -93,7 +83,7 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, current_epoch: u6
         }            
     })
     .map(|i| {
-      transaction_builder::encode_autopay_create_instruction_script(i.uid, in_type, i.destination, i.end_epoch, i.percent_balance_cast.unwrap())
+      transaction_builder::encode_autopay_create_instruction_script(i.uid, i.in_type, i.destination, i.end_epoch, i.percent_balance_cast.unwrap())
     })
     .collect()
 }
@@ -117,6 +107,7 @@ fn test_instruction_script_match() {
 
   let instr = PayInstruction {
       uid: 1,
+      in_type: 0,
       destination: AccountAddress::ZERO,
       percent_inflow: None,
       percent_inflow_cast: None,

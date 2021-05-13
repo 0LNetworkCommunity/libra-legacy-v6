@@ -14,6 +14,8 @@ use std::{fs, path::PathBuf};
 pub struct PayInstruction {
     /// unique id of instruction
     pub uid: u64,
+    /// type of instruction
+    pub in_type: u8,
     /// destination account
     pub destination: AccountAddress,
     /// percentage of new inflow of epoch
@@ -75,6 +77,7 @@ impl PayInstruction {
     pub fn check_instruction_safety(&self, script: Script) -> Result<(), Error> {
         let PayInstruction {
             uid,
+            in_type,
             destination,
             end_epoch,
             percent_balance_cast,
