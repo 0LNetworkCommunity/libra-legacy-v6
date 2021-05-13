@@ -22,6 +22,7 @@ a given time period.
 -  [Function `update_window_info`](#0x1_AccountLimits_update_window_info)
 -  [Function `reset_window`](#0x1_AccountLimits_reset_window)
 -  [Function `can_receive`](#0x1_AccountLimits_can_receive)
+-  [Function `max_withdrawal`](#0x1_AccountLimits_max_withdrawal)
 -  [Function `can_withdraw`](#0x1_AccountLimits_can_withdraw)
 -  [Function `is_unrestricted`](#0x1_AccountLimits_is_unrestricted)
 -  [Function `limits_definition_address`](#0x1_AccountLimits_limits_definition_address)
@@ -1045,6 +1046,52 @@ Checks whether receiving limits are satisfied.
    update_field(update_field(receiving,
        window_inflow, receiving.window_inflow + amount),
        tracked_balance, receiving.tracked_balance + amount)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_AccountLimits_max_withdrawal"></a>
+
+## Function `max_withdrawal`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_max_withdrawal">max_withdrawal</a>&lt;CoinType&gt;(addr: address): (u64, bool)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_max_withdrawal">max_withdrawal</a>&lt;CoinType&gt;(
+    addr: address,
+): (u64, bool) <b>acquires</b> <a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>, <a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a> {
+    <b>if</b> (!<b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>&lt;CoinType&gt;&gt;(addr)) {
+        <b>return</b> (0, <b>false</b>)
+    };
+    <b>let</b> sending = borrow_global_mut&lt;<a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>&lt;CoinType&gt;&gt;(addr);
+
+    <b>if</b> (!<b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a>&lt;CoinType&gt;&gt;(sending.limit_address)) {
+        <b>return</b> (0, <b>false</b>)
+    };
+    <b>let</b> limits_definition = borrow_global&lt;<a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a>&lt;CoinType&gt;&gt;(sending.limit_address);
+    // If the limits are unrestricted then don't do any more work.
+    <b>if</b> (<a href="AccountLimits.md#0x1_AccountLimits_is_unrestricted">is_unrestricted</a>(limits_definition)) <b>return</b> (<a href="AccountLimits.md#0x1_AccountLimits_MAX_U64">MAX_U64</a>, <b>true</b>);
+
+    <a href="AccountLimits.md#0x1_AccountLimits_reset_window">reset_window</a>(sending, limits_definition);
+    // Check outflow is OK
+    <b>if</b> (limits_definition.max_outflow &lt; sending.window_outflow) {
+        <b>return</b> (0, <b>false</b>)
+    };
+    <b>let</b> max_outflow = limits_definition.max_outflow - sending.window_outflow;
+    // Flow is OK, so record it.
+    (max_outflow, <b>true</b>)
+
 }
 </code></pre>
 

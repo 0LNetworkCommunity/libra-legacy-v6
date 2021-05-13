@@ -17,11 +17,13 @@ This module defines a struct storing the metadata of the block and new block eve
     -  [Initialization](#@Initialization_2)
 
 
-<pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
+<pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay2">0x1::AutoPay2</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
 <b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="Event.md#0x1_Event">0x1::Event</a>;
+<b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
+<b>use</b> <a href="LibraAccount.md#0x1_LibraAccount">0x1::LibraAccount</a>;
 <b>use</b> <a href="LibraSystem.md#0x1_LibraSystem">0x1::LibraSystem</a>;
 <b>use</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp">0x1::LibraTimestamp</a>;
 <b>use</b> <a href="Reconfigure.md#0x1_Reconfigure">0x1::Reconfigure</a>;
@@ -248,9 +250,12 @@ The runtime always runs this before executing the transactions in a block.
 // print(&01000);
     <a href="Stats.md#0x1_Stats_process_set_votes">Stats::process_set_votes</a>(vm, &previous_block_votes);
     <a href="Stats.md#0x1_Stats_inc_prop">Stats::inc_prop</a>(vm, *&proposer);
-// print(&02000);
-    <b>if</b> (<a href="AutoPay.md#0x1_AutoPay_tick">AutoPay::tick</a>(vm)){
-        <a href="AutoPay.md#0x1_AutoPay_process_autopay">AutoPay::process_autopay</a>(vm);
+
+    <b>if</b> (<a href="AutoPay.md#0x1_AutoPay2_tick">AutoPay2::tick</a>(vm)){
+        //triggers autopay at beginning of each epoch
+        //tick is reset at end of previous epoch
+        <a href="LibraAccount.md#0x1_LibraAccount_process_escrow">LibraAccount::process_escrow</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm);
+        <a href="AutoPay.md#0x1_AutoPay2_process_autopay">AutoPay2::process_autopay</a>(vm);
     };
     ///////////////////
     <b>let</b> block_metadata_ref = borrow_global_mut&lt;<a href="LibraBlock.md#0x1_LibraBlock_BlockMetadata">BlockMetadata</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());

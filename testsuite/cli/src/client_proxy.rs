@@ -719,13 +719,13 @@ impl ClientProxy {
     /// creates an autopay instruction on the sending account.
     pub fn autopay_create(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
         ensure!(
-            space_delim_strings.len() == 6,
-            "Invalid number of arguments to create autopay instruction. Did you pass your account address, instruction id, payee address, ending epoch, and percentage?"
+            space_delim_strings.len() == 7,
+            "Invalid number of arguments to create autopay instruction. Did you pass your account address, instruction id, instruction type, payee address, ending epoch, and percentage?"
         );
 
         let (sender_address, _) =
             self.get_account_address_from_parameter(space_delim_strings[1]).expect("address not submitted");
-        let (payee_address, _) = self.get_account_address_from_parameter(space_delim_strings[3]).expect("payee address not submitted");
+        let (payee_address, _) = self.get_account_address_from_parameter(space_delim_strings[4]).expect("payee address not submitted");
         
         let sender_ref_id = self.get_account_ref_id(&sender_address)?;
         let sender = self.accounts.get(sender_ref_id).unwrap();
@@ -733,9 +733,10 @@ impl ClientProxy {
 
         let program = transaction_builder::encode_autopay_create_instruction_script(
             space_delim_strings[2].parse::<u64>().unwrap(),
+            space_delim_strings[3].parse::<u8>().unwrap(),
             payee_address,
-            space_delim_strings[4].parse::<u64>().unwrap(),
             space_delim_strings[5].parse::<u64>().unwrap(),
+            space_delim_strings[6].parse::<u64>().unwrap(),
         );
 
         let txn = self.create_txn_to_submit(
@@ -756,7 +757,7 @@ impl ClientProxy {
  
     //////// 0L ////////
     /// creates an autopay instruction on the sending account.
-    pub fn autopay_batch(&mut self, uid: u64, payee_address: AccountAddress, end_epoch: u64, percentage: u64,) -> Result<()> {        
+    pub fn autopay_batch(&mut self, uid: u64, in_type: u8, payee_address: AccountAddress, end_epoch: u64, percentage: u64,) -> Result<()> {        
         // assume 0th address in wallet for transactions.
         let (sender_address, _) =
             self.get_account_address_from_parameter("0").expect("address not submitted");
@@ -767,6 +768,7 @@ impl ClientProxy {
 
         let program = transaction_builder::encode_autopay_create_instruction_script(
             uid,
+            in_type,
             payee_address,
             end_epoch,
             percentage,

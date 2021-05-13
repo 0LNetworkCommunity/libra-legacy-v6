@@ -38,14 +38,38 @@ impl Runnable for AutopayBatchCmd {
 pub fn process_instructions(instructions: Vec<PayInstruction>, current_epoch: u64) -> Vec<Script> {
     // TODO: Check instruction IDs are sequential.
     instructions.into_iter().filter_map(|i| {
-        let warning = format!(
-            "Instruction {uid}:\nSend {percent_balance:.2?}% of your total balance every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
+
+        assert!(i.in_type >= 0 && i.in_type < 3);
+
+
+        let warning = if (i.in_type == 0 ) {
+          format!(
+              "Instruction {uid}:\nSend {percent_balance:.2?}% of your total balance every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
+              uid = &i.uid,
+              percent_balance = *&i.percent_balance_cast.unwrap() as f64 /100f64,
+              duration_epochs = &i.duration_epochs.unwrap(),
+              epoch_ending = &i.duration_epochs.unwrap() + current_epoch,
+              destination = &i.destination,
+          )
+        } else if (i.in_type == 1 ) {
+          format!(
+            "Instruction {uid}:\nSend {percent_balance:.2?}% of your change in balance every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
             uid = &i.uid,
             percent_balance = *&i.percent_balance_cast.unwrap() as f64 /100f64,
             duration_epochs = &i.duration_epochs.unwrap(),
             epoch_ending = &i.duration_epochs.unwrap() + current_epoch,
             destination = &i.destination,
-        );
+        )
+        } else  {
+          format!(
+            "Instruction {uid}:\nSend {total_val} every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
+            uid = &i.uid,
+            total_val = *&i.fixed_payment.unwrap(),
+            duration_epochs = &i.duration_epochs.unwrap(),
+            epoch_ending = &i.duration_epochs.unwrap() + current_epoch,
+            destination = &i.destination,
+        )
+        };
         println!("{}", &warning);
         // accept if CI mode.
         if *IS_CI { return Some(i) }            
@@ -59,7 +83,7 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, current_epoch: u6
         }            
     })
     .map(|i| {
-      transaction_builder::encode_autopay_create_instruction_script(i.uid, i.destination, i.end_epoch, i.percent_balance_cast.unwrap())
+      transaction_builder::encode_autopay_create_instruction_script(i.uid, i.in_type, i.destination, i.end_epoch, i.percent_balance_cast.unwrap())
     })
     .collect()
 }
@@ -83,6 +107,7 @@ fn test_instruction_script_match() {
 
   let instr = PayInstruction {
       uid: 1,
+      in_type: 0,
       destination: AccountAddress::ZERO,
       percent_inflow: None,
       percent_inflow_cast: None,

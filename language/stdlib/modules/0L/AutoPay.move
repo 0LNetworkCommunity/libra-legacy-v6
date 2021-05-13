@@ -1,5 +1,5 @@
 address 0x1{
-  module AutoPay{
+  module AutoPay2{
 ///////////////////////////////////////////////////////////////////////////
   // 0L Module
   // Auto Pay - 
@@ -13,22 +13,43 @@ address 0x1{
     use 0x1::FixedPoint32;
     use 0x1::CoreAddresses;
     use 0x1::LibraConfig;
-    use 0x1::LibraTimestamp;
-    use 0x1::Epoch;
-    use 0x1::Globals;
     use 0x1::Errors;
     // use 0x1::Debug::print;
 
     /// Attempted to send funds to an account that does not exist
+    /// Maximum value for the Payment type selection
+    const MAX_TYPE: u8 = 3;
+
+    // types of Payments
+    /// send percent of balance at end of epoch payment type
+    const PERCENT_OF_BALANCE: u8 = 0;
+    /// send percent of the change in balance since the last tick payment type
+    const PERCENT_OF_CHANGE: u8 = 1;
+    /// send a certain amount each tick until end_epoch is reached payment type
+    const AMOUNT_UNTIL: u8 = 2;
+    /// send a certain amount once at the next tick payment type
+    const ONE_SHOT: u8 = 3;
+
+    const MAX_NUMBER_OF_INSTRUCTIONS: u64 = 12;
+
     const EPAYEE_DOES_NOT_EXIST: u64 = 010017;
     /// The account does not have autopay enabled.
     const EAUTOPAY_NOT_ENABLED: u64 = 010018;
     /// Attempting to re-use autopay id
     const AUTOPAY_ID_EXISTS: u64 = 010019;
+    /// Invalid payment type given
+    const INVALID_PAYMENT_TYPE: u64 = 010020;
+    /// Attempt to add instruction when too many already exist
+    const TOO_MANY_INSTRUCTIONS: u64 = 010021;
 
     resource struct Tick {
       triggered: bool,
     }
+
+    resource struct AccountLimitsEnable {
+      enabled: bool,
+    }
+
     // List of payments. Each account will own their own copy of this struct
     resource struct Data {
       payments: vector<Payment>,
@@ -47,13 +68,20 @@ address 0x1{
 
     // This is the structure of each Payment struct which represents one automatic
     // payment held by an account
+    // Possible types:
+    // 0: amt% of current balance until end epoch
+    // 1: amt% of inflow until end_epoch 
+    // 2: amt gas until end_epoch
+    // 3: amt gas, one time payment
     struct Payment {
       // TODO: name should be a string to store a memo
       // name: u64,
       uid: u64,
+      in_type: u8,
       payee: address,
-      end_epoch: u64,  // end epoch is inclusive
-      percentage: u64,
+      end_epoch: u64,  // end epoch is inclusive, must just be higher than current epoch for type 3
+      prev_bal: u64, //only used for type 1
+      amt: u64, //percentage for types 0 & 1, count for 2 & 3
     }
 
     ///////////////////////////////
@@ -67,12 +95,8 @@ address 0x1{
       let tick_state = borrow_global_mut<Tick>(Signer::address_of(vm));
 
       if (!tick_state.triggered) {
-        let timer = LibraTimestamp::now_seconds() - Epoch::get_timer_seconds_start(vm);
-        let tick_interval = Globals::get_epoch_length();
-        if (timer > tick_interval/2) {
-          tick_state.triggered = true;
-          return true
-        }
+        tick_state.triggered = true;
+        return true
       };
       false
     }
@@ -87,7 +111,16 @@ address 0x1{
     public fun initialize(sender: &signer) {
       assert(Signer::address_of(sender) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(010002));
       move_to<AccountList>(sender, AccountList { accounts: Vector::empty<address>(), current_epoch: 0, });
-      move_to<Tick>(sender, Tick {triggered: false})
+      move_to<Tick>(sender, Tick {triggered: false});
+      move_to<AccountLimitsEnable>(sender, AccountLimitsEnable {enabled: false});
+
+      LibraAccount::initialize_escrow_root<GAS>(sender);
+    }
+
+    public fun enable_account_limits(sender: &signer) acquires AccountLimitsEnable {
+      assert(Signer::address_of(sender) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(010002));
+      let limits_enable = borrow_global_mut<AccountLimitsEnable>(Signer::address_of(sender));
+      limits_enable.enabled = true;
     }
 
     // This is the main function for this module. It is called once every epoch
@@ -98,7 +131,7 @@ address 0x1{
     // Function code 03
     public fun process_autopay(
       vm: &signer,
-    ) acquires AccountList, Data {
+    ) acquires AccountList, Data, AccountLimitsEnable {
       // Only account 0x0 should be triggering this autopayment each block
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(010003));
 
@@ -122,37 +155,59 @@ address 0x1{
         let payments_len = Vector::length<Payment>(payments);
         let payments_idx = 0;
         while (payments_idx < payments_len) {
-// print(&02211);
+          let delete_payment = false;
+          {
+            let payment = Vector::borrow_mut<Payment>(payments, payments_idx);
+            // If payment end epoch is greater, it's not an active payment anymore, so delete it
+            if (payment.end_epoch >= epoch) {
+              // A payment will happen now
+              // Obtain the amount to pay 
+              // IMPORTANT there are two digits for scaling representation.
+             
+              // an autopay instruction of 12.34% is scaled by two orders, and represented in AutoPay as `1234`.
+              let amount = if (payment.in_type == PERCENT_OF_BALANCE) {
+                FixedPoint32::multiply_u64(account_bal , FixedPoint32::create_from_rational(payment.amt, 10000))
+              } else if (payment.in_type == PERCENT_OF_CHANGE) {
+                if (account_bal > payment.prev_bal) {
+                  FixedPoint32::multiply_u64(account_bal - payment.prev_bal, FixedPoint32::create_from_rational(payment.amt, 10000))
+                } else {
+                  // if account balance hasn't gone up, no value is transferred
+                  0
+                }
+              } else {
+                // in remaining cases, payment is simple amaount given, not a percentage
+                payment.amt
+              };
+              
+              if (amount != 0 && amount <= account_bal) {
+                if (borrow_global<AccountLimitsEnable>(Signer::address_of(vm)).enabled) {
+                  LibraAccount::vm_make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
+                } else {
+                  LibraAccount::vm_make_payment_no_limit<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
+                };
+              };
 
-          let payment = Vector::borrow_mut<Payment>(payments, payments_idx);          
-          // no payments to self
-          if (&payment.payee == account_addr) break;
+              // update previous balance for next calculation
+              payment.prev_bal = LibraAccount::balance<GAS>(*account_addr);
 
-          // If payment end epoch is greater, it's not an active payment anymore, so delete it
-          if (payment.end_epoch >= epoch) {
-            // A payment will happen now
-            // Obtain the amount to pay from percentage and balance
-// print(&02212);
-
-            // IMPORTANT there are two digits for scaling representation.
-            // an autopay instruction of 12.34% is scaled by two orders, and represented in AutoPay as `1234`.
-            if (payment.percentage > 10000) break;
-            let percent_scaled = FixedPoint32::create_from_rational(payment.percentage, 10000);
-//  print(&02213);
-           
-            let amount = FixedPoint32::multiply_u64(account_bal, percent_scaled);
-            if (amount > account_bal) {
-              // deplete the account if greater
-              amount = amount - account_bal;
+              // if it's a one shot payment, delete it once it has done its job
+              if (payment.in_type == ONE_SHOT) {
+                delete_payment = true;
+              }
+              
             };
-            if (amount>0) {
-              LibraAccount::vm_make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
+            // if the payment has reached its last epoch, delete it
+            if (payment.end_epoch <= epoch) {
+              delete_payment = true;
             };
-// print(&02214);
-
           };
-          // TODO: might want to delete inactive instructions to save memory
-          payments_idx = payments_idx + 1;
+          if (delete_payment == true) {
+            Vector::remove<Payment>(payments, payments_idx);
+            payments_len = payments_len - 1;
+          }
+          else {
+            payments_idx = payments_idx + 1;
+          };
         };
         account_idx = account_idx + 1;
       };
@@ -175,6 +230,8 @@ address 0x1{
         move_to<Data>(acc, Data { payments: Vector::empty<Payment>()});
       };
 
+      // Initialize Escrow data
+      LibraAccount::initialize_escrow<GAS>(acc);
     }
 
     // An account can disable autopay on it's account
@@ -200,9 +257,10 @@ address 0x1{
     public fun create_instruction(
       sender: &signer, 
       uid: u64,
+      in_type: u8,
       payee: address,
       end_epoch: u64,
-      percentage: u64
+      amt: u64
     ) acquires Data {
       let addr = Signer::address_of(sender);
       // Confirm that no payment exists with the same uid
@@ -213,14 +271,22 @@ address 0x1{
       };
       let payments = &mut borrow_global_mut<Data>(addr).payments;
 
+      assert(Vector::length<Payment>(payments) < MAX_NUMBER_OF_INSTRUCTIONS, Errors::limit_exceeded(TOO_MANY_INSTRUCTIONS));
+
       assert(LibraAccount::exists_at(payee), Errors::not_published(EPAYEE_DOES_NOT_EXIST));
+
+      assert(in_type <= MAX_TYPE, Errors::invalid_argument(INVALID_PAYMENT_TYPE));
+
+      let account_bal = LibraAccount::balance<GAS>(addr);
 
       Vector::push_back<Payment>(payments, Payment {
         // name: name,
         uid: uid,
+        in_type: in_type,
         payee: payee,
         end_epoch: end_epoch,
-        percentage: percentage,
+        prev_bal: account_bal,
+        amt: amt,
       });
     }
 
@@ -253,16 +319,16 @@ address 0x1{
     }
 
     // Returns (sender address,  end_epoch, percentage)
-    public fun query_instruction(account: address, uid: u64): (address, u64, u64) acquires Data {
+    public fun query_instruction(account: address, uid: u64): (u8, address, u64, u64) acquires Data {
       // TODO: This can be made faster if Data.payments is stored as a BST sorted by 
       let index = find(account, uid);
       if (Option::is_none<u64>(&index)) {
         // Case where payment is not found
-        return (0x0, 0, 0)
+        return (0, 0x0, 0, 0)
       } else {
         let payments = &borrow_global_mut<Data>(account).payments;
         let payment = Vector::borrow(payments, Option::extract<u64>(&mut index));
-        return (payment.payee, payment.end_epoch, payment.percentage)
+        return (payment.in_type, payment.payee, payment.end_epoch, payment.amt)
       }
     }
 
@@ -288,43 +354,45 @@ address 0x1{
   }
 }
 
-  //   // This function is only called by LibraBlock anytime the block number is changed
-  //   // This architecture avoids a cyclical dependency by using the Observer design pattern
-  //   public fun update_block(height: u64) acquires AccountList {
-  //     // If 0x0 is updating the block number, update it for the module in AccountList
-  //     Transaction::assert(Transaction::sender() == 0x0, 8001);
-  //     borrow_global_mut<AccountList>(0x0).current_block = height;
-  //   }
+module AutoPay{
+///////////////////////////////////////////////////////////////////////////
+  // Old module, simply left to prevent state transition
+  // module is purposefully crippled so as to not allow any operation
+  // use the above AutoPay2 module instead
+  ///////////////////////////////////////////////////////////////////////////
 
+    /// Attempted to send funds to an account that does not exist
+    const EPAYEE_DOES_NOT_EXIST: u64 = 17;
 
-  //   // // This is currently used only for testing purposes
-  //   // // TODO: Remove this function eventually
-  //   // public fun make_dummy_payment_vec(payee: address): vector<Payment> {
-  //   //   let ret = Vector::empty<Payment>();
-  //   //   Vector::push_back(&mut ret, Payment {
-  //   //       enabled: true,
-  //   //       name: 0,
-  //   //       uid: 0,
-  //   //       payee: payee,
-  //   //       end: 5,
-  //   //       amount: 1,
-  //   //       currency_code: Libra::currency_code<GAS::T>(),
-  //   //       from_earmarked_transactions: true,
-  //   //       last_block_paid: 0,
-  //   //     } 
-  //   //   );
-  //   //   ret
-  //   // }
+    resource struct Tick {
+      triggered: bool,
+    }
+    // List of payments. Each account will own their own copy of this struct
+    resource struct Data {
+      payments: vector<Payment>,
+    }
 
-  //   // Any account can check for the existence of a payment for any other account.
-  //   // Example use case: Landlord wants to confirm that a renter still has their autopay
-  //   // payments enabled and wants to check details using the payment uid that the renter
-  //   // provided
-  //   public fun exists(account: address, uid: u64): bool acquires Data {
-  //     let index = find(account, uid);
-  //     if (Option::is_some<u64>(&index)) {
-  //       return true
-  //     } else {
-  //       return false
-  //     }
-  //   }
+    // One copy of this struct will be created. It will be stored in 0x0.
+    // It keeps track of all accounts that have autopay enabled and updates the 
+    // list as accounts change their Status structs
+
+    // It also keeps track of the current epoch for efficiency (to prevent repeated
+    // queries to LibraBlock)
+    resource struct AccountList {
+      accounts: vector<address>,
+      current_epoch: u64,
+    }
+
+    // This is the structure of each Payment struct which represents one automatic
+    // payment held by an account
+    struct Payment {
+      // TODO: name should be a string to store a memo
+      // name: u64,
+      uid: u64,
+      payee: address,
+      end_epoch: u64,  // end epoch is inclusive
+      percentage: u64,
+    }
+
+}
+

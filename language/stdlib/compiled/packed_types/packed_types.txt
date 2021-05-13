@@ -56,6 +56,15 @@
     }
   ],
   [
+    "010f45cebc7436ebe3afd9f4fb50cce0e46df8484bdc7c3b309ae669a5b8cf06bc",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "LibraAccount",
+      "name": "EscrowSettings",
+      "type_params": []
+    }
+  ],
+  [
     "01123f3746147847a98608e80d193d84d01fe6dd9a41d3dec1ac45ae5d62b8f074",
     {
       "address": "00000000000000000000000000000001",
@@ -107,15 +116,6 @@
           }
         }
       ]
-    }
-  ],
-  [
-    "011d1d5ec73e13f79f12ac414ad27470a4b394c90d74cb4ba22cd7e8dd4d95d847",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "AutoPay",
-      "name": "AccountList",
-      "type_params": []
     }
   ],
   [
@@ -200,12 +200,39 @@
     }
   ],
   [
+    "012cb63fdd9d8b414d23ee36a05140c87336fa81b1caeba921fb87ab8413f03d44",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "AutoPay2",
+      "name": "Data",
+      "type_params": []
+    }
+  ],
+  [
     "01368c921b1e4a3b117f1be9f349983f71ff624f0a7c92a718989942cca2d0e97c",
     {
       "address": "00000000000000000000000000000001",
       "module": "LibraConfig",
       "name": "NewEpochEvent",
       "type_params": []
+    }
+  ],
+  [
+    "0138754c46556ca747d17affd16cd47271dbd2684a1870629b64d466b57e564acd",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "LibraAccount",
+      "name": "EscrowList",
+      "type_params": [
+        {
+          "Struct": {
+            "address": "00000000000000000000000000000001",
+            "module": "GAS",
+            "name": "GAS",
+            "type_params": []
+          }
+        }
+      ]
     }
   ],
   [
@@ -452,6 +479,15 @@
     }
   ],
   [
+    "016fcd8fb40bd90d6e4c1f6a552ddfd7575ce64bf0934350b1ec5589f104bfe5f8",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "AutoPay2",
+      "name": "Payment",
+      "type_params": []
+    }
+  ],
+  [
     "0170df01a050acd0d46afb601ffe53534889aced22334f647611ff713279e57a73",
     {
       "address": "00000000000000000000000000000001",
@@ -493,15 +529,6 @@
       "address": "00000000000000000000000000000001",
       "module": "LibraVMConfig",
       "name": "LibraVMConfig",
-      "type_params": []
-    }
-  ],
-  [
-    "017955810437e8020dedb9ef06bc78d76740d1b349d2b5e5743dc052471ccb06ae",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "AutoPay",
-      "name": "Tick",
       "type_params": []
     }
   ],
@@ -704,6 +731,33 @@
     }
   ],
   [
+    "01a93c2da711976face100c19d7c95c15b3269a7301171a44524874ea8c1a65844",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "FIFO",
+      "name": "FIFO",
+      "type_params": [
+        {
+          "Struct": {
+            "address": "00000000000000000000000000000001",
+            "module": "LibraAccount",
+            "name": "Escrow",
+            "type_params": [
+              {
+                "Struct": {
+                  "address": "00000000000000000000000000000001",
+                  "module": "GAS",
+                  "name": "GAS",
+                  "type_params": []
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  [
     "01ab426b82b34f64869cb07ec0df0a58908cb9058043b0c5113e4f703862d6d619",
     {
       "address": "00000000000000000000000000000001",
@@ -772,6 +826,15 @@
       "address": "00000000000000000000000000000001",
       "module": "TrustedAccounts",
       "name": "Trusted",
+      "type_params": []
+    }
+  ],
+  [
+    "01bcd237e5c195239cc4227b95cc3de88f2a7e3136557a936993118490dd8a495c",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "AutoPay2",
+      "name": "Tick",
       "type_params": []
     }
   ],
@@ -859,15 +922,6 @@
     }
   ],
   [
-    "01ca7f44542941b825f782e14fac9c5cfaad5eabac7b371590077dcce00df0e25a",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "AutoPay",
-      "name": "Data",
-      "type_params": []
-    }
-  ],
-  [
     "01cc3019332ad35a38c479c561ec953c5ffa2ceab30717688f681070c4536efb3d",
     {
       "address": "00000000000000000000000000000001",
@@ -895,6 +949,24 @@
     }
   ],
   [
+    "01d3dd7511f88d6741f9b4b46959f1874eeaa73a0f8da6bf1f073026a387923585",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "LibraAccount",
+      "name": "AutopayEscrow",
+      "type_params": [
+        {
+          "Struct": {
+            "address": "00000000000000000000000000000001",
+            "module": "GAS",
+            "name": "GAS",
+            "type_params": []
+          }
+        }
+      ]
+    }
+  ],
+  [
     "01d3eafb5278af3630a1f5580236ea7fef6090bcf190e21e62d5ac220bf4e67628",
     {
       "address": "00000000000000000000000000000001",
@@ -910,6 +982,15 @@
           }
         }
       ]
+    }
+  ],
+  [
+    "01d4179e48da339e459aa8367b20c5654ebe28e52afd7dd105485ee699ac27e76c",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "AutoPay2",
+      "name": "AccountList",
+      "type_params": []
     }
   ],
   [
@@ -985,6 +1066,15 @@
     }
   ],
   [
+    "01e3dc5d831da13b77224f6012cf02a5f0dd8292061a5d5072edc1617cefb3d455",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "AutoPay2",
+      "name": "AccountLimitsEnable",
+      "type_params": []
+    }
+  ],
+  [
     "01e7ae84f992d29f92e4944c66bbca887bd08035dc29877ba98fd164b2f55074de",
     {
       "address": "00000000000000000000000000000001",
@@ -1017,15 +1107,6 @@
       "address": "00000000000000000000000000000001",
       "module": "ValidatorOperatorConfig",
       "name": "ValidatorOperatorConfig",
-      "type_params": []
-    }
-  ],
-  [
-    "01f4456fd5aed67352ea22edc62b077950ef92ae6e4e73408c188ada5fee577d6f",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "AutoPay",
-      "name": "Payment",
       "type_params": []
     }
   ],
