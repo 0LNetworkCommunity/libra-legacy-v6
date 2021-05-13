@@ -15,11 +15,9 @@
 -  [Function `retrieve_latest_history`](#0x1_Upgrade_retrieve_latest_history)
 -  [Function `has_upgrade`](#0x1_Upgrade_has_upgrade)
 -  [Function `get_payload`](#0x1_Upgrade_get_payload)
--  [Function `foo`](#0x1_Upgrade_foo)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="Vector.md#0x1_Vector">0x1::Vector</a>;
@@ -321,30 +319,6 @@ Structs for UpgradeHistory resource
 <pre><code><b>public</b> <b>fun</b> <a href="Upgrade.md#0x1_Upgrade_get_payload">get_payload</a>(): vector&lt;u8&gt; <b>acquires</b> <a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a> {
     <b>assert</b>(<b>exists</b>&lt;<a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()), <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(210006));
     *&borrow_global&lt;<a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()).payload
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_Upgrade_foo"></a>
-
-## Function `foo`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Upgrade.md#0x1_Upgrade_foo">foo</a>()
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Upgrade.md#0x1_Upgrade_foo">foo</a>() {
-    print(&0x050D1AC);
 }
 </code></pre>
 
