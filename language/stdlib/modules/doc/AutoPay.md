@@ -564,8 +564,6 @@ Attempt to add instruction when too many already exist
     // Initialize the instructions <a href="AutoPay.md#0x1_AutoPay2_Data">Data</a> on user account state
     move_to&lt;<a href="AutoPay.md#0x1_AutoPay2_Data">Data</a>&gt;(acc, <a href="AutoPay.md#0x1_AutoPay2_Data">Data</a> { payments: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="AutoPay.md#0x1_AutoPay2_Payment">Payment</a>&gt;()});
   };
-  // Initialize the instructions <a href="AutoPay.md#0x1_AutoPay2_Data">Data</a> on user account state
-  move_to&lt;<a href="AutoPay.md#0x1_AutoPay2_Data">Data</a>&gt;(acc, <a href="AutoPay.md#0x1_AutoPay2_Data">Data</a> { payments: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="AutoPay.md#0x1_AutoPay2_Payment">Payment</a>&gt;()});
 
   // Initialize Escrow data
   <a href="LibraAccount.md#0x1_LibraAccount_initialize_escrow">LibraAccount::initialize_escrow</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(acc);
