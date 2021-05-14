@@ -39,10 +39,10 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, current_epoch: u6
     // TODO: Check instruction IDs are sequential.
     instructions.into_iter().filter_map(|i| {
 
-        assert!(i.in_type >= 0 && i.in_type < 3);
+        assert!(i.type_of >= 0 && i.type_of < 3);
 
 
-        let warning = if (i.in_type == 0 ) {
+        let warning = if (i.type_of == 0 ) {
           format!(
               "Instruction {uid}:\nSend {percent_balance:.2?}% of your total balance every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
               uid = &i.uid,
@@ -51,7 +51,7 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, current_epoch: u6
               epoch_ending = &i.duration_epochs.unwrap() + current_epoch,
               destination = &i.destination,
           )
-        } else if (i.in_type == 1 ) {
+        } else if (i.type_of == 1 ) {
           format!(
             "Instruction {uid}:\nSend {percent_balance:.2?}% of your change in balance every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
             uid = &i.uid,
@@ -83,7 +83,7 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, current_epoch: u6
         }            
     })
     .map(|i| {
-      transaction_builder::encode_autopay_create_instruction_script(i.uid, i.in_type, i.destination, i.end_epoch, i.percent_balance_cast.unwrap())
+      transaction_builder::encode_autopay_create_instruction_script(i.uid, i.type_of, i.destination, i.end_epoch, i.percent_balance_cast.unwrap())
     })
     .collect()
 }
@@ -107,7 +107,7 @@ fn test_instruction_script_match() {
 
   let instr = PayInstruction {
       uid: 1,
-      in_type: 0,
+      type_of: 0,
       destination: AccountAddress::ZERO,
       percent_inflow: None,
       percent_inflow_cast: None,
