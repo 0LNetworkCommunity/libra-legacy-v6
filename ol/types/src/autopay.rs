@@ -189,13 +189,13 @@ fn scale_fractional(fract_percent: f64) -> Option<u64> {
 
 #[test]
 fn parse_file() {
-    let path = ol_fixtures::get_persona_autopay_json("alice").1;
+    let path = ol_fixtures::get_demo_autopay_json().1;
     PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
 }
 
 #[test]
 fn parse_pct_balance_type() {
-    let path = ol_fixtures::get_persona_autopay_json("alice").1;
+    let path = ol_fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
     let first = &inst[0];
     
@@ -210,7 +210,7 @@ fn parse_pct_balance_type() {
 
 #[test]
 fn parse_pct_change_type() {
-    let path = ol_fixtures::get_persona_autopay_json("alice").1;
+    let path = ol_fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
     let second = &inst[1];
     
@@ -226,7 +226,7 @@ fn parse_pct_change_type() {
 
 #[test]
 fn parse_fixed_recurr_type() {
-    let path = ol_fixtures::get_persona_autopay_json("alice").1;
+    let path = ol_fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
     let third = &inst[2];
     
@@ -241,7 +241,7 @@ fn parse_fixed_recurr_type() {
 
 #[test]
 fn parse_fixed_once_type() {
-    let path = ol_fixtures::get_persona_autopay_json("alice").1;
+    let path = ol_fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
     let fourth = &inst[3];
     
@@ -256,7 +256,7 @@ fn parse_fixed_once_type() {
 
 #[test]
 fn parse_pct_balance_end_epoch_type() {
-    let path = ol_fixtures::get_persona_autopay_json("alice").1;
+    let path = ol_fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
     let fifth = &inst[4];
     
@@ -271,7 +271,7 @@ fn parse_pct_balance_end_epoch_type() {
 
 #[test]
 fn parse_pct_change_end_epoch_type() {
-    let path = ol_fixtures::get_persona_autopay_json("alice").1;
+    let path = ol_fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
     let sixth = &inst[5];
     
@@ -287,7 +287,7 @@ fn parse_pct_change_end_epoch_type() {
 
 #[test]
 fn parse_fixed_recurr_end_epoch_type() {
-    let path = ol_fixtures::get_persona_autopay_json("alice").1;
+    let path = ol_fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
     let seventh = &inst[6];
     
@@ -302,7 +302,7 @@ fn parse_fixed_recurr_end_epoch_type() {
 
 #[test]
 fn parse_fixed_once_end_epoch_type() {
-    let path = ol_fixtures::get_persona_autopay_json("alice").1;
+    let path = ol_fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
     let eigth = &inst[7];
     
