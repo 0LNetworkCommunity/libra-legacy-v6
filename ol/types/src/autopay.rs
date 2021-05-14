@@ -111,13 +111,12 @@ impl PayInstruction {
                     }
                     InstructionType::FixedRecurring => {
                         i.type_move = Some(FIXED_RECURRING);
-                        let trunc = i.value.trunc() as u64;
-                        i.value_move = Some(trunc);
+                        i.value_move = Some(scale_coin(i.value));
                     }
                     InstructionType::FixedOnce => {
                         i.type_move = Some(FIXED_ONCE);
                         let trunc = i.value.trunc() as u64;
-                        i.value_move = Some(trunc);
+                        i.value_move = Some(scale_coin(i.value));
                     }
                 }
 
@@ -173,7 +172,21 @@ impl PayInstruction {
 // for autopay purposes percentages have two decimal places precision.
 // No rounding is applied. The third decimal is trucated.
 // the result is a integer of 4 bits.
-fn scale_fractional(fract_percent: f64) -> Option<u64> {
+fn scale_coin(coin_value: f64) -> Option<u64> {
+    // the UI for the autopay_batch, allows 2 decimal precision for pecentages: 12.34%
+    // multiply by 100 to get the desired decimal precision
+    let scaled = coin_value * 1000000 as f64;
+    // drop the fractional part with trunc()
+    let trunc = scaled.trunc() as u64; // return max 4 digits.
+    if trunc < 9999 {
+        Some(trunc)
+    } else {
+        println!("percent needs to have max four digits, skipping");
+        None
+    }
+}
+
+fn scale_percent(fract_percent: f64) -> Option<u64> {
     // the UI for the autopay_batch, allows 2 decimal precision for pecentages: 12.34%
     // multiply by 100 to get the desired decimal precision
     let scaled = fract_percent * 100 as f64;

@@ -63,7 +63,7 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, starting_epoch: &
             epoch_ending = &i.end_epoch.unwrap(),
             destination = &i.destination,
         )
-        } else  {
+        } else if i.type_move.unwrap() == 2  {
           format!(
             "Instruction {uid}: {note}\nSend {total_val} every day {count_epochs} times  (until epoch {epoch_ending}) to address: {destination}?",
             uid = &i.uid,
@@ -73,6 +73,13 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, starting_epoch: &
               }),
               note = &i.note.clone().unwrap(),
             epoch_ending = &i.end_epoch.unwrap(),
+            destination = &i.destination,
+        )
+        } else {
+          format!(
+            "Instruction {uid}: {note}\nSend {total_val} once to address: {destination}?",
+            uid = &i.uid,
+            total_val = *&i.value_move.unwrap(),
             destination = &i.destination,
         )
         };
