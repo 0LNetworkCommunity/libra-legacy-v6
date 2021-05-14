@@ -27,7 +27,7 @@ impl Runnable for AutopayBatchCmd {
 
         let epoch = crate::epoch::get_epoch(&tx_params);
         println!("The current epoch is: {}", epoch);
-        let instructions = PayInstruction::parse_autopay_instructions(&self.autopay_batch_file).unwrap();
+        let instructions = PayInstruction::parse_autopay_instructions(&self.autopay_batch_file, Some(epoch)).unwrap();
         let scripts = process_instructions(instructions, epoch);
         batch_wrapper(scripts, &tx_params, entry_args.no_send, entry_args.save_path)
 
@@ -39,34 +39,34 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, current_epoch: u6
     // TODO: Check instruction IDs are sequential.
     instructions.into_iter().filter_map(|i| {
 
-        assert!(i.type_of >= 0 && i.type_of < 3);
+        assert!(i.type_move.unwrap() >= 0 && i.type_move.unwrap() < 3);
 
 
-        let warning = if (i.type_of == 0 ) {
+        let warning = if (i.type_move.unwrap() == 0 ) {
           format!(
               "Instruction {uid}:\nSend {percent_balance:.2?}% of your total balance every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
               uid = &i.uid,
-              percent_balance = *&i.percent_balance_cast.unwrap() as f64 /100f64,
+              percent_balance = *&i.value_move.unwrap() as f64 /100f64,
               duration_epochs = &i.duration_epochs.unwrap(),
-              epoch_ending = &i.duration_epochs.unwrap() + current_epoch,
+              epoch_ending = &i.end_epoch.unwrap(),
               destination = &i.destination,
           )
-        } else if (i.type_of == 1 ) {
+        } else if (i.type_move.unwrap() == 1 ) {
           format!(
             "Instruction {uid}:\nSend {percent_balance:.2?}% of your change in balance every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
             uid = &i.uid,
-            percent_balance = *&i.percent_balance_cast.unwrap() as f64 /100f64,
+            percent_balance = *&i.value_move.unwrap() as f64 /100f64,
             duration_epochs = &i.duration_epochs.unwrap(),
-            epoch_ending = &i.duration_epochs.unwrap() + current_epoch,
+            epoch_ending = &i.end_epoch.unwrap(),
             destination = &i.destination,
         )
         } else  {
           format!(
             "Instruction {uid}:\nSend {total_val} every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
             uid = &i.uid,
-            total_val = *&i.fixed_payment.unwrap(),
+            total_val = *&i.value_move.unwrap(),
             duration_epochs = &i.duration_epochs.unwrap(),
-            epoch_ending = &i.duration_epochs.unwrap() + current_epoch,
+            epoch_ending = &i.end_epoch.unwrap(),
             destination = &i.destination,
         )
         };
@@ -83,7 +83,13 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, current_epoch: u6
         }            
     })
     .map(|i| {
-      transaction_builder::encode_autopay_create_instruction_script(i.uid, i.type_of, i.destination, i.end_epoch, i.percent_balance_cast.unwrap())
+      transaction_builder::encode_autopay_create_instruction_script(
+        i.uid, 
+        i.type_move.unwrap(), 
+        i.destination, 
+        i.end_epoch.unwrap(), 
+        i.value_move.unwrap()
+      )
     })
     .collect()
 }
