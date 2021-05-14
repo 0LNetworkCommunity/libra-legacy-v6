@@ -37,7 +37,6 @@ impl Runnable for AutopayBatchCmd {
 pub fn process_instructions(instructions: Vec<PayInstruction>, starting_epoch: &u64) -> Vec<Script> {
     // TODO: Check instruction IDs are sequential.
     instructions.into_iter().filter_map(|i| {
-        dbg!(&i);
         assert!(i.type_move.unwrap() <= 3);
 
         let warning = if i.type_move.unwrap() == 0 {
@@ -54,7 +53,7 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, starting_epoch: &
           )
         } else if i.type_move.unwrap() == 1 {
           format!(
-            "Instruction {uid}: {note}\nSend {percent_balance:.2?}% of your total balance every day {count_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
+            "Instruction {uid}: {note}\nSend {percent_balance:.2?}% new incoming funds every day {count_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
             uid = &i.uid,
             percent_balance = *&i.value_move.unwrap() as f64 /100f64,
             count_epochs = &i.duration_epochs.unwrap_or_else(|| {
