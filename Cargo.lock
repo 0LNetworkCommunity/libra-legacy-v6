@@ -5044,6 +5044,7 @@ dependencies = [
  "num-format",
  "ol-types",
  "once_cell",
+ "port_scanner",
  "regex",
  "reqwest",
  "resource-viewer",
@@ -5411,6 +5412,12 @@ dependencies = [
  "cfg-if 0.1.10",
  "universal-hash",
 ]
+
+[[package]]
+name = "port_scanner"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "325a6d2ac5dee293c3b2612d4993b98aec1dff096b0a2dae70ed7d95784a05da"
 
 [[package]]
 name = "ppv-lite86"

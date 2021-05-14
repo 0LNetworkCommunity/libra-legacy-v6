@@ -317,11 +317,12 @@ impl Node {
 
     /// is web monitor serving on 3030
     pub fn is_web_monitor_serving() -> bool {
-        let out = Command::new("fuser")
-            .args(&["3030/tcp"])
-            .output()
-            .expect("could no check fuser");
-        out.status.code().unwrap() == 0
+        port_scanner::scan_port(3030)
+        // let out = Command::new("fuser")
+        //     .args(&["3030/tcp"])
+        //     .output()
+        //     .expect("could no check fuser");
+        // out.status.code().unwrap() == 0
     }
 
     fn check_systemd(process_name: &str) -> bool {

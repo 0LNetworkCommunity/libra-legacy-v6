@@ -186,7 +186,7 @@ impl Node {
                 println!("Starting `ol serve`");
             }
             spawn_process(
-                "ol",
+                "ol_cli",
                 &["serve"],
                 "monitor",
                 "failed to run 'ol', is it installed?",
