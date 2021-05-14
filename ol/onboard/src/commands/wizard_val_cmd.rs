@@ -168,8 +168,8 @@ fn get_autopay_batch(
     };
 
     let starting_epoch = cfg.chain_info.base_epoch.unwrap();
-    let instr_vec = PayInstruction::parse_autopay_instructions(&home_path.join(file_name), Some(starting_epoch)).unwrap();
-    let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone());
+    let instr_vec = PayInstruction::parse_autopay_instructions(&home_path.join(file_name), Some(starting_epoch.clone())).unwrap();
+    let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone(), &starting_epoch);
     let url = cfg.what_url(false);
     let mut tx_params =
         submit_tx::get_tx_params_from_toml(cfg.to_owned(), TxType::Miner, Some(wallet), url, None)
