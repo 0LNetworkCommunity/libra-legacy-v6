@@ -223,16 +223,6 @@
 
 
 
-<a name="0x1_AutoPay2_AMOUNT_UNTIL"></a>
-
-send a certain amount each tick until end_epoch is reached payment type
-
-
-<pre><code><b>const</b> <a href="AutoPay.md#0x1_AutoPay2_AMOUNT_UNTIL">AMOUNT_UNTIL</a>: u8 = 2;
-</code></pre>
-
-
-
 <a name="0x1_AutoPay2_AUTOPAY_ID_EXISTS"></a>
 
 Attempting to re-use autopay id
@@ -249,6 +239,26 @@ The account does not have autopay enabled.
 
 
 <pre><code><b>const</b> <a href="AutoPay.md#0x1_AutoPay2_EAUTOPAY_NOT_ENABLED">EAUTOPAY_NOT_ENABLED</a>: u64 = 10018;
+</code></pre>
+
+
+
+<a name="0x1_AutoPay2_FIXED_ONCE"></a>
+
+send a certain amount once at the next tick payment type
+
+
+<pre><code><b>const</b> <a href="AutoPay.md#0x1_AutoPay2_FIXED_ONCE">FIXED_ONCE</a>: u8 = 3;
+</code></pre>
+
+
+
+<a name="0x1_AutoPay2_FIXED_RECURRING"></a>
+
+send a certain amount each tick until end_epoch is reached payment type
+
+
+<pre><code><b>const</b> <a href="AutoPay.md#0x1_AutoPay2_FIXED_RECURRING">FIXED_RECURRING</a>: u8 = 2;
 </code></pre>
 
 
@@ -279,16 +289,6 @@ Maximum value for the Payment type selection
 
 
 <pre><code><b>const</b> <a href="AutoPay.md#0x1_AutoPay2_MAX_TYPE">MAX_TYPE</a>: u8 = 3;
-</code></pre>
-
-
-
-<a name="0x1_AutoPay2_ONE_SHOT"></a>
-
-send a certain amount once at the next tick payment type
-
-
-<pre><code><b>const</b> <a href="AutoPay.md#0x1_AutoPay2_ONE_SHOT">ONE_SHOT</a>: u8 = 3;
 </code></pre>
 
 
@@ -513,7 +513,7 @@ Attempt to add instruction when too many already exist
           payment.prev_bal = <a href="LibraAccount.md#0x1_LibraAccount_balance">LibraAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*account_addr);
 
           // <b>if</b> it's a one shot payment, delete it once it has done its job
-          <b>if</b> (payment.in_type == <a href="AutoPay.md#0x1_AutoPay2_ONE_SHOT">ONE_SHOT</a>) {
+          <b>if</b> (payment.in_type == <a href="AutoPay.md#0x1_AutoPay2_FIXED_ONCE">FIXED_ONCE</a>) {
             delete_payment = <b>true</b>;
           }
 
