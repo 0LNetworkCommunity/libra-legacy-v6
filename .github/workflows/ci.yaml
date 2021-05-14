@@ -57,6 +57,8 @@ jobs:
             components: rustfmt, clippy
       - name: Run Miner tests
         run: cd ol/miner && NODE_ENV=test cargo test
+      - name: Run Types tests
+        run: cd ol/types && NODE_ENV=test cargo test
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
