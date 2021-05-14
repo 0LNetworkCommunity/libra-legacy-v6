@@ -176,7 +176,11 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
 fn maybe_switch_mode(node: &mut Node, is_in_val_set: bool, verbose: bool) -> NodeState {
     // let print_gag = Gag::stdout().unwrap();
 
-    let running_mode = Node::what_node_mode().expect("could not detect node mode");
+    let running_mode = match Node::what_node_mode(){
+        Ok(t)=> t,
+        Err(_) => return NodeState::Stopped,
+    };
+
     if verbose {
         status_ok!("Mode", "node running in mode: {:?}", running_mode);
     }

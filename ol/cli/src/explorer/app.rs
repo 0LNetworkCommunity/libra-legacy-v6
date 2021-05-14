@@ -213,6 +213,9 @@ impl<'a> App<'a> {
             'q' => {
                 self.should_quit = true;
             }
+            'c' => {
+                self.should_quit = true;
+            }
             't' => {
                 self.show_chart = !self.show_chart;
             }
@@ -230,7 +233,7 @@ impl<'a> App<'a> {
 
         match self.tabs.index {
             0 => self.fetch(),
-            2 => self.fetch_txs(),
+            3 => self.fetch_txs(),
             _ => {}
         }
     }

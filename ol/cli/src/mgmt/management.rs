@@ -48,7 +48,7 @@ fn spawn_process(
     args: &[&str],
     log_file: &str,
     expect_msg: &str,
-) -> std::process::Child {
+) -> std::io::Result<std::process::Child> {
     // Create log file, and pipe stdout/err
     let outputs = create_log_file(log_file);
     let errors = outputs.try_clone().unwrap();
@@ -58,7 +58,6 @@ fn spawn_process(
         .stdout(Stdio::from(outputs))
         .stderr(Stdio::from(errors))
         .spawn()
-        .expect(expect_msg)
 }
 
 impl Node {
@@ -84,7 +83,9 @@ impl Node {
 
         let child = if *IS_PROD {
             let args = vec!["--config", &config_file_name];
-            println!("Starting '{}' with args: {:?}", NODE, args.join(" "));
+            if _verbose {
+                println!("Starting '{}' with args: {:?}", NODE, args.join(" "));
+            }
             spawn_process(
                 NODE,
                 args.as_slice(),
@@ -97,7 +98,9 @@ impl Node {
             let debug_bin = project_root.join(format!("target/debug/{}", NODE));
             let bin_str = debug_bin.to_str().unwrap();
             let args = vec!["--config", &config_file_name];
-            println!("Starting 'libra-node' with args: {:?}", args.join(" "));
+            if _verbose {
+                println!("Starting 'libra-node' with args: {:?}", args.join(" "));
+            }
             spawn_process(
                 bin_str,
                 args.as_slice(),
@@ -106,9 +109,9 @@ impl Node {
             )
         };
 
-        let pid = &child.id();
-        self.save_pid(NODE, *pid);
-        println!("Started new with PID: {}", pid);
+        // let pid = &child.id();
+        // self.save_pid(NODE, *pid);
+        // println!("Started new with PID: {}", pid);
         Ok(())
     }
 
@@ -126,7 +129,9 @@ impl Node {
             // start as operator, so that mnemonic is not needed.
             let args = vec!["-o", "start"];
             // if use_backup { args.push("--backup-url"); };
-            println!("Starting '{}' with args: {:?}", MINER, args.join(" "));
+            if _verbose {
+                println!("Starting '{}' with args: {:?}", MINER, args.join(" "));
+            }
             spawn_process(
                 MINER,
                 args.as_slice(),
@@ -139,7 +144,9 @@ impl Node {
             let bin_str = debug_bin.to_str().unwrap();
             // start as operator, so that mnemonic is not needed.
             let args = vec!["-o", "start"];
-            println!("Starting 'miner' with args: {:?}", args.join(" "));
+            if _verbose {
+                println!("Starting 'miner' with args: {:?}", args.join(" "));
+            }
             spawn_process(
                 bin_str,
                 args.as_slice(),
@@ -148,9 +155,9 @@ impl Node {
             )
         };
 
-        let pid = &child.id();
-        self.save_pid(MINER, *pid);
-        println!("Started with PID {} in the background", pid);
+        // let pid = &child.id();
+        // self.save_pid(MINER, *pid);
+        // println!("Started with PID {} in the background", pid);
     }
 
     /// Start Monitor
@@ -159,12 +166,16 @@ impl Node {
         // Stop any processes we may have started and detached from.
         // if is running do nothing
         if node::Node::is_web_monitor_serving() {
-            println!("web monitor is already running. Exiting.");
+            if _verbose {
+                println!("web monitor is already running. Exiting.");
+            }
             return;
         }
 
-        let child = if *IS_PROD {
-            println!("Starting `ol serve`");
+        let mut child = if *IS_PROD {
+            if _verbose{
+                println!("Starting `ol serve`");
+            }
             spawn_process(
                 "ol",
                 &["serve"],
@@ -177,7 +188,9 @@ impl Node {
             let bin_str = debug_bin.to_str().unwrap();
 
             let args = vec!["serve"];
-            println!("Starting '{}' with args: {:?}", bin_str, args.join(" "));
+            if _verbose{
+                println!("Starting '{}' with args: {:?}", bin_str, args.join(" "));
+            }
             spawn_process(
                 bin_str,
                 args.as_slice(),
@@ -186,9 +199,9 @@ impl Node {
             )
         };
 
-        let pid = &child.id();
-        self.save_pid("monitor", *pid);
-        println!("Started with PID {} in the background", pid);
+        // let pid = &child.id();
+        // self.save_pid("monitor", *pid);
+        // println!("Started with PID {} in the background", pid);
     }
 
     // /// Start pilot, for explorer

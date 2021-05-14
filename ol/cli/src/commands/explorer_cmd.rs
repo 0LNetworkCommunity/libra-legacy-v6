@@ -35,7 +35,7 @@ impl Runnable for ExplorerCMD {
         // TODO: optionally start explorer with the pilot process in a thread
         // Start the health check runner in background, optionally with --pilot, which starts services.
         // check if pilot or something else is already running.
-        let do_pilot = self.pilot.clone();
+        let do_pilot = self.pilot.to_owned();
         thread::spawn(move || {
             let mut conf = match entrypoint::get_args().swarm_path {
                 Some(sp) => AppCfg::init_app_configs_swarm(sp.clone(), sp.join("0")),
@@ -45,7 +45,6 @@ impl Runnable for ExplorerCMD {
             let mut node = Node::new(client, conf);
             runner::run_checks(&mut node, do_pilot, true, false);
         });
-        
 
         let args = entrypoint::get_args();
 
@@ -66,8 +65,9 @@ impl Runnable for ExplorerCMD {
         });
 
         let stdout = io::stdout().into_raw_mode().expect("Failed to initial screen");
-        let stdout = MouseTerminal::from(stdout);
+        //let stdout = MouseTerminal::from(stdout);
         let stdout = AlternateScreen::from(stdout);
+        stdout.lock();
         let backend = TermionBackend::new(stdout);
         let mut terminal = Terminal::new(backend).expect("Failed to initial screen");
 
@@ -105,6 +105,6 @@ impl Runnable for ExplorerCMD {
             }
         }
         terminal.clear().unwrap();
-        terminal.flush().unwrap();
+        std::mem::drop(terminal);
     }
 }
