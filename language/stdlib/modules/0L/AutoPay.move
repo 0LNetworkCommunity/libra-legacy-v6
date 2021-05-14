@@ -1,5 +1,6 @@
-address 0x1{
-  module AutoPay2{
+address 0x1 {
+  // renamed to preventhalting from state corruption
+  module AutoPay2 {
 ///////////////////////////////////////////////////////////////////////////
   // 0L Module
   // Auto Pay - 

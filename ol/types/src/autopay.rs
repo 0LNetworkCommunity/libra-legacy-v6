@@ -8,26 +8,53 @@ use libra_types::{
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{fs, path::PathBuf};
+
+
+// These match Autpay2.move
+/// send percent of balance at end of epoch payment type
+const PERCENT_OF_BALANCE: u8 = 0;
+/// send percent of the change in balance since the last tick payment type
+const PERCENT_OF_CHANGE: u8 = 1;
+/// send a certain amount each tick until end_epoch is reached payment type
+const AMOUNT_UNTIL: u8 = 2;
+/// send a certain amount once at the next tick payment type
+const ONE_SHOT: u8 = 3;
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
+pub enum InstructionType {
+  PercentOfBalance { percent: f64, percent_cast: Option<u64> },
+  PercentOfChange { percent: f64, percent_cast: Option<u64> },
+  FixedRecurring { coins: u64 },
+  FixedOnce { coins: u64 },
+  None,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+// #[serde(deny_unknown_fields)]
 /// Autopay payment instruction
 pub struct PayInstruction {
+    /// description of payment, not sent to chain
+    pub note: String,
     /// unique id of instruction
     pub uid: u64,
+    /// enum for type of instruction
+    pub in_type: InstructionType,
     /// type of instruction
-    pub in_type: u8,
+    pub in_type_move: Option<u8>,
     /// destination account
     pub destination: AccountAddress,
-    /// percentage of new inflow of epoch
-    pub percent_inflow: Option<f64>,
-    /// inflow percent cast to four digit u64 for Move
-    pub percent_inflow_cast: Option<u64>,
-    /// percentage of total balance at transaction time
-    pub percent_balance: Option<f64>,
-    /// balance percent cast to four digit u64 for Move
-    pub percent_balance_cast: Option<u64>,
-    /// percentage of total balance at transaction time
-    pub fixed_payment: Option<u64>,
+    // /// percentage of new inflow of epoch
+    // pub percent_inflow: Option<f64>,
+    // /// inflow percent cast to four digit u64 for Move
+    // pub percent_inflow_cast: Option<u64>,
+    // /// percentage of total balance at transaction time
+    // pub percent_balance: Option<f64>,
+    // /// balance percent cast to four digit u64 for Move
+    // pub percent_balance_cast: Option<u64>,
+    // /// percentage of total balance at transaction time
+    // pub fixed_payment: Option<u64>,
+
     /// epoch when payment instruction will stop
     pub end_epoch: u64,
     /// optional duration in epochs of the instruction
@@ -50,17 +77,26 @@ impl PayInstruction {
 
         let transformed = inst_vec.into_iter()
         .map(|mut i| {
+            match i.in_type {
+                InstructionType::PercentOfBalance { percent, percent_cast } => {}
+                InstructionType::PercentOfChange { percent, percent_cast } => {}
+                InstructionType::FixedRecurring { coins } => {}
+                InstructionType::FixedOnce { coins } => {}
+                InstructionType::None => {}
+            }
             // TODO: check sequential instructions by uid
             // check the object has an actual payment instruction.
-            if !i.percent_inflow.is_some() &&
-            !i.percent_balance.is_some() &&
-            !i.fixed_payment.is_some() {
-              println!("autopay instruction file not valid, skipping all transactions. Issue at instruction {:?}", i);
-            }
-            i.cast_scale();
-            if let Some(pct_in) = i.percent_inflow {total_pct_inflow = total_pct_inflow + pct_in};
+            // if !i.percent_inflow.is_some() &&
+            // !i.percent_balance.is_some() {
+            // // !i.fixed_recurring.is_some() &&
+            // // !i.fixed_once.is_some() {
+            //   println!("autopay instruction file not valid, skipping all transactions. Issue at instruction {:?}", i);
+            // }
 
-            if let Some(pct_bal) = i.percent_balance {total_pct_balance = total_pct_balance + pct_bal};
+            // i.cast_scale();
+            // if let Some(pct_in) = i.percent_inflow {total_pct_inflow = total_pct_inflow + pct_in};
+
+            // if let Some(pct_bal) = i.percent_balance {total_pct_balance = total_pct_balance + pct_bal};
 
             i
         })
@@ -77,10 +113,10 @@ impl PayInstruction {
     pub fn check_instruction_safety(&self, script: Script) -> Result<(), Error> {
         let PayInstruction {
             uid,
-            in_type,
+            // in_type,
             destination,
             end_epoch,
-            percent_balance_cast,
+            // percent_balance_cast,
             ..
         } = *self;
 
@@ -96,23 +132,23 @@ impl PayInstruction {
             script.args()[2] == TransactionArgument::U64(end_epoch),
             "not the same ending epoch"
         );
-        assert!(
-            script.args()[3]
-                == TransactionArgument::U64(
-                    percent_balance_cast.expect("cannot get percent_balance_cast")
-                ),
-            "not the same ending epoch"
-        );
+        // assert!(
+        //     script.args()[3]
+        //         == TransactionArgument::U64(
+        //             percent_balance_cast.expect("cannot get percent_balance_cast")
+        //         ),
+        //     "not the same ending epoch"
+        // );
         Ok(())
     }
 
-    /// add cast fields in instruction objects
-    pub fn cast_scale(&mut self) -> &Self {
-        // for percentages need to convert and scale the two decimal places
-        self.percent_inflow_cast = scale_fractional(&self.percent_inflow);
-        self.percent_balance_cast = scale_fractional(&self.percent_balance);
-        self
-    }
+    // /// add cast fields in instruction objects
+    // pub fn cast_scale(&mut self) -> &Self {
+    //     // for percentages need to convert and scale the two decimal places
+    //     self.percent_inflow_cast = scale_fractional(&self.percent_inflow);
+    //     self.percent_balance_cast = scale_fractional(&self.percent_balance);
+    //     self
+    // }
 }
 // convert the decimals for Move.
 // for autopay purposes percentages have two decimal places precision.
@@ -135,4 +171,24 @@ fn scale_fractional(fract_percent: &Option<f64>) -> Option<u64> {
         }
         None => None,
     }
+}
+
+
+#[test]
+fn parse_file() {
+  let path = ol_fixtures::get_persona_autopay_json("alice").1;
+  let inst = PayInstruction::parse_autopay_instructions(&path).unwrap();
+  
+  // assert_eq!(inst[0].);
+
+  match inst[0].in_type {
+      InstructionType::PercentOfBalance { percent, percent_cast } => {
+        assert_eq!(percent, 10f64);
+      },
+      _ => {}
+  }
+  // assert!(
+  //   inst[0].in_type ,
+  //   "not the same ending epoch"
+  // );
 }

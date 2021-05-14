@@ -1,16 +1,26 @@
 {
   "autopay_instructions": [
     {
+      "note": "test",
+      "in_type": {
+        "PercentOfBalance": {
+          "percent": 10.00
+        }
+      },
       "uid": 1,
       "destination": "3DC18D1CF61FAAC6AC70E3A63F062E4B",
-      "percent_balance": 10.00,
       "end_epoch": 100,
       "duration_epochs": 100
     },
     {
-      "uid": 2,
+      "note": "test",
+      "in_type": {
+        "PercentOfBalance": {
+          "percent": 10.00
+        }
+      },
+      "uid": 1,
       "destination": "3DC18D1CF61FAAC6AC70E3A63F062E4B",
-      "percent_balance": 1.00,
       "end_epoch": 100,
       "duration_epochs": 100
     }

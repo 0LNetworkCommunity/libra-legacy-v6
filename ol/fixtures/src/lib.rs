@@ -14,3 +14,12 @@ pub fn get_persona_account_json(persona: &str) -> (String, PathBuf) {
     buf
   )
 }
+
+pub fn get_persona_autopay_json(persona: &str) -> (String, PathBuf) {
+  let path= env!("CARGO_MANIFEST_DIR");
+  let buf = Path::new(path).join("autopay").join(format!("{}.autopay_batch.json", persona));
+  (
+    fs::read_to_string(&buf).expect("could not file mnemonic file"),
+    buf
+  )
+}

@@ -5089,6 +5089,7 @@ dependencies = [
  "libra-types",
  "machine-ip",
  "move-core-types",
+ "ol-fixtures",
  "once_cell",
  "reqwest",
  "rustyline",
