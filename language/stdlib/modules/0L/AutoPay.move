@@ -27,9 +27,9 @@ address 0x1 {
     /// send percent of the change in balance since the last tick payment type
     const PERCENT_OF_CHANGE: u8 = 1;
     /// send a certain amount each tick until end_epoch is reached payment type
-    const AMOUNT_UNTIL: u8 = 2;
+    const FIXED_RECURRING: u8 = 2;
     /// send a certain amount once at the next tick payment type
-    const ONE_SHOT: u8 = 3;
+    const FIXED_ONCE: u8 = 3;
 
     const MAX_NUMBER_OF_INSTRUCTIONS: u64 = 12;
 
@@ -192,7 +192,7 @@ address 0x1 {
               payment.prev_bal = LibraAccount::balance<GAS>(*account_addr);
 
               // if it's a one shot payment, delete it once it has done its job
-              if (payment.in_type == ONE_SHOT) {
+              if (payment.in_type == FIXED_ONCE) {
                 delete_payment = true;
               }
               

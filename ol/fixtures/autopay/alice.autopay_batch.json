@@ -14,13 +14,13 @@
     },
     {
       "note": "test",
+      "uid": 1,
+      "destination": "3DC18D1CF61FAAC6AC70E3A63F062E4B",
       "in_type": {
         "PercentOfBalance": {
           "percent": 10.00
         }
       },
-      "uid": 1,
-      "destination": "3DC18D1CF61FAAC6AC70E3A63F062E4B",
       "end_epoch": 100,
       "duration_epochs": 100
     }

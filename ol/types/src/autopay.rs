@@ -7,7 +7,7 @@ use libra_types::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{fs, path::PathBuf};
+use std::{fs, path::PathBuf, u64};
 
 
 // These match Autpay2.move
@@ -16,15 +16,15 @@ const PERCENT_OF_BALANCE: u8 = 0;
 /// send percent of the change in balance since the last tick payment type
 const PERCENT_OF_CHANGE: u8 = 1;
 /// send a certain amount each tick until end_epoch is reached payment type
-const AMOUNT_UNTIL: u8 = 2;
+const FIXED_RECURRING: u8 = 2;
 /// send a certain amount once at the next tick payment type
-const ONE_SHOT: u8 = 3;
+const FIXED_ONCE: u8 = 3;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub enum InstructionType {
-  PercentOfBalance { percent: f64, percent_cast: Option<u64> },
-  PercentOfChange { percent: f64, percent_cast: Option<u64> },
+  PercentOfBalance { percent: f64 },
+  PercentOfChange { percent: f64 },
   FixedRecurring { coins: u64 },
   FixedOnce { coins: u64 },
   None,
@@ -42,6 +42,8 @@ pub struct PayInstruction {
     pub in_type: InstructionType,
     /// type of instruction
     pub in_type_move: Option<u8>,
+    /// value cast for move
+    pub value_move: Option<u64>,
     /// destination account
     pub destination: AccountAddress,
     // /// percentage of new inflow of epoch
@@ -56,7 +58,7 @@ pub struct PayInstruction {
     // pub fixed_payment: Option<u64>,
 
     /// epoch when payment instruction will stop
-    pub end_epoch: u64,
+    pub end_epoch: Option<u64>,
     /// optional duration in epochs of the instruction
     pub duration_epochs: Option<u64>,
 }
@@ -77,26 +79,39 @@ impl PayInstruction {
 
         let transformed = inst_vec.into_iter()
         .map(|mut i| {
-            match i.in_type {
-                InstructionType::PercentOfBalance { percent, percent_cast } => {}
-                InstructionType::PercentOfChange { percent, percent_cast } => {}
-                InstructionType::FixedRecurring { coins } => {}
-                InstructionType::FixedOnce { coins } => {}
-                InstructionType::None => {}
+            if i.end_epoch.is_none() && i.duration_epochs.is_none() {
+              panic!("Need to set end_epoch, or duration_epoch in instruction: {:?}", &i);
             }
-            // TODO: check sequential instructions by uid
-            // check the object has an actual payment instruction.
-            // if !i.percent_inflow.is_some() &&
-            // !i.percent_balance.is_some() {
-            // // !i.fixed_recurring.is_some() &&
-            // // !i.fixed_once.is_some() {
-            //   println!("autopay instruction file not valid, skipping all transactions. Issue at instruction {:?}", i);
-            // }
 
-            // i.cast_scale();
-            // if let Some(pct_in) = i.percent_inflow {total_pct_inflow = total_pct_inflow + pct_in};
+            if let Some(duration) = i.duration_epochs {
+              i.end_epoch = Some(duration);
+            }
 
-            // if let Some(pct_bal) = i.percent_balance {total_pct_balance = total_pct_balance + pct_bal};
+            match i.in_type {
+                InstructionType::PercentOfBalance { percent } => {
+                  i.in_type_move = Some(PERCENT_OF_BALANCE);
+                  i.value_move = scale_fractional(percent);
+                  total_pct_balance = total_pct_balance + percent;
+                }
+                InstructionType::PercentOfChange { percent } => {
+                  i.in_type_move = Some(PERCENT_OF_CHANGE);
+                  i.value_move = scale_fractional(percent);
+                  total_pct_balance = total_pct_balance + percent;
+
+                }
+                InstructionType::FixedRecurring { coins } => {
+                  i.in_type_move = Some(AMOUNT_UNTIL);
+                  i.value_move = Some(coins);
+                  
+                }
+                InstructionType::FixedOnce { coins } => {
+                  i.in_type_move = Some(ONE_SHOT);
+                  i.value_move = Some(coins);
+                }
+                _ => {
+                  panic!("Transaction type not detected in json. Set `in_type`");
+                }
+            }
 
             i
         })
@@ -105,7 +120,7 @@ impl PayInstruction {
         if (total_pct_inflow < 100f64) && (total_pct_balance < 100f64){
           Ok(transformed)
         } else {
-          Err(Error::msg("percentages sum greater than 100%"))
+          Err(Error::msg("Aborting, percentages sum greater than 100%"))
         }
     }
 
@@ -129,7 +144,7 @@ impl PayInstruction {
             "not sending to expected destination"
         );
         assert!(
-            script.args()[2] == TransactionArgument::U64(end_epoch),
+            script.args()[2] == TransactionArgument::U64(end_epoch.unwrap()),
             "not the same ending epoch"
         );
         // assert!(
@@ -154,12 +169,12 @@ impl PayInstruction {
 // for autopay purposes percentages have two decimal places precision.
 // No rounding is applied. The third decimal is trucated.
 // the result is a integer of 4 bits.
-fn scale_fractional(fract_percent: &Option<f64>) -> Option<u64> {
+fn scale_fractional(fract_percent: f64) -> Option<u64> {
     // finish parsing the json
-    match fract_percent {
-        Some(fractional) => {
+    // match fract_percent {
+    //     Some(fractional) => {
             // multiply by 100 to get the desired decimal precision
-            let scaled = fractional * 100 as f64;
+            let scaled = fract_percent * 100 as f64;
             // drop the fractional part with trunc()
             let trunc = scaled.trunc() as u64; // return max 4 digits.
             if trunc < 9999 {
@@ -168,9 +183,9 @@ fn scale_fractional(fract_percent: &Option<f64>) -> Option<u64> {
                 println!("percent needs to have max four digits, skipping");
                 None
             }
-        }
-        None => None,
-    }
+        // }
+        // None => None,
+    // }
 }
 
 
@@ -179,10 +194,10 @@ fn parse_file() {
   let path = ol_fixtures::get_persona_autopay_json("alice").1;
   let inst = PayInstruction::parse_autopay_instructions(&path).unwrap();
   
-  // assert_eq!(inst[0].);
+  assert_eq!(inst[0].in_type_move, Some(0));
 
   match inst[0].in_type {
-      InstructionType::PercentOfBalance { percent, percent_cast } => {
+      InstructionType::PercentOfBalance { percent } => {
         assert_eq!(percent, 10f64);
       },
       _ => {}
