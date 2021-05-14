@@ -68,10 +68,10 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, starting_epoch: &
             "Instruction {uid}: {note}\nSend {total_val} every day {count_epochs} times  (until epoch {epoch_ending}) to address: {destination}?",
             uid = &i.uid,
             total_val = *&i.value_move.unwrap(),
-             count_epochs = &i.duration_epochs.unwrap_or_else(|| {
-                &i.end_epoch.unwrap() - starting_epoch 
-              }),
-              note = &i.note.clone().unwrap(),
+            count_epochs = &i.duration_epochs.unwrap_or_else(|| {
+              &i.end_epoch.unwrap() - starting_epoch 
+            }),
+            note = &i.note.clone().unwrap(),
             epoch_ending = &i.end_epoch.unwrap(),
             destination = &i.destination,
         )
@@ -79,6 +79,7 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, starting_epoch: &
           format!(
             "Instruction {uid}: {note}\nSend {total_val} once to address: {destination}?",
             uid = &i.uid,
+            note = &i.note.clone().unwrap(),
             total_val = *&i.value_move.unwrap(),
             destination = &i.destination,
         )
@@ -122,19 +123,23 @@ pub fn sign_instructions(scripts: Vec<Script>, starting_sequence_num: u64, tx_pa
 fn test_instruction_script_match() {
   use libra_types::account_address::AccountAddress;
 
-  let script = transaction_builder::encode_autopay_create_instruction_script(1, AccountAddress::ZERO, 100, 1000);
+  let script = transaction_builder::encode_autopay_create_instruction_script(
+    1, 
+    0, 
+    AccountAddress::ZERO, 
+    100, 
+    1000);
 
   let instr = PayInstruction {
       uid: 1,
       type_of: 0,
       destination: AccountAddress::ZERO,
-      percent_inflow: None,
-      percent_inflow_cast: None,
-      percent_balance: Some(10.00),
-      percent_balance_cast: Some(1000),
-      fixed_payment: None,
-      end_epoch: 100,
-      duration_epochs: Some(10)
+      end_epoch: Some(100),
+      duration_epochs: Some(10),
+      note: "test",
+      type_move: None,
+      value: 100,
+      value_move: None,
   };
 
   instr.check_instruction_safety(script).unwrap();

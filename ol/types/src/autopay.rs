@@ -101,22 +101,21 @@ impl PayInstruction {
                 match i.type_of {
                     InstructionType::PercentOfBalance => {
                         i.type_move = Some(PERCENT_OF_BALANCE);
-                        i.value_move = scale_fractional(i.value);
+                        i.value_move = scale_percent(i.value);
                         total_pct_balance = total_pct_balance + i.value;
                     }
                     InstructionType::PercentOfChange => {
                         i.type_move = Some(PERCENT_OF_CHANGE);
-                        i.value_move = scale_fractional(i.value);
+                        i.value_move = scale_percent(i.value);
                         total_pct_of_change = total_pct_of_change + i.value;
                     }
                     InstructionType::FixedRecurring => {
                         i.type_move = Some(FIXED_RECURRING);
-                        i.value_move = Some(scale_coin(i.value));
+                        i.value_move = scale_coin(i.value);
                     }
                     InstructionType::FixedOnce => {
                         i.type_move = Some(FIXED_ONCE);
-                        let trunc = i.value.trunc() as u64;
-                        i.value_move = Some(scale_coin(i.value));
+                        i.value_move = scale_coin(i.value);
                     }
                 }
 

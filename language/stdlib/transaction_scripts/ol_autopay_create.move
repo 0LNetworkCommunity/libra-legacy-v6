@@ -11,7 +11,7 @@ script {
     in_type: u8,
     payee: address,
     end_epoch: u64,
-    percentage: u64,
+    value: u64,
   ) {
     let account = Signer::address_of(sender);
 
@@ -26,7 +26,7 @@ script {
       in_type,
       payee,
       end_epoch,
-      percentage,
+      value,
     );
   }
 }
