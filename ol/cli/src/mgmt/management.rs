@@ -109,9 +109,13 @@ impl Node {
             )
         };
 
-        // let pid = &child.id();
-        // self.save_pid(NODE, *pid);
-        // println!("Started new with PID: {}", pid);
+        if let Ok(ch) = child {
+            let pid = &ch.id();
+            self.save_pid(NODE, *pid);
+            if _verbose{
+                println!("Started with PID {} in the background", pid);
+            }
+        }
         Ok(())
     }
 
@@ -155,9 +159,14 @@ impl Node {
             )
         };
 
-        // let pid = &child.id();
-        // self.save_pid(MINER, *pid);
-        // println!("Started with PID {} in the background", pid);
+        if let Ok(ch) = child {
+            let pid = &ch.id();
+            self.save_pid(MINER, *pid);
+            if _verbose{
+                println!("Started with PID {} in the background", pid);
+            }
+        }
+
     }
 
     /// Start Monitor
@@ -199,9 +208,13 @@ impl Node {
             )
         };
 
-        // let pid = &child.id();
-        // self.save_pid("monitor", *pid);
-        // println!("Started with PID {} in the background", pid);
+        if let Ok(ch) = child {
+            let pid = &ch.id();
+            self.save_pid("monitor", *pid);
+            if _verbose{
+                println!("Started with PID {} in the background", pid);
+            }
+        }
     }
 
     // /// Start pilot, for explorer
