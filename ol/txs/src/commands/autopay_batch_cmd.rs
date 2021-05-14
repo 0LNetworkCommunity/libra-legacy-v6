@@ -28,21 +28,20 @@ impl Runnable for AutopayBatchCmd {
         let epoch = crate::epoch::get_epoch(&tx_params);
         println!("The current epoch is: {}", epoch);
         let instructions = PayInstruction::parse_autopay_instructions(&self.autopay_batch_file, Some(epoch)).unwrap();
-        let scripts = process_instructions(instructions, epoch);
+        let scripts = process_instructions(instructions);
         batch_wrapper(scripts, &tx_params, entry_args.no_send, entry_args.save_path)
 
     }
 }
 
-/// Process autopay instructions in to scripts
-pub fn process_instructions(instructions: Vec<PayInstruction>, current_epoch: u64) -> Vec<Script> {
+/// Process autopay instructions into scripts
+pub fn process_instructions(instructions: Vec<PayInstruction>) -> Vec<Script> {
     // TODO: Check instruction IDs are sequential.
     instructions.into_iter().filter_map(|i| {
 
-        assert!(i.type_move.unwrap() >= 0 && i.type_move.unwrap() < 3);
+        assert!(i.type_move.unwrap() > 0 && i.type_move.unwrap() < 3);
 
-
-        let warning = if (i.type_move.unwrap() == 0 ) {
+        let warning = if i.type_move.unwrap() == 0 {
           format!(
               "Instruction {uid}:\nSend {percent_balance:.2?}% of your total balance every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
               uid = &i.uid,
@@ -51,7 +50,7 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, current_epoch: u6
               epoch_ending = &i.end_epoch.unwrap(),
               destination = &i.destination,
           )
-        } else if (i.type_move.unwrap() == 1 ) {
+        } else if i.type_move.unwrap() == 1 {
           format!(
             "Instruction {uid}:\nSend {percent_balance:.2?}% of your change in balance every epoch {duration_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
             uid = &i.uid,

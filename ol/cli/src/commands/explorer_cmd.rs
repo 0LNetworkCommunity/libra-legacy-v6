@@ -31,8 +31,8 @@ pub struct ExplorerCMD {
 impl Runnable for ExplorerCMD {
     /// Start the application.
     fn run(&self) {
-        let cfg = app_config().clone();
-        let args = entrypoint::get_args();
+        // let cfg = app_config().clone();
+        // let args = entrypoint::get_args();
 
         // TODO: optionally start explorer with the pilot process in a thread
         // Start the health check runner in background, optionally with --pilot, which starts services.
