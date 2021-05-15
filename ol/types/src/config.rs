@@ -113,7 +113,6 @@ impl AppCfg {
         default_config.profile.auth_key = authkey.to_string();
         default_config.profile.account = account;
         if let Some(url) = upstream_peer {
-            dbg!(&url);
             default_config.profile.upstream_nodes = Some(vec![url.to_owned()]);
         }
         // skip questionnaire if CI
