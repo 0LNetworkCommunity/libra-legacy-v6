@@ -2,7 +2,7 @@ SHELL=/usr/bin/env bash
 DATA_PATH = ${HOME}/.0L
 SOURCE_PATH = ${HOME}/libra
 SWARM_TEMP = ${HOME}/swarm_temp
-LOG=${HOME}/output.log
+LOG=${HOME}/test-upgrade.log
 
 NODE_ENV=test
 TEST=y
@@ -20,9 +20,13 @@ ifndef PREV_VERSION
 PREV_VERSION=v4.3.0
 endif
 
-ifndef TEST_BRANCH
-TEST_BRANCH=release-v4.3.1
+ifndef BRANCH_NAME
+BRANCH_NAME=release-v4.3.1
 endif
+
+# USAGE: BRANCH_NAME=<latest branch> make -f test-upgrade.mk upgrade-test
+# NOTE: BRANCH_NAME shares semantics with https://github.com/marketplace/actions/get-branch-name
+test: get-prev stdlib start upgrade check stop
 
 start:
 	@echo Building Swarm
@@ -30,7 +34,7 @@ start:
 	cd ${SOURCE_PATH} && cargo run -p libra-swarm -- --libra-node ${SOURCE_PATH}/target/debug/libra-node -c ${SWARM_TEMP} -n ${NUM_NODES} &> ${LOG}&
 
 stop:
-	killall libra-swarm libra-node
+	killall libra-swarm libra-node | true
 
 get-prev:
 	cd ${SOURCE_PATH} && git reset --hard && git fetch
@@ -38,7 +42,7 @@ get-prev:
 
 get-test:
 	cd ${SOURCE_PATH} && git reset --hard && git fetch
-	cd ${SOURCE_PATH} && git checkout ${TEST_BRANCH}
+	cd ${SOURCE_PATH} && git checkout ${BRANCH_NAME}
 
 stdlib:
 	cd ${SOURCE_PATH} && cargo run --release -p stdlib
@@ -54,7 +58,7 @@ submit:
 	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-upgrade
 
 query:
-	cd ${SOURCE_PATH} && cargo run -p ol-cli -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --blockheight
+	cd ${SOURCE_PATH} && cargo run -p ol-cli -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --blockheight | grep -Eo [0-9]+ | tail -n1
 
 END=$(shell date -ud "5 minute" +%s)
 NOW = $(shell date -u +%s)
@@ -63,10 +67,10 @@ START_TEXT = "To run the Libra CLI client"
 UPGRADE_TEXT = "stdlib upgrade: published"
 
 upgrade: 
-	echo ${END}
 	@while [[ ${NOW} -le ${END} ]] ; do \
 			if grep -q ${START_TEXT} ${LOG} ; then \
-				make -f ${SOURCE_PATH}/ol/util/test-upgrade.mk get-test stdlib submit; \
+				make -f ${SOURCE_PATH}/ol/util/test-upgrade.mk get-test stdlib ; \
+				PERSONA=alice make -f ${SOURCE_PATH}/ol/util/test-upgrade.mk submit; \
 				PERSONA=bob make -f ${SOURCE_PATH}/ol/util/test-upgrade.mk submit; \
 				break; \
 			else \
@@ -78,7 +82,6 @@ upgrade:
 
 check:	
 	@while [[ ${NOW} -le ${END} ]] ; do \
-			make -f ${SOURCE_PATH}/ol/util/test-upgrade.mk query; \
 			if grep -q ${UPGRADE_TEXT} ${SWARM_TEMP}/logs/0.log ; then \
 				echo UPGRADE SUCCESS! ; \
 				break ; \
@@ -90,10 +93,9 @@ check:
 	done
 
 # check the blocks are progressing after upgrade
-progress:	
-	@while [[ ${NOW} -le ${END} ]] ; do \
-			make -f ${SOURCE_PATH}/ol/util/test-upgrade.mk query; \
-			if [TODO] ; then \
+progress:
+	while [[ ${NOW} -le ${END} ]] ; do \
+			if make -f ${SOURCE_PATH}/ol/util/test-upgrade.mk query > 0 ; then \
 				echo making progress ; \
 				break ; \
 			else \
@@ -103,4 +105,3 @@ progress:
 			sleep 5 ; \
 	done
 
-test: get-prev start upgrade check stop
