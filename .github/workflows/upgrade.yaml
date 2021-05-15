@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: nelonoel/branch-name@v1.0.1
       - name: Swarm upgrade test
-        uses: nelonoel/branch-name@v1.0.1
         run: echo ${BRANCH_NAME}
         run: cd ol/util/ && make -f test-upgrade.mk test
