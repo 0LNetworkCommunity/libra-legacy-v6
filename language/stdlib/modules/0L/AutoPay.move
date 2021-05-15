@@ -76,7 +76,6 @@ address 0x1 {
     // 3: amt gas, one time payment
     struct Payment {
       // TODO: name should be a string to store a memo
-      // name: u64,
       uid: u64,
       in_type: u8,
       payee: address,
