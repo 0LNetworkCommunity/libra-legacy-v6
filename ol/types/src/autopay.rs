@@ -174,15 +174,8 @@ impl PayInstruction {
 fn scale_coin(coin_value: f64) -> Option<u64> {
     // the UI for the autopay_batch, allows 2 decimal precision for pecentages: 12.34%
     // multiply by 100 to get the desired decimal precision
-    let scaled = coin_value * 1000000 as f64;
-    // drop the fractional part with trunc()
-    let trunc = scaled.trunc() as u64; // return max 4 digits.
-    if trunc < 9999 {
-        Some(trunc)
-    } else {
-        println!("percent needs to have max four digits, skipping");
-        None
-    }
+    let scale = coin_value * 1000000 as f64;
+    Some(scale as u64)
 }
 
 fn scale_percent(fract_percent: f64) -> Option<u64> {

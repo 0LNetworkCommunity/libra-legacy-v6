@@ -207,7 +207,7 @@ fn test_parse_account_file() {
     use crate::account::ValConfigs;
     let path = ol_fixtures::get_persona_account_json("eve").1;
     let init_configs = ValConfigs::get_init_data(&path).unwrap();
-    assert_eq!(init_configs.op_fullnode_network_addresses, decode("2d040000000000052318072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800").unwrap(), "Could not parse network address");
+    assert_eq!(init_configs.op_fullnode_network_addresses, decode("2d04009de60f2a052318072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800").unwrap(), "Could not parse network address");
 
     let consensus_key_vec = decode("cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d").unwrap();
     
