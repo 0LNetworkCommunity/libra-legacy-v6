@@ -1,2 +1,2 @@
-pub mod keygen;
+pub mod wallet;
 pub mod scheme;

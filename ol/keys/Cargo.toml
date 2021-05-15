@@ -1,5 +1,5 @@
 [package]
-name = "keygen"
+name = "ol-keys"
 authors = []
 version = "0.1.0"
 edition = "2018"

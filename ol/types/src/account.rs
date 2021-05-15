@@ -6,7 +6,7 @@ use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use hex::{decode, encode};
 use std::{fs::File, io::Write, path::PathBuf};
 use libra_network_address::{NetworkAddress, encrypted::{TEST_SHARED_VAL_NETADDR_KEY, TEST_SHARED_VAL_NETADDR_KEY_VERSION}};
-use keygen::scheme::KeyScheme;
+use ol_keys::scheme::KeyScheme;
 use crate::autopay::PayInstruction;
 use anyhow;
 #[derive(Serialize, Deserialize, Debug, Clone)]

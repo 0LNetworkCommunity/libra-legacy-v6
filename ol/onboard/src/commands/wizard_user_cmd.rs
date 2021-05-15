@@ -2,6 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
+use ol_keys::wallet;
 use ol_types::block::Block;
 use miner::{delay, block::write_genesis};
 use ol_types::config::AppCfg;
@@ -40,10 +41,10 @@ fn wizard(path: PathBuf, is_fix: bool, block_zero: &Option<PathBuf>) {
     let mut miner_configs = AppCfg::default();
     
     let (authkey, account, _) = if is_fix { 
-        keygen::account_from_prompt()
+        wallet::get_account_from_prompt()
         
     } else {
-        keygen::keygen()
+        wallet::keygen()
     };
 
     // Where to save block_0

@@ -6,12 +6,11 @@ use crate::{application::app_config, config::AppCfg, entrypoint, migrate};
 use abscissa_core::{Command, FrameworkError, Options, Runnable, config};
 use anyhow::Error;
 use libra_genesis_tool::{init, key};
-use keygen::scheme::KeyScheme;
+use ol_keys::{scheme::KeyScheme, wallet};
 use libra_json_rpc_client::AccountAddress;
 use libra_types::transaction::authenticator::AuthenticationKey;
 use std::{fs, path::PathBuf};
 use libra_wallet::WalletLibrary;
-use keygen;
 use url::Url;
 /// `init` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -45,7 +44,7 @@ impl Runnable for InitCmd {
           return
         }
         
-        let (authkey, account, wallet) = keygen::account_from_prompt();
+        let (authkey, account, wallet) = wallet::get_account_from_prompt();
         // start with a default value, or read from file if already initialized
         let mut miner_config = app_config().to_owned();
         if !self.skip_miner { 

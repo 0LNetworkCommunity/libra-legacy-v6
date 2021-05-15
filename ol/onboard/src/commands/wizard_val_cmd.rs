@@ -8,7 +8,7 @@ use ol_types::block::Block;
 
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 // use libra_genesis_tool::keyscheme::KeyScheme;
-use keygen::scheme::KeyScheme;
+use ol_keys::{wallet, scheme::KeyScheme};
 
 use libra_genesis_tool::node_files;
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
@@ -53,7 +53,7 @@ impl Runnable for ValWizardCmd {
         status_info!("\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys, run the standalone keygen tool with 'ol keygen'.\n\nYour first 0L proof-of-work will be mined now. Expect this to take up to 15 minutes on modern CPUs.\n");
 
         // Get credentials from prompt
-        let (authkey, account, wallet) = keygen::account_from_prompt();
+        let (authkey, account, wallet) = wallet::get_account_from_prompt();
 
         // Initialize Miner
         // Need to assign app_config, otherwise abscissa would use the default.

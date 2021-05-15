@@ -15,6 +15,7 @@ use libra_types::{chain_id::ChainId, waypoint::Waypoint};
 use rustyline::{config::CompletionType, error::ReadlineError, Config, Editor};
 use std::{str::FromStr, time::{Duration, UNIX_EPOCH}};
 use structopt::StructOpt;
+use ol_keys::wallet;
 
 #[derive(Debug, StructOpt)]
 #[structopt(
@@ -82,7 +83,7 @@ fn main() {
     let args = Args::from_args();
 
     //////// 0L ////////
-    let mnemonic_str = keygen::account_from_prompt().2.mnemonic();
+    let mnemonic_str = wallet::get_account_from_prompt().2.mnemonic();
     let entered_mnem = if mnemonic_str.is_empty() { false } else { true };
 
     let mut logger = ::libra_logger::Logger::new();
