@@ -1,7 +1,9 @@
 SHELL=/usr/bin/env bash
 DATA_PATH = ${HOME}/.0L
-SWARM_TEMP = ${HOME}/swarm_temp
-LOG=${HOME}/test-upgrade.log
+SWARM_TEMP = ${DATA_PATH}/swarm_temp
+UPGRADE_TEMP = ${SWARM_TEMP}/upgrade/
+SAFE_MAKE_FILE = ${SWARM_TEMP}/upgrade/test-upgrade.mk
+LOG=${UPGRADE_TEMP}/test-upgrade.log
 
 NODE_ENV=test
 TEST=y
@@ -40,6 +42,8 @@ stop:
 	killall libra-swarm libra-node | true
 
 get-prev:
+# save makefile outside of repo, since we'll need it across branches
+	cp ${SOURCE_PATH}/ol/util/test-upgrade.mk ${SAFE_MAKE_FILE}
 	cd ${SOURCE_PATH} && git reset --hard && git fetch
 	cd ${SOURCE_PATH} && git checkout ${PREV_VERSION}
 
@@ -72,9 +76,9 @@ UPGRADE_TEXT = "stdlib upgrade: published"
 upgrade: 
 	@while [[ ${NOW} -le ${END} ]] ; do \
 			if grep -q ${START_TEXT} ${LOG} ; then \
-				make -f ${SOURCE_PATH}/ol/util/test-upgrade.mk get-test stdlib ; \
-				PERSONA=alice make -f ${SOURCE_PATH}/ol/util/test-upgrade.mk submit; \
-				PERSONA=bob make -f ${SOURCE_PATH}/ol/util/test-upgrade.mk submit; \
+				make -f ${SAFE_MAKE_FILE} get-test stdlib ; \
+				PERSONA=alice make -f ${SAFE_MAKE_FILE} submit; \
+				PERSONA=bob make -f ${SAFE_MAKE_FILE} submit; \
 				break; \
 			else \
 				echo . ; \
@@ -98,7 +102,7 @@ check:
 # check the blocks are progressing after upgrade
 progress:
 	while [[ ${NOW} -le ${END} ]] ; do \
-			if make -f ${SOURCE_PATH}/ol/util/test-upgrade.mk query > 0 ; then \
+			if make -f ${SAFE_MAKE_FILE} query > 0 ; then \
 				echo making progress ; \
 				break ; \
 			else \
