@@ -201,7 +201,7 @@ pub enum ScriptCall {
         in_type: u8,
         payee: AccountAddress,
         end_epoch: u64,
-        percentage: u64,
+        value: u64,
     },
 
     AutopayDisable {},
@@ -1578,10 +1578,8 @@ impl ScriptCall {
                 in_type,
                 payee,
                 end_epoch,
-                percentage,
-            } => {
-                encode_autopay_create_instruction_script(uid, in_type, payee, end_epoch, percentage)
-            }
+                value,
+            } => encode_autopay_create_instruction_script(uid, in_type, payee, end_epoch, value),
             AutopayDisable {} => encode_autopay_disable_script(),
             AutopayEnable {} => encode_autopay_enable_script(),
             Burn {
@@ -2041,7 +2039,7 @@ pub fn encode_autopay_create_instruction_script(
     in_type: u8,
     payee: AccountAddress,
     end_epoch: u64,
-    percentage: u64,
+    value: u64,
 ) -> Script {
     Script::new(
         AUTOPAY_CREATE_INSTRUCTION_CODE.to_vec(),
@@ -2051,7 +2049,7 @@ pub fn encode_autopay_create_instruction_script(
             TransactionArgument::U8(in_type),
             TransactionArgument::Address(payee),
             TransactionArgument::U64(end_epoch),
-            TransactionArgument::U64(percentage),
+            TransactionArgument::U64(value),
         ],
     )
 }
@@ -3744,7 +3742,7 @@ fn decode_autopay_create_instruction_script(script: &Script) -> Option<ScriptCal
         in_type: decode_u8_argument(script.args().get(1)?.clone())?,
         payee: decode_address_argument(script.args().get(2)?.clone())?,
         end_epoch: decode_u64_argument(script.args().get(3)?.clone())?,
-        percentage: decode_u64_argument(script.args().get(4)?.clone())?,
+        value: decode_u64_argument(script.args().get(4)?.clone())?,
     })
 }
 

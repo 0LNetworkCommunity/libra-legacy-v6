@@ -135,7 +135,7 @@ fn test_instruction_script_match() {
       type_of: 0,
       destination: AccountAddress::ZERO,
       end_epoch: Some(100),
-      duration_epochs: Some(10),
+      duration_epochs: None,
       note: "test",
       type_move: None,
       value: 100,

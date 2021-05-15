@@ -160,9 +160,9 @@ impl PayInstruction {
         assert!(
             script.args()[3]
                 == TransactionArgument::U64(
-                    value_move.expect("cannot get percent_balance_cast")
+                    value_move.expect("cannot get value_move")
                 ),
-            "not the same ending epoch"
+            "not the same value being sent"
         );
         Ok(())
     }
@@ -248,7 +248,7 @@ fn parse_fixed_recurr_type() {
     assert_eq!(third.duration_epochs, Some(100));
     assert_eq!(third.end_epoch, Some(100));
     assert_eq!(third.type_of, InstructionType::FixedRecurring);
-    assert_eq!(third.value, 5f64);
+    assert_eq!(third.value_move, 5000000f64);
 }
 
 #[test]
@@ -263,7 +263,7 @@ fn parse_fixed_once_type() {
     assert_eq!(fourth.duration_epochs, Some(100));
     assert_eq!(fourth.end_epoch, Some(100));
     assert_eq!(fourth.type_of, InstructionType::FixedOnce);
-    assert_eq!(fourth.value, 22f64);
+    assert_eq!(fourth.value_move, 22000000f64);
 }
 
 #[test]
@@ -310,6 +310,8 @@ fn parse_fixed_recurr_end_epoch_type() {
     assert_eq!(seventh.end_epoch, Some(50));
     assert_eq!(seventh.type_of, InstructionType::FixedRecurring);
     assert_eq!(seventh.value, 5f64);
+    assert_eq!(seventh.value_move, 5000000f64);
+
 }
 
 #[test]
@@ -325,4 +327,5 @@ fn parse_fixed_once_end_epoch_type() {
     assert_eq!(eigth.end_epoch, Some(50));
     assert_eq!(eigth.type_of, InstructionType::FixedOnce);
     assert_eq!(eigth.value, 22f64);
+    assert_eq!(eigth.value_move, 22000000f64);
 }

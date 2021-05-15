@@ -30,7 +30,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ol_autopay_create.md#autopay_create_instruction">autopay_create_instruction</a>(sender: &signer, uid: u64, in_type: u8, payee: address, end_epoch: u64, percentage: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="ol_autopay_create.md#autopay_create_instruction">autopay_create_instruction</a>(sender: &signer, uid: u64, in_type: u8, payee: address, end_epoch: u64, value: u64)
 </code></pre>
 
 
@@ -45,7 +45,7 @@
   in_type: u8,
   payee: address,
   end_epoch: u64,
-  percentage: u64,
+  value: u64,
 ) {
   <b>let</b> account = <a href="../../modules/doc/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
 
@@ -60,7 +60,7 @@
     in_type,
     payee,
     end_epoch,
-    percentage,
+    value,
   );
 }
 </code></pre>
