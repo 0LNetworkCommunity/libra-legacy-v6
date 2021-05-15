@@ -37,12 +37,12 @@ stop:
 	killall libra-swarm libra-node | true
 
 get-prev:
-	cd ${SOURCE_PATH} && git reset --hard && git fetch
-	cd ${SOURCE_PATH} && git checkout ${PREV_VERSION}
+	cd ${SOURCE_PATH} && git reset --hard origin && git fetch
+	cd ${SOURCE_PATH} && git checkout ${PREV_VERSION} -f
 
 get-test:
-	cd ${SOURCE_PATH} && git reset --hard && git fetch
-	cd ${SOURCE_PATH} && git checkout ${BRANCH_NAME}
+	cd ${SOURCE_PATH} && git reset --hard origin && git fetch
+	cd ${SOURCE_PATH} && git checkout ${BRANCH_NAME} -f
 
 stdlib:
 	cd ${SOURCE_PATH} && cargo run --release -p stdlib
