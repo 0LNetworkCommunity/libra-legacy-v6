@@ -41,11 +41,11 @@ stop:
 
 get-prev:
 	cd ${SOURCE_PATH} && git reset --hard && git fetch
-	cd ${SOURCE_PATH} && git checkout ${PREV_VERSION} -f
+	cd ${SOURCE_PATH} && git checkout ${PREV_VERSION}
 
 get-test:
 	cd ${SOURCE_PATH} && git reset --hard && git fetch
-	cd ${SOURCE_PATH} && git checkout ${BRANCH_NAME} -f
+	cd ${SOURCE_PATH} && git checkout ${BRANCH_NAME}
 
 stdlib:
 	cd ${SOURCE_PATH} && cargo run --release -p stdlib
