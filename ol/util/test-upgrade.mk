@@ -1,11 +1,14 @@
 SHELL=/usr/bin/env bash
 DATA_PATH = ${HOME}/.0L
-SOURCE_PATH = ${HOME}/libra
 SWARM_TEMP = ${HOME}/swarm_temp
 LOG=${HOME}/test-upgrade.log
 
 NODE_ENV=test
 TEST=y
+
+ifndef SOURCE_PATH
+SOURCE_PATH = ${HOME}/libra
+endif
 
 # alice
 ifndef PERSONA

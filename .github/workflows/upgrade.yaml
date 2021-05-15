@@ -8,7 +8,7 @@ on:
     
 jobs:
   functional:
-    name: Functional Tests
+    name: Stdlib Upgrade
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -16,4 +16,4 @@ jobs:
       - name: Check branch
         run: echo ${BRANCH_NAME}
       - name: Swarm upgrade test
-        run: cd ol/util/ && make -f test-upgrade.mk test
+        run: cd ol/util/ && SOURCE_PATH=./ make -f test-upgrade.mk test
