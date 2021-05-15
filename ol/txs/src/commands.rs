@@ -23,8 +23,7 @@ mod autopay_cmd;
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use ol_cli::commands::CONFIG_FILE;
 use crate::config::AppCfg;
-use dirs;
-use libra_global_constants::NODE_HOME;
+use crate::entrypoint;
 use self::{
     create_account_cmd::CreateAccountCmd,
     create_validator_cmd::CreateValidatorCmd,
@@ -95,10 +94,15 @@ impl Configurable<AppCfg> for TxsCmd {
         // If you'd like for a missing configuration file to be a hard error
         // instead, always return `Some(CONFIG_FILE)` here.
 
-        let mut config_path = dirs::home_dir().unwrap();
-        config_path.push(NODE_HOME);
-        config_path.push(CONFIG_FILE);
+        let mut config_path = entrypoint::get_node_home();
 
-        Some(config_path)
+        config_path.push(CONFIG_FILE);
+        if config_path.exists() {
+            // println!("initializing from config file: {:?}", config_path);
+            Some(config_path)
+        } else {
+            // println!("config file not yet existing: {:?}", config_path);
+            None
+        }
     }
 }
