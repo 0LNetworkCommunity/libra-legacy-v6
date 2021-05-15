@@ -1,8 +1,8 @@
 SHELL=/usr/bin/env bash
 DATA_PATH = ${HOME}/.0L
 SWARM_TEMP = ${DATA_PATH}/swarm_temp
-UPGRADE_TEMP = ${SWARM_TEMP}/upgrade/
-SAFE_MAKE_FILE = ${SWARM_TEMP}/upgrade/test-upgrade.mk
+UPGRADE_TEMP = ${DATA_PATH}/test-upgrade
+SAFE_MAKE_FILE = ${UPGRADE_TEMP}/test-upgrade.mk
 LOG=${UPGRADE_TEMP}/test-upgrade.log
 
 NODE_ENV=test
