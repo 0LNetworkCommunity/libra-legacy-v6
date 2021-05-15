@@ -83,8 +83,6 @@ pub enum TxsCmd {
     /// The `valset` subcommand
     #[options(help = "join or leave the validator universe, i.e. candidate for validator set")]
     ValSet(ValSetCmd),
-
-
 }
 
 /// This trait allows you to define how application configuration is loaded.
