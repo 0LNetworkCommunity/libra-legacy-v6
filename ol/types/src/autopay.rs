@@ -150,15 +150,15 @@ impl PayInstruction {
             "not sending expected type of transaction"
         );
         assert!(
-            script.args()[1] == TransactionArgument::Address(destination),
+            script.args()[2] == TransactionArgument::Address(destination),
             "not sending to expected destination"
         );
         assert!(
-            script.args()[2] == TransactionArgument::U64(end_epoch.unwrap()),
+            script.args()[3] == TransactionArgument::U64(end_epoch.unwrap()),
             "not the same ending epoch"
         );
         assert!(
-            script.args()[3]
+            script.args()[4]
                 == TransactionArgument::U64(
                     value_move.expect("cannot get value_move")
                 ),

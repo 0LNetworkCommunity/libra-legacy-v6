@@ -122,24 +122,24 @@ pub fn sign_instructions(scripts: Vec<Script>, starting_sequence_num: u64, tx_pa
 #[test]
 fn test_instruction_script_match() {
   use libra_types::account_address::AccountAddress;
-
+  use ol_types::autopay::InstructionType;
   let script = transaction_builder::encode_autopay_create_instruction_script(
     1, 
     0, 
     AccountAddress::ZERO, 
-    100, 
+    10, 
     1000);
 
   let instr = PayInstruction {
       uid: 1,
-      type_of: 0,
+      type_of: InstructionType::PercentOfBalance,
       destination: AccountAddress::ZERO,
-      end_epoch: Some(100),
+      end_epoch: Some(10),
       duration_epochs: None,
-      note: "test",
-      type_move: None,
-      value: 100,
-      value_move: None,
+      note: Some("test".to_owned()),
+      type_move: Some(0),
+      value: 10f64,
+      value_move: Some(1000u64),
   };
 
   instr.check_instruction_safety(script).unwrap();
