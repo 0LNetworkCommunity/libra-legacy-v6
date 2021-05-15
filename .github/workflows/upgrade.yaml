@@ -10,6 +10,7 @@ jobs:
   functional:
     name: Stdlib Upgrade
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v2
       - uses: nelonoel/branch-name@v1.0.1
