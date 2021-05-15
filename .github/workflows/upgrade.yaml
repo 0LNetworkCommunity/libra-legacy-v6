@@ -24,4 +24,4 @@ jobs:
       - name: Check branch
         run: echo ${BRANCH_NAME}
       - name: Swarm upgrade test
-        run: cd ol/util/ && SOURCE_PATH=./ make -f test-upgrade.mk test
+        run: SOURCE_PATH=./ make -f ol/util/test-upgrade.mk test
