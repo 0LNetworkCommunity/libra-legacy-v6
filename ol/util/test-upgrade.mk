@@ -43,7 +43,8 @@ stop:
 
 get-prev:
 # save makefile outside of repo, since we'll need it across branches
-	cp ${SOURCE_PATH}/ol/util/test-upgrade.mk ${SAFE_MAKE_FILE}
+	mkdir -p ${UPGRADE_TEMP}
+	rsync -avR ${SOURCE_PATH}/ol/util/test-upgrade.mk ${SAFE_MAKE_FILE}
 	cd ${SOURCE_PATH} && git reset --hard && git fetch
 	cd ${SOURCE_PATH} && git checkout ${PREV_VERSION}
 
