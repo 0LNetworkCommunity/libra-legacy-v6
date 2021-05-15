@@ -248,7 +248,7 @@ fn parse_fixed_recurr_type() {
     assert_eq!(third.duration_epochs, Some(100));
     assert_eq!(third.end_epoch, Some(100));
     assert_eq!(third.type_of, InstructionType::FixedRecurring);
-    assert_eq!(third.value_move, 5000000f64);
+    assert_eq!(third.value_move.unwrap(), 5000000u64);
 }
 
 #[test]
@@ -263,7 +263,7 @@ fn parse_fixed_once_type() {
     assert_eq!(fourth.duration_epochs, Some(100));
     assert_eq!(fourth.end_epoch, Some(100));
     assert_eq!(fourth.type_of, InstructionType::FixedOnce);
-    assert_eq!(fourth.value_move, 22000000f64);
+    assert_eq!(fourth.value_move.unwrap(), 22000000u64);
 }
 
 #[test]
@@ -294,7 +294,7 @@ fn parse_pct_change_end_epoch_type() {
     assert_eq!(sixth.end_epoch, Some(50));
     assert_eq!(sixth.type_of, InstructionType::PercentOfChange);
     assert_eq!(sixth.value, 12.34f64);
-    assert_eq!(sixth.value_move, Some(1234u64));
+    assert_eq!(sixth.value_move.unwrap(), 1234u64);
 }
 
 #[test]
@@ -310,7 +310,7 @@ fn parse_fixed_recurr_end_epoch_type() {
     assert_eq!(seventh.end_epoch, Some(50));
     assert_eq!(seventh.type_of, InstructionType::FixedRecurring);
     assert_eq!(seventh.value, 5f64);
-    assert_eq!(seventh.value_move, 5000000f64);
+    assert_eq!(seventh.value_move.unwrap(), 5000000u64);
 
 }
 
@@ -327,5 +327,5 @@ fn parse_fixed_once_end_epoch_type() {
     assert_eq!(eigth.end_epoch, Some(50));
     assert_eq!(eigth.type_of, InstructionType::FixedOnce);
     assert_eq!(eigth.value, 22f64);
-    assert_eq!(eigth.value_move, 22000000f64);
+    assert_eq!(eigth.value_move.unwrap(), 22000000u64);
 }
