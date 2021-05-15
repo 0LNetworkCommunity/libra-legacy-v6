@@ -34,8 +34,8 @@ jobs:
         run: cd language/stdlib && cargo run --release
       - name: Run 0L functional tests
         run: cd language/move-lang/functional-tests && NODE_ENV=test cargo test 0L
-  miner:
-    name: Miner Tests
+  tools:
+    name: 0L tools Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -59,6 +59,8 @@ jobs:
         run: cd ol/miner && NODE_ENV=test cargo test
       - name: Run Types tests
         run: cd ol/types && NODE_ENV=test cargo test
+      - name: Run TXS tests
+        run: cd ol/txs && NODE_ENV=test cargo test
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
