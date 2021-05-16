@@ -10,6 +10,7 @@ use abscissa_core::{Command, Options, Runnable, status_info, time::{DateTime, Ut
 // use libra_genesis_tool::keyscheme::KeyScheme;
 use ol_keys::wallet;
 use ol_cli::config::AppCfg;
+use ol_types::autopay::{InstructionType, PayInstruction, write_batch_file};
 
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -27,7 +28,6 @@ impl Runnable for FixCmd {
 pub fn migrate_account_json(cfg: &AppCfg) {
   let (_, _, wallet) = wallet::get_account_from_prompt();
   let home_path = cfg.workspace.node_home.clone();
-  dbg!(&home_path);
   println!("Reading autopay configs");
   let (autopay_batch, autopay_signed) = get_autopay_batch(
         &None,
@@ -46,6 +46,8 @@ pub fn migrate_account_json(cfg: &AppCfg) {
       fs::copy(&account_json_path, &backup_path).expect("could not backup account.json");
     }
 
+    migrate_autopay_json_4_3_0(cfg, autopay_batch.clone().unwrap());
+
     println!("writing account.json to {:?}", cfg.workspace.node_home.clone());
 
     // Write account manifest
@@ -56,4 +58,25 @@ pub fn migrate_account_json(cfg: &AppCfg) {
         autopay_batch,
         autopay_signed,
     );
+}
+
+/// migrate autopay.json for archive purposes
+pub fn migrate_autopay_json_4_3_0(cfg: &AppCfg, instructions: Vec<PayInstruction>) {
+  let file_path = cfg.workspace.node_home.clone().join("back.autopay_batch.json");
+
+  println!("migrating autopay_batch.json to {:?}", &file_path);
+
+  let vec_instr: Vec<PayInstruction> = instructions.into_iter()
+  .map(|mut i| {
+    if i.type_of == InstructionType::PercentOfChange {
+      i.type_of = InstructionType::PercentOfBalance;
+      i.type_move = None;
+      i.value_move = None;
+      i.duration_epochs = Some(1);
+    }
+    i
+  })
+  .collect();
+
+  write_batch_file(file_path, vec_instr).expect("could not save autopay_batch file");
 }

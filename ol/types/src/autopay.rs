@@ -7,7 +7,7 @@ use libra_types::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{fs, path::PathBuf, u64};
+use std::{fs::{self, File}, io::Write, path::PathBuf, u64};
 
 // These match Autpay2.move
 /// send percent of balance at end of epoch payment type
@@ -167,6 +167,25 @@ impl PayInstruction {
         Ok(())
     }
 }
+
+/// save a batch file of instructions
+pub fn write_batch_file(file_path: PathBuf, vec_instr: Vec<PayInstruction>) -> Result<(), Error> {
+  #[derive(Clone, Debug, Deserialize, Serialize)]
+  struct Batch {
+    autopay_instructions: Vec<PayInstruction>
+  }
+    let mut buffer = File::open(file_path)?;
+    // let data = serde_json::to_string(&vec_instr)?;
+
+    let data = serde_json::to_string(&Batch { 
+      autopay_instructions: vec_instr
+    })?;
+
+    buffer.write(data.as_bytes())?;
+    Ok(())
+}
+
+
 // convert the decimals for Move.
 // for autopay purposes percentages have two decimal places precision.
 // No rounding is applied. The third decimal is trucated.
