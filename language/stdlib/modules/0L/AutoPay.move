@@ -90,13 +90,15 @@ address 0x1 {
     // Function code: 01
     public fun tick(vm: &signer): bool acquires Tick {
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(010001));
-      assert(exists<Tick>(CoreAddresses::LIBRA_ROOT_ADDRESS()), Errors::not_published(010001));
-      
-      let tick_state = borrow_global_mut<Tick>(Signer::address_of(vm));
+      if (exists<Tick>(CoreAddresses::LIBRA_ROOT_ADDRESS())) {
+        let tick_state = borrow_global_mut<Tick>(Signer::address_of(vm));
 
-      if (!tick_state.triggered) {
-        tick_state.triggered = true;
-        return true
+        if (!tick_state.triggered) {
+          tick_state.triggered = true;
+          return true
+        };
+      } else {
+        initialize(vm);
       };
       false
     }
