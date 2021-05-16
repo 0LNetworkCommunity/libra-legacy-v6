@@ -62,7 +62,7 @@ jobs:
       - name: Run TXS tests
         run: cd ol/txs && NODE_ENV=test cargo test
       - name: Run keygen tests
-        run: cd ol/keygen && NODE_ENV=test cargo test
+        run: cd ol/keys && NODE_ENV=test cargo test
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
