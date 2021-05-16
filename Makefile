@@ -394,7 +394,7 @@ dev-register: clear fix register
 dev-genesis: genesis dev-save-genesis fix-genesis
 
 # Save the files to mock infrastructure i.e. devnet github
-dev-infra: dev-save-genesis dev-backup-archive dev-commit
+dev-infra: dev-backup-archive dev-commit
 
 dev-save-genesis: set-waypoint
 	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/ol/devnet/genesis/${V}/
