@@ -118,8 +118,8 @@ progress:
 				echo ERROR, txs not successful ; \
 				exit 1 ; \
 			fi ; \
-			echo "Sleeping for 5 secs" ; \
-			sleep 5 ; \
+			echo "Sleeping for 1 min" ; \
+			sleep 1m ; \
 	done
 
 tail:
