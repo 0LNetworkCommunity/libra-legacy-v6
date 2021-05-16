@@ -4,13 +4,13 @@
 
 use super::files_cmd;
 use crate::prelude::app_config;
-use ol_types::block::Block;
-use abscissa_core::{Command, Options, Runnable, status_info, status_ok};
-use ol_keys::{scheme::KeyScheme, wallet};
+use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_genesis_tool::node_files;
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use libra_wallet::WalletLibrary;
 use ol_cli::{commands::init_cmd, config::AppCfg};
+use ol_keys::{scheme::KeyScheme, wallet};
+use ol_types::block::Block;
 use ol_types::{account::ValConfigs, autopay::PayInstruction, config::TxType};
 use reqwest::Url;
 use serde_json::Value;
@@ -55,13 +55,14 @@ impl Runnable for ValWizardCmd {
         let (authkey, account, wallet) = wallet::get_account_from_prompt();
 
         // Initialize Miner
-        let upstream = match &self.upstream_peer {
-          Some(url) => url.to_owned(),
-          _ => match &self.template_url { 
+        let mut upstream = match &self.upstream_peer {
             Some(url) => url.to_owned(),
-            None => panic!("expected upstream peer url or template url")
-          }
+            None => match &self.template_url {
+                Some(url) => url.to_owned(),
+                None => panic!("expected upstream peer url or template url"),
+            },
         };
+        upstream.set_port(Some(8080));
 
         // Need to assign app_config, otherwise abscissa would use the default.
         let mut app_config =
@@ -71,6 +72,9 @@ impl Runnable for ValWizardCmd {
         status_ok!("\nMiner config written", "\n...........................\n");
 
         if let Some(url) = &self.template_url {
+            
+            let mut url = url.to_owned();
+            url.set_port(Some(3030));
             save_template(&url.join("account.json").unwrap(), home_path);
             let (epoch, wp) = get_epoch_info(&url.join("epoch.json").unwrap());
 
