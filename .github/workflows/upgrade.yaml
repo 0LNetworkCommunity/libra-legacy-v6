@@ -13,7 +13,9 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v2
-      - uses: nelonoel/branch-name@v1.0.1
+      - name: Get branch names
+        id: branch-name
+        uses: tj-actions/branch-names@v4
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -23,6 +25,6 @@ jobs:
       - name: Install deps
         run: sudo apt-get install -y lld
       - name: Check branch
-        run: echo ${BRANCH_NAME}
+        run: echo "${{ steps.branch-name.outputs.current_branch }}"
       - name: Swarm upgrade test
-        run: SOURCE_PATH=./ make -f ol/util/test-upgrade.mk test
+        run: BRANCH_NAME=${{ steps.branch-name.outputs.current_branch }} SOURCE_PATH=./ make -f ol/util/test-upgrade.mk test
