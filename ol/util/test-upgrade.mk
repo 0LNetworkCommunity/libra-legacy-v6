@@ -31,7 +31,7 @@ endif
 
 # USAGE: BRANCH_NAME=<latest branch> make -f test-upgrade.mk upgrade-test
 # NOTE: BRANCH_NAME shares semantics with https://github.com/marketplace/actions/get-branch-name
-test: get-prev stdlib start upgrade check stop
+test: get-prev stdlib start upgrade check tail
 
 start:
 	@echo Building Swarm
@@ -113,3 +113,5 @@ progress:
 			sleep 5 ; \
 	done
 
+tail:
+	tail -f ${SWARM_TEMP}/logs/0/log
