@@ -62,7 +62,7 @@ impl Runnable for ValWizardCmd {
                 None => panic!("expected upstream peer url or template url"),
             },
         };
-        upstream.set_port(Some(8080));
+        upstream.set_port(Some(8080)).unwrap(); // json rpc port
 
         // Need to assign app_config, otherwise abscissa would use the default.
         let mut app_config =
@@ -74,7 +74,7 @@ impl Runnable for ValWizardCmd {
         if let Some(url) = &self.template_url {
             
             let mut url = url.to_owned();
-            url.set_port(Some(3030));
+            url.set_port(Some(3030)).unwrap(); //web port
             save_template(&url.join("account.json").unwrap(), home_path);
             let (epoch, wp) = get_epoch_info(&url.join("epoch.json").unwrap());
 
