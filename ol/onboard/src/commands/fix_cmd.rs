@@ -19,7 +19,7 @@ pub struct FixCmd {}
 impl Runnable for FixCmd {
     /// Print version message
     fn run(&self) {
-        status_info!("\nOnboard fix", "Migrating account.json");
+        status_info!("\nOnboard fix", "migrating account.json");
         migrate_account_json(&app_config().clone());
     }
   }
@@ -64,7 +64,7 @@ pub fn migrate_account_json(cfg: &AppCfg) {
 pub fn migrate_autopay_json_4_3_0(cfg: &AppCfg, instructions: Vec<PayInstruction>) {
   let file_path = cfg.workspace.node_home.clone().join("back.autopay_batch.json");
 
-  println!("migrating autopay_batch.json to {:?}", &file_path);
+  println!("\nmigrating autopay_batch.json to {:?}\n", &file_path);
 
   let vec_instr: Vec<PayInstruction> = instructions.into_iter()
   .map(|mut i| {
