@@ -55,11 +55,14 @@ impl Runnable for ValWizardCmd {
         let (authkey, account, wallet) = wallet::get_account_from_prompt();
 
         // Initialize Miner
+        let upstream = match &self.upstream_peer {
+          Some(url) => url.to_owned(),
+          _ => match &self.template_url { 
+            Some(url) => url.to_owned(),
+            None => panic!("expected upstream peer url or template url")
+          }
+        };
 
-        let upstream = self.upstream_peer.clone().unwrap_or(
-          self.template_url.clone()
-          .expect("expected upstream peer url or template url")
-        );
         // Need to assign app_config, otherwise abscissa would use the default.
         let mut app_config =
             AppCfg::init_app_configs(authkey, account, &Some(upstream), &self.home_path);
