@@ -174,7 +174,7 @@ pub fn write_batch_file(file_path: PathBuf, vec_instr: Vec<PayInstruction>) -> R
   struct Batch {
     autopay_instructions: Vec<PayInstruction>
   }
-    let mut buffer = File::open(file_path)?;
+    let mut buffer = File::create(file_path)?;
     // let data = serde_json::to_string(&vec_instr)?;
 
     let data = serde_json::to_string(&Batch { 
