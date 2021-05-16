@@ -5,11 +5,8 @@
 use super::files_cmd;
 use crate::prelude::app_config;
 use ol_types::block::Block;
-
-use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
-// use libra_genesis_tool::keyscheme::KeyScheme;
-use ol_keys::{wallet, scheme::KeyScheme};
-
+use abscissa_core::{Command, Options, Runnable, status_info, status_ok};
+use ol_keys::{scheme::KeyScheme, wallet};
 use libra_genesis_tool::node_files;
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use libra_wallet::WalletLibrary;
@@ -19,13 +16,15 @@ use reqwest::Url;
 use serde_json::Value;
 use std::{fs::File, io::Write, path::PathBuf};
 use txs::{commands::autopay_batch_cmd, submit_tx};
-
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ValWizardCmd {
     #[options(short = "h", help = "home path for all 0L files")]
     home_path: Option<PathBuf>,
-    #[options(short = "a", help = "where to output the account.json file, defaults to node home")]
+    #[options(
+        short = "a",
+        help = "where to output the account.json file, defaults to node home"
+    )]
     account_path: Option<PathBuf>,
     #[options(help = "id of the chain")]
     chain_id: Option<u8>,
@@ -134,8 +133,8 @@ impl Runnable for ValWizardCmd {
             );
         }
 
-        // Write Manifest
-        write_manifest(
+        // Write account manifest
+        write_account_json(
             &self.account_path,
             wallet,
             Some(app_config),
@@ -151,7 +150,8 @@ impl Runnable for ValWizardCmd {
     }
 }
 
-fn get_autopay_batch(
+/// get autopay instructions from file
+pub fn get_autopay_batch(
     template: &Option<Url>,
     file_path: &Option<PathBuf>,
     home_path: &PathBuf,
@@ -161,14 +161,16 @@ fn get_autopay_batch(
     let file_name = if template.is_some() {
         // assumes the template was downloaded from URL
         "template.json"
-    } else if let Some(path) = file_path {
-        path.to_str().unwrap()
     } else {
         "autopay_batch.json"
     };
 
     let starting_epoch = cfg.chain_info.base_epoch.unwrap();
-    let instr_vec = PayInstruction::parse_autopay_instructions(&home_path.join(file_name), Some(starting_epoch.clone())).unwrap();
+    let instr_vec = PayInstruction::parse_autopay_instructions(
+        &file_path.clone().unwrap_or(home_path.join(file_name)),
+        Some(starting_epoch.clone()),
+    )
+    .unwrap();
     let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone(), &starting_epoch);
     let url = cfg.what_url(false);
     let mut tx_params =
@@ -209,7 +211,7 @@ fn get_epoch_info(url: &Url) -> (Option<u64>, Option<Waypoint>) {
 }
 
 /// Creates an account.json file for the validator
-fn write_manifest(
+pub fn write_account_json(
     json_path: &Option<PathBuf>,
     wallet: WalletLibrary,
     wizard_config: Option<AppCfg>,

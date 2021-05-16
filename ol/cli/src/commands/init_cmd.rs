@@ -32,7 +32,12 @@ impl Runnable for InitCmd {
     /// Print version message
     fn run(&self) {
         if *&self.fix {
+          // fix 0L.toml file
           migrate::migrate(self.path.to_owned());
+
+          // fix account.json
+          
+          // TODO: fix key_store.json
           return
         };
 
@@ -55,7 +60,10 @@ impl Runnable for InitCmd {
             &self.path
           ).unwrap()
         };
-        if !self.skip_val { initialize_validator(&wallet, &miner_config).unwrap() };
+
+        if !self.skip_val {
+          initialize_validator(&wallet, &miner_config).unwrap() 
+        };
     }
 }
 
