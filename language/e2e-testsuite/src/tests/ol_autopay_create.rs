@@ -34,6 +34,7 @@ fn autopay_create_test() {
 
   let script = transaction_builder::encode_autopay_create_instruction_script(
     1,
+    0,
     *recipient.address(),
     10,
     10,

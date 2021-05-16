@@ -51,7 +51,7 @@ pub fn get_account_from_wallet(wallet: &WalletLibrary) -> (AuthenticationKey, Ac
 }
 
 /// Prompts user to type mnemonic securely.
-pub fn account_from_prompt() 
+pub fn get_account_from_prompt() 
   -> (AuthenticationKey, AccountAddress, WalletLibrary) {
 
     println!("Enter your 0L mnemonic:");
