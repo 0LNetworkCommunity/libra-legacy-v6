@@ -340,13 +340,15 @@ Attempt to add instruction when too many already exist
 
 <pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay2_tick">tick</a>(vm: &signer): bool <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay2_Tick">Tick</a> {
   <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(010001));
-  <b>assert</b>(<b>exists</b>&lt;<a href="AutoPay.md#0x1_AutoPay2_Tick">Tick</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(010001));
+  <b>if</b> (<b>exists</b>&lt;<a href="AutoPay.md#0x1_AutoPay2_Tick">Tick</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>())) {
+    <b>let</b> tick_state = borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay2_Tick">Tick</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm));
 
-  <b>let</b> tick_state = borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay2_Tick">Tick</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm));
-
-  <b>if</b> (!tick_state.triggered) {
-    tick_state.triggered = <b>true</b>;
-    <b>return</b> <b>true</b>
+    <b>if</b> (!tick_state.triggered) {
+      tick_state.triggered = <b>true</b>;
+      <b>return</b> <b>true</b>
+    };
+  } <b>else</b> {
+    <a href="AutoPay.md#0x1_AutoPay2_initialize">initialize</a>(vm);
   };
   <b>false</b>
 }
