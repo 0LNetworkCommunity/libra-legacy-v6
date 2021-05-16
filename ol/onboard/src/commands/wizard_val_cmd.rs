@@ -56,7 +56,10 @@ impl Runnable for ValWizardCmd {
 
         // Initialize Miner
 
-        let upstream = *&self.upstream_peer.unwrap_or(&self.template_url.expect("expected upstream peer url or template url"));
+        let upstream = self.upstream_peer.clone().unwrap_or(
+          self.template_url.clone()
+          .expect("expected upstream peer url or template url")
+        );
         // Need to assign app_config, otherwise abscissa would use the default.
         let mut app_config =
             AppCfg::init_app_configs(authkey, account, &Some(upstream), &self.home_path);
