@@ -59,11 +59,10 @@ impl Node {
     /// Get the account view struct
     pub fn get_account_view(&mut self) -> Option<AccountView> {
         let account = self.conf.profile.account;
-        let (account_view, _) = self
-            .client
-            .get_account(account, true)
-            .expect(&format!("could not get account at address {:?}", account));
-        account_view
+        match self.client.get_account(account, true){
+            Ok(t) => t.0,
+            Err(e) => None
+        }
 
         // .expect(&format!("could not get account at address {:?}", account))
     }
