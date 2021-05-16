@@ -59,13 +59,10 @@ impl Node {
     /// Get the account view struct
     pub fn get_account_view(&mut self) -> Option<AccountView> {
         let account = self.conf.profile.account;
-        let (account_view, _) = self
-            .client
-            .get_account(account, true)
-            .expect(&format!("could not get account at address {:?}", account));
-        account_view
-
-        // .expect(&format!("could not get account at address {:?}", account))
+        match self.client.get_account(account, true) {
+            Ok((account_view, _)) => account_view,
+            Err(_) => None
+        }
     }
 
     /// Return a full Move-annotated account resource struct
