@@ -71,7 +71,7 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
         if verbose {
             status_warn!("web monitor is NOT serving 3030. Attempting start.");
         }
-        node.start_monitor(verbose);
+        node.start_web(verbose);
         node.vitals.host_state.monitor_state = MonitorState::Serving;
     }
 

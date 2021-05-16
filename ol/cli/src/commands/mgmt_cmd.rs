@@ -2,6 +2,7 @@
 
 use crate::{application::app_config, entrypoint, mgmt::management::NodeMode, node::{client, node::Node}};
 use abscissa_core::{Command, Options, Runnable};
+
 /// management subcommands
 #[derive(Command, Debug, Options)]
 pub struct MgmtCmd {
@@ -39,6 +40,13 @@ impl Runnable for MgmtCmd {
         } else if self.stop_all {
             node.stop_node();
             node.stop_miner();
+
+            // also stop pilot and monitor.
+            let mut child = std::process::Command::new("killall")
+                .arg("ol")
+                .spawn()
+                .expect(&format!("failed to run killall ol"));
+            child.wait().expect("killall did not exit");
         }
     }
 }

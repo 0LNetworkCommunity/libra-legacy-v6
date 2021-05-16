@@ -4,7 +4,7 @@ use abscissa_core::{Command, Options, Runnable};
 use crate::{application::app_config, entrypoint, explorer::event::{Events, Config, Event}, node::{client, node::Node}};
 use std::time::Duration;
 use std::{io, thread};
-use termion::{event::Key, input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
+use termion::{event::Key, raw::IntoRawMode, screen::AlternateScreen};
 use tui::backend::TermionBackend;
 use tui::Terminal;
 use crate::explorer::{App, ui};
