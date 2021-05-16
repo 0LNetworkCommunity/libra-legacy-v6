@@ -31,7 +31,7 @@ address 0x1 {
     /// send a certain amount once at the next tick payment type
     const FIXED_ONCE: u8 = 3;
 
-    const MAX_NUMBER_OF_INSTRUCTIONS: u64 = 12;
+    const MAX_NUMBER_OF_INSTRUCTIONS: u64 = 30;
 
     const EPAYEE_DOES_NOT_EXIST: u64 = 010017;
     /// The account does not have autopay enabled.
