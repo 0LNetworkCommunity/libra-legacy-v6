@@ -11,7 +11,7 @@ pub struct StartCmd {
     #[options(short = "o", help = "run once and exit, not continuous")]
     once: bool,
     /// Silent mode, defaults to verbose
-    #[options(short = "s", help = "run once and exit, not continuous")]
+    #[options(short = "s", help = "silent mode, no prints")]
     silent: bool
 }
 
