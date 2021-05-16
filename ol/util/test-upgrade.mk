@@ -31,7 +31,7 @@ endif
 
 # USAGE: BRANCH_NAME=<latest branch> make -f test-upgrade.mk upgrade-test
 # NOTE: BRANCH_NAME shares semantics with https://github.com/marketplace/actions/get-branch-name
-test: get-prev stdlib start upgrade check
+test: prep get-prev stdlib start upgrade check
 
 start:
 	@echo Building Swarm
@@ -41,10 +41,13 @@ start:
 stop:
 	killall libra-swarm libra-node | true
 
-get-prev:
+prep:
 # save makefile outside of repo, since we'll need it across branches
-	mkdir -p ${UPGRADE_TEMP}
+#	mkdir ${HOME}/.0L/ | true
+	mkdir -p ${UPGRADE_TEMP} | true
 	cp ${SOURCE_PATH}/ol/util/test-upgrade.mk ${SAFE_MAKE_FILE}
+
+get-prev:
 	cd ${SOURCE_PATH} && git reset --hard && git fetch
 	cd ${SOURCE_PATH} && git checkout ${PREV_VERSION}
 
@@ -59,7 +62,6 @@ stdlib:
 
 init:
 	cd ${SOURCE_PATH} && cargo run -p ol-cli -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init
-	mkdir ${HOME}/.0L/ | true
 	cp ${SWARM_TEMP}/0/0L.toml ${HOME}/.0L/0L.toml
 
 submit:
@@ -68,7 +70,11 @@ submit:
 query:
 	cd ${SOURCE_PATH} && cargo run -p ol-cli -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --blockheight | grep -Eo [0-9]+ | tail -n1
 
-END=$(shell date -ud "5 minute" +%s)
+txs:
+	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} demo
+
+
+END = $(shell date -ud "5 minute" +%s)
 NOW = $(shell date -u +%s)
 
 START_TEXT = "To run the Libra CLI client"
@@ -102,12 +108,15 @@ check:
 
 # check the blocks are progressing after upgrade
 progress:
-	while [[ ${NOW} -le ${END} ]] ; do \
-			if make -f ${SAFE_MAKE_FILE} query > 0 ; then \
-				echo making progress ; \
-				break ; \
+	@i=1 ; \
+	while [[ $$i -le 10 ]] ; do \
+			echo ===== Transaction $$i =====; \
+			if make -f ${SAFE_MAKE_FILE} txs ; then \
+				echo Making progress ; \
+				i=$$(($$i + 1)); \
 			else \
-				echo . ; \
+				echo ERROR, txs not successful ; \
+				exit 1 ; \
 			fi ; \
 			echo "Sleeping for 5 secs" ; \
 			sleep 5 ; \
