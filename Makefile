@@ -76,6 +76,15 @@ uninstall:
 		rm /usr/local/bin/$$b ; \
 	done
 
+
+download-release:
+	@for b in ${BINS} ; do \
+		echo $$b ; \
+		curl --create-dirs -o ${DATA_PATH}/release-${RELEASE}/$$b -L ${RELEASE_URL}/${RELEASE}/$$b ; \
+		chmod 744 ${DATA_PATH}/release-${RELEASE}/$$b ; \
+		cp ${DATA_PATH}/release-${RELEASE}/$$b  /usr/local/bin/$$b ; \
+	done
+
 bins:
 # Build and install genesis tool, libra-node, and miner
 	cargo run -p stdlib --release
@@ -385,7 +394,7 @@ dev-register: clear fix register
 dev-genesis: genesis dev-save-genesis fix-genesis
 
 # Save the files to mock infrastructure i.e. devnet github
-dev-infra: dev-save-genesis dev-backup-archive dev-commit
+dev-infra: dev-backup-archive dev-commit
 
 dev-save-genesis: set-waypoint
 	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/ol/devnet/genesis/${V}/

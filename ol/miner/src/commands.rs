@@ -14,7 +14,8 @@ use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
 };
 use std::path::PathBuf;
-use crate::entrypoint;
+use dirs;
+use libra_global_constants::NODE_HOME;
 
 /// MinerApp Configuration Filename
 pub const CONFIG_FILE: &str = "0L.toml";
@@ -48,14 +49,14 @@ impl Configurable<AppCfg> for MinerCmd {
         // If you'd like for a missing configuration file to be a hard error
         // instead, always return `Some(CONFIG_FILE)` here.
 
-        let mut config_path = entrypoint::get_node_home();
+        let mut config_path = dirs::home_dir()
+        .unwrap();
+        config_path.push(NODE_HOME);
         config_path.push(CONFIG_FILE);
 
         if config_path.exists() {
-            println!("initializing miner from config file: {:?}", config_path);
             Some(config_path)
         } else {
-            println!("miner config file not existing: {:?}", config_path);
             None
         }
     }

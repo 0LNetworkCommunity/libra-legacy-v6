@@ -23,7 +23,7 @@ use std::{
 };
 use structopt::StructOpt;
 use vm_genesis::GenesisMiningProof;
-use keygen::scheme::KeyScheme;
+use ol_keys::scheme::KeyScheme;
 
 pub struct StorageHelper {
   temppath: libra_temppath::TempPath,

@@ -821,7 +821,6 @@ dependencies = [
  "crash-handler",
  "generate-key",
  "hex 0.4.2",
- "keygen",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
@@ -834,6 +833,7 @@ dependencies = [
  "libra-wallet",
  "libra-workspace-hack",
  "num-traits",
+ "ol-keys",
  "once_cell",
  "proptest",
  "reqwest",
@@ -2840,15 +2840,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "keygen"
-version = "0.1.0"
-dependencies = [
- "libra-types",
- "libra-wallet",
- "rpassword",
-]
-
-[[package]]
 name = "kube"
 version = "0.42.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3221,7 +3212,6 @@ dependencies = [
  "executor",
  "generate-key",
  "hex 0.4.2",
- "keygen",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
@@ -3239,6 +3229,7 @@ dependencies = [
  "libra-workspace-hack",
  "libradb",
  "ol-fixtures",
+ "ol-keys",
  "rand 0.7.3",
  "rustyline",
  "serde",
@@ -4198,7 +4189,6 @@ dependencies = [
  "glob",
  "gumdrop",
  "hex 0.4.2",
- "keygen",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
@@ -4216,6 +4206,7 @@ dependencies = [
  "move-core-types",
  "ol-cli",
  "ol-fixtures",
+ "ol-keys",
  "ol-types",
  "once_cell",
  "regex",
@@ -5028,7 +5019,6 @@ dependencies = [
  "gumdrop",
  "handlebars",
  "hex 0.4.2",
- "keygen",
  "libra-config",
  "libra-genesis-tool",
  "libra-global-constants",
@@ -5042,6 +5032,7 @@ dependencies = [
  "machine-ip",
  "nix 0.18.0",
  "num-format",
+ "ol-keys",
  "ol-types",
  "once_cell",
  "regex",
@@ -5070,6 +5061,15 @@ name = "ol-fixtures"
 version = "0.1.0"
 
 [[package]]
+name = "ol-keys"
+version = "0.1.0"
+dependencies = [
+ "libra-types",
+ "libra-wallet",
+ "rpassword",
+]
+
+[[package]]
 name = "ol-types"
 version = "0.1.0"
 dependencies = [
@@ -5079,7 +5079,6 @@ dependencies = [
  "dialoguer",
  "dirs 2.0.2",
  "hex 0.4.2",
- "keygen",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
@@ -5089,6 +5088,8 @@ dependencies = [
  "libra-types",
  "machine-ip",
  "move-core-types",
+ "ol-fixtures",
+ "ol-keys",
  "once_cell",
  "reqwest",
  "rustyline",
@@ -5108,7 +5109,6 @@ dependencies = [
  "criterion",
  "dirs 2.0.2",
  "gumdrop",
- "keygen",
  "libra-genesis-tool",
  "libra-global-constants",
  "libra-network-address",
@@ -5116,6 +5116,7 @@ dependencies = [
  "libra-wallet",
  "miner",
  "ol-cli",
+ "ol-keys",
  "ol-types",
  "once_cell",
  "reqwest",
@@ -7723,7 +7724,6 @@ dependencies = [
  "glob",
  "gumdrop",
  "hex 0.4.2",
- "keygen",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
@@ -7740,6 +7740,7 @@ dependencies = [
  "move-core-types",
  "ol-cli",
  "ol-fixtures",
+ "ol-keys",
  "ol-types",
  "once_cell",
  "regex",

@@ -7,7 +7,7 @@
 
 
 
-<pre><code><b>use</b> <a href="../../modules/doc/AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
+<pre><code><b>use</b> <a href="../../modules/doc/AutoPay.md#0x1_AutoPay2">0x1::AutoPay2</a>;
 <b>use</b> <a href="../../modules/doc/Signer.md#0x1_Signer">0x1::Signer</a>;
 </code></pre>
 
@@ -26,10 +26,10 @@
 <pre><code><b>fun</b> <a href="ol_autopay_disable.md#autopay_disable">autopay_disable</a>(sender: &signer) {
     <b>let</b> account = <a href="../../modules/doc/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
 
-    <b>if</b> (<a href="../../modules/doc/AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(account)) {
-        <a href="../../modules/doc/AutoPay.md#0x1_AutoPay_disable_autopay">AutoPay::disable_autopay</a>(sender);
+    <b>if</b> (<a href="../../modules/doc/AutoPay.md#0x1_AutoPay2_is_enabled">AutoPay2::is_enabled</a>(account)) {
+        <a href="../../modules/doc/AutoPay.md#0x1_AutoPay2_disable_autopay">AutoPay2::disable_autopay</a>(sender);
     };
-    <b>assert</b>(!<a href="../../modules/doc/AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(account), 010001);
+    <b>assert</b>(!<a href="../../modules/doc/AutoPay.md#0x1_AutoPay2_is_enabled">AutoPay2::is_enabled</a>(account), 010001);
 }
 </code></pre>
 
