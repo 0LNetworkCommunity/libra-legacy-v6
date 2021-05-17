@@ -50,7 +50,7 @@ pub async fn start_server(mut node: Node, run_checks: bool) {
       node_home.join("web-monitor/public/")
         // for using `npm run dev`
     } else {
-      PathBuf::from("/root/libra/ol/cli/web-monitor/public/")
+      PathBuf::from("/root/libra/ol/cli/web-monitor/")
     };
 
     //GET /
