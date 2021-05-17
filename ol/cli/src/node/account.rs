@@ -63,7 +63,6 @@ impl Node {
             Ok(t) => t.0,
             Err(e) => None
         }
-
         // .expect(&format!("could not get account at address {:?}", account))
     }
 
