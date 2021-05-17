@@ -798,7 +798,7 @@
         cost = owner_balance;
       };
 
-      <a href="LibraAccount.md#0x1_LibraAccount_vm_make_payment">LibraAccount::vm_make_payment</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+      <a href="LibraAccount.md#0x1_LibraAccount_vm_make_payment_no_limit">LibraAccount::vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
         miner_addr,
         oper_addr,
         cost,

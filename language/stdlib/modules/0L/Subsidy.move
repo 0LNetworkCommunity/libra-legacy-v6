@@ -427,7 +427,7 @@ address 0x1 {
             cost = owner_balance;
           };
 
-          LibraAccount::vm_make_payment<GAS>(
+          LibraAccount::vm_make_payment_no_limit<GAS>(
             miner_addr,
             oper_addr,
             cost,

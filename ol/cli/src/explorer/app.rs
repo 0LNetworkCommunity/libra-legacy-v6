@@ -3,7 +3,7 @@
 use crate::node::chain_info;
 use crate::node::node::Node;
 use super::TabsState;
-use libra_json_rpc_client::views::{TransactionDataView, TransactionView};
+use libra_json_rpc_client::views::TransactionView;
 use libra_types::{account_state::AccountState};
 
 /// struct for fullnode list
@@ -18,26 +18,26 @@ pub struct Server<'a> {
     pub status: &'a str,
 }
 
-pub struct Tx {
-    /// Sender
-    pub sender: String,
-    /// signature_scheme
-    pub signature_scheme: String,
-    /// signature
-    pub signature: String,
-    /// pubkey
-    pub public_key: String,
-    /// sequence
-    pub sequence_number: u64,
-    /// chain id
-    pub chain_id: u8,
-    /// max gas amount
-    pub max_gas_amount: u64,
-    /// gas unit price
-    pub gas_unit_price: u64,
-    /// Gas currency
-    pub gas_currency: String,
-}
+// pub struct Tx {
+//     /// Sender
+//     pub sender: String,
+//     /// signature_scheme
+//     pub signature_scheme: String,
+//     /// signature
+//     pub signature: String,
+//     /// pubkey
+//     pub public_key: String,
+//     /// sequence
+//     pub sequence_number: u64,
+//     /// chain id
+//     pub chain_id: u8,
+//     /// max gas amount
+//     pub max_gas_amount: u64,
+//     /// gas unit price
+//     pub gas_unit_price: u64,
+//     /// Gas currency
+//     pub gas_currency: String,
+// }
 
 /// Explorer Application
 pub struct App<'a> {

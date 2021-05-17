@@ -50,7 +50,7 @@ libra-genesis-tool = { path = "../../config/management/genesis", version = "0.1.
 libra-wallet = { path = "../../testsuite/cli/libra-wallet", version = "0.1.0" }
 libradb = { path = "../../storage/libradb", version = "0.1.0" }
 libra-temppath = { path = "../../common/temppath", version = "0.1.0" }
-keygen = { path = "../../ol/keygen/", version = "0.1.0" }
+ol-keys = { path = "../../ol/keys/", version = "0.1.0" }
 abscissa_tokio = "0.5"
 regex = "1"
 ol-types = { path = "../../ol/types"}

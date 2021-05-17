@@ -10,7 +10,7 @@ use crate::{
 use abscissa_core::{status_ok, status_warn};
 use anyhow::Error;
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
-use keygen::scheme::KeyScheme;
+use ol_keys::{wallet, scheme::KeyScheme};
 use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     test_utils::KeyPair,
@@ -339,9 +339,9 @@ pub fn get_tx_params_from_toml(
 ) -> Result<TxParams, Error> {
     // let url = config.profile.default_node.clone().unwrap();
     let (auth_key, address, wallet) = if let Some(wallet) = wallet_opt {
-        keygen::get_account_from_wallet(wallet)
+        wallet::get_account_from_wallet(wallet)
     } else {
-        keygen::account_from_prompt()
+        wallet::get_account_from_prompt()
     };
 
     let waypoint = wp.unwrap_or_else(|| {

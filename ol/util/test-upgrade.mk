@@ -1,11 +1,16 @@
 SHELL=/usr/bin/env bash
 DATA_PATH = ${HOME}/.0L
-SOURCE_PATH = ${HOME}/libra
-SWARM_TEMP = ${HOME}/swarm_temp
-LOG=${HOME}/test-upgrade.log
+SWARM_TEMP = ${DATA_PATH}/swarm_temp
+UPGRADE_TEMP = ${DATA_PATH}/test-upgrade
+SAFE_MAKE_FILE = ${UPGRADE_TEMP}/test-upgrade.mk
+LOG=${UPGRADE_TEMP}/test-upgrade.log
 
 NODE_ENV=test
 TEST=y
+
+ifndef SOURCE_PATH
+SOURCE_PATH = ${HOME}/libra
+endif
 
 # alice
 ifndef PERSONA
@@ -26,7 +31,7 @@ endif
 
 # USAGE: BRANCH_NAME=<latest branch> make -f test-upgrade.mk upgrade-test
 # NOTE: BRANCH_NAME shares semantics with https://github.com/marketplace/actions/get-branch-name
-test: get-prev stdlib start upgrade check stop
+test: prep get-prev stdlib start upgrade check progress stop
 
 start:
 	@echo Building Swarm
@@ -35,6 +40,12 @@ start:
 
 stop:
 	killall libra-swarm libra-node | true
+
+prep:
+# save makefile outside of repo, since we'll need it across branches
+#	mkdir ${HOME}/.0L/ | true
+	mkdir -p ${UPGRADE_TEMP} | true
+	cp ${SOURCE_PATH}/ol/util/test-upgrade.mk ${SAFE_MAKE_FILE}
 
 get-prev:
 	cd ${SOURCE_PATH} && git reset --hard && git fetch
@@ -51,7 +62,6 @@ stdlib:
 
 init:
 	cd ${SOURCE_PATH} && cargo run -p ol-cli -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init
-	mkdir ${HOME}/.0L/ | true
 	cp ${SWARM_TEMP}/0/0L.toml ${HOME}/.0L/0L.toml
 
 submit:
@@ -60,7 +70,11 @@ submit:
 query:
 	cd ${SOURCE_PATH} && cargo run -p ol-cli -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --blockheight | grep -Eo [0-9]+ | tail -n1
 
-END=$(shell date -ud "5 minute" +%s)
+txs:
+	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} demo
+
+
+END = $(shell date -ud "5 minute" +%s)
 NOW = $(shell date -u +%s)
 
 START_TEXT = "To run the Libra CLI client"
@@ -69,9 +83,9 @@ UPGRADE_TEXT = "stdlib upgrade: published"
 upgrade: 
 	@while [[ ${NOW} -le ${END} ]] ; do \
 			if grep -q ${START_TEXT} ${LOG} ; then \
-				make -f ${SOURCE_PATH}/ol/util/test-upgrade.mk get-test stdlib ; \
-				PERSONA=alice make -f ${SOURCE_PATH}/ol/util/test-upgrade.mk submit; \
-				PERSONA=bob make -f ${SOURCE_PATH}/ol/util/test-upgrade.mk submit; \
+				make -f ${SAFE_MAKE_FILE} get-test stdlib ; \
+				PERSONA=alice make -f ${SAFE_MAKE_FILE} submit; \
+				PERSONA=bob make -f ${SAFE_MAKE_FILE} submit; \
 				break; \
 			else \
 				echo . ; \
@@ -94,14 +108,19 @@ check:
 
 # check the blocks are progressing after upgrade
 progress:
-	while [[ ${NOW} -le ${END} ]] ; do \
-			if make -f ${SOURCE_PATH}/ol/util/test-upgrade.mk query > 0 ; then \
-				echo making progress ; \
-				break ; \
+	@i=1 ; \
+	while [[ $$i -le 10 ]] ; do \
+			echo ===== Transaction $$i =====; \
+			if make -f ${SAFE_MAKE_FILE} txs ; then \
+				echo Making progress ; \
+				i=$$(($$i + 1)); \
 			else \
-				echo . ; \
+				echo ERROR, txs not successful ; \
+				exit 1 ; \
 			fi ; \
-			echo "Sleeping for 5 secs" ; \
-			sleep 5 ; \
+			echo "Sleeping for 1 min" ; \
+			sleep 1m ; \
 	done
 
+tail:
+	tail -f ${SWARM_TEMP}/logs/0/log

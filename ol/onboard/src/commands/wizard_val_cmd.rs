@@ -4,28 +4,27 @@
 
 use super::files_cmd;
 use crate::prelude::app_config;
-use ol_types::block::Block;
-
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
-// use libra_genesis_tool::keyscheme::KeyScheme;
-use keygen::scheme::KeyScheme;
-
 use libra_genesis_tool::node_files;
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use libra_wallet::WalletLibrary;
 use ol_cli::{commands::init_cmd, config::AppCfg};
+use ol_keys::{scheme::KeyScheme, wallet};
+use ol_types::block::Block;
 use ol_types::{account::ValConfigs, autopay::PayInstruction, config::TxType};
 use reqwest::Url;
 use serde_json::Value;
 use std::{fs::File, io::Write, path::PathBuf};
 use txs::{commands::autopay_batch_cmd, submit_tx};
-
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ValWizardCmd {
     #[options(short = "h", help = "home path for all 0L files")]
     home_path: Option<PathBuf>,
-    #[options(short = "a", help = "where to output the account.json file, defaults to node home")]
+    #[options(
+        short = "a",
+        help = "where to output the account.json file, defaults to node home"
+    )]
     account_path: Option<PathBuf>,
     #[options(help = "id of the chain")]
     chain_id: Option<u8>,
@@ -53,17 +52,29 @@ impl Runnable for ValWizardCmd {
         status_info!("\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys, run the standalone keygen tool with 'ol keygen'.\n\nYour first 0L proof-of-work will be mined now. Expect this to take up to 15 minutes on modern CPUs.\n");
 
         // Get credentials from prompt
-        let (authkey, account, wallet) = keygen::account_from_prompt();
+        let (authkey, account, wallet) = wallet::get_account_from_prompt();
 
         // Initialize Miner
+        let mut upstream = match &self.upstream_peer {
+            Some(url) => url.to_owned(),
+            None => match &self.template_url {
+                Some(url) => url.to_owned(),
+                None => panic!("expected upstream peer url or template url"),
+            },
+        };
+        upstream.set_port(Some(8080)).unwrap(); // json rpc port
+
         // Need to assign app_config, otherwise abscissa would use the default.
         let mut app_config =
-            AppCfg::init_app_configs(authkey, account, &self.upstream_peer, &self.home_path);
+            AppCfg::init_app_configs(authkey, account, &Some(upstream), &self.home_path);
 
         let home_path = &app_config.workspace.node_home;
         status_ok!("\nMiner config written", "\n...........................\n");
 
         if let Some(url) = &self.template_url {
+            
+            let mut url = url.to_owned();
+            url.set_port(Some(3030)).unwrap(); //web port
             save_template(&url.join("account.json").unwrap(), home_path);
             let (epoch, wp) = get_epoch_info(&url.join("epoch.json").unwrap());
 
@@ -134,8 +145,8 @@ impl Runnable for ValWizardCmd {
             );
         }
 
-        // Write Manifest
-        write_manifest(
+        // Write account manifest
+        write_account_json(
             &self.account_path,
             wallet,
             Some(app_config),
@@ -151,7 +162,8 @@ impl Runnable for ValWizardCmd {
     }
 }
 
-fn get_autopay_batch(
+/// get autopay instructions from file
+pub fn get_autopay_batch(
     template: &Option<Url>,
     file_path: &Option<PathBuf>,
     home_path: &PathBuf,
@@ -161,15 +173,17 @@ fn get_autopay_batch(
     let file_name = if template.is_some() {
         // assumes the template was downloaded from URL
         "template.json"
-    } else if let Some(path) = file_path {
-        path.to_str().unwrap()
     } else {
         "autopay_batch.json"
     };
 
     let starting_epoch = cfg.chain_info.base_epoch.unwrap();
-    let instr_vec = PayInstruction::parse_autopay_instructions(&home_path.join(file_name)).unwrap();
-    let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone(), starting_epoch);
+    let instr_vec = PayInstruction::parse_autopay_instructions(
+        &file_path.clone().unwrap_or(home_path.join(file_name)),
+        Some(starting_epoch.clone()),
+    )
+    .unwrap();
+    let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone(), &starting_epoch);
     let url = cfg.what_url(false);
     let mut tx_params =
         submit_tx::get_tx_params_from_toml(cfg.to_owned(), TxType::Miner, Some(wallet), url, None)
@@ -209,7 +223,7 @@ fn get_epoch_info(url: &Url) -> (Option<u64>, Option<Waypoint>) {
 }
 
 /// Creates an account.json file for the validator
-fn write_manifest(
+pub fn write_account_json(
     json_path: &Option<PathBuf>,
     wallet: WalletLibrary,
     wizard_config: Option<AppCfg>,

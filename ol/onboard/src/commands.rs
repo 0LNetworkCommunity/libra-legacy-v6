@@ -5,11 +5,13 @@ mod wizard_fn_cmd;
 mod wizard_user_cmd;
 mod wizard_val_cmd;
 mod keygen_cmd;
+mod fix_cmd;
 
 use self::{
     version_cmd::VersionCmd, wizard_fn_cmd::FnWizardCmd, wizard_user_cmd::UserWizardCmd,
     wizard_val_cmd::ValWizardCmd,
     keygen_cmd::KeygenCmd,
+    fix_cmd::FixCmd,
 };
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use dirs;
@@ -45,6 +47,11 @@ pub enum WizCmd {
     /// The `keygen` subcommand
     #[options(help = "create new account and mnemonic")]
     Keygen(KeygenCmd),
+
+    /// The `fix` subcommand
+    #[options(help = "migrate account.json")]
+    Fix(FixCmd),
+    
 }
 
 /// This trait allows you to define how application configuration is loaded.
