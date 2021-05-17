@@ -80,7 +80,7 @@ impl AppCfg {
                 }
             }
             Err(_err) => {
-                println!("Waypoint: fallback to base_waypoint in 0L.toml");
+                // println!("Waypoint: fallback to base_waypoint in 0L.toml");
                 self.chain_info.base_waypoint
             }
         }
