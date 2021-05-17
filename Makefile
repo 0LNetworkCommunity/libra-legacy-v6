@@ -76,15 +76,6 @@ uninstall:
 		rm /usr/local/bin/$$b ; \
 	done
 
-
-download-release:
-	@for b in ${BINS} ; do \
-		echo $$b ; \
-		curl --create-dirs -o ${DATA_PATH}/release-${RELEASE}/$$b -L ${RELEASE_URL}/${RELEASE}/$$b ; \
-		chmod 744 ${DATA_PATH}/release-${RELEASE}/$$b ; \
-		cp ${DATA_PATH}/release-${RELEASE}/$$b  /usr/local/bin/$$b ; \
-	done
-
 bins:
 # Build and install genesis tool, libra-node, and miner
 	cargo run -p stdlib --release
