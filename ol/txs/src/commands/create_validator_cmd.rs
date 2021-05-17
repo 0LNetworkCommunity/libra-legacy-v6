@@ -51,12 +51,15 @@ pub fn create_validator_script(new_account: &ValConfigs) -> Script {
 
 pub fn account_from_url(url: &mut Url, path: &PathBuf) -> PathBuf {
     url.set_port(Some(3030)).unwrap();
-    let g_path = path.join("account.json");
-    let g_res = reqwest::blocking::get(&url.to_string());
-    let mut g_file = File::create(&g_path).expect("couldn't create file");
-    let g_content = g_res.unwrap().bytes().unwrap().to_vec(); //.text().unwrap();
-    g_file.write_all(g_content.as_slice()).unwrap();
-    g_path
+    let url_string = url.join("account.json").unwrap();
+    let res = reqwest::blocking::get(url_string);
+    
+    let host_string = url.host().unwrap().to_string();
+    let file_path = path.join(format!("{}.account.json", host_string));
+    let mut file = File::create(&file_path).expect("couldn't create file");
+    let content = res.unwrap().bytes().unwrap().to_vec(); //.text().unwrap();
+    file.write_all(content.as_slice()).unwrap();
+    file_path
 }
 
 impl Runnable for CreateValidatorCmd {
