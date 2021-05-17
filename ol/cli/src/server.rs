@@ -12,7 +12,13 @@ use crate::{cache::Vitals, check::runner, node::node::Node};
 #[tokio::main]
 /// starts the web server
 pub async fn start_server(mut node: Node, run_checks: bool) {
-    let cfg = &node.conf;
+    let cfg = node.conf.clone();
+
+    if run_checks {
+      thread::spawn(move || {
+          runner::run_checks(&mut node, false, true, false, false);
+      });
+    }
 
     let node_home = cfg.clone().workspace.node_home.clone();
     //GET check/ (json api for check data)
@@ -34,6 +40,7 @@ pub async fn start_server(mut node: Node, run_checks: bool) {
     }));
 
     let node_home = cfg.clone().workspace.node_home.clone();
+
     let epoch_route = warp::path("epoch.json").and(warp::get().map(move || {
         // let node_home = node_home_two.clone();
         let vitals = Vitals::read_json(&node_home).chain_view.unwrap();
@@ -56,11 +63,7 @@ pub async fn start_server(mut node: Node, run_checks: bool) {
     //GET /
     let landing = warp::fs::dir(web_files);
 
-    if run_checks {
-      thread::spawn(move || {
-          runner::run_checks(&mut node, false, true, false, false);
-      });
-    }
+
 
     warp::serve(landing.or(account_template).or(vitals_route).or(epoch_route))
         .run(([0, 0, 0, 0], 3030))
