@@ -277,7 +277,7 @@ Invalid payment type given
 
 
 
-<pre><code><b>const</b> <a href="AutoPay.md#0x1_AutoPay2_MAX_NUMBER_OF_INSTRUCTIONS">MAX_NUMBER_OF_INSTRUCTIONS</a>: u64 = 12;
+<pre><code><b>const</b> <a href="AutoPay.md#0x1_AutoPay2_MAX_NUMBER_OF_INSTRUCTIONS">MAX_NUMBER_OF_INSTRUCTIONS</a>: u64 = 30;
 </code></pre>
 
 

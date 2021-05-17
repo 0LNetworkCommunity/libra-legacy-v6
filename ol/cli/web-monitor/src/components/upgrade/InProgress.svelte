@@ -1,6 +1,5 @@
 <script lang="ts">
   import { chainInfo } from "../../store.ts";
-  import { onMount } from "svelte";
 
   let vote_counts = [];
   let validator_count = 0;
@@ -14,15 +13,8 @@
     expiration_height = data.chain_view.upgrade.upgrade.vote_window;
     vote_window_expired = expiration_height < current_height;
     current_height = data.chain_view.height;
-  });
 
-  onMount(async () => {
-    let val_url = "http://" + location.host + "/vals";
-    await fetch(val_url)
-      .then((r) => r.json())
-      .then((data) => {
-        validator_count = data.length;
-      });
+    validator_count = data.chain_view.validator_view.length;
   });
 </script>
 
@@ -57,7 +49,9 @@
           <p class="uk-text-uppercase uk-text-small">
             {vote_counts.length} votes / {validator_count} validators
           </p>
-          <p>{prop.validators}</p>
+          {#each prop.validators as val, i}
+            <p>{val}</p>
+          {/each}
         {/each}
       </div>
     </div>
