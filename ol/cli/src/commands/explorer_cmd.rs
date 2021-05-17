@@ -84,7 +84,6 @@ impl Runnable for ExplorerCMD {
             .expect("Failed to initial screen");
         //let stdout = MouseTerminal::from(stdout);
         let stdout = AlternateScreen::from(stdout);
-        stdout.lock();
         let backend = TermionBackend::new(stdout);
         let mut terminal = Terminal::new(backend).expect("Failed to initial screen");
 

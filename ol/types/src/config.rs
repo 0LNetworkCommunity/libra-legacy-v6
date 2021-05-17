@@ -69,13 +69,12 @@ impl AppCfg {
                     serde_json::from_reader(file).expect("could not parse JSON in key_store.json");
                 match ajson::get(&json.to_string(), "*/waypoint.value") {
                     Some(value) => {
-                        println!("Waypoint: using waypoint from key_store.json: {:?}", &value);
-
+                        //println!("Waypoint: using waypoint from key_store.json: {:?}", &value);
                         Some(value.to_string().parse().unwrap())
                     }
                     // If nothing is found in key_store.json fallback to base_waypoint in toml
                     _ => {
-                        println!("Waypoint: fallback to base_waypoint in 0L.toml");
+                        //println!("Waypoint: fallback to base_waypoint in 0L.toml");
                         self.chain_info.base_waypoint
                     }
                 }
