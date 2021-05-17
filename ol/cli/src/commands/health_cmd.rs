@@ -1,7 +1,7 @@
 //! `monitor-cmd` subcommand
 
+use crate::{check, entrypoint, node::client, node::node::Node, prelude::app_config};
 use abscissa_core::{Command, Options, Runnable};
-use crate::{check, node::client, entrypoint, node::node::Node, prelude::app_config};
 
 /// `monitor-cmd` subcommand
 ///
@@ -14,17 +14,17 @@ use crate::{check, node::client, entrypoint, node::node::Node, prelude::app_conf
 pub struct HealthCmd {
     /// Runs continuously
     #[options(no_short, help = "is live")]
-    live: bool
+    live: bool,
 }
 
 impl Runnable for HealthCmd {
     /// Start the application.
     fn run(&self) {
-      let args = entrypoint::get_args();
-      let mut cfg = app_config().clone();
-      let client = client::pick_client(args.swarm_path, &mut cfg).unwrap().0;
-      let mut node = Node::new(client, cfg);
+        let args = entrypoint::get_args();
+        let mut cfg = app_config().clone();
+        let client = client::pick_client(args.swarm_path, &mut cfg).unwrap().0;
+        let mut node = Node::new(client, cfg);
 
-      check::runner::run_checks(&mut node, false ,self.live, true);
+        check::runner::run_checks(&mut node, false, self.live, true, false);
     }
 }

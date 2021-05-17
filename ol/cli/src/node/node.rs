@@ -118,12 +118,9 @@ impl Node {
 
     /// Get waypoint from client
     pub fn waypoint(&mut self) -> Option<Waypoint> {
-        match self.client
-            .get_state_proof() {
+        match self.client.get_state_proof() {
             Ok(_t) => self.client.waypoint(),
-            Err(_) => {
-              self.conf.get_waypoint(None)
-            }
+            Err(_) => self.conf.get_waypoint(None),
         }
     }
 
@@ -234,8 +231,31 @@ impl Node {
         Node::check_process(MINER_PROCESS) | Node::check_systemd(MINER_PROCESS)
     }
 
+    /// Check if miner is running
+    pub fn pilot_running() -> bool {
+        let mut system = sysinfo::System::new_all();
+        system.refresh_all();
+
+        let all_p = system.get_process_by_name("ol");
+        // dbg!(&all_p);
+        let process = all_p
+            .into_iter()
+            .filter(|i| match i.status() {
+                ProcessStatus::Run => true,
+                ProcessStatus::Sleep => true,
+                _ => false,
+            })
+            .find(|i| !i.cmd().is_empty());
+
+        process.unwrap()
+            .cmd()
+            .into_iter()
+            .find(|s| s.contains(&"pilot".to_owned()))
+            .is_some()
+    }
+
     fn check_process(process_str: &str) -> bool {
-      // get processes from sysinfo
+        // get processes from sysinfo
         let mut system = sysinfo::System::new_all();
         system.refresh_all();
         for (_, process) in system.get_processes() {
@@ -256,7 +276,7 @@ impl Node {
                 .args(&["libra-node", "status"])
                 .output();
             match output {
-                Ok(out)=> {
+                Ok(out) => {
                     let text = str::from_utf8(&out.stdout.as_slice()).unwrap();
                     if text.contains("validator") {
                         return Ok(NodeMode::Validator);
@@ -264,8 +284,8 @@ impl Node {
                     if text.contains("fullnode") {
                         return Ok(NodeMode::Fullnode);
                     }
-                },
-                Err(e)=> return Err(Error::from(e))
+                }
+                Err(e) => return Err(Error::from(e)),
             }
 
             // check as parent process
@@ -309,7 +329,6 @@ impl Node {
                 if is_fn {
                     return Ok(NodeMode::Validator);
                 }
-
             }
         }
         Err(Error::msg("node is not running"))
@@ -317,11 +336,7 @@ impl Node {
 
     /// is web monitor serving on 3030
     pub fn is_web_monitor_serving() -> bool {
-        let out = Command::new("fuser")
-            .args(&["3030/tcp"])
-            .output()
-            .expect("could no check fuser");
-        out.status.code().unwrap() == 0
+        port_scanner::scan_port(3030)
     }
 
     fn check_systemd(process_name: &str) -> bool {
@@ -334,6 +349,5 @@ impl Node {
             Ok(o) => o.status.code().unwrap() == 0,
             Err(_) => false,
         }
-        //out.status.code().unwrap() == 0 // is_active --quiet will exit 0 if the service is running normally.
     }
 }

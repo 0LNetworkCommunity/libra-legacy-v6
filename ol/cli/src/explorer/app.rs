@@ -3,7 +3,7 @@
 use crate::node::chain_info;
 use crate::node::node::Node;
 use super::TabsState;
-use libra_json_rpc_client::views::TransactionDataView;
+use libra_json_rpc_client::views::TransactionView;
 use libra_types::{account_state::AccountState};
 
 /// struct for fullnode list
@@ -18,26 +18,26 @@ pub struct Server<'a> {
     pub status: &'a str,
 }
 
-pub struct Tx {
-    /// Sender
-    pub sender: String,
-    /// signature_scheme
-    pub signature_scheme: String,
-    /// signature
-    pub signature: String,
-    /// pubkey
-    pub public_key: String,
-    /// sequence
-    pub sequence_number: u64,
-    /// chain id
-    pub chain_id: u8,
-    /// max gas amount
-    pub max_gas_amount: u64,
-    /// gas unit price
-    pub gas_unit_price: u64,
-    /// Gas currency
-    pub gas_currency: String,
-}
+// pub struct Tx {
+//     /// Sender
+//     pub sender: String,
+//     /// signature_scheme
+//     pub signature_scheme: String,
+//     /// signature
+//     pub signature: String,
+//     /// pubkey
+//     pub public_key: String,
+//     /// sequence
+//     pub sequence_number: u64,
+//     /// chain id
+//     pub chain_id: u8,
+//     /// max gas amount
+//     pub max_gas_amount: u64,
+//     /// gas unit price
+//     pub gas_unit_price: u64,
+//     /// Gas currency
+//     pub gas_currency: String,
+// }
 
 /// Explorer Application
 pub struct App<'a> {
@@ -66,7 +66,7 @@ pub struct App<'a> {
     /// latest fetched tx version
     pub last_fetch_tx_version: u64,
     /// transaction list
-    pub txs: Vec<Tx>,
+    pub txs: Vec<TransactionView>,
 }
 
 /// implementation of app
@@ -135,41 +135,44 @@ impl<'a> App<'a> {
             .get_metadata();
         if meta.is_err() { return }
         let latest_version =meta.unwrap().version;
-        self.last_fetch_tx_version = if latest_version > 1000 {latest_version-1000} else {0};
+        //self.last_fetch_tx_version = if latest_version > 1000 {latest_version-1000} else {0};
 
         match self
           .node
             .client
-            .get_txn_by_range(self.last_fetch_tx_version, 100, true)
+            .get_txn_by_range(if latest_version > 1000 {latest_version-1000} else {0}, 100, true)
         {
             Ok(txs) => {
-                txs.iter().for_each(|tv| {
-                    match tv.clone().transaction {
-                        TransactionDataView::UserTransaction {sender,
-                                                             signature_scheme,
-                                                             signature,
-                                                             public_key,
-                                                             sequence_number,
-                                                             chain_id,
-                                                             max_gas_amount,
-                                                             gas_unit_price,
-                                                             gas_currency,
-                            ..} => {
-                            self.txs.push(Tx{
-                                sender,
-                                sequence_number,
-                                signature,
-                                signature_scheme,
-                                public_key,
-                                chain_id,
-                                max_gas_amount,
-                                gas_currency,
-                                gas_unit_price,
-                            });
-                        },
-                        _ => {}
-                    }
-                });
+                self.txs = txs;
+                self.txs.reverse();
+                // txs.iter().for_each(|tv| {
+                //     match tv.clone().transaction {
+                //         TransactionDataView::UserTransaction {sender,
+                //                                              signature_scheme,
+                //                                              signature,
+                //                                              public_key,
+                //                                              sequence_number,
+                //                                              chain_id,
+                //                                              max_gas_amount,
+                //                                              gas_unit_price,
+                //                                              gas_currency,
+                //             ..} => {
+                //             println!("TX:{:?}, {:?}", &sender, signature);
+                //             self.txs.push(Tx{
+                //                 sender,
+                //                 sequence_number,
+                //                 signature,
+                //                 signature_scheme,
+                //                 public_key,
+                //                 chain_id,
+                //                 max_gas_amount,
+                //                 gas_currency,
+                //                 gas_unit_price,
+                //             });
+                //         },
+                //         _ => {}
+                //     }
+                // });
             }
             Err(e) => { println!("Error occurs: {}", e)}
         }
@@ -210,6 +213,9 @@ impl<'a> App<'a> {
             'q' => {
                 self.should_quit = true;
             }
+            'c' => {
+                self.should_quit = true;
+            }
             't' => {
                 self.show_chart = !self.show_chart;
             }
@@ -227,7 +233,7 @@ impl<'a> App<'a> {
 
         match self.tabs.index {
             0 => self.fetch(),
-            2 => self.fetch_txs(),
+            3 => self.fetch_txs(),
             _ => {}
         }
     }

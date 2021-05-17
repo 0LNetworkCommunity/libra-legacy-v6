@@ -1,5 +1,5 @@
 [package]
-name = "ol-cli"
+name = "ol"
 authors = []
 version = "0.1.0"
 edition = "2018"
@@ -57,6 +57,7 @@ ol-types = { path = "../../ol/types"}
 storage-interface = { path = "../../storage/storage-interface", version = "0.1.0" }
 fs_extra = "1"
 gag = "0.1.10"
+port_scanner = "0.1.5"
 
 # Parity with Storage create
 [dependencies.rocksdb]

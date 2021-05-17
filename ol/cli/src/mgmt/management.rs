@@ -37,7 +37,7 @@ pub fn create_log_file(file_name: &str) -> File {
     let logs_dir = conf.workspace.node_home.join("logs/");
     fs::create_dir_all(&logs_dir).expect("could not create logs dir");
     let logs_file = logs_dir.join([file_name, ".log"].join(""));
-    println!("Logging in file: {:?}", logs_file);
+    //println!("Logging in file: {:?}", logs_file);
 
     File::create(logs_file).expect("could not create log file")
 }
@@ -47,8 +47,8 @@ fn spawn_process(
     binary: &str,
     args: &[&str],
     log_file: &str,
-    expect_msg: &str,
-) -> std::process::Child {
+    _expect_msg: &str,
+) -> std::io::Result<std::process::Child> {
     // Create log file, and pipe stdout/err
     let outputs = create_log_file(log_file);
     let errors = outputs.try_clone().unwrap();
@@ -58,7 +58,6 @@ fn spawn_process(
         .stdout(Stdio::from(outputs))
         .stderr(Stdio::from(errors))
         .spawn()
-        .expect(expect_msg)
 }
 
 impl Node {
@@ -68,7 +67,9 @@ impl Node {
         // if is running do nothing
         // TODO: Get another check of node running
         if node::Node::node_running() {
-            println!("{} is already running. Exiting.", NODE);
+            if !_verbose {
+                println!("{} is already running. Exiting.", NODE);
+            }
             return Ok(());
         }
 
@@ -82,7 +83,9 @@ impl Node {
 
         let child = if *IS_PROD {
             let args = vec!["--config", &config_file_name];
-            println!("Starting '{}' with args: {:?}", NODE, args.join(" "));
+            if _verbose {
+                println!("Starting '{}' with args: {:?}", NODE, args.join(" "));
+            }
             spawn_process(
                 NODE,
                 args.as_slice(),
@@ -91,11 +94,12 @@ impl Node {
             )
         } else {
             let project_root = self.conf.workspace.source_path.clone().unwrap();
-            dbg!(&project_root);
             let debug_bin = project_root.join(format!("target/debug/{}", NODE));
             let bin_str = debug_bin.to_str().unwrap();
             let args = vec!["--config", &config_file_name];
-            println!("Starting 'libra-node' with args: {:?}", args.join(" "));
+            if _verbose {
+                println!("Starting 'libra-node' with args: {:?}", args.join(" "));
+            }
             spawn_process(
                 bin_str,
                 args.as_slice(),
@@ -104,9 +108,13 @@ impl Node {
             )
         };
 
-        let pid = &child.id();
-        self.save_pid(NODE, *pid);
-        println!("Started new with PID: {}", pid);
+        if let Ok(ch) = child {
+            let pid = &ch.id();
+            self.save_pid(NODE, *pid);
+            if _verbose{
+                println!("Started with PID {} in the background", pid);
+            }
+        }
         Ok(())
     }
 
@@ -124,7 +132,9 @@ impl Node {
             // start as operator, so that mnemonic is not needed.
             let args = vec!["-o", "start"];
             // if use_backup { args.push("--backup-url"); };
-            println!("Starting '{}' with args: {:?}", MINER, args.join(" "));
+            if _verbose {
+                println!("Starting '{}' with args: {:?}", MINER, args.join(" "));
+            }
             spawn_process(
                 MINER,
                 args.as_slice(),
@@ -137,7 +147,9 @@ impl Node {
             let bin_str = debug_bin.to_str().unwrap();
             // start as operator, so that mnemonic is not needed.
             let args = vec!["-o", "start"];
-            println!("Starting 'miner' with args: {:?}", args.join(" "));
+            if _verbose {
+                println!("Starting 'miner' with args: {:?}", args.join(" "));
+            }
             spawn_process(
                 bin_str,
                 args.as_slice(),
@@ -146,23 +158,32 @@ impl Node {
             )
         };
 
-        let pid = &child.id();
-        self.save_pid(MINER, *pid);
-        println!("Started with PID {} in the background", pid);
+        if let Ok(ch) = child {
+            let pid = &ch.id();
+            self.save_pid(MINER, *pid);
+            if _verbose{
+                println!("Started with PID {} in the background", pid);
+            }
+        }
+
     }
 
     /// Start Monitor
-    pub fn start_monitor(&mut self, _verbose: bool) {
+    pub fn start_web(&mut self, _verbose: bool) {
         // if verbose { drop(print_gag); }
         // Stop any processes we may have started and detached from.
         // if is running do nothing
         if node::Node::is_web_monitor_serving() {
-            println!("web monitor is already running. Exiting.");
+            if _verbose {
+                println!("web monitor is already running. Exiting.");
+            }
             return;
         }
 
         let child = if *IS_PROD {
-            println!("Starting `ol serve`");
+            if _verbose{
+                println!("Starting `ol serve`");
+            }
             spawn_process(
                 "ol",
                 &["serve"],
@@ -171,11 +192,13 @@ impl Node {
             )
         } else {
             let project_root = self.conf.workspace.source_path.clone().unwrap();
-            let debug_bin = project_root.join("target/debug/ol_cli");
+            let debug_bin = project_root.join("target/debug/ol");
             let bin_str = debug_bin.to_str().unwrap();
 
             let args = vec!["serve"];
-            println!("Starting '{}' with args: {:?}", bin_str, args.join(" "));
+            if _verbose{
+                println!("Starting '{}' with args: {:?}", bin_str, args.join(" "));
+            }
             spawn_process(
                 bin_str,
                 args.as_slice(),
@@ -184,41 +207,49 @@ impl Node {
             )
         };
 
-        let pid = &child.id();
-        self.save_pid("monitor", *pid);
+        if let Ok(ch) = child {
+            let pid = &ch.id();
+            self.save_pid("monitor", *pid);
+            if _verbose{
+                println!("Started with PID {} in the background", pid);
+            }
+        }
+    }
+
+    /// Start pilot, for explorer
+    pub fn start_pilot(&mut self, verbose: bool) {
+        if Node::pilot_running() { return }
+
+        let mut args = vec!["pilot"];
+        if verbose {
+          args.push("-s");
+        }
+        let child = if *IS_PROD {
+            println!("Starting `ol pilot`");
+            spawn_process(
+                "ol",
+                args.as_slice(),
+                "pilot",
+                "failed to run 'ol', is it installed?",
+            )
+        } else {
+            let project_root = self.conf.workspace.source_path.clone().unwrap();
+            let debug_bin = project_root.join("target/debug/ol");
+            let bin_str = debug_bin.to_str().unwrap();
+            println!("Starting '{}' with args: {:?}", bin_str, args.join(" "));
+            spawn_process(
+                bin_str,
+                args.as_slice(),
+                "pilot",
+                &format!("failed to run: {}", bin_str),
+            )
+        };
+
+        let pid = &child.unwrap().id();
+        self.save_pid("pilot", *pid);
         println!("Started with PID {} in the background", pid);
     }
 
-    // /// Start pilot, for explorer
-    // pub fn start_pilot(&mut self) {
-
-    //     let child = if *IS_PROD {
-    //         println!("Starting `ol pilot`");
-    //         spawn_process(
-    //             "ol",
-    //             &["pilot"],
-    //             "pilot",
-    //             "failed to run 'ol', is it installed?",
-    //         )
-    //     } else {
-    //         let project_root = self.conf.workspace.source_path.clone().unwrap();
-    //         let debug_bin = project_root.join("target/debug/ol_cli");
-    //         let bin_str = debug_bin.to_str().unwrap();
-
-    //         let args = vec!["pilot"];
-    //         println!("Starting '{}' with args: {:?}", bin_str, args.join(" "));
-    //         spawn_process(
-    //             bin_str,
-    //             args.as_slice(),
-    //             "pilot",
-    //             &format!("failed to run: {}", bin_str),
-    //         )
-    //     };
-
-    //     let pid = &child.id();
-    //     self.save_pid("pilot", *pid);
-    //     println!("Started with PID {} in the background", pid);
-    // }
     /// Save PID
     pub fn save_pid(&mut self, proc_name: &str, pid: u32) {
         // Handle empty case

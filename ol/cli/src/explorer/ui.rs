@@ -483,18 +483,18 @@ where
         .iter()
         .map(|c| {
             let cells = vec![
-                Cell::from(Span::raw(format!("{}", c.chain_id))),
-                Cell::from(Span::raw(format!("{:?}", c.sender))),
-                Cell::from(Span::raw(format!("{:?}", c.sequence_number))),
-                Cell::from(Span::raw(format!("{:?}:{:?}",c.signature_scheme ,c.signature))),
-                Cell::from(Span::raw(format!("{:?}/{:?}", c.max_gas_amount, c.gas_currency))),
+                Cell::from(Span::raw(format!("{}", c.version))),
+                Cell::from(Span::raw(format!("{}", c.hash))),
+                Cell::from(Span::raw(format!("{:?}", c.gas_used))),
+                Cell::from(Span::raw(format!("{:?}", c.vm_status))),
+                Cell::from(Span::raw(format!("{:?}", c.transaction))),
             ];
             Row::new(cells)
         })
         .collect();
     let table = Table::new(items)
         .header(
-            Row::new(vec!["Chain ID", "Sender", "Sequence", "Status", "Signature", "Gas"])
+            Row::new(vec!["Version", "Hash", "Gas", "Status", "Type", "Body"])
                 .style(Style::default().fg(Color::Green)),
         )
         .block(

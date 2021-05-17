@@ -4204,7 +4204,7 @@ dependencies = [
  "libradb",
  "machine-ip",
  "move-core-types",
- "ol-cli",
+ "ol",
  "ol-fixtures",
  "ol-keys",
  "ol-types",
@@ -4997,7 +4997,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ab52be62400ca80aa00285d25253d7f7c437b7375c4de678f5405d3afe82ca5"
 
 [[package]]
-name = "ol-cli"
+name = "ol"
 version = "0.1.0"
 dependencies = [
  "abscissa_core",
@@ -5030,11 +5030,12 @@ dependencies = [
  "libra-wallet",
  "libradb",
  "machine-ip",
- "nix 0.18.0",
+ "nix 0.17.0",
  "num-format",
  "ol-keys",
  "ol-types",
  "once_cell",
+ "port_scanner",
  "regex",
  "reqwest",
  "resource-viewer",
@@ -5115,7 +5116,7 @@ dependencies = [
  "libra-types",
  "libra-wallet",
  "miner",
- "ol-cli",
+ "ol",
  "ol-keys",
  "ol-types",
  "once_cell",
@@ -5412,6 +5413,12 @@ dependencies = [
  "cfg-if 0.1.10",
  "universal-hash",
 ]
+
+[[package]]
+name = "port_scanner"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "325a6d2ac5dee293c3b2612d4993b98aec1dff096b0a2dae70ed7d95784a05da"
 
 [[package]]
 name = "ppv-lite86"
@@ -7738,7 +7745,7 @@ dependencies = [
  "libra-wallet",
  "libradb",
  "move-core-types",
- "ol-cli",
+ "ol",
  "ol-fixtures",
  "ol-keys",
  "ol-types",
