@@ -9,4 +9,6 @@ for b in $DOWNLOAD_URLS ; do \
   chmod 755 /usr/local/bin/$(echo $b | rev | cut -d"/" -f1 | rev) ;\
 done
 
-  mv /usr/local/bin/ol /usr/local/bin/ol
+mkdir ~/.0L/
+mv /usr/local/bin/web-monitor.zip ~/.0L/web-monitor.zip
+unzip ~/.0L/web-monitor.zip
