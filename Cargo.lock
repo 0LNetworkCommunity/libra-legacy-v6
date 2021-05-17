@@ -4204,7 +4204,7 @@ dependencies = [
  "libradb",
  "machine-ip",
  "move-core-types",
- "ol-cli",
+ "ol",
  "ol-fixtures",
  "ol-keys",
  "ol-types",
@@ -4997,7 +4997,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ab52be62400ca80aa00285d25253d7f7c437b7375c4de678f5405d3afe82ca5"
 
 [[package]]
-name = "ol-cli"
+name = "ol"
 version = "0.1.0"
 dependencies = [
  "abscissa_core",
@@ -5030,7 +5030,7 @@ dependencies = [
  "libra-wallet",
  "libradb",
  "machine-ip",
- "nix 0.18.0",
+ "nix 0.17.0",
  "num-format",
  "ol-keys",
  "ol-types",
@@ -5116,7 +5116,7 @@ dependencies = [
  "libra-types",
  "libra-wallet",
  "miner",
- "ol-cli",
+ "ol",
  "ol-keys",
  "ol-types",
  "once_cell",
@@ -7745,7 +7745,7 @@ dependencies = [
  "libra-wallet",
  "libradb",
  "move-core-types",
- "ol-cli",
+ "ol",
  "ol-fixtures",
  "ol-keys",
  "ol-types",

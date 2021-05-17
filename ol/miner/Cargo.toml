@@ -49,7 +49,7 @@ ol-keys = { path = "../keys/", version = "0.1.0" }
 url = { version = "^2.1", features = ["serde"]}
 libra-secure-storage = { path = "../../secure/storage", version = "0.1.0" }
 machine-ip = "0.2.1"
-ol-cli = { path = "../cli"}
+ol = { path = "../cli"}
 txs = { path = "../txs"}
 ol-types = { path = "../../ol/types"}
 

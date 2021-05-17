@@ -1,6 +1,5 @@
 //! `monitor-cmd` subcommand
 
-use crate::check::runner;
 use crate::config::AppCfg;
 use crate::explorer::{ui, App};
 use crate::{
@@ -11,7 +10,7 @@ use crate::{
 };
 use abscissa_core::{Command, Options, Runnable};
 use std::time::Duration;
-use std::{io, thread};
+use std::io;
 use termion::{event::Key, raw::IntoRawMode, screen::AlternateScreen};
 use tui::backend::TermionBackend;
 use tui::Terminal;
@@ -19,9 +18,9 @@ use tui::Terminal;
 /// `explorer-cmd` subcommand
 #[derive(Command, Debug, Options)]
 pub struct ExplorerCMD {
-      ///
+    ///
     #[options(help = "Start pilot detached")]
-    skip_pilot: bool,
+    pilot: bool,
     ///
     #[options(help = "Don't refresh checks")]
     skip_checks: bool,
@@ -37,19 +36,7 @@ impl Runnable for ExplorerCMD {
     /// Start the application.
     fn run(&self) {
 
-        if *&self.skip_pilot {
-            thread::spawn(move || {
-                let mut conf = match entrypoint::get_args().swarm_path {
-                    Some(sp) => AppCfg::init_app_configs_swarm(sp.clone(), sp.join("0")),
-                    None => app_config().to_owned(),
-                };
-                let client = client::pick_client(entrypoint::get_args().swarm_path, &mut conf)
-                    .unwrap()
-                    .0;
-                let mut node = Node::new(client, conf);
-                runner::run_checks(&mut node, false, true, false);
-            });
-        } else {
+        if *&self.pilot {
           let mut conf = match entrypoint::get_args().swarm_path {
               Some(sp) => AppCfg::init_app_configs_swarm(sp.clone(), sp.join("0")),
               None => app_config().to_owned(),
@@ -58,7 +45,7 @@ impl Runnable for ExplorerCMD {
               .unwrap()
               .0;
           let mut node = Node::new(client, conf);
-          node.start_pilot();
+          node.start_pilot(false);
         }
 
         let args = entrypoint::get_args();

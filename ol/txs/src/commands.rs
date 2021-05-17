@@ -21,7 +21,7 @@ mod valset_cmd;
 mod autopay_cmd;
 
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
-use ol_cli::commands::CONFIG_FILE;
+use ol::commands::CONFIG_FILE;
 use crate::config::AppCfg;
 use crate::entrypoint;
 use self::{

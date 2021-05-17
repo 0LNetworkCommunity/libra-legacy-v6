@@ -94,7 +94,6 @@ impl Node {
             )
         } else {
             let project_root = self.conf.workspace.source_path.clone().unwrap();
-            dbg!(&project_root);
             let debug_bin = project_root.join(format!("target/debug/{}", NODE));
             let bin_str = debug_bin.to_str().unwrap();
             let args = vec!["--config", &config_file_name];
@@ -186,14 +185,14 @@ impl Node {
                 println!("Starting `ol serve`");
             }
             spawn_process(
-                "ol_cli",
+                "ol",
                 &["serve"],
                 "monitor",
                 "failed to run 'ol', is it installed?",
             )
         } else {
             let project_root = self.conf.workspace.source_path.clone().unwrap();
-            let debug_bin = project_root.join("target/debug/ol_cli");
+            let debug_bin = project_root.join("target/debug/ol");
             let bin_str = debug_bin.to_str().unwrap();
 
             let args = vec!["serve"];
@@ -218,22 +217,25 @@ impl Node {
     }
 
     /// Start pilot, for explorer
-    pub fn start_pilot(&mut self) {
+    pub fn start_pilot(&mut self, verbose: bool) {
+        if Node::pilot_running() { return }
 
+        let mut args = vec!["pilot"];
+        if verbose {
+          args.push("-s");
+        }
         let child = if *IS_PROD {
             println!("Starting `ol pilot`");
             spawn_process(
                 "ol",
-                &["pilot"],
+                args.as_slice(),
                 "pilot",
                 "failed to run 'ol', is it installed?",
             )
         } else {
             let project_root = self.conf.workspace.source_path.clone().unwrap();
-            let debug_bin = project_root.join("target/debug/ol_cli");
+            let debug_bin = project_root.join("target/debug/ol");
             let bin_str = debug_bin.to_str().unwrap();
-
-            let args = vec!["pilot"];
             println!("Starting '{}' with args: {:?}", bin_str, args.join(" "));
             spawn_process(
                 bin_str,

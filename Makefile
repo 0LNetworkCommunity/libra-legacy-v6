@@ -43,7 +43,7 @@ ifndef RELEASE
 RELEASE=$(shell curl -sL https://api.github.com/repos/OLSF/libra/releases/latest | jq -r '.assets[].browser_download_url')
 endif
 
-BINS= db-backup db-backup-verify db-restore libra-node miner ol_cli txs stdlib
+BINS= db-backup db-backup-verify db-restore libra-node miner ol txs stdlib
 
 
 
@@ -90,7 +90,7 @@ bins:
 	cargo run -p stdlib --release
 
 # NOTE: stdlib is built for cli bindings
-	cargo build -p libra-node -p miner -p backup-cli -p ol-cli -p txs -p onboard --release
+	cargo build -p libra-node -p miner -p backup-cli -p ol -p txs -p onboard --release
 
 install:
 	sudo cp -f ${SOURCE}/target/release/miner /usr/local/bin/miner
@@ -98,7 +98,7 @@ install:
 	sudo cp -f ${SOURCE}/target/release/db-restore /usr/local/bin/db-restore
 	sudo cp -f ${SOURCE}/target/release/db-backup /usr/local/bin/db-backup
 	sudo cp -f ${SOURCE}/target/release/db-backup-verify /usr/local/bin/db-backup-verify
-	sudo cp -f ${SOURCE}/target/release/ol_cli /usr/local/bin/ol
+	sudo cp -f ${SOURCE}/target/release/ol /usr/local/bin/ol
 	sudo cp -f ${SOURCE}/target/release/txs /usr/local/bin/txs
 	sudo cp -f ${SOURCE}/target/release/onboard /usr/local/bin/onboard
 
@@ -377,7 +377,7 @@ dev-join: clear fix fix-genesis dev-wizard
 # mock restore backups from dev-epoch-archive
 	rm -rf ~/.0L/restore
 # restore from MOCK archive OLSF/dev-epoch-archive
-	cargo r -p ol-cli -- restore
+	cargo r -p ol -- restore
 # start a node with fullnode.node.yaml configs
 	make start-full
 

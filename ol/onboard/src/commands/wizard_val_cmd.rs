@@ -8,7 +8,7 @@ use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_genesis_tool::node_files;
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use libra_wallet::WalletLibrary;
-use ol_cli::{commands::init_cmd, config::AppCfg};
+use ol::{commands::init_cmd, config::AppCfg};
 use ol_keys::{scheme::KeyScheme, wallet};
 use ol_types::block::Block;
 use ol_types::{account::ValConfigs, autopay::PayInstruction, config::TxType};
@@ -149,7 +149,7 @@ impl Runnable for ValWizardCmd {
         write_account_json(
             &self.account_path,
             wallet,
-            Some(app_config),
+            Some(app_config.clone()),
             autopay_batch,
             autopay_signed,
         );
@@ -158,7 +158,7 @@ impl Runnable for ValWizardCmd {
             "\n...........................\n"
         );
 
-        status_info!("Your validator node and miner app are now configured.", "The account.json can be used to submit an account creation transaction on-chain. Someone with an existing account (with GAS) can do this for you.");
+        status_info!("Your validator node and miner app are now configured.", &format!("\nStart your node with `ol start`, and then ask someone with GAS to do this transaction `txs create-validator -u http://{}`", &app_config.profile.ip));
     }
 }
 

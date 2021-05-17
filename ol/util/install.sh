@@ -9,4 +9,4 @@ for b in $DOWNLOAD_URLS ; do \
   chmod 755 /usr/local/bin/$(echo $b | rev | cut -d"/" -f1 | rev) ;\
 done
 
-  mv /usr/local/bin/ol_cli /usr/local/bin/ol
+  mv /usr/local/bin/ol /usr/local/bin/ol

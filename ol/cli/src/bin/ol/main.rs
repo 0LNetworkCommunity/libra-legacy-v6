@@ -3,7 +3,7 @@
 #![deny(warnings, missing_docs, trivial_casts, unused_qualifications)]
 #![forbid(unsafe_code)]
 
-use ol_cli::application::APPLICATION;
+use ol::application::APPLICATION;
 
 /// Boot OlCli
 fn main() {

@@ -58,7 +58,7 @@ pub async fn start_server(mut node: Node, run_checks: bool) {
 
     if run_checks {
       thread::spawn(move || {
-          runner::run_checks(&mut node, false, true, false);
+          runner::run_checks(&mut node, false, true, false, false);
       });
     }
 

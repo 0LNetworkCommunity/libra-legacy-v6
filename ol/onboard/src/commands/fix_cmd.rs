@@ -9,7 +9,7 @@ use super::wizard_val_cmd::get_autopay_batch;
 use abscissa_core::{Command, Options, Runnable, status_info, time::{DateTime, Utc}};
 // use libra_genesis_tool::keyscheme::KeyScheme;
 use ol_keys::wallet;
-use ol_cli::config::AppCfg;
+use ol::config::AppCfg;
 use ol_types::autopay::{InstructionType, PayInstruction, write_batch_file};
 
 /// `val-wizard` subcommand

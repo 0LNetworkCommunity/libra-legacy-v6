@@ -81,7 +81,7 @@ pub enum OlCliCmd {
     #[options(help = "run simple queries through subcommands, prints the value to stdout")]
     Query(QueryCmd), 
 
-    /// The `check` subcommand
+    /// The `health` subcommand
     #[options(help = "run healthcheck on the account, node, and displays some network information")]
     Health(HealthCmd),
 
@@ -89,7 +89,7 @@ pub enum OlCliCmd {
     #[options(help = "watch a block explorer monitor in terminal")]
     Explorer(ExplorerCMD),
 
-    /// The `explorer` subcommand
+    /// The `pilot` subcommand, for explorer
     #[options(help = "run pilot command, which triggers needed services")]
     Pilot(PilotCmd),
 
