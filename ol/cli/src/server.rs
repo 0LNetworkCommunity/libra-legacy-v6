@@ -1,7 +1,7 @@
 //! `server`  web monitor http server
 use futures::StreamExt;
 use serde_json::json;
-use std::{convert::Infallible, fs, path::PathBuf, thread, time::Duration};
+use std::{convert::Infallible, fs, thread, time::Duration, env::current_dir};
 use tokio::time::interval;
 use warp::{sse::ServerSentEvent, Filter};
 use ol_types::config::IS_PROD;
@@ -49,11 +49,12 @@ pub async fn start_server(node: Node) {
 
 
     let node_home = cfg.clone().workspace.node_home.clone();
+    let relative_path = "web-monitor/public/";
     let web_files = if !*IS_PROD {
         // for using `npm run dev`
-      PathBuf::from("/root/libra/ol/cli/web-monitor/public/")
+        current_dir().unwrap().join(&relative_path)
     } else {
-      node_home.join("web-monitor/public/")
+        node_home.join(&relative_path)
     };
 
     //GET /
