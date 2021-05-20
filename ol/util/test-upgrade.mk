@@ -4,6 +4,7 @@ SWARM_TEMP = ${DATA_PATH}/swarm_temp
 UPGRADE_TEMP = ${DATA_PATH}/test-upgrade
 SAFE_MAKE_FILE = ${UPGRADE_TEMP}/test-upgrade.mk
 LOG=${UPGRADE_TEMP}/test-upgrade.log
+UNAME := $(shell uname)
 
 NODE_ENV=test
 TEST=y
@@ -65,7 +66,7 @@ init:
 	cp ${SWARM_TEMP}/0/0L.toml ${HOME}/.0L/0L.toml
 
 submit:
-	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-upgrade
+	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-upgrade -f ${SOURCE_PATH}/language/stdlib/staged/stdlib.mv
 
 query:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --blockheight | grep -Eo [0-9]+ | tail -n1
@@ -74,8 +75,13 @@ txs:
 	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} demo
 
 
-END = $(shell date -ud "5 minute" +%s)
+ifeq ($(UNAME), Darwin)
+END = $(shell date -v +5M +%s)
 NOW = $(shell date -u +%s)
+else 
+END = $(shell date -ud "5 minutes" +%s)
+NOW = $(shell date -u +%s)
+endif
 
 START_TEXT = "To run the Libra CLI client"
 UPGRADE_TEXT = "stdlib upgrade: published"
