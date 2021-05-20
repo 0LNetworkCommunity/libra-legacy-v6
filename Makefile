@@ -397,3 +397,10 @@ dev-backup-archive:
 dev-commit:
 	git commit -a -m "save genesis fixtures to ${V}" | true
 	git push | true
+
+
+TAG=$(shell git tag -l "previous")
+clean-tags:
+	git push origin --delete ${TAG}
+	git tag -d ${TAG}
+	
