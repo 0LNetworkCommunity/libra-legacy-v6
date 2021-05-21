@@ -13,9 +13,7 @@
     let data = JSON.parse(info_str);
     vote_counts = data.chain_view.upgrade.upgrade.vote_counts;
     voters = 0;
-    console.log(vote_counts);
     vote_counts.forEach(e => {
-      console.log(e.validators.length);
       voters = voters + e.validators.length;
     });
     expiration_height = data.chain_view.upgrade.upgrade.vote_window;
