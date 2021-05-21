@@ -26,8 +26,11 @@ impl Node {
     let wp = self.waypoint().expect("Can not update Waypoint");
     let mut remote_client = default_remote_client(&self.conf, wp).unwrap().0;
     //println!("remote: {:?}", &self.conf);
-    let delay = compare_client_version(&mut self.client, &mut remote_client).unwrap();
-    (within_thresh(delay), delay)
+    let compare = compare_client_version(&mut self.client, &mut remote_client);
+    match compare {
+        Ok(delay) => (within_thresh(delay), delay),
+        Err(_) => (false, 666)
+    }
   }
 
   /// Compare the nodes from toml config.
