@@ -51,7 +51,8 @@ impl Node {
 fn print_it(node: &Node) {
     println!(
 "
-========= HEALTH {now} =========
+HEALTH\n...........................\n
+{now}
 Configs exist: {configs}
 DB restored: {restored}
 Web monitor: {web_running}

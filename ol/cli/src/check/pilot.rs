@@ -51,7 +51,9 @@ pub fn maybe_restore_db(mut node: &mut Node, verbose: bool) -> &mut Node {
 
 /// run once
 pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
-  if verbose { println!("========= PILOT =========")}
+    if verbose {
+        println!("PILOT\n...........................\n");
+    }
     // Start the webserver before anything else
     if node.vitals.items.web_running {
         node.vitals.host_state.monitor_state = MonitorState::Serving;
@@ -98,7 +100,10 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
         let start_mode = if is_in_val_set { Validator } else { Fullnode };
 
         if verbose {
-            println!("Node: WARN: node is NOT running, starting in {:?} mode", &start_mode);
+            println!(
+                "Node: WARN: node is NOT running, starting in {:?} mode",
+                &start_mode
+            );
         }
 
         node.vitals.host_state.node_state = match node.start_node(start_mode.clone(), verbose) {
@@ -125,34 +130,38 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
         node.vitals.host_state.miner_state = MinerState::Stopped;
         if verbose {
             println!("Miner: WARN: is NOT running");
-            println!("Miner: will try to start miner");
         }
-        if !node.vitals.items.node_running  {
+        if !node.vitals.items.node_running {
             if verbose {
-                println!("Miner: WARN: Node not running. Cannot start miner if node is not running");
-            }
-        }
-        // did the node finish sync?
-        if node.vitals.items.is_synced {
-            if verbose {
-                println!("Sync: node is synced");
-            }
-
-            // does the account exist on chain? otherwise sending mining txs will fail
-            if node.vitals.items.account_created {
-                if verbose {
-                    println!("Account: owner account found on-chain. Starting miner");
-                }
-                node.start_miner(verbose);
-                node.vitals.host_state.miner_state = MinerState::Mining;
-            } else {
-                if verbose {
-                    println!("ERROR trying to start miner. Owner account does NOT exist on chain. Was the account creation transaction submitted?")
-                }
+                println!(
+                    ".. Node: WARN: Node not running. Cannot start miner if node is not running"
+                );
             }
         } else {
-            if verbose {
-                println!("Sync: node is NOT Synced");
+            // did the node finish sync?
+            if node.vitals.items.is_synced {
+                if verbose {
+                    println!(".. Sync: node is synced");
+                }
+
+                // does the account exist on chain? otherwise sending mining txs will fail
+                if node.vitals.items.account_created {
+                    if verbose {
+                        println!(".... Account: owner account found on-chain.");
+                        println!(".... Miner: attempting to start miner.");
+                    }
+                    node.start_miner(verbose);
+                    node.vitals.host_state.miner_state = MinerState::Mining;
+                } else {
+                    if verbose {
+                        println!(".... Account: Owner account does NOT exist on chain. Was the account creation transaction submitted?")
+                    }
+                }
+            } else {
+                if verbose {
+                    println!(".. Sync: node is NOT synced");
+                    println!(".. Miner: WARN: cannot start miner until node is synced");
+                }
             }
         }
     }
@@ -161,20 +170,20 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
 }
 
 fn maybe_switch_mode(node: &mut Node, is_in_val_set: bool, verbose: bool) -> NodeState {
-    let running_mode = match Node::what_node_mode(){
-        Ok(t)=> t,
+    let running_mode = match Node::what_node_mode() {
+        Ok(t) => t,
         Err(_) => return NodeState::Stopped,
     };
 
     if verbose {
-        println!("Mode: node running in mode: {:?}", running_mode);
+        println!(".. Mode: node running in mode: {:?}", running_mode);
     }
 
     let running_in_val_mode = running_mode == Validator;
     // Running correctly as a FULLNODE
     if !running_in_val_mode && !is_in_val_set {
         if verbose {
-            println!("Mode: running the correct mode {:?}.", running_mode);
+            println!(".... Mode: running the correct mode",);
         }
         return NodeState::FullnodeMode;
     }
@@ -182,7 +191,7 @@ fn maybe_switch_mode(node: &mut Node, is_in_val_set: bool, verbose: bool) -> Nod
     // Do nothing, the account is in validator set, and we are running as a validator
     if running_in_val_mode && is_in_val_set {
         if verbose {
-            println!("Mode: running the correct mode {:?}.", running_mode);
+            println!(".... Mode: running the correct mode");
         }
         return NodeState::ValidatorMode;
     }
@@ -190,10 +199,11 @@ fn maybe_switch_mode(node: &mut Node, is_in_val_set: bool, verbose: bool) -> Nod
     // INCORRECT CASE 1: Need to change mode from Fullnode to Validator mode
     if !running_in_val_mode && is_in_val_set {
         if verbose {
-            println!("Mode: WARN: running the INCORRECT mode, switching to VALIDATOR mode");
+            println!(".... Mode: WARN: running the INCORRECT mode, switching to VALIDATOR mode");
         }
         node.stop_node();
-        node.start_node(Validator, verbose).expect("could not start node");
+        node.start_node(Validator, verbose)
+            .expect("could not start node");
 
         return NodeState::ValidatorMode;
     }
@@ -201,10 +211,11 @@ fn maybe_switch_mode(node: &mut Node, is_in_val_set: bool, verbose: bool) -> Nod
     // INCORRECT CASE 2: Need to change mode from Validator to Fullnode mode
     if running_in_val_mode && !is_in_val_set {
         if verbose {
-            println!("Mode: WARN: running the INCORRECT mode, switching to FULLNODE mode");
+            println!(".... Mode: WARN: running the INCORRECT mode, switching to FULLNODE mode");
         }
         node.stop_node();
-        node.start_node(Validator, verbose).expect("could not start node");
+        node.start_node(Validator, verbose)
+            .expect("could not start node");
 
         return NodeState::FullnodeMode;
     }
