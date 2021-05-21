@@ -24,8 +24,8 @@ pub struct QueryCmd {
     #[options(no_short, help = "blockheight")]
     blockheight: bool,
     
-    #[options(help = "sync delay")]
-    sync_delay: bool,
+    #[options(help = "sync delay from upstream")]
+    sync: bool,
     
     #[options(help = "resources")]
     resources: bool,
@@ -70,7 +70,7 @@ impl Runnable for QueryCmd {
             info = node.get(QueryType::BlockHeight);
             display = "BLOCKHEIGHT";
         }
-        else if self.sync_delay {
+        else if self.sync {
             info = node.get(QueryType::SyncDelay);
             display = "SYNC-DELAY";
         } 

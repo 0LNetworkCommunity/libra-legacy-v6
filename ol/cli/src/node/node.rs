@@ -68,9 +68,13 @@ impl Node {
         self.vitals.items.node_running = Node::node_running();
         self.vitals.items.miner_running = Node::miner_running();
         self.vitals.items.account_created = self.accounts_exist_on_chain();
-        let sync_tuple = self.is_synced();
-        self.vitals.items.is_synced = sync_tuple.0;
-        self.vitals.items.sync_delay = sync_tuple.1;
+        if let Ok(sync_tuple) = self.is_synced() {
+          self.vitals.items.is_synced = sync_tuple.0;
+          self.vitals.items.sync_delay = sync_tuple.1;
+        } else {
+          self.vitals.items.is_synced = false;
+          self.vitals.items.sync_delay = 404;
+        }
         self.vitals.items.validator_set = self.is_in_validator_set();
         self
     }

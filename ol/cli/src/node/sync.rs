@@ -2,7 +2,7 @@
 
 use super::node::Node;
 use crate::{config::AppCfg, node::client::*};
-use anyhow::Error;
+use anyhow::{Error, bail};
 use cli::libra_client::LibraClient;
 use libra_types::waypoint::Waypoint;
 
@@ -19,17 +19,20 @@ impl Node {
   }
 
   /// check if node is synced
-  pub fn is_synced(&mut self) -> (bool, i64) {
+  pub fn is_synced(&mut self) -> Result<(bool, i64), Error> {
     if !Node::node_running() {
-      return (false, 0);
-    };
+      bail!("Node is not running. Cannot connect to localhost:8080.");
+    }
+    
     let wp = self.waypoint().expect("Can not update Waypoint");
     let mut remote_client = default_remote_client(&self.conf, wp).unwrap().0;
-    //println!("remote: {:?}", &self.conf);
+    // dbg!(&remote_client.get_metadata().unwrap().version);
+    dbg!(&self.client.get_metadata().unwrap().version);
+
     let compare = compare_client_version(&mut self.client, &mut remote_client);
     match compare {
-        Ok(delay) => (within_thresh(delay), delay),
-        Err(_) => (false, 666)
+        Ok(delay) => Ok((within_thresh(delay), delay)),
+        Err(e) =>  Err(e),
     }
   }
 

@@ -65,7 +65,12 @@ impl Node {
           &chain.unwrap().waypoint.unwrap().to_string()
         )
       }
-      SyncDelay => self.is_synced().1.to_string(),
+      SyncDelay => {
+       match self.is_synced(){
+           Ok(sync) => sync.1.to_string(),
+           Err(e) => e.to_string()
+       }
+      },
       Resources => {
         let resources = self.get_annotate_account_blob(self.conf.profile.account)
           .unwrap()

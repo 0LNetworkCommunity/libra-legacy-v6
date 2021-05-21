@@ -199,11 +199,14 @@ impl Node {
     match &self.vitals.host_state.node_state {
       // If fullnode is running try to mine (if account is created)
       NodeState::FullnodeModeCatchup => {
-        if self.is_synced().0 {
-          &self.node_transition(NodeEvents::FullnodeSynced, trigger_action);
-        } else {
-          println!("Node is not synced, cannot advance.")
+        if let Ok(sync) = self.is_synced() {
+          if sync.0 {
+            &self.node_transition(NodeEvents::FullnodeSynced, trigger_action);
+          } else {
+            println!("Node is not synced, cannot advance.")
+          }
         }
+
       }
       // TODO: would be unusual if the validator joined val set before
       //       the fullnode is synced, but could happen.
