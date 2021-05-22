@@ -40,8 +40,8 @@ pub static IS_DEVNET: Lazy<bool> = Lazy::new(||{
 });
 
 /// Restore database from archive
-pub fn fast_forward_db(verbose: bool) -> Result<(), Error>{
-    let mut backup = Backup::new();
+pub fn fast_forward_db(verbose: bool, epoch: Option<u64>) -> Result<(), Error>{
+    let mut backup = Backup::new(epoch);
 
     println!("fetching latest epoch backup from epoch archive");
     backup.fetch_backup(verbose)?;
@@ -89,20 +89,25 @@ pub struct Backup {
 
 impl Backup {
     /// Creates a backup info instance
-    pub fn new() -> Self {
+    pub fn new(epoch: Option<u64>) -> Self {
         let conf = app_config().to_owned();
-        let (version_number, zip_url) = get_highest_epoch_zip().expect(&format!("could not find a zip backup at url: {}", GITHUB_REPO.clone()));
-        let restore_path = conf.workspace.node_home.join(format!("restore/{}", version_number));
+        let (restore_epoch, zip_url) = if let Some(e) = epoch {
+          (e, get_zip_url(e).unwrap())
+        } else {
+          get_highest_epoch_zip().expect(&format!("could not find a zip backup at url: {}", GITHUB_REPO.clone()))
+        };
+
+        let restore_path = conf.workspace.node_home.join(format!("restore/{}", restore_epoch));
         fs::create_dir_all(&restore_path).unwrap();
         
-        println!("DB fast forward to epoch: {}", &version_number);
+        println!("DB fast forward to epoch: {}", &restore_epoch);
 
         Backup {
-            version_number,
+            version_number: restore_epoch,
             zip_url,
             home_path: conf.workspace.node_home.clone(),
             restore_path: restore_path.clone(),
-            zip_path: conf.workspace.node_home.join(format!("restore/restore-{}.zip", version_number)),
+            zip_path: conf.workspace.node_home.join(format!("restore/restore-{}.zip", restore_epoch)),
             waypoint: None,
             node_namespace: format!("{}-oper", conf.profile.auth_key.clone()),
         }
@@ -250,6 +255,17 @@ fn get_highest_epoch_zip() -> Result<(u64, String), Error> {
         repo = GITHUB_REPO.clone(),
         highest_epoch = highest_epoch.to_string(),
         ))
+    )
+}
+
+fn get_zip_url(epoch: u64) -> Result<String, Error> {
+    Ok( 
+      format!(
+        "https://raw.githubusercontent.com/{owner}/{repo}/main/{epoch}.zip",
+        owner = GITHUB_ORG.clone(),
+        repo = GITHUB_REPO.clone(),
+        epoch = epoch.to_string(),
+      )
     )
 }
 

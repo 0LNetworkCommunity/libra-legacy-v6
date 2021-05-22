@@ -159,7 +159,7 @@ impl Node {
         } else {
           if trigger_action && entry_args.swarm_path.is_none() {
             action_print("attempting to restore db from archive");
-            restore::fast_forward_db(false).expect("unable to fast forward db");
+            restore::fast_forward_db(false, None).expect("unable to fast forward db");
           } else if let Some(path) = entry_args.swarm_path {
             // swarm testing, mock restore
             // TODO: place waypoint in key_store, and node.yaml

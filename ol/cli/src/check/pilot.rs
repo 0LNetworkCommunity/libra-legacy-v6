@@ -32,7 +32,7 @@ pub fn maybe_restore_db(mut node: &mut Node, verbose: bool) -> &mut Node {
             if verbose {
                 println!("DB: WARN: libraDB is not bootstrapped. Database needs a valid set of transactions to boot. Attempting `ol restore` to fetch backups from archive.");
             }
-            mgmt::restore::fast_forward_db(true).unwrap();
+            mgmt::restore::fast_forward_db(true, None).unwrap();
             node.vitals.host_state.onboard_state = OnboardState::DbBootstrapOk;
         }
     // return
@@ -43,7 +43,7 @@ pub fn maybe_restore_db(mut node: &mut Node, verbose: bool) -> &mut Node {
                 &cfg.workspace.node_home
             );
         }
-        mgmt::restore::fast_forward_db(true).unwrap();
+        mgmt::restore::fast_forward_db(true, None).unwrap();
         node.vitals.host_state.onboard_state = OnboardState::DbBootstrapOk;
     }
     node
