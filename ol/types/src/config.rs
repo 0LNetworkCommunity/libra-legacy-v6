@@ -124,10 +124,10 @@ impl AppCfg {
         default_config.workspace.node_home = if config_path.is_some() {
             config_path.clone().unwrap()
         } else {
-            dirs::home_dir().unwrap()
+            let mut node_home = dirs::home_dir().unwrap();
+            node_home.push(NODE_HOME);
+            node_home
         };
-
-        default_config.workspace.node_home.push(NODE_HOME);
 
         fs::create_dir_all(&default_config.workspace.node_home).unwrap();
 
