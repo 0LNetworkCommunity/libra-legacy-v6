@@ -68,11 +68,11 @@ impl Runnable for QueryCmd {
         } 
         else if self.blockheight {
             info = node.get(QueryType::BlockHeight);
-            display = "BLOCKHEIGHT";
+            display = "BLOCK HEIGHT";
         }
         else if self.sync {
             info = node.get(QueryType::SyncDelay);
-            display = "SYNC-DELAY";
+            display = "SYNC";
         } 
         else if self.resources {
             info = node.get(QueryType::Resources);
