@@ -6,7 +6,9 @@ for b in $DOWNLOAD_URLS ; do \
   echo $b | rev | cut -d"/" -f1 | rev ; \
   curl  --progress-bar --create-dirs -o /usr/local/bin/$(echo $b | rev | cut -d"/" -f1 | rev) -L $b ; \
   echo 'downloaded to /usr/local/bin/' ; \
-  chmod 744 /usr/local/bin/$(echo $b | rev | cut -d"/" -f1 | rev) ;\
+  chmod 755 /usr/local/bin/$(echo $b | rev | cut -d"/" -f1 | rev) ;\
 done
 
-  mv /usr/local/bin/ol_cli /usr/local/bin/ol
+mkdir -p ~/.0L/web-monitor/
+mv /usr/local/bin/web-monitor.zip ~/.0L/web-monitor.zip
+unzip -o ~/.0L/web-monitor.zip -d ~/.0L/web-monitor/
