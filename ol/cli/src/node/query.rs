@@ -68,7 +68,7 @@ impl Node {
       SyncDelay => {
        match self.sync_state(){
            Ok(sync) => {
-             format!("\nis synced: {}\nlocal height: {}\nupstream delay: {}", sync.is_synced, sync.sync_height, sync.sync_delay)
+             format!("is synced: {}, local height: {}, upstream delay: {}", sync.is_synced, sync.sync_height, sync.sync_delay)
            },
            Err(e) => e.to_string()
        }
