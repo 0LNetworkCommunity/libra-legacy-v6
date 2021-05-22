@@ -48,6 +48,7 @@ impl Node {
       s.sync_height = local_db.synced_version;
       s.sync_delay = s.remote_height as i64 - s.sync_height as i64;
       s.is_synced = s.sync_delay < 1000;
+      return Ok(s)
     }
     Err(anyhow!("Cannot get local db state"))
   }
