@@ -110,7 +110,7 @@ pub fn pick_client(
         .expect("could not get waypoint");
     // check if is in sync
     if let Ok(s) = Node::check_sync(config, waypoint) {
-        if s.0 {
+        if s.is_synced {
             return default_local_client(config, waypoint.clone());
         }
     }

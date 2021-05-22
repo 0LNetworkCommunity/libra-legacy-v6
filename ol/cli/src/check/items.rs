@@ -26,6 +26,8 @@ pub struct Items {
   pub node_mode: Option<NodeMode>,
   /// is the blockchain in sync with upstream
   pub is_synced: bool,
+  /// sync height
+  pub sync_height: u64,
   /// how far behind is the node
   pub sync_delay: i64,
   /// is in the validator set
@@ -41,6 +43,7 @@ impl Default for Items {
       node_running: false,
       miner_running: false,
       is_synced: false,
+      sync_height: 0,
       sync_delay: 0,
       validator_set: false,
       db_files_exist: false,

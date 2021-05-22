@@ -68,12 +68,16 @@ impl Node {
         self.vitals.items.node_running = Node::node_running();
         self.vitals.items.miner_running = Node::miner_running();
         self.vitals.items.account_created = self.accounts_exist_on_chain();
-        if let Ok(sync_tuple) = self.is_synced() {
-          self.vitals.items.is_synced = sync_tuple.0;
-          self.vitals.items.sync_delay = sync_tuple.1;
+        // TODO: make SyncState an item, so we don't need to assign.
+        // affects web-monitor structs
+        if let Ok(s) = self.sync_state() {
+          self.vitals.items.is_synced = s.is_synced;
+          self.vitals.items.sync_delay = s.sync_delay;
+          self.vitals.items.sync_height = s.sync_height
         } else {
           self.vitals.items.is_synced = false;
           self.vitals.items.sync_delay = 404;
+          self.vitals.items.sync_height = 404;
         }
         self.vitals.items.validator_set = self.is_in_validator_set();
         self
