@@ -78,7 +78,7 @@ impl Runnable for QueryCmd {
             info = node.get(QueryType::Resources);
             display = "RESOURCES";
         }
-        else if self.resources {
+        else if self.epoch {
             info = node.get(QueryType::Epoch);
             display = "EPOCH";
         }
@@ -91,8 +91,6 @@ impl Runnable for QueryCmd {
             });
             display = "TRANSACTIONS";
         }
-
-
         status_info!(display, format!("{}", info));
     }
 }

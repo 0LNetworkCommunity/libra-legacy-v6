@@ -2,9 +2,11 @@
 
 use super::node::Node;
 use crate::{config::AppCfg, node::client::*};
-use anyhow::{Error, bail};
+use anyhow::{Error, anyhow, bail};
+use backup_cli::utils::backup_service_client::{BackupServiceClient, BackupServiceClientOpt};
 use cli::libra_client::LibraClient;
 use libra_types::waypoint::Waypoint;
+use libradb::backup::backup_handler::DbState;
 
 impl Node {
   /// check if node is synced
@@ -26,7 +28,7 @@ impl Node {
     
     let wp = self.waypoint().expect("Can not update Waypoint");
     let mut remote_client = default_remote_client(&self.conf, wp).unwrap().0;
-    // dbg!(&remote_client.get_metadata().unwrap().version);
+    dbg!(&remote_client.get_metadata().unwrap().version);
     dbg!(&self.client.get_metadata().unwrap().version);
 
     let compare = compare_client_version(&mut self.client, &mut remote_client);
@@ -62,4 +64,19 @@ fn compare_client_version(local: &mut LibraClient, remote: &mut LibraClient) -> 
 
 fn within_thresh(delay: i64) -> bool {
   delay < 10_000
+}
+
+/// get local sync block height
+pub async fn get_local_height() -> Result<DbState, Error>{
+  let bk = BackupServiceClientOpt {
+    address: "http://localhost:6186".to_owned(),
+  };
+  let client = BackupServiceClient::new_with_opt(bk);
+  if let Some(db_state) = client.get_db_state().await? {
+    println!("{}", db_state);
+    return Ok(db_state)
+  } else {
+    println!("DB not bootstrapped.");
+    return Err(anyhow!("DB not bootstrapped."))
+  }
 }

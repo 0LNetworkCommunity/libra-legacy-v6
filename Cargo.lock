@@ -5004,6 +5004,7 @@ dependencies = [
  "abscissa_tokio",
  "ajson",
  "anyhow",
+ "backup-cli",
  "bitflags",
  "byteorder",
  "cassowary",

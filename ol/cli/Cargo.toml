@@ -58,6 +58,8 @@ storage-interface = { path = "../../storage/storage-interface", version = "0.1.0
 fs_extra = "1"
 gag = "0.1.10"
 port_scanner = "0.1.5"
+backup-cli = { path = "../../storage/backup/backup-cli", version = "0.1.0" }
+
 
 # Parity with Storage create
 [dependencies.rocksdb]

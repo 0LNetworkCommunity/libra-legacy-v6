@@ -192,15 +192,6 @@ impl Node {
         return false;
     }
 
-    // pub fn db_state() {
-    //   // from storage/backup/backup-cli/src/bin/db-backup.rs
-    //     // let client = BackupServiceClient::new_with_opt(opt.client);
-    //     // if let Some(db_state) = client.get_db_state().await? {
-    //     //     println!("{}", db_state)
-    //     // } else {
-    //     //     println!("DB not bootstrapped.")
-    //     // }
-    // }
     /// database is initialized, Please do NOT invoke this function frequently
     pub fn db_files_exist(&mut self) -> bool {
         // check to see no files are present
@@ -208,23 +199,6 @@ impl Node {
         db_path.exists()
     }
 
-    // /// Check if node caught up, if so mark as caught up.
-    // pub fn check_sync(&mut self) -> (bool, i64) {
-    //     let sync = Check::node_is_synced();
-    //     // let have_ever_synced = false;
-    //     // assert never synced
-    //     if self.has_never_synced() && sync.0 {
-    //         // mark as synced
-    //         self.vitals.items.is_synced = true;
-    //         self.vitals.items.write_cache();
-    //     }
-    //     sync
-    // }
-
-    // /// Check if node is running
-    // pub fn check_node_state() -> bool {
-    //   NodeHealth::check_process(NODE_PROCESS)
-    // }
     /// Check if node is running
     pub fn node_running() -> bool {
         Node::check_process(NODE_PROCESS) | Node::check_systemd(NODE_PROCESS)
