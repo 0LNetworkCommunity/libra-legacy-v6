@@ -7,6 +7,7 @@ use backup_cli::utils::backup_service_client::{BackupServiceClient, BackupServic
 use cli::libra_client::LibraClient;
 use libra_types::waypoint::Waypoint;
 use libradb::backup::backup_handler::DbState;
+use tokio::runtime::Runtime;
 
 impl Node {
   /// check if node is synced
@@ -31,11 +32,16 @@ impl Node {
     dbg!(&remote_client.get_metadata().unwrap().version);
     dbg!(&self.client.get_metadata().unwrap().version);
 
-    let compare = compare_client_version(&mut self.client, &mut remote_client);
-    match compare {
-        Ok(delay) => Ok((within_thresh(delay), delay)),
-        Err(e) =>  Err(e),
+    if let Some(local_db) = get_db_state() {
+      let remote_version = remote_client.get_metadata().unwrap().version;
+      let delay = remote_version as i64 - local_db.synced_version as i64;
+      if delay < 1000 {
+        return Ok((true, delay))
+      } else {
+        return Ok((false, delay))
+      }
     }
+    Err(anyhow!("Cannot get local db state"))
   }
 
   /// Compare the nodes from toml config.
@@ -67,16 +73,12 @@ fn within_thresh(delay: i64) -> bool {
 }
 
 /// get local sync block height
-pub async fn get_local_height() -> Result<DbState, Error>{
+pub fn get_db_state() -> Option<DbState>{
   let bk = BackupServiceClientOpt {
     address: "http://localhost:6186".to_owned(),
   };
   let client = BackupServiceClient::new_with_opt(bk);
-  if let Some(db_state) = client.get_db_state().await? {
-    println!("{}", db_state);
-    return Ok(db_state)
-  } else {
-    println!("DB not bootstrapped.");
-    return Err(anyhow!("DB not bootstrapped."))
-  }
+
+  let mut rt = Runtime::new().unwrap();
+  rt.block_on(client.get_db_state()).unwrap()
 }
