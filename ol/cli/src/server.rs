@@ -34,13 +34,15 @@ pub async fn start_server(mut node: Node, run_checks: bool) {
         warp::sse::reply(event_stream)
     });
 
-    let account_template = warp::path("account.json").and(warp::get().map(|| {
-        fs::read_to_string("/root/.0L/account.json").unwrap()
-        // let obj: Value = serde_json::from_str(&string);
+    // TODO: re-assigning node_home because warp moves it.
+    let node_home = cfg.clone().workspace.node_home.clone();
+
+    let account_template = warp::path("account.json").and(warp::get().map(move || {
+      let account_path = node_home.join("account.json");
+      fs::read_to_string(account_path).unwrap()
     }));
 
     let node_home = cfg.clone().workspace.node_home.clone();
-
     let epoch_route = warp::path("epoch.json").and(warp::get().map(move || {
         // let node_home = node_home_two.clone();
         let vitals = Vitals::read_json(&node_home).chain_view.unwrap();
@@ -57,7 +59,9 @@ pub async fn start_server(mut node: Node, run_checks: bool) {
       node_home.join("web-monitor/")
         // for using `npm run dev`
     } else {
-      PathBuf::from("/root/libra/ol/cli/web-monitor/public/")
+      let source_path= env!("CARGO_MANIFEST_DIR");
+      let path = PathBuf::from(source_path);
+      path.join("web-monitor/public/")
     };
 
     //GET /
