@@ -4,6 +4,7 @@
 
 use super::files_cmd;
 use crate::prelude::app_config;
+use crate::entrypoint;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_genesis_tool::node_files;
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
@@ -19,8 +20,6 @@ use txs::{commands::autopay_batch_cmd, submit_tx};
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ValWizardCmd {
-    #[options(short = "h", help = "home path for all 0L files")]
-    home_path: Option<PathBuf>,
     #[options(
         short = "a",
         help = "where to output the account.json file, defaults to node home"
@@ -54,21 +53,20 @@ impl Runnable for ValWizardCmd {
         // Get credentials from prompt
         let (authkey, account, wallet) = wallet::get_account_from_prompt();
 
-        // Initialize Miner
-        let mut upstream = match &self.upstream_peer {
-            Some(url) => url.to_owned(),
-            None => match &self.template_url {
-                Some(url) => url.to_owned(),
-                None => panic!("expected upstream peer url or template url"),
-            },
+        let cfg = app_config().clone(); // read 0L.toml in case it exists
+ 
+        let upstream = match cfg.profile.upstream_nodes {
+            Some(url) => url[0].to_owned(),   
+            _ => Url::parse("http://localhost:8080").unwrap(),  // default if not configured otherwise
         };
-        upstream.set_port(Some(8080)).unwrap(); // json rpc port
 
-        // Need to assign app_config, otherwise abscissa would use the default.
+        println!("staring validator wizard with upstream URL: {:?}", &upstream);
+
         let mut app_config =
-            AppCfg::init_app_configs(authkey, account, &Some(upstream), &self.home_path);
+            AppCfg::init_app_configs(authkey, account, &Some(upstream), &Some(entrypoint::get_node_home()));
 
         let home_path = &app_config.workspace.node_home;
+        
         status_ok!("\nMiner config written", "\n...........................\n");
 
         if let Some(url) = &self.template_url {
