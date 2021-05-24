@@ -1,4 +1,4 @@
-# ol-cli
+# ol
 
 This is the entrypoint for monitoring, management, and configuration tools for 0L.
 

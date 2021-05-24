@@ -6,7 +6,7 @@ use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use hex::{decode, encode};
 use std::{fs::File, io::Write, path::PathBuf};
 use libra_network_address::{NetworkAddress, encrypted::{TEST_SHARED_VAL_NETADDR_KEY, TEST_SHARED_VAL_NETADDR_KEY_VERSION}};
-use keygen::scheme::KeyScheme;
+use ol_keys::scheme::KeyScheme;
 use crate::autopay::PayInstruction;
 use anyhow;
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -203,11 +203,11 @@ impl UserConfigs {
 }
 
 #[test]
-fn test_parse_init_file() {
+fn test_parse_account_file() {
     use crate::account::ValConfigs;
-    let fixtures = PathBuf::from("../ol/fixtures/onboarding/eve_init_test.json");
-    let init_configs = ValConfigs::get_init_data(&fixtures).unwrap();
-    assert_eq!(init_configs.op_fullnode_network_addresses, decode("2d040000000000052318072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800").unwrap(), "Could not parse network address");
+    let path = ol_fixtures::get_persona_account_json("eve").1;
+    let init_configs = ValConfigs::get_init_data(&path).unwrap();
+    assert_eq!(init_configs.op_fullnode_network_addresses, decode("2d04009de60f2a052318072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800").unwrap(), "Could not parse network address");
 
     let consensus_key_vec = decode("cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d").unwrap();
     

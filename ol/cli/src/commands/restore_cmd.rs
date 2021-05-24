@@ -14,11 +14,13 @@ use crate::mgmt;
 pub struct RestoreCmd {
     #[options(short="v", help = "verbose logging of backup restore")]
     verbose: bool,
+    #[options(short="e", help = "what epoch to start restore from")]
+    epoch: Option<u64>,
 }
 
 impl Runnable for RestoreCmd {
     /// Start the application.
     fn run(&self) {
-        mgmt::restore::fast_forward_db(self.verbose).unwrap();
+        mgmt::restore::fast_forward_db(self.verbose, self.epoch).unwrap();
     }
 }

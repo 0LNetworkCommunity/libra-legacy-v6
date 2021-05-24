@@ -36,6 +36,7 @@ to synchronize configuration changes for the validators.
 <b>use</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp">0x1::LibraTimestamp</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
+<b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 </code></pre>
 
 
@@ -926,7 +927,11 @@ reconfiguration event.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="LibraConfig.md#0x1_LibraConfig_check_transfer_enabled">check_transfer_enabled</a>(): bool <b>acquires</b> <a href="LibraConfig.md#0x1_LibraConfig_Configuration">Configuration</a> {
-    <a href="LibraConfig.md#0x1_LibraConfig_get_current_epoch">get_current_epoch</a>() &gt; 1000
+    <b>if</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
+        <b>true</b>
+    } <b>else</b> {
+        <a href="LibraConfig.md#0x1_LibraConfig_get_current_epoch">get_current_epoch</a>() &gt; 1000
+    }
 }
 </code></pre>
 

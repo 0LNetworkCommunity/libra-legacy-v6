@@ -66,7 +66,7 @@ impl Node {
           &self.miner_transition(MinerEvents::Started, trigger_action);
         } else {
           // start the miner
-          self.start_miner();
+          self.start_miner(true);
         }
       }
     }
@@ -88,7 +88,7 @@ impl Node {
 
       OnboardEvents::RestoreDb => {
         if self.vitals.host_state.onboard_state == ValConfigsOk {
-          self.vitals.host_state.onboard_state = DbRestoredOk;
+          self.vitals.host_state.onboard_state = DbBootstrapOk;
         }
       }
       }
@@ -159,7 +159,7 @@ impl Node {
         } else {
           if trigger_action && entry_args.swarm_path.is_none() {
             action_print("attempting to restore db from archive");
-            restore::fast_forward_db(false).expect("unable to fast forward db");
+            restore::fast_forward_db(false, None).expect("unable to fast forward db");
           } else if let Some(path) = entry_args.swarm_path {
             // swarm testing, mock restore
             // TODO: place waypoint in key_store, and node.yaml
@@ -176,7 +176,8 @@ impl Node {
           }
         }
       }
-      OnboardState::DbRestoredOk => {
+      OnboardState::DbFilesOk => {}
+      OnboardState::DbBootstrapOk => {
         // if check.node_running() {
         //   &self.onboard_transition(OnboardEvents::StartFullnode, trigger_action);
         // } else {
@@ -198,11 +199,14 @@ impl Node {
     match &self.vitals.host_state.node_state {
       // If fullnode is running try to mine (if account is created)
       NodeState::FullnodeModeCatchup => {
-        if self.is_synced().0 {
-          &self.node_transition(NodeEvents::FullnodeSynced, trigger_action);
-        } else {
-          println!("Node is not synced, cannot advance.")
+        if let Ok(sync) = self.sync_state() {
+          if sync.is_synced {
+            &self.node_transition(NodeEvents::FullnodeSynced, trigger_action);
+          } else {
+            println!("Node is not synced, cannot advance.")
+          }
         }
+
       }
       // TODO: would be unusual if the validator joined val set before
       //       the fullnode is synced, but could happen.
@@ -215,7 +219,7 @@ impl Node {
           // Stop node first, then restart as validator.
           self.stop_node();
 
-          self.start_node(management::NodeMode::Validator)
+          self.start_node(management::NodeMode::Validator, true)
             .expect("unable to start node in validator mode");
 
           &self.node_transition(NodeEvents::SwitchToValidatorMode, trigger_action);

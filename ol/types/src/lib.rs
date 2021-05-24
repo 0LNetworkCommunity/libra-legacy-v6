@@ -13,3 +13,5 @@ pub mod account;
 pub mod autopay;
 pub mod block;
 pub mod config;
+pub mod oracle_upgrade;
+pub mod miner_state;

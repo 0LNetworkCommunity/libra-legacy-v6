@@ -22,7 +22,7 @@ module Genesis {
     use 0x1::Stats;
     use 0x1::ValidatorUniverse;
     use 0x1::GAS;
-    use 0x1::AutoPay;
+    use 0x1::AutoPay2;
     use 0x1::Oracle;
     use 0x1::Hash;
     use 0x1::Subsidy;
@@ -95,7 +95,7 @@ module Genesis {
         /////// 0L /////////
         Stats::initialize(lr_account);
         ValidatorUniverse::initialize(lr_account);
-        AutoPay::initialize(lr_account);
+        AutoPay2::initialize(lr_account);
         Subsidy::init_fullnode_sub(lr_account);
         Oracle::initialize(lr_account);
         MinerState::init_list(lr_account);

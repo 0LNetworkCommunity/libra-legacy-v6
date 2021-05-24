@@ -8,7 +8,10 @@
 script {
 use 0x1::LibraAccount;
 use 0x1::GAS::GAS;
+use 0x1::Testnet;
 fun main(account: &signer) {
+    //transfers are enabled in testnet, need to disable testnet to check that they are disabled otherwise
+    Testnet::remove_testnet(account);
     let with_cap = LibraAccount::extract_withdraw_capability(account);
     LibraAccount::pay_from<GAS>(&with_cap, {{bob}}, 10, x"", x"");
     assert(LibraAccount::balance<GAS>({{alice}}) == 0, 0);
@@ -17,7 +20,7 @@ fun main(account: &signer) {
 }
 }
 ////////// Transfers should fail ////////
-// check: VMExecutionFailure(ABORTED { code: 12016,
+// check: VMExecutionFailure
 /////////////////////////////////////////
 
 // //! new-transaction

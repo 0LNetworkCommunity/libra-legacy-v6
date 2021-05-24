@@ -1,5 +1,5 @@
 [package]
-name = "ol-cli"
+name = "ol"
 authors = []
 version = "0.1.0"
 edition = "2018"
@@ -50,12 +50,15 @@ libra-genesis-tool = { path = "../../config/management/genesis", version = "0.1.
 libra-wallet = { path = "../../testsuite/cli/libra-wallet", version = "0.1.0" }
 libradb = { path = "../../storage/libradb", version = "0.1.0" }
 libra-temppath = { path = "../../common/temppath", version = "0.1.0" }
-keygen = { path = "../../ol/keygen/", version = "0.1.0" }
+ol-keys = { path = "../../ol/keys/", version = "0.1.0" }
 abscissa_tokio = "0.5"
 regex = "1"
 ol-types = { path = "../../ol/types"}
-
 storage-interface = { path = "../../storage/storage-interface", version = "0.1.0" }
+fs_extra = "1"
+gag = "0.1.10"
+port_scanner = "0.1.5"
+backup-cli = { path = "../../storage/backup/backup-cli", version = "0.1.0" }
 
 
 # Parity with Storage create

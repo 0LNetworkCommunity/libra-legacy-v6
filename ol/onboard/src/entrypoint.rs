@@ -4,10 +4,8 @@ use abscissa_core::{
     Command, command::Usage, Config, Configurable, FrameworkError, 
     Options, Runnable    
 };
-use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
-use reqwest::Url;
 use std::path::PathBuf;
-
+use libra_global_constants::NODE_HOME;
 use crate::commands;
 
 /// Toplevel entrypoint command.
@@ -37,32 +35,7 @@ where
     #[options(command)]
     pub command: Option<Cmd>,
 
-    /// --- Customizing EntryPoint --- ///
-
-    /// Account Address
-    #[options(short = "a", help = "account address")]
-    pub account: Option<AccountAddress>,
-
-    /// URL to send tx
-    #[options(short = "u", help = "URL to send tx")]    
-    pub url: Option<Url>,
-
-    /// Use the upstream URL in configs for sending transaction
-    #[options(help = "Use the upstream URL in configs for sending transaction")]
-    pub use_upstream_url: bool,
-
-    /// Override waypoint to connect to
-    #[options(short = "w", help = "waypoint to connect to")]
-    pub waypoint: Option<Waypoint>,
-
-        /// Save the tx to file
-    #[options(short = "s", help = "save the signed tx to file")]
-    pub save_path: Option<PathBuf>,
-
-    /// Only save, don't send transaction
-    #[options(short = "n", help = "don't send the transaction, to be used with --save_path")]
-    pub no_send: bool,
-
+    // --- Customizing EntryPoint --- //
     /// Swarm path - get tx params from swarm
     #[options(help = "swarm path to override tx params, testing only")]
     pub swarm_path: Option<PathBuf>,
@@ -70,10 +43,6 @@ where
     /// Swarm persona - what fixtures to use
     #[options(help = "use the fixtures of a persona, e.g. alice, eve")]
     pub swarm_persona: Option<String>,
-
-    /// The operator is sending the transaction, used in miner.
-    #[options(help = "the operator is signing and sending the transaction")]
-    pub is_operator: bool,
 
 }
 
@@ -158,4 +127,29 @@ pub type EntryPointTxsCmd = EntryPoint<commands::WizCmd>;
 /// get arguments passed in the entrypoin of this app, not the subcommands
 pub fn get_args() -> EntryPointTxsCmd {
   Command::from_env_args()
+}
+
+/// returns node_home
+/// usually something like "/root/.0L"
+/// in case of swarm like "....../swarm_temp/0" for alice
+/// in case of swarm like "....../swarm_temp/1" for bob
+pub fn get_node_home() -> PathBuf {
+    let mut config_path = dirs::home_dir().unwrap();
+    config_path.push(NODE_HOME);
+
+    let entry_args = get_args();
+
+    if entry_args.swarm_path.is_some() {
+        config_path = PathBuf::from(entry_args.swarm_path.unwrap());
+        if entry_args.swarm_persona.is_some() {
+            let persona = &entry_args.swarm_persona.unwrap();
+            let all_personas = vec!["alice", "bob", "carol", "dave"];
+            let index = all_personas.iter().position(|&r| r == persona).unwrap();
+            config_path.push(index.to_string());
+        } else {
+            config_path.push("0"); // default
+        }
+    }
+
+    return config_path;
 }

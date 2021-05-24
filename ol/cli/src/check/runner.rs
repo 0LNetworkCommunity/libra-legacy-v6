@@ -1,40 +1,58 @@
 //! `monitor` subcommand
 
+use super::pilot;
 use crate::node::node::Node;
-use crossterm::{
-    cursor,
-    terminal::{self, ClearType},
-    QueueableCommand,
-};
-use std::io::{stdout, Write};
 use std::{thread, time::Duration};
+use chrono::Utc;
 
 /// Start the node monitor
-pub fn run_checks(mut node: Node, is_live: bool, print: bool) {
-  let home_path = node.conf.workspace.node_home.clone();
-    let mut x = 0;
+pub fn run_checks(mut node: &mut Node, pilot: bool, is_live: bool, verbose_check: bool, verbose_pilot: bool) {
+    
+    if pilot {
+        pilot::maybe_restore_db(&mut node, verbose_pilot);
+    }
     loop {
-        &node.refresh_onchain_state();
-        &node.refresh_chain_info();
-        &node.refresh_account_info();
-        &node.refresh_checks();
-        &node.vitals.write_json(&home_path);
-        if print { print_it(&node) }
-        if !is_live && x == 0 { break; };
-        x = x + 1;
-        thread::sleep(Duration::from_millis(1000));
+        // update all the checks
+        node.check_once(verbose_check);
+
+        if pilot {
+            pilot::run_once(&mut node, verbose_pilot);
+        }
+        if !is_live {
+            break;
+        };
+        thread::sleep(Duration::from_millis(30_000));
     }
 }
 
+
+impl Node {
+  /// Run healtchecks once
+  pub fn check_once(&mut self, verbose: bool) -> &mut Self {
+      let home_path = self.conf.workspace.node_home.clone();
+
+      &self.refresh_onchain_state();
+      &self.refresh_chain_info();
+      &self.refresh_account_info();
+      &self.refresh_checks();
+      &self.vitals.write_json(&home_path);
+      if verbose {
+          print_it(&self)
+      }
+
+      self
+  }
+}
+
+
 fn print_it(node: &Node) {
-    let mut stdout = stdout();
-    terminal::Clear(ClearType::All);
-    stdout.queue(cursor::SavePosition).unwrap();
-    stdout
-        .write(
-            format!(
-"Configs exist:{configs}
+    println!(
+"
+HEALTH\n...........................\n
+{now}
+Configs exist: {configs}
 DB restored: {restored}
+Web monitor: {web_running}
 Is synced: {synced}
 Sync delay: {delay}
 Node running: {node}
@@ -42,19 +60,15 @@ Miner running: {miner}
 Account on chain: {account}
 In validator set: {in_set}
 \n",
+                now = Utc::now().format("%Y-%m-%d %H:%M:%S").to_string(), 
                 configs = node.vitals.items.configs_exist,
                 restored = node.vitals.items.db_restored,
+                web_running = node.vitals.items.web_running,
                 synced = node.vitals.items.is_synced,
                 delay = node.vitals.items.sync_delay,
                 node = node.vitals.items.node_running,
                 miner = node.vitals.items.miner_running,
                 account = node.vitals.items.account_created,
                 in_set = node.vitals.items.validator_set,
-            )
-            .as_bytes(),
-        )
-        .unwrap();
-
-    stdout.queue(cursor::RestorePosition).unwrap();
-    stdout.flush().unwrap();
+        );
 }

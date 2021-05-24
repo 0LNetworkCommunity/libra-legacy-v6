@@ -36,11 +36,15 @@ impl Node {
     use QueryType::*;
     match query_type {
       Balance => {
+        // TODO: get scaling factor from chain.
+        let scaling_factor = 1_000_000;
         match self.get_account_view() {
             Some(account_view) => {
               for av in account_view.balances.iter() {
                 if av.currency == "GAS" {
-                  return av.amount.to_formatted_string(&Locale::en);
+                  
+                  let amount = av.amount/scaling_factor ;
+                  return amount.to_formatted_string(&Locale::en);
                 }
               }
             },
@@ -61,7 +65,14 @@ impl Node {
           &chain.unwrap().waypoint.unwrap().to_string()
         )
       }
-      SyncDelay => self.is_synced().1.to_string(),
+      SyncDelay => {
+       match self.sync_state(){
+           Ok(sync) => {
+             format!("is synced: {}, local height: {}, upstream delay: {}", sync.is_synced, sync.sync_height, sync.sync_delay)
+           },
+           Err(e) => e.to_string()
+       }
+      },
       Resources => {
         let resources = self.get_annotate_account_blob(self.conf.profile.account)
           .unwrap()
