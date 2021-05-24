@@ -12,6 +12,9 @@ use libra_types::transaction::authenticator::AuthenticationKey;
 use std::{fs, path::PathBuf};
 use libra_wallet::WalletLibrary;
 use url::Url;
+use fs_extra::file::{copy, CopyOptions};
+use fs_extra::dir::{create};
+
 /// `init` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct InitCmd {
@@ -45,7 +48,7 @@ impl Runnable for InitCmd {
         if let Some(path) = entry_args.swarm_path {
           let swarm_node_home = entrypoint::get_node_home();
           let absolute = fs::canonicalize(path).unwrap();
-          initialize_host_swarm(absolute, swarm_node_home).unwrap();
+          initialize_host_swarm(absolute, swarm_node_home, entry_args.swarm_persona);
           return
         }
         
@@ -73,11 +76,25 @@ pub fn initialize_host(authkey: AuthenticationKey, account: AccountAddress, upst
     Ok(cfg)
 }
 
-/// Initializes the necessary 0L config files: 0L.toml
-pub fn initialize_host_swarm(swarm_path: PathBuf, node_home: PathBuf) -> Result <AppCfg, Error>{
+/// Initializes the necessary 0L config files: 0L.toml and populate blocks directory
+/// assumes the libra source is checked out at $HOME/libra
+pub fn initialize_host_swarm(swarm_path: PathBuf, node_home: PathBuf, persona: Option<String>) {
     let cfg = AppCfg::init_app_configs_swarm(swarm_path, node_home);
-    Ok(cfg)
+    if persona.is_some() {
+      let source = PathBuf::new().join(&cfg.workspace.source_path.unwrap()).join("ol/fixtures/blocks/test").join(persona.unwrap()).join("block_0.json");
+      let bocks_dir = PathBuf::new().join(&cfg.workspace.node_home).join(&cfg.workspace.block_dir);
+      let target_file = PathBuf::new().join(&cfg.workspace.node_home).join(&cfg.workspace.block_dir).join("block_0.json");
+      println!("copy first block from {:?} to {:?}", source, target_file);
+      match create(bocks_dir, false) {
+        Err(why) => println!("create block dir failed: {:?}", why),
+        _ => match copy(source, target_file, &CopyOptions::new()) {
+          Err(why) => println!("copy block failed: {:?}", why),
+          _ => (),
+        }
+      }
+    }
 }
+
 /// Initializes the necessary validator config files: genesis.blob, key_store.json
 pub fn initialize_validator(wallet: &WalletLibrary, miner_config: &AppCfg) -> Result <(), Error>{
     let home_dir = &miner_config.workspace.node_home;
