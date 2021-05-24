@@ -25,7 +25,7 @@ pub const NODE_PROCESS: &str = "libra-node";
 /// miner process name:
 pub const MINER_PROCESS: &str = "miner";
 
-/// Configuration used for checks we want to make on the node
+/// Configuration and state of node, account, and host.
 pub struct Node {
     /// 0L configs
     pub conf: AppCfg,
@@ -33,7 +33,6 @@ pub struct Node {
     pub client: LibraClient,
     /// vitals
     pub vitals: Vitals,
-
     // TODO: deduplicate these
     chain_state: Option<AccountState>,
     miner_state: Option<MinerStateResourceView>,
@@ -62,13 +61,24 @@ impl Node {
     /// refresh all checks
     pub fn refresh_checks(&mut self) -> &mut Self {
         self.vitals.items.configs_exist = self.configs_exist();
-        self.vitals.items.db_restored = self.db_files_exist();
+        self.vitals.items.db_files_exist = self.db_files_exist();
+        self.vitals.items.db_restored = self.db_bootstrapped();
+        self.vitals.items.web_running = Node::is_web_monitor_serving();
+        self.vitals.items.node_mode = Node::what_node_mode().ok();
         self.vitals.items.node_running = Node::node_running();
         self.vitals.items.miner_running = Node::miner_running();
         self.vitals.items.account_created = self.accounts_exist_on_chain();
-        let sync_tuple = self.is_synced();
-        self.vitals.items.is_synced = sync_tuple.0;
-        self.vitals.items.sync_delay = sync_tuple.1;
+        // TODO: make SyncState an item, so we don't need to assign.
+        // affects web-monitor structs
+        if let Ok(s) = self.sync_state() {
+          self.vitals.items.is_synced = s.is_synced;
+          self.vitals.items.sync_delay = s.sync_delay;
+          self.vitals.items.sync_height = s.sync_height
+        } else {
+          self.vitals.items.is_synced = false;
+          self.vitals.items.sync_delay = 404;
+          self.vitals.items.sync_height = 404;
+        }
         self.vitals.items.validator_set = self.is_in_validator_set();
         self
     }
@@ -115,17 +125,10 @@ impl Node {
     }
 
     /// Get waypoint from client
-    pub fn waypoint(&mut self) -> Waypoint {
-        self.client
-            .get_state_proof()
-            .expect("Failed to get state proof"); // refresh latest state proof
-        let waypoint = self.client.waypoint();
-        match waypoint {
-            Some(w) => w,
-            None => self
-                .conf
-                .get_waypoint(None)
-                .expect("could not get waypoint"),
+    pub fn waypoint(&mut self) -> Option<Waypoint> {
+        match self.client.get_state_proof() {
+            Ok(_t) => self.client.waypoint(),
+            Err(_) => self.conf.get_waypoint(None),
         }
     }
 
@@ -146,7 +149,7 @@ impl Node {
                 false
             }
             None => {
-                println!("No chain state retrieved");
+                //println!("No chain state retrieved");
                 false
             }
         }
@@ -187,21 +190,12 @@ impl Node {
                 Ok(db) => {
                     return db.get_latest_version().is_ok();
                 }
-                Err(e) => println!("Failed to open db:{}", e),
+                Err(_e) => (),
             }
         }
         return false;
     }
 
-    // pub fn db_state() {
-    //   // from storage/backup/backup-cli/src/bin/db-backup.rs
-    //     // let client = BackupServiceClient::new_with_opt(opt.client);
-    //     // if let Some(db_state) = client.get_db_state().await? {
-    //     //     println!("{}", db_state)
-    //     // } else {
-    //     //     println!("DB not bootstrapped.")
-    //     // }
-    // }
     /// database is initialized, Please do NOT invoke this function frequently
     pub fn db_files_exist(&mut self) -> bool {
         // check to see no files are present
@@ -209,23 +203,6 @@ impl Node {
         db_path.exists()
     }
 
-    // /// Check if node caught up, if so mark as caught up.
-    // pub fn check_sync(&mut self) -> (bool, i64) {
-    //     let sync = Check::node_is_synced();
-    //     // let have_ever_synced = false;
-    //     // assert never synced
-    //     if self.has_never_synced() && sync.0 {
-    //         // mark as synced
-    //         self.vitals.items.is_synced = true;
-    //         self.vitals.items.write_cache();
-    //     }
-    //     sync
-    // }
-
-    // /// Check if node is running
-    // pub fn check_node_state() -> bool {
-    //   NodeHealth::check_process(NODE_PROCESS)
-    // }
     /// Check if node is running
     pub fn node_running() -> bool {
         Node::check_process(NODE_PROCESS) | Node::check_systemd(NODE_PROCESS)
@@ -236,8 +213,31 @@ impl Node {
         Node::check_process(MINER_PROCESS) | Node::check_systemd(MINER_PROCESS)
     }
 
+    /// Check if miner is running
+    pub fn pilot_running() -> bool {
+        let mut system = sysinfo::System::new_all();
+        system.refresh_all();
+
+        let all_p = system.get_process_by_name("ol");
+        // dbg!(&all_p);
+        let process = all_p
+            .into_iter()
+            .filter(|i| match i.status() {
+                ProcessStatus::Run => true,
+                ProcessStatus::Sleep => true,
+                _ => false,
+            })
+            .find(|i| !i.cmd().is_empty());
+
+        process.unwrap()
+            .cmd()
+            .into_iter()
+            .find(|s| s.contains(&"pilot".to_owned()))
+            .is_some()
+    }
+
     fn check_process(process_str: &str) -> bool {
-      // get processes from sysinfo
+        // get processes from sysinfo
         let mut system = sysinfo::System::new_all();
         system.refresh_all();
         for (_, process) in system.get_processes() {
@@ -254,16 +254,20 @@ impl Node {
     pub fn what_node_mode() -> Result<NodeMode, Error> {
         // check systemd first
         if Node::node_running() {
-            let out = Command::new("service")
+            let output = Command::new("service")
                 .args(&["libra-node", "status"])
-                .output()
-                .expect("could not check systemctl");
-            let text = str::from_utf8(&out.stdout.as_slice()).unwrap();
-            if text.contains("validator") {
-                return Ok(NodeMode::Validator);
-            }
-            if text.contains("fullnode") {
-                return Ok(NodeMode::Fullnode);
+                .output();
+            match output {
+                Ok(out) => {
+                    let text = str::from_utf8(&out.stdout.as_slice()).unwrap();
+                    if text.contains("validator") {
+                        return Ok(NodeMode::Validator);
+                    }
+                    if text.contains("fullnode") {
+                        return Ok(NodeMode::Fullnode);
+                    }
+                }
+                Err(e) => return Err(Error::from(e)),
             }
 
             // check as parent process
@@ -307,7 +311,6 @@ impl Node {
                 if is_fn {
                     return Ok(NodeMode::Validator);
                 }
-
             }
         }
         Err(Error::msg("node is not running"))
@@ -315,11 +318,7 @@ impl Node {
 
     /// is web monitor serving on 3030
     pub fn is_web_monitor_serving() -> bool {
-        let out = Command::new("fuser")
-            .args(&["3030/tcp"])
-            .output()
-            .expect("could no check fuser");
-        out.status.code().unwrap() == 0
+        port_scanner::scan_port(3030)
     }
 
     fn check_systemd(process_name: &str) -> bool {
@@ -332,6 +331,5 @@ impl Node {
             Ok(o) => o.status.code().unwrap() == 0,
             Err(_) => false,
         }
-        //out.status.code().unwrap() == 0 // is_active --quiet will exit 0 if the service is running normally.
     }
 }

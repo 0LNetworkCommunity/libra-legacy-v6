@@ -24,11 +24,12 @@ dirs = "2.0.2"
 transaction-builder = { path = "../../language/transaction-builder", version = "0.1.0"}
 libra-network-address = { path = "../../network/network-address", version = "0.1.0" }
 libra-genesis-tool = { path = "../../config/management/genesis", version = "0.1.0" }
-keygen = { path = "../keygen/", version = "0.1.0" }
-ol-cli = { path = "../cli"}
+ol-keys = { path = "../keys/", version = "0.1.0" }
+ol = { path = "../cli"}
 txs = { path = "../txs"}
 ol-types = { path = "../../ol/types"}
 miner = { path = "../miner" }
+zip = "0.5.12"
 
 [dependencies.abscissa_core]
 version = "0.5.2"

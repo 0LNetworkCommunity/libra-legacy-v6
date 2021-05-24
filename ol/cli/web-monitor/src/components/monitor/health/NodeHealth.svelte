@@ -34,6 +34,15 @@
         if (i.id === "set") {
           i.is_true = healthData.validator_set;
         }
+        if (i.id === "correct_mode") {
+          i.is_true = false; 
+          if (healthData.validator_set) {
+            i.is_true = healthData.node_mode == "Validator";
+          } else {
+            i.is_true = healthData.node_mode != "Validator";
+          }
+          i.description = "node running in mode: ".concat(healthData.node_mode);
+        }
         return i;
       });
     }
@@ -87,6 +96,12 @@
       id: "set",
       title: "In validator set",
       description: "owner account is in the validator set",
+      is_true: false,
+    },
+    {
+      id: "correct_mode",
+      title: "Mode",
+      description: "node running in mode: ",
       is_true: false,
     },
   ];

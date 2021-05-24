@@ -69,19 +69,18 @@ impl AppCfg {
                     serde_json::from_reader(file).expect("could not parse JSON in key_store.json");
                 match ajson::get(&json.to_string(), "*/waypoint.value") {
                     Some(value) => {
-                        println!("Waypoint: using waypoint from key_store.json: {:?}", &value);
-
+                        //println!("Waypoint: using waypoint from key_store.json: {:?}", &value);
                         Some(value.to_string().parse().unwrap())
                     }
                     // If nothing is found in key_store.json fallback to base_waypoint in toml
                     _ => {
-                        println!("Waypoint: fallback to base_waypoint in 0L.toml");
+                        //println!("Waypoint: fallback to base_waypoint in 0L.toml");
                         self.chain_info.base_waypoint
                     }
                 }
             }
             Err(_err) => {
-                println!("Waypoint: fallback to base_waypoint in 0L.toml");
+                // println!("Waypoint: fallback to base_waypoint in 0L.toml");
                 self.chain_info.base_waypoint
             }
         }
@@ -113,7 +112,6 @@ impl AppCfg {
         default_config.profile.auth_key = authkey.to_string();
         default_config.profile.account = account;
         if let Some(url) = upstream_peer {
-            dbg!(&url);
             default_config.profile.upstream_nodes = Some(vec![url.to_owned()]);
         }
         // skip questionnaire if CI
@@ -126,10 +124,10 @@ impl AppCfg {
         default_config.workspace.node_home = if config_path.is_some() {
             config_path.clone().unwrap()
         } else {
-            dirs::home_dir().unwrap()
+            let mut node_home = dirs::home_dir().unwrap();
+            node_home.push(NODE_HOME);
+            node_home
         };
-
-        default_config.workspace.node_home.push(NODE_HOME);
 
         fs::create_dir_all(&default_config.workspace.node_home).unwrap();
 
@@ -173,7 +171,7 @@ impl AppCfg {
   /// Save swarm default configs to swarm path
   /// swarm_path points to the swarm_temp directory
   /// node_home to the directory of the current swarm persona
-  pub fn init_swarm_config(swarm_path: PathBuf, node_home: PathBuf) -> AppCfg{
+  pub fn init_app_configs_swarm(swarm_path: PathBuf, node_home: PathBuf) -> AppCfg{
     // println!("init_swarm_config: {:?}", swarm_path); already logged in commands.rs
     let host_config = AppCfg::make_swarm_configs(swarm_path, node_home);
     AppCfg::save_file(&host_config);
@@ -209,7 +207,7 @@ impl AppCfg {
                 .unwrap();
 
         // upstream configs
-        let upstream_config_path = swarm_path.join("1/node.yaml");
+        let upstream_config_path = swarm_path.join("0/node.yaml");
         let upstream_config = NodeConfig::load(&upstream_config_path).unwrap_or_else(|_| {
             panic!(
                 "Failed to load NodeConfig from file: {:?}",
@@ -280,7 +278,7 @@ impl Default for AppCfg {
 
 /// Information about the Chain to mined for
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
+/// #[serde(deny_unknown_fields)]
 pub struct Workspace {
     /// home directory of the libra node, may be the same as miner.
     pub node_home: PathBuf,
@@ -289,9 +287,14 @@ pub struct Workspace {
     /// Directory to store blocks in
     pub block_dir: String,
     /// Directory for the database
+    #[serde(default = "default_db_path")]
     pub db_path: PathBuf,
     /// Path to which stdlib binaries for upgrades get built typically /language/stdlib/staged/stdlib.mv
     pub stdlib_bin_path: PathBuf,
+}
+
+fn default_db_path() -> PathBuf {
+    dirs::home_dir().unwrap().join(NODE_HOME).join("db")
 }
 
 impl Default for Workspace {
@@ -300,7 +303,7 @@ impl Default for Workspace {
             node_home: dirs::home_dir().unwrap().join(NODE_HOME),
             source_path: Some(dirs::home_dir().unwrap().join("libra")),
             block_dir: "blocks".to_owned(),
-            db_path: dirs::home_dir().unwrap().join(NODE_HOME).join("db"),
+            db_path: default_db_path(),
             stdlib_bin_path: "/root/libra/language/stdlib/staged/stdlib.mv"
                 .parse::<PathBuf>()
                 .unwrap(),
@@ -386,14 +389,19 @@ pub enum TxType {
 // #[serde(deny_unknown_fields)]
 pub struct TxConfigs {
     /// baseline cost
+    #[serde(default="default_baseline_cost")]
     pub baseline_cost: TxCost,
     /// critical transactions cost
+    #[serde(default="default_critical_txs_cost")]
     pub critical_txs_cost: Option<TxCost>,
     /// management transactions cost
+    #[serde(default="default_management_txs_cost")]
     pub management_txs_cost: Option<TxCost>,
     /// Miner transactions cost
+    #[serde(default="default_miner_txs_cost")]
     pub miner_txs_cost: Option<TxCost>,
     /// Cheap or test transation costs
+    #[serde(default="default_cheap_txs_cost")]
     pub cheap_txs_cost: Option<TxCost>,
 }
 
@@ -439,24 +447,29 @@ impl TxCost {
 impl Default for TxConfigs {
     fn default() -> Self {
         Self {
-            baseline_cost: TxCost::new(10_000),
-            critical_txs_cost: Some(TxCost::new(1_000_000)),
-            management_txs_cost: Some(TxCost::new(100_000)),
-            miner_txs_cost: Some(TxCost::new(10_000)),
-            cheap_txs_cost: Some(TxCost::new(1_000)),
+            baseline_cost: default_baseline_cost(),
+            critical_txs_cost: default_critical_txs_cost(),
+            management_txs_cost: default_management_txs_cost(),
+            miner_txs_cost: default_miner_txs_cost(),
+            cheap_txs_cost: default_cheap_txs_cost(),
         }
     }
 }
 
+fn default_baseline_cost() -> TxCost { TxCost::new(10_000) }
+fn default_critical_txs_cost() -> Option<TxCost> { Some(TxCost::new(1_000_000)) }
+fn default_management_txs_cost() -> Option<TxCost> { Some(TxCost::new(100_000)) }
+fn default_miner_txs_cost() -> Option<TxCost> {Some(TxCost::new(10_000)) }
+fn default_cheap_txs_cost() -> Option<TxCost> { Some(TxCost::new(1_000)) }
+
 /// Get swarm configs from swarm files, swarm must be running
-pub fn get_swarm_configs(mut swarm_path: PathBuf) -> (Url, Waypoint) {
+pub fn get_swarm_configs( mut swarm_path: PathBuf) -> (Url, Waypoint) {
     swarm_path.push("0/node.yaml");
     let config = NodeConfig::load(&swarm_path)
         .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path));
 
     let url = Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str())
         .unwrap();
-
     let waypoint = config.base.waypoint.waypoint();
 
     (url, waypoint)

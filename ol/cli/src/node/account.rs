@@ -7,9 +7,6 @@ use libra_types::{account_state::AccountState, transaction::Version};
 use resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator, NullStateView};
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
-
-// const ACCOUNT_INFO_DB_KEY: &str = "account_info";
-
 #[derive(Clone, Debug, Deserialize, Serialize)]
 /// information on the owner account of this node.
 pub struct OwnerAccountView {
@@ -46,26 +43,13 @@ impl Node {
         }
     }
 
-    // /// get chain info from cache
-    // pub fn read_account_info_cache() -> OwnerAccountView {
-    //     let account_state = DB_CACHE_READ
-    //         .get(ACCOUNT_INFO_DB_KEY.as_bytes())
-    //         .unwrap()
-    //         .expect("could not reach account_info cache");
-    //     let c: OwnerAccountView = serde_json::de::from_slice(&account_state.as_slice()).unwrap();
-    //     c
-    // }
-
     /// Get the account view struct
     pub fn get_account_view(&mut self) -> Option<AccountView> {
         let account = self.conf.profile.account;
-        let (account_view, _) = self
-            .client
-            .get_account(account, true)
-            .expect(&format!("could not get account at address {:?}", account));
-        account_view
-
-        // .expect(&format!("could not get account at address {:?}", account))
+        match self.client.get_account(account, true) {
+            Ok((account_view, _)) => account_view,
+            Err(_) => None
+        }
     }
 
     /// Return a full Move-annotated account resource struct

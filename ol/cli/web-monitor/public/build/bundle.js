@@ -50,6 +50,9 @@ var app = (function () {
     function space() {
         return text(' ');
     }
+    function empty() {
+        return text('');
+    }
     function attr(node, attribute, value) {
         if (value == null)
             node.removeAttribute(attribute);
@@ -68,17 +71,6 @@ var app = (function () {
     let current_component;
     function set_current_component(component) {
         current_component = component;
-    }
-    function get_current_component() {
-        if (!current_component)
-            throw new Error('Function called outside component initialization');
-        return current_component;
-    }
-    function onMount(fn) {
-        get_current_component().$$.on_mount.push(fn);
-    }
-    function onDestroy(fn) {
-        get_current_component().$$.on_destroy.push(fn);
     }
 
     const dirty_components = [];
@@ -181,6 +173,12 @@ var app = (function () {
             block.o(local);
         }
     }
+
+    const globals = (typeof window !== 'undefined'
+        ? window
+        : typeof globalThis !== 'undefined'
+            ? globalThis
+            : global);
     function create_component(block) {
         block && block.c();
     }
@@ -17982,7 +17980,7 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (84:2) {#if healthData}
+    // (100:2) {#if healthData}
     function create_if_block$1(ctx) {
     	let div;
     	let h3;
@@ -18014,11 +18012,11 @@ var app = (function () {
     			}
 
     			attr_dev(h3, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted");
-    			add_location(h3, file$9, 85, 6, 2369);
+    			add_location(h3, file$9, 101, 6, 2928);
     			attr_dev(dl, "class", "uk-description-list");
-    			add_location(dl, file$9, 88, 6, 2481);
+    			add_location(dl, file$9, 104, 6, 3040);
     			attr_dev(div, "class", "uk-card uk-card-default uk-card-body");
-    			add_location(div, file$9, 84, 4, 2312);
+    			add_location(div, file$9, 100, 4, 2871);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -18089,14 +18087,14 @@ var app = (function () {
     		block,
     		id: create_if_block$1.name,
     		type: "if",
-    		source: "(84:2) {#if healthData}",
+    		source: "(100:2) {#if healthData}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (90:8) {#each allChecks as c}
+    // (106:8) {#each allChecks as c}
     function create_each_block$3(ctx) {
     	let check;
     	let current;
@@ -18143,7 +18141,7 @@ var app = (function () {
     		block,
     		id: create_each_block$3.name,
     		type: "each",
-    		source: "(90:8) {#each allChecks as c}",
+    		source: "(106:8) {#each allChecks as c}",
     		ctx
     	});
 
@@ -18159,7 +18157,7 @@ var app = (function () {
     		c: function create() {
     			main = element("main");
     			if (if_block) if_block.c();
-    			add_location(main, file$9, 82, 0, 2282);
+    			add_location(main, file$9, 98, 0, 2841);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -18261,6 +18259,18 @@ var app = (function () {
     					i.is_true = healthData.validator_set;
     				}
 
+    				if (i.id === "correct_mode") {
+    					i.is_true = false;
+
+    					if (healthData.validator_set) {
+    						i.is_true = healthData.node_mode == "Validator";
+    					} else {
+    						i.is_true = healthData.node_mode != "Validator";
+    					}
+
+    					i.description = ("node running in mode: ").concat(healthData.node_mode);
+    				}
+
     				return i;
     			}));
     		}
@@ -18307,6 +18317,12 @@ var app = (function () {
     			id: "set",
     			title: "In validator set",
     			description: "owner account is in the validator set",
+    			is_true: false
+    		},
+    		{
+    			id: "correct_mode",
+    			title: "Mode",
+    			description: "node running in mode: ",
     			is_true: false
     		}
     	];
@@ -18846,7 +18862,7 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (57:4) {#each set as val, i}
+    // (45:4) {#each set as val, i}
     function create_each_block$2(ctx) {
     	let li;
     	let div5;
@@ -18947,34 +18963,34 @@ var app = (function () {
     			td7 = element("td");
     			t22 = text(t22_value);
     			t23 = space();
-    			add_location(div0, file$5, 60, 12, 1747);
-    			add_location(div1, file$5, 61, 12, 1792);
-    			add_location(div2, file$5, 62, 12, 1834);
-    			add_location(div3, file$5, 63, 12, 1885);
+    			add_location(div0, file$5, 48, 12, 1438);
+    			add_location(div1, file$5, 49, 12, 1483);
+    			add_location(div2, file$5, 50, 12, 1525);
+    			add_location(div3, file$5, 51, 12, 1576);
     			attr_dev(div4, "class", "uk-column-1-4 uk-child-width-expand@s uk-text-center");
-    			add_location(div4, file$5, 59, 10, 1668);
+    			add_location(div4, file$5, 47, 10, 1359);
     			attr_dev(div5, "class", "uk-accordion-title uk-text-muted");
-    			add_location(div5, file$5, 58, 8, 1611);
-    			add_location(td0, file$5, 70, 16, 2080);
+    			add_location(div5, file$5, 46, 8, 1302);
+    			add_location(td0, file$5, 58, 16, 1771);
     			attr_dev(td1, "class", "uk-text-break");
-    			add_location(td1, file$5, 71, 16, 2130);
-    			add_location(tr0, file$5, 69, 14, 2059);
-    			add_location(td2, file$5, 74, 16, 2237);
+    			add_location(td1, file$5, 59, 16, 1821);
+    			add_location(tr0, file$5, 57, 14, 1750);
+    			add_location(td2, file$5, 62, 16, 1928);
     			attr_dev(td3, "class", "uk-text-break");
-    			add_location(td3, file$5, 75, 16, 2288);
-    			add_location(tr1, file$5, 73, 14, 2216);
-    			add_location(td4, file$5, 78, 16, 2393);
-    			add_location(td5, file$5, 79, 16, 2447);
-    			add_location(tr2, file$5, 77, 14, 2372);
-    			add_location(td6, file$5, 82, 16, 2546);
-    			add_location(td7, file$5, 83, 16, 2590);
-    			add_location(tr3, file$5, 81, 14, 2525);
-    			add_location(tbody, file$5, 68, 12, 2037);
+    			add_location(td3, file$5, 63, 16, 1979);
+    			add_location(tr1, file$5, 61, 14, 1907);
+    			add_location(td4, file$5, 66, 16, 2084);
+    			add_location(td5, file$5, 67, 16, 2138);
+    			add_location(tr2, file$5, 65, 14, 2063);
+    			add_location(td6, file$5, 70, 16, 2237);
+    			add_location(td7, file$5, 71, 16, 2281);
+    			add_location(tr3, file$5, 69, 14, 2216);
+    			add_location(tbody, file$5, 56, 12, 1728);
     			attr_dev(table, "class", "uk-table");
-    			add_location(table, file$5, 67, 10, 2000);
+    			add_location(table, file$5, 55, 10, 1691);
     			attr_dev(div6, "class", "uk-accordion-content");
-    			add_location(div6, file$5, 66, 8, 1955);
-    			add_location(li, file$5, 57, 6, 1598);
+    			add_location(div6, file$5, 54, 8, 1646);
+    			add_location(li, file$5, 45, 6, 1289);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, li, anchor);
@@ -19039,7 +19055,7 @@ var app = (function () {
     		block,
     		id: create_each_block$2.name,
     		type: "each",
-    		source: "(57:4) {#each set as val, i}",
+    		source: "(45:4) {#each set as val, i}",
     		ctx
     	});
 
@@ -19101,20 +19117,21 @@ var app = (function () {
     				each_blocks[i].c();
     			}
 
-    			add_location(span, file$5, 43, 4, 1214);
+    			add_location(span, file$5, 31, 4, 905);
     			attr_dev(h2, "class", " uk-text-center uk-text-uppercase uk-text-muted uk-text-light uk-margin-medium-bottom");
-    			add_location(h2, file$5, 40, 2, 1104);
-    			add_location(div0, file$5, 48, 6, 1413);
-    			add_location(div1, file$5, 49, 6, 1438);
-    			add_location(div2, file$5, 50, 6, 1468);
-    			add_location(div3, file$5, 51, 6, 1501);
+    			add_location(h2, file$5, 28, 2, 795);
+    			add_location(div0, file$5, 36, 6, 1104);
+    			add_location(div1, file$5, 37, 6, 1129);
+    			add_location(div2, file$5, 38, 6, 1159);
+    			add_location(div3, file$5, 39, 6, 1192);
     			attr_dev(div4, "class", "uk-column-1-4 uk-child-width-expand@s uk-text-center uk-text-uppercase uk-text-light uk-text-small");
-    			add_location(div4, file$5, 47, 4, 1294);
+    			add_location(div4, file$5, 35, 4, 985);
     			attr_dev(div5, "class", "uk-text-muted");
-    			add_location(div5, file$5, 46, 2, 1262);
+    			add_location(div5, file$5, 34, 2, 953);
     			attr_dev(ul, "uk-accordion", "");
-    			add_location(ul, file$5, 55, 2, 1548);
-    			add_location(main, file$5, 39, 0, 1095);
+    			add_location(ul, file$5, 43, 2, 1239);
+    			attr_dev(main, "uk-height-viewport", "expand: true");
+    			add_location(main, file$5, 27, 0, 752);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -19213,8 +19230,6 @@ var app = (function () {
     	});
 
     	$$self.$capture_state = () => ({
-    		onMount,
-    		onDestroy,
     		sortBy: lodash.sortBy,
     		set,
     		chainInfo,
@@ -19490,6 +19505,8 @@ var app = (function () {
     }
 
     /* src/components/upgrade/InProgress.svelte generated by Svelte v3.37.0 */
+
+    const { console: console_1 } = globals;
     const file$3 = "src/components/upgrade/InProgress.svelte";
 
     function get_each_context(ctx, list, i) {
@@ -19499,23 +19516,70 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (56:8) {#each vote_counts as prop, i}
+    function get_each_context_1(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[9] = list[i];
+    	child_ctx[8] = i;
+    	return child_ctx;
+    }
+
+    // (55:10) {#each prop.validators as val, i}
+    function create_each_block_1(ctx) {
+    	let p;
+    	let t_value = /*val*/ ctx[9] + "";
+    	let t;
+
+    	const block = {
+    		c: function create() {
+    			p = element("p");
+    			t = text(t_value);
+    			add_location(p, file$3, 55, 12, 1649);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, p, anchor);
+    			append_dev(p, t);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty & /*vote_counts*/ 1 && t_value !== (t_value = /*val*/ ctx[9] + "")) set_data_dev(t, t_value);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(p);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block_1.name,
+    		type: "each",
+    		source: "(55:10) {#each prop.validators as val, i}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (46:8) {#each vote_counts as prop, i}
     function create_each_block(ctx) {
     	let h5;
     	let t0;
     	let t1_value = /*i*/ ctx[8] + 1 + "";
     	let t1;
     	let t2;
-    	let p0;
-    	let t3_value = /*vote_counts*/ ctx[0].length + "";
+    	let p;
+    	let t3_value = /*prop*/ ctx[6].validators.length + "";
     	let t3;
     	let t4;
     	let t5;
     	let t6;
     	let t7;
-    	let p1;
-    	let t8_value = /*prop*/ ctx[6].validators + "";
-    	let t8;
+    	let each_1_anchor;
+    	let each_value_1 = /*prop*/ ctx[6].validators;
+    	validate_each_argument(each_value_1);
+    	let each_blocks = [];
+
+    	for (let i = 0; i < each_value_1.length; i += 1) {
+    		each_blocks[i] = create_each_block_1(get_each_context_1(ctx, each_value_1, i));
+    	}
 
     	const block = {
     		c: function create() {
@@ -19523,45 +19587,76 @@ var app = (function () {
     			t0 = text("proposal ");
     			t1 = text(t1_value);
     			t2 = space();
-    			p0 = element("p");
+    			p = element("p");
     			t3 = text(t3_value);
     			t4 = text(" votes / ");
     			t5 = text(/*validator_count*/ ctx[1]);
     			t6 = text(" validators");
     			t7 = space();
-    			p1 = element("p");
-    			t8 = text(t8_value);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].c();
+    			}
+
+    			each_1_anchor = empty();
     			attr_dev(h5, "class", "uk-text-muted uk-text-center uk-text-uppercase uk-text-small");
-    			add_location(h5, file$3, 56, 10, 2036);
-    			attr_dev(p0, "class", "uk-text-uppercase uk-text-small");
-    			add_location(p0, file$3, 61, 10, 2188);
-    			add_location(p1, file$3, 64, 10, 2327);
+    			add_location(h5, file$3, 46, 10, 1308);
+    			attr_dev(p, "class", "uk-text-uppercase uk-text-small");
+    			add_location(p, file$3, 51, 10, 1460);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, h5, anchor);
     			append_dev(h5, t0);
     			append_dev(h5, t1);
     			insert_dev(target, t2, anchor);
-    			insert_dev(target, p0, anchor);
-    			append_dev(p0, t3);
-    			append_dev(p0, t4);
-    			append_dev(p0, t5);
-    			append_dev(p0, t6);
+    			insert_dev(target, p, anchor);
+    			append_dev(p, t3);
+    			append_dev(p, t4);
+    			append_dev(p, t5);
+    			append_dev(p, t6);
     			insert_dev(target, t7, anchor);
-    			insert_dev(target, p1, anchor);
-    			append_dev(p1, t8);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].m(target, anchor);
+    			}
+
+    			insert_dev(target, each_1_anchor, anchor);
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty & /*vote_counts*/ 1 && t3_value !== (t3_value = /*vote_counts*/ ctx[0].length + "")) set_data_dev(t3, t3_value);
+    			if (dirty & /*vote_counts*/ 1 && t3_value !== (t3_value = /*prop*/ ctx[6].validators.length + "")) set_data_dev(t3, t3_value);
     			if (dirty & /*validator_count*/ 2) set_data_dev(t5, /*validator_count*/ ctx[1]);
-    			if (dirty & /*vote_counts*/ 1 && t8_value !== (t8_value = /*prop*/ ctx[6].validators + "")) set_data_dev(t8, t8_value);
+
+    			if (dirty & /*vote_counts*/ 1) {
+    				each_value_1 = /*prop*/ ctx[6].validators;
+    				validate_each_argument(each_value_1);
+    				let i;
+
+    				for (i = 0; i < each_value_1.length; i += 1) {
+    					const child_ctx = get_each_context_1(ctx, each_value_1, i);
+
+    					if (each_blocks[i]) {
+    						each_blocks[i].p(child_ctx, dirty);
+    					} else {
+    						each_blocks[i] = create_each_block_1(child_ctx);
+    						each_blocks[i].c();
+    						each_blocks[i].m(each_1_anchor.parentNode, each_1_anchor);
+    					}
+    				}
+
+    				for (; i < each_blocks.length; i += 1) {
+    					each_blocks[i].d(1);
+    				}
+
+    				each_blocks.length = each_value_1.length;
+    			}
     		},
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(h5);
     			if (detaching) detach_dev(t2);
-    			if (detaching) detach_dev(p0);
+    			if (detaching) detach_dev(p);
     			if (detaching) detach_dev(t7);
-    			if (detaching) detach_dev(p1);
+    			destroy_each(each_blocks, detaching);
+    			if (detaching) detach_dev(each_1_anchor);
     		}
     	};
 
@@ -19569,7 +19664,7 @@ var app = (function () {
     		block,
     		id: create_each_block.name,
     		type: "each",
-    		source: "(56:8) {#each vote_counts as prop, i}",
+    		source: "(46:8) {#each vote_counts as prop, i}",
     		ctx
     	});
 
@@ -19587,7 +19682,6 @@ var app = (function () {
     	let td0;
     	let t3;
     	let td1;
-    	let t4_value = /*vote_counts*/ ctx[0].length + "";
     	let t4;
     	let t5;
     	let t6;
@@ -19624,7 +19718,7 @@ var app = (function () {
     			td0.textContent = "VOTERS:";
     			t3 = space();
     			td1 = element("td");
-    			t4 = text(t4_value);
+    			t4 = text(/*voters*/ ctx[3]);
     			t5 = text("/");
     			t6 = text(/*validator_count*/ ctx[1]);
     			t7 = space();
@@ -19645,24 +19739,24 @@ var app = (function () {
     			}
 
     			attr_dev(h3, "class", "uk-text-muted uk-text-center uk-text-uppercase");
-    			add_location(h3, file$3, 35, 4, 1498);
+    			add_location(h3, file$3, 25, 4, 782);
     			attr_dev(td0, "class", "uk-text-uppercase");
-    			add_location(td0, file$3, 41, 10, 1659);
-    			add_location(td1, file$3, 42, 10, 1712);
-    			add_location(tr0, file$3, 40, 8, 1644);
+    			add_location(td0, file$3, 31, 10, 943);
+    			add_location(td1, file$3, 32, 10, 996);
+    			add_location(tr0, file$3, 30, 8, 928);
     			attr_dev(td2, "class", "uk-text-uppercase");
-    			add_location(td2, file$3, 45, 10, 1799);
-    			add_location(td3, file$3, 46, 10, 1856);
-    			add_location(tr1, file$3, 44, 8, 1784);
-    			add_location(tbody, file$3, 39, 6, 1628);
+    			add_location(td2, file$3, 35, 10, 1071);
+    			add_location(td3, file$3, 36, 10, 1128);
+    			add_location(tr1, file$3, 34, 8, 1056);
+    			add_location(tbody, file$3, 29, 6, 912);
     			attr_dev(table, "class", "uk-table");
-    			add_location(table, file$3, 38, 4, 1597);
-    			add_location(hr, file$3, 51, 4, 1934);
+    			add_location(table, file$3, 28, 4, 881);
+    			add_location(hr, file$3, 41, 4, 1206);
     			attr_dev(div0, "class", "uk-text-center");
-    			add_location(div0, file$3, 54, 6, 1958);
-    			add_location(div1, file$3, 53, 4, 1946);
-    			add_location(div2, file$3, 34, 2, 1488);
-    			add_location(main, file$3, 33, 0, 1479);
+    			add_location(div0, file$3, 44, 6, 1230);
+    			add_location(div1, file$3, 43, 4, 1218);
+    			add_location(div2, file$3, 24, 2, 772);
+    			add_location(main, file$3, 23, 0, 763);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -19698,7 +19792,7 @@ var app = (function () {
     			}
     		},
     		p: function update(ctx, [dirty]) {
-    			if (dirty & /*vote_counts*/ 1 && t4_value !== (t4_value = /*vote_counts*/ ctx[0].length + "")) set_data_dev(t4, t4_value);
+    			if (dirty & /*voters*/ 8) set_data_dev(t4, /*voters*/ ctx[3]);
     			if (dirty & /*validator_count*/ 2) set_data_dev(t6, /*validator_count*/ ctx[1]);
     			if (dirty & /*expiration_height*/ 4) set_data_dev(t10, /*expiration_height*/ ctx[2]);
 
@@ -19748,87 +19842,51 @@ var app = (function () {
     function instance$3($$self, $$props, $$invalidate) {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots("InProgress", slots, []);
-
-    	var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
-    		function adopt(value) {
-    			return value instanceof P
-    			? value
-    			: new P(function (resolve) {
-    						resolve(value);
-    					});
-    		}
-
-    		return new (P || (P = Promise))(function (resolve, reject) {
-    				function fulfilled(value) {
-    					try {
-    						step(generator.next(value));
-    					} catch(e) {
-    						reject(e);
-    					}
-    				}
-
-    				function rejected(value) {
-    					try {
-    						step(generator["throw"](value));
-    					} catch(e) {
-    						reject(e);
-    					}
-    				}
-
-    				function step(result) {
-    					result.done
-    					? resolve(result.value)
-    					: adopt(result.value).then(fulfilled, rejected);
-    				}
-
-    				step((generator = generator.apply(thisArg, _arguments || [])).next());
-    			});
-    	};
-
     	let vote_counts = [];
     	let validator_count = 0;
     	let expiration_height = 0;
+    	let voters = 0;
     	let vote_window_expired;
     	let current_height = 0;
 
     	chainInfo.subscribe(info_str => {
     		let data = JSON.parse(info_str);
     		$$invalidate(0, vote_counts = data.chain_view.upgrade.upgrade.vote_counts);
+    		$$invalidate(3, voters = 0);
+    		console.log(vote_counts);
+
+    		vote_counts.forEach(e => {
+    			console.log(e.validators.length);
+    			$$invalidate(3, voters = voters + e.validators.length);
+    		});
+
     		$$invalidate(2, expiration_height = data.chain_view.upgrade.upgrade.vote_window);
     		vote_window_expired = expiration_height < current_height;
     		current_height = data.chain_view.height;
+    		$$invalidate(1, validator_count = data.chain_view.validator_view.length);
     	});
-
-    	onMount(() => __awaiter(void 0, void 0, void 0, function* () {
-    		let val_url = "http://" + location.host + "/vals";
-
-    		yield fetch(val_url).then(r => r.json()).then(data => {
-    			$$invalidate(1, validator_count = data.length);
-    		});
-    	}));
 
     	const writable_props = [];
 
     	Object.keys($$props).forEach(key => {
-    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<InProgress> was created with unknown prop '${key}'`);
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console_1.warn(`<InProgress> was created with unknown prop '${key}'`);
     	});
 
     	$$self.$capture_state = () => ({
-    		__awaiter,
     		chainInfo,
-    		onMount,
     		vote_counts,
     		validator_count,
     		expiration_height,
+    		voters,
     		vote_window_expired,
     		current_height
     	});
 
     	$$self.$inject_state = $$props => {
-    		if ("__awaiter" in $$props) __awaiter = $$props.__awaiter;
     		if ("vote_counts" in $$props) $$invalidate(0, vote_counts = $$props.vote_counts);
     		if ("validator_count" in $$props) $$invalidate(1, validator_count = $$props.validator_count);
     		if ("expiration_height" in $$props) $$invalidate(2, expiration_height = $$props.expiration_height);
+    		if ("voters" in $$props) $$invalidate(3, voters = $$props.voters);
     		if ("vote_window_expired" in $$props) vote_window_expired = $$props.vote_window_expired;
     		if ("current_height" in $$props) current_height = $$props.current_height;
     	};
@@ -19837,7 +19895,7 @@ var app = (function () {
     		$$self.$inject_state($$props.$$inject);
     	}
 
-    	return [vote_counts, validator_count, expiration_height];
+    	return [vote_counts, validator_count, expiration_height, voters];
     }
 
     class InProgress extends SvelteComponentDev {
@@ -20176,11 +20234,12 @@ var app = (function () {
     			create_component(vals.$$.fragment);
     			t2 = space();
     			create_component(upgrade.$$.fragment);
-    			attr_dev(ul, "class", "uk-switcher uk-margin switcher-container");
-    			add_location(ul, file$1, 10, 4, 309);
+    			attr_dev(ul, "class", "uk-switcher uk-margin switcher-container uk-height-large");
+    			add_location(ul, file$1, 10, 4, 341);
     			attr_dev(div, "class", "uk-container uk-margin-top");
-    			add_location(div, file$1, 9, 2, 264);
-    			attr_dev(main, "class", "uk-background-muted uk-height-viewport");
+    			add_location(div, file$1, 9, 2, 296);
+    			attr_dev(main, "uk-height-viewport", "expand: true");
+    			attr_dev(main, "class", "uk-background-muted uk-overflow-auto");
     			add_location(main, file$1, 7, 0, 198);
     		},
     		l: function claim(nodes) {

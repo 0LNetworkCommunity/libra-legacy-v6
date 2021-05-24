@@ -33,10 +33,6 @@ pub struct StartCmd {
         help = "Connect to upstream node, instead of default (local) node"
     )]
     url: Option<Url>,
-
-    // Option for operator to submit transactions for owner.
-    #[options(short = "o", help = "Operator will submit transactions for owner")]
-    is_operator: bool,
 }
 
 impl Runnable for StartCmd {
@@ -51,12 +47,13 @@ impl Runnable for StartCmd {
             use_upstream_url,
             ..
         } = entrypoint::get_args();
-
-        //TODO(mortonbits): In the case of swarm this needs to take from swarm_temp/0/, and not from  ~/.0L, as I think is happening here.
+        
+        // config reading respects swarm setup
+        // so also cfg.get_waypoint will return correct data
         let cfg = app_config().clone();
 
         let waypoint = if waypoint.is_none() {
-            match cfg.get_waypoint(swarm_path.clone()) {
+            match cfg.get_waypoint(None) {
                 Some(w) => Some(w),
                 _ => {
                     status_err!("Cannot start without waypoint, exiting");
@@ -78,12 +75,13 @@ impl Runnable for StartCmd {
 
         // Check for, and submit backlog proofs.
         if !self.skip_backlog {
-            backlog::process_backlog(&cfg, &tx_params, self.is_operator);
+          // TODO: remove is_operator from signature, since tx_params has it.
+            backlog::process_backlog(&cfg, &tx_params, is_operator);
         }
 
         if !self.backlog_only {
             // Steady state.
-            let result = mine_and_submit(&cfg, tx_params, self.is_operator);
+            let result = mine_and_submit(&cfg, tx_params, is_operator);
             match result {
                 Ok(_val) => {}
                 Err(err) => {

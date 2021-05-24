@@ -6,10 +6,8 @@ use std::sync::{
 };
 use std::thread;
 use std::time::Duration;
-
 use termion::event::Key;
 use termion::input::TermRead;
-
 /// Event Struct
 pub enum Event<I> {
     /// Input Event
@@ -53,10 +51,6 @@ impl Default for Config {
 
 /// Events
 impl Events {
-    // pub fn new() -> Events {
-    //     Events::with_config(Config::default())
-    // }
-
     /// Config Event
     pub fn with_config(config: Config) -> Events {
         let (tx, rx) = mpsc::channel();
@@ -99,12 +93,4 @@ impl Events {
     pub fn next(&self) -> Result<Event<Key>, mpsc::RecvError> {
         self.rx.recv()
     }
-
-    // pub fn disable_exit_key(&mut self) {
-    //     self.ignore_exit_key.store(true, Ordering::Relaxed);
-    // }
-    //
-    // pub fn enable_exit_key(&mut self) {
-    //     self.ignore_exit_key.store(false, Ordering::Relaxed);
-    // }
 }

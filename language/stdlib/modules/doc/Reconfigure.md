@@ -10,7 +10,7 @@
 
 
 <pre><code><b>use</b> <a href="AccountLimits.md#0x1_AccountLimits">0x1::AccountLimits</a>;
-<b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
+<b>use</b> <a href="AutoPay.md#0x1_AutoPay2">0x1::AutoPay2</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
 <b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
@@ -194,7 +194,7 @@
     <a href="Subsidy.md#0x1_Subsidy_fullnode_reconfig">Subsidy::fullnode_reconfig</a>(vm);
 //  print(&032120);
 
-    <a href="AutoPay.md#0x1_AutoPay_reconfig_reset_tick">AutoPay::reconfig_reset_tick</a>(vm);
+    <a href="AutoPay.md#0x1_AutoPay2_reconfig_reset_tick">AutoPay2::reconfig_reset_tick</a>(vm);
 //  print(&032130);
     <a href="Epoch.md#0x1_Epoch_reset_timer">Epoch::reset_timer</a>(vm, height_now);
 }

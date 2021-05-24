@@ -10,11 +10,11 @@ use crate::{
 use abscissa_core::{status_ok, status_warn};
 use anyhow::Error;
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
+use ol_keys::{wallet, scheme::KeyScheme};
 use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     test_utils::KeyPair,
 };
-use keygen::scheme::KeyScheme;
 use libra_global_constants::OPERATOR_KEY;
 use libra_json_rpc_types::views::{TransactionView, VMStatusView};
 use libra_secure_storage::{CryptoStorage, NamespacedStorage, OnDiskStorageInternal, Storage};
@@ -98,17 +98,17 @@ pub fn maybe_submit(
         save_tx(txn.clone(), path);
     }
 
-    if no_send {return Ok(txn);}
+    if no_send {
+        return Ok(txn);
+    }
 
     match submit_tx(client, txn.clone(), &mut account_data) {
-      Ok(res) => {
-        match eval_tx_status(res) {
-          Ok(_) => Ok(txn),
-          Err(e) => Err(e),
-        }
-      },
-      Err(e) => Err(e), 
-  }
+        Ok(res) => match eval_tx_status(res) {
+            Ok(_) => Ok(txn),
+            Err(e) => Err(e),
+        },
+        Err(e) => Err(e),
+    }
 }
 /// convenience for wrapping multiple transactions
 pub fn batch_wrapper(
@@ -121,8 +121,10 @@ pub fn batch_wrapper(
         // TODO: format path for batch scripts
 
         let new_path = if save_path.is_some() {
-          Some(save_path.clone().unwrap().join(i.to_string()))
-        } else {None};
+            Some(save_path.clone().unwrap().join(i.to_string()))
+        } else {
+            None
+        };
 
         maybe_submit(s, tx_params, no_send, new_path).unwrap();
         // TODO: handle saving of batches to file.
@@ -188,7 +190,16 @@ pub fn tx_params_wrapper(tx_type: TxType) -> Result<TxParams, Error> {
         ..
     } = entrypoint::get_args();
     let app_config = app_config().clone();
-    tx_params(app_config, url, waypoint, swarm_path,swarm_persona, tx_type, is_operator, use_upstream_url)
+    tx_params(
+        app_config,
+        url,
+        waypoint,
+        swarm_path,
+        swarm_persona,
+        tx_type,
+        is_operator,
+        use_upstream_url,
+    )
 }
 
 /// tx_parameters format
@@ -202,22 +213,25 @@ pub fn tx_params(
     is_operator: bool,
     use_upstream_url: bool,
 ) -> Result<TxParams, Error> {
-    let url = if url_opt.is_some() {url_opt.unwrap()} 
-    else {config.what_url(use_upstream_url)};
+    let url = if url_opt.is_some() {
+        url_opt.unwrap()
+    } else {
+        config.what_url(use_upstream_url)
+    };
 
     let mut tx_params: TxParams = if swarm_path.is_some() {
         get_tx_params_from_swarm(
-          swarm_path.clone().expect("needs a valid swarm temp dir"),
-          swarm_persona.expect("need a swarm 'persona' with credentials in fixtures."),
-          is_operator,
-        ).unwrap()
+            swarm_path.clone().expect("needs a valid swarm temp dir"),
+            swarm_persona.expect("need a swarm 'persona' with credentials in fixtures."),
+            is_operator,
+        )
+        .unwrap()
     } else {
         if is_operator {
-            
-            get_oper_params(waypoint.unwrap(), &config, tx_type, url)
+            get_oper_params( &config, tx_type, url, waypoint)
         } else {
             // Get from 0L.toml e.g. ~/.0L/0L.toml, or use Profile::default()
-            get_tx_params_from_toml(config.clone(), tx_type, None, url).unwrap()
+            get_tx_params_from_toml(config.clone(), tx_type, None, url, waypoint).unwrap()
         }
     };
 
@@ -229,15 +243,19 @@ pub fn tx_params(
 }
 
 /// Extract params from a local running swarm
-pub fn get_tx_params_from_swarm(swarm_path: PathBuf, swarm_persona: String, is_operator: bool) -> Result<TxParams, Error> {
+pub fn get_tx_params_from_swarm(
+    swarm_path: PathBuf,
+    swarm_persona: String,
+    is_operator: bool,
+) -> Result<TxParams, Error> {
     let (url, waypoint) = ol_types::config::get_swarm_configs(swarm_path);
     let mnem = ol_fixtures::get_persona_mnem(&swarm_persona.as_str());
     let keys = KeyScheme::new_from_mnemonic(mnem);
-    
+
     let keypair = if is_operator {
-      KeyPair::from(keys.child_1_operator.get_private_key())
+        KeyPair::from(keys.child_1_operator.get_private_key())
     } else {
-      KeyPair::from(keys.child_0_owner.get_private_key())
+        KeyPair::from(keys.child_0_owner.get_private_key())
     };
 
     let pubkey = keys.child_0_owner.get_public();
@@ -266,10 +284,11 @@ pub fn get_tx_params_from_swarm(swarm_path: PathBuf, swarm_persona: String, is_o
 
 /// Form tx parameters struct
 pub fn get_oper_params(
-    waypoint: Waypoint,
     config: &AppCfg,
     tx_type: TxType,
     url: Url,
+    wp: Option<Waypoint>,
+
     // // url_opt overrides all node configs, takes precedence over use_backup_url
     // url_opt: Option<Url>,
     // upstream_url: bool,
@@ -290,6 +309,12 @@ pub fn get_oper_params(
     let pubkey = &keypair.public_key; // keys.child_0_owner.get_public();
     let auth_key = AuthenticationKey::ed25519(pubkey);
 
+    let waypoint = wp.unwrap_or_else(|| {
+      config
+          .get_waypoint(None)
+          .clone()
+          .expect("could not get waypoint")
+    });
 
     let tx_cost = config.tx_configs.get_cost(tx_type);
     TxParams {
@@ -309,14 +334,22 @@ pub fn get_tx_params_from_toml(
     config: AppCfg,
     tx_type: TxType,
     wallet_opt: Option<&WalletLibrary>,
-    url: Url
+    url: Url,
+    wp: Option<Waypoint>,
 ) -> Result<TxParams, Error> {
     // let url = config.profile.default_node.clone().unwrap();
     let (auth_key, address, wallet) = if let Some(wallet) = wallet_opt {
-        keygen::get_account_from_wallet(wallet)
+        wallet::get_account_from_wallet(wallet)
     } else {
-        keygen::account_from_prompt()
+        wallet::get_account_from_prompt()
     };
+
+    let waypoint = wp.unwrap_or_else(|| {
+        config
+            .get_waypoint(None)
+            .clone()
+            .expect("could not get waypoint")
+    });
 
     let keys = KeyScheme::new_from_mnemonic(wallet.mnemonic());
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
@@ -326,10 +359,7 @@ pub fn get_tx_params_from_toml(
         signer_address: address,
         owner_address: address,
         url,
-        waypoint: config
-            .get_waypoint(None)
-            .clone()
-            .expect("could not get waypoint"),
+        waypoint,
         keypair,
         tx_cost: tx_cost.to_owned(),
         // max_gas_unit_for_tx: config.tx_configs.management_txs.max_gas_unit_for_tx,

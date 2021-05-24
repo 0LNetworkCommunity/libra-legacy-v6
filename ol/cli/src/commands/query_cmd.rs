@@ -24,8 +24,8 @@ pub struct QueryCmd {
     #[options(no_short, help = "blockheight")]
     blockheight: bool,
     
-    #[options(help = "sync delay")]
-    sync_delay: bool,
+    #[options(help = "sync delay from upstream")]
+    sync: bool,
     
     #[options(help = "resources")]
     resources: bool,
@@ -50,8 +50,8 @@ pub struct QueryCmd {
 impl Runnable for QueryCmd {
     fn run(&self) {
         let args = entrypoint::get_args();
-        let cfg = app_config().clone();
-        let client = client::pick_client(args.swarm_path, &cfg).unwrap().0;
+        let mut cfg = app_config().clone();
+        let client = client::pick_client(args.swarm_path, &mut cfg).unwrap().0;
         let mut node = Node::new(client, cfg);
 
         let _account = 
@@ -68,17 +68,17 @@ impl Runnable for QueryCmd {
         } 
         else if self.blockheight {
             info = node.get(QueryType::BlockHeight);
-            display = "BLOCKHEIGHT";
+            display = "BLOCK HEIGHT";
         }
-        else if self.sync_delay {
+        else if self.sync {
             info = node.get(QueryType::SyncDelay);
-            display = "SYNC-DELAY";
+            display = "SYNC";
         } 
         else if self.resources {
             info = node.get(QueryType::Resources);
             display = "RESOURCES";
         }
-        else if self.resources {
+        else if self.epoch {
             info = node.get(QueryType::Epoch);
             display = "EPOCH";
         }
@@ -91,8 +91,6 @@ impl Runnable for QueryCmd {
             });
             display = "TRANSACTIONS";
         }
-
-
         status_info!(display, format!("{}", info));
     }
 }

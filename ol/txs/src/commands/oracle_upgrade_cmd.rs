@@ -43,15 +43,5 @@ impl Runnable for OracleUpgradeCmd {
           entry_args.no_send,
           entry_args.save_path
         ).unwrap();
-        // match submit_tx(
-        //     &tx_params, 
-        //     oracle_tx_script(&path)
-        // ) {
-        //     Err(err) => { println!("{:?}", err) }
-        //     Ok(res)  => {
-        //         eval_tx_status(res);
-        //     }
-        // }
-
     }
 }

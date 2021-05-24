@@ -10,6 +10,8 @@ pub enum AccountState {
     None,
     /// account created on chain
     ExistsOnChain,
+    /// account in val set
+    InSet,
 }
 
 /// Events that can be taken on accounts
@@ -27,8 +29,11 @@ pub enum OnboardState {
     EmptyBox,
     /// Files initialized node.yaml, key_store.json
     ValConfigsOk,
+
+    /// DB files 
+    DbFilesOk,
     /// Database restored from backup
-    DbRestoredOk,
+    DbBootstrapOk,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -80,11 +85,14 @@ pub enum NodeEvents {
 #[serde(deny_unknown_fields)]
 /// All states a miner can be in
 pub enum MinerState {
-    /// Miner connected to upstream
+    /// Miner stopped
     Stopped,
-    /// Miner connected to upstream
+    /// Miner running
     Mining,
 }
+
+
+
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 /// Actions that impact the miner
@@ -93,6 +101,17 @@ pub enum MinerEvents {
     Started,
     /// miner failed
     Failed,
+}
+
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+/// All states the web-monitor can be in
+pub enum MonitorState {
+    /// Monitor stopped
+    Stopped,
+    /// Monitor serving
+    Serving,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -104,6 +123,10 @@ pub struct HostState {
     pub node_state: NodeState,
     /// state of miner
     pub miner_state: MinerState,
+    /// state of monitor
+    pub monitor_state: MonitorState,
+    /// state of account
+    pub account_state: AccountState,
 }
 
 /// methods for host state
@@ -114,6 +137,8 @@ impl HostState {
             onboard_state: OnboardState::EmptyBox,
             node_state: NodeState::Stopped,
             miner_state: MinerState::Stopped,
+            monitor_state: MonitorState::Stopped,
+            account_state: AccountState::None,
         }
     }
 }
