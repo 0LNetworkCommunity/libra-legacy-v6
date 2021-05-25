@@ -1,3 +1,4 @@
+apt install -y unzip zip jq
 DOWNLOAD_URLS=$(curl -sL https://api.github.com/repos/OLSF/libra/releases/latest | jq -r '.assets[].browser_download_url')
 
 
