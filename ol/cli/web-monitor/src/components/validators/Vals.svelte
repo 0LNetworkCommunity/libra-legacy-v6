@@ -67,7 +67,7 @@
       <li>
         <div class="uk-accordion-title uk-text-muted">
           <div class="uk-column-1-4 uk-child-width-expand@s uk-text-center">
-            <div>{val.account_address}</div>
+            <div class="hash">{val.account_address}</div>
             <div>{val.voting_power}</div>
             <div>{val.count_proofs_in_epoch}</div>
             <div>{val.tower_height}</div>
