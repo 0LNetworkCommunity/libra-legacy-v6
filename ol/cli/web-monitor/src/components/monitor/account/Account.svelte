@@ -5,6 +5,7 @@
   let inValidatorSet: Boolean = false;
 
   import { chainInfo } from "../../../store.ts";
+  import "../../layout/Style.svelte";
 
   chainInfo.subscribe((info_str) => {
     let data = JSON.parse(info_str);
@@ -43,7 +44,7 @@
     <tbody>
       <tr>
         <td class="uk-text-uppercase">owner</td>
-        <td class="uk-text-truncate"> {account} </td>
+        <td class="uk-text-truncate hash">{account}</td>
       </tr>
       <tr>
         <td class="uk-text-uppercase">balance</td>

@@ -57,7 +57,7 @@
           <p class="uk-text-uppercase uk-text-small">
             {vote_counts.length} votes / {validator_count} validators
           </p>
-          <p>{prop.validators}</p>
+          <p class="hash">{prop.validators}</p>
         {/each}
       </div>
     </div>
