@@ -3,8 +3,8 @@
 #![allow(clippy::never_loop)]
 
 use super::files_cmd;
-use crate::prelude::app_config;
 use crate::entrypoint;
+use crate::prelude::app_config;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_genesis_tool::node_files;
 use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
@@ -54,23 +54,35 @@ impl Runnable for ValWizardCmd {
         let (authkey, account, wallet) = wallet::get_account_from_prompt();
 
         let cfg = app_config().clone(); // read 0L.toml in case it exists
- 
-        let upstream = match cfg.profile.upstream_nodes {
-            Some(url) => url[0].to_owned(),   
-            _ => Url::parse("http://localhost:8080").unwrap(),  // default if not configured otherwise
-        };
 
-        println!("staring validator wizard with upstream URL: {:?}", &upstream);
+        let mut upstream = self.upstream_peer.clone().unwrap_or_else(|| {
+            self.template_url.clone().unwrap_or_else(|| {
+                // read from config if available, else set localhost
+                match cfg.profile.upstream_nodes {
+                    Some(url) => url[0].to_owned(),
+                    _ => Url::parse("http://localhost").unwrap(),
+                }
+            })
+        });
+        upstream.set_port(Some(8080)).unwrap();
 
-        let mut app_config =
-            AppCfg::init_app_configs(authkey, account, &Some(upstream), &Some(entrypoint::get_node_home()));
+        println!(
+            "staring validator wizard with upstream URL: {:?}",
+            &upstream
+        );
+
+        let mut app_config = AppCfg::init_app_configs(
+            authkey,
+            account,
+            &Some(upstream),
+            &Some(entrypoint::get_node_home()),
+        );
 
         let home_path = &app_config.workspace.node_home;
-        
+
         status_ok!("\nMiner config written", "\n...........................\n");
 
         if let Some(url) = &self.template_url {
-            
             let mut url = url.to_owned();
             url.set_port(Some(3030)).unwrap(); //web port
             save_template(&url.join("account.json").unwrap(), home_path);
@@ -197,7 +209,11 @@ pub fn save_template(url: &Url, home_path: &PathBuf) -> PathBuf {
     let g_res = reqwest::blocking::get(&url.to_string());
     let g_path = home_path.join("template.json");
     let mut g_file = File::create(&g_path).expect("couldn't create file");
-    let g_content = g_res.unwrap().bytes().expect("cannot connect to upstream node").to_vec(); //.text().unwrap();
+    let g_content = g_res
+        .unwrap()
+        .bytes()
+        .expect("cannot connect to upstream node")
+        .to_vec(); //.text().unwrap();
     g_file.write_all(g_content.as_slice()).unwrap();
     g_path
 }
