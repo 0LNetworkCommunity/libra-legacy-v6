@@ -2,7 +2,7 @@
 use futures::StreamExt;
 use ol_types::config::IS_PROD;
 use serde_json::json;
-use std::{convert::Infallible, fs, thread, time::Duration, path::PathBuf};
+use std::{convert::Infallible, fs, path::PathBuf, process::Command, thread, time::Duration};
 use tokio::time::interval;
 use warp::{sse::ServerSentEvent, Filter};
 
@@ -19,13 +19,14 @@ pub async fn start_server(mut node: Node, run_checks: bool) {
         });
     }
 
-    let node_home = workspace.node_home.clone();
+    let node_home = cfg.clone().workspace.node_home.clone();
     //GET check/ (json api for check data)
     let vitals_route = warp::path("vitals").and(warp::get()).map(move || {
         let path = node_home.clone();
         // create server event source from Check object
         let event_stream = interval(Duration::from_secs(10)).map(move |_| {
             let vitals = Vitals::read_json(&path);
+            // let items = health.refresh_checks();
             sse_vitals(vitals)
         });
         // reply using server-sent events
@@ -40,11 +41,10 @@ pub async fn start_server(mut node: Node, run_checks: bool) {
         fs::read_to_string(account_path).unwrap()
     }));
 
-    let node_home = workspace.node_home.clone();
+    let node_home = cfg.clone().workspace.node_home.clone();
     let epoch_route = warp::path("epoch.json").and(warp::get().map(move || {
         // let node_home = node_home_two.clone();
-        let path = node_home.clone();
-        let vitals = Vitals::read_json(&path).chain_view.unwrap();
+        let vitals = Vitals::read_json(&node_home).chain_view.unwrap();
         let json = json!({
           "epoch": vitals.epoch,
           "waypoint": vitals.waypoint.unwrap().to_string()
