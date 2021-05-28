@@ -11,7 +11,6 @@ use std::{thread, time::Duration};
 /// check the db
 pub fn maybe_restore_db(mut node: &mut Node, verbose: bool) -> &mut Node {
     let cfg = node.conf.to_owned();
-    // let wp = node.client.waypoint().unwrap().to_owned();
     // Abort if the database is not set correctly.
     node.vitals.host_state.onboard_state = OnboardState::EmptyBox;
 
@@ -86,8 +85,7 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
             if verbose {
                 println!("Node: account is NOT in validator set");
                   if node.vitals.items.account_created {
-                    println!(".. A
-                    ccount: Owner account does NOT exist on chain. Was the account creation transaction submitted?");
+                    println!(".. Account: Owner account does NOT exist on chain. Was the account creation transaction submitted?");
       
               }
             }
@@ -118,7 +116,7 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
             },
             Err(_) => {
                 if verbose {
-                    println!("Node: WARN: could not start node in: {:?}", &start_mode);
+                    println!(".. Node: WARN: could not start node in: {:?}", &start_mode);
                 }
                 NodeState::Stopped
             }

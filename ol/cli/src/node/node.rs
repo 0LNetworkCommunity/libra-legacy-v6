@@ -7,14 +7,11 @@ use libradb::LibraDB;
 use std::{process::Command, str};
 use sysinfo::SystemExt;
 use sysinfo::{ProcessExt, ProcessStatus};
-
 use libra_json_rpc_client::views::MinerStateResourceView;
 use libra_types::waypoint::Waypoint;
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
 use storage_interface::DbReader;
-
 use super::{account::OwnerAccountView, states::HostState};
-// use std::path::PathBuf;
 
 /// name of key in kv store for sync
 pub const SYNC_KEY: &str = "is_synced";
@@ -25,6 +22,11 @@ pub const NODE_PROCESS: &str = "libra-node";
 /// miner process name:
 pub const MINER_PROCESS: &str = "miner";
 
+/// Node process info
+pub struct ProcInfo {
+    is_running: bool,
+    mode: Option<NodeMode>,
+}
 /// Configuration and state of node, account, and host.
 pub struct Node {
     /// 0L configs
@@ -71,13 +73,13 @@ impl Node {
         // TODO: make SyncState an item, so we don't need to assign.
         // affects web-monitor structs
         if let Ok(s) = self.sync_state() {
-          self.vitals.items.is_synced = s.is_synced;
-          self.vitals.items.sync_delay = s.sync_delay;
-          self.vitals.items.sync_height = s.sync_height
+            self.vitals.items.is_synced = s.is_synced;
+            self.vitals.items.sync_delay = s.sync_delay;
+            self.vitals.items.sync_height = s.sync_height
         } else {
-          self.vitals.items.is_synced = false;
-          self.vitals.items.sync_delay = 404;
-          self.vitals.items.sync_height = 404;
+            self.vitals.items.is_synced = false;
+            self.vitals.items.sync_delay = 404;
+            self.vitals.items.sync_height = 404;
         }
         self.vitals.items.validator_set = self.is_in_validator_set();
         self
@@ -149,7 +151,6 @@ impl Node {
                 false
             }
             None => {
-                //println!("No chain state retrieved");
                 false
             }
         }
@@ -169,7 +170,6 @@ impl Node {
     /// the owner and operator accounts exist on chain
     pub fn accounts_exist_on_chain(&mut self) -> bool {
         let addr = self.conf.profile.account;
-        // dbg!(&addr);
         let account = self.client.get_account(addr, false);
         match account {
             Ok((opt, _)) => match opt {
@@ -205,7 +205,28 @@ impl Node {
 
     /// Check if node is running
     pub fn node_running() -> bool {
-        Node::check_process(NODE_PROCESS) | Node::check_systemd(NODE_PROCESS)
+        Node::node_proc_info().unwrap().is_running
+    }
+
+    /// Check if node is running
+    fn node_proc_info() -> Result<ProcInfo, Error> {
+        let info = if Node::check_process(NODE_PROCESS) {
+            ProcInfo {
+                is_running: true,
+                mode: Node::node_mode_foreground().ok(),
+            }
+        } else if Node::check_systemd(NODE_PROCESS) {
+            ProcInfo {
+                is_running: true,
+                mode: Node::node_mode_systemd().ok(),
+            }
+        } else {
+           ProcInfo {
+                is_running: false,
+                mode: None,
+            }
+        };
+        Ok(info)
     }
 
     /// Check if miner is running
@@ -219,7 +240,6 @@ impl Node {
         system.refresh_all();
 
         let all_p = system.get_process_by_name("ol");
-        // dbg!(&all_p);
         let process = all_p
             .into_iter()
             .filter(|i| match i.status() {
@@ -229,7 +249,8 @@ impl Node {
             })
             .find(|i| !i.cmd().is_empty());
 
-        process.unwrap()
+        process
+            .unwrap()
             .cmd()
             .into_iter()
             .find(|s| s.contains(&"pilot".to_owned()))
@@ -246,74 +267,87 @@ impl Node {
                 return true;
             }
         }
-        // aldo try by name (yield different results), most reliable.
+        // also try by name (yield different results), most reliable.
         let p = system.get_process_by_name(process_str);
         !p.is_empty()
     }
     /// check what mode the node is running in
     pub fn what_node_mode() -> Result<NodeMode, Error> {
-        // check systemd first
-        if Node::node_running() {
-            let output = Command::new("service")
-                .args(&["libra-node", "status"])
-                .output();
-            match output {
-                Ok(out) => {
-                    let text = str::from_utf8(&out.stdout.as_slice()).unwrap();
-                    if text.contains("validator") {
-                        return Ok(NodeMode::Validator);
-                    }
-                    if text.contains("fullnode") {
-                        return Ok(NodeMode::Fullnode);
-                    }
-                }
-                Err(e) => return Err(Error::from(e)),
+        match Node::node_proc_info() {
+            Ok(proc) => {
+              match proc.mode {
+                Some(m) => Ok(m),
+                None => Err(Error::msg("no node mode found"))
             }
+            },
+            Err(e) => Err(e)
+        }
+    }
 
-            // check as parent process
-            let mut system = sysinfo::System::new_all();
-            system.refresh_all();
-            let all_p = system.get_process_by_name(NODE_PROCESS);
-            // dbg!(&all_p);
-            let process = all_p
-                .into_iter()
-                .filter(|i| match i.status() {
-                    ProcessStatus::Run => true,
-                    ProcessStatus::Sleep => true,
-                    _ => false,
-                })
-                .find(|i| !i.cmd().is_empty());
-
-            if let Some(p) = process {
-                let is_val = p
-                    .cmd()
-                    .into_iter()
-                    .find(|s| s.contains(&"validator".to_owned()))
-                    .is_some();
-                if is_val {
+    /// check what mode the node is running in
+    pub fn node_mode_systemd() -> Result<NodeMode, Error> {
+        let output = Command::new("service")
+            .args(&["libra-node", "status"])
+            .output();
+        match output {
+            Ok(out) => {
+                let text = str::from_utf8(&out.stdout.as_slice()).unwrap();
+                if text.contains("validator") {
                     return Ok(NodeMode::Validator);
-                }
-
-                let is_fn = p
-                    .cmd()
-                    .into_iter()
-                    .find(|s| s.contains(&"fullnode".to_owned()))
-                    .is_some();
-                if is_fn {
+                } else if text.contains("fullnode") {
                     return Ok(NodeMode::Fullnode);
                 }
+            }
+            Err(e) => return Err(Error::from(e)),
+        }
+        Err(Error::msg("no systemd mode found"))
+    }
 
-                let is_fn = p
-                    .cmd()
-                    .into_iter()
-                    .find(|s| s.contains(&"swarm".to_owned()))
-                    .is_some();
-                if is_fn {
-                    return Ok(NodeMode::Validator);
-                }
+    /// check what mode the node is running in
+    pub fn node_mode_foreground() -> Result<NodeMode, Error> {
+        // check as parent process
+        let mut system = sysinfo::System::new_all();
+        system.refresh_all();
+        let all_p = system.get_process_by_name(NODE_PROCESS);
+        // dbg!(&all_p);
+        let process = all_p
+            .into_iter()
+            .filter(|i| match i.status() {
+                ProcessStatus::Run => true,
+                ProcessStatus::Sleep => true,
+                _ => false,
+            })
+            .find(|i| !i.cmd().is_empty());
+
+        if let Some(p) = process {
+            let is_val = p
+                .cmd()
+                .into_iter()
+                .find(|s| s.contains(&"validator".to_owned()))
+                .is_some();
+            if is_val {
+                return Ok(NodeMode::Validator);
+            }
+
+            let is_fn = p
+                .cmd()
+                .into_iter()
+                .find(|s| s.contains(&"fullnode".to_owned()))
+                .is_some();
+            if is_fn {
+                return Ok(NodeMode::Fullnode);
+            }
+
+            let is_fn = p
+                .cmd()
+                .into_iter()
+                .find(|s| s.contains(&"swarm".to_owned()))
+                .is_some();
+            if is_fn {
+                return Ok(NodeMode::Validator);
             }
         }
-        Err(Error::msg("node is not running"))
+        Err(Error::msg("no mode found in process"))
     }
 
     /// is web monitor serving on 3030
