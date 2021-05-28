@@ -403,6 +403,8 @@ storage:
   grpc_max_receive_len: 100000000
   prune_window: 20000
   timeout_ms: 30000
+state_sync:
+  chunk_limit: 250
 json_rpc:
   address: 127.0.0.1:8080
 upstream:
