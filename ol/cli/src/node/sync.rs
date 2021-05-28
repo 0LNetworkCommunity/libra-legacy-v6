@@ -1,10 +1,10 @@
 //! `sync` subcommand
 
 use super::node::Node;
-use crate::{config::AppCfg, node::client::*};
+use crate::{node::client::*};
 use anyhow::{Error, anyhow, bail};
 use backup_cli::utils::backup_service_client::{BackupServiceClient, BackupServiceClientOpt};
-use libra_types::waypoint::Waypoint;
+
 use libradb::backup::backup_handler::DbState;
 use tokio::runtime::Runtime;
 

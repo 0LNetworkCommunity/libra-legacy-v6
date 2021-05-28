@@ -1,10 +1,10 @@
 //! `serve-cmd` subcommand
 
-use std::process::exit;
+
 
 use crate::{entrypoint, node::{client, node::Node}, prelude::app_config, server};
 use abscissa_core::{Command, Options, Runnable};
-use ol_types::config::get_swarm_backup_service_url;
+
 #[derive(Command, Debug, Options)]
 pub struct ServeCmd {
     /// Start healthcheck runner
