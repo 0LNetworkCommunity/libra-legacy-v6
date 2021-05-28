@@ -87,7 +87,7 @@ pub fn swarm_test_client(
     config: &mut AppCfg,
     swarm_path: PathBuf,
 ) -> Option<(LibraClient, Waypoint)> {
-    let (url, waypoint) = ol_types::config::get_swarm_configs(swarm_path.clone());
+    let (url, waypoint) = ol_types::config::get_swarm_rpc_url(swarm_path.clone());
     config.profile.default_node = Some(url.clone());
     config.profile.upstream_nodes = Some(vec![url.clone()]);
 
@@ -102,6 +102,7 @@ pub fn pick_client(
     swarm_path: Option<PathBuf>,
     config: &mut AppCfg,
 ) -> Option<(LibraClient, Waypoint)> {
+    let is_swarm = *&swarm_path.is_some();
     if let Some(path) = swarm_path {
         return swarm_test_client(config, path);
     };
@@ -109,9 +110,12 @@ pub fn pick_client(
         .get_waypoint(swarm_path)
         .expect("could not get waypoint");
     // check if is in sync
-    if let Ok(s) = Node::check_sync(config, waypoint) {
+    let local_client = default_local_client(config, waypoint.clone()).unwrap().0;
+    
+    let mut node = Node::new(local_client, config.clone(), is_swarm);
+    if let Ok(s) = node.check_sync() {
         if s.is_synced {
-            return default_local_client(config, waypoint.clone());
+            return Some((node.client, waypoint.clone()))
         }
     }
     default_remote_client(config, waypoint.clone())

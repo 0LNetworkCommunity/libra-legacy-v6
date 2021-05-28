@@ -10,7 +10,7 @@ use std::{thread, time::Duration};
 
 /// check the db
 pub fn maybe_restore_db(mut node: &mut Node, verbose: bool) -> &mut Node {
-    let cfg = node.conf.to_owned();
+    let cfg = node.app_conf.to_owned();
     // let wp = node.client.waypoint().unwrap().to_owned();
     // Abort if the database is not set correctly.
     node.vitals.host_state.onboard_state = OnboardState::EmptyBox;

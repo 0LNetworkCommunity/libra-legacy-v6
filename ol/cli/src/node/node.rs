@@ -3,6 +3,7 @@
 use crate::{cache::Vitals, check::items::Items, config::AppCfg, mgmt::management::NodeMode};
 use anyhow::Error;
 use cli::libra_client::LibraClient;
+use libra_config::config::NodeConfig;
 use libradb::LibraDB;
 use std::{process::Command, str};
 use sysinfo::SystemExt;
@@ -28,7 +29,9 @@ pub const MINER_PROCESS: &str = "miner";
 /// Configuration and state of node, account, and host.
 pub struct Node {
     /// 0L configs
-    pub conf: AppCfg,
+    pub app_conf: AppCfg,
+    /// node conf
+    pub node_conf: NodeConfig,
     /// libraclient for connecting
     pub client: LibraClient,
     /// vitals
@@ -40,10 +43,24 @@ pub struct Node {
 
 impl Node {
     /// Create a instance of Check
-    pub fn new(client: LibraClient, conf: AppCfg) -> Self {
+    pub fn new(client: LibraClient, conf: AppCfg, is_swarm: bool) -> Self {
+      let node_yaml = if is_swarm {
+        "validator.node.yaml"
+      } else {
+        "node.yaml"
+      };
+
+      let node_conf = NodeConfig::load(
+          conf
+          .workspace
+          .node_home
+          .join(node_yaml)
+        ).unwrap();
+
         return Self {
             client,
-            conf: conf.clone(),
+            app_conf: conf.clone(),
+            node_conf,
             vitals: Vitals {
                 host_state: HostState::new(),
                 account_view: OwnerAccountView::new(conf.profile.account),
@@ -70,7 +87,7 @@ impl Node {
         self.vitals.items.account_created = self.accounts_exist_on_chain();
         // TODO: make SyncState an item, so we don't need to assign.
         // affects web-monitor structs
-        if let Ok(s) = self.sync_state() {
+        if let Ok(s) = self.check_sync() {
           self.vitals.items.is_synced = s.is_synced;
           self.vitals.items.sync_delay = s.sync_delay;
           self.vitals.items.sync_height = s.sync_height
@@ -89,7 +106,7 @@ impl Node {
             Ok(account_state) => Some(account_state),
             Err(_) => None,
         };
-        self.miner_state = match self.client.get_miner_state(self.conf.profile.account) {
+        self.miner_state = match self.client.get_miner_state(self.app_conf.profile.account) {
             Ok(state) => state,
             _ => None,
         };
@@ -121,14 +138,14 @@ impl Node {
 
     /// Current monitor account
     pub fn account(&self) -> Vec<u8> {
-        self.conf.profile.account.to_vec()
+        self.app_conf.profile.account.to_vec()
     }
 
     /// Get waypoint from client
     pub fn waypoint(&mut self) -> Option<Waypoint> {
         match self.client.get_state_proof() {
             Ok(_t) => self.client.waypoint(),
-            Err(_) => self.conf.get_waypoint(None),
+            Err(_) => self.app_conf.get_waypoint(None),
         }
     }
 
@@ -142,7 +159,7 @@ impl Node {
         match &self.chain_state {
             Some(s) => {
                 for v in s.get_validator_set().unwrap().unwrap().payload().iter() {
-                    if v.account_address().to_vec() == self.conf.profile.account.to_vec() {
+                    if v.account_address().to_vec() == self.app_conf.profile.account.to_vec() {
                         return true;
                     }
                 }
@@ -158,7 +175,7 @@ impl Node {
     /// nothing is configured yet, empty box
     pub fn configs_exist(&mut self) -> bool {
         // check to see no files are present
-        let home_path = self.conf.workspace.node_home.clone();
+        let home_path = self.app_conf.workspace.node_home.clone();
 
         let c_exist = home_path.join("blocks/block_0.json").exists()
             && home_path.join("validator.node.yaml").exists()
@@ -168,7 +185,7 @@ impl Node {
 
     /// the owner and operator accounts exist on chain
     pub fn accounts_exist_on_chain(&mut self) -> bool {
-        let addr = self.conf.profile.account;
+        let addr = self.app_conf.profile.account;
         // dbg!(&addr);
         let account = self.client.get_account(addr, false);
         match account {
@@ -182,7 +199,7 @@ impl Node {
 
     /// database is initialized, Please do NOT invoke this function frequently
     pub fn db_bootstrapped(&mut self) -> bool {
-        let file = self.conf.workspace.db_path.clone();
+        let file = self.app_conf.workspace.db_path.clone();
         if file.exists() {
             // When not committing, we open the DB as secondary so the tool is usable along side a
             // running node on the same DB. Using a TempPath since it won't run for long.
@@ -199,7 +216,7 @@ impl Node {
     /// database is initialized, Please do NOT invoke this function frequently
     pub fn db_files_exist(&mut self) -> bool {
         // check to see no files are present
-        let db_path = self.conf.workspace.db_path.clone().join("libradb");
+        let db_path = self.app_conf.workspace.db_path.clone().join("libradb");
         db_path.exists()
     }
 

@@ -93,7 +93,7 @@ impl Node {
                 "failed to run 'libra-node', is it installed?",
             )
         } else {
-            let project_root = self.conf.workspace.source_path.clone().unwrap();
+            let project_root = self.app_conf.workspace.source_path.clone().unwrap();
             let debug_bin = project_root.join(format!("target/debug/{}", NODE));
             let bin_str = debug_bin.to_str().unwrap();
             let args = vec!["--config", &config_file_name];
@@ -142,7 +142,7 @@ impl Node {
                 "failed to run 'miner', is it installed?",
             )
         } else {
-            let project_root = self.conf.workspace.source_path.clone().unwrap();
+            let project_root = self.app_conf.workspace.source_path.clone().unwrap();
             let debug_bin = project_root.join(format!("target/debug/{}", MINER));
             let bin_str = debug_bin.to_str().unwrap();
             // start as operator, so that mnemonic is not needed.
@@ -191,7 +191,7 @@ impl Node {
                 "failed to run 'ol', is it installed?",
             )
         } else {
-            let project_root = self.conf.workspace.source_path.clone().unwrap();
+            let project_root = self.app_conf.workspace.source_path.clone().unwrap();
             let debug_bin = project_root.join("target/debug/ol");
             let bin_str = debug_bin.to_str().unwrap();
 
@@ -233,7 +233,7 @@ impl Node {
                 "failed to run 'ol', is it installed?",
             )
         } else {
-            let project_root = self.conf.workspace.source_path.clone().unwrap();
+            let project_root = self.app_conf.workspace.source_path.clone().unwrap();
             let debug_bin = project_root.join("target/debug/ol");
             let bin_str = debug_bin.to_str().unwrap();
             println!("Starting '{}' with args: {:?}", bin_str, args.join(" "));
