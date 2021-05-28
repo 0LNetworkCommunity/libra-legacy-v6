@@ -44,18 +44,13 @@ pub struct Node {
 impl Node {
     /// Create a instance of Check
     pub fn new(client: LibraClient, conf: AppCfg, is_swarm: bool) -> Self {
-      let node_yaml = if is_swarm {
-        "validator.node.yaml"
-      } else {
-        "node.yaml"
-      };
+        let node_yaml = if is_swarm {
+            "node.yaml"
+        } else {
+            "validator.node.yaml"
+        };
 
-      let node_conf = NodeConfig::load(
-          conf
-          .workspace
-          .node_home
-          .join(node_yaml)
-        ).unwrap();
+        let node_conf = NodeConfig::load(conf.workspace.node_home.join(node_yaml)).unwrap();
 
         return Self {
             client,
@@ -88,13 +83,13 @@ impl Node {
         // TODO: make SyncState an item, so we don't need to assign.
         // affects web-monitor structs
         if let Ok(s) = self.check_sync() {
-          self.vitals.items.is_synced = s.is_synced;
-          self.vitals.items.sync_delay = s.sync_delay;
-          self.vitals.items.sync_height = s.sync_height
+            self.vitals.items.is_synced = s.is_synced;
+            self.vitals.items.sync_delay = s.sync_delay;
+            self.vitals.items.sync_height = s.sync_height
         } else {
-          self.vitals.items.is_synced = false;
-          self.vitals.items.sync_delay = 404;
-          self.vitals.items.sync_height = 404;
+            self.vitals.items.is_synced = false;
+            self.vitals.items.sync_delay = 404;
+            self.vitals.items.sync_height = 404;
         }
         self.vitals.items.validator_set = self.is_in_validator_set();
         self
@@ -246,7 +241,8 @@ impl Node {
             })
             .find(|i| !i.cmd().is_empty());
 
-        process.unwrap()
+        process
+            .unwrap()
             .cmd()
             .into_iter()
             .find(|s| s.contains(&"pilot".to_owned()))
