@@ -70,7 +70,6 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
         node.vitals.host_state.monitor_state = MonitorState::Serving;
     }
 
-
     let is_in_val_set = node.vitals.items.validator_set;
     match is_in_val_set {
         true => {
@@ -81,13 +80,15 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
         }
         false => {
             // TODO: we don't know if the account exists from the is_in_validator_set check
-            node.vitals.host_state.account_state = AccountState::None;
             if verbose {
                 println!("Node: account is NOT in validator set");
-                  if node.vitals.items.account_created {
-                    println!(".. Account: Owner account does NOT exist on chain. Was the account creation transaction submitted?");
-      
-              }
+            }
+            node.vitals.host_state.account_state = AccountState::ExistsOnChain;
+            if !node.vitals.items.account_created {
+                node.vitals.host_state.account_state = AccountState::None;
+            }
+            if verbose {
+                println!(".. Account: Owner account does NOT exist on chain. Was the account creation transaction submitted?");
             }
         }
     }
