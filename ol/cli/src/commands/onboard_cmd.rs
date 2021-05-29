@@ -26,13 +26,15 @@ impl Runnable for OnboardCmd {
     /// Start the application.
     fn run(&self) {
         let args = entrypoint::get_args();
+        let is_swarm = *&args.swarm_path.is_some();
+
         let mut cfg = app_config().clone();
         let client = client::pick_client(args.swarm_path, &mut cfg).unwrap().0;
         if !self.trigger_actions {
             println!("You can pass --trigger-actions or -t to attempt the next transition\n")
         }
         // let mut host = transitions::HostState::init(client, cfg);
-        let mut node = Node::new(client, cfg);
+        let mut node = Node::new(client, cfg, is_swarm);
         let state = node.node_maybe_advance(self.trigger_actions);
 
         println!(

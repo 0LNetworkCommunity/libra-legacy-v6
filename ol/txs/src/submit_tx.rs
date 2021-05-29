@@ -248,7 +248,7 @@ pub fn get_tx_params_from_swarm(
     swarm_persona: String,
     is_operator: bool,
 ) -> Result<TxParams, Error> {
-    let (url, waypoint) = ol_types::config::get_swarm_configs(swarm_path);
+    let (url, waypoint) = ol_types::config::get_swarm_rpc_url(swarm_path);
     let mnem = ol_fixtures::get_persona_mnem(&swarm_persona.as_str());
     let keys = KeyScheme::new_from_mnemonic(mnem);
 

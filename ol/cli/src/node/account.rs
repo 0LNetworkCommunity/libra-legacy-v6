@@ -45,7 +45,7 @@ impl Node {
 
     /// Get the account view struct
     pub fn get_account_view(&mut self) -> Option<AccountView> {
-        let account = self.conf.profile.account;
+        let account = self.app_conf.profile.account;
         match self.client.get_account(account, true) {
             Ok((account_view, _)) => account_view,
             Err(_) => None

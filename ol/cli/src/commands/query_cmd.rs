@@ -50,9 +50,10 @@ pub struct QueryCmd {
 impl Runnable for QueryCmd {
     fn run(&self) {
         let args = entrypoint::get_args();
+        let is_swarm = *&args.swarm_path.is_some();
         let mut cfg = app_config().clone();
         let client = client::pick_client(args.swarm_path, &mut cfg).unwrap().0;
-        let mut node = Node::new(client, cfg);
+        let mut node = Node::new(client, cfg, is_swarm);
 
         let _account = 
             if args.account.is_some() { args.account.unwrap() }
