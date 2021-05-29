@@ -6,11 +6,13 @@ use crate::{
 };
 use anyhow::Error;
 use serde::{Deserialize, Serialize};
-use std::{fs::{self, File}, io::Write, path::PathBuf};
+use std::{fs::{self, File}, io::Write, path::PathBuf, fs::rename};
 /// caching database name, to be appended to node_home
 pub const MONITOR_DB_PATH: &str = "/tmp/0L/monitor_db";
 /// filename for monitor cache
 pub const CACHE_JSON_NAME: &str = "monitor_cache.json";
+/// filename for temp monitor cache
+pub const CACHE_TEMP_NAME: &str = "monitor_cache.temp";
 
 /// format for storing node data to json
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -47,9 +49,15 @@ impl Vitals {
     /// write json cache
     pub fn write_json(&self, node_home: &PathBuf) -> Result<(), Error> {
         let serialized = serde_json::to_vec(&self)?;
-        let cache_path = node_home.join(CACHE_JSON_NAME);
-        let mut file = File::create(cache_path)?;
+
+        // uses temporary file to avoid listeners reading partial content
+        let temp_path = node_home.join(CACHE_TEMP_NAME);
+        let mut file = File::create(&temp_path)?;
         file.write_all(&serialized)?;
+        
+        // after writing temporary file renames and overwrite to cache file
+        let cache_path = node_home.join(CACHE_JSON_NAME);
+        rename(temp_path, cache_path).expect("temporary cache file should be renamed");
         Ok(())
     }
 }
