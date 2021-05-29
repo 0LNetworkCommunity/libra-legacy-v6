@@ -25,7 +25,7 @@ pub fn run_checks(mut node: &mut Node, pilot: bool, is_live: bool, verbose_check
 impl Node {
   /// Run healtchecks once
   pub fn check_once(&mut self, verbose: bool) -> &mut Self {
-      let home_path = self.conf.workspace.node_home.clone();
+      let home_path = self.app_conf.workspace.node_home.clone();
 
       &self.refresh_onchain_state();
       &self.refresh_chain_info();

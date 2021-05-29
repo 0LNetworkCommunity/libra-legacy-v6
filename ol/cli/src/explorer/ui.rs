@@ -46,7 +46,7 @@ where
     B: Backend,
 {
 
-    let node_home = app.node.conf.clone().workspace.node_home.clone();
+    let node_home = app.node.app_conf.clone().workspace.node_home.clone();
     let cached_vitals = Vitals::read_json(&node_home);
 
     let status_webserver = if cached_vitals.items.web_running {
@@ -62,7 +62,7 @@ where
         }
         "DB files exist".to_owned()
     } else {
-        format!("DB files do NOT EXIST {:?}", app.node.conf.workspace.db_path).to_owned()
+        format!("DB files do NOT EXIST {:?}", app.node.app_conf.workspace.db_path).to_owned()
     };
     let text = vec![
         Spans::from(vec![

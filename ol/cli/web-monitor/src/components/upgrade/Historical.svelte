@@ -28,7 +28,7 @@
           {#each versions as v, i}
             <tr>
               <td>{i + 1}</td>
-              <td>{v.hash}</td>
+              <td class="hash">{v.hash}</td>
               <td>{v.vote_count}</td>
             </tr>
           {/each}

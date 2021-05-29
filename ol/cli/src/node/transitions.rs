@@ -199,7 +199,7 @@ impl Node {
     match &self.vitals.host_state.node_state {
       // If fullnode is running try to mine (if account is created)
       NodeState::FullnodeModeCatchup => {
-        if let Ok(sync) = self.sync_state() {
+        if let Ok(sync) = self.check_sync() {
           if sync.is_synced {
             &self.node_transition(NodeEvents::FullnodeSynced, trigger_action);
           } else {
