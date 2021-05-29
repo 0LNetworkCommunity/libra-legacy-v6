@@ -14,7 +14,6 @@ import ValidatorModal from "./ValidatorModal.svelte";
     epochs_validating_and_mining: Number;
     contiguous_epochs_validating_and_mining: Number;
     epochs_since_last_account_creation: Number;
-    can_create_account: boolean;
   }
   
   let set: ValInfo[] = [];
