@@ -11,7 +11,7 @@ use crate::{cache::Vitals, check::runner, node::node::Node};
 #[tokio::main]
 /// starts the web server
 pub async fn start_server(mut node: Node, run_checks: bool) {
-    let cfg = node.conf.clone();
+    let cfg = node.app_conf.clone();
 
     if run_checks {
         thread::spawn(move || {

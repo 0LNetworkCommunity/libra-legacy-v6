@@ -1,7 +1,10 @@
 //! `serve-cmd` subcommand
 
+
+
 use crate::{entrypoint, node::{client, node::Node}, prelude::app_config, server};
 use abscissa_core::{Command, Options, Runnable};
+
 #[derive(Command, Debug, Options)]
 pub struct ServeCmd {
     /// Start healthcheck runner
@@ -16,12 +19,13 @@ impl Runnable for ServeCmd {
     /// Start the application.
     fn run(&self) {
         let args = entrypoint::get_args();
+        let is_swarm = *&args.swarm_path.is_some();
         let mut cfg = app_config().clone();
         if self.update {
           server::update_web(&cfg.workspace.node_home);
         } else {
-          let client = client::pick_client(args.swarm_path, &mut cfg).unwrap().0;
-          let node = Node::new(client, cfg);
+          let client = client::pick_client(args.swarm_path, &mut cfg).unwrap().0;          
+          let node = Node::new(client, cfg, is_swarm);
           server::start_server(node, self.run_checks);
         }
     }

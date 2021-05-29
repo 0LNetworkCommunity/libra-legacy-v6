@@ -66,7 +66,7 @@ impl Node {
         )
       }
       SyncDelay => {
-       match self.sync_state(){
+       match self.check_sync(){
            Ok(sync) => {
              format!("is synced: {}, local height: {}, upstream delay: {}", sync.is_synced, sync.sync_height, sync.sync_delay)
            },
@@ -74,7 +74,7 @@ impl Node {
        }
       },
       Resources => {
-        let resources = self.get_annotate_account_blob(self.conf.profile.account)
+        let resources = self.get_annotate_account_blob(self.app_conf.profile.account)
           .unwrap()
           .0
           .unwrap();
@@ -88,7 +88,7 @@ impl Node {
         else { 0 };
 
         let txs = self.client.get_txn_by_acc_range(
-          account.unwrap_or(self.conf.profile.account),
+          account.unwrap_or(self.app_conf.profile.account),
           txs_height.unwrap_or(query_height),
           txs_count.unwrap_or(100), 
           true

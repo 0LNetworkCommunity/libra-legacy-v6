@@ -60,7 +60,7 @@ impl AppCfg {
     /// Gets the dynamic waypoint from libra node's key_store.json
     pub fn get_waypoint(&self, swarm_path_opt: Option<PathBuf>) -> Option<Waypoint> {
         if let Some(path) = swarm_path_opt {
-            return Some(get_swarm_configs(path).1);
+            return Some(get_swarm_rpc_url(path).1);
         };
 
         match fs::File::open(self.get_key_store_path()) {
@@ -463,7 +463,7 @@ fn default_miner_txs_cost() -> Option<TxCost> {Some(TxCost::new(10_000)) }
 fn default_cheap_txs_cost() -> Option<TxCost> { Some(TxCost::new(1_000)) }
 
 /// Get swarm configs from swarm files, swarm must be running
-pub fn get_swarm_configs( mut swarm_path: PathBuf) -> (Url, Waypoint) {
+pub fn get_swarm_rpc_url(mut swarm_path: PathBuf) -> (Url, Waypoint) {
     swarm_path.push("0/node.yaml");
     let config = NodeConfig::load(&swarm_path)
         .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path));
@@ -473,4 +473,19 @@ pub fn get_swarm_configs( mut swarm_path: PathBuf) -> (Url, Waypoint) {
     let waypoint = config.base.waypoint.waypoint();
 
     (url, waypoint)
+}
+
+/// Get swarm configs from swarm files, swarm must be running
+pub fn get_swarm_backup_service_url(mut swarm_path: PathBuf, swarm_id: u8) -> Result<Url, anyhow::Error> {
+    swarm_path.push(format!("{}/node.yaml", swarm_id));
+    let config = NodeConfig::load(&swarm_path)
+        .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path));
+
+    let url = Url::parse(
+      format!(
+        "http://localhost:{}",
+        config.storage.address.port()
+      ).as_str()
+    ).unwrap();
+    Ok(url)
 }
