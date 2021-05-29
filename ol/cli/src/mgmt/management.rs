@@ -62,12 +62,12 @@ fn spawn_process(
 
 impl Node {
     /// Start Node, as fullnode
-    pub fn start_node(&mut self, config_type: NodeMode, _verbose: bool) -> Result<(), Error> {
+    pub fn start_node(&mut self, config_type: NodeMode, verbose: bool) -> Result<(), Error> {
         use BINARY_NODE as NODE;
         // if is running do nothing
         // TODO: Get another check of node running
         if node::Node::node_running() {
-            if !_verbose {
+            if verbose {
                 println!("{} is already running. Exiting.", NODE);
             }
             return Ok(());
@@ -83,7 +83,7 @@ impl Node {
 
         let child = if *IS_PROD {
             let args = vec!["--config", &config_file_name];
-            if _verbose {
+            if verbose {
                 println!("Starting '{}' with args: {:?}", NODE, args.join(" "));
             }
             spawn_process(
@@ -93,11 +93,11 @@ impl Node {
                 "failed to run 'libra-node', is it installed?",
             )
         } else {
-            let project_root = self.conf.workspace.source_path.clone().unwrap();
+            let project_root = self.app_conf.workspace.source_path.clone().unwrap();
             let debug_bin = project_root.join(format!("target/debug/{}", NODE));
             let bin_str = debug_bin.to_str().unwrap();
             let args = vec!["--config", &config_file_name];
-            if _verbose {
+            if verbose {
                 println!("Starting 'libra-node' with args: {:?}", args.join(" "));
             }
             spawn_process(
@@ -111,7 +111,7 @@ impl Node {
         if let Ok(ch) = child {
             let pid = &ch.id();
             self.save_pid(NODE, *pid);
-            if _verbose{
+            if verbose{
                 println!("Started with PID {} in the background", pid);
             }
         }
@@ -142,7 +142,7 @@ impl Node {
                 "failed to run 'miner', is it installed?",
             )
         } else {
-            let project_root = self.conf.workspace.source_path.clone().unwrap();
+            let project_root = self.app_conf.workspace.source_path.clone().unwrap();
             let debug_bin = project_root.join(format!("target/debug/{}", MINER));
             let bin_str = debug_bin.to_str().unwrap();
             // start as operator, so that mnemonic is not needed.
@@ -191,7 +191,7 @@ impl Node {
                 "failed to run 'ol', is it installed?",
             )
         } else {
-            let project_root = self.conf.workspace.source_path.clone().unwrap();
+            let project_root = self.app_conf.workspace.source_path.clone().unwrap();
             let debug_bin = project_root.join("target/debug/ol");
             let bin_str = debug_bin.to_str().unwrap();
 
@@ -233,7 +233,7 @@ impl Node {
                 "failed to run 'ol', is it installed?",
             )
         } else {
-            let project_root = self.conf.workspace.source_path.clone().unwrap();
+            let project_root = self.app_conf.workspace.source_path.clone().unwrap();
             let debug_bin = project_root.join("target/debug/ol");
             let bin_str = debug_bin.to_str().unwrap();
             println!("Starting '{}' with args: {:?}", bin_str, args.join(" "));
