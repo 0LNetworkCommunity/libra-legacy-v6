@@ -18,8 +18,8 @@ pub struct ValSetCmd {
         help = "remove node from validator universe, i.e. cease being a candidate for validator set"
     )]
     leave: bool,
-    // #[options(help = "unjail the node, add to list, and remove jailed designation")]
-    // unjail: bool,
+    #[options(help = "add to val universe")]
+    add: bool,
 }
 
 impl Runnable for ValSetCmd {
@@ -31,7 +31,9 @@ impl Runnable for ValSetCmd {
            transaction_builder::encode_join_script()
         } else if *&self.leave {
            transaction_builder::encode_leave_script()
-        } else {
+        } else if *&self.add {
+           transaction_builder::encode_val_add_self_script()
+        }else {
           panic!("need to set --join or --leave flags")
         };
 
