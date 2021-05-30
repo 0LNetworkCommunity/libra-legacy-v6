@@ -117,6 +117,10 @@ address 0x1 {
       borrow_global_mut<JailedBit>(addr).is_jailed = false;
     }
 
+    public fun exists_jailedbit(addr: address): bool {
+      exists<JailedBit>(addr)
+    }
+
     public fun is_jailed(validator: address): bool acquires JailedBit {
       if (!exists<JailedBit>(validator)) {
         return false
@@ -132,10 +136,7 @@ address 0x1 {
     }
 
     //////// TEST ////////
-    public fun exists_jailedbit(addr: address): bool {
-      assert(Testnet::is_testnet()== true, 220115014011);
-      exists<JailedBit>(addr)
-    }
+
 
     public fun test_helper_add_self_onboard(vm: &signer, addr:address) acquires ValidatorUniverse {
       assert(Testnet::is_testnet()== true, 220116014011);
