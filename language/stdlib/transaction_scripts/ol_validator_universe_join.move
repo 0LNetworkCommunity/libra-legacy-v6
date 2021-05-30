@@ -3,7 +3,7 @@ script {
     use 0x1::Signer;
     use 0x1::MinerState;
     use 0x1::Errors;
-    const NOT_ABOVE_THRESH: u64 = 01;
+    const NOT_ABOVE_THRESH: u64 = 220101;
 
     fun join(validator: &signer) {
         let addr = Signer::address_of(validator);
