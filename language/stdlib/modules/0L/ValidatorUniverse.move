@@ -130,13 +130,10 @@ address 0x1 {
 
     public fun genesis_helper(vm: &signer, validator: &signer) acquires ValidatorUniverse, JailedBit {
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 220101014010);
-      // let addr = Signer::address_of(sender);
-      // MinerState::node_above_thresh(sender, addr);
       add(validator);
     }
 
     //////// TEST ////////
-
 
     public fun test_helper_add_self_onboard(vm: &signer, addr:address) acquires ValidatorUniverse {
       assert(Testnet::is_testnet()== true, 220116014011);
