@@ -1322,7 +1322,7 @@ Initialize this module. This is only callable from genesis.
         &<a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>(),
         solution
     );
-    <b>assert</b>(valid, <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(120102));
+    <b>assert</b>(valid, <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(120103));
 
     // check there's enough balance for bootstrapping both operator and validator account
     <b>assert</b>(<a href="LibraAccount.md#0x1_LibraAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender_addr)  &gt;= 2 * <a href="LibraAccount.md#0x1_LibraAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>, <a href="Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="LibraAccount.md#0x1_LibraAccount_EINSUFFICIENT_BALANCE">EINSUFFICIENT_BALANCE</a>));

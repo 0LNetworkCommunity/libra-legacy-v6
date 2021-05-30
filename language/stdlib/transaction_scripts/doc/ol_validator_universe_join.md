@@ -25,7 +25,7 @@
 
 
 
-<pre><code><b>const</b> <a href="ol_validator_universe_join.md#join_NOT_ABOVE_THRESH">NOT_ABOVE_THRESH</a>: u64 = 1;
+<pre><code><b>const</b> <a href="ol_validator_universe_join.md#join_NOT_ABOVE_THRESH">NOT_ABOVE_THRESH</a>: u64 = 220101;
 </code></pre>
 
 

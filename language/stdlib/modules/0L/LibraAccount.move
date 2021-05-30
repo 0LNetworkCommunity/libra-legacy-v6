@@ -451,7 +451,7 @@ module LibraAccount {
             &Globals::get_difficulty(),
             solution
         );
-        assert(valid, Errors::invalid_argument(120102));
+        assert(valid, Errors::invalid_argument(120103));
 
         // check there's enough balance for bootstrapping both operator and validator account
         assert(balance<GAS>(sender_addr)  >= 2 * BOOTSTRAP_COIN_VALUE, Errors::limit_exceeded(EINSUFFICIENT_BALANCE));

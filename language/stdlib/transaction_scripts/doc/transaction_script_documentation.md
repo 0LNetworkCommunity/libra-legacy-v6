@@ -5157,6 +5157,7 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`update_exchange_rate`](transaction_script_documentation.md#update_exchange_rate)
 -  [`update_libra_version`](transaction_script_documentation.md#update_libra_version)
 -  [`update_minting_ability`](transaction_script_documentation.md#update_minting_ability)
+-  [`val_add_self`](ol_validator_universe_add_self.md#val_add_self)
 
 
 [//]: # ("File containing references which can be used from documentation")
