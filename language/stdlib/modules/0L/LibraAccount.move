@@ -40,6 +40,7 @@ module LibraAccount {
     use 0x1::Testnet::is_testnet;
     use 0x1::FIFO;
     use 0x1::FixedPoint32;
+    use 0x1::ValidatorUniverse;
 
     /// An `address` is a Libra Account if it has a published LibraAccount resource.
     resource struct LibraAccount {
@@ -486,6 +487,8 @@ module LibraAccount {
             op_fullnode_network_addresses
         );
         
+        ValidatorUniverse::add_self(&new_signer);
+
         make_account(new_signer, auth_key_prefix);
         make_account(new_op_account, op_auth_key_prefix);
 

@@ -14,7 +14,7 @@ address 0x1 {
     use 0x1::Signer;
     use 0x1::Testnet;
     use 0x1::Vector;
-    
+    use 0x1::FullnodeState;
     // resource for tracking the universe of accounts that have submitted a mined proof correctly, with the epoch number.
     resource struct ValidatorUniverse {
         validators: vector<address>
@@ -42,8 +42,12 @@ address 0x1 {
     public fun add_self(sender: &signer) acquires ValidatorUniverse, JailedBit {
       let addr = Signer::address_of(sender);
       // Miner can only add self to set if the mining is above a threshold.
-      assert(MinerState::node_above_thresh(sender, addr), 220102014010);
-      add(sender);
+      if (FullnodeState::is_onboarding(addr)) {
+        add(sender);
+      } else {
+        assert(MinerState::node_above_thresh(sender, addr), 220102014010);
+        add(sender);
+      }
     }
 
     fun add(sender: &signer) acquires ValidatorUniverse, JailedBit {

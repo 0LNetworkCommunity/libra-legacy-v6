@@ -25,7 +25,7 @@
 
 
 
-<pre><code><b>const</b> <a href="ol_validator_universe_add_self.md#val_add_self_NOT_ABOVE_THRESH">NOT_ABOVE_THRESH</a>: u64 = 220101;
+<pre><code><b>const</b> <a href="ol_validator_universe_add_self.md#val_add_self_NOT_ABOVE_THRESH">NOT_ABOVE_THRESH</a>: u64 = 220102;
 </code></pre>
 
 
