@@ -41,8 +41,9 @@ use std::{
     sync::Arc,
 };
 use storage_interface::{DbReader, Order};
-use libra_json_rpc_types::views::{MinerStateResourceView, OracleResourceView};
+use libra_json_rpc_types::views::{MinerStateResourceView, OracleResourceView, ValsStatsResourceView};
 use ol_types::oracle_upgrade::OracleResource;
+use ol_types::vals_stats::ValsStatsResource;
 
 #[derive(Clone)]
 pub(crate) struct JsonRpcService {
@@ -637,6 +638,7 @@ pub(crate) fn build_registry() -> RpcRegistry {
     register_rpc_method!(registry, "get_network_status", get_network_status, 0, 0);
     //////// 0L ////////
     register_rpc_method!(registry, "get_miner_state", get_miner_state, 2, 0);
+    register_rpc_method!(registry, "get_vals_stats", get_vals_stats, 1, 0);
     register_rpc_method!(registry, "query_oracle_upgrade", query_oracle_upgrade, 1, 0);
     registry
 }
@@ -665,13 +667,12 @@ async fn get_miner_state(
     service: JsonRpcService,
     request: JsonRpcRequest,
 ) -> Result<MinerStateResourceView, JsonRpcError> {
-
     let account_address = request.parse_account_address(0)?;
 
     // If versions are specified by the request parameters, use them, otherwise use the defaults
     let version = request.parse_version_param(1, "version")?;
 
-    let account_state_with_proof =  service.get_account_state(account_address, version)?;
+    let account_state_with_proof = service.get_account_state(account_address, version)?;
     match account_state_with_proof {
         Some(s) => {
             let ms :Option<MinerStateResource> = s.get_resource(MinerStateResource::resource_path().as_slice())?;
@@ -686,12 +687,33 @@ async fn get_miner_state(
 }
 
 //////// 0L ////////
+/// Returns validators statistics
+async fn get_vals_stats(
+    service: JsonRpcService,
+    request: JsonRpcRequest,
+) -> Result<ValsStatsResourceView, JsonRpcError> {
+    let account_address = AccountAddress::ZERO;
+    let version = request.parse_version_param(1, "version")?;
+    let account_state_with_proof = service.get_account_state(account_address, version)?;
+    match account_state_with_proof {
+        Some(s) => {
+            let resouce :Option<ValsStatsResource> = s.get_resource(ValsStatsResource::resource_path().as_slice())?;
+            if resouce.is_some() {
+                let resource_view = ValsStatsResourceView::try_from(resouce.unwrap());
+                return Ok(resource_view.ok().unwrap());
+            }
+        },
+        None => {}
+    }
+    Err(JsonRpcError::invalid_request_with_msg("No Validators Stats found.".to_string()))
+}
+
+//////// 0L ////////
 /// Returns Oracle Upgrade view
 async fn query_oracle_upgrade(
     service: JsonRpcService,
     request: JsonRpcRequest,
 ) -> Result<OracleResourceView, JsonRpcError> {
-
     let account_address = AccountAddress::ZERO;
 
     // If versions are specified by the request parameters, use them, otherwise use the defaults

@@ -31,13 +31,13 @@ module Stats{
     public fun initialize(vm: &signer) {
       let sender = Signer::address_of(vm);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(190001));
-       move_to<ValStats>(
+      move_to<ValStats>(
         vm, 
         ValStats {
-            history: Vector::empty(),
-            current: blank()
-          }
-        );
+          history: Vector::empty(),
+          current: blank()
+        }
+      );
     }
     
   fun blank():SetData {

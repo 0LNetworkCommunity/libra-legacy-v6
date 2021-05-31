@@ -34,6 +34,7 @@ use std::{
 };
 use ol_types::miner_state::MinerStateResource;
 use ol_types::oracle_upgrade::{UpgradeOracle, OracleResource};
+use ol_types::vals_stats::{SetData, ValsStatsResource};
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct AmountView {
@@ -829,6 +830,23 @@ impl TryFrom<MinerStateResource> for MinerStateResourceView {
             epochs_validating_and_mining: state.epochs_validating_and_mining,
             contiguous_epochs_validating_and_mining: state.contiguous_epochs_validating_and_mining,
             epochs_since_last_account_creation: state.epochs_since_last_account_creation
+        })
+    }
+}
+
+//////// 0L ////////
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct ValsStatsResourceView {  
+    pub history: Vec<SetData>,
+    pub current: SetData,
+}
+
+impl TryFrom<ValsStatsResource> for ValsStatsResourceView {
+    type Error = Error;
+    fn try_from(stats: ValsStatsResource) -> Result<ValsStatsResourceView, Error> {
+        Ok(ValsStatsResourceView {
+            history: stats.history,
+            current: stats.current,
         })
     }
 }

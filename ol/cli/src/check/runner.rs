@@ -40,6 +40,9 @@ impl Node {
           print_it(&self)
       }
 
+      println!("");
+      println!(">>> vals stats: {:?}", &self.vals_stats);
+      println!("");
       self
   }
 }
