@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { sortBy } from "lodash";
+import { chainInfo } from "../../store.ts";
+import ValidatorModal from "./ValidatorModal.svelte";
 
   interface ValInfo {
     account_address: string;
@@ -16,86 +17,71 @@
   }
   
   let set: ValInfo[] = [];
-
-  import { chainInfo } from "../../store.ts";
+  let selectedVal: ValInfo = null;
+  let sortableColumns = [
+    { label: "voting power", sortKey: "voting_power" },
+    { label: "proofs in epoch", sortKey: "count_proofs_in_epoch" },
+    { label: "tower height", sortKey: "tower_height" }
+  ];
+  let sortOption: string = "voting_power";
+  let sortOrder = 1;
 
   chainInfo.subscribe((info_str) => {
     let data = JSON.parse(info_str);
     // TODO: find a better way to check if data is ready.
-    if (data.chain_view && data.chain_view.validator_view) {
-      set = sortBy(data.chain_view.validator_view, ["voting_power"]).reverse();
+    if (data.chain_view && data.chain_view.validator_view && sortOption) {
+      set = data.chain_view.validator_view;
+      selectedVal = set[0];
     }
   });
-
-  function can_create_account(info: ValInfo): Boolean {
-    return info.epochs_since_last_account_creation > 7;
-  }
-
+  $: set = set.sort((a, b) => (a[sortOption] > b[sortOption]) ? sortOrder : -sortOrder);
   
+  function thOnClick(key: string) {
+    if (sortOption == key) {
+      sortOrder = -sortOrder;
+    }
+    sortOption = key;
+  }
 </script>
-<style>
-  /* TODO: get styles to work. svelte or uikit are overriding these. */
-  /* .like-accordion-title {
-    display: block;
-    font-size: 1.25rem;
-    line-height: 1.4;
-    color: #333;
-    overflow: hidden;
-    margin-left: 10px;
-  } */
-</style>
-
 
 <main uk-height-viewport="expand: true">
-  <h2
-    class=" uk-text-center uk-text-uppercase uk-text-muted uk-text-light uk-margin-medium-bottom"
-  >
+  <h2 class="uk-text-center uk-text-uppercase uk-text-muted uk-text-light uk-margin-medium-bottom">
     <span>{set.length} Validators</span>
   </h2>
+ 
+  <table class="uk-table uk-table-hover uk-text-muted">
+    <thead>
+      <tr>
+          <th class="uk-text-center">account</th>
+          {#each sortableColumns as col}
+            <th class="uk-text-right" on:click={() => thOnClick(col.sortKey)}>
+              <span class="disable-select">{col.label}</span>
+              {#if sortOption == col.sortKey}
+                {#if sortOrder == 1}
+                  <span uk-icon="icon: triangle-up"></span>
+                {:else}
+                  <span uk-icon="icon: triangle-down"></span>
+                {/if}
+              {/if}
+            </th>
+          {/each}
+          <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {#each set as val, i}
+        <tr on:click={() => selectedVal = val}>
+          <td class="hash uk-text-center">{val.account_address}</td>
+          <td class="uk-text-right">{val.voting_power}</td>
+          <td class="uk-text-right">{val.count_proofs_in_epoch}</td>
+          <td class="uk-text-right">{val.tower_height}</td>
+          <td>
+            <span uk-icon="icon: info" uk-toggle="target: #validator-modal"></span>
+          </td>
+        </tr>
+      {/each}
+    </tbody>
+  </table>
 
-  <div class="uk-text-muted">
-    <div class="uk-column-1-4 uk-child-width-expand@s uk-text-center uk-text-uppercase uk-text-light uk-text-small">
-      <div>account</div>
-      <div>voting power</div>
-      <div>proofs in epoch</div>
-      <div>tower height</div>
-    </div>
-  </div>
-
-  <ul uk-accordion>
-    {#each set as val, i}
-      <li>
-        <div class="uk-accordion-title uk-text-muted">
-          <div class="uk-column-1-4 uk-child-width-expand@s uk-text-center">
-            <div class="hash">{val.account_address}</div>
-            <div>{val.voting_power}</div>
-            <div>{val.count_proofs_in_epoch}</div>
-            <div>{val.tower_height}</div>
-          </div>
-        </div>
-        <div class="uk-accordion-content">
-          <table class="uk-table">
-            <tbody>
-              <tr>
-                <td>fullnode network address</td>
-                <td class="uk-text-break"> {val.full_node_ip} </td>
-              </tr>
-              <tr>
-                <td>validator network address</td>
-                <td class="uk-text-break">{val.validator_ip}</td>
-              </tr>
-              <tr>
-                <td>epochs validating and mining</td>
-                <td>{val.epochs_validating_and_mining}</td>
-              </tr>
-              <tr>
-                <td>can create account</td>
-                <td>{can_create_account(val)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </li>
-    {/each}
-  </ul>
+  <ValidatorModal validator={selectedVal}></ValidatorModal>
 </main>
