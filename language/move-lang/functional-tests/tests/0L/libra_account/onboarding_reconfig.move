@@ -96,11 +96,13 @@ script {
     use 0x1::Vector;
     fun main(vm: &signer) {
         // Tests on initial size of validators
+        // New validator is not in this set.
         assert(LibraSystem::validator_set_size() == 4, 7357000180101);
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
         assert(!LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180103);
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(vm));
-        assert(len == 4 , 7357000180104);
+        // Is in validator universe
+        assert(len == 5 , 7357000180104);
       }
 }
 // check: EXECUTED
@@ -119,10 +121,10 @@ script {
 
     fun main(vm: &signer) {
         // Tests on initial size of validators
-        assert(LibraSystem::validator_set_size() == 4, 7357000180101);
-        assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
-        assert(LibraSystem::is_validator({{bob}}) == true, 7357000180103);
-        assert(LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B) == false, 7357000180103);
+        assert(LibraSystem::validator_set_size() == 4, 7357000180201);
+        assert(LibraSystem::is_validator({{alice}}) == true, 7357000180202);
+        assert(LibraSystem::is_validator({{bob}}) == true, 7357000180203);
+        assert(LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B) == false, 7357000180204);
 
         // Mock everyone being a CASE 1
         let voters = Vector::empty<address>();
@@ -137,14 +139,12 @@ script {
         MinerState::test_helper_mock_mining_vm(vm, {{dave}}, 20);
         MinerState::test_helper_mock_mining_vm(vm, 0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 20);
 
+        // check the new account is in the list of eligible
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(vm));
-        assert(len == 4 , 7357000180104);
-
-        // Adding eve to validator universe - would be done by self
-        ValidatorUniverse::test_helper_add_self_onboard(vm, 0x3DC18D1CF61FAAC6AC70E3A63F062E4B);
+        assert(len == 5 , 7357000180205);
 
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(vm));
-        assert(len == 5 , 7357000180104);
+        assert(len == 5 , 7357000180206);
 
         let i = 1;
         while (i < 16) {
@@ -169,11 +169,11 @@ script {
     use 0x1::Vector;
     fun main(vm: &signer) {
         // Tests on initial size of validators
-        assert(LibraSystem::validator_set_size() == 5, 7357000200101);
-        assert(LibraSystem::is_validator({{alice}}) == true, 7357000200102);
-        assert(LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000200103);
+        assert(LibraSystem::validator_set_size() == 5, 7357000200301);
+        assert(LibraSystem::is_validator({{alice}}) == true, 7357000200302);
+        assert(LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000200303);
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(vm));
-        assert(LibraSystem::validator_set_size() == len, 7357000200104);
+        assert(LibraSystem::validator_set_size() == len, 7357000200304);
       }
 }
 // check: EXECUTED

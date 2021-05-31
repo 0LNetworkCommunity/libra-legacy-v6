@@ -401,7 +401,7 @@ module LibraAccount {
     // This function has no permissions, it doesn't check the signer. And it exceptionally is moving a resource to a different account than the signer.
     // LibraAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
 
-        /////// 0L ////////
+    /////// 0L ////////
     //Function code: 01
     public fun create_user_account_with_proof(
         challenge: &vector<u8>,
@@ -487,6 +487,7 @@ module LibraAccount {
             op_fullnode_network_addresses
         );
         
+        // user can join validator universe list, but will only join if the mining is above the threshold in the preceeding period.
         ValidatorUniverse::add_self(&new_signer);
 
         make_account(new_signer, auth_key_prefix);
