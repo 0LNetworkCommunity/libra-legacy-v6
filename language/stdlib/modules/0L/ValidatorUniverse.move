@@ -14,7 +14,7 @@ address 0x1 {
     use 0x1::Signer;
     use 0x1::Testnet;
     use 0x1::Vector;
-    
+    use 0x1::FullnodeState;
     // resource for tracking the universe of accounts that have submitted a mined proof correctly, with the epoch number.
     resource struct ValidatorUniverse {
         validators: vector<address>
@@ -42,8 +42,12 @@ address 0x1 {
     public fun add_self(sender: &signer) acquires ValidatorUniverse, JailedBit {
       let addr = Signer::address_of(sender);
       // Miner can only add self to set if the mining is above a threshold.
-      assert(MinerState::node_above_thresh(sender, addr), 220102014010);
-      add(sender);
+      if (FullnodeState::is_onboarding(addr)) {
+        add(sender);
+      } else {
+        assert(MinerState::node_above_thresh(sender, addr), 220102014010);
+        add(sender);
+      }
     }
 
     fun add(sender: &signer) acquires ValidatorUniverse, JailedBit {
@@ -117,6 +121,10 @@ address 0x1 {
       borrow_global_mut<JailedBit>(addr).is_jailed = false;
     }
 
+    public fun exists_jailedbit(addr: address): bool {
+      exists<JailedBit>(addr)
+    }
+
     public fun is_jailed(validator: address): bool acquires JailedBit {
       if (!exists<JailedBit>(validator)) {
         return false
@@ -126,19 +134,13 @@ address 0x1 {
 
     public fun genesis_helper(vm: &signer, validator: &signer) acquires ValidatorUniverse, JailedBit {
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 220101014010);
-      // let addr = Signer::address_of(sender);
-      // MinerState::node_above_thresh(sender, addr);
       add(validator);
     }
 
     //////// TEST ////////
-    public fun exists_jailedbit(addr: address): bool {
-      assert(Testnet::is_testnet()== true, 130115014011);
-      exists<JailedBit>(addr)
-    }
 
     public fun test_helper_add_self_onboard(vm: &signer, addr:address) acquires ValidatorUniverse {
-      assert(Testnet::is_testnet()== true, 130115014011);
+      assert(Testnet::is_testnet()== true, 220116014011);
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 220101015010);
       let state = borrow_global_mut<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
       Vector::push_back<address>(&mut state.validators, addr);

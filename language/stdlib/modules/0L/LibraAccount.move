@@ -40,6 +40,7 @@ module LibraAccount {
     use 0x1::Testnet::is_testnet;
     use 0x1::FIFO;
     use 0x1::FixedPoint32;
+    use 0x1::ValidatorUniverse;
 
     /// An `address` is a Libra Account if it has a published LibraAccount resource.
     resource struct LibraAccount {
@@ -400,7 +401,7 @@ module LibraAccount {
     // This function has no permissions, it doesn't check the signer. And it exceptionally is moving a resource to a different account than the signer.
     // LibraAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
 
-        /////// 0L ////////
+    /////// 0L ////////
     //Function code: 01
     public fun create_user_account_with_proof(
         challenge: &vector<u8>,
@@ -451,7 +452,7 @@ module LibraAccount {
             &Globals::get_difficulty(),
             solution
         );
-        assert(valid, Errors::invalid_argument(120102));
+        assert(valid, Errors::invalid_argument(120103));
 
         // check there's enough balance for bootstrapping both operator and validator account
         assert(balance<GAS>(sender_addr)  >= 2 * BOOTSTRAP_COIN_VALUE, Errors::limit_exceeded(EINSUFFICIENT_BALANCE));
@@ -486,6 +487,9 @@ module LibraAccount {
             op_fullnode_network_addresses
         );
         
+        // user can join validator universe list, but will only join if the mining is above the threshold in the preceeding period.
+        ValidatorUniverse::add_self(&new_signer);
+
         make_account(new_signer, auth_key_prefix);
         make_account(new_op_account, op_auth_key_prefix);
 

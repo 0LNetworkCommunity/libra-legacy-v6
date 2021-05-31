@@ -129,6 +129,7 @@ before and after every transaction.
 <b>use</b> <a href="VDF.md#0x1_VDF">0x1::VDF</a>;
 <b>use</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig">0x1::ValidatorConfig</a>;
 <b>use</b> <a href="ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig">0x1::ValidatorOperatorConfig</a>;
+<b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
@@ -1322,7 +1323,7 @@ Initialize this module. This is only callable from genesis.
         &<a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>(),
         solution
     );
-    <b>assert</b>(valid, <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(120102));
+    <b>assert</b>(valid, <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(120103));
 
     // check there's enough balance for bootstrapping both operator and validator account
     <b>assert</b>(<a href="LibraAccount.md#0x1_LibraAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender_addr)  &gt;= 2 * <a href="LibraAccount.md#0x1_LibraAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>, <a href="Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="LibraAccount.md#0x1_LibraAccount_EINSUFFICIENT_BALANCE">EINSUFFICIENT_BALANCE</a>));
@@ -1356,6 +1357,8 @@ Initialize this module. This is only callable from genesis.
         op_validator_network_addresses,
         op_fullnode_network_addresses
     );
+
+    <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_self">ValidatorUniverse::add_self</a>(&new_signer);
 
     <a href="LibraAccount.md#0x1_LibraAccount_make_account">make_account</a>(new_signer, auth_key_prefix);
     <a href="LibraAccount.md#0x1_LibraAccount_make_account">make_account</a>(new_op_account, op_auth_key_prefix);

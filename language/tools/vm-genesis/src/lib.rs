@@ -806,6 +806,7 @@ fn initialize_testnet(
     if get_env() == "stage" { 
         module_name = "StagingNet";
     };
+
     exec_function(
         session,
         log_context,

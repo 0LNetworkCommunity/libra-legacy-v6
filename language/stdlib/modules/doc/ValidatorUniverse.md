@@ -17,14 +17,15 @@
 -  [Function `jail`](#0x1_ValidatorUniverse_jail)
 -  [Function `unjail_self`](#0x1_ValidatorUniverse_unjail_self)
 -  [Function `unjail`](#0x1_ValidatorUniverse_unjail)
+-  [Function `exists_jailedbit`](#0x1_ValidatorUniverse_exists_jailedbit)
 -  [Function `is_jailed`](#0x1_ValidatorUniverse_is_jailed)
 -  [Function `genesis_helper`](#0x1_ValidatorUniverse_genesis_helper)
--  [Function `exists_jailedbit`](#0x1_ValidatorUniverse_exists_jailedbit)
 -  [Function `test_helper_add_self_onboard`](#0x1_ValidatorUniverse_test_helper_add_self_onboard)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
+<b>use</b> <a href="FullnodeState.md#0x1_FullnodeState">0x1::FullnodeState</a>;
 <b>use</b> <a href="MinerState.md#0x1_MinerState">0x1::MinerState</a>;
 <b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
@@ -134,8 +135,12 @@
 <pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_self">add_self</a>(sender: &signer) <b>acquires</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a>, <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a> {
   <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   // Miner can only add self <b>to</b> set <b>if</b> the mining is above a threshold.
-  <b>assert</b>(<a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(sender, addr), 220102014010);
-  <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add">add</a>(sender);
+  <b>if</b> (<a href="FullnodeState.md#0x1_FullnodeState_is_onboarding">FullnodeState::is_onboarding</a>(addr)) {
+    <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add">add</a>(sender);
+  } <b>else</b> {
+    <b>assert</b>(<a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(sender, addr), 220102014010);
+    <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add">add</a>(sender);
+  }
 }
 </code></pre>
 
@@ -368,6 +373,30 @@
 
 </details>
 
+<a name="0x1_ValidatorUniverse_exists_jailedbit"></a>
+
+## Function `exists_jailedbit`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_exists_jailedbit">exists_jailedbit</a>(addr: address): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_exists_jailedbit">exists_jailedbit</a>(addr: address): bool {
+  <b>exists</b>&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a>&gt;(addr)
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_ValidatorUniverse_is_jailed"></a>
 
 ## Function `is_jailed`
@@ -412,34 +441,7 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_genesis_helper">genesis_helper</a>(vm: &signer, validator: &signer) <b>acquires</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a>, <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a> {
   <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 220101014010);
-  // <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
-  // <a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(sender, addr);
   <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add">add</a>(validator);
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_ValidatorUniverse_exists_jailedbit"></a>
-
-## Function `exists_jailedbit`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_exists_jailedbit">exists_jailedbit</a>(addr: address): bool
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_exists_jailedbit">exists_jailedbit</a>(addr: address): bool {
-  <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()== <b>true</b>, 130115014011);
-  <b>exists</b>&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a>&gt;(addr)
 }
 </code></pre>
 
@@ -463,7 +465,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_test_helper_add_self_onboard">test_helper_add_self_onboard</a>(vm: &signer, addr:address) <b>acquires</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a> {
-  <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()== <b>true</b>, 130115014011);
+  <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()== <b>true</b>, 220116014011);
   <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 220101015010);
   <b>let</b> state = borrow_global_mut&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
   <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(&<b>mut</b> state.validators, addr);
