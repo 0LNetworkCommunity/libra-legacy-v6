@@ -9,4 +9,4 @@ for b in $DOWNLOAD_URLS ; do \
 done
 
 mkdir -p ~/.0L/web-monitor
-tar -xf ~/bin/web-monitor.tar.gz -d ~/.0L/web-monitor/
+tar -xf ~/bin/web-monitor.tar.gz --directory ~/.0L/web-monitor/
