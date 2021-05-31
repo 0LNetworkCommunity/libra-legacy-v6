@@ -1,12 +1,24 @@
-DOWNLOAD_URLS=$(curl -sL https://api.github.com/repos/OLSF/libra/releases/latest | jq -r '.assets[].browser_download_url')
+apps=("db-backup" "db-backup-verify" "db-restore" "libra-node" "miner" "ol" "onboard" "stdlib" "txs")
 
-for b in $DOWNLOAD_URLS ; do \
-  echo $b ; \
-  echo $b | rev | cut -d"/" -f1 | rev ; \
-  curl  --progress-bar --create-dirs -o ~/bin/$(echo $b | rev | cut -d"/" -f1 | rev) -L $b ; \
-  echo 'downloaded to /usr/local/bin/' ; \
-  chmod 755 ~/bin/$(echo $b | rev | cut -d"/" -f1 | rev) ;\
+for n in ${apps[@]}; do \
+  curl  --progress-bar --create-dirs -o ~/bin/$n -L https://github.com/OLSF/libra/releases/latest/download/$n ; \
+  echo $n '- downloaded to ~/bin/' ; \
+  chmod 755 ~/bin/$n ;\
 done
 
+curl  --progress-bar --create-dirs -o ~/.0L/web-monitor.tar.gz -L https://github.com/OLSF/libra/releases/latest/download/web-monitor.tar.gz ; \
+echo 'web-monitor.tar.gz - downloaded to ~/bin/' ; \
+
 mkdir -p ~/.0L/web-monitor
-tar -xf ~/bin/web-monitor.tar.gz --directory ~/.0L/web-monitor/
+tar -xf ~/.0L/web-monitor.tar.gz --directory ~/.0L/web-monitor/
+
+echo "Checking PATH"
+
+if grep -Fxq 'export PATH=~/bin:$PATH' ~/.bashrc 
+then
+  echo "~/bin already in PATH"
+else
+  echo 'exporting ~/bin to PATH'
+  echo 'export PATH=~/bin:$PATH' >> ~/.bashrc 
+  echo 'close this terminal or restart with `source ~/.bashrc`'
+fi
