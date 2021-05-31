@@ -8,13 +8,12 @@ use crate::{
 };
 use std::{thread, time::Duration};
 
-/// check the db
+/// check if we need to restore the db
 pub fn maybe_restore_db(mut node: &mut Node, verbose: bool) -> &mut Node {
     let cfg = node.app_conf.to_owned();
     // Abort if the database is not set correctly.
     node.vitals.host_state.onboard_state = OnboardState::EmptyBox;
 
-    // TODO: db.vitals.db_restored
     if node.db_files_exist() {
         node.vitals.host_state.onboard_state = OnboardState::DbFilesOk;
 
@@ -79,22 +78,20 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
             }
         }
         false => {
-            // TODO: we don't know if the account exists from the is_in_validator_set check
             if verbose {
                 println!("Node: account is NOT in validator set");
             }
             node.vitals.host_state.account_state = AccountState::ExistsOnChain;
             if !node.vitals.items.account_created {
                 node.vitals.host_state.account_state = AccountState::None;
-            }
-            if verbose {
-                println!(".. Account: Owner account does NOT exist on chain. Was the account creation transaction submitted?");
+              if verbose {
+                  println!(".. Account: Owner account does NOT exist on chain. Was the account creation transaction submitted?");
+              }
             }
         }
     }
 
     // is node started?
-    // TODO: vitals.node_running
     if node.vitals.items.node_running {
         if verbose {
             println!("Node: node is running");

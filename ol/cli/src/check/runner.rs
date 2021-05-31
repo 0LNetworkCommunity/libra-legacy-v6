@@ -7,10 +7,6 @@ use chrono::Utc;
 
 /// Start the node monitor
 pub fn run_checks(mut node: &mut Node, pilot: bool, is_live: bool, verbose_check: bool, verbose_pilot: bool) {
-    
-    if pilot {
-        pilot::maybe_restore_db(&mut node, verbose_pilot);
-    }
     loop {
         // update all the checks
         node.check_once(verbose_check);
@@ -48,8 +44,8 @@ impl Node {
 fn print_it(node: &Node) {
     println!(
 "
+{now}\n
 HEALTH\n...........................\n
-{now}
 Configs exist: {configs}
 DB restored: {restored}
 Web monitor: {web_running}
