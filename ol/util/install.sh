@@ -1,4 +1,3 @@
-apt install -y unzip zip jq
 DOWNLOAD_URLS=$(curl -sL https://api.github.com/repos/OLSF/libra/releases/latest | jq -r '.assets[].browser_download_url')
 
 for b in $DOWNLOAD_URLS ; do \
@@ -10,5 +9,5 @@ for b in $DOWNLOAD_URLS ; do \
 done
 
 mkdir -p ~/.0L/web-monitor
-mv /usr/local/bin/web-monitor.zip ~/.0L/web-monitor.zip
-unzip ~/.0L/web-monitor.zip -d ~/.0L/web-monitor/
+mv /usr/local/bin/web-monitor.tar.gz ~/.0L/web-monitor.zip
+tar -xf ~/.0L/web-monitor.tar.gz -d ~/.0L/web-monitor/
