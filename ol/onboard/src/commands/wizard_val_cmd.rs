@@ -72,20 +72,23 @@ impl Runnable for ValWizardCmd {
             &upstream
         );
 
+        let mut web_monitor_url = upstream.clone();
+        web_monitor_url.set_port(Some(3030)).unwrap();
+        let epoch_url = &web_monitor_url.join("epoch.json").unwrap();
+        let (base_epoch, base_waypoint) = get_epoch_info(epoch_url);
+
         let mut app_config = AppCfg::init_app_configs(
             authkey,
             account,
             &Some(upstream.clone()),
             &Some(entrypoint::get_node_home()),
+            base_epoch,
+            base_waypoint
+
         );
         let home_path = &app_config.workspace.node_home;
 
-        let mut web_monitor_url = upstream.clone();
-        web_monitor_url.set_port(Some(3030)).unwrap();
-        let epoch_url = &web_monitor_url.join("epoch.json").unwrap();
-        let (epoch, wp) = get_epoch_info(epoch_url);
-        app_config.chain_info.base_epoch = epoch;
-        app_config.chain_info.base_waypoint = wp;
+
 
         status_ok!("\nApp configs written", "\n...........................\n");
 
@@ -112,7 +115,7 @@ impl Runnable for ValWizardCmd {
         );
 
         // Initialize Validator Keys
-        init_cmd::initialize_validator(&wallet, &app_config, wp).unwrap();
+        init_cmd::initialize_validator(&wallet, &app_config, base_waypoint).unwrap();
         status_ok!("\nKey file written", "\n...........................\n");
 
         // fetching the genesis files from genesis-archive

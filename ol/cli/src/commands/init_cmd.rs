@@ -63,7 +63,9 @@ impl Runnable for InitCmd {
             authkey,
             account, 
             &self.upstream_peer,
-            &self.path
+            &self.path,
+            None, // TODO: probably need an epoch option here.
+            self.waypoint,
           ).unwrap()
         };
 
@@ -74,8 +76,8 @@ impl Runnable for InitCmd {
 }
 
 /// Initializes the necessary 0L config files: 0L.toml
-pub fn initialize_host(authkey: AuthenticationKey, account: AccountAddress, upstream_peer: &Option<Url>, path: &Option<PathBuf>) -> Result <AppCfg, Error>{
-    let cfg = AppCfg::init_app_configs(authkey, account, upstream_peer, path);
+pub fn initialize_host(authkey: AuthenticationKey, account: AccountAddress, upstream_peer: &Option<Url>, path: &Option<PathBuf>, epoch_opt: Option<u64>, wp_opt: Option<Waypoint>) -> Result <AppCfg, Error>{
+    let cfg = AppCfg::init_app_configs(authkey, account, upstream_peer, path, epoch_opt, wp_opt);
     Ok(cfg)
 }
 
