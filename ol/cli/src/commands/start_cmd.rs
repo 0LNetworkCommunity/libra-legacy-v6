@@ -1,7 +1,7 @@
 //! `start-cmd` subcommand
 
 use abscissa_core::{Command, Options, Runnable};
-use crate::{check, node::client, entrypoint, node::node::Node, prelude::app_config};
+use crate::{check::{self, pilot}, entrypoint, node::client, node::node::Node, prelude::app_config};
 
 /// `start` subcommand
 
@@ -9,7 +9,10 @@ use crate::{check, node::client, entrypoint, node::node::Node, prelude::app_conf
 pub struct StartCmd {
     /// Silent mode, defaults to verbose
     #[options(short = "s", help = "silent mode, no prints")]
-    silent: bool
+    silent: bool,
+    /// Check if DB needs to be restored.
+    #[options(short = "r", help = "check if DB bootstraps if not will attempt retore")]
+    restore: bool
 }
 
 impl Runnable for StartCmd {
@@ -17,10 +20,10 @@ impl Runnable for StartCmd {
     fn run(&self) {
       let args = entrypoint::get_args();
       let is_swarm = *&args.swarm_path.is_some();
-
       let mut cfg = app_config().clone();
       let client = client::pick_client(args.swarm_path, &mut cfg).unwrap().0;
       let mut node = Node::new(client, cfg, is_swarm);
+      if *&self.restore { pilot::maybe_restore_db(&mut node, !self.silent); }
       check::runner::run_checks(&mut node, true ,true, !self.silent, !self.silent);
     }
 }

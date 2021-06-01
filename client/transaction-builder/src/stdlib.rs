@@ -1549,6 +1549,8 @@ pub enum ScriptCall {
         currency: TypeTag,
         allow_minting: bool,
     },
+
+    ValAddSelf {},
 }
 
 impl ScriptCall {
@@ -1833,6 +1835,7 @@ impl ScriptCall {
                 currency,
                 allow_minting,
             } => encode_update_minting_ability_script(currency, allow_minting),
+            ValAddSelf {} => encode_val_add_self_script(),
         }
     }
 
@@ -3709,6 +3712,10 @@ pub fn encode_update_minting_ability_script(currency: TypeTag, allow_minting: bo
     )
 }
 
+pub fn encode_val_add_self_script() -> Script {
+    Script::new(VAL_ADD_SELF_CODE.to_vec(), vec![], vec![])
+}
+
 fn decode_add_currency_to_account_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::AddCurrencyToAccount {
         currency: script.ty_args().get(0)?.clone(),
@@ -4061,6 +4068,10 @@ fn decode_update_minting_ability_script(script: &Script) -> Option<ScriptCall> {
     })
 }
 
+fn decode_val_add_self_script(_script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::ValAddSelf {})
+}
+
 type DecoderMap = std::collections::HashMap<
     Vec<u8>,
     Box<dyn Fn(&Script) -> Option<ScriptCall> + std::marker::Sync + std::marker::Send>,
@@ -4240,6 +4251,10 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
     map.insert(
         UPDATE_MINTING_ABILITY_CODE.to_vec(),
         Box::new(decode_update_minting_ability_script),
+    );
+    map.insert(
+        VAL_ADD_SELF_CODE.to_vec(),
+        Box::new(decode_val_add_self_script),
     );
     map
 });
@@ -4509,11 +4524,11 @@ const JOIN_CODE: &[u8] = &[
     108, 102, 16, 101, 120, 105, 115, 116, 115, 95, 106, 97, 105, 108, 101, 100, 98, 105, 116, 10,
     105, 110, 105, 116, 105, 97, 108, 105, 122, 101, 14, 105, 115, 95, 105, 110, 95, 117, 110, 105,
     118, 101, 114, 115, 101, 9, 105, 115, 95, 106, 97, 105, 108, 101, 100, 11, 117, 110, 106, 97,
-    105, 108, 95, 115, 101, 108, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 8, 1, 0,
-    0, 0, 0, 0, 0, 0, 0, 3, 6, 40, 10, 0, 17, 2, 12, 1, 10, 0, 10, 1, 17, 1, 7, 0, 17, 0, 12, 3,
-    12, 2, 11, 2, 3, 16, 11, 0, 1, 11, 3, 39, 10, 1, 17, 6, 32, 3, 21, 5, 23, 10, 0, 17, 3, 10, 1,
-    17, 4, 32, 3, 28, 5, 30, 10, 0, 17, 5, 10, 1, 17, 7, 3, 34, 5, 37, 11, 0, 17, 8, 5, 39, 11, 0,
-    1, 2,
+    105, 108, 95, 115, 101, 108, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 8, 197,
+    91, 3, 0, 0, 0, 0, 0, 0, 3, 6, 40, 10, 0, 17, 2, 12, 1, 10, 0, 10, 1, 17, 1, 7, 0, 17, 0, 12,
+    3, 12, 2, 11, 2, 3, 16, 11, 0, 1, 11, 3, 39, 10, 1, 17, 6, 32, 3, 21, 5, 23, 10, 0, 17, 3, 10,
+    1, 17, 4, 32, 3, 28, 5, 30, 10, 0, 17, 5, 10, 1, 17, 7, 3, 34, 5, 37, 11, 0, 17, 8, 5, 39, 11,
+    0, 1, 2,
 ];
 
 const LEAVE_CODE: &[u8] = &[
@@ -4799,4 +4814,19 @@ const UPDATE_MINTING_ABILITY_CODE: &[u8] = &[
     0, 0, 1, 0, 1, 1, 1, 0, 2, 2, 6, 12, 1, 0, 1, 9, 0, 5, 76, 105, 98, 114, 97, 22, 117, 112, 100,
     97, 116, 101, 95, 109, 105, 110, 116, 105, 110, 103, 95, 97, 98, 105, 108, 105, 116, 121, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 4, 11, 0, 10, 1, 56, 0, 2,
+];
+
+const VAL_ADD_SELF_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 8, 3, 8, 25, 5, 33, 18, 7, 51, 110, 8, 161, 1, 16, 6,
+    177, 1, 10, 0, 0, 0, 1, 0, 2, 0, 3, 0, 4, 0, 0, 0, 1, 5, 1, 2, 0, 2, 6, 3, 4, 0, 3, 7, 3, 5, 0,
+    3, 8, 4, 2, 0, 1, 3, 2, 6, 12, 5, 1, 1, 1, 6, 12, 1, 5, 0, 3, 5, 1, 3, 6, 69, 114, 114, 111,
+    114, 115, 10, 77, 105, 110, 101, 114, 83, 116, 97, 116, 101, 6, 83, 105, 103, 110, 101, 114,
+    17, 86, 97, 108, 105, 100, 97, 116, 111, 114, 85, 110, 105, 118, 101, 114, 115, 101, 13, 105,
+    110, 118, 97, 108, 105, 100, 95, 115, 116, 97, 116, 101, 17, 110, 111, 100, 101, 95, 97, 98,
+    111, 118, 101, 95, 116, 104, 114, 101, 115, 104, 10, 97, 100, 100, 114, 101, 115, 115, 95, 111,
+    102, 8, 97, 100, 100, 95, 115, 101, 108, 102, 14, 105, 115, 95, 105, 110, 95, 117, 110, 105,
+    118, 101, 114, 115, 101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 8, 198, 91, 3, 0,
+    0, 0, 0, 0, 0, 3, 6, 27, 10, 0, 17, 2, 12, 1, 10, 0, 10, 1, 17, 1, 7, 0, 17, 0, 12, 3, 12, 2,
+    11, 2, 3, 16, 11, 0, 1, 11, 3, 39, 10, 1, 17, 4, 32, 3, 21, 5, 24, 11, 0, 17, 3, 5, 26, 11, 0,
+    1, 2,
 ];
