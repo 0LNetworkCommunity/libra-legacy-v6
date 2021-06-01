@@ -180,7 +180,7 @@ pub fn get_node_home() -> PathBuf {
         config_path = PathBuf::from(entry_args.swarm_path.unwrap());
         if entry_args.swarm_persona.is_some() {
             let persona = &entry_args.swarm_persona.unwrap();
-            let all_personas = vec!["alice", "bob", "carol", "dave"];
+            let all_personas = vec!["alice", "bob", "carol", "dave", "eve"];
             let index = all_personas.iter().position(|&r| r == persona).unwrap();
             config_path.push(index.to_string());
         } else {
