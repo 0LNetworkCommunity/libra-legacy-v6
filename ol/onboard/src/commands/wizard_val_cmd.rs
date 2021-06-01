@@ -77,14 +77,13 @@ impl Runnable for ValWizardCmd {
         let epoch_url = &web_monitor_url.join("epoch.json").unwrap();
         let (base_epoch, base_waypoint) = get_epoch_info(epoch_url);
 
-        let mut app_config = AppCfg::init_app_configs(
+        let app_config = AppCfg::init_app_configs(
             authkey,
             account,
             &Some(upstream.clone()),
             &Some(entrypoint::get_node_home()),
             base_epoch,
             base_waypoint
-
         );
         let home_path = &app_config.workspace.node_home;
 
@@ -147,6 +146,7 @@ impl Runnable for ValWizardCmd {
             &namespace,
             &self.rebuild_genesis,
             &false,
+            base_waypoint,
         )
         .unwrap();
 
