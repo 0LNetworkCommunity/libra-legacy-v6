@@ -30,7 +30,9 @@ pub struct SetData {
 /// Struct that represents a Validators Stats resource
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ValsStatsResource {
+    /// Stats history
     pub history: Vec<SetData>,
+    /// Current epoch stats
     pub current: SetData,
 }
 

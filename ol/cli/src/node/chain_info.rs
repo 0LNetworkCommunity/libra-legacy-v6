@@ -63,6 +63,10 @@ pub struct ValidatorView {
   pub contiguous_epochs_validating_and_mining: u64,
   /// epoch count since creation
   pub epochs_since_last_account_creation: u64,
+  /// total count votes in current epoch
+  pub vote_count_in_epoch: u64,
+  /// total block propositions in current epoch
+  pub prop_count_in_epoch: u64,
 }
 
 impl Node {
@@ -128,7 +132,7 @@ impl Node {
 
       cs.upgrade = self.client.query_oracle_upgrade().expect("could not get upgrade oracle view");
 
-
+      let mut val_index = 0;
       let validators: Vec<ValidatorView> = account_state
         .get_validator_set()
         .unwrap()
@@ -162,6 +166,10 @@ impl Node {
             .unwrap()
             .unwrap();
 
+          let votes = self.get_current_vote_count(val_index);
+          let props = self.get_current_prop_count(val_index);
+          val_index += 1;
+
           ValidatorView {
             account_address: v.account_address().to_string(),
             voting_power: v.consensus_voting_power(),
@@ -177,6 +185,8 @@ impl Node {
             contiguous_epochs_validating_and_mining: ms
               .contiguous_epochs_validating_and_mining,
             epochs_since_last_account_creation: ms.epochs_since_last_account_creation,
+            vote_count_in_epoch: votes,
+            prop_count_in_epoch: props,
           }
         })
         .collect();
@@ -189,6 +199,14 @@ impl Node {
     }
 
     (None, None)
+  }
+
+  fn get_current_vote_count(&self, val_index: usize) -> u64 {
+    self.vals_stats.as_ref().unwrap().current.vote_count.get(val_index).unwrap().clone()
+  }
+
+  fn get_current_prop_count(&self, val_index: usize) -> u64 {
+    self.vals_stats.as_ref().unwrap().current.prop_count.get(val_index).unwrap().clone()
   }
 }
 // get chain info from cache

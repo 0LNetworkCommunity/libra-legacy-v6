@@ -14,6 +14,8 @@ import ValidatorModal from "./ValidatorModal.svelte";
     epochs_validating_and_mining: Number;
     contiguous_epochs_validating_and_mining: Number;
     epochs_since_last_account_creation: Number;
+    vote_count_in_epoch: Number;
+    prop_count_in_epoch: Number;
   }
   
   let set: ValInfo[] = [];
@@ -21,7 +23,9 @@ import ValidatorModal from "./ValidatorModal.svelte";
   let sortableColumns = [
     { label: "voting power", sortKey: "voting_power" },
     { label: "proofs in epoch", sortKey: "count_proofs_in_epoch" },
-    { label: "tower height", sortKey: "tower_height" }
+    { label: "tower height", sortKey: "tower_height" },
+    { label: "votes in epoch", sortKey: "vote_count_in_epoch" },
+    { label: "props in epoch", sortKey: "prop_count_in_epoch" },
   ];
   let sortOption: string = "voting_power";
   let sortOrder = 1;
@@ -75,6 +79,8 @@ import ValidatorModal from "./ValidatorModal.svelte";
           <td class="uk-text-right">{val.voting_power}</td>
           <td class="uk-text-right">{val.count_proofs_in_epoch}</td>
           <td class="uk-text-right">{val.tower_height}</td>
+          <td class="uk-text-right">{val.vote_count_in_epoch}</td>
+          <td class="uk-text-right">{val.prop_count_in_epoch}</td>
           <td>
             <span uk-icon="icon: info" uk-toggle="target: #validator-modal"></span>
           </td>

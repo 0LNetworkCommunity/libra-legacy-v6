@@ -175,11 +175,7 @@ impl LibraClient {
         let responses = self.client.execute(batch)?;
         match get_response_from_batch(0, &responses)? {
             Ok(result) => {
-                println!(">>> get_response!");
                 let vals_stats = ValsStatsResourceView::from_response(result.clone())?;                
-                println!("");
-                println!(">>> get vals stats: {:?}", vals_stats.clone());
-                println!("");
                 Ok(Some(vals_stats))
             }
             Err(e) => bail!(

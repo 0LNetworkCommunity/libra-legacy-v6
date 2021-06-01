@@ -38,11 +38,11 @@ pub struct Node {
     pub client: LibraClient,
     /// vitals
     pub vitals: Vitals,
-    // TODO: deduplicate these
+    /// TODO: deduplicate these
     chain_state: Option<AccountState>,
     miner_state: Option<MinerStateResourceView>,
     
-    // TODO: move to vitals?
+    /// TODO: move to vitals?
     pub vals_stats: Option<ValsStatsResourceView>,
 }
 
@@ -103,16 +103,16 @@ impl Node {
 
     /// Fetch chain state from the upstream node
     pub fn refresh_onchain_state(&mut self) -> &mut Self {
+        self.vals_stats = match self.client.get_vals_stats() {
+            Ok(stats) => stats,
+            _ => None,
+        };
         self.chain_state = match self.get_account_state(AccountAddress::ZERO) {
             Ok(account_state) => Some(account_state),
             Err(_) => None,
         };
         self.miner_state = match self.client.get_miner_state(self.app_conf.profile.account) {
             Ok(state) => state,
-            _ => None,
-        };
-        self.vals_stats = match self.client.get_vals_stats() {
-            Ok(stats) => stats,
             _ => None,
         };
         self
