@@ -4,6 +4,7 @@
 
 use abscissa_core::{Command, Options, Runnable, status_info, status_ok};
 use libra_genesis_tool::node_files;
+use libra_types::waypoint::Waypoint;
 use std::{path::PathBuf};
 use super::{files_cmd};
 use crate::{application::app_config};
@@ -22,6 +23,8 @@ pub struct FnWizardCmd {
     rebuild_genesis: bool,
     #[options(help = "skip fetching genesis blob")]
     skip_fetch_genesis: bool, 
+    #[options(help = "optional waypoint")]
+    waypoint: Option<Waypoint>,
 }
 
 impl Runnable for FnWizardCmd {
@@ -46,15 +49,6 @@ impl Runnable for FnWizardCmd {
             );
             status_ok!("\nGenesis OK", "\n...........................\n");
         }
-        // // Build Genesis and node.yaml file
-        // files_cmd::node_config_files(
-        //     &conf,
-        //     &self.chain_id,
-        //     &self.github_org,
-        //     &self.repo,
-        //     &self.rebuild_genesis,
-        //     &true,
-        // );
 
         let home_dir = cfg.workspace.node_home.to_owned();
         // 0L convention is for the namespace of the operator to be appended by '-oper'
@@ -71,6 +65,8 @@ impl Runnable for FnWizardCmd {
             &namespace,
             &self.rebuild_genesis,
             &true,
+            self.waypoint,
+
         ).unwrap();
         status_ok!("\nNode config OK", "\n...........................\n");
     }

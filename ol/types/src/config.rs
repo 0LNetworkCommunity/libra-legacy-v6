@@ -106,6 +106,8 @@ impl AppCfg {
         account: AccountAddress,
         upstream_peer: &Option<Url>,
         config_path: &Option<PathBuf>,
+        base_epoch: Option<u64>,
+        base_waypoint: Option<Waypoint>,
     ) -> AppCfg {
         // TODO: Check if configs exist and warn on overwrite.
         let mut default_config = AppCfg::default();
@@ -156,6 +158,10 @@ impl AppCfg {
         };
 
         default_config.profile.ip = ip;
+
+        default_config.chain_info.base_epoch = base_epoch;
+        default_config.chain_info.base_waypoint = base_waypoint;
+
 
         // Get statement which goes into genesis block
         default_config.profile.statement = Input::new()
