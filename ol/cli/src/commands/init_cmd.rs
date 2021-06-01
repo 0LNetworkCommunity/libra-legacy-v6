@@ -109,6 +109,7 @@ pub fn initialize_validator(wallet: &WalletLibrary, miner_config: &AppCfg, way_o
     key::set_operator_key(home_dir, &namespace);
     key::set_owner_key(home_dir, &namespace);
     if let Some(way) = way_opt {
+      key::set_genesis_waypoint(home_dir, &namespace, way);
       key::set_waypoint(home_dir, &namespace, way);
     }
     Ok(())
