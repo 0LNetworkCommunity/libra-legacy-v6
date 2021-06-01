@@ -80,7 +80,10 @@ impl Runnable for ValWizardCmd {
         );
         let home_path = &app_config.workspace.node_home;
 
-        let (epoch, wp) = get_epoch_info(&upstream.join("epoch.json").unwrap());
+        let mut web_monitor_url = upstream.clone();
+        web_monitor_url.set_port(Some(3030)).unwrap();
+        let epoch_url = &web_monitor_url.join("epoch.json").unwrap();
+        let (epoch, wp) = get_epoch_info(epoch_url);
         app_config.chain_info.base_epoch = epoch;
         app_config.chain_info.base_waypoint = wp;
 
