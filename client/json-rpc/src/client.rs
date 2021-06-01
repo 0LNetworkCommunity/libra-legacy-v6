@@ -131,6 +131,19 @@ impl JsonRpcBatch {
         );
     }
 
+    //////// 0L ////////
+    pub fn add_get_vals_stats_request(
+        &mut self,
+        version: Option<u64>,
+    ) {
+        self.add_request(
+            "get_vals_stats".to_string(),
+            vec![
+                json!(version),
+            ],
+        );
+    }
+
     pub fn add_query_oracle_upgrade_with_proof_request(
         &mut self,
         version: Option<u64>,
