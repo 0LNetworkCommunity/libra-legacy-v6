@@ -65,6 +65,7 @@ impl Runnable for ValWizardCmd {
             })
         });
         upstream.set_port(Some(8080)).unwrap();
+        
 
         println!(
             "staring validator wizard with upstream URL: {:?}",
@@ -74,22 +75,21 @@ impl Runnable for ValWizardCmd {
         let mut app_config = AppCfg::init_app_configs(
             authkey,
             account,
-            &Some(upstream),
+            &Some(upstream.clone()),
             &Some(entrypoint::get_node_home()),
         );
-
         let home_path = &app_config.workspace.node_home;
 
-        status_ok!("\nMiner config written", "\n...........................\n");
+        let (epoch, wp) = get_epoch_info(&upstream.join("epoch.json").unwrap());
+        app_config.chain_info.base_epoch = epoch;
+        app_config.chain_info.base_waypoint = wp;
+
+        status_ok!("\nApp configs written", "\n...........................\n");
 
         if let Some(url) = &self.template_url {
             let mut url = url.to_owned();
             url.set_port(Some(3030)).unwrap(); //web port
             save_template(&url.join("account.json").unwrap(), home_path);
-            let (epoch, wp) = get_epoch_info(&url.join("epoch.json").unwrap());
-
-            app_config.chain_info.base_epoch = epoch;
-            app_config.chain_info.base_waypoint = wp;
             // get autopay
             status_ok!("\nTemplate saved", "\n...........................\n");
         }
@@ -109,7 +109,7 @@ impl Runnable for ValWizardCmd {
         );
 
         // Initialize Validator Keys
-        init_cmd::initialize_validator(&wallet, &app_config).unwrap();
+        init_cmd::initialize_validator(&wallet, &app_config, wp).unwrap();
         status_ok!("\nKey file written", "\n...........................\n");
 
         // fetching the genesis files from genesis-archive
