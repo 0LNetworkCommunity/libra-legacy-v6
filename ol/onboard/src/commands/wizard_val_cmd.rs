@@ -68,7 +68,7 @@ impl Runnable for ValWizardCmd {
         
 
         println!(
-            "staring validator wizard with upstream URL: {:?}",
+            "starting validator wizard with upstream URL: {:?}",
             &upstream
         );
 
