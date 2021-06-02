@@ -17,7 +17,7 @@
             <tbody>
                 <tr>
                   <td class="uk-table-expand">account address</td>
-                  <td class="hash">{validator.account_address}</td>
+                  <td>{validator.account_address}</td>
                 </tr>
                 <tr>
                     <td>fullnode network address</td>

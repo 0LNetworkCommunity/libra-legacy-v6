@@ -1,7 +1,4 @@
 <style>
-    :global(.hash) {
-        font-family: "monospace";
-    }
     :global(.disable-select) {
       -webkit-touch-callout: none; /* iOS Safari */
         -webkit-user-select: none; /* Safari */
