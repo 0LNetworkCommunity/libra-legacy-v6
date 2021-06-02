@@ -30,3 +30,4 @@ jobs:
         run: sudo chmod -R 777 language/stdlib/ 
       - name: Swarm upgrade test
         run: BRANCH_NAME=${{ steps.branch-name.outputs.current_branch }} SOURCE_PATH=./ make -f ol/util/test-upgrade.mk test
+  
