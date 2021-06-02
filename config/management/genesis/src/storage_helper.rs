@@ -8,6 +8,7 @@ use consensus_types::safety_data::SafetyData;
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     Uniform,
+    ValidCryptoMaterialStringExt
 };
 use diem_global_constants::{
     CONSENSUS_KEY, DIEM_ROOT_KEY, EXECUTION_KEY, FULLNODE_NETWORK_KEY, OPERATOR_KEY, OWNER_KEY,
@@ -23,6 +24,7 @@ use diem_types::{
 };
 use std::{fs::File, path::Path};
 use structopt::StructOpt;
+use ol_keys::scheme::KeyScheme;
 
 pub struct StorageHelper {
     temppath: diem_temppath::TempPath,
@@ -34,6 +36,85 @@ impl StorageHelper {
         temppath.create_as_file().unwrap();
         File::create(temppath.path()).unwrap();
         Self { temppath }
+    }
+
+    //////// 0L ////////
+    pub fn new_with_path(path: std::path::PathBuf) -> Self {
+        std::fs::create_dir_all(&path).unwrap();
+        let path = diem_temppath::TempPath::new_with_dir(path);
+        path.create_as_file().expect("Failed on create_as_file");
+        File::create(path.path()).expect("Could not create file");
+        Self { temppath: path }
+    }
+
+    ///////// 0L  /////////
+    pub fn get_with_path(path: std::path::PathBuf) -> Self {
+        let path = diem_temppath::TempPath::new_with_dir(path);
+        // path.create_as_file().expect("Failed on create_as_file");
+        // File::create(path.path()).expect("Could not create file");
+        Self { temppath: path }
+    }
+
+    ///////// 0L  /////////
+    pub fn initialize_with_mnemonic(&self, namespace: String, keys: KeyScheme, is_genesis: bool) {
+        let mut storage_owner = self.storage(namespace.clone());
+        let mut storage_oper = self.storage(namespace.clone() + "-oper");
+
+        if is_genesis {
+        // Data needed for testnet, swarm, and genesis ceremony.
+        let mut storage_root = self.storage("root".to_owned());
+        let dummy_root = Ed25519PrivateKey::from_encoded_string(
+            "8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010",
+        )
+        .unwrap();
+
+        storage_root
+            .import_private_key(DIEM_ROOT_KEY, dummy_root.clone())
+            .unwrap();
+        storage_root
+            .import_private_key(TREASURY_COMPLIANCE_KEY, dummy_root)
+            .unwrap();
+        storage_owner
+            .import_private_key(OWNER_KEY, keys.child_0_owner.get_private_key())
+            .unwrap();
+        }
+        // storage_oper.set(OWNER_ACCOUNT, peer_id).unwrap();
+
+        storage_oper
+        .import_private_key(OPERATOR_KEY, keys.child_1_operator.get_private_key())
+        .unwrap();
+        storage_oper
+        .import_private_key(
+            VALIDATOR_NETWORK_KEY,
+            keys.child_2_val_network.get_private_key(),
+        )
+        .unwrap();
+        storage_oper
+        .import_private_key(
+            FULLNODE_NETWORK_KEY,
+            keys.child_3_fullnode_network.get_private_key(),
+        )
+        .unwrap();
+        storage_oper
+        .import_private_key(CONSENSUS_KEY, keys.child_4_consensus.get_private_key())
+        .unwrap();
+        storage_oper
+        .import_private_key(EXECUTION_KEY, keys.child_5_executor.get_private_key())
+        .unwrap();
+        storage_oper
+        .set(SAFETY_DATA, SafetyData::new(0, 0, 0, None))
+        .unwrap();
+
+        let mut encryptor = diem_network_address_encryption::Encryptor::new(storage_oper);
+        encryptor.initialize().unwrap();
+
+        // TODO: Use EncNetworkAddress instead of TEST_SHARED
+        encryptor
+        .add_key(
+            diem_types::network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY_VERSION,
+            diem_types::network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY,
+        )
+        .unwrap();
     }
 
     pub fn storage(&self, namespace: String) -> Storage {
@@ -121,6 +202,30 @@ impl StorageHelper {
         let command = Command::from_iter(args.split_whitespace());
         command.create_waypoint()
     }
+
+    ///////// 0L  /////////
+    pub fn build_genesis_from_github(
+        &self,
+        chain_id: ChainId,
+        remote: &str,
+        genesis_path: &std::path::PathBuf,
+    ) -> Result<Waypoint, Error> {
+        let args = format!(
+        "
+            libra-genesis-tool
+            create-waypoint
+            --chain-id {chain_id}
+            --shared-backend {remote}
+            --genesis-path {genesis_path}
+        ",
+        chain_id = chain_id,
+        remote = remote,
+        genesis_path = genesis_path.to_str().unwrap(),
+        );
+
+        let command = Command::from_iter(args.split_whitespace());
+        command.create_waypoint()
+    }    
 
     pub fn insert_waypoint(&self, validator_ns: &str, waypoint: Waypoint) -> Result<(), Error> {
         let args = format!(
