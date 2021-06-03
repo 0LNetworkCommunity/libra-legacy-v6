@@ -137,13 +137,13 @@
 <pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_initialize">initialize</a>(vm: &signer) {
   <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190001));
-   move_to&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(
+  move_to&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(
     vm,
     <a href="Stats.md#0x1_Stats_ValStats">ValStats</a> {
-        history: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>(),
-        current: <a href="Stats.md#0x1_Stats_blank">blank</a>()
-      }
-    );
+      history: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+      current: <a href="Stats.md#0x1_Stats_blank">blank</a>()
+    }
+  );
 }
 </code></pre>
 

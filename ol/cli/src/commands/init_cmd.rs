@@ -6,6 +6,7 @@ use crate::{application::app_config, config::AppCfg, entrypoint, migrate};
 use abscissa_core::{Command, FrameworkError, Options, Runnable, config};
 use anyhow::Error;
 use libra_genesis_tool::{init, key};
+use libra_types::waypoint::Waypoint;
 use ol_keys::{scheme::KeyScheme, wallet};
 use libra_json_rpc_client::AccountAddress;
 use libra_types::transaction::authenticator::AuthenticationKey;
@@ -28,6 +29,8 @@ pub struct InitCmd {
     skip_val: bool,
     #[options(help = "Fix config file, and migrate any missing fields")]
     fix: bool,
+    #[options(help = "Set a waypoint in config files")]
+    waypoint: Option<Waypoint>,
 }
 
 
@@ -60,19 +63,21 @@ impl Runnable for InitCmd {
             authkey,
             account, 
             &self.upstream_peer,
-            &self.path
+            &self.path,
+            None, // TODO: probably need an epoch option here.
+            self.waypoint,
           ).unwrap()
         };
 
         if !self.skip_val {
-          initialize_validator(&wallet, &miner_config).unwrap() 
+          initialize_validator(&wallet, &miner_config, self.waypoint).unwrap() 
         };
     }
 }
 
 /// Initializes the necessary 0L config files: 0L.toml
-pub fn initialize_host(authkey: AuthenticationKey, account: AccountAddress, upstream_peer: &Option<Url>, path: &Option<PathBuf>) -> Result <AppCfg, Error>{
-    let cfg = AppCfg::init_app_configs(authkey, account, upstream_peer, path);
+pub fn initialize_host(authkey: AuthenticationKey, account: AccountAddress, upstream_peer: &Option<Url>, path: &Option<PathBuf>, epoch_opt: Option<u64>, wp_opt: Option<Waypoint>) -> Result <AppCfg, Error>{
+    let cfg = AppCfg::init_app_configs(authkey, account, upstream_peer, path, epoch_opt, wp_opt);
     Ok(cfg)
 }
 
@@ -96,14 +101,17 @@ pub fn initialize_host_swarm(swarm_path: PathBuf, node_home: PathBuf, persona: O
 }
 
 /// Initializes the necessary validator config files: genesis.blob, key_store.json
-pub fn initialize_validator(wallet: &WalletLibrary, miner_config: &AppCfg) -> Result <(), Error>{
+pub fn initialize_validator(wallet: &WalletLibrary, miner_config: &AppCfg, way_opt: Option<Waypoint>) -> Result <(), Error>{
     let home_dir = &miner_config.workspace.node_home;
     let keys = KeyScheme::new(wallet);
     let namespace = miner_config.profile.auth_key.to_owned();
     init::key_store_init(home_dir, &namespace, keys, false);
     key::set_operator_key(home_dir, &namespace);
     key::set_owner_key(home_dir, &namespace);
-
+    if let Some(way) = way_opt {
+      key::set_genesis_waypoint(home_dir, &namespace, way);
+      key::set_waypoint(home_dir, &namespace, way);
+    }
     Ok(())
 }
 

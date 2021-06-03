@@ -7,6 +7,8 @@ use std::fs;
 use crate::{commands::wizard_val_cmd::write_account_json, prelude::app_config};
 use super::wizard_val_cmd::get_autopay_batch;
 use abscissa_core::{Command, Options, Runnable, status_info, time::{DateTime, Utc}};
+use libra_genesis_tool::key;
+use libra_types::waypoint::Waypoint;
 // use libra_genesis_tool::keyscheme::KeyScheme;
 use ol_keys::wallet;
 use ol::config::AppCfg;
@@ -14,13 +16,26 @@ use ol_types::autopay::{InstructionType, PayInstruction, write_batch_file};
 
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
-pub struct FixCmd {}
+pub struct FixCmd {
+    #[options(help = "waypoint to set")]
+    waypoint: Option<Waypoint>,
+}
 
 impl Runnable for FixCmd {
     /// Print version message
     fn run(&self) {
         status_info!("\nOnboard fix", "migrating account.json");
-        migrate_account_json(&app_config().clone());
+        let cfg = app_config();
+        let home_dir = &cfg.workspace.node_home;
+        let namespace = &cfg.profile.auth_key;
+        // set the waypoint
+        if let Some(w) = self.waypoint {
+          key::set_waypoint(home_dir, namespace, w);
+
+        }
+        key::set_operator_key(home_dir, namespace);
+
+        migrate_account_json(&cfg);
     }
   }
 
@@ -59,6 +74,7 @@ pub fn migrate_account_json(cfg: &AppCfg) {
         autopay_signed,
     );
 }
+
 
 /// migrate autopay.json for archive purposes
 pub fn migrate_autopay_json_4_3_0(cfg: &AppCfg, instructions: Vec<PayInstruction>) {
