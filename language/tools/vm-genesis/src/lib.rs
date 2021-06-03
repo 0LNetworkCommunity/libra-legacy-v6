@@ -6,6 +6,9 @@
 mod genesis_context;
 pub mod genesis_gas_schedule;
 
+use serde::{Deserialize, Serialize};
+use std::env;
+
 use crate::{genesis_context::GenesisStateView, genesis_gas_schedule::INITIAL_GAS_SCHEDULE};
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
@@ -72,16 +75,16 @@ pub type OperatorAssignment = (Option<Ed25519PublicKey>, Name, ScriptFunction);
 pub type OperatorRegistration = (Ed25519PublicKey, Name, ScriptFunction);
 
 pub fn encode_genesis_transaction(
-    diem_root_key: Ed25519PublicKey,
-    treasury_compliance_key: Ed25519PublicKey,
+    diem_root_key: Option<&Ed25519PublicKey>,            //////// 0L ////////
+    treasury_compliance_key: Option<&Ed25519PublicKey>,  //////// 0L ////////
     operator_assignments: &[OperatorAssignment],
     operator_registrations: &[OperatorRegistration],
     vm_publishing_option: Option<VMPublishingOption>,
     chain_id: ChainId,
 ) -> Transaction {
     Transaction::GenesisTransaction(WriteSetPayload::Direct(encode_genesis_change_set(
-        &diem_root_key,
-        &treasury_compliance_key,
+        diem_root_key,
+        treasury_compliance_key,
         operator_assignments,
         operator_registrations,
         current_module_blobs(), // Must use compiled stdlib,
@@ -92,8 +95,8 @@ pub fn encode_genesis_transaction(
 }
 
 pub fn encode_genesis_change_set(
-    diem_root_key: &Ed25519PublicKey,
-    treasury_compliance_key: &Ed25519PublicKey,
+    diem_root_key: Option<&Ed25519PublicKey>,           //////// 0L ////////
+    treasury_compliance_key: Option<&Ed25519PublicKey>, //////// 0L ////////
     operator_assignments: &[OperatorAssignment],
     operator_registrations: &[OperatorRegistration],
     stdlib_modules: &[Vec<u8>],
@@ -124,8 +127,8 @@ pub fn encode_genesis_change_set(
     create_and_initialize_main_accounts(
         &mut session,
         &log_context,
-        &diem_root_key,
-        &treasury_compliance_key,
+        diem_root_key,
+        treasury_compliance_key,
         vm_publishing_option,
         &xdx_ty,
         chain_id,
@@ -143,7 +146,9 @@ pub fn encode_genesis_change_set(
         .iter()
         .any(|test_chain_id| test_chain_id.id() == chain_id.id())
     {
-        create_and_initialize_testnet_minting(&mut session, &log_context, &treasury_compliance_key);
+        create_and_initialize_testnet_minting(
+            &mut session, &log_context, &treasury_compliance_key.unwrap()   //////// 0L ////////
+        );
     }
 
     let (mut changeset1, mut events1) = session.finish().unwrap();
@@ -213,18 +218,27 @@ fn exec_script_function(
         .unwrap()
 }
 
+//////// 0L ////////
 /// Create and initialize Association and Core Code accounts.
 fn create_and_initialize_main_accounts(
     session: &mut Session<StateViewCache>,
     log_context: &impl LogContext,
-    diem_root_key: &Ed25519PublicKey,
-    treasury_compliance_key: &Ed25519PublicKey,
+    diem_root_key: Option<&Ed25519PublicKey>,
+    _treasury_compliance_key: Option<&Ed25519PublicKey>,
     publishing_option: VMPublishingOption,
     xdx_ty: &TypeTag,
     chain_id: ChainId,
 ) {
-    let diem_root_auth_key = AuthenticationKey::ed25519(diem_root_key);
-    let treasury_compliance_auth_key = AuthenticationKey::ed25519(treasury_compliance_key);
+    let diem_root_auth_key:AuthenticationKey;
+    if diem_root_key.is_some() {
+        diem_root_auth_key = AuthenticationKey::ed25519(&diem_root_key.unwrap());
+    } else {
+        diem_root_auth_key = AuthenticationKey::new(
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        );
+    }   
+
+    // let treasury_compliance_auth_key = AuthenticationKey::ed25519(treasury_compliance_key);
 
     let root_diem_root_address = account_config::diem_root_address();
     let tc_account_address = account_config::treasury_compliance_account_address();
@@ -253,7 +267,7 @@ fn create_and_initialize_main_accounts(
             MoveValue::Signer(root_diem_root_address),
             MoveValue::Signer(tc_account_address),
             MoveValue::vector_u8(diem_root_auth_key.to_vec()),
-            MoveValue::vector_u8(treasury_compliance_auth_key.to_vec()),
+            // MoveValue::vector_u8(treasury_compliance_auth_key.to_vec()),
             initial_allow_list,
             MoveValue::Bool(publishing_option.is_open_module),
             MoveValue::vector_u8(instr_gas_costs),
@@ -611,8 +625,8 @@ pub fn generate_test_genesis(
     let validators = Validator::new_set(count);
 
     let genesis = encode_genesis_change_set(
-        &GENESIS_KEYPAIR.1,
-        &GENESIS_KEYPAIR.1,
+        Some(&GENESIS_KEYPAIR.1), //////// 0L ////////
+        Some(&GENESIS_KEYPAIR.1), //////// 0L ////////
         &validators
             .iter()
             .map(|v| v.operator_assignment())
@@ -626,4 +640,95 @@ pub fn generate_test_genesis(
         ChainId::test(),
     );
     (genesis, validators)
+}
+
+//////// 0L ////////
+/// Genesis subsidy to miners
+fn distribute_genesis_subsidy(
+    session: &mut Session<StateViewCache>,
+    log_context: &impl LogContext,
+) { 
+    let diem_root_address = account_config::diem_root_address();
+
+    exec_function(
+        session,
+        log_context,
+        "Subsidy",
+        "genesis",
+        vec![],
+        serialize_values(&vec![
+            MoveValue::Signer(diem_root_address),
+        ]),
+    )
+}
+
+//////// 0L ////////
+fn get_env() -> String {
+    match env::var("NODE_ENV") {
+        Ok(val) => val,
+        _ => "test".to_string() // default to "test" if not set
+    }
+}
+
+//////// 0L ////////
+// 0L Change: Necessary for genesis transaction.
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct GenesisMiningProof {
+    pub preimage: String,
+    pub proof: String,
+}
+
+//////// 0L ////////
+impl Default for GenesisMiningProof {
+    fn default() -> GenesisMiningProof {
+
+        // These use "alice" fixtures from ../fixtures and used elsewhere in the project, in both easy(stage) and hard(Prod) mode.
+        //TODO: These fixtures should be moved to /fixtures/miner_fixtures.rs
+
+        let easy_preimage = "87515d94a244235a1433d7117bc0cb154c613c2f4b1e67ca8d98a542ee3f59f5000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000304c20746573746e65746400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000050726f74657374732072616765206163726f737320746865206e6174696f6e".to_owned();
+
+        let easy_proof = "002c4dc1276a8a58ea88fc9974c847f14866420cbc62e5712baf1ae26b6c38a393c4acba3f72d8653e4b2566c84369601bdd1de5249233f60391913b59f0b7f797f66897de17fb44a6024570d2f60e6c5c08e3156d559fbd901fad0f1343e0109a9083e661e5d7f8c1cc62e815afeee31d04af8b8f31c39a5f4636af2b468bf59a0010f48d79e7475be62e7007d71b7355944f8164e761cd9aca671a4066114e1382fbe98834fe32cf494d01f31d1b98e3ef6bffa543928810535a063c7bbf491c472263a44d9269b1cbcb0aa351f8bd894e278b5d5667cc3f26a35b9f8fd985e4424bedbb3b77bdcc678ccbb9ed92c1730dcdd3a89c1a8766cbefa75d6eeb7e5921000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001".to_owned();
+
+        //NOTE: this is same as easy_preimage
+        // let hard_preimage = easy_preimage.to_owned();
+        let hard_preimage = "87515d94a244235a1433d7117bc0cb154c613c2f4b1e67ca8d98a542ee3f59f5000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000304c20746573746e6574404b4c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000050726f74657374732072616765206163726f737320746865206e6174696f6e".to_owned();
+
+        let hard_proof =  "001725678f78425dac39e394fc07698dd8fc891dfba0822cecc5d21434dacde903f508c1e12844eb4b97a598653cc6d03524335edf51b43f090199288488b537fd977cc5f53069f609a2f758f121e887f28f0fc1150aa5649255f8b7caea9edf6228640358d1a4fe43ddb6ad6ce1c3a6a28166e2f0b7e7310e80bfbb1db85e096000065a89b7f44ebc495d70db6034fd529a80e0b5bb74ace62cffb89f4e16e54f93e4a0063ca3651dd8486b466607973a51aacb0c66213e64e0b7bf291c64d81ed4a517a0abe58da4ae46f6191c808d9ba7c636cee404ed02248794db3fab6e5e4ab517f6f3fa12f39fb88fb5a143b5d9c16a31e3c3e173deb11494f792b52a67a70034a065c665b1ef05921a6a8ac4946365d61b2b4d5b86a607ba73659863d774c3fc7c2372f5b6c8b5ae068d4e20aac5e42b501bf441569d377f70e8f87db8a6f9b1eadb813880dbeb89872121849df312383f4d8007747ae76e66e5a13d9457af173ebb0c5eb9c39ee1ac5cef94aa75e1d5286349c88051c36507960de1f37377ffddc80a66578b437ac2a6d04fc7a595075b978bd844919d03ffe9db5b6440b753273c498aa2a139de42188d278d1ce1e3ddfdd99a97a64907e1cdf30d1c55dfc7262cd3175eb1f268ee2a91576fcd6bd644031413f55e42c510d08a81e747de36c0a6c9019d219571ea6851f43a551d6012a5317cc52992a72c270c1570419665".to_owned();
+
+        if get_env() == "test"  {
+            return GenesisMiningProof {
+                preimage: easy_preimage,
+                proof: easy_proof,
+            }
+
+        } else {
+            return GenesisMiningProof {
+                preimage: hard_preimage,
+                proof: hard_proof,
+            }
+        }
+    }
+}
+
+//////// 0L ////////
+fn initialize_testnet(
+    session: &mut Session<StateViewCache>,
+    log_context: &impl LogContext
+) {
+    let root_diem_root_address = account_config::diem_root_address();
+    let mut module_name = "Testnet";
+    if get_env() == "stage" { 
+        module_name = "StagingNet";
+    };
+    exec_function(
+        session,
+        log_context,
+        module_name,
+        "initialize",
+        vec![],
+        serialize_values(&vec![
+            MoveValue::Signer(root_diem_root_address),
+        ]),
+    );
 }

@@ -71,8 +71,9 @@ impl<T: AsRef<Path>> ValidatorBuilder<T> {
             operators: (0..self.num_validators)
                 .map(|i| (i.to_string() + OPERATOR_SHARED_NS))
                 .collect(),
-            diem_root: "".to_string(), // DIEM_ROOT_SHARED_NS.into(),
-            treasury_compliance: "".to_string(), // DIEM_ROOT_SHARED_NS.into(),
+            //////// 0L ////////                
+            // diem_root: DIEM_ROOT_SHARED_NS.into(),
+            // treasury_compliance: DIEM_ROOT_SHARED_NS.into(),
         };
 
         let mut common_storage = self.storage_helper.storage(COMMON_NS.into());
@@ -99,6 +100,11 @@ impl<T: AsRef<Path>> ValidatorBuilder<T> {
 
         self.storage_helper
             .initialize_by_idx(local_ns.clone(), 1 + index);
+        
+        //////// 0L /////////
+        self.storage_helper
+            .swarm_pow_helper(remote_ns.clone());
+                        
         let _ = self
             .storage_helper
             .owner_key(&local_ns, &remote_ns)

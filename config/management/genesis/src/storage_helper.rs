@@ -24,6 +24,7 @@ use diem_types::{
 };
 use std::{fs::File, path::Path};
 use structopt::StructOpt;
+use vm_genesis::GenesisMiningProof;
 use ol_keys::scheme::KeyScheme;
 
 pub struct StorageHelper {
@@ -185,6 +186,24 @@ impl StorageHelper {
             .unwrap();
     }
 
+    ///////// 0L /////////
+    pub fn swarm_pow_helper(&self, namespace: String) {
+        let mut storage = self.storage(namespace);
+        let default_proof = GenesisMiningProof::default();
+        storage
+        .set(
+            diem_global_constants::PROOF_OF_WORK_PREIMAGE,
+            default_proof.preimage,
+        )
+        .unwrap();
+        storage
+        .set(
+            diem_global_constants::PROOF_OF_WORK_PROOF,
+            default_proof.proof,
+        )
+        .unwrap();
+    }
+
     pub fn create_waypoint(&self, chain_id: ChainId) -> Result<Waypoint, Error> {
         let args = format!(
             "
@@ -212,7 +231,7 @@ impl StorageHelper {
     ) -> Result<Waypoint, Error> {
         let args = format!(
         "
-            libra-genesis-tool
+            diem-genesis-tool
             create-waypoint
             --chain-id {chain_id}
             --shared-backend {remote}
