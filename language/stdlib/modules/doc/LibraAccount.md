@@ -1358,6 +1358,7 @@ Initialize this module. This is only callable from genesis.
         op_fullnode_network_addresses
     );
 
+    // user can join validator universe list, but will only join <b>if</b> the mining is above the threshold in the preceeding period.
     <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_self">ValidatorUniverse::add_self</a>(&new_signer);
 
     <a href="LibraAccount.md#0x1_LibraAccount_make_account">make_account</a>(new_signer, auth_key_prefix);

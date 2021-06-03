@@ -7,6 +7,7 @@ use std::{fs::File, path::{PathBuf}};
 use crate::{application::app_config};
 use abscissa_core::{Command, Options, Runnable};
 use libra_genesis_tool::node_files;
+use libra_types::waypoint::Waypoint;
 use std::io::Write;
 
 use ol_types::config::AppCfg;
@@ -23,6 +24,8 @@ pub struct FilesCmd {
     rebuild_genesis: bool, 
     #[options(help = "only make fullnode config files")]
     fullnode_only: bool,
+    #[options(help = "optional waypoint")]
+    waypoint: Option<Waypoint>,
 }
 
 
@@ -37,6 +40,7 @@ impl Runnable for FilesCmd {
             &self.repo,
             &self.rebuild_genesis,
             &self.fullnode_only,
+            self.waypoint,
         ) 
     }
 }
@@ -48,6 +52,7 @@ pub fn genesis_files(
     repo: &Option<String>,
     rebuild_genesis: &bool,
     fullnode_only: &bool,
+    way_opt: Option<Waypoint>,
 ) {
     let home_dir = miner_config.workspace.node_home.to_owned();
     // 0L convention is for the namespace of the operator to be appended by '-oper'
@@ -60,7 +65,8 @@ pub fn genesis_files(
         &repo.clone().unwrap_or("experimetal-genesis".to_string()),
         &namespace,
         rebuild_genesis,
-        fullnode_only
+        fullnode_only,
+        way_opt
     ).unwrap();
 
     println!("validator configurations initialized, file saved to: {:?}", &home_dir.join("validator.node.yaml"));

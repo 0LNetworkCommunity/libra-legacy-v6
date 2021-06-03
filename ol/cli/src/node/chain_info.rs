@@ -1,13 +1,11 @@
 //! `chain_info`
 use chrono::Utc;
-
 use libra_json_rpc_client::views::OracleResourceView;
 use libra_types::{
   account_address::AccountAddress, account_state::AccountState, waypoint::Waypoint,
 };
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
-
 use super::node::Node;
 
 /// name of chain info key for db
@@ -166,8 +164,8 @@ impl Node {
             .unwrap()
             .unwrap();
 
-          let votes = self.get_current_vote_count(val_index);
-          let props = self.get_current_prop_count(val_index);
+          let votes = self.get_current_vote_count(val_index).unwrap_or(0);
+          let props = self.get_current_prop_count(val_index).unwrap_or(0);
           val_index += 1;
 
           ValidatorView {
@@ -201,30 +199,31 @@ impl Node {
     (None, None)
   }
 
-  fn get_current_vote_count(&self, val_index: usize) -> u64 {
-    self.vals_stats.as_ref().unwrap().current.vote_count.get(val_index).unwrap().clone()
+  fn get_current_vote_count(&self, val_index: usize) -> Option<u64> {
+    match &self.vals_stats {
+        Some(s) => {
+          match s.current.vote_count.get(val_index){
+            Some(c) => {
+              Some(c.to_owned())
+            },
+            None => None
+          }
+        },
+        None => None,
+    }
   }
 
-  fn get_current_prop_count(&self, val_index: usize) -> u64 {
-    self.vals_stats.as_ref().unwrap().current.prop_count.get(val_index).unwrap().clone()
+  fn get_current_prop_count(&self, val_index: usize) -> Option<u64>{
+    match &self.vals_stats {
+        Some(s) => {
+          match s.current.prop_count.get(val_index){
+            Some(c) => {
+              Some(c.to_owned())
+            },
+            None => None
+          }
+        },
+        None => None,
+    }
   }
 }
-// get chain info from cache
-// pub fn read_chain_info_cache() -> ChainView {
-//   let chain_state = DB_CACHE
-//     .get(CHAIN_INFO_DB_KEY.as_bytes())
-//     .unwrap()
-//     .expect("could not reach chain_info cache");
-//   let c: ChainView = serde_json::de::from_slice(&chain_state.as_slice()).unwrap();
-//   c
-// }
-
-// /// get chain info from cache
-// pub fn read_val_info_cache() -> Vec<ValidatorView> {
-//   let val_info = DB_CACHE
-//     .get(VAL_INFO_DB_KEY.as_bytes())
-//     .unwrap()
-//     .expect("could not reach chain_info cache");
-//   let v: Vec<ValidatorView> = serde_json::de::from_slice(&val_info.as_slice()).unwrap();
-//   v
-// }

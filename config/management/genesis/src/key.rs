@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use libra_crypto::ed25519::Ed25519PublicKey;
-use libra_global_constants::{OPERATOR_ACCOUNT, OWNER_ACCOUNT};
+use libra_global_constants::{GENESIS_WAYPOINT, OPERATOR_ACCOUNT, OWNER_ACCOUNT, WAYPOINT};
 use libra_management::{config:: ConfigPath, error::Error, secure_backend::{SecureBackend, SharedBackend}};
 use libra_secure_storage::OnDiskStorageInternal;
-use libra_types::transaction::authenticator::AuthenticationKey;
+use libra_types::{transaction::authenticator::AuthenticationKey, waypoint::Waypoint};
 use std::path::PathBuf;
 use structopt::StructOpt;
 use libra_secure_storage::CryptoStorage;
@@ -64,6 +64,7 @@ impl Key {
 }
 
 //////// 0L /////////
+
 pub fn set_operator_key(path: &PathBuf, namespace: &str) {
     let mut storage = libra_secure_storage::Storage::OnDiskStorage(OnDiskStorageInternal::new(path.join("key_store.json").to_owned()));
     // TODO: Remove hard coded field
@@ -79,6 +80,17 @@ pub fn set_owner_key(path: &PathBuf, namespace: &str) {
     let account = authkey.derived_address();
     storage.set(&format!("{}-oper/{}", namespace, OWNER_ACCOUNT), account).unwrap();
 }
+
+pub fn set_waypoint(path: &PathBuf, namespace: &str, waypoint: Waypoint) {
+    let mut storage = libra_secure_storage::Storage::OnDiskStorage(OnDiskStorageInternal::new(path.join("key_store.json").to_owned()));
+    storage.set(&format!("{}-oper/{}", namespace, WAYPOINT), waypoint).unwrap();
+}
+
+pub fn set_genesis_waypoint(path: &PathBuf, namespace: &str, waypoint: Waypoint) {
+    let mut storage = libra_secure_storage::Storage::OnDiskStorage(OnDiskStorageInternal::new(path.join("key_store.json").to_owned()));
+    storage.set(&format!("{}-oper/{}", namespace, GENESIS_WAYPOINT), waypoint).unwrap();
+}
+
 //////// 0L end /////////
 
 #[derive(Debug, StructOpt)]
