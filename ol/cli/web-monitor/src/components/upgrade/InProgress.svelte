@@ -56,7 +56,7 @@
             {prop.validators.length} votes / {validator_count} validators
           </p>
           {#each prop.validators as val, i}
-            <p class="hash">{val}</p>
+            <p>{val}</p>
           {/each}
         {/each}
       </div>

@@ -75,7 +75,7 @@ import ValidatorModal from "./ValidatorModal.svelte";
     <tbody>
       {#each set as val, i}
         <tr on:click={() => selectedVal = val}>
-          <td class="hash uk-text-center">{val.account_address}</td>
+          <td class="uk-text-center">{val.account_address}</td>
           <td class="uk-text-right">{val.voting_power}</td>
           <td class="uk-text-right">{val.count_proofs_in_epoch}</td>
           <td class="uk-text-right">{val.tower_height}</td>
