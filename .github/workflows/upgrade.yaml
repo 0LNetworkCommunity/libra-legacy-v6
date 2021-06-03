@@ -2,9 +2,9 @@ name: Chain Upgrade
 
 on:
   push:
-    branches: [ ci ]
+    branches: [ main, ci ]
   pull_request:
-    branches: [ main, 'v**', 'release**' ]
+    branches: [ main, 'release**' ]
     
 jobs:
   functional:
