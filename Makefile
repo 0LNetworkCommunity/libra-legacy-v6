@@ -76,12 +76,17 @@ uninstall:
 		rm /usr/local/bin/$$b ; \
 	done
 
-bins:
+bins: stdlib
 # Build and install genesis tool, libra-node, and miner
-	cargo run -p stdlib --release
-
 # NOTE: stdlib is built for cli bindings
+
 	cargo build -p libra-node -p miner -p backup-cli -p ol -p txs -p onboard --release
+
+stdlib:
+	cargo run --release -p stdlib
+	cargo run --release -p stdlib -- --create-upgrade-payload
+	sha256sum language/stdlib/staged/stdlib.mv
+  
 
 install:
 	sudo cp -f ${SOURCE}/target/release/miner /usr/local/bin/miner
@@ -323,11 +328,7 @@ client: set-waypoint
 # endif
 
 
-stdlib:
-	cargo run --release -p stdlib
-	cargo run --release -p stdlib -- --create-upgrade-payload
-	sha256sum language/stdlib/staged/stdlib.mv
-  
+
 keygen:
 	cd ${DATA_PATH} && miner keygen
 
