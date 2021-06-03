@@ -18619,18 +18619,18 @@ var app = (function () {
     			add_location(h3, file$8, 32, 2, 973);
     			attr_dev(td0, "class", "uk-text-uppercase");
     			add_location(td0, file$8, 41, 8, 1150);
-    			attr_dev(td1, "class", "uk-text-truncate hash");
+    			attr_dev(td1, "class", "uk-text-truncate");
     			add_location(td1, file$8, 42, 8, 1199);
     			add_location(tr0, file$8, 40, 6, 1137);
     			attr_dev(td2, "class", "uk-text-uppercase");
-    			add_location(td2, file$8, 45, 8, 1279);
-    			add_location(td3, file$8, 46, 8, 1330);
-    			add_location(tr1, file$8, 44, 6, 1266);
+    			add_location(td2, file$8, 45, 8, 1274);
+    			add_location(td3, file$8, 46, 8, 1325);
+    			add_location(tr1, file$8, 44, 6, 1261);
     			attr_dev(td4, "class", "uk-text-uppercase");
-    			add_location(td4, file$8, 49, 8, 1404);
+    			add_location(td4, file$8, 49, 8, 1399);
     			attr_dev(td5, "class", "uk-text-uppercase");
-    			add_location(td5, file$8, 50, 8, 1454);
-    			add_location(tr2, file$8, 48, 6, 1391);
+    			add_location(td5, file$8, 50, 8, 1449);
+    			add_location(tr2, file$8, 48, 6, 1386);
     			add_location(tbody, file$8, 39, 4, 1123);
     			attr_dev(table, "class", "uk-table");
     			add_location(table, file$8, 38, 4, 1094);
@@ -18981,22 +18981,21 @@ var app = (function () {
     			add_location(thead, file$6, 10, 12, 336);
     			attr_dev(td0, "class", "uk-table-expand");
     			add_location(td0, file$6, 18, 18, 527);
-    			attr_dev(td1, "class", "hash");
     			add_location(td1, file$6, 19, 18, 594);
     			add_location(tr1, file$6, 17, 16, 504);
-    			add_location(td2, file$6, 22, 20, 707);
+    			add_location(td2, file$6, 22, 20, 694);
     			attr_dev(td3, "class", "uk-text-break");
-    			add_location(td3, file$6, 23, 20, 761);
-    			add_location(tr2, file$6, 21, 16, 682);
-    			add_location(td4, file$6, 26, 20, 880);
-    			add_location(td5, file$6, 27, 20, 935);
-    			add_location(tr3, file$6, 25, 16, 855);
-    			add_location(td6, file$6, 30, 20, 1032);
-    			add_location(td7, file$6, 31, 20, 1090);
-    			add_location(tr4, file$6, 29, 16, 1007);
-    			add_location(td8, file$6, 34, 18, 1201);
-    			add_location(td9, file$6, 35, 18, 1247);
-    			add_location(tr5, file$6, 33, 16, 1178);
+    			add_location(td3, file$6, 23, 20, 748);
+    			add_location(tr2, file$6, 21, 16, 669);
+    			add_location(td4, file$6, 26, 20, 867);
+    			add_location(td5, file$6, 27, 20, 922);
+    			add_location(tr3, file$6, 25, 16, 842);
+    			add_location(td6, file$6, 30, 20, 1019);
+    			add_location(td7, file$6, 31, 20, 1077);
+    			add_location(tr4, file$6, 29, 16, 994);
+    			add_location(td8, file$6, 34, 18, 1188);
+    			add_location(td9, file$6, 35, 18, 1234);
+    			add_location(tr5, file$6, 33, 16, 1165);
     			add_location(tbody, file$6, 16, 12, 480);
     			attr_dev(table, "class", "uk-table");
     			add_location(table, file$6, 9, 10, 299);
@@ -19437,22 +19436,22 @@ var app = (function () {
     			td6 = element("td");
     			span = element("span");
     			t12 = space();
-    			attr_dev(td0, "class", "hash uk-text-center");
+    			attr_dev(td0, "class", "uk-text-center");
     			add_location(td0, file$5, 57, 10, 2003);
     			attr_dev(td1, "class", "uk-text-right");
-    			add_location(td1, file$5, 58, 10, 2072);
+    			add_location(td1, file$5, 58, 10, 2067);
     			attr_dev(td2, "class", "uk-text-right");
-    			add_location(td2, file$5, 59, 10, 2132);
+    			add_location(td2, file$5, 59, 10, 2127);
     			attr_dev(td3, "class", "uk-text-right");
-    			add_location(td3, file$5, 60, 10, 2201);
+    			add_location(td3, file$5, 60, 10, 2196);
     			attr_dev(td4, "class", "uk-text-right");
-    			add_location(td4, file$5, 61, 10, 2261);
+    			add_location(td4, file$5, 61, 10, 2256);
     			attr_dev(td5, "class", "uk-text-right");
-    			add_location(td5, file$5, 62, 10, 2328);
+    			add_location(td5, file$5, 62, 10, 2323);
     			attr_dev(span, "uk-icon", "icon: info");
     			attr_dev(span, "uk-toggle", "target: #validator-modal");
-    			add_location(span, file$5, 64, 12, 2412);
-    			add_location(td6, file$5, 63, 10, 2395);
+    			add_location(span, file$5, 64, 12, 2407);
+    			add_location(td6, file$5, 63, 10, 2390);
     			add_location(tr, file$5, 56, 8, 1953);
     		},
     		m: function mount(target, anchor) {
@@ -19866,9 +19865,8 @@ var app = (function () {
     			t4 = text(t4_value);
     			t5 = space();
     			add_location(td0, file$4, 29, 14, 600);
-    			attr_dev(td1, "class", "hash");
     			add_location(td1, file$4, 30, 14, 631);
-    			add_location(td2, file$4, 31, 14, 676);
+    			add_location(td2, file$4, 31, 14, 663);
     			add_location(tr, file$4, 28, 12, 581);
     		},
     		m: function mount(target, anchor) {
@@ -20097,7 +20095,6 @@ var app = (function () {
     		c: function create() {
     			p = element("p");
     			t = text(t_value);
-    			attr_dev(p, "class", "hash");
     			add_location(p, file$3, 53, 12, 1577);
     		},
     		m: function mount(target, anchor) {

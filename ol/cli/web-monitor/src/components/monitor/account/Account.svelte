@@ -44,7 +44,7 @@
     <tbody>
       <tr>
         <td class="uk-text-uppercase">owner</td>
-        <td class="uk-text-truncate hash">{account}</td>
+        <td class="uk-text-truncate">{account}</td>
       </tr>
       <tr>
         <td class="uk-text-uppercase">balance</td>
