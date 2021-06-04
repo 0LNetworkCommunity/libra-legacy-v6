@@ -1,8 +1,9 @@
 //! `chain_info`
 use chrono::Utc;
-use libra_json_rpc_client::views::OracleResourceView;
+use libra_json_rpc_client::views::{OracleResourceView};
 use libra_types::{
   account_address::AccountAddress, account_state::AccountState, waypoint::Waypoint,
+  validators_stats::ValidatorsStatsResource,
 };
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
@@ -34,6 +35,8 @@ pub struct ChainView {
   pub upgrade: Option<OracleResourceView>,
   /// validator view
   pub validator_view: Option<Vec<ValidatorView>>,
+  /// validators stats
+  pub validators_stats: Option<ValidatorsStatsResource>,
 }
 
 #[derive(Default, Debug, Deserialize, Serialize, Clone)]
@@ -99,6 +102,12 @@ impl Node {
         .payload()
         .len() as u64;
 
+      // Get vals stats
+      let validators_stats = account_state
+        .get_validators_stats()
+        .unwrap()
+        .unwrap();
+
       // Calculate Epoch Progress
       let ts = account_state
         .get_configuration_resource()
@@ -130,7 +139,6 @@ impl Node {
 
       cs.upgrade = self.client.query_oracle_upgrade().expect("could not get upgrade oracle view");
 
-      let mut val_index = 0;
       let validators: Vec<ValidatorView> = account_state
         .get_validator_set()
         .unwrap()
@@ -164,9 +172,7 @@ impl Node {
             .unwrap()
             .unwrap();
 
-          let votes = self.get_current_vote_count(val_index).unwrap_or(0);
-          let props = self.get_current_prop_count(val_index).unwrap_or(0);
-          val_index += 1;
+          let validator_stats = validators_stats.get_validator_current_stats(v.account_address().clone());
 
           ValidatorView {
             account_address: v.account_address().to_string(),
@@ -183,13 +189,14 @@ impl Node {
             contiguous_epochs_validating_and_mining: ms
               .contiguous_epochs_validating_and_mining,
             epochs_since_last_account_creation: ms.epochs_since_last_account_creation,
-            vote_count_in_epoch: votes,
-            prop_count_in_epoch: props,
+            vote_count_in_epoch: validator_stats.vote_count,
+            prop_count_in_epoch: validator_stats.prop_count,
           }
         })
         .collect();
       
       cs.validator_view = Some(validators.clone());
+      cs.validators_stats = Some(validators_stats);
 
       self.vitals.chain_view = Some(cs.clone());
 
@@ -197,33 +204,5 @@ impl Node {
     }
 
     (None, None)
-  }
-
-  fn get_current_vote_count(&self, val_index: usize) -> Option<u64> {
-    match &self.vals_stats {
-        Some(s) => {
-          match s.current.vote_count.get(val_index){
-            Some(c) => {
-              Some(c.to_owned())
-            },
-            None => None
-          }
-        },
-        None => None,
-    }
-  }
-
-  fn get_current_prop_count(&self, val_index: usize) -> Option<u64>{
-    match &self.vals_stats {
-        Some(s) => {
-          match s.current.prop_count.get(val_index){
-            Some(c) => {
-              Some(c.to_owned())
-            },
-            None => None
-          }
-        },
-        None => None,
-    }
   }
 }

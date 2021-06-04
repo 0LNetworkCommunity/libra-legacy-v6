@@ -8,7 +8,7 @@ use libradb::LibraDB;
 use std::{process::Command, str};
 use sysinfo::SystemExt;
 use sysinfo::{ProcessExt, ProcessStatus};
-use libra_json_rpc_client::views::{MinerStateResourceView, ValsStatsResourceView};
+use libra_json_rpc_client::views::{MinerStateResourceView};
 use libra_types::waypoint::Waypoint;
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
 use storage_interface::DbReader;
@@ -41,9 +41,6 @@ pub struct Node {
     /// TODO: deduplicate these
     chain_state: Option<AccountState>,
     miner_state: Option<MinerStateResourceView>,
-    
-    /// TODO: move to vitals?
-    pub vals_stats: Option<ValsStatsResourceView>,
 }
 
 impl Node {
@@ -72,7 +69,6 @@ impl Node {
             },
             miner_state: None,
             chain_state: None,
-            vals_stats: None,
         };
     }
 
@@ -103,10 +99,6 @@ impl Node {
 
     /// Fetch chain state from the upstream node
     pub fn refresh_onchain_state(&mut self) -> &mut Self {
-        self.vals_stats = match self.client.get_vals_stats() {
-            Ok(stats) => stats,
-            _ => None,
-        };
         self.chain_state = match self.get_account_state(AccountAddress::ZERO) {
             Ok(account_state) => Some(account_state),
             Err(_) => None,
