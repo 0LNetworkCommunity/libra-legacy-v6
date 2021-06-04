@@ -1,25 +1,32 @@
 //! 'query'
 use libra_json_rpc_client::{AccountAddress, views::TransactionView};
 use num_format::{Locale, ToFormattedString};
+
 use super::node::Node;
 
 #[derive(Debug)]
 /// What query do we want to return
 pub enum QueryType {
   /// Account balance
-  Balance,
+  Balance {
+    /// account to query txs of
+    account: AccountAddress 
+  },
   /// Epoch and waypoint
   Epoch,
   /// Network block height
   BlockHeight,
   /// All account resources
-  Resources,
+  Resources {
+    /// account to query txs of
+    account: AccountAddress 
+  },
   /// How far behind the local is from the upstream nodes
   SyncDelay,
   /// Get transaction history
   Txs { 
     /// account to query txs of
-    account: Option<AccountAddress>,
+    account: AccountAddress,
     /// get transactions after this height
     txs_height: Option<u64>,
     /// limit how many txs
@@ -32,14 +39,14 @@ pub enum QueryType {
 /// Get data from a client, with a query type. Will connect to local only if in sync.
 impl Node {
   /// run a query
-  pub fn get(&mut self, query_type: QueryType) -> String {
+  pub fn query(&mut self, query_type: QueryType) -> String {
     use QueryType::*;
     match query_type {
-      Balance => {
+      Balance{account} => {
         // TODO: get scaling factor from chain.
         let scaling_factor = 1_000_000;
-        match self.get_account_view() {
-            Some(account_view) => {
+        match self.client.get_account(account, true) {
+            Ok((Some(account_view), _)) => {
               for av in account_view.balances.iter() {
                 if av.currency == "GAS" {
                   
@@ -48,7 +55,7 @@ impl Node {
                 }
               }
             },
-            None => {}
+            _ => {}
         }
         "0".to_string()
       }
@@ -73,8 +80,9 @@ impl Node {
            Err(e) => e.to_string()
        }
       },
-      Resources => {
-        let resources = self.get_annotate_account_blob(self.app_conf.profile.account)
+      Resources { account } => {
+        // account
+        let resources = self.get_annotate_account_blob(account)
           .unwrap()
           .0
           .unwrap();
@@ -88,7 +96,7 @@ impl Node {
         else { 0 };
 
         let txs = self.client.get_txn_by_acc_range(
-          account.unwrap_or(self.app_conf.profile.account),
+          account,
           txs_height.unwrap_or(query_height),
           txs_count.unwrap_or(100), 
           true
@@ -109,10 +117,6 @@ impl Node {
         } else {
           format!("{:#?}", txs)
         }
-
-
-        
-
       }
     }
   }
