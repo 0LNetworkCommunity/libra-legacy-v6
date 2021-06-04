@@ -1,5 +1,6 @@
 //! Configs for all 0L apps.
 
+use anyhow::Error;
 use dialoguer::{Confirm, Input};
 use dirs;
 use libra_config::config::NodeConfig;
@@ -58,9 +59,9 @@ pub struct AppCfg {
 
 impl AppCfg {
     /// Gets the dynamic waypoint from libra node's key_store.json
-    pub fn get_waypoint(&self, swarm_path_opt: Option<PathBuf>) -> Option<Waypoint> {
+    pub fn get_waypoint(&self, swarm_path_opt: Option<PathBuf>) -> Result<Waypoint, Error> {
         if let Some(path) = swarm_path_opt {
-            return Some(get_swarm_rpc_url(path).1);
+            return Ok(get_swarm_rpc_url(path).1);
         };
 
         match fs::File::open(self.get_key_store_path()) {
@@ -69,19 +70,23 @@ impl AppCfg {
                     serde_json::from_reader(file).expect("could not parse JSON in key_store.json");
                 match ajson::get(&json.to_string(), "*/waypoint.value") {
                     Some(value) => {
-                        //println!("Waypoint: using waypoint from key_store.json: {:?}", &value);
-                        Some(value.to_string().parse().unwrap())
+                        value.to_string().parse()
                     }
                     // If nothing is found in key_store.json fallback to base_waypoint in toml
                     _ => {
-                        //println!("Waypoint: fallback to base_waypoint in 0L.toml");
-                        self.chain_info.base_waypoint
+                      match self.chain_info.base_waypoint {
+                          Some(w) => Ok(w),
+                          None => Err(Error::msg("could not get waypoint from 0L.toml")),
+                      }
                     }
                 }
             }
-            Err(_err) => {
+            Err(_) => {
                 // println!("Waypoint: fallback to base_waypoint in 0L.toml");
-                self.chain_info.base_waypoint
+                match self.chain_info.base_waypoint {
+                    Some(w) => Ok(w),
+                    None => Err(Error::msg("could not get waypoint from 0L.toml")),
+                }
             }
         }
     }
@@ -482,7 +487,7 @@ pub fn get_swarm_rpc_url(mut swarm_path: PathBuf) -> (Url, Waypoint) {
 }
 
 /// Get swarm configs from swarm files, swarm must be running
-pub fn get_swarm_backup_service_url(mut swarm_path: PathBuf, swarm_id: u8) -> Result<Url, anyhow::Error> {
+pub fn get_swarm_backup_service_url(mut swarm_path: PathBuf, swarm_id: u8) -> Result<Url, Error> {
     swarm_path.push(format!("{}/node.yaml", swarm_id));
     let config = NodeConfig::load(&swarm_path)
         .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path));

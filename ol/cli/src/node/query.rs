@@ -55,7 +55,8 @@ impl Node {
                 }
               }
             },
-            _ => {}
+            Ok((None, _)) => { dbg!("none"); }
+            Err(e) => {dbg!(e);}
         }
         "0".to_string()
       }
