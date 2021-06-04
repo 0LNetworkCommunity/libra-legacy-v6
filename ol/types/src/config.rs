@@ -60,6 +60,8 @@ pub struct AppCfg {
 impl AppCfg {
     /// Gets the dynamic waypoint from libra node's key_store.json
     pub fn get_waypoint(&self, swarm_path_opt: Option<PathBuf>) -> Result<Waypoint, Error> {
+        let err_msg = Error::msg("Could not get waypoint from cli, key_store.json, nor 0L.toml.");
+
         if let Some(path) = swarm_path_opt {
             return Ok(get_swarm_rpc_url(path).1);
         };
@@ -76,7 +78,7 @@ impl AppCfg {
                     _ => {
                       match self.chain_info.base_waypoint {
                           Some(w) => Ok(w),
-                          None => Err(Error::msg("could not get waypoint from 0L.toml")),
+                          None => Err(err_msg),
                       }
                     }
                 }
@@ -85,7 +87,7 @@ impl AppCfg {
                 // println!("Waypoint: fallback to base_waypoint in 0L.toml");
                 match self.chain_info.base_waypoint {
                     Some(w) => Ok(w),
-                    None => Err(Error::msg("could not get waypoint from 0L.toml")),
+                    None => Err(err_msg),
                 }
             }
         }
