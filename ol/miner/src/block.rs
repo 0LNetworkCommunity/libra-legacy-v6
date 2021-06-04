@@ -3,9 +3,10 @@
 use ol_types::config::AppCfg;
 use crate::{
     delay::*,
+    backlog,
     error::{Error, ErrorKind},
     prelude::*,
-    commit_proof::commit_proof_tx,
+    commit_proof::commit_proof_tx
 };
 use byteorder::{LittleEndian, WriteBytesExt};
 use glob::glob;
@@ -104,32 +105,87 @@ pub fn mine_and_submit(
         status_err!("Genesis block_0.json not found. Exiting.");
         std::process::exit(0);
     } else {
+        // the max block that has been succesfully submitted to client
+        let mut remote_height = current_block_number.unwrap();
+        // in the beginning, mining height is +1 of client block number
+        let mut mining_height = remote_height + 1; 
+
         // mine continuously from the last block in the file systems
-        let mut mining_height = current_block_number.unwrap() + 1;
         loop {
+            status_info!(
+                "Latest client block:",
+                format!("{}", remote_height)
+            );
+
             status_info!(format!("Block {}", mining_height), "Mining VDF Proof");
 
-            let block = mine_once(&config)?;
+            let block_result = mine_once(&config);
+            let block: Block;
+            match block_result {
+                Ok(blk) => block = blk,
+                Err(err) => {
+                    status_warn!("Mining block {} failed: {}", mining_height, err);
+                    continue
+                }
+            }
+
             status_info!(
                 "Proof mined:",
                 format!("block_{}.json created.", block.height.to_string())
             );
+            
+            // submits backlog to client
+            for pending_block_number in (remote_height+1)..(mining_height+1) {
 
-            if let Some(ref _node) = config.profile.default_node {
-                match commit_proof_tx(&tx_params, block.preimage, block.proof, is_operator) {
-                    Ok(tx_view) => match eval_tx_status(tx_view) {
-                        Ok(_) => status_ok!("Success:", "Proof committed to chain"),
-                        Err(_) => status_err!("Miner transaction rejected"),
-                    },
-                    Err(err) => status_err!("Miner transaction rejected: {}", err),
+                let block_to_submit: Block;
+                if remote_height!=(mining_height-1) {
+                    // read block
+                    let block_path = format!("{}/block_{}.json", blocks_dir.display(), pending_block_number);
+                    let block_file = fs::read_to_string(block_path).expect("Could not read latest block");
+                    block_to_submit = serde_json::from_str(&block_file).expect("could not deserialize latest block");
+                } else {
+                    block_to_submit = block.clone();
                 }
-            } else {
-                return Err(ErrorKind::Config
-                    .context("No Node for submitting transactions")
-                    .into());
+                status_info!(format!("Committing Block {}", block_to_submit.height), "to chain");
+
+                // Submit tx
+                if let Some(ref _node) = config.profile.default_node {
+                    match commit_proof_tx(&tx_params, block_to_submit.preimage, block_to_submit.proof, is_operator) {
+                        Ok(tx_view) => {
+                            match eval_tx_status(tx_view.clone()) {
+                                Ok(()) => {
+                                    // Resetting client 
+                                    remote_height = pending_block_number;
+                                    status_ok!("Success:", "Proof committed to chain")
+                                },
+                                Err(err) => {
+                                    status_warn!("Transaction evaluation failed: {}", err);
+                                    // Sometimes tx is submitted but evaluation is throwing error. 
+                                    // So, we get the latest state to confirm once. 
+                                    match backlog::get_remote_state(&tx_params) {
+                                        Ok(remote_state) => {
+                                            remote_height = remote_state.verified_tower_height
+                                        },
+                                        Err(err) => {
+                                            status_warn!("Failed fetching remote state: {}", err);
+                                        }
+                                    }
+                                    break
+                                }
+                            }
+                        }, Err(err) => {
+                            status_warn!("Miner transaction rejected: {}", err);
+                            break
+                        }
+                    }
+                } else {
+                    return Err(ErrorKind::Config
+                        .context("No Node for submitting transactions")
+                        .into());
+                }
             }
 
-            mining_height = block.height + 1;
+            mining_height = block.height + 1; 
         }
     }
 }
@@ -155,6 +211,7 @@ pub fn parse_block_height(blocks_dir: &PathBuf) -> (Option<u64>, Option<PathBuf>
     let mut max_block_path = None;
 
     // iterate through all json files in the directory.
+    println!("{}/block_*.json", blocks_dir.display());
     for entry in glob(&format!("{}/block_*.json", blocks_dir.display()))
         .expect("Failed to read glob pattern")
     {
@@ -461,3 +518,4 @@ pub fn genesis_preimage(cfg: &AppCfg) -> Vec<u8> {
     );
     return preimage;
 }
+

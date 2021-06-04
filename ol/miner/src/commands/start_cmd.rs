@@ -79,6 +79,8 @@ impl Runnable for StartCmd {
             backlog::process_backlog(&cfg, &tx_params, is_operator);
         }
 
+        println!("url: {}", tx_params.url.clone());
+        
         if !self.backlog_only {
             // Steady state.
             let result = mine_and_submit(&cfg, tx_params, is_operator);

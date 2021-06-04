@@ -18,10 +18,10 @@ pub fn commit_proof_tx(
     // Create a client object
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
-    let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
+    let chain_id = ChainId::new(client.get_metadata()?.chain_id);
 
     // For sequence number
-    let (account_state,_) = client.get_account(tx_params.signer_address.clone(), true).unwrap();
+    let (account_state,_) = client.get_account(tx_params.signer_address.clone(), true)?;
     let sequence_number = match account_state {
         Some(av) => av.sequence_number,
         None => 0,

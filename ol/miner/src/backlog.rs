@@ -14,28 +14,14 @@ use crate::{
 };
 use std::io::BufReader;
 use crate::block::parse_block_height;
+use anyhow::{bail, Result, Error};
+use libra_json_rpc_types::views::{MinerStateResourceView};
 
 /// Submit a backlog of blocks that may have been mined while network is offline. Likely not more than 1. 
 pub fn process_backlog(config: &AppCfg, tx_params: &TxParams, is_operator: bool) {
     // Getting remote miner state
-    let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
-    println!("Fetching remote tower height");
-    let remote_state  = match client.get_miner_state(tx_params.owner_address.clone()) {
-        Ok( s ) => { match s {
-            Some(state) => {
-                state
-            },
-            None => {
-                println!("Info: Received response but no remote state found. Exiting.");
-                return
-            }
-        } },
-        Err( e) => {
-            println!("Error fetching remote state: {:?}", e);
-            return
-        },
-    };
-
+    
+    let remote_state = get_remote_state(tx_params).unwrap();
     let remote_height = remote_state.verified_tower_height;
 
     println!("Remote tower height: {}", remote_height);
@@ -63,5 +49,27 @@ pub fn process_backlog(config: &AppCfg, tx_params: &TxParams, is_operator: bool)
             Err(err) => println!("Submit backlog failed with: {}", err)
         }
         i = i + 1;
+    }
+}
+
+/// returns remote node state given tx_params
+pub fn get_remote_state(tx_params: &TxParams) -> Result<MinerStateResourceView, Error> {
+    let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+    println!("Fetching remote tower height: {}, {}", tx_params.url.clone(), tx_params.owner_address.clone());
+    let remote_state = client.get_miner_state(tx_params.owner_address.clone());
+    match remote_state {
+        Ok( s ) => { match s {
+            Some(state) => {
+                Ok(state)
+            },
+            None => {
+                println!("Info: Received response but no remote state found. Exiting.");
+                bail!("Info: Received response but no remote state found. Exiting.")
+            }
+        } },
+        Err(e) => {
+            println!("Error fetching remote state: {:?}", e);
+            bail!("Error fetching remote state: {:?}", e)
+        },
     }
 }
