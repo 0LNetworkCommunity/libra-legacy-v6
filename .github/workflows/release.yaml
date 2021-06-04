@@ -2,6 +2,7 @@ name: Publish
 
 on:
   push:
+    branches: [ ci ]
     tags:
       - '*'
 
@@ -31,8 +32,10 @@ jobs:
           file_glob: true
           tag: ${{ github.ref }}
           overwrite: true
-      - name: Web
-        run:  cd ol/cli/web-monitor/public/; tar -czvf web-monitor.tar.gz *
+      - name: Build Web
+        run: cd ol/cli/web-monitor/public/ && npm i && npm run build
+      - name: Package Web
+        run: cd ol/cli/web-monitor/public/; tar -czvf web-monitor.tar.gz *
       - name: Upload Web Files
         uses: svenstaro/upload-release-action@v2
         with:
