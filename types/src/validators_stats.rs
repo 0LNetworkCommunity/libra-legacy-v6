@@ -13,6 +13,11 @@ use move_core_types::{
 use serde::{Deserialize, Serialize};
 use move_core_types::account_address::AccountAddress;
 
+pub struct ValidatorStats {
+    pub vote_count: u64,
+    pub prop_count: u64,
+}
+
 /// Stats of propositions and votes from all validators
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct SetData {
@@ -62,5 +67,17 @@ impl ValidatorsStatsResource {
     pub fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
         println!("ValidatorsStatsResource >> try_from_bytes");
         lcs::from_bytes(bytes).map_err(Into::into)
+    }
+
+    pub fn get_validator_current_stats(&self, validator_address: AccountAddress) -> ValidatorStats {
+        let validator_index = self.get_validator_index(validator_address);
+        ValidatorStats {
+            vote_count: self.current.vote_count.get(validator_index).unwrap().to_owned(),
+            prop_count: self.current.prop_count.get(validator_index).unwrap().to_owned(),
+        }
+    }
+    
+    pub fn get_validator_index(&self, validator_address: AccountAddress) -> usize {
+        self.current.addr.iter().position(|&each| each == validator_address).unwrap()
     }
 }

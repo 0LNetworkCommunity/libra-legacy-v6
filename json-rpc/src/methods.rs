@@ -637,7 +637,6 @@ pub(crate) fn build_registry() -> RpcRegistry {
     register_rpc_method!(registry, "get_network_status", get_network_status, 0, 0);
     //////// 0L ////////
     register_rpc_method!(registry, "get_miner_state", get_miner_state, 2, 0);
-    register_rpc_method!(registry, "get_vals_stats", get_vals_stats, 1, 0);
     register_rpc_method!(registry, "query_oracle_upgrade", query_oracle_upgrade, 1, 0);
     registry
 }
