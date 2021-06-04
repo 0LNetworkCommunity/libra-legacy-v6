@@ -12,7 +12,7 @@ use diem_types::{
 };
 use std::{fs::File, io::Write, path::PathBuf};
 use structopt::StructOpt;
-use vm_genesis::{OperatorAssignment, OperatorRegistration};
+use vm_genesis::{OperatorAssignment, OperatorRegistration, GenesisMiningProof};
 
 /// Note, it is implicitly expected that the storage supports
 /// a namespace but one has not been set.
@@ -108,6 +108,8 @@ impl Genesis {
             let operator_key = operator_storage.ed25519_key(OPERATOR_KEY)?;
             let operator_account = account_address::from_public_key(&operator_key);
 
+            //////// 0L ////////
+            //In genesis the owner will sign this script, which assigns an operator to thier profile.
             let set_operator_script =
                 transaction_builder::encode_set_validator_operator_script_function(
                     operator_name.as_bytes().to_vec(),
@@ -115,8 +117,22 @@ impl Genesis {
                 )
                 .into_script_function();
 
+            //////// 0L ////////
+            let pow = GenesisMiningProof {
+                preimage: owner_storage.string(diem_global_constants::PROOF_OF_WORK_PREIMAGE).unwrap(),
+                proof: owner_storage.string(diem_global_constants::PROOF_OF_WORK_PROOF).unwrap(),
+            };
+
             let owner_name_vec = owner.as_bytes().to_vec();
-            operator_assignments.push((owner_key, owner_name_vec, set_operator_script));
+            operator_assignments.push(
+                (
+                    owner_key, 
+                    owner_name_vec, 
+                    set_operator_script,  
+                    //////// 0L ////////
+                    pow
+                )
+            );
         }
 
         Ok(operator_assignments)
@@ -130,8 +146,9 @@ impl Genesis {
         let config = self.config()?;
         let mut registrations = Vec::new();
 
-        for operator in layout.operators.iter() {
-            let operator_storage = config.shared_backend_with_namespace(operator.into());
+        //////// 0L ////////
+        for operator_name in layout.operators.iter() {
+            let operator_storage = config.shared_backend_with_namespace(operator_name.into());
             let operator_key = operator_storage.ed25519_key(OPERATOR_KEY)?;
             let validator_config_tx = operator_storage.transaction(constants::VALIDATOR_CONFIG)?;
             let validator_config_tx = validator_config_tx.as_signed_user_txn().unwrap().payload();
@@ -142,12 +159,15 @@ impl Genesis {
                     return Err(Error::UnexpectedError("Found invalid registration".into()));
                 };
 
+            let operator_account = account_address::from_public_key(&operator_key);                
             registrations.push((
                 operator_key,
-                operator.as_bytes().to_vec(),
+                operator_name.as_bytes().to_vec(),
                 validator_config_tx,
+                operator_account,                
             ));
         }
+        //////// 0L end ////////
 
         Ok(registrations)
     }

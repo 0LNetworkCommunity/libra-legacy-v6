@@ -7893,6 +7893,7 @@ dependencies = [
  "diem-types",
  "diem-vm",
  "diem-workspace-hack",
+ "hex",
  "move-core-types",
  "move-vm-runtime",
  "move-vm-types",

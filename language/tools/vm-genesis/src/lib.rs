@@ -68,11 +68,14 @@ pub static ZERO_COST_SCHEDULE: Lazy<CostTable> = Lazy::new(zero_cost_schedule);
 const ZERO_AUTH_KEY: [u8; 32] = [0; 32];
 
 pub type Name = Vec<u8>;
+//////// 0L ////////
 // Defines a validator owner and maps that to an operator
-pub type OperatorAssignment = (Option<Ed25519PublicKey>, Name, ScriptFunction);
+pub type OperatorAssignment = 
+    (Option<Ed25519PublicKey>, Name, ScriptFunction, GenesisMiningProof);
 
+//////// 0L ////////
 // Defines a validator operator and maps that to a validator (config)
-pub type OperatorRegistration = (Ed25519PublicKey, Name, ScriptFunction);
+pub type OperatorRegistration = (Ed25519PublicKey, Name, ScriptFunction, AccountAddress);
 
 pub fn encode_genesis_transaction(
     diem_root_key: Option<&Ed25519PublicKey>,            //////// 0L ////////
@@ -365,6 +368,7 @@ fn create_and_initialize_testnet_minting(
     );
 }
 
+//////// 0L ////////
 /// Creates and initializes each validator owner and validator operator. This method creates all
 /// the required accounts, sets the validator operators for each validator owner, and sets the
 /// validator config on-chain.
@@ -380,10 +384,16 @@ fn create_and_initialize_owners_operators(
     // key prefix and account address. Internally move then computes the auth key as auth key
     // prefix || address. Because of this, the initial auth key will be invalid as we produce the
     // account address from the name and not the public key.
-    for (owner_key, owner_name, _op_assignment) in operator_assignments {
-        let staged_owner_auth_key =
-            diem_config::utils::default_validator_owner_auth_key_from_name(owner_name);
+    println!("0 ======== Create Owner Accounts");    
+    for (owner_key, owner_name, _op_assignment, genesis_proof) in operator_assignments {
+        // TODO: Remove. Temporary Authkey for genesis, because accounts are being created from human names. 
+        let staged_owner_auth_key = 
+            AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
+        dbg!(owner_address);
+        // let staged_owner_auth_key = diem_config::utils::default_validator_owner_auth_key_from_name(owner_name);
+        //TODO: why does this need to be derived from human name?
+        // let owner_address = staged_owner_auth_key.derived_address();
         let create_owner_script =
             transaction_builder::encode_create_validator_account_script_function(
                 0,
@@ -403,22 +413,64 @@ fn create_and_initialize_owners_operators(
         let real_owner_auth_key = if let Some(owner_key) = owner_key {
             AuthenticationKey::ed25519(owner_key).to_vec()
         } else {
-            ZERO_AUTH_KEY.to_vec()
+            ZERO_AUTH_KEY.to_vec() // TODO: is this used for tests?
         };
 
+        // Rotate auth key.
         exec_script_function(
             session,
             log_context,
-            owner_address,
+            owner_address.clone(),
             &transaction_builder::encode_rotate_authentication_key_script_function(
                 real_owner_auth_key,
             )
             .into_script_function(),
         );
+
+        // Submit mining proof
+        let preimage = hex::decode(&genesis_proof.preimage).unwrap();
+        let proof = hex::decode(&genesis_proof.proof).unwrap();
+        exec_function(
+            session,
+            log_context,
+            "MinerState",
+            "genesis_helper",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(diem_root_address),                
+                MoveValue::Signer(owner_address),                
+                MoveValue::vector_u8(preimage),
+                MoveValue::vector_u8(proof)
+            ])
+        );
+
+        exec_function(
+            session,
+            log_context,
+            "ValidatorUniverse",
+            "genesis_helper",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(diem_root_address),                
+                MoveValue::Signer(owner_address),
+            ])
+        );
+
+        exec_function(
+            session,
+            log_context,
+            "FullnodeState",
+            "init",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(owner_address),
+            ])
+        );        
     }
 
+    println!("1 ======== Create OP Accounts");
     // Create accounts for each validator operator
-    for (operator_key, operator_name, _) in operator_registrations {
+    for (operator_key, operator_name, _, _) in operator_registrations {
         let operator_auth_key = AuthenticationKey::ed25519(&operator_key);
         let operator_account = account_address::from_public_key(operator_key);
         let create_operator_script =
@@ -437,21 +489,28 @@ fn create_and_initialize_owners_operators(
         );
     }
 
-    // Set the validator operator for each validator owner
-    for (_owner_key, owner_name, op_assignment) in operator_assignments {
-        let owner_address = diem_config::utils::validator_owner_account_from_name(owner_name);
-        exec_script_function(session, log_context, owner_address, op_assignment);
+    println!("2 ======== Link owner to OP");    
+    // Authorize an operator for a validator/owner
+    for (owner_key, _owner_name, op_assignment_script, _genesis_proof) in operator_assignments {
+        // let owner_address = diem_config::utils::validator_owner_account_from_name(owner_name);
+        let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
+        let owner_address = staged_owner_auth_key.derived_address();
+        exec_script_function(session, log_context, owner_address, op_assignment_script);
     }
-
-    // Set the validator config for each validator
-    for (operator_key, _, registration) in operator_registrations {
+    
+    println!("3 ======== OP sends network info to Owner config");
+    // Set the validator operator configs for each owner
+    for (operator_key, _, registration, _account) in operator_registrations {
         let operator_account = account_address::from_public_key(operator_key);
         exec_script_function(session, log_context, operator_account, registration);
     }
 
+    println!("4 ======== Add owner to validator set");
     // Add each validator to the validator set
-    for (_owner_key, owner_name, _op_assignment) in operator_assignments {
-        let owner_address = diem_config::utils::validator_owner_account_from_name(owner_name);
+    for (owner_key, _owner_name, _op_assignment, _genesis_proof) in operator_assignments {
+        let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
+        let owner_address = staged_owner_auth_key.derived_address();
+        // let owner_address = diem_config::utils::validator_owner_account_from_name(owner_name);
         exec_function(
             session,
             log_context,
@@ -563,6 +622,7 @@ pub fn test_genesis_change_set_and_validators(count: Option<usize>) -> (ChangeSe
 pub struct Validator {
     pub index: usize,
     pub key: Ed25519PrivateKey,
+    pub oper_key: Ed25519PrivateKey, //////// 0L ////////
     pub name: Vec<u8>,
     pub operator_address: AccountAddress,
     pub owner_address: AccountAddress,
@@ -579,12 +639,14 @@ impl Validator {
     fn gen(index: usize, rng: &mut rand::rngs::StdRng) -> Self {
         let name = index.to_string().as_bytes().to_vec();
         let key = Ed25519PrivateKey::generate(rng);
-        let operator_address = account_address::from_public_key(&key.public_key());
+        let oper_key = Ed25519PrivateKey::generate(rng);
+        let operator_address = account_address::from_public_key(&oper_key.public_key());
         let owner_address = diem_config::utils::validator_owner_account_from_name(&name);
 
         Self {
             index,
             key,
+            oper_key, //////// 0L ////////
             name,
             operator_address,
             owner_address,
@@ -601,6 +663,8 @@ impl Validator {
             Some(self.key.public_key()),
             self.name.clone(),
             script_function,
+            //////// 0L ////////
+            GenesisMiningProof::default() // NOTE: For testing only
         )
     }
 
@@ -613,7 +677,7 @@ impl Validator {
                 bcs::to_bytes(&[0u8; 0]).unwrap(),
             )
             .into_script_function();
-        (self.key.public_key(), self.name.clone(), script_function)
+        (self.oper_key.public_key(), self.name.clone(), script_function, self.operator_address,)
     }
 }
 
