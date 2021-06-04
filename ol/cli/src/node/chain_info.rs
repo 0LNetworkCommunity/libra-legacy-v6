@@ -81,7 +81,7 @@ impl Node {
     // TODO: This is duplicated with check.rs
     let _ = self.client.get_state_proof();
     
-    cs.waypoint = self.client.waypoint();
+    cs.waypoint = self.client.waypoint().ok();
 
     if let Some(account_blob) = blob {
       let account_state = AccountState::try_from(&account_blob).unwrap();

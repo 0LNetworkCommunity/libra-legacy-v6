@@ -51,7 +51,7 @@ pub fn get_client() -> Option<LibraClient> {
 pub fn default_remote_client(
     config: &AppCfg,
     waypoint: Waypoint,
-) -> Option<(LibraClient, Waypoint)> {
+) -> Result<(LibraClient, Waypoint), Error> {
     let remote_url = config
         .profile
         .upstream_nodes
@@ -61,8 +61,8 @@ pub fn default_remote_client(
         .next()
         .unwrap(); // upstream_node_url.clone();
     match make_client(Some(remote_url.clone()), waypoint) {
-        Ok(client) => Some((client, waypoint)),
-        Err(_) => None,
+        Ok(client) => Ok((client, waypoint)),
+        Err(e) => Err(e),
     }
 }
 
@@ -70,15 +70,15 @@ pub fn default_remote_client(
 pub fn default_local_client(
     config: &AppCfg,
     waypoint: Waypoint,
-) -> Option<(LibraClient, Waypoint)> {
+) -> Result<(LibraClient, Waypoint), Error> {
     let local_url = config
         .profile
         .default_node
         .clone()
         .expect("could not get url from configs");
     match make_client(Some(local_url.clone()), waypoint) {
-        Ok(client) => Some((client, waypoint)),
-        Err(_) => None,
+        Ok(client) => Ok((client, waypoint)),
+        Err(e) => Err(e),
     }
 }
 
@@ -86,14 +86,14 @@ pub fn default_local_client(
 pub fn swarm_test_client(
     config: &mut AppCfg,
     swarm_path: PathBuf,
-) -> Option<(LibraClient, Waypoint)> {
+) -> Result<(LibraClient, Waypoint), Error> {
     let (url, waypoint) = ol_types::config::get_swarm_rpc_url(swarm_path.clone());
     config.profile.default_node = Some(url.clone());
     config.profile.upstream_nodes = Some(vec![url.clone()]);
 
     match make_client(Some(url.clone()), waypoint) {
-        Ok(client) => Some((client, waypoint)),
-        Err(_e) => None,
+        Ok(client) => Ok((client, waypoint)),
+        Err(e) => Err(e),
     }
 }
 
@@ -101,21 +101,20 @@ pub fn swarm_test_client(
 pub fn pick_client(
     swarm_path: Option<PathBuf>,
     config: &mut AppCfg,
-) -> Option<(LibraClient, Waypoint)> {
+) -> Result<(LibraClient, Waypoint), Error> {
     let is_swarm = *&swarm_path.is_some();
     if let Some(path) = swarm_path {
         return swarm_test_client(config, path);
     };
     let waypoint = config
-        .get_waypoint(swarm_path)
-        .expect("could not get waypoint");
+        .get_waypoint(swarm_path)?;
     // check if is in sync
-    let local_client = default_local_client(config, waypoint.clone()).unwrap().0;
+    let local_client = default_local_client(config, waypoint.clone())?;
     
-    let mut node = Node::new(local_client, config.clone(), is_swarm);
+    let mut node = Node::new(local_client.0, config.clone(), is_swarm);
     if let Ok(s) = node.check_sync() {
         if s.is_synced {
-            return Some((node.client, waypoint.clone()))
+            return Ok((node.client, waypoint.clone()))
         }
     }
     default_remote_client(config, waypoint.clone())

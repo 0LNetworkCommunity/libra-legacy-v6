@@ -147,7 +147,7 @@ impl Node {
     }
 
     /// Get waypoint from client
-    pub fn waypoint(&mut self) -> Option<Waypoint> {
+    pub fn waypoint(&mut self) -> Result<Waypoint, Error> {
         match self.client.get_state_proof() {
             Ok(_t) => self.client.waypoint(),
             Err(_) => self.app_conf.get_waypoint(None),
