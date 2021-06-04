@@ -51,7 +51,7 @@ pub fn get_client() -> Option<LibraClient> {
 pub fn default_remote_client(
     config: &AppCfg,
     waypoint: Waypoint,
-) -> Result<(LibraClient, Waypoint), Error> {
+) -> Result<LibraClient, Error> {
     let remote_url = config
         .profile
         .upstream_nodes
@@ -60,48 +60,39 @@ pub fn default_remote_client(
         .into_iter()
         .next()
         .unwrap(); // upstream_node_url.clone();
-    match make_client(Some(remote_url.clone()), waypoint) {
-        Ok(client) => Ok((client, waypoint)),
-        Err(e) => Err(e),
-    }
+    make_client(Some(remote_url.clone()), waypoint)
 }
 
 /// get client type with defaults from toml for local node
 pub fn default_local_client(
     config: &AppCfg,
     waypoint: Waypoint,
-) -> Result<(LibraClient, Waypoint), Error> {
+) -> Result<LibraClient, Error> {
     let local_url = config
         .profile
         .default_node
         .clone()
         .expect("could not get url from configs");
-    match make_client(Some(local_url.clone()), waypoint) {
-        Ok(client) => Ok((client, waypoint)),
-        Err(e) => Err(e),
-    }
+    make_client(Some(local_url.clone()), waypoint)
 }
 
 /// connect a swarm client
 pub fn swarm_test_client(
     config: &mut AppCfg,
     swarm_path: PathBuf,
-) -> Result<(LibraClient, Waypoint), Error> {
+) -> Result<LibraClient, Error> {
     let (url, waypoint) = ol_types::config::get_swarm_rpc_url(swarm_path.clone());
     config.profile.default_node = Some(url.clone());
     config.profile.upstream_nodes = Some(vec![url.clone()]);
 
-    match make_client(Some(url.clone()), waypoint) {
-        Ok(client) => Ok((client, waypoint)),
-        Err(e) => Err(e),
-    }
+    make_client(Some(url.clone()), waypoint)
 }
 
 /// picks what URL to connect to based on sync state. Or returns the client for swarm.
 pub fn pick_client(
     swarm_path: Option<PathBuf>,
     config: &mut AppCfg,
-) -> Result<(LibraClient, Waypoint), Error> {
+) -> Result<LibraClient, Error> {
     let is_swarm = *&swarm_path.is_some();
     if let Some(path) = swarm_path {
         return swarm_test_client(config, path);
@@ -111,10 +102,10 @@ pub fn pick_client(
     // check if is in sync
     let local_client = default_local_client(config, waypoint.clone())?;
     
-    let mut node = Node::new(local_client.0, config.clone(), is_swarm);
+    let mut node = Node::new(local_client, config.clone(), is_swarm);
     if let Ok(s) = node.check_sync() {
         if s.is_synced {
-            return Ok((node.client, waypoint.clone()))
+            return Ok(node.client)
         }
     }
     default_remote_client(config, waypoint.clone())

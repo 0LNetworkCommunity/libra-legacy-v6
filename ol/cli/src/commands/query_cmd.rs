@@ -56,7 +56,7 @@ impl Runnable for QueryCmd {
             if args.account.is_some() { args.account.unwrap() }
             else { cfg.profile.account };
             
-        let client = client::pick_client(args.swarm_path.clone(), &mut cfg).unwrap().0;
+        let client = client::pick_client(args.swarm_path.clone(), &mut cfg).unwrap();
         let mut node = Node::new(client, cfg, is_swarm);
 
   
