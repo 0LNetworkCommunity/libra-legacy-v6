@@ -17,6 +17,7 @@ use crate::{
     },
     upgrade_payload::UpgradePayloadResource,
     validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource},
+    validators_stats::ValidatorsStatsResource,
 };
 use anyhow::{bail, format_err, Error, Result};
 use move_core_types::{identifier::Identifier, move_resource::MoveResource};
@@ -176,6 +177,12 @@ impl AccountState {
     // for upgrade
     pub fn get_upgrade_payload_resource(&self) -> Result<Option<UpgradePayloadResource>> {
         self.get_resource(&UpgradePayloadResource::resource_path())
+    }
+
+    //////// 0L ////////
+    /// validators stats
+    pub fn get_validators_stats(&self) -> Result<Option<ValidatorsStatsResource>> {
+        self.get_resource(&ValidatorsStatsResource::resource_path())
     }
 
     pub fn get_event_handle_by_query_path(&self, query_path: &[u8]) -> Result<Option<EventHandle>> {

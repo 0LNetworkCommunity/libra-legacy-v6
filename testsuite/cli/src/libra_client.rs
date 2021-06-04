@@ -26,7 +26,7 @@ use libra_types::{
     waypoint::Waypoint,
 };
 use reqwest::Url;
-use libra_json_rpc_client::views::{MinerStateResourceView, ValsStatsResourceView, OracleResourceView};
+use libra_json_rpc_client::views::{MinerStateResourceView, OracleResourceView};
 
 /// A client connection to an AdmissionControl (AC) service. `LibraClient` also
 /// handles verifying the server's responses, retrying on non-fatal failures, and
@@ -160,26 +160,6 @@ impl LibraClient {
             Err(e) => bail!(
                 "Failed to get miner state for account address {} with error: {:?}",
                 account,
-                e
-            ),
-        }
-    }
-
-    //////// 0L ////////
-    /// Get Validators Stats
-    pub fn get_vals_stats(
-        &mut self,
-    ) -> Result<Option<ValsStatsResourceView>> {
-        let mut batch = JsonRpcBatch::new();
-        batch.add_get_vals_stats_request(None);
-        let responses = self.client.execute(batch)?;
-        match get_response_from_batch(0, &responses)? {
-            Ok(result) => {
-                let vals_stats = ValsStatsResourceView::from_response(result.clone())?;                
-                Ok(Some(vals_stats))
-            }
-            Err(e) => bail!(
-                "Failed to get validators stats error: {:?}",
                 e
             ),
         }

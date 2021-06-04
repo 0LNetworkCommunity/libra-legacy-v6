@@ -9,7 +9,7 @@ use anyhow::{ensure, format_err, Error, Result};
 
 use serde_json::{Number, Value};
 use std::convert::TryFrom;
-use libra_json_rpc_types::views::{MinerStateResourceView, ValsStatsResourceView, OracleResourceView};
+use libra_json_rpc_types::views::{MinerStateResourceView, OracleResourceView};
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, PartialEq, Debug)]
@@ -26,7 +26,6 @@ pub enum JsonRpcResponse {
     NetworkStatusResponse(Number),
     //////// 0L ////////    
     MinerStateViewResponse(MinerStateResourceView),
-    ValsStatsViewResponse(ValsStatsResourceView),
     OracleResourceViewResponse(OracleResourceView),
     //////// 0L end ////////
     UnknownResponse(Value),
@@ -105,12 +104,6 @@ impl TryFrom<(String, Value)> for JsonRpcResponse {
             "get_miner_state" => {
                 let state: MinerStateResourceView = serde_json::from_value(value)?;
                 Ok(JsonRpcResponse::MinerStateViewResponse(
-                    state,
-                ))
-            }
-            "get_vals_stats" => {
-                let state: ValsStatsResourceView = serde_json::from_value(value)?;
-                Ok(JsonRpcResponse::ValsStatsViewResponse(
                     state,
                 ))
             }
@@ -228,16 +221,6 @@ impl ResponseAsView for AccountStateWithProofView {
 impl ResponseAsView for MinerStateResourceView {
     fn from_response(response: JsonRpcResponse) -> Result<Self> {
         if let JsonRpcResponse::MinerStateViewResponse(resp) = response {
-            Ok(resp)
-        } else {
-            Self::unexpected_response_error::<Self>(response)
-        }
-    }
-}
-
-impl ResponseAsView for ValsStatsResourceView {
-    fn from_response(response: JsonRpcResponse) -> Result<Self> {
-        if let JsonRpcResponse::ValsStatsViewResponse(resp) = response {
             Ok(resp)
         } else {
             Self::unexpected_response_error::<Self>(response)

@@ -41,9 +41,8 @@ use std::{
     sync::Arc,
 };
 use storage_interface::{DbReader, Order};
-use libra_json_rpc_types::views::{MinerStateResourceView, OracleResourceView, ValsStatsResourceView};
+use libra_json_rpc_types::views::{MinerStateResourceView, OracleResourceView};
 use ol_types::oracle_upgrade::OracleResource;
-use ol_types::vals_stats::ValsStatsResource;
 
 #[derive(Clone)]
 pub(crate) struct JsonRpcService {
@@ -684,28 +683,6 @@ async fn get_miner_state(
         None => {}
     }
     Err(JsonRpcError::invalid_request_with_msg("No Miner State found.".to_string()))
-}
-
-//////// 0L ////////
-/// Returns validators statistics
-async fn get_vals_stats(
-    service: JsonRpcService,
-    request: JsonRpcRequest,
-) -> Result<ValsStatsResourceView, JsonRpcError> {
-    let account_address = AccountAddress::ZERO;
-    let version = request.parse_version_param(1, "version")?;
-    let account_state_with_proof = service.get_account_state(account_address, version)?;
-    match account_state_with_proof {
-        Some(s) => {
-            let resouce :Option<ValsStatsResource> = s.get_resource(ValsStatsResource::resource_path().as_slice())?;
-            if resouce.is_some() {
-                let resource_view = ValsStatsResourceView::try_from(resouce.unwrap());
-                return Ok(resource_view.ok().unwrap());
-            }
-        },
-        None => {}
-    }
-    Err(JsonRpcError::invalid_request_with_msg("No Validators Stats found.".to_string()))
 }
 
 //////// 0L ////////

@@ -18,6 +18,7 @@ use libra_types::{
     proof::{AccountStateProof, AccumulatorConsistencyProof},
     transaction::{Script, Transaction, TransactionArgument, TransactionPayload},
     vm_status::KeptVMStatus,
+    validators_stats::{SetData, ValidatorsStatsResource},
 };
 use move_core_types::{
     account_address::AccountAddress,
@@ -34,7 +35,6 @@ use std::{
 };
 use ol_types::miner_state::MinerStateResource;
 use ol_types::oracle_upgrade::{UpgradeOracle, OracleResource};
-use ol_types::vals_stats::{SetData, ValsStatsResource};
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct AmountView {
@@ -836,20 +836,41 @@ impl TryFrom<MinerStateResource> for MinerStateResourceView {
 
 //////// 0L ////////
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct ValsStatsResourceView {  
+pub struct ValidatorsStatsView {  
     pub history: Vec<SetData>,
     pub current: SetData,
 }
 
-impl TryFrom<ValsStatsResource> for ValsStatsResourceView {
+impl TryFrom<ValidatorsStatsResource> for ValidatorsStatsView {
     type Error = Error;
-    fn try_from(stats: ValsStatsResource) -> Result<ValsStatsResourceView, Error> {
-        Ok(ValsStatsResourceView {
+    fn try_from(stats: ValidatorsStatsResource) -> Result<ValidatorsStatsView, Error> {
+        Ok(ValidatorsStatsView {
             history: stats.history,
             current: stats.current,
         })
     }
 }
+
+pub struct ValidatorStats {
+    pub vote_count: u64,
+    pub prop_count: u64,
+}
+
+impl ValidatorsStatsView {
+    fn get_validator_current_stats(&self, validator_address: AccountAddress) -> ValidatorStats {
+        let validator_index = self.get_validator_index(validator_address);
+        ValidatorStats {
+            vote_count: self.current.vote_count.get(validator_index).unwrap().to_owned(),
+            prop_count: self.current.prop_count.get(validator_index).unwrap().to_owned(),
+        }
+    }
+    
+    fn get_validator_index(&self, validator_address: AccountAddress) -> usize {
+        self.current.addr.iter().position(|&each| each == validator_address).unwrap()
+    }
+}
+
+
 
 //////// 0L ////////
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
