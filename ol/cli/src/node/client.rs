@@ -97,8 +97,8 @@ pub fn pick_client(
     if let Some(path) = swarm_path {
         return swarm_test_client(config, path);
     };
-    let waypoint = config
-        .get_waypoint(swarm_path)?;
+    let waypoint = config.get_waypoint(swarm_path)?;
+    
     // check if is in sync
     let local_client = default_local_client(config, waypoint.clone())?;
     

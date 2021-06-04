@@ -1,5 +1,7 @@
 //! `bal` subcommand
 
+use std::process::exit;
+
 use abscissa_core::{Command, Options, Runnable, status_info};
 use crate::{
     entrypoint,
@@ -56,7 +58,10 @@ impl Runnable for QueryCmd {
             if args.account.is_some() { args.account.unwrap() }
             else { cfg.profile.account };
             
-        let client = client::pick_client(args.swarm_path.clone(), &mut cfg).unwrap();
+        let client = client::pick_client(args.swarm_path.clone(), &mut cfg).unwrap_or_else(|e| {
+          println!("ERROR: Cannot connect to a client. Message: {}", e);
+          exit(1);
+        });
         let mut node = Node::new(client, cfg, is_swarm);
 
   
