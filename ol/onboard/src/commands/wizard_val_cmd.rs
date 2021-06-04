@@ -4,6 +4,7 @@
 
 use super::files_cmd;
 use crate::entrypoint;
+use crate::home::what_home;
 use crate::prelude::app_config;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_genesis_tool::node_files;
@@ -77,11 +78,12 @@ impl Runnable for ValWizardCmd {
         let epoch_url = &web_monitor_url.join("epoch.json").unwrap();
         let (base_epoch, base_waypoint) = get_epoch_info(epoch_url);
 
+        let home_path = what_home();
         let app_config = AppCfg::init_app_configs(
             authkey,
             account,
             &Some(upstream.clone()),
-            &Some(entrypoint::get_node_home()),
+            &Some(home_path),
             base_epoch,
             base_waypoint
         );
