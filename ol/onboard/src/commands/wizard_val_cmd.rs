@@ -3,7 +3,7 @@
 #![allow(clippy::never_loop)]
 
 use super::files_cmd;
-use crate::entrypoint;
+
 use crate::home::what_home;
 use crate::prelude::app_config;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
