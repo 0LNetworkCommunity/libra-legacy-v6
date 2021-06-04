@@ -54,9 +54,9 @@ impl Runnable for StartCmd {
 
         let waypoint = if waypoint.is_none() {
             match cfg.get_waypoint(None) {
-                Some(w) => Some(w),
-                _ => {
-                    status_err!("Cannot start without waypoint, exiting");
+                Ok(w) => Some(w),
+                Err(e) => {
+                    status_err!("Cannot start without waypoint. Message: {:?}", e);
                     std::process::exit(-1);
                 }
             }

@@ -303,7 +303,7 @@ pub struct Workspace {
     #[serde(default = "default_db_path")]
     pub db_path: PathBuf,
     /// Path to which stdlib binaries for upgrades get built typically /language/stdlib/staged/stdlib.mv
-    pub stdlib_bin_path: PathBuf,
+    pub stdlib_bin_path: Option<PathBuf>,
 }
 
 fn default_db_path() -> PathBuf {
@@ -312,14 +312,13 @@ fn default_db_path() -> PathBuf {
 
 impl Default for Workspace {
     fn default() -> Self {
+        let home_dir = dirs::home_dir().unwrap();
         Self {
             node_home: dirs::home_dir().unwrap().join(NODE_HOME),
-            source_path: Some(dirs::home_dir().unwrap().join("libra")),
+            source_path: Some(home_dir.join("libra")),
             block_dir: "blocks".to_owned(),
             db_path: default_db_path(),
-            stdlib_bin_path: "/root/libra/language/stdlib/staged/stdlib.mv"
-                .parse::<PathBuf>()
-                .unwrap(),
+            stdlib_bin_path: Some(home_dir.join("libra/language/stdlib/staged/stdlib.mv"))
         }
     }
 }
