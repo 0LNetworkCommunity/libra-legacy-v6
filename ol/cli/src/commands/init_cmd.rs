@@ -10,6 +10,7 @@ use libra_types::waypoint::Waypoint;
 use ol_keys::{scheme::KeyScheme, wallet};
 use libra_json_rpc_client::AccountAddress;
 use libra_types::transaction::authenticator::AuthenticationKey;
+use ol_types::home::what_home;
 use std::{fs, path::PathBuf};
 use libra_wallet::WalletLibrary;
 use url::Url;
@@ -23,8 +24,8 @@ pub struct InitCmd {
     path: Option<PathBuf>,
     #[options(help = "An upstream peer to use in 0L.toml")]
     upstream_peer: Option<Url>,
-    #[options(help = "Skip miner app configs")]
-    skip_miner: bool,
+    #[options(help = "Skip app configs")]
+    skip_app: bool,
     #[options(help = "Skip validator init")]
     skip_val: bool,
     #[options(help = "Fix config file, and migrate any missing fields")]
@@ -40,16 +41,12 @@ impl Runnable for InitCmd {
         if *&self.fix {
           // fix 0L.toml file
           migrate::migrate(self.path.to_owned());
-
-          // fix account.json
-          
-          // TODO: fix key_store.json
           return
         };
 
         let entry_args = entrypoint::get_args();
-        if let Some(path) = entry_args.swarm_path {
-          let swarm_node_home = entrypoint::get_node_home();
+        if let Some(path) = entry_args.swarm_path.clone() {
+          let swarm_node_home = what_home(entry_args.swarm_path, entry_args.swarm_persona.clone());
           let absolute = fs::canonicalize(path).unwrap();
           initialize_host_swarm(absolute, swarm_node_home, entry_args.swarm_persona);
           return
@@ -58,7 +55,7 @@ impl Runnable for InitCmd {
         let (authkey, account, wallet) = wallet::get_account_from_prompt();
         // start with a default value, or read from file if already initialized
         let mut app_cfg = app_config().to_owned();
-        if !self.skip_miner { 
+        if !self.skip_app { 
           app_cfg = initialize_app_cfg(
             authkey,
             account, 

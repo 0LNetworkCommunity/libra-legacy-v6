@@ -68,12 +68,11 @@ impl Runnable for ValWizardCmd {
             &upstream
         );
 
-        let home_path = what_home();
         let app_config = AppCfg::init_app_configs(
             authkey,
             account,
             &Some(upstream.clone()),
-            &Some(home_path),
+            &None,
             None,
             None
         );

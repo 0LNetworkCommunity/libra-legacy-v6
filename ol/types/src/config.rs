@@ -16,6 +16,8 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::{fs, io::Write, net::Ipv4Addr, path::PathBuf, str::FromStr};
 
+use crate::home::what_home;
+
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
 
 /// Check if we are in prod mode
@@ -111,13 +113,17 @@ impl AppCfg {
         account: AccountAddress,
         upstream_peer: &Option<Url>,
         config_path: &Option<PathBuf>,
-        mut base_epoch: Option<u64>,
-        mut base_waypoint: Option<Waypoint>,
+        base_epoch: Option<u64>,
+        base_waypoint: Option<Waypoint>,
     ) -> AppCfg {
         // TODO: Check if configs exist and warn on overwrite.
         let mut default_config = AppCfg::default();
         default_config.profile.auth_key = authkey.to_string();
         default_config.profile.account = account;
+
+        default_config.workspace.node_home = config_path.clone().unwrap_or_else(||{
+            what_home(None, None)
+        });
 
         if let Some(url) = upstream_peer {
             default_config.profile.upstream_nodes = Some(vec![url.to_owned()]);
@@ -143,13 +149,7 @@ impl AppCfg {
             return default_config;
         }
 
-        default_config.workspace.node_home = if config_path.is_some() {
-            config_path.clone().unwrap()
-        } else {
-            let mut node_home = dirs::home_dir().unwrap();
-            node_home.push(NODE_HOME);
-            node_home
-        };
+
 
         fs::create_dir_all(&default_config.workspace.node_home).unwrap();
 

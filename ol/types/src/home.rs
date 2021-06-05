@@ -3,13 +3,10 @@ use dialoguer::{Confirm, Input};
 use libra_global_constants::NODE_HOME;
 use std::path::PathBuf;
 
-use crate::entrypoint::get_args;
-
 /// interact with user to get the home path for files
 pub fn what_home(swarm_path: Option<PathBuf>, swarm_persona: Option<String>) -> PathBuf {
-    let args = get_args();
-    if let Some(path) = args.swarm_path {
-      return swarm_home(path, args.swarm_persona);
+    if let Some(path) = swarm_path {
+      return swarm_home(path, swarm_persona);
     }
 
     let mut default_home_dir = dirs::home_dir().unwrap();
