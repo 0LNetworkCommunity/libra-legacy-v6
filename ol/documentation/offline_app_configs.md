@@ -9,10 +9,11 @@ You will need to create app configs before using apps.
 Using a mnemonic you can refresh the configs with:
 
 ```
-ol init --skip-val --path /home/alice/my_0L_configs/ --upstream-peer 'http://<ip-address>'
+ol init --skip-val --from-source --upstream-peer 'http://<ip-address>'
 ```
 
-Note: --upstream-peer is required to fetch up-to-date epoch and waypoint information.
+`--upstream-peer` fetches up-to-date epoch and waypoint information from an upstream.
+`--from-source` indicates that you want to include paths to source in 0L.config, useful for development and oracle upgrade transaction for standard library.
 
 `Fun statement` is not required, but you may want to enter the original one for consistency.
 

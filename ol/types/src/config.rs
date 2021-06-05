@@ -132,7 +132,7 @@ impl AppCfg {
         if ask_source_path {
           let source_path = what_source();
           default_config.workspace.source_path = source_path.clone();
-          default_config.workspace.stdlib_bin_path = Some(source_path.unwrap().join("/language/stdlib/staged/stdlib.mv"));
+          default_config.workspace.stdlib_bin_path = Some(source_path.unwrap().join("language/stdlib/staged/stdlib.mv"));
         }
 
 
@@ -302,13 +302,12 @@ fn default_db_path() -> PathBuf {
 
 impl Default for Workspace {
     fn default() -> Self {
-        let home_dir = dirs::home_dir().unwrap();
         Self {
             node_home: dirs::home_dir().unwrap().join(NODE_HOME),
-            source_path: Some(home_dir.join("libra")),
+            source_path: None,
             block_dir: "blocks".to_owned(),
             db_path: default_db_path(),
-            stdlib_bin_path: Some(home_dir.join("libra/language/stdlib/staged/stdlib.mv")),
+            stdlib_bin_path: None,
         }
     }
 }

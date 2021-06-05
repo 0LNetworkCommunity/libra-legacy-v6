@@ -1,43 +1,40 @@
 
+## Create, or Refresh Validator Configs
 
-# Using 0L apps off-node
+Existing validators can refresh their configs by using the same `onboard` tool that new validators would use.
 
-This guide is for running 0L apps off of the node. For example running the for `txs` app or `ol` cli from your laptop.
+Ideally you will start from a fresh new user (not root) on your host.
 
-## Create, or refresh configs
+0. Backup your config files in your current user's `~/.0L`. 
 
-You will need to create app configs (0L.toml and a few others)
-You can refresh your configs with:
+1. Make sure you have your autopay_batch.json in the folder where you would like to keep node configs (e.g. /home/alice/my_0L_configs/)
 
-0. Make sure you have your autopay_batch.json in the folder where you would like to keep node configs (e.g. /home/alice/my_0L_configs/)
+2. Create all files needed for validator
 
-1. onboard --val --skip-mining --upstream-peer http://ip-address
+```
+onboard --val --skip-mining --upstream-peer http://ip-address --from-source
+```
 
 This command will prompt for a few configs, including what directory you will be storing configs for that account. It will also prompt for the IP address of the node.
 
-Fun statement is not required, but you may want to enter the original one for consistency.
+`--upstream-peer` fetches up-to-date epoch and waypoint information from an upstream.
+`--from-source` indicates that you want to include paths to source in 0L.config, useful for development and oracle upgrade transaction for standard library.
 
-Note: --upstream-peer is required to fetch up to date epoch and waypoint information.
+`Fun statement` is not required, but you may want to enter the original one for consistency.
 
-# Use Configs
-2. From now on use 0L apps with --config path/to/config/0L.toml
+3. Copy `blocks/` directory from the backup
 
-For example:
-
-### ol CLI
 ```
-# get balance
-ol --config path/to/config/0L.toml query --balance
-
-# get waypoint info
-ol --config path/to/config/0L.toml query --epoch
-
-# watch tv
-ol --config path/to/config/0L.toml explorer
+cp path/to/.0L/blocks/* new/path/.0L/blocks/
 ```
 
-### TXS
+4. Stop your node, miner, monitor and restart
+
 ```
-# submit upgrade tx
-txs --config path/to/config/0L.toml  oracle-upgrade -f path/to/libra/language/stdlib/staged/stdlib.mv
+# in previous user
+ol mgmt --stop all
+
+# in new user
+ol start
 ```
+

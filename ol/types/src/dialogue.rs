@@ -32,70 +32,63 @@ pub fn what_home(swarm_path: Option<PathBuf>, swarm_persona: Option<String>) -> 
 
 /// interact with user to get the source path
 pub fn what_source() -> Option<PathBuf> {
-    match Confirm::new()
-        .with_prompt("Include path to source code in configs?")
-        .interact()
-        .unwrap()
-    {
-        true => {
-            let mut default_source_path = dirs::home_dir().unwrap();
-            default_source_path.push("libra");
+    let mut default_source_path = dirs::home_dir().unwrap();
+    default_source_path.push("libra");
 
-            let txt = &format!(
-                "Is this the path to the source code? {:?}?",
-                default_source_path
-            );
-            let dir = match Confirm::new().with_prompt(txt).interact().unwrap() {
-                true => default_source_path,
-                false => {
-                    let input: String = Input::new()
-                        .with_prompt("Enter the full path to use (e.g. /home/name)")
-                        .interact_text()
-                        .unwrap();
-                    PathBuf::from(input)
-                }
-            };
-            Some(dir)
+    let txt = &format!(
+        "Is this the path to the source code? {:?}?",
+        default_source_path
+    );
+    let dir = match Confirm::new().with_prompt(txt).interact().unwrap() {
+        true => default_source_path,
+        false => {
+            let input: String = Input::new()
+                .with_prompt("Enter the full path to use (e.g. /home/name)")
+                .interact_text()
+                .unwrap();
+            PathBuf::from(input)
         }
-        false => None,
-    }
+    };
+    Some(dir)
 }
 
 /// interact with user to get ip address
 pub fn what_ip() -> Result<Ipv4Addr, Error> {
-  let system_ip = match machine_ip::get() {
-      Some(ip) => ip.to_string(),
-      None => "127.0.0.1".to_string(),
-  };
+    let system_ip = match machine_ip::get() {
+        Some(ip) => ip.to_string(),
+        None => "127.0.0.1".to_string(),
+    };
 
-        let txt = &format!(
-            "Will you use this host, and this IP address {:?}, for your node?",
-            system_ip
-        );
-        let ip = match Confirm::new().with_prompt(txt).interact().unwrap() {
-            true => system_ip
+    let txt = &format!(
+        "Will you use this host, and this IP address {:?}, for your node?",
+        system_ip
+    );
+    let ip = match Confirm::new().with_prompt(txt).interact().unwrap() {
+        true => system_ip
+            .parse::<Ipv4Addr>()
+            .expect("Could not parse IP address: {:?}"),
+        false => {
+            let input: String = Input::new()
+                .with_prompt("Enter the IP address of the node")
+                .interact_text()
+                .unwrap();
+            input
                 .parse::<Ipv4Addr>()
-                .expect("Could not parse IP address: {:?}"),
-            false => {
-                let input: String = Input::new()
-                    .with_prompt("Enter the IP address of the node")
-                    .interact_text()
-                    .unwrap();
-                input
-                    .parse::<Ipv4Addr>()
-                    .expect("Could not parse IP address")
-            }
-        };
-        
-        Ok(ip)
+                .expect("Could not parse IP address")
+        }
+    };
+
+    Ok(ip)
 }
 
 /// interact with user to get a statement
 pub fn what_statement() -> String {
-  Input::new()
+    Input::new()
         .with_prompt("Enter a (fun) statement to go into your first transaction")
         .interact_text()
-        .expect("We need some text unique to you which will go into your the first proof of your tower")
+        .expect(
+            "We need some text unique to you which will go into your the first proof of your tower",
+        )
 }
 /// returns node_home
 /// usually something like "/root/.0L"
