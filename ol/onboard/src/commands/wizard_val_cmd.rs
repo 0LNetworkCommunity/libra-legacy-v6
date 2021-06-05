@@ -8,14 +8,13 @@ use crate::home::what_home;
 use crate::prelude::app_config;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_genesis_tool::node_files;
-use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
+use libra_types::{transaction::SignedTransaction};
 use libra_wallet::WalletLibrary;
 use ol::{commands::init_cmd, config::AppCfg};
 use ol_keys::{scheme::KeyScheme, wallet};
 use ol_types::block::Block;
 use ol_types::{account::ValConfigs, autopay::PayInstruction, config::TxType};
 use reqwest::Url;
-use serde_json::Value;
 use std::process::exit;
 use std::{fs::File, io::Write, path::PathBuf};
 use txs::{commands::autopay_batch_cmd, submit_tx};
@@ -69,22 +68,17 @@ impl Runnable for ValWizardCmd {
             &upstream
         );
 
-        let mut web_monitor_url = upstream.clone();
-        web_monitor_url.set_port(Some(3030)).unwrap();
-        let epoch_url = &web_monitor_url.join("epoch.json").unwrap();
-        let (base_epoch, base_waypoint) = get_epoch_info(epoch_url);
-
         let home_path = what_home();
         let app_config = AppCfg::init_app_configs(
             authkey,
             account,
             &Some(upstream.clone()),
             &Some(home_path),
-            base_epoch,
-            base_waypoint
+            None,
+            None
         );
         let home_path = &app_config.workspace.node_home;
-
+        let base_waypoint = app_config.chain_info.base_waypoint.clone();
 
 
         status_ok!("\nApp configs written", "\n...........................\n");
@@ -222,23 +216,6 @@ pub fn save_template(url: &Url, home_path: &PathBuf) -> PathBuf {
     g_path
 }
 
-fn get_epoch_info(url: &Url) -> (Option<u64>, Option<Waypoint>) {
-    let g_res = reqwest::blocking::get(&url.to_string());
-    let string = g_res.unwrap().text().unwrap();
-    let json: Value = string.parse().unwrap();
-    let epoch = json
-        .get("epoch")
-        .unwrap()
-        .as_u64()
-        .expect("should have epoch number");
-    let waypoint = json
-        .get("waypoint")
-        .unwrap()
-        .as_str()
-        .expect("should have epoch number");
-
-    (Some(epoch), waypoint.parse().ok())
-}
 
 /// Creates an account.json file for the validator
 pub fn write_account_json(

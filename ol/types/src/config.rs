@@ -13,6 +13,7 @@ use machine_ip;
 use once_cell::sync::Lazy;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
+use serde_json;
 use std::{fs, io::Write, net::Ipv4Addr, path::PathBuf, str::FromStr};
 
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
@@ -113,16 +114,26 @@ impl AppCfg {
         account: AccountAddress,
         upstream_peer: &Option<Url>,
         config_path: &Option<PathBuf>,
-        base_epoch: Option<u64>,
-        base_waypoint: Option<Waypoint>,
+        mut base_epoch: Option<u64>,
+        mut base_waypoint: Option<Waypoint>,
     ) -> AppCfg {
         // TODO: Check if configs exist and warn on overwrite.
         let mut default_config = AppCfg::default();
         default_config.profile.auth_key = authkey.to_string();
         default_config.profile.account = account;
+
         if let Some(url) = upstream_peer {
             default_config.profile.upstream_nodes = Some(vec![url.to_owned()]);
-        }
+            let mut web_monitor_url = url.clone();
+            web_monitor_url.set_port(Some(3030)).unwrap();
+            let epoch_url = &web_monitor_url.join("epoch.json").unwrap();
+            let (e, w) = bootstrap_waypoint_from_upstream(epoch_url).unwrap();
+            base_epoch = Some(e);
+            base_waypoint = Some(w)
+          }
+        default_config.chain_info.base_epoch = base_epoch;
+        default_config.chain_info.base_waypoint = base_waypoint;
+
         // skip questionnaire if CI
         if *IS_CI {
             AppCfg::save_file(&default_config);
@@ -165,10 +176,6 @@ impl AppCfg {
         };
 
         default_config.profile.ip = ip;
-
-        default_config.chain_info.base_epoch = base_epoch;
-        default_config.chain_info.base_waypoint = base_waypoint;
-
 
         // Get statement which goes into genesis block
         default_config.profile.statement = Input::new()
@@ -500,4 +507,25 @@ pub fn get_swarm_backup_service_url(mut swarm_path: PathBuf, swarm_id: u8) -> Re
       ).as_str()
     ).unwrap();
     Ok(url)
+}
+
+/// fetch initial waypoint information from a clean state.
+pub fn bootstrap_waypoint_from_upstream(url: &Url) -> Result<(u64, Waypoint), Error> {
+    let g_res = reqwest::blocking::get(&url.to_string());
+    let string = g_res.unwrap().text().unwrap();
+    let json: serde_json::Value = string.parse().unwrap();
+    let epoch = json
+        .get("epoch")
+        .unwrap()
+        .as_u64()
+        .unwrap();
+    let waypoint = json
+        .get("waypoint")
+        .unwrap()
+        .as_str()
+        .unwrap()
+        .parse()
+        .unwrap();
+
+    Ok((epoch, waypoint))
 }
