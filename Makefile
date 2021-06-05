@@ -1,6 +1,7 @@
 #### VARIABLES ####
 SHELL=/usr/bin/env bash
 DATA_PATH = ${HOME}/.0L
+USER_BIN_PATH = ${HOME}/bin
 
 # Chain settings
 CHAIN_ID = 1
@@ -89,15 +90,14 @@ stdlib:
   
 
 install:
-	sudo cp -f ${SOURCE}/target/release/miner /usr/local/bin/miner
-	sudo cp -f ${SOURCE}/target/release/libra-node /usr/local/bin/libra-node
-	sudo cp -f ${SOURCE}/target/release/db-restore /usr/local/bin/db-restore
-	sudo cp -f ${SOURCE}/target/release/db-backup /usr/local/bin/db-backup
-	sudo cp -f ${SOURCE}/target/release/db-backup-verify /usr/local/bin/db-backup-verify
-	sudo cp -f ${SOURCE}/target/release/ol /usr/local/bin/ol
-	sudo cp -f ${SOURCE}/target/release/txs /usr/local/bin/txs
-	sudo cp -f ${SOURCE}/target/release/onboard /usr/local/bin/onboard
-
+	sudo cp -f ${SOURCE}/target/release/miner ${USER_BIN_PATH}/miner
+	sudo cp -f ${SOURCE}/target/release/libra-node ${USER_BIN_PATH}/libra-node
+	sudo cp -f ${SOURCE}/target/release/db-restore ${USER_BIN_PATH}/db-restore
+	sudo cp -f ${SOURCE}/target/release/db-backup ${USER_BIN_PATH}/db-backup
+	sudo cp -f ${SOURCE}/target/release/db-backup-verify ${USER_BIN_PATH}/db-backup-verify
+	sudo cp -f ${SOURCE}/target/release/ol ${USER_BIN_PATH}/ol
+	sudo cp -f ${SOURCE}/target/release/txs ${USER_BIN_PATH}/txs
+	sudo cp -f ${SOURCE}/target/release/onboard ${USER_BIN_PATH}/onboard
 
 #### GENESIS BACKEND SETUP ####
 init-backend: 
