@@ -4,7 +4,7 @@
 
 use super::files_cmd;
 
-use crate::home::what_home;
+
 use crate::prelude::app_config;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_genesis_tool::node_files;
