@@ -29,7 +29,7 @@ impl Runnable for OnboardCmd {
         let is_swarm = *&args.swarm_path.is_some();
 
         let mut cfg = app_config().clone();
-        let client = client::pick_client(args.swarm_path, &mut cfg).unwrap().0;
+        let client = client::pick_client(args.swarm_path, &mut cfg).unwrap();
         if !self.trigger_actions {
             println!("You can pass --trigger-actions or -t to attempt the next transition\n")
         }

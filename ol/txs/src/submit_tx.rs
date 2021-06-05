@@ -310,10 +310,7 @@ pub fn get_oper_params(
     let auth_key = AuthenticationKey::ed25519(pubkey);
 
     let waypoint = wp.unwrap_or_else(|| {
-      config
-          .get_waypoint(None)
-          .clone()
-          .expect("could not get waypoint")
+      config.get_waypoint(None).unwrap()
     });
 
     let tx_cost = config.tx_configs.get_cost(tx_type);
@@ -345,10 +342,7 @@ pub fn get_tx_params_from_toml(
     };
 
     let waypoint = wp.unwrap_or_else(|| {
-        config
-            .get_waypoint(None)
-            .clone()
-            .expect("could not get waypoint")
+        config.get_waypoint(None).unwrap()
     });
 
     let keys = KeyScheme::new_from_mnemonic(wallet.mnemonic());

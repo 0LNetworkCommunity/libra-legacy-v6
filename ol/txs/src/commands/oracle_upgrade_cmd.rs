@@ -30,12 +30,10 @@ impl Runnable for OracleUpgradeCmd {
         let entry_args = entrypoint::get_args();
         let tx_params = tx_params_wrapper(TxType::Critial).unwrap();
 
-        let path = if *&self.upgrade_file_path.is_some() {
-            self.upgrade_file_path.clone().unwrap() 
-        } else {
-            let cfg = app_config();
-            cfg.workspace.stdlib_bin_path.clone()
-        };
+        let path = self.upgrade_file_path.clone().unwrap_or_else(|| {
+          let cfg = app_config();
+          cfg.workspace.stdlib_bin_path.clone().unwrap()
+        });
         
         maybe_submit(
           oracle_tx_script(&path),

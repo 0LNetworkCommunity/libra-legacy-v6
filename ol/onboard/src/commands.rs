@@ -16,7 +16,7 @@ use self::{
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use std::path::PathBuf;
 use ol_types::config::AppCfg;
-use crate::entrypoint;
+
 
 /// MinerApp Configuration Filename
 pub const CONFIG_FILE: &str = "0L.toml";
@@ -61,21 +61,7 @@ impl Configurable<AppCfg> for WizCmd {
         // Check if the config file exists, and if it does not, ignore it.
         // If you'd like for a missing configuration file to be a hard error
         // instead, always return `Some(CONFIG_FILE)` here.
-
-        // let mut config_path = dirs::home_dir().unwrap();
-        // config_path.push(NODE_HOME);
-        // config_path.push(CONFIG_FILE);
-
-        let mut config_path = entrypoint::get_node_home();
-        config_path.push(CONFIG_FILE);
-
-        if config_path.exists() {
-            println!("initializing from config file: {:?}", config_path);
-            Some(config_path)
-        } else {
-            println!("NO config file found at: {:?}", config_path);
-            None
-        }
+        None
     }
 
     // /// Apply changes to the config after it's been loaded, e.g. overriding

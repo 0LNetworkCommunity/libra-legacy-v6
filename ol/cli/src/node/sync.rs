@@ -43,8 +43,7 @@ impl Node {
         let waypoint = &self.waypoint().unwrap();
 
         let mut remote_client = default_remote_client(&self.app_conf, *waypoint)
-            .expect("cannot connect to upstream node")
-            .0;
+            .expect("cannot connect to upstream node");
 
         if let Some(local_db) = self.get_db_state() {
             s.remote_height = remote_client.get_metadata().unwrap().version;

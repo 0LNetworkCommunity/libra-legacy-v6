@@ -16,12 +16,15 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1.0.7
       - uses: hecrj/setup-rust-action@v1
         with:
           rust-version: stable
           components: rustfmt
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
       - name: Build
         run:  RUSTC_WRAPPER=sccache make bins
       - name: Upload binaries to github.com/release

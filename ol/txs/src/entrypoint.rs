@@ -75,10 +75,6 @@ where
     /// The operator is sending the transaction, used in miner.
     #[options(short = "o", help = "the operator is signing and sending the transaction")]
     pub is_operator: bool,
-
-
-    
-
 }
 
 impl<Cmd> EntryPoint<Cmd>
