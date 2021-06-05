@@ -23,7 +23,7 @@ pub fn what_home() -> PathBuf {
         true => default_home_dir,
         false => {
             let input: String = Input::new()
-                .with_prompt("Enter the full path to use (e.g. /home/name): ")
+                .with_prompt("Enter the full path to use (e.g. /home/name)")
                 .interact_text()
                 .unwrap();
             PathBuf::from(input)

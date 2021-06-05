@@ -16,6 +16,7 @@ use ol_types::block::Block;
 use ol_types::{account::ValConfigs, autopay::PayInstruction, config::TxType};
 use reqwest::Url;
 use serde_json::Value;
+use std::process::exit;
 use std::{fs::File, io::Write, path::PathBuf};
 use txs::{commands::autopay_batch_cmd, submit_tx};
 /// `val-wizard` subcommand
@@ -61,7 +62,10 @@ impl Runnable for ValWizardCmd {
                 // read from config if available, else set localhost
                 match cfg.profile.upstream_nodes {
                     Some(url) => url[0].to_owned(),
-                    _ => Url::parse("http://localhost").unwrap(),
+                    _ => {
+                      println!("Must set an upstream peer, or a template URL. Exiting.");
+                      exit(1);
+                    },
                 }
             })
         });
@@ -69,7 +73,7 @@ impl Runnable for ValWizardCmd {
         
 
         println!(
-            "starting validator wizard with upstream URL: {:?}",
+            "Setting upstream peer URL to: {:?}",
             &upstream
         );
 
