@@ -33,6 +33,7 @@ pub mod validator_config;
 pub mod validator_info;
 pub mod validator_signer;
 pub mod validator_verifier;
+pub mod validators_stats;
 pub mod vm_status;
 pub mod upgrade_payload; //////// 0L ////////
 pub mod waypoint;
