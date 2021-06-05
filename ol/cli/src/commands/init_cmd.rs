@@ -10,7 +10,6 @@ use libra_types::waypoint::Waypoint;
 use ol_keys::{scheme::KeyScheme, wallet};
 use libra_json_rpc_client::AccountAddress;
 use libra_types::transaction::authenticator::AuthenticationKey;
-use ol_types::home::what_home;
 use std::{fs, path::PathBuf};
 use libra_wallet::WalletLibrary;
 use url::Url;
@@ -45,8 +44,8 @@ impl Runnable for InitCmd {
         };
 
         let entry_args = entrypoint::get_args();
-        if let Some(path) = entry_args.swarm_path.clone() {
-          let swarm_node_home = what_home(entry_args.swarm_path, entry_args.swarm_persona.clone());
+        if let Some(path) = entry_args.swarm_path {
+          let swarm_node_home = entrypoint::get_node_home();
           let absolute = fs::canonicalize(path).unwrap();
           initialize_host_swarm(absolute, swarm_node_home, entry_args.swarm_persona);
           return

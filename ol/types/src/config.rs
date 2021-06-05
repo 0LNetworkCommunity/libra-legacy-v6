@@ -1,7 +1,6 @@
 //! Configs for all 0L apps.
 
 use anyhow::Error;
-use dialoguer::{Confirm, Input};
 use dirs;
 use libra_config::config::NodeConfig;
 use libra_global_constants::{CONFIG_FILE, NODE_HOME};
@@ -9,14 +8,13 @@ use libra_types::{
     account_address::AccountAddress, transaction::authenticator::AuthenticationKey,
     waypoint::Waypoint,
 };
-use machine_ip;
 use once_cell::sync::Lazy;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::{fs, io::Write, net::Ipv4Addr, path::PathBuf, str::FromStr};
 
-use crate::home::what_home;
+use crate::dialogue::{what_home, what_ip, what_source, what_statement};
 
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
 
@@ -121,9 +119,18 @@ impl AppCfg {
         default_config.profile.auth_key = authkey.to_string();
         default_config.profile.account = account;
 
+                // Get statement which goes into genesis block
+        default_config.profile.statement = what_statement();
+
+        default_config.profile.ip = what_ip().unwrap();
+
         default_config.workspace.node_home = config_path.clone().unwrap_or_else(||{
             what_home(None, None)
         });
+
+        let source_path = what_source();
+        default_config.workspace.source_path = source_path.clone();
+        default_config.workspace.stdlib_bin_path = Some(source_path.unwrap().join("/language/stdlib/staged/stdlib.mv"));
 
         if let Some(url) = upstream_peer {
             default_config.profile.upstream_nodes = Some(vec![url.to_owned()]);
@@ -153,37 +160,7 @@ impl AppCfg {
 
         fs::create_dir_all(&default_config.workspace.node_home).unwrap();
 
-        let system_ip = match machine_ip::get() {
-            Some(ip) => ip.to_string(),
-            None => "127.0.0.1".to_string(),
-        };
 
-        let txt = &format!(
-            "Will you use this host, and this IP address {:?}, for your node?",
-            system_ip
-        );
-        let ip = match Confirm::new().with_prompt(txt).interact().unwrap() {
-            true => system_ip
-                .parse::<Ipv4Addr>()
-                .expect("Could not parse IP address: {:?}"),
-            false => {
-                let input: String = Input::new()
-                    .with_prompt("Enter the IP address of the node")
-                    .interact_text()
-                    .unwrap();
-                input
-                    .parse::<Ipv4Addr>()
-                    .expect("Could not parse IP address")
-            }
-        };
-
-        default_config.profile.ip = ip;
-
-        // Get statement which goes into genesis block
-        default_config.profile.statement = Input::new()
-    .with_prompt("Enter a (fun) statement to go into your first transaction")
-    .interact_text()
-    .expect("We need some text unique to you which will go into your the first proof of your tower");
 
         AppCfg::save_file(&default_config);
 

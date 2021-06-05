@@ -15,4 +15,4 @@ pub mod block;
 pub mod config;
 pub mod oracle_upgrade;
 pub mod miner_state;
-pub mod home;
+pub mod dialogue;
