@@ -31,6 +31,8 @@ pub struct InitCmd {
     fix: bool,
     #[options(help = "Set a waypoint in config files")]
     waypoint: Option<Waypoint>,
+    #[options(help = "If user is building from source")]
+    from_source: bool,
 }
 
 
@@ -62,6 +64,7 @@ impl Runnable for InitCmd {
             &self.path,
             None, // TODO: probably need an epoch option here.
             self.waypoint,
+            self.from_source,
           ).unwrap()
         };
 
@@ -72,8 +75,8 @@ impl Runnable for InitCmd {
 }
 
 /// Initializes the necessary 0L config files: 0L.toml
-pub fn initialize_app_cfg(authkey: AuthenticationKey, account: AccountAddress, upstream_peer: &Option<Url>, path: &Option<PathBuf>, epoch_opt: Option<u64>, wp_opt: Option<Waypoint>) -> Result <AppCfg, Error>{
-    let cfg = AppCfg::init_app_configs(authkey, account, upstream_peer, path, epoch_opt, wp_opt);
+pub fn initialize_app_cfg(authkey: AuthenticationKey, account: AccountAddress, upstream_peer: &Option<Url>, path: &Option<PathBuf>, epoch_opt: Option<u64>, wp_opt: Option<Waypoint>, from_source: bool) -> Result <AppCfg, Error>{
+    let cfg = AppCfg::init_app_configs(authkey, account, upstream_peer, path, epoch_opt, wp_opt, from_source);
     Ok(cfg)
 }
 

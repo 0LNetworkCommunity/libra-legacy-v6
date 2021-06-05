@@ -113,6 +113,7 @@ impl AppCfg {
         config_path: &Option<PathBuf>,
         base_epoch: Option<u64>,
         base_waypoint: Option<Waypoint>,
+        ask_source_path: bool,
     ) -> AppCfg {
         // TODO: Check if configs exist and warn on overwrite.
         let mut default_config = AppCfg::default();
@@ -128,9 +129,12 @@ impl AppCfg {
             what_home(None, None)
         });
 
-        let source_path = what_source();
-        default_config.workspace.source_path = source_path.clone();
-        default_config.workspace.stdlib_bin_path = Some(source_path.unwrap().join("/language/stdlib/staged/stdlib.mv"));
+        if ask_source_path {
+          let source_path = what_source();
+          default_config.workspace.source_path = source_path.clone();
+          default_config.workspace.stdlib_bin_path = Some(source_path.unwrap().join("/language/stdlib/staged/stdlib.mv"));
+        }
+
 
         if let Some(url) = upstream_peer {
             default_config.profile.upstream_nodes = Some(vec![url.to_owned()]);
