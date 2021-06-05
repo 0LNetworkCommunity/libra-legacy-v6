@@ -50,28 +50,20 @@ pub struct ValWizardCmd {
 impl Runnable for ValWizardCmd {
     /// Print version message
     fn run(&self) {
+        // Note. `onboard` command DOES NOT READ CONFIGS FROM 0L.toml
+
         status_info!("\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys, run the standalone keygen tool with 'ol keygen'.\n\nYour first 0L proof-of-work will be mined now. Expect this to take up to 15 minutes on modern CPUs.\n");
 
         // Get credentials from prompt
         let (authkey, account, wallet) = wallet::get_account_from_prompt();
 
-        let cfg = app_config().clone(); // read 0L.toml in case it exists
-
         let mut upstream = self.upstream_peer.clone().unwrap_or_else(|| {
             self.template_url.clone().unwrap_or_else(|| {
-                // read from config if available, else set localhost
-                match cfg.profile.upstream_nodes {
-                    Some(url) => url[0].to_owned(),
-                    _ => {
-                      println!("Must set an upstream peer, or a template URL. Exiting.");
-                      exit(1);
-                    },
-                }
+                println!("ERROR: Must set a URL to query chain. Use --upstream-peer of --template-url. Exiting.");
+                exit(1);
             })
         });
         upstream.set_port(Some(8080)).unwrap();
-        
-
         println!(
             "Setting upstream peer URL to: {:?}",
             &upstream
