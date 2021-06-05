@@ -35,12 +35,13 @@ pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
 
 /// check this is CI environment
 pub static IS_CI: Lazy<bool> = Lazy::new(|| {
-  // assume default if NODE_ENV=prod and TEST=y.
-    if std::env::var("NODE_ENV").unwrap_or("prod".to_string()) != "prod".to_string() &&
-    std::env::var("TEST").unwrap_or("n".to_string()) != "n".to_string() {
-      true
+    // assume default if NODE_ENV=prod and TEST=y.
+    if std::env::var("NODE_ENV").unwrap_or("prod".to_string()) != "prod".to_string()
+        && std::env::var("TEST").unwrap_or("n".to_string()) != "n".to_string()
+    {
+        true
     } else {
-      false
+        false
     }
 });
 
@@ -72,16 +73,12 @@ impl AppCfg {
                 let json: serde_json::Value =
                     serde_json::from_reader(file).expect("could not parse JSON in key_store.json");
                 match ajson::get(&json.to_string(), "*/waypoint.value") {
-                    Some(value) => {
-                        value.to_string().parse()
-                    }
+                    Some(value) => value.to_string().parse(),
                     // If nothing is found in key_store.json fallback to base_waypoint in toml
-                    _ => {
-                      match self.chain_info.base_waypoint {
-                          Some(w) => Ok(w),
-                          None => Err(err_msg),
-                      }
-                    }
+                    _ => match self.chain_info.base_waypoint {
+                        Some(w) => Ok(w),
+                        None => Err(err_msg),
+                    },
                 }
             }
             Err(_) => {
@@ -128,11 +125,16 @@ impl AppCfg {
             web_monitor_url.set_port(Some(3030)).unwrap();
             let epoch_url = &web_monitor_url.join("epoch.json").unwrap();
             let (e, w) = bootstrap_waypoint_from_upstream(epoch_url).unwrap();
-            base_epoch = Some(e);
-            base_waypoint = Some(w)
-          }
-        default_config.chain_info.base_epoch = base_epoch;
-        default_config.chain_info.base_waypoint = base_waypoint;
+            default_config.chain_info.base_epoch = Some(e);
+            default_config.chain_info.base_waypoint = Some(w)
+        }
+        // override from args
+        if base_epoch.is_some() {
+            default_config.chain_info.base_epoch = base_epoch;
+        }
+        if base_waypoint.is_some() {
+            default_config.chain_info.base_waypoint = base_waypoint;
+        }
 
         // skip questionnaire if CI
         if *IS_CI {
@@ -188,15 +190,15 @@ impl AppCfg {
         default_config
     }
 
-  /// Save swarm default configs to swarm path
-  /// swarm_path points to the swarm_temp directory
-  /// node_home to the directory of the current swarm persona
-  pub fn init_app_configs_swarm(swarm_path: PathBuf, node_home: PathBuf) -> AppCfg{
-    // println!("init_swarm_config: {:?}", swarm_path); already logged in commands.rs
-    let host_config = AppCfg::make_swarm_configs(swarm_path, node_home);
-    AppCfg::save_file(&host_config);
-    host_config
-  }
+    /// Save swarm default configs to swarm path
+    /// swarm_path points to the swarm_temp directory
+    /// node_home to the directory of the current swarm persona
+    pub fn init_app_configs_swarm(swarm_path: PathBuf, node_home: PathBuf) -> AppCfg {
+        // println!("init_swarm_config: {:?}", swarm_path); already logged in commands.rs
+        let host_config = AppCfg::make_swarm_configs(swarm_path, node_home);
+        AppCfg::save_file(&host_config);
+        host_config
+    }
 
     fn save_file(host_config: &AppCfg) {
         let toml = toml::to_string(host_config).unwrap();
@@ -214,10 +216,10 @@ impl AppCfg {
         );
     }
 
-  /// get configs from swarm
-  /// swarm_path points to the swarm_temp directory
-  /// node_home to the directory of the current swarm persona
-  pub fn make_swarm_configs(swarm_path: PathBuf, node_home: PathBuf) -> AppCfg {
+    /// get configs from swarm
+    /// swarm_path points to the swarm_temp directory
+    /// node_home to the directory of the current swarm persona
+    pub fn make_swarm_configs(swarm_path: PathBuf, node_home: PathBuf) -> AppCfg {
         let config_path = swarm_path.join("0/node.yaml");
         let config = NodeConfig::load(&config_path)
             .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &config_path));
@@ -252,7 +254,7 @@ impl AppCfg {
         };
 
         let db_path = node_home.join("db");
-    
+
         cfg.workspace.node_home = node_home;
         cfg.workspace.db_path = db_path;
         cfg.chain_info.base_waypoint = Some(config.base.waypoint.waypoint());
@@ -325,7 +327,7 @@ impl Default for Workspace {
             source_path: Some(home_dir.join("libra")),
             block_dir: "blocks".to_owned(),
             db_path: default_db_path(),
-            stdlib_bin_path: Some(home_dir.join("libra/language/stdlib/staged/stdlib.mv"))
+            stdlib_bin_path: Some(home_dir.join("libra/language/stdlib/staged/stdlib.mv")),
         }
     }
 }
@@ -408,19 +410,19 @@ pub enum TxType {
 // #[serde(deny_unknown_fields)]
 pub struct TxConfigs {
     /// baseline cost
-    #[serde(default="default_baseline_cost")]
+    #[serde(default = "default_baseline_cost")]
     pub baseline_cost: TxCost,
     /// critical transactions cost
-    #[serde(default="default_critical_txs_cost")]
+    #[serde(default = "default_critical_txs_cost")]
     pub critical_txs_cost: Option<TxCost>,
     /// management transactions cost
-    #[serde(default="default_management_txs_cost")]
+    #[serde(default = "default_management_txs_cost")]
     pub management_txs_cost: Option<TxCost>,
     /// Miner transactions cost
-    #[serde(default="default_miner_txs_cost")]
+    #[serde(default = "default_miner_txs_cost")]
     pub miner_txs_cost: Option<TxCost>,
     /// Cheap or test transation costs
-    #[serde(default="default_cheap_txs_cost")]
+    #[serde(default = "default_cheap_txs_cost")]
     pub cheap_txs_cost: Option<TxCost>,
 }
 
@@ -475,11 +477,21 @@ impl Default for TxConfigs {
     }
 }
 
-fn default_baseline_cost() -> TxCost { TxCost::new(10_000) }
-fn default_critical_txs_cost() -> Option<TxCost> { Some(TxCost::new(1_000_000)) }
-fn default_management_txs_cost() -> Option<TxCost> { Some(TxCost::new(100_000)) }
-fn default_miner_txs_cost() -> Option<TxCost> {Some(TxCost::new(10_000)) }
-fn default_cheap_txs_cost() -> Option<TxCost> { Some(TxCost::new(1_000)) }
+fn default_baseline_cost() -> TxCost {
+    TxCost::new(10_000)
+}
+fn default_critical_txs_cost() -> Option<TxCost> {
+    Some(TxCost::new(1_000_000))
+}
+fn default_management_txs_cost() -> Option<TxCost> {
+    Some(TxCost::new(100_000))
+}
+fn default_miner_txs_cost() -> Option<TxCost> {
+    Some(TxCost::new(10_000))
+}
+fn default_cheap_txs_cost() -> Option<TxCost> {
+    Some(TxCost::new(1_000))
+}
 
 /// Get swarm configs from swarm files, swarm must be running
 pub fn get_swarm_rpc_url(mut swarm_path: PathBuf) -> (Url, Waypoint) {
@@ -500,12 +512,8 @@ pub fn get_swarm_backup_service_url(mut swarm_path: PathBuf, swarm_id: u8) -> Re
     let config = NodeConfig::load(&swarm_path)
         .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path));
 
-    let url = Url::parse(
-      format!(
-        "http://localhost:{}",
-        config.storage.address.port()
-      ).as_str()
-    ).unwrap();
+    let url =
+        Url::parse(format!("http://localhost:{}", config.storage.address.port()).as_str()).unwrap();
     Ok(url)
 }
 
@@ -514,11 +522,7 @@ pub fn bootstrap_waypoint_from_upstream(url: &Url) -> Result<(u64, Waypoint), Er
     let g_res = reqwest::blocking::get(&url.to_string());
     let string = g_res.unwrap().text().unwrap();
     let json: serde_json::Value = string.parse().unwrap();
-    let epoch = json
-        .get("epoch")
-        .unwrap()
-        .as_u64()
-        .unwrap();
+    let epoch = json.get("epoch").unwrap().as_u64().unwrap();
     let waypoint = json
         .get("waypoint")
         .unwrap()
