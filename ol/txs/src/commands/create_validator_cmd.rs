@@ -9,14 +9,12 @@ use crate::{
     submit_tx::{tx_params_wrapper, maybe_submit},
 };
 use abscissa_core::{Command, Options, Runnable};
+use dialoguer::Confirm;
 use libra_types::transaction::Script;
+use ol::node::node::Node;
 use ol_types::{account::ValConfigs, config::TxType};
 use reqwest::Url;
-use std::{
-    fs::{self, File},
-    io::Write,
-    path::PathBuf,
-};
+use std::{fs::{self, File}, io::Write, path::PathBuf, process::exit};
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Options)]
 pub struct CreateValidatorCmd {
@@ -28,9 +26,6 @@ pub struct CreateValidatorCmd {
 
 /// create validator account by submitting transaction on chain
 pub fn create_validator_script(new_account: &ValConfigs) -> Script {
-    // let file_two = fs::File::open(account_json_path).expect("file should open read only");
-    // let account: ValConfigs =
-    //     serde_json::from_reader(file_two).expect("file should be proper JSON");
     let new_account = new_account.to_owned();
     new_account.check_autopay().unwrap();
 
@@ -64,7 +59,7 @@ pub fn account_from_url(url: &mut Url, path: &PathBuf) -> PathBuf {
 
 impl Runnable for CreateValidatorCmd {
     fn run(&self) {
-        let cfg = app_config();
+        let cfg = app_config().clone();
         let entry_args = entrypoint::get_args();
         let tmp;
         if self.account_file.is_none() && self.url.is_none() {
@@ -83,6 +78,15 @@ impl Runnable for CreateValidatorCmd {
         let file = fs::File::open(account_json_path).expect("file should open read only");
         let new_account: ValConfigs =
             serde_json::from_reader(file).expect("file should be proper JSON");
+        
+        let node = Node::default_from_cfg(cfg);
+        let epoch_now = match node.vitals.chain_view {
+            Some(c) => c.epoch,
+            None => {
+              println!("Could not connect to chain to fetch epoch. Exiting");
+              exit(1);
+            },
+        };
 
         match new_account.check_autopay() {
             Ok(_) => {
@@ -95,9 +99,19 @@ impl Runnable for CreateValidatorCmd {
                 .unwrap();
 
                 // submit autopay if there are any
-                if let Some(signed_autopay_batch) = new_account.autopay_signed {
-                    relay::relay_batch(&signed_autopay_batch, &tx_params).unwrap();
-                }
+                new_account.autopay_instructions.unwrap()
+                .into_iter()
+                .for_each(|i|{
+                    println!("{}", i.text_instructions(&epoch_now));
+                    match Confirm::new().with_prompt("").interact().unwrap() {
+                      true => {},
+                      _ =>  {
+                        panic!("Autopay configuration aborted. Check batch configuration file or template");
+                      }
+                    } 
+                });
+
+                relay::relay_batch(&new_account.autopay_signed.unwrap(), &tx_params).unwrap();
             }
             Err(_) => {
                 println!(
@@ -107,9 +121,3 @@ impl Runnable for CreateValidatorCmd {
         }
     }
 }
-
-// #[test]
-// fn test_create_val() {
-//     let path = ol_fixtures::get_persona_account_json("alice").1;
-//     create_validator_script(&path);
-// }
