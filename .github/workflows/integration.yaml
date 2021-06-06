@@ -7,6 +7,30 @@ on:
     branches: [ main, 'release**' ]
     
 jobs:
+  mine:
+    name: Mining
+    runs-on: self-hosted
+    timeout-minutes: 45
+    env:
+      NODE_ENV: test
+      TEST: y
+    steps:
+      - uses: actions/checkout@v2
+      - name: Get branch names
+        id: branch-name
+        uses: tj-actions/branch-names@v4
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: 1.46.0
+            override: true
+            components: rustfmt, clippy
+      - name: Install deps
+        run: sudo apt-get install -y lld
+      - name: Check branch
+        run: echo "${{ steps.branch-name.outputs.current_branch }}"
+      - name: Swarm upgrade test
+        run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/util/test-mining.mk test
   upgrade:
     name: Stdlib Upgrade
     runs-on: self-hosted
@@ -30,25 +54,5 @@ jobs:
         run: sudo chmod -R 777 language/stdlib/ 
       - name: Swarm upgrade test
         run: BRANCH_NAME=${{ steps.branch-name.outputs.current_branch }} RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/util/test-upgrade.mk test
-  mine:
-    name: Mining
-    runs-on: self-hosted
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@v2
-      - name: Get branch names
-        id: branch-name
-        uses: tj-actions/branch-names@v4
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: 1.46.0
-            override: true
-            components: rustfmt, clippy
-      - name: Install deps
-        run: sudo apt-get install -y lld
-      - name: Check branch
-        run: echo "${{ steps.branch-name.outputs.current_branch }}"
-      - name: Swarm upgrade test
-        run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/util/test-mining.mk test
+
   
