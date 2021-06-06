@@ -10,7 +10,7 @@ TEST=y
 ifndef SOURCE_PATH
 SOURCE_PATH = ${HOME}/libra
 endif
-MAKE_FILE = ${SOURCE_PATH}/ol/integration-tests/test-mining.mk
+MAKE_FILE = ${SOURCE_PATH}/ol/integration-tests/test-autopay.mk
 
 # alice
 ifndef PERSONA
@@ -25,7 +25,7 @@ START_TEXT = "To run the Libra CLI client"
 SUCCESS_TEXT = "Proof committed to chain"
 
 
-test: swarm check-swarm start-mine check stop
+test: swarm check-swarm send-tx check-tx stop
 
 swarm:
 	@echo Building Swarm
@@ -43,8 +43,8 @@ echo:
 init:
 	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}
 
-mine:
-	cd ${SOURCE_PATH} && cargo r -p miner -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} start
+tx:
+	cd ${SOURCE_PATH} && cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} autopay-batch -f ${SOURCE_PATH}/ol/fixtures/autopay/alice.autopay_batch.json
 
 create-stage:
 	cd ${SOURCE_PATH} && cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} create-validator -f ol/fixtures/account/stage.eve.account.json 
@@ -67,14 +67,14 @@ check-swarm:
 			sleep 5 ; \
 	done
 
-start-mine: 
+send-tx: 
 	PERSONA=alice make -f ${MAKE_FILE} init
-	PERSONA=alice make -f ${MAKE_FILE} mine &>> ${LOG} &
+	PERSONA=alice make -f ${MAKE_FILE} tx
 
-check:
+check-tx:
 	@while [[ ${NOW} -le ${END} ]] ; do \
 			if grep -q ${SUCCESS_TEXT} ${LOG} ; then \
-				echo MINING SUCCESS ; \
+				echo TX SUCCESS ; \
 				break ; \
 			else \
 				echo . ; \
