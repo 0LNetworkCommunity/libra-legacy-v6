@@ -30,7 +30,7 @@ jobs:
       - name: Check branch
         run: echo "${{ steps.branch-name.outputs.current_branch }}"
       - name: Swarm mining test
-        run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/util/test-mining.mk test
+        run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-mining.mk test
   autopay:
     name: Autopay
     runs-on: self-hosted
@@ -54,9 +54,9 @@ jobs:
       - name: Check branch
         run: echo "${{ steps.branch-name.outputs.current_branch }}"
       - name: Swarm autopay test-percent-change
-        run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/util/test-autopay.mk test-percent-change
+        run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-autopay.mk test-percent-change
       - name: Swarm autopay test-fixed-once
-        run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/util/test-mining.mk test-fixed-once
+        run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-mining.mk test-fixed-once
   upgrade:
     name: Stdlib Upgrade
     runs-on: self-hosted
@@ -79,6 +79,6 @@ jobs:
       - name: File permissions
         run: sudo chmod -R 777 language/stdlib/ 
       - name: Swarm upgrade test
-        run: BRANCH_NAME=${{ steps.branch-name.outputs.current_branch }} RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/util/test-upgrade.mk test
+        run: BRANCH_NAME=${{ steps.branch-name.outputs.current_branch }} RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-upgrade.mk test
 
 
