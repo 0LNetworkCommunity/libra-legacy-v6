@@ -24,7 +24,7 @@ impl Runnable for ServeCmd {
         if self.update {
           server::update_web(&cfg.workspace.node_home);
         } else {
-          let client = client::pick_client(args.swarm_path, &mut cfg).unwrap().0;          
+          let client = client::pick_client(args.swarm_path, &mut cfg).unwrap();          
           let node = Node::new(client, cfg, is_swarm);
           server::start_server(node, self.run_checks);
         }
