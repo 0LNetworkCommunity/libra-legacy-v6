@@ -67,7 +67,7 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, starting_epoch: &
           format!(
             "Instruction {uid}: {note}\nSend {total_val} every day {count_epochs} times  (until epoch {epoch_ending}) to address: {destination}?",
             uid = &i.uid,
-            total_val = *&i.value_move.unwrap(),
+            total_val = *&i.value_move.unwrap() / 1_000_000, // scaling factor
             count_epochs = &i.duration_epochs.unwrap_or_else(|| {
               &i.end_epoch.unwrap() - starting_epoch 
             }),
@@ -80,7 +80,7 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, starting_epoch: &
             "Instruction {uid}: {note}\nSend {total_val} once to address: {destination}?",
             uid = &i.uid,
             note = &i.note.clone().unwrap(),
-            total_val = *&i.value_move.unwrap(),
+            total_val = *&i.value_move.unwrap() / 1_000_000, // scaling factor
             destination = &i.destination,
         )
         };

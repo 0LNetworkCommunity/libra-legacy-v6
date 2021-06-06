@@ -44,8 +44,7 @@ impl Runnable for ExplorerCMD {
               None => app_config().to_owned(),
           };
           let client = client::pick_client(entrypoint::get_args().swarm_path, &mut conf)
-              .unwrap()
-              .0;
+              .unwrap();
           let mut node = Node::new(client, conf, is_swarm);
           node.start_pilot(false);
         }
@@ -57,7 +56,7 @@ impl Runnable for ExplorerCMD {
             None => app_config().to_owned(),
         };
 
-        let client = client::pick_client(args.swarm_path, &mut cfg).unwrap().0;
+        let client = client::pick_client(args.swarm_path, &mut cfg).unwrap();
         let node = Node::new(client, cfg, is_swarm);
 
         let mut app = App::new(" Console ", self.enhanced_graphics, node);

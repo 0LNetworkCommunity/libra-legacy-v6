@@ -1,5 +1,7 @@
 //! `bal` subcommand
 
+use std::process::exit;
+
 use abscissa_core::{Command, Options, Runnable, status_info};
 use crate::{
     entrypoint,
@@ -52,44 +54,50 @@ impl Runnable for QueryCmd {
         let args = entrypoint::get_args();
         let is_swarm = *&args.swarm_path.is_some();
         let mut cfg = app_config().clone();
-        let client = client::pick_client(args.swarm_path, &mut cfg).unwrap().0;
+        let account = 
+            if args.account.is_some() { args.account.unwrap() }
+            else { cfg.profile.account };
+            
+        let client = client::pick_client(args.swarm_path.clone(), &mut cfg).unwrap_or_else(|e| {
+          println!("ERROR: Cannot connect to a client. Message: {}", e);
+          exit(1);
+        });
         let mut node = Node::new(client, cfg, is_swarm);
 
-        let _account = 
-            if args.account.is_some() { args.account.unwrap() }
-            else { app_config().profile.account };
+  
 
         let mut info = String::new();
         let mut display = "";
 
-        // TODO: Reduce boilerplate. Serialize "balance" to cast to QueryType::Balance        
         if self.balance {
-            info = node.get(QueryType::Balance);
+            info = node.query(QueryType::Balance{account});
             display = "BALANCE";
-        } 
+        }
         else if self.blockheight {
-            info = node.get(QueryType::BlockHeight);
+            info = node.query(QueryType::BlockHeight);
             display = "BLOCK HEIGHT";
         }
         else if self.sync {
-            info = node.get(QueryType::SyncDelay);
+            info = node.query(QueryType::SyncDelay);
             display = "SYNC";
-        } 
+        }
         else if self.resources {
-            info = node.get(QueryType::Resources);
+            info = node.query(QueryType::Resources{account});
             display = "RESOURCES";
         }
         else if self.epoch {
-            info = node.get(QueryType::Epoch);
+            info = node.query(QueryType::Epoch);
             display = "EPOCH";
         }
         else if self.txs {
-            info = node.get(QueryType::Txs {
-              account: args.account,
-              txs_height: self.txs_height,
-              txs_count: self.txs_count, 
-              txs_type: self.txs_type.to_owned(),
-            });
+            info = node.query(
+              QueryType::Txs {
+                account,
+                txs_height: self.txs_height,
+                txs_count: self.txs_count, 
+                txs_type: self.txs_type.to_owned(),
+              }
+            );
             display = "TRANSACTIONS";
         }
         status_info!(display, format!("{}", info));

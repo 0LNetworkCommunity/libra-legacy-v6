@@ -5109,6 +5109,7 @@ dependencies = [
  "abscissa_core",
  "anyhow",
  "criterion",
+ "dialoguer",
  "dirs 2.0.2",
  "gumdrop",
  "libra-genesis-tool",
