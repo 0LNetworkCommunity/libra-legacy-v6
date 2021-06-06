@@ -30,8 +30,12 @@ endif
 
 test: swarm check-swarm send-tx check-tx check-autopay check-transfer stop
 
+test-percent-change:
+	AUTOPAY_FILE=alice.autopay_batch.json make -f ${MAKE_FILE} test
+
 test-fixed-once:
 	AUTOPAY_FILE=alice.fixed_once.autopay_batch.json make -f ${MAKE_FILE} test
+
 
 
 
