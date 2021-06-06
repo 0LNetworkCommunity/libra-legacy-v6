@@ -3,18 +3,19 @@
 #![allow(clippy::never_loop)]
 
 use super::files_cmd;
-use crate::entrypoint;
+
+
 use crate::prelude::app_config;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_genesis_tool::node_files;
-use libra_types::{transaction::SignedTransaction, waypoint::Waypoint};
+use libra_types::{transaction::SignedTransaction};
 use libra_wallet::WalletLibrary;
 use ol::{commands::init_cmd, config::AppCfg};
 use ol_keys::{scheme::KeyScheme, wallet};
 use ol_types::block::Block;
 use ol_types::{account::ValConfigs, autopay::PayInstruction, config::TxType};
 use reqwest::Url;
-use serde_json::Value;
+use std::process::exit;
 use std::{fs::File, io::Write, path::PathBuf};
 use txs::{commands::autopay_batch_cmd, submit_tx};
 /// `val-wizard` subcommand
@@ -43,50 +44,43 @@ pub struct ValWizardCmd {
     autopay_file: Option<PathBuf>,
     #[options(help = "An upstream peer to use in 0L.toml")]
     upstream_peer: Option<Url>,
+    #[options(help = "If validator is building from source")]
+    from_source: bool,
 }
 
 impl Runnable for ValWizardCmd {
     /// Print version message
     fn run(&self) {
+        // Note. `onboard` command DOES NOT READ CONFIGS FROM 0L.toml
+
         status_info!("\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys, run the standalone keygen tool with 'ol keygen'.\n\nYour first 0L proof-of-work will be mined now. Expect this to take up to 15 minutes on modern CPUs.\n");
 
         // Get credentials from prompt
         let (authkey, account, wallet) = wallet::get_account_from_prompt();
 
-        let cfg = app_config().clone(); // read 0L.toml in case it exists
-
         let mut upstream = self.upstream_peer.clone().unwrap_or_else(|| {
             self.template_url.clone().unwrap_or_else(|| {
-                // read from config if available, else set localhost
-                match cfg.profile.upstream_nodes {
-                    Some(url) => url[0].to_owned(),
-                    _ => Url::parse("http://localhost").unwrap(),
-                }
+                println!("ERROR: Must set a URL to query chain. Use --upstream-peer of --template-url. Exiting.");
+                exit(1);
             })
         });
         upstream.set_port(Some(8080)).unwrap();
-        
-
         println!(
-            "starting validator wizard with upstream URL: {:?}",
+            "Setting upstream peer URL to: {:?}",
             &upstream
         );
-
-        let mut web_monitor_url = upstream.clone();
-        web_monitor_url.set_port(Some(3030)).unwrap();
-        let epoch_url = &web_monitor_url.join("epoch.json").unwrap();
-        let (base_epoch, base_waypoint) = get_epoch_info(epoch_url);
 
         let app_config = AppCfg::init_app_configs(
             authkey,
             account,
             &Some(upstream.clone()),
-            &Some(entrypoint::get_node_home()),
-            base_epoch,
-            base_waypoint
+            &None,
+            None,
+            None,
+            *&self.from_source
         );
         let home_path = &app_config.workspace.node_home;
-
+        let base_waypoint = app_config.chain_info.base_waypoint.clone();
 
 
         status_ok!("\nApp configs written", "\n...........................\n");
@@ -224,23 +218,6 @@ pub fn save_template(url: &Url, home_path: &PathBuf) -> PathBuf {
     g_path
 }
 
-fn get_epoch_info(url: &Url) -> (Option<u64>, Option<Waypoint>) {
-    let g_res = reqwest::blocking::get(&url.to_string());
-    let string = g_res.unwrap().text().unwrap();
-    let json: Value = string.parse().unwrap();
-    let epoch = json
-        .get("epoch")
-        .unwrap()
-        .as_u64()
-        .expect("should have epoch number");
-    let waypoint = json
-        .get("waypoint")
-        .unwrap()
-        .as_str()
-        .expect("should have epoch number");
-
-    (Some(epoch), waypoint.parse().ok())
-}
 
 /// Creates an account.json file for the validator
 pub fn write_account_json(

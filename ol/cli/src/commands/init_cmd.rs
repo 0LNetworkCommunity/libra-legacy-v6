@@ -19,18 +19,20 @@ use fs_extra::dir::{create};
 /// `init` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct InitCmd {
-    #[options(help = "home path for miner app")]
+    #[options(help = "home path for app config")]
     path: Option<PathBuf>,
     #[options(help = "An upstream peer to use in 0L.toml")]
     upstream_peer: Option<Url>,
-    #[options(help = "Skip miner app configs")]
-    skip_miner: bool,
+    #[options(help = "Skip app configs")]
+    skip_app: bool,
     #[options(help = "Skip validator init")]
     skip_val: bool,
     #[options(help = "Fix config file, and migrate any missing fields")]
     fix: bool,
     #[options(help = "Set a waypoint in config files")]
     waypoint: Option<Waypoint>,
+    #[options(help = "If user is building from source")]
+    from_source: bool,
 }
 
 
@@ -40,10 +42,6 @@ impl Runnable for InitCmd {
         if *&self.fix {
           // fix 0L.toml file
           migrate::migrate(self.path.to_owned());
-
-          // fix account.json
-          
-          // TODO: fix key_store.json
           return
         };
 
@@ -57,27 +55,28 @@ impl Runnable for InitCmd {
         
         let (authkey, account, wallet) = wallet::get_account_from_prompt();
         // start with a default value, or read from file if already initialized
-        let mut miner_config = app_config().to_owned();
-        if !self.skip_miner { 
-          miner_config =  initialize_host(
+        let mut app_cfg = app_config().to_owned();
+        if !self.skip_app { 
+          app_cfg = initialize_app_cfg(
             authkey,
             account, 
             &self.upstream_peer,
             &self.path,
             None, // TODO: probably need an epoch option here.
             self.waypoint,
+            self.from_source,
           ).unwrap()
         };
 
         if !self.skip_val {
-          initialize_validator(&wallet, &miner_config, self.waypoint).unwrap() 
+          initialize_validator(&wallet, &app_cfg, self.waypoint).unwrap() 
         };
     }
 }
 
 /// Initializes the necessary 0L config files: 0L.toml
-pub fn initialize_host(authkey: AuthenticationKey, account: AccountAddress, upstream_peer: &Option<Url>, path: &Option<PathBuf>, epoch_opt: Option<u64>, wp_opt: Option<Waypoint>) -> Result <AppCfg, Error>{
-    let cfg = AppCfg::init_app_configs(authkey, account, upstream_peer, path, epoch_opt, wp_opt);
+pub fn initialize_app_cfg(authkey: AuthenticationKey, account: AccountAddress, upstream_peer: &Option<Url>, path: &Option<PathBuf>, epoch_opt: Option<u64>, wp_opt: Option<Waypoint>, from_source: bool) -> Result <AppCfg, Error>{
+    let cfg = AppCfg::init_app_configs(authkey, account, upstream_peer, path, epoch_opt, wp_opt, from_source);
     Ok(cfg)
 }
 

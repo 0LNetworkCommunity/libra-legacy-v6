@@ -1,5 +1,5 @@
 //! 'query'
-use libra_json_rpc_client::{AccountAddress, views::TransactionView};
+use libra_json_rpc_client::{views::TransactionView, AccountAddress};
 use num_format::{Locale, ToFormattedString};
 
 use super::node::Node;
@@ -88,13 +88,40 @@ impl Node {
           .0
           .unwrap();
 
-        format!("{:#?}", resources).to_string()
-      }
-      Txs{account, txs_height, txs_count, txs_type } => {
-        let (chain, _) = self.refresh_chain_info();
-        let current_height = chain.unwrap().height;
-        let query_height = if current_height > 100_000 { current_height - 100_000 }
-        else { 0 };
+                format!(
+                    "{} - WAYPOINT: {}",
+                    chain.clone().unwrap().epoch.to_string(),
+                    &chain.unwrap().waypoint.unwrap().to_string()
+                )
+            }
+            SyncDelay => match self.check_sync() {
+                Ok(sync) => format!(
+                    "is synced: {}, local height: {}, upstream delay: {}",
+                    sync.is_synced, sync.sync_height, sync.sync_delay
+                ),
+                Err(e) => e.to_string(),
+            },
+            Resources { account } => {
+                // account
+                match self.get_annotate_account_blob(account) {
+                    Ok((Some(r), _)) => format!("{:#?}", r),
+                    Err(e) => format!("Error querying account resource. Message: {:#?}", e),
+                    _ => format!("Error, cannot find account state for {:#?}", account),
+                }
+            }
+            Txs {
+                account,
+                txs_height,
+                txs_count,
+                txs_type,
+            } => {
+                let (chain, _) = self.refresh_chain_info();
+                let current_height = chain.unwrap().height;
+                let query_height = if current_height > 100_000 {
+                    current_height - 100_000
+                } else {
+                    0
+                };
 
         let txs = self.client.get_txn_by_acc_range(
           account,
@@ -103,8 +130,8 @@ impl Node {
           true
         ).unwrap();
 
-        if let Some(t) = txs_type {
-          let filter: Vec<TransactionView> = txs.into_iter()
+                if let Some(t) = txs_type {
+                    let filter: Vec<TransactionView> = txs.into_iter()
           .filter(|tv|{
             match &tv.transaction {
                 libra_json_rpc_client::views::TransactionDataView::UserTransaction {  script, .. } => {
@@ -114,11 +141,13 @@ impl Node {
             }
           })
           .collect();
-          format!("{:#?}", filter)
-        } else {
-          format!("{:#?}", txs)
+                    format!("{:#?}", filter)
+                } else {
+                    format!("{:#?}", txs)
+                }
+            }
         }
       }
     }
-  }
 }
+
