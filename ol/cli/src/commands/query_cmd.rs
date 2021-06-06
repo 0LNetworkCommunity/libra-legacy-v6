@@ -35,7 +35,7 @@ pub struct QueryCmd {
     #[options(help = "epoch and waypoint")]
     epoch: bool,
 
-    #[options(help = "get last 100 transactions")]
+    #[options(help = "get last transactions, defaults to last 100")]
     txs: bool,
 
     #[options(help = "height to start txs query from, defaults to -100_000 blocks")]

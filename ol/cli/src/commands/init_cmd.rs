@@ -31,8 +31,8 @@ pub struct InitCmd {
     fix: bool,
     #[options(help = "Set a waypoint in config files")]
     waypoint: Option<Waypoint>,
-    #[options(help = "If user is building from source")]
-    from_source: bool,
+    #[options(help = "Path to source code, for devs")]
+    source_path: Option<PathBuf>,
 }
 
 
@@ -49,7 +49,7 @@ impl Runnable for InitCmd {
         if let Some(path) = entry_args.swarm_path {
           let swarm_node_home = entrypoint::get_node_home();
           let absolute = fs::canonicalize(path).unwrap();
-          initialize_host_swarm(absolute, swarm_node_home, entry_args.swarm_persona);
+          initialize_host_swarm(absolute, swarm_node_home, entry_args.swarm_persona, self.source_path.as_ref().unwrap());
           return
         }
         
@@ -64,7 +64,7 @@ impl Runnable for InitCmd {
             &self.path,
             None, // TODO: probably need an epoch option here.
             self.waypoint,
-            self.from_source,
+            &self.source_path,
           ).unwrap()
         };
 
@@ -75,17 +75,32 @@ impl Runnable for InitCmd {
 }
 
 /// Initializes the necessary 0L config files: 0L.toml
-pub fn initialize_app_cfg(authkey: AuthenticationKey, account: AccountAddress, upstream_peer: &Option<Url>, path: &Option<PathBuf>, epoch_opt: Option<u64>, wp_opt: Option<Waypoint>, from_source: bool) -> Result <AppCfg, Error>{
-    let cfg = AppCfg::init_app_configs(authkey, account, upstream_peer, path, epoch_opt, wp_opt, from_source);
+pub fn initialize_app_cfg(
+  authkey: AuthenticationKey,
+  account: AccountAddress,
+  upstream_peer: &Option<Url>,
+  path: &Option<PathBuf>,
+  epoch_opt: Option<u64>,
+  wp_opt: Option<Waypoint>,
+  source_path: &Option<PathBuf>
+) -> Result <AppCfg, Error>{
+    let cfg = AppCfg::init_app_configs(
+      authkey,
+      account,
+      upstream_peer,
+      path,
+      epoch_opt,
+      wp_opt,
+      source_path);
     Ok(cfg)
 }
 
 /// Initializes the necessary 0L config files: 0L.toml and populate blocks directory
 /// assumes the libra source is checked out at $HOME/libra
-pub fn initialize_host_swarm(swarm_path: PathBuf, node_home: PathBuf, persona: Option<String>) {
+pub fn initialize_host_swarm(swarm_path: PathBuf, node_home: PathBuf, persona: Option<String>, source_path: &PathBuf) {
     let cfg = AppCfg::init_app_configs_swarm(swarm_path, node_home);
     if persona.is_some() {
-      let source = PathBuf::new().join(&cfg.workspace.source_path.unwrap()).join("ol/fixtures/blocks/test").join(persona.unwrap()).join("block_0.json");
+      let source = source_path.join("ol/fixtures/blocks/test").join(persona.unwrap()).join("block_0.json");
       let bocks_dir = PathBuf::new().join(&cfg.workspace.node_home).join(&cfg.workspace.block_dir);
       let target_file = PathBuf::new().join(&cfg.workspace.node_home).join(&cfg.workspace.block_dir).join("block_0.json");
       println!("copy first block from {:?} to {:?}", source, target_file);

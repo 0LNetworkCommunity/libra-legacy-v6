@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::{fs, io::Write, net::Ipv4Addr, path::PathBuf, str::FromStr};
 
-use crate::dialogue::{what_home, what_ip, what_source, what_statement};
+use crate::dialogue::{what_home, what_ip, what_statement};
 
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
 
@@ -113,7 +113,7 @@ impl AppCfg {
         config_path: &Option<PathBuf>,
         base_epoch: Option<u64>,
         base_waypoint: Option<Waypoint>,
-        ask_source_path: bool,
+        source_path: &Option<PathBuf>,
     ) -> AppCfg {
         // TODO: Check if configs exist and warn on overwrite.
         let mut default_config = AppCfg::default();
@@ -129,10 +129,10 @@ impl AppCfg {
             what_home(None, None)
         });
 
-        if ask_source_path {
-          let source_path = what_source();
+        if source_path.is_some() {
+          // let source_path = what_source();
           default_config.workspace.source_path = source_path.clone();
-          default_config.workspace.stdlib_bin_path = Some(source_path.unwrap().join("language/stdlib/staged/stdlib.mv"));
+          default_config.workspace.stdlib_bin_path = Some(source_path.as_ref().unwrap().join("language/stdlib/staged/stdlib.mv"));
         }
 
 
