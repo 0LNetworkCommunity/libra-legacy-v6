@@ -25,7 +25,10 @@ START_TEXT = "To run the Libra CLI client"
 SUCCESS_TEXT = "transaction executed"
 
 
-test: swarm check-swarm send-tx check-tx stop
+# test: swarm check-swarm send-tx check-tx check-autopay stop
+
+test: swarm check-swarm send-tx
+
 
 swarm:
 	@echo Building Swarm
@@ -76,4 +79,6 @@ check-tx:
 			sleep 5 ; \
 	done
 
-check-autopay: resources
+check-autopay: 
+# checks if there is any mention of BOB's account as a payee
+	PERSONA=alice make -f ${MAKE_FILE} resources | grep -e '88E74DFED34420F2AD8032148280A84B' -e 'payee'
