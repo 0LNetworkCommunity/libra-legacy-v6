@@ -98,14 +98,17 @@ make bins && make install
 Before you start: have the static IP address you wish to associate with your validator, and a fun personal statement 
 to place in your first proof.
 
-2.1. Generate new keys and account: `miner keygen`. Run as many times as you like, and choose a mnemonic. 
+2.1. Generate new keys and account: `onboard keygen`. Run as many times as you like, and choose a mnemonic. 
 **Mnemonic and keys are not saved anywhere, write them down now**. 
 
 2.2. Run the validator onboarding wizard inside a `screen` or `tmux` session, and answer questions: 
 
 ```
 # start wizard
-miner val
+onboard val -u http://<ip-address>:3030
+
+# without template, note: assumes an autopay_batch.json is in the project root.
+onboard val
 ```
 
 2.3. Send the generated `~/.0L/account.json` to someone that has GAS and can execute the account creation transaction for you.
