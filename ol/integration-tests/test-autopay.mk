@@ -22,7 +22,7 @@ MNEM="talent sunset lizard pill fame nuclear spy noodle basket okay critic grow 
 NUM_NODES = 2
 
 START_TEXT = "To run the Libra CLI client"
-SUCCESS_TEXT = "Proof committed to chain"
+SUCCESS_TEXT = "transaction executed"
 
 
 test: swarm check-swarm send-tx check-tx stop
@@ -44,17 +44,10 @@ init:
 	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}
 
 tx:
-	cd ${SOURCE_PATH} && cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} autopay-batch -f ${SOURCE_PATH}/ol/fixtures/autopay/alice.autopay_batch.json
-
-create-stage:
-	cd ${SOURCE_PATH} && cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} create-validator -f ol/fixtures/account/stage.eve.account.json 
-
-create:
-	cd ${SOURCE_PATH} && cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} create-validator -f ol/fixtures/account/eve.account.json 
+	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} autopay-batch -f ${SOURCE_PATH}/ol/fixtures/autopay/alice.autopay_batch.json
 
 resources:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --resources
-
 
 check-swarm: 
 	@while [[ ${NOW} -le ${END} ]] ; do \
@@ -69,7 +62,7 @@ check-swarm:
 
 send-tx: 
 	PERSONA=alice make -f ${MAKE_FILE} init
-	PERSONA=alice make -f ${MAKE_FILE} tx
+	PERSONA=alice make -f ${MAKE_FILE} tx &>> ${LOG} &
 
 check-tx:
 	@while [[ ${NOW} -le ${END} ]] ; do \
@@ -82,3 +75,5 @@ check-tx:
 			echo "Sleeping for 5 secs" ; \
 			sleep 5 ; \
 	done
+
+check-autopay: resources
