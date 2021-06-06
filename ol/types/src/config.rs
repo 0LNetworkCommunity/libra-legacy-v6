@@ -302,7 +302,6 @@ fn default_db_path() -> PathBuf {
 
 impl Default for Workspace {
     fn default() -> Self {
-        let home_dir = dirs::home_dir().unwrap();
         Self {
             node_home: dirs::home_dir().unwrap().join(NODE_HOME),
             source_path: None,
