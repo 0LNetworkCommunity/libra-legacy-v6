@@ -1,4 +1,4 @@
-# Things you will need:
+# Validator Setup
 
 
 ## Requirements 
@@ -6,7 +6,7 @@
 - A fixed IP address of the machine
 - Recommended specs: 250G harddrive, 4 cores
 
-### High-level Steps
+### High-level steps
 1. Install binaries.
 2. Generate a public mining/validator key and associated mneumonic.
 3. Generate and share you `account.json` file with someone who has gas and can execute the onboarding transaction for you.
@@ -27,17 +27,8 @@ These instructions target Ubuntu.
 
 1.1. Set up an Ubuntu host with `ssh` access, e.g. in a cloud service provider. 
 1.2.  Associate a static IP  with your host, this will be tied to you account, and will be set in your `account.json` file.
-1.3. You'll want to use `screen` (or `tmux`) to persist the terminal session for build (you'll use `screen` or `tmux` 
-      for running the nodes / miner as well). 
+1.3. You'll want to use `tmux` to persist the terminal session for build, as well as for running the nodes and miner. 
 
-screen
-```
-# start a new screen session
-screen -S build
-
-# to rejoin the session
-screen -rd build 
-```
 tmux
 ```
 # start a new tmux session
@@ -85,7 +76,7 @@ reset
 For more details: https://github.com/OLSF/libra/wiki/OS-Dependencies
 
 1.5. Build the source and install binaries:
-This takes a while, run inside `tmux` or `screen` in case your session gets disconnected 
+This takes a while, run inside `tmux` in case your session gets disconnected 
 ```
 cd </path/to/libra/source/> 
 make bins && make install
@@ -101,7 +92,7 @@ to place in your first proof.
 2.1. Generate new keys and account: `onboard keygen`. Run as many times as you like, and choose a mnemonic. 
 **Mnemonic and keys are not saved anywhere, write them down now**. 
 
-2.2. Run the validator onboarding wizard inside a `screen` or `tmux` session, and answer questions: 
+2.2. Run the validator onboarding wizard inside a `tmux` session, and answer questions: 
 
 ```
 # start wizard
@@ -117,7 +108,7 @@ onboard val
 
 2.4. Backup your files: `cp -r ~/.0L/* ~/.0L/init-backup/`
 
-## 3. Fast forward to the recent state 
+## 3. Fast forward to the most recent state snapshot 
 
 Speed up the sync of your ledger by restoring a backup before starting a fullnode (next step). 
 The following command will fetch the latest epoch archive, usually from within the last 24h.
@@ -129,10 +120,10 @@ ol restore
 ## 4. Start the node in `fullnode` mode:
 
 4.1 To enable the node to run after you detach from your terminal session, start within a 
-`screen` or `tmux` session.
+`tmux` session.
 
 **note**: temporarily: as of v4.2.8 you'll need to increase your host's file descriptors. Fix is in the works. For now:
-run this before starting your `tmux` or `screen` session.
+run this before starting your `tmux` session.
 ```
 # increase file descriptors
 ulimit -n 100000
@@ -151,16 +142,7 @@ yourusername soft    nproc          100000
 yourusername hard    nproc          100000
 yourusername soft    nofile         100000
 ```
-start your fullnode in a `screen` or `tmux` session.
-
-```
-screen -S fullnode 
-
-## verify your file handlers have been increased
-ulimit -n
-100000
-```
-or 
+start your fullnode in a `tmux` session.
 
 ```
 tmux new -s fullnode
@@ -170,7 +152,7 @@ ulimit -n
 100000
 ```
 
-inside the `screen` or `tmux` session start the node in fullnode mode. 
+inside the `tmux` session start the node in fullnode mode. 
 ```
 # create log directory 
 mkdir ~/.0L/logs
@@ -196,20 +178,14 @@ This command will tell you the sync state of a RUNNING local node: `db-backup on
 
 Before you start: You will need your mnemonic.
 
-5.1. Run the miner within its own `screen` or `tmux` session:
-```
-screen -S miner 
-# to reconnect to the screen miner session
-screen -rd miner
-```
-or
+5.1. Run the miner within its own `tmux` session:
 ```
 tmux new -s miner 
 # to reconnect to the tmux miner session
 tmux attach -t miner
 ```
 
-5.2. From inside the `screen` or `tmux` session, start the miner and enter your mnemonic:  
+5.2. From inside the `tmux` session, start the miner and enter your mnemonic:  
 ```
 miner start >> ~/.0L/logs/miner.log 2>&1
 ``` 
@@ -223,7 +199,7 @@ Once in the validator set, the node can connect to other validators and sign blo
 
 6.1. On the next epoch, start node in `validator` mode.
 
-Restarting your node in validator mode inside a `screen` or `tmux` session.
+Restarting your node in validator mode inside a `tmux` session.
 
 Again, there may be an issue with file descriptors, increase with `ulimit -n 100000` before starting node
 
@@ -233,12 +209,8 @@ make stop
 # and just in case, stop all processes
 killall libra-node
 ```
-start a `screen` or `tmux` session
 
-```
-screen -S validator
-```
-or
+start a `tmux` session
 ```
 tmux new -s validator
 ```
