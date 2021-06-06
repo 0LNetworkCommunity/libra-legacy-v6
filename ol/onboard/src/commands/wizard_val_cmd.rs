@@ -45,7 +45,7 @@ pub struct ValWizardCmd {
     #[options(help = "An upstream peer to use in 0L.toml")]
     upstream_peer: Option<Url>,
     #[options(help = "If validator is building from source")]
-    from_source: bool,
+    source_path: Option<PathBuf>,
 }
 
 impl Runnable for ValWizardCmd {
@@ -77,7 +77,7 @@ impl Runnable for ValWizardCmd {
             &None,
             None,
             None,
-            *&self.from_source
+            &self.source_path
         );
         let home_path = &app_config.workspace.node_home;
         let base_waypoint = app_config.chain_info.base_waypoint.clone();
