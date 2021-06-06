@@ -25,9 +25,9 @@ START_TEXT = "To run the Libra CLI client"
 SUCCESS_TEXT = "transaction executed"
 
 
-# test: swarm check-swarm send-tx check-tx check-autopay stop
+test: swarm check-swarm send-tx check-tx check-autopay check-transfer stop
 
-test: swarm check-swarm send-tx
+# test: swarm check-swarm send-tx
 
 
 swarm:
@@ -51,6 +51,13 @@ tx:
 
 resources:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --resources
+
+balance:
+	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --balance
+
+balance-bob:
+	cd ${SOURCE_PATH} && cargo run -p ol -- --account 88E74DFED34420F2AD8032148280A84B --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --balance
+
 
 check-swarm: 
 	@while [[ ${NOW} -le ${END} ]] ; do \
@@ -82,3 +89,17 @@ check-tx:
 check-autopay: 
 # checks if there is any mention of BOB's account as a payee
 	PERSONA=alice make -f ${MAKE_FILE} resources | grep -e '88E74DFED34420F2AD8032148280A84B' -e 'payee'
+
+
+check-transfer:
+	@while [[ ${NOW} -le ${END} ]] ; do \
+			if PERSONA=alice make -f ${MAKE_FILE} balance-bob | grep -e '5'; then \
+				echo TX SUCCESS ; \
+				break ; \
+			else \
+				echo . ; \
+			fi ; \
+			echo "Sleeping for 5 secs" ; \
+			sleep 5 ; \
+	done
+	
