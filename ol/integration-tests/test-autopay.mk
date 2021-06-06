@@ -24,10 +24,15 @@ NUM_NODES = 2
 START_TEXT = "To run the Libra CLI client"
 SUCCESS_TEXT = "transaction executed"
 
+ifndef AUTOPAY_FILE
+AUTOPAY_FILE = alice.autopay_batch.json
+endif
 
 test: swarm check-swarm send-tx check-tx check-autopay check-transfer stop
 
-# test: swarm check-swarm send-tx
+test-fixed-once:
+	AUTOPAY_FILE=alice.fixed_once.autopay_batch.json make -f ${MAKE_FILE} test
+
 
 
 swarm:
@@ -47,7 +52,7 @@ init:
 	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}
 
 tx:
-	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} autopay-batch -f ${SOURCE_PATH}/ol/fixtures/autopay/alice.autopay_batch.json
+	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} autopay-batch -f ${SOURCE_PATH}/ol/fixtures/autopay/${AUTOPAY_FILE}
 
 resources:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --resources
@@ -92,6 +97,7 @@ check-autopay:
 
 
 check-transfer:
+# swarm accounts start with a balance of 4
 	@while [[ ${NOW} -le ${END} ]] ; do \
 			if PERSONA=alice make -f ${MAKE_FILE} balance-bob | grep -e '5'; then \
 				echo TX SUCCESS ; \
