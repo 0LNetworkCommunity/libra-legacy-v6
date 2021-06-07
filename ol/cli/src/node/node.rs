@@ -12,6 +12,7 @@ use libra_json_rpc_client::views::{MinerStateResourceView};
 use libra_types::waypoint::Waypoint;
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
 use storage_interface::DbReader;
+use super::client;
 use super::{account::OwnerAccountView, states::HostState};
 
 /// name of key in kv store for sync
@@ -71,6 +72,14 @@ impl Node {
             chain_state: None,
         };
     }
+
+    /// default node connection from configs
+    pub fn default_from_cfg(mut cfg: AppCfg) -> Node {
+        // NOTE: not intended for swarm.
+        let client = client::pick_client(None, &mut cfg).unwrap();
+        Node::new(client, cfg, false)
+    }
+
 
     /// refresh all checks
     pub fn refresh_checks(&mut self) -> &mut Self {
@@ -144,11 +153,6 @@ impl Node {
             Ok(_t) => self.client.waypoint(),
             Err(_) => self.app_conf.get_waypoint(None),
         }
-    }
-
-    /// is validator jailed
-    pub fn is_jailed() -> bool {
-        unimplemented!("Don't know how to implement")
     }
 
     /// Is current account in validator set

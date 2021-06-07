@@ -10,7 +10,7 @@ TEST=y
 ifndef SOURCE_PATH
 SOURCE_PATH = ${HOME}/libra
 endif
-MAKE_FILE = ${SOURCE_PATH}/ol/util/test-mining.mk
+MAKE_FILE = ${SOURCE_PATH}/ol/integration-tests/test-autopay.mk
 
 # alice
 ifndef PERSONA
@@ -22,10 +22,22 @@ MNEM="talent sunset lizard pill fame nuclear spy noodle basket okay critic grow 
 NUM_NODES = 2
 
 START_TEXT = "To run the Libra CLI client"
-SUCCESS_TEXT = "Proof committed to chain"
+SUCCESS_TEXT = "transaction executed"
+
+ifndef AUTOPAY_FILE
+AUTOPAY_FILE = alice.autopay_batch.json
+endif
+
+test: swarm check-swarm send-tx check-tx check-autopay check-transfer stop
+
+test-percent-change:
+	AUTOPAY_FILE=alice.autopay_batch.json make -f ${MAKE_FILE} test
+
+test-fixed-once:
+	AUTOPAY_FILE=alice.fixed_once.autopay_batch.json make -f ${MAKE_FILE} test
 
 
-test: swarm check-swarm start-mine check stop
+
 
 swarm:
 	@echo Building Swarm
@@ -43,17 +55,17 @@ echo:
 init:
 	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}
 
-mine:
-	cd ${SOURCE_PATH} && cargo r -p miner -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} start
-
-create-stage:
-	cd ${SOURCE_PATH} && cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} create-validator -f ol/fixtures/account/stage.eve.account.json 
-
-create:
-	cd ${SOURCE_PATH} && cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} create-validator -f ol/fixtures/account/eve.account.json 
+tx:
+	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} autopay-batch -f ${SOURCE_PATH}/ol/fixtures/autopay/${AUTOPAY_FILE}
 
 resources:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --resources
+
+balance:
+	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --balance
+
+balance-bob:
+	cd ${SOURCE_PATH} && cargo run -p ol -- --account 88E74DFED34420F2AD8032148280A84B --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --balance
 
 
 check-swarm: 
@@ -67,14 +79,14 @@ check-swarm:
 			sleep 5 ; \
 	done
 
-start-mine: 
+send-tx: 
 	PERSONA=alice make -f ${MAKE_FILE} init
-	PERSONA=alice make -f ${MAKE_FILE} mine &>> ${LOG} &
+	PERSONA=alice make -f ${MAKE_FILE} tx &>> ${LOG} &
 
-check:
+check-tx:
 	@while [[ ${NOW} -le ${END} ]] ; do \
 			if grep -q ${SUCCESS_TEXT} ${LOG} ; then \
-				echo MINING SUCCESS ; \
+				echo TX SUCCESS ; \
 				break ; \
 			else \
 				echo . ; \
@@ -82,3 +94,22 @@ check:
 			echo "Sleeping for 5 secs" ; \
 			sleep 5 ; \
 	done
+
+check-autopay: 
+# checks if there is any mention of BOB's account as a payee
+	PERSONA=alice make -f ${MAKE_FILE} resources | grep -e '88E74DFED34420F2AD8032148280A84B' -e 'payee'
+
+
+check-transfer:
+# swarm accounts start with a balance of 4
+	@while [[ ${NOW} -le ${END} ]] ; do \
+			if PERSONA=alice make -f ${MAKE_FILE} balance-bob | grep -e '5'; then \
+				echo TX SUCCESS ; \
+				break ; \
+			else \
+				echo . ; \
+			fi ; \
+			echo "Sleeping for 5 secs" ; \
+			sleep 5 ; \
+	done
+	
