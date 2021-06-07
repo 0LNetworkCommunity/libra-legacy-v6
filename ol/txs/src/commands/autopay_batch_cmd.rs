@@ -111,6 +111,6 @@ fn test_instruction_script_match() {
       value_move: Some(1000u64),
   };
 
-  instr.check_instruction_safety(script).unwrap();
+  instr.check_instruction_match_tx(script).unwrap();
 
 }
