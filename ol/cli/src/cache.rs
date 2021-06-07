@@ -2,7 +2,7 @@
 use crate::{
     check::items::Items,
     mgmt::management::HostProcess,
-    node::{account::OwnerAccountView, chain_view::ChainView, states::HostState},
+    node::{account::OwnerAccountView, chain_info::ChainView, states::HostState},
 };
 use anyhow::Error;
 use serde::{Deserialize, Serialize};

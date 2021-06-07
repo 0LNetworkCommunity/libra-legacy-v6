@@ -166,60 +166,6 @@ impl PayInstruction {
         );
         Ok(())
     }
-
-    /// provide text information on the instruction
-    pub fn text_instructions(&self, starting_epoch: &u64) -> String {
-      match self.type_of {
-        InstructionType::PercentOfBalance => {
-          format!(
-            "Instruction {uid}: {note}\nSend {percent_balance:.2?}% of your total balance every day {count_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
-            uid = &self.uid,
-            percent_balance = *&self.value_move.unwrap() as f64 /100f64,
-            count_epochs = &self.duration_epochs.unwrap_or_else(|| {
-              &self.end_epoch.unwrap() - starting_epoch 
-            }),
-            note = &self.note.clone().unwrap(),
-            epoch_ending = &self.end_epoch.unwrap(),
-            destination = &self.destination,
-          )
-        },
-        InstructionType::PercentOfChange => {
-            format!(
-              "Instruction {uid}: {note}\nSend {percent_balance:.2?}% new incoming funds every day {count_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
-              uid = &self.uid,
-              percent_balance = *&self.value_move.unwrap() as f64 /100f64,
-              count_epochs = &self.duration_epochs.unwrap_or_else(|| {
-                  &self.end_epoch.unwrap() - starting_epoch 
-                  }),
-              note = &self.note.clone().unwrap(),
-              epoch_ending = &self.end_epoch.unwrap(),
-              destination = &self.destination,
-            )
-        },
-        InstructionType::FixedRecurring => {
-            format!(
-                "Instruction {uid}: {note}\nSend {total_val} every day {count_epochs} times  (until epoch {epoch_ending}) to address: {destination}?",
-                uid = &self.uid,
-                total_val = *&self.value_move.unwrap() / 1_000_000, // scaling factor
-                count_epochs = &self.duration_epochs.unwrap_or_else(|| {
-                  &self.end_epoch.unwrap() - starting_epoch 
-                }),
-                note = &self.note.clone().unwrap(),
-                epoch_ending = &self.end_epoch.unwrap(),
-                destination = &self.destination,
-            )
-        },
-        InstructionType::FixedOnce => {
-          format!(
-                "Instruction {uid}: {note}\nSend {total_val} once to address: {destination}?",
-                uid = &self.uid,
-                note = &self.note.clone().unwrap(),
-                total_val = *&self.value_move.unwrap() / 1_000_000, // scaling factor
-                destination = &self.destination,
-            )
-        }
-      }
-    }
 }
 
 /// save a batch file of instructions
@@ -264,10 +210,6 @@ fn scale_percent(fract_percent: f64) -> Option<u64> {
         None
     }
 }
-
-
-
-
 
 #[test]
 fn parse_file() {

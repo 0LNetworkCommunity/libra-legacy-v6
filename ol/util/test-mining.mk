@@ -10,7 +10,7 @@ TEST=y
 ifndef SOURCE_PATH
 SOURCE_PATH = ${HOME}/libra
 endif
-MAKE_FILE = ${SOURCE_PATH}/ol/integration-tests/test-mining.mk
+MAKE_FILE = ${SOURCE_PATH}/ol/util/test-mining.mk
 
 # alice
 ifndef PERSONA
