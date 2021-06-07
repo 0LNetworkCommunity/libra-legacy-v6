@@ -7,7 +7,7 @@ use libra_types::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{fs::{self, File}, io::Write, path::PathBuf, u64};
+use std::{fs::{self, File}, io::Write, path::PathBuf, process::exit, u64};
 
 // These match Autpay2.move
 /// send percent of balance at end of epoch payment type
@@ -79,22 +79,29 @@ impl PayInstruction {
             .into_iter()
             .map(|mut i| {
                 if ids.contains(&i.uid) {
-                  panic!(format!("uid on instructions need to be unique: {}", &i.uid));
+                  println!("uid on instructions need to be unique: Duplicate Id: {}", &i.uid);
+                  exit(1);
                 }
                 ids.push(i.uid);
 
                 if i.end_epoch.is_none() && i.duration_epochs.is_none() {
-                    panic!(
+                    println!(
                         "Need to set end_epoch, or duration_epoch in instruction: {:?}",
                         &i
                     );
+                    exit(1);
                 }
 
                 if let Some(duration) = i.duration_epochs {
+                    if duration == 0 {
+                      println!("Duration cannot be 0. Instruction: {:?}", &i);
+                      exit(1);
+                    }
                     if let Some(current) = current_epoch {
                       i.end_epoch = Some(duration + current);
                     } else {
-                      panic!("If you are setting a duration_epochs instruction, we need the current epoch");
+                      println!("If you are setting a duration_epochs instruction, we need the current epoch. Instruction: {:?}", &i);
+                      exit(1);
                     }
                 }
 
@@ -264,9 +271,6 @@ fn scale_percent(fract_percent: f64) -> Option<u64> {
         None
     }
 }
-
-
-
 
 
 #[test]

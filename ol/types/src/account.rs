@@ -165,7 +165,7 @@ impl ValConfigs {
             let tx = signed.iter().nth(i).unwrap();
             let payload = tx.clone().into_raw_transaction().into_payload();
             if let TransactionPayload::Script(s) = payload {
-                match instr.check_instruction_safety(s.clone()) {
+                match instr.check_instruction_match_tx(s.clone()) {
                     Ok(_) => {}
                     Err(e) => {
                         panic!(

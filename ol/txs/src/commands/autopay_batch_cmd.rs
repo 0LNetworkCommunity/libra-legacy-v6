@@ -6,7 +6,7 @@ use abscissa_core::{Command, Options, Runnable};
 use libra_types::transaction::{Script, SignedTransaction};
 use crate::{entrypoint, sign_tx::sign_tx, submit_tx::{tx_params_wrapper, batch_wrapper, TxParams}};
 use dialoguer::Confirm;
-use std::path::PathBuf;
+use std::{path::PathBuf, process::exit};
 use ol_types::{autopay::PayInstruction, config::{TxType, IS_CI}};
 
 /// command to submit a batch of autopay tx from file
@@ -37,7 +37,21 @@ impl Runnable for AutopayBatchCmd {
 pub fn process_instructions(instructions: Vec<PayInstruction>, starting_epoch: &u64) -> Vec<Script> {
     // TODO: Check instruction IDs are sequential.
     instructions.into_iter().filter_map(|i| {
-        assert!(i.type_move.unwrap() <= 3);
+      // double check transactions
+        match i.type_move.unwrap()<= 3 {
+            true => {},
+            false => {
+              println!("Instruction type not valid for transactions: {:?}", &i);
+              exit(1); 
+            },
+        }
+        match i.duration_epochs > 0 {
+            true => {},
+            false => {
+              println!("Instructions must have duration greater than 0. Exiting. Instruction: {:?}", &i);
+              exit(1);
+            },
+        }
 
         println!("{}", i.text_instructions(starting_epoch));
         // accept if CI mode.
