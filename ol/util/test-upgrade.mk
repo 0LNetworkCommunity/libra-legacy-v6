@@ -46,7 +46,7 @@ prep:
 # save makefile outside of repo, since we'll need it across branches
 #	mkdir ${HOME}/.0L/ | true
 	mkdir -p ${UPGRADE_TEMP} | true
-	cp ${SOURCE_PATH}/ol/integration-tests/test-upgrade.mk ${SAFE_MAKE_FILE}
+	cp ${SOURCE_PATH}/ol/util/test-upgrade.mk ${SAFE_MAKE_FILE}
 
 get-prev:
 	cd ${SOURCE_PATH} && git reset --hard && git fetch

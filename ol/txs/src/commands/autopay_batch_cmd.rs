@@ -39,7 +39,52 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, starting_epoch: &
     instructions.into_iter().filter_map(|i| {
         assert!(i.type_move.unwrap() <= 3);
 
-        println!("{}", i.text_instructions(starting_epoch));
+        let warning = if i.type_move.unwrap() == 0 {
+          format!(
+              "Instruction {uid}: {note}\nSend {percent_balance:.2?}% of your total balance every day {count_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
+              uid = &i.uid,
+              percent_balance = *&i.value_move.unwrap() as f64 /100f64,
+              count_epochs = &i.duration_epochs.unwrap_or_else(|| {
+                 &i.end_epoch.unwrap() - starting_epoch 
+                }),
+              note = &i.note.clone().unwrap(),
+              epoch_ending = &i.end_epoch.unwrap(),
+              destination = &i.destination,
+          )
+        } else if i.type_move.unwrap() == 1 {
+          format!(
+            "Instruction {uid}: {note}\nSend {percent_balance:.2?}% new incoming funds every day {count_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
+            uid = &i.uid,
+            percent_balance = *&i.value_move.unwrap() as f64 /100f64,
+            count_epochs = &i.duration_epochs.unwrap_or_else(|| {
+                 &i.end_epoch.unwrap() - starting_epoch 
+                }),
+            note = &i.note.clone().unwrap(),
+            epoch_ending = &i.end_epoch.unwrap(),
+            destination = &i.destination,
+        )
+        } else if i.type_move.unwrap() == 2  {
+          format!(
+            "Instruction {uid}: {note}\nSend {total_val} every day {count_epochs} times  (until epoch {epoch_ending}) to address: {destination}?",
+            uid = &i.uid,
+            total_val = *&i.value_move.unwrap() / 1_000_000, // scaling factor
+            count_epochs = &i.duration_epochs.unwrap_or_else(|| {
+              &i.end_epoch.unwrap() - starting_epoch 
+            }),
+            note = &i.note.clone().unwrap(),
+            epoch_ending = &i.end_epoch.unwrap(),
+            destination = &i.destination,
+        )
+        } else {
+          format!(
+            "Instruction {uid}: {note}\nSend {total_val} once to address: {destination}?",
+            uid = &i.uid,
+            note = &i.note.clone().unwrap(),
+            total_val = *&i.value_move.unwrap() / 1_000_000, // scaling factor
+            destination = &i.destination,
+        )
+        };
+        println!("{}", &warning);
         // accept if CI mode.
         if *IS_CI { return Some(i) }            
         
