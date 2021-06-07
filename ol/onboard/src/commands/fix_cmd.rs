@@ -50,6 +50,7 @@ pub fn migrate_account_json(cfg: &AppCfg) {
         &home_path,
         &cfg,
         &wallet,
+        false, // TODO: Do we need swarm case for this?
     );
 
     let account_json_path = cfg.workspace.node_home.clone().join("account.json");
