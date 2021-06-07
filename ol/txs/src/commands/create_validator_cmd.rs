@@ -12,11 +12,7 @@ use abscissa_core::{Command, Options, Runnable};
 use libra_types::transaction::Script;
 use ol_types::{account::ValConfigs, config::TxType};
 use reqwest::Url;
-use std::{
-    fs::{self, File},
-    io::Write,
-    path::PathBuf,
-};
+use std::{fs::{self, File}, io::Write, path::PathBuf, process::exit};
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Options)]
 pub struct CreateValidatorCmd {
@@ -98,13 +94,22 @@ impl Runnable for CreateValidatorCmd {
                 // submit autopay if there are any
                 // if let Some(signed_autopay_batch) = new_account.autopay_signed {
                 println!("Relaying previously signed transactions from: {:?}", &new_account.ow_human_name);
-                relay::relay_batch(&new_account.autopay_signed.unwrap(), &tx_params).unwrap();
+                match relay::relay_batch(&new_account.autopay_signed.unwrap(), &tx_params) {
+                    Ok(_) => {
+                      println!("\nUser transactions successfully relayed\n")
+                    },
+                    Err(e) => {
+                      println!("\nError relaying transactions. Message: {:?}", e);
+                      exit(1);
+                    },
+                }
                 // }
             }
-            Err(_) => {
+            Err(e) => {
                 println!(
-                    "cannot send atomic account creation transaction, error with: PayInstruction."
+                    "\nError: cannot send atomic account creation transaction. Message: {:?}", e
                 );
+                exit(1);
             }
         }
     }

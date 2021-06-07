@@ -23,14 +23,12 @@ NUM_NODES = 2
 EVE = 3DC18D1CF61FAAC6AC70E3A63F062E4B
 
 START_TEXT = "To run the Libra CLI client"
-SUCCESS_TEXT = "transaction executed"
+SUCCESS_TEXT = "User transactions successfully relayed"
 
-
-ifndef AUTOPAY_FILE
-AUTOPAY_FILE = alice.autopay_batch.json
-endif
+# account.json fixtures generated with onboard --swarm-path ./whatever val --upstream-peer http://a-real-ip
 
 test: swarm check-swarm send-tx check-tx check-account-created check-transfer stop
+# test: swarm check-swarm send-tx check-tx check-account-created check-transfer stop
 
 swarm:
 	@echo Building Swarm
@@ -42,8 +40,6 @@ swarm:
 stop:
 	killall libra-swarm libra-node miner ol | true
 
-echo: 
-	@echo hi &> ${LOG} &
 
 init:
 	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}
@@ -90,8 +86,21 @@ check-tx:
 
 check-account-created: 
 # checks if there is any mention of BOB's account as a payee on EVE's account
-	PERSONA=alice make -f ${MAKE_FILE} resources | grep -e '88E74DFED34420F2AD8032148280A84B' -e 'payee'
+	PERSONA=alice make -f ${MAKE_FILE} resources | grep -e 'payee'
 
+# check-autopay:
+# # swarm accounts start with a balance of 4
+# 	@while [[ ${NOW} -le ${END} ]] ; do \
+# 			if PERSONA=alice make -f ${MAKE_FILE} resources | grep -e 'payee'; then \
+# 				echo TX SUCCESS ; \
+# 				break ; \
+# 			else \
+# 				echo . ; \
+# 			fi ; \
+# 			echo "Sleeping for 5 secs" ; \
+# 			sleep 5 ; \
+# 	done
+	
 
 check-transfer:
 # swarm accounts start with a balance of 4
