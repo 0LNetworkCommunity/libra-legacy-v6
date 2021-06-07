@@ -1,7 +1,7 @@
 SHELL=/usr/bin/env bash
 DATA_PATH = ${HOME}/.0L
 SWARM_TEMP = ${DATA_PATH}/swarm_temp
-LOG=${DATA_PATH}/test-mining.log
+LOG=${DATA_PATH}/test-onboard.log
 UNAME := $(shell uname)
 
 NODE_ENV=test
@@ -10,7 +10,7 @@ TEST=y
 ifndef SOURCE_PATH
 SOURCE_PATH = ${HOME}/libra
 endif
-MAKE_FILE = ${SOURCE_PATH}/ol/integration-tests/test-autopay.mk
+MAKE_FILE = ${SOURCE_PATH}/ol/integration-tests/test-onboard.mk
 
 # alice
 ifndef PERSONA
@@ -55,7 +55,7 @@ resources:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} --account ${EVE} query --resources
 
 balance:
-	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --balance
+	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} --account 3DC18D1CF61FAAC6AC70E3A63F062E4B query --balance
 
 balance-bob:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --account 88E74DFED34420F2AD8032148280A84B --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --balance

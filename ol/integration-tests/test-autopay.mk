@@ -1,7 +1,7 @@
 SHELL=/usr/bin/env bash
 DATA_PATH = ${HOME}/.0L
 SWARM_TEMP = ${DATA_PATH}/swarm_temp
-LOG=${DATA_PATH}/test-mining.log
+LOG=${DATA_PATH}/test-autopay.log
 UNAME := $(shell uname)
 
 NODE_ENV=test

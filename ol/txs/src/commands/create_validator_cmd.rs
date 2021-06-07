@@ -86,6 +86,7 @@ impl Runnable for CreateValidatorCmd {
 
         match new_account.check_autopay() {
             Ok(_) => {
+                println!("Sending account creation transaction");
                 maybe_submit(
                     create_validator_script(&new_account),
                     &tx_params,
@@ -95,9 +96,10 @@ impl Runnable for CreateValidatorCmd {
                 .unwrap();
 
                 // submit autopay if there are any
-                if let Some(signed_autopay_batch) = new_account.autopay_signed {
-                    relay::relay_batch(&signed_autopay_batch, &tx_params).unwrap();
-                }
+                // if let Some(signed_autopay_batch) = new_account.autopay_signed {
+                println!("Relaying previously signed transactions from: {:?}", &new_account.ow_human_name);
+                relay::relay_batch(&new_account.autopay_signed.unwrap(), &tx_params).unwrap();
+                // }
             }
             Err(_) => {
                 println!(
