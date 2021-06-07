@@ -36,9 +36,6 @@ test-percent-change:
 test-fixed-once:
 	AUTOPAY_FILE=alice.fixed_once.autopay_batch.json make -f ${MAKE_FILE} test
 
-
-
-
 swarm:
 	@echo Building Swarm
 	rm -rf ${SWARM_TEMP}
