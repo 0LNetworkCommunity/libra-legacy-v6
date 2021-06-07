@@ -9,7 +9,6 @@ use crate::{
     submit_tx::{tx_params_wrapper, maybe_submit},
 };
 use abscissa_core::{Command, Options, Runnable};
-use dialoguer::Confirm;
 use libra_types::transaction::Script;
 use ol::node::node::Node;
 use ol_types::{account::ValConfigs, config::TxType};
@@ -25,9 +24,9 @@ pub struct CreateValidatorCmd {
 }
 
 /// create validator account by submitting transaction on chain
-pub fn create_validator_script(new_account: &ValConfigs) -> Script {
+pub fn create_validator_script(new_account: &ValConfigs, epoch_now: u64) -> Script {
     let new_account = new_account.to_owned();
-    new_account.check_autopay().unwrap();
+    new_account.check_autopay(epoch_now).unwrap();
 
     transaction_builder::encode_create_acc_val_script(
         new_account.block_zero.preimage,
@@ -92,13 +91,14 @@ impl Runnable for CreateValidatorCmd {
             Ok(_) => {
                 println!("Sending account creation transaction");
                 maybe_submit(
-                    create_validator_script(&new_account),
+                    create_validator_script(&new_account, epoch_now),
                     &tx_params,
                     entry_args.no_send,
                     entry_args.save_path,
                 )
                 .unwrap();
 
+                println!("\nRelaying previously signed transactions from: {:?}\n", &new_account.ow_human_name);
                 match relay::relay_batch(&new_account.autopay_signed.unwrap(), &tx_params) {
                     Ok(_) => {
                       println!("\nUser transactions successfully relayed\n")

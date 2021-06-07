@@ -138,7 +138,7 @@ impl PayInstruction {
     }
 
     /// checks ths instruction against the raw script for correctness.
-    pub fn check_instruction_safety(&self, script: Script) -> Result<(), Error> {
+    pub fn check_instruction_match_tx(&self, script: Script) -> Result<(), Error> {
         let PayInstruction {
             uid,
             type_move,

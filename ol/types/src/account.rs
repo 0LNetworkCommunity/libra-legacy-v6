@@ -145,7 +145,7 @@ impl ValConfigs {
 
     /// check correctness of autopay
     pub fn check_autopay(&self, epoch_now: u64) -> Result<(), anyhow::Error>{
-    println!("\nRelaying previously signed transactions from: {:?}\n", &new_account.ow_human_name);
+
     self
         .autopay_instructions
         .clone()
@@ -154,7 +154,7 @@ impl ValConfigs {
         .enumerate()
         .for_each(|(i, instr)| {
 
-            println!("{}", i.text_instructions(&epoch_now));
+            println!("{}", instr.text_instructions(&epoch_now));
             match Confirm::new().with_prompt("").interact().unwrap() {
               true => {},
               _ =>  {

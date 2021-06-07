@@ -45,7 +45,7 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, starting_epoch: &
               exit(1); 
             },
         }
-        match i.duration_epochs > 0 {
+        match i.duration_epochs.unwrap() > 0 {
             true => {},
             false => {
               println!("Instructions must have duration greater than 0. Exiting. Instruction: {:?}", &i);
