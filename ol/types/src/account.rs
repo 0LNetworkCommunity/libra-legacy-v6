@@ -1,5 +1,6 @@
 //! Formatters for libra account creation
 use crate::block::Block;
+use dialoguer::Confirm;
 use libra_crypto::x25519::PublicKey;
 use libra_types::{account_address::AccountAddress, transaction::{SignedTransaction, TransactionPayload}};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
@@ -143,7 +144,8 @@ impl ValConfigs {
     }
 
     /// check correctness of autopay
-    pub fn check_autopay(&self) -> Result<(), anyhow::Error>{
+    pub fn check_autopay(&self, epoch_now: u64) -> Result<(), anyhow::Error>{
+    println!("\nRelaying previously signed transactions from: {:?}\n", &new_account.ow_human_name);
     self
         .autopay_instructions
         .clone()
@@ -151,6 +153,14 @@ impl ValConfigs {
         .into_iter()
         .enumerate()
         .for_each(|(i, instr)| {
+
+            println!("{}", i.text_instructions(&epoch_now));
+            match Confirm::new().with_prompt("").interact().unwrap() {
+              true => {},
+              _ =>  {
+                panic!("Autopay configuration aborted. Check batch configuration file or template");
+              }
+            } 
             let signed = self.autopay_signed.clone().unwrap();
             let tx = signed.iter().nth(i).unwrap();
             let payload = tx.clone().into_raw_transaction().into_payload();
