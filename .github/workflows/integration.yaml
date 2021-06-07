@@ -53,10 +53,10 @@ jobs:
         run: sudo apt-get install -y lld
       - name: Check branch
         run: echo "${{ steps.branch-name.outputs.current_branch }}"
-      - name: Swarm autopay test-percent-change
+      - name: Swarm autopay percent-change
         run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-autopay.mk test-percent-change
-      - name: Swarm autopay test-fixed-once
-        run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-mining.mk test-fixed-once
+      - name: Swarm autopay fixed-once
+        run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-autopay.mk test-fixed-once
   upgrade:
     name: Stdlib Upgrade
     runs-on: self-hosted
