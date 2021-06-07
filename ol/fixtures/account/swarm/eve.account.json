@@ -19,8 +19,8 @@
       "note": "test balance",
       "type_of": "PercentOfBalance",
       "type_move": 0,
-      "value": 12.34,
-      "value_move": 1234,
+      "value": 75.55,
+      "value_move": 7555,
       "destination": "88E74DFED34420F2AD8032148280A84B",
       "end_epoch": 287,
       "duration_epochs": 100
@@ -311,7 +311,7 @@
                 "U64": 287
               },
               {
-                "U64": 1234
+                "U64": 7555
               }
             ]
           }
@@ -319,13 +319,13 @@
         "max_gas_amount": 10000,
         "gas_unit_price": 1,
         "gas_currency_code": "GAS",
-        "expiration_timestamp_secs": 1623163476,
+        "expiration_timestamp_secs": 1623166249,
         "chain_id": 4
       },
       "authenticator": {
         "Ed25519": {
           "public_key": "9af2f5b59e5e396692b91ac996d36236f15c5b17a6bec1cbbfe6c9c031d76449",
-          "signature": "ea96e0e77960189299d8b3419db616578c2daa23480b0617f6d9137b3cf7af9ec7e8e506d94019d5a0e051c19dac19ea8228c0035aec9e3d7f2212c260cc4b0d"
+          "signature": "648cdb89ea9683ecdc07f43a683bb4a49ac7f581681f80fdbf5997af1a8192a7825cc3df1460d1b378b7034af8e6d0d3151a5091b77c075ea59380c2fc1b7806"
         }
       }
     }
