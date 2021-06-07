@@ -19,8 +19,10 @@ endif
 
 MNEM="talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse"
 
-NUM_NODES = 2
+NUM_NODES = 4
 EVE = 3DC18D1CF61FAAC6AC70E3A63F062E4B
+
+ONBOARD_FILE="eve.fixed_recurring.account.json"
 
 START_TEXT = "To run the Libra CLI client"
 SUCCESS_TEXT = "User transactions successfully relayed"
@@ -29,7 +31,6 @@ SUCCESS_TEXT = "User transactions successfully relayed"
 # cargo r -p onboard -- --swarm-path ./whatever val --upstream-peer http://167.172.248.37/
 
 test: swarm check-swarm send-tx check-tx check-account-created check-transfer stop
-# test: swarm check-swarm send-tx check-tx check-account-created check-transfer stop
 
 swarm:
 	@echo Building Swarm
@@ -46,7 +47,7 @@ init:
 	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}
 
 tx:
-	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} create-validator -f ${SOURCE_PATH}/ol/fixtures/account/swarm/eve.fixed_recurring.account.json
+	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} create-validator -f ${SOURCE_PATH}/ol/fixtures/account/swarm/${ONBOARD_FILE}
 
 resources:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} --account ${EVE} query --resources
@@ -88,20 +89,6 @@ check-tx:
 check-account-created: 
 # checks if there is any mention of BOB's account as a payee on EVE's account
 	PERSONA=alice make -f ${MAKE_FILE} resources | grep -e 'payee'
-
-# check-autopay:
-# # swarm accounts start with a balance of 4
-# 	@while [[ ${NOW} -le ${END} ]] ; do \
-# 			if PERSONA=alice make -f ${MAKE_FILE} resources | grep -e 'payee'; then \
-# 				echo TX SUCCESS ; \
-# 				break ; \
-# 			else \
-# 				echo . ; \
-# 			fi ; \
-# 			echo "Sleeping for 5 secs" ; \
-# 			sleep 5 ; \
-# 	done
-	
 
 check-transfer:
 # swarm accounts start with a balance of 4
