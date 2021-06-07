@@ -37,7 +37,7 @@ swarm:
 	rm -rf ${SWARM_TEMP}
 	mkdir ${SWARM_TEMP}
 	cd ${SOURCE_PATH} && cargo build -p libra-node -p cli
-	cd ${SOURCE_PATH} && cargo run -p libra-swarm -- --libra-node ${SOURCE_PATH}/target/debug/libra-node -c ${SWARM_TEMP} -n ${NUM_NODES} &> ${LOG} &
+	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo run -p libra-swarm -- --libra-node ${SOURCE_PATH}/target/debug/libra-node -c ${SWARM_TEMP} -n ${NUM_NODES} &> ${LOG} &
 
 stop:
 	killall libra-swarm libra-node miner ol | true
@@ -49,7 +49,7 @@ init:
 	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}
 
 tx:
-	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} create-validator -f ${SOURCE_PATH}/ol/fixtures/account/eve.account.json
+	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} create-validator -f ${SOURCE_PATH}/ol/fixtures/account/swarm/eve.account.json
 
 resources:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} --account ${EVE} query --resources
