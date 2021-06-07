@@ -17,10 +17,10 @@
     {
       "uid": 0,
       "note": "test balance",
-      "type_of": "PercentOfBalance",
-      "type_move": 0,
-      "value": 75.55,
-      "value_move": 7555,
+      "type_of": "FixedRecurring",
+      "type_move": 2,
+      "value": 1.0,
+      "value_move": 1000000,
       "destination": "88E74DFED34420F2AD8032148280A84B",
       "end_epoch": 287,
       "duration_epochs": 100
@@ -302,7 +302,7 @@
                 "U64": 0
               },
               {
-                "U8": 0
+                "U8": 2
               },
               {
                 "Address": "88E74DFED34420F2AD8032148280A84B"
@@ -311,7 +311,7 @@
                 "U64": 287
               },
               {
-                "U64": 7555
+                "U64": 1000000
               }
             ]
           }
@@ -319,13 +319,13 @@
         "max_gas_amount": 10000,
         "gas_unit_price": 1,
         "gas_currency_code": "GAS",
-        "expiration_timestamp_secs": 1623166249,
+        "expiration_timestamp_secs": 1623183111,
         "chain_id": 4
       },
       "authenticator": {
         "Ed25519": {
           "public_key": "9af2f5b59e5e396692b91ac996d36236f15c5b17a6bec1cbbfe6c9c031d76449",
-          "signature": "648cdb89ea9683ecdc07f43a683bb4a49ac7f581681f80fdbf5997af1a8192a7825cc3df1460d1b378b7034af8e6d0d3151a5091b77c075ea59380c2fc1b7806"
+          "signature": "b5052b918f7bdada4c4547d9f0b36954aabd636a7bcfbc5da7f38e643234e12fbf9a5854b989eaf141bdce7be1239d90137247b84dfc60860cbf0b1e2d2ed606"
         }
       }
     }

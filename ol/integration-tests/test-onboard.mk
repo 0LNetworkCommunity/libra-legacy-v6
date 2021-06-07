@@ -25,7 +25,8 @@ EVE = 3DC18D1CF61FAAC6AC70E3A63F062E4B
 START_TEXT = "To run the Libra CLI client"
 SUCCESS_TEXT = "User transactions successfully relayed"
 
-# account.json fixtures generated with onboard --swarm-path ./whatever val --upstream-peer http://a-real-ip
+# account.json fixtures generated with:
+# cargo r -p onboard -- --swarm-path ./whatever val --upstream-peer http://167.172.248.37/
 
 test: swarm check-swarm send-tx check-tx check-account-created check-transfer stop
 # test: swarm check-swarm send-tx check-tx check-account-created check-transfer stop
@@ -45,7 +46,7 @@ init:
 	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}
 
 tx:
-	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} create-validator -f ${SOURCE_PATH}/ol/fixtures/account/swarm/eve.account.json
+	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} create-validator -f ${SOURCE_PATH}/ol/fixtures/account/swarm/eve.fixed_recurring.account.json
 
 resources:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} --account ${EVE} query --resources
