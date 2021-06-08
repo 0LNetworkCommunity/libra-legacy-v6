@@ -24,6 +24,9 @@ address 0x1 {
 
       //Errors
       const VOTE_TYPE_INVALID: u64 = 150001;
+      const DELEGATION_NOT_ENABLED: u64 = 150002;
+      const VOTE_ALREADY_DELEGATED: u64 = 150003;
+      const DELEGATION_NOT_PRESENT: u64 = 150004;
   
       resource struct Oracles {
         upgrade: UpgradeOracle
@@ -58,6 +61,12 @@ address 0x1 {
         vote_window: u64,                   // End of the current window, in block height
         version_id: u64,                    // Version id of the current window
         consensus: VoteCount,
+      }
+
+      resource struct VoteDelegation {
+        vote_delegated: bool,
+        delegates: vector<address>,
+        delegated_to_address: address, 
       }
 
   
@@ -263,13 +272,16 @@ address 0x1 {
       }
 
       fun get_weight (voter: address, type: u8) {
-        assert(type <= VOTE_TYPE_MAX, Errors::invalid_argument(VOTE_TYPE_INVALID));
 
         if (type == VOTE_TYPE_ONE_FOR_ONE) {
           1
         }
         else if (type == VOTE_TYPE_PROPORTIONAL_VOTING_POWER) {
           NodeWeight::proof_of_weight(address)
+        }
+        else {
+          assert(false, Errors::invalid_argument(VOTE_TYPE_INVALID));
+          1
         }
 
       }
@@ -293,6 +305,53 @@ address 0x1 {
           let threshold = total_voting_power * 2 / 3;
           threshold
         }
+        else {
+          assert(false, Errors::invalid_argument(VOTE_TYPE_INVALID));
+          1
+        }
+      }
+
+      public fun enable_delegation (sender: &signer) {
+        move_to<VoteDelegation>(sender, VoteDelegation{
+          vote_delegated: false,
+          delegates: Vector::empty<address>(),
+          delegated_to_address: Signer::address_of(sender),
+        });
+      }
+
+      public fun delegate_vote (sender: &signer, vote_dest: address) acquires VoteDelegation{
+        assert(exists<VoteDelegation>(Signer::address_of(sender)), Errors::not_published(DELEGATION_NOT_ENABLED));
+        assert(exists<VoteDelegation>(vote_dest, Errors::not_published(DELEGATION_NOT_ENABLED));
+
+        let del = borrow_global_mut<VoteDelegation>(Signer::address_of(sender)); 
+        assert(del.vote_delegated == false, Errors::invalid_state(VOTE_ALREADY_DELEGATED));
+        
+        del.vote_delegated = true;
+        del.delegated_to_address = vote_dest;
+        
+        let del = borrow_global_mut<VoteDelegation>(vote_dest); 
+
+        Vector::push_back<address>(&mut del.delegates, Signer::address_of(sender));
+
+      }
+
+      public fun remove_delegate_vote (sender: &signer) acquires VoteDelegation{
+        assert(exists<VoteDelegation>(Signer::address_of(sender)), Errors::not_published(DELEGATION_NOT_ENABLED));
+        
+        let del = borrow_global_mut<VoteDelegation>(Signer::address_of(sender));
+
+        del.vote_delegated = false;
+        let vote_dest = del.delegated_to_address;
+        del.delegated_to_address = Signer::address_of(sender);
+
+        let del = borrow_global_mut<VoteDelegation>(vote_dest);
+
+        let b, loc = Vector::index_of<address>(&del.delegates, &vote_dest);
+        assert(b, Errors::invalid_state(DELEGATION_NOT_PRESENT));
+
+        //TODO: swapping element with the last one, then removing would be more efficient
+        Vector::remove<address>(&mut del.delegates, loc);
+
       }
 
       // Function code: 04
