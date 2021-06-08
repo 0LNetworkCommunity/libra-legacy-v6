@@ -23,7 +23,7 @@ address 0x1 {
       const VOTE_TYPE_UPGRADE: u8 = VOTE_TYPE_ONE_FOR_ONE;
 
       //Errors
-      const VOTE_TYPE_INVALID: u64 = 022001;
+      const VOTE_TYPE_INVALID: u64 = 150001;
   
       resource struct Oracles {
         upgrade: UpgradeOracle
@@ -227,11 +227,14 @@ address 0x1 {
         upgrade_oracle.vote_window = height + 1000000;
         upgrade_oracle.consensus = VoteCount{
           data: Vector::empty<u8>(), 
+          hash: Vector::empty<u8>(),
           validators: Vector::empty<address>(),
+          total_weight: 0,
         };
       }
   
       // check to see if threshold is reached every time receiving a vote
+      // TODO: Not sure we still want to do this every time as tallying is more costly when using node weight (as the threshold must be summed), fine for now. 
       fun tally_upgrade (upgrade_oracle: &mut UpgradeOracle, type: u8) {
         let validator_num = LibraSystem::validator_set_size();
         let threshold = get_threshold(type);
@@ -265,14 +268,8 @@ address 0x1 {
         if (type == VOTE_TYPE_ONE_FOR_ONE) {
           1
         }
-        else if (type == VOTE_TYPE_DELEGATED_ONE_FOR_ONE) {
-          //TODO
-        }
         else if (type == VOTE_TYPE_PROPORTIONAL_VOTING_POWER) {
           NodeWeight::proof_of_weight(address)
-        }
-        else if (type == VOTE_TYPE_DELEGATED_PROPORTIONAL_VOTING_POWER) {
-          //TODO
         }
 
       }
@@ -283,14 +280,18 @@ address 0x1 {
           let threshold = validator_num * 2 / 3;
           threshold 
         }
-        else if (type == VOTE_TYPE_DELEGATED_ONE_FOR_ONE) {
-          //TODO
-        }
         else if (type == VOTE_TYPE_PROPORTIONAL_VOTING_POWER) {
-          NodeWeight::proof_of_weight(address)
-        }
-        else if (type == VOTE_TYPE_DELEGATED_PROPORTIONAL_VOTING_POWER) {
-          //TODO
+          let val_set_size = LibraSystem::validator_set_size();
+          let i = 0; 
+          let total_voting_power = 0
+          while (i < val_set_size) {
+            let addr = LibraSystem::get_ith_validator_address(i)
+            total_voting_power = total_voting_power + NodeWeight::proof_of_weight(addr);
+
+            i = i + 1;
+          }
+          let threshold = total_voting_power * 2 / 3;
+          threshold
         }
       }
 
