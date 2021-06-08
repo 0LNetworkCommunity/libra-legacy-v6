@@ -1,11 +1,11 @@
 //! Formatters for libra account creation
-use crate::block::Block;
+use crate::{block::Block, config::IS_TEST};
 use dialoguer::Confirm;
 use libra_crypto::x25519::PublicKey;
 use libra_types::{account_address::AccountAddress, transaction::{SignedTransaction, TransactionPayload}};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use hex::{decode, encode};
-use std::{fs::File, io::Write, path::PathBuf};
+use std::{fs::File, io::Write, path::PathBuf, process::exit};
 use libra_network_address::{NetworkAddress, encrypted::{TEST_SHARED_VAL_NETADDR_KEY, TEST_SHARED_VAL_NETADDR_KEY_VERSION}};
 use ol_keys::scheme::KeyScheme;
 use crate::autopay::PayInstruction;
@@ -144,9 +144,8 @@ impl ValConfigs {
     }
 
     /// check correctness of autopay
-    pub fn check_autopay(&self, epoch_now: u64) -> Result<(), anyhow::Error>{
-
-    self
+    pub fn check_autopay(&self) -> Result<(), anyhow::Error>{
+        self
         .autopay_instructions
         .clone()
         .expect("could not find autopay instructions")
@@ -154,12 +153,15 @@ impl ValConfigs {
         .enumerate()
         .for_each(|(i, instr)| {
 
-            println!("{}", instr.text_instructions(&epoch_now));
-            match Confirm::new().with_prompt("").interact().unwrap() {
-              true => {},
-              _ =>  {
-                panic!("Autopay configuration aborted. Check batch configuration file or template");
-              }
+            println!("{}", instr.text_instruction());
+            if !*IS_TEST {  
+              match Confirm::new().with_prompt("").interact().unwrap() {
+                true => {},
+                _ =>  {
+                  print!("Autopay configuration aborted. Check batch configuration file or template");
+                  exit(1);
+                }
+              } 
             } 
             let signed = self.autopay_signed.clone().unwrap();
             let tx = signed.iter().nth(i).unwrap();

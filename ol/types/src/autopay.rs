@@ -175,16 +175,19 @@ impl PayInstruction {
     }
 
     /// provide text information on the instruction
-    pub fn text_instructions(&self, starting_epoch: &u64) -> String {
+    pub fn text_instruction(&self) -> String {
+      let times = match &self.duration_epochs {
+        Some(d) => format!("{} times", d),
+        None => "".to_owned()
+      };
       match self.type_of {
+        
         InstructionType::PercentOfBalance => {
           format!(
-            "Instruction {uid}: {note}\nSend {percent_balance:.2?}% of your total balance every day {count_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
+            "Instruction {uid}: {note}\nSend {percent_balance:.2?}% of your total balance every day {times} (until epoch {epoch_ending}) to address: {destination}?",
             uid = &self.uid,
             percent_balance = *&self.value_move.unwrap() as f64 /100f64,
-            count_epochs = &self.duration_epochs.unwrap_or_else(|| {
-              &self.end_epoch.unwrap() - starting_epoch 
-            }),
+            times = times,
             note = &self.note.clone().unwrap(),
             epoch_ending = &self.end_epoch.unwrap(),
             destination = &self.destination,
@@ -192,12 +195,10 @@ impl PayInstruction {
         },
         InstructionType::PercentOfChange => {
             format!(
-              "Instruction {uid}: {note}\nSend {percent_balance:.2?}% new incoming funds every day {count_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
+              "Instruction {uid}: {note}\nSend {percent_balance:.2?}% new incoming funds every day {times} (until epoch {epoch_ending}) to address: {destination}?",
               uid = &self.uid,
               percent_balance = *&self.value_move.unwrap() as f64 /100f64,
-              count_epochs = &self.duration_epochs.unwrap_or_else(|| {
-                  &self.end_epoch.unwrap() - starting_epoch 
-                  }),
+              times = times,
               note = &self.note.clone().unwrap(),
               epoch_ending = &self.end_epoch.unwrap(),
               destination = &self.destination,
@@ -205,12 +206,10 @@ impl PayInstruction {
         },
         InstructionType::FixedRecurring => {
             format!(
-                "Instruction {uid}: {note}\nSend {total_val} every day {count_epochs} times  (until epoch {epoch_ending}) to address: {destination}?",
+                "Instruction {uid}: {note}\nSend {total_val} every day {times} (until epoch {epoch_ending}) to address: {destination}?",
                 uid = &self.uid,
                 total_val = *&self.value_move.unwrap() / 1_000_000, // scaling factor
-                count_epochs = &self.duration_epochs.unwrap_or_else(|| {
-                  &self.end_epoch.unwrap() - starting_epoch 
-                }),
+                times = times,
                 note = &self.note.clone().unwrap(),
                 epoch_ending = &self.end_epoch.unwrap(),
                 destination = &self.destination,

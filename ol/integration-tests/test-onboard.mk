@@ -22,7 +22,7 @@ MNEM="talent sunset lizard pill fame nuclear spy noodle basket okay critic grow 
 NUM_NODES = 4
 EVE = 3DC18D1CF61FAAC6AC70E3A63F062E4B
 
-ONBOARD_FILE="eve.fixed_recurring.account.json"
+ONBOARD_FILE=eve.fixed_once.account.json
 
 START_TEXT = "To run the Libra CLI client"
 SUCCESS_TEXT = "User transactions successfully relayed"
@@ -44,9 +44,11 @@ stop:
 
 
 init:
+	@echo INIT
 	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}
 
 tx:
+	@echo TX
 	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} create-validator -f ${SOURCE_PATH}/ol/fixtures/account/swarm/${ONBOARD_FILE}
 
 resources:
