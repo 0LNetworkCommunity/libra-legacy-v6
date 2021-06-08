@@ -10,7 +10,7 @@ jobs:
   integration:
     name: Integration
     runs-on: self-hosted
-    timeout-minutes: 45
+    timeout-minutes: 90
     env:
       NODE_ENV: test
       TEST: y
