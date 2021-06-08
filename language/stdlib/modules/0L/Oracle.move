@@ -11,6 +11,7 @@ address 0x1 {
     use 0x1::Upgrade;
     use 0x1::LibraBlock;
     use 0x1::CoreAddresses;
+    use 0x1::Hash;
   
       resource struct Oracles {
         upgrade: UpgradeOracle
@@ -22,11 +23,14 @@ address 0x1 {
         validator: address,
         data: vector<u8>,
         version_id: u64,
+        type: u64, //0 -> voted with complete data, 1 -> voted with hash
+        weight: u64, //Defaults to 1, may switch to be proportional to voting power or number of validators who have delegated votes
         // More stuff?
       }
   
       struct VoteCount {
         data: vector<u8>,
+        hash: vector<u8>,
         validators: vector<address>,
       }
   
@@ -77,6 +81,9 @@ address 0x1 {
         if (id == 1) {
           upgrade_handler(sender, data);
         }
+        if (id == 2) {
+          upgrade_handler_hash(sender, data);
+        }
         // put else if cases for other oracles
       }
   
@@ -98,11 +105,46 @@ address 0x1 {
                 validator: Signer::address_of(sender),
                 data: copy data,
                 version_id: *&upgrade_oracle.version_id,
+                type: 0,
+                weight: 1,
         };
         Vector::push_back(&mut upgrade_oracle.votes, validator_vote);
         Vector::push_back(&mut upgrade_oracle.validators_voted, Signer::address_of(sender));
         increment_vote_count(&mut upgrade_oracle.vote_counts, data, Signer::address_of(sender));
         tally_upgrade(upgrade_oracle);
+      }
+
+      fun upgrade_handler_hash (sender: &signer, data: vector<u8>) acquires Oracles {
+        let current_height = LibraBlock::get_current_block_height();
+        let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::LIBRA_ROOT_ADDRESS()).upgrade;
+  
+        // check if qualifies as a new round
+        let is_new_round = current_height > upgrade_oracle.vote_window;
+  
+        if (is_new_round) {
+          //If it's a new round, user must submit a data payload, not hash only
+          return;
+        }; 
+  
+        // if the sender has voted, do nothing
+        if (Vector::contains<address>(&upgrade_oracle.validators_voted, &Signer::address_of(sender))) {return};
+        
+        let validator_vote = Vote {
+                validator: Signer::address_of(sender),
+                data: copy data,
+                version_id: *&upgrade_oracle.version_id,
+                type: 1, 
+                weight: 1, 
+        };
+        
+        let vote_sent = increment_vote_count_hash(&mut upgrade_oracle.vote_counts, data, Signer::address_of(sender));
+
+        if (vote_sent) {
+          Vector::push_back(&mut upgrade_oracle.votes, validator_vote);
+          Vector::push_back(&mut upgrade_oracle.validators_voted, Signer::address_of(sender));
+          tally_upgrade(upgrade_oracle);
+        };
+        
       }
   
       fun increment_vote_count(vote_counts: &mut vector<VoteCount>, data: vector<u8>, validator: address) {
@@ -118,7 +160,23 @@ address 0x1 {
         };
         let validators = Vector::empty<address>();
         Vector::push_back<address>(&mut validators, validator);
-        Vector::push_back(vote_counts, VoteCount{data: copy data, validators: validators});
+        let data_hash = Hash::sha2_256(copy data);
+        Vector::push_back(vote_counts, VoteCount{data: copy data, hash: data_hash, validators: validators});
+      }
+
+      //returns true if vote is submitted successfully, false if it was not (no match found)
+      fun increment_vote_count_hash(vote_counts: &mut vector<VoteCount>, data: vector<u8>, validator: address): bool {
+        let i = 0;
+        let len = Vector::length(vote_counts);
+        while (i < len) {
+            let entry = Vector::borrow_mut(vote_counts, i);
+            if (Vector::compare(&entry.hash, &data)) {
+              Vector::push_back(&mut entry.validators, validator);
+              return true;
+            };
+            i = i + 1;
+        };
+        false
       }
   
       fun check_consensus(vote_counts: &vector<VoteCount>, threshold: u64): VoteCount {
