@@ -12,6 +12,18 @@ address 0x1 {
     use 0x1::LibraBlock;
     use 0x1::CoreAddresses;
     use 0x1::Hash;
+    use 0x1::NodeWeight;
+
+      //possible vote types
+      const VOTE_TYPE_ONE_FOR_ONE: u8 = 0;
+      const VOTE_TYPE_PROPORTIONAL_VOTING_POWER: u8 = 1;
+      const VOTE_TYPE_MAX: u8 = 1; //change if new voting types are added
+
+      //selected vote type for oracle
+      const VOTE_TYPE_UPGRADE: u8 = VOTE_TYPE_ONE_FOR_ONE;
+
+      //Errors
+      const VOTE_TYPE_INVALID: u64 = 022001;
   
       resource struct Oracles {
         upgrade: UpgradeOracle
@@ -32,6 +44,7 @@ address 0x1 {
         data: vector<u8>,
         hash: vector<u8>,
         validators: vector<address>,
+        total_weight: u64,
       }
   
       struct UpgradeOracle {
@@ -46,6 +59,7 @@ address 0x1 {
         version_id: u64,                    // Version id of the current window
         consensus: VoteCount,
       }
+
   
      // Function code: 01
       public fun initialize(vm: &signer) {
@@ -60,7 +74,9 @@ address 0x1 {
                 version_id: 0,
                 consensus: VoteCount{
                   data: Vector::empty<u8>(), 
+                  hash: Vector::empty<u8>(), 
                   validators: Vector::empty<address>(),
+                  total_weight: 0,
                 },
               }
           },
@@ -101,17 +117,19 @@ address 0x1 {
         // if the sender has voted, do nothing
         if (Vector::contains<address>(&upgrade_oracle.validators_voted, &Signer::address_of(sender))) {return};
         
+        let vote_weight = get_weight(Signer::address_of(sender), VOTE_TYPE_UPGRADE);
+
         let validator_vote = Vote {
                 validator: Signer::address_of(sender),
                 data: copy data,
                 version_id: *&upgrade_oracle.version_id,
                 type: 0,
-                weight: 1,
+                weight: vote_weight,
         };
         Vector::push_back(&mut upgrade_oracle.votes, validator_vote);
         Vector::push_back(&mut upgrade_oracle.validators_voted, Signer::address_of(sender));
-        increment_vote_count(&mut upgrade_oracle.vote_counts, data, Signer::address_of(sender));
-        tally_upgrade(upgrade_oracle);
+        increment_vote_count(&mut upgrade_oracle.vote_counts, data, Signer::address_of(sender), vote_weight);
+        tally_upgrade(upgrade_oracle, VOTE_TYPE_UPGRADE);
       }
 
       fun upgrade_handler_hash (sender: &signer, data: vector<u8>) acquires Oracles {
@@ -129,31 +147,34 @@ address 0x1 {
         // if the sender has voted, do nothing
         if (Vector::contains<address>(&upgrade_oracle.validators_voted, &Signer::address_of(sender))) {return};
         
+        let vote_weight = get_weight(Signer::address_of(sender), VOTE_TYPE_UPGRADE);
+        
         let validator_vote = Vote {
                 validator: Signer::address_of(sender),
                 data: copy data,
                 version_id: *&upgrade_oracle.version_id,
                 type: 1, 
-                weight: 1, 
+                weight: vote_weight, 
         };
         
-        let vote_sent = increment_vote_count_hash(&mut upgrade_oracle.vote_counts, data, Signer::address_of(sender));
+        let vote_sent = increment_vote_count_hash(&mut upgrade_oracle.vote_counts, data, Signer::address_of(sender), weight: vote_weight);
 
         if (vote_sent) {
           Vector::push_back(&mut upgrade_oracle.votes, validator_vote);
           Vector::push_back(&mut upgrade_oracle.validators_voted, Signer::address_of(sender));
-          tally_upgrade(upgrade_oracle);
+          tally_upgrade(upgrade_oracle, VOTE_TYPE_UPGRADE);
         };
         
       }
   
-      fun increment_vote_count(vote_counts: &mut vector<VoteCount>, data: vector<u8>, validator: address) {
+      fun increment_vote_count(vote_counts: &mut vector<VoteCount>, data: vector<u8>, validator: address, vote_weight: u64) {
         let i = 0;
         let len = Vector::length(vote_counts);
         while (i < len) {
             let entry = Vector::borrow_mut(vote_counts, i);
             if (Vector::compare(&entry.data, &data)) {
               Vector::push_back(&mut entry.validators, validator);
+              entry.total_weight = entry.total_weight + vote_weight
               return
             };
             i = i + 1;
@@ -161,17 +182,18 @@ address 0x1 {
         let validators = Vector::empty<address>();
         Vector::push_back<address>(&mut validators, validator);
         let data_hash = Hash::sha2_256(copy data);
-        Vector::push_back(vote_counts, VoteCount{data: copy data, hash: data_hash, validators: validators});
+        Vector::push_back(vote_counts, VoteCount{data: copy data, hash: data_hash, validators: validators, total_weight: vote_weight});
       }
 
       //returns true if vote is submitted successfully, false if it was not (no match found)
-      fun increment_vote_count_hash(vote_counts: &mut vector<VoteCount>, data: vector<u8>, validator: address): bool {
+      fun increment_vote_count_hash(vote_counts: &mut vector<VoteCount>, data: vector<u8>, validator: address, vote_weight: u64): bool {
         let i = 0;
         let len = Vector::length(vote_counts);
         while (i < len) {
             let entry = Vector::borrow_mut(vote_counts, i);
             if (Vector::compare(&entry.hash, &data)) {
               Vector::push_back(&mut entry.validators, validator);
+              entry.total_weight = entry.total_weight + vote_weight
               return true;
             };
             i = i + 1;
@@ -184,7 +206,7 @@ address 0x1 {
         let len = Vector::length(vote_counts);
         while (i < len) {
             let entry = Vector::borrow(vote_counts, i);
-            if (Vector::length(&entry.validators) >= threshold) {
+            if (entry.weight >= threshold) {
               return *entry
             };
             i = i + 1;
@@ -210,9 +232,9 @@ address 0x1 {
       }
   
       // check to see if threshold is reached every time receiving a vote
-      fun tally_upgrade (upgrade_oracle: &mut UpgradeOracle) {
+      fun tally_upgrade (upgrade_oracle: &mut UpgradeOracle, type: u8) {
         let validator_num = LibraSystem::validator_set_size();
-        let threshold = validator_num * 2 / 3;
+        let threshold = get_threshold(type);
         let result = check_consensus(&upgrade_oracle.vote_counts, threshold);
   
         if (!Vector::is_empty(&result.data)) {
@@ -234,6 +256,41 @@ address 0x1 {
           let current_height = LibraBlock::get_current_block_height();
           Upgrade::record_history(vm, upgrade_oracle.version_id, payload, validators, current_height);
           enter_new_upgrade_round(upgrade_oracle, current_height);
+        }
+      }
+
+      fun get_weight (voter: address, type: u8) {
+        assert(type <= VOTE_TYPE_MAX, Errors::invalid_argument(VOTE_TYPE_INVALID));
+
+        if (type == VOTE_TYPE_ONE_FOR_ONE) {
+          1
+        }
+        else if (type == VOTE_TYPE_DELEGATED_ONE_FOR_ONE) {
+          //TODO
+        }
+        else if (type == VOTE_TYPE_PROPORTIONAL_VOTING_POWER) {
+          NodeWeight::proof_of_weight(address)
+        }
+        else if (type == VOTE_TYPE_DELEGATED_PROPORTIONAL_VOTING_POWER) {
+          //TODO
+        }
+
+      }
+
+      fun get_threshold (type: u8) {
+        if (type == VOTE_TYPE_ONE_FOR_ONE) {
+          let validator_num = LibraSystem::validator_set_size();
+          let threshold = validator_num * 2 / 3;
+          threshold 
+        }
+        else if (type == VOTE_TYPE_DELEGATED_ONE_FOR_ONE) {
+          //TODO
+        }
+        else if (type == VOTE_TYPE_PROPORTIONAL_VOTING_POWER) {
+          NodeWeight::proof_of_weight(address)
+        }
+        else if (type == VOTE_TYPE_DELEGATED_PROPORTIONAL_VOTING_POWER) {
+          //TODO
         }
       }
 
