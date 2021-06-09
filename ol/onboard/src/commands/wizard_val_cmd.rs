@@ -5,6 +5,7 @@
 use super::files_cmd;
 
 
+use crate::entrypoint;
 use crate::prelude::app_config;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_genesis_tool::node_files;
@@ -13,6 +14,7 @@ use libra_wallet::WalletLibrary;
 use ol::{commands::init_cmd, config::AppCfg};
 use ol_keys::{scheme::KeyScheme, wallet};
 use ol_types::block::Block;
+use ol_types::config::IS_TEST;
 use ol_types::{account::ValConfigs, autopay::PayInstruction, config::TxType};
 use reqwest::Url;
 use std::process::exit;
@@ -54,6 +56,8 @@ impl Runnable for ValWizardCmd {
         // Note. `onboard` command DOES NOT READ CONFIGS FROM 0L.toml
 
         status_info!("\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys, run the standalone keygen tool with 'ol keygen'.\n\nYour first 0L proof-of-work will be mined now. Expect this to take up to 15 minutes on modern CPUs.\n");
+        
+        let entry_args = entrypoint::get_args();
 
         // Get credentials from prompt
         let (authkey, account, wallet) = wallet::get_account_from_prompt();
@@ -101,6 +105,7 @@ impl Runnable for ValWizardCmd {
             home_path,
             &app_config,
             &wallet,
+            entry_args.swarm_path.as_ref().is_some()
         );
         status_ok!(
             "\nAutopay transactions signed",
@@ -179,6 +184,7 @@ pub fn get_autopay_batch(
     home_path: &PathBuf,
     cfg: &AppCfg,
     wallet: &WalletLibrary,
+    is_swarm: bool,
 ) -> (Option<Vec<PayInstruction>>, Option<Vec<SignedTransaction>>) {
     let file_name = if template.is_some() {
         // assumes the template was downloaded from URL
@@ -193,13 +199,19 @@ pub fn get_autopay_batch(
         Some(starting_epoch.clone()),
     )
     .unwrap();
-    let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone(), &starting_epoch);
+    let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone());
     let url = cfg.what_url(false);
     let mut tx_params =
-        submit_tx::get_tx_params_from_toml(cfg.to_owned(), TxType::Miner, Some(wallet), url, None)
+        submit_tx::get_tx_params_from_toml(cfg.to_owned(), TxType::Miner, Some(wallet), url, None, is_swarm)
             .unwrap();
-    // give the tx a very long expiration, 1 day.
-    let tx_expiration_sec = 24 * 60 * 60;
+    let tx_expiration_sec = if *IS_TEST {
+      // creating fixtures here, so give it near infinite expiry
+      100 * 360 * 24 * 60 * 60
+    } else {
+      // give the tx a very long expiration, 7 days.
+      7 * 24 * 60 * 60
+    };
+
     tx_params.tx_cost.user_tx_timeout = tx_expiration_sec;
     let txn_vec = autopay_batch_cmd::sign_instructions(script_vec, 0, &tx_params);
     (Some(instr_vec), Some(txn_vec))

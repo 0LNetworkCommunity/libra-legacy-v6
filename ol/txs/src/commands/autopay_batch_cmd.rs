@@ -6,8 +6,8 @@ use abscissa_core::{Command, Options, Runnable};
 use libra_types::transaction::{Script, SignedTransaction};
 use crate::{entrypoint, sign_tx::sign_tx, submit_tx::{tx_params_wrapper, batch_wrapper, TxParams}};
 use dialoguer::Confirm;
-use std::path::PathBuf;
-use ol_types::{autopay::PayInstruction, config::{TxType, IS_CI}};
+use std::{path::PathBuf, process::exit};
+use ol_types::{autopay::PayInstruction, config::{TxType, IS_TEST}};
 
 /// command to submit a batch of autopay tx from file
 #[derive(Command, Debug, Default, Options)]
@@ -27,21 +27,34 @@ impl Runnable for AutopayBatchCmd {
         let epoch = crate::epoch::get_epoch(&tx_params);
         println!("The current epoch is: {}", epoch);
         let instructions = PayInstruction::parse_autopay_instructions(&self.autopay_batch_file, Some(epoch)).unwrap();
-        let scripts = process_instructions(instructions, &epoch);
+        let scripts = process_instructions(instructions);
         batch_wrapper(scripts, &tx_params, entry_args.no_send, entry_args.save_path)
-
     }
 }
 
 /// Process autopay instructions into scripts
-pub fn process_instructions(instructions: Vec<PayInstruction>, starting_epoch: &u64) -> Vec<Script> {
+pub fn process_instructions(instructions: Vec<PayInstruction>) -> Vec<Script> {
     // TODO: Check instruction IDs are sequential.
     instructions.into_iter().filter_map(|i| {
-        assert!(i.type_move.unwrap() <= 3);
+      // double check transactions
+        match i.type_move.unwrap()<= 3 {
+            true => {},
+            false => {
+              println!("Instruction type not valid for transactions: {:?}", &i);
+              exit(1); 
+            },
+        }
+        match i.duration_epochs.unwrap() > 0 {
+            true => {},
+            false => {
+              println!("Instructions must have duration greater than 0. Exiting. Instruction: {:?}", &i);
+              exit(1);
+            },
+        }
 
-        println!("{}", i.text_instructions(starting_epoch));
+        println!("{}", i.text_instruction());
         // accept if CI mode.
-        if *IS_CI { return Some(i) }            
+        if *IS_TEST { return Some(i) }            
         
         // check the user wants to do this.
         match Confirm::new().with_prompt("").interact().unwrap() {
@@ -97,6 +110,6 @@ fn test_instruction_script_match() {
       value_move: Some(1000u64),
   };
 
-  instr.check_instruction_safety(script).unwrap();
+  instr.check_instruction_match_tx(script).unwrap();
 
 }

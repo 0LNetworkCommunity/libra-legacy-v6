@@ -34,7 +34,7 @@ pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
 });
 
 /// check this is CI environment
-pub static IS_CI: Lazy<bool> = Lazy::new(|| {
+pub static IS_TEST: Lazy<bool> = Lazy::new(|| {
     // assume default if NODE_ENV=prod and TEST=y.
     if std::env::var("NODE_ENV").unwrap_or("prod".to_string()) != "prod".to_string()
         && std::env::var("TEST").unwrap_or("n".to_string()) != "n".to_string()
@@ -154,7 +154,7 @@ impl AppCfg {
         }
 
         // skip questionnaire if CI
-        if *IS_CI {
+        if *IS_TEST {
             AppCfg::save_file(&default_config);
 
             return default_config;

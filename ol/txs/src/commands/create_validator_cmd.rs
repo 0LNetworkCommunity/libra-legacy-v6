@@ -9,9 +9,7 @@ use crate::{
     submit_tx::{tx_params_wrapper, maybe_submit},
 };
 use abscissa_core::{Command, Options, Runnable};
-use dialoguer::Confirm;
 use libra_types::transaction::Script;
-use ol::node::node::Node;
 use ol_types::{account::ValConfigs, config::TxType};
 use reqwest::Url;
 use std::{fs::{self, File}, io::Write, path::PathBuf, process::exit};
@@ -27,7 +25,6 @@ pub struct CreateValidatorCmd {
 /// create validator account by submitting transaction on chain
 pub fn create_validator_script(new_account: &ValConfigs) -> Script {
     let new_account = new_account.to_owned();
-    new_account.check_autopay().unwrap();
 
     transaction_builder::encode_create_acc_val_script(
         new_account.block_zero.preimage,
@@ -63,7 +60,8 @@ impl Runnable for CreateValidatorCmd {
         let entry_args = entrypoint::get_args();
         let tmp;
         if self.account_file.is_none() && self.url.is_none() {
-            panic!("No account file nor URL passed in CLI")
+            println!("No account file nor URL passed in CLI");
+            exit(1);
         }
         let account_json_path: &PathBuf = if self.account_file.is_some() {
             self.account_file.as_ref().unwrap()
@@ -78,18 +76,10 @@ impl Runnable for CreateValidatorCmd {
         let file = fs::File::open(account_json_path).expect("file should open read only");
         let new_account: ValConfigs =
             serde_json::from_reader(file).expect("file should be proper JSON");
-        
-        let node = Node::default_from_cfg(cfg);
-        let epoch_now = match node.vitals.chain_view {
-            Some(c) => c.epoch,
-            None => {
-              println!("Could not connect to chain to fetch epoch. Exiting");
-              exit(1);
-            },
-        };
-
+                // submit initial autopay if there are any
         match new_account.check_autopay() {
             Ok(_) => {
+                println!("Sending account creation transaction");
                 maybe_submit(
                     create_validator_script(&new_account),
                     &tx_params,
@@ -97,26 +87,23 @@ impl Runnable for CreateValidatorCmd {
                     entry_args.save_path,
                 )
                 .unwrap();
-
-                // submit autopay if there are any
-                new_account.autopay_instructions.unwrap()
-                .into_iter()
-                .for_each(|i|{
-                    println!("{}", i.text_instructions(&epoch_now));
-                    match Confirm::new().with_prompt("").interact().unwrap() {
-                      true => {},
-                      _ =>  {
-                        panic!("Autopay configuration aborted. Check batch configuration file or template");
-                      }
-                    } 
-                });
-
-                relay::relay_batch(&new_account.autopay_signed.unwrap(), &tx_params).unwrap();
+                
+                println!("\nRelaying previously signed transactions from: {:?}\n", &new_account.ow_human_name);
+                match relay::relay_batch(&new_account.autopay_signed.unwrap(), &tx_params) {
+                    Ok(_) => {
+                      println!("\nUser transactions successfully relayed\n")
+                    },
+                    Err(e) => {
+                      println!("\nError relaying transactions. Message: {:?}", e);
+                      exit(1);
+                    },
+                }
             }
-            Err(_) => {
+            Err(e) => {
                 println!(
-                    "cannot send atomic account creation transaction, error with: PayInstruction."
+                    "\nError: cannot send atomic account creation transaction. Message: {:?}", e
                 );
+                exit(1);
             }
         }
     }
