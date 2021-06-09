@@ -46,7 +46,6 @@ fun set_validator_operator(
     operator_name: vector<u8>,
     operator_account: address
 ) {
-    //////// 0L ////////
     assert(ValidatorOperatorConfig::get_human_name(operator_account) == operator_name, 111);
     ValidatorConfig::set_operator(account, operator_account);
 }

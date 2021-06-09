@@ -3,9 +3,6 @@ use 0x1::Libra;
 use 0x1::FixedPoint32;
 use 0x1::SlidingNonce;
 
-//////// 0L ////////
-// `tc_account` renamed to `lr_account`
-
 /// # Summary
 /// Update the rough on-chain exchange rate between a specified currency and LBR (as a conversion
 /// to micro-LBR). The transaction can only be sent by the Treasury Compliance account. After this

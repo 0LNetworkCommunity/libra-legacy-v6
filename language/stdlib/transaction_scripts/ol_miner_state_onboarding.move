@@ -3,10 +3,12 @@
 script {
   use 0x1::LibraAccount;
   use 0x1::GAS::GAS;
+  // use 0x1::Transaction;
+  // use 0x1::VDF;
   use 0x1::ValidatorConfig;
-  use 0x1::Debug::print;
 
-  fun create_acc_val(
+  fun minerstate_onboarding(
+    
     sender: &signer,
     challenge: vector<u8>,
     solution: vector<u8>,
@@ -19,24 +21,23 @@ script {
     op_human_name: vector<u8>,
   ) {
 
-print(&0x1);
     let new_account_address = LibraAccount::create_validator_account_with_proof(
-      sender,
-      &challenge,
-      &solution,
-      ow_human_name,
-      op_address,
-      op_auth_key_prefix,
-      op_consensus_pubkey,
-      op_validator_network_addresses,
-      op_fullnode_network_addresses,
-      op_human_name,
+    sender,
+    &challenge,
+    &solution,
+    ow_human_name,
+    op_address,
+    op_auth_key_prefix,
+    op_consensus_pubkey,
+    op_validator_network_addresses,
+    op_fullnode_network_addresses,
+    op_human_name,
     );
-print(&0x2);
+
     // Check the account has the Validator role
     assert(ValidatorConfig::is_valid(new_account_address), 03);
-print(&0x3);
-    // Check the account exists and the balance is greater than 0
-    assert(LibraAccount::balance<GAS>(new_account_address) > 0, 04);
+
+    // Check the account exists and the balance is 0
+    assert(LibraAccount::balance<GAS>(new_account_address) == 0, 04);
 }
 }
