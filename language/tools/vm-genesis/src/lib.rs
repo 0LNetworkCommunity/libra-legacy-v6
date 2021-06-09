@@ -707,26 +707,6 @@ pub fn generate_test_genesis(
 }
 
 //////// 0L ////////
-/// Genesis subsidy to miners
-fn distribute_genesis_subsidy(
-    session: &mut Session<StateViewCache>,
-    log_context: &impl LogContext,
-) { 
-    let diem_root_address = account_config::diem_root_address();
-
-    exec_function(
-        session,
-        log_context,
-        "Subsidy",
-        "genesis",
-        vec![],
-        serialize_values(&vec![
-            MoveValue::Signer(diem_root_address),
-        ]),
-    )
-}
-
-//////// 0L ////////
 fn get_env() -> String {
     match env::var("NODE_ENV") {
         Ok(val) => val,
@@ -773,26 +753,4 @@ impl Default for GenesisMiningProof {
             }
         }
     }
-}
-
-//////// 0L ////////
-fn initialize_testnet(
-    session: &mut Session<StateViewCache>,
-    log_context: &impl LogContext
-) {
-    let root_diem_root_address = account_config::diem_root_address();
-    let mut module_name = "Testnet";
-    if get_env() == "stage" { 
-        module_name = "StagingNet";
-    };
-    exec_function(
-        session,
-        log_context,
-        module_name,
-        "initialize",
-        vec![],
-        serialize_values(&vec![
-            MoveValue::Signer(root_diem_root_address),
-        ]),
-    );
 }

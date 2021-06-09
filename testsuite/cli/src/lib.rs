@@ -3,6 +3,7 @@
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
+#![allow(missing_docs)] //////// 0L ////////
 
 //! Diem Client
 //!
@@ -25,7 +26,7 @@ pub mod commands;
 mod counters;
 mod dev_commands;
 /// Client wrapper to connect to validator.
-mod diem_client;
+pub mod diem_client; //////// 0L ////////
 mod info_commands;
 mod query_commands;
 mod transfer_commands;

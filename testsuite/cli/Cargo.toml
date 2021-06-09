@@ -42,6 +42,8 @@ diem-framework = { path = "../../language/diem-framework" }
 diem-framework-releases = { path = "../../language/diem-framework/releases" }
 diem-transaction-builder = { path = "../../sdk/transaction-builder" }
 compiler = { path = "../../language/compiler" }
+#//////// 0L ////////
+diem-json-rpc-client = { path = "../../client/json-rpc" }
 
 [dev-dependencies]
 proptest = "1.0.0"
