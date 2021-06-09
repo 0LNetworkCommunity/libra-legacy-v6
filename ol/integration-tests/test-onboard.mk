@@ -22,7 +22,7 @@ MNEM="talent sunset lizard pill fame nuclear spy noodle basket okay critic grow 
 NUM_NODES = 4
 EVE = 3DC18D1CF61FAAC6AC70E3A63F062E4B
 
-ONBOARD_FILE=eve.fixed_once.account.json
+ONBOARD_FILE=eve.fixed_recurring.account.json
 
 START_TEXT = "To run the Libra CLI client"
 SUCCESS_TEXT = "User transactions successfully relayed"

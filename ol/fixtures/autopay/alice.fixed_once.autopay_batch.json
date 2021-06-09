@@ -1,7 +1,7 @@
 {
   "autopay_instructions": [
     {
-      "note": "test balance",
+      "note": "once",
       "uid": 0,
       "destination": "88E74DFED34420F2AD8032148280A84B",
       "type_of": "FixedOnce",
