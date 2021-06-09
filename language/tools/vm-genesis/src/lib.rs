@@ -22,9 +22,9 @@ use diem_types::{
     account_address,
     account_config::{
         self,
-        events::{CreateAccountEvent, NewEpochEvent},
+        events::CreateAccountEvent,
     },
-    chain_id::{ChainId, NamedChain},
+    chain_id::ChainId,
     contract_event::ContractEvent,
     on_chain_config::{VMPublishingOption, DIEM_MAX_KNOWN_VERSION},
     transaction::{
@@ -91,8 +91,9 @@ pub fn encode_genesis_transaction(
         operator_assignments,
         operator_registrations,
         current_module_blobs(), // Must use compiled stdlib,
+        //////// 0L ////////        
         vm_publishing_option
-            .unwrap_or_else(|| VMPublishingOption::locked(LegacyStdlibScript::allowlist())),
+            .unwrap_or_else(|| VMPublishingOption::open()), // :)
         chain_id,
     )))
 }
@@ -136,6 +137,16 @@ pub fn encode_genesis_change_set(
         &xdx_ty,
         chain_id,
     );
+    //////// 0L ////////
+    println!("OK create_and_initialize_main_accounts =============== ");
+
+    let genesis_env = get_env();
+    println!("Initializing with env: {}", genesis_env);
+    if genesis_env != "prod"  {
+        initialize_testnet(&mut session, &log_context);
+    }    
+    //////// 0L end ////////
+
     // generate the genesis WriteSet
     create_and_initialize_owners_operators(
         &mut session,
@@ -143,16 +154,24 @@ pub fn encode_genesis_change_set(
         &operator_assignments,
         &operator_registrations,
     );
+    //////// 0L ////////
+    println!("OK create_and_initialize_owners_operators =============== ");
+
+    distribute_genesis_subsidy(&mut session, &log_context);
+    println!("OK Genesis subsidy =============== ");
+    //////// 0L end ////////
+
     reconfigure(&mut session, &log_context);
 
-    if [NamedChain::TESTNET, NamedChain::DEVNET, NamedChain::TESTING]
-        .iter()
-        .any(|test_chain_id| test_chain_id.id() == chain_id.id())
-    {
-        create_and_initialize_testnet_minting(
-            &mut session, &log_context, &treasury_compliance_key.unwrap()   //////// 0L ////////
-        );
-    }
+    //////// 0L ////////
+    // if [NamedChain::TESTNET, NamedChain::DEVNET, NamedChain::TESTING]
+    //     .iter()
+    //     .any(|test_chain_id| test_chain_id.id() == chain_id.id())
+    // {
+    //     create_and_initialize_testnet_minting(
+    //         &mut session, &log_context, &treasury_compliance_key.unwrap()   //////// 0L ////////
+    //     );
+    // }
 
     let (mut changeset1, mut events1) = session.finish().unwrap();
 
@@ -244,7 +263,8 @@ fn create_and_initialize_main_accounts(
     // let treasury_compliance_auth_key = AuthenticationKey::ed25519(treasury_compliance_key);
 
     let root_diem_root_address = account_config::diem_root_address();
-    let tc_account_address = account_config::treasury_compliance_account_address();
+    //////// 0L ////////
+    // let tc_account_address = account_config::treasury_compliance_account_address();
 
     let initial_allow_list = MoveValue::Vector(
         publishing_option
@@ -268,9 +288,10 @@ fn create_and_initialize_main_accounts(
         vec![],
         serialize_values(&vec![
             MoveValue::Signer(root_diem_root_address),
-            MoveValue::Signer(tc_account_address),
+            // MoveValue::Signer(tc_account_address), //////// 0L ////////
             MoveValue::vector_u8(diem_root_auth_key.to_vec()),
-            // MoveValue::vector_u8(treasury_compliance_auth_key.to_vec()),
+            //////// 0L ////////
+            // MoveValue::vector_u8(treasury_compliance_auth_key.to_vec()), 
             initial_allow_list,
             MoveValue::Bool(publishing_option.is_open_module),
             MoveValue::vector_u8(instr_gas_costs),
@@ -314,7 +335,8 @@ fn create_and_initialize_main_accounts(
     );
 }
 
-fn create_and_initialize_testnet_minting(
+// 0L todo
+fn _create_and_initialize_testnet_minting( //////// 0L ////////
     session: &mut Session<StateViewCache>,
     log_context: &impl LogContext,
     public_key: &Ed25519PublicKey,
@@ -575,17 +597,18 @@ fn verify_genesis_write_set(events: &[ContractEvent]) {
         CreateAccountEvent::event_key(),
     );
 
-    // (3) The first non-account creation event should be the new epoch event
-    let new_epoch_events: Vec<&ContractEvent> = events
-        .iter()
-        .filter(|e| e.key() == &NewEpochEvent::event_key())
-        .collect();
-    assert!(
-        new_epoch_events.len() == 1,
-        "There should only be one NewEpochEvent"
-    );
-    // (4) This should be the first new_epoch_event
-    assert_eq!(new_epoch_events[0].sequence_number(), 0,);
+    //////// 0L ////////
+    // // (3) The first non-account creation event should be the new epoch event
+    // let new_epoch_events: Vec<&ContractEvent> = events
+    //     .iter()
+    //     .filter(|e| e.key() == &NewEpochEvent::event_key())
+    //     .collect();
+    // assert!(
+    //     new_epoch_events.len() == 1,
+    //     "There should only be one NewEpochEvent"
+    // );
+    // // (4) This should be the first new_epoch_event
+    // assert_eq!(new_epoch_events[0].sequence_number(), 0,);
 }
 
 /// An enum specifying whether the compiled stdlib/scripts should be used or freshly built versions
@@ -631,7 +654,7 @@ pub struct Validator {
 impl Validator {
     pub fn new_set(count: Option<usize>) -> Vec<Validator> {
         let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([1u8; 32]);
-        (0..count.unwrap_or(10))
+        (0..count.unwrap_or(4)) //////// 0L ////////
             .map(|idx| Validator::gen(idx, &mut rng))
             .collect()
     }
@@ -641,7 +664,7 @@ impl Validator {
         let key = Ed25519PrivateKey::generate(rng);
         let oper_key = Ed25519PrivateKey::generate(rng);
         let operator_address = account_address::from_public_key(&oper_key.public_key());
-        let owner_address = diem_config::utils::validator_owner_account_from_name(&name);
+        let owner_address = account_address::from_public_key(&key.public_key());
 
         Self {
             index,
@@ -677,7 +700,12 @@ impl Validator {
                 bcs::to_bytes(&[0u8; 0]).unwrap(),
             )
             .into_script_function();
-        (self.oper_key.public_key(), self.name.clone(), script_function, self.operator_address,)
+        (
+            self.oper_key.public_key(),
+            self.name.clone(),
+            script_function,
+            self.operator_address, //////// 0L ////////
+        )
     }
 }
 
@@ -704,6 +732,24 @@ pub fn generate_test_genesis(
         ChainId::test(),
     );
     (genesis, validators)
+}
+
+//////// 0L ////////
+/// Genesis subsidy to miners
+fn distribute_genesis_subsidy(
+    session: &mut Session<StateViewCache>,
+    log_context: &impl LogContext,
+) { 
+    let diem_root_address = account_config::diem_root_address();
+
+    exec_function(
+        session,
+        log_context,
+        "Subsidy",
+        "genesis",
+        vec![],
+        serialize_values(&vec![MoveValue::Signer(diem_root_address)])
+    )
 }
 
 //////// 0L ////////
@@ -753,4 +799,24 @@ impl Default for GenesisMiningProof {
             }
         }
     }
+}
+
+//////// 0L ////////
+fn initialize_testnet(
+    session: &mut Session<StateViewCache>,
+    log_context: &impl LogContext
+) {
+    let diem_root_address = account_config::diem_root_address();
+    let mut module_name = "Testnet";
+    if get_env() == "stage" { 
+        module_name = "StagingNet";
+    };
+    exec_function(
+        session,
+        log_context,
+        module_name,
+        "initialize",
+        vec![],
+        serialize_values(&vec![MoveValue::Signer(diem_root_address)])
+    );
 }
