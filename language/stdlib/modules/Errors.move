@@ -16,23 +16,14 @@ address 0x1 {
 /// >TODO: determine what kind of stability guarantees we give about reasons/associated module.
 module Errors {
     /// A function to create an error from from a category and a reason.
-    fun make(_category: u8, reason: u64): u64 {
-        (reason as u64)
-        //(category as u64) + (reason << 8) - native implementation
-        // Changed error codes make to easily track them in 0L. 
+    fun make(category: u8, reason: u64): u64 {
+        (category as u64) + (reason << 8)
     }
     spec fun make {
         pragma opaque = true;
-        ensures [concrete] result == reason;
+        ensures [concrete] result == category + (reason << 8);
         aborts_if [abstract] false;
-        ensures [abstract] result == reason;
-    }
-
-        /// A function to create an error from from a category and a reason.
-    fun make_ol(_category: u8, reason: u64): u64 {
-        (reason as u64)
-        //(category as u64) + (reason << 8) - native implementation
-        // Changed error codes make to easily track them in 0L. 
+        ensures [abstract] result == category;
     }
 
     /// The system is in a state where the performed operation is not allowed. Example: call to a function only allowed
@@ -69,12 +60,6 @@ module Errors {
 
     /// A custom error category for extension points.
     const CUSTOM: u8 = 255;
-
-    /// 0L Error codes
-    const OL_ERR: u8 = 11;
-
-    // 0L Error codes
-    const OL_TX_ERR: u8 = 12;
 
     public fun invalid_state(reason: u64): u64 { make(INVALID_STATE, reason) }
     spec fun invalid_state {
@@ -140,20 +125,6 @@ module Errors {
     }
 
     public fun custom(reason: u64): u64 { make(CUSTOM, reason) }
-    spec fun custom {
-        pragma opaque = true;
-        aborts_if false;
-        ensures result == CUSTOM;
-    }
-
-    public fun ol_tx(reason: u64): u64 { make(OL_TX_ERR, reason) }
-    spec fun custom {
-        pragma opaque = true;
-        aborts_if false;
-        ensures result == CUSTOM;
-    }
-
-    public fun ol(reason: u64): u64 { make(OL_ERR, reason) }
     spec fun custom {
         pragma opaque = true;
         aborts_if false;

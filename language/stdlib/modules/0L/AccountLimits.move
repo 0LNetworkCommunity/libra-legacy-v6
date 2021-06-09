@@ -7,7 +7,6 @@ module AccountLimits {
     use 0x1::LibraTimestamp;
     use 0x1::Roles;
     use 0x1::Signer;
-    use 0x1::LibraConfig;
 
     /// An operations capability that restricts callers of this module since
     /// the operations can mutate account states.
@@ -178,28 +177,6 @@ module AccountLimits {
         aborts_if exists<Window<CoinType>>(Signer::spec_address_of(to_limit)) with Errors::ALREADY_PUBLISHED;
     }
 
-    // OL function to publish window by account without libraroot
-    public fun publish_window_OL<CoinType>(
-        to_limit: &signer,
-        limit_address: address,
-    ) {
-        assert(exists<LimitsDefinition<CoinType>>(limit_address), Errors::not_published(ELIMITS_DEFINITION));
-        assert(
-            !exists<Window<CoinType>>(Signer::address_of(to_limit)),
-            Errors::already_published(EWINDOW)
-        );
-        move_to(
-            to_limit,
-            Window<CoinType> {
-                window_start: current_time(),
-                window_inflow: 0,
-                window_outflow: 0,
-                tracked_balance: 0,
-                limit_address,
-            }
-        )
-    }
-
     /// Unrestricted limits are represented by setting all fields in the
     /// limits definition to `MAX_U64`. Anyone can publish an unrestricted
     /// limits since no windows will point to this limits definition unless the
@@ -255,29 +232,6 @@ module AccountLimits {
         if (new_max_outflow > 0) { limits_def.max_outflow = new_max_outflow };
         if (new_max_holding_balance > 0) { limits_def.max_holding = new_max_holding_balance };
         if (new_time_period > 0) { limits_def.time_period = new_time_period };
-    }
-
-    // OL function to publish restricted limits
-    public fun publish_restricted_limits_definition_OL<CoinType>(
-        account: &signer
-    ) {
-        
-        let sender_addr = Signer::address_of(account);
-        // As we don't have Optionals for txn scripts, in update_account_limit_definition.move
-        // we use 0 value to represent a None (ie no update to that variable)
-        assert(
-            !exists<LimitsDefinition<CoinType>>(sender_addr),
-            Errors::already_published(ELIMITS_DEFINITION)
-        );
-        move_to(
-            account,
-            LimitsDefinition<CoinType> {
-                max_inflow: MAX_U64,
-                max_outflow: LibraConfig::get_epoch_transfer_limit(),
-                max_holding: MAX_U64,
-                time_period: ONE_DAY
-            }
-        )
     }
 
     /// Update either the `tracked_balance` or `limit_address` fields of the
@@ -445,37 +399,6 @@ module AccountLimits {
             window_inflow, receiving.window_inflow + amount),
             tracked_balance, receiving.tracked_balance + amount)
     }
-
-    //first return value is max withdrawal amount, second is whether withdrawal is allowed at all
-    public fun max_withdrawal<CoinType>(
-        addr: address,
-    ): (u64, bool) acquires Window, LimitsDefinition {
-        if (!exists<Window<CoinType>>(addr)) {
-            return (0, false)
-        };
-        let sending = borrow_global_mut<Window<CoinType>>(addr);
-
-        if (!exists<LimitsDefinition<CoinType>>(sending.limit_address)) {
-            return (0, false)
-        };
-        let limits_definition = borrow_global<LimitsDefinition<CoinType>>(sending.limit_address);
-        // If the limits are unrestricted then don't do any more work.
-        if (is_unrestricted(limits_definition)) return (MAX_U64, true);
-
-        reset_window(sending, limits_definition);
-        // Check outflow is OK
-        if (limits_definition.max_outflow < sending.window_outflow) {
-            return (0, false)
-        };
-        let max_outflow = limits_definition.max_outflow - sending.window_outflow;
-        // Flow is OK, so record it.
-        (max_outflow, true)
-
-    }
-    
-
-
-
 
     /// Verify that `amount` can be withdrawn from the account tracked
     /// by the `sending` window without violating any limits specified

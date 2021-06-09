@@ -34,7 +34,6 @@ module ValidatorOperatorConfig {
         });
     }
 
-    //////// 0L ////////
     public fun publish_with_proof(
         validator_operator_account: &signer,
         human_name: vector<u8>,

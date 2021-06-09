@@ -3,6 +3,7 @@
 
 # Module `0x1::TransactionFee`
 
+Functions to initialize, accumulated, and burn transaction fees.
 
 
 -  [Resource `TransactionFee`](#0x1_TransactionFee_TransactionFee)
@@ -79,7 +80,7 @@ fiat <code>CoinType</code> that can be collected as a transaction fee.
 A <code><a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a></code> resource is not in the required state
 
 
-<pre><code><b>const</b> <a href="TransactionFee.md#0x1_TransactionFee_ETRANSACTION_FEE">ETRANSACTION_FEE</a>: u64 = 20000;
+<pre><code><b>const</b> <a href="TransactionFee.md#0x1_TransactionFee_ETRANSACTION_FEE">ETRANSACTION_FEE</a>: u64 = 0;
 </code></pre>
 
 

@@ -6,7 +6,6 @@ address 0x1 {
 ///
 /// > Note: When trying to understand this code, it's important to know that "config"
 /// and "configuration" are used for several distinct concepts.
-// Error Code file prefix: 1200
 module LibraSystem {
     use 0x1::CoreAddresses;
     use 0x1::Errors;
@@ -68,19 +67,19 @@ module LibraSystem {
     }
 
     /// The `CapabilityHolder` resource was not in the required state
-    const ECAPABILITY_HOLDER: u64 = 12000;
+    const ECAPABILITY_HOLDER: u64 = 0;
     /// Tried to add a validator with an invalid state to the validator set
-    const EINVALID_PROSPECTIVE_VALIDATOR: u64 = 12001;
+    const EINVALID_PROSPECTIVE_VALIDATOR: u64 = 1;
     /// Tried to add a validator to the validator set that was already in it
-    const EALREADY_A_VALIDATOR: u64 = 12002;
+    const EALREADY_A_VALIDATOR: u64 = 2;
     /// An operation was attempted on an address not in the vaidator set
-    const ENOT_AN_ACTIVE_VALIDATOR: u64 = 12003;
+    const ENOT_AN_ACTIVE_VALIDATOR: u64 = 3;
     /// The validator operator is not the operator for the specified validator
-    const EINVALID_TRANSACTION_SENDER: u64 = 12004;
+    const EINVALID_TRANSACTION_SENDER: u64 = 4;
     /// An out of bounds index for the validator set was encountered
-    const EVALIDATOR_INDEX: u64 = 12005;
+    const EVALIDATOR_INDEX: u64 = 5;
     /// Rate limited when trying to update config
-    const ECONFIG_UPDATE_RATE_LIMITED: u64 = 12006;
+    const ECONFIG_UPDATE_RATE_LIMITED: u64 = 6;
 
     /// Number of microseconds in 5 minutes
     const FIVE_MINUTES: u64 = 300000000;
@@ -619,13 +618,12 @@ module LibraSystem {
     // Tests for this method are written in move-lang/functional-tests/0L/reconfiguration/bulk_update.move
 
     // TODO: Has this been superceded by update_config_and_reconfigure ?
-    // Function code:01
     public fun bulk_update_validators(
         account: &signer,
         new_validators: vector<address>
     ) acquires CapabilityHolder {
         LibraTimestamp::assert_operating();
-        assert(Signer::address_of(account) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(120001));
+        assert(Signer::address_of(account) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 1202014010);
 
         // Either check for each validator and add/remove them or clear the current list and append the list.
         // The first way might be computationally expensive, so I choose to go with second approach.
@@ -660,9 +658,9 @@ module LibraSystem {
         };
 
         let next_count = Vector::length<ValidatorInfo>(&next_epoch_validators);
-        assert(next_count > 0, Errors::invalid_argument(120001) );
+        assert(next_count > 0, 1202011000 );
         // Transaction::assert(next_count > n, 90000000002 );
-        assert(next_count == n, Errors::invalid_argument(1200011) );
+        assert(next_count == n, 1202021000 );
 
         // We have vector of validators - updated!
         // Next, let us get the current validator set for the current parameters
@@ -679,18 +677,14 @@ module LibraSystem {
     }
 
     //get_compliant_val_votes
-    //Function code:02
     public fun get_fee_ratio(vm: &signer, height_start: u64, height_end: u64): (vector<address>, vector<FixedPoint32::FixedPoint32>) {
         let validators = &get_libra_system_config().validators;
-
         let compliant_nodes = Vector::empty<address>();
         let count_compliant_votes = 0;
         let i = 0;
         while (i < Vector::length(validators)) {
             let addr = Vector::borrow(validators, i).addr;
-            
-            let case = Cases::get_case(vm, addr, height_start, height_end);
-            if (case == 1) {
+            if (Cases::get_case(vm, addr, height_start, height_end) == 1) {
                 let node_votes = Stats::node_current_votes(vm, addr);
                 Vector::push_back(&mut compliant_nodes, addr);
                 count_compliant_votes = count_compliant_votes + node_votes;
@@ -707,7 +701,7 @@ module LibraSystem {
              k = k + 1;
         };
 
-        assert(Vector::length(&compliant_nodes) == Vector::length(&fee_ratios),Errors::invalid_argument(120002) );
+        assert(Vector::length(&compliant_nodes) == Vector::length(&fee_ratios),120201014010 );
 
         (compliant_nodes, fee_ratios)
     }
