@@ -21,7 +21,6 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="LibraBlock.md#0x1_LibraBlock">0x1::LibraBlock</a>;
 <b>use</b> <a href="LibraSystem.md#0x1_LibraSystem">0x1::LibraSystem</a>;
 <b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
@@ -256,7 +255,7 @@
 <pre><code><b>public</b> <b>fun</b> <a href="Oracle.md#0x1_Oracle_handler">handler</a> (sender: &signer, id: u64, data: vector&lt;u8&gt;) <b>acquires</b> <a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a> {
   // receives payload from oracle_tx.<b>move</b>
   // Check the sender is a validator.
-  <b>assert</b>(<a href="LibraSystem.md#0x1_LibraSystem_is_validator">LibraSystem::is_validator</a>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender)), <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(150002));
+  <b>assert</b>(<a href="LibraSystem.md#0x1_LibraSystem_is_validator">LibraSystem::is_validator</a>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender)), 11111); // TODO: error code
 
   <b>if</b> (id == 1) {
     <a href="Oracle.md#0x1_Oracle_upgrade_handler">upgrade_handler</a>(sender, data);
@@ -406,9 +405,7 @@
   upgrade_oracle.validators_voted = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
   upgrade_oracle.vote_counts = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="Oracle.md#0x1_Oracle_VoteCount">VoteCount</a>&gt;();
   upgrade_oracle.votes = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="Oracle.md#0x1_Oracle_Vote">Vote</a>&gt;();
-  // TODO: change <b>to</b> Epochs instead of height. Could possibly be an argument <b>as</b> well.
-  // Setting the window <b>to</b> be approx two 24h periods.
-  upgrade_oracle.vote_window = height + 1000000;
+  upgrade_oracle.vote_window = height + 1000;        // TODO: store constants
   upgrade_oracle.consensus = <a href="Oracle.md#0x1_Oracle_VoteCount">VoteCount</a>{
     data: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u8&gt;(),
     validators: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;(),
@@ -466,7 +463,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Oracle.md#0x1_Oracle_check_upgrade">check_upgrade</a>(vm: &signer) <b>acquires</b> <a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a> {
-  <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(150003));
+  <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 11111); // TODO: error code
   <b>let</b> upgrade_oracle = &<b>mut</b> borrow_global_mut&lt;<a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()).upgrade;
 
   <b>let</b> payload = *&upgrade_oracle.consensus.data;
@@ -501,7 +498,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Oracle.md#0x1_Oracle_test_helper_query_oracle_votes">test_helper_query_oracle_votes</a>(): vector&lt;address&gt; <b>acquires</b> <a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a> {
-  <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), <a href="Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(150004));
+  <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 123401011000);
   <b>let</b> s = borrow_global&lt;<a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a>&gt;(0x0);
   <b>let</b> len = <a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="Oracle.md#0x1_Oracle_Vote">Vote</a>&gt;(&s.upgrade.votes);
 

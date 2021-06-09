@@ -5,9 +5,6 @@ address 0x1 {
 /// later inclusion (by functions in LibraConfig) in a `LibraConfig::LibraConfig<LibraSystem>`
 /// struct (the `Self::ValidatorConfig` in a `LibraConfig::ValidatorInfo` which is a member
 /// of the `LibraSystem::LibraSystem.validators` vector).
-///////////////////////////////////////////////////////////////////////////
-// File Prefix for errors: 2200
-///////////////////////////////////////////////////////////////////////////
 
 module ValidatorConfig {
     use 0x1::LibraTimestamp;
@@ -34,13 +31,13 @@ module ValidatorConfig {
     // TODO(valerini): add events here
 
     /// The `ValidatorConfig` resource was not in the required state
-    const EVALIDATOR_CONFIG: u64 = 22000;
+    const EVALIDATOR_CONFIG: u64 = 0;
     /// The sender is not the operator for the specified validator
-    const EINVALID_TRANSACTION_SENDER: u64 = 22001;
+    const EINVALID_TRANSACTION_SENDER: u64 = 1;
     /// The provided consensus public key is malformed
-    const EINVALID_CONSENSUS_KEY: u64 = 22002;
+    const EINVALID_CONSENSUS_KEY: u64 = 2;
     /// Tried to set an account without the correct operator role as a Validator Operator
-    const ENOT_A_VALIDATOR_OPERATOR: u64 = 22003;
+    const ENOT_A_VALIDATOR_OPERATOR: u64 = 3;
 
     ///////////////////////////////////////////////////////////////////////////
     // Validator setup methods

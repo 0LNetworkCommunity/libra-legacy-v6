@@ -14,7 +14,6 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="LibraConfig.md#0x1_LibraConfig">0x1::LibraConfig</a>;
 <b>use</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp">0x1::LibraTimestamp</a>;
@@ -79,7 +78,7 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="Epoch.md#0x1_Epoch_initialize">initialize</a>(vm: &signer) {
     <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
-    <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(050001));
+    <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 190201014010);
     move_to&lt;<a href="Epoch.md#0x1_Epoch_Timer">Timer</a>&gt;(
     vm,
     <a href="Epoch.md#0x1_Epoch_Timer">Timer</a> {
@@ -138,7 +137,7 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="Epoch.md#0x1_Epoch_reset_timer">reset_timer</a>(vm: &signer, height: u64) <b>acquires</b> <a href="Epoch.md#0x1_Epoch_Timer">Timer</a> {
     <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
-    <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(050002));
+    <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 190201014010);
     <b>let</b> time = borrow_global_mut&lt;<a href="Epoch.md#0x1_Epoch_Timer">Timer</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
     time.epoch = <a href="LibraConfig.md#0x1_LibraConfig_get_current_epoch">LibraConfig::get_current_epoch</a>() + 1;
     time.height_start = height;
@@ -167,7 +166,7 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="Epoch.md#0x1_Epoch_get_timer_seconds_start">get_timer_seconds_start</a>(vm: &signer):u64 <b>acquires</b> <a href="Epoch.md#0x1_Epoch_Timer">Timer</a> {
     <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
-    <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(),  <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(050003));
+    <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 190201014010);
     <b>let</b> time = borrow_global&lt;<a href="Epoch.md#0x1_Epoch_Timer">Timer</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
     time.seconds_start
 }
@@ -194,7 +193,7 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="Epoch.md#0x1_Epoch_get_timer_height_start">get_timer_height_start</a>(vm: &signer):u64 <b>acquires</b> <a href="Epoch.md#0x1_Epoch_Timer">Timer</a> {
   <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
-  <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(),  <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(050004));
+  <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 190201014010);
   <b>let</b> time = borrow_global&lt;<a href="Epoch.md#0x1_Epoch_Timer">Timer</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
   time.height_start
 }

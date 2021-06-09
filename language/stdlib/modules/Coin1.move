@@ -13,10 +13,12 @@ module Coin1 {
     /// Registers the `Coin1` cointype. This can only be called from genesis.
     public fun initialize(
         lr_account: &signer,
+        // lr_account: &signer,
     ) {
         LibraTimestamp::assert_genesis();
         Libra::register_SCS_currency<Coin1>(
             lr_account,
+            // lr_account,
             FixedPoint32::create_from_rational(1, 1), // exchange rate to GAS
             1000000, // scaling_factor = 10^6
             100,     // fractional_part = 10^2
@@ -39,7 +41,7 @@ module Coin1 {
         include Roles::AbortsIfNotLibraRoot{account: lr_account};
         /// Only a TreasuryCompliance account can have the MintCapability [[H1]][PERMISSION].
         /// Moreover, only a TreasuryCompliance account can have the BurnCapability [[H3]][PERMISSION].
-        include Roles::AbortsIfNotTreasuryCompliance{account: lr_account}; //////// 0L ////////
+        include Roles::AbortsIfNotTreasuryCompliance{account: lr_account};
     }
 
     // =================================================================

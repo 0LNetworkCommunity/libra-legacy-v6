@@ -1,12 +1,9 @@
 script {
     use 0x1::LibraSystem;
     use 0x1::Vector;
-    
-    // FOR E2E testing
+    //use 0x1::ValidatorUniverse;
     fun ol_reconfig_bulk_update_setup(account: &signer, alice: address, bob: address, carol: address,
         sha: address, ram: address) {
-
-        
         // Create vector of desired validators
         let vec = Vector::empty();
         Vector::push_back<address>(&mut vec, alice);

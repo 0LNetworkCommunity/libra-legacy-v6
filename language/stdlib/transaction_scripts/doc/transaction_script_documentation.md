@@ -3501,7 +3501,6 @@ resource published under it. The sending <code>account</code> must be a Validato
     operator_name: vector&lt;u8&gt;,
     operator_account: address
 ) {
-    //////// 0L ////////
     <b>assert</b>(<a href="../../modules/doc/ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_get_human_name">ValidatorOperatorConfig::get_human_name</a>(operator_account) == operator_name, 111);
     <a href="../../modules/doc/ValidatorConfig.md#0x1_ValidatorConfig_set_operator">ValidatorConfig::set_operator</a>(account, operator_account);
 }
@@ -5056,8 +5055,7 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`0x1::AccountFreezing`](../../modules/doc/AccountFreezing.md#0x1_AccountFreezing)
 -  [`0x1::AccountLimits`](../../modules/doc/AccountLimits.md#0x1_AccountLimits)
 -  [`0x1::Authenticator`](../../modules/doc/Authenticator.md#0x1_Authenticator)
--  [`0x234567::AutoPay`](../../modules/doc/AutoPay.md#0x234567_AutoPay)
--  [`0x1::AutoPay2`](../../modules/doc/AutoPay.md#0x1_AutoPay2)
+-  [`0x1::AutoPay`](../../modules/doc/AutoPay.md#0x1_AutoPay)
 -  [`0x1::Cases`](../../modules/doc/Cases.md#0x1_Cases)
 -  [`0x1::ChainId`](../../modules/doc/ChainId.md#0x1_ChainId)
 -  [`0x1::Coin1`](../../modules/doc/Coin1.md#0x1_Coin1)
@@ -5068,7 +5066,6 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`0x1::Epoch`](../../modules/doc/Epoch.md#0x1_Epoch)
 -  [`0x1::Errors`](../../modules/doc/Errors.md#0x1_Errors)
 -  [`0x1::Event`](../../modules/doc/Event.md#0x1_Event)
--  [`0x1::FIFO`](../../modules/doc/FIFO.md#0x1_FIFO)
 -  [`0x1::FixedPoint32`](../../modules/doc/FixedPoint32.md#0x1_FixedPoint32)
 -  [`0x1::FullnodeState`](../../modules/doc/FullnodeState.md#0x1_FullnodeState)
 -  [`0x1::GAS`](../../modules/doc/GAS.md#0x1_GAS)
@@ -5114,14 +5111,10 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`add_recovery_rotation_capability`](transaction_script_documentation.md#add_recovery_rotation_capability)
 -  [`add_to_script_allow_list`](transaction_script_documentation.md#add_to_script_allow_list)
 -  [`add_validator_and_reconfigure`](transaction_script_documentation.md#add_validator_and_reconfigure)
--  [`autopay_create_instruction`](ol_autopay_create.md#autopay_create_instruction)
--  [`autopay_disable`](ol_autopay_disable.md#autopay_disable)
--  [`autopay_enable`](ol_autopay_enable.md#autopay_enable)
+-  [`autopay_create_instruction_tx`](ol_autopay_create.md#autopay_create_instruction_tx)
 -  [`burn`](transaction_script_documentation.md#burn)
 -  [`burn_txn_fees`](transaction_script_documentation.md#burn_txn_fees)
 -  [`cancel_burn`](transaction_script_documentation.md#cancel_burn)
--  [`create_acc_user`](ol_create_acc_user.md#create_acc_user)
--  [`create_acc_val`](ol_create_acc_val.md#create_acc_val)
 -  [`create_child_vasp_account`](transaction_script_documentation.md#create_child_vasp_account)
 -  [`create_designated_dealer`](transaction_script_documentation.md#create_designated_dealer)
 -  [`create_parent_vasp_account`](transaction_script_documentation.md#create_parent_vasp_account)
@@ -5129,12 +5122,11 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`create_validator_account`](transaction_script_documentation.md#create_validator_account)
 -  [`create_validator_operator_account`](transaction_script_documentation.md#create_validator_operator_account)
 -  [`demo_e2e`](ol_demo_e2e.md#demo_e2e)
+-  [`enable_autopay_tx`](ol_autopay_enable.md#enable_autopay_tx)
 -  [`freeze_account`](transaction_script_documentation.md#freeze_account)
--  [`join`](ol_validator_universe_join.md#join)
--  [`leave`](ol_validator_universe_leave.md#leave)
 -  [`minerstate_commit`](ol_miner_state_commit.md#minerstate_commit)
--  [`minerstate_commit_by_operator`](ol_miner_state_commit_by_operator.md#minerstate_commit_by_operator)
 -  [`minerstate_helper`](ol_miner_state_helper.md#minerstate_helper)
+-  [`minerstate_onboarding`](ol_miner_state_onboarding.md#minerstate_onboarding)
 -  [`ol_oracle_tx`](ol_oracle_tx.md#ol_oracle_tx)
 -  [`ol_reconfig_bulk_update_setup`](ol_reconfig_bulk_update_setup.md#ol_reconfig_bulk_update_setup)
 -  [`peer_to_peer_with_metadata`](transaction_script_documentation.md#peer_to_peer_with_metadata)
@@ -5152,12 +5144,12 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`set_validator_operator`](transaction_script_documentation.md#set_validator_operator)
 -  [`set_validator_operator_with_nonce_admin`](transaction_script_documentation.md#set_validator_operator_with_nonce_admin)
 -  [`tiered_mint`](transaction_script_documentation.md#tiered_mint)
+-  [`trusted_account_update_tx`](trusted_account_update.md#trusted_account_update_tx)
 -  [`unfreeze_account`](transaction_script_documentation.md#unfreeze_account)
 -  [`update_dual_attestation_limit`](transaction_script_documentation.md#update_dual_attestation_limit)
 -  [`update_exchange_rate`](transaction_script_documentation.md#update_exchange_rate)
 -  [`update_libra_version`](transaction_script_documentation.md#update_libra_version)
 -  [`update_minting_ability`](transaction_script_documentation.md#update_minting_ability)
--  [`val_add_self`](ol_validator_universe_add_self.md#val_add_self)
 
 
 [//]: # ("File containing references which can be used from documentation")
