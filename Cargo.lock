@@ -4992,13 +4992,17 @@ name = "move-vm-natives"
 version = "0.1.0"
 dependencies = [
  "diem-crypto",
+ "diem-global-constants",
+ "diem-types",
  "diem-workspace-hack",
+ "hex 0.4.3",
  "mirai-annotations",
  "move-core-types",
  "move-vm-types",
  "once_cell",
  "sha2 0.9.3",
  "smallvec 1.6.1",
+ "vdf",
  "vm",
 ]
 

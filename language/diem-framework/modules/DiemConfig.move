@@ -10,6 +10,7 @@ module DiemConfig {
     use 0x1::DiemTimestamp;
     use 0x1::Signer;
     use 0x1::Roles;
+    use 0x1::Testnet;
 
     /// A generic singleton resource that holds a value of a specific type.
     struct DiemConfig<Config: copy + drop + store> has key, store {
@@ -446,6 +447,30 @@ module DiemConfig {
             global<DiemConfig<Config>>(CoreAddresses::DIEM_ROOT_ADDRESS()).payload
         }
     }
+
+    //////// 0L ////////
+    public fun get_current_epoch(): u64 acquires Configuration {
+        let config_ref = borrow_global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        config_ref.epoch
+    }
+
+    public fun get_epoch_transfer_limit(): u64 acquires Configuration {
+        // Constant to start the withdrawal limit calculation from 
+        let transfer_enabled_epoch = 75;
+        let config_ref = borrow_global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        
+        // Calculating transfer limit in multiples of epoch
+        ((config_ref.epoch - transfer_enabled_epoch) * 10)
+    }
+
+    public fun check_transfer_enabled(): bool acquires Configuration {
+        if(Testnet::is_testnet()){
+            true
+        } else {
+            get_current_epoch() > 1000
+        }
+    }    
+    //////// 0L end ////////
 
 }
 }
