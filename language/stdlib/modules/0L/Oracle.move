@@ -21,6 +21,7 @@ address 0x1 {
 
       //selected vote type for oracle
       const VOTE_TYPE_UPGRADE: u8 = VOTE_TYPE_ONE_FOR_ONE;
+      const DELEGATION_ENABLED_UPGRADE: bool = false;
 
       //Errors
       const VOTE_TYPE_INVALID: u64 = 150001;
@@ -98,22 +99,45 @@ address 0x1 {
       }
   
       // Function code: 02
-      public fun handler (sender: &signer, id: u64, data: vector<u8>) acquires Oracles {
+      public fun handler (sender: &signer, id: u64, data: vector<u8>) acquires Oracles, VoteDelegation {
         // receives payload from oracle_tx.move
         // Check the sender is a validator. 
         assert(LibraSystem::is_validator(Signer::address_of(sender)), Errors::requires_role(150002)); 
   
         if (id == 1) {
-          upgrade_handler(Signer::address_of(sender), data);
-          //TODO enable delegation
+          upgrade_handler(Signer::address_of(sender), copy data);
+          if (DELEGATION_ENABLED_UPGRADE && exists<VoteDelegation>(Signer::address_of(sender))) {
+            let del = borrow_global<VoteDelegation>(Signer::address_of(sender));
+            let l = Vector::length<address>(del.delegates);
+            let i = 0;
+            let hash = Hash::sha2_256(data);
+            while (i < l) {
+              let addr = *Vector::borrow<address>(&del.delegates, i);
+              if(LibraSystem::is_validator(addr)) {
+                upgrade_handler_hash(addr, copy hash);
+              };
+              i = i + 1;
+            };
+          }
         }
         if (id == 2) {
-          upgrade_handler_hash(Signer::address_of(sender), data);
-          //TODO enable delegation
+          upgrade_handler_hash(Signer::address_of(sender), copy data);
+          if (DELEGATION_ENABLED_UPGRADE && exists<VoteDelegation>(Signer::address_of(sender))) {
+            let del = borrow_global<VoteDelegation>(Signer::address_of(sender));
+            let l = Vector::length<address>(del.delegates);
+            let i = 0;
+            while (i < l) {
+              let addr = *Vector::borrow<address>(&del.delegates, i);
+              if(LibraSystem::is_validator(addr)) {
+                upgrade_handler_hash(addr, copy data);
+              };
+              i = i + 1;
+            };
+          }
         }
         // put else if cases for other oracles
       }
-      //TODO switch signer for address
+      
       fun upgrade_handler (sender: address, data: vector<u8>) acquires Oracles {
         let current_height = LibraBlock::get_current_block_height();
         let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::LIBRA_ROOT_ADDRESS()).upgrade;
@@ -126,9 +150,9 @@ address 0x1 {
         }; 
   
         // if the sender has voted, do nothing
-        if (Vector::contains<address>(&upgrade_oracle.validators_voted, &Signer::address_of(sender))) {return};
+        if (Vector::contains<address>(&upgrade_oracle.validators_voted, &sender) {return};
         
-        let vote_weight = get_weight(Signer::address_of(sender), VOTE_TYPE_UPGRADE);
+        let vote_weight = get_weight(sender, VOTE_TYPE_UPGRADE);
 
         let validator_vote = Vote {
                 validator: Signer::address_of(sender),
@@ -138,11 +162,11 @@ address 0x1 {
                 weight: vote_weight,
         };
         Vector::push_back(&mut upgrade_oracle.votes, validator_vote);
-        Vector::push_back(&mut upgrade_oracle.validators_voted, Signer::address_of(sender));
-        increment_vote_count(&mut upgrade_oracle.vote_counts, data, Signer::address_of(sender), vote_weight);
+        Vector::push_back(&mut upgrade_oracle.validators_voted, sender);
+        increment_vote_count(&mut upgrade_oracle.vote_counts, data, sender, vote_weight);
         tally_upgrade(upgrade_oracle, VOTE_TYPE_UPGRADE);
       }
-      //TODO switch signer for address
+      
       fun upgrade_handler_hash (sender: address, data: vector<u8>) acquires Oracles {
         let current_height = LibraBlock::get_current_block_height();
         let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::LIBRA_ROOT_ADDRESS()).upgrade;
@@ -156,23 +180,23 @@ address 0x1 {
         }; 
   
         // if the sender has voted, do nothing
-        if (Vector::contains<address>(&upgrade_oracle.validators_voted, &Signer::address_of(sender))) {return};
+        if (Vector::contains<address>(&upgrade_oracle.validators_voted, &sender)) {return};
         
-        let vote_weight = get_weight(Signer::address_of(sender), VOTE_TYPE_UPGRADE);
+        let vote_weight = get_weight(sender, VOTE_TYPE_UPGRADE);
         
         let validator_vote = Vote {
-                validator: Signer::address_of(sender),
+                validator: sender,
                 data: copy data,
                 version_id: *&upgrade_oracle.version_id,
                 type: 1, 
                 weight: vote_weight, 
         };
         
-        let vote_sent = increment_vote_count_hash(&mut upgrade_oracle.vote_counts, data, Signer::address_of(sender), weight: vote_weight);
+        let vote_sent = increment_vote_count_hash(&mut upgrade_oracle.vote_counts, data, sender, weight: vote_weight);
 
         if (vote_sent) {
           Vector::push_back(&mut upgrade_oracle.votes, validator_vote);
-          Vector::push_back(&mut upgrade_oracle.validators_voted, Signer::address_of(sender));
+          Vector::push_back(&mut upgrade_oracle.validators_voted, sender);
           tally_upgrade(upgrade_oracle, VOTE_TYPE_UPGRADE);
         };
         
@@ -346,13 +370,15 @@ address 0x1 {
         let vote_dest = del.delegated_to_address;
         del.delegated_to_address = Signer::address_of(sender);
 
-        let del = borrow_global_mut<VoteDelegation>(vote_dest);
+        //don't want to end up in a situation where delegation cannot be removed
+        if (exists<VoteDelegation>(vote_dest)) {
+          let del = borrow_global_mut<VoteDelegation>(vote_dest);
 
-        let b, loc = Vector::index_of<address>(&del.delegates, &vote_dest);
-        assert(b, Errors::invalid_state(DELEGATION_NOT_PRESENT));
-
-        //TODO: swapping element with the last one, then removing would be more efficient
-        Vector::remove<address>(&mut del.delegates, loc);
+          let b, loc = Vector::index_of<address>(&del.delegates, &vote_dest);
+          if (b) {
+            Vector::remove<address>(&mut del.delegates, loc);
+          };
+        };
 
       }
 
