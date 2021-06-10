@@ -13,9 +13,9 @@ use ol_types::account;
 #[derive(Command, Debug, Default, Options)]
 pub struct UserWizardCmd {
     #[options(help = "path to write account manifest")]
-    home_path: Option<PathBuf>,
+    output_dir: Option<PathBuf>,
     #[options(help = "File to check")]
-    check: Option<PathBuf>,
+    check_file: Option<PathBuf>,
     #[options(help = "use an existing block_0.json file and skip mining")]
     block_zero: Option<PathBuf>,
 }
@@ -24,12 +24,12 @@ impl Runnable for UserWizardCmd {
     /// Print version message
     fn run(&self) {
         // let miner_configs = app_config();
-        let home_path = self.home_path.clone().unwrap_or_else(|| PathBuf::from("."));
+        let path = self.output_dir.clone().unwrap_or_else(|| PathBuf::from("."));
         
-        if let Some(path) = &self.check {
-            check(path.to_path_buf());
+        if let Some(file) = &self.check_file {
+            check(file.to_path_buf());
         } else {
-            wizard(home_path, &self.block_zero);
+            wizard(path, &self.block_zero);
         }
     }
 }
