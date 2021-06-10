@@ -38,7 +38,7 @@ pub enum InstructionType {
 /// Autopay payment instruction
 pub struct PayInstruction {
     /// unique id of instruction
-    pub uid: u64,
+    pub uid: Option<u64>,
     /// description of payment, not sent to chain
     pub note: Option<String>,
     /// enum for type of instruction
@@ -62,6 +62,7 @@ impl PayInstruction {
     pub fn parse_autopay_instructions(
         autopay_batch_file: &PathBuf,
         current_epoch: Option<u64>,
+        start_uid: Option<u64>,
     ) -> Result<Vec<PayInstruction>, Error> {
         let file = fs::File::open(autopay_batch_file).expect(&format!(
             "cannot open autopay batch file: {:?}",
@@ -73,62 +74,59 @@ impl PayInstruction {
 
         let mut total_pct_of_change: f64 = 0f64;
         let mut total_pct_balance: f64 = 0f64;
-        let mut ids: Vec<u64> = vec!();
-
+        // let mut ids: Vec<u64> = vec!();
+        let new_uid = start_uid.unwrap_or(0);
         let transformed = inst_vec
             .into_iter()
-            .map(|mut i| {
-                if ids.contains(&i.uid) {
-                  println!("uid on instructions need to be unique: Duplicate Id: {}", &i.uid);
-                  exit(1);
-                }
-                ids.push(i.uid);
+            .enumerate()
+            .map(|(i, mut inst)| {
+                inst.uid = Some(new_uid + i as u64);
 
-                if i.end_epoch.is_none() && i.duration_epochs.is_none() {
+                if inst.end_epoch.is_none() && inst.duration_epochs.is_none() {
                     println!(
                         "Need to set end_epoch, or duration_epoch in instruction: {:?}",
-                        &i
+                        &inst
                     );
                     exit(1);
                 }
 
-                if let Some(duration) = i.duration_epochs {
+                if let Some(duration) = inst.duration_epochs {
                     if duration == 0 {
-                      println!("Duration cannot be 0. Instruction: {:?}", &i);
+                      println!("Duration cannot be 0. Instruction: {:?}", &inst);
                       exit(1);
                     }
                     if let Some(current) = current_epoch {
-                      i.end_epoch = Some(duration + current);
+                      inst.end_epoch = Some(duration + current);
                     } else {
-                      println!("If you are setting a duration_epochs instruction, we need the current epoch. Instruction: {:?}", &i);
+                      println!("If you are setting a duration_epochs instruction, we need the current epoch. Instruction: {:?}", &inst);
                       exit(1);
                     }
                 }
 
-                match i.type_of {
+                match inst.type_of {
                     InstructionType::PercentOfBalance => {
-                        i.type_move = Some(PERCENT_OF_BALANCE);
-                        i.value_move = scale_percent(i.value);
-                        total_pct_balance = total_pct_balance + i.value;
+                        inst.type_move = Some(PERCENT_OF_BALANCE);
+                        inst.value_move = scale_percent(inst.value);
+                        total_pct_balance = total_pct_balance + inst.value;
                     }
                     InstructionType::PercentOfChange => {
-                        i.type_move = Some(PERCENT_OF_CHANGE);
-                        i.value_move = scale_percent(i.value);
-                        total_pct_of_change = total_pct_of_change + i.value;
+                        inst.type_move = Some(PERCENT_OF_CHANGE);
+                        inst.value_move = scale_percent(inst.value);
+                        total_pct_of_change = total_pct_of_change + inst.value;
                     }
                     InstructionType::FixedRecurring => {
-                        i.type_move = Some(FIXED_RECURRING);
-                        i.value_move = scale_coin(i.value);
+                        inst.type_move = Some(FIXED_RECURRING);
+                        inst.value_move = scale_coin(inst.value);
                     }
                     InstructionType::FixedOnce => {
-                        i.type_move = Some(FIXED_ONCE);
-                        i.value_move = scale_coin(i.value);
+                        inst.type_move = Some(FIXED_ONCE);
+                        inst.value_move = scale_coin(inst.value);
                         // TODO: temporary patch to duration bug  https://github.com/OLSF/libra/pull/556
-                        i.duration_epochs = Some(2);
+                        inst.duration_epochs = Some(2);
                     }
                 }
 
-                i
+                inst
             })
             .collect();
 
@@ -151,7 +149,7 @@ impl PayInstruction {
         } = *self;
 
         assert!(
-            script.args()[0] == TransactionArgument::U64(uid),
+            script.args()[0] == TransactionArgument::U64(uid.unwrap()),
             "not same unique id"
         );
         assert!(
@@ -187,7 +185,7 @@ impl PayInstruction {
         InstructionType::PercentOfBalance => {
           format!(
             "Instruction {uid}: {note}\nSend {percent_balance:.2?}% of your total balance every day {times} (until epoch {epoch_ending}) to address: {destination}?",
-            uid = &self.uid,
+            uid = &self.uid.unwrap(),
             percent_balance = *&self.value_move.unwrap() as f64 /100f64,
             times = times,
             note = &self.note.clone().unwrap(),
@@ -198,7 +196,7 @@ impl PayInstruction {
         InstructionType::PercentOfChange => {
             format!(
               "Instruction {uid}: {note}\nSend {percent_balance:.2?}% new incoming funds every day {times} (until epoch {epoch_ending}) to address: {destination}?",
-              uid = &self.uid,
+              uid = &self.uid.unwrap(),
               percent_balance = *&self.value_move.unwrap() as f64 /100f64,
               times = times,
               note = &self.note.clone().unwrap(),
@@ -209,7 +207,7 @@ impl PayInstruction {
         InstructionType::FixedRecurring => {
             format!(
                 "Instruction {uid}: {note}\nSend {total_val} every day {times} (until epoch {epoch_ending}) to address: {destination}?",
-                uid = &self.uid,
+                uid = &self.uid.unwrap(),
                 total_val = *&self.value_move.unwrap() / 1_000_000, // scaling factor
                 times = times,
                 note = &self.note.clone().unwrap(),
@@ -220,7 +218,7 @@ impl PayInstruction {
         InstructionType::FixedOnce => {
           format!(
                 "Instruction {uid}: {note}\nSend {total_val} once to address: {destination}?",
-                uid = &self.uid,
+                uid = &self.uid.unwrap(),
                 note = &self.note.clone().unwrap(),
                 total_val = *&self.value_move.unwrap() / 1_000_000, // scaling factor
                 destination = &self.destination,
@@ -277,13 +275,13 @@ fn scale_percent(fract_percent: f64) -> Option<u64> {
 #[test]
 fn parse_file() {
     let path = ol_fixtures::get_demo_autopay_json().1;
-    PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
+    PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
 }
 
 #[test]
 fn parse_pct_balance_type() {
     let path = ol_fixtures::get_demo_autopay_json().1;
-    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
+    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let first = &inst[0];
     
     assert_eq!(first.uid, 0);
@@ -298,7 +296,7 @@ fn parse_pct_balance_type() {
 #[test]
 fn parse_pct_change_type() {
     let path = ol_fixtures::get_demo_autopay_json().1;
-    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
+    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let second = &inst[1];
     
     assert_eq!(second.uid, 1);
@@ -314,7 +312,7 @@ fn parse_pct_change_type() {
 #[test]
 fn parse_fixed_recurr_type() {
     let path = ol_fixtures::get_demo_autopay_json().1;
-    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
+    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let third = &inst[2];
     
     assert_eq!(third.uid, 2);
@@ -329,7 +327,7 @@ fn parse_fixed_recurr_type() {
 #[test]
 fn parse_fixed_once_type() {
     let path = ol_fixtures::get_demo_autopay_json().1;
-    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
+    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let fourth = &inst[3];
     
     assert_eq!(fourth.uid, 3);
@@ -344,7 +342,7 @@ fn parse_fixed_once_type() {
 #[test]
 fn parse_pct_balance_end_epoch_type() {
     let path = ol_fixtures::get_demo_autopay_json().1;
-    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
+    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let fifth = &inst[4];
     
     assert_eq!(fifth.uid, 4);
@@ -359,7 +357,7 @@ fn parse_pct_balance_end_epoch_type() {
 #[test]
 fn parse_pct_change_end_epoch_type() {
     let path = ol_fixtures::get_demo_autopay_json().1;
-    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
+    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let sixth = &inst[5];
     
     assert_eq!(sixth.uid, 5);
@@ -375,7 +373,7 @@ fn parse_pct_change_end_epoch_type() {
 #[test]
 fn parse_fixed_recurr_end_epoch_type() {
     let path = ol_fixtures::get_demo_autopay_json().1;
-    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
+    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let seventh = &inst[6];
     
     assert_eq!(seventh.uid, 6);
@@ -392,7 +390,7 @@ fn parse_fixed_recurr_end_epoch_type() {
 #[test]
 fn parse_fixed_once_end_epoch_type() {
     let path = ol_fixtures::get_demo_autopay_json().1;
-    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
+    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let eigth = &inst[7];
     
     assert_eq!(eigth.uid, 7);

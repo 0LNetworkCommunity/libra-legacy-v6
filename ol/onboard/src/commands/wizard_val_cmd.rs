@@ -197,6 +197,7 @@ pub fn get_autopay_batch(
     let instr_vec = PayInstruction::parse_autopay_instructions(
         &file_path.clone().unwrap_or(home_path.join(file_name)),
         Some(starting_epoch.clone()),
+        None,
     )
     .unwrap();
     let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone());

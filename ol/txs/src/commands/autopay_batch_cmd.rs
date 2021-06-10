@@ -31,7 +31,7 @@ impl Runnable for AutopayBatchCmd {
         // let node = Node::default_from_cfg(cfg.clone(), None);
         // let resources = node.query(Resources{ account: cfg.profile.account});
 
-        let instructions = PayInstruction::parse_autopay_instructions(&self.autopay_batch_file, Some(epoch)).unwrap();
+        let instructions = PayInstruction::parse_autopay_instructions(&self.autopay_batch_file, Some(epoch), None).unwrap();
         let scripts = process_instructions(instructions);
         batch_wrapper(scripts, &tx_params, entry_args.no_send, entry_args.save_path)
     }
@@ -71,7 +71,7 @@ pub fn process_instructions(instructions: Vec<PayInstruction>) -> Vec<Script> {
     })
     .map(|i| {
       transaction_builder::encode_autopay_create_instruction_script(
-        i.uid, 
+        i.uid.unwrap(), 
         i.type_move.unwrap(), 
         i.destination, 
         i.end_epoch.unwrap(), 
