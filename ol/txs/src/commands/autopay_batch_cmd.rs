@@ -4,7 +4,8 @@
 
 use abscissa_core::{Command, Options, Runnable};
 use libra_types::transaction::{Script, SignedTransaction};
-use crate::{entrypoint, sign_tx::sign_tx, submit_tx::{tx_params_wrapper, batch_wrapper, TxParams}};
+use ol::node::{node::Node, query};
+use crate::{entrypoint, prelude::app_config, sign_tx::sign_tx, submit_tx::{tx_params_wrapper, batch_wrapper, TxParams}};
 use dialoguer::Confirm;
 use std::{path::PathBuf, process::exit};
 use ol_types::{autopay::PayInstruction, config::{TxType, IS_TEST}};
@@ -23,9 +24,13 @@ impl Runnable for AutopayBatchCmd {
         // will not increment automatically, since this can lead to user error.
         let entry_args = entrypoint::get_args();
         let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
-
+        let cfg = app_config();
         let epoch = crate::epoch::get_epoch(&tx_params);
         println!("The current epoch is: {}", epoch);
+        // // get highest autopay number
+        // let node = Node::default_from_cfg(cfg.clone(), None);
+        // let resources = node.query(Resources{ account: cfg.profile.account});
+
         let instructions = PayInstruction::parse_autopay_instructions(&self.autopay_batch_file, Some(epoch)).unwrap();
         let scripts = process_instructions(instructions);
         batch_wrapper(scripts, &tx_params, entry_args.no_send, entry_args.save_path)

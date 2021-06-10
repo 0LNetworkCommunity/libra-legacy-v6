@@ -123,6 +123,8 @@ impl PayInstruction {
                     InstructionType::FixedOnce => {
                         i.type_move = Some(FIXED_ONCE);
                         i.value_move = scale_coin(i.value);
+                        // TODO: temporary patch to duration bug  https://github.com/OLSF/libra/pull/556
+                        i.duration_epochs = Some(2);
                     }
                 }
 
