@@ -104,15 +104,17 @@ address 0x1 {
         assert(LibraSystem::is_validator(Signer::address_of(sender)), Errors::requires_role(150002)); 
   
         if (id == 1) {
-          upgrade_handler(sender, data);
+          upgrade_handler(Signer::address_of(sender), data);
+          //TODO enable delegation
         }
         if (id == 2) {
-          upgrade_handler_hash(sender, data);
+          upgrade_handler_hash(Signer::address_of(sender), data);
+          //TODO enable delegation
         }
         // put else if cases for other oracles
       }
-  
-      fun upgrade_handler (sender: &signer, data: vector<u8>) acquires Oracles {
+      //TODO switch signer for address
+      fun upgrade_handler (sender: address, data: vector<u8>) acquires Oracles {
         let current_height = LibraBlock::get_current_block_height();
         let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::LIBRA_ROOT_ADDRESS()).upgrade;
   
@@ -140,8 +142,8 @@ address 0x1 {
         increment_vote_count(&mut upgrade_oracle.vote_counts, data, Signer::address_of(sender), vote_weight);
         tally_upgrade(upgrade_oracle, VOTE_TYPE_UPGRADE);
       }
-
-      fun upgrade_handler_hash (sender: &signer, data: vector<u8>) acquires Oracles {
+      //TODO switch signer for address
+      fun upgrade_handler_hash (sender: address, data: vector<u8>) acquires Oracles {
         let current_height = LibraBlock::get_current_block_height();
         let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::LIBRA_ROOT_ADDRESS()).upgrade;
   
