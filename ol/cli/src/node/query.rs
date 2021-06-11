@@ -2,8 +2,9 @@
 use std::collections::BTreeMap;
 
 use libra_json_rpc_client::{views::TransactionView, AccountAddress};
+use move_core_types::{identifier::Identifier, language_storage::{StructTag, TypeTag}};
 use num_format::{Locale, ToFormattedString};
-use resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct};
+use resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct, AnnotatedMoveValue};
 
 use super::node::Node;
 
@@ -137,33 +138,63 @@ impl Node {
     }
 }
 
-
-
-// fn get_struct(mut blob: AnnotatedAccountStateBlob, tag: StructTag) -> Option<AnnotatedMoveStruct> {
-//   blob.0.remove(&tag)
-// }
-
-// fn get_first(mut blob: AnnotatedAccountStateBlob) {
-//   let x = blob.0.first_entry();
-//   dbg!(x);
-// }
-
-// StructTag, AnnotatedMoveStruct
-
-/// fixture
-pub fn fixture_struct() -> AnnotatedAccountStateBlob {
+/// test fixtures
+pub fn test_fixture_blob() -> AnnotatedAccountStateBlob {
   let mut s = BTreeMap::new();
-  let move_struct = AnnotatedMoveStruct::test();
-  s.insert(move_struct.get_tag(), move_struct);
+  let move_struct = test_fixture_struct();
+  s.insert(move_struct.type_.clone(), move_struct);
   AnnotatedAccountStateBlob(s)
 }
 
-#[test] 
-fn test() {
-  let s = fixture_struct();
-  &s.0.values()
-  .for_each(|x| {
-    dbg!(&x.get_tag());
+/// stuct fixture
+pub fn test_fixture_struct()  -> AnnotatedMoveStruct {
+    let module_tag = StructTag {
+      address: AccountAddress::random(),
+      module: Identifier::new("TestModule").unwrap(),
+      name: Identifier::new("TestStructName").unwrap(),
+      type_params: vec!(TypeTag::Bool),
+    };
+
+    let key = Identifier::new("test_key").unwrap();
+    let value = AnnotatedMoveValue::Bool(true);
+
+    AnnotatedMoveStruct {
+      is_resource: true,
+      type_: module_tag.clone(),
+      value: vec!((key, value)),
+    }
+  }
+
+/// search through the account state blob
+pub fn walk_blob(blob: AnnotatedAccountStateBlob, module_name: String) {
+    blob.0.values()
+    .for_each(|move_struct| {
+    dbg!(&move_struct);
+    if move_struct.type_.module.clone().into_string() == module_name {
+      dbg!("this is the right module");
+    } 
+    // if move_struct.type_.name.into_string() == "string" {
+    //   dbg!("this is the right struct");
+    // } 
+
+    // let val: Vec<AnnotatedMoveValue> = move_struct
+    //   .value
+    //   .into_iter()
+    //   .filter_map(|a|{
+    //     if a.0.into_string() == "string".to_owned() {
+    //       dbg!("this is the right value in a struct");
+    //       Some(a.1)
+    //     } else {
+    //       None
+    //     }
+    //   })
+    //   .collect();
   });
+}
+
+#[test]
+fn test() {
+  let s = test_fixture_blob();
+  walk_blob(s, "TestModule".to_owned());
 }
 
