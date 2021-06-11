@@ -192,7 +192,7 @@ pub fn find_value_from_state(
 }
 
 #[test]
-fn test() {
+fn test_find_annotated_move_value() {
     let s = test_fixture_blob();
     match find_value_from_state(
         &s,
