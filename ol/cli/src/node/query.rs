@@ -2,7 +2,10 @@
 use std::collections::BTreeMap;
 
 use libra_json_rpc_client::{views::TransactionView, AccountAddress};
-use move_core_types::{identifier::Identifier, language_storage::{StructTag, TypeTag}};
+use move_core_types::{
+    identifier::Identifier,
+    language_storage::{StructTag, TypeTag},
+};
 use num_format::{Locale, ToFormattedString};
 use resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct, AnnotatedMoveValue};
 
@@ -86,10 +89,7 @@ impl Node {
             Resources { account } => {
                 // account
                 match self.get_annotate_account_blob(account) {
-                    Ok((Some(r), _)) => {
-                      
-                      format!("{:#?}", r)
-                    },
+                    Ok((Some(r), _)) => format!("{:#?}", r),
                     Err(e) => format!("Error querying account resource. Message: {:#?}", e),
                     _ => format!("Error, cannot find account state for {:#?}", account),
                 }
@@ -140,61 +140,71 @@ impl Node {
 
 /// test fixtures
 pub fn test_fixture_blob() -> AnnotatedAccountStateBlob {
-  let mut s = BTreeMap::new();
-  let move_struct = test_fixture_struct();
-  s.insert(move_struct.type_.clone(), move_struct);
-  AnnotatedAccountStateBlob(s)
+    let mut s = BTreeMap::new();
+    let move_struct = test_fixture_struct();
+    s.insert(move_struct.type_.clone(), move_struct);
+    AnnotatedAccountStateBlob(s)
 }
 
 /// stuct fixture
-pub fn test_fixture_struct()  -> AnnotatedMoveStruct {
+pub fn test_fixture_struct() -> AnnotatedMoveStruct {
     let module_tag = StructTag {
-      address: AccountAddress::random(),
-      module: Identifier::new("TestModule").unwrap(),
-      name: Identifier::new("TestStructName").unwrap(),
-      type_params: vec!(TypeTag::Bool),
+        address: AccountAddress::random(),
+        module: Identifier::new("TestModule").unwrap(),
+        name: Identifier::new("TestStructName").unwrap(),
+        type_params: vec![TypeTag::Bool],
     };
 
     let key = Identifier::new("test_key").unwrap();
     let value = AnnotatedMoveValue::Bool(true);
 
     AnnotatedMoveStruct {
-      is_resource: true,
-      type_: module_tag.clone(),
-      value: vec!((key, value)),
+        is_resource: true,
+        type_: module_tag.clone(),
+        value: vec![(key, value)],
     }
-  }
+}
 
-/// search through the account state blob
-pub fn walk_blob(blob: AnnotatedAccountStateBlob, module_name: String) {
-    blob.0.values()
-    .for_each(|move_struct| {
-    dbg!(&move_struct);
-    if move_struct.type_.module.clone().into_string() == module_name {
-      dbg!("this is the right module");
-    } 
-    // if move_struct.type_.name.into_string() == "string" {
-    //   dbg!("this is the right struct");
-    // } 
-
-    // let val: Vec<AnnotatedMoveValue> = move_struct
-    //   .value
-    //   .into_iter()
-    //   .filter_map(|a|{
-    //     if a.0.into_string() == "string".to_owned() {
-    //       dbg!("this is the right value in a struct");
-    //       Some(a.1)
-    //     } else {
-    //       None
-    //     }
-    //   })
-    //   .collect();
-  });
+/// finds a value
+pub fn find_value_from_state(
+    blob: &AnnotatedAccountStateBlob,
+    module_name: String,
+    struct_name: String,
+    key_name: String,
+) -> Option<&AnnotatedMoveValue> {
+    match blob.0.values().find(|&s| {
+        // dbg!(&s.type_.name.as_ref().to_string());
+        s.type_.module.as_ref().to_string() == module_name
+            && s.type_.name.as_ref().to_string() == struct_name
+    }) {
+        Some(s) => {
+            match s
+                .value
+                .iter()
+                .find(|v| v.0.clone().into_string() == key_name)
+            {
+                Some((_, v)) => Some(v),
+                None => None,
+            }
+        }
+        None => None,
+    }
 }
 
 #[test]
 fn test() {
-  let s = test_fixture_blob();
-  walk_blob(s, "TestModule".to_owned());
-}
+    let s = test_fixture_blob();
+    let val = find_value_from_state(
+        &s,
+        "TestModule".to_owned(),
+        "TestStructName".to_owned(),
+        "test_key".to_owned(),
+    );
 
+    match Some(val) {
+        Some(_) => todo!(),
+        None => todo!(),
+    }
+
+    dbg!(&val);
+}
