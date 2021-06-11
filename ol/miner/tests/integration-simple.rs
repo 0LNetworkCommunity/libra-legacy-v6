@@ -30,7 +30,7 @@ pub fn integration() {
             .arg("-p").arg("libra-swarm")
             .arg("--")
             .arg("-n").arg("1")
-            .arg("--libra-node").arg("../target/debug/libra-node ")
+            .arg("--libra-node").arg("target/debug/libra-node ")
             .arg("-c").arg("swarm_temp");
     let cmd = swarm_cmd.stdout(Stdio::inherit())
                 .stderr(Stdio::inherit())
