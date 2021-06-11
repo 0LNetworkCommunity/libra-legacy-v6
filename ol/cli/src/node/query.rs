@@ -1,6 +1,9 @@
 //! 'query'
+use std::collections::BTreeMap;
+
 use libra_json_rpc_client::{views::TransactionView, AccountAddress};
 use num_format::{Locale, ToFormattedString};
+use resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct};
 
 use super::node::Node;
 
@@ -82,7 +85,10 @@ impl Node {
             Resources { account } => {
                 // account
                 match self.get_annotate_account_blob(account) {
-                    Ok((Some(r), _)) => format!("{:#?}", r),
+                    Ok((Some(r), _)) => {
+                      
+                      format!("{:#?}", r)
+                    },
                     Err(e) => format!("Error querying account resource. Message: {:#?}", e),
                     _ => format!("Error, cannot find account state for {:#?}", account),
                 }
@@ -129,5 +135,35 @@ impl Node {
             }
         }
     }
+}
+
+
+
+// fn get_struct(mut blob: AnnotatedAccountStateBlob, tag: StructTag) -> Option<AnnotatedMoveStruct> {
+//   blob.0.remove(&tag)
+// }
+
+// fn get_first(mut blob: AnnotatedAccountStateBlob) {
+//   let x = blob.0.first_entry();
+//   dbg!(x);
+// }
+
+// StructTag, AnnotatedMoveStruct
+
+/// fixture
+pub fn fixture_struct() -> AnnotatedAccountStateBlob {
+  let mut s = BTreeMap::new();
+  let move_struct = AnnotatedMoveStruct::test();
+  s.insert(move_struct.get_tag(), move_struct);
+  AnnotatedAccountStateBlob(s)
+}
+
+#[test] 
+fn test() {
+  let s = fixture_struct();
+  &s.0.values()
+  .for_each(|x| {
+    dbg!(&x.get_tag());
+  });
 }
 
