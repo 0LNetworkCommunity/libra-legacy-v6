@@ -194,17 +194,20 @@ pub fn find_value_from_state(
 #[test]
 fn test() {
     let s = test_fixture_blob();
-    let val = find_value_from_state(
+    match find_value_from_state(
         &s,
         "TestModule".to_owned(),
         "TestStructName".to_owned(),
         "test_key".to_owned(),
-    );
-
-    match Some(val) {
-        Some(_) => todo!(),
-        None => todo!(),
+    ) {
+        // NOTE: This is gross, but I don't see a way to use assert_eq! on AnnotatedMoveValue
+        Some(v) => {
+            match v {
+                // TODO: For some reason can't use assert
+                AnnotatedMoveValue::Bool(b) => assert!(*b == true),
+                _ => panic!("not the right value"),
+            }
+        }
+        None => panic!("not the right value"),
     }
-
-    dbg!(&val);
 }
