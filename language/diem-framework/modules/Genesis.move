@@ -22,11 +22,12 @@ module Genesis {
     use 0x1::Stats;
     use 0x1::ValidatorUniverse;
     use 0x1::GAS;
+    // 0L todo
     // use 0x1::AutoPay2;
     // use 0x1::Oracle;
     use 0x1::Hash;
-    // use 0x1::Subsidy;
-    // use 0x1::Epoch;
+    use 0x1::Subsidy;
+    use 0x1::Epoch;
     use 0x1::MinerState;
 
     /// Initializes the Diem framework.
@@ -108,7 +109,7 @@ module Genesis {
         Stats::initialize(dr_account);
         ValidatorUniverse::initialize(dr_account);
         // AutoPay2::initialize(dr_account);
-        // Subsidy::init_fullnode_sub(dr_account);
+        Subsidy::init_fullnode_sub(dr_account);
         // Oracle::initialize(dr_account);
         MinerState::init_list(dr_account);
 
@@ -116,6 +117,7 @@ module Genesis {
         // `DiemTimestamp::is_operating() ==> ...` will become active and a verification condition.
         // See also discussion at function specification.
         DiemTimestamp::set_time_has_started(dr_account);
+        Epoch::initialize(dr_account); /////// 0L /////////
     }
 
     /// For verification of genesis, the goal is to prove that all the invariants which
