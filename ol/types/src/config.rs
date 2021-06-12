@@ -285,7 +285,8 @@ impl Default for AppCfg {
 pub struct Workspace {
     /// home directory of the libra node, may be the same as miner.
     pub node_home: PathBuf,
-    /// Directory to store blocks in
+    /// Directory of source code (for developer tests only)
+    #[serde(default = "default_source_path")]
     pub source_path: Option<PathBuf>,
     /// Directory to store blocks in
     pub block_dir: String,
@@ -298,6 +299,10 @@ pub struct Workspace {
 
 fn default_db_path() -> PathBuf {
     dirs::home_dir().unwrap().join(NODE_HOME).join("db")
+}
+
+fn default_source_path() -> Option<PathBuf> {
+    Some(PathBuf::from_str(".").unwrap())
 }
 
 impl Default for Workspace {
