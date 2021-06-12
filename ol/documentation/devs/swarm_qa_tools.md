@@ -1,60 +1,160 @@
-# QA 0L tools using swarm
+# 0L tools using swarm
 
-## First configure swarm environment
-###  Start a swarm
-Remember to export `NODE_ENV="test"`, preferably have your `.bashrc` do this.
-Note: the path to swarm files, in this example: ~/swarm_temp
+## Purpose
+The swarm simulates a libra network by running some libra-nodes on localhost. The nodes are pre configured to be in a validator set. The configs for up to five libra nodes are well defined and can be accessed by specifying swarm-persona Alice, Bob, Carol, Dave and Eve.
+
+
+## Bringing up a swarm
+### Assumptions
+
+Throughout this documentation the following paths are used, but they can be changed, if the setup is different on your system:
+
+* libra source is cloned into $HOME/libra
+* the temp directory for swarm files is created in $HOME/swarm_temp
+
+### Initial compile steps
+
+The following compile steps are mandatory for the swarm to run correctly using the latest source code. All other rust dependencies will get compiled by cargo when needed:
+
 ```
-cargo build -p libra-node -p cli && NODE_ENV="test" cargo run -p libra-swarm -- --libra-node target/debug/libra-node -c ~/swarm_temp  -n 2 -s --cli-path target/debug/cli
+cargo build -p libra-node -p cli
+cd language/stdlib
+cargo run --release
 ```
 
-### Initialize the 0L.toml, for the 0th address (alice)
+### Starting the swarm
+
+The general syntax to start the swarm is:
+
+`cargo run -p libra-swarm -- [libra-node binary path] -c [path for temporary files] -n [number of nodes to simulate]`
+
+To start swarm with a client in same terminal, pass the `-s` and `--cli-path` to cli binary
+
+Also `NODE_ENV="test"` is important to use. In this documentation we will set it at each command, but you might also add in `.bashrc` a line `export NODE_ENV="test"`
+
+### Swarm with 2 nodes without cli:
+
 ```
-cargo run -p ol -- --swarm-path=~/swarm_temp --swarm-persona=alice init --source-path ./
+cd $HOME/libra
+NODE_ENV="test" cargo run -p libra-swarm -- --libra-node target/debug/libra-node -c $HOME/swarm_temp -n 2
+```
+
+### Swarm with 2 nodes and with cli:
+
+```
+cd ~/libra
+NODE_ENV="test" cargo run -p libra-swarm -- --libra-node target/debug/libra-node -c $HOME/swarm_temp -n 2 -s --cli-path target/debug/cli
+```
+
+At the cli prompt when asked to "Enter your 0L mnemonic:" you can use the mnemonics of alice (see below in the section about the cli)
+
+
+### Initialize swarm configs 
+
+After starting the swarm, the 0L.toml and other configs have to be created by:
+
+```
+export NODE_ENV="test"
+cargo run -p ol -- --swarm-path=$HOME/swarm_temp --swarm-persona=alice init --source-path $HOME/libra
+cargo run -p ol -- --swarm-path=$HOME/swarm_temp --swarm-persona=bob init --source-path $HOME/libra
+```
+
+If more than 2 swarm nodes are running, the same commands have to be run also for swarm-persona carol, dave and eve.
+
+## 0L tools
+
+After the above steps, the 0L tools can be used
+
+## cli
+
+If swarm has been started without cli, you can attach the cli like this (with the data that is shown at the end of swarm startup in the console). E.g.:
+ 
+```
+cargo r -p cli -- -u http://<local-host-and-port> -m <path to mint.key' --waypoint <random waypoint> --chain-id 4
+```
+
+The mnemonics to enter are those in the fixtures dorectory, e.g. for alice in `ol/fixtures/mnemonic/alice.mnem`
+
+```
+talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse
+```
+
+if succeed, you can enter `help` at the cli prompt `libra%` or for example request the account balance:
+
+```
+libra% query balance 0
+Balance is: 4.995072GAS
 ```
 
 
 ## Miner
 
-In another terminal:
+In swarm you can run the miner for alice by the following command:
 
-Preparing block_0.json, so miner can directly be started for "Alice":
+```
+NODE_ENV="test" cargo r -p miner -- --swarm-path $HOME/swarm_temp --swarm-persona alice start
+```
 
-`mkdir ~/swarm_temp/0/blocks  && cp ol/fixtures/blocks/test/alice/block_0.json ~/swarm_temp/0/blocks`
-
-Start miner:
-
-`NODE_ENV="test" cargo run -p miner -- --swarm-path=~/swarm_temp --swarm-persona=alice start`
 
 ## Explorer
 
-In another terminal:
-
-`cargo run -p ol-cli -- --swarm-path=~/swarm_temp --swarm-persona=alice explorer`
-
-## TXS
-
-
-### Send a noop demo transaction as `alice`
-
-Note: that you are using the same swarm temp path as above
+The explorer to show network activity can be run by the following command. Usually it only makes sense to do this after the miner is running:
 
 ```
-cd ~/libra/
+NODE_ENV="test" cargo r -p ol -- --swarm-path=$HOME/swarm_temp --swarm-persona=alice explorer
+```
 
-cargo r -p txs -- --swarm-path=~/swarm_temp/ --swarm-persona=alice demo
+## Health
+
+```
+NODE_ENV="test" cargo r -p ol -- --swarm-path=$HOME/swarm_temp --swarm-persona=alice health
+```
+
+## Pilot
+
+```
+NODE_ENV="test" cargo r -p ol -- --swarm-path=$HOME/libra/swarm_temp --swarm-persona=alice pilot
+```
+
+-> läuft, aber kann dann zb nicht den SERVE starten
+
+## Web Monitor (SERVE)
+
+```
+cargo r -p ol -- --swarm-path /home/morton/libra/swarm_temp/ --swarm-persona alice serve
+```
+
+-> nochmal checken wieso kein Inhalt geliefert wird
+
+
+## Transactions
+
+### Demo txs
+With the following command you can send a demo transaction as `alice`
+
+```
+cargo r -p txs -- --swarm-path=$HOME/swarm_temp/ --swarm-persona=alice demo
 ```
 
 
-### Send an account creation tx from `alice`, for `eve`
+### Validator account creation tx from `alice`, for `eve`
+
+The following command would send an onboarding transaction from alice to eve:
 
 ```
-cd ~/libra/
-
-cargo r -p txs -- --swarm-path=~/swarm_temp/ --swarm-persona=alice create-validator -f ./ol/fixtures/onboarding/eve_init_test.json
+cargo r -p txs -- --swarm-path=$HOME/swarm_temp/ --swarm-persona=alice create-validator -f ./ol/fixtures/onboarding/eve_init_test.json
 ```
 
 (the create-validator step for swarm still throws an arror "could not find autopay instructions" in release-v4.3.0, even with https://github.com/OLSF/libra/pull/499)
+
+
+
+
+
+
+
+
+
 
 ### Relay
 
