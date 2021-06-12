@@ -42,7 +42,7 @@ NODE_ENV="test" cargo run -p libra-swarm -- --libra-node target/debug/libra-node
 ### Swarm with 2 nodes and with cli:
 
 ```
-cd ~/libra
+cd $HOME/libra
 NODE_ENV="test" cargo run -p libra-swarm -- --libra-node target/debug/libra-node -c $HOME/swarm_temp -n 2 -s --cli-path target/debug/cli
 ```
 
@@ -104,27 +104,49 @@ The explorer to show network activity can be run by the following command. Usual
 NODE_ENV="test" cargo r -p ol -- --swarm-path=$HOME/swarm_temp --swarm-persona=alice explorer
 ```
 
-## Health
-
-```
-NODE_ENV="test" cargo r -p ol -- --swarm-path=$HOME/swarm_temp --swarm-persona=alice health
-```
 
 ## Pilot
+
+Pilot is also running for swarm and correctly detects, which components are not ok. But is not able to start the missing components, e.g. web monitor or miner:
 
 ```
 NODE_ENV="test" cargo r -p ol -- --swarm-path=$HOME/libra/swarm_temp --swarm-persona=alice pilot
 ```
 
--> läuft, aber kann dann zb nicht den SERVE starten
 
-## Web Monitor (SERVE)
+## Health
+
+The health check for swarm nodes works basically but does not interpret each status completely correct:
 
 ```
-cargo r -p ol -- --swarm-path /home/morton/libra/swarm_temp/ --swarm-persona alice serve
+NODE_ENV="test" cargo r -p ol -- --swarm-path=$HOME/swarm_temp --swarm-persona=alice health
 ```
 
--> nochmal checken wieso kein Inhalt geliefert wird
+Known inaccuracy:
+`Configs exist` is always shown as `false`
+
+
+## Web Monitor (warp server)
+
+Before the web monitor will work properly for swarm, if you did not do it up to now, run the health command once (see section above).
+
+
+After this, in one terminal window start the svelte dev server. This updates the HTML and JS bundles as files are changed. You need this for realtime feedback.
+
+```
+cd $HOME/libra/ol/cli/web-monitor
+npm run dev
+```
+
+
+Then in a second terminal window, you can start the "warp" server, which will serve the web monitor on port 3030:
+
+```
+cd $HOME/libra
+cargo r -p ol -- --swarm-path $HOME/swarm_temp/ --swarm-persona alice serve
+```
+
+Now you can visit the web monitor with a browser on http://localhost:3030
 
 
 ## Transactions
@@ -148,14 +170,6 @@ cargo r -p txs -- --swarm-path=$HOME/swarm_temp/ --swarm-persona=alice create-va
 (the create-validator step for swarm still throws an arror "could not find autopay instructions" in release-v4.3.0, even with https://github.com/OLSF/libra/pull/499)
 
 
-
-
-
-
-
-
-
-
 ### Relay
 
 This transaction will appear with bob's signature and apply changes to `bob` account. However `alice` will be submitting it. The use case is if bob's machine which signs cannot or prefers not to connect (e.g. or bob would like to sign from an offline computer/device, or in onboarding cases).
@@ -163,14 +177,13 @@ This transaction will appear with bob's signature and apply changes to `bob` acc
 #### Save a noop test transaction, by `bob` for `alice` to later send
 
 ```
-cd ~/libra/
-
-cargo r -p txs -- --swarm-path=./swarm_temp/ --swarm-persona=bob --save-path ./noop_tx.json --no-send demo
+cd $HOME/libra
+cargo r -p txs -- --swarm-path=$HOME/swarm_temp/ --swarm-persona=bob --save-path ./noop_tx.json --no-send demo
 ```
 
 #### submit as `alice`
-```
-cd ~/libra/
 
-cargo r -p txs -- --swarm-path=./swarm_temp/ --swarm-persona=bob relay --relay-file ./noop_tx.json
+```
+cd $HOME/libra
+cargo r -p txs -- --swarm-path=$HOME/swarm_temp/ --swarm-persona=bob relay --relay-file ./noop_tx.json
 ```
