@@ -28,6 +28,17 @@ pub enum QueryType {
         /// account to query txs of
         account: AccountAddress,
     },
+    /// get a move value from account blob
+    MoveValue {
+      /// account to query txs of
+      account: AccountAddress,
+      /// move module name
+      module_name: String,
+      /// move struct name
+      struct_name: String,
+      /// move key name
+      key_name: String,
+    },
     /// How far behind the local is from the upstream nodes
     SyncDelay,
     /// Get transaction history
@@ -40,7 +51,7 @@ pub enum QueryType {
         txs_count: Option<u64>,
         /// filter by type
         txs_type: Option<String>,
-    },
+    }
 }
 
 /// Get data from a client, with a query type. Will connect to local only if in sync.
@@ -93,7 +104,18 @@ impl Node {
                     Err(e) => format!("Error querying account resource. Message: {:#?}", e),
                     _ => format!("Error, cannot find account state for {:#?}", account),
                 }
-            }
+            },
+            MoveValue { account, module_name, struct_name, key_name } => {
+                // account
+                match self.get_annotate_account_blob(account) {
+                    Ok((Some(r), _)) => {
+                      let value = find_value_from_state(&r, module_name, struct_name, key_name);
+                      format!("{:#?}", value)
+                    },
+                    Err(e) => format!("Error querying account resource. Message: {:#?}", e),
+                    _ => format!("Error, cannot find account state for {:#?}", account),
+                }
+            },
             Txs {
                 account,
                 txs_height,
