@@ -7755,6 +7755,7 @@ dependencies = [
  "once_cell",
  "regex",
  "reqwest",
+ "resource-viewer",
  "rpassword",
  "rustyline",
  "serde",

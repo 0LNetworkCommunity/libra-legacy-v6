@@ -15,7 +15,7 @@ use ol::{commands::init_cmd, config::AppCfg};
 use ol_keys::{scheme::KeyScheme, wallet};
 use ol_types::block::Block;
 use ol_types::config::IS_TEST;
-use ol_types::{account::ValConfigs, autopay::PayInstruction, config::TxType};
+use ol_types::{account::ValConfigs, pay_instruction::PayInstruction, config::TxType};
 use reqwest::Url;
 use std::process::exit;
 use std::{fs::File, io::Write, path::PathBuf};

@@ -4,12 +4,14 @@
 
 use abscissa_core::{Command, Options, Runnable};
 use libra_types::transaction::{Script, SignedTransaction};
-use ol::node::{node::Node, query};
+use ol::node::{node::Node};
 use crate::{entrypoint, prelude::app_config, sign_tx::sign_tx, submit_tx::{tx_params_wrapper, batch_wrapper, TxParams}};
 use dialoguer::Confirm;
-use std::{path::PathBuf, process::exit};
-use ol_types::{autopay::PayInstruction, config::{TxType, IS_TEST}};
-
+use std::{convert::TryFrom, path::PathBuf, process::exit};
+use ol_types::{config::{TxType, IS_TEST}, autopay::AutoPayResource, pay_instruction::PayInstruction};
+use libra_types::{
+    account_address::AccountAddress
+};
 /// command to submit a batch of autopay tx from file
 #[derive(Command, Debug, Default, Options)]
 pub struct AutopayBatchCmd {
@@ -28,9 +30,10 @@ impl Runnable for AutopayBatchCmd {
         let epoch = crate::epoch::get_epoch(&tx_params);
         println!("The current epoch is: {}", epoch);
         // // get highest autopay number
-        // let node = Node::default_from_cfg(cfg.clone(), None);
-        // let resources = node.query(Resources{ account: cfg.profile.account});
+        let mut node = Node::default_from_cfg(cfg.clone(), entry_args.swarm_path);
+        get_autopay_id(&mut node, tx_params.owner_address);
 
+        
         let instructions = PayInstruction::parse_autopay_instructions(&self.autopay_batch_file, Some(epoch), None).unwrap();
         let scripts = process_instructions(instructions);
         batch_wrapper(scripts, &tx_params, entry_args.no_send, entry_args.save_path)
@@ -95,7 +98,7 @@ pub fn sign_instructions(scripts: Vec<Script>, starting_sequence_num: u64, tx_pa
 #[test]
 fn test_instruction_script_match() {
   use libra_types::account_address::AccountAddress;
-  use ol_types::autopay::InstructionType;
+  use ol_types::pay_instruction::InstructionType;
   let script = transaction_builder::encode_autopay_create_instruction_script(
     1, 
     0, 
@@ -117,4 +120,18 @@ fn test_instruction_script_match() {
 
   instr.check_instruction_match_tx(script).unwrap();
 
+}
+
+fn get_autopay_id(node: &mut Node, account: AccountAddress) -> Option<u64>{
+    match node.get_account_state(account) {
+        Ok(s) => {
+          let resouce: Option<AutoPayResource> = s.get_resource(AutoPayResource::resource_path().as_slice()).unwrap();
+          if resouce.is_some() {
+              let resource_view = AutoPayResource::try_from(resouce.unwrap());
+              dbg!(&resource_view);
+          }
+        },
+        Err(_) => {},
+    }
+    Some(1)
 }
