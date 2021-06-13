@@ -82,7 +82,9 @@ impl PayInstruction {
             .map(|(i, mut inst)| {
                 inst.uid = Some(new_uid + i as u64);
 
-                if inst.end_epoch.is_none() && inst.duration_epochs.is_none() {
+                if inst.end_epoch.is_none()
+                && inst.duration_epochs.is_none()
+                && inst.type_of != InstructionType::FixedOnce {
                     println!(
                         "Need to set end_epoch, or duration_epoch in instruction: {:?}",
                         &inst
@@ -284,7 +286,7 @@ fn parse_pct_balance_type() {
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let first = &inst[0];
     
-    assert_eq!(first.uid, 0);
+    assert_eq!(first.uid, Some(1));
     assert_eq!(first.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
     assert_eq!(first.type_move, Some(0));
     assert_eq!(first.duration_epochs, Some(100));
@@ -299,7 +301,7 @@ fn parse_pct_change_type() {
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let second = &inst[1];
     
-    assert_eq!(second.uid, 1);
+    assert_eq!(second.uid, Some(2));
     assert_eq!(second.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
     assert_eq!(second.type_move, Some(1));
     assert_eq!(second.duration_epochs, Some(100));
@@ -315,7 +317,7 @@ fn parse_fixed_recurr_type() {
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let third = &inst[2];
     
-    assert_eq!(third.uid, 2);
+    assert_eq!(third.uid, Some(3));
     assert_eq!(third.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
     assert_eq!(third.type_move, Some(2));
     assert_eq!(third.duration_epochs, Some(100));
@@ -330,11 +332,11 @@ fn parse_fixed_once_type() {
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let fourth = &inst[3];
     
-    assert_eq!(fourth.uid, 3);
+    assert_eq!(fourth.uid, Some(4));
     assert_eq!(fourth.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
     assert_eq!(fourth.type_move, Some(3));
-    assert_eq!(fourth.duration_epochs, Some(100));
-    assert_eq!(fourth.end_epoch, Some(100));
+    assert_eq!(fourth.duration_epochs, Some(2)); // TODO: This is temporary patch for v4.3.2
+    assert_eq!(fourth.end_epoch, None);
     assert_eq!(fourth.type_of, InstructionType::FixedOnce);
     assert_eq!(fourth.value_move.unwrap(), 22000000u64);
 }
@@ -345,7 +347,7 @@ fn parse_pct_balance_end_epoch_type() {
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let fifth = &inst[4];
     
-    assert_eq!(fifth.uid, 4);
+    assert_eq!(fifth.uid, Some(5));
     assert_eq!(fifth.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
     assert_eq!(fifth.type_move, Some(0));
     assert_eq!(fifth.duration_epochs, None);
@@ -360,7 +362,7 @@ fn parse_pct_change_end_epoch_type() {
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let sixth = &inst[5];
     
-    assert_eq!(sixth.uid, 5);
+    assert_eq!(sixth.uid, Some(6));
     assert_eq!(sixth.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
     assert_eq!(sixth.type_move, Some(1));
     assert_eq!(sixth.duration_epochs, None);
@@ -376,7 +378,7 @@ fn parse_fixed_recurr_end_epoch_type() {
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let seventh = &inst[6];
     
-    assert_eq!(seventh.uid, 6);
+    assert_eq!(seventh.uid, Some(7));
     assert_eq!(seventh.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
     assert_eq!(seventh.type_move, Some(2));
     assert_eq!(seventh.duration_epochs, None);
@@ -385,20 +387,4 @@ fn parse_fixed_recurr_end_epoch_type() {
     assert_eq!(seventh.value, 5f64);
     assert_eq!(seventh.value_move.unwrap(), 5000000u64);
 
-}
-
-#[test]
-fn parse_fixed_once_end_epoch_type() {
-    let path = ol_fixtures::get_demo_autopay_json().1;
-    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
-    let eigth = &inst[7];
-    
-    assert_eq!(eigth.uid, 7);
-    assert_eq!(eigth.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
-    assert_eq!(eigth.type_move, Some(3));
-    assert_eq!(eigth.duration_epochs, None);
-    assert_eq!(eigth.end_epoch, Some(50));
-    assert_eq!(eigth.type_of, InstructionType::FixedOnce);
-    assert_eq!(eigth.value, 22f64);
-    assert_eq!(eigth.value_move.unwrap(), 22000000u64);
 }
