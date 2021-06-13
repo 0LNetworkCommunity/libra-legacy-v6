@@ -29,7 +29,8 @@ pub fn integration() {
     swarm_cmd.arg("run")
             .arg("-p").arg("libra-swarm")
             .arg("--")
-            .arg("-n").arg("1")
+            .arg("-n")
+            .arg("1")
             .arg("--libra-node").arg(node_exec.to_str().unwrap())
             .arg("-c").arg(swarm_configs_path.to_str().unwrap());
     let cmd = swarm_cmd.stdout(Stdio::inherit())

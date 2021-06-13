@@ -201,7 +201,7 @@ impl AppCfg {
     /// swarm_path points to the swarm_temp directory
     /// node_home to the directory of the current swarm persona
     pub fn make_swarm_configs(swarm_path: PathBuf, node_home: PathBuf) -> AppCfg {
-        let config_path = swarm_path.join("0/node.yaml");
+        let config_path = swarm_path.join(&node_home).join("node.yaml");
         let config = NodeConfig::load(&config_path)
             .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &config_path));
 
@@ -210,7 +210,7 @@ impl AppCfg {
                 .unwrap();
 
         // upstream configs
-        let upstream_config_path = swarm_path.join("0/node.yaml");
+        let upstream_config_path = swarm_path.join(&node_home).join("node.yaml");
         let upstream_config = NodeConfig::load(&upstream_config_path).unwrap_or_else(|_| {
             panic!(
                 "Failed to load NodeConfig from file: {:?}",
