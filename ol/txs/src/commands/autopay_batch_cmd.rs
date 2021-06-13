@@ -3,11 +3,12 @@
 #![allow(clippy::never_loop)]
 
 use abscissa_core::{Command, Options, Runnable};
+use anyhow::Error;
 use libra_types::transaction::{Script, SignedTransaction};
 use ol::node::{node::Node};
 use crate::{entrypoint, prelude::app_config, sign_tx::sign_tx, submit_tx::{tx_params_wrapper, batch_wrapper, TxParams}};
 use dialoguer::Confirm;
-use std::{convert::TryFrom, path::PathBuf, process::exit};
+use std::{path::PathBuf, process::exit};
 use ol_types::{config::{TxType, IS_TEST}, autopay::AutoPayResource, pay_instruction::PayInstruction};
 use libra_types::{
     account_address::AccountAddress
@@ -27,14 +28,22 @@ impl Runnable for AutopayBatchCmd {
         let entry_args = entrypoint::get_args();
         let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
         let cfg = app_config();
-        let epoch = crate::epoch::get_epoch(&tx_params);
-        println!("The current epoch is: {}", epoch);
+
         // // get highest autopay number
         let mut node = Node::default_from_cfg(cfg.clone(), entry_args.swarm_path);
-        get_autopay_id(&mut node, tx_params.owner_address);
-
+        let start_id = match get_autopay_start_id(&mut node, tx_params.owner_address){
+            Ok(i) => Some(i),
+            Err(e) => {
+              println!("ERROR: Could not fetch AutoPay ids, cannot continue to send tx. Message: {:?}", e);
+              exit(1);
+            },
+        };
+        println!("Latest Autopay id: {:?}", &start_id);
+        node.refresh_chain_info();
+        let epoch = node.vitals.chain_view.unwrap().epoch;
+        println!("The current epoch is: {}\n", epoch);
         
-        let instructions = PayInstruction::parse_autopay_instructions(&self.autopay_batch_file, Some(epoch), None).unwrap();
+        let instructions = PayInstruction::parse_autopay_instructions(&self.autopay_batch_file, Some(epoch), start_id).unwrap();
         let scripts = process_instructions(instructions);
         batch_wrapper(scripts, &tx_params, entry_args.no_send, entry_args.save_path)
     }
@@ -122,16 +131,20 @@ fn test_instruction_script_match() {
 
 }
 
-fn get_autopay_id(node: &mut Node, account: AccountAddress) -> Option<u64>{
-    match node.get_account_state(account) {
-        Ok(s) => {
-          let resouce: Option<AutoPayResource> = s.get_resource(AutoPayResource::resource_path().as_slice()).unwrap();
-          if resouce.is_some() {
-              let resource_view = AutoPayResource::try_from(resouce.unwrap());
-              dbg!(&resource_view);
-          }
+fn get_autopay_start_id(node: &mut Node, account: AccountAddress) -> Result<u64, Error>{
+    let s = node.get_account_state(account)?;
+    match s.get_resource::<AutoPayResource>(
+      AutoPayResource::resource_path()
+      .as_slice()
+    ).unwrap(){
+        Some(a) => {
+          let mut ids = vec!(0u64);
+          a.payment.iter().for_each(|i|{
+            ids.push(i.uid);
+          });
+          ids.sort();
+          Ok(ids.pop().unwrap())
         },
-        Err(_) => {},
+        None => Ok(0),
     }
-    Some(1)
 }

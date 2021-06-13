@@ -75,7 +75,7 @@ impl PayInstruction {
         let mut total_pct_of_change: f64 = 0f64;
         let mut total_pct_balance: f64 = 0f64;
         // let mut ids: Vec<u64> = vec!();
-        let new_uid = start_uid.unwrap_or(0);
+        let new_uid = start_uid.unwrap_or(0) + 1;
         let transformed = inst_vec
             .into_iter()
             .enumerate()

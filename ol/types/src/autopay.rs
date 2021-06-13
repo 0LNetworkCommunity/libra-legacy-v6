@@ -23,17 +23,17 @@ pub struct AutoPayResource {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Payment {
     ///
-    uid: u64,
+    pub uid: u64,
     ///
-    in_type: u8,
+    pub in_type: u8,
     ///
-    payee: AccountAddress,
+    pub payee: AccountAddress,
     ///
-    end_epoch: u64,
+    pub end_epoch: u64,
     ///
-    prev_bal: u64,
+    pub prev_bal: u64,
     ///
-    amt: u64,
+    pub amt: u64,
 }
 
 impl MoveResource for AutoPayResource {
