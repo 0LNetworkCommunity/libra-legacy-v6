@@ -12,11 +12,7 @@ use libra_types::{
     access_path::AccessPath, account_address::AccountAddress, account_state::AccountState,
     contract_event::ContractEvent,
 };
-use move_core_types::{
-    identifier::Identifier,
-    language_storage::{ModuleId, StructTag},
-    value::{MoveStruct, MoveValue},
-};
+use move_core_types::{identifier::Identifier, language_storage::{ModuleId, StructTag}, value::{MoveStruct, MoveValue}};
 use move_vm_runtime::data_cache::RemoteCache;
 use std::{
     collections::btree_map::BTreeMap,
@@ -29,15 +25,19 @@ mod cached_access_path_table;
 mod fat_type;
 mod module_cache;
 mod resolver;
+#[derive(Debug)]
+
+//////// 0L ////////
+// make pub
+pub struct AnnotatedAccountStateBlob(pub BTreeMap<StructTag, AnnotatedMoveStruct>);
 
 #[derive(Debug)]
-pub struct AnnotatedAccountStateBlob(BTreeMap<StructTag, AnnotatedMoveStruct>);
-
-#[derive(Debug)]
+//////// 0L ////////
+/// Make fields pub
 pub struct AnnotatedMoveStruct {
-    is_resource: bool,
-    type_: StructTag,
-    value: Vec<(Identifier, AnnotatedMoveValue)>,
+    pub is_resource: bool,
+    pub type_: StructTag,
+    pub value: Vec<(Identifier, AnnotatedMoveValue)>,
 }
 
 /// AnnotatedMoveValue is a fully expanded version of on chain Move data. This should only be used
@@ -62,6 +62,7 @@ pub struct MoveValueAnnotator<'a> {
 }
 
 impl<'a> MoveValueAnnotator<'a> {
+
     pub fn new(view: &'a dyn RemoteCache) -> Self {
         Self {
             cache: Resolver::new(view, true),

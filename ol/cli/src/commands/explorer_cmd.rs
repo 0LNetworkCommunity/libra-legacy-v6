@@ -35,12 +35,26 @@ pub struct ExplorerCMD {
 impl Runnable for ExplorerCMD {
     /// Start the application.
     fn run(&self) {
+
+        let node_index = if let Some(persona)  = entrypoint::get_args().swarm_persona {
+            match persona.as_str() {
+                "alice" => "0",
+                "bob" => "1",
+                "carol" => "2",
+                "dave" => "3",
+                "eve" => "4",
+                _ => "0"
+            }
+        }else{
+            "0"
+        };
+
         let args = entrypoint::get_args();
         let is_swarm = *&args.swarm_path.is_some();
 
         if *&self.pilot {
           let mut conf = match args.swarm_path {
-              Some(sp) => AppCfg::init_app_configs_swarm(sp.clone(), sp.join("0")),
+              Some(sp) => AppCfg::init_app_configs_swarm(sp.clone(), sp.join(node_index)),
               None => app_config().to_owned(),
           };
           let client = client::pick_client(entrypoint::get_args().swarm_path, &mut conf)
@@ -52,7 +66,7 @@ impl Runnable for ExplorerCMD {
         let args = entrypoint::get_args();
 
         let mut cfg = match args.swarm_path.clone() {
-            Some(sp) => AppCfg::init_app_configs_swarm(sp.clone(), sp.join("0")),
+            Some(sp) => AppCfg::init_app_configs_swarm(sp.clone(), sp.join(node_index)),
             None => app_config().to_owned(),
         };
 
@@ -84,6 +98,12 @@ impl Runnable for ExplorerCMD {
 
             match events.next().unwrap() {
                 Event::Input(key) => match key {
+                    Key::Ctrl(c) => {
+                        if c == 'c' {
+                            app.should_quit = true;
+                            break;
+                        }
+                    }
                     Key::Char(character) => {
                         app.on_key(character);
                     }

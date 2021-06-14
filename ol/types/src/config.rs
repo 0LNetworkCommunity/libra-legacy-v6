@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::{fs, io::Write, net::Ipv4Addr, path::PathBuf, str::FromStr};
 
-use crate::dialogue::{what_home, what_ip, what_source, what_statement};
+use crate::dialogue::{what_home, what_ip, what_statement};
 
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
 
@@ -34,7 +34,7 @@ pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
 });
 
 /// check this is CI environment
-pub static IS_CI: Lazy<bool> = Lazy::new(|| {
+pub static IS_TEST: Lazy<bool> = Lazy::new(|| {
     // assume default if NODE_ENV=prod and TEST=y.
     if std::env::var("NODE_ENV").unwrap_or("prod".to_string()) != "prod".to_string()
         && std::env::var("TEST").unwrap_or("n".to_string()) != "n".to_string()
@@ -113,7 +113,7 @@ impl AppCfg {
         config_path: &Option<PathBuf>,
         base_epoch: Option<u64>,
         base_waypoint: Option<Waypoint>,
-        ask_source_path: bool,
+        source_path: &Option<PathBuf>,
     ) -> AppCfg {
         // TODO: Check if configs exist and warn on overwrite.
         let mut default_config = AppCfg::default();
@@ -129,10 +129,10 @@ impl AppCfg {
             what_home(None, None)
         });
 
-        if ask_source_path {
-          let source_path = what_source();
+        if source_path.is_some() {
+          // let source_path = what_source();
           default_config.workspace.source_path = source_path.clone();
-          default_config.workspace.stdlib_bin_path = Some(source_path.unwrap().join("language/stdlib/staged/stdlib.mv"));
+          default_config.workspace.stdlib_bin_path = Some(source_path.as_ref().unwrap().join("language/stdlib/staged/stdlib.mv"));
         }
 
 
@@ -154,7 +154,7 @@ impl AppCfg {
         }
 
         // skip questionnaire if CI
-        if *IS_CI {
+        if *IS_TEST {
             AppCfg::save_file(&default_config);
 
             return default_config;
@@ -201,7 +201,7 @@ impl AppCfg {
     /// swarm_path points to the swarm_temp directory
     /// node_home to the directory of the current swarm persona
     pub fn make_swarm_configs(swarm_path: PathBuf, node_home: PathBuf) -> AppCfg {
-        let config_path = swarm_path.join("0/node.yaml");
+        let config_path = swarm_path.join(&node_home).join("node.yaml");
         let config = NodeConfig::load(&config_path)
             .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &config_path));
 
@@ -210,7 +210,7 @@ impl AppCfg {
                 .unwrap();
 
         // upstream configs
-        let upstream_config_path = swarm_path.join("0/node.yaml");
+        let upstream_config_path = swarm_path.join(&node_home).join("node.yaml");
         let upstream_config = NodeConfig::load(&upstream_config_path).unwrap_or_else(|_| {
             panic!(
                 "Failed to load NodeConfig from file: {:?}",

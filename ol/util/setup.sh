@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# targeting ububtu
-apt update
-apt install -y git vim zip unzip jq build-essential cmake clang llvm libgmp-dev secure-delete pkg-config libssl-dev lld
+# targeting ubuntu
+sudo apt update
+sudo apt install -y git vim zip unzip jq build-essential cmake clang llvm libgmp-dev secure-delete pkg-config libssl-dev lld
 curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
 PATH="$HOME/.cargo/bin:$PATH" cargo install toml-cli
 PATH="$HOME/.cargo/bin:$PATH" cargo install sccache

@@ -231,7 +231,7 @@ pub fn tx_params(
             get_oper_params( &config, tx_type, url, waypoint)
         } else {
             // Get from 0L.toml e.g. ~/.0L/0L.toml, or use Profile::default()
-            get_tx_params_from_toml(config.clone(), tx_type, None, url, waypoint).unwrap()
+            get_tx_params_from_toml(config.clone(), tx_type, None, url, waypoint, swarm_path.as_ref().is_some()).unwrap()
         }
     };
 
@@ -333,6 +333,7 @@ pub fn get_tx_params_from_toml(
     wallet_opt: Option<&WalletLibrary>,
     url: Url,
     wp: Option<Waypoint>,
+    is_swarm: bool,
 ) -> Result<TxParams, Error> {
     // let url = config.profile.default_node.clone().unwrap();
     let (auth_key, address, wallet) = if let Some(wallet) = wallet_opt {
@@ -348,6 +349,14 @@ pub fn get_tx_params_from_toml(
     let keys = KeyScheme::new_from_mnemonic(wallet.mnemonic());
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
     let tx_cost = config.tx_configs.get_cost(tx_type);
+
+    let chain_id = if is_swarm {
+      ChainId::new(4)
+    } else {
+      // main net id
+      ChainId::new(1)
+    };
+
     let tx_params = TxParams {
         auth_key,
         signer_address: address,
@@ -359,7 +368,7 @@ pub fn get_tx_params_from_toml(
         // max_gas_unit_for_tx: config.tx_configs.management_txs.max_gas_unit_for_tx,
         // coin_price_per_unit: config.tx_configs.management_txs.coin_price_per_unit, // in micro_gas
         // user_tx_timeout: config.tx_configs.management_txs.user_tx_timeout,
-        chain_id: ChainId::new(1),
+        chain_id,
     };
 
     Ok(tx_params)

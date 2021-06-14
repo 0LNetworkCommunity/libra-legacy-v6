@@ -160,8 +160,8 @@ address 0x1 {
           let delete_payment = false;
           {
             let payment = Vector::borrow_mut<Payment>(payments, payments_idx);
-            // If payment end epoch is greater, it's not an active payment anymore, so delete it
-            if (payment.end_epoch >= epoch) {
+            // If payment end epoch is greater, it's not an active payment anymore, so delete it, does not apply to fixed once payment (it is deleted once it is sent)
+            if (payment.end_epoch >= epoch || payment.in_type == FIXED_ONCE) {
               // A payment will happen now
               // Obtain the amount to pay 
               // IMPORTANT there are two digits for scaling representation.
