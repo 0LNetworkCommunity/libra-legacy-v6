@@ -93,10 +93,12 @@ pub fn migrate_autopay_json_4_3_0(cfg: &AppCfg, instructions: Vec<PayInstruction
   let vec_instr: Vec<PayInstruction> = instructions.into_iter()
   .map(|mut i| {
     if i.type_of == InstructionType::PercentOfChange {
+      i.uid = None;
       i.type_of = InstructionType::PercentOfBalance;
       i.type_move = None;
       i.value_move = None;
       i.duration_epochs = Some(1);
+      i.end_epoch = None;
     }
     i
   })
