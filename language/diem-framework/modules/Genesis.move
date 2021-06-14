@@ -22,9 +22,8 @@ module Genesis {
     use 0x1::Stats;
     use 0x1::ValidatorUniverse;
     use 0x1::GAS;
-    // 0L todo
-    // use 0x1::AutoPay2;
-    // use 0x1::Oracle;
+    use 0x1::AutoPay2;
+    use 0x1::Oracle;
     use 0x1::Hash;
     use 0x1::Subsidy;
     use 0x1::Epoch;
@@ -108,9 +107,9 @@ module Genesis {
         // DiemAccount::restore_key_rotation_capability(tc_rotate_key_cap);
         Stats::initialize(dr_account);
         ValidatorUniverse::initialize(dr_account);
-        // AutoPay2::initialize(dr_account);
+        AutoPay2::initialize(dr_account);
         Subsidy::init_fullnode_sub(dr_account);
-        // Oracle::initialize(dr_account);
+        Oracle::initialize(dr_account);
         MinerState::init_list(dr_account);
 
         // After we have called this function, all invariants which are guarded by
