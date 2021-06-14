@@ -83,13 +83,17 @@ impl PayInstruction {
                 inst.uid = Some(new_uid + i as u64);
 
                 if inst.end_epoch.is_none()
-                && inst.duration_epochs.is_none()
-                && inst.type_of != InstructionType::FixedOnce {
-                    println!(
-                        "Need to set end_epoch, or duration_epoch in instruction: {:?}",
-                        &inst
-                    );
-                    exit(1);
+                && inst.duration_epochs.is_none() {
+
+                if inst.type_of != InstructionType::FixedOnce {
+                      println!(
+                          "Need to set end_epoch, or duration_epoch in instruction: {:?}",
+                          &inst
+                      );
+                      exit(1);
+                  } else {
+                    inst.duration_epochs = Some(1);
+                  }
                 }
 
                 if let Some(duration) = inst.duration_epochs {
@@ -103,6 +107,8 @@ impl PayInstruction {
                       println!("If you are setting a duration_epochs instruction, we need the current epoch. Instruction: {:?}", &inst);
                       exit(1);
                     }
+                } else {
+
                 }
 
                 match inst.type_of {
