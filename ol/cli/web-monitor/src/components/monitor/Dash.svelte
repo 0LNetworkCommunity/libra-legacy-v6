@@ -2,14 +2,8 @@
   import NodeHealth from "./health/NodeHealth.svelte";
   import Info from "./chain/Info.svelte";
   import Account from "./account/Account.svelte";
-  import AutoPay from "./account/AutoPay.svelte";
-  import { chainInfo } from "../../store.ts";
 
-  let data = {};
-  chainInfo.subscribe((info_str) => {
-    data = JSON.parse(info_str);
-  });
-
+  export let data;
 </script>
 
 <main>
@@ -22,9 +16,6 @@
     </div>
     <div class="uk-width-1-3@m">
       <Account account={data.account_view}/>
-    </div>
-    <div class="uk-width-1-1">
-      <AutoPay account={data.account_view}/>
     </div>
   </div>
 </main>

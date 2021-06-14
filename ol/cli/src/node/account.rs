@@ -32,6 +32,14 @@ impl OwnerAccountView {
             auto_pay: None,
         }
     }
+
+    /// query if account has auto pay settings, and not empty
+    pub fn has_auto_pay_not_empty(&self) -> bool {
+        match &self.auto_pay {
+            Some(auto_pay) => auto_pay.payments.len() > 0,
+            None => false
+        }
+    }
 }
 
 impl Node {
@@ -57,7 +65,7 @@ impl Node {
         }
     }
 
-    // Get account auto pay resource
+    /// Get account auto pay resource
     pub fn get_auto_pay_view(&mut self, account: AccountAddress) -> Option<AutoPayView> {
         let state = self.get_account_state(account);
         match state {

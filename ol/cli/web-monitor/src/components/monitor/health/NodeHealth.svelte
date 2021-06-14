@@ -60,9 +60,15 @@
       description: "node running in mode: ",
       is_true: false,
     },
+    {
+      id: "has_auto_pay",
+      title: "Auto Pay",
+      description: "validator has auto pay batch set",
+      is_true: false,
+    },
   ];
 
-  if (health_data) {
+  $: if (health_data) {
     allChecks = map(allChecks, (i: CheckObj) => {
       if (i.id === "config") {
         i.is_true = health_data.configs_exist;
@@ -94,11 +100,13 @@
         }
         i.description = "node running in mode: ".concat(health_data.node_mode);
       }
+      if (i.id === "has_auto_pay") {
+        i.is_true = health_data.has_auto_pay;
+      }
       return i;
     });
   }
 </script>
-
 
 <div class="uk-card uk-card-default uk-card-body uk-margin-bottom">
   <h3 class="uk-card-title uk-text-center uk-text-uppercase uk-text-muted">

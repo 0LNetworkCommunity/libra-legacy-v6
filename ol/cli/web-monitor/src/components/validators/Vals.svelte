@@ -1,6 +1,6 @@
 <script lang="ts">
-import { chainInfo } from "../../store.ts";
-import ValidatorModal from "./ValidatorModal.svelte";
+  import ValidatorModal from "./ValidatorModal.svelte";
+  export let data;
 
   interface ValInfo {
     account_address: string;
@@ -30,14 +30,10 @@ import ValidatorModal from "./ValidatorModal.svelte";
   let sortOption: string = "voting_power";
   let sortOrder = 1;
 
-  chainInfo.subscribe((info_str) => {
-    let data = JSON.parse(info_str);
-    // TODO: find a better way to check if data is ready.
-    if (data.chain_view && data.chain_view.validator_view) {
-      set = data.chain_view.validator_view;
-      selectedVal = set[0];
-    }
-  });
+  $: if (data.chain_view && data.chain_view.validator_view) {
+    set = data.chain_view.validator_view;
+    selectedVal = set[0];
+  }
   $: set = set.sort((a, b) => (a[sortOption] > b[sortOption]) ? sortOrder : -sortOrder);
   
   function thOnClick(key: string) {
