@@ -342,7 +342,7 @@ fn parse_fixed_once_type() {
     assert_eq!(fourth.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
     assert_eq!(fourth.type_move, Some(3));
     assert_eq!(fourth.duration_epochs, Some(2)); // TODO: This is temporary patch for v4.3.2
-    assert_eq!(fourth.end_epoch, None);
+    assert_eq!(fourth.end_epoch, Some(1));
     assert_eq!(fourth.type_of, InstructionType::FixedOnce);
     assert_eq!(fourth.value_move.unwrap(), 22000000u64);
 }
