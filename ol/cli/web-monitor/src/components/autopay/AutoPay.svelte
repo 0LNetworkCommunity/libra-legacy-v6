@@ -45,9 +45,7 @@
         </tbody>
       </table>
     {:else}
-      <p class="uk-text-uppercase">your validator does not have auto pay set</p>
-      <p>Now to setup auto pay: <a href="#">x</a></p>
-      <p>List : <a href="#">y</a></p>
+      <p class="uk-text-center uk-text-warning">Your validator does not have an Auto Pay Batch set.</p>
     {/if}
   {:else}
     <p>loading...</p>

@@ -20982,7 +20982,7 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (49:2) {:else}
+    // (47:2) {:else}
     function create_else_block_1(ctx) {
     	let p;
 
@@ -20990,7 +20990,7 @@ var app = (function () {
     		c: function create() {
     			p = element("p");
     			p.textContent = "loading...";
-    			add_location(p, file$2, 49, 4, 1841);
+    			add_location(p, file$2, 47, 4, 1772);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, p, anchor);
@@ -21005,7 +21005,7 @@ var app = (function () {
     		block,
     		id: create_else_block_1.name,
     		type: "else",
-    		source: "(49:2) {:else}",
+    		source: "(47:2) {:else}",
     		ctx
     	});
 
@@ -21065,57 +21065,21 @@ var app = (function () {
 
     // (44:4) {:else}
     function create_else_block(ctx) {
-    	let p0;
-    	let t1;
-    	let p1;
-    	let t2;
-    	let a0;
-    	let t4;
-    	let p2;
-    	let t5;
-    	let a1;
+    	let p;
 
     	const block = {
     		c: function create() {
-    			p0 = element("p");
-    			p0.textContent = "your validator does not have auto pay set";
-    			t1 = space();
-    			p1 = element("p");
-    			t2 = text("Now to setup auto pay: ");
-    			a0 = element("a");
-    			a0.textContent = "x";
-    			t4 = space();
-    			p2 = element("p");
-    			t5 = text("List : ");
-    			a1 = element("a");
-    			a1.textContent = "y";
-    			attr_dev(p0, "class", "uk-text-uppercase");
-    			add_location(p0, file$2, 44, 6, 1650);
-    			attr_dev(a0, "href", "#");
-    			add_location(a0, file$2, 45, 32, 1757);
-    			add_location(p1, file$2, 45, 6, 1731);
-    			attr_dev(a1, "href", "#");
-    			add_location(a1, file$2, 46, 16, 1795);
-    			add_location(p2, file$2, 46, 6, 1785);
+    			p = element("p");
+    			p.textContent = "Your validator does not have an Auto Pay Batch set.";
+    			attr_dev(p, "class", "uk-text-center uk-text-warning");
+    			add_location(p, file$2, 44, 6, 1650);
     		},
     		m: function mount(target, anchor) {
-    			insert_dev(target, p0, anchor);
-    			insert_dev(target, t1, anchor);
-    			insert_dev(target, p1, anchor);
-    			append_dev(p1, t2);
-    			append_dev(p1, a0);
-    			insert_dev(target, t4, anchor);
-    			insert_dev(target, p2, anchor);
-    			append_dev(p2, t5);
-    			append_dev(p2, a1);
+    			insert_dev(target, p, anchor);
     		},
     		p: noop,
     		d: function destroy(detaching) {
-    			if (detaching) detach_dev(p0);
-    			if (detaching) detach_dev(t1);
-    			if (detaching) detach_dev(p1);
-    			if (detaching) detach_dev(t4);
-    			if (detaching) detach_dev(p2);
+    			if (detaching) detach_dev(p);
     		}
     	};
 
