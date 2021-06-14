@@ -16,15 +16,23 @@ address 0x1 {
 /// >TODO: determine what kind of stability guarantees we give about reasons/associated module.
 module Errors {
     /// A function to create an error from from a category and a reason.
-    fun make(category: u8, reason: u64): u64 {
-        (category as u64) + (reason << 8)
+    fun make(_category: u8, reason: u64): u64 {
+        /////// 0L /////////
+        // (category as u64) + (reason << 8)
+        (reason as u64) // Changed error codes make to easily track them in 0L
     }
     spec fun make {
         pragma opaque = true;
-        ensures [concrete] result == category + (reason << 8);
+        ensures [concrete] result == reason; /////// 0L /////////
         aborts_if [abstract] false;
-        ensures [abstract] result == category;
+        ensures [abstract] result == reason; /////// 0L /////////
     }
+    
+    /////// 0L /////////
+    /// A function to create an error from from a category and a reason.
+    fun make_ol(_category: u8, reason: u64): u64 {
+        (reason as u64)
+    }    
 
     /// The system is in a state where the performed operation is not allowed. Example: call to a function only allowed
     /// in genesis.
@@ -57,6 +65,12 @@ module Errors {
 
     /// An internal error (bug) has occurred.
     const INTERNAL: u8 = 10;
+
+    /// 0L Error codes
+    const OL_ERR: u8 = 11; /////// 0L /////////
+
+    // 0L Error codes
+    const OL_TX_ERR: u8 = 12; /////// 0L /////////
 
     /// A custom error category for extension points.
     const CUSTOM: u8 = 255;
@@ -130,6 +144,17 @@ module Errors {
         aborts_if false;
         ensures result == CUSTOM;
     }
+
+    /////// 0L /////////
+    public fun ol_tx(reason: u64): u64 { make(OL_TX_ERR, reason) }
+    spec fun custom {
+        pragma opaque = true;
+        aborts_if false;
+        ensures result == CUSTOM;
+    }
+
+    /////// 0L /////////
+    public fun ol(reason: u64): u64 { make(OL_ERR, reason) }        
 }
 
 }
