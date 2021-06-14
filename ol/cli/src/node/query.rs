@@ -1,6 +1,13 @@
 //! 'query'
+use std::collections::BTreeMap;
+
 use libra_json_rpc_client::{views::TransactionView, AccountAddress};
+use move_core_types::{
+    identifier::Identifier,
+    language_storage::{StructTag, TypeTag},
+};
 use num_format::{Locale, ToFormattedString};
+use resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct, AnnotatedMoveValue};
 
 use super::node::Node;
 
@@ -21,6 +28,17 @@ pub enum QueryType {
         /// account to query txs of
         account: AccountAddress,
     },
+    /// get a move value from account blob
+    MoveValue {
+      /// account to query txs of
+      account: AccountAddress,
+      /// move module name
+      module_name: String,
+      /// move struct name
+      struct_name: String,
+      /// move key name
+      key_name: String,
+    },
     /// How far behind the local is from the upstream nodes
     SyncDelay,
     /// Get transaction history
@@ -33,7 +51,7 @@ pub enum QueryType {
         txs_count: Option<u64>,
         /// filter by type
         txs_type: Option<String>,
-    },
+    }
 }
 
 /// Get data from a client, with a query type. Will connect to local only if in sync.
@@ -86,7 +104,18 @@ impl Node {
                     Err(e) => format!("Error querying account resource. Message: {:#?}", e),
                     _ => format!("Error, cannot find account state for {:#?}", account),
                 }
-            }
+            },
+            MoveValue { account, module_name, struct_name, key_name } => {
+                // account
+                match self.get_annotate_account_blob(account) {
+                    Ok((Some(r), _)) => {
+                      let value = find_value_from_state(&r, module_name, struct_name, key_name);
+                      format!("{:#?}", value)
+                    },
+                    Err(e) => format!("Error querying account resource. Message: {:#?}", e),
+                    _ => format!("Error, cannot find account state for {:#?}", account),
+                }
+            },
             Txs {
                 account,
                 txs_height,
@@ -131,3 +160,119 @@ impl Node {
     }
 }
 
+
+
+
+/// check if the vec of value, is actually of other structs
+pub fn is_vec_of_struct(
+  move_val: &Vec<AnnotatedMoveValue>,
+) -> bool {
+    if let Some(e) = move_val.first() {
+      match e {
+        AnnotatedMoveValue::Struct(_) => return true,
+        _ => return false
+      }
+    }
+    false
+}
+
+/// get last vec
+pub fn get_last_stuct_in_vec(
+  move_val: &Vec<AnnotatedMoveValue>,
+) -> bool {
+    if let Some(e) = move_val.first() {
+      match e {
+        AnnotatedMoveValue::Struct(_) => return true,
+        _ => return false
+      }
+    }
+    false
+}
+
+// Ability to query Move types by walking an account blob. This is for structs which we may not have an equivalent type created in rust. For structs the core platform uses we have mappings available e.g. ol/types/src/miner_state.rs. This solves querying for resource structs that may be created by third parties.
+
+/// check if the vec of value, is actually of other structs
+pub fn unwrap_val_to_struct(
+  move_val: &AnnotatedMoveValue,
+) -> Option<&AnnotatedMoveStruct> {
+  match move_val {
+    AnnotatedMoveValue::Struct(s) => Some(s),
+    _ => None
+  }
+}
+
+/// find the value in a struct
+pub fn find_value_in_struct(s: &AnnotatedMoveStruct, key_name: String) -> Option<&AnnotatedMoveValue> {
+    match s
+        .value
+        .iter()
+        .find(|v| v.0.clone().into_string() == key_name)
+    {
+        Some((_, v)) => Some(v),
+        None => None,
+    }
+}
+/// finds a value
+pub fn find_value_from_state(
+    blob: &AnnotatedAccountStateBlob,
+    module_name: String,
+    struct_name: String,
+    key_name: String,
+) -> Option<&AnnotatedMoveValue> {
+    match blob.0.values().find(|&s| {
+        s.type_.module.as_ref().to_string() == module_name
+        && s.type_.name.as_ref().to_string() == struct_name
+    }) {
+        Some(s) => find_value_in_struct(s, key_name),
+        None => None,
+    }
+}
+
+
+/// test fixtures
+pub fn test_fixture_blob() -> AnnotatedAccountStateBlob {
+    let mut s = BTreeMap::new();
+    let move_struct = test_fixture_struct();
+    s.insert(move_struct.type_.clone(), move_struct);
+    AnnotatedAccountStateBlob(s)
+}
+
+/// stuct fixture
+pub fn test_fixture_struct() -> AnnotatedMoveStruct {
+    let module_tag = StructTag {
+        address: AccountAddress::random(),
+        module: Identifier::new("TestModule").unwrap(),
+        name: Identifier::new("TestStructName").unwrap(),
+        type_params: vec![TypeTag::Bool],
+    };
+
+    let key = Identifier::new("test_key").unwrap();
+    let value = AnnotatedMoveValue::Bool(true);
+
+    AnnotatedMoveStruct {
+        is_resource: true,
+        type_: module_tag.clone(),
+        value: vec![(key, value)],
+    }
+}
+
+#[test]
+fn test_find_annotated_move_value() {
+    let s = test_fixture_blob();
+    match find_value_from_state(
+        &s,
+        "TestModule".to_owned(),
+        "TestStructName".to_owned(),
+        "test_key".to_owned(),
+    ) {
+        // NOTE: This is gross, but I don't see a way to use assert_eq! on AnnotatedMoveValue
+        Some(v) => {
+            match v {
+                // TODO: For some reason can't use assert
+                AnnotatedMoveValue::Bool(b) => assert!(*b == true),
+                _ => panic!("not the right value"),
+            }
+        }
+        None => panic!("not the right value"),
+    }
+}

@@ -12,7 +12,7 @@ use libra_types::waypoint::Waypoint;
 // use libra_genesis_tool::keyscheme::KeyScheme;
 use ol_keys::wallet;
 use ol::config::AppCfg;
-use ol_types::autopay::{InstructionType, PayInstruction, write_batch_file};
+use ol_types::pay_instruction::{InstructionType, PayInstruction, write_batch_file};
 
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
