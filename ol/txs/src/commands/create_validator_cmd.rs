@@ -12,11 +12,7 @@ use abscissa_core::{Command, Options, Runnable};
 use libra_types::transaction::Script;
 use ol_types::{account::ValConfigs, config::TxType};
 use reqwest::Url;
-use std::{
-    fs::{self, File},
-    io::Write,
-    path::PathBuf,
-};
+use std::{fs::{self, File}, io::Write, path::PathBuf, process::exit};
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Options)]
 pub struct CreateValidatorCmd {
@@ -28,11 +24,7 @@ pub struct CreateValidatorCmd {
 
 /// create validator account by submitting transaction on chain
 pub fn create_validator_script(new_account: &ValConfigs) -> Script {
-    // let file_two = fs::File::open(account_json_path).expect("file should open read only");
-    // let account: ValConfigs =
-    //     serde_json::from_reader(file_two).expect("file should be proper JSON");
     let new_account = new_account.to_owned();
-    new_account.check_autopay().unwrap();
 
     transaction_builder::encode_create_acc_val_script(
         new_account.block_zero.preimage,
@@ -64,11 +56,12 @@ pub fn account_from_url(url: &mut Url, path: &PathBuf) -> PathBuf {
 
 impl Runnable for CreateValidatorCmd {
     fn run(&self) {
-        let cfg = app_config();
+        let cfg = app_config().clone();
         let entry_args = entrypoint::get_args();
         let tmp;
         if self.account_file.is_none() && self.url.is_none() {
-            panic!("No account file nor URL passed in CLI")
+            println!("No account file nor URL passed in CLI");
+            exit(1);
         }
         let account_json_path: &PathBuf = if self.account_file.is_some() {
             self.account_file.as_ref().unwrap()
@@ -83,9 +76,10 @@ impl Runnable for CreateValidatorCmd {
         let file = fs::File::open(account_json_path).expect("file should open read only");
         let new_account: ValConfigs =
             serde_json::from_reader(file).expect("file should be proper JSON");
-
+                // submit initial autopay if there are any
         match new_account.check_autopay() {
             Ok(_) => {
+                println!("Sending account creation transaction");
                 maybe_submit(
                     create_validator_script(&new_account),
                     &tx_params,
@@ -93,23 +87,24 @@ impl Runnable for CreateValidatorCmd {
                     entry_args.save_path,
                 )
                 .unwrap();
-
-                // submit autopay if there are any
-                if let Some(signed_autopay_batch) = new_account.autopay_signed {
-                    relay::relay_batch(&signed_autopay_batch, &tx_params).unwrap();
+                
+                println!("\nRelaying previously signed transactions from: {:?}\n", &new_account.ow_human_name);
+                match relay::relay_batch(&new_account.autopay_signed.unwrap(), &tx_params) {
+                    Ok(_) => {
+                      println!("\nUser transactions successfully relayed\n")
+                    },
+                    Err(e) => {
+                      println!("\nError relaying transactions. Message: {:?}", e);
+                      exit(1);
+                    },
                 }
             }
-            Err(_) => {
+            Err(e) => {
                 println!(
-                    "cannot send atomic account creation transaction, error with: PayInstruction."
+                    "\nError: cannot send atomic account creation transaction. Message: {:?}", e
                 );
+                exit(1);
             }
         }
     }
 }
-
-// #[test]
-// fn test_create_val() {
-//     let path = ol_fixtures::get_persona_account_json("alice").1;
-//     create_validator_script(&path);
-// }

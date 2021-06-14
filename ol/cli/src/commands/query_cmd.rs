@@ -35,7 +35,7 @@ pub struct QueryCmd {
     #[options(help = "epoch and waypoint")]
     epoch: bool,
 
-    #[options(help = "get last 100 transactions")]
+    #[options(help = "get last transactions, defaults to last 100")]
     txs: bool,
 
     #[options(help = "height to start txs query from, defaults to -100_000 blocks")]
@@ -47,6 +47,17 @@ pub struct QueryCmd {
     #[options(help = "filter by type of transaction, e.g. 'ol_miner_state_commit'")]
     txs_type: Option<String>,
 
+    #[options(help = "move value")]
+    move_state: bool,
+
+    #[options(help = "move module name")]
+    move_module: Option<String>,
+
+    #[options(help = "move struct name")]
+    move_struct: Option<String>,
+
+    #[options(help = "move value name")]
+    move_value: Option<String>,
 }
 
 impl Runnable for QueryCmd {
@@ -63,9 +74,6 @@ impl Runnable for QueryCmd {
           exit(1);
         });
         let mut node = Node::new(client, cfg, is_swarm);
-
-  
-
         let mut info = String::new();
         let mut display = "";
 
@@ -83,6 +91,15 @@ impl Runnable for QueryCmd {
         }
         else if self.resources {
             info = node.query(QueryType::Resources{account});
+            display = "RESOURCES";
+        }
+        else if self.move_state {
+            info = node.query(QueryType::MoveValue{
+              account,
+              module_name: self.move_module.clone().unwrap(),
+              struct_name: self.move_struct.clone().unwrap(),
+              key_name: self.move_value.clone().unwrap(),
+            });
             display = "RESOURCES";
         }
         else if self.epoch {

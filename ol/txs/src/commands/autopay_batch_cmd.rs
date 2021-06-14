@@ -3,12 +3,16 @@
 #![allow(clippy::never_loop)]
 
 use abscissa_core::{Command, Options, Runnable};
+use anyhow::Error;
 use libra_types::transaction::{Script, SignedTransaction};
-use crate::{entrypoint, sign_tx::sign_tx, submit_tx::{tx_params_wrapper, batch_wrapper, TxParams}};
+use ol::node::{node::Node};
+use crate::{entrypoint, prelude::app_config, sign_tx::sign_tx, submit_tx::{tx_params_wrapper, batch_wrapper, TxParams}};
 use dialoguer::Confirm;
-use std::path::PathBuf;
-use ol_types::{autopay::PayInstruction, config::{TxType, IS_CI}};
-
+use std::{path::PathBuf, process::exit};
+use ol_types::{config::{TxType, IS_TEST}, autopay::AutoPayResource, pay_instruction::PayInstruction};
+use libra_types::{
+    account_address::AccountAddress
+};
 /// command to submit a batch of autopay tx from file
 #[derive(Command, Debug, Default, Options)]
 pub struct AutopayBatchCmd {
@@ -23,70 +27,51 @@ impl Runnable for AutopayBatchCmd {
         // will not increment automatically, since this can lead to user error.
         let entry_args = entrypoint::get_args();
         let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
+        let cfg = app_config();
 
-        let epoch = crate::epoch::get_epoch(&tx_params);
-        println!("The current epoch is: {}", epoch);
-        let instructions = PayInstruction::parse_autopay_instructions(&self.autopay_batch_file, Some(epoch)).unwrap();
-        let scripts = process_instructions(instructions, &epoch);
+        // // get highest autopay number
+        let mut node = Node::default_from_cfg(cfg.clone(), entry_args.swarm_path);
+        let start_id = match get_autopay_start_id(&mut node, tx_params.owner_address){
+            Ok(i) => Some(i),
+            Err(e) => {
+              println!("ERROR: Could not fetch AutoPay ids, cannot continue to send tx. Message: {:?}", e);
+              exit(1);
+            },
+        };
+        println!("Latest Autopay id: {:?}", &start_id);
+        node.refresh_chain_info();
+        let epoch = node.vitals.chain_view.unwrap().epoch;
+        println!("The current epoch is: {}\n", epoch);
+        
+        let instructions = PayInstruction::parse_autopay_instructions(&self.autopay_batch_file, Some(epoch), start_id).unwrap();
+        let scripts = process_instructions(instructions);
         batch_wrapper(scripts, &tx_params, entry_args.no_send, entry_args.save_path)
-
     }
 }
 
 /// Process autopay instructions into scripts
-pub fn process_instructions(instructions: Vec<PayInstruction>, starting_epoch: &u64) -> Vec<Script> {
+pub fn process_instructions(instructions: Vec<PayInstruction>) -> Vec<Script> {
     // TODO: Check instruction IDs are sequential.
     instructions.into_iter().filter_map(|i| {
-        assert!(i.type_move.unwrap() <= 3);
+      // double check transactions
+        match i.type_move.unwrap()<= 3 {
+            true => {},
+            false => {
+              println!("Instruction type not valid for transactions: {:?}", &i);
+              exit(1); 
+            },
+        }
+        match i.duration_epochs.unwrap() > 0 {
+            true => {},
+            false => {
+              println!("Instructions must have duration greater than 0. Exiting. Instruction: {:?}", &i);
+              exit(1);
+            },
+        }
 
-        let warning = if i.type_move.unwrap() == 0 {
-          format!(
-              "Instruction {uid}: {note}\nSend {percent_balance:.2?}% of your total balance every day {count_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
-              uid = &i.uid,
-              percent_balance = *&i.value_move.unwrap() as f64 /100f64,
-              count_epochs = &i.duration_epochs.unwrap_or_else(|| {
-                 &i.end_epoch.unwrap() - starting_epoch 
-                }),
-              note = &i.note.clone().unwrap(),
-              epoch_ending = &i.end_epoch.unwrap(),
-              destination = &i.destination,
-          )
-        } else if i.type_move.unwrap() == 1 {
-          format!(
-            "Instruction {uid}: {note}\nSend {percent_balance:.2?}% new incoming funds every day {count_epochs} times (until epoch {epoch_ending}) to address: {destination}?",
-            uid = &i.uid,
-            percent_balance = *&i.value_move.unwrap() as f64 /100f64,
-            count_epochs = &i.duration_epochs.unwrap_or_else(|| {
-                 &i.end_epoch.unwrap() - starting_epoch 
-                }),
-            note = &i.note.clone().unwrap(),
-            epoch_ending = &i.end_epoch.unwrap(),
-            destination = &i.destination,
-        )
-        } else if i.type_move.unwrap() == 2  {
-          format!(
-            "Instruction {uid}: {note}\nSend {total_val} every day {count_epochs} times  (until epoch {epoch_ending}) to address: {destination}?",
-            uid = &i.uid,
-            total_val = *&i.value_move.unwrap() / 1_000_000, // scaling factor
-            count_epochs = &i.duration_epochs.unwrap_or_else(|| {
-              &i.end_epoch.unwrap() - starting_epoch 
-            }),
-            note = &i.note.clone().unwrap(),
-            epoch_ending = &i.end_epoch.unwrap(),
-            destination = &i.destination,
-        )
-        } else {
-          format!(
-            "Instruction {uid}: {note}\nSend {total_val} once to address: {destination}?",
-            uid = &i.uid,
-            note = &i.note.clone().unwrap(),
-            total_val = *&i.value_move.unwrap() / 1_000_000, // scaling factor
-            destination = &i.destination,
-        )
-        };
-        println!("{}", &warning);
+        println!("{}", i.text_instruction());
         // accept if CI mode.
-        if *IS_CI { return Some(i) }            
+        if *IS_TEST { return Some(i) }            
         
         // check the user wants to do this.
         match Confirm::new().with_prompt("").interact().unwrap() {
@@ -98,7 +83,7 @@ pub fn process_instructions(instructions: Vec<PayInstruction>, starting_epoch: &
     })
     .map(|i| {
       transaction_builder::encode_autopay_create_instruction_script(
-        i.uid, 
+        i.uid.unwrap(), 
         i.type_move.unwrap(), 
         i.destination, 
         i.end_epoch.unwrap(), 
@@ -122,7 +107,7 @@ pub fn sign_instructions(scripts: Vec<Script>, starting_sequence_num: u64, tx_pa
 #[test]
 fn test_instruction_script_match() {
   use libra_types::account_address::AccountAddress;
-  use ol_types::autopay::InstructionType;
+  use ol_types::pay_instruction::InstructionType;
   let script = transaction_builder::encode_autopay_create_instruction_script(
     1, 
     0, 
@@ -131,7 +116,7 @@ fn test_instruction_script_match() {
     1000);
 
   let instr = PayInstruction {
-      uid: 1,
+      uid: Some(1),
       type_of: InstructionType::PercentOfBalance,
       destination: AccountAddress::ZERO,
       end_epoch: Some(10),
@@ -142,6 +127,24 @@ fn test_instruction_script_match() {
       value_move: Some(1000u64),
   };
 
-  instr.check_instruction_safety(script).unwrap();
+  instr.check_instruction_match_tx(script).unwrap();
 
+}
+
+fn get_autopay_start_id(node: &mut Node, account: AccountAddress) -> Result<u64, Error>{
+    let s = node.get_account_state(account)?;
+    match s.get_resource::<AutoPayResource>(
+      AutoPayResource::resource_path()
+      .as_slice()
+    ).unwrap(){
+        Some(a) => {
+          let mut ids = vec!(0u64);
+          a.payment.iter().for_each(|i|{
+            ids.push(i.uid);
+          });
+          ids.sort();
+          Ok(ids.pop().unwrap())
+        },
+        None => Ok(0),
+    }
 }

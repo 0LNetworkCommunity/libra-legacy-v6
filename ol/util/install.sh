@@ -11,14 +11,3 @@ echo 'web-monitor.tar.gz - downloaded to ~/bin/' ; \
 
 mkdir -p ~/.0L/web-monitor
 tar -xf ~/.0L/web-monitor.tar.gz --directory ~/.0L/web-monitor/
-
-echo "Checking PATH"
-
-if grep -Fxq 'export PATH=~/bin:$PATH' ~/.bashrc 
-then
-  echo "~/bin already in PATH"
-else
-  echo 'exporting ~/bin to PATH'
-  echo 'export PATH=~/bin:$PATH' >> ~/.bashrc 
-  echo 'close this terminal or restart with `source ~/.bashrc`'
-fi
