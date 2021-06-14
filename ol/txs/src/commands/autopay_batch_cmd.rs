@@ -116,7 +116,7 @@ fn test_instruction_script_match() {
     1000);
 
   let instr = PayInstruction {
-      uid: 1,
+      uid: Some(1),
       type_of: InstructionType::PercentOfBalance,
       destination: AccountAddress::ZERO,
       end_epoch: Some(10),
