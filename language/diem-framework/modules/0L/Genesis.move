@@ -29,6 +29,8 @@ module Genesis {
     use 0x1::Epoch;
     use 0x1::MinerState;
 
+    use 0x1::Debug::print;
+
     /// Initializes the Diem framework.
     fun initialize(
         dr_account: signer,
@@ -41,6 +43,9 @@ module Genesis {
         native_schedule: vector<u8>,
         chain_id: u8,
     ) {
+        print(&11);
+        assert(true, 42); 
+
         let dr_account = &dr_account;
         // let tc_account = &tc_account; /////// 0L /////////
 
