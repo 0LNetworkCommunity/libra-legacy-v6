@@ -107,21 +107,21 @@
   ];
 </script>
 
-<main>
+
+<div class="uk-card uk-card-default uk-card-body uk-margin-bottom">
+  <h3 class="uk-card-title uk-text-center uk-text-uppercase uk-text-muted">
+    Node Health
+  </h3>
   {#if healthData}
-    <div class="uk-card uk-card-default uk-card-body">
-      <h3 class="uk-card-title uk-text-center uk-text-uppercase uk-text-muted">
-        Node Health
-      </h3>
-      <dl class="uk-description-list">
-        {#each allChecks as c}
-          <Check
-            title={c.title}
-            description={c.description}
-            isTrue={c.is_true}
-          />
-        {/each}
-      </dl>
-    </div>
+    <dl class="uk-description-list">
+      {#each allChecks as c}
+        <Check
+          title={c.title}
+          description={c.description}
+          isTrue={c.is_true}
+        />
+      {/each}
+    </dl>
   {/if}
-</main>
+</div>
+

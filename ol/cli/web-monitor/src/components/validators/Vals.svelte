@@ -33,7 +33,7 @@ import ValidatorModal from "./ValidatorModal.svelte";
   chainInfo.subscribe((info_str) => {
     let data = JSON.parse(info_str);
     // TODO: find a better way to check if data is ready.
-    if (data.chain_view && data.chain_view.validator_view && sortOption) {
+    if (data.chain_view && data.chain_view.validator_view) {
       set = data.chain_view.validator_view;
       selectedVal = set[0];
     }
@@ -74,8 +74,9 @@ import ValidatorModal from "./ValidatorModal.svelte";
     </thead>
     <tbody>
       {#each set as val, i}
-        <tr on:click={() => selectedVal = val}>
-          <td class="uk-text-center">{val.account_address}</td>
+        <tr on:click={() => selectedVal = val}>        
+          <td class="uk-visible@s uk-text-center">{val.account_address}</td>
+          <td class="uk-hidden@s uk-text-truncate">{val.account_address}</td>
           <td class="uk-text-right">{val.voting_power}</td>
           <td class="uk-text-right">{val.count_proofs_in_epoch}</td>
           <td class="uk-text-right">{val.tower_height}</td>

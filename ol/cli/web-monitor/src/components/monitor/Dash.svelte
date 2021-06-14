@@ -5,14 +5,14 @@
 </script>
 
 <main>
-  <div uk-grid>
-    <div class="uk-width-1-3">
+  <div class="uk-grid-match uk-grid-small" uk-grid>
+    <div class="uk-width-1-3@m">
       <NodeHealth/>
     </div>
-    <div class="uk-width-1-3">
+    <div class="uk-width-1-3@m">
       <Info/>
     </div>
-    <div class="uk-width-1-3">
+    <div class="uk-width-1-3@m">
       <Account/>
     </div>
   </div>
