@@ -20,7 +20,7 @@ pub struct AutoPayResource {
 }
 
 /// Autopay instruction
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Payment {
     ///
     pub uid: u64,
@@ -68,4 +68,14 @@ impl AutoPayResource {
     pub fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
         lcs::from_bytes(bytes).map_err(Into::into)
     }
+
+    ///
+    pub fn get_view(&self) -> AutoPayView {
+        AutoPayView { payments: self.payment.clone() }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AutoPayView {
+    pub payments: Vec<Payment>,
 }

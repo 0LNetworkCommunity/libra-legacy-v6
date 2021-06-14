@@ -2,51 +2,7 @@
   import Check from "./Check.svelte";
   import { map } from "lodash";
 
-  let healthData;
-
-  import { chainInfo } from "../../../store.ts";
-
-  chainInfo.subscribe((info_str) => {
-    // NOTE: Svelte store only stores strings, need to always deserialize in component.
-    let chain = JSON.parse(info_str);
-    if (chain.items) {
-      // healthData = JSON.parse(msg.data);
-      healthData = chain.items;
-      allChecks = map(allChecks, (i: CheckObj) => {
-        if (i.id === "config") {
-          i.is_true = healthData.configs_exist;
-        }
-        if (i.id === "account") {
-          i.is_true = healthData.account_created;
-        }
-        if (i.id === "restore") {
-          i.is_true = healthData.db_restored;
-        }
-        if (i.id === "node") {
-          i.is_true = healthData.node_running;
-        }
-        if (i.id === "miner") {
-          i.is_true = healthData.miner_running;
-        }
-        if (i.id === "sync") {
-          i.is_true = healthData.is_synced;
-        }
-        if (i.id === "set") {
-          i.is_true = healthData.validator_set;
-        }
-        if (i.id === "correct_mode") {
-          i.is_true = false; 
-          if (healthData.validator_set) {
-            i.is_true = healthData.node_mode == "Validator";
-          } else {
-            i.is_true = healthData.node_mode != "Validator";
-          }
-          i.description = "node running in mode: ".concat(healthData.node_mode);
-        }
-        return i;
-      });
-    }
-  });
+  export let health_data;
 
   interface CheckObj {
     id: string;
@@ -105,6 +61,42 @@
       is_true: false,
     },
   ];
+
+  if (health_data) {
+    allChecks = map(allChecks, (i: CheckObj) => {
+      if (i.id === "config") {
+        i.is_true = health_data.configs_exist;
+      }
+      if (i.id === "account") {
+        i.is_true = health_data.account_created;
+      }
+      if (i.id === "restore") {
+        i.is_true = health_data.db_restored;
+      }
+      if (i.id === "node") {
+        i.is_true = health_data.node_running;
+      }
+      if (i.id === "miner") {
+        i.is_true = health_data.miner_running;
+      }
+      if (i.id === "sync") {
+        i.is_true = health_data.is_synced;
+      }
+      if (i.id === "set") {
+        i.is_true = health_data.validator_set;
+      }
+      if (i.id === "correct_mode") {
+        i.is_true = false; 
+        if (health_data.validator_set) {
+          i.is_true = health_data.node_mode == "Validator";
+        } else {
+          i.is_true = health_data.node_mode != "Validator";
+        }
+        i.description = "node running in mode: ".concat(health_data.node_mode);
+      }
+      return i;
+    });
+  }
 </script>
 
 
@@ -112,7 +104,7 @@
   <h3 class="uk-card-title uk-text-center uk-text-uppercase uk-text-muted">
     Node Health
   </h3>
-  {#if healthData}
+  {#if health_data}
     <dl class="uk-description-list">
       {#each allChecks as c}
         <Check
@@ -122,6 +114,8 @@
         />
       {/each}
     </dl>
+  {:else}
+    <p>loading...</p>
   {/if}
 </div>
 

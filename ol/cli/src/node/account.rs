@@ -7,6 +7,8 @@ use libra_types::{account_state::AccountState, transaction::Version};
 use resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator, NullStateView};
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
+use ol_types::autopay::{AutoPayResource, AutoPayView};
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 /// information on the owner account of this node.
 pub struct OwnerAccountView {
@@ -16,6 +18,8 @@ pub struct OwnerAccountView {
     balance: u64,
     /// if is jailed
     is_in_validator_set: bool,
+    /// auto pay
+    auto_pay: Option<AutoPayView>,
 }
 
 impl OwnerAccountView {
@@ -25,6 +29,7 @@ impl OwnerAccountView {
             address,
             balance: 0,
             is_in_validator_set: false,
+            auto_pay: None,
         }
     }
 }
@@ -36,7 +41,7 @@ impl Node {
             Some(av) => {
                 self.vitals.account_view.balance = get_balance(av);
                 self.vitals.account_view.is_in_validator_set = self.is_in_validator_set();
-
+                self.vitals.account_view.auto_pay = self.get_auto_pay_view(self.vitals.account_view.address);
                 Some(&self.vitals.account_view)
             }
             None => None
@@ -48,6 +53,21 @@ impl Node {
         let account = self.app_conf.profile.account;
         match self.client.get_account(account, true) {
             Ok((account_view, _)) => account_view,
+            Err(_) => None
+        }
+    }
+
+    // Get account auto pay resource
+    pub fn get_auto_pay_view(&mut self, account: AccountAddress) -> Option<AutoPayView> {
+        let state = self.get_account_state(account);
+        match state {
+            Ok(state) => match state.get_resource::<AutoPayResource>(
+                AutoPayResource::resource_path().as_slice()
+            ) {
+                Ok(Some(res)) => Some(res.get_view()),
+                Ok(None) => None,
+                Err(_) => None
+            }
             Err(_) => None
         }
     }
