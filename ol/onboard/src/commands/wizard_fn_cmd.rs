@@ -8,7 +8,7 @@ use libra_types::waypoint::Waypoint;
 use std::{path::PathBuf};
 use super::{files_cmd};
 use crate::{application::app_config};
-/// `val-wizard` subcommand
+/// `fullnode wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct FnWizardCmd {
     #[options(help = "output path files created, defaults to ~/.0L")]

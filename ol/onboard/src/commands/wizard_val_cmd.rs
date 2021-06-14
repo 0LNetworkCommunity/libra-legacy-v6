@@ -20,7 +20,7 @@ use reqwest::Url;
 use std::process::exit;
 use std::{fs::File, io::Write, path::PathBuf};
 use txs::{commands::autopay_batch_cmd, submit_tx};
-/// `val-wizard` subcommand
+/// `validator wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ValWizardCmd {
     #[options(
