@@ -9,7 +9,7 @@ use ol_types::config::AppCfg;
 use abscissa_core::{Command, Options, Runnable};
 use std::{path::PathBuf};
 use ol_types::account;
-/// `user-wizard` subcommand
+/// `user wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct UserWizardCmd {
     #[options(help = "path to write account manifest")]

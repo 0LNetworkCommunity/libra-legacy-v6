@@ -83,13 +83,17 @@ impl PayInstruction {
                 inst.uid = Some(new_uid + i as u64);
 
                 if inst.end_epoch.is_none()
-                && inst.duration_epochs.is_none()
-                && inst.type_of != InstructionType::FixedOnce {
-                    println!(
-                        "Need to set end_epoch, or duration_epoch in instruction: {:?}",
-                        &inst
-                    );
-                    exit(1);
+                && inst.duration_epochs.is_none() {
+
+                if inst.type_of != InstructionType::FixedOnce {
+                      println!(
+                          "Need to set end_epoch, or duration_epoch in instruction: {:?}",
+                          &inst
+                      );
+                      exit(1);
+                  } else {
+                    inst.duration_epochs = Some(1);
+                  }
                 }
 
                 if let Some(duration) = inst.duration_epochs {
@@ -103,6 +107,8 @@ impl PayInstruction {
                       println!("If you are setting a duration_epochs instruction, we need the current epoch. Instruction: {:?}", &inst);
                       exit(1);
                     }
+                } else {
+
                 }
 
                 match inst.type_of {
@@ -197,7 +203,7 @@ impl PayInstruction {
         },
         InstructionType::PercentOfChange => {
             format!(
-              "Instruction {uid}: {note}\nSend {percent_balance:.2?}% new incoming funds every day {times} (until epoch {epoch_ending}) to address: {destination}?",
+              "Instruction {uid}: {note}\nSend {percent_balance:.2?}% of new incoming funds every day {times} (until epoch {epoch_ending}) to address: {destination}?",
               uid = &self.uid.unwrap(),
               percent_balance = *&self.value_move.unwrap() as f64 /100f64,
               times = times,
@@ -336,7 +342,7 @@ fn parse_fixed_once_type() {
     assert_eq!(fourth.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
     assert_eq!(fourth.type_move, Some(3));
     assert_eq!(fourth.duration_epochs, Some(2)); // TODO: This is temporary patch for v4.3.2
-    assert_eq!(fourth.end_epoch, None);
+    assert_eq!(fourth.end_epoch, Some(1));
     assert_eq!(fourth.type_of, InstructionType::FixedOnce);
     assert_eq!(fourth.value_move.unwrap(), 22000000u64);
 }
