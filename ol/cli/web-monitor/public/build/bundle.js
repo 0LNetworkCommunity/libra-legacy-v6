@@ -423,7 +423,7 @@ var app = (function () {
     			t5 = space();
     			li3 = element("li");
     			a3 = element("a");
-    			a3.textContent = "Auto Pay";
+    			a3.textContent = "Autopay";
     			attr_dev(a0, "href", "#");
     			add_location(a0, file$c, 4, 30, 194);
     			attr_dev(li0, "class", "uk-active");
@@ -20990,7 +20990,7 @@ var app = (function () {
     		c: function create() {
     			p = element("p");
     			p.textContent = "loading...";
-    			add_location(p, file$2, 47, 4, 1772);
+    			add_location(p, file$2, 47, 4, 1778);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, p, anchor);
@@ -21072,7 +21072,7 @@ var app = (function () {
     			p = element("p");
     			p.textContent = "Your validator does not have an Auto Pay Batch set.";
     			attr_dev(p, "class", "uk-text-center uk-text-warning");
-    			add_location(p, file$2, 44, 6, 1650);
+    			add_location(p, file$2, 44, 6, 1656);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, p, anchor);
@@ -21150,22 +21150,22 @@ var app = (function () {
     			}
 
     			attr_dev(th0, "class", "uk-text-center");
-    			add_location(th0, file$2, 21, 12, 596);
+    			add_location(th0, file$2, 21, 12, 602);
     			attr_dev(th1, "class", "uk-text-center");
-    			add_location(th1, file$2, 22, 12, 644);
+    			add_location(th1, file$2, 22, 12, 650);
     			attr_dev(th2, "class", "uk-text-center");
-    			add_location(th2, file$2, 23, 12, 693);
+    			add_location(th2, file$2, 23, 12, 699);
     			attr_dev(th3, "class", "uk-text-center uk-visible@s");
-    			add_location(th3, file$2, 24, 12, 743);
+    			add_location(th3, file$2, 24, 12, 749);
     			attr_dev(th4, "class", "uk-text-center uk-visible@s");
-    			add_location(th4, file$2, 25, 12, 810);
+    			add_location(th4, file$2, 25, 12, 816);
     			attr_dev(th5, "class", "uk-text-center");
-    			add_location(th5, file$2, 26, 12, 884);
-    			add_location(tr, file$2, 20, 10, 579);
-    			add_location(thead, file$2, 19, 8, 561);
-    			add_location(tbody, file$2, 29, 8, 964);
+    			add_location(th5, file$2, 26, 12, 890);
+    			add_location(tr, file$2, 20, 10, 585);
+    			add_location(thead, file$2, 19, 8, 567);
+    			add_location(tbody, file$2, 29, 8, 970);
     			attr_dev(table, "class", "uk-table");
-    			add_location(table, file$2, 18, 6, 528);
+    			add_location(table, file$2, 18, 6, 534);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, table, anchor);
@@ -21288,20 +21288,20 @@ var app = (function () {
     			t12 = text(t12_value);
     			t13 = space();
     			attr_dev(td0, "class", "uk-text-center");
-    			add_location(td0, file$2, 32, 14, 1098);
+    			add_location(td0, file$2, 32, 14, 1104);
     			attr_dev(td1, "class", "uk-text-center");
-    			add_location(td1, file$2, 33, 14, 1150);
+    			add_location(td1, file$2, 33, 14, 1156);
     			attr_dev(td2, "class", "uk-visible@s uk-text-center");
-    			add_location(td2, file$2, 34, 14, 1206);
+    			add_location(td2, file$2, 34, 14, 1212);
     			attr_dev(td3, "class", "uk-hidden@s uk-text-truncate");
-    			add_location(td3, file$2, 35, 14, 1273);
+    			add_location(td3, file$2, 35, 14, 1279);
     			attr_dev(td4, "class", "uk-text-right uk-visible@s");
-    			add_location(td4, file$2, 36, 14, 1341);
+    			add_location(td4, file$2, 36, 14, 1347);
     			attr_dev(td5, "class", "uk-text-right uk-visible@s");
-    			add_location(td5, file$2, 37, 14, 1411);
+    			add_location(td5, file$2, 37, 14, 1417);
     			attr_dev(td6, "class", "uk-text-right");
-    			add_location(td6, file$2, 38, 14, 1504);
-    			add_location(tr, file$2, 31, 12, 1079);
+    			add_location(td6, file$2, 38, 14, 1510);
+    			add_location(tr, file$2, 31, 12, 1085);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, tr, anchor);
@@ -21369,7 +21369,7 @@ var app = (function () {
     		c: function create() {
     			div = element("div");
     			h3 = element("h3");
-    			h3.textContent = "Auto Pay Setup";
+    			h3.textContent = "Autopay Instructions";
     			t1 = space();
     			if_block.c();
     			attr_dev(h3, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted uk-text-large");

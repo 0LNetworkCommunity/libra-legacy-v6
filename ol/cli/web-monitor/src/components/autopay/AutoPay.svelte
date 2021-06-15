@@ -14,7 +14,7 @@
 
 <div class="uk-card uk-card-default uk-card-body uk-margin-bottom">
   <h3 class="uk-card-title uk-text-center uk-text-uppercase uk-text-muted uk-text-large">
-    Auto Pay Setup
+    Autopay Instructions
   </h3>
   
   {#if account}

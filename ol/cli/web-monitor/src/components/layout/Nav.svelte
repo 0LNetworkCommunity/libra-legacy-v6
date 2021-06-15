@@ -5,7 +5,7 @@
         <li class="uk-active"><a href="#">Dash</a></li>
         <li><a href="#">Validators</a></li>
         <li><a href="#">Upgrades</a></li>
-        <li><a href="#">Auto Pay</a></li>
+        <li><a href="#">Autopay</a></li>
       </ul>
     </div>
   </nav>
