@@ -13,6 +13,7 @@
 
 //! new-transaction
 //! sender: alice
+//! gas-currency: GAS
 script {
     use 0x1::PersistenceDemo;
 
@@ -20,11 +21,11 @@ script {
     // address for `alice`, which can be accessed with sender variable or 
     // the helper `{alice}`
     fun main(sender: signer){ // alice's signer type added in tx.
-      PersistenceDemo::initialize(sender);
+      PersistenceDemo::initialize(&sender);
 
-      PersistenceDemo::add_stuff(sender);
-      assert(PersistenceDemo::length(sender) == 3, 0);
-      assert(PersistenceDemo::contains(sender, 1), 1);
+      PersistenceDemo::add_stuff(&sender);
+      assert(PersistenceDemo::length(&sender) == 3, 0);
+      assert(PersistenceDemo::contains(&sender, 1), 1);
     }
 }
 
@@ -39,10 +40,11 @@ script {
 
 //! new-transaction
 //! sender: alice
+//! gas-currency: GAS
 script {
     use 0x1::PersistenceDemo;
     fun main(sender: signer){
-      assert(PersistenceDemo::length(sender) == 2, 4);
+      assert(PersistenceDemo::length(&sender) == 2, 4);
     }
 }
 
@@ -58,10 +60,11 @@ script {
 
 //! new-transaction
 //! sender: bob
+//! gas-currency: GAS
 script {
     use 0x1::PersistenceDemo;
     fun main(sender: signer){
-        PersistenceDemo::add_stuff(sender);
+        PersistenceDemo::add_stuff(&sender);
     }
 }
 

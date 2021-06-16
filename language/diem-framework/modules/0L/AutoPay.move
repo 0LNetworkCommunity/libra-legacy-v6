@@ -356,45 +356,46 @@ address 0x1 {
   }
 }
 
-module AutoPay{
-///////////////////////////////////////////////////////////////////////////
-  // Old module, simply left to prevent state transition
-  // module is purposefully crippled so as to not allow any operation
-  // use the above AutoPay2 module instead
-  ///////////////////////////////////////////////////////////////////////////
+//// Commented out during diem 1.2 upstream upgrade, breaks functional-tests
+// module AutoPay{
+// ///////////////////////////////////////////////////////////////////////////
+//   // Old module, simply left to prevent state transition
+//   // module is purposefully crippled so as to not allow any operation
+//   // use the above AutoPay2 module instead
+//   ///////////////////////////////////////////////////////////////////////////
 
-    /// Attempted to send funds to an account that does not exist
-    const EPAYEE_DOES_NOT_EXIST: u64 = 17;
+//     /// Attempted to send funds to an account that does not exist
+//     const EPAYEE_DOES_NOT_EXIST: u64 = 17;
 
-    struct Tick has key {
-      triggered: bool,
-    }
-    // List of payments. Each account will own their own copy of this struct
-    struct Data {
-      payments: vector<Payment>,
-    }
+//     struct Tick has key {
+//       triggered: bool,
+//     }
+//     // List of payments. Each account will own their own copy of this struct
+//     struct Data {
+//       payments: vector<Payment>,
+//     }
 
-    // One copy of this struct will be created. It will be stored in 0x0.
-    // It keeps track of all accounts that have autopay enabled and updates the 
-    // list as accounts change their Status structs
+//     // One copy of this struct will be created. It will be stored in 0x0.
+//     // It keeps track of all accounts that have autopay enabled and updates the 
+//     // list as accounts change their Status structs
 
-    // It also keeps track of the current epoch for efficiency (to prevent repeated
-    // queries to DiemBlock)
-    struct AccountList has key {
-      accounts: vector<address>,
-      current_epoch: u64,
-    }
+//     // It also keeps track of the current epoch for efficiency (to prevent repeated
+//     // queries to DiemBlock)
+//     struct AccountList has key {
+//       accounts: vector<address>,
+//       current_epoch: u64,
+//     }
 
-    // This is the structure of each Payment struct which represents one automatic
-    // payment held by an account
-    struct Payment {
-      // TODO: name should be a string to store a memo
-      // name: u64,
-      uid: u64,
-      payee: address,
-      end_epoch: u64,  // end epoch is inclusive
-      percentage: u64,
-    }
+//     // This is the structure of each Payment struct which represents one automatic
+//     // payment held by an account
+//     struct Payment {
+//       // TODO: name should be a string to store a memo
+//       // name: u64,
+//       uid: u64,
+//       payee: address,
+//       end_epoch: u64,  // end epoch is inclusive
+//       percentage: u64,
+//     }
 
-}
+// }
 

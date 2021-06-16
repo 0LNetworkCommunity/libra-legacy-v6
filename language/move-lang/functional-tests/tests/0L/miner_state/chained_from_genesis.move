@@ -3,6 +3,7 @@
 // Alice Submit VDF Proof
 //! new-transaction
 //! sender: alice
+//! gas-currency: GAS
 
 script {
 use 0x1::MinerState;
@@ -22,7 +23,7 @@ fun main(sender: signer) {
         difficulty,
         TestFixtures::alice_1_easy_sol()
     );
-    MinerState::commit_state(sender, proof);
+    MinerState::commit_state(&sender, proof);
 
     assert(MinerState::test_helper_get_height({{alice}}) == 1, 10008003);
 }
