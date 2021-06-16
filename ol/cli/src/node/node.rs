@@ -5,6 +5,7 @@ use anyhow::Error;
 use cli::libra_client::LibraClient;
 use libra_config::config::NodeConfig;
 use libradb::LibraDB;
+use std::path::PathBuf;
 use std::{process::Command, str};
 use sysinfo::SystemExt;
 use sysinfo::{ProcessExt, ProcessStatus};
@@ -74,10 +75,10 @@ impl Node {
     }
 
     /// default node connection from configs
-    pub fn default_from_cfg(mut cfg: AppCfg) -> Node {
+    pub fn default_from_cfg(mut cfg: AppCfg, swarm_path: Option<PathBuf>) -> Node {
         // NOTE: not intended for swarm.
-        let client = client::pick_client(None, &mut cfg).unwrap();
-        Node::new(client, cfg, false)
+        let client = client::pick_client(swarm_path.clone(), &mut cfg).unwrap();
+        Node::new(client, cfg, swarm_path.is_some())
     }
 
 
@@ -103,6 +104,7 @@ impl Node {
             self.vitals.items.sync_height = 404;
         }
         self.vitals.items.validator_set = self.is_in_validator_set();
+        self.vitals.items.has_auto_pay = self.vitals.account_view.has_auto_pay_not_empty();
         self
     }
 

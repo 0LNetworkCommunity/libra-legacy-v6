@@ -34,7 +34,7 @@ pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
 });
 
 /// check this is CI environment
-pub static IS_CI: Lazy<bool> = Lazy::new(|| {
+pub static IS_TEST: Lazy<bool> = Lazy::new(|| {
     // assume default if NODE_ENV=prod and TEST=y.
     if std::env::var("NODE_ENV").unwrap_or("prod".to_string()) != "prod".to_string()
         && std::env::var("TEST").unwrap_or("n".to_string()) != "n".to_string()
@@ -154,7 +154,7 @@ impl AppCfg {
         }
 
         // skip questionnaire if CI
-        if *IS_CI {
+        if *IS_TEST {
             AppCfg::save_file(&default_config);
 
             return default_config;
@@ -201,7 +201,7 @@ impl AppCfg {
     /// swarm_path points to the swarm_temp directory
     /// node_home to the directory of the current swarm persona
     pub fn make_swarm_configs(swarm_path: PathBuf, node_home: PathBuf) -> AppCfg {
-        let config_path = swarm_path.join("0/node.yaml");
+        let config_path = swarm_path.join(&node_home).join("node.yaml");
         let config = NodeConfig::load(&config_path)
             .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &config_path));
 
@@ -210,7 +210,7 @@ impl AppCfg {
                 .unwrap();
 
         // upstream configs
-        let upstream_config_path = swarm_path.join("0/node.yaml");
+        let upstream_config_path = swarm_path.join(&node_home).join("node.yaml");
         let upstream_config = NodeConfig::load(&upstream_config_path).unwrap_or_else(|_| {
             panic!(
                 "Failed to load NodeConfig from file: {:?}",
