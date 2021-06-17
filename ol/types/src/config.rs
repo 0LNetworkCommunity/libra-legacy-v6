@@ -174,9 +174,9 @@ impl AppCfg {
     /// Save swarm default configs to swarm path
     /// swarm_path points to the swarm_temp directory
     /// node_home to the directory of the current swarm persona
-    pub fn init_app_configs_swarm(swarm_path: PathBuf, node_home: PathBuf) -> AppCfg {
+    pub fn init_app_configs_swarm(swarm_path: PathBuf, node_home: PathBuf, source_path: Option<PathBuf>) -> AppCfg {
         // println!("init_swarm_config: {:?}", swarm_path); already logged in commands.rs
-        let host_config = AppCfg::make_swarm_configs(swarm_path, node_home);
+        let host_config = AppCfg::make_swarm_configs(swarm_path, node_home, source_path);
         AppCfg::save_file(&host_config);
         host_config
     }
@@ -200,7 +200,7 @@ impl AppCfg {
     /// get configs from swarm
     /// swarm_path points to the swarm_temp directory
     /// node_home to the directory of the current swarm persona
-    pub fn make_swarm_configs(swarm_path: PathBuf, node_home: PathBuf) -> AppCfg {
+    pub fn make_swarm_configs(swarm_path: PathBuf, node_home: PathBuf, source_path: Option<PathBuf>) -> AppCfg {
         let config_path = swarm_path.join(&node_home).join("node.yaml");
         let config = NodeConfig::load(&config_path)
             .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &config_path));
@@ -238,6 +238,7 @@ impl AppCfg {
 
         cfg.workspace.node_home = node_home;
         cfg.workspace.db_path = db_path;
+        cfg.workspace.source_path = source_path;
         cfg.chain_info.base_waypoint = Some(config.base.waypoint.waypoint());
         cfg.profile.account = "4C613C2F4B1E67CA8D98A542EE3F59F5".parse().unwrap(); // alice
         cfg.profile.default_node = Some(url);
@@ -286,7 +287,6 @@ pub struct Workspace {
     /// home directory of the libra node, may be the same as miner.
     pub node_home: PathBuf,
     /// Directory of source code (for developer tests only)
-    #[serde(default = "default_source_path")]
     pub source_path: Option<PathBuf>,
     /// Directory to store blocks in
     pub block_dir: String,
@@ -299,10 +299,6 @@ pub struct Workspace {
 
 fn default_db_path() -> PathBuf {
     dirs::home_dir().unwrap().join(NODE_HOME).join("db")
-}
-
-fn default_source_path() -> Option<PathBuf> {
-    Some(PathBuf::from_str(".").unwrap())
 }
 
 impl Default for Workspace {

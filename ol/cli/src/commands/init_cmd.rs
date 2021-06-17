@@ -49,28 +49,26 @@ impl Runnable for InitCmd {
         if let Some(path) = entry_args.swarm_path {
           let swarm_node_home = entrypoint::get_node_home();
           let absolute = fs::canonicalize(path).unwrap();
-          initialize_host_swarm(absolute, swarm_node_home, entry_args.swarm_persona, self.source_path.as_ref().unwrap());
-          return
+          initialize_host_swarm(absolute, swarm_node_home, entry_args.swarm_persona, &self.source_path);
+        } else {
+          let (authkey, account, wallet) = wallet::get_account_from_prompt();
+          // start with a default value, or read from file if already initialized
+          let mut app_cfg = app_config().to_owned();
+          if !self.skip_app { 
+            app_cfg = initialize_app_cfg(
+              authkey,
+              account, 
+              &self.upstream_peer,
+              &self.path,
+              None, // TODO: probably need an epoch option here.
+              self.waypoint,
+              &self.source_path,
+            ).unwrap()
+          };
+          if !self.skip_val {
+            initialize_validator(&wallet, &app_cfg, self.waypoint).unwrap() 
+          };
         }
-        
-        let (authkey, account, wallet) = wallet::get_account_from_prompt();
-        // start with a default value, or read from file if already initialized
-        let mut app_cfg = app_config().to_owned();
-        if !self.skip_app { 
-          app_cfg = initialize_app_cfg(
-            authkey,
-            account, 
-            &self.upstream_peer,
-            &self.path,
-            None, // TODO: probably need an epoch option here.
-            self.waypoint,
-            &self.source_path,
-          ).unwrap()
-        };
-
-        if !self.skip_val {
-          initialize_validator(&wallet, &app_cfg, self.waypoint).unwrap() 
-        };
     }
 }
 
@@ -91,16 +89,16 @@ pub fn initialize_app_cfg(
       path,
       epoch_opt,
       wp_opt,
-      source_path);
+      &source_path);
     Ok(cfg)
 }
 
 /// Initializes the necessary 0L config files: 0L.toml and populate blocks directory
 /// assumes the libra source is checked out at $HOME/libra
-pub fn initialize_host_swarm(swarm_path: PathBuf, node_home: PathBuf, persona: Option<String>, source_path: &PathBuf) {
-    let cfg = AppCfg::init_app_configs_swarm(swarm_path, node_home);
+pub fn initialize_host_swarm(swarm_path: PathBuf, node_home: PathBuf, persona: Option<String>, source_path: &Option<PathBuf>) {
+    let cfg = AppCfg::init_app_configs_swarm(swarm_path, node_home, source_path.clone());
     if persona.is_some() {
-      let source = source_path.join("ol/fixtures/blocks/test").join(persona.unwrap()).join("block_0.json");
+      let source = &cfg.workspace.source_path.unwrap().join("ol/fixtures/blocks/test").join(persona.unwrap()).join("block_0.json");
       let bocks_dir = PathBuf::new().join(&cfg.workspace.node_home).join(&cfg.workspace.block_dir);
       let target_file = PathBuf::new().join(&cfg.workspace.node_home).join(&cfg.workspace.block_dir).join("block_0.json");
       println!("copy first block from {:?} to {:?}", source, target_file);
