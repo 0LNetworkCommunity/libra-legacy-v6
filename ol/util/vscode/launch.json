@@ -1,0 +1,82 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "ol serve",
+      "cargo": {
+        "args": [
+          "b",
+          "-p",
+          "ol"
+        ],
+      },
+      "args": [
+        "--swarm-path",
+        "/root/swarm_temp",
+        "--swarm-persona",
+        "alice",
+        "serve",
+        "-c"
+      ], // e.g. ["arg1", "arg2"]
+      "env": {
+        "MNEM": "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse",
+        "NODE_ENV": "test"
+      }, // e.g. {"ENV1": "aa", "ENV2: "bb"}
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "onboard val",
+      "cargo": {
+        "args": [
+          "b",
+          "-p",
+          "onboard"
+        ],
+      },
+      "args": [
+        "val",
+        "--skip-mining",
+        "--upstream-peer",
+        "http://167.172.248.37/",
+      ], // e.g. ["arg1", "arg2"]
+      "env": {
+        "MNEM": "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse",
+        "NODE_ENV": "test"
+      }, // e.g. {"ENV1": "aa", "ENV2: "bb"}
+      "cwd": "${workspaceFolder}"
+    },
+        {
+          "type": "lldb",
+          "request": "launch",
+          "preLaunchTask": "swarmInit",
+          "name": "query",
+          "cargo": {
+            "args": [
+              "b",
+              "-p",
+              "ol"
+            ],
+          },
+          "args": [
+          "--swarm-path",
+          "/root/swarm_temp",
+          "--swarm-persona",
+          "alice",
+          "query",
+          "--resources"
+          ], // e.g. ["arg1", "arg2"]
+          "env": {
+            "MNEM": "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse",
+            "NODE_ENV": "test"
+          }, // e.g. {"ENV1": "aa", "ENV2: "bb"}
+          "cwd": "${workspaceFolder}"
+        }
+  ]
+}

@@ -8,7 +8,7 @@ use hex::{decode, encode};
 use std::{fs::File, io::Write, path::PathBuf, process::exit};
 use libra_network_address::{NetworkAddress, encrypted::{TEST_SHARED_VAL_NETADDR_KEY, TEST_SHARED_VAL_NETADDR_KEY_VERSION}};
 use ol_keys::scheme::KeyScheme;
-use crate::autopay::PayInstruction;
+use crate::pay_instruction::PayInstruction;
 use anyhow;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 /// Configuration data necessary to initialize a validator.
