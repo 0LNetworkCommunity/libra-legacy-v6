@@ -50,25 +50,27 @@ impl Runnable for InitCmd {
           let swarm_node_home = entrypoint::get_node_home();
           let absolute = fs::canonicalize(path).unwrap();
           initialize_host_swarm(absolute, swarm_node_home, entry_args.swarm_persona, &self.source_path);
-        } else {
-          let (authkey, account, wallet) = wallet::get_account_from_prompt();
-          // start with a default value, or read from file if already initialized
-          let mut app_cfg = app_config().to_owned();
-          if !self.skip_app { 
-            app_cfg = initialize_app_cfg(
-              authkey,
-              account, 
-              &self.upstream_peer,
-              &self.path,
-              None, // TODO: probably need an epoch option here.
-              self.waypoint,
-              &self.source_path,
-            ).unwrap()
-          };
-          if !self.skip_val {
-            initialize_validator(&wallet, &app_cfg, self.waypoint).unwrap() 
-          };
+          return
         }
+        
+        let (authkey, account, wallet) = wallet::get_account_from_prompt();
+        // start with a default value, or read from file if already initialized
+        let mut app_cfg = app_config().to_owned();
+        if !self.skip_app { 
+          app_cfg = initialize_app_cfg(
+            authkey,
+            account, 
+            &self.upstream_peer,
+            &self.path,
+            None, // TODO: probably need an epoch option here.
+            self.waypoint,
+            &self.source_path,
+          ).unwrap()
+        };
+
+        if !self.skip_val {
+          initialize_validator(&wallet, &app_cfg, self.waypoint).unwrap() 
+        };
     }
 }
 
@@ -89,7 +91,7 @@ pub fn initialize_app_cfg(
       path,
       epoch_opt,
       wp_opt,
-      &source_path);
+      source_path);
     Ok(cfg)
 }
 
