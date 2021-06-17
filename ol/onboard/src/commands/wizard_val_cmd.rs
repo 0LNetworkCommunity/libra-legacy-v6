@@ -15,12 +15,12 @@ use ol::{commands::init_cmd, config::AppCfg};
 use ol_keys::{scheme::KeyScheme, wallet};
 use ol_types::block::Block;
 use ol_types::config::IS_TEST;
-use ol_types::{account::ValConfigs, autopay::PayInstruction, config::TxType};
+use ol_types::{account::ValConfigs, pay_instruction::PayInstruction, config::TxType};
 use reqwest::Url;
 use std::process::exit;
 use std::{fs::File, io::Write, path::PathBuf};
 use txs::{commands::autopay_batch_cmd, submit_tx};
-/// `val-wizard` subcommand
+/// `validator wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ValWizardCmd {
     #[options(
@@ -197,6 +197,7 @@ pub fn get_autopay_batch(
     let instr_vec = PayInstruction::parse_autopay_instructions(
         &file_path.clone().unwrap_or(home_path.join(file_name)),
         Some(starting_epoch.clone()),
+        None,
     )
     .unwrap();
     let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone());

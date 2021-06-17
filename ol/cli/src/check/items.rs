@@ -32,6 +32,8 @@ pub struct Items {
   pub sync_delay: i64,
   /// is in the validator set
   pub validator_set: bool,
+  /// has auto pay not empty
+  pub has_auto_pay: bool,
 }
 
 impl Default for Items {
@@ -49,6 +51,7 @@ impl Default for Items {
       db_files_exist: false,
       web_running: false,
       node_mode: None,
+      has_auto_pay: false,
     }
   }
 }

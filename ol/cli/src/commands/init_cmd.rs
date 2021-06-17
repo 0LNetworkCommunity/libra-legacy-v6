@@ -104,7 +104,7 @@ pub fn initialize_host_swarm(swarm_path: PathBuf, node_home: PathBuf, persona: O
       let bocks_dir = PathBuf::new().join(&cfg.workspace.node_home).join(&cfg.workspace.block_dir);
       let target_file = PathBuf::new().join(&cfg.workspace.node_home).join(&cfg.workspace.block_dir).join("block_0.json");
       println!("copy first block from {:?} to {:?}", source, target_file);
-      match create(bocks_dir, false) {
+      match create(blocks_dir, true) {
         Err(why) => println!("create block dir failed: {:?}", why),
         _ => match copy(source, target_file, &CopyOptions::new()) {
           Err(why) => println!("copy block failed: {:?}", why),
