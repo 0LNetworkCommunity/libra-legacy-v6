@@ -9,6 +9,7 @@ use crate::entrypoint;
 use crate::prelude::app_config;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_genesis_tool::node_files;
+use libra_types::waypoint::Waypoint;
 use libra_types::{transaction::SignedTransaction};
 use libra_wallet::WalletLibrary;
 use ol::{commands::init_cmd, config::AppCfg};
@@ -48,6 +49,10 @@ pub struct ValWizardCmd {
     upstream_peer: Option<Url>,
     #[options(help = "If validator is building from source")]
     source_path: Option<PathBuf>,
+    #[options(short = "w", help = "If validator is building from source")]
+    waypoint: Option<Waypoint>,
+    #[options(short = "e", help = "If validator is building from source")]
+    epoch: Option<u64>,
 }
 
 impl Runnable for ValWizardCmd {
@@ -79,8 +84,8 @@ impl Runnable for ValWizardCmd {
             account,
             &Some(upstream.clone()),
             &None,
-            None,
-            None,
+            &self.epoch,
+            &self.waypoint,
             &self.source_path
         );
         let home_path = &app_config.workspace.node_home;

@@ -17,7 +17,8 @@ ifndef PERSONA
 PERSONA=alice
 endif
 
-MNEM="talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse"
+# Eve mnemonic
+MNEM="recall october regret kite undo choice outside season business wall quit arrest vacant arrow giggle vote ghost winter hawk soft cheap decide exhaust spare"
 
 NUM_NODES = 4
 EVE = 3DC18D1CF61FAAC6AC70E3A63F062E4B
@@ -42,11 +43,14 @@ swarm:
 stop:
 	killall libra-swarm libra-node miner ol | true
 
-
 init:
 	@echo INIT
 	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}
 
+create-account:
+# TODO: Makefile question: Why do we need to set MNEM set to itself here?
+	MNEM=${MNEM} cargo r -p onboard -- val --upstream-peer http://localhost --epoch 5 --waypoint '0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2'
+ 
 tx:
 	@echo TX
 	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} create-validator -f ${SOURCE_PATH}/ol/fixtures/account/swarm/${ONBOARD_FILE}
