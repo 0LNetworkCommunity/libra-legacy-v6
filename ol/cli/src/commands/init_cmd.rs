@@ -49,7 +49,7 @@ impl Runnable for InitCmd {
         if let Some(path) = entry_args.swarm_path {
           let swarm_node_home = entrypoint::get_node_home();
           let absolute = fs::canonicalize(path).unwrap();
-          initialize_host_swarm(absolute, swarm_node_home, entry_args.swarm_persona, self.source_path.as_ref().unwrap());
+          initialize_host_swarm(absolute, swarm_node_home, entry_args.swarm_persona, &self.source_path);
           return
         }
         
@@ -97,10 +97,10 @@ pub fn initialize_app_cfg(
 
 /// Initializes the necessary 0L config files: 0L.toml and populate blocks directory
 /// assumes the libra source is checked out at $HOME/libra
-pub fn initialize_host_swarm(swarm_path: PathBuf, node_home: PathBuf, persona: Option<String>, source_path: &PathBuf) {
-    let cfg = AppCfg::init_app_configs_swarm(swarm_path, node_home);
+pub fn initialize_host_swarm(swarm_path: PathBuf, node_home: PathBuf, persona: Option<String>, source_path: &Option<PathBuf>) {
+    let cfg = AppCfg::init_app_configs_swarm(swarm_path, node_home, source_path.clone());
     if persona.is_some() {
-      let source = source_path.join("ol/fixtures/blocks/test").join(persona.unwrap()).join("block_0.json");
+      let source = &cfg.workspace.source_path.unwrap().join("ol/fixtures/blocks/test").join(persona.unwrap()).join("block_0.json");
       let blocks_dir = PathBuf::new().join(&cfg.workspace.node_home).join(&cfg.workspace.block_dir);
       let target_file = PathBuf::new().join(&cfg.workspace.node_home).join(&cfg.workspace.block_dir).join("block_0.json");
       println!("copy first block from {:?} to {:?}", source, target_file);
