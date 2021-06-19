@@ -90,6 +90,7 @@ stdlib:
   
 
 install:
+	mkdir ${USER_BIN_PATH} | true
 	sudo cp -f ${SOURCE}/target/release/miner ${USER_BIN_PATH}/miner
 	sudo cp -f ${SOURCE}/target/release/libra-node ${USER_BIN_PATH}/libra-node
 	sudo cp -f ${SOURCE}/target/release/db-restore ${USER_BIN_PATH}/db-restore
