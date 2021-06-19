@@ -27,13 +27,8 @@ This command will prompt for a few configs, including what directory you will be
 
 `Fun statement` is not required, but you may want to enter the original one for consistency.
 
-3. Copy `blocks/` directory from the backup
 
-```
-cp path/to/.0L/blocks/* new/path/.0L/blocks/
-```
-
-4. Stop your node, miner, monitor and restart
+3. Stop your node, miner, monitor and restart
 
 ```
 # in previous user
