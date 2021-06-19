@@ -34,7 +34,6 @@ endif
 export
 
 test: swarm check-swarm send-tx check-tx check-autopay check-transfer stop
-	echo $$SUCCESS_TEXT
 
 test-percent-change:
 	AUTOPAY_FILE=alice.autopay_batch.json make -f ${MAKE_FILE} test
@@ -43,7 +42,7 @@ test-fixed-once:
 	AUTOPAY_FILE=alice.fixed_once.autopay_batch.json make -f ${MAKE_FILE} test
 
 test-all:
-	export AUTOPAY_FILE=all.autopay_batch.json SUCCESS_TEXT="'with sequence number: 7'" && echo $$SUCCESS_TEXT && make -f ${MAKE_FILE} test
+	export AUTOPAY_FILE=all.autopay_batch.json SUCCESS_TEXT="'with sequence number: 7'" && make -f ${MAKE_FILE} test
 
 swarm:
 	@echo Building Swarm
