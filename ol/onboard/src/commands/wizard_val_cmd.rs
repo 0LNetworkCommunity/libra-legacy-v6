@@ -28,7 +28,9 @@ pub struct ValWizardCmd {
         short = "a",
         help = "where to output the account.json file, defaults to node home"
     )]
-    account_path: Option<PathBuf>,
+    output_path: Option<PathBuf>,
+    #[options(help = "explicitly set home path instead of answer in wizard, for CI usually")]
+    home_path: Option<PathBuf>,
     #[options(help = "id of the chain")]
     chain_id: Option<u8>,
     #[options(help = "github org of genesis repo")]
@@ -83,7 +85,7 @@ impl Runnable for ValWizardCmd {
             authkey,
             account,
             &Some(upstream.clone()),
-            &None,
+            &self.home_path,
             &self.epoch,
             &self.waypoint,
             &self.source_path
@@ -167,7 +169,7 @@ impl Runnable for ValWizardCmd {
 
         // Write account manifest
         write_account_json(
-            &self.account_path,
+            &self.output_path,
             wallet,
             Some(app_config.clone()),
             autopay_batch,

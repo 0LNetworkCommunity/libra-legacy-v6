@@ -10,9 +10,7 @@ use crate::config::IS_TEST;
 pub fn what_home(swarm_path: Option<PathBuf>, swarm_persona: Option<String>) -> PathBuf {
     // For dev and CI setup
     if let Some(path) = swarm_path {
-        return swarm_home(path, swarm_persona);
-    } else if *IS_TEST {
-      return PathBuf::from("~/.0L")
+      return swarm_home(path, swarm_persona);
     }
 
     let mut default_home_dir = dirs::home_dir().unwrap();

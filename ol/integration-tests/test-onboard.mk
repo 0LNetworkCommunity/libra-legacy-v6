@@ -28,6 +28,8 @@ ONBOARD_FILE=eve.fixed_recurring.account.json
 START_TEXT = "To run the Libra CLI client"
 SUCCESS_TEXT = "User transactions successfully relayed"
 
+export
+
 # account.json fixtures generated with:
 # cargo r -p onboard -- --swarm-path ./whatever val --upstream-peer http://167.172.248.37/
 
@@ -48,12 +50,13 @@ init:
 	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}
 
 create-account:
+	cp ${SOURCE_PATH}/ol/fixtures/autopay/alice.autopay_batch.json ${DATA_PATH}/autopay_batch.json
 # TODO: Makefile question: Why do we need to set MNEM set to itself here?
-	MNEM=${MNEM} cargo r -p onboard -- val --upstream-peer http://localhost --epoch 5 --waypoint '0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2'
+	MNEM=${MNEM} cargo r -p onboard -- val --upstream-peer http://localhost --epoch 5 --waypoint '0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2' --home-path ${DATA_PATH} --output-path ${DATA_PATH}
  
 tx:
 	@echo TX
-	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} create-validator -f ${SOURCE_PATH}/ol/fixtures/account/swarm/${ONBOARD_FILE}
+	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} create-validator -f ${DATA_PATH}/account.json
 
 resources:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} --account ${EVE} query --resources
