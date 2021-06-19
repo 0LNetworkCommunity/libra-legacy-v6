@@ -7,7 +7,12 @@ Ideally you will start from a fresh new user (not root) on your host.
 
 0. Backup your config files in your current user's `~/.0L`. 
 
-1. Make sure you have your autopay_batch.json in the folder where you would like to keep node configs (e.g. /home/alice/my_0L_configs/)
+```
+cd ~
+rsync -av --exclude db/ ~/.0L ~/0L_backup_202106
+```
+
+1. Make sure you have your `autopay_batch.json` in the `~/.0L` before continuing
 
 2. Create all files needed for validator
 
