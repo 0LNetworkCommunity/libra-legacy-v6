@@ -12,13 +12,17 @@ use libra_types::waypoint::Waypoint;
 // use libra_genesis_tool::keyscheme::KeyScheme;
 use ol_keys::wallet;
 use ol::config::AppCfg;
-use ol_types::autopay::{InstructionType, PayInstruction, write_batch_file};
+use ol_types::pay_instruction::{InstructionType, PayInstruction, write_batch_file};
 
-/// `val-wizard` subcommand
+/// `fix` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct FixCmd {
     #[options(help = "waypoint to set")]
     waypoint: Option<Waypoint>,
+    #[options(help = "migrate account json")]
+    account: bool,
+    #[options(help = "fix operator key")]
+    operator: bool,
 }
 
 impl Runnable for FixCmd {
@@ -31,11 +35,14 @@ impl Runnable for FixCmd {
         // set the waypoint
         if let Some(w) = self.waypoint {
           key::set_waypoint(home_dir, namespace, w);
-
         }
-        key::set_operator_key(home_dir, namespace);
+        if self.operator {
+          key::set_operator_key(home_dir, namespace);
+        }
 
-        migrate_account_json(&cfg);
+        if self.account {
+          migrate_account_json(&cfg);
+        }
     }
   }
 
@@ -50,6 +57,7 @@ pub fn migrate_account_json(cfg: &AppCfg) {
         &home_path,
         &cfg,
         &wallet,
+        false, // TODO: Do we need swarm case for this?
     );
 
     let account_json_path = cfg.workspace.node_home.clone().join("account.json");
@@ -85,10 +93,12 @@ pub fn migrate_autopay_json_4_3_0(cfg: &AppCfg, instructions: Vec<PayInstruction
   let vec_instr: Vec<PayInstruction> = instructions.into_iter()
   .map(|mut i| {
     if i.type_of == InstructionType::PercentOfChange {
+      i.uid = None;
       i.type_of = InstructionType::PercentOfBalance;
       i.type_move = None;
       i.value_move = None;
       i.duration_epochs = Some(1);
+      i.end_epoch = None;
     }
     i
   })

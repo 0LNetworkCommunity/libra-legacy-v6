@@ -5,6 +5,7 @@ use anyhow::Error;
 use cli::libra_client::LibraClient;
 use libra_config::config::NodeConfig;
 use libradb::LibraDB;
+use std::path::PathBuf;
 use std::{process::Command, str};
 use sysinfo::SystemExt;
 use sysinfo::{ProcessExt, ProcessStatus};
@@ -12,6 +13,7 @@ use libra_json_rpc_client::views::{MinerStateResourceView};
 use libra_types::waypoint::Waypoint;
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
 use storage_interface::DbReader;
+use super::client;
 use super::{account::OwnerAccountView, states::HostState};
 
 /// name of key in kv store for sync
@@ -72,6 +74,14 @@ impl Node {
         };
     }
 
+    /// default node connection from configs
+    pub fn default_from_cfg(mut cfg: AppCfg, swarm_path: Option<PathBuf>) -> Node {
+        // NOTE: not intended for swarm.
+        let client = client::pick_client(swarm_path.clone(), &mut cfg).unwrap();
+        Node::new(client, cfg, swarm_path.is_some())
+    }
+
+
     /// refresh all checks
     pub fn refresh_checks(&mut self) -> &mut Self {
         self.vitals.items.configs_exist = self.configs_exist();
@@ -94,6 +104,7 @@ impl Node {
             self.vitals.items.sync_height = 404;
         }
         self.vitals.items.validator_set = self.is_in_validator_set();
+        self.vitals.items.has_auto_pay = self.vitals.account_view.has_auto_pay_not_empty();
         self
     }
 
@@ -144,11 +155,6 @@ impl Node {
             Ok(_t) => self.client.waypoint(),
             Err(_) => self.app_conf.get_waypoint(None),
         }
-    }
-
-    /// is validator jailed
-    pub fn is_jailed() -> bool {
-        unimplemented!("Don't know how to implement")
     }
 
     /// Is current account in validator set
