@@ -17,7 +17,7 @@ rsync -av --exclude db/ ~/.0L ~/0L_backup_202106
 2. Create all files needed for validator
 
 ```
-onboard --val --skip-mining --upstream-peer http://ip-address --source-path path/to/libra/source
+onboard val --skip-mining --upstream-peer http://ip-address --source-path path/to/libra/source
 ```
 
 This command will prompt for a few configs, including what directory you will be storing configs for that account. It will also prompt for the IP address of the node.
