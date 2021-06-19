@@ -22,19 +22,28 @@ MNEM="talent sunset lizard pill fame nuclear spy noodle basket okay critic grow 
 NUM_NODES = 2
 
 START_TEXT = "To run the Libra CLI client"
+
+ifndef SUCCESS_TEXT
 SUCCESS_TEXT = "transaction executed"
+endif
 
 ifndef AUTOPAY_FILE
 AUTOPAY_FILE = alice.autopay_batch.json
 endif
 
+export
+
 test: swarm check-swarm send-tx check-tx check-autopay check-transfer stop
+	echo $$SUCCESS_TEXT
 
 test-percent-change:
 	AUTOPAY_FILE=alice.autopay_batch.json make -f ${MAKE_FILE} test
 
 test-fixed-once:
 	AUTOPAY_FILE=alice.fixed_once.autopay_batch.json make -f ${MAKE_FILE} test
+
+test-all:
+	export AUTOPAY_FILE=all.autopay_batch.json SUCCESS_TEXT="'with sequence number: 7'" && echo $$SUCCESS_TEXT && make -f ${MAKE_FILE} test
 
 swarm:
 	@echo Building Swarm
@@ -44,10 +53,7 @@ swarm:
 	cd ${SOURCE_PATH} && cargo run -p libra-swarm -- --libra-node ${SOURCE_PATH}/target/debug/libra-node -c ${SWARM_TEMP} -n ${NUM_NODES} &> ${LOG} &
 
 stop:
-	killall libra-swarm libra-node miner ol | true
-
-echo: 
-	@echo hi &> ${LOG} &
+	killall libra-swarm libra-node miner ol txs cli | true
 
 init:
 	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}
