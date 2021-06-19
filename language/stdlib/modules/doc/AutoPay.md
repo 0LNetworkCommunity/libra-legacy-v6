@@ -482,8 +482,8 @@ Attempt to add instruction when too many already exist
       <b>let</b> delete_payment = <b>false</b>;
       {
         <b>let</b> payment = <a href="Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>&lt;<a href="AutoPay.md#0x1_AutoPay2_Payment">Payment</a>&gt;(payments, payments_idx);
-        // If payment end epoch is greater, it's not an active payment anymore, so delete it
-        <b>if</b> (payment.end_epoch &gt;= epoch) {
+        // If payment end epoch is greater, it's not an active payment anymore, so delete it, does not <b>apply</b> <b>to</b> fixed once payment (it is deleted once it is sent)
+        <b>if</b> (payment.end_epoch &gt;= epoch || payment.in_type == <a href="AutoPay.md#0x1_AutoPay2_FIXED_ONCE">FIXED_ONCE</a>) {
           // A payment will happen now
           // Obtain the amount <b>to</b> pay
           // IMPORTANT there are two digits for scaling representation.
