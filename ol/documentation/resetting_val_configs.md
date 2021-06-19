@@ -30,11 +30,12 @@ This command will prompt for a few configs, including what directory you will be
 
 3. Stop your node, miner, monitor and restart
 
+Make sure you are doing this in tmux. Re-attach with `tmux a`
 ```
-# in previous user
+# stop everything
 ol mgmt --stop all
 
-# in new user
+# restart the 0L service orchestrator
 ol start
 ```
 
