@@ -118,17 +118,13 @@ mv-bin:
 		mv /usr/local/bin/* ~/bin/ ; \
 	fi
 
-ap-template:
-	curl https://raw.githubusercontent.com/LOL-LLC/donations-record/main/clean.autopay_batch.json --output ~/.0L/template.autopay_batch.json
-
-
 reset:
 	onboard val --skip-mining --upstream-peer http://167.172.248.37/ --source-path ~/libra
 
 
 backup:
 	cd ~ && rsync -av --exclude db/ --exclude logs/ ~/.0L ~/0L_backup_$(shell date +"%m-%d-%y")
-	
+
 #### GENESIS BACKEND SETUP ####
 init-backend: 
 	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
