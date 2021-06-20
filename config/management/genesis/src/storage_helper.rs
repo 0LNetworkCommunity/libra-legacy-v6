@@ -51,7 +51,7 @@ impl StorageHelper {
         Self { temppath: path }
     }
 
-    ///////// 0L  /////////
+    ///////// 0L /////////
     pub fn get_with_path(path: std::path::PathBuf) -> Self {
         let path = diem_temppath::TempPath::new_with_dir(path);
         // path.create_as_file().expect("Failed on create_as_file");
@@ -59,7 +59,7 @@ impl StorageHelper {
         Self { temppath: path }
     }
 
-    ///////// 0L  /////////
+    ///////// 0L /////////
     pub fn initialize_with_mnemonic_swarm(&self, namespace: String, mnemonic: String) {
         let keys = KeyScheme::new_from_mnemonic(mnemonic);
         let mut storage = self.storage(namespace.clone());
@@ -202,8 +202,8 @@ impl StorageHelper {
     // }
 
     //////// 0L ////////
-    // 0L: change, initialize the 0th account with a fixture mnemonic "Alice". 
-    // So we can test miner and other APIs.
+    // 0L: change, initialize the 0-4th accounts with a fixture mnemonics.
+    // So we can reliably test miner and other transactions.
     pub fn initialize_by_idx(&self, namespace: String, idx: usize) {
         // let mnem_alice = "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse".to_string();
         // let mnem_alice = ol_fixtures::get_persona_mnem("alice");
@@ -212,12 +212,16 @@ impl StorageHelper {
         let mut seed = [0u8; 32];
         let data_to_copy = 32 - std::cmp::min(32, partial_seed.len());
         seed[data_to_copy..].copy_from_slice(partial_seed.as_slice());
-        // idx 0 is for a "diemroot" account in swarm tests.
+        // idx 0 is reserved by swarm for a "diemroot" account in tests. 
+        //   It is not for a validator, just for doing genesis.
         // idx 1  is for the first node OWNER, set a fixed mnemonic to derive 
         // keys for this one so we can simulate miner workflow.
         // user personas
         match idx {
         1 => {
+            let user = ol_fixtures::get_persona_mnem("alice");
+            dbg!("swarm 3", &user);
+                        
             self.initialize_with_mnemonic_swarm(
             namespace,
             ol_fixtures::get_persona_mnem("alice"),

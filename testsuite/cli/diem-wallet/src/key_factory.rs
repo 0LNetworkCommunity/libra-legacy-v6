@@ -136,9 +136,11 @@ pub struct KeyFactory {
 }
 
 impl KeyFactory {
-    const MNEMONIC_SALT_PREFIX: &'static [u8] = b"DIEM WALLET: mnemonic salt prefix$";
-    const MAIN_KEY_SALT: &'static [u8] = b"DIEM WALLET: main key salt$";
-    const INFO_PREFIX: &'static [u8] = b"DIEM WALLET: derived key$";
+    //////// 0L ////////
+    const MNEMONIC_SALT_PREFIX: &'static [u8] = b"0L WALLET: UNREST, FIRES, AND VIOLENCE AS PROTESTS RAGE ACROSS US: mnemonic salt prefix$"; // https://markets.businessinsider.com/news/stocks/why-stock-market-rising-amid-nationwide-police-brutality-protests-2020-6-1029273996
+    const MAIN_KEY_SALT: &'static [u8] = b"0L WALLET: 30 MILLION AMERICANS HAVE FILED INITIAL UNEMPLOYMENT CLAIMS: master key salt$"; // https://www.cnn.com/2020/04/30/economy/unemployment-benefits-coronavirus/index.html
+    const INFO_PREFIX: &'static [u8] = b"0L WALLET: US DEATHS NEAR 100,000, AN INCALCULABLE LOSS: derived key$"; // https://www.nytimes.com/interactive/2020/05/24/us/us-coronavirus-deaths-100000.html
+    
     /// Instantiate a new KeyFactor from a Seed, where the [u8; 64] raw bytes of the Seed are used
     /// to derive both the Main and its child keys
     pub fn new(seed: &Seed) -> Result<Self> {
