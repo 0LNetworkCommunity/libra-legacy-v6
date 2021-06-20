@@ -1,4 +1,7 @@
-# 0L Configuration Jubilee
+# Resetting all node configs
+
+WARNING: As of v4.3.2 the default location for executables is `$HOME/bin`. Previously they were in `/usr/local/bin` which required root/sudo
+
 
 ## backup your files
 
