@@ -70,12 +70,12 @@ download-release:
 		echo $$b ; \
 		curl --create-dirs -o ${DATA_PATH}/release-${RELEASE}/$$b -L ${RELEASE_URL}/${RELEASE}/$$b ; \
 		chmod 744 ${DATA_PATH}/release-${RELEASE}/$$b ; \
-		cp ${DATA_PATH}/release-${RELEASE}/$$b  /usr/local/bin/$$b ; \
+		cp ${DATA_PATH}/release-${RELEASE}/$$b  ${USER_BIN_PATH}/$$b ; \
 	done
 
 uninstall:
 	@for b in ${BINS} ; do \
-		rm /usr/local/bin/$$b ; \
+		rm ${USER_BIN_PATH}/$$b ; \
 	done
 
 bins: stdlib
