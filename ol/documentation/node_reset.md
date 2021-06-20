@@ -9,7 +9,7 @@ cd ~
 rsync -av --exclude db/ ~/.0L ~/0L_backup_202106
 ```
 
-## confirm your executables are in $HOME/bin
+## Executables are in $HOME/bin
 
 As of v4.3.2 the default location for executables is `$HOME/bin`. Previously they were in `/usr/local/bin` which required root/sudo
 
@@ -17,6 +17,9 @@ Find out where the executables are.
 
 ```
 which ol
+
+# If this is the output, you need to migrate.
+/usr/local/bin/ol
 ```
 
 If you haven't yet migrated the locations do this:
