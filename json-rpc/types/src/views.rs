@@ -28,6 +28,8 @@ use std::{
     collections::BTreeMap,
     convert::{TryFrom, TryInto},
 };
+use ol_types::miner_state::MinerStateResource;
+use ol_types::oracle_upgrade::{UpgradeOracle, OracleResource};
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct AmountView {
@@ -857,3 +859,50 @@ impl TryFrom<AccountStateProof> for AccountStateProofView {
         })
     }
 }
+
+//////// 0L ////////
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct MinerStateResourceView {
+    pub previous_proof_hash: BytesView,
+    pub verified_tower_height: u64, // user's latest verified_tower_height
+    pub latest_epoch_mining: u64,
+    pub count_proofs_in_epoch: u64,
+    pub epochs_validating_and_mining: u64,
+    pub contiguous_epochs_validating_and_mining: u64,
+    pub epochs_since_last_account_creation: u64
+}
+
+impl TryFrom<MinerStateResource> for MinerStateResourceView {
+    type Error = Error;
+
+    fn try_from(state: MinerStateResource) -> Result<MinerStateResourceView, Error> {
+        Ok(MinerStateResourceView {
+            previous_proof_hash: BytesView::from( state.previous_proof_hash),
+            verified_tower_height: state.verified_tower_height, // user's latest verified_tower_height
+            latest_epoch_mining: state.latest_epoch_mining,
+            count_proofs_in_epoch: state.count_proofs_in_epoch,
+            epochs_validating_and_mining: state.epochs_validating_and_mining,
+            contiguous_epochs_validating_and_mining: state.contiguous_epochs_validating_and_mining,
+            epochs_since_last_account_creation: state.epochs_since_last_account_creation
+        })
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct OracleResourceView {
+    pub upgrade: UpgradeOracle,
+    // pub votes: Vec<Vote>,
+    // pub consensus: VoteCount,
+}
+
+impl TryFrom<OracleResource> for OracleResourceView {
+    type Error = Error;
+    fn try_from(state: OracleResource) -> Result<OracleResourceView, Error> {
+      Ok(OracleResourceView {
+            upgrade: state.upgrade,
+            // votes: compressed.votes.clone(),
+            // consensus: compressed.consensus.clone(),
+        })
+    }
+}
+//////// 0L end ////////

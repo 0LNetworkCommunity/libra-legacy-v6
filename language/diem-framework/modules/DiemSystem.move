@@ -6,6 +6,10 @@ address 0x1 {
 ///
 /// > Note: When trying to understand this code, it's important to know that "config"
 /// and "configuration" are used for several distinct concepts.
+
+/////// 0L /////////
+// Error Code file prefix: 1200
+
 module DiemSystem {
     use 0x1::CoreAddresses;
     use 0x1::Errors;
@@ -16,6 +20,11 @@ module DiemSystem {
     use 0x1::Vector;
     use 0x1::Roles;
     use 0x1::DiemTimestamp;
+    //////// 0L ////////
+    use 0x1::FixedPoint32;
+    use 0x1::Stats;
+    use 0x1::Cases;
+    use 0x1::NodeWeight;
 
     /// Information about a Validator Owner.
     struct ValidatorInfo has copy, drop, store {
@@ -62,21 +71,21 @@ module DiemSystem {
     }
 
     /// The `CapabilityHolder` resource was not in the required state
-    const ECAPABILITY_HOLDER: u64 = 0;
+    const ECAPABILITY_HOLDER: u64 = 12000; /////// 0L /////////
     /// Tried to add a validator with an invalid state to the validator set
-    const EINVALID_PROSPECTIVE_VALIDATOR: u64 = 1;
+    const EINVALID_PROSPECTIVE_VALIDATOR: u64 = 12001; /////// 0L /////////
     /// Tried to add a validator to the validator set that was already in it
-    const EALREADY_A_VALIDATOR: u64 = 2;
+    const EALREADY_A_VALIDATOR: u64 = 12002; /////// 0L /////////
     /// An operation was attempted on an address not in the vaidator set
-    const ENOT_AN_ACTIVE_VALIDATOR: u64 = 3;
+    const ENOT_AN_ACTIVE_VALIDATOR: u64 = 12003; /////// 0L /////////
     /// The validator operator is not the operator for the specified validator
-    const EINVALID_TRANSACTION_SENDER: u64 = 4;
+    const EINVALID_TRANSACTION_SENDER: u64 = 12004; /////// 0L /////////
     /// An out of bounds index for the validator set was encountered
-    const EVALIDATOR_INDEX: u64 = 5;
+    const EVALIDATOR_INDEX: u64 = 12005; /////// 0L /////////
     /// Rate limited when trying to update config
-    const ECONFIG_UPDATE_RATE_LIMITED: u64 = 6;
+    const ECONFIG_UPDATE_RATE_LIMITED: u64 = 12006; /////// 0L /////////
     /// Validator set already at maximum allowed size
-    const EMAX_VALIDATORS: u64 = 7;
+    const EMAX_VALIDATORS: u64 = 12007; /////// 0L /////////
 
     /// Number of microseconds in 5 minutes
     const FIVE_MINUTES: u64 = 300000000;
@@ -627,5 +636,138 @@ module DiemSystem {
            spec_get_validators()[i1].consensus_voting_power == 1;
 
     }
+
+    ///////// 0L //////////
+    // This function takes in a set of top n validators and updates the validator set.
+    // NewEpochEvent event will be fired.
+    // The Association, the VM, the validator operator or the validator from the current validator set
+    // are authorized to update the set of validator infos and add/remove validators
+    // Tests for this method are written in move-lang/functional-tests/0L/reconfiguration/bulk_update.move
+
+    // TODO: Has this been superceded by update_config_and_reconfigure ?
+    // Function code:01
+    public fun bulk_update_validators(
+        account: &signer,
+        new_validators: vector<address>
+    ) acquires CapabilityHolder {
+        DiemTimestamp::assert_operating();
+        assert(Signer::address_of(account) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(120001));
+
+        // Either check for each validator and add/remove them or clear the current list and append the list.
+        // The first way might be computationally expensive, so I choose to go with second approach.
+
+        // Clear all the current validators  ==> Intialize new validators
+        let next_epoch_validators = Vector::empty();
+
+        let n = Vector::length<address>(&new_validators);
+        // Get the current validator and append it to list
+        let index = 0;
+        while (index < n) {
+            let account_address = *(Vector::borrow<address>(&new_validators, index));
+
+            // A prospective validator must have a validator config resource
+            assert(ValidatorConfig::is_valid(account_address), Errors::invalid_argument(EINVALID_PROSPECTIVE_VALIDATOR));
+                        
+            if (!is_validator(account_address)) {
+                add_validator(account, account_address);
+            };
+            
+            let config = ValidatorConfig::get_config(account_address);
+            Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
+                addr: account_address,
+                config, // copy the config over to ValidatorSet
+                consensus_voting_power: 1 + NodeWeight::proof_of_weight(account_address),
+                last_config_update_time: DiemTimestamp::now_microseconds(),
+            });
+
+            // NOTE: This was move to redeem. Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
+            // ValidatorUniverse::update_validator_epoch_count(account_address);
+            index = index + 1;
+        };
+
+        let next_count = Vector::length<ValidatorInfo>(&next_epoch_validators);
+        assert(next_count > 0, Errors::invalid_argument(120001) );
+        // Transaction::assert(next_count > n, 90000000002 );
+        assert(next_count == n, Errors::invalid_argument(1200011) );
+
+        // We have vector of validators - updated!
+        // Next, let us get the current validator set for the current parameters
+        let outgoing_validator_set = get_diem_system_config();
+
+        // We create a new Validator set using scheme from outgoingValidatorset and update the validator set.
+        let updated_validator_set = DiemSystem {
+            scheme: outgoing_validator_set.scheme,
+            validators: next_epoch_validators,
+        };
+
+        // Updated the configuration using updated validator set. Now, start new epoch
+        set_diem_system_config(updated_validator_set);
+    }
+
+    /////// 0L /////////
+    //get_compliant_val_votes
+    //Function code:02
+    public fun get_fee_ratio(vm: &signer, height_start: u64, height_end: u64): (vector<address>, vector<FixedPoint32::FixedPoint32>) {
+        let validators = &get_diem_system_config().validators;
+
+        let compliant_nodes = Vector::empty<address>();
+        let count_compliant_votes = 0;
+        let i = 0;
+        while (i < Vector::length(validators)) {
+            let addr = Vector::borrow(validators, i).addr;
+            
+            let case = Cases::get_case(vm, addr, height_start, height_end);
+            if (case == 1) {
+                let node_votes = Stats::node_current_votes(vm, addr);
+                Vector::push_back(&mut compliant_nodes, addr);
+                count_compliant_votes = count_compliant_votes + node_votes;
+            };
+            i = i + 1;
+        };
+        let fee_ratios = Vector::empty<FixedPoint32::FixedPoint32>();
+        let k = 0;
+        while (k < Vector::length(&compliant_nodes)) {
+            let addr = *Vector::borrow(&compliant_nodes, k);
+            let node_votes = Stats::node_current_votes(vm, addr);
+            let ratio = FixedPoint32::create_from_rational(node_votes, count_compliant_votes);
+            Vector::push_back(&mut fee_ratios, ratio);
+             k = k + 1;
+        };
+
+        assert(Vector::length(&compliant_nodes) == Vector::length(&fee_ratios),Errors::invalid_argument(120002) );
+
+        (compliant_nodes, fee_ratios)
+    }
+
+    /////// 0L /////////
+    public fun get_jailed_set(vm: &signer, height_start: u64, height_end: u64): vector<address> {
+      let validator_set = get_val_set_addr();
+      let jailed_set = Vector::empty<address>();
+      let k = 0;
+      while(k < Vector::length(&validator_set)){
+        let addr = *Vector::borrow<address>(&validator_set, k);
+
+        // consensus case 1 and 2, allow inclusion into the next validator set.
+        let case = Cases::get_case(vm, addr, height_start, height_end);
+        if (case == 3 || case == 4){
+          Vector::push_back<address>(&mut jailed_set, addr)
+        };
+        k = k + 1;
+      };
+      jailed_set
+    }
+
+    /////// 0L /////////
+    public fun get_val_set_addr(): vector<address> {
+        let validators = &get_diem_system_config().validators;
+        let nodes = Vector::empty<address>();
+        let i = 0;
+        while (i < Vector::length(validators)) {
+            Vector::push_back(&mut nodes, Vector::borrow(validators, i).addr);
+            i = i + 1;
+        };
+        nodes 
+    }
+
 }
 }

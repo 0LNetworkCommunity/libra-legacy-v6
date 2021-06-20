@@ -44,7 +44,7 @@ module VASP {
     /// or if there is already a VASP (child or parent) at this account.
     public fun publish_parent_vasp_credential(vasp: &signer, tc_account: &signer) {
         DiemTimestamp::assert_operating();
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_diem_root(tc_account); /////// 0L /////////
         Roles::assert_parent_vasp_role(vasp);
         let vasp_addr = Signer::address_of(vasp);
         assert(!is_vasp(vasp_addr), Errors::already_published(EPARENT_OR_CHILD_VASP));

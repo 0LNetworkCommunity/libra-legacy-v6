@@ -25,3 +25,13 @@ pub const VALIDATOR_NETWORK_KEY: &str = "validator_network";
 pub const SAFETY_DATA: &str = "safety_data";
 pub const WAYPOINT: &str = "waypoint";
 pub const GENESIS_WAYPOINT: &str = "genesis-waypoint";
+
+//////// 0L ////////
+pub const NODE_HOME: &str = ".0L/";
+pub const PROOF_OF_WORK_PREIMAGE: &str = "pow_preimage";
+pub const PROOF_OF_WORK_PROOF: &str = "pow_proof";
+pub const SALT_0L: &str = "0L";
+pub const SOURCE_DIR: &str = "libra/";
+pub const VDF_SECURITY_PARAM: u16 = 2048;
+/// Filename for 0L configs
+pub const CONFIG_FILE: &str = "0L.toml";

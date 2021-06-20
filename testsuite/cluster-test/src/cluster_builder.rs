@@ -442,8 +442,9 @@ impl ClusterBuilder {
         let layout = Layout {
             owners: owners.clone(),
             operators: owners,
-            diem_root: DIEM_ROOT_NS.to_string(),
-            treasury_compliance: DIEM_ROOT_NS.to_string(),
+            //////// 0L ////////
+            // diem_root: DIEM_ROOT_NS.to_string(),
+            // treasury_compliance: DIEM_ROOT_NS.to_string(),
         };
         let layout_path = "/tmp/layout.yaml";
         write!(

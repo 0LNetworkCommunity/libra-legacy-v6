@@ -22,6 +22,11 @@ diem-workspace-hack = { path = "../../../common/workspace-hack" }
 move-core-types = { path = "../../move-core/types" }
 move-vm-types = { path = "../types" }
 vm = { path = "../../vm" }
+######### 0L ########
+diem-global-constants = { path = "../../../config/global-constants"}
+hex = "0.4.2"
+diem-types = { path = "../../../types"}
+vdf = { path="../../../ol/verifiable_delay/vdf"}
 
 [features]
 default = []
