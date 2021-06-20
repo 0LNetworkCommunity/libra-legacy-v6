@@ -1,4 +1,4 @@
-# v4.3.2 Upgrade
+# Node Reset
 
 WARNING: 0L Tools no longer depend on sudo/root access. As such some default install paths have changed. 
 
@@ -9,7 +9,11 @@ cd ~
 rsync -av --exclude db/ ~/.0L ~/0L_backup_202106
 ```
 
-## Executables are in $HOME/bin
+## Stop your services
+```
+ol mgmt --stop all
+```
+## Confirm executables are in $HOME/bin
 
 As of v4.3.2 the default location for executables is `$HOME/bin`. Previously they were in `/usr/local/bin` which required root/sudo
 
@@ -66,12 +70,8 @@ Do this first: [Resetting Val Configs](resetting_val_configs.md)
 
 ## Restart your services as the new user
 
-Stop your node, miner, monitor and restart
+Recommended way is to use the service orchestration with:
 
 ```
-# in previous user
-ol mgmt --stop all
-
-# in new user
 ol start
 ```
