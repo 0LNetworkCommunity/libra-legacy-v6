@@ -7,12 +7,17 @@ Ideally you will start from a fresh new user (not root) on your host.
 
 0. Backup your config files in your current user's `~/.0L`. 
 
-1. Make sure you have your autopay_batch.json in the folder where you would like to keep node configs (e.g. /home/alice/my_0L_configs/)
+```
+cd ~
+rsync -av --exclude db/ ~/.0L ~/0L_backup_202106
+```
+
+1. Make sure you have your `autopay_batch.json` in the `~/.0L` before continuing
 
 2. Create all files needed for validator
 
 ```
-onboard --val --skip-mining --upstream-peer http://ip-address --source-path path/to/libra/source
+onboard val --skip-mining --upstream-peer http://ip-address --source-path path/to/libra/source
 ```
 
 This command will prompt for a few configs, including what directory you will be storing configs for that account. It will also prompt for the IP address of the node.
@@ -22,19 +27,15 @@ This command will prompt for a few configs, including what directory you will be
 
 `Fun statement` is not required, but you may want to enter the original one for consistency.
 
-3. Copy `blocks/` directory from the backup
 
-```
-cp path/to/.0L/blocks/* new/path/.0L/blocks/
-```
+3. Stop your node, miner, monitor and restart
 
-4. Stop your node, miner, monitor and restart
-
+Make sure you are doing this in tmux. Re-attach with `tmux a`
 ```
-# in previous user
+# stop everything
 ol mgmt --stop all
 
-# in new user
+# restart the 0L service orchestrator
 ol start
 ```
 

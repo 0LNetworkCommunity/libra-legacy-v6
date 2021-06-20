@@ -1,14 +1,19 @@
-# 0L Configuration Jubilee
+# v4.3.2 Upgrade
+
+WARNING: 0L Tools no longer depend on sudo/root access. As such some default install paths have changed. 
+
+As of v4.3.2 the default location for executables is `$HOME/bin`. Previously they were in `/usr/local/bin` which required root/sudo
+
 
 ## backup your files
 
 ```
 cd ~
-rsync -av --exclude db/ ~/.0L ~/0L_backup_20210607
+rsync -av --exclude db/ ~/.0L ~/0L_backup_202106
 
 ```
 
-## Create a new user on host
+## If you are using root/sudo: create a new user on host
 
 Especially important for those running as root.
 

@@ -62,8 +62,8 @@ impl Runnable for InitCmd {
             account, 
             &self.upstream_peer,
             &self.path,
-            None, // TODO: probably need an epoch option here.
-            self.waypoint,
+            &None, // TODO: probably need an epoch option here.
+            &self.waypoint,
             &self.source_path,
           ).unwrap()
         };
@@ -80,8 +80,8 @@ pub fn initialize_app_cfg(
   account: AccountAddress,
   upstream_peer: &Option<Url>,
   path: &Option<PathBuf>,
-  epoch_opt: Option<u64>,
-  wp_opt: Option<Waypoint>,
+  epoch_opt: &Option<u64>,
+  wp_opt: &Option<Waypoint>,
   source_path: &Option<PathBuf>
 ) -> Result <AppCfg, Error>{
     let cfg = AppCfg::init_app_configs(

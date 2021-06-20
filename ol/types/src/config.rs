@@ -12,7 +12,7 @@ use once_cell::sync::Lazy;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::{fs, io::Write, net::Ipv4Addr, path::PathBuf, str::FromStr};
+use std::{fs, io::Write, net::Ipv4Addr, path::PathBuf, process::exit, str::FromStr};
 
 use crate::dialogue::{what_home, what_ip, what_statement};
 
@@ -111,8 +111,8 @@ impl AppCfg {
         account: AccountAddress,
         upstream_peer: &Option<Url>,
         config_path: &Option<PathBuf>,
-        base_epoch: Option<u64>,
-        base_waypoint: Option<Waypoint>,
+        base_epoch: &Option<u64>,
+        base_waypoint: &Option<Waypoint>,
         source_path: &Option<PathBuf>,
     ) -> AppCfg {
         // TODO: Check if configs exist and warn on overwrite.
@@ -120,7 +120,7 @@ impl AppCfg {
         default_config.profile.auth_key = authkey.to_string();
         default_config.profile.account = account;
 
-                // Get statement which goes into genesis block
+        // Get statement which goes into genesis block
         default_config.profile.statement = what_statement();
 
         default_config.profile.ip = what_ip().unwrap();
@@ -135,22 +135,23 @@ impl AppCfg {
           default_config.workspace.stdlib_bin_path = Some(source_path.as_ref().unwrap().join("language/stdlib/staged/stdlib.mv"));
         }
 
-
-        if let Some(url) = upstream_peer {
-            default_config.profile.upstream_nodes = Some(vec![url.to_owned()]);
-            let mut web_monitor_url = url.clone();
-            web_monitor_url.set_port(Some(3030)).unwrap();
-            let epoch_url = &web_monitor_url.join("epoch.json").unwrap();
-            let (e, w) = bootstrap_waypoint_from_upstream(epoch_url).unwrap();
-            default_config.chain_info.base_epoch = Some(e);
-            default_config.chain_info.base_waypoint = Some(w)
-        }
         // override from args
-        if base_epoch.is_some() {
-            default_config.chain_info.base_epoch = base_epoch;
-        }
-        if base_waypoint.is_some() {
-            default_config.chain_info.base_waypoint = base_waypoint;
+        if base_epoch.is_some() && base_waypoint.is_some(){
+            default_config.chain_info.base_epoch = *base_epoch;
+            default_config.chain_info.base_waypoint = *base_waypoint;
+        } else {
+          if let Some(url) = upstream_peer {
+              default_config.profile.upstream_nodes = Some(vec![url.to_owned()]);
+              let mut web_monitor_url = url.clone();
+              web_monitor_url.set_port(Some(3030)).unwrap();
+              let epoch_url = &web_monitor_url.join("epoch.json").unwrap();
+              let (e, w) = bootstrap_waypoint_from_upstream(epoch_url).unwrap();
+              default_config.chain_info.base_epoch = Some(e);
+              default_config.chain_info.base_waypoint = Some(w)
+          } else {
+            println!("ERROR: Trying to get a starting epoch, and waypoint for configs. Either pass --epoch and --waypoint as CLI args, or provide a URL to fetch this data from --upstream-peer or --template-url");
+            exit(1);
+          }
         }
 
         // skip questionnaire if CI
