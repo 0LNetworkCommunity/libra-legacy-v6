@@ -62,7 +62,7 @@ pub fn process_instructions(instructions: Vec<PayInstruction>) -> Vec<Script> {
             },
         }
         
-        if i.duration_epochs.is_none() || i.duration_epochs.unwrap() < 1 {
+        if i.duration_epochs.is_some() && i.duration_epochs.unwrap() < 1 {
           println!("Instructions must have epoch_duration greater than 0. Exiting. Instruction: {:?}", &i);
           exit(1);
         }

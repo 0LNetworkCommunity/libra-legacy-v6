@@ -40,7 +40,7 @@ start:
 	cd ${SOURCE_PATH} && cargo run -p libra-swarm -- --libra-node ${SOURCE_PATH}/target/debug/libra-node -c ${SWARM_TEMP} -n ${NUM_NODES} &> ${LOG}&
 
 stop:
-	killall libra-swarm libra-node | true
+	killall libra-swarm libra-node miner ol txs cli | true
 
 prep:
 # save makefile outside of repo, since we'll need it across branches

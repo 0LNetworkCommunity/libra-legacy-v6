@@ -62,6 +62,7 @@ download: web-files
 
 web-files: 
 	curl -L --progress-bar --create-dirs -o ${DATA_PATH}/web-monitor.tar.gz https://github.com/OLSF/libra/releases/latest/download/web-monitor.tar.gz
+	mkdir ${DATA_PATH}/web-monitor | true
 	tar -xf ${DATA_PATH}/web-monitor.tar.gz --directory ${DATA_PATH}/web-monitor
 
 download-release:
@@ -90,6 +91,7 @@ stdlib:
   
 
 install:
+	mkdir ${USER_BIN_PATH} | true
 	sudo cp -f ${SOURCE}/target/release/miner ${USER_BIN_PATH}/miner
 	sudo cp -f ${SOURCE}/target/release/libra-node ${USER_BIN_PATH}/libra-node
 	sudo cp -f ${SOURCE}/target/release/db-restore ${USER_BIN_PATH}/db-restore
