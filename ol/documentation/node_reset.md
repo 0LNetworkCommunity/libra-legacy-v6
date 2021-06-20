@@ -2,6 +2,12 @@
 
 WARNING: 0L Tools no longer depend on sudo/root access. As such some default install paths have changed. 
 
+## If you are using root/sudo: create a new user on host
+
+This is unsafe, and the tools do not depend on sudo.
+
+[Migrate host configs away from sudo](ops_migrate_from_sudo.md)
+
 ## backup your files
 
 ```
@@ -36,12 +42,6 @@ echo PATH=~/bin:$PATH >> ~/.bashrc
 
 sudo cp /usr/local/bin/* ~/bin
 ```
-
-## If you are using root/sudo: create a new user on host
-
-This is unsafe, and the tools do not depend on sudo.
-
-[Migrate host configs away from sudo](ops_migrate_from_sudo.md)
 
 ## Fetch latest code
 

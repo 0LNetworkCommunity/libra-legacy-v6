@@ -55,9 +55,9 @@ deps:
 download: web-files
 	@for b in ${RELEASE} ; do \
 		echo $$b | rev | cut -d"/" -f1 | rev ; \
-		curl  --progress-bar --create-dirs -o /usr/local/bin/$$(echo $$b | rev | cut -d"/" -f1 | rev) -L $$b ; \
-		echo 'downloaded to /usr/local/bin/' ; \
-		chmod 744 /usr/local/bin/$$(echo $$b | rev | cut -d"/" -f1 | rev) ;\
+		curl  --progress-bar --create-dirs -o ${USER_BIN_PATH}/$$(echo $$b | rev | cut -d"/" -f1 | rev) -L $$b ; \
+		echo 'downloaded to ${USER_BIN_PATH}' ; \
+		chmod 744 ${USER_BIN_PATH}/$$(echo $$b | rev | cut -d"/" -f1 | rev) ;\
 	done
 
 web-files: 
@@ -92,6 +92,7 @@ stdlib:
 
 install:
 	mkdir ${USER_BIN_PATH} | true
+
 	sudo cp -f ${SOURCE}/target/release/miner ${USER_BIN_PATH}/miner
 	sudo cp -f ${SOURCE}/target/release/libra-node ${USER_BIN_PATH}/libra-node
 	sudo cp -f ${SOURCE}/target/release/db-restore ${USER_BIN_PATH}/db-restore
@@ -101,6 +102,33 @@ install:
 	sudo cp -f ${SOURCE}/target/release/txs ${USER_BIN_PATH}/txs
 	sudo cp -f ${SOURCE}/target/release/onboard ${USER_BIN_PATH}/onboard
 
+## Do below as user: val
+path:
+	@if (cat ~/.bashrc | grep '~/bin:') ; then \
+		echo PATH already contains ~/bin ; \
+	else \
+		echo adding to PATH ; \
+		echo PATH=~/bin:$$PATH >> ~/.bashrc ; \
+	fi
+
+mv-bin:
+	@if which ol | grep /usr/local/bin/ ; then \
+		echo copy all bins ; \
+		mkdir ~/bin/ | true ; \
+		mv /usr/local/bin/* ~/bin/ ; \
+	fi
+
+ap-template:
+	curl https://raw.githubusercontent.com/LOL-LLC/donations-record/main/clean.autopay_batch.json --output ~/.0L/template.autopay_batch.json
+
+
+reset:
+	onboard val --skip-mining --upstream-peer http://167.172.248.37/ --source-path ~/libra
+
+
+backup:
+	cd ~ && rsync -av --exclude db/ --exclude logs/ ~/.0L ~/0L_backup_$(shell date +"%m-%d-%y")
+	
 #### GENESIS BACKEND SETUP ####
 init-backend: 
 	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
