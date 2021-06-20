@@ -55,9 +55,9 @@ deps:
 download: web-files
 	@for b in ${RELEASE} ; do \
 		echo $$b | rev | cut -d"/" -f1 | rev ; \
-		curl  --progress-bar --create-dirs -o /usr/local/bin/$$(echo $$b | rev | cut -d"/" -f1 | rev) -L $$b ; \
-		echo 'downloaded to /usr/local/bin/' ; \
-		chmod 744 /usr/local/bin/$$(echo $$b | rev | cut -d"/" -f1 | rev) ;\
+		curl  --progress-bar --create-dirs -o ${USER_BIN_PATH}/$$(echo $$b | rev | cut -d"/" -f1 | rev) -L $$b ; \
+		echo 'downloaded to ${USER_BIN_PATH}' ; \
+		chmod 744 ${USER_BIN_PATH}/$$(echo $$b | rev | cut -d"/" -f1 | rev) ;\
 	done
 
 web-files: 
@@ -70,12 +70,12 @@ download-release:
 		echo $$b ; \
 		curl --create-dirs -o ${DATA_PATH}/release-${RELEASE}/$$b -L ${RELEASE_URL}/${RELEASE}/$$b ; \
 		chmod 744 ${DATA_PATH}/release-${RELEASE}/$$b ; \
-		cp ${DATA_PATH}/release-${RELEASE}/$$b  /usr/local/bin/$$b ; \
+		cp ${DATA_PATH}/release-${RELEASE}/$$b  ${USER_BIN_PATH}/$$b ; \
 	done
 
 uninstall:
 	@for b in ${BINS} ; do \
-		rm /usr/local/bin/$$b ; \
+		rm ${USER_BIN_PATH}/$$b ; \
 	done
 
 bins: stdlib
@@ -92,6 +92,7 @@ stdlib:
 
 install:
 	mkdir ${USER_BIN_PATH} | true
+
 	sudo cp -f ${SOURCE}/target/release/miner ${USER_BIN_PATH}/miner
 	sudo cp -f ${SOURCE}/target/release/libra-node ${USER_BIN_PATH}/libra-node
 	sudo cp -f ${SOURCE}/target/release/db-restore ${USER_BIN_PATH}/db-restore
@@ -100,6 +101,29 @@ install:
 	sudo cp -f ${SOURCE}/target/release/ol ${USER_BIN_PATH}/ol
 	sudo cp -f ${SOURCE}/target/release/txs ${USER_BIN_PATH}/txs
 	sudo cp -f ${SOURCE}/target/release/onboard ${USER_BIN_PATH}/onboard
+
+## Do below as user: val
+path:
+	@if (cat ~/.bashrc | grep '~/bin:') ; then \
+		echo PATH already contains ~/bin ; \
+	else \
+		echo adding to PATH ; \
+		echo PATH=~/bin:$$PATH >> ~/.bashrc ; \
+	fi
+
+mv-bin:
+	@if which ol | grep /usr/local/bin/ ; then \
+		echo copy all bins ; \
+		mkdir ~/bin/ | true ; \
+		mv /usr/local/bin/* ~/bin/ ; \
+	fi
+
+reset:
+	onboard val --skip-mining --upstream-peer http://167.172.248.37/ --source-path ~/libra
+
+
+backup:
+	cd ~ && rsync -av --exclude db/ --exclude logs/ ~/.0L ~/0L_backup_$(shell date +"%m-%d-%y")
 
 #### GENESIS BACKEND SETUP ####
 init-backend: 
