@@ -90,32 +90,39 @@ stdlib:
 	sha256sum language/stdlib/staged/stdlib.mv
   
 
-install:
+install: mv-bin bin-path
 	mkdir ${USER_BIN_PATH} | true
 
-	sudo cp -f ${SOURCE}/target/release/miner ${USER_BIN_PATH}/miner
-	sudo cp -f ${SOURCE}/target/release/libra-node ${USER_BIN_PATH}/libra-node
-	sudo cp -f ${SOURCE}/target/release/db-restore ${USER_BIN_PATH}/db-restore
-	sudo cp -f ${SOURCE}/target/release/db-backup ${USER_BIN_PATH}/db-backup
-	sudo cp -f ${SOURCE}/target/release/db-backup-verify ${USER_BIN_PATH}/db-backup-verify
-	sudo cp -f ${SOURCE}/target/release/ol ${USER_BIN_PATH}/ol
-	sudo cp -f ${SOURCE}/target/release/txs ${USER_BIN_PATH}/txs
-	sudo cp -f ${SOURCE}/target/release/onboard ${USER_BIN_PATH}/onboard
+	cp -f ${SOURCE}/target/release/miner ${USER_BIN_PATH}/miner
+	cp -f ${SOURCE}/target/release/libra-node ${USER_BIN_PATH}/libra-node
+	cp -f ${SOURCE}/target/release/db-restore ${USER_BIN_PATH}/db-restore
+	cp -f ${SOURCE}/target/release/db-backup ${USER_BIN_PATH}/db-backup
+	cp -f ${SOURCE}/target/release/db-backup-verify ${USER_BIN_PATH}/db-backup-verify
+	cp -f ${SOURCE}/target/release/ol ${USER_BIN_PATH}/ol
+	cp -f ${SOURCE}/target/release/txs ${USER_BIN_PATH}/txs
+	cp -f ${SOURCE}/target/release/onboard ${USER_BIN_PATH}/onboard
 
-## Do below as user: val
-path:
+bin-path:
 	@if (cat ~/.bashrc | grep '~/bin:') ; then \
-		echo PATH already contains ~/bin ; \
+		echo "OK .bashrc correctly configured with PATH=~/bin" ; \
 	else \
-		echo adding to PATH ; \
-		echo PATH=~/bin:$$PATH >> ~/.bashrc ; \
+		echo -n "WARN Your .bashrc doesn't seem to have ~/bin as a search path. Append .bashrc with PATH=~/bin:$$PATH ? (y/n) " ; \
+		read answer ; \
+		if [ "$$answer" != "$${answer#[Yy]}" ] ; then \
+			echo adding to PATH ; \
+			echo PATH=~/bin:$$PATH >> ~/.bashrc ; \
+		fi ; \
 	fi
 
 mv-bin:
-	@if which ol | grep /usr/local/bin/ ; then \
-		echo copy all bins ; \
-		mkdir ~/bin/ | true ; \
-		mv /usr/local/bin/* ~/bin/ ; \
+	@if which ol | grep /usr/local/bin  ; then \
+		echo -n "You have executables in a deprecated location. Move the executables from /usr/local/bin to ~/bin? (y/n) " ; \
+		read answer ; \
+		if [ "$$answer" != "$${answer#[Yy]}" ] ; then \
+			echo copy all bins ; \
+			mkdir ~/bin/ | true ; \
+			mv /usr/local/bin/* ${USER_BIN_PATH} ; \
+		fi ; \
 	fi
 
 reset:
@@ -251,24 +258,24 @@ start-full:
 
 daemon:
 # your node's custom libra-node.service lives in ~/.0L. Take the template from libra/util and edit for your needs.
-	sudo cp -f ~/.0L/libra-node.service /lib/systemd/system/
+	cp -f ~/.0L/libra-node.service /lib/systemd/system/
 
 	@if test -d ~/logs; then \
 		echo "WIPING SYSTEMD LOGS"; \
-		sudo rm -rf ~/logs*; \
+		rm -rf ~/logs*; \
 	fi 
 
-	sudo mkdir ~/logs
-	sudo touch ~/logs/node.log
-	sudo chmod 777 ~/logs
-	sudo chmod 777 ~/logs/node.log
+	mkdir ~/logs
+	touch ~/logs/node.log
+	chmod 777 ~/logs
+	chmod 777 ~/logs/node.log
 
-	sudo systemctl daemon-reload
-	sudo systemctl stop libra-node.service
-	sudo systemctl start libra-node.service
-	sudo sleep 2
-	sudo systemctl status libra-node.service &
-	sudo tail -f ~/logs/node.log
+	systemctl daemon-reload
+	systemctl stop libra-node.service
+	systemctl start libra-node.service
+	sleep 2
+	systemctl status libra-node.service &
+	tail -f ~/logs/node.log
 
 #### TEST SETUP ####
 
@@ -374,7 +381,7 @@ wipe:
 	srm ~/.bash_history
 
 stop:
-	sudo service libra-node stop
+	service libra-node stop
 
 debug:
 	make smoke-onboard <<< $$'${MNEM}'
