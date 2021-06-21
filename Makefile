@@ -92,14 +92,14 @@ stdlib:
 
 install:
 	mkdir ${USER_BIN_PATH} | true
-	sudo cp -f ${SOURCE}/target/release/miner ${USER_BIN_PATH}/miner
-	sudo cp -f ${SOURCE}/target/release/libra-node ${USER_BIN_PATH}/libra-node
-	sudo cp -f ${SOURCE}/target/release/db-restore ${USER_BIN_PATH}/db-restore
-	sudo cp -f ${SOURCE}/target/release/db-backup ${USER_BIN_PATH}/db-backup
-	sudo cp -f ${SOURCE}/target/release/db-backup-verify ${USER_BIN_PATH}/db-backup-verify
-	sudo cp -f ${SOURCE}/target/release/ol ${USER_BIN_PATH}/ol
-	sudo cp -f ${SOURCE}/target/release/txs ${USER_BIN_PATH}/txs
-	sudo cp -f ${SOURCE}/target/release/onboard ${USER_BIN_PATH}/onboard
+	cp -f ${SOURCE}target/release/miner ${USER_BIN_PATH}/miner
+	cp -f ${SOURCE}target/release/libra-node ${USER_BIN_PATH}/libra-node
+	cp -f ${SOURCE}target/release/db-restore ${USER_BIN_PATH}/db-restore
+	cp -f ${SOURCE}target/release/db-backup ${USER_BIN_PATH}/db-backup
+	cp -f ${SOURCE}target/release/db-backup-verify ${USER_BIN_PATH}/db-backup-verify
+	cp -f ${SOURCE}target/release/ol ${USER_BIN_PATH}/ol
+	cp -f ${SOURCE}target/release/txs ${USER_BIN_PATH}/txs
+	cp -f ${SOURCE}target/release/onboard ${USER_BIN_PATH}/onboard
 
 #### GENESIS BACKEND SETUP ####
 init-backend: 
