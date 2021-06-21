@@ -29,8 +29,6 @@ module Genesis {
     use 0x1::Epoch;
     use 0x1::MinerState;
 
-    use 0x1::Debug::print;
-
     /// Initializes the Diem framework.
     fun initialize(
         dr_account: signer,

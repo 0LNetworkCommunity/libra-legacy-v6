@@ -154,28 +154,30 @@ module ValidatorAdministrationScripts {
         );
      }
 
-    /// Access control rule is that only the validator operator for a validator may set
-    /// call this, but there is an aborts_if in SetConfigAbortsIf that tests that directly.
-    spec fun register_validator_config {
-        use 0x1::Errors;
-        use 0x1::DiemAccount;
-        use 0x1::Signer;
+    //////// 0L ////////
+    // /// Access control rule is that only the validator operator for a validator may set
+    // /// call this, but there is an aborts_if in SetConfigAbortsIf that tests that directly.
+    // spec fun register_validator_config {
+    //     use 0x1::Errors;
+    //     use 0x1::DiemAccount;
+    //     use 0x1::Signer;
 
-        include DiemAccount::TransactionChecks{sender: validator_operator_account}; // properties checked by the prologue.
-        include ValidatorConfig::SetConfigAbortsIf {validator_addr: validator_account};
-        ensures ValidatorConfig::is_valid(validator_account);
+    //     include DiemAccount::TransactionChecks{sender: validator_operator_account}; // properties checked by the prologue.
+    //     include ValidatorConfig::SetConfigAbortsIf {validator_addr: validator_account};
+    //     ensures ValidatorConfig::is_valid(validator_account);
 
-        aborts_with [check]
-            Errors::INVALID_ARGUMENT,
-            Errors::NOT_PUBLISHED;
+    //     aborts_with [check]
+    //         Errors::INVALID_ARGUMENT,
+    //         Errors::NOT_PUBLISHED;
 
-        /// **Access Control:**
-        /// Only the Validator Operator account which has been registered with the validator can
-        /// update the validator's configuration [[H15]][PERMISSION].
-        aborts_if Signer::address_of(validator_operator_account) !=
-                    ValidatorConfig::get_operator(validator_account)
-                        with Errors::INVALID_ARGUMENT;
-    }
+    //     /// **Access Control:**
+    //     /// Only the Validator Operator account which has been registered with the validator can
+    //     /// update the validator's configuration [[H15]][PERMISSION].
+    //     aborts_if Signer::address_of(validator_operator_account) !=
+    //                 ValidatorConfig::get_operator(validator_account)
+    //                     with Errors::INVALID_ARGUMENT;
+    // }
+    //////// 0L end ////////
 
     /// # Summary
     /// This script removes a validator account from the validator set, and triggers a reconfiguration
@@ -440,7 +442,10 @@ module ValidatorAdministrationScripts {
         // next is due to abort in get_human_name
         include ValidatorConfig::AbortsIfNoValidatorConfig{addr: account_addr};
         // TODO: use an error code from Errors.move instead of 0.
-        aborts_if ValidatorOperatorConfig::get_human_name(operator_account) != operator_name with 0;
+
+        //////// 0L ////////
+        aborts_if ValidatorOperatorConfig::get_human_name(operator_account) != operator_name with 111;
+
         include ValidatorConfig::SetOperatorAbortsIf{validator_account: account, operator_addr: operator_account};
         include ValidatorConfig::SetOperatorEnsures{validator_account: account, operator_addr: operator_account};
 
