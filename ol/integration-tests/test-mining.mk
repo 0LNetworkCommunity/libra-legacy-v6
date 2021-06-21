@@ -35,7 +35,7 @@ swarm:
 	cd ${SOURCE_PATH} && cargo run -p libra-swarm -- --libra-node ${SOURCE_PATH}/target/debug/libra-node -c ${SWARM_TEMP} -n ${NUM_NODES} &> ${LOG} &
 
 stop:
-	killall libra-swarm libra-node miner ol | true
+	killall libra-swarm libra-node miner ol txs cli | true
 
 echo: 
 	@echo hi &> ${LOG} &

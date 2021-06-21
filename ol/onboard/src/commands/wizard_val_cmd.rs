@@ -9,6 +9,7 @@ use crate::entrypoint;
 use crate::prelude::app_config;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_genesis_tool::node_files;
+use libra_types::waypoint::Waypoint;
 use libra_types::{transaction::SignedTransaction};
 use libra_wallet::WalletLibrary;
 use ol::{commands::init_cmd, config::AppCfg};
@@ -27,7 +28,9 @@ pub struct ValWizardCmd {
         short = "a",
         help = "where to output the account.json file, defaults to node home"
     )]
-    account_path: Option<PathBuf>,
+    output_path: Option<PathBuf>,
+    #[options(help = "explicitly set home path instead of answer in wizard, for CI usually")]
+    home_path: Option<PathBuf>,
     #[options(help = "id of the chain")]
     chain_id: Option<u8>,
     #[options(help = "github org of genesis repo")]
@@ -48,6 +51,10 @@ pub struct ValWizardCmd {
     upstream_peer: Option<Url>,
     #[options(help = "If validator is building from source")]
     source_path: Option<PathBuf>,
+    #[options(short = "w", help = "If validator is building from source")]
+    waypoint: Option<Waypoint>,
+    #[options(short = "e", help = "If validator is building from source")]
+    epoch: Option<u64>,
 }
 
 impl Runnable for ValWizardCmd {
@@ -78,9 +85,9 @@ impl Runnable for ValWizardCmd {
             authkey,
             account,
             &Some(upstream.clone()),
-            &None,
-            None,
-            None,
+            &self.home_path,
+            &self.epoch,
+            &self.waypoint,
             &self.source_path
         );
         let home_path = &app_config.workspace.node_home;
@@ -162,7 +169,7 @@ impl Runnable for ValWizardCmd {
 
         // Write account manifest
         write_account_json(
-            &self.account_path,
+            &self.output_path,
             wallet,
             Some(app_config.clone()),
             autopay_batch,
