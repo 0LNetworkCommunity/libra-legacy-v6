@@ -21,7 +21,7 @@ address 0x1 {
 
       //selected vote type for oracle
       const VOTE_TYPE_UPGRADE: u8 = 0; //VOTE_TYPE_ONE_FOR_ONE;
-      const DELEGATION_ENABLED_UPGRADE: bool = false;
+      const DELEGATION_ENABLED_UPGRADE: bool = true;
 
       //Errors
       const VOTE_TYPE_INVALID: u64 = 150001;
@@ -349,6 +349,12 @@ address 0x1 {
         });
       }
 
+      public fun check_number_delegates (addr: address): u64 acquires VoteDelegation {
+        let del = borrow_global<VoteDelegation>(addr);
+        Vector::length<address>(& del.delegates)
+
+      }
+
       public fun delegate_vote (sender: &signer, vote_dest: address) acquires VoteDelegation{
         assert(exists<VoteDelegation>(Signer::address_of(sender)), Errors::not_published(DELEGATION_NOT_ENABLED));
         assert(exists<VoteDelegation>(vote_dest), Errors::not_published(DELEGATION_NOT_ENABLED));
@@ -378,7 +384,7 @@ address 0x1 {
         if (exists<VoteDelegation>(vote_dest)) {
           let del = borrow_global_mut<VoteDelegation>(vote_dest);
 
-          let (b, loc) = Vector::index_of<address>(&del.delegates, &vote_dest);
+          let (b, loc) = Vector::index_of<address>(&del.delegates, &Signer::address_of(sender));
           if (b) {
             Vector::remove<address>(&mut del.delegates, loc);
           };
