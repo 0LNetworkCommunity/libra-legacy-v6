@@ -1,62 +1,47 @@
-# 0L Configuration Jubilee
+# Best-Practices Configuration
+
+WARNING: 0L Tools no longer depend on sudo/root access. As such some default install paths have changed. 
+
+As of v4.3.2 the default location for executables is `$HOME/bin`. Previously they were in `/usr/local/bin` which required root/sudo
+
+## If you are using root/sudo: create a new user on host
+
+This is unsafe, and the tools do not depend on sudo.
+
+[Migrate host configs away from sudo](ops_migrate_from_sudo.md)
 
 ## backup your files
 
 ```
 cd ~
-rsync -av --exclude db/ ~/.0L ~/0L_backup_20210607
-
+rsync -av --exclude db/ ~/.0L ~/0L_backup_202106
 ```
 
-## Create a new user on host
-
-Especially important for those running as root.
-
-Make this a restricted user: do not give the user `sudo`. 
-
-For a user with the name `val`:
+## Stop your services
 ```
+ol mgmt --stop all
+```
+## Confirm executables are in $HOME/bin
 
-sudo useradd -m val
+Find out where the executables are.
 
 ```
+which ol
 
-##  Switch into new user
-
-```
-su val
-```
-
-## Add ~/bin to PATH
-
-`~/bin` will be where your binaries will live. You need to add this to the "search path" to execute commands easily.
-
-```
-# add to ./bashrc
-PATH=~/bin:$PATH
+# If this is the output, you need to migrate.
+/usr/local/bin/ol
 ```
 
-Do this: https://unix.stackexchange.com/questions/26047/how-to-correctly-add-a-path-to-path
-
-
-TODO: dboreham, tell us what to do.
-
-
-### Add your ssh pubkey to the new user
-
-Include your public key in .ssh/authorized_key so you can access the user directly from ssh.
+If you haven't yet migrated the locations do this:
 
 ```
-nano /home/val/.ssh/authorized_keys
+mkdir ~/bin
+
+# add /bin to the search PATH
+echo PATH=~/bin:$PATH >> ~/.bashrc
+
+sudo cp /usr/local/bin/* ~/bin
 ```
-
-alternatively copy the file from the /root/.ssh/authorized_keys
-
-```
-cp /root/.ssh/authorized_keys /home/val/.ssh/
-
-```
-
 
 ## Fetch latest code
 
@@ -85,12 +70,8 @@ Do this first: [Resetting Val Configs](resetting_val_configs.md)
 
 ## Restart your services as the new user
 
-Stop your node, miner, monitor and restart
+Recommended way is to use the service orchestration with:
 
 ```
-# in previous user
-ol mgmt --stop all
-
-# in new user
 ol start
 ```
