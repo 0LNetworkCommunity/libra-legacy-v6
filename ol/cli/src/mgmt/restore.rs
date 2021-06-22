@@ -121,14 +121,27 @@ impl Backup {
         
         let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
         let restore_dir = &self.home_path.join("restore/");
-        let mut child = Command::new("unzip")
-        .arg("-o")
+
+        // replace zip for tar
+        // tar -xf archive.tar.gz -C
+        let mut child = Command::new("tar")
+        .arg("-xf")
         .arg(&self.zip_path)
-        .arg("-d")
+        .arg("-C")
         .arg(restore_dir)
         .stdout(stdio_cfg)
         .spawn()
         .expect(&format!("failed to unzip {:?} into {:?}", &self.zip_path, restore_dir));
+
+
+        // let mut child = Command::new("unzip")
+        // .arg("-o")
+        // .arg(&self.zip_path)
+        // .arg("-d")
+        // .arg(restore_dir)
+        // .stdout(stdio_cfg)
+        // .spawn()
+        // .expect(&format!("failed to unzip {:?} into {:?}", &self.zip_path, restore_dir));
 
         let ecode = child.wait().expect("failed to wait on child");
 
@@ -250,7 +263,7 @@ fn get_highest_epoch_zip() -> Result<(u64, String), Error> {
     // TODO: Change to new directory structure
     Ok(
         (highest_epoch, 
-            format!("https://raw.githubusercontent.com/{owner}/{repo}/main/{highest_epoch}.zip",
+            format!("https://raw.githubusercontent.com/{owner}/{repo}/main/{highest_epoch}.tar.gz",
         owner = GITHUB_ORG.clone(),
         repo = GITHUB_REPO.clone(),
         highest_epoch = highest_epoch.to_string(),
@@ -261,7 +274,7 @@ fn get_highest_epoch_zip() -> Result<(u64, String), Error> {
 fn get_zip_url(epoch: u64) -> Result<String, Error> {
     Ok( 
       format!(
-        "https://raw.githubusercontent.com/{owner}/{repo}/main/{epoch}.zip",
+        "https://raw.githubusercontent.com/{owner}/{repo}/main/{epoch}.tar.gz",
         owner = GITHUB_ORG.clone(),
         repo = GITHUB_REPO.clone(),
         epoch = epoch.to_string(),
