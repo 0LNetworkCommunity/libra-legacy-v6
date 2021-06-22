@@ -63,7 +63,7 @@
     {
       id: "has_auto_pay",
       title: "Autopay",
-      description: "validator has autopay batch set",
+      description: "autopay instructions are set up",
       is_true: false,
     },
   ];

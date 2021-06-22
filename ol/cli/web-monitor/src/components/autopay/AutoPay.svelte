@@ -18,7 +18,7 @@
   </h3>
   
   {#if account}
-    {#if account.auto_pay}
+    {#if account.auto_pay && account.auto_pay.payments.length > 0}
       <table class="uk-table">
         <thead>
           <tr>
