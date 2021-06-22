@@ -3,7 +3,7 @@
 
 // This file was generated. Do not modify!
 //
-// To re-generate this code, run: `cargo run --release -p diem-framework`
+// To update this code, run: `cargo run --release -p diem-framework` and copy the re-generated file to deseired locations.
 
 //! Conversion library between a structured representation of a Move script call (`ScriptCall`) and the
 //! standard BCS-compatible representation used in Diem transactions (`Script`).
@@ -1470,7 +1470,9 @@ pub enum ScriptFunctionCall {
     /// * `AccountCreationScripts::create_child_vasp_account`
     /// * `AccountCreationScripts::create_parent_vasp_account`
     /// * `PaymentScripts::peer_to_peer_with_metadata`
-    AddCurrencyToAccount { currency: TypeTag },
+    AddCurrencyToAccount {
+        currency: TypeTag,
+    },
 
     /// # Summary
     /// Stores the sending accounts ability to rotate its authentication key with a designated recovery
@@ -1512,7 +1514,9 @@ pub enum ScriptFunctionCall {
     /// # Related Scripts
     /// * `AccountAdministrationScripts::create_recovery_address`
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_recovery_address`
-    AddRecoveryRotationCapability { recovery_address: AccountAddress },
+    AddRecoveryRotationCapability {
+        recovery_address: AccountAddress,
+    },
 
     /// # Summary
     /// Adds a validator account to the validator set, and triggers a
@@ -1566,6 +1570,8 @@ pub enum ScriptFunctionCall {
         validator_address: AccountAddress,
     },
 
+    AutopayEnable {},
+
     /// # Summary
     /// Burns the transaction fees collected in the `CoinType` currency so that the
     /// Diem association may reclaim the backing coins off-chain. May only be sent
@@ -1601,7 +1607,9 @@ pub enum ScriptFunctionCall {
     /// # Related Scripts
     /// * `TreasuryComplianceScripts::burn_with_amount`
     /// * `TreasuryComplianceScripts::cancel_burn_with_amount`
-    BurnTxnFees { coin_type: TypeTag },
+    BurnTxnFees {
+        coin_type: TypeTag,
+    },
 
     /// # Summary
     /// Burns the coins held in a preburn resource in the preburn queue at the
@@ -2110,7 +2118,9 @@ pub enum ScriptFunctionCall {
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`                | The `sliding_nonce` is too far in the future.                                              |
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED`       | The `sliding_nonce` has been previously recorded.                                          |
     /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::EDIEM_ROOT`                   | `account` is not the Diem Root account.                                                    |
-    InitializeDiemConsensusConfig { sliding_nonce: u64 },
+    InitializeDiemConsensusConfig {
+        sliding_nonce: u64,
+    },
 
     /// # Summary
     /// Transfers a given number of coins in a specified currency from one account to another.
@@ -2217,7 +2227,10 @@ pub enum ScriptFunctionCall {
     /// * `TreasuryComplianceScripts::cancel_burn_with_amount`
     /// * `TreasuryComplianceScripts::burn_with_amount`
     /// * `TreasuryComplianceScripts::burn_txn_fees`
-    Preburn { token: TypeTag, amount: u64 },
+    Preburn {
+        token: TypeTag,
+        amount: u64,
+    },
 
     /// # Summary
     /// Rotates the authentication key of the sending account to the newly-specified ed25519 public key and
@@ -2246,7 +2259,9 @@ pub enum ScriptFunctionCall {
     ///
     /// # Related Scripts
     /// * `AccountAdministrationScripts::rotate_shared_ed25519_public_key`
-    PublishSharedEd25519PublicKey { public_key: Bytes },
+    PublishSharedEd25519PublicKey {
+        public_key: Bytes,
+    },
 
     /// # Summary
     /// Updates a validator's configuration. This does not reconfigure the system and will not update
@@ -2364,7 +2379,9 @@ pub enum ScriptFunctionCall {
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_nonce`
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_nonce_admin`
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_recovery_address`
-    RotateAuthenticationKey { new_key: Bytes },
+    RotateAuthenticationKey {
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the sender's authentication key to the supplied new authentication key. May be sent by
@@ -2398,7 +2415,10 @@ pub enum ScriptFunctionCall {
     /// * `AccountAdministrationScripts::rotate_authentication_key`
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_nonce_admin`
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_recovery_address`
-    RotateAuthenticationKeyWithNonce { sliding_nonce: u64, new_key: Bytes },
+    RotateAuthenticationKeyWithNonce {
+        sliding_nonce: u64,
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the specified account's authentication key to the supplied new authentication key. May
@@ -2432,7 +2452,10 @@ pub enum ScriptFunctionCall {
     /// * `AccountAdministrationScripts::rotate_authentication_key`
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_nonce`
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_recovery_address`
-    RotateAuthenticationKeyWithNonceAdmin { sliding_nonce: u64, new_key: Bytes },
+    RotateAuthenticationKeyWithNonceAdmin {
+        sliding_nonce: u64,
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the authentication key of a specified account that is part of a recovery address to a
@@ -2509,7 +2532,10 @@ pub enum ScriptFunctionCall {
     /// * `AccountCreationScripts::create_parent_vasp_account`
     /// * `AccountCreationScripts::create_designated_dealer`
     /// * `AccountAdministrationScripts::rotate_dual_attestation_info`
-    RotateDualAttestationInfo { new_url: Bytes, new_key: Bytes },
+    RotateDualAttestationInfo {
+        new_url: Bytes,
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the authentication key in a `SharedEd25519PublicKey`. This transaction can be sent by
@@ -2537,7 +2563,9 @@ pub enum ScriptFunctionCall {
     ///
     /// # Related Scripts
     /// * `AccountAdministrationScripts::publish_shared_ed25519_public_key`
-    RotateSharedEd25519PublicKey { public_key: Bytes },
+    RotateSharedEd25519PublicKey {
+        public_key: Bytes,
+    },
 
     /// # Summary
     /// Updates the gas constants stored on chain and used by the VM for gas
@@ -2847,7 +2875,10 @@ pub enum ScriptFunctionCall {
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`                | The `sliding_nonce` is too far in the future.                                              |
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED`       | The `sliding_nonce` has been previously recorded.                                          |
     /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::EDIEM_ROOT`                   | `account` is not the Diem Root account.                                                    |
-    UpdateDiemConsensusConfig { sliding_nonce: u64, config: Bytes },
+    UpdateDiemConsensusConfig {
+        sliding_nonce: u64,
+        config: Bytes,
+    },
 
     /// # Summary
     /// Updates the Diem major version that is stored on-chain and is used by the VM.  This
@@ -2875,7 +2906,10 @@ pub enum ScriptFunctionCall {
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED`       | The `sliding_nonce` has been previously recorded.                                          |
     /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::EDIEM_ROOT`                   | `account` is not the Diem Root account.                                                    |
     /// | `Errors::INVALID_ARGUMENT` | `DiemVersion::EINVALID_MAJOR_VERSION_NUMBER`  | `major` is less-than or equal to the current major version stored on-chain.                |
-    UpdateDiemVersion { sliding_nonce: u64, major: u64 },
+    UpdateDiemVersion {
+        sliding_nonce: u64,
+        major: u64,
+    },
 
     /// # Summary
     /// Update the dual attestation limit on-chain. Defined in terms of micro-XDX.  The transaction can
@@ -3240,6 +3274,7 @@ impl ScriptFunctionCall {
                 validator_name,
                 validator_address,
             ),
+            AutopayEnable {} => encode_autopay_enable_script_function(),
             BurnTxnFees { coin_type } => encode_burn_txn_fees_script_function(coin_type),
             BurnWithAmount {
                 token,
@@ -3674,6 +3709,18 @@ pub fn encode_add_validator_and_reconfigure_script_function(
             bcs::to_bytes(&validator_name).unwrap(),
             bcs::to_bytes(&validator_address).unwrap(),
         ],
+    ))
+}
+
+pub fn encode_autopay_enable_script_function() -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            Identifier::new("AutoPayScripts").unwrap(),
+        ),
+        Identifier::new("autopay_enable").unwrap(),
+        vec![],
+        vec![],
     ))
 }
 
@@ -7272,6 +7319,16 @@ fn decode_add_validator_and_reconfigure_script_function(
     }
 }
 
+fn decode_autopay_enable_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(_script) = payload {
+        Some(ScriptFunctionCall::AutopayEnable {})
+    } else {
+        None
+    }
+}
+
 fn decode_burn_txn_fees_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -8150,6 +8207,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "ValidatorAdministrationScriptsadd_validator_and_reconfigure".to_string(),
             Box::new(decode_add_validator_and_reconfigure_script_function),
+        );
+        map.insert(
+            "AutoPayScriptsautopay_enable".to_string(),
+            Box::new(decode_autopay_enable_script_function),
         );
         map.insert(
             "TreasuryComplianceScriptsburn_txn_fees".to_string(),

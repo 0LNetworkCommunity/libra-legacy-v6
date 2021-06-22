@@ -1470,7 +1470,9 @@ pub enum ScriptFunctionCall {
     /// * `AccountCreationScripts::create_child_vasp_account`
     /// * `AccountCreationScripts::create_parent_vasp_account`
     /// * `PaymentScripts::peer_to_peer_with_metadata`
-    AddCurrencyToAccount { currency: TypeTag },
+    AddCurrencyToAccount {
+        currency: TypeTag,
+    },
 
     /// # Summary
     /// Stores the sending accounts ability to rotate its authentication key with a designated recovery
@@ -1512,7 +1514,9 @@ pub enum ScriptFunctionCall {
     /// # Related Scripts
     /// * `AccountAdministrationScripts::create_recovery_address`
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_recovery_address`
-    AddRecoveryRotationCapability { recovery_address: AccountAddress },
+    AddRecoveryRotationCapability {
+        recovery_address: AccountAddress,
+    },
 
     /// # Summary
     /// Adds a validator account to the validator set, and triggers a
@@ -1564,6 +1568,161 @@ pub enum ScriptFunctionCall {
         sliding_nonce: u64,
         validator_name: Bytes,
         validator_address: AccountAddress,
+    },
+
+    AutopayEnable {},
+
+    /// # Summary
+    /// Burns the transaction fees collected in the `CoinType` currency so that the
+    /// Diem association may reclaim the backing coins off-chain. May only be sent
+    /// by the Treasury Compliance account.
+    ///
+    /// # Technical Description
+    /// Burns the transaction fees collected in `CoinType` so that the
+    /// association may reclaim the backing coins. Once this transaction has executed
+    /// successfully all transaction fees that will have been collected in
+    /// `CoinType` since the last time this script was called with that specific
+    /// currency. Both `balance` and `preburn` fields in the
+    /// `TransactionFee::TransactionFee<CoinType>` resource published under the `0xB1E55ED`
+    /// account address will have a value of 0 after the successful execution of this script.
+    ///
+    /// # Events
+    /// The successful execution of this transaction will emit a `Diem::BurnEvent` on the event handle
+    /// held in the `Diem::CurrencyInfo<CoinType>` resource's `burn_events` published under
+    /// `0xA550C18`.
+    ///
+    /// # Parameters
+    /// | Name         | Type     | Description                                                                                                                                         |
+    /// | ------       | ------   | -------------                                                                                                                                       |
+    /// | `CoinType`   | Type     | The Move type for the `CoinType` being added to the sending account of the transaction. `CoinType` must be an already-registered currency on-chain. |
+    /// | `tc_account` | `signer` | The signer of the sending account of this transaction. Must be the Treasury Compliance account.                                                     |
+    ///
+    /// # Common Abort Conditions
+    /// | Error Category             | Error Reason                          | Description                                                 |
+    /// | ----------------           | --------------                        | -------------                                               |
+    /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE` | The sending account is not the Treasury Compliance account. |
+    /// | `Errors::NOT_PUBLISHED`    | `TransactionFee::ETRANSACTION_FEE`    | `CoinType` is not an accepted transaction fee currency.     |
+    /// | `Errors::INVALID_ARGUMENT` | `Diem::ECOIN`                        | The collected fees in `CoinType` are zero.                  |
+    ///
+    /// # Related Scripts
+    /// * `TreasuryComplianceScripts::burn_with_amount`
+    /// * `TreasuryComplianceScripts::cancel_burn_with_amount`
+    BurnTxnFees {
+        coin_type: TypeTag,
+    },
+
+    /// # Summary
+    /// Burns the coins held in a preburn resource in the preburn queue at the
+    /// specified preburn address, which are equal to the `amount` specified in the
+    /// transaction. Finds the first relevant outstanding preburn request with
+    /// matching amount and removes the contained coins from the system. The sending
+    /// account must be the Treasury Compliance account.
+    /// The account that holds the preburn queue resource will normally be a Designated
+    /// Dealer, but there are no enforced requirements that it be one.
+    ///
+    /// # Technical Description
+    /// This transaction permanently destroys all the coins of `Token` type
+    /// stored in the `Diem::Preburn<Token>` resource published under the
+    /// `preburn_address` account address.
+    ///
+    /// This transaction will only succeed if the sending `account` has a
+    /// `Diem::BurnCapability<Token>`, and a `Diem::Preburn<Token>` resource
+    /// exists under `preburn_address`, with a non-zero `to_burn` field. After the successful execution
+    /// of this transaction the `total_value` field in the
+    /// `Diem::CurrencyInfo<Token>` resource published under `0xA550C18` will be
+    /// decremented by the value of the `to_burn` field of the preburn resource
+    /// under `preburn_address` immediately before this transaction, and the
+    /// `to_burn` field of the preburn resource will have a zero value.
+    ///
+    /// # Events
+    /// The successful execution of this transaction will emit a `Diem::BurnEvent` on the event handle
+    /// held in the `Diem::CurrencyInfo<Token>` resource's `burn_events` published under
+    /// `0xA550C18`.
+    ///
+    /// # Parameters
+    /// | Name              | Type      | Description                                                                                                        |
+    /// | ------            | ------    | -------------                                                                                                      |
+    /// | `Token`           | Type      | The Move type for the `Token` currency being burned. `Token` must be an already-registered currency on-chain.      |
+    /// | `tc_account`      | `signer`  | The signer of the sending account of this transaction, must have a burn capability for `Token` published under it. |
+    /// | `sliding_nonce`   | `u64`     | The `sliding_nonce` (see: `SlidingNonce`) to be used for this transaction.                                         |
+    /// | `preburn_address` | `address` | The address where the coins to-be-burned are currently held.                                                       |
+    /// | `amount`          | `u64`     | The amount to be burned.                                                                                           |
+    ///
+    /// # Common Abort Conditions
+    /// | Error Category                | Error Reason                            | Description                                                                                                                         |
+    /// | ----------------              | --------------                          | -------------                                                                                                                       |
+    /// | `Errors::NOT_PUBLISHED`       | `SlidingNonce::ESLIDING_NONCE`          | A `SlidingNonce` resource is not published under `account`.                                                                         |
+    /// | `Errors::INVALID_ARGUMENT`    | `SlidingNonce::ENONCE_TOO_OLD`          | The `sliding_nonce` is too old and it's impossible to determine if it's duplicated or not.                                          |
+    /// | `Errors::INVALID_ARGUMENT`    | `SlidingNonce::ENONCE_TOO_NEW`          | The `sliding_nonce` is too far in the future.                                                                                       |
+    /// | `Errors::INVALID_ARGUMENT`    | `SlidingNonce::ENONCE_ALREADY_RECORDED` | The `sliding_nonce` has been previously recorded.                                                                                   |
+    /// | `Errors::REQUIRES_CAPABILITY` | `Diem::EBURN_CAPABILITY`                | The sending `account` does not have a `Diem::BurnCapability<Token>` published under it.                                             |
+    /// | `Errors::INVALID_STATE`       | `Diem::EPREBURN_NOT_FOUND`              | The `Diem::PreburnQueue<Token>` resource under `preburn_address` does not contain a preburn request with a value matching `amount`. |
+    /// | `Errors::NOT_PUBLISHED`       | `Diem::EPREBURN_QUEUE`                  | The account at `preburn_address` does not have a `Diem::PreburnQueue<Token>` resource published under it.                           |
+    /// | `Errors::NOT_PUBLISHED`       | `Diem::ECURRENCY_INFO`                  | The specified `Token` is not a registered currency on-chain.                                                                        |
+    ///
+    /// # Related Scripts
+    /// * `TreasuryComplianceScripts::burn_txn_fees`
+    /// * `TreasuryComplianceScripts::cancel_burn_with_amount`
+    /// * `TreasuryComplianceScripts::preburn`
+    BurnWithAmount {
+        token: TypeTag,
+        sliding_nonce: u64,
+        preburn_address: AccountAddress,
+        amount: u64,
+    },
+
+    /// # Summary
+    /// Cancels and returns the coins held in the preburn area under
+    /// `preburn_address`, which are equal to the `amount` specified in the transaction. Finds the first preburn
+    /// resource with the matching amount and returns the funds to the `preburn_address`'s balance.
+    /// Can only be successfully sent by an account with Treasury Compliance role.
+    ///
+    /// # Technical Description
+    /// Cancels and returns all coins held in the `Diem::Preburn<Token>` resource under the `preburn_address` and
+    /// return the funds to the `preburn_address` account's `DiemAccount::Balance<Token>`.
+    /// The transaction must be sent by an `account` with a `Diem::BurnCapability<Token>`
+    /// resource published under it. The account at `preburn_address` must have a
+    /// `Diem::Preburn<Token>` resource published under it, and its value must be nonzero. The transaction removes
+    /// the entire balance held in the `Diem::Preburn<Token>` resource, and returns it back to the account's
+    /// `DiemAccount::Balance<Token>` under `preburn_address`. Due to this, the account at
+    /// `preburn_address` must already have a balance in the `Token` currency published
+    /// before this script is called otherwise the transaction will fail.
+    ///
+    /// # Events
+    /// The successful execution of this transaction will emit:
+    /// * A `Diem::CancelBurnEvent` on the event handle held in the `Diem::CurrencyInfo<Token>`
+    /// resource's `burn_events` published under `0xA550C18`.
+    /// * A `DiemAccount::ReceivedPaymentEvent` on the `preburn_address`'s
+    /// `DiemAccount::DiemAccount` `received_events` event handle with both the `payer` and `payee`
+    /// being `preburn_address`.
+    ///
+    /// # Parameters
+    /// | Name              | Type      | Description                                                                                                                          |
+    /// | ------            | ------    | -------------                                                                                                                        |
+    /// | `Token`           | Type      | The Move type for the `Token` currenty that burning is being cancelled for. `Token` must be an already-registered currency on-chain. |
+    /// | `account`         | `signer`  | The signer of the sending account of this transaction, must have a burn capability for `Token` published under it.                   |
+    /// | `preburn_address` | `address` | The address where the coins to-be-burned are currently held.                                                                         |
+    /// | `amount`          | `u64`     | The amount to be cancelled.                                                                                                          |
+    ///
+    /// # Common Abort Conditions
+    /// | Error Category                | Error Reason                                     | Description                                                                                                                         |
+    /// | ----------------              | --------------                                   | -------------                                                                                                                       |
+    /// | `Errors::REQUIRES_CAPABILITY` | `Diem::EBURN_CAPABILITY`                         | The sending `account` does not have a `Diem::BurnCapability<Token>` published under it.                                             |
+    /// | `Errors::INVALID_STATE`       | `Diem::EPREBURN_NOT_FOUND`                       | The `Diem::PreburnQueue<Token>` resource under `preburn_address` does not contain a preburn request with a value matching `amount`. |
+    /// | `Errors::NOT_PUBLISHED`       | `Diem::EPREBURN_QUEUE`                           | The account at `preburn_address` does not have a `Diem::PreburnQueue<Token>` resource published under it.                           |
+    /// | `Errors::NOT_PUBLISHED`       | `Diem::ECURRENCY_INFO`                           | The specified `Token` is not a registered currency on-chain.                                                                        |
+    /// | `Errors::INVALID_ARGUMENT`    | `DiemAccount::EPAYEE_CANT_ACCEPT_CURRENCY_TYPE`  | The account at `preburn_address` doesn't have a balance resource for `Token`.                                                       |
+    /// | `Errors::LIMIT_EXCEEDED`      | `DiemAccount::EDEPOSIT_EXCEEDS_LIMITS`           | The depositing of the funds held in the prebun area would exceed the `account`'s account limits.                                    |
+    /// | `Errors::INVALID_STATE`       | `DualAttestation::EPAYEE_COMPLIANCE_KEY_NOT_SET` | The `account` does not have a compliance key set on it but dual attestion checking was performed.                                   |
+    ///
+    /// # Related Scripts
+    /// * `TreasuryComplianceScripts::burn_txn_fees`
+    /// * `TreasuryComplianceScripts::burn_with_amount`
+    /// * `TreasuryComplianceScripts::preburn`
+    CancelBurnWithAmount {
+        token: TypeTag,
+        preburn_address: AccountAddress,
+        amount: u64,
     },
 
     /// # Summary
@@ -1890,6 +2049,54 @@ pub enum ScriptFunctionCall {
     },
 
     /// # Summary
+    /// Freezes the account at `address`. The sending account of this transaction
+    /// must be the Treasury Compliance account. The account being frozen cannot be
+    /// the Diem Root or Treasury Compliance account. After the successful
+    /// execution of this transaction no transactions may be sent from the frozen
+    /// account, and the frozen account may not send or receive coins.
+    ///
+    /// # Technical Description
+    /// Sets the `AccountFreezing::FreezingBit` to `true` and emits a
+    /// `AccountFreezing::FreezeAccountEvent`. The transaction sender must be the
+    /// Treasury Compliance account, but the account at `to_freeze_account` must
+    /// not be either `0xA550C18` (the Diem Root address), or `0xB1E55ED` (the
+    /// Treasury Compliance address). Note that this is a per-account property
+    /// e.g., freezing a Parent VASP will not effect the status any of its child
+    /// accounts and vice versa.
+    ///
+
+    /// # Events
+    /// Successful execution of this transaction will emit a `AccountFreezing::FreezeAccountEvent` on
+    /// the `freeze_event_handle` held in the `AccountFreezing::FreezeEventsHolder` resource published
+    /// under `0xA550C18` with the `frozen_address` being the `to_freeze_account`.
+    ///
+    /// # Parameters
+    /// | Name                | Type      | Description                                                                                     |
+    /// | ------              | ------    | -------------                                                                                   |
+    /// | `tc_account`        | `signer`  | The signer of the sending account of this transaction. Must be the Treasury Compliance account. |
+    /// | `sliding_nonce`     | `u64`     | The `sliding_nonce` (see: `SlidingNonce`) to be used for this transaction.                      |
+    /// | `to_freeze_account` | `address` | The account address to be frozen.                                                               |
+    ///
+    /// # Common Abort Conditions
+    /// | Error Category             | Error Reason                                 | Description                                                                                |
+    /// | ----------------           | --------------                               | -------------                                                                              |
+    /// | `Errors::NOT_PUBLISHED`    | `SlidingNonce::ESLIDING_NONCE`               | A `SlidingNonce` resource is not published under `tc_account`.                             |
+    /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_OLD`               | The `sliding_nonce` is too old and it's impossible to determine if it's duplicated or not. |
+    /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`               | The `sliding_nonce` is too far in the future.                                              |
+    /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED`      | The `sliding_nonce` has been previously recorded.                                          |
+    /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE`        | The sending account is not the Treasury Compliance account.                                |
+    /// | `Errors::REQUIRES_ROLE`    | `Roles::ETREASURY_COMPLIANCE`                | The sending account is not the Treasury Compliance account.                                |
+    /// | `Errors::INVALID_ARGUMENT` | `AccountFreezing::ECANNOT_FREEZE_TC`         | `to_freeze_account` was the Treasury Compliance account (`0xB1E55ED`).                     |
+    /// | `Errors::INVALID_ARGUMENT` | `AccountFreezing::ECANNOT_FREEZE_DIEM_ROOT` | `to_freeze_account` was the Diem Root account (`0xA550C18`).                              |
+    ///
+    /// # Related Scripts
+    /// * `TreasuryComplianceScripts::unfreeze_account`
+    FreezeAccount {
+        sliding_nonce: u64,
+        to_freeze_account: AccountAddress,
+    },
+
+    /// # Summary
     /// Initializes the Diem consensus config that is stored on-chain.  This
     /// transaction can only be sent from the Diem Root account.
     ///
@@ -1911,7 +2118,9 @@ pub enum ScriptFunctionCall {
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`                | The `sliding_nonce` is too far in the future.                                              |
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED`       | The `sliding_nonce` has been previously recorded.                                          |
     /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::EDIEM_ROOT`                   | `account` is not the Diem Root account.                                                    |
-    InitializeDiemConsensusConfig { sliding_nonce: u64 },
+    InitializeDiemConsensusConfig {
+        sliding_nonce: u64,
+    },
 
     /// # Summary
     /// Transfers a given number of coins in a specified currency from one account to another.
@@ -1976,6 +2185,54 @@ pub enum ScriptFunctionCall {
     },
 
     /// # Summary
+    /// Moves a specified number of coins in a given currency from the account's
+    /// balance to its preburn area after which the coins may be burned. This
+    /// transaction may be sent by any account that holds a balance and preburn area
+    /// in the specified currency.
+    ///
+    /// # Technical Description
+    /// Moves the specified `amount` of coins in `Token` currency from the sending `account`'s
+    /// `DiemAccount::Balance<Token>` to the `Diem::Preburn<Token>` published under the same
+    /// `account`. `account` must have both of these resources published under it at the start of this
+    /// transaction in order for it to execute successfully.
+    ///
+    /// # Events
+    /// Successful execution of this script emits two events:
+    /// * `DiemAccount::SentPaymentEvent ` on `account`'s `DiemAccount::DiemAccount` `sent_events`
+    /// handle with the `payee` and `payer` fields being `account`'s address; and
+    /// * A `Diem::PreburnEvent` with `Token`'s currency code on the
+    /// `Diem::CurrencyInfo<Token`'s `preburn_events` handle for `Token` and with
+    /// `preburn_address` set to `account`'s address.
+    ///
+    /// # Parameters
+    /// | Name      | Type     | Description                                                                                                                      |
+    /// | ------    | ------   | -------------                                                                                                                    |
+    /// | `Token`   | Type     | The Move type for the `Token` currency being moved to the preburn area. `Token` must be an already-registered currency on-chain. |
+    /// | `account` | `signer` | The signer of the sending account.                                                                                               |
+    /// | `amount`  | `u64`    | The amount in `Token` to be moved to the preburn area.                                                                           |
+    ///
+    /// # Common Abort Conditions
+    /// | Error Category           | Error Reason                                             | Description                                                                             |
+    /// | ----------------         | --------------                                           | -------------                                                                           |
+    /// | `Errors::NOT_PUBLISHED`  | `Diem::ECURRENCY_INFO`                                  | The `Token` is not a registered currency on-chain.                                      |
+    /// | `Errors::INVALID_STATE`  | `DiemAccount::EWITHDRAWAL_CAPABILITY_ALREADY_EXTRACTED` | The withdrawal capability for `account` has already been extracted.                     |
+    /// | `Errors::LIMIT_EXCEEDED` | `DiemAccount::EINSUFFICIENT_BALANCE`                    | `amount` is greater than `payer`'s balance in `Token`.                                  |
+    /// | `Errors::NOT_PUBLISHED`  | `DiemAccount::EPAYER_DOESNT_HOLD_CURRENCY`              | `account` doesn't hold a balance in `Token`.                                            |
+    /// | `Errors::NOT_PUBLISHED`  | `Diem::EPREBURN`                                        | `account` doesn't have a `Diem::Preburn<Token>` resource published under it.           |
+    /// | `Errors::INVALID_STATE`  | `Diem::EPREBURN_OCCUPIED`                               | The `value` field in the `Diem::Preburn<Token>` resource under the sender is non-zero. |
+    /// | `Errors::NOT_PUBLISHED`  | `Roles::EROLE_ID`                                        | The `account` did not have a role assigned to it.                                       |
+    /// | `Errors::REQUIRES_ROLE`  | `Roles::EDESIGNATED_DEALER`                              | The `account` did not have the role of DesignatedDealer.                                |
+    ///
+    /// # Related Scripts
+    /// * `TreasuryComplianceScripts::cancel_burn_with_amount`
+    /// * `TreasuryComplianceScripts::burn_with_amount`
+    /// * `TreasuryComplianceScripts::burn_txn_fees`
+    Preburn {
+        token: TypeTag,
+        amount: u64,
+    },
+
+    /// # Summary
     /// Rotates the authentication key of the sending account to the newly-specified ed25519 public key and
     /// publishes a new shared authentication key derived from that public key under the sender's account.
     /// Any account can send this transaction.
@@ -2002,7 +2259,9 @@ pub enum ScriptFunctionCall {
     ///
     /// # Related Scripts
     /// * `AccountAdministrationScripts::rotate_shared_ed25519_public_key`
-    PublishSharedEd25519PublicKey { public_key: Bytes },
+    PublishSharedEd25519PublicKey {
+        public_key: Bytes,
+    },
 
     /// # Summary
     /// Updates a validator's configuration. This does not reconfigure the system and will not update
@@ -2120,7 +2379,9 @@ pub enum ScriptFunctionCall {
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_nonce`
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_nonce_admin`
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_recovery_address`
-    RotateAuthenticationKey { new_key: Bytes },
+    RotateAuthenticationKey {
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the sender's authentication key to the supplied new authentication key. May be sent by
@@ -2154,7 +2415,10 @@ pub enum ScriptFunctionCall {
     /// * `AccountAdministrationScripts::rotate_authentication_key`
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_nonce_admin`
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_recovery_address`
-    RotateAuthenticationKeyWithNonce { sliding_nonce: u64, new_key: Bytes },
+    RotateAuthenticationKeyWithNonce {
+        sliding_nonce: u64,
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the specified account's authentication key to the supplied new authentication key. May
@@ -2188,7 +2452,10 @@ pub enum ScriptFunctionCall {
     /// * `AccountAdministrationScripts::rotate_authentication_key`
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_nonce`
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_recovery_address`
-    RotateAuthenticationKeyWithNonceAdmin { sliding_nonce: u64, new_key: Bytes },
+    RotateAuthenticationKeyWithNonceAdmin {
+        sliding_nonce: u64,
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the authentication key of a specified account that is part of a recovery address to a
@@ -2265,7 +2532,10 @@ pub enum ScriptFunctionCall {
     /// * `AccountCreationScripts::create_parent_vasp_account`
     /// * `AccountCreationScripts::create_designated_dealer`
     /// * `AccountAdministrationScripts::rotate_dual_attestation_info`
-    RotateDualAttestationInfo { new_url: Bytes, new_key: Bytes },
+    RotateDualAttestationInfo {
+        new_url: Bytes,
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the authentication key in a `SharedEd25519PublicKey`. This transaction can be sent by
@@ -2293,7 +2563,9 @@ pub enum ScriptFunctionCall {
     ///
     /// # Related Scripts
     /// * `AccountAdministrationScripts::publish_shared_ed25519_public_key`
-    RotateSharedEd25519PublicKey { public_key: Bytes },
+    RotateSharedEd25519PublicKey {
+        public_key: Bytes,
+    },
 
     /// # Summary
     /// Updates the gas constants stored on chain and used by the VM for gas
@@ -2483,6 +2755,104 @@ pub enum ScriptFunctionCall {
     },
 
     /// # Summary
+    /// Mints a specified number of coins in a currency to a Designated Dealer. The sending account
+    /// must be the Treasury Compliance account, and coins can only be minted to a Designated Dealer
+    /// account.
+    ///
+    /// # Technical Description
+    /// Mints `mint_amount` of coins in the `CoinType` currency to Designated Dealer account at
+    /// `designated_dealer_address`. The `tier_index` parameter specifies which tier should be used to
+    /// check verify the off-chain approval policy, and is based in part on the on-chain tier values
+    /// for the specific Designated Dealer, and the number of `CoinType` coins that have been minted to
+    /// the dealer over the past 24 hours. Every Designated Dealer has 4 tiers for each currency that
+    /// they support. The sending `tc_account` must be the Treasury Compliance account, and the
+    /// receiver an authorized Designated Dealer account.
+    ///
+    /// # Events
+    /// Successful execution of the transaction will emit two events:
+    /// * A `Diem::MintEvent` with the amount and currency code minted is emitted on the
+    /// `mint_event_handle` in the stored `Diem::CurrencyInfo<CoinType>` resource stored under
+    /// `0xA550C18`; and
+    /// * A `DesignatedDealer::ReceivedMintEvent` with the amount, currency code, and Designated
+    /// Dealer's address is emitted on the `mint_event_handle` in the stored `DesignatedDealer::Dealer`
+    /// resource published under the `designated_dealer_address`.
+    ///
+    /// # Parameters
+    /// | Name                        | Type      | Description                                                                                                |
+    /// | ------                      | ------    | -------------                                                                                              |
+    /// | `CoinType`                  | Type      | The Move type for the `CoinType` being minted. `CoinType` must be an already-registered currency on-chain. |
+    /// | `tc_account`                | `signer`  | The signer of the sending account of this transaction. Must be the Treasury Compliance account.            |
+    /// | `sliding_nonce`             | `u64`     | The `sliding_nonce` (see: `SlidingNonce`) to be used for this transaction.                                 |
+    /// | `designated_dealer_address` | `address` | The address of the Designated Dealer account being minted to.                                              |
+    /// | `mint_amount`               | `u64`     | The number of coins to be minted.                                                                          |
+    /// | `tier_index`                | `u64`     | [Deprecated] The mint tier index to use for the Designated Dealer account. Will be ignored                 |
+    ///
+    /// # Common Abort Conditions
+    /// | Error Category                | Error Reason                                 | Description                                                                                                                  |
+    /// | ----------------              | --------------                               | -------------                                                                                                                |
+    /// | `Errors::NOT_PUBLISHED`       | `SlidingNonce::ESLIDING_NONCE`               | A `SlidingNonce` resource is not published under `tc_account`.                                                               |
+    /// | `Errors::INVALID_ARGUMENT`    | `SlidingNonce::ENONCE_TOO_OLD`               | The `sliding_nonce` is too old and it's impossible to determine if it's duplicated or not.                                   |
+    /// | `Errors::INVALID_ARGUMENT`    | `SlidingNonce::ENONCE_TOO_NEW`               | The `sliding_nonce` is too far in the future.                                                                                |
+    /// | `Errors::INVALID_ARGUMENT`    | `SlidingNonce::ENONCE_ALREADY_RECORDED`      | The `sliding_nonce` has been previously recorded.                                                                            |
+    /// | `Errors::REQUIRES_ADDRESS`    | `CoreAddresses::ETREASURY_COMPLIANCE`        | `tc_account` is not the Treasury Compliance account.                                                                         |
+    /// | `Errors::REQUIRES_ROLE`       | `Roles::ETREASURY_COMPLIANCE`                | `tc_account` is not the Treasury Compliance account.                                                                         |
+    /// | `Errors::INVALID_ARGUMENT`    | `DesignatedDealer::EINVALID_MINT_AMOUNT`     | `mint_amount` is zero.                                                                                                       |
+    /// | `Errors::NOT_PUBLISHED`       | `DesignatedDealer::EDEALER`                  | `DesignatedDealer::Dealer` or `DesignatedDealer::TierInfo<CoinType>` resource does not exist at `designated_dealer_address`. |
+    /// | `Errors::REQUIRES_CAPABILITY` | `Diem::EMINT_CAPABILITY`                    | `tc_account` does not have a `Diem::MintCapability<CoinType>` resource published under it.                                  |
+    /// | `Errors::INVALID_STATE`       | `Diem::EMINTING_NOT_ALLOWED`                | Minting is not currently allowed for `CoinType` coins.                                                                       |
+    /// | `Errors::LIMIT_EXCEEDED`      | `DiemAccount::EDEPOSIT_EXCEEDS_LIMITS`      | The depositing of the funds would exceed the `account`'s account limits.                                                     |
+    ///
+    /// # Related Scripts
+    /// * `AccountCreationScripts::create_designated_dealer`
+    /// * `PaymentScripts::peer_to_peer_with_metadata`
+    /// * `AccountAdministrationScripts::rotate_dual_attestation_info`
+    TieredMint {
+        coin_type: TypeTag,
+        sliding_nonce: u64,
+        designated_dealer_address: AccountAddress,
+        mint_amount: u64,
+        tier_index: u64,
+    },
+
+    /// # Summary
+    /// Unfreezes the account at `address`. The sending account of this transaction must be the
+    /// Treasury Compliance account. After the successful execution of this transaction transactions
+    /// may be sent from the previously frozen account, and coins may be sent and received.
+    ///
+    /// # Technical Description
+    /// Sets the `AccountFreezing::FreezingBit` to `false` and emits a
+    /// `AccountFreezing::UnFreezeAccountEvent`. The transaction sender must be the Treasury Compliance
+    /// account. Note that this is a per-account property so unfreezing a Parent VASP will not effect
+    /// the status any of its child accounts and vice versa.
+    ///
+    /// # Events
+    /// Successful execution of this script will emit a `AccountFreezing::UnFreezeAccountEvent` with
+    /// the `unfrozen_address` set the `to_unfreeze_account`'s address.
+    ///
+    /// # Parameters
+    /// | Name                  | Type      | Description                                                                                     |
+    /// | ------                | ------    | -------------                                                                                   |
+    /// | `tc_account`          | `signer`  | The signer of the sending account of this transaction. Must be the Treasury Compliance account. |
+    /// | `sliding_nonce`       | `u64`     | The `sliding_nonce` (see: `SlidingNonce`) to be used for this transaction.                      |
+    /// | `to_unfreeze_account` | `address` | The account address to be frozen.                                                               |
+    ///
+    /// # Common Abort Conditions
+    /// | Error Category             | Error Reason                            | Description                                                                                |
+    /// | ----------------           | --------------                          | -------------                                                                              |
+    /// | `Errors::NOT_PUBLISHED`    | `SlidingNonce::ESLIDING_NONCE`          | A `SlidingNonce` resource is not published under `account`.                                |
+    /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_OLD`          | The `sliding_nonce` is too old and it's impossible to determine if it's duplicated or not. |
+    /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`          | The `sliding_nonce` is too far in the future.                                              |
+    /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED` | The `sliding_nonce` has been previously recorded.                                          |
+    /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE`   | The sending account is not the Treasury Compliance account.                                |
+    ///
+    /// # Related Scripts
+    /// * `TreasuryComplianceScripts::freeze_account`
+    UnfreezeAccount {
+        sliding_nonce: u64,
+        to_unfreeze_account: AccountAddress,
+    },
+
+    /// # Summary
     /// Updates the Diem consensus config that is stored on-chain and is used by the Consensus.  This
     /// transaction can only be sent from the Diem Root account.
     ///
@@ -2505,7 +2875,10 @@ pub enum ScriptFunctionCall {
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`                | The `sliding_nonce` is too far in the future.                                              |
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED`       | The `sliding_nonce` has been previously recorded.                                          |
     /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::EDIEM_ROOT`                   | `account` is not the Diem Root account.                                                    |
-    UpdateDiemConsensusConfig { sliding_nonce: u64, config: Bytes },
+    UpdateDiemConsensusConfig {
+        sliding_nonce: u64,
+        config: Bytes,
+    },
 
     /// # Summary
     /// Updates the Diem major version that is stored on-chain and is used by the VM.  This
@@ -2533,7 +2906,117 @@ pub enum ScriptFunctionCall {
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED`       | The `sliding_nonce` has been previously recorded.                                          |
     /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::EDIEM_ROOT`                   | `account` is not the Diem Root account.                                                    |
     /// | `Errors::INVALID_ARGUMENT` | `DiemVersion::EINVALID_MAJOR_VERSION_NUMBER`  | `major` is less-than or equal to the current major version stored on-chain.                |
-    UpdateDiemVersion { sliding_nonce: u64, major: u64 },
+    UpdateDiemVersion {
+        sliding_nonce: u64,
+        major: u64,
+    },
+
+    /// # Summary
+    /// Update the dual attestation limit on-chain. Defined in terms of micro-XDX.  The transaction can
+    /// only be sent by the Treasury Compliance account.  After this transaction all inter-VASP
+    /// payments over this limit must be checked for dual attestation.
+    ///
+    /// # Technical Description
+    /// Updates the `micro_xdx_limit` field of the `DualAttestation::Limit` resource published under
+    /// `0xA550C18`. The amount is set in micro-XDX.
+    ///
+    /// # Parameters
+    /// | Name                  | Type     | Description                                                                                     |
+    /// | ------                | ------   | -------------                                                                                   |
+    /// | `tc_account`          | `signer` | The signer of the sending account of this transaction. Must be the Treasury Compliance account. |
+    /// | `sliding_nonce`       | `u64`    | The `sliding_nonce` (see: `SlidingNonce`) to be used for this transaction.                      |
+    /// | `new_micro_xdx_limit` | `u64`    | The new dual attestation limit to be used on-chain.                                             |
+    ///
+    /// # Common Abort Conditions
+    /// | Error Category             | Error Reason                            | Description                                                                                |
+    /// | ----------------           | --------------                          | -------------                                                                              |
+    /// | `Errors::NOT_PUBLISHED`    | `SlidingNonce::ESLIDING_NONCE`          | A `SlidingNonce` resource is not published under `tc_account`.                             |
+    /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_OLD`          | The `sliding_nonce` is too old and it's impossible to determine if it's duplicated or not. |
+    /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`          | The `sliding_nonce` is too far in the future.                                              |
+    /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED` | The `sliding_nonce` has been previously recorded.                                          |
+    /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE`   | `tc_account` is not the Treasury Compliance account.                                       |
+    ///
+    /// # Related Scripts
+    /// * `TreasuryComplianceScripts::update_exchange_rate`
+    /// * `TreasuryComplianceScripts::update_minting_ability`
+    UpdateDualAttestationLimit {
+        sliding_nonce: u64,
+        new_micro_xdx_limit: u64,
+    },
+
+    /// # Summary
+    /// Update the rough on-chain exchange rate between a specified currency and XDX (as a conversion
+    /// to micro-XDX). The transaction can only be sent by the Treasury Compliance account. After this
+    /// transaction the updated exchange rate will be used for normalization of gas prices, and for
+    /// dual attestation checking.
+    ///
+    /// # Technical Description
+    /// Updates the on-chain exchange rate from the given `Currency` to micro-XDX.  The exchange rate
+    /// is given by `new_exchange_rate_numerator/new_exchange_rate_denominator`.
+    ///
+    /// # Parameters
+    /// | Name                            | Type     | Description                                                                                                                        |
+    /// | ------                          | ------   | -------------                                                                                                                      |
+    /// | `Currency`                      | Type     | The Move type for the `Currency` whose exchange rate is being updated. `Currency` must be an already-registered currency on-chain. |
+    /// | `tc_account`                    | `signer` | The signer of the sending account of this transaction. Must be the Treasury Compliance account.                                    |
+    /// | `sliding_nonce`                 | `u64`    | The `sliding_nonce` (see: `SlidingNonce`) to be used for the transaction.                                                          |
+    /// | `new_exchange_rate_numerator`   | `u64`    | The numerator for the new to micro-XDX exchange rate for `Currency`.                                                               |
+    /// | `new_exchange_rate_denominator` | `u64`    | The denominator for the new to micro-XDX exchange rate for `Currency`.                                                             |
+    ///
+    /// # Common Abort Conditions
+    /// | Error Category             | Error Reason                            | Description                                                                                |
+    /// | ----------------           | --------------                          | -------------                                                                              |
+    /// | `Errors::NOT_PUBLISHED`    | `SlidingNonce::ESLIDING_NONCE`          | A `SlidingNonce` resource is not published under `tc_account`.                             |
+    /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_OLD`          | The `sliding_nonce` is too old and it's impossible to determine if it's duplicated or not. |
+    /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`          | The `sliding_nonce` is too far in the future.                                              |
+    /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED` | The `sliding_nonce` has been previously recorded.                                          |
+    /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE`   | `tc_account` is not the Treasury Compliance account.                                       |
+    /// | `Errors::REQUIRES_ROLE`    | `Roles::ETREASURY_COMPLIANCE`           | `tc_account` is not the Treasury Compliance account.                                       |
+    /// | `Errors::INVALID_ARGUMENT` | `FixedPoint32::EDENOMINATOR`            | `new_exchange_rate_denominator` is zero.                                                   |
+    /// | `Errors::INVALID_ARGUMENT` | `FixedPoint32::ERATIO_OUT_OF_RANGE`     | The quotient is unrepresentable as a `FixedPoint32`.                                       |
+    /// | `Errors::LIMIT_EXCEEDED`   | `FixedPoint32::ERATIO_OUT_OF_RANGE`     | The quotient is unrepresentable as a `FixedPoint32`.                                       |
+    ///
+    /// # Related Scripts
+    /// * `TreasuryComplianceScripts::update_dual_attestation_limit`
+    /// * `TreasuryComplianceScripts::update_minting_ability`
+    UpdateExchangeRate {
+        currency: TypeTag,
+        sliding_nonce: u64,
+        new_exchange_rate_numerator: u64,
+        new_exchange_rate_denominator: u64,
+    },
+
+    /// # Summary
+    /// Script to allow or disallow minting of new coins in a specified currency.  This transaction can
+    /// only be sent by the Treasury Compliance account.  Turning minting off for a currency will have
+    /// no effect on coins already in circulation, and coins may still be removed from the system.
+    ///
+    /// # Technical Description
+    /// This transaction sets the `can_mint` field of the `Diem::CurrencyInfo<Currency>` resource
+    /// published under `0xA550C18` to the value of `allow_minting`. Minting of coins if allowed if
+    /// this field is set to `true` and minting of new coins in `Currency` is disallowed otherwise.
+    /// This transaction needs to be sent by the Treasury Compliance account.
+    ///
+    /// # Parameters
+    /// | Name            | Type     | Description                                                                                                                          |
+    /// | ------          | ------   | -------------                                                                                                                        |
+    /// | `Currency`      | Type     | The Move type for the `Currency` whose minting ability is being updated. `Currency` must be an already-registered currency on-chain. |
+    /// | `account`       | `signer` | Signer of the sending account. Must be the Diem Root account.                                                                        |
+    /// | `allow_minting` | `bool`   | Whether to allow minting of new coins in `Currency`.                                                                                 |
+    ///
+    /// # Common Abort Conditions
+    /// | Error Category             | Error Reason                          | Description                                          |
+    /// | ----------------           | --------------                        | -------------                                        |
+    /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE` | `tc_account` is not the Treasury Compliance account. |
+    /// | `Errors::NOT_PUBLISHED`    | `Diem::ECURRENCY_INFO`               | `Currency` is not a registered currency on-chain.    |
+    ///
+    /// # Related Scripts
+    /// * `TreasuryComplianceScripts::update_dual_attestation_limit`
+    /// * `TreasuryComplianceScripts::update_exchange_rate`
+    UpdateMintingAbility {
+        currency: TypeTag,
+        allow_minting: bool,
+    },
 }
 
 impl ScriptCall {
@@ -2791,6 +3274,24 @@ impl ScriptFunctionCall {
                 validator_name,
                 validator_address,
             ),
+            AutopayEnable {} => encode_autopay_enable_script_function(),
+            BurnTxnFees { coin_type } => encode_burn_txn_fees_script_function(coin_type),
+            BurnWithAmount {
+                token,
+                sliding_nonce,
+                preburn_address,
+                amount,
+            } => encode_burn_with_amount_script_function(
+                token,
+                sliding_nonce,
+                preburn_address,
+                amount,
+            ),
+            CancelBurnWithAmount {
+                token,
+                preburn_address,
+                amount,
+            } => encode_cancel_burn_with_amount_script_function(token, preburn_address, amount),
             CreateChildVaspAccount {
                 coin_type,
                 child_address,
@@ -2857,6 +3358,10 @@ impl ScriptFunctionCall {
                 auth_key_prefix,
                 human_name,
             ),
+            FreezeAccount {
+                sliding_nonce,
+                to_freeze_account,
+            } => encode_freeze_account_script_function(sliding_nonce, to_freeze_account),
             InitializeDiemConsensusConfig { sliding_nonce } => {
                 encode_initialize_diem_consensus_config_script_function(sliding_nonce)
             }
@@ -2873,6 +3378,7 @@ impl ScriptFunctionCall {
                 metadata,
                 metadata_signature,
             ),
+            Preburn { token, amount } => encode_preburn_script_function(token, amount),
             PublishSharedEd25519PublicKey { public_key } => {
                 encode_publish_shared_ed25519_public_key_script_function(public_key)
             }
@@ -2978,6 +3484,23 @@ impl ScriptFunctionCall {
                 operator_name,
                 operator_account,
             ),
+            TieredMint {
+                coin_type,
+                sliding_nonce,
+                designated_dealer_address,
+                mint_amount,
+                tier_index,
+            } => encode_tiered_mint_script_function(
+                coin_type,
+                sliding_nonce,
+                designated_dealer_address,
+                mint_amount,
+                tier_index,
+            ),
+            UnfreezeAccount {
+                sliding_nonce,
+                to_unfreeze_account,
+            } => encode_unfreeze_account_script_function(sliding_nonce, to_unfreeze_account),
             UpdateDiemConsensusConfig {
                 sliding_nonce,
                 config,
@@ -2986,6 +3509,28 @@ impl ScriptFunctionCall {
                 sliding_nonce,
                 major,
             } => encode_update_diem_version_script_function(sliding_nonce, major),
+            UpdateDualAttestationLimit {
+                sliding_nonce,
+                new_micro_xdx_limit,
+            } => encode_update_dual_attestation_limit_script_function(
+                sliding_nonce,
+                new_micro_xdx_limit,
+            ),
+            UpdateExchangeRate {
+                currency,
+                sliding_nonce,
+                new_exchange_rate_numerator,
+                new_exchange_rate_denominator,
+            } => encode_update_exchange_rate_script_function(
+                currency,
+                sliding_nonce,
+                new_exchange_rate_numerator,
+                new_exchange_rate_denominator,
+            ),
+            UpdateMintingAbility {
+                currency,
+                allow_minting,
+            } => encode_update_minting_ability_script_function(currency, allow_minting),
         }
     }
 
@@ -3163,6 +3708,206 @@ pub fn encode_add_validator_and_reconfigure_script_function(
             bcs::to_bytes(&sliding_nonce).unwrap(),
             bcs::to_bytes(&validator_name).unwrap(),
             bcs::to_bytes(&validator_address).unwrap(),
+        ],
+    ))
+}
+
+pub fn encode_autopay_enable_script_function() -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            Identifier::new("AutoPayScripts").unwrap(),
+        ),
+        Identifier::new("autopay_enable").unwrap(),
+        vec![],
+        vec![],
+    ))
+}
+
+/// # Summary
+/// Burns the transaction fees collected in the `CoinType` currency so that the
+/// Diem association may reclaim the backing coins off-chain. May only be sent
+/// by the Treasury Compliance account.
+///
+/// # Technical Description
+/// Burns the transaction fees collected in `CoinType` so that the
+/// association may reclaim the backing coins. Once this transaction has executed
+/// successfully all transaction fees that will have been collected in
+/// `CoinType` since the last time this script was called with that specific
+/// currency. Both `balance` and `preburn` fields in the
+/// `TransactionFee::TransactionFee<CoinType>` resource published under the `0xB1E55ED`
+/// account address will have a value of 0 after the successful execution of this script.
+///
+/// # Events
+/// The successful execution of this transaction will emit a `Diem::BurnEvent` on the event handle
+/// held in the `Diem::CurrencyInfo<CoinType>` resource's `burn_events` published under
+/// `0xA550C18`.
+///
+/// # Parameters
+/// | Name         | Type     | Description                                                                                                                                         |
+/// | ------       | ------   | -------------                                                                                                                                       |
+/// | `CoinType`   | Type     | The Move type for the `CoinType` being added to the sending account of the transaction. `CoinType` must be an already-registered currency on-chain. |
+/// | `tc_account` | `signer` | The signer of the sending account of this transaction. Must be the Treasury Compliance account.                                                     |
+///
+/// # Common Abort Conditions
+/// | Error Category             | Error Reason                          | Description                                                 |
+/// | ----------------           | --------------                        | -------------                                               |
+/// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE` | The sending account is not the Treasury Compliance account. |
+/// | `Errors::NOT_PUBLISHED`    | `TransactionFee::ETRANSACTION_FEE`    | `CoinType` is not an accepted transaction fee currency.     |
+/// | `Errors::INVALID_ARGUMENT` | `Diem::ECOIN`                        | The collected fees in `CoinType` are zero.                  |
+///
+/// # Related Scripts
+/// * `TreasuryComplianceScripts::burn_with_amount`
+/// * `TreasuryComplianceScripts::cancel_burn_with_amount`
+pub fn encode_burn_txn_fees_script_function(coin_type: TypeTag) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            Identifier::new("TreasuryComplianceScripts").unwrap(),
+        ),
+        Identifier::new("burn_txn_fees").unwrap(),
+        vec![coin_type],
+        vec![],
+    ))
+}
+
+/// # Summary
+/// Burns the coins held in a preburn resource in the preburn queue at the
+/// specified preburn address, which are equal to the `amount` specified in the
+/// transaction. Finds the first relevant outstanding preburn request with
+/// matching amount and removes the contained coins from the system. The sending
+/// account must be the Treasury Compliance account.
+/// The account that holds the preburn queue resource will normally be a Designated
+/// Dealer, but there are no enforced requirements that it be one.
+///
+/// # Technical Description
+/// This transaction permanently destroys all the coins of `Token` type
+/// stored in the `Diem::Preburn<Token>` resource published under the
+/// `preburn_address` account address.
+///
+/// This transaction will only succeed if the sending `account` has a
+/// `Diem::BurnCapability<Token>`, and a `Diem::Preburn<Token>` resource
+/// exists under `preburn_address`, with a non-zero `to_burn` field. After the successful execution
+/// of this transaction the `total_value` field in the
+/// `Diem::CurrencyInfo<Token>` resource published under `0xA550C18` will be
+/// decremented by the value of the `to_burn` field of the preburn resource
+/// under `preburn_address` immediately before this transaction, and the
+/// `to_burn` field of the preburn resource will have a zero value.
+///
+/// # Events
+/// The successful execution of this transaction will emit a `Diem::BurnEvent` on the event handle
+/// held in the `Diem::CurrencyInfo<Token>` resource's `burn_events` published under
+/// `0xA550C18`.
+///
+/// # Parameters
+/// | Name              | Type      | Description                                                                                                        |
+/// | ------            | ------    | -------------                                                                                                      |
+/// | `Token`           | Type      | The Move type for the `Token` currency being burned. `Token` must be an already-registered currency on-chain.      |
+/// | `tc_account`      | `signer`  | The signer of the sending account of this transaction, must have a burn capability for `Token` published under it. |
+/// | `sliding_nonce`   | `u64`     | The `sliding_nonce` (see: `SlidingNonce`) to be used for this transaction.                                         |
+/// | `preburn_address` | `address` | The address where the coins to-be-burned are currently held.                                                       |
+/// | `amount`          | `u64`     | The amount to be burned.                                                                                           |
+///
+/// # Common Abort Conditions
+/// | Error Category                | Error Reason                            | Description                                                                                                                         |
+/// | ----------------              | --------------                          | -------------                                                                                                                       |
+/// | `Errors::NOT_PUBLISHED`       | `SlidingNonce::ESLIDING_NONCE`          | A `SlidingNonce` resource is not published under `account`.                                                                         |
+/// | `Errors::INVALID_ARGUMENT`    | `SlidingNonce::ENONCE_TOO_OLD`          | The `sliding_nonce` is too old and it's impossible to determine if it's duplicated or not.                                          |
+/// | `Errors::INVALID_ARGUMENT`    | `SlidingNonce::ENONCE_TOO_NEW`          | The `sliding_nonce` is too far in the future.                                                                                       |
+/// | `Errors::INVALID_ARGUMENT`    | `SlidingNonce::ENONCE_ALREADY_RECORDED` | The `sliding_nonce` has been previously recorded.                                                                                   |
+/// | `Errors::REQUIRES_CAPABILITY` | `Diem::EBURN_CAPABILITY`                | The sending `account` does not have a `Diem::BurnCapability<Token>` published under it.                                             |
+/// | `Errors::INVALID_STATE`       | `Diem::EPREBURN_NOT_FOUND`              | The `Diem::PreburnQueue<Token>` resource under `preburn_address` does not contain a preburn request with a value matching `amount`. |
+/// | `Errors::NOT_PUBLISHED`       | `Diem::EPREBURN_QUEUE`                  | The account at `preburn_address` does not have a `Diem::PreburnQueue<Token>` resource published under it.                           |
+/// | `Errors::NOT_PUBLISHED`       | `Diem::ECURRENCY_INFO`                  | The specified `Token` is not a registered currency on-chain.                                                                        |
+///
+/// # Related Scripts
+/// * `TreasuryComplianceScripts::burn_txn_fees`
+/// * `TreasuryComplianceScripts::cancel_burn_with_amount`
+/// * `TreasuryComplianceScripts::preburn`
+pub fn encode_burn_with_amount_script_function(
+    token: TypeTag,
+    sliding_nonce: u64,
+    preburn_address: AccountAddress,
+    amount: u64,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            Identifier::new("TreasuryComplianceScripts").unwrap(),
+        ),
+        Identifier::new("burn_with_amount").unwrap(),
+        vec![token],
+        vec![
+            bcs::to_bytes(&sliding_nonce).unwrap(),
+            bcs::to_bytes(&preburn_address).unwrap(),
+            bcs::to_bytes(&amount).unwrap(),
+        ],
+    ))
+}
+
+/// # Summary
+/// Cancels and returns the coins held in the preburn area under
+/// `preburn_address`, which are equal to the `amount` specified in the transaction. Finds the first preburn
+/// resource with the matching amount and returns the funds to the `preburn_address`'s balance.
+/// Can only be successfully sent by an account with Treasury Compliance role.
+///
+/// # Technical Description
+/// Cancels and returns all coins held in the `Diem::Preburn<Token>` resource under the `preburn_address` and
+/// return the funds to the `preburn_address` account's `DiemAccount::Balance<Token>`.
+/// The transaction must be sent by an `account` with a `Diem::BurnCapability<Token>`
+/// resource published under it. The account at `preburn_address` must have a
+/// `Diem::Preburn<Token>` resource published under it, and its value must be nonzero. The transaction removes
+/// the entire balance held in the `Diem::Preburn<Token>` resource, and returns it back to the account's
+/// `DiemAccount::Balance<Token>` under `preburn_address`. Due to this, the account at
+/// `preburn_address` must already have a balance in the `Token` currency published
+/// before this script is called otherwise the transaction will fail.
+///
+/// # Events
+/// The successful execution of this transaction will emit:
+/// * A `Diem::CancelBurnEvent` on the event handle held in the `Diem::CurrencyInfo<Token>`
+/// resource's `burn_events` published under `0xA550C18`.
+/// * A `DiemAccount::ReceivedPaymentEvent` on the `preburn_address`'s
+/// `DiemAccount::DiemAccount` `received_events` event handle with both the `payer` and `payee`
+/// being `preburn_address`.
+///
+/// # Parameters
+/// | Name              | Type      | Description                                                                                                                          |
+/// | ------            | ------    | -------------                                                                                                                        |
+/// | `Token`           | Type      | The Move type for the `Token` currenty that burning is being cancelled for. `Token` must be an already-registered currency on-chain. |
+/// | `account`         | `signer`  | The signer of the sending account of this transaction, must have a burn capability for `Token` published under it.                   |
+/// | `preburn_address` | `address` | The address where the coins to-be-burned are currently held.                                                                         |
+/// | `amount`          | `u64`     | The amount to be cancelled.                                                                                                          |
+///
+/// # Common Abort Conditions
+/// | Error Category                | Error Reason                                     | Description                                                                                                                         |
+/// | ----------------              | --------------                                   | -------------                                                                                                                       |
+/// | `Errors::REQUIRES_CAPABILITY` | `Diem::EBURN_CAPABILITY`                         | The sending `account` does not have a `Diem::BurnCapability<Token>` published under it.                                             |
+/// | `Errors::INVALID_STATE`       | `Diem::EPREBURN_NOT_FOUND`                       | The `Diem::PreburnQueue<Token>` resource under `preburn_address` does not contain a preburn request with a value matching `amount`. |
+/// | `Errors::NOT_PUBLISHED`       | `Diem::EPREBURN_QUEUE`                           | The account at `preburn_address` does not have a `Diem::PreburnQueue<Token>` resource published under it.                           |
+/// | `Errors::NOT_PUBLISHED`       | `Diem::ECURRENCY_INFO`                           | The specified `Token` is not a registered currency on-chain.                                                                        |
+/// | `Errors::INVALID_ARGUMENT`    | `DiemAccount::EPAYEE_CANT_ACCEPT_CURRENCY_TYPE`  | The account at `preburn_address` doesn't have a balance resource for `Token`.                                                       |
+/// | `Errors::LIMIT_EXCEEDED`      | `DiemAccount::EDEPOSIT_EXCEEDS_LIMITS`           | The depositing of the funds held in the prebun area would exceed the `account`'s account limits.                                    |
+/// | `Errors::INVALID_STATE`       | `DualAttestation::EPAYEE_COMPLIANCE_KEY_NOT_SET` | The `account` does not have a compliance key set on it but dual attestion checking was performed.                                   |
+///
+/// # Related Scripts
+/// * `TreasuryComplianceScripts::burn_txn_fees`
+/// * `TreasuryComplianceScripts::burn_with_amount`
+/// * `TreasuryComplianceScripts::preburn`
+pub fn encode_cancel_burn_with_amount_script_function(
+    token: TypeTag,
+    preburn_address: AccountAddress,
+    amount: u64,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            Identifier::new("TreasuryComplianceScripts").unwrap(),
+        ),
+        Identifier::new("cancel_burn_with_amount").unwrap(),
+        vec![token],
+        vec![
+            bcs::to_bytes(&preburn_address).unwrap(),
+            bcs::to_bytes(&amount).unwrap(),
         ],
     ))
 }
@@ -3578,6 +4323,67 @@ pub fn encode_create_validator_operator_account_script_function(
 }
 
 /// # Summary
+/// Freezes the account at `address`. The sending account of this transaction
+/// must be the Treasury Compliance account. The account being frozen cannot be
+/// the Diem Root or Treasury Compliance account. After the successful
+/// execution of this transaction no transactions may be sent from the frozen
+/// account, and the frozen account may not send or receive coins.
+///
+/// # Technical Description
+/// Sets the `AccountFreezing::FreezingBit` to `true` and emits a
+/// `AccountFreezing::FreezeAccountEvent`. The transaction sender must be the
+/// Treasury Compliance account, but the account at `to_freeze_account` must
+/// not be either `0xA550C18` (the Diem Root address), or `0xB1E55ED` (the
+/// Treasury Compliance address). Note that this is a per-account property
+/// e.g., freezing a Parent VASP will not effect the status any of its child
+/// accounts and vice versa.
+///
+
+/// # Events
+/// Successful execution of this transaction will emit a `AccountFreezing::FreezeAccountEvent` on
+/// the `freeze_event_handle` held in the `AccountFreezing::FreezeEventsHolder` resource published
+/// under `0xA550C18` with the `frozen_address` being the `to_freeze_account`.
+///
+/// # Parameters
+/// | Name                | Type      | Description                                                                                     |
+/// | ------              | ------    | -------------                                                                                   |
+/// | `tc_account`        | `signer`  | The signer of the sending account of this transaction. Must be the Treasury Compliance account. |
+/// | `sliding_nonce`     | `u64`     | The `sliding_nonce` (see: `SlidingNonce`) to be used for this transaction.                      |
+/// | `to_freeze_account` | `address` | The account address to be frozen.                                                               |
+///
+/// # Common Abort Conditions
+/// | Error Category             | Error Reason                                 | Description                                                                                |
+/// | ----------------           | --------------                               | -------------                                                                              |
+/// | `Errors::NOT_PUBLISHED`    | `SlidingNonce::ESLIDING_NONCE`               | A `SlidingNonce` resource is not published under `tc_account`.                             |
+/// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_OLD`               | The `sliding_nonce` is too old and it's impossible to determine if it's duplicated or not. |
+/// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`               | The `sliding_nonce` is too far in the future.                                              |
+/// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED`      | The `sliding_nonce` has been previously recorded.                                          |
+/// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE`        | The sending account is not the Treasury Compliance account.                                |
+/// | `Errors::REQUIRES_ROLE`    | `Roles::ETREASURY_COMPLIANCE`                | The sending account is not the Treasury Compliance account.                                |
+/// | `Errors::INVALID_ARGUMENT` | `AccountFreezing::ECANNOT_FREEZE_TC`         | `to_freeze_account` was the Treasury Compliance account (`0xB1E55ED`).                     |
+/// | `Errors::INVALID_ARGUMENT` | `AccountFreezing::ECANNOT_FREEZE_DIEM_ROOT` | `to_freeze_account` was the Diem Root account (`0xA550C18`).                              |
+///
+/// # Related Scripts
+/// * `TreasuryComplianceScripts::unfreeze_account`
+pub fn encode_freeze_account_script_function(
+    sliding_nonce: u64,
+    to_freeze_account: AccountAddress,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            Identifier::new("TreasuryComplianceScripts").unwrap(),
+        ),
+        Identifier::new("freeze_account").unwrap(),
+        vec![],
+        vec![
+            bcs::to_bytes(&sliding_nonce).unwrap(),
+            bcs::to_bytes(&to_freeze_account).unwrap(),
+        ],
+    ))
+}
+
+/// # Summary
 /// Initializes the Diem consensus config that is stored on-chain.  This
 /// transaction can only be sent from the Diem Root account.
 ///
@@ -3687,6 +4493,61 @@ pub fn encode_peer_to_peer_with_metadata_script_function(
             bcs::to_bytes(&metadata).unwrap(),
             bcs::to_bytes(&metadata_signature).unwrap(),
         ],
+    ))
+}
+
+/// # Summary
+/// Moves a specified number of coins in a given currency from the account's
+/// balance to its preburn area after which the coins may be burned. This
+/// transaction may be sent by any account that holds a balance and preburn area
+/// in the specified currency.
+///
+/// # Technical Description
+/// Moves the specified `amount` of coins in `Token` currency from the sending `account`'s
+/// `DiemAccount::Balance<Token>` to the `Diem::Preburn<Token>` published under the same
+/// `account`. `account` must have both of these resources published under it at the start of this
+/// transaction in order for it to execute successfully.
+///
+/// # Events
+/// Successful execution of this script emits two events:
+/// * `DiemAccount::SentPaymentEvent ` on `account`'s `DiemAccount::DiemAccount` `sent_events`
+/// handle with the `payee` and `payer` fields being `account`'s address; and
+/// * A `Diem::PreburnEvent` with `Token`'s currency code on the
+/// `Diem::CurrencyInfo<Token`'s `preburn_events` handle for `Token` and with
+/// `preburn_address` set to `account`'s address.
+///
+/// # Parameters
+/// | Name      | Type     | Description                                                                                                                      |
+/// | ------    | ------   | -------------                                                                                                                    |
+/// | `Token`   | Type     | The Move type for the `Token` currency being moved to the preburn area. `Token` must be an already-registered currency on-chain. |
+/// | `account` | `signer` | The signer of the sending account.                                                                                               |
+/// | `amount`  | `u64`    | The amount in `Token` to be moved to the preburn area.                                                                           |
+///
+/// # Common Abort Conditions
+/// | Error Category           | Error Reason                                             | Description                                                                             |
+/// | ----------------         | --------------                                           | -------------                                                                           |
+/// | `Errors::NOT_PUBLISHED`  | `Diem::ECURRENCY_INFO`                                  | The `Token` is not a registered currency on-chain.                                      |
+/// | `Errors::INVALID_STATE`  | `DiemAccount::EWITHDRAWAL_CAPABILITY_ALREADY_EXTRACTED` | The withdrawal capability for `account` has already been extracted.                     |
+/// | `Errors::LIMIT_EXCEEDED` | `DiemAccount::EINSUFFICIENT_BALANCE`                    | `amount` is greater than `payer`'s balance in `Token`.                                  |
+/// | `Errors::NOT_PUBLISHED`  | `DiemAccount::EPAYER_DOESNT_HOLD_CURRENCY`              | `account` doesn't hold a balance in `Token`.                                            |
+/// | `Errors::NOT_PUBLISHED`  | `Diem::EPREBURN`                                        | `account` doesn't have a `Diem::Preburn<Token>` resource published under it.           |
+/// | `Errors::INVALID_STATE`  | `Diem::EPREBURN_OCCUPIED`                               | The `value` field in the `Diem::Preburn<Token>` resource under the sender is non-zero. |
+/// | `Errors::NOT_PUBLISHED`  | `Roles::EROLE_ID`                                        | The `account` did not have a role assigned to it.                                       |
+/// | `Errors::REQUIRES_ROLE`  | `Roles::EDESIGNATED_DEALER`                              | The `account` did not have the role of DesignatedDealer.                                |
+///
+/// # Related Scripts
+/// * `TreasuryComplianceScripts::cancel_burn_with_amount`
+/// * `TreasuryComplianceScripts::burn_with_amount`
+/// * `TreasuryComplianceScripts::burn_txn_fees`
+pub fn encode_preburn_script_function(token: TypeTag, amount: u64) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            Identifier::new("TreasuryComplianceScripts").unwrap(),
+        ),
+        Identifier::new("preburn").unwrap(),
+        vec![token],
+        vec![bcs::to_bytes(&amount).unwrap()],
     ))
 }
 
@@ -4388,6 +5249,132 @@ pub fn encode_set_validator_operator_with_nonce_admin_script_function(
 }
 
 /// # Summary
+/// Mints a specified number of coins in a currency to a Designated Dealer. The sending account
+/// must be the Treasury Compliance account, and coins can only be minted to a Designated Dealer
+/// account.
+///
+/// # Technical Description
+/// Mints `mint_amount` of coins in the `CoinType` currency to Designated Dealer account at
+/// `designated_dealer_address`. The `tier_index` parameter specifies which tier should be used to
+/// check verify the off-chain approval policy, and is based in part on the on-chain tier values
+/// for the specific Designated Dealer, and the number of `CoinType` coins that have been minted to
+/// the dealer over the past 24 hours. Every Designated Dealer has 4 tiers for each currency that
+/// they support. The sending `tc_account` must be the Treasury Compliance account, and the
+/// receiver an authorized Designated Dealer account.
+///
+/// # Events
+/// Successful execution of the transaction will emit two events:
+/// * A `Diem::MintEvent` with the amount and currency code minted is emitted on the
+/// `mint_event_handle` in the stored `Diem::CurrencyInfo<CoinType>` resource stored under
+/// `0xA550C18`; and
+/// * A `DesignatedDealer::ReceivedMintEvent` with the amount, currency code, and Designated
+/// Dealer's address is emitted on the `mint_event_handle` in the stored `DesignatedDealer::Dealer`
+/// resource published under the `designated_dealer_address`.
+///
+/// # Parameters
+/// | Name                        | Type      | Description                                                                                                |
+/// | ------                      | ------    | -------------                                                                                              |
+/// | `CoinType`                  | Type      | The Move type for the `CoinType` being minted. `CoinType` must be an already-registered currency on-chain. |
+/// | `tc_account`                | `signer`  | The signer of the sending account of this transaction. Must be the Treasury Compliance account.            |
+/// | `sliding_nonce`             | `u64`     | The `sliding_nonce` (see: `SlidingNonce`) to be used for this transaction.                                 |
+/// | `designated_dealer_address` | `address` | The address of the Designated Dealer account being minted to.                                              |
+/// | `mint_amount`               | `u64`     | The number of coins to be minted.                                                                          |
+/// | `tier_index`                | `u64`     | [Deprecated] The mint tier index to use for the Designated Dealer account. Will be ignored                 |
+///
+/// # Common Abort Conditions
+/// | Error Category                | Error Reason                                 | Description                                                                                                                  |
+/// | ----------------              | --------------                               | -------------                                                                                                                |
+/// | `Errors::NOT_PUBLISHED`       | `SlidingNonce::ESLIDING_NONCE`               | A `SlidingNonce` resource is not published under `tc_account`.                                                               |
+/// | `Errors::INVALID_ARGUMENT`    | `SlidingNonce::ENONCE_TOO_OLD`               | The `sliding_nonce` is too old and it's impossible to determine if it's duplicated or not.                                   |
+/// | `Errors::INVALID_ARGUMENT`    | `SlidingNonce::ENONCE_TOO_NEW`               | The `sliding_nonce` is too far in the future.                                                                                |
+/// | `Errors::INVALID_ARGUMENT`    | `SlidingNonce::ENONCE_ALREADY_RECORDED`      | The `sliding_nonce` has been previously recorded.                                                                            |
+/// | `Errors::REQUIRES_ADDRESS`    | `CoreAddresses::ETREASURY_COMPLIANCE`        | `tc_account` is not the Treasury Compliance account.                                                                         |
+/// | `Errors::REQUIRES_ROLE`       | `Roles::ETREASURY_COMPLIANCE`                | `tc_account` is not the Treasury Compliance account.                                                                         |
+/// | `Errors::INVALID_ARGUMENT`    | `DesignatedDealer::EINVALID_MINT_AMOUNT`     | `mint_amount` is zero.                                                                                                       |
+/// | `Errors::NOT_PUBLISHED`       | `DesignatedDealer::EDEALER`                  | `DesignatedDealer::Dealer` or `DesignatedDealer::TierInfo<CoinType>` resource does not exist at `designated_dealer_address`. |
+/// | `Errors::REQUIRES_CAPABILITY` | `Diem::EMINT_CAPABILITY`                    | `tc_account` does not have a `Diem::MintCapability<CoinType>` resource published under it.                                  |
+/// | `Errors::INVALID_STATE`       | `Diem::EMINTING_NOT_ALLOWED`                | Minting is not currently allowed for `CoinType` coins.                                                                       |
+/// | `Errors::LIMIT_EXCEEDED`      | `DiemAccount::EDEPOSIT_EXCEEDS_LIMITS`      | The depositing of the funds would exceed the `account`'s account limits.                                                     |
+///
+/// # Related Scripts
+/// * `AccountCreationScripts::create_designated_dealer`
+/// * `PaymentScripts::peer_to_peer_with_metadata`
+/// * `AccountAdministrationScripts::rotate_dual_attestation_info`
+pub fn encode_tiered_mint_script_function(
+    coin_type: TypeTag,
+    sliding_nonce: u64,
+    designated_dealer_address: AccountAddress,
+    mint_amount: u64,
+    tier_index: u64,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            Identifier::new("TreasuryComplianceScripts").unwrap(),
+        ),
+        Identifier::new("tiered_mint").unwrap(),
+        vec![coin_type],
+        vec![
+            bcs::to_bytes(&sliding_nonce).unwrap(),
+            bcs::to_bytes(&designated_dealer_address).unwrap(),
+            bcs::to_bytes(&mint_amount).unwrap(),
+            bcs::to_bytes(&tier_index).unwrap(),
+        ],
+    ))
+}
+
+/// # Summary
+/// Unfreezes the account at `address`. The sending account of this transaction must be the
+/// Treasury Compliance account. After the successful execution of this transaction transactions
+/// may be sent from the previously frozen account, and coins may be sent and received.
+///
+/// # Technical Description
+/// Sets the `AccountFreezing::FreezingBit` to `false` and emits a
+/// `AccountFreezing::UnFreezeAccountEvent`. The transaction sender must be the Treasury Compliance
+/// account. Note that this is a per-account property so unfreezing a Parent VASP will not effect
+/// the status any of its child accounts and vice versa.
+///
+/// # Events
+/// Successful execution of this script will emit a `AccountFreezing::UnFreezeAccountEvent` with
+/// the `unfrozen_address` set the `to_unfreeze_account`'s address.
+///
+/// # Parameters
+/// | Name                  | Type      | Description                                                                                     |
+/// | ------                | ------    | -------------                                                                                   |
+/// | `tc_account`          | `signer`  | The signer of the sending account of this transaction. Must be the Treasury Compliance account. |
+/// | `sliding_nonce`       | `u64`     | The `sliding_nonce` (see: `SlidingNonce`) to be used for this transaction.                      |
+/// | `to_unfreeze_account` | `address` | The account address to be frozen.                                                               |
+///
+/// # Common Abort Conditions
+/// | Error Category             | Error Reason                            | Description                                                                                |
+/// | ----------------           | --------------                          | -------------                                                                              |
+/// | `Errors::NOT_PUBLISHED`    | `SlidingNonce::ESLIDING_NONCE`          | A `SlidingNonce` resource is not published under `account`.                                |
+/// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_OLD`          | The `sliding_nonce` is too old and it's impossible to determine if it's duplicated or not. |
+/// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`          | The `sliding_nonce` is too far in the future.                                              |
+/// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED` | The `sliding_nonce` has been previously recorded.                                          |
+/// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE`   | The sending account is not the Treasury Compliance account.                                |
+///
+/// # Related Scripts
+/// * `TreasuryComplianceScripts::freeze_account`
+pub fn encode_unfreeze_account_script_function(
+    sliding_nonce: u64,
+    to_unfreeze_account: AccountAddress,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            Identifier::new("TreasuryComplianceScripts").unwrap(),
+        ),
+        Identifier::new("unfreeze_account").unwrap(),
+        vec![],
+        vec![
+            bcs::to_bytes(&sliding_nonce).unwrap(),
+            bcs::to_bytes(&to_unfreeze_account).unwrap(),
+        ],
+    ))
+}
+
+/// # Summary
 /// Updates the Diem consensus config that is stored on-chain and is used by the Consensus.  This
 /// transaction can only be sent from the Diem Root account.
 ///
@@ -4469,6 +5456,150 @@ pub fn encode_update_diem_version_script_function(
             bcs::to_bytes(&sliding_nonce).unwrap(),
             bcs::to_bytes(&major).unwrap(),
         ],
+    ))
+}
+
+/// # Summary
+/// Update the dual attestation limit on-chain. Defined in terms of micro-XDX.  The transaction can
+/// only be sent by the Treasury Compliance account.  After this transaction all inter-VASP
+/// payments over this limit must be checked for dual attestation.
+///
+/// # Technical Description
+/// Updates the `micro_xdx_limit` field of the `DualAttestation::Limit` resource published under
+/// `0xA550C18`. The amount is set in micro-XDX.
+///
+/// # Parameters
+/// | Name                  | Type     | Description                                                                                     |
+/// | ------                | ------   | -------------                                                                                   |
+/// | `tc_account`          | `signer` | The signer of the sending account of this transaction. Must be the Treasury Compliance account. |
+/// | `sliding_nonce`       | `u64`    | The `sliding_nonce` (see: `SlidingNonce`) to be used for this transaction.                      |
+/// | `new_micro_xdx_limit` | `u64`    | The new dual attestation limit to be used on-chain.                                             |
+///
+/// # Common Abort Conditions
+/// | Error Category             | Error Reason                            | Description                                                                                |
+/// | ----------------           | --------------                          | -------------                                                                              |
+/// | `Errors::NOT_PUBLISHED`    | `SlidingNonce::ESLIDING_NONCE`          | A `SlidingNonce` resource is not published under `tc_account`.                             |
+/// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_OLD`          | The `sliding_nonce` is too old and it's impossible to determine if it's duplicated or not. |
+/// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`          | The `sliding_nonce` is too far in the future.                                              |
+/// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED` | The `sliding_nonce` has been previously recorded.                                          |
+/// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE`   | `tc_account` is not the Treasury Compliance account.                                       |
+///
+/// # Related Scripts
+/// * `TreasuryComplianceScripts::update_exchange_rate`
+/// * `TreasuryComplianceScripts::update_minting_ability`
+pub fn encode_update_dual_attestation_limit_script_function(
+    sliding_nonce: u64,
+    new_micro_xdx_limit: u64,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            Identifier::new("TreasuryComplianceScripts").unwrap(),
+        ),
+        Identifier::new("update_dual_attestation_limit").unwrap(),
+        vec![],
+        vec![
+            bcs::to_bytes(&sliding_nonce).unwrap(),
+            bcs::to_bytes(&new_micro_xdx_limit).unwrap(),
+        ],
+    ))
+}
+
+/// # Summary
+/// Update the rough on-chain exchange rate between a specified currency and XDX (as a conversion
+/// to micro-XDX). The transaction can only be sent by the Treasury Compliance account. After this
+/// transaction the updated exchange rate will be used for normalization of gas prices, and for
+/// dual attestation checking.
+///
+/// # Technical Description
+/// Updates the on-chain exchange rate from the given `Currency` to micro-XDX.  The exchange rate
+/// is given by `new_exchange_rate_numerator/new_exchange_rate_denominator`.
+///
+/// # Parameters
+/// | Name                            | Type     | Description                                                                                                                        |
+/// | ------                          | ------   | -------------                                                                                                                      |
+/// | `Currency`                      | Type     | The Move type for the `Currency` whose exchange rate is being updated. `Currency` must be an already-registered currency on-chain. |
+/// | `tc_account`                    | `signer` | The signer of the sending account of this transaction. Must be the Treasury Compliance account.                                    |
+/// | `sliding_nonce`                 | `u64`    | The `sliding_nonce` (see: `SlidingNonce`) to be used for the transaction.                                                          |
+/// | `new_exchange_rate_numerator`   | `u64`    | The numerator for the new to micro-XDX exchange rate for `Currency`.                                                               |
+/// | `new_exchange_rate_denominator` | `u64`    | The denominator for the new to micro-XDX exchange rate for `Currency`.                                                             |
+///
+/// # Common Abort Conditions
+/// | Error Category             | Error Reason                            | Description                                                                                |
+/// | ----------------           | --------------                          | -------------                                                                              |
+/// | `Errors::NOT_PUBLISHED`    | `SlidingNonce::ESLIDING_NONCE`          | A `SlidingNonce` resource is not published under `tc_account`.                             |
+/// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_OLD`          | The `sliding_nonce` is too old and it's impossible to determine if it's duplicated or not. |
+/// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`          | The `sliding_nonce` is too far in the future.                                              |
+/// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED` | The `sliding_nonce` has been previously recorded.                                          |
+/// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE`   | `tc_account` is not the Treasury Compliance account.                                       |
+/// | `Errors::REQUIRES_ROLE`    | `Roles::ETREASURY_COMPLIANCE`           | `tc_account` is not the Treasury Compliance account.                                       |
+/// | `Errors::INVALID_ARGUMENT` | `FixedPoint32::EDENOMINATOR`            | `new_exchange_rate_denominator` is zero.                                                   |
+/// | `Errors::INVALID_ARGUMENT` | `FixedPoint32::ERATIO_OUT_OF_RANGE`     | The quotient is unrepresentable as a `FixedPoint32`.                                       |
+/// | `Errors::LIMIT_EXCEEDED`   | `FixedPoint32::ERATIO_OUT_OF_RANGE`     | The quotient is unrepresentable as a `FixedPoint32`.                                       |
+///
+/// # Related Scripts
+/// * `TreasuryComplianceScripts::update_dual_attestation_limit`
+/// * `TreasuryComplianceScripts::update_minting_ability`
+pub fn encode_update_exchange_rate_script_function(
+    currency: TypeTag,
+    sliding_nonce: u64,
+    new_exchange_rate_numerator: u64,
+    new_exchange_rate_denominator: u64,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            Identifier::new("TreasuryComplianceScripts").unwrap(),
+        ),
+        Identifier::new("update_exchange_rate").unwrap(),
+        vec![currency],
+        vec![
+            bcs::to_bytes(&sliding_nonce).unwrap(),
+            bcs::to_bytes(&new_exchange_rate_numerator).unwrap(),
+            bcs::to_bytes(&new_exchange_rate_denominator).unwrap(),
+        ],
+    ))
+}
+
+/// # Summary
+/// Script to allow or disallow minting of new coins in a specified currency.  This transaction can
+/// only be sent by the Treasury Compliance account.  Turning minting off for a currency will have
+/// no effect on coins already in circulation, and coins may still be removed from the system.
+///
+/// # Technical Description
+/// This transaction sets the `can_mint` field of the `Diem::CurrencyInfo<Currency>` resource
+/// published under `0xA550C18` to the value of `allow_minting`. Minting of coins if allowed if
+/// this field is set to `true` and minting of new coins in `Currency` is disallowed otherwise.
+/// This transaction needs to be sent by the Treasury Compliance account.
+///
+/// # Parameters
+/// | Name            | Type     | Description                                                                                                                          |
+/// | ------          | ------   | -------------                                                                                                                        |
+/// | `Currency`      | Type     | The Move type for the `Currency` whose minting ability is being updated. `Currency` must be an already-registered currency on-chain. |
+/// | `account`       | `signer` | Signer of the sending account. Must be the Diem Root account.                                                                        |
+/// | `allow_minting` | `bool`   | Whether to allow minting of new coins in `Currency`.                                                                                 |
+///
+/// # Common Abort Conditions
+/// | Error Category             | Error Reason                          | Description                                          |
+/// | ----------------           | --------------                        | -------------                                        |
+/// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE` | `tc_account` is not the Treasury Compliance account. |
+/// | `Errors::NOT_PUBLISHED`    | `Diem::ECURRENCY_INFO`               | `Currency` is not a registered currency on-chain.    |
+///
+/// # Related Scripts
+/// * `TreasuryComplianceScripts::update_dual_attestation_limit`
+/// * `TreasuryComplianceScripts::update_exchange_rate`
+pub fn encode_update_minting_ability_script_function(
+    currency: TypeTag,
+    allow_minting: bool,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            Identifier::new("TreasuryComplianceScripts").unwrap(),
+        ),
+        Identifier::new("update_minting_ability").unwrap(),
+        vec![currency],
+        vec![bcs::to_bytes(&allow_minting).unwrap()],
     ))
 }
 
@@ -6188,6 +7319,57 @@ fn decode_add_validator_and_reconfigure_script_function(
     }
 }
 
+fn decode_autopay_enable_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(_script) = payload {
+        Some(ScriptFunctionCall::AutopayEnable {})
+    } else {
+        None
+    }
+}
+
+fn decode_burn_txn_fees_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::BurnTxnFees {
+            coin_type: script.ty_args().get(0)?.clone(),
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_burn_with_amount_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::BurnWithAmount {
+            token: script.ty_args().get(0)?.clone(),
+            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
+            preburn_address: bcs::from_bytes(script.args().get(1)?).ok()?,
+            amount: bcs::from_bytes(script.args().get(2)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_cancel_burn_with_amount_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::CancelBurnWithAmount {
+            token: script.ty_args().get(0)?.clone(),
+            preburn_address: bcs::from_bytes(script.args().get(0)?).ok()?,
+            amount: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_create_child_vasp_account_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -6278,6 +7460,19 @@ fn decode_create_validator_operator_account_script_function(
     }
 }
 
+fn decode_freeze_account_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::FreezeAccount {
+            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
+            to_freeze_account: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_initialize_diem_consensus_config_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -6300,6 +7495,17 @@ fn decode_peer_to_peer_with_metadata_script_function(
             amount: bcs::from_bytes(script.args().get(1)?).ok()?,
             metadata: bcs::from_bytes(script.args().get(2)?).ok()?,
             metadata_signature: bcs::from_bytes(script.args().get(3)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_preburn_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::Preburn {
+            token: script.ty_args().get(0)?.clone(),
+            amount: bcs::from_bytes(script.args().get(0)?).ok()?,
         })
     } else {
         None
@@ -6491,6 +7697,33 @@ fn decode_set_validator_operator_with_nonce_admin_script_function(
     }
 }
 
+fn decode_tiered_mint_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::TieredMint {
+            coin_type: script.ty_args().get(0)?.clone(),
+            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
+            designated_dealer_address: bcs::from_bytes(script.args().get(1)?).ok()?,
+            mint_amount: bcs::from_bytes(script.args().get(2)?).ok()?,
+            tier_index: bcs::from_bytes(script.args().get(3)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_unfreeze_account_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::UnfreezeAccount {
+            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
+            to_unfreeze_account: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_update_diem_consensus_config_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -6511,6 +7744,47 @@ fn decode_update_diem_version_script_function(
         Some(ScriptFunctionCall::UpdateDiemVersion {
             sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
             major: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_update_dual_attestation_limit_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::UpdateDualAttestationLimit {
+            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
+            new_micro_xdx_limit: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_update_exchange_rate_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::UpdateExchangeRate {
+            currency: script.ty_args().get(0)?.clone(),
+            sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
+            new_exchange_rate_numerator: bcs::from_bytes(script.args().get(1)?).ok()?,
+            new_exchange_rate_denominator: bcs::from_bytes(script.args().get(2)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_update_minting_ability_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::UpdateMintingAbility {
+            currency: script.ty_args().get(0)?.clone(),
+            allow_minting: bcs::from_bytes(script.args().get(0)?).ok()?,
         })
     } else {
         None
@@ -6935,6 +8209,22 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_add_validator_and_reconfigure_script_function),
         );
         map.insert(
+            "AutoPayScriptsautopay_enable".to_string(),
+            Box::new(decode_autopay_enable_script_function),
+        );
+        map.insert(
+            "TreasuryComplianceScriptsburn_txn_fees".to_string(),
+            Box::new(decode_burn_txn_fees_script_function),
+        );
+        map.insert(
+            "TreasuryComplianceScriptsburn_with_amount".to_string(),
+            Box::new(decode_burn_with_amount_script_function),
+        );
+        map.insert(
+            "TreasuryComplianceScriptscancel_burn_with_amount".to_string(),
+            Box::new(decode_cancel_burn_with_amount_script_function),
+        );
+        map.insert(
             "AccountCreationScriptscreate_child_vasp_account".to_string(),
             Box::new(decode_create_child_vasp_account_script_function),
         );
@@ -6959,12 +8249,20 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_create_validator_operator_account_script_function),
         );
         map.insert(
+            "TreasuryComplianceScriptsfreeze_account".to_string(),
+            Box::new(decode_freeze_account_script_function),
+        );
+        map.insert(
             "SystemAdministrationScriptsinitialize_diem_consensus_config".to_string(),
             Box::new(decode_initialize_diem_consensus_config_script_function),
         );
         map.insert(
             "PaymentScriptspeer_to_peer_with_metadata".to_string(),
             Box::new(decode_peer_to_peer_with_metadata_script_function),
+        );
+        map.insert(
+            "TreasuryComplianceScriptspreburn".to_string(),
+            Box::new(decode_preburn_script_function),
         );
         map.insert(
             "AccountAdministrationScriptspublish_shared_ed25519_public_key".to_string(),
@@ -7020,12 +8318,32 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_set_validator_operator_with_nonce_admin_script_function),
         );
         map.insert(
+            "TreasuryComplianceScriptstiered_mint".to_string(),
+            Box::new(decode_tiered_mint_script_function),
+        );
+        map.insert(
+            "TreasuryComplianceScriptsunfreeze_account".to_string(),
+            Box::new(decode_unfreeze_account_script_function),
+        );
+        map.insert(
             "SystemAdministrationScriptsupdate_diem_consensus_config".to_string(),
             Box::new(decode_update_diem_consensus_config_script_function),
         );
         map.insert(
             "SystemAdministrationScriptsupdate_diem_version".to_string(),
             Box::new(decode_update_diem_version_script_function),
+        );
+        map.insert(
+            "TreasuryComplianceScriptsupdate_dual_attestation_limit".to_string(),
+            Box::new(decode_update_dual_attestation_limit_script_function),
+        );
+        map.insert(
+            "TreasuryComplianceScriptsupdate_exchange_rate".to_string(),
+            Box::new(decode_update_exchange_rate_script_function),
+        );
+        map.insert(
+            "TreasuryComplianceScriptsupdate_minting_ability".to_string(),
+            Box::new(decode_update_minting_ability_script_function),
         );
         map
     });
