@@ -43,6 +43,8 @@ impl Runnable for AutopayBatchCmd {
         let epoch = node.vitals.chain_view.unwrap().epoch;
         println!("The current epoch is: {}\n", epoch);
         
+        println!("Next you will confirm the instructions before sending the batch transaction\n ALL INSTRUCTIONS MUST BE CONFIRMED before the tx submission happens. Batches are atomic. If you reject one transaction, no batch will be submitted, and you must revise the batch.json file");
+
         let instructions = PayInstruction::parse_autopay_instructions(&self.autopay_batch_file, Some(epoch), start_id).unwrap();
         let scripts = process_instructions(instructions);
         batch_wrapper(scripts, &tx_params, entry_args.no_send, entry_args.save_path)
