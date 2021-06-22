@@ -45,7 +45,7 @@
         </tbody>
       </table>
     {:else}
-      <p class="uk-text-center uk-text-warning">Your validator does not have an Auto Pay Batch set.</p>
+      <p class="uk-text-center uk-text-warning">Your validator does not have autopay instructions.</p>
     {/if}
   {:else}
     <p>loading...</p>
