@@ -12,7 +12,7 @@ module AccountScripts {
     use 0x1::GAS::GAS;
     use 0x1::ValidatorConfig;
   
-    fun create_acc_user(    
+    public(script) fun create_acc_user(
         _sender: signer,
         challenge: vector<u8>,
         solution: vector<u8>,
@@ -26,7 +26,7 @@ module AccountScripts {
         assert(DiemAccount::balance<GAS>(new_account_address) == 0, 01);
     }
 
-    fun create_acc_val(
+    public(script) fun create_acc_val(
         sender: signer,
         challenge: vector<u8>,
         solution: vector<u8>,

@@ -1735,6 +1735,23 @@ pub enum ScriptFunctionCall {
         amount: u64,
     },
 
+    CreateAccUser {
+        challenge: Bytes,
+        solution: Bytes,
+    },
+
+    CreateAccVal {
+        challenge: Bytes,
+        solution: Bytes,
+        ow_human_name: Bytes,
+        op_address: AccountAddress,
+        op_auth_key_prefix: Bytes,
+        op_consensus_pubkey: Bytes,
+        op_validator_network_addresses: Bytes,
+        op_fullnode_network_addresses: Bytes,
+        op_human_name: Bytes,
+    },
+
     /// # Summary
     /// Creates a Child VASP account with its parent being the sending account of the transaction.
     /// The sender of the transaction must be a Parent VASP account.
@@ -3346,6 +3363,31 @@ impl ScriptFunctionCall {
                 preburn_address,
                 amount,
             } => encode_cancel_burn_with_amount_script_function(token, preburn_address, amount),
+            CreateAccUser {
+                challenge,
+                solution,
+            } => encode_create_acc_user_script_function(challenge, solution),
+            CreateAccVal {
+                challenge,
+                solution,
+                ow_human_name,
+                op_address,
+                op_auth_key_prefix,
+                op_consensus_pubkey,
+                op_validator_network_addresses,
+                op_fullnode_network_addresses,
+                op_human_name,
+            } => encode_create_acc_val_script_function(
+                challenge,
+                solution,
+                ow_human_name,
+                op_address,
+                op_auth_key_prefix,
+                op_consensus_pubkey,
+                op_validator_network_addresses,
+                op_fullnode_network_addresses,
+                op_human_name,
+            ),
             CreateChildVaspAccount {
                 coin_type,
                 child_address,
@@ -4023,6 +4065,56 @@ pub fn encode_cancel_burn_with_amount_script_function(
         vec![
             bcs::to_bytes(&preburn_address).unwrap(),
             bcs::to_bytes(&amount).unwrap(),
+        ],
+    ))
+}
+
+pub fn encode_create_acc_user_script_function(
+    challenge: Vec<u8>,
+    solution: Vec<u8>,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            Identifier::new("AccountScripts").unwrap(),
+        ),
+        Identifier::new("create_acc_user").unwrap(),
+        vec![],
+        vec![
+            bcs::to_bytes(&challenge).unwrap(),
+            bcs::to_bytes(&solution).unwrap(),
+        ],
+    ))
+}
+
+pub fn encode_create_acc_val_script_function(
+    challenge: Vec<u8>,
+    solution: Vec<u8>,
+    ow_human_name: Vec<u8>,
+    op_address: AccountAddress,
+    op_auth_key_prefix: Vec<u8>,
+    op_consensus_pubkey: Vec<u8>,
+    op_validator_network_addresses: Vec<u8>,
+    op_fullnode_network_addresses: Vec<u8>,
+    op_human_name: Vec<u8>,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            Identifier::new("AccountScripts").unwrap(),
+        ),
+        Identifier::new("create_acc_val").unwrap(),
+        vec![],
+        vec![
+            bcs::to_bytes(&challenge).unwrap(),
+            bcs::to_bytes(&solution).unwrap(),
+            bcs::to_bytes(&ow_human_name).unwrap(),
+            bcs::to_bytes(&op_address).unwrap(),
+            bcs::to_bytes(&op_auth_key_prefix).unwrap(),
+            bcs::to_bytes(&op_consensus_pubkey).unwrap(),
+            bcs::to_bytes(&op_validator_network_addresses).unwrap(),
+            bcs::to_bytes(&op_fullnode_network_addresses).unwrap(),
+            bcs::to_bytes(&op_human_name).unwrap(),
         ],
     ))
 }
@@ -7633,6 +7725,39 @@ fn decode_cancel_burn_with_amount_script_function(
     }
 }
 
+fn decode_create_acc_user_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::CreateAccUser {
+            challenge: bcs::from_bytes(script.args().get(0)?).ok()?,
+            solution: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_create_acc_val_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::CreateAccVal {
+            challenge: bcs::from_bytes(script.args().get(0)?).ok()?,
+            solution: bcs::from_bytes(script.args().get(1)?).ok()?,
+            ow_human_name: bcs::from_bytes(script.args().get(2)?).ok()?,
+            op_address: bcs::from_bytes(script.args().get(3)?).ok()?,
+            op_auth_key_prefix: bcs::from_bytes(script.args().get(4)?).ok()?,
+            op_consensus_pubkey: bcs::from_bytes(script.args().get(5)?).ok()?,
+            op_validator_network_addresses: bcs::from_bytes(script.args().get(6)?).ok()?,
+            op_fullnode_network_addresses: bcs::from_bytes(script.args().get(7)?).ok()?,
+            op_human_name: bcs::from_bytes(script.args().get(8)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_create_child_vasp_account_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -8584,6 +8709,14 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "TreasuryComplianceScriptscancel_burn_with_amount".to_string(),
             Box::new(decode_cancel_burn_with_amount_script_function),
+        );
+        map.insert(
+            "AccountScriptscreate_acc_user".to_string(),
+            Box::new(decode_create_acc_user_script_function),
+        );
+        map.insert(
+            "AccountScriptscreate_acc_val".to_string(),
+            Box::new(decode_create_acc_val_script_function),
         );
         map.insert(
             "AccountCreationScriptscreate_child_vasp_account".to_string(),
