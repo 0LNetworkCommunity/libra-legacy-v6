@@ -39,15 +39,14 @@ address 0x1 {
         validator: address,
         data: vector<u8>,
         version_id: u64,
-        type: u64, //0 -> voted with complete data, 1 -> voted with hash
         weight: u64, //Defaults to 1, may switch to be proportional to voting power
         // More stuff?
       }
   
       struct VoteCount {
         data: vector<u8>,
-        hash: vector<u8>,
         validators: vector<address>,
+        hash: vector<u8>,
         total_weight: u64,
       }
   
@@ -156,9 +155,8 @@ address 0x1 {
 
         let validator_vote = Vote {
                 validator: sender,
-                data: copy data,
+                data: Hash::sha2_256(copy data),
                 version_id: *&upgrade_oracle.version_id,
-                type: 0,
                 weight: vote_weight,
         };
         Vector::push_back(&mut upgrade_oracle.votes, validator_vote);
@@ -188,7 +186,6 @@ address 0x1 {
                 validator: sender,
                 data: copy data,
                 version_id: *&upgrade_oracle.version_id,
-                type: 1, 
                 weight: vote_weight, 
         };
         
@@ -203,11 +200,12 @@ address 0x1 {
       }
   
       fun increment_vote_count(vote_counts: &mut vector<VoteCount>, data: vector<u8>, validator: address, vote_weight: u64) {
+        let data_hash = Hash::sha2_256(copy data);
         let i = 0;
         let len = Vector::length(vote_counts);
         while (i < len) {
             let entry = Vector::borrow_mut(vote_counts, i);
-            if (Vector::compare(&entry.data, &data)) {
+            if (Vector::compare(&entry.hash, &data_hash)) {
               Vector::push_back(&mut entry.validators, validator);
               entry.total_weight = entry.total_weight + vote_weight;
               return
@@ -216,7 +214,6 @@ address 0x1 {
         };
         let validators = Vector::empty<address>();
         Vector::push_back<address>(&mut validators, validator);
-        let data_hash = Hash::sha2_256(copy data);
         Vector::push_back(vote_counts, VoteCount{data: copy data, hash: data_hash, validators: validators, total_weight: vote_weight});
       }
 
