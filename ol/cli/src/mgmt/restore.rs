@@ -159,9 +159,9 @@ impl Backup {
         let db_path = &self.home_path.join("db/");
         let restore_path = self.restore_path.to_str().unwrap();
         let height = &self.waypoint.unwrap().version();
-        restore_epoch(db_path, restore_path, verbose);
-        restore_transaction(db_path, restore_path, verbose);
-        restore_snapshot(db_path, restore_path, height, verbose);
+        restore_epoch(db_path, restore_path, verbose)?;
+        restore_transaction(db_path, restore_path, verbose)?;
+        restore_snapshot(db_path, restore_path, height, verbose)?;
         Ok(())
     }
 
@@ -283,10 +283,10 @@ fn get_zip_url(epoch: u64) -> Result<String, Error> {
 }
 
 /// Restores transaction epoch backups
-pub fn restore_epoch(db_path: &PathBuf, restore_path: &str, verbose: bool) {
+pub fn restore_epoch(db_path: &PathBuf, restore_path: &str, verbose: bool) -> Result<(), Error>{
     let manifest_path = glob(
         &format!("{}/**/epoch_ending.manifest", restore_path)
-    ).expect("Failed to read glob pattern").next().unwrap().unwrap();
+    ).expect("Failed to read glob pattern").next().unwrap()?;
     
     let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
 
@@ -300,22 +300,25 @@ pub fn restore_epoch(db_path: &PathBuf, restore_path: &str, verbose: bool) {
     .arg("--dir")
     .arg(restore_path)
     .stdout(stdio_cfg)
-    .spawn()
-    .expect("failed to execute child");
+    .spawn()?;
 
-    let ecode = child.wait().expect("failed to wait on child");
+    let ecode = child.wait()?;
 
     assert!(ecode.success());
     
     println!("epoch metadata restored from epoch archive, files saved to: {:?}", restore_path);
     status_ok!("\nEpoch metadata restored", "\n...........................\n");
+    Ok(())
 }
 
 /// Restores transaction type backups
-pub fn restore_transaction(db_path: &PathBuf, restore_path: &str, verbose: bool) {
+pub fn restore_transaction(db_path: &PathBuf, restore_path: &str, verbose: bool) -> Result<(), Error> {
     let manifest_path = glob(
     &format!("{}/**/transaction.manifest", restore_path)
-    ).expect("Failed to read glob pattern").next().unwrap().unwrap();
+    )
+    .expect("Failed to read glob pattern")
+    .next()
+    .unwrap()?;
 
     let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
 
@@ -329,22 +332,25 @@ pub fn restore_transaction(db_path: &PathBuf, restore_path: &str, verbose: bool)
     .arg("--dir")
     .arg(restore_path)
     .stdout(stdio_cfg)
-    .spawn()
-    .expect("failed to execute child");
+    .spawn()?;
 
-    let ecode = child.wait().expect("failed to wait on child");
+    let ecode = child.wait()?;
 
     assert!(ecode.success());
     
     println!("transactions restored from epoch archive,");
     status_ok!("\nTransactions restored", "\n...........................\n");
+    Ok(())
 }
 
 /// Restores snapshot type backups
-pub fn restore_snapshot(db_path: &PathBuf, restore_path: &str, epoch_height: &u64, verbose: bool) {
+pub fn restore_snapshot(db_path: &PathBuf, restore_path: &str, epoch_height: &u64, verbose: bool) -> Result<(), Error> {
     let manifest_path = glob(
     &format!("{}/**/state.manifest", restore_path)
-    ).expect("Failed to read glob pattern").next().unwrap().unwrap();
+    )
+    .expect("Failed to read glob pattern")
+    .next()
+    .expect("could not find state.manifest in archive")?;
 
     let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
 
@@ -360,15 +366,14 @@ pub fn restore_snapshot(db_path: &PathBuf, restore_path: &str, epoch_height: &u6
     .arg("--dir")
     .arg(restore_path)
     .stdout(stdio_cfg)
-    .spawn()
-    .expect("failed to execute child");
+    .spawn()?;
 
-    let ecode = child.wait()
-            .expect("failed to wait on child");
+    let ecode = child.wait()?;
 
     assert!(ecode.success());
     println!("state snapshot restored from epoch archive,");
     status_ok!("\nState snapshot restored", "\n...........................\n");
+    Ok(())
 }
 
 
