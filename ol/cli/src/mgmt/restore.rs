@@ -114,27 +114,40 @@ impl Backup {
     }
     /// Fetch backups
     pub fn fetch_backup(&self, verbose: bool) -> Result<(), Error> {    
-        let mut resp = reqwest::blocking::get(&self.zip_url).expect("request failed");
-        let mut out = File::create(&self.zip_path).expect("failed to create file");
-        io::copy(&mut resp, &mut out).expect("failed to copy content");
+        let mut resp = reqwest::blocking::get(&self.zip_url).expect("epoch archive http request failed");
+        let mut out = File::create(&self.zip_path).expect("cannot create archive zip");
+        io::copy(&mut resp, &mut out).expect("failed to write to archive zip");
+        println!("fetched archive zip, copied to {:?}", &self.home_path.join("restore/"));      
         
         let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
+        let restore_dir = &self.home_path.join("restore/");
 
-        
-        let mut child = Command::new("unzip")
-        .arg("-o")
+        // replace zip for tar
+        // tar -xf archive.tar.gz -C
+        let mut child = Command::new("tar")
+        .arg("-xf")
         .arg(&self.zip_path)
-        .arg("-d")
-        .arg(&self.home_path.join("restore/"))
+        .arg("-C")
+        .arg(restore_dir)
         .stdout(stdio_cfg)
         .spawn()
-        .expect("failed to execute child");
+        .expect(&format!("failed to unzip {:?} into {:?}", &self.zip_path, restore_dir));
+
+
+        // let mut child = Command::new("unzip")
+        // .arg("-o")
+        // .arg(&self.zip_path)
+        // .arg("-d")
+        // .arg(restore_dir)
+        // .stdout(stdio_cfg)
+        // .spawn()
+        // .expect(&format!("failed to unzip {:?} into {:?}", &self.zip_path, restore_dir));
 
         let ecode = child.wait().expect("failed to wait on child");
 
         assert!(ecode.success());
 
-        println!("fetched archive zip, copied to {:?}", &self.home_path.join("restore/"));
+
         status_ok!("\nArchive downloaded", "\n...........................\n");
 
 
@@ -146,9 +159,9 @@ impl Backup {
         let db_path = &self.home_path.join("db/");
         let restore_path = self.restore_path.to_str().unwrap();
         let height = &self.waypoint.unwrap().version();
-        restore_epoch(db_path, restore_path, verbose);
-        restore_transaction(db_path, restore_path, verbose);
-        restore_snapshot(db_path, restore_path, height, verbose);
+        restore_epoch(db_path, restore_path, verbose)?;
+        restore_transaction(db_path, restore_path, verbose)?;
+        restore_snapshot(db_path, restore_path, height, verbose)?;
         Ok(())
     }
 
@@ -250,7 +263,7 @@ fn get_highest_epoch_zip() -> Result<(u64, String), Error> {
     // TODO: Change to new directory structure
     Ok(
         (highest_epoch, 
-            format!("https://raw.githubusercontent.com/{owner}/{repo}/main/{highest_epoch}.zip",
+            format!("https://raw.githubusercontent.com/{owner}/{repo}/main/{highest_epoch}.tar.gz",
         owner = GITHUB_ORG.clone(),
         repo = GITHUB_REPO.clone(),
         highest_epoch = highest_epoch.to_string(),
@@ -261,7 +274,7 @@ fn get_highest_epoch_zip() -> Result<(u64, String), Error> {
 fn get_zip_url(epoch: u64) -> Result<String, Error> {
     Ok( 
       format!(
-        "https://raw.githubusercontent.com/{owner}/{repo}/main/{epoch}.zip",
+        "https://raw.githubusercontent.com/{owner}/{repo}/main/{epoch}.tar.gz",
         owner = GITHUB_ORG.clone(),
         repo = GITHUB_REPO.clone(),
         epoch = epoch.to_string(),
@@ -270,10 +283,10 @@ fn get_zip_url(epoch: u64) -> Result<String, Error> {
 }
 
 /// Restores transaction epoch backups
-pub fn restore_epoch(db_path: &PathBuf, restore_path: &str, verbose: bool) {
+pub fn restore_epoch(db_path: &PathBuf, restore_path: &str, verbose: bool) -> Result<(), Error>{
     let manifest_path = glob(
         &format!("{}/**/epoch_ending.manifest", restore_path)
-    ).expect("Failed to read glob pattern").next().unwrap().unwrap();
+    ).expect("Failed to read glob pattern").next().unwrap()?;
     
     let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
 
@@ -287,22 +300,25 @@ pub fn restore_epoch(db_path: &PathBuf, restore_path: &str, verbose: bool) {
     .arg("--dir")
     .arg(restore_path)
     .stdout(stdio_cfg)
-    .spawn()
-    .expect("failed to execute child");
+    .spawn()?;
 
-    let ecode = child.wait().expect("failed to wait on child");
+    let ecode = child.wait()?;
 
     assert!(ecode.success());
     
     println!("epoch metadata restored from epoch archive, files saved to: {:?}", restore_path);
     status_ok!("\nEpoch metadata restored", "\n...........................\n");
+    Ok(())
 }
 
 /// Restores transaction type backups
-pub fn restore_transaction(db_path: &PathBuf, restore_path: &str, verbose: bool) {
+pub fn restore_transaction(db_path: &PathBuf, restore_path: &str, verbose: bool) -> Result<(), Error> {
     let manifest_path = glob(
     &format!("{}/**/transaction.manifest", restore_path)
-    ).expect("Failed to read glob pattern").next().unwrap().unwrap();
+    )
+    .expect("Failed to read glob pattern")
+    .next()
+    .unwrap()?;
 
     let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
 
@@ -316,22 +332,25 @@ pub fn restore_transaction(db_path: &PathBuf, restore_path: &str, verbose: bool)
     .arg("--dir")
     .arg(restore_path)
     .stdout(stdio_cfg)
-    .spawn()
-    .expect("failed to execute child");
+    .spawn()?;
 
-    let ecode = child.wait().expect("failed to wait on child");
+    let ecode = child.wait()?;
 
     assert!(ecode.success());
     
     println!("transactions restored from epoch archive,");
     status_ok!("\nTransactions restored", "\n...........................\n");
+    Ok(())
 }
 
 /// Restores snapshot type backups
-pub fn restore_snapshot(db_path: &PathBuf, restore_path: &str, epoch_height: &u64, verbose: bool) {
+pub fn restore_snapshot(db_path: &PathBuf, restore_path: &str, epoch_height: &u64, verbose: bool) -> Result<(), Error> {
     let manifest_path = glob(
     &format!("{}/**/state.manifest", restore_path)
-    ).expect("Failed to read glob pattern").next().unwrap().unwrap();
+    )
+    .expect("Failed to read glob pattern")
+    .next()
+    .expect("could not find state.manifest in archive")?;
 
     let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
 
@@ -347,15 +366,14 @@ pub fn restore_snapshot(db_path: &PathBuf, restore_path: &str, epoch_height: &u6
     .arg("--dir")
     .arg(restore_path)
     .stdout(stdio_cfg)
-    .spawn()
-    .expect("failed to execute child");
+    .spawn()?;
 
-    let ecode = child.wait()
-            .expect("failed to wait on child");
+    let ecode = child.wait()?;
 
     assert!(ecode.success());
     println!("state snapshot restored from epoch archive,");
     status_ok!("\nState snapshot restored", "\n...........................\n");
+    Ok(())
 }
 
 
