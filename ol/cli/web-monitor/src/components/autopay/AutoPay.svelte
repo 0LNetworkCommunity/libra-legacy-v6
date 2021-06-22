@@ -18,7 +18,7 @@
   </h3>
   
   {#if account}
-    {#if account.auto_pay}
+    {#if account.auto_pay && account.auto_pay.payments.length > 0}
       <table class="uk-table">
         <thead>
           <tr>
@@ -45,7 +45,7 @@
         </tbody>
       </table>
     {:else}
-      <p class="uk-text-center uk-text-warning">Your validator does not have an Auto Pay Batch set.</p>
+      <p class="uk-text-center uk-text-warning">Your validator does not have autopay instructions.</p>
     {/if}
   {:else}
     <p>loading...</p>
