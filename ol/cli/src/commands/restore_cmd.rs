@@ -21,6 +21,9 @@ pub struct RestoreCmd {
 impl Runnable for RestoreCmd {
     /// Start the application.
     fn run(&self) {
-        mgmt::restore::fast_forward_db(self.verbose, self.epoch).unwrap();
+        match mgmt::restore::fast_forward_db(self.verbose, self.epoch) {
+            Ok(_) => {},
+            Err(e) => println!("ERROR: could not complete db restore, message: {:?}", e),
+        };
     }
 }

@@ -114,27 +114,27 @@ impl Backup {
     }
     /// Fetch backups
     pub fn fetch_backup(&self, verbose: bool) -> Result<(), Error> {    
-        let mut resp = reqwest::blocking::get(&self.zip_url).expect("request failed");
-        let mut out = File::create(&self.zip_path).expect("failed to create file");
-        io::copy(&mut resp, &mut out).expect("failed to copy content");
+        let mut resp = reqwest::blocking::get(&self.zip_url).expect("epoch archive http request failed");
+        let mut out = File::create(&self.zip_path).expect("cannot create archive zip");
+        io::copy(&mut resp, &mut out).expect("failed to write to archive zip");
+        println!("fetched archive zip, copied to {:?}", &self.home_path.join("restore/"));      
         
         let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
-
-        
+        let restore_dir = &self.home_path.join("restore/");
         let mut child = Command::new("unzip")
         .arg("-o")
         .arg(&self.zip_path)
         .arg("-d")
-        .arg(&self.home_path.join("restore/"))
+        .arg(restore_dir)
         .stdout(stdio_cfg)
         .spawn()
-        .expect("failed to execute child");
+        .expect(&format!("failed to unzip {:?} into {:?}", &self.zip_path, restore_dir));
 
         let ecode = child.wait().expect("failed to wait on child");
 
         assert!(ecode.success());
 
-        println!("fetched archive zip, copied to {:?}", &self.home_path.join("restore/"));
+
         status_ok!("\nArchive downloaded", "\n...........................\n");
 
 
