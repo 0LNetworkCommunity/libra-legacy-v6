@@ -17944,7 +17944,7 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (115:2) {:else}
+    // (118:2) {:else}
     function create_else_block$5(ctx) {
     	let p;
 
@@ -17952,7 +17952,7 @@ var app = (function () {
     		c: function create() {
     			p = element("p");
     			p.textContent = "loading...";
-    			add_location(p, file$a, 115, 4, 3085);
+    			add_location(p, file$a, 118, 4, 3225);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, p, anchor);
@@ -17969,14 +17969,14 @@ var app = (function () {
     		block,
     		id: create_else_block$5.name,
     		type: "else",
-    		source: "(115:2) {:else}",
+    		source: "(118:2) {:else}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (105:2) {#if health_data}
+    // (108:2) {#if health_data}
     function create_if_block$6(ctx) {
     	let dl;
     	let current;
@@ -18001,7 +18001,7 @@ var app = (function () {
     			}
 
     			attr_dev(dl, "class", "uk-description-list");
-    			add_location(dl, file$a, 105, 4, 2866);
+    			add_location(dl, file$a, 108, 4, 3006);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, dl, anchor);
@@ -18069,14 +18069,14 @@ var app = (function () {
     		block,
     		id: create_if_block$6.name,
     		type: "if",
-    		source: "(105:2) {#if health_data}",
+    		source: "(108:2) {#if health_data}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (107:6) {#each allChecks as c}
+    // (110:6) {#each allChecks as c}
     function create_each_block$3(ctx) {
     	let check;
     	let current;
@@ -18123,7 +18123,7 @@ var app = (function () {
     		block,
     		id: create_each_block$3.name,
     		type: "each",
-    		source: "(107:6) {#each allChecks as c}",
+    		source: "(110:6) {#each allChecks as c}",
     		ctx
     	});
 
@@ -18156,9 +18156,9 @@ var app = (function () {
     			t1 = space();
     			if_block.c();
     			attr_dev(h3, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted");
-    			add_location(h3, file$a, 101, 2, 2744);
+    			add_location(h3, file$a, 104, 2, 2884);
     			attr_dev(div, "class", "uk-card uk-card-default uk-card-body uk-margin-bottom");
-    			add_location(div, file$a, 100, 0, 2674);
+    			add_location(div, file$a, 103, 0, 2814);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -18279,8 +18279,8 @@ var app = (function () {
     		},
     		{
     			id: "has_auto_pay",
-    			title: "Auto Pay",
-    			description: "validator has auto pay batch set",
+    			title: "Autopay",
+    			description: "validator has autopay batch set",
     			is_true: false
     		}
     	];
@@ -18352,6 +18352,10 @@ var app = (function () {
 
     					if (i.id === "has_auto_pay") {
     						i.is_true = health_data.has_auto_pay;
+
+    						i.description = i.is_true
+    						? "autopay instructions are set up"
+    						: "autopay instructions not found";
     					}
 
     					return i;

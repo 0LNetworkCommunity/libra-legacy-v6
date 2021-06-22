@@ -62,8 +62,8 @@
     },
     {
       id: "has_auto_pay",
-      title: "Auto Pay",
-      description: "validator has auto pay batch set",
+      title: "Autopay",
+      description: "validator has autopay batch set",
       is_true: false,
     },
   ];
@@ -102,6 +102,9 @@
       }
       if (i.id === "has_auto_pay") {
         i.is_true = health_data.has_auto_pay;
+        i.description = i.is_true 
+          ? "autopay instructions are set up"
+          : "autopay instructions not found";
       }
       return i;
     });
