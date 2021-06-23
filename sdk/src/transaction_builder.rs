@@ -260,14 +260,14 @@ pub enum Currency {
 impl Currency {
     pub fn as_str(&self) -> &str {
         match self {
-            Currency::XDX => GAS_NAME,
+            Currency::XDX => GAS_NAME, //////// 0L ////////
             Currency::XUS => XUS_NAME,
         }
     }
 
     pub fn type_tag(&self) -> TypeTag {
         match self {
-            Currency::XDX => gas_type_tag(),
+            Currency::XDX => gas_type_tag(), //////// 0L ////////
             Currency::XUS => xus_tag(),
         }
     }

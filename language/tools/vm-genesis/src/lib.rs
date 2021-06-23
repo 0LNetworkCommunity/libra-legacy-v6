@@ -121,6 +121,7 @@ pub fn encode_genesis_change_set(
     let mut session = move_vm.new_session(&data_cache);
     let log_context = NoContextLog::new();
 
+    //////// 0L ////////
     let xdx_ty = TypeTag::Struct(StructTag {
         address: *account_config::GAS_MODULE.address(),
         module: account_config::GAS_MODULE.name().to_owned(),

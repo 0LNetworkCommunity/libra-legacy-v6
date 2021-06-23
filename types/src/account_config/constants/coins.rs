@@ -8,7 +8,7 @@ use move_core_types::{
 };
 use once_cell::sync::Lazy;
 
-pub const GAS_NAME: &str = "GAS";
+pub const GAS_NAME: &str = "GAS"; //////// 0L ////////
 pub const XUS_NAME: &str = "XUS";
 
 pub fn xus_tag() -> TypeTag {
@@ -20,6 +20,7 @@ pub fn xus_tag() -> TypeTag {
     })
 }
 
+//////// 0L ////////
 pub static GAS_MODULE: Lazy<ModuleId> =
     Lazy::new(|| ModuleId::new(CORE_CODE_ADDRESS, Identifier::new(GAS_NAME).unwrap()));
 pub static GAS_STRUCT_NAME: Lazy<Identifier> = Lazy::new(|| Identifier::new(GAS_NAME).unwrap());
@@ -44,7 +45,7 @@ pub fn coin_name(t: &TypeTag) -> Option<String> {
             ..
         }) if *address == CORE_CODE_ADDRESS && module == name => {
             let name_str = name.to_string();
-            if name_str == GAS_NAME || name_str == XUS_NAME {
+            if name_str == GAS_NAME || name_str == XUS_NAME { //////// 0L ////////
                 Some(name_str)
             } else {
                 None
@@ -57,7 +58,7 @@ pub fn coin_name(t: &TypeTag) -> Option<String> {
 #[test]
 fn coin_names() {
     assert!(coin_name(&xus_tag()).unwrap() == XUS_NAME);
-    assert!(coin_name(&gas_type_tag()).unwrap() == GAS_NAME);
+    assert!(coin_name(&gas_type_tag()).unwrap() == GAS_NAME); //////// 0L ////////
 
     assert!(coin_name(&TypeTag::U64) == None);
     let bad_name = Identifier::new("NotACoin").unwrap();
