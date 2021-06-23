@@ -50,7 +50,7 @@ pub fn get_packed_types(env: &GlobalEnv, targets: &FunctionTargetsHolder) -> BTr
 
                     if num_type_parameters == 1 {
                         let coin_types: Vec<Type> =
-                            vec![account_config::xus_tag(), account_config::xdx_type_tag()]
+                            vec![account_config::xus_tag(), account_config::gas_type_tag()]
                                 .into_iter()
                                 .map(|t| Type::from_type_tag(t, env))
                                 .collect();

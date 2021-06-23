@@ -329,6 +329,41 @@ impl FakeExecutor {
         self.apply_write_set(output.write_set());
     }
 
+    //////// 0L ////////
+    // TODO: extend this func if need for future testing
+    pub fn new_custom_block(&mut self, round: u64) {
+        let validator_set = ValidatorSet::fetch_config(&self.data_store)
+            .expect("Unable to retrieve the validator set from storage");
+        self.block_time += 1;
+
+        // 0L: Mocking the validator signatures in previous block.
+        let mut vec_validator_adresses = vec![];
+        // println!("num of validator {:?}",validator_set.payload().len());
+        for i in validator_set.payload().iter() {
+            //println!("\nvalidator: \n{:?}",i );
+            vec_validator_adresses.push(*i.account_address())
+        }
+
+        let new_block = BlockMetadata::new(
+            HashValue::zero(),
+            round, // 0L: block height/round 
+            self.block_time,
+            vec_validator_adresses, // 0L: Mocking the validator signatures in previous block.
+            *validator_set.payload()[0].account_address(),
+        );
+
+        let output = self
+            .execute_transaction_block(vec![Transaction::BlockMetadata(new_block)])
+            .expect("Executing block prologue should succeed")
+            .pop()
+            .expect("Failed to get the execution result for Block Prologue");
+        // check if we emit the expected event, there might be more events for transaction fees
+        let event = output.events()[0].clone();
+
+        assert!(bcs::from_bytes::<NewBlockEvent>(event.event_data()).is_ok());
+        self.apply_write_set(output.write_set());
+    }    
+
     fn module(name: &str) -> ModuleId {
         ModuleId::new(CORE_CODE_ADDRESS, Identifier::new(name).unwrap())
     }

@@ -22,7 +22,7 @@ use diem_types::{
     account_config::{
         diem_root_address, from_currency_code_string, testnet_dd_account_address,
         treasury_compliance_account_address, type_tag_for_currency_code,
-        ACCOUNT_RECEIVED_EVENT_PATH, ACCOUNT_SENT_EVENT_PATH, XDX_NAME, XUS_NAME,
+        ACCOUNT_RECEIVED_EVENT_PATH, ACCOUNT_SENT_EVENT_PATH, GAS_NAME, XUS_NAME,
     },
     account_state::AccountState,
     chain_id::ChainId,
@@ -1546,8 +1546,8 @@ impl ClientProxy {
     ) -> Result<u64> {
         ensure!(!input.is_empty(), "Empty input not allowed for diem unit");
         ensure!(
-            currency != XDX_NAME,
-            "XDX not allowed to be minted or transferred. Use XUS instead"
+            currency != GAS_NAME,
+            "GAS not allowed to be minted or transferred. Use XUS instead"
         );
         // This is not supposed to panic as it is used as constant here.
         let currencies_info = self.client.get_currency_info()?;

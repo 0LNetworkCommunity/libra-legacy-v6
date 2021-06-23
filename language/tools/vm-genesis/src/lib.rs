@@ -122,9 +122,9 @@ pub fn encode_genesis_change_set(
     let log_context = NoContextLog::new();
 
     let xdx_ty = TypeTag::Struct(StructTag {
-        address: *account_config::XDX_MODULE.address(),
-        module: account_config::XDX_MODULE.name().to_owned(),
-        name: account_config::XDX_STRUCT_NAME.to_owned(),
+        address: *account_config::GAS_MODULE.address(),
+        module: account_config::GAS_MODULE.name().to_owned(),
+        name: account_config::GAS_STRUCT_NAME.to_owned(),
         type_params: vec![],
     });
 

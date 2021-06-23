@@ -4390,6 +4390,7 @@ dependencies = [
  "diem-workspace-hack",
  "goldenfile",
  "hex 0.4.3",
+ "include_dir",
  "move-core-types",
  "move-vm-runtime",
  "move-vm-types",
