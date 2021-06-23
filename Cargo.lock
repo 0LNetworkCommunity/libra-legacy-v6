@@ -4416,6 +4416,7 @@ dependencies = [
  "diem-vm",
  "diem-workspace-hack",
  "diem-writeset-generator",
+ "hex 0.4.3",
  "language-e2e-tests",
  "move-core-types",
  "move-vm-runtime",
