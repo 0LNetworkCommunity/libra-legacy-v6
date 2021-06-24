@@ -13,7 +13,7 @@ ifndef SOURCE_PATH
 SOURCE_PATH = ${HOME}/libra
 endif
 
-HASH := $(sha256sum -z ${SOURCE_PATH}/language/stdlib/staged/stdlib.mv)
+HASH := $(shell sha256sum -z ${SOURCE_PATH}/language/stdlib/staged/stdlib.mv | cut -d " " -f 1)
 
 # alice
 ifndef PERSONA
@@ -71,6 +71,7 @@ submit:
 	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-upgrade -f ${SOURCE_PATH}/language/stdlib/staged/stdlib.mv
 
 submit-hash:
+	echo ${HASH}
 	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-upgrade-hash -h ${HASH}
 
 query:
