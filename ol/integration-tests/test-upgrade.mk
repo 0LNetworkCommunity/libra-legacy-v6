@@ -93,11 +93,12 @@ START_TEXT = "To run the Libra CLI client"
 UPGRADE_TEXT = "stdlib upgrade: published"
 
 upgrade: 
+# Note, in order to have bob vote with hash, change 'submit' in his command to 'submit-hash', will only work if PREV_VERSION also has the submit-hash command
 	@while [[ ${NOW} -le ${END} ]] ; do \
 			if grep -q ${START_TEXT} ${LOG} ; then \
 				make -f ${SAFE_MAKE_FILE} get-test stdlib ; \
 				PERSONA=alice make -f ${SAFE_MAKE_FILE} submit; \
-				PERSONA=bob make -f ${SAFE_MAKE_FILE} submit-hash; \
+				PERSONA=bob make -f ${SAFE_MAKE_FILE} submit; \
 				break; \
 			else \
 				echo . ; \
