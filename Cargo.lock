@@ -5091,6 +5091,7 @@ dependencies = [
  "libra-types",
  "machine-ip",
  "move-core-types",
+ "num-format",
  "ol-fixtures",
  "ol-keys",
  "once_cell",
