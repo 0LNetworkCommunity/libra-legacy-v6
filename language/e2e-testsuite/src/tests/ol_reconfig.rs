@@ -1,7 +1,13 @@
 // Copyright (c) 0lsf
 // SPDX-License-Identifier: Apache-2.0
 
-use diem_transaction_builder::stdlib::{self as transaction_builder, encode_add_validator_and_reconfigure_script_function, encode_create_validator_account_script_function, encode_ol_reconfig_bulk_update_setup_script_function, encode_register_validator_config_script_function};
+use diem_transaction_builder::stdlib::{
+    self as transaction_builder, 
+    encode_add_validator_and_reconfigure_script_function, 
+    encode_create_validator_account_script_function, 
+    encode_ol_reconfig_bulk_update_setup_script_function, 
+    encode_register_validator_config_script_function
+};
 use diem_types::{account_config::from_currency_code_string, vm_status::KeptVMStatus};
 use language_e2e_tests::{
     account::{Account, AccountData, AccountRoleSpecifier},

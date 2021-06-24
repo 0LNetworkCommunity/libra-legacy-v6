@@ -9,7 +9,7 @@ use move_core_types::{
 use once_cell::sync::Lazy;
 
 pub const GAS_NAME: &str = "GAS"; //////// 0L ////////
-pub const XUS_NAME: &str = "XUS";
+pub const XUS_NAME: &str = "GAS"; //////// 0L ////////
 
 pub fn xus_tag() -> TypeTag {
     TypeTag::Struct(StructTag {
