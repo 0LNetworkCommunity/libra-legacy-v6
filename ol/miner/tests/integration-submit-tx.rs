@@ -92,7 +92,8 @@ pub fn integration_submit_tx() {
 
             // TODO: make these paths references
             let tx_params = get_tx_params_from_swarm(swarm_configs_path.clone(), "alice".to_owned(), false).unwrap();// TO write logic
-            let config =  AppCfg::init_app_configs_swarm(swarm_configs_path.clone(), swarm_configs_path.join("0"));
+            let config =  AppCfg::init_app_configs_swarm(swarm_configs_path.clone(), 
+                                    swarm_configs_path.join("0"), Some(root_source_path.clone().to_path_buf()));
 
             let mut blocks_dir = config.workspace.node_home.clone();
             blocks_dir.push(&config.workspace.block_dir);
