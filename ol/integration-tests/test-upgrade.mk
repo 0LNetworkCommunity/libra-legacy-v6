@@ -68,6 +68,10 @@ init:
 submit:
 	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-upgrade -f ${SOURCE_PATH}/language/stdlib/staged/stdlib.mv
 
+submit-hash:
+	HASH := $(sha256sum -z ${SOURCE_PATH}/language/stdlib/staged/stdlib.mv)
+	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-hash -h ${HASH}
+
 query:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --blockheight | grep -Eo [0-9]+ | tail -n1
 
@@ -91,7 +95,7 @@ upgrade:
 			if grep -q ${START_TEXT} ${LOG} ; then \
 				make -f ${SAFE_MAKE_FILE} get-test stdlib ; \
 				PERSONA=alice make -f ${SAFE_MAKE_FILE} submit; \
-				PERSONA=bob make -f ${SAFE_MAKE_FILE} submit; \
+				PERSONA=bob make -f ${SAFE_MAKE_FILE} submit-hash; \
 				break; \
 			else \
 				echo . ; \
