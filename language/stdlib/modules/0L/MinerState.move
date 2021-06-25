@@ -562,5 +562,13 @@ address 0x1 {
       assert(Testnet::is_testnet()== true, Errors::invalid_state(130118));
       *&borrow_global<MinerProofHistory>(miner_addr).previous_proof_hash
     }
+
+    public fun test_helper_set_weight_vm(vm: &signer, addr: address, weight: u64) acquires MinerProofHistory {
+      assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(130113));
+
+      assert(Testnet::is_testnet(), Errors::invalid_state(130113));
+      let state = borrow_global_mut<MinerProofHistory>(addr);
+      state.epochs_validating_and_mining = weight;
+    }
   }
 }

@@ -1,9 +1,31 @@
 //! account: alice, 1000000, 0, validator
 //! account: bob, 1000000, 0, validator
-//! account: charlie, 1000000, 0, validator
-//! account: jim, 1000000, 0, validator
-//! account: lucy, 1000000, 0, validator
-//! account: thomas, 1000000, 0, validator
+//! account: carol, 1000000, 0, validator
+//! account: dave, 1000000, 0, validator
+//! account: eve, 1000000, 0, validator
+
+//! new-transaction
+//! sender: libraroot
+script {
+    use 0x1::MinerState;
+    use 0x1::NodeWeight;
+    fun main(sender: &signer) {
+        MinerState::test_helper_set_weight_vm(sender, {{alice}}, 10);
+        assert(NodeWeight::proof_of_weight({{alice}}) == 10, 7357300101011088);
+        MinerState::test_helper_set_weight_vm(sender, {{bob}}, 10);
+        assert(NodeWeight::proof_of_weight({{bob}}) == 10, 7357300101011088);
+        MinerState::test_helper_set_weight_vm(sender, {{carol}}, 10);
+        assert(NodeWeight::proof_of_weight({{carol}}) == 10, 7357300101011088);
+        MinerState::test_helper_set_weight_vm(sender, {{dave}}, 31);
+        assert(NodeWeight::proof_of_weight({{dave}}) == 31, 7357300101011088);
+        MinerState::test_helper_set_weight_vm(sender, {{eve}}, 31);
+        assert(NodeWeight::proof_of_weight({{eve}}) == 31, 7357300101011088);
+    }
+}
+//check: EXECUTED
+
+
+
 
 //! new-transaction
 //! sender: alice
@@ -35,7 +57,7 @@ script {
   use 0x1::Upgrade;
   fun main(sender: &signer){
       let id = 1;
-      let data = b"hello";
+      let data = b"bello";
       Oracle::handler(sender, id, data);
       let vec = Oracle::test_helper_query_oracle_votes();
 
@@ -49,31 +71,43 @@ script {
 // check: EXECUTED
 
 //! new-transaction
-//! sender: charlie
+//! sender: carol
 script {
   use 0x1::Oracle;
   use 0x1::Vector;
   use 0x1::Upgrade;
   use 0x1::Hash;
-  //use 0x1::Debug::print;
   fun main(sender: &signer){
       let id = 2;
-      let data = b"hello";
+      let data = b"bello";
       let hash = Hash::sha2_256(data);
       //print(&hash);
       Oracle::handler(sender, id, hash);
       let vec = Oracle::test_helper_query_oracle_votes();
       let e = *Vector::borrow<address>(&vec, 2);
-      assert(e == {{charlie}}, 7357123401011000);
+      assert(e == {{carol}}, 7357123401011000);
 
-      assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-      assert(Oracle::test_check_upgrade() == false, 7357123401011001);
+      if (Oracle::upgrade_vote_type() == 0) {
+          //One validator, one vote
+          assert(Upgrade::has_upgrade() == false, 7357123401011000); 
+          assert(Oracle::test_check_upgrade() == true, 7357123401011001);
+      }
+      else if (Oracle::upgrade_vote_type() == 1) {
+          //Weighted vote based on mining
+          assert(Upgrade::has_upgrade() == false, 7357123401011000); 
+          assert(Oracle::test_check_upgrade() == false, 7357123401011001);
+      }
+      else {
+          //test must be upgraded for new vote type
+          assert(false, 7357123401011003);
+      };
+      
   }
 }
 // check: EXECUTED
 
 //! new-transaction
-//! sender: jim
+//! sender: dave
 script {
   use 0x1::Oracle;
   use 0x1::Vector;
@@ -84,16 +118,28 @@ script {
       Oracle::handler(sender, id, data);
       let vec = Oracle::test_helper_query_oracle_votes();
       let e = *Vector::borrow<address>(&vec, 3);
-      assert(e == {{jim}}, 7357123401011000);
+      assert(e == {{dave}}, 7357123401011000);
 
-      assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-      assert(Oracle::test_check_upgrade() == false, 7357123401011001);
+      if (Oracle::upgrade_vote_type() == 0) {
+          //One validator, one vote
+          assert(Upgrade::has_upgrade() == false, 7357123401011000); 
+          assert(Oracle::test_check_upgrade() == true, 7357123401011001);
+      }
+      else if (Oracle::upgrade_vote_type() == 1) {
+          //Weighted vote based on mining
+          assert(Upgrade::has_upgrade() == false, 7357123401011000); 
+          assert(Oracle::test_check_upgrade() == false, 7357123401011001);
+      }
+      else {
+          //test must be upgraded for new vote type
+          assert(false, 7357123401011003);
+      };
   }
 }
 // check: EXECUTED
 
 //! new-transaction
-//! sender: thomas
+//! sender: eve
 script {
   use 0x1::Oracle;
   use 0x1::Vector;
@@ -102,68 +148,30 @@ script {
   //use 0x1::Debug::print;
   fun main(sender: &signer){
       let id = 2;
-      let data = b"bello";
+      let data = b"hello";
       let hash = Hash::sha2_256(data);
       //print(&hash);
       Oracle::handler(sender, id, hash);
       let vec = Oracle::test_helper_query_oracle_votes();
       let e = *Vector::borrow<address>(&vec, 4);
-      assert(e == {{thomas}}, 7357123401011000);
+      assert(e == {{eve}}, 7357123401011000);
 
-      assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-      assert(Oracle::test_check_upgrade() == false, 7357123401011001);
+      if (Oracle::upgrade_vote_type() == 0) {
+          //One validator, one vote
+          assert(Upgrade::has_upgrade() == false, 7357123401011000); 
+          assert(Oracle::test_check_upgrade() == true, 7357123401011001);
+      }
+      else if (Oracle::upgrade_vote_type() == 1) {
+          //Weighted vote based on mining
+          assert(Upgrade::has_upgrade() == false, 7357123401011000); 
+          assert(Oracle::test_check_upgrade() == true, 7357123401011001);
+      }
+      else {
+          //test must be upgraded for new vote type
+          assert(false, 7357123401011003);
+      };
   }
 }
 // check: EXECUTED
 
 
-
-//! new-transaction
-//! sender: lucy
-script {
-  use 0x1::Oracle;
-  use 0x1::Vector;
-  use 0x1::Upgrade;
-  fun main(sender: &signer){
-      let id = 1;
-      let data = b"hello";
-      Oracle::handler(sender, id, data);
-      let vec = Oracle::test_helper_query_oracle_votes();
-      let e = *Vector::borrow<address>(&vec, 5);
-      assert(e == {{lucy}}, 7357123401011000);
-
-      assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-      assert(Oracle::test_check_upgrade() == true, 7357123401011001);
-  }
-}
-// check: EXECUTED
-
-
-// //! block-prologue
-// //! proposer: bob
-// //! block-time: 1
-// //! round: 2
-
-// //! block-prologue
-// //! proposer: bob
-// //! block-time: 2
-// //! round: 2
-
-// //! new-transaction
-// //! sender: libraroot
-// script {
-//   use 0x1::Upgrade;
-//   use 0x1::Vector;
-//   fun main(){
-//     let (upgraded_version, payload, voters, height) = Upgrade::retrieve_latest_history();
-
-//     let validators = Vector::empty<address>();
-//     Vector::push_back(&mut validators, {{alice}});
-//     Vector::push_back(&mut validators, {{charlie}});
-//     assert(upgraded_version == 0, 7357123401011000);
-//     assert(payload == b"hello", 7357123401011000);
-//     assert(Vector::compare(&voters, &validators), 7357123401011000);
-//     assert(height == 1, 7357123401011000);
-//   }
-// }
-// // check: EXECUTED

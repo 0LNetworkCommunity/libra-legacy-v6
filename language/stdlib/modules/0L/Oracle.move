@@ -21,7 +21,7 @@ address 0x1 {
 
       //selected vote type for oracle
       const VOTE_TYPE_UPGRADE: u8 = 0; //VOTE_TYPE_ONE_FOR_ONE;
-      const DELEGATION_ENABLED_UPGRADE: bool = true;
+      const DELEGATION_ENABLED_UPGRADE: bool = false;
 
       //Errors
       const VOTE_TYPE_INVALID: u64 = 150001;
@@ -418,6 +418,14 @@ address 0x1 {
         else {
           false
         }
+      }
+
+      public fun delegation_enabled_upgrade(): bool {
+        DELEGATION_ENABLED_UPGRADE
+      }
+
+      public fun upgrade_vote_type(): u8 {
+        VOTE_TYPE_UPGRADE
       }
     }
   }
