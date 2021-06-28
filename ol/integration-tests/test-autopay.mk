@@ -49,7 +49,7 @@ swarm:
 	rm -rf ${SWARM_TEMP}
 	mkdir ${SWARM_TEMP}
 	cd ${SOURCE_PATH} && cargo build -p libra-node -p cli
-	cd ${SOURCE_PATH} && cargo run -p libra-swarm -- --libra-node ${SOURCE_PATH}/target/debug/libra-node -c ${SWARM_TEMP} -n ${NUM_NODES} &> ${LOG} &
+	cd ${SOURCE_PATH} && cargo run -p libra-swarm -- --libra-node ${SOURCE_PATH}/target/debug/libra-node -c ${SWARM_TEMP} -n ${NUM_NODES} 2>&1 | tee ${LOG} &
 
 stop:
 	killall libra-swarm libra-node miner ol txs cli | true
@@ -83,7 +83,7 @@ check-swarm:
 
 send-tx: 
 	PERSONA=alice make -f ${MAKE_FILE} init
-	PERSONA=alice make -f ${MAKE_FILE} tx &>> ${LOG} &
+	PERSONA=alice make -f ${MAKE_FILE} tx 2>&1 | tee -a ${LOG} &
 
 check-tx:
 	@while [[ ${NOW} -le ${END} ]] ; do \
