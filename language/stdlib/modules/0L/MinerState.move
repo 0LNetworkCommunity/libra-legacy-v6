@@ -453,7 +453,7 @@ address 0x1 {
           verified_tower_height: 0u64,
           latest_epoch_mining: 0u64,
           count_proofs_in_epoch: 0u64,
-          epochs_validating_and_mining: 0u64,
+          epochs_validating_and_mining: 1u64, //Set for the weighted vote E2E test
           contiguous_epochs_validating_and_mining: 0u64,
           epochs_since_last_account_creation: 10u64, // is not rate-limited
         });
