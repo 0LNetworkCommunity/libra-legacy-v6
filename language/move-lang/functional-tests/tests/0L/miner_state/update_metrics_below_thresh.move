@@ -21,6 +21,8 @@ fun main(sender: &signer) {
         TestFixtures::alice_0_easy_chal(),
         TestFixtures::alice_0_easy_sol()
     );
+    //above test function was updated to set height to 1 for oracle E2E test, need to reset to 0 here. 
+    MinerState::test_helper_set_weight_vm(sender, {{alice}}, 0);
 
     // check for initialized MinerState
     let verified_tower_height_after = MinerState::test_helper_get_height({{alice}});
