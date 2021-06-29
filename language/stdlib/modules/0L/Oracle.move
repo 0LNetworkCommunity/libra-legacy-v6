@@ -20,8 +20,8 @@ address 0x1 {
       const VOTE_TYPE_MAX: u8 = 1; //change if new voting types are added
 
       //selected vote type for oracle
-      const VOTE_TYPE_UPGRADE: u8 = 0; //VOTE_TYPE_ONE_FOR_ONE;
-      const DELEGATION_ENABLED_UPGRADE: bool = false;
+      const VOTE_TYPE_UPGRADE: u8 = 1; //VOTE_TYPE_PROPORTIONAL_VOTING_POWER;
+      const DELEGATION_ENABLED_UPGRADE: bool = true;
 
       //Errors
       const VOTE_TYPE_INVALID: u64 = 150001;
