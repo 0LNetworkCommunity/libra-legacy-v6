@@ -8,6 +8,7 @@ use txs::submit_tx::{TxParams, get_tx_params_from_swarm};
 use anyhow::{bail, Error};
 
 #[test]
+#[ignore]
 /// In case the miner fails to connect with client, miner should continue mining 
 /// and submit the backlog on each block. This test simulates this issue by blocking 
 /// the port in between and testing the connectivity. 
