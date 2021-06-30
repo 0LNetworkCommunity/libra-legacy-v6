@@ -11,6 +11,23 @@ address 0x1 {
     use 0x1::Upgrade;
     use 0x1::LibraBlock;
     use 0x1::CoreAddresses;
+    use 0x1::Hash;
+    use 0x1::NodeWeight;
+
+      //possible vote types
+      const VOTE_TYPE_ONE_FOR_ONE: u8 = 0;
+      const VOTE_TYPE_PROPORTIONAL_VOTING_POWER: u8 = 1;
+      const VOTE_TYPE_MAX: u8 = 1; //change if new voting types are added
+
+      //selected vote type for oracle
+      const VOTE_TYPE_UPGRADE: u8 = 1; //VOTE_TYPE_PROPORTIONAL_VOTING_POWER;
+      const DELEGATION_ENABLED_UPGRADE: bool = true;
+
+      //Errors
+      const VOTE_TYPE_INVALID: u64 = 150001;
+      const DELEGATION_NOT_ENABLED: u64 = 150002;
+      const VOTE_ALREADY_DELEGATED: u64 = 150003;
+      const DELEGATION_NOT_PRESENT: u64 = 150004;
   
       resource struct Oracles {
         upgrade: UpgradeOracle
@@ -22,12 +39,15 @@ address 0x1 {
         validator: address,
         data: vector<u8>,
         version_id: u64,
+        weight: u64, //Defaults to 1, may switch to be proportional to voting power
         // More stuff?
       }
   
       struct VoteCount {
         data: vector<u8>,
         validators: vector<address>,
+        hash: vector<u8>,
+        total_weight: u64,
       }
   
       struct UpgradeOracle {
@@ -42,6 +62,13 @@ address 0x1 {
         version_id: u64,                    // Version id of the current window
         consensus: VoteCount,
       }
+
+      resource struct VoteDelegation {
+        vote_delegated: bool,
+        delegates: vector<address>,
+        delegated_to_address: address, 
+      }
+
   
      // Function code: 01
       public fun initialize(vm: &signer) {
@@ -56,7 +83,9 @@ address 0x1 {
                 version_id: 0,
                 consensus: VoteCount{
                   data: Vector::empty<u8>(), 
+                  hash: Vector::empty<u8>(), 
                   validators: Vector::empty<address>(),
+                  total_weight: 0,
                 },
               }
           },
@@ -69,18 +98,46 @@ address 0x1 {
       }
   
       // Function code: 02
-      public fun handler (sender: &signer, id: u64, data: vector<u8>) acquires Oracles {
+      public fun handler (sender: &signer, id: u64, data: vector<u8>) acquires Oracles, VoteDelegation {
         // receives payload from oracle_tx.move
         // Check the sender is a validator. 
         assert(LibraSystem::is_validator(Signer::address_of(sender)), Errors::requires_role(150002)); 
   
         if (id == 1) {
-          upgrade_handler(sender, data);
+          upgrade_handler(Signer::address_of(sender), copy data);
+          if (DELEGATION_ENABLED_UPGRADE && exists<VoteDelegation>(Signer::address_of(sender))) {
+            let del = borrow_global<VoteDelegation>(Signer::address_of(sender));
+            let l = Vector::length<address>(&del.delegates);
+            let i = 0;
+            let hash = Hash::sha2_256(data);
+            while (i < l) {
+              let addr = *Vector::borrow<address>(&del.delegates, i);
+              if(LibraSystem::is_validator(addr)) {
+                upgrade_handler_hash(addr, copy hash);
+              };
+              i = i + 1;
+            };
+          };
         }
+        else if (id == 2) {
+          upgrade_handler_hash(Signer::address_of(sender), copy data);
+          if (DELEGATION_ENABLED_UPGRADE && exists<VoteDelegation>(Signer::address_of(sender))) {
+            let del = borrow_global<VoteDelegation>(Signer::address_of(sender));
+            let l = Vector::length<address>(&del.delegates);
+            let i = 0;
+            while (i < l) {
+              let addr = *Vector::borrow<address>(&del.delegates, i);
+              if(LibraSystem::is_validator(addr)) {
+                upgrade_handler_hash(addr, copy data);
+              };
+              i = i + 1;
+            };
+          };
+        };
         // put else if cases for other oracles
       }
-  
-      fun upgrade_handler (sender: &signer, data: vector<u8>) acquires Oracles {
+      
+      fun upgrade_handler (sender: address, data: vector<u8>) acquires Oracles {
         let current_height = LibraBlock::get_current_block_height();
         let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::LIBRA_ROOT_ADDRESS()).upgrade;
   
@@ -92,33 +149,88 @@ address 0x1 {
         }; 
   
         // if the sender has voted, do nothing
-        if (Vector::contains<address>(&upgrade_oracle.validators_voted, &Signer::address_of(sender))) {return};
+        if (Vector::contains<address>(&upgrade_oracle.validators_voted, &sender)) {return};
         
+        let vote_weight = get_weight(sender, VOTE_TYPE_UPGRADE);
+
         let validator_vote = Vote {
-                validator: Signer::address_of(sender),
-                data: copy data,
+                validator: sender,
+                data: Hash::sha2_256(copy data),
                 version_id: *&upgrade_oracle.version_id,
+                weight: vote_weight,
         };
         Vector::push_back(&mut upgrade_oracle.votes, validator_vote);
-        Vector::push_back(&mut upgrade_oracle.validators_voted, Signer::address_of(sender));
-        increment_vote_count(&mut upgrade_oracle.vote_counts, data, Signer::address_of(sender));
-        tally_upgrade(upgrade_oracle);
+        Vector::push_back(&mut upgrade_oracle.validators_voted, sender);
+        increment_vote_count(&mut upgrade_oracle.vote_counts, data, sender, vote_weight);
+        tally_upgrade(upgrade_oracle, VOTE_TYPE_UPGRADE);
+      }
+      
+      fun upgrade_handler_hash (sender: address, data: vector<u8>) acquires Oracles {
+        let current_height = LibraBlock::get_current_block_height();
+        let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::LIBRA_ROOT_ADDRESS()).upgrade;
+  
+        // check if qualifies as a new round
+        let is_new_round = current_height > upgrade_oracle.vote_window;
+  
+        if (is_new_round) {
+          //If it's a new round, user must submit a data payload, not hash only
+          return
+        }; 
+  
+        // if the sender has voted, do nothing
+        if (Vector::contains<address>(&upgrade_oracle.validators_voted, &sender)) {return};
+        
+        let vote_weight = get_weight(sender, VOTE_TYPE_UPGRADE);
+        
+        let validator_vote = Vote {
+                validator: sender,
+                data: copy data,
+                version_id: *&upgrade_oracle.version_id,
+                weight: vote_weight, 
+        };
+        
+        let vote_sent = increment_vote_count_hash(&mut upgrade_oracle.vote_counts, data, sender, vote_weight);
+
+        if (vote_sent) {
+          Vector::push_back(&mut upgrade_oracle.votes, validator_vote);
+          Vector::push_back(&mut upgrade_oracle.validators_voted, sender);
+          tally_upgrade(upgrade_oracle, VOTE_TYPE_UPGRADE);
+        };
+        
       }
   
-      fun increment_vote_count(vote_counts: &mut vector<VoteCount>, data: vector<u8>, validator: address) {
+      fun increment_vote_count(vote_counts: &mut vector<VoteCount>, data: vector<u8>, validator: address, vote_weight: u64) {
+        let data_hash = Hash::sha2_256(copy data);
         let i = 0;
         let len = Vector::length(vote_counts);
         while (i < len) {
             let entry = Vector::borrow_mut(vote_counts, i);
-            if (Vector::compare(&entry.data, &data)) {
+            if (Vector::compare(&entry.hash, &data_hash)) {
               Vector::push_back(&mut entry.validators, validator);
+              entry.total_weight = entry.total_weight + vote_weight;
               return
             };
             i = i + 1;
         };
         let validators = Vector::empty<address>();
         Vector::push_back<address>(&mut validators, validator);
-        Vector::push_back(vote_counts, VoteCount{data: copy data, validators: validators});
+        Vector::push_back(vote_counts, VoteCount{data: copy data, hash: data_hash, validators: validators, total_weight: vote_weight});
+      }
+
+      //returns true if vote is submitted successfully, false if it was not (no match found)
+      fun increment_vote_count_hash(vote_counts: &mut vector<VoteCount>, data: vector<u8>, validator: address, vote_weight: u64): bool {
+        let i = 0;
+        let len = Vector::length(vote_counts);
+        while (i < len) {
+            let entry = Vector::borrow_mut(vote_counts, i);
+            if (Vector::compare(&entry.hash, &data)) {
+              Vector::push_back(&mut entry.validators, validator);
+              entry.total_weight = entry.total_weight + vote_weight;
+              return true
+            };
+            i = i + 1;
+        };
+        false
       }
   
       fun check_consensus(vote_counts: &vector<VoteCount>, threshold: u64): VoteCount {
@@ -126,14 +238,16 @@ address 0x1 {
         let len = Vector::length(vote_counts);
         while (i < len) {
             let entry = Vector::borrow(vote_counts, i);
-            if (Vector::length(&entry.validators) >= threshold) {
+            if (entry.total_weight >= threshold) {
               return *entry
             };
             i = i + 1;
         };
         VoteCount{
           data: Vector::empty<u8>(), 
+          hash: Vector::empty<u8>(), 
           validators: Vector::empty<address>(),
+          total_weight: 0,
         }
       }
   
@@ -147,14 +261,16 @@ address 0x1 {
         upgrade_oracle.vote_window = height + 1000000;
         upgrade_oracle.consensus = VoteCount{
           data: Vector::empty<u8>(), 
+          hash: Vector::empty<u8>(),
           validators: Vector::empty<address>(),
+          total_weight: 0,
         };
       }
   
       // check to see if threshold is reached every time receiving a vote
-      fun tally_upgrade (upgrade_oracle: &mut UpgradeOracle) {
-        let validator_num = LibraSystem::validator_set_size();
-        let threshold = validator_num * 2 / 3;
+      // TODO: Not sure we still want to do this every time as tallying is more costly when using node weight (as the threshold must be summed), fine for now. 
+      fun tally_upgrade (upgrade_oracle: &mut UpgradeOracle, type: u8) {
+        let threshold = get_threshold(type);
         let result = check_consensus(&upgrade_oracle.vote_counts, threshold);
   
         if (!Vector::is_empty(&result.data)) {
@@ -179,6 +295,100 @@ address 0x1 {
         }
       }
 
+      fun get_weight (voter: address, type: u8): u64 {
+
+        if (type == VOTE_TYPE_ONE_FOR_ONE) {
+          1
+        }
+        else if (type == VOTE_TYPE_PROPORTIONAL_VOTING_POWER) {
+          NodeWeight::proof_of_weight(voter)
+        }
+        else {
+          assert(false, Errors::invalid_argument(VOTE_TYPE_INVALID));
+          1
+        }
+
+      }
+
+      fun get_threshold (type: u8): u64 {
+        if (type == VOTE_TYPE_ONE_FOR_ONE) {
+          let validator_num = LibraSystem::validator_set_size();
+          let threshold = validator_num * 2 / 3;
+          threshold 
+        }
+        else if (type == VOTE_TYPE_PROPORTIONAL_VOTING_POWER) {
+          calculate_proportional_voting_threshold()
+        }
+        else {
+          assert(false, Errors::invalid_argument(VOTE_TYPE_INVALID));
+          1
+        }
+      }
+
+      fun calculate_proportional_voting_threshold(): u64 {
+        let val_set_size = LibraSystem::validator_set_size();
+        let i = 0;
+        let voting_power = 0;
+        while (i < val_set_size) {
+          let addr = LibraSystem::get_ith_validator_address(i);
+          voting_power = voting_power + NodeWeight::proof_of_weight(addr);
+          i = i + 1;
+        };
+        let threshold = voting_power * 2 / 3;
+        threshold
+      }
+
+      public fun enable_delegation (sender: &signer) {
+        move_to<VoteDelegation>(sender, VoteDelegation{
+          vote_delegated: false,
+          delegates: Vector::empty<address>(),
+          delegated_to_address: Signer::address_of(sender),
+        });
+      }
+
+      public fun check_number_delegates (addr: address): u64 acquires VoteDelegation {
+        let del = borrow_global<VoteDelegation>(addr);
+        Vector::length<address>(& del.delegates)
+
+      }
+
+      public fun delegate_vote (sender: &signer, vote_dest: address) acquires VoteDelegation{
+        assert(exists<VoteDelegation>(Signer::address_of(sender)), Errors::not_published(DELEGATION_NOT_ENABLED));
+        assert(exists<VoteDelegation>(vote_dest), Errors::not_published(DELEGATION_NOT_ENABLED));
+
+        let del = borrow_global_mut<VoteDelegation>(Signer::address_of(sender)); 
+        assert(del.vote_delegated == false, Errors::invalid_state(VOTE_ALREADY_DELEGATED));
+        
+        del.vote_delegated = true;
+        del.delegated_to_address = vote_dest;
+        
+        let del = borrow_global_mut<VoteDelegation>(vote_dest); 
+
+        Vector::push_back<address>(&mut del.delegates, Signer::address_of(sender));
+
+      }
+
+      public fun remove_delegate_vote (sender: &signer) acquires VoteDelegation{
+        assert(exists<VoteDelegation>(Signer::address_of(sender)), Errors::not_published(DELEGATION_NOT_ENABLED));
+        
+        let del = borrow_global_mut<VoteDelegation>(Signer::address_of(sender));
+
+        del.vote_delegated = false;
+        let vote_dest = del.delegated_to_address;
+        del.delegated_to_address = Signer::address_of(sender);
+
+        //don't want to end up in a situation where delegation cannot be removed
+        if (exists<VoteDelegation>(vote_dest)) {
+          let del = borrow_global_mut<VoteDelegation>(vote_dest);
+
+          let (b, loc) = Vector::index_of<address>(&del.delegates, &Signer::address_of(sender));
+          if (b) {
+            Vector::remove<address>(&mut del.delegates, loc);
+          };
+        };
+
+      }
+
       // Function code: 04
       public fun test_helper_query_oracle_votes(): vector<address> acquires Oracles {
         assert(Testnet::is_testnet(), Errors::invalid_state(150004));
@@ -194,6 +404,28 @@ address 0x1 {
     
         };
         voters
+      }
+
+      public fun test_check_upgrade(): bool acquires Oracles {
+        assert(Testnet::is_testnet(), Errors::invalid_state(150004)); 
+        let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::LIBRA_ROOT_ADDRESS()).upgrade;
+  
+        let payload = *&upgrade_oracle.consensus.data;
+  
+        if (!Vector::is_empty(&payload)) {
+          true
+        }
+        else {
+          false
+        }
+      }
+
+      public fun delegation_enabled_upgrade(): bool {
+        DELEGATION_ENABLED_UPGRADE
+      }
+
+      public fun upgrade_vote_type(): u8 {
+        VOTE_TYPE_UPGRADE
       }
     }
   }

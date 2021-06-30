@@ -453,7 +453,7 @@ address 0x1 {
           verified_tower_height: 0u64,
           latest_epoch_mining: 0u64,
           count_proofs_in_epoch: 0u64,
-          epochs_validating_and_mining: 0u64,
+          epochs_validating_and_mining: 1u64, //Set for the weighted vote E2E test
           contiguous_epochs_validating_and_mining: 0u64,
           epochs_since_last_account_creation: 10u64, // is not rate-limited
         });
@@ -561,6 +561,12 @@ address 0x1 {
     public fun test_helper_hash(miner_addr: address): vector<u8> acquires MinerProofHistory {
       assert(Testnet::is_testnet()== true, Errors::invalid_state(130118));
       *&borrow_global<MinerProofHistory>(miner_addr).previous_proof_hash
+    }
+
+    public fun test_helper_set_weight_vm(_vm: &signer, addr: address, weight: u64) acquires MinerProofHistory {
+      assert(Testnet::is_testnet(), Errors::invalid_state(130113));
+      let state = borrow_global_mut<MinerProofHistory>(addr);
+      state.epochs_validating_and_mining = weight;
     }
   }
 }
