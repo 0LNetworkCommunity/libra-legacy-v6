@@ -5,7 +5,6 @@ use cli::{libra_client::LibraClient, AccountData, AccountStatus};
 use txs::{sign_tx::sign_tx, submit_tx::{TxParams, submit_tx}};
 use libra_types::transaction::{Script};
 use libra_json_rpc_types::views::{TransactionView};
-use libra_types::chain_id::ChainId;
 
 /// Submit a miner transaction to the network.
 pub fn commit_proof_tx(
@@ -18,7 +17,7 @@ pub fn commit_proof_tx(
     // Create a client object
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
-    let chain_id = ChainId::new(client.get_metadata()?.chain_id);
+    let chain_id = tx_params.chain_id;
 
     // For sequence number
     let (account_state,_) = client.get_account(tx_params.signer_address.clone(), true)?;

@@ -18,10 +18,10 @@ use anyhow::{bail, Result, Error};
 use libra_json_rpc_types::views::{MinerStateResourceView};
 
 /// Submit a backlog of blocks that may have been mined while network is offline. Likely not more than 1. 
-pub fn process_backlog(config: &AppCfg, tx_params: &TxParams, is_operator: bool) {
+pub fn process_backlog(config: &AppCfg, tx_params: &TxParams, is_operator: bool) -> Result<(), Error> {
     // Getting remote miner state
     
-    let remote_state = get_remote_state(tx_params).unwrap();
+    let remote_state = get_remote_state(tx_params)?;
     let remote_height = remote_state.verified_tower_height;
 
     println!("Remote tower height: {}", remote_height);
@@ -29,27 +29,24 @@ pub fn process_backlog(config: &AppCfg, tx_params: &TxParams, is_operator: bool)
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
     let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
+    if let Some(current_block_number) = current_block_number {
+        println!("Local tower height: {:?}", current_block_number);
+        if current_block_number > remote_height { 
+            status_info!("Backlog:","resubmitting missing blocks.");
 
-    println!("Local tower height: {:?}", current_block_number.unwrap());
-    if current_block_number.unwrap() <= remote_height { return };
-    status_info!("Backlog:","resubmitting missing blocks.");
-
-    let mut i = remote_height + 1;
-    while i <= current_block_number.unwrap() {
-        let path = PathBuf::from(format!("{}/block_{}.json", blocks_dir.display(), i));
-        let file = File::open(&path).expect("Could not open block file");
-        let reader = BufReader::new(file);
-        let block: Block = serde_json::from_reader(reader).unwrap();
-        match commit_proof_tx(&tx_params, block.preimage, block.proof, is_operator) {
-            Ok(res) => {
-                if eval_tx_status(res).is_err(){
-                    break;
-                }
-            },
-            Err(err) => println!("Submit backlog failed with: {}", err)
+            let mut i = remote_height + 1;
+            while i <= current_block_number {
+                let path = PathBuf::from(format!("{}/block_{}.json", blocks_dir.display(), i));
+                let file = File::open(&path)?;
+                let reader = BufReader::new(file);
+                let block: Block = serde_json::from_reader(reader)?;
+                let view = commit_proof_tx(&tx_params, block.preimage, block.proof, is_operator)?;
+                eval_tx_status(view)?;
+                i = i + 1;
+            }
         }
-        i = i + 1;
     }
+    Ok(())
 }
 
 /// returns remote node state given tx_params

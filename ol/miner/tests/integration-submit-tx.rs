@@ -8,7 +8,6 @@ use txs::submit_tx::{TxParams, get_tx_params_from_swarm};
 use anyhow::{bail, Error};
 
 #[test]
-#[ignore]
 /// In case the miner fails to connect with client, miner should continue mining 
 /// and submit the backlog on each block. This test simulates this issue by blocking 
 /// the port in between and testing the connectivity. 
@@ -30,7 +29,8 @@ pub fn integration_submit_tx() {
     std::env::set_var("RUST_LOG", "debug");
     let mut swarm_cmd = Command::new("cargo");
     swarm_cmd.current_dir(&root_source_path.as_os_str());
-    swarm_cmd.arg("run")
+    swarm_cmd.env("NODE_ENV", "test")
+            .arg("run")
             .arg("-p").arg("libra-swarm")
             .arg("--")
             .arg("-n").arg("1")
@@ -70,7 +70,8 @@ pub fn integration_submit_tx() {
 
             // start the miner swarm test helper.
             let mut miner_cmd = Command::new("cargo");
-            miner_cmd.arg("run")
+            miner_cmd.env("NODE_ENV", "test")
+                    .arg("run")
                     .arg("-p")
                     .arg("miner")
                     .arg("--")

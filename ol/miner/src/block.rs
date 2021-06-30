@@ -5,15 +5,14 @@ use crate::{
     delay::*,
     backlog,
     error::{Error, ErrorKind},
-    prelude::*,
-    commit_proof::commit_proof_tx
+    prelude::*
 };
 use byteorder::{LittleEndian, WriteBytesExt};
 use glob::glob;
 use hex::decode;
 use libra_crypto::hash::HashValue;
 use ol_types::block::Block;
-use txs::submit_tx::{TxParams, eval_tx_status};
+use txs::submit_tx::{TxParams};
 use std::{
     fs,
     io::{BufReader, Write},
@@ -106,82 +105,24 @@ pub fn mine_and_submit(
         std::process::exit(0);
     } else {
         // the max block that has been succesfully submitted to client
-        let mut remote_height = current_block_number.unwrap();
+        let mut mining_height = current_block_number.unwrap() + 1;
         // in the beginning, mining height is +1 of client block number
-        let mut mining_height = remote_height + 1; 
 
         // mine continuously from the last block in the file systems
         loop {
-            status_info!(
-                "Latest client block:",
-                format!("{}", remote_height)
-            );
-
             status_info!(format!("Block {}", mining_height), "Mining VDF Proof");
 
-            let block_result = mine_once(&config);
-            let block: Block;
-            match block_result {
-                Ok(blk) => block = blk,
-                Err(err) => {
-                    status_warn!("Mining block {} failed: {}", mining_height, err);
-                    continue
-                }
-            }
-
+            let block = mine_once(&config)?;
             status_info!(
                 "Proof mined:",
                 format!("block_{}.json created.", block.height.to_string())
             );
-            
+
             // submits backlog to client
-            for pending_block_number in (remote_height+1)..(mining_height+1) {
-
-                let block_to_submit: Block;
-                if remote_height!=(mining_height-1) {
-                    // read block
-                    let block_path = format!("{}/block_{}.json", blocks_dir.display(), pending_block_number);
-                    let block_file = fs::read_to_string(block_path).expect("Could not read latest block");
-                    block_to_submit = serde_json::from_str(&block_file).expect("could not deserialize latest block");
-                } else {
-                    block_to_submit = block.clone();
-                }
-                status_info!(format!("Committing Block {}", block_to_submit.height), "to chain");
-
-                // Submit tx
-                if let Some(ref _node) = config.profile.default_node {
-                    match commit_proof_tx(&tx_params, block_to_submit.preimage, block_to_submit.proof, is_operator) {
-                        Ok(tx_view) => {
-                            match eval_tx_status(tx_view.clone()) {
-                                Ok(()) => {
-                                    // Resetting client 
-                                    remote_height = pending_block_number;
-                                    status_ok!("Success:", "Proof committed to chain")
-                                },
-                                Err(err) => {
-                                    status_warn!("Transaction evaluation failed: {}", err);
-                                    // Sometimes tx is submitted but evaluation is throwing error. 
-                                    // So, we get the latest state to confirm once. 
-                                    match backlog::get_remote_state(&tx_params) {
-                                        Ok(remote_state) => {
-                                            remote_height = remote_state.verified_tower_height
-                                        },
-                                        Err(err) => {
-                                            status_warn!("Failed fetching remote state: {}", err);
-                                        }
-                                    }
-                                    break
-                                }
-                            }
-                        }, Err(err) => {
-                            status_warn!("Miner transaction rejected: {}", err);
-                            break
-                        }
-                    }
-                } else {
-                    return Err(ErrorKind::Config
-                        .context("No Node for submitting transactions")
-                        .into());
+            match backlog::process_backlog(&config, &tx_params, is_operator) {
+                Ok(()) => status_ok!("Success:", "backlog committed to chain"),
+                Err(e) => {
+                    status_warn!("Failed fetching remote state: {}", e);
                 }
             }
 
