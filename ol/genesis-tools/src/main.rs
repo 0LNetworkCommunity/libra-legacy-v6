@@ -8,10 +8,15 @@ use libra_types::{
     proof::TransactionInfoWithProof, ledger_info::LedgerInfoWithSignatures,
     account_state_blob::AccountStateBlob
 };
-
+use std::{
+    net::{IpAddr, Ipv4Addr, SocketAddr},
+    sync::Arc,
+};
 use libra_crypto::HashValue;
+use libra_config::utils::get_available_port;
 
 use backup_cli::backup_types::state_snapshot::manifest::StateSnapshotBackup;
+
 use anyhow::{ensure, Result};
 
 use tokio::{
@@ -19,8 +24,22 @@ use tokio::{
     io::{AsyncRead}
 };
 
+use libradb::LibraDB;
+use libra_temppath::TempPath;
+
 use backup_cli::utils::read_record_bytes::ReadRecordBytes;
-use futures::executor::block_on;
+
+use tokio::runtime::Runtime;
+use backup_service::start_backup_service;
+
+// use backup_cli::utils::test_utils::{start_local_backup_service, tmp_db_with_random_content};
+
+fn get_runtime() -> (Runtime, u16) {
+    let port = get_available_port();
+    let path = TempPath::new();
+    let rt = start_backup_service(SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), port), Arc::new(LibraDB::new_for_test(&path)));
+    (rt, port)
+}
 
 
 async fn open_for_read(
@@ -64,70 +83,31 @@ async fn read_account_state_chunk(file_handle: FileHandle) -> Result<Vec<(HashVa
 
 async fn run_impl(manifest: StateSnapshotBackup) -> Result<()>{
     for chunk in manifest.chunks {
+        
         let blobs = read_account_state_chunk(chunk.blobs).await?;
-        let proof = load_lcs_file(&chunk.proof)?;
+        // let proof = load_lcs_file(&chunk.proof)?;
         println!("{:?}", blobs);
-        println!("{:?}", proof);
+        // TODO(Venkat) -> Here's the blob
+        // println!("{:?}", proof);
 
     }
     Ok(())
 }
 
 fn main() -> Result<()>{
-    // let the_file = r#"{
-    //     "FirstName": "John",
-    //     "LastName": "Doe",
-    //     "Age": 43,
-    //     "Address": {
-    //         "Street": "Downing Street 10",
-    //         "City": "London",
-    //         "Country": "Great Britain"
-    //     },
-    //     "PhoneNumbers": [
-    //         "+44 1234567",
-    //         "+44 2345678"
-    //     ]
-    // }"#;
 
     let path = "/home/node/libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.manifest";
     let path2 = "/home/node/libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.proof";
 
-    // let file = File::open(path)
-    //     .expect("file should open read only");
-
-    
-    // let json: serde_json::Value = serde_json::from_reader(file)
-    //     .expect("file should be proper JSON");
-    // let first_name = json.get("version")
-    //     .expect("file should have FirstName key");
-    // println!("{:?}", json);
-    // println!("{:?}", first_name);
-
-    // let x = read_from_file(path);
-    // println!("{:?}", x);
-
     let manifest = read_from_json(&path).unwrap();
-    // println!("{:?}", y.version);
+
+    let (mut rt, _port) = get_runtime();
 
 
-    // let first_name = json.get("version")
-    //     .expect("file should have FirstName key");
-
-    // let manifest: StateSnapshotBackup = json
-    // println!("{:?}", json);
-    // println!("{:?}", first_name);
-    
-
-    // let json: serde_json::Value =
-    //     serde_json::from_str(the_file).expect("JSON was not well-formatted");
-    // println!("{:?}", json)
-
-    // let y = read_from_file(path2);
 
     let (txn_info_with_proof, li): (TransactionInfoWithProof, LedgerInfoWithSignatures) = load_lcs_file(path2).unwrap();
 
-    // println!("{:?}", txn_info_with_proof);
-    // println!("{:?}", li);
+
 
     txn_info_with_proof.verify(li.ledger_info(), manifest.version)?;
 
@@ -139,7 +119,7 @@ fn main() -> Result<()>{
     );
 
     let future = run_impl(manifest); // Nothing is printed
-    block_on(future)?;
+    rt.block_on(future)?;
 
     Ok(())
     
