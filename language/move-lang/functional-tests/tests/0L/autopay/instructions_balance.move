@@ -96,7 +96,6 @@ script {
   fun main(_vm: &signer) {
     let ending_balance = LibraAccount::balance<GAS>({{alice}});
     assert(ending_balance == 9501, 735705);
-    
   }
 }
 // check: EXECUTED
