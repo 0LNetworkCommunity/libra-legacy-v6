@@ -3,60 +3,30 @@
 //! account: alice, 1000000, 0, validator
 //! account: bob, 1000000, 0, validator
 
-
-///// DEMO 1: Happy case, the State resource is initialized to Alice's account, and can subsequently by written to, and read from.
-
-///// This tag tells the test harness that what follows is a separate transaction from anything above, and that the sender is alice.
-
 //! new-transaction
-//! sender: alice
+//! sender: libraroot
 script {
-    use 0x1::PersistenceDemo;
+    use 0x1::Wallet;
 
-    // This sender argument was populated by the test harness with a random address for `alice`, which can be accessed with sender variable or the helper `{alice}`
-    fun main(sender: &signer){ // alice's signer type added in tx.
-      PersistenceDemo::initialize(sender);
-
-      PersistenceDemo::add_stuff(sender);
-      assert(PersistenceDemo::length(sender) == 3, 0);
-      assert(PersistenceDemo::contains(sender, 1), 1);
+    fun main(vm: &signer) {
+      Wallet::init_comm_list(vm);
     }
 }
 
-///// The tags with `check` matches to a string in the VM output. Here we are checking for a correct execution.
 // check: EXECUTED
 
-///// DEMO 2: Abort if an `assert` fails.
-///// This will fail because length is actually 3
-///// Note: In the test harness the state from the previous transaction is preserved if executing within the same file (persistence.move).
 
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::PersistenceDemo;
-    fun main(sender: &signer){
-      assert(PersistenceDemo::length(sender) == 2, 4);
+    use 0x1::Wallet;
+    use 0x1::Vector;
+
+    fun main(sender: &signer) {
+      Wallet::set_comm(sender);
+      let list = Wallet::get_comm_list();
+      assert(Vector::length(&list) == 1, 7357001);
     }
 }
 
-///// Checking the VM output for the string ABORTED
-
-// check: ABORTED
-
-
-///// DEMO 3: State is not initialized in BOB address
-///// this will fail because bob does not have the data struct, and we tried to operate on it.
-///// This is a new transaction.
-
-//! new-transaction
-//! sender: bob
-script {
-    use 0x1::PersistenceDemo;
-    fun main(sender: &signer){
-        PersistenceDemo::add_stuff(sender);
-    }
-}
-
-///// Checking the VM output for the string `EXECUTION_FAILURE`
-
-// check: EXECUTION_FAILURE
+// check: EXECUTED
