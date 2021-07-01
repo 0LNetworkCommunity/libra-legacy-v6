@@ -41,6 +41,7 @@ module LibraAccount {
     use 0x1::FIFO;
     use 0x1::FixedPoint32;
     use 0x1::ValidatorUniverse;
+    use 0x1::Wallet;
 
     /// An `address` is a Libra Account if it has a published LibraAccount resource.
     resource struct LibraAccount {
@@ -916,6 +917,11 @@ module LibraAccount {
         //////// 0L //////// Transfers of 10 GAS 
         //////// 0L //////// enabled when epoch is 1000. 
         let sender_addr = Signer::address_of(sender);
+
+        // Community wallets have own transfer mechanism.
+        let community_wallets = Wallet::get_comm_list();
+        assert(!Vector::contains(&community_wallets, &sender_addr), Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
+
         if (LibraConfig::check_transfer_enabled()) {
             if(!AccountLimits::has_limits_published<GAS>(sender_addr)){
                 AccountLimits::publish_restricted_limits_definition_OL<GAS>(sender);
