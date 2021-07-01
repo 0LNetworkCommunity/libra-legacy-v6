@@ -86,7 +86,6 @@ script {
   use 0x1::AutoPay2;
   use 0x1::LibraAccount;
   use 0x1::GAS::GAS;
-  use 0x1::Debug::print;
   fun main(sender: &signer) {
     let alice_balance = LibraAccount::balance<GAS>({{alice}});
     let bob_balance = LibraAccount::balance<GAS>({{bob}});
@@ -97,10 +96,7 @@ script {
     assert(alice_balance_after < alice_balance, 2);
     
     let transferred = alice_balance - alice_balance_after;
-    print(&transferred);
     let bob_received = LibraAccount::balance<GAS>({{bob}}) - bob_balance;
-    print(&bob_received);
-    //assert(bob_received == transferred, 2);
     }
 }
 // check: EXECUTED
