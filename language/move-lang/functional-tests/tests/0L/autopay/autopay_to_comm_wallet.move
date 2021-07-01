@@ -65,7 +65,7 @@ script {
 // check: EXECUTED
 
 //! new-transaction
-//! sender: alice
+//! sender: bob
 script {
     use 0x1::Wallet;
     use 0x1::Vector;

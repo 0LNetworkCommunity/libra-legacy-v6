@@ -15,6 +15,7 @@ address 0x1 {
     use 0x1::CoreAddresses;
     use 0x1::LibraConfig;
     use 0x1::Errors;
+    use 0x1::Wallet;
     // use 0x1::Debug::print;
 
     /// Attempted to send funds to an account that does not exist
@@ -206,14 +207,19 @@ address 0x1 {
                 // in remaining cases, payment is simple amaount given, not a percentage
                 payment.amt
               };
-              
-              if (amount != 0 && amount <= account_bal) {
-                if (borrow_global<AccountLimitsEnable>(Signer::address_of(vm)).enabled) {
-                  LibraAccount::vm_make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
-                } else {
-                  LibraAccount::vm_make_payment_no_limit<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
+
+              // check payees are community wallets
+              let list = Wallet::get_comm_list();
+              if (Vector::contains<address>(&list, &payment.payee)) {
+                if (amount != 0 && amount <= account_bal) {
+                  if (borrow_global<AccountLimitsEnable>(Signer::address_of(vm)).enabled) {
+                    LibraAccount::vm_make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
+                  } else {
+                    LibraAccount::vm_make_payment_no_limit<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
+                  };
                 };
               };
+
 
               // update previous balance for next calculation
               payment.prev_bal = LibraAccount::balance<GAS>(*account_addr);
