@@ -151,6 +151,7 @@ The Move modules in the Libra Framework can be bucketed in to a couple categorie
 -  [`0x1::ValidatorOperatorConfig`](ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig)
 -  [`0x1::ValidatorUniverse`](ValidatorUniverse.md#0x1_ValidatorUniverse)
 -  [`0x1::Vector`](Vector.md#0x1_Vector)
+-  [`0x1::Wallet`](Wallet.md#0x1_Wallet)
 
 
 [//]: # ("File containing references which can be used from documentation")
