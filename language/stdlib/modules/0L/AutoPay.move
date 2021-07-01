@@ -125,6 +125,32 @@ address 0x1 {
       limits_enable.enabled = true;
     }
 
+    // helper to get all known destinations users have for autopay
+    public fun get_payee_global():vector<address> acquires AccountList, Data {
+      let account_list = &borrow_global<AccountList>(CoreAddresses::LIBRA_ROOT_ADDRESS()).accounts;
+      let accounts_length = Vector::length<address>(account_list);
+      let account_idx = 0;
+      let payee_vec = Vector::empty<address>();
+
+// print(&02200);
+      while (account_idx < accounts_length) {
+        let account_addr = Vector::borrow<address>(account_list, account_idx);
+        // Obtain the account balance
+        // let account_bal = LibraAccount::balance<GAS>(*account_addr);
+        // Go through all payments for this account and pay 
+        let payments = &mut borrow_global_mut<Data>(*account_addr).payments;
+        let payments_len = Vector::length<Payment>(payments);
+        let payments_idx = 0;
+        while (payments_idx < payments_len) {
+          let payment = Vector::borrow_mut<Payment>(payments, payments_idx);
+          Vector::push_back<address>(&mut payee_vec, payment.payee)
+        };
+        
+      };
+      return payee_vec
+    }
+
+
     // This is the main function for this module. It is called once every epoch
     // by 0x0::LibraBlock in the block_prologue function.
     // This function iterates through all autopay-enabled accounts and processes
