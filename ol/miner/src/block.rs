@@ -120,7 +120,7 @@ pub fn mine_and_submit(
 
             // submits backlog to client
             match backlog::process_backlog(&config, &tx_params, is_operator) {
-                Ok(()) => status_ok!("Success:", "backlog committed to chain"),
+                Ok(()) => status_ok!("Success:", "Proof committed to chain"),
                 Err(e) => {
                     status_warn!("Failed fetching remote state: {}", e);
                 }
@@ -152,7 +152,6 @@ pub fn parse_block_height(blocks_dir: &PathBuf) -> (Option<u64>, Option<PathBuf>
     let mut max_block_path = None;
 
     // iterate through all json files in the directory.
-    println!("{}/block_*.json", blocks_dir.display());
     for entry in glob(&format!("{}/block_*.json", blocks_dir.display()))
         .expect("Failed to read glob pattern")
     {
