@@ -48,54 +48,35 @@ script {
 
   fun main(vm: &signer) {
     // send to community wallet Bob
-    LibraAccount::vm_make_payment_no_limit<GAS>(
-      {{alice}},
-      {{bob}}, // community wallet
-      100,
-      x"",
-      x"",
-      vm
-    );
-
+    LibraAccount::vm_make_payment_no_limit<GAS>( {{alice}}, {{bob}}, 100, x"", x"", vm);
     // send to community wallet Carol
-    LibraAccount::vm_make_payment_no_limit<GAS>(
-      {{alice}},
-      {{carol}}, // community wallet
-      300,
-      x"",
-      x"",
-      vm
-    );
+    LibraAccount::vm_make_payment_no_limit<GAS>( {{alice}}, {{carol}}, 300, x"", x"", vm);
 
     let bal = LibraAccount::balance<GAS>({{bob}});
-    assert(bal == 1000100, 7357003);
+    assert(bal == 100, 7357003);
     let bal = LibraAccount::balance<GAS>({{carol}});
-    assert(bal == 1000300, 7357004);
+    assert(bal == 300, 7357004);
 
     Burn::reset_ratios(vm);
     let (addr, _ , ratios) = Burn::get_ratios();
-
     assert(Vector::length(&addr) == 2, 7357005);
-    let pct = FixedPoint32::multiply_u64(
-      100,
-      Vector::pop_back<FixedPoint32::FixedPoint32>(&mut ratios)
-    );
+
+    let carol_mult = *Vector::borrow<FixedPoint32::FixedPoint32>(&ratios, 1);
+    let pct_carol = FixedPoint32::multiply_u64(100, carol_mult);
 
     // ratio for carol's community wallet.
-    print(&pct);
-    // assert(pct == 75, 7357006);
+    assert(pct_carol == 75, 7357006);
 
     Burn::epoch_start_burn(vm, {{alice}}, 100);
+
     let bal_alice = LibraAccount::balance<GAS>({{alice}});
-    print(&bal_alice);
+    assert(bal_alice == 999500, 7357007);
 
     let bal_bob = LibraAccount::balance<GAS>({{bob}});
-    print(&bal_bob);
+    assert(bal_bob == 125, 7357007);
 
-    // assert(bal_bob == 1000150, 7357001);
     let bal_carol = LibraAccount::balance<GAS>({{carol}});
-    // assert(bal_carol == 1000150, 7357001);
-    print(&bal_carol);
+    assert(bal_bob == 375, 7357007);
   }
 }
 // check: EXECUTED
