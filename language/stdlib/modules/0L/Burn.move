@@ -42,13 +42,22 @@ module Burn {
     print(&0x103);
 
     let ratios_vec = Vector::empty<FixedPoint32::FixedPoint32>();
-    while (i < len) {
+    let k = 0;
+    while (k < len) {
       print(&0x120);
 
-      let cumu = *Vector::borrow(&deposit_vec, i);
+      let cumu = *Vector::borrow(&deposit_vec, k);
+      print(&0x121);      
+
       let ratio = FixedPoint32::create_from_rational(cumu, global_deposits);
+      print(&0x122);
+      let num = FixedPoint32::multiply_u64(100, ratio);
+      print(&0x123);
+      print(&num);
+      let ratio = FixedPoint32::create_from_rational(cumu, global_deposits);
+      print(&0x124);
       Vector::push_back(&mut ratios_vec, ratio);
-      i = i + 1;
+      k = k + 1;
     };
     print(&0x104);
 
