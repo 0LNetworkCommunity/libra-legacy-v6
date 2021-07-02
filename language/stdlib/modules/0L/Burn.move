@@ -6,11 +6,9 @@ module Burn {
   use 0x1::LibraAccount;
   use 0x1::CoreAddresses;
   use 0x1::GAS::GAS;
-  use 0x1::Signer;
 
   resource struct BurnPreference {
-    list: vector<address>,
-    ratio: vector<FixedPoint32::FixedPoint32>
+    is_burn: bool
   }
 
   resource struct DepositInfo {
@@ -18,47 +16,6 @@ module Burn {
     deposits: vector<u64>,
     ratio: vector<FixedPoint32::FixedPoint32>,
   }
-
-  public fun push_burn_preference(sender: &signer, addr: address, pct: u64) acquires BurnPreference {
-    if (!exists<BurnPreference>(Signer::address_of(sender))) {
-      move_to<BurnPreference>(sender, BurnPreference {
-        list: Vector::empty(),
-        ratio: Vector::empty()
-      })
-    };
-
-    let list = Wallet::get_comm_list();
-    if (Vector::contains<address>(&list, &addr)){
-      let b = borrow_global_mut<BurnPreference>(Signer::address_of(sender));
-      Vector::push_back<address>(&mut b.list, addr);
-      let r = FixedPoint32::create_from_rational(pct, 10000);
-      Vector::push_back<FixedPoint32::FixedPoint32>(&mut b.ratio, r);
-    };
-  }
-
-  public fun clear_burn_preference(sender: &signer) acquires BurnPreference {
-    if (!exists<BurnPreference>(Signer::address_of(sender))) {
-      move_to<BurnPreference>(sender, BurnPreference {
-        list: Vector::empty(),
-        ratio: Vector::empty()
-      })
-    };
-
-    let b = borrow_global_mut<BurnPreference>(Signer::address_of(sender));
-    b.list = Vector::empty();
-    b.ratio = Vector::empty();
-  }
-
-  fun burn_pref_exists(addr: address): bool acquires BurnPreference {
-    if (exists<BurnPreference>(addr)) {
-      let b = borrow_global_mut<BurnPreference>(addr);
-      if (Vector::length<address>(&b.list) > 0) {
-        return true
-      }
-    };
-    return false
-  }
-
 
   public fun reset_ratios(vm: &signer) acquires DepositInfo {
     CoreAddresses::assert_libra_root(vm);
@@ -100,7 +57,28 @@ module Burn {
     FixedPoint32::multiply_u64(value, ratio)
   }
 
-  public fun epoch_start_burn(vm: &signer, payer: address, value: u64) acquires DepositInfo{
+  fun epoch_start_burn(vm: &signer, payer: address, value: u64) acquires DepositInfo, BurnPreference {
+    if (exists<BurnPreference>(payer)) {
+      if (borrow_global<BurnPreference>(payer).is_burn) {
+        return burn(vm, payer, value)
+      }
+    };
+    send(vm, payer, value);
+  }
+
+  fun burn(vm: &signer, payer: address, value: u64) {
+      LibraAccount::vm_make_payment_no_limit<GAS>(
+          payer,
+          0xDEADDEAD,
+          value,
+          b"epoch start burn",
+          b"epoch start burn",
+          vm,
+      );
+  }
+
+
+  fun send(vm: &signer, payer: address, value: u64) acquires DepositInfo {
     let list = get_address_list();
     let len = Vector::length<address>(&list);
     let i = 0;
@@ -112,8 +90,8 @@ module Burn {
           payer,
           payee,
           val,
-          b"epoch start",
-          b"epoch start",
+          b"epoch start send",
+          b"epoch start send",
           vm,
       );
       i = i + 1;
