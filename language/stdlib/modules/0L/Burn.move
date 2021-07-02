@@ -56,10 +56,10 @@ module Burn {
 
   public fun epoch_start_burn(vm: &signer, payer: address, value: u64) acquires DepositInfo{
     let list = get_address_list();
-    let len = Vector::length<addres>(&list);
+    let len = Vector::length<address>(&list);
     let i = 0;
     while (i < len) {
-      let payee = *Vector::borrow<address>(list, i);
+      let payee = *Vector::borrow<address>(&list, i);
       let val = get_value(payee, value);
       LibraAccount::vm_make_payment_no_limit(
           payer,
@@ -68,10 +68,8 @@ module Burn {
           b"epoch start",
           b"epoch start",
           vm,
-      )
-    }
-
-
+      );
+    };
   }
 }
 }
