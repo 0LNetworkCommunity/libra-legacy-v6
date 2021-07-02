@@ -8,11 +8,13 @@
 -  [Resource `DepositInfo`](#0x1_Burn_DepositInfo)
 -  [Function `set_ratios`](#0x1_Burn_set_ratios)
 -  [Function `get_address_list`](#0x1_Burn_get_address_list)
--  [Function `get_ratio`](#0x1_Burn_get_ratio)
+-  [Function `get_value`](#0x1_Burn_get_value)
+-  [Function `epoch_start_burn`](#0x1_Burn_epoch_start_burn)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
+<b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="LibraAccount.md#0x1_LibraAccount">0x1::LibraAccount</a>;
 <b>use</b> <a href="Vector.md#0x1_Vector">0x1::Vector</a>;
 <b>use</b> <a href="Wallet.md#0x1_Wallet">0x1::Wallet</a>;
@@ -54,6 +56,12 @@
 <dd>
 
 </dd>
+<dt>
+<code>total: u64</code>
+</dt>
+<dd>
+
+</dd>
 </dl>
 
 
@@ -86,7 +94,8 @@
     <b>let</b> addr = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&list, i);
     <b>let</b> cumu = <a href="LibraAccount.md#0x1_LibraAccount_get_cumulative_deposits">LibraAccount::get_cumulative_deposits</a>(addr);
     global_deposits = global_deposits + cumu;
-    <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> deposit_vec, cumu)
+    <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> deposit_vec, cumu);
+    i = i + 1;
   };
 
   <b>let</b> ratios_vec = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>&gt;();
@@ -94,11 +103,13 @@
     <b>let</b> cumu = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&deposit_vec, i);
     <b>let</b> ratio = <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(cumu, global_deposits);
     <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> ratios_vec, ratio);
+    i = i + 1;
   };
   <b>let</b> d = borrow_global_mut&lt;<a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a>&gt;(0x0);
   d.addr = list;
   d.deposits = deposit_vec;
   d.ratio = ratios_vec;
+  d.total = global_deposits;
 }
 </code></pre>
 
@@ -130,13 +141,13 @@
 
 </details>
 
-<a name="0x1_Burn_get_ratio"></a>
+<a name="0x1_Burn_get_value"></a>
 
-## Function `get_ratio`
+## Function `get_value`
 
 
 
-<pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_get_ratio">get_ratio</a>(payee: address): <a href="FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>
+<pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_get_value">get_value</a>(payee: address, value: u64): u64
 </code></pre>
 
 
@@ -145,10 +156,51 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_get_ratio">get_ratio</a>(payee: address): <a href="FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a> <b>acquires</b> <a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a> {
+<pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_get_value">get_value</a>(payee: address, value: u64): u64 <b>acquires</b> <a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a> {
   <b>let</b> d = borrow_global&lt;<a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a>&gt;(0x0);
   <b>let</b> (_, i) = <a href="Vector.md#0x1_Vector_index_of">Vector::index_of</a>(&d.addr, &payee);
-  <b>return</b> *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&d.ratio, i)
+  <b>let</b> ratio = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&d.ratio, i);
+  <a href="FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(value, ratio)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Burn_epoch_start_burn"></a>
+
+## Function `epoch_start_burn`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Burn.md#0x1_Burn_epoch_start_burn">epoch_start_burn</a>(vm: &signer, payer: address, value: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Burn.md#0x1_Burn_epoch_start_burn">epoch_start_burn</a>(vm: &signer, payer: address, value: u64) <b>acquires</b> <a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a>{
+  <b>let</b> list = <a href="Burn.md#0x1_Burn_get_address_list">get_address_list</a>();
+  <b>let</b> len = <a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&list);
+  <b>let</b> i = 0;
+  <b>while</b> (i &lt; len) {
+    <b>let</b> payee = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&list, i);
+    <b>let</b> val = <a href="Burn.md#0x1_Burn_get_value">get_value</a>(payee, value);
+
+    <a href="LibraAccount.md#0x1_LibraAccount_vm_make_payment_no_limit">LibraAccount::vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+        payer,
+        payee,
+        val,
+        b"epoch start",
+        b"epoch start",
+        vm,
+    );
+    i = i + 1;
+  };
 }
 </code></pre>
 

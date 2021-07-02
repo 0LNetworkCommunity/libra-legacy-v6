@@ -5,6 +5,7 @@ module Burn {
   use 0x1::Vector;
   use 0x1::LibraAccount;
   use 0x1::CoreAddresses;
+  use 0x1::GAS::GAS;
 
   resource struct DepositInfo {
     addr: vector<address>,
@@ -61,7 +62,8 @@ module Burn {
     while (i < len) {
       let payee = *Vector::borrow<address>(&list, i);
       let val = get_value(payee, value);
-      LibraAccount::vm_make_payment_no_limit(
+      
+      LibraAccount::vm_make_payment_no_limit<GAS>(
           payer,
           payee,
           val,
@@ -69,6 +71,7 @@ module Burn {
           b"epoch start",
           vm,
       );
+      i = i + 1;
     };
   }
 }
