@@ -86,7 +86,7 @@ module Burn {
     FixedPoint32::multiply_u64(value, ratio)
   }
 
-  fun epoch_start_burn(vm: &signer, payer: address, value: u64) acquires DepositInfo, BurnPreference {
+  public fun epoch_start_burn(vm: &signer, payer: address, value: u64) acquires DepositInfo, BurnPreference {
     if (exists<BurnPreference>(payer)) {
       if (borrow_global<BurnPreference>(payer).is_burn) {
         return burn(vm, payer, value)
@@ -101,28 +101,36 @@ module Burn {
           0xDEADDEAD,
           value,
           b"epoch start burn",
-          b"epoch start burn",
+          b"",
           vm,
       );
   }
 
 
   fun send(vm: &signer, payer: address, value: u64) acquires DepositInfo {
+    print(&0x200);
+
     let list = get_address_list();
     let len = Vector::length<address>(&list);
+    print(&0x201);
+
     let i = 0;
     while (i < len) {
+      print(&0x210);
       let payee = *Vector::borrow<address>(&list, i);
       let val = get_value(payee, value);
-      
+      print(&0x211);
+
       LibraAccount::vm_make_payment_no_limit<GAS>(
           payer,
           payee,
           val,
           b"epoch start send",
-          b"epoch start send",
+          b"",
           vm,
       );
+      print(&0x212);
+
       i = i + 1;
     };
   }

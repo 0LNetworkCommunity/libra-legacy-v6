@@ -72,18 +72,11 @@ script {
     assert(bal == 1000100, 7357001);
 
     Burn::reset_ratios(vm);
-    let (addr, _ , ratios) = Burn::get_ratios();
+    let (addr, deps , ratios) = Burn::get_ratios();
 
     assert(Vector::length(&addr) == 2, 7357002);
-    let pct = FixedPoint32::multiply_u64(
-      100,
-      Vector::pop_back<FixedPoint32::FixedPoint32>(&mut ratios)
-    );
-    
+    let pct = FixedPoint32::multiply_u64(100, Vector::pop_back<FixedPoint32::FixedPoint32>(&mut ratios));
     assert(pct == 50, 7357003);
-
-    Burn::epoch_start_burn(vm, {{alice}}, 100);
   }
 }
 // check: EXECUTED
-
