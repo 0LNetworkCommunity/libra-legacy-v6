@@ -51,6 +51,7 @@ module Burn {
 
       let ratio = FixedPoint32::create_from_rational(cumu, global_deposits);
       print(&0x122);
+      // todo: remove, only for prints.
       let num = FixedPoint32::multiply_u64(100, ratio);
       print(&0x123);
       print(&num);
@@ -120,7 +121,8 @@ module Burn {
       let payee = *Vector::borrow<address>(&list, i);
       let val = get_value(payee, value);
       print(&0x211);
-
+      print(&val);
+      
       LibraAccount::vm_make_payment_no_limit<GAS>(
           payer,
           payee,
