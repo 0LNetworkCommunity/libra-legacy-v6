@@ -44,7 +44,6 @@ script {
   use 0x1::Burn;
   use 0x1::Vector;
   use 0x1::FixedPoint32;
-  use 0x1::Debug::print;
 
   fun main(vm: &signer) {
     // send to community wallet Bob
