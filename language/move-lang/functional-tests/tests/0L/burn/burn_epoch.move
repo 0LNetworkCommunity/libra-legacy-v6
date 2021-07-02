@@ -72,11 +72,46 @@ script {
     assert(bal == 1000100, 7357001);
 
     Burn::reset_ratios(vm);
-    let (addr, deps , ratios) = Burn::get_ratios();
+    let (addr, _ , ratios) = Burn::get_ratios();
 
     assert(Vector::length(&addr) == 2, 7357002);
-    let pct = FixedPoint32::multiply_u64(100, Vector::pop_back<FixedPoint32::FixedPoint32>(&mut ratios));
+    let pct = FixedPoint32::multiply_u64(
+      100,
+      Vector::pop_back<FixedPoint32::FixedPoint32>(&mut ratios)
+    );
+    
     assert(pct == 50, 7357003);
   }
 }
+// check: EXECUTED
+
+
+
+//////////////////////////////////////////////
+/// Trigger reconfiguration at 61 seconds ////
+//! block-prologue
+//! proposer: alice
+//! block-time: 61000000
+//! round: 15
+
+////// TEST RECONFIGURATION IS HAPPENING /////
+// check: NewEpochEvent
+//////////////////////////////////////////////
+
+
+//! new-transaction
+//! sender: libraroot
+script {
+  use 0x1::LibraAccount;
+  use 0x1::GAS::GAS;
+  use 0x1::Debug::print;
+
+
+  fun main(_vm: &signer) {
+    let bal = LibraAccount::balance<GAS>({{bob}});
+    print(&bal);
+    // assert(bal == 1000100, 7357001);
+  }
+}
+
 // check: EXECUTED
