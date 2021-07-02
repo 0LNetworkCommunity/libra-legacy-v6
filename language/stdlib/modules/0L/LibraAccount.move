@@ -81,6 +81,13 @@ module LibraAccount {
         coin: Libra<Token>,
     }
 
+    //////// 0L ////////
+    resource struct CumulativeDeposits {
+        /// Store the cumulative deposits made to this account.
+        /// not all accounts will have this enabled.
+        value: u64
+    }
+
     /// The holder of WithdrawCapability for account_address can withdraw Libra from
     /// account_address/LibraAccount/balance.
     /// There is at most one WithdrawCapability in existence for a given address.
@@ -397,12 +404,24 @@ module LibraAccount {
     }
 
     //////// 0L ////////
+    // init struct for storing cumulative deposits
+    public fun init_cumulative_deposits(sender: &signer) acquires Balance {
+      let addr = Signer::address_of(sender);
+      let value = balance<GAS>(addr);
+      if (!exists<CumulativeDeposits>(addr)) {
+        move_to<CumulativeDeposits>(sender, CumulativeDeposits {
+          value
+        })
+      };
+    } 
+
+    public fun get_cumulative_deposits(addr: address): u64 acquires CumulativeDeposits {
+      borrow_global<CumulativeDeposits>(addr).value
+    }
 
     // Permissions: PUBLIC, ANYONE, OPEN!
     // This function has no permissions, it doesn't check the signer. And it exceptionally is moving a resource to a different account than the signer.
     // LibraAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
-
-    /////// 0L ////////
     //Function code: 01
     public fun create_user_account_with_proof(
         challenge: &vector<u8>,
@@ -443,7 +462,7 @@ module LibraAccount {
         op_validator_network_addresses: vector<u8>,
         op_fullnode_network_addresses: vector<u8>,
         op_human_name: vector<u8>,
-    ):address acquires LibraAccount, Balance, AccountOperationsCapability {
+    ):address acquires LibraAccount, Balance, AccountOperationsCapability, CumulativeDeposits {
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
 
@@ -560,7 +579,7 @@ module LibraAccount {
         to_deposit: Libra<Token>,
         metadata: vector<u8>,
         metadata_signature: vector<u8>
-    ) acquires LibraAccount, Balance, AccountOperationsCapability {
+    ) acquires LibraAccount, Balance, AccountOperationsCapability, CumulativeDeposits {
         LibraTimestamp::assert_operating();
         AccountFreezing::assert_not_frozen(payee);
         // Check that the `to_deposit` coin is non-zero
@@ -602,7 +621,14 @@ module LibraAccount {
                 metadata
             }
         );
+
+        // update cumulative deposits if the account has the struct.
+        if (exists<CumulativeDeposits>(payee)) {
+          let cumu = borrow_global_mut<CumulativeDeposits>(payee);
+          cumu.value = cumu.value + deposit_value
+        };
     }
+
     spec fun deposit {
         pragma opaque;
         modifies global<Balance<Token>>(payee);
@@ -666,7 +692,7 @@ module LibraAccount {
         designated_dealer_address: address,
         mint_amount: u64,
         tier_index: u64,
-    ) acquires LibraAccount, Balance, AccountOperationsCapability {
+    ) acquires LibraAccount, Balance, AccountOperationsCapability, CumulativeDeposits {
         let coin = DesignatedDealer::tiered_mint<Token>(
             tc_account, mint_amount, designated_dealer_address, tier_index
         );
@@ -710,7 +736,7 @@ module LibraAccount {
     public fun cancel_burn<Token>(
         account: &signer,
         preburn_address: address,
-    ) acquires LibraAccount, Balance, AccountOperationsCapability {
+    ) acquires LibraAccount, Balance, AccountOperationsCapability, CumulativeDeposits {
         let coin = Libra::cancel_burn<Token>(account, preburn_address);
         // record both sender and recipient as `preburn_address`: the coins are moving from
         // `preburn_address`'s `Preburn` resource to its balance
@@ -928,7 +954,7 @@ module LibraAccount {
             };
             // Check if limits window is published
             if(!AccountLimits::has_window_published<GAS>(sender_addr)){
-                AccountLimits::publish_window_OL<GAS>(sender, sender_addr);
+                AccountLimits::publish_window_OL<GAS>(sender);
             };
         } else {
             assert(sender_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
@@ -985,6 +1011,7 @@ module LibraAccount {
         ensures spec_holds_own_withdraw_cap(cap_addr);
     }
     
+    //////// 0L ////////
     // 0L function for AutoPay module
     // 0L error suffix 120101
     public fun vm_make_payment<Token>(
@@ -994,7 +1021,7 @@ module LibraAccount {
         metadata: vector<u8>,
         metadata_signature: vector<u8>,
         vm: &signer
-    ) acquires LibraAccount , Balance, AccountOperationsCapability, AutopayEscrow {
+    ) acquires LibraAccount , Balance, AccountOperationsCapability, AutopayEscrow, CumulativeDeposits {
         if (Signer::address_of(vm) != CoreAddresses::LIBRA_ROOT_ADDRESS()) return;
         if (amount < 0) return;
 
@@ -1044,7 +1071,7 @@ module LibraAccount {
         restore_withdraw_capability(cap);
     }
 
-
+      //////// 0L ////////
      public fun vm_make_payment_no_limit<Token>(
         payer : address,
         payee: address,
@@ -1052,7 +1079,7 @@ module LibraAccount {
         metadata: vector<u8>,
         metadata_signature: vector<u8>,
         vm: &signer
-    ) acquires LibraAccount , Balance, AccountOperationsCapability {
+    ) acquires LibraAccount , Balance, AccountOperationsCapability, CumulativeDeposits {
         if (Signer::address_of(vm) != CoreAddresses::LIBRA_ROOT_ADDRESS()) return;
         // don't try to send a 0 balance, will halt.
         if (amount < 0) return; 
@@ -1100,7 +1127,7 @@ module LibraAccount {
         amount: u64,
         metadata: vector<u8>,
         metadata_signature: vector<u8>
-    ) acquires LibraAccount, Balance, AccountOperationsCapability {
+    ) acquires LibraAccount, Balance, AccountOperationsCapability, CumulativeDeposits {
         //////// 0L //////// Transfers disabled by default
         //////// 0L //////// Transfers of 10 GAS 
         //////// 0L //////// enabled when validator count is 100. 
@@ -1190,7 +1217,7 @@ module LibraAccount {
     fun onboarding_gas_transfer<Token>(
         payer_sig: &signer,
         payee: address
-    ) acquires LibraAccount, Balance, AccountOperationsCapability {
+    ) acquires LibraAccount, Balance, AccountOperationsCapability, CumulativeDeposits {
         let payer_addr = Signer::address_of(payer_sig);
         let account_balance = borrow_global_mut<Balance<Token>>(payer_addr);
         let balance_coin = &mut account_balance.coin;
@@ -2441,7 +2468,7 @@ module LibraAccount {
         requires prologue_guarantees(sender);
     }
 
-        // 0L::Methods for vm to deposit
+    // 0L::Methods for vm to deposit
     // Deposits the `to_deposit` coin into the `payee`'s account balance with the attached `metadata`
     public fun vm_deposit_with_metadata<Token>(
         payer: &signer,
@@ -2449,7 +2476,7 @@ module LibraAccount {
         to_deposit: Libra<Token>,
         metadata: vector<u8>,
         metadata_signature: vector<u8>
-    ) acquires LibraAccount, Balance, AccountOperationsCapability {
+    ) acquires LibraAccount, Balance, AccountOperationsCapability, CumulativeDeposits {
         let sender = Signer::address_of(payer);
         assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 4010);
         deposit(

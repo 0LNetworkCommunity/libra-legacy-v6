@@ -95,6 +95,7 @@ The Move modules in the Libra Framework can be bucketed in to a couple categorie
 -  [`0x1::Authenticator`](Authenticator.md#0x1_Authenticator)
 -  [`0x234567::AutoPay`](AutoPay.md#0x234567_AutoPay)
 -  [`0x1::AutoPay2`](AutoPay.md#0x1_AutoPay2)
+-  [`0x1::Burn`](Burn.md#0x1_Burn)
 -  [`0x1::Cases`](Cases.md#0x1_Cases)
 -  [`0x1::ChainId`](ChainId.md#0x1_ChainId)
 -  [`0x1::Coin1`](Coin1.md#0x1_Coin1)

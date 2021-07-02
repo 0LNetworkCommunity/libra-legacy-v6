@@ -1075,6 +1075,15 @@
     }
   ],
   [
+    "01e174561e9c7c0e04dcef5c4fcf12a271722e9882a00e423d45ee3a741775b7b3",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "LibraAccount",
+      "name": "CumulativeDeposits",
+      "type_params": []
+    }
+  ],
+  [
     "01e2d51827c76b70cc9f91a1fc28d14edac68d9ff9d7d10466326102dd463f922a",
     {
       "address": "00000000000000000000000000000001",

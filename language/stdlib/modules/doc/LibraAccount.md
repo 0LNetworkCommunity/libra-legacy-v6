@@ -10,6 +10,7 @@ before and after every transaction.
 
 -  [Resource `LibraAccount`](#0x1_LibraAccount_LibraAccount)
 -  [Resource `Balance`](#0x1_LibraAccount_Balance)
+-  [Resource `CumulativeDeposits`](#0x1_LibraAccount_CumulativeDeposits)
 -  [Resource `WithdrawCapability`](#0x1_LibraAccount_WithdrawCapability)
 -  [Resource `KeyRotationCapability`](#0x1_LibraAccount_KeyRotationCapability)
 -  [Resource `AccountOperationsCapability`](#0x1_LibraAccount_AccountOperationsCapability)
@@ -29,6 +30,8 @@ before and after every transaction.
 -  [Function `initialize_escrow_root`](#0x1_LibraAccount_initialize_escrow_root)
 -  [Function `update_escrow_percentage`](#0x1_LibraAccount_update_escrow_percentage)
 -  [Function `initialize`](#0x1_LibraAccount_initialize)
+-  [Function `init_cumulative_deposits`](#0x1_LibraAccount_init_cumulative_deposits)
+-  [Function `get_cumulative_deposits`](#0x1_LibraAccount_get_cumulative_deposits)
 -  [Function `create_user_account_with_proof`](#0x1_LibraAccount_create_user_account_with_proof)
 -  [Function `create_validator_account_with_proof`](#0x1_LibraAccount_create_validator_account_with_proof)
 -  [Function `has_published_account_limits`](#0x1_LibraAccount_has_published_account_limits)
@@ -232,6 +235,34 @@ currently held by the account.
  Stores the value of the balance in its balance field. A coin has
  a <code>value</code> field. The amount of money in the balance is changed
  by modifying this field.
+</dd>
+</dl>
+
+
+</details>
+
+<a name="0x1_LibraAccount_CumulativeDeposits"></a>
+
+## Resource `CumulativeDeposits`
+
+
+
+<pre><code><b>resource</b> <b>struct</b> <a href="LibraAccount.md#0x1_LibraAccount_CumulativeDeposits">CumulativeDeposits</a>
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>value: u64</code>
+</dt>
+<dd>
+ Store the cumulative deposits made to this account.
+ not all accounts will have this enabled.
 </dd>
 </dl>
 
@@ -1248,6 +1279,60 @@ Initialize this module. This is only callable from genesis.
 
 </details>
 
+<a name="0x1_LibraAccount_init_cumulative_deposits"></a>
+
+## Function `init_cumulative_deposits`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_init_cumulative_deposits">init_cumulative_deposits</a>(sender: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_init_cumulative_deposits">init_cumulative_deposits</a>(sender: &signer) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a> {
+  <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+  <b>let</b> value = <a href="LibraAccount.md#0x1_LibraAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(addr);
+  <b>if</b> (!<b>exists</b>&lt;<a href="LibraAccount.md#0x1_LibraAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(addr)) {
+    move_to&lt;<a href="LibraAccount.md#0x1_LibraAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(sender, <a href="LibraAccount.md#0x1_LibraAccount_CumulativeDeposits">CumulativeDeposits</a> {
+      value
+    })
+  };
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_LibraAccount_get_cumulative_deposits"></a>
+
+## Function `get_cumulative_deposits`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_get_cumulative_deposits">get_cumulative_deposits</a>(addr: address): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_get_cumulative_deposits">get_cumulative_deposits</a>(addr: address): u64 <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount_CumulativeDeposits">CumulativeDeposits</a> {
+  borrow_global&lt;<a href="LibraAccount.md#0x1_LibraAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(addr).value
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_LibraAccount_create_user_account_with_proof"></a>
 
 ## Function `create_user_account_with_proof`
@@ -1314,7 +1399,7 @@ Initialize this module. This is only callable from genesis.
     op_validator_network_addresses: vector&lt;u8&gt;,
     op_fullnode_network_addresses: vector&lt;u8&gt;,
     op_human_name: vector&lt;u8&gt;,
-):address <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>, <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>, <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+):address <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>, <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>, <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="LibraAccount.md#0x1_LibraAccount_CumulativeDeposits">CumulativeDeposits</a> {
     <b>let</b> sender_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
     // Rate limit spam accounts.
 
@@ -1504,7 +1589,7 @@ Record a payment of <code>to_deposit</code> from <code>payer</code> to <code>pay
     to_deposit: <a href="Libra.md#0x1_Libra">Libra</a>&lt;Token&gt;,
     metadata: vector&lt;u8&gt;,
     metadata_signature: vector&lt;u8&gt;
-) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>, <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>, <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>, <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>, <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="LibraAccount.md#0x1_LibraAccount_CumulativeDeposits">CumulativeDeposits</a> {
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_operating">LibraTimestamp::assert_operating</a>();
     <a href="AccountFreezing.md#0x1_AccountFreezing_assert_not_frozen">AccountFreezing::assert_not_frozen</a>(payee);
     // Check that the `to_deposit` coin is non-zero
@@ -1546,6 +1631,12 @@ Record a payment of <code>to_deposit</code> from <code>payer</code> to <code>pay
             metadata
         }
     );
+
+    // <b>update</b> cumulative deposits <b>if</b> the account has the <b>struct</b>.
+    <b>if</b> (<b>exists</b>&lt;<a href="LibraAccount.md#0x1_LibraAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(payee)) {
+      <b>let</b> cumu = borrow_global_mut&lt;<a href="LibraAccount.md#0x1_LibraAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(payee);
+      cumu.value = cumu.value + deposit_value
+    };
 }
 </code></pre>
 
@@ -1671,7 +1762,7 @@ Sender should be treasury compliance account and receiver authorized DD.
     designated_dealer_address: address,
     mint_amount: u64,
     tier_index: u64,
-) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>, <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>, <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>, <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>, <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="LibraAccount.md#0x1_LibraAccount_CumulativeDeposits">CumulativeDeposits</a> {
     <b>let</b> coin = <a href="DesignatedDealer.md#0x1_DesignatedDealer_tiered_mint">DesignatedDealer::tiered_mint</a>&lt;Token&gt;(
         tc_account, mint_amount, designated_dealer_address, tier_index
     );
@@ -1724,9 +1815,9 @@ Sender should be treasury compliance account and receiver authorized DD.
 <pre><code><b>schema</b> <a href="LibraAccount.md#0x1_LibraAccount_TieredMintEnsures">TieredMintEnsures</a>&lt;Token&gt; {
     designated_dealer_address: address;
     mint_amount: u64;
-    <a name="0x1_LibraAccount_dealer_balance$75"></a>
+    <a name="0x1_LibraAccount_dealer_balance$77"></a>
     <b>let</b> dealer_balance = <b>global</b>&lt;<a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>&lt;Token&gt;&gt;(designated_dealer_address).coin.value;
-    <a name="0x1_LibraAccount_currency_info$76"></a>
+    <a name="0x1_LibraAccount_currency_info$78"></a>
     <b>let</b> currency_info = <b>global</b>&lt;<a href="Libra.md#0x1_Libra_CurrencyInfo">Libra::CurrencyInfo</a>&lt;Token&gt;&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_CURRENCY_INFO_ADDRESS">CoreAddresses::CURRENCY_INFO_ADDRESS</a>());
 }
 </code></pre>
@@ -1771,7 +1862,7 @@ The balance of designated dealer increases by <code>amount</code>.
 <pre><code><b>public</b> <b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_cancel_burn">cancel_burn</a>&lt;Token&gt;(
     account: &signer,
     preburn_address: address,
-) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>, <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>, <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>, <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>, <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="LibraAccount.md#0x1_LibraAccount_CumulativeDeposits">CumulativeDeposits</a> {
     <b>let</b> coin = <a href="Libra.md#0x1_Libra_cancel_burn">Libra::cancel_burn</a>&lt;Token&gt;(account, preburn_address);
     // record both sender and recipient <b>as</b> `preburn_address`: the coins are moving from
     // `preburn_address`'s `Preburn` <b>resource</b> <b>to</b> its balance
@@ -1790,9 +1881,9 @@ The balance of designated dealer increases by <code>amount</code>.
 
 <pre><code><b>include</b> <a href="LibraAccount.md#0x1_LibraAccount_CancelBurnAbortsIf">CancelBurnAbortsIf</a>&lt;Token&gt;;
 <b>include</b> <a href="Libra.md#0x1_Libra_CancelBurnWithCapEnsures">Libra::CancelBurnWithCapEnsures</a>&lt;Token&gt;;
-<a name="0x1_LibraAccount_preburn_value_at_addr$85"></a>
+<a name="0x1_LibraAccount_preburn_value_at_addr$87"></a>
 <b>let</b> preburn_value_at_addr = <b>global</b>&lt;<a href="Libra.md#0x1_Libra_Preburn">Libra::Preburn</a>&lt;Token&gt;&gt;(preburn_address).to_burn.value;
-<a name="0x1_LibraAccount_balance_at_addr$86"></a>
+<a name="0x1_LibraAccount_balance_at_addr$88"></a>
 <b>let</b> balance_at_addr = <a href="LibraAccount.md#0x1_LibraAccount_balance">balance</a>&lt;Token&gt;(preburn_address);
 <b>ensures</b> balance_at_addr == <b>old</b>(balance_at_addr) + <b>old</b>(preburn_value_at_addr);
 </code></pre>
@@ -1806,7 +1897,7 @@ The balance of designated dealer increases by <code>amount</code>.
 <pre><code><b>schema</b> <a href="LibraAccount.md#0x1_LibraAccount_CancelBurnAbortsIf">CancelBurnAbortsIf</a>&lt;Token&gt; {
     account: signer;
     preburn_address: address;
-    <a name="0x1_LibraAccount_amount$77"></a>
+    <a name="0x1_LibraAccount_amount$79"></a>
     <b>let</b> amount = <b>global</b>&lt;<a href="Libra.md#0x1_Libra_Preburn">Libra::Preburn</a>&lt;Token&gt;&gt;(preburn_address).to_burn.value;
     <b>aborts_if</b> !<b>exists</b>&lt;<a href="Libra.md#0x1_Libra_BurnCapability">Libra::BurnCapability</a>&lt;Token&gt;&gt;(<a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(account))
         <b>with</b> <a href="Errors.md#0x1_Errors_REQUIRES_CAPABILITY">Errors::REQUIRES_CAPABILITY</a>;
@@ -1996,7 +2087,7 @@ Withdraw <code>amount</code> <code><a href="Libra.md#0x1_Libra">Libra</a>&lt;Tok
 
 
 
-<a name="0x1_LibraAccount_payer$87"></a>
+<a name="0x1_LibraAccount_payer$89"></a>
 
 
 <pre><code><b>let</b> payer = cap.account_address;
@@ -2020,7 +2111,7 @@ Withdraw <code>amount</code> <code><a href="Libra.md#0x1_Libra">Libra</a>&lt;Tok
     cap: <a href="LibraAccount.md#0x1_LibraAccount_WithdrawCapability">WithdrawCapability</a>;
     payee: address;
     amount: u64;
-    <a name="0x1_LibraAccount_payer$72"></a>
+    <a name="0x1_LibraAccount_payer$74"></a>
     <b>let</b> payer = cap.account_address;
     <b>include</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp_AbortsIfNotOperating">LibraTimestamp::AbortsIfNotOperating</a>;
     <b>include</b> <a href="Libra.md#0x1_Libra_AbortsIfNoCurrency">Libra::AbortsIfNoCurrency</a>&lt;Token&gt;;
@@ -2097,9 +2188,9 @@ resource under <code>dd</code>.
 
 
 <pre><code><b>pragma</b> opaque;
-<a name="0x1_LibraAccount_dd_addr$88"></a>
+<a name="0x1_LibraAccount_dd_addr$90"></a>
 <b>let</b> dd_addr = <a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(dd);
-<a name="0x1_LibraAccount_payer$89"></a>
+<a name="0x1_LibraAccount_payer$91"></a>
 <b>let</b> payer = cap.account_address;
 <b>modifies</b> <b>global</b>&lt;<a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>&gt;(payer);
 <b>ensures</b> <b>exists</b>&lt;<a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>&gt;(payer);
@@ -2134,9 +2225,9 @@ resource under <code>dd</code>.
 <pre><code><b>schema</b> <a href="LibraAccount.md#0x1_LibraAccount_PreburnEnsures">PreburnEnsures</a>&lt;Token&gt; {
     dd_addr: address;
     payer: address;
-    <a name="0x1_LibraAccount_payer_balance$73"></a>
+    <a name="0x1_LibraAccount_payer_balance$75"></a>
     <b>let</b> payer_balance = <b>global</b>&lt;<a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payer).coin.value;
-    <a name="0x1_LibraAccount_preburn$74"></a>
+    <a name="0x1_LibraAccount_preburn$76"></a>
     <b>let</b> preburn = <b>global</b>&lt;<a href="Libra.md#0x1_Libra_Preburn">Libra::Preburn</a>&lt;Token&gt;&gt;(dd_addr);
 }
 </code></pre>
@@ -2197,7 +2288,7 @@ Return a unique capability granting permission to withdraw from the sender's acc
         };
         // Check <b>if</b> limits window is published
         <b>if</b>(!<a href="AccountLimits.md#0x1_AccountLimits_has_window_published">AccountLimits::has_window_published</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender_addr)){
-            <a href="AccountLimits.md#0x1_AccountLimits_publish_window_OL">AccountLimits::publish_window_OL</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender, sender_addr);
+            <a href="AccountLimits.md#0x1_AccountLimits_publish_window_OL">AccountLimits::publish_window_OL</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender);
         };
     } <b>else</b> {
         <b>assert</b>(sender_addr == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="LibraAccount.md#0x1_LibraAccount_EWITHDRAWAL_EXCEEDS_LIMITS">EWITHDRAWAL_EXCEEDS_LIMITS</a>));
@@ -2224,7 +2315,7 @@ Return a unique capability granting permission to withdraw from the sender's acc
 
 
 <pre><code><b>pragma</b> opaque;
-<a name="0x1_LibraAccount_sender_addr$90"></a>
+<a name="0x1_LibraAccount_sender_addr$92"></a>
 <b>let</b> sender_addr = <a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(sender);
 <b>modifies</b> <b>global</b>&lt;<a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>&gt;(sender_addr);
 <b>include</b> <a href="LibraAccount.md#0x1_LibraAccount_ExtractWithdrawCapAbortsIf">ExtractWithdrawCapAbortsIf</a>{sender_addr};
@@ -2292,7 +2383,7 @@ Return the withdraw capability to the account it originally came from
 
 
 <pre><code><b>pragma</b> opaque;
-<a name="0x1_LibraAccount_cap_addr$91"></a>
+<a name="0x1_LibraAccount_cap_addr$93"></a>
 <b>let</b> cap_addr = cap.account_address;
 <b>modifies</b> <b>global</b>&lt;<a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>&gt;(cap_addr);
 <b>aborts_if</b> !<a href="LibraAccount.md#0x1_LibraAccount_exists_at">exists_at</a>(cap_addr) <b>with</b> <a href="Errors.md#0x1_Errors_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a>;
@@ -2326,7 +2417,7 @@ Return the withdraw capability to the account it originally came from
     metadata: vector&lt;u8&gt;,
     metadata_signature: vector&lt;u8&gt;,
     vm: &signer
-) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a> , <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>, <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="LibraAccount.md#0x1_LibraAccount_AutopayEscrow">AutopayEscrow</a> {
+) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a> , <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>, <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="LibraAccount.md#0x1_LibraAccount_AutopayEscrow">AutopayEscrow</a>, <a href="LibraAccount.md#0x1_LibraAccount_CumulativeDeposits">CumulativeDeposits</a> {
     <b>if</b> (<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()) <b>return</b>;
     <b>if</b> (amount &lt; 0) <b>return</b>;
 
@@ -2403,7 +2494,7 @@ Return the withdraw capability to the account it originally came from
    metadata: vector&lt;u8&gt;,
    metadata_signature: vector&lt;u8&gt;,
    vm: &signer
-) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a> , <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>, <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a> , <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>, <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="LibraAccount.md#0x1_LibraAccount_CumulativeDeposits">CumulativeDeposits</a> {
    <b>if</b> (<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()) <b>return</b>;
    // don't try <b>to</b> send a 0 balance, will halt.
    <b>if</b> (amount &lt; 0) <b>return</b>;
@@ -2469,7 +2560,7 @@ attestation protocol
     amount: u64,
     metadata: vector&lt;u8&gt;,
     metadata_signature: vector&lt;u8&gt;
-) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>, <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>, <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>, <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>, <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="LibraAccount.md#0x1_LibraAccount_CumulativeDeposits">CumulativeDeposits</a> {
     //////// 0L //////// Transfers disabled by default
     //////// 0L //////// Transfers of 10 <a href="GAS.md#0x1_GAS">GAS</a>
     //////// 0L //////// enabled when validator count is 100.
@@ -2511,7 +2602,7 @@ attestation protocol
 
 
 <pre><code><b>pragma</b> opaque;
-<a name="0x1_LibraAccount_payer$92"></a>
+<a name="0x1_LibraAccount_payer$94"></a>
 <b>let</b> payer = cap.account_address;
 <b>modifies</b> <b>global</b>&lt;<a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>&gt;(payer);
 <b>modifies</b> <b>global</b>&lt;<a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>&gt;(payee);
@@ -2557,7 +2648,7 @@ attestation protocol
     amount: u64;
     metadata: vector&lt;u8&gt;;
     metadata_signature: vector&lt;u8&gt; ;
-    <a name="0x1_LibraAccount_payer$78"></a>
+    <a name="0x1_LibraAccount_payer$80"></a>
     <b>let</b> payer = cap.account_address;
     <b>include</b> <a href="LibraAccount.md#0x1_LibraAccount_DepositAbortsIfRestricted">DepositAbortsIfRestricted</a>&lt;Token&gt;{payer: cap.account_address};
     <b>include</b> <a href="LibraAccount.md#0x1_LibraAccount_WithdrawFromBalanceNoLimitsAbortsIf">WithdrawFromBalanceNoLimitsAbortsIf</a>&lt;Token&gt;{payer, balance: <b>global</b>&lt;<a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payer)};
@@ -2603,7 +2694,7 @@ attestation protocol
 <pre><code><b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_onboarding_gas_transfer">onboarding_gas_transfer</a>&lt;Token&gt;(
     payer_sig: &signer,
     payee: address
-) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>, <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>, <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>, <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>, <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="LibraAccount.md#0x1_LibraAccount_CumulativeDeposits">CumulativeDeposits</a> {
     <b>let</b> payer_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(payer_sig);
     <b>let</b> account_balance = borrow_global_mut&lt;<a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payer_addr);
     <b>let</b> balance_coin = &<b>mut</b> account_balance.coin;
@@ -2779,7 +2870,7 @@ Return a unique capability granting permission to rotate the sender's authentica
 
 <pre><code><b>schema</b> <a href="LibraAccount.md#0x1_LibraAccount_ExtractKeyRotationCapabilityAbortsIf">ExtractKeyRotationCapabilityAbortsIf</a> {
     account: signer;
-    <a name="0x1_LibraAccount_account_addr$79"></a>
+    <a name="0x1_LibraAccount_account_addr$81"></a>
     <b>let</b> account_addr = <a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(account);
     <b>aborts_if</b> !<a href="LibraAccount.md#0x1_LibraAccount_exists_at">exists_at</a>(account_addr) <b>with</b> <a href="Errors.md#0x1_Errors_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a>;
     <b>include</b> <a href="LibraAccount.md#0x1_LibraAccount_AbortsIfDelegatedKeyRotationCapability">AbortsIfDelegatedKeyRotationCapability</a>;
@@ -2926,7 +3017,7 @@ have currencies", below.
 
 
 
-<a name="0x1_LibraAccount_new_account_addr$93"></a>
+<a name="0x1_LibraAccount_new_account_addr$95"></a>
 
 
 <pre><code><b>let</b> new_account_addr = <a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(new_account);
@@ -3063,7 +3154,7 @@ Creating an account at address 0x0 will abort as it is a reserved address for th
 
 
 
-<a name="0x1_LibraAccount_new_account_addr$94"></a>
+<a name="0x1_LibraAccount_new_account_addr$96"></a>
 
 
 <pre><code><b>let</b> new_account_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(new_account);
@@ -4060,11 +4151,11 @@ The prologue for module transaction
 
 
 
-<a name="0x1_LibraAccount_transaction_sender$95"></a>
+<a name="0x1_LibraAccount_transaction_sender$97"></a>
 
 
 <pre><code><b>let</b> transaction_sender = <a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(sender);
-<a name="0x1_LibraAccount_max_transaction_fee$96"></a>
+<a name="0x1_LibraAccount_max_transaction_fee$98"></a>
 <b>let</b> max_transaction_fee = txn_gas_price * txn_max_gas_units;
 <b>include</b> <a href="LibraAccount.md#0x1_LibraAccount_ModulePrologueAbortsIf">ModulePrologueAbortsIf</a>&lt;Token&gt; {
     max_transaction_fee,
@@ -4086,7 +4177,7 @@ The prologue for module transaction
     chain_id: u8;
     max_transaction_fee: u128;
     txn_expiration_time_seconds: u64;
-    <a name="0x1_LibraAccount_transaction_sender$80"></a>
+    <a name="0x1_LibraAccount_transaction_sender$82"></a>
     <b>let</b> transaction_sender = <a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(sender);
     <b>include</b> <a href="LibraAccount.md#0x1_LibraAccount_PrologueCommonAbortsIf">PrologueCommonAbortsIf</a>&lt;Token&gt; {
         transaction_sender,
@@ -4173,11 +4264,11 @@ The prologue for script transaction
 
 
 
-<a name="0x1_LibraAccount_transaction_sender$97"></a>
+<a name="0x1_LibraAccount_transaction_sender$99"></a>
 
 
 <pre><code><b>let</b> transaction_sender = <a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(sender);
-<a name="0x1_LibraAccount_max_transaction_fee$98"></a>
+<a name="0x1_LibraAccount_max_transaction_fee$100"></a>
 <b>let</b> max_transaction_fee = txn_gas_price * txn_max_gas_units;
 <b>include</b> <a href="LibraAccount.md#0x1_LibraAccount_ScriptPrologueAbortsIf">ScriptPrologueAbortsIf</a>&lt;Token&gt;{
     max_transaction_fee,
@@ -4200,7 +4291,7 @@ The prologue for script transaction
     max_transaction_fee: u128;
     txn_expiration_time_seconds: u64;
     script_hash: vector&lt;u8&gt;;
-    <a name="0x1_LibraAccount_transaction_sender$81"></a>
+    <a name="0x1_LibraAccount_transaction_sender$83"></a>
     <b>let</b> transaction_sender = <a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(sender);
     <b>include</b> <a href="LibraAccount.md#0x1_LibraAccount_PrologueCommonAbortsIf">PrologueCommonAbortsIf</a>&lt;Token&gt; {transaction_sender};
 }
@@ -4296,7 +4387,7 @@ The prologue for WriteSet transaction
     txn_public_key: vector&lt;u8&gt;;
     txn_expiration_time_seconds: u64;
     chain_id: u8;
-    <a name="0x1_LibraAccount_transaction_sender$82"></a>
+    <a name="0x1_LibraAccount_transaction_sender$84"></a>
     <b>let</b> transaction_sender = <a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(sender);
 }
 </code></pre>
@@ -4436,11 +4527,11 @@ The main properties that it verifies:
 
 
 
-<a name="0x1_LibraAccount_transaction_sender$99"></a>
+<a name="0x1_LibraAccount_transaction_sender$101"></a>
 
 
 <pre><code><b>let</b> transaction_sender = <a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(sender);
-<a name="0x1_LibraAccount_max_transaction_fee$100"></a>
+<a name="0x1_LibraAccount_max_transaction_fee$102"></a>
 <b>let</b> max_transaction_fee = txn_gas_price * txn_max_gas_units;
 <b>include</b> <a href="LibraAccount.md#0x1_LibraAccount_PrologueCommonAbortsIf">PrologueCommonAbortsIf</a>&lt;Token&gt; {
     transaction_sender,
@@ -4865,7 +4956,7 @@ Epilogue for WriteSet trasnaction
     to_deposit: <a href="Libra.md#0x1_Libra">Libra</a>&lt;Token&gt;,
     metadata: vector&lt;u8&gt;,
     metadata_signature: vector&lt;u8&gt;
-) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>, <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>, <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>, <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>, <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="LibraAccount.md#0x1_LibraAccount_CumulativeDeposits">CumulativeDeposits</a> {
     <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(payer);
     <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 4010);
     <a href="LibraAccount.md#0x1_LibraAccount_deposit">deposit</a>(
@@ -4996,7 +5087,7 @@ or the key rotation capability for addr itself [[H17]][PERMISSION].
 
 <pre><code><b>schema</b> <a href="LibraAccount.md#0x1_LibraAccount_EnsuresHasKeyRotationCap">EnsuresHasKeyRotationCap</a> {
     account: signer;
-    <a name="0x1_LibraAccount_addr$83"></a>
+    <a name="0x1_LibraAccount_addr$85"></a>
     <b>let</b> addr = <a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(account);
     <b>ensures</b> <a href="LibraAccount.md#0x1_LibraAccount_spec_holds_own_key_rotation_cap">spec_holds_own_key_rotation_cap</a>(addr);
 }
@@ -5058,7 +5149,7 @@ or the withdraw capability for addr itself [[H18]][PERMISSION].
 
 <pre><code><b>schema</b> <a href="LibraAccount.md#0x1_LibraAccount_EnsuresWithdrawCap">EnsuresWithdrawCap</a> {
     account: signer;
-    <a name="0x1_LibraAccount_addr$84"></a>
+    <a name="0x1_LibraAccount_addr$86"></a>
     <b>let</b> addr = <a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(account);
     <b>ensures</b> <a href="LibraAccount.md#0x1_LibraAccount_spec_holds_own_withdraw_cap">spec_holds_own_withdraw_cap</a>(addr);
 }
