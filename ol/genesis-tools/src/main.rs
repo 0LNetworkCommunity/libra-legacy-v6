@@ -8,6 +8,27 @@ use libra_types::{
     proof::TransactionInfoWithProof, ledger_info::LedgerInfoWithSignatures,
     account_state_blob::AccountStateBlob
 };
+use libra_types::{
+    access_path::AccessPath,
+    account_address::AccountAddress,
+    account_config::{
+        coin1_tmp_tag, from_currency_code_string, testnet_dd_account_address,
+        treasury_compliance_account_address, BalanceResource, COIN1_NAME,
+    },
+    account_state::AccountState,
+    contract_event::ContractEvent,
+    on_chain_config,
+    on_chain_config::{config_address, ConfigurationResource, OnChainConfig, ValidatorSet},
+    proof::SparseMerkleRangeProof,
+    transaction::{
+        authenticator::AuthenticationKey, ChangeSet, Transaction, Version, WriteSetPayload,
+        PRE_GENESIS_VERSION,
+    },
+    trusted_state::TrustedState,
+    validator_signer::ValidatorSigner,
+    waypoint::Waypoint,
+    write_set::{WriteOp, WriteSetMut},
+};
 use std::{
     net::{IpAddr, Ipv4Addr, SocketAddr},
     sync::Arc,
@@ -32,6 +53,14 @@ use backup_cli::utils::read_record_bytes::ReadRecordBytes;
 use tokio::runtime::Runtime;
 use backup_service::start_backup_service;
 
+mod generate_genesis;
+use libra_genesis_tool::{verify::compute_genesis};
+use storage_interface::{DbReader, DbReaderWriter};
+use executor::{
+    db_bootstrapper::{generate_waypoint, maybe_bootstrap, get_balance},
+    Executor,
+};
+use libra_vm::LibraVM;
 // use backup_cli::utils::test_utils::{start_local_backup_service, tmp_db_with_random_content};
 
 fn get_runtime() -> (Runtime, u16) {
@@ -45,7 +74,8 @@ fn get_runtime() -> (Runtime, u16) {
 async fn open_for_read(
     file_handle: &FileHandleRef,
 ) -> Result<Box<dyn AsyncRead + Send + Unpin>> {
-    let mut path: String = "/home/node/libra/ol/fixtures/state-snapshot/194/".to_owned();
+    let home = dirs::home_dir().unwrap();
+    let mut path: String = home.join("libra/ol/fixtures/state-snapshot/194/").into_os_string().into_string().unwrap().to_owned();
     path.push_str(&file_handle.to_string());
     let file = OpenOptions::new().read(true).open(path).await?;
     Ok(Box::new(file))
@@ -82,6 +112,7 @@ async fn read_account_state_chunk(file_handle: FileHandle) -> Result<Vec<(HashVa
 }
 
 async fn run_impl(manifest: StateSnapshotBackup) -> Result<()>{
+    let mut account_state_blobs: Vec<AccountStateBlob> = Vec::new();
     for chunk in manifest.chunks {
         
         let blobs = read_account_state_chunk(chunk.blobs).await?;
@@ -89,23 +120,62 @@ async fn run_impl(manifest: StateSnapshotBackup) -> Result<()>{
         println!("{:?}", blobs);
         // TODO(Venkat) -> Here's the blob
         // println!("{:?}", proof);
+        for (_key, blob) in blobs {
+            account_state_blobs.push(blob)
+        }
 
     }
+
+
+    let genesis = vm_genesis::test_genesis_change_set_and_validators(Some(1));
+    let genesis_txn = Transaction::GenesisTransaction(WriteSetPayload::Direct(genesis.0));
+    let tmp_dir = TempPath::new();
+    let db_rw = DbReaderWriter::new(LibraDB::new_for_test(&tmp_dir));
+
+    // Executor won't be able to boot on empty db due to lack of StartupInfo.
+    assert!(db_rw.reader.get_startup_info().unwrap().is_none());
+
+    // Bootstrap empty DB.
+    let waypoint = generate_waypoint::<LibraVM>(&db_rw, &genesis_txn).expect("Should not fail.");
+    maybe_bootstrap::<LibraVM>(&db_rw, &genesis_txn, waypoint).unwrap();
+    let startup_info = db_rw
+        .reader
+        .get_startup_info()
+        .expect("Should not fail.")
+        .expect("Should not be None.");
+    assert_eq!(
+        Waypoint::new_epoch_boundary(startup_info.latest_ledger_info.ledger_info()).unwrap(),
+        waypoint
+    );
+    let (li, epoch_change_proof, _) = db_rw.reader.get_state_proof(waypoint.version()).unwrap();
+    let trusted_state = TrustedState::from(waypoint);
+    trusted_state
+        .verify_and_ratchet(&li, &epoch_change_proof)
+        .unwrap();
+
+    // `maybe_bootstrap()` does nothing on non-empty DB.
+    assert!(!maybe_bootstrap::<LibraVM>(&db_rw, &genesis_txn, waypoint).unwrap());
+
+    let genesis_txn = generate_genesis::generate_genesis_from_snapshot(&account_state_blobs, &db_rw).unwrap();
+    generate_genesis::write_genesis_blob(genesis_txn)?;
+    generate_genesis::test_genesis_from_blob(&account_state_blobs, db_rw)?;
     Ok(())
 }
 
 fn main() -> Result<()>{
+    let home = dirs::home_dir().unwrap();
+    
+    let path = home.join("libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.manifest");
+    let path2 = home.join("libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.proof");
 
-    let path = "/home/node/libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.manifest";
-    let path2 = "/home/node/libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.proof";
-
-    let manifest = read_from_json(&path).unwrap();
+    let manifest = read_from_json(&path.into_os_string().into_string().unwrap()).unwrap();
 
     let (mut rt, _port) = get_runtime();
 
 
 
-    let (txn_info_with_proof, li): (TransactionInfoWithProof, LedgerInfoWithSignatures) = load_lcs_file(path2).unwrap();
+    let (txn_info_with_proof, li): (TransactionInfoWithProof, LedgerInfoWithSignatures) = 
+            load_lcs_file(&path2.into_os_string().into_string().unwrap()).unwrap();
 
 
 
@@ -124,3 +194,4 @@ fn main() -> Result<()>{
     Ok(())
     
 }
+
