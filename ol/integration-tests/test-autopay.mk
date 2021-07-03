@@ -49,7 +49,7 @@ swarm:
 	rm -rf ${SWARM_TEMP}
 	mkdir ${SWARM_TEMP}
 	cd ${SOURCE_PATH} && cargo build -p libra-node -p cli
-	cd ${SOURCE_PATH} && cargo run -p libra-swarm -- --libra-node ${SOURCE_PATH}/target/debug/libra-node -c ${SWARM_TEMP} -n ${NUM_NODES} 2>&1 | tee ${LOG} &
+	cd ${SOURCE_PATH} && cargo run -p libra-swarm -- --libra-node ${SOURCE_PATH}/target/debug/libra-node -c ${SWARM_TEMP} -n ${NUM_NODES} &> ${LOG} &
 
 stop:
 	killall libra-swarm libra-node miner ol txs cli | true
@@ -58,7 +58,7 @@ init:
 	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}
 
 tx:
-	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y RUST_BACKTRACE=1 cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} autopay-batch -f ${SOURCE_PATH}/ol/fixtures/autopay/${AUTOPAY_FILE}
+	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} autopay-batch -f ${SOURCE_PATH}/ol/fixtures/autopay/${AUTOPAY_FILE}
 
 resources:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --resources
@@ -83,7 +83,7 @@ check-swarm:
 
 send-tx: 
 	PERSONA=alice make -f ${MAKE_FILE} init
-	PERSONA=alice make -f ${MAKE_FILE} tx 2>&1 | tee -a ${LOG} &
+	PERSONA=alice make -f ${MAKE_FILE} tx &>> ${LOG} &
 
 check-tx:
 	@while [[ ${NOW} -le ${END} ]] ; do \
