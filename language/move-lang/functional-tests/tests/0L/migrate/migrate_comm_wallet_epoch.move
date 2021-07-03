@@ -36,14 +36,4 @@ script {
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-//! new-transaction
-//! sender: libraroot
-script {
-    use 0x1::Wallet;
-    fun main(_vm: &signer) {
-      assert(Wallet::is_comm({{bob}}), 7357008);
-      assert(Wallet::is_comm({{carol}}), 7357009);
 
-    }
-}
-// check: EXECUTED

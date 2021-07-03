@@ -26,7 +26,7 @@ module Reconfigure {
     use 0x1::GAS::GAS;
     use 0x1::LibraConfig;
     use 0x1::Burn;
-    // use 0x1::Debug::print;
+    use 0x1::Debug::print;
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
@@ -37,7 +37,7 @@ module Reconfigure {
         // loop through validators and pay full node subsidies.
         // Should happen before transactionfees get distributed.
         // There may be new validators which have not mined yet.
-// print(&03100);
+print(&03100);
 
         let miners = MinerState::get_miner_list();
         
@@ -64,7 +64,7 @@ module Reconfigure {
 // print(&03220);
 
             if (FullnodeState::is_onboarding(addr)) {
-// print(&03221);
+print(&03221);
 
               // TODO: onboarding subsidy is not necessary with onboarding transfer.
                 value = Subsidy::distribute_onboarding_subsidy(vm, addr);
@@ -84,7 +84,7 @@ module Reconfigure {
         // Distribute Transaction fees and subsidy payments to all outgoing validators
         let height_start = Epoch::get_timer_height_start(vm);
 
-// print(&03240);
+print(&03240);
 
         let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio(vm, height_start, height_now);
         if (Vector::length<address>(&outgoing_set) > 0) {
@@ -94,7 +94,7 @@ module Reconfigure {
             if (subsidy_units > 0) {
                 Subsidy::process_subsidy(vm, subsidy_units, &outgoing_set, &fee_ratio);
             };
-// print(&03241);
+print(&03241);
 
             Subsidy::process_fees(vm, &outgoing_set, &fee_ratio);
         };
@@ -114,7 +114,7 @@ module Reconfigure {
         let top_accounts = NodeWeight::top_n_accounts(vm, Globals::get_max_validator_per_epoch());
 
         let jailed_set = LibraSystem::get_jailed_set(vm, height_start, height_now);
-// print(&03250);
+print(&03250);
         Burn::reset_ratios(vm);
         // let incoming_count = Vector::length<address>(&top_accounts) - Vector::length<address>(&jailed_set);
         // let burn_value = Subsidy::subsidy_curve(
@@ -124,12 +124,12 @@ module Reconfigure {
         // )/4;
         let burn_value = 1000000; // TODO: switch to a variable cost, as above.
 
-// print(&burn_value);
+print(&burn_value);
 
 
         let i = 0;
         while (i < Vector::length<address>(&top_accounts)) {
-// print(&03251);
+print(&03251);
 
             let addr = *Vector::borrow(&top_accounts, i);
 // print(&addr);

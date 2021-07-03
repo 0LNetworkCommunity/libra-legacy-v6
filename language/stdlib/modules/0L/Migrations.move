@@ -61,8 +61,8 @@ module Migrations {
 module MigrateWallets {
   // migrations should have own module, since imports can cause dependency cycling.
   use 0x1::AutoPay2;
-  use 0x1::Wallet;
   use 0x1::Vector;
+  use 0x1::LibraAccount;
   use 0x1::Migrations;
 
   const UID: u64 = 10;
@@ -76,7 +76,7 @@ module MigrateWallets {
     let i = 0;
     while (i < len) {
       let addr = *Vector::borrow<address>(&vec_addr, i);
-      Wallet::vm_set_comm(vm, addr);
+      LibraAccount::vm_init_community_wallet(vm, addr);
       i = i + 1;
     };
     Migrations::push(UID, b"MigrateWallets");

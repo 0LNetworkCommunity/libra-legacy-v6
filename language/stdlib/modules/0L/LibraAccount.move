@@ -404,6 +404,14 @@ module LibraAccount {
     }
 
     //////// 0L ////////
+    public fun vm_init_community_wallet(vm: &signer, addr: address) acquires Balance {
+      CoreAddresses::assert_libra_root(vm);
+      let account_sig = create_signer(addr);
+      init_cumulative_deposits(&account_sig);
+      Wallet::set_comm(&account_sig);
+      destroy_signer(account_sig);
+    }
+
     // init struct for storing cumulative deposits
     public fun init_cumulative_deposits(sender: &signer) acquires Balance {
       let addr = Signer::address_of(sender);
@@ -416,6 +424,8 @@ module LibraAccount {
     } 
 
     public fun get_cumulative_deposits(addr: address): u64 acquires CumulativeDeposits {
+      if (!exists<CumulativeDeposits>(addr)) return 0;
+
       borrow_global<CumulativeDeposits>(addr).value
     }
 
