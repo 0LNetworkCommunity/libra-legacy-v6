@@ -27,6 +27,17 @@ module Wallet {
       }
     }
 
+    public fun vm_set_comm(vm: &signer, addr: address) acquires CommunityWallets {
+      CoreAddresses::assert_libra_root(vm);
+      let list = get_comm_list();
+      if (!Vector::contains<address>(&list, &addr)) {
+        if (exists<CommunityWallets>(0x0)) {
+          let s = borrow_global_mut<CommunityWallets>(0x0);
+          Vector::push_back(&mut s.list, addr);
+        }
+      }
+    }
+
     public fun get_comm_list(): vector<address> acquires CommunityWallets{
       if (exists<CommunityWallets>(0x0)) {
         let s = borrow_global<CommunityWallets>(0x0);

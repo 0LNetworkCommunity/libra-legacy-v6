@@ -127,7 +127,7 @@ address 0x1 {
     }
 
     // helper to get all known destinations users have for autopay
-    public fun get_payee_global():vector<address> acquires AccountList, Data {
+    public fun get_all_payees():vector<address> acquires AccountList, Data {
       let account_list = &borrow_global<AccountList>(CoreAddresses::LIBRA_ROOT_ADDRESS()).accounts;
       let accounts_length = Vector::length<address>(account_list);
       let account_idx = 0;

@@ -52,17 +52,17 @@ script {
 // check: EXECUTED
 
 
-//! new-transaction
-//! sender: libraroot
-script {
-    use 0x1::Wallet;
+// //! new-transaction
+// //! sender: libraroot
+// script {
+//     use 0x1::Wallet;
 
-    fun main(vm: &signer) {
-      Wallet::init_comm_list(vm);
-    }
-}
+//     fun main(vm: &signer) {
+//       Wallet::init_comm_list(vm);
+//     }
+// }
 
-// check: EXECUTED
+// // check: EXECUTED
 
 //! new-transaction
 //! sender: bob
