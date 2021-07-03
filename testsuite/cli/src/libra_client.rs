@@ -64,7 +64,7 @@ impl LibraClient {
             latest_epoch_change_li: None,
         })
     }
-
+    
     /// Submits a transaction and bumps the sequence number for the sender, pass in `None` for
     /// sender_account if sender's address is not managed by the client.
     pub fn submit_transaction(
