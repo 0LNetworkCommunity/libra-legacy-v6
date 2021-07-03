@@ -63,8 +63,9 @@ module MigrateWallets {
   use 0x1::AutoPay2;
   use 0x1::Wallet;
   use 0x1::Vector;
+  use 0x1::Migrations;
 
-  const UID: u8 = 10;
+  const UID: u64 = 10;
 
   public fun migrate_community_wallets(vm: &signer) {
     // find autopay wallets
@@ -77,7 +78,8 @@ module MigrateWallets {
       let addr = *Vector::borrow<address>(&vec_addr, i);
       Wallet::vm_set_comm(vm, addr);
       i = i + 1;
-    }
+    };
+    Migrations::push(UID, b"MigrateWallets");
   }
 
 }
