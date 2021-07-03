@@ -26,6 +26,11 @@ script {
       Wallet::set_comm(sender);
       let list = Wallet::get_comm_list();
       assert(Vector::length(&list) == 1, 7357001);
+
+      Wallet::remove_comm(sender);
+      let list = Wallet::get_comm_list();
+      assert(Vector::length(&list) == 0, 7357002);
+
     }
 }
 

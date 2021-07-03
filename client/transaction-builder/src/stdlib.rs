@@ -1314,6 +1314,7 @@ pub enum ScriptCall {
 
     SetWalletType {
         type_of: u8,
+        unset: bool,
     },
 
     /// # Summary
@@ -1799,7 +1800,7 @@ impl ScriptCall {
                 operator_name,
                 operator_account,
             ),
-            SetWalletType { type_of } => encode_set_wallet_type_script(type_of),
+            SetWalletType { type_of, unset } => encode_set_wallet_type_script(type_of, unset),
             TieredMint {
                 coin_type,
                 sliding_nonce,
@@ -3431,11 +3432,14 @@ pub fn encode_set_validator_operator_with_nonce_admin_script(
     )
 }
 
-pub fn encode_set_wallet_type_script(type_of: u8) -> Script {
+pub fn encode_set_wallet_type_script(type_of: u8, unset: bool) -> Script {
     Script::new(
         SET_WALLET_TYPE_CODE.to_vec(),
         vec![],
-        vec![TransactionArgument::U8(type_of)],
+        vec![
+            TransactionArgument::U8(type_of),
+            TransactionArgument::Bool(unset),
+        ],
     )
 }
 
@@ -4037,6 +4041,7 @@ fn decode_set_validator_operator_with_nonce_admin_script(script: &Script) -> Opt
 fn decode_set_wallet_type_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::SetWalletType {
         type_of: decode_u8_argument(script.args().get(0)?.clone())?,
+        unset: decode_bool_argument(script.args().get(1)?.clone())?,
     })
 }
 
@@ -4781,13 +4786,12 @@ const SET_VALIDATOR_OPERATOR_WITH_NONCE_ADMIN_CODE: &[u8] = &[
 ];
 
 const SET_WALLET_TYPE_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 15, 5, 19, 8, 7, 27, 63, 8, 90, 16, 0, 0, 0, 1,
-    1, 2, 0, 1, 0, 1, 3, 0, 1, 0, 0, 4, 0, 1, 0, 1, 6, 12, 0, 2, 6, 12, 2, 12, 76, 105, 98, 114,
-    97, 65, 99, 99, 111, 117, 110, 116, 6, 87, 97, 108, 108, 101, 116, 8, 115, 101, 116, 95, 99,
-    111, 109, 109, 8, 115, 101, 116, 95, 115, 108, 111, 119, 24, 105, 110, 105, 116, 95, 99, 117,
-    109, 117, 108, 97, 116, 105, 118, 101, 95, 100, 101, 112, 111, 115, 105, 116, 115, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 1, 20, 10, 1, 49, 0, 33, 3, 5, 5, 7, 10, 0, 17, 1,
-    10, 1, 49, 1, 33, 3, 12, 5, 17, 10, 0, 17, 0, 11, 0, 17, 2, 5, 19, 11, 0, 1, 2,
+    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 2, 3, 2, 15, 5, 17, 9, 7, 26, 37, 8, 63, 16, 0, 0, 0, 1,
+    0, 1, 0, 0, 2, 0, 1, 0, 0, 3, 0, 1, 0, 1, 6, 12, 0, 3, 6, 12, 2, 1, 6, 87, 97, 108, 108, 101,
+    116, 11, 114, 101, 109, 111, 118, 101, 95, 99, 111, 109, 109, 8, 115, 101, 116, 95, 99, 111,
+    109, 109, 8, 115, 101, 116, 95, 115, 108, 111, 119, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 1, 0, 2, 1, 24, 10, 1, 49, 0, 33, 3, 5, 5, 7, 10, 0, 17, 2, 10, 1, 49, 1, 33, 3, 12, 5, 21,
+    10, 2, 3, 15, 5, 18, 11, 0, 17, 0, 5, 20, 11, 0, 17, 1, 5, 23, 11, 0, 1, 2,
 ];
 
 const TIERED_MINT_CODE: &[u8] = &[

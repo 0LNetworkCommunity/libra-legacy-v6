@@ -7,14 +7,13 @@
 
 
 
-<pre><code><b>use</b> <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount">0x1::LibraAccount</a>;
-<b>use</b> <a href="../../modules/doc/Wallet.md#0x1_Wallet">0x1::Wallet</a>;
+<pre><code><b>use</b> <a href="../../modules/doc/Wallet.md#0x1_Wallet">0x1::Wallet</a>;
 </code></pre>
 
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ol_wallet_set.md#set_wallet_type">set_wallet_type</a>(sender: &signer, type_of: u8)
+<pre><code><b>public</b> <b>fun</b> <a href="ol_wallet_set.md#set_wallet_type">set_wallet_type</a>(sender: &signer, type_of: u8, unset: bool)
 </code></pre>
 
 
@@ -23,14 +22,17 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="ol_wallet_set.md#set_wallet_type">set_wallet_type</a>(sender: &signer, type_of: u8) {
+<pre><code><b>fun</b> <a href="ol_wallet_set.md#set_wallet_type">set_wallet_type</a>(sender: &signer, type_of: u8, unset: bool) {
   <b>if</b> (type_of == 0) {
     <a href="../../modules/doc/Wallet.md#0x1_Wallet_set_slow">Wallet::set_slow</a>(sender);
   };
 
   <b>if</b> (type_of == 1) {
-    <a href="../../modules/doc/Wallet.md#0x1_Wallet_set_comm">Wallet::set_comm</a>(sender);
-    <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount_init_cumulative_deposits">LibraAccount::init_cumulative_deposits</a>(sender);
+    <b>if</b> (unset) {
+      <a href="../../modules/doc/Wallet.md#0x1_Wallet_remove_comm">Wallet::remove_comm</a>(sender);
+    } <b>else</b> {
+      <a href="../../modules/doc/Wallet.md#0x1_Wallet_set_comm">Wallet::set_comm</a>(sender);
+    };
   };
 }
 </code></pre>

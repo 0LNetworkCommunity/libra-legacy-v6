@@ -1438,7 +1438,8 @@ module LibraAccount {
 
         //////// 0L ////////
         TrustedAccounts::initialize(&new_account);
-
+        Wallet::set_slow(&new_account);
+        
         destroy_signer(new_account);
     }
 

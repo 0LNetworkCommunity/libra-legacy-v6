@@ -15,7 +15,7 @@
 -  [Function `reconfig_reset_tick`](#0x1_AutoPay2_reconfig_reset_tick)
 -  [Function `initialize`](#0x1_AutoPay2_initialize)
 -  [Function `enable_account_limits`](#0x1_AutoPay2_enable_account_limits)
--  [Function `get_payee_global`](#0x1_AutoPay2_get_payee_global)
+-  [Function `get_all_payees`](#0x1_AutoPay2_get_all_payees)
 -  [Function `process_autopay`](#0x1_AutoPay2_process_autopay)
 -  [Function `enable_autopay`](#0x1_AutoPay2_enable_autopay)
 -  [Function `disable_autopay`](#0x1_AutoPay2_disable_autopay)
@@ -440,13 +440,13 @@ Attempt to add instruction when too many already exist
 
 </details>
 
-<a name="0x1_AutoPay2_get_payee_global"></a>
+<a name="0x1_AutoPay2_get_all_payees"></a>
 
-## Function `get_payee_global`
+## Function `get_all_payees`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay2_get_payee_global">get_payee_global</a>(): vector&lt;address&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay2_get_all_payees">get_all_payees</a>(): vector&lt;address&gt;
 </code></pre>
 
 
@@ -455,7 +455,7 @@ Attempt to add instruction when too many already exist
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay2_get_payee_global">get_payee_global</a>():vector&lt;address&gt; <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a>, <a href="AutoPay.md#0x1_AutoPay2_Data">Data</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay2_get_all_payees">get_all_payees</a>():vector&lt;address&gt; <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a>, <a href="AutoPay.md#0x1_AutoPay2_Data">Data</a> {
   <b>let</b> account_list = &borrow_global&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()).accounts;
   <b>let</b> accounts_length = <a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(account_list);
   <b>let</b> account_idx = 0;
@@ -472,9 +472,10 @@ Attempt to add instruction when too many already exist
     <b>let</b> payments_idx = 0;
     <b>while</b> (payments_idx &lt; payments_len) {
       <b>let</b> payment = <a href="Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>&lt;<a href="AutoPay.md#0x1_AutoPay2_Payment">Payment</a>&gt;(payments, payments_idx);
-      <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(&<b>mut</b> payee_vec, payment.payee)
+      <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(&<b>mut</b> payee_vec, payment.payee);
+      payments_idx = payments_idx + 1;
     };
-
+    account_idx = account_idx + 1;
   };
   <b>return</b> payee_vec
 }

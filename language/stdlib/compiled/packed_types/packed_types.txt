@@ -128,6 +128,15 @@
     }
   ],
   [
+    "011c5b67488d4cfc541ad91544a09b53a486442a047833076fd4640d6bdb26bd43",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Migrations",
+      "name": "Migrations",
+      "type_params": []
+    }
+  ],
+  [
     "011d57af3a45c686035178347e1b50849f0c2bad90b2baa2ead36bd208450ed175",
     {
       "address": "00000000000000000000000000000001",
@@ -1072,15 +1081,6 @@
           }
         }
       ]
-    }
-  ],
-  [
-    "01e174561e9c7c0e04dcef5c4fcf12a271722e9882a00e423d45ee3a741775b7b3",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "LibraAccount",
-      "name": "CumulativeDeposits",
-      "type_params": []
     }
   ],
   [
