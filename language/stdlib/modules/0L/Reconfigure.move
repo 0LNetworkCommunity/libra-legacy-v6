@@ -26,7 +26,7 @@ module Reconfigure {
     use 0x1::GAS::GAS;
     use 0x1::LibraConfig;
     use 0x1::Burn;
-    use 0x1::Debug::print;
+    // use 0x1::Debug::print;
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
@@ -116,28 +116,30 @@ module Reconfigure {
         let jailed_set = LibraSystem::get_jailed_set(vm, height_start, height_now);
 // print(&03250);
         Burn::reset_ratios(vm);
-        let incoming_count = Vector::length<address>(&top_accounts) - Vector::length<address>(&jailed_set);
-        let burn_value = Subsidy::subsidy_curve(
-          Globals::get_subsidy_ceiling_gas(),
-          incoming_count,
-          Globals::get_max_node_density()
-        )/4;
-        print(&burn_value);
+        // let incoming_count = Vector::length<address>(&top_accounts) - Vector::length<address>(&jailed_set);
+        // let burn_value = Subsidy::subsidy_curve(
+        //   Globals::get_subsidy_ceiling_gas(),
+        //   incoming_count,
+        //   Globals::get_max_node_density()
+        // )/4;
+        let burn_value = 1000000; // TODO: switch to a variable cost, as above.
+
+// print(&burn_value);
 
 
         let i = 0;
         while (i < Vector::length<address>(&top_accounts)) {
-print(&03251);
+// print(&03251);
 
             let addr = *Vector::borrow(&top_accounts, i);
-print(&addr);
+// print(&addr);
             let mined_last_epoch = MinerState::node_above_thresh(vm, addr);
 
-print(&mined_last_epoch);
+// print(&mined_last_epoch);
        
             // TODO: temporary until jail-refactor merge.
             if ((!Vector::contains(&jailed_set, &addr)) && mined_last_epoch) {
-print(&03252);   
+// print(&03252);   
                 // execute the burn according to preferences
                 Burn::epoch_start_burn(vm, addr, burn_value);
                 Vector::push_back(&mut proposed_set, addr);

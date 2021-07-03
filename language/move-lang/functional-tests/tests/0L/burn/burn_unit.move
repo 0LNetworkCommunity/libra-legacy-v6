@@ -75,7 +75,7 @@ script {
     assert(bal_bob == 125, 7357007);
 
     let bal_carol = LibraAccount::balance<GAS>({{carol}});
-    assert(bal_bob == 375, 7357007);
+    assert(bal_carol == 375, 7357007);
   }
 }
 // check: EXECUTED

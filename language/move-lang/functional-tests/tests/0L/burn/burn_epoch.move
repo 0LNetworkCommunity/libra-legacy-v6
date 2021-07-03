@@ -96,15 +96,13 @@ script {
 script {
   use 0x1::LibraAccount;
   use 0x1::GAS::GAS;
-  use 0x1::Debug::print;
-
 
   fun main(_vm: &signer) {
     let bal = LibraAccount::balance<GAS>({{bob}});
-    print(&bal);
-    // the burn equals 296/4 * scaling factor = 74000000
+    // TODO: the burn equals 296/4 * scaling factor = 74000000
     // and then the 100 previously existed in the account.
-    assert(bal == 74000100, 7357001);
+
+    assert(bal == 1000100, 7357001);
   }
 }
 
