@@ -28,7 +28,6 @@ use self::{
     create_account_cmd::CreateAccountCmd,
     create_validator_cmd::CreateValidatorCmd,
     oracle_upgrade_cmd::OracleUpgradeCmd,
-    oracle_upgrade_cmd::OracleUpgradeHashCmd,
     version_cmd::VersionCmd,
     autopay_batch_cmd::AutopayBatchCmd,
     autopay_cmd::AutopayCmd,
@@ -53,10 +52,6 @@ pub enum TxsCmd {
     /// The `oracle-upgrade` subcommand
     #[options(help = "submit an oracle transaction to upgrade stdlib")]
     OracleUpgrade(OracleUpgradeCmd),     
-
-    /// The `oracle-upgrade-hash` subcommand
-    #[options(help = "submit an oracle transaction to upgrade stdlib")]
-    OracleUpgradeHash(OracleUpgradeHashCmd),  
 
     /// The `autopay` subcommand
     #[options(help = "enable or disable autopay")]
