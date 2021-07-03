@@ -67,7 +67,7 @@ module MigrateWallets {
 
   const UID: u8 = 10;
 
-  fun migrate_community_wallets(vm: &signer) {
+  public fun migrate_community_wallets(vm: &signer) {
     // find autopay wallets
     let vec_addr = AutoPay2::get_all_payees();
     print(&vec_addr);

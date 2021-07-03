@@ -47,6 +47,11 @@ module Wallet {
       }
     }
 
+    public fun is_comm(addr: address): bool acquires CommunityWallets{
+      let s = borrow_global<CommunityWallets>(0x0);
+      Vector::contains<address>(&s.list, &addr)
+    }
+
     resource struct SlowWallet {
         is_slow: bool
     }
