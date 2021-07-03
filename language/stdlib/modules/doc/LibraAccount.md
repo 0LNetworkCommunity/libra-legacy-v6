@@ -131,7 +131,6 @@ before and after every transaction.
 <b>use</b> <a href="ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig">0x1::ValidatorOperatorConfig</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="Vector.md#0x1_Vector">0x1::Vector</a>;
-<b>use</b> <a href="Wallet.md#0x1_Wallet">0x1::Wallet</a>;
 </code></pre>
 
 
@@ -2184,13 +2183,8 @@ Return a unique capability granting permission to withdraw from the sender's acc
 ): <a href="LibraAccount.md#0x1_LibraAccount_WithdrawCapability">WithdrawCapability</a> <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a> {
     //////// 0L //////// Transfers disabled by default
     //////// 0L //////// Transfers of 10 <a href="GAS.md#0x1_GAS">GAS</a>
-    //////// 0L //////// enabled when epoch is 1000.
+    //////// 0L //////// enabled when validator count is 100.
     <b>let</b> sender_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
-
-    // Community wallets have own transfer mechanism.
-    <b>let</b> community_wallets = <a href="Wallet.md#0x1_Wallet_get_comm_list">Wallet::get_comm_list</a>();
-    <b>assert</b>(!<a href="Vector.md#0x1_Vector_contains">Vector::contains</a>(&community_wallets, &sender_addr), <a href="Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="LibraAccount.md#0x1_LibraAccount_EWITHDRAWAL_EXCEEDS_LIMITS">EWITHDRAWAL_EXCEEDS_LIMITS</a>));
-
     <b>if</b> (<a href="LibraConfig.md#0x1_LibraConfig_check_transfer_enabled">LibraConfig::check_transfer_enabled</a>()) {
         <b>if</b>(!<a href="AccountLimits.md#0x1_AccountLimits_has_limits_published">AccountLimits::has_limits_published</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender_addr)){
             <a href="AccountLimits.md#0x1_AccountLimits_publish_restricted_limits_definition_OL">AccountLimits::publish_restricted_limits_definition_OL</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender);
@@ -3049,7 +3043,6 @@ Creating an account at address 0x0 will abort as it is a reserved address for th
 
     //////// 0L ////////
     <a href="TrustedAccounts.md#0x1_TrustedAccounts_initialize">TrustedAccounts::initialize</a>(&new_account);
-    <a href="Wallet.md#0x1_Wallet_set_slow">Wallet::set_slow</a>(&new_account);
 
     <a href="LibraAccount.md#0x1_LibraAccount_destroy_signer">destroy_signer</a>(new_account);
 }
