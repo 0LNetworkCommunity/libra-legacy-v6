@@ -2,14 +2,15 @@
 //! account: bob, 1000000
 //! account: carol, 1000000
 
-// We test creation of autopay, retrieving it using same and different accounts
-// Finally, we also test deleting of autopay
+// create autopay instructions to wallets which have not yet been marked as community wallets.
 
 //! new-transaction
 //! sender: alice
 script {
   use 0x1::AutoPay2;
   use 0x1::Signer;
+  use 0x1::Wallet;
+
   fun main(sender: &signer) {
     AutoPay2::enable_autopay(sender);
     assert(AutoPay2::is_enabled(Signer::address_of(sender)), 73570001);
@@ -19,6 +20,8 @@ script {
     assert(end_epoch == 2, 73570003);
     assert(percentage == 5, 73570004);
     assert(type == 0, 7357005);
+
+    // is not a community wallet
     assert(!Wallet::is_comm({{bob}}), 7357006);
   }
 }
@@ -35,3 +38,4 @@ script {
       assert(Wallet::is_comm({{bob}}), 7357007);
     }
 }
+// check: EXECUTED

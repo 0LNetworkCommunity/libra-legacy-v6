@@ -144,9 +144,10 @@ address 0x1 {
         let payments_idx = 0;
         while (payments_idx < payments_len) {
           let payment = Vector::borrow_mut<Payment>(payments, payments_idx);
-          Vector::push_back<address>(&mut payee_vec, payment.payee)
+          Vector::push_back<address>(&mut payee_vec, payment.payee);
+          payments_idx = payments_idx + 1;
         };
-        
+        account_idx = account_idx + 1;
       };
       return payee_vec
     }
