@@ -15,6 +15,8 @@ pub struct WalletCmd {
     community: bool,
     #[options(short = "s", help = "set this address as a slow wallet")]
     slow: bool,
+    #[options(short = "r", help = "remove setting")]
+    remove: bool,
 }
 
 
@@ -33,7 +35,7 @@ impl Runnable for WalletCmd {
 
         let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
         maybe_submit(
-          transaction_builder::encode_set_wallet_type_script(type_int),
+          transaction_builder::encode_set_wallet_type_script(type_int, self.remove),
           &tx_params,
           entry_args.no_send,
           entry_args.save_path

@@ -17,24 +17,39 @@ module Wallet {
     }
 
     public fun set_comm(sig: &signer) acquires CommunityWallets {
-      let addr = Signer::address_of(sig);
-      let list = get_comm_list();
-      if (!Vector::contains<address>(&list, &addr)) {
-        if (exists<CommunityWallets>(0x0)) {
-          let s = borrow_global_mut<CommunityWallets>(0x0);
-          Vector::push_back(&mut s.list, addr);
-        }
+      if (exists<CommunityWallets>(0x0)) {
+        let addr = Signer::address_of(sig);
+        let list = get_comm_list();
+        if (!Vector::contains<address>(&list, &addr)) {
+            let s = borrow_global_mut<CommunityWallets>(0x0);
+            Vector::push_back(&mut s.list, addr);
+          }
+      }
+    }
+
+    public fun remove_comm(sig: &signer) acquires CommunityWallets {
+      if (exists<CommunityWallets>(0x0)) {
+        let addr = Signer::address_of(sig);
+        let list = get_comm_list();
+        let (yes, i) = Vector::index_of<address>(&list, &addr);
+        if (yes) {
+            let s = borrow_global_mut<CommunityWallets>(0x0);
+            Vector::remove(&mut s.list, i);
+          }
       }
     }
 
     public fun vm_set_comm(vm: &signer, addr: address) acquires CommunityWallets {
       CoreAddresses::assert_libra_root(vm);
-      let list = get_comm_list();
-      if (!Vector::contains<address>(&list, &addr)) {
-        if (exists<CommunityWallets>(0x0)) {
+      if (exists<CommunityWallets>(0x0)) {
+        let list = get_comm_list();
+        if (!Vector::contains<address>(&list, &addr)) {
+        
           let s = borrow_global_mut<CommunityWallets>(0x0);
           Vector::push_back(&mut s.list, addr);
         }
+      } else {
+        init_comm_list(vm);
       }
     }
 

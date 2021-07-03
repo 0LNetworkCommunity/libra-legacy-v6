@@ -13,7 +13,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ol_wallet_set.md#set_wallet_type">set_wallet_type</a>(sender: &signer, type_of: u8)
+<pre><code><b>public</b> <b>fun</b> <a href="ol_wallet_set.md#set_wallet_type">set_wallet_type</a>(sender: &signer, type_of: u8, unset: bool)
 </code></pre>
 
 
@@ -22,13 +22,17 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="ol_wallet_set.md#set_wallet_type">set_wallet_type</a>(sender: &signer, type_of: u8) {
+<pre><code><b>fun</b> <a href="ol_wallet_set.md#set_wallet_type">set_wallet_type</a>(sender: &signer, type_of: u8, unset: bool) {
   <b>if</b> (type_of == 0) {
-    <a href="../../modules/doc/Wallet.md#0x1_Wallet_set_slow">Wallet::set_slow</a>(sender)
+    <a href="../../modules/doc/Wallet.md#0x1_Wallet_set_slow">Wallet::set_slow</a>(sender);
   };
 
   <b>if</b> (type_of == 1) {
-    <a href="../../modules/doc/Wallet.md#0x1_Wallet_set_comm">Wallet::set_comm</a>(sender)
+    <b>if</b> (unset) {
+      <a href="../../modules/doc/Wallet.md#0x1_Wallet_remove_comm">Wallet::remove_comm</a>(sender);
+    } <b>else</b> {
+      <a href="../../modules/doc/Wallet.md#0x1_Wallet_set_comm">Wallet::set_comm</a>(sender);
+    };
   };
 }
 </code></pre>

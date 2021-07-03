@@ -472,9 +472,10 @@ Attempt to add instruction when too many already exist
     <b>let</b> payments_idx = 0;
     <b>while</b> (payments_idx &lt; payments_len) {
       <b>let</b> payment = <a href="Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>&lt;<a href="AutoPay.md#0x1_AutoPay2_Payment">Payment</a>&gt;(payments, payments_idx);
-      <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(&<b>mut</b> payee_vec, payment.payee)
+      <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(&<b>mut</b> payee_vec, payment.payee);
+      payments_idx = payments_idx + 1;
     };
-
+    account_idx = account_idx + 1;
   };
   <b>return</b> payee_vec
 }

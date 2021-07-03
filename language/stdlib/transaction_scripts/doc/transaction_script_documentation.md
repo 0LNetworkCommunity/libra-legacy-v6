@@ -5084,6 +5084,8 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`0x1::LibraTimestamp`](../../modules/doc/LibraTimestamp.md#0x1_LibraTimestamp)
 -  [`0x1::LibraTransactionPublishingOption`](../../modules/doc/LibraTransactionPublishingOption.md#0x1_LibraTransactionPublishingOption)
 -  [`0x1::LibraVersion`](../../modules/doc/LibraVersion.md#0x1_LibraVersion)
+-  [`0x1::MigrateWallets`](../../modules/doc/Migrations.md#0x1_MigrateWallets)
+-  [`0x1::Migrations`](../../modules/doc/Migrations.md#0x1_Migrations)
 -  [`0x1::MinerState`](../../modules/doc/MinerState.md#0x1_MinerState)
 -  [`0x1::NodeWeight`](../../modules/doc/NodeWeight.md#0x1_NodeWeight)
 -  [`0x1::Option`](../../modules/doc/Option.md#0x1_Option)
