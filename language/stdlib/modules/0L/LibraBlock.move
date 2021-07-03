@@ -14,8 +14,6 @@ module LibraBlock {
     use 0x1::Epoch;
     use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
-    use 0x1::MigrateWallets;
-    use 0x1::Migrations;
 
     resource struct BlockMetadata {
         /// Height of the current block
@@ -111,12 +109,9 @@ module LibraBlock {
         );
 
          //////// 0L ////////
-        // EPOCH BOUNDARY
+        // reconfigure
         if (Epoch::epoch_finished()) {
 // print(&03000);
-          // Run migrations
-          Migrations::init(vm);
-          MigrateWallets::migrate_community_wallets(vm);
 
           // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata. But there's a circular reference there when we try.
           Reconfigure::reconfigure(vm, get_current_block_height());
