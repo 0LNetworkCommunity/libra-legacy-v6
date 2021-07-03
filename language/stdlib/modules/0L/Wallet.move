@@ -2,7 +2,10 @@ address 0x1 {
 module Wallet {
     use 0x1::CoreAddresses;
     use 0x1::Vector;
-    use 0x1::Signer;  
+    use 0x1::Signer;
+
+    //////// COMMUNITY WALLETS ////////
+
     resource struct CommunityWallets {
         list: vector<address>
     }
@@ -67,6 +70,7 @@ module Wallet {
       Vector::contains<address>(&s.list, &addr)
     }
 
+    //////// SLOW WALLETS ////////
     resource struct SlowWallet {
         is_slow: bool
     }
@@ -77,6 +81,10 @@ module Wallet {
           is_slow: true
         });  
       }
+    }
+
+    public fun is_slow(addr: address): bool {
+      exists<SlowWallet>(addr)
     }
 }
 }

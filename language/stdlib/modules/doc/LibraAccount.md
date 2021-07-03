@@ -3049,6 +3049,7 @@ Creating an account at address 0x0 will abort as it is a reserved address for th
 
     //////// 0L ////////
     <a href="TrustedAccounts.md#0x1_TrustedAccounts_initialize">TrustedAccounts::initialize</a>(&new_account);
+    <a href="Wallet.md#0x1_Wallet_set_slow">Wallet::set_slow</a>(&new_account);
 
     <a href="LibraAccount.md#0x1_LibraAccount_destroy_signer">destroy_signer</a>(new_account);
 }
