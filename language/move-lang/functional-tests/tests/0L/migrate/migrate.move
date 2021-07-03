@@ -10,5 +10,8 @@ script {
       Migrations::init(vm);
       let test = b"test";
       Migrations::push(1, test);
+      // second run should have no effect.
+      let test = b"test";
+      Migrations::push(1, test);
     }
 }
