@@ -1,4 +1,4 @@
-//! account: alice, 1000000
+//! account: alice, 1000000, 0, validator
 //! account: bob, 1000000
 //! account: carol, 1000000
 
@@ -39,10 +39,8 @@ script {
 //! new-transaction
 //! sender: libraroot
 script {
-    use 0x1::MigrateWallets;
     use 0x1::Wallet;
-    fun main(vm: &signer) { // alice's signer type added in tx.
-      // MigrateWallets::migrate_community_wallets(vm);
+    fun main(_vm: &signer) {
       assert(Wallet::is_comm({{bob}}), 7357008);
       assert(Wallet::is_comm({{carol}}), 7357009);
 
