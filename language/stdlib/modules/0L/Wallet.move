@@ -70,6 +70,78 @@ module Wallet {
       Vector::contains<address>(&s.list, &addr)
     }
 
+
+    // Timed transfer submission
+    resource struct CommunityTransfers {
+      proposed: vector<TimedTransfer>,
+      approved: vector<TimedTransfer>,
+      max_uid: u64,
+
+    }
+    struct TimedTransfer {
+      uid: u64,
+      expire_epoch: u64,
+      payer: address,
+      payee: address,
+      value: u64,
+      description: vector<u8>,
+    }
+
+  public fun init_comm_transfers(vm: &signer) {
+    CoreAddresses::assert_libra_root(vm);
+    move_to<CommunityTransfers>(vm, CommunityTransfers{
+      proposed: Vector::empty<TimedTransfer>(),
+      approved: Vector::empty<TimedTransfer>(),
+      max_uid: 0,
+    })
+  }
+
+  // fun find(uid: u64): Option<Job> acquires Migrations {
+  //   let job_list = &borrow_global<Migrations>(0x0).list;
+  //   let len = Vector::length(job_list);
+  //   let i = 0;
+  //   while (i < len) {
+  //     let j = *Vector::borrow<Job>(job_list, i);
+  //     if (j.uid == uid) {
+  //       return Option::some<Job>(j)
+  //     };
+  //     i = i + 1;
+  //   };
+  //   Option::none<Job>()
+  // }
+
+    public fun new_timed_transfer(sender: &signer, payee: address, value: u64, description: vector<u8>) acquires CommunityTransfers {
+      let d = borrow_global_mut<CommunityTransfers>(0x0);
+      d.max_uid = d.max_uid + 1;
+
+      let t = TimedTransfer {
+          uid: d.max_uid,
+          expire_epoch: 0,
+          payer: Signer::address_of(sender),
+          payee: payee,
+          value: value,
+          description: description,
+        };
+      Vector::push_back<TimedTransfer>(&mut d.proposed, t);
+
+    }
+    // check wallet is in the community list.
+    // add current epoch + 1
+
+
+    // veto()
+    // check sender is in validator set
+    // check all votes are still in validator set
+
+    //Freeze after consecutive freezes
+    // reset freeze count
+
+
+    // Vote to unfreeze a wallet.
+
+
+
+
     //////// SLOW WALLETS ////////
     resource struct SlowWallet {
         is_slow: bool
