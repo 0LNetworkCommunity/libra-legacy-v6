@@ -6,6 +6,7 @@ module Wallet {
     use 0x1::Errors;
     use 0x1::LibraConfig;
     use 0x1::Option::{Self,Option};
+    use 0x1::LibraSystem;
 
     const ERR_PREFIX: u64 = 023;
     //////// COMMUNITY WALLETS ////////
@@ -79,6 +80,7 @@ module Wallet {
     resource struct CommunityTransfers {
       proposed: vector<TimedTransfer>,
       approved: vector<TimedTransfer>,
+      rejected: vector<TimedTransfer>,
       max_uid: u64,
 
     }
@@ -89,6 +91,7 @@ module Wallet {
       payee: address,
       value: u64,
       description: vector<u8>,
+      veto: vector<address>,
     }
 
   public fun init_comm_transfers(vm: &signer) {
@@ -96,6 +99,7 @@ module Wallet {
     move_to<CommunityTransfers>(vm, CommunityTransfers{
       proposed: Vector::empty<TimedTransfer>(),
       approved: Vector::empty<TimedTransfer>(),
+      rejected: Vector::empty<TimedTransfer>(),
       max_uid: 0,
     })
   }
@@ -135,6 +139,7 @@ module Wallet {
           payee: payee,
           value: value,
           description: description,
+          veto: Vector::empty<address>(),
       };
 
       Vector::push_back<TimedTransfer>(&mut d.proposed, t);
@@ -146,11 +151,21 @@ module Wallet {
     }
 
 
-    // veto()
+  public fun veto(sender: &signer, uid: u64) acquires CommunityTransfers {
+     let addr = Signer::address_of(sender);
+    assert(
+      LibraSystem::is_validator(addr),
+      Errors::requires_role(ERR_PREFIX + 001)
+    );
+    let opt = find_proposed(uid);
+    if (Option::is_some<TimedTransfer>(&opt)) {
+      let t = Option::extract<TimedTransfer>(&mut opt);
+      Vector::push_back<address>(&mut t.veto, addr);
+    }
     // check sender is in validator set
     // check all votes are still in validator set
-
-    //Freeze()
+  }
+    // Freeze()
     /// after consecutive freezes
     // reset freeze count
 
