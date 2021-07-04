@@ -25,6 +25,8 @@ pub struct AutoPayResource {
 pub struct AutoPayView {
     /// 
     pub payments: Vec<PaymentView>,
+    ///
+    pub recurring_sum: u64,
 }
 
 /// Autopay instruction
@@ -127,6 +129,16 @@ impl AutoPayResource {
                 amount: each.get_amount_formatted(),
             }
         }).collect();
-        AutoPayView { payments: payments }
+
+        // sum amount of recurring instructions
+        let sum = self.payment.iter()
+            .filter(|payment| payment.in_type == 0u8)
+            .map(|x| x.amt)
+            .sum();
+
+        AutoPayView { 
+            payments: payments,
+            recurring_sum: sum,
+        }
     }
 }

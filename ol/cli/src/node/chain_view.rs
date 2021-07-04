@@ -39,6 +39,8 @@ pub struct ChainView {
   pub validator_view: Option<Vec<ValidatorView>>,
   /// validators stats
   pub validators_stats: Option<ValidatorsStatsResource>,
+  /// audit stats
+  pub vals_config_stats: Option<ValsConfigStats>,
 }
 
 #[derive(Default, Debug, Deserialize, Serialize, Clone)]
@@ -74,6 +76,25 @@ pub struct ValidatorView {
   pub validator_config: Option<ValidatorConfigView>,
   /// autopay instructions
   pub autopay: Option<AutoPayView>,
+}
+
+/// Validators config stats
+#[derive(Default, Debug, Deserialize, Serialize, Clone)]
+pub struct ValsConfigStats {
+  /// total #vals in the stats
+  pub total_vals: usize,
+  /// total of vals with autopay set
+  pub count_vals_with_autopay: u64,
+  /// total of vals with operator account
+  pub count_vals_with_operator: u64,
+  /// total of vals having operator with balance greater than zero
+  pub count_positive_balance_operators: u64,
+  /// percentage of vals with autopay set
+  pub percent_vals_with_autopay: f64,
+  /// percentage of vals with operator account
+  pub percent_vals_with_operator: f64,
+  /// percentage of vals having operator with balance greater than zero
+  pub percent_positive_balance_operators: f64,
 }
 
 impl Node {
@@ -207,6 +228,7 @@ impl Node {
       
       cs.validator_view = Some(validators.clone());
       cs.validators_stats = Some(validators_stats);
+      cs.vals_config_stats = Some(calc_config_stats(cs.validator_view.clone().unwrap()));
 
       self.vitals.chain_view = Some(cs.clone());
 
@@ -214,5 +236,33 @@ impl Node {
     }
 
     (None, None)
+  }
+}
+
+fn calc_config_stats(vals: Vec<ValidatorView>) -> ValsConfigStats {
+  let mut count_autopay = 0;
+  let mut count_operators = 0;
+  let mut count_positive_balance = 0;
+
+  for val in vals.iter() {
+    let config = val.validator_config.clone().unwrap();
+    if val.autopay.is_some() {
+      count_autopay += 1;
+    }
+    if config.operator_account.is_some() {
+      count_operators += 1;
+    }
+    if config.operator_has_balance.is_some() && config.operator_has_balance.unwrap() {
+      count_positive_balance += 1;
+    } 
+  }
+  ValsConfigStats {
+    total_vals: vals.len(),
+    count_vals_with_autopay: count_autopay,
+    count_vals_with_operator: count_operators,
+    count_positive_balance_operators: count_positive_balance,
+    percent_vals_with_autopay: count_autopay as f64 / vals.len() as f64,
+    percent_vals_with_operator: count_operators as f64 / vals.len() as f64,
+    percent_positive_balance_operators: count_positive_balance as f64 / vals.len() as f64,
   }
 }
