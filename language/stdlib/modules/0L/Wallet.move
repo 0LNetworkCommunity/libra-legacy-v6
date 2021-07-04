@@ -7,6 +7,7 @@ module Wallet {
     use 0x1::LibraConfig;
     use 0x1::Option::{Self,Option};
     use 0x1::LibraSystem;
+    use 0x1::NodeWeight;
 
     const ERR_PREFIX: u64 = 023;
     //////// COMMUNITY WALLETS ////////
@@ -161,10 +162,56 @@ module Wallet {
     if (Option::is_some<TimedTransfer>(&opt)) {
       let t = Option::extract<TimedTransfer>(&mut opt);
       Vector::push_back<address>(&mut t.veto, addr);
-    }
-    // check sender is in validator set
-    // check all votes are still in validator set
+      if (tally_veto(t)) {
+        reject(uid)
+      }
+    };
   }
+
+  fun reject(uid: u64) acquires CommunityTransfers {
+    let c = borrow_global_mut<CommunityTransfers>(0x0);
+    let list = *&c.proposed;
+    let len = Vector::length(&list);
+    let i = 0;
+    while (i < len) {
+      let t = *Vector::borrow<TimedTransfer>(&list, i);
+      if (t.uid == uid) {
+        Vector::remove<TimedTransfer>(&mut c.proposed, 1);
+      };
+      i = i + 1;
+    };
+  }
+  fun tally_veto(t: TimedTransfer): bool {
+    let votes = 0;
+    let threshold = calculate_proportional_voting_threshold();
+
+    let k = 0;
+    let len = Vector::length<address>(&t.veto);
+    while (k < len) {
+      let addr = *Vector::borrow<address>(&t.veto, k);
+      // ignore votes that are no longer in the validator set,
+      // BUT DON'T REMOVE, since they may rejoin the validator set, and shouldn't need to vote again.
+      if (LibraSystem::is_validator(addr)) {
+        votes = votes + NodeWeight::proof_of_weight(addr)
+      };
+      k = k + 1;
+    };
+
+    return votes > threshold
+  }
+
+    fun calculate_proportional_voting_threshold(): u64 {
+        let val_set_size = LibraSystem::validator_set_size();
+        let i = 0;
+        let voting_power = 0;
+        while (i < val_set_size) {
+          let addr = LibraSystem::get_ith_validator_address(i);
+          voting_power = voting_power + NodeWeight::proof_of_weight(addr);
+          i = i + 1;
+        };
+        let threshold = voting_power * 2 / 3;
+        threshold
+    }
     // Freeze()
     /// after consecutive freezes
     // reset freeze count
