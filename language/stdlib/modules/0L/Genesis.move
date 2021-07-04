@@ -102,6 +102,7 @@ module Genesis {
         Oracle::initialize(lr_account);
         MinerState::init_list(lr_account);
         Wallet::init_comm_list(lr_account);
+        Wallet::init_comm_transfers(lr_account);
         Migrations::init(lr_account);
 
         // After we have called this function, all invariants which are guarded by

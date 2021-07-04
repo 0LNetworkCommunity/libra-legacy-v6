@@ -3,7 +3,11 @@ module Wallet {
     use 0x1::CoreAddresses;
     use 0x1::Vector;
     use 0x1::Signer;
+    use 0x1::Errors;
+    use 0x1::LibraConfig;
+    use 0x1::Option::{Self,Option};
 
+    const ERR_PREFIX: u64 = 023;
     //////// COMMUNITY WALLETS ////////
 
     resource struct CommunityWallets {
@@ -96,44 +100,58 @@ module Wallet {
     })
   }
 
-  // fun find(uid: u64): Option<Job> acquires Migrations {
-  //   let job_list = &borrow_global<Migrations>(0x0).list;
-  //   let len = Vector::length(job_list);
-  //   let i = 0;
-  //   while (i < len) {
-  //     let j = *Vector::borrow<Job>(job_list, i);
-  //     if (j.uid == uid) {
-  //       return Option::some<Job>(j)
-  //     };
-  //     i = i + 1;
-  //   };
-  //   Option::none<Job>()
-  // }
+  fun find_proposed(uid: u64): Option<TimedTransfer> acquires CommunityTransfers {
+    let list = &borrow_global<CommunityTransfers>(0x0).proposed;
+    let len = Vector::length(list);
+    let i = 0;
+    while (i < len) {
+      let t = *Vector::borrow<TimedTransfer>(list, i);
+      if (t.uid == uid) {
+        return Option::some<TimedTransfer>(t)
+      };
+      i = i + 1;
+    };
+    Option::none<TimedTransfer>()
+  }
 
-    public fun new_timed_transfer(sender: &signer, payee: address, value: u64, description: vector<u8>) acquires CommunityTransfers {
+  public fun new_timed_transfer(sender: &signer, payee: address, value: u64, description: vector<u8>): u64 acquires CommunityTransfers, CommunityWallets {
+      let sender_addr = Signer::address_of(sender);
+      let list = get_comm_list();
+        
+      assert(
+        Vector::contains<address>(&list, &sender_addr), Errors::requires_role(ERR_PREFIX + 001)
+      );
+
       let d = borrow_global_mut<CommunityTransfers>(0x0);
       d.max_uid = d.max_uid + 1;
+      
+      // add current epoch + 1
+      let current_epoch = LibraConfig::get_current_epoch();
 
       let t = TimedTransfer {
           uid: d.max_uid,
-          expire_epoch: 0,
-          payer: Signer::address_of(sender),
+          expire_epoch: current_epoch + 7,
+          payer: sender_addr,
           payee: payee,
           value: value,
           description: description,
-        };
-      Vector::push_back<TimedTransfer>(&mut d.proposed, t);
+      };
 
+      Vector::push_back<TimedTransfer>(&mut d.proposed, t);
+      return d.max_uid
     }
-    // check wallet is in the community list.
-    // add current epoch + 1
+
+    public fun transfer_is_proposed(uid: u64): bool acquires  CommunityTransfers {
+      Option::is_some<TimedTransfer>(&find_proposed(uid))
+    }
 
 
     // veto()
     // check sender is in validator set
     // check all votes are still in validator set
 
-    //Freeze after consecutive freezes
+    //Freeze()
+    /// after consecutive freezes
     // reset freeze count
 
 
