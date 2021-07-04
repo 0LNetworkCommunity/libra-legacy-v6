@@ -9,7 +9,7 @@
   </h3>
   
   {#if account}
-    {#if account.auto_pay && account.auto_pay.payments.length > 0}
+    {#if account.autopay && account.autopay.payments.length > 0}
       <table class="uk-table">
         <thead>
           <tr>
@@ -21,7 +21,7 @@
           </tr>
         </thead>
         <tbody>
-          {#each account.auto_pay.payments as {uid, type_desc, payee, end_epoch, amount}}
+          {#each account.autopay.payments as {uid, type_desc, payee, end_epoch, amount}}
             <tr>
               <td class="uk-text-center">{uid}</td>
               <td class="uk-text-center">{type_desc}</td>

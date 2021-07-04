@@ -3,8 +3,10 @@ use chrono::Utc;
 use libra_json_rpc_client::views::{OracleResourceView};
 use libra_types::{
   account_address::AccountAddress, account_state::AccountState, waypoint::Waypoint,
-  validators_stats::ValidatorsStatsResource,
+  validators_stats::ValidatorsStatsResource
 };
+use ol_types::{validator_config::ValidatorConfigView, autopay::AutoPayView};
+
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 use super::node::Node;
@@ -68,6 +70,10 @@ pub struct ValidatorView {
   pub vote_count_in_epoch: u64,
   /// total block propositions in current epoch
   pub prop_count_in_epoch: u64,
+  /// validator config in the chain
+  pub validator_config: Option<ValidatorConfigView>,
+  /// autopay instructions
+  pub autopay: Option<AutoPayView>,
 }
 
 impl Node {
@@ -173,6 +179,8 @@ impl Node {
             .unwrap();
 
           let validator_stats = validators_stats.get_validator_current_stats(v.account_address().clone());
+          let val_config = self.get_validator_config(v.account_address().clone());
+          let autopay = self.get_autopay_view(v.account_address().clone());
 
           ValidatorView {
             account_address: v.account_address().to_string(),
@@ -191,6 +199,8 @@ impl Node {
             epochs_since_last_account_creation: ms.epochs_since_last_account_creation,
             vote_count_in_epoch: validator_stats.vote_count,
             prop_count_in_epoch: validator_stats.prop_count,
+            validator_config: val_config,
+            autopay: autopay
           }
         })
         .collect();

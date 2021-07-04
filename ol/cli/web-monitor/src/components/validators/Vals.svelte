@@ -1,6 +1,9 @@
 <script lang="ts">
-  import ValidatorModal from "./ValidatorModal.svelte";
+  import { validate_component } from "svelte/internal";
+import ValidatorModal from "./ValidatorModal.svelte";
   export let data;
+
+  const modal_id = "vals-tab-val-modal";
 
   interface ValInfo {
     account_address: string;
@@ -44,6 +47,12 @@
   }
 </script>
 
+<style>
+  .owner {
+    background: #d9f3ff;
+  }
+</style>
+
 <main uk-height-viewport="expand: true">
   <h2 class="uk-text-center uk-text-uppercase uk-text-muted uk-text-light uk-margin-medium-bottom">
     <span>{set.length} Validators</span>
@@ -70,7 +79,7 @@
     </thead>
     <tbody>
       {#each set as val, i}
-        <tr on:click={() => selectedVal = val}>        
+      <tr class="{val.account_address === data.account_view.address ? 'owner' : ''}" on:click={() => selectedVal = val}>        
           <td class="uk-visible@s uk-text-center">{val.account_address}</td>
           <td class="uk-hidden@s uk-text-truncate">{val.account_address}</td>
           <td class="uk-text-right">{val.voting_power}</td>
@@ -79,12 +88,12 @@
           <td class="uk-text-right">{val.vote_count_in_epoch}</td>
           <td class="uk-text-right">{val.prop_count_in_epoch}</td>
           <td>
-            <span uk-icon="icon: info" uk-toggle="target: #validator-modal"></span>
+            <span uk-icon="icon: info" uk-toggle="target: #{modal_id}"></span>
           </td>
         </tr>
       {/each}
     </tbody>
   </table>
 
-  <ValidatorModal validator={selectedVal}></ValidatorModal>
+  <ValidatorModal validator={selectedVal} id={modal_id}></ValidatorModal>
 </main>

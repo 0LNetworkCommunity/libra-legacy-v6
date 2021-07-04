@@ -6,6 +6,7 @@
         <li><a href="#">Validators</a></li>
         <li><a href="#">Upgrades</a></li>
         <li><a href="#">Autopay</a></li>
+        <li><a href="#">Audit</a></li>
       </ul>
     </div>
   </nav>

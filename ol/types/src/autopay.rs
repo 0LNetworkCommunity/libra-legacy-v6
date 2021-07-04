@@ -1,4 +1,4 @@
-//! miner state view for cli
+//! autopay view for web monitor
 
 use libra_types::{
     access_path::AccessPath,
