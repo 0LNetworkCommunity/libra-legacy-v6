@@ -16,6 +16,11 @@ module Wallet {
         list: vector<address>
     }
 
+    resource struct CommunityFreeze {
+        consecutive_rejections: u64
+    }
+
+
     public fun init_comm_list(vm: &signer) {
       CoreAddresses::assert_libra_root(vm);
       if (!exists<CommunityWallets>(0x0)) {
@@ -32,7 +37,11 @@ module Wallet {
         if (!Vector::contains<address>(&list, &addr)) {
             let s = borrow_global_mut<CommunityWallets>(0x0);
             Vector::push_back(&mut s.list, addr);
-          }
+        };
+
+        move_to<CommunityFreeze>(sig, CommunityFreeze {
+          consecutive_rejections: 0
+        })
       }
     }
 
@@ -168,6 +177,7 @@ module Wallet {
     };
   }
 
+  // reject a transaction and removed from proposed list if vetoed
   fun reject(uid: u64) acquires CommunityTransfers {
     let c = borrow_global_mut<CommunityTransfers>(0x0);
     let list = *&c.proposed;
@@ -178,8 +188,10 @@ module Wallet {
       if (t.uid == uid) {
         Vector::remove<TimedTransfer>(&mut c.proposed, 1);
       };
+      Vector::push_back(&mut c.rejected, t);
       i = i + 1;
     };
+    
   }
   fun tally_veto(t: TimedTransfer): bool {
     let votes = 0;
@@ -200,18 +212,28 @@ module Wallet {
     return votes > threshold
   }
 
-    fun calculate_proportional_voting_threshold(): u64 {
-        let val_set_size = LibraSystem::validator_set_size();
-        let i = 0;
-        let voting_power = 0;
-        while (i < val_set_size) {
-          let addr = LibraSystem::get_ith_validator_address(i);
-          voting_power = voting_power + NodeWeight::proof_of_weight(addr);
-          i = i + 1;
-        };
-        let threshold = voting_power * 2 / 3;
-        threshold
-    }
+  // get the total voting power of the validator set, and find the 2/3rds threshold
+  fun calculate_proportional_voting_threshold(): u64 {
+      let val_set_size = LibraSystem::validator_set_size();
+      let i = 0;
+      let voting_power = 0;
+      while (i < val_set_size) {
+        let addr = LibraSystem::get_ith_validator_address(i);
+        voting_power = voting_power + NodeWeight::proof_of_weight(addr);
+        i = i + 1;
+      };
+      let threshold = voting_power * 2 / 3;
+      threshold
+  }
+
+    // Process Transactions
+    // reset approved list
+    // clear the freeze count.
+    // pop off proposed list
+    // add to approved list
+    // transfer funds
+
+
     // Freeze()
     /// after consecutive freezes
     // reset freeze count
