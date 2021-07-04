@@ -1,7 +1,7 @@
 <script lang="ts">
     import "/layout/Style.svelte";
     export let account;
-  </script>
+</script>
 
 <div class="uk-card uk-card-default uk-card-body uk-margin-bottom">
   <h3 class="uk-card-title uk-text-center uk-text-uppercase uk-text-muted uk-text-large">

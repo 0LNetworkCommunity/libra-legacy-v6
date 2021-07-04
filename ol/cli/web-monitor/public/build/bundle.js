@@ -21754,7 +21754,7 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (70:4) {:else}
+    // (73:4) {:else}
     function create_else_block_3(ctx) {
     	let t;
 
@@ -21775,14 +21775,14 @@ var app = (function () {
     		block,
     		id: create_else_block_3.name,
     		type: "else",
-    		source: "(70:4) {:else}",
+    		source: "(73:4) {:else}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (26:4) {#if data.chain_view}
+    // (29:4) {#if data.chain_view}
     function create_if_block(ctx) {
     	let table;
     	let thead;
@@ -21837,21 +21837,21 @@ var app = (function () {
     			}
 
     			attr_dev(th0, "class", "uk-text-center");
-    			add_location(th0, file$2, 29, 20, 925);
+    			add_location(th0, file$2, 32, 20, 1012);
     			attr_dev(th1, "class", "uk-text-center");
-    			add_location(th1, file$2, 30, 20, 987);
+    			add_location(th1, file$2, 33, 20, 1074);
     			attr_dev(th2, "class", "uk-text-center");
-    			add_location(th2, file$2, 31, 20, 1047);
-    			add_location(br, file$2, 32, 59, 1155);
+    			add_location(th2, file$2, 34, 20, 1134);
+    			add_location(br, file$2, 35, 59, 1242);
     			attr_dev(th3, "class", "uk-text-center");
-    			add_location(th3, file$2, 32, 20, 1116);
+    			add_location(th3, file$2, 35, 20, 1203);
     			attr_dev(th4, "class", "uk-text-center");
-    			add_location(th4, file$2, 33, 20, 1201);
-    			add_location(tr, file$2, 28, 16, 900);
-    			add_location(thead, file$2, 27, 12, 876);
-    			add_location(tbody, file$2, 36, 12, 1289);
+    			add_location(th4, file$2, 36, 20, 1288);
+    			add_location(tr, file$2, 31, 16, 987);
+    			add_location(thead, file$2, 30, 12, 963);
+    			add_location(tbody, file$2, 39, 12, 1376);
     			attr_dev(table, "class", "uk-table");
-    			add_location(table, file$2, 26, 8, 839);
+    			add_location(table, file$2, 29, 8, 926);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, table, anchor);
@@ -21911,14 +21911,14 @@ var app = (function () {
     		block,
     		id: create_if_block.name,
     		type: "if",
-    		source: "(26:4) {#if data.chain_view}",
+    		source: "(29:4) {#if data.chain_view}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (45:28) {:else}
+    // (48:28) {:else}
     function create_else_block_2(ctx) {
     	let span;
 
@@ -21927,7 +21927,7 @@ var app = (function () {
     			span = element("span");
     			attr_dev(span, "class", "uk-text-danger");
     			attr_dev(span, "uk-icon", "icon: close");
-    			add_location(span, file$2, 45, 32, 1837);
+    			add_location(span, file$2, 48, 32, 1924);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -21941,14 +21941,14 @@ var app = (function () {
     		block,
     		id: create_else_block_2.name,
     		type: "else",
-    		source: "(45:28) {:else}",
+    		source: "(48:28) {:else}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (43:28) {#if val.has_autopay}
+    // (46:28) {#if val.has_autopay}
     function create_if_block_3(ctx) {
     	let span;
 
@@ -21957,7 +21957,7 @@ var app = (function () {
     			span = element("span");
     			attr_dev(span, "class", "uk-text-success");
     			attr_dev(span, "uk-icon", "icon: check");
-    			add_location(span, file$2, 43, 32, 1705);
+    			add_location(span, file$2, 46, 32, 1792);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -21971,14 +21971,14 @@ var app = (function () {
     		block,
     		id: create_if_block_3.name,
     		type: "if",
-    		source: "(43:28) {#if val.has_autopay}",
+    		source: "(46:28) {#if val.has_autopay}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (52:28) {:else}
+    // (55:28) {:else}
     function create_else_block_1(ctx) {
     	let span;
 
@@ -21987,7 +21987,7 @@ var app = (function () {
     			span = element("span");
     			attr_dev(span, "class", "uk-text-danger");
     			attr_dev(span, "uk-icon", "icon: close");
-    			add_location(span, file$2, 52, 32, 2229);
+    			add_location(span, file$2, 55, 32, 2316);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -22001,14 +22001,14 @@ var app = (function () {
     		block,
     		id: create_else_block_1.name,
     		type: "else",
-    		source: "(52:28) {:else}",
+    		source: "(55:28) {:else}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (50:28) {#if val.has_op_account}
+    // (53:28) {#if val.has_op_account}
     function create_if_block_2(ctx) {
     	let span;
 
@@ -22017,7 +22017,7 @@ var app = (function () {
     			span = element("span");
     			attr_dev(span, "class", "uk-text-success");
     			attr_dev(span, "uk-icon", "icon: check");
-    			add_location(span, file$2, 50, 32, 2097);
+    			add_location(span, file$2, 53, 32, 2184);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -22031,14 +22031,14 @@ var app = (function () {
     		block,
     		id: create_if_block_2.name,
     		type: "if",
-    		source: "(50:28) {#if val.has_op_account}",
+    		source: "(53:28) {#if val.has_op_account}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (59:28) {:else}
+    // (62:28) {:else}
     function create_else_block(ctx) {
     	let span;
 
@@ -22047,7 +22047,7 @@ var app = (function () {
     			span = element("span");
     			attr_dev(span, "class", "uk-text-danger");
     			attr_dev(span, "uk-icon", "icon: close");
-    			add_location(span, file$2, 59, 32, 2621);
+    			add_location(span, file$2, 62, 32, 2708);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -22061,14 +22061,14 @@ var app = (function () {
     		block,
     		id: create_else_block.name,
     		type: "else",
-    		source: "(59:28) {:else}",
+    		source: "(62:28) {:else}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (57:28) {#if val.has_op_balance}
+    // (60:28) {#if val.has_op_balance}
     function create_if_block_1(ctx) {
     	let span;
 
@@ -22077,7 +22077,7 @@ var app = (function () {
     			span = element("span");
     			attr_dev(span, "class", "uk-text-success");
     			attr_dev(span, "uk-icon", "icon: check");
-    			add_location(span, file$2, 57, 32, 2489);
+    			add_location(span, file$2, 60, 32, 2576);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -22091,14 +22091,14 @@ var app = (function () {
     		block,
     		id: create_if_block_1.name,
     		type: "if",
-    		source: "(57:28) {#if val.has_op_balance}",
+    		source: "(60:28) {#if val.has_op_balance}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (38:16) {#each audit_set as val}
+    // (41:16) {#each audit_set as val}
     function create_each_block(ctx) {
     	let tr;
     	let td0;
@@ -22171,21 +22171,21 @@ var app = (function () {
     			span = element("span");
     			t7 = space();
     			attr_dev(td0, "class", "uk-visible@s uk-text-center");
-    			add_location(td0, file$2, 39, 24, 1428);
+    			add_location(td0, file$2, 42, 24, 1515);
     			attr_dev(td1, "class", "uk-hidden@s uk-text-truncate");
-    			add_location(td1, file$2, 40, 24, 1511);
+    			add_location(td1, file$2, 43, 24, 1598);
     			attr_dev(td2, "class", "uk-text-center");
-    			add_location(td2, file$2, 41, 24, 1595);
+    			add_location(td2, file$2, 44, 24, 1682);
     			attr_dev(td3, "class", "uk-text-center");
-    			add_location(td3, file$2, 48, 24, 1984);
+    			add_location(td3, file$2, 51, 24, 2071);
     			attr_dev(td4, "class", "uk-text-center");
-    			add_location(td4, file$2, 55, 24, 2376);
+    			add_location(td4, file$2, 58, 24, 2463);
     			attr_dev(span, "uk-icon", "icon: info");
     			attr_dev(span, "uk-toggle", "target: #" + modal_id);
-    			add_location(span, file$2, 63, 28, 2824);
+    			add_location(span, file$2, 66, 28, 2911);
     			attr_dev(td5, "class", "uk-text-center");
-    			add_location(td5, file$2, 62, 24, 2768);
-    			add_location(tr, file$2, 38, 20, 1358);
+    			add_location(td5, file$2, 65, 24, 2855);
+    			add_location(tr, file$2, 41, 20, 1445);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, tr, anchor);
@@ -22262,7 +22262,7 @@ var app = (function () {
     		block,
     		id: create_each_block.name,
     		type: "each",
-    		source: "(38:16) {#each audit_set as val}",
+    		source: "(41:16) {#each audit_set as val}",
     		ctx
     	});
 
@@ -22303,8 +22303,8 @@ var app = (function () {
     			t2 = space();
     			create_component(validatormodal.$$.fragment);
     			attr_dev(h3, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted uk-text-large");
-    			add_location(h3, file$2, 22, 4, 676);
-    			add_location(div, file$2, 21, 0, 666);
+    			add_location(h3, file$2, 25, 4, 763);
+    			add_location(div, file$2, 24, 0, 753);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -22401,7 +22401,7 @@ var app = (function () {
     	}
 
     	$$self.$$.update = () => {
-    		if ($$self.$$.dirty & /*data*/ 1) {
+    		if ($$self.$$.dirty & /*data, selected_val, audit_set*/ 7) {
     			if (data.chain_view) {
     				$$invalidate(1, audit_set = data.chain_view.validator_view.map(each => {
     					return {
@@ -22412,6 +22412,10 @@ var app = (function () {
     						has_op_balance: each.validator_config.operator_has_balance
     					};
     				}));
+
+    				if (selected_val == null) {
+    					$$invalidate(2, selected_val = audit_set[0]);
+    				}
     			}
     		}
     	};

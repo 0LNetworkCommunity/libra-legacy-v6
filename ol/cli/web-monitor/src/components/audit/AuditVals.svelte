@@ -16,6 +16,9 @@
                 has_op_balance: each.validator_config.operator_has_balance
             }
         })
+        if (selected_val == null) {
+            selected_val = audit_set[0];
+        }
     }
 </script>
 

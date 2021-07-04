@@ -35,6 +35,7 @@ use std::{
     path::PathBuf,
     thread, time,
 };
+
 /// All the parameters needed for a client transaction.
 #[derive(Debug)]
 pub struct TxParams {
@@ -161,6 +162,8 @@ fn stage(
     (signer_account_data, txn)
 }
 /// Submit a transaction to the network.
+
+
 pub fn submit_tx(
     mut client: LibraClient,
     txn: SignedTransaction,
@@ -386,6 +389,8 @@ pub fn wait_for_tx(
         signer_address, sequence_number
     );
 
+    let mut iter = 0;
+    const MAX_ITERATIONS: u8 = 10; // 5000 * 2/1000
     loop {
         thread::sleep(time::Duration::from_millis(1000));
         // prevent all the logging the client does while
@@ -402,6 +407,11 @@ pub fn wait_for_tx(
             _ => {
                 print!(".");
             }
+        }
+        iter += 1;
+
+        if iter==MAX_ITERATIONS {
+            return None;
         }
     }
 }
