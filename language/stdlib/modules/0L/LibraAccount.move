@@ -1046,7 +1046,7 @@ module LibraAccount {
 
     use 0x1::Debug::print;
     //////// 0L ////////
-    public fun process_community_wallets(_vm: &signer, epoch: u64) {
+    public fun process_community_wallets(vm: &signer, epoch: u64) acquires LibraAccount, Balance, AccountOperationsCapability {
       let v = Wallet::list_tx_by_epoch(epoch);
 
       let len = Vector::length<Wallet::TimedTransfer>(&v);
@@ -1059,12 +1059,10 @@ module LibraAccount {
         print(&payee);
         print(&value);
         print(&description);
-        // vm_make_payment_no_limit<GAS>(t.payer, t.payee, t.value, t.description, b"", vm);
+        vm_make_payment_no_limit<GAS>(payer, payee, value, description, b"", vm);
 
         i = i + 1;
       };
-
-      
     }
 
     public fun vm_make_payment_no_limit<Token>(

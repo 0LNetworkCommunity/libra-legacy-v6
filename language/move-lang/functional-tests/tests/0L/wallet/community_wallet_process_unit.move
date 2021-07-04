@@ -1,5 +1,5 @@
 //! account: alice, 1000000, 0
-//! account: bob, 1000000, 0
+//! account: bob, 0, 0
 
 
 //! new-transaction
@@ -27,18 +27,16 @@ script {
 //! sender: libraroot
 script {
     use 0x1::LibraAccount;
-    use 0x1::LibraConfig;
     use 0x1::GAS::GAS;
-    use 0x1::Debug::print;
 
     fun main(vm: &signer) {
-
-      let e = LibraConfig::get_current_epoch();
-      print(&e);
       let bob_balance = LibraAccount::balance<GAS>({{bob}});
+      assert(bob_balance == 0, 7357004);
 
-      print(&bob_balance);
       LibraAccount::process_community_wallets(vm, 4);
+
+      let bob_balance = LibraAccount::balance<GAS>({{bob}});
+      assert(bob_balance == 100, 7357005);
     }
 }
 
