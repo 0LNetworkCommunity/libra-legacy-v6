@@ -101,7 +101,13 @@ module Wallet {
       payee: address,
       value: u64,
       description: vector<u8>,
-      veto: vector<address>,
+      veto: Veto,
+    }
+
+    struct Veto {
+      list: vector<address>,
+      count: u64,
+      threshold: u64,
     }
 
   public fun init_comm_transfers(vm: &signer) {
@@ -114,19 +120,7 @@ module Wallet {
     })
   }
 
-  fun find_proposed(uid: u64): Option<TimedTransfer> acquires CommunityTransfers {
-    let list = &borrow_global<CommunityTransfers>(0x0).proposed;
-    let len = Vector::length(list);
-    let i = 0;
-    while (i < len) {
-      let t = *Vector::borrow<TimedTransfer>(list, i);
-      if (t.uid == uid) {
-        return Option::some<TimedTransfer>(t)
-      };
-      i = i + 1;
-    };
-    Option::none<TimedTransfer>()
-  }
+
 
   public fun new_timed_transfer(sender: &signer, payee: address, value: u64, description: vector<u8>): u64 acquires CommunityTransfers, CommunityWallets {
       let sender_addr = Signer::address_of(sender);
@@ -149,29 +143,52 @@ module Wallet {
           payee: payee,
           value: value,
           description: description,
-          veto: Vector::empty<address>(),
+          veto: Veto {
+            list: Vector::empty<address>(),
+            count: 0,
+            threshold: 0,
+          }
       };
 
       Vector::push_back<TimedTransfer>(&mut d.proposed, t);
       return d.max_uid
     }
 
-    public fun transfer_is_proposed(uid: u64): bool acquires  CommunityTransfers {
-      Option::is_some<TimedTransfer>(&find_proposed(uid))
-    }
+  public fun find(uid: u64, type_of: u8): (Option<TimedTransfer>, u64) acquires CommunityTransfers {
+    let c = borrow_global<CommunityTransfers>(0x0);
+    let list = if (type_of == 0) {
+      &c.proposed
+    } else if (type_of == 1) {
+      &c.approved
+    } else {
+      &c.rejected
+    };
 
-
+    let len = Vector::length(list);
+    let i = 0;
+    while (i < len) {
+      let t = *Vector::borrow<TimedTransfer>(list, i);
+      if (t.uid == uid) {
+        return (Option::some<TimedTransfer>(t), i)
+      };
+      i = i + 1;
+    };
+    (Option::none<TimedTransfer>(), 0)
+  }
+  
   public fun veto(sender: &signer, uid: u64) acquires CommunityTransfers {
      let addr = Signer::address_of(sender);
     assert(
       LibraSystem::is_validator(addr),
       Errors::requires_role(ERR_PREFIX + 001)
     );
-    let opt = find_proposed(uid);
+    let (opt, i) = find(uid, 0);
     if (Option::is_some<TimedTransfer>(&opt)) {
-      let t = Option::extract<TimedTransfer>(&mut opt);
-      Vector::push_back<address>(&mut t.veto, addr);
-      if (tally_veto(t)) {
+      let c = borrow_global_mut<CommunityTransfers>(0x0);
+      let t = Vector::borrow_mut<TimedTransfer>(&mut c.proposed, i);
+      Vector::push_back<address>(&mut t.veto.list, addr);
+
+      if (tally_veto(i)) {
         reject(uid)
       }
     };
@@ -183,31 +200,43 @@ module Wallet {
     let list = *&c.proposed;
     let len = Vector::length(&list);
     let i = 0;
+
     while (i < len) {
+
       let t = *Vector::borrow<TimedTransfer>(&list, i);
       if (t.uid == uid) {
-        Vector::remove<TimedTransfer>(&mut c.proposed, 1);
+        Vector::remove<TimedTransfer>(&mut c.proposed, i);
+        Vector::push_back(&mut c.rejected, t);
       };
-      Vector::push_back(&mut c.rejected, t);
+
       i = i + 1;
     };
     
   }
-  fun tally_veto(t: TimedTransfer): bool {
+
+  fun tally_veto(index: u64): bool acquires CommunityTransfers {
+    let c = borrow_global_mut<CommunityTransfers>(0x0);
+    let t = Vector::borrow_mut<TimedTransfer>(&mut c.proposed, index);
+
     let votes = 0;
     let threshold = calculate_proportional_voting_threshold();
-
+    
     let k = 0;
-    let len = Vector::length<address>(&t.veto);
+    let len = Vector::length<address>(&t.veto.list);
+
     while (k < len) {
-      let addr = *Vector::borrow<address>(&t.veto, k);
+      let addr = *Vector::borrow<address>(&t.veto.list, k);
       // ignore votes that are no longer in the validator set,
       // BUT DON'T REMOVE, since they may rejoin the validator set, and shouldn't need to vote again.
+
       if (LibraSystem::is_validator(addr)) {
         votes = votes + NodeWeight::proof_of_weight(addr)
       };
       k = k + 1;
     };
+
+    t.veto.count = votes;
+    t.veto.threshold = threshold;
 
     return votes > threshold
   }
@@ -218,7 +247,7 @@ module Wallet {
       let i = 0;
       let voting_power = 0;
       while (i < val_set_size) {
-        let addr = LibraSystem::get_ith_validator_address(i);
+        let addr = LibraSystem::get_ith_validator_address(i);        
         voting_power = voting_power + NodeWeight::proof_of_weight(addr);
         i = i + 1;
       };
@@ -238,11 +267,20 @@ module Wallet {
     /// after consecutive freezes
     // reset freeze count
 
-
+    // unfreeze()
     // Vote to unfreeze a wallet.
 
 
+    //////// GETTERS ////////
+    public fun transfer_is_proposed(uid: u64): bool acquires  CommunityTransfers {
+      let (opt, _) = find(uid, 0);
+      Option::is_some<TimedTransfer>(&opt)
+    }
 
+    public fun transfer_is_rejected(uid: u64): bool acquires  CommunityTransfers {
+      let (opt, _) = find(uid, 2);
+      Option::is_some<TimedTransfer>(&opt)
+    }
 
     //////// SLOW WALLETS ////////
     resource struct SlowWallet {
