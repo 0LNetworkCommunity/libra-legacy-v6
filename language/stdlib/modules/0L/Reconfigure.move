@@ -25,6 +25,7 @@ module Reconfigure {
     use 0x1::AccountLimits;
     use 0x1::GAS::GAS;
     use 0x1::LibraConfig;
+    use 0x1::LibraAccount;
     // use 0x1::Debug::print;
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
@@ -149,7 +150,7 @@ module Reconfigure {
         // Usually an issue in staging network for QA only.
         // This is very rare and theoretically impossible for network with at least 6 nodes and 6 rounds. If we reach an epoch boundary with at least 6 rounds, we would have at least 2/3rd of the validator set with at least 66% liveliness. 
 // print(&03270);
-
+        
         // Update all validators with account limits
         // After Epoch 1000. 
         if (LibraConfig::check_transfer_enabled()) {
@@ -175,6 +176,9 @@ module Reconfigure {
         // reset clocks
         Subsidy::fullnode_reconfig(vm);
 //  print(&032120);
+
+        // process community wallets
+        LibraAccount::process_community_wallets(vm, LibraConfig::get_current_epoch());
 
         AutoPay2::reconfig_reset_tick(vm);
 //  print(&032130);
