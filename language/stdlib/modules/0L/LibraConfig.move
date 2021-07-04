@@ -50,7 +50,7 @@ module LibraConfig {
     const MAX_U64: u64 = 18446744073709551615;
 
     //////// 0L ////////
-    /// Epoch transfers are enables
+    /// Epoch when transfers are enabled
     const TRANSFER_ENABLED_EPOCH: u64 = 1000;
 
     /// Publishes `Configuration` resource. Can only be invoked by Libra root, and only a single time in Genesis.

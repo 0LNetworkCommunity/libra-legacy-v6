@@ -1044,15 +1044,37 @@ module LibraAccount {
         restore_withdraw_capability(cap);
     }
 
+    use 0x1::Debug::print;
+    //////// 0L ////////
+    public fun process_community_wallets(_vm: &signer, epoch: u64) {
+      let v = Wallet::list_tx_by_epoch(epoch);
 
-     public fun vm_make_payment_no_limit<Token>(
-        payer : address,
+      let len = Vector::length<Wallet::TimedTransfer>(&v);
+      let i = 0;
+      while (i < len) {
+        let t: Wallet::TimedTransfer = *Vector::borrow(&v, i);
+        //TODO: Is this the best way to access a struct property from outside a module?
+        let (payer, payee, value, description) = Wallet::get_tx_args(t);
+        print(&payer);
+        print(&payee);
+        print(&value);
+        print(&description);
+        // vm_make_payment_no_limit<GAS>(t.payer, t.payee, t.value, t.description, b"", vm);
+
+        i = i + 1;
+      };
+
+      
+    }
+
+    public fun vm_make_payment_no_limit<Token>(
+        payer: address,
         payee: address,
         amount: u64,
         metadata: vector<u8>,
         metadata_signature: vector<u8>,
         vm: &signer
-    ) acquires LibraAccount , Balance, AccountOperationsCapability {
+    ) acquires LibraAccount, Balance, AccountOperationsCapability {
         if (Signer::address_of(vm) != CoreAddresses::LIBRA_ROOT_ADDRESS()) return;
         // don't try to send a 0 balance, will halt.
         if (amount < 0) return; 

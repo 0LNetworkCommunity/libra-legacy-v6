@@ -10,6 +10,7 @@ module Wallet {
     use 0x1::NodeWeight;
 
     const ERR_PREFIX: u64 = 023;
+
     //////// COMMUNITY WALLETS ////////
 
     resource struct CommunityWallets {
@@ -138,7 +139,7 @@ module Wallet {
 
       let t = TimedTransfer {
           uid: d.max_uid,
-          expire_epoch: current_epoch + 7,
+          expire_epoch: current_epoch + 3,
           payer: sender_addr,
           payee: payee,
           value: value,
@@ -255,12 +256,28 @@ module Wallet {
       threshold
   }
 
-    // Process Transactions
-    // reset approved list
-    // clear the freeze count.
-    // pop off proposed list
-    // add to approved list
-    // transfer funds
+  public fun list_tx_by_epoch(epoch: u64): vector<TimedTransfer> acquires CommunityTransfers {
+      let c = borrow_global_mut<CommunityTransfers>(0x0);
+      // reset approved list
+      c.approved = Vector::empty<TimedTransfer>();
+      // loop proposed list
+      let pending = Vector::empty<TimedTransfer>();
+      let len = Vector::length(&c.proposed);
+      let i = 0;
+      while (i < len) {
+        let t = Vector::borrow(&c.proposed, i);
+        if (t.expire_epoch == epoch) {
+          
+          Vector::push_back<TimedTransfer>(&mut pending, *t);
+          // TODO: clear the freeze count on community wallet
+          // add to approved list
+        };
+        i = i + 1;
+      };
+      return pending
+    }
+    
+    
 
 
     // Freeze()
@@ -272,6 +289,10 @@ module Wallet {
 
 
     //////// GETTERS ////////
+    public fun get_tx_args(t: TimedTransfer): (address, address, u64, vector<u8>) {
+      (t.payer, t.payee, t.value, *&t.description)
+    }
+    
     public fun transfer_is_proposed(uid: u64): bool acquires  CommunityTransfers {
       let (opt, _) = find(uid, 0);
       Option::is_some<TimedTransfer>(&opt)
