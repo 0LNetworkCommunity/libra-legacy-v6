@@ -1,6 +1,7 @@
 //! 'query'
 use std::collections::BTreeMap;
 
+use cli::libra_client::LibraClient;
 use libra_json_rpc_client::{views::TransactionView, AccountAddress};
 use move_core_types::{
     identifier::Identifier,
@@ -8,6 +9,8 @@ use move_core_types::{
 };
 use num_format::{Locale, ToFormattedString};
 use resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct, AnnotatedMoveValue};
+
+use crate::{events::EventsFetcher, node::client};
 
 use super::node::Node;
 
@@ -51,6 +54,10 @@ pub enum QueryType {
         txs_count: Option<u64>,
         /// filter by type
         txs_type: Option<String>,
+    },
+    /// Get events
+    Events {
+      account: AccountAddress
     }
 }
 
@@ -155,7 +162,26 @@ impl Node {
                 } else {
                     format!("{:#?}", txs)
                 }
-            }
+          },
+          Events {
+            account
+          } => {
+            // TODO: should borrow and not create a new client.
+            let mut print = "Events \n".to_string();
+            let handles = self
+            .get_payment_event_handles(account)
+            .unwrap();
+
+            if let Some((sent_handle, received_handle)) = handles {
+                  for evt in self.get_handle_events(&sent_handle).unwrap() {
+                    print.push_str(&format!("{:?}", evt));
+                  }
+                  for evt in self.get_handle_events(&received_handle).unwrap() {
+                    print.push_str(&format!("{:?}", evt));
+                  }
+              };
+            print
+          }
         }
     }
 }

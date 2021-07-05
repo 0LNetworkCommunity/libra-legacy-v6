@@ -2,8 +2,8 @@
 
 use crate::node::node::Node;
 use anyhow::{Error, Result};
-use libra_json_rpc_client::{views::AccountView, AccountAddress};
-use libra_types::{account_state::AccountState, transaction::Version};
+use libra_json_rpc_client::{views::{AccountView, EventView}, AccountAddress};
+use libra_types::{account_state::AccountState, event::{EventHandle, EventKey}, transaction::Version};
 use resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator, NullStateView};
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
@@ -104,6 +104,48 @@ impl Node {
         } else {
             Err(Error::msg("connection to client"))
         }
+    }
+
+    pub fn get_payment_event_handles(
+        &mut self,
+        account: AccountAddress,
+    ) -> Result<Option<(EventHandle, EventHandle)>, Error> {
+        match self.get_account_state(account) {
+            Ok(account_state) => {
+              let handles = account_state
+              .get_account_resource()?
+              .map(|resource| {
+                (
+                    resource.sent_events().clone(),
+                    resource.received_events().clone(),
+                )
+              });
+              Ok(handles)
+            },
+            Err(e) =>  Err(Error::msg("cannot get payment event handles"))
+        }
+    }
+
+    pub fn get_events(
+        &mut self,
+        event_key: &EventKey,
+        start: u64,
+        limit: u64,
+    ) -> Result<Vec<EventView>> {
+        let key = hex::encode(event_key.as_bytes());
+        
+        self.client.get_events(key, start, limit)
+    }
+
+    pub fn get_handle_events(&mut self, event_handle: &EventHandle) -> Result<Vec<EventView>> {
+        if event_handle.count() == 0 {
+            return Ok(vec![]);
+        }
+        self.get_events(
+          event_handle.key(), 
+          0, 
+          event_handle.count()
+        )
     }
 }
 
