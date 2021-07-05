@@ -1,7 +1,8 @@
 //! 'query'
 use std::collections::BTreeMap;
 
-use libra_json_rpc_client::{views::TransactionView, AccountAddress};
+use hex::decode;
+use libra_json_rpc_client::{AccountAddress, views::{BytesView, EventView, TransactionView}};
 use move_core_types::{
     identifier::Identifier,
     language_storage::{StructTag, TypeTag},
@@ -9,6 +10,8 @@ use move_core_types::{
 use num_format::{Locale, ToFormattedString};
 use resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct, AnnotatedMoveValue};
 use super::node::Node;
+
+const SCALING_FACTOR: u64 = 1_000_000;
 
 #[derive(Debug)]
 /// What query do we want to return
@@ -68,12 +71,11 @@ impl Node {
         match query_type {
             Balance { account } => {
                 // TODO: get scaling factor from chain.
-                let scaling_factor = 1_000_000;
                 match self.client.get_account(account, true) {
                     Ok((Some(account_view), _)) => {
                         for av in account_view.balances.iter() {
                             if av.currency == "GAS" {
-                                let amount = av.amount / scaling_factor;
+                                let amount = av.amount / SCALING_FACTOR;
                                 return amount.to_formatted_string(&Locale::en);
                             }
                         }
@@ -172,12 +174,13 @@ impl Node {
             .get_payment_event_handles(account)
             .unwrap();
 
+            
             if let Some((sent_handle, received_handle)) = handles {
                   for evt in self.get_handle_events(&sent_handle).unwrap() {
-                    if sent_or_received { print.push_str(&format!("{:?}\n", evt)); }
+                    if sent_or_received { print.push_str(&format_event_view(evt)) }
                   }
                   for evt in self.get_handle_events(&received_handle).unwrap() {
-                    if !sent_or_received { print.push_str(&format!("{:?}\n", evt)); }
+                    if !sent_or_received { print.push_str(&format_event_view(evt)) }
                   }
               };
             print
@@ -187,7 +190,30 @@ impl Node {
 }
 
 
+fn format_event_view(e: EventView) -> String {
 
+  // TODO: make this more idiomatic.
+
+  use libra_json_rpc_client::views::EventDataView::*;
+  let (a, BytesView(s), BytesView(r), BytesView(m), ..) = match e.data {
+    ReceivedPayment { amount, sender, receiver, metadata } => {
+      (amount, sender, receiver,  metadata)
+    },
+    SentPayment { amount, receiver, sender, metadata } => {
+      (amount, sender, receiver,  metadata)
+    },
+    _ => { panic!("trying to parse a payment event type, but event is not a ReceivedPayment or SentPayment")}
+  };
+  let scaled = a.amount / SCALING_FACTOR;
+  format!(
+    "id: {:?}, sender: {:?}, recipient: {:?}, amount: {:?}, metadata: {:?}\n",
+    e.sequence_number,
+    s,
+    r,
+    scaled.to_formatted_string(&Locale::en),
+    String::from_utf8_lossy(&decode(m).unwrap()),
+  )
+}
 
 /// check if the vec of value, is actually of other structs
 pub fn is_vec_of_struct(
