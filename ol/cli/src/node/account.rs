@@ -141,13 +141,14 @@ impl Node {
 
     /// get all events associated with an EventHandle
     // change this to async and do paging.
-    pub fn get_handle_events(&mut self, event_handle: &EventHandle) -> Result<Vec<EventView>> {
+    pub fn get_handle_events(&mut self, event_handle: &EventHandle, seq_start: Option<u64>) -> Result<Vec<EventView>> {
         if event_handle.count() == 0 {
             return Ok(vec![]);
         }
+        // TODO: how to get the highest sequence number available in the database.
         self.get_events(
           event_handle.key(), 
-          0, 
+          seq_start.unwrap_or(0), 
           event_handle.count()
         )
     }

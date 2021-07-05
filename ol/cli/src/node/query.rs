@@ -60,6 +60,8 @@ pub enum QueryType {
       account: AccountAddress,
       /// switch for sent or received events.
       sent_or_received: bool,
+      /// what event sequence number to start querying from, if DB does not have all.
+      seq_start: Option<u64>,
     }
 }
 
@@ -166,7 +168,8 @@ impl Node {
           },
           Events {
             account,
-            sent_or_received
+            sent_or_received,
+            seq_start,
           } => {
             // TODO: should borrow and not create a new client.
             let mut print = "Events \n".to_string();
@@ -176,10 +179,10 @@ impl Node {
 
             
             if let Some((sent_handle, received_handle)) = handles {
-                  for evt in self.get_handle_events(&sent_handle).unwrap() {
+                  for evt in self.get_handle_events(&sent_handle, seq_start).unwrap() {
                     if sent_or_received { print.push_str(&format_event_view(evt)) }
                   }
-                  for evt in self.get_handle_events(&received_handle).unwrap() {
+                  for evt in self.get_handle_events(&received_handle, seq_start).unwrap() {
                     if !sent_or_received { print.push_str(&format_event_view(evt)) }
                   }
               };

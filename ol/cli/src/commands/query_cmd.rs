@@ -113,11 +113,10 @@ impl Runnable for QueryCmd {
             display = "EPOCH";
         } else if self.events_received {
             
-            info = node.query(QueryType::Events{account, sent_or_received: false});
+            info = node.query(QueryType::Events{account, sent_or_received: false, seq_start: self.txs_height});
             display = "EVENTS";
         } else if self.events_sent {
-
-            info = node.query(QueryType::Events{account, sent_or_received: true});
+            info = node.query(QueryType::Events{account, sent_or_received: true, seq_start: self.txs_height});
             display = "EVENTS";
         }
         else if self.txs {
