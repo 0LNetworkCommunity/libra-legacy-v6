@@ -1,7 +1,6 @@
 //! 'query'
 use std::collections::BTreeMap;
 
-use cli::libra_client::LibraClient;
 use libra_json_rpc_client::{views::TransactionView, AccountAddress};
 use move_core_types::{
     identifier::Identifier,
@@ -9,9 +8,6 @@ use move_core_types::{
 };
 use num_format::{Locale, ToFormattedString};
 use resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct, AnnotatedMoveValue};
-
-use crate::{events::EventsFetcher, node::client};
-
 use super::node::Node;
 
 #[derive(Debug)]
@@ -57,6 +53,7 @@ pub enum QueryType {
     },
     /// Get events
     Events {
+      /// account to query events
       account: AccountAddress
     }
 }

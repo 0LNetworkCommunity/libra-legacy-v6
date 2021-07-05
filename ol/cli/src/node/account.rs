@@ -106,6 +106,7 @@ impl Node {
         }
     }
 
+    /// Get event handles associated with payments
     pub fn get_payment_event_handles(
         &mut self,
         account: AccountAddress,
@@ -122,10 +123,11 @@ impl Node {
               });
               Ok(handles)
             },
-            Err(e) =>  Err(Error::msg("cannot get payment event handles"))
+            Err(_) =>  Err(Error::msg("cannot get payment event handles"))
         }
     }
 
+    /// Get events associated with an event handle's key
     pub fn get_events(
         &mut self,
         event_key: &EventKey,
@@ -137,6 +139,8 @@ impl Node {
         self.client.get_events(key, start, limit)
     }
 
+    /// get all events associated with an EventHandle
+    // change this to async and do paging.
     pub fn get_handle_events(&mut self, event_handle: &EventHandle) -> Result<Vec<EventView>> {
         if event_handle.count() == 0 {
             return Ok(vec![]);
