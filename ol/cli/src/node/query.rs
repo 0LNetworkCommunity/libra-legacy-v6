@@ -54,7 +54,9 @@ pub enum QueryType {
     /// Get events
     Events {
       /// account to query events
-      account: AccountAddress
+      account: AccountAddress,
+      /// switch for sent or received events.
+      sent_or_received: bool,
     }
 }
 
@@ -161,7 +163,8 @@ impl Node {
                 }
           },
           Events {
-            account
+            account,
+            sent_or_received
           } => {
             // TODO: should borrow and not create a new client.
             let mut print = "Events \n".to_string();
@@ -171,10 +174,10 @@ impl Node {
 
             if let Some((sent_handle, received_handle)) = handles {
                   for evt in self.get_handle_events(&sent_handle).unwrap() {
-                    print.push_str(&format!("{:?}", evt));
+                    if sent_or_received { print.push_str(&format!("{:?}\n", evt)); }
                   }
                   for evt in self.get_handle_events(&received_handle).unwrap() {
-                    print.push_str(&format!("{:?}", evt));
+                    if !sent_or_received { print.push_str(&format!("{:?}\n", evt)); }
                   }
               };
             print
