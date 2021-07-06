@@ -85,7 +85,8 @@ module LibraAccount {
     resource struct CumulativeDeposits {
         /// Store the cumulative deposits made to this account.
         /// not all accounts will have this enabled.
-        value: u64
+        value: u64,
+        index: u64, 
     }
 
     /// The holder of WithdrawCapability for account_address can withdraw Libra from
@@ -416,9 +417,11 @@ module LibraAccount {
     public fun init_cumulative_deposits(sender: &signer) acquires Balance {
       let addr = Signer::address_of(sender);
       let value = balance<GAS>(addr);
+      let index = balance<GAS>(addr);
       if (!exists<CumulativeDeposits>(addr)) {
         move_to<CumulativeDeposits>(sender, CumulativeDeposits {
-          value
+          value,
+          index,
         })
       };
     } 
@@ -427,6 +430,12 @@ module LibraAccount {
       if (!exists<CumulativeDeposits>(addr)) return 0;
 
       borrow_global<CumulativeDeposits>(addr).value
+    }
+
+    public fun get_index_cumu_deposits(addr: address): u64 acquires CumulativeDeposits {
+      if (!exists<CumulativeDeposits>(addr)) return 0;
+
+      borrow_global<CumulativeDeposits>(addr).index
     }
 
     // Permissions: PUBLIC, ANYONE, OPEN!
@@ -634,8 +643,11 @@ module LibraAccount {
 
         // update cumulative deposits if the account has the struct.
         if (exists<CumulativeDeposits>(payee)) {
+          let epoch = LibraConfig::get_current_epoch();
+          let index = deposit_index_inflation_curve(epoch, deposit_value);
           let cumu = borrow_global_mut<CumulativeDeposits>(payee);
-          cumu.value = cumu.value + deposit_value
+          cumu.value = cumu.value + deposit_value;
+          cumu.index = cumu.index + index;
         };
     }
 
@@ -2490,6 +2502,19 @@ module LibraAccount {
             metadata,
             metadata_signature
         );
+    }
+
+    /// adjust the points of the deposits favoring more recent deposits.
+    /// inflation by x% per day from the start of network.
+    public fun deposit_index_inflation_curve(
+      epoch: u64,
+      value: u64,
+    ): u64 {
+      
+      // 1/2 percent per day inflation of deposit points.
+      let slope = FixedPoint32::create_from_rational(1005, 1000);
+
+      FixedPoint32::multiply_u64(epoch * value, slope)
     }
 
     /////// TEST HELPERS //////
