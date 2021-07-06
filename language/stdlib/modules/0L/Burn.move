@@ -34,7 +34,7 @@ module Burn {
       print(&0x110);
 
       let addr = *Vector::borrow(&list, i);
-      let cumu = LibraAccount::get_cumulative_deposits(addr);
+      let cumu = LibraAccount::get_index_cumu_deposits(addr);
       print(&0x111);
 
       global_deposits = global_deposits + cumu;

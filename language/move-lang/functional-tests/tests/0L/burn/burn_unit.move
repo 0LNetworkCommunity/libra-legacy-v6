@@ -69,10 +69,11 @@ script {
     Burn::epoch_start_burn(vm, {{alice}}, 100);
 
     let bal_alice = LibraAccount::balance<GAS>({{alice}});
-    assert(bal_alice == 999500, 7357007);
+    assert(bal_alice == 599901, 7357007);
 
+    // rounding issues
     let bal_bob = LibraAccount::balance<GAS>({{bob}});
-    assert(bal_bob == 125, 7357007);
+    assert(bal_bob == 124, 7357007);
 
     let bal_carol = LibraAccount::balance<GAS>({{carol}});
     assert(bal_carol == 375, 7357007);
