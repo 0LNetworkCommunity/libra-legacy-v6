@@ -96,7 +96,7 @@ script {
 
     let carol_mult = *Vector::borrow<FixedPoint32::FixedPoint32>(&ratios, 1);
     let pct_carol = FixedPoint32::multiply_u64(100000, carol_mult);
-    assert(pct_carol == 49875, 7357009);
+    assert(pct_carol == 50124, 7357009);
 
 
   }
