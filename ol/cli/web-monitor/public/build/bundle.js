@@ -180,14 +180,12 @@ var app = (function () {
             block.o(local);
         }
     }
-    function validate_component(component, name) {
-        if (!component || !component.$$render) {
-            if (name === 'svelte:component')
-                name += ' this={...}';
-            throw new Error(`<${name}> is not a valid SSR component. You may need to review your build config to ensure that dependencies are compiled, rather than imported as pre-compiled modules`);
-        }
-        return component;
-    }
+
+    const globals = (typeof window !== 'undefined'
+        ? window
+        : typeof globalThis !== 'undefined'
+            ? globalThis
+            : global);
     function create_component(block) {
         block && block.c();
     }
@@ -20178,7 +20176,7 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (47:14) {#if sortOption == col.sortKey}
+    // (46:14) {#if sortOption == col.sortKey}
     function create_if_block$2(ctx) {
     	let if_block_anchor;
 
@@ -20220,14 +20218,14 @@ var app = (function () {
     		block,
     		id: create_if_block$2.name,
     		type: "if",
-    		source: "(47:14) {#if sortOption == col.sortKey}",
+    		source: "(46:14) {#if sortOption == col.sortKey}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (50:16) {:else}
+    // (49:16) {:else}
     function create_else_block$2(ctx) {
     	let span;
 
@@ -20235,7 +20233,7 @@ var app = (function () {
     		c: function create() {
     			span = element("span");
     			attr_dev(span, "uk-icon", "icon: triangle-down");
-    			add_location(span, file$6, 50, 18, 1700);
+    			add_location(span, file$6, 49, 18, 1646);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -20249,14 +20247,14 @@ var app = (function () {
     		block,
     		id: create_else_block$2.name,
     		type: "else",
-    		source: "(50:16) {:else}",
+    		source: "(49:16) {:else}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (48:16) {#if sortOrder == 1}
+    // (47:16) {#if sortOrder == 1}
     function create_if_block_1$2(ctx) {
     	let span;
 
@@ -20264,7 +20262,7 @@ var app = (function () {
     		c: function create() {
     			span = element("span");
     			attr_dev(span, "uk-icon", "icon: triangle-up");
-    			add_location(span, file$6, 48, 18, 1616);
+    			add_location(span, file$6, 47, 18, 1562);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -20278,14 +20276,14 @@ var app = (function () {
     		block,
     		id: create_if_block_1$2.name,
     		type: "if",
-    		source: "(48:16) {#if sortOrder == 1}",
+    		source: "(47:16) {#if sortOrder == 1}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (44:10) {#each sortableColumns as col}
+    // (43:10) {#each sortableColumns as col}
     function create_each_block_1$1(ctx) {
     	let th;
     	let span;
@@ -20308,9 +20306,9 @@ var app = (function () {
     			t1 = space();
     			if (if_block) if_block.c();
     			attr_dev(span, "class", "disable-select");
-    			add_location(span, file$6, 45, 14, 1467);
+    			add_location(span, file$6, 44, 14, 1413);
     			attr_dev(th, "class", "uk-text-right");
-    			add_location(th, file$6, 44, 12, 1386);
+    			add_location(th, file$6, 43, 12, 1332);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, th, anchor);
@@ -20352,14 +20350,14 @@ var app = (function () {
     		block,
     		id: create_each_block_1$1.name,
     		type: "each",
-    		source: "(44:10) {#each sortableColumns as col}",
+    		source: "(43:10) {#each sortableColumns as col}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (60:6) {#each set as val, i}
+    // (59:6) {#each set as val, i}
     function create_each_block$2(ctx) {
     	let tr;
     	let td0;
@@ -20429,29 +20427,29 @@ var app = (function () {
     			span = element("span");
     			t14 = space();
     			attr_dev(td0, "class", "uk-visible@s uk-text-center");
-    			add_location(td0, file$6, 61, 10, 2046);
+    			add_location(td0, file$6, 60, 10, 1992);
     			attr_dev(td1, "class", "uk-hidden@s uk-text-truncate");
-    			add_location(td1, file$6, 62, 10, 2123);
+    			add_location(td1, file$6, 61, 10, 2069);
     			attr_dev(td2, "class", "uk-text-right");
-    			add_location(td2, file$6, 63, 10, 2201);
+    			add_location(td2, file$6, 62, 10, 2147);
     			attr_dev(td3, "class", "uk-text-right");
-    			add_location(td3, file$6, 64, 10, 2261);
+    			add_location(td3, file$6, 63, 10, 2207);
     			attr_dev(td4, "class", "uk-text-right");
-    			add_location(td4, file$6, 65, 10, 2330);
+    			add_location(td4, file$6, 64, 10, 2276);
     			attr_dev(td5, "class", "uk-text-right");
-    			add_location(td5, file$6, 66, 10, 2390);
+    			add_location(td5, file$6, 65, 10, 2336);
     			attr_dev(td6, "class", "uk-text-right");
-    			add_location(td6, file$6, 67, 10, 2457);
+    			add_location(td6, file$6, 66, 10, 2403);
     			attr_dev(span, "uk-icon", "icon: info");
     			attr_dev(span, "uk-toggle", "target: #" + modal_id$1);
-    			add_location(span, file$6, 69, 12, 2541);
-    			add_location(td7, file$6, 68, 10, 2524);
+    			add_location(span, file$6, 68, 12, 2487);
+    			add_location(td7, file$6, 67, 10, 2470);
 
     			attr_dev(tr, "class", tr_class_value = "" + (null_to_empty(/*val*/ ctx[9].account_address === /*data*/ ctx[0].account_view.address
     			? "owner"
     			: "") + " svelte-1q781lw"));
 
-    			add_location(tr, file$6, 60, 6, 1913);
+    			add_location(tr, file$6, 59, 6, 1859);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, tr, anchor);
@@ -20512,7 +20510,7 @@ var app = (function () {
     		block,
     		id: create_each_block$2.name,
     		type: "each",
-    		source: "(60:6) {#each set as val, i}",
+    		source: "(59:6) {#each set as val, i}",
     		ctx
     	});
 
@@ -20593,19 +20591,19 @@ var app = (function () {
 
     			t7 = space();
     			create_component(validatormodal.$$.fragment);
-    			add_location(span, file$6, 36, 4, 1157);
+    			add_location(span, file$6, 35, 4, 1103);
     			attr_dev(h2, "class", "uk-text-center uk-text-uppercase uk-text-muted uk-text-light uk-margin-medium-bottom");
-    			add_location(h2, file$6, 35, 2, 1055);
+    			add_location(h2, file$6, 34, 2, 1001);
     			attr_dev(th0, "class", "uk-text-center");
-    			add_location(th0, file$6, 42, 10, 1293);
-    			add_location(th1, file$6, 55, 10, 1832);
-    			add_location(tr, file$6, 41, 6, 1278);
-    			add_location(thead, file$6, 40, 4, 1264);
-    			add_location(tbody, file$6, 58, 4, 1871);
+    			add_location(th0, file$6, 41, 10, 1239);
+    			add_location(th1, file$6, 54, 10, 1778);
+    			add_location(tr, file$6, 40, 6, 1224);
+    			add_location(thead, file$6, 39, 4, 1210);
+    			add_location(tbody, file$6, 57, 4, 1817);
     			attr_dev(table, "class", "uk-table uk-table-hover uk-text-muted");
-    			add_location(table, file$6, 39, 2, 1206);
+    			add_location(table, file$6, 38, 2, 1152);
     			attr_dev(main, "uk-height-viewport", "expand: true");
-    			add_location(main, file$6, 34, 0, 1012);
+    			add_location(main, file$6, 33, 0, 958);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -20780,7 +20778,6 @@ var app = (function () {
     	};
 
     	$$self.$capture_state = () => ({
-    		validate_component,
     		ValidatorModal,
     		data,
     		modal_id: modal_id$1,
@@ -21818,28 +21815,28 @@ var app = (function () {
     			t15 = space();
     			td8 = element("td");
     			t16 = text(t16_value);
-    			add_location(td0, file$3, 17, 12, 295);
+    			add_location(td0, file$3, 17, 12, 306);
     			attr_dev(td1, "class", "uk-text-right");
-    			add_location(td1, file$3, 18, 12, 328);
+    			add_location(td1, file$3, 18, 12, 339);
     			attr_dev(td2, "class", "uk-text-right");
-    			add_location(td2, file$3, 19, 12, 403);
-    			add_location(tr0, file$3, 16, 8, 278);
-    			add_location(td3, file$3, 22, 12, 522);
+    			add_location(td2, file$3, 19, 12, 414);
+    			add_location(tr0, file$3, 16, 8, 289);
+    			add_location(td3, file$3, 22, 12, 533);
     			attr_dev(td4, "class", "uk-text-right");
-    			add_location(td4, file$3, 23, 12, 564);
+    			add_location(td4, file$3, 23, 12, 575);
     			attr_dev(td5, "class", "uk-text-right");
-    			add_location(td5, file$3, 24, 12, 640);
-    			add_location(tr1, file$3, 21, 8, 505);
-    			add_location(td6, file$3, 27, 12, 760);
+    			add_location(td5, file$3, 24, 12, 651);
+    			add_location(tr1, file$3, 21, 8, 516);
+    			add_location(td6, file$3, 27, 12, 771);
     			attr_dev(td7, "class", "uk-text-right");
-    			add_location(td7, file$3, 28, 12, 811);
+    			add_location(td7, file$3, 28, 12, 822);
     			attr_dev(td8, "class", "uk-text-right");
-    			add_location(td8, file$3, 29, 12, 895);
-    			add_location(tr2, file$3, 26, 8, 743);
+    			add_location(td8, file$3, 29, 12, 906);
+    			add_location(tr2, file$3, 26, 8, 754);
     			attr_dev(table, "class", "uk-table");
-    			add_location(table, file$3, 15, 4, 245);
+    			add_location(table, file$3, 15, 4, 256);
     			attr_dev(div, "class", "audit-container svelte-uu1jkw");
-    			add_location(div, file$3, 14, 0, 211);
+    			add_location(div, file$3, 14, 0, 222);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -21901,7 +21898,7 @@ var app = (function () {
     }
 
     function print_percent(num) {
-    	return num * 100 + "%";
+    	return (num * 100).toFixed(0) + "%";
     }
 
     function instance$3($$self, $$props, $$invalidate) {
@@ -21961,6 +21958,8 @@ var app = (function () {
     }
 
     /* src/components/audit/AuditVals.svelte generated by Svelte v3.37.0 */
+
+    const { console: console_1 } = globals;
     const file$2 = "src/components/audit/AuditVals.svelte";
 
     function get_each_context(ctx, list, i) {
@@ -21969,7 +21968,7 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (79:4) {:else}
+    // (80:4) {:else}
     function create_else_block_3(ctx) {
     	let t;
 
@@ -21992,14 +21991,14 @@ var app = (function () {
     		block,
     		id: create_else_block_3.name,
     		type: "else",
-    		source: "(79:4) {:else}",
+    		source: "(80:4) {:else}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (34:4) {#if data.chain_view}
+    // (35:4) {#if data.chain_view}
     function create_if_block(ctx) {
     	let auditsummary;
     	let t0;
@@ -22048,7 +22047,7 @@ var app = (function () {
     			th0.textContent = "Validator";
     			t2 = space();
     			th1 = element("th");
-    			th1.textContent = "Autopay";
+    			th1.textContent = "Recurring Autopay";
     			t4 = space();
     			th2 = element("th");
     			th2.textContent = "Operator Account";
@@ -22067,21 +22066,21 @@ var app = (function () {
     			}
 
     			attr_dev(th0, "class", "uk-text-center");
-    			add_location(th0, file$2, 38, 20, 1345);
+    			add_location(th0, file$2, 39, 20, 1383);
     			attr_dev(th1, "class", "uk-text-center");
-    			add_location(th1, file$2, 39, 20, 1407);
+    			add_location(th1, file$2, 40, 20, 1445);
     			attr_dev(th2, "class", "uk-text-center");
-    			add_location(th2, file$2, 40, 20, 1467);
-    			add_location(br, file$2, 41, 59, 1575);
+    			add_location(th2, file$2, 41, 20, 1515);
+    			add_location(br, file$2, 42, 59, 1623);
     			attr_dev(th3, "class", "uk-text-center");
-    			add_location(th3, file$2, 41, 20, 1536);
+    			add_location(th3, file$2, 42, 20, 1584);
     			attr_dev(th4, "class", "uk-text-center");
-    			add_location(th4, file$2, 42, 20, 1621);
-    			add_location(tr, file$2, 37, 16, 1320);
-    			add_location(thead, file$2, 36, 12, 1296);
-    			add_location(tbody, file$2, 45, 12, 1709);
+    			add_location(th4, file$2, 43, 20, 1669);
+    			add_location(tr, file$2, 38, 16, 1358);
+    			add_location(thead, file$2, 37, 12, 1334);
+    			add_location(tbody, file$2, 46, 12, 1757);
     			attr_dev(table, "class", "uk-table");
-    			add_location(table, file$2, 35, 8, 1259);
+    			add_location(table, file$2, 36, 8, 1297);
     		},
     		m: function mount(target, anchor) {
     			mount_component(auditsummary, target, anchor);
@@ -22160,14 +22159,14 @@ var app = (function () {
     		block,
     		id: create_if_block.name,
     		type: "if",
-    		source: "(34:4) {#if data.chain_view}",
+    		source: "(35:4) {#if data.chain_view}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (54:28) {:else}
+    // (55:28) {:else}
     function create_else_block_2(ctx) {
     	let span;
 
@@ -22176,7 +22175,7 @@ var app = (function () {
     			span = element("span");
     			attr_dev(span, "class", "uk-text-danger");
     			attr_dev(span, "uk-icon", "icon: close");
-    			add_location(span, file$2, 54, 32, 2280);
+    			add_location(span, file$2, 55, 32, 2328);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -22191,14 +22190,14 @@ var app = (function () {
     		block,
     		id: create_else_block_2.name,
     		type: "else",
-    		source: "(54:28) {:else}",
+    		source: "(55:28) {:else}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (52:28) {#if val.has_autopay}
+    // (53:28) {#if val.has_autopay}
     function create_if_block_3(ctx) {
     	let span;
     	let t0;
@@ -22214,7 +22213,7 @@ var app = (function () {
     			t2 = text(")");
     			attr_dev(span, "class", "uk-text-success");
     			attr_dev(span, "uk-icon", "icon: check");
-    			add_location(span, file$2, 52, 32, 2125);
+    			add_location(span, file$2, 53, 32, 2173);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -22237,14 +22236,14 @@ var app = (function () {
     		block,
     		id: create_if_block_3.name,
     		type: "if",
-    		source: "(52:28) {#if val.has_autopay}",
+    		source: "(53:28) {#if val.has_autopay}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (61:28) {:else}
+    // (62:28) {:else}
     function create_else_block_1(ctx) {
     	let span;
 
@@ -22253,7 +22252,7 @@ var app = (function () {
     			span = element("span");
     			attr_dev(span, "class", "uk-text-danger");
     			attr_dev(span, "uk-icon", "icon: close");
-    			add_location(span, file$2, 61, 32, 2672);
+    			add_location(span, file$2, 62, 32, 2720);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -22267,14 +22266,14 @@ var app = (function () {
     		block,
     		id: create_else_block_1.name,
     		type: "else",
-    		source: "(61:28) {:else}",
+    		source: "(62:28) {:else}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (59:28) {#if val.has_op_account}
+    // (60:28) {#if val.has_op_account}
     function create_if_block_2(ctx) {
     	let span;
 
@@ -22283,7 +22282,7 @@ var app = (function () {
     			span = element("span");
     			attr_dev(span, "class", "uk-text-success");
     			attr_dev(span, "uk-icon", "icon: check");
-    			add_location(span, file$2, 59, 32, 2540);
+    			add_location(span, file$2, 60, 32, 2588);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -22297,14 +22296,14 @@ var app = (function () {
     		block,
     		id: create_if_block_2.name,
     		type: "if",
-    		source: "(59:28) {#if val.has_op_account}",
+    		source: "(60:28) {#if val.has_op_account}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (68:28) {:else}
+    // (69:28) {:else}
     function create_else_block(ctx) {
     	let span;
 
@@ -22313,7 +22312,7 @@ var app = (function () {
     			span = element("span");
     			attr_dev(span, "class", "uk-text-danger");
     			attr_dev(span, "uk-icon", "icon: close");
-    			add_location(span, file$2, 68, 32, 3060);
+    			add_location(span, file$2, 69, 32, 3108);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -22327,14 +22326,14 @@ var app = (function () {
     		block,
     		id: create_else_block.name,
     		type: "else",
-    		source: "(68:28) {:else}",
+    		source: "(69:28) {:else}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (66:28) {#if val.has_op_balance}
+    // (67:28) {#if val.has_op_balance}
     function create_if_block_1(ctx) {
     	let span;
 
@@ -22343,7 +22342,7 @@ var app = (function () {
     			span = element("span");
     			attr_dev(span, "class", "uk-text-success");
     			attr_dev(span, "uk-icon", "icon: check");
-    			add_location(span, file$2, 66, 32, 2932);
+    			add_location(span, file$2, 67, 32, 2980);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -22357,14 +22356,14 @@ var app = (function () {
     		block,
     		id: create_if_block_1.name,
     		type: "if",
-    		source: "(66:28) {#if val.has_op_balance}",
+    		source: "(67:28) {#if val.has_op_balance}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (47:16) {#each audit_set as val}
+    // (48:16) {#each audit_set as val}
     function create_each_block(ctx) {
     	let tr;
     	let td0;
@@ -22437,21 +22436,21 @@ var app = (function () {
     			span = element("span");
     			t7 = space();
     			attr_dev(td0, "class", "uk-visible@s uk-text-center");
-    			add_location(td0, file$2, 48, 24, 1848);
+    			add_location(td0, file$2, 49, 24, 1896);
     			attr_dev(td1, "class", "uk-hidden@s uk-text-truncate");
-    			add_location(td1, file$2, 49, 24, 1931);
+    			add_location(td1, file$2, 50, 24, 1979);
     			attr_dev(td2, "class", "uk-text-center");
-    			add_location(td2, file$2, 50, 24, 2015);
+    			add_location(td2, file$2, 51, 24, 2063);
     			attr_dev(td3, "class", "uk-text-center");
-    			add_location(td3, file$2, 57, 24, 2427);
+    			add_location(td3, file$2, 58, 24, 2475);
     			attr_dev(td4, "class", "uk-text-center");
-    			add_location(td4, file$2, 64, 24, 2819);
+    			add_location(td4, file$2, 65, 24, 2867);
     			attr_dev(span, "uk-icon", "icon: info");
     			attr_dev(span, "uk-toggle", "target: #" + modal_id);
-    			add_location(span, file$2, 72, 28, 3263);
+    			add_location(span, file$2, 73, 28, 3311);
     			attr_dev(td5, "class", "uk-text-center");
-    			add_location(td5, file$2, 71, 24, 3207);
-    			add_location(tr, file$2, 47, 20, 1778);
+    			add_location(td5, file$2, 72, 24, 3255);
+    			add_location(tr, file$2, 48, 20, 1826);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, tr, anchor);
@@ -22530,7 +22529,7 @@ var app = (function () {
     		block,
     		id: create_each_block.name,
     		type: "each",
-    		source: "(47:16) {#each audit_set as val}",
+    		source: "(48:16) {#each audit_set as val}",
     		ctx
     	});
 
@@ -22575,8 +22574,8 @@ var app = (function () {
     			t2 = space();
     			create_component(validatormodal.$$.fragment);
     			attr_dev(h3, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted uk-text-large");
-    			add_location(h3, file$2, 30, 4, 1029);
-    			add_location(div, file$2, 29, 0, 1019);
+    			add_location(h3, file$2, 31, 4, 1067);
+    			add_location(div, file$2, 30, 0, 1057);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -22661,7 +22660,7 @@ var app = (function () {
     	const writable_props = ["data"];
 
     	Object.keys($$props).forEach(key => {
-    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<AuditVals> was created with unknown prop '${key}'`);
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console_1.warn(`<AuditVals> was created with unknown prop '${key}'`);
     	});
 
     	const click_handler = val => $$invalidate(2, selected_val = val.view);
@@ -22692,6 +22691,8 @@ var app = (function () {
     	$$self.$$.update = () => {
     		if ($$self.$$.dirty & /*data, selected_val, audit_set*/ 7) {
     			if (data.chain_view) {
+    				console.log(data.chain_view);
+
     				$$invalidate(1, audit_set = data.chain_view.validator_view.map(each => {
     					let sum_formated = each.autopay && each.autopay.recurring_sum
     					? (each.autopay.recurring_sum / 100).toFixed(2) + "%"
@@ -22733,7 +22734,7 @@ var app = (function () {
     		const props = options.props || {};
 
     		if (/*data*/ ctx[0] === undefined && !("data" in props)) {
-    			console.warn("<AuditVals> was created without expected prop 'data'");
+    			console_1.warn("<AuditVals> was created without expected prop 'data'");
     		}
     	}
 

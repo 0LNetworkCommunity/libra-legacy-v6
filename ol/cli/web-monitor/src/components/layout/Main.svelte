@@ -21,7 +21,7 @@
       <Vals data={data}/>
       <Upgrade data={data}/>
       <AutoPay account={data.account_view}/>
-      <AuditVals data={data}/>
+      <AuditVals data={data}/>      
     </ul>
   </div>
 </main>

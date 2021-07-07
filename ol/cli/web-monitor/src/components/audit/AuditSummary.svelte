@@ -1,7 +1,7 @@
 <script>
     export let stats;
     function print_percent(num) {
-        return (num * 100) + "%";
+        return (num * 100).toFixed(0) + "%";
     }
 </script>
 

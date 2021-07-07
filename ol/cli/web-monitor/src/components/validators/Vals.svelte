@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { validate_component } from "svelte/internal";
-import ValidatorModal from "./ValidatorModal.svelte";
+  import ValidatorModal from "./ValidatorModal.svelte";
   export let data;
 
   const modal_id = "vals-tab-val-modal";
