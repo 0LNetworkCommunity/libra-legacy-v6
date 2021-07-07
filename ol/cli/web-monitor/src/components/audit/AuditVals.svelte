@@ -51,7 +51,7 @@
                         <td class="uk-hidden@s uk-text-truncate">{val.address}</td>
                         <td class="uk-text-center">
                             {#if val.has_autopay}
-                                <span class="uk-text-success" uk-icon="icon: check"></span> ({val.recurring_sum})     
+                                <span class="uk-text-success" uk-icon="icon: check"></span> {val.recurring_sum}
                             {:else}
                                 <span class="uk-text-danger" uk-icon="icon: close"></span>
                             {/if}

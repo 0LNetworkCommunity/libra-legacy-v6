@@ -22175,7 +22175,7 @@ var app = (function () {
     			span = element("span");
     			attr_dev(span, "class", "uk-text-danger");
     			attr_dev(span, "uk-icon", "icon: close");
-    			add_location(span, file$2, 55, 32, 2328);
+    			add_location(span, file$2, 55, 32, 2321);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -22203,14 +22203,12 @@ var app = (function () {
     	let t0;
     	let t1_value = /*val*/ ctx[4].recurring_sum + "";
     	let t1;
-    	let t2;
 
     	const block = {
     		c: function create() {
     			span = element("span");
-    			t0 = text(" (");
+    			t0 = space();
     			t1 = text(t1_value);
-    			t2 = text(")");
     			attr_dev(span, "class", "uk-text-success");
     			attr_dev(span, "uk-icon", "icon: check");
     			add_location(span, file$2, 53, 32, 2173);
@@ -22219,7 +22217,6 @@ var app = (function () {
     			insert_dev(target, span, anchor);
     			insert_dev(target, t0, anchor);
     			insert_dev(target, t1, anchor);
-    			insert_dev(target, t2, anchor);
     		},
     		p: function update(ctx, dirty) {
     			if (dirty & /*audit_set*/ 2 && t1_value !== (t1_value = /*val*/ ctx[4].recurring_sum + "")) set_data_dev(t1, t1_value);
@@ -22228,7 +22225,6 @@ var app = (function () {
     			if (detaching) detach_dev(span);
     			if (detaching) detach_dev(t0);
     			if (detaching) detach_dev(t1);
-    			if (detaching) detach_dev(t2);
     		}
     	};
 
@@ -22252,7 +22248,7 @@ var app = (function () {
     			span = element("span");
     			attr_dev(span, "class", "uk-text-danger");
     			attr_dev(span, "uk-icon", "icon: close");
-    			add_location(span, file$2, 62, 32, 2720);
+    			add_location(span, file$2, 62, 32, 2713);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -22282,7 +22278,7 @@ var app = (function () {
     			span = element("span");
     			attr_dev(span, "class", "uk-text-success");
     			attr_dev(span, "uk-icon", "icon: check");
-    			add_location(span, file$2, 60, 32, 2588);
+    			add_location(span, file$2, 60, 32, 2581);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -22312,7 +22308,7 @@ var app = (function () {
     			span = element("span");
     			attr_dev(span, "class", "uk-text-danger");
     			attr_dev(span, "uk-icon", "icon: close");
-    			add_location(span, file$2, 69, 32, 3108);
+    			add_location(span, file$2, 69, 32, 3101);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -22342,7 +22338,7 @@ var app = (function () {
     			span = element("span");
     			attr_dev(span, "class", "uk-text-success");
     			attr_dev(span, "uk-icon", "icon: check");
-    			add_location(span, file$2, 67, 32, 2980);
+    			add_location(span, file$2, 67, 32, 2973);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -22442,14 +22438,14 @@ var app = (function () {
     			attr_dev(td2, "class", "uk-text-center");
     			add_location(td2, file$2, 51, 24, 2063);
     			attr_dev(td3, "class", "uk-text-center");
-    			add_location(td3, file$2, 58, 24, 2475);
+    			add_location(td3, file$2, 58, 24, 2468);
     			attr_dev(td4, "class", "uk-text-center");
-    			add_location(td4, file$2, 65, 24, 2867);
+    			add_location(td4, file$2, 65, 24, 2860);
     			attr_dev(span, "uk-icon", "icon: info");
     			attr_dev(span, "uk-toggle", "target: #" + modal_id);
-    			add_location(span, file$2, 73, 28, 3311);
+    			add_location(span, file$2, 73, 28, 3304);
     			attr_dev(td5, "class", "uk-text-center");
-    			add_location(td5, file$2, 72, 24, 3255);
+    			add_location(td5, file$2, 72, 24, 3248);
     			add_location(tr, file$2, 48, 20, 1826);
     		},
     		m: function mount(target, anchor) {
