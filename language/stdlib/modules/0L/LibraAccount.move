@@ -644,7 +644,7 @@ module LibraAccount {
         // update cumulative deposits if the account has the struct.
         if (exists<CumulativeDeposits>(payee)) {
           let epoch = LibraConfig::get_current_epoch();
-          let index = deposit_index_inflation_curve(epoch, deposit_value);
+          let index = deposit_index_curve(epoch, deposit_value);
           let cumu = borrow_global_mut<CumulativeDeposits>(payee);
           cumu.value = cumu.value + deposit_value;
           cumu.index = cumu.index + index;
@@ -2506,15 +2506,13 @@ module LibraAccount {
 
     /// adjust the points of the deposits favoring more recent deposits.
     /// inflation by x% per day from the start of network.
-    public fun deposit_index_inflation_curve(
+    public fun deposit_index_curve(
       epoch: u64,
       value: u64,
     ): u64 {
       
-      // 1/2 percent per day inflation of deposit points.
-      let slope = FixedPoint32::create_from_rational(1005, 1000);
-
-      FixedPoint32::multiply_u64(epoch * value, slope)
+      // increment 1/2 percent per day, not compounded.
+      (value * (1000 + (epoch * 5))) / 1000
     }
 
     /////// TEST HELPERS //////
