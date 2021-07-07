@@ -132,7 +132,7 @@ impl AutoPayResource {
 
         // sum amount of recurring instructions
         let sum = self.payment.iter()
-            .filter(|payment| payment.in_type == 0u8)
+            .filter(|payment| payment.in_type == 1u8)
             .map(|x| x.amt)
             .sum();
 
