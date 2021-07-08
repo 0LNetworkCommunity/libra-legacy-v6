@@ -47,10 +47,10 @@ script {
 
   fun main(vm: &signer) {
     // send to community wallet Bob
-    LibraAccount::vm_make_payment_no_limit<GAS>( {{alice}}, {{bob}}, 100, x"", x"", vm);
+    LibraAccount::vm_make_payment_no_limit<GAS>( {{alice}}, {{bob}}, 100000, x"", x"", vm);
 
     // send to community wallet Carol
-    LibraAccount::vm_make_payment_no_limit<GAS>( {{alice}}, {{carol}}, 300, x"", x"", vm);
+    LibraAccount::vm_make_payment_no_limit<GAS>( {{alice}}, {{carol}}, 300000, x"", x"", vm);
 
     Burn::reset_ratios(vm);
     let (addr, deps , ratios) = Burn::get_ratios();
@@ -58,10 +58,10 @@ script {
     assert(Vector::length(&deps) == 2, 7357004);
     assert(Vector::length(&ratios) == 2, 7357005);
 
-    let bob_deposits = *Vector::borrow<u64>(&deps, 0);
-    assert(bob_deposits == 100, 7357006);
-    let carol_deposits = *Vector::borrow<u64>(&deps, 1);
-    assert(carol_deposits == 300, 7357007);
+    let bob_deposits_indexed = *Vector::borrow<u64>(&deps, 0);
+    assert(bob_deposits_indexed == 100500, 7357006);
+    let carol_deposits_indexed = *Vector::borrow<u64>(&deps, 1);
+    assert(carol_deposits_indexed == 301500, 7357007);
 
     let bob_mult = *Vector::borrow<FixedPoint32::FixedPoint32>(&ratios, 0);
     let pct_bob = FixedPoint32::multiply_u64(100, bob_mult);
