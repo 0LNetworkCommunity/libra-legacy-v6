@@ -232,9 +232,9 @@ impl Node {
                 }
             }
     
-            // calc average amount of recurring autopay instructions
+            // calc average amount of recurring autopay
             if instructions > 0 {
-                average_percent = sum_percent as f64 / instructions as f64;
+                average_percent = sum_percent as f64 / payers.len() as f64;
             }               
     
             PayeeStats { 
