@@ -8,7 +8,6 @@
     let audit_set = [];
     let selected_val = null;
     $: if (data.chain_view) {
-        console.log(data.chain_view);
         audit_set = data.chain_view.validator_view.map(each => {
             let sum_formated = each.autopay && each.autopay.recurring_sum 
                 ? (each.autopay.recurring_sum / 100).toFixed(2) + "%"

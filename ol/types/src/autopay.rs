@@ -35,6 +35,8 @@ pub struct PaymentView {
     ///
     pub uid: u64,
     ///
+    pub in_type: u8,
+    ///
     pub type_desc: String,
     ///
     pub payee: AccountAddress,
@@ -43,7 +45,16 @@ pub struct PaymentView {
     ///
     pub prev_bal: u64,
     ///
+    pub amt: u64,    
+    ///
     pub amount: String,
+}
+
+impl PaymentView {
+    ///
+    pub fn is_percent_of_change(&self) -> bool {
+        self.in_type == 1u8
+    }
 }
 
 /// Autopay instruction
@@ -122,10 +133,12 @@ impl AutoPayResource {
         let payments = self.payment.iter().map(|each| {
             PaymentView {
                 uid: each.uid,
+                in_type: each.in_type,
                 type_desc: each.get_type_desc(),
                 payee: each.payee,
                 end_epoch: each.end_epoch,
                 prev_bal: each.prev_bal,
+                amt: each.amt,
                 amount: each.get_amount_formatted(),
             }
         }).collect();

@@ -10,6 +10,7 @@
   let data;
   chainInfo.subscribe((info_str) => {
     data = JSON.parse(info_str);
+    console.log(data);
   });
 </script>
 

@@ -246,7 +246,7 @@ fn calc_config_stats(vals: Vec<ValidatorView>) -> ValsConfigStats {
 
   for val in vals.iter() {
     let config = val.validator_config.clone().unwrap();
-    if val.autopay.is_some() {
+    if val.autopay.is_some() && val.autopay.as_ref().unwrap().payments.iter().find(| each | each.is_percent_of_change()).is_some() {
       count_autopay += 1;
     }
     if config.operator_account.is_some() {

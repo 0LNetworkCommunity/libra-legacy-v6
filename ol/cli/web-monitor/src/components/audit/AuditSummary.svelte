@@ -15,7 +15,7 @@
 <div class="audit-container">
     <table class="uk-table">
         <tr>
-            <td>Has Autopay</td>
+            <td>Has Recurring Autopay</td>
             <td class="uk-text-right">{stats.count_vals_with_autopay}</td>
             <td class="uk-text-right">{print_percent(stats.percent_vals_with_autopay)}</td>
         </tr>
