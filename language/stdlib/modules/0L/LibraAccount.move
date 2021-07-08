@@ -1051,11 +1051,17 @@ module LibraAccount {
       let len = Vector::length<Wallet::TimedTransfer>(&v);
       let i = 0;
       while (i < len) {
+        
         let t: Wallet::TimedTransfer = *Vector::borrow(&v, i);
         //TODO: Is this the best way to access a struct property from outside a module?
         let (payer, payee, value, description) = Wallet::get_tx_args(t);
-        vm_make_payment_no_limit<GAS>(payer, payee, value, description, b"", vm);
+        
+        if (Wallet::is_frozen(payer)) continue;
 
+        vm_make_payment_no_limit<GAS>(payer, payee, value, description, b"", vm);
+        
+        Wallet::maybe_reset_rejection_counter(vm, payer);
+        
         i = i + 1;
       };
     }

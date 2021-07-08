@@ -8,6 +8,7 @@ module Wallet {
     use 0x1::Option::{Self,Option};
     use 0x1::LibraSystem;
     use 0x1::NodeWeight;
+    use 0x1::Debug::print;
 
     const ERR_PREFIX: u64 = 023;
 
@@ -17,77 +18,7 @@ module Wallet {
         list: vector<address>
     }
 
-    resource struct CommunityFreeze {
-        consecutive_rejections: u64
-    }
-
-
-    public fun init_comm_list(vm: &signer) {
-      CoreAddresses::assert_libra_root(vm);
-      if (!exists<CommunityWallets>(0x0)) {
-        move_to<CommunityWallets>(vm, CommunityWallets {
-          list: Vector::empty<address>()
-        });  
-      }
-    }
-
-    public fun set_comm(sig: &signer) acquires CommunityWallets {
-      if (exists<CommunityWallets>(0x0)) {
-        let addr = Signer::address_of(sig);
-        let list = get_comm_list();
-        if (!Vector::contains<address>(&list, &addr)) {
-            let s = borrow_global_mut<CommunityWallets>(0x0);
-            Vector::push_back(&mut s.list, addr);
-        };
-
-        move_to<CommunityFreeze>(sig, CommunityFreeze {
-          consecutive_rejections: 0
-        })
-      }
-    }
-
-    public fun remove_comm(sig: &signer) acquires CommunityWallets {
-      if (exists<CommunityWallets>(0x0)) {
-        let addr = Signer::address_of(sig);
-        let list = get_comm_list();
-        let (yes, i) = Vector::index_of<address>(&list, &addr);
-        if (yes) {
-            let s = borrow_global_mut<CommunityWallets>(0x0);
-            Vector::remove(&mut s.list, i);
-          }
-      }
-    }
-
-    public fun vm_set_comm(vm: &signer, addr: address) acquires CommunityWallets {
-      CoreAddresses::assert_libra_root(vm);
-      if (exists<CommunityWallets>(0x0)) {
-        let list = get_comm_list();
-        if (!Vector::contains<address>(&list, &addr)) {
-        
-          let s = borrow_global_mut<CommunityWallets>(0x0);
-          Vector::push_back(&mut s.list, addr);
-        }
-      } else {
-        init_comm_list(vm);
-      }
-    }
-
-    public fun get_comm_list(): vector<address> acquires CommunityWallets{
-      if (exists<CommunityWallets>(0x0)) {
-        let s = borrow_global<CommunityWallets>(0x0);
-        return *&s.list
-      } else {
-        return Vector::empty<address>()
-      }
-    }
-
-    public fun is_comm(addr: address): bool acquires CommunityWallets{
-      let s = borrow_global<CommunityWallets>(0x0);
-      Vector::contains<address>(&s.list, &addr)
-    }
-
-
-    // Timed transfer submission
+        // Timed transfer submission
     resource struct CommunityTransfers {
       proposed: vector<TimedTransfer>,
       approved: vector<TimedTransfer>,
@@ -111,18 +42,82 @@ module Wallet {
       threshold: u64,
     }
 
-  public fun init_comm_transfers(vm: &signer) {
-    CoreAddresses::assert_libra_root(vm);
-    move_to<CommunityTransfers>(vm, CommunityTransfers{
-      proposed: Vector::empty<TimedTransfer>(),
-      approved: Vector::empty<TimedTransfer>(),
-      rejected: Vector::empty<TimedTransfer>(),
-      max_uid: 0,
-    })
-  }
+    resource struct CommunityFreeze {
+        is_frozen: bool,
+        consecutive_rejections: u64,
+        unfreeze_votes: vector<address>,
+    }
+
+    // Utility used at genesis (and on upgrade) to initialize the system state.
+    public fun init(vm: &signer) {
+        CoreAddresses::assert_libra_root(vm);
+        
+        if ((!exists<CommunityTransfers>(0x0))) {
+          move_to<CommunityTransfers>(vm, CommunityTransfers{
+            proposed: Vector::empty<TimedTransfer>(),
+            approved: Vector::empty<TimedTransfer>(),
+            rejected: Vector::empty<TimedTransfer>(),
+            max_uid: 0,
+          })
+        }; 
+
+      if (!exists<CommunityWallets>(0x0)) {
+        move_to<CommunityWallets>(vm, CommunityWallets {
+          list: Vector::empty<address>()
+        });  
+      }
+    }
+
+    public fun set_comm(sig: &signer) acquires CommunityWallets {
+      if (exists<CommunityWallets>(0x0)) {
+        let addr = Signer::address_of(sig);
+        let list = get_comm_list();
+        if (!Vector::contains<address>(&list, &addr)) {
+            let s = borrow_global_mut<CommunityWallets>(0x0);
+            Vector::push_back(&mut s.list, addr);
+        };
+
+        move_to<CommunityFreeze>(sig, CommunityFreeze {
+          is_frozen: false,
+          consecutive_rejections: 0,
+          unfreeze_votes: Vector::empty<address>()
+        })
+      }
+    }
 
 
+    // Utility for vm to set an address as a Community Wallet
+    public fun vm_set_comm(vm: &signer, addr: address) acquires CommunityWallets {
+      CoreAddresses::assert_libra_root(vm);
+      if (exists<CommunityWallets>(0x0)) {
+        let list = get_comm_list();
+        if (!Vector::contains<address>(&list, &addr)) {
+        
+          let s = borrow_global_mut<CommunityWallets>(0x0);
+          Vector::push_back(&mut s.list, addr);
+        }
+      }
+    }
 
+    // Utility for vm to remove the CommunityWallet tag from an address
+    public fun vm_remove_comm(vm: &signer, addr: address) acquires CommunityWallets {
+      CoreAddresses::assert_libra_root(vm);
+      if (exists<CommunityWallets>(0x0)) {
+        let list = get_comm_list();
+        let (yes, i) = Vector::index_of<address>(&list, &addr);
+        if (yes) {
+          let s = borrow_global_mut<CommunityWallets>(0x0);
+          Vector::remove(&mut s.list, i);
+        }
+      }
+    }
+
+
+  // The community wallet Signer can propose a timed transaction.
+  // the timed transaction defaults to occurring in the 3rd following epoch.
+  // TODO: Increase this time?
+  // the transaction will automatically occur at the epoch boundary, unless a veto vote by the validator set is successful.
+  // at that point the transaction leves the proposed queue, and is added the rejected list.
   public fun new_timed_transfer(sender: &signer, payee: address, value: u64, description: vector<u8>): u64 acquires CommunityTransfers, CommunityWallets {
       let sender_addr = Signer::address_of(sender);
       let list = get_comm_list();
@@ -155,6 +150,8 @@ module Wallet {
       return d.max_uid
     }
 
+  // utlity to query a CommunityWallet transfer wallet.
+  // Note: doesn not need to be a public function, except for use in tests.
   public fun find(uid: u64, type_of: u8): (Option<TimedTransfer>, u64) acquires CommunityTransfers {
     let c = borrow_global<CommunityTransfers>(0x0);
     let list = if (type_of == 0) {
@@ -177,44 +174,65 @@ module Wallet {
     (Option::none<TimedTransfer>(), 0)
   }
   
-  public fun veto(sender: &signer, uid: u64) acquires CommunityTransfers {
-     let addr = Signer::address_of(sender);
+  // A validator casts a vote to veto a proposed/pending transaction by a community wallet.
+  // The validator identifies the transaction by a unique id.
+  // tallies are computed on the fly, such that if a veto happens, the community which
+  // is faster than waiting for epoch boundaries.
+
+  public fun veto(sender: &signer, uid: u64) acquires CommunityTransfers, CommunityFreeze {
+    print(&0x110);
+    let addr = Signer::address_of(sender);
     assert(
       LibraSystem::is_validator(addr),
       Errors::requires_role(ERR_PREFIX + 001)
     );
+    print(&0x111);
     let (opt, i) = find(uid, 0);
     if (Option::is_some<TimedTransfer>(&opt)) {
       let c = borrow_global_mut<CommunityTransfers>(0x0);
       let t = Vector::borrow_mut<TimedTransfer>(&mut c.proposed, i);
       Vector::push_back<address>(&mut t.veto.list, addr);
+      print(&0x112);
 
       if (tally_veto(i)) {
+      print(&0x113);
+
         reject(uid)
       }
     };
   }
 
-  // reject a transaction and removed from proposed list if vetoed
-  fun reject(uid: u64) acquires CommunityTransfers {
+  // private function. Once vetoed, the CommunityWallet transaction is remove from proposed list.
+  fun reject(uid: u64) acquires CommunityTransfers, CommunityFreeze {
+    print(&0x01131);
     let c = borrow_global_mut<CommunityTransfers>(0x0);
     let list = *&c.proposed;
     let len = Vector::length(&list);
     let i = 0;
-
+    print(&0x01132);
     while (i < len) {
-
+      print(&0x01133);
       let t = *Vector::borrow<TimedTransfer>(&list, i);
       if (t.uid == uid) {
         Vector::remove<TimedTransfer>(&mut c.proposed, i);
+        let f = borrow_global_mut<CommunityFreeze>(*&t.payer);
+        f.consecutive_rejections = f.consecutive_rejections + 1;
         Vector::push_back(&mut c.rejected, t);
+        
       };
 
       i = i + 1;
     };
     
+    print(&0x01134);
+
   }
 
+  // private function to tally vetos.
+  // checks if a voter is in the validator set.
+  // tallies everytime called. Only counts votes in the validator set.
+  // does not remove an address if not in the validator set, in case the validator returns
+  // to the set on the next tally.
   fun tally_veto(index: u64): bool acquires CommunityTransfers {
     let c = borrow_global_mut<CommunityTransfers>(0x0);
     let t = Vector::borrow_mut<TimedTransfer>(&mut c.proposed, index);
@@ -242,7 +260,7 @@ module Wallet {
     return votes > threshold
   }
 
-  // get the total voting power of the validator set, and find the 2/3rds threshold
+  // private function to get the total voting power of the validator set, and find the 2/3rds threshold
   fun calculate_proportional_voting_threshold(): u64 {
       let val_set_size = LibraSystem::validator_set_size();
       let i = 0;
@@ -256,6 +274,8 @@ module Wallet {
       threshold
   }
 
+  // Utility to list CommunityWallet transfers due, by epoch. Anyone can call this.
+  // This is used by VM in LibraAccount at epoch boundaries to process the wallet transfers.
   public fun list_tx_by_epoch(epoch: u64): vector<TimedTransfer> acquires CommunityTransfers {
       let c = borrow_global_mut<CommunityTransfers>(0x0);
       // reset approved list
@@ -277,15 +297,59 @@ module Wallet {
       return pending
     }
     
-    
+    public fun maybe_reset_rejection_counter(vm: &signer, wallet: address) acquires CommunityFreeze {
+      CoreAddresses::assert_libra_root(vm);
+      let f = borrow_global_mut<CommunityFreeze>(wallet);
+      f.consecutive_rejections = 0;
+    }
 
+    // Private function to freeze a community wallet
+    // community wallets get frozen if 3 consecutive attempts to transfer are rejected.
+    fun maybe_freeze(wallet: address) acquires CommunityFreeze {
+      let f = borrow_global_mut<CommunityFreeze>(wallet);
+      if (f.consecutive_rejections > 2) {
+        f.is_frozen = true;
+      }
+    }
 
-    // Freeze()
-    /// after consecutive freezes
-    // reset freeze count
+    // Unfreezing a wallet requires the same threshold, as rejecting a transaction.
+    // validators can vote to unfreeze.
+    // unfreezing happens as soon as a vote passes threshold (not at epoch boundary)
+    public fun vote_to_unfreeze(val: &signer, wallet: address) acquires CommunityFreeze {
+      let f = borrow_global_mut<CommunityFreeze>(wallet);
+      let val_addr = Signer::address_of(val);
+      Vector::push_back<address>(&mut f.unfreeze_votes, val_addr);
+      
+      if (tally_unfreeze(wallet)) {
+        let f = borrow_global_mut<CommunityFreeze>(wallet);
+        f.is_frozen = false;
+      }
+    }
 
-    // unfreeze()
-    // Vote to unfreeze a wallet.
+    // private function to tall the unfreezing of a wallet.
+    fun tally_unfreeze(wallet: address): bool acquires CommunityFreeze {
+      let f = borrow_global<CommunityFreeze>(wallet);
+
+      let votes = 0;
+      let threshold = calculate_proportional_voting_threshold();
+      
+      let k = 0;
+      let len = Vector::length<address>(&f.unfreeze_votes);
+
+      while (k < len) {
+        let addr = *Vector::borrow<address>(&f.unfreeze_votes, k);
+        // ignore votes that are no longer in the validator set,
+        // BUT DON'T REMOVE, since they may rejoin the validator set, and shouldn't need to vote again.
+
+        if (LibraSystem::is_validator(addr)) {
+          votes = votes + NodeWeight::proof_of_weight(addr)
+        };
+        k = k + 1;
+      };
+
+      return votes > threshold
+    }
+
 
 
     //////// GETTERS ////////
@@ -302,6 +366,30 @@ module Wallet {
       let (opt, _) = find(uid, 2);
       Option::is_some<TimedTransfer>(&opt)
     }
+
+    // Getter for retrieving the list of community wallets.
+    public fun get_comm_list(): vector<address> acquires CommunityWallets{
+      if (exists<CommunityWallets>(0x0)) {
+        let s = borrow_global<CommunityWallets>(0x0);
+        return *&s.list
+      } else {
+        return Vector::empty<address>()
+      }
+    }
+
+    // getter to check if is a CommunityWallet
+    public fun is_comm(addr: address): bool acquires CommunityWallets{
+      let s = borrow_global<CommunityWallets>(0x0);
+      Vector::contains<address>(&s.list, &addr)
+    }
+
+    // getter to check if wallet is frozen
+    // used in LibraAccount before attempting a transfer.
+    public fun is_frozen(addr: address): bool acquires CommunityFreeze{
+      let f = borrow_global<CommunityFreeze>(addr);
+      f.is_frozen
+    }
+
 
     //////// SLOW WALLETS ////////
     resource struct SlowWallet {

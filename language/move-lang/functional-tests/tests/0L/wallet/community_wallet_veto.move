@@ -62,11 +62,15 @@ script {
 //! sender: dave
 script {
     use 0x1::Wallet;
+    use 0x1::Debug::print;
 
     fun main(sender: &signer) {
       let uid = 1;
+      print(&0x1);
       Wallet::veto(sender, uid);
+      print(&0x2);
       assert(!Wallet::transfer_is_proposed(uid), 7357006);
+      print(&0x2);
       assert(Wallet::transfer_is_rejected(uid), 7357007);
     }
 }
