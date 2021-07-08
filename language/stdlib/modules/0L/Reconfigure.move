@@ -26,7 +26,7 @@ module Reconfigure {
     use 0x1::GAS::GAS;
     use 0x1::LibraConfig;
     use 0x1::Burn;
-    
+    use 0x1::LibraAccount;
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
     public fun reconfigure(vm: &signer, height_now: u64) {
