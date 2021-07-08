@@ -86,19 +86,6 @@ module Wallet {
     }
 
 
-    // Utility for vm to set an address as a Community Wallet
-    public fun vm_set_comm(vm: &signer, addr: address) acquires CommunityWallets {
-      CoreAddresses::assert_libra_root(vm);
-      if (exists<CommunityWallets>(0x0)) {
-        let list = get_comm_list();
-        if (!Vector::contains<address>(&list, &addr)) {
-        
-          let s = borrow_global_mut<CommunityWallets>(0x0);
-          Vector::push_back(&mut s.list, addr);
-        }
-      }
-    }
-
     // Utility for vm to remove the CommunityWallet tag from an address
     public fun vm_remove_comm(vm: &signer, addr: address) acquires CommunityWallets {
       CoreAddresses::assert_libra_root(vm);

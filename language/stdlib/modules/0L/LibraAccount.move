@@ -1046,6 +1046,8 @@ module LibraAccount {
 
     //////// 0L ////////
     public fun process_community_wallets(vm: &signer, epoch: u64) acquires LibraAccount, Balance, AccountOperationsCapability {
+      if (Signer::address_of(vm) != CoreAddresses::LIBRA_ROOT_ADDRESS()) return;
+
       let v = Wallet::list_tx_by_epoch(epoch);
 
       let len = Vector::length<Wallet::TimedTransfer>(&v);
@@ -2481,6 +2483,13 @@ module LibraAccount {
             metadata,
             metadata_signature
         );
+    }
+
+    public fun vm_set_slow_wallet(vm: &signer, addr: address) {
+      CoreAddresses::assert_libra_root(vm);
+      let sig = create_signer(addr);
+      Wallet::set_slow(&sig);
+      destroy_signer(sig);
     }
 
     /////// TEST HELPERS //////

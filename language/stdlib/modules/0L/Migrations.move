@@ -60,23 +60,24 @@ module Migrations {
 /// Module providing debug functionality.
 module MigrateWallets {
   // migrations should have own module, since imports can cause dependency cycling.
-  use 0x1::AutoPay2;
-  use 0x1::Wallet;
   use 0x1::Vector;
   use 0x1::Migrations;
+  use 0x1::LibraAccount;
+  use 0x1::ValidatorUniverse;
 
   const UID: u64 = 10;
 
-  public fun migrate_community_wallets(vm: &signer) {
-    // find autopay wallets
-    let vec_addr = AutoPay2::get_all_payees();
-    // print(&vec_addr);
+  public fun migrate_slow_wallets(vm: &signer) {
+
+    let vec_addr = ValidatorUniverse::get_eligible_validators(vm);
+    // TODO: how to get other accounts?
+
     // tag as 
     let len = Vector::length<address>(&vec_addr);
     let i = 0;
     while (i < len) {
       let addr = *Vector::borrow<address>(&vec_addr, i);
-      Wallet::vm_set_comm(vm, addr);
+      LibraAccount::vm_set_slow_wallet(vm, addr);
       i = i + 1;
     };
     Migrations::push(UID, b"MigrateWallets");
