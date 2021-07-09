@@ -2,14 +2,16 @@
     export let data;
    
     let sortableColumns = [
+        { label: "note", sortKey: "note" },
+        { label: "address", sortKey: "address" },
         { label: "#payers", sortKey: "payers" },
         { label: "average %", sortKey: "average_percent" },
         { label: "balance", sortKey: "balance" },
         { label: "sum %", sortKey: "sum_percentage" },
         { label: "% of all", sortKey: "all_percentage" },
     ];
-    let sortOption = "balance";
-    let sortOrder = 1;
+    let sortOption = "payers";
+    let sortOrder = -1;
     
     let total_balance, total_sum_percentage, total_percentage;
 
@@ -56,10 +58,8 @@
             <table class="uk-table">
                 <thead>
                     <tr>
-                        <th class="uk-text-left">note</th>
-                        <th class="uk-text-center uk-visible@s">payee account</th>
                         {#each sortableColumns as col}
-                            <th class="uk-text-right" on:click={() => thOnClick(col.sortKey)}>
+                            <th class="uk-text-center" on:click={() => thOnClick(col.sortKey)}>
                             <span class="disable-select">{col.label}</span>
                             {#if sortOption == col.sortKey}
                                 {#if sortOrder == 1}
@@ -75,9 +75,10 @@
                 <tbody>
                     {#each watch_list as {note, address, balance, payers, average_percent, sum_percentage, all_percentage}}
                         <tr>
-                            <td class="uk-visible@s uk-text-left">{note}</td>
+                            <td class="uk-visible@s uk-text-center">{note}</td>
                             <td class="uk-hidden@s uk-text-truncate">{note}</td>
                             <td class="uk-visible@s uk-text-center">{address}</td>
+                            <td class="uk-hidden@s uk-text-truncate">{address}</td>
                             <td class="uk-text-right">{payers}</td>
                             <td class="uk-text-right">{formatPercent(average_percent)}</td>
                             <td class="uk-text-right">{formatBalance(balance)}</td>
@@ -87,7 +88,7 @@
                     {/each}
                     <tr>
                         <td class="uk-text-center uk-text-bold">TOTAL</td>
-                        <td class="uk-visible@s"></td>
+                        <td></td>
                         <td></td>
                         <td></td>
                         <td class="uk-text-right uk-text-bold">{formatBalance(total_balance)}</td>
