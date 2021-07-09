@@ -48,7 +48,7 @@
 
 <style>
   .owner {
-    background: #d9f3ff;
+    background: #E6E6E6;
   }
 </style>
 

@@ -4,6 +4,7 @@
   import Vals from "../validators/Vals.svelte";
   import Upgrade from "../upgrade/Upgrade.svelte";
   import AutoPay from "../autopay/AutoPay.svelte";
+  import WatchList from "../watch-list/WatchList.svelte";
   import AuditVals from "../audit/AuditVals.svelte";
   import { chainInfo } from "../../store.ts";
 
@@ -22,6 +23,7 @@
       <Vals data={data}/>
       <Upgrade data={data}/>
       <AutoPay account={data.account_view}/>
+      <WatchList data={data}/>
       <AuditVals data={data}/>      
     </ul>
   </div>

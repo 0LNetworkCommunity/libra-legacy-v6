@@ -1,5 +1,4 @@
 <script lang="ts">
-  import WatchList from "../watch-list/WatchList.svelte";
   import "/layout/Style.svelte";
   export let account;
 </script>
@@ -34,7 +33,6 @@
           {/each}
         </tbody>
       </table>
-      <WatchList watch_list={account.watch_list} />
     {:else}
       <p class="uk-text-center uk-text-warning">Your validator does not have autopay instructions.</p>
     {/if}

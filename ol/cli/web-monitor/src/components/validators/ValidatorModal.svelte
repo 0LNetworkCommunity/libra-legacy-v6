@@ -27,7 +27,7 @@
   <div id="{id ? id : 'validator-modal'}" uk-modal>
       <div id="validator-modal-body" class="uk-modal-dialog uk-modal-body">
           <button class="uk-modal-close-default" type="button" uk-close></button>
-          <h2 class="uk-modal-title">Validator Info</h2>
+          <h2 class="uk-modal-title uk-text-muted">Validator Info</h2>
           <table class="uk-table">
             <thead>
                 <tr>

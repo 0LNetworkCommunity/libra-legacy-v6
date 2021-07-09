@@ -6,7 +6,7 @@ use libra_json_rpc_client::{views::AccountView, AccountAddress};
 use libra_types::{account_state::AccountState, transaction::Version};
 use resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator, NullStateView};
 use serde::{Deserialize, Serialize};
-use std::{convert::TryFrom, collections::HashSet};
+use std::{convert::TryFrom};
 use ol_types::{autopay::{AutoPayResource, AutoPayView}, validator_config::{ValidatorConfigResource, ValidatorConfigView}};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -20,8 +20,6 @@ pub struct OwnerAccountView {
     is_in_validator_set: bool,
     /// auto pay
     autopay: Option<AutoPayView>,
-    /// auto pay watch list
-    watch_list: Option<WatchList>,
     /// operator account
     operator_account: Option<AccountAddress>,
     /// operator balance
@@ -36,7 +34,6 @@ impl OwnerAccountView {
             balance: 0_f64,
             is_in_validator_set: false,
             autopay: None,
-            watch_list: None,
             operator_account: None,
             operator_balance: None,
         }
@@ -72,7 +69,6 @@ impl Node {
                 self.vitals.account_view.balance = get_balance(av);
                 self.vitals.account_view.is_in_validator_set = self.is_in_validator_set();
                 self.vitals.account_view.autopay = self.get_autopay_view(self.vitals.account_view.address);
-                self.vitals.account_view.watch_list = self.get_watch_list();
                 let operator = self.get_validator_operator_account(self.vitals.account_view.address);
                 self.vitals.account_view.operator_account = operator;
                 if operator.is_some() {
@@ -177,75 +173,6 @@ impl Node {
             Err(Error::msg("connection to client"))
         }
     }
-
-    /*
-    /// get account balance history
-    pub fn get_account_balance_history(&mut self, address: AccountAddress) -> Result<Vec<(u64, u64)>> {
-        /*
-            get current account version and collect balance of each version
-        */
-        match self.client.get_account_state_blob(address)? {
-            Ok((blob, version)) => {
-                /*
-                    get sequence from blob
-                    for 
-                */
-            },
-            Err(x) => Err(x)
-        }
-    }
-    */
-
-    /// get stats from payee accounts in validator autopay instructions
-    pub fn get_watch_list(&mut self) -> Option<WatchList> {
-        if self.vitals.account_view.autopay.is_none() {
-            return None;
-        }
-        
-        let owner_payees = self.vitals.account_view.autopay
-            .as_ref()
-            .unwrap()
-            .payments
-            .clone()
-            .iter()
-            .map(| x | x.payee)
-            .collect::<HashSet<_>>();
-
-        let stats = owner_payees.iter().map(| payee | {              
-            let balance = self.get_account_balance(*payee).unwrap();
-            let mut payers: HashSet<String> = HashSet::new(); 
-            let mut instructions: u8 = 0;
-            let mut sum_percent: u64 = 0;
-            let mut average_percent: f64 = 0.0;
-            let vals = self.vitals.chain_view.as_ref().unwrap().validator_view.as_ref().unwrap();
-            
-
-            for val in vals.iter() {
-                if val.autopay.is_some() {
-                    for payment in val.autopay.as_ref().unwrap().payments.iter() {
-                        if payment.is_percent_of_change() && payment.payee == *payee {
-                            payers.insert(val.account_address.clone());
-                            instructions += 1;
-                            sum_percent += payment.amt;
-                        }
-                    }
-                }
-            }
-    
-            // calc average amount of recurring autopay
-            if instructions > 0 {
-                average_percent = sum_percent as f64 / payers.len() as f64;
-            }               
-    
-            PayeeStats { 
-                payee: *payee, 
-                balance: balance, 
-                payers: payers.len(), 
-                average_percent: format!("{:.2}%", average_percent / 100.00)
-            }
-        });
-        Some(WatchList { accounts: stats.collect() })
-    }
 }
 
 /// get balance from AccountView
@@ -257,25 +184,3 @@ fn get_balance(account_view: AccountView) -> f64 {
     }
     0_f64
 }
-
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-///
-pub struct WatchList {
-    ///
-    pub accounts: Vec<PayeeStats>
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-///
-pub struct PayeeStats {
-    ///
-    pub payee: AccountAddress,
-    ///
-    pub balance: f64,
-    ///
-    pub payers: usize,
-    ///
-    pub average_percent: String,
-}
-  

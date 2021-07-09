@@ -8,7 +8,7 @@ use libra_types::{
 use ol_types::{validator_config::ValidatorConfigView, autopay::AutoPayView};
 
 use serde::{Deserialize, Serialize};
-use std::convert::TryFrom;
+use std::{convert::TryFrom, collections::HashMap};
 use super::node::Node;
 
 /// name of chain info key for db
@@ -41,6 +41,8 @@ pub struct ChainView {
   pub validators_stats: Option<ValidatorsStatsResource>,
   /// audit stats
   pub vals_config_stats: Option<ValsConfigStats>,
+  /// autopay payees percentage recurring stats
+  pub autopay_watch_list: Option<Vec<PayeeStats>>, 
 }
 
 #[derive(Default, Debug, Deserialize, Serialize, Clone)]
@@ -221,7 +223,7 @@ impl Node {
             vote_count_in_epoch: validator_stats.vote_count,
             prop_count_in_epoch: validator_stats.prop_count,
             validator_config: val_config,
-            autopay: autopay
+            autopay: autopay,
           }
         })
         .collect();
@@ -229,13 +231,65 @@ impl Node {
       cs.validator_view = Some(validators.clone());
       cs.validators_stats = Some(validators_stats);
       cs.vals_config_stats = Some(calc_config_stats(cs.validator_view.clone().unwrap()));
-
+      cs.autopay_watch_list = self.get_autopay_watch_list(validators.clone());
+            
       self.vitals.chain_view = Some(cs.clone());
 
       return (Some(cs), Some(validators));
     }
 
     (None, None)
+  }
+
+  /// Get all percentage recurring payees stats
+  pub fn get_autopay_watch_list(&mut self, vals: Vec<ValidatorView>) -> Option<Vec<PayeeStats>> {
+    let mut payees: HashMap<AccountAddress, PayeeSums> = HashMap::new();
+    let mut total: u64 = 0;
+
+    struct PayeeSums {
+      pub amount: u64,
+      pub payers: u64,
+    }
+
+    // iterate over all validators
+    for val in vals.iter() {
+      if val.autopay.is_some() {
+        // iterate over all autopay instructions
+        let mut val_payees: HashMap<AccountAddress, u64> = HashMap::new();
+        for payment in val.autopay.as_ref().unwrap().payments.iter() {
+          if payment.is_percent_of_change() {
+            total += payment.amt;
+            *val_payees.entry(payment.payee).or_insert(0) += payment.amt;
+          }
+        }
+        // sum payers and amount
+        for (payee, amount) in val_payees.iter() {
+          let payee_sums = payees.get_mut(&payee);
+          match payee_sums {
+            Some(p) => {
+              p.amount = p.amount + amount;
+              p.payers = p.payers + 1;
+            },
+            None => {
+              payees.insert(*payee, PayeeSums { amount: *amount, payers: 1 });    
+            }
+          }
+        }
+      }
+    }
+
+    // collect payees stats
+    let ret = payees.iter().map(| (payee, stat) | {
+      PayeeStats { 
+        payee: *payee, 
+        payers: stat.payers, 
+        average_percent: stat.amount as f64 / stat.payers as f64,
+        balance: self.get_account_balance(*payee).unwrap(), 
+        sum_percentage: stat.amount,
+        all_percentage: (stat.amount * 10000) as f64 / total as f64,
+      }
+    }).collect();
+    Some(ret)
   }
 }
 
@@ -266,3 +320,78 @@ fn calc_config_stats(vals: Vec<ValidatorView>) -> ValsConfigStats {
     percent_positive_balance_operators: count_positive_balance as f64 / vals.len() as f64,
   }
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+///
+pub struct PayeeStats {
+  ///
+  pub payee: AccountAddress,
+  ///
+  pub balance: f64,
+  ///
+  pub payers: u64,
+  ///
+  pub average_percent: f64,
+  ///
+  pub sum_percentage: u64,
+  /// 
+  pub all_percentage: f64,
+}
+
+ 
+
+  /*
+  /// get stats from payee accounts in validator autopay instructions
+  pub fn get_watch_list_old(&mut self) -> Option<WatchList> {
+    if self.vitals.account_view.autopay.is_none() {
+        return None;
+    }
+    
+    let owner_payees = self.vitals.account_view.autopay
+        .as_ref()
+        .unwrap()
+        .payments
+        .clone()
+        .iter()
+        .map(| x | x.payee)
+        .collect::<HashSet<_>>();
+
+    let stats = owner_payees.iter().map(| payee | {              
+        let balance = self.get_account_balance(*payee).unwrap();
+        let mut payers: HashSet<String> = HashSet::new(); 
+        let mut instructions: u8 = 0;
+        let mut sum_percent: u64 = 0;
+        let mut average_percent: f64 = 0.0;
+        let vals = self.vitals.chain_view.as_ref().unwrap().validator_view.as_ref().unwrap();
+        
+
+        for val in vals.iter() {
+            if val.autopay.is_some() {
+                for payment in val.autopay.as_ref().unwrap().payments.iter() {
+                    if payment.is_percent_of_change() && payment.payee == *payee {
+                        payers.insert(val.account_address.clone());
+                        instructions += 1;
+                        sum_percent += payment.amt;
+                    }
+                }
+            }
+        }
+
+        // calc average amount of recurring autopay
+        if instructions > 0 {
+            average_percent = sum_percent as f64 / payers.len() as f64;
+        }               
+
+        PayeeStats { 
+            payee: *payee, 
+            balance: balance, 
+            payers: payers.len(), 
+            average_percent: format!("{:.2}%", average_percent / 100.00)
+        }
+    });
+    Some(WatchList { accounts: stats.collect() })
+  }
+}
+*/
+
+
