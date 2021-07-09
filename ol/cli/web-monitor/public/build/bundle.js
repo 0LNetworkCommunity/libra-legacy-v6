@@ -552,7 +552,7 @@ var app = (function () {
     const file$e = "src/components/monitor/health/Check.svelte";
 
     // (13:4) {:else}
-    function create_else_block$7(ctx) {
+    function create_else_block$8(ctx) {
     	let span;
 
     	const block = {
@@ -572,7 +572,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_else_block$7.name,
+    		id: create_else_block$8.name,
     		type: "else",
     		source: "(13:4) {:else}",
     		ctx
@@ -623,7 +623,7 @@ var app = (function () {
 
     	function select_block_type(ctx, dirty) {
     		if (/*isTrue*/ ctx[0]) return create_if_block$9;
-    		return create_else_block$7;
+    		return create_else_block$8;
     	}
 
     	let current_block_type = select_block_type(ctx);
@@ -17980,7 +17980,7 @@ var app = (function () {
     }
 
     // (142:2) {:else}
-    function create_else_block$6(ctx) {
+    function create_else_block$7(ctx) {
     	let p;
 
     	const block = {
@@ -18002,7 +18002,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_else_block$6.name,
+    		id: create_else_block$7.name,
     		type: "else",
     		source: "(142:2) {:else}",
     		ctx
@@ -18172,7 +18172,7 @@ var app = (function () {
     	let current_block_type_index;
     	let if_block;
     	let current;
-    	const if_block_creators = [create_if_block$8, create_else_block$6];
+    	const if_block_creators = [create_if_block$8, create_else_block$7];
     	const if_blocks = [];
 
     	function select_block_type(ctx, dirty) {
@@ -18464,7 +18464,7 @@ var app = (function () {
     const file$c = "src/components/monitor/chain/Info.svelte";
 
     // (25:2) {:else}
-    function create_else_block$5(ctx) {
+    function create_else_block$6(ctx) {
     	let p;
 
     	const block = {
@@ -18484,7 +18484,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_else_block$5.name,
+    		id: create_else_block$6.name,
     		type: "else",
     		source: "(25:2) {:else}",
     		ctx
@@ -18608,7 +18608,7 @@ var app = (function () {
 
     	function select_block_type(ctx, dirty) {
     		if (/*chain*/ ctx[0]) return create_if_block$7;
-    		return create_else_block$5;
+    		return create_else_block$6;
     	}
 
     	let current_block_type = select_block_type(ctx);
@@ -18727,7 +18727,7 @@ var app = (function () {
     const file$b = "src/components/monitor/account/Account.svelte";
 
     // (39:2) {:else}
-    function create_else_block$4(ctx) {
+    function create_else_block$5(ctx) {
     	let p;
 
     	const block = {
@@ -18747,7 +18747,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_else_block$4.name,
+    		id: create_else_block$5.name,
     		type: "else",
     		source: "(39:2) {:else}",
     		ctx
@@ -18779,7 +18779,7 @@ var app = (function () {
     	let t10_value = formatBalance$1(/*account*/ ctx[0].balance) + "";
     	let t10;
     	let t11;
-    	let if_block = /*account*/ ctx[0].operator_account != null && create_if_block_1$4(ctx);
+    	let if_block = /*account*/ ctx[0].operator_account != null && create_if_block_1$5(ctx);
 
     	const block = {
     		c: function create() {
@@ -18853,7 +18853,7 @@ var app = (function () {
     				if (if_block) {
     					if_block.p(ctx, dirty);
     				} else {
-    					if_block = create_if_block_1$4(ctx);
+    					if_block = create_if_block_1$5(ctx);
     					if_block.c();
     					if_block.m(tbody, null);
     				}
@@ -18880,7 +18880,7 @@ var app = (function () {
     }
 
     // (30:8) {#if account.operator_account != null}
-    function create_if_block_1$4(ctx) {
+    function create_if_block_1$5(ctx) {
     	let tr;
     	let td0;
     	let t1;
@@ -18932,7 +18932,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_if_block_1$4.name,
+    		id: create_if_block_1$5.name,
     		type: "if",
     		source: "(30:8) {#if account.operator_account != null}",
     		ctx
@@ -18948,7 +18948,7 @@ var app = (function () {
 
     	function select_block_type(ctx, dirty) {
     		if (/*account*/ ctx[0]) return create_if_block$6;
-    		return create_else_block$4;
+    		return create_else_block$5;
     	}
 
     	let current_block_type = select_block_type(ctx);
@@ -19287,8 +19287,8 @@ var app = (function () {
     	let if_block_anchor;
 
     	function select_block_type_1(ctx, dirty) {
-    		if (/*account*/ ctx[0].autopay && /*account*/ ctx[0].autopay.payments.length > 0) return create_if_block_1$3;
-    		return create_else_block$3;
+    		if (/*account*/ ctx[0].autopay && /*account*/ ctx[0].autopay.payments.length > 0) return create_if_block_1$4;
+    		return create_else_block$4;
     	}
 
     	let current_block_type = select_block_type_1(ctx);
@@ -19334,7 +19334,7 @@ var app = (function () {
     }
 
     // (35:4) {:else}
-    function create_else_block$3(ctx) {
+    function create_else_block$4(ctx) {
     	let p;
 
     	const block = {
@@ -19355,7 +19355,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_else_block$3.name,
+    		id: create_else_block$4.name,
     		type: "else",
     		source: "(35:4) {:else}",
     		ctx
@@ -19365,7 +19365,7 @@ var app = (function () {
     }
 
     // (11:4) {#if account.autopay && account.autopay.payments.length > 0}
-    function create_if_block_1$3(ctx) {
+    function create_if_block_1$4(ctx) {
     	let table;
     	let thead;
     	let tr;
@@ -19483,7 +19483,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_if_block_1$3.name,
+    		id: create_if_block_1$4.name,
     		type: "if",
     		source: "(11:4) {#if account.autopay && account.autopay.payments.length > 0}",
     		ctx
@@ -20183,7 +20183,7 @@ var app = (function () {
     	return child_ctx;
     }
 
-    function get_each_context_1$1(ctx, list, i) {
+    function get_each_context_1$2(ctx, list, i) {
     	const child_ctx = ctx.slice();
     	child_ctx[12] = list[i];
     	return child_ctx;
@@ -20194,8 +20194,8 @@ var app = (function () {
     	let if_block_anchor;
 
     	function select_block_type(ctx, dirty) {
-    		if (/*sortOrder*/ ctx[3] == 1) return create_if_block_1$2;
-    		return create_else_block$2;
+    		if (/*sortOrder*/ ctx[3] == 1) return create_if_block_1$3;
+    		return create_else_block$3;
     	}
 
     	let current_block_type = select_block_type(ctx);
@@ -20239,7 +20239,7 @@ var app = (function () {
     }
 
     // (49:16) {:else}
-    function create_else_block$2(ctx) {
+    function create_else_block$3(ctx) {
     	let span;
 
     	const block = {
@@ -20258,7 +20258,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_else_block$2.name,
+    		id: create_else_block$3.name,
     		type: "else",
     		source: "(49:16) {:else}",
     		ctx
@@ -20268,7 +20268,7 @@ var app = (function () {
     }
 
     // (47:16) {#if sortOrder == 1}
-    function create_if_block_1$2(ctx) {
+    function create_if_block_1$3(ctx) {
     	let span;
 
     	const block = {
@@ -20287,7 +20287,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_if_block_1$2.name,
+    		id: create_if_block_1$3.name,
     		type: "if",
     		source: "(47:16) {#if sortOrder == 1}",
     		ctx
@@ -20297,7 +20297,7 @@ var app = (function () {
     }
 
     // (43:10) {#each sortableColumns as col}
-    function create_each_block_1$1(ctx) {
+    function create_each_block_1$2(ctx) {
     	let th;
     	let span;
     	let t0_value = /*col*/ ctx[12].label + "";
@@ -20361,7 +20361,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_each_block_1$1.name,
+    		id: create_each_block_1$2.name,
     		type: "each",
     		source: "(43:10) {#each sortableColumns as col}",
     		ctx
@@ -20555,7 +20555,7 @@ var app = (function () {
     	let each_blocks_1 = [];
 
     	for (let i = 0; i < each_value_1.length; i += 1) {
-    		each_blocks_1[i] = create_each_block_1$1(get_each_context_1$1(ctx, each_value_1, i));
+    		each_blocks_1[i] = create_each_block_1$2(get_each_context_1$2(ctx, each_value_1, i));
     	}
 
     	let each_value = /*set*/ ctx[1];
@@ -20660,12 +20660,12 @@ var app = (function () {
     				let i;
 
     				for (i = 0; i < each_value_1.length; i += 1) {
-    					const child_ctx = get_each_context_1$1(ctx, each_value_1, i);
+    					const child_ctx = get_each_context_1$2(ctx, each_value_1, i);
 
     					if (each_blocks_1[i]) {
     						each_blocks_1[i].p(child_ctx, dirty);
     					} else {
-    						each_blocks_1[i] = create_each_block_1$1(child_ctx);
+    						each_blocks_1[i] = create_each_block_1$2(child_ctx);
     						each_blocks_1[i].c();
     						each_blocks_1[i].m(tr, t5);
     					}
@@ -20940,7 +20940,7 @@ var app = (function () {
     	return child_ctx;
     }
 
-    function get_each_context_1(ctx, list, i) {
+    function get_each_context_1$1(ctx, list, i) {
     	const child_ctx = ctx.slice();
     	child_ctx[9] = list[i];
     	child_ctx[8] = i;
@@ -20948,7 +20948,7 @@ var app = (function () {
     }
 
     // (53:10) {#each prop.validators as val, i}
-    function create_each_block_1(ctx) {
+    function create_each_block_1$1(ctx) {
     	let p;
     	let t_value = /*val*/ ctx[9] + "";
     	let t;
@@ -20973,7 +20973,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_each_block_1.name,
+    		id: create_each_block_1$1.name,
     		type: "each",
     		source: "(53:10) {#each prop.validators as val, i}",
     		ctx
@@ -21002,7 +21002,7 @@ var app = (function () {
     	let each_blocks = [];
 
     	for (let i = 0; i < each_value_1.length; i += 1) {
-    		each_blocks[i] = create_each_block_1(get_each_context_1(ctx, each_value_1, i));
+    		each_blocks[i] = create_each_block_1$1(get_each_context_1$1(ctx, each_value_1, i));
     	}
 
     	const block = {
@@ -21056,12 +21056,12 @@ var app = (function () {
     				let i;
 
     				for (i = 0; i < each_value_1.length; i += 1) {
-    					const child_ctx = get_each_context_1(ctx, each_value_1, i);
+    					const child_ctx = get_each_context_1$1(ctx, each_value_1, i);
 
     					if (each_blocks[i]) {
     						each_blocks[i].p(child_ctx, dirty);
     					} else {
-    						each_blocks[i] = create_each_block_1(child_ctx);
+    						each_blocks[i] = create_each_block_1$1(child_ctx);
     						each_blocks[i].c();
     						each_blocks[i].m(each_1_anchor.parentNode, each_1_anchor);
     					}
@@ -21376,7 +21376,7 @@ var app = (function () {
     	let t;
     	let if_block1_anchor;
     	let current;
-    	const if_block_creators = [create_if_block_2$1, create_else_block$1];
+    	const if_block_creators = [create_if_block_2$2, create_else_block$2];
     	const if_blocks = [];
 
     	function select_block_type_1(ctx, dirty) {
@@ -21386,7 +21386,7 @@ var app = (function () {
 
     	current_block_type_index = select_block_type_1(ctx);
     	if_block0 = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx);
-    	let if_block1 = /*vote_window_expired*/ ctx[2] && create_if_block_1$1(ctx);
+    	let if_block1 = /*vote_window_expired*/ ctx[2] && create_if_block_1$2(ctx);
 
     	const block = {
     		c: function create() {
@@ -21456,7 +21456,7 @@ var app = (function () {
     }
 
     // (17:10) {:else}
-    function create_else_block$1(ctx) {
+    function create_else_block$2(ctx) {
     	let div;
     	let h4;
 
@@ -21483,7 +21483,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_else_block$1.name,
+    		id: create_else_block$2.name,
     		type: "else",
     		source: "(17:10) {:else}",
     		ctx
@@ -21493,7 +21493,7 @@ var app = (function () {
     }
 
     // (15:10) {#if vote_in_progress}
-    function create_if_block_2$1(ctx) {
+    function create_if_block_2$2(ctx) {
     	let inprogress;
     	let current;
     	inprogress = new InProgress({ $$inline: true });
@@ -21522,7 +21522,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_if_block_2$1.name,
+    		id: create_if_block_2$2.name,
     		type: "if",
     		source: "(15:10) {#if vote_in_progress}",
     		ctx
@@ -21532,7 +21532,7 @@ var app = (function () {
     }
 
     // (25:10) {#if vote_window_expired}
-    function create_if_block_1$1(ctx) {
+    function create_if_block_1$2(ctx) {
     	let div;
     	let h3;
     	let t1;
@@ -21574,7 +21574,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_if_block_1$1.name,
+    		id: create_if_block_1$2.name,
     		type: "if",
     		source: "(25:10) {#if vote_window_expired}",
     		ctx
@@ -21761,35 +21761,40 @@ var app = (function () {
 
     function get_each_context$1(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[2] = list[i].payee;
-    	child_ctx[3] = list[i].balance;
-    	child_ctx[4] = list[i].payers;
-    	child_ctx[5] = list[i].average_percent;
-    	child_ctx[6] = list[i].sum_percentage;
-    	child_ctx[7] = list[i].all_percentage;
+    	child_ctx[7] = list[i].payee;
+    	child_ctx[8] = list[i].balance;
+    	child_ctx[9] = list[i].payers;
+    	child_ctx[10] = list[i].average_percent;
+    	child_ctx[11] = list[i].sum_percentage;
+    	child_ctx[12] = list[i].all_percentage;
     	return child_ctx;
     }
 
-    // (27:4) {#if watch_list}
+    function get_each_context_1(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[15] = list[i];
+    	return child_ctx;
+    }
+
+    // (42:4) {#if watch_list}
     function create_if_block$1(ctx) {
     	let div;
     	let table;
     	let thead;
     	let tr;
-    	let th0;
+    	let th;
     	let t1;
-    	let th1;
-    	let t3;
-    	let th2;
-    	let t5;
-    	let th3;
-    	let t7;
-    	let th4;
-    	let t9;
-    	let th5;
-    	let t11;
+    	let t2;
     	let tbody;
-    	let each_value = /*watch_list*/ ctx[0];
+    	let each_value_1 = /*sortableColumns*/ ctx[3];
+    	validate_each_argument(each_value_1);
+    	let each_blocks_1 = [];
+
+    	for (let i = 0; i < each_value_1.length; i += 1) {
+    		each_blocks_1[i] = create_each_block_1(get_each_context_1(ctx, each_value_1, i));
+    	}
+
+    	let each_value = /*watch_list*/ ctx[2];
     	validate_each_argument(each_value);
     	let each_blocks = [];
 
@@ -21803,66 +21808,43 @@ var app = (function () {
     			table = element("table");
     			thead = element("thead");
     			tr = element("tr");
-    			th0 = element("th");
-    			th0.textContent = "payee";
+    			th = element("th");
+    			th.textContent = "payee";
     			t1 = space();
-    			th1 = element("th");
-    			th1.textContent = "#payers";
-    			t3 = space();
-    			th2 = element("th");
-    			th2.textContent = "average %";
-    			t5 = space();
-    			th3 = element("th");
-    			th3.textContent = "balance";
-    			t7 = space();
-    			th4 = element("th");
-    			th4.textContent = "sum %";
-    			t9 = space();
-    			th5 = element("th");
-    			th5.textContent = "% of all";
-    			t11 = space();
+
+    			for (let i = 0; i < each_blocks_1.length; i += 1) {
+    				each_blocks_1[i].c();
+    			}
+
+    			t2 = space();
     			tbody = element("tbody");
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
     				each_blocks[i].c();
     			}
 
-    			attr_dev(th0, "class", "uk-text-center");
-    			add_location(th0, file$4, 31, 24, 920);
-    			attr_dev(th1, "class", "uk-text-center");
-    			add_location(th1, file$4, 32, 24, 982);
-    			attr_dev(th2, "class", "uk-text-center");
-    			add_location(th2, file$4, 33, 24, 1046);
-    			attr_dev(th3, "class", "uk-text-center");
-    			add_location(th3, file$4, 34, 24, 1112);
-    			attr_dev(th4, "class", "uk-text-center");
-    			add_location(th4, file$4, 35, 24, 1176);
-    			attr_dev(th5, "class", "uk-text-center");
-    			add_location(th5, file$4, 36, 24, 1238);
-    			add_location(tr, file$4, 30, 20, 891);
-    			add_location(thead, file$4, 29, 16, 863);
-    			add_location(tbody, file$4, 39, 16, 1346);
+    			attr_dev(th, "class", "uk-text-center");
+    			add_location(th, file$4, 46, 24, 1402);
+    			add_location(tr, file$4, 45, 20, 1373);
+    			add_location(thead, file$4, 44, 16, 1345);
+    			add_location(tbody, file$4, 61, 16, 2174);
     			attr_dev(table, "class", "uk-table");
-    			add_location(table, file$4, 28, 12, 822);
-    			add_location(div, file$4, 27, 8, 804);
+    			add_location(table, file$4, 43, 12, 1304);
+    			add_location(div, file$4, 42, 8, 1286);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
     			append_dev(div, table);
     			append_dev(table, thead);
     			append_dev(thead, tr);
-    			append_dev(tr, th0);
+    			append_dev(tr, th);
     			append_dev(tr, t1);
-    			append_dev(tr, th1);
-    			append_dev(tr, t3);
-    			append_dev(tr, th2);
-    			append_dev(tr, t5);
-    			append_dev(tr, th3);
-    			append_dev(tr, t7);
-    			append_dev(tr, th4);
-    			append_dev(tr, t9);
-    			append_dev(tr, th5);
-    			append_dev(table, t11);
+
+    			for (let i = 0; i < each_blocks_1.length; i += 1) {
+    				each_blocks_1[i].m(tr, null);
+    			}
+
+    			append_dev(table, t2);
     			append_dev(table, tbody);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
@@ -21870,8 +21852,32 @@ var app = (function () {
     			}
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty & /*print_percent, watch_list, formatBalance*/ 1) {
-    				each_value = /*watch_list*/ ctx[0];
+    			if (dirty & /*thOnClick, sortableColumns, sortOrder, sortOption*/ 27) {
+    				each_value_1 = /*sortableColumns*/ ctx[3];
+    				validate_each_argument(each_value_1);
+    				let i;
+
+    				for (i = 0; i < each_value_1.length; i += 1) {
+    					const child_ctx = get_each_context_1(ctx, each_value_1, i);
+
+    					if (each_blocks_1[i]) {
+    						each_blocks_1[i].p(child_ctx, dirty);
+    					} else {
+    						each_blocks_1[i] = create_each_block_1(child_ctx);
+    						each_blocks_1[i].c();
+    						each_blocks_1[i].m(tr, null);
+    					}
+    				}
+
+    				for (; i < each_blocks_1.length; i += 1) {
+    					each_blocks_1[i].d(1);
+    				}
+
+    				each_blocks_1.length = each_value_1.length;
+    			}
+
+    			if (dirty & /*print_percent, watch_list, formatBalance*/ 4) {
+    				each_value = /*watch_list*/ ctx[2];
     				validate_each_argument(each_value);
     				let i;
 
@@ -21896,6 +21902,7 @@ var app = (function () {
     		},
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(div);
+    			destroy_each(each_blocks_1, detaching);
     			destroy_each(each_blocks, detaching);
     		}
     	};
@@ -21904,40 +21911,228 @@ var app = (function () {
     		block,
     		id: create_if_block$1.name,
     		type: "if",
-    		source: "(27:4) {#if watch_list}",
+    		source: "(42:4) {#if watch_list}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (41:20) {#each watch_list as {payee, balance, payers, average_percent, sum_percentage, all_percentage}}
+    // (51:28) {#if sortOption == col.sortKey}
+    function create_if_block_1$1(ctx) {
+    	let if_block_anchor;
+
+    	function select_block_type(ctx, dirty) {
+    		if (/*sortOrder*/ ctx[1] == 1) return create_if_block_2$1;
+    		return create_else_block$1;
+    	}
+
+    	let current_block_type = select_block_type(ctx);
+    	let if_block = current_block_type(ctx);
+
+    	const block = {
+    		c: function create() {
+    			if_block.c();
+    			if_block_anchor = empty();
+    		},
+    		m: function mount(target, anchor) {
+    			if_block.m(target, anchor);
+    			insert_dev(target, if_block_anchor, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (current_block_type !== (current_block_type = select_block_type(ctx))) {
+    				if_block.d(1);
+    				if_block = current_block_type(ctx);
+
+    				if (if_block) {
+    					if_block.c();
+    					if_block.m(if_block_anchor.parentNode, if_block_anchor);
+    				}
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if_block.d(detaching);
+    			if (detaching) detach_dev(if_block_anchor);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_1$1.name,
+    		type: "if",
+    		source: "(51:28) {#if sortOption == col.sortKey}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (54:32) {:else}
+    function create_else_block$1(ctx) {
+    	let span;
+
+    	const block = {
+    		c: function create() {
+    			span = element("span");
+    			attr_dev(span, "uk-icon", "icon: triangle-down");
+    			add_location(span, file$4, 54, 32, 1925);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, span, anchor);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(span);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_else_block$1.name,
+    		type: "else",
+    		source: "(54:32) {:else}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (52:32) {#if sortOrder == 1}
+    function create_if_block_2$1(ctx) {
+    	let span;
+
+    	const block = {
+    		c: function create() {
+    			span = element("span");
+    			attr_dev(span, "uk-icon", "icon: triangle-up");
+    			add_location(span, file$4, 52, 32, 1811);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, span, anchor);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(span);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_2$1.name,
+    		type: "if",
+    		source: "(52:32) {#if sortOrder == 1}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (48:24) {#each sortableColumns as col}
+    function create_each_block_1(ctx) {
+    	let th;
+    	let span;
+    	let t0_value = /*col*/ ctx[15].label + "";
+    	let t0;
+    	let t1;
+    	let t2;
+    	let mounted;
+    	let dispose;
+    	let if_block = /*sortOption*/ ctx[0] == /*col*/ ctx[15].sortKey && create_if_block_1$1(ctx);
+
+    	function click_handler() {
+    		return /*click_handler*/ ctx[6](/*col*/ ctx[15]);
+    	}
+
+    	const block = {
+    		c: function create() {
+    			th = element("th");
+    			span = element("span");
+    			t0 = text(t0_value);
+    			t1 = space();
+    			if (if_block) if_block.c();
+    			t2 = space();
+    			attr_dev(span, "class", "disable-select");
+    			add_location(span, file$4, 49, 28, 1618);
+    			attr_dev(th, "class", "uk-text-right");
+    			add_location(th, file$4, 48, 28, 1523);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, th, anchor);
+    			append_dev(th, span);
+    			append_dev(span, t0);
+    			append_dev(th, t1);
+    			if (if_block) if_block.m(th, null);
+    			append_dev(th, t2);
+
+    			if (!mounted) {
+    				dispose = listen_dev(th, "click", click_handler, false, false, false);
+    				mounted = true;
+    			}
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+
+    			if (/*sortOption*/ ctx[0] == /*col*/ ctx[15].sortKey) {
+    				if (if_block) {
+    					if_block.p(ctx, dirty);
+    				} else {
+    					if_block = create_if_block_1$1(ctx);
+    					if_block.c();
+    					if_block.m(th, t2);
+    				}
+    			} else if (if_block) {
+    				if_block.d(1);
+    				if_block = null;
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(th);
+    			if (if_block) if_block.d();
+    			mounted = false;
+    			dispose();
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block_1.name,
+    		type: "each",
+    		source: "(48:24) {#each sortableColumns as col}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (63:20) {#each watch_list as {payee, balance, payers, average_percent, sum_percentage, all_percentage}}
     function create_each_block$1(ctx) {
     	let tr;
     	let td0;
-    	let t0_value = /*payee*/ ctx[2] + "";
+    	let t0_value = /*payee*/ ctx[7] + "";
     	let t0;
     	let t1;
     	let td1;
-    	let t2_value = /*payers*/ ctx[4] + "";
+    	let t2_value = /*payee*/ ctx[7] + "";
     	let t2;
     	let t3;
     	let td2;
-    	let t4_value = print_percent$1(/*average_percent*/ ctx[5]) + "";
+    	let t4_value = /*payers*/ ctx[9] + "";
     	let t4;
     	let t5;
     	let td3;
-    	let t6_value = formatBalance(/*balance*/ ctx[3]) + "";
+    	let t6_value = print_percent$1(/*average_percent*/ ctx[10]) + "";
     	let t6;
     	let t7;
     	let td4;
-    	let t8_value = print_percent$1(/*sum_percentage*/ ctx[6]) + "";
+    	let t8_value = formatBalance(/*balance*/ ctx[8]) + "";
     	let t8;
     	let t9;
     	let td5;
-    	let t10_value = print_percent$1(/*all_percentage*/ ctx[7]) + "";
+    	let t10_value = print_percent$1(/*sum_percentage*/ ctx[11]) + "";
     	let t10;
     	let t11;
+    	let td6;
+    	let t12_value = print_percent$1(/*all_percentage*/ ctx[12]) + "";
+    	let t12;
+    	let t13;
 
     	const block = {
     		c: function create() {
@@ -21960,19 +22155,24 @@ var app = (function () {
     			td5 = element("td");
     			t10 = text(t10_value);
     			t11 = space();
-    			attr_dev(td0, "class", "uk-text-center");
-    			add_location(td0, file$4, 42, 28, 1527);
-    			attr_dev(td1, "class", "uk-text-right");
-    			add_location(td1, file$4, 43, 28, 1595);
+    			td6 = element("td");
+    			t12 = text(t12_value);
+    			t13 = space();
+    			attr_dev(td0, "class", "uk-visible@s uk-text-center");
+    			add_location(td0, file$4, 64, 28, 2355);
+    			attr_dev(td1, "class", "uk-hidden@s uk-text-truncate");
+    			add_location(td1, file$4, 65, 28, 2436);
     			attr_dev(td2, "class", "uk-text-right");
-    			add_location(td2, file$4, 44, 28, 1663);
+    			add_location(td2, file$4, 66, 28, 2518);
     			attr_dev(td3, "class", "uk-text-right");
-    			add_location(td3, file$4, 45, 28, 1755);
+    			add_location(td3, file$4, 67, 28, 2586);
     			attr_dev(td4, "class", "uk-text-right");
-    			add_location(td4, file$4, 46, 28, 1839);
+    			add_location(td4, file$4, 68, 28, 2678);
     			attr_dev(td5, "class", "uk-text-right");
-    			add_location(td5, file$4, 47, 28, 1930);
-    			add_location(tr, file$4, 41, 24, 1494);
+    			add_location(td5, file$4, 69, 28, 2762);
+    			attr_dev(td6, "class", "uk-text-right");
+    			add_location(td6, file$4, 70, 28, 2853);
+    			add_location(tr, file$4, 63, 24, 2322);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, tr, anchor);
@@ -21994,14 +22194,18 @@ var app = (function () {
     			append_dev(tr, td5);
     			append_dev(td5, t10);
     			append_dev(tr, t11);
+    			append_dev(tr, td6);
+    			append_dev(td6, t12);
+    			append_dev(tr, t13);
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty & /*watch_list*/ 1 && t0_value !== (t0_value = /*payee*/ ctx[2] + "")) set_data_dev(t0, t0_value);
-    			if (dirty & /*watch_list*/ 1 && t2_value !== (t2_value = /*payers*/ ctx[4] + "")) set_data_dev(t2, t2_value);
-    			if (dirty & /*watch_list*/ 1 && t4_value !== (t4_value = print_percent$1(/*average_percent*/ ctx[5]) + "")) set_data_dev(t4, t4_value);
-    			if (dirty & /*watch_list*/ 1 && t6_value !== (t6_value = formatBalance(/*balance*/ ctx[3]) + "")) set_data_dev(t6, t6_value);
-    			if (dirty & /*watch_list*/ 1 && t8_value !== (t8_value = print_percent$1(/*sum_percentage*/ ctx[6]) + "")) set_data_dev(t8, t8_value);
-    			if (dirty & /*watch_list*/ 1 && t10_value !== (t10_value = print_percent$1(/*all_percentage*/ ctx[7]) + "")) set_data_dev(t10, t10_value);
+    			if (dirty & /*watch_list*/ 4 && t0_value !== (t0_value = /*payee*/ ctx[7] + "")) set_data_dev(t0, t0_value);
+    			if (dirty & /*watch_list*/ 4 && t2_value !== (t2_value = /*payee*/ ctx[7] + "")) set_data_dev(t2, t2_value);
+    			if (dirty & /*watch_list*/ 4 && t4_value !== (t4_value = /*payers*/ ctx[9] + "")) set_data_dev(t4, t4_value);
+    			if (dirty & /*watch_list*/ 4 && t6_value !== (t6_value = print_percent$1(/*average_percent*/ ctx[10]) + "")) set_data_dev(t6, t6_value);
+    			if (dirty & /*watch_list*/ 4 && t8_value !== (t8_value = formatBalance(/*balance*/ ctx[8]) + "")) set_data_dev(t8, t8_value);
+    			if (dirty & /*watch_list*/ 4 && t10_value !== (t10_value = print_percent$1(/*sum_percentage*/ ctx[11]) + "")) set_data_dev(t10, t10_value);
+    			if (dirty & /*watch_list*/ 4 && t12_value !== (t12_value = print_percent$1(/*all_percentage*/ ctx[12]) + "")) set_data_dev(t12, t12_value);
     		},
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(tr);
@@ -22012,7 +22216,7 @@ var app = (function () {
     		block,
     		id: create_each_block$1.name,
     		type: "each",
-    		source: "(41:20) {#each watch_list as {payee, balance, payers, average_percent, sum_percentage, all_percentage}}",
+    		source: "(63:20) {#each watch_list as {payee, balance, payers, average_percent, sum_percentage, all_percentage}}",
     		ctx
     	});
 
@@ -22023,7 +22227,7 @@ var app = (function () {
     	let div;
     	let h3;
     	let t1;
-    	let if_block = /*watch_list*/ ctx[0] && create_if_block$1(ctx);
+    	let if_block = /*watch_list*/ ctx[2] && create_if_block$1(ctx);
 
     	const block = {
     		c: function create() {
@@ -22033,9 +22237,9 @@ var app = (function () {
     			t1 = space();
     			if (if_block) if_block.c();
     			attr_dev(h3, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted uk-text-large");
-    			add_location(h3, file$4, 23, 4, 650);
+    			add_location(h3, file$4, 38, 4, 1132);
     			attr_dev(div, "class", "uk-card uk-card-default uk-card-body uk-margin-bottom");
-    			add_location(div, file$4, 22, 0, 578);
+    			add_location(div, file$4, 37, 0, 1060);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -22047,7 +22251,7 @@ var app = (function () {
     			if (if_block) if_block.m(div, null);
     		},
     		p: function update(ctx, [dirty]) {
-    			if (/*watch_list*/ ctx[0]) {
+    			if (/*watch_list*/ ctx[2]) {
     				if (if_block) {
     					if_block.p(ctx, dirty);
     				} else {
@@ -22094,27 +22298,65 @@ var app = (function () {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots("WatchList", slots, []);
     	let { data } = $$props;
+
+    	let sortableColumns = [
+    		{ label: "#payers", sortKey: "payers" },
+    		{
+    			label: "average %",
+    			sortKey: "average_percent"
+    		},
+    		{ label: "balance", sortKey: "balance" },
+    		{
+    			label: "sum %",
+    			sortKey: "sum_percentage"
+    		},
+    		{
+    			label: "% of all",
+    			sortKey: "all_percentage"
+    		}
+    	];
+
+    	let sortOption = "balance";
+    	let sortOrder = 1;
     	let watch_list = null;
+
+    	function thOnClick(key) {
+    		if (sortOption == key) {
+    			$$invalidate(1, sortOrder = -sortOrder);
+    		}
+
+    		$$invalidate(0, sortOption = key);
+    	}
+
     	const writable_props = ["data"];
 
     	Object.keys($$props).forEach(key => {
     		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<WatchList> was created with unknown prop '${key}'`);
     	});
 
+    	const click_handler = col => thOnClick(col.sortKey);
+
     	$$self.$$set = $$props => {
-    		if ("data" in $$props) $$invalidate(1, data = $$props.data);
+    		if ("data" in $$props) $$invalidate(5, data = $$props.data);
     	};
 
     	$$self.$capture_state = () => ({
     		data,
+    		sortableColumns,
+    		sortOption,
+    		sortOrder,
     		watch_list,
+    		thOnClick,
     		formatBalance,
     		print_percent: print_percent$1
     	});
 
     	$$self.$inject_state = $$props => {
-    		if ("data" in $$props) $$invalidate(1, data = $$props.data);
-    		if ("watch_list" in $$props) $$invalidate(0, watch_list = $$props.watch_list);
+    		if ("data" in $$props) $$invalidate(5, data = $$props.data);
+    		if ("sortableColumns" in $$props) $$invalidate(3, sortableColumns = $$props.sortableColumns);
+    		if ("sortOption" in $$props) $$invalidate(0, sortOption = $$props.sortOption);
+    		if ("sortOrder" in $$props) $$invalidate(1, sortOrder = $$props.sortOrder);
+    		if ("watch_list" in $$props) $$invalidate(2, watch_list = $$props.watch_list);
     	};
 
     	if ($$props && "$$inject" in $$props) {
@@ -22122,26 +22364,28 @@ var app = (function () {
     	}
 
     	$$self.$$.update = () => {
-    		if ($$self.$$.dirty & /*data*/ 2) {
-    			$$invalidate(0, watch_list = data.chain_view
-    			? data.chain_view.autopay_watch_list
-    			: null);
-    		}
-
-    		if ($$self.$$.dirty & /*watch_list*/ 1) {
-    			if (watch_list && watch_list.accounts) {
-    				$$invalidate(0, watch_list.accounts = watch_list.accounts.sort((a, b) => a.balance > b.balance ? 1 : -1), watch_list);
+    		if ($$self.$$.dirty & /*data, sortOption, sortOrder*/ 35) {
+    			if (data && data.chain_view && data.chain_view.autopay_watch_list) {
+    				$$invalidate(2, watch_list = data.chain_view.autopay_watch_list.sort((a, b) => a[sortOption] > b[sortOption] ? sortOrder : -sortOrder));
     			}
     		}
     	};
 
-    	return [watch_list, data];
+    	return [
+    		sortOption,
+    		sortOrder,
+    		watch_list,
+    		sortableColumns,
+    		thOnClick,
+    		data,
+    		click_handler
+    	];
     }
 
     class WatchList extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$4, create_fragment$4, safe_not_equal, { data: 1 });
+    		init(this, options, instance$4, create_fragment$4, safe_not_equal, { data: 5 });
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
@@ -22153,7 +22397,7 @@ var app = (function () {
     		const { ctx } = this.$$;
     		const props = options.props || {};
 
-    		if (/*data*/ ctx[1] === undefined && !("data" in props)) {
+    		if (/*data*/ ctx[5] === undefined && !("data" in props)) {
     			console.warn("<WatchList> was created without expected prop 'data'");
     		}
     	}
