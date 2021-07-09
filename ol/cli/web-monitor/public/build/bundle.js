@@ -22285,8 +22285,8 @@ var app = (function () {
 
     function formatBalance(balance) {
     	return balance.toLocaleString("en-ES", {
-    		minimumFractionDigits: 2,
-    		maximumFractionDigits: 2
+    		minimumFractionDigits: 0,
+    		maximumFractionDigits: 0
     	});
     }
 
