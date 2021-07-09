@@ -11,14 +11,26 @@
     let sortOption = "balance";
     let sortOrder = 1;
     
+    let total_balance, total_sum_percentage, total_percentage;
+
     let watch_list = null;
     $: if (data && data.chain_view && data.chain_view.autopay_watch_list) {
-        watch_list = data.chain_view.autopay_watch_list.sort((a, b) => (a[sortOption] > b[sortOption]) ? sortOrder : -sortOrder);
+        watch_list = data.chain_view.autopay_watch_list.sort((a, b) => (a[sortOption] > b[sortOption]) ? sortOrder : -sortOrder);        
+        
+        // update totals
+        total_balance = 0;
+        total_percentage = 0;
+        total_sum_percentage = 0;
+        watch_list.forEach(stat => {
+            total_balance += stat.balance;
+            total_percentage += stat.all_percentage;
+            total_sum_percentage += stat.sum_percentage;
+        });
     }
-    
+   
     function thOnClick(key) {
         if (sortOption == key) {
-        sortOrder = -sortOrder;
+            sortOrder = -sortOrder;
         }
         sortOption = key;
     }
@@ -30,7 +42,7 @@
         });
     }
 
-    function print_percent(num) {
+    function formatPercent(num) {
         return (num / 100).toFixed(2) + "%";
     }
 </script>
@@ -65,12 +77,20 @@
                             <td class="uk-visible@s uk-text-center">{payee}</td>
                             <td class="uk-hidden@s uk-text-truncate">{payee}</td>
                             <td class="uk-text-right">{payers}</td>
-                            <td class="uk-text-right">{print_percent(average_percent)}</td>
+                            <td class="uk-text-right">{formatPercent(average_percent)}</td>
                             <td class="uk-text-right">{formatBalance(balance)}</td>
-                            <td class="uk-text-right">{print_percent(sum_percentage)}</td>
-                            <td class="uk-text-right">{print_percent(all_percentage)}</td>
+                            <td class="uk-text-right">{formatPercent(sum_percentage)}</td>
+                            <td class="uk-text-right">{formatPercent(all_percentage)}</td>
                         </tr>
                     {/each}
+                    <tr>
+                        <td class="uk-text-center uk-text-bold">TOTAL</td>
+                        <td class="uk-text-right uk-text-bold"></td>
+                        <td class="uk-text-right uk-text-bold"></td>
+                        <td class="uk-text-right uk-text-bold">{formatBalance(total_balance)}</td>
+                        <td class="uk-text-right uk-text-bold">{formatPercent(total_sum_percentage)}</td>
+                        <td class="uk-text-right uk-text-bold">{formatPercent(total_percentage)}</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
