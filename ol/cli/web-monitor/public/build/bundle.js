@@ -21836,7 +21836,7 @@ var app = (function () {
     			th0.textContent = "note";
     			t1 = space();
     			th1 = element("th");
-    			th1.textContent = "payee";
+    			th1.textContent = "payee account";
     			t3 = space();
 
     			for (let i = 0; i < each_blocks_1.length; i += 1) {
@@ -21870,29 +21870,30 @@ var app = (function () {
     			td6 = element("td");
     			t15 = text(t15_value);
     			attr_dev(th0, "class", "uk-text-left");
-    			add_location(th0, file$4, 58, 24, 1804);
-    			attr_dev(th1, "class", "uk-text-center");
-    			add_location(th1, file$4, 59, 24, 1863);
-    			add_location(tr0, file$4, 57, 20, 1775);
-    			add_location(thead, file$4, 56, 16, 1747);
+    			add_location(th0, file$4, 58, 24, 1829);
+    			attr_dev(th1, "class", "uk-text-center uk-visible@s");
+    			add_location(th1, file$4, 59, 24, 1888);
+    			add_location(tr0, file$4, 57, 20, 1800);
+    			add_location(thead, file$4, 56, 16, 1772);
     			attr_dev(td0, "class", "uk-text-center uk-text-bold");
-    			add_location(td0, file$4, 88, 24, 3571);
+    			add_location(td0, file$4, 88, 24, 3617);
     			attr_dev(td1, "class", "uk-text-right uk-text-bold");
-    			add_location(td1, file$4, 89, 24, 3646);
+    			add_location(td1, file$4, 89, 24, 3692);
     			attr_dev(td2, "class", "uk-text-right uk-text-bold");
-    			add_location(td2, file$4, 90, 24, 3715);
+    			add_location(td2, file$4, 90, 24, 3761);
     			attr_dev(td3, "class", "uk-text-right uk-text-bold");
-    			add_location(td3, file$4, 91, 24, 3784);
+    			add_location(td3, file$4, 91, 24, 3830);
     			attr_dev(td4, "class", "uk-text-right uk-text-bold");
-    			add_location(td4, file$4, 92, 24, 3853);
+    			add_location(td4, file$4, 92, 24, 3899);
     			attr_dev(td5, "class", "uk-text-right uk-text-bold");
-    			add_location(td5, file$4, 93, 24, 3952);
+    			add_location(td5, file$4, 93, 24, 3998);
     			attr_dev(td6, "class", "uk-text-right uk-text-bold");
-    			add_location(td6, file$4, 94, 24, 4058);
-    			add_location(tr1, file$4, 87, 20, 3542);
-    			add_location(tbody, file$4, 74, 16, 2635);
+    			add_location(td6, file$4, 94, 24, 4104);
+    			add_location(tr1, file$4, 87, 20, 3588);
+    			add_location(tbody, file$4, 74, 16, 2681);
     			attr_dev(table, "class", "uk-table");
-    			add_location(table, file$4, 55, 12, 1706);
+    			add_location(table, file$4, 55, 12, 1731);
+    			attr_dev(div, "class", "uk-overflow-auto");
     			add_location(div, file$4, 54, 8, 1688);
     		},
     		m: function mount(target, anchor) {
@@ -22063,7 +22064,7 @@ var app = (function () {
     		c: function create() {
     			span = element("span");
     			attr_dev(span, "uk-icon", "icon: triangle-down");
-    			add_location(span, file$4, 67, 32, 2386);
+    			add_location(span, file$4, 67, 32, 2432);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -22092,7 +22093,7 @@ var app = (function () {
     		c: function create() {
     			span = element("span");
     			attr_dev(span, "uk-icon", "icon: triangle-up");
-    			add_location(span, file$4, 65, 32, 2272);
+    			add_location(span, file$4, 65, 32, 2318);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -22138,9 +22139,9 @@ var app = (function () {
     			if (if_block) if_block.c();
     			t2 = space();
     			attr_dev(span, "class", "disable-select");
-    			add_location(span, file$4, 62, 28, 2079);
+    			add_location(span, file$4, 62, 28, 2125);
     			attr_dev(th, "class", "uk-text-right");
-    			add_location(th, file$4, 61, 28, 1984);
+    			add_location(th, file$4, 61, 28, 2030);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, th, anchor);
@@ -22252,22 +22253,22 @@ var app = (function () {
     			td7 = element("td");
     			t14 = text(t14_value);
     			attr_dev(td0, "class", "uk-visible@s uk-text-left");
-    			add_location(td0, file$4, 77, 28, 2824);
+    			add_location(td0, file$4, 77, 28, 2870);
     			attr_dev(td1, "class", "uk-hidden@s uk-text-truncate");
-    			add_location(td1, file$4, 78, 28, 2902);
+    			add_location(td1, file$4, 78, 28, 2948);
     			attr_dev(td2, "class", "uk-visible@s uk-text-center");
-    			add_location(td2, file$4, 79, 28, 2983);
+    			add_location(td2, file$4, 79, 28, 3029);
     			attr_dev(td3, "class", "uk-text-right");
-    			add_location(td3, file$4, 80, 28, 3066);
+    			add_location(td3, file$4, 80, 28, 3112);
     			attr_dev(td4, "class", "uk-text-right");
-    			add_location(td4, file$4, 81, 28, 3134);
+    			add_location(td4, file$4, 81, 28, 3180);
     			attr_dev(td5, "class", "uk-text-right");
-    			add_location(td5, file$4, 82, 28, 3226);
+    			add_location(td5, file$4, 82, 28, 3272);
     			attr_dev(td6, "class", "uk-text-right");
-    			add_location(td6, file$4, 83, 28, 3310);
+    			add_location(td6, file$4, 83, 28, 3356);
     			attr_dev(td7, "class", "uk-text-right");
-    			add_location(td7, file$4, 84, 28, 3401);
-    			add_location(tr, file$4, 76, 24, 2791);
+    			add_location(td7, file$4, 84, 28, 3447);
+    			add_location(tr, file$4, 76, 24, 2837);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, tr, anchor);

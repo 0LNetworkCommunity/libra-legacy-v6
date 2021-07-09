@@ -52,12 +52,12 @@
         Autopay Watch List
     </h3>
     {#if watch_list}
-        <div>
+        <div class="uk-overflow-auto">
             <table class="uk-table">
                 <thead>
                     <tr>
                         <th class="uk-text-left">note</th>
-                        <th class="uk-text-center">payee</th>
+                        <th class="uk-text-center uk-visible@s">payee account</th>
                         {#each sortableColumns as col}
                             <th class="uk-text-right" on:click={() => thOnClick(col.sortKey)}>
                             <span class="disable-select">{col.label}</span>
