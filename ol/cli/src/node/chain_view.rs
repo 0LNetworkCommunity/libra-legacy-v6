@@ -359,9 +359,9 @@ fn get_note_from_dic(dic: Option<&Dic>, address: AccountAddress) -> String {
   match dic {
     Some(x) => match x.accounts.iter().find(| entry | entry.address == address ) {
       Some(found) => found.note.clone(),
-      None => String::from("?b")
+      None => String::from("?")
     }
-    None => String::from("?a"),
+    None => String::from("?"),
   }
 }
 
