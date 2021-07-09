@@ -87,9 +87,9 @@
                     {/each}
                     <tr>
                         <td class="uk-text-center uk-text-bold">TOTAL</td>
-                        <td class="uk-text-right uk-text-bold"></td>
-                        <td class="uk-text-right uk-text-bold"></td>
-                        <td class="uk-text-right uk-text-bold"></td>
+                        <td class="uk-visible@s"></td>
+                        <td></td>
+                        <td></td>
                         <td class="uk-text-right uk-text-bold">{formatBalance(total_balance)}</td>
                         <td class="uk-text-right uk-text-bold">{formatPercent(total_sum_percentage)}</td>
                         <td class="uk-text-right uk-text-bold">{formatPercent(total_percentage)}</td>
