@@ -21761,18 +21761,19 @@ var app = (function () {
 
     function get_each_context$1(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[10] = list[i].payee;
-    	child_ctx[11] = list[i].balance;
-    	child_ctx[12] = list[i].payers;
-    	child_ctx[13] = list[i].average_percent;
-    	child_ctx[14] = list[i].sum_percentage;
-    	child_ctx[15] = list[i].all_percentage;
+    	child_ctx[10] = list[i].note;
+    	child_ctx[11] = list[i].address;
+    	child_ctx[12] = list[i].balance;
+    	child_ctx[13] = list[i].payers;
+    	child_ctx[14] = list[i].average_percent;
+    	child_ctx[15] = list[i].sum_percentage;
+    	child_ctx[16] = list[i].all_percentage;
     	return child_ctx;
     }
 
     function get_each_context_1(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[18] = list[i];
+    	child_ctx[19] = list[i];
     	return child_ctx;
     }
 
@@ -21782,29 +21783,33 @@ var app = (function () {
     	let table;
     	let thead;
     	let tr0;
-    	let th;
+    	let th0;
     	let t1;
-    	let t2;
-    	let tbody;
+    	let th1;
     	let t3;
+    	let t4;
+    	let tbody;
+    	let t5;
     	let tr1;
     	let td0;
-    	let t5;
-    	let td1;
-    	let t6;
-    	let td2;
     	let t7;
-    	let td3;
-    	let t8_value = formatBalance(/*total_balance*/ ctx[3]) + "";
+    	let td1;
     	let t8;
+    	let td2;
     	let t9;
-    	let td4;
-    	let t10_value = formatPercent(/*total_sum_percentage*/ ctx[4]) + "";
+    	let td3;
     	let t10;
+    	let td4;
+    	let t11_value = formatBalance(/*total_balance*/ ctx[3]) + "";
     	let t11;
-    	let td5;
-    	let t12_value = formatPercent(/*total_percentage*/ ctx[5]) + "";
     	let t12;
+    	let td5;
+    	let t13_value = formatPercent(/*total_sum_percentage*/ ctx[4]) + "";
+    	let t13;
+    	let t14;
+    	let td6;
+    	let t15_value = formatPercent(/*total_percentage*/ ctx[5]) + "";
+    	let t15;
     	let each_value_1 = /*sortableColumns*/ ctx[6];
     	validate_each_argument(each_value_1);
     	let each_blocks_1 = [];
@@ -21827,56 +21832,65 @@ var app = (function () {
     			table = element("table");
     			thead = element("thead");
     			tr0 = element("tr");
-    			th = element("th");
-    			th.textContent = "payee";
+    			th0 = element("th");
+    			th0.textContent = "note";
     			t1 = space();
+    			th1 = element("th");
+    			th1.textContent = "payee";
+    			t3 = space();
 
     			for (let i = 0; i < each_blocks_1.length; i += 1) {
     				each_blocks_1[i].c();
     			}
 
-    			t2 = space();
+    			t4 = space();
     			tbody = element("tbody");
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
     				each_blocks[i].c();
     			}
 
-    			t3 = space();
+    			t5 = space();
     			tr1 = element("tr");
     			td0 = element("td");
     			td0.textContent = "TOTAL";
-    			t5 = space();
-    			td1 = element("td");
-    			t6 = space();
-    			td2 = element("td");
     			t7 = space();
-    			td3 = element("td");
-    			t8 = text(t8_value);
+    			td1 = element("td");
+    			t8 = space();
+    			td2 = element("td");
     			t9 = space();
+    			td3 = element("td");
+    			t10 = space();
     			td4 = element("td");
-    			t10 = text(t10_value);
-    			t11 = space();
+    			t11 = text(t11_value);
+    			t12 = space();
     			td5 = element("td");
-    			t12 = text(t12_value);
-    			attr_dev(th, "class", "uk-text-center");
-    			add_location(th, file$4, 58, 24, 1804);
+    			t13 = text(t13_value);
+    			t14 = space();
+    			td6 = element("td");
+    			t15 = text(t15_value);
+    			attr_dev(th0, "class", "uk-text-left");
+    			add_location(th0, file$4, 58, 24, 1804);
+    			attr_dev(th1, "class", "uk-text-center");
+    			add_location(th1, file$4, 59, 24, 1863);
     			add_location(tr0, file$4, 57, 20, 1775);
     			add_location(thead, file$4, 56, 16, 1747);
     			attr_dev(td0, "class", "uk-text-center uk-text-bold");
-    			add_location(td0, file$4, 86, 24, 3425);
+    			add_location(td0, file$4, 88, 24, 3571);
     			attr_dev(td1, "class", "uk-text-right uk-text-bold");
-    			add_location(td1, file$4, 87, 24, 3500);
+    			add_location(td1, file$4, 89, 24, 3646);
     			attr_dev(td2, "class", "uk-text-right uk-text-bold");
-    			add_location(td2, file$4, 88, 24, 3569);
+    			add_location(td2, file$4, 90, 24, 3715);
     			attr_dev(td3, "class", "uk-text-right uk-text-bold");
-    			add_location(td3, file$4, 89, 24, 3638);
+    			add_location(td3, file$4, 91, 24, 3784);
     			attr_dev(td4, "class", "uk-text-right uk-text-bold");
-    			add_location(td4, file$4, 90, 24, 3737);
+    			add_location(td4, file$4, 92, 24, 3853);
     			attr_dev(td5, "class", "uk-text-right uk-text-bold");
-    			add_location(td5, file$4, 91, 24, 3843);
-    			add_location(tr1, file$4, 85, 20, 3396);
-    			add_location(tbody, file$4, 73, 16, 2576);
+    			add_location(td5, file$4, 93, 24, 3952);
+    			attr_dev(td6, "class", "uk-text-right uk-text-bold");
+    			add_location(td6, file$4, 94, 24, 4058);
+    			add_location(tr1, file$4, 87, 20, 3542);
+    			add_location(tbody, file$4, 74, 16, 2635);
     			attr_dev(table, "class", "uk-table");
     			add_location(table, file$4, 55, 12, 1706);
     			add_location(div, file$4, 54, 8, 1688);
@@ -21886,36 +21900,40 @@ var app = (function () {
     			append_dev(div, table);
     			append_dev(table, thead);
     			append_dev(thead, tr0);
-    			append_dev(tr0, th);
+    			append_dev(tr0, th0);
     			append_dev(tr0, t1);
+    			append_dev(tr0, th1);
+    			append_dev(tr0, t3);
 
     			for (let i = 0; i < each_blocks_1.length; i += 1) {
     				each_blocks_1[i].m(tr0, null);
     			}
 
-    			append_dev(table, t2);
+    			append_dev(table, t4);
     			append_dev(table, tbody);
 
     			for (let i = 0; i < each_blocks.length; i += 1) {
     				each_blocks[i].m(tbody, null);
     			}
 
-    			append_dev(tbody, t3);
+    			append_dev(tbody, t5);
     			append_dev(tbody, tr1);
     			append_dev(tr1, td0);
-    			append_dev(tr1, t5);
-    			append_dev(tr1, td1);
-    			append_dev(tr1, t6);
-    			append_dev(tr1, td2);
     			append_dev(tr1, t7);
-    			append_dev(tr1, td3);
-    			append_dev(td3, t8);
+    			append_dev(tr1, td1);
+    			append_dev(tr1, t8);
+    			append_dev(tr1, td2);
     			append_dev(tr1, t9);
+    			append_dev(tr1, td3);
+    			append_dev(tr1, t10);
     			append_dev(tr1, td4);
-    			append_dev(td4, t10);
-    			append_dev(tr1, t11);
+    			append_dev(td4, t11);
+    			append_dev(tr1, t12);
     			append_dev(tr1, td5);
-    			append_dev(td5, t12);
+    			append_dev(td5, t13);
+    			append_dev(tr1, t14);
+    			append_dev(tr1, td6);
+    			append_dev(td6, t15);
     		},
     		p: function update(ctx, dirty) {
     			if (dirty & /*thOnClick, sortableColumns, sortOrder, sortOption*/ 195) {
@@ -21955,7 +21973,7 @@ var app = (function () {
     					} else {
     						each_blocks[i] = create_each_block$1(child_ctx);
     						each_blocks[i].c();
-    						each_blocks[i].m(tbody, t3);
+    						each_blocks[i].m(tbody, t5);
     					}
     				}
 
@@ -21966,9 +21984,9 @@ var app = (function () {
     				each_blocks.length = each_value.length;
     			}
 
-    			if (dirty & /*total_balance*/ 8 && t8_value !== (t8_value = formatBalance(/*total_balance*/ ctx[3]) + "")) set_data_dev(t8, t8_value);
-    			if (dirty & /*total_sum_percentage*/ 16 && t10_value !== (t10_value = formatPercent(/*total_sum_percentage*/ ctx[4]) + "")) set_data_dev(t10, t10_value);
-    			if (dirty & /*total_percentage*/ 32 && t12_value !== (t12_value = formatPercent(/*total_percentage*/ ctx[5]) + "")) set_data_dev(t12, t12_value);
+    			if (dirty & /*total_balance*/ 8 && t11_value !== (t11_value = formatBalance(/*total_balance*/ ctx[3]) + "")) set_data_dev(t11, t11_value);
+    			if (dirty & /*total_sum_percentage*/ 16 && t13_value !== (t13_value = formatPercent(/*total_sum_percentage*/ ctx[4]) + "")) set_data_dev(t13, t13_value);
+    			if (dirty & /*total_percentage*/ 32 && t15_value !== (t15_value = formatPercent(/*total_percentage*/ ctx[5]) + "")) set_data_dev(t15, t15_value);
     		},
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(div);
@@ -21988,7 +22006,7 @@ var app = (function () {
     	return block;
     }
 
-    // (63:28) {#if sortOption == col.sortKey}
+    // (64:28) {#if sortOption == col.sortKey}
     function create_if_block_1$1(ctx) {
     	let if_block_anchor;
 
@@ -22030,14 +22048,14 @@ var app = (function () {
     		block,
     		id: create_if_block_1$1.name,
     		type: "if",
-    		source: "(63:28) {#if sortOption == col.sortKey}",
+    		source: "(64:28) {#if sortOption == col.sortKey}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (66:32) {:else}
+    // (67:32) {:else}
     function create_else_block$1(ctx) {
     	let span;
 
@@ -22045,7 +22063,7 @@ var app = (function () {
     		c: function create() {
     			span = element("span");
     			attr_dev(span, "uk-icon", "icon: triangle-down");
-    			add_location(span, file$4, 66, 32, 2327);
+    			add_location(span, file$4, 67, 32, 2386);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -22059,14 +22077,14 @@ var app = (function () {
     		block,
     		id: create_else_block$1.name,
     		type: "else",
-    		source: "(66:32) {:else}",
+    		source: "(67:32) {:else}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (64:32) {#if sortOrder == 1}
+    // (65:32) {#if sortOrder == 1}
     function create_if_block_2$1(ctx) {
     	let span;
 
@@ -22074,7 +22092,7 @@ var app = (function () {
     		c: function create() {
     			span = element("span");
     			attr_dev(span, "uk-icon", "icon: triangle-up");
-    			add_location(span, file$4, 64, 32, 2213);
+    			add_location(span, file$4, 65, 32, 2272);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -22088,27 +22106,27 @@ var app = (function () {
     		block,
     		id: create_if_block_2$1.name,
     		type: "if",
-    		source: "(64:32) {#if sortOrder == 1}",
+    		source: "(65:32) {#if sortOrder == 1}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (60:24) {#each sortableColumns as col}
+    // (61:24) {#each sortableColumns as col}
     function create_each_block_1(ctx) {
     	let th;
     	let span;
-    	let t0_value = /*col*/ ctx[18].label + "";
+    	let t0_value = /*col*/ ctx[19].label + "";
     	let t0;
     	let t1;
     	let t2;
     	let mounted;
     	let dispose;
-    	let if_block = /*sortOption*/ ctx[0] == /*col*/ ctx[18].sortKey && create_if_block_1$1(ctx);
+    	let if_block = /*sortOption*/ ctx[0] == /*col*/ ctx[19].sortKey && create_if_block_1$1(ctx);
 
     	function click_handler() {
-    		return /*click_handler*/ ctx[9](/*col*/ ctx[18]);
+    		return /*click_handler*/ ctx[9](/*col*/ ctx[19]);
     	}
 
     	const block = {
@@ -22120,9 +22138,9 @@ var app = (function () {
     			if (if_block) if_block.c();
     			t2 = space();
     			attr_dev(span, "class", "disable-select");
-    			add_location(span, file$4, 61, 28, 2020);
+    			add_location(span, file$4, 62, 28, 2079);
     			attr_dev(th, "class", "uk-text-right");
-    			add_location(th, file$4, 60, 28, 1925);
+    			add_location(th, file$4, 61, 28, 1984);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, th, anchor);
@@ -22140,7 +22158,7 @@ var app = (function () {
     		p: function update(new_ctx, dirty) {
     			ctx = new_ctx;
 
-    			if (/*sortOption*/ ctx[0] == /*col*/ ctx[18].sortKey) {
+    			if (/*sortOption*/ ctx[0] == /*col*/ ctx[19].sortKey) {
     				if (if_block) {
     					if_block.p(ctx, dirty);
     				} else {
@@ -22165,43 +22183,47 @@ var app = (function () {
     		block,
     		id: create_each_block_1.name,
     		type: "each",
-    		source: "(60:24) {#each sortableColumns as col}",
+    		source: "(61:24) {#each sortableColumns as col}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (75:20) {#each watch_list as {payee, balance, payers, average_percent, sum_percentage, all_percentage}}
+    // (76:20) {#each watch_list as {note, address, balance, payers, average_percent, sum_percentage, all_percentage}}
     function create_each_block$1(ctx) {
     	let tr;
     	let td0;
-    	let t0_value = /*payee*/ ctx[10] + "";
+    	let t0_value = /*note*/ ctx[10] + "";
     	let t0;
     	let t1;
     	let td1;
-    	let t2_value = /*payee*/ ctx[10] + "";
+    	let t2_value = /*note*/ ctx[10] + "";
     	let t2;
     	let t3;
     	let td2;
-    	let t4_value = /*payers*/ ctx[12] + "";
+    	let t4_value = /*address*/ ctx[11] + "";
     	let t4;
     	let t5;
     	let td3;
-    	let t6_value = formatPercent(/*average_percent*/ ctx[13]) + "";
+    	let t6_value = /*payers*/ ctx[13] + "";
     	let t6;
     	let t7;
     	let td4;
-    	let t8_value = formatBalance(/*balance*/ ctx[11]) + "";
+    	let t8_value = formatPercent(/*average_percent*/ ctx[14]) + "";
     	let t8;
     	let t9;
     	let td5;
-    	let t10_value = formatPercent(/*sum_percentage*/ ctx[14]) + "";
+    	let t10_value = formatBalance(/*balance*/ ctx[12]) + "";
     	let t10;
     	let t11;
     	let td6;
-    	let t12_value = formatPercent(/*all_percentage*/ ctx[15]) + "";
+    	let t12_value = formatPercent(/*sum_percentage*/ ctx[15]) + "";
     	let t12;
+    	let t13;
+    	let td7;
+    	let t14_value = formatPercent(/*all_percentage*/ ctx[16]) + "";
+    	let t14;
 
     	const block = {
     		c: function create() {
@@ -22226,21 +22248,26 @@ var app = (function () {
     			t11 = space();
     			td6 = element("td");
     			t12 = text(t12_value);
-    			attr_dev(td0, "class", "uk-visible@s uk-text-center");
-    			add_location(td0, file$4, 76, 28, 2757);
+    			t13 = space();
+    			td7 = element("td");
+    			t14 = text(t14_value);
+    			attr_dev(td0, "class", "uk-visible@s uk-text-left");
+    			add_location(td0, file$4, 77, 28, 2824);
     			attr_dev(td1, "class", "uk-hidden@s uk-text-truncate");
-    			add_location(td1, file$4, 77, 28, 2838);
-    			attr_dev(td2, "class", "uk-text-right");
-    			add_location(td2, file$4, 78, 28, 2920);
+    			add_location(td1, file$4, 78, 28, 2902);
+    			attr_dev(td2, "class", "uk-visible@s uk-text-center");
+    			add_location(td2, file$4, 79, 28, 2983);
     			attr_dev(td3, "class", "uk-text-right");
-    			add_location(td3, file$4, 79, 28, 2988);
+    			add_location(td3, file$4, 80, 28, 3066);
     			attr_dev(td4, "class", "uk-text-right");
-    			add_location(td4, file$4, 80, 28, 3080);
+    			add_location(td4, file$4, 81, 28, 3134);
     			attr_dev(td5, "class", "uk-text-right");
-    			add_location(td5, file$4, 81, 28, 3164);
+    			add_location(td5, file$4, 82, 28, 3226);
     			attr_dev(td6, "class", "uk-text-right");
-    			add_location(td6, file$4, 82, 28, 3255);
-    			add_location(tr, file$4, 75, 24, 2724);
+    			add_location(td6, file$4, 83, 28, 3310);
+    			attr_dev(td7, "class", "uk-text-right");
+    			add_location(td7, file$4, 84, 28, 3401);
+    			add_location(tr, file$4, 76, 24, 2791);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, tr, anchor);
@@ -22264,15 +22291,19 @@ var app = (function () {
     			append_dev(tr, t11);
     			append_dev(tr, td6);
     			append_dev(td6, t12);
+    			append_dev(tr, t13);
+    			append_dev(tr, td7);
+    			append_dev(td7, t14);
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty & /*watch_list*/ 4 && t0_value !== (t0_value = /*payee*/ ctx[10] + "")) set_data_dev(t0, t0_value);
-    			if (dirty & /*watch_list*/ 4 && t2_value !== (t2_value = /*payee*/ ctx[10] + "")) set_data_dev(t2, t2_value);
-    			if (dirty & /*watch_list*/ 4 && t4_value !== (t4_value = /*payers*/ ctx[12] + "")) set_data_dev(t4, t4_value);
-    			if (dirty & /*watch_list*/ 4 && t6_value !== (t6_value = formatPercent(/*average_percent*/ ctx[13]) + "")) set_data_dev(t6, t6_value);
-    			if (dirty & /*watch_list*/ 4 && t8_value !== (t8_value = formatBalance(/*balance*/ ctx[11]) + "")) set_data_dev(t8, t8_value);
-    			if (dirty & /*watch_list*/ 4 && t10_value !== (t10_value = formatPercent(/*sum_percentage*/ ctx[14]) + "")) set_data_dev(t10, t10_value);
-    			if (dirty & /*watch_list*/ 4 && t12_value !== (t12_value = formatPercent(/*all_percentage*/ ctx[15]) + "")) set_data_dev(t12, t12_value);
+    			if (dirty & /*watch_list*/ 4 && t0_value !== (t0_value = /*note*/ ctx[10] + "")) set_data_dev(t0, t0_value);
+    			if (dirty & /*watch_list*/ 4 && t2_value !== (t2_value = /*note*/ ctx[10] + "")) set_data_dev(t2, t2_value);
+    			if (dirty & /*watch_list*/ 4 && t4_value !== (t4_value = /*address*/ ctx[11] + "")) set_data_dev(t4, t4_value);
+    			if (dirty & /*watch_list*/ 4 && t6_value !== (t6_value = /*payers*/ ctx[13] + "")) set_data_dev(t6, t6_value);
+    			if (dirty & /*watch_list*/ 4 && t8_value !== (t8_value = formatPercent(/*average_percent*/ ctx[14]) + "")) set_data_dev(t8, t8_value);
+    			if (dirty & /*watch_list*/ 4 && t10_value !== (t10_value = formatBalance(/*balance*/ ctx[12]) + "")) set_data_dev(t10, t10_value);
+    			if (dirty & /*watch_list*/ 4 && t12_value !== (t12_value = formatPercent(/*sum_percentage*/ ctx[15]) + "")) set_data_dev(t12, t12_value);
+    			if (dirty & /*watch_list*/ 4 && t14_value !== (t14_value = formatPercent(/*all_percentage*/ ctx[16]) + "")) set_data_dev(t14, t14_value);
     		},
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(tr);
@@ -22283,7 +22314,7 @@ var app = (function () {
     		block,
     		id: create_each_block$1.name,
     		type: "each",
-    		source: "(75:20) {#each watch_list as {payee, balance, payers, average_percent, sum_percentage, all_percentage}}",
+    		source: "(76:20) {#each watch_list as {note, address, balance, payers, average_percent, sum_percentage, all_percentage}}",
     		ctx
     	});
 

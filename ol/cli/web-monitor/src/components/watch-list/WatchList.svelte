@@ -56,6 +56,7 @@
             <table class="uk-table">
                 <thead>
                     <tr>
+                        <th class="uk-text-left">note</th>
                         <th class="uk-text-center">payee</th>
                         {#each sortableColumns as col}
                             <th class="uk-text-right" on:click={() => thOnClick(col.sortKey)}>
@@ -72,10 +73,11 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {#each watch_list as {payee, balance, payers, average_percent, sum_percentage, all_percentage}}
+                    {#each watch_list as {note, address, balance, payers, average_percent, sum_percentage, all_percentage}}
                         <tr>
-                            <td class="uk-visible@s uk-text-center">{payee}</td>
-                            <td class="uk-hidden@s uk-text-truncate">{payee}</td>
+                            <td class="uk-visible@s uk-text-left">{note}</td>
+                            <td class="uk-hidden@s uk-text-truncate">{note}</td>
+                            <td class="uk-visible@s uk-text-center">{address}</td>
                             <td class="uk-text-right">{payers}</td>
                             <td class="uk-text-right">{formatPercent(average_percent)}</td>
                             <td class="uk-text-right">{formatBalance(balance)}</td>
@@ -85,6 +87,7 @@
                     {/each}
                     <tr>
                         <td class="uk-text-center uk-text-bold">TOTAL</td>
+                        <td class="uk-text-right uk-text-bold"></td>
                         <td class="uk-text-right uk-text-bold"></td>
                         <td class="uk-text-right uk-text-bold"></td>
                         <td class="uk-text-right uk-text-bold">{formatBalance(total_balance)}</td>
