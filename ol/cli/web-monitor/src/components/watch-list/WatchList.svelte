@@ -31,7 +31,7 @@
     }
 
     function print_percent(num) {
-        return (num / 100).toFixed(0) + "%";
+        return (num / 100).toFixed(2) + "%";
     }
 </script>
 

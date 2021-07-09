@@ -22291,7 +22291,7 @@ var app = (function () {
     }
 
     function print_percent$1(num) {
-    	return (num / 100).toFixed(0) + "%";
+    	return (num / 100).toFixed(2) + "%";
     }
 
     function instance$4($$self, $$props, $$invalidate) {
