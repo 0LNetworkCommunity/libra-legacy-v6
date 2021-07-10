@@ -224,7 +224,7 @@ A <code><a href="LibraConfig.md#0x1_LibraConfig_ModifyConfigCapability">ModifyCo
 
 <a name="0x1_LibraConfig_TRANSFER_ENABLED_EPOCH"></a>
 
-Epoch transfers are enables
+Epoch when transfers are enabled
 
 
 <pre><code><b>const</b> <a href="LibraConfig.md#0x1_LibraConfig_TRANSFER_ENABLED_EPOCH">TRANSFER_ENABLED_EPOCH</a>: u64 = 1000;

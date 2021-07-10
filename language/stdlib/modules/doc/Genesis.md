@@ -126,7 +126,7 @@ Initializes the Libra framework.
     <a href="Subsidy.md#0x1_Subsidy_init_fullnode_sub">Subsidy::init_fullnode_sub</a>(lr_account);
     <a href="Oracle.md#0x1_Oracle_initialize">Oracle::initialize</a>(lr_account);
     <a href="MinerState.md#0x1_MinerState_init_list">MinerState::init_list</a>(lr_account);
-    <a href="Wallet.md#0x1_Wallet_init_comm_list">Wallet::init_comm_list</a>(lr_account);
+    <a href="Wallet.md#0x1_Wallet_init">Wallet::init</a>(lr_account);
     <a href="Migrations.md#0x1_Migrations_init">Migrations::init</a>(lr_account);
 
     // After we have called this function, all invariants which are guarded by

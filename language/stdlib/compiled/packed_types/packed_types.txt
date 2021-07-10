@@ -11,6 +11,15 @@
     }
   ],
   [
+    "0103727e93787a0ad47f3bdf4356907516f9e80efe3a4a9b549dc9d8a9199b859f",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Wallet",
+      "name": "CommunityFreeze",
+      "type_params": []
+    }
+  ],
+  [
     "0103db96f01bcf7ff5102545b9adca4e1459426299a93e1e5bd5e2b615c89e68ed",
     {
       "address": "00000000000000000000000000000001",
@@ -125,6 +134,15 @@
           }
         }
       ]
+    }
+  ],
+  [
+    "011bba269197c5d169be0acfc714686d3c3975d97a568da824b34ae91ed50e8e56",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Wallet",
+      "name": "CommunityTransfers",
+      "type_params": []
     }
   ],
   [
