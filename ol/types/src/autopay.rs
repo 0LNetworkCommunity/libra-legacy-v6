@@ -48,6 +48,8 @@ pub struct PaymentView {
     pub amt: u64,    
     ///
     pub amount: String,
+    ///
+    pub note: Option<String>,
 }
 
 impl PaymentView {
@@ -140,6 +142,7 @@ impl AutoPayResource {
                 prev_bal: each.prev_bal,
                 amt: each.amt,
                 amount: each.get_amount_formatted(),
+                note: None,
             }
         }).collect();
 

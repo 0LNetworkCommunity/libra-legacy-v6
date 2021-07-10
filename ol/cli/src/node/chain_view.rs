@@ -8,7 +8,7 @@ use libra_types::{
 use ol_types::{validator_config::ValidatorConfigView, autopay::AutoPayView};
 
 use serde::{Deserialize, Serialize};
-use std::{convert::TryFrom, collections::HashMap, path::{PathBuf, Path}, fs::File};
+use std::{convert::TryFrom, collections::HashMap};
 use super::node::Node;
 
 /// name of chain info key for db
@@ -280,10 +280,10 @@ impl Node {
 
     
     // collect payees stats
-    let dic = read_accounts_dic_json(&self.app_conf.workspace.node_home);
+    let dict = self.load_account_dictionary();
     let ret = payees.iter().map(| (payee, stat) | {
       PayeeStats {
-        note: get_note_from_dic(dic.as_ref(), *payee),
+        note: dict.get_note_for_address(*payee),
         address: *payee, 
         payers: stat.payers, 
         average_percent: stat.amount as f64 / stat.payers as f64,
@@ -341,42 +341,4 @@ pub struct PayeeStats {
   pub sum_percentage: u64,
   /// 
   pub all_percentage: f64,
-}
-
-/// reach the json accounts dictionary
-pub fn read_accounts_dic_json(node_home: &PathBuf) -> Option<Dic> {
-  let dic_path = node_home.join("accounts-dictionary.json");
-  if !(Path::new(&dic_path).exists()) {
-    println!(">>> dic file no found: {:?}", dic_path);
-    return None;
-  }
-  let file = File::open(dic_path).expect("file should open read only");
-  let json: Dic = serde_json::from_reader(file).expect("file should be proper JSON");
-  Some(json)
-}
-
-fn get_note_from_dic(dic: Option<&Dic>, address: AccountAddress) -> String {
-  match dic {
-    Some(x) => match x.accounts.iter().find(| entry | entry.address == address ) {
-      Some(found) => found.note.clone(),
-      None => String::from("?")
-    }
-    None => String::from("?"),
-  }
-}
-
-///
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Dic {
-  ///
-  pub accounts: Vec<DicEntry>,
-}
-
-///
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct DicEntry {
-  ///
-  pub address: AccountAddress,
-  ///
-  pub note: String,
 }

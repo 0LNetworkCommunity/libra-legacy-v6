@@ -8,6 +8,7 @@ use resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator, NullStateVi
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom};
 use ol_types::{autopay::{AutoPayResource, AutoPayView}, validator_config::{ValidatorConfigResource, ValidatorConfigView}};
+use crate::node::dictionary::AccountDictionary;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 /// information on the owner account of this node.
@@ -96,12 +97,21 @@ impl Node {
             Ok(state) => match state.get_resource::<AutoPayResource>(
                 AutoPayResource::resource_path().as_slice()
             ) {
-                Ok(Some(res)) => Some(res.get_view()),
+                Ok(Some(res)) => Some(self.enrich_note(res.get_view())),
                 Ok(None) => None,
                 Err(_) => None
             }
             Err(_) => None
         }
+    }
+
+    /// Enrich with notes freom dictionary
+    fn enrich_note(&mut self, mut autopay: AutoPayView) -> AutoPayView {
+        let dic: AccountDictionary = self.load_account_dictionary();
+        for payment in autopay.payments.iter_mut()  {
+            payment.note = Some(dic.get_note_for_address(payment.payee));
+        }        
+        autopay
     }
 
     /// Get validator config view
