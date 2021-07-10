@@ -11,9 +11,9 @@ Module providing debug functionality.
 
 
 <pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay2">0x1::AutoPay2</a>;
+<b>use</b> <a href="LibraAccount.md#0x1_LibraAccount">0x1::LibraAccount</a>;
 <b>use</b> <a href="Migrations.md#0x1_Migrations">0x1::Migrations</a>;
 <b>use</b> <a href="Vector.md#0x1_Vector">0x1::Vector</a>;
-<b>use</b> <a href="Wallet.md#0x1_Wallet">0x1::Wallet</a>;
 </code></pre>
 
 
@@ -56,7 +56,7 @@ Module providing debug functionality.
   <b>let</b> i = 0;
   <b>while</b> (i &lt; len) {
     <b>let</b> addr = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&vec_addr, i);
-    <a href="Wallet.md#0x1_Wallet_vm_set_comm">Wallet::vm_set_comm</a>(vm, addr);
+    <a href="LibraAccount.md#0x1_LibraAccount_vm_init_community_wallet">LibraAccount::vm_init_community_wallet</a>(vm, addr);
     i = i + 1;
   };
   <a href="Migrations.md#0x1_Migrations_push">Migrations::push</a>(<a href="Migrations.md#0x1_MigrateWallets_UID">UID</a>, b"<a href="Migrations.md#0x1_MigrateWallets">MigrateWallets</a>");

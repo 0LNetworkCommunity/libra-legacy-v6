@@ -35,7 +35,7 @@ impl Runnable for WalletCmd {
 
         let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
         maybe_submit(
-          transaction_builder::encode_set_wallet_type_script(type_int, self.remove),
+          transaction_builder::encode_set_wallet_type_script(type_int),
           &tx_params,
           entry_args.no_send,
           entry_args.save_path

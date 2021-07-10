@@ -17,7 +17,6 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="LibraAccount.md#0x1_LibraAccount">0x1::LibraAccount</a>;
@@ -110,47 +109,37 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="Burn.md#0x1_Burn_reset_ratios">reset_ratios</a>(vm: &signer) <b>acquires</b> <a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a> {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_libra_root">CoreAddresses::assert_libra_root</a>(vm);
-  print(&0x100);
-
   <b>let</b> list = <a href="Wallet.md#0x1_Wallet_get_comm_list">Wallet::get_comm_list</a>();
-  print(&0x101);
+
   <b>let</b> len = <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&list);
   <b>let</b> i = 0;
   <b>let</b> global_deposits = 0;
   <b>let</b> deposit_vec = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u64&gt;();
-  print(&0x102);
 
   <b>while</b> (i &lt; len) {
-    print(&0x110);
 
     <b>let</b> addr = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&list, i);
-    <b>let</b> cumu = <a href="LibraAccount.md#0x1_LibraAccount_get_cumulative_deposits">LibraAccount::get_cumulative_deposits</a>(addr);
+    <b>let</b> cumu = <a href="LibraAccount.md#0x1_LibraAccount_get_index_cumu_deposits">LibraAccount::get_index_cumu_deposits</a>(addr);
+
     global_deposits = global_deposits + cumu;
     <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> deposit_vec, cumu);
     i = i + 1;
   };
-  print(&0x103);
 
   <b>let</b> ratios_vec = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>&gt;();
   <b>let</b> k = 0;
   <b>while</b> (k &lt; len) {
-    print(&0x120);
-
     <b>let</b> cumu = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&deposit_vec, k);
-    print(&0x121);
+
+    <b>if</b> (cumu == 0) {
+      k = k + 1;
+      <b>continue</b>
+    };
 
     <b>let</b> ratio = <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(cumu, global_deposits);
-    print(&0x122);
-    // todo: remove, only for prints.
-    <b>let</b> num = <a href="FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(100, ratio);
-    print(&0x123);
-    print(&num);
-    <b>let</b> ratio = <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(cumu, global_deposits);
-    print(&0x124);
     <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> ratios_vec, ratio);
     k = k + 1;
   };
-  print(&0x104);
 
   <b>if</b> (<b>exists</b>&lt;<a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a>&gt;(0x0)) {
     <b>let</b> d = borrow_global_mut&lt;<a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a>&gt;(0x0);
@@ -298,19 +287,13 @@
 
 
 <pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_send">send</a>(vm: &signer, payer: address, value: u64) <b>acquires</b> <a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a> {
-  print(&0x200);
-
   <b>let</b> list = <a href="Burn.md#0x1_Burn_get_address_list">get_address_list</a>();
   <b>let</b> len = <a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&list);
-  print(&0x201);
 
   <b>let</b> i = 0;
   <b>while</b> (i &lt; len) {
-    print(&0x210);
     <b>let</b> payee = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&list, i);
     <b>let</b> val = <a href="Burn.md#0x1_Burn_get_value">get_value</a>(payee, value);
-    print(&0x211);
-    print(&val);
 
     <a href="LibraAccount.md#0x1_LibraAccount_vm_make_payment_no_limit">LibraAccount::vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
         payer,
@@ -320,7 +303,6 @@
         b"",
         vm,
     );
-    print(&0x212);
 
     i = i + 1;
   };
