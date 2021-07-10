@@ -57,42 +57,43 @@
     <span>{set.length} Validators</span>
   </h2>
  
-  <table class="uk-table uk-table-hover uk-text-muted">
-    <thead>
-      <tr>
-          <th class="uk-text-center">account</th>
-          {#each sortableColumns as col}
-            <th class="uk-text-right" on:click={() => thOnClick(col.sortKey)}>
-              <span class="disable-select">{col.label}</span>
-              {#if sortOption == col.sortKey}
-                {#if sortOrder == 1}
-                  <span uk-icon="icon: triangle-up"></span>
-                {:else}
-                  <span uk-icon="icon: triangle-down"></span>
+  <div class="uk-overflow-auto">
+    <table class="uk-table uk-table-hover uk-text-muted">
+      <thead>
+        <tr>
+            <th class="uk-text-center">account</th>
+            {#each sortableColumns as col}
+              <th class="uk-text-right" on:click={() => thOnClick(col.sortKey)}>
+                <span class="disable-select">{col.label}</span>
+                {#if sortOption == col.sortKey}
+                  {#if sortOrder == 1}
+                    <span uk-icon="icon: triangle-up"></span>
+                  {:else}
+                    <span uk-icon="icon: triangle-down"></span>
+                  {/if}
                 {/if}
-              {/if}
-            </th>
-          {/each}
-          <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each set as val, i}
-      <tr class="{val.account_address === data.account_view.address ? 'owner' : ''}" on:click={() => selectedVal = val}>        
-          <td class="uk-visible@s uk-text-center">{val.account_address}</td>
-          <td class="uk-hidden@s uk-text-truncate">{val.account_address}</td>
-          <td class="uk-text-right">{val.voting_power}</td>
-          <td class="uk-text-right">{val.count_proofs_in_epoch}</td>
-          <td class="uk-text-right">{val.tower_height}</td>
-          <td class="uk-text-right">{val.vote_count_in_epoch}</td>
-          <td class="uk-text-right">{val.prop_count_in_epoch}</td>
-          <td>
-            <span uk-icon="icon: info" uk-toggle="target: #{modal_id}"></span>
-          </td>
+              </th>
+            {/each}
+            <th></th>
         </tr>
-      {/each}
-    </tbody>
-  </table>
-
+      </thead>
+      <tbody>
+        {#each set as val, i}
+        <tr class="{val.account_address === data.account_view.address ? 'owner' : ''}" on:click={() => selectedVal = val}>        
+            <td class="uk-visible@s uk-text-center">{val.account_address}</td>
+            <td class="uk-hidden@s uk-text-truncate">{val.account_address}</td>
+            <td class="uk-text-right">{val.voting_power}</td>
+            <td class="uk-text-right">{val.count_proofs_in_epoch}</td>
+            <td class="uk-text-right">{val.tower_height}</td>
+            <td class="uk-text-right">{val.vote_count_in_epoch}</td>
+            <td class="uk-text-right">{val.prop_count_in_epoch}</td>
+            <td>
+              <span uk-icon="icon: info" uk-toggle="target: #{modal_id}"></span>
+            </td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  </div>
   <ValidatorModal validator={selectedVal} id={modal_id}></ValidatorModal>
 </main>

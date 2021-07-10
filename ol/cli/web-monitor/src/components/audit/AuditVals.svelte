@@ -33,49 +33,51 @@
     </h2>
     {#if data.chain_view}
         <AuditSummary stats={data.chain_view.vals_config_stats} />
-        <table class="uk-table uk-table-hover">
-            <thead>
-                <tr>
-                    <th class="uk-text-center">Validator</th>
-                    <th class="uk-text-center">Recurring Autopay</th>
-                    <th class="uk-text-center">Operator Account</th>
-                    <th class="uk-text-center">Operator Has<br>Positive Balance</th>
-                    <th class="uk-text-center"></th>
-                </tr>
-            </thead>
-            <tbody>
-                {#each audit_set as val}
-                    <tr on:click={() => selected_val = val.view}>
-                        <td class="uk-visible@s uk-text-center">{val.address}</td>
-                        <td class="uk-hidden@s uk-text-truncate">{val.address}</td>
-                        <td class="uk-text-center">
-                            {#if val.has_autopay}
-                                <span class="uk-text-success" uk-icon="icon: check"></span> {val.recurring_sum}
-                            {:else}
-                                <span class="uk-text-danger" uk-icon="icon: close"></span>
-                            {/if}
-                        </td>
-                        <td class="uk-text-center">
-                            {#if val.has_op_account}
-                                <span class="uk-text-success" uk-icon="icon: check"></span>    
-                            {:else}
-                                <span class="uk-text-danger" uk-icon="icon: close"></span>
-                            {/if}
-                        </td>
-                        <td class="uk-text-center">
-                            {#if val.has_op_balance}
-                                <span class="uk-text-success" uk-icon="icon: check"></span>
-                            {:else}
-                                <span class="uk-text-danger" uk-icon="icon: close"></span>
-                            {/if}
-                        </td>
-                        <td class="uk-text-center">
-                            <span uk-icon="icon: info" uk-toggle="target: #{modal_id}"></span>
-                        </td>
+        <div class="uk-overflow-auto">
+            <table class="uk-table uk-table-hover">
+                <thead>
+                    <tr>
+                        <th class="uk-text-center">Validator</th>
+                        <th class="uk-text-center">Recurring Autopay</th>
+                        <th class="uk-text-center">Operator Account</th>
+                        <th class="uk-text-center">Operator Has<br>Positive Balance</th>
+                        <th class="uk-text-center"></th>
                     </tr>
-                {/each}                
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    {#each audit_set as val}
+                        <tr on:click={() => selected_val = val.view}>
+                            <td class="uk-visible@s uk-text-center">{val.address}</td>
+                            <td class="uk-hidden@s uk-text-truncate">{val.address}</td>
+                            <td class="uk-text-center">
+                                {#if val.has_autopay}
+                                    <span class="uk-text-success" uk-icon="icon: check"></span> {val.recurring_sum}
+                                {:else}
+                                    <span class="uk-text-danger" uk-icon="icon: close"></span>
+                                {/if}
+                            </td>
+                            <td class="uk-text-center">
+                                {#if val.has_op_account}
+                                    <span class="uk-text-success" uk-icon="icon: check"></span>    
+                                {:else}
+                                    <span class="uk-text-danger" uk-icon="icon: close"></span>
+                                {/if}
+                            </td>
+                            <td class="uk-text-center">
+                                {#if val.has_op_balance}
+                                    <span class="uk-text-success" uk-icon="icon: check"></span>
+                                {:else}
+                                    <span class="uk-text-danger" uk-icon="icon: close"></span>
+                                {/if}
+                            </td>
+                            <td class="uk-text-center">
+                                <span uk-icon="icon: info" uk-toggle="target: #{modal_id}"></span>
+                            </td>
+                        </tr>
+                    {/each}                
+                </tbody>
+            </table>
+        </div>
     {:else}
         loading...
     {/if}
