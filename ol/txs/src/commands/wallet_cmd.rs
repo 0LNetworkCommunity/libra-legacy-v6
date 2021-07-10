@@ -15,8 +15,6 @@ pub struct WalletCmd {
     community: bool,
     #[options(short = "s", help = "set this address as a slow wallet")]
     slow: bool,
-    #[options(short = "r", help = "remove setting")]
-    remove: bool,
 }
 
 
