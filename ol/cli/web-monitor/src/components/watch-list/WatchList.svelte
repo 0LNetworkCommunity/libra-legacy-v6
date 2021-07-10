@@ -49,13 +49,13 @@
     }
 </script>
 
-<div class="uk-card uk-card-default uk-card-body uk-margin-bottom">
-    <h3 class="uk-card-title uk-text-center uk-text-uppercase uk-text-muted uk-text-large">
+<div>
+    <h2 class="uk-text-center uk-text-uppercase uk-text-muted uk-text-light uk-margin-medium-bottom">
         Autopay Watch List
-    </h3>
+    </h2>
     {#if watch_list}
         <div class="uk-overflow-auto">
-            <table class="uk-table">
+            <table class="uk-table uk-table-hover">
                 <thead>
                     <tr>
                         {#each sortableColumns as col}

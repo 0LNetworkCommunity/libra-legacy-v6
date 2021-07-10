@@ -21,10 +21,10 @@
     <ul class="uk-switcher uk-margin switcher-container uk-height-large">
       <Dash data={data}/>
       <Vals data={data}/>
-      <Upgrade data={data}/>
       <AutoPay account={data.account_view}/>
       <WatchList data={data}/>
       <AuditVals data={data}/>      
+      <Upgrade data={data}/>
     </ul>
   </div>
 </main>

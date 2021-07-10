@@ -28,12 +28,12 @@
 </script>
 
 <div>
-    <h3 class="uk-card-title uk-text-center uk-text-uppercase uk-text-muted uk-text-large">
+    <h2 class="uk-text-center uk-text-uppercase uk-text-muted uk-text-light uk-margin-medium-bottom">
       Audit Validators Configs
-    </h3>
+    </h2>
     {#if data.chain_view}
         <AuditSummary stats={data.chain_view.vals_config_stats} />
-        <table class="uk-table">
+        <table class="uk-table uk-table-hover">
             <thead>
                 <tr>
                     <th class="uk-text-center">Validator</th>

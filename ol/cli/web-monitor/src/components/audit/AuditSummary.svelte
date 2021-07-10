@@ -13,7 +13,6 @@
 </style>
 
 <div class="uk-card uk-card-default uk-card-body uk-margin-bottom audit-container">
-    <h3 class="uk-card-title uk-text-muted">Summary</h3>
     <table class="uk-table">
         <thead>
             <tr>
