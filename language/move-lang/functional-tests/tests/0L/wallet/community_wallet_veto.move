@@ -47,12 +47,21 @@ script {
 //! sender: carol
 script {
     use 0x1::Wallet;
-    
+
     fun main(sender: &signer) {
       let uid = 1;
+      let e = Wallet::get_tx_epoch(uid);
+      assert(e == 4, 7357004);
+
       Wallet::veto(sender, uid);
-      assert(Wallet::transfer_is_proposed(uid), 7357004);
-      assert(!Wallet::transfer_is_rejected(uid), 7357005);
+
+
+      let e = Wallet::get_tx_epoch(uid);
+      // adds latency to tx
+      assert(e == 5, 7357005);
+
+      assert(Wallet::transfer_is_proposed(uid), 7357006);
+      assert(!Wallet::transfer_is_rejected(uid), 7357007);
     }
 }
 
@@ -62,16 +71,20 @@ script {
 //! sender: dave
 script {
     use 0x1::Wallet;
-    use 0x1::Debug::print;
 
     fun main(sender: &signer) {
       let uid = 1;
-      print(&0x1);
+
+      let e = Wallet::get_tx_epoch(uid);
+      assert(e == 5, 7357008);
+
       Wallet::veto(sender, uid);
-      print(&0x2);
-      assert(!Wallet::transfer_is_proposed(uid), 7357006);
-      print(&0x2);
-      assert(Wallet::transfer_is_rejected(uid), 7357007);
+
+      let e = Wallet::get_tx_epoch(uid);
+      assert(e == 0, 7357009);
+
+      assert(!Wallet::transfer_is_proposed(uid), 7357010);
+      assert(Wallet::transfer_is_rejected(uid), 7357011);
     }
 }
 
