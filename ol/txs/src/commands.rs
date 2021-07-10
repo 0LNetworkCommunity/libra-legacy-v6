@@ -19,6 +19,7 @@ mod demo_cmd;
 mod relay_cmd;
 mod valset_cmd;
 mod autopay_cmd;
+mod authkey_cmd;
 
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use ol::commands::CONFIG_FILE;
@@ -35,6 +36,7 @@ use self::{
     demo_cmd::DemoCmd,
     relay_cmd::RelayCmd,
     valset_cmd::ValSetCmd,
+    authkey_cmd::AuthkeyCmd,
 };
 use std::path::PathBuf;
 
@@ -87,6 +89,10 @@ pub enum TxsCmd {
     /// The `valset` subcommand
     #[options(help = "join or leave the validator universe, i.e. candidate for validator set")]
     ValSet(ValSetCmd),
+
+    /// subcommand to rotate an auth key (change mnemonic that controls address)
+    #[options(help = "rotate an account's authorization key")]
+    Authkey(AuthkeyCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.
