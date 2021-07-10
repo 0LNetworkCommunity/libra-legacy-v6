@@ -26,7 +26,6 @@ impl Node {
     pub fn load_account_dictionary(&mut self) -> AccountDictionary {
         let node_home = &self.app_conf.workspace.node_home;
         let dic_path = node_home.join("accounts-dictionary.json");
-        println!(">>> dic_path: {:?}", dic_path);
         match Path::new(&dic_path).exists() {
             true => {
                 let file = File::open(dic_path).expect("file should open read only");
