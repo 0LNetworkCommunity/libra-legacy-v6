@@ -23,9 +23,9 @@ impl Runnable for WalletCmd {
         let entry_args = entrypoint::get_args();
 
         let type_int = if self.community {
-          0u8
-        } else if self.slow {
           1u8
+        } else if self.slow {
+          0u8
         } else {
           println!("Must pass flag --community or --slow");
           exit(1);

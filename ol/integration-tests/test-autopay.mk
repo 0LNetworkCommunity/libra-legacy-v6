@@ -33,9 +33,9 @@ endif
 
 export
 
-test: swarm check-swarm set-community send-tx check-tx check-autopay check-transfer stop
+test: swarm check-swarm set-community send-tx check-tx  check-autopay check-transfer stop
 
-test-percent-change:
+test-percent-bal:
 	AUTOPAY_FILE=alice.autopay_batch.json make -f ${MAKE_FILE} test
 
 test-fixed-once:
