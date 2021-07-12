@@ -119,9 +119,9 @@ fn check_db_dir(config_file: &PathBuf) {
                 let consensusdb_path = dbdir_path.join("consensusdb");
                 let libradb_path = dbdir_path.join("libradb");
                 let num_sst_files_consensus = get_num_files_matching(&consensusdb_path, Regex::new(r".sst$").unwrap());
-                println!("INFO: your consensus db ({:?}) contains {:?} files", consensusdb_path, num_sst_files_consensus);  
+                println!("INFO: your consensus db ({:?}) contains {:?} sst-files", consensusdb_path, num_sst_files_consensus);  
                 let num_sst_files_libradb = get_num_files_matching(&libradb_path, Regex::new(r".sst$").unwrap());
-                println!("INFO: your libradb ({:?}) contains {:?} files", libradb_path, num_sst_files_libradb);  
+                println!("INFO: your libradb ({:?}) contains {:?} sst-files", libradb_path, num_sst_files_libradb);  
             }
         }
     } 
