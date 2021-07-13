@@ -1,19 +1,20 @@
 // ALICE is CASE 1
-//! account: alice, 1, 0, validator
+//! account: alice, 1GAS, 0, validator
 
 // BOB is CASE 2
-//! account: bob, 1, 0, validator
+//! account: bob, 1GAS, 0, validator
 
 // BOB is CASE 3
-//! account: carol, 1, 0, validator
+//! account: carol, 1GAS, 0, validator
 
 // BOB is CASE 4
-//! account: dave, 1, 0, validator
+//! account: dave, 1GAS, 0, validator
 
 //! new-transaction
 //! sender: alice
 script {
     use 0x1::MinerState;
+
     fun main(sender: signer) {
       //NOTE: Alice is Case 1, she validates and mines. Setting up mining.
         MinerState::test_helper_mock_mining(&sender, 5);
@@ -61,10 +62,10 @@ script {
       i = i + 1;
     };
 
-    assert(DiemAccount::balance<GAS>({{alice}}) == 1, 7357190102011000);
-    assert(DiemAccount::balance<GAS>({{bob}}) == 1, 7357190102021000);
-    assert(DiemAccount::balance<GAS>({{carol}}) == 1, 7357190102031000);
-    assert(DiemAccount::balance<GAS>({{dave}}) == 1, 7357190102041000);
+    assert(DiemAccount::balance<GAS>({{alice}}) == 1000000, 7357190102011000);
+    assert(DiemAccount::balance<GAS>({{bob}}) == 1000000, 7357190102021000);
+    assert(DiemAccount::balance<GAS>({{carol}}) == 1000000, 7357190102031000);
+    assert(DiemAccount::balance<GAS>({{dave}}) == 1000000, 7357190102041000);
 
     assert(Cases::get_case(vm, {{alice}}, 0, 15) == 1, 7357190102051000);
     assert(Cases::get_case(vm, {{bob}}, 0, 15) == 2, 7357190102061000);
@@ -96,10 +97,10 @@ script {
         //TODO: The fee ratio is unused in this proposal.
         Subsidy::process_fees(vm, &validators, &fee_ratios);
 
-        assert(DiemAccount::balance<GAS>({{alice}}) == 1001, 7357190103021000);
-        assert(DiemAccount::balance<GAS>({{bob}}) == 1, 7357190103031000);
-        assert(DiemAccount::balance<GAS>({{carol}}) == 1, 7357190103031000);
-        assert(DiemAccount::balance<GAS>({{dave}}) == 1, 7357190103031000);
+        assert(DiemAccount::balance<GAS>({{alice}}) == 1001000, 7357190103021000);
+        assert(DiemAccount::balance<GAS>({{bob}}) == 1000000, 7357190103031000);
+        assert(DiemAccount::balance<GAS>({{carol}}) == 1000000, 7357190103031000);
+        assert(DiemAccount::balance<GAS>({{dave}}) == 1000000, 7357190103031000);
     }
 }
 // check: EXECUTED
