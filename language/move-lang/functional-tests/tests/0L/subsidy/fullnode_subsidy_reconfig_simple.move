@@ -1,6 +1,6 @@
-//! account: alice, 100, 0, validator
+//! account: alice, 100GAS, 0, validator
 //// frank is a fullnode
-//! account: frank, 100, 0
+//! account: frank, 100GAS, 0
 
 //! new-transaction
 //! sender: diemroot
@@ -36,6 +36,6 @@ script {
         let new_account_bal = DiemAccount::balance<GAS>({{frank}});
         assert(value == 864000, 735702);
         assert(new_account_bal>old_account_bal, 73570001);
-        assert(new_account_bal == 864100, 73570002);
+        assert(new_account_bal == 1864000, 73570002);
     }
 }
