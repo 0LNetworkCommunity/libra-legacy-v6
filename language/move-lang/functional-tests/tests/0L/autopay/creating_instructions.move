@@ -1,6 +1,6 @@
-//! account: carol, 1000000
-//! account: bob, 1000000
-//! account: alice, 1000000
+//! account: carol, 1GAS
+//! account: bob, 1GAS
+//! account: alice, 1GAS
 
 // We test creation of autopay, retiriving it using same and different accounts
 // Finally, we also test deleting of autopay

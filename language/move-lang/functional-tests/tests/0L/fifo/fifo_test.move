@@ -5,7 +5,6 @@
 
 script {
     use 0x1::FIFO;
-    use 0x1::Debug::print;
     fun main(_s: signer) {
         let f = FIFO::empty<u64>();
         let len = FIFO::len<u64>(& f);
