@@ -1,5 +1,5 @@
-//! account: alice, 100
-//! account: bob, 100
+//! account: alice, 1GAS
+//! account: bob, 1GAS
 
 // We test creation of autopay, retiriving it using same and different accounts
 // Finally, we also test deleting of autopay
