@@ -5020,6 +5020,7 @@ dependencies = [
  "gumdrop",
  "handlebars",
  "hex 0.4.2",
+ "libra-canonical-serialization",
  "libra-config",
  "libra-genesis-tool",
  "libra-global-constants",
