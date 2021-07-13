@@ -9,6 +9,7 @@ Stores the string name of a ValidatorOperator account.
 -  [Resource `ValidatorOperatorConfig`](#0x1_ValidatorOperatorConfig_ValidatorOperatorConfig)
 -  [Constants](#@Constants_0)
 -  [Function `publish`](#0x1_ValidatorOperatorConfig_publish)
+-  [Function `publish_with_proof`](#0x1_ValidatorOperatorConfig_publish_with_proof)
 -  [Function `get_human_name`](#0x1_ValidatorOperatorConfig_get_human_name)
 -  [Function `has_validator_operator_config`](#0x1_ValidatorOperatorConfig_has_validator_operator_config)
 -  [Module Specification](#@Module_Specification_1)
@@ -129,6 +130,42 @@ The <code><a href="ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig">Valid
     <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotValidatorOperator">Roles::AbortsIfNotValidatorOperator</a>;
     <b>aborts_if</b> <a href="ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_has_validator_operator_config">has_validator_operator_config</a>(validator_operator_addr)
         <b>with</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a>;
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ValidatorOperatorConfig_publish_with_proof"></a>
+
+## Function `publish_with_proof`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_publish_with_proof">publish_with_proof</a>(validator_operator_account: &signer, human_name: vector&lt;u8&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_publish_with_proof">publish_with_proof</a>(
+    validator_operator_account: &signer,
+    human_name: vector&lt;u8&gt;,
+) {
+    <a href="DiemTimestamp.md#0x1_DiemTimestamp_assert_operating">DiemTimestamp::assert_operating</a>();
+    <a href="Roles.md#0x1_Roles_assert_validator_operator">Roles::assert_validator_operator</a>(validator_operator_account);
+    <b>assert</b>(
+        !<a href="ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_has_validator_operator_config">has_validator_operator_config</a>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(validator_operator_account)),
+        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_already_published">Errors::already_published</a>(<a href="ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_EVALIDATOR_OPERATOR_CONFIG">EVALIDATOR_OPERATOR_CONFIG</a>)
+    );
+
+    move_to(validator_operator_account, <a href="ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig">ValidatorOperatorConfig</a> {
+        human_name,
+    });
 }
 </code></pre>
 

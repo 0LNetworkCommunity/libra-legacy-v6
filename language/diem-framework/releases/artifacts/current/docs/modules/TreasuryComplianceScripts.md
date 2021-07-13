@@ -1082,7 +1082,6 @@ is given by <code>new_exchange_rate_numerator/new_exchange_rate_denominator</cod
         new_exchange_rate_numerator,
         new_exchange_rate_denominator
 );
-<b>include</b> <a href="Diem.md#0x1_Diem_UpdateXDXExchangeRateAbortsIf">Diem::UpdateXDXExchangeRateAbortsIf</a>&lt;Currency&gt;;
 <b>include</b> <a href="Diem.md#0x1_Diem_UpdateXDXExchangeRateEnsures">Diem::UpdateXDXExchangeRateEnsures</a>&lt;Currency&gt;{xdx_exchange_rate: rate};
 <b>include</b> <a href="Diem.md#0x1_Diem_UpdateXDXExchangeRateEmits">Diem::UpdateXDXExchangeRateEmits</a>&lt;Currency&gt;{xdx_exchange_rate: rate};
 <b>aborts_with</b> [check]

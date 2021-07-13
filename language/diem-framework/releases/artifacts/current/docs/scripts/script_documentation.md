@@ -3001,36 +3001,6 @@ only "locally" under the <code>validator_account</code> account address.
 
 </details>
 
-<details>
-<summary>Specification</summary>
-
-Access control rule is that only the validator operator for a validator may set
-call this, but there is an aborts_if in SetConfigAbortsIf that tests that directly.
-
-
-<pre><code><b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_TransactionChecks">DiemAccount::TransactionChecks</a>{sender: validator_operator_account};
-<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_SetConfigAbortsIf">ValidatorConfig::SetConfigAbortsIf</a> {validator_addr: validator_account};
-<b>ensures</b> <a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(validator_account);
-<b>aborts_with</b> [check]
-    <a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>,
-    <a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a>;
-</code></pre>
-
-
-**Access Control:**
-Only the Validator Operator account which has been registered with the validator can
-update the validator's configuration [[H15]][PERMISSION].
-
-
-<pre><code><b>aborts_if</b> <a href="_address_of">Signer::address_of</a>(validator_operator_account) !=
-            <a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(validator_account)
-                <b>with</b> <a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
-</code></pre>
-
-
-
-</details>
-
 <a name="0x1_ValidatorAdministrationScripts_remove_validator_and_reconfigure"></a>
 
 ##### Function `remove_validator_and_reconfigure`
@@ -3417,7 +3387,7 @@ resource published under it. The sending <code>account</code> must be a Validato
 <pre><code><b>let</b> account_addr = <a href="_address_of">Signer::address_of</a>(account);
 <b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_TransactionChecks">DiemAccount::TransactionChecks</a>{sender: account};
 <b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_AbortsIfNoValidatorConfig">ValidatorConfig::AbortsIfNoValidatorConfig</a>{addr: account_addr};
-<b>aborts_if</b> <a href="../../../../../releases/artifacts/current/docs/modules/ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_get_human_name">ValidatorOperatorConfig::get_human_name</a>(operator_account) != operator_name <b>with</b> 0;
+<b>aborts_if</b> <a href="../../../../../releases/artifacts/current/docs/modules/ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_get_human_name">ValidatorOperatorConfig::get_human_name</a>(operator_account) != operator_name <b>with</b> 111;
 <b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_SetOperatorAbortsIf">ValidatorConfig::SetOperatorAbortsIf</a>{validator_account: account, operator_addr: operator_account};
 <b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_SetOperatorEnsures">ValidatorConfig::SetOperatorEnsures</a>{validator_account: account, operator_addr: operator_account};
 </code></pre>
@@ -4608,7 +4578,6 @@ is given by <code>new_exchange_rate_numerator/new_exchange_rate_denominator</cod
         new_exchange_rate_numerator,
         new_exchange_rate_denominator
 );
-<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/Diem.md#0x1_Diem_UpdateXDXExchangeRateAbortsIf">Diem::UpdateXDXExchangeRateAbortsIf</a>&lt;Currency&gt;;
 <b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/Diem.md#0x1_Diem_UpdateXDXExchangeRateEnsures">Diem::UpdateXDXExchangeRateEnsures</a>&lt;Currency&gt;{xdx_exchange_rate: rate};
 <b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/Diem.md#0x1_Diem_UpdateXDXExchangeRateEmits">Diem::UpdateXDXExchangeRateEmits</a>&lt;Currency&gt;{xdx_exchange_rate: rate};
 <b>aborts_with</b> [check]
@@ -5038,8 +5007,11 @@ a reconfiguration of the system.
 -  [`0x1::AccountFreezing`](../../../../../releases/artifacts/current/docs/modules/AccountFreezing.md#0x1_AccountFreezing)
 -  [`0x1::AccountLimits`](../../../../../releases/artifacts/current/docs/modules/AccountLimits.md#0x1_AccountLimits)
 -  [`0x1::Authenticator`](../../../../../releases/artifacts/current/docs/modules/Authenticator.md#0x1_Authenticator)
+-  [`0x1::AutoPay2`](../../../../../releases/artifacts/current/docs/modules/AutoPay.md#0x1_AutoPay2)
+-  [`0x1::Cases`](../../../../../releases/artifacts/current/docs/modules/Cases.md#0x1_Cases)
 -  [`0x1::ChainId`](../../../../../releases/artifacts/current/docs/modules/ChainId.md#0x1_ChainId)
 -  [`0x1::CoreAddresses`](../../../../../releases/artifacts/current/docs/modules/CoreAddresses.md#0x1_CoreAddresses)
+-  [`0x1::Debug`](../../../../../releases/artifacts/current/docs/modules/Debug.md#0x1_Debug)
 -  [`0x1::DesignatedDealer`](../../../../../releases/artifacts/current/docs/modules/DesignatedDealer.md#0x1_DesignatedDealer)
 -  [`0x1::Diem`](../../../../../releases/artifacts/current/docs/modules/Diem.md#0x1_Diem)
 -  [`0x1::DiemAccount`](../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount)
@@ -5052,21 +5024,38 @@ a reconfiguration of the system.
 -  [`0x1::DiemVMConfig`](../../../../../releases/artifacts/current/docs/modules/DiemVMConfig.md#0x1_DiemVMConfig)
 -  [`0x1::DiemVersion`](../../../../../releases/artifacts/current/docs/modules/DiemVersion.md#0x1_DiemVersion)
 -  [`0x1::DualAttestation`](../../../../../releases/artifacts/current/docs/modules/DualAttestation.md#0x1_DualAttestation)
+-  [`0x1::Epoch`](../../../../../releases/artifacts/current/docs/modules/Epoch.md#0x1_Epoch)
+-  [`0x1::FIFO`](../../../../../releases/artifacts/current/docs/modules/FIFO_rename.md#0x1_FIFO)
+-  [`0x1::FullnodeState`](../../../../../releases/artifacts/current/docs/modules/FullnodeState.md#0x1_FullnodeState)
+-  [`0x1::GAS`](../../../../../releases/artifacts/current/docs/modules/GAS.md#0x1_GAS)
 -  [`0x1::Genesis`](../../../../../releases/artifacts/current/docs/modules/Genesis.md#0x1_Genesis)
+-  [`0x1::Globals`](../../../../../releases/artifacts/current/docs/modules/Globals.md#0x1_Globals)
+-  [`0x1::MinerState`](../../../../../releases/artifacts/current/docs/modules/MinerState.md#0x1_MinerState)
+-  [`0x1::NodeWeight`](../../../../../releases/artifacts/current/docs/modules/NodeWeight.md#0x1_NodeWeight)
+-  [`0x1::Oracle`](../../../../../releases/artifacts/current/docs/modules/Oracle.md#0x1_Oracle)
 -  [`0x1::PaymentScripts`](script_documentation.md#0x1_PaymentScripts)
+-  [`0x1::Reconfigure`](../../../../../releases/artifacts/current/docs/modules/Reconfigure.md#0x1_Reconfigure)
 -  [`0x1::RecoveryAddress`](../../../../../releases/artifacts/current/docs/modules/RecoveryAddress.md#0x1_RecoveryAddress)
 -  [`0x1::RegisteredCurrencies`](../../../../../releases/artifacts/current/docs/modules/RegisteredCurrencies.md#0x1_RegisteredCurrencies)
 -  [`0x1::Roles`](../../../../../releases/artifacts/current/docs/modules/Roles.md#0x1_Roles)
 -  [`0x1::SharedEd25519PublicKey`](../../../../../releases/artifacts/current/docs/modules/SharedEd25519PublicKey.md#0x1_SharedEd25519PublicKey)
 -  [`0x1::Signature`](../../../../../releases/artifacts/current/docs/modules/Signature.md#0x1_Signature)
 -  [`0x1::SlidingNonce`](../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce)
+-  [`0x1::StagingNet`](../../../../../releases/artifacts/current/docs/modules/Testnet.md#0x1_StagingNet)
+-  [`0x1::Stats`](../../../../../releases/artifacts/current/docs/modules/Stats.md#0x1_Stats)
+-  [`0x1::Subsidy`](../../../../../releases/artifacts/current/docs/modules/Subsidy.md#0x1_Subsidy)
 -  [`0x1::SystemAdministrationScripts`](script_documentation.md#0x1_SystemAdministrationScripts)
+-  [`0x1::Testnet`](../../../../../releases/artifacts/current/docs/modules/Testnet.md#0x1_Testnet)
 -  [`0x1::TransactionFee`](../../../../../releases/artifacts/current/docs/modules/TransactionFee.md#0x1_TransactionFee)
 -  [`0x1::TreasuryComplianceScripts`](script_documentation.md#0x1_TreasuryComplianceScripts)
+-  [`0x1::TrustedAccounts`](../../../../../releases/artifacts/current/docs/modules/TrustedAccounts.md#0x1_TrustedAccounts)
+-  [`0x1::Upgrade`](../../../../../releases/artifacts/current/docs/modules/Upgrade.md#0x1_Upgrade)
 -  [`0x1::VASP`](../../../../../releases/artifacts/current/docs/modules/VASP.md#0x1_VASP)
+-  [`0x1::VDF`](../../../../../releases/artifacts/current/docs/modules/VDF.md#0x1_VDF)
 -  [`0x1::ValidatorAdministrationScripts`](script_documentation.md#0x1_ValidatorAdministrationScripts)
 -  [`0x1::ValidatorConfig`](../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig)
 -  [`0x1::ValidatorOperatorConfig`](../../../../../releases/artifacts/current/docs/modules/ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig)
+-  [`0x1::ValidatorUniverse`](../../../../../releases/artifacts/current/docs/modules/ValidatorUniverse.md#0x1_ValidatorUniverse)
 -  [`0x1::XDX`](../../../../../releases/artifacts/current/docs/modules/XDX.md#0x1_XDX)
 -  [`0x1::XUS`](../../../../../releases/artifacts/current/docs/modules/XUS.md#0x1_XUS)
 
