@@ -25,6 +25,9 @@ to synchronize configuration changes for the validators.
 -  [Function `reconfigure`](#0x1_DiemConfig_reconfigure)
 -  [Function `reconfigure_`](#0x1_DiemConfig_reconfigure_)
 -  [Function `emit_genesis_reconfiguration_event`](#0x1_DiemConfig_emit_genesis_reconfiguration_event)
+-  [Function `get_current_epoch`](#0x1_DiemConfig_get_current_epoch)
+-  [Function `get_epoch_transfer_limit`](#0x1_DiemConfig_get_epoch_transfer_limit)
+-  [Function `check_transfer_enabled`](#0x1_DiemConfig_check_transfer_enabled)
 -  [Module Specification](#@Module_Specification_1)
     -  [Initialization](#@Initialization_2)
     -  [Invariants](#@Invariants_3)
@@ -37,6 +40,7 @@ to synchronize configuration changes for the validators.
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event">0x1::Event</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
+<b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 </code></pre>
 
 
@@ -321,7 +325,7 @@ Publishes <code><a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configurati
 
 <pre><code><b>schema</b> <a href="DiemConfig.md#0x1_DiemConfig_InitializeEnsures">InitializeEnsures</a> {
     <b>ensures</b> <a href="DiemConfig.md#0x1_DiemConfig_spec_has_config">spec_has_config</a>();
-    <a name="0x1_DiemConfig_new_config$16"></a>
+    <a name="0x1_DiemConfig_new_config$19"></a>
     <b>let</b> new_config = <b>global</b>&lt;<a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
     <b>ensures</b> new_config.epoch == 0;
     <b>ensures</b> new_config.last_reconfiguration_time == 0;
@@ -885,11 +889,11 @@ Private function to do reconfiguration.  Updates reconfiguration status resource
 <pre><code><b>pragma</b> opaque;
 <b>modifies</b> <b>global</b>&lt;<a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
 <b>ensures</b> <b>old</b>(<a href="DiemConfig.md#0x1_DiemConfig_spec_has_config">spec_has_config</a>()) == <a href="DiemConfig.md#0x1_DiemConfig_spec_has_config">spec_has_config</a>();
-<a name="0x1_DiemConfig_config$25"></a>
+<a name="0x1_DiemConfig_config$28"></a>
 <b>let</b> config = <b>global</b>&lt;<a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
-<a name="0x1_DiemConfig_now$26"></a>
+<a name="0x1_DiemConfig_now$29"></a>
 <b>let</b> now = <a href="DiemTimestamp.md#0x1_DiemTimestamp_spec_now_microseconds">DiemTimestamp::spec_now_microseconds</a>();
-<a name="0x1_DiemConfig_epoch$27"></a>
+<a name="0x1_DiemConfig_epoch$30"></a>
 <b>let</b> epoch = config.epoch;
 <b>include</b> !<a href="DiemConfig.md#0x1_DiemConfig_spec_reconfigure_omitted">spec_reconfigure_omitted</a>() || (config.last_reconfiguration_time == now)
     ==&gt; <a href="DiemConfig.md#0x1_DiemConfig_InternalReconfigureAbortsIf">InternalReconfigureAbortsIf</a> && <a href="DiemConfig.md#0x1_DiemConfig_ReconfigureAbortsIf">ReconfigureAbortsIf</a>;
@@ -913,12 +917,12 @@ These conditions are unlikely to happen in reality, and excluding them avoids fo
 <a name="0x1_DiemConfig_InternalReconfigureAbortsIf"></a>
 
 
-<a name="0x1_DiemConfig_config$19"></a>
+<a name="0x1_DiemConfig_config$22"></a>
 
 
 <pre><code><b>schema</b> <a href="DiemConfig.md#0x1_DiemConfig_InternalReconfigureAbortsIf">InternalReconfigureAbortsIf</a> {
     <b>let</b> config = <b>global</b>&lt;<a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
-    <a name="0x1_DiemConfig_current_time$20"></a>
+    <a name="0x1_DiemConfig_current_time$23"></a>
     <b>let</b> current_time = <a href="DiemTimestamp.md#0x1_DiemTimestamp_spec_now_microseconds">DiemTimestamp::spec_now_microseconds</a>();
     <b>aborts_if</b> [concrete] current_time &lt; config.last_reconfiguration_time <b>with</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_INVALID_STATE">Errors::INVALID_STATE</a>;
     <b>aborts_if</b> [concrete] config.epoch == <a href="DiemConfig.md#0x1_DiemConfig_MAX_U64">MAX_U64</a>
@@ -933,12 +937,12 @@ This schema is to be used by callers of <code>reconfigure</code>
 <a name="0x1_DiemConfig_ReconfigureAbortsIf"></a>
 
 
-<a name="0x1_DiemConfig_config$17"></a>
+<a name="0x1_DiemConfig_config$20"></a>
 
 
 <pre><code><b>schema</b> <a href="DiemConfig.md#0x1_DiemConfig_ReconfigureAbortsIf">ReconfigureAbortsIf</a> {
     <b>let</b> config = <b>global</b>&lt;<a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
-    <a name="0x1_DiemConfig_current_time$18"></a>
+    <a name="0x1_DiemConfig_current_time$21"></a>
     <b>let</b> current_time = <a href="DiemTimestamp.md#0x1_DiemTimestamp_spec_now_microseconds">DiemTimestamp::spec_now_microseconds</a>();
     <b>aborts_if</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp_is_operating">DiemTimestamp::is_operating</a>()
         && <a href="DiemConfig.md#0x1_DiemConfig_reconfiguration_enabled">reconfiguration_enabled</a>()
@@ -955,18 +959,18 @@ This schema is to be used by callers of <code>reconfigure</code>
 <a name="0x1_DiemConfig_ReconfigureEmits"></a>
 
 
-<a name="0x1_DiemConfig_config$21"></a>
+<a name="0x1_DiemConfig_config$24"></a>
 
 
 <pre><code><b>schema</b> <a href="DiemConfig.md#0x1_DiemConfig_ReconfigureEmits">ReconfigureEmits</a> {
     <b>let</b> config = <b>global</b>&lt;<a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
-    <a name="0x1_DiemConfig_now$22"></a>
+    <a name="0x1_DiemConfig_now$25"></a>
     <b>let</b> now = <a href="DiemTimestamp.md#0x1_DiemTimestamp_spec_now_microseconds">DiemTimestamp::spec_now_microseconds</a>();
-    <a name="0x1_DiemConfig_msg$23"></a>
+    <a name="0x1_DiemConfig_msg$26"></a>
     <b>let</b> msg = <a href="DiemConfig.md#0x1_DiemConfig_NewEpochEvent">NewEpochEvent</a> {
         epoch: config.epoch,
     };
-    <a name="0x1_DiemConfig_handle$24"></a>
+    <a name="0x1_DiemConfig_handle$27"></a>
     <b>let</b> handle = config.events;
     emits msg <b>to</b> handle <b>if</b> (!<a href="DiemConfig.md#0x1_DiemConfig_spec_reconfigure_omitted">spec_reconfigure_omitted</a>() && now != <b>old</b>(config).last_reconfiguration_time);
 }
@@ -1017,17 +1021,99 @@ reconfiguration event.
 
 
 
-<a name="0x1_DiemConfig_config$28"></a>
+<a name="0x1_DiemConfig_config$31"></a>
 
 
 <pre><code><b>let</b> config = <b>global</b>&lt;<a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
-<a name="0x1_DiemConfig_handle$29"></a>
+<a name="0x1_DiemConfig_handle$32"></a>
 <b>let</b> handle = config.events;
-<a name="0x1_DiemConfig_msg$30"></a>
+<a name="0x1_DiemConfig_msg$33"></a>
 <b>let</b> msg = <a href="DiemConfig.md#0x1_DiemConfig_NewEpochEvent">NewEpochEvent</a> {
         epoch: config.epoch,
 };
 emits msg <b>to</b> handle;
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemConfig_get_current_epoch"></a>
+
+## Function `get_current_epoch`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">get_current_epoch</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">get_current_epoch</a>(): u64 <b>acquires</b> <a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a> {
+    <b>let</b> config_ref = borrow_global&lt;<a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
+    config_ref.epoch
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemConfig_get_epoch_transfer_limit"></a>
+
+## Function `get_epoch_transfer_limit`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemConfig.md#0x1_DiemConfig_get_epoch_transfer_limit">get_epoch_transfer_limit</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemConfig.md#0x1_DiemConfig_get_epoch_transfer_limit">get_epoch_transfer_limit</a>(): u64 <b>acquires</b> <a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a> {
+    // Constant <b>to</b> start the withdrawal limit calculation from
+    <b>let</b> transfer_enabled_epoch = 75;
+    <b>let</b> config_ref = borrow_global&lt;<a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
+
+    // Calculating transfer limit in multiples of epoch
+    ((config_ref.epoch - transfer_enabled_epoch) * 10)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemConfig_check_transfer_enabled"></a>
+
+## Function `check_transfer_enabled`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemConfig.md#0x1_DiemConfig_check_transfer_enabled">check_transfer_enabled</a>(): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemConfig.md#0x1_DiemConfig_check_transfer_enabled">check_transfer_enabled</a>(): bool <b>acquires</b> <a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a> {
+    <b>if</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
+        <b>true</b>
+    } <b>else</b> {
+        <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">get_current_epoch</a>() &gt; 1000
+    }
+}
 </code></pre>
 
 

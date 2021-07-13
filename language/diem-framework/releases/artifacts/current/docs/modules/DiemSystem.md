@@ -28,19 +28,27 @@ and "configuration" are used for several distinct concepts.
 -  [Function `get_validator_index_`](#0x1_DiemSystem_get_validator_index_)
 -  [Function `update_ith_validator_info_`](#0x1_DiemSystem_update_ith_validator_info_)
 -  [Function `is_validator_`](#0x1_DiemSystem_is_validator_)
+-  [Function `bulk_update_validators`](#0x1_DiemSystem_bulk_update_validators)
+-  [Function `get_fee_ratio`](#0x1_DiemSystem_get_fee_ratio)
+-  [Function `get_jailed_set`](#0x1_DiemSystem_get_jailed_set)
+-  [Function `get_val_set_addr`](#0x1_DiemSystem_get_val_set_addr)
 -  [Module Specification](#@Module_Specification_1)
     -  [Initialization](#@Initialization_2)
     -  [Access Control](#@Access_Control_3)
     -  [Helper Functions](#@Helper_Functions_4)
 
 
-<pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<pre><code><b>use</b> <a href="Cases.md#0x1_Cases">0x1::Cases</a>;
+<b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
+<b>use</b> <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
+<b>use</b> <a href="NodeWeight.md#0x1_NodeWeight">0x1::NodeWeight</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
+<b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig">0x1::ValidatorConfig</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
@@ -193,7 +201,7 @@ Members of <code>validators</code> vector (the validator set) have unique addres
 The validator operator is not the operator for the specified validator
 
 
-<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_EINVALID_TRANSACTION_SENDER">EINVALID_TRANSACTION_SENDER</a>: u64 = 4;
+<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_EINVALID_TRANSACTION_SENDER">EINVALID_TRANSACTION_SENDER</a>: u64 = 12004;
 </code></pre>
 
 
@@ -203,7 +211,7 @@ The validator operator is not the operator for the specified validator
 Tried to add a validator to the validator set that was already in it
 
 
-<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_EALREADY_A_VALIDATOR">EALREADY_A_VALIDATOR</a>: u64 = 2;
+<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_EALREADY_A_VALIDATOR">EALREADY_A_VALIDATOR</a>: u64 = 12002;
 </code></pre>
 
 
@@ -213,7 +221,7 @@ Tried to add a validator to the validator set that was already in it
 The <code><a href="DiemSystem.md#0x1_DiemSystem_CapabilityHolder">CapabilityHolder</a></code> resource was not in the required state
 
 
-<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_ECAPABILITY_HOLDER">ECAPABILITY_HOLDER</a>: u64 = 0;
+<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_ECAPABILITY_HOLDER">ECAPABILITY_HOLDER</a>: u64 = 12000;
 </code></pre>
 
 
@@ -223,7 +231,7 @@ The <code><a href="DiemSystem.md#0x1_DiemSystem_CapabilityHolder">CapabilityHold
 Rate limited when trying to update config
 
 
-<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_ECONFIG_UPDATE_RATE_LIMITED">ECONFIG_UPDATE_RATE_LIMITED</a>: u64 = 6;
+<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_ECONFIG_UPDATE_RATE_LIMITED">ECONFIG_UPDATE_RATE_LIMITED</a>: u64 = 12006;
 </code></pre>
 
 
@@ -233,7 +241,7 @@ Rate limited when trying to update config
 Tried to add a validator with an invalid state to the validator set
 
 
-<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_EINVALID_PROSPECTIVE_VALIDATOR">EINVALID_PROSPECTIVE_VALIDATOR</a>: u64 = 1;
+<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_EINVALID_PROSPECTIVE_VALIDATOR">EINVALID_PROSPECTIVE_VALIDATOR</a>: u64 = 12001;
 </code></pre>
 
 
@@ -243,7 +251,7 @@ Tried to add a validator with an invalid state to the validator set
 Validator set already at maximum allowed size
 
 
-<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_EMAX_VALIDATORS">EMAX_VALIDATORS</a>: u64 = 7;
+<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_EMAX_VALIDATORS">EMAX_VALIDATORS</a>: u64 = 12007;
 </code></pre>
 
 
@@ -253,7 +261,7 @@ Validator set already at maximum allowed size
 An operation was attempted on an address not in the vaidator set
 
 
-<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_ENOT_AN_ACTIVE_VALIDATOR">ENOT_AN_ACTIVE_VALIDATOR</a>: u64 = 3;
+<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_ENOT_AN_ACTIVE_VALIDATOR">ENOT_AN_ACTIVE_VALIDATOR</a>: u64 = 12003;
 </code></pre>
 
 
@@ -263,7 +271,7 @@ An operation was attempted on an address not in the vaidator set
 An out of bounds index for the validator set was encountered
 
 
-<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_EVALIDATOR_INDEX">EVALIDATOR_INDEX</a>: u64 = 5;
+<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_EVALIDATOR_INDEX">EVALIDATOR_INDEX</a>: u64 = 12005;
 </code></pre>
 
 
@@ -341,7 +349,7 @@ Must be invoked by the Diem root a single time in Genesis.
 <pre><code><b>modifies</b> <b>global</b>&lt;<a href="DiemConfig.md#0x1_DiemConfig_DiemConfig">DiemConfig::DiemConfig</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
 <b>include</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp_AbortsIfNotGenesis">DiemTimestamp::AbortsIfNotGenesis</a>;
 <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotDiemRoot">Roles::AbortsIfNotDiemRoot</a>{account: dr_account};
-<a name="0x1_DiemSystem_dr_addr$20"></a>
+<a name="0x1_DiemSystem_dr_addr$24"></a>
 <b>let</b> dr_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(dr_account);
 <b>aborts_if</b> <a href="DiemConfig.md#0x1_DiemConfig_spec_is_published">DiemConfig::spec_is_published</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;() <b>with</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a>;
 <b>aborts_if</b> <b>exists</b>&lt;<a href="DiemSystem.md#0x1_DiemSystem_CapabilityHolder">CapabilityHolder</a>&gt;(dr_addr) <b>with</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a>;
@@ -521,7 +529,7 @@ a ValidatorRole
     <b>ensures</b> <a href="Roles.md#0x1_Roles_spec_has_validator_role_addr">Roles::spec_has_validator_role_addr</a>(validator_addr);
     <b>ensures</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(validator_addr);
     <b>ensures</b> <a href="DiemSystem.md#0x1_DiemSystem_spec_is_validator">spec_is_validator</a>(validator_addr);
-    <a name="0x1_DiemSystem_vs$15"></a>
+    <a name="0x1_DiemSystem_vs$19"></a>
     <b>let</b> vs = <a href="DiemSystem.md#0x1_DiemSystem_spec_get_validators">spec_get_validators</a>();
     <b>ensures</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_eq_push_back">Vector::eq_push_back</a>(vs,
                                  <b>old</b>(vs),
@@ -612,7 +620,7 @@ Removes a validator, aborts unless called by diem root account
 
 <pre><code><b>schema</b> <a href="DiemSystem.md#0x1_DiemSystem_RemoveValidatorEnsures">RemoveValidatorEnsures</a> {
     validator_addr: address;
-    <a name="0x1_DiemSystem_vs$16"></a>
+    <a name="0x1_DiemSystem_vs$20"></a>
     <b>let</b> vs = <a href="DiemSystem.md#0x1_DiemSystem_spec_get_validators">spec_get_validators</a>();
     <b>ensures</b> <b>forall</b> vi in vs <b>where</b> vi.addr != validator_addr: <b>exists</b> ovi in <b>old</b>(vs): vi == ovi;
 }
@@ -693,7 +701,7 @@ and emits a reconfigurationevent.
 <b>include</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_AbortsIfGetOperator">ValidatorConfig::AbortsIfGetOperator</a>{addr: validator_addr};
 <b>include</b> <a href="DiemSystem.md#0x1_DiemSystem_UpdateConfigAndReconfigureAbortsIf">UpdateConfigAndReconfigureAbortsIf</a>;
 <b>include</b> <a href="DiemSystem.md#0x1_DiemSystem_UpdateConfigAndReconfigureEnsures">UpdateConfigAndReconfigureEnsures</a>;
-<a name="0x1_DiemSystem_is_validator_info_updated$21"></a>
+<a name="0x1_DiemSystem_is_validator_info_updated$25"></a>
 <b>let</b> is_validator_info_updated =
     <a href="ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(validator_addr) &&
     (<b>exists</b> v_info in <a href="DiemSystem.md#0x1_DiemSystem_spec_get_validators">spec_get_validators</a>():
@@ -712,7 +720,7 @@ and emits a reconfigurationevent.
 <pre><code><b>schema</b> <a href="DiemSystem.md#0x1_DiemSystem_UpdateConfigAndReconfigureAbortsIf">UpdateConfigAndReconfigureAbortsIf</a> {
     validator_addr: address;
     validator_operator_account: signer;
-    <a name="0x1_DiemSystem_validator_operator_addr$17"></a>
+    <a name="0x1_DiemSystem_validator_operator_addr$21"></a>
     <b>let</b> validator_operator_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(validator_operator_account);
     <b>include</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp_AbortsIfNotOperating">DiemTimestamp::AbortsIfNotOperating</a>;
 }
@@ -741,7 +749,7 @@ for validator_addr, and doesn't change any addresses.
 
 <pre><code><b>schema</b> <a href="DiemSystem.md#0x1_DiemSystem_UpdateConfigAndReconfigureEnsures">UpdateConfigAndReconfigureEnsures</a> {
     validator_addr: address;
-    <a name="0x1_DiemSystem_vs$18"></a>
+    <a name="0x1_DiemSystem_vs$22"></a>
     <b>let</b> vs = <a href="DiemSystem.md#0x1_DiemSystem_spec_get_validators">spec_get_validators</a>();
     <b>ensures</b> len(vs) == len(<b>old</b>(vs));
 }
@@ -794,7 +802,7 @@ DIP-6 property
 
 <pre><code><b>schema</b> <a href="DiemSystem.md#0x1_DiemSystem_UpdateConfigAndReconfigureEmits">UpdateConfigAndReconfigureEmits</a> {
     validator_addr: address;
-    <a name="0x1_DiemSystem_is_validator_info_updated$19"></a>
+    <a name="0x1_DiemSystem_is_validator_info_updated$23"></a>
     <b>let</b> is_validator_info_updated =
         <a href="ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(validator_addr) &&
         (<b>exists</b> v_info in <a href="DiemSystem.md#0x1_DiemSystem_spec_get_validators">spec_get_validators</a>():
@@ -1078,7 +1086,7 @@ It has a loop, so there are spec blocks in the code to assert loop invariants.
 
 <pre><code><b>pragma</b> opaque;
 <b>aborts_if</b> <b>false</b>;
-<a name="0x1_DiemSystem_size$22"></a>
+<a name="0x1_DiemSystem_size$26"></a>
 <b>let</b> size = len(validators);
 </code></pre>
 
@@ -1160,7 +1168,7 @@ This function never aborts.
 
 <pre><code><b>pragma</b> opaque;
 <b>aborts_if</b> <b>false</b>;
-<a name="0x1_DiemSystem_new_validator_config$23"></a>
+<a name="0x1_DiemSystem_new_validator_config$27"></a>
 <b>let</b> new_validator_config = <a href="ValidatorConfig.md#0x1_ValidatorConfig_spec_get_config">ValidatorConfig::spec_get_config</a>(validators[i].addr);
 </code></pre>
 
@@ -1259,6 +1267,204 @@ Private function checks for membership of <code>addr</code> in validator set.
 <pre><code><b>pragma</b> opaque;
 <b>aborts_if</b> <b>false</b>;
 <b>ensures</b> result == (<b>exists</b> v in validators_vec_ref: v.addr == addr);
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemSystem_bulk_update_validators"></a>
+
+## Function `bulk_update_validators`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_bulk_update_validators">bulk_update_validators</a>(account: &signer, new_validators: vector&lt;address&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_bulk_update_validators">bulk_update_validators</a>(
+    account: &signer,
+    new_validators: vector&lt;address&gt;
+) <b>acquires</b> <a href="DiemSystem.md#0x1_DiemSystem_CapabilityHolder">CapabilityHolder</a> {
+    <a href="DiemTimestamp.md#0x1_DiemTimestamp_assert_operating">DiemTimestamp::assert_operating</a>();
+    <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account) == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(120001));
+
+    // Either check for each validator and add/remove them or clear the current list and append the list.
+    // The first way might be computationally expensive, so I choose <b>to</b> go <b>with</b> second approach.
+
+    // Clear all the current validators  ==&gt; Intialize new validators
+    <b>let</b> next_epoch_validators = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>();
+
+    <b>let</b> n = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&new_validators);
+    // Get the current validator and append it <b>to</b> list
+    <b>let</b> index = 0;
+    <b>while</b> (index &lt; n) {
+        <b>let</b> account_address = *(<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&new_validators, index));
+
+        // A prospective validator must have a validator config <b>resource</b>
+        <b>assert</b>(<a href="ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(account_address), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DiemSystem.md#0x1_DiemSystem_EINVALID_PROSPECTIVE_VALIDATOR">EINVALID_PROSPECTIVE_VALIDATOR</a>));
+
+        <b>if</b> (!<a href="DiemSystem.md#0x1_DiemSystem_is_validator">is_validator</a>(account_address)) {
+            <a href="DiemSystem.md#0x1_DiemSystem_add_validator">add_validator</a>(account, account_address);
+        };
+
+        <b>let</b> config = <a href="ValidatorConfig.md#0x1_ValidatorConfig_get_config">ValidatorConfig::get_config</a>(account_address);
+        <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> next_epoch_validators, <a href="DiemSystem.md#0x1_DiemSystem_ValidatorInfo">ValidatorInfo</a> {
+            addr: account_address,
+            config, // <b>copy</b> the config over <b>to</b> ValidatorSet
+            consensus_voting_power: 1 + <a href="NodeWeight.md#0x1_NodeWeight_proof_of_weight">NodeWeight::proof_of_weight</a>(account_address),
+            last_config_update_time: <a href="DiemTimestamp.md#0x1_DiemTimestamp_now_microseconds">DiemTimestamp::now_microseconds</a>(),
+        });
+
+        // NOTE: This was <b>move</b> <b>to</b> redeem. Update the <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a>.mining_epoch_count <b>with</b> +1 at the end of the epoch.
+        // ValidatorUniverse::update_validator_epoch_count(account_address);
+        index = index + 1;
+    };
+
+    <b>let</b> next_count = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem_ValidatorInfo">ValidatorInfo</a>&gt;(&next_epoch_validators);
+    <b>assert</b>(next_count &gt; 0, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(120001) );
+    // Transaction::assert(next_count &gt; n, 90000000002 );
+    <b>assert</b>(next_count == n, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(1200011) );
+
+    // We have vector of validators - updated!
+    // Next, <b>let</b> us get the current validator set for the current parameters
+    <b>let</b> outgoing_validator_set = <a href="DiemSystem.md#0x1_DiemSystem_get_diem_system_config">get_diem_system_config</a>();
+
+    // We create a new Validator set using scheme from outgoingValidatorset and <b>update</b> the validator set.
+    <b>let</b> updated_validator_set = <a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a> {
+        scheme: outgoing_validator_set.scheme,
+        validators: next_epoch_validators,
+    };
+
+    // Updated the configuration using updated validator set. Now, start new epoch
+    <a href="DiemSystem.md#0x1_DiemSystem_set_diem_system_config">set_diem_system_config</a>(updated_validator_set);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemSystem_get_fee_ratio"></a>
+
+## Function `get_fee_ratio`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_get_fee_ratio">get_fee_ratio</a>(vm: &signer, height_start: u64, height_end: u64): (vector&lt;address&gt;, vector&lt;<a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_get_fee_ratio">get_fee_ratio</a>(vm: &signer, height_start: u64, height_end: u64): (vector&lt;address&gt;, vector&lt;<a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>&gt;) {
+    <b>let</b> validators = &<a href="DiemSystem.md#0x1_DiemSystem_get_diem_system_config">get_diem_system_config</a>().validators;
+
+    <b>let</b> compliant_nodes = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
+    <b>let</b> count_compliant_votes = 0;
+    <b>let</b> i = 0;
+    <b>while</b> (i &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(validators)) {
+        <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(validators, i).addr;
+
+        <b>let</b> case = <a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, height_start, height_end);
+        <b>if</b> (case == 1) {
+            <b>let</b> node_votes = <a href="Stats.md#0x1_Stats_node_current_votes">Stats::node_current_votes</a>(vm, addr);
+            <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> compliant_nodes, addr);
+            count_compliant_votes = count_compliant_votes + node_votes;
+        };
+        i = i + 1;
+    };
+    <b>let</b> fee_ratios = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>&gt;();
+    <b>let</b> k = 0;
+    <b>while</b> (k &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&compliant_nodes)) {
+        <b>let</b> addr = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&compliant_nodes, k);
+        <b>let</b> node_votes = <a href="Stats.md#0x1_Stats_node_current_votes">Stats::node_current_votes</a>(vm, addr);
+        <b>let</b> ratio = <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(node_votes, count_compliant_votes);
+        <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> fee_ratios, ratio);
+         k = k + 1;
+    };
+
+    <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&compliant_nodes) == <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&fee_ratios),<a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(120002) );
+
+    (compliant_nodes, fee_ratios)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemSystem_get_jailed_set"></a>
+
+## Function `get_jailed_set`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_get_jailed_set">get_jailed_set</a>(vm: &signer, height_start: u64, height_end: u64): vector&lt;address&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_get_jailed_set">get_jailed_set</a>(vm: &signer, height_start: u64, height_end: u64): vector&lt;address&gt; {
+  <b>let</b> validator_set = <a href="DiemSystem.md#0x1_DiemSystem_get_val_set_addr">get_val_set_addr</a>();
+  <b>let</b> jailed_set = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
+  <b>let</b> k = 0;
+  <b>while</b>(k &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&validator_set)){
+    <b>let</b> addr = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&validator_set, k);
+
+    // consensus case 1 and 2, allow inclusion into the next validator set.
+    <b>let</b> case = <a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, height_start, height_end);
+    <b>if</b> (case == 3 || case == 4){
+      <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(&<b>mut</b> jailed_set, addr)
+    };
+    k = k + 1;
+  };
+  jailed_set
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemSystem_get_val_set_addr"></a>
+
+## Function `get_val_set_addr`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_get_val_set_addr">get_val_set_addr</a>(): vector&lt;address&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_get_val_set_addr">get_val_set_addr</a>(): vector&lt;address&gt; {
+    <b>let</b> validators = &<a href="DiemSystem.md#0x1_DiemSystem_get_diem_system_config">get_diem_system_config</a>().validators;
+    <b>let</b> nodes = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
+    <b>let</b> i = 0;
+    <b>while</b> (i &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(validators)) {
+        <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> nodes, <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(validators, i).addr);
+        i = i + 1;
+    };
+    nodes
+}
 </code></pre>
 
 

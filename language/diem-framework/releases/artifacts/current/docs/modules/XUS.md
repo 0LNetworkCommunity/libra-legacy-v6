@@ -55,7 +55,7 @@ The type tag representing the <code><a href="XUS.md#0x1_XUS">XUS</a></code> curr
 Registers the <code><a href="XUS.md#0x1_XUS">XUS</a></code> cointype. This can only be called from genesis.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="XUS.md#0x1_XUS_initialize">initialize</a>(dr_account: &signer, tc_account: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="XUS.md#0x1_XUS_initialize">initialize</a>(dr_account: &signer)
 </code></pre>
 
 
@@ -66,13 +66,13 @@ Registers the <code><a href="XUS.md#0x1_XUS">XUS</a></code> cointype. This can o
 
 <pre><code><b>public</b> <b>fun</b> <a href="XUS.md#0x1_XUS_initialize">initialize</a>(
     dr_account: &signer,
-    tc_account: &signer,
+    // tc_account: &signer, /////// 0L /////////
 ) {
     <a href="DiemTimestamp.md#0x1_DiemTimestamp_assert_genesis">DiemTimestamp::assert_genesis</a>();
     <a href="Diem.md#0x1_Diem_register_SCS_currency">Diem::register_SCS_currency</a>&lt;<a href="XUS.md#0x1_XUS">XUS</a>&gt;(
         dr_account,
-        tc_account,
-        <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(1, 1), // exchange rate <b>to</b> <a href="XDX.md#0x1_XDX">XDX</a>
+        // tc_account, /////// 0L /////////
+        <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(1, 1), // exchange rate <b>to</b> <a href="GAS.md#0x1_GAS">GAS</a>
         1000000, // scaling_factor = 10^6
         100,     // fractional_part = 10^2
         b"<a href="XUS.md#0x1_XUS">XUS</a>"
@@ -118,7 +118,7 @@ Only a TreasuryCompliance account can have the MintCapability [[H1]][PERMISSION]
 Moreover, only a TreasuryCompliance account can have the BurnCapability [[H3]][PERMISSION].
 
 
-<pre><code><b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: tc_account};
+<pre><code><b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: dr_account};
 </code></pre>
 
 
