@@ -16,9 +16,9 @@ script {
       let vec = Oracle::test_helper_query_oracle_votes();
 
       let e = *Vector::borrow<address>(&vec, 0);
-      assert(e == {{alice}}, 7357123401011000);
+      assert(e == {{alice}}, 735701);
 
-      assert(Upgrade::has_upgrade() == false, 7357123401011000); 
+      assert(Upgrade::has_upgrade() == false, 735702); 
   }
 }
 // check: EXECUTED
@@ -38,9 +38,9 @@ script {
       let vec = Oracle::test_helper_query_oracle_votes();
 
       let e = *Vector::borrow<address>(&vec, 1);
-      assert(e == {{bob}}, 7357123401011000);
+      assert(e == {{bob}}, 735703);
 
-      assert(Upgrade::has_upgrade() == false, 7357123401011000); 
+      assert(Upgrade::has_upgrade() == false, 735704); 
   }
 }
 // check: EXECUTED
@@ -56,7 +56,7 @@ script {
       let data = b"hello";
       Oracle::handler(&sender, id, data);
 
-      assert(Upgrade::has_upgrade() == false, 7357123401011000); 
+      assert(Upgrade::has_upgrade() == false, 735705); 
   }
 }
 // check: EXECUTED
@@ -84,10 +84,10 @@ script {
     let validators = Vector::empty<address>();
     Vector::push_back(&mut validators, {{alice}});
     Vector::push_back(&mut validators, {{charlie}});
-    assert(upgraded_version == 0, 7357123401011000);
-    assert(payload == b"hello", 7357123401011000);
-    assert(Vector::compare(&voters, &validators), 7357123401011000);
-    assert(height == 1, 7357123401011000);
+    assert(upgraded_version == 0, 735706);
+    assert(payload == b"hello", 735707);
+    assert(Vector::compare(&voters, &validators), 735708);
+    assert(height == 1, 735709);
   }
 }
 // check: EXECUTED
