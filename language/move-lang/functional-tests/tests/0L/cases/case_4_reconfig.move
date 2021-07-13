@@ -3,12 +3,12 @@
 // DID NOT validate successfully.
 // DID mine above the threshold for the epoch. 
 
-//! account: alice, 1, 0, validator
-//! account: bob, 1, 0, validator
-//! account: carol, 1, 0, validator
-//! account: dave, 1, 0, validator
-//! account: eve, 1, 0, validator
-//! account: frank, 1, 0, validator
+//! account: alice, 1GAS, 0, validator
+//! account: bob, 1GAS, 0, validator
+//! account: carol, 1GAS, 0, validator
+//! account: dave, 1GAS, 0, validator
+//! account: eve, 1GAS, 0, validator
+//! account: frank, 1GAS, 0, validator
 
 
 //! block-prologue
@@ -122,7 +122,7 @@ script {
         assert(DiemSystem::validator_set_size() == 6, 7357000180101);
         assert(DiemSystem::is_validator({{dave}}) == true, 7357000180102);
         assert(MinerState::test_helper_get_height({{dave}}) == 0, 7357000180104);
-        assert(DiemAccount::balance<GAS>({{dave}}) == 1, 7357000180106);
+        assert(DiemAccount::balance<GAS>({{dave}}) == 1000000, 7357000180106);
         assert(NodeWeight::proof_of_weight({{dave}}) == 0, 7357000180107);  
         assert(MinerState::test_helper_get_height({{dave}}) == 0, 7357000180108);
     }
@@ -203,7 +203,7 @@ script {
         // Check the validator set is at expected size
         assert(DiemSystem::validator_set_size() == 5, 7357000180110);
         assert(DiemSystem::is_validator({{dave}}) == false, 7357000180111);            
-        assert(DiemAccount::balance<GAS>({{dave}}) == 1, 7357000180112);
+        assert(DiemAccount::balance<GAS>({{dave}}) == 1000000, 7357000180112);
         assert(NodeWeight::proof_of_weight({{dave}}) == 0, 7357000180113);  
         assert(DiemConfig::get_current_epoch()==2, 7357000180114);
 

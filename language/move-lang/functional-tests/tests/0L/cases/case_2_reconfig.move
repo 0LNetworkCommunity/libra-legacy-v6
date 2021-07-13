@@ -4,11 +4,11 @@
 // DID validate successfully.
 // DID NOT mine above the threshold for the epoch. 
 
-//! account: alice, 1, 0, validator
-//! account: bob, 1, 0, validator
-//! account: carol, 1, 0, validator
-//! account: dave, 1, 0, validator
-//! account: eve, 1, 0, validator
+//! account: alice, 1GAS, 0, validator
+//! account: bob, 1GAS, 0, validator
+//! account: carol, 1GAS, 0, validator
+//! account: dave, 1GAS, 0, validator
+//! account: eve, 1GAS, 0, validator
 
 //! block-prologue
 //! proposer: alice
@@ -33,7 +33,7 @@ script {
 
         //// NO MINING ////
 
-        assert(DiemAccount::balance<GAS>({{bob}}) == 1, 7357000180106);
+        assert(DiemAccount::balance<GAS>({{bob}}) == 1000000, 7357000180106);
         assert(NodeWeight::proof_of_weight({{bob}}) == 0, 7357000180107);  
         assert(MinerState::test_helper_get_height({{bob}}) == 0, 7357000180108);
     }
@@ -102,7 +102,6 @@ script {
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
-    use 0x1::Debug::print;
 
     fun main(_account: signer) {
         // We are in a new epoch.
@@ -114,8 +113,7 @@ script {
         assert(DiemSystem::is_validator({{bob}}) == true, 7357000180111);
         
         //case 2 does not get rewards.
-        print(&DiemAccount::balance<GAS>({{bob}}));
-        assert(DiemAccount::balance<GAS>({{bob}}) == 1, 7357000180112);  
+        assert(DiemAccount::balance<GAS>({{bob}}) == 1000000, 7357000180112);  
 
         //case 2 does not increment weight.
         assert(NodeWeight::proof_of_weight({{bob}}) == 0, 7357000180113);  
