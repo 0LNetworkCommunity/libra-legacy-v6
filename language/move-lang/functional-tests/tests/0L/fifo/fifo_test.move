@@ -1,4 +1,4 @@
-//! account: alice, 1000000, 0, validator
+//! account: alice, 1GAS, 0, validator
 
 //! new-transaction
 //! sender: alice
