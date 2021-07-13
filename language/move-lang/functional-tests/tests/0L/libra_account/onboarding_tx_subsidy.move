@@ -1,4 +1,4 @@
-//! account: bob, 10000000, 0, validator
+//! account: bob, 0, 0, validator
 
 //! new-transaction
 //! sender: bob
@@ -12,6 +12,7 @@ use 0x1::TestFixtures;
 use 0x1::ValidatorConfig;
 use 0x1::Roles;
 use 0x1::Signer;
+
 // Test Prefix: 1301
 
   fun main(sender: signer) {
@@ -75,7 +76,8 @@ use 0x1::Signer;
     );
 
     // // Bob's balance should have gone down by 2M gas (operator and owner)
-    assert(DiemAccount::balance<GAS>({{bob}}) == 8000000, 73571301011000);
+
+    assert(DiemAccount::balance<GAS>({{bob}}) == 497536, 73571301011000);
 
   }
 }
