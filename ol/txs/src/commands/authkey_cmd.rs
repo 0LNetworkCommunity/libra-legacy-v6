@@ -19,7 +19,6 @@ pub struct AuthkeyCmd {
 }
 
 impl Runnable for AuthkeyCmd {
-    /// Print version message
     fn run(&self) {
         if let Some(key) = &self.new_key {
             let entry_args = entrypoint::get_args();
