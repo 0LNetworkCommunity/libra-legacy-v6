@@ -15,7 +15,6 @@ module LibraBlock {
     use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
     use 0x1::Migrations;
-    use 0x1::Debug::print;
 
     resource struct BlockMetadata {
         /// Height of the current block
