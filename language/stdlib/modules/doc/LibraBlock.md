@@ -19,7 +19,6 @@ This module defines a struct storing the metadata of the block and new block eve
 
 <pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay2">0x1::AutoPay2</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
 <b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="Event.md#0x1_Event">0x1::Event</a>;
@@ -239,7 +238,6 @@ The runtime always runs this before executing the transactions in a block.
     previous_block_votes: vector&lt;address&gt;,
     proposer: address
 ) <b>acquires</b> <a href="LibraBlock.md#0x1_LibraBlock_BlockMetadata">BlockMetadata</a> {
-    print(&0x1000);
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_operating">LibraTimestamp::assert_operating</a>();
     // Operational constraint: can only be invoked by the VM.
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
@@ -250,22 +248,15 @@ The runtime always runs this before executing the transactions in a block.
     );
     //////// 0L ////////
     // increment stats
-// print(&01000);
-    print(&0x1001);
     <a href="Stats.md#0x1_Stats_process_set_votes">Stats::process_set_votes</a>(vm, &previous_block_votes);
-    print(&0x1002);
     <a href="Stats.md#0x1_Stats_inc_prop">Stats::inc_prop</a>(vm, *&proposer);
 
-
     <b>if</b> (<a href="AutoPay.md#0x1_AutoPay2_tick">AutoPay2::tick</a>(vm)){
-        print(&0x100201);
         //triggers autopay at beginning of each epoch
         //tick is reset at end of previous epoch
         <a href="LibraAccount.md#0x1_LibraAccount_process_escrow">LibraAccount::process_escrow</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm);
-        print(&0x100202);
         <a href="AutoPay.md#0x1_AutoPay2_process_autopay">AutoPay2::process_autopay</a>(vm);
     };
-    print(&0x1003);
     ///////////////////
     <b>let</b> block_metadata_ref = borrow_global_mut&lt;<a href="LibraBlock.md#0x1_LibraBlock_BlockMetadata">BlockMetadata</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_update_global_time">LibraTimestamp::update_global_time</a>(vm, proposer, timestamp);
@@ -282,13 +273,9 @@ The runtime always runs this before executing the transactions in a block.
 
      //////// 0L ////////
     // EPOCH BOUNDARY
-    print(&0x1004);
     <b>if</b> (<a href="Epoch.md#0x1_Epoch_epoch_finished">Epoch::epoch_finished</a>()) {
-// print(&03000);
-      print(&0x100401);
       // Run migrations
       <a href="Migrations.md#0x1_Migrations_init">Migrations::init</a>(vm);
-      print(&0x100402);
       // TODO: We don't need <b>to</b> pass block height <b>to</b> ReconfigureOL. It should <b>use</b> the <a href="LibraBlock.md#0x1_LibraBlock_BlockMetadata">BlockMetadata</a>. But there's a circular reference there when we try.
       <a href="Reconfigure.md#0x1_Reconfigure_reconfigure">Reconfigure::reconfigure</a>(vm, <a href="LibraBlock.md#0x1_LibraBlock_get_current_block_height">get_current_block_height</a>());
     };

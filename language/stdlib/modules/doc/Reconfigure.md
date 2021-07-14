@@ -12,7 +12,6 @@
 <pre><code><b>use</b> <a href="AccountLimits.md#0x1_AccountLimits">0x1::AccountLimits</a>;
 <b>use</b> <a href="AutoPay.md#0x1_AutoPay2">0x1::AutoPay2</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
 <b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
@@ -55,7 +54,7 @@
     // <b>loop</b> through validators and pay full node subsidies.
     // Should happen before transactionfees get distributed.
     // There may be new validators which have not mined yet.
-print(&03100);
+// print(&03100);
 
     <b>let</b> miners = <a href="MinerState.md#0x1_MinerState_get_miner_list">MinerState::get_miner_list</a>();
 
@@ -190,22 +189,22 @@ print(&03100);
 
     // <a href="Reconfigure.md#0x1_Reconfigure">Reconfigure</a> the network
     <a href="LibraSystem.md#0x1_LibraSystem_bulk_update_validators">LibraSystem::bulk_update_validators</a>(vm, proposed_set);
-print(&032110);
 
+// print(&032110);
     // reset clocks
     <a href="Subsidy.md#0x1_Subsidy_fullnode_reconfig">Subsidy::fullnode_reconfig</a>(vm);
-print(&032120);
 
+//  print(&032120);
     // process community wallets
     <a href="LibraAccount.md#0x1_LibraAccount_process_community_wallets">LibraAccount::process_community_wallets</a>(vm,
     <a href="LibraConfig.md#0x1_LibraConfig_get_current_epoch">LibraConfig::get_current_epoch</a>());
 
-print(&032120);
+//  print(&032130);
 
     <a href="AutoPay.md#0x1_AutoPay2_reconfig_reset_tick">AutoPay2::reconfig_reset_tick</a>(vm);
-print(&032130);
+//  print(&032140);
     <a href="Epoch.md#0x1_Epoch_reset_timer">Epoch::reset_timer</a>(vm, height_now);
-print(&032140);
+//  print(&032150);
 }
 </code></pre>
 
