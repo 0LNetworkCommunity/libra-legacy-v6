@@ -171,18 +171,22 @@ module Reconfigure {
 
         // Reconfigure the network
         LibraSystem::bulk_update_validators(vm, proposed_set);
-// print(&032110);
 
+// print(&032110);
         // reset clocks
         Subsidy::fullnode_reconfig(vm);
+ 
 //  print(&032120);
-
         // process community wallets
-        LibraAccount::process_community_wallets(vm, LibraConfig::get_current_epoch());
+        LibraAccount::process_community_wallets(vm, 
+        LibraConfig::get_current_epoch());
+ 
+//  print(&032130);
 
         AutoPay2::reconfig_reset_tick(vm);
-//  print(&032130);
+//  print(&032140);
         Epoch::reset_timer(vm, height_now);
+//  print(&032150);
     }
 
     /// OL function to update withdrawal limits in all validator accounts

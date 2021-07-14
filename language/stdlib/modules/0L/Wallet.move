@@ -71,6 +71,10 @@ module Wallet {
       }
     }
 
+    public fun is_init_comm():bool {
+      exists<CommunityTransfers>(0x0)
+    }
+
     public fun set_comm(sig: &signer) acquires CommunityWallets {
       if (exists<CommunityWallets>(0x0)) {
         let addr = Signer::address_of(sig);

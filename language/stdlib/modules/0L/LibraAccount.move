@@ -1047,6 +1047,12 @@ module LibraAccount {
     //////// 0L ////////
     public fun process_community_wallets(vm: &signer, epoch: u64) acquires LibraAccount, Balance, AccountOperationsCapability {
       if (Signer::address_of(vm) != CoreAddresses::LIBRA_ROOT_ADDRESS()) return;
+      
+      // Migrate on the fly if state doesn't exist on upgrade.
+      if (!Wallet::is_init_comm()) {
+        Wallet::init(vm);
+        return
+      };
 
       let v = Wallet::list_tx_by_epoch(epoch);
 
