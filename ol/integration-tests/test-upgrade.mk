@@ -32,7 +32,7 @@ endif
 
 # USAGE: BRANCH_NAME=<latest branch> make -f test-upgrade.mk upgrade-test
 # NOTE: BRANCH_NAME shares semantics with https://github.com/marketplace/actions/get-branch-name
-test: prep get-prev stdlib start set-community upgrade check progress stop
+test: prep get-prev stdlib start upgrade check progress stop
 
 start:
 	@echo Building Swarm
@@ -73,9 +73,6 @@ query:
 
 txs:
 	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} demo
-
-set-community:
-	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona bob wallet -c
 
 ifeq ($(UNAME), Darwin)
 END = $(shell date -v +5M +%s)
