@@ -5025,7 +5025,7 @@ a reconfiguration of the system.
 -  [`0x1::DiemVersion`](../../../../../releases/artifacts/current/docs/modules/DiemVersion.md#0x1_DiemVersion)
 -  [`0x1::DualAttestation`](../../../../../releases/artifacts/current/docs/modules/DualAttestation.md#0x1_DualAttestation)
 -  [`0x1::Epoch`](../../../../../releases/artifacts/current/docs/modules/Epoch.md#0x1_Epoch)
--  [`0x1::FIFO`](../../../../../releases/artifacts/current/docs/modules/FIFO_rename.md#0x1_FIFO)
+-  [`0x1::FIFO`](../../../../../releases/artifacts/current/docs/modules/FIFO.md#0x1_FIFO)
 -  [`0x1::FullnodeState`](../../../../../releases/artifacts/current/docs/modules/FullnodeState.md#0x1_FullnodeState)
 -  [`0x1::GAS`](../../../../../releases/artifacts/current/docs/modules/GAS.md#0x1_GAS)
 -  [`0x1::Genesis`](../../../../../releases/artifacts/current/docs/modules/Genesis.md#0x1_Genesis)

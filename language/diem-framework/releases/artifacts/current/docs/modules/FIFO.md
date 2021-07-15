@@ -27,7 +27,7 @@
 
 
 
-<pre><code><b>struct</b> <a href="FIFO_rename.md#0x1_FIFO">FIFO</a>&lt;Element&gt;
+<pre><code><b>struct</b> <a href="FIFO.md#0x1_FIFO">FIFO</a>&lt;Element&gt;
 </code></pre>
 
 
@@ -60,7 +60,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="FIFO_rename.md#0x1_FIFO_empty">empty</a>&lt;Element&gt;(): <a href="FIFO_rename.md#0x1_FIFO_FIFO">FIFO::FIFO</a>&lt;Element&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="FIFO.md#0x1_FIFO_empty">empty</a>&lt;Element&gt;(): <a href="FIFO.md#0x1_FIFO_FIFO">FIFO::FIFO</a>&lt;Element&gt;
 </code></pre>
 
 
@@ -69,10 +69,10 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="FIFO_rename.md#0x1_FIFO_empty">empty</a>&lt;Element&gt;(): <a href="FIFO_rename.md#0x1_FIFO">FIFO</a>&lt;Element&gt;{
+<pre><code><b>public</b> <b>fun</b> <a href="FIFO.md#0x1_FIFO_empty">empty</a>&lt;Element&gt;(): <a href="FIFO.md#0x1_FIFO">FIFO</a>&lt;Element&gt;{
     <b>let</b> incoming = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;Element&gt;();
     <b>let</b> outgoing = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;Element&gt;();
-    <a href="FIFO_rename.md#0x1_FIFO">FIFO</a> {
+    <a href="FIFO.md#0x1_FIFO">FIFO</a> {
         incoming: incoming,
         outgoing: outgoing,
     }
@@ -89,7 +89,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="FIFO_rename.md#0x1_FIFO_push">push</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO_rename.md#0x1_FIFO_FIFO">FIFO::FIFO</a>&lt;Element&gt;, new_item: Element)
+<pre><code><b>public</b> <b>fun</b> <a href="FIFO.md#0x1_FIFO_push">push</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO.md#0x1_FIFO_FIFO">FIFO::FIFO</a>&lt;Element&gt;, new_item: Element)
 </code></pre>
 
 
@@ -98,7 +98,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="FIFO_rename.md#0x1_FIFO_push">push</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO_rename.md#0x1_FIFO">FIFO</a>&lt;Element&gt;, new_item: Element){
+<pre><code><b>public</b> <b>fun</b> <a href="FIFO.md#0x1_FIFO_push">push</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO.md#0x1_FIFO">FIFO</a>&lt;Element&gt;, new_item: Element){
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;Element&gt;(&<b>mut</b> v.incoming, new_item);
 }
 </code></pre>
@@ -113,7 +113,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="FIFO_rename.md#0x1_FIFO_push_LIFO">push_LIFO</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO_rename.md#0x1_FIFO_FIFO">FIFO::FIFO</a>&lt;Element&gt;, new_item: Element)
+<pre><code><b>public</b> <b>fun</b> <a href="FIFO.md#0x1_FIFO_push_LIFO">push_LIFO</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO.md#0x1_FIFO_FIFO">FIFO::FIFO</a>&lt;Element&gt;, new_item: Element)
 </code></pre>
 
 
@@ -122,7 +122,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="FIFO_rename.md#0x1_FIFO_push_LIFO">push_LIFO</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO_rename.md#0x1_FIFO">FIFO</a>&lt;Element&gt;, new_item: Element){
+<pre><code><b>public</b> <b>fun</b> <a href="FIFO.md#0x1_FIFO_push_LIFO">push_LIFO</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO.md#0x1_FIFO">FIFO</a>&lt;Element&gt;, new_item: Element){
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;Element&gt;(&<b>mut</b> v.outgoing, new_item);
 }
 </code></pre>
@@ -137,7 +137,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="FIFO_rename.md#0x1_FIFO_pop">pop</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO_rename.md#0x1_FIFO_FIFO">FIFO::FIFO</a>&lt;Element&gt;): Element
+<pre><code><b>public</b> <b>fun</b> <a href="FIFO.md#0x1_FIFO_pop">pop</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO.md#0x1_FIFO_FIFO">FIFO::FIFO</a>&lt;Element&gt;): Element
 </code></pre>
 
 
@@ -146,8 +146,8 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="FIFO_rename.md#0x1_FIFO_pop">pop</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO_rename.md#0x1_FIFO">FIFO</a>&lt;Element&gt;): Element{
-    <a href="FIFO_rename.md#0x1_FIFO_perform_swap">perform_swap</a>&lt;Element&gt;(v);
+<pre><code><b>public</b> <b>fun</b> <a href="FIFO.md#0x1_FIFO_pop">pop</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO.md#0x1_FIFO">FIFO</a>&lt;Element&gt;): Element{
+    <a href="FIFO.md#0x1_FIFO_perform_swap">perform_swap</a>&lt;Element&gt;(v);
     //now pop from the outgoing queue
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_pop_back">Vector::pop_back</a>&lt;Element&gt;(&<b>mut</b> v.outgoing)
 }
@@ -163,7 +163,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="FIFO_rename.md#0x1_FIFO_peek">peek</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO_rename.md#0x1_FIFO_FIFO">FIFO::FIFO</a>&lt;Element&gt;): &Element
+<pre><code><b>public</b> <b>fun</b> <a href="FIFO.md#0x1_FIFO_peek">peek</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO.md#0x1_FIFO_FIFO">FIFO::FIFO</a>&lt;Element&gt;): &Element
 </code></pre>
 
 
@@ -172,8 +172,8 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="FIFO_rename.md#0x1_FIFO_peek">peek</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO_rename.md#0x1_FIFO">FIFO</a>&lt;Element&gt;): & Element{
-    <a href="FIFO_rename.md#0x1_FIFO_perform_swap">perform_swap</a>&lt;Element&gt;(v);
+<pre><code><b>public</b> <b>fun</b> <a href="FIFO.md#0x1_FIFO_peek">peek</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO.md#0x1_FIFO">FIFO</a>&lt;Element&gt;): & Element{
+    <a href="FIFO.md#0x1_FIFO_perform_swap">perform_swap</a>&lt;Element&gt;(v);
 
     <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;Element&gt;(& v.outgoing);
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;Element&gt;(& v.outgoing, len - 1)
@@ -190,7 +190,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="FIFO_rename.md#0x1_FIFO_peek_mut">peek_mut</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO_rename.md#0x1_FIFO_FIFO">FIFO::FIFO</a>&lt;Element&gt;): &<b>mut</b> Element
+<pre><code><b>public</b> <b>fun</b> <a href="FIFO.md#0x1_FIFO_peek_mut">peek_mut</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO.md#0x1_FIFO_FIFO">FIFO::FIFO</a>&lt;Element&gt;): &<b>mut</b> Element
 </code></pre>
 
 
@@ -199,8 +199,8 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="FIFO_rename.md#0x1_FIFO_peek_mut">peek_mut</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO_rename.md#0x1_FIFO">FIFO</a>&lt;Element&gt;): &<b>mut</b> Element{
-    <a href="FIFO_rename.md#0x1_FIFO_perform_swap">perform_swap</a>&lt;Element&gt;(v);
+<pre><code><b>public</b> <b>fun</b> <a href="FIFO.md#0x1_FIFO_peek_mut">peek_mut</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO.md#0x1_FIFO">FIFO</a>&lt;Element&gt;): &<b>mut</b> Element{
+    <a href="FIFO.md#0x1_FIFO_perform_swap">perform_swap</a>&lt;Element&gt;(v);
 
     <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;Element&gt;(& v.outgoing);
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>&lt;Element&gt;(&<b>mut</b> v.outgoing, len - 1)
@@ -217,7 +217,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="FIFO_rename.md#0x1_FIFO_len">len</a>&lt;Element&gt;(v: &<a href="FIFO_rename.md#0x1_FIFO_FIFO">FIFO::FIFO</a>&lt;Element&gt;): u64
+<pre><code><b>public</b> <b>fun</b> <a href="FIFO.md#0x1_FIFO_len">len</a>&lt;Element&gt;(v: &<a href="FIFO.md#0x1_FIFO_FIFO">FIFO::FIFO</a>&lt;Element&gt;): u64
 </code></pre>
 
 
@@ -226,7 +226,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="FIFO_rename.md#0x1_FIFO_len">len</a>&lt;Element&gt;(v: & <a href="FIFO_rename.md#0x1_FIFO">FIFO</a>&lt;Element&gt;): u64{
+<pre><code><b>public</b> <b>fun</b> <a href="FIFO.md#0x1_FIFO_len">len</a>&lt;Element&gt;(v: & <a href="FIFO.md#0x1_FIFO">FIFO</a>&lt;Element&gt;): u64{
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;Element&gt;(& v.outgoing) + <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;Element&gt;(& v.incoming)
 }
 </code></pre>
@@ -241,7 +241,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="FIFO_rename.md#0x1_FIFO_perform_swap">perform_swap</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO_rename.md#0x1_FIFO_FIFO">FIFO::FIFO</a>&lt;Element&gt;)
+<pre><code><b>fun</b> <a href="FIFO.md#0x1_FIFO_perform_swap">perform_swap</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO.md#0x1_FIFO_FIFO">FIFO::FIFO</a>&lt;Element&gt;)
 </code></pre>
 
 
@@ -250,9 +250,9 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="FIFO_rename.md#0x1_FIFO_perform_swap">perform_swap</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO_rename.md#0x1_FIFO">FIFO</a>&lt;Element&gt;) {
+<pre><code><b>fun</b> <a href="FIFO.md#0x1_FIFO_perform_swap">perform_swap</a>&lt;Element&gt;(v: &<b>mut</b> <a href="FIFO.md#0x1_FIFO">FIFO</a>&lt;Element&gt;) {
     <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;Element&gt;(& v.outgoing) == 0) {
-        //TODO: Add a proper error here, can't pop from an empty <a href="FIFO_rename.md#0x1_FIFO">FIFO</a>
+        //TODO: Add a proper error here, can't pop from an empty <a href="FIFO.md#0x1_FIFO">FIFO</a>
         <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;Element&gt;(&v.incoming);
         <b>assert</b>(len &gt; 0, 1);
         //If outgoing is empty, pop all of incoming into outgoing

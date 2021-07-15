@@ -93,7 +93,7 @@ accounts on-chain.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">DIEM_ROOT_ADDRESS</a>(): address {
-    0x0
+    0x0 //////// 0L ////////
 }
 </code></pre>
 
@@ -121,7 +121,7 @@ be this from an operational viewpoint, so this is why this is separated out.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="CoreAddresses.md#0x1_CoreAddresses_CURRENCY_INFO_ADDRESS">CURRENCY_INFO_ADDRESS</a>(): address {
-    0x0
+    0x0 //////// 0L ////////
 }
 </code></pre>
 
@@ -148,7 +148,7 @@ operations. The account at this address is created in genesis.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="CoreAddresses.md#0x1_CoreAddresses_TREASURY_COMPLIANCE_ADDRESS">TREASURY_COMPLIANCE_ADDRESS</a>(): address {
-    0x0
+    0x0 //////// 0L ////////
 }
 </code></pre>
 
