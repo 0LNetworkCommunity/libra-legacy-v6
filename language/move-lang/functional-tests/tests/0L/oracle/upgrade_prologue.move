@@ -64,12 +64,13 @@ script {
 //! block-prologue
 //! proposer: bob
 //! block-time: 1
-//! round: 2
+//! round: 1
 
 //! block-prologue
 //! proposer: bob
 //! block-time: 2
 //! round: 2
+
 
 //! new-transaction
 //! sender: diemroot
@@ -84,10 +85,12 @@ script {
     let validators = Vector::empty<address>();
     Vector::push_back(&mut validators, {{alice}});
     Vector::push_back(&mut validators, {{charlie}});
-    assert(upgraded_version == 0, 735706);
-    assert(payload == b"hello", 735707);
-    assert(Vector::compare(&voters, &validators), 735708);
-    assert(height == 1, 735709);
+
+    assert(Upgrade::has_upgrade(), 735706); 
+    assert(upgraded_version == 0, 735707);
+    assert(payload == b"hello", 735708);
+    assert(Vector::compare(&voters, &validators), 735709);
+    assert(height == 1, 735710);
   }
 }
 // check: EXECUTED
