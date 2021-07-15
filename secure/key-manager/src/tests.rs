@@ -20,7 +20,7 @@ use diem_time_service::{MockTimeService, TimeService, TimeServiceTrait};
 use diem_types::{
     account_address::AccountAddress,
     account_config,
-    account_config::XDX_NAME,
+    account_config::XUS_NAME,
     account_state::AccountState,
     block_info::BlockInfo,
     block_metadata::{BlockMetadata, DiemBlockResource},
@@ -748,7 +748,7 @@ fn verify_validator_config_info_mismatch<T: DiemInterface>(mut node: Node<T>) {
         script,
         MAX_GAS_AMOUNT,
         GAS_UNIT_PRICE,
-        XDX_NAME.to_owned(),
+        XUS_NAME.to_owned(),
         node.time.now_secs() + TXN_EXPIRATION_SECS,
         diem_types::chain_id::ChainId::test(),
     );
