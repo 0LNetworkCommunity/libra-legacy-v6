@@ -20,7 +20,7 @@ use move_vm_runtime::{
     move_vm::MoveVM,
     session::Session,
 };
-use move_vm_types::{gas_schedule::{calculate_intrinsic_gas, zero_cost_schedule, CostStrategy}, values::Value};
+use move_vm_types::gas_schedule::{calculate_intrinsic_gas, zero_cost_schedule, CostStrategy};
 use std::{convert::TryFrom, sync::Arc};
 use vm::errors::Location;
 use diem_framework_releases::import_stdlib;
@@ -432,25 +432,24 @@ impl DiemVMImpl {
         cost_strategy: &mut CostStrategy,
         log_context: &impl LogContext,
     ) -> Result<(), VMStatus> {
-        if let (round, _timestamp, _previous_vote, _proposer) = block_metadata.into_inner() {
-            info!("0L ===============================  round is {}", round);
-            // hardcoding consensus checking on round 2
-            if round == 2 {
-                info!("0L ==== stdlib upgrade: checking for stdlib upgrade");
-                // tick Oracle::check_upgrade
-                let args = vec![
-                    MoveValue::Signer(txn_data.sender),
-                ];
-                session.execute_function(
-                    &ORACLE_MODULE,
-                    &CHECK_UPGRADE,
-                    vec![],
-                    serialize_values(&args),
-                    // txn_data.sender(),
-                    cost_strategy,
-                    log_context,
-                ).expect("Couldn't check upgrade");
-            }
+        let (round, _timestamp, _previous_vote, _proposer) = block_metadata.into_inner();
+        info!("0L ===============================  round is {}", round);
+        // hardcoding consensus checking on round 2
+        if round == 2 {
+            info!("0L ==== stdlib upgrade: checking for stdlib upgrade");
+            // tick Oracle::check_upgrade
+            let args = vec![
+                MoveValue::Signer(txn_data.sender),
+            ];
+            session.execute_function(
+                &ORACLE_MODULE,
+                &CHECK_UPGRADE,
+                vec![],
+                serialize_values(&args),
+                // txn_data.sender(),
+                cost_strategy,
+                log_context,
+            ).expect("Couldn't check upgrade");
         }
 
         Ok(())
@@ -466,61 +465,60 @@ impl DiemVMImpl {
         cost_strategy: &mut CostStrategy,
         log_context: &impl LogContext,
     ) -> Result<(), VMStatus> {
-        if let (round, timestamp, _previous_vote, _proposer) = block_metadata.into_inner() {
-            // hardcoding upgrade on round 2
-            if round==2 {
-                // check the UpgradePayload flag
-                let ap = UpgradePayloadResource::access_path();
-                let gref = 
-                    StateViewCache::get(remote_cache, &ap).ok();
-                let upgrade_payload = 
-                match gref {
-                    Some(bytes) => {
-                        let payload = bytes.map(|data_blob| {
-                            bcs::from_bytes(data_blob.as_slice()).expect("Failure decoding upgrade payload resource")
-                        });
-                        payload.unwrap_or(UpgradePayloadResource::new(vec![]))
-                    },
-                    None => UpgradePayloadResource::new(vec![]),
-                };
+        let (round, timestamp, _previous_vote, _proposer) = block_metadata.into_inner();
+        // hardcoding upgrade on round 2
+        if round==2 {
+            // check the UpgradePayload flag
+            let ap = UpgradePayloadResource::access_path();
+            let gref = 
+                StateViewCache::get(remote_cache, &ap).ok();
+            let upgrade_payload = 
+            match gref {
+                Some(bytes) => {
+                    let payload = bytes.map(|data_blob| {
+                        bcs::from_bytes(data_blob.as_slice()).expect("Failure decoding upgrade payload resource")
+                    });
+                    payload.unwrap_or(UpgradePayloadResource::new(vec![]))
+                },
+                None => UpgradePayloadResource::new(vec![]),
+            };
 
-                let payload = upgrade_payload.payload;
-                if payload.len() > 0 {
-                    info!("0L ==== stdlib upgrade: upgrade payload elected in previous epoch");
+            let payload = upgrade_payload.payload;
+            if payload.len() > 0 {
+                info!("0L ==== stdlib upgrade: upgrade payload elected in previous epoch");
 
-                    // publish the agreed stdlib
-                    let new_stdlib = import_stdlib(&payload);
-                    let mut counter = 0;
-                    for module in new_stdlib {
-                        let mut bytes = vec![];
-                        module
-                            .serialize(&mut bytes)
-                            .expect("Failed to serialize module");
-                        session.revise_module(
-                            bytes, 
-                            account_config::CORE_CODE_ADDRESS, 
-                            cost_strategy, 
-                            log_context
-                        ).expect("Failed to publish module");
-                        counter += 1;
-                    }
-                    info!("0L ==== stdlib upgrade: published {} modules", counter);
-
-                    // reset the UpgradePayload
-                    let args = vec![
-                        MoveValue::Signer(txn_data.sender),
-                    ];
-                    session.execute_function(
-                        &UPGRADE_MODULE,
-                        &RESET_PAYLOAD,
-                        vec![],
-                        serialize_values(&args),
-                        // txn_data.sender(),
-                        cost_strategy,
-                        log_context,
-                    ).expect("Couldn't reset payload");
-                    info!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
+                // publish the agreed stdlib
+                let new_stdlib = import_stdlib(&payload);
+                let mut counter = 0;
+                for module in new_stdlib {
+                    let mut bytes = vec![];
+                    module
+                        .serialize(&mut bytes)
+                        .expect("Failed to serialize module");
+                    session.revise_module(
+                        bytes, 
+                        account_config::CORE_CODE_ADDRESS, 
+                        cost_strategy, 
+                        log_context
+                    ).expect("Failed to publish module");
+                    counter += 1;
                 }
+                info!("0L ==== stdlib upgrade: published {} modules", counter);
+
+                // reset the UpgradePayload
+                let args = vec![
+                    MoveValue::Signer(txn_data.sender),
+                ];
+                session.execute_function(
+                    &UPGRADE_MODULE,
+                    &RESET_PAYLOAD,
+                    vec![],
+                    serialize_values(&args),
+                    // txn_data.sender(),
+                    cost_strategy,
+                    log_context,
+                ).expect("Couldn't reset payload");
+                info!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
             }
         }
 
