@@ -19,6 +19,7 @@ mod demo_cmd;
 mod relay_cmd;
 mod valset_cmd;
 mod autopay_cmd;
+mod wallet_cmd;
 mod authkey_cmd;
 
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
@@ -35,6 +36,7 @@ use self::{
     demo_cmd::DemoCmd,
     relay_cmd::RelayCmd,
     valset_cmd::ValSetCmd,
+    wallet_cmd::WalletCmd,
     authkey_cmd::AuthkeyCmd,
 };
 use std::path::PathBuf;
@@ -85,7 +87,11 @@ pub enum TxsCmd {
     #[options(help = "join or leave the validator universe, i.e. candidate for validator set")]
     ValSet(ValSetCmd),
 
-    /// subcommand to rotate an auth key (change mnemonic that controls address)
+    /// The `wallet` subcommand
+    #[options(help = "set a wallet type to the address")]
+    Wallet(WalletCmd),
+  
+    /// The `authkey` subcommand to rotate an auth key (change mnemonic that controls address)
     #[options(help = "rotate an account's authorization key")]
     Authkey(AuthkeyCmd),
 }
