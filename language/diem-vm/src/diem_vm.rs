@@ -23,6 +23,7 @@ use move_vm_runtime::{
 use move_vm_types::{gas_schedule::{calculate_intrinsic_gas, zero_cost_schedule, CostStrategy}, values::Value};
 use std::{convert::TryFrom, sync::Arc};
 use vm::errors::Location;
+use diem_framework_releases::import_stdlib;
 
 #[derive(Clone)]
 /// A wrapper to make VMRuntime standalone and thread safe.
@@ -488,7 +489,7 @@ impl DiemVMImpl {
                     info!("0L ==== stdlib upgrade: upgrade payload elected in previous epoch");
 
                     // publish the agreed stdlib
-                    let new_stdlib = stdlib::import_stdlib(&payload);
+                    let new_stdlib = import_stdlib(&payload);
                     let mut counter = 0;
                     for module in new_stdlib {
                         let mut bytes = vec![];
