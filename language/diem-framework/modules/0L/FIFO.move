@@ -6,13 +6,10 @@ address 0x1 {
 module FIFO {
     use 0x1::Vector;
 
-    struct FIFO<Element> has store, drop {
+    struct FIFO<Element> has store, drop
+     {
         incoming: vector<Element>,
         outgoing: vector<Element>
-    }
-
-    public fun test() {
-
     }
 
     public fun empty<Element>(): FIFO<Element>{

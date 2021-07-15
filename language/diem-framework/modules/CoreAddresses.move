@@ -14,7 +14,7 @@ module CoreAddresses {
     /// ultimate authority over the permissions granted (or removed) from
     /// accounts on-chain.
     public fun DIEM_ROOT_ADDRESS(): address {
-        0x0
+        0x0 //////// 0L ////////
     }
 
     /// The (singleton) address under which the `0x1::Diem::CurrencyInfo` resource for
@@ -22,14 +22,14 @@ module CoreAddresses {
     /// `DIEM_ROOT_ADDRESS` but there is no requirement that it must
     /// be this from an operational viewpoint, so this is why this is separated out.
     public fun CURRENCY_INFO_ADDRESS(): address {
-        0x0
+        0x0 //////// 0L ////////
     }
 
     /// The account address of the treasury and compliance account in
     /// charge of minting/burning and other day-to-day but privileged
     /// operations. The account at this address is created in genesis.
     public fun TREASURY_COMPLIANCE_ADDRESS(): address {
-        0x0
+        0x0 //////// 0L ////////
     }
 
     /// The reserved address for transactions inserted by the VM into blocks (e.g.
