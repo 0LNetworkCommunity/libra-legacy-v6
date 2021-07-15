@@ -52,6 +52,10 @@ script {
     use 0x1::Vector;
     use 0x1::MinerState;
     use 0x1::Stats;
+    use 0x1::AutoPay2;
+    use 0x1::LibraAccount;
+    use 0x1::GAS::GAS;
+    use 0x1::ValidatorConfig;
 
     fun main(vm: &signer) {
         // Tests on initial size of validators
@@ -59,6 +63,7 @@ script {
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
         assert(LibraSystem::is_validator({{bob}}) == true, 7357000180103);
         assert(LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B) == false, 7357000180104);
+        assert(MinerState::is_init(0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180105);
 
         // Mock everyone being a CASE 1
         let voters = Vector::empty<address>();
@@ -67,11 +72,32 @@ script {
         Vector::push_back<address>(&mut voters, {{carol}});
         Vector::push_back<address>(&mut voters, {{dave}});
 
-
         MinerState::test_helper_mock_mining_vm(vm, {{alice}}, 20);
         MinerState::test_helper_mock_mining_vm(vm, {{bob}}, 20);
         MinerState::test_helper_mock_mining_vm(vm, {{carol}}, 20);
         MinerState::test_helper_mock_mining_vm(vm, {{dave}}, 20);
+
+        let alice_sig = LibraAccount::test_helper_create_signer(vm, {{alice}});
+        let bob_sig = LibraAccount::test_helper_create_signer(vm, {{bob}});
+        let carol_sig = LibraAccount::test_helper_create_signer(vm, {{carol}});
+        let dave_sig = LibraAccount::test_helper_create_signer(vm, {{dave}});
+        AutoPay2::enable_autopay(&alice_sig);
+        AutoPay2::enable_autopay(&bob_sig);
+        AutoPay2::enable_autopay(&carol_sig);
+        AutoPay2::enable_autopay(&dave_sig);
+        LibraAccount::test_helper_destroy_signer(vm, alice_sig);
+        LibraAccount::test_helper_destroy_signer(vm, bob_sig);
+        LibraAccount::test_helper_destroy_signer(vm, carol_sig);
+        LibraAccount::test_helper_destroy_signer(vm, dave_sig);
+
+        let oper_alice = ValidatorConfig::get_operator({{alice}});
+        let oper_bob = ValidatorConfig::get_operator({{bob}});
+        let oper_carol = ValidatorConfig::get_operator({{carol}});
+        let oper_dave = ValidatorConfig::get_operator({{dave}});
+        LibraAccount::vm_make_payment_no_limit<GAS>( {{alice}}, oper_alice, 60009, x"", x"", vm);  
+        LibraAccount::vm_make_payment_no_limit<GAS>( {{bob}}, oper_bob, 60009, x"", x"", vm);  
+        LibraAccount::vm_make_payment_no_limit<GAS>( {{carol}}, oper_carol, 60009, x"", x"", vm);  
+        LibraAccount::vm_make_payment_no_limit<GAS>( {{dave}}, oper_dave, 0009, x"", x"", vm);
 
         let i = 1;
         while (i < 16) {
@@ -81,6 +107,7 @@ script {
         };
 
         Reconfigure::reconfigure(vm, 15); // reconfigure at height 15
+        assert(LibraSystem::validator_set_size() == 4, 7357000180106);
     }
 }
 // check: EXECUTED
@@ -102,7 +129,7 @@ script {
         assert(!LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180103);
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(vm));
         // Is in validator universe
-        assert(len == 5 , 7357000180104);
+        assert(len == 5, 7357000180104);
       }
 }
 // check: EXECUTED
@@ -118,6 +145,10 @@ script {
     use 0x1::MinerState;
     use 0x1::Stats;
     use 0x1::ValidatorUniverse;
+    use 0x1::AutoPay2;
+    use 0x1::LibraAccount;
+    use 0x1::GAS::GAS;
+    use 0x1::ValidatorConfig;
 
     fun main(vm: &signer) {
         // Tests on initial size of validators
@@ -139,6 +170,12 @@ script {
         MinerState::test_helper_mock_mining_vm(vm, {{dave}}, 20);
         MinerState::test_helper_mock_mining_vm(vm, 0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 20);
 
+        // enable autopay and transfer coins to the new operator
+        let new_val = LibraAccount::test_helper_create_signer(vm, 0x3DC18D1CF61FAAC6AC70E3A63F062E4B);
+        AutoPay2::enable_autopay(&new_val);
+        let new_oper = ValidatorConfig::get_operator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B);
+        LibraAccount::vm_make_payment_no_limit<GAS>(0x3DC18D1CF61FAAC6AC70E3A63F062E4B, new_oper, 60009, x"", x"", vm);
+
         // check the new account is in the list of eligible
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(vm));
         assert(len == 5 , 7357000180205);
@@ -154,6 +191,7 @@ script {
         };
 
         Reconfigure::reconfigure(vm, 15); // reconfigure at height 15
+        LibraAccount::test_helper_destroy_signer(vm, new_val);
     }
 }
 // check: EXECUTED
@@ -173,7 +211,7 @@ script {
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000200302);
         assert(LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000200303);
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(vm));
-        assert(LibraSystem::validator_set_size() == len, 7357000200304);
+        assert(len == 5, 7357000200304);
       }
 }
 // check: EXECUTED
