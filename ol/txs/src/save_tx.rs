@@ -6,7 +6,6 @@ use std::{
   io::{BufReader, Write},
   path::PathBuf,
 };
-use diem_transaction_builder::stdlib;
 
 /// Save signed transaction to file
 pub fn save_tx(txn: SignedTransaction, path: PathBuf) {
@@ -32,6 +31,8 @@ pub fn read_tx_from_file(path: PathBuf) -> Result<Vec<SignedTransaction>, Error>
 
 #[test]
 fn test_sign_tx() {
+  use diem_transaction_builder::stdlib;
+
   use crate::sign_tx::sign_tx;
   use crate::submit_tx::TxParams;
   use diem_types::{account_address::AccountAddress, chain_id::ChainId};
@@ -49,7 +50,7 @@ fn test_sign_tx() {
 
 #[test]
 fn test_save_tx() {
-
+  use diem_transaction_builder::stdlib;
   use crate::sign_tx::sign_tx;
   use crate::submit_tx::TxParams;
   use diem_types::{chain_id::ChainId, account_address::AccountAddress};
