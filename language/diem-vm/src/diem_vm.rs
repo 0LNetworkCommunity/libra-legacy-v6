@@ -1,25 +1,10 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    access_path_cache::AccessPathCache,
-    counters::*,
-    data_cache::RemoteStorage,
-    errors::{convert_epilogue_error, convert_prologue_error, expect_only_successful_execution},
-    system_module_names::*,
-    transaction_metadata::TransactionMetadata,
-};
+use crate::{access_path_cache::AccessPathCache, counters::*, data_cache::{RemoteStorage, StateViewCache}, errors::{convert_epilogue_error, convert_prologue_error, expect_only_successful_execution}, system_module_names::*, transaction_metadata::TransactionMetadata};
 use diem_logger::prelude::*;
 use diem_state_view::StateView;
-use diem_types::{
-    account_config,
-    contract_event::ContractEvent,
-    event::EventKey,
-    on_chain_config::{ConfigStorage, DiemVersion, OnChainConfig, VMConfig, VMPublishingOption},
-    transaction::{TransactionOutput, TransactionStatus},
-    vm_status::{KeptVMStatus, StatusCode, VMStatus},
-    write_set::{WriteOp, WriteSet, WriteSetMut},
-};
+use diem_types::{account_config, block_metadata::BlockMetadata, contract_event::ContractEvent, event::EventKey, on_chain_config::{ConfigStorage, DiemVersion, OnChainConfig, VMConfig, VMPublishingOption}, transaction::{TransactionOutput, TransactionStatus}, upgrade_payload::UpgradePayloadResource, vm_status::{KeptVMStatus, StatusCode, VMStatus}, write_set::{WriteOp, WriteSet, WriteSetMut}};
 use fail::fail_point;
 use move_core_types::{
     account_address::AccountAddress,
@@ -35,7 +20,7 @@ use move_vm_runtime::{
     move_vm::MoveVM,
     session::Session,
 };
-use move_vm_types::gas_schedule::{calculate_intrinsic_gas, zero_cost_schedule, CostStrategy};
+use move_vm_types::{gas_schedule::{calculate_intrinsic_gas, zero_cost_schedule, CostStrategy}, values::Value};
 use std::{convert::TryFrom, sync::Arc};
 use vm::errors::Location;
 
@@ -433,7 +418,116 @@ impl DiemVMImpl {
     pub fn new_session<'r, R: RemoteCache>(&self, r: &'r R) -> Session<'r, '_, R> {
         self.move_vm.new_session(r)
     }
+
+        //////// 0L ////////    
+    // Note: currently the upgrade needs two blocks to happen: 
+    // In the first block, consensus is reached and recorded; 
+    // in the second block, the payload is applied and history is recorded
+    pub(crate) fn tick_oracle_consensus<R: RemoteCache> (
+        &self,
+        session: &mut Session<R>,
+        block_metadata: BlockMetadata,
+        txn_data: &TransactionMetadata,
+        cost_strategy: &mut CostStrategy,
+        log_context: &impl LogContext,
+    ) -> Result<(), VMStatus> {
+        if let (round, _timestamp, _previous_vote, _proposer) = block_metadata.into_inner() {
+            info!("0L ===============================  round is {}", round);
+            // hardcoding consensus checking on round 2
+            if round==2 {
+                info!("0L ==== stdlib upgrade: checking for stdlib upgrade");
+                // tick Oracle::check_upgrade
+                let args = vec![
+                    Value::signer_reference(txn_data.sender),
+                ];
+                session.execute_function(
+                    &ORACLE_MODULE,
+                    &CHECK_UPGRADE,
+                    vec![],
+                    args,
+                    // txn_data.sender(),
+                    cost_strategy,
+                    log_context,
+                ).expect("Couldn't check upgrade");
+            }
+        }
+
+        Ok(())
+    }
+
+    //////// 0L ////////    
+    pub(crate) fn apply_stdlib_upgrade<R: RemoteCache> (
+        &self,
+        session: &mut Session<R>,
+        remote_cache: &StateViewCache<'_>,
+        block_metadata: BlockMetadata,
+        txn_data: &TransactionMetadata,
+        cost_strategy: &mut CostStrategy,
+        log_context: &impl LogContext,
+    ) -> Result<(), VMStatus> {
+        if let (round, timestamp, _previous_vote, _proposer) = block_metadata.into_inner() {
+            // hardcoding upgrade on round 2
+            if round==2 {
+                // check the UpgradePayload flag
+                let ap = UpgradePayloadResource::access_path();
+                let gref = 
+                    StateViewCache::get(remote_cache, &ap).ok();
+                let upgrade_payload = 
+                match gref {
+                    Some(bytes) => {
+                        let payload = bytes.map(|data_blob| {
+                            bcs::from_bytes(data_blob.as_slice()).expect("Failure decoding upgrade payload resource")
+                        });
+                        payload.unwrap_or(UpgradePayloadResource::new(vec![]))
+                    },
+                    None => UpgradePayloadResource::new(vec![]),
+                };
+
+                let payload = upgrade_payload.payload;
+                if payload.len() > 0 {
+                    info!("0L ==== stdlib upgrade: upgrade payload elected in previous epoch");
+
+                    // publish the agreed stdlib
+                    let new_stdlib = stdlib::import_stdlib(&payload);
+                    let mut counter = 0;
+                    for module in new_stdlib {
+                        let mut bytes = vec![];
+                        module
+                            .serialize(&mut bytes)
+                            .expect("Failed to serialize module");
+                        session.revise_module(
+                            bytes, 
+                            account_config::CORE_CODE_ADDRESS, 
+                            cost_strategy, 
+                            log_context
+                        ).expect("Failed to publish module");
+                        counter += 1;
+                    }
+                    info!("0L ==== stdlib upgrade: published {} modules", counter);
+
+                    // reset the UpgradePayload
+                    let args = vec![
+                        Value::signer_reference(txn_data.sender),
+                    ];
+                    session.execute_function(
+                        &UPGRADE_MODULE,
+                        &RESET_PAYLOAD,
+                        vec![],
+                        args,
+                        // txn_data.sender(),
+                        cost_strategy,
+                        log_context,
+                    ).expect("Couldn't reset payload");
+                    info!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
+                }
+            }
+        }
+
+        Ok(())
+      }
 }
+
+
 
 /// Internal APIs for the Diem VM, primarily used for testing.
 #[derive(Clone, Copy)]

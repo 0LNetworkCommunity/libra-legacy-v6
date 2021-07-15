@@ -16,6 +16,31 @@ pub static DIEM_BLOCK_MODULE: Lazy<ModuleId> = Lazy::new(|| {
     )
 });
 
+//////// 0L ////////
+// Oracle module
+pub static ORACLE_MODULE: Lazy<ModuleId> = Lazy::new(|| {
+    ModuleId::new(
+        account_config::CORE_CODE_ADDRESS,
+        ORACLE_MODULE_NAME.clone(),
+    )
+});
+pub static UPGRADE_MODULE: Lazy<ModuleId> = Lazy::new(|| {
+    ModuleId::new(
+        account_config::CORE_CODE_ADDRESS,
+        UPGRADE_MODULE_NAME.clone(),
+    )
+});
+// Oracles
+static ORACLE_MODULE_NAME: Lazy<Identifier> =
+    Lazy::new(|| Identifier::new("Oracle").unwrap());
+pub static CHECK_UPGRADE: Lazy<Identifier> =
+    Lazy::new(|| Identifier::new("check_upgrade").unwrap());
+static UPGRADE_MODULE_NAME: Lazy<Identifier> =
+    Lazy::new(|| Identifier::new("Upgrade").unwrap());
+pub static RESET_PAYLOAD: Lazy<Identifier> =
+    Lazy::new(|| Identifier::new("reset_payload").unwrap());
+//////// 0L end ////////    
+
 // Names for special functions and structs
 pub static SCRIPT_PROLOGUE_NAME: Lazy<Identifier> =
     Lazy::new(|| Identifier::new("script_prologue").unwrap());

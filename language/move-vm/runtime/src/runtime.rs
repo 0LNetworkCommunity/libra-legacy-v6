@@ -116,6 +116,44 @@ impl VMRuntime {
         data_store.publish_module(&module_id, module)
     }
 
+    //////// 0L ////////
+    // 0L: currently only used by upgrade oracle
+    // TODO: consider refactor this
+    pub(crate) fn revise_module(
+        &self,
+        module: Vec<u8>,
+        sender: AccountAddress,
+        data_store: &mut impl DataStore,
+        _cost_strategy: &mut CostStrategy,
+        log_context: &impl LogContext,
+    ) -> VMResult<()> {
+        // deserialize the module. Perform bounds check. After this indexes can be
+        // used with the `[]` operator
+        let compiled_module = match CompiledModule::deserialize(&module) {
+            Ok(module) => module,
+            Err(err) => {
+                warn!(*log_context, "[VM] module deserialization failed {:?}", err);
+                return Err(err.finish(Location::Undefined));
+            }
+        };
+
+        // Make sure the module's self address matches the transaction sender. The self address is
+        // where the module will actually be published. If we did not check this, the sender could
+        // publish a module under anyone's account.
+        if compiled_module.address() != &sender {
+            return Err(verification_error(
+                StatusCode::MODULE_ADDRESS_DOES_NOT_MATCH_SENDER,
+                IndexKind::AddressIdentifier,
+                compiled_module.self_handle_idx().0,
+            )
+            .finish(Location::Undefined));
+        }
+
+        // Skip dependency and existence check to overwrite
+        let module_id = compiled_module.self_id();
+        data_store.publish_module(&module_id, module)
+    }
+
     fn deserialize_args(
         &self,
         _file_format_version: u32,

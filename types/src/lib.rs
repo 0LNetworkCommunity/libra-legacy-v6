@@ -39,5 +39,7 @@ pub mod write_set;
 
 pub use account_address::AccountAddress as PeerId;
 
+pub mod upgrade_payload; //////// 0L ////////
+
 #[cfg(test)]
 mod unit_tests;

@@ -102,6 +102,24 @@ impl<'r, 'l, R: RemoteCache> Session<'r, 'l, R> {
         )
     }
 
+    //////// 0L ////////    
+    // 0L: currently only used by upgrade oracle
+    pub fn revise_module(
+        &mut self,
+        module: Vec<u8>,
+        sender: AccountAddress,
+        cost_strategy: &mut CostStrategy,
+        log_context: &impl LogContext,
+    ) -> VMResult<()> {
+        self.runtime.revise_module(
+            module,
+            sender,
+            &mut self.data_cache,
+            cost_strategy,
+            log_context,
+        )
+    }
+
     /// Execute a transaction script.
     ///
     /// The Move VM MUST return a user error (in other words, an error that's not an invariant
