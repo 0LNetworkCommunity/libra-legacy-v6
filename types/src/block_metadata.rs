@@ -69,6 +69,11 @@ impl BlockMetadata {
     pub fn proposer(&self) -> AccountAddress {
         self.proposer
     }
+
+    //////// 0L ////////
+    pub fn round(&self) -> u64 {
+        self.round
+    }
 }
 
 pub fn new_block_event_key() -> EventKey {

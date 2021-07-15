@@ -83,6 +83,14 @@ fn build_transaction_config_1() {
     parse_and_build_config(&global, r"
         //! block-time: 6
     ").unwrap_err();
+
+    //////// 0L ////////
+    let block = parse_and_build_config(&global, r"
+      //! proposer: alice
+      //! block-time: 6
+      //! round: 2
+    ").unwrap();
+    assert!(block.round() == 2, "round does not match");
 }
 
 #[rustfmt::skip]
