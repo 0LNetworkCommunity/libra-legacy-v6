@@ -11,6 +11,7 @@ use move_core_types::{
 };
 use serde::{Deserialize, Serialize};
 use move_core_types::account_address::AccountAddress;
+use num_format::{Locale, ToFormattedString};
 
 /// Struct that represents a AutoPay resource
 #[derive(Debug, Serialize, Deserialize)]
@@ -23,7 +24,24 @@ pub struct AutoPayResource {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AutoPayView {
     /// 
-    pub payments: Vec<Payment>,
+    pub payments: Vec<PaymentView>,
+}
+
+/// Autopay instruction
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PaymentView {
+    ///
+    pub uid: u64,
+    ///
+    pub type_desc: String,
+    ///
+    pub payee: AccountAddress,
+    ///
+    pub end_epoch: u64,
+    ///
+    pub prev_bal: u64,
+    ///
+    pub amount: String,
 }
 
 /// Autopay instruction
@@ -41,6 +59,27 @@ pub struct Payment {
     pub prev_bal: u64,
     ///
     pub amt: u64,
+}
+
+impl Payment {
+    /// get description for in_type value
+    pub fn get_type_desc(&self) -> String {
+        match self.in_type {
+            0 => String::from("percent of balance"),
+            1 => String::from("percent of change"),
+            2 => String::from("fixed recurring"),
+            3 => String::from("fixed once"),
+            _ => String::from("type unknown"),
+        }
+    }
+
+    /// format amount according to type
+    pub fn get_amount_formatted(&self) -> String {
+        match self.in_type {
+            0 | 1   => format!("{:.2}%", self.amt as f64 / 100.00),
+            _       => self.amt.to_formatted_string(&Locale::en),
+        }
+    }
 }
 
 impl MoveResource for AutoPayResource {
@@ -78,7 +117,16 @@ impl AutoPayResource {
 
     ///
     pub fn get_view(&self) -> AutoPayView {
-        AutoPayView { payments: self.payment.clone() }
+        let payments = self.payment.iter().map(|each| {
+            PaymentView {
+                uid: each.uid,
+                type_desc: each.get_type_desc(),
+                payee: each.payee,
+                end_epoch: each.end_epoch,
+                prev_bal: each.prev_bal,
+                amount: each.get_amount_formatted(),
+            }
+        }).collect();
+        AutoPayView { payments: payments }
     }
 }
-

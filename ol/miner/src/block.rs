@@ -3,16 +3,16 @@
 use ol_types::config::AppCfg;
 use crate::{
     delay::*,
+    backlog,
     error::{Error, ErrorKind},
-    prelude::*,
-    commit_proof::commit_proof_tx,
+    prelude::*
 };
 use byteorder::{LittleEndian, WriteBytesExt};
 use glob::glob;
 use hex::decode;
 use libra_crypto::hash::HashValue;
 use ol_types::block::Block;
-use txs::submit_tx::{TxParams, eval_tx_status};
+use txs::submit_tx::{TxParams};
 use std::{
     fs,
     io::{BufReader, Write},
@@ -104,8 +104,11 @@ pub fn mine_and_submit(
         status_err!("Genesis block_0.json not found. Exiting.");
         std::process::exit(0);
     } else {
-        // mine continuously from the last block in the file systems
+        // the max block that has been succesfully submitted to client
         let mut mining_height = current_block_number.unwrap() + 1;
+        // in the beginning, mining height is +1 of client block number
+
+        // mine continuously from the last block in the file systems
         loop {
             status_info!(format!("Block {}", mining_height), "Mining VDF Proof");
 
@@ -115,21 +118,15 @@ pub fn mine_and_submit(
                 format!("block_{}.json created.", block.height.to_string())
             );
 
-            if let Some(ref _node) = config.profile.default_node {
-                match commit_proof_tx(&tx_params, block.preimage, block.proof, is_operator) {
-                    Ok(tx_view) => match eval_tx_status(tx_view) {
-                        Ok(_) => status_ok!("Success:", "Proof committed to chain"),
-                        Err(_) => status_err!("Miner transaction rejected"),
-                    },
-                    Err(err) => status_err!("Miner transaction rejected: {}", err),
+            // submits backlog to client
+            match backlog::process_backlog(&config, &tx_params, is_operator) {
+                Ok(()) => status_ok!("Success:", "Proof committed to chain"),
+                Err(e) => {
+                    status_warn!("Failed fetching remote state: {}", e);
                 }
-            } else {
-                return Err(ErrorKind::Config
-                    .context("No Node for submitting transactions")
-                    .into());
             }
 
-            mining_height = block.height + 1;
+            mining_height = block.height + 1; 
         }
     }
 }
@@ -461,3 +458,4 @@ pub fn genesis_preimage(cfg: &AppCfg) -> Vec<u8> {
     );
     return preimage;
 }
+
