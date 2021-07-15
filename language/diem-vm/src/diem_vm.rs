@@ -435,17 +435,17 @@ impl DiemVMImpl {
         if let (round, _timestamp, _previous_vote, _proposer) = block_metadata.into_inner() {
             info!("0L ===============================  round is {}", round);
             // hardcoding consensus checking on round 2
-            if round==2 {
+            if round == 2 {
                 info!("0L ==== stdlib upgrade: checking for stdlib upgrade");
                 // tick Oracle::check_upgrade
                 let args = vec![
-                    Value::signer_reference(txn_data.sender),
+                    MoveValue::Signer(txn_data.sender),
                 ];
                 session.execute_function(
                     &ORACLE_MODULE,
                     &CHECK_UPGRADE,
                     vec![],
-                    args,
+                    serialize_values(&args),
                     // txn_data.sender(),
                     cost_strategy,
                     log_context,
@@ -508,13 +508,13 @@ impl DiemVMImpl {
 
                     // reset the UpgradePayload
                     let args = vec![
-                        Value::signer_reference(txn_data.sender),
+                        MoveValue::Signer(txn_data.sender),
                     ];
                     session.execute_function(
                         &UPGRADE_MODULE,
                         &RESET_PAYLOAD,
                         vec![],
-                        args,
+                        serialize_values(&args),
                         // txn_data.sender(),
                         cost_strategy,
                         log_context,
