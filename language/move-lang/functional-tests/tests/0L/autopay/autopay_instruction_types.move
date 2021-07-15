@@ -9,6 +9,17 @@
 //! account: eric, 10000GAS, 0 
 
 // test runs various autopay instruction types to ensure they are being executed as expected
+//! new-transaction
+module Holder {
+    struct Hold has key { x: u64 }
+    public fun hold(account: &signer, x: u64) {
+        move_to(account, Hold{ x })
+    }
+
+    public fun fetch(addr: address): u64 acquires Hold {
+      borrow_global<Hold>(addr).x
+    }
+}
 
 //! new-transaction
 //! sender: diemroot
@@ -30,10 +41,13 @@ script {
 script {
 use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
+use 0x1::DiemAccount;
+use {{default}}::Holder;
   fun main(lr: signer, alice_account: signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(&alice_account);
       AccountLimits::update_limits_definition<GAS>(&lr, {{alice}}, 0, 10000, 0, 1);
       AccountLimits::publish_window<GAS>(&lr, &alice_account, {{alice}});
+    Holder::hold(&alice_account, DiemAccount::balance<GAS>({{alice}}));
   }
 }
 // check: "Keep(EXECUTED)"
@@ -44,10 +58,13 @@ use 0x1::GAS::GAS;
 script {
 use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
+use 0x1::DiemAccount;
+use {{default}}::Holder;
   fun main(lr: signer, jim_account: signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(&jim_account);
       AccountLimits::update_limits_definition<GAS>(&lr, {{jim}}, 0, 10000, 0, 1);
       AccountLimits::publish_window<GAS>(&lr, &jim_account, {{jim}});
+    Holder::hold(&jim_account, DiemAccount::balance<GAS>({{jim}}));
   }
 }
 // check: "Keep(EXECUTED)"
@@ -58,10 +75,13 @@ use 0x1::GAS::GAS;
 script {
 use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
+use 0x1::DiemAccount;
+use {{default}}::Holder;
   fun main(lr: signer, lucy_account: signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(&lucy_account);
       AccountLimits::update_limits_definition<GAS>(&lr, {{lucy}}, 0, 10000, 0, 1);
       AccountLimits::publish_window<GAS>(&lr, &lucy_account, {{lucy}});
+    Holder::hold(&lucy_account, DiemAccount::balance<GAS>({{lucy}}));
   }
 }
 // check: "Keep(EXECUTED)"
@@ -72,10 +92,13 @@ use 0x1::GAS::GAS;
 script {
 use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
+use 0x1::DiemAccount;
+use {{default}}::Holder;
   fun main(lr: signer, paul_account: signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(&paul_account);
       AccountLimits::update_limits_definition<GAS>(&lr, {{paul}}, 0, 10000, 0, 1);
       AccountLimits::publish_window<GAS>(&lr, &paul_account, {{paul}});
+    Holder::hold(&paul_account, DiemAccount::balance<GAS>({{paul}}));
   }
 }
 // check: "Keep(EXECUTED)"
@@ -86,10 +109,13 @@ use 0x1::GAS::GAS;
 script {
 use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
+use 0x1::DiemAccount;
+use {{default}}::Holder;
   fun main(lr: signer, thomas_account: signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(&thomas_account);
       AccountLimits::update_limits_definition<GAS>(&lr, {{thomas}}, 0, 10000, 0, 1);
       AccountLimits::publish_window<GAS>(&lr, &thomas_account, {{thomas}});
+    Holder::hold(&thomas_account, DiemAccount::balance<GAS>({{thomas}}));
   }
 }
 // check: "Keep(EXECUTED)"
@@ -100,10 +126,13 @@ use 0x1::GAS::GAS;
 script {
 use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
+use 0x1::DiemAccount;
+use {{default}}::Holder;
   fun main(lr: signer, denice_account: signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(&denice_account);
       AccountLimits::update_limits_definition<GAS>(&lr, {{denice}}, 0, 10000, 0, 1);
       AccountLimits::publish_window<GAS>(&lr, &denice_account, {{denice}});
+    Holder::hold(&denice_account, DiemAccount::balance<GAS>({{denice}}));
   }
 }
 // check: "Keep(EXECUTED)"
@@ -114,10 +143,13 @@ use 0x1::GAS::GAS;
 script {
 use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
+use 0x1::DiemAccount;
+use {{default}}::Holder;
   fun main(lr: signer, carlos_account: signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(&carlos_account);
       AccountLimits::update_limits_definition<GAS>(&lr, {{carlos}}, 0, 10000, 0, 1);
       AccountLimits::publish_window<GAS>(&lr, &carlos_account, {{carlos}});
+    Holder::hold(&carlos_account, DiemAccount::balance<GAS>({{carlos}}));
   }
 }
 // check: "Keep(EXECUTED)"
@@ -128,10 +160,13 @@ use 0x1::GAS::GAS;
 script {
 use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
+use 0x1::DiemAccount;
+use {{default}}::Holder;
   fun main(lr: signer, eric_account: signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(&eric_account);
       AccountLimits::update_limits_definition<GAS>(&lr, {{eric}}, 0, 10000, 0, 1);
       AccountLimits::publish_window<GAS>(&lr, &eric_account, {{eric}});
+    Holder::hold(&eric_account, DiemAccount::balance<GAS>({{eric}}));
   }
 }
 // check: "Keep(EXECUTED)"
@@ -262,19 +297,29 @@ script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
   use 0x1::Diem;
+  use {{default}}::Holder;
+  use 0x1::FixedPoint32;
   fun main(vm: signer) {
+    let alice_store = Holder::fetch({{alice}});
+    let lucy_store = Holder::fetch({{lucy}});
+    let thomas_store = Holder::fetch({{thomas}});
+    let carlos_store = Holder::fetch({{carlos}});
+    
+
     let ending_balance = DiemAccount::balance<GAS>({{alice}});
-    assert(ending_balance == 9501, 7357004);
+    let amount_sent = FixedPoint32::multiply_u64(alice_store, FixedPoint32::create_from_rational(500, 10000));
+    assert(alice_store - ending_balance == amount_sent, 7357004);
+    assert(alice_store - ending_balance >0, 7357004);
 
     // lucy didn't receive any funds, so no change in balance, so no payment sent
     let ending_balance = DiemAccount::balance<GAS>({{lucy}});
-    assert(ending_balance == 10000, 7357006);
+    assert(lucy_store - ending_balance == 0, 7357006);
 
     let ending_balance = DiemAccount::balance<GAS>({{thomas}});
-    assert(ending_balance == 9800, 7357006);
+    assert(thomas_store - ending_balance == 200, 7357006);
 
     let ending_balance = DiemAccount::balance<GAS>({{carlos}});
-    assert(ending_balance == 9500, 7357006);
+    assert(carlos_store - ending_balance == 500, 7357006);
     //Confirm the one-shot instruction was deleted
     let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction({{carlos}}, 1);
     assert(type == 0, 1);
@@ -292,7 +337,7 @@ script {
     );
 
     let ending_balance = DiemAccount::balance<GAS>({{lucy}});
-    assert(ending_balance == 20000, 7357006);
+    assert(ending_balance - lucy_store == 10000, 7357006);
     
   }
 }
@@ -330,33 +375,47 @@ script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
   use 0x1::AutoPay2;
+  use {{default}}::Holder;
+  use 0x1::FixedPoint32;
   fun main(_vm: signer) {
+    let alice_store = Holder::fetch({{alice}});
+    let lucy_store = Holder::fetch({{lucy}});
+    let thomas_store = Holder::fetch({{thomas}});
+    let carlos_store = Holder::fetch({{carlos}});
+    let jim_store = Holder::fetch({{jim}});
+    let paul_store = Holder::fetch({{paul}});
+    let denice_store = Holder::fetch({{denice}});
+    let eric_store = Holder::fetch({{eric}});
+
     let ending_balance = DiemAccount::balance<GAS>({{alice}});
-    assert(ending_balance == 9026, 7357004);
+    let amount_sent = FixedPoint32::multiply_u64(alice_store, FixedPoint32::create_from_rational(500, 10000));
+    let second_bal = alice_store - amount_sent;
+    amount_sent = amount_sent + FixedPoint32::multiply_u64(second_bal, FixedPoint32::create_from_rational(500, 10000));
+    assert(alice_store - ending_balance == amount_sent, 7357004);
 
     // lucy will have paid 5% on the 10000 she received last epoch
     let ending_balance = DiemAccount::balance<GAS>({{lucy}});
-    assert(ending_balance == 19501, 7357006);
+    assert(ending_balance - lucy_store == 9501, 7357006);
     
     let ending_balance = DiemAccount::balance<GAS>({{thomas}});
-    assert(ending_balance == 9600, 7357006);
+    assert(thomas_store - ending_balance == 400, 7357006);
 
     // no change, one-shot instruction is finished
     let ending_balance = DiemAccount::balance<GAS>({{carlos}});
-    assert(ending_balance == 9500, 7357006);
+    assert(carlos_store - ending_balance == 500, 7357006);
 
     // check balance of recipients
     let ending_balance = DiemAccount::balance<GAS>({{jim}});
-    assert(ending_balance == 10974, 7357006);
+    assert(ending_balance - jim_store == amount_sent, 7357006);
 
     let ending_balance = DiemAccount::balance<GAS>({{paul}});
-    assert(ending_balance == 10499, 7357006);
+    assert(ending_balance - paul_store == 499, 7357006);
 
     let ending_balance = DiemAccount::balance<GAS>({{denice}});
-    assert(ending_balance == 10400, 7357006);
+    assert(ending_balance - denice_store == 400, 7357006);
 
     let ending_balance = DiemAccount::balance<GAS>({{eric}});
-    assert(ending_balance == 10500, 7357006);
+    assert(ending_balance - eric_store == 500, 7357006);
 
     //all instructions should be deleted as they expired in epoch 2, check to confirm
     //Confirm the one-shot instruction was deleted

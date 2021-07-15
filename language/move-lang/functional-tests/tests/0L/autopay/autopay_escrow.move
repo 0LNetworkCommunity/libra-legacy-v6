@@ -3,7 +3,17 @@
 //! account: greg, 100GAS
 //! account: carol, 10000GAS, 0, validator
 
-// Check autopay is triggered in block prologue correctly i.e., middle of epoch boundary
+//! new-transaction
+module Holder {
+    struct Hold has key { x: u64 }
+    public fun hold(account: &signer, x: u64) {
+        move_to(account, Hold{ x })
+    }
+
+    public fun fetch(addr: address): u64 acquires Hold {
+      borrow_global<Hold>(addr).x
+    }
+}
 
 //! new-transaction
 //! sender: diemroot
@@ -27,10 +37,13 @@ script {
 script {
 use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
+use 0x1::DiemAccount;
+use {{default}}::Holder;
 fun main(lr: signer, alice_account: signer) {
     AccountLimits::publish_unrestricted_limits<GAS>(&alice_account);
     AccountLimits::update_limits_definition<GAS>(&lr, {{alice}}, 0, 30, 0, 1);
     AccountLimits::publish_window<GAS>(&lr, &alice_account, {{alice}});
+    Holder::hold(&alice_account, DiemAccount::balance<GAS>({{alice}}));
 }
 }
 // check: "Keep(EXECUTED)"
@@ -41,10 +54,13 @@ fun main(lr: signer, alice_account: signer) {
 script {
 use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
+use 0x1::DiemAccount;
+use {{default}}::Holder;
 fun main(lr: signer, bob_account: signer) {
     AccountLimits::publish_unrestricted_limits<GAS>(&bob_account);
     AccountLimits::update_limits_definition<GAS>(&lr, {{bob}}, 0, 30, 0, 1);
     AccountLimits::publish_window<GAS>(&lr, &bob_account, {{bob}});
+    Holder::hold(&bob_account, DiemAccount::balance<GAS>({{bob}}));
 }
 }
 // check: "Keep(EXECUTED)"
@@ -55,10 +71,13 @@ fun main(lr: signer, bob_account: signer) {
 script {
 use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
+use 0x1::DiemAccount;
+use {{default}}::Holder;
 fun main(lr: signer, greg_account: signer) {
     AccountLimits::publish_unrestricted_limits<GAS>(&greg_account);
     AccountLimits::update_limits_definition<GAS>(&lr, {{greg}}, 0, 30, 0, 1);
     AccountLimits::publish_window<GAS>(&lr, &greg_account, {{greg}});
+    Holder::hold(&greg_account, DiemAccount::balance<GAS>({{greg}}));
 }
 }
 // check: "Keep(EXECUTED)"
@@ -99,297 +118,333 @@ script {
 script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
+  use {{default}}::Holder;
   fun main() {
     let alice_balance = DiemAccount::balance<GAS>({{alice}});
     let bob_balance = DiemAccount::balance<GAS>({{bob}});
     let greg_balance = DiemAccount::balance<GAS>({{greg}});
-    assert(alice_balance == 300, 1);
-    assert(bob_balance == 100, 2);
-    assert(greg_balance == 100, 2);
+    let alice_store = Holder::fetch({{alice}});
+    let bob_store = Holder::fetch({{bob}});
+    let greg_store = Holder::fetch({{greg}});
+    assert(alice_balance == alice_store, 1);
+    assert(bob_balance == bob_store, 2);
+    assert(greg_balance == greg_store, 2);
     }
 }
 // check: EXECUTED
 
 
-// ///////////////////////////////////////////////////
-// ///// Trigger Autopay Tick at 31 secs           ////
-// /// i.e. 1 second after 1/2 epoch  /////
-// //! block-prologue
-// //! proposer: carol
-// //! block-time: 31000000
-// //! round: 23
-// ///////////////////////////////////////////////////
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 31 secs           ////
+/// i.e. 1 second after 1/2 epoch  /////
+//! block-prologue
+//! proposer: carol
+//! block-time: 31000000
+//! round: 23
+///////////////////////////////////////////////////
 
 
-// // Weird. This next block needs to be added here otherwise the prologue above does not run.
-// ///////////////////////////////////////////////////
-// ///// Trigger Autopay Tick at 31 secs           ////
-// /// i.e. 1 second after 1/2 epoch  /////
-// //! block-prologue
-// //! proposer: carol
-// //! block-time: 32000000
-// //! round: 24
-// ///////////////////////////////////////////////////
+// Weird. This next block needs to be added here otherwise the prologue above does not run.
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 31 secs           ////
+/// i.e. 1 second after 1/2 epoch  /////
+//! block-prologue
+//! proposer: carol
+//! block-time: 32000000
+//! round: 24
+///////////////////////////////////////////////////
 
-// //! new-transaction
-// //! sender: diemroot
-// script {
-//   use 0x1::DiemAccount;
-//   use 0x1::GAS::GAS;
-//   fun main(_vm: signer) {
-//     let alice_balance = DiemAccount::balance<GAS>({{alice}});
-//     let bob_balance = DiemAccount::balance<GAS>({{bob}});
-//     let greg_balance = DiemAccount::balance<GAS>({{greg}});
-//     assert(alice_balance == 200, 1);
-//     assert(bob_balance == 130, 2);
-//     assert(greg_balance == 100, 2);
-//   }
-// }
-// // check: EXECUTED
+//! new-transaction
+//! sender: diemroot
+script {
+  use 0x1::DiemAccount;
+  use 0x1::GAS::GAS;
+  use {{default}}::Holder;
+  fun main(_vm: signer) {
+    let alice_balance = DiemAccount::balance<GAS>({{alice}});
+    let bob_balance = DiemAccount::balance<GAS>({{bob}});
+    let greg_balance = DiemAccount::balance<GAS>({{greg}});
+    let alice_store = Holder::fetch({{alice}});
+    let bob_store = Holder::fetch({{bob}});
+    let greg_store = Holder::fetch({{greg}});
+    assert(alice_store - alice_balance == 100, 1);
+    assert(bob_balance - bob_store == 30, 2);
+    assert(greg_balance - greg_store == 0, 2);
+  }
+}
+// check: EXECUTED
 
-// ///////////////////////////////////////////////////
-// ///// Trigger Autopay Tick at 31 secs           ////
-// /// i.e. 1 second after 1/2 epoch  /////
-// //! block-prologue
-// //! proposer: carol
-// //! block-time: 61000000
-// //! round: 65
-// ///////////////////////////////////////////////////
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 31 secs           ////
+/// i.e. 1 second after 1/2 epoch  /////
+//! block-prologue
+//! proposer: carol
+//! block-time: 61000000
+//! round: 65
+///////////////////////////////////////////////////
 
-// ///////////////////////////////////////////////////
-// ///// Trigger Autopay Tick at 31 secs           ////
-// /// i.e. 1 second after 1/2 epoch  /////
-// //! block-prologue
-// //! proposer: carol
-// //! block-time: 62000000
-// //! round: 66
-// ///////////////////////////////////////////////////
-
-
-// //! new-transaction
-// //! sender: diemroot
-// script {
-//   use 0x1::DiemAccount;
-//   use 0x1::GAS::GAS;
-//   fun main(_vm: signer) {
-//     let alice_balance = DiemAccount::balance<GAS>({{alice}});
-//     let bob_balance = DiemAccount::balance<GAS>({{bob}});
-//     let greg_balance = DiemAccount::balance<GAS>({{greg}});
-//     assert(alice_balance == 100, 1);
-//     assert(bob_balance == 150, 2);
-//     assert(greg_balance == 110, 2);
-//   }
-// }
-// // check: EXECUTED
-
-// ///////////////////////////////////////////////////
-// ///// Trigger Autopay Tick at 31 secs           ////
-// /// i.e. 1 second after 1/2 epoch  /////
-// //! block-prologue
-// //! proposer: carol
-// //! block-time: 122000000
-// //! round: 67
-// ///////////////////////////////////////////////////
-
-// ///////////////////////////////////////////////////
-// ///// Trigger Autopay Tick at 31 secs           ////
-// /// i.e. 1 second after 1/2 epoch  /////
-// //! block-prologue
-// //! proposer: carol
-// //! block-time: 123000000
-// //! round: 68
-// ///////////////////////////////////////////////////
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 31 secs           ////
+/// i.e. 1 second after 1/2 epoch  /////
+//! block-prologue
+//! proposer: carol
+//! block-time: 62000000
+//! round: 66
+///////////////////////////////////////////////////
 
 
-// //! new-transaction
-// //! sender: diemroot
-// script {
-//   use 0x1::DiemAccount;
-//   use 0x1::GAS::GAS;
-//   fun main(_vm: signer) {
-//     let alice_balance = DiemAccount::balance<GAS>({{alice}});
-//     let bob_balance = DiemAccount::balance<GAS>({{bob}});
-//     let greg_balance = DiemAccount::balance<GAS>({{greg}});
-//     assert(alice_balance == 100, 1);
-//     assert(bob_balance == 150, 2);
-//     assert(greg_balance == 140, 2);
-//   }
-// }
-// // check: EXECUTED
+//! new-transaction
+//! sender: diemroot
+script {
+  use 0x1::DiemAccount;
+  use 0x1::GAS::GAS;
+  use {{default}}::Holder;
+  fun main(_vm: signer) {
+    let alice_balance = DiemAccount::balance<GAS>({{alice}});
+    let bob_balance = DiemAccount::balance<GAS>({{bob}});
+    let greg_balance = DiemAccount::balance<GAS>({{greg}});
+    let alice_store = Holder::fetch({{alice}});
+    let bob_store = Holder::fetch({{bob}});
+    let greg_store = Holder::fetch({{greg}});
+    assert(alice_store - alice_balance == 200, 1);
+    assert(bob_balance - bob_store == 50, 2);
+    assert(greg_balance - greg_store == 10, 2);
+  }
+}
+// check: EXECUTED
 
-// ///////////////////////////////////////////////////
-// ///// Trigger Autopay Tick at 31 secs           ////
-// /// i.e. 1 second after 1/2 epoch  /////
-// //! block-prologue
-// //! proposer: carol
-// //! block-time: 183000000
-// //! round: 69
-// ///////////////////////////////////////////////////
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 31 secs           ////
+/// i.e. 1 second after 1/2 epoch  /////
+//! block-prologue
+//! proposer: carol
+//! block-time: 122000000
+//! round: 67
+///////////////////////////////////////////////////
 
-// ///////////////////////////////////////////////////
-// ///// Trigger Autopay Tick at 31 secs           ////
-// /// i.e. 1 second after 1/2 epoch  /////
-// //! block-prologue
-// //! proposer: carol
-// //! block-time: 184000000
-// //! round: 70
-// ///////////////////////////////////////////////////
-
-
-// //! new-transaction
-// //! sender: diemroot
-// script {
-//   use 0x1::DiemAccount;
-//   use 0x1::GAS::GAS;
-//   fun main(_vm: signer) {
-//     let alice_balance = DiemAccount::balance<GAS>({{alice}});
-//     let bob_balance = DiemAccount::balance<GAS>({{bob}});
-//     let greg_balance = DiemAccount::balance<GAS>({{greg}});
-//     assert(alice_balance == 100, 1);
-//     assert(bob_balance == 170, 2);
-//     assert(greg_balance == 150, 2);
-//   }
-// }
-// // check: EXECUTED
-
-// ///////////////////////////////////////////////////
-// ///// Trigger Autopay Tick at 31 secs           ////
-// /// i.e. 1 second after 1/2 epoch  /////
-// //! block-prologue
-// //! proposer: carol
-// //! block-time: 244000000
-// //! round: 71
-// ///////////////////////////////////////////////////
-
-// ///////////////////////////////////////////////////
-// ///// Trigger Autopay Tick at 31 secs           ////
-// /// i.e. 1 second after 1/2 epoch  /////
-// //! block-prologue
-// //! proposer: carol
-// //! block-time: 245000000
-// //! round: 72
-// ///////////////////////////////////////////////////
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 31 secs           ////
+/// i.e. 1 second after 1/2 epoch  /////
+//! block-prologue
+//! proposer: carol
+//! block-time: 123000000
+//! round: 68
+///////////////////////////////////////////////////
 
 
-// //! new-transaction
-// //! sender: diemroot
-// script {
-//   use 0x1::DiemAccount;
-//   use 0x1::GAS::GAS;
-//   fun main(_vm: signer) {
-//     let alice_balance = DiemAccount::balance<GAS>({{alice}});
-//     let bob_balance = DiemAccount::balance<GAS>({{bob}});
-//     let greg_balance = DiemAccount::balance<GAS>({{greg}});
-//     assert(alice_balance == 100, 1);
-//     assert(bob_balance == 200, 2);
-//     assert(greg_balance == 150, 2);
-//   }
-// }
-// // check: EXECUTED
+//! new-transaction
+//! sender: diemroot
+script {
+  use 0x1::DiemAccount;
+  use 0x1::GAS::GAS;
+  use {{default}}::Holder;
+  fun main(_vm: signer) {
+    let alice_balance = DiemAccount::balance<GAS>({{alice}});
+    let bob_balance = DiemAccount::balance<GAS>({{bob}});
+    let greg_balance = DiemAccount::balance<GAS>({{greg}});
+    let alice_store = Holder::fetch({{alice}});
+    let bob_store = Holder::fetch({{bob}});
+    let greg_store = Holder::fetch({{greg}});
+    assert(alice_store - alice_balance == 200, 1);
+    assert(bob_balance - bob_store == 50, 2);
+    assert(greg_balance - greg_store == 40, 2);
+  }
+}
+// check: EXECUTED
 
-// ///////////////////////////////////////////////////
-// ///// Trigger Autopay Tick at 31 secs           ////
-// /// i.e. 1 second after 1/2 epoch  /////
-// //! block-prologue
-// //! proposer: carol
-// //! block-time: 305000000
-// //! round: 73
-// ///////////////////////////////////////////////////
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 31 secs           ////
+/// i.e. 1 second after 1/2 epoch  /////
+//! block-prologue
+//! proposer: carol
+//! block-time: 183000000
+//! round: 69
+///////////////////////////////////////////////////
 
-// ///////////////////////////////////////////////////
-// ///// Trigger Autopay Tick at 31 secs           ////
-// /// i.e. 1 second after 1/2 epoch  /////
-// //! block-prologue
-// //! proposer: carol
-// //! block-time: 306000000
-// //! round: 74
-// ///////////////////////////////////////////////////
-
-
-// //! new-transaction
-// //! sender: diemroot
-// script {
-//   use 0x1::DiemAccount;
-//   use 0x1::GAS::GAS;
-//   fun main(_vm: signer) {
-//     let alice_balance = DiemAccount::balance<GAS>({{alice}});
-//     let bob_balance = DiemAccount::balance<GAS>({{bob}});
-//     let greg_balance = DiemAccount::balance<GAS>({{greg}});
-//     assert(alice_balance == 100, 1);
-//     assert(bob_balance == 200, 2);
-//     assert(greg_balance == 180, 2);
-//   }
-// }
-// // check: EXECUTED
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 31 secs           ////
+/// i.e. 1 second after 1/2 epoch  /////
+//! block-prologue
+//! proposer: carol
+//! block-time: 184000000
+//! round: 70
+///////////////////////////////////////////////////
 
 
-// ///////////////////////////////////////////////////
-// ///// Trigger Autopay Tick at 31 secs           ////
-// /// i.e. 1 second after 1/2 epoch  /////
-// //! block-prologue
-// //! proposer: carol
-// //! block-time: 366000000
-// //! round: 75
-// ///////////////////////////////////////////////////
+//! new-transaction
+//! sender: diemroot
+script {
+  use 0x1::DiemAccount;
+  use 0x1::GAS::GAS;
+  use {{default}}::Holder;
+  fun main(_vm: signer) {
+    let alice_balance = DiemAccount::balance<GAS>({{alice}});
+    let bob_balance = DiemAccount::balance<GAS>({{bob}});
+    let greg_balance = DiemAccount::balance<GAS>({{greg}});
+    let alice_store = Holder::fetch({{alice}});
+    let bob_store = Holder::fetch({{bob}});
+    let greg_store = Holder::fetch({{greg}});
+    assert(alice_store - alice_balance == 200, 1);
+    assert(bob_balance - bob_store == 70, 2);
+    assert(greg_balance - greg_store == 50, 2);
+  }
+}
+// check: EXECUTED
 
-// ///////////////////////////////////////////////////
-// ///// Trigger Autopay Tick at 31 secs           ////
-// /// i.e. 1 second after 1/2 epoch  /////
-// //! block-prologue
-// //! proposer: carol
-// //! block-time: 367000000
-// //! round: 76
-// ///////////////////////////////////////////////////
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 31 secs           ////
+/// i.e. 1 second after 1/2 epoch  /////
+//! block-prologue
+//! proposer: carol
+//! block-time: 244000000
+//! round: 71
+///////////////////////////////////////////////////
 
-
-// //! new-transaction
-// //! sender: diemroot
-// script {
-//   use 0x1::DiemAccount;
-//   use 0x1::GAS::GAS;
-//   fun main(_vm: signer) {
-//     let alice_balance = DiemAccount::balance<GAS>({{alice}});
-//     let bob_balance = DiemAccount::balance<GAS>({{bob}});
-//     let greg_balance = DiemAccount::balance<GAS>({{greg}});
-//     assert(alice_balance == 100, 1);
-//     assert(bob_balance == 200, 2);
-//     assert(greg_balance == 200, 2);
-//   }
-// }
-// // check: EXECUTED
-
-
-// ///////////////////////////////////////////////////
-// ///// Trigger Autopay Tick at 31 secs           ////
-// /// i.e. 1 second after 1/2 epoch  /////
-// //! block-prologue
-// //! proposer: carol
-// //! block-time: 427000000
-// //! round: 77
-// ///////////////////////////////////////////////////
-
-// ///////////////////////////////////////////////////
-// ///// Trigger Autopay Tick at 31 secs           ////
-// /// i.e. 1 second after 1/2 epoch  /////
-// //! block-prologue
-// //! proposer: carol
-// //! block-time: 428000000
-// //! round: 78
-// ///////////////////////////////////////////////////
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 31 secs           ////
+/// i.e. 1 second after 1/2 epoch  /////
+//! block-prologue
+//! proposer: carol
+//! block-time: 245000000
+//! round: 72
+///////////////////////////////////////////////////
 
 
-// //! new-transaction
-// //! sender: diemroot
-// script {
-//   use 0x1::DiemAccount;
-//   use 0x1::GAS::GAS;
-//   fun main(_vm: signer) {
-//     let alice_balance = DiemAccount::balance<GAS>({{alice}});
-//     let bob_balance = DiemAccount::balance<GAS>({{bob}});
-//     let greg_balance = DiemAccount::balance<GAS>({{greg}});
-//     assert(alice_balance == 100, 1);
-//     assert(bob_balance == 200, 2);
-//     assert(greg_balance == 200, 2);
-//   }
-// }
-// // check: EXECUTED
+//! new-transaction
+//! sender: diemroot
+script {
+  use 0x1::DiemAccount;
+  use 0x1::GAS::GAS;
+  use {{default}}::Holder;
+  fun main(_vm: signer) {
+    let alice_balance = DiemAccount::balance<GAS>({{alice}});
+    let bob_balance = DiemAccount::balance<GAS>({{bob}});
+    let greg_balance = DiemAccount::balance<GAS>({{greg}});
+    let alice_store = Holder::fetch({{alice}});
+    let bob_store = Holder::fetch({{bob}});
+    let greg_store = Holder::fetch({{greg}});
+    assert(alice_store - alice_balance == 200, 1);
+    assert(bob_balance - bob_store == 100, 2);
+    assert(greg_balance - greg_store == 50, 2);
+  }
+}
+// check: EXECUTED
+
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 31 secs           ////
+/// i.e. 1 second after 1/2 epoch  /////
+//! block-prologue
+//! proposer: carol
+//! block-time: 305000000
+//! round: 73
+///////////////////////////////////////////////////
+
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 31 secs           ////
+/// i.e. 1 second after 1/2 epoch  /////
+//! block-prologue
+//! proposer: carol
+//! block-time: 306000000
+//! round: 74
+///////////////////////////////////////////////////
+
+
+//! new-transaction
+//! sender: diemroot
+script {
+  use 0x1::DiemAccount;
+  use 0x1::GAS::GAS;
+  use {{default}}::Holder;
+  fun main(_vm: signer) {
+    let alice_balance = DiemAccount::balance<GAS>({{alice}});
+    let bob_balance = DiemAccount::balance<GAS>({{bob}});
+    let greg_balance = DiemAccount::balance<GAS>({{greg}});
+    let alice_store = Holder::fetch({{alice}});
+    let bob_store = Holder::fetch({{bob}});
+    let greg_store = Holder::fetch({{greg}});
+    assert(alice_store - alice_balance == 200, 1);
+    assert(bob_balance - bob_store == 100, 2);
+    assert(greg_balance - greg_store == 80, 2);
+  }
+}
+// check: EXECUTED
+
+
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 31 secs           ////
+/// i.e. 1 second after 1/2 epoch  /////
+//! block-prologue
+//! proposer: carol
+//! block-time: 366000000
+//! round: 75
+///////////////////////////////////////////////////
+
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 31 secs           ////
+/// i.e. 1 second after 1/2 epoch  /////
+//! block-prologue
+//! proposer: carol
+//! block-time: 367000000
+//! round: 76
+///////////////////////////////////////////////////
+
+
+//! new-transaction
+//! sender: diemroot
+script {
+  use 0x1::DiemAccount;
+  use 0x1::GAS::GAS;
+  use {{default}}::Holder;
+  fun main(_vm: signer) {
+    let alice_balance = DiemAccount::balance<GAS>({{alice}});
+    let bob_balance = DiemAccount::balance<GAS>({{bob}});
+    let greg_balance = DiemAccount::balance<GAS>({{greg}});
+    let alice_store = Holder::fetch({{alice}});
+    let bob_store = Holder::fetch({{bob}});
+    let greg_store = Holder::fetch({{greg}});
+    assert(alice_store - alice_balance == 200, 1);
+    assert(bob_balance - bob_store == 100, 2);
+    assert(greg_balance - greg_store == 100, 2);
+  }
+}
+// check: EXECUTED
+
+
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 31 secs           ////
+/// i.e. 1 second after 1/2 epoch  /////
+//! block-prologue
+//! proposer: carol
+//! block-time: 427000000
+//! round: 77
+///////////////////////////////////////////////////
+
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 31 secs           ////
+/// i.e. 1 second after 1/2 epoch  /////
+//! block-prologue
+//! proposer: carol
+//! block-time: 428000000
+//! round: 78
+///////////////////////////////////////////////////
+
+
+//! new-transaction
+//! sender: diemroot
+script {
+  use 0x1::DiemAccount;
+  use 0x1::GAS::GAS;
+  use {{default}}::Holder;
+  fun main(_vm: signer) {
+    let alice_balance = DiemAccount::balance<GAS>({{alice}});
+    let bob_balance = DiemAccount::balance<GAS>({{bob}});
+    let greg_balance = DiemAccount::balance<GAS>({{greg}});
+    let alice_store = Holder::fetch({{alice}});
+    let bob_store = Holder::fetch({{bob}});
+    let greg_store = Holder::fetch({{greg}});
+    assert(alice_store - alice_balance == 200, 1);
+    assert(bob_balance - bob_store == 100, 2);
+    assert(greg_balance - greg_store == 100, 2);
+  }
+}
+// check: EXECUTED
