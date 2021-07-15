@@ -11,6 +11,7 @@ address 0x1 {
     use 0x1::Upgrade;
     use 0x1::DiemBlock;
     use 0x1::CoreAddresses;
+    use 0x1::Debug::print;
   
       struct Oracles has key {
         upgrade: UpgradeOracle
@@ -70,6 +71,7 @@ address 0x1 {
   
       // Function code: 02
       public fun handler (sender: &signer, id: u64, data: vector<u8>) acquires Oracles {
+        
         // receives payload from oracle_tx.move
         // Check the sender is a validator. 
         assert(DiemSystem::is_validator(Signer::address_of(sender)), Errors::requires_role(150002)); 
@@ -86,7 +88,7 @@ address 0x1 {
   
         // check if qualifies as a new round
         let is_new_round = current_height > upgrade_oracle.vote_window;
-  
+        print(&current_height);
         if (is_new_round) {
           enter_new_upgrade_round(upgrade_oracle, current_height);
         }; 
