@@ -25,6 +25,7 @@ module Reconfigure {
     use 0x1::AccountLimits;
     use 0x1::GAS::GAS;
     use 0x1::LibraConfig;
+    use 0x1::Audit;
     // use 0x1::Debug::print;
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
@@ -121,7 +122,11 @@ module Reconfigure {
             let addr = *Vector::borrow(&top_accounts, i);
             let mined_last_epoch = MinerState::node_above_thresh(vm, addr);
             // TODO: temporary until jail-refactor merge.
-            if ((!Vector::contains(&jailed_set, &addr)) && mined_last_epoch) {
+            if (
+              (!Vector::contains(&jailed_set, &addr)) && 
+              mined_last_epoch && 
+              Audit::val_audit_passing(addr)
+            ) {
                 Vector::push_back(&mut proposed_set, addr);
             };
             i = i+ 1;
