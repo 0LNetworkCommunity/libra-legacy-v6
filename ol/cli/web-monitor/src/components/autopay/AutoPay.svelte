@@ -1,5 +1,4 @@
 <script lang="ts">
-<<<<<<< HEAD
   import AutoPaySummary from "./AutoPaySummary.svelte";
   import "/layout/Style.svelte";
   export let account;
@@ -9,11 +8,6 @@
     total = account.autopay.payments.reduce((a, b) => a + (b.amt || 0), 0);
   }
 </script>
-=======
-    import "/layout/Style.svelte";
-    export let account;
-  </script>
->>>>>>> 453b5dc5f19865d4c0f4787c6029c96a1d32da92
 
 <div>
   <h2 class="uk-text-center uk-text-uppercase uk-text-muted uk-text-light uk-margin-medium-bottom">
@@ -21,7 +15,6 @@
   </h2>
   
   {#if account}
-<<<<<<< HEAD
     {#if account.autopay && account.autopay.payments.length > 0}
       <AutoPaySummary payments={account.autopay.payments}/>
       <div class="uk-overflow-auto">
@@ -34,28 +27,6 @@
               <th class="uk-text-center">type</th>
               <th class="uk-text-center">end epoch</th>
               <th class="uk-text-center">amount</th>
-=======
-    {#if account.auto_pay && account.auto_pay.payments.length > 0}
-      <table class="uk-table">
-        <thead>
-          <tr>
-            <th class="uk-text-center">uid</th>
-            <th class="uk-text-center">type</th>
-            <th class="uk-text-center">payee</th>
-            <th class="uk-text-center uk-visible@s">end epoch</th>
-            <th class="uk-text-center">amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each account.auto_pay.payments as {uid, type_desc, payee, end_epoch, amount}}
-            <tr>
-              <td class="uk-text-center">{uid}</td>
-              <td class="uk-text-center">{type_desc}</td>
-              <td class="uk-visible@s uk-text-center">{payee}</td>
-              <td class="uk-hidden@s uk-text-truncate">{payee}</td>
-              <td class="uk-text-right uk-visible@s">{end_epoch}</td>
-              <td class="uk-text-right">{amount}</td>
->>>>>>> 453b5dc5f19865d4c0f4787c6029c96a1d32da92
             </tr>
           </thead>
           <tbody>

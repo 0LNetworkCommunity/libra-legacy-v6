@@ -97,7 +97,7 @@ script {
         LibraAccount::vm_make_payment_no_limit<GAS>( {{alice}}, oper_alice, 60009, x"", x"", vm);  
         LibraAccount::vm_make_payment_no_limit<GAS>( {{bob}}, oper_bob, 60009, x"", x"", vm);  
         LibraAccount::vm_make_payment_no_limit<GAS>( {{carol}}, oper_carol, 60009, x"", x"", vm);  
-        LibraAccount::vm_make_payment_no_limit<GAS>( {{dave}}, oper_dave, 0009, x"", x"", vm);
+        LibraAccount::vm_make_payment_no_limit<GAS>( {{dave}}, oper_dave, 60009, x"", x"", vm);
 
         let i = 1;
         while (i < 16) {

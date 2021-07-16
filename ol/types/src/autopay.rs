@@ -25,11 +25,8 @@ pub struct AutoPayResource {
 pub struct AutoPayView {
     /// 
     pub payments: Vec<PaymentView>,
-<<<<<<< HEAD
     ///
     pub recurring_sum: u64,
-=======
->>>>>>> 453b5dc5f19865d4c0f4787c6029c96a1d32da92
 }
 
 /// Autopay instruction
@@ -38,11 +35,8 @@ pub struct PaymentView {
     ///
     pub uid: u64,
     ///
-<<<<<<< HEAD
     pub in_type: u8,
     ///
-=======
->>>>>>> 453b5dc5f19865d4c0f4787c6029c96a1d32da92
     pub type_desc: String,
     ///
     pub payee: AccountAddress,
@@ -51,7 +45,6 @@ pub struct PaymentView {
     ///
     pub prev_bal: u64,
     ///
-<<<<<<< HEAD
     pub amt: u64,    
     ///
     pub amount: String,
@@ -64,9 +57,6 @@ impl PaymentView {
     pub fn is_percent_of_change(&self) -> bool {
         self.in_type == 1u8
     }
-=======
-    pub amount: String,
->>>>>>> 453b5dc5f19865d4c0f4787c6029c96a1d32da92
 }
 
 /// Autopay instruction
@@ -145,15 +135,11 @@ impl AutoPayResource {
         let payments = self.payment.iter().map(|each| {
             PaymentView {
                 uid: each.uid,
-<<<<<<< HEAD
                 in_type: each.in_type,
-=======
->>>>>>> 453b5dc5f19865d4c0f4787c6029c96a1d32da92
                 type_desc: each.get_type_desc(),
                 payee: each.payee,
                 end_epoch: each.end_epoch,
                 prev_bal: each.prev_bal,
-<<<<<<< HEAD
                 amt: each.amt,
                 amount: each.get_amount_formatted(),
                 note: None,
@@ -170,11 +156,5 @@ impl AutoPayResource {
             payments: payments,
             recurring_sum: sum,
         }
-=======
-                amount: each.get_amount_formatted(),
-            }
-        }).collect();
-        AutoPayView { payments: payments }
->>>>>>> 453b5dc5f19865d4c0f4787c6029c96a1d32da92
     }
 }
