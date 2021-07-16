@@ -421,7 +421,7 @@ pub fn create_upgrade_payload(build:  &BTreeMap<String, CompiledModule> ) {
   let mut module_path = PathBuf::from("/root/.0L/");
   module_path.push(STAGED_STDLIB_NAME);
   module_path.set_extension(STAGED_EXTENSION);
-  print!(&module_path);
+  print!("{:?} ", &module_path);
   let modules: Vec<Vec<u8>> = build
       .values().into_iter()
       .map(|compiled_module| {
