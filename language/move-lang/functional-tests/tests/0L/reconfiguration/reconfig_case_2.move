@@ -19,13 +19,40 @@
 //! NewBlockEvent
 
 //! new-transaction
+//! sender: libraroot
+script {
+    use 0x1::LibraAccount;
+    use 0x1::GAS::GAS;
+    use 0x1::ValidatorConfig;
+
+    fun main(sender: &signer) {
+        // tranfer enough coins to operators
+        let oper_bob = ValidatorConfig::get_operator({{bob}});
+        let oper_eve = ValidatorConfig::get_operator({{eve}});
+        let oper_dave = ValidatorConfig::get_operator({{dave}});
+        let oper_alice = ValidatorConfig::get_operator({{alice}});
+        let oper_carol = ValidatorConfig::get_operator({{carol}});
+        let oper_frank = ValidatorConfig::get_operator({{frank}});
+        LibraAccount::vm_make_payment_no_limit<GAS>({{bob}}, oper_bob, 50009, x"", x"", sender);
+        LibraAccount::vm_make_payment_no_limit<GAS>({{eve}}, oper_eve, 50009, x"", x"", sender);
+        LibraAccount::vm_make_payment_no_limit<GAS>({{dave}}, oper_dave, 50009, x"", x"", sender);
+        LibraAccount::vm_make_payment_no_limit<GAS>({{alice}}, oper_alice, 50009, x"", x"", sender);
+        LibraAccount::vm_make_payment_no_limit<GAS>({{carol}}, oper_carol, 50009, x"", x"", sender);
+        LibraAccount::vm_make_payment_no_limit<GAS>({{frank}}, oper_frank, 50009, x"", x"", sender);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
 //! sender: alice
 script {
     use 0x1::MinerState;
+    use 0x1::AutoPay2;
 
     fun main(sender: &signer) {
+        AutoPay2::enable_autopay(sender);
+ 
         // Miner is the only one that can update their mining stats. Hence this first transaction.
-
         MinerState::test_helper_mock_mining(sender, 5);
         assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357300101011000);
     }
@@ -36,10 +63,12 @@ script {
 //! sender: bob
 script {
     use 0x1::MinerState;
+    use 0x1::AutoPay2;
 
     fun main(sender: &signer) {
-        // Miner is the only one that can update their mining stats. Hence this first transaction.
+        AutoPay2::enable_autopay(sender);
 
+        // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(sender, 5);
         assert(MinerState::test_helper_get_count({{bob}}) == 5, 7357300101011000);
     }
@@ -50,10 +79,12 @@ script {
 //! sender: carol
 script {
     use 0x1::MinerState;
+       use 0x1::AutoPay2;
 
     fun main(sender: &signer) {
-        // Miner is the only one that can update their mining stats. Hence this first transaction.
+        AutoPay2::enable_autopay(sender);
 
+        // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(sender, 5);
         assert(MinerState::test_helper_get_count({{carol}}) == 5, 7357300101011000);
     }
@@ -64,10 +95,11 @@ script {
 //! sender: dave
 script {
     use 0x1::MinerState;
-
+    use 0x1::AutoPay2;
     fun main(sender: &signer) {
+        AutoPay2::enable_autopay(sender);
+        
         // Miner is the only one that can update their mining stats. Hence this first transaction.
-
         MinerState::test_helper_mock_mining(sender, 5);
         assert(MinerState::test_helper_get_count({{dave}}) == 5, 7357300101011000);
     }
@@ -78,10 +110,11 @@ script {
 //! sender: eve
 script {
     use 0x1::MinerState;
-
+    use 0x1::AutoPay2;
     fun main(sender: &signer) {
+        AutoPay2::enable_autopay(sender); 
+        
         // Miner is the only one that can update their mining stats. Hence this first transaction.
-
         MinerState::test_helper_mock_mining(sender, 5);
         assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357300101011000);
     }
@@ -137,9 +170,10 @@ script {
     fun main(_account: &signer) {
         // We are in a new epoch.
         assert(LibraConfig::get_current_epoch() == 2, 7357180107);
+        print(&73571111);
         print(&LibraSystem::validator_set_size());
         // Tests on initial size of validators 
-        // assert(LibraSystem::validator_set_size() == 5, 7357180207);
+        assert(LibraSystem::validator_set_size() == 5, 7357180207);
         assert(LibraSystem::is_validator({{frank}}) == false, 7357180307);
     }
 }
