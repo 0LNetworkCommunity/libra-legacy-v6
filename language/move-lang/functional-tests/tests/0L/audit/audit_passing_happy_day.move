@@ -14,7 +14,7 @@ script {
     use 0x1::LibraAccount;
     
     fun main(lr: &signer, alice_account: &signer) {
-        assert(ValidatorConfig::is_valid({{alice}}), 1);
+        assert(ValidatorConfig::is_valid({{alice}}), 7357007003001);
         
         // transfer enough coins to operator
         let oper = ValidatorConfig::get_operator({{alice}});
@@ -26,16 +26,17 @@ script {
             x"",
             lr
         );               
-        assert(LibraAccount::balance<GAS>(oper) == 50009, 1);
+        assert(LibraAccount::balance<GAS>(oper) == 50009, 7357007003002);
         
         // enable autopay
-        assert(!AutoPay2::is_enabled({{alice}}), 1);
+        assert(!AutoPay2::is_enabled({{alice}}), 7357007003003);
         AutoPay2::enable_autopay(alice_account);
-        assert(AutoPay2::is_enabled({{alice}}), 1);
+        assert(AutoPay2::is_enabled({{alice}}), 7357007003004);
 
-        assert(MinerState::is_init({{alice}}), 1);
+        assert(MinerState::is_init({{alice}}), 7357007003005);
 
-        assert(Audit::val_audit_passing({{alice}}), 1);
+        // audit must pass
+        assert(Audit::val_audit_passing({{alice}}), 7357007003006);
     }
 }
 // check: EXECUTED

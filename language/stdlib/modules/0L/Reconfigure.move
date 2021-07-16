@@ -26,7 +26,7 @@ module Reconfigure {
     use 0x1::GAS::GAS;
     use 0x1::LibraConfig;
     use 0x1::Audit;
-    // use 0x1::Debug::print;
+    use 0x1::Debug::print;
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
     public fun reconfigure(vm: &signer, height_now: u64) {
@@ -117,7 +117,7 @@ module Reconfigure {
 
         let i = 0;
         while (i < Vector::length<address>(&top_accounts)) {
-// print(&03251);
+            print(&03251);
 
             let addr = *Vector::borrow(&top_accounts, i);
             let mined_last_epoch = MinerState::node_above_thresh(vm, addr);

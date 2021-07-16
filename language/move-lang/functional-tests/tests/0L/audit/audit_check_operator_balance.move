@@ -16,14 +16,14 @@ script {
     fun main(lr: &signer, alice_account: &signer) {
         // enable autopay
         AutoPay2::enable_autopay(alice_account);
-        assert(AutoPay2::is_enabled({{alice}}), 1);
-        assert(ValidatorConfig::is_valid({{alice}}), 1);
-        assert(MinerState::is_init({{alice}}), 1);
+        assert(AutoPay2::is_enabled({{alice}}), 7357007002001);
+        assert(ValidatorConfig::is_valid({{alice}}), 7357007002002);
+        assert(MinerState::is_init({{alice}}), 7357007002003);
         
         // check operator zero balance
         let oper = ValidatorConfig::get_operator({{alice}});
-        assert(LibraAccount::balance<GAS>(oper) == 0, 1);        
-        assert(!Audit::val_audit_passing({{alice}}), 1);
+        assert(LibraAccount::balance<GAS>(oper) == 0, 7357007002004);        
+        assert(!Audit::val_audit_passing({{alice}}), 7357007002005);
 
         // transfer not enough balance to operator
         let oper = ValidatorConfig::get_operator({{alice}});
@@ -35,8 +35,8 @@ script {
             x"",
             lr
         );
-        assert(LibraAccount::balance<GAS>(oper) == 49999, 1);
-        assert(!Audit::val_audit_passing({{alice}}), 1);
+        assert(LibraAccount::balance<GAS>(oper) == 49999, 7357007002006);
+        assert(!Audit::val_audit_passing({{alice}}), 7357007002007);
     }
 }
 // check: EXECUTED
