@@ -15,6 +15,13 @@ fn main() {
         .name("Move standard library")
         .author("The Diem Core Contributors")
         .arg(Arg::with_name("output").long("output").help("use a custom output path").takes_value(true))
+        //////// 0L ////////
+        .arg(
+            Arg::with_name("upgrade")
+                .long("upgrade")
+                .help("create a single file for network upgrade"),
+        )
+        //////// end 0L ////////
         .arg(
             Arg::with_name("no-doc")
                 .long("no-doc")
@@ -58,6 +65,7 @@ fn main() {
         script_builder: !matches.is_present("no-script-builder"),
         errmap: !matches.is_present("no-errmap"),
         time_it: true,
+        upgrade_payload: matches.is_present("upgrade"),
     };
 
     // Make sure that the current directory is `language/diem-framework` from now on.

@@ -1837,6 +1837,7 @@ dependencies = [
  "bcs",
  "bytecode-verifier",
  "diem-crypto",
+ "diem-framework",
  "diem-types",
  "diem-workspace-hack",
  "include_dir",

@@ -5,7 +5,7 @@ use anyhow::{bail, Result};
 use diem_types::transaction::ScriptFunction;
 use include_dir::{include_dir, Dir};
 use once_cell::sync::Lazy;
-use std::{convert::TryFrom, path::PathBuf};
+use std::{convert::TryFrom, fs::File, io::Write, path::PathBuf};
 use vm::file_format::CompiledModule;
 
 use bytecode_verifier::verify_module; //////// 0L ////////
@@ -14,6 +14,17 @@ pub mod legacy;
 
 #[cfg(test)]
 mod tests;
+
+//////// 0L ////////
+// for Upgrade oracle
+/// The output path under which staged files will be put
+pub const STAGED_OUTPUT_PATH: &str = "staged";
+/// The file name for the staged stdlib
+pub const STAGED_STDLIB_NAME: &str = "stdlib";
+/// The extension for staged files
+pub const STAGED_EXTENSION: &str = "mv";
+//////// 0L end ////////
+
 
 /// The compiled library needs to be included in the Rust binary due to Docker deployment issues.
 const RELEASES_DIR: Dir = include_dir!("artifacts");
@@ -138,4 +149,23 @@ pub fn import_stdlib(lib_bytes: &Vec<u8>) -> Vec<CompiledModule> {
         verified_modules.push(module)
     }
     verified_modules
+}
+
+
+//////// 0L ////////
+pub fn create_upgrade_payload() {
+  let mut module_path = PathBuf::from(STAGED_OUTPUT_PATH);
+  module_path.push(STAGED_STDLIB_NAME);
+  module_path.set_extension(STAGED_EXTENSION);
+  let modules: Vec<Vec<u8>> = build_stdlib()
+      .values().into_iter()
+      .map(|compiled_module| {
+          let mut ser = Vec::new();
+          compiled_module.serialize(&mut ser).unwrap();
+          ser
+      })
+      .collect();
+  let bytes = bcs::to_bytes(&modules).unwrap();
+  let mut module_file = File::create(module_path).unwrap();
+  module_file.write_all(&bytes).unwrap();
 }

@@ -4,13 +4,18 @@
 use crate::{path_in_crate, save_binary};
 use log::LevelFilter;
 use move_core_types::language_storage::ModuleId;
-use std::{
-    collections::BTreeMap,
-    fs::{create_dir_all, remove_dir_all, File},
-    io::Read,
-    path::Path,
-};
+use std::{collections::BTreeMap, fs::{create_dir_all, remove_dir_all, File}, io::{Read, Write}, path::{Path, PathBuf}};
 use vm::{compatibility::Compatibility, normalized::Module, CompiledModule};
+
+//////// 0L ////////
+// for Upgrade oracle
+/// The output path under which staged files will be put
+pub const STAGED_OUTPUT_PATH: &str = "staged";
+/// The file name for the staged stdlib
+pub const STAGED_STDLIB_NAME: &str = "stdlib";
+/// The extension for staged files
+pub const STAGED_EXTENSION: &str = "mv";
+//////// 0L end ////////
 
 fn recreate_dir(dir_path: impl AsRef<Path>) {
     let dir_path = dir_path.as_ref();
@@ -268,6 +273,7 @@ pub struct ReleaseOptions {
     pub script_builder: bool,
     pub errmap: bool,
     pub time_it: bool,
+    pub upgrade_payload: bool, //////// 0L ////////
 }
 
 impl Default for ReleaseOptions {
@@ -282,6 +288,7 @@ impl Default for ReleaseOptions {
             script_builder: true,
             errmap: true,
             time_it: false,
+            upgrade_payload: true,
         }
     }
 }
@@ -321,6 +328,14 @@ pub fn create_release(output_path: impl AsRef<Path>, options: &ReleaseOptions) {
         }
 
         let modules = run_step(msg("Compiling modules"), || build_modules(&modules_path));
+        
+        //////// 0L ////////
+        if options.upgrade_payload {
+            run_step(msg("Generating upgrade payload"), || {
+              create_upgrade_payload(&modules);
+            });
+        }
+        //////// end 0L ////////
 
         if let Some(old_module_apis) = old_module_apis {
             run_step(msg("Checking linking/layout compatibility"), || {
@@ -373,4 +388,49 @@ pub fn create_release(output_path: impl AsRef<Path>, options: &ReleaseOptions) {
             build_error_code_map(&err_exp_path)
         });
     }
+
+
+}
+
+
+// //////// 0L ////////
+// // Update stdlib with a byte string, used as part of the upgrade oracle
+// pub fn import_stdlib(lib_bytes: &Vec<u8>) -> Vec<CompiledModule> {
+//     let modules : Vec<CompiledModule> = bcs::from_bytes::<Vec<Vec<u8>>>(lib_bytes)
+//         .unwrap_or(vec![]) // set as empty array if err occurred
+//         .into_iter()
+//         .map(|bytes| CompiledModule::deserialize(&bytes).unwrap())
+//         .collect();
+
+//     // verify the compiled module
+//     let mut verified_modules = vec![];
+//     for module in modules {
+//         verify_module(&module).expect("stdlib module failed to verify");
+//         // DependencyChecker::verify_module(&module, &verified_modules)
+//         //     .expect("stdlib module dependency failed to verify");
+//         verified_modules.push(module)
+//     }
+//     verified_modules
+// }
+
+
+//////// 0L ////////
+pub fn create_upgrade_payload(build:  &BTreeMap<String, CompiledModule> ) {
+  // let mut module_path = PathBuf::from(STAGED_OUTPUT_PATH);
+  // TODO: set the .0L path the right way.
+  let mut module_path = PathBuf::from("/root/.0L/");
+  module_path.push(STAGED_STDLIB_NAME);
+  module_path.set_extension(STAGED_EXTENSION);
+  print!(&module_path);
+  let modules: Vec<Vec<u8>> = build
+      .values().into_iter()
+      .map(|compiled_module| {
+          let mut ser = Vec::new();
+          compiled_module.serialize(&mut ser).unwrap();
+          ser
+      })
+      .collect();
+  let bytes = bcs::to_bytes(&modules).unwrap();
+  let mut module_file = File::create(module_path).unwrap();
+  module_file.write_all(&bytes).unwrap();
 }

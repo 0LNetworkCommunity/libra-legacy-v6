@@ -21,6 +21,7 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemBlock.md#0x1_DiemBlock">0x1::DiemBlock</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
@@ -254,6 +255,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Oracle.md#0x1_Oracle_handler">handler</a> (sender: &signer, id: u64, data: vector&lt;u8&gt;) <b>acquires</b> <a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a> {
+
   // receives payload from oracle_tx.<b>move</b>
   // Check the sender is a validator.
   <b>assert</b>(<a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender)), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(150002));
@@ -290,7 +292,7 @@
 
   // check <b>if</b> qualifies <b>as</b> a new round
   <b>let</b> is_new_round = current_height &gt; upgrade_oracle.vote_window;
-
+  print(&current_height);
   <b>if</b> (is_new_round) {
     <a href="Oracle.md#0x1_Oracle_enter_new_upgrade_round">enter_new_upgrade_round</a>(upgrade_oracle, current_height);
   };
