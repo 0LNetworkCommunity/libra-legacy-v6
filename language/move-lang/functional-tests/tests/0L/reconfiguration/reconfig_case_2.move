@@ -26,7 +26,7 @@ script {
     use 0x1::ValidatorConfig;
 
     fun main(sender: &signer) {
-        // tranfer enough coins to operators
+        // Transfer enough coins to operators
         let oper_bob = ValidatorConfig::get_operator({{bob}});
         let oper_eve = ValidatorConfig::get_operator({{eve}});
         let oper_dave = ValidatorConfig::get_operator({{dave}});
@@ -54,7 +54,7 @@ script {
  
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357008007001);
     }
 }
 //check: EXECUTED
@@ -70,7 +70,7 @@ script {
 
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{bob}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{bob}}) == 5, 7357008007002);
     }
 }
 //check: EXECUTED
@@ -86,7 +86,7 @@ script {
 
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{carol}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{carol}}) == 5, 7357008007003);
     }
 }
 //check: EXECUTED
@@ -101,7 +101,7 @@ script {
         
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{dave}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{dave}}) == 5, 7357008007004);
     }
 }
 //check: EXECUTED
@@ -116,7 +116,7 @@ script {
         
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357008007005);
     }
 }
 //check: EXECUTED
@@ -143,8 +143,8 @@ script {
             i = i + 1;
         };
 
-        assert(LibraSystem::validator_set_size() == 6, 7357000180101);
-        assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
+        assert(LibraSystem::validator_set_size() == 6, 7357008007006);
+        assert(LibraSystem::is_validator({{alice}}) == true, 7357008007007);
     }
 }
 //check: EXECUTED
@@ -169,12 +169,12 @@ script {
 
     fun main(_account: &signer) {
         // We are in a new epoch.
-        assert(LibraConfig::get_current_epoch() == 2, 7357180107);
+        assert(LibraConfig::get_current_epoch() == 2, 7357008007008);
         print(&73571111);
         print(&LibraSystem::validator_set_size());
         // Tests on initial size of validators 
-        assert(LibraSystem::validator_set_size() == 5, 7357180207);
-        assert(LibraSystem::is_validator({{frank}}) == false, 7357180307);
+        assert(LibraSystem::validator_set_size() == 5, 7357008007009);
+        assert(LibraSystem::is_validator({{frank}}) == false, 7357008007010);
     }
 }
 //check: EXECUTED

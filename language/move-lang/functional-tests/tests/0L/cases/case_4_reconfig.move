@@ -1,3 +1,4 @@
+
 // This tests consensus Case 3.
 // DAVE is a validator.
 // DID NOT validate successfully.
@@ -17,14 +18,40 @@
 //! NewBlockEvent
 
 //! new-transaction
-//! sender: alice
+//! sender: libraroot
 script {
-    
-    use 0x1::MinerState;
+    use 0x1::LibraAccount;
+    use 0x1::GAS::GAS;
+    use 0x1::ValidatorConfig;
 
     fun main(sender: &signer) {
-        // Alice is the only one that can update her mining stats. Hence this first transaction.
+        // tranfer enough coins to operators
+        let oper_bob = ValidatorConfig::get_operator({{bob}});
+        let oper_eve = ValidatorConfig::get_operator({{eve}});
+        let oper_dave = ValidatorConfig::get_operator({{dave}});
+        let oper_alice = ValidatorConfig::get_operator({{alice}});
+        let oper_carol = ValidatorConfig::get_operator({{carol}});
+        let oper_frank = ValidatorConfig::get_operator({{frank}});
+        LibraAccount::vm_make_payment_no_limit<GAS>({{bob}}, oper_bob, 50009, x"", x"", sender);
+        LibraAccount::vm_make_payment_no_limit<GAS>({{eve}}, oper_eve, 50009, x"", x"", sender);
+        LibraAccount::vm_make_payment_no_limit<GAS>({{dave}}, oper_dave, 50009, x"", x"", sender);
+        LibraAccount::vm_make_payment_no_limit<GAS>({{alice}}, oper_alice, 50009, x"", x"", sender);
+        LibraAccount::vm_make_payment_no_limit<GAS>({{carol}}, oper_carol, 50009, x"", x"", sender);
+        LibraAccount::vm_make_payment_no_limit<GAS>({{frank}}, oper_frank, 50009, x"", x"", sender);
+    }
+}
+//check: EXECUTED
 
+//! new-transaction
+//! sender: alice
+script {
+    use 0x1::MinerState;
+    use 0x1::AutoPay2;
+
+    fun main(sender: &signer) {
+        AutoPay2::enable_autopay(sender);
+
+        // Alice is the only one that can update her mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(sender, 5);
         assert(MinerState::get_count_in_epoch({{alice}}) == 5, 7357300101011000);
     }
@@ -34,12 +61,13 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    
     use 0x1::MinerState;
+    use 0x1::AutoPay2;
 
     fun main(sender: &signer) {
-        // Alice is the only one that can update her mining stats. Hence this first transaction.
+        AutoPay2::enable_autopay(sender);
 
+        // Bob is the only one that can update her mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(sender, 5);
         assert(MinerState::get_count_in_epoch({{bob}}) == 5, 7357300101011000);
     }
@@ -50,12 +78,13 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    
     use 0x1::MinerState;
+    use 0x1::AutoPay2;
 
     fun main(sender: &signer) {
-        // Alice is the only one that can update her mining stats. Hence this first transaction.
+        AutoPay2::enable_autopay(sender);
 
+        // Carol is the only one that can update her mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(sender, 5);
         assert(MinerState::get_count_in_epoch({{carol}}) == 5, 7357300101011000);
     }
@@ -69,11 +98,13 @@ script {
 //! new-transaction
 //! sender: eve
 script {
-    
     use 0x1::MinerState;
+    use 0x1::AutoPay2;
 
     fun main(sender: &signer) {
-        // Alice is the only one that can update her mining stats. Hence this first transaction.
+        AutoPay2::enable_autopay(sender);
+
+        // Eve is the only one that can update her mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(sender, 5);
         assert(MinerState::get_count_in_epoch({{eve}}) == 5, 7357300101011000);
     }
@@ -83,12 +114,13 @@ script {
 //! new-transaction
 //! sender: frank
 script {
-    
     use 0x1::MinerState;
+    use 0x1::AutoPay2;
 
     fun main(sender: &signer) {
-        // Alice is the only one that can update her mining stats. Hence this first transaction.
+        AutoPay2::enable_autopay(sender);
 
+        // Frank is the only one that can update her mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(sender, 5);
         assert(MinerState::get_count_in_epoch({{frank}}) == 5, 7357300101011000);
     }
@@ -157,7 +189,6 @@ script {
 script {
     use 0x1::Cases;
     
-    
     fun main(vm: &signer) {
         // We are in a new epoch.
         // Check carol is in the the correct case during reconfigure
@@ -176,28 +207,29 @@ script {
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-
 //! new-transaction
 //! sender: libraroot
 script {
-    
     use 0x1::LibraSystem;
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
     use 0x1::LibraConfig;
-    
+    use 0x1::Debug::print;
 
     fun main(_account: &signer) {
         // We are in a new epoch.
 
         // Check the validator set is at expected size
+        
+        print(&7357666);
+        print(&LibraSystem::validator_set_size());
+
         assert(LibraSystem::validator_set_size() == 5, 7357000180110);
         assert(LibraSystem::is_validator({{dave}}) == false, 7357000180111);            
         assert(LibraAccount::balance<GAS>({{dave}}) == 1, 7357000180112);
         assert(NodeWeight::proof_of_weight({{dave}}) == 0, 7357000180113);  
         assert(LibraConfig::get_current_epoch()==2, 7357000180114);
-
     }
 }
 //check: EXECUTED

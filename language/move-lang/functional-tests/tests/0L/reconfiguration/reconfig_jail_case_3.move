@@ -27,7 +27,7 @@ script {
         // Miner is the only one that can update their mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::get_count_in_epoch({{alice}}) == 5, 7357300101011000);
+        assert(MinerState::get_count_in_epoch({{alice}}) == 5, 7357008009001);
     }
 }
 //check: EXECUTED
@@ -41,7 +41,7 @@ script {
         // Miner is the only one that can update their mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{bob}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{bob}}) == 5, 7357008009002);
     }
 }
 //check: EXECUTED
@@ -55,7 +55,7 @@ script {
         // Miner is the only one that can update their mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{carol}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{carol}}) == 5, 7357008009003);
     }
 }
 //check: EXECUTED
@@ -69,7 +69,7 @@ script {
         // Miner is the only one that can update their mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{dave}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{dave}}) == 5, 7357008009004);
     }
 }
 //check: EXECUTED
@@ -83,7 +83,7 @@ script {
         // Miner is the only one that can update their mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::get_count_in_epoch({{eve}}) == 5, 7357300101011000);
+        assert(MinerState::get_count_in_epoch({{eve}}) == 5, 7357008009005);
     }
 }
 //check: EXECUTED
@@ -111,8 +111,8 @@ script {
             i = i + 1;
         };
 
-        assert(LibraSystem::validator_set_size() == 6, 7357000180101);
-        assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
+        assert(LibraSystem::validator_set_size() == 6, 7357008009006);
+        assert(LibraSystem::is_validator({{alice}}) == true, 7357008009007);
     }
 }
 //check: EXECUTED
@@ -137,11 +137,11 @@ script {
 
     fun main(_account: &signer) {
         // We are in a new epoch.
-        assert(LibraConfig::get_current_epoch() == 2, 7357180107);
+        assert(LibraConfig::get_current_epoch() == 2, 7357008009008);
         print(&LibraSystem::validator_set_size());
         // Tests on initial size of validators 
-        assert(LibraSystem::validator_set_size() == 4, 7357180207);
-        assert(LibraSystem::is_validator({{eve}}) == false, 7357180307);
+        assert(LibraSystem::validator_set_size() == 4, 7357008009009);
+        assert(LibraSystem::is_validator({{eve}}) == false, 7357008009010);
     }
 }
 //check: EXECUTED
