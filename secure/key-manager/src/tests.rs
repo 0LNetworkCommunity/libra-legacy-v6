@@ -748,7 +748,7 @@ fn verify_validator_config_info_mismatch<T: DiemInterface>(mut node: Node<T>) {
         script,
         MAX_GAS_AMOUNT,
         GAS_UNIT_PRICE,
-        XUS_NAME.to_owned(),
+        XUS_NAME.to_owned(), /////// 0L /////////
         node.time.now_secs() + TXN_EXPIRATION_SECS,
         diem_types::chain_id::ChainId::test(),
     );

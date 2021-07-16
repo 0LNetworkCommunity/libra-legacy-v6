@@ -47,7 +47,7 @@ use {{default}}::Holder;
       AccountLimits::publish_unrestricted_limits<GAS>(&alice_account);
       AccountLimits::update_limits_definition<GAS>(&lr, {{alice}}, 0, 10000, 0, 1);
       AccountLimits::publish_window<GAS>(&lr, &alice_account, {{alice}});
-    Holder::hold(&alice_account, DiemAccount::balance<GAS>({{alice}}));
+      Holder::hold(&alice_account, DiemAccount::balance<GAS>({{alice}}));
   }
 }
 // check: "Keep(EXECUTED)"
@@ -64,7 +64,7 @@ use {{default}}::Holder;
       AccountLimits::publish_unrestricted_limits<GAS>(&jim_account);
       AccountLimits::update_limits_definition<GAS>(&lr, {{jim}}, 0, 10000, 0, 1);
       AccountLimits::publish_window<GAS>(&lr, &jim_account, {{jim}});
-    Holder::hold(&jim_account, DiemAccount::balance<GAS>({{jim}}));
+      Holder::hold(&jim_account, DiemAccount::balance<GAS>({{jim}}));
   }
 }
 // check: "Keep(EXECUTED)"
@@ -81,7 +81,7 @@ use {{default}}::Holder;
       AccountLimits::publish_unrestricted_limits<GAS>(&lucy_account);
       AccountLimits::update_limits_definition<GAS>(&lr, {{lucy}}, 0, 10000, 0, 1);
       AccountLimits::publish_window<GAS>(&lr, &lucy_account, {{lucy}});
-    Holder::hold(&lucy_account, DiemAccount::balance<GAS>({{lucy}}));
+      Holder::hold(&lucy_account, DiemAccount::balance<GAS>({{lucy}}));
   }
 }
 // check: "Keep(EXECUTED)"
@@ -98,7 +98,7 @@ use {{default}}::Holder;
       AccountLimits::publish_unrestricted_limits<GAS>(&paul_account);
       AccountLimits::update_limits_definition<GAS>(&lr, {{paul}}, 0, 10000, 0, 1);
       AccountLimits::publish_window<GAS>(&lr, &paul_account, {{paul}});
-    Holder::hold(&paul_account, DiemAccount::balance<GAS>({{paul}}));
+      Holder::hold(&paul_account, DiemAccount::balance<GAS>({{paul}}));
   }
 }
 // check: "Keep(EXECUTED)"
@@ -115,7 +115,7 @@ use {{default}}::Holder;
       AccountLimits::publish_unrestricted_limits<GAS>(&thomas_account);
       AccountLimits::update_limits_definition<GAS>(&lr, {{thomas}}, 0, 10000, 0, 1);
       AccountLimits::publish_window<GAS>(&lr, &thomas_account, {{thomas}});
-    Holder::hold(&thomas_account, DiemAccount::balance<GAS>({{thomas}}));
+      Holder::hold(&thomas_account, DiemAccount::balance<GAS>({{thomas}}));
   }
 }
 // check: "Keep(EXECUTED)"
@@ -132,7 +132,7 @@ use {{default}}::Holder;
       AccountLimits::publish_unrestricted_limits<GAS>(&denice_account);
       AccountLimits::update_limits_definition<GAS>(&lr, {{denice}}, 0, 10000, 0, 1);
       AccountLimits::publish_window<GAS>(&lr, &denice_account, {{denice}});
-    Holder::hold(&denice_account, DiemAccount::balance<GAS>({{denice}}));
+      Holder::hold(&denice_account, DiemAccount::balance<GAS>({{denice}}));
   }
 }
 // check: "Keep(EXECUTED)"
@@ -149,7 +149,7 @@ use {{default}}::Holder;
       AccountLimits::publish_unrestricted_limits<GAS>(&carlos_account);
       AccountLimits::update_limits_definition<GAS>(&lr, {{carlos}}, 0, 10000, 0, 1);
       AccountLimits::publish_window<GAS>(&lr, &carlos_account, {{carlos}});
-    Holder::hold(&carlos_account, DiemAccount::balance<GAS>({{carlos}}));
+      Holder::hold(&carlos_account, DiemAccount::balance<GAS>({{carlos}}));
   }
 }
 // check: "Keep(EXECUTED)"
@@ -166,7 +166,7 @@ use {{default}}::Holder;
       AccountLimits::publish_unrestricted_limits<GAS>(&eric_account);
       AccountLimits::update_limits_definition<GAS>(&lr, {{eric}}, 0, 10000, 0, 1);
       AccountLimits::publish_window<GAS>(&lr, &eric_account, {{eric}});
-    Holder::hold(&eric_account, DiemAccount::balance<GAS>({{eric}}));
+      Holder::hold(&eric_account, DiemAccount::balance<GAS>({{eric}}));
   }
 }
 // check: "Keep(EXECUTED)"

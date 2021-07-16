@@ -11,7 +11,6 @@ address 0x1 {
     use 0x1::Upgrade;
     use 0x1::DiemBlock;
     use 0x1::CoreAddresses;
-    use 0x1::Debug::print;
   
       struct Oracles has key {
         upgrade: UpgradeOracle
@@ -88,7 +87,6 @@ address 0x1 {
   
         // check if qualifies as a new round
         let is_new_round = current_height > upgrade_oracle.vote_window;
-        print(&current_height);
         if (is_new_round) {
           enter_new_upgrade_round(upgrade_oracle, current_height);
         }; 
