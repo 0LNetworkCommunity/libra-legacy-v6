@@ -43,6 +43,41 @@ script {
 }
 //check: EXECUTED
 
+//! new-transaction
+//! sender: alice
+script {
+    use 0x1::AutoPay2;
+    fun main(sender: &signer) {
+        AutoPay2::enable_autopay(sender);
+    }
+}
+
+//! new-transaction
+//! sender: bob
+script {
+    use 0x1::AutoPay2;
+    fun main(sender: &signer) {
+        AutoPay2::enable_autopay(sender);
+    }
+}
+
+//! new-transaction
+//! sender: carol
+script {
+    use 0x1::AutoPay2;
+    fun main(sender: &signer) {
+        AutoPay2::enable_autopay(sender);
+    }
+}
+
+//! new-transaction
+//! sender: dave
+script {
+    use 0x1::AutoPay2;
+    fun main(sender: &signer) {
+        AutoPay2::enable_autopay(sender);
+    }
+}
 
 //! new-transaction
 //! sender: libraroot
@@ -65,31 +100,12 @@ script {
         assert(LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B) == false, 7357000180104);
         assert(MinerState::is_init(0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180105);
 
-        // Mock everyone being a CASE 1
-        let voters = Vector::empty<address>();
-        Vector::push_back<address>(&mut voters, {{alice}});
-        Vector::push_back<address>(&mut voters, {{bob}});
-        Vector::push_back<address>(&mut voters, {{carol}});
-        Vector::push_back<address>(&mut voters, {{dave}});
-
         MinerState::test_helper_mock_mining_vm(vm, {{alice}}, 20);
         MinerState::test_helper_mock_mining_vm(vm, {{bob}}, 20);
         MinerState::test_helper_mock_mining_vm(vm, {{carol}}, 20);
         MinerState::test_helper_mock_mining_vm(vm, {{dave}}, 20);
 
-        let alice_sig = LibraAccount::test_helper_create_signer(vm, {{alice}});
-        let bob_sig = LibraAccount::test_helper_create_signer(vm, {{bob}});
-        let carol_sig = LibraAccount::test_helper_create_signer(vm, {{carol}});
-        let dave_sig = LibraAccount::test_helper_create_signer(vm, {{dave}});
-        AutoPay2::enable_autopay(&alice_sig);
-        AutoPay2::enable_autopay(&bob_sig);
-        AutoPay2::enable_autopay(&carol_sig);
-        AutoPay2::enable_autopay(&dave_sig);
-        LibraAccount::test_helper_destroy_signer(vm, alice_sig);
-        LibraAccount::test_helper_destroy_signer(vm, bob_sig);
-        LibraAccount::test_helper_destroy_signer(vm, carol_sig);
-        LibraAccount::test_helper_destroy_signer(vm, dave_sig);
-
+        // Transfer coins to operators
         let oper_alice = ValidatorConfig::get_operator({{alice}});
         let oper_bob = ValidatorConfig::get_operator({{bob}});
         let oper_carol = ValidatorConfig::get_operator({{carol}});
@@ -99,6 +115,12 @@ script {
         LibraAccount::vm_make_payment_no_limit<GAS>( {{carol}}, oper_carol, 60009, x"", x"", vm);  
         LibraAccount::vm_make_payment_no_limit<GAS>( {{dave}}, oper_dave, 60009, x"", x"", vm);
 
+        // Mock everyone being a CASE 1
+        let voters = Vector::empty<address>();
+        Vector::push_back<address>(&mut voters, {{alice}});
+        Vector::push_back<address>(&mut voters, {{bob}});
+        Vector::push_back<address>(&mut voters, {{carol}});
+        Vector::push_back<address>(&mut voters, {{dave}});
         let i = 1;
         while (i < 16) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
