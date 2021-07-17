@@ -87,7 +87,6 @@ script {
     use 0x1::Vector;
     use 0x1::MinerState;
     use 0x1::Stats;
-    use 0x1::AutoPay2;
     use 0x1::LibraAccount;
     use 0x1::GAS::GAS;
     use 0x1::ValidatorConfig;
