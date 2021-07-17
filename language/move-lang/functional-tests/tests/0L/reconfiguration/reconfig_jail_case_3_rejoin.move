@@ -345,12 +345,11 @@ script {
 //! new-transaction
 //! sender: eve
 script {
-use 0x1::MinerState;
-// use 0x1::LibraConfig;
-fun main(sender: &signer) {
-    // Mock some mining so Eve can send rejoin tx
-    MinerState::test_helper_mock_mining(sender, 100);
-}
+    use 0x1::MinerState;
+    fun main(sender: &signer) {
+        // Mock some mining so Eve can send rejoin tx
+        MinerState::test_helper_mock_mining(sender, 100);
+    }
 }
 
 // EVE SENDS JOIN TX
