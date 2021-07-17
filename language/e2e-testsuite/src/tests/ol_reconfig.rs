@@ -5,8 +5,11 @@ use diem_transaction_builder::stdlib::{
     self as transaction_builder, 
     encode_add_validator_and_reconfigure_script_function, 
     encode_create_validator_account_script_function, 
+    encode_create_validator_operator_account_script_function, 
     encode_ol_reconfig_bulk_update_setup_script_function, 
-    encode_register_validator_config_script_function
+    encode_register_validator_config_script_function, 
+    encode_set_validator_operator_script_function,
+    encode_minerstate_commit_script_function
 };
 use diem_types::{account_config::from_currency_code_string, vm_status::KeptVMStatus};
 use language_e2e_tests::{
@@ -29,11 +32,12 @@ fn reconfig_bulk_update_test() {
 
     // Create some accounts to be able to call a tx script and be validators
     let diem_root = Account::new_diem_root();
-    let mut accounts = vec![];
+    let mut validators = vec![];
+
     for _i in 0..5 {
-        accounts.push(Account::new());
+        validators.push(Account::new());
     }
-    println!("created new validator accounts");
+    println!("--- created new validator accounts");
 
     // Register account data for diem root
     let diem_root_data = AccountData::with_account(
@@ -54,8 +58,8 @@ fn reconfig_bulk_update_test() {
                 .transaction()
                 .payload(encode_create_validator_account_script_function(
                     sequence_number,
-                    *accounts.get(i).unwrap().address(),
-                    accounts.get(i).unwrap().auth_key_prefix(),
+                    *validators.get(i).unwrap().address(),
+                    validators.get(i).unwrap().auth_key_prefix(),
                     (**names.get(i).unwrap()).to_string().into_bytes(),
                 ))
                 .sequence_number(sequence_number)
@@ -63,19 +67,53 @@ fn reconfig_bulk_update_test() {
         );
         sequence_number += 1;
     }
-    println!("registered new validator accounts");
+    println!("--- registered new validator accounts");
+
+    executor.new_block();
+
+    let operator_account = executor.create_raw_account();
+
+    // Add operator
+    executor.execute_and_apply(
+        diem_root_data.account()
+            .transaction()
+            .payload(encode_create_validator_operator_account_script_function(
+                sequence_number,
+                *operator_account.address(),
+                operator_account.auth_key_prefix(),
+                b"operator".to_vec(),
+            ))
+            .sequence_number(sequence_number)
+            .sign(),
+    );
+    sequence_number += 1;
+    println!("--- created operator account");
+
+    for i in 0..5 {
+        // validators set operator
+        executor.execute_and_apply(
+            validators.get(i).unwrap()
+                .transaction()
+                .payload(encode_set_validator_operator_script_function(
+                    b"operator".to_vec(),
+                    *operator_account.address(),
+                ))
+                .sequence_number(0)
+                .sign(),
+        );
+    }
+    println!("--- validators set their operator account");
+
     executor.new_block();
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     // register validator config
     for i in 0..5 {
         executor.execute_and_apply(
-            accounts
-                .get(i)
-                .unwrap()
+            operator_account
                 .transaction()
                 .payload(encode_register_validator_config_script_function(
-                    *accounts.get(i).unwrap().address(),
+                    *validators.get(i).unwrap().address(),
                     [
                         0xd7, 0x5a, 0x98, 0x01, 0x82, 0xb1, 0x0a, 0xb7, 0xd5, 0x4b, 0xfe, 0xd3,
                         0xc9, 0x64, 0x07, 0x3a, 0x0e, 0xe1, 0x72, 0xf3, 0xda, 0xa6, 0x23, 0x25,
@@ -85,12 +123,11 @@ fn reconfig_bulk_update_test() {
                     vec![254; 32],
                     vec![253; 32],
                 ))
-                .sequence_number(0)
+                .sequence_number(i as u64)
                 .sign(),
         );
     }
-    println!("registered validators");
-    executor.new_block();
+    println!("--- registered validator configs");
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Actually register the accounts as validators
@@ -102,20 +139,22 @@ fn reconfig_bulk_update_test() {
                 .payload(encode_add_validator_and_reconfigure_script_function(
                     sequence_number,
                     (**names.get(i).unwrap()).to_string().into_bytes(),
-                    *accounts.get(i).unwrap().address(),
+                    *validators.get(i).unwrap().address(),
                 ))
                 .sequence_number(sequence_number)
                 .sign(),
         );
         sequence_number += 1;
     }
-    println!("registered and reconfiged validators");
+    println!("--- registered and reconfigured validators");
+
     executor.new_block();
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     // borrowed from minerstate commit test, register the minerstate for the new validators
 
-    // This test uses Alice's block_1 proof (../fixtures/block_1.json.stage.alice), assuming she has participated in a genesis ceremony.
+    // This test uses Alice's block_1 proof (../fixtures/block_1.json.stage.alice), 
+    // assuming she has participated in a genesis ceremony.
     let preimage = hex::decode(
         "3190cef88aa2fb86fbfa062f62be33d08d1493e982597d7be286ab5b6d01e4b0"
     ).unwrap();
@@ -126,7 +165,7 @@ fn reconfig_bulk_update_test() {
     let payload = transaction_builder::encode_minerstate_helper_script_function();
     for i in 0..5 {
         executor.execute_and_apply(
-            accounts
+            validators
                 .get(i)
                 .unwrap()
                 .transaction()
@@ -135,13 +174,13 @@ fn reconfig_bulk_update_test() {
                 .sign(),
         );
     }
-    println!("minerstate_helper_script executed successfully");
+    println!("--- minerstate_helper_script executed successfully");
 
-    let payload = transaction_builder::encode_minerstate_commit_script_function(preimage, proof);
+    let payload = encode_minerstate_commit_script_function(preimage, proof);
 
     for i in 0..5 {
         executor.execute_and_apply(
-            accounts
+            validators
                 .get(i)
                 .unwrap()
                 .transaction()
@@ -150,7 +189,7 @@ fn reconfig_bulk_update_test() {
                 .sign(),
         );
     }
-    println!("minerstate_commit executed successfully");
+    println!("--- minerstate_commit executed successfully");
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Construct the signed tx script for test setup.
@@ -159,11 +198,11 @@ fn reconfig_bulk_update_test() {
             .account()
             .transaction()
             .payload(encode_ol_reconfig_bulk_update_setup_script_function(
-                *accounts.get(0).unwrap().address(),
-                *accounts.get(1).unwrap().address(),
-                *accounts.get(2).unwrap().address(),
-                *accounts.get(3).unwrap().address(),
-                *accounts.get(4).unwrap().address(),
+                *validators.get(0).unwrap().address(),
+                *validators.get(1).unwrap().address(),
+                *validators.get(2).unwrap().address(),
+                *validators.get(3).unwrap().address(),
+                *validators.get(4).unwrap().address(),
             ))
             .sequence_number(sequence_number)
             .sign(),

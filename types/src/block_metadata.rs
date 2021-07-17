@@ -77,7 +77,7 @@ impl BlockMetadata {
 }
 
 pub fn new_block_event_key() -> EventKey {
-    EventKey::new_from_address(&diem_root_address(), 17)
+    EventKey::new_from_address(&diem_root_address(), 12) //////// 0L ////////
 }
 
 /// The path to the new block event handle under a DiemBlock::BlockMetadata resource.
