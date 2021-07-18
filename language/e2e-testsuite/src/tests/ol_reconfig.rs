@@ -71,9 +71,8 @@ fn reconfig_bulk_update_test() {
 
     executor.new_block();
 
-    let operator_account = executor.create_raw_account();
-
     // Add operator
+    let operator_account = executor.create_raw_account();
     executor.execute_and_apply(
         diem_root_data.account()
             .transaction()
