@@ -2,6 +2,8 @@
 
 #![allow(clippy::never_loop)]
 
+use std::process::exit;
+
 use abscissa_core::{Command, Options, Runnable};
 
 use crate::{entrypoint, submit_tx::{ maybe_submit, tx_params_wrapper}};
@@ -30,12 +32,19 @@ impl Runnable for AutopayCmd {
         } else {
           panic!("must choose --enable or --disable");
         };
-        maybe_submit(
+        
+        match maybe_submit(
           script,
           &tx_params,
           entry_args.no_send,
           entry_args.save_path,
-        ).unwrap();
+        ) {
+            Err(e) => {
+              println!("ERROR: could not submit autopay transaction, message: \n{:?}", &e);
+              exit(1);
+            },
+            _ => {}
+        }
             
 
 

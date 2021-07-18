@@ -2,6 +2,8 @@
 
 #![allow(clippy::never_loop)]
 
+use std::process::exit;
+
 use abscissa_core::{Command, Options, Runnable};
 use ol_types::config::TxType;
 use crate::{entrypoint, submit_tx::{tx_params_wrapper, maybe_submit}};
@@ -16,11 +18,20 @@ impl Runnable for DemoCmd {
         let entry_args = entrypoint::get_args();
 
         let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
-        maybe_submit(
+
+        match maybe_submit(
           transaction_builder::encode_demo_e2e_script(42),
           &tx_params,
           entry_args.no_send,
           entry_args.save_path
-        ).unwrap();
+        ) {
+            Ok(r) => {
+              println!("{:?}", &r);
+            },
+            Err(e) => {
+              println!("ERROR: could not submit demo transaction, message: \n{:?}", &e);
+              exit(1);
+            },
+        }
     }
 }
