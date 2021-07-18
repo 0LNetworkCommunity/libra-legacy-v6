@@ -124,7 +124,7 @@ progress:
 				exit 1 ; \
 			fi ; \
 			echo "Sleeping for 1 min" ; \
-			sleep 1m ; \
+			sleep 10 ; \
 	done
 
 tail:
