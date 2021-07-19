@@ -92,6 +92,7 @@ The Move modules in the Libra Framework can be bucketed in to a couple categorie
 
 -  [`0x1::AccountFreezing`](AccountFreezing.md#0x1_AccountFreezing)
 -  [`0x1::AccountLimits`](AccountLimits.md#0x1_AccountLimits)
+-  [`0x1::Audit`](Audit.md#0x1_Audit)
 -  [`0x1::Authenticator`](Authenticator.md#0x1_Authenticator)
 -  [`0x234567::AutoPay`](AutoPay.md#0x234567_AutoPay)
 -  [`0x1::AutoPay2`](AutoPay.md#0x1_AutoPay2)

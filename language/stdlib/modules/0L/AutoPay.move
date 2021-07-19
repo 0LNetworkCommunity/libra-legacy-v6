@@ -136,12 +136,6 @@ address 0x1 {
 // print(&02200);
       while (account_idx < accounts_length) {
         let account_addr = Vector::borrow<address>(account_list, account_idx);
-<<<<<<< HEAD
-=======
-        // Obtain the account balance
-        // let account_bal = LibraAccount::balance<GAS>(*account_addr);
-        // Go through all payments for this account and pay 
->>>>>>> main
         let payments = &mut borrow_global_mut<Data>(*account_addr).payments;
         let payments_len = Vector::length<Payment>(payments);
         let payments_idx = 0;

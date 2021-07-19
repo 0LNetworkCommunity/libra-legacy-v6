@@ -25,14 +25,10 @@ module Reconfigure {
     use 0x1::AccountLimits;
     use 0x1::GAS::GAS;
     use 0x1::LibraConfig;
-<<<<<<< HEAD
     use 0x1::Burn;
     use 0x1::LibraAccount;
-=======
     use 0x1::Audit;
-    use 0x1::LibraAccount;
     // use 0x1::Debug::print;
->>>>>>> main
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
     public fun reconfigure(vm: &signer, height_now: u64) {
@@ -141,19 +137,14 @@ module Reconfigure {
 // print(&mined_last_epoch);
        
             // TODO: temporary until jail-refactor merge.
-<<<<<<< HEAD
-            if ((!Vector::contains(&jailed_set, &addr)) && mined_last_epoch) {
-// print(&03252);   
-                // execute the burn according to preferences
-                Burn::epoch_start_burn(vm, addr, burn_value);
-=======
             if (
               (!Vector::contains(&jailed_set, &addr)) && 
               mined_last_epoch && 
               Audit::val_audit_passing(addr)
             ) {
->>>>>>> main
                 Vector::push_back(&mut proposed_set, addr);
+                Burn::epoch_start_burn(vm, addr, burn_value);
+
             };
             i = i+ 1;
         };

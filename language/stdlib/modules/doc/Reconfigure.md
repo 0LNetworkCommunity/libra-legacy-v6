@@ -148,8 +148,6 @@
 
     <b>let</b> i = 0;
     <b>while</b> (i &lt; <a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&top_accounts)) {
-// print(&03251);
-
         <b>let</b> addr = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&top_accounts, i);
 // print(&addr);
         <b>let</b> mined_last_epoch = <a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(vm, addr);
@@ -157,19 +155,14 @@
 // print(&mined_last_epoch);
 
         // TODO: temporary until jail-refactor merge.
-<<<<<<< HEAD
-        <b>if</b> ((!<a href="Vector.md#0x1_Vector_contains">Vector::contains</a>(&jailed_set, &addr)) && mined_last_epoch) {
-// print(&03252);
-            // execute the burn according <b>to</b> preferences
-            <a href="Burn.md#0x1_Burn_epoch_start_burn">Burn::epoch_start_burn</a>(vm, addr, burn_value);
-=======
         <b>if</b> (
           (!<a href="Vector.md#0x1_Vector_contains">Vector::contains</a>(&jailed_set, &addr)) &&
           mined_last_epoch &&
           <a href="Audit.md#0x1_Audit_val_audit_passing">Audit::val_audit_passing</a>(addr)
         ) {
->>>>>>> main
             <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> proposed_set, addr);
+            <a href="Burn.md#0x1_Burn_epoch_start_burn">Burn::epoch_start_burn</a>(vm, addr, burn_value);
+
         };
         i = i+ 1;
     };
@@ -217,14 +210,10 @@
     <a href="LibraAccount.md#0x1_LibraAccount_process_community_wallets">LibraAccount::process_community_wallets</a>(vm,
     <a href="LibraConfig.md#0x1_LibraConfig_get_current_epoch">LibraConfig::get_current_epoch</a>());
 
-<<<<<<< HEAD
+//  print(&032130);
+
     // process community wallets
     <a href="LibraAccount.md#0x1_LibraAccount_process_community_wallets">LibraAccount::process_community_wallets</a>(vm, <a href="LibraConfig.md#0x1_LibraConfig_get_current_epoch">LibraConfig::get_current_epoch</a>());
-
-    <a href="AutoPay.md#0x1_AutoPay2_reconfig_reset_tick">AutoPay2::reconfig_reset_tick</a>(vm);
-=======
->>>>>>> main
-//  print(&032130);
 
     <a href="AutoPay.md#0x1_AutoPay2_reconfig_reset_tick">AutoPay2::reconfig_reset_tick</a>(vm);
 //  print(&032140);
