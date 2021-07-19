@@ -54,15 +54,6 @@ pub enum LegacyStdlibScript {
     UpdateDiemVersion,
     UpdateMintingAbility,
     UpdateDualAttestationLimit,
-    //////// 0L ////////
-    ReconfigSetup,
-    OracleTx,
-    MinerStateCommit,
-    CreateAccountVal,
-    CreateAccountUser,
-    Join,
-    Demo,
-    Leave,    
     // ...add new scripts here
 }
 
@@ -105,16 +96,7 @@ impl LegacyStdlibScript {
             UpdateDiemVersion,
             UpdateMintingAbility,
             UpdateDualAttestationLimit,
-            // ...add new scripts here
-            //////// 0L ////////
-            ReconfigSetup,
-            OracleTx,
-            MinerStateCommit,
-            CreateAccountVal,
-            CreateAccountUser,
-            Join,
-            Demo,
-            Leave,            
+            // ...add new scripts here         
         ]
     }
 
@@ -251,16 +233,7 @@ impl fmt::Display for LegacyStdlibScript {
                 UnfreezeAccount => "unfreeze_account",
                 UpdateDiemVersion => "update_diem_version",
                 UpdateExchangeRate => "update_exchange_rate",
-                UpdateMintingAbility => "update_minting_ability",
-                //////// 0L ////////
-                ReconfigSetup => "ol_reconfig_bulk_update_setup",
-                OracleTx => "ol_oracle_tx",
-                MinerStateCommit => "ol_miner_state_commit",
-                CreateAccountVal => "ol_create_acc_val",
-                CreateAccountUser => "ol_create_acc_user",
-                Demo => "ol_demo_e2e",
-                Join => "ol_validator_universe_join",
-                Leave => "ol_validator_universe_leave",                
+                UpdateMintingAbility => "update_minting_ability",              
             }
         )
     }
