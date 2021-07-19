@@ -18,7 +18,7 @@ use diem_types::{
 use language_e2e_tests::{
   account::{Account, AccountData, AccountRoleSpecifier},
   executor::FakeExecutor,
-  oracle_setup::{oracle_helper_tx, upgrade_foo_tx},
+  ol_oracle_setup::{oracle_helper_tx, upgrade_foo_tx},
 };
 
 pub const GAS_NAME: &str = "GAS";
