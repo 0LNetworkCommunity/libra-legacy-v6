@@ -1,10 +1,7 @@
 use crate::account::Account;
-use diem_framework_releases::legacy::transaction_scripts::{
-    LegacyStdlibScript, CompiledBytes
-};
-use diem_types::{
-    transaction::{SignedTransaction, TransactionArgument, Script},
-};
+use diem_framework_releases::legacy::transaction_scripts::CompiledBytes;
+use diem_transaction_builder::stdlib as transaction_builder;
+use diem_types::transaction::{SignedTransaction, Script};
 use include_dir::{include_dir, Dir};
 
 // NOTE: rerun fixtures with: cargo run -p stdlib --release -- --create-upgrade-payload
@@ -15,23 +12,16 @@ pub fn oracle_helper_tx(
     sender: &Account,
     seq_num: u64,
 ) -> SignedTransaction {
-    let mut args: Vec<TransactionArgument> = Vec::new();
-    args.push(TransactionArgument::U64(1));
     let stdlib_bytes = std::include_bytes!(
         "../../../../ol/fixtures/upgrade_payload/foo_stdlib.mv"
     );
-    let stdlib_vec = stdlib_bytes.to_vec();
-    args.push(TransactionArgument::U8Vector(stdlib_vec));
-
     sender
         .transaction()
-        .script(Script::new(
-            LegacyStdlibScript::OracleTx
-                .compiled_bytes()
-                .into_vec(),
-            vec![],
-            args,
-        ))
+        .payload(
+            transaction_builder::encode_ol_oracle_tx_script_function(
+                1, stdlib_bytes.to_vec()
+            )
+        )
         .sequence_number(seq_num)
         .max_gas_amount(1_000_000_000) // give sufficient gas
         .sign()
