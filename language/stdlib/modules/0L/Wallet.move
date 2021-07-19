@@ -8,10 +8,20 @@ module Wallet {
     use 0x1::Option::{Self,Option};
     use 0x1::LibraSystem;
     use 0x1::NodeWeight;
+<<<<<<< HEAD
     use 0x1::Debug::print;
 
     const ERR_PREFIX: u64 = 023;
 
+=======
+
+    const ERR_PREFIX: u64 = 023;
+
+    const PROPOSED: u8 = 0;
+    const APPROVED: u8 = 1;
+    const REJECTED: u8 = 2;
+
+>>>>>>> main
     //////// COMMUNITY WALLETS ////////
 
     resource struct CommunityWallets {
@@ -68,6 +78,13 @@ module Wallet {
       }
     }
 
+<<<<<<< HEAD
+=======
+    public fun is_init_comm():bool {
+      exists<CommunityTransfers>(0x0)
+    }
+
+>>>>>>> main
     public fun set_comm(sig: &signer) acquires CommunityWallets {
       if (exists<CommunityWallets>(0x0)) {
         let addr = Signer::address_of(sig);
@@ -86,6 +103,7 @@ module Wallet {
     }
 
 
+<<<<<<< HEAD
     // Utility for vm to set an address as a Community Wallet
     public fun vm_set_comm(vm: &signer, addr: address) acquires CommunityWallets {
       CoreAddresses::assert_libra_root(vm);
@@ -99,6 +117,8 @@ module Wallet {
       }
     }
 
+=======
+>>>>>>> main
     // Utility for vm to remove the CommunityWallet tag from an address
     public fun vm_remove_comm(vm: &signer, addr: address) acquires CommunityWallets {
       CoreAddresses::assert_libra_root(vm);
@@ -180,12 +200,16 @@ module Wallet {
   // is faster than waiting for epoch boundaries.
 
   public fun veto(sender: &signer, uid: u64) acquires CommunityTransfers, CommunityFreeze {
+<<<<<<< HEAD
     print(&0x110);
+=======
+>>>>>>> main
     let addr = Signer::address_of(sender);
     assert(
       LibraSystem::is_validator(addr),
       Errors::requires_role(ERR_PREFIX + 001)
     );
+<<<<<<< HEAD
     print(&0x111);
     let (opt, i) = find(uid, 0);
     if (Option::is_some<TimedTransfer>(&opt)) {
@@ -197,6 +221,19 @@ module Wallet {
       if (tally_veto(i)) {
       print(&0x113);
 
+=======
+    let (opt, i) = find(uid, PROPOSED);
+    if (Option::is_some<TimedTransfer>(&opt)) {
+      let c = borrow_global_mut<CommunityTransfers>(0x0);
+      let t = Vector::borrow_mut<TimedTransfer>(&mut c.proposed, i);
+      // add voters address to the veto list
+      Vector::push_back<address>(&mut t.veto.list, addr);
+      // if not at rejection threshold
+      // add latency to the payment, to get further reviews
+      t.expire_epoch = t.expire_epoch + 1;
+
+      if (tally_veto(i)) {
+>>>>>>> main
         reject(uid)
       }
     };
@@ -204,14 +241,21 @@ module Wallet {
 
   // private function. Once vetoed, the CommunityWallet transaction is remove from proposed list.
   fun reject(uid: u64) acquires CommunityTransfers, CommunityFreeze {
+<<<<<<< HEAD
     print(&0x01131);
+=======
+>>>>>>> main
     let c = borrow_global_mut<CommunityTransfers>(0x0);
     let list = *&c.proposed;
     let len = Vector::length(&list);
     let i = 0;
+<<<<<<< HEAD
     print(&0x01132);
     while (i < len) {
       print(&0x01133);
+=======
+    while (i < len) {
+>>>>>>> main
       let t = *Vector::borrow<TimedTransfer>(&list, i);
       if (t.uid == uid) {
         Vector::remove<TimedTransfer>(&mut c.proposed, i);
@@ -224,8 +268,11 @@ module Wallet {
       i = i + 1;
     };
     
+<<<<<<< HEAD
     print(&0x01134);
 
+=======
+>>>>>>> main
   }
 
   // private function to tally vetos.
@@ -356,14 +403,33 @@ module Wallet {
     public fun get_tx_args(t: TimedTransfer): (address, address, u64, vector<u8>) {
       (t.payer, t.payee, t.value, *&t.description)
     }
+<<<<<<< HEAD
     
     public fun transfer_is_proposed(uid: u64): bool acquires  CommunityTransfers {
       let (opt, _) = find(uid, 0);
+=======
+
+    public fun get_tx_epoch(uid: u64): u64 acquires CommunityTransfers {
+      let (opt, _) = find(uid, PROPOSED);
+      if (Option::is_some<TimedTransfer>(&opt)) {
+        let t = Option::borrow<TimedTransfer>(&opt);
+        return *&t.expire_epoch
+      };
+      0
+    }
+    
+    public fun transfer_is_proposed(uid: u64): bool acquires  CommunityTransfers {
+      let (opt, _) = find(uid, PROPOSED);
+>>>>>>> main
       Option::is_some<TimedTransfer>(&opt)
     }
 
     public fun transfer_is_rejected(uid: u64): bool acquires  CommunityTransfers {
+<<<<<<< HEAD
       let (opt, _) = find(uid, 2);
+=======
+      let (opt, _) = find(uid, REJECTED);
+>>>>>>> main
       Option::is_some<TimedTransfer>(&opt)
     }
 

@@ -1093,7 +1093,29 @@ module LibraAccount {
         restore_withdraw_capability(cap);
     }
 
+    //////// 0L ////////
+    public fun process_community_wallets(vm: &signer, epoch: u64) acquires LibraAccount, Balance, AccountOperationsCapability {
+      if (Signer::address_of(vm) != CoreAddresses::LIBRA_ROOT_ADDRESS()) return;
+      
+      // Migrate on the fly if state doesn't exist on upgrade.
+      if (!Wallet::is_init_comm()) {
+        Wallet::init(vm);
+        return
+      };
 
+      let v = Wallet::list_tx_by_epoch(epoch);
+
+      let len = Vector::length<Wallet::TimedTransfer>(&v);
+      let i = 0;
+      while (i < len) {
+        
+        let t: Wallet::TimedTransfer = *Vector::borrow(&v, i);
+        //TODO: Is this the best way to access a struct property from outside a module?
+        let (payer, payee, value, description) = Wallet::get_tx_args(t);
+        
+        if (Wallet::is_frozen(payer)) continue;
+
+<<<<<<< HEAD
     //////// 0L ////////
     public fun process_community_wallets(vm: &signer, epoch: u64) acquires LibraAccount, Balance, AccountOperationsCapability, CumulativeDeposits {
       let v = Wallet::list_tx_by_epoch(epoch);
@@ -1108,6 +1130,8 @@ module LibraAccount {
         
         if (Wallet::is_frozen(payer)) continue;
 
+=======
+>>>>>>> main
         vm_make_payment_no_limit<GAS>(payer, payee, value, description, b"", vm);
         
         Wallet::maybe_reset_rejection_counter(vm, payer);
@@ -1116,7 +1140,10 @@ module LibraAccount {
       };
     }
 
+<<<<<<< HEAD
       //////// 0L ////////
+=======
+>>>>>>> main
     public fun vm_make_payment_no_limit<Token>(
         payer: address,
         payee: address,
@@ -1124,7 +1151,11 @@ module LibraAccount {
         metadata: vector<u8>,
         metadata_signature: vector<u8>,
         vm: &signer
+<<<<<<< HEAD
     ) acquires LibraAccount, Balance, AccountOperationsCapability, CumulativeDeposits {
+=======
+    ) acquires LibraAccount, Balance, AccountOperationsCapability {
+>>>>>>> main
         if (Signer::address_of(vm) != CoreAddresses::LIBRA_ROOT_ADDRESS()) return;
         // don't try to send a 0 balance, will halt.
         if (amount < 1) return; 
@@ -2527,6 +2558,7 @@ module LibraAccount {
         );
     }
 
+<<<<<<< HEAD
     /// adjust the points of the deposits favoring more recent deposits.
     /// inflation by x% per day from the start of network.
     public fun deposit_index_curve(
@@ -2536,6 +2568,13 @@ module LibraAccount {
       
       // increment 1/2 percent per day, not compounded.
       (value * (1000 + (epoch * 5))) / 1000
+=======
+    public fun vm_set_slow_wallet(vm: &signer, addr: address) {
+      CoreAddresses::assert_libra_root(vm);
+      let sig = create_signer(addr);
+      Wallet::set_slow(&sig);
+      destroy_signer(sig);
+>>>>>>> main
     }
 
     /////// TEST HELPERS //////

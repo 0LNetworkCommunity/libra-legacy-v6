@@ -10,6 +10,7 @@
 
 
 <pre><code><b>use</b> <a href="AccountLimits.md#0x1_AccountLimits">0x1::AccountLimits</a>;
+<b>use</b> <a href="Audit.md#0x1_Audit">0x1::Audit</a>;
 <b>use</b> <a href="AutoPay.md#0x1_AutoPay2">0x1::AutoPay2</a>;
 <b>use</b> <a href="Burn.md#0x1_Burn">0x1::Burn</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
@@ -156,10 +157,18 @@
 // print(&mined_last_epoch);
 
         // TODO: temporary until jail-refactor merge.
+<<<<<<< HEAD
         <b>if</b> ((!<a href="Vector.md#0x1_Vector_contains">Vector::contains</a>(&jailed_set, &addr)) && mined_last_epoch) {
 // print(&03252);
             // execute the burn according <b>to</b> preferences
             <a href="Burn.md#0x1_Burn_epoch_start_burn">Burn::epoch_start_burn</a>(vm, addr, burn_value);
+=======
+        <b>if</b> (
+          (!<a href="Vector.md#0x1_Vector_contains">Vector::contains</a>(&jailed_set, &addr)) &&
+          mined_last_epoch &&
+          <a href="Audit.md#0x1_Audit_val_audit_passing">Audit::val_audit_passing</a>(addr)
+        ) {
+>>>>>>> main
             <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> proposed_set, addr);
         };
         i = i+ 1;
@@ -198,18 +207,29 @@
 
     // <a href="Reconfigure.md#0x1_Reconfigure">Reconfigure</a> the network
     <a href="LibraSystem.md#0x1_LibraSystem_bulk_update_validators">LibraSystem::bulk_update_validators</a>(vm, proposed_set);
-// print(&032110);
 
+// print(&032110);
     // reset clocks
     <a href="Subsidy.md#0x1_Subsidy_fullnode_reconfig">Subsidy::fullnode_reconfig</a>(vm);
-//  print(&032120);
 
+//  print(&032120);
+    // process community wallets
+    <a href="LibraAccount.md#0x1_LibraAccount_process_community_wallets">LibraAccount::process_community_wallets</a>(vm,
+    <a href="LibraConfig.md#0x1_LibraConfig_get_current_epoch">LibraConfig::get_current_epoch</a>());
+
+<<<<<<< HEAD
     // process community wallets
     <a href="LibraAccount.md#0x1_LibraAccount_process_community_wallets">LibraAccount::process_community_wallets</a>(vm, <a href="LibraConfig.md#0x1_LibraConfig_get_current_epoch">LibraConfig::get_current_epoch</a>());
 
     <a href="AutoPay.md#0x1_AutoPay2_reconfig_reset_tick">AutoPay2::reconfig_reset_tick</a>(vm);
+=======
+>>>>>>> main
 //  print(&032130);
+
+    <a href="AutoPay.md#0x1_AutoPay2_reconfig_reset_tick">AutoPay2::reconfig_reset_tick</a>(vm);
+//  print(&032140);
     <a href="Epoch.md#0x1_Epoch_reset_timer">Epoch::reset_timer</a>(vm, height_now);
+//  print(&032150);
 }
 </code></pre>
 

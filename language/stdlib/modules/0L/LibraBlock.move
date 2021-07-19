@@ -85,7 +85,6 @@ module LibraBlock {
         );
         //////// 0L ////////
         // increment stats
-// print(&01000);
         Stats::process_set_votes(vm, &previous_block_votes);
         Stats::inc_prop(vm, *&proposer);
         
@@ -112,10 +111,15 @@ module LibraBlock {
          //////// 0L ////////
         // EPOCH BOUNDARY
         if (Epoch::epoch_finished()) {
+<<<<<<< HEAD
 // print(&03000);
           // Run migrations
           Migrations::init(vm);
           
+=======
+          // Run migrations
+          Migrations::init(vm);
+>>>>>>> main
           // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata. But there's a circular reference there when we try.
           Reconfigure::reconfigure(vm, get_current_block_height());
         };

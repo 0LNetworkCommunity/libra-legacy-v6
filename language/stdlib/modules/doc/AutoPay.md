@@ -464,6 +464,12 @@ Attempt to add instruction when too many already exist
 // print(&02200);
   <b>while</b> (account_idx &lt; accounts_length) {
     <b>let</b> account_addr = <a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(account_list, account_idx);
+<<<<<<< HEAD
+=======
+    // Obtain the account balance
+    // <b>let</b> account_bal = <a href="LibraAccount.md#0x1_LibraAccount_balance">LibraAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*account_addr);
+    // Go through all payments for this account and pay
+>>>>>>> main
     <b>let</b> payments = &<b>mut</b> borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay2_Data">Data</a>&gt;(*account_addr).payments;
     <b>let</b> payments_len = <a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="AutoPay.md#0x1_AutoPay2_Payment">Payment</a>&gt;(payments);
     <b>let</b> payments_idx = 0;

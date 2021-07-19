@@ -7,12 +7,21 @@ Module providing debug functionality.
 
 
 -  [Constants](#@Constants_0)
+<<<<<<< HEAD
 -  [Function `migrate_community_wallets`](#0x1_MigrateWallets_migrate_community_wallets)
 
 
 <pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay2">0x1::AutoPay2</a>;
 <b>use</b> <a href="LibraAccount.md#0x1_LibraAccount">0x1::LibraAccount</a>;
 <b>use</b> <a href="Migrations.md#0x1_Migrations">0x1::Migrations</a>;
+=======
+-  [Function `migrate_slow_wallets`](#0x1_MigrateWallets_migrate_slow_wallets)
+
+
+<pre><code><b>use</b> <a href="LibraAccount.md#0x1_LibraAccount">0x1::LibraAccount</a>;
+<b>use</b> <a href="Migrations.md#0x1_Migrations">0x1::Migrations</a>;
+<b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
+>>>>>>> main
 <b>use</b> <a href="Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
@@ -32,6 +41,7 @@ Module providing debug functionality.
 
 
 
+<<<<<<< HEAD
 <a name="0x1_MigrateWallets_migrate_community_wallets"></a>
 
 ## Function `migrate_community_wallets`
@@ -39,6 +49,15 @@ Module providing debug functionality.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Migrations.md#0x1_MigrateWallets_migrate_community_wallets">migrate_community_wallets</a>(vm: &signer)
+=======
+<a name="0x1_MigrateWallets_migrate_slow_wallets"></a>
+
+## Function `migrate_slow_wallets`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Migrations.md#0x1_MigrateWallets_migrate_slow_wallets">migrate_slow_wallets</a>(vm: &signer)
+>>>>>>> main
 </code></pre>
 
 
@@ -47,16 +66,28 @@ Module providing debug functionality.
 <summary>Implementation</summary>
 
 
+<<<<<<< HEAD
 <pre><code><b>public</b> <b>fun</b> <a href="Migrations.md#0x1_MigrateWallets_migrate_community_wallets">migrate_community_wallets</a>(vm: &signer) {
   // find autopay wallets
   <b>let</b> vec_addr = <a href="AutoPay.md#0x1_AutoPay2_get_all_payees">AutoPay2::get_all_payees</a>();
   // print(&vec_addr);
+=======
+<pre><code><b>public</b> <b>fun</b> <a href="Migrations.md#0x1_MigrateWallets_migrate_slow_wallets">migrate_slow_wallets</a>(vm: &signer) {
+
+  <b>let</b> vec_addr = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm);
+  // TODO: how <b>to</b> get other accounts?
+
+>>>>>>> main
   // tag <b>as</b>
   <b>let</b> len = <a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&vec_addr);
   <b>let</b> i = 0;
   <b>while</b> (i &lt; len) {
     <b>let</b> addr = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&vec_addr, i);
+<<<<<<< HEAD
     <a href="LibraAccount.md#0x1_LibraAccount_vm_init_community_wallet">LibraAccount::vm_init_community_wallet</a>(vm, addr);
+=======
+    <a href="LibraAccount.md#0x1_LibraAccount_vm_set_slow_wallet">LibraAccount::vm_set_slow_wallet</a>(vm, addr);
+>>>>>>> main
     i = i + 1;
   };
   <a href="Migrations.md#0x1_Migrations_push">Migrations::push</a>(<a href="Migrations.md#0x1_MigrateWallets_UID">UID</a>, b"<a href="Migrations.md#0x1_MigrateWallets">MigrateWallets</a>");

@@ -13,8 +13,13 @@
 -  [Resource `SlowWallet`](#0x1_Wallet_SlowWallet)
 -  [Constants](#@Constants_0)
 -  [Function `init`](#0x1_Wallet_init)
+<<<<<<< HEAD
 -  [Function `set_comm`](#0x1_Wallet_set_comm)
 -  [Function `vm_set_comm`](#0x1_Wallet_vm_set_comm)
+=======
+-  [Function `is_init_comm`](#0x1_Wallet_is_init_comm)
+-  [Function `set_comm`](#0x1_Wallet_set_comm)
+>>>>>>> main
 -  [Function `vm_remove_comm`](#0x1_Wallet_vm_remove_comm)
 -  [Function `new_timed_transfer`](#0x1_Wallet_new_timed_transfer)
 -  [Function `find`](#0x1_Wallet_find)
@@ -28,6 +33,10 @@
 -  [Function `vote_to_unfreeze`](#0x1_Wallet_vote_to_unfreeze)
 -  [Function `tally_unfreeze`](#0x1_Wallet_tally_unfreeze)
 -  [Function `get_tx_args`](#0x1_Wallet_get_tx_args)
+<<<<<<< HEAD
+=======
+-  [Function `get_tx_epoch`](#0x1_Wallet_get_tx_epoch)
+>>>>>>> main
 -  [Function `transfer_is_proposed`](#0x1_Wallet_transfer_is_proposed)
 -  [Function `transfer_is_rejected`](#0x1_Wallet_transfer_is_rejected)
 -  [Function `get_comm_list`](#0x1_Wallet_get_comm_list)
@@ -38,7 +47,10 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<<<<<<< HEAD
 <b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
+=======
+>>>>>>> main
 <b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="LibraConfig.md#0x1_LibraConfig">0x1::LibraConfig</a>;
 <b>use</b> <a href="LibraSystem.md#0x1_LibraSystem">0x1::LibraSystem</a>;
@@ -295,6 +307,18 @@
 ## Constants
 
 
+<<<<<<< HEAD
+=======
+<a name="0x1_Wallet_APPROVED"></a>
+
+
+
+<pre><code><b>const</b> <a href="Wallet.md#0x1_Wallet_APPROVED">APPROVED</a>: u8 = 1;
+</code></pre>
+
+
+
+>>>>>>> main
 <a name="0x1_Wallet_ERR_PREFIX"></a>
 
 
@@ -304,6 +328,27 @@
 
 
 
+<<<<<<< HEAD
+=======
+<a name="0x1_Wallet_PROPOSED"></a>
+
+
+
+<pre><code><b>const</b> <a href="Wallet.md#0x1_Wallet_PROPOSED">PROPOSED</a>: u8 = 0;
+</code></pre>
+
+
+
+<a name="0x1_Wallet_REJECTED"></a>
+
+
+
+<pre><code><b>const</b> <a href="Wallet.md#0x1_Wallet_REJECTED">REJECTED</a>: u8 = 2;
+</code></pre>
+
+
+
+>>>>>>> main
 <a name="0x1_Wallet_init"></a>
 
 ## Function `init`
@@ -343,6 +388,7 @@
 
 </details>
 
+<<<<<<< HEAD
 <a name="0x1_Wallet_set_comm"></a>
 
 ## Function `set_comm`
@@ -350,6 +396,15 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_set_comm">set_comm</a>(sig: &signer)
+=======
+<a name="0x1_Wallet_is_init_comm"></a>
+
+## Function `is_init_comm`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_is_init_comm">is_init_comm</a>(): bool
+>>>>>>> main
 </code></pre>
 
 
@@ -358,6 +413,7 @@
 <summary>Implementation</summary>
 
 
+<<<<<<< HEAD
 <pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_set_comm">set_comm</a>(sig: &signer) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a> {
   <b>if</b> (<b>exists</b>&lt;<a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a>&gt;(0x0)) {
     <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
@@ -373,6 +429,10 @@
       unfreeze_votes: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;()
     })
   }
+=======
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_is_init_comm">is_init_comm</a>():bool {
+  <b>exists</b>&lt;<a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>&gt;(0x0)
+>>>>>>> main
 }
 </code></pre>
 
@@ -380,6 +440,7 @@
 
 </details>
 
+<<<<<<< HEAD
 <a name="0x1_Wallet_vm_set_comm"></a>
 
 ## Function `vm_set_comm`
@@ -387,6 +448,15 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_vm_set_comm">vm_set_comm</a>(vm: &signer, addr: address)
+=======
+<a name="0x1_Wallet_set_comm"></a>
+
+## Function `set_comm`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_set_comm">set_comm</a>(sig: &signer)
+>>>>>>> main
 </code></pre>
 
 
@@ -395,6 +465,7 @@
 <summary>Implementation</summary>
 
 
+<<<<<<< HEAD
 <pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_vm_set_comm">vm_set_comm</a>(vm: &signer, addr: address) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a> {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_libra_root">CoreAddresses::assert_libra_root</a>(vm);
   <b>if</b> (<b>exists</b>&lt;<a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a>&gt;(0x0)) {
@@ -404,6 +475,22 @@
       <b>let</b> s = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a>&gt;(0x0);
       <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> s.list, addr);
     }
+=======
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_set_comm">set_comm</a>(sig: &signer) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a> {
+  <b>if</b> (<b>exists</b>&lt;<a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a>&gt;(0x0)) {
+    <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
+    <b>let</b> list = <a href="Wallet.md#0x1_Wallet_get_comm_list">get_comm_list</a>();
+    <b>if</b> (!<a href="Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(&list, &addr)) {
+        <b>let</b> s = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a>&gt;(0x0);
+        <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> s.list, addr);
+    };
+
+    move_to&lt;<a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a>&gt;(sig, <a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a> {
+      is_frozen: <b>false</b>,
+      consecutive_rejections: 0,
+      unfreeze_votes: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;()
+    })
+>>>>>>> main
   }
 }
 </code></pre>
@@ -554,12 +641,16 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_veto">veto</a>(sender: &signer, uid: u64) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>, <a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a> {
+<<<<<<< HEAD
   print(&0x110);
+=======
+>>>>>>> main
   <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   <b>assert</b>(
     <a href="LibraSystem.md#0x1_LibraSystem_is_validator">LibraSystem::is_validator</a>(addr),
     <a href="Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(<a href="Wallet.md#0x1_Wallet_ERR_PREFIX">ERR_PREFIX</a> + 001)
   );
+<<<<<<< HEAD
   print(&0x111);
   <b>let</b> (opt, i) = <a href="Wallet.md#0x1_Wallet_find">find</a>(uid, 0);
   <b>if</b> (<a href="Option.md#0x1_Option_is_some">Option::is_some</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(&opt)) {
@@ -571,6 +662,19 @@
     <b>if</b> (<a href="Wallet.md#0x1_Wallet_tally_veto">tally_veto</a>(i)) {
     print(&0x113);
 
+=======
+  <b>let</b> (opt, i) = <a href="Wallet.md#0x1_Wallet_find">find</a>(uid, <a href="Wallet.md#0x1_Wallet_PROPOSED">PROPOSED</a>);
+  <b>if</b> (<a href="Option.md#0x1_Option_is_some">Option::is_some</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(&opt)) {
+    <b>let</b> c = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>&gt;(0x0);
+    <b>let</b> t = <a href="Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(&<b>mut</b> c.proposed, i);
+    // add voters address <b>to</b> the veto list
+    <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(&<b>mut</b> t.veto.list, addr);
+    // <b>if</b> not at rejection threshold
+    // add latency <b>to</b> the payment, <b>to</b> get further reviews
+    t.expire_epoch = t.expire_epoch + 1;
+
+    <b>if</b> (<a href="Wallet.md#0x1_Wallet_tally_veto">tally_veto</a>(i)) {
+>>>>>>> main
       <a href="Wallet.md#0x1_Wallet_reject">reject</a>(uid)
     }
   };
@@ -597,14 +701,21 @@
 
 
 <pre><code><b>fun</b> <a href="Wallet.md#0x1_Wallet_reject">reject</a>(uid: u64) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>, <a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a> {
+<<<<<<< HEAD
   print(&0x01131);
+=======
+>>>>>>> main
   <b>let</b> c = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>&gt;(0x0);
   <b>let</b> list = *&c.proposed;
   <b>let</b> len = <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&list);
   <b>let</b> i = 0;
+<<<<<<< HEAD
   print(&0x01132);
   <b>while</b> (i &lt; len) {
     print(&0x01133);
+=======
+  <b>while</b> (i &lt; len) {
+>>>>>>> main
     <b>let</b> t = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(&list, i);
     <b>if</b> (t.uid == uid) {
       <a href="Vector.md#0x1_Vector_remove">Vector::remove</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(&<b>mut</b> c.proposed, i);
@@ -617,8 +728,11 @@
     i = i + 1;
   };
 
+<<<<<<< HEAD
   print(&0x01134);
 
+=======
+>>>>>>> main
 }
 </code></pre>
 
@@ -898,6 +1012,38 @@
 
 </details>
 
+<<<<<<< HEAD
+=======
+<a name="0x1_Wallet_get_tx_epoch"></a>
+
+## Function `get_tx_epoch`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_get_tx_epoch">get_tx_epoch</a>(uid: u64): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_get_tx_epoch">get_tx_epoch</a>(uid: u64): u64 <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a> {
+  <b>let</b> (opt, _) = <a href="Wallet.md#0x1_Wallet_find">find</a>(uid, <a href="Wallet.md#0x1_Wallet_PROPOSED">PROPOSED</a>);
+  <b>if</b> (<a href="Option.md#0x1_Option_is_some">Option::is_some</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(&opt)) {
+    <b>let</b> t = <a href="Option.md#0x1_Option_borrow">Option::borrow</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(&opt);
+    <b>return</b> *&t.expire_epoch
+  };
+  0
+}
+</code></pre>
+
+
+
+</details>
+
+>>>>>>> main
 <a name="0x1_Wallet_transfer_is_proposed"></a>
 
 ## Function `transfer_is_proposed`
@@ -914,7 +1060,11 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_transfer_is_proposed">transfer_is_proposed</a>(uid: u64): bool <b>acquires</b>  <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a> {
+<<<<<<< HEAD
   <b>let</b> (opt, _) = <a href="Wallet.md#0x1_Wallet_find">find</a>(uid, 0);
+=======
+  <b>let</b> (opt, _) = <a href="Wallet.md#0x1_Wallet_find">find</a>(uid, <a href="Wallet.md#0x1_Wallet_PROPOSED">PROPOSED</a>);
+>>>>>>> main
   <a href="Option.md#0x1_Option_is_some">Option::is_some</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(&opt)
 }
 </code></pre>
@@ -939,7 +1089,11 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_transfer_is_rejected">transfer_is_rejected</a>(uid: u64): bool <b>acquires</b>  <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a> {
+<<<<<<< HEAD
   <b>let</b> (opt, _) = <a href="Wallet.md#0x1_Wallet_find">find</a>(uid, 2);
+=======
+  <b>let</b> (opt, _) = <a href="Wallet.md#0x1_Wallet_find">find</a>(uid, <a href="Wallet.md#0x1_Wallet_REJECTED">REJECTED</a>);
+>>>>>>> main
   <a href="Option.md#0x1_Option_is_some">Option::is_some</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(&opt)
 }
 </code></pre>

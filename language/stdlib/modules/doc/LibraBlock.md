@@ -248,7 +248,6 @@ The runtime always runs this before executing the transactions in a block.
     );
     //////// 0L ////////
     // increment stats
-// print(&01000);
     <a href="Stats.md#0x1_Stats_process_set_votes">Stats::process_set_votes</a>(vm, &previous_block_votes);
     <a href="Stats.md#0x1_Stats_inc_prop">Stats::inc_prop</a>(vm, *&proposer);
 
@@ -275,10 +274,15 @@ The runtime always runs this before executing the transactions in a block.
      //////// 0L ////////
     // EPOCH BOUNDARY
     <b>if</b> (<a href="Epoch.md#0x1_Epoch_epoch_finished">Epoch::epoch_finished</a>()) {
+<<<<<<< HEAD
 // print(&03000);
       // Run migrations
       <a href="Migrations.md#0x1_Migrations_init">Migrations::init</a>(vm);
 
+=======
+      // Run migrations
+      <a href="Migrations.md#0x1_Migrations_init">Migrations::init</a>(vm);
+>>>>>>> main
       // TODO: We don't need <b>to</b> pass block height <b>to</b> ReconfigureOL. It should <b>use</b> the <a href="LibraBlock.md#0x1_LibraBlock_BlockMetadata">BlockMetadata</a>. But there's a circular reference there when we try.
       <a href="Reconfigure.md#0x1_Reconfigure_reconfigure">Reconfigure::reconfigure</a>(vm, <a href="LibraBlock.md#0x1_LibraBlock_get_current_block_height">get_current_block_height</a>());
     };

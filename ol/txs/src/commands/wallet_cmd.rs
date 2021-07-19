@@ -15,8 +15,6 @@ pub struct WalletCmd {
     community: bool,
     #[options(short = "s", help = "set this address as a slow wallet")]
     slow: bool,
-    #[options(short = "r", help = "remove setting")]
-    remove: bool,
 }
 
 
@@ -25,20 +23,26 @@ impl Runnable for WalletCmd {
         let entry_args = entrypoint::get_args();
 
         let type_int = if self.community {
-          0u8
-        } else if self.slow {
           1u8
+        } else if self.slow {
+          0u8
         } else {
           println!("Must pass flag --community or --slow");
           exit(1);
         };
 
         let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
-        maybe_submit(
+        match maybe_submit(
           transaction_builder::encode_set_wallet_type_script(type_int),
           &tx_params,
           entry_args.no_send,
           entry_args.save_path
-        ).unwrap();
+        ) {
+            Err(e) => {
+              println!("ERROR: could not submit wallet type transaction, message: \n{:?}", &e);
+              exit(1);
+            },
+            _ => {}
+        }
     }
 }
