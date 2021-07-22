@@ -67,8 +67,10 @@ fn main() {
                 .help("include diagrams in the stdlib documentation"))
         //////// 0L ////////
         // for upgrade oracle
-        // 1. build the stdlib first cargo run -p stdlib --release
-        // 2. compile into one file cargo run -p stdlib --release -- --create_upgrade_payload
+        // 1. build the first 
+        //      `cargo r -p diem-framework --release`
+        // 2. compile into one file:
+        //      `cargo r -p diem-framework --release -- --create-upgrade-payload`
         .arg(
             Arg::with_name("create-upgrade-payload")
                 .long("create-upgrade-payload")
