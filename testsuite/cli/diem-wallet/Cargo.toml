@@ -25,6 +25,8 @@ diem-temppath = { path = "../../../common/temppath/" }
 diem-types = { path = "../../../types" }
 diem-workspace-hack = { path = "../../../common/workspace-hack" }
 mirai-annotations = "1.10.1"
+#//////// 0L ////////
+diem-global-constants = { path = "../../../config/global-constants", version = "0.1.0"}
 
 [features]
 default = []

@@ -5,7 +5,7 @@
 //! The concept of known users can be helpful for testing to provide reproducible results.
 
 use crate::{mnemonic::Mnemonic, wallet_library::WalletLibrary};
-use anyhow::{ensure, Result};
+use anyhow::Result;
 use std::{
     fs::File,
     io::{BufRead, BufReader, Write},
@@ -23,11 +23,12 @@ pub fn recover<P: AsRef<Path>>(path: &P) -> Result<WalletLibrary> {
     let mut line = String::new();
     let _ = buffered.read_line(&mut line)?;
     let parts: Vec<&str> = line.split(DELIMITER).collect();
-    ensure!(parts.len() == 2, format!("Invalid entry '{}'", line));
+    //////// 0L ////////
+    // ensure!(parts.len() == 2, format!("Invalid entry '{}'", line));
 
     let mnemonic = Mnemonic::from(&parts[0].to_string()[..])?;
     let mut wallet = WalletLibrary::new_from_mnemonic(mnemonic);
-    wallet.generate_addresses(parts[1].trim().to_string().parse::<u64>()?)?;
+    wallet.generate_addresses(6)?; //////// 0L ////////
 
     Ok(wallet)
 }

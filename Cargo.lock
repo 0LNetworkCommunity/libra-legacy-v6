@@ -2654,6 +2654,7 @@ dependencies = [
  "anyhow",
  "byteorder",
  "diem-crypto",
+ "diem-global-constants",
  "diem-temppath",
  "diem-types",
  "diem-workspace-hack",
