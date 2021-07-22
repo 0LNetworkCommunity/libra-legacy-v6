@@ -312,12 +312,16 @@ where
 ///   - Script ABIs
 ///   - Script Builder
 ///   - Error Descriptions
-pub fn create_release(output_path: impl AsRef<Path>, options: &ReleaseOptions) {
+pub fn create_release(
+    output_path: impl AsRef<Path>, 
+    options: &ReleaseOptions,
+    create_upgrade_payload: bool
+) {
     let output_path = output_path.as_ref();
 
     let msg = |s: &'static str| if options.time_it { Some(s) } else { None };
 
-    if options.build_modules {
+    if create_upgrade_payload || options.build_modules { /////// 0L /////////
         let modules_path = output_path.join("modules");
         let mut old_module_apis = None;
         if options.check_layout_compatibility {
@@ -332,7 +336,7 @@ pub fn create_release(output_path: impl AsRef<Path>, options: &ReleaseOptions) {
         //////// 0L ////////
         if options.upgrade_payload {
             run_step(msg("Generating upgrade payload"), || {
-              create_upgrade_payload(&modules);
+                create_upgrade_payload_fn(&modules);
             });
         }
         //////// end 0L ////////
@@ -361,7 +365,7 @@ pub fn create_release(output_path: impl AsRef<Path>, options: &ReleaseOptions) {
         });
     }
 
-    if options.script_abis {
+    if create_upgrade_payload || options.script_abis { /////// 0L /////////
         let script_abis_path = output_path.join("script_abis");
         run_step(msg("Generating script ABIs"), || {
             generate_script_abis(&script_abis_path, &Path::new("releases/legacy/scripts"))
@@ -379,7 +383,7 @@ pub fn create_release(output_path: impl AsRef<Path>, options: &ReleaseOptions) {
         }
     }
 
-    if options.errmap {
+    if !create_upgrade_payload && options.errmap { //////// 0L ////////
         let mut err_exp_path = output_path
             .join("error_description")
             .join("error_description");
@@ -388,7 +392,6 @@ pub fn create_release(output_path: impl AsRef<Path>, options: &ReleaseOptions) {
             build_error_code_map(&err_exp_path)
         });
     }
-
 
 }
 
@@ -415,7 +418,7 @@ pub fn create_release(output_path: impl AsRef<Path>, options: &ReleaseOptions) {
 
 
 //////// 0L ////////
-pub fn create_upgrade_payload(build:  &BTreeMap<String, CompiledModule> ) {
+pub fn create_upgrade_payload_fn(build:  &BTreeMap<String, CompiledModule> ) {
   // let mut module_path = PathBuf::from(STAGED_OUTPUT_PATH);
   // TODO: set the .0L path the right way.
   let mut module_path = PathBuf::from("/root/.0L/");

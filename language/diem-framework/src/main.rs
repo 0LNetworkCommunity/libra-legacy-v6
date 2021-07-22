@@ -5,7 +5,19 @@
 
 use clap::{App, Arg};
 use diem_framework::*;
-use std::path::Path;
+use move_stdlib::utils::time_it;
+use std::io::Write;
+use std::path::{Path, PathBuf};
+
+//////// 0L ////////
+// for Upgrade oracle
+/// The output path under which staged files will be put
+pub const STAGED_OUTPUT_PATH: &str = "staged";
+/// The file name for the staged stdlib
+pub const STAGED_STDLIB_NAME: &str = "stdlib";
+/// The extension for staged files
+pub const STAGED_EXTENSION: &str = "mv";
+//////// 0L end ////////
 
 // Generates the compiled stdlib and transaction scripts. Until this is run changes to the source
 // modules/scripts, and changes in the Move compiler will not be reflected in the stdlib used for
@@ -52,7 +64,15 @@ fn main() {
         .arg(
             Arg::with_name("with-diagram")
                 .long("with-diagram")
-                .help("include diagrams in the stdlib documentation")
+                .help("include diagrams in the stdlib documentation"))
+        //////// 0L ////////
+        // for upgrade oracle
+        // 1. build the stdlib first cargo run -p stdlib --release
+        // 2. compile into one file cargo run -p stdlib --release -- --create_upgrade_payload
+        .arg(
+            Arg::with_name("create-upgrade-payload")
+                .long("create-upgrade-payload")
+                .help("generate test/stdlib.mv for upgrade oracle")
         );
     let matches = cli.get_matches();
     let options = release::ReleaseOptions {
@@ -81,9 +101,38 @@ fn main() {
         println!("NOTE: run this program in --release mode for better speed");
     }
 
+    //////// 0L ////////
+    let staged_path = PathBuf::from(STAGED_OUTPUT_PATH);
+    std::fs::create_dir_all(&staged_path).unwrap();
+    // for upgrade oracle
+    let create_upgrade_payload =
+        matches.is_present("create-upgrade-payload");
+
+    if create_upgrade_payload {
+        time_it("Creating staged/stdlib.mv for upgrade oracle", || {
+            let mut module_path = PathBuf::from(STAGED_OUTPUT_PATH);
+            module_path.push(STAGED_STDLIB_NAME);
+            module_path.set_extension(STAGED_EXTENSION);
+            let modules: Vec<Vec<u8>> = build_stdlib()
+                .values().into_iter()
+                .map(|compiled_module| {
+                    let mut ser = Vec::new();
+                    compiled_module.serialize(&mut ser).unwrap();
+                    ser
+                })
+                .collect();
+            let bytes = bcs::to_bytes(&modules).unwrap();
+            let mut module_file = std::fs::File::create(module_path).unwrap();
+            module_file.write_all(&bytes).unwrap();
+        });
+    }
+    //////// 0L end ////////    
+
     let output_path = matches
         .value_of("output")
         .unwrap_or("releases/artifacts/current");
 
-    release::create_release(&Path::new(output_path), &options)
+    release::create_release(
+        &Path::new(output_path), &options, create_upgrade_payload
+    )
 }

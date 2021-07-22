@@ -85,7 +85,8 @@ pub fn stdlib_bytecode_files() -> Vec<String> {
     res
 }
 
-pub(crate) fn build_stdlib() -> BTreeMap<String, CompiledModule> {
+/////// 0L /////////
+pub fn build_stdlib() -> BTreeMap<String, CompiledModule> {
     let (_files, compiled_units) = move_compile_and_report(
         &diem_stdlib_files(),
         &[],
