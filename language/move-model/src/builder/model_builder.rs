@@ -270,7 +270,14 @@ impl<'env> ModelBuilder<'env> {
             is_pure: false,
         };
         // Duplicate declarations have been checked by the Move compiler.
-        assert!(self.fun_table.insert(name, entry).is_none());
+        ////////// 0L //////////
+        // assert!(self.fun_table.insert(name, entry).is_none());
+        let script_inserted_success = self.fun_table.insert(name, entry).is_none();
+        if !*&script_inserted_success {
+            println!("\n Found duplicate move tx script: {:?}", &module_id);
+        }
+        assert!(script_inserted_success);
+        //////// 0L end ////////
     }
 
     /// Defines a constant.
