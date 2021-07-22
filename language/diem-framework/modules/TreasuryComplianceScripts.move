@@ -522,6 +522,9 @@ module TreasuryComplianceScripts {
         DualAttestation::set_microdiem_limit(&tc_account, new_micro_xdx_limit);
     }
 
+    //////// 0L ////////
+    // `tc_account` renamed to `dm_account`
+
     /// # Summary
     /// Update the rough on-chain exchange rate between a specified currency and XDX (as a conversion
     /// to micro-XDX). The transaction can only be sent by the Treasury Compliance account. After this
@@ -536,7 +539,7 @@ module TreasuryComplianceScripts {
     /// | Name                            | Type     | Description                                                                                                                        |
     /// | ------                          | ------   | -------------                                                                                                                      |
     /// | `Currency`                      | Type     | The Move type for the `Currency` whose exchange rate is being updated. `Currency` must be an already-registered currency on-chain. |
-    /// | `tc_account`                    | `signer` | The signer of the sending account of this transaction. Must be the Treasury Compliance account.                                    |
+    /// | `dm_account`                    | `signer` | The signer of the sending account of this transaction. Must be the Treasury Compliance account.                                    |
     /// | `sliding_nonce`                 | `u64`    | The `sliding_nonce` (see: `SlidingNonce`) to be used for the transaction.                                                          |
     /// | `new_exchange_rate_numerator`   | `u64`    | The numerator for the new to micro-XDX exchange rate for `Currency`.                                                               |
     /// | `new_exchange_rate_denominator` | `u64`    | The denominator for the new to micro-XDX exchange rate for `Currency`.                                                             |
@@ -544,12 +547,12 @@ module TreasuryComplianceScripts {
     /// # Common Abort Conditions
     /// | Error Category             | Error Reason                            | Description                                                                                |
     /// | ----------------           | --------------                          | -------------                                                                              |
-    /// | `Errors::NOT_PUBLISHED`    | `SlidingNonce::ESLIDING_NONCE`          | A `SlidingNonce` resource is not published under `tc_account`.                             |
+    /// | `Errors::NOT_PUBLISHED`    | `SlidingNonce::ESLIDING_NONCE`          | A `SlidingNonce` resource is not published under `dm_account`.                             |
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_OLD`          | The `sliding_nonce` is too old and it's impossible to determine if it's duplicated or not. |
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`          | The `sliding_nonce` is too far in the future.                                              |
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED` | The `sliding_nonce` has been previously recorded.                                          |
-    /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE`   | `tc_account` is not the Treasury Compliance account.                                       |
-    /// | `Errors::REQUIRES_ROLE`    | `Roles::ETREASURY_COMPLIANCE`           | `tc_account` is not the Treasury Compliance account.                                       |
+    /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE`   | `dm_account` is not the Treasury Compliance account.                                       |
+    /// | `Errors::REQUIRES_ROLE`    | `Roles::ETREASURY_COMPLIANCE`           | `dm_account` is not the Treasury Compliance account.                                       |
     /// | `Errors::INVALID_ARGUMENT` | `FixedPoint32::EDENOMINATOR`            | `new_exchange_rate_denominator` is zero.                                                   |
     /// | `Errors::INVALID_ARGUMENT` | `FixedPoint32::ERATIO_OUT_OF_RANGE`     | The quotient is unrepresentable as a `FixedPoint32`.                                       |
     /// | `Errors::LIMIT_EXCEEDED`   | `FixedPoint32::ERATIO_OUT_OF_RANGE`     | The quotient is unrepresentable as a `FixedPoint32`.                                       |
@@ -559,25 +562,25 @@ module TreasuryComplianceScripts {
     /// * `TreasuryComplianceScripts::update_minting_ability`
 
     public(script) fun update_exchange_rate<Currency: store>(
-            tc_account: signer,
+            dm_account: signer,
             sliding_nonce: u64,
             new_exchange_rate_numerator: u64,
             new_exchange_rate_denominator: u64,
     ) {
-        SlidingNonce::record_nonce_or_abort(&tc_account, sliding_nonce);
+        SlidingNonce::record_nonce_or_abort(&dm_account, sliding_nonce);
         let rate = FixedPoint32::create_from_rational(
                 new_exchange_rate_numerator,
                 new_exchange_rate_denominator,
         );
-        Diem::update_xdx_exchange_rate<Currency>(&tc_account, rate);
+        Diem::update_xdx_exchange_rate<Currency>(&dm_account, rate);
     }
     spec fun update_exchange_rate {
         use 0x1::Errors;
         use 0x1::DiemAccount;
         use 0x1::Roles;
 
-        include DiemAccount::TransactionChecks{sender: tc_account}; // properties checked by the prologue.
-        include SlidingNonce::RecordNonceAbortsIf{ account: tc_account, seq_nonce: sliding_nonce };
+        include DiemAccount::TransactionChecks{sender: dm_account}; // properties checked by the prologue.
+        include SlidingNonce::RecordNonceAbortsIf{ account: dm_account, seq_nonce: sliding_nonce };
         include FixedPoint32::CreateFromRationalAbortsIf{
                numerator: new_exchange_rate_numerator,
                denominator: new_exchange_rate_denominator
@@ -599,7 +602,7 @@ module TreasuryComplianceScripts {
 
         /// **Access Control:**
         /// Only the Treasury Compliance account can update the exchange rate [[H5]][PERMISSION].
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
+        include Roles::AbortsIfNotTreasuryCompliance{account: dm_account};
     }
 
     /// # Summary

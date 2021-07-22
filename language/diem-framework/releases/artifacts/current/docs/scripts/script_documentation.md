@@ -3367,7 +3367,8 @@ resource published under it. The sending <code>account</code> must be a Validato
     operator_name: vector&lt;u8&gt;,
     operator_account: address
 ) {
-    <b>assert</b>(<a href="../../../../../releases/artifacts/current/docs/modules/ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_get_human_name">ValidatorOperatorConfig::get_human_name</a>(operator_account) == operator_name, 0);
+    //////// 0L ////////
+    <b>assert</b>(<a href="../../../../../releases/artifacts/current/docs/modules/ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_get_human_name">ValidatorOperatorConfig::get_human_name</a>(operator_account) == operator_name, 111);
     <a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_set_operator">ValidatorConfig::set_operator</a>(&account, operator_account);
 }
 </code></pre>
@@ -4503,7 +4504,7 @@ is given by <code>new_exchange_rate_numerator/new_exchange_rate_denominator</cod
 | Name                            | Type     | Description                                                                                                                        |
 | ------                          | ------   | -------------                                                                                                                      |
 | <code>Currency</code>                      | Type     | The Move type for the <code>Currency</code> whose exchange rate is being updated. <code>Currency</code> must be an already-registered currency on-chain. |
-| <code>tc_account</code>                    | <code>signer</code> | The signer of the sending account of this transaction. Must be the Treasury Compliance account.                                    |
+| <code>dm_account</code>                    | <code>signer</code> | The signer of the sending account of this transaction. Must be the Treasury Compliance account.                                    |
 | <code>sliding_nonce</code>                 | <code>u64</code>    | The <code>sliding_nonce</code> (see: <code><a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce">SlidingNonce</a></code>) to be used for the transaction.                                                          |
 | <code>new_exchange_rate_numerator</code>   | <code>u64</code>    | The numerator for the new to micro-XDX exchange rate for <code>Currency</code>.                                                               |
 | <code>new_exchange_rate_denominator</code> | <code>u64</code>    | The denominator for the new to micro-XDX exchange rate for <code>Currency</code>.                                                             |
@@ -4515,12 +4516,12 @@ is given by <code>new_exchange_rate_numerator/new_exchange_rate_denominator</cod
 
 | Error Category             | Error Reason                            | Description                                                                                |
 | ----------------           | --------------                          | -------------                                                                              |
-| <code><a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce_ESLIDING_NONCE">SlidingNonce::ESLIDING_NONCE</a></code>          | A <code><a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce">SlidingNonce</a></code> resource is not published under <code>tc_account</code>.                             |
+| <code><a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce_ESLIDING_NONCE">SlidingNonce::ESLIDING_NONCE</a></code>          | A <code><a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce">SlidingNonce</a></code> resource is not published under <code>dm_account</code>.                             |
 | <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce_ENONCE_TOO_OLD">SlidingNonce::ENONCE_TOO_OLD</a></code>          | The <code>sliding_nonce</code> is too old and it's impossible to determine if it's duplicated or not. |
 | <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce_ENONCE_TOO_NEW">SlidingNonce::ENONCE_TOO_NEW</a></code>          | The <code>sliding_nonce</code> is too far in the future.                                              |
 | <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce_ENONCE_ALREADY_RECORDED">SlidingNonce::ENONCE_ALREADY_RECORDED</a></code> | The <code>sliding_nonce</code> has been previously recorded.                                          |
-| <code><a href="_REQUIRES_ADDRESS">Errors::REQUIRES_ADDRESS</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/CoreAddresses.md#0x1_CoreAddresses_ETREASURY_COMPLIANCE">CoreAddresses::ETREASURY_COMPLIANCE</a></code>   | <code>tc_account</code> is not the Treasury Compliance account.                                       |
-| <code><a href="_REQUIRES_ROLE">Errors::REQUIRES_ROLE</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/Roles.md#0x1_Roles_ETREASURY_COMPLIANCE">Roles::ETREASURY_COMPLIANCE</a></code>           | <code>tc_account</code> is not the Treasury Compliance account.                                       |
+| <code><a href="_REQUIRES_ADDRESS">Errors::REQUIRES_ADDRESS</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/CoreAddresses.md#0x1_CoreAddresses_ETREASURY_COMPLIANCE">CoreAddresses::ETREASURY_COMPLIANCE</a></code>   | <code>dm_account</code> is not the Treasury Compliance account.                                       |
+| <code><a href="_REQUIRES_ROLE">Errors::REQUIRES_ROLE</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/Roles.md#0x1_Roles_ETREASURY_COMPLIANCE">Roles::ETREASURY_COMPLIANCE</a></code>           | <code>dm_account</code> is not the Treasury Compliance account.                                       |
 | <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="_EDENOMINATOR">FixedPoint32::EDENOMINATOR</a></code>            | <code>new_exchange_rate_denominator</code> is zero.                                                   |
 | <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="_ERATIO_OUT_OF_RANGE">FixedPoint32::ERATIO_OUT_OF_RANGE</a></code>     | The quotient is unrepresentable as a <code><a href="">FixedPoint32</a></code>.                                       |
 | <code><a href="_LIMIT_EXCEEDED">Errors::LIMIT_EXCEEDED</a></code>   | <code><a href="_ERATIO_OUT_OF_RANGE">FixedPoint32::ERATIO_OUT_OF_RANGE</a></code>     | The quotient is unrepresentable as a <code><a href="">FixedPoint32</a></code>.                                       |
@@ -4534,7 +4535,7 @@ is given by <code>new_exchange_rate_numerator/new_exchange_rate_denominator</cod
 * <code><a href="script_documentation.md#0x1_TreasuryComplianceScripts_update_minting_ability">TreasuryComplianceScripts::update_minting_ability</a></code>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_update_exchange_rate">update_exchange_rate</a>&lt;Currency&gt;(tc_account: signer, sliding_nonce: u64, new_exchange_rate_numerator: u64, new_exchange_rate_denominator: u64)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_update_exchange_rate">update_exchange_rate</a>&lt;Currency&gt;(dm_account: signer, sliding_nonce: u64, new_exchange_rate_numerator: u64, new_exchange_rate_denominator: u64)
 </code></pre>
 
 
@@ -4544,17 +4545,17 @@ is given by <code>new_exchange_rate_numerator/new_exchange_rate_denominator</cod
 
 
 <pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_update_exchange_rate">update_exchange_rate</a>&lt;Currency: store&gt;(
-        tc_account: signer,
+        dm_account: signer,
         sliding_nonce: u64,
         new_exchange_rate_numerator: u64,
         new_exchange_rate_denominator: u64,
 ) {
-    <a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce_record_nonce_or_abort">SlidingNonce::record_nonce_or_abort</a>(&tc_account, sliding_nonce);
+    <a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce_record_nonce_or_abort">SlidingNonce::record_nonce_or_abort</a>(&dm_account, sliding_nonce);
     <b>let</b> rate = <a href="_create_from_rational">FixedPoint32::create_from_rational</a>(
             new_exchange_rate_numerator,
             new_exchange_rate_denominator,
     );
-    <a href="../../../../../releases/artifacts/current/docs/modules/Diem.md#0x1_Diem_update_xdx_exchange_rate">Diem::update_xdx_exchange_rate</a>&lt;Currency&gt;(&tc_account, rate);
+    <a href="../../../../../releases/artifacts/current/docs/modules/Diem.md#0x1_Diem_update_xdx_exchange_rate">Diem::update_xdx_exchange_rate</a>&lt;Currency&gt;(&dm_account, rate);
 }
 </code></pre>
 
@@ -4567,8 +4568,8 @@ is given by <code>new_exchange_rate_numerator/new_exchange_rate_denominator</cod
 
 
 
-<pre><code><b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_TransactionChecks">DiemAccount::TransactionChecks</a>{sender: tc_account};
-<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce_RecordNonceAbortsIf">SlidingNonce::RecordNonceAbortsIf</a>{ account: tc_account, seq_nonce: sliding_nonce };
+<pre><code><b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_TransactionChecks">DiemAccount::TransactionChecks</a>{sender: dm_account};
+<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce_RecordNonceAbortsIf">SlidingNonce::RecordNonceAbortsIf</a>{ account: dm_account, seq_nonce: sliding_nonce };
 <b>include</b> <a href="_CreateFromRationalAbortsIf">FixedPoint32::CreateFromRationalAbortsIf</a>{
        numerator: new_exchange_rate_numerator,
        denominator: new_exchange_rate_denominator
@@ -4593,7 +4594,7 @@ is given by <code>new_exchange_rate_numerator/new_exchange_rate_denominator</cod
 Only the Treasury Compliance account can update the exchange rate [[H5]][PERMISSION].
 
 
-<pre><code><b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: tc_account};
+<pre><code><b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: dm_account};
 </code></pre>
 
 
