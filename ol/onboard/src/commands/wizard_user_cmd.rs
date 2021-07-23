@@ -30,9 +30,9 @@ impl Runnable for UserWizardCmd {
         // let miner_configs = app_config();
         let home_path = self.home_path.clone().unwrap_or_else(|| PathBuf::from("."));
         if self.check {
-            match check(home_path) {
-                true => println!("Proof verified in {:?}", &path),
-                false => println!("Invalid proof in {:?}", &path)
+            match check(home_path.clone()) {
+                true => println!("Proof verified in {:?}", &home_path),
+                false => println!("Invalid proof in {:?}", &home_path)
             }
         } else {
             wizard(home_path, self.fix,  &self.block_zero);
