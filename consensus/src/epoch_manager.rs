@@ -574,7 +574,8 @@ impl EpochManager {
                 Ok(_) => trace!(RoundStateLogSchema::new(round_state)),
                 Err(e) => {
                     counters::ERROR_COUNT.inc();
-                    error!(error = ?e, kind = error_kind(&e), RoundStateLogSchema::new(round_state));
+                    /////// 0L /////////
+                    warn!(error = ?e, kind = error_kind(&e), RoundStateLogSchema::new(round_state));
                 }
             }
 
