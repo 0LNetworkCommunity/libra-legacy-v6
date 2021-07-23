@@ -118,6 +118,7 @@ pub mod diem_swarm_utils {
             false,
             /* faucet server */ None,
             Some(mnemonic_file_path),
+            None, //////// 0L ////////            
             waypoint.unwrap_or(swarm.config.waypoint),
             true,
         )
