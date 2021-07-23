@@ -9,6 +9,8 @@ use ol_types::config::AppCfg;
 use abscissa_core::{Command, Options, Runnable};
 use std::{path::PathBuf};
 use ol_types::account;
+use libra_types::account_address::AccountAddress;
+
 /// `user-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct UserWizardCmd {
@@ -40,12 +42,12 @@ impl Runnable for UserWizardCmd {
     }
 }
 
-pub fn wizard(path: PathBuf, is_fix: bool, block_zero: &Option<PathBuf>) {
+pub fn wizard(path: PathBuf, is_fix: bool, block_zero: &Option<PathBuf>) -> (AccountAddress, String) {
     let mut miner_configs = AppCfg::default();
     
-    let (authkey, account, _) = if is_fix { 
-        wallet::get_account_from_prompt()
-        
+    let (authkey, account, _, mnemonic) = if is_fix {
+        let (k, a, w) = wallet::get_account_from_prompt();
+        (k, a, w, "".into())
     } else {
         wallet::keygen()
     };
@@ -66,6 +68,7 @@ pub fn wizard(path: PathBuf, is_fix: bool, block_zero: &Option<PathBuf>) {
     // Create Manifest
     account::UserConfigs::new(block)
     .create_manifest(path);
+    (account, mnemonic)
 }
 
 /// Checks the format of the account manifest, including vdf proof
