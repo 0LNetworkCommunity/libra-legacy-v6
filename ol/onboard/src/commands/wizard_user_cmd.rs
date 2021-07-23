@@ -30,14 +30,17 @@ impl Runnable for UserWizardCmd {
         // let miner_configs = app_config();
         let home_path = self.home_path.clone().unwrap_or_else(|| PathBuf::from("."));
         if self.check {
-            check(home_path);
+            match check(home_path) {
+                true => println!("Proof verified in {:?}", &path),
+                false => println!("Invalid proof in {:?}", &path)
+            }
         } else {
             wizard(home_path, self.fix,  &self.block_zero);
         }
     }
 }
 
-fn wizard(path: PathBuf, is_fix: bool, block_zero: &Option<PathBuf>) {
+pub fn wizard(path: PathBuf, is_fix: bool, block_zero: &Option<PathBuf>) {
     let mut miner_configs = AppCfg::default();
     
     let (authkey, account, _) = if is_fix { 
@@ -66,11 +69,8 @@ fn wizard(path: PathBuf, is_fix: bool, block_zero: &Option<PathBuf>) {
 }
 
 /// Checks the format of the account manifest, including vdf proof
-fn check(path: PathBuf) {
+pub fn check(path: PathBuf) -> bool {
     let user_data = account::UserConfigs::get_init_data(&path).expect(&format!("could not parse manifest in {:?}", &path));
 
-    match delay::verify(&user_data.block_zero.preimage, &user_data.block_zero.proof) {
-        true => println!("Proof verified in {:?}", &path),
-        false => println!("Invalid proof in {:?}", &path)
-    }
+    delay::verify(&user_data.block_zero.preimage, &user_data.block_zero.proof)
 }
