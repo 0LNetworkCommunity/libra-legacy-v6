@@ -1,11 +1,11 @@
 //! MinerApp Subcommands
-mod files_cmd;
-mod version_cmd;
-mod wizard_fn_cmd;
-mod wizard_user_cmd;
-mod wizard_val_cmd;
-mod keygen_cmd;
-mod fix_cmd;
+pub mod files_cmd;
+pub mod version_cmd;
+pub mod wizard_fn_cmd;
+pub mod wizard_user_cmd;
+pub mod wizard_val_cmd;
+pub mod keygen_cmd;
+pub mod fix_cmd;
 
 use self::{
     version_cmd::VersionCmd, wizard_fn_cmd::FnWizardCmd, wizard_user_cmd::UserWizardCmd,
