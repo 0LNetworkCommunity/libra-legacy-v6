@@ -15,6 +15,7 @@ use crate::{
         ConfigurationResource, DiemVersion, OnChainConfig, RegisteredCurrencies,
         VMPublishingOption, ValidatorSet,
     },
+    ol_upgrade_payload::UpgradePayloadResource,
     validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource},
 };
 use anyhow::{format_err, Error, Result};
@@ -201,6 +202,12 @@ impl AccountState {
         self.get_resource::<DiemBlockResource>()
     }
 
+    //////// 0L ////////
+    // for upgrade
+    pub fn get_upgrade_payload_resource(&self) -> Result<Option<UpgradePayloadResource>> {
+        self.get_resource_impl(&UpgradePayloadResource::resource_path())
+    }
+    
     pub fn get(&self, key: &[u8]) -> Option<&Vec<u8>> {
         self.0.get(key)
     }
