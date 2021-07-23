@@ -6,6 +6,9 @@ use crate::{
     dev_commands::DevCommand, info_commands::InfoCommand, query_commands::QueryCommand,
     transfer_commands::TransferCommand,
 };
+use crate::ol_node_commands::NodeCommand;
+use crate::ol_oracle_commands::OracleCommand;
+
 use anyhow::Error;
 use diem_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
 use std::{collections::HashMap, sync::Arc};
@@ -49,6 +52,9 @@ pub fn get_commands(
         Arc::new(QueryCommand {}),
         Arc::new(TransferCommand {}),
         Arc::new(InfoCommand {}),
+        ///////// 0L ////////
+        Arc::new(NodeCommand {}),
+        Arc::new(OracleCommand {}),        
     ];
     if include_dev {
         commands.push(Arc::new(DevCommand {}));

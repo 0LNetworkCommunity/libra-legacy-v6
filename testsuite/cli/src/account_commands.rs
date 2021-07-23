@@ -24,6 +24,14 @@ impl Command for AccountCommand {
             Box::new(AccountCommandWriteRecovery {}),
             Box::new(AccountCommandMint {}),
             Box::new(AccountCommandAddCurrency {}),
+            //////// 0L ////////
+            Box::new(AccountCommandCreateUser {}),
+            Box::new(AccountCommandCreateVal {}),
+            Box::new(AccountCommandAutopayEnable {}),
+            Box::new(AccountCommandAutopayCreate {}),
+            Box::new(AccountCommandAutopayBatch {}),
+            Box::new(AccountCommandUpdateValConfig {}),
+            Box::new(AccountCommandSetOperator {}),
         ];
 
         subcommand_execute(&params[0], commands, client, &params[1..]);
@@ -179,3 +187,216 @@ impl Command for AccountCommandAddCurrency {
         }
     }
 }
+
+//////// 0L ////////
+/// 0L Sub command to create a user account on-chain using a vdf proof.
+pub struct AccountCommandCreateUser {}
+
+impl Command for AccountCommandCreateUser {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["create_user", "cu"]
+    }
+    fn get_description(&self) -> &'static str {
+        "Create on-chain user account from proof"
+    }
+    fn get_params_help(&self) -> &'static str {
+        "<sending_account> <path_to_proof_file>"
+    }
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        match client.create_user(params, true) {
+            Ok(()) => println!("Created account"),
+            Err(e) => report_error("Error creating user account", e),
+        }
+    }
+}
+
+
+//////// 0L ////////
+/// 0L Sub command to create a validator account.
+pub struct AccountCommandCreateVal {}
+
+impl Command for AccountCommandCreateVal {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["create_val", "cv"]
+    }
+    fn get_description(&self) -> &'static str {
+        "Create on-chain user account and configure validator"
+    }
+    fn get_params_help(&self) -> &'static str {
+        "<sending_account> <path_to_proof_file>"
+    }
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        match client.create_val(params, true) {
+            Ok(()) => println!("Created account"),
+            Err(e) => report_error("Error creating user account", e),
+        }
+    }
+}
+
+//////// 0L ////////
+/// 0L Sub command for the operator to include a validator.
+pub struct AccountCommandUpdateValConfig {}
+
+impl Command for AccountCommandUpdateValConfig {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["update_val_config", "uvc"]
+    }
+    fn get_description(&self) -> &'static str {
+        "Operator updates a val config"
+    }
+    fn get_params_help(&self) -> &'static str {
+        "<sending_account> <path_to_account_file>"
+    }
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        match client.update_val_configs(params, true) {
+            Ok(()) => println!("Val configs updated"),
+            Err(e) => report_error("Error updating val configs", e),
+        }
+    }
+}
+
+//////// 0L ////////
+/// 0L Sub command to create a validator account.
+pub struct AccountCommandSetOperator {}
+
+impl Command for AccountCommandSetOperator {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["set_operator", "so"]
+    }
+    fn get_description(&self) -> &'static str {
+        "Validator picks a new operator"
+    }
+    fn get_params_help(&self) -> &'static str {
+        "<sending_account> <path_to_account_file>"
+    }
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        match client.set_operator(params, true) {
+            Ok(()) => println!("Operator updated"),
+            Err(e) => report_error("Error updating operator", e),
+        }
+    }
+}
+
+//////// 0L ////////
+/// 0L Sub command to enable autopay state on system and user account.
+pub struct AccountCommandAutopayEnable {}
+
+impl Command for AccountCommandAutopayEnable {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["autopay_enable", "ae"]
+    }
+    fn get_description(&self) -> &'static str {
+        "Enables Autopay functionality on an account"
+    }
+    fn get_params_help(&self) -> &'static str {
+        "<sending_account>"
+    }
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        assert!(
+            params.len() == 2,
+            "Invalid number of arguments to enable autopay. Did you pass your account address?"
+        );
+
+        match client.autopay_enable(params[1]) {
+            Ok(()) => println!("Enabled Autopay"),
+            Err(e) => report_error("Error creating local account", e),
+        }
+    }
+}
+
+//////// 0L ////////
+/// 0L Sub command to create a new autopay instruction.
+pub struct AccountCommandAutopayCreate {}
+
+impl Command for AccountCommandAutopayCreate {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["autopay_instruction", "ai"]
+    }
+    fn get_description(&self) -> &'static str {
+        "Creates Autopay instruction"
+    }
+    fn get_params_help(&self) -> &'static str {
+        "<sending_account> <instruction_id> <payee_account> <end_epoch> <percent_integer>"
+    }
+
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        match client.autopay_create(params, true) {
+            Ok(()) => println!("Created autopay instruction"),
+            Err(e) => report_error("Error on autopay instruction tx", e),
+        }
+    }
+}
+
+//////// 0L ////////
+/// 0L Sub command to create a new autopay instruction.
+pub struct AccountCommandAutopayBatch {}
+
+impl Command for AccountCommandAutopayBatch {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["autopay_batch", "ab"]
+    }
+    fn get_description(&self) -> &'static str {
+        "Batches Autopay instructions from file."
+    }
+    fn get_params_help(&self) -> &'static str {
+        "<file path>"
+    }
+
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        // do loop in here
+        let file = std::fs::File::open(params[1])
+            .expect("file should open read only");
+        let json: serde_json::Value = serde_json::from_reader(file)
+            .expect("file should be proper JSON");
+        let inst = json.get("instructions")
+            .expect("file should have array of instructions");
+        let batch = inst.as_array().unwrap().into_iter();
+        // TODO: query instructions on-chain to get highest id number.
+        struct Instruction {
+            uid: u64,
+            in_type: u64, 
+            destination: String,
+            percent: u64,
+            end_epoch: u64,
+        }
+        let list: Vec<Instruction> = batch.map(|value|{
+            let inst = value.as_object().expect("expected json object");
+            Instruction {
+                uid: inst["uid"].as_u64().unwrap(),
+                in_type: inst["in_type"].as_u64().unwrap(),
+                destination: inst["destination"].as_str().unwrap().to_owned(),
+                percent: inst["percent_int"].as_u64().unwrap(),
+                end_epoch: inst["end_epoch"].as_u64().unwrap(),
+            }
+        }).collect();
+
+        match client.autopay_enable("0") {
+            Ok(()) => println!("Autopay enabled"),
+            Err(e) => report_error("error creating local account", e),
+        }
+
+        for inst in list {
+            let in_type_u8 = match inst.in_type {
+                0 => 0,
+                1 => 1,
+                2 => 2,
+                3 => 3,
+                _ => 4,
+            };
+            assert!(in_type_u8 != 4);
+            
+            match client.autopay_batch(
+                inst.uid,
+                in_type_u8, 
+                inst.destination.parse().unwrap(),
+                inst.end_epoch,
+                inst.percent
+            ){
+                Ok(()) => println!("Submitted autopay batch instruction, uid: {}", inst.uid),
+                Err(e) => report_error("Error submitting batch autopay", e),
+            }
+        }
+    }
+}
+
+
