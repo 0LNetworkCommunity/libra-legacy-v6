@@ -20,19 +20,19 @@ use fs_extra::dir::{create};
 #[derive(Command, Debug, Default, Options)]
 pub struct InitCmd {
     #[options(help = "home path for app config")]
-    path: Option<PathBuf>,
+    pub path: Option<PathBuf>,
     #[options(help = "An upstream peer to use in 0L.toml")]
-    upstream_peer: Option<Url>,
+    pub upstream_peer: Option<Url>,
     #[options(help = "Skip app configs")]
-    skip_app: bool,
+    pub skip_app: bool,
     #[options(help = "Skip validator init")]
-    skip_val: bool,
+    pub skip_val: bool,
     #[options(help = "Fix config file, and migrate any missing fields")]
-    fix: bool,
+    pub fix: bool,
     #[options(help = "Set a waypoint in config files")]
-    waypoint: Option<Waypoint>,
+    pub waypoint: Option<Waypoint>,
     #[options(help = "Path to source code, for devs")]
-    source_path: Option<PathBuf>,
+    pub source_path: Option<PathBuf>,
 }
 
 
