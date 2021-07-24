@@ -10,29 +10,29 @@ use reqwest::Url;
 use txs::submit_tx::tx_params;
 
 /// `start` subcommand
-#[derive(Command, Debug, Options)]
+#[derive(Command, Default, Debug, Options)]
 pub struct StartCmd {
     // Option for --backlog, only sends backlogged transactions.
     #[options(
         short = "b",
         help = "Start but don't mine, and only resubmit backlog of proofs"
     )]
-    backlog_only: bool,
+    pub backlog_only: bool,
 
     // don't process backlog
     #[options(short = "s", help = "Skip backlog")]
-    skip_backlog: bool,
+    pub skip_backlog: bool,
 
     // Option to us rpc url to connect
     #[options(help = "Connect to upstream node, instead of default (local) node")]
-    upstream_url: bool,
+    pub upstream_url: bool,
 
     // Option to us rpc url to connect
     #[options(
         short = "u",
         help = "Connect to upstream node, instead of default (local) node"
     )]
-    url: Option<Url>,
+    pub url: Option<Url>,
 }
 
 impl Runnable for StartCmd {
