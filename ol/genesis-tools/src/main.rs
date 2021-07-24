@@ -49,7 +49,6 @@ use executor::{
 use libra_vm::LibraVM;
 use gumdrop::Options;
 
-
 fn get_runtime() -> (Runtime, u16) {
     let port = get_available_port();
     let path = TempPath::new();

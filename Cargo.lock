@@ -5104,6 +5104,7 @@ dependencies = [
  "libra-vm",
  "libradb",
  "move-core-types",
+ "ol",
  "serde",
  "serde_json",
  "storage-interface",
