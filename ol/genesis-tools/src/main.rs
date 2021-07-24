@@ -166,10 +166,9 @@ pub fn main_stuff(path: PathBuf) -> Result<()> {
     let path_man = path.clone().join("state.manifest");
     dbg!(&path_man);
     let path_proof = path.join("state.proof");
-    // let path = home.join("libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.manifest");
-    // let path2 = home.join("libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.proof");
+    dbg!(&path_proof);
 
-    let manifest = read_from_json(&path_man.into_os_string().into_string().unwrap()).unwrap();
+    let manifest = read_from_json(path_man.to_str().unwrap()).unwrap();
 
     let (mut rt, _port) = get_runtime();
 
@@ -200,6 +199,6 @@ fn test_main() -> Result<()> {
     let buf = Path::new(path)
         .parent()
         .unwrap()
-        .join("fixtures/state-snapshot/194/state_ver_74694920.0889/state.manifest");
+        .join("fixtures/state-snapshot/194/state_ver_74694920.0889/");
     main_stuff(buf)
 }
