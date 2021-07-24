@@ -193,10 +193,10 @@ pub fn main_stuff(path: PathBuf) -> Result<()> {
 
 
 #[test]
-fn test_main() -> Result<(), Error> {
+fn test_main() -> Result<()> {
     use anyhow::Error;
     use std::path::Path;
-    
+
     let path = env!("CARGO_MANIFEST_DIR");
     let buf = Path::new(path)
         .parent()
