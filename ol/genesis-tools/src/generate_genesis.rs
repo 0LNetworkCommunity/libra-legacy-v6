@@ -23,7 +23,7 @@ use libra_types::{
 use executor::{
     db_bootstrapper::{generate_waypoint, maybe_bootstrap, get_balance},
 };
-use storage_interface::{DbReader, DbReaderWriter};
+use storage_interface::DbReaderWriter;
 
 use libra_vm::LibraVM;
 use libradb::{LibraDB};

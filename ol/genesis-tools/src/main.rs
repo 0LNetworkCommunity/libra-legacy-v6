@@ -9,25 +9,11 @@ use libra_types::{
     account_state_blob::AccountStateBlob
 };
 use libra_types::{
-    access_path::AccessPath,
-    account_address::AccountAddress,
-    account_config::{
-        coin1_tmp_tag, from_currency_code_string, testnet_dd_account_address,
-        treasury_compliance_account_address, BalanceResource, COIN1_NAME,
-    },
-    account_state::AccountState,
-    contract_event::ContractEvent,
-    on_chain_config,
-    on_chain_config::{config_address, ConfigurationResource, OnChainConfig, ValidatorSet},
-    proof::SparseMerkleRangeProof,
     transaction::{
-        authenticator::AuthenticationKey, ChangeSet, Transaction, Version, WriteSetPayload,
-        PRE_GENESIS_VERSION,
-    },
+        Transaction, WriteSetPayload
+      },
     trusted_state::TrustedState,
-    validator_signer::ValidatorSigner,
     waypoint::Waypoint,
-    write_set::{WriteOp, WriteSetMut},
 };
 use std::{
     net::{IpAddr, Ipv4Addr, SocketAddr},
@@ -55,10 +41,9 @@ use backup_service::start_backup_service;
 
 mod generate_genesis;
 
-use storage_interface::{DbReader, DbReaderWriter};
+use storage_interface::DbReaderWriter;
 use executor::{
-    db_bootstrapper::{generate_waypoint, maybe_bootstrap, get_balance},
-    Executor,
+    db_bootstrapper::{generate_waypoint, maybe_bootstrap},
 };
 use libra_vm::LibraVM;
 // use backup_cli::utils::test_utils::{start_local_backup_service, tmp_db_with_random_content};
