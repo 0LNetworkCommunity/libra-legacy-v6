@@ -35,15 +35,6 @@ use libra_vm::LibraVM;
 use libradb::{LibraDB};
 use std::{convert::TryFrom, fs::File, io::Write, io::Read};
 use move_core_types::move_resource::MoveResource;
-// use storage_interface::{DbReader, DbReaderWriter};
-// use transaction_builder::{
-//     encode_create_parent_vasp_account_script, encode_peer_to_peer_with_metadata_script,
-// };
-
-#[test]
-pub fn test() {
-    
-}
 
 pub fn test_genesis_from_blob(account_state_blobs: &Vec<AccountStateBlob>, _db_rw: DbReaderWriter) -> Result<(), anyhow::Error> {
     let home = dirs::home_dir().unwrap();
