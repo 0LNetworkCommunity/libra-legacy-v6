@@ -5,6 +5,8 @@
 use std::path::PathBuf;
 
 use abscissa_core::{Command, Options, Runnable};
+use anyhow::Error;
+use libra_types::transaction::SignedTransaction;
 use ol_types::config::TxType;
 use crate::{entrypoint, submit_tx::{TxParams, maybe_submit, tx_params_wrapper}};
 
@@ -22,16 +24,16 @@ impl Runnable for DemoCmd {
           &tx_params,
           entry_args.no_send,
           entry_args.save_path
-        );
+        ).unwrap();
     }
 }
 
 /// a no-op tx to test transctions
-pub fn demo_tx(tx_params: &TxParams, no_send: bool, save_path: Option<PathBuf>){
+pub fn demo_tx(tx_params: &TxParams, no_send: bool, save_path: Option<PathBuf>) -> Result<SignedTransaction, Error>{
   maybe_submit(
     transaction_builder::encode_demo_e2e_script(42),
     &tx_params,
     no_send,
     save_path
-  ).unwrap();
+  )
 }

@@ -10,7 +10,7 @@ use libra_types::{
 };
 use once_cell::sync::Lazy;
 use reqwest::Url;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_json;
 use std::{fs::{self, File}, io::{Read, Write}, net::Ipv4Addr, path::PathBuf, str::FromStr};
 
