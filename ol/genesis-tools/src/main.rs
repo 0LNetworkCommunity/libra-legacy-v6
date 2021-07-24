@@ -1,5 +1,6 @@
 use backup_cli::storage::{FileHandle, FileHandleRef};
 use serde::de::DeserializeOwned;
+use std::path::{Path, PathBuf};
 use std::{fs::File};
 
 use std::io::Read;
@@ -24,7 +25,7 @@ use libra_config::utils::get_available_port;
 
 use backup_cli::backup_types::state_snapshot::manifest::StateSnapshotBackup;
 
-use anyhow::{ensure, Result};
+use anyhow::{Result, ensure};
 
 use tokio::{
     fs::{OpenOptions},
@@ -46,7 +47,8 @@ use executor::{
     db_bootstrapper::{generate_waypoint, maybe_bootstrap},
 };
 use libra_vm::LibraVM;
-// use backup_cli::utils::test_utils::{start_local_backup_service, tmp_db_with_random_content};
+use gumdrop::Options;
+
 
 fn get_runtime() -> (Runtime, u16) {
     let port = get_available_port();
@@ -148,21 +150,31 @@ async fn run_impl(manifest: StateSnapshotBackup) -> Result<()>{
 }
 
 fn main() -> Result<()>{
-    let home = dirs::home_dir().unwrap();
-    
-    let path = home.join("libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.manifest");
-    let path2 = home.join("libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.proof");
+    #[derive(Debug, Options)]
+    struct Args {
+      #[options(help = "path to state")]
+      path: PathBuf,
+    }
 
-    let manifest = read_from_json(&path.into_os_string().into_string().unwrap()).unwrap();
+    let opts = Args::parse_args_default_or_exit();
+
+    main_stuff(opts.path)
+}
+
+
+pub fn main_stuff(path: PathBuf) -> Result<()> {
+    let path_man = path.clone().join("state.manifest");
+    dbg!(&path_man);
+    let path_proof = path.join("state.proof");
+    // let path = home.join("libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.manifest");
+    // let path2 = home.join("libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.proof");
+
+    let manifest = read_from_json(&path_man.into_os_string().into_string().unwrap()).unwrap();
 
     let (mut rt, _port) = get_runtime();
 
-
-
     let (txn_info_with_proof, li): (TransactionInfoWithProof, LedgerInfoWithSignatures) = 
-            load_lcs_file(&path2.into_os_string().into_string().unwrap()).unwrap();
-
-
+            load_lcs_file(&path_proof.into_os_string().into_string().unwrap()).unwrap();
 
     txn_info_with_proof.verify(li.ledger_info(), manifest.version)?;
 
@@ -177,6 +189,16 @@ fn main() -> Result<()>{
     rt.block_on(future)?;
 
     Ok(())
-    
 }
 
+
+#[test]
+fn test_main() -> Result<(), Error> {
+    use anyhow::Error;
+    let path = env!("CARGO_MANIFEST_DIR");
+    let buf = Path::new(path)
+        .parent()
+        .unwrap()
+        .join("fixtures/state-snapshot/194/state_ver_74694920.0889/state.manifest");
+    main_stuff(buf)
+}
