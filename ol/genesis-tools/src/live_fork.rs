@@ -3,6 +3,7 @@
 use crate::fetch_archive::wait_for_archive;
 use anyhow::Result;
 
+/// starts the daemon for the live fork.
 pub fn fork_daemon() {
   match wait_for_archive() {
     Ok(_) => {
@@ -16,7 +17,7 @@ pub fn fork_daemon() {
 
 
 /// restart node from new genesis.blob from archive
-pub fn restart() {
+pub fn restart() -> Result<()>{
   kill_all_services();
 
   ol_start();
