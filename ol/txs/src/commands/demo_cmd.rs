@@ -26,6 +26,7 @@ impl Runnable for DemoCmd {
     }
 }
 
+/// a no-op tx to test transctions
 pub fn demo_tx(tx_params: &TxParams, no_send: bool, save_path: Option<PathBuf>){
   maybe_submit(
     transaction_builder::encode_demo_e2e_script(42),
