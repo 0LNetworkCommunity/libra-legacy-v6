@@ -1,3 +1,5 @@
+//! read-archive
+
 use backup_cli::storage::{FileHandle, FileHandleRef};
 use serde::de::DeserializeOwned;
 use std::path::PathBuf;
@@ -41,14 +43,14 @@ use backup_cli::utils::read_record_bytes::ReadRecordBytes;
 use tokio::runtime::Runtime;
 use backup_service::start_backup_service;
 
-mod generate_genesis;
-
 use storage_interface::DbReaderWriter;
 use executor::{
     db_bootstrapper::{generate_waypoint, maybe_bootstrap},
 };
 use libra_vm::LibraVM;
 use gumdrop::Options;
+
+use crate::generate_genesis;
 
 fn get_runtime() -> (Runtime, u16) {
     let port = get_available_port();
