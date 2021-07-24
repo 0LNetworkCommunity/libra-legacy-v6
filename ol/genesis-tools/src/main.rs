@@ -54,7 +54,7 @@ use tokio::runtime::Runtime;
 use backup_service::start_backup_service;
 
 mod generate_genesis;
-use libra_genesis_tool::{verify::compute_genesis};
+
 use storage_interface::{DbReader, DbReaderWriter};
 use executor::{
     db_bootstrapper::{generate_waypoint, maybe_bootstrap, get_balance},

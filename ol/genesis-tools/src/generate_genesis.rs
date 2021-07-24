@@ -2,7 +2,7 @@ use anyhow::{Result, bail};
 use libra_management::{
    error::Error
 };
-use libra_genesis_tool::{verify::compute_genesis};
+
 use libra_temppath::TempPath;
 use libra_types::{
     access_path::AccessPath,
@@ -28,13 +28,12 @@ use libra_types::{
 };
 use executor::{
     db_bootstrapper::{generate_waypoint, maybe_bootstrap, get_balance},
-    Executor,
 };
 use storage_interface::{DbReader, DbReaderWriter};
 
 use libra_vm::LibraVM;
-use libradb::{GetRestoreHandler, LibraDB};
-use std::{any, convert::TryFrom, fs::File, io::Write, io::Read};
+use libradb::{LibraDB};
+use std::{convert::TryFrom, fs::File, io::Write, io::Read};
 use move_core_types::move_resource::MoveResource;
 // use storage_interface::{DbReader, DbReaderWriter};
 // use transaction_builder::{
@@ -46,12 +45,12 @@ pub fn test() {
     
 }
 
-pub fn test_genesis_from_blob(account_state_blobs: &Vec<AccountStateBlob>, db_rw: DbReaderWriter) -> Result<(), anyhow::Error> {
+pub fn test_genesis_from_blob(account_state_blobs: &Vec<AccountStateBlob>, _db_rw: DbReaderWriter) -> Result<(), anyhow::Error> {
     let home = dirs::home_dir().unwrap();
     let genesis_path = home.join(".0L/genesis_from_snapshot.blob");
 
     let db_dir_tmp = TempPath::new();
-    let (db, db_rw) = DbReaderWriter::wrap(LibraDB::new_for_test(&db_dir_tmp));
+    let (_db, db_rw) = DbReaderWriter::wrap(LibraDB::new_for_test(&db_dir_tmp));
 
     let mut file = File::open(genesis_path)
         .map_err(|e| Error::UnexpectedError(format!("Unable to open genesis file: {}", e)))?;
