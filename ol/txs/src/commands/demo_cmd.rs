@@ -2,9 +2,11 @@
 
 #![allow(clippy::never_loop)]
 
+use std::path::PathBuf;
+
 use abscissa_core::{Command, Options, Runnable};
 use ol_types::config::TxType;
-use crate::{entrypoint, submit_tx::{tx_params_wrapper, maybe_submit}};
+use crate::{entrypoint, submit_tx::{TxParams, maybe_submit, tx_params_wrapper}};
 
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -16,11 +18,19 @@ impl Runnable for DemoCmd {
         let entry_args = entrypoint::get_args();
 
         let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
-        maybe_submit(
-          transaction_builder::encode_demo_e2e_script(42),
+        demo_tx(
           &tx_params,
           entry_args.no_send,
           entry_args.save_path
-        ).unwrap();
+        );
     }
+}
+
+pub fn demo_tx(tx_params: &TxParams, no_send: bool, save_path: Option<PathBuf>){
+  maybe_submit(
+    transaction_builder::encode_demo_e2e_script(42),
+    &tx_params,
+    no_send,
+    save_path
+  ).unwrap();
 }
