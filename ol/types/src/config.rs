@@ -10,9 +10,9 @@ use libra_types::{
 };
 use once_cell::sync::Lazy;
 use reqwest::Url;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json;
-use std::{fs, io::Write, net::Ipv4Addr, path::PathBuf, str::FromStr};
+use std::{fs::{self, File}, io::{Read, Write}, net::Ipv4Addr, path::PathBuf, str::FromStr};
 
 use crate::dialogue::{what_home, what_ip, what_statement};
 
@@ -58,6 +58,19 @@ pub struct AppCfg {
     /// Transaction configurations
     pub tx_configs: TxConfigs,
 }
+
+/// Get a AppCfg object from toml file
+pub fn parse_toml(path: String) -> Result<AppCfg, Error> {
+    let mut config_toml = String::new();
+
+    let mut file = File::open(&path)?;
+
+    file.read_to_string(&mut config_toml)
+            .unwrap_or_else(|err| panic!("Error while reading config: [{}]", err));
+
+    let cfg: AppCfg = toml::from_str(&config_toml).unwrap();
+    Ok(cfg)
+} 
 
 impl AppCfg {
     /// Gets the dynamic waypoint from libra node's key_store.json
@@ -127,7 +140,7 @@ impl AppCfg {
             Some(s) => s,
             None => what_statement(),
         };
-        
+
         default_config.profile.ip = match ip {
             Some(i) => i,
             None => what_ip().unwrap(),
