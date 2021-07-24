@@ -1,6 +1,7 @@
 use backup_cli::storage::{FileHandle, FileHandleRef};
 use serde::de::DeserializeOwned;
 use std::path::PathBuf;
+use std::process::exit;
 use std::{fs::File};
 
 use std::io::Read;
@@ -151,17 +152,33 @@ async fn run_impl(manifest: StateSnapshotBackup) -> Result<()>{
 fn main() -> Result<()>{
     #[derive(Debug, Options)]
     struct Args {
-      #[options(help = "path to state")]
-      path: PathBuf,
+      #[options(help = "path to snapshot files")]
+      path: Option<PathBuf>,
+      #[options(help = "swarm simulation mode")]
+      swarm: bool,
+      #[options(help = "live fork mode")]
+      fork: bool,
     }
 
     let opts = Args::parse_args_default_or_exit();
 
-    main_stuff(opts.path)
+    if opts.swarm {
+      Ok(())
+
+    } else if opts.fork {
+
+      Ok(())
+
+    } else if let Some(path) = opts.path {
+      genesis_from_path(path)
+    } else {
+      println!("No options provided, exiting");
+      exit(1);
+    }
 }
 
 
-pub fn main_stuff(path: PathBuf) -> Result<()> {
+pub fn genesis_from_path(path: PathBuf) -> Result<()> {
     let path_man = path.clone().join("state.manifest");
     dbg!(&path_man);
     let path_proof = path.join("state.proof");
@@ -199,5 +216,5 @@ fn test_main() -> Result<()> {
         .parent()
         .unwrap()
         .join("fixtures/state-snapshot/194/state_ver_74694920.0889/");
-    main_stuff(buf)
+    genesis_from_path(buf)
 }
