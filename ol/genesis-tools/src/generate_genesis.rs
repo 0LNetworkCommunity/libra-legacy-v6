@@ -8,22 +8,16 @@ use libra_types::{
     access_path::AccessPath,
     account_address::AccountAddress,
     account_config::{
-        coin1_tmp_tag, from_currency_code_string, testnet_dd_account_address,
-        treasury_compliance_account_address, BalanceResource, COIN1_NAME,
+        coin1_tmp_tag, from_currency_code_string, BalanceResource, COIN1_NAME,
     },
     account_state::AccountState,
     account_state_blob::AccountStateBlob,
     contract_event::ContractEvent,
     on_chain_config,
     on_chain_config::{config_address, ConfigurationResource, OnChainConfig, ValidatorSet},
-    proof::SparseMerkleRangeProof,
     transaction::{
-        authenticator::AuthenticationKey, ChangeSet, Transaction, Version, WriteSetPayload,
-        PRE_GENESIS_VERSION,
+        ChangeSet, Transaction, WriteSetPayload
     },
-    trusted_state::TrustedState,
-    validator_signer::ValidatorSigner,
-    waypoint::Waypoint,
     write_set::{WriteOp, WriteSetMut},
 };
 use executor::{
