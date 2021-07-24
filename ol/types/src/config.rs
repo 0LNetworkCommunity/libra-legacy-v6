@@ -114,6 +114,8 @@ impl AppCfg {
         base_epoch: Option<u64>,
         base_waypoint: Option<Waypoint>,
         source_path: &Option<PathBuf>,
+        statement: Option<String>,
+        ip: Option<Ipv4Addr>,
     ) -> AppCfg {
         // TODO: Check if configs exist and warn on overwrite.
         let mut default_config = AppCfg::default();
@@ -121,9 +123,15 @@ impl AppCfg {
         default_config.profile.account = account;
 
                 // Get statement which goes into genesis block
-        default_config.profile.statement = what_statement();
-
-        default_config.profile.ip = what_ip().unwrap();
+        default_config.profile.statement = match statement {
+            Some(s) => s,
+            None => what_statement(),
+        };
+        
+        default_config.profile.ip = match ip {
+            Some(i) => i,
+            None => what_ip().unwrap(),
+        };
 
         default_config.workspace.node_home = config_path.clone().unwrap_or_else(||{
             what_home(None, None)

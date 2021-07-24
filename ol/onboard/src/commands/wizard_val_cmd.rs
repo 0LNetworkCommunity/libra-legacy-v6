@@ -81,7 +81,9 @@ impl Runnable for ValWizardCmd {
             &None,
             None,
             None,
-            &self.source_path
+            &self.source_path,
+            None,
+            None,
         );
         let home_path = &app_config.workspace.node_home;
         let base_waypoint = app_config.chain_info.base_waypoint.clone();

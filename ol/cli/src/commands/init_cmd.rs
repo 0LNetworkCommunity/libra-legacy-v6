@@ -19,18 +19,25 @@ use fs_extra::dir::{create};
 /// `init` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct InitCmd {
+    /// home path for app config
     #[options(help = "home path for app config")]
     pub path: Option<PathBuf>,
+    /// An upstream peer to use in 0L.toml
     #[options(help = "An upstream peer to use in 0L.toml")]
     pub upstream_peer: Option<Url>,
+    /// Skip app configs
     #[options(help = "Skip app configs")]
     pub skip_app: bool,
+    /// Skip validator init
     #[options(help = "Skip validator init")]
     pub skip_val: bool,
+    /// Fix config file, and migrate any missing fields
     #[options(help = "Fix config file, and migrate any missing fields")]
     pub fix: bool,
+    /// Set a waypoint in config files
     #[options(help = "Set a waypoint in config files")]
     pub waypoint: Option<Waypoint>,
+    /// Path to source code, for devs
     #[options(help = "Path to source code, for devs")]
     pub source_path: Option<PathBuf>,
 }
@@ -91,7 +98,10 @@ pub fn initialize_app_cfg(
       path,
       epoch_opt,
       wp_opt,
-      source_path);
+      source_path,
+      None,
+      None,
+    );
     Ok(cfg)
 }
 
