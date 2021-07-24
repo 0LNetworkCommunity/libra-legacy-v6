@@ -43,6 +43,8 @@ move-core-types = { path = "../language/move-core/types" }
 move-explain = { path = "../language/tools/move-explain" }
 network = { path = "../network" }
 storage-interface = { path = "../storage/storage-interface" }
+#/////// 0L /////////
+ol-types = { path = "../ol/types" }
 
 [dev-dependencies]
 proptest = "1.0.0"

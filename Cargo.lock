@@ -2021,6 +2021,7 @@ dependencies = [
  "move-explain",
  "move-vm-types",
  "network",
+ "ol-types",
  "once_cell",
  "proptest",
  "rand 0.8.3",
