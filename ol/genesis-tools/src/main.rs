@@ -1,6 +1,6 @@
 use backup_cli::storage::{FileHandle, FileHandleRef};
 use serde::de::DeserializeOwned;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::{fs::File};
 
 use std::io::Read;
@@ -195,6 +195,8 @@ pub fn main_stuff(path: PathBuf) -> Result<()> {
 #[test]
 fn test_main() -> Result<(), Error> {
     use anyhow::Error;
+    use std::path::Path;
+    
     let path = env!("CARGO_MANIFEST_DIR");
     let buf = Path::new(path)
         .parent()
