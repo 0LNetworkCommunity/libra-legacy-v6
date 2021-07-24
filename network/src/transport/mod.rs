@@ -24,7 +24,7 @@ use libra_logger::prelude::*;
 use libra_network_address::{parse_dns_tcp, parse_ip_tcp, parse_memory, NetworkAddress};
 use libra_types::{chain_id::ChainId, PeerId};
 use netcore::transport::{proxy_protocol, tcp, ConnectionOrigin, Transport};
-use serde::{export::Formatter, Serialize};
+use serde::{Serialize};
 use std::{
     collections::{BTreeMap, HashMap, HashSet},
     convert::TryFrom,
@@ -38,6 +38,7 @@ use std::{
     time::Duration,
 };
 use tokio::time::timeout;
+use std::fmt::Formatter;
 
 #[cfg(test)]
 mod test;
