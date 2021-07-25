@@ -1,5 +1,6 @@
 use backup_cli::storage::{FileHandle, FileHandleRef};
 use serde::de::DeserializeOwned;
+use std::path::PathBuf;
 use std::{fs::File};
 
 use std::io::Read;
@@ -9,25 +10,11 @@ use libra_types::{
     account_state_blob::AccountStateBlob
 };
 use libra_types::{
-    access_path::AccessPath,
-    account_address::AccountAddress,
-    account_config::{
-        coin1_tmp_tag, from_currency_code_string, testnet_dd_account_address,
-        treasury_compliance_account_address, BalanceResource, COIN1_NAME,
-    },
-    account_state::AccountState,
-    contract_event::ContractEvent,
-    on_chain_config,
-    on_chain_config::{config_address, ConfigurationResource, OnChainConfig, ValidatorSet},
-    proof::SparseMerkleRangeProof,
     transaction::{
-        authenticator::AuthenticationKey, ChangeSet, Transaction, Version, WriteSetPayload,
-        PRE_GENESIS_VERSION,
-    },
+        Transaction, WriteSetPayload
+      },
     trusted_state::TrustedState,
-    validator_signer::ValidatorSigner,
     waypoint::Waypoint,
-    write_set::{WriteOp, WriteSetMut},
 };
 use std::{
     net::{IpAddr, Ipv4Addr, SocketAddr},
@@ -38,7 +25,7 @@ use libra_config::utils::get_available_port;
 
 use backup_cli::backup_types::state_snapshot::manifest::StateSnapshotBackup;
 
-use anyhow::{ensure, Result};
+use anyhow::{Result, ensure};
 
 use tokio::{
     fs::{OpenOptions},
@@ -54,15 +41,14 @@ use tokio::runtime::Runtime;
 use backup_service::start_backup_service;
 
 mod generate_genesis;
-use libra_genesis_tool::{verify::compute_genesis};
-use storage_interface::{DbReader, DbReaderWriter};
+
+use storage_interface::DbReaderWriter;
 use executor::{
-    db_bootstrapper::{generate_waypoint, maybe_bootstrap, get_balance},
-    Executor,
+    db_bootstrapper::{generate_waypoint, maybe_bootstrap},
 };
 use libra_vm::LibraVM;
-use serde::de::Deserialize;
-// use backup_cli::utils::test_utils::{start_local_backup_service, tmp_db_with_random_content};
+use gumdrop::Options;
+
 
 fn get_runtime() -> (Runtime, u16) {
     let port = get_available_port();
@@ -193,8 +179,60 @@ fn main() -> Result<()>{
     let genesis_txn = generate_genesis::generate_genesis_from_snapshot(&account_state_blobs, &db_rw).unwrap();
     generate_genesis::write_genesis_blob(genesis_txn)?;
     generate_genesis::test_genesis_from_blob(&account_state_blobs, db_rw)?;
-
     Ok(())
-    
 }
 
+fn main() -> Result<()>{
+    #[derive(Debug, Options)]
+    struct Args {
+      #[options(help = "path to state")]
+      path: PathBuf,
+    }
+
+    let opts = Args::parse_args_default_or_exit();
+
+    main_stuff(opts.path)
+}
+
+
+pub fn main_stuff(path: PathBuf) -> Result<()> {
+    let path_man = path.clone().join("state.manifest");
+    dbg!(&path_man);
+    let path_proof = path.join("state.proof");
+    // let path = home.join("libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.manifest");
+    // let path2 = home.join("libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.proof");
+
+    let manifest = read_from_json(&path_man.into_os_string().into_string().unwrap()).unwrap();
+
+    let (mut rt, _port) = get_runtime();
+
+    let (txn_info_with_proof, li): (TransactionInfoWithProof, LedgerInfoWithSignatures) = 
+            load_lcs_file(&path_proof.into_os_string().into_string().unwrap()).unwrap();
+
+    txn_info_with_proof.verify(li.ledger_info(), manifest.version)?;
+
+    ensure!(
+        txn_info_with_proof.transaction_info().state_root_hash() == manifest.root_hash,
+        "Root hash mismatch with that in proof. root hash: {}, expected: {}",
+        manifest.root_hash,
+        txn_info_with_proof.transaction_info().state_root_hash(),
+    );
+
+    let future = run_impl(manifest); // Nothing is printed
+    rt.block_on(future)?;
+
+    Ok(())
+}
+
+
+#[test]
+fn test_main() -> Result<()> {
+    use std::path::Path;
+
+    let path = env!("CARGO_MANIFEST_DIR");
+    let buf = Path::new(path)
+        .parent()
+        .unwrap()
+        .join("fixtures/state-snapshot/194/state_ver_74694920.0889/state.manifest");
+    main_stuff(buf)
+}

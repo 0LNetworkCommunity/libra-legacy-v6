@@ -18,35 +18,28 @@ use libra_types::{
     contract_event::ContractEvent,
     on_chain_config,
     on_chain_config::{config_address, ConfigurationResource, OnChainConfig, ValidatorSet},
-    transaction::{ChangeSet, Transaction, WriteSetPayload},
+    transaction::{
+        ChangeSet, Transaction, WriteSetPayload
+    },
     write_set::{WriteOp, WriteSetMut},
 };
 use executor::{
-    db_bootstrapper::{generate_waypoint, maybe_bootstrap, get_balance}
+    db_bootstrapper::{generate_waypoint, maybe_bootstrap, get_balance},
 };
-use storage_interface::{DbReader, DbReaderWriter};
+use storage_interface::DbReaderWriter;
 
 use libra_vm::LibraVM;
 use libradb::{LibraDB};
 use std::{convert::TryFrom, fs::File, io::Write, io::Read};
 use move_core_types::move_resource::MoveResource;
 use ol_keys::{scheme::KeyScheme, wallet::get_account_from_mnem};
-// use storage_interface::{DbReader, DbReaderWriter};
-// use transaction_builder::{
-//     encode_create_parent_vasp_account_script, encode_peer_to_peer_with_metadata_script,
-// };
 
-#[test]
-pub fn test() {
-    
-}
-
-pub fn test_genesis_from_blob(account_state_blobs: &Vec<AccountStateBlob>, db_rw: DbReaderWriter) -> Result<(), anyhow::Error> {
+pub fn test_genesis_from_blob(account_state_blobs: &Vec<AccountStateBlob>, _db_rw: DbReaderWriter) -> Result<(), anyhow::Error> {
     let home = dirs::home_dir().unwrap();
     let genesis_path = home.join(".0L/genesis_from_snapshot.blob");
 
     let db_dir_tmp = TempPath::new();
-    let (db, db_rw) = DbReaderWriter::wrap(LibraDB::new_for_test(&db_dir_tmp));
+    let (_db, db_rw) = DbReaderWriter::wrap(LibraDB::new_for_test(&db_dir_tmp));
 
     let mut file = File::open(genesis_path)
         .map_err(|e| Error::UnexpectedError(format!("Unable to open genesis file: {}", e)))?;
