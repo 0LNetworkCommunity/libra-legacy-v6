@@ -34,8 +34,11 @@ struct Args {
     #[structopt(short = "m", long, requires("faucet-path"))]
     pub start_faucet: bool,
     /// Path to the libra-node binary
-    #[structopt(long)]
+    #[structopt(long, default_value = "target/debug/libra-node")]
     pub libra_node: String,
+
+    #[structopt(long, default_value = "/home/teja9999/.0L/genesis.blob")]
+    pub genesis_path: String,
 
     /// Path to the cli binary
     #[structopt(long)]
@@ -55,8 +58,9 @@ fn main() {
     let mut validator_swarm = LibraSwarm::configure_validator_swarm(
         args.libra_node.as_ref(),
         num_nodes,
-        args.config_dir.clone(),
+        Some(std::string::String::from("/home/teja9999/.0L/swarm_temp")), //args.config_dir.clone(),
         None,
+        args.genesis_path
     )
     .expect("Failed to configure validator swarm");
 

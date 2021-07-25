@@ -61,6 +61,7 @@ use executor::{
     Executor,
 };
 use libra_vm::LibraVM;
+use serde::de::Deserialize;
 // use backup_cli::utils::test_utils::{start_local_backup_service, tmp_db_with_random_content};
 
 fn get_runtime() -> (Runtime, u16) {
@@ -111,7 +112,7 @@ async fn read_account_state_chunk(file_handle: FileHandle) -> Result<Vec<(HashVa
     Ok(chunk)
 }
 
-async fn run_impl(manifest: StateSnapshotBackup) -> Result<()>{
+async fn run_impl(manifest: StateSnapshotBackup) -> Result<Vec<AccountStateBlob>> {
     let mut account_state_blobs: Vec<AccountStateBlob> = Vec::new();
     for chunk in manifest.chunks {
         
@@ -126,14 +127,47 @@ async fn run_impl(manifest: StateSnapshotBackup) -> Result<()>{
 
     }
 
+    Ok(account_state_blobs)
+}
 
+pub fn get_account_state_blobs() -> Result<Vec<AccountStateBlob>> {
+    let home = dirs::home_dir().unwrap();
+    
+    let path = home.join("libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.manifest");
+    let path2 = home.join("libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.proof");
+
+    let manifest = read_from_json(&path.into_os_string().into_string().unwrap()).unwrap();
+
+    let (mut rt, _port) = get_runtime();
+
+    let (txn_info_with_proof, li): (TransactionInfoWithProof, LedgerInfoWithSignatures) = 
+            load_lcs_file(&path2.into_os_string().into_string().unwrap()).unwrap();
+
+    txn_info_with_proof.verify(li.ledger_info(), manifest.version)?;
+
+    ensure!(
+        txn_info_with_proof.transaction_info().state_root_hash() == manifest.root_hash,
+        "Root hash mismatch with that in proof. root hash: {}, expected: {}",
+        manifest.root_hash,
+        txn_info_with_proof.transaction_info().state_root_hash(),
+    );
+
+    // run_impl(manifest).unwrap()
+    let future = run_impl(manifest); // Nothing is printed
+    Ok(rt.block_on(future)?)
+}
+
+fn main() -> Result<()>{
+    
+    let account_state_blobs = get_account_state_blobs().unwrap();
+    
     let genesis = vm_genesis::test_genesis_change_set_and_validators(Some(1));
     let genesis_txn = Transaction::GenesisTransaction(WriteSetPayload::Direct(genesis.0));
     let tmp_dir = TempPath::new();
     let db_rw = DbReaderWriter::new(LibraDB::new_for_test(&tmp_dir));
 
     // Executor won't be able to boot on empty db due to lack of StartupInfo.
-    assert!(db_rw.reader.get_startup_info().unwrap().is_none());
+    assert!(db_rw.reader.get_startup_info().unwrap().is_none());    
 
     // Bootstrap empty DB.
     let waypoint = generate_waypoint::<LibraVM>(&db_rw, &genesis_txn).expect("Should not fail.");
@@ -159,37 +193,6 @@ async fn run_impl(manifest: StateSnapshotBackup) -> Result<()>{
     let genesis_txn = generate_genesis::generate_genesis_from_snapshot(&account_state_blobs, &db_rw).unwrap();
     generate_genesis::write_genesis_blob(genesis_txn)?;
     generate_genesis::test_genesis_from_blob(&account_state_blobs, db_rw)?;
-    Ok(())
-}
-
-fn main() -> Result<()>{
-    let home = dirs::home_dir().unwrap();
-    
-    let path = home.join("libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.manifest");
-    let path2 = home.join("libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.proof");
-
-    let manifest = read_from_json(&path.into_os_string().into_string().unwrap()).unwrap();
-
-    let (mut rt, _port) = get_runtime();
-
-
-
-    let (txn_info_with_proof, li): (TransactionInfoWithProof, LedgerInfoWithSignatures) = 
-            load_lcs_file(&path2.into_os_string().into_string().unwrap()).unwrap();
-
-
-
-    txn_info_with_proof.verify(li.ledger_info(), manifest.version)?;
-
-    ensure!(
-        txn_info_with_proof.transaction_info().state_root_hash() == manifest.root_hash,
-        "Root hash mismatch with that in proof. root hash: {}, expected: {}",
-        manifest.root_hash,
-        txn_info_with_proof.transaction_info().state_root_hash(),
-    );
-
-    let future = run_impl(manifest); // Nothing is printed
-    rt.block_on(future)?;
 
     Ok(())
     

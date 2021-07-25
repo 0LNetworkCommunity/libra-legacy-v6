@@ -29,6 +29,7 @@ impl SmokeTestEnvironment {
             num_validators,
             None,
             Some(template),
+            "genesis.blob"
         )
         .unwrap();
 

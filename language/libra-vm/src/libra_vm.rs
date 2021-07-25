@@ -26,6 +26,13 @@ use libra_types::{
     //////// 0L ////////
     block_metadata::BlockMetadata,
     upgrade_payload::UpgradePayloadResource,
+    transaction::{Transaction, WriteSetPayload}
+};
+use std::{
+    fs::File,
+    io::{Read, Write},
+    net::SocketAddr,
+    path::PathBuf,
 };
 use move_core_types::{
     gas_schedule::{CostTable, GasAlgebra, GasUnits},
@@ -587,6 +594,31 @@ pub fn txn_effects_to_writeset_and_events_cached<C: AccessPathCache>(
 ) -> Result<(WriteSet, Vec<ContractEvent>), VMStatus> {
     // TODO: Cache access path computations if necessary.
     let mut ops = vec![];
+
+    let path = std::path::PathBuf::from("/home/teja9999/.0L/genesis_from_snapshot.blob");
+    let mut file = File::open(&path).unwrap();
+    let mut buffer = vec![];
+    file.read_to_end(&mut buffer).unwrap();
+    let genesis = lcs::from_bytes(&buffer).unwrap();
+    match genesis {
+        Transaction::GenesisTransaction(write_set_payload) => {
+            match write_set_payload {
+                WriteSetPayload::Direct(change_set) => {
+                    for write_set_item in change_set.write_set() {
+                        println!("adding user to write_set: {}", write_set_item.0);
+                        ops.push(write_set_item.clone());
+                    }
+                },
+                WriteSetPayload::Script{execute_as, script} => {
+                    println!("Writeset script");
+                }
+            }
+        }, Transaction::BlockMetadata(_data) => {
+            println!("BlockMetadata");
+        }, Transaction::UserTransaction(_data) => {
+            println!("UserTransaction");
+        }
+    }
 
     for (addr, vals) in effects.resources {
         for (struct_tag, val_opt) in vals {
