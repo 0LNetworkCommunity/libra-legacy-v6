@@ -25,6 +25,10 @@ pub struct CreateWaypoint {
     //////// 0L ////////
     #[structopt(long)]
     genesis_path: Option<PathBuf>,
+
+    //////// 0L /////////
+    #[structopt(long)]
+    pub genesis_blob_path: Option<PathBuf>,
 }
 
 impl CreateWaypoint {
@@ -35,6 +39,7 @@ impl CreateWaypoint {
             backend: self.shared_backend,
             //////// 0L ////////
             path: self.genesis_path,
+            genesis_blob_path: self.genesis_blob_path
         };
 
         let genesis = genesis_helper.execute()?;

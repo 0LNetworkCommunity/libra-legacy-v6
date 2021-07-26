@@ -13,6 +13,14 @@ pub struct WithdrawCapabilityResource {
     account_address: AccountAddress,
 }
 
+impl WithdrawCapabilityResource {
+    pub fn new(account_address: AccountAddress) -> Self {
+        WithdrawCapabilityResource {
+            account_address: account_address
+        }
+    }
+}
+
 impl MoveResource for WithdrawCapabilityResource {
     const MODULE_NAME: &'static str = ACCOUNT_MODULE_NAME;
     const STRUCT_NAME: &'static str = "WithdrawCapability";

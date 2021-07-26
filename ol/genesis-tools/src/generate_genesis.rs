@@ -109,27 +109,27 @@ pub fn add_account_states_to_write_set(write_set_mut: &mut WriteSetMut, account_
         match address_option {
             Some(address) => {
                 for (k, v) in account_state.iter() {
-                    // if k.clone()==AccountResource::resource_path() {
-                    //     let account_resource_option = account_state.get_account_resource()?;
-                    //     match account_resource_option {
-                    //         Some(mut account_resource) => {
-                    //             let account_resource_new = account_resource.clone_with_authentication_key(
-                    //                 authentication_key.clone(), account_details.1
-                    //             );
-                    //             write_set_mut.push((
-                    //                 AccessPath::new(address, k.clone()),
-                    //                 WriteOp::Value(lcs::to_bytes(&account_resource_new).unwrap()),
-                    //             ));
-                    //         }, None => {
-                    //             println!("Account resource not found for index: {}", index);
-                    //         }
-                    //     }
-                    // } else {
+                    if k.clone()==AccountResource::resource_path() {
+                        let account_resource_option = account_state.get_account_resource()?;
+                        match account_resource_option {
+                            Some(mut account_resource) => {
+                                let account_resource_new = account_resource.clone_with_authentication_key(
+                                    authentication_key.clone(), account_details.1
+                                );
+                                write_set_mut.push((
+                                    AccessPath::new(address, k.clone()),
+                                    WriteOp::Value(lcs::to_bytes(&account_resource_new).unwrap()),
+                                ));
+                            }, None => {
+                                println!("Account resource not found for index: {}", index);
+                            }
+                        }
+                    } else {
                         write_set_mut.push((
                             AccessPath::new(address, k.clone()),
                             WriteOp::Value(v.clone()),
                         ));
-                    // }
+                    }
                 }
                 println!("process account index: {}", index);
             }, None => {

@@ -382,7 +382,7 @@ impl LibraVM {
                 match execution_result {
                     Ok(effect) => {
                         let (cs, events) =
-                            txn_effects_to_writeset_and_events(effect).map_err(Err)?;
+                            txn_effects_to_writeset_and_events(effect, None).map_err(Err)?;
                         ChangeSet::new(cs, events)
                     }
                     Err(e) => {
@@ -555,7 +555,7 @@ impl LibraVM {
 
         let effects = session.finish().map_err(|e| e.into_vm_status())?;
         let (epilogue_writeset, epilogue_events) =
-            txn_effects_to_writeset_and_events_cached(&mut (), effects)?;
+            txn_effects_to_writeset_and_events_cached(&mut (), effects, None)?;
 
         // Make sure epilogue WriteSet doesn't intersect with the writeset in TransactionPayload.
         if !epilogue_writeset

@@ -13,6 +13,14 @@ pub struct KeyRotationCapabilityResource {
     account_address: AccountAddress,
 }
 
+impl KeyRotationCapabilityResource {
+    pub fn new(account_address: AccountAddress) -> Self {
+        KeyRotationCapabilityResource {
+            account_address: account_address
+        }
+    }
+}
+
 impl MoveResource for KeyRotationCapabilityResource {
     const MODULE_NAME: &'static str = ACCOUNT_MODULE_NAME;
     const STRUCT_NAME: &'static str = "KeyRotationCapability";

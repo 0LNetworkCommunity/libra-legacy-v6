@@ -116,18 +116,17 @@ async fn run_impl(manifest: StateSnapshotBackup) -> Result<Vec<AccountStateBlob>
     Ok(account_state_blobs)
 }
 
-pub fn get_account_state_blobs() -> Result<Vec<AccountStateBlob>> {
-    let home = dirs::home_dir().unwrap();
-    
-    let path = home.join("libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.manifest");
-    let path2 = home.join("libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.proof");
+pub fn get_account_state_blobs(path: PathBuf) -> Result<Vec<AccountStateBlob>> {
+    let path_man = path.clone().join("state.manifest");
+    dbg!(&path_man);
+    let path_proof = path.join("state.proof");
 
-    let manifest = read_from_json(&path.into_os_string().into_string().unwrap()).unwrap();
+    let manifest = read_from_json(&path_man.into_os_string().into_string().unwrap()).unwrap();
 
     let (mut rt, _port) = get_runtime();
 
     let (txn_info_with_proof, li): (TransactionInfoWithProof, LedgerInfoWithSignatures) = 
-            load_lcs_file(&path2.into_os_string().into_string().unwrap()).unwrap();
+            load_lcs_file(&path_proof.into_os_string().into_string().unwrap()).unwrap();
 
     txn_info_with_proof.verify(li.ledger_info(), manifest.version)?;
 
@@ -143,9 +142,9 @@ pub fn get_account_state_blobs() -> Result<Vec<AccountStateBlob>> {
     Ok(rt.block_on(future)?)
 }
 
-fn main() -> Result<()>{
+fn create_genesis_blob(path: PathBuf) -> Result<()>{
     
-    let account_state_blobs = get_account_state_blobs().unwrap();
+    let account_state_blobs = get_account_state_blobs(path).unwrap();
     
     let genesis = vm_genesis::test_genesis_change_set_and_validators(Some(1));
     let genesis_txn = Transaction::GenesisTransaction(WriteSetPayload::Direct(genesis.0));
@@ -191,37 +190,7 @@ fn main() -> Result<()>{
 
     let opts = Args::parse_args_default_or_exit();
 
-    main_stuff(opts.path)
-}
-
-
-pub fn main_stuff(path: PathBuf) -> Result<()> {
-    let path_man = path.clone().join("state.manifest");
-    dbg!(&path_man);
-    let path_proof = path.join("state.proof");
-    // let path = home.join("libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.manifest");
-    // let path2 = home.join("libra/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.proof");
-
-    let manifest = read_from_json(&path_man.into_os_string().into_string().unwrap()).unwrap();
-
-    let (mut rt, _port) = get_runtime();
-
-    let (txn_info_with_proof, li): (TransactionInfoWithProof, LedgerInfoWithSignatures) = 
-            load_lcs_file(&path_proof.into_os_string().into_string().unwrap()).unwrap();
-
-    txn_info_with_proof.verify(li.ledger_info(), manifest.version)?;
-
-    ensure!(
-        txn_info_with_proof.transaction_info().state_root_hash() == manifest.root_hash,
-        "Root hash mismatch with that in proof. root hash: {}, expected: {}",
-        manifest.root_hash,
-        txn_info_with_proof.transaction_info().state_root_hash(),
-    );
-
-    let future = run_impl(manifest); // Nothing is printed
-    rt.block_on(future)?;
-
-    Ok(())
+    create_genesis_blob(opts.path)
 }
 
 
@@ -233,6 +202,6 @@ fn test_main() -> Result<()> {
     let buf = Path::new(path)
         .parent()
         .unwrap()
-        .join("fixtures/state-snapshot/194/state_ver_74694920.0889/state.manifest");
-    main_stuff(buf)
+        .join("fixtures/state-snapshot/194/state_ver_74694920.0889");
+        create_genesis_blob(buf)
 }

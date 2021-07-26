@@ -28,6 +28,14 @@ pub struct Genesis {
     pub backend: SharedBackend,
     #[structopt(long)]
     pub path: Option<PathBuf>,
+
+    //////// 0L /////////
+    // a genesis blob can be passed as reference to to create the final genesis.blob
+    // the usual libra-genesis-tool only creates genesis.blob with owners/operators only
+    // passing an additional blob will be used to load other accounts data
+    /// path to a reference genesis blob file using which a new genesis blob will be generated containing owners and validators
+    #[structopt(long)]
+    pub genesis_blob_path: Option<PathBuf>,
 }
 
 impl Genesis {
@@ -60,6 +68,7 @@ impl Genesis {
             &operator_registrations,
             script_policy,
             chain_id,
+            self.genesis_blob_path
         );
 
         if let Some(path) = self.path {

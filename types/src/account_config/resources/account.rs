@@ -77,18 +77,17 @@ impl AccountResource {
 
     pub fn clone_with_authentication_key(&self, new_authentication_key: Vec<u8>,
         account_address: AccountAddress) -> AccountResource {
-        let withdraw = WithdrawCapabilityResource {
-            account_address: account_address
-        };
-        let account_resource = AccountResource::new(
+        let withdraw_capability_resource = WithdrawCapabilityResource::new(
+            account_address.clone());
+        let key_rotation_cap = KeyRotationCapabilityResource::new(account_address.clone());
+        AccountResource::new(
             self.sequence_number,
             new_authentication_key,
-            None,
-            None,
+            Some(withdraw_capability_resource),
+            Some(key_rotation_cap),
             self.sent_events.clone(),
             self.received_events.clone(),
-        );
-        return account_resource;
+        )
     }
 }
 

@@ -77,7 +77,6 @@ impl ExecutionConfig {
     }
 
     pub fn save(&mut self, root_dir: &RootPath) -> Result<(), Error> {
-        // self.load(root_dir.clone());
         if let Some(genesis) = &self.genesis {
             if self.genesis_file_location.as_os_str().is_empty() {
                 self.genesis_file_location = PathBuf::from(GENESIS_DEFAULT);

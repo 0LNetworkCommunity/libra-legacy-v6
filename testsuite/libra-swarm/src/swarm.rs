@@ -284,22 +284,21 @@ impl LibraSwarm {
         })
     }
 
-    pub fn configure_validator_swarm(
+    pub fn  configure_validator_swarm(
         libra_node_bin_path: &Path,
         num_nodes: usize,
         config_dir: Option<String>,
         template: Option<NodeConfig>,
-        genesis_path: String
+        genesis_blob_path: Option<PathBuf>
     ) -> Result<LibraSwarm> {
         let swarm_config_dir = Self::setup_config_dir(&config_dir);
         info!("logs for validator at {:?}", swarm_config_dir);
 
-        let mut node_config_mut = template.unwrap_or_else(NodeConfig::default_for_validator);
-        node_config_mut.execution.genesis_file_location = std::path::PathBuf::from(genesis_path);
-        let node_config = node_config_mut;
+        let node_config = template.unwrap_or_else(NodeConfig::default_for_validator);
 
         let config_path = &swarm_config_dir.as_ref().to_path_buf();
-        let builder = ValidatorBuilder::new(num_nodes, node_config, &swarm_config_dir);
+        let builder = ValidatorBuilder::new(num_nodes, node_config, &swarm_config_dir,
+        genesis_blob_path);
         let config = SwarmConfig::build(&builder, config_path)?;
 
         Ok(Self {
