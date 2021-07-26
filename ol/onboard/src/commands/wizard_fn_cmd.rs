@@ -3,7 +3,7 @@
 #![allow(clippy::never_loop)]
 
 use abscissa_core::{Command, Options, Runnable, status_info, status_ok};
-use diem_genesis_tool::node_files;
+use diem_genesis_tool::ol_node_files;
 use diem_types::waypoint::Waypoint;
 use std::{path::PathBuf};
 use super::{files_cmd};
@@ -54,7 +54,7 @@ impl Runnable for FnWizardCmd {
         // 0L convention is for the namespace of the operator to be appended by '-oper'
         let namespace = cfg.profile.auth_key.clone() + "-oper";
         
-        node_files::write_node_config_files(
+        ol_node_files::write_node_config_files(
             home_dir.clone(),
             self.chain_id.unwrap_or(1),
             &self.github_org.clone().unwrap_or("OLSF".to_string()),

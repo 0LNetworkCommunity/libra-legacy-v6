@@ -13,7 +13,7 @@ mod verify;
 mod waypoint;
 //////// 0L ////////
 pub mod init;
-pub mod node_files;
+pub mod ol_node_files;
 mod mining;
 pub mod seeds;
 

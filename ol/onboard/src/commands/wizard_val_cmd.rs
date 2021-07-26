@@ -6,7 +6,7 @@ use super::files_cmd;
 use crate::prelude::app_config;
 use crate::entrypoint;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
-use diem_genesis_tool::node_files;
+use diem_genesis_tool::ol_node_files;
 use diem_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use diem_wallet::WalletLibrary;
 use ol::{commands::init_cmd, config::AppCfg};
@@ -119,7 +119,7 @@ impl Runnable for ValWizardCmd {
         let namespace = app_config.profile.auth_key.clone() + "-oper";
 
         // TODO: use node_config to get the seed peers and then write upstream_node vec in 0L.toml from that.
-        node_files::write_node_config_files(
+        ol_node_files::write_node_config_files(
             home_dir.clone(),
             self.chain_id.unwrap_or(1),
             &self.github_org.clone().unwrap_or("OLSF".to_string()),

@@ -6,7 +6,7 @@ use std::{fs::File, path::{PathBuf}};
 
 use crate::{application::app_config};
 use abscissa_core::{Command, Options, Runnable};
-use diem_genesis_tool::node_files;
+use diem_genesis_tool::ol_node_files;
 use diem_types::waypoint::Waypoint;
 use std::io::Write;
 
@@ -57,7 +57,7 @@ pub fn genesis_files(
     // 0L convention is for the namespace of the operator to be appended by '-oper'
     let namespace = miner_config.profile.auth_key.clone() + "-oper";
     
-    node_files::write_node_config_files(
+    ol_node_files::write_node_config_files(
         home_dir.clone(), 
         chain_id.unwrap_or(1),
         &github_org.clone().unwrap_or("OLSF".to_string()),
