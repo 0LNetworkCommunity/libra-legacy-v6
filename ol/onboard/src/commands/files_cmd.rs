@@ -7,6 +7,7 @@ use std::{fs::File, path::{PathBuf}};
 use crate::{application::app_config};
 use abscissa_core::{Command, Options, Runnable};
 use diem_genesis_tool::node_files;
+use diem_types::waypoint::Waypoint;
 use std::io::Write;
 
 use ol_types::config::AppCfg;
@@ -23,8 +24,9 @@ pub struct FilesCmd {
     rebuild_genesis: bool, 
     #[options(help = "only make fullnode config files")]
     fullnode_only: bool,
+    #[options(help = "optional waypoint")]
+    waypoint: Option<Waypoint>,    
 }
-
 
 impl Runnable for FilesCmd {
     /// Print version message
@@ -37,6 +39,7 @@ impl Runnable for FilesCmd {
             &self.repo,
             &self.rebuild_genesis,
             &self.fullnode_only,
+            self.waypoint,
         ) 
     }
 }
@@ -48,6 +51,7 @@ pub fn genesis_files(
     repo: &Option<String>,
     rebuild_genesis: &bool,
     fullnode_only: &bool,
+    way_opt: Option<Waypoint>,
 ) {
     let home_dir = miner_config.workspace.node_home.to_owned();
     // 0L convention is for the namespace of the operator to be appended by '-oper'
@@ -60,10 +64,13 @@ pub fn genesis_files(
         &repo.clone().unwrap_or("experimetal-genesis".to_string()),
         &namespace,
         rebuild_genesis,
-        fullnode_only
+        fullnode_only,
+        way_opt
     ).unwrap();
 
-    println!("validator configurations initialized, file saved to: {:?}", &home_dir.join("validator.node.yaml"));
+    println!("validator configurations initialized, file saved to: {:?}", 
+        &home_dir.join("validator.node.yaml")
+    );
 
 }
 
@@ -76,7 +83,11 @@ pub fn get_files(
     let repo = repo.clone().unwrap_or("genesis-archive".to_string());
 
 
-    let base_url = format!("https://raw.githubusercontent.com/{github_org}/{repo}/main/genesis/", github_org=github_org, repo=repo);
+    let base_url = format!(
+        "https://raw.githubusercontent.com/{github_org}/{repo}/main/genesis/", 
+        github_org=github_org, 
+        repo=repo
+    );
 
     let w_res = reqwest::blocking::get(&format!("{}genesis_waypoint", base_url));
 

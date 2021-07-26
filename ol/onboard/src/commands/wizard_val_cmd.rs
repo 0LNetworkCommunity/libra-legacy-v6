@@ -66,7 +66,8 @@ impl Runnable for ValWizardCmd {
             AppCfg::init_app_configs(authkey, account, &Some(upstream), &Some(entrypoint::get_node_home()));
 
         let home_path = &app_config.workspace.node_home;
-        
+        let base_waypoint = app_config.chain_info.base_waypoint.clone();
+
         status_ok!("\nMiner config written", "\n...........................\n");
 
         if let Some(url) = &self.template_url {
@@ -97,7 +98,7 @@ impl Runnable for ValWizardCmd {
         );
 
         // Initialize Validator Keys
-        init_cmd::initialize_validator(&wallet, &app_config).unwrap();
+        init_cmd::initialize_validator(&wallet, &app_config, base_waypoint).unwrap();
         status_ok!("\nKey file written", "\n...........................\n");
 
         // fetching the genesis files from genesis-archive
@@ -129,6 +130,7 @@ impl Runnable for ValWizardCmd {
             &namespace,
             &self.rebuild_genesis,
             &false,
+            base_waypoint            
         )
         .unwrap();
 

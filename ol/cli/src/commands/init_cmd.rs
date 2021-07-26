@@ -6,6 +6,7 @@ use crate::{application::app_config, config::AppCfg, entrypoint, migrate};
 use abscissa_core::{Command, FrameworkError, Options, Runnable, config};
 use anyhow::Error;
 use diem_genesis_tool::{init, key};
+use diem_types::waypoint::Waypoint;
 use ol_keys::{scheme::KeyScheme, wallet};
 use diem_json_rpc_client::AccountAddress;
 use diem_types::transaction::authenticator::AuthenticationKey;
@@ -25,6 +26,8 @@ pub struct InitCmd {
     skip_val: bool,
     #[options(help = "Fix config file, and migrate any missing fields")]
     fix: bool,
+    #[options(help = "Set a waypoint in config files")]
+    waypoint: Option<Waypoint>,    
 }
 
 
@@ -62,7 +65,7 @@ impl Runnable for InitCmd {
         };
 
         if !self.skip_val {
-          initialize_validator(&wallet, &miner_config).unwrap() 
+          initialize_validator(&wallet, &miner_config, self.waypoint).unwrap() 
         };
     }
 }
@@ -79,7 +82,9 @@ pub fn initialize_host_swarm(swarm_path: PathBuf, node_home: PathBuf) -> Result 
     Ok(cfg)
 }
 /// Initializes the necessary validator config files: genesis.blob, key_store.json
-pub fn initialize_validator(wallet: &WalletLibrary, miner_config: &AppCfg) -> Result <(), Error>{
+pub fn initialize_validator(
+    wallet: &WalletLibrary, miner_config: &AppCfg, way_opt: Option<Waypoint>
+) -> Result <(), Error>{
     let home_dir = &miner_config.workspace.node_home;
     let keys = KeyScheme::new(wallet);
     let namespace = miner_config.profile.auth_key.to_owned();

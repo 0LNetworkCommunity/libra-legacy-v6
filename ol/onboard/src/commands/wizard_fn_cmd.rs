@@ -4,10 +4,11 @@
 
 use abscissa_core::{Command, Options, Runnable, status_info, status_ok};
 use diem_genesis_tool::node_files;
+use diem_types::waypoint::Waypoint;
 use std::{path::PathBuf};
 use super::{files_cmd};
 use crate::{application::app_config};
-/// `val-wizard` subcommand
+/// `fullnode-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct FnWizardCmd {
     #[options(help = "output path files created, defaults to ~/.0L")]
@@ -21,7 +22,9 @@ pub struct FnWizardCmd {
     #[options(help = "build genesis from ceremony repo")]
     rebuild_genesis: bool,
     #[options(help = "skip fetching genesis blob")]
-    skip_fetch_genesis: bool, 
+    skip_fetch_genesis: bool,
+    #[options(help = "optional waypoint")]
+    waypoint: Option<Waypoint>,
 }
 
 impl Runnable for FnWizardCmd {
@@ -46,15 +49,6 @@ impl Runnable for FnWizardCmd {
             );
             status_ok!("\nGenesis OK", "\n...........................\n");
         }
-        // // Build Genesis and node.yaml file
-        // files_cmd::node_config_files(
-        //     &conf,
-        //     &self.chain_id,
-        //     &self.github_org,
-        //     &self.repo,
-        //     &self.rebuild_genesis,
-        //     &true,
-        // );
 
         let home_dir = cfg.workspace.node_home.to_owned();
         // 0L convention is for the namespace of the operator to be appended by '-oper'
@@ -71,6 +65,7 @@ impl Runnable for FnWizardCmd {
             &namespace,
             &self.rebuild_genesis,
             &true,
+            self.waypoint,
         ).unwrap();
         status_ok!("\nNode config OK", "\n...........................\n");
     }
