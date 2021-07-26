@@ -43,10 +43,8 @@ impl FromStr for Balance {
     fn from_str(s: &str) -> Result<Self> {
         // TODO: Try to get this from the on-chain config?
         let coin_types = vec!["XDX", "XUS"];
-
         let mut coin_type: Vec<&str> = coin_types.into_iter().filter(|x| s.ends_with(x)).collect();
         let currency_code = coin_type.pop().unwrap_or("XUS");
-
         if !coin_type.is_empty() {
             return Err(ErrorKind::Other(
                 "Multiple coin types supplied for account. Accounts are single currency"
