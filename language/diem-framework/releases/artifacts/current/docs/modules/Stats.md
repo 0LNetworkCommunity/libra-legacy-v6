@@ -137,13 +137,13 @@
 <pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_initialize">initialize</a>(vm: &signer) {
   <b>let</b> sender = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190001));
-   move_to&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(
+  move_to&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(
     vm,
     <a href="Stats.md#0x1_Stats_ValStats">ValStats</a> {
-        history: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
-        current: <a href="Stats.md#0x1_Stats_blank">blank</a>()
-      }
-    );
+      history: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+      current: <a href="Stats.md#0x1_Stats_blank">blank</a>()
+    }
+  );
 }
 </code></pre>
 
@@ -168,12 +168,12 @@
 
 <pre><code><b>fun</b> <a href="Stats.md#0x1_Stats_blank">blank</a>():<a href="Stats.md#0x1_Stats_SetData">SetData</a> {
   <a href="Stats.md#0x1_Stats_SetData">SetData</a> {
-      addr: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
-      prop_count: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
-      vote_count: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
-      total_votes: 0,
-      total_props: 0,
-    }
+    addr: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+    prop_count: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+    vote_count: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+    total_votes: 0,
+    total_props: 0,
+  }
 }
 </code></pre>
 
