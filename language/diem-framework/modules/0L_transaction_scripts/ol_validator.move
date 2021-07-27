@@ -8,7 +8,8 @@ module ValidatorScripts {
     use 0x1::ValidatorUniverse;
     use 0x1::Vector;
 
-    const NOT_ABOVE_THRESH: u64 = 01;
+    const NOT_ABOVE_THRESH_JOIN: u64 = 220101;
+    const NOT_ABOVE_THRESH_ADD : u64 = 220102;
 
     // FOR E2E testing
     public(script) fun ol_reconfig_bulk_update_setup(
@@ -41,7 +42,7 @@ module ValidatorScripts {
         // if is above threshold continue, or raise error.
         assert(
             MinerState::node_above_thresh(&validator, addr), 
-            Errors::invalid_state(NOT_ABOVE_THRESH)
+            Errors::invalid_state(NOT_ABOVE_THRESH_JOIN)
         );
         // if is not in universe, add back
         if (!ValidatorUniverse::is_in_universe(addr)) {
@@ -64,6 +65,20 @@ module ValidatorScripts {
             ValidatorUniverse::remove_self(&validator);
         };
     }
+
+    public(script) fun val_add_self(validator: signer) {
+        let validator = &validator;
+        let addr = Signer::address_of(validator);
+        // if is above threshold continue, or raise error.
+        assert(
+            MinerState::node_above_thresh(validator, addr), 
+            Errors::invalid_state(NOT_ABOVE_THRESH_ADD)
+        );
+        // if is not in universe, add back
+        if (!ValidatorUniverse::is_in_universe(addr)) {
+            ValidatorUniverse::add_self(validator);
+        };
+    }    
 
 }
 }

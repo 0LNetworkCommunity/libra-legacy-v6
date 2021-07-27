@@ -3078,6 +3078,8 @@ pub enum ScriptFunctionCall {
         currency: TypeTag,
         allow_minting: bool,
     },
+
+    ValAddSelf {},
 }
 
 impl ScriptCall {
@@ -3652,6 +3654,7 @@ impl ScriptFunctionCall {
                 currency,
                 allow_minting,
             } => encode_update_minting_ability_script_function(currency, allow_minting),
+            ValAddSelf {} => encode_val_add_self_script_function(),
         }
     }
 
@@ -5929,6 +5932,18 @@ pub fn encode_update_minting_ability_script_function(
         Identifier::new("update_minting_ability").unwrap(),
         vec![currency],
         vec![bcs::to_bytes(&allow_minting).unwrap()],
+    ))
+}
+
+pub fn encode_val_add_self_script_function() -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            Identifier::new("ValidatorScripts").unwrap(),
+        ),
+        Identifier::new("val_add_self").unwrap(),
+        vec![],
+        vec![],
     ))
 }
 
@@ -8269,6 +8284,14 @@ fn decode_update_minting_ability_script_function(
     }
 }
 
+fn decode_val_add_self_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(_script) = payload {
+        Some(ScriptFunctionCall::ValAddSelf {})
+    } else {
+        None
+    }
+}
+
 fn decode_add_currency_to_account_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::AddCurrencyToAccount {
         currency: script.ty_args().get(0)?.clone(),
@@ -8870,6 +8893,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "TreasuryComplianceScriptsupdate_minting_ability".to_string(),
             Box::new(decode_update_minting_ability_script_function),
+        );
+        map.insert(
+            "ValidatorScriptsval_add_self".to_string(),
+            Box::new(decode_val_add_self_script_function),
         );
         map
     });
