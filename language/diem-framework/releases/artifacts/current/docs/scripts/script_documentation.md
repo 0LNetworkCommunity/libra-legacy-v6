@@ -5007,6 +5007,7 @@ a reconfiguration of the system.
 -  [`0x1::AccountCreationScripts`](script_documentation.md#0x1_AccountCreationScripts)
 -  [`0x1::AccountFreezing`](../../../../../releases/artifacts/current/docs/modules/AccountFreezing.md#0x1_AccountFreezing)
 -  [`0x1::AccountLimits`](../../../../../releases/artifacts/current/docs/modules/AccountLimits.md#0x1_AccountLimits)
+-  [`0x1::Audit`](../../../../../releases/artifacts/current/docs/modules/Audit.md#0x1_Audit)
 -  [`0x1::Authenticator`](../../../../../releases/artifacts/current/docs/modules/Authenticator.md#0x1_Authenticator)
 -  [`0x1::AutoPay2`](../../../../../releases/artifacts/current/docs/modules/AutoPay.md#0x1_AutoPay2)
 -  [`0x1::Cases`](../../../../../releases/artifacts/current/docs/modules/Cases.md#0x1_Cases)
