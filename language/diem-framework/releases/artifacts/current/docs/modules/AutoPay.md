@@ -15,6 +15,7 @@
 -  [Function `reconfig_reset_tick`](#0x1_AutoPay2_reconfig_reset_tick)
 -  [Function `initialize`](#0x1_AutoPay2_initialize)
 -  [Function `enable_account_limits`](#0x1_AutoPay2_enable_account_limits)
+-  [Function `get_all_payees`](#0x1_AutoPay2_get_all_payees)
 -  [Function `process_autopay`](#0x1_AutoPay2_process_autopay)
 -  [Function `enable_autopay`](#0x1_AutoPay2_enable_autopay)
 -  [Function `disable_autopay`](#0x1_AutoPay2_disable_autopay)
@@ -34,6 +35,7 @@
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
+<b>use</b> <a href="Wallet.md#0x1_Wallet">0x1::Wallet</a>;
 </code></pre>
 
 
@@ -438,6 +440,54 @@ Attempt to add instruction when too many already exist
 
 </details>
 
+<a name="0x1_AutoPay2_get_all_payees"></a>
+
+## Function `get_all_payees`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay2_get_all_payees">get_all_payees</a>(): vector&lt;address&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay2_get_all_payees">get_all_payees</a>():vector&lt;address&gt; <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a>, <a href="AutoPay.md#0x1_AutoPay2_Data">Data</a> {
+  <b>let</b> account_list = &borrow_global&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a>&gt;(
+    <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()
+  ).accounts;
+  <b>let</b> accounts_length = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(account_list);
+  <b>let</b> account_idx = 0;
+  <b>let</b> payee_vec = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
+
+  <b>while</b> (account_idx &lt; accounts_length) {
+    <b>let</b> account_addr = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(account_list, account_idx);
+    // Obtain the account balance
+    // <b>let</b> account_bal = <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*account_addr);
+    // Go through all payments for this account and pay
+    <b>let</b> payments = &<b>mut</b> borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay2_Data">Data</a>&gt;(*account_addr).payments;
+    <b>let</b> payments_len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="AutoPay.md#0x1_AutoPay2_Payment">Payment</a>&gt;(payments);
+    <b>let</b> payments_idx = 0;
+    <b>while</b> (payments_idx &lt; payments_len) {
+      <b>let</b> payment = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>&lt;<a href="AutoPay.md#0x1_AutoPay2_Payment">Payment</a>&gt;(payments, payments_idx);
+      <b>if</b> (!<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(&payee_vec, &payment.payee)) {
+        <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(&<b>mut</b> payee_vec, payment.payee);
+      };
+      payments_idx = payments_idx + 1;
+    };
+    account_idx = account_idx + 1;
+  };
+  <b>return</b> payee_vec
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_AutoPay2_process_autopay"></a>
 
 ## Function `process_autopay`
@@ -482,18 +532,27 @@ Attempt to add instruction when too many already exist
       <b>let</b> delete_payment = <b>false</b>;
       {
         <b>let</b> payment = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>&lt;<a href="AutoPay.md#0x1_AutoPay2_Payment">Payment</a>&gt;(payments, payments_idx);
-        // If payment end epoch is greater, it's not an active payment anymore, so delete it
-        <b>if</b> (payment.end_epoch &gt;= epoch) {
+        // If payment end epoch is greater, it's not an active payment
+        // anymore, so delete it, does not <b>apply</b> <b>to</b> fixed once payment
+        // (it is deleted once it is sent)
+        <b>if</b> (payment.end_epoch &gt;= epoch || payment.in_type == <a href="AutoPay.md#0x1_AutoPay2_FIXED_ONCE">FIXED_ONCE</a>) {
           // A payment will happen now
           // Obtain the amount <b>to</b> pay
           // IMPORTANT there are two digits for scaling representation.
 
-          // an autopay instruction of 12.34% is scaled by two orders, and represented in AutoPay <b>as</b> `1234`.
+          // an autopay instruction of 12.34% is scaled by two orders,
+          // and represented in AutoPay <b>as</b> `1234`.
           <b>let</b> amount = <b>if</b> (payment.in_type == <a href="AutoPay.md#0x1_AutoPay2_PERCENT_OF_BALANCE">PERCENT_OF_BALANCE</a>) {
-            <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(account_bal , <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(payment.amt, 10000))
+            <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(
+              account_bal,
+              <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(payment.amt, 10000)
+            )
           } <b>else</b> <b>if</b> (payment.in_type == <a href="AutoPay.md#0x1_AutoPay2_PERCENT_OF_CHANGE">PERCENT_OF_CHANGE</a>) {
             <b>if</b> (account_bal &gt; payment.prev_bal) {
-              <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(account_bal - payment.prev_bal, <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(payment.amt, 10000))
+              <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(
+                account_bal - payment.prev_bal,
+                <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(payment.amt, 10000)
+              )
             } <b>else</b> {
               // <b>if</b> account balance hasn't gone up, no value is transferred
               0
@@ -503,12 +562,19 @@ Attempt to add instruction when too many already exist
             payment.amt
           };
 
-          <b>if</b> (amount != 0 && amount &lt;= account_bal) {
-            <b>if</b> (borrow_global&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountLimitsEnable">AccountLimitsEnable</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm)).enabled) {
-              <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment">DiemAccount::vm_make_payment</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*account_addr, payment.payee, amount, x"", x"", vm);
-            } <b>else</b> {
-              <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">DiemAccount::vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*account_addr, payment.payee, amount, x"", x"", vm);
-            };
+          // check payees are community wallets
+          <b>let</b> list = <a href="Wallet.md#0x1_Wallet_get_comm_list">Wallet::get_comm_list</a>();
+          <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(&list, &payment.payee) &&
+              amount != 0 &&
+              amount &lt;= account_bal &&
+              borrow_global&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountLimitsEnable">AccountLimitsEnable</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm)).enabled) {
+              <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment">DiemAccount::vm_make_payment</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+                *account_addr, payment.payee, amount, x"", x"", vm
+              );
+          } <b>else</b> {
+              <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">DiemAccount::vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+                *account_addr, payment.payee, amount, x"", x"", vm
+              );
           };
 
           // <b>update</b> previous balance for next calculation

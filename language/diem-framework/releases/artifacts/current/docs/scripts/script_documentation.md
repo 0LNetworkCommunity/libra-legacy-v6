@@ -5057,6 +5057,7 @@ a reconfiguration of the system.
 -  [`0x1::ValidatorConfig`](../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig)
 -  [`0x1::ValidatorOperatorConfig`](../../../../../releases/artifacts/current/docs/modules/ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig)
 -  [`0x1::ValidatorUniverse`](../../../../../releases/artifacts/current/docs/modules/ValidatorUniverse.md#0x1_ValidatorUniverse)
+-  [`0x1::Wallet`](../../../../../releases/artifacts/current/docs/modules/Wallet.md#0x1_Wallet)
 -  [`0x1::XDX`](../../../../../releases/artifacts/current/docs/modules/XDX.md#0x1_XDX)
 -  [`0x1::XUS`](../../../../../releases/artifacts/current/docs/modules/XUS.md#0x1_XUS)
 

@@ -15,7 +15,7 @@ address 0x1 {
     use 0x1::CoreAddresses;
     use 0x1::DiemConfig;
     use 0x1::Errors;
-    // use 0x1::Debug::print;
+    use 0x1::Wallet;
 
     /// Attempted to send funds to an account that does not exist
     /// Maximum value for the Payment type selection
@@ -125,6 +125,35 @@ address 0x1 {
       limits_enable.enabled = true;
     }
 
+    // helper to get all known destinations users have for autopay
+    public fun get_all_payees():vector<address> acquires AccountList, Data {
+      let account_list = &borrow_global<AccountList>(
+        CoreAddresses::DIEM_ROOT_ADDRESS()
+      ).accounts;
+      let accounts_length = Vector::length<address>(account_list);
+      let account_idx = 0;
+      let payee_vec = Vector::empty<address>();
+
+      while (account_idx < accounts_length) {
+        let account_addr = Vector::borrow<address>(account_list, account_idx);
+        // Obtain the account balance
+        // let account_bal = DiemAccount::balance<GAS>(*account_addr);
+        // Go through all payments for this account and pay 
+        let payments = &mut borrow_global_mut<Data>(*account_addr).payments;
+        let payments_len = Vector::length<Payment>(payments);
+        let payments_idx = 0;
+        while (payments_idx < payments_len) {
+          let payment = Vector::borrow_mut<Payment>(payments, payments_idx);
+          if (!Vector::contains<address>(&payee_vec, &payment.payee)) {
+            Vector::push_back<address>(&mut payee_vec, payment.payee);
+          };
+          payments_idx = payments_idx + 1;
+        };
+        account_idx = account_idx + 1;
+      };
+      return payee_vec
+    }
+
     // This is the main function for this module. It is called once every epoch
     // by 0x0::DiemBlock in the block_prologue function.
     // This function iterates through all autopay-enabled accounts and processes
@@ -160,18 +189,27 @@ address 0x1 {
           let delete_payment = false;
           {
             let payment = Vector::borrow_mut<Payment>(payments, payments_idx);
-            // If payment end epoch is greater, it's not an active payment anymore, so delete it
-            if (payment.end_epoch >= epoch) {
+            // If payment end epoch is greater, it's not an active payment 
+            // anymore, so delete it, does not apply to fixed once payment 
+            // (it is deleted once it is sent)
+            if (payment.end_epoch >= epoch || payment.in_type == FIXED_ONCE) {
               // A payment will happen now
               // Obtain the amount to pay 
               // IMPORTANT there are two digits for scaling representation.
              
-              // an autopay instruction of 12.34% is scaled by two orders, and represented in AutoPay as `1234`.
+              // an autopay instruction of 12.34% is scaled by two orders, 
+              // and represented in AutoPay as `1234`.
               let amount = if (payment.in_type == PERCENT_OF_BALANCE) {
-                FixedPoint32::multiply_u64(account_bal , FixedPoint32::create_from_rational(payment.amt, 10000))
+                FixedPoint32::multiply_u64(
+                  account_bal, 
+                  FixedPoint32::create_from_rational(payment.amt, 10000)
+                )
               } else if (payment.in_type == PERCENT_OF_CHANGE) {
                 if (account_bal > payment.prev_bal) {
-                  FixedPoint32::multiply_u64(account_bal - payment.prev_bal, FixedPoint32::create_from_rational(payment.amt, 10000))
+                  FixedPoint32::multiply_u64(
+                    account_bal - payment.prev_bal, 
+                    FixedPoint32::create_from_rational(payment.amt, 10000)
+                  )
                 } else {
                   // if account balance hasn't gone up, no value is transferred
                   0
@@ -180,13 +218,20 @@ address 0x1 {
                 // in remaining cases, payment is simple amaount given, not a percentage
                 payment.amt
               };
-              
-              if (amount != 0 && amount <= account_bal) {
-                if (borrow_global<AccountLimitsEnable>(Signer::address_of(vm)).enabled) {
-                  DiemAccount::vm_make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
-                } else {
-                  DiemAccount::vm_make_payment_no_limit<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
-                };
+
+              // check payees are community wallets
+              let list = Wallet::get_comm_list();
+              if (Vector::contains<address>(&list, &payment.payee) && 
+                  amount != 0 && 
+                  amount <= account_bal && 
+                  borrow_global<AccountLimitsEnable>(Signer::address_of(vm)).enabled) {
+                  DiemAccount::vm_make_payment<GAS>(
+                    *account_addr, payment.payee, amount, x"", x"", vm
+                  );
+              } else {
+                  DiemAccount::vm_make_payment_no_limit<GAS>(
+                    *account_addr, payment.payee, amount, x"", x"", vm
+                  );
               };
 
               // update previous balance for next calculation

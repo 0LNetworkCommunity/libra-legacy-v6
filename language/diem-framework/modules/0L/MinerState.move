@@ -90,7 +90,7 @@ address 0x1 {
       // In rustland the vm_genesis creates a Signer for the miner. So the SENDER is not the same and the Signer.
 
       //TODO: Previously in OLv3 is_genesis() returned true. How to check that this is part of genesis? is_genesis returns false here.
-      // assert(LibraTimestamp::is_genesis(), 130101024010);
+      // assert(DiemTimestamp::is_genesis(), 130101024010);
       init_miner_state(miner_sig, &challenge, &solution);
 
       // TODO: Move this elsewhere? 
@@ -337,8 +337,8 @@ address 0x1 {
       // NOTE Only Signer can update own state.
       // Should only happen once.
       assert(!exists<MinerProofHistory>(Signer::address_of(miner_sig)), Errors::requires_role(130107));
-      // LibraAccount calls this.
-      // Exception is LibraAccount which can simulate a Signer.
+      // DiemAccount calls this.
+      // Exception is DiemAccount which can simulate a Signer.
       // Initialize MinerProofHistory object and give to miner account
       move_to<MinerProofHistory>(miner_sig, MinerProofHistory{
         previous_proof_hash: Vector::empty(),

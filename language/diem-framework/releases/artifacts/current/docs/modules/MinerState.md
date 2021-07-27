@@ -348,7 +348,7 @@
   // In rustland the vm_genesis creates a <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a> for the miner. So the SENDER is not the same and the <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a>.
 
   //TODO: Previously in OLv3 is_genesis() returned <b>true</b>. How <b>to</b> check that this is part of genesis? is_genesis returns <b>false</b> here.
-  // <b>assert</b>(LibraTimestamp::is_genesis(), 130101024010);
+  // <b>assert</b>(<a href="DiemTimestamp.md#0x1_DiemTimestamp_is_genesis">DiemTimestamp::is_genesis</a>(), 130101024010);
   <a href="MinerState.md#0x1_MinerState_init_miner_state">init_miner_state</a>(miner_sig, &challenge, &solution);
 
   // TODO: Move this elsewhere?
@@ -702,8 +702,8 @@
   // NOTE Only <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a> can <b>update</b> own state.
   // Should only happen once.
   <b>assert</b>(!<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig)), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(130107));
-  // LibraAccount calls this.
-  // Exception is LibraAccount which can simulate a <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a>.
+  // <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> calls this.
+  // Exception is <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> which can simulate a <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a>.
   // Initialize <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> object and give <b>to</b> miner account
   move_to&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_sig, <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>{
     previous_proof_hash: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
