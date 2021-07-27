@@ -4,9 +4,9 @@ module Wallet {
     use 0x1::Vector;
     use 0x1::Signer;
     use 0x1::Errors;
-    use 0x1::LibraConfig;
+    use 0x1::DiemConfig;
     use 0x1::Option::{Self,Option};
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     use 0x1::NodeWeight;
 
     const ERR_PREFIX: u64 = 023;
@@ -17,19 +17,19 @@ module Wallet {
 
     //////// COMMUNITY WALLETS ////////
 
-    resource struct CommunityWallets {
+    struct CommunityWallets has key {
         list: vector<address>
     }
 
         // Timed transfer submission
-    resource struct CommunityTransfers {
+    struct CommunityTransfers has key {
       proposed: vector<TimedTransfer>,
       approved: vector<TimedTransfer>,
       rejected: vector<TimedTransfer>,
       max_uid: u64,
 
     }
-    struct TimedTransfer {
+    struct TimedTransfer has copy, drop, key, store {
       uid: u64,
       expire_epoch: u64,
       payer: address,
@@ -39,13 +39,13 @@ module Wallet {
       veto: Veto,
     }
 
-    struct Veto {
+    struct Veto has copy, drop, store {
       list: vector<address>,
       count: u64,
       threshold: u64,
     }
 
-    resource struct CommunityFreeze {
+    struct CommunityFreeze has key {
         is_frozen: bool,
         consecutive_rejections: u64,
         unfreeze_votes: vector<address>,
@@ -53,7 +53,7 @@ module Wallet {
 
     // Utility used at genesis (and on upgrade) to initialize the system state.
     public fun init(vm: &signer) {
-        CoreAddresses::assert_libra_root(vm);
+        CoreAddresses::assert_diem_root(vm);
         
         if ((!exists<CommunityTransfers>(0x0))) {
           move_to<CommunityTransfers>(vm, CommunityTransfers{
@@ -95,7 +95,7 @@ module Wallet {
 
     // Utility for vm to remove the CommunityWallet tag from an address
     public fun vm_remove_comm(vm: &signer, addr: address) acquires CommunityWallets {
-      CoreAddresses::assert_libra_root(vm);
+      CoreAddresses::assert_diem_root(vm);
       if (exists<CommunityWallets>(0x0)) {
         let list = get_comm_list();
         let (yes, i) = Vector::index_of<address>(&list, &addr);
@@ -124,7 +124,7 @@ module Wallet {
       d.max_uid = d.max_uid + 1;
       
       // add current epoch + 1
-      let current_epoch = LibraConfig::get_current_epoch();
+      let current_epoch = DiemConfig::get_current_epoch();
 
       let t = TimedTransfer {
           uid: d.max_uid,
@@ -176,7 +176,7 @@ module Wallet {
   public fun veto(sender: &signer, uid: u64) acquires CommunityTransfers, CommunityFreeze {
     let addr = Signer::address_of(sender);
     assert(
-      LibraSystem::is_validator(addr),
+      DiemSystem::is_validator(addr),
       Errors::requires_role(ERR_PREFIX + 001)
     );
     let (opt, i) = find(uid, PROPOSED);
@@ -236,7 +236,7 @@ module Wallet {
       // ignore votes that are no longer in the validator set,
       // BUT DON'T REMOVE, since they may rejoin the validator set, and shouldn't need to vote again.
 
-      if (LibraSystem::is_validator(addr)) {
+      if (DiemSystem::is_validator(addr)) {
         votes = votes + NodeWeight::proof_of_weight(addr)
       };
       k = k + 1;
@@ -250,11 +250,11 @@ module Wallet {
 
   // private function to get the total voting power of the validator set, and find the 2/3rds threshold
   fun calculate_proportional_voting_threshold(): u64 {
-      let val_set_size = LibraSystem::validator_set_size();
+      let val_set_size = DiemSystem::validator_set_size();
       let i = 0;
       let voting_power = 0;
       while (i < val_set_size) {
-        let addr = LibraSystem::get_ith_validator_address(i);        
+        let addr = DiemSystem::get_ith_validator_address(i);        
         voting_power = voting_power + NodeWeight::proof_of_weight(addr);
         i = i + 1;
       };
@@ -263,7 +263,7 @@ module Wallet {
   }
 
   // Utility to list CommunityWallet transfers due, by epoch. Anyone can call this.
-  // This is used by VM in LibraAccount at epoch boundaries to process the wallet transfers.
+  // This is used by VM in DiemAccount at epoch boundaries to process the wallet transfers.
   public fun list_tx_by_epoch(epoch: u64): vector<TimedTransfer> acquires CommunityTransfers {
       let c = borrow_global_mut<CommunityTransfers>(0x0);
       // reset approved list
@@ -286,7 +286,7 @@ module Wallet {
     }
     
     public fun maybe_reset_rejection_counter(vm: &signer, wallet: address) acquires CommunityFreeze {
-      CoreAddresses::assert_libra_root(vm);
+      CoreAddresses::assert_diem_root(vm);
       let f = borrow_global_mut<CommunityFreeze>(wallet);
       f.consecutive_rejections = 0;
     }
@@ -329,7 +329,7 @@ module Wallet {
         // ignore votes that are no longer in the validator set,
         // BUT DON'T REMOVE, since they may rejoin the validator set, and shouldn't need to vote again.
 
-        if (LibraSystem::is_validator(addr)) {
+        if (DiemSystem::is_validator(addr)) {
           votes = votes + NodeWeight::proof_of_weight(addr)
         };
         k = k + 1;
@@ -381,7 +381,7 @@ module Wallet {
     }
 
     // getter to check if wallet is frozen
-    // used in LibraAccount before attempting a transfer.
+    // used in DiemAccount before attempting a transfer.
     public fun is_frozen(addr: address): bool acquires CommunityFreeze{
       let f = borrow_global<CommunityFreeze>(addr);
       f.is_frozen
@@ -389,7 +389,7 @@ module Wallet {
 
 
     //////// SLOW WALLETS ////////
-    resource struct SlowWallet {
+    struct SlowWallet has key {
         is_slow: bool
     }
 
