@@ -42,6 +42,7 @@ module DiemAccount {
     use 0x1::FIFO;
     use 0x1::FixedPoint32;
     use 0x1::GAS::GAS;
+    use 0x1::ValidatorUniverse;
     use 0x1::Wallet;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
@@ -428,7 +429,7 @@ module DiemAccount {
     // DiemAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
 
     /////// 0L ////////
-    //Function code: 01
+    // Function code: 01
     public fun create_user_account_with_proof(
         challenge: &vector<u8>,
         solution: &vector<u8>,
@@ -456,8 +457,10 @@ module DiemAccount {
 
     /////// 0L ////////
     // Permissions: PUBLIC, ANYONE, OPEN!
-    // This function has no permissions, it doesn't check the signer. And it exceptionally is moving a resource to a different account than the signer.
-    // DiemAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
+    // This function has no permissions, it doesn't check the signer. 
+    // And it exceptionally is moving a resource to a different account than the signer.
+    // DiemAccount is the only code in the VM which can place a resource in an account. 
+    // As such the module and especially this function has an attack surface.
     //Function code:02
     public fun create_validator_account_with_proof(
         sender: &signer,
@@ -480,7 +483,7 @@ module DiemAccount {
             &Globals::get_difficulty(),
             solution
         );
-        assert(valid, Errors::invalid_argument(120102));
+        assert(valid, Errors::invalid_argument(120103));
 
         // check there's enough balance for bootstrapping both operator and validator account
         assert(balance<GAS>(sender_addr)  >= 2 * BOOTSTRAP_COIN_VALUE, Errors::limit_exceeded(EINSUFFICIENT_BALANCE));
@@ -514,6 +517,11 @@ module DiemAccount {
             op_validator_network_addresses,
             op_fullnode_network_addresses
         );
+
+        /////// 0L /////////
+        // user can join validator universe list, but will only join if 
+        // the mining is above the threshold in the preceeding period.
+        ValidatorUniverse::add_self(&new_signer);        
         
         make_account(new_signer, auth_key_prefix);
         make_account(new_op_account, op_auth_key_prefix);
@@ -1014,15 +1022,24 @@ module DiemAccount {
         include WithdrawFromEmits<Token>{payee: dd_addr, metadata: x""};
     }
 
-    /// Return a unique capability granting permission to withdraw from the sender's account balance.
+    /// Return a unique capability granting permission to withdraw from 
+    /// the sender's account balance.
     // Function code: 10 Prefix: 170110     /////// 0L /////////
     public fun extract_withdraw_capability(
         sender: &signer
     ): WithdrawCapability acquires DiemAccount {
         //////// 0L //////// Transfers disabled by default
         //////// 0L //////// Transfers of 10 GAS 
-        //////// 0L //////// enabled when validator count is 100.         
+        //////// 0L //////// enabled when epoch is 1000
         let sender_addr = Signer::address_of(sender);
+
+        /////// 0L /////////
+        // Community wallets have own transfer mechanism.
+        let community_wallets = Wallet::get_comm_list();
+        assert(
+            !Vector::contains(&community_wallets, &sender_addr), 
+            Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
+        );
 
         /////// 0L /////////
         if (DiemConfig::check_transfer_enabled()) {
@@ -1034,7 +1051,10 @@ module DiemAccount {
                 AccountLimits::publish_window_OL<GAS>(sender, sender_addr);
             };
         } else {
-            assert(sender_addr == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
+            assert(
+                sender_addr == CoreAddresses::DIEM_ROOT_ADDRESS(), 
+                Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
+            );
         };
 
         // Abort if we already extracted the unique withdraw capability for this account.
@@ -1148,6 +1168,39 @@ module DiemAccount {
         };
 
         restore_withdraw_capability(cap);
+    }
+
+    //////// 0L ////////
+    public fun process_community_wallets(
+        vm: &signer, epoch: u64
+    ) acquires DiemAccount, Balance, AccountOperationsCapability {
+        if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
+        
+        // Migrate on the fly if state doesn't exist on upgrade.
+        if (!Wallet::is_init_comm()) {
+            Wallet::init(vm);
+            return
+        };
+
+        let v = Wallet::list_tx_by_epoch(epoch);
+
+        let len = Vector::length<Wallet::TimedTransfer>(&v);
+        let i = 0;
+        while (i < len) {
+            
+            let t: Wallet::TimedTransfer = *Vector::borrow(&v, i);
+            // TODO: Is this the best way to access a struct property from 
+            // outside a module?
+            let (payer, payee, value, description) = Wallet::get_tx_args(t);
+            
+            if (Wallet::is_frozen(payer)) continue;
+
+            vm_make_payment_no_limit<GAS>(payer, payee, value, description, b"", vm);
+            
+            Wallet::maybe_reset_rejection_counter(vm, payer);
+            
+            i = i + 1;
+        };
     }
 
     /////// 0L /////////
@@ -1537,7 +1590,10 @@ module DiemAccount {
             }
         );
         
-        TrustedAccounts::initialize(&new_account); //////// 0L ////////
+        //////// 0L ////////
+        TrustedAccounts::initialize(&new_account);
+        Wallet::set_slow(&new_account);
+
         destroy_signer(new_account);
     }
     spec fun make_account {
