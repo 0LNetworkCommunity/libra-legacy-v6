@@ -14,6 +14,7 @@ module DiemBlock {
     use 0x1::Epoch;
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
+    use 0x1::Migrations;
 
     struct BlockMetadata has key {
         /// Height of the current block
@@ -108,8 +109,10 @@ module DiemBlock {
         );
 
         //////// 0L ////////
-        // reconfigure
-        if (Epoch::epoch_finished()) {    
+        // EPOCH BOUNDARY
+        if (Epoch::epoch_finished()) {
+          // Run migrations
+          Migrations::init(&vm);
           // TODO: We don't need to pass block height to ReconfigureOL. 
           // It should use the BlockMetadata. But there's a circular reference 
           // there when we try.

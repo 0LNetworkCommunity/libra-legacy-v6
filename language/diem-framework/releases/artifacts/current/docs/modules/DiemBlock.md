@@ -26,6 +26,7 @@ This module defines a struct storing the metadata of the block and new block eve
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event">0x1::Event</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
+<b>use</b> <a href="Migrations.md#0x1_Migrations">0x1::Migrations</a>;
 <b>use</b> <a href="Reconfigure.md#0x1_Reconfigure">0x1::Reconfigure</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 </code></pre>
@@ -271,8 +272,10 @@ The runtime always runs this before executing the transactions in a block.
     );
 
     //////// 0L ////////
-    // reconfigure
+    // EPOCH BOUNDARY
     <b>if</b> (<a href="Epoch.md#0x1_Epoch_epoch_finished">Epoch::epoch_finished</a>()) {
+      // Run migrations
+      <a href="Migrations.md#0x1_Migrations_init">Migrations::init</a>(&vm);
       // TODO: We don't need <b>to</b> pass block height <b>to</b> ReconfigureOL.
       // It should <b>use</b> the <a href="DiemBlock.md#0x1_DiemBlock_BlockMetadata">BlockMetadata</a>. But there's a circular reference
       // there when we try.
