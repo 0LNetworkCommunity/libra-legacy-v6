@@ -163,6 +163,7 @@ The Move modules in the Diem Framework can be bucketed in to a couple categories
 -  [`0x1::ValidatorUniverse`](ValidatorUniverse.md#0x1_ValidatorUniverse)
 -  [`0x1::Vector`](../../../../../../move-stdlib/docs/Vector.md#0x1_Vector)
 -  [`0x1::Wallet`](Wallet.md#0x1_Wallet)
+-  [`0x1::WalletScripts`](ol_wallet.md#0x1_WalletScripts)
 -  [`0x1::XDX`](XDX.md#0x1_XDX)
 -  [`0x1::XUS`](XUS.md#0x1_XUS)
 
