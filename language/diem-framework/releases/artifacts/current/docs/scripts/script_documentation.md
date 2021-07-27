@@ -5031,6 +5031,8 @@ a reconfiguration of the system.
 -  [`0x1::GAS`](../../../../../releases/artifacts/current/docs/modules/GAS.md#0x1_GAS)
 -  [`0x1::Genesis`](../../../../../releases/artifacts/current/docs/modules/Genesis.md#0x1_Genesis)
 -  [`0x1::Globals`](../../../../../releases/artifacts/current/docs/modules/Globals.md#0x1_Globals)
+-  [`0x1::MigrateWallets`](../../../../../releases/artifacts/current/docs/modules/Migrations.md#0x1_MigrateWallets)
+-  [`0x1::Migrations`](../../../../../releases/artifacts/current/docs/modules/Migrations.md#0x1_Migrations)
 -  [`0x1::MinerState`](../../../../../releases/artifacts/current/docs/modules/MinerState.md#0x1_MinerState)
 -  [`0x1::NodeWeight`](../../../../../releases/artifacts/current/docs/modules/NodeWeight.md#0x1_NodeWeight)
 -  [`0x1::Oracle`](../../../../../releases/artifacts/current/docs/modules/Oracle.md#0x1_Oracle)

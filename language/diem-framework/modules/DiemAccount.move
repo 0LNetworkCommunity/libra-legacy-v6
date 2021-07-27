@@ -42,6 +42,7 @@ module DiemAccount {
     use 0x1::FIFO;
     use 0x1::FixedPoint32;
     use 0x1::GAS::GAS;
+    use 0x1::Wallet;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key, store { /////// 0L /////////
@@ -2754,6 +2755,14 @@ module DiemAccount {
             metadata_signature
         );
     }
+
+    /////// 0L /////////
+    public fun vm_set_slow_wallet(vm: &signer, addr: address) {
+      CoreAddresses::assert_diem_root(vm);
+      let sig = create_signer(addr);
+      Wallet::set_slow(&sig);
+      destroy_signer(sig);
+    }    
 
     /////// TEST HELPERS //////
 
