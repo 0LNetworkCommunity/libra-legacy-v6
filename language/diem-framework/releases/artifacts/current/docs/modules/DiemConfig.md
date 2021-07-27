@@ -254,6 +254,16 @@ A <code><a href="DiemConfig.md#0x1_DiemConfig_ModifyConfigCapability">ModifyConf
 
 
 
+<a name="0x1_DiemConfig_TRANSFER_ENABLED_EPOCH"></a>
+
+Epoch when transfers are enabled
+
+
+<pre><code><b>const</b> <a href="DiemConfig.md#0x1_DiemConfig_TRANSFER_ENABLED_EPOCH">TRANSFER_ENABLED_EPOCH</a>: u64 = 1000;
+</code></pre>
+
+
+
 <a name="0x1_DiemConfig_initialize"></a>
 
 ## Function `initialize`
@@ -1080,7 +1090,7 @@ emits msg <b>to</b> handle;
 
 <pre><code><b>public</b> <b>fun</b> <a href="DiemConfig.md#0x1_DiemConfig_get_epoch_transfer_limit">get_epoch_transfer_limit</a>(): u64 <b>acquires</b> <a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a> {
     // Constant <b>to</b> start the withdrawal limit calculation from
-    <b>let</b> transfer_enabled_epoch = 75;
+    <b>let</b> transfer_enabled_epoch = <a href="DiemConfig.md#0x1_DiemConfig_TRANSFER_ENABLED_EPOCH">TRANSFER_ENABLED_EPOCH</a>;
     <b>let</b> config_ref = borrow_global&lt;<a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
 
     // Calculating transfer limit in multiples of epoch
@@ -1111,7 +1121,7 @@ emits msg <b>to</b> handle;
     <b>if</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
         <b>true</b>
     } <b>else</b> {
-        <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">get_current_epoch</a>() &gt; 1000
+        <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">get_current_epoch</a>() &gt; <a href="DiemConfig.md#0x1_DiemConfig_TRANSFER_ENABLED_EPOCH">TRANSFER_ENABLED_EPOCH</a>
     }
 }
 </code></pre>
