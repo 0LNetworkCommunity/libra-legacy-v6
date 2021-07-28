@@ -31,8 +31,10 @@ mod fat_type;
 mod module_cache;
 mod resolver;
 
+//////// 0L ////////
+// make pub
 #[derive(Debug)]
-pub struct AnnotatedAccountStateBlob(BTreeMap<StructTag, AnnotatedMoveStruct>);
+pub struct AnnotatedAccountStateBlob(pub BTreeMap<StructTag, AnnotatedMoveStruct>);
 
 #[derive(Debug)]
 pub struct AnnotatedMoveStruct {
@@ -63,6 +65,7 @@ pub struct MoveValueAnnotator<'a> {
 }
 
 impl<'a> MoveValueAnnotator<'a> {
+
     pub fn new(view: &'a dyn RemoteCache) -> Self {
         Self {
             cache: Resolver::new(view, true),
