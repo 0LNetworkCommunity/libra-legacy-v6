@@ -47,3 +47,6 @@ s-check:
 			echo "Sleeping for 5 secs" ; \
 			sleep 5 ; \
 	done
+
+stop: 
+	killall libra-swarm libra-node
