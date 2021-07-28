@@ -190,6 +190,7 @@ pub fn tx_params_wrapper(tx_type: TxType) -> Result<TxParams, Error> {
         ..
     } = entrypoint::get_args();
     let app_config = app_config().clone();
+    dbg!(&app_config);
     tx_params(
         app_config,
         url,
@@ -232,6 +233,7 @@ pub fn tx_params(
         } else {
             // Get from 0L.toml e.g. ~/.0L/0L.toml, or use Profile::default()
             get_tx_params_from_toml(config.clone(), tx_type, None, url, waypoint, swarm_path.as_ref().is_some()).unwrap()
+            
         }
     };
 

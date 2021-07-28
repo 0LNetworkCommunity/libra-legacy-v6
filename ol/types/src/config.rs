@@ -479,7 +479,7 @@ fn default_cheap_txs_cost() -> Option<TxCost> {
 pub fn get_swarm_rpc_url(mut swarm_path: PathBuf) -> (Url, Waypoint) {
     swarm_path.push("0/node.yaml");
     let config = NodeConfig::load(&swarm_path)
-        .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path));
+        .unwrap_or_else(|e| panic!("Failed to load NodeConfig from file: {:?}, mesage: {:?}", &swarm_path, e));
 
     let url = Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str())
         .unwrap();

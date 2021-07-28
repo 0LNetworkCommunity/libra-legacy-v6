@@ -31,6 +31,14 @@ ifndef AUTOPAY_FILE
 AUTOPAY_FILE = alice.autopay_batch.json
 endif
 
+ifeq ($(UNAME), Darwin)
+END = $(shell date -v +5M +%s)
+NOW = $(shell date -u +%s)
+else 
+END = $(shell date -ud "5 minutes" +%s)
+NOW = $(shell date -u +%s)
+endif
+
 export
 
 test: swarm check-swarm send-tx check-tx check-autopay check-transfer stop

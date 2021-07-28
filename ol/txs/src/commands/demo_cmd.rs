@@ -16,6 +16,7 @@ impl Runnable for DemoCmd {
         let entry_args = entrypoint::get_args();
 
         let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
+        // dbg!(&tx_params);
         maybe_submit(
           transaction_builder::encode_demo_e2e_script(42),
           &tx_params,
