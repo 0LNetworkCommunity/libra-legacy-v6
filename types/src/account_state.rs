@@ -21,8 +21,9 @@ use crate::{
 };
 use anyhow::{bail, format_err, Error, Result};
 use move_core_types::{identifier::Identifier, move_resource::MoveResource};
-use serde::{de::DeserializeOwned, export::Formatter, Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{collections::btree_map::BTreeMap, convert::TryFrom, fmt};
+use std::fmt::Formatter;
 
 #[derive(Default, Deserialize, PartialEq, Serialize)]
 pub struct AccountState(BTreeMap<Vec<u8>, Vec<u8>>);
