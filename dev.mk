@@ -2,7 +2,7 @@ SHELL=/usr/bin/env bash
 DATA_PATH = ${HOME}/.0L
 SWARM_TEMP = ${DATA_PATH}/swarm_temp
 UNAME := $(shell uname)
-LOG=${SWARM_TEMP}/make_swarm.log
+LOG=${DATA_PATH}/make_swarm.log
 NODE_ENV=test
 TEST=y
 START_TEXT = "To run the Libra CLI client"
@@ -28,12 +28,11 @@ swarm: s-build s-start s-check s-init
 
 s-build:
 	@echo Building Swarm
+	touch ${LOG}
 	cd ${SOURCE_PATH} && cargo build -p libra-node
-	
 
 s-start:
 	cd ${SOURCE_PATH} && cargo run -p libra-swarm -- --libra-node ${SOURCE_PATH}/target/debug/libra-node -c ${SWARM_TEMP} -n ${NUM_NODES} &> ${LOG}&
-
 
 s-init:
 	cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}

@@ -77,7 +77,6 @@ balance:
 balance-bob:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --account 88E74DFED34420F2AD8032148280A84B --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --balance
 
-
 check-swarm: 
 	@while [[ ${NOW} -le ${END} ]] ; do \
 			if grep -q ${START_TEXT} ${LOG} ; then \
@@ -108,7 +107,6 @@ check-tx:
 check-autopay: 
 # checks if there is any mention of BOB's account as a payee
 	PERSONA=alice make -f ${MAKE_FILE} resources | grep -e '88E74DFED34420F2AD8032148280A84B' -e 'payee'
-
 
 check-transfer:
 # swarm accounts start with a balance of 4
