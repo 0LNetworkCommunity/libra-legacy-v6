@@ -7,40 +7,42 @@
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::Wallet;
-    use 0x1::Vector;
+  use 0x1::Wallet;
+  use 0x1::Vector;
 
-    fun main(sender: &signer) {
-      Wallet::set_comm(sender);
-      let list = Wallet::get_comm_list();
-      assert(Vector::length(&list) == 1, 7357001);
-    }
+  fun main(sender: signer) {
+    Wallet::set_comm(&sender);
+    let list = Wallet::get_comm_list();
+    assert(Vector::length(&list) == 1, 7357001);
+  }
 }
 
 // check: EXECUTED
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
-    use 0x1::AccountLimits;
-    use 0x1::CoreAddresses;
-    use 0x1::GAS::GAS;
-    fun main(account: &signer) {
-        AccountLimits::update_limits_definition<GAS>(account, CoreAddresses::LIBRA_ROOT_ADDRESS(), 0, 10000, 0, 1);
-    }
+  use 0x1::AccountLimits;
+  use 0x1::CoreAddresses;
+  use 0x1::GAS::GAS;
+  fun main(account: signer) {
+    AccountLimits::update_limits_definition<GAS>(
+      &account, CoreAddresses::DIEM_ROOT_ADDRESS(), 0, 10000, 0, 1
+    );
+  }
 }
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! execute-as: alice
 script {
 use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
-  fun main(lr: &signer, alice_account: &signer) {
-      AccountLimits::publish_unrestricted_limits<GAS>(alice_account);
-      AccountLimits::update_limits_definition<GAS>(lr, {{alice}}, 0, 10000, 0, 1);
-      AccountLimits::publish_window<GAS>(lr, alice_account, {{alice}});
+  fun main(dm: signer, alice_account: signer) {
+    AccountLimits::publish_unrestricted_limits<GAS>(&alice_account);
+    AccountLimits::update_limits_definition<GAS>(&dm, {{alice}}, 0, 10000, 0, 1);
+    AccountLimits::publish_window<GAS>(&dm, &alice_account, {{alice}});
   }
 }
 // check: "Keep(EXECUTED)"
@@ -51,13 +53,16 @@ use 0x1::GAS::GAS;
 script {
   use 0x1::AutoPay2;
   use 0x1::Signer;
-  fun main(sender: &signer) {
+  fun main(sender: signer) {
+    let sender = &sender;
     AutoPay2::enable_autopay(sender);
     assert(AutoPay2::is_enabled(Signer::address_of(sender)), 0);
     
     AutoPay2::create_instruction(sender, 1, 1, {{carol}}, 2, 500);
 
-    let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(Signer::address_of(sender), 1);
+    let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(
+      Signer::address_of(sender), 1
+    );
     assert(type == 1, 1);
     assert(payee == {{carol}}, 1);
     assert(end_epoch == 2, 1);
@@ -88,27 +93,27 @@ script {
 ///////////////////////////////////////////////////
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
-  use 0x1::LibraAccount;
+  use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
-  use 0x1::Libra;
-  fun main(vm: &signer) {
+  use 0x1::Diem;
+  fun main(vm: signer) {
     // alice didn't receive any funds, so no change in balance, so no payment sent
-    let ending_balance = LibraAccount::balance<GAS>({{alice}});
+    let ending_balance = DiemAccount::balance<GAS>({{alice}});
     assert(ending_balance == 10000, 7357006);
 
-  // add funds to alice account for next tick
-    let coin = Libra::mint<GAS>(vm, 10000);
-    assert(Libra::value<GAS>(&coin) == 10000, 1);
-    LibraAccount::vm_deposit_with_metadata<GAS>(
-        vm,
+    // add funds to alice account for next tick
+    let coin = Diem::mint<GAS>(&vm, 10000);
+    assert(Diem::value<GAS>(&coin) == 10000, 1);
+    DiemAccount::vm_deposit_with_metadata<GAS>(
+        &vm,
         {{alice}},
         coin,
         x"", x""
     );
 
-    let ending_balance = LibraAccount::balance<GAS>({{alice}});
+    let ending_balance = DiemAccount::balance<GAS>({{alice}});
     assert(ending_balance == 20000, 7357006);
   }
 }
@@ -141,17 +146,17 @@ script {
 ///////////////////////////////////////////////////
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
-  use 0x1::LibraAccount;
+  use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
-  fun main(_vm: &signer) {
+  fun main(_vm: signer) {
     // alice will have paid 5% on the 10000 she received last epoch
-    let ending_balance = LibraAccount::balance<GAS>({{alice}});
+    let ending_balance = DiemAccount::balance<GAS>({{alice}});
     assert(ending_balance == 19501, 7357006);
 
     // check balance of recipients
-    let ending_balance = LibraAccount::balance<GAS>({{carol}});
+    let ending_balance = DiemAccount::balance<GAS>({{carol}});
     assert(ending_balance == 10499, 7357006);
   }
 }
