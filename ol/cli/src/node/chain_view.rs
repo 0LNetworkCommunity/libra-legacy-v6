@@ -78,6 +78,8 @@ pub struct ValidatorView {
   pub validator_config: Option<ValidatorConfigView>,
   /// autopay instructions
   pub autopay: Option<AutoPayView>,
+  /// note
+  pub note: String,
 }
 
 /// Validators config stats
@@ -168,6 +170,7 @@ impl Node {
 
       cs.upgrade = self.client.query_oracle_upgrade().expect("could not get upgrade oracle view");
 
+      let dict = self.load_account_dictionary();
       let validators: Vec<ValidatorView> = account_state
         .get_validator_set()
         .unwrap()
@@ -224,6 +227,7 @@ impl Node {
             prop_count_in_epoch: validator_stats.prop_count,
             validator_config: val_config,
             autopay: autopay,
+            note: dict.get_note_for_address(*v.account_address())
           }
         })
         .collect();
