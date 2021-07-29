@@ -6,6 +6,7 @@ script {
   use 0x1::DiemAccount;
   use 0x1::TestFixtures;
   use 0x1::GAS::GAS;
+  use 0x1::Wallet;
 
   fun main(_sender: signer) {
     // Scenario: Bob, an existing user, is sending a transaction for Eve, 
@@ -20,6 +21,7 @@ script {
     );
 
     assert(DiemAccount::balance<GAS>(eve_addr) == 0, 7357130101081000);
+    assert(Wallet::is_slow(eve_addr), 7357130101081001);
   }
 }
 // check: EXECUTED

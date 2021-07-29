@@ -69,8 +69,11 @@ fun main(vm: signer) {
   let expected = 1000000 + 576000;
   assert(bal == expected, 7357401003);
 
-  assert(!ValidatorUniverse::exists_jailedbit(eve_addr), 7357401004);
-  assert(!ValidatorUniverse::is_in_universe(eve_addr), 7357401005);
+  // validator should have jailedbit
+  assert(ValidatorUniverse::exists_jailedbit(eve_addr), 7357401004);
+  // validator should be in universe if just joined.
+  assert(ValidatorUniverse::is_in_universe(eve_addr), 7357401005);
+  // should not be jailed
   assert(!ValidatorUniverse::is_jailed(eve_addr), 7357401006);
 }
 }

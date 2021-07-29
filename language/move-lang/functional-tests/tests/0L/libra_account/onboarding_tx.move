@@ -12,8 +12,8 @@ script {
   use 0x1::ValidatorConfig;
   use 0x1::Roles;
   use 0x1::Signer;
-  use 0x1::Debug::print;
   use 0x1::ValidatorUniverse;
+  use 0x1::Wallet;
 
   // Test Prefix: 1301
   fun main(sender: signer) {
@@ -67,16 +67,16 @@ script {
     //Check the validator has 0 proof of weight.
     assert(NodeWeight::proof_of_weight(eve_addr) == 0, 7357130101071000);
 
-    // Check the account exists and the balance is 0
-    // TODO: Needs some balance
-    print(&DiemAccount::balance<GAS>(eve_addr));
+    // Check the account exists and the balance has the onboarding amount
     assert(DiemAccount::balance<GAS>(eve_addr) == 1000000, 7357130101081000);
 
-    // Should not automatically be in validator universe
-    // Needs to mine and submit the join transaction.
-    assert(!ValidatorUniverse::is_in_universe(eve_addr), 7357130101091000);
-    // Does not have a jailedbit since was not added to validator universe yet.
-    assert(!ValidatorUniverse::exists_jailedbit(eve_addr), 7357130101101000);
+    // Automatically is a candidate for validator set
+    assert(ValidatorUniverse::is_in_universe(eve_addr), 7357130101091000);
+    // Should have a jailed bit
+    assert(ValidatorUniverse::exists_jailedbit(eve_addr), 7357130101101000);
+
+    // new accounts tagged as slow wallets
+    assert(Wallet::is_slow(eve_addr), 7357130101111000);
   }
 }
 // check: EXECUTED
@@ -86,7 +86,6 @@ script {
 script {
   use 0x1::MinerState;
   use 0x1::Testnet;
-  // use 0x1::ValidatorUniverse;
 
   fun main(vm: signer) {
     // need to remove testnet for this test, since testnet does not ratelimit account creation.
@@ -94,8 +93,5 @@ script {
     
     // check is rate-limited
     assert(MinerState::can_create_val_account({{bob}}) == false, 7357130101091000);
-
-    // let universe = ValidatorUniverse::get_eligible_validators(&vm);
-    // print(&universe);
   }
 }
