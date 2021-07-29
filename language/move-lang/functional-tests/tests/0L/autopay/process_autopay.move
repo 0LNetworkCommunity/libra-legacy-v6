@@ -25,10 +25,10 @@ script {
 script {
 use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
-fun main(lr: signer, alice_account: signer) {
+fun main(dm: signer, alice_account: signer) {
     AccountLimits::publish_unrestricted_limits<GAS>(&alice_account);
-    AccountLimits::update_limits_definition<GAS>(&lr, {{alice}}, 0, 10, 0, 0);
-    AccountLimits::publish_window<GAS>(&lr, &alice_account, {{alice}});
+    AccountLimits::update_limits_definition<GAS>(&dm, {{alice}}, 0, 10, 0, 0);
+    AccountLimits::publish_window<GAS>(&dm, &alice_account, {{alice}});
 }
 }
 // check: "Keep(EXECUTED)"

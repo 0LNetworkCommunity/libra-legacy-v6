@@ -43,10 +43,10 @@ use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
 use 0x1::DiemAccount;
 use {{default}}::Holder;
-  fun main(lr: signer, alice_account: signer) {
+  fun main(dm: signer, alice_account: signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(&alice_account);
-      AccountLimits::update_limits_definition<GAS>(&lr, {{alice}}, 0, 10000, 0, 1);
-      AccountLimits::publish_window<GAS>(&lr, &alice_account, {{alice}});
+      AccountLimits::update_limits_definition<GAS>(&dm, {{alice}}, 0, 10000, 0, 1);
+      AccountLimits::publish_window<GAS>(&dm, &alice_account, {{alice}});
       Holder::hold(&alice_account, DiemAccount::balance<GAS>({{alice}}));
   }
 }
@@ -60,10 +60,10 @@ use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
 use 0x1::DiemAccount;
 use {{default}}::Holder;
-  fun main(lr: signer, jim_account: signer) {
+  fun main(dm: signer, jim_account: signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(&jim_account);
-      AccountLimits::update_limits_definition<GAS>(&lr, {{jim}}, 0, 10000, 0, 1);
-      AccountLimits::publish_window<GAS>(&lr, &jim_account, {{jim}});
+      AccountLimits::update_limits_definition<GAS>(&dm, {{jim}}, 0, 10000, 0, 1);
+      AccountLimits::publish_window<GAS>(&dm, &jim_account, {{jim}});
       Holder::hold(&jim_account, DiemAccount::balance<GAS>({{jim}}));
   }
 }
@@ -77,10 +77,10 @@ use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
 use 0x1::DiemAccount;
 use {{default}}::Holder;
-  fun main(lr: signer, lucy_account: signer) {
+  fun main(dm: signer, lucy_account: signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(&lucy_account);
-      AccountLimits::update_limits_definition<GAS>(&lr, {{lucy}}, 0, 10000, 0, 1);
-      AccountLimits::publish_window<GAS>(&lr, &lucy_account, {{lucy}});
+      AccountLimits::update_limits_definition<GAS>(&dm, {{lucy}}, 0, 10000, 0, 1);
+      AccountLimits::publish_window<GAS>(&dm, &lucy_account, {{lucy}});
       Holder::hold(&lucy_account, DiemAccount::balance<GAS>({{lucy}}));
   }
 }
@@ -94,10 +94,10 @@ use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
 use 0x1::DiemAccount;
 use {{default}}::Holder;
-  fun main(lr: signer, paul_account: signer) {
+  fun main(dm: signer, paul_account: signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(&paul_account);
-      AccountLimits::update_limits_definition<GAS>(&lr, {{paul}}, 0, 10000, 0, 1);
-      AccountLimits::publish_window<GAS>(&lr, &paul_account, {{paul}});
+      AccountLimits::update_limits_definition<GAS>(&dm, {{paul}}, 0, 10000, 0, 1);
+      AccountLimits::publish_window<GAS>(&dm, &paul_account, {{paul}});
       Holder::hold(&paul_account, DiemAccount::balance<GAS>({{paul}}));
   }
 }
@@ -111,10 +111,10 @@ use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
 use 0x1::DiemAccount;
 use {{default}}::Holder;
-  fun main(lr: signer, thomas_account: signer) {
+  fun main(dm: signer, thomas_account: signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(&thomas_account);
-      AccountLimits::update_limits_definition<GAS>(&lr, {{thomas}}, 0, 10000, 0, 1);
-      AccountLimits::publish_window<GAS>(&lr, &thomas_account, {{thomas}});
+      AccountLimits::update_limits_definition<GAS>(&dm, {{thomas}}, 0, 10000, 0, 1);
+      AccountLimits::publish_window<GAS>(&dm, &thomas_account, {{thomas}});
       Holder::hold(&thomas_account, DiemAccount::balance<GAS>({{thomas}}));
   }
 }
@@ -128,10 +128,10 @@ use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
 use 0x1::DiemAccount;
 use {{default}}::Holder;
-  fun main(lr: signer, denice_account: signer) {
+  fun main(dm: signer, denice_account: signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(&denice_account);
-      AccountLimits::update_limits_definition<GAS>(&lr, {{denice}}, 0, 10000, 0, 1);
-      AccountLimits::publish_window<GAS>(&lr, &denice_account, {{denice}});
+      AccountLimits::update_limits_definition<GAS>(&dm, {{denice}}, 0, 10000, 0, 1);
+      AccountLimits::publish_window<GAS>(&dm, &denice_account, {{denice}});
       Holder::hold(&denice_account, DiemAccount::balance<GAS>({{denice}}));
   }
 }
@@ -145,10 +145,10 @@ use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
 use 0x1::DiemAccount;
 use {{default}}::Holder;
-  fun main(lr: signer, carlos_account: signer) {
+  fun main(dm: signer, carlos_account: signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(&carlos_account);
-      AccountLimits::update_limits_definition<GAS>(&lr, {{carlos}}, 0, 10000, 0, 1);
-      AccountLimits::publish_window<GAS>(&lr, &carlos_account, {{carlos}});
+      AccountLimits::update_limits_definition<GAS>(&dm, {{carlos}}, 0, 10000, 0, 1);
+      AccountLimits::publish_window<GAS>(&dm, &carlos_account, {{carlos}});
       Holder::hold(&carlos_account, DiemAccount::balance<GAS>({{carlos}}));
   }
 }
@@ -162,10 +162,10 @@ use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
 use 0x1::DiemAccount;
 use {{default}}::Holder;
-  fun main(lr: signer, eric_account: signer) {
+  fun main(dm: signer, eric_account: signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(&eric_account);
-      AccountLimits::update_limits_definition<GAS>(&lr, {{eric}}, 0, 10000, 0, 1);
-      AccountLimits::publish_window<GAS>(&lr, &eric_account, {{eric}});
+      AccountLimits::update_limits_definition<GAS>(&dm, {{eric}}, 0, 10000, 0, 1);
+      AccountLimits::publish_window<GAS>(&dm, &eric_account, {{eric}});
       Holder::hold(&eric_account, DiemAccount::balance<GAS>({{eric}}));
   }
 }
