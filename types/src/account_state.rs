@@ -16,6 +16,7 @@ use crate::{
         VMPublishingOption, ValidatorSet,
     },
     ol_upgrade_payload::UpgradePayloadResource,
+    ol_validators_stats::ValidatorsStatsResource,
     validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource},
 };
 use anyhow::{format_err, Error, Result};
@@ -207,7 +208,13 @@ impl AccountState {
     pub fn get_upgrade_payload_resource(&self) -> Result<Option<UpgradePayloadResource>> {
         self.get_resource_impl(&UpgradePayloadResource::resource_path())
     }
-    
+
+    //////// 0L ////////
+    /// validators stats
+    pub fn get_validators_stats(&self) -> Result<Option<ValidatorsStatsResource>> {
+        self.get_resource()
+    }
+
     pub fn get(&self, key: &[u8]) -> Option<&Vec<u8>> {
         self.0.get(key)
     }

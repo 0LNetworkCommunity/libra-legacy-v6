@@ -30,6 +30,7 @@ pub mod test_helpers;
 pub mod transaction;
 pub mod trusted_state;
 pub mod ol_upgrade_payload; //////// 0L ////////
+pub mod ol_validators_stats; //////// 0L ////////
 pub mod validator_config;
 pub mod validator_info;
 pub mod validator_signer;
