@@ -3,12 +3,12 @@
 // DID NOT validate successfully.
 // DID mine above the threshold for the epoch. 
 
-//! account: alice, 1GAS, 0, validator
-//! account: bob, 1GAS, 0, validator
-//! account: carol, 1GAS, 0, validator
-//! account: dave, 1GAS, 0, validator
-//! account: eve, 1GAS, 0, validator
-//! account: frank, 1GAS, 0, validator
+//! account: alice, 100000GAS, 0, validator
+//! account: bob, 100000GAS, 0, validator
+//! account: carol, 100000GAS, 0, validator
+//! account: dave, 100000GAS, 0, validator
+//! account: eve, 100000GAS, 0, validator
+//! account: frank, 100000GAS, 0, validator
 
 
 //! block-prologue
@@ -17,12 +17,39 @@
 //! NewBlockEvent
 
 //! new-transaction
+//! sender: diemroot
+script {
+    use 0x1::DiemAccount;
+    use 0x1::GAS::GAS;
+    use 0x1::ValidatorConfig;
+
+    fun main(sender: signer) {
+        // tranfer enough coins to operators
+        let oper_bob = ValidatorConfig::get_operator({{bob}});
+        let oper_eve = ValidatorConfig::get_operator({{eve}});
+        let oper_dave = ValidatorConfig::get_operator({{dave}});
+        let oper_alice = ValidatorConfig::get_operator({{alice}});
+        let oper_carol = ValidatorConfig::get_operator({{carol}});
+        let oper_frank = ValidatorConfig::get_operator({{frank}});
+        DiemAccount::vm_make_payment_no_limit<GAS>({{bob}}, oper_bob, 50009, x"", x"", &sender);
+        DiemAccount::vm_make_payment_no_limit<GAS>({{eve}}, oper_eve, 50009, x"", x"", &sender);
+        DiemAccount::vm_make_payment_no_limit<GAS>({{dave}}, oper_dave, 50009, x"", x"", &sender);
+        DiemAccount::vm_make_payment_no_limit<GAS>({{alice}}, oper_alice, 50009, x"", x"", &sender);
+        DiemAccount::vm_make_payment_no_limit<GAS>({{carol}}, oper_carol, 50009, x"", x"", &sender);
+        DiemAccount::vm_make_payment_no_limit<GAS>({{frank}}, oper_frank, 50009, x"", x"", &sender);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
 //! sender: alice
 script {    
     use 0x1::MinerState;
     use 0x1::Signer;
+    use 0x1::AutoPay2;
 
     fun main(sender: signer) {
+        AutoPay2::enable_autopay(&sender);
         MinerState::test_helper_mock_mining(&sender, 5);
         assert(MinerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
@@ -35,8 +62,10 @@ script {
     
     use 0x1::MinerState;
     use 0x1::Signer;
+    use 0x1::AutoPay2;
 
     fun main(sender: signer) {
+        AutoPay2::enable_autopay(&sender);
         MinerState::test_helper_mock_mining(&sender, 5);
         assert(MinerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
@@ -49,8 +78,10 @@ script {
     
     use 0x1::MinerState;
     use 0x1::Signer;
+    use 0x1::AutoPay2;
 
     fun main(sender: signer) {
+        AutoPay2::enable_autopay(&sender);
         MinerState::test_helper_mock_mining(&sender, 5);
         assert(MinerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
@@ -63,9 +94,10 @@ script {
     
     use 0x1::MinerState;
     use 0x1::Signer;
-    // 
+    use 0x1::AutoPay2;
 
     fun main(sender: signer) {
+        AutoPay2::enable_autopay(&sender);
         MinerState::test_helper_mock_mining(&sender, 5);
         assert(MinerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
@@ -78,8 +110,10 @@ script {
     
     use 0x1::MinerState;
     use 0x1::Signer;
+    use 0x1::AutoPay2;
 
     fun main(sender: signer) {
+        AutoPay2::enable_autopay(&sender);
         MinerState::test_helper_mock_mining(&sender, 5);
         assert(MinerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
@@ -92,9 +126,10 @@ script {
     
     use 0x1::MinerState;
     use 0x1::Signer;
-    // 
+    use 0x1::AutoPay2;
 
     fun main(sender: signer) {
+        AutoPay2::enable_autopay(&sender);
         MinerState::test_helper_mock_mining(&sender, 5);
         assert(MinerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
@@ -104,7 +139,6 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    
     use 0x1::DiemSystem;
     use 0x1::MinerState;
     use 0x1::GAS::GAS;
@@ -121,7 +155,7 @@ script {
         assert(DiemSystem::validator_set_size() == 6, 7357000180101);
         assert(DiemSystem::is_validator({{carol}}) == true, 7357000180102);
         assert(MinerState::test_helper_get_height({{carol}}) == 0, 7357000180104);
-        assert(DiemAccount::balance<GAS>({{carol}}) == 1000000, 7357000180106);
+        assert(DiemAccount::balance<GAS>({{carol}}) == 49991, 7357000180106);
         assert(MinerState::test_helper_get_height({{carol}}) == 0, 7357000180108);
     }
 }
@@ -186,7 +220,6 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    
     use 0x1::DiemSystem;
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
@@ -199,10 +232,9 @@ script {
         // Check the validator set is at expected size
         assert(DiemSystem::validator_set_size() == 5, 7357000180110);
         assert(DiemSystem::is_validator({{carol}}) == false, 7357000180111);
-        assert(DiemAccount::balance<GAS>({{carol}}) == 1000000, 7357000180112);
+        assert(DiemAccount::balance<GAS>({{carol}}) == 49991, 7357000180112);
         assert(NodeWeight::proof_of_weight({{carol}}) == 1, 7357000180113);  
         assert(DiemConfig::get_current_epoch() == 2, 7357000180114);
-
     }
 }
 //check: EXECUTED

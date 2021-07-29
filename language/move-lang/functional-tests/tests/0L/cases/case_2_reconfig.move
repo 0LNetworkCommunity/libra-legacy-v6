@@ -4,16 +4,49 @@
 // DID validate successfully.
 // DID NOT mine above the threshold for the epoch. 
 
-//! account: alice, 1GAS, 0, validator
-//! account: bob, 1GAS, 0, validator
-//! account: carol, 1GAS, 0, validator
-//! account: dave, 1GAS, 0, validator
-//! account: eve, 1GAS, 0, validator
+//! account: alice, 100000GAS, 0, validator
+//! account: bob, 100000GAS, 0, validator
+//! account: carol, 100000GAS, 0, validator
+//! account: dave, 100000GAS, 0, validator
+//! account: eve, 100000GAS, 0, validator
 
 //! block-prologue
 //! proposer: alice
 //! block-time: 1
 //! NewBlockEvent
+
+//! new-transaction
+//! sender: diemroot
+script {
+    use 0x1::DiemAccount;
+    use 0x1::GAS::GAS;
+    use 0x1::ValidatorConfig;
+
+    fun main(sender: signer) {
+        // tranfer enough coins to operators
+        let oper_alice = ValidatorConfig::get_operator({{alice}});
+        let oper_bob = ValidatorConfig::get_operator({{bob}});
+        let oper_carol = ValidatorConfig::get_operator({{carol}});
+        let oper_dave = ValidatorConfig::get_operator({{dave}});
+        let oper_eve = ValidatorConfig::get_operator({{eve}});
+        DiemAccount::vm_make_payment_no_limit<GAS>(
+            {{alice}}, oper_alice, 50009, x"", x"", &sender
+        );
+        DiemAccount::vm_make_payment_no_limit<GAS>(
+            {{bob}}, oper_bob, 50009, x"", x"", &sender
+        );
+        DiemAccount::vm_make_payment_no_limit<GAS>(
+            {{carol}}, oper_carol, 50009, x"", x"", &sender
+        );
+        DiemAccount::vm_make_payment_no_limit<GAS>(
+            {{dave}}, oper_dave, 50009, x"", x"", &sender
+        );
+        DiemAccount::vm_make_payment_no_limit<GAS>(
+            {{eve}}, oper_eve, 50009, x"", x"", &sender
+        );
+    }
+}
+//check: EXECUTED
 
 //! new-transaction
 //! sender: bob
@@ -33,7 +66,7 @@ script {
 
         //// NO MINING ////
 
-        assert(DiemAccount::balance<GAS>({{bob}}) == 1000000, 7357000180106);
+        assert(DiemAccount::balance<GAS>({{bob}}) == 49991, 7357000180106);
         assert(NodeWeight::proof_of_weight({{bob}}) == 0, 7357000180107);  
         assert(MinerState::test_helper_get_height({{bob}}) == 0, 7357000180108);
     }
@@ -113,7 +146,7 @@ script {
         assert(DiemSystem::is_validator({{bob}}) == true, 7357000180111);
         
         //case 2 does not get rewards.
-        assert(DiemAccount::balance<GAS>({{bob}}) == 1000000, 7357000180112);  
+        assert(DiemAccount::balance<GAS>({{bob}}) == 49991, 7357000180112);  
 
         //case 2 does not increment weight.
         assert(NodeWeight::proof_of_weight({{bob}}) == 0, 7357000180113);  
