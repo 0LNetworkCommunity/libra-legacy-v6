@@ -15,7 +15,7 @@
 //! sender: alice
 script {
     use 0x1::MinerState;
-    fun main(_sender: &signer) {
+    fun main(_sender: signer) {
       MinerState::test_helper_set_epochs_mining({{carol}}, 50);
       MinerState::test_helper_set_epochs_mining({{dave}}, 50);
     }
@@ -29,14 +29,14 @@ script {
     use 0x1::Wallet;
     use 0x1::Vector;
 
-    fun main(sender: &signer) {
-      Wallet::set_comm(sender);
+    fun main(sender: signer) {
+      Wallet::set_comm(&sender);
       let list = Wallet::get_comm_list();
 
       assert(Vector::length(&list) == 1, 7357001);
       assert(Wallet::is_comm({{alice}}), 7357002);
 
-      let uid = Wallet::new_timed_transfer(sender, {{bob}}, 100, b"thanks bob");
+      let uid = Wallet::new_timed_transfer(&sender, {{bob}}, 100, b"thanks bob");
       assert(Wallet::transfer_is_proposed(uid), 7357003);
     }
 }
@@ -48,12 +48,12 @@ script {
 script {
     use 0x1::Wallet;
 
-    fun main(sender: &signer) {
+    fun main(sender: signer) {
       let uid = 1;
       let e = Wallet::get_tx_epoch(uid);
       assert(e == 4, 7357004);
 
-      Wallet::veto(sender, uid);
+      Wallet::veto(&sender, uid);
 
 
       let e = Wallet::get_tx_epoch(uid);
@@ -72,13 +72,13 @@ script {
 script {
     use 0x1::Wallet;
 
-    fun main(sender: &signer) {
+    fun main(sender: signer) {
       let uid = 1;
 
       let e = Wallet::get_tx_epoch(uid);
       assert(e == 5, 7357008);
 
-      Wallet::veto(sender, uid);
+      Wallet::veto(&sender, uid);
 
       let e = Wallet::get_tx_epoch(uid);
       assert(e == 0, 7357009);
