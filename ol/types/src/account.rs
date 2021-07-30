@@ -1,5 +1,6 @@
-//! Formatters for diem account creation
-use crate::block::Block;
+//! Formatters for libra account creation
+use crate::{block::Block, config::IS_TEST};
+use dialoguer::Confirm;
 use diem_crypto::x25519::PublicKey;
 use diem_types::{
     account_address::AccountAddress,
@@ -12,12 +13,12 @@ use diem_types::{
     transaction::{SignedTransaction, TransactionPayload},
 };
 
-use crate::autopay::PayInstruction;
+use crate::pay_instruction::PayInstruction;
 use anyhow;
 use hex::{decode, encode};
 use ol_keys::scheme::KeyScheme;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
-use std::{fs::File, io::Write, path::PathBuf};
+use std::{fs::File, io::Write, path::PathBuf, process::exit};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 /// Configuration data necessary to initialize a validator.
@@ -163,11 +164,21 @@ impl ValConfigs {
             .into_iter()
             .enumerate()
             .for_each(|(i, instr)| {
+                println!("{}", instr.text_instruction());
+                if !*IS_TEST {  
+                  match Confirm::new().with_prompt("").interact().unwrap() {
+                    true => {},
+                    _ =>  {
+                      print!("Autopay configuration aborted. Check batch configuration file or template");
+                      exit(1);
+                    }
+                  } 
+                }
                 let signed = self.autopay_signed.clone().unwrap();
                 let tx = signed.iter().nth(i).unwrap();
                 let payload = tx.clone().into_raw_transaction().into_payload();
                 if let TransactionPayload::Script(s) = payload {
-                    match instr.check_instruction_safety(s.clone()) {
+                    match instr.check_instruction_match_tx(s.clone()) {
                         Ok(_) => {}
                         Err(e) => {
                             panic!(
