@@ -19,16 +19,43 @@
 //! NewBlockEvent
 
 //! new-transaction
+//! sender: diemroot
+script {
+    use 0x1::DiemAccount;
+    use 0x1::GAS::GAS;
+    use 0x1::ValidatorConfig;
+
+    fun main(sender: signer) {
+        // Transfer enough coins to operators
+        let oper_bob = ValidatorConfig::get_operator({{bob}});
+        let oper_eve = ValidatorConfig::get_operator({{eve}});
+        let oper_dave = ValidatorConfig::get_operator({{dave}});
+        let oper_alice = ValidatorConfig::get_operator({{alice}});
+        let oper_carol = ValidatorConfig::get_operator({{carol}});
+        let oper_frank = ValidatorConfig::get_operator({{frank}});
+        DiemAccount::vm_make_payment_no_limit<GAS>({{bob}}, oper_bob, 50009, x"", x"", &sender);
+        DiemAccount::vm_make_payment_no_limit<GAS>({{eve}}, oper_eve, 50009, x"", x"", &sender);
+        DiemAccount::vm_make_payment_no_limit<GAS>({{dave}}, oper_dave, 50009, x"", x"", &sender);
+        DiemAccount::vm_make_payment_no_limit<GAS>({{alice}}, oper_alice, 50009, x"", x"", &sender);
+        DiemAccount::vm_make_payment_no_limit<GAS>({{carol}}, oper_carol, 50009, x"", x"", &sender);
+        DiemAccount::vm_make_payment_no_limit<GAS>({{frank}}, oper_frank, 50009, x"", x"", &sender);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
 //! sender: alice
 script {
     use 0x1::MinerState;
+    use 0x1::AutoPay2;
 
     fun main(sender: signer) {
+        AutoPay2::enable_autopay(&sender);
+
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
-
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357008006001);
     }
 }
 //check: EXECUTED
@@ -37,13 +64,15 @@ script {
 //! sender: bob
 script {
     use 0x1::MinerState;
+    use 0x1::AutoPay2;
 
     fun main(sender: signer) {
+        AutoPay2::enable_autopay(&sender);
+
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
-
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count({{bob}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{bob}}) == 5, 7357008006002);
     }
 }
 //check: EXECUTED
@@ -52,12 +81,15 @@ script {
 //! sender: carol
 script {
     use 0x1::MinerState;
+    use 0x1::AutoPay2;
 
     fun main(sender: signer) {
-        // Miner is the only one that can update their mining stats. Hence this first transaction.
+        AutoPay2::enable_autopay(&sender);
 
+        // Miner is the only one that can update their mining stats. 
+        // Hence this first transaction.
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count({{carol}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{carol}}) == 5, 7357008006003);
     }
 }
 //check: EXECUTED
@@ -66,13 +98,15 @@ script {
 //! sender: dave
 script {
     use 0x1::MinerState;
+    use 0x1::AutoPay2;
 
     fun main(sender: signer) {
+        AutoPay2::enable_autopay(&sender);
+
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
-
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count({{dave}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{dave}}) == 5, 7357008006004);
     }
 }
 //check: EXECUTED
@@ -81,13 +115,26 @@ script {
 //! sender: eve
 script {
     use 0x1::MinerState;
+    use 0x1::AutoPay2;
 
     fun main(sender: signer) {
+        AutoPay2::enable_autopay(&sender);
+
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
-
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357008006005);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: frank
+script {
+    use 0x1::AutoPay2;
+
+    fun main(sender: signer) {
+        AutoPay2::enable_autopay(&sender);
     }
 }
 //check: EXECUTED
@@ -114,8 +161,8 @@ script {
             i = i + 1;
         };
 
-        assert(DiemSystem::validator_set_size() == 6, 7357000180101);
-        assert(DiemSystem::is_validator({{alice}}) == true, 7357000180102);
+        assert(DiemSystem::validator_set_size() == 6, 7357008006006);
+        assert(DiemSystem::is_validator({{alice}}) == true, 7357008006007);
     }
 }
 //check: EXECUTED
@@ -140,11 +187,11 @@ script {
 
     fun main(_account: signer) {
         // We are in a new epoch.
-        assert(DiemConfig::get_current_epoch() == 2, 7357180107);
+        assert(DiemConfig::get_current_epoch() == 2, 7357008006008);
         print(&DiemSystem::validator_set_size());
         // Tests on initial size of validators 
-        assert(DiemSystem::validator_set_size() == 5, 7357180207);
-        assert(DiemSystem::is_validator({{frank}}) == false, 7357180307);
+        assert(DiemSystem::validator_set_size() == 5, 7357008006009);
+        assert(DiemSystem::is_validator({{frank}}) == false, 7357008006010);
     }
 }
 //check: EXECUTED
@@ -157,9 +204,9 @@ script {
     use 0x1::DiemConfig;
     fun main(_account: signer) {
         // We are in a new epoch.
-        assert(DiemConfig::get_current_epoch() == 2, 7357180105011000);
+        assert(DiemConfig::get_current_epoch() == 2, 7357008006011);
         // Tests on initial size of validators 
-        assert(DiemSystem::validator_set_size() == 5, 7357180105021000);
+        assert(DiemSystem::validator_set_size() == 5, 7357008006012);
         assert(DiemSystem::is_validator({{frank}})
          == false, 7357180105031000);
     }
@@ -194,7 +241,7 @@ script {
 
         // Even though Eve will be considered a case 2, it was because she 
         // was jailed. She will rejoin next epoch.
-        assert(Cases::get_case(vm, {{eve}}, 0, 15) == 2, 7357180106011000);
+        assert(Cases::get_case(vm, {{eve}}, 0, 15) == 2, 7357008006013);
         // Reconfigure::reconfigure(vm, 30);
     }
 }
@@ -207,11 +254,11 @@ script {
     use 0x1::MinerState;
 
     fun main(sender: signer) {
-        // Alice is the only one that can update her mining stats. 
+        // Miner is the only one that can update her mining stats. 
         // Hence this first transaction.
 
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357180101011000);
+        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357008006014);
     }
 }
 //check: EXECUTED
@@ -226,7 +273,7 @@ script {
         // Hence this first transaction.
 
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count({{bob}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{bob}}) == 5, 7357008006015);
     }
 }
 //check: EXECUTED
@@ -241,7 +288,7 @@ script {
         // Hence this first transaction.
 
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count({{carol}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{carol}}) == 5, 7357008006016);
     }
 }
 //check: EXECUTED
@@ -256,7 +303,7 @@ script {
         // Hence this first transaction.
 
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count({{dave}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{dave}}) == 5, 7357008006017);
     }
 }
 //check: EXECUTED
@@ -267,11 +314,11 @@ script {
     use 0x1::MinerState;
 
     fun main(sender: signer) {
-        // Alice is the only one that can update her mining stats. 
+        // Miner is the only one that can update her mining stats. 
         // Hence this first transaction.
 
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357180102011000);
+        assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357008006018);
     }
 }
 //check: EXECUTED
@@ -282,11 +329,11 @@ script {
     use 0x1::MinerState;
 
     fun main(sender: signer) {
-        // Alice is the only one that can update her mining stats. 
+        // Miner is the only one that can update her mining stats. 
         // Hence this first transaction.
 
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count({{frank}}) == 5, 7357180102011000);
+        assert(MinerState::test_helper_get_count({{frank}}) == 5, 7357008006019);
     }
 }
 //check: EXECUTED
@@ -307,11 +354,13 @@ script {
 script {
     use 0x1::DiemSystem;
     use 0x1::DiemConfig;
+    use 0x1::Debug::print;
 
     fun main(_account: signer) {
-        assert(DiemConfig::get_current_epoch() == 3, 7357180107011000);
-        assert(DiemSystem::validator_set_size() == 6, 7357180105021000);
-        assert(DiemSystem::is_validator({{frank}}), 7357180107031000);
+        assert(DiemConfig::get_current_epoch() == 3, 7357008006020);
+        print(&DiemSystem::validator_set_size());
+        assert(DiemSystem::validator_set_size() == 6, 7357008006021);
+        assert(DiemSystem::is_validator({{frank}}), 7357008006022);
     }
 }
 //check: EXECUTED

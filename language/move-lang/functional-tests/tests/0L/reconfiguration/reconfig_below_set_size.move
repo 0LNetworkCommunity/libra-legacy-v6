@@ -29,7 +29,7 @@ script {
         // Hence this first transaction.
 
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357008005001);
     }
 }
 //check: EXECUTED
@@ -43,7 +43,7 @@ script {
         // Hence this first transaction.
 
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357008005002);
     }
 }
 //check: EXECUTED
@@ -71,8 +71,8 @@ script {
             i = i + 1;
         };
 
-        assert(DiemSystem::validator_set_size() == 6, 7357000180101);
-        assert(DiemSystem::is_validator({{alice}}) == true, 7357000180102);
+        assert(DiemSystem::validator_set_size() == 6, 7357008005003);
+        assert(DiemSystem::is_validator({{alice}}) == true, 7357008005004);
     }
 }
 //check: EXECUTED
@@ -96,9 +96,9 @@ script {
 
     fun main(_account: signer) {
         // We are in a new epoch.
-        assert(DiemConfig::get_current_epoch() == 2, 7357180107);
+        assert(DiemConfig::get_current_epoch() == 2, 7357008005005);
         // Tests on initial size of validators
-        assert(DiemSystem::validator_set_size() == 6, 7357180207);
+        assert(DiemSystem::validator_set_size() == 6, 7357008005006);
     }
 }
 //check: EXECUTED

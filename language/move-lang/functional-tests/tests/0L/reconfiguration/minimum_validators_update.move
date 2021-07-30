@@ -19,8 +19,8 @@ script {
 
     fun main(_account: signer) {
         // Tests on initial size of validators 
-        assert(DiemSystem::validator_set_size() == 4, 7357000180101);
-        assert(DiemSystem::is_validator({{alice}}) == true, 7357000180102);
+        assert(DiemSystem::validator_set_size() == 4, 7357008004001);
+        assert(DiemSystem::is_validator({{alice}}) == true, 7357008004002);
     }
 }
 // check: EXECUTED

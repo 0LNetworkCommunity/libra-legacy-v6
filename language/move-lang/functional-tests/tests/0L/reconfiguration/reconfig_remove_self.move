@@ -40,10 +40,10 @@ script {
             i = i + 1;
         };
         // Carol is still a validator until the next epoch
-        assert(DiemSystem::validator_set_size() == 3, 7357180103011000);
-        assert(DiemSystem::is_validator({{alice}}), 7357180104011000);
-        assert(DiemSystem::is_validator({{bob}}), 7357180104011000);
-        assert(DiemSystem::is_validator({{carol}}), 7357180104011000);
+        assert(DiemSystem::validator_set_size() == 3, 7357008011001);
+        assert(DiemSystem::is_validator({{alice}}), 7357008011002);
+        assert(DiemSystem::is_validator({{bob}}), 7357008011003);
+        assert(DiemSystem::is_validator({{carol}}), 7357008011004);
     }
 }
 //check: EXECUTED
@@ -70,11 +70,11 @@ script {
 
     fun main(_account: signer) {
         // We are in a new epoch.
-        assert(DiemConfig::get_current_epoch() == 2, 7357180105011000);
+        assert(DiemConfig::get_current_epoch() == 2, 7357008011005);
         // Tests to ensure validator set size has indeed dropped
-        assert(DiemSystem::validator_set_size() == 2, 7357180105021000);
+        assert(DiemSystem::validator_set_size() == 2, 7357008011006);
         // Carol is no longer a validator because she removed herself the previous epoch
-        assert(DiemSystem::is_validator({{carol}}) == false, 7357180105031000);
+        assert(DiemSystem::is_validator({{carol}}) == false, 7357008011007);
     }
 }
 //check: EXECUTED
@@ -121,10 +121,10 @@ script {
     use 0x1::DiemSystem;
     use 0x1::DiemConfig;
     fun main(_account: signer) {
-        assert(DiemConfig::get_current_epoch() == 3, 7357180107011000);
+        assert(DiemConfig::get_current_epoch() == 3, 7357008011008);
 
         // carol is still not a validator because she has not rejoined. 
-        assert(!DiemSystem::is_validator({{carol}}), 7357180107021000);
+        assert(!DiemSystem::is_validator({{carol}}), 7357008011009);
     }
 }
 //check: EXECUTED
@@ -167,11 +167,11 @@ script {
     use 0x1::DiemSystem;
     use 0x1::DiemConfig;
     fun main(_account: signer) {
-        assert(DiemConfig::get_current_epoch() == 4, 7357180108011000);
+        assert(DiemConfig::get_current_epoch() == 4, 7357008011010);
 
         // Carol is a validator once more
-        assert(DiemSystem::is_validator({{carol}}), 7357180108021000);
-        assert(DiemSystem::validator_set_size() == 3, 7357180105021000);
+        assert(DiemSystem::is_validator({{carol}}), 7357008011011);
+        assert(DiemSystem::validator_set_size() == 3, 7357008011012);
     }
 }
 //check: EXECUTED

@@ -21,9 +21,9 @@ script {
 
     fun main(_account: signer) {
         // Tests on initial size of validators 
-        assert(DiemSystem::validator_set_size() == 5, 7357000180101);
-        assert(DiemSystem::is_validator({{alice}}) == true, 7357000180102);
-        assert(DiemSystem::is_validator({{bob}}) == true, 7357000180103);
+        assert(DiemSystem::validator_set_size() == 5, 7357008012001);
+        assert(DiemSystem::is_validator({{alice}}) == true, 7357008012002);
+        assert(DiemSystem::is_validator({{bob}}) == true, 7357008012003);
     }
 }
 // check: EXECUTED
@@ -36,9 +36,9 @@ script {
 
     fun main(_account: signer) {
         // Tests on initial size of validators 
-        assert(DiemSystem::validator_set_size() == 5, 7357000180104);
-        assert(DiemSystem::is_validator({{alice}}) == true, 7357000180105);
-        assert(DiemSystem::is_validator({{bob}}) == true, 7357000180106);
+        assert(DiemSystem::validator_set_size() == 5, 7357008012004);
+        assert(DiemSystem::is_validator({{alice}}) == true, 7357008012005);
+        assert(DiemSystem::is_validator({{bob}}) == true, 7357008012006);
     }
 }
 //check: EXECUTED
@@ -88,8 +88,8 @@ script {
     use 0x1::DiemSystem;
     use 0x1::DiemConfig;
     fun main(_account: signer) {
-        assert(DiemSystem::validator_set_size() == 5, 7357180103011000);
-        assert(DiemConfig::get_current_epoch() == 2, 7357180103021000);
+        assert(DiemSystem::validator_set_size() == 5, 7357008012007);
+        assert(DiemConfig::get_current_epoch() == 2, 7357008012008);
     }
 }
 // check: EXECUTED
