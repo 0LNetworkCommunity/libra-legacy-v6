@@ -9,6 +9,7 @@
 )]
 
 pub mod application;
+pub mod checkup;
 pub mod commands;
 pub mod config;
 pub mod entrypoint;

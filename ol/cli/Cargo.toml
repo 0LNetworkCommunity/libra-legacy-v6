@@ -38,7 +38,6 @@ handlebars = "3.5.3"
 futures = "0.3.6"
 nix = "*"
 diem-secure-storage = { path = "../../secure/storage", version = "0.1.0" }
-# diem-network-address = { path = "../../network/network-address", package="diem-network-address", version="0.1.0"}
 glob = "0.3.0"
 sm = "0.9.0"
 diem-config = { path = "../../config", version = "0.1.0"}
@@ -59,7 +58,10 @@ fs_extra = "1"
 gag = "0.1.10"
 port_scanner = "0.1.5"
 backup-cli = { path = "../../storage/backup/backup-cli", version = "0.1.0" }
-
+move-core-types = { path = "../../language/move-core/types" }
+walkdir = "2.3"
+rand = "0.8"
+bcs = "0.1.2"
 
 # Parity with Storage create
 [dependencies.rocksdb]
