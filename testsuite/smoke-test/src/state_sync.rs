@@ -13,6 +13,9 @@ use crate::{
 use diem_config::config::NodeConfig;
 use diem_types::waypoint::Waypoint;
 use std::{fs, path::PathBuf};
+use diem_writeset_generator::encode_remove_validators_payload;
+use std::time::SystemTime;
+use diem_types::account_address::AccountAddress;
 
 #[test]
 fn test_basic_state_synchronization() {
@@ -326,4 +329,154 @@ fn test_state_sync_multichunk_epoch() {
     env.validator_swarm.add_node(3).unwrap();
 
     assert!(env.validator_swarm.wait_for_all_nodes_to_catchup());
+}
+
+#[test]
+fn test_drop_validator_catchup_multichunk_epoch() {
+    let mut env = SmokeTestEnvironment::new_with_chunk_limit(4, 5);
+    env.validator_swarm.launch();
+    let mut client = env.get_validator_client(0, None);
+    client
+        .enable_custom_script(&["enable_custom_script"], false, true)
+        .unwrap();
+
+        
+    // do "something" : 
+    client.create_next_account(false).unwrap();
+    client
+        .mint_coins(&["mintb", "0", "10", "GAS"], true)
+        .unwrap();
+    assert!(compare_balances(
+        vec![(10.0, "GAS".to_string())],
+        client.get_balances(&["b", "0"]).unwrap(),
+    ));
+
+
+    // wait a bit
+    ::std::thread::sleep(::std::time::Duration::from_millis(5000));
+
+
+    println!("env.validator_swarm.wait_for_all_nodes_to_catchup() - start");    
+    // Wait for all the nodes to catch up
+    assert!(env.validator_swarm.wait_for_all_nodes_to_catchup());
+    println!("env.validator_swarm.wait_for_all_nodes_to_catchup() - end");    
+
+    // wait a bit
+    ::std::thread::sleep(::std::time::Duration::from_millis(5000));
+
+    let node_to_kick_out = 1;
+    let mut kicked_out_validator = env.get_validator_client(node_to_kick_out, None);
+    kicked_out_validator.create_next_account(false).unwrap().address; // Result<AddressAndIndex>
+    
+    let mut accounts = Vec::<AccountAddress>::new();
+    for account_data in kicked_out_validator.accounts.iter() {
+        accounts.push(account_data.address);
+    }
+    
+    println!("=====================================================================");
+    println!("accounts which will be kicked out are {:?}", accounts);
+    println!("=====================================================================");
+  
+    let txn1 = encode_remove_validators_payload(accounts); // -> WriteSetPayloadcode
+    println!("remove validator payload txn1 = {:?}", txn1);
+
+    // let client0 execute the remove-transaction
+    let sys_time = SystemTime::now();
+    let execute_remove_node = client.association_transaction_with_local_diem_root_account(diem_types::transaction::TransactionPayload::WriteSet(txn1), true);
+
+    // unfortunately this results in a timeout after 60 seconds
+    if execute_remove_node.is_err() {
+        let new_sys_time = SystemTime::now();
+        let difference = new_sys_time.duration_since(sys_time);
+        println!("error for remove_validators ({:?}) happened after {:?} seconds", execute_remove_node, difference.unwrap().as_secs());
+        // assert!(execute_remove_node.is_ok(), "this failure happened after {:?} seconds", difference.unwrap().as_secs());
+    }
+  
+    println!("client0.test_validator_connection() = {:?}", client.test_validator_connection());
+    println!("client1.test_validator_connection() = {:?}", kicked_out_validator.test_validator_connection());
+
+    // submit more transactions to make the current epoch (=1) span > 1 chunk (= 5 versions)
+    for _ in 0..7 {
+        client
+            .mint_coins(&["mintb", "0", "10", "GAS"], true)
+            .unwrap();
+    }
+
+    let script_path = workspace_builder::workspace_root()
+        .join("testsuite/smoke-test/src/dev_modules/test_script.move");
+    let unwrapped_script_path = script_path.to_str().unwrap();
+    let move_stdlib_dir = move_stdlib::move_stdlib_modules_full_path();
+    let diem_framework_dir = diem_framework::diem_stdlib_modules_full_path();
+    let script_params = &[
+        "compile",
+        unwrapped_script_path,
+        move_stdlib_dir.as_str(),
+        diem_framework_dir.as_str(),
+    ];
+    let mut script_compiled_paths = client.compile_program(script_params).unwrap();
+    let script_compiled_path = if script_compiled_paths.len() != 1 {
+        panic!("compiler output has more than one file")
+    } else {
+        script_compiled_paths.pop().unwrap()
+    };
+
+    // Initially publishing option was set to CustomScript, this transaction should be executed.
+    client
+        .execute_script(&["execute", "0", &script_compiled_path[..], "10", "0x0"])
+        .unwrap();
+
+    // Bump epoch by trigger a reconfig for multiple epochs
+    for curr_epoch in 2..=3 {
+        // bumps epoch from curr_epoch -> curr_epoch + 1
+        client
+            .enable_custom_script(&["enable_custom_script"], false, true)
+            .unwrap();
+        assert_eq!(
+            client
+                .latest_epoch_change_li()
+                .unwrap()
+                .ledger_info()
+                .epoch(),
+            curr_epoch
+        );
+    }
+
+    // Restart the node and synchronize the state
+    // assert!(env.validator_swarm.start_node(node_to_kick_out).is_ok());
+
+    // Wait for all the nodes to catch up
+    assert!(env.validator_swarm.wait_for_all_nodes_to_catchup());
+
+    // wait a bit
+    ::std::thread::sleep(::std::time::Duration::from_millis(15000));
+
+    let mut kicked_out_node = env.get_validator_client(node_to_kick_out, None);
+    let mut other_node = env.get_validator_client(node_to_kick_out+1, None);
+
+    let version_kicked_out_node = kicked_out_node.get_latest_version();
+    let version_other_node = other_node.get_latest_version();
+    let diff = abs_difference(version_kicked_out_node, version_other_node);
+
+    let committed_rount_kicked_out_node = 0; // kicked_out_node.get_metric(last_committed_round_str)
+    let committed_rount_other_node = 0; //other_node.get_metric(last_committed_round_str)
+
+    println!("restarted_node: latest round and version is now: {:?} / {:?}", committed_rount_kicked_out_node, version_kicked_out_node);
+    println!("other_node: latest round and version is now: {:?} / {:?}", committed_rount_other_node, version_other_node);
+
+    println!("restarted_node: latest epoch ledger info is now: {:?}", kicked_out_node.latest_epoch_change_li().unwrap());
+    println!("other_node: latest epoch ledger info is now: {:?}", other_node.latest_epoch_change_li().unwrap());
+
+    
+    assert!(diff < 10, "latest versions differ too much between node kicked out node and other node");
+
+    assert!(false); // to keep logfiles
+
+}
+
+fn abs_difference(x: u64, y: u64) -> u64 {
+    if x < y {
+        y - x
+    } else {
+        x - y
+    }
 }
