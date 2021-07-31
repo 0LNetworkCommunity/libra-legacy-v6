@@ -34,9 +34,11 @@ jobs:
       - name: MINING
         run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-mining.mk test
       - name: AUTOPAY percent-change
-        run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-autopay.mk test-percent-change
+        run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-autopay.mk test-percent-bal
       - name: AUTOPAY fixed-once
         run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-autopay.mk test-fixed-once
+      - name: AUTOPAY all
+        run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-autopay.mk test-all
       - name: ONBOARD
         run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-onboard.mk test
       - name: File permissions

@@ -1,404 +1,160 @@
-//! `autopay`
+//! autopay view for web monitor
 
-use anyhow::Error;
 use libra_types::{
-    account_address::AccountAddress,
-    transaction::{Script, TransactionArgument},
+    access_path::AccessPath,
+    account_config::constants:: CORE_CODE_ADDRESS,
+};
+use anyhow::Result;
+use move_core_types::{
+    language_storage::{ResourceKey, StructTag},
+    move_resource::MoveResource,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use std::{fs::{self, File}, io::Write, path::PathBuf, process::exit, u64};
+use move_core_types::account_address::AccountAddress;
+use num_format::{Locale, ToFormattedString};
 
-// These match Autpay2.move
-/// send percent of balance at end of epoch payment type
-const PERCENT_OF_BALANCE: u8 = 0;
-/// send percent of the change in balance since the last tick payment type
-const PERCENT_OF_CHANGE: u8 = 1;
-/// send a certain amount each tick until end_epoch is reached payment type
-const FIXED_RECURRING: u8 = 2;
-/// send a certain amount once at the next tick payment type
-const FIXED_ONCE: u8 = 3;
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-#[serde(deny_unknown_fields)]
-/// Types of instructions for autopay
-pub enum InstructionType {
-    /// balance
-    PercentOfBalance,
-    /// inflow
-    PercentOfChange,
-    /// fixed recurring
-    FixedRecurring,
-    /// fixed one time payment
-    FixedOnce,
+/// Struct that represents a AutoPay resource
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AutoPayResource {
+    ///
+    pub payment: Vec<Payment>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-// #[serde(deny_unknown_fields)]
-/// Autopay payment instruction
-pub struct PayInstruction {
-    /// unique id of instruction
+/// Struct that represents a view for AutoPay resource
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AutoPayView {
+    /// 
+    pub payments: Vec<PaymentView>,
+    ///
+    pub recurring_sum: u64,
+}
+
+/// Autopay instruction
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PaymentView {
+    ///
     pub uid: u64,
-    /// description of payment, not sent to chain
+    ///
+    pub in_type: u8,
+    ///
+    pub type_desc: String,
+    ///
+    pub payee: AccountAddress,
+    ///
+    pub end_epoch: u64,
+    ///
+    pub prev_bal: u64,
+    ///
+    pub amt: u64,    
+    ///
+    pub amount: String,
+    ///
     pub note: Option<String>,
-    /// enum for type of instruction
-    pub type_of: InstructionType,
-    /// type of instruction
-    pub type_move: Option<u8>,
-    /// value cast for move
-    pub value: f64,
-    /// value cast for move
-    pub value_move: Option<u64>,
-    /// destination account
-    pub destination: AccountAddress,
-    /// epoch when payment instruction will stop
-    pub end_epoch: Option<u64>,
-    /// optional duration in epochs of the instruction
-    pub duration_epochs: Option<u64>,
 }
 
-impl PayInstruction {
-    /// extract autopay instructions from json file
-    pub fn parse_autopay_instructions(
-        autopay_batch_file: &PathBuf,
-        current_epoch: Option<u64>,
-    ) -> Result<Vec<PayInstruction>, Error> {
-        let file = fs::File::open(autopay_batch_file).expect(&format!(
-            "cannot open autopay batch file: {:?}",
-            autopay_batch_file
-        ));
-        let json: Value = serde_json::from_reader(&file).expect("cannot parse autopay.json");
-        let val: Value = json.get("autopay_instructions").unwrap().to_owned();
-        let inst_vec: Vec<PayInstruction> = serde_json::from_value(val).unwrap();
+impl PaymentView {
+    ///
+    pub fn is_percent_of_change(&self) -> bool {
+        self.in_type == 1u8
+    }
+}
 
-        let mut total_pct_of_change: f64 = 0f64;
-        let mut total_pct_balance: f64 = 0f64;
-        let mut ids: Vec<u64> = vec!();
+/// Autopay instruction
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Payment {
+    ///
+    pub uid: u64,
+    ///
+    pub in_type: u8,
+    ///
+    pub payee: AccountAddress,
+    ///
+    pub end_epoch: u64,
+    ///
+    pub prev_bal: u64,
+    ///
+    pub amt: u64,
+}
 
-        let transformed = inst_vec
-            .into_iter()
-            .map(|mut i| {
-                if ids.contains(&i.uid) {
-                  println!("uid on instructions need to be unique: Duplicate Id: {}", &i.uid);
-                  exit(1);
-                }
-                ids.push(i.uid);
-
-                if i.end_epoch.is_none() && i.duration_epochs.is_none() {
-                    println!(
-                        "Need to set end_epoch, or duration_epoch in instruction: {:?}",
-                        &i
-                    );
-                    exit(1);
-                }
-
-                if let Some(duration) = i.duration_epochs {
-                    if duration == 0 {
-                      println!("Duration cannot be 0. Instruction: {:?}", &i);
-                      exit(1);
-                    }
-                    if let Some(current) = current_epoch {
-                      i.end_epoch = Some(duration + current);
-                    } else {
-                      println!("If you are setting a duration_epochs instruction, we need the current epoch. Instruction: {:?}", &i);
-                      exit(1);
-                    }
-                }
-
-                match i.type_of {
-                    InstructionType::PercentOfBalance => {
-                        i.type_move = Some(PERCENT_OF_BALANCE);
-                        i.value_move = scale_percent(i.value);
-                        total_pct_balance = total_pct_balance + i.value;
-                    }
-                    InstructionType::PercentOfChange => {
-                        i.type_move = Some(PERCENT_OF_CHANGE);
-                        i.value_move = scale_percent(i.value);
-                        total_pct_of_change = total_pct_of_change + i.value;
-                    }
-                    InstructionType::FixedRecurring => {
-                        i.type_move = Some(FIXED_RECURRING);
-                        i.value_move = scale_coin(i.value);
-                    }
-                    InstructionType::FixedOnce => {
-                        i.type_move = Some(FIXED_ONCE);
-                        i.value_move = scale_coin(i.value);
-                    }
-                }
-
-                i
-            })
-            .collect();
-
-        if (total_pct_of_change < 100f64) && (total_pct_balance < 100f64) {
-            Ok(transformed)
-        } else {
-            Err(Error::msg("Aborting, percentages sum greater than 100%"))
+impl Payment {
+    /// get description for in_type value
+    pub fn get_type_desc(&self) -> String {
+        match self.in_type {
+            0 => String::from("percent of balance"),
+            1 => String::from("percent of change"),
+            2 => String::from("fixed recurring"),
+            3 => String::from("fixed once"),
+            _ => String::from("type unknown"),
         }
     }
 
-    /// checks ths instruction against the raw script for correctness.
-    pub fn check_instruction_match_tx(&self, script: Script) -> Result<(), Error> {
-        let PayInstruction {
-            uid,
-            type_move,
-            value_move,
-            destination,
-            end_epoch,
-            ..
-        } = *self;
-
-        assert!(
-            script.args()[0] == TransactionArgument::U64(uid),
-            "not same unique id"
-        );
-        assert!(
-            script.args()[1] == TransactionArgument::U8(type_move.unwrap()),
-            "not sending expected type of transaction"
-        );
-        assert!(
-            script.args()[2] == TransactionArgument::Address(destination),
-            "not sending to expected destination"
-        );
-        assert!(
-            script.args()[3] == TransactionArgument::U64(end_epoch.unwrap()),
-            "not the same ending epoch"
-        );
-        assert!(
-            script.args()[4]
-                == TransactionArgument::U64(
-                    value_move.expect("cannot get value_move")
-                ),
-            "not the same value being sent"
-        );
-        Ok(())
-    }
-
-    /// provide text information on the instruction
-    pub fn text_instruction(&self) -> String {
-      let times = match &self.duration_epochs {
-        Some(d) => format!("{} times", d),
-        None => "".to_owned()
-      };
-      match self.type_of {
-        
-        InstructionType::PercentOfBalance => {
-          format!(
-            "Instruction {uid}: {note}\nSend {percent_balance:.2?}% of your total balance every day {times} (until epoch {epoch_ending}) to address: {destination}?",
-            uid = &self.uid,
-            percent_balance = *&self.value_move.unwrap() as f64 /100f64,
-            times = times,
-            note = &self.note.clone().unwrap(),
-            epoch_ending = &self.end_epoch.unwrap(),
-            destination = &self.destination,
-          )
-        },
-        InstructionType::PercentOfChange => {
-            format!(
-              "Instruction {uid}: {note}\nSend {percent_balance:.2?}% new incoming funds every day {times} (until epoch {epoch_ending}) to address: {destination}?",
-              uid = &self.uid,
-              percent_balance = *&self.value_move.unwrap() as f64 /100f64,
-              times = times,
-              note = &self.note.clone().unwrap(),
-              epoch_ending = &self.end_epoch.unwrap(),
-              destination = &self.destination,
-            )
-        },
-        InstructionType::FixedRecurring => {
-            format!(
-                "Instruction {uid}: {note}\nSend {total_val} every day {times} (until epoch {epoch_ending}) to address: {destination}?",
-                uid = &self.uid,
-                total_val = *&self.value_move.unwrap() / 1_000_000, // scaling factor
-                times = times,
-                note = &self.note.clone().unwrap(),
-                epoch_ending = &self.end_epoch.unwrap(),
-                destination = &self.destination,
-            )
-        },
-        InstructionType::FixedOnce => {
-          format!(
-                "Instruction {uid}: {note}\nSend {total_val} once to address: {destination}?",
-                uid = &self.uid,
-                note = &self.note.clone().unwrap(),
-                total_val = *&self.value_move.unwrap() / 1_000_000, // scaling factor
-                destination = &self.destination,
-            )
+    /// format amount according to type
+    pub fn get_amount_formatted(&self) -> String {
+        match self.in_type {
+            0 | 1   => format!("{:.2}%", self.amt as f64 / 100.00),
+            _       => self.amt.to_formatted_string(&Locale::en),
         }
-      }
     }
 }
 
-/// save a batch file of instructions
-pub fn write_batch_file(file_path: PathBuf, vec_instr: Vec<PayInstruction>) -> Result<(), Error> {
-  #[derive(Clone, Debug, Deserialize, Serialize)]
-  struct Batch {
-    autopay_instructions: Vec<PayInstruction>
-  }
-    let mut buffer = File::create(file_path)?;
-    // let data = serde_json::to_string(&vec_instr)?;
-
-    let data = serde_json::to_string(&Batch { 
-      autopay_instructions: vec_instr
-    })?;
-
-    buffer.write(data.as_bytes())?;
-    Ok(())
+impl MoveResource for AutoPayResource {
+    const MODULE_NAME: &'static str = "AutoPay2";
+    const STRUCT_NAME: &'static str = "Data";
 }
 
-
-// convert the decimals for Move.
-// for autopay purposes percentages have two decimal places precision.
-// No rounding is applied. The third decimal is trucated.
-// the result is a integer of 4 bits.
-fn scale_coin(coin_value: f64) -> Option<u64> {
-    // the UI for the autopay_batch, allows 2 decimal precision for pecentages: 12.34%
-    // multiply by 100 to get the desired decimal precision
-    let scale = coin_value * 1000000 as f64;
-    Some(scale as u64)
-}
-
-fn scale_percent(fract_percent: f64) -> Option<u64> {
-    // the UI for the autopay_batch, allows 2 decimal precision for pecentages: 12.34%
-    // multiply by 100 to get the desired decimal precision
-    let scaled = fract_percent * 100 as f64;
-    // drop the fractional part with trunc()
-    let trunc = scaled.trunc() as u64; // return max 4 digits.
-    if trunc < 9999 {
-        Some(trunc)
-    } else {
-        println!("percent needs to have max four digits, skipping");
-        None
+impl AutoPayResource {
+    ///
+    pub fn struct_tag() -> StructTag {
+        StructTag {
+            address: CORE_CODE_ADDRESS,
+            module: AutoPayResource::module_identifier(),
+            name: AutoPayResource::struct_identifier(),
+            type_params: vec![],
+        }
     }
-}
+    ///
+    pub fn access_path(account: AccountAddress) -> AccessPath {
+        let resource_key = ResourceKey::new(
+            account,
+            AutoPayResource::struct_tag(),
+        );
+        AccessPath::resource_access_path(&resource_key)
+    }
+    ///
+    pub fn resource_path() -> Vec<u8> {
+        AccessPath::resource_access_vec(&AutoPayResource::struct_tag())
+    }
 
+    /// 
+    pub fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
+        lcs::from_bytes(bytes).map_err(Into::into)
+    }
 
-#[test]
-fn parse_file() {
-    let path = ol_fixtures::get_demo_autopay_json().1;
-    PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
-}
+    ///
+    pub fn get_view(&self) -> AutoPayView {
+        let payments = self.payment.iter().map(|each| {
+            PaymentView {
+                uid: each.uid,
+                in_type: each.in_type,
+                type_desc: each.get_type_desc(),
+                payee: each.payee,
+                end_epoch: each.end_epoch,
+                prev_bal: each.prev_bal,
+                amt: each.amt,
+                amount: each.get_amount_formatted(),
+                note: None,
+            }
+        }).collect();
 
-#[test]
-fn parse_pct_balance_type() {
-    let path = ol_fixtures::get_demo_autopay_json().1;
-    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
-    let first = &inst[0];
-    
-    assert_eq!(first.uid, 0);
-    assert_eq!(first.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
-    assert_eq!(first.type_move, Some(0));
-    assert_eq!(first.duration_epochs, Some(100));
-    assert_eq!(first.end_epoch, Some(100));
-    assert_eq!(first.type_of, InstructionType::PercentOfBalance);
-    assert_eq!(first.value, 10f64);
-}
+        // sum amount of recurring instructions
+        let sum = self.payment.iter()
+            .filter(|payment| payment.in_type == 1u8)
+            .map(|x| x.amt)
+            .sum();
 
-#[test]
-fn parse_pct_change_type() {
-    let path = ol_fixtures::get_demo_autopay_json().1;
-    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
-    let second = &inst[1];
-    
-    assert_eq!(second.uid, 1);
-    assert_eq!(second.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
-    assert_eq!(second.type_move, Some(1));
-    assert_eq!(second.duration_epochs, Some(100));
-    assert_eq!(second.end_epoch, Some(100));
-    assert_eq!(second.type_of, InstructionType::PercentOfChange);
-    assert_eq!(second.value, 12.34f64);
-    assert_eq!(second.value_move, Some(1234u64));
-}
-
-#[test]
-fn parse_fixed_recurr_type() {
-    let path = ol_fixtures::get_demo_autopay_json().1;
-    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
-    let third = &inst[2];
-    
-    assert_eq!(third.uid, 2);
-    assert_eq!(third.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
-    assert_eq!(third.type_move, Some(2));
-    assert_eq!(third.duration_epochs, Some(100));
-    assert_eq!(third.end_epoch, Some(100));
-    assert_eq!(third.type_of, InstructionType::FixedRecurring);
-    assert_eq!(third.value_move.unwrap(), 5000000u64);
-}
-
-#[test]
-fn parse_fixed_once_type() {
-    let path = ol_fixtures::get_demo_autopay_json().1;
-    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
-    let fourth = &inst[3];
-    
-    assert_eq!(fourth.uid, 3);
-    assert_eq!(fourth.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
-    assert_eq!(fourth.type_move, Some(3));
-    assert_eq!(fourth.duration_epochs, Some(100));
-    assert_eq!(fourth.end_epoch, Some(100));
-    assert_eq!(fourth.type_of, InstructionType::FixedOnce);
-    assert_eq!(fourth.value_move.unwrap(), 22000000u64);
-}
-
-#[test]
-fn parse_pct_balance_end_epoch_type() {
-    let path = ol_fixtures::get_demo_autopay_json().1;
-    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
-    let fifth = &inst[4];
-    
-    assert_eq!(fifth.uid, 4);
-    assert_eq!(fifth.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
-    assert_eq!(fifth.type_move, Some(0));
-    assert_eq!(fifth.duration_epochs, None);
-    assert_eq!(fifth.end_epoch, Some(50));
-    assert_eq!(fifth.type_of, InstructionType::PercentOfBalance);
-    assert_eq!(fifth.value, 10f64);
-}
-
-#[test]
-fn parse_pct_change_end_epoch_type() {
-    let path = ol_fixtures::get_demo_autopay_json().1;
-    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
-    let sixth = &inst[5];
-    
-    assert_eq!(sixth.uid, 5);
-    assert_eq!(sixth.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
-    assert_eq!(sixth.type_move, Some(1));
-    assert_eq!(sixth.duration_epochs, None);
-    assert_eq!(sixth.end_epoch, Some(50));
-    assert_eq!(sixth.type_of, InstructionType::PercentOfChange);
-    assert_eq!(sixth.value, 12.34f64);
-    assert_eq!(sixth.value_move.unwrap(), 1234u64);
-}
-
-#[test]
-fn parse_fixed_recurr_end_epoch_type() {
-    let path = ol_fixtures::get_demo_autopay_json().1;
-    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
-    let seventh = &inst[6];
-    
-    assert_eq!(seventh.uid, 6);
-    assert_eq!(seventh.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
-    assert_eq!(seventh.type_move, Some(2));
-    assert_eq!(seventh.duration_epochs, None);
-    assert_eq!(seventh.end_epoch, Some(50));
-    assert_eq!(seventh.type_of, InstructionType::FixedRecurring);
-    assert_eq!(seventh.value, 5f64);
-    assert_eq!(seventh.value_move.unwrap(), 5000000u64);
-
-}
-
-#[test]
-fn parse_fixed_once_end_epoch_type() {
-    let path = ol_fixtures::get_demo_autopay_json().1;
-    let inst = PayInstruction::parse_autopay_instructions(&path, Some(0)).unwrap();
-    let eigth = &inst[7];
-    
-    assert_eq!(eigth.uid, 7);
-    assert_eq!(eigth.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
-    assert_eq!(eigth.type_move, Some(3));
-    assert_eq!(eigth.duration_epochs, None);
-    assert_eq!(eigth.end_epoch, Some(50));
-    assert_eq!(eigth.type_of, InstructionType::FixedOnce);
-    assert_eq!(eigth.value, 22f64);
-    assert_eq!(eigth.value_move.unwrap(), 22000000u64);
+        AutoPayView { 
+            payments: payments,
+            recurring_sum: sum,
+        }
+    }
 }

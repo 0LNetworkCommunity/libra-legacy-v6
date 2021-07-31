@@ -34,6 +34,7 @@ use std::{
     path::PathBuf,
     thread, time,
 };
+
 /// All the parameters needed for a client transaction.
 #[derive(Debug)]
 pub struct TxParams {
@@ -160,6 +161,8 @@ fn stage(
     (signer_account_data, txn)
 }
 /// Submit a transaction to the network.
+
+
 pub fn submit_tx(
     mut client: LibraClient,
     txn: SignedTransaction,
@@ -380,13 +383,16 @@ pub fn wait_for_tx(
     client: &mut LibraClient,
 ) -> Option<TransactionView> {
     println!(
-        "\nAwaiting tx status \n\
-       Submitted from account: {} with sequence number: {}",
-        signer_address, sequence_number
+      "\nAwaiting tx status \nSubmitted from account: {} with sequence number: {}",
+      signer_address,
+      sequence_number
     );
 
+    const MAX_ITERATIONS: u8 = 30;
+
+    let mut iter = 0;
     loop {
-        thread::sleep(time::Duration::from_millis(1000));
+        thread::sleep(time::Duration::from_millis(1_000));
         // prevent all the logging the client does while
         // it loops through the query.
         stdout().flush().unwrap();
@@ -401,6 +407,12 @@ pub fn wait_for_tx(
             _ => {
                 print!(".");
             }
+        }
+        iter += 1;
+
+        if iter==MAX_ITERATIONS {
+            println!("Timeout waiting for response");
+            return None;
         }
     }
 }

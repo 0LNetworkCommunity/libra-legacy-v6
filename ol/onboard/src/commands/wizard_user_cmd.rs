@@ -9,19 +9,13 @@ use ol_types::config::AppCfg;
 use abscissa_core::{Command, Options, Runnable};
 use std::{path::PathBuf};
 use ol_types::account;
-use libra_types::account_address::AccountAddress;
-
-/// `user-wizard` subcommand
+/// `user wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct UserWizardCmd {
     #[options(help = "path to write account manifest")]
-    home_path: Option<PathBuf>,
-    #[options(help = "path to file to be checked")]
-    check: bool,
-    #[options(help = "regenerates account manifest from mnemonic")]
-    fix: bool,
-    #[options(help = "creates a validator account")]
-    validator: bool,
+    output_dir: Option<PathBuf>,
+    #[options(help = "File to check")]
+    check_file: Option<PathBuf>,
     #[options(help = "use an existing block_0.json file and skip mining")]
     block_zero: Option<PathBuf>,
 }
@@ -30,39 +24,32 @@ impl Runnable for UserWizardCmd {
     /// Print version message
     fn run(&self) {
         // let miner_configs = app_config();
-        let home_path = self.home_path.clone().unwrap_or_else(|| PathBuf::from("."));
-        if self.check {
-            match check(home_path.clone()) {
-                true => println!("Proof verified in {:?}", &home_path),
-                false => println!("Invalid proof in {:?}", &home_path)
-            }
+        let path = self.output_dir.clone().unwrap_or_else(|| PathBuf::from("."));
+        
+        if let Some(file) = &self.check_file {
+            check(file.to_path_buf());
         } else {
-            wizard(home_path, self.fix,  &self.block_zero);
+            wizard(path, &self.block_zero);
         }
     }
 }
 
-pub fn wizard(path: PathBuf, is_fix: bool, block_zero: &Option<PathBuf>) -> (AccountAddress, String) {
-    let mut miner_configs = AppCfg::default();
+fn wizard(path: PathBuf, block_zero: &Option<PathBuf>) {
+    let mut app_cfg = AppCfg::default();
     
-    let (authkey, account, _, mnemonic) = if is_fix {
-        let (k, a, w) = wallet::get_account_from_prompt();
-        (k, a, w, "".into())
-    } else {
-        wallet::keygen()
-    };
+    let (authkey, account, _) = wallet::get_account_from_prompt();
 
     // Where to save block_0
-    miner_configs.workspace.node_home = path.clone();
-    miner_configs.profile.auth_key = authkey.to_string();
-    miner_configs.profile.account = account;
+    app_cfg.workspace.node_home = path.clone();
+    app_cfg.profile.auth_key = authkey.to_string();
+    app_cfg.profile.account = account;
 
     // Create block zero, if there isn't one.
     let block;
     if let Some(block_path) = block_zero {
         block = Block::parse_block_file(block_path.to_owned());
     } else {
-        block = write_genesis(&miner_configs);
+        block = write_genesis(&app_cfg);
     }
 
     // Create Manifest

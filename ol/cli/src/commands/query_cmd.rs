@@ -38,6 +38,12 @@ pub struct QueryCmd {
     #[options(help = "get last transactions, defaults to last 100")]
     txs: bool,
 
+    #[options(help = "get last payment events SENT, defaults to last 100")]
+    events_sent: bool,
+    
+    #[options(help = "get last payment events RECEIVED, defaults to last 100")]
+    events_received: bool,
+
     #[options(help = "height to start txs query from, defaults to -100_000 blocks")]
     txs_height: Option<u64>,
 
@@ -47,6 +53,17 @@ pub struct QueryCmd {
     #[options(help = "filter by type of transaction, e.g. 'ol_miner_state_commit'")]
     txs_type: Option<String>,
 
+    #[options(help = "move value")]
+    move_state: bool,
+
+    #[options(help = "move module name")]
+    move_module: Option<String>,
+
+    #[options(help = "move struct name")]
+    move_struct: Option<String>,
+
+    #[options(help = "move value name")]
+    move_value: Option<String>,
 }
 
 impl Runnable for QueryCmd {
@@ -63,9 +80,6 @@ impl Runnable for QueryCmd {
           exit(1);
         });
         let mut node = Node::new(client, cfg, is_swarm);
-
-  
-
         let mut info = String::new();
         let mut display = "";
 
@@ -85,9 +99,25 @@ impl Runnable for QueryCmd {
             info = node.query(QueryType::Resources{account});
             display = "RESOURCES";
         }
+        else if self.move_state {
+            info = node.query(QueryType::MoveValue{
+              account,
+              module_name: self.move_module.clone().unwrap(),
+              struct_name: self.move_struct.clone().unwrap(),
+              key_name: self.move_value.clone().unwrap(),
+            });
+            display = "RESOURCES";
+        }
         else if self.epoch {
             info = node.query(QueryType::Epoch);
             display = "EPOCH";
+        } else if self.events_received {
+            
+            info = node.query(QueryType::Events{account, sent_or_received: false, seq_start: self.txs_height});
+            display = "EVENTS";
+        } else if self.events_sent {
+            info = node.query(QueryType::Events{account, sent_or_received: true, seq_start: self.txs_height});
+            display = "EVENTS";
         }
         else if self.txs {
             info = node.query(

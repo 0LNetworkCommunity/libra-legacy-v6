@@ -3,7 +3,7 @@
 #![allow(clippy::never_loop)]
 
 use std::path::PathBuf;
-
+use std::process::exit;
 use abscissa_core::{Command, Options, Runnable};
 use anyhow::Error;
 use libra_types::transaction::SignedTransaction;
@@ -20,11 +20,19 @@ impl Runnable for DemoCmd {
         let entry_args = entrypoint::get_args();
 
         let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
-        demo_tx(
+        match demo_tx(
           &tx_params,
           entry_args.no_send,
           entry_args.save_path
-        ).unwrap();
+        ) {
+            Ok(r) => {
+              println!("{:?}", &r);
+            },
+            Err(e) => {
+              println!("ERROR: could not submit demo transaction, message: \n{:?}", &e);
+              exit(1);
+            },
+        }
     }
 }
 

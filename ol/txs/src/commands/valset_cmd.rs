@@ -2,6 +2,8 @@
 
 #![allow(clippy::never_loop)]
 
+use std::process::exit;
+
 use crate::{
     entrypoint,
     submit_tx::{maybe_submit, tx_params_wrapper},
@@ -37,13 +39,18 @@ impl Runnable for ValSetCmd {
           panic!("need to set --join or --leave flags")
         };
 
-        maybe_submit(
+        match maybe_submit(
             script,
             // transaction_builder::encode_demo_e2e_script(42),
             &tx_params,
             entry_args.no_send,
             entry_args.save_path,
-        )
-        .unwrap();
+        ) {
+            Err(e) => {
+              println!("ERROR: could not submit validator-set transaction, message: \n{:?}", &e);
+              exit(1);
+            },
+            _ => {}
+        }
     }
 }
