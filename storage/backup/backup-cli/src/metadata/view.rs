@@ -7,8 +7,8 @@ use crate::metadata::{
 use anyhow::{anyhow, ensure, Result};
 use itertools::Itertools;
 use libra_types::transaction::Version;
-use serde::export::Formatter;
 use std::{fmt::Display, str::FromStr};
+use std::fmt::Formatter;
 
 pub struct MetadataView {
     epoch_ending_backups: Vec<EpochEndingBackupMeta>,
