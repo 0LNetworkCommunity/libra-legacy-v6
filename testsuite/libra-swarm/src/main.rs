@@ -8,7 +8,7 @@ use libra_genesis_tool::config_builder::FullnodeType;
 use libra_swarm::{client, faucet, swarm::LibraSwarm};
 use libra_temppath::TempPath;
 use libra_types::chain_id::ChainId;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -34,8 +34,12 @@ struct Args {
     #[structopt(short = "m", long, requires("faucet-path"))]
     pub start_faucet: bool,
     /// Path to the libra-node binary
-    #[structopt(long)]
+    #[structopt(long, default_value = "target/debug/libra-node")]
     pub libra_node: String,
+
+    /// path to a reference genesis blob file using which swarm has to start
+    #[structopt(long)]
+    pub genesis_blob_path: Option<PathBuf>,
 
     /// Path to the cli binary
     #[structopt(long)]
@@ -57,6 +61,7 @@ fn main() {
         num_nodes,
         args.config_dir.clone(),
         None,
+        args.genesis_blob_path
     )
     .expect("Failed to configure validator swarm");
 

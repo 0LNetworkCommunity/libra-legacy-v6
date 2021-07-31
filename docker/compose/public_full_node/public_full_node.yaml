@@ -10,7 +10,7 @@ base:
 execution:
     # Path to a genesis transaction. Note, this must be paired with a waypoint. If you update your
     # waypoint without a corresponding genesis, the file location should be an empty path.
-    genesis_file_location: "/opt/libra/etc/genesis.blob"
+    genesis_file_location: "/home/teja9999/.0L/genesis.blob"
 
 full_node_networks:
       # Disabled for testnet

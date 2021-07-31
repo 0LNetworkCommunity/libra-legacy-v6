@@ -158,6 +158,11 @@ With the following command you can send a demo transaction as `alice`
 cargo r -p txs -- --swarm-path=$HOME/swarm_temp/ --swarm-persona=alice demo
 ```
 
+The command above is equivalent to doing:
+
+```
+cargo r -p txs -- --config ~/.0L/swarm_temp/0/0L.toml demo
+```
 
 ### Validator account creation tx from `alice`, for `eve`
 

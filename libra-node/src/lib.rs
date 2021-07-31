@@ -138,7 +138,7 @@ pub fn load_test_environment(config_path: Option<PathBuf>, random_ports: bool) {
     // Build a single validator network
     let template = NodeConfig::default_for_validator();
     let builder =
-        libra_genesis_tool::config_builder::ValidatorBuilder::new(1, template, &config_path)
+        libra_genesis_tool::config_builder::ValidatorBuilder::new(1, template, &config_path, None)
             .randomize_first_validator_ports(random_ports);
     let test_config =
         libra_genesis_tool::swarm_config::SwarmConfig::build(&builder, &config_path).unwrap();

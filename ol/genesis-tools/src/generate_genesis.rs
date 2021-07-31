@@ -2,13 +2,16 @@ use anyhow::{Result, bail};
 use libra_management::{
    error::Error
 };
-
+use libra_wallet::{Mnemonic, WalletLibrary, key_factory::{ChildNumber, ExtendedPrivKey}};
+use libra_genesis_tool::{verify::compute_genesis};
 use libra_temppath::TempPath;
 use libra_types::{
     access_path::AccessPath,
     account_address::AccountAddress,
     account_config::{
-        coin1_tmp_tag, from_currency_code_string, BalanceResource, COIN1_NAME,
+        coin1_tmp_tag, from_currency_code_string,
+        treasury_compliance_account_address, BalanceResource, COIN1_NAME,
+        AccountResource
     },
     account_state::AccountState,
     account_state_blob::AccountStateBlob,
@@ -29,6 +32,7 @@ use libra_vm::LibraVM;
 use libradb::{LibraDB};
 use std::{convert::TryFrom, fs::File, io::Write, io::Read};
 use move_core_types::move_resource::MoveResource;
+use ol_keys::{scheme::KeyScheme, wallet::get_account_from_mnem};
 
 pub fn test_genesis_from_blob(account_state_blobs: &Vec<AccountStateBlob>, _db_rw: DbReaderWriter) -> Result<(), anyhow::Error> {
     let home = dirs::home_dir().unwrap();
@@ -50,10 +54,11 @@ pub fn test_genesis_from_blob(account_state_blobs: &Vec<AccountStateBlob>, _db_r
 
     let mut index = 0;
     for blob in account_state_blobs {
+        println!("index: {}", index);
         match get_account_details(blob) {
             Ok(details) => {
                 if get_balance(&details.0, &db_rw) != details.1.coin() {
-                    println!("Balance not matching for blob index: {}", index);
+                    bail!("Balance not matching for blob index: {}", index);
                 };
             },
             Err(e) => {
@@ -91,6 +96,52 @@ pub fn write_genesis_blob(genesis_txn: Transaction) -> Result<(), anyhow::Error>
     Ok(())
 }
 
+pub fn add_account_states_to_write_set(write_set_mut: &mut WriteSetMut, account_state_blobs: &Vec<AccountStateBlob>) -> Result<(), anyhow::Error> {
+    let mut index = 0;
+
+    let mnemonic_string = std::string::String::from("talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse");
+    let account_details = get_account_from_mnem(mnemonic_string);
+    let authentication_key = account_details.0.to_vec();
+    for blob in account_state_blobs {
+        let account_state = AccountState::try_from(blob)
+                                .map_err(|e| Error::UnexpectedError(format!("Failed to parse blob: {}", e)))?;
+        let address_option = account_state.get_account_address()?;
+        match address_option {
+            Some(address) => {
+                for (k, v) in account_state.iter() {
+                    if k.clone()==AccountResource::resource_path() {
+                        let account_resource_option = account_state.get_account_resource()?;
+                        match account_resource_option {
+                            Some(mut account_resource) => {
+                                let account_resource_new = account_resource.clone_with_authentication_key(
+                                    authentication_key.clone(), account_details.1
+                                );
+                                write_set_mut.push((
+                                    AccessPath::new(address, k.clone()),
+                                    WriteOp::Value(lcs::to_bytes(&account_resource_new).unwrap()),
+                                ));
+                            }, None => {
+                                println!("Account resource not found for index: {}", index);
+                            }
+                        }
+                    } else {
+                        write_set_mut.push((
+                            AccessPath::new(address, k.clone()),
+                            WriteOp::Value(v.clone()),
+                        ));
+                    }
+                }
+                println!("process account index: {}", index);
+            }, None => {
+                println!("No address for error: {}", index);
+            }
+        }
+        index += 1;
+    }
+    println!("Total accounts read: {}", index);
+    Ok(())
+}
+
 pub fn generate_genesis_from_snapshot(account_state_blobs: &Vec<AccountStateBlob>, db: &DbReaderWriter) -> Result<Transaction, anyhow::Error> {
     let configuration = get_configuration(&db);
     let mut write_set_mut = WriteSetMut::new(vec![
@@ -104,22 +155,7 @@ pub fn generate_genesis_from_snapshot(account_state_blobs: &Vec<AccountStateBlob
         )]
     );
 
-    let mut index = 0;
-    for blob in account_state_blobs {
-        match get_account_details(blob) {
-            Ok(details) => {
-                write_set_mut.push((
-                    AccessPath::new(details.0, BalanceResource::access_path_for(coin1_tmp_tag())),
-                    WriteOp::Value(lcs::to_bytes(&details.1)?),
-                ));
-            },
-            Err(e) => {
-                println!("Error get_account_details at index {}: {}", index, e)
-            }
-        }
-        index += 1;
-    }
-    println!("Total accounts read: {}", index);
+    add_account_states_to_write_set(&mut write_set_mut, account_state_blobs);
 
     Ok(Transaction::GenesisTransaction(WriteSetPayload::Direct(ChangeSet::new(
         write_set_mut

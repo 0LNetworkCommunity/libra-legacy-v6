@@ -9,6 +9,12 @@ pub mod genesis_gas_schedule;
 use serde::{Deserialize, Serialize};
 // use hex;
 use std::env;
+use std::{
+    fs::File,
+    io::{Read, Write},
+    net::SocketAddr,
+    path::PathBuf,
+};
 
 use crate::{genesis_context::GenesisStateView, genesis_gas_schedule::INITIAL_GAS_SCHEDULE};
 use compiled_stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
@@ -22,7 +28,9 @@ use libra_types::{account_address, account_config::{
     }, chain_id::{ChainId}, contract_event::ContractEvent, on_chain_config::VMPublishingOption, transaction::{
         authenticator::AuthenticationKey, ChangeSet, Script, Transaction, TransactionArgument,
         WriteSetPayload,
-    }};
+    },
+    write_set::{WriteOp, WriteSetMut}
+};
 use libra_vm::{data_cache::StateViewCache, txn_effects_to_writeset_and_events};
 use move_core_types::{
     account_address::AccountAddress,
@@ -78,6 +86,7 @@ pub fn encode_genesis_transaction(
     operator_registrations: &[OperatorRegistration],
     vm_publishing_option: Option<VMPublishingOption>,
     chain_id: ChainId,
+    genesis_blob_path: Option<PathBuf>
 ) -> Transaction {
     Transaction::GenesisTransaction(WriteSetPayload::Direct(encode_genesis_change_set(
         libra_root_key,
@@ -89,6 +98,7 @@ pub fn encode_genesis_transaction(
         vm_publishing_option
             .unwrap_or_else(|| VMPublishingOption::open()), // :)
         chain_id,
+        genesis_blob_path
     )))
 }
 
@@ -111,6 +121,7 @@ pub fn encode_genesis_change_set(
     stdlib_modules: &[CompiledModule],
     vm_publishing_option: VMPublishingOption,
     chain_id: ChainId,
+    genesis_blob_path: Option<PathBuf>
 ) -> ChangeSet {
     // create a data view for move_vm
     let mut state_view = GenesisStateView::new();
@@ -172,7 +183,7 @@ pub fn encode_genesis_change_set(
 
     let effects = merge_txn_effects(effects_1, effects_2);
 
-    let (write_set, events) = txn_effects_to_writeset_and_events(effects).unwrap();
+    let (write_set, events) = txn_effects_to_writeset_and_events(effects, genesis_blob_path).unwrap();
 
     assert!(!write_set.iter().any(|(_, op)| op.is_deletion()));
     verify_genesis_write_set(&events);
@@ -722,6 +733,7 @@ pub fn generate_test_genesis(
         stdlib_modules,
         vm_publishing_option,
         ChainId::test(),
+        None
     );
     (genesis, validators)
 }

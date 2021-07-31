@@ -7,7 +7,7 @@ use crate::{
     },
     event::EventHandle,
 };
-use move_core_types::move_resource::MoveResource;
+use move_core_types::{account_address::AccountAddress, move_resource::MoveResource};
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
@@ -73,6 +73,21 @@ impl AccountResource {
     /// Return the received_events handle for the given AccountResource
     pub fn received_events(&self) -> &EventHandle {
         &self.received_events
+    }
+
+    pub fn clone_with_authentication_key(&self, new_authentication_key: Vec<u8>,
+        account_address: AccountAddress) -> AccountResource {
+        let withdraw_capability_resource = WithdrawCapabilityResource::new(
+            account_address.clone());
+        let key_rotation_cap = KeyRotationCapabilityResource::new(account_address.clone());
+        AccountResource::new(
+            self.sequence_number,
+            new_authentication_key,
+            Some(withdraw_capability_resource),
+            Some(key_rotation_cap),
+            self.sent_events.clone(),
+            self.received_events.clone(),
+        )
     }
 }
 

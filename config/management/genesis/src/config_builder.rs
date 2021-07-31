@@ -13,7 +13,12 @@ use libra_crypto::ed25519::Ed25519PrivateKey;
 use libra_management::constants::{COMMON_NS, LAYOUT};
 use libra_secure_storage::{CryptoStorage, KVStorage, Storage};
 use libra_temppath::TempPath;
-use libra_types::{chain_id::ChainId, waypoint::Waypoint};
+use libra_types::{
+    chain_id::ChainId, 
+    waypoint::Waypoint,
+    transaction::{ChangeSet, Transaction, WriteSetPayload},
+    write_set::WriteSetMut
+};
 use std::path::{Path, PathBuf};
 
 const LIBRA_ROOT_NS: &str = "libra_root";
@@ -29,16 +34,18 @@ pub struct ValidatorBuilder<T: AsRef<Path>> {
     randomize_first_validator_ports: bool,
     swarm_path: T,
     template: NodeConfig,
+    genesis_blob_path: Option<PathBuf>
 }
 
 impl<T: AsRef<Path>> ValidatorBuilder<T> {
-    pub fn new(num_validators: usize, template: NodeConfig, swarm_path: T) -> Self {
+    pub fn new(num_validators: usize, template: NodeConfig, swarm_path: T, genesis_blob_path: Option<PathBuf>) -> Self {
         Self {
             storage_helper: StorageHelper::new(),
             num_validators,
             randomize_first_validator_ports: true,
             swarm_path,
             template,
+            genesis_blob_path
         }
     }
 
@@ -185,7 +192,7 @@ impl<T: AsRef<Path>> ValidatorBuilder<T> {
         genesis_path.create_as_file().unwrap();
         let genesis = self
             .storage_helper
-            .genesis(ChainId::test(), genesis_path.path())
+            .genesis(ChainId::test(), genesis_path.path(), &self.genesis_blob_path)
             .unwrap();
 
         self.storage_helper
@@ -196,6 +203,7 @@ impl<T: AsRef<Path>> ValidatorBuilder<T> {
             .storage_helper
             .verify_genesis(&local_ns, genesis_path.path())
             .unwrap();
+        println!("output: {}", output);
         assert_eq!(output.split("match").count(), 5, "Failed to verify genesis");
 
         config.consensus.safety_rules.service = SafetyRulesService::Thread;
@@ -204,6 +212,25 @@ impl<T: AsRef<Path>> ValidatorBuilder<T> {
 
         let backend = self.secure_backend(&local_ns, "safety-rules");
         config.base.waypoint = WaypointConfig::FromStorage(backend);
+
+        // match genesis {
+        //     Transaction::GenesisTransaction(write_set_payload) => {
+        //         match write_set_payload {
+        //             WriteSetPayload::Direct(change_set) => {
+        //                 for write_set_item in change_set.write_set() {
+        //                     println!("Access path: {}", write_set_item.0);
+        //                 }
+        //             },
+        //             WriteSetPayload::Script{execute_as, script} => {
+        //                 println!("Writeset script");
+        //             }
+        //         }
+        //     }, Transaction::BlockMetadata(_data) => {
+        //         println!("BlockMetadata");
+        //     }, Transaction::UserTransaction(_data) => {
+        //         println!("UserTransaction");
+        //     }
+        // }
         config.execution.genesis = Some(genesis);
         config.execution.genesis_file_location = PathBuf::from("");
     }
@@ -237,7 +264,7 @@ impl<T: AsRef<Path>> BuildSwarm for ValidatorBuilder<T> {
 
         let waypoint = self
             .storage_helper
-            .create_waypoint(ChainId::test())
+            .create_waypoint(ChainId::test(), &self.genesis_blob_path)
             .unwrap();
         // Create genesis and waypoint
         for (i, config) in configs.iter_mut().enumerate() {
@@ -366,7 +393,7 @@ impl BuildSwarm for FullnodeBuilder {
 pub fn test_config() -> (NodeConfig, Ed25519PrivateKey) {
     let path = TempPath::new();
     path.create_as_dir().unwrap();
-    let builder = ValidatorBuilder::new(1, NodeConfig::default_for_validator(), path.path());
+    let builder = ValidatorBuilder::new(1, NodeConfig::default_for_validator(), path.path(), None);
     let (mut configs, key) = builder.build_swarm().unwrap();
 
     let mut config = configs.swap_remove(0);

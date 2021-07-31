@@ -375,7 +375,7 @@ impl FakeExecutor {
                 });
             let effects = session.finish().expect("Failed to generate txn effects");
             let (writeset, _events) =
-                txn_effects_to_writeset_and_events(effects).expect("Failed to generate writeset");
+                txn_effects_to_writeset_and_events(effects, None).expect("Failed to generate writeset");
             writeset
         };
         self.data_store.add_write_set(&write_set);
@@ -408,7 +408,7 @@ impl FakeExecutor {
             .map_err(|e| e.into_vm_status())?;
         let effects = session.finish().expect("Failed to generate txn effects");
         let (writeset, _events) =
-            txn_effects_to_writeset_and_events(effects).expect("Failed to generate writeset");
+            txn_effects_to_writeset_and_events(effects, None).expect("Failed to generate writeset");
         Ok(writeset)
     }
 }

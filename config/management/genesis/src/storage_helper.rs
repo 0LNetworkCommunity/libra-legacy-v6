@@ -307,19 +307,38 @@ impl StorageHelper {
       .unwrap();
   }
 
-  pub fn create_waypoint(&self, chain_id: ChainId) -> Result<Waypoint, Error> {
-    let args = format!(
-      "
-        libra-genesis-tool
-        create-waypoint
-        --chain-id {chain_id}
-        --shared-backend backend={backend};\
-          path={path}
-      ",
-      chain_id = chain_id,
-      backend = DISK,
-      path = self.path_string(),
-    );
+  pub fn create_waypoint(&self, chain_id: ChainId, genesis_blob_path: &Option<PathBuf>) -> Result<Waypoint, Error> {
+    let args = match genesis_blob_path {
+      Some(path) =>{
+        format!(
+          "
+            libra-genesis-tool
+            create-waypoint
+            --chain-id {chain_id}
+            --shared-backend backend={backend};\
+              path={path}
+            --genesis-blob-path {genesis_blob_path}
+          ",
+          chain_id = chain_id,
+          backend = DISK,
+          path = self.path_string(),
+          genesis_blob_path = path.to_str().expect("couldnt read genesis_blob_path file")
+        )
+      }, None => {
+        format!(
+          "
+            libra-genesis-tool
+            create-waypoint
+            --chain-id {chain_id}
+            --shared-backend backend={backend};\
+              path={path}
+          ",
+          chain_id = chain_id,
+          backend = DISK,
+          path = self.path_string(),
+        )
+      }
+    };
 
     let command = Command::from_iter(args.split_whitespace());
     command.create_waypoint()
@@ -351,40 +370,62 @@ impl StorageHelper {
 
   pub fn insert_waypoint(&self, validator_ns: &str, waypoint: Waypoint) -> Result<(), Error> {
     let args = format!(
-      "
-        libra-genesis-tool
-        insert-waypoint
-        --validator-backend backend={backend};\
-          path={path};\
-          namespace={validator_ns}
-        --waypoint {waypoint}
-        --set-genesis
-      ",
-      backend = DISK,
-      path = self.path_string(),
-      validator_ns = validator_ns,
-      waypoint = waypoint,
-    );
+        "
+          libra-genesis-tool
+          insert-waypoint
+          --validator-backend backend={backend};\
+            path={path};\
+            namespace={validator_ns}
+          --waypoint {waypoint}
+          --set-genesis
+        ",
+        backend = DISK,
+        path = self.path_string(),
+        validator_ns = validator_ns,
+        waypoint = waypoint
+      );
 
     let command = Command::from_iter(args.split_whitespace());
     command.insert_waypoint()
   }
 
-  pub fn genesis(&self, chain_id: ChainId, genesis_path: &Path) -> Result<Transaction, Error> {
-    let args = format!(
-      "
-        libra-genesis-tool
-        genesis
-        --chain-id {chain_id}
-        --shared-backend backend={backend};\
-          path={path}
-        --path {genesis_path}
-      ",
-      chain_id = chain_id,
-      backend = DISK,
-      path = self.path_string(),
-      genesis_path = genesis_path.to_str().expect("Unable to parse genesis_path"),
-    );
+  pub fn genesis(&self, chain_id: ChainId, genesis_path: &Path, genesis_blob_path: &Option<PathBuf>) -> Result<Transaction, Error> {
+    let args = match genesis_blob_path {
+      Some(path) => {
+        println!("Using reference genesis blob to generate genesis.");
+        format!(
+          "
+            libra-genesis-tool
+            genesis
+            --chain-id {chain_id}
+            --shared-backend backend={backend};\
+              path={path}
+            --path {genesis_path}
+            --genesis-blob-path {genesis_blob_path}
+          ",
+          chain_id = chain_id,
+          backend = DISK,
+          path = self.path_string(),
+          genesis_path = genesis_path.to_str().expect("Unable to parse genesis_path"),
+          genesis_blob_path = path.to_str().expect("Unable to parse genesis_blob_path"),
+        )
+      }, None => {
+        format!(
+          "
+            libra-genesis-tool
+            genesis
+            --chain-id {chain_id}
+            --shared-backend backend={backend};\
+              path={path}
+            --path {genesis_path}
+          ",
+          chain_id = chain_id,
+          backend = DISK,
+          path = self.path_string(),
+          genesis_path = genesis_path.to_str().expect("Unable to parse genesis_path"),
+        )
+      }
+    };
 
     let command = Command::from_iter(args.split_whitespace());
     command.genesis()
