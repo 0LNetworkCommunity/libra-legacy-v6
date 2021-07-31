@@ -1,5 +1,7 @@
 //! `start`
 
+use std::process::exit;
+
 use ol_types::config::AppCfg;
 use crate::{backlog, block::*, entrypoint};
 use crate::{entrypoint::EntryPointTxsCmd, prelude::*};
@@ -92,7 +94,10 @@ impl Runnable for StartCmd {
             match result {
                 Ok(_val) => {}
                 Err(err) => {
-                    println!("Failed to mine_and_submit: {}", err);
+                    println!("ERROR: miner failed, message: {:?}", err);
+                    // exit on unrecoverable error.
+                    exit(1);
+
                 }
             }
         }
