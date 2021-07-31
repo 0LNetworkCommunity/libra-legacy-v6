@@ -81,7 +81,7 @@ impl Runnable for StartCmd {
             match backlog::process_backlog(&cfg, &tx_params, is_operator) {
                 Ok(()) => status_ok!("Backlog:", "backlog committed to chain"),
                 Err(e) => {
-                    println!("Failed fetching remote state: {}", e);
+                    println!("WARN: Failed fetching remote state: {}", e);
                 }
             }
         }
