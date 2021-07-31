@@ -59,7 +59,7 @@ impl Runnable for StartCmd {
                 Ok(w) => Some(w),
                 Err(e) => {
                     status_err!("Cannot start without waypoint. Message: {:?}", e);
-                    std::process::exit(-1);
+                    exit(-1);
                 }
             }
         } else { waypoint };

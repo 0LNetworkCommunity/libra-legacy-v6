@@ -55,7 +55,6 @@ fn wizard(path: PathBuf, block_zero: &Option<PathBuf>) {
     // Create Manifest
     account::UserConfigs::new(block)
     .create_manifest(path);
-    (account, mnemonic)
 }
 
 /// Checks the format of the account manifest, including vdf proof
