@@ -4,19 +4,21 @@ use crate::fetch_archive::wait_for_archive;
 use anyhow::Result;
 
 /// starts the daemon for the live fork.
-pub fn fork_daemon() -> Result<()> {
-    match wait_for_archive() {
-        Ok(_) => {
-            // generate_genesis_from_snapshot
-            match restart() {
-                Ok(_) => Ok(()),
-                Err(e) => Err(e),
-            }
-        }
+pub fn fork_daemon(epoch: Option<u64>) -> Result<()> {
+    if !archive_exists() {
+      wait_for_archive(epoch)?;
+
+    };
+    // generate_genesis_from_snapshot
+    match restart() {
+        Ok(_) => Ok(()),
         Err(e) => Err(e),
     }
 }
 
+fn archive_exists() -> bool {
+  true
+}
 /// restart node from new genesis.blob from archive
 pub fn restart() -> Result<()> {
     kill_all_services();
