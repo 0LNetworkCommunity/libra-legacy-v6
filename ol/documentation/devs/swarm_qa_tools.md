@@ -192,7 +192,7 @@ cargo r -p txs -- --swarm-path=$HOME/swarm_temp/ --swarm-persona=bob relay --rel
 
 When you experiment with swarm and the autopay feature, be aware that there is a "fail-safe" built into the validator set election. If we don't get 4 validators who qualify to be in the validator set, then the system does not change the validator set. So often in swarm for dev purposes we will have 4 or fewer nodes, so we don't get an accurate picture of the reconfiguration.
 
-In the "real world", a validator node which has no autopay and operator configs set up will be thrown out of the validator set, but in swarm, as no node has autopay set up per default, no node will be thrown out.
+In the "real world", a validator node which has no autopay and operator configs set up will be thrown out of the validator set, but in swarm, as no node has and operator configs set up per default, no node will be thrown out.
 
 We've debated putting a switch to have a different behavior in testnet mode, but even that felt like not "fail safe" behavior.
 
