@@ -12,7 +12,7 @@ use once_cell::sync::Lazy;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::{fs::{self, File}, io::{Read, Write}, net::Ipv4Addr, path::PathBuf, str::FromStr};
+use std::{fs::{self, File}, io::{Read, Write}, net::Ipv4Addr, path::PathBuf, process::exit, str::FromStr};
 
 use crate::dialogue::{what_home, what_ip, what_statement};
 
@@ -23,7 +23,7 @@ pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
     match std::env::var("NODE_ENV") {
         Ok(val) => {
             match val.as_str() {
-                "prod" => true,
+                "prod" => true, 
                 // if anything else is set by user is false
                 _ => false,
             }

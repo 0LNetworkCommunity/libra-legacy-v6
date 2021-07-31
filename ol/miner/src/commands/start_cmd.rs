@@ -12,27 +12,27 @@ use txs::submit_tx::tx_params;
 /// `start` subcommand
 #[derive(Command, Default, Debug, Options)]
 pub struct StartCmd {
-    // Option for --backlog, only sends backlogged transactions.
+    /// Option for --backlog, only sends backlogged transactions.
     #[options(
         short = "b",
         help = "Start but don't mine, and only resubmit backlog of proofs"
     )]
-    pub backlog_only: bool,
+    backlog_only: bool,
 
-    // don't process backlog
+    /// don't process backlog
     #[options(short = "s", help = "Skip backlog")]
-    pub skip_backlog: bool,
+    skip_backlog: bool,
 
-    // Option to us rpc url to connect
+    /// Option to us rpc url to connect
     #[options(help = "Connect to upstream node, instead of default (local) node")]
-    pub upstream_url: bool,
+    upstream_url: bool,
 
-    // Option to us rpc url to connect
+    /// Option to us rpc url to connect
     #[options(
         short = "u",
         help = "Connect to upstream node, instead of default (local) node"
     )]
-    pub url: Option<Url>,
+    url: Option<Url>,
 }
 
 impl Runnable for StartCmd {
