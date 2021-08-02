@@ -2,10 +2,8 @@
 
 use backup_cli::storage::{FileHandle, FileHandleRef};
 use libra_types::access_path::AccessPath;
-use libra_types::account_config::AccountResource;
 use libra_types::account_state::AccountState;
 use libra_types::write_set::{WriteOp, WriteSetMut};
-use move_core_types::move_resource::MoveResource;
 use serde::de::DeserializeOwned;
 use std::convert::TryFrom;
 use std::path::PathBuf;
@@ -128,8 +126,6 @@ async fn accounts_from_snapshot_backup(
     Ok(account_state_blobs)
 }
 
-
-
 /// take an unmodified account state and make into a writeset.
 pub fn unmodified_state_into_writeset(
     account_state_blobs: &Vec<AccountStateBlob>,
@@ -138,26 +134,15 @@ pub fn unmodified_state_into_writeset(
     let mut index = 0;
     for blob in account_state_blobs {
         let account_state = AccountState::try_from(blob)?;
-
-        // let address_option = account_state.get_account_address()?;
         if let Some(address) = account_state.get_account_address()? {
             // Some(address) => {
             for (k, v) in account_state.iter() {
-                // TODO: what is this checking?
-                if k == &AccountResource::resource_path() {
-                    let item_tuple = (
-                        AccessPath::new(address, k.clone()),
-                        WriteOp::Value(v.clone()),
-                    );
-
-                    write_set_mut.push(item_tuple);
-                } else {
-                    // TODO: why would this happen?
-                    // write_set_mut.push((
-                    //     AccessPath::new(address, k.clone()),
-                    //     WriteOp::Value(v.clone()),
-                    // ));
-                }
+                let item_tuple = (
+                    AccessPath::new(address, k.clone()),
+                    WriteOp::Value(v.clone()),
+                );
+                // push into the writeset
+                write_set_mut.push(item_tuple);
             }
             println!("process account index: {}", index);
         } else {
@@ -165,11 +150,16 @@ pub fn unmodified_state_into_writeset(
         };
         index += 1;
     }
-
     println!("Total accounts read: {}", index);
 
     Ok(write_set_mut)
 }
+
+fn merge_writeset(mut left: WriteSetMut, right: WriteSetMut) -> Result<WriteSetMut, Error>{
+  left.write_set.extend(right.write_set);
+  Ok(left)
+}
+
 
 /// Tokio async parsing of state snapshot into blob
 async fn run_impl(manifest: StateSnapshotBackup) -> Result<()> {
