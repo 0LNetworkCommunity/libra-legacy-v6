@@ -714,7 +714,7 @@ fn recovery_owners_operators(
     println!("2 ======== Link owner to OP");
 
 
-    let n = 0u64;
+    let mut n = 0u64;
     // Owner/Validator is authorizing an Operator. This is sent by Owner. Operators need to have registered before this step.
     for i in val_assignments {
         let script = transaction_builder::encode_set_validator_operator_with_nonce_admin_script(
@@ -735,7 +735,7 @@ fn recovery_owners_operators(
         )
         .unwrap();
 
-        n+1;
+        n = n+1;
     }
 
     println!("3 ======== OP sends network info to Owner config");
@@ -745,9 +745,9 @@ fn recovery_owners_operators(
       // Operator is signing this
         let register_val_script = transaction_builder::encode_register_validator_config_script(
           i.validator_to_represent,
-          i.operator_consensus_pubkey,
-          i.validator_network_addresses,
-          i.fullnode_network_addresses,
+          i.operator_consensus_pubkey.clone(),
+          i.validator_network_addresses.clone(),
+          i.fullnode_network_addresses.clone(),
         );
 
       session
