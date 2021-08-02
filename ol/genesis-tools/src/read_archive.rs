@@ -32,7 +32,7 @@ use std::{
 
 use backup_cli::backup_types::state_snapshot::manifest::StateSnapshotBackup;
 
-use anyhow::{bail, ensure, Error, Result};
+use anyhow::{ensure, Error, Result};
 
 use tokio::{fs::OpenOptions, io::AsyncRead};
 
@@ -134,7 +134,7 @@ pub fn unmodified_state_into_writeset(
     let mut index = 0;
     for blob in account_state_blobs {
         let account_state = AccountState::try_from(blob)?;
-        
+
         // let address_option = account_state.get_account_address()?;
         if let Some(address) = account_state.get_account_address()? {
             // Some(address) => {
