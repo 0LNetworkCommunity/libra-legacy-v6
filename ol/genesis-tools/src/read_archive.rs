@@ -100,6 +100,7 @@ async fn read_account_state_chunk(file_handle: FileHandle) -> Result<Vec<(HashVa
     Ok(chunk)
 }
 
+/// Tokio async parsing of state snapshot into blob
 async fn run_impl(manifest: StateSnapshotBackup) -> Result<()>{
     let mut account_state_blobs: Vec<AccountStateBlob> = Vec::new();
     for chunk in manifest.chunks {
@@ -151,34 +152,6 @@ async fn run_impl(manifest: StateSnapshotBackup) -> Result<()>{
     Ok(())
 }
 
-fn main() -> Result<()>{
-    #[derive(Debug, Options)]
-    struct Args {
-      #[options(help = "path to snapshot files")]
-      path: Option<PathBuf>,
-      #[options(help = "swarm simulation mode")]
-      swarm: bool,
-      #[options(help = "live fork mode")]
-      fork: bool,
-    }
-
-    let opts = Args::parse_args_default_or_exit();
-
-    if opts.swarm {
-      Ok(())
-
-    } else if opts.fork {
-
-      Ok(())
-
-    } else if let Some(path) = opts.path {
-      genesis_from_path(path)
-    } else {
-      println!("No options provided, exiting");
-      exit(1);
-    }
-}
-
 
 pub fn genesis_from_path(path: PathBuf) -> Result<()> {
     let path_man = path.clone().join("state.manifest");
@@ -188,10 +161,10 @@ pub fn genesis_from_path(path: PathBuf) -> Result<()> {
 
     let manifest = read_from_json(path_man.to_str().unwrap()).unwrap();
 
+    // Tokio runtime
     let (mut rt, _port) = get_runtime();
 
-    let (txn_info_with_proof, li): (TransactionInfoWithProof, LedgerInfoWithSignatures) = 
-            load_lcs_file(&path_proof.into_os_string().into_string().unwrap()).unwrap();
+    let (txn_info_with_proof, li): (TransactionInfoWithProof, LedgerInfoWithSignatures) = load_lcs_file(&path_proof.into_os_string().into_string().unwrap()).unwrap();
 
     txn_info_with_proof.verify(li.ledger_info(), manifest.version)?;
 
