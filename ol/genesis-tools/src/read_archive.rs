@@ -2,8 +2,12 @@
 
 use backup_cli::storage::{FileHandle, FileHandleRef};
 use libra_types::access_path::AccessPath;
+use libra_types::account_config::AccountResource;
 use libra_types::account_state::AccountState;
 use libra_types::write_set::{WriteOp, WriteSetMut};
+use move_core_types::move_resource::MoveResource;
+use ol_fixtures::get_persona_mnem;
+use ol_keys::wallet::get_account_from_mnem;
 use serde::de::DeserializeOwned;
 use std::convert::TryFrom;
 use std::path::PathBuf;
@@ -30,7 +34,7 @@ use std::{
 
 use backup_cli::backup_types::state_snapshot::manifest::StateSnapshotBackup;
 
-use anyhow::{ensure, Error, Result};
+use anyhow::{Error, Result, bail, ensure};
 
 use tokio::{fs::OpenOptions, io::AsyncRead};
 
@@ -57,6 +61,7 @@ fn get_runtime() -> (Runtime, u16) {
     );
     (rt, port)
 }
+
 
 async fn open_for_read(file_handle: &FileHandleRef) -> Result<Box<dyn AsyncRead + Send + Unpin>> {
     let home = dirs::home_dir().unwrap();
@@ -102,12 +107,14 @@ async fn read_account_state_chunk(
     }
     Ok(chunk)
 }
+
 /// take an archive file path and parse into a writeset
-pub async fn archive_into_writeset(archive_path: PathBuf) -> Result<WriteSetMut, Error> {
+pub async fn archive_into_writeset(archive_path: PathBuf, case: GenesisCase) -> Result<WriteSetMut, Error> {
     let backup = read_from_json(archive_path)?;
     let account_blobs = accounts_from_snapshot_backup(backup).await?;
-    unmodified_state_into_writeset(&account_blobs)
+    make_writeset(&account_blobs, case)
 }
+
 
 /// Tokio async parsing of state snapshot into blob
 async fn accounts_from_snapshot_backup(
@@ -126,40 +133,97 @@ async fn accounts_from_snapshot_backup(
     Ok(account_state_blobs)
 }
 
-/// take an unmodified account state and make into a writeset.
-pub fn unmodified_state_into_writeset(
+fn get_alice_authkey_for_swarm() -> Vec<u8> {
+    let mnemonic_string = get_persona_mnem("alice");
+    let account_details = get_account_from_mnem(mnemonic_string);
+    account_details.0.to_vec()
+}
+
+/// cases that we need to create a genesis from backup.
+pub enum GenesisCase {
+  /// a network upgrade or fork
+  Fork,
+  /// simulate state in a local swarm.
+  Test,
+}
+
+/// make the writeset for the genesis case. Starts with an unmodified account state and make into a writeset.
+pub fn make_writeset(
     account_state_blobs: &Vec<AccountStateBlob>,
+    case: GenesisCase
 ) -> Result<WriteSetMut, Error> {
-    let mut write_set_mut = WriteSetMut::new(vec![]);
-    let mut index = 0;
+    let write_set_mut = WriteSetMut::new(vec![]);
     for blob in account_state_blobs {
         let account_state = AccountState::try_from(blob)?;
+        match case {
+            GenesisCase::Fork => todo!(),
+            GenesisCase::Test => {
+              // TODO: borrow
+              let clean = get_unmodified_writeset(&account_state)?;
+              let auth = authkey_rotate_change_item(&account_state, get_alice_authkey_for_swarm())?;
+              let write_set_mut = merge_writeset(write_set_mut, clean)?;
+              return Ok(merge_writeset(write_set_mut, auth)?);
+
+            },
+        }
+    }
+    println!("Total accounts read: {}", &account_state_blobs.len());
+
+    Ok(write_set_mut)
+}
+
+
+/// Without modifying the data convert an AccountState struct, into a WriteSet Item which can be included in a genesis transaction. This should take all of the resources in the account.
+fn get_unmodified_writeset(account_state: &AccountState) -> Result<WriteSetMut, Error> {
+        let mut ws = WriteSetMut::new(vec![]);
         if let Some(address) = account_state.get_account_address()? {
-            // Some(address) => {
+            // iterate over all the account's resources\
             for (k, v) in account_state.iter() {
                 let item_tuple = (
                     AccessPath::new(address, k.clone()),
                     WriteOp::Value(v.clone()),
                 );
                 // push into the writeset
-                write_set_mut.push(item_tuple);
+                ws.push(item_tuple);
             }
-            println!("process account index: {}", index);
-        } else {
-            println!("No address for error: {}", index);
-        };
-        index += 1;
+            println!("processed account: {:?}", address);
+
+            return Ok(ws)
+        }
+
+        bail!("ERROR: No address for AccountState: {:?}", account_state);
+}
+
+/// Returns the writeset item for replaceing an authkey on an account. This is only to be used in testing and simulation.
+fn authkey_rotate_change_item(account_state: &AccountState, authentication_key: Vec<u8>) -> Result<WriteSetMut, Error> {
+    let mut ws = WriteSetMut::new(vec![]);
+
+    if let Some(address) = account_state.get_account_address()? {
+        // iterate over all the account's resources
+        for (k, _v) in account_state.iter() {
+            // if we find an AccountResource struc, which is where authkeys are kept
+            if k.clone() == AccountResource::resource_path() {
+                // let account_resource_option = account_state.get_account_resource()?;
+                if let Some(account_resource) = account_state.get_account_resource()? {
+                    let account_resource_new = account_resource
+                        .clone_with_authentication_key(authentication_key.clone(), address.clone());
+                    ws.push((
+                        AccessPath::new(address, k.clone()),
+                        WriteOp::Value(lcs::to_bytes(&account_resource_new).unwrap()),
+                    ));
+                }
+            }
+        }
+        println!("rotate authkey for account: {:?}", address);
     }
-    println!("Total accounts read: {}", index);
-
-    Ok(write_set_mut)
+    bail!("ERROR: No address found at AccountState: {:?}", account_state);
 }
 
-fn merge_writeset(mut left: WriteSetMut, right: WriteSetMut) -> Result<WriteSetMut, Error>{
-  left.write_set.extend(right.write_set);
-  Ok(left)
-}
 
+fn merge_writeset(mut left: WriteSetMut, right: WriteSetMut) -> Result<WriteSetMut, Error> {
+    left.write_set.extend(right.write_set);
+    Ok(left)
+}
 
 /// Tokio async parsing of state snapshot into blob
 async fn run_impl(manifest: StateSnapshotBackup) -> Result<()> {

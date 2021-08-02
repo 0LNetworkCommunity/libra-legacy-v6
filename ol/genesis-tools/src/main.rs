@@ -2,7 +2,7 @@ use std::{path::PathBuf, process::exit};
 
 use anyhow::Result;
 use gumdrop::Options;
-use ol_genesis_tools::read_archive::archive_into_writeset;
+// use ol_genesis_tools::read_archive::archive_into_writeset;
 
 fn main() -> Result<()>{
     #[derive(Debug, Options)]
@@ -22,9 +22,9 @@ fn main() -> Result<()>{
     let opts = Args::parse_args_default_or_exit();
 
     if opts.swarm {
-      if let Some(archive_path) = opts.path {
+      if let Some(_archive_path) = opts.path {
         // TODO: block on this future
-        archive_into_writeset(archive_path);
+        // archive_into_writeset(archive_path);
       }
       Ok(())
 
