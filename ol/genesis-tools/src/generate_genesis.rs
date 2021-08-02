@@ -27,6 +27,7 @@ use libra_types::{
 use executor::{
     db_bootstrapper::{generate_waypoint, maybe_bootstrap, get_balance},
 };
+use ol_fixtures::get_persona_mnem;
 use storage_interface::DbReaderWriter;
 
 use libra_vm::LibraVM;
@@ -100,26 +101,28 @@ pub fn write_genesis_blob(genesis_txn: Transaction) -> Result<(), anyhow::Error>
     Ok(())
 }
 
+fn get_alice_authkey_for_swarm() -> Vec<u8> {
+    let mnemonic_string = get_persona_mnem("alice");
+    let account_details = get_account_from_mnem(mnemonic_string);
+    account_details.0.to_vec()
+}
 /// Create a WriteSet from account state blobs
 pub fn add_account_states_to_write_set(write_set_mut: &mut WriteSetMut, account_state_blobs: &Vec<AccountStateBlob>) -> Result<(), anyhow::Error> {
     let mut index = 0;
-
-    let mnemonic_string = std::string::String::from("talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse");
-    let account_details = get_account_from_mnem(mnemonic_string);
-    let authentication_key = account_details.0.to_vec();
+    let authentication_key = get_alice_authkey_for_swarm();
     for blob in account_state_blobs {
         let account_state = AccountState::try_from(blob)
-                                .map_err(|e| Error::UnexpectedError(format!("Failed to parse blob: {}", e)))?;
+          .map_err(|e| Error::UnexpectedError(format!("Failed to parse blob: {}", e)))?;
         let address_option = account_state.get_account_address()?;
         match address_option {
             Some(address) => {
                 for (k, v) in account_state.iter() {
-                    if k.clone()==AccountResource::resource_path() {
+                    if k.clone() == AccountResource::resource_path() {
                         let account_resource_option = account_state.get_account_resource()?;
                         match account_resource_option {
                             Some(account_resource) => {
                                 let account_resource_new = account_resource.clone_with_authentication_key(
-                                    authentication_key.clone(), account_details.1
+                                    authentication_key.clone(), address.clone()
                                 );
                                 write_set_mut.push((
                                     AccessPath::new(address, k.clone()),
@@ -130,6 +133,7 @@ pub fn add_account_states_to_write_set(write_set_mut: &mut WriteSetMut, account_
                             }
                         }
                     } else {
+                        // TODO: why would this happen?
                         write_set_mut.push((
                             AccessPath::new(address, k.clone()),
                             WriteOp::Value(v.clone()),

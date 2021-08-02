@@ -107,54 +107,20 @@ async fn accounts_from_snapshot_backup(manifest: StateSnapshotBackup) -> Result<
     for chunk in manifest.chunks {
         
         let blobs = read_account_state_chunk(chunk.blobs).await?;
-        // let proof = load_lcs_file(&chunk.proof)?;
-        println!("{:?}", blobs);
-        // TODO(Venkat) -> Here's the blob
-        // println!("{:?}", proof);
+        // println!("{:?}", blobs);
         for (_key, blob) in blobs {
             account_state_blobs.push(blob)
         }
     };
 
     Ok(account_state_blobs)
-
-    // let genesis = vm_genesis::test_genesis_change_set_and_validators(Some(1));
-    // let genesis_txn = Transaction::GenesisTransaction(WriteSetPayload::Direct(genesis.0));
-    // let tmp_dir = TempPath::new();
-    // let db_rw = DbReaderWriter::new(LibraDB::new_for_test(&tmp_dir));
-
-    // // Executor won't be able to boot on empty db due to lack of StartupInfo.
-    // assert!(db_rw.reader.get_startup_info().unwrap().is_none());
-
-    // // Bootstrap empty DB.
-    // let waypoint = generate_waypoint::<LibraVM>(&db_rw, &genesis_txn).expect("Should not fail.");
-    // maybe_bootstrap::<LibraVM>(&db_rw, &genesis_txn, waypoint).unwrap();
-    // let startup_info = db_rw
-    //     .reader
-    //     .get_startup_info()
-    //     .expect("Should not fail.")
-    //     .expect("Should not be None.");
-    // assert_eq!(
-    //     Waypoint::new_epoch_boundary(startup_info.latest_ledger_info.ledger_info()).unwrap(),
-    //     waypoint
-    // );
-    // let (li, epoch_change_proof, _) = db_rw.reader.get_state_proof(waypoint.version()).unwrap();
-    // let trusted_state = TrustedState::from(waypoint);
-    // trusted_state
-    //     .verify_and_ratchet(&li, &epoch_change_proof)
-    //     .unwrap();
-
-    // // `maybe_bootstrap()` does nothing on non-empty DB.
-    // assert!(!maybe_bootstrap::<LibraVM>(&db_rw, &genesis_txn, waypoint).unwrap());
-
-    
-    // let genesis_txn = generate_genesis::generate_genesis_from_snapshot(&account_state_blobs, &db_rw).unwrap();
-    // generate_genesis::write_genesis_blob(genesis_txn)?;
-    // generate_genesis::test_genesis_from_blob(&account_state_blobs, db_rw)?;
-    // Ok(())
 }
 
-
+async fn create_restore_writeset(manifest: StateSnapshotBackup) -> Result<()>{
+  let account_blobs = accounts_from_snapshot_backup(manifest).await?;
+  
+  Ok(())
+}
 
 /// Tokio async parsing of state snapshot into blob
 async fn run_impl(manifest: StateSnapshotBackup) -> Result<()>{
@@ -201,7 +167,6 @@ async fn run_impl(manifest: StateSnapshotBackup) -> Result<()>{
 
     // `maybe_bootstrap()` does nothing on non-empty DB.
     assert!(!maybe_bootstrap::<LibraVM>(&db_rw, &genesis_txn, waypoint).unwrap());
-
 
     let genesis_txn = generate_genesis::generate_genesis_from_snapshot(&account_state_blobs, &db_rw).unwrap();
     generate_genesis::write_genesis_blob(genesis_txn)?;
