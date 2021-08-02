@@ -8,13 +8,13 @@ pub mod genesis_gas_schedule;
 
 use serde::{Deserialize, Serialize};
 // use hex;
-use std::env;
-use std::{
-    fs::File,
-    io::{Read, Write},
-    net::SocketAddr,
-    path::PathBuf,
-};
+use std::{env, path::PathBuf};
+// use std::{
+//     fs::File,
+//     io::{Read, Write},
+//     net::SocketAddr,
+//     path::PathBuf,
+// };
 
 use crate::{genesis_context::GenesisStateView, genesis_gas_schedule::INITIAL_GAS_SCHEDULE};
 use compiled_stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
@@ -29,7 +29,7 @@ use libra_types::{account_address, account_config::{
         authenticator::AuthenticationKey, ChangeSet, Script, Transaction, TransactionArgument,
         WriteSetPayload,
     },
-    write_set::{WriteOp, WriteSetMut}
+    // write_set::{WriteOp, WriteSetMut}
 };
 use libra_vm::{data_cache::StateViewCache, txn_effects_to_writeset_and_events};
 use move_core_types::{

@@ -152,7 +152,7 @@ async fn run_impl(manifest: StateSnapshotBackup) -> Result<()>{
     Ok(())
 }
 
-
+/// given a path to state archive, produce a genesis.blob
 pub fn genesis_from_path(path: PathBuf) -> Result<()> {
     let path_man = path.clone().join("state.manifest");
     dbg!(&path_man);

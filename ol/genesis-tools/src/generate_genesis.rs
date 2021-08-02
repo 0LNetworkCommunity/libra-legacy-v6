@@ -1,3 +1,5 @@
+//! generate genesis files from snapshot
+
 use anyhow::{Result, bail};
 use libra_management::{
    error::Error
@@ -33,6 +35,7 @@ use std::{convert::TryFrom, fs::File, io::Write, io::Read};
 use move_core_types::move_resource::MoveResource;
 use ol_keys::{wallet::get_account_from_mnem};
 
+/// wrapper for testing getting a genesis from a blob.
 pub fn test_genesis_from_blob(account_state_blobs: &Vec<AccountStateBlob>, _db_rw: DbReaderWriter) -> Result<(), anyhow::Error> {
     let home = dirs::home_dir().unwrap();
     let genesis_path = home.join(".0L/genesis_from_snapshot.blob");
@@ -79,6 +82,8 @@ fn get_configuration(db: &DbReaderWriter) -> ConfigurationResource {
     config_state.get_configuration_resource().unwrap().unwrap()
 }
 
+/// Given a Genesis transaction, write a genesis.blob file
+// TODO: A path needs to be given.
 pub fn write_genesis_blob(genesis_txn: Transaction) -> Result<(), anyhow::Error> {
     let home = dirs::home_dir().unwrap();
     let ol_path = home.join(".0L/genesis_from_snapshot.blob");
@@ -95,6 +100,7 @@ pub fn write_genesis_blob(genesis_txn: Transaction) -> Result<(), anyhow::Error>
     Ok(())
 }
 
+/// Create a WriteSet from account state blobs
 pub fn add_account_states_to_write_set(write_set_mut: &mut WriteSetMut, account_state_blobs: &Vec<AccountStateBlob>) -> Result<(), anyhow::Error> {
     let mut index = 0;
 
@@ -141,6 +147,8 @@ pub fn add_account_states_to_write_set(write_set_mut: &mut WriteSetMut, account_
     Ok(())
 }
 
+
+/// given a vec of AccountStateBlobs, try to parse and bootsrap a database, and finally create a genesis.blob
 pub fn generate_genesis_from_snapshot(account_state_blobs: &Vec<AccountStateBlob>, db: &DbReaderWriter) -> Result<Transaction, anyhow::Error> {
     let configuration = get_configuration(&db);
     let mut write_set_mut = WriteSetMut::new(vec![
@@ -168,6 +176,7 @@ pub fn generate_genesis_from_snapshot(account_state_blobs: &Vec<AccountStateBlob
     ))))
 }
 
+/// Get account address and balance from AccountStateBlob
 pub fn get_account_details(blob: &AccountStateBlob) -> Result<(AccountAddress, BalanceResource), anyhow::Error> {
     let account_state = AccountState::try_from(blob)
                                 .map_err(|e| Error::UnexpectedError(format!("Failed to parse blob: {}", e)))?;

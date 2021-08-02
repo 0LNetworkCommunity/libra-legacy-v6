@@ -611,8 +611,9 @@ pub fn txn_effects_to_writeset_and_events_cached<C: AccessPathCache>(
                                 ops.push(write_set_item.clone());
                             }
                         },
-                        WriteSetPayload::Script{execute_as, script} => {
-                            println!("Writeset script");
+                        //////// 0L ////////
+                        WriteSetPayload::Script{execute_as: _, script: _} => {
+                            println!("Writeset script"); 
                         }
                     }
                 }, Transaction::BlockMetadata(_data) => {
