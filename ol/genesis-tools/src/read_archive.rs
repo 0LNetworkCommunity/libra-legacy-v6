@@ -81,7 +81,7 @@ fn read_from_file(path: &str) -> Result<Vec<u8>> {
     Ok(data)
 }
 
-fn read_from_json(path: &str) -> Result<StateSnapshotBackup> {
+fn read_from_json(path: PathBuf) -> Result<StateSnapshotBackup> {
     let config = std::fs::read_to_string(path)?;
     let map: StateSnapshotBackup = serde_json::from_str(&config)?;
     Ok(map)
@@ -104,6 +104,13 @@ async fn read_account_state_chunk(
     }
     Ok(chunk)
 }
+/// take an archive file path and parse into a writeset
+pub async fn archive_into_writeset(archive_path: PathBuf) -> Result<WriteSetMut, Error> {
+    let backup = read_from_json(archive_path)?;
+    let account_blobs = accounts_from_snapshot_backup(backup).await?;
+    unmodified_state_into_writeset(&account_blobs)
+}
+
 /// Tokio async parsing of state snapshot into blob
 async fn accounts_from_snapshot_backup(
     manifest: StateSnapshotBackup,
@@ -121,10 +128,7 @@ async fn accounts_from_snapshot_backup(
     Ok(account_state_blobs)
 }
 
-async fn snapshot_to_writeset(manifest: StateSnapshotBackup) -> Result<WriteSetMut, Error> {
-    let account_blobs = accounts_from_snapshot_backup(manifest).await?;
-    unmodified_state_into_writeset(&account_blobs)
-}
+
 
 /// take an unmodified account state and make into a writeset.
 pub fn unmodified_state_into_writeset(
@@ -225,7 +229,7 @@ pub fn genesis_from_path(path: PathBuf) -> Result<()> {
     let path_proof = path.join("state.proof");
     dbg!(&path_proof);
 
-    let manifest = read_from_json(path_man.to_str().unwrap()).unwrap();
+    let manifest = read_from_json(path_man).unwrap();
 
     // Tokio runtime
     let (mut rt, _port) = get_runtime();
