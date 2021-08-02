@@ -636,15 +636,17 @@ fn create_and_initialize_owners_operators(
     }
 }
 
+/// Validator/owner state to recover in genesis recovery mode
 pub struct ValRecover {
   val_account: AccountAddress,
   operator_delegated_account: AccountAddress,
   val_auth_key: AuthenticationKey,
 }
 
+/// Operator state to recover in genesis recovery mode
 pub struct OperRecover {
   operator_account: AccountAddress,
-  operator_auth_key: Vec<u8>,
+  operator_auth_key: AuthenticationKey,
   validator_to_represent: AccountAddress,
   operator_consensus_pubkey: Vec<u8>,
   validator_network_addresses: Vec<u8>,
@@ -668,7 +670,6 @@ fn recovery_owners_operators(
     for i in val_assignments {
 
         dbg!(i.val_account);
-
         
         let create_owner_script = transaction_builder::encode_create_validator_account_script(
             0,
