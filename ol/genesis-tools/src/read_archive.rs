@@ -1,21 +1,27 @@
 //! read-archive
 
 use backup_cli::storage::{FileHandle, FileHandleRef};
+use libra_types::access_path::AccessPath;
+use libra_types::account_config::AccountResource;
+use libra_types::account_state::AccountState;
+use libra_types::write_set::{WriteOp, WriteSetMut};
+use move_core_types::move_resource::MoveResource;
 use serde::de::DeserializeOwned;
+use std::convert::TryFrom;
 use std::path::PathBuf;
 
-use std::{fs::File};
+use std::fs::File;
 
 use std::io::Read;
 
+use libra_config::utils::get_available_port;
+use libra_crypto::HashValue;
 use libra_types::{
-    proof::TransactionInfoWithProof, ledger_info::LedgerInfoWithSignatures,
-    account_state_blob::AccountStateBlob
+    account_state_blob::AccountStateBlob, ledger_info::LedgerInfoWithSignatures,
+    proof::TransactionInfoWithProof,
 };
 use libra_types::{
-    transaction::{
-        Transaction, WriteSetPayload
-      },
+    transaction::{Transaction, WriteSetPayload},
     trusted_state::TrustedState,
     waypoint::Waypoint,
 };
@@ -23,48 +29,45 @@ use std::{
     net::{IpAddr, Ipv4Addr, SocketAddr},
     sync::Arc,
 };
-use libra_crypto::HashValue;
-use libra_config::utils::get_available_port;
 
 use backup_cli::backup_types::state_snapshot::manifest::StateSnapshotBackup;
 
-use anyhow::{Result, ensure};
+use anyhow::{bail, ensure, Error, Result};
 
-use tokio::{
-    fs::{OpenOptions},
-    io::{AsyncRead}
-};
+use tokio::{fs::OpenOptions, io::AsyncRead};
 
-use libradb::LibraDB;
 use libra_temppath::TempPath;
+use libradb::LibraDB;
 
 use backup_cli::utils::read_record_bytes::ReadRecordBytes;
 
-use tokio::runtime::Runtime;
 use backup_service::start_backup_service;
+use tokio::runtime::Runtime;
 
-use storage_interface::DbReaderWriter;
-use executor::{
-    db_bootstrapper::{generate_waypoint, maybe_bootstrap},
-};
+use executor::db_bootstrapper::{generate_waypoint, maybe_bootstrap};
 use libra_vm::LibraVM;
-
+use storage_interface::DbReaderWriter;
 
 use crate::generate_genesis;
 
 fn get_runtime() -> (Runtime, u16) {
     let port = get_available_port();
     let path = TempPath::new();
-    let rt = start_backup_service(SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), port), Arc::new(LibraDB::new_for_test(&path)));
+    let rt = start_backup_service(
+        SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), port),
+        Arc::new(LibraDB::new_for_test(&path)),
+    );
     (rt, port)
 }
 
-
-async fn open_for_read(
-    file_handle: &FileHandleRef,
-) -> Result<Box<dyn AsyncRead + Send + Unpin>> {
+async fn open_for_read(file_handle: &FileHandleRef) -> Result<Box<dyn AsyncRead + Send + Unpin>> {
     let home = dirs::home_dir().unwrap();
-    let mut path: String = home.join("libra/ol/fixtures/state-snapshot/194/").into_os_string().into_string().unwrap().to_owned();
+    let mut path: String = home
+        .join("libra/ol/fixtures/state-snapshot/194/")
+        .into_os_string()
+        .into_string()
+        .unwrap()
+        .to_owned();
     path.push_str(&file_handle.to_string());
     let file = OpenOptions::new().read(true).open(path).await?;
     Ok(Box::new(file))
@@ -78,7 +81,7 @@ fn read_from_file(path: &str) -> Result<Vec<u8>> {
     Ok(data)
 }
 
-fn read_from_json(path: &str) -> Result<StateSnapshotBackup>{
+fn read_from_json(path: &str) -> Result<StateSnapshotBackup> {
     let config = std::fs::read_to_string(path)?;
     let map: StateSnapshotBackup = serde_json::from_str(&config)?;
     Ok(map)
@@ -89,7 +92,9 @@ fn load_lcs_file<T: DeserializeOwned>(file_handle: &str) -> Result<T> {
     Ok(lcs::from_bytes(&x)?)
 }
 
-async fn read_account_state_chunk(file_handle: FileHandle) -> Result<Vec<(HashValue, AccountStateBlob)>> {
+async fn read_account_state_chunk(
+    file_handle: FileHandle,
+) -> Result<Vec<(HashValue, AccountStateBlob)>> {
     let mut file = open_for_read(&file_handle).await?;
 
     let mut chunk = vec![];
@@ -100,35 +105,73 @@ async fn read_account_state_chunk(file_handle: FileHandle) -> Result<Vec<(HashVa
     Ok(chunk)
 }
 /// Tokio async parsing of state snapshot into blob
-async fn accounts_from_snapshot_backup(manifest: StateSnapshotBackup) -> Result<Vec<AccountStateBlob>>{
-
+async fn accounts_from_snapshot_backup(
+    manifest: StateSnapshotBackup,
+) -> Result<Vec<AccountStateBlob>> {
     // parse AccountStateBlob from chunks of the archive
     let mut account_state_blobs: Vec<AccountStateBlob> = Vec::new();
     for chunk in manifest.chunks {
-        
         let blobs = read_account_state_chunk(chunk.blobs).await?;
         // println!("{:?}", blobs);
         for (_key, blob) in blobs {
             account_state_blobs.push(blob)
         }
-    };
+    }
 
     Ok(account_state_blobs)
 }
 
-async fn create_restore_writeset(manifest: StateSnapshotBackup) -> Result<()>{
-  let account_blobs = accounts_from_snapshot_backup(manifest).await?;
-  
-  Ok(())
+async fn snapshot_to_writeset(manifest: StateSnapshotBackup) -> Result<WriteSetMut, Error> {
+    let account_blobs = accounts_from_snapshot_backup(manifest).await?;
+    unmodified_state_into_writeset(&account_blobs)
+}
+
+/// take an unmodified account state and make into a writeset.
+pub fn unmodified_state_into_writeset(
+    account_state_blobs: &Vec<AccountStateBlob>,
+) -> Result<WriteSetMut, Error> {
+    let mut write_set_mut = WriteSetMut::new(vec![]);
+    let mut index = 0;
+    for blob in account_state_blobs {
+        let account_state = AccountState::try_from(blob)?;
+        
+        // let address_option = account_state.get_account_address()?;
+        if let Some(address) = account_state.get_account_address()? {
+            // Some(address) => {
+            for (k, v) in account_state.iter() {
+                // TODO: what is this checking?
+                if k == &AccountResource::resource_path() {
+                    let item_tuple = (
+                        AccessPath::new(address, k.clone()),
+                        WriteOp::Value(v.clone()),
+                    );
+
+                    write_set_mut.push(item_tuple);
+                } else {
+                    // TODO: why would this happen?
+                    // write_set_mut.push((
+                    //     AccessPath::new(address, k.clone()),
+                    //     WriteOp::Value(v.clone()),
+                    // ));
+                }
+            }
+            println!("process account index: {}", index);
+        } else {
+            println!("No address for error: {}", index);
+        };
+        index += 1;
+    }
+
+    println!("Total accounts read: {}", index);
+
+    Ok(write_set_mut)
 }
 
 /// Tokio async parsing of state snapshot into blob
-async fn run_impl(manifest: StateSnapshotBackup) -> Result<()>{
-
+async fn run_impl(manifest: StateSnapshotBackup) -> Result<()> {
     // parse AccountStateBlob from chunks of the archive
     let mut account_state_blobs: Vec<AccountStateBlob> = Vec::new();
     for chunk in manifest.chunks {
-        
         let blobs = read_account_state_chunk(chunk.blobs).await?;
         // let proof = load_lcs_file(&chunk.proof)?;
         println!("{:?}", blobs);
@@ -168,7 +211,8 @@ async fn run_impl(manifest: StateSnapshotBackup) -> Result<()>{
     // `maybe_bootstrap()` does nothing on non-empty DB.
     assert!(!maybe_bootstrap::<LibraVM>(&db_rw, &genesis_txn, waypoint).unwrap());
 
-    let genesis_txn = generate_genesis::generate_genesis_from_snapshot(&account_state_blobs, &db_rw).unwrap();
+    let genesis_txn =
+        generate_genesis::generate_genesis_from_snapshot(&account_state_blobs, &db_rw).unwrap();
     generate_genesis::write_genesis_blob(genesis_txn)?;
     generate_genesis::test_genesis_from_blob(&account_state_blobs, db_rw)?;
     Ok(())
@@ -186,7 +230,8 @@ pub fn genesis_from_path(path: PathBuf) -> Result<()> {
     // Tokio runtime
     let (mut rt, _port) = get_runtime();
 
-    let (txn_info_with_proof, li): (TransactionInfoWithProof, LedgerInfoWithSignatures) = load_lcs_file(&path_proof.into_os_string().into_string().unwrap()).unwrap();
+    let (txn_info_with_proof, li): (TransactionInfoWithProof, LedgerInfoWithSignatures) =
+        load_lcs_file(&path_proof.into_os_string().into_string().unwrap()).unwrap();
 
     txn_info_with_proof.verify(li.ledger_info(), manifest.version)?;
 
@@ -202,7 +247,6 @@ pub fn genesis_from_path(path: PathBuf) -> Result<()> {
 
     Ok(())
 }
-
 
 #[test]
 fn test_main() -> Result<()> {

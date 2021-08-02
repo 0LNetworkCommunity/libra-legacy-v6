@@ -106,6 +106,44 @@ fn get_alice_authkey_for_swarm() -> Vec<u8> {
     let account_details = get_account_from_mnem(mnemonic_string);
     account_details.0.to_vec()
 }
+
+/// take an unmodified account state and make into a writeset.
+pub fn unmodified_state_into_writeset(account_state_blobs: &Vec<AccountStateBlob>) -> Result<WriteSetMut, anyhow::Error>  {
+    let mut write_set_mut = WriteSetMut::new(vec![]);
+    let mut index = 0;
+    for blob in account_state_blobs {
+        let account_state = AccountState::try_from(blob)
+          .map_err(|e| Error::UnexpectedError(format!("Failed to parse blob: {}", e)))?;
+        let address_option = account_state.get_account_address()?;
+        match address_option {
+            Some(address) => {
+                for (k, v) in account_state.iter() {
+                  // TODO: what is this checking?
+                    if k == &AccountResource::resource_path() {
+                        let item_tuple = (
+                          AccessPath::new(address, k.clone()),
+                          WriteOp::Value(v.clone()),
+                        );
+
+                        write_set_mut.push(item_tuple);
+                    } else {
+                        // TODO: why would this happen?
+                        write_set_mut.push((
+                            AccessPath::new(address, k.clone()),
+                            WriteOp::Value(v.clone()),
+                        ));
+                    }
+                }
+                println!("process account index: {}", index);
+            }, None => {
+                println!("No address for error: {}", index);
+            }
+        }
+        index += 1;
+    }
+    println!("Total accounts read: {}", index);
+    Ok(write_set_mut)
+}
 /// Create a WriteSet from account state blobs
 pub fn add_account_states_to_write_set(write_set_mut: &mut WriteSetMut, account_state_blobs: &Vec<AccountStateBlob>) -> Result<(), anyhow::Error> {
     let mut index = 0;
