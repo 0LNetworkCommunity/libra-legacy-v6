@@ -3,7 +3,7 @@
 use backup_cli::storage::{FileHandle, FileHandleRef};
 use serde::de::DeserializeOwned;
 use std::path::PathBuf;
-use std::process::exit;
+
 use std::{fs::File};
 
 use std::io::Read;
@@ -48,7 +48,7 @@ use executor::{
     db_bootstrapper::{generate_waypoint, maybe_bootstrap},
 };
 use libra_vm::LibraVM;
-use gumdrop::Options;
+
 
 use crate::generate_genesis;
 

@@ -2,15 +2,14 @@ use anyhow::{Result, bail};
 use libra_management::{
    error::Error
 };
-use libra_wallet::{Mnemonic, WalletLibrary, key_factory::{ChildNumber, ExtendedPrivKey}};
-use libra_genesis_tool::{verify::compute_genesis};
+
+
 use libra_temppath::TempPath;
 use libra_types::{
     access_path::AccessPath,
     account_address::AccountAddress,
     account_config::{
-        coin1_tmp_tag, from_currency_code_string,
-        treasury_compliance_account_address, BalanceResource, COIN1_NAME,
+        coin1_tmp_tag, from_currency_code_string, BalanceResource, COIN1_NAME,
         AccountResource
     },
     account_state::AccountState,
@@ -32,7 +31,7 @@ use libra_vm::LibraVM;
 use libradb::{LibraDB};
 use std::{convert::TryFrom, fs::File, io::Write, io::Read};
 use move_core_types::move_resource::MoveResource;
-use ol_keys::{scheme::KeyScheme, wallet::get_account_from_mnem};
+use ol_keys::{wallet::get_account_from_mnem};
 
 pub fn test_genesis_from_blob(account_state_blobs: &Vec<AccountStateBlob>, _db_rw: DbReaderWriter) -> Result<(), anyhow::Error> {
     let home = dirs::home_dir().unwrap();
@@ -112,7 +111,7 @@ pub fn add_account_states_to_write_set(write_set_mut: &mut WriteSetMut, account_
                     if k.clone()==AccountResource::resource_path() {
                         let account_resource_option = account_state.get_account_resource()?;
                         match account_resource_option {
-                            Some(mut account_resource) => {
+                            Some(account_resource) => {
                                 let account_resource_new = account_resource.clone_with_authentication_key(
                                     authentication_key.clone(), account_details.1
                                 );
@@ -155,7 +154,7 @@ pub fn generate_genesis_from_snapshot(account_state_blobs: &Vec<AccountStateBlob
         )]
     );
 
-    add_account_states_to_write_set(&mut write_set_mut, account_state_blobs);
+    add_account_states_to_write_set(&mut write_set_mut, account_state_blobs)?;
 
     Ok(Transaction::GenesisTransaction(WriteSetPayload::Direct(ChangeSet::new(
         write_set_mut
