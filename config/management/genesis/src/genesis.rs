@@ -172,8 +172,8 @@ impl Genesis {
                 operator_account,
             ));
         }
+        
         //////// 0L end ////////
-
         Ok(registrations)
     }
 
