@@ -55,7 +55,7 @@ mod error;
 mod tests;
 
 pub use self::error::PeerManagerError;
-use serde::export::Formatter;
+use std::fmt::Formatter;
 
 /// Request received by PeerManager from upstream actors.
 #[derive(Debug, Serialize)]

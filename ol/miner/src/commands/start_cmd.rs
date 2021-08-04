@@ -1,5 +1,7 @@
 //! `start`
 
+use std::process::exit;
+
 use ol_types::config::AppCfg;
 use crate::{backlog, block::*, entrypoint};
 use crate::{entrypoint::EntryPointTxsCmd, prelude::*};
@@ -10,24 +12,24 @@ use reqwest::Url;
 use txs::submit_tx::tx_params;
 
 /// `start` subcommand
-#[derive(Command, Debug, Options)]
+#[derive(Command, Default, Debug, Options)]
 pub struct StartCmd {
-    // Option for --backlog, only sends backlogged transactions.
+    /// Option for --backlog, only sends backlogged transactions.
     #[options(
         short = "b",
         help = "Start but don't mine, and only resubmit backlog of proofs"
     )]
     backlog_only: bool,
 
-    // don't process backlog
+    /// don't process backlog
     #[options(short = "s", help = "Skip backlog")]
     skip_backlog: bool,
 
-    // Option to us rpc url to connect
+    /// Option to us rpc url to connect
     #[options(help = "Connect to upstream node, instead of default (local) node")]
     upstream_url: bool,
 
-    // Option to us rpc url to connect
+    /// Option to us rpc url to connect
     #[options(
         short = "u",
         help = "Connect to upstream node, instead of default (local) node"
@@ -57,7 +59,7 @@ impl Runnable for StartCmd {
                 Ok(w) => Some(w),
                 Err(e) => {
                     status_err!("Cannot start without waypoint. Message: {:?}", e);
-                    std::process::exit(-1);
+                    exit(-1);
                 }
             }
         } else { waypoint };
@@ -79,7 +81,7 @@ impl Runnable for StartCmd {
             match backlog::process_backlog(&cfg, &tx_params, is_operator) {
                 Ok(()) => status_ok!("Backlog:", "backlog committed to chain"),
                 Err(e) => {
-                    println!("Failed fetching remote state: {}", e);
+                    println!("WARN: Failed fetching remote state: {}", e);
                 }
             }
         }
@@ -92,7 +94,10 @@ impl Runnable for StartCmd {
             match result {
                 Ok(_val) => {}
                 Err(err) => {
-                    println!("Failed to mine_and_submit: {}", err);
+                    println!("ERROR: miner failed, message: {:?}", err);
+                    // exit on unrecoverable error.
+                    exit(1);
+
                 }
             }
         }

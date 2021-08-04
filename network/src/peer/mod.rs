@@ -25,10 +25,11 @@ use libra_config::network_id::NetworkContext;
 use libra_logger::prelude::*;
 use libra_types::PeerId;
 use netcore::compat::IoCompat;
-use serde::{export::Formatter, Serialize};
+use serde::{Serialize};
 use std::{fmt::Debug, io, sync::Arc};
 use tokio::runtime::Handle;
 use tokio_util::codec::{FramedRead, FramedWrite, LengthDelimitedCodec};
+use std::fmt::Formatter;
 
 //////// 0L ////////
 // // Rate-limit configuration for inbound messages. Allows 100 messages for every 10ms window.

@@ -20,20 +20,28 @@ use crate::checkup;
 /// `init` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct InitCmd {
+    /// home path for app config
     #[options(help = "home path for app config")]
     path: Option<PathBuf>,
+    /// An upstream peer to use in 0L.toml
     #[options(help = "An upstream peer to use in 0L.toml")]
     upstream_peer: Option<Url>,
+    /// Skip app configs
     #[options(help = "Skip app configs")]
     skip_app: bool,
+    /// Skip validator init
     #[options(help = "Skip validator init")]
     skip_val: bool,
+    /// run checkup on config file
     #[options(help = "Check config file and give hints if something seems wrong")]
     checkup: bool,
+    /// fix the config file
     #[options(help = "Fix config file, and migrate any missing fields")]
     fix: bool,
+    /// Set a waypoint in config files
     #[options(help = "Set a waypoint in config files")]
     waypoint: Option<Waypoint>,
+    /// Path to source code, for devs
     #[options(help = "Path to source code, for devs")]
     source_path: Option<PathBuf>,
 }
@@ -100,7 +108,10 @@ pub fn initialize_app_cfg(
       path,
       epoch_opt,
       wp_opt,
-      source_path);
+      source_path,
+      None,
+      None,
+    );
     Ok(cfg)
 }
 

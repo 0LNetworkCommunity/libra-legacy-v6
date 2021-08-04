@@ -58,11 +58,8 @@ fn wizard(path: PathBuf, block_zero: &Option<PathBuf>) {
 }
 
 /// Checks the format of the account manifest, including vdf proof
-fn check(path: PathBuf) {
+pub fn check(path: PathBuf) -> bool {
     let user_data = account::UserConfigs::get_init_data(&path).expect(&format!("could not parse manifest in {:?}", &path));
 
-    match delay::verify(&user_data.block_zero.preimage, &user_data.block_zero.proof) {
-        true => println!("Proof verified in {:?}", &path),
-        false => println!("Invalid proof in {:?}", &path)
-    }
+    delay::verify(&user_data.block_zero.preimage, &user_data.block_zero.proof)
 }

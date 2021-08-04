@@ -4,9 +4,9 @@ use ol_types::config::AppCfg;
 use crate::{
     delay::*,
     backlog,
-    error::{Error, ErrorKind},
-    prelude::*
 };
+use anyhow::{Error, bail};
+
 use byteorder::{LittleEndian, WriteBytesExt};
 use glob::glob;
 use hex::decode;
@@ -82,9 +82,7 @@ pub fn mine_once(config: &AppCfg) -> Result<Block, Error> {
         Ok(block)
     // Err(ErrorKind::Io.context(format!("submit_vdf_proof_tx_to_network {:?}", block_dir)).into())
     } else {
-        return Err(ErrorKind::Io
-            .context(format!("No files found in {:?}", &config.get_block_dir()))
-            .into());
+        bail!(format!("No files found in {:?}", &config.get_block_dir()));
     }
 }
 
@@ -101,8 +99,7 @@ pub fn mine_and_submit(
 
     // If there are NO files in path, mine the genesis proof.
     if current_block_number.is_none() {
-        status_err!("Genesis block_0.json not found. Exiting.");
-        std::process::exit(0);
+      bail!("ERROR: Genesis block_0.json not found.");
     } else {
         // the max block that has been succesfully submitted to client
         let mut mining_height = current_block_number.unwrap() + 1;
@@ -110,19 +107,17 @@ pub fn mine_and_submit(
 
         // mine continuously from the last block in the file systems
         loop {
-            status_info!(format!("Block {}", mining_height), "Mining VDF Proof");
+            println!("Mining VDF Proof: Block {}", mining_height);
 
             let block = mine_once(&config)?;
-            status_info!(
-                "Proof mined:",
-                format!("block_{}.json created.", block.height.to_string())
-            );
+            println!("Proof mined: block_{}.json created.", block.height.to_string());
 
             // submits backlog to client
             match backlog::process_backlog(&config, &tx_params, is_operator) {
-                Ok(()) => status_ok!("Success:", "Proof committed to chain"),
+                Ok(()) => println!("Success: Proof committed to chain"),
                 Err(e) => {
-                    status_warn!("Failed fetching remote state: {}", e);
+                    // don't stop on tx errors
+                    println!("ERROR: Failed fetching remote state, message: {}", e);
                 }
             }
 
