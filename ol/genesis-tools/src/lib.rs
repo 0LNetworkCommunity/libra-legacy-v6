@@ -14,3 +14,4 @@ pub mod read_archive;
 pub mod generate_genesis;
 pub mod fork;
 pub mod recover;
+pub mod genesis_wrapper;
