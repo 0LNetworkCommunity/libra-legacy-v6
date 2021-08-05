@@ -26,13 +26,8 @@ use libra_types::{
     //////// 0L ////////
     block_metadata::BlockMetadata,
     upgrade_payload::UpgradePayloadResource,
-    // transaction::{Transaction, WriteSetPayload}
 };
-// use std::{
-//     fs::File,
-//     io::{Read},
-//     path::PathBuf,
-// };
+
 use move_core_types::{
     gas_schedule::{CostTable, GasAlgebra, GasUnits},
     identifier::IdentStr,

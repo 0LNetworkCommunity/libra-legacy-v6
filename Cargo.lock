@@ -5148,6 +5148,7 @@ dependencies = [
  "ol-keys",
  "once_cell",
  "reqwest",
+ "resource-viewer",
  "rustyline",
  "serde",
  "serde_json",
