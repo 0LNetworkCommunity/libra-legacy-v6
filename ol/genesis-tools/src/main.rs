@@ -10,16 +10,14 @@ fn main() -> Result<()> {
         epoch: Option<u64>,
         #[options(help = "path to snapshot dir to read")]
         snaphot_path: Option<PathBuf>,
-        #[options(help = "swarm simulation mode")]
-        swarm: bool,
         #[options(help = "write genesis from recovery file")]
         genesis: bool,
         #[options(help = "write recovery file from snapshot")]
         recover_path: Option<PathBuf>,
         #[options(help = "live fork mode")]
-        live: bool,
-        // #[options(help = "Url of the github repo with archive")]
-        // epoch: Option<Url>,
+        daemon: bool,
+        #[options(help = "swarm simulation mode")]
+        swarm: bool,
     }
 
     let opts = Args::parse_args_default_or_exit();
@@ -32,7 +30,7 @@ fn main() -> Result<()> {
             archive_into_recovery(&a_path, &r_path);
         };
         Ok(())
-    } else if opts.live {
+    } else if opts.daemon {
         // start the live fork daemon
 
         Ok(())
