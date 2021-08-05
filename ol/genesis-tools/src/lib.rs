@@ -13,3 +13,4 @@ pub mod live_fork;
 pub mod read_archive;
 pub mod generate_genesis;
 pub mod fork;
+pub mod recover;

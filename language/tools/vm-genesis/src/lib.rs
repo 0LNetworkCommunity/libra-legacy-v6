@@ -244,7 +244,17 @@ pub fn encode_recovery_genesis_transaction(
         &operator_registrations,
     );
 
+    
+
     println!("OK recover owners and operators =============== ");
+
+    // TODO: Restore Balance and Total Supply
+
+    // TODO: Restore Mining 
+
+    // TODO: Restore FullnodeState
+
+    // TODO: Restore WalletType
 
     reconfigure(&mut session, &log_context);
 
@@ -263,7 +273,9 @@ pub fn encode_recovery_genesis_transaction(
 
     assert!(!write_set.iter().any(|(_, op)| op.is_deletion()));
     verify_genesis_write_set(&events);
-    Ok(Transaction::GenesisTransaction(WriteSetPayload::Direct(write_set)))
+    
+    let cs = ChangeSet::new(write_set, events);
+    Ok(Transaction::GenesisTransaction(WriteSetPayload::Direct(cs)))
 }
 
 /// Convert the transaction arguments into Move values.
@@ -676,11 +688,6 @@ fn recovery_owners_operators(
             &create_owner_script,
         );
 
-        // TODO: Restore Mining 
-
-        // TODO: Restore ValidatorUniverse
-
-        // TODO: Restore FullnodeState
   
     }
 
@@ -955,7 +962,6 @@ pub fn generate_test_genesis(
         stdlib_modules,
         vm_publishing_option,
         ChainId::test(),
-        None
     );
     (genesis, validators)
 }
