@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
+mod ol_genesis_recover; ///////// 0L ////////
 
 mod genesis_context;
 pub mod genesis_gas_schedule;
@@ -197,8 +198,8 @@ pub fn encode_genesis_change_set(
 pub fn encode_recovery_change_set(
     libra_root_key: Option<&Ed25519PublicKey>,
     treasury_compliance_key: Option<&Ed25519PublicKey>,
-    operator_assignments: &[OperatorAssignment],
-    operator_registrations: &[OperatorRegistration],
+    val_assignments: &[ValRecover],
+    operator_registrations: &[OperRecover],
     stdlib_modules: &[CompiledModule],
     vm_publishing_option: VMPublishingOption,
     chain_id: ChainId,
@@ -241,10 +242,10 @@ pub fn encode_recovery_change_set(
         initialize_testnet(&mut session, &log_context);
     }
     // generate the genesis WriteSet
-    create_and_initialize_owners_operators(
+    recovery_owners_operators(
         &mut session,
         &log_context,
-        &operator_assignments,
+        &val_assignments,
         &operator_registrations,
     );
 
