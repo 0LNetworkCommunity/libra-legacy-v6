@@ -74,11 +74,9 @@ pub fn parse_recovery(state: &AccountState) -> Result<GenesisRecovery, Error> {
             // extract the validator config resource
             if k == &BalanceResource::resource_path() {
                 gr.balance = lcs::from_bytes(v).ok();
-            } else
-            if k == &ValidatorConfigResource::resource_path() {
+            } else if k == &ValidatorConfigResource::resource_path() {
                 gr.val_cfg = lcs::from_bytes(v).ok();
-            } else
-            if k  == &MinerStateResource::resource_path() {
+            } else if k == &MinerStateResource::resource_path() {
                 gr.miner_state = lcs::from_bytes(v).ok();
             }
 
@@ -86,8 +84,7 @@ pub fn parse_recovery(state: &AccountState) -> Result<GenesisRecovery, Error> {
                 // structs only on 0x0 address
                 if k == &ConfigurationResource::resource_path() {
                     gr.miner_state = lcs::from_bytes(v).ok();
-                } else
-                if k == &CommunityWalletsResource::resource_path() {
+                } else if k == &CommunityWalletsResource::resource_path() {
                     gr.miner_state = lcs::from_bytes(v).ok();
                 }
             }
