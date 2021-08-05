@@ -113,7 +113,7 @@ async fn read_account_state_chunk(
 pub async fn archive_into_writeset(archive_path: PathBuf, case: GenesisCase) -> Result<WriteSetMut, Error> {
     let backup = read_from_json(archive_path)?;
     let account_blobs = accounts_from_snapshot_backup(backup).await?;
-    make_writeset(&account_blobs, case)
+    accounts_to_writeset(&account_blobs, case)
 }
 
 
@@ -149,7 +149,7 @@ pub enum GenesisCase {
 }
 
 /// make the writeset for the genesis case. Starts with an unmodified account state and make into a writeset.
-pub fn make_writeset(
+pub fn accounts_into_writeset(
     account_state_blobs: &Vec<AccountStateBlob>,
     case: GenesisCase
 ) -> Result<WriteSetMut, Error> {
