@@ -86,13 +86,12 @@ pub fn parse_recovery(account_state: &AccountState) -> Result<GenesisRecovery, E
     bail!("ERROR: No address for AccountState: {:?}", account_state);
 }
 
-impl GenesisRecovery {
-    fn save_file(self, mut path: PathBuf) -> Result<(), Error> {
-        let j = serde_json::to_string(&self)?;
-        path.push("genesis_recovery.json");
-        let mut file = fs::File::create(&path).expect("Could not genesis_recovery create file");
-        file.write_all(j.as_bytes())
-            .expect("Could not write account recovery");
-        Ok(())
-    }
+/// Save genesis recovery file
+pub fn save_recovery_file(data: &Vec<GenesisRecovery>, path: &PathBuf) -> Result<(), Error> {
+    let j = serde_json::to_string(data)?;
+    let mut file = fs::File::create(path).expect("Could not genesis_recovery create file");
+    file.write_all(j.as_bytes())
+        .expect("Could not write account recovery");
+    Ok(())
 }
+

@@ -35,7 +35,7 @@ use std::{
 
 use backup_cli::backup_types::state_snapshot::manifest::StateSnapshotBackup;
 
-use anyhow::{Error, Result, bail, ensure};
+use anyhow::{bail, ensure, Error, Result};
 
 use tokio::{fs::OpenOptions, io::AsyncRead};
 
@@ -52,6 +52,7 @@ use libra_vm::LibraVM;
 use storage_interface::DbReaderWriter;
 
 use crate::generate_genesis;
+use crate::recover::{GenesisRecovery, accounts_into_recovery, save_recovery_file};
 
 fn get_runtime() -> (Runtime, u16) {
     let port = get_available_port();
@@ -62,7 +63,6 @@ fn get_runtime() -> (Runtime, u16) {
     );
     (rt, port)
 }
-
 
 async fn open_for_read(file_handle: &FileHandleRef) -> Result<Box<dyn AsyncRead + Send + Unpin>> {
     let home = dirs::home_dir().unwrap();
@@ -85,7 +85,7 @@ fn read_from_file(path: &str) -> Result<Vec<u8>> {
     Ok(data)
 }
 
-fn read_from_json(path: PathBuf) -> Result<StateSnapshotBackup> {
+fn read_from_json(path: &PathBuf) -> Result<StateSnapshotBackup> {
     let config = std::fs::read_to_string(path)?;
     let map: StateSnapshotBackup = serde_json::from_str(&config)?;
     Ok(map)
@@ -110,12 +110,26 @@ async fn read_account_state_chunk(
 }
 
 /// take an archive file path and parse into a writeset
-pub async fn archive_into_writeset(archive_path: PathBuf, case: GenesisCase) -> Result<WriteSetMut, Error> {
-    let backup = read_from_json(archive_path)?;
+pub async fn archive_into_writeset(
+    archive_path: PathBuf,
+    case: GenesisCase,
+) -> Result<WriteSetMut, Error> {
+    let backup = read_from_json(&archive_path)?;
     let account_blobs = accounts_from_snapshot_backup(backup).await?;
     accounts_into_writeset(&account_blobs, case)
 }
 
+/// take an archive file path and parse into a writeset
+pub async fn archive_into_recovery(
+    archive_path: &PathBuf,
+    recovery_path: &PathBuf,
+) -> Result<Vec<GenesisRecovery>, Error> {
+    let backup = read_from_json(archive_path)?;
+    let account_blobs = accounts_from_snapshot_backup(backup).await?;
+    let r = accounts_into_recovery(&account_blobs)?;
+    save_recovery_file(&r, recovery_path)?;
+    Ok(r)
+}
 
 /// Tokio async parsing of state snapshot into blob
 async fn accounts_from_snapshot_backup(
@@ -142,16 +156,16 @@ fn get_alice_authkey_for_swarm() -> Vec<u8> {
 
 /// cases that we need to create a genesis from backup.
 pub enum GenesisCase {
-  /// a network upgrade or fork
-  Fork,
-  /// simulate state in a local swarm.
-  Test,
+    /// a network upgrade or fork
+    Fork,
+    /// simulate state in a local swarm.
+    Test,
 }
 
 /// make the writeset for the genesis case. Starts with an unmodified account state and make into a writeset.
 pub fn accounts_into_writeset(
     account_state_blobs: &Vec<AccountStateBlob>,
-    case: GenesisCase
+    case: GenesisCase,
 ) -> Result<WriteSetMut, Error> {
     let write_set_mut = WriteSetMut::new(vec![]);
     for blob in account_state_blobs {
@@ -159,13 +173,13 @@ pub fn accounts_into_writeset(
         match case {
             GenesisCase::Fork => todo!(),
             GenesisCase::Test => {
-              // TODO: borrow
-              let clean = get_unmodified_writeset(&account_state)?;
-              let auth = authkey_rotate_change_item(&account_state, get_alice_authkey_for_swarm())?;
-              let write_set_mut = merge_writeset(write_set_mut, clean)?;
-              return Ok(merge_writeset(write_set_mut, auth)?);
-
-            },
+                // TODO: borrow
+                let clean = get_unmodified_writeset(&account_state)?;
+                let auth =
+                    authkey_rotate_change_item(&account_state, get_alice_authkey_for_swarm())?;
+                let write_set_mut = merge_writeset(write_set_mut, clean)?;
+                return Ok(merge_writeset(write_set_mut, auth)?);
+            }
         }
     }
     println!("Total accounts read: {}", &account_state_blobs.len());
@@ -173,54 +187,32 @@ pub fn accounts_into_writeset(
     Ok(write_set_mut)
 }
 
-
 /// Without modifying the data convert an AccountState struct, into a WriteSet Item which can be included in a genesis transaction. This should take all of the resources in the account.
 fn get_unmodified_writeset(account_state: &AccountState) -> Result<WriteSetMut, Error> {
-        let mut ws = WriteSetMut::new(vec![]);
-        if let Some(address) = account_state.get_account_address()? {
-            // iterate over all the account's resources\
-            for (k, v) in account_state.iter() {
-                let item_tuple = (
-                    AccessPath::new(address, k.clone()),
-                    WriteOp::Value(v.clone()),
-                );
-                // push into the writeset
-                ws.push(item_tuple);
-            }
-            println!("processed account: {:?}", address);
-
-            return Ok(ws)
+    let mut ws = WriteSetMut::new(vec![]);
+    if let Some(address) = account_state.get_account_address()? {
+        // iterate over all the account's resources\
+        for (k, v) in account_state.iter() {
+            let item_tuple = (
+                AccessPath::new(address, k.clone()),
+                WriteOp::Value(v.clone()),
+            );
+            // push into the writeset
+            ws.push(item_tuple);
         }
+        println!("processed account: {:?}", address);
 
-        bail!("ERROR: No address for AccountState: {:?}", account_state);
+        return Ok(ws);
+    }
+
+    bail!("ERROR: No address for AccountState: {:?}", account_state);
 }
 
-// fn get_recovery_structs(account_state: &AccountState) -> Result<ValidatorConfigResource, Error> {
-//         let mut ws = WriteSetMut::new(vec![]);
-//         if let Some(address) = account_state.get_account_address()? {
-//             // iterate over all the account's resources\
-//             for (k, v) in account_state.iter() {
-//               // extract the validator config resource
-//               if k.clone() == ValidatorConfigResource::resource_path() {
-//                 let val_config: ValidatorConfigResource = lcs::from_bytes(v);
-//               }
-//               // // get any operator configs that may exist
-//               // if k.clone() == ValidatorOperatorConfigResource::resource_path() {
-//               //   let val_config: ValidatorOperatorConfigResource = lcs::from_bytes(v);
-
-//               // }                
-
-//             }
-//             println!("processed account: {:?}", address);
-
-//             return Ok(ws)
-//         }
-
-//         bail!("ERROR: No address for AccountState: {:?}", account_state);
-// }
-
 /// Returns the writeset item for replaceing an authkey on an account. This is only to be used in testing and simulation.
-fn authkey_rotate_change_item(account_state: &AccountState, authentication_key: Vec<u8>) -> Result<WriteSetMut, Error> {
+fn authkey_rotate_change_item(
+    account_state: &AccountState,
+    authentication_key: Vec<u8>,
+) -> Result<WriteSetMut, Error> {
     let mut ws = WriteSetMut::new(vec![]);
 
     if let Some(address) = account_state.get_account_address()? {
@@ -241,9 +233,11 @@ fn authkey_rotate_change_item(account_state: &AccountState, authentication_key: 
         }
         println!("rotate authkey for account: {:?}", address);
     }
-    bail!("ERROR: No address found at AccountState: {:?}", account_state);
+    bail!(
+        "ERROR: No address found at AccountState: {:?}",
+        account_state
+    );
 }
-
 
 fn merge_writeset(mut left: WriteSetMut, right: WriteSetMut) -> Result<WriteSetMut, Error> {
     left.write_set.extend(right.write_set);
@@ -308,7 +302,7 @@ pub fn genesis_from_path(path: PathBuf) -> Result<()> {
     let path_proof = path.join("state.proof");
     dbg!(&path_proof);
 
-    let manifest = read_from_json(path_man).unwrap();
+    let manifest = read_from_json(&path_man).unwrap();
 
     // Tokio runtime
     let (mut rt, _port) = get_runtime();
