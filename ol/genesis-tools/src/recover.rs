@@ -41,7 +41,7 @@ pub struct GenesisRecovery {
 pub fn accounts_into_recovery(
     account_state_blobs: &Vec<AccountStateBlob>,
 ) -> Result<Vec<GenesisRecovery>, Error> {
-    let to_recover = vec![];
+    let mut to_recover = vec![];
     for blob in account_state_blobs {
         let account_state = AccountState::try_from(blob)?;
         match parse_recovery(&account_state) {
@@ -87,7 +87,7 @@ pub fn parse_recovery(account_state: &AccountState) -> Result<GenesisRecovery, E
 }
 
 impl GenesisRecovery {
-    fn save_file(self, path: PathBuf) -> Result<(), Error> {
+    fn save_file(self, mut path: PathBuf) -> Result<(), Error> {
         let j = serde_json::to_string(&self)?;
         path.push("genesis_recovery.json");
         let mut file = fs::File::create(&path).expect("Could not genesis_recovery create file");

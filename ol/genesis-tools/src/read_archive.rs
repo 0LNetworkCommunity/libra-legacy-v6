@@ -113,7 +113,7 @@ async fn read_account_state_chunk(
 pub async fn archive_into_writeset(archive_path: PathBuf, case: GenesisCase) -> Result<WriteSetMut, Error> {
     let backup = read_from_json(archive_path)?;
     let account_blobs = accounts_from_snapshot_backup(backup).await?;
-    accounts_to_writeset(&account_blobs, case)
+    accounts_into_writeset(&account_blobs, case)
 }
 
 
