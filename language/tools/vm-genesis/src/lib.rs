@@ -8,15 +8,7 @@ pub mod genesis_gas_schedule;
 
 use anyhow::Error;
 use serde::{Deserialize, Serialize};
-// use hex;
-use std::{env, path::PathBuf};
-// use std::{
-//     fs::File,
-//     io::{Read, Write},
-//     net::SocketAddr,
-//     path::PathBuf,
-// };
-
+use std::env;
 use crate::{genesis_context::GenesisStateView, genesis_gas_schedule::INITIAL_GAS_SCHEDULE};
 use compiled_stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
 use libra_crypto::{
