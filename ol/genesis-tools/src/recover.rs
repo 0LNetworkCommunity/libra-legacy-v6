@@ -4,11 +4,12 @@ use std::{convert::TryFrom, fs, io::Write, path::PathBuf};
 
 use anyhow::{bail, Error};
 use libra_types::{
-    account_config::BalanceResource, account_state::AccountState,
-    account_state_blob::AccountStateBlob, validator_config::ValidatorConfigResource,
+    account_address::AccountAddress, account_config::BalanceResource, account_state::AccountState,
+    account_state_blob::AccountStateBlob, on_chain_config::ConfigurationResource,
+    validator_config::ValidatorConfigResource,
 };
 use move_core_types::move_resource::MoveResource;
-use ol_types::miner_state::MinerStateResource;
+use ol_types::{community_wallet::CommunityWalletsResource, miner_state::MinerStateResource};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -24,8 +25,6 @@ enum WalletType {
     Slow,
     Community,
 }
-
-
 
 /// The basic structs needed to recover account state in a new network.
 /// This is necessary for catastrophic recoveries, when the source code changes too much. Like what is going to happen between v4 and v5, where the source code of v5 will not be able to work with objects from v4. We need an intermediary file.
@@ -61,7 +60,7 @@ pub fn accounts_into_recovery(
 }
 
 /// create a recovery struct from an account state.
-pub fn parse_recovery(account_state: &AccountState) -> Result<GenesisRecovery, Error> {
+pub fn parse_recovery(state: &AccountState) -> Result<GenesisRecovery, Error> {
     let mut gr = GenesisRecovery {
         role: AccountRole::EndUser,
         balance: None,
@@ -69,9 +68,9 @@ pub fn parse_recovery(account_state: &AccountState) -> Result<GenesisRecovery, E
         miner_state: None,
     };
 
-    if let Some(address) = account_state.get_account_address()? {
+    if let Some(address) = state.get_account_address()? {
         // iterate over all the account's resources\
-        for (k, v) in account_state.iter() {
+        for (k, v) in state.iter() {
             // extract the validator config resource
             if k.clone() == BalanceResource::resource_path() {
                 gr.balance = lcs::from_bytes(v).ok();
@@ -82,11 +81,21 @@ pub fn parse_recovery(account_state: &AccountState) -> Result<GenesisRecovery, E
             if k.clone() == MinerStateResource::resource_path() {
                 gr.miner_state = lcs::from_bytes(v).ok();
             }
+
+            if address == AccountAddress::ZERO {
+                // structs only on 0x0 address
+                if k.clone() == ConfigurationResource::resource_path() {
+                    gr.miner_state = lcs::from_bytes(v).ok();
+                }
+                if k.clone() == CommunityWalletsResource::resource_path() {
+                    gr.miner_state = lcs::from_bytes(v).ok();
+                }
+            }
         }
         println!("processed account: {:?}", address);
     }
 
-    bail!("ERROR: No address for AccountState: {:?}", account_state);
+    bail!("ERROR: No address for AccountState: {:?}", state);
 }
 
 /// Save genesis recovery file
@@ -97,4 +106,3 @@ pub fn save_recovery_file(data: &Vec<GenesisRecovery>, path: &PathBuf) -> Result
         .expect("Could not write account recovery");
     Ok(())
 }
-

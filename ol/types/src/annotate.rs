@@ -10,7 +10,7 @@ use move_core_types::language_storage::{StructTag, TypeTag};
 use resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct, AnnotatedMoveValue, MoveValueAnnotator, NullStateView};
     
 /// Parse an account blob into an annotated Move view
-pub fn get_annotate_account_blob(account_blob: AccountStateBlob) -> Result<AnnotatedAccountStateBlob, Error> {
+pub fn get_annotated_account_blob(account_blob: AccountStateBlob) -> Result<AnnotatedAccountStateBlob, Error> {
         let state_view = NullStateView::default();
         let annotator = MoveValueAnnotator::new(&state_view);
         annotator.view_account_state(&AccountState::try_from(&account_blob)?)
