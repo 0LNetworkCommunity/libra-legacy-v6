@@ -2,6 +2,7 @@ use std::{path::PathBuf, process::exit};
 
 use anyhow::Result;
 use gumdrop::Options;
+use ol_genesis_tools::read_archive::archive_into_recovery;
 // use ol_genesis_tools::read_archive::archive_into_writeset;
 
 fn main() -> Result<()>{
@@ -10,11 +11,11 @@ fn main() -> Result<()>{
       #[options(help = "what epoch to restore from archive")]
       epoch: Option<u64>,
       #[options(help = "path to snapshot files")]
-      path: Option<PathBuf>,
+      snaphot_path: Option<PathBuf>,
       #[options(help = "swarm simulation mode")]
       swarm: bool,
       #[options(help = "dump snapshot into recovery file")]
-      recover: bool,
+      recover_path: Option<PathBuf>,
       #[options(help = "live fork mode")]
       fork: bool,
       // #[options(help = "Url of the github repo with archive")]
@@ -25,7 +26,7 @@ fn main() -> Result<()>{
 
     // Start a simulation swarm based on snapshot
     if opts.swarm {
-      if let Some(_archive_path) = opts.path {
+      if let Some(_archive_path) = opts.snaphot_path {
         // TODO: block on this future
         // archive_into_writeset(archive_path);
       }
@@ -37,11 +38,10 @@ fn main() -> Result<()>{
       Ok(())
     
     // process recovery file only
-    } else if opts.recover {
-       if let Some(path) = opts.path {
-          dbg!(&path);
-          // genesis_from_path(path)
-       }
+    } else if let Some(r_path) = opts.recover_path {
+       if let Some(a_path) = opts.snaphot_path {
+          archive_into_recovery(&a_path, &r_path);
+       };
       Ok(())
     } else {
       println!("No options provided, exiting");
