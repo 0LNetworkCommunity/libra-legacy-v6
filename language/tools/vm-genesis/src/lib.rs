@@ -6,6 +6,7 @@
 mod genesis_context;
 pub mod genesis_gas_schedule;
 
+use anyhow::Error;
 use serde::{Deserialize, Serialize};
 // use hex;
 use std::{env, path::PathBuf};
@@ -86,7 +87,6 @@ pub fn encode_genesis_transaction(
     operator_registrations: &[OperatorRegistration],
     vm_publishing_option: Option<VMPublishingOption>,
     chain_id: ChainId,
-    genesis_blob_path: Option<PathBuf>
 ) -> Transaction {
     Transaction::GenesisTransaction(WriteSetPayload::Direct(encode_genesis_change_set(
         libra_root_key,
@@ -98,7 +98,6 @@ pub fn encode_genesis_transaction(
         vm_publishing_option
             .unwrap_or_else(|| VMPublishingOption::open()), // :)
         chain_id,
-        genesis_blob_path
     )))
 }
 
@@ -121,7 +120,6 @@ pub fn encode_genesis_change_set(
     stdlib_modules: &[CompiledModule],
     vm_publishing_option: VMPublishingOption,
     chain_id: ChainId,
-    genesis_blob_path: Option<PathBuf>
 ) -> ChangeSet {
     // create a data view for move_vm
     let mut state_view = GenesisStateView::new();
@@ -194,16 +192,14 @@ pub fn encode_genesis_change_set(
 }
 
 //////// 0L ////////
-pub fn encode_recovery_change_set(
-    libra_root_key: Option<&Ed25519PublicKey>,
-    treasury_compliance_key: Option<&Ed25519PublicKey>,
+pub fn encode_recovery_genesis_transaction(
     val_assignments: &[ValRecover],
     operator_registrations: &[OperRecover],
-    stdlib_modules: &[CompiledModule],
-    vm_publishing_option: VMPublishingOption,
-    chain_id: ChainId,
-    genesis_blob_path: Option<PathBuf>
-) -> ChangeSet {
+    chain_id: ChainId
+  ) -> Result<Transaction, Error> {
+    let stdlib_modules = stdlib_modules(StdLibOptions::Compiled);
+    let vm_publishing_option =  VMPublishingOption::open();
+
     // create a data view for move_vm
     let mut state_view = GenesisStateView::new();
     for module in stdlib_modules {
@@ -226,8 +222,8 @@ pub fn encode_recovery_change_set(
     create_and_initialize_main_accounts(
         &mut session,
         &log_context,
-        libra_root_key,
-        treasury_compliance_key,
+        None,
+        None,
         vm_publishing_option,
         &lbr_ty,
         chain_id,
@@ -267,7 +263,7 @@ pub fn encode_recovery_change_set(
 
     assert!(!write_set.iter().any(|(_, op)| op.is_deletion()));
     verify_genesis_write_set(&events);
-    ChangeSet::new(write_set, events)
+    Ok(Transaction::GenesisTransaction(WriteSetPayload::Direct(write_set)))
 }
 
 /// Convert the transaction arguments into Move values.
@@ -348,7 +344,7 @@ fn create_and_initialize_main_accounts(
     chain_id: ChainId,
 ) {
     let libra_root_auth_key:AuthenticationKey;
-    if libra_root_key.is_some() {
+    if libra_root_key.is_some() { // for swarm testing only, NOT USED IN PRODUCTION
         libra_root_auth_key = AuthenticationKey::ed25519(&libra_root_key.unwrap());
     } else {
         libra_root_auth_key = AuthenticationKey::new([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
