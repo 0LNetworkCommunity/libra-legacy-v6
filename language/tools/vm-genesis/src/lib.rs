@@ -186,7 +186,7 @@ pub fn encode_genesis_change_set(
 
     let effects = merge_txn_effects(effects_1, effects_2);
 
-    let (write_set, events) = txn_effects_to_writeset_and_events(effects, genesis_blob_path).unwrap();
+    let (write_set, events) = txn_effects_to_writeset_and_events(effects).unwrap();
 
     assert!(!write_set.iter().any(|(_, op)| op.is_deletion()));
     verify_genesis_write_set(&events);
@@ -263,7 +263,7 @@ pub fn encode_recovery_change_set(
 
     let effects = merge_txn_effects(effects_1, effects_2);
 
-    let (write_set, events) = txn_effects_to_writeset_and_events(effects, genesis_blob_path).unwrap();
+    let (write_set, events) = txn_effects_to_writeset_and_events(effects).unwrap();
 
     assert!(!write_set.iter().any(|(_, op)| op.is_deletion()));
     verify_genesis_write_set(&events);

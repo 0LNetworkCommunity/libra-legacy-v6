@@ -590,40 +590,9 @@ impl<'a> LibraVMInternals<'a> {
 pub fn txn_effects_to_writeset_and_events_cached<C: AccessPathCache>(
     ap_cache: &mut C,
     effects: TransactionEffects,
-    genesis_blob_path: Option<PathBuf>
 ) -> Result<(WriteSet, Vec<ContractEvent>), VMStatus> {
     // TODO: Cache access path computations if necessary.
     let mut ops = vec![];
-    println!("txn_effects_to_writeset_and_events_cached");
-
-    match genesis_blob_path {
-        Some(path) => {
-            let mut file = File::open(&path).unwrap();
-            let mut buffer = vec![];
-            file.read_to_end(&mut buffer).unwrap();
-            let genesis = lcs::from_bytes(&buffer).unwrap();
-            match genesis {
-                Transaction::GenesisTransaction(write_set_payload) => {
-                    match write_set_payload {
-                        WriteSetPayload::Direct(change_set) => {
-                            for write_set_item in change_set.write_set() {
-                                println!("adding user to write_set: {}", write_set_item.0);
-                                ops.push(write_set_item.clone());
-                            }
-                        },
-                        //////// 0L ////////
-                        WriteSetPayload::Script{execute_as: _, script: _} => {
-                            println!("Writeset script"); 
-                        }
-                    }
-                }, Transaction::BlockMetadata(_data) => {
-                    println!("BlockMetadata");
-                }, Transaction::UserTransaction(_data) => {
-                    println!("UserTransaction");
-                }
-            }
-        }, None => {}
-    }
 
     for (addr, vals) in effects.resources {
         for (struct_tag, val_opt) in vals {
@@ -700,7 +669,7 @@ pub(crate) fn get_transaction_output<A: AccessPathCache, R: RemoteCache>(
         .get();
 
     let effects = session.finish().map_err(|e| e.into_vm_status())?;
-    let (write_set, events) = txn_effects_to_writeset_and_events_cached(ap_cache, effects, None)?;
+    let (write_set, events) = txn_effects_to_writeset_and_events_cached(ap_cache, effects)?;
 
     Ok(TransactionOutput::new(
         write_set,
@@ -712,9 +681,8 @@ pub(crate) fn get_transaction_output<A: AccessPathCache, R: RemoteCache>(
 
 pub fn txn_effects_to_writeset_and_events(
     effects: TransactionEffects,
-    genesis_blob_path: Option<PathBuf>
 ) -> Result<(WriteSet, Vec<ContractEvent>), VMStatus> {
-    txn_effects_to_writeset_and_events_cached(&mut (), effects, genesis_blob_path)
+    txn_effects_to_writeset_and_events_cached(&mut (), effects)
 }
 
 pub(crate) fn get_currency_info(
