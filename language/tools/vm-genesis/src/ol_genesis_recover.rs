@@ -1,21 +1,12 @@
 //! ol-genesis
 
-
-
-
-
-
-
-use libra_types::{account_address, account_config::{
-        self,
-        events::{CreateAccountEvent},
-    }, chain_id::{ChainId}, contract_event::ContractEvent, on_chain_config::VMPublishingOption, transaction::{
-        authenticator::AuthenticationKey, ChangeSet, Script, Transaction, TransactionArgument,
-        WriteSetPayload,
+use libra_types::{
+    account_config,
+    transaction::{
+        authenticator::AuthenticationKey, Script, TransactionArgument
     },
-    // write_set::{WriteOp, WriteSetMut}
 };
-use libra_vm::{data_cache::StateViewCache};
+use libra_vm::data_cache::StateViewCache;
 use move_core_types::{
     account_address::AccountAddress,
     gas_schedule::{CostTable, GasAlgebra, GasUnits},
@@ -23,9 +14,7 @@ use move_core_types::{
     language_storage::{ModuleId, TypeTag},
 };
 use move_vm_runtime::{
-    data_cache::TransactionEffects,
-    logging::{LogContext, NoContextLog},
-    move_vm::MoveVM,
+    logging::LogContext,
     session::Session,
 };
 use move_vm_types::{
@@ -34,31 +23,26 @@ use move_vm_types::{
 };
 use once_cell::sync::Lazy;
 
-
-
-
-
 /// Start with a Zero cost schedule
 // TODO: Duplicated with lib.rs
 pub static ZERO_COST_SCHEDULE: Lazy<CostTable> = Lazy::new(zero_cost_schedule);
 
-
 /// Validator/owner state to recover in genesis recovery mode
 pub struct ValRecover {
-  val_account: AccountAddress,
-  operator_delegated_account: AccountAddress,
-  val_auth_key: AuthenticationKey,
+    val_account: AccountAddress,
+    operator_delegated_account: AccountAddress,
+    val_auth_key: AuthenticationKey,
 }
 
 /// Operator state to recover in genesis recovery mode
 pub struct OperRecover {
-  operator_account: AccountAddress,
-  operator_auth_key: AuthenticationKey,
-  validator_to_represent: AccountAddress,
-  operator_consensus_pubkey: Vec<u8>,
-  validator_network_addresses: Vec<u8>,
-  fullnode_network_addresses: Vec<u8>,
-  }
+    operator_account: AccountAddress,
+    operator_auth_key: AuthenticationKey,
+    validator_to_represent: AccountAddress,
+    operator_consensus_pubkey: Vec<u8>,
+    validator_network_addresses: Vec<u8>,
+    fullnode_network_addresses: Vec<u8>,
+}
 
 //////// 0L ////////
 /// Restores  owner and operator state to a genesis, in a recovery or fork scenario. No need to bootstrap all the state.
@@ -76,9 +60,8 @@ fn recovery_owners_operators(
     // account address from the name and not the public key.
     println!("0 ======== Create Owner Accounts");
     for i in val_assignments {
-
         dbg!(i.val_account);
-        
+
         let create_owner_script = transaction_builder::encode_create_validator_account_script(
             0,
             i.val_account,
@@ -92,18 +75,16 @@ fn recovery_owners_operators(
             &create_owner_script,
         );
 
-        // TODO: Restore Mining 
+        // TODO: Restore Mining
 
         // TODO: Restore ValidatorUniverse
 
         // TODO: Restore FullnodeState
-  
     }
 
     println!("1 ======== Create OP Accounts");
     // Create accounts for each validator operator
     for i in operator_registrations {
-
         let create_operator_script =
             transaction_builder::encode_create_validator_operator_account_script(
                 0,
@@ -121,60 +102,56 @@ fn recovery_owners_operators(
 
     println!("2 ======== Link owner to OP");
 
-
     let mut n = 0u64;
     // Owner/Validator is authorizing an Operator. This is sent by Owner. Operators need to have registered before this step.
     for i in val_assignments {
         let script = transaction_builder::encode_set_validator_operator_with_nonce_admin_script(
-          n,
-          i.operator_delegated_account.to_vec(),
-          i.operator_delegated_account,
+            n,
+            i.operator_delegated_account.to_vec(),
+            i.operator_delegated_account,
         );
 
-      
-      session
-        .execute_script(
-            script.code().to_vec(),
-            script.ty_args().to_vec(),
-            convert_txn_args(script.args()),
-            vec![libra_root_address, i.val_account],
-            &mut CostStrategy::system(&ZERO_COST_SCHEDULE, GasUnits::new(100_000_000)),
-            log_context,
-        )
-        .unwrap();
+        session
+            .execute_script(
+                script.code().to_vec(),
+                script.ty_args().to_vec(),
+                convert_txn_args(script.args()),
+                vec![libra_root_address, i.val_account],
+                &mut CostStrategy::system(&ZERO_COST_SCHEDULE, GasUnits::new(100_000_000)),
+                log_context,
+            )
+            .unwrap();
 
-        n = n+1;
+        n = n + 1;
     }
 
     println!("3 ======== OP sends network info to Owner config");
     // Set the validator operator configs for each owner. The Validator/owner needs to have linked to the Operator before this step.
     for i in operator_registrations {
-        
-      // Operator is signing this
+        // Operator is signing this
         let register_val_script = transaction_builder::encode_register_validator_config_script(
-          i.validator_to_represent,
-          i.operator_consensus_pubkey.clone(),
-          i.validator_network_addresses.clone(),
-          i.fullnode_network_addresses.clone(),
+            i.validator_to_represent,
+            i.operator_consensus_pubkey.clone(),
+            i.validator_network_addresses.clone(),
+            i.fullnode_network_addresses.clone(),
         );
 
-      session
-        .execute_script(
-            register_val_script.code().to_vec(),
-            register_val_script.ty_args().to_vec(),
-            convert_txn_args(register_val_script.args()),
-            vec![i.operator_account],
-            &mut CostStrategy::system(&ZERO_COST_SCHEDULE, GasUnits::new(100_000_000)),
-            log_context,
-        )
-        .unwrap()
+        session
+            .execute_script(
+                register_val_script.code().to_vec(),
+                register_val_script.ty_args().to_vec(),
+                convert_txn_args(register_val_script.args()),
+                vec![i.operator_account],
+                &mut CostStrategy::system(&ZERO_COST_SCHEDULE, GasUnits::new(100_000_000)),
+                log_context,
+            )
+            .unwrap()
     }
 
     println!("4 ======== Add owner to validator set");
 
     // Add each validator to the validator set. The Validators configs need be valid before this step runs.
     for i in val_assignments {
-
         exec_function(
             session,
             log_context,
@@ -255,7 +232,7 @@ fn convert_txn_args(args: &[TransactionArgument]) -> Vec<Value> {
             TransactionArgument::Bool(b) => Value::bool(*b),
             TransactionArgument::U8Vector(v) => Value::vector_u8(v.clone()),
             //////// 0L ////////
-            TransactionArgument::AddressVector(v) => Value::vector_address(v.clone())
+            TransactionArgument::AddressVector(v) => Value::vector_address(v.clone()),
         })
         .collect()
 }
