@@ -5108,6 +5108,7 @@ dependencies = [
  "ol",
  "ol-fixtures",
  "ol-keys",
+ "ol-types",
  "serde",
  "serde_json",
  "storage-interface",
