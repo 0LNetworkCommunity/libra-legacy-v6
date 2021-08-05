@@ -25,7 +25,10 @@ enum WalletType {
     Community,
 }
 
+
+
 /// The basic structs needed to recover account state in a new network.
+/// This is necessary for catastrophic recoveries, when the source code changes too much. Like what is going to happen between v4 and v5, where the source code of v5 will not be able to work with objects from v4. We need an intermediary file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GenesisRecovery {
     role: AccountRole,
