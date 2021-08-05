@@ -1,14 +1,11 @@
 //! ol-genesis
 
-use serde::{Deserialize, Serialize};
-use std::{env, path::PathBuf};
 
-use crate::{genesis_context::GenesisStateView, genesis_gas_schedule::INITIAL_GAS_SCHEDULE};
-use compiled_stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
-use libra_crypto::{
-    ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
-    PrivateKey, Uniform,
-};
+
+
+
+
+
 use libra_types::{account_address, account_config::{
         self,
         events::{CreateAccountEvent},
@@ -18,12 +15,12 @@ use libra_types::{account_address, account_config::{
     },
     // write_set::{WriteOp, WriteSetMut}
 };
-use libra_vm::{data_cache::StateViewCache, txn_effects_to_writeset_and_events};
+use libra_vm::{data_cache::StateViewCache};
 use move_core_types::{
     account_address::AccountAddress,
     gas_schedule::{CostTable, GasAlgebra, GasUnits},
     identifier::Identifier,
-    language_storage::{ModuleId, StructTag, TypeTag},
+    language_storage::{ModuleId, TypeTag},
 };
 use move_vm_runtime::{
     data_cache::TransactionEffects,
@@ -36,12 +33,13 @@ use move_vm_types::{
     values::Value,
 };
 use once_cell::sync::Lazy;
-use rand::prelude::*;
-use transaction_builder::encode_create_designated_dealer_script;
-use vm::{file_format::SignatureToken, CompiledModule};
 
 
-/// TODO: Duplicated with lib.rs
+
+
+
+/// Start with a Zero cost schedule
+// TODO: Duplicated with lib.rs
 pub static ZERO_COST_SCHEDULE: Lazy<CostTable> = Lazy::new(zero_cost_schedule);
 
 
