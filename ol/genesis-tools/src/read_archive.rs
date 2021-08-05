@@ -4,6 +4,7 @@ use backup_cli::storage::{FileHandle, FileHandleRef};
 use libra_types::access_path::AccessPath;
 use libra_types::account_config::AccountResource;
 use libra_types::account_state::AccountState;
+use libra_types::validator_config::ValidatorConfigResource;
 use libra_types::write_set::{WriteOp, WriteSetMut};
 use move_core_types::move_resource::MoveResource;
 use ol_fixtures::get_persona_mnem;
@@ -185,6 +186,31 @@ fn get_unmodified_writeset(account_state: &AccountState) -> Result<WriteSetMut, 
                 );
                 // push into the writeset
                 ws.push(item_tuple);
+            }
+            println!("processed account: {:?}", address);
+
+            return Ok(ws)
+        }
+
+        bail!("ERROR: No address for AccountState: {:?}", account_state);
+}
+
+fn get_recovery_structs(account_state: &AccountState) -> Result<(ValidatorConfigResource, ValidatorOperatorConfigResource), Error> {
+        let mut ws = WriteSetMut::new(vec![]);
+        if let Some(address) = account_state.get_account_address()? {
+            // iterate over all the account's resources\
+            for (k, v) in account_state.iter() {
+              // extract the validator config resource
+              if k.clone() == ValidatorConfigResource::resource_path() {
+                let val_config: ValidatorConfigResource = lcs::from_bytes(v);
+                  
+              }
+              // get any operator configs that may exist
+              if k.clone() == ValidatorOperatorConfigResource::resource_path() {
+                let val_config: ValidatorOperatorConfigResource = lcs::from_bytes(v);
+
+              }                
+
             }
             println!("processed account: {:?}", address);
 
