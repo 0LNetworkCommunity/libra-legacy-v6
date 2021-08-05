@@ -3,10 +3,10 @@
 use std::path::PathBuf;
 
 use anyhow::Error;
-use vm_genesis::encode_genesis_transaction;
+
 
 /// takes a recovery file and produces a genesis file
-pub fn fork_genesis(recovery_file: PathBuf, output_genesis: PathBuf) -> Result<(), Error> {
+pub fn fork_genesis(_recovery_file: PathBuf, _output_genesis: PathBuf) -> Result<(), Error> {
 
     // let genesis = encode_recovery_genesis_transaction();
     Ok(())

@@ -6,7 +6,7 @@ use move_core_types::move_resource::MoveResource;
 
 
 fn get_recovery_structs(account_state: &AccountState) -> Result<ValidatorConfigResource, Error> {
-        let mut ws = WriteSetMut::new(vec![]);
+        let _ws = WriteSetMut::new(vec![]);
         if let Some(address) = account_state.get_account_address()? {
             // iterate over all the account's resources\
             for (k, v) in account_state.iter() {

@@ -4,7 +4,7 @@ use backup_cli::storage::{FileHandle, FileHandleRef};
 use libra_types::access_path::AccessPath;
 use libra_types::account_config::AccountResource;
 use libra_types::account_state::AccountState;
-use libra_types::validator_config::ValidatorConfigResource;
+
 use libra_types::write_set::{WriteOp, WriteSetMut};
 use move_core_types::move_resource::MoveResource;
 use ol_fixtures::get_persona_mnem;
