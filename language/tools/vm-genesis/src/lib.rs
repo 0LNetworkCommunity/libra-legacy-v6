@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
-mod ol_genesis_recover; ///////// 0L ////////
 
 mod genesis_context;
 pub mod genesis_gas_schedule;
