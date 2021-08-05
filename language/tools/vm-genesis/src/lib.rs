@@ -233,7 +233,7 @@ pub fn encode_recovery_change_set(
         &lbr_ty,
         chain_id,
     );
-    println!("OK create_and_initialize_main_accounts =============== ");
+    println!("OK create system accounts =============== ");
 
     //////// 0L ////////
     let genesis_env = get_env();
@@ -249,11 +249,7 @@ pub fn encode_recovery_change_set(
         &operator_registrations,
     );
 
-    println!("OK create_and_initialize_owners_operators =============== ");
-
-    // distribute_genesis_subsidy(&mut session, &log_context);
-    
-    // println!("OK Genesis subsidy =============== ");
+    println!("OK recover owners and operators =============== ");
 
     reconfigure(&mut session, &log_context);
 
