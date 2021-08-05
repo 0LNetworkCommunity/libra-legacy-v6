@@ -16,6 +16,15 @@ pub fn fork_daemon(epoch: Option<u64>) -> Result<()> {
     }
 }
 
+fn is_epoch() -> bool {
+  true
+}
+
+fn create_backup() -> Result<()> {
+  Ok(())
+
+}
+
 fn archive_exists() -> bool {
   true
 }

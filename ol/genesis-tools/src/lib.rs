@@ -9,7 +9,7 @@
 )]
 
 pub mod fetch_archive;
-pub mod live_fork;
+pub mod fork_daemon;
 pub mod read_archive;
 pub mod generate_genesis;
 pub mod fork;
