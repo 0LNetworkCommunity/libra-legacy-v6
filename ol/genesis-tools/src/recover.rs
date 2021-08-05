@@ -72,22 +72,22 @@ pub fn parse_recovery(state: &AccountState) -> Result<GenesisRecovery, Error> {
         // iterate over all the account's resources\
         for (k, v) in state.iter() {
             // extract the validator config resource
-            if k.clone() == BalanceResource::resource_path() {
+            if k == &BalanceResource::resource_path() {
                 gr.balance = lcs::from_bytes(v).ok();
-            }
-            if k.clone() == ValidatorConfigResource::resource_path() {
+            } else
+            if k == &ValidatorConfigResource::resource_path() {
                 gr.val_cfg = lcs::from_bytes(v).ok();
-            }
-            if k.clone() == MinerStateResource::resource_path() {
+            } else
+            if k  == &MinerStateResource::resource_path() {
                 gr.miner_state = lcs::from_bytes(v).ok();
             }
 
             if address == AccountAddress::ZERO {
                 // structs only on 0x0 address
-                if k.clone() == ConfigurationResource::resource_path() {
+                if k == &ConfigurationResource::resource_path() {
                     gr.miner_state = lcs::from_bytes(v).ok();
-                }
-                if k.clone() == CommunityWalletsResource::resource_path() {
+                } else
+                if k == &CommunityWalletsResource::resource_path() {
                     gr.miner_state = lcs::from_bytes(v).ok();
                 }
             }
