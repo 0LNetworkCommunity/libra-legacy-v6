@@ -635,20 +635,32 @@ fn create_and_initialize_owners_operators(
 }
 
 /// Validator/owner state to recover in genesis recovery mode
+#[derive(Debug, PartialEq)]
 pub struct ValRecover {
-    val_account: AccountAddress,
-    operator_delegated_account: AccountAddress,
-    val_auth_key: AuthenticationKey,
+    ///
+    pub val_account: AccountAddress,
+    ///
+    pub operator_delegated_account: AccountAddress,
+    ///
+    pub val_auth_key: AuthenticationKey,
+
 }
 
 /// Operator state to recover in genesis recovery mode
+#[derive(Debug, PartialEq)]
 pub struct OperRecover {
-    operator_account: AccountAddress,
-    operator_auth_key: AuthenticationKey,
-    validator_to_represent: AccountAddress,
-    operator_consensus_pubkey: Vec<u8>,
-    validator_network_addresses: Vec<u8>,
-    fullnode_network_addresses: Vec<u8>,
+    ///
+    pub operator_account: AccountAddress,
+    ///
+    pub operator_auth_key: AuthenticationKey,
+    ///
+    pub validator_to_represent: AccountAddress,
+    ///
+    pub operator_consensus_pubkey: Vec<u8>,
+    ///
+    pub validator_network_addresses: Vec<u8>,
+    ///
+    pub fullnode_network_addresses: Vec<u8>,
 }
 //////// 0L ////////
 /// Restores  owner and operator state to a genesis, in a recovery or fork scenario. No need to bootstrap all the state.

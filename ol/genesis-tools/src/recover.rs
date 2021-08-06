@@ -3,11 +3,7 @@
 use std::{convert::TryFrom, fs, io::Write, path::PathBuf};
 
 use anyhow::{bail, Error};
-use libra_types::{
-    account_address::AccountAddress, account_config::BalanceResource, account_state::AccountState,
-    account_state_blob::AccountStateBlob, on_chain_config::ConfigurationResource,
-    validator_config::ValidatorConfigResource,
-};
+use libra_types::{account_address::AccountAddress, account_config::BalanceResource, account_state::AccountState, account_state_blob::AccountStateBlob, on_chain_config::ConfigurationResource, transaction::authenticator::AuthenticationKey, validator_config::ValidatorConfigResource};
 use move_core_types::move_resource::MoveResource;
 use ol_types::{community_wallet::CommunityWalletsResource, miner_state::MinerStateResource};
 use serde::{Deserialize, Serialize};
@@ -30,10 +26,18 @@ enum WalletType {
 /// This is necessary for catastrophic recoveries, when the source code changes too much. Like what is going to happen between v4 and v5, where the source code of v5 will not be able to work with objects from v4. We need an intermediary file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GenesisRecovery {
-    role: AccountRole,
-    balance: Option<BalanceResource>,
-    val_cfg: Option<ValidatorConfigResource>,
-    miner_state: Option<MinerStateResource>,
+    ///
+    pub account: AccountAddress,
+    ///
+    pub auth_key: Option<AuthenticationKey>,
+    ///
+    pub role: AccountRole,
+    ///
+    pub balance: Option<BalanceResource>,
+    ///
+    pub val_cfg: Option<ValidatorConfigResource>,
+    ///
+    pub miner_state: Option<MinerStateResource>,
     // wallet_type: Option<WalletType>,
     // TODO: Fullnode State? // rust struct does not exist
     // TODO: Autopay? // rust struct does not exist
@@ -62,6 +66,8 @@ pub fn accounts_into_recovery(
 /// create a recovery struct from an account state.
 pub fn parse_recovery(state: &AccountState) -> Result<GenesisRecovery, Error> {
     let mut gr = GenesisRecovery {
+        account: AccountAddress::ZERO,
+        auth_key: None,
         role: AccountRole::EndUser,
         balance: None,
         val_cfg: None,
@@ -69,6 +75,7 @@ pub fn parse_recovery(state: &AccountState) -> Result<GenesisRecovery, Error> {
     };
 
     if let Some(address) = state.get_account_address()? {
+        gr.account = address;
         // iterate over all the account's resources\
         for (k, v) in state.iter() {
             // extract the validator config resource
