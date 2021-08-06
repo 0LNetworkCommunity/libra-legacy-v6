@@ -9,14 +9,14 @@ use ol_types::{community_wallet::CommunityWalletsResource, miner_state::MinerSta
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-enum AccountRole {
+pub enum AccountRole {
     System,
     Validator,
     Operator,
     EndUser,
 }
 #[derive(Debug, Serialize, Deserialize)]
-enum WalletType {
+pub enum WalletType {
     None,
     Slow,
     Community,
