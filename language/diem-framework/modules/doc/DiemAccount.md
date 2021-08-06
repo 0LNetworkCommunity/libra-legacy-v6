@@ -18,8 +18,19 @@ before and after every transaction.
 -  [Struct `ReceivedPaymentEvent`](#0x1_DiemAccount_ReceivedPaymentEvent)
 -  [Struct `AdminTransactionEvent`](#0x1_DiemAccount_AdminTransactionEvent)
 -  [Struct `CreateAccountEvent`](#0x1_DiemAccount_CreateAccountEvent)
+-  [Struct `Escrow`](#0x1_DiemAccount_Escrow)
+-  [Resource `AutopayEscrow`](#0x1_DiemAccount_AutopayEscrow)
+-  [Resource `EscrowList`](#0x1_DiemAccount_EscrowList)
+-  [Struct `EscrowSettings`](#0x1_DiemAccount_EscrowSettings)
 -  [Constants](#@Constants_0)
+-  [Function `new_escrow`](#0x1_DiemAccount_new_escrow)
+-  [Function `process_escrow`](#0x1_DiemAccount_process_escrow)
+-  [Function `initialize_escrow`](#0x1_DiemAccount_initialize_escrow)
+-  [Function `initialize_escrow_root`](#0x1_DiemAccount_initialize_escrow_root)
+-  [Function `update_escrow_percentage`](#0x1_DiemAccount_update_escrow_percentage)
 -  [Function `initialize`](#0x1_DiemAccount_initialize)
+-  [Function `create_user_account_with_proof`](#0x1_DiemAccount_create_user_account_with_proof)
+-  [Function `create_validator_account_with_proof`](#0x1_DiemAccount_create_validator_account_with_proof)
 -  [Function `has_published_account_limits`](#0x1_DiemAccount_has_published_account_limits)
 -  [Function `should_track_limits_for_account`](#0x1_DiemAccount_should_track_limits_for_account)
 -  [Function `deposit`](#0x1_DiemAccount_deposit)
@@ -31,7 +42,11 @@ before and after every transaction.
 -  [Function `preburn`](#0x1_DiemAccount_preburn)
 -  [Function `extract_withdraw_capability`](#0x1_DiemAccount_extract_withdraw_capability)
 -  [Function `restore_withdraw_capability`](#0x1_DiemAccount_restore_withdraw_capability)
+-  [Function `vm_make_payment`](#0x1_DiemAccount_vm_make_payment)
+-  [Function `process_community_wallets`](#0x1_DiemAccount_process_community_wallets)
+-  [Function `vm_make_payment_no_limit`](#0x1_DiemAccount_vm_make_payment_no_limit)
 -  [Function `pay_from`](#0x1_DiemAccount_pay_from)
+-  [Function `onboarding_gas_transfer`](#0x1_DiemAccount_onboarding_gas_transfer)
 -  [Function `rotate_authentication_key`](#0x1_DiemAccount_rotate_authentication_key)
     -  [Access Control](#@Access_Control_2)
 -  [Function `extract_key_rotation_capability`](#0x1_DiemAccount_extract_key_rotation_capability)
@@ -68,6 +83,10 @@ before and after every transaction.
 -  [Function `writeset_epilogue`](#0x1_DiemAccount_writeset_epilogue)
 -  [Function `create_validator_account`](#0x1_DiemAccount_create_validator_account)
 -  [Function `create_validator_operator_account`](#0x1_DiemAccount_create_validator_operator_account)
+-  [Function `vm_deposit_with_metadata`](#0x1_DiemAccount_vm_deposit_with_metadata)
+-  [Function `vm_set_slow_wallet`](#0x1_DiemAccount_vm_set_slow_wallet)
+-  [Function `test_helper_create_signer`](#0x1_DiemAccount_test_helper_create_signer)
+-  [Function `test_helper_destroy_signer`](#0x1_DiemAccount_test_helper_destroy_signer)
 -  [Module Specification](#@Module_Specification_4)
     -  [Access Control](#@Access_Control_5)
         -  [Key Rotation Capability](#@Key_Rotation_Capability_6)
@@ -95,17 +114,27 @@ before and after every transaction.
 <b>use</b> <a href="DualAttestation.md#0x1_DualAttestation">0x1::DualAttestation</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event">0x1::Event</a>;
+<b>use</b> <a href="FIFO.md#0x1_FIFO">0x1::FIFO</a>;
+<b>use</b> <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
+<b>use</b> <a href="FullnodeState.md#0x1_FullnodeState">0x1::FullnodeState</a>;
+<b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
+<b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Hash.md#0x1_Hash">0x1::Hash</a>;
+<b>use</b> <a href="MinerState.md#0x1_MinerState">0x1::MinerState</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="SlidingNonce.md#0x1_SlidingNonce">0x1::SlidingNonce</a>;
+<b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="TransactionFee.md#0x1_TransactionFee">0x1::TransactionFee</a>;
+<b>use</b> <a href="TrustedAccounts.md#0x1_TrustedAccounts">0x1::TrustedAccounts</a>;
 <b>use</b> <a href="VASP.md#0x1_VASP">0x1::VASP</a>;
+<b>use</b> <a href="VDF.md#0x1_VDF">0x1::VDF</a>;
 <b>use</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig">0x1::ValidatorConfig</a>;
 <b>use</b> <a href="ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig">0x1::ValidatorOperatorConfig</a>;
+<b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
-<b>use</b> <a href="XDX.md#0x1_XDX">0x1::XDX</a>;
+<b>use</b> <a href="Wallet.md#0x1_Wallet">0x1::Wallet</a>;
 <b>use</b> <a href="XUS.md#0x1_XUS">0x1::XUS</a>;
 </code></pre>
 
@@ -118,7 +147,7 @@ before and after every transaction.
 An <code>address</code> is a Diem Account iff it has a published DiemAccount resource.
 
 
-<pre><code><b>struct</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> has key
+<pre><code><b>struct</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> has store, key
 </code></pre>
 
 
@@ -190,7 +219,7 @@ A resource that holds the total value of currency of type <code>Token</code>
 currently held by the account.
 
 
-<pre><code><b>struct</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt; has key
+<pre><code><b>struct</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt; has store, key
 </code></pre>
 
 
@@ -492,6 +521,126 @@ Message for creation of a new account
 
 </details>
 
+<a name="0x1_DiemAccount_Escrow"></a>
+
+## Struct `Escrow`
+
+
+
+<pre><code><b>struct</b> <a href="DiemAccount.md#0x1_DiemAccount_Escrow">Escrow</a>&lt;Token&gt; has store
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>to_account: address</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>escrow: <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;</code>
+</dt>
+<dd>
+
+</dd>
+</dl>
+
+
+</details>
+
+<a name="0x1_DiemAccount_AutopayEscrow"></a>
+
+## Resource `AutopayEscrow`
+
+
+
+<pre><code><b>struct</b> <a href="DiemAccount.md#0x1_DiemAccount_AutopayEscrow">AutopayEscrow</a>&lt;Token&gt; has store, key
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>list: <a href="FIFO.md#0x1_FIFO_FIFO">FIFO::FIFO</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Escrow">DiemAccount::Escrow</a>&lt;Token&gt;&gt;</code>
+</dt>
+<dd>
+
+</dd>
+</dl>
+
+
+</details>
+
+<a name="0x1_DiemAccount_EscrowList"></a>
+
+## Resource `EscrowList`
+
+
+
+<pre><code><b>struct</b> <a href="DiemAccount.md#0x1_DiemAccount_EscrowList">EscrowList</a>&lt;Token&gt; has key
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>accounts: vector&lt;<a href="DiemAccount.md#0x1_DiemAccount_EscrowSettings">DiemAccount::EscrowSettings</a>&gt;</code>
+</dt>
+<dd>
+
+</dd>
+</dl>
+
+
+</details>
+
+<a name="0x1_DiemAccount_EscrowSettings"></a>
+
+## Struct `EscrowSettings`
+
+
+
+<pre><code><b>struct</b> <a href="DiemAccount.md#0x1_DiemAccount_EscrowSettings">EscrowSettings</a> has store
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>account: address</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>share: u64</code>
+</dt>
+<dd>
+
+</dd>
+</dl>
+
+
+</details>
+
 <a name="@Constants_0"></a>
 
 ## Constants
@@ -506,12 +655,21 @@ Message for creation of a new account
 
 
 
+<a name="0x1_DiemAccount_BOOTSTRAP_COIN_VALUE"></a>
+
+
+
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>: u64 = 1000000;
+</code></pre>
+
+
+
 <a name="0x1_DiemAccount_EACCOUNT"></a>
 
 The <code><a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a></code> resource is not in the required state
 
 
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EACCOUNT">EACCOUNT</a>: u64 = 0;
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EACCOUNT">EACCOUNT</a>: u64 = 12010;
 </code></pre>
 
 
@@ -521,7 +679,7 @@ The <code><a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a></code> resour
 The <code><a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a></code> was not in the required state
 
 
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EACCOUNT_OPERATIONS_CAPABILITY">EACCOUNT_OPERATIONS_CAPABILITY</a>: u64 = 22;
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EACCOUNT_OPERATIONS_CAPABILITY">EACCOUNT_OPERATIONS_CAPABILITY</a>: u64 = 120122;
 </code></pre>
 
 
@@ -531,7 +689,7 @@ The <code><a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">A
 Tried to add a balance in a currency that this account already has
 
 
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EADD_EXISTING_CURRENCY">EADD_EXISTING_CURRENCY</a>: u64 = 15;
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EADD_EXISTING_CURRENCY">EADD_EXISTING_CURRENCY</a>: u64 = 120115;
 </code></pre>
 
 
@@ -541,7 +699,7 @@ Tried to add a balance in a currency that this account already has
 An account cannot be created at the reserved core code address of 0x1
 
 
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_ECANNOT_CREATE_AT_CORE_CODE">ECANNOT_CREATE_AT_CORE_CODE</a>: u64 = 24;
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_ECANNOT_CREATE_AT_CORE_CODE">ECANNOT_CREATE_AT_CORE_CODE</a>: u64 = 120124;
 </code></pre>
 
 
@@ -551,7 +709,7 @@ An account cannot be created at the reserved core code address of 0x1
 An account cannot be created at the reserved VM address of 0x0
 
 
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_ECANNOT_CREATE_AT_VM_RESERVED">ECANNOT_CREATE_AT_VM_RESERVED</a>: u64 = 10;
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_ECANNOT_CREATE_AT_VM_RESERVED">ECANNOT_CREATE_AT_VM_RESERVED</a>: u64 = 120110;
 </code></pre>
 
 
@@ -561,7 +719,7 @@ An account cannot be created at the reserved VM address of 0x0
 Tried to deposit a coin whose value was zero
 
 
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_ECOIN_DEPOSIT_IS_ZERO">ECOIN_DEPOSIT_IS_ZERO</a>: u64 = 2;
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_ECOIN_DEPOSIT_IS_ZERO">ECOIN_DEPOSIT_IS_ZERO</a>: u64 = 12012;
 </code></pre>
 
 
@@ -571,7 +729,7 @@ Tried to deposit a coin whose value was zero
 Tried to deposit funds that would have surpassed the account's limits
 
 
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EDEPOSIT_EXCEEDS_LIMITS">EDEPOSIT_EXCEEDS_LIMITS</a>: u64 = 3;
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EDEPOSIT_EXCEEDS_LIMITS">EDEPOSIT_EXCEEDS_LIMITS</a>: u64 = 12013;
 </code></pre>
 
 
@@ -581,7 +739,7 @@ Tried to deposit funds that would have surpassed the account's limits
 An invalid amount of gas units was provided for execution of the transaction
 
 
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EGAS">EGAS</a>: u64 = 20;
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EGAS">EGAS</a>: u64 = 120120;
 </code></pre>
 
 
@@ -591,7 +749,7 @@ An invalid amount of gas units was provided for execution of the transaction
 The account does not hold a large enough balance in the specified currency
 
 
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EINSUFFICIENT_BALANCE">EINSUFFICIENT_BALANCE</a>: u64 = 5;
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EINSUFFICIENT_BALANCE">EINSUFFICIENT_BALANCE</a>: u64 = 12015;
 </code></pre>
 
 
@@ -601,7 +759,7 @@ The account does not hold a large enough balance in the specified currency
 The <code><a href="DiemAccount.md#0x1_DiemAccount_KeyRotationCapability">KeyRotationCapability</a></code> for this account has already been extracted
 
 
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EKEY_ROTATION_CAPABILITY_ALREADY_EXTRACTED">EKEY_ROTATION_CAPABILITY_ALREADY_EXTRACTED</a>: u64 = 9;
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EKEY_ROTATION_CAPABILITY_ALREADY_EXTRACTED">EKEY_ROTATION_CAPABILITY_ALREADY_EXTRACTED</a>: u64 = 12019;
 </code></pre>
 
 
@@ -611,7 +769,7 @@ The <code><a href="DiemAccount.md#0x1_DiemAccount_KeyRotationCapability">KeyRota
 The provided authentication had an invalid length
 
 
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EMALFORMED_AUTHENTICATION_KEY">EMALFORMED_AUTHENTICATION_KEY</a>: u64 = 8;
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EMALFORMED_AUTHENTICATION_KEY">EMALFORMED_AUTHENTICATION_KEY</a>: u64 = 12018;
 </code></pre>
 
 
@@ -622,7 +780,7 @@ Attempted to send funds in a currency that the receiving account does not hold.
 e.g., <code><a href="Diem.md#0x1_Diem">Diem</a>&lt;<a href="XDX.md#0x1_XDX">XDX</a>&gt;</code> to an account that exists, but does not have a <code><a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;<a href="XDX.md#0x1_XDX">XDX</a>&gt;</code> resource
 
 
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EPAYEE_CANT_ACCEPT_CURRENCY_TYPE">EPAYEE_CANT_ACCEPT_CURRENCY_TYPE</a>: u64 = 18;
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EPAYEE_CANT_ACCEPT_CURRENCY_TYPE">EPAYEE_CANT_ACCEPT_CURRENCY_TYPE</a>: u64 = 120118;
 </code></pre>
 
 
@@ -632,7 +790,7 @@ e.g., <code><a href="Diem.md#0x1_Diem">Diem</a>&lt;<a href="XDX.md#0x1_XDX">XDX<
 Attempted to send funds to an account that does not exist
 
 
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EPAYEE_DOES_NOT_EXIST">EPAYEE_DOES_NOT_EXIST</a>: u64 = 17;
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EPAYEE_DOES_NOT_EXIST">EPAYEE_DOES_NOT_EXIST</a>: u64 = 120117;
 </code></pre>
 
 
@@ -642,7 +800,7 @@ Attempted to send funds to an account that does not exist
 Tried to withdraw funds in a currency that the account does hold
 
 
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EPAYER_DOESNT_HOLD_CURRENCY">EPAYER_DOESNT_HOLD_CURRENCY</a>: u64 = 19;
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EPAYER_DOESNT_HOLD_CURRENCY">EPAYER_DOESNT_HOLD_CURRENCY</a>: u64 = 120119;
 </code></pre>
 
 
@@ -652,7 +810,7 @@ Tried to withdraw funds in a currency that the account does hold
 Tried to create a balance for an account whose role does not allow holding balances
 
 
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EROLE_CANT_STORE_BALANCE">EROLE_CANT_STORE_BALANCE</a>: u64 = 4;
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EROLE_CANT_STORE_BALANCE">EROLE_CANT_STORE_BALANCE</a>: u64 = 12014;
 </code></pre>
 
 
@@ -662,7 +820,7 @@ Tried to create a balance for an account whose role does not allow holding balan
 The withdrawal of funds would have exceeded the the account's limits
 
 
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_EXCEEDS_LIMITS">EWITHDRAWAL_EXCEEDS_LIMITS</a>: u64 = 6;
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_EXCEEDS_LIMITS">EWITHDRAWAL_EXCEEDS_LIMITS</a>: u64 = 12016;
 </code></pre>
 
 
@@ -672,7 +830,7 @@ The withdrawal of funds would have exceeded the the account's limits
 The <code><a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">WithdrawCapability</a></code> for this account has already been extracted
 
 
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED">EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED</a>: u64 = 7;
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED">EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED</a>: u64 = 12017;
 </code></pre>
 
 
@@ -682,7 +840,7 @@ The <code><a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">WithdrawCa
 The <code><a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">WithdrawCapability</a></code> for this account is not extracted
 
 
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAW_CAPABILITY_NOT_EXTRACTED">EWITHDRAW_CAPABILITY_NOT_EXTRACTED</a>: u64 = 11;
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAW_CAPABILITY_NOT_EXTRACTED">EWITHDRAW_CAPABILITY_NOT_EXTRACTED</a>: u64 = 120111;
 </code></pre>
 
 
@@ -692,7 +850,7 @@ The <code><a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">WithdrawCa
 The <code><a href="DiemAccount.md#0x1_DiemAccount_DiemWriteSetManager">DiemWriteSetManager</a></code> was not in the required state
 
 
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EWRITESET_MANAGER">EWRITESET_MANAGER</a>: u64 = 23;
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EWRITESET_MANAGER">EWRITESET_MANAGER</a>: u64 = 120123;
 </code></pre>
 
 
@@ -826,6 +984,255 @@ important to the semantics of the system.
 
 
 
+<a name="0x1_DiemAccount_new_escrow"></a>
+
+## Function `new_escrow`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_new_escrow">new_escrow</a>&lt;Token: store&gt;(account: &signer, payer: address, payee: address, amount: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_new_escrow">new_escrow</a>&lt;Token: store&gt;(
+    account: &signer,
+    payer: address,
+    payee: address,
+    amount: u64,
+) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_AutopayEscrow">AutopayEscrow</a> {
+    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(account);
+
+    // Formal verification <b>spec</b>: should not get anyone <b>else</b>'s balance <b>struct</b>
+    <b>let</b> balance_struct = borrow_global_mut&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payer);
+    <b>let</b> coin = <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>&lt;Token&gt;(&<b>mut</b> balance_struct.coin, amount);
+
+    <b>let</b> new_escrow = <a href="DiemAccount.md#0x1_DiemAccount_Escrow">Escrow</a> {
+        to_account: payee,
+        escrow: coin,
+    };
+
+    <b>let</b> state = borrow_global_mut&lt;<a href="DiemAccount.md#0x1_DiemAccount_AutopayEscrow">AutopayEscrow</a>&lt;Token&gt;&gt;(payer);
+    <a href="FIFO.md#0x1_FIFO_push">FIFO::push</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Escrow">Escrow</a>&lt;Token&gt;&gt;(&<b>mut</b> state.list, new_escrow);
+
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_process_escrow"></a>
+
+## Function `process_escrow`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_process_escrow">process_escrow</a>&lt;Token: store&gt;(account: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_process_escrow">process_escrow</a>&lt;Token: store&gt;(
+    account: &signer
+) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_EscrowList">EscrowList</a>, <a href="DiemAccount.md#0x1_DiemAccount_AutopayEscrow">AutopayEscrow</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(account);
+
+    <b>let</b> account_list = &borrow_global&lt;<a href="DiemAccount.md#0x1_DiemAccount_EscrowList">EscrowList</a>&lt;Token&gt;&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).accounts;
+    <b>let</b> account_len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_EscrowSettings">EscrowSettings</a>&gt;(account_list);
+    <b>let</b> account_idx = 0;
+
+    <b>while</b> (account_idx &lt; account_len) {
+        <b>let</b> <a href="DiemAccount.md#0x1_DiemAccount_EscrowSettings">EscrowSettings</a> {account: account_addr, share: percentage} = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_EscrowSettings">EscrowSettings</a>&gt;(account_list, account_idx);
+
+        //get transfer limit room
+        <b>let</b> (limit_room, withdrawal_allowed) = <a href="AccountLimits.md#0x1_AccountLimits_max_withdrawal">AccountLimits::max_withdrawal</a>&lt;Token&gt;(*account_addr);
+        <b>if</b> (!withdrawal_allowed) {
+            account_idx = account_idx + 1;
+            <b>continue</b>
+        };
+
+        limit_room = <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(limit_room , <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(*percentage, 100));
+
+        <b>let</b> amount_sent: u64 = 0;
+
+        <b>let</b> payment_list = &<b>mut</b> borrow_global_mut&lt;<a href="DiemAccount.md#0x1_DiemAccount_AutopayEscrow">AutopayEscrow</a>&lt;Token&gt;&gt;(*account_addr).list;
+        <b>let</b> num_payments = <a href="FIFO.md#0x1_FIFO_len">FIFO::len</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Escrow">Escrow</a>&lt;Token&gt;&gt;(payment_list);
+
+        //pay out escrow until limit is reached
+        <b>while</b> (limit_room &gt; 0 && num_payments &gt; 0) {
+            <b>let</b> <a href="DiemAccount.md#0x1_DiemAccount_Escrow">Escrow</a>&lt;Token&gt; {to_account, escrow} = <a href="FIFO.md#0x1_FIFO_pop">FIFO::pop</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Escrow">Escrow</a>&lt;Token&gt;&gt;(payment_list);
+            <b>let</b> recipient_coins = borrow_global_mut&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(to_account);
+            <b>let</b> payment_size = <a href="Diem.md#0x1_Diem_value">Diem::value</a>&lt;Token&gt;(&escrow);
+            <b>if</b> (payment_size &gt; limit_room) {
+                <b>let</b> (coin1, coin2) = <a href="Diem.md#0x1_Diem_split">Diem::split</a>&lt;Token&gt;(escrow, limit_room);
+                <a href="Diem.md#0x1_Diem_deposit">Diem::deposit</a>&lt;Token&gt;(&<b>mut</b> recipient_coins.coin, coin2);
+                <b>let</b> new_escrow = <a href="DiemAccount.md#0x1_DiemAccount_Escrow">Escrow</a> {
+                    to_account: to_account,
+                    escrow: coin1,
+                };
+                <a href="FIFO.md#0x1_FIFO_push_LIFO">FIFO::push_LIFO</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Escrow">Escrow</a>&lt;Token&gt;&gt;(payment_list, new_escrow);
+                amount_sent = amount_sent + limit_room;
+                limit_room = 0;
+            } <b>else</b> {
+                //This entire escrow is being paid out
+                <a href="Diem.md#0x1_Diem_deposit">Diem::deposit</a>&lt;Token&gt;(&<b>mut</b> recipient_coins.coin, escrow);
+                limit_room = limit_room - payment_size;
+                amount_sent = amount_sent + payment_size;
+                num_payments = num_payments - 1;
+            }
+        };
+        //<b>update</b> account limits
+        <b>if</b> (amount_sent &gt; 0) {
+            _ = <a href="AccountLimits.md#0x1_AccountLimits_update_withdrawal_limits">AccountLimits::update_withdrawal_limits</a>&lt;Token&gt;(
+                amount_sent,
+                *account_addr,
+                &borrow_global&lt;<a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).limits_cap
+            );
+        };
+
+
+        account_idx = account_idx + 1;
+    }
+
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_initialize_escrow"></a>
+
+## Function `initialize_escrow`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_initialize_escrow">initialize_escrow</a>&lt;Token: store&gt;(sender: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_initialize_escrow">initialize_escrow</a>&lt;Token: store&gt;(
+    sender: &signer
+) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_EscrowList">EscrowList</a> {
+    <b>let</b> account = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+    <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_AutopayEscrow">AutopayEscrow</a>&lt;Token&gt;&gt;(account)) {
+        move_to&lt;<a href="DiemAccount.md#0x1_DiemAccount_AutopayEscrow">AutopayEscrow</a>&lt;Token&gt;&gt;(sender, <a href="DiemAccount.md#0x1_DiemAccount_AutopayEscrow">AutopayEscrow</a> {
+            list: <a href="FIFO.md#0x1_FIFO_empty">FIFO::empty</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Escrow">Escrow</a>&lt;Token&gt;&gt;()
+        });
+        <b>let</b> escrow_list = &<b>mut</b> borrow_global_mut&lt;<a href="DiemAccount.md#0x1_DiemAccount_EscrowList">EscrowList</a>&lt;Token&gt;&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).accounts;
+        <b>let</b> idx = 0;
+        <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_EscrowSettings">EscrowSettings</a>&gt;(escrow_list);
+        <b>let</b> found = <b>false</b>;
+
+        <b>while</b> (idx &lt; len) {
+            <b>let</b> account_addr = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_EscrowSettings">EscrowSettings</a>&gt;(escrow_list, idx).account;
+            <b>if</b> (account_addr == account) {
+                found = <b>true</b>;
+                <b>break</b>
+            };
+            idx = idx + 1;
+        };
+        <b>if</b> (!found){
+            //share initialized <b>to</b> 100
+            <b>let</b> default_percentage: u64 = 100;
+            <b>let</b> settings = <a href="DiemAccount.md#0x1_DiemAccount_EscrowSettings">EscrowSettings</a>{ account: account, share: default_percentage};
+            <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_EscrowSettings">EscrowSettings</a>&gt;(escrow_list, settings);
+        };
+    };
+
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_initialize_escrow_root"></a>
+
+## Function `initialize_escrow_root`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_initialize_escrow_root">initialize_escrow_root</a>&lt;Token: store&gt;(sender: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_initialize_escrow_root">initialize_escrow_root</a>&lt;Token: store&gt;(
+    sender: &signer
+) {
+    move_to&lt;<a href="DiemAccount.md#0x1_DiemAccount_EscrowList">EscrowList</a>&lt;Token&gt;&gt;(sender, <a href="DiemAccount.md#0x1_DiemAccount_EscrowList">EscrowList</a>&lt;Token&gt;{ accounts: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_EscrowSettings">EscrowSettings</a>&gt;()});
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_update_escrow_percentage"></a>
+
+## Function `update_escrow_percentage`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_update_escrow_percentage">update_escrow_percentage</a>&lt;Token: store&gt;(sender: &signer, new_percentage: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_update_escrow_percentage">update_escrow_percentage</a>&lt;Token: store&gt;(
+    sender: &signer,
+    new_percentage: u64,
+) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_EscrowList">EscrowList</a> {
+    <b>assert</b>(new_percentage &gt;= 50, 1);
+    <b>assert</b>(new_percentage &lt;= 100, 1);
+
+    <b>let</b> escrow_list = &<b>mut</b> borrow_global_mut&lt;<a href="DiemAccount.md#0x1_DiemAccount_EscrowList">EscrowList</a>&lt;Token&gt;&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).accounts;
+    <b>let</b> account = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+    <b>let</b> idx = 0;
+    <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_EscrowSettings">EscrowSettings</a>&gt;(escrow_list);
+
+    <b>while</b> (idx &lt; len) {
+        <b>let</b> settings = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_EscrowSettings">EscrowSettings</a>&gt;(escrow_list, idx);
+        <b>if</b> (settings.account == account) {
+            settings.share = new_percentage;
+            <b>return</b>
+        };
+        idx = idx + 1;
+    };
+    //should never reach this point, <b>if</b> you do, autopay does not exist for the account.
+    <b>assert</b>(<b>false</b>, 1);
+
+
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_DiemAccount_initialize"></a>
 
 ## Function `initialize`
@@ -853,10 +1260,11 @@ Initialize this module. This is only callable from genesis.
     <a href="DiemAccount.md#0x1_DiemAccount_create_diem_root_account">create_diem_root_account</a>(
         <b>copy</b> dummy_auth_key_prefix,
     );
-    <a href="DiemAccount.md#0x1_DiemAccount_create_treasury_compliance_account">create_treasury_compliance_account</a>(
-        dr_account,
-        <b>copy</b> dummy_auth_key_prefix,
-    );
+    /////// 0L /////////
+    // <a href="DiemAccount.md#0x1_DiemAccount_create_treasury_compliance_account">create_treasury_compliance_account</a>(
+    //     dr_account,
+    //     <b>copy</b> dummy_auth_key_prefix,
+    // );
 }
 </code></pre>
 
@@ -879,6 +1287,139 @@ Initialize this module. This is only callable from genesis.
 <b>include</b> <a href="DiemAccount.md#0x1_DiemAccount_CreateDiemRootAccountEnsures">CreateDiemRootAccountEnsures</a>;
 <b>include</b> <a href="DiemAccount.md#0x1_DiemAccount_CreateTreasuryComplianceAccountModifies">CreateTreasuryComplianceAccountModifies</a>;
 <b>include</b> <a href="DiemAccount.md#0x1_DiemAccount_CreateTreasuryComplianceAccountEnsures">CreateTreasuryComplianceAccountEnsures</a>;
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_create_user_account_with_proof"></a>
+
+## Function `create_user_account_with_proof`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_create_user_account_with_proof">create_user_account_with_proof</a>(challenge: &vector&lt;u8&gt;, solution: &vector&lt;u8&gt;): address
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_create_user_account_with_proof">create_user_account_with_proof</a>(
+    challenge: &vector&lt;u8&gt;,
+    solution: &vector&lt;u8&gt;,
+):address <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+    // Rate limit <b>with</b> vdf proof.
+    <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(
+        challenge,
+        &<a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>(),
+        solution
+    );
+    <b>let</b> (new_account_address, auth_key_prefix) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(challenge);
+    <b>assert</b>(valid, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(120101));
+    <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
+    <a href="Roles.md#0x1_Roles_new_user_role_with_proof">Roles::new_user_role_with_proof</a>(&new_signer);
+    <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_signer);
+    <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_signer, <b>false</b>);
+    <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_signer, auth_key_prefix);
+    new_account_address
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_create_validator_account_with_proof"></a>
+
+## Function `create_validator_account_with_proof`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_create_validator_account_with_proof">create_validator_account_with_proof</a>(sender: &signer, challenge: &vector&lt;u8&gt;, solution: &vector&lt;u8&gt;, ow_human_name: vector&lt;u8&gt;, op_address: address, op_auth_key_prefix: vector&lt;u8&gt;, op_consensus_pubkey: vector&lt;u8&gt;, op_validator_network_addresses: vector&lt;u8&gt;, op_fullnode_network_addresses: vector&lt;u8&gt;, op_human_name: vector&lt;u8&gt;): address
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_create_validator_account_with_proof">create_validator_account_with_proof</a>(
+    sender: &signer,
+    challenge: &vector&lt;u8&gt;,
+    solution: &vector&lt;u8&gt;,
+    ow_human_name: vector&lt;u8&gt;,
+    op_address: address,
+    op_auth_key_prefix: vector&lt;u8&gt;,
+    op_consensus_pubkey: vector&lt;u8&gt;,
+    op_validator_network_addresses: vector&lt;u8&gt;,
+    op_fullnode_network_addresses: vector&lt;u8&gt;,
+    op_human_name: vector&lt;u8&gt;,
+):address <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+    <b>let</b> sender_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+    // Rate limit spam accounts.
+
+    <b>assert</b>(<a href="MinerState.md#0x1_MinerState_can_create_val_account">MinerState::can_create_val_account</a>(sender_addr), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(120102));
+    <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(
+        challenge,
+        &<a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>(),
+        solution
+    );
+    <b>assert</b>(valid, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(120103));
+
+    // check there's enough balance for bootstrapping both operator and validator account
+    <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender_addr)  &gt;= 2 * <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EINSUFFICIENT_BALANCE">EINSUFFICIENT_BALANCE</a>));
+
+    //Create Owner Account
+    <b>let</b> (new_account_address, auth_key_prefix) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(challenge);
+    <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
+    // The dr_account account is verified <b>to</b> have the diem root role in `<a href="Roles.md#0x1_Roles_new_validator_role">Roles::new_validator_role</a>`
+    <a href="Roles.md#0x1_Roles_new_validator_role_with_proof">Roles::new_validator_role_with_proof</a>(&new_signer);
+    <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_signer);
+    <a href="ValidatorConfig.md#0x1_ValidatorConfig_publish_with_proof">ValidatorConfig::publish_with_proof</a>(&new_signer, ow_human_name);
+    <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_signer, <b>false</b>);
+
+    // NOTE: <a href="VDF.md#0x1_VDF">VDF</a> verification is being called twice!
+    <a href="MinerState.md#0x1_MinerState_init_miner_state">MinerState::init_miner_state</a>(&new_signer, challenge, solution);
+    // TODO: Should fullnode init happen here, or under MinerState::init?
+    <a href="FullnodeState.md#0x1_FullnodeState_init">FullnodeState::init</a>(&new_signer);
+    // Create OP Account
+    <b>let</b> new_op_account = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(op_address);
+    <a href="Roles.md#0x1_Roles_new_validator_operator_role_with_proof">Roles::new_validator_operator_role_with_proof</a>(&new_op_account);
+    <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_op_account);
+    <a href="ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_publish_with_proof">ValidatorOperatorConfig::publish_with_proof</a>(&new_op_account, op_human_name);
+    <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_op_account, <b>false</b>);
+    // Link owner <b>to</b> OP
+    <a href="ValidatorConfig.md#0x1_ValidatorConfig_set_operator">ValidatorConfig::set_operator</a>(&new_signer, op_address);
+    // OP sends network info <b>to</b> Owner config"
+    <a href="ValidatorConfig.md#0x1_ValidatorConfig_set_config">ValidatorConfig::set_config</a>(
+        &new_op_account, // signer
+        new_account_address,
+        op_consensus_pubkey,
+        op_validator_network_addresses,
+        op_fullnode_network_addresses
+    );
+
+    /////// 0L /////////
+    // user can join validator universe list, but will only join <b>if</b>
+    // the mining is above the threshold in the preceeding period.
+    <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_self">ValidatorUniverse::add_self</a>(&new_signer);
+
+    <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_signer, auth_key_prefix);
+    <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_op_account, op_auth_key_prefix);
+
+    <a href="MinerState.md#0x1_MinerState_reset_rate_limit">MinerState::reset_rate_limit</a>(sender_addr);
+
+    // Transfer for owner
+    <a href="DiemAccount.md#0x1_DiemAccount_onboarding_gas_transfer">onboarding_gas_transfer</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender, new_account_address);
+    // Transfer for operator <b>as</b> well
+    <a href="DiemAccount.md#0x1_DiemAccount_onboarding_gas_transfer">onboarding_gas_transfer</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender, op_address);
+    new_account_address
+}
 </code></pre>
 
 
@@ -1019,11 +1560,12 @@ Record a payment of <code>to_deposit</code> from <code>payer</code> to <code>pay
     <b>assert</b>(deposit_value &gt; 0, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DiemAccount.md#0x1_DiemAccount_ECOIN_DEPOSIT_IS_ZERO">ECOIN_DEPOSIT_IS_ZERO</a>));
     // Check that an account <b>exists</b> at `payee`
     <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(payee), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EPAYEE_DOES_NOT_EXIST">EPAYEE_DOES_NOT_EXIST</a>));
-    // Check that `payee` can accept payments in `Token`
-    <b>assert</b>(
-        <b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payee),
-        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DiemAccount.md#0x1_DiemAccount_EPAYEE_CANT_ACCEPT_CURRENCY_TYPE">EPAYEE_CANT_ACCEPT_CURRENCY_TYPE</a>)
-    );
+    /////// 0L /////////
+    // // Check that `payee` can accept payments in `Token`
+    // <b>assert</b>(
+    //     <b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payee),
+    //     <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DiemAccount.md#0x1_DiemAccount_EPAYEE_CANT_ACCEPT_CURRENCY_TYPE">EPAYEE_CANT_ACCEPT_CURRENCY_TYPE</a>)
+    // );
 
     // Check that the payment complies <b>with</b> dual attestation rules
     <a href="DualAttestation.md#0x1_DualAttestation_assert_payment_ok">DualAttestation::assert_payment_ok</a>&lt;Token&gt;(
@@ -1535,6 +2077,11 @@ Withdraw <code>amount</code> <code><a href="Diem.md#0x1_Diem">Diem</a>&lt;Token&
     <b>let</b> payer = cap.account_address;
     <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(payer), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EACCOUNT">EACCOUNT</a>));
     <b>assert</b>(<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payer), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EPAYER_DOESNT_HOLD_CURRENCY">EPAYER_DOESNT_HOLD_CURRENCY</a>));
+
+    /////// 0L /////////
+    // Do not attempt sending <b>to</b> a payee that does not have balance
+    <b>assert</b>(<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payee), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EPAYER_DOESNT_HOLD_CURRENCY">EPAYER_DOESNT_HOLD_CURRENCY</a>));
+
     <b>let</b> account_balance = borrow_global_mut&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payer);
     // Load the payer's account and emit an event <b>to</b> record the withdrawal
     <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_emit_event">Event::emit_event</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_SentPaymentEvent">SentPaymentEvent</a>&gt;(
@@ -1779,7 +2326,8 @@ The value of preburn at <code>dd_addr</code> increases by <code>amount</code>;
 
 ## Function `extract_withdraw_capability`
 
-Return a unique capability granting permission to withdraw from the sender's account balance.
+Return a unique capability granting permission to withdraw from
+the sender's account balance.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_extract_withdraw_capability">extract_withdraw_capability</a>(sender: &signer): <a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">DiemAccount::WithdrawCapability</a>
@@ -1794,7 +2342,35 @@ Return a unique capability granting permission to withdraw from the sender's acc
 <pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_extract_withdraw_capability">extract_withdraw_capability</a>(
     sender: &signer
 ): <a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">WithdrawCapability</a> <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> {
+    //////// 0L //////// Transfers disabled by default
+    //////// 0L //////// Transfers of 10 <a href="GAS.md#0x1_GAS">GAS</a>
+    //////// 0L //////// enabled when epoch is 1000
     <b>let</b> sender_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+
+    /////// 0L /////////
+    // Community wallets have own transfer mechanism.
+    <b>let</b> community_wallets = <a href="Wallet.md#0x1_Wallet_get_comm_list">Wallet::get_comm_list</a>();
+    <b>assert</b>(
+        !<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&community_wallets, &sender_addr),
+        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_EXCEEDS_LIMITS">EWITHDRAWAL_EXCEEDS_LIMITS</a>)
+    );
+
+    /////// 0L /////////
+    <b>if</b> (<a href="DiemConfig.md#0x1_DiemConfig_check_transfer_enabled">DiemConfig::check_transfer_enabled</a>()) {
+        <b>if</b>(!<a href="AccountLimits.md#0x1_AccountLimits_has_limits_published">AccountLimits::has_limits_published</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender_addr)){
+            <a href="AccountLimits.md#0x1_AccountLimits_publish_restricted_limits_definition_OL">AccountLimits::publish_restricted_limits_definition_OL</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender);
+        };
+        // Check <b>if</b> limits window is published
+        <b>if</b>(!<a href="AccountLimits.md#0x1_AccountLimits_has_window_published">AccountLimits::has_window_published</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender_addr)){
+            <a href="AccountLimits.md#0x1_AccountLimits_publish_window_OL">AccountLimits::publish_window_OL</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender, sender_addr);
+        };
+    } <b>else</b> {
+        <b>assert</b>(
+            sender_addr == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(),
+            <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_EXCEEDS_LIMITS">EWITHDRAWAL_EXCEEDS_LIMITS</a>)
+        );
+    };
+
     // Abort <b>if</b> we already extracted the unique withdraw capability for this account.
     <b>assert</b>(
         !<a href="DiemAccount.md#0x1_DiemAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(sender_addr),
@@ -1896,6 +2472,197 @@ Return the withdraw capability to the account it originally came from
 
 </details>
 
+<a name="0x1_DiemAccount_vm_make_payment"></a>
+
+## Function `vm_make_payment`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment">vm_make_payment</a>&lt;Token: store&gt;(payer: address, payee: address, amount: u64, metadata: vector&lt;u8&gt;, metadata_signature: vector&lt;u8&gt;, vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment">vm_make_payment</a>&lt;Token: store&gt;(
+    payer : address,
+    payee: address,
+    amount: u64,
+    metadata: vector&lt;u8&gt;,
+    metadata_signature: vector&lt;u8&gt;,
+    vm: &signer
+) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> , <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="DiemAccount.md#0x1_DiemAccount_AutopayEscrow">AutopayEscrow</a> {
+    <b>if</b> (<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()) <b>return</b>;
+    <b>if</b> (amount &lt; 0) <b>return</b>;
+
+    // Check payee can receive funds in this currency.
+    <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payee)) <b>return</b>;
+    // <b>assert</b>(<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payee), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EROLE_CANT_STORE_BALANCE">EROLE_CANT_STORE_BALANCE</a>));
+
+    // Check there is a payer
+    <b>if</b> (!<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(payer)) <b>return</b>;
+
+    // <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(payer), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EACCOUNT">EACCOUNT</a>));
+
+    // Check the payer is in possession of withdraw token.
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(payer)) <b>return</b>;
+
+    <b>let</b> (max_withdraw, withdrawal_allowed) = <a href="AccountLimits.md#0x1_AccountLimits_max_withdrawal">AccountLimits::max_withdrawal</a>&lt;Token&gt;(payer);
+
+    <b>if</b> (!withdrawal_allowed) <b>return</b>;
+
+    // VM can extract the withdraw token.
+    <b>let</b> account = borrow_global_mut&lt;<a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>&gt;(payer);
+    <b>let</b> cap = <a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_extract">Option::extract</a>(&<b>mut</b> account.withdraw_capability);
+
+
+    <b>let</b> transfer_now =
+        <b>if</b> (max_withdraw &gt;= amount) {
+            amount
+        } <b>else</b> {
+            max_withdraw
+        };
+    <b>let</b> transfer_later = amount - transfer_now;
+    <b>if</b> (transfer_now &gt; 0) {
+        <a href="DiemAccount.md#0x1_DiemAccount_pay_from">pay_from</a>&lt;Token&gt;(
+            &cap,
+            payee,
+            transfer_now,
+            metadata,
+            metadata_signature
+        );
+    };
+
+    <b>if</b> (transfer_later &gt; 0)
+    {
+        <a href="DiemAccount.md#0x1_DiemAccount_new_escrow">new_escrow</a>&lt;Token&gt;(vm, payer, payee, transfer_later);
+    };
+
+    <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">restore_withdraw_capability</a>(cap);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_process_community_wallets"></a>
+
+## Function `process_community_wallets`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_process_community_wallets">process_community_wallets</a>(vm: &signer, epoch: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_process_community_wallets">process_community_wallets</a>(
+    vm: &signer, epoch: u64
+) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+    <b>if</b> (<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()) <b>return</b>;
+
+    // Migrate on the fly <b>if</b> state doesn't exist on upgrade.
+    <b>if</b> (!<a href="Wallet.md#0x1_Wallet_is_init_comm">Wallet::is_init_comm</a>()) {
+        <a href="Wallet.md#0x1_Wallet_init">Wallet::init</a>(vm);
+        <b>return</b>
+    };
+
+    <b>let</b> v = <a href="Wallet.md#0x1_Wallet_list_tx_by_epoch">Wallet::list_tx_by_epoch</a>(epoch);
+
+    <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">Wallet::TimedTransfer</a>&gt;(&v);
+    <b>let</b> i = 0;
+    <b>while</b> (i &lt; len) {
+
+        <b>let</b> t: <a href="Wallet.md#0x1_Wallet_TimedTransfer">Wallet::TimedTransfer</a> = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&v, i);
+        // TODO: Is this the best way <b>to</b> access a <b>struct</b> property from
+        // outside a <b>module</b>?
+        <b>let</b> (payer, payee, value, description) = <a href="Wallet.md#0x1_Wallet_get_tx_args">Wallet::get_tx_args</a>(t);
+
+        <b>if</b> (<a href="Wallet.md#0x1_Wallet_is_frozen">Wallet::is_frozen</a>(payer)) <b>continue</b>;
+
+        <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(payer, payee, value, description, b"", vm);
+
+        <a href="Wallet.md#0x1_Wallet_maybe_reset_rejection_counter">Wallet::maybe_reset_rejection_counter</a>(vm, payer);
+
+        i = i + 1;
+    };
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_vm_make_payment_no_limit"></a>
+
+## Function `vm_make_payment_no_limit`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">vm_make_payment_no_limit</a>&lt;Token: store&gt;(payer: address, payee: address, amount: u64, metadata: vector&lt;u8&gt;, metadata_signature: vector&lt;u8&gt;, vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">vm_make_payment_no_limit</a>&lt;Token: store&gt;(
+    payer : address,
+    payee: address,
+    amount: u64,
+    metadata: vector&lt;u8&gt;,
+    metadata_signature: vector&lt;u8&gt;,
+    vm: &signer
+) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> , <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+    <b>if</b> (<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()) <b>return</b>;
+    // don't try <b>to</b> send a 0 balance, will halt.
+    <b>if</b> (amount &lt; 0) <b>return</b>;
+
+    // Check payee can receive funds in this currency.
+    <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payee)) <b>return</b>;
+    // <b>assert</b>(<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payee), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EROLE_CANT_STORE_BALANCE">EROLE_CANT_STORE_BALANCE</a>));
+
+    // Check there is a payer
+    <b>if</b> (!<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(payer)) <b>return</b>;
+
+    // <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(payer), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EACCOUNT">EACCOUNT</a>));
+
+    // Check the payer is in possession of withdraw token.
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(payer)) <b>return</b>;
+
+    // <b>assert</b>(
+    //     !<a href="DiemAccount.md#0x1_DiemAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(payer),
+    //     <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED">EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED</a>)
+    // );
+
+    // VM can extract the withdraw token.
+    <b>let</b> account = borrow_global_mut&lt;<a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>&gt;(payer);
+    <b>let</b> cap = <a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_extract">Option::extract</a>(&<b>mut</b> account.withdraw_capability);
+    <a href="DiemAccount.md#0x1_DiemAccount_deposit">deposit</a>&lt;Token&gt;(
+        cap.account_address,
+        payee,
+        <a href="DiemAccount.md#0x1_DiemAccount_withdraw_from">withdraw_from</a>(&cap, payee, amount, <b>copy</b> metadata),
+        metadata,
+        metadata_signature
+    );
+    <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">restore_withdraw_capability</a>(cap);
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_DiemAccount_pay_from"></a>
 
 ## Function `pay_from`
@@ -1923,6 +2690,30 @@ attestation protocol
     metadata: vector&lt;u8&gt;,
     metadata_signature: vector&lt;u8&gt;
 ) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+    //////// 0L //////// Transfers disabled by default
+    //////// 0L //////// Transfers of 10 <a href="GAS.md#0x1_GAS">GAS</a>
+    //////// 0L //////// enabled when validator count is 100.
+    <b>if</b> (<a href="DiemConfig.md#0x1_DiemConfig_check_transfer_enabled">DiemConfig::check_transfer_enabled</a>()) {
+        // Ensure that this withdrawal is compliant <b>with</b> the account limits on
+        // this account.
+        <b>assert</b>(
+                <a href="AccountLimits.md#0x1_AccountLimits_update_withdrawal_limits">AccountLimits::update_withdrawal_limits</a>&lt;Token&gt;(
+                    amount,
+                    {{*&cap.account_address}},
+                    &borrow_global&lt;<a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>&gt;(
+                        <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()
+                        ).limits_cap
+                ),
+                <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_EXCEEDS_LIMITS">EWITHDRAWAL_EXCEEDS_LIMITS</a>)
+            );
+
+    } <b>else</b> {
+        <b>assert</b>(
+            *&cap.account_address == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(),
+            <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_EXCEEDS_LIMITS">EWITHDRAWAL_EXCEEDS_LIMITS</a>)
+        );
+    };
+
     <a href="DiemAccount.md#0x1_DiemAccount_deposit">deposit</a>&lt;Token&gt;(
         *&cap.account_address,
         payee,
@@ -2024,18 +2815,45 @@ attestation protocol
 
 
 
+</details>
 
-<a name="0x1_DiemAccount_PayFromEmits"></a>
+<a name="0x1_DiemAccount_onboarding_gas_transfer"></a>
+
+## Function `onboarding_gas_transfer`
 
 
-<pre><code><b>schema</b> <a href="DiemAccount.md#0x1_DiemAccount_PayFromEmits">PayFromEmits</a>&lt;Token&gt; {
-    cap: <a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">WithdrawCapability</a>;
-    payee: address;
-    amount: u64;
-    metadata: vector&lt;u8&gt;;
-    <b>let</b> payer = cap.account_address;
-    <b>include</b> <a href="DiemAccount.md#0x1_DiemAccount_DepositEmits">DepositEmits</a>&lt;Token&gt;{payer: payer};
-    <b>include</b> <a href="DiemAccount.md#0x1_DiemAccount_WithdrawFromEmits">WithdrawFromEmits</a>&lt;Token&gt;;
+
+<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_onboarding_gas_transfer">onboarding_gas_transfer</a>&lt;Token: store&gt;(payer_sig: &signer, payee: address)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_onboarding_gas_transfer">onboarding_gas_transfer</a>&lt;Token: store&gt;(
+    payer_sig: &signer,
+    payee: address
+) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+    <b>let</b> payer_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(payer_sig);
+    <b>let</b> account_balance = borrow_global_mut&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payer_addr);
+    <b>let</b> balance_coin = &<b>mut</b> account_balance.coin;
+    // Doubly check balance <b>exists</b>.
+    <b>assert</b>(
+        <a href="Diem.md#0x1_Diem_value">Diem::value</a>(balance_coin) &gt; <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>,
+        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EINSUFFICIENT_BALANCE">EINSUFFICIENT_BALANCE</a>)
+    );
+    // Should <b>abort</b> <b>if</b> the
+    <b>let</b> metadata = b"onboarding transfer";
+    <b>let</b> coin_to_deposit = <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(balance_coin, <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>);
+    <a href="DiemAccount.md#0x1_DiemAccount_deposit">deposit</a>&lt;Token&gt;(
+        payer_addr,
+        payee,
+        coin_to_deposit,
+        metadata,
+        b""
+    );
 }
 </code></pre>
 
@@ -2320,11 +3138,12 @@ then add for both token types.
     <b>let</b> new_account_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(new_account);
     <a href="DiemAccount.md#0x1_DiemAccount_add_currency">add_currency</a>&lt;Token&gt;(new_account);
     <b>if</b> (add_all_currencies) {
-        <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;<a href="XUS.md#0x1_XUS">XUS</a>&gt;&gt;(new_account_addr)) {
-            <a href="DiemAccount.md#0x1_DiemAccount_add_currency">add_currency</a>&lt;<a href="XUS.md#0x1_XUS">XUS</a>&gt;(new_account);
-        };
-        <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;<a href="XDX.md#0x1_XDX">XDX</a>&gt;&gt;(new_account_addr)) {
-            <a href="DiemAccount.md#0x1_DiemAccount_add_currency">add_currency</a>&lt;<a href="XDX.md#0x1_XDX">XDX</a>&gt;(new_account);
+        /////// 0L /////////
+        // <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;<a href="XUS.md#0x1_XUS">XUS</a>&gt;&gt;(new_account_addr)) {
+        //     <a href="DiemAccount.md#0x1_DiemAccount_add_currency">add_currency</a>&lt;<a href="XUS.md#0x1_XUS">XUS</a>&gt;(new_account);
+        // };
+        <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;&gt;(new_account_addr)) {
+            <a href="DiemAccount.md#0x1_DiemAccount_add_currency">add_currency</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(new_account);
         };
     };
 }
@@ -2358,8 +3177,8 @@ then add for both token types.
     <b>aborts_if</b> <b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(addr) <b>with</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a>;
     <b>include</b> add_all_currencies && !<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;<a href="XUS.md#0x1_XUS">XUS</a>&gt;&gt;(addr)
         ==&gt; <a href="Diem.md#0x1_Diem_AbortsIfNoCurrency">Diem::AbortsIfNoCurrency</a>&lt;<a href="XUS.md#0x1_XUS">XUS</a>&gt;;
-    <b>include</b> add_all_currencies && !<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;<a href="XDX.md#0x1_XDX">XDX</a>&gt;&gt;(addr)
-        ==&gt; <a href="Diem.md#0x1_Diem_AbortsIfNoCurrency">Diem::AbortsIfNoCurrency</a>&lt;<a href="XDX.md#0x1_XDX">XDX</a>&gt;;
+    <b>include</b> add_all_currencies && !<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;&gt;(addr) /////// 0L /////////
+        ==&gt; <a href="Diem.md#0x1_Diem_AbortsIfNoCurrency">Diem::AbortsIfNoCurrency</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;;
 }
 </code></pre>
 
@@ -2375,8 +3194,8 @@ then add for both token types.
     <b>include</b> <a href="DiemAccount.md#0x1_DiemAccount_AddCurrencyEnsures">AddCurrencyEnsures</a>&lt;Token&gt;;
     <b>include</b> add_all_currencies && !<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;<a href="XUS.md#0x1_XUS">XUS</a>&gt;&gt;(addr)
         ==&gt; <a href="DiemAccount.md#0x1_DiemAccount_AddCurrencyEnsures">AddCurrencyEnsures</a>&lt;<a href="XUS.md#0x1_XUS">XUS</a>&gt;;
-    <b>include</b> add_all_currencies && !<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;<a href="XDX.md#0x1_XDX">XDX</a>&gt;&gt;(addr)
-        ==&gt; <a href="DiemAccount.md#0x1_DiemAccount_AddCurrencyEnsures">AddCurrencyEnsures</a>&lt;<a href="XDX.md#0x1_XDX">XDX</a>&gt;;
+    <b>include</b> add_all_currencies && !<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;&gt;(addr) /////// 0L /////////
+        ==&gt; <a href="DiemAccount.md#0x1_DiemAccount_AddCurrencyEnsures">AddCurrencyEnsures</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;;
 }
 </code></pre>
 
@@ -2409,11 +3228,14 @@ Creating an account at address 0x0 will abort as it is a reserved address for th
     auth_key_prefix: vector&lt;u8&gt;,
 ) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
     <b>let</b> new_account_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(&new_account);
-    // cannot create an account at the reserved address 0x0
-    <b>assert</b>(
-        new_account_addr != <a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>(),
-        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DiemAccount.md#0x1_DiemAccount_ECANNOT_CREATE_AT_VM_RESERVED">ECANNOT_CREATE_AT_VM_RESERVED</a>)
-    );
+
+    /////// 0L /////////
+    // // cannot create an account at the reserved address 0x0
+    // <b>assert</b>(
+    //     new_account_addr != <a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>(),
+    //     <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DiemAccount.md#0x1_DiemAccount_ECANNOT_CREATE_AT_VM_RESERVED">ECANNOT_CREATE_AT_VM_RESERVED</a>)
+    // );
+
     <b>assert</b>(
         new_account_addr != <a href="CoreAddresses.md#0x1_CoreAddresses_CORE_CODE_ADDRESS">CoreAddresses::CORE_CODE_ADDRESS</a>(),
         <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DiemAccount.md#0x1_DiemAccount_ECANNOT_CREATE_AT_CORE_CODE">ECANNOT_CREATE_AT_CORE_CODE</a>)
@@ -2454,6 +3276,10 @@ Creating an account at address 0x0 will abort as it is a reserved address for th
             sequence_number: 0,
         }
     );
+
+    //////// 0L ////////
+    <a href="TrustedAccounts.md#0x1_TrustedAccounts_initialize">TrustedAccounts::initialize</a>(&new_account);
+    <a href="Wallet.md#0x1_Wallet_set_slow">Wallet::set_slow</a>(&new_account);
 }
 </code></pre>
 
@@ -3228,11 +4054,14 @@ Add a balance of <code>Token</code> type to the sending account
 <pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_add_currency">add_currency</a>&lt;Token: store&gt;(account: &signer) {
     // aborts <b>if</b> `Token` is not a currency type in the system
     <a href="Diem.md#0x1_Diem_assert_is_currency">Diem::assert_is_currency</a>&lt;Token&gt;();
-    // Check that an account <b>with</b> this role is allowed <b>to</b> hold funds
-    <b>assert</b>(
-        <a href="Roles.md#0x1_Roles_can_hold_balance">Roles::can_hold_balance</a>(account),
-        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DiemAccount.md#0x1_DiemAccount_EROLE_CANT_STORE_BALANCE">EROLE_CANT_STORE_BALANCE</a>)
-    );
+
+    /////// 0L /////////
+    // // Check that an account <b>with</b> this role is allowed <b>to</b> hold funds
+    // <b>assert</b>(
+    //     <a href="Roles.md#0x1_Roles_can_hold_balance">Roles::can_hold_balance</a>(account),
+    //     <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DiemAccount.md#0x1_DiemAccount_EROLE_CANT_STORE_BALANCE">EROLE_CANT_STORE_BALANCE</a>)
+    // );
+
     // aborts <b>if</b> this account already has a balance in `Token`
     <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
     <b>assert</b>(!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(addr), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_already_published">Errors::already_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EADD_EXISTING_CURRENCY">EADD_EXISTING_CURRENCY</a>));
@@ -4496,6 +5325,7 @@ Create a Validator account
     <a href="Roles.md#0x1_Roles_new_validator_role">Roles::new_validator_role</a>(dr_account, &new_account);
     <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_account);
     <a href="ValidatorConfig.md#0x1_ValidatorConfig_publish">ValidatorConfig::publish</a>(&new_account, dr_account, human_name);
+    <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_account, <b>false</b>); /////// 0L /////////
     <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_account, auth_key_prefix)
 }
 </code></pre>
@@ -4575,6 +5405,7 @@ Create a Validator Operator account
     <a href="Roles.md#0x1_Roles_new_validator_operator_role">Roles::new_validator_operator_role</a>(dr_account, &new_account);
     <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_account);
     <a href="ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_publish">ValidatorOperatorConfig::publish</a>(&new_account, dr_account, human_name);
+    <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_account, <b>false</b>); /////// 0L /////////
     <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_account, auth_key_prefix)
 }
 </code></pre>
@@ -4619,6 +5450,123 @@ Create a Validator Operator account
     <b>include</b> <a href="Roles.md#0x1_Roles_GrantRole">Roles::GrantRole</a>{addr: new_account_address, role_id: <a href="Roles.md#0x1_Roles_VALIDATOR_OPERATOR_ROLE_ID">Roles::VALIDATOR_OPERATOR_ROLE_ID</a>};
     <b>ensures</b> <a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(new_account_address);
     <b>ensures</b> <a href="ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_has_validator_operator_config">ValidatorOperatorConfig::has_validator_operator_config</a>(new_account_address);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_vm_deposit_with_metadata"></a>
+
+## Function `vm_deposit_with_metadata`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">vm_deposit_with_metadata</a>&lt;Token: store&gt;(payer: &signer, payee: address, to_deposit: <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;, metadata: vector&lt;u8&gt;, metadata_signature: vector&lt;u8&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">vm_deposit_with_metadata</a>&lt;Token: store&gt;(
+    payer: &signer,
+    payee: address,
+    to_deposit: <a href="Diem.md#0x1_Diem">Diem</a>&lt;Token&gt;,
+    metadata: vector&lt;u8&gt;,
+    metadata_signature: vector&lt;u8&gt;
+) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+    <b>let</b> sender = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(payer);
+    <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), 4010);
+    <a href="DiemAccount.md#0x1_DiemAccount_deposit">deposit</a>(
+        <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(),
+        payee,
+        to_deposit,
+        metadata,
+        metadata_signature
+    );
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_vm_set_slow_wallet"></a>
+
+## Function `vm_set_slow_wallet`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_set_slow_wallet">vm_set_slow_wallet</a>(vm: &signer, addr: address)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_set_slow_wallet">vm_set_slow_wallet</a>(vm: &signer, addr: address) {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+  <b>let</b> sig = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(addr);
+  <a href="Wallet.md#0x1_Wallet_set_slow">Wallet::set_slow</a>(&sig);
+  // destroy_signer(sig); // 0L todo: fn deleted
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_test_helper_create_signer"></a>
+
+## Function `test_helper_create_signer`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_test_helper_create_signer">test_helper_create_signer</a>(vm: &signer, addr: address): signer
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_test_helper_create_signer">test_helper_create_signer</a>(vm: &signer, addr: address): signer {
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+    <b>assert</b>(is_testnet(), 120102011021);
+    <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(addr)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_test_helper_destroy_signer"></a>
+
+## Function `test_helper_destroy_signer`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_test_helper_destroy_signer">test_helper_destroy_signer</a>(vm: &signer, _to_destroy: signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_test_helper_destroy_signer">test_helper_destroy_signer</a>(vm: &signer, _to_destroy: signer) {
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+    <b>assert</b>(is_testnet(), 120103011021);
+    // destroy_signer(sig); // 0L todo: fn deleted
 }
 </code></pre>
 

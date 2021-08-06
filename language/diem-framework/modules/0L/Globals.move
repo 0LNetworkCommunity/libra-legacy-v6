@@ -128,7 +128,7 @@ module Globals {
           subsidy_ceiling_gas: 296 * coin_scale,
           min_node_density: 4,
           max_node_density: 300,
-          burn_accounts: Vector::singleton(0xDEADDEAD),
+          burn_accounts: Vector::singleton(@0xDEADDEAD),
           difficulty: 100,
           epoch_mining_threshold: 1,
         }
@@ -141,7 +141,7 @@ module Globals {
           subsidy_ceiling_gas: 8640000 * coin_scale,
           min_node_density: 4,
           max_node_density: 300,
-          burn_accounts: Vector::singleton(0xDEADDEAD),
+          burn_accounts: Vector::singleton(@0xDEADDEAD),
           difficulty: 5000000,
           epoch_mining_threshold: 1,
         } 
@@ -157,7 +157,7 @@ module Globals {
           subsidy_ceiling_gas: 8640000 * coin_scale, // subsidy amount assumes 24 hour epoch lengths. Also needs to be adjusted for coin_scale the onchain representation of human readable value.
           min_node_density: 4,
           max_node_density: 300,
-          burn_accounts: Vector::singleton(0xDEADDEAD),
+          burn_accounts: Vector::singleton(@0xDEADDEAD),
           difficulty: 5000000, //10 mins on macbook pro 2.5 ghz quadcore
           epoch_mining_threshold: 20,
           }

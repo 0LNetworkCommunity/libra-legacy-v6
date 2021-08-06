@@ -25,6 +25,9 @@ to synchronize configuration changes for the validators.
 -  [Function `reconfigure`](#0x1_DiemConfig_reconfigure)
 -  [Function `reconfigure_`](#0x1_DiemConfig_reconfigure_)
 -  [Function `emit_genesis_reconfiguration_event`](#0x1_DiemConfig_emit_genesis_reconfiguration_event)
+-  [Function `get_current_epoch`](#0x1_DiemConfig_get_current_epoch)
+-  [Function `get_epoch_transfer_limit`](#0x1_DiemConfig_get_epoch_transfer_limit)
+-  [Function `check_transfer_enabled`](#0x1_DiemConfig_check_transfer_enabled)
 -  [Module Specification](#@Module_Specification_1)
     -  [Initialization](#@Initialization_2)
     -  [Invariants](#@Invariants_3)
@@ -37,6 +40,7 @@ to synchronize configuration changes for the validators.
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event">0x1::Event</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
+<b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 </code></pre>
 
 
@@ -246,6 +250,16 @@ A <code><a href="DiemConfig.md#0x1_DiemConfig_ModifyConfigCapability">ModifyConf
 
 
 <pre><code><b>const</b> <a href="DiemConfig.md#0x1_DiemConfig_EMODIFY_CAPABILITY">EMODIFY_CAPABILITY</a>: u64 = 2;
+</code></pre>
+
+
+
+<a name="0x1_DiemConfig_TRANSFER_ENABLED_EPOCH"></a>
+
+Epoch when transfers are enabled
+
+
+<pre><code><b>const</b> <a href="DiemConfig.md#0x1_DiemConfig_TRANSFER_ENABLED_EPOCH">TRANSFER_ENABLED_EPOCH</a>: u64 = 1000;
 </code></pre>
 
 
@@ -1007,6 +1021,88 @@ reconfiguration event.
         epoch: config.epoch,
 };
 emits msg <b>to</b> handle;
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemConfig_get_current_epoch"></a>
+
+## Function `get_current_epoch`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">get_current_epoch</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">get_current_epoch</a>(): u64 <b>acquires</b> <a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a> {
+    <b>let</b> config_ref = borrow_global&lt;<a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
+    config_ref.epoch
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemConfig_get_epoch_transfer_limit"></a>
+
+## Function `get_epoch_transfer_limit`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemConfig.md#0x1_DiemConfig_get_epoch_transfer_limit">get_epoch_transfer_limit</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemConfig.md#0x1_DiemConfig_get_epoch_transfer_limit">get_epoch_transfer_limit</a>(): u64 <b>acquires</b> <a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a> {
+    // Constant <b>to</b> start the withdrawal limit calculation from
+    <b>let</b> transfer_enabled_epoch = <a href="DiemConfig.md#0x1_DiemConfig_TRANSFER_ENABLED_EPOCH">TRANSFER_ENABLED_EPOCH</a>;
+    <b>let</b> config_ref = borrow_global&lt;<a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
+
+    // Calculating transfer limit in multiples of epoch
+    ((config_ref.epoch - transfer_enabled_epoch) * 10)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemConfig_check_transfer_enabled"></a>
+
+## Function `check_transfer_enabled`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemConfig.md#0x1_DiemConfig_check_transfer_enabled">check_transfer_enabled</a>(): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemConfig.md#0x1_DiemConfig_check_transfer_enabled">check_transfer_enabled</a>(): bool <b>acquires</b> <a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a> {
+    <b>if</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
+        <b>true</b>
+    } <b>else</b> {
+        <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">get_current_epoch</a>() &gt; <a href="DiemConfig.md#0x1_DiemConfig_TRANSFER_ENABLED_EPOCH">TRANSFER_ENABLED_EPOCH</a>
+    }
+}
 </code></pre>
 
 

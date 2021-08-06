@@ -72,8 +72,8 @@ address 0x1 {
     }
     // Private, can only be called within module
     fun increment_miners_list(miner: address) acquires MinerList {
-      if (exists<MinerList>(0x0)) {
-        let state = borrow_global_mut<MinerList>(0x0);
+      if (exists<MinerList>(@0x0)) {
+        let state = borrow_global_mut<MinerList>(@0x0);
         if (!Vector::contains<address>(&mut state.list, &miner)) {
           Vector::push_back<address>(&mut state.list, miner);
         }
@@ -300,13 +300,13 @@ address 0x1 {
 
       // check minerlist exists, or use eligible_validators to initialize.
       // Migration on hot upgrade
-      if (!exists<MinerList>(0x0)) {
+      if (!exists<MinerList>(@0x0)) {
         move_to<MinerList>(vm, MinerList {
           list: *migrate_eligible_validators
         });
       };
 
-      let minerlist_state = borrow_global_mut<MinerList>(0x0);
+      let minerlist_state = borrow_global_mut<MinerList>(@0x0);
 
       // // Get list of validators from ValidatorUniverse
       // let eligible_validators = ValidatorUniverse::get_eligible_validators(vm);
@@ -407,10 +407,10 @@ address 0x1 {
     // Permissions: PUBLIC, ANYONE
     // TODO: Rename
     public fun get_miner_list(): vector<address> acquires MinerList {
-      if (!exists<MinerList>(0x0)) {
+      if (!exists<MinerList>(@0x0)) {
         return Vector::empty<address>()  
       };
-      *&borrow_global<MinerList>(0x0).list
+      *&borrow_global<MinerList>(@0x0).list
     }
 
     // Returns number of epochs for input miner's state

@@ -55,7 +55,7 @@ module Wallet {
     public fun init(vm: &signer) {
         CoreAddresses::assert_diem_root(vm);
         
-        if ((!exists<CommunityTransfers>(0x0))) {
+        if ((!exists<CommunityTransfers>(@0x0))) {
           move_to<CommunityTransfers>(vm, CommunityTransfers{
             proposed: Vector::empty<TimedTransfer>(),
             approved: Vector::empty<TimedTransfer>(),
@@ -64,7 +64,7 @@ module Wallet {
           })
         }; 
 
-      if (!exists<CommunityWallets>(0x0)) {
+      if (!exists<CommunityWallets>(@0x0)) {
         move_to<CommunityWallets>(vm, CommunityWallets {
           list: Vector::empty<address>()
         });  
@@ -72,15 +72,15 @@ module Wallet {
     }
 
     public fun is_init_comm():bool {
-      exists<CommunityTransfers>(0x0)
+      exists<CommunityTransfers>(@0x0)
     }
 
     public fun set_comm(sig: &signer) acquires CommunityWallets {
-      if (exists<CommunityWallets>(0x0)) {
+      if (exists<CommunityWallets>(@0x0)) {
         let addr = Signer::address_of(sig);
         let list = get_comm_list();
         if (!Vector::contains<address>(&list, &addr)) {
-            let s = borrow_global_mut<CommunityWallets>(0x0);
+            let s = borrow_global_mut<CommunityWallets>(@0x0);
             Vector::push_back(&mut s.list, addr);
         };
 
@@ -96,11 +96,11 @@ module Wallet {
     // Utility for vm to remove the CommunityWallet tag from an address
     public fun vm_remove_comm(vm: &signer, addr: address) acquires CommunityWallets {
       CoreAddresses::assert_diem_root(vm);
-      if (exists<CommunityWallets>(0x0)) {
+      if (exists<CommunityWallets>(@0x0)) {
         let list = get_comm_list();
         let (yes, i) = Vector::index_of<address>(&list, &addr);
         if (yes) {
-          let s = borrow_global_mut<CommunityWallets>(0x0);
+          let s = borrow_global_mut<CommunityWallets>(@0x0);
           Vector::remove(&mut s.list, i);
         }
       }
@@ -120,7 +120,7 @@ module Wallet {
         Vector::contains<address>(&list, &sender_addr), Errors::requires_role(ERR_PREFIX + 001)
       );
 
-      let d = borrow_global_mut<CommunityTransfers>(0x0);
+      let d = borrow_global_mut<CommunityTransfers>(@0x0);
       d.max_uid = d.max_uid + 1;
       
       // add current epoch + 1
@@ -147,7 +147,7 @@ module Wallet {
   // utlity to query a CommunityWallet transfer wallet.
   // Note: doesn not need to be a public function, except for use in tests.
   public fun find(uid: u64, type_of: u8): (Option<TimedTransfer>, u64) acquires CommunityTransfers {
-    let c = borrow_global<CommunityTransfers>(0x0);
+    let c = borrow_global<CommunityTransfers>(@0x0);
     let list = if (type_of == 0) {
       &c.proposed
     } else if (type_of == 1) {
@@ -181,7 +181,7 @@ module Wallet {
     );
     let (opt, i) = find(uid, PROPOSED);
     if (Option::is_some<TimedTransfer>(&opt)) {
-      let c = borrow_global_mut<CommunityTransfers>(0x0);
+      let c = borrow_global_mut<CommunityTransfers>(@0x0);
       let t = Vector::borrow_mut<TimedTransfer>(&mut c.proposed, i);
       // add voters address to the veto list
       Vector::push_back<address>(&mut t.veto.list, addr);
@@ -197,7 +197,7 @@ module Wallet {
 
   // private function. Once vetoed, the CommunityWallet transaction is remove from proposed list.
   fun reject(uid: u64) acquires CommunityTransfers, CommunityFreeze {
-    let c = borrow_global_mut<CommunityTransfers>(0x0);
+    let c = borrow_global_mut<CommunityTransfers>(@0x0);
     let list = *&c.proposed;
     let len = Vector::length(&list);
     let i = 0;
@@ -222,7 +222,7 @@ module Wallet {
   // does not remove an address if not in the validator set, in case the validator returns
   // to the set on the next tally.
   fun tally_veto(index: u64): bool acquires CommunityTransfers {
-    let c = borrow_global_mut<CommunityTransfers>(0x0);
+    let c = borrow_global_mut<CommunityTransfers>(@0x0);
     let t = Vector::borrow_mut<TimedTransfer>(&mut c.proposed, index);
 
     let votes = 0;
@@ -265,7 +265,7 @@ module Wallet {
   // Utility to list CommunityWallet transfers due, by epoch. Anyone can call this.
   // This is used by VM in DiemAccount at epoch boundaries to process the wallet transfers.
   public fun list_tx_by_epoch(epoch: u64): vector<TimedTransfer> acquires CommunityTransfers {
-      let c = borrow_global_mut<CommunityTransfers>(0x0);
+      let c = borrow_global_mut<CommunityTransfers>(@0x0);
       // reset approved list
       c.approved = Vector::empty<TimedTransfer>();
       // loop proposed list
@@ -366,8 +366,8 @@ module Wallet {
 
     // Getter for retrieving the list of community wallets.
     public fun get_comm_list(): vector<address> acquires CommunityWallets{
-      if (exists<CommunityWallets>(0x0)) {
-        let s = borrow_global<CommunityWallets>(0x0);
+      if (exists<CommunityWallets>(@0x0)) {
+        let s = borrow_global<CommunityWallets>(@0x0);
         return *&s.list
       } else {
         return Vector::empty<address>()
@@ -376,7 +376,7 @@ module Wallet {
 
     // getter to check if is a CommunityWallet
     public fun is_comm(addr: address): bool acquires CommunityWallets{
-      let s = borrow_global<CommunityWallets>(0x0);
+      let s = borrow_global<CommunityWallets>(@0x0);
       Vector::contains<address>(&s.list, &addr)
     }
 

@@ -14,10 +14,12 @@ of the <code><a href="DiemSystem.md#0x1_DiemSystem_DiemSystem">DiemSystem::DiemS
 -  [Resource `ValidatorConfig`](#0x1_ValidatorConfig_ValidatorConfig)
 -  [Constants](#@Constants_0)
 -  [Function `publish`](#0x1_ValidatorConfig_publish)
+-  [Function `publish_with_proof`](#0x1_ValidatorConfig_publish_with_proof)
 -  [Function `exists_config`](#0x1_ValidatorConfig_exists_config)
 -  [Function `set_operator`](#0x1_ValidatorConfig_set_operator)
 -  [Function `remove_operator`](#0x1_ValidatorConfig_remove_operator)
 -  [Function `set_config`](#0x1_ValidatorConfig_set_config)
+-  [Function `init_val_config_with_proof`](#0x1_ValidatorConfig_init_val_config_with_proof)
 -  [Function `is_valid`](#0x1_ValidatorConfig_is_valid)
 -  [Function `get_config`](#0x1_ValidatorConfig_get_config)
 -  [Function `get_human_name`](#0x1_ValidatorConfig_get_human_name)
@@ -130,7 +132,7 @@ of the <code><a href="DiemSystem.md#0x1_DiemSystem_DiemSystem">DiemSystem::DiemS
 The provided consensus public key is malformed
 
 
-<pre><code><b>const</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_EINVALID_CONSENSUS_KEY">EINVALID_CONSENSUS_KEY</a>: u64 = 2;
+<pre><code><b>const</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_EINVALID_CONSENSUS_KEY">EINVALID_CONSENSUS_KEY</a>: u64 = 22002;
 </code></pre>
 
 
@@ -140,7 +142,7 @@ The provided consensus public key is malformed
 The sender is not the operator for the specified validator
 
 
-<pre><code><b>const</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_EINVALID_TRANSACTION_SENDER">EINVALID_TRANSACTION_SENDER</a>: u64 = 1;
+<pre><code><b>const</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_EINVALID_TRANSACTION_SENDER">EINVALID_TRANSACTION_SENDER</a>: u64 = 22001;
 </code></pre>
 
 
@@ -150,7 +152,7 @@ The sender is not the operator for the specified validator
 Tried to set an account without the correct operator role as a Validator Operator
 
 
-<pre><code><b>const</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_ENOT_A_VALIDATOR_OPERATOR">ENOT_A_VALIDATOR_OPERATOR</a>: u64 = 3;
+<pre><code><b>const</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_ENOT_A_VALIDATOR_OPERATOR">ENOT_A_VALIDATOR_OPERATOR</a>: u64 = 22003;
 </code></pre>
 
 
@@ -160,7 +162,7 @@ Tried to set an account without the correct operator role as a Validator Operato
 The <code><a href="ValidatorConfig.md#0x1_ValidatorConfig">ValidatorConfig</a></code> resource was not in the required state
 
 
-<pre><code><b>const</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_EVALIDATOR_CONFIG">EVALIDATOR_CONFIG</a>: u64 = 0;
+<pre><code><b>const</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_EVALIDATOR_CONFIG">EVALIDATOR_CONFIG</a>: u64 = 22000;
 </code></pre>
 
 
@@ -230,6 +232,70 @@ and the address of the validator operator.
     <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotValidator">Roles::AbortsIfNotValidator</a>{validator_addr: validator_addr};
     <b>aborts_if</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_exists_config">exists_config</a>(validator_addr)
         <b>with</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a>;
+}
+</code></pre>
+
+
+
+
+<pre><code><b>include</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_PublishWProofAbortsIf">PublishWProofAbortsIf</a> {validator_addr: <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(validator_account)};
+<b>ensures</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_exists_config">exists_config</a>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(validator_account));
+</code></pre>
+
+
+
+
+<a name="0x1_ValidatorConfig_PublishWProofAbortsIf"></a>
+
+
+<pre><code><b>schema</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_PublishWProofAbortsIf">PublishWProofAbortsIf</a> {
+    validator_addr: address;
+    <b>include</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp_AbortsIfNotOperating">DiemTimestamp::AbortsIfNotOperating</a>;
+    <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotValidator">Roles::AbortsIfNotValidator</a>{validator_addr: validator_addr};
+    <b>aborts_if</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_exists_config">exists_config</a>(validator_addr)
+        <b>with</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a>;
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ValidatorConfig_publish_with_proof"></a>
+
+## Function `publish_with_proof`
+
+Publishes a mostly empty ValidatorConfig struct. Eventually, it
+will have critical info such as keys, network addresses for validators,
+and the address of the validator operator.
+Permissions: PUBLIC, ANYONE, SIGNER
+Needs to be a signer, is called from DiemAccount, which can create a signer. Otherwise, not callable publicly, and can only grant role to the signer's address.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_publish_with_proof">publish_with_proof</a>(validator_account: &signer, human_name: vector&lt;u8&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_publish_with_proof">publish_with_proof</a>(
+    validator_account: &signer,
+    human_name: vector&lt;u8&gt;,
+) {
+    <a href="DiemTimestamp.md#0x1_DiemTimestamp_assert_operating">DiemTimestamp::assert_operating</a>();
+    <a href="Roles.md#0x1_Roles_assert_validator">Roles::assert_validator</a>(validator_account);
+    <b>assert</b>(
+        !<b>exists</b>&lt;<a href="ValidatorConfig.md#0x1_ValidatorConfig">ValidatorConfig</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(validator_account)),
+        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_already_published">Errors::already_published</a>(<a href="ValidatorConfig.md#0x1_ValidatorConfig_EVALIDATOR_CONFIG">EVALIDATOR_CONFIG</a>)
+    );
+    move_to(validator_account, <a href="ValidatorConfig.md#0x1_ValidatorConfig">ValidatorConfig</a> {
+        config: <a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_none">Option::none</a>(),
+        operator_account: <a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_none">Option::none</a>(),
+        human_name,
+    });
 }
 </code></pre>
 
@@ -495,6 +561,49 @@ of the DiemSystem's code.
         <b>with</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
     <b>include</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_AbortsIfGetOperator">AbortsIfGetOperator</a>{addr: validator_addr};
     <b>aborts_if</b> !<a href="Signature.md#0x1_Signature_ed25519_validate_pubkey">Signature::ed25519_validate_pubkey</a>(consensus_pubkey) <b>with</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ValidatorConfig_init_val_config_with_proof"></a>
+
+## Function `init_val_config_with_proof`
+
+Sets a validator config from proof
+Permissions: PUBLIC, ANYONE, SIGNER
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_init_val_config_with_proof">init_val_config_with_proof</a>(validator_account: &signer, consensus_pubkey: vector&lt;u8&gt;, validator_network_addresses: vector&lt;u8&gt;, fullnode_network_addresses: vector&lt;u8&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_init_val_config_with_proof">init_val_config_with_proof</a>(
+    validator_account: &signer,
+    consensus_pubkey: vector&lt;u8&gt;,
+    validator_network_addresses: vector&lt;u8&gt;,
+    fullnode_network_addresses: vector&lt;u8&gt;,
+) <b>acquires</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig">ValidatorConfig</a> {
+    <b>let</b> validator_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(validator_account);
+    <b>assert</b>(
+        <a href="Signature.md#0x1_Signature_ed25519_validate_pubkey">Signature::ed25519_validate_pubkey</a>(<b>copy</b> consensus_pubkey),
+        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="ValidatorConfig.md#0x1_ValidatorConfig_EINVALID_CONSENSUS_KEY">EINVALID_CONSENSUS_KEY</a>)
+    );
+    // // TODO(valerini): verify the proof of posession for consensus_pubkey
+    <b>assert</b>(<a href="ValidatorConfig.md#0x1_ValidatorConfig_exists_config">exists_config</a>(validator_addr), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="ValidatorConfig.md#0x1_ValidatorConfig_EVALIDATOR_CONFIG">EVALIDATOR_CONFIG</a>));
+    <b>let</b> t_ref = borrow_global_mut&lt;<a href="ValidatorConfig.md#0x1_ValidatorConfig">ValidatorConfig</a>&gt;(validator_addr);
+    t_ref.config = <a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_some">Option::some</a>(<a href="ValidatorConfig.md#0x1_ValidatorConfig_Config">Config</a> {
+        consensus_pubkey,
+        validator_network_addresses,
+        fullnode_network_addresses,
+    });
 }
 </code></pre>
 

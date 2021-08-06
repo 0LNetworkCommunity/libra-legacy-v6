@@ -450,7 +450,7 @@ address 0x1 {
     ) acquires FullnodeSubsidy {
       Roles::assert_diem_root(vm);
       assert(is_testnet(), Errors::invalid_state(190108));
-      let state = borrow_global_mut<FullnodeSubsidy>(0x0);
+      let state = borrow_global_mut<FullnodeSubsidy>(@0x0);
       state.previous_epoch_proofs = previous_epoch_proofs;
       state.current_proof_price = current_proof_price;
       state.current_cap = current_cap;

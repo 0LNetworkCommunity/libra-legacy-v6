@@ -182,7 +182,7 @@ address 0x1 {
       // Function code: 04
       public fun test_helper_query_oracle_votes(): vector<address> acquires Oracles {
         assert(Testnet::is_testnet(), Errors::invalid_state(150004));
-        let s = borrow_global<Oracles>(0x0);
+        let s = borrow_global<Oracles>(@0x0);
         let len = Vector::length<Vote>(&s.upgrade.votes);
     
         let voters = Vector::empty<address>();

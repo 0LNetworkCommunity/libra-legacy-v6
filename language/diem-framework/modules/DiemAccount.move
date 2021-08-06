@@ -1598,8 +1598,6 @@ module DiemAccount {
         //////// 0L ////////
         TrustedAccounts::initialize(&new_account);
         Wallet::set_slow(&new_account);
-
-        destroy_signer(new_account);
     }
     spec make_account {
         pragma opaque;
@@ -2925,7 +2923,7 @@ module DiemAccount {
       CoreAddresses::assert_diem_root(vm);
       let sig = create_signer(addr);
       Wallet::set_slow(&sig);
-      destroy_signer(sig);
+      // destroy_signer(sig); // 0L todo: fn deleted
     }    
 
     /////// TEST HELPERS //////
@@ -2939,10 +2937,10 @@ module DiemAccount {
     } 
 
     /////// 0L /////////
-    public fun test_helper_destroy_signer(vm: &signer, to_destroy: signer) {
+    public fun test_helper_destroy_signer(vm: &signer, _to_destroy: signer) {
         CoreAddresses::assert_diem_root(vm);
         assert(is_testnet(), 120103011021);
-        destroy_signer(to_destroy);
+        // destroy_signer(sig); // 0L todo: fn deleted
     }    
 }
 }

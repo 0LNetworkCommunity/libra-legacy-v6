@@ -1470,7 +1470,9 @@ pub enum ScriptFunctionCall {
     /// * `AccountCreationScripts::create_child_vasp_account`
     /// * `AccountCreationScripts::create_parent_vasp_account`
     /// * `PaymentScripts::peer_to_peer_with_metadata`
-    AddCurrencyToAccount { currency: TypeTag },
+    AddCurrencyToAccount {
+        currency: TypeTag,
+    },
 
     /// # Summary
     /// Add a DiemID domain to parent VASP account. The transaction can only be sent by
@@ -1541,7 +1543,9 @@ pub enum ScriptFunctionCall {
     /// # Related Scripts
     /// * `AccountAdministrationScripts::create_recovery_address`
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_recovery_address`
-    AddRecoveryRotationCapability { recovery_address: AccountAddress },
+    AddRecoveryRotationCapability {
+        recovery_address: AccountAddress,
+    },
 
     /// # Summary
     /// Adds a validator account to the validator set, and triggers a
@@ -1595,6 +1599,18 @@ pub enum ScriptFunctionCall {
         validator_address: AccountAddress,
     },
 
+    AutopayCreateInstruction {
+        uid: u64,
+        in_type: u8,
+        payee: AccountAddress,
+        end_epoch: u64,
+        value: u64,
+    },
+
+    AutopayDisable {},
+
+    AutopayEnable {},
+
     /// # Summary
     /// Burns the transaction fees collected in the `CoinType` currency so that the
     /// Diem association may reclaim the backing coins off-chain. May only be sent
@@ -1630,7 +1646,9 @@ pub enum ScriptFunctionCall {
     /// # Related Scripts
     /// * `TreasuryComplianceScripts::burn_with_amount`
     /// * `TreasuryComplianceScripts::cancel_burn_with_amount`
-    BurnTxnFees { coin_type: TypeTag },
+    BurnTxnFees {
+        coin_type: TypeTag,
+    },
 
     /// # Summary
     /// Burns the coins held in a preburn resource in the preburn queue at the
@@ -1744,6 +1762,23 @@ pub enum ScriptFunctionCall {
         token: TypeTag,
         preburn_address: AccountAddress,
         amount: u64,
+    },
+
+    CreateAccUser {
+        challenge: Bytes,
+        solution: Bytes,
+    },
+
+    CreateAccVal {
+        challenge: Bytes,
+        solution: Bytes,
+        ow_human_name: Bytes,
+        op_address: AccountAddress,
+        op_auth_key_prefix: Bytes,
+        op_consensus_pubkey: Bytes,
+        op_validator_network_addresses: Bytes,
+        op_fullnode_network_addresses: Bytes,
+        op_human_name: Bytes,
     },
 
     /// # Summary
@@ -2090,6 +2125,10 @@ pub enum ScriptFunctionCall {
         human_name: Bytes,
     },
 
+    DemoE2e {
+        world: u64,
+    },
+
     /// # Summary
     /// Freezes the account at `address`. The sending account of this transaction
     /// must be the Treasury Compliance account. The account being frozen cannot be
@@ -2160,7 +2199,39 @@ pub enum ScriptFunctionCall {
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`                | The `sliding_nonce` is too far in the future.                                              |
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED`       | The `sliding_nonce` has been previously recorded.                                          |
     /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::EDIEM_ROOT`                   | `account` is not the Diem Root account.                                                    |
-    InitializeDiemConsensusConfig { sliding_nonce: u64 },
+    InitializeDiemConsensusConfig {
+        sliding_nonce: u64,
+    },
+
+    Join {},
+
+    Leave {},
+
+    MinerstateCommit {
+        challenge: Bytes,
+        solution: Bytes,
+    },
+
+    MinerstateCommitByOperator {
+        owner_address: AccountAddress,
+        challenge: Bytes,
+        solution: Bytes,
+    },
+
+    MinerstateHelper {},
+
+    OlOracleTx {
+        id: u64,
+        data: Bytes,
+    },
+
+    OlReconfigBulkUpdateSetup {
+        alice: AccountAddress,
+        bob: AccountAddress,
+        carol: AccountAddress,
+        sha: AccountAddress,
+        ram: AccountAddress,
+    },
 
     /// # Summary
     /// Transfers a given number of coins in a specified currency from one account to another.
@@ -2267,7 +2338,10 @@ pub enum ScriptFunctionCall {
     /// * `TreasuryComplianceScripts::cancel_burn_with_amount`
     /// * `TreasuryComplianceScripts::burn_with_amount`
     /// * `TreasuryComplianceScripts::burn_txn_fees`
-    Preburn { token: TypeTag, amount: u64 },
+    Preburn {
+        token: TypeTag,
+        amount: u64,
+    },
 
     /// # Summary
     /// Rotates the authentication key of the sending account to the newly-specified ed25519 public key and
@@ -2296,7 +2370,9 @@ pub enum ScriptFunctionCall {
     ///
     /// # Related Scripts
     /// * `AccountAdministrationScripts::rotate_shared_ed25519_public_key`
-    PublishSharedEd25519PublicKey { public_key: Bytes },
+    PublishSharedEd25519PublicKey {
+        public_key: Bytes,
+    },
 
     /// # Summary
     /// Updates a validator's configuration. This does not reconfigure the system and will not update
@@ -2443,7 +2519,9 @@ pub enum ScriptFunctionCall {
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_nonce`
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_nonce_admin`
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_recovery_address`
-    RotateAuthenticationKey { new_key: Bytes },
+    RotateAuthenticationKey {
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the sender's authentication key to the supplied new authentication key. May be sent by
@@ -2477,7 +2555,10 @@ pub enum ScriptFunctionCall {
     /// * `AccountAdministrationScripts::rotate_authentication_key`
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_nonce_admin`
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_recovery_address`
-    RotateAuthenticationKeyWithNonce { sliding_nonce: u64, new_key: Bytes },
+    RotateAuthenticationKeyWithNonce {
+        sliding_nonce: u64,
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the specified account's authentication key to the supplied new authentication key. May
@@ -2511,7 +2592,10 @@ pub enum ScriptFunctionCall {
     /// * `AccountAdministrationScripts::rotate_authentication_key`
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_nonce`
     /// * `AccountAdministrationScripts::rotate_authentication_key_with_recovery_address`
-    RotateAuthenticationKeyWithNonceAdmin { sliding_nonce: u64, new_key: Bytes },
+    RotateAuthenticationKeyWithNonceAdmin {
+        sliding_nonce: u64,
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the authentication key of a specified account that is part of a recovery address to a
@@ -2588,7 +2672,10 @@ pub enum ScriptFunctionCall {
     /// * `AccountCreationScripts::create_parent_vasp_account`
     /// * `AccountCreationScripts::create_designated_dealer`
     /// * `AccountAdministrationScripts::rotate_dual_attestation_info`
-    RotateDualAttestationInfo { new_url: Bytes, new_key: Bytes },
+    RotateDualAttestationInfo {
+        new_url: Bytes,
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the authentication key in a `SharedEd25519PublicKey`. This transaction can be sent by
@@ -2616,7 +2703,9 @@ pub enum ScriptFunctionCall {
     ///
     /// # Related Scripts
     /// * `AccountAdministrationScripts::publish_shared_ed25519_public_key`
-    RotateSharedEd25519PublicKey { public_key: Bytes },
+    RotateSharedEd25519PublicKey {
+        public_key: Bytes,
+    },
 
     /// # Summary
     /// Updates the gas constants stored on chain and used by the VM for gas
@@ -2805,6 +2894,10 @@ pub enum ScriptFunctionCall {
         operator_account: AccountAddress,
     },
 
+    SetWalletType {
+        type_of: u8,
+    },
+
     /// # Summary
     /// Mints a specified number of coins in a currency to a Designated Dealer. The sending account
     /// must be the Treasury Compliance account, and coins can only be minted to a Designated Dealer
@@ -2926,7 +3019,10 @@ pub enum ScriptFunctionCall {
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`                | The `sliding_nonce` is too far in the future.                                              |
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED`       | The `sliding_nonce` has been previously recorded.                                          |
     /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::EDIEM_ROOT`                   | `account` is not the Diem Root account.                                                    |
-    UpdateDiemConsensusConfig { sliding_nonce: u64, config: Bytes },
+    UpdateDiemConsensusConfig {
+        sliding_nonce: u64,
+        config: Bytes,
+    },
 
     /// # Summary
     /// Updates the Diem major version that is stored on-chain and is used by the VM.  This
@@ -2954,7 +3050,10 @@ pub enum ScriptFunctionCall {
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED`       | The `sliding_nonce` has been previously recorded.                                          |
     /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::EDIEM_ROOT`                   | `account` is not the Diem Root account.                                                    |
     /// | `Errors::INVALID_ARGUMENT` | `DiemVersion::EINVALID_MAJOR_VERSION_NUMBER`  | `major` is less-than or equal to the current major version stored on-chain.                |
-    UpdateDiemVersion { sliding_nonce: u64, major: u64 },
+    UpdateDiemVersion {
+        sliding_nonce: u64,
+        major: u64,
+    },
 
     /// # Summary
     /// Update the dual attestation limit on-chain. Defined in terms of micro-XDX.  The transaction can
@@ -3003,7 +3102,7 @@ pub enum ScriptFunctionCall {
     /// | Name                            | Type     | Description                                                                                                                        |
     /// | ------                          | ------   | -------------                                                                                                                      |
     /// | `Currency`                      | Type     | The Move type for the `Currency` whose exchange rate is being updated. `Currency` must be an already-registered currency on-chain. |
-    /// | `tc_account`                    | `signer` | The signer of the sending account of this transaction. Must be the Treasury Compliance account.                                    |
+    /// | `dm_account`                    | `signer` | The signer of the sending account of this transaction. Must be the Treasury Compliance account.                                    |
     /// | `sliding_nonce`                 | `u64`    | The `sliding_nonce` (see: `SlidingNonce`) to be used for the transaction.                                                          |
     /// | `new_exchange_rate_numerator`   | `u64`    | The numerator for the new to micro-XDX exchange rate for `Currency`.                                                               |
     /// | `new_exchange_rate_denominator` | `u64`    | The denominator for the new to micro-XDX exchange rate for `Currency`.                                                             |
@@ -3011,12 +3110,12 @@ pub enum ScriptFunctionCall {
     /// # Common Abort Conditions
     /// | Error Category             | Error Reason                            | Description                                                                                |
     /// | ----------------           | --------------                          | -------------                                                                              |
-    /// | `Errors::NOT_PUBLISHED`    | `SlidingNonce::ESLIDING_NONCE`          | A `SlidingNonce` resource is not published under `tc_account`.                             |
+    /// | `Errors::NOT_PUBLISHED`    | `SlidingNonce::ESLIDING_NONCE`          | A `SlidingNonce` resource is not published under `dm_account`.                             |
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_OLD`          | The `sliding_nonce` is too old and it's impossible to determine if it's duplicated or not. |
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`          | The `sliding_nonce` is too far in the future.                                              |
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED` | The `sliding_nonce` has been previously recorded.                                          |
-    /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE`   | `tc_account` is not the Treasury Compliance account.                                       |
-    /// | `Errors::REQUIRES_ROLE`    | `Roles::ETREASURY_COMPLIANCE`           | `tc_account` is not the Treasury Compliance account.                                       |
+    /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE`   | `dm_account` is not the Treasury Compliance account.                                       |
+    /// | `Errors::REQUIRES_ROLE`    | `Roles::ETREASURY_COMPLIANCE`           | `dm_account` is not the Treasury Compliance account.                                       |
     /// | `Errors::INVALID_ARGUMENT` | `FixedPoint32::EDENOMINATOR`            | `new_exchange_rate_denominator` is zero.                                                   |
     /// | `Errors::INVALID_ARGUMENT` | `FixedPoint32::ERATIO_OUT_OF_RANGE`     | The quotient is unrepresentable as a `FixedPoint32`.                                       |
     /// | `Errors::LIMIT_EXCEEDED`   | `FixedPoint32::ERATIO_OUT_OF_RANGE`     | The quotient is unrepresentable as a `FixedPoint32`.                                       |
@@ -3062,6 +3161,8 @@ pub enum ScriptFunctionCall {
         currency: TypeTag,
         allow_minting: bool,
     },
+
+    ValAddSelf {},
 }
 
 impl ScriptCall {
@@ -3366,6 +3467,17 @@ impl ScriptFunctionCall {
                 validator_name,
                 validator_address,
             ),
+            AutopayCreateInstruction {
+                uid,
+                in_type,
+                payee,
+                end_epoch,
+                value,
+            } => encode_autopay_create_instruction_script_function(
+                uid, in_type, payee, end_epoch, value,
+            ),
+            AutopayDisable {} => encode_autopay_disable_script_function(),
+            AutopayEnable {} => encode_autopay_enable_script_function(),
             BurnTxnFees { coin_type } => encode_burn_txn_fees_script_function(coin_type),
             BurnWithAmount {
                 token,
@@ -3383,6 +3495,31 @@ impl ScriptFunctionCall {
                 preburn_address,
                 amount,
             } => encode_cancel_burn_with_amount_script_function(token, preburn_address, amount),
+            CreateAccUser {
+                challenge,
+                solution,
+            } => encode_create_acc_user_script_function(challenge, solution),
+            CreateAccVal {
+                challenge,
+                solution,
+                ow_human_name,
+                op_address,
+                op_auth_key_prefix,
+                op_consensus_pubkey,
+                op_validator_network_addresses,
+                op_fullnode_network_addresses,
+                op_human_name,
+            } => encode_create_acc_val_script_function(
+                challenge,
+                solution,
+                ow_human_name,
+                op_address,
+                op_auth_key_prefix,
+                op_consensus_pubkey,
+                op_validator_network_addresses,
+                op_fullnode_network_addresses,
+                op_human_name,
+            ),
             CreateChildVaspAccount {
                 coin_type,
                 child_address,
@@ -3450,6 +3587,7 @@ impl ScriptFunctionCall {
                 auth_key_prefix,
                 human_name,
             ),
+            DemoE2e { world } => encode_demo_e2e_script_function(world),
             FreezeAccount {
                 sliding_nonce,
                 to_freeze_account,
@@ -3457,6 +3595,30 @@ impl ScriptFunctionCall {
             InitializeDiemConsensusConfig { sliding_nonce } => {
                 encode_initialize_diem_consensus_config_script_function(sliding_nonce)
             }
+            Join {} => encode_join_script_function(),
+            Leave {} => encode_leave_script_function(),
+            MinerstateCommit {
+                challenge,
+                solution,
+            } => encode_minerstate_commit_script_function(challenge, solution),
+            MinerstateCommitByOperator {
+                owner_address,
+                challenge,
+                solution,
+            } => encode_minerstate_commit_by_operator_script_function(
+                owner_address,
+                challenge,
+                solution,
+            ),
+            MinerstateHelper {} => encode_minerstate_helper_script_function(),
+            OlOracleTx { id, data } => encode_ol_oracle_tx_script_function(id, data),
+            OlReconfigBulkUpdateSetup {
+                alice,
+                bob,
+                carol,
+                sha,
+                ram,
+            } => encode_ol_reconfig_bulk_update_setup_script_function(alice, bob, carol, sha, ram),
             PeerToPeerWithMetadata {
                 currency,
                 payee,
@@ -3579,6 +3741,7 @@ impl ScriptFunctionCall {
                 operator_name,
                 operator_account,
             ),
+            SetWalletType { type_of } => encode_set_wallet_type_script_function(type_of),
             TieredMint {
                 coin_type,
                 sliding_nonce,
@@ -3626,6 +3789,7 @@ impl ScriptFunctionCall {
                 currency,
                 allow_minting,
             } => encode_update_minting_ability_script_function(currency, allow_minting),
+            ValAddSelf {} => encode_val_add_self_script_function(),
         }
     }
 
@@ -3849,6 +4013,54 @@ pub fn encode_add_validator_and_reconfigure_script_function(
     ))
 }
 
+pub fn encode_autopay_create_instruction_script_function(
+    uid: u64,
+    in_type: u8,
+    payee: AccountAddress,
+    end_epoch: u64,
+    value: u64,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("AutoPayScripts").to_owned(),
+        ),
+        ident_str!("autopay_create_instruction").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&uid).unwrap(),
+            bcs::to_bytes(&in_type).unwrap(),
+            bcs::to_bytes(&payee).unwrap(),
+            bcs::to_bytes(&end_epoch).unwrap(),
+            bcs::to_bytes(&value).unwrap(),
+        ],
+    ))
+}
+
+pub fn encode_autopay_disable_script_function() -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("AutoPayScripts").to_owned(),
+        ),
+        ident_str!("autopay_disable").to_owned(),
+        vec![],
+        vec![],
+    ))
+}
+
+pub fn encode_autopay_enable_script_function() -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("AutoPayScripts").to_owned(),
+        ),
+        ident_str!("autopay_enable").to_owned(),
+        vec![],
+        vec![],
+    ))
+}
+
 /// # Summary
 /// Burns the transaction fees collected in the `CoinType` currency so that the
 /// Diem association may reclaim the backing coins off-chain. May only be sent
@@ -4033,6 +4245,56 @@ pub fn encode_cancel_burn_with_amount_script_function(
         vec![
             bcs::to_bytes(&preburn_address).unwrap(),
             bcs::to_bytes(&amount).unwrap(),
+        ],
+    ))
+}
+
+pub fn encode_create_acc_user_script_function(
+    challenge: Vec<u8>,
+    solution: Vec<u8>,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("AccountScripts").to_owned(),
+        ),
+        ident_str!("create_acc_user").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&challenge).unwrap(),
+            bcs::to_bytes(&solution).unwrap(),
+        ],
+    ))
+}
+
+pub fn encode_create_acc_val_script_function(
+    challenge: Vec<u8>,
+    solution: Vec<u8>,
+    ow_human_name: Vec<u8>,
+    op_address: AccountAddress,
+    op_auth_key_prefix: Vec<u8>,
+    op_consensus_pubkey: Vec<u8>,
+    op_validator_network_addresses: Vec<u8>,
+    op_fullnode_network_addresses: Vec<u8>,
+    op_human_name: Vec<u8>,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("AccountScripts").to_owned(),
+        ),
+        ident_str!("create_acc_val").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&challenge).unwrap(),
+            bcs::to_bytes(&solution).unwrap(),
+            bcs::to_bytes(&ow_human_name).unwrap(),
+            bcs::to_bytes(&op_address).unwrap(),
+            bcs::to_bytes(&op_auth_key_prefix).unwrap(),
+            bcs::to_bytes(&op_consensus_pubkey).unwrap(),
+            bcs::to_bytes(&op_validator_network_addresses).unwrap(),
+            bcs::to_bytes(&op_fullnode_network_addresses).unwrap(),
+            bcs::to_bytes(&op_human_name).unwrap(),
         ],
     ))
 }
@@ -4478,6 +4740,18 @@ pub fn encode_create_validator_operator_account_script_function(
     ))
 }
 
+pub fn encode_demo_e2e_script_function(world: u64) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("DemoScripts").to_owned(),
+        ),
+        ident_str!("demo_e2e").to_owned(),
+        vec![],
+        vec![bcs::to_bytes(&world).unwrap()],
+    ))
+}
+
 /// # Summary
 /// Freezes the account at `address`. The sending account of this transaction
 /// must be the Treasury Compliance account. The account being frozen cannot be
@@ -4572,6 +4846,116 @@ pub fn encode_initialize_diem_consensus_config_script_function(
         ident_str!("initialize_diem_consensus_config").to_owned(),
         vec![],
         vec![bcs::to_bytes(&sliding_nonce).unwrap()],
+    ))
+}
+
+pub fn encode_join_script_function() -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("ValidatorScripts").to_owned(),
+        ),
+        ident_str!("join").to_owned(),
+        vec![],
+        vec![],
+    ))
+}
+
+pub fn encode_leave_script_function() -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("ValidatorScripts").to_owned(),
+        ),
+        ident_str!("leave").to_owned(),
+        vec![],
+        vec![],
+    ))
+}
+
+pub fn encode_minerstate_commit_script_function(
+    challenge: Vec<u8>,
+    solution: Vec<u8>,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("MinerStateScripts").to_owned(),
+        ),
+        ident_str!("minerstate_commit").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&challenge).unwrap(),
+            bcs::to_bytes(&solution).unwrap(),
+        ],
+    ))
+}
+
+pub fn encode_minerstate_commit_by_operator_script_function(
+    owner_address: AccountAddress,
+    challenge: Vec<u8>,
+    solution: Vec<u8>,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("MinerStateScripts").to_owned(),
+        ),
+        ident_str!("minerstate_commit_by_operator").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&owner_address).unwrap(),
+            bcs::to_bytes(&challenge).unwrap(),
+            bcs::to_bytes(&solution).unwrap(),
+        ],
+    ))
+}
+
+pub fn encode_minerstate_helper_script_function() -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("MinerStateScripts").to_owned(),
+        ),
+        ident_str!("minerstate_helper").to_owned(),
+        vec![],
+        vec![],
+    ))
+}
+
+pub fn encode_ol_oracle_tx_script_function(id: u64, data: Vec<u8>) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("OracleScripts").to_owned(),
+        ),
+        ident_str!("ol_oracle_tx").to_owned(),
+        vec![],
+        vec![bcs::to_bytes(&id).unwrap(), bcs::to_bytes(&data).unwrap()],
+    ))
+}
+
+pub fn encode_ol_reconfig_bulk_update_setup_script_function(
+    alice: AccountAddress,
+    bob: AccountAddress,
+    carol: AccountAddress,
+    sha: AccountAddress,
+    ram: AccountAddress,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("ValidatorScripts").to_owned(),
+        ),
+        ident_str!("ol_reconfig_bulk_update_setup").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&alice).unwrap(),
+            bcs::to_bytes(&bob).unwrap(),
+            bcs::to_bytes(&carol).unwrap(),
+            bcs::to_bytes(&sha).unwrap(),
+            bcs::to_bytes(&ram).unwrap(),
+        ],
     ))
 }
 
@@ -5446,6 +5830,18 @@ pub fn encode_set_validator_operator_with_nonce_admin_script_function(
     ))
 }
 
+pub fn encode_set_wallet_type_script_function(type_of: u8) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("WalletScripts").to_owned(),
+        ),
+        ident_str!("set_wallet_type").to_owned(),
+        vec![],
+        vec![bcs::to_bytes(&type_of).unwrap()],
+    ))
+}
+
 /// # Summary
 /// Mints a specified number of coins in a currency to a Designated Dealer. The sending account
 /// must be the Treasury Compliance account, and coins can only be minted to a Designated Dealer
@@ -5717,7 +6113,7 @@ pub fn encode_update_dual_attestation_limit_script_function(
 /// | Name                            | Type     | Description                                                                                                                        |
 /// | ------                          | ------   | -------------                                                                                                                      |
 /// | `Currency`                      | Type     | The Move type for the `Currency` whose exchange rate is being updated. `Currency` must be an already-registered currency on-chain. |
-/// | `tc_account`                    | `signer` | The signer of the sending account of this transaction. Must be the Treasury Compliance account.                                    |
+/// | `dm_account`                    | `signer` | The signer of the sending account of this transaction. Must be the Treasury Compliance account.                                    |
 /// | `sliding_nonce`                 | `u64`    | The `sliding_nonce` (see: `SlidingNonce`) to be used for the transaction.                                                          |
 /// | `new_exchange_rate_numerator`   | `u64`    | The numerator for the new to micro-XDX exchange rate for `Currency`.                                                               |
 /// | `new_exchange_rate_denominator` | `u64`    | The denominator for the new to micro-XDX exchange rate for `Currency`.                                                             |
@@ -5725,12 +6121,12 @@ pub fn encode_update_dual_attestation_limit_script_function(
 /// # Common Abort Conditions
 /// | Error Category             | Error Reason                            | Description                                                                                |
 /// | ----------------           | --------------                          | -------------                                                                              |
-/// | `Errors::NOT_PUBLISHED`    | `SlidingNonce::ESLIDING_NONCE`          | A `SlidingNonce` resource is not published under `tc_account`.                             |
+/// | `Errors::NOT_PUBLISHED`    | `SlidingNonce::ESLIDING_NONCE`          | A `SlidingNonce` resource is not published under `dm_account`.                             |
 /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_OLD`          | The `sliding_nonce` is too old and it's impossible to determine if it's duplicated or not. |
 /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`          | The `sliding_nonce` is too far in the future.                                              |
 /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED` | The `sliding_nonce` has been previously recorded.                                          |
-/// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE`   | `tc_account` is not the Treasury Compliance account.                                       |
-/// | `Errors::REQUIRES_ROLE`    | `Roles::ETREASURY_COMPLIANCE`           | `tc_account` is not the Treasury Compliance account.                                       |
+/// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE`   | `dm_account` is not the Treasury Compliance account.                                       |
+/// | `Errors::REQUIRES_ROLE`    | `Roles::ETREASURY_COMPLIANCE`           | `dm_account` is not the Treasury Compliance account.                                       |
 /// | `Errors::INVALID_ARGUMENT` | `FixedPoint32::EDENOMINATOR`            | `new_exchange_rate_denominator` is zero.                                                   |
 /// | `Errors::INVALID_ARGUMENT` | `FixedPoint32::ERATIO_OUT_OF_RANGE`     | The quotient is unrepresentable as a `FixedPoint32`.                                       |
 /// | `Errors::LIMIT_EXCEEDED`   | `FixedPoint32::ERATIO_OUT_OF_RANGE`     | The quotient is unrepresentable as a `FixedPoint32`.                                       |
@@ -5798,6 +6194,18 @@ pub fn encode_update_minting_ability_script_function(
         ident_str!("update_minting_ability").to_owned(),
         vec![currency],
         vec![bcs::to_bytes(&allow_minting).unwrap()],
+    ))
+}
+
+pub fn encode_val_add_self_script_function() -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("ValidatorScripts").to_owned(),
+        ),
+        ident_str!("val_add_self").to_owned(),
+        vec![],
+        vec![],
     ))
 }
 
@@ -7530,6 +7938,42 @@ fn decode_add_validator_and_reconfigure_script_function(
     }
 }
 
+fn decode_autopay_create_instruction_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::AutopayCreateInstruction {
+            uid: bcs::from_bytes(script.args().get(0)?).ok()?,
+            in_type: bcs::from_bytes(script.args().get(1)?).ok()?,
+            payee: bcs::from_bytes(script.args().get(2)?).ok()?,
+            end_epoch: bcs::from_bytes(script.args().get(3)?).ok()?,
+            value: bcs::from_bytes(script.args().get(4)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_autopay_disable_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(_script) = payload {
+        Some(ScriptFunctionCall::AutopayDisable {})
+    } else {
+        None
+    }
+}
+
+fn decode_autopay_enable_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(_script) = payload {
+        Some(ScriptFunctionCall::AutopayEnable {})
+    } else {
+        None
+    }
+}
+
 fn decode_burn_txn_fees_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -7565,6 +8009,39 @@ fn decode_cancel_burn_with_amount_script_function(
             token: script.ty_args().get(0)?.clone(),
             preburn_address: bcs::from_bytes(script.args().get(0)?).ok()?,
             amount: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_create_acc_user_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::CreateAccUser {
+            challenge: bcs::from_bytes(script.args().get(0)?).ok()?,
+            solution: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_create_acc_val_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::CreateAccVal {
+            challenge: bcs::from_bytes(script.args().get(0)?).ok()?,
+            solution: bcs::from_bytes(script.args().get(1)?).ok()?,
+            ow_human_name: bcs::from_bytes(script.args().get(2)?).ok()?,
+            op_address: bcs::from_bytes(script.args().get(3)?).ok()?,
+            op_auth_key_prefix: bcs::from_bytes(script.args().get(4)?).ok()?,
+            op_consensus_pubkey: bcs::from_bytes(script.args().get(5)?).ok()?,
+            op_validator_network_addresses: bcs::from_bytes(script.args().get(6)?).ok()?,
+            op_fullnode_network_addresses: bcs::from_bytes(script.args().get(7)?).ok()?,
+            op_human_name: bcs::from_bytes(script.args().get(8)?).ok()?,
         })
     } else {
         None
@@ -7671,6 +8148,16 @@ fn decode_create_validator_operator_account_script_function(
     }
 }
 
+fn decode_demo_e2e_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::DemoE2e {
+            world: bcs::from_bytes(script.args().get(0)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_freeze_account_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -7690,6 +8177,86 @@ fn decode_initialize_diem_consensus_config_script_function(
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::InitializeDiemConsensusConfig {
             sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_join_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(_script) = payload {
+        Some(ScriptFunctionCall::Join {})
+    } else {
+        None
+    }
+}
+
+fn decode_leave_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(_script) = payload {
+        Some(ScriptFunctionCall::Leave {})
+    } else {
+        None
+    }
+}
+
+fn decode_minerstate_commit_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::MinerstateCommit {
+            challenge: bcs::from_bytes(script.args().get(0)?).ok()?,
+            solution: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_minerstate_commit_by_operator_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::MinerstateCommitByOperator {
+            owner_address: bcs::from_bytes(script.args().get(0)?).ok()?,
+            challenge: bcs::from_bytes(script.args().get(1)?).ok()?,
+            solution: bcs::from_bytes(script.args().get(2)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_minerstate_helper_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(_script) = payload {
+        Some(ScriptFunctionCall::MinerstateHelper {})
+    } else {
+        None
+    }
+}
+
+fn decode_ol_oracle_tx_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::OlOracleTx {
+            id: bcs::from_bytes(script.args().get(0)?).ok()?,
+            data: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_ol_reconfig_bulk_update_setup_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::OlReconfigBulkUpdateSetup {
+            alice: bcs::from_bytes(script.args().get(0)?).ok()?,
+            bob: bcs::from_bytes(script.args().get(1)?).ok()?,
+            carol: bcs::from_bytes(script.args().get(2)?).ok()?,
+            sha: bcs::from_bytes(script.args().get(3)?).ok()?,
+            ram: bcs::from_bytes(script.args().get(4)?).ok()?,
         })
     } else {
         None
@@ -7921,6 +8488,18 @@ fn decode_set_validator_operator_with_nonce_admin_script_function(
     }
 }
 
+fn decode_set_wallet_type_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::SetWalletType {
+            type_of: bcs::from_bytes(script.args().get(0)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_tiered_mint_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::TieredMint {
@@ -8010,6 +8589,14 @@ fn decode_update_minting_ability_script_function(
             currency: script.ty_args().get(0)?.clone(),
             allow_minting: bcs::from_bytes(script.args().get(0)?).ok()?,
         })
+    } else {
+        None
+    }
+}
+
+fn decode_val_add_self_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(_script) = payload {
+        Some(ScriptFunctionCall::ValAddSelf {})
     } else {
         None
     }
@@ -8437,6 +9024,18 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_add_validator_and_reconfigure_script_function),
         );
         map.insert(
+            "AutoPayScriptsautopay_create_instruction".to_string(),
+            Box::new(decode_autopay_create_instruction_script_function),
+        );
+        map.insert(
+            "AutoPayScriptsautopay_disable".to_string(),
+            Box::new(decode_autopay_disable_script_function),
+        );
+        map.insert(
+            "AutoPayScriptsautopay_enable".to_string(),
+            Box::new(decode_autopay_enable_script_function),
+        );
+        map.insert(
             "TreasuryComplianceScriptsburn_txn_fees".to_string(),
             Box::new(decode_burn_txn_fees_script_function),
         );
@@ -8447,6 +9046,14 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "TreasuryComplianceScriptscancel_burn_with_amount".to_string(),
             Box::new(decode_cancel_burn_with_amount_script_function),
+        );
+        map.insert(
+            "AccountScriptscreate_acc_user".to_string(),
+            Box::new(decode_create_acc_user_script_function),
+        );
+        map.insert(
+            "AccountScriptscreate_acc_val".to_string(),
+            Box::new(decode_create_acc_val_script_function),
         );
         map.insert(
             "AccountCreationScriptscreate_child_vasp_account".to_string(),
@@ -8477,12 +9084,44 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_create_validator_operator_account_script_function),
         );
         map.insert(
+            "DemoScriptsdemo_e2e".to_string(),
+            Box::new(decode_demo_e2e_script_function),
+        );
+        map.insert(
             "TreasuryComplianceScriptsfreeze_account".to_string(),
             Box::new(decode_freeze_account_script_function),
         );
         map.insert(
             "SystemAdministrationScriptsinitialize_diem_consensus_config".to_string(),
             Box::new(decode_initialize_diem_consensus_config_script_function),
+        );
+        map.insert(
+            "ValidatorScriptsjoin".to_string(),
+            Box::new(decode_join_script_function),
+        );
+        map.insert(
+            "ValidatorScriptsleave".to_string(),
+            Box::new(decode_leave_script_function),
+        );
+        map.insert(
+            "MinerStateScriptsminerstate_commit".to_string(),
+            Box::new(decode_minerstate_commit_script_function),
+        );
+        map.insert(
+            "MinerStateScriptsminerstate_commit_by_operator".to_string(),
+            Box::new(decode_minerstate_commit_by_operator_script_function),
+        );
+        map.insert(
+            "MinerStateScriptsminerstate_helper".to_string(),
+            Box::new(decode_minerstate_helper_script_function),
+        );
+        map.insert(
+            "OracleScriptsol_oracle_tx".to_string(),
+            Box::new(decode_ol_oracle_tx_script_function),
+        );
+        map.insert(
+            "ValidatorScriptsol_reconfig_bulk_update_setup".to_string(),
+            Box::new(decode_ol_reconfig_bulk_update_setup_script_function),
         );
         map.insert(
             "PaymentScriptspeer_to_peer_with_metadata".to_string(),
@@ -8550,6 +9189,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_set_validator_operator_with_nonce_admin_script_function),
         );
         map.insert(
+            "WalletScriptsset_wallet_type".to_string(),
+            Box::new(decode_set_wallet_type_script_function),
+        );
+        map.insert(
             "TreasuryComplianceScriptstiered_mint".to_string(),
             Box::new(decode_tiered_mint_script_function),
         );
@@ -8577,12 +9220,23 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             "TreasuryComplianceScriptsupdate_minting_ability".to_string(),
             Box::new(decode_update_minting_ability_script_function),
         );
+        map.insert(
+            "ValidatorScriptsval_add_self".to_string(),
+            Box::new(decode_val_add_self_script_function),
+        );
         map
     });
 
 fn decode_bool_argument(arg: TransactionArgument) -> Option<bool> {
     match arg {
         TransactionArgument::Bool(value) => Some(value),
+        _ => None,
+    }
+}
+
+fn decode_u8_argument(arg: TransactionArgument) -> Option<u8> {
+    match arg {
+        TransactionArgument::U8(value) => Some(value),
         _ => None,
     }
 }

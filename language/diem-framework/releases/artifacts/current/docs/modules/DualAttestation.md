@@ -38,12 +38,12 @@ Module managing dual attestation.
 <b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event">0x1::Event</a>;
+<b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="Signature.md#0x1_Signature">0x1::Signature</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="VASP.md#0x1_VASP">0x1::VASP</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
-<b>use</b> <a href="XDX.md#0x1_XDX">0x1::XDX</a>;
 </code></pre>
 
 
@@ -360,7 +360,7 @@ the <code>created</code> account must send a transaction that invokes <code>rota
     human_name: vector&lt;u8&gt;,
 ) {
     <a href="Roles.md#0x1_Roles_assert_parent_vasp_or_designated_dealer">Roles::assert_parent_vasp_or_designated_dealer</a>(created);
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(creator);
+    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(creator); /////// 0L /////////
     <b>assert</b>(
         !<b>exists</b>&lt;<a href="DualAttestation.md#0x1_DualAttestation_Credential">Credential</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(created)),
         <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_already_published">Errors::already_published</a>(<a href="DualAttestation.md#0x1_DualAttestation_ECREDENTIAL">ECREDENTIAL</a>)
@@ -1254,7 +1254,7 @@ Travel rule limit set during genesis
     <a href="DiemTimestamp.md#0x1_DiemTimestamp_assert_genesis">DiemTimestamp::assert_genesis</a>();
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(dr_account); // operational constraint.
     <b>assert</b>(!<b>exists</b>&lt;<a href="DualAttestation.md#0x1_DualAttestation_Limit">Limit</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_already_published">Errors::already_published</a>(<a href="DualAttestation.md#0x1_DualAttestation_ELIMIT">ELIMIT</a>));
-    <b>let</b> initial_limit = (<a href="DualAttestation.md#0x1_DualAttestation_INITIAL_DUAL_ATTESTATION_LIMIT">INITIAL_DUAL_ATTESTATION_LIMIT</a> <b>as</b> u128) * (<a href="Diem.md#0x1_Diem_scaling_factor">Diem::scaling_factor</a>&lt;<a href="XDX.md#0x1_XDX">XDX</a>&gt;() <b>as</b> u128);
+    <b>let</b> initial_limit = (<a href="DualAttestation.md#0x1_DualAttestation_INITIAL_DUAL_ATTESTATION_LIMIT">INITIAL_DUAL_ATTESTATION_LIMIT</a> <b>as</b> u128) * (<a href="Diem.md#0x1_Diem_scaling_factor">Diem::scaling_factor</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;() <b>as</b> u128);
     <b>assert</b>(initial_limit &lt;= <a href="DualAttestation.md#0x1_DualAttestation_MAX_U64">MAX_U64</a>, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DualAttestation.md#0x1_DualAttestation_ELIMIT">ELIMIT</a>));
     move_to(
         dr_account,
@@ -1277,9 +1277,9 @@ Travel rule limit set during genesis
 <pre><code><b>include</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp_AbortsIfNotGenesis">DiemTimestamp::AbortsIfNotGenesis</a>;
 <b>include</b> <a href="CoreAddresses.md#0x1_CoreAddresses_AbortsIfNotDiemRoot">CoreAddresses::AbortsIfNotDiemRoot</a>{account: dr_account};
 <b>aborts_if</b> <b>exists</b>&lt;<a href="DualAttestation.md#0x1_DualAttestation_Limit">Limit</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()) <b>with</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a>;
-<b>let</b> initial_limit = <a href="DualAttestation.md#0x1_DualAttestation_INITIAL_DUAL_ATTESTATION_LIMIT">INITIAL_DUAL_ATTESTATION_LIMIT</a> * <a href="Diem.md#0x1_Diem_spec_scaling_factor">Diem::spec_scaling_factor</a>&lt;<a href="XDX.md#0x1_XDX">XDX</a>&gt;();
+<b>let</b> initial_limit = <a href="DualAttestation.md#0x1_DualAttestation_INITIAL_DUAL_ATTESTATION_LIMIT">INITIAL_DUAL_ATTESTATION_LIMIT</a> * <a href="Diem.md#0x1_Diem_spec_scaling_factor">Diem::spec_scaling_factor</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;();
 <b>aborts_if</b> initial_limit &gt; <a href="DualAttestation.md#0x1_DualAttestation_MAX_U64">MAX_U64</a> <b>with</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_LIMIT_EXCEEDED">Errors::LIMIT_EXCEEDED</a>;
-<b>include</b> <a href="Diem.md#0x1_Diem_AbortsIfNoCurrency">Diem::AbortsIfNoCurrency</a>&lt;<a href="XDX.md#0x1_XDX">XDX</a>&gt;;
+<b>include</b> <a href="Diem.md#0x1_Diem_AbortsIfNoCurrency">Diem::AbortsIfNoCurrency</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;;
 </code></pre>
 
 
@@ -1344,7 +1344,7 @@ Aborts if <code>tc_account</code> does not have the TreasuryCompliance role
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="DualAttestation.md#0x1_DualAttestation_set_microdiem_limit">set_microdiem_limit</a>(tc_account: &signer, micro_xdx_limit: u64) <b>acquires</b> <a href="DualAttestation.md#0x1_DualAttestation_Limit">Limit</a> {
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(tc_account);
+    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(tc_account); /////// 0L /////////
     <b>assert</b>(<b>exists</b>&lt;<a href="DualAttestation.md#0x1_DualAttestation_Limit">Limit</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DualAttestation.md#0x1_DualAttestation_ELIMIT">ELIMIT</a>));
     borrow_global_mut&lt;<a href="DualAttestation.md#0x1_DualAttestation_Limit">Limit</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).micro_xdx_limit = micro_xdx_limit;
 }

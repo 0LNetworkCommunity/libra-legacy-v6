@@ -371,7 +371,7 @@ address 0x1 {
       let index = find(account, uid);
       if (Option::is_none<u64>(&index)) {
         // Case where payment is not found
-        return (0, 0x0, 0, 0)
+        return (0, @0x0, 0, 0)
       } else {
         let payments = &borrow_global_mut<Data>(account).payments;
         let payment = Vector::borrow(payments, Option::extract<u64>(&mut index));
