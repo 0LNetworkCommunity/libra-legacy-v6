@@ -104,6 +104,7 @@ fn test_client_waypoints() {
         genesis_li
     );
 
+    // This ugly blob is to remove a validator, we can do better... //////// 0L ////////
     // Start next epoch
     let peer_id = env.validator_swarm.get_node(0).unwrap().peer_id();
     let op_tool = get_op_tool(&env.validator_swarm, 1);

@@ -21,6 +21,9 @@ pub struct CreateWaypoint {
     chain_id: Option<ChainId>,
     #[structopt(flatten)]
     shared_backend: SharedBackend,
+    //////// 0L ////////
+    #[structopt(long)]
+    genesis_path: Option<std::path::PathBuf>,    
 }
 
 impl CreateWaypoint {
@@ -28,8 +31,8 @@ impl CreateWaypoint {
         let genesis_helper = crate::genesis::Genesis {
             config: self.config,
             chain_id: self.chain_id,
-            backend: self.shared_backend,
-            path: None,
+            backend: self.shared_backend,            
+            path: self.genesis_path, //////// 0L ////////
         };
 
         let genesis = genesis_helper.execute()?;

@@ -98,6 +98,11 @@ pub fn interpret_with_options(
             TransactionArgument::U8Vector(v) => {
                 MoveValue::Vector(v.into_iter().map(MoveValue::U8).collect())
             }
+            //////// 0L ////////
+            TransactionArgument::AddressVector(v) => {
+                // 0L todo: Not sure about the correctness of this patch
+                MoveValue::Vector(v.into_iter().map(MoveValue::Address).collect())
+            }
         }))
         .collect();
 

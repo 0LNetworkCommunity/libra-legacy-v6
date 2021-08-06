@@ -16,6 +16,8 @@ pub enum Proposer {
 pub enum Entry {
     Proposer(Proposer),
     Timestamp(u64),
+    Round(u64), //////// 0L ////////
+
 }
 
 impl FromStr for Entry {
@@ -47,6 +49,15 @@ impl FromStr for Entry {
         if let Some(s) = s.strip_prefix("block-time:") {
             return Ok(Entry::Timestamp(s.parse::<u64>()?));
         }
+
+        //////// 0L ////////
+        if let Some(s) = s.strip_prefix("round:"){
+            if s.is_empty() {
+                return Ok(Entry::Round(0));
+            }
+            return Ok(Entry::Round(s.parse::<u64>()?));
+        }
+
         Err(ErrorKind::Other(format!(
             "failed to parse '{}' as transaction config entry",
             s
@@ -74,9 +85,11 @@ impl Entry {
     }
 }
 
+//////// 0L ////////
 pub fn build_block_metadata(config: &GlobalConfig, entries: &[Entry]) -> Result<BlockMetadata> {
     let mut timestamp = None;
     let mut proposer = None;
+    let mut round = 0;
     for entry in entries {
         match entry {
             Entry::Proposer(s) => {
@@ -86,11 +99,12 @@ pub fn build_block_metadata(config: &GlobalConfig, entries: &[Entry]) -> Result<
                 };
             }
             Entry::Timestamp(new_timestamp) => timestamp = Some(new_timestamp),
+            Entry::Round(new_round) => round = *new_round
         }
     }
     if let (Some(t), Some(addr)) = (timestamp, proposer) {
         // TODO: Add parser for hash value and vote maps.
-        Ok(BlockMetadata::new(HashValue::zero(), 0, *t, vec![], addr))
+        Ok(BlockMetadata::new(HashValue::zero(), round, *t, vec![], addr))
     } else {
         Err(ErrorKind::Other("Cannot generate block metadata".to_string()).into())
     }

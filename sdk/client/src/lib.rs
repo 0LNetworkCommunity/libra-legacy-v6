@@ -73,6 +73,8 @@ pub enum Method {
     GetEvents,
     GetCurrencies,
     GetNetworkStatus,
+    GetMinerStateView,         /////// 0L /////////
+    GetOracleUpgradeStateView, /////// 0L /////////
 
     //
     // Experimental APIs

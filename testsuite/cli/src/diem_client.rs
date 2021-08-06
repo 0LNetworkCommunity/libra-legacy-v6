@@ -1,8 +1,14 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use anyhow::{ensure, Result};
-use diem_client::{views, BlockingClient, Response, WaitForTransactionError};
+use anyhow::{bail, ensure, Error, Result};
+use diem_client::{
+    views, 
+    views::{MinerStateResourceView, OracleUpgradeStateView},
+    BlockingClient, 
+    Response, 
+    WaitForTransactionError
+};
 use diem_logger::prelude::info;
 use diem_types::{
     account_address::AccountAddress,
@@ -68,6 +74,27 @@ impl DiemClient {
     pub fn get_account(&self, account: &AccountAddress) -> Result<Option<views::AccountView>> {
         self.client
             .get_account(*account)
+            .map_err(Into::into)
+            .map(Response::into_inner)
+    }
+
+    ///////// 0L ////////
+    /// Get miner states for an address.
+    pub fn get_miner_state(
+        &self,
+        account: &AccountAddress,
+    ) -> Result<Option<MinerStateResourceView>> {
+        self.client
+            .get_miner_state(*account)
+            .map_err(Into::into)
+            .map(Response::into_inner)
+    }
+
+    ///////// 0L ////////
+    /// Get state for oracle upgrade
+    pub fn get_oracle_upgrade_state(&self) -> Result<Option<OracleUpgradeStateView>> {
+        self.client
+            .get_oracle_upgrade_state()
             .map_err(Into::into)
             .map(Response::into_inner)
     }
@@ -179,6 +206,17 @@ impl DiemClient {
         Ok(())
     }
 
+    //////// 0L ////////
+    /// generate latest waypoint
+    pub fn waypoint(&self) -> Result<Waypoint, Error> {
+        match self.latest_epoch_change_li() {
+            Some(li) => {
+              Waypoint::new_epoch_boundary(li.ledger_info())
+            },
+            None => Err(Error::msg("No epoch change LedgerInfo found"))
+        }
+    }
+
     /// LedgerInfo corresponding to the latest epoch change.
     pub(crate) fn latest_epoch_change_li(&self) -> Option<&LedgerInfoWithSignatures> {
         self.latest_epoch_change_li.as_ref()
@@ -209,6 +247,29 @@ impl DiemClient {
             .map_err(Into::into)
             .map(Response::into_inner)
     }
+
+    /////// 0L todo /////////
+    // /// Get all transactions for an account within a range
+    // pub fn get_txn_by_acc_range(
+    //     &mut self,
+    //     account: AccountAddress,
+    //     start_height: u64,
+    //     num_txs_limit: u64,
+    //     fetch_events: bool
+    // ) -> Result<Vec<TransactionView>> {
+    //     let mut batch = JsonRpcBatch::new();
+    //     batch.add_get_account_transactions_request(account, start_height, num_txs_limit, fetch_events);
+    //     batch.add_get_state_proof_request(self.trusted_state.latest_version());
+
+    //     let responses = self.client.execute(batch)?;
+    //     let state_proof_view = get_response_from_batch(1, &responses)?.as_ref();
+    //     self.process_state_proof_response(state_proof_view)?;
+
+    //     match get_response_from_batch(0, &responses)? {
+    //         Ok(result) => Ok(TransactionView::vec_from_response(result.clone())?),
+    //         Err(e) => bail!("Failed to get transactions with error: {:?}", e),
+    //     }
+    // }
 
     /// Get transactions in range (start_version..start_version + limit - 1) from validator.
     pub fn get_txn_by_range(

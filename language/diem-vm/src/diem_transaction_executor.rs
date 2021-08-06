@@ -488,7 +488,9 @@ impl DiemVM {
         let mut gas_status = GasStatus::new_unmetered();
         let mut session = self.0.new_session(storage);
 
-        let (round, timestamp, previous_vote, proposer) = block_metadata.into_inner();
+        let (round, timestamp, previous_vote, proposer) = block_metadata.clone().into_inner();
+        if round % 1000 == 0 {println!("======== round is {}", round)}
+
         let args = serialize_values(&vec![
             MoveValue::Signer(txn_data.sender),
             MoveValue::U64(round),
@@ -496,6 +498,7 @@ impl DiemVM {
             MoveValue::Vector(previous_vote.into_iter().map(MoveValue::Address).collect()),
             MoveValue::Address(proposer),
         ]);
+
         session
             .execute_function(
                 &DIEM_BLOCK_MODULE,
@@ -509,6 +512,29 @@ impl DiemVM {
             .or_else(|e| {
                 expect_only_successful_execution(e, BLOCK_PROLOGUE.as_str(), log_context)
             })?;
+
+        //////// 0L ////////
+        // Consensus checking for oracle outcome
+        self.0.tick_oracle_consensus(
+            &mut session, 
+            block_metadata.clone(), 
+            &txn_data, 
+            &mut gas_status, 
+            log_context
+        )?;
+
+        // 0L todo
+        // //////// 0L ////////
+        // // Apply upgrade for Upgrade oracle
+        // self.0.apply_stdlib_upgrade(
+        //     &mut session, 
+        //     &storage, 
+        //     block_metadata.clone(), 
+        //     &txn_data, 
+        //     &mut gas_status, 
+        //     log_context
+        // )?;
+
         SYSTEM_TRANSACTIONS_EXECUTED.inc();
 
         let output = get_transaction_output(

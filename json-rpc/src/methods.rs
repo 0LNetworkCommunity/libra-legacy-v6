@@ -6,9 +6,10 @@ use crate::{
     data,
     errors::JsonRpcError,
     views::{
-        AccountStateWithProofView, AccountView, CurrencyInfoView, EventView, EventWithProofView,
-        MetadataView, StateProofView, TransactionListView, TransactionView,
-        TransactionsWithProofsView,
+        AccountStateWithProofView, AccountView, CurrencyInfoView, 
+        EventView, EventWithProofView, MetadataView, MinerStateResourceView,
+        OracleUpgradeStateView, StateProofView, TransactionView,
+        TransactionListView, TransactionsWithProofsView,
     },
 };
 use anyhow::Result;
@@ -17,15 +18,18 @@ use diem_json_rpc_types::request::{
     GetAccountParams, GetAccountStateWithProofParams, GetAccountTransactionParams,
     GetAccountTransactionsParams, GetCurrenciesParams, GetEventsParams, GetEventsWithProofsParams,
     GetMetadataParams, GetNetworkStatusParams, GetStateProofParams, GetTransactionsParams,
-    GetTransactionsWithProofsParams, MethodRequest, SubmitParams,
+    GetTransactionsWithProofsParams, JsonRpcRequest, MethodRequest, SubmitParams,
 };
 use diem_mempool::{MempoolClientSender, SubmissionStatus};
 use diem_types::{
-    chain_id::ChainId, ledger_info::LedgerInfoWithSignatures, mempool_status::MempoolStatusCode,
+    account_address::AccountAddress, chain_id::ChainId, 
+    ledger_info::LedgerInfoWithSignatures, mempool_status::MempoolStatusCode,
     transaction::SignedTransaction,
 };
 use fail::fail_point;
 use futures::{channel::oneshot, SinkExt};
+use ol_types::{miner_state::MinerStateResource, oracle_upgrade::OracleResource};
+use serde::de::DeserializeOwned;
 use serde_json::Value;
 use std::{borrow::Borrow, sync::Arc};
 use storage_interface::DbReader;
@@ -361,4 +365,61 @@ impl<'a> Handler<'a> {
             version,
         )
     }
+}
+
+// //////// 0L ////////
+// /// Returns Miner states for a miner
+// async fn get_miner_state(
+//     service: JsonRpcService,
+//     request: JsonRpcRequest,
+// ) -> Result<MinerStateResourceView, JsonRpcError> {
+
+//     let account_address = request.parse_account_address(0)?;
+
+//     // If versions are specified by the request parameters, use them, otherwise use the defaults
+//     let version = request.parse_version_param(1, "version")?;
+
+//     let account_state_with_proof =  service.get_account_state(account_address, version)?;
+//     match account_state_with_proof {
+//         Some(s) => {
+//             let ms :Option<MinerStateResource> = s.get_resource_impl(
+//                 MinerStateResource::resource_path().as_slice()
+//             )?;
+//             if ms.is_some() {
+//                 let msv = MinerStateResourceView::try_from(ms.unwrap());
+//                 return Ok(msv.ok().unwrap());
+//             }
+//         },
+//         None => {}
+//     }
+//     Err(JsonRpcError::invalid_request_with_msg("No Miner State found.".to_string()))
+// }
+
+// 0L todo: no parse_version_param()
+//////// 0L ////////
+/// Returns Oracle Upgrade view
+async fn query_oracle_upgrade(
+    service: JsonRpcService,
+    request: JsonRpcRequest,
+) -> Result<OracleUpgradeStateView, JsonRpcError> {
+
+    // let account_address = AccountAddress::ZERO;
+
+    // // If versions are specified by the request parameters, use them, otherwise use the defaults
+    // let version = request.parse_version_param(1, "version")?;
+
+    // let account_state_with_proof =  service.get_account_state(account_address, version)?;
+    // match account_state_with_proof {
+    //     Some(s) => {
+    //         let resouce :Option<OracleResource> = s.get_resource_impl(
+    //             OracleResource::resource_path().as_slice()
+    //         )?;
+    //         if resouce.is_some() {
+    //             let resource_view = OracleUpgradeStateView::try_from(resouce.unwrap());
+    //             return Ok(resource_view.ok().unwrap());
+    //         }
+    //     },
+    //     None => {}
+    // }
+    Err(JsonRpcError::invalid_request_with_msg("No Upgrade Resource found.".to_string()))
 }

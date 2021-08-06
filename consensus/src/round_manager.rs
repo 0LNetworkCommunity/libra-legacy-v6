@@ -470,7 +470,7 @@ impl RoundManager {
             self.block_store.sync_info(),
         )));
         self.network.broadcast(timeout_vote_msg).await;
-        error!(
+        warn!( //////// 0L ////////
             round = round,
             remote_peer = self.proposer_election.get_valid_proposer(round),
             voted = use_last_vote,

@@ -47,6 +47,18 @@ impl TempPath {
         }
     }
 
+    ///////// 0L  /////////
+    /// Create persistant data path.
+    pub fn new_with_dir(dir: PathBuf) -> Self {
+        let mut temppath = dir;
+        temppath.push(format!("key_store.json"));
+
+        TempPath {
+            path_buf: temppath,
+            persist: true,
+        }
+    }
+
     /// Return the underlying path to this temporary directory.
     pub fn path(&self) -> &Path {
         &self.path_buf
@@ -59,7 +71,8 @@ impl TempPath {
 
     pub fn create_as_file(&self) -> io::Result<()> {
         let mut builder = fs::OpenOptions::new();
-        builder.write(true).create_new(true);
+        // Overwrite keystore file
+        builder.write(true).create(true); ///////// 0L  /////////
         builder.open(self.path())?;
         Ok(())
     }

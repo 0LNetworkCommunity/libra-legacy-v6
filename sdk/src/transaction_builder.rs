@@ -4,7 +4,7 @@
 use crate::{
     move_types::{account_address::AccountAddress, language_storage::TypeTag},
     types::{
-        account_config::{xdx_type_tag, xus_tag, XDX_NAME, XUS_NAME},
+        account_config::{gas_type_tag, xus_tag, GAS_NAME, XUS_NAME},
         chain_id::ChainId,
         transaction::{authenticator::AuthenticationKey, RawTransaction, TransactionPayload},
     },
@@ -548,14 +548,14 @@ pub enum Currency {
 impl Currency {
     pub fn as_str(&self) -> &str {
         match self {
-            Currency::XDX => XDX_NAME,
+            Currency::XDX => GAS_NAME, //////// 0L ////////
             Currency::XUS => XUS_NAME,
         }
     }
 
     pub fn type_tag(&self) -> TypeTag {
         match self {
-            Currency::XDX => xdx_type_tag(),
+            Currency::XDX => gas_type_tag(), //////// 0L ////////
             Currency::XUS => xus_tag(),
         }
     }

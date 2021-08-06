@@ -81,6 +81,8 @@ pub struct NodeConfig {
     #[serde(default)]
     pub test: Option<TestConfig>,
     #[serde(default)]
+    pub upstream: UpstreamConfig, //////// 0L ////////
+    #[serde(default)]
     pub validator_network: Option<NetworkConfig>,
     #[serde(default)]
     pub failpoints: Option<HashMap<String, String>>,

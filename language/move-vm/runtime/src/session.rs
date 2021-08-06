@@ -102,6 +102,24 @@ impl<'r, 'l, S: MoveStorage> Session<'r, 'l, S> {
         )
     }
 
+    //////// 0L ////////    
+    // 0L: currently only used by upgrade oracle
+    pub fn revise_module(
+        &mut self,
+        module: Vec<u8>,
+        sender: AccountAddress,
+        gas_status: &mut GasStatus,
+        log_context: &impl LogContext,
+    ) -> VMResult<()> {
+        self.runtime.revise_module(
+            module,
+            sender,
+            &mut self.data_cache,
+            gas_status,
+            log_context,
+        )
+    }
+
     /// Execute a transaction script.
     ///
     /// The Move VM MUST return a user error (in other words, an error that's not an invariant

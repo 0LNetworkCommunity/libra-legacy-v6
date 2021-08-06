@@ -7,7 +7,6 @@ module DesignatedDealer {
     use 0x1::Event;
     use 0x1::Roles;
     use 0x1::Signer;
-    use 0x1::XUS::XUS;
 
     /// A `DesignatedDealer` always holds this `Dealer` resource regardless of the
     /// currencies it can hold. All `ReceivedMintEvent` events for all
@@ -64,17 +63,18 @@ module DesignatedDealer {
     public fun publish_designated_dealer_credential<CoinType: store>(
         dd: &signer,
         tc_account: &signer,
-        add_all_currencies: bool,
+        _add_all_currencies: bool,
     ){
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_diem_root(tc_account); /////// 0L /////////
         Roles::assert_designated_dealer(dd);
         assert(!exists<Dealer>(Signer::address_of(dd)), Errors::already_published(EDEALER));
         move_to(dd, Dealer { mint_event_handle: Event::new_event_handle<ReceivedMintEvent>(dd) });
-        if (add_all_currencies) {
-            add_currency<XUS>(dd, tc_account);
-        } else {
-            add_currency<CoinType>(dd, tc_account);
-        };
+        /////// 0L /////////
+        // if (add_all_currencies) {
+        //     add_currency<XUS>(dd, tc_account);
+        // } else {
+        //     add_currency<CoinType>(dd, tc_account);
+        // };
     }
     spec publish_designated_dealer_credential {
         pragma opaque;
@@ -84,14 +84,16 @@ module DesignatedDealer {
         include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
         include Roles::AbortsIfNotDesignatedDealer{account: dd};
         aborts_if exists<Dealer>(dd_addr) with Errors::ALREADY_PUBLISHED;
-        include if (add_all_currencies) AddCurrencyAbortsIf<XUS>{dd_addr: dd_addr}
-                else AddCurrencyAbortsIf<CoinType>{dd_addr: dd_addr};
+        /////// 0L /////////
+        // include if (add_all_currencies) AddCurrencyAbortsIf<XUS>{dd_addr: dd_addr}
+        //         else AddCurrencyAbortsIf<CoinType>{dd_addr: dd_addr};
 
         modifies global<Dealer>(dd_addr);
         ensures exists<Dealer>(dd_addr);
         modifies global<Event::EventHandleGenerator>(dd_addr);
-        modifies global<Diem::PreburnQueue<CoinType>>(dd_addr);
-        modifies global<Diem::PreburnQueue<XUS>>(dd_addr);
+        /////// 0L /////////
+        // modifies global<Diem::PreburnQueue<CoinType>>(dd_addr);
+        // modifies global<Diem::PreburnQueue<XUS>>(dd_addr);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -102,7 +104,7 @@ module DesignatedDealer {
     /// Public so that a currency can be added to a DD later on. Will require
     /// multi-signer transactions in order to add a new currency to an existing DD.
     public fun add_currency<CoinType: store>(dd: &signer, tc_account: &signer) {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_diem_root(tc_account); /////// 0L /////////
         let dd_addr = Signer::address_of(dd);
         assert(exists_at(dd_addr), Errors::not_published(EDEALER));
         Diem::publish_preburn_queue_to_account<CoinType>(dd, tc_account);
@@ -135,7 +137,7 @@ module DesignatedDealer {
         // compatibility, but it will be ignored.
         _tier_index: u64,
     ): Diem::Diem<CoinType> acquires Dealer, TierInfo {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_diem_root(tc_account); /////// 0L /////////
         assert(amount > 0, Errors::invalid_argument(EINVALID_MINT_AMOUNT));
         assert(exists_at(dd_addr), Errors::not_published(EDEALER));
 

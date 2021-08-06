@@ -1,0 +1,58 @@
+{
+  "autopay_instructions": [
+    {
+      "note": "test balance",
+      "destination": "88E74DFED34420F2AD8032148280A84B",
+      "type_of": "PercentOfBalance",
+      "value": 10.00,
+      "duration_epochs": 100
+    },
+    {
+      "note": "test change",
+      "destination": "88E74DFED34420F2AD8032148280A84B",
+      "type_of": "PercentOfChange",
+      "value": 12.34,
+      "duration_epochs": 100
+    },
+    {
+      "note": "test fixed recurring",
+      "destination": "88E74DFED34420F2AD8032148280A84B",
+      "type_of": "FixedRecurring",
+      "value": 5,
+      "duration_epochs": 100
+    },
+    {
+      "note": "test fixed once",
+      "destination": "88E74DFED34420F2AD8032148280A84B",
+      "type_of": "FixedOnce",
+      "value": 22
+    },
+    {
+      "note": "test balance - end",
+      "destination": "88E74DFED34420F2AD8032148280A84B",
+      "type_of": "PercentOfBalance",
+      "value": 10.00,
+      "end_epoch": 50
+    },
+    {
+      "note": "test change - end",
+      "destination": "88E74DFED34420F2AD8032148280A84B",
+      "type_of": "PercentOfChange",
+      "value": 12.34,
+      "end_epoch": 50
+    },
+    {
+      "note": "test fixed recurring - end",
+      "destination": "88E74DFED34420F2AD8032148280A84B",
+      "type_of": "FixedRecurring",
+      "value": 5,
+      "end_epoch": 50
+    },
+    {
+      "note": "test fixed once - end",
+      "destination": "88E74DFED34420F2AD8032148280A84B",
+      "type_of": "FixedOnce",
+      "value": 22
+    }
+  ]
+}

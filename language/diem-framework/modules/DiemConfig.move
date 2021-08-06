@@ -10,6 +10,7 @@ module DiemConfig {
     use 0x1::DiemTimestamp;
     use 0x1::Signer;
     use 0x1::Roles;
+    use 0x1::Testnet;
 
     /// A generic singleton resource that holds a value of a specific type.
     struct DiemConfig<Config: copy + drop + store> has key, store {
@@ -50,6 +51,10 @@ module DiemConfig {
     const EINVALID_BLOCK_TIME: u64 = 3;
     /// The largest possible u64 value
     const MAX_U64: u64 = 18446744073709551615;
+
+    //////// 0L ////////
+    /// Epoch when transfers are enabled
+    const TRANSFER_ENABLED_EPOCH: u64 = 1000;    
 
     /// Publishes `Configuration` resource. Can only be invoked by Diem root, and only a single time in Genesis.
     public fun initialize(
@@ -448,6 +453,30 @@ module DiemConfig {
             global<DiemConfig<Config>>(CoreAddresses::DIEM_ROOT_ADDRESS()).payload
         }
     }
+
+    //////// 0L ////////
+    public fun get_current_epoch(): u64 acquires Configuration {
+        let config_ref = borrow_global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        config_ref.epoch
+    }
+
+    public fun get_epoch_transfer_limit(): u64 acquires Configuration {
+        // Constant to start the withdrawal limit calculation from 
+        let transfer_enabled_epoch = TRANSFER_ENABLED_EPOCH;
+        let config_ref = borrow_global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        
+        // Calculating transfer limit in multiples of epoch
+        ((config_ref.epoch - transfer_enabled_epoch) * 10)
+    }
+
+    public fun check_transfer_enabled(): bool acquires Configuration {
+        if(Testnet::is_testnet()){
+            true
+        } else {
+            get_current_epoch() > TRANSFER_ENABLED_EPOCH
+        }
+    }    
+    //////// 0L end ////////
 
 }
 }

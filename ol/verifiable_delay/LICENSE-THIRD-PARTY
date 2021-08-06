@@ -1,0 +1,13 @@
+This project is based on the sample VDF implementation at
+https://github.com/Chia-Network/vdf-competition.  This is licensed under the
+Apache 2.0 License, which can be found in LICENSE-APACHE.  It also carries the
+following NOTICE file:
+
+    Chia vdf-toy
+    Copyright 2018 and onwards Chia Network Inc.
+
+    This product includes software developed at
+    Chia Network Inc (https://www.chia.net/).
+
+This project contains code from rust-gmp, located at
+https://github.com/fizyk20/rust-gmp and licensed under the MIT license.

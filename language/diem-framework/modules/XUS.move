@@ -13,13 +13,13 @@ module XUS {
     /// Registers the `XUS` cointype. This can only be called from genesis.
     public fun initialize(
         dr_account: &signer,
-        tc_account: &signer,
+        // tc_account: &signer, /////// 0L /////////
     ) {
         DiemTimestamp::assert_genesis();
         Diem::register_SCS_currency<XUS>(
             dr_account,
-            tc_account,
-            FixedPoint32::create_from_rational(1, 1), // exchange rate to XDX
+            // tc_account, /////// 0L /////////
+            FixedPoint32::create_from_rational(1, 1), // exchange rate to GAS
             1000000, // scaling_factor = 10^6
             100,     // fractional_part = 10^2
             b"XUS"
@@ -41,7 +41,7 @@ module XUS {
         include Roles::AbortsIfNotDiemRoot{account: dr_account};
         /// Only a TreasuryCompliance account can have the MintCapability [[H1]][PERMISSION].
         /// Moreover, only a TreasuryCompliance account can have the BurnCapability [[H3]][PERMISSION].
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
+        include Roles::AbortsIfNotTreasuryCompliance{account: dr_account}; /////// 0L /////////
     }
 
     // =================================================================

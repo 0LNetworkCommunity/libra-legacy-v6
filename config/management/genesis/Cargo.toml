@@ -36,6 +36,15 @@ storage-interface = { path = "../../../storage/storage-interface" }
 diem-transaction-builder = { path = "../../../sdk/transaction-builder" }
 vm-genesis = { path = "../../../language/tools/vm-genesis" }
 
+# //////// 0L ////////
+rustyline = "6.2.0"
+diem-wallet = { path = "../../../testsuite/cli/diem-wallet", version = "0.1.0"}
+ol-keys = { path = "../../../ol/keys",  version = "0.1.0" }
+hex = "0.4.2"
+dirs = "2.0.2"
+serde_json = "1"
+ol-fixtures = {path = "../../../ol/fixtures"}
+
 [dev-dependencies]
 diem-config = { path = "../..", features = ["fuzzing"]}
 

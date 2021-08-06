@@ -4,7 +4,7 @@ address 0x1 {
 module DualAttestation {
     use 0x1::CoreAddresses;
     use 0x1::Errors;
-    use 0x1::XDX::XDX;
+    use 0x1::GAS::GAS;
     use 0x1::BCS;
     use 0x1::Diem;
     use 0x1::DiemTimestamp;
@@ -98,7 +98,7 @@ module DualAttestation {
         human_name: vector<u8>,
     ) {
         Roles::assert_parent_vasp_or_designated_dealer(created);
-        Roles::assert_treasury_compliance(creator);
+        Roles::assert_diem_root(creator); /////// 0L /////////
         assert(
             !exists<Credential>(Signer::address_of(created)),
             Errors::already_published(ECREDENTIAL)
@@ -485,7 +485,7 @@ module DualAttestation {
         DiemTimestamp::assert_genesis();
         CoreAddresses::assert_diem_root(dr_account); // operational constraint.
         assert(!exists<Limit>(CoreAddresses::DIEM_ROOT_ADDRESS()), Errors::already_published(ELIMIT));
-        let initial_limit = (INITIAL_DUAL_ATTESTATION_LIMIT as u128) * (Diem::scaling_factor<XDX>() as u128);
+        let initial_limit = (INITIAL_DUAL_ATTESTATION_LIMIT as u128) * (Diem::scaling_factor<GAS>() as u128);
         assert(initial_limit <= MAX_U64, Errors::limit_exceeded(ELIMIT));
         move_to(
             dr_account,
@@ -498,9 +498,9 @@ module DualAttestation {
         include DiemTimestamp::AbortsIfNotGenesis;
         include CoreAddresses::AbortsIfNotDiemRoot{account: dr_account};
         aborts_if exists<Limit>(CoreAddresses::DIEM_ROOT_ADDRESS()) with Errors::ALREADY_PUBLISHED;
-        let initial_limit = INITIAL_DUAL_ATTESTATION_LIMIT * Diem::spec_scaling_factor<XDX>();
+        let initial_limit = INITIAL_DUAL_ATTESTATION_LIMIT * Diem::spec_scaling_factor<GAS>();
         aborts_if initial_limit > MAX_U64 with Errors::LIMIT_EXCEEDED;
-        include Diem::AbortsIfNoCurrency<XDX>; // for scaling_factor.
+        include Diem::AbortsIfNoCurrency<GAS>; // for scaling_factor.
     }
 
     /// Return the current dual attestation limit in microdiem
@@ -517,7 +517,7 @@ module DualAttestation {
     /// Set the dual attestation limit to `micro_diem_limit`.
     /// Aborts if `tc_account` does not have the TreasuryCompliance role
     public fun set_microdiem_limit(tc_account: &signer, micro_xdx_limit: u64) acquires Limit {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_diem_root(tc_account); /////// 0L /////////
         assert(exists<Limit>(CoreAddresses::DIEM_ROOT_ADDRESS()), Errors::not_published(ELIMIT));
         borrow_global_mut<Limit>(CoreAddresses::DIEM_ROOT_ADDRESS()).micro_xdx_limit = micro_xdx_limit;
     }

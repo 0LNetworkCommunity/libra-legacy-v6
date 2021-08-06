@@ -16,10 +16,14 @@ diem-types = { path = "../../../types" }
 diem-workspace-hack = { path = "../../../common/workspace-hack" }
 move-binary-format = { path = "../../move-binary-format" }
 
+bytecode-verifier = {path = "../../bytecode-verifier" }
 anyhow = "1.0.38"
 include_dir = "0.6.0"
 bcs = "0.1.2"
 once_cell = "1.7.2"
+
+#//////// 0L ////////
+diem-framework = {path = "../" }
 
 [dev-dependencies]
 bytecode-verifier = { path = "../../bytecode-verifier" }

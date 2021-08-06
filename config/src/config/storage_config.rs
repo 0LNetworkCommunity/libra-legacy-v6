@@ -63,7 +63,9 @@ impl Default for StorageConfig {
             // of the DB might require, 10k (TPS)  * 100 (seconds)  =  1 Million might be a
             // conservatively safe minimal prune window. It'll take a few Gigabytes of disk space
             // depending on the size of an average account blob.
-            prune_window: Some(1_000_000),
+            //////// 0L ////////
+            // ~50GB state tree history (about 1 day at 100 tps)
+            prune_window: Some(10_000_000), 
             data_dir: PathBuf::from("/opt/diem/data"),
             // Default read/write/connection timeout, in milliseconds
             timeout_ms: 30_000,

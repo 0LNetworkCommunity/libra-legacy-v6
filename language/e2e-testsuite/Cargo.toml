@@ -28,6 +28,8 @@ diem-logger = { path = "../../common/logger" }
 diem-framework-releases = { path = "../diem-framework/releases" }
 diem-workspace-hack = { path = "../../common/workspace-hack" }
 diem-writeset-generator = { path = "../diem-tools/writeset-transaction-generator"}
+# //////// 0L ////////
+hex = "0.4.2"
 
 [features]
 default = ["diem-transaction-builder/fuzzing"]

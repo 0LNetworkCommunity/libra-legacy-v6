@@ -2,12 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use diem_crypto::ed25519::Ed25519PublicKey;
+use diem_global_constants::{GENESIS_WAYPOINT, OPERATOR_ACCOUNT, OWNER_ACCOUNT, WAYPOINT};
 use diem_management::{
     config::ConfigPath,
     error::Error,
     secure_backend::{SecureBackend, SharedBackend},
 };
 use std::{convert::TryFrom, path::PathBuf, str::FromStr};
+use diem_secure_storage::{
+    CryptoStorage, OnDiskStorage, KVStorage
+};
+use diem_types::{transaction::authenticator::AuthenticationKey, waypoint::Waypoint};
 use structopt::StructOpt;
 
 diem_management::secure_backend!(
@@ -60,6 +65,45 @@ impl Key {
 
         Ok(key)
     }
+}
+
+//////// 0L /////////
+pub fn set_operator_key(path: &PathBuf, namespace: &str) {
+    let mut storage = diem_secure_storage::Storage::OnDiskStorage(
+        OnDiskStorage::new(path.join("key_store.json").to_owned())
+    );
+    // TODO: Remove hard coded field
+    let field = format!("{}-oper/operator", namespace);
+    let key = storage.get_public_key(&field).unwrap().public_key;
+    let peer_id = diem_types::account_address::from_public_key(&key);
+    storage.set(OPERATOR_ACCOUNT, peer_id).unwrap();
+}
+
+//////// 0L /////////
+pub fn set_owner_key(path: &PathBuf, namespace: &str) {
+    let mut storage = diem_secure_storage::Storage::OnDiskStorage(
+        OnDiskStorage::new(path.join("key_store.json").to_owned())
+    );
+    let authkey: AuthenticationKey = namespace.parse().unwrap();
+    let account = authkey.derived_address();
+    storage.set(&format!("{}-oper/{}", namespace, OWNER_ACCOUNT), account).unwrap();
+}
+
+
+//////// 0L /////////
+pub fn set_waypoint(path: &PathBuf, namespace: &str, waypoint: Waypoint) {
+    let mut storage = diem_secure_storage::Storage::OnDiskStorage(
+        OnDiskStorage::new(path.join("key_store.json").to_owned())
+    );
+    storage.set(&format!("{}-oper/{}", namespace, WAYPOINT), waypoint).unwrap();
+}
+
+//////// 0L /////////
+pub fn set_genesis_waypoint(path: &PathBuf, namespace: &str, waypoint: Waypoint) {
+    let mut storage = diem_secure_storage::Storage::OnDiskStorage(
+        OnDiskStorage::new(path.join("key_store.json").to_owned())
+    );
+    storage.set(&format!("{}-oper/{}", namespace, GENESIS_WAYPOINT), waypoint).unwrap();
 }
 
 #[derive(Debug, StructOpt)]

@@ -51,3 +51,12 @@ target-out-docker
 
 # Doc generation output
 *.md.old
+
+# //////// 0L ////////
+swarm_temp
+
+# miner.toml
+key_store.json
+
+#vs code
+.vscode/

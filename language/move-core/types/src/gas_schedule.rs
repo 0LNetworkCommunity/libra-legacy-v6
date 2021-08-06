@@ -160,7 +160,8 @@ pub const LARGE_TRANSACTION_CUTOFF: AbstractMemorySize<GasCarrier> = AbstractMem
 /// For exists checks on data that doesn't exists this is the multiplier that is used.
 pub const MIN_EXISTS_DATA_SIZE: AbstractMemorySize<GasCarrier> = AbstractMemorySize(100);
 
-pub const MAX_TRANSACTION_SIZE_IN_BYTES: GasCarrier = 4096;
+// 0L: changed temporarily for oversized upgrade payload
+pub const MAX_TRANSACTION_SIZE_IN_BYTES: GasCarrier = 409600; //////// 0L ////////
 
 #[derive(Clone, Debug, Serialize, PartialEq, Deserialize)]
 pub struct GasConstants {
@@ -219,7 +220,8 @@ impl Default for GasConstants {
             min_transaction_gas_units: InternalGasUnits(600),
             large_transaction_cutoff: LARGE_TRANSACTION_CUTOFF,
             intrinsic_gas_per_byte: InternalGasUnits(8),
-            maximum_number_of_gas_units: GasUnits(4_000_000),
+            // 0L: changed temporarily for oversized upgrade payload
+            maximum_number_of_gas_units: GasUnits(10_000_000_000), //////// 0L ////////
             min_price_per_gas_unit: GasPrice(0),
             max_price_per_gas_unit: GasPrice(10_000),
             max_transaction_size_in_bytes: MAX_TRANSACTION_SIZE_IN_BYTES,

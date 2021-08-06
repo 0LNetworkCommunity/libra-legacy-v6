@@ -96,7 +96,7 @@ impl LegacyStdlibScript {
             UpdateDiemVersion,
             UpdateMintingAbility,
             UpdateDualAttestationLimit,
-            // ...add new scripts here
+            // ...add new scripts here         
         ]
     }
 
@@ -154,6 +154,13 @@ impl LegacyStdlibScript {
 pub struct CompiledBytes(Vec<u8>);
 
 impl CompiledBytes {
+
+    //////// 0L ////////
+    /// constructor
+    pub fn new(bytes : Vec<u8>) -> Self {
+        CompiledBytes(bytes)
+    }
+    
     /// Return the sha3-256 hash of the script bytes
     pub fn hash(&self) -> HashValue {
         Self::hash_bytes(&self.0)
@@ -226,7 +233,7 @@ impl fmt::Display for LegacyStdlibScript {
                 UnfreezeAccount => "unfreeze_account",
                 UpdateDiemVersion => "update_diem_version",
                 UpdateExchangeRate => "update_exchange_rate",
-                UpdateMintingAbility => "update_minting_ability",
+                UpdateMintingAbility => "update_minting_ability",              
             }
         )
     }

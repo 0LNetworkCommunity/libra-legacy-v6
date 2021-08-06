@@ -68,6 +68,9 @@ impl ValidatorConfig {
         // and encrypt the validator address.
         let validator_address =
             validator_address.append_prod_protos(validator_network_key, HANDSHAKE_VERSION);
+
+        dbg!(&validator_address); //////// 0L ////////
+
         let encryptor = config.validator_backend().encryptor();
         let validator_addresses = encryptor
             .encrypt(
@@ -83,12 +86,15 @@ impl ValidatorConfig {
         let fullnode_address =
             fullnode_address.append_prod_protos(fullnode_network_key, HANDSHAKE_VERSION);
 
+        dbg!(&fullnode_address); //////// 0L ////////
+
         // Generate the validator config script
         let transaction_callback = if reconfigure {
             transaction_builder::encode_set_validator_config_and_reconfigure_script_function
         } else {
             transaction_builder::encode_register_validator_config_script_function
         };
+        
         let validator_config_script = transaction_callback(
             owner_account,
             consensus_key.to_bytes().to_vec(),

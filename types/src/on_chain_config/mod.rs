@@ -38,7 +38,7 @@ pub use self::{
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct ConfigID(&'static str, &'static str);
 
-const CONFIG_ADDRESS_STR: &str = "0xA550C18";
+const CONFIG_ADDRESS_STR: &str = "0x0"; //////// 0L ////////
 
 pub fn config_address() -> AccountAddress {
     AccountAddress::from_hex_literal(CONFIG_ADDRESS_STR).expect("failed to get address")

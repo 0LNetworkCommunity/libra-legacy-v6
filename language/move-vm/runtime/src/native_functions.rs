@@ -7,7 +7,7 @@ use move_core_types::{
     account_address::AccountAddress, gas_schedule::CostTable, language_storage::CORE_CODE_ADDRESS,
     value::MoveTypeLayout, vm_status::StatusType,
 };
-use move_vm_natives::{account, bcs, debug, event, hash, signature, signer, vector};
+use move_vm_natives::{account, bcs, debug, event, hash, signature, signer, vector, vdf};
 use move_vm_types::{
     data_store::DataStore,
     gas_schedule::GasStatus,
@@ -45,6 +45,9 @@ pub(crate) enum NativeFunction {
     CreateSigner,
     // functions below this line are deprecated and remain only for replaying old transactions
     DestroySigner,
+    //////// 0L ////////
+    VDFVerify,
+    RedeemAuthKeyParse,    
 }
 
 impl NativeFunction {
@@ -77,6 +80,9 @@ impl NativeFunction {
             (&CORE_CODE_ADDRESS, "Signer", "borrow_address") => SignerBorrowAddress,
             // functions below this line are deprecated and remain only for replaying old transactions
             (&CORE_CODE_ADDRESS, "DiemAccount", "destroy_signer") => DestroySigner,
+            //////// 0L ////////
+            (&CORE_CODE_ADDRESS, "VDF", "verify") => VDFVerify,
+            (&CORE_CODE_ADDRESS, "VDF", "extract_address_from_challenge") => RedeemAuthKeyParse,            
             _ => return None,
         })
     }
@@ -110,6 +116,9 @@ impl NativeFunction {
             Self::CreateSigner => account::native_create_signer(ctx, t, v),
             // functions below this line are deprecated and remain only for replaying old transactions
             Self::DestroySigner => account::native_destroy_signer(ctx, t, v),
+            //////// 0L ////////
+            Self::VDFVerify => vdf::verify(ctx, t, v),
+            Self::RedeemAuthKeyParse => vdf::extract_address_from_challenge(ctx, t, v),            
         };
         debug_assert!(match &result {
             Err(e) => e.major_status().status_type() == StatusType::InvariantViolation,

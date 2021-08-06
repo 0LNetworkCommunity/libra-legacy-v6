@@ -11,8 +11,9 @@ use crate::{
     error::WaitForTransactionError,
     move_deserialize::{self, Event},
     views::{
-        AccountStateWithProofView, AccountView, CurrencyInfoView, EventView, EventWithProofView,
-        MetadataView, StateProofView, TransactionView, TransactionsWithProofsView,
+        AccountStateWithProofView, AccountView, CurrencyInfoView, EventView, 
+        EventWithProofView, MetadataView, StateProofView, TransactionView, 
+        TransactionsWithProofsView, MinerStateResourceView, OracleUpgradeStateView,
     },
     Error, Result, Retry, State,
 };
@@ -151,6 +152,18 @@ impl BlockingClient {
     ) -> Result<Response<Option<AccountView>>> {
         self.send(MethodRequest::get_account_by_version(address, version))
     }
+
+    /////// 0L /////////
+    pub fn get_miner_state(&self, address: AccountAddress) 
+    -> Result<Response<Option<MinerStateResourceView>>> {
+        self.send(MethodRequest::get_miner_state(address))
+    }
+
+    /////// 0L /////////
+    pub fn get_oracle_upgrade_state(&self) 
+    -> Result<Response<Option<OracleUpgradeStateView>>> {
+        self.send(MethodRequest::get_oracle_upgrade_state())
+    }    
 
     pub fn get_transactions(
         &self,

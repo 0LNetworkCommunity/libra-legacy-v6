@@ -826,10 +826,14 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
                 .executor_proxy
                 .get_epoch_change_ledger_info(request.current_epoch)?;
             if end_of_epoch_li.ledger_info().version() < request.known_version {
-                return Err(Error::UnexpectedError(format!("Waypoint request's current_epoch (epoch {}, version {}) < waypoint request's known_version {}",
-                                                          end_of_epoch_li.ledger_info().epoch(),
-                                                          end_of_epoch_li.ledger_info().version(),
-                                                          request.known_version,)));
+                return Err(Error::UnexpectedError(
+                    format!(
+                        "Waypoint request's current_epoch (epoch {}, version {}) < waypoint request's known_version {}",
+                        end_of_epoch_li.ledger_info().epoch(),
+                        end_of_epoch_li.ledger_info().version(),
+                        request.known_version,
+                    )
+                ));
             }
             let num_txns_until_end_of_epoch =
                 end_of_epoch_li.ledger_info().version() - request.known_version;

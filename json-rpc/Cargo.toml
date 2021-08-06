@@ -48,6 +48,8 @@ network = { path = "../network" }
 scratchpad = { path = "../storage/scratchpad", optional = true }
 storage-interface = { path = "../storage/storage-interface" }
 vm-genesis = { path = "../language/tools/vm-genesis", optional = true }
+#/////// 0L /////////
+ol-types = { path = "../ol/types" }
 
 [dev-dependencies]
 proptest = "1.0.0"

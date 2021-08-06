@@ -186,6 +186,12 @@ secure_backend!(
 
 secure_backend!(SharedBackend, shared_backend, "shared information");
 
+//////// 0L ////////
+pub fn storage(s: &str) -> Result<config::SecureBackend, Error> {
+    let management_backend: SecureBackend = s.try_into()?;
+    management_backend.try_into()
+}
+
 #[allow(dead_code)]
 #[cfg(test)]
 mod tests {

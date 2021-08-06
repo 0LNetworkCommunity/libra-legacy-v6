@@ -33,6 +33,8 @@ module Roles {
     const EVALIDATOR_OPERATOR: u64 = 8;
     /// The signer didn't have the required Child VASP role
     const ECHILD_VASP: u64 = 9;
+    //////// 0L ////////
+    const USER_ID: u64 = 10;
 
     ///////////////////////////////////////////////////////////////////////////
     // Role ID constants
@@ -54,6 +56,22 @@ module Roles {
 
     // =============
     // Role Granting
+
+    /////// 0L /////////
+    // /// Publishes libra root role. Granted only in genesis.
+    // public fun grant_libra_user_role(
+    //     lr_account: &signer,
+    // ) {
+    //     LibraTimestamp::assert_genesis();
+    //     // Checks actual Libra root because Libra root role is not set
+    //     // until next line of code.
+    //     CoreAddresses::assert_libra_root(lr_account);
+    //     // Grant the role to the libra root account
+    //     grant_role(lr_account, OL_USER);
+    // }
+    // spec grant_libra_user_role {
+    //     include GrantRole{addr: Signer::address_of(lr_account), role_id: OL_USER};
+    // }
 
     /// Publishes diem root role. Granted only in genesis.
     public fun grant_diem_root_role(
@@ -96,7 +114,7 @@ module Roles {
         creating_account: &signer,
         new_account: &signer,
     ) acquires RoleId {
-        assert_treasury_compliance(creating_account);
+        assert_diem_root(creating_account); /////// 0L /////////
         grant_role(new_account, DESIGNATED_DEALER_ROLE_ID);
     }
     spec new_designated_dealer_role {
@@ -116,6 +134,53 @@ module Roles {
     spec new_validator_role {
         include AbortsIfNotDiemRoot{account: creating_account};
         include GrantRole{addr: Signer::address_of(new_account), role_id: VALIDATOR_ROLE_ID};
+    }
+
+    //////// 0L /////////
+    // Creates a user account
+    /// Permissions: PUBLIC, ANYONE, SIGNER
+    /// Needs to be a signer, is called from LibraAccount, which can create a signer. 
+    // Otherwise, not callable publicly, and can only grant role to the signer's address.
+    public fun new_user_role_with_proof(
+        new_account: &signer
+    ) {
+        // assert_libra_root(creating_account);
+        grant_role(new_account, USER_ID);
+    }
+
+    // spec new_user_role_with_proof {
+    //     include GrantRole{addr: Signer::address_of(new_account), role_id: USER_ID};
+    // }
+
+
+    //////// 0L ////////
+    /// Publish a Validator `RoleId` under `new_account`.
+    /// The `creating_account` must be libra root.
+    /// Permissions: PUBLIC, ANYONE, SIGNER
+    /// Needs to be a signer, is called from LibraAccount, which can create a signer. 
+    // Otherwise, not callable publicly, and can only grant role to the signer's address.
+    public fun new_validator_role_with_proof(
+        new_account: &signer
+    ) {
+        // assert_libra_root(creating_account);
+        grant_role(new_account, VALIDATOR_ROLE_ID);
+    }
+
+    spec new_validator_role_with_proof {
+        include GrantRole{addr: Signer::address_of(new_account), role_id: VALIDATOR_ROLE_ID};
+    }
+
+    //////// 0L ////////
+    // same for operator 
+    // can only be called by signer
+    public fun new_validator_operator_role_with_proof(
+        new_account: &signer,
+    ) {
+        grant_role(new_account, VALIDATOR_OPERATOR_ROLE_ID);
+    }
+
+    spec new_validator_operator_role_with_proof {
+        include GrantRole{addr: Signer::address_of(new_account), role_id: VALIDATOR_OPERATOR_ROLE_ID};
     }
 
     /// Publish a ValidatorOperator `RoleId` under `new_account`.
@@ -138,7 +203,7 @@ module Roles {
         creating_account: &signer,
         new_account: &signer,
     ) acquires RoleId {
-        assert_treasury_compliance(creating_account);
+        assert_diem_root(creating_account); /////// 0L /////////
         grant_role(new_account, PARENT_VASP_ROLE_ID);
     }
     spec new_parent_vasp_role {
@@ -219,6 +284,11 @@ module Roles {
         has_role(account, CHILD_VASP_ROLE_ID)
     }
 
+    /////// 0L /////////
+    public fun has_user_role(account: &signer): bool acquires RoleId {
+        has_role(account, USER_ID)
+    }
+
     public fun get_role_id(a: address): u64 acquires RoleId {
         assert(exists<RoleId>(a), Errors::not_published(EROLE_ID));
         borrow_global<RoleId>(a).role_id
@@ -231,7 +301,10 @@ module Roles {
         // `DiemRoot`) cannot.
         has_parent_VASP_role(account) ||
         has_child_VASP_role(account) ||
-        has_designated_dealer_role(account)
+        has_designated_dealer_role(account) ||
+        /////// 0L /////////
+        has_user_role(account) ||
+        has_validator_role(account)
     }
 
     // ===============
@@ -252,7 +325,7 @@ module Roles {
 
     /// Assert that the account is treasury compliance.
     public fun assert_treasury_compliance(account: &signer) acquires RoleId {
-        CoreAddresses::assert_treasury_compliance(account);
+        CoreAddresses::assert_diem_root(account); /////// 0L /////////
         let addr = Signer::address_of(account);
         assert(exists<RoleId>(addr), Errors::not_published(EROLE_ID));
         assert(
@@ -322,6 +395,23 @@ module Roles {
         include AbortsIfNotValidator{validator_addr: Signer::address_of(validator_account)};
     }
 
+    //////// 0L ////////
+    /// Need api with `account` and not `signer`
+    /// Assert that the account has the validator role.
+    public fun assert_validator_addr(validator_addr: address): bool acquires RoleId {
+        // let validator_addr = Signer::address_of(validator_account);
+        assert(exists<RoleId>(validator_addr), Errors::not_published(EROLE_ID));
+        assert(
+            borrow_global<RoleId>(validator_addr).role_id == VALIDATOR_ROLE_ID,
+            Errors::requires_role(EVALIDATOR)
+        );
+        true
+    }
+    spec assert_validator_addr {
+        pragma opaque;
+        include AbortsIfNotValidator{validator_addr: validator_addr};
+    }    
+
     /// Assert that the account has the validator operator role.
     public fun assert_validator_operator(validator_operator_account: &signer) acquires RoleId {
         let validator_operator_addr = Signer::address_of(validator_operator_account);
@@ -334,6 +424,18 @@ module Roles {
     spec assert_validator_operator {
         pragma opaque;
         include AbortsIfNotValidatorOperator{validator_operator_addr: Signer::spec_address_of(validator_operator_account)};
+    }
+
+    //////// 0L ////////
+    /// Assert that the account has the validator operator role.
+    public fun assert_validator_operator_addr(validator_operator_addr: address):bool acquires RoleId {
+        // let validator_operator_addr = Signer::address_of(validator_operator_account);
+        assert(exists<RoleId>(validator_operator_addr), Errors::not_published(EROLE_ID));
+        assert(
+            borrow_global<RoleId>(validator_operator_addr).role_id == VALIDATOR_OPERATOR_ROLE_ID,
+            Errors::requires_role(EVALIDATOR_OPERATOR)
+        );
+        true
     }
 
     /// Assert that the account has either the parent vasp or designated dealer role.
@@ -507,6 +609,11 @@ module Roles {
         fun spec_has_child_VASP_role_addr(addr: address): bool {
             spec_has_role_id_addr(addr, CHILD_VASP_ROLE_ID)
         }
+
+        /////// 0L /////////
+        fun spec_has_user_role_addr(addr: address): bool {
+            spec_has_role_id_addr(addr, USER_ID)
+        }        
 
         fun spec_can_hold_balance_addr(addr: address): bool {
             spec_has_parent_VASP_role_addr(addr) ||

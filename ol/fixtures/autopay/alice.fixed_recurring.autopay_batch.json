@@ -1,0 +1,12 @@
+{
+  "autopay_instructions": [
+    {
+      "note": "recurring",
+      "uid": 0,
+      "destination": "88E74DFED34420F2AD8032148280A84B",
+      "type_of": "FixedRecurring",
+      "value": 1,
+      "duration_epochs": 100
+    }
+  ]
+}

@@ -19,6 +19,7 @@ use crate::{
 };
 use anyhow::Result;
 use diem_crypto::ed25519::Ed25519PrivateKey;
+use diem_global_constants::SALT_0L;
 use diem_types::{
     account_address::AccountAddress,
     transaction::{
@@ -50,7 +51,7 @@ impl WalletLibrary {
 
     /// Constructor that instantiates a new WalletLibrary from Mnemonic
     pub fn new_from_mnemonic(mnemonic: Mnemonic) -> Self {
-        let seed = Seed::new(&mnemonic, "DIEM");
+        let seed = Seed::new(&mnemonic, SALT_0L); //////// 0L ////////
         WalletLibrary {
             mnemonic,
             key_factory: KeyFactory::new(&seed).unwrap(),
@@ -195,6 +196,11 @@ impl WalletLibrary {
             Err(WalletError::DiemWalletGeneric("missing address".to_string()).into())
         }
     }
+
+    //////// 0L ////////
+    pub fn get_key_factory(&self) -> &KeyFactory{
+        &self.key_factory
+    }    
 }
 
 /// WalletLibrary naturally support TransactionSigner trait.

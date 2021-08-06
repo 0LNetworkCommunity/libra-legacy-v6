@@ -31,8 +31,10 @@ mod fat_type;
 mod module_cache;
 mod resolver;
 
+//////// 0L ////////
+// make pub
 #[derive(Debug)]
-pub struct AnnotatedAccountStateBlob(BTreeMap<StructTag, AnnotatedMoveStruct>);
+pub struct AnnotatedAccountStateBlob(pub BTreeMap<StructTag, AnnotatedMoveStruct>);
 
 #[derive(Clone, Debug)]
 pub struct AnnotatedMoveStruct {

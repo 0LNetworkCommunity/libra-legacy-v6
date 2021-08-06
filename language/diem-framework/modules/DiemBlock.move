@@ -7,6 +7,14 @@ module DiemBlock {
     use 0x1::Event;
     use 0x1::DiemSystem;
     use 0x1::DiemTimestamp;
+    //////// 0L ////////
+    use 0x1::Reconfigure;
+    use 0x1::Stats;
+    use 0x1::AutoPay2;
+    use 0x1::Epoch;
+    use 0x1::GAS::GAS;
+    use 0x1::DiemAccount;
+    use 0x1::Migrations;
 
     struct BlockMetadata has key {
         /// Height of the current block
@@ -76,6 +84,16 @@ module DiemBlock {
             proposer == CoreAddresses::VM_RESERVED_ADDRESS() || DiemSystem::is_validator(proposer),
             Errors::requires_address(EVM_OR_VALIDATOR)
         );
+        //////// 0L ////////
+        // increment stats        
+        Stats::process_set_votes(&vm, &previous_block_votes);
+        Stats::inc_prop(&vm, *&proposer);        
+        if (AutoPay2::tick(&vm)){
+            //triggers autopay at beginning of each epoch 
+            //tick is reset at end of previous epoch
+            DiemAccount::process_escrow<GAS>(&vm);
+            AutoPay2::process_autopay(&vm);
+        };        
 
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(CoreAddresses::DIEM_ROOT_ADDRESS());
         DiemTimestamp::update_global_time(&vm, proposer, timestamp);
@@ -89,6 +107,17 @@ module DiemBlock {
                 time_microseconds: timestamp,
             }
         );
+
+        //////// 0L ////////
+        // EPOCH BOUNDARY
+        if (Epoch::epoch_finished()) {
+          // Run migrations
+          Migrations::init(&vm);
+          // TODO: We don't need to pass block height to ReconfigureOL. 
+          // It should use the BlockMetadata. But there's a circular reference 
+          // there when we try.
+          Reconfigure::reconfigure(&vm, get_current_block_height());
+        };        
     }
     spec block_prologue {
         include DiemTimestamp::AbortsIfNotOperating;
