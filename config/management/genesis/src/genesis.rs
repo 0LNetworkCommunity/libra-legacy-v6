@@ -68,7 +68,6 @@ impl Genesis {
             &operator_registrations,
             script_policy,
             chain_id,
-            self.genesis_blob_path
         );
 
         if let Some(path) = self.path {
@@ -172,8 +171,8 @@ impl Genesis {
                 operator_account,
             ));
         }
+        
         //////// 0L end ////////
-
         Ok(registrations)
     }
 

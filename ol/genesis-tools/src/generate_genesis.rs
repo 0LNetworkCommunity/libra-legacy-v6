@@ -1,16 +1,17 @@
+//! generate genesis files from snapshot
+
 use anyhow::{Result, bail};
 use libra_management::{
    error::Error
 };
-use libra_wallet::{Mnemonic, WalletLibrary, key_factory::{ChildNumber, ExtendedPrivKey}};
-use libra_genesis_tool::{verify::compute_genesis};
+
+
 use libra_temppath::TempPath;
 use libra_types::{
     access_path::AccessPath,
     account_address::AccountAddress,
     account_config::{
-        coin1_tmp_tag, from_currency_code_string,
-        treasury_compliance_account_address, BalanceResource, COIN1_NAME,
+        coin1_tmp_tag, from_currency_code_string, BalanceResource, COIN1_NAME,
         AccountResource
     },
     account_state::AccountState,
@@ -26,14 +27,16 @@ use libra_types::{
 use executor::{
     db_bootstrapper::{generate_waypoint, maybe_bootstrap, get_balance},
 };
+use ol_fixtures::get_persona_mnem;
 use storage_interface::DbReaderWriter;
 
 use libra_vm::LibraVM;
 use libradb::{LibraDB};
 use std::{convert::TryFrom, fs::File, io::Write, io::Read};
 use move_core_types::move_resource::MoveResource;
-use ol_keys::{scheme::KeyScheme, wallet::get_account_from_mnem};
+use ol_keys::{wallet::get_account_from_mnem};
 
+/// wrapper for testing getting a genesis from a blob.
 pub fn test_genesis_from_blob(account_state_blobs: &Vec<AccountStateBlob>, _db_rw: DbReaderWriter) -> Result<(), anyhow::Error> {
     let home = dirs::home_dir().unwrap();
     let genesis_path = home.join(".0L/genesis_from_snapshot.blob");
@@ -80,6 +83,8 @@ fn get_configuration(db: &DbReaderWriter) -> ConfigurationResource {
     config_state.get_configuration_resource().unwrap().unwrap()
 }
 
+/// Given a Genesis transaction, write a genesis.blob file
+// TODO: A path needs to be given.
 pub fn write_genesis_blob(genesis_txn: Transaction) -> Result<(), anyhow::Error> {
     let home = dirs::home_dir().unwrap();
     let ol_path = home.join(".0L/genesis_from_snapshot.blob");
@@ -96,25 +101,66 @@ pub fn write_genesis_blob(genesis_txn: Transaction) -> Result<(), anyhow::Error>
     Ok(())
 }
 
-pub fn add_account_states_to_write_set(write_set_mut: &mut WriteSetMut, account_state_blobs: &Vec<AccountStateBlob>) -> Result<(), anyhow::Error> {
-    let mut index = 0;
-
-    let mnemonic_string = std::string::String::from("talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse");
+fn get_alice_authkey_for_swarm() -> Vec<u8> {
+    let mnemonic_string = get_persona_mnem("alice");
     let account_details = get_account_from_mnem(mnemonic_string);
-    let authentication_key = account_details.0.to_vec();
+    account_details.0.to_vec()
+}
+
+/// take an unmodified account state and make into a writeset.
+pub fn unmodified_state_into_writeset(account_state_blobs: &Vec<AccountStateBlob>) -> Result<WriteSetMut, anyhow::Error>  {
+    let mut write_set_mut = WriteSetMut::new(vec![]);
+    let mut index = 0;
     for blob in account_state_blobs {
         let account_state = AccountState::try_from(blob)
-                                .map_err(|e| Error::UnexpectedError(format!("Failed to parse blob: {}", e)))?;
+          .map_err(|e| Error::UnexpectedError(format!("Failed to parse blob: {}", e)))?;
         let address_option = account_state.get_account_address()?;
         match address_option {
             Some(address) => {
                 for (k, v) in account_state.iter() {
-                    if k.clone()==AccountResource::resource_path() {
+                  // TODO: what is this checking?
+                    if k == &AccountResource::resource_path() {
+                        let item_tuple = (
+                          AccessPath::new(address, k.clone()),
+                          WriteOp::Value(v.clone()),
+                        );
+
+                        write_set_mut.push(item_tuple);
+                    } else {
+                        // TODO: why would this happen?
+                        write_set_mut.push((
+                            AccessPath::new(address, k.clone()),
+                            WriteOp::Value(v.clone()),
+                        ));
+                    }
+                }
+                println!("process account index: {}", index);
+            }, None => {
+                println!("No address for error: {}", index);
+            }
+        }
+        index += 1;
+    }
+    println!("Total accounts read: {}", index);
+    Ok(write_set_mut)
+}
+/// Create a WriteSet from account state blobs
+pub fn add_account_states_to_write_set(write_set_mut: &mut WriteSetMut, account_state_blobs: &Vec<AccountStateBlob>) -> Result<(), anyhow::Error> {
+    let mut index = 0;
+    let authentication_key = get_alice_authkey_for_swarm();
+    for blob in account_state_blobs {
+        let account_state = AccountState::try_from(blob)
+          .map_err(|e| Error::UnexpectedError(format!("Failed to parse blob: {}", e)))?;
+        let address_option = account_state.get_account_address()?;
+        match address_option {
+            Some(address) => {
+                for (k, v) in account_state.iter() {
+                    if k.clone() == AccountResource::resource_path() {
                         let account_resource_option = account_state.get_account_resource()?;
                         match account_resource_option {
-                            Some(mut account_resource) => {
+                            Some(account_resource) => {
                                 let account_resource_new = account_resource.clone_with_authentication_key(
-                                    authentication_key.clone(), account_details.1
+                                    authentication_key.clone(), address.clone()
                                 );
                                 write_set_mut.push((
                                     AccessPath::new(address, k.clone()),
@@ -125,6 +171,7 @@ pub fn add_account_states_to_write_set(write_set_mut: &mut WriteSetMut, account_
                             }
                         }
                     } else {
+                        // TODO: why would this happen?
                         write_set_mut.push((
                             AccessPath::new(address, k.clone()),
                             WriteOp::Value(v.clone()),
@@ -142,6 +189,8 @@ pub fn add_account_states_to_write_set(write_set_mut: &mut WriteSetMut, account_
     Ok(())
 }
 
+
+/// given a vec of AccountStateBlobs, try to parse and bootsrap a database, and finally create a genesis.blob
 pub fn generate_genesis_from_snapshot(account_state_blobs: &Vec<AccountStateBlob>, db: &DbReaderWriter) -> Result<Transaction, anyhow::Error> {
     let configuration = get_configuration(&db);
     let mut write_set_mut = WriteSetMut::new(vec![
@@ -155,7 +204,7 @@ pub fn generate_genesis_from_snapshot(account_state_blobs: &Vec<AccountStateBlob
         )]
     );
 
-    add_account_states_to_write_set(&mut write_set_mut, account_state_blobs);
+    add_account_states_to_write_set(&mut write_set_mut, account_state_blobs)?;
 
     Ok(Transaction::GenesisTransaction(WriteSetPayload::Direct(ChangeSet::new(
         write_set_mut
@@ -169,6 +218,7 @@ pub fn generate_genesis_from_snapshot(account_state_blobs: &Vec<AccountStateBlob
     ))))
 }
 
+/// Get account address and balance from AccountStateBlob
 pub fn get_account_details(blob: &AccountStateBlob) -> Result<(AccountAddress, BalanceResource), anyhow::Error> {
     let account_state = AccountState::try_from(blob)
                                 .map_err(|e| Error::UnexpectedError(format!("Failed to parse blob: {}", e)))?;

@@ -109,6 +109,7 @@ impl Node {
                 // account
                 match self.get_annotate_account_blob(account) {
                     Ok((Some(r), _)) => {
+                      // TODO: Duplicated in ol/types/annotate
                       let value = find_value_from_state(&r, module_name, struct_name, key_name);
                       format!("{:#?}", value)
                     },

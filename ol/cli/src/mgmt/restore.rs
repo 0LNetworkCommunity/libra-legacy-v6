@@ -82,7 +82,7 @@ pub struct Backup {
     zip_url: String,
     home_path: PathBuf,
     restore_path: PathBuf,
-    zip_path: PathBuf,
+    tar_path: PathBuf,
     waypoint: Option<Waypoint>,
     node_namespace: String,
 }
@@ -107,7 +107,7 @@ impl Backup {
             zip_url,
             home_path: conf.workspace.node_home.clone(),
             restore_path: restore_path.clone(),
-            zip_path: conf.workspace.node_home.join(format!("restore/restore-{}.zip", restore_epoch)),
+            tar_path: conf.workspace.node_home.join(format!("restore/restore-{}.zip", restore_epoch)),
             waypoint: None,
             node_namespace: format!("{}-oper", conf.profile.auth_key.clone()),
         }
@@ -115,7 +115,7 @@ impl Backup {
     /// Fetch backups
     pub fn fetch_backup(&self, verbose: bool) -> Result<(), Error> {    
         let mut resp = reqwest::blocking::get(&self.zip_url).expect("epoch archive http request failed");
-        let mut out = File::create(&self.zip_path).expect("cannot create archive zip");
+        let mut out = File::create(&self.tar_path).expect("cannot create archive zip");
         io::copy(&mut resp, &mut out).expect("failed to write to archive zip");
         println!("fetched archive zip, copied to {:?}", &self.home_path.join("restore/"));      
         
@@ -126,12 +126,12 @@ impl Backup {
         // tar -xf archive.tar.gz -C
         let mut child = Command::new("tar")
         .arg("-xf")
-        .arg(&self.zip_path)
+        .arg(&self.tar_path)
         .arg("-C")
         .arg(restore_dir)
         .stdout(stdio_cfg)
         .spawn()
-        .expect(&format!("failed to unzip {:?} into {:?}", &self.zip_path, restore_dir));
+        .expect(&format!("failed to untar {:?} into {:?}", &self.tar_path, restore_dir));
 
 
         // let mut child = Command::new("unzip")
