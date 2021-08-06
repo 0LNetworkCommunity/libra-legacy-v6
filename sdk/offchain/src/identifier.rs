@@ -10,7 +10,7 @@ use diem_sdk::{
     transaction_builder::Currency,
     types::{
         account_address::AccountAddress,
-        account_config::{allowed_currency_code_string, XDX_NAME, XUS_NAME},
+        account_config::{allowed_currency_code_string, XUS_NAME},
     },
 };
 use std::{collections::HashMap, str::FromStr};
@@ -265,7 +265,7 @@ fn normalize_currency(input: Option<&String>) -> Result<Option<Currency>, Intent
 fn currency_from_str(currency: &str) -> Result<Currency, IntentIdentifierError> {
     match currency {
         XUS_NAME => Ok(Currency::XUS),
-        XDX_NAME => Ok(Currency::XDX),
+        // XDX_NAME => Ok(Currency::XDX), /////// 0L /////////
         _ => Err(IntentIdentifierError::Parse(format!(
             "Unable to parse currency {}",
             currency,

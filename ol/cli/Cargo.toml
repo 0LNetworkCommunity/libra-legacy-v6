@@ -63,6 +63,7 @@ walkdir = "2.3"
 rand = "0.8"
 bcs = "0.1.2"
 move-vm-types = { path = "../../language/move-vm/types" } # 0L todo: which move-vm/ path?
+move-binary-format = { path = "../../language/move-binary-format" }
 
 # Parity with Storage create
 [dependencies.rocksdb]

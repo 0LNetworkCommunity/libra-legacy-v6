@@ -47,7 +47,7 @@ pub fn convert_txn_args(args: &[TransactionArgument]) -> Vec<Vec<u8>> {
                 TransactionArgument::Bool(b) => MoveValue::Bool(*b),
                 TransactionArgument::U8Vector(v) => MoveValue::vector_u8(v.clone()),
                 //////// 0L ////////            
-                TransactionArgument::AddressVector(v) => MoveValue::vector_address(v.clone())                
+                TransactionArgument::AddressVector(v) => MoveValue::vector_address(v.clone())              
             };
             mv.simple_serialize()
                 .expect("transaction arguments must serialize")

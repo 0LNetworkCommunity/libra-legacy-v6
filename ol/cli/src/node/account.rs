@@ -225,9 +225,7 @@ impl Node {
         start: u64,
         limit: u64,
     ) -> Result<Vec<EventView>> {
-        let key = hex::encode(event_key.as_bytes());
-        
-        self.client.get_events(&key, start, limit)
+        self.client.get_events(*event_key, start, limit)
     }
 
     /// get all events associated with an EventHandle

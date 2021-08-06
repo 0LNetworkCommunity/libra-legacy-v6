@@ -5861,6 +5861,7 @@ dependencies = [
  "handlebars",
  "hex 0.4.3",
  "machine-ip",
+ "move-binary-format",
  "move-core-types",
  "move-vm-types",
  "nix 0.20.0",

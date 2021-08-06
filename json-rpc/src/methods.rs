@@ -7,7 +7,7 @@ use crate::{
     errors::JsonRpcError,
     views::{
         AccountStateWithProofView, AccountView, CurrencyInfoView, 
-        EventView, EventWithProofView, MetadataView, MinerStateResourceView,
+        EventView, EventWithProofView, MetadataView, /*MinerStateResourceView,*/
         OracleUpgradeStateView, StateProofView, TransactionView,
         TransactionListView, TransactionsWithProofsView,
     },
@@ -22,14 +22,14 @@ use diem_json_rpc_types::request::{
 };
 use diem_mempool::{MempoolClientSender, SubmissionStatus};
 use diem_types::{
-    account_address::AccountAddress, chain_id::ChainId, 
+    /*account_address::AccountAddress,*/ chain_id::ChainId, 
     ledger_info::LedgerInfoWithSignatures, mempool_status::MempoolStatusCode,
     transaction::SignedTransaction,
 };
 use fail::fail_point;
 use futures::{channel::oneshot, SinkExt};
-use ol_types::{miner_state::MinerStateResource, oracle_upgrade::OracleResource};
-use serde::de::DeserializeOwned;
+// use ol_types::{miner_state::MinerStateResource, oracle_upgrade::OracleResource};
+// use serde::de::DeserializeOwned;
 use serde_json::Value;
 use std::{borrow::Borrow, sync::Arc};
 use storage_interface::DbReader;
@@ -395,12 +395,14 @@ impl<'a> Handler<'a> {
 //     Err(JsonRpcError::invalid_request_with_msg("No Miner State found.".to_string()))
 // }
 
-// 0L todo: no parse_version_param()
+// 0L todo: - no parse_version_param()
+//          - where to use this fn? This fn is now unused since no 
+//            method.rs::build_registry() in diem 1.3.0, see v5_old_diem-1.2.0 branch
 //////// 0L ////////
 /// Returns Oracle Upgrade view
-async fn query_oracle_upgrade(
-    service: JsonRpcService,
-    request: JsonRpcRequest,
+async fn _query_oracle_upgrade(
+    _service: JsonRpcService,
+    _request: JsonRpcRequest,
 ) -> Result<OracleUpgradeStateView, JsonRpcError> {
 
     // let account_address = AccountAddress::ZERO;

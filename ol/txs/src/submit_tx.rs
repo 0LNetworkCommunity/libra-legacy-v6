@@ -17,7 +17,7 @@ use diem_crypto::{
 };
 use diem_global_constants::OPERATOR_KEY;
 use diem_json_rpc_types::views::{TransactionView, VMStatusView};
-use diem_secure_storage::{CryptoStorage, NamespacedStorage, OnDiskStorage, Storage};
+use diem_secure_storage::{CryptoStorage, Namespaced, OnDiskStorage, Storage};
 use diem_types::{account_address::AccountAddress, waypoint::Waypoint};
 use diem_types::{
     chain_id::ChainId,
@@ -300,10 +300,12 @@ pub fn get_oper_params(
     let orig_storage = Storage::OnDiskStorage(OnDiskStorage::new(
         config.workspace.node_home.join("key_store.json").to_owned(),
     ));
-    let storage = Storage::NamespacedStorage(NamespacedStorage::new(
-        orig_storage,
-        format!("{}-oper", &config.profile.auth_key),
-    ));
+    let storage = Storage::NamespacedStorage(
+        Namespaced::new(
+            format!("{}-oper", &config.profile.auth_key),
+            Box::new(orig_storage),
+        )
+    );
     // export_private_key_for_version
     let privkey = storage
         .export_private_key(OPERATOR_KEY)

@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 
 use hex::decode;
 use diem_json_rpc_client::{AccountAddress, views::{BytesView, EventView}};
+use move_binary_format::{file_format::{Ability, AbilitySet}};
 use move_core_types::{
     identifier::Identifier,
     language_storage::{StructTag, TypeTag},
@@ -10,7 +11,6 @@ use move_core_types::{
 use num_format::{Locale, ToFormattedString};
 use resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct, AnnotatedMoveValue};
 use super::node::Node;
-use vm::{file_format::{Ability, AbilitySet}};
 
 const SCALING_FACTOR: u64 = 1_000_000;
 

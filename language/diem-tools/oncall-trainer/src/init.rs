@@ -113,6 +113,8 @@ impl NodeInfo {
             false,
             None,
             None,
+            // 0L todo: is this correct?
+            None, //////// 0L ////////
             self.waypoint,
             false,
         )

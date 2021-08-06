@@ -10,7 +10,7 @@ use glob::glob;
 use serde::{Serialize, Deserialize};
 use std::{fs::{self, File}, io::{self}, path::{PathBuf}, process::Command};
 use crate::application::app_config;
-use diem_secure_storage::{self, NamespacedStorage, OnDiskStorage};
+use diem_secure_storage::{self, Namespaced, OnDiskStorage};
 use diem_types::{waypoint::Waypoint};
 use diem_secure_storage::KVStorage;
 
@@ -202,9 +202,9 @@ impl Backup {
             OnDiskStorage::new(self.home_path.join("key_store.json").to_owned())
         );
         let mut ns_storage = diem_secure_storage::Storage::NamespacedStorage(
-            NamespacedStorage::new(
-                storage,
-                self.node_namespace.clone()
+            Namespaced::new(
+                self.node_namespace.clone(),
+                Box::new(storage),
             )
         );
         ns_storage.set(GENESIS_WAYPOINT, waypoint)?;

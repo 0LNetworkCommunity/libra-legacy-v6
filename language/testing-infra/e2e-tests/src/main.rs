@@ -86,6 +86,10 @@ fn script_to_script_function(script: &Script) -> Option<ScriptFunction> {
                         TransactionArgument::Address(a) => MoveValue::Address(*a),
                         TransactionArgument::Bool(b) => MoveValue::Bool(*b),
                         TransactionArgument::U8Vector(v) => MoveValue::vector_u8(v.clone()),
+                        //////// 0L ////////
+                        TransactionArgument::AddressVector(v) => { 
+                            MoveValue::vector_address(v.clone())
+                        }
                     }
                     .simple_serialize()
                     .unwrap()
