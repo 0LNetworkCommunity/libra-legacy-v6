@@ -43,6 +43,6 @@ fn main() -> Result<()> {
         Ok(())
     } else {
         println!("No options provided, exiting.");
-        exit(1)
+        exit(1);
     }
 }
