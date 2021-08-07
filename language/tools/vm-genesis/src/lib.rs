@@ -188,6 +188,7 @@ pub fn encode_genesis_change_set(
 pub fn encode_recovery_genesis_transaction(
     val_assignments: &[ValRecover],
     operator_registrations: &[OperRecover],
+    val_set: &[AccountAddress],
     chain_id: ChainId,
 ) -> Result<Transaction, Error> {
     let stdlib_modules = stdlib_modules(StdLibOptions::Compiled);
@@ -235,6 +236,7 @@ pub fn encode_recovery_genesis_transaction(
         &log_context,
         &val_assignments,
         &operator_registrations,
+        &val_set,
     );
 
     // restore account state
