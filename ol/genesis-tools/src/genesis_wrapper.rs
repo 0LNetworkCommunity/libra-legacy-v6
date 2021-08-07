@@ -1,11 +1,10 @@
 //! genesis-wrapper
 
-use crate::recover::AccountRole::*;
-use crate::recover::{GenesisRecovery, RecoverConsensusAccounts};
+use crate::recover::RecoverConsensusAccounts;
 use anyhow::Error;
 use libra_types::account_address::AccountAddress;
 use libra_types::transaction::{Transaction, WriteSetPayload};
-use vm_genesis::{OperRecover, ValRecover, encode_recovery_genesis_changeset};
+use vm_genesis::encode_recovery_genesis_changeset;
 
 
 /// make the recovery genesis transaction, and file
