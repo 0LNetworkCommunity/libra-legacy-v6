@@ -1,5 +1,6 @@
 use std::{path::PathBuf, process::exit};
 use anyhow::Result;
+use futures::executor::block_on;
 use gumdrop::Options;
 use ol_genesis_tools::read_archive::archive_into_recovery;
 
@@ -24,11 +25,9 @@ fn main() -> Result<()> {
     if opts.genesis {
         // create a genesis file from recovery file
         Ok(())
-    } else if let Some(r_path) = opts.recover_path {
-        // write recovery file
-        if let Some(a_path) = opts.snaphot_path {
-            archive_into_recovery(&a_path, &r_path);
-        };
+    } else if let Some(a_path) = opts.snaphot_path {
+
+        
         Ok(())
     } else if opts.daemon {
         // start the live fork daemon

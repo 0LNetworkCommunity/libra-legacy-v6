@@ -122,12 +122,10 @@ pub async fn archive_into_writeset(
 /// take an archive file path and parse into a writeset
 pub async fn archive_into_recovery(
     archive_path: &PathBuf,
-    recovery_path: &PathBuf,
 ) -> Result<Vec<LegacyRecovery>, Error> {
     let backup = read_from_json(archive_path)?;
     let account_blobs = accounts_from_snapshot_backup(backup).await?;
     let r = accounts_into_recovery(&account_blobs)?;
-    save_recovery_file(&r, recovery_path)?;
     Ok(r)
 }
 
