@@ -56,22 +56,19 @@ pub struct GenesisRecovery {
 
 /// RecoveryFile
 // #[derive(Debug, Serialize, Deserialize)]
-pub struct RecoveryFile {
+pub struct RecoverValidatorSet {
     ///
     pub vals: Vec<ValRecover>,
     ///
     pub opers: Vec<OperRecover>,
-    ///
-    pub users: Vec<UserRecover>,
 
 }
 
-impl Default for RecoveryFile {
+impl Default for RecoverValidatorSet {
   fn default() -> Self {
-      RecoveryFile {
+      RecoverValidatorSet {
         vals: vec!(),
         opers: vec!(),
-        users: vec!(),
       }
   }
 }

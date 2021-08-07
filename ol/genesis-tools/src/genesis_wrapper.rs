@@ -1,32 +1,39 @@
 //! genesis-wrapper
 
 use crate::recover::AccountRole::*;
-use crate::recover::{GenesisRecovery, RecoveryFile};
+use crate::recover::{GenesisRecovery, RecoverValidatorSet};
+use anyhow::Error;
 use libra_types::account_address::AccountAddress;
-use std::path::PathBuf;
 use vm_genesis::{OperRecover, ValRecover};
 
 /// Make recovery file in format needed
-pub fn make_recovery_file(recover: Vec<GenesisRecovery>, _output_path: PathBuf) {
-    // read file
-    let mut file = RecoveryFile::default();
+pub fn recover_validator_set(recover: Vec<GenesisRecovery>) -> Result<RecoverValidatorSet, Error> {
+    let mut set = RecoverValidatorSet::default();
 
     for i in &recover {
         let account: AccountAddress = i.account;
         // get deduplicated validators info
         match i.role {
             Validator => {
-                let val_cfg = i.val_cfg.as_ref().unwrap().validator_config.as_ref().unwrap().clone();
+                let val_cfg = i
+                    .val_cfg
+                    .as_ref()
+                    .unwrap()
+                    .validator_config
+                    .as_ref()
+                    .unwrap()
+                    .clone();
 
-                let operator_delegated_account = i.val_cfg.as_ref().unwrap().delegated_account.unwrap();
+                let operator_delegated_account =
+                    i.val_cfg.as_ref().unwrap().delegated_account.unwrap();
                 // prevent duplicate accounts
-                if file
+                if set
                     .vals
                     .iter()
                     .find(|&a| a.val_account == account)
                     .is_none()
                 {
-                    file.vals.push(ValRecover {
+                    set.vals.push(ValRecover {
                         val_account: account,
                         operator_delegated_account,
                         val_auth_key: i.auth_key.unwrap(),
@@ -41,13 +48,13 @@ pub fn make_recovery_file(recover: Vec<GenesisRecovery>, _output_path: PathBuf) 
                 match oper_data {
                     Some(o) => {
                         // get the operator info, preventing duplicates
-                        if file
+                        if set
                             .opers
                             .iter()
                             .find(|&a| a.operator_account == operator_delegated_account)
                             .is_none()
                         {
-                            file.opers.push(OperRecover {
+                            set.opers.push(OperRecover {
                                 operator_account: o.account,
                                 operator_auth_key: o.auth_key.unwrap(),
                                 validator_to_represent: account,
@@ -61,22 +68,11 @@ pub fn make_recovery_file(recover: Vec<GenesisRecovery>, _output_path: PathBuf) 
                             });
                         }
                     }
-                    None => todo!(),
+                    None => {}
                 }
             }
             _ => {}
         }
-        // get deduplicated operator info
-
-        // file.vals.sort_by(|a, b| b.val_account.cmp(&a.val_account));
     }
-
-    // get operators to recover
-    // get vals to recover
-
-    // Get a base gensis
-    // let genesis = encode_recovery_genesis_transaction(recover, )?;
-
-    // create transaction
-    // save transaction
+    Ok(set)
 }
