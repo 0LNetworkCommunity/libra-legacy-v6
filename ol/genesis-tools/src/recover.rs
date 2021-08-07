@@ -36,7 +36,7 @@ pub enum WalletType {
 /// The basic structs needed to recover account state in a new network.
 /// This is necessary for catastrophic recoveries, when the source code changes too much. Like what is going to happen between v4 and v5, where the source code of v5 will not be able to work with objects from v4. We need an intermediary file.
 #[derive(Debug, Serialize, Deserialize)]
-pub struct GenesisRecovery {
+pub struct LegacyRecovery {
     ///
     pub account: AccountAddress,
     ///
@@ -76,7 +76,7 @@ impl Default for RecoverConsensusAccounts {
 /// make the writeset for the genesis case. Starts with an unmodified account state and make into a writeset.
 pub fn accounts_into_recovery(
     account_state_blobs: &Vec<AccountStateBlob>,
-) -> Result<Vec<GenesisRecovery>, Error> {
+) -> Result<Vec<LegacyRecovery>, Error> {
     let mut to_recover = vec![];
     for blob in account_state_blobs {
         let account_state = AccountState::try_from(blob)?;
@@ -94,8 +94,8 @@ pub fn accounts_into_recovery(
 }
 
 /// create a recovery struct from an account state.
-pub fn parse_recovery(state: &AccountState) -> Result<GenesisRecovery, Error> {
-    let mut gr = GenesisRecovery {
+pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
+    let mut l = LegacyRecovery {
         account: AccountAddress::ZERO,
         auth_key: None,
         role: AccountRole::EndUser,
@@ -105,28 +105,28 @@ pub fn parse_recovery(state: &AccountState) -> Result<GenesisRecovery, Error> {
     };
 
     if let Some(address) = state.get_account_address()? {
-        gr.account = address;
+        l.account = address;
         // iterate over all the account's resources\
         for (k, v) in state.iter() {
             // extract the validator config resource
             if k == &BalanceResource::resource_path() {
-                gr.balance = lcs::from_bytes(v).ok();
+                l.balance = lcs::from_bytes(v).ok();
             } else if k == &ValidatorConfigResource::resource_path() {
-                gr.role = AccountRole::Validator;
-                gr.val_cfg = lcs::from_bytes(v).ok();
+                l.role = AccountRole::Validator;
+                l.val_cfg = lcs::from_bytes(v).ok();
             } else if k == &ValidatorOperatorConfigResource::resource_path() {
-                gr.role = AccountRole::Operator;
+                l.role = AccountRole::Operator;
             } else if k == &MinerStateResource::resource_path() {
-                gr.miner_state = lcs::from_bytes(v).ok();
+                l.miner_state = lcs::from_bytes(v).ok();
             }
 
             if address == AccountAddress::ZERO {
-                gr.role = AccountRole::System;
+                l.role = AccountRole::System;
                 // structs only on 0x0 address
                 if k == &ConfigurationResource::resource_path() {
-                    gr.miner_state = lcs::from_bytes(v).ok();
+                    l.miner_state = lcs::from_bytes(v).ok();
                 } else if k == &CommunityWalletsResource::resource_path() {
-                    gr.miner_state = lcs::from_bytes(v).ok();
+                    l.miner_state = lcs::from_bytes(v).ok();
                 }
             }
         }
@@ -138,7 +138,7 @@ pub fn parse_recovery(state: &AccountState) -> Result<GenesisRecovery, Error> {
 
 /// Make recovery file in format needed
 pub fn recover_consensus_accounts(
-    recover: Vec<GenesisRecovery>,
+    recover: Vec<LegacyRecovery>,
 ) -> Result<RecoverConsensusAccounts, Error> {
     use AccountRole::*;
     let mut set = RecoverConsensusAccounts::default();
@@ -212,7 +212,7 @@ pub fn recover_consensus_accounts(
 
 
 /// Save genesis recovery file
-pub fn save_recovery_file(data: &Vec<GenesisRecovery>, path: &PathBuf) -> Result<(), Error> {
+pub fn save_recovery_file(data: &Vec<LegacyRecovery>, path: &PathBuf) -> Result<(), Error> {
     let j = serde_json::to_string(data)?;
     let mut file = fs::File::create(path).expect("Could not genesis_recovery create file");
     file.write_all(j.as_bytes())

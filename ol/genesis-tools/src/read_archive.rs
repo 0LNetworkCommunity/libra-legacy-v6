@@ -52,7 +52,7 @@ use libra_vm::LibraVM;
 use storage_interface::DbReaderWriter;
 
 use crate::generate_genesis;
-use crate::recover::{GenesisRecovery, accounts_into_recovery, save_recovery_file};
+use crate::recover::{LegacyRecovery, accounts_into_recovery, save_recovery_file};
 
 fn get_runtime() -> (Runtime, u16) {
     let port = get_available_port();
@@ -123,7 +123,7 @@ pub async fn archive_into_writeset(
 pub async fn archive_into_recovery(
     archive_path: &PathBuf,
     recovery_path: &PathBuf,
-) -> Result<Vec<GenesisRecovery>, Error> {
+) -> Result<Vec<LegacyRecovery>, Error> {
     let backup = read_from_json(archive_path)?;
     let account_blobs = accounts_from_snapshot_backup(backup).await?;
     let r = accounts_into_recovery(&account_blobs)?;
@@ -167,7 +167,7 @@ pub fn accounts_into_writeset(
     account_state_blobs: &Vec<AccountStateBlob>,
     case: GenesisCase,
 ) -> Result<WriteSetMut, Error> {
-    let write_set_mut = WriteSetMut::new(vec![]);
+    let mut write_set_mut = WriteSetMut::new(vec![]);
     for blob in account_state_blobs {
         let account_state = AccountState::try_from(blob)?;
         match case {
@@ -177,8 +177,10 @@ pub fn accounts_into_writeset(
                 let clean = get_unmodified_writeset(&account_state)?;
                 let auth =
                     authkey_rotate_change_item(&account_state, get_alice_authkey_for_swarm())?;
-                let write_set_mut = merge_writeset(write_set_mut, clean)?;
-                return Ok(merge_writeset(write_set_mut, auth)?);
+                let merge_clean = merge_writeset(write_set_mut, clean)?;
+                let merge_all = merge_writeset(merge_clean, auth)?;
+
+                return Ok(merge_all);
             }
         }
     }
@@ -239,7 +241,7 @@ fn authkey_rotate_change_item(
     );
 }
 
-fn merge_writeset(mut left: WriteSetMut, right: WriteSetMut) -> Result<WriteSetMut, Error> {
+pub fn merge_writeset(mut left: WriteSetMut, right: WriteSetMut) -> Result<WriteSetMut, Error> {
     left.write_set.extend(right.write_set);
     Ok(left)
 }

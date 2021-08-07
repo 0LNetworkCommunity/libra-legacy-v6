@@ -240,18 +240,7 @@ pub fn encode_recovery_genesis_changeset(
         &val_set,
     );
 
-    // restore account state
-    // recover_all_accounts();
-
     println!("OK recover owners and operators =============== ");
-
-    // TODO: Restore Balance and Total Supply
-
-    // TODO: Restore Mining
-
-    // TODO: Restore FullnodeState
-
-    // TODO: Restore WalletType
 
     reconfigure(&mut session, &log_context);
 
@@ -267,11 +256,6 @@ pub fn encode_recovery_genesis_changeset(
     let effects = merge_txn_effects(effects_1, effects_2);
 
     let (write_set, events) = txn_effects_to_writeset_and_events(effects).unwrap();
-
-    // recover accounts to writeset?
-
-    // Need to explcitly set the validator set (not all validators configured will be in the set)
-    // bulk_update_validators
 
     assert!(!write_set.iter().any(|(_, op)| op.is_deletion()));
     verify_genesis_write_set(&events);
