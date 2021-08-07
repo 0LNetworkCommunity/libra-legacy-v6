@@ -37,6 +37,7 @@ struct Args {
     #[structopt(long, default_value = "target/debug/libra-node")]
     pub libra_node: String,
 
+    //////// 0L ////////
     /// path to a reference genesis blob file using which swarm has to start
     #[structopt(long)]
     pub genesis_blob_path: Option<PathBuf>,
@@ -61,7 +62,7 @@ fn main() {
         num_nodes,
         args.config_dir.clone(),
         None,
-        args.genesis_blob_path
+        args.genesis_blob_path //////// 0L ////////
     )
     .expect("Failed to configure validator swarm");
 
