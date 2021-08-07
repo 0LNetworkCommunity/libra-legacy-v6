@@ -32,14 +32,15 @@ pub fn append_genesis(
     legacy_vec: Vec<LegacyRecovery>,
 ) -> Result<Transaction, Error> {
     // merge writesets
-    let mut all_writesets = WriteSetMut::new(vec![]);
+    let mut all_writesets = gen_cs.write_set().to_owned().into_mut();
     for l in legacy_vec {
       let ws = get_migration_account_writeset(l)?;
       all_writesets = merge_writeset(all_writesets, ws)?;
     }
-
+    
+    let all_changes = ChangeSet::new(all_writesets.freeze().unwrap(), gen_cs.events().to_owned());
     Ok(Transaction::GenesisTransaction(WriteSetPayload::Direct(
-        gen_cs,
+        all_changes,
     )))
 }
 /// make the recovery genesis transaction, and file
