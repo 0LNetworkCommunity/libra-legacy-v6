@@ -9,7 +9,7 @@ use ol_types::{community_wallet::CommunityWalletsResource, miner_state::MinerSta
 use serde::{Deserialize, Serialize};
 use vm_genesis::{OperRecover, UserRecover, ValRecover};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 /// Account role
 pub enum AccountRole {
     /// System Accounts
