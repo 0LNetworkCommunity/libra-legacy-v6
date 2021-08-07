@@ -195,8 +195,6 @@ impl<T: AsRef<Path>> ValidatorBuilder<T> {
         let genesis_path = TempPath::new();
         genesis_path.create_as_file().unwrap();
 
-        // if a genesis blob is provided, parse and assign it, otherwise do the typical swarm genesis builder.
-        
         //////// 0L ////////
         let genesis = self
             .storage_helper
@@ -210,6 +208,8 @@ impl<T: AsRef<Path>> ValidatorBuilder<T> {
         self.storage_helper
             .insert_waypoint(&local_ns, waypoint)
             .unwrap();
+
+        dbg!(&genesis_path.path());
 
         let output = self
             .storage_helper
