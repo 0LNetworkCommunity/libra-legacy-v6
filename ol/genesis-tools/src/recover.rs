@@ -138,12 +138,12 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
 
 /// Make recovery file in format needed
 pub fn recover_consensus_accounts(
-    recover: Vec<LegacyRecovery>,
+    recover: &Vec<LegacyRecovery>,
 ) -> Result<RecoverConsensusAccounts, Error> {
     use AccountRole::*;
     let mut set = RecoverConsensusAccounts::default();
 
-    for i in &recover {
+    for i in recover {
         let account: AccountAddress = i.account;
         // get deduplicated validators info
         match i.role {

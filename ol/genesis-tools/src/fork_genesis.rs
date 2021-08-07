@@ -5,7 +5,7 @@ use std::io::Write;
 use std::path::PathBuf;
 
 use crate::read_archive::{archive_into_recovery, merge_writeset};
-use crate::recover::{LegacyRecovery, RecoverConsensusAccounts};
+use crate::recover::{LegacyRecovery, RecoverConsensusAccounts, recover_consensus_accounts};
 use anyhow::Error;
 use futures::executor::block_on;
 use libra_types::access_path::AccessPath;
@@ -16,20 +16,34 @@ use libra_types::write_set::{WriteOp, WriteSetMut};
 use move_core_types::move_resource::MoveResource;
 use vm_genesis::encode_recovery_genesis_changeset;
 
-pub fn make_genesis(archive_path: PathBuf) {
+/// Make a recovery genesis blob
+pub fn make_recovery_genesis(
+  genesis_blob_path: PathBuf,
+  archive_path: PathBuf,
+  validator_set: &[AccountAddress]
+) -> Result<(), Error>{
+  // get the legacy data from archive
   let legacy = block_on(
     archive_into_recovery(&archive_path)
-  );
+  )?;
+  // get consensus accounts
+  let genesis_accounts = recover_consensus_accounts(&legacy)?;
+  // create baseline genesis
+  let cs = get_baseline_genesis_change_set(genesis_accounts, validator_set)?;
+  // append genesis
+  let gen_tx = append_genesis(cs, legacy)?;
+  // save genesis
+  save_genesis(gen_tx, genesis_blob_path)
 }
 /// Get the minimal viable genesis from consensus accounts.
 pub fn get_baseline_genesis_change_set(
     genesis_accounts: RecoverConsensusAccounts,
-    set: &[AccountAddress],
+    validator_set: &[AccountAddress],
 ) -> Result<ChangeSet, Error> {
     encode_recovery_genesis_changeset(
         &genesis_accounts.vals,
         &genesis_accounts.opers,
-        &set,
+        &validator_set,
         1, // mainnet
     )
 }
