@@ -6,6 +6,8 @@ UNAME := $(shell uname)
 
 NODE_ENV=test
 
+test: swarm-genesis swarm
+
 fork-genesis:
 	cargo run -p ol-genesis-tools -- --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ../fixtures/state-snapshot/194/state_ver_74694920.0889/state.manifest
 
