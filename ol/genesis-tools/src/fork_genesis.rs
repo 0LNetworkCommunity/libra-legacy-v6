@@ -9,6 +9,7 @@ use libra_types::transaction::{ChangeSet, Transaction, WriteSetPayload};
 use vm_genesis::encode_recovery_genesis_changeset;
 
 
+/// Get the minimal viable genesis from consensus accounts.
 pub fn get_baseline_genesis_change_set(genesis_accounts: RecoverConsensusAccounts, set: &[AccountAddress]) -> Result<ChangeSet, Error>  {
   encode_recovery_genesis_changeset(
     &genesis_accounts.vals, 
@@ -29,6 +30,7 @@ pub fn append_genesis(gen_cs: ChangeSet, recover: GenesisRecovery, output_path: 
   Ok(Transaction::GenesisTransaction(WriteSetPayload::Direct(gen_cs)))
 }
 
+/// save the genesis blob
 pub fn save_genesis(gen_tx: Transaction, output_path: PathBuf) {
 
 }
