@@ -13,4 +13,4 @@ pub mod fork_daemon;
 pub mod read_archive;
 pub mod generate_genesis;
 pub mod recover;
-pub mod genesis_wrapper;
+pub mod fork_genesis;
