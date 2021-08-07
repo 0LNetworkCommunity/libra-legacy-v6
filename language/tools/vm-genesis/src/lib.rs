@@ -828,14 +828,15 @@ fn verify_genesis_write_set(events: &[ContractEvent]) {
         CreateAccountEvent::event_key(),
     );
 
-    // (2) second event is account creation event for TreasuryCompliance
-    let create_treasury_compliance_event = &events[1];
-    assert_eq!(
-        *create_treasury_compliance_event.key(),
-        CreateAccountEvent::event_key(),
-    );
-
     //////// 0L ////////
+
+    // (2) second event is account creation event for TreasuryCompliance
+    // let create_treasury_compliance_event = &events[1];
+    // assert_eq!(
+    //     *create_treasury_compliance_event.key(),
+    //     CreateAccountEvent::event_key(),
+    // );
+
     // (3) The first non-account creation event should be the new epoch event
     // let new_epoch_events: Vec<&ContractEvent> = events
     //     .iter()

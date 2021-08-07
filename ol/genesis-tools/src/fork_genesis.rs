@@ -7,7 +7,6 @@ use std::path::PathBuf;
 use crate::read_archive::{archive_into_recovery, merge_writeset};
 use crate::recover::{LegacyRecovery, RecoverConsensusAccounts, recover_consensus_accounts};
 use anyhow::Error;
-use futures::executor::block_on;
 use libra_types::access_path::AccessPath;
 use libra_types::account_address::AccountAddress;
 use libra_types::account_config::BalanceResource;
@@ -15,7 +14,6 @@ use libra_types::transaction::{ChangeSet, Transaction, WriteSetPayload};
 use libra_types::write_set::{WriteOp, WriteSetMut};
 use move_core_types::move_resource::MoveResource;
 use vm_genesis::encode_recovery_genesis_changeset;
-
 
 /// Make a recovery genesis blob
 pub async fn make_recovery_genesis(
