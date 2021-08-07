@@ -639,18 +639,6 @@ fn create_and_initialize_owners_operators(
         );
     }
 }
-
-/// Validator/owner state to recover in genesis recovery mode
-#[derive(Debug, PartialEq)]
-pub struct UserRecover {
-    ///
-    pub account: AccountAddress,
-    ///
-    pub auth_key: AuthenticationKey,
-    /// balance
-    pub balance: u64,
-
-}
 /// Validator/owner state to recover in genesis recovery mode
 #[derive(Debug, PartialEq, PartialOrd)]
 pub struct ValRecover {

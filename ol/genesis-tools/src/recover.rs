@@ -7,7 +7,7 @@ use libra_types::{account_address::AccountAddress, account_config::BalanceResour
 use move_core_types::move_resource::MoveResource;
 use ol_types::{community_wallet::CommunityWalletsResource, miner_state::MinerStateResource};
 use serde::{Deserialize, Serialize};
-use vm_genesis::{OperRecover, UserRecover, ValRecover};
+use vm_genesis::{OperRecover, ValRecover};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 /// Account role
