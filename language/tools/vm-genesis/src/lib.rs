@@ -629,7 +629,7 @@ fn create_and_initialize_owners_operators(
     }
 }
 /// Validator/owner state to recover in genesis recovery mode
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub struct ValRecover {
     ///
     pub val_account: AccountAddress,
@@ -641,7 +641,7 @@ pub struct ValRecover {
 }
 
 /// Operator state to recover in genesis recovery mode
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct OperRecover {
     ///
     pub operator_account: AccountAddress,

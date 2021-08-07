@@ -55,7 +55,7 @@ pub struct LegacyRecovery {
 }
 
 /// RecoveryFile
-// #[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct RecoverConsensusAccounts {
     ///
     pub vals: Vec<ValRecover>,

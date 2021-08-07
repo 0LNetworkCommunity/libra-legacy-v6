@@ -16,20 +16,27 @@ use libra_types::write_set::{WriteOp, WriteSetMut};
 use move_core_types::move_resource::MoveResource;
 use vm_genesis::encode_recovery_genesis_changeset;
 
+
 /// Make a recovery genesis blob
-pub fn make_recovery_genesis(
+pub async fn make_recovery_genesis(
   genesis_blob_path: PathBuf,
   archive_path: PathBuf,
-  validator_set: &[AccountAddress]
-) -> Result<(), Error>{
+) -> Result<(), Error> {
   // get the legacy data from archive
-  let legacy = block_on(
-    archive_into_recovery(&archive_path)
-  )?;
+  let legacy = archive_into_recovery(&archive_path).await?;
   // get consensus accounts
   let genesis_accounts = recover_consensus_accounts(&legacy)?;
   // create baseline genesis
-  let cs = get_baseline_genesis_change_set(genesis_accounts, validator_set)?;
+
+  // TODO: for testing letting all validators be in genesis set.
+  let validator_set: Vec<AccountAddress> = genesis_accounts.vals.clone()
+      .into_iter()
+      .map(|a|{
+        return a.val_account
+      })
+      .collect();
+
+  let cs = get_baseline_genesis_change_set(genesis_accounts, &validator_set)?;
   // append genesis
   let gen_tx = append_genesis(cs, legacy)?;
   // save genesis
