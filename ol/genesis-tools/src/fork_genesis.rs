@@ -1,5 +1,7 @@
 //! genesis-wrapper
 
+use std::fs::File;
+use std::io::Write;
 use std::path::PathBuf;
 
 use crate::read_archive::merge_writeset;
@@ -34,10 +36,10 @@ pub fn append_genesis(
     // merge writesets
     let mut all_writesets = gen_cs.write_set().to_owned().into_mut();
     for l in legacy_vec {
-      let ws = migrate_account(l)?;
-      all_writesets = merge_writeset(all_writesets, ws)?;
+        let ws = migrate_account(l)?;
+        all_writesets = merge_writeset(all_writesets, ws)?;
     }
-    
+
     let all_changes = ChangeSet::new(all_writesets.freeze().unwrap(), gen_cs.events().to_owned());
     Ok(Transaction::GenesisTransaction(WriteSetPayload::Direct(
         all_changes,
@@ -70,4 +72,9 @@ pub fn migrate_account(legacy: LegacyRecovery) -> Result<WriteSetMut, Error> {
 }
 
 /// save the genesis blob
-pub fn save_genesis(gen_tx: Transaction, output_path: PathBuf) {}
+pub fn save_genesis(gen_tx: Transaction, output_path: PathBuf) -> Result<(), Error> {
+    let mut file = File::create(output_path)?;
+    let bytes = lcs::to_bytes(&gen_tx)?;
+    file.write_all(&bytes)?;
+    Ok(())
+}
