@@ -14,3 +14,4 @@ pub mod read_archive;
 pub mod generate_genesis;
 pub mod recover;
 pub mod fork_genesis;
+pub mod swarm_genesis;

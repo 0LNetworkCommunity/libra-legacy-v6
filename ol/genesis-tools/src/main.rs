@@ -2,7 +2,7 @@ use std::{path::PathBuf, process::exit};
 use anyhow::Result;
 
 use gumdrop::Options;
-use ol_genesis_tools::fork_genesis::make_recovery_genesis;
+use ol_genesis_tools::{fork_genesis::make_recovery_genesis, swarm_genesis::make_swarm_genesis};
 
 
 #[tokio::main]
@@ -46,11 +46,14 @@ async fn main() -> Result<()> {
         return Ok(())
     } else if opts.swarm {
         // Write swarm genesis from snapshot, for CI and simulation
-        if let Some(_archive_path) = opts.snapshot {
-            // TODO: block on this future
-            // archive_into_writeset(archive_path);
-        }
-        return Ok(())
+        if let Some(archive_path) = opts.snapshot {
+          make_swarm_genesis(opts.genesis.unwrap(), archive_path).await?;
+          return Ok(())
+        } else {
+        println!("ERROR: must provide a path with --snapshot, exiting.");
+        exit(1);
+      }
+        
     } else {
         println!("ERROR: no options provided, exiting.");
         exit(1);

@@ -101,6 +101,15 @@ pub fn write_genesis_blob(genesis_txn: Transaction) -> Result<(), anyhow::Error>
     Ok(())
 }
 
+/// WritesetMut into a genesis tx
+pub fn writeset_to_tx(ws: WriteSetMut) -> Transaction {
+  Transaction::GenesisTransaction(
+    WriteSetPayload::Direct(
+        ChangeSet::new(ws.freeze().unwrap(), vec!())
+    ))
+}
+
+
 fn get_alice_authkey_for_swarm() -> Vec<u8> {
     let mnemonic_string = get_persona_mnem("alice");
     let account_details = get_account_from_mnem(mnemonic_string);

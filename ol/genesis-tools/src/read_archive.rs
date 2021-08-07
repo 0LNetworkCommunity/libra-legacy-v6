@@ -52,7 +52,7 @@ use libra_vm::LibraVM;
 use storage_interface::DbReaderWriter;
 
 use crate::generate_genesis;
-use crate::recover::{LegacyRecovery, accounts_into_recovery};
+use crate::recover::{accounts_into_recovery, LegacyRecovery};
 
 fn get_runtime() -> (Runtime, u16) {
     let port = get_available_port();
@@ -110,19 +110,16 @@ async fn read_account_state_chunk(
 }
 
 /// take an archive file path and parse into a writeset
-pub async fn archive_into_writeset(
+pub async fn archive_into_swarm_writeset(
     archive_path: PathBuf,
-    case: GenesisCase,
 ) -> Result<WriteSetMut, Error> {
     let backup = read_from_json(&archive_path)?;
     let account_blobs = accounts_from_snapshot_backup(backup).await?;
-    accounts_into_writeset(&account_blobs, case)
+    accounts_into_writeset_swarm(&account_blobs)
 }
 
 /// take an archive file path and parse into a writeset
-pub async fn archive_into_recovery(
-    archive_path: &PathBuf,
-) -> Result<Vec<LegacyRecovery>, Error> {
+pub async fn archive_into_recovery(archive_path: &PathBuf) -> Result<Vec<LegacyRecovery>, Error> {
     let backup = read_from_json(archive_path)?;
     let account_blobs = accounts_from_snapshot_backup(backup).await?;
     let r = accounts_into_recovery(&account_blobs)?;
@@ -161,26 +158,17 @@ pub enum GenesisCase {
 }
 
 /// make the writeset for the genesis case. Starts with an unmodified account state and make into a writeset.
-pub fn accounts_into_writeset(
+pub fn accounts_into_writeset_swarm(
     account_state_blobs: &Vec<AccountStateBlob>,
-    case: GenesisCase,
 ) -> Result<WriteSetMut, Error> {
-    let write_set_mut = WriteSetMut::new(vec![]);
+    let mut write_set_mut = WriteSetMut::new(vec![]);
     for blob in account_state_blobs {
         let account_state = AccountState::try_from(blob)?;
-        match case {
-            GenesisCase::Fork => todo!(),
-            GenesisCase::Test => {
-                // TODO: borrow
-                let clean = get_unmodified_writeset(&account_state)?;
-                let auth =
-                    authkey_rotate_change_item(&account_state, get_alice_authkey_for_swarm())?;
-                let merge_clean = merge_writeset(write_set_mut, clean)?;
-                let merge_all = merge_writeset(merge_clean, auth)?;
-
-                return Ok(merge_all);
-            }
-        }
+        // TODO: borrow
+        let clean = get_unmodified_writeset(&account_state)?;
+        let auth = authkey_rotate_change_item(&account_state, get_alice_authkey_for_swarm())?;
+        let merge_clean = merge_writeset(write_set_mut, clean)?;
+        write_set_mut = merge_writeset(merge_clean, auth)?;
     }
     println!("Total accounts read: {}", &account_state_blobs.len());
 

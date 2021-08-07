@@ -209,15 +209,17 @@ impl<T: AsRef<Path>> ValidatorBuilder<T> {
             .insert_waypoint(&local_ns, waypoint)
             .unwrap();
 
-        dbg!(&genesis_path.path());
+        //////// 0L ////////
+        // don't verify swarm's setup, if we are testing from a known genesis.blob
+        if self.genesis_blob_path.is_none() {
+            let output = self
+                .storage_helper
+                .verify_genesis(&local_ns, genesis_path.path())
+                .unwrap();
 
-        let output = self
-            .storage_helper
-            .verify_genesis(&local_ns, genesis_path.path())
-            .unwrap();
-  
-        println!("output: {}", output);
-        assert_eq!(output.split("match").count(), 5, "Failed to verify genesis");
+            println!("output: {}", output);
+            assert_eq!(output.split("match").count(), 5, "Failed to verify genesis");
+        }
 
         config.consensus.safety_rules.service = SafetyRulesService::Thread;
         config.consensus.safety_rules.backend = self.secure_backend(&local_ns, "safety-rules");
