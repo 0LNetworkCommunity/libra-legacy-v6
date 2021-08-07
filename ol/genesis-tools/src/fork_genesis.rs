@@ -34,7 +34,7 @@ pub fn append_genesis(
     // merge writesets
     let mut all_writesets = gen_cs.write_set().to_owned().into_mut();
     for l in legacy_vec {
-      let ws = get_migration_account_writeset(l)?;
+      let ws = migrate_account(l)?;
       all_writesets = merge_writeset(all_writesets, ws)?;
     }
     
@@ -44,16 +44,20 @@ pub fn append_genesis(
     )))
 }
 /// make the recovery genesis transaction, and file
-pub fn get_migration_account_writeset(legacy: LegacyRecovery) -> Result<WriteSetMut, Error> {
+pub fn migrate_account(legacy: LegacyRecovery) -> Result<WriteSetMut, Error> {
     let mut write_set_mut = WriteSetMut::new(vec![]);
 
     // add writesets, for recovering e.g. user accounts, balance, miner state, or application state
 
     // TODO: Restore Balance and Total Supply
     // legacy.balance
+    // TODO: Change legacy names
+    // NOTE: this is only needed from Libra -> Diem renames
+    let value = legacy.balance.unwrap().coin();
+    let new = BalanceResource::new(value);
     write_set_mut.push((
         AccessPath::new(legacy.account, BalanceResource::resource_path()),
-        WriteOp::Value(lcs::to_bytes(&legacy.balance).unwrap()),
+        WriteOp::Value(lcs::to_bytes(&new).unwrap()),
     ));
     // TODO: Restore Mining
 

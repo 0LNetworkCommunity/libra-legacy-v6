@@ -241,6 +241,7 @@ fn authkey_rotate_change_item(
     );
 }
 
+/// helper to merge writesets
 pub fn merge_writeset(mut left: WriteSetMut, right: WriteSetMut) -> Result<WriteSetMut, Error> {
     left.write_set.extend(right.write_set);
     Ok(left)
