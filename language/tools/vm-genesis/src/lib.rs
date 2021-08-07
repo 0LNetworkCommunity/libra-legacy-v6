@@ -237,6 +237,9 @@ pub fn encode_recovery_genesis_transaction(
         &operator_registrations,
     );
 
+    // restore account state
+    // recover_all_accounts();
+
     println!("OK recover owners and operators =============== ");
 
     // TODO: Restore Balance and Total Supply
@@ -261,6 +264,9 @@ pub fn encode_recovery_genesis_transaction(
     let effects = merge_txn_effects(effects_1, effects_2);
 
     let (write_set, events) = txn_effects_to_writeset_and_events(effects).unwrap();
+
+    // recover accounts to writeset?
+
 
     assert!(!write_set.iter().any(|(_, op)| op.is_deletion()));
     verify_genesis_write_set(&events);
@@ -634,6 +640,17 @@ fn create_and_initialize_owners_operators(
     }
 }
 
+/// Validator/owner state to recover in genesis recovery mode
+#[derive(Debug, PartialEq)]
+pub struct UserRecover {
+    ///
+    pub account: AccountAddress,
+    ///
+    pub auth_key: AuthenticationKey,
+    /// balance
+    pub balance: u64,
+
+}
 /// Validator/owner state to recover in genesis recovery mode
 #[derive(Debug, PartialEq)]
 pub struct ValRecover {

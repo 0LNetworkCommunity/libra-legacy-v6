@@ -7,6 +7,7 @@ use libra_types::{account_address::AccountAddress, account_config::BalanceResour
 use move_core_types::move_resource::MoveResource;
 use ol_types::{community_wallet::CommunityWalletsResource, miner_state::MinerStateResource};
 use serde::{Deserialize, Serialize};
+use vm_genesis::{OperRecover, UserRecover, ValRecover};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum AccountRole {
@@ -41,6 +42,18 @@ pub struct GenesisRecovery {
     // wallet_type: Option<WalletType>,
     // TODO: Fullnode State? // rust struct does not exist
     // TODO: Autopay? // rust struct does not exist
+}
+
+/// RecoveryFile
+// #[derive(Debug, Serialize, Deserialize)]
+pub struct RecoveryFile {
+    ///
+    pub vals: Vec<ValRecover>,
+    ///
+    pub opers: Vec<OperRecover>,
+    ///
+    pub users: Vec<UserRecover>,
+
 }
 
 /// make the writeset for the genesis case. Starts with an unmodified account state and make into a writeset.

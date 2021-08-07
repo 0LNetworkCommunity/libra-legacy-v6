@@ -1,14 +1,16 @@
 //! genesis-wrapper
 
 use crate::recover::GenesisRecovery;
-use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
+use anyhow::Error;
+use libra_types::{account_address::AccountAddress, chain_id::ChainId, on_chain_config::VMPublishingOption, transaction::{ChangeSet, Transaction, WriteSetPayload, authenticator::AuthenticationKey}};
+use libra_vm::{data_cache::StateViewCache, txn_effects_to_writeset_and_events};
+use serde_json::Value;
 use std::path::PathBuf;
-use vm_genesis::{encode_recovery_genesis_transaction, ValRecover};
+use vm_genesis::*;
 
-pub fn genesis_from_recovery_file(
+pub fn make_recovery_file(
     recover: Vec<GenesisRecovery>,
-    path_to_genesis: PathBuf,
-    path_to_recovery: PathBuf,
+    output_path: PathBuf,
 ) {
     // read file
     let mut vals: Vec<ValRecover> = vec![];
@@ -28,6 +30,7 @@ pub fn genesis_from_recovery_file(
     // get operators to recover
     // get vals to recover
 
+    // Get a base gensis
     // let genesis = encode_recovery_genesis_transaction(recover, )?;
 
     // create transaction
