@@ -13,5 +13,5 @@ build:
 	cargo build -p libra-node -p cli
 
 swarm: build
-	 cargo run -p libra-swarm -- --libra-node ${SOURCE_PATH}/target/debug/libra-node -c ~/.0L/swarm_temp -n 1 -s --cli-path ${SOURCE_PATH}/target/debug/cli --genesis-blob-path ${DATA_PATH}/genesis_from_snapshot.blob
+	 cargo run -p libra-swarm -- --libra-node ${SOURCE_PATH}/target/debug/libra-node -c ${DATA_PATH}/swarm_temp -n 1 -s --cli-path ${SOURCE_PATH}/target/debug/cli --genesis-blob-path ${DATA_PATH}/genesis_from_snapshot.blob
 

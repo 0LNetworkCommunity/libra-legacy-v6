@@ -19,11 +19,7 @@ use libra_types::{
     // transaction::{ChangeSet, Transaction, WriteSetPayload},
     // write_set::WriteSetMut
 };
-use std::{
-    fs::File,
-    io::Read,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 const LIBRA_ROOT_NS: &str = "libra_root";
 const LIBRA_ROOT_SHARED_NS: &str = "libra_root_shared";
@@ -199,32 +195,17 @@ impl<T: AsRef<Path>> ValidatorBuilder<T> {
         let genesis_path = TempPath::new();
         genesis_path.create_as_file().unwrap();
 
-        // if a genesis blob is provide it, parse and assign it, otherwise do the typical swarm genesis builder.
+        // if a genesis blob is provided, parse and assign it, otherwise do the typical swarm genesis builder.
+        
         //////// 0L ////////
-        let genesis = match &self.genesis_blob_path {
-            Some(p) => {
-                let mut file = File::open(&p)
-                    .map_err(|e| format!("Unable to open genesis file: {:?}", e))
-                    .unwrap();
-                let mut buffer = vec![];
-                file.read_to_end(&mut buffer)
-                    .map_err(|e| format!("Unable to read genesis file: {:?}", e))
-                    .unwrap();
-                let genesis_txn = lcs::from_bytes(&buffer)
-                    .map_err(|e| format!("Unable to parse genesis file: {:?}", e))
-                    .unwrap();
-                genesis_txn
-            }
-            //////// end 0L ////////
-            None => self
-                .storage_helper
-                .genesis(
-                    ChainId::test(),
-                    &genesis_path.path(),
-                    &self.genesis_blob_path,
-                )
-                .unwrap(),
-        };
+        let genesis = self
+            .storage_helper
+            .genesis(
+                ChainId::test(),
+                &genesis_path.path(),
+                &self.genesis_blob_path,
+            )
+            .unwrap();
 
         self.storage_helper
             .insert_waypoint(&local_ns, waypoint)
@@ -234,6 +215,7 @@ impl<T: AsRef<Path>> ValidatorBuilder<T> {
             .storage_helper
             .verify_genesis(&local_ns, genesis_path.path())
             .unwrap();
+  
         println!("output: {}", output);
         assert_eq!(output.split("match").count(), 5, "Failed to verify genesis");
 
