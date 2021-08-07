@@ -10,16 +10,26 @@ use serde::{Deserialize, Serialize};
 use vm_genesis::{OperRecover, UserRecover, ValRecover};
 
 #[derive(Debug, Serialize, Deserialize)]
+/// Account role
 pub enum AccountRole {
+    /// System Accounts
     System,
+    /// Vals
     Validator,
+    /// Opers
     Operator,
+    /// Users
     EndUser,
 }
+
+/// Wallet type
 #[derive(Debug, Serialize, Deserialize)]
 pub enum WalletType {
+    ///
     None,
+    ///
     Slow,
+    ///
     Community,
 }
 

@@ -2,12 +2,12 @@
 
 use crate::recover::GenesisRecovery;
 
-use libra_types::{account_address::AccountAddress, chain_id::ChainId, on_chain_config::VMPublishingOption, transaction::{ChangeSet, Transaction, WriteSetPayload, authenticator::AuthenticationKey}};
-
+use libra_types::{account_address::AccountAddress, transaction::{authenticator::AuthenticationKey}};
 
 use std::path::PathBuf;
 use vm_genesis::*;
 
+/// Make recovery file in format needed
 pub fn make_recovery_file(
     recover: Vec<GenesisRecovery>,
     _output_path: PathBuf,
