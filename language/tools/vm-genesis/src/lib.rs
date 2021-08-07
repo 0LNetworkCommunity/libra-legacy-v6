@@ -652,7 +652,7 @@ pub struct UserRecover {
 
 }
 /// Validator/owner state to recover in genesis recovery mode
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, PartialOrd)]
 pub struct ValRecover {
     ///
     pub val_account: AccountAddress,

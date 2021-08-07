@@ -3,7 +3,7 @@
 use std::{convert::TryFrom, fs, io::Write, path::PathBuf};
 
 use anyhow::{bail, Error};
-use libra_types::{account_address::AccountAddress, account_config::BalanceResource, account_state::AccountState, account_state_blob::AccountStateBlob, on_chain_config::ConfigurationResource, transaction::authenticator::AuthenticationKey, validator_config::ValidatorConfigResource};
+use libra_types::{account_address::AccountAddress, account_config::BalanceResource, account_state::AccountState, account_state_blob::AccountStateBlob, on_chain_config::ConfigurationResource, transaction::authenticator::AuthenticationKey, validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource}};
 use move_core_types::move_resource::MoveResource;
 use ol_types::{community_wallet::CommunityWalletsResource, miner_state::MinerStateResource};
 use serde::{Deserialize, Serialize};
@@ -66,6 +66,16 @@ pub struct RecoveryFile {
 
 }
 
+impl Default for RecoveryFile {
+  fn default() -> Self {
+      RecoveryFile {
+        vals: vec!(),
+        opers: vec!(),
+        users: vec!(),
+      }
+  }
+}
+
 /// make the writeset for the genesis case. Starts with an unmodified account state and make into a writeset.
 pub fn accounts_into_recovery(
     account_state_blobs: &Vec<AccountStateBlob>,
@@ -105,12 +115,16 @@ pub fn parse_recovery(state: &AccountState) -> Result<GenesisRecovery, Error> {
             if k == &BalanceResource::resource_path() {
                 gr.balance = lcs::from_bytes(v).ok();
             } else if k == &ValidatorConfigResource::resource_path() {
+                gr.role = AccountRole::Validator;
                 gr.val_cfg = lcs::from_bytes(v).ok();
+            } else if k == &ValidatorOperatorConfigResource::resource_path() {
+                gr.role = AccountRole::Operator;
             } else if k == &MinerStateResource::resource_path() {
                 gr.miner_state = lcs::from_bytes(v).ok();
             }
 
             if address == AccountAddress::ZERO {
+                gr.role = AccountRole::System;
                 // structs only on 0x0 address
                 if k == &ConfigurationResource::resource_path() {
                     gr.miner_state = lcs::from_bytes(v).ok();
