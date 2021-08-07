@@ -1,14 +1,14 @@
 //! genesis-wrapper
 
 use crate::recover::AccountRole::*;
-use crate::recover::{GenesisRecovery, RecoverValidatorSet};
+use crate::recover::{GenesisRecovery, RecoverConsensusAccounts};
 use anyhow::Error;
 use libra_types::account_address::AccountAddress;
 use vm_genesis::{OperRecover, ValRecover};
 
 /// Make recovery file in format needed
-pub fn recover_validator_set(recover: Vec<GenesisRecovery>) -> Result<RecoverValidatorSet, Error> {
-    let mut set = RecoverValidatorSet::default();
+pub fn recover_consensus_accounts(recover: Vec<GenesisRecovery>) -> Result<RecoverConsensusAccounts, Error> {
+    let mut set = RecoverConsensusAccounts::default();
 
     for i in &recover {
         let account: AccountAddress = i.account;

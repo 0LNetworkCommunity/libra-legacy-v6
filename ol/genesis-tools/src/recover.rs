@@ -56,7 +56,7 @@ pub struct GenesisRecovery {
 
 /// RecoveryFile
 // #[derive(Debug, Serialize, Deserialize)]
-pub struct RecoverValidatorSet {
+pub struct RecoverConsensusAccounts {
     ///
     pub vals: Vec<ValRecover>,
     ///
@@ -64,9 +64,9 @@ pub struct RecoverValidatorSet {
 
 }
 
-impl Default for RecoverValidatorSet {
+impl Default for RecoverConsensusAccounts {
   fn default() -> Self {
-      RecoverValidatorSet {
+      RecoverConsensusAccounts {
         vals: vec!(),
         opers: vec!(),
       }
