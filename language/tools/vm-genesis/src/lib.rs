@@ -185,12 +185,13 @@ pub fn encode_genesis_change_set(
 }
 
 //////// 0L ////////
-pub fn encode_recovery_genesis_transaction(
+pub fn encode_recovery_genesis_changeset(
     val_assignments: &[ValRecover],
     operator_registrations: &[OperRecover],
     val_set: &[AccountAddress],
-    chain_id: ChainId,
-) -> Result<Transaction, Error> {
+    chain: u8,
+) -> Result<ChangeSet, Error> {
+    let chain_id = ChainId::new(chain);
     let stdlib_modules = stdlib_modules(StdLibOptions::Compiled);
     let vm_publishing_option = VMPublishingOption::open();
 
@@ -275,8 +276,8 @@ pub fn encode_recovery_genesis_transaction(
     assert!(!write_set.iter().any(|(_, op)| op.is_deletion()));
     verify_genesis_write_set(&events);
 
-    let cs = ChangeSet::new(write_set, events);
-    Ok(Transaction::GenesisTransaction(WriteSetPayload::Direct(cs)))
+    Ok(ChangeSet::new(write_set, events))
+    // Ok(Transaction::GenesisTransaction(WriteSetPayload::Direct(cs)))
 }
 
 /// Convert the transaction arguments into Move values.

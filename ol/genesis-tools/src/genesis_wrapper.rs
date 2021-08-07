@@ -4,75 +4,28 @@ use crate::recover::AccountRole::*;
 use crate::recover::{GenesisRecovery, RecoverConsensusAccounts};
 use anyhow::Error;
 use libra_types::account_address::AccountAddress;
-use vm_genesis::{OperRecover, ValRecover};
+use libra_types::transaction::{Transaction, WriteSetPayload};
+use vm_genesis::{OperRecover, ValRecover, encode_recovery_genesis_changeset};
 
-/// Make recovery file in format needed
-pub fn recover_consensus_accounts(recover: Vec<GenesisRecovery>) -> Result<RecoverConsensusAccounts, Error> {
-    let mut set = RecoverConsensusAccounts::default();
 
-    for i in &recover {
-        let account: AccountAddress = i.account;
-        // get deduplicated validators info
-        match i.role {
-            Validator => {
-                let val_cfg = i
-                    .val_cfg
-                    .as_ref()
-                    .unwrap()
-                    .validator_config
-                    .as_ref()
-                    .unwrap()
-                    .clone();
+/// make the recovery genesis transaction, and file
+pub fn make_recovery_genesis(genesis_accounts: RecoverConsensusAccounts, set: &[AccountAddress]) -> Result<Transaction, Error> {
+  // Get a base change set
+  let cs = encode_recovery_genesis_changeset(
+    &genesis_accounts.vals, 
+    &genesis_accounts.opers, 
+    &set, 
+    1
+  )?;
 
-                let operator_delegated_account =
-                    i.val_cfg.as_ref().unwrap().delegated_account.unwrap();
-                // prevent duplicate accounts
-                if set
-                    .vals
-                    .iter()
-                    .find(|&a| a.val_account == account)
-                    .is_none()
-                {
-                    set.vals.push(ValRecover {
-                        val_account: account,
-                        operator_delegated_account,
-                        val_auth_key: i.auth_key.unwrap(),
-                    });
-                }
+  // add writesets, for recovering e.g. user accounts, balance, miner state, or application state 
 
-                // find the operator's authkey
-                let oper_data = recover
-                    .iter()
-                    .find(|&a| a.account == operator_delegated_account && a.role == Operator);
+  // merge writesets
 
-                match oper_data {
-                    Some(o) => {
-                        // get the operator info, preventing duplicates
-                        if set
-                            .opers
-                            .iter()
-                            .find(|&a| a.operator_account == operator_delegated_account)
-                            .is_none()
-                        {
-                            set.opers.push(OperRecover {
-                                operator_account: o.account,
-                                operator_auth_key: o.auth_key.unwrap(),
-                                validator_to_represent: account,
-                                // TODO: Check conversion of public key
-                                operator_consensus_pubkey: val_cfg
-                                    .consensus_public_key
-                                    .to_bytes()
-                                    .to_vec(),
-                                validator_network_addresses: val_cfg.validator_network_addresses,
-                                fullnode_network_addresses: val_cfg.fullnode_network_addresses,
-                            });
-                        }
-                    }
-                    None => {}
-                }
-            }
-            _ => {}
-        }
-    }
-    Ok(set)
+
+  // make the genesis transaction
+  let gen_tx = Transaction::GenesisTransaction(WriteSetPayload::Direct(cs));
+
+  // optionally save to file
+  Ok(gen_tx)
 }
