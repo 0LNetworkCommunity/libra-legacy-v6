@@ -52,7 +52,7 @@ use libra_vm::LibraVM;
 use storage_interface::DbReaderWriter;
 
 use crate::generate_genesis;
-use crate::recover::{LegacyRecovery, accounts_into_recovery, save_recovery_file};
+use crate::recover::{LegacyRecovery, accounts_into_recovery};
 
 fn get_runtime() -> (Runtime, u16) {
     let port = get_available_port();
@@ -165,7 +165,7 @@ pub fn accounts_into_writeset(
     account_state_blobs: &Vec<AccountStateBlob>,
     case: GenesisCase,
 ) -> Result<WriteSetMut, Error> {
-    let mut write_set_mut = WriteSetMut::new(vec![]);
+    let write_set_mut = WriteSetMut::new(vec![]);
     for blob in account_state_blobs {
         let account_state = AccountState::try_from(blob)?;
         match case {
