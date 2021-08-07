@@ -267,6 +267,8 @@ pub fn encode_recovery_genesis_transaction(
 
     // recover accounts to writeset?
 
+    // Need to explcitly set the validator set (not all validators configured will be in the set)
+    // bulk_update_validators
 
     assert!(!write_set.iter().any(|(_, op)| op.is_deletion()));
     verify_genesis_write_set(&events);
@@ -674,6 +676,7 @@ fn recovery_owners_operators(
     log_context: &impl LogContext,
     val_assignments: &[ValRecover],
     operator_registrations: &[OperRecover],
+    val_set: &[AccountAddress],
 ) {
     let libra_root_address = account_config::libra_root_address();
 
@@ -767,8 +770,10 @@ fn recovery_owners_operators(
 
     println!("4 ======== Add owner to validator set");
 
+    // NOTE: In recovery scenarios the validator set is NOT the same as the total validators.
     // Add each validator to the validator set. The Validators configs need be valid before this step runs.
-    for i in val_assignments {
+
+    for i in val_set {
         exec_function(
             session,
             log_context,
@@ -778,7 +783,7 @@ fn recovery_owners_operators(
             vec![],
             vec![
                 Value::transaction_argument_signer_reference(libra_root_address),
-                Value::address(i.val_account),
+                Value::address(*i),
             ],
         );
     }
@@ -825,6 +830,7 @@ fn reconfigure(session: &mut Session<StateViewCache>, log_context: &impl LogCont
         vec![],
     );
 }
+
 
 /// Verify the consistency of the genesis `WriteSet`
 fn verify_genesis_write_set(events: &[ContractEvent]) {
