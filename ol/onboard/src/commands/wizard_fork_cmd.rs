@@ -6,8 +6,9 @@ use super::files_cmd;
 
 use crate::entrypoint;
 use crate::prelude::app_config;
+use crate::read_genesis::gen_tx_from_blob;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
-use libra_genesis_tool::node_files;
+use libra_genesis_tool::{node_files, waypoint};
 use libra_types::transaction::SignedTransaction;
 use libra_types::waypoint::Waypoint;
 use libra_wallet::WalletLibrary;
@@ -77,17 +78,25 @@ impl Runnable for ForkCmd {
         upstream.set_port(Some(8080)).unwrap();
         println!("Setting upstream peer URL to: {:?}", &upstream);
 
+        let mut wp = self.waypoint.clone();
+        if let Some(path) = &self.prebuilt_genesis {
+          let tx = gen_tx_from_blob(path).unwrap();
+          wp = Some(waypoint::CreateWaypoint::extract_waypoint(tx).unwrap());
+          dbg!(&wp);
+        }
+
         let app_config = AppCfg::init_app_configs(
             authkey,
             account,
             &Some(upstream.clone()),
             &self.home_path,
-            &self.epoch,
-            &self.waypoint,
+            &Some(0),
+            &wp,
             &self.source_path,
         );
         let home_path = &app_config.workspace.node_home;
         let base_waypoint = app_config.chain_info.base_waypoint.clone();
+        dbg!(&base_waypoint);
 
         status_ok!("\nApp configs written", "\n...........................\n");
 
@@ -128,7 +137,9 @@ impl Runnable for ForkCmd {
             );
 
             prebuilt_genesis_path = Some(home_path.join("genesis.blob"))
+            
         }
+
 
         let home_dir = app_config.workspace.node_home.to_owned();
         // 0L convention is for the namespace of the operator to be appended by '-oper'
