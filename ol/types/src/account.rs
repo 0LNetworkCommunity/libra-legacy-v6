@@ -117,7 +117,7 @@ impl ValConfigs {
             op_consensus_pubkey: keys.child_4_consensus.get_public().to_bytes().to_vec(),
             op_validator_network_addresses: lcs::to_bytes(&encrypted_addr).unwrap(),
             op_fullnode_network_addresses: lcs::to_bytes(&fn_addr_obj).unwrap(),
-            op_fullnode_network_addresses_string: fn_addr_obj.to_owned(),
+            op_fullnode_network_addresses_string: fn_addr_obj.last().unwrap().to_owned(),
             op_human_name: format!("{}-oper", owner_address),
             autopay_instructions,
             autopay_signed,

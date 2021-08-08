@@ -1,12 +1,20 @@
 //! recovery
 
-use std::{convert::TryFrom, fs, io::Write, path::PathBuf};
-use libra_network_address::NetworkAddress;
 use anyhow::{bail, Error};
-use libra_types::{account_address::AccountAddress, account_config::BalanceResource, account_state::AccountState, account_state_blob::AccountStateBlob, on_chain_config::ConfigurationResource, transaction::authenticator::AuthenticationKey, validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource}};
+use libra_network_address::NetworkAddress;
+use libra_types::{
+    account_address::AccountAddress,
+    account_config::BalanceResource,
+    account_state::AccountState,
+    account_state_blob::AccountStateBlob,
+    on_chain_config::ConfigurationResource,
+    transaction::authenticator::AuthenticationKey,
+    validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource},
+};
 use move_core_types::move_resource::MoveResource;
 use ol_types::{community_wallet::CommunityWalletsResource, miner_state::MinerStateResource};
 use serde::{Deserialize, Serialize};
+use std::{convert::TryFrom, fs, io::Write, path::PathBuf};
 use vm_genesis::{OperRecover, ValRecover};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -61,16 +69,15 @@ pub struct RecoverConsensusAccounts {
     pub vals: Vec<ValRecover>,
     ///
     pub opers: Vec<OperRecover>,
-
 }
 
 impl Default for RecoverConsensusAccounts {
-  fn default() -> Self {
-      RecoverConsensusAccounts {
-        vals: vec!(),
-        opers: vec!(),
-      }
-  }
+    fn default() -> Self {
+        RecoverConsensusAccounts {
+            vals: vec![],
+            opers: vec![],
+        }
+    }
 }
 
 /// make the writeset for the genesis case. Starts with an unmodified account state and make into a writeset.
@@ -104,17 +111,18 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
         val_cfg: None,
         miner_state: None,
     };
-    
+
     if let Some(address) = state.get_account_address()? {
         l.account = address;
         l.auth_key = AuthenticationKey::try_from(
-          state
-          .get_account_resource()
-          .unwrap()
-          .unwrap()
-          .authentication_key()
-        ).ok();
-        
+            state
+                .get_account_resource()
+                .unwrap()
+                .unwrap()
+                .authentication_key(),
+        )
+        .ok();
+
         // from(state.get_account_resource().unwrap().unwrap().authentication_key());
         // iterate over all the account's resources\
         for (k, v) in state.iter() {
@@ -124,11 +132,37 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
             } else if k == &ValidatorConfigResource::resource_path() {
                 l.role = AccountRole::Validator;
                 l.val_cfg = lcs::from_bytes(v).ok();
-                let netaddr = l.clone().val_cfg.unwrap().validator_config.unwrap().fullnode_network_addresses();
-                dbg!(&netaddr);
 
-                let valnetaddr = l.clone().val_cfg.unwrap().validator_config.unwrap().validator_network_addresses();
-                dbg!(&valnetaddr);
+                let mut val_config = l
+                    .clone()
+                    .val_cfg
+                    .unwrap()
+                    .validator_config
+                    .unwrap();
+                // fix broken network addresses.
+
+                match val_config.fullnode_network_addresses() {
+                    Ok(_) => {} // well formed network address. Do nothing.
+                    Err(_) => {
+                        let bad_address = val_config.fullnode_network_addresses;
+                        match lcs::from_bytes::<NetworkAddress>(&bad_address) {
+                            Ok(p) => {
+                                dbg!(&p);
+                                let ser = lcs::to_bytes(&vec![p]).unwrap();
+                                val_config.fullnode_network_addresses = ser;
+                                if let Some(mut res) = l.val_cfg {
+                                  res.validator_config = Some(val_config);
+                                  l.val_cfg = Some(res)
+                                }
+                                
+                            }
+                            Err(_) => {}
+                        }
+                    }
+                };
+
+            // let valnetaddr = l.clone().val_cfg.unwrap().validator_config.unwrap().validator_network_addresses();
+            // dbg!(&valnetaddr);
             } else if k == &ValidatorOperatorConfigResource::resource_path() {
                 l.role = AccountRole::Operator;
             } else if k == &MinerStateResource::resource_path() {
@@ -146,9 +180,12 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
             }
         }
         println!("processed account: {:?}", address);
-        return Ok(l)
+        return Ok(l);
     } else {
-      bail!("ERROR: No address for AccountState: {:?}", state.get_account_address());
+        bail!(
+            "ERROR: No address for AccountState: {:?}",
+            state.get_account_address()
+        );
     }
 }
 
@@ -181,13 +218,12 @@ pub fn recover_consensus_accounts(
                     .iter()
                     .find(|&a| a.val_account == account)
                     .is_none()
-                { 
-                  set.vals.push(ValRecover {
-                      val_account: account,
-                      operator_delegated_account,
-                      val_auth_key: i.auth_key.unwrap(),
-                  });
-
+                {
+                    set.vals.push(ValRecover {
+                        val_account: account,
+                        operator_delegated_account,
+                        val_auth_key: i.auth_key.unwrap(),
+                    });
                 }
 
                 // find the operator's authkey
@@ -197,7 +233,8 @@ pub fn recover_consensus_accounts(
 
                 match oper_data {
                     Some(o) => {
-                        let netaddr: Vec<NetworkAddress> = lcs::from_bytes(val_cfg.fullnode_network_addresses.as_slice()).unwrap();
+                        let netaddr: Vec<NetworkAddress> =
+                            lcs::from_bytes(val_cfg.fullnode_network_addresses.as_slice()).unwrap();
                         dbg!(&netaddr);
                         // get the operator info, preventing duplicates
                         if set
@@ -205,7 +242,7 @@ pub fn recover_consensus_accounts(
                             .iter()
                             .find(|&a| a.operator_account == operator_delegated_account)
                             .is_none()
-                        { 
+                        {
                             set.opers.push(OperRecover {
                                 operator_account: o.account,
                                 operator_auth_key: o.auth_key.unwrap(),
@@ -228,7 +265,6 @@ pub fn recover_consensus_accounts(
     }
     Ok(set)
 }
-
 
 /// Save genesis recovery file
 pub fn save_recovery_file(data: &Vec<LegacyRecovery>, path: &PathBuf) -> Result<(), Error> {
