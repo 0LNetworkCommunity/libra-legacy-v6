@@ -142,7 +142,7 @@ pub fn encode_genesis_change_set(
         &lbr_ty,
         chain_id,
     );
-    println!("OK create_and_initialize_main_accounts =============== ");
+    println!("GENESIS: create_and_initialize_main_accounts");
 
     //////// 0L ////////
     let genesis_env = get_env();
@@ -158,11 +158,11 @@ pub fn encode_genesis_change_set(
         &operator_registrations,
     );
 
-    println!("OK create_and_initialize_owners_operators =============== ");
+    println!("GENESIS: create_and_initialize_owners_operators");
 
     distribute_genesis_subsidy(&mut session, &log_context);
 
-    println!("OK Genesis subsidy =============== ");
+    println!("GENESIS: Genesis subsidy");
 
     reconfigure(&mut session, &log_context);
 
@@ -223,7 +223,7 @@ pub fn encode_recovery_genesis_changeset(
         &lbr_ty,
         chain_id,
     );
-    println!("OK create system accounts =============== ");
+    println!("GENESIS: create system accounts");
 
     //////// 0L ////////
     let genesis_env = get_env();
@@ -240,7 +240,7 @@ pub fn encode_recovery_genesis_changeset(
         &val_set,
     );
 
-    println!("OK recover owners and operators =============== ");
+    println!("GENESIS: recover owners and operators");
 
     reconfigure(&mut session, &log_context);
 
@@ -487,7 +487,7 @@ fn create_and_initialize_owners_operators(
     // key prefix and account address. Internally move then computes the auth key as auth key
     // prefix || address. Because of this, the initial auth key will be invalid as we produce the
     // account address from the name and not the public key.
-    println!("0 ======== Create Owner Accounts");
+    println!("======== Create Owner Accounts");
     for (owner_key, owner_name, _op_assignment, genesis_proof) in operator_assignments {
         // TODO: Remove. Temporary Authkey for genesis, because accounts are being created from human names.
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
@@ -566,7 +566,7 @@ fn create_and_initialize_owners_operators(
         );
     }
 
-    println!("1 ======== Create OP Accounts");
+    println!("======== Create OP Accounts");
     // Create accounts for each validator operator
     for (operator_key, operator_name, _, _) in operator_registrations {
         let operator_auth_key = AuthenticationKey::ed25519(&operator_key);
@@ -586,7 +586,7 @@ fn create_and_initialize_owners_operators(
         );
     }
 
-    println!("2 ======== Link owner to OP");
+    println!("======== Link Owner to OP");
 
     // Authorize an operator for a validator/owner
     for (owner_key, _owner_name, op_assignment_script, _genesis_proof) in operator_assignments {
@@ -598,14 +598,14 @@ fn create_and_initialize_owners_operators(
         exec_script(session, log_context, owner_address, op_assignment_script);
     }
 
-    println!("3 ======== OP sends network info to Owner config");
+    println!("======== OP sends network info to Owner config");
     // Set the validator operator configs for each owner
     for (operator_key, _, registration, _account) in operator_registrations {
         let operator_account = account_address::from_public_key(operator_key);
         exec_script(session, log_context, operator_account, registration);
     }
 
-    println!("4 ======== Add owner to validator set");
+    println!("======== Add owner to validator set");
 
     // Add each validator to the validator set
     for (owner_key, _owner_name, _op_assignment, _genesis_proof) in operator_assignments {
@@ -669,7 +669,7 @@ fn recovery_owners_operators(
     // key prefix and account address. Internally move then computes the auth key as auth key
     // prefix || address. Because of this, the initial auth key will be invalid as we produce the
     // account address from the name and not the public key.
-    println!("0 ======== Create Owner Accounts");
+    println!("======== Create Owner Accounts");
     for i in val_assignments {
         println!("account: {:?}", i.val_account);
 
@@ -687,7 +687,7 @@ fn recovery_owners_operators(
         );
     }
 
-    println!("1 ======== Create OP Accounts");
+    println!("======== Create OP Accounts");
     // Create accounts for each validator operator
     for i in operator_registrations {
         let create_operator_script =
@@ -705,7 +705,7 @@ fn recovery_owners_operators(
         );
     }
 
-    println!("2 ======== Link owner to OP");
+    println!("======== Link owner to OP");
 
     let mut n = 0u64;
     // Owner/Validator is authorizing an Operator. This is sent by Owner. Operators need to have registered before this step.
@@ -730,7 +730,7 @@ fn recovery_owners_operators(
         n = n + 1;
     }
 
-    println!("3 ======== OP sends network info to Owner config");
+    println!("======== OP sends network info to Owner config");
     // Set the validator operator configs for each owner. The Validator/owner needs to have linked to the Operator before this step.
     for i in operator_registrations {
         // let addresses = i.fullnode_network_addresses.clone();
@@ -757,7 +757,7 @@ fn recovery_owners_operators(
             .unwrap()
     }
 
-    println!("4 ======== Add owner to validator set");
+    println!("======== Add owner to validator set");
 
     // NOTE: In recovery scenarios the validator set is NOT the same as the total validators.
     // Add each validator to the validator set. The Validators configs need be valid before this step runs.
