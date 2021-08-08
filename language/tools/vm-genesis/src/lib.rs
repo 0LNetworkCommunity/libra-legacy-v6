@@ -671,7 +671,7 @@ fn recovery_owners_operators(
     // account address from the name and not the public key.
     println!("0 ======== Create Owner Accounts");
     for i in val_assignments {
-        println!("validator account: {:?}", i.val_account);
+        println!("account: {:?}", i.val_account);
 
         let create_owner_script = transaction_builder::encode_create_validator_account_script(
             0,
