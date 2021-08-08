@@ -441,13 +441,12 @@ clean-tags:
 
 ##### FORK TESTS #####
 
-# Set local storage keys
-fork-init: init
-
 # Make genesis file
 fork-genesis:
 		cargo run -p ol-genesis-tools -- --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ../fixtures/state-snapshot/194/state_ver_74694920.0889/state.manifest
-# Set node config
+# Use onboard to create all node files
+fork-config:
+	cargo run -p onboard -- val -u http://167.172.248.37 --prebuilt-genesis ${DATA_PATH}/genesis_from_snapshot.blob
 
-# set-waypoint
+# start node from files
 
