@@ -45,10 +45,10 @@ pub async fn make_recovery_genesis(
     gen_tx = Transaction::GenesisTransaction(
       WriteSetPayload::Direct(cs)
     );
-    
+
   }
   // save genesis
-
+  // dbg!(&gen_tx);
   save_genesis(gen_tx, genesis_blob_path)
 }
 

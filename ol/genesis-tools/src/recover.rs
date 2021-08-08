@@ -104,11 +104,18 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
         val_cfg: None,
         miner_state: None,
     };
-    let test = state.get_account_address()?;
-    dbg!(&test);
-
+    
     if let Some(address) = state.get_account_address()? {
         l.account = address;
+        l.auth_key = AuthenticationKey::try_from(
+          state
+          .get_account_resource()
+          .unwrap()
+          .unwrap()
+          .authentication_key()
+        ).ok();
+        
+        // from(state.get_account_resource().unwrap().unwrap().authentication_key());
         // iterate over all the account's resources\
         for (k, v) in state.iter() {
             // extract the validator config resource
@@ -169,12 +176,13 @@ pub fn recover_consensus_accounts(
                     .iter()
                     .find(|&a| a.val_account == account)
                     .is_none()
-                {
-                    set.vals.push(ValRecover {
-                        val_account: account,
-                        operator_delegated_account,
-                        val_auth_key: i.auth_key.unwrap(),
-                    });
+                { 
+                  set.vals.push(ValRecover {
+                      val_account: account,
+                      operator_delegated_account,
+                      val_auth_key: i.auth_key.unwrap(),
+                  });
+
                 }
 
                 // find the operator's authkey
