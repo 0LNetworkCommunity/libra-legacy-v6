@@ -438,3 +438,16 @@ clean-tags:
 	git push origin --delete ${TAG}
 	git tag -d ${TAG}
 	
+
+##### FORK TESTS #####
+
+# Set local storage keys
+fork-init: init
+
+# Make genesis file
+fork-genesis:
+		cargo run -p ol-genesis-tools -- --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ../fixtures/state-snapshot/194/state_ver_74694920.0889/state.manifest
+# Set node config
+
+# set-waypoint
+

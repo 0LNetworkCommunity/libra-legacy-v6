@@ -20,8 +20,8 @@ pub struct FilesCmd {
     github_org: Option<String>,
     #[options(help = "repo with with genesis transactions")]
     repo: Option<String>,   
-    #[options(help = "build genesis from ceremony repo")]
-    rebuild_genesis: bool, 
+    #[options(help = "use a prebuilt genesis.blob")]
+    prebuilt_genesis: Option<PathBuf>, 
     #[options(help = "only make fullnode config files")]
     fullnode_only: bool,
     #[options(help = "optional waypoint")]
@@ -38,7 +38,7 @@ impl Runnable for FilesCmd {
             &self.chain_id,
             &self.github_org,
             &self.repo,
-            &self.rebuild_genesis,
+            &self.prebuilt_genesis,
             &self.fullnode_only,
             self.waypoint,
         ) 
@@ -50,7 +50,7 @@ pub fn genesis_files(
     chain_id: &Option<u8>,
     github_org: &Option<String>,
     repo: &Option<String>,
-    rebuild_genesis: &bool,
+    prebuilt_genesis: &Option<PathBuf>,
     fullnode_only: &bool,
     way_opt: Option<Waypoint>,
 ) {
@@ -64,7 +64,7 @@ pub fn genesis_files(
         &github_org.clone().unwrap_or("OLSF".to_string()),
         &repo.clone().unwrap_or("experimetal-genesis".to_string()),
         &namespace,
-        rebuild_genesis,
+        prebuilt_genesis,
         fullnode_only,
         way_opt
     ).unwrap();
