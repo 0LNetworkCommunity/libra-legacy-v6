@@ -133,12 +133,7 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
                 l.role = AccountRole::Validator;
                 l.val_cfg = lcs::from_bytes(v).ok();
 
-                let mut val_config = l
-                    .clone()
-                    .val_cfg
-                    .unwrap()
-                    .validator_config
-                    .unwrap();
+                let mut val_config = l.clone().val_cfg.unwrap().validator_config.unwrap();
                 // fix broken network addresses.
 
                 match val_config.fullnode_network_addresses() {
@@ -147,22 +142,17 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
                         let bad_address = val_config.fullnode_network_addresses;
                         match lcs::from_bytes::<NetworkAddress>(&bad_address) {
                             Ok(p) => {
-                                dbg!(&p);
                                 let ser = lcs::to_bytes(&vec![p]).unwrap();
                                 val_config.fullnode_network_addresses = ser;
                                 if let Some(mut res) = l.val_cfg {
-                                  res.validator_config = Some(val_config);
-                                  l.val_cfg = Some(res)
+                                    res.validator_config = Some(val_config);
+                                    l.val_cfg = Some(res)
                                 }
-                                
                             }
                             Err(_) => {}
                         }
                     }
                 };
-
-            // let valnetaddr = l.clone().val_cfg.unwrap().validator_config.unwrap().validator_network_addresses();
-            // dbg!(&valnetaddr);
             } else if k == &ValidatorOperatorConfigResource::resource_path() {
                 l.role = AccountRole::Operator;
             } else if k == &MinerStateResource::resource_path() {
@@ -233,9 +223,6 @@ pub fn recover_consensus_accounts(
 
                 match oper_data {
                     Some(o) => {
-                        let netaddr: Vec<NetworkAddress> =
-                            lcs::from_bytes(val_cfg.fullnode_network_addresses.as_slice()).unwrap();
-                        dbg!(&netaddr);
                         // get the operator info, preventing duplicates
                         if set
                             .opers

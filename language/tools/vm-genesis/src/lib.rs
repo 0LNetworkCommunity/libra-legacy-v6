@@ -13,7 +13,6 @@ use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     PrivateKey, Uniform,
 };
-use libra_network_address::NetworkAddress;
 use libra_types::{
     account_address,
     account_config::{self, events::CreateAccountEvent},
@@ -493,8 +492,6 @@ fn create_and_initialize_owners_operators(
         // TODO: Remove. Temporary Authkey for genesis, because accounts are being created from human names.
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
-        dbg!(owner_address);
-
         let create_owner_script = transaction_builder::encode_create_validator_account_script(
             0,
             owner_address,
@@ -674,7 +671,7 @@ fn recovery_owners_operators(
     // account address from the name and not the public key.
     println!("0 ======== Create Owner Accounts");
     for i in val_assignments {
-        dbg!(i.val_account);
+        println!("validator account: {:?}", i.val_account);
 
         let create_owner_script = transaction_builder::encode_create_validator_account_script(
             0,
