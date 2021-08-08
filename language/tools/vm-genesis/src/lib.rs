@@ -142,7 +142,7 @@ pub fn encode_genesis_change_set(
         &lbr_ty,
         chain_id,
     );
-    println!("GENESIS: create_and_initialize_main_accounts");
+    println!("GENESIS: created main accounts");
 
     //////// 0L ////////
     let genesis_env = get_env();
@@ -158,11 +158,11 @@ pub fn encode_genesis_change_set(
         &operator_registrations,
     );
 
-    println!("GENESIS: create_and_initialize_owners_operators");
+    println!("GENESIS: created owners & operators");
 
     distribute_genesis_subsidy(&mut session, &log_context);
 
-    println!("GENESIS: Genesis subsidy");
+    println!("GENESIS: subsidy processed");
 
     reconfigure(&mut session, &log_context);
 
@@ -181,6 +181,9 @@ pub fn encode_genesis_change_set(
 
     assert!(!write_set.iter().any(|(_, op)| op.is_deletion()));
     verify_genesis_write_set(&events);
+    
+    println!("GENESIS: done");
+
     ChangeSet::new(write_set, events)
 }
 
@@ -223,7 +226,7 @@ pub fn encode_recovery_genesis_changeset(
         &lbr_ty,
         chain_id,
     );
-    println!("GENESIS: create system accounts");
+    println!("GENESIS: created system accounts");
 
     //////// 0L ////////
     let genesis_env = get_env();
@@ -240,7 +243,7 @@ pub fn encode_recovery_genesis_changeset(
         &val_set,
     );
 
-    println!("GENESIS: recover owners and operators");
+    println!("GENESIS: recovered owners and operators");
 
     reconfigure(&mut session, &log_context);
 
@@ -259,9 +262,10 @@ pub fn encode_recovery_genesis_changeset(
 
     assert!(!write_set.iter().any(|(_, op)| op.is_deletion()));
     verify_genesis_write_set(&events);
+    
+    println!("GENESIS: done");
 
     Ok(ChangeSet::new(write_set, events))
-    // Ok(Transaction::GenesisTransaction(WriteSetPayload::Direct(cs)))
 }
 
 /// Convert the transaction arguments into Move values.
