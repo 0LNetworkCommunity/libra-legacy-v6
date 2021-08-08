@@ -99,13 +99,15 @@ impl ValConfigs {
 
         let fullnode_network_string = format!("/ip4/{}/tcp/6179", ip_address);
         let fn_addr_obj: NetworkAddress = fullnode_network_string.parse().expect("could not parse fullnode network address");
+        
         let fn_pubkey =  PublicKey::from_ed25519_public_bytes(
             &keys
             .child_3_fullnode_network
             .get_public()
             .to_bytes()
         ).unwrap();
-        let fn_addr_obj = fn_addr_obj.append_prod_protos(fn_pubkey, 0);
+        let fn_addr_obj = vec![fn_addr_obj.append_prod_protos(fn_pubkey, 0)];
+        
         Self {
             /// Block zero of the onboarded miner
             block_zero: block,

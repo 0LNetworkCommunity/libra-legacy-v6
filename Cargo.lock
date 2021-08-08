@@ -5099,6 +5099,7 @@ dependencies = [
  "libra-crypto",
  "libra-genesis-tool",
  "libra-management",
+ "libra-network-address",
  "libra-temppath",
  "libra-types",
  "libra-vm",

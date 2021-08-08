@@ -63,7 +63,9 @@ impl Seeds {
 
             // use validator address, not the operator consensus key.
             // let peer_id = info.account_address().to_owned();
-            let addr_vec = info.config().fullnode_network_addresses().expect("Get the Fullnode network address");
+            dbg!(&info.config());
+            
+            let addr_vec = info.config().fullnode_network_addresses().expect("could not find fullnode_network_addresses");
             seed_addr.insert(peer_id, addr_vec);
         }
 

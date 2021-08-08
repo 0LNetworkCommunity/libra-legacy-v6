@@ -1,7 +1,7 @@
 //! recovery
 
 use std::{convert::TryFrom, fs, io::Write, path::PathBuf};
-
+use libra_network_address::NetworkAddress;
 use anyhow::{bail, Error};
 use libra_types::{account_address::AccountAddress, account_config::BalanceResource, account_state::AccountState, account_state_blob::AccountStateBlob, on_chain_config::ConfigurationResource, transaction::authenticator::AuthenticationKey, validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource}};
 use move_core_types::move_resource::MoveResource;
@@ -9,7 +9,7 @@ use ol_types::{community_wallet::CommunityWalletsResource, miner_state::MinerSta
 use serde::{Deserialize, Serialize};
 use vm_genesis::{OperRecover, ValRecover};
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 /// Account role
 pub enum AccountRole {
     /// System Accounts
@@ -23,7 +23,7 @@ pub enum AccountRole {
 }
 
 /// Wallet type
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum WalletType {
     ///
     None,
@@ -35,7 +35,7 @@ pub enum WalletType {
 
 /// The basic structs needed to recover account state in a new network.
 /// This is necessary for catastrophic recoveries, when the source code changes too much. Like what is going to happen between v4 and v5, where the source code of v5 will not be able to work with objects from v4. We need an intermediary file.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LegacyRecovery {
     ///
     pub account: AccountAddress,
@@ -124,6 +124,11 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
             } else if k == &ValidatorConfigResource::resource_path() {
                 l.role = AccountRole::Validator;
                 l.val_cfg = lcs::from_bytes(v).ok();
+                let netaddr = l.clone().val_cfg.unwrap().validator_config.unwrap().fullnode_network_addresses();
+                dbg!(&netaddr);
+
+                let valnetaddr = l.clone().val_cfg.unwrap().validator_config.unwrap().validator_network_addresses();
+                dbg!(&valnetaddr);
             } else if k == &ValidatorOperatorConfigResource::resource_path() {
                 l.role = AccountRole::Operator;
             } else if k == &MinerStateResource::resource_path() {
@@ -192,13 +197,15 @@ pub fn recover_consensus_accounts(
 
                 match oper_data {
                     Some(o) => {
+                        let netaddr: Vec<NetworkAddress> = lcs::from_bytes(val_cfg.fullnode_network_addresses.as_slice()).unwrap();
+                        dbg!(&netaddr);
                         // get the operator info, preventing duplicates
                         if set
                             .opers
                             .iter()
                             .find(|&a| a.operator_account == operator_delegated_account)
                             .is_none()
-                        {
+                        { 
                             set.opers.push(OperRecover {
                                 operator_account: o.account,
                                 operator_auth_key: o.auth_key.unwrap(),

@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use move_core_types::account_address::AccountAddress;
 
 /// Struct that represents a CurrencyInfo resource
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MinerStateResource {
     ///
     pub previous_proof_hash: Vec<u8>,

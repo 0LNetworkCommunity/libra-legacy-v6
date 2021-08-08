@@ -14,7 +14,7 @@ use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
 
 /// The balance resource held under an account.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
 pub struct BalanceResource {
     coin: u64,

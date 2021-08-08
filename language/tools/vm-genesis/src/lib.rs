@@ -13,6 +13,7 @@ use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     PrivateKey, Uniform,
 };
+use libra_network_address::NetworkAddress;
 use libra_types::{
     account_address,
     account_config::{self, events::CreateAccountEvent},
@@ -735,6 +736,10 @@ fn recovery_owners_operators(
     println!("3 ======== OP sends network info to Owner config");
     // Set the validator operator configs for each owner. The Validator/owner needs to have linked to the Operator before this step.
     for i in operator_registrations {
+        // let addresses = i.fullnode_network_addresses.clone();
+        // dbg!(&i.fullnode_network_addresses.clone());
+        // let a: Vec<NetworkAddress> = i.fullnode_network_addresses.clone().try_into().unwrap();
+        // dbg!(&a);
         // Operator is signing this
         let register_val_script = transaction_builder::encode_register_validator_config_script(
             i.validator_to_represent,
