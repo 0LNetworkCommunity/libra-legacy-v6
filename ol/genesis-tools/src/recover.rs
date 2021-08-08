@@ -89,6 +89,7 @@ pub fn accounts_into_recovery(
         }
     }
     println!("Total accounts read: {}", &account_state_blobs.len());
+    println!("Total accounts recovered: {}", &to_recover.len());
 
     Ok(to_recover)
 }
@@ -103,6 +104,8 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
         val_cfg: None,
         miner_state: None,
     };
+    let test = state.get_account_address()?;
+    dbg!(&test);
 
     if let Some(address) = state.get_account_address()? {
         l.account = address;
@@ -131,9 +134,10 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
             }
         }
         println!("processed account: {:?}", address);
+        return Ok(l)
+    } else {
+      bail!("ERROR: No address for AccountState: {:?}", state.get_account_address());
     }
-
-    bail!("ERROR: No address for AccountState: {:?}", state);
 }
 
 /// Make recovery file in format needed

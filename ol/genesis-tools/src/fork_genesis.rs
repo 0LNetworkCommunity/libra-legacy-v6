@@ -19,6 +19,7 @@ use vm_genesis::encode_recovery_genesis_changeset;
 pub async fn make_recovery_genesis(
   genesis_blob_path: PathBuf,
   archive_path: PathBuf,
+  append: bool,
 ) -> Result<(), Error> {
   // get the legacy data from archive
   let legacy = archive_into_recovery(&archive_path).await?;
@@ -35,11 +36,22 @@ pub async fn make_recovery_genesis(
       .collect();
 
   let cs = get_baseline_genesis_change_set(genesis_accounts, &validator_set)?;
-  // append genesis
-  let gen_tx = append_genesis(cs, legacy)?;
+  
+  let gen_tx;
+  if append {
+    // append further writeset to genesis
+    gen_tx = append_genesis(cs, legacy)?;
+  } else {
+    gen_tx = Transaction::GenesisTransaction(
+      WriteSetPayload::Direct(cs)
+    );
+    
+  }
   // save genesis
+
   save_genesis(gen_tx, genesis_blob_path)
 }
+
 /// Get the minimal viable genesis from consensus accounts.
 pub fn get_baseline_genesis_change_set(
     genesis_accounts: RecoverConsensusAccounts,

@@ -13,10 +13,12 @@ async fn main() -> Result<()> {
         epoch: Option<u64>,
         #[options(help = "path to snapshot dir to read")]
         snapshot: Option<PathBuf>,
-        #[options(help = "write genesis from recovery file")]
+        #[options(help = "write genesis from snapshot")]
         genesis: Option<PathBuf>,
-        #[options(help = "write recovery file from snapshot")]
+        #[options(help = "optional, write recovery file from snapshot")]
         recover: Option<PathBuf>,
+        #[options(help = "optional, get baseline genesis without changes, for dubugging")]
+        debug_baseline: bool,
         #[options(help = "live fork mode")]
         daemon: bool,
         #[options(help = "swarm simulation mode")]
@@ -28,7 +30,7 @@ async fn main() -> Result<()> {
     if let Some(g_path) = opts.genesis {
       if let Some(s_path) = opts.snapshot {
         // create a genesis file from archive file
-        make_recovery_genesis(g_path, s_path).await?;
+        make_recovery_genesis(g_path, s_path, false).await?;
         return Ok(())
       } else {
         println!("ERROR: must provide a path with --snapshot, exiting.");
