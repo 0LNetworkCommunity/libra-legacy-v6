@@ -443,10 +443,12 @@ clean-tags:
 
 # Make genesis file
 fork-genesis:
-		cargo run -p ol-genesis-tools -- --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ../fixtures/state-snapshot/194/state_ver_74694920.0889/state.manifest
+		cargo run -p ol-genesis-tools -- --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.manifest
 # Use onboard to create all node files
 fork-config:
-	cargo run -p onboard -- val -u http://167.172.248.37 --prebuilt-genesis ${DATA_PATH}/genesis_from_snapshot.blob
+	cargo run -p onboard -- fork -u http://167.172.248.37 --prebuilt-genesis ${DATA_PATH}/genesis_from_snapshot.blob
 
 # start node from files
 
+fork-start:
+	cargo run -p libra-node -- --config ~/.0L/validator.node.yaml
