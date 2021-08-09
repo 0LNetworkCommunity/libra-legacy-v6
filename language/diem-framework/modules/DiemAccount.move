@@ -2923,7 +2923,7 @@ module DiemAccount {
       CoreAddresses::assert_diem_root(vm);
       let sig = create_signer(addr);
       Wallet::set_slow(&sig);
-      // destroy_signer(sig); // 0L todo: fn deleted
+      // destroy_signer(sig); // 0L todo: this fn deleted, delete this line?
     }    
 
     /////// TEST HELPERS //////
@@ -2940,7 +2940,7 @@ module DiemAccount {
     public fun test_helper_destroy_signer(vm: &signer, _to_destroy: signer) {
         CoreAddresses::assert_diem_root(vm);
         assert(is_testnet(), 120103011021);
-        // destroy_signer(sig); // 0L todo: fn deleted
+        // destroy_signer(sig); // 0L todo: this fn deleted, delete this line?
     }    
 }
 }
