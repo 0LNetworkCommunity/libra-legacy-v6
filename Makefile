@@ -139,7 +139,7 @@ init-backend:
 layout:
 	cargo run -p libra-genesis-tool --release -- set-layout \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
-	--path ./ol/util/set_layout_${NODE_ENV}.toml
+	--path ./ol/devnet/set_layout_${NODE_ENV}.toml
 
 root:
 		cargo run -p libra-genesis-tool --release -- libra-root-key \
@@ -315,10 +315,15 @@ ifdef TEST
 	@echo NAMESPACE: ${NS}
 	@echo GENESIS: ${V}
 	@if test ! -d ${DATA_PATH}; then \
-		echo Creating Directories \
+		echo mkdir ~/.0L/ \
 		mkdir ${DATA_PATH}; \
-		mkdir -p ${DATA_PATH}/blocks/; \
 	fi
+
+	@if test ! -d ${DATA_PATH}/blocks/; then \
+		echo mkdir ~/.0L/blocks \
+		mkdir ${DATA_PATH}/blocks/; \
+	fi
+
 
 	@if test -f ${DATA_PATH}/blocks/block_0.json; then \
 		rm ${DATA_PATH}/blocks/block_0.json; \
@@ -390,7 +395,7 @@ debug:
 ##### DEVNET TESTS #####
 
 devnet: clear fix fix-genesis dev-wizard start
-# runs a smoke test from fixtures. 
+# runs a smoke test from fixtures.
 # Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 # This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
 
