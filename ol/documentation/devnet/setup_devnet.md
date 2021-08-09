@@ -10,7 +10,7 @@ The steps below do 1) setup hosts 2) create the data for genesis.
 
 Every host has a static IP, and a persistent "persona": alice, bob, carol.
 
-With predefined keys.
+Mapping the personas to a ip address is done with 0L.toml config files found in: `ol/fixtures/configs/*.0L.toml`
 
 ## From an empty box
 
@@ -45,7 +45,6 @@ make check
 All nodes/personas need to register
 ```
 make dev-register
-
 ```
 
 Files should be updated on: https://github.com/OLSF/dev-genesis
