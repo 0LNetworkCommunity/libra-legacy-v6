@@ -457,3 +457,7 @@ fork-config:
 
 fork-start:
 	cargo run -p libra-node -- --config ~/.0L/validator.node.yaml
+
+fork-backup:
+		cargo r -p ol -- query --epoch
+		cargo run -p backup-cli --bin db-backup -- one-shot backup --backup-service-address http://localhost:6186 state-snapshot --state-version 13128 local-fs --dir ${DATA_PATH}/backup/
