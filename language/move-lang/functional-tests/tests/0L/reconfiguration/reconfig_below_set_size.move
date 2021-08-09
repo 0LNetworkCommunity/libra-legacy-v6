@@ -29,7 +29,7 @@ script {
         // Hence this first transaction.
 
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357008005001);
+        assert(MinerState::test_helper_get_count(@{{alice}}) == 5, 7357008005001);
     }
 }
 //check: EXECUTED
@@ -43,7 +43,7 @@ script {
         // Hence this first transaction.
 
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357008005002);
+        assert(MinerState::test_helper_get_count(@{{eve}}) == 5, 7357008005002);
     }
 }
 //check: EXECUTED
@@ -56,13 +56,13 @@ script {
     use 0x1::DiemSystem;
 
     fun main(vm: signer) {
-        let voters = Vector::singleton<address>({{alice}});
-        Vector::push_back<address>(&mut voters, {{bob}});
-        Vector::push_back<address>(&mut voters, {{carol}});
-        Vector::push_back<address>(&mut voters, {{dave}});
+        let voters = Vector::singleton<address>(@{{alice}});
+        Vector::push_back<address>(&mut voters, @{{bob}});
+        Vector::push_back<address>(&mut voters, @{{carol}});
+        Vector::push_back<address>(&mut voters, @{{dave}});
         // Skip Eve.
-        // Vector::push_back<address>(&mut voters, {{eve}});
-        Vector::push_back<address>(&mut voters, {{frank}});
+        // Vector::push_back<address>(&mut voters, @{{eve}});
+        Vector::push_back<address>(&mut voters, @{{frank}});
 
         let i = 1;
         while (i < 15) {
@@ -72,7 +72,7 @@ script {
         };
 
         assert(DiemSystem::validator_set_size() == 6, 7357008005003);
-        assert(DiemSystem::is_validator({{alice}}) == true, 7357008005004);
+        assert(DiemSystem::is_validator(@{{alice}}) == true, 7357008005004);
     }
 }
 //check: EXECUTED

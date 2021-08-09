@@ -33,9 +33,9 @@ script {
         let vm = &vm;
         Subsidy::set_global_count(vm, 10000);
         Subsidy::fullnode_reconfig(vm);
-        let old_account_bal = DiemAccount::balance<GAS>({{frank}});
-        let value = Subsidy::distribute_fullnode_subsidy(vm, {{frank}}, 1,);
-        let new_account_bal = DiemAccount::balance<GAS>({{frank}});
+        let old_account_bal = DiemAccount::balance<GAS>(@{{frank}});
+        let value = Subsidy::distribute_fullnode_subsidy(vm, @{{frank}}, 1,);
+        let new_account_bal = DiemAccount::balance<GAS>(@{{frank}});
         assert(value == 84, 735702);
         assert(new_account_bal>old_account_bal, 73570001);
         assert(new_account_bal == 1000084, 73570002);

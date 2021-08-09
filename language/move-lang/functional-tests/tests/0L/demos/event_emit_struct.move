@@ -25,7 +25,7 @@ module M {
 //! new-transaction
 //! sender: alice
 script {
-    use {{default}}::M;
+    use @{{default}}::M;
 
     fun main(sender: signer) {
         M::emit(&sender);

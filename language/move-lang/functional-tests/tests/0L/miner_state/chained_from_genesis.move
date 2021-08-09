@@ -15,8 +15,8 @@ fun main(sender: signer) {
     print(&02100);
 
     let difficulty = 100u64;
-    assert(MinerState::test_helper_get_height({{alice}}) == 0, 10008001);
-    assert(MinerState::test_helper_hash({{alice}}) == TestFixtures::alice_1_easy_chal(), 10008002);
+    assert(MinerState::test_helper_get_height(@@{{alice}}) == 0, 10008001);
+    assert(MinerState::test_helper_hash(@@{{alice}}) == TestFixtures::alice_1_easy_chal(), 10008002);
         
     let proof = MinerState::create_proof_blob(
         TestFixtures::alice_1_easy_chal(),
@@ -25,7 +25,7 @@ fun main(sender: signer) {
     );
     MinerState::commit_state(&sender, proof);
 
-    assert(MinerState::test_helper_get_height({{alice}}) == 1, 10008003);
+    assert(MinerState::test_helper_get_height(@@{{alice}}) == 1, 10008003);
 }
 }
 // check: EXECUTED

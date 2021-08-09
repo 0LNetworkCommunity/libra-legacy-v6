@@ -25,10 +25,10 @@ script {
     // assume epoch changes at round 15
 
     let vm = &vm;
-    let validators = Vector::singleton<address>({{alice}});
-    Vector::push_back(&mut validators, {{bob}});
-    Vector::push_back(&mut validators, {{carol}});
-    Vector::push_back(&mut validators, {{dave}});
+    let validators = Vector::singleton<address>(@{{alice}});
+    Vector::push_back(&mut validators, @{{bob}});
+    Vector::push_back(&mut validators, @{{carol}});
+    Vector::push_back(&mut validators, @{{dave}});
 
     // create mock validator stats for full epoch
     let i = 0;

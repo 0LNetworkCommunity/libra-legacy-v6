@@ -22,7 +22,7 @@ script {
         );
 
         // check for initialized MinerState
-        let verified_tower_height_after = MinerState::test_helper_get_height({{alice}});
+        let verified_tower_height_after = MinerState::test_helper_get_height(@{{alice}});
 
         assert(verified_tower_height_after == height_after, 10008001);
     }
@@ -39,7 +39,7 @@ script {
     // SIMULATES THE SECOND PROOF OF THE MINER (block_1.json)
     fun main(sender: signer) {
         let difficulty = 100u64;
-        assert(MinerState::test_helper_get_height({{alice}}) == 0, 10008001);
+        assert(MinerState::test_helper_get_height(@{{alice}}) == 0, 10008001);
         let height_after = 1;
         
         let proof = MinerState::create_proof_blob(
@@ -49,7 +49,7 @@ script {
         );
         MinerState::commit_state(&sender, proof);
 
-        let verified_height = MinerState::test_helper_get_height({{alice}});
+        let verified_height = MinerState::test_helper_get_height(@{{alice}});
         assert(verified_height == height_after, 10008002);
     }
 }

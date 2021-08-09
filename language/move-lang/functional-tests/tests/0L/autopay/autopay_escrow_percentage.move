@@ -43,8 +43,8 @@ use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
 fun main(dm: signer, alice_account: signer) {
     AccountLimits::publish_unrestricted_limits<GAS>(&alice_account);
-    AccountLimits::update_limits_definition<GAS>(&dm, {{alice}}, 0, 30, 0, 1);
-    AccountLimits::publish_window<GAS>(&dm, &alice_account, {{alice}});
+    AccountLimits::update_limits_definition<GAS>(&dm, @{{alice}}, 0, 30, 0, 1);
+    AccountLimits::publish_window<GAS>(&dm, &alice_account, @{{alice}});
 }
 }
 // check: "Keep(EXECUTED)"
@@ -57,8 +57,8 @@ use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
 fun main(dm: signer, bob_account: signer) {
     AccountLimits::publish_unrestricted_limits<GAS>(&bob_account);
-    AccountLimits::update_limits_definition<GAS>(&dm, {{bob}}, 0, 30, 0, 1);
-    AccountLimits::publish_window<GAS>(&dm, &bob_account, {{bob}});
+    AccountLimits::update_limits_definition<GAS>(&dm, @{{bob}}, 0, 30, 0, 1);
+    AccountLimits::publish_window<GAS>(&dm, &bob_account, @{{bob}});
 }
 }
 // check: "Keep(EXECUTED)"
@@ -79,7 +79,7 @@ script {
     assert(AutoPay2::is_enabled(Signer::address_of(&sender)), 0);
     
     //one shot payment to bob
-    AutoPay2::create_instruction(&sender, 1, 3, {{bob}}, 1000, 100);
+    AutoPay2::create_instruction(&sender, 1, 3, @{{bob}}, 1000, 100);
 
     //update account limit dedicated to paying escrow to 50%
     DiemAccount::update_escrow_percentage<GAS>(&sender, 50);
@@ -88,7 +88,7 @@ script {
       Signer::address_of(&sender), 1
     );
     assert(type == 3, 1);
-    assert(payee == {{bob}}, 1);
+    assert(payee == @{{bob}}, 1);
     assert(end_epoch == 1000, 1);
     assert(amt == 100, 1);
   }
@@ -102,8 +102,8 @@ script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
   fun main() {
-    let alice_balance = DiemAccount::balance<GAS>({{alice}});
-    let bob_balance = DiemAccount::balance<GAS>({{bob}});
+    let alice_balance = DiemAccount::balance<GAS>(@{{alice}});
+    let bob_balance = DiemAccount::balance<GAS>(@{{bob}});
     assert(alice_balance==300, 1);
     assert(bob_balance == 100, 2);
     }
@@ -136,8 +136,8 @@ script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
   fun main(_vm: signer) {
-    let alice_balance = DiemAccount::balance<GAS>({{alice}});
-    let bob_balance = DiemAccount::balance<GAS>({{bob}});
+    let alice_balance = DiemAccount::balance<GAS>(@{{alice}});
+    let bob_balance = DiemAccount::balance<GAS>(@{{bob}});
     assert(alice_balance==200, 1);
     assert(bob_balance == 130, 2);
   }
@@ -169,8 +169,8 @@ script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
   fun main(_vm: signer) {
-    let alice_balance = DiemAccount::balance<GAS>({{alice}});
-    let bob_balance = DiemAccount::balance<GAS>({{bob}});
+    let alice_balance = DiemAccount::balance<GAS>(@{{alice}});
+    let bob_balance = DiemAccount::balance<GAS>(@{{bob}});
     assert(alice_balance==200, 1);
     assert(bob_balance == 145, 2);
   }

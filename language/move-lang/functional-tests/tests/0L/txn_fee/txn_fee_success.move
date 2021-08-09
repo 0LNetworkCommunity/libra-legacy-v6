@@ -52,8 +52,8 @@ script {
     // check the case of a network density of 4 active validators.
 
     let vm = &vm;
-    let validators = Vector::singleton<address>({{alice}});
-    Vector::push_back(&mut validators, {{bob}});
+    let validators = Vector::singleton<address>(@{{alice}});
+    Vector::push_back(&mut validators, @{{bob}});
 
     // create mock validator stats for full epoch
     let i = 0;
@@ -62,15 +62,15 @@ script {
       i = i + 1;
     };
 
-    assert(DiemAccount::balance<GAS>({{alice}}) == 1000000, 7357190102011000);
-    assert(DiemAccount::balance<GAS>({{bob}}) == 1000000, 7357190102021000);
-    assert(DiemAccount::balance<GAS>({{carol}}) == 1000000, 7357190102031000);
-    assert(DiemAccount::balance<GAS>({{dave}}) == 1000000, 7357190102041000);
+    assert(DiemAccount::balance<GAS>(@{{alice}}) == 1000000, 7357190102011000);
+    assert(DiemAccount::balance<GAS>(@{{bob}}) == 1000000, 7357190102021000);
+    assert(DiemAccount::balance<GAS>(@{{carol}}) == 1000000, 7357190102031000);
+    assert(DiemAccount::balance<GAS>(@{{dave}}) == 1000000, 7357190102041000);
 
-    assert(Cases::get_case(vm, {{alice}}, 0, 15) == 1, 7357190102051000);
-    assert(Cases::get_case(vm, {{bob}}, 0, 15) == 2, 7357190102061000);
-    assert(Cases::get_case(vm, {{carol}}, 0, 15) == 3, 7357190102071000);
-    assert(Cases::get_case(vm, {{dave}}, 0, 15) == 4, 7357190102081000);
+    assert(Cases::get_case(vm, @{{alice}}, 0, 15) == 1, 7357190102051000);
+    assert(Cases::get_case(vm, @{{bob}}, 0, 15) == 2, 7357190102061000);
+    assert(Cases::get_case(vm, @{{carol}}, 0, 15) == 3, 7357190102071000);
+    assert(Cases::get_case(vm, @{{dave}}, 0, 15) == 4, 7357190102081000);
   }
 }
 // check: EXECUTED
@@ -97,10 +97,10 @@ script {
         //TODO: The fee ratio is unused in this proposal.
         Subsidy::process_fees(vm, &validators, &fee_ratios);
 
-        assert(DiemAccount::balance<GAS>({{alice}}) == 1001000, 7357190103021000);
-        assert(DiemAccount::balance<GAS>({{bob}}) == 1000000, 7357190103031000);
-        assert(DiemAccount::balance<GAS>({{carol}}) == 1000000, 7357190103031000);
-        assert(DiemAccount::balance<GAS>({{dave}}) == 1000000, 7357190103031000);
+        assert(DiemAccount::balance<GAS>(@{{alice}}) == 1001000, 7357190103021000);
+        assert(DiemAccount::balance<GAS>(@{{bob}}) == 1000000, 7357190103031000);
+        assert(DiemAccount::balance<GAS>(@{{carol}}) == 1000000, 7357190103031000);
+        assert(DiemAccount::balance<GAS>(@{{dave}}) == 1000000, 7357190103031000);
     }
 }
 // check: EXECUTED

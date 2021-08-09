@@ -19,9 +19,9 @@ script {
     use 0x1::MinerState;
     
     fun main(sender: signer) {
-        assert(MinerState::get_count_in_epoch({{alice}}) == 5, 73570001);
-        MinerState::test_helper_mock_reconfig(&sender, {{alice}});
-        assert(MinerState::get_epochs_mining({{alice}}) == 1, 73570002);
+        assert(MinerState::get_count_in_epoch(@{{alice}}) == 5, 73570001);
+        MinerState::test_helper_mock_reconfig(&sender, @{{alice}});
+        assert(MinerState::get_epochs_mining(@{{alice}}) == 1, 73570002);
     }
 }
 //check: EXECUTED

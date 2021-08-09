@@ -10,7 +10,7 @@ script {
         // Hence this first transaction.
 
         MinerState::test_helper_mock_mining(&sender, 0);
-        assert(MinerState::get_count_in_epoch({{alice}}) == 0, 7357300101011000);
+        assert(MinerState::get_count_in_epoch(@{{alice}}) == 0, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -24,12 +24,12 @@ script {
     use 0x1::Cases;
 
     fun main(sender: signer) {
-        let voters = Vector::singleton<address>({{alice}});
+        let voters = Vector::singleton<address>(@{{alice}});
         // only voted on 1 block out of 200
         Stats::process_set_votes(&sender, &voters);
 
         // Mock end of epoch for minerstate
-        assert(Cases::get_case(&sender, {{alice}}, 0, 200) == 4, 7357300103011000);
+        assert(Cases::get_case(&sender, @{{alice}}, 0, 200) == 4, 7357300103011000);
     }
 }
 //check: EXECUTED

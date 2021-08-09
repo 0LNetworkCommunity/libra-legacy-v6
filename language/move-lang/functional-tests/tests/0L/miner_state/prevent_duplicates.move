@@ -18,7 +18,7 @@ script {
             TestFixtures::easy_sol()
         );
 
-        let height = MinerState::test_helper_get_height({{bob}});
+        let height = MinerState::test_helper_get_height(@{{bob}});
         assert(height==0, 01);
 
     }

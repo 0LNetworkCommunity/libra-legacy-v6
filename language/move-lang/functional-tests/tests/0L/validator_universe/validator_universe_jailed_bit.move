@@ -24,9 +24,9 @@ use 0x1::ValidatorUniverse;
 // use 0x1::Signer;
 fun main(vm: signer) {
     // Test from genesis if not jailed and in universe
-    ValidatorUniverse::jail(&vm, {{alice}});
-    assert(ValidatorUniverse::is_jailed({{alice}}), 73570001);
-    assert(ValidatorUniverse::is_in_universe({{alice}}), 73570002);
+    ValidatorUniverse::jail(&vm, @{{alice}});
+    assert(ValidatorUniverse::is_jailed(@{{alice}}), 73570001);
+    assert(ValidatorUniverse::is_in_universe(@{{alice}}), 73570002);
 }
 }
 // check: EXECUTED

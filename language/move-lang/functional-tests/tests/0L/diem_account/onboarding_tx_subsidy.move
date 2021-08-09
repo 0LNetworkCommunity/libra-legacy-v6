@@ -77,7 +77,7 @@ use 0x1::Signer;
 
     // // Bob's balance should have gone down by 2M gas (operator and owner)
 
-    assert(DiemAccount::balance<GAS>({{bob}}) == 497536, 73571301011000);
+    assert(DiemAccount::balance<GAS>(@{{bob}}) == 497536, 73571301011000);
 
   }
 }
@@ -113,7 +113,7 @@ script {
         7357003
       );
 
-      assert(MinerState::can_create_val_account({{bob}}) == false, 7357004);
+      assert(MinerState::can_create_val_account(@{{bob}}) == false, 7357004);
       
   }
 }

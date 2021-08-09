@@ -92,6 +92,6 @@ script {
     Testnet::remove_testnet(&vm);
     
     // check is rate-limited
-    assert(MinerState::can_create_val_account({{bob}}) == false, 7357130101091000);
+    assert(MinerState::can_create_val_account(@{{bob}}) == false, 7357130101091000);
   }
 }

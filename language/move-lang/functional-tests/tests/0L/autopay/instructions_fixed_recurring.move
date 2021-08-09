@@ -41,8 +41,8 @@ use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
   fun main(dm: signer, alice_account: signer) {
     AccountLimits::publish_unrestricted_limits<GAS>(&alice_account);
-    AccountLimits::update_limits_definition<GAS>(&dm, {{alice}}, 0, 10000, 0, 1);
-    AccountLimits::publish_window<GAS>(&dm, &alice_account, {{alice}});
+    AccountLimits::update_limits_definition<GAS>(&dm, @{{alice}}, 0, 10000, 0, 1);
+    AccountLimits::publish_window<GAS>(&dm, &alice_account, @{{alice}});
   }
 }
 // check: "Keep(EXECUTED)"
@@ -58,13 +58,13 @@ script {
     AutoPay2::enable_autopay(sender);
     assert(AutoPay2::is_enabled(Signer::address_of(sender)), 0);
     
-    AutoPay2::create_instruction(sender, 1, 2, {{carol}}, 2, 200);
+    AutoPay2::create_instruction(sender, 1, 2, @{{carol}}, 2, 200);
 
     let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(
       Signer::address_of(sender), 1
     );
     assert(type == 2, 1);
-    assert(payee == {{carol}}, 1);
+    assert(payee == @{{carol}}, 1);
     assert(end_epoch == 2, 1);
     assert(percentage == 200, 1);
   }
@@ -98,7 +98,7 @@ script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
   fun main(_vm: signer) {
-    let ending_balance = DiemAccount::balance<GAS>({{alice}});
+    let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
     assert(ending_balance == 9800, 7357006);
   }
 }
@@ -137,11 +137,11 @@ script {
   use 0x1::GAS::GAS;
   fun main(_vm: signer) {
     // alice will have paid 5% on the 10000 she received last epoch
-    let ending_balance = DiemAccount::balance<GAS>({{alice}});
+    let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
     assert(ending_balance == 9600, 7357006);
 
     // check balance of recipients
-    let ending_balance = DiemAccount::balance<GAS>({{carol}});
+    let ending_balance = DiemAccount::balance<GAS>(@{{carol}});
     assert(ending_balance == 10400, 7357006);
   }
 }

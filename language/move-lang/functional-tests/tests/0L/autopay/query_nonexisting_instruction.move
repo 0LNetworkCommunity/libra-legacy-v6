@@ -19,7 +19,7 @@ script {
     );
     // If autopay instruction doesn't exists, it returns (0x0, 0, 0)
     assert(type == 0, 1);
-    assert(payee == {{0x0}}, 1);
+    assert(payee == @{{0x0}}, 1);
     assert(end_epoch == 0, 1);
     assert(percentage == 0, 1);
   }

@@ -13,12 +13,12 @@ script {
     use 0x1::DiemAccount;
     
     fun main(dm: signer, alice_account: signer) {
-        assert(ValidatorConfig::is_valid({{alice}}), 7357007003001);
+        assert(ValidatorConfig::is_valid(@{{alice}}), 7357007003001);
         
         // transfer enough coins to operator
-        let oper = ValidatorConfig::get_operator({{alice}});
+        let oper = ValidatorConfig::get_operator(@{{alice}});
         DiemAccount::vm_make_payment_no_limit<GAS>(
-            {{alice}},
+            @{{alice}},
             oper, // has a 0 in balance
             50009,
             x"",
@@ -28,14 +28,14 @@ script {
         assert(DiemAccount::balance<GAS>(oper) == 50009, 7357007003002);
         
         // enable autopay
-        assert(!AutoPay2::is_enabled({{alice}}), 7357007003003);
+        assert(!AutoPay2::is_enabled(@{{alice}}), 7357007003003);
         AutoPay2::enable_autopay(&alice_account);
-        assert(AutoPay2::is_enabled({{alice}}), 7357007003004);
+        assert(AutoPay2::is_enabled(@{{alice}}), 7357007003004);
 
-        assert(MinerState::is_init({{alice}}), 7357007003005);
+        assert(MinerState::is_init(@{{alice}}), 7357007003005);
 
         // audit must pass
-        assert(Audit::val_audit_passing({{alice}}), 7357007003006);
+        assert(Audit::val_audit_passing(@{{alice}}), 7357007003006);
     }
 }
 // check: EXECUTED
