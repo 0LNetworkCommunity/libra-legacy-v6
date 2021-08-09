@@ -71,7 +71,7 @@ impl Runnable for ForkCmd {
 
         let mut upstream = self.upstream_peer.clone().unwrap_or_else(|| {
             self.template_url.clone().unwrap_or_else(|| {
-                println!("ERROR: Must set a URL to query chain. Use --upstream-peer of --template-url. Exiting.");
+                println!("ERROR: Must set a URL to query chain. Use --upstream-peer or --template-url. Exiting.");
                 exit(1);
             })
         });
