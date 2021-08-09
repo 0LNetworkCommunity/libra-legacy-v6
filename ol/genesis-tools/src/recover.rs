@@ -4,6 +4,7 @@ use std::{convert::TryFrom, fs, io::Write, path::PathBuf};
 
 use anyhow::{bail, Error};
 use libra_types::{
+    account_address::AccountAddress,
     account_config::BalanceResource, account_state::AccountState,
     account_state_blob::AccountStateBlob, validator_config::ValidatorConfigResource,
 };
@@ -29,9 +30,10 @@ enum WalletType {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GenesisRecovery {
     role: AccountRole,
-    balance: Option<BalanceResource>,
-    val_cfg: Option<ValidatorConfigResource>,
-    miner_state: Option<MinerStateResource>,
+    pub address: AccountAddress,
+    pub balance: Option<BalanceResource>,
+    pub val_cfg: Option<ValidatorConfigResource>,
+    pub miner_state: Option<MinerStateResource>,
     // wallet_type: Option<WalletType>,
     // TODO: Fullnode State? // rust struct does not exist
     // TODO: Autopay? // rust struct does not exist
@@ -57,16 +59,19 @@ pub fn accounts_into_recovery(
     Ok(to_recover)
 }
 
+
+
 /// create a recovery struct from an account state.
 pub fn parse_recovery(account_state: &AccountState) -> Result<GenesisRecovery, Error> {
-    let mut gr = GenesisRecovery {
-        role: AccountRole::EndUser,
-        balance: None,
-        val_cfg: None,
-        miner_state: None,
-    };
+    let gr = if let Some(address) = account_state.get_account_address()? {
+        let mut gr = GenesisRecovery {
+            role: AccountRole::EndUser,
+            balance: None,
+            val_cfg: None,
+            miner_state: None,
+            address: address
+        };
 
-    if let Some(address) = account_state.get_account_address()? {
         // iterate over all the account's resources\
         for (k, v) in account_state.iter() {
             // extract the validator config resource
@@ -81,9 +86,12 @@ pub fn parse_recovery(account_state: &AccountState) -> Result<GenesisRecovery, E
             }
         }
         println!("processed account: {:?}", address);
-    }
-
-    bail!("ERROR: No address for AccountState: {:?}", account_state);
+        gr
+    } else {
+        bail!("ERROR: No address for AccountState: {:?}", account_state)
+    };
+    
+    Ok(gr)
 }
 
 /// Save genesis recovery file

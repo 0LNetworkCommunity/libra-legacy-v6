@@ -22,12 +22,15 @@ use libra_crypto::HashValue;
 use libra_types::{
     account_state_blob::AccountStateBlob, ledger_info::LedgerInfoWithSignatures,
     proof::TransactionInfoWithProof,
+    account_config::BalanceResource, 
+    validator_config::ValidatorConfigResource,
 };
 use libra_types::{
     transaction::{Transaction, WriteSetPayload},
     trusted_state::TrustedState,
     waypoint::Waypoint,
 };
+use ol_types::miner_state::MinerStateResource;
 use std::{
     net::{IpAddr, Ipv4Addr, SocketAddr},
     sync::Arc,
@@ -325,6 +328,7 @@ pub fn genesis_from_path(path: PathBuf) -> Result<()> {
     Ok(())
 }
 
+#[cfg(test)]
 #[test]
 fn test_main() -> Result<()> {
     use std::path::Path;
@@ -335,4 +339,79 @@ fn test_main() -> Result<()> {
         .unwrap()
         .join("fixtures/state-snapshot/194/state_ver_74694920.0889/");
     genesis_from_path(buf)
+}
+
+#[test]
+pub fn test_accounts_into_recovery() {
+    use std::path::Path;
+
+    let path = env!("CARGO_MANIFEST_DIR");
+    let buf = Path::new(path)
+        .parent()
+        .unwrap()
+        .join("fixtures/state-snapshot/194/state_ver_74694920.0889/");
+    let path_man = buf.clone().join("state.manifest");
+    println!("Running.....");
+    let backup = read_from_json(&path_man).unwrap();
+
+    let (mut rt, _port) = get_runtime();
+    let account_blobs_futures = accounts_from_snapshot_backup(backup);
+    let account_blobs = rt.block_on(account_blobs_futures).unwrap();
+    let genesis_recovery_list = accounts_into_recovery(&account_blobs).unwrap();
+    println!("Total GenesisRecovery objects: {}", &genesis_recovery_list.len());
+    for blob in account_blobs {
+        let account_state = AccountState::try_from(&blob).unwrap();  
+        if let Some(address) = account_state.get_account_address().unwrap() {
+            let mut address_processed = false;
+            for gr in &genesis_recovery_list {
+                if gr.address != address {
+                    continue;
+                }
+                // iterate over all the account's resources\
+                for (k, v) in account_state.iter() {
+                    // extract the validator config resource
+                    if k.clone() == BalanceResource::resource_path() {
+                        match &gr.balance {
+                            Some(balance) => {
+                                if lcs::to_bytes(&balance).unwrap() != v.clone() {
+                                    panic!("Balance resource not found in GenesisRecovery object: {}", gr.address);
+                                }
+                            }, None => {
+                                panic!("Balance not found");
+                            }
+                        }
+                        
+                    }
+                    if k.clone() == ValidatorConfigResource::resource_path() {
+                        match &gr.val_cfg {
+                            Some(val_cfg) => {
+                                if lcs::to_bytes(&val_cfg).unwrap() != v.clone() {
+                                    panic!("ValidatorConfigResource not found in GenesisRecovery object: {}", gr.address);
+                                }
+                            }, None => {
+                                panic!("ValidatorConfigResource not found");
+                            }
+                        }
+                    }
+                    if k.clone() == MinerStateResource::resource_path() {
+                        match &gr.miner_state {
+                            Some(miner_state) => {
+                                if lcs::to_bytes(&miner_state).unwrap() != v.clone() {
+                                    panic!("MinerStateResource not found in GenesisRecovery object: {}", gr.address);
+                                }
+                            }, None => {
+                                panic!("MinerStateResource not found");
+                            }
+                        }
+                    }
+                }
+                println!("processed account: {:?}", address);
+                address_processed = true;
+                break;
+            };
+            if !address_processed {
+                panic!("Address not found for {} in recovery list", &address);
+            }
+        };          
+    };
 }
