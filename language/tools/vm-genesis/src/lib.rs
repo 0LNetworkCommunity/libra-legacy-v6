@@ -6,16 +6,9 @@
 mod genesis_context;
 pub mod genesis_gas_schedule;
 
+use anyhow::Error;
 use serde::{Deserialize, Serialize};
-// use hex;
 use std::env;
-use std::{
-    fs::File,
-    io::{Read, Write},
-    net::SocketAddr,
-    path::PathBuf,
-};
-
 use crate::{genesis_context::GenesisStateView, genesis_gas_schedule::INITIAL_GAS_SCHEDULE};
 use compiled_stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
 use libra_crypto::{
@@ -29,7 +22,7 @@ use libra_types::{account_address, account_config::{
         authenticator::AuthenticationKey, ChangeSet, Script, Transaction, TransactionArgument,
         WriteSetPayload,
     },
-    write_set::{WriteOp, WriteSetMut}
+    // write_set::{WriteOp, WriteSetMut}
 };
 use libra_vm::{data_cache::StateViewCache, txn_effects_to_writeset_and_events};
 use move_core_types::{
@@ -86,7 +79,6 @@ pub fn encode_genesis_transaction(
     operator_registrations: &[OperatorRegistration],
     vm_publishing_option: Option<VMPublishingOption>,
     chain_id: ChainId,
-    genesis_blob_path: Option<PathBuf>
 ) -> Transaction {
     Transaction::GenesisTransaction(WriteSetPayload::Direct(encode_genesis_change_set(
         libra_root_key,
@@ -98,7 +90,6 @@ pub fn encode_genesis_transaction(
         vm_publishing_option
             .unwrap_or_else(|| VMPublishingOption::open()), // :)
         chain_id,
-        genesis_blob_path
     )))
 }
 
@@ -121,7 +112,6 @@ pub fn encode_genesis_change_set(
     stdlib_modules: &[CompiledModule],
     vm_publishing_option: VMPublishingOption,
     chain_id: ChainId,
-    genesis_blob_path: Option<PathBuf>
 ) -> ChangeSet {
     // create a data view for move_vm
     let mut state_view = GenesisStateView::new();
@@ -170,6 +160,7 @@ pub fn encode_genesis_change_set(
     println!("OK create_and_initialize_owners_operators =============== ");
 
     distribute_genesis_subsidy(&mut session, &log_context);
+    
     println!("OK Genesis subsidy =============== ");
 
     reconfigure(&mut session, &log_context);
@@ -178,16 +169,105 @@ pub fn encode_genesis_change_set(
     let state_view = GenesisStateView::new();
     let data_cache = StateViewCache::new(&state_view);
     let mut session = move_vm.new_session(&data_cache);
+    
     publish_stdlib(&mut session, &log_context, stdlib_modules);
+    
     let effects_2 = session.finish().unwrap();
 
     let effects = merge_txn_effects(effects_1, effects_2);
 
-    let (write_set, events) = txn_effects_to_writeset_and_events(effects, genesis_blob_path).unwrap();
+    let (write_set, events) = txn_effects_to_writeset_and_events(effects).unwrap();
 
     assert!(!write_set.iter().any(|(_, op)| op.is_deletion()));
     verify_genesis_write_set(&events);
     ChangeSet::new(write_set, events)
+}
+
+//////// 0L ////////
+pub fn encode_recovery_genesis_transaction(
+    val_assignments: &[ValRecover],
+    operator_registrations: &[OperRecover],
+    chain_id: ChainId
+  ) -> Result<Transaction, Error> {
+    let stdlib_modules = stdlib_modules(StdLibOptions::Compiled);
+    let vm_publishing_option =  VMPublishingOption::open();
+
+    // create a data view for move_vm
+    let mut state_view = GenesisStateView::new();
+    for module in stdlib_modules {
+        let module_id = module.self_id();
+        state_view.add_module(&module_id, &module);
+    }
+    let data_cache = StateViewCache::new(&state_view);
+
+    let move_vm = MoveVM::new();
+    let mut session = move_vm.new_session(&data_cache);
+    let log_context = NoContextLog::new();
+
+    let lbr_ty = TypeTag::Struct(StructTag {
+        address: *account_config::LBR_MODULE.address(),
+        module: account_config::LBR_MODULE.name().to_owned(),
+        name: account_config::LBR_STRUCT_NAME.to_owned(),
+        type_params: vec![],
+    });
+
+    create_and_initialize_main_accounts(
+        &mut session,
+        &log_context,
+        None,
+        None,
+        vm_publishing_option,
+        &lbr_ty,
+        chain_id,
+    );
+    println!("OK create system accounts =============== ");
+
+    //////// 0L ////////
+    let genesis_env = get_env();
+    println!("Initializing with env: {}", genesis_env);
+    if genesis_env != "prod"  {
+        initialize_testnet(&mut session, &log_context);
+    }
+    // generate the genesis WriteSet
+    recovery_owners_operators(
+        &mut session,
+        &log_context,
+        &val_assignments,
+        &operator_registrations,
+    );
+
+    
+
+    println!("OK recover owners and operators =============== ");
+
+    // TODO: Restore Balance and Total Supply
+
+    // TODO: Restore Mining 
+
+    // TODO: Restore FullnodeState
+
+    // TODO: Restore WalletType
+
+    reconfigure(&mut session, &log_context);
+
+    let effects_1 = session.finish().unwrap();
+    let state_view = GenesisStateView::new();
+    let data_cache = StateViewCache::new(&state_view);
+    let mut session = move_vm.new_session(&data_cache);
+    
+    publish_stdlib(&mut session, &log_context, stdlib_modules);
+    
+    let effects_2 = session.finish().unwrap();
+
+    let effects = merge_txn_effects(effects_1, effects_2);
+
+    let (write_set, events) = txn_effects_to_writeset_and_events(effects).unwrap();
+
+    assert!(!write_set.iter().any(|(_, op)| op.is_deletion()));
+    verify_genesis_write_set(&events);
+    
+    let cs = ChangeSet::new(write_set, events);
+    Ok(Transaction::GenesisTransaction(WriteSetPayload::Direct(cs)))
 }
 
 /// Convert the transaction arguments into Move values.
@@ -268,7 +348,7 @@ fn create_and_initialize_main_accounts(
     chain_id: ChainId,
 ) {
     let libra_root_auth_key:AuthenticationKey;
-    if libra_root_key.is_some() {
+    if libra_root_key.is_some() { // for swarm testing only, NOT USED IN PRODUCTION
         libra_root_auth_key = AuthenticationKey::ed25519(&libra_root_key.unwrap());
     } else {
         libra_root_auth_key = AuthenticationKey::new([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
@@ -414,9 +494,8 @@ fn create_and_initialize_owners_operators(
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
         dbg!(owner_address);
-        // let staged_owner_auth_key = libra_config::utils::default_validator_owner_auth_key_from_name(owner_name);
-        //TODO: why does this need to be derived from human name?
-        // let owner_address = staged_owner_auth_key.derived_address();
+
+
         let create_owner_script = transaction_builder::encode_create_validator_account_script(
             0,
             owner_address,
@@ -552,6 +631,148 @@ fn create_and_initialize_owners_operators(
         );
     }
 }
+
+/// Validator/owner state to recover in genesis recovery mode
+pub struct ValRecover {
+  val_account: AccountAddress,
+  operator_delegated_account: AccountAddress,
+  val_auth_key: AuthenticationKey,
+}
+
+/// Operator state to recover in genesis recovery mode
+pub struct OperRecover {
+  operator_account: AccountAddress,
+  operator_auth_key: AuthenticationKey,
+  validator_to_represent: AccountAddress,
+  operator_consensus_pubkey: Vec<u8>,
+  validator_network_addresses: Vec<u8>,
+  fullnode_network_addresses: Vec<u8>,
+  }
+//////// 0L ////////
+/// Restores  owner and operator state to a genesis, in a recovery or fork scenario. No need to bootstrap all the state.
+fn recovery_owners_operators(
+    session: &mut Session<StateViewCache>,
+    log_context: &impl LogContext,
+    val_assignments: &[ValRecover],
+    operator_registrations: &[OperRecover],
+) {
+    let libra_root_address = account_config::libra_root_address();
+
+    // Create accounts for each validator owner. The inputs for creating an account are the auth
+    // key prefix and account address. Internally move then computes the auth key as auth key
+    // prefix || address. Because of this, the initial auth key will be invalid as we produce the
+    // account address from the name and not the public key.
+    println!("0 ======== Create Owner Accounts");
+    for i in val_assignments {
+
+        dbg!(i.val_account);
+        
+        let create_owner_script = transaction_builder::encode_create_validator_account_script(
+            0,
+            i.val_account,
+            i.val_auth_key.prefix().to_vec(),
+            i.val_account.to_vec(),
+        );
+        exec_script(
+            session,
+            log_context,
+            libra_root_address,
+            &create_owner_script,
+        );
+
+  
+    }
+
+    println!("1 ======== Create OP Accounts");
+    // Create accounts for each validator operator
+    for i in operator_registrations {
+
+        let create_operator_script =
+            transaction_builder::encode_create_validator_operator_account_script(
+                0,
+                i.operator_account,
+                i.operator_auth_key.prefix().to_vec(),
+                i.operator_account.to_vec(),
+            );
+        exec_script(
+            session,
+            log_context,
+            libra_root_address,
+            &create_operator_script,
+        );
+    }
+
+    println!("2 ======== Link owner to OP");
+
+
+    let mut n = 0u64;
+    // Owner/Validator is authorizing an Operator. This is sent by Owner. Operators need to have registered before this step.
+    for i in val_assignments {
+        let script = transaction_builder::encode_set_validator_operator_with_nonce_admin_script(
+          n,
+          i.operator_delegated_account.to_vec(),
+          i.operator_delegated_account,
+        );
+
+      
+      session
+        .execute_script(
+            script.code().to_vec(),
+            script.ty_args().to_vec(),
+            convert_txn_args(script.args()),
+            vec![libra_root_address, i.val_account],
+            &mut CostStrategy::system(&ZERO_COST_SCHEDULE, GasUnits::new(100_000_000)),
+            log_context,
+        )
+        .unwrap();
+
+        n = n+1;
+    }
+
+    println!("3 ======== OP sends network info to Owner config");
+    // Set the validator operator configs for each owner. The Validator/owner needs to have linked to the Operator before this step.
+    for i in operator_registrations {
+        
+      // Operator is signing this
+        let register_val_script = transaction_builder::encode_register_validator_config_script(
+          i.validator_to_represent,
+          i.operator_consensus_pubkey.clone(),
+          i.validator_network_addresses.clone(),
+          i.fullnode_network_addresses.clone(),
+        );
+
+      session
+        .execute_script(
+            register_val_script.code().to_vec(),
+            register_val_script.ty_args().to_vec(),
+            convert_txn_args(register_val_script.args()),
+            vec![i.operator_account],
+            &mut CostStrategy::system(&ZERO_COST_SCHEDULE, GasUnits::new(100_000_000)),
+            log_context,
+        )
+        .unwrap()
+    }
+
+    println!("4 ======== Add owner to validator set");
+
+    // Add each validator to the validator set. The Validators configs need be valid before this step runs.
+    for i in val_assignments {
+
+        exec_function(
+            session,
+            log_context,
+            libra_root_address,
+            "LibraSystem",
+            "add_validator",
+            vec![],
+            vec![
+                Value::transaction_argument_signer_reference(libra_root_address),
+                Value::address(i.val_account),
+            ],
+        );
+    }
+}
+
 
 fn remove_genesis(stdlib_modules: &[CompiledModule]) -> impl Iterator<Item = &CompiledModule> {
     stdlib_modules
@@ -733,7 +954,6 @@ pub fn generate_test_genesis(
         stdlib_modules,
         vm_publishing_option,
         ChainId::test(),
-        None
     );
     (genesis, validators)
 }

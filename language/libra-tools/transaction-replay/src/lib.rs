@@ -152,7 +152,7 @@ impl LibraDebugger {
         let txn_effect = session
             .finish()
             .map_err(|err| format_err!("Unexpected VM Error: {:?}", err))?;
-        let (write_set, events) = txn_effects_to_writeset_and_events(txn_effect, None)
+        let (write_set, events) = txn_effects_to_writeset_and_events(txn_effect)
             .map_err(|err| format_err!("Unexpected VM Error: {:?}", err))?;
         Ok(ChangeSet::new(write_set, events))
     }
