@@ -8,13 +8,18 @@ use crate::config::IS_TEST;
 
 /// interact with user to get the home path for files
 pub fn what_home(swarm_path: Option<PathBuf>, swarm_persona: Option<String>) -> PathBuf {
-    // For dev and CI setup
+
+  // For dev and CI setup
     if let Some(path) = swarm_path {
       return swarm_home(path, swarm_persona);
     }
 
     let mut default_home_dir = dirs::home_dir().unwrap();
     default_home_dir.push(NODE_HOME);
+
+    if *IS_TEST {
+      return default_home_dir
+    }  
 
     let txt = &format!(
         "Will you use the default directory for node data and configs: {:?}?",
