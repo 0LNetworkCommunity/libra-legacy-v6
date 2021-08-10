@@ -1,7 +1,7 @@
 //! account: alice, 1000000, 0, validator
 
 //! new-transaction
-module M {
+module {{default}}::M {
     use 0x1::Event::{destroy_handle, emit_event, EventHandle, new_event_handle};
     use 0x1::Signer::address_of;
 
@@ -25,7 +25,7 @@ module M {
 //! new-transaction
 //! sender: alice
 script {
-    use @{{default}}::M;
+    use {{default}}::M;
 
     fun main(sender: signer) {
         M::emit(&sender);

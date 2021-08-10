@@ -90,7 +90,6 @@ script {
   use 0x1::AutoPay2;
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
-  use 0x1::Debug::print;
   fun main(sender: signer) {
     let alice_balance = DiemAccount::balance<GAS>(@{{alice}});
     let bob_balance = DiemAccount::balance<GAS>(@{{bob}});

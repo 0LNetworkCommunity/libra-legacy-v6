@@ -14,7 +14,7 @@ script {
     // fails silently, as asserts can cause the VM to halt.
     DiemAccount::vm_make_payment<GAS>(
       @{{alice}},
-      0x0, // cannot receive balance
+      @0x0, // cannot receive balance
       100,
       x"",
       x"",

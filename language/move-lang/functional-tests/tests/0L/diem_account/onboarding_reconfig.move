@@ -20,7 +20,7 @@ script {
     let solution = TestFixtures::eve_0_easy_sol();
     // // Parse key and check
     let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
-    assert(eve_addr == 0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 401);
+    assert(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 401);
 
     let sender_addr = Signer::address_of(&sender);
     let epochs_since_creation = 10;
@@ -31,7 +31,7 @@ script {
         &challenge,
         &solution,
         b"leet",
-        0xfa72817f1b5aab94658238ddcdc08010,
+        @0xfa72817f1b5aab94658238ddcdc08010,
         x"fa72817f1b5aab94658238ddcdc08010",
         // random consensus_pubkey: vector<u8>,
         x"8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010",
@@ -101,10 +101,10 @@ script {
         assert(DiemSystem::is_validator(@{{alice}}) == true, 7357000180102);
         assert(DiemSystem::is_validator(@{{bob}}) == true, 7357000180103);
         assert(
-            DiemSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B) == false, 
+            DiemSystem::is_validator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B) == false, 
             7357000180104
         );
-        assert(MinerState::is_init(0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180105);
+        assert(MinerState::is_init(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180105);
 
         MinerState::test_helper_mock_mining_vm(vm, @{{alice}}, 20);
         MinerState::test_helper_mock_mining_vm(vm, @{{bob}}, 20);
@@ -154,7 +154,7 @@ script {
         // New validator is not in this set.
         assert(DiemSystem::validator_set_size() == 4, 7357000180101);
         assert(DiemSystem::is_validator(@{{alice}}) == true, 7357000180102);
-        assert(!DiemSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180103);
+        assert(!DiemSystem::is_validator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180103);
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(&vm));
         // Is in validator universe
         assert(len == 5, 7357000180104);
@@ -185,7 +185,7 @@ script {
         assert(DiemSystem::is_validator(@{{alice}}) == true, 7357000180202);
         assert(DiemSystem::is_validator(@{{bob}}) == true, 7357000180203);
         assert(
-            DiemSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B) == false, 
+            DiemSystem::is_validator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B) == false, 
             7357000180204
         );
 
@@ -207,9 +207,9 @@ script {
             vm, 0x3DC18D1CF61FAAC6AC70E3A63F062E4B
         );
         AutoPay2::enable_autopay(&new_val);
-        let new_oper = ValidatorConfig::get_operator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B);
+        let new_oper = ValidatorConfig::get_operator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B);
         DiemAccount::vm_make_payment_no_limit<GAS>(
-            0x3DC18D1CF61FAAC6AC70E3A63F062E4B, new_oper, 60009, x"", x"", vm
+            @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, new_oper, 60009, x"", x"", vm
         );
 
         // check the new account is in the list of eligible
@@ -248,7 +248,7 @@ script {
         // Tests on initial size of validators
         assert(DiemSystem::validator_set_size() == 5, 7357000200301);
         assert(DiemSystem::is_validator(@{{alice}}) == true, 7357000200302);
-        assert(DiemSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000200303);
+        assert(DiemSystem::is_validator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000200303);
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(&vm));
         assert(len == 5, 7357000200304);
       }

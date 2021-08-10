@@ -27,7 +27,7 @@ script {
         &challenge,
         &solution,
         b"leet",
-        0xfa72817f1b5aab94658238ddcdc08010,
+        @0xfa72817f1b5aab94658238ddcdc08010,
         x"fa72817f1b5aab94658238ddcdc08010",
         x"8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010", // random consensus_pubkey: vector<u8>,
         b"192.168.0.1", // validator_network_addresses: vector<u8>,

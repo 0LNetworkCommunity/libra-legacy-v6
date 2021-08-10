@@ -107,7 +107,7 @@ script {
     //Confirm the one-shot instruction was deleted
     let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(@{{alice}}, 1);
     assert(type == 0, 1);
-    assert(payee == 0x0, 1);
+    assert(payee == @0x0, 1);
     assert(end_epoch == 0, 1);
     assert(percentage == 0, 1);
   }
