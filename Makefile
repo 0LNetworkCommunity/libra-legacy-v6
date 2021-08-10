@@ -452,7 +452,7 @@ fork-backup:
 		cargo run -p backup-cli --bin db-backup -- one-shot backup --backup-service-address http://localhost:6186 state-snapshot --state-version 13128 local-fs --dir ${DATA_PATH}/backup/
 
 # Make genesis file
-fork-genesis:
+fork-genesis: stdlib
 		cargo run -p ol-genesis-tools -- --debug-baseline --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ${SOURCE}/ol/devnet/snapshot/state_ver_13128.623d/
 # Use onboard to create all node files
 fork-config:
