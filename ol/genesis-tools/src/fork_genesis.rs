@@ -90,12 +90,15 @@ pub fn migrate_account(legacy: LegacyRecovery) -> Result<WriteSetMut, Error> {
     // legacy.balance
     // TODO: Change legacy names
     // NOTE: this is only needed from Libra -> Diem renames
-    let value = legacy.balance.unwrap().coin();
-    let new = BalanceResource::new(value);
-    write_set_mut.push((
-        AccessPath::new(legacy.account, BalanceResource::resource_path()),
-        WriteOp::Value(lcs::to_bytes(&new).unwrap()),
-    ));
+    if let Some(bal) = legacy.balance {
+      dbg!(&bal);
+      let new = BalanceResource::new(bal.coin());
+      write_set_mut.push((
+          AccessPath::new(legacy.account, BalanceResource::resource_path()),
+          WriteOp::Value(lcs::to_bytes(&new).unwrap()),
+      ));
+    }
+
     // TODO: Restore Mining
 
     // TODO: Restore FullnodeState

@@ -458,7 +458,7 @@ fork-backup:
 		cargo run -p backup-cli --bin db-backup -- one-shot backup --backup-service-address http://localhost:6186 state-snapshot --state-version ${EPOCH_HEIGHT} local-fs --dir ${SOURCE}/ol/devnet/snapshot/
 
 # Make genesis file
-fork-genesis: stdlib
+fork-genesis:
 		cargo run -p ol-genesis-tools -- --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ${SOURCE}/ol/devnet/snapshot/state_ver*
 # Use onboard to create all node files
 fork-config:
@@ -470,4 +470,4 @@ fork-start:
 	rm -rf ~/.0L/db
 	cargo run -p libra-node -- --config ~/.0L/validator.node.yaml
 
-fork: fork-genesis fork-config fork-start
+fork: stdlib fork-genesis fork-config fork-start
