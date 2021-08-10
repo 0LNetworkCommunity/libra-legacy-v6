@@ -454,8 +454,7 @@ epoch:
 	echo ${EPOCH_HEIGHT}
 
 fork-backup:
-		cargo r -p ol -- query --epoch
-		mkdir ${DATA_PATH}/backup/ || true
+		rm -rf ${SOURCE}/ol/devnet/snapshot/*
 		cargo run -p backup-cli --bin db-backup -- one-shot backup --backup-service-address http://localhost:6186 state-snapshot --state-version ${EPOCH_HEIGHT} local-fs --dir ${SOURCE}/ol/devnet/snapshot/
 
 # Make genesis file
