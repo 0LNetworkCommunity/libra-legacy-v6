@@ -689,6 +689,51 @@ fn recovery_owners_operators(
             libra_root_address,
             &create_owner_script,
         );
+
+        println!("======== recover miner state");
+            exec_function(
+            session,
+            log_context,
+            libra_root_address,
+            "MinerState",
+            "recover_miner_state",
+            vec![],
+            vec![
+                Value::transaction_argument_signer_reference(libra_root_address),
+                Value::transaction_argument_signer_reference(i.val_account),
+                // Value::vector_u8(preimage),
+                // Value::vector_u8(proof),
+            ],
+        );
+
+        println!("======== add to validator universe");
+        exec_function(
+            session,
+            log_context,
+            libra_root_address,
+            "ValidatorUniverse",
+            "genesis_helper",
+            vec![],
+            vec![
+                Value::transaction_argument_signer_reference(libra_root_address),
+                Value::transaction_argument_signer_reference(i.val_account),
+            ],
+        );
+
+        println!("======== init fullnode state");
+
+        exec_function(
+            session,
+            log_context,
+            libra_root_address,
+            "FullnodeState",
+            "init",
+            vec![],
+            vec![
+                Value::transaction_argument_signer_reference(i.val_account),
+                // Value::address(owner_address),
+            ],
+        );
     }
 
     println!("======== Create OP Accounts");
@@ -708,6 +753,8 @@ fn recovery_owners_operators(
             &create_operator_script,
         );
     }
+
+
 
     println!("======== Link owner to OP");
 

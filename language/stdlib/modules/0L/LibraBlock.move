@@ -15,7 +15,7 @@ module LibraBlock {
     use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
     use 0x1::Debug::print;
-    use 0x1::Vector;
+
     resource struct BlockMetadata {
         /// Height of the current block
         height: u64,
@@ -88,13 +88,13 @@ module LibraBlock {
 
 print(&01000);
 print(&previous_block_votes);
-        if (Vector::length(&previous_block_votes) > 0) {
+//        if (Vector::length(&previous_block_votes) > 0) {
         Stats::process_set_votes(vm, &previous_block_votes);
 print(&01002);
 
         Stats::inc_prop(vm, *&proposer);
 print(&01003);
-        };
+//};
 
         
         if (AutoPay2::tick(vm)){
