@@ -2,17 +2,9 @@
 
 use anyhow::{bail, Error};
 use libra_network_address::NetworkAddress;
-use libra_types::{
-    account_address::AccountAddress,
-    account_config::BalanceResource,
-    account_state::AccountState,
-    account_state_blob::AccountStateBlob,
-    on_chain_config::ConfigurationResource,
-    transaction::authenticator::AuthenticationKey,
-    validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource},
-};
-use move_core_types::move_resource::MoveResource;
-use ol_types::{wallet::CommunityWalletsResource, fullnode_counter::FullnodeCounterResource, miner_state::MinerStateResource};
+use libra_types::{account_address::AccountAddress, account_config::{BalanceResource, CurrencyInfoResource}, account_state::AccountState, account_state_blob::AccountStateBlob, on_chain_config::ConfigurationResource, transaction::authenticator::AuthenticationKey, validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource}};
+use move_core_types::{identifier::Identifier, move_resource::MoveResource};
+use ol_types::{autopay::AutoPayResource, fullnode_counter::FullnodeCounterResource, miner_state::MinerStateResource, wallet::CommunityWalletsResource};
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, fs, io::Write, path::PathBuf};
 use vm_genesis::{OperRecover, ValRecover};
@@ -46,7 +38,7 @@ pub enum WalletType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LegacyRecovery {
     ///
-    pub account: AccountAddress,
+    pub account: Option<AccountAddress>,
     ///
     pub auth_key: Option<AuthenticationKey>,
     ///
@@ -60,8 +52,11 @@ pub struct LegacyRecovery {
     ///
     pub comm_wallet: Option<CommunityWalletsResource>,
     ///
-    pub fullnode_counter: Option<FullnodeCounterResource>
-
+    pub fullnode_counter: Option<FullnodeCounterResource>,
+    ///
+    pub autopay: Option<AutoPayResource>,
+    ///
+    pub currency_info: Option<CurrencyInfoResource>,
     // TODO: Autopay? // rust struct does not exist
 }
 
@@ -107,7 +102,7 @@ pub fn accounts_into_recovery(
 /// create a recovery struct from an account state.
 pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
     let mut l = LegacyRecovery {
-        account: AccountAddress::ZERO,
+        account: None,
         auth_key: None,
         role: AccountRole::EndUser,
         balance: None,
@@ -115,10 +110,14 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
         miner_state: None,
         comm_wallet: None,
         fullnode_counter: None,
+        autopay: None,
+        currency_info: None,
     };
 
     if let Some(address) = state.get_account_address()? {
-        l.account = address;
+        l.account = Some(address);
+        // dbg!(&l.account);
+
         l.auth_key = AuthenticationKey::try_from(
             state
                 .get_account_resource()
@@ -162,9 +161,12 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
                 l.role = AccountRole::Operator;
             } else if k == &MinerStateResource::resource_path() {
                 l.miner_state = lcs::from_bytes(v).ok();
+            } else if k == &AutoPayResource::resource_path() {
+                l.autopay = lcs::from_bytes(v).ok();
             }
 
             if address == AccountAddress::ZERO {
+                // dbg!(&l);
                 l.role = AccountRole::System;
                 // structs only on 0x0 address
                 if k == &ConfigurationResource::resource_path() {
@@ -173,6 +175,8 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
                     l.comm_wallet = lcs::from_bytes(v).ok();
                 } else if k == &FullnodeCounterResource::resource_path() {
                     l.fullnode_counter = lcs::from_bytes(v).ok();
+                } else if k == &CurrencyInfoResource::resource_path_for(Identifier::new("GAS".to_owned()).unwrap()).path {
+                    l.currency_info = lcs::from_bytes(v).ok();
                 }
             }
         }
@@ -194,7 +198,7 @@ pub fn recover_consensus_accounts(
     let mut set = RecoverConsensusAccounts::default();
 
     for i in recover {
-        let account: AccountAddress = i.account;
+        let account: AccountAddress = i.account.unwrap();
         // get deduplicated validators info
         match i.role {
             Validator => {
@@ -226,7 +230,7 @@ pub fn recover_consensus_accounts(
                 // find the operator's authkey
                 let oper_data = recover
                     .iter()
-                    .find(|&a| a.account == operator_delegated_account && a.role == Operator);
+                    .find(|&a| a.account == Some(operator_delegated_account) && a.role == Operator);
 
                 match oper_data {
                     Some(o) => {
@@ -238,7 +242,7 @@ pub fn recover_consensus_accounts(
                             .is_none()
                         {
                             set.opers.push(OperRecover {
-                                operator_account: o.account,
+                                operator_account: o.account.unwrap(),
                                 operator_auth_key: o.auth_key.unwrap(),
                                 validator_to_represent: account,
                                 // TODO: Check conversion of public key
