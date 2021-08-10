@@ -841,6 +841,7 @@ reconfiguration event.
 <pre><code><b>fun</b> <a href="LibraConfig.md#0x1_LibraConfig_emit_genesis_reconfiguration_event">emit_genesis_reconfiguration_event</a>() <b>acquires</b> <a href="LibraConfig.md#0x1_LibraConfig_Configuration">Configuration</a> {
     <b>assert</b>(<b>exists</b>&lt;<a href="LibraConfig.md#0x1_LibraConfig_Configuration">Configuration</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="LibraConfig.md#0x1_LibraConfig_ECONFIGURATION">ECONFIGURATION</a>));
     <b>let</b> config_ref = borrow_global_mut&lt;<a href="LibraConfig.md#0x1_LibraConfig_Configuration">Configuration</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
+
     <b>assert</b>(config_ref.epoch == 0 && config_ref.last_reconfiguration_time == 0, <a href="Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="LibraConfig.md#0x1_LibraConfig_ECONFIGURATION">ECONFIGURATION</a>));
     config_ref.epoch = 1;
 

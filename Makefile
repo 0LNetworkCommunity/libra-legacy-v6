@@ -461,5 +461,6 @@ fork-config:
 # start node from files
 
 fork-start:
+	rm -rf ~/.0L/db
 	cargo run -p libra-node -- --config ~/.0L/validator.node.yaml
 

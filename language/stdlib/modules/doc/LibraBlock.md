@@ -29,6 +29,7 @@ This module defines a struct storing the metadata of the block and new block eve
 <b>use</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp">0x1::LibraTimestamp</a>;
 <b>use</b> <a href="Reconfigure.md#0x1_Reconfigure">0x1::Reconfigure</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
+<b>use</b> <a href="Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
 
@@ -250,12 +251,15 @@ The runtime always runs this before executing the transactions in a block.
     // increment stats
 
 print(&01000);
-
+print(&previous_block_votes);
+    <b>if</b> (<a href="Vector.md#0x1_Vector_length">Vector::length</a>(&previous_block_votes) &gt; 0) {
     <a href="Stats.md#0x1_Stats_process_set_votes">Stats::process_set_votes</a>(vm, &previous_block_votes);
 print(&01002);
 
     <a href="Stats.md#0x1_Stats_inc_prop">Stats::inc_prop</a>(vm, *&proposer);
 print(&01003);
+    };
+
 
     <b>if</b> (<a href="AutoPay.md#0x1_AutoPay2_tick">AutoPay2::tick</a>(vm)){
         //triggers autopay at beginning of each epoch
