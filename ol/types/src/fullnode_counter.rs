@@ -30,8 +30,8 @@ pub struct FullnodeCounterResource {
 }
 
 impl MoveResource for FullnodeCounterResource {
-    const MODULE_NAME: &'static str = "MinerState";
-    const STRUCT_NAME: &'static str = "MinerProofHistory";
+    const MODULE_NAME: &'static str = "FullnodeState";
+    const STRUCT_NAME: &'static str = "FullnodeCounter";
 }
 
 impl FullnodeCounterResource {

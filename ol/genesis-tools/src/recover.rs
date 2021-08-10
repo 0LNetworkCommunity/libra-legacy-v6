@@ -12,7 +12,7 @@ use libra_types::{
     validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource},
 };
 use move_core_types::move_resource::MoveResource;
-use ol_types::{community_wallet::CommunityWalletsResource, fullnode_counter::FullnodeCounterResource, miner_state::MinerStateResource};
+use ol_types::{wallet::CommunityWalletsResource, fullnode_counter::FullnodeCounterResource, miner_state::MinerStateResource};
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, fs, io::Write, path::PathBuf};
 use vm_genesis::{OperRecover, ValRecover};

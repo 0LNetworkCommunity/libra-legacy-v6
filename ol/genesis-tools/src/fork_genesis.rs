@@ -13,7 +13,7 @@ use libra_types::account_config::BalanceResource;
 use libra_types::transaction::{ChangeSet, Transaction, WriteSetPayload};
 use libra_types::write_set::{WriteOp, WriteSetMut};
 use move_core_types::move_resource::MoveResource;
-use ol_types::community_wallet::{CommunityWalletsResource, SlowWalletResource};
+use ol_types::wallet::{CommunityWalletsResource, SlowWalletResource};
 use ol_types::fullnode_counter::FullnodeCounterResource;
 use ol_types::miner_state::MinerStateResource;
 use vm_genesis::encode_recovery_genesis_changeset;
