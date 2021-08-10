@@ -13,6 +13,7 @@ use libra_types::account_config::BalanceResource;
 use libra_types::transaction::{ChangeSet, Transaction, WriteSetPayload};
 use libra_types::write_set::{WriteOp, WriteSetMut};
 use move_core_types::move_resource::MoveResource;
+use ol_types::miner_state::MinerStateResource;
 use vm_genesis::encode_recovery_genesis_changeset;
 
 /// Make a recovery genesis blob
@@ -99,6 +100,22 @@ pub fn migrate_account(legacy: LegacyRecovery) -> Result<WriteSetMut, Error> {
     }
 
     // TODO: Restore Mining
+
+    if let Some(m) = legacy.miner_state {
+      let new = MinerStateResource {
+        previous_proof_hash: m.previous_proof_hash,
+        verified_tower_height: m.verified_tower_height,
+        latest_epoch_mining: m.latest_epoch_mining,
+        count_proofs_in_epoch: m.count_proofs_in_epoch,
+        epochs_validating_and_mining: m.epochs_validating_and_mining,
+        contiguous_epochs_validating_and_mining: m.contiguous_epochs_validating_and_mining,
+        epochs_since_last_account_creation: m.epochs_since_last_account_creation,
+    };
+      write_set_mut.push((
+          AccessPath::new(legacy.account, MinerStateResource::resource_path()),
+          WriteOp::Value(lcs::to_bytes(&new).unwrap()),
+      ));
+    }
 
     // TODO: Restore FullnodeState
 
