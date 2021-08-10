@@ -14,6 +14,7 @@ use libra_types::account_address::AccountAddress;
 use libra_types::account_config::{BalanceResource, CurrencyInfoResource};
 use libra_types::transaction::{ChangeSet, Transaction, WriteSetPayload};
 use libra_types::write_set::{WriteOp, WriteSetMut};
+use move_core_types::identifier::Identifier;
 use move_core_types::move_resource::MoveResource;
 use ol_types::autopay::AutoPayResource;
 use ol_types::fullnode_counter::FullnodeCounterResource;
@@ -209,8 +210,9 @@ pub fn total_coin_value_restore(
                     exchange_rate_update_events: c.exchange_rate_update_events.to_owned(),
                 };
 
+                let access_path = CurrencyInfoResource::resource_path_for(Identifier::new("GAS".to_owned()).unwrap());
                 write_set_mut.push((
-                    AccessPath::new(legacy.account.unwrap(), FullnodeCounterResource::resource_path()),
+                    access_path,
                     WriteOp::Value(lcs::to_bytes(&new).unwrap()),
                 ));
 
