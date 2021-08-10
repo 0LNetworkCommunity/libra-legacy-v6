@@ -238,10 +238,12 @@ The runtime always runs this before executing the transactions in a block.
     previous_block_votes: vector&lt;address&gt;,
     proposer: address
 ) <b>acquires</b> <a href="LibraBlock.md#0x1_LibraBlock_BlockMetadata">BlockMetadata</a> {
+print(&01000);
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_operating">LibraTimestamp::assert_operating</a>();
     // Operational constraint: can only be invoked by the VM.
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
     // Authorization
+print(&01001);
     <b>assert</b>(
         proposer == <a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>() || <a href="LibraSystem.md#0x1_LibraSystem_is_validator">LibraSystem::is_validator</a>(proposer),
         <a href="Errors.md#0x1_Errors_requires_address">Errors::requires_address</a>(<a href="LibraBlock.md#0x1_LibraBlock_EVM_OR_VALIDATOR">EVM_OR_VALIDATOR</a>)
@@ -249,7 +251,7 @@ The runtime always runs this before executing the transactions in a block.
     //////// 0L ////////
     // increment stats
 
-print(&01000);
+
 print(&previous_block_votes);
 //        <b>if</b> (<a href="Vector.md#0x1_Vector_length">Vector::length</a>(&previous_block_votes) &gt; 0) {
     <a href="Stats.md#0x1_Stats_process_set_votes">Stats::process_set_votes</a>(vm, &previous_block_votes);

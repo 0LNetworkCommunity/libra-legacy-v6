@@ -75,10 +75,12 @@ module LibraBlock {
         previous_block_votes: vector<address>,
         proposer: address
     ) acquires BlockMetadata {
+print(&01000);
         LibraTimestamp::assert_operating();
         // Operational constraint: can only be invoked by the VM.
         CoreAddresses::assert_vm(vm);
         // Authorization
+print(&01001);
         assert(
             proposer == CoreAddresses::VM_RESERVED_ADDRESS() || LibraSystem::is_validator(proposer),
             Errors::requires_address(EVM_OR_VALIDATOR)
@@ -86,7 +88,7 @@ module LibraBlock {
         //////// 0L ////////
         // increment stats
 
-print(&01000);
+
 print(&previous_block_votes);
 //        if (Vector::length(&previous_block_votes) > 0) {
         Stats::process_set_votes(vm, &previous_block_votes);
