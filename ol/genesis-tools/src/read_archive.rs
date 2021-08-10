@@ -65,15 +65,7 @@ fn get_runtime() -> (Runtime, u16) {
 }
 
 async fn open_for_read(file_handle: &FileHandleRef) -> Result<Box<dyn AsyncRead + Send + Unpin>> {
-    let home = dirs::home_dir().unwrap();
-    let mut path: String = home
-        .join("libra/ol/fixtures/state-snapshot/194/")
-        .into_os_string()
-        .into_string()
-        .unwrap()
-        .to_owned();
-    path.push_str(&file_handle.to_string());
-    let file = OpenOptions::new().read(true).open(path).await?;
+    let file = OpenOptions::new().read(true).open(file_handle).await?;
     Ok(Box::new(file))
 }
 
@@ -81,7 +73,6 @@ fn read_from_file(path: &str) -> Result<Vec<u8>> {
     let mut data = Vec::<u8>::new();
     let mut f = File::open(path).expect("Unable to open file");
     f.read_to_end(&mut data).expect("Unable to read data");
-    // println!("{}", data.len())?;
     Ok(data)
 }
 
@@ -98,9 +89,11 @@ fn load_lcs_file<T: DeserializeOwned>(file_handle: &str) -> Result<T> {
 
 async fn read_account_state_chunk(
     file_handle: FileHandle,
+    archive_path: &PathBuf,
 ) -> Result<Vec<(HashValue, AccountStateBlob)>> {
-    let mut file = open_for_read(&file_handle).await?;
-
+    let full_handle = archive_path.parent().unwrap().join(file_handle);
+    let handle_str = full_handle.to_str().unwrap();
+    let mut file = open_for_read(handle_str).await?;
     let mut chunk = vec![];
 
     while let Some(record_bytes) = file.read_record_bytes().await? {
@@ -114,14 +107,16 @@ pub async fn archive_into_swarm_writeset(
     archive_path: PathBuf,
 ) -> Result<WriteSetMut, Error> {
     let backup = read_from_json(&archive_path)?;
-    let account_blobs = accounts_from_snapshot_backup(backup).await?;
+    let account_blobs = accounts_from_snapshot_backup(backup, &archive_path).await?;
     accounts_into_writeset_swarm(&account_blobs)
 }
 
 /// take an archive file path and parse into a writeset
 pub async fn archive_into_recovery(archive_path: &PathBuf) -> Result<Vec<LegacyRecovery>, Error> {
-    let backup = read_from_json(archive_path)?;
-    let account_blobs = accounts_from_snapshot_backup(backup).await?;
+    let manifest_json = archive_path.join("state.manifest");
+
+    let backup = read_from_json(&manifest_json)?;
+    let account_blobs = accounts_from_snapshot_backup(backup, archive_path).await?;
     let r = accounts_into_recovery(&account_blobs)?;
     Ok(r)
 }
@@ -129,11 +124,12 @@ pub async fn archive_into_recovery(archive_path: &PathBuf) -> Result<Vec<LegacyR
 /// Tokio async parsing of state snapshot into blob
 async fn accounts_from_snapshot_backup(
     manifest: StateSnapshotBackup,
+    archive_path: &PathBuf
 ) -> Result<Vec<AccountStateBlob>> {
     // parse AccountStateBlob from chunks of the archive
     let mut account_state_blobs: Vec<AccountStateBlob> = Vec::new();
     for chunk in manifest.chunks {
-        let blobs = read_account_state_chunk(chunk.blobs).await?;
+        let blobs = read_account_state_chunk(chunk.blobs, archive_path).await?;
         // println!("{:?}", blobs);
         for (_key, blob) in blobs {
             account_state_blobs.push(blob)
@@ -234,11 +230,11 @@ pub fn merge_writeset(mut left: WriteSetMut, right: WriteSetMut) -> Result<Write
 }
 
 /// Tokio async parsing of state snapshot into blob
-async fn run_impl(manifest: StateSnapshotBackup) -> Result<()> {
+async fn run_impl(manifest: StateSnapshotBackup, path: &PathBuf) -> Result<()> {
     // parse AccountStateBlob from chunks of the archive
     let mut account_state_blobs: Vec<AccountStateBlob> = Vec::new();
     for chunk in manifest.chunks {
-        let blobs = read_account_state_chunk(chunk.blobs).await?;
+        let blobs = read_account_state_chunk(chunk.blobs, path).await?;
         // let proof = load_lcs_file(&chunk.proof)?;
         println!("{:?}", blobs);
         // TODO(Venkat) -> Here's the blob
@@ -308,7 +304,7 @@ pub fn genesis_from_path(path: PathBuf) -> Result<()> {
         txn_info_with_proof.transaction_info().state_root_hash(),
     );
 
-    let future = run_impl(manifest); // Nothing is printed
+    let future = run_impl(manifest, &path); // Nothing is printed
     rt.block_on(future)?;
 
     Ok(())

@@ -34,9 +34,7 @@ pub async fn make_recovery_genesis(
         return a.val_account
       })
       .collect();
-
   let cs = get_baseline_genesis_change_set(genesis_accounts, &validator_set)?;
-  
   let gen_tx;
   if append {
     // append further writeset to genesis

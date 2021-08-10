@@ -453,7 +453,7 @@ fork-backup:
 
 # Make genesis file
 fork-genesis:
-		cargo run -p ol-genesis-tools -- --debug-baseline --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ${DATA_PATH}/backup/state_ver_13128.623d/state.manifest
+		cargo run -p ol-genesis-tools -- --debug-baseline --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ${DATA_PATH}/backup/state_ver_13128.623d/
 # Use onboard to create all node files
 fork-config:
 	cargo run -p onboard -- fork -u http://167.172.248.37 --prebuilt-genesis ${DATA_PATH}/genesis_from_snapshot.blob
