@@ -346,6 +346,7 @@ endif
 fix-genesis:
 	cp ./ol/devnet/genesis/${V}/genesis.blob ${DATA_PATH}/
 	cp ./ol/devnet/genesis/${V}/genesis_waypoint ${DATA_PATH}/
+	cp ./ol/devnet/genesis/${V}/genesis_waypoint ${DATA_PATH}/client_waypoint
 
 
 #### HELPERS ####
@@ -446,14 +447,20 @@ clean-tags:
 
 ##### FORK TESTS #####
 
+EPOCH_HEIGHT = $(shell cargo r -p ol -- query --epoch | cut -d ":" -f 2)
+
+epoch:
+	cargo r -p ol -- query --epoch
+	echo ${EPOCH_HEIGHT}
+
 fork-backup:
 		cargo r -p ol -- query --epoch
 		mkdir ${DATA_PATH}/backup/ || true
-		cargo run -p backup-cli --bin db-backup -- one-shot backup --backup-service-address http://localhost:6186 state-snapshot --state-version 13128 local-fs --dir ${DATA_PATH}/backup/
+		cargo run -p backup-cli --bin db-backup -- one-shot backup --backup-service-address http://localhost:6186 state-snapshot --state-version ${EPOCH_HEIGHT} local-fs --dir ${SOURCE}/ol/devnet/snapshot/
 
 # Make genesis file
 fork-genesis: stdlib
-		cargo run -p ol-genesis-tools -- --debug-baseline --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ${SOURCE}/ol/devnet/snapshot/state_ver_13128.623d/
+		cargo run -p ol-genesis-tools -- --debug-baseline --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ${SOURCE}/ol/devnet/snapshot/state_ver*
 # Use onboard to create all node files
 fork-config:
 	cargo run -p onboard -- fork -u http://167.172.248.37 --prebuilt-genesis ${DATA_PATH}/genesis_from_snapshot.blob
