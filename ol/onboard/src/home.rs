@@ -5,6 +5,7 @@ use std::path::PathBuf;
 
 use crate::entrypoint::get_args;
 
+//TODO: deprecated?
 /// interact with user to get the home path for files
 pub fn what_home(_swarm_path: Option<PathBuf>, _swarm_persona: Option<String>) -> PathBuf {
     let args = get_args();
