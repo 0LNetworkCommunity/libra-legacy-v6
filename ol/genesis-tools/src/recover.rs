@@ -57,7 +57,7 @@ pub struct LegacyRecovery {
     pub val_cfg: Option<ValidatorConfigResource>,
     ///
     pub miner_state: Option<MinerStateResource>,
-    //
+    ///
     pub comm_wallet: Option<CommunityWalletsResource>
     // wallet_type: Option<WalletType>,
     // TODO: Fullnode State? // rust struct does not exist

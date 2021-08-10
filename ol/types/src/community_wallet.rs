@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use move_core_types::account_address::AccountAddress;
 
 /// Struct that represents a CommunityWallet resource
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CommunityWalletsResource {
     /// List
     pub list: Vec<AccountAddress>,
