@@ -30,7 +30,7 @@ async fn main() -> Result<()> {
     if let Some(g_path) = opts.genesis {
       if let Some(s_path) = opts.snapshot {
         // create a genesis file from archive file
-        make_recovery_genesis(g_path, s_path, false).await?;
+        make_recovery_genesis(g_path, s_path, true).await?;
         return Ok(())
       } else {
         println!("ERROR: must provide a path with --snapshot, exiting.");
