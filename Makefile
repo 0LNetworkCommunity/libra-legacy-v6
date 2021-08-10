@@ -446,9 +446,14 @@ clean-tags:
 
 ##### FORK TESTS #####
 
+fork-backup:
+		cargo r -p ol -- query --epoch
+		mkdir ${DATA_PATH}/backup/ || true
+		cargo run -p backup-cli --bin db-backup -- one-shot backup --backup-service-address http://localhost:6186 state-snapshot --state-version 13128 local-fs --dir ${DATA_PATH}/backup/
+
 # Make genesis file
 fork-genesis:
-		cargo run -p ol-genesis-tools -- --debug-baseline --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ol/fixtures/state-snapshot/194/state_ver_74694920.0889/state.manifest
+		cargo run -p ol-genesis-tools -- --debug-baseline --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ${DATA_PATH}/backup/state_ver_13128.623d/state.manifest
 # Use onboard to create all node files
 fork-config:
 	cargo run -p onboard -- fork -u http://167.172.248.37 --prebuilt-genesis ${DATA_PATH}/genesis_from_snapshot.blob
@@ -458,6 +463,3 @@ fork-config:
 fork-start:
 	cargo run -p libra-node -- --config ~/.0L/validator.node.yaml
 
-fork-backup:
-		cargo r -p ol -- query --epoch
-		cargo run -p backup-cli --bin db-backup -- one-shot backup --backup-service-address http://localhost:6186 state-snapshot --state-version 13128 local-fs --dir ${DATA_PATH}/backup/
