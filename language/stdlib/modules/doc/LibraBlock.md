@@ -19,6 +19,7 @@ This module defines a struct storing the metadata of the block and new block eve
 
 <pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay2">0x1::AutoPay2</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
 <b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="Event.md#0x1_Event">0x1::Event</a>;
@@ -247,9 +248,14 @@ The runtime always runs this before executing the transactions in a block.
     );
     //////// 0L ////////
     // increment stats
-// print(&01000);
+
+print(&01000);
+
     <a href="Stats.md#0x1_Stats_process_set_votes">Stats::process_set_votes</a>(vm, &previous_block_votes);
+print(&01002);
+
     <a href="Stats.md#0x1_Stats_inc_prop">Stats::inc_prop</a>(vm, *&proposer);
+print(&01003);
 
     <b>if</b> (<a href="AutoPay.md#0x1_AutoPay2_tick">AutoPay2::tick</a>(vm)){
         //triggers autopay at beginning of each epoch
@@ -257,10 +263,12 @@ The runtime always runs this before executing the transactions in a block.
         <a href="LibraAccount.md#0x1_LibraAccount_process_escrow">LibraAccount::process_escrow</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm);
         <a href="AutoPay.md#0x1_AutoPay2_process_autopay">AutoPay2::process_autopay</a>(vm);
     };
-    ///////////////////
+    //////// end 0L ////////
     <b>let</b> block_metadata_ref = borrow_global_mut&lt;<a href="LibraBlock.md#0x1_LibraBlock_BlockMetadata">BlockMetadata</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_update_global_time">LibraTimestamp::update_global_time</a>(vm, proposer, timestamp);
     block_metadata_ref.height = block_metadata_ref.height + 1;
+print(&01004);
+
     <a href="Event.md#0x1_Event_emit_event">Event::emit_event</a>&lt;<a href="LibraBlock.md#0x1_LibraBlock_NewBlockEvent">NewBlockEvent</a>&gt;(
         &<b>mut</b> block_metadata_ref.new_block_events,
         <a href="LibraBlock.md#0x1_LibraBlock_NewBlockEvent">NewBlockEvent</a> {
@@ -270,11 +278,13 @@ The runtime always runs this before executing the transactions in a block.
             time_microseconds: timestamp,
         }
     );
+print(&01005);
 
      //////// 0L ////////
     // reconfigure
     <b>if</b> (<a href="Epoch.md#0x1_Epoch_epoch_finished">Epoch::epoch_finished</a>()) {
-// print(&03000);
+
+print(&01006);
 
       // TODO: We don't need <b>to</b> pass block height <b>to</b> ReconfigureOL. It should <b>use</b> the <a href="LibraBlock.md#0x1_LibraBlock_BlockMetadata">BlockMetadata</a>. But there's a circular reference there when we try.
       <a href="Reconfigure.md#0x1_Reconfigure_reconfigure">Reconfigure::reconfigure</a>(vm, <a href="LibraBlock.md#0x1_LibraBlock_get_current_block_height">get_current_block_height</a>());
