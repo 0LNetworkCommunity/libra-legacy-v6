@@ -19,3 +19,4 @@ pub mod dialogue;
 pub mod autopay;
 pub mod annotate;
 pub mod community_wallet;
+pub mod fullnode_counter;

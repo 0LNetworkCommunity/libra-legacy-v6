@@ -12,7 +12,7 @@ use libra_types::{
     validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource},
 };
 use move_core_types::move_resource::MoveResource;
-use ol_types::{community_wallet::CommunityWalletsResource, miner_state::MinerStateResource};
+use ol_types::{community_wallet::CommunityWalletsResource, fullnode_counter::FullnodeCounterResource, miner_state::MinerStateResource};
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, fs, io::Write, path::PathBuf};
 use vm_genesis::{OperRecover, ValRecover};
@@ -58,9 +58,10 @@ pub struct LegacyRecovery {
     ///
     pub miner_state: Option<MinerStateResource>,
     ///
-    pub comm_wallet: Option<CommunityWalletsResource>
-    // wallet_type: Option<WalletType>,
-    // TODO: Fullnode State? // rust struct does not exist
+    pub comm_wallet: Option<CommunityWalletsResource>,
+    ///
+    pub fullnode_counter: Option<FullnodeCounterResource>
+
     // TODO: Autopay? // rust struct does not exist
 }
 
@@ -113,6 +114,7 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
         val_cfg: None,
         miner_state: None,
         comm_wallet: None,
+        fullnode_counter: None,
     };
 
     if let Some(address) = state.get_account_address()? {
@@ -169,6 +171,8 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
                     l.miner_state = lcs::from_bytes(v).ok();
                 } else if k == &CommunityWalletsResource::resource_path() {
                     l.comm_wallet = lcs::from_bytes(v).ok();
+                } else if k == &FullnodeCounterResource::resource_path() {
+                    l.fullnode_counter = lcs::from_bytes(v).ok();
                 }
             }
         }

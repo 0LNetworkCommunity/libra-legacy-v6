@@ -14,6 +14,7 @@ use libra_types::transaction::{ChangeSet, Transaction, WriteSetPayload};
 use libra_types::write_set::{WriteOp, WriteSetMut};
 use move_core_types::move_resource::MoveResource;
 use ol_types::community_wallet::{CommunityWalletsResource, SlowWalletResource};
+use ol_types::fullnode_counter::FullnodeCounterResource;
 use ol_types::miner_state::MinerStateResource;
 use vm_genesis::encode_recovery_genesis_changeset;
 
@@ -100,7 +101,7 @@ pub fn migrate_account(legacy: LegacyRecovery) -> Result<WriteSetMut, Error> {
       ));
     }
 
-    // TODO: Restore Mining
+    // Restore Miner State
 
     if let Some(m) = legacy.miner_state {
       let new = MinerStateResource {
@@ -118,9 +119,6 @@ pub fn migrate_account(legacy: LegacyRecovery) -> Result<WriteSetMut, Error> {
       ));
     }
 
-    // TODO: Restore FullnodeState
-
-    
     // TODO: Restore WalletType
     if legacy.role != AccountRole::System {
         let new = SlowWalletResource {
@@ -143,6 +141,23 @@ pub fn migrate_account(legacy: LegacyRecovery) -> Result<WriteSetMut, Error> {
           WriteOp::Value(lcs::to_bytes(&new).unwrap()),
       ));
     }
+
+    // fullnode counter
+    if let Some(f) = legacy.fullnode_counter {
+      let new = FullnodeCounterResource {
+        proofs_submitted_in_epoch: f.proofs_submitted_in_epoch,
+        proofs_paid_in_epoch: f.proofs_paid_in_epoch,
+        subsidy_in_epoch: f.subsidy_in_epoch,
+        cumulative_proofs_submitted: f.cumulative_proofs_submitted,
+        cumulative_proofs_paid: f.cumulative_proofs_paid,
+        cumulative_subsidy: f.cumulative_subsidy,
+    };
+      write_set_mut.push((
+          AccessPath::new(legacy.account, FullnodeCounterResource::resource_path()),
+          WriteOp::Value(lcs::to_bytes(&new).unwrap()),
+      ));
+    }
+
     // make the genesis transaction
     Ok(write_set_mut)
 }
