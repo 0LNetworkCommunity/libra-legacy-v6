@@ -57,6 +57,8 @@ pub struct LegacyRecovery {
     pub val_cfg: Option<ValidatorConfigResource>,
     ///
     pub miner_state: Option<MinerStateResource>,
+    //
+    pub comm_wallet: Option<CommunityWalletsResource>
     // wallet_type: Option<WalletType>,
     // TODO: Fullnode State? // rust struct does not exist
     // TODO: Autopay? // rust struct does not exist
@@ -110,6 +112,7 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
         balance: None,
         val_cfg: None,
         miner_state: None,
+        comm_wallet: None,
     };
 
     if let Some(address) = state.get_account_address()? {
@@ -165,7 +168,7 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
                 if k == &ConfigurationResource::resource_path() {
                     l.miner_state = lcs::from_bytes(v).ok();
                 } else if k == &CommunityWalletsResource::resource_path() {
-                    l.miner_state = lcs::from_bytes(v).ok();
+                    l.comm_wallet = lcs::from_bytes(v).ok();
                 }
             }
         }

@@ -5,7 +5,7 @@ use std::io::Write;
 use std::path::PathBuf;
 
 use crate::read_archive::{archive_into_recovery, merge_writeset};
-use crate::recover::{LegacyRecovery, RecoverConsensusAccounts, recover_consensus_accounts};
+use crate::recover::{AccountRole, LegacyRecovery, RecoverConsensusAccounts, recover_consensus_accounts};
 use anyhow::Error;
 use libra_types::access_path::AccessPath;
 use libra_types::account_address::AccountAddress;
@@ -13,6 +13,7 @@ use libra_types::account_config::BalanceResource;
 use libra_types::transaction::{ChangeSet, Transaction, WriteSetPayload};
 use libra_types::write_set::{WriteOp, WriteSetMut};
 use move_core_types::move_resource::MoveResource;
+use ol_types::community_wallet::{CommunityWalletsResource, SlowWalletResource};
 use ol_types::miner_state::MinerStateResource;
 use vm_genesis::encode_recovery_genesis_changeset;
 
@@ -119,8 +120,29 @@ pub fn migrate_account(legacy: LegacyRecovery) -> Result<WriteSetMut, Error> {
 
     // TODO: Restore FullnodeState
 
+    
     // TODO: Restore WalletType
+    if legacy.role != AccountRole::System {
+        let new = SlowWalletResource {
+            is_slow: true,
+        };
+        write_set_mut.push((
+          AccessPath::new(legacy.account, SlowWalletResource::resource_path()),
+          WriteOp::Value(lcs::to_bytes(&new).unwrap()),
+      ));
+    }
 
+    // System state to recover.
+    // Community Wallets
+    if let Some(w) = legacy.comm_wallet {
+      let new = CommunityWalletsResource {
+        list: w.list,
+    };
+      write_set_mut.push((
+          AccessPath::new(legacy.account, CommunityWalletsResource::resource_path()),
+          WriteOp::Value(lcs::to_bytes(&new).unwrap()),
+      ));
+    }
     // make the genesis transaction
     Ok(write_set_mut)
 }
