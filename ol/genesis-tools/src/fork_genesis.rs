@@ -91,7 +91,6 @@ pub fn migrate_account(legacy: LegacyRecovery) -> Result<WriteSetMut, Error> {
     // TODO: Change legacy names
     // NOTE: this is only needed from Libra -> Diem renames
     if let Some(bal) = legacy.balance {
-      dbg!(&bal);
       let new = BalanceResource::new(bal.coin());
       write_set_mut.push((
           AccessPath::new(legacy.account, BalanceResource::resource_path()),
