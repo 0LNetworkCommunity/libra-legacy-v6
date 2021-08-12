@@ -93,6 +93,8 @@ impl Runnable for ForkCmd {
             &Some(0),
             &wp,
             &self.source_path,
+            None,
+            None,
         );
         let home_path = &app_config.workspace.node_home;
         let base_waypoint = app_config.chain_info.base_waypoint.clone();
