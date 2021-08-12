@@ -14,8 +14,9 @@
 use futures::{future::Future, stream::Stream};
 use libra_network_address::NetworkAddress;
 use libra_types::PeerId;
-use serde::{export::Formatter, Serialize};
+use serde::{Serialize};
 use std::fmt;
+use std::fmt::Formatter;
 
 pub mod and_then;
 pub mod boxed;

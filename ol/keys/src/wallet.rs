@@ -8,7 +8,7 @@ use libra_types::{
 };
 
 /// Genereates keys from WalletLibrary, updates a MinerConfig
-pub fn keygen() -> (AuthenticationKey, AccountAddress, WalletLibrary) {
+pub fn keygen() -> (AuthenticationKey, AccountAddress, WalletLibrary, String) {
         // Generate new keys
         let mut wallet = WalletLibrary::new();
         let mnemonic_string = wallet.mnemonic();
@@ -19,7 +19,11 @@ pub fn keygen() -> (AuthenticationKey, AccountAddress, WalletLibrary) {
         
         println!("0L Account Address:\n\
         ...........................\n\
-        {:?}\n", &account);
+        {}\n", &account.to_string());
+
+        println!("Authentication Key (for key rotation):\n\
+        ...........................\n\
+        {}\n", &auth_key.to_string());
 
         println!("0L mnemonic:\n\
         ...........................");
@@ -31,7 +35,7 @@ pub fn keygen() -> (AuthenticationKey, AccountAddress, WalletLibrary) {
                   this mnemonic. It is not saved anywhere. Nobody can help \
                   you if you lose it.\n\n");
 
-        (auth_key, account, wallet)
+        (auth_key, account, wallet, mnemonic_string)
 }
 
 /// Get authkey and account from mnemonic

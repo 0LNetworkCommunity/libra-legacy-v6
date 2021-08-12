@@ -30,6 +30,7 @@ ol-keys = { path = "../keys" }
 move-core-types = { path = "../../language/move-core/types", version = "0.1.0" }
 sha2 = "0.9.1"
 resource-viewer = { path = "../../language/tools/resource-viewer", version = "0.1.0" }
+num-format = "0.4.0"
 
 [dev-dependencies]
 ol-fixtures = { path = "../../ol/fixtures" }

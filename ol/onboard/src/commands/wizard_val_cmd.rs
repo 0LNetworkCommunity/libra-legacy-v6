@@ -85,6 +85,8 @@ impl Runnable for ValWizardCmd {
             &self.epoch,
             &self.waypoint,
             &self.source_path,
+            None,
+            None,
         );
         let home_path = &app_config.workspace.node_home;
         let base_waypoint = app_config.chain_info.base_waypoint.clone();
@@ -225,7 +227,8 @@ pub fn get_autopay_batch(
     (Some(instr_vec), Some(txn_vec))
 }
 
-pub fn save_template(url: &Url, home_path: &PathBuf) -> PathBuf {
+/// save template file
+fn save_template(url: &Url, home_path: &PathBuf) -> PathBuf {
     let g_res = reqwest::blocking::get(&url.to_string());
     let g_path = home_path.join("template.json");
     let mut g_file = File::create(&g_path).expect("couldn't create file");

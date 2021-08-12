@@ -20,3 +20,4 @@ pub mod autopay;
 pub mod annotate;
 pub mod wallet;
 pub mod fullnode_counter;
+pub mod validator_config;

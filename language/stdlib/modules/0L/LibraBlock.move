@@ -15,6 +15,7 @@ module LibraBlock {
     use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
     use 0x1::Debug::print;
+    use 0x1::Migrations;
 
     resource struct BlockMetadata {
         /// Height of the current block
@@ -123,11 +124,13 @@ print(&01004);
 print(&01005);
 
          //////// 0L ////////
-        // reconfigure
+        // EPOCH BOUNDARY
         if (Epoch::epoch_finished()) {
 
 print(&01006);
 
+          // Run migrations
+          Migrations::init(vm);
           // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata. But there's a circular reference there when we try.
           Reconfigure::reconfigure(vm, get_current_block_height());
         };
