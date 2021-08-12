@@ -16,22 +16,37 @@ use move_core_types::{
 };
 use serde::{Deserialize, Serialize};
 
+//////// 0L ////////
+
 /// Struct that represents a CurrencyInfo resource
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CurrencyInfoResource {
-    total_value: u128,
-    preburn_value: u64,
-    to_lbr_exchange_rate: u64,
-    is_synthetic: bool,
-    scaling_factor: u64,
-    fractional_part: u64,
-    currency_code: Identifier,
-    can_mint: bool,
-    mint_events: EventHandle,
-    burn_events: EventHandle,
-    preburn_events: EventHandle,
-    cancel_burn_events: EventHandle,
-    exchange_rate_update_events: EventHandle,
+    ///
+    pub total_value: u128,
+    ///
+    pub preburn_value: u64,
+    ///
+    pub to_lbr_exchange_rate: u64,
+    ///
+    pub is_synthetic: bool,
+    ///
+    pub scaling_factor: u64,
+    ///
+    pub fractional_part: u64,
+    ///
+    pub currency_code: Identifier,
+    ///
+    pub can_mint: bool,
+    ///
+    pub mint_events: EventHandle,
+    ///
+    pub burn_events: EventHandle,
+    ///
+    pub preburn_events: EventHandle,
+    ///
+    pub cancel_burn_events: EventHandle,
+    ///
+    pub exchange_rate_update_events: EventHandle,
 }
 
 impl MoveResource for CurrencyInfoResource {

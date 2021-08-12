@@ -31,6 +31,7 @@ ol-types = { path = "../../ol/types"}
 miner = { path = "../miner" }
 zip = "0.5.12"
 dialoguer = "0.8.0"
+lcs = { path = "../../common/lcs", package = "libra-canonical-serialization", version = "0.1.0" }
 
 [dependencies.abscissa_core]
 version = "0.5.2"

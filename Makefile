@@ -139,7 +139,7 @@ init-backend:
 layout:
 	cargo run -p libra-genesis-tool --release -- set-layout \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
-	--path ./ol/util/set_layout_${NODE_ENV}.toml
+	--path ./ol/devnet/set_layout_${NODE_ENV}.toml
 
 root:
 		cargo run -p libra-genesis-tool --release -- libra-root-key \
@@ -315,10 +315,15 @@ ifdef TEST
 	@echo NAMESPACE: ${NS}
 	@echo GENESIS: ${V}
 	@if test ! -d ${DATA_PATH}; then \
-		echo Creating Directories \
+		echo mkdir ~/.0L/ \
 		mkdir ${DATA_PATH}; \
-		mkdir -p ${DATA_PATH}/blocks/; \
 	fi
+
+	@if test ! -d ${DATA_PATH}/blocks/; then \
+		echo mkdir ~/.0L/blocks \
+		mkdir ${DATA_PATH}/blocks/; \
+	fi
+
 
 	@if test -f ${DATA_PATH}/blocks/block_0.json; then \
 		rm ${DATA_PATH}/blocks/block_0.json; \
@@ -341,6 +346,7 @@ endif
 fix-genesis:
 	cp ./ol/devnet/genesis/${V}/genesis.blob ${DATA_PATH}/
 	cp ./ol/devnet/genesis/${V}/genesis_waypoint ${DATA_PATH}/
+	cp ./ol/devnet/genesis/${V}/genesis_waypoint ${DATA_PATH}/client_waypoint
 
 
 #### HELPERS ####
@@ -390,7 +396,7 @@ debug:
 ##### DEVNET TESTS #####
 
 devnet: clear fix fix-genesis dev-wizard start
-# runs a smoke test from fixtures. 
+# runs a smoke test from fixtures.
 # Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 # This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
 
@@ -408,7 +414,7 @@ dev-join: clear fix fix-genesis dev-wizard
 
 dev-wizard:
 #  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
-	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis --upstream-peer http://161.35.13.169:8080
+	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --prebuilt-genesis ${DATA_PATH}/genesis.blob --chain-id 1 --github-org OLSF --repo dev-genesis --upstream-peer http://161.35.13.169:8080 --epoch 0 --waypoint $$(cat ${DATA_PATH}/client_waypoint)
 
 #### DEVNET INFRASTRUCTURE ####
 # usually do this on Alice, which has the dev-epoch-archive repo, and dev-genesis
@@ -438,3 +444,30 @@ clean-tags:
 	git push origin --delete ${TAG}
 	git tag -d ${TAG}
 	
+
+##### FORK TESTS #####
+
+EPOCH_HEIGHT = $(shell cargo r -p ol -- query --epoch | cut -d ":" -f 2)
+
+epoch:
+	cargo r -p ol -- query --epoch
+	echo ${EPOCH_HEIGHT}
+
+fork-backup:
+		rm -rf ${SOURCE}/ol/devnet/snapshot/*
+		cargo run -p backup-cli --bin db-backup -- one-shot backup --backup-service-address http://localhost:6186 state-snapshot --state-version ${EPOCH_HEIGHT} local-fs --dir ${SOURCE}/ol/devnet/snapshot/
+
+# Make genesis file
+fork-genesis:
+		cargo run -p ol-genesis-tools -- --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ${SOURCE}/ol/devnet/snapshot/state_ver*
+# Use onboard to create all node files
+fork-config:
+	cargo run -p onboard -- fork -u http://167.172.248.37 --prebuilt-genesis ${DATA_PATH}/genesis_from_snapshot.blob
+
+# start node from files
+
+fork-start: 
+	rm -rf ~/.0L/db
+	cargo run -p libra-node -- --config ~/.0L/validator.node.yaml
+
+fork: stdlib fork-genesis fork-config fork-start

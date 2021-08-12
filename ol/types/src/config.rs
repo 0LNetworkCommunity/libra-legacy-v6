@@ -135,6 +135,7 @@ impl AppCfg {
           default_config.workspace.stdlib_bin_path = Some(source_path.as_ref().unwrap().join("language/stdlib/staged/stdlib.mv"));
         }
 
+        dbg!(&base_waypoint);
         // override from args
         if base_epoch.is_some() && base_waypoint.is_some(){
             default_config.chain_info.base_epoch = *base_epoch;

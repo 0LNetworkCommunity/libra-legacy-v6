@@ -78,6 +78,8 @@ module Stats{
         k = k + 1;
       }
     }
+    
+    use 0x1::Debug::print;
 
     //Function: 04
     public fun process_set_votes(vm: &signer, set: &vector<address>) acquires ValStats{
@@ -85,6 +87,7 @@ module Stats{
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(190004));
 
       let length = Vector::length<address>(set);
+      print(&length);
       let k = 0;
       while (k < length) {
         let node_address = *(Vector::borrow<address>(set, k));
@@ -143,15 +146,25 @@ module Stats{
 
     //Permissions: Public, VM only.
     //Function: 09
+
     public fun inc_prop(vm: &signer, node_addr: address) acquires ValStats {
+      print(&0100201);
       let sender = Signer::address_of(vm);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(190009));
-
+      print(&0100202);
       let stats = borrow_global_mut<ValStats>(sender);
-      let (_, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
+      print(stats);
+      print(&0100203);
+      let (t, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
+      print(&t);
+      print(&i);
+      print(&0100204);
       let current_count = *Vector::borrow<u64>(&mut stats.current.prop_count, i);
+      print(&0100205);
       Vector::push_back(&mut stats.current.prop_count, current_count + 1);
+      print(&0100206);
       Vector::swap_remove(&mut stats.current.prop_count, i);
+      print(&0100207);
       stats.current.total_props = stats.current.total_props + 1;
     }
     

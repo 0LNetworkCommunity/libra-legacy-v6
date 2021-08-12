@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use executor::db_bootstrapper;
 use libra_management::{config::ConfigPath, error::Error, secure_backend::SharedBackend};
 use libra_temppath::TempPath;
-use libra_types::{chain_id::ChainId, waypoint::Waypoint};
+use libra_types::{chain_id::ChainId, transaction::Transaction, waypoint::Waypoint};
 use libra_vm::LibraVM;
 use libradb::LibraDB;
 use storage_interface::DbReaderWriter;
@@ -42,14 +42,17 @@ impl CreateWaypoint {
             genesis_blob_path: self.genesis_blob_path
         };
 
-        let genesis = genesis_helper.execute()?;
+        let gen_tx = genesis_helper.execute()?;
+        Self::extract_waypoint(gen_tx)
 
+    }
+    pub fn extract_waypoint(gen_tx: Transaction) -> Result<Waypoint, Error> {
         let path = TempPath::new();
         let libradb =
             LibraDB::open(&path, false, None).map_err(|e| Error::UnexpectedError(e.to_string()))?;
         let db_rw = DbReaderWriter::new(libradb);
 
-        db_bootstrapper::generate_waypoint::<LibraVM>(&db_rw, &genesis)
+        db_bootstrapper::generate_waypoint::<LibraVM>(&db_rw, &gen_tx)
             .map_err(|e| Error::UnexpectedError(e.to_string()))
     }
 }

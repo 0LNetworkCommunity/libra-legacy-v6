@@ -14,7 +14,7 @@ use libra_management::constants::{COMMON_NS, LAYOUT};
 use libra_secure_storage::{CryptoStorage, KVStorage, Storage};
 use libra_temppath::TempPath;
 use libra_types::{
-    chain_id::ChainId, 
+    chain_id::ChainId,
     waypoint::Waypoint,
     // transaction::{ChangeSet, Transaction, WriteSetPayload},
     // write_set::WriteSetMut
@@ -34,18 +34,23 @@ pub struct ValidatorBuilder<T: AsRef<Path>> {
     randomize_first_validator_ports: bool,
     swarm_path: T,
     template: NodeConfig,
-    genesis_blob_path: Option<PathBuf>
+    genesis_blob_path: Option<PathBuf>,
 }
 
 impl<T: AsRef<Path>> ValidatorBuilder<T> {
-    pub fn new(num_validators: usize, template: NodeConfig, swarm_path: T, genesis_blob_path: Option<PathBuf>) -> Self {
+    pub fn new(
+        num_validators: usize,
+        template: NodeConfig,
+        swarm_path: T,
+        genesis_blob_path: Option<PathBuf>,
+    ) -> Self {
         Self {
             storage_helper: StorageHelper::new(),
             num_validators,
             randomize_first_validator_ports: true,
             swarm_path,
             template,
-            genesis_blob_path
+            genesis_blob_path, //////// 0L ////////
         }
     }
 
@@ -105,10 +110,9 @@ impl<T: AsRef<Path>> ValidatorBuilder<T> {
 
         self.storage_helper
             .initialize_by_idx(local_ns.clone(), 1 + index);
-        
+
         //////// 0L /////////
-        self.storage_helper
-            .swarm_pow_helper(remote_ns.clone());
+        self.storage_helper.swarm_pow_helper(remote_ns.clone());
 
         let _ = self
             .storage_helper
@@ -190,21 +194,32 @@ impl<T: AsRef<Path>> ValidatorBuilder<T> {
 
         let genesis_path = TempPath::new();
         genesis_path.create_as_file().unwrap();
+
+        //////// 0L ////////
         let genesis = self
             .storage_helper
-            .genesis(ChainId::test(), genesis_path.path(), &self.genesis_blob_path)
+            .genesis(
+                ChainId::test(),
+                &genesis_path.path(),
+                &self.genesis_blob_path,
+            )
             .unwrap();
 
         self.storage_helper
             .insert_waypoint(&local_ns, waypoint)
             .unwrap();
 
-        let output = self
-            .storage_helper
-            .verify_genesis(&local_ns, genesis_path.path())
-            .unwrap();
-        println!("output: {}", output);
-        assert_eq!(output.split("match").count(), 5, "Failed to verify genesis");
+        //////// 0L ////////
+        // don't verify swarm's setup, if we are testing from a known genesis.blob
+        if self.genesis_blob_path.is_none() {
+            let output = self
+                .storage_helper
+                .verify_genesis(&local_ns, genesis_path.path())
+                .unwrap();
+
+            println!("output: {}", output);
+            assert_eq!(output.split("match").count(), 5, "Failed to verify genesis");
+        }
 
         config.consensus.safety_rules.service = SafetyRulesService::Thread;
         config.consensus.safety_rules.backend = self.secure_backend(&local_ns, "safety-rules");
