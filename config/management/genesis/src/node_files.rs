@@ -35,7 +35,7 @@ pub struct Files {
     #[structopt(long)]
     data_path: PathBuf,
     #[structopt(long, verbatim_doc_comment)]
-    genesis_path: Option<PathBuf>,
+    prebuilt_genesis: Option<PathBuf>,
     #[structopt(long, verbatim_doc_comment)]
     fullnode_only: bool,
     #[structopt(long, verbatim_doc_comment)]
@@ -50,7 +50,7 @@ impl Files {
             &self.github_org,
             &self.repo,
             &self.namespace,
-            &true,
+            &self.prebuilt_genesis,
             &self.fullnode_only,
             self.waypoint,
         )
@@ -63,7 +63,7 @@ pub fn write_node_config_files(
     github_org: &str,
     repo: &str,
     namespace: &str,
-    rebuild_genesis: &bool,
+    prebuilt_genesis: &Option<PathBuf>,
     fullnode_only: &bool,
     mut way_opt: Option<Waypoint>,
 ) -> Result<NodeConfig, Error> {
@@ -81,20 +81,26 @@ pub fn write_node_config_files(
 
     let storage_helper = StorageHelper::get_with_path(output_dir.clone());
 
-    let genesis_path = output_dir.join("genesis.blob");
-    if *rebuild_genesis {
-        // Create genesis blob from repo and saves waypoint
-        let genesis_waypoint = storage_helper
-            .build_genesis_from_github(chain_id, &remote, &genesis_path)
-            .unwrap();
+    // default to genesis path in home dir
+    let mut genesis_path = output_dir.join("genesis.blob");
 
-        // for genesis cases, need to insert the waypoint in the key_store.json
-        storage_helper
-            .insert_waypoint(&namespace, genesis_waypoint)
-            .unwrap();
+    match prebuilt_genesis {
+        Some(path) => {
+            // TODO: insert waypoint
+            genesis_path = path.to_owned();
+        }
+        None => {
+            let genesis_waypoint = storage_helper
+                .build_genesis_from_github(chain_id, &remote, &genesis_path)
+                .unwrap();
+            // for genesis cases, need to insert the waypoint in the key_store.json
+            storage_helper
+                .insert_waypoint(&namespace, genesis_waypoint)
+                .unwrap();
 
-        way_opt = Some(genesis_waypoint);
-    }
+            way_opt = Some(genesis_waypoint);
+        }
+    };
 
     // Write the genesis waypoint without a namespaced storage.
     let mut disk_storage = OnDiskStorageConfig::default();

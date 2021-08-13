@@ -12,12 +12,13 @@
 
 use libra_config::network_id::NetworkId;
 use libra_types::chain_id::ChainId;
-use serde::{export::Formatter, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, convert::TryInto, fmt, iter::Iterator};
 use thiserror::Error;
 
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
+use std::fmt::Formatter;
 
 #[cfg(test)]
 mod test;

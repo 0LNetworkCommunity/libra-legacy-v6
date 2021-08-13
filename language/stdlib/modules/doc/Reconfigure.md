@@ -10,6 +10,7 @@
 
 
 <pre><code><b>use</b> <a href="AccountLimits.md#0x1_AccountLimits">0x1::AccountLimits</a>;
+<b>use</b> <a href="Audit.md#0x1_Audit">0x1::Audit</a>;
 <b>use</b> <a href="AutoPay.md#0x1_AutoPay2">0x1::AutoPay2</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
@@ -18,6 +19,7 @@
 <b>use</b> <a href="FullnodeState.md#0x1_FullnodeState">0x1::FullnodeState</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
+<b>use</b> <a href="LibraAccount.md#0x1_LibraAccount">0x1::LibraAccount</a>;
 <b>use</b> <a href="LibraConfig.md#0x1_LibraConfig">0x1::LibraConfig</a>;
 <b>use</b> <a href="LibraSystem.md#0x1_LibraSystem">0x1::LibraSystem</a>;
 <b>use</b> <a href="MinerState.md#0x1_MinerState">0x1::MinerState</a>;
@@ -134,26 +136,18 @@
 
     <b>let</b> i = 0;
     <b>while</b> (i &lt; <a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&top_accounts)) {
-// print(&03251);
-
         <b>let</b> addr = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&top_accounts, i);
         <b>let</b> mined_last_epoch = <a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(vm, addr);
         // TODO: temporary until jail-refactor merge.
-        <b>if</b> ((!<a href="Vector.md#0x1_Vector_contains">Vector::contains</a>(&jailed_set, &addr)) && mined_last_epoch) {
+        <b>if</b> (
+          (!<a href="Vector.md#0x1_Vector_contains">Vector::contains</a>(&jailed_set, &addr)) &&
+          mined_last_epoch &&
+          <a href="Audit.md#0x1_Audit_val_audit_passing">Audit::val_audit_passing</a>(addr)
+        ) {
             <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> proposed_set, addr);
         };
         i = i+ 1;
     };
-
-    // <b>let</b> proposed_set = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>();
-    // <b>let</b> i = 0;
-    // <b>while</b> (i &lt; <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&top_accounts)) {
-    //     <b>let</b> addr = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&top_accounts, i);
-    //     <b>if</b> (!<a href="Vector.md#0x1_Vector_contains">Vector::contains</a>(&jailed_set, &addr)){
-    //         <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> proposed_set, addr);
-    //     };
-    //     i = i+ 1;
-    // };
 
     // 2. get top accounts.
     // TODO: This is temporary. Top N is after jailed have been removed
@@ -188,15 +182,22 @@
 
     // <a href="Reconfigure.md#0x1_Reconfigure">Reconfigure</a> the network
     <a href="LibraSystem.md#0x1_LibraSystem_bulk_update_validators">LibraSystem::bulk_update_validators</a>(vm, proposed_set);
-// print(&032110);
 
+// print(&032110);
     // reset clocks
     <a href="Subsidy.md#0x1_Subsidy_fullnode_reconfig">Subsidy::fullnode_reconfig</a>(vm);
+
 //  print(&032120);
+    // process community wallets
+    <a href="LibraAccount.md#0x1_LibraAccount_process_community_wallets">LibraAccount::process_community_wallets</a>(vm,
+    <a href="LibraConfig.md#0x1_LibraConfig_get_current_epoch">LibraConfig::get_current_epoch</a>());
+
+//  print(&032130);
 
     <a href="AutoPay.md#0x1_AutoPay2_reconfig_reset_tick">AutoPay2::reconfig_reset_tick</a>(vm);
-//  print(&032130);
+//  print(&032140);
     <a href="Epoch.md#0x1_Epoch_reset_timer">Epoch::reset_timer</a>(vm, height_now);
+//  print(&032150);
 }
 </code></pre>
 

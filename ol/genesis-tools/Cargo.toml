@@ -34,6 +34,7 @@ ol = { path = "../cli/"}
 ol-fixtures = { path = "../fixtures/" }
 ol-keys = { path = "../keys/", version = "0.1.0" }
 ol-types = { path = "../types/" }
+libra-network-address = { path = "../../network/network-address", version = "0.1.0" }
 
 [features]
 fuzzing = ["libradb/fuzzing"]

@@ -166,7 +166,8 @@ impl ProposerElection for LeaderReputation {
             *w = total_weight;
         }
         let mut state = round.to_le_bytes().to_vec();
-        let chosen_weight = next(&mut state) % total_weight;
+        let chosen_weight = 
+        next(&mut state) % total_weight;
         let chosen_index = weights
             .binary_search_by(|w| {
                 if *w <= chosen_weight {

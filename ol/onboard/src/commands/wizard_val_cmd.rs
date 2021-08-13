@@ -4,19 +4,18 @@
 
 use super::files_cmd;
 
-
 use crate::entrypoint;
 use crate::prelude::app_config;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_genesis_tool::node_files;
+use libra_types::transaction::SignedTransaction;
 use libra_types::waypoint::Waypoint;
-use libra_types::{transaction::SignedTransaction};
 use libra_wallet::WalletLibrary;
 use ol::{commands::init_cmd, config::AppCfg};
 use ol_keys::{scheme::KeyScheme, wallet};
 use ol_types::block::Block;
 use ol_types::config::IS_TEST;
-use ol_types::{account::ValConfigs, pay_instruction::PayInstruction, config::TxType};
+use ol_types::{account::ValConfigs, config::TxType, pay_instruction::PayInstruction};
 use reqwest::Url;
 use std::process::exit;
 use std::{fs::File, io::Write, path::PathBuf};
@@ -38,9 +37,9 @@ pub struct ValWizardCmd {
     #[options(help = "repo with with genesis transactions")]
     repo: Option<String>,
     #[options(help = "build genesis from ceremony repo")]
-    rebuild_genesis: bool,
-    #[options(help = "skip fetching genesis blob")]
-    skip_fetch_genesis: bool,
+    prebuilt_genesis: Option<PathBuf>,
+    #[options(help = "fetching genesis blob from github")]
+    fetch_git_genesis: bool,
     #[options(help = "skip mining a block zero")]
     skip_mining: bool,
     #[options(short = "u", help = "template account.json to configure from")]
@@ -63,7 +62,7 @@ impl Runnable for ValWizardCmd {
         // Note. `onboard` command DOES NOT READ CONFIGS FROM 0L.toml
 
         status_info!("\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys, run the standalone keygen tool with 'ol keygen'.\n\nYour first 0L proof-of-work will be mined now. Expect this to take up to 15 minutes on modern CPUs.\n");
-        
+
         let entry_args = entrypoint::get_args();
 
         // Get credentials from prompt
@@ -71,15 +70,12 @@ impl Runnable for ValWizardCmd {
 
         let mut upstream = self.upstream_peer.clone().unwrap_or_else(|| {
             self.template_url.clone().unwrap_or_else(|| {
-                println!("ERROR: Must set a URL to query chain. Use --upstream-peer of --template-url. Exiting.");
+                println!("ERROR: Must set a URL to query chain. Use --upstream-peer or --template-url. Exiting.");
                 exit(1);
             })
         });
         upstream.set_port(Some(8080)).unwrap();
-        println!(
-            "Setting upstream peer URL to: {:?}",
-            &upstream
-        );
+        println!("Setting upstream peer URL to: {:?}", &upstream);
 
         let app_config = AppCfg::init_app_configs(
             authkey,
@@ -88,11 +84,12 @@ impl Runnable for ValWizardCmd {
             &self.home_path,
             &self.epoch,
             &self.waypoint,
-            &self.source_path
+            &self.source_path,
+            None,
+            None,
         );
         let home_path = &app_config.workspace.node_home;
         let base_waypoint = app_config.chain_info.base_waypoint.clone();
-
 
         status_ok!("\nApp configs written", "\n...........................\n");
 
@@ -112,7 +109,7 @@ impl Runnable for ValWizardCmd {
             home_path,
             &app_config,
             &wallet,
-            entry_args.swarm_path.as_ref().is_some()
+            entry_args.swarm_path.as_ref().is_some(),
         );
         status_ok!(
             "\nAutopay transactions signed",
@@ -123,17 +120,16 @@ impl Runnable for ValWizardCmd {
         init_cmd::initialize_validator(&wallet, &app_config, base_waypoint).unwrap();
         status_ok!("\nKey file written", "\n...........................\n");
 
-        // fetching the genesis files from genesis-archive
-        // unless we are skipping it, or unless we intend to rebuild.
-        if !self.skip_fetch_genesis {
-            // if we are rebuilding genesis then we should skip fetching files
-            if !self.rebuild_genesis {
-                files_cmd::get_files(home_path.to_owned(), &self.github_org, &self.repo);
-                status_ok!(
-                    "\nDownloaded genesis files",
-                    "\n...........................\n"
-                );
-            }
+        // fetching the genesis files from genesis-archive, will override the path for prebuilt genesis.
+        let mut prebuilt_genesis_path = self.prebuilt_genesis.clone();
+        if self.fetch_git_genesis {
+            files_cmd::get_files(home_path.clone(), &self.github_org, &self.repo);
+            status_ok!(
+                "\nDownloaded genesis files",
+                "\n...........................\n"
+            );
+
+            prebuilt_genesis_path = Some(home_path.join("genesis.blob"))
         }
 
         let home_dir = app_config.workspace.node_home.to_owned();
@@ -150,7 +146,7 @@ impl Runnable for ValWizardCmd {
                 .clone()
                 .unwrap_or("experimental-genesis".to_string()),
             &namespace,
-            &self.rebuild_genesis,
+            &prebuilt_genesis_path,
             &false,
             base_waypoint,
         )
@@ -209,15 +205,21 @@ pub fn get_autopay_batch(
     .unwrap();
     let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone());
     let url = cfg.what_url(false);
-    let mut tx_params =
-        submit_tx::get_tx_params_from_toml(cfg.to_owned(), TxType::Miner, Some(wallet), url, None, is_swarm)
-            .unwrap();
+    let mut tx_params = submit_tx::get_tx_params_from_toml(
+        cfg.to_owned(),
+        TxType::Miner,
+        Some(wallet),
+        url,
+        None,
+        is_swarm,
+    )
+    .unwrap();
     let tx_expiration_sec = if *IS_TEST {
-      // creating fixtures here, so give it near infinite expiry
-      100 * 360 * 24 * 60 * 60
+        // creating fixtures here, so give it near infinite expiry
+        100 * 360 * 24 * 60 * 60
     } else {
-      // give the tx a very long expiration, 7 days.
-      7 * 24 * 60 * 60
+        // give the tx a very long expiration, 7 days.
+        7 * 24 * 60 * 60
     };
 
     tx_params.tx_cost.user_tx_timeout = tx_expiration_sec;
@@ -225,7 +227,8 @@ pub fn get_autopay_batch(
     (Some(instr_vec), Some(txn_vec))
 }
 
-pub fn save_template(url: &Url, home_path: &PathBuf) -> PathBuf {
+/// save template file
+fn save_template(url: &Url, home_path: &PathBuf) -> PathBuf {
     let g_res = reqwest::blocking::get(&url.to_string());
     let g_path = home_path.join("template.json");
     let mut g_file = File::create(&g_path).expect("couldn't create file");
@@ -237,7 +240,6 @@ pub fn save_template(url: &Url, home_path: &PathBuf) -> PathBuf {
     g_file.write_all(g_content.as_slice()).unwrap();
     g_path
 }
-
 
 /// Creates an account.json file for the validator
 pub fn write_account_json(

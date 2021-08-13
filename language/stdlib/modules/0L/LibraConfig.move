@@ -49,6 +49,10 @@ module LibraConfig {
     /// The largest possible u64 value
     const MAX_U64: u64 = 18446744073709551615;
 
+    //////// 0L ////////
+    /// Epoch when transfers are enabled
+    const TRANSFER_ENABLED_EPOCH: u64 = 1000;
+
     /// Publishes `Configuration` resource. Can only be invoked by Libra root, and only a single time in Genesis.
     public fun initialize(
         lr_account: &signer,
@@ -329,6 +333,7 @@ module LibraConfig {
     fun emit_genesis_reconfiguration_event() acquires Configuration {
         assert(exists<Configuration>(CoreAddresses::LIBRA_ROOT_ADDRESS()), Errors::not_published(ECONFIGURATION));
         let config_ref = borrow_global_mut<Configuration>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+
         assert(config_ref.epoch == 0 && config_ref.last_reconfiguration_time == 0, Errors::invalid_state(ECONFIGURATION));
         config_ref.epoch = 1;
 
@@ -391,7 +396,7 @@ module LibraConfig {
 
     public fun get_epoch_transfer_limit(): u64 acquires Configuration {
         // Constant to start the withdrawal limit calculation from 
-        let transfer_enabled_epoch = 75;
+        let transfer_enabled_epoch = TRANSFER_ENABLED_EPOCH;
         let config_ref = borrow_global<Configuration>(CoreAddresses::LIBRA_ROOT_ADDRESS());
         
         // Calculating transfer limit in multiples of epoch
@@ -402,7 +407,7 @@ module LibraConfig {
         if(Testnet::is_testnet()){
             true
         } else {
-            get_current_epoch() > 1000
+            get_current_epoch() > TRANSFER_ENABLED_EPOCH
         }
     }
 

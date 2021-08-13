@@ -20,8 +20,9 @@ use libra_types::{
     proof::{SparseMerkleRangeProof, TransactionAccumulatorRangeProof, TransactionInfoWithProof},
     transaction::{Transaction, TransactionInfo, Version},
 };
-use serde::{export::Formatter, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::{fmt::Display, sync::Arc};
+use std::fmt::Formatter;
 
 /// `BackupHandler` provides functionalities for LibraDB data backup.
 #[derive(Clone)]

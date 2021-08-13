@@ -362,6 +362,32 @@ address 0x1 {
       verify_and_update_state(Signer::address_of(miner_sig), proof, false);
     }
 
+    // Function to recover miner state in a fork's genesis
+    // Permissions: PUBLIC, Signer, Validator only
+    // Function code: 07
+    public fun recover_miner_state(vm_sig: &signer, miner_sig: &signer) acquires MinerList {
+      
+      // NOTE Only Signer can update own state.
+      // Should only happen once.
+      assert(!exists<MinerProofHistory>(Signer::address_of(miner_sig)), Errors::requires_role(130107));
+      // LibraAccount calls this.
+      // Exception is LibraAccount which can simulate a Signer.
+      // Initialize MinerProofHistory object and give to miner account
+      move_to<MinerProofHistory>(miner_sig, MinerProofHistory{
+        previous_proof_hash: Vector::empty(),
+        verified_tower_height: 0u64,
+        latest_epoch_mining: 0u64,
+        count_proofs_in_epoch: 1u64,
+        epochs_validating_and_mining: 0u64,
+        contiguous_epochs_validating_and_mining: 0u64,
+        epochs_since_last_account_creation: 0u64,
+      });
+
+      add_self_list(miner_sig);
+
+      let node_addr = Signer::address_of(miner_sig);
+      Stats::init_address(vm_sig, node_addr);
+    }
 
     // Process and check the first proof blob submitted for validity (includes correct address)
     // Permissions: PUBLIC, ANYONE. (used in onboarding transaction).
@@ -555,6 +581,13 @@ address 0x1 {
       assert(Testnet::is_testnet()== true, Errors::invalid_state(130117));
       let state = borrow_global_mut<MinerProofHistory>(miner_addr);
       state.epochs_since_last_account_creation = value;
+    }
+
+    public fun test_helper_set_epochs_mining(node_addr: address, value: u64)acquires MinerProofHistory {
+      assert(Testnet::is_testnet()== true, Errors::invalid_state(130117));
+
+      let s = borrow_global_mut<MinerProofHistory>(node_addr);
+      s.epochs_validating_and_mining = value;
     }
 
     // Function code: 18

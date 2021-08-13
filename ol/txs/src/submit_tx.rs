@@ -7,7 +7,6 @@ use crate::{
     save_tx::save_tx,
     sign_tx::sign_tx,
 };
-use abscissa_core::{status_ok, status_warn};
 use anyhow::Error;
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
 use ol_keys::{wallet, scheme::KeyScheme};
@@ -35,6 +34,7 @@ use std::{
     path::PathBuf,
     thread, time,
 };
+
 /// All the parameters needed for a client transaction.
 #[derive(Debug)]
 pub struct TxParams {
@@ -161,6 +161,8 @@ fn stage(
     (signer_account_data, txn)
 }
 /// Submit a transaction to the network.
+
+
 pub fn submit_tx(
     mut client: LibraClient,
     txn: SignedTransaction,
@@ -383,13 +385,16 @@ pub fn wait_for_tx(
     client: &mut LibraClient,
 ) -> Option<TransactionView> {
     println!(
-        "\nAwaiting tx status \n\
-       Submitted from account: {} with sequence number: {}",
-        signer_address, sequence_number
+      "\nAwaiting tx status \nSubmitted from account: {} with sequence number: {}",
+      signer_address,
+      sequence_number
     );
 
+    const MAX_ITERATIONS: u8 = 30;
+
+    let mut iter = 0;
     loop {
-        thread::sleep(time::Duration::from_millis(1000));
+        thread::sleep(time::Duration::from_millis(1_000));
         // prevent all the logging the client does while
         // it loops through the query.
         stdout().flush().unwrap();
@@ -405,6 +410,12 @@ pub fn wait_for_tx(
                 print!(".");
             }
         }
+        iter += 1;
+
+        if iter==MAX_ITERATIONS {
+            println!("Timeout waiting for response");
+            return None;
+        }
     }
 }
 
@@ -412,11 +423,11 @@ pub fn wait_for_tx(
 pub fn eval_tx_status(result: TransactionView) -> Result<(), Error> {
     match result.vm_status == VMStatusView::Executed {
         true => {
-            status_ok!("\nSuccess:", "transaction executed");
+            println!("\nSuccess: transaction executed");
             Ok(())
         }
         false => {
-            status_warn!("Transaction failed");
+            println!("Transaction failed");
             let msg = format!("Rejected with code:{:?}", result.vm_status);
             Err(Error::msg(msg))
         }

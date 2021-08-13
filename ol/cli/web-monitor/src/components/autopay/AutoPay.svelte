@@ -1,49 +1,49 @@
 <script lang="ts">
-    import "/layout/Style.svelte";
-    
-    export let account;
+  import AutoPaySummary from "./AutoPaySummary.svelte";
+  import "/layout/Style.svelte";
+  export let account;
 
-    // TODO: move logic to the server side
-    let formatAmount = (value, type) => {
-      if (type === 0 || type === 1) {
-        return (value / 100).toFixed(2) + "%";
-      }
-      return value.toLocaleString('en-ES');
-    }
-  </script>
+  let total;
+  $: if (account && account.autopay) {
+    total = account.autopay.payments.reduce((a, b) => a + (b.amt || 0), 0);
+  }
+</script>
 
-<div class="uk-card uk-card-default uk-card-body uk-margin-bottom">
-  <h3 class="uk-card-title uk-text-center uk-text-uppercase uk-text-muted uk-text-large">
+<div>
+  <h2 class="uk-text-center uk-text-uppercase uk-text-muted uk-text-light uk-margin-medium-bottom">
     Autopay Instructions
-  </h3>
+  </h2>
   
   {#if account}
-    {#if account.auto_pay && account.auto_pay.payments.length > 0}
-      <table class="uk-table">
-        <thead>
-          <tr>
-            <th class="uk-text-center">uid</th>
-            <th class="uk-text-center">type</th>
-            <th class="uk-text-center">payee</th>
-            <th class="uk-text-center uk-visible@s">end epoch</th>
-            <th class="uk-text-center uk-visible@s">previous balance</th>
-            <th class="uk-text-center">amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each account.auto_pay.payments as {uid, in_type, payee, end_epoch, prev_bal, amt}}
+    {#if account.autopay && account.autopay.payments.length > 0}
+      <AutoPaySummary payments={account.autopay.payments}/>
+      <div class="uk-overflow-auto">
+        <table class="uk-table uk-table-hover">
+          <thead>
             <tr>
-              <td class="uk-text-center">{uid}</td>
-              <td class="uk-text-center">{in_type}</td>
-              <td class="uk-visible@s uk-text-center">{payee}</td>
-              <td class="uk-hidden@s uk-text-truncate">{payee}</td>
-              <td class="uk-text-right uk-visible@s">{end_epoch}</td>
-              <td class="uk-text-right uk-visible@s">{prev_bal.toLocaleString('en-ES')}</td>
-              <td class="uk-text-right">{formatAmount(amt, in_type)}</td>
+              <th class="uk-text-center">uid</th>
+              <th class="uk-text-center">note</th>
+              <th class="uk-text-center">payee</th>
+              <th class="uk-text-center">type</th>
+              <th class="uk-text-center">end epoch</th>
+              <th class="uk-text-center">amount</th>
             </tr>
-          {/each}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {#each account.autopay.payments as {uid, note, type_desc, payee, end_epoch, amount}}
+              <tr>
+                <td class="uk-text-center">{uid}</td>
+                <td class="uk-text-center">{note || ""}</td>
+                <td class="uk-visible@s uk-text-center">{payee}</td>
+                <td class="uk-hidden@s uk-text-truncate">{payee}</td>
+                <td class="uk-text-center">{type_desc}</td>
+                <td class="uk-text-right">{end_epoch}</td>
+                <td class="uk-text-right">{amount}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
     {:else}
       <p class="uk-text-center uk-text-warning">Your validator does not have autopay instructions.</p>
     {/if}

@@ -46,7 +46,10 @@ impl Node {
             .expect("cannot connect to upstream node");
 
         if let Some(local_db) = self.get_db_state() {
-            s.remote_height = remote_client.get_metadata().unwrap().version;
+            s.remote_height = match remote_client.get_metadata(){
+                Ok(m) => m.version,
+                Err(_) => 404,
+            };
             s.sync_height = local_db.synced_version;
             s.sync_delay = s.remote_height as i64 - s.sync_height as i64;
             s.is_synced = s.sync_delay < 1000;

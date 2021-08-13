@@ -1,6 +1,6 @@
 //! MinerApp Subcommands
 
-mod start_cmd;
+pub mod start_cmd;
 mod version_cmd;
 mod zero_cmd;
 

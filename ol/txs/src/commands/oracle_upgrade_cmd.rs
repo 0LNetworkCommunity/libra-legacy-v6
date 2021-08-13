@@ -6,7 +6,7 @@ use abscissa_core::{Command, Options, Runnable};
 use ol_types::config::TxType;
 use crate::{entrypoint, prelude::app_config, submit_tx::{tx_params_wrapper, maybe_submit}};
 use libra_types::{transaction::{Script}};
-use std::{fs, io::prelude::*, path::PathBuf};
+use std::{fs, io::prelude::*, path::PathBuf, process::exit};
 
 /// `OracleUpgrade` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -35,11 +35,17 @@ impl Runnable for OracleUpgradeCmd {
           cfg.workspace.stdlib_bin_path.clone().unwrap()
         });
         
-        maybe_submit(
+        match maybe_submit(
           oracle_tx_script(&path),
           &tx_params,
           entry_args.no_send,
           entry_args.save_path
-        ).unwrap();
+        ) {
+            Err(e) => {
+              println!("ERROR: could not submit upgrade transaction, message: \n{:?}", &e);
+              exit(1);
+            },
+            _ => {}
+        }
     }
 }

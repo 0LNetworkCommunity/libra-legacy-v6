@@ -12,7 +12,7 @@ use once_cell::sync::Lazy;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::{fs, io::Write, net::Ipv4Addr, path::PathBuf, process::exit, str::FromStr};
+use std::{fs::{self, File}, io::{Read, Write}, net::Ipv4Addr, path::PathBuf, process::exit, str::FromStr};
 
 use crate::dialogue::{what_home, what_ip, what_statement};
 
@@ -23,7 +23,7 @@ pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
     match std::env::var("NODE_ENV") {
         Ok(val) => {
             match val.as_str() {
-                "prod" => true,
+                "prod" => true, 
                 // if anything else is set by user is false
                 _ => false,
             }
@@ -58,6 +58,19 @@ pub struct AppCfg {
     /// Transaction configurations
     pub tx_configs: TxConfigs,
 }
+
+/// Get a AppCfg object from toml file
+pub fn parse_toml(path: String) -> Result<AppCfg, Error> {
+    let mut config_toml = String::new();
+
+    let mut file = File::open(&path)?;
+
+    file.read_to_string(&mut config_toml)
+            .unwrap_or_else(|err| panic!("Error while reading config: [{}]", err));
+
+    let cfg: AppCfg = toml::from_str(&config_toml).unwrap();
+    Ok(cfg)
+} 
 
 impl AppCfg {
     /// Gets the dynamic waypoint from libra node's key_store.json
@@ -114,16 +127,24 @@ impl AppCfg {
         base_epoch: &Option<u64>,
         base_waypoint: &Option<Waypoint>,
         source_path: &Option<PathBuf>,
+        statement: Option<String>,
+        ip: Option<Ipv4Addr>,
     ) -> AppCfg {
         // TODO: Check if configs exist and warn on overwrite.
         let mut default_config = AppCfg::default();
         default_config.profile.auth_key = authkey.to_string();
         default_config.profile.account = account;
 
-        // Get statement which goes into genesis block
-        default_config.profile.statement = what_statement();
+                // Get statement which goes into genesis block
+        default_config.profile.statement = match statement {
+            Some(s) => s,
+            None => what_statement(),
+        };
 
-        default_config.profile.ip = what_ip().unwrap();
+        default_config.profile.ip = match ip {
+            Some(i) => i,
+            None => what_ip().unwrap(),
+        };
 
         default_config.workspace.node_home = config_path.clone().unwrap_or_else(||{
             what_home(None, None)
@@ -135,6 +156,7 @@ impl AppCfg {
           default_config.workspace.stdlib_bin_path = Some(source_path.as_ref().unwrap().join("language/stdlib/staged/stdlib.mv"));
         }
 
+        dbg!(&base_waypoint);
         // override from args
         if base_epoch.is_some() && base_waypoint.is_some(){
             default_config.chain_info.base_epoch = *base_epoch;

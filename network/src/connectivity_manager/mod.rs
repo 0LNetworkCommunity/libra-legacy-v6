@@ -47,7 +47,7 @@ use rand::{
     prelude::{SeedableRng, SmallRng},
     seq::SliceRandom,
 };
-use serde::{export::Formatter, Serialize};
+use serde::{ Serialize};
 use std::{
     cmp::min,
     collections::{HashMap, HashSet},
@@ -57,6 +57,7 @@ use std::{
 };
 use tokio::{time, time::Instant};
 use tokio_retry::strategy::jitter;
+use std::fmt::Formatter;
 
 pub mod builder;
 #[cfg(test)]

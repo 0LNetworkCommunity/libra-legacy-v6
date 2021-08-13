@@ -12,9 +12,13 @@ use libra_types::{
     chain_id::ChainId,
     transaction::{Transaction, TransactionPayload},
 };
-use std::{fs::File, io::Write, path::PathBuf};
+use std::{
+    fs::File,
+    io::{Read, Write},
+    path::PathBuf,
+};
 use structopt::StructOpt;
-use vm_genesis::{OperatorAssignment, OperatorRegistration, GenesisMiningProof};
+use vm_genesis::{GenesisMiningProof, OperatorAssignment, OperatorRegistration};
 
 /// Note, it is implicitly expected that the storage supports
 /// a namespace but one has not been set.
@@ -47,28 +51,45 @@ impl Genesis {
     }
 
     pub fn execute(self) -> Result<Transaction, Error> {
-        let layout = self.layout()?;
-        //////// 0L ////////
-        // let libra_root_key = self.libra_root_key(&layout)?;
-        // let treasury_compliance_key = self.treasury_compliance_key(&layout)?;
-        let operator_assignments = self.operator_assignments(&layout)?;
-        let operator_registrations = self.operator_registrations(&layout)?;
+        // If we are just parsing a genesis file, skip the rest
+        let genesis = match self.genesis_blob_path {
+            Some(p) => {
+                let mut file = File::open(&p)
+                    .map_err(|e| format!("Unable to open genesis file: {:?}", e))
+                    .unwrap();
+                let mut buffer = vec![];
+                file.read_to_end(&mut buffer)
+                    .map_err(|e| format!("Unable to read genesis file: {:?}", e))
+                    .unwrap();
+                lcs::from_bytes(&buffer)
+                    .map_err(|e| format!("Unable to parse genesis file: {:?}", e))
+                    .unwrap()
+            }
+            None => {
+                let layout = self.layout()?;
+                //////// 0L ////////
+                // let libra_root_key = self.libra_root_key(&layout)?;
+                // let treasury_compliance_key = self.treasury_compliance_key(&layout)?;
+                let operator_assignments = self.operator_assignments(&layout)?;
+                let operator_registrations = self.operator_registrations(&layout)?;
 
-        let chain_id = self.config()?.chain_id;
-        let script_policy = Some(libra_types::on_chain_config::VMPublishingOption::open());
+                let chain_id = self.config()?.chain_id;
+                let script_policy = Some(libra_types::on_chain_config::VMPublishingOption::open());
 
-        let genesis = vm_genesis::encode_genesis_transaction(
-            //////// 0L ////////
-            // libra_root_key,
-            // treasury_compliance_key,
-            None,
-            None,
-            //////// 0L end ////////
-            &operator_assignments,
-            &operator_registrations,
-            script_policy,
-            chain_id,
-        );
+                vm_genesis::encode_genesis_transaction(
+                    //////// 0L ////////
+                    // libra_root_key,
+                    // treasury_compliance_key,
+                    None,
+                    None,
+                    //////// 0L end ////////
+                    &operator_assignments,
+                    &operator_registrations,
+                    script_policy,
+                    chain_id,
+                )
+            }
+        };
 
         if let Some(path) = self.path {
             let mut file = File::create(path).map_err(|e| {
@@ -115,7 +136,7 @@ impl Genesis {
             let operator_storage = config.shared_backend_with_namespace(operator_name.clone());
             let operator_key = operator_storage.ed25519_key(OPERATOR_KEY)?;
             let operator_account = account_address::from_public_key(&operator_key);
-            
+
             //////// 0L ////////
             //In genesis the owner will sign this script, which assigns an operator to thier profile.
             let set_operator_script = transaction_builder::encode_set_validator_operator_script(
@@ -125,18 +146,22 @@ impl Genesis {
 
             //////// 0L ////////
             let pow = GenesisMiningProof {
-                preimage: owner_storage.string(libra_global_constants::PROOF_OF_WORK_PREIMAGE).unwrap(),
-                proof: owner_storage.string(libra_global_constants::PROOF_OF_WORK_PROOF).unwrap(),
+                preimage: owner_storage
+                    .string(libra_global_constants::PROOF_OF_WORK_PREIMAGE)
+                    .unwrap(),
+                proof: owner_storage
+                    .string(libra_global_constants::PROOF_OF_WORK_PROOF)
+                    .unwrap(),
             };
 
             let owner_name_vec = owner.as_bytes().to_vec();
-            operator_assignments.push(
-                (owner_key,
+            operator_assignments.push((
+                owner_key,
                 owner_name_vec,
-                set_operator_script, 
+                set_operator_script,
                 //////// 0L ////////
-                pow)
-            );
+                pow,
+            ));
         }
 
         Ok(operator_assignments)
@@ -162,7 +187,7 @@ impl Genesis {
                 } else {
                     return Err(Error::UnexpectedError("Found invalid registration".into()));
                 };
-            
+
             let operator_account = account_address::from_public_key(&operator_key);
             registrations.push((
                 operator_key,
@@ -171,7 +196,7 @@ impl Genesis {
                 operator_account,
             ));
         }
-        
+
         //////// 0L end ////////
         Ok(registrations)
     }

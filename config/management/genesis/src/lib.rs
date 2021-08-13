@@ -10,7 +10,7 @@ pub mod layout;
 mod validator_config;
 mod validator_operator;
 pub mod verify;
-mod waypoint;
+pub mod waypoint;
 //////// 0L ////////
 pub mod init;
 pub mod node_files;

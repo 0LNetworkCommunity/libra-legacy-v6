@@ -1,12 +1,13 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 use anyhow::{ensure, format_err, Error, Result};
-use serde::{de::Visitor, export::fmt::Debug, Deserialize, Deserializer, Serialize};
+use serde::{de::Visitor, Deserialize, Deserializer, Serialize};
 use std::{
     convert::TryFrom,
     fmt::{Display, Formatter},
     str::FromStr,
 };
+use std::fmt::Debug;
 
 /// A registry of named chain IDs
 /// Its main purpose is to improve human readability of reserved chain IDs in config files and CLI
