@@ -6,7 +6,7 @@ use crate::{
 };
 use anyhow::{bail, Error, Result};
 use backup_cli::backup_types::state_snapshot::manifest::StateSnapshotBackup;
-use libra_types::{
+use diem_types::{
     access_path::AccessPath,
     account_config::AccountResource,
     account_state::AccountState,
@@ -138,7 +138,7 @@ pub fn merge_writeset(mut left: WriteSetMut, right: WriteSetMut) -> Result<Write
 
 #[test]
 pub fn test_accounts_into_recovery() {
-    use libra_types::{account_config::BalanceResource, validator_config::ValidatorConfigResource};
+    use diem_types::{account_config::BalanceResource, validator_config::ValidatorConfigResource};
     use move_core_types::move_resource::MoveResource;
     use ol_types::miner_state::MinerStateResource;
 

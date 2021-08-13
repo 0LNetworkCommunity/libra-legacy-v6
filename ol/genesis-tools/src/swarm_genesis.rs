@@ -2,7 +2,7 @@
 
 use crate::{fork_genesis::save_genesis, process_snapshot::archive_into_swarm_writeset};
 use anyhow::Error;
-use libra_types::{
+use diem_types::{
     transaction::{ChangeSet, Transaction, WriteSetPayload},
     write_set::WriteSetMut,
 };

@@ -9,11 +9,11 @@ use crate::recover::{
     recover_consensus_accounts, AccountRole, LegacyRecovery, RecoverConsensusAccounts,
 };
 use anyhow::{bail, Error};
-use libra_types::access_path::AccessPath;
-use libra_types::account_address::AccountAddress;
-use libra_types::account_config::{BalanceResource, CurrencyInfoResource};
-use libra_types::transaction::{ChangeSet, Transaction, WriteSetPayload};
-use libra_types::write_set::{WriteOp, WriteSetMut};
+use diem_types::access_path::AccessPath;
+use diem_types::account_address::AccountAddress;
+use diem_types::account_config::{BalanceResource, CurrencyInfoResource};
+use diem_types::transaction::{ChangeSet, Transaction, WriteSetPayload};
+use diem_types::write_set::{WriteOp, WriteSetMut};
 use move_core_types::identifier::Identifier;
 use move_core_types::move_resource::MoveResource;
 use ol_types::autopay::AutoPayResource;

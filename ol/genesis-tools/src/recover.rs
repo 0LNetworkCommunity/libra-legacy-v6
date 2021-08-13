@@ -1,8 +1,9 @@
 //! recovery
 
 use anyhow::{bail, Error};
-use libra_network_address::NetworkAddress;
-use libra_types::{
+// use libra_network_address::NetworkAddress;
+use diem_types::{
+    network_address::NetworkAddress,
     account_address::AccountAddress,
     account_config::{BalanceResource, CurrencyInfoResource},
     account_state::AccountState,

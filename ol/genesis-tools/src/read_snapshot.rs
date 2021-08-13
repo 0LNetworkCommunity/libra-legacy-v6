@@ -6,8 +6,8 @@ use backup_cli::{
     storage::{FileHandle, FileHandleRef},
     utils::read_record_bytes::ReadRecordBytes,
 };
-use libra_crypto::HashValue;
-use libra_types::account_state_blob::AccountStateBlob;
+use diem_crypto::HashValue;
+use diem_types::account_state_blob::AccountStateBlob;
 use std::path::PathBuf;
 use tokio::{fs::OpenOptions, io::AsyncRead};
 
