@@ -1,5 +1,7 @@
-//! account: alice, 1000000, 0
-//! account: bob, 0, 0
+
+// Todo: These GAS values have no effect, all accounts start with 1M GAS
+//! account: alice, 1000000GAS, 0
+//! account: bob,   1000000GAS, 0
 
 
 //! new-transaction
@@ -31,12 +33,12 @@ script {
 
     fun main(vm: signer) {
       let bob_balance = DiemAccount::balance<GAS>(@{{bob}});
-      assert(bob_balance == 0, 7357004);
+      assert(bob_balance == 1000000, 7357004);
 
       DiemAccount::process_community_wallets(&vm, 4);
 
       let bob_balance = DiemAccount::balance<GAS>(@{{bob}});
-      assert(bob_balance == 100, 7357005);
+      assert(bob_balance == 1000100, 7357005);
     }
 }
 

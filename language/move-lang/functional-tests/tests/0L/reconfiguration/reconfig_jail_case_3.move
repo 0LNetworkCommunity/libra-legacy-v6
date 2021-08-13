@@ -42,7 +42,7 @@ script {
     }
 }
 //check: EXECUTED
-`
+
 //! new-transaction
 //! sender: alice
 script {
