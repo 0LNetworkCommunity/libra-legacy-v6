@@ -200,11 +200,11 @@ script {
         MinerState::test_helper_mock_mining_vm(vm, @{{bob}}, 20);
         MinerState::test_helper_mock_mining_vm(vm, @{{carol}}, 20);
         MinerState::test_helper_mock_mining_vm(vm, @{{dave}}, 20);
-        MinerState::test_helper_mock_mining_vm(vm, 0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 20);
+        MinerState::test_helper_mock_mining_vm(vm, @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 20);
 
         // enable autopay and transfer coins to the new operator
         let new_val = DiemAccount::test_helper_create_signer(
-            vm, 0x3DC18D1CF61FAAC6AC70E3A63F062E4B
+            vm, @0x3DC18D1CF61FAAC6AC70E3A63F062E4B
         );
         AutoPay2::enable_autopay(&new_val);
         let new_oper = ValidatorConfig::get_operator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B);
@@ -217,10 +217,10 @@ script {
         assert(len == 5 , 7357000180205);
 
         // Adding eve to validator universe - would be done by self
-        ValidatorUniverse::test_helper_add_self_onboard(vm, 0x3DC18D1CF61FAAC6AC70E3A63F062E4B);
+        ValidatorUniverse::test_helper_add_self_onboard(vm, @0x3DC18D1CF61FAAC6AC70E3A63F062E4B);
 
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(vm));
-        assert(len == 5 , 7357000180206);
+        assert(len == 6 , 7357000180206);
 
         let i = 1;
         while (i < 16) {
@@ -246,11 +246,11 @@ script {
     use 0x1::Vector;
     fun main(vm: signer) {
         // Tests on initial size of validators
-        assert(DiemSystem::validator_set_size() == 5, 7357000200301);
+        assert(DiemSystem::validator_set_size() == 6, 7357000200301);
         assert(DiemSystem::is_validator(@{{alice}}) == true, 7357000200302);
         assert(DiemSystem::is_validator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000200303);
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(&vm));
-        assert(len == 5, 7357000200304);
+        assert(len == 6, 7357000200304);
       }
 }
 // check: EXECUTED
