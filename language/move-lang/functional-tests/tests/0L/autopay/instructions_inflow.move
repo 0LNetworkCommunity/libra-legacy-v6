@@ -1,6 +1,7 @@
-//! account: bob, 10000GAS, 0, validator
-//! account: alice, 10000GAS, 0 
-//! account: carol, 10000GAS, 0 
+// Todo: These GAS values have no effect, all accounts start with 1M GAS
+//! account: bob,   1000000GAS, 0, validator
+//! account: alice, 1000000GAS, 0 
+//! account: carol, 1000000GAS, 0 
 
 // test runs various autopay instruction types to ensure they are being executed as expected
 
@@ -101,7 +102,7 @@ script {
   fun main(vm: signer) {
     // alice didn't receive any funds, so no change in balance, so no payment sent
     let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
-    assert(ending_balance == 10000, 7357006);
+    assert(ending_balance == 1000000, 7357002);
 
     // add funds to alice account for next tick
     let coin = Diem::mint<GAS>(&vm, 10000);
@@ -114,7 +115,7 @@ script {
     );
 
     let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
-    assert(ending_balance == 20000, 7357006);
+    assert(ending_balance == 1010000, 7357003);
   }
 }
 // check: EXECUTED
@@ -153,11 +154,11 @@ script {
   fun main(_vm: signer) {
     // alice will have paid 5% on the 10000 she received last epoch
     let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
-    assert(ending_balance == 19501, 7357006);
+    assert(ending_balance == 19501, 7357004);
 
     // check balance of recipients
     let ending_balance = DiemAccount::balance<GAS>(@{{carol}});
-    assert(ending_balance == 10499, 7357006);
+    assert(ending_balance == 10499, 7357005);
   }
 }
 // check: EXECUTED

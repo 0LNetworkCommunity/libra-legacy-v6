@@ -1,6 +1,7 @@
-//! account: bob, 10000GAS, 0, validator
-//! account: alice, 10000GAS, 0 
-//! account: carol, 10000GAS, 0 
+// Todo: These GAS values have no effect, all accounts start with 1M GAS
+//! account: bob,   1000000GAS, 0, validator
+//! account: alice, 1000000GAS, 0 
+//! account: carol, 1000000GAS, 0 
 
 // test runs various autopay instruction types to ensure they are being executed as expected
 
@@ -102,7 +103,7 @@ script {
   fun main(_vm: signer) {
 
     let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
-    assert(ending_balance == 9500, 7357006);
+    assert(ending_balance == 999500, 7357002);
     
     //Confirm the one-shot instruction was deleted
     let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(@{{alice}}, 1);
@@ -149,11 +150,11 @@ script {
   fun main(_vm: signer) {
     // no change, one-shot instruction is finished
     let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
-    assert(ending_balance == 9500, 7357006);
+    assert(ending_balance == 999500, 7357003);
 
     // check balance of recipients
     let ending_balance = DiemAccount::balance<GAS>(@{{carol}});
-    assert(ending_balance == 10500, 7357006);
+    assert(ending_balance == 1000500, 7357004);
   }
 }
 // check: EXECUTED
