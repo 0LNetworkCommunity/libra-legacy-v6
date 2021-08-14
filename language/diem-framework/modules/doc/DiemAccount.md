@@ -5514,7 +5514,7 @@ Create a Validator Operator account
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
   <b>let</b> sig = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(addr);
   <a href="Wallet.md#0x1_Wallet_set_slow">Wallet::set_slow</a>(&sig);
-  // destroy_signer(sig); // 0L todo: fn deleted
+  // destroy_signer(sig); // 0L todo: this fn deleted, delete this line?
 }
 </code></pre>
 
@@ -5566,7 +5566,7 @@ Create a Validator Operator account
 <pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_test_helper_destroy_signer">test_helper_destroy_signer</a>(vm: &signer, _to_destroy: signer) {
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
     <b>assert</b>(is_testnet(), 120103011021);
-    // destroy_signer(sig); // 0L todo: fn deleted
+    // destroy_signer(sig); // 0L todo: this fn deleted, delete this line?
 }
 </code></pre>
 
