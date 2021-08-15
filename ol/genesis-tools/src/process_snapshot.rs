@@ -106,13 +106,13 @@ fn authkey_rotate_change_item(
             // if we find an AccountResource struc, which is where authkeys are kept
             if k.clone() == AccountResource::resource_path() {
                 // let account_resource_option = account_state.get_account_resource()?;
-                if let Some(mut account_resource) = account_state.get_account_resource()? {
+                if let Some(account_resource) = account_state.get_account_resource()? {
 
-                  account_resource.new_auth(authentication_key.clone());
+                  let ar = account_resource.rotate_auth_key(authentication_key.clone());
 
                   ws.push((
                         AccessPath::new(address, k.clone()),
-                        WriteOp::Value(bcs::to_bytes(&account_resource).unwrap()),
+                        WriteOp::Value(bcs::to_bytes(&ar).unwrap()),
                     ));
                 }
             }
@@ -126,8 +126,8 @@ fn authkey_rotate_change_item(
 }
 
 /// helper to merge writesets
-pub fn merge_writeset(mut left: WriteSetMut, right: WriteSetMut) -> Result<WriteSetMut, Error> {
-    let merge = left.get();
+pub fn merge_writeset(left: WriteSetMut, right: WriteSetMut) -> Result<WriteSetMut, Error> {
+    let mut merge = left.get();
     merge.extend(right.get());
     Ok(WriteSetMut::new(merge))
 }

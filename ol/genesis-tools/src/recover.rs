@@ -3,11 +3,11 @@
 use anyhow::{bail, Error};
 // use libra_network_address::NetworkAddress;
 use diem_types::{
-    network_address::NetworkAddress,
     account_address::AccountAddress,
     account_config::{BalanceResource, CurrencyInfoResource},
     account_state::AccountState,
     account_state_blob::AccountStateBlob,
+    network_address::NetworkAddress,
     on_chain_config::ConfigurationResource,
     transaction::authenticator::AuthenticationKey,
     validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource},
@@ -147,28 +147,13 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
                 l.balance = bcs::from_bytes(v).ok();
             } else if k == &ValidatorConfigResource::resource_path() {
                 l.role = AccountRole::Validator;
-                l.val_cfg = bcs::from_bytes(v).ok();
-
-                let mut val_config = l.val_cfg.unwrap().validator_config.unwrap();
-                // fix broken network addresses.
-
-                match val_config.fullnode_network_addresses() {
-                    Ok(_) => {} // well formed network address. Do nothing.
-                    Err(_) => {
-                        let bad_address = val_config.fullnode_network_addresses;
-                        match bcs::from_bytes::<NetworkAddress>(&bad_address) {
-                            Ok(p) => {
-                                let ser = bcs::to_bytes(&vec![p]).unwrap();
-                                val_config.fullnode_network_addresses = ser;
-                                if let Some(mut res) = l.val_cfg {
-                                    res.validator_config = Some(val_config);
-                                    l.val_cfg = Some(res)
-                                }
-                            }
-                            Err(_) => {}
-                        }
-                    }
-                };
+                let mut config: ValidatorConfigResource =
+                    bcs::from_bytes(v).expect("error deserializing validator config");
+                // Note: 0L v4.3.3 has a number of malformed network addresses. This is a one-time migration.
+                // let  fn_addr = config.validator_config.unwrap().fullnode_network_addresses();
+                // TODO: test this
+                maybe_migrate_fn_address(&mut config);
+                l.val_cfg = Some(config);
             } else if k == &ValidatorOperatorConfigResource::resource_path() {
                 l.role = AccountRole::Operator;
             } else if k == &MinerStateResource::resource_path() {
@@ -288,4 +273,29 @@ pub fn save_recovery_file(data: &Vec<LegacyRecovery>, path: &PathBuf) -> Result<
     file.write_all(j.as_bytes())
         .expect("Could not write account recovery");
     Ok(())
+}
+
+// Note: 0L v4.3.3 has a number of malformed network addresses. This is a one-time migration.
+// let  fn_addr = config.validator_config.unwrap().fullnode_network_addresses();
+fn maybe_migrate_fn_address(resource: &mut ValidatorConfigResource) -> &ValidatorConfigResource {
+    let cfg = resource.validator_config.as_ref().unwrap();
+    match cfg.fullnode_network_addresses() {
+        Ok(_) => {} // well formed network address, no-op.
+        Err(_) => {
+            // parse as a single address instead of a vector of addresses
+            match bcs::from_bytes::<NetworkAddress>(&cfg.fullnode_network_addresses) {
+                Ok(net) => {
+                    // fix the problematic address.
+                    let mut new_config = cfg.clone();
+                    // change into vector of addresses.
+                    new_config.fullnode_network_addresses = bcs::to_bytes(&vec![net]).unwrap();
+                    // Need to wrap in two Options.
+                    resource.validator_config = Some(new_config.to_owned());
+                }
+                Err(_) => {}
+            }
+        }
+    };
+
+    resource
 }

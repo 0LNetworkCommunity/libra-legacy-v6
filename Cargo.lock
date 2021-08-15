@@ -5939,6 +5939,7 @@ dependencies = [
  "serde_json",
  "storage-interface",
  "tokio 1.3.0",
+ "tokio-test",
  "vm-genesis",
 ]
 

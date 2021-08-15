@@ -78,8 +78,16 @@ impl AccountResource {
 
     //////// 0L /////////
     /// Replace the authkey in place
-    pub fn new_auth(mut self, new_key: Vec<u8>) {
+    pub fn rotate_auth_key(mut self, new_key: Vec<u8>) -> Self {
         self.authentication_key = new_key;
+        AccountResource {
+            authentication_key: self.authentication_key,
+            withdrawal_capability: self.withdrawal_capability,
+            key_rotation_capability: self.key_rotation_capability,
+            received_events: self.received_events,
+            sent_events: self.sent_events,
+            sequence_number: self.sequence_number,
+        }
     }
 }
 

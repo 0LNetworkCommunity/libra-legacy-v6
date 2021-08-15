@@ -196,14 +196,14 @@ pub fn encode_recovery_genesis_changeset(
     val_assignments: &[ValRecover],
     operator_registrations: &[OperRecover],
     val_set: &[AccountAddress],
-    stdlib_modules: &[Vec<u8>],
-    vm_publishing_option: VMPublishingOption,
+    // stdlib_modules: &[Vec<u8>],
+    // vm_publishing_option: VMPublishingOption,
     chain: u8,
 ) -> Result<ChangeSet, Error>  {
     let mut stdlib_module_tuples: Vec<(ModuleId, &Vec<u8>)> = Vec::new();
     // create a data view for move_vm
     let mut state_view = GenesisStateView::new();
-    for module in stdlib_modules {
+    for module in current_module_blobs() {
         let module_id = CompiledModule::deserialize(module).unwrap().self_id();
         state_view.add_module(&module_id, &module);
         stdlib_module_tuples.push((module_id, module));
@@ -227,7 +227,7 @@ pub fn encode_recovery_genesis_changeset(
         &log_context,
         None,
         None,
-        vm_publishing_option,
+        VMPublishingOption::open(),
         &xdx_ty,
         ChainId::new(chain),
     );
