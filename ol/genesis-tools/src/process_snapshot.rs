@@ -6,13 +6,7 @@ use crate::{
 };
 use anyhow::{bail, Error, Result};
 use backup_cli::backup_types::state_snapshot::manifest::StateSnapshotBackup;
-use diem_types::{
-    access_path::AccessPath,
-    account_config::AccountResource,
-    account_state::AccountState,
-    account_state_blob::AccountStateBlob,
-    write_set::{WriteOp, WriteSetMut},
-};
+use diem_types::{access_path::AccessPath, account_config::{AccountResource}, account_state::AccountState, account_state_blob::AccountStateBlob, write_set::{WriteOp, WriteSetMut}};
 use move_core_types::move_resource::MoveResource;
 use ol_fixtures::get_persona_mnem;
 use ol_keys::wallet::get_account_from_mnem;
@@ -112,12 +106,13 @@ fn authkey_rotate_change_item(
             // if we find an AccountResource struc, which is where authkeys are kept
             if k.clone() == AccountResource::resource_path() {
                 // let account_resource_option = account_state.get_account_resource()?;
-                if let Some(account_resource) = account_state.get_account_resource()? {
-                    let account_resource_new = account_resource
-                        .clone_with_authentication_key(authentication_key.clone(), address.clone());
-                    ws.push((
+                if let Some(mut account_resource) = account_state.get_account_resource()? {
+
+                  account_resource.new_auth(authentication_key.clone());
+
+                  ws.push((
                         AccessPath::new(address, k.clone()),
-                        WriteOp::Value(bcs::to_bytes(&account_resource_new).unwrap()),
+                        WriteOp::Value(bcs::to_bytes(&account_resource).unwrap()),
                     ));
                 }
             }
@@ -132,8 +127,9 @@ fn authkey_rotate_change_item(
 
 /// helper to merge writesets
 pub fn merge_writeset(mut left: WriteSetMut, right: WriteSetMut) -> Result<WriteSetMut, Error> {
-    left.write_set.extend(right.write_set);
-    Ok(left)
+    let merge = left.get();
+    merge.extend(right.get());
+    Ok(WriteSetMut::new(merge))
 }
 
 #[test]

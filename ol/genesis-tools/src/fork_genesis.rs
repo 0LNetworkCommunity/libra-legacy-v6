@@ -197,22 +197,22 @@ pub fn total_coin_value_restore(
     match sys_legacy {
         Some(legacy) => {
             if let Some(c) = &legacy.currency_info {
-                let new = CurrencyInfoResource {
+                let new = CurrencyInfoResource::new(
                     // replace total value
                     total_value,
-                    preburn_value: c.preburn_value.to_owned(),
-                    to_lbr_exchange_rate: c.to_lbr_exchange_rate.to_owned(),
-                    is_synthetic: c.is_synthetic.to_owned(),
-                    scaling_factor: c.scaling_factor.to_owned(),
-                    fractional_part: c.fractional_part.to_owned(),
-                    currency_code: c.currency_code.to_owned(),
-                    can_mint: c.can_mint.to_owned(),
-                    mint_events: c.mint_events.to_owned(),
-                    burn_events: c.burn_events.to_owned(),
-                    preburn_events: c.preburn_events.to_owned(),
-                    cancel_burn_events: c.cancel_burn_events.to_owned(),
-                    exchange_rate_update_events: c.exchange_rate_update_events.to_owned(),
-                };
+                    c.preburn_value(),
+                    c.to_xdx_exchange_rate(),
+                    c.is_synthetic(),
+                    c.scaling_factor(),
+                    c.fractional_part(),
+                    c.currency_code().to_owned(),
+                    c.can_mint(),
+                    c.mint_events().to_owned(),
+                    c.burn_events().to_owned(),
+                    c.preburn_events().to_owned(),
+                    c.cancel_burn_events().to_owned(),
+                    c.exchange_rate_update_events().to_owned(),
+                );
 
                 let access_path = CurrencyInfoResource::resource_path_for(
                     Identifier::new("GAS".to_owned()).unwrap(),

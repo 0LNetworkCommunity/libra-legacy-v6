@@ -47,7 +47,7 @@ pub enum WalletType {
 
 /// The basic structs needed to recover account state in a new network.
 /// This is necessary for catastrophic recoveries, when the source code changes too much. Like what is going to happen between v4 and v5, where the source code of v5 will not be able to work with objects from v4. We need an intermediary file.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct LegacyRecovery {
     ///
     pub account: Option<AccountAddress>,
@@ -149,7 +149,7 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
                 l.role = AccountRole::Validator;
                 l.val_cfg = bcs::from_bytes(v).ok();
 
-                let mut val_config = l.clone().val_cfg.unwrap().validator_config.unwrap();
+                let mut val_config = l.val_cfg.unwrap().validator_config.unwrap();
                 // fix broken network addresses.
 
                 match val_config.fullnode_network_addresses() {
