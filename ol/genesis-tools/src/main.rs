@@ -11,7 +11,7 @@ async fn main() -> Result<()> {
         #[options(help = "what epoch to restore from archive")]
         epoch: Option<u64>,
         #[options(help = "path to snapshot dir to read")]
-        snapshot: Option<PathBuf>,
+        snapshot_path: Option<PathBuf>,
         #[options(help = "write genesis from snapshot")]
         output_path: Option<PathBuf>,
         #[options(help = "create a genesis for a fork")]
@@ -30,7 +30,11 @@ async fn main() -> Result<()> {
 
     if opts.fork {
         if let Some(g_path) = opts.output_path {
-            if let Some(s_path) = opts.snapshot {
+            if let Some(s_path) = opts.snapshot_path {
+                if !s_path.exists() { 
+                  println!("ERROR: snapshot directory does not exist: {:?}", &s_path);
+                  exit(1);
+                }
                 // create a genesis file from archive file
                 make_recovery_genesis(
                   g_path, 
@@ -56,8 +60,12 @@ async fn main() -> Result<()> {
         return Ok(());
     } else if opts.swarm {
         // Write swarm genesis from snapshot, for CI and simulation
-        if let Some(archive_path) = opts.snapshot {
-            make_swarm_genesis(opts.output_path.unwrap(), archive_path).await?;
+        if let Some(s_path) = opts.snapshot_path {
+            if !s_path.exists() { 
+              println!("ERROR: snapshot directory does not exist: {:?}", &s_path);
+              exit(1);
+            }
+            make_swarm_genesis(opts.output_path.unwrap(), s_path).await?;
             return Ok(());
         } else {
             println!("ERROR: must provide a path with --snapshot, exiting.");

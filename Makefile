@@ -448,11 +448,11 @@ epoch:
 
 fork-backup:
 		rm -rf ${SOURCE}/ol/devnet/snapshot/*
-		cargo run -p backup-cli --bin db-backup -- one-shot backup --backup-service-address http://localhost:6186 state-snapshot --state-version ${EPOCH_HEIGHT} local-fs --dir ${SOURCE}/ol/devnet/snapshot/
+		cargo run -p backup-cli --bin db-backup -- one-shot backup --backup-service-address http://localhost:6186 state-snapshot --state-version ${EPOCH_HEIGHT} local-fs --dir ${SOURCE}ol/devnet/snapshot/
 
 # Make genesis file
 fork-genesis:
-		cargo run -p ol-genesis-tools -- --fork --output-path ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ${SOURCE}/ol/devnet/snapshot/state_ver*
+		cargo run -p ol-genesis-tools -- --fork --output-path ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ${SOURCE}ol/devnet/snapshot/state_ver*
 
 # Use onboard to create all node files
 fork-config:
