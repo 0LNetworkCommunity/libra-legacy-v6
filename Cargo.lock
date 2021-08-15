@@ -5928,8 +5928,6 @@ dependencies = [
  "diem-crypto",
  "diem-types",
  "diem-wallet",
- "diemdb",
- "dirs 2.0.2",
  "futures",
  "gumdrop 0.8.0",
  "move-core-types",

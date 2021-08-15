@@ -28,8 +28,5 @@ ol-keys = { path = "../keys/", version = "0.1.0" }
 ol-types = { path = "../types/" }
 #diem-network-address = { path = "../../network/network-address", version = "0.1.0" }
 
-[features]
-fuzzing = ["diemdb/fuzzing"]
-
 [dev-dependencies]
 tokio-test = "*"
