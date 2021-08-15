@@ -5,7 +5,7 @@ use diem_types::{
     account_config::constants:: CORE_CODE_ADDRESS,
 };
 use anyhow::Result;
-use move_core_types::{ident_str, identifier::IdentStr, language_storage::{ResourceKey, StructTag}, move_resource::{MoveResource, MoveStructType}};
+use move_core_types::{ident_str, identifier::IdentStr, language_storage::{ResourceKey, StructTag}, move_resource::{MoveStructType}};
 use serde::{Deserialize, Serialize};
 use move_core_types::account_address::AccountAddress;
 
