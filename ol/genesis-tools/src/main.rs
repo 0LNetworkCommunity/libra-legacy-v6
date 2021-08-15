@@ -36,13 +36,18 @@ async fn main() -> Result<()> {
                   exit(1);
                 }
                 // create a genesis file from archive file
-                make_recovery_genesis(
+                match make_recovery_genesis(
                   g_path, 
                   s_path, 
                   !opts.debug_baseline
-                )
-                .await?;
-                return Ok(());
+                ).await {
+                    Ok(_) => return Ok(()),
+                    Err(e) => {
+                      println!("ERROR: could not create genesis from snapshot, message: {:?}", e);
+                      exit(1);
+                    },
+                };
+                
             } else {
                 println!("ERROR: must provide a path with --snapshot, exiting.");
                 exit(1);

@@ -22,8 +22,6 @@ pub async fn archive_into_swarm_writeset(archive_path: PathBuf) -> Result<WriteS
 
 /// take an archive file path and parse into a writeset
 pub async fn archive_into_recovery(archive_path: &PathBuf) -> Result<Vec<LegacyRecovery>, Error> {
-    dbg!(&archive_path);
-
     let manifest_json = archive_path.join("state.manifest");
 
     let backup = read_snapshot::read_from_json(&manifest_json)?;
@@ -37,11 +35,11 @@ pub async fn archive_into_recovery(archive_path: &PathBuf) -> Result<Vec<LegacyR
 async fn accounts_from_snapshot_backup(
     manifest: StateSnapshotBackup,
     archive_path: &PathBuf,
-) -> Result<Vec<AccountStateBlob>> {
+) -> Result<Vec<AccountStateBlob>, Error> {
     // parse AccountStateBlob from chunks of the archive
     let mut account_state_blobs: Vec<AccountStateBlob> = Vec::new();
     for chunk in manifest.chunks {
-        dbg!(&archive_path);
+        // dbg!(&archive_path);
         let blobs = read_snapshot::read_account_state_chunk(chunk.blobs, archive_path).await?;
         // println!("{:?}", blobs);
         for (_key, blob) in blobs {
