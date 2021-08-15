@@ -144,10 +144,10 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
         for (k, v) in state.iter() {
             // extract the validator config resource
             if k == &BalanceResource::resource_path() {
-                l.balance = lcs::from_bytes(v).ok();
+                l.balance = bcs::from_bytes(v).ok();
             } else if k == &ValidatorConfigResource::resource_path() {
                 l.role = AccountRole::Validator;
-                l.val_cfg = lcs::from_bytes(v).ok();
+                l.val_cfg = bcs::from_bytes(v).ok();
 
                 let mut val_config = l.clone().val_cfg.unwrap().validator_config.unwrap();
                 // fix broken network addresses.
@@ -156,9 +156,9 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
                     Ok(_) => {} // well formed network address. Do nothing.
                     Err(_) => {
                         let bad_address = val_config.fullnode_network_addresses;
-                        match lcs::from_bytes::<NetworkAddress>(&bad_address) {
+                        match bcs::from_bytes::<NetworkAddress>(&bad_address) {
                             Ok(p) => {
-                                let ser = lcs::to_bytes(&vec![p]).unwrap();
+                                let ser = bcs::to_bytes(&vec![p]).unwrap();
                                 val_config.fullnode_network_addresses = ser;
                                 if let Some(mut res) = l.val_cfg {
                                     res.validator_config = Some(val_config);
@@ -172,9 +172,9 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
             } else if k == &ValidatorOperatorConfigResource::resource_path() {
                 l.role = AccountRole::Operator;
             } else if k == &MinerStateResource::resource_path() {
-                l.miner_state = lcs::from_bytes(v).ok();
+                l.miner_state = bcs::from_bytes(v).ok();
             } else if k == &AutoPayResource::resource_path() {
-                l.autopay = lcs::from_bytes(v).ok();
+                l.autopay = bcs::from_bytes(v).ok();
             }
 
             if address == AccountAddress::ZERO {
@@ -182,18 +182,18 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
                 l.role = AccountRole::System;
                 // structs only on 0x0 address
                 if k == &ConfigurationResource::resource_path() {
-                    l.miner_state = lcs::from_bytes(v).ok();
+                    l.miner_state = bcs::from_bytes(v).ok();
                 } else if k == &CommunityWalletsResource::resource_path() {
-                    l.comm_wallet = lcs::from_bytes(v).ok();
+                    l.comm_wallet = bcs::from_bytes(v).ok();
                 } else if k == &FullnodeCounterResource::resource_path() {
-                    l.fullnode_counter = lcs::from_bytes(v).ok();
+                    l.fullnode_counter = bcs::from_bytes(v).ok();
                 } else if k
                     == &CurrencyInfoResource::resource_path_for(
                         Identifier::new("GAS".to_owned()).unwrap(),
                     )
                     .path
                 {
-                    l.currency_info = lcs::from_bytes(v).ok();
+                    l.currency_info = bcs::from_bytes(v).ok();
                 }
             }
         }

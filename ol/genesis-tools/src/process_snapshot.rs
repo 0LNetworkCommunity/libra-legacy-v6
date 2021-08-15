@@ -117,7 +117,7 @@ fn authkey_rotate_change_item(
                         .clone_with_authentication_key(authentication_key.clone(), address.clone());
                     ws.push((
                         AccessPath::new(address, k.clone()),
-                        WriteOp::Value(lcs::to_bytes(&account_resource_new).unwrap()),
+                        WriteOp::Value(bcs::to_bytes(&account_resource_new).unwrap()),
                     ));
                 }
             }
@@ -174,7 +174,7 @@ pub fn test_accounts_into_recovery() {
                     if k.clone() == BalanceResource::resource_path() {
                         match &gr.balance {
                             Some(balance) => {
-                                if lcs::to_bytes(&balance).unwrap() != v.clone() {
+                                if bcs::to_bytes(&balance).unwrap() != v.clone() {
                                     panic!("Balance resource not found in GenesisRecovery object: {:?}", gr.account);
                                 }
                             }
@@ -186,7 +186,7 @@ pub fn test_accounts_into_recovery() {
                     if k.clone() == ValidatorConfigResource::resource_path() {
                         match &gr.val_cfg {
                             Some(val_cfg) => {
-                                if lcs::to_bytes(&val_cfg).unwrap() != v.clone() {
+                                if bcs::to_bytes(&val_cfg).unwrap() != v.clone() {
                                     panic!("ValidatorConfigResource not found in GenesisRecovery object: {:?}", gr.account);
                                 }
                             }
@@ -198,7 +198,7 @@ pub fn test_accounts_into_recovery() {
                     if k.clone() == MinerStateResource::resource_path() {
                         match &gr.miner_state {
                             Some(miner_state) => {
-                                if lcs::to_bytes(&miner_state).unwrap() != v.clone() {
+                                if bcs::to_bytes(&miner_state).unwrap() != v.clone() {
                                     panic!("MinerStateResource not found in GenesisRecovery object: {:?}", gr.account);
                                 }
                             }

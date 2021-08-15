@@ -109,7 +109,7 @@ pub fn migrate_account(legacy: &LegacyRecovery) -> Result<WriteSetMut, Error> {
         let new = BalanceResource::new(bal.coin());
         write_set_mut.push((
             AccessPath::new(account, BalanceResource::resource_path()),
-            WriteOp::Value(lcs::to_bytes(&new).unwrap()),
+            WriteOp::Value(bcs::to_bytes(&new).unwrap()),
         ));
     }
 
@@ -128,7 +128,7 @@ pub fn migrate_account(legacy: &LegacyRecovery) -> Result<WriteSetMut, Error> {
         // };
         write_set_mut.push((
             AccessPath::new(account, MinerStateResource::resource_path()),
-            WriteOp::Value(lcs::to_bytes(&m).unwrap()),
+            WriteOp::Value(bcs::to_bytes(&m).unwrap()),
         ));
     }
 
@@ -137,7 +137,7 @@ pub fn migrate_account(legacy: &LegacyRecovery) -> Result<WriteSetMut, Error> {
         let new = SlowWalletResource { is_slow: true };
         write_set_mut.push((
             AccessPath::new(account, SlowWalletResource::resource_path()),
-            WriteOp::Value(lcs::to_bytes(&new).unwrap()),
+            WriteOp::Value(bcs::to_bytes(&new).unwrap()),
         ));
     }
 
@@ -147,7 +147,7 @@ pub fn migrate_account(legacy: &LegacyRecovery) -> Result<WriteSetMut, Error> {
         // let new = AutoPayResource::new(bal.coin());
         write_set_mut.push((
             AccessPath::new(account, AutoPayResource::resource_path()),
-            WriteOp::Value(lcs::to_bytes(&a).unwrap()),
+            WriteOp::Value(bcs::to_bytes(&a).unwrap()),
         ));
     }
 
@@ -159,7 +159,7 @@ pub fn migrate_account(legacy: &LegacyRecovery) -> Result<WriteSetMut, Error> {
         };
         write_set_mut.push((
             AccessPath::new(account, CommunityWalletsResource::resource_path()),
-            WriteOp::Value(lcs::to_bytes(&new).unwrap()),
+            WriteOp::Value(bcs::to_bytes(&new).unwrap()),
         ));
     }
     // fullnode counter
@@ -176,7 +176,7 @@ pub fn migrate_account(legacy: &LegacyRecovery) -> Result<WriteSetMut, Error> {
         // TODO: confirm no transformation is needed since the serialization remains the same.
         write_set_mut.push((
             AccessPath::new(account, FullnodeCounterResource::resource_path()),
-            WriteOp::Value(lcs::to_bytes(&f).unwrap()),
+            WriteOp::Value(bcs::to_bytes(&f).unwrap()),
         ));
     }
 
@@ -217,7 +217,7 @@ pub fn total_coin_value_restore(
                 let access_path = CurrencyInfoResource::resource_path_for(
                     Identifier::new("GAS".to_owned()).unwrap(),
                 );
-                write_set_mut.push((access_path, WriteOp::Value(lcs::to_bytes(&new).unwrap())));
+                write_set_mut.push((access_path, WriteOp::Value(bcs::to_bytes(&new).unwrap())));
 
                 return Ok(write_set_mut);
             }
@@ -231,7 +231,7 @@ pub fn total_coin_value_restore(
 /// save the genesis blob
 pub fn save_genesis(gen_tx: Transaction, output_path: PathBuf) -> Result<(), Error> {
     let mut file = File::create(output_path)?;
-    let bytes = lcs::to_bytes(&gen_tx)?;
+    let bytes = bcs::to_bytes(&gen_tx)?;
     file.write_all(&bytes)?;
     Ok(())
 }
