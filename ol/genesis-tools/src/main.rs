@@ -36,7 +36,8 @@ async fn main() -> Result<()> {
                   g_path, 
                   s_path, 
                   !opts.debug_baseline
-                ).await?;
+                )
+                .await?;
                 return Ok(());
             } else {
                 println!("ERROR: must provide a path with --snapshot, exiting.");

@@ -25,6 +25,7 @@ pub async fn archive_into_recovery(archive_path: &PathBuf) -> Result<Vec<LegacyR
     let manifest_json = archive_path.join("state.manifest");
 
     let backup = read_snapshot::read_from_json(&manifest_json)?;
+
     let account_blobs = accounts_from_snapshot_backup(backup, archive_path).await?;
     let r = accounts_into_recovery(&account_blobs)?;
     Ok(r)

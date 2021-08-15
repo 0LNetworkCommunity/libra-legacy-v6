@@ -1,6 +1,6 @@
 //! read-archive
 
-use anyhow::Result;
+use anyhow::{Error, Result};
 use backup_cli::{
     backup_types::state_snapshot::manifest::StateSnapshotBackup,
     storage::{FileHandle, FileHandleRef},
@@ -13,8 +13,11 @@ use tokio::{fs::OpenOptions, io::AsyncRead};
 
 ////// SNAPSHOT FILE IO //////
 /// read snapshot manifest file into object
-pub fn read_from_json(path: &PathBuf) -> Result<StateSnapshotBackup> {
-    let config = std::fs::read_to_string(path)?;
+pub fn read_from_json(path: &PathBuf) -> Result<StateSnapshotBackup, Error> {
+    println!(&path);
+    let config = std::fs::read_to_string(path)
+    .map_err(|e| format!("Error: cannot read file {:?}, error: {:?}", path, e )).unwrap();
+
     let map: StateSnapshotBackup = serde_json::from_str(&config)?;
     Ok(map)
 }
