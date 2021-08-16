@@ -97,6 +97,7 @@ pub fn accounts_into_recovery(
     let mut to_recover = vec![];
     for blob in account_state_blobs {
         let account_state = AccountState::try_from(blob)?;
+        dbg!(&account_state);
         match parse_recovery(&account_state) {
             Ok(gr) => to_recover.push(gr),
             Err(e) => println!(

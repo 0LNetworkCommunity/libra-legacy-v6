@@ -30,8 +30,6 @@ pub mod serde_helper;
 pub mod test_helpers;
 pub mod transaction;
 pub mod trusted_state;
-pub mod ol_upgrade_payload; //////// 0L ////////
-pub mod ol_validators_stats; //////// 0L ////////
 pub mod validator_config;
 pub mod validator_info;
 pub mod validator_signer;
@@ -39,8 +37,13 @@ pub mod validator_verifier;
 pub mod vm_status;
 pub mod waypoint;
 pub mod write_set;
-
 pub use account_address::AccountAddress as PeerId;
+
+//////// 0L ////////
+pub mod ol_upgrade_payload; 
+pub mod ol_validators_stats; 
+pub mod ol_legacy_account_state; 
+//////// end 0L ////////
 
 #[cfg(test)]
 mod unit_tests;

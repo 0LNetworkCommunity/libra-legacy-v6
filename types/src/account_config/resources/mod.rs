@@ -34,3 +34,6 @@ pub use role::*;
 pub use role_id::*;
 pub use vasp::*;
 pub use withdraw_capability::*;
+
+//////// 0L ////////
+pub mod ol_legacy_account;
