@@ -1,11 +1,15 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{account_config::{
-        KeyRotationCapabilityResource,
-        WithdrawCapabilityResource,
-    }, event::EventHandle};
-use move_core_types::{ident_str, identifier::IdentStr, move_resource::{MoveResource, MoveStructType}};
+use crate::{
+    account_config::{KeyRotationCapabilityResource, WithdrawCapabilityResource},
+    event::EventHandle,
+};
+use move_core_types::{
+    ident_str,
+    identifier::IdentStr,
+    move_resource::{MoveResource, MoveStructType},
+};
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
@@ -94,6 +98,3 @@ impl MoveStructType for OLLegacyAccountResource {
 }
 
 impl MoveResource for OLLegacyAccountResource {}
-
-
-

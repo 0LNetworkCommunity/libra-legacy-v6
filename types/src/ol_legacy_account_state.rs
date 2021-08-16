@@ -1,25 +1,10 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    access_path::Path,
-    account_address::AccountAddress,
-    account_config::{
-        currency_code_from_type_tag, AccountResource, AccountRole, BalanceResource,
-        ChainIdResource, ChildVASP, Credential, CurrencyInfoResource, DesignatedDealer,
-        DesignatedDealerPreburns, DiemIdDomainManager, DiemIdDomains, FreezingBit, ParentVASP,
-        PreburnQueueResource, PreburnResource,
-    },
-    block_metadata::DiemBlockResource,
-    diem_timestamp::DiemTimestampResource,
-    on_chain_config::{
+use crate::{access_path::Path, account_address::AccountAddress, account_config::{AccountResource, AccountRole, BalanceResource, ChainIdResource, ChildVASP, Credential, CurrencyInfoResource, DesignatedDealer, DesignatedDealerPreburns, DiemIdDomainManager, DiemIdDomains, FreezingBit, ParentVASP, PreburnQueueResource, PreburnResource, currency_code_from_type_tag, ol_legacy_account::OLLegacyAccountResource}, block_metadata::DiemBlockResource, diem_timestamp::DiemTimestampResource, ol_upgrade_payload::UpgradePayloadResource, ol_validators_stats::ValidatorsStatsResource, on_chain_config::{
         ConfigurationResource, DiemVersion, OnChainConfig, RegisteredCurrencies,
         VMPublishingOption, ValidatorSet,
-    },
-    ol_upgrade_payload::UpgradePayloadResource,
-    ol_validators_stats::ValidatorsStatsResource,
-    validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource},
-};
+    }, validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource}};
 use anyhow::{format_err, Error, Result};
 use move_core_types::{
     identifier::Identifier,
@@ -39,8 +24,8 @@ impl OLLegacyAccountState {
             .map(|opt_ar| opt_ar.map(|ar| ar.sent_events().key().get_creator_address()))
     }
 
-    pub fn get_account_resource(&self) -> Result<Option<AccountResource>> {
-        self.get_resource::<AccountResource>()
+    pub fn get_account_resource(&self) -> Result<Option<OLLegacyAccountResource>> {
+        self.get_resource::<OLLegacyAccountResource>()
     }
 
     pub fn get_balance_resources(&self) -> Result<BTreeMap<Identifier, BalanceResource>> {
