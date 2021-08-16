@@ -324,7 +324,7 @@ impl TryFrom<(&AccountResource, &BalanceResource)> for OLLegacyAccountState {
     ) -> Result<Self> {
         let mut btree_map: BTreeMap<Vec<u8>, Vec<u8>> = BTreeMap::new();
         btree_map.insert(
-            AccountResource::resource_path(),
+            OLLegacyAccountResource::resource_path(),
             bcs::to_bytes(account_resource)?,
         );
         btree_map.insert(

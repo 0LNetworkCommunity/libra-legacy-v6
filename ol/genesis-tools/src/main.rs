@@ -1,5 +1,4 @@
 use anyhow::Result;
-use diem_types::{account_config::{AccountResource, BalanceResource}, event::EventHandle};
 use std::{path::PathBuf, process::exit};
 
 use gumdrop::Options;
