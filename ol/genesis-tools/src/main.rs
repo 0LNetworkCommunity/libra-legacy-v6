@@ -1,4 +1,5 @@
 use anyhow::Result;
+use diem_types::{account_config::{AccountResource, BalanceResource}, event::EventHandle};
 use std::{path::PathBuf, process::exit};
 
 use gumdrop::Options;
@@ -16,6 +17,8 @@ async fn main() -> Result<()> {
         output_path: Option<PathBuf>,
         #[options(help = "create a genesis for a fork")]
         fork: bool,
+        #[options(help = "create a genesis from Libra legacy")]
+        legacy: bool,
         #[options(help = "optional, write recovery file from snapshot")]
         recover: Option<PathBuf>,
         #[options(help = "optional, get baseline genesis without changes, for dubugging")]
@@ -27,7 +30,6 @@ async fn main() -> Result<()> {
     }
 
     let opts = Args::parse_args_default_or_exit();
-
     if opts.fork {
         if let Some(g_path) = opts.output_path {
             if let Some(s_path) = opts.snapshot_path {
@@ -39,7 +41,8 @@ async fn main() -> Result<()> {
                 match make_recovery_genesis(
                   g_path, 
                   s_path, 
-                  !opts.debug_baseline
+                  !opts.debug_baseline,
+                  opts.legacy,
                 ).await {
                     Ok(_) => return Ok(()),
                     Err(e) => {
@@ -47,6 +50,8 @@ async fn main() -> Result<()> {
                       exit(1);
                     },
                 };
+
+                
                 
             } else {
                 println!("ERROR: must provide a path with --snapshot, exiting.");

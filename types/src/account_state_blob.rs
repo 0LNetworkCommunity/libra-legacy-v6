@@ -1,7 +1,7 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{account_address::{AccountAddress, HashAccountAddress}, account_config::{AccountResource, BalanceResource}, account_state::AccountState, ledger_info::LedgerInfo, ol_legacy_account_state::OLLegacyAccountState, proof::AccountStateProof, transaction::Version};
+use crate::{account_address::{AccountAddress, HashAccountAddress}, account_config::{AccountResource, BalanceResource}, account_state::AccountState, ledger_info::LedgerInfo, proof::AccountStateProof, transaction::Version};
 use anyhow::{anyhow, ensure, Error, Result};
 use diem_crypto::{
     hash::{CryptoHash, CryptoHasher},
@@ -69,16 +69,6 @@ impl TryFrom<&AccountState> for AccountStateBlob {
         Ok(Self {
             blob: bcs::to_bytes(account_state)?,
         })
-    }
-}
-
-//////// 0L ////////
-
-impl TryFrom<&AccountStateBlob> for OLLegacyAccountState {
-    type Error = Error;
-
-    fn try_from(account_state_blob: &AccountStateBlob) -> Result<Self> {
-        bcs::from_bytes(&account_state_blob.blob).map_err(Into::into)
     }
 }
 

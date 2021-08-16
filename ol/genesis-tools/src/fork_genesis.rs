@@ -27,13 +27,14 @@ pub async fn make_recovery_genesis(
     genesis_blob_path: PathBuf,
     archive_path: PathBuf,
     append: bool,
+    is_legacy: bool,
 ) -> Result<(), Error> {
     //TODO: have option to "swarmify" this so that the authkey and network addresses.
 
     // get the legacy data from archive
-    let legacy = archive_into_recovery(&archive_path).await?;
+    let recovery = archive_into_recovery(&archive_path, is_legacy).await?;
     // get consensus accounts
-    let genesis_accounts = recover_consensus_accounts(&legacy)?;
+    let genesis_accounts = recover_consensus_accounts(&recovery)?;
     // create baseline genesis
 
     // TODO: for testing letting all validators be in genesis set.
@@ -47,7 +48,7 @@ pub async fn make_recovery_genesis(
     let gen_tx;
     if append {
         // append further writeset to genesis
-        gen_tx = append_genesis(cs, legacy)?;
+        gen_tx = append_genesis(cs, recovery)?;
     } else {
         gen_tx = Transaction::GenesisTransaction(WriteSetPayload::Direct(cs));
     }

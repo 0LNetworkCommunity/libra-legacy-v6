@@ -1,9 +1,6 @@
 //! process-snapshot
 
-use crate::{
-    read_snapshot::{self},
-    recover::{accounts_into_recovery, LegacyRecovery},
-};
+use crate::{read_snapshot::{self}, recover::{LegacyRecovery, accounts_into_recovery, legacy_accounts_into_recovery}};
 use anyhow::{bail, Error, Result};
 use backup_cli::backup_types::state_snapshot::manifest::StateSnapshotBackup;
 use diem_types::{access_path::AccessPath, account_config::{AccountResource}, account_state::AccountState, account_state_blob::AccountStateBlob, write_set::{WriteOp, WriteSetMut}};
@@ -21,13 +18,20 @@ pub async fn archive_into_swarm_writeset(archive_path: PathBuf) -> Result<WriteS
 }
 
 /// take an archive file path and parse into a writeset
-pub async fn archive_into_recovery(archive_path: &PathBuf) -> Result<Vec<LegacyRecovery>, Error> {
+pub async fn archive_into_recovery(archive_path: &PathBuf, is_legacy: bool) -> Result<Vec<LegacyRecovery>, Error> {
     let manifest_json = archive_path.join("state.manifest");
 
     let backup = read_snapshot::read_from_json(&manifest_json)?;
 
     let account_blobs = accounts_from_snapshot_backup(backup, archive_path).await?;
-    let r = accounts_into_recovery(&account_blobs)?;
+    let r = if is_legacy {
+      println!("Parsing account state from legacy, Libra structs");
+      legacy_accounts_into_recovery(&account_blobs)?
+    } else {
+      println!("Parsing account state from Diem structs");
+      accounts_into_recovery(&account_blobs)?
+    };
+
     Ok(r)
 }
 

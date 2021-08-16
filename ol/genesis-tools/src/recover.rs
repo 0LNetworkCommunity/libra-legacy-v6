@@ -109,7 +109,7 @@ pub fn legacy_accounts_into_recovery(
 ) -> Result<Vec<LegacyRecovery>, Error> {
     let mut to_recover = vec![];
     for blob in account_state_blobs {
-        let account_state = OLLegacyAccountState::try_from(blob)?;
+        let account_state: OLLegacyAccountState = bcs::from_bytes(blob.as_ref()).unwrap();
         dbg!(&account_state);
         match parse_legacy_recovery(&account_state) {
             Ok(gr) => to_recover.push(gr),
