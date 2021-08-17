@@ -1,8 +1,16 @@
 //! recovery
 
 use anyhow::{bail, Error};
-// use libra_network_address::NetworkAddress;
-use diem_types::{account_address::AccountAddress, account_config::{BalanceResource, CurrencyInfoResource}, account_state::AccountState, account_state_blob::AccountStateBlob, network_address::NetworkAddress, ol_legacy_account_state::OLLegacyAccountState, on_chain_config::ConfigurationResource, transaction::authenticator::AuthenticationKey, validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource}};
+use diem_types::{
+    account_address::AccountAddress,
+    account_config::{BalanceResource, CurrencyInfoResource},
+    account_state::AccountState,
+    account_state_blob::AccountStateBlob,
+    network_address::NetworkAddress,
+    on_chain_config::ConfigurationResource,
+    transaction::authenticator::AuthenticationKey,
+    validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource},
+};
 use move_core_types::{identifier::Identifier, move_resource::MoveResource};
 use ol_types::{
     autopay::AutoPayResource, fullnode_counter::FullnodeCounterResource,
@@ -103,29 +111,6 @@ pub fn accounts_into_recovery(
     Ok(to_recover)
 }
 
-/// make the writeset for the genesis case. Starts with an unmodified account state and make into a writeset.
-pub fn legacy_accounts_into_recovery(
-    account_state_blobs: &Vec<AccountStateBlob>,
-) -> Result<Vec<LegacyRecovery>, Error> {
-    let mut to_recover = vec![];
-    for blob in account_state_blobs {
-
-        let account_state: OLLegacyAccountState = bcs::from_bytes(blob.as_ref()).unwrap();
-
-        match parse_legacy_recovery(&account_state) {
-            Ok(gr) => to_recover.push(gr),
-            Err(e) => println!(
-                "WARN: could not recover account, continuing. Message: {:?}",
-                e
-            ),
-        }
-    }
-    println!("Total accounts read: {}", &account_state_blobs.len());
-    println!("Total accounts recovered: {}", &to_recover.len());
-
-    Ok(to_recover)
-}
-
 /// create a recovery struct from an account state.
 pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
     let mut l = LegacyRecovery {
@@ -206,88 +191,6 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
         );
     }
 }
-
-/// create a recovery struct from an account state.
-pub fn parse_legacy_recovery(state: &OLLegacyAccountState) -> Result<LegacyRecovery, Error> {
-    let mut l = LegacyRecovery {
-        account: None,
-        auth_key: None,
-        role: AccountRole::EndUser,
-        balance: None,
-        val_cfg: None,
-        miner_state: None,
-        comm_wallet: None,
-        fullnode_counter: None,
-        autopay: None,
-        currency_info: None,
-    };
-
-    if let Some(address) = state.get_account_address()? {
-        l.account = Some(address);
-        // dbg!(&l.account);
-
-        l.auth_key = AuthenticationKey::try_from(
-            state
-                .get_account_resource()
-                .unwrap()
-                .unwrap()
-                .authentication_key(),
-        )
-        .ok();
-
-        // from(state.get_account_resource().unwrap().unwrap().authentication_key());
-        // iterate over all the account's resources\
-        for (k, v) in state.iter() {
-            // extract the validator config resource
-            if k == &BalanceResource::resource_path() {
-                l.balance = bcs::from_bytes(v).ok();
-            } else if k == &ValidatorConfigResource::resource_path() {
-                l.role = AccountRole::Validator;
-                let mut config: ValidatorConfigResource =
-                    bcs::from_bytes(v).expect("error deserializing validator config");
-                // Note: 0L v4.3.3 has a number of malformed network addresses. This is a one-time migration.
-                // let  fn_addr = config.validator_config.unwrap().fullnode_network_addresses();
-                // TODO: test this
-                maybe_migrate_fn_address(&mut config);
-                l.val_cfg = Some(config);
-            } else if k == &ValidatorOperatorConfigResource::resource_path() {
-                l.role = AccountRole::Operator;
-            } else if k == &MinerStateResource::resource_path() {
-                l.miner_state = bcs::from_bytes(v).ok();
-            } else if k == &AutoPayResource::resource_path() {
-                l.autopay = bcs::from_bytes(v).ok();
-            }
-
-            if address == AccountAddress::ZERO {
-                // dbg!(&l);
-                l.role = AccountRole::System;
-                // structs only on 0x0 address
-                if k == &ConfigurationResource::resource_path() {
-                    l.miner_state = bcs::from_bytes(v).ok();
-                } else if k == &CommunityWalletsResource::resource_path() {
-                    l.comm_wallet = bcs::from_bytes(v).ok();
-                } else if k == &FullnodeCounterResource::resource_path() {
-                    l.fullnode_counter = bcs::from_bytes(v).ok();
-                } else if k
-                    == &CurrencyInfoResource::resource_path_for(
-                        Identifier::new("GAS".to_owned()).unwrap(),
-                    )
-                    .path
-                {
-                    l.currency_info = bcs::from_bytes(v).ok();
-                }
-            }
-        }
-        println!("processed account: {:?}", address);
-        return Ok(l);
-    } else {
-        bail!(
-            "ERROR: No address for AccountState: {:?}",
-            state.get_account_address()
-        );
-    }
-}
-
 
 /// Make recovery file in format needed
 pub fn recover_consensus_accounts(

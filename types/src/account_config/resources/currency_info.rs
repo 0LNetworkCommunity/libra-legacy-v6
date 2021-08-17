@@ -153,6 +153,7 @@ impl CurrencyInfoResource {
     pub fn to_xdx_exchange_rate(&self) -> u64 {
         self.to_xdx_exchange_rate
     }
+    
     pub fn can_mint(&self) -> bool {
         self.can_mint
     }

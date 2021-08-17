@@ -42,7 +42,6 @@ pub use account_address::AccountAddress as PeerId;
 //////// 0L ////////
 pub mod ol_upgrade_payload; 
 pub mod ol_validators_stats; 
-pub mod ol_legacy_account_state; 
 //////// end 0L ////////
 
 #[cfg(test)]
