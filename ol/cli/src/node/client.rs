@@ -52,15 +52,20 @@ pub fn default_remote_client(
     config: &AppCfg,
     waypoint: Waypoint,
 ) -> Result<LibraClient, Error> {
-    let remote_url = config
+    for remote_url in config
         .profile
         .upstream_nodes
         .clone()
         .unwrap()
-        .into_iter()
-        .next()
-        .unwrap(); // upstream_node_url.clone();
-    make_client(Some(remote_url.clone()), waypoint)
+        .into_iter() {
+        if let Ok(mut c) =  make_client(Some(remote_url), waypoint) {
+            if c.get_state_proof().is_ok() {
+                return Ok(c)
+            }
+        }
+
+    }
+    Err(Error::msg("Not found available remote server"))
 }
 
 /// get client type with defaults from toml for local node
