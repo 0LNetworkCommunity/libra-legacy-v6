@@ -438,3 +438,19 @@ clean-tags:
 	git push origin --delete ${TAG}
 	git tag -d ${TAG}
 	
+
+####### SWARM ########
+
+sw: sw-build sw-start sw-init
+
+## Build
+sw-build:
+	cd ${SOURCE} && cargo run -p diem-framework --release	
+	# cargo build -p libra-node -p cli && cargo run -p libra-swarm
+
+## Swarm
+sw-start:
+	cd ${SOURCE} && cargo run -p diem-swarm -- --diem-node target/debug/diem-node -c ${DATA_PATH}/swarm_temp -n 1 -s --cli-path ${SOURCE}/target/debug/cli
+
+sw-init:
+	cd ${SOURCE} && cargo r -p ol -- --swarm-path ~/swarm_temp/ --swarm-persona alice init --source-path ~/libra
