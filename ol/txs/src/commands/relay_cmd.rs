@@ -2,7 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use std::path::PathBuf;
+use std::{path::PathBuf, process::exit};
 
 use abscissa_core::{Command, Options, Runnable};
 use crate::relay::relay_from_file;
@@ -18,6 +18,12 @@ pub struct RelayCmd {
 
 impl Runnable for RelayCmd {    
     fn run(&self) {
-        relay_from_file(self.relay_file.clone()).unwrap();
+        match relay_from_file(self.relay_file.clone()) {
+            Err(e) => {
+              println!("ERROR: could not relay transaction, message: \n{:?}", &e);
+              exit(1);
+            },
+            _ => {}
+        }
     }
 }

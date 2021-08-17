@@ -15,41 +15,58 @@ use libra_wallet::WalletLibrary;
 use url::Url;
 use fs_extra::file::{copy, CopyOptions};
 use fs_extra::dir::{create};
+use crate::checkup;
 
 /// `init` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct InitCmd {
+    /// home path for app config
     #[options(help = "home path for app config")]
-    pub path: Option<PathBuf>,
+    path: Option<PathBuf>,
+    /// An upstream peer to use in 0L.toml
     #[options(help = "An upstream peer to use in 0L.toml")]
-    pub upstream_peer: Option<Url>,
+    upstream_peer: Option<Url>,
+    /// Skip app configs
     #[options(help = "Skip app configs")]
-    pub skip_app: bool,
+    skip_app: bool,
+    /// Skip validator init
     #[options(help = "Skip validator init")]
-    pub skip_val: bool,
+    skip_val: bool,
+    /// run checkup on config file
+    #[options(help = "Check config file and give hints if something seems wrong")]
+    checkup: bool,
+    /// fix the config file
     #[options(help = "Fix config file, and migrate any missing fields")]
-    pub fix: bool,
+    fix: bool,
+    /// Set a waypoint in config files
     #[options(help = "Set a waypoint in config files")]
-    pub waypoint: Option<Waypoint>,
+    waypoint: Option<Waypoint>,
+    /// Path to source code, for devs
     #[options(help = "Path to source code, for devs")]
-    pub source_path: Option<PathBuf>,
+    source_path: Option<PathBuf>,
 }
 
 
 impl Runnable for InitCmd {
     /// Print version message
     fn run(&self) {
-        if *&self.fix {
+        if *&self.checkup {
+          // check 0L.toml file
+          checkup::checkup(self.path.to_owned());
+          return
+        };
+
+       if *&self.fix {
           // fix 0L.toml file
           migrate::migrate(self.path.to_owned());
           return
         };
-
+        
         let entry_args = entrypoint::get_args();
         if let Some(path) = entry_args.swarm_path {
           let swarm_node_home = entrypoint::get_node_home();
           let absolute = fs::canonicalize(path).unwrap();
-          initialize_host_swarm(absolute, swarm_node_home, entry_args.swarm_persona, self.source_path.as_ref().unwrap());
+          initialize_host_swarm(absolute, swarm_node_home, entry_args.swarm_persona, &self.source_path);
           return
         }
         
@@ -62,8 +79,8 @@ impl Runnable for InitCmd {
             account, 
             &self.upstream_peer,
             &self.path,
-            None, // TODO: probably need an epoch option here.
-            self.waypoint,
+            &None, // TODO: probably need an epoch option here.
+            &self.waypoint,
             &self.source_path,
           ).unwrap()
         };
@@ -80,8 +97,8 @@ pub fn initialize_app_cfg(
   account: AccountAddress,
   upstream_peer: &Option<Url>,
   path: &Option<PathBuf>,
-  epoch_opt: Option<u64>,
-  wp_opt: Option<Waypoint>,
+  epoch_opt: &Option<u64>,
+  wp_opt: &Option<Waypoint>,
   source_path: &Option<PathBuf>
 ) -> Result <AppCfg, Error>{
     let cfg = AppCfg::init_app_configs(
@@ -91,20 +108,23 @@ pub fn initialize_app_cfg(
       path,
       epoch_opt,
       wp_opt,
-      source_path);
+      source_path,
+      None,
+      None,
+    );
     Ok(cfg)
 }
 
 /// Initializes the necessary 0L config files: 0L.toml and populate blocks directory
 /// assumes the libra source is checked out at $HOME/libra
-pub fn initialize_host_swarm(swarm_path: PathBuf, node_home: PathBuf, persona: Option<String>, source_path: &PathBuf) {
-    let cfg = AppCfg::init_app_configs_swarm(swarm_path, node_home);
+pub fn initialize_host_swarm(swarm_path: PathBuf, node_home: PathBuf, persona: Option<String>, source_path: &Option<PathBuf>) {
+    let cfg = AppCfg::init_app_configs_swarm(swarm_path, node_home, source_path.clone());
     if persona.is_some() {
-      let source = source_path.join("ol/fixtures/blocks/test").join(persona.unwrap()).join("block_0.json");
-      let bocks_dir = PathBuf::new().join(&cfg.workspace.node_home).join(&cfg.workspace.block_dir);
+      let source = &cfg.workspace.source_path.unwrap().join("ol/fixtures/blocks/test").join(persona.unwrap()).join("block_0.json");
+      let blocks_dir = PathBuf::new().join(&cfg.workspace.node_home).join(&cfg.workspace.block_dir);
       let target_file = PathBuf::new().join(&cfg.workspace.node_home).join(&cfg.workspace.block_dir).join("block_0.json");
       println!("copy first block from {:?} to {:?}", source, target_file);
-      match create(bocks_dir, false) {
+      match create(blocks_dir, true) {
         Err(why) => println!("create block dir failed: {:?}", why),
         _ => match copy(source, target_file, &CopyOptions::new()) {
           Err(why) => println!("copy block failed: {:?}", why),

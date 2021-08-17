@@ -12,7 +12,7 @@ use once_cell::sync::Lazy;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::{fs, io::Write, net::Ipv4Addr, path::PathBuf, str::FromStr};
+use std::{fs::{self, File}, io::{Read, Write}, net::Ipv4Addr, path::PathBuf, process::exit, str::FromStr};
 
 use crate::dialogue::{what_home, what_ip, what_statement};
 
@@ -23,7 +23,7 @@ pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
     match std::env::var("NODE_ENV") {
         Ok(val) => {
             match val.as_str() {
-                "prod" => true,
+                "prod" => true, 
                 // if anything else is set by user is false
                 _ => false,
             }
@@ -58,6 +58,19 @@ pub struct AppCfg {
     /// Transaction configurations
     pub tx_configs: TxConfigs,
 }
+
+/// Get a AppCfg object from toml file
+pub fn parse_toml(path: String) -> Result<AppCfg, Error> {
+    let mut config_toml = String::new();
+
+    let mut file = File::open(&path)?;
+
+    file.read_to_string(&mut config_toml)
+            .unwrap_or_else(|err| panic!("Error while reading config: [{}]", err));
+
+    let cfg: AppCfg = toml::from_str(&config_toml).unwrap();
+    Ok(cfg)
+} 
 
 impl AppCfg {
     /// Gets the dynamic waypoint from libra node's key_store.json
@@ -111,9 +124,11 @@ impl AppCfg {
         account: AccountAddress,
         upstream_peer: &Option<Url>,
         config_path: &Option<PathBuf>,
-        base_epoch: Option<u64>,
-        base_waypoint: Option<Waypoint>,
+        base_epoch: &Option<u64>,
+        base_waypoint: &Option<Waypoint>,
         source_path: &Option<PathBuf>,
+        statement: Option<String>,
+        ip: Option<Ipv4Addr>,
     ) -> AppCfg {
         // TODO: Check if configs exist and warn on overwrite.
         let mut default_config = AppCfg::default();
@@ -121,9 +136,15 @@ impl AppCfg {
         default_config.profile.account = account;
 
                 // Get statement which goes into genesis block
-        default_config.profile.statement = what_statement();
+        default_config.profile.statement = match statement {
+            Some(s) => s,
+            None => what_statement(),
+        };
 
-        default_config.profile.ip = what_ip().unwrap();
+        default_config.profile.ip = match ip {
+            Some(i) => i,
+            None => what_ip().unwrap(),
+        };
 
         default_config.workspace.node_home = config_path.clone().unwrap_or_else(||{
             what_home(None, None)
@@ -135,22 +156,23 @@ impl AppCfg {
           default_config.workspace.stdlib_bin_path = Some(source_path.as_ref().unwrap().join("language/stdlib/staged/stdlib.mv"));
         }
 
-
-        if let Some(url) = upstream_peer {
-            default_config.profile.upstream_nodes = Some(vec![url.to_owned()]);
-            let mut web_monitor_url = url.clone();
-            web_monitor_url.set_port(Some(3030)).unwrap();
-            let epoch_url = &web_monitor_url.join("epoch.json").unwrap();
-            let (e, w) = bootstrap_waypoint_from_upstream(epoch_url).unwrap();
-            default_config.chain_info.base_epoch = Some(e);
-            default_config.chain_info.base_waypoint = Some(w)
-        }
         // override from args
-        if base_epoch.is_some() {
-            default_config.chain_info.base_epoch = base_epoch;
-        }
-        if base_waypoint.is_some() {
-            default_config.chain_info.base_waypoint = base_waypoint;
+        if base_epoch.is_some() && base_waypoint.is_some(){
+            default_config.chain_info.base_epoch = *base_epoch;
+            default_config.chain_info.base_waypoint = *base_waypoint;
+        } else {
+          if let Some(url) = upstream_peer {
+              default_config.profile.upstream_nodes = Some(vec![url.to_owned()]);
+              let mut web_monitor_url = url.clone();
+              web_monitor_url.set_port(Some(3030)).unwrap();
+              let epoch_url = &web_monitor_url.join("epoch.json").unwrap();
+              let (e, w) = bootstrap_waypoint_from_upstream(epoch_url).unwrap();
+              default_config.chain_info.base_epoch = Some(e);
+              default_config.chain_info.base_waypoint = Some(w)
+          } else {
+            println!("ERROR: Trying to get a starting epoch, and waypoint for configs. Either pass --epoch and --waypoint as CLI args, or provide a URL to fetch this data from --upstream-peer or --template-url");
+            exit(1);
+          }
         }
 
         // skip questionnaire if CI
@@ -174,9 +196,9 @@ impl AppCfg {
     /// Save swarm default configs to swarm path
     /// swarm_path points to the swarm_temp directory
     /// node_home to the directory of the current swarm persona
-    pub fn init_app_configs_swarm(swarm_path: PathBuf, node_home: PathBuf) -> AppCfg {
+    pub fn init_app_configs_swarm(swarm_path: PathBuf, node_home: PathBuf, source_path: Option<PathBuf>) -> AppCfg {
         // println!("init_swarm_config: {:?}", swarm_path); already logged in commands.rs
-        let host_config = AppCfg::make_swarm_configs(swarm_path, node_home);
+        let host_config = AppCfg::make_swarm_configs(swarm_path, node_home, source_path);
         AppCfg::save_file(&host_config);
         host_config
     }
@@ -200,7 +222,7 @@ impl AppCfg {
     /// get configs from swarm
     /// swarm_path points to the swarm_temp directory
     /// node_home to the directory of the current swarm persona
-    pub fn make_swarm_configs(swarm_path: PathBuf, node_home: PathBuf) -> AppCfg {
+    pub fn make_swarm_configs(swarm_path: PathBuf, node_home: PathBuf, source_path: Option<PathBuf>) -> AppCfg {
         let config_path = swarm_path.join(&node_home).join("node.yaml");
         let config = NodeConfig::load(&config_path)
             .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &config_path));
@@ -238,6 +260,7 @@ impl AppCfg {
 
         cfg.workspace.node_home = node_home;
         cfg.workspace.db_path = db_path;
+        cfg.workspace.source_path = source_path;
         cfg.chain_info.base_waypoint = Some(config.base.waypoint.waypoint());
         cfg.profile.account = "4C613C2F4B1E67CA8D98A542EE3F59F5".parse().unwrap(); // alice
         cfg.profile.default_node = Some(url);
@@ -285,7 +308,7 @@ impl Default for AppCfg {
 pub struct Workspace {
     /// home directory of the libra node, may be the same as miner.
     pub node_home: PathBuf,
-    /// Directory to store blocks in
+    /// Directory of source code (for developer tests only)
     pub source_path: Option<PathBuf>,
     /// Directory to store blocks in
     pub block_dir: String,

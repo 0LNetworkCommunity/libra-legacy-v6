@@ -9,25 +9,28 @@ use crate::entrypoint;
 use crate::prelude::app_config;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use libra_genesis_tool::node_files;
+use libra_types::waypoint::Waypoint;
 use libra_types::{transaction::SignedTransaction};
 use libra_wallet::WalletLibrary;
 use ol::{commands::init_cmd, config::AppCfg};
 use ol_keys::{scheme::KeyScheme, wallet};
 use ol_types::block::Block;
 use ol_types::config::IS_TEST;
-use ol_types::{account::ValConfigs, autopay::PayInstruction, config::TxType};
+use ol_types::{account::ValConfigs, pay_instruction::PayInstruction, config::TxType};
 use reqwest::Url;
 use std::process::exit;
 use std::{fs::File, io::Write, path::PathBuf};
 use txs::{commands::autopay_batch_cmd, submit_tx};
-/// `val-wizard` subcommand
+/// `validator wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ValWizardCmd {
     #[options(
         short = "a",
         help = "where to output the account.json file, defaults to node home"
     )]
-    account_path: Option<PathBuf>,
+    output_path: Option<PathBuf>,
+    #[options(help = "explicitly set home path instead of answer in wizard, for CI usually")]
+    home_path: Option<PathBuf>,
     #[options(help = "id of the chain")]
     chain_id: Option<u8>,
     #[options(help = "github org of genesis repo")]
@@ -48,6 +51,10 @@ pub struct ValWizardCmd {
     upstream_peer: Option<Url>,
     #[options(help = "If validator is building from source")]
     source_path: Option<PathBuf>,
+    #[options(short = "w", help = "If validator is building from source")]
+    waypoint: Option<Waypoint>,
+    #[options(short = "e", help = "If validator is building from source")]
+    epoch: Option<u64>,
 }
 
 impl Runnable for ValWizardCmd {
@@ -78,10 +85,12 @@ impl Runnable for ValWizardCmd {
             authkey,
             account,
             &Some(upstream.clone()),
-            &None,
+            &self.home_path,
+            &self.epoch,
+            &self.waypoint,
+            &self.source_path,
             None,
             None,
-            &self.source_path
         );
         let home_path = &app_config.workspace.node_home;
         let base_waypoint = app_config.chain_info.base_waypoint.clone();
@@ -162,7 +171,7 @@ impl Runnable for ValWizardCmd {
 
         // Write account manifest
         write_account_json(
-            &self.account_path,
+            &self.output_path,
             wallet,
             Some(app_config.clone()),
             autopay_batch,
@@ -197,6 +206,7 @@ pub fn get_autopay_batch(
     let instr_vec = PayInstruction::parse_autopay_instructions(
         &file_path.clone().unwrap_or(home_path.join(file_name)),
         Some(starting_epoch.clone()),
+        None,
     )
     .unwrap();
     let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone());
@@ -217,7 +227,8 @@ pub fn get_autopay_batch(
     (Some(instr_vec), Some(txn_vec))
 }
 
-pub fn save_template(url: &Url, home_path: &PathBuf) -> PathBuf {
+/// save template file
+fn save_template(url: &Url, home_path: &PathBuf) -> PathBuf {
     let g_res = reqwest::blocking::get(&url.to_string());
     let g_path = home_path.join("template.json");
     let mut g_file = File::create(&g_path).expect("couldn't create file");

@@ -49,6 +49,7 @@ ol-types = {path = "../../ol/types"}
 ol-fixtures = {path = "../../ol/fixtures"}
 libra-secure-storage = { path = "../../secure/storage", version = "0.1.0" }
 dialoguer = "0.8.0"
+resource-viewer = { path = "../../language/tools/resource-viewer", version = "0.1.0" }
 
 [dependencies.abscissa_core]
 version = "0.5.2"
