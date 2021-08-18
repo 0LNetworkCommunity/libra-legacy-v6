@@ -73,8 +73,7 @@ pub enum Method {
     GetEvents,
     GetCurrencies,
     GetNetworkStatus,
-    GetMinerStateView,         /////// 0L /////////
-    GetOracleUpgradeStateView, /////// 0L /////////
+
 
     //
     // Experimental APIs
@@ -83,6 +82,9 @@ pub enum Method {
     GetAccountStateWithProof,
     GetTransactionsWithProofs,
     GetEventsWithProofs,
+
+    GetMinerStateView,         /////// 0L /////////
+    GetOracleUpgradeStateView, /////// 0L /////////
 }
 
 cfg_async_or_blocking! {

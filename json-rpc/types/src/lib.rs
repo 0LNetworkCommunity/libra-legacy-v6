@@ -44,9 +44,9 @@ pub enum Method {
     GetAccountStateWithProof,
     GetTransactionsWithProofs,
     GetEventsWithProofs,
-    
+
     //////// 0L ////////
-    GetMinerState,
+    GetMinerStateView,
 }
 
 impl Method {
@@ -67,7 +67,7 @@ impl Method {
             Method::GetEventsWithProofs => "get_events_with_proofs",
 
             //////// 0L ////////
-            Method::GetMinerState => "get_miner_state",
+            Method::GetMinerStateView => "get_miner_state_view",
         }
     }
 }

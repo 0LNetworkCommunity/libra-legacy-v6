@@ -185,7 +185,7 @@ impl<'a> Handler<'a> {
             }
 
             //////// 0L ////////
-            MethodRequest::GetMinerState(params) => {
+            MethodRequest::GetMinerStateView(params) => {
                 serde_json::to_value(self.get_miner_state(params).await?)?
             }
         };

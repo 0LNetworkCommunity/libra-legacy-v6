@@ -82,7 +82,7 @@ pub enum MethodRequest {
     GetEventsWithProofs(GetEventsWithProofsParams),
 
     //////// 0L ////////
-    GetMinerState(GetMinerStateParams),
+    GetMinerStateView(GetMinerStateParams),
 }
 
 impl MethodRequest {
@@ -117,8 +117,8 @@ impl MethodRequest {
             }
 
             //////// 0L ////////
-            Method::GetMinerState => {
-                MethodRequest::GetMinerState(serde_json::from_value(value)?)
+            Method::GetMinerStateView => {
+                MethodRequest::GetMinerStateView(serde_json::from_value(value)?)
             }
 
 
@@ -143,7 +143,7 @@ impl MethodRequest {
             MethodRequest::GetTransactionsWithProofs(_) => Method::GetTransactionsWithProofs,
             MethodRequest::GetEventsWithProofs(_) => Method::GetEventsWithProofs,
             ///////// 0L ////////
-            MethodRequest::GetMinerState(_) =>  Method::GetMinerState, 
+            MethodRequest::GetMinerStateView(_) =>  Method::GetMinerStateView, 
         }
     }
 }

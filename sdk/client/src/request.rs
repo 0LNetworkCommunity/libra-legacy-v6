@@ -21,9 +21,7 @@ pub enum MethodRequest {
     GetEvents(EventKey, u64, u64),
     GetCurrencies([(); 0]),
     GetNetworkStatus([(); 0]),
-    //////// 0L ////////
-    GetMinerStateView(AccountAddress),
-    GetOracleUpgradeStateView(),
+
 
     //
     // Experimental APIs
@@ -32,6 +30,10 @@ pub enum MethodRequest {
     GetAccountStateWithProof(AccountAddress, Option<u64>, Option<u64>),
     GetTransactionsWithProofs(u64, u64, bool),
     GetEventsWithProofs(EventKey, u64, u64),
+
+    //////// 0L ////////
+    GetMinerStateView(AccountAddress),
+    GetOracleUpgradeStateView(),
 }
 
 impl MethodRequest {
