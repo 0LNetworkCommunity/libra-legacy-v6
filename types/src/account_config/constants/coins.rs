@@ -14,7 +14,7 @@ pub const GAS_NAME: &str = "GAS";
 pub const GAS_IDENTIFIER: &IdentStr = ident_str!(GAS_NAME);
 pub const XUS_NAME: &str = "GAS";
 pub const XUS_IDENTIFIER: &IdentStr = ident_str!(XUS_NAME);
-// 0L todo: is this correct?
+// 0L todo: is this patch correct?
 pub const XDX_NAME: &str = "GAS";
 pub const XDX_IDENTIFIER: &IdentStr = ident_str!(XDX_NAME);
 

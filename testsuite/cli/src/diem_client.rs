@@ -248,7 +248,7 @@ impl DiemClient {
             .map(Response::into_inner)
     }
 
-    // 0L todo: is it possible to implement this fn with diem 1.3.0 code?
+    // 0L todo: Not sure if it is possible to implement this fn with diem 1.3.0 code
     /////// 0L /////////
     // /// Get all transactions for an account within a range
     // pub fn get_txn_by_acc_range(

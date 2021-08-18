@@ -42,6 +42,7 @@ impl Runnable for FilesCmd {
     }
 }
 
+/// create genesis files
 pub fn genesis_files(
     miner_config: &AppCfg,
     chain_id: &Option<u8>,
@@ -72,6 +73,7 @@ pub fn genesis_files(
 
 }
 
+/// fetch files from github
 pub fn get_files(
     home_dir: PathBuf,
     github_org: &Option<String>,
