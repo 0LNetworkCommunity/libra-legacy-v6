@@ -7,7 +7,6 @@ use crate::{
     save_tx::save_tx,
     sign_tx::sign_tx,
 };
-use abscissa_core::{status_ok, status_warn};
 use anyhow::Error;
 use cli::{diem_client::DiemClient, AccountData, AccountStatus};
 use ol_keys::{wallet, scheme::KeyScheme};
@@ -424,11 +423,11 @@ pub fn wait_for_tx(
 pub fn eval_tx_status(result: TransactionView) -> Result<(), Error> {
     match result.vm_status == VMStatusView::Executed {
         true => {
-            status_ok!("\nSuccess:", "transaction executed");
+            println!("\nSuccess: transaction executed");
             Ok(())
         }
         false => {
-            status_warn!("Transaction failed");
+            println!("Transaction failed");
             let msg = format!("Rejected with code:{:?}", result.vm_status);
             Err(Error::msg(msg))
         }
