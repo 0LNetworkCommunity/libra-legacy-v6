@@ -22,7 +22,7 @@ pub enum MethodRequest {
     GetCurrencies([(); 0]),
     GetNetworkStatus([(); 0]),
     //////// 0L ////////
-    GetMinerStateView((AccountAddress,)),
+    GetMinerStateView(AccountAddress),
     GetOracleUpgradeStateView(),
 
     //
@@ -58,7 +58,7 @@ impl MethodRequest {
 
     /////// 0L /////////
     pub fn get_miner_state(address: AccountAddress) -> Self {
-        Self::GetMinerStateView((address,))
+        Self::GetMinerStateView(address)
     }
 
     /////// 0L /////////

@@ -306,13 +306,5 @@ pub fn get_miner_state(
     let s = get_account_state(db, account, version)?.unwrap();
 
     MinerStateResourceView::try_from(s).map_err(Into::into)
-    //   let account_state = db.get_latest_account_state(account)?.ok_or_else(|| {
-    //     JsonRpcError::invalid_request_with_msg(format!(
-    //         "could not find account by address {}",
-    //         account
-    //     ))
-    // })?;
-    // // let proofs = db.get_state_proof_with_ledger_info(version, ledger_info.clone())?;
-    // MinerStateResourceView::try_from(account_state).map_err(Into::into)
 }
 

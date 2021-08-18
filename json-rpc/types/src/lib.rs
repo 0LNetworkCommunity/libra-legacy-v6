@@ -44,6 +44,7 @@ pub enum Method {
     GetAccountStateWithProof,
     GetTransactionsWithProofs,
     GetEventsWithProofs,
+    
     //////// 0L ////////
     GetMinerState,
 }

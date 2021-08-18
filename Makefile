@@ -441,7 +441,7 @@ clean-tags:
 
 ####### SWARM ########
 
-sw: sw-stdlib sw-build sw-start sw-init
+sw: sw-build sw-start sw-init
 
 ## Build
 sw-stdlib:

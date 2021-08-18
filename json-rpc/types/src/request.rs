@@ -116,6 +116,7 @@ impl MethodRequest {
                 MethodRequest::GetEventsWithProofs(serde_json::from_value(value)?)
             }
 
+            //////// 0L ////////
             Method::GetMinerState => {
                 MethodRequest::GetMinerState(serde_json::from_value(value)?)
             }
@@ -141,7 +142,8 @@ impl MethodRequest {
             MethodRequest::GetAccountStateWithProof(_) => Method::GetAccountStateWithProof,
             MethodRequest::GetTransactionsWithProofs(_) => Method::GetTransactionsWithProofs,
             MethodRequest::GetEventsWithProofs(_) => Method::GetEventsWithProofs,
-            MethodRequest::GetMinerState(_) => todo!(),
+            ///////// 0L ////////
+            MethodRequest::GetMinerState(_) =>  Method::GetMinerState, 
         }
     }
 }
