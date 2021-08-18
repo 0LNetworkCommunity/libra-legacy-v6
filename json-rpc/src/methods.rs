@@ -376,10 +376,7 @@ impl<'a> Handler<'a> {
         &self,
         params: GetMinerStateParams,
     ) -> Result<MinerStateResourceView, JsonRpcError> {
-        let version = self.version_param(params.version, "version")?;
-
-        //  let version = self.version_param(Some(params.version), "version")?;
-        data::get_miner_state(self.service.db.borrow(), version, params.account)
+        data::get_miner_state(self.service.db.borrow(), self.version(), params.account)
     }
 }
 

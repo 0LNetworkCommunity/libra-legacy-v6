@@ -67,7 +67,7 @@ impl Method {
             Method::GetEventsWithProofs => "get_events_with_proofs",
 
             //////// 0L ////////
-            Method::GetMinerStateView => "get_miner_state_view",
+            Method::GetMinerStateView => "get_miner_state_view", // Name is not used in json RPC, what matters is the serde snakecase attribute
         }
     }
 }

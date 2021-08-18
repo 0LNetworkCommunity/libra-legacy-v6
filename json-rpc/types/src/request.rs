@@ -344,13 +344,26 @@ pub struct GetEventsWithProofsParams {
 //////// 0L ////////
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct GetMinerStateParams {
-    pub version: Option<u64>,
     pub account: AccountAddress,
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+
+
+    #[test]
+    fn ol_get_miner() { //////// 0L ////////
+        let account = "1668f6be25668c1a17cd8caf6b8d2f25";
+
+        // json object
+        let value = serde_json::json!({"account": account});
+        serde_json::from_value::<GetMinerStateParams>(value).unwrap();
+
+        // json list
+        let value = serde_json::json!([account]);
+        serde_json::from_value::<GetMinerStateParams>(value).unwrap();
+    }
 
     #[test]
     fn metadata() {
