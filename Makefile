@@ -441,12 +441,14 @@ clean-tags:
 
 ####### SWARM ########
 
-sw: sw-build sw-start sw-init
+sw: sw-stdlib sw-build sw-start sw-init
 
 ## Build
+sw-stdlib:
+	cd ${SOURCE} && cargo run -p diem-framework
+
 sw-build:
-	cd ${SOURCE} && cargo run -p diem-framework --release	
-	# cargo build -p libra-node -p cli && cargo run -p libra-swarm
+	cargo build -p diem-node -p diem-swarm
 
 ## Swarm
 sw-start:
