@@ -80,6 +80,9 @@ pub enum MethodRequest {
     GetAccountStateWithProof(GetAccountStateWithProofParams),
     GetTransactionsWithProofs(GetTransactionsWithProofsParams),
     GetEventsWithProofs(GetEventsWithProofsParams),
+
+    //////// 0L ////////
+    GetMinerState(GetMinerStateParams),
 }
 
 impl MethodRequest {
@@ -112,6 +115,12 @@ impl MethodRequest {
             Method::GetEventsWithProofs => {
                 MethodRequest::GetEventsWithProofs(serde_json::from_value(value)?)
             }
+
+            Method::GetMinerState => {
+                MethodRequest::GetMinerState(serde_json::from_value(value)?)
+            }
+
+
         };
 
         Ok(method_request)
@@ -132,6 +141,7 @@ impl MethodRequest {
             MethodRequest::GetAccountStateWithProof(_) => Method::GetAccountStateWithProof,
             MethodRequest::GetTransactionsWithProofs(_) => Method::GetTransactionsWithProofs,
             MethodRequest::GetEventsWithProofs(_) => Method::GetEventsWithProofs,
+            MethodRequest::GetMinerState(_) => todo!(),
         }
     }
 }
@@ -327,6 +337,13 @@ pub struct GetEventsWithProofsParams {
     pub key: EventKey,
     pub start: u64,
     pub limit: u64,
+}
+
+//////// 0L ////////
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct GetMinerStateParams {
+    pub version: Option<u64>,
+    pub account: AccountAddress,
 }
 
 #[cfg(test)]

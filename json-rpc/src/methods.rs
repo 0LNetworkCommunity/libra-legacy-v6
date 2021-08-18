@@ -6,10 +6,9 @@ use crate::{
     data,
     errors::JsonRpcError,
     views::{
-        AccountStateWithProofView, AccountView, CurrencyInfoView, 
-        EventView, EventWithProofView, MetadataView, /*MinerStateResourceView,*/
-        OracleUpgradeStateView, StateProofView, TransactionView,
-        TransactionListView, TransactionsWithProofsView,
+        AccountStateWithProofView, AccountView, CurrencyInfoView, EventView, EventWithProofView,
+        MetadataView, MinerStateResourceView, OracleUpgradeStateView, StateProofView,
+        TransactionListView, TransactionView, TransactionsWithProofsView,
     },
 };
 use anyhow::Result;
@@ -17,12 +16,13 @@ use diem_config::config::RoleType;
 use diem_json_rpc_types::request::{
     GetAccountParams, GetAccountStateWithProofParams, GetAccountTransactionParams,
     GetAccountTransactionsParams, GetCurrenciesParams, GetEventsParams, GetEventsWithProofsParams,
-    GetMetadataParams, GetNetworkStatusParams, GetStateProofParams, GetTransactionsParams,
-    GetTransactionsWithProofsParams, JsonRpcRequest, MethodRequest, SubmitParams,
+    GetMetadataParams, GetMinerStateParams, GetNetworkStatusParams, GetStateProofParams,
+    GetTransactionsParams, GetTransactionsWithProofsParams, JsonRpcRequest, MethodRequest,
+    SubmitParams,
 };
 use diem_mempool::{MempoolClientSender, SubmissionStatus};
 use diem_types::{
-    /*account_address::AccountAddress,*/ chain_id::ChainId, 
+    /*account_address::AccountAddress,*/ chain_id::ChainId,
     ledger_info::LedgerInfoWithSignatures, mempool_status::MempoolStatusCode,
     transaction::SignedTransaction,
 };
@@ -182,6 +182,11 @@ impl<'a> Handler<'a> {
             }
             MethodRequest::GetEventsWithProofs(params) => {
                 serde_json::to_value(self.get_events_with_proofs(params).await?)?
+            }
+
+            //////// 0L ////////
+            MethodRequest::GetMinerState(params) => {
+                serde_json::to_value(self.get_miner_state(params).await?)?
             }
         };
         Ok(response)
@@ -365,6 +370,17 @@ impl<'a> Handler<'a> {
             version,
         )
     }
+
+    //////// 0L ////////
+    async fn get_miner_state(
+        &self,
+        params: GetMinerStateParams,
+    ) -> Result<MinerStateResourceView, JsonRpcError> {
+        let version = self.version_param(params.version, "version")?;
+
+        //  let version = self.version_param(Some(params.version), "version")?;
+        data::get_miner_state(self.service.db.borrow(), version, params.account)
+    }
 }
 
 // //////// 0L ////////
@@ -396,7 +412,7 @@ impl<'a> Handler<'a> {
 // }
 
 // 0L todo: - no parse_version_param()
-//          - where to use this fn? This fn is now unused since no 
+//          - where to use this fn? This fn is now unused since no
 //            method.rs::build_registry() in diem 1.3.0, see v5_old_diem-1.2.0 branch
 //////// 0L ////////
 /// Returns Oracle Upgrade view
@@ -404,7 +420,6 @@ async fn _query_oracle_upgrade(
     _service: JsonRpcService,
     _request: JsonRpcRequest,
 ) -> Result<OracleUpgradeStateView, JsonRpcError> {
-
     // let account_address = AccountAddress::ZERO;
 
     // // If versions are specified by the request parameters, use them, otherwise use the defaults
@@ -423,5 +438,7 @@ async fn _query_oracle_upgrade(
     //     },
     //     None => {}
     // }
-    Err(JsonRpcError::invalid_request_with_msg("No Upgrade Resource found.".to_string()))
+    Err(JsonRpcError::invalid_request_with_msg(
+        "No Upgrade Resource found.".to_string(),
+    ))
 }

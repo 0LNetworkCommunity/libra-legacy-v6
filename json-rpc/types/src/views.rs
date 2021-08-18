@@ -42,7 +42,7 @@ use std::{
     collections::BTreeMap,
     convert::{TryFrom, TryInto},
 };
-use ol_types::miner_state::MinerStateResource;
+// use ol_types::miner_state::MinerStateResource;
 use ol_types::oracle_upgrade::{UpgradeOracle, OracleResource};
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
@@ -1459,18 +1459,19 @@ pub struct MinerStateResourceView {
     pub epochs_since_last_account_creation: u64
 }
 
-impl TryFrom<MinerStateResource> for MinerStateResourceView {
+impl TryFrom<AccountState> for MinerStateResourceView {
     type Error = Error;
 
-    fn try_from(state: MinerStateResource) -> Result<MinerStateResourceView, Error> {
+    fn try_from(state: AccountState) -> Result<MinerStateResourceView, Error> {
+        let m = state.get_miner_state()?.unwrap();
         Ok(MinerStateResourceView {
-            previous_proof_hash: BytesView::from( state.previous_proof_hash),
-            verified_tower_height: state.verified_tower_height, // user's latest verified_tower_height
-            latest_epoch_mining: state.latest_epoch_mining,
-            count_proofs_in_epoch: state.count_proofs_in_epoch,
-            epochs_validating_and_mining: state.epochs_validating_and_mining,
-            contiguous_epochs_validating_and_mining: state.contiguous_epochs_validating_and_mining,
-            epochs_since_last_account_creation: state.epochs_since_last_account_creation
+            previous_proof_hash: BytesView::from( m.previous_proof_hash),
+            verified_tower_height: m.verified_tower_height, // user's latest verified_tower_height
+            latest_epoch_mining: m.latest_epoch_mining,
+            count_proofs_in_epoch: m.count_proofs_in_epoch,
+            epochs_validating_and_mining: m.epochs_validating_and_mining,
+            contiguous_epochs_validating_and_mining: m.contiguous_epochs_validating_and_mining,
+            epochs_since_last_account_creation: m.epochs_since_last_account_creation
         })
     }
 }

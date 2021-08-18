@@ -448,11 +448,14 @@ sw-stdlib:
 	cd ${SOURCE} && cargo run -p diem-framework
 
 sw-build:
-	cargo build -p diem-node -p diem-swarm
+	cargo build -p diem-node -p diem-swarm -p cli
 
 ## Swarm
 sw-start:
 	cd ${SOURCE} && cargo run -p diem-swarm -- --diem-node target/debug/diem-node -c ${DATA_PATH}/swarm_temp -n 1 -s --cli-path ${SOURCE}/target/debug/cli
 
 sw-init:
-	cd ${SOURCE} && cargo r -p ol -- --swarm-path ~/swarm_temp/ --swarm-persona alice init --source-path ~/libra
+	cd ${SOURCE} && cargo r -p ol -- --swarm-path ${DATA_PATH}/swarm_temp/ --swarm-persona alice init --source-path ~/libra
+
+sw-miner:
+		cd ${SOURCE} && cargo r -p miner -- --swarm-path ${DATA_PATH}/swarm_temp --swarm-persona alice start
