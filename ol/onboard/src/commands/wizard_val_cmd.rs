@@ -15,6 +15,7 @@ use ol_types::block::Block;
 use ol_types::config::IS_TEST;
 use ol_types::{account::ValConfigs, pay_instruction::PayInstruction, config::TxType};
 use reqwest::Url;
+use std::fs;
 use std::process::exit;
 use std::{fs::File, io::Write, path::PathBuf};
 use txs::{commands::autopay_batch_cmd, submit_tx};
@@ -53,6 +54,8 @@ pub struct ValWizardCmd {
     waypoint: Option<Waypoint>,
     #[options(short = "e", help = "If validator is building from source")]
     epoch: Option<u64>,    
+    #[options(help = "For testing in ci, use genesis.blob fixtures")]
+    ci: bool,   
 }
 
 impl Runnable for ValWizardCmd {
@@ -136,6 +139,8 @@ impl Runnable for ValWizardCmd {
                     "\n...........................\n"
                 );
             }
+        } else if self.ci {
+          fs::copy("/root/libra/ol/fixtures/genesis/swarm_genesis.blob", home_path.join("genesis.blob")).unwrap();
         }
 
         let home_dir = app_config.workspace.node_home.to_owned();

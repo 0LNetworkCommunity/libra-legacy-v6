@@ -89,8 +89,7 @@ pub fn get_files(
         repo=repo
     );
 
-    let w_res = reqwest::blocking::get(&format!("{}genesis_waypoint", base_url));
-
+    let w_res = reqwest::blocking::get(&format!("{}genesis_waypoint.txt", base_url));
     let w_path = &home_dir.join("genesis_waypoint");
     let mut w_file = File::create(&w_path).expect("couldn't create file");
     let w_content =  w_res.unwrap().text().unwrap();

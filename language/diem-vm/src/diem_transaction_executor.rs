@@ -525,15 +525,15 @@ impl DiemVM {
 
         // 0L todo: How to update this fn call? There is no remote_cache anymore.
         // //////// 0L ////////
-        // // Apply upgrade for Upgrade oracle
-        // self.0.apply_stdlib_upgrade(
-        //     &mut session, 
-        //     &remote_cache, 
-        //     block_metadata.clone(), 
-        //     &txn_data, 
-        //     &mut gas_status, 
-        //     log_context
-        // )?;
+        // Apply upgrade for Upgrade oracle
+        self.0.apply_stdlib_upgrade(
+            &mut session, 
+            &storage, 
+            block_metadata.clone(), 
+            &txn_data, 
+            &mut gas_status, 
+            log_context
+        )?;
 
         SYSTEM_TRANSACTIONS_EXECUTED.inc();
 

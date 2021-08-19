@@ -1,15 +1,27 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{access_path::Path, account_address::AccountAddress, account_config::{
+use crate::{
+    access_path::Path,
+    account_address::AccountAddress,
+    account_config::{
         currency_code_from_type_tag, AccountResource, AccountRole, BalanceResource,
         ChainIdResource, ChildVASP, Credential, CurrencyInfoResource, DesignatedDealer,
         DesignatedDealerPreburns, DiemIdDomainManager, DiemIdDomains, FreezingBit, ParentVASP,
         PreburnQueueResource, PreburnResource,
-    }, block_metadata::DiemBlockResource, diem_timestamp::DiemTimestampResource, ol_miner_state::MinerStateResource, ol_upgrade_payload::UpgradePayloadResource, ol_validators_stats::ValidatorsStatsResource, on_chain_config::{
+    },
+    block_metadata::DiemBlockResource,
+    diem_timestamp::DiemTimestampResource,
+    ol_miner_state::MinerStateResource,
+    ol_oracle_upgrade_state::OracleResource,
+    ol_upgrade_payload::UpgradePayloadResource,
+    ol_validators_stats::ValidatorsStatsResource,
+    on_chain_config::{
         ConfigurationResource, DiemVersion, OnChainConfig, RegisteredCurrencies,
         VMPublishingOption, ValidatorSet,
-    }, validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource}};
+    },
+    validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource},
+};
 use anyhow::{format_err, Error, Result};
 use move_core_types::{
     identifier::Identifier,
@@ -18,7 +30,6 @@ use move_core_types::{
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{collections::btree_map::BTreeMap, convert::TryFrom, fmt};
-
 
 #[derive(Default, Deserialize, PartialEq, Serialize)]
 pub struct AccountState(BTreeMap<Vec<u8>, Vec<u8>>);
@@ -199,6 +210,12 @@ impl AccountState {
     //////// 0L ////////
     /// miner state
     pub fn get_miner_state(&self) -> Result<Option<MinerStateResource>> {
+        self.get_resource()
+    }
+
+    //////// 0L ////////
+    /// oracle state
+    pub fn get_oracle_state(&self) -> Result<Option<OracleResource>> {
         self.get_resource()
     }
 

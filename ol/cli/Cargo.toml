@@ -17,7 +17,7 @@ sysinfo = "0.16.4"
 gumdrop = "0.7"
 serde = { version = "1", features = ["serde_derive"] }
 thiserror = "1"
-reqwest = { version = "0.10.6", features = ["blocking", "json"], default_features = false }
+reqwest = { version = "0.11.2", features = ["blocking", "json"], default_features = false }
 cli = { path = "../../testsuite/cli/", version = "0.1.0" }
 diem-types = { path = "../../types/" }
 num-format = "0.4.0"

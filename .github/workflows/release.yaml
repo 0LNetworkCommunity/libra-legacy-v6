@@ -1,0 +1,51 @@
+name: Publish
+
+on:
+  push:
+    branches: [ ci ]
+    tags:
+      - '*'
+
+env:
+  CARGO_TERM_COLOR: always
+  NODE_ENV: prod
+
+jobs:
+  release:
+    name: Release for OLSF
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1.0.7
+      - uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: stable
+          components: rustfmt
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - name: Build
+        run:  RUSTC_WRAPPER=sccache make bins
+      - name: Upload binaries to github.com/release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/!(*.*)
+          file_glob: true
+          tag: ${{ github.ref }}
+          overwrite: true
+      - name: Build Web
+        run: cd ol/cli/web-monitor/public/ && npm i && npm run build
+      - name: Package Web
+        run: cd ol/cli/web-monitor/public/; tar -czvf web-monitor.tar.gz *
+      - name: Upload Web Files
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ol/cli/web-monitor/public/web-monitor.tar.gz
+          file_glob: true
+          tag: ${{ github.ref }}
+          overwrite: true
+
+          

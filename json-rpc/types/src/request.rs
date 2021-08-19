@@ -83,6 +83,7 @@ pub enum MethodRequest {
 
     //////// 0L ////////
     GetMinerStateView(GetMinerStateParams),
+    GetOracleUpgradeStateView(),
 }
 
 impl MethodRequest {
@@ -121,6 +122,11 @@ impl MethodRequest {
                 MethodRequest::GetMinerStateView(serde_json::from_value(value)?)
             }
 
+            Method::GetOracleUpgradeStateView => {
+                MethodRequest::GetOracleUpgradeStateView()
+            }
+            
+
 
         };
 
@@ -144,7 +150,7 @@ impl MethodRequest {
             MethodRequest::GetEventsWithProofs(_) => Method::GetEventsWithProofs,
             ///////// 0L ////////
             MethodRequest::GetMinerStateView(_) =>  Method::GetMinerStateView, 
-        }
+            MethodRequest::GetOracleUpgradeStateView() =>  Method::GetOracleUpgradeStateView,        }
     }
 }
 

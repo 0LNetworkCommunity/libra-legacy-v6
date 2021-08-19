@@ -25,11 +25,11 @@ MNEM="talent sunset lizard pill fame nuclear spy noodle basket okay critic grow 
 NUM_NODES = 2
 
 ifndef PREV_VERSION
-PREV_VERSION=v4.3.2
+PREV_VERSION=v5-rpc
 endif
 
 ifndef BRANCH_NAME
-BRANCH_NAME=main
+BRANCH_NAME=v5-rpc
 endif
 
 # USAGE: BRANCH_NAME=<latest branch> make -f test-upgrade.mk upgrade
@@ -59,9 +59,9 @@ get-test:
 	cd ${SOURCE_PATH} && git checkout ${BRANCH_NAME} -f
 
 stdlib:
-	cd ${SOURCE_PATH} && cargo run --release -p stdlib
-	cd ${SOURCE_PATH} && cargo run --release -p stdlib -- --create-upgrade-payload
-	sha256sum ${STDLIB_BIN}
+	cd ${SOURCE_PATH} && cargo run --release -p diem-framework
+	cd ${SOURCE_PATH} && cargo run --release -p diem-framework -- --create-upgrade-payload
+
 
 init:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init

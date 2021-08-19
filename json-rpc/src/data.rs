@@ -6,7 +6,7 @@ use crate::{
     views::{
         AccountStateWithProofView, AccountView, CurrencyInfoView, EventView, EventWithProofView,
         MetadataView, StateProofView, TransactionListView, TransactionView,
-        TransactionsWithProofsView, MinerStateResourceView
+        TransactionsWithProofsView, MinerStateResourceView, OracleUpgradeStateView
     },
 };
 use anyhow::{format_err, Result};
@@ -306,5 +306,17 @@ pub fn get_miner_state(
     let s = get_account_state(db, account, version)?.unwrap();
 
     MinerStateResourceView::try_from(s).map_err(Into::into)
+}
+
+/// Get miner state
+pub fn get_oracle_upgrade_state(
+    db: &dyn DbReader,
+    version: u64,
+    // account: AccountAddress,
+    // ledger_info: &LedgerInfoWithSignatures,
+) -> Result<OracleUpgradeStateView, JsonRpcError> {
+    let s = get_account_state(db, diem_root_address(), version)?.unwrap();
+
+    OracleUpgradeStateView::try_from(s).map_err(Into::into)
 }
 
