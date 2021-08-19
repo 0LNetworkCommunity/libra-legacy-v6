@@ -45,7 +45,7 @@ impl Command for CommandQueryMinerState {
     fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
         match client.get_miner_state(&params) {
             Ok( Some(msv)) => println!(" Account: {:?}\n {:?}", &params[1], msv ),
-            Err(e) => println!("Didn't found miner state for this address: {:?}", e),
+            Err(e) => println!("Didn't find miner state for this address: {:?}", e),
             _ => {}
         }
     }

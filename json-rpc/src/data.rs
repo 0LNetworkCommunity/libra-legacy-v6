@@ -6,10 +6,11 @@ use crate::{
     views::{
         AccountStateWithProofView, AccountView, CurrencyInfoView, EventView, EventWithProofView,
         MetadataView, StateProofView, TransactionListView, TransactionView,
-        TransactionsWithProofsView,
+        TransactionsWithProofsView, MinerStateResourceView
     },
 };
 use anyhow::{format_err, Result};
+// use diem_client::views::MinerStateResourceView;
 use diem_crypto::HashValue;
 use diem_types::{
     account_address::AccountAddress,
@@ -292,3 +293,18 @@ pub fn get_account_state_with_proof(
         account_state_with_proof,
     )?)
 }
+
+
+//////// 0L ////////
+/// Get miner state
+pub fn get_miner_state(
+    db: &dyn DbReader,
+    version: u64,
+    account: AccountAddress,
+    // ledger_info: &LedgerInfoWithSignatures,
+) -> Result<MinerStateResourceView, JsonRpcError> {
+    let s = get_account_state(db, account, version)?.unwrap();
+
+    MinerStateResourceView::try_from(s).map_err(Into::into)
+}
+

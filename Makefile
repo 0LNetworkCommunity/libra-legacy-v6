@@ -438,6 +438,29 @@ clean-tags:
 	git push origin --delete ${TAG}
 	git tag -d ${TAG}
 	
+
+
+####### SWARM ########
+
+sw: sw-build sw-start sw-init
+
+## Build
+sw-stdlib:
+	cd ${SOURCE} && cargo run -p diem-framework
+
+sw-build:
+	cargo build -p diem-node -p diem-swarm -p cli
+
+## Swarm
+sw-start:
+	cd ${SOURCE} && cargo run -p diem-swarm -- --diem-node target/debug/diem-node -c ${DATA_PATH}/swarm_temp -n 1 -s --cli-path ${SOURCE}/target/debug/cli
+
+sw-init:
+	cd ${SOURCE} && cargo r -p ol -- --swarm-path ${DATA_PATH}/swarm_temp/ --swarm-persona alice init --source-path ~/libra
+
+sw-miner:
+		cd ${SOURCE} && cargo r -p miner -- --swarm-path ${DATA_PATH}/swarm_temp --swarm-persona alice start
+=======
 ##### FORK TESTS #####
 
 EPOCH_HEIGHT = $(shell cargo r -p ol -- query --epoch | cut -d ":" -f 2)

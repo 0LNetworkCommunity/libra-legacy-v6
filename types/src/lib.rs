@@ -41,8 +41,8 @@ pub use account_address::AccountAddress as PeerId;
 
 //////// 0L ////////
 pub mod ol_upgrade_payload; 
-pub mod ol_validators_stats; 
-//////// end 0L ////////
+pub mod ol_validators_stats;
+pub mod ol_miner_state;
 
 #[cfg(test)]
 mod unit_tests;

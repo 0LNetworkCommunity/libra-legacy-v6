@@ -80,6 +80,9 @@ pub enum MethodRequest {
     GetAccountStateWithProof(GetAccountStateWithProofParams),
     GetTransactionsWithProofs(GetTransactionsWithProofsParams),
     GetEventsWithProofs(GetEventsWithProofsParams),
+
+    //////// 0L ////////
+    GetMinerStateView(GetMinerStateParams),
 }
 
 impl MethodRequest {
@@ -112,6 +115,13 @@ impl MethodRequest {
             Method::GetEventsWithProofs => {
                 MethodRequest::GetEventsWithProofs(serde_json::from_value(value)?)
             }
+
+            //////// 0L ////////
+            Method::GetMinerStateView => {
+                MethodRequest::GetMinerStateView(serde_json::from_value(value)?)
+            }
+
+
         };
 
         Ok(method_request)
@@ -132,6 +142,8 @@ impl MethodRequest {
             MethodRequest::GetAccountStateWithProof(_) => Method::GetAccountStateWithProof,
             MethodRequest::GetTransactionsWithProofs(_) => Method::GetTransactionsWithProofs,
             MethodRequest::GetEventsWithProofs(_) => Method::GetEventsWithProofs,
+            ///////// 0L ////////
+            MethodRequest::GetMinerStateView(_) =>  Method::GetMinerStateView, 
         }
     }
 }
@@ -329,9 +341,29 @@ pub struct GetEventsWithProofsParams {
     pub limit: u64,
 }
 
+//////// 0L ////////
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct GetMinerStateParams {
+    pub account: AccountAddress,
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
+
+
+    #[test]
+    fn ol_get_miner() { //////// 0L ////////
+        let account = "1668f6be25668c1a17cd8caf6b8d2f25";
+
+        // json object
+        let value = serde_json::json!({"account": account});
+        serde_json::from_value::<GetMinerStateParams>(value).unwrap();
+
+        // json list
+        let value = serde_json::json!([account]);
+        serde_json::from_value::<GetMinerStateParams>(value).unwrap();
+    }
 
     #[test]
     fn metadata() {
