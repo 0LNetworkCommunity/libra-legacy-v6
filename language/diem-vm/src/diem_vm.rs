@@ -4,7 +4,7 @@
 use crate::{
     access_path_cache::AccessPathCache,
     counters::*,
-    data_cache::{RemoteStorage, StateViewCache}, 
+    data_cache::RemoteStorage, 
     errors::{convert_epilogue_error, convert_prologue_error, expect_only_successful_execution},
     system_module_names::*,
     transaction_metadata::TransactionMetadata,
@@ -503,10 +503,10 @@ impl DiemVMImpl {
 
     // 0L todo: See the caller "fn process_block_prologue"
     //////// 0L ////////    
-    pub(crate) fn _apply_stdlib_upgrade<S: MoveStorage> (
+    pub(crate) fn apply_stdlib_upgrade<S: MoveStorage> (
         &self,
         session: &mut Session<S>,
-        remote_cache: &StateViewCache<'_>,
+        remote_cache: &S,
         block_metadata: BlockMetadata,
         txn_data: &TransactionMetadata,
         gas_status: &mut GasStatus,
@@ -515,22 +515,7 @@ impl DiemVMImpl {
         let (round, timestamp, _previous_vote, _proposer) = block_metadata.into_inner();
         // hardcoding upgrade on round 2
         if round==2 {
-            // check the UpgradePayload flag
-            let ap = UpgradePayloadResource::access_path();
-            let gref = 
-                StateViewCache::get(remote_cache, &ap).ok();
-            let upgrade_payload = 
-            match gref {
-                Some(bytes) => {
-                    let payload = bytes.map(|data_blob| {
-                        bcs::from_bytes(data_blob.as_slice()).expect("Failure decoding upgrade payload resource")
-                    });
-                    payload.unwrap_or(UpgradePayloadResource::new(vec![]))
-                },
-                None => UpgradePayloadResource::new(vec![]),
-            };
-
-            let payload = upgrade_payload.payload;
+            let payload = get_upgrade_payload(remote_cache)?.payload;
             if payload.len() > 0 {
                 info!("0L ==== stdlib upgrade: upgrade payload elected in previous epoch");
 
@@ -571,6 +556,21 @@ impl DiemVMImpl {
 
         Ok(())
       }
+}
+
+fn get_upgrade_payload<S: MoveStorage>(
+    remote_cache: &S,
+) -> Result<UpgradePayloadResource, VMStatus> {
+    if let Ok(Some(blob)) = remote_cache.get_resource(
+      &account_config::diem_root_address(),
+      &UpgradePayloadResource::struct_tag(),
+  ) {
+      let x = bcs::from_bytes::<UpgradePayloadResource>(&blob)
+          .map_err(|_| VMStatus::Error(StatusCode::RESOURCE_DOES_NOT_EXIST))?;
+      Ok(x)
+  } else {
+      Err(VMStatus::Error(StatusCode::CURRENCY_INFO_DOES_NOT_EXIST))
+  }
 }
 
 /// Internal APIs for the Diem VM, primarily used for testing.
