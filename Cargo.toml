@@ -173,6 +173,7 @@ members = [
     "ol/verifiable_delay/classgroup",
     "ol/verifiable_delay/vdf",
     "ol/verifiable_delay/vdf-cli", 
+    "ol/genesis-tools",
 ]
 
 # NOTE: default-members is the complete list of binaries that form the "production Diem codebase". These members should

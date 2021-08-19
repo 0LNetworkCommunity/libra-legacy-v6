@@ -9234,12 +9234,12 @@ fn decode_bool_argument(arg: TransactionArgument) -> Option<bool> {
     }
 }
 
-fn decode_u8_argument(arg: TransactionArgument) -> Option<u8> {
-    match arg {
-        TransactionArgument::U8(value) => Some(value),
-        _ => None,
-    }
-}
+// fn decode_u8_argument(arg: TransactionArgument) -> Option<u8> {
+//     match arg {
+//         TransactionArgument::U8(value) => Some(value),
+//         _ => None,
+//     }
+// }
 
 fn decode_u64_argument(arg: TransactionArgument) -> Option<u64> {
     match arg {
