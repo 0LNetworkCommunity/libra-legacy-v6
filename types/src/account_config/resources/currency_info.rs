@@ -95,6 +95,7 @@ impl CurrencyInfoResource {
         self.fractional_part
     }
 
+
     pub fn exchange_rate(&self) -> f32 {
         // Exchange rates are represented as 32|32 fixed-point numbers on-chain, so we divide by the scaling
         // factor (2^32) of the number to arrive at the floating point representation of the number.
@@ -144,5 +145,20 @@ impl CurrencyInfoResource {
 
     pub fn exchange_rate_update_events(&self) -> &EventHandle {
         &self.exchange_rate_update_events
+    }
+
+
+    ///////// 0L //////// 
+    
+    pub fn to_xdx_exchange_rate(&self) -> u64 {
+        self.to_xdx_exchange_rate
+    }
+    
+    pub fn can_mint(&self) -> bool {
+        self.can_mint
+    }
+
+    pub fn is_synthetic(&self) -> bool {
+        self.is_synthetic
     }
 }

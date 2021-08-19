@@ -39,7 +39,6 @@ pub mod waypoint;
 pub mod write_set;
 pub use account_address::AccountAddress as PeerId;
 
-
 //////// 0L ////////
 pub mod ol_upgrade_payload; 
 pub mod ol_validators_stats;

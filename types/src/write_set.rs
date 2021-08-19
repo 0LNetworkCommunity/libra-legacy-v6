@@ -89,6 +89,13 @@ impl WriteSetMut {
         // TODO: add structural validation
         Ok(WriteSet(self))
     }
+
+    //////// 0L ////////
+    /// Get an owned instance of the mutable writeset
+    pub fn get(self) -> Vec<(AccessPath, WriteOp)> {
+      // TODO: add structural validation
+      self.write_set
+    }
 }
 
 impl ::std::iter::FromIterator<(AccessPath, WriteOp)> for WriteSetMut {

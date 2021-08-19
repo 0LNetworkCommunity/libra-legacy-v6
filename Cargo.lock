@@ -43,7 +43,7 @@ dependencies = [
  "chrono",
  "color-backtrace",
  "generational-arena",
- "gumdrop",
+ "gumdrop 0.7.0",
  "libc",
  "once_cell",
  "regex",
@@ -3790,7 +3790,16 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ee50908bc1beeac1f2902e0b4e0cd0d844e716f5ebdc6f0cfc1163fe5e10bcde"
 dependencies = [
- "gumdrop_derive",
+ "gumdrop_derive 0.7.0",
+]
+
+[[package]]
+name = "gumdrop"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "46571f5d540478cf70d2a42dd0d6d8e9f4b9cc7531544b93311e657b86568a0b"
+dependencies = [
+ "gumdrop_derive 0.8.0",
 ]
 
 [[package]]
@@ -3798,6 +3807,17 @@ name = "gumdrop_derive"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "90454ce4de40b7ca6a8968b5ef367bdab48413962588d0d2b1638d60090c35d7"
+dependencies = [
+ "proc-macro2 1.0.27",
+ "quote 1.0.9",
+ "syn 1.0.72",
+]
+
+[[package]]
+name = "gumdrop_derive"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "915ef07c710d84733522461de2a734d4d62a3fd39a4d4f404c2f385ef8618d05"
 dependencies = [
  "proc-macro2 1.0.27",
  "quote 1.0.9",
@@ -4825,7 +4845,7 @@ dependencies = [
  "diemdb",
  "dirs 2.0.2",
  "glob",
- "gumdrop",
+ "gumdrop 0.7.0",
  "hex 0.4.3",
  "machine-ip",
  "move-core-types",
@@ -5858,7 +5878,7 @@ dependencies = [
  "futures",
  "gag",
  "glob",
- "gumdrop",
+ "gumdrop 0.7.0",
  "handlebars",
  "hex 0.4.3",
  "machine-ip",
@@ -5897,6 +5917,32 @@ dependencies = [
 [[package]]
 name = "ol-fixtures"
 version = "0.1.0"
+
+[[package]]
+name = "ol-genesis-tools"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "backup-cli",
+ "backup-service",
+ "bcs",
+ "diem-crypto",
+ "diem-types",
+ "diem-wallet",
+ "futures",
+ "gumdrop 0.8.0",
+ "move-core-types",
+ "ol",
+ "ol-fixtures",
+ "ol-keys",
+ "ol-types",
+ "serde",
+ "serde_json",
+ "storage-interface",
+ "tokio 1.3.0",
+ "tokio-test",
+ "vm-genesis",
+]
 
 [[package]]
 name = "ol-keys"
@@ -5962,7 +6008,7 @@ dependencies = [
  "diem-types",
  "diem-wallet",
  "dirs 2.0.2",
- "gumdrop",
+ "gumdrop 0.7.0",
  "miner",
  "ol",
  "ol-keys",
@@ -9038,7 +9084,7 @@ dependencies = [
  "diemdb",
  "dirs 2.0.2",
  "glob",
- "gumdrop",
+ "gumdrop 0.7.0",
  "hex 0.4.3",
  "move-core-types",
  "ol",
