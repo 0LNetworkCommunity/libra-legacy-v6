@@ -61,7 +61,7 @@ get-test:
 stdlib:
 	cd ${SOURCE_PATH} && cargo run --release -p diem-framework
 	cd ${SOURCE_PATH} && cargo run --release -p diem-framework -- --create-upgrade-payload
-	sha256sum ${STDLIB_BIN}
+
 
 init:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init
