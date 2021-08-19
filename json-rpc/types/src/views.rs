@@ -4,31 +4,19 @@
 use anyhow::{ensure, format_err, Error, Result};
 use diem_crypto::hash::{CryptoHash, HashValue};
 use diem_transaction_builder::{error_explain, stdlib::ScriptCall};
-use diem_types::{
-    account_config::{
+use diem_types::{account_config::{
         AccountResource, AccountRole, AdminTransactionEvent, BalanceResource, BaseUrlRotationEvent,
         BurnEvent, CancelBurnEvent, ComplianceKeyRotationEvent, CreateAccountEvent,
         CurrencyInfoResource, DesignatedDealerPreburns, DiemIdDomainEvent, FreezingBit, MintEvent,
         NewBlockEvent, NewEpochEvent, PreburnEvent, ReceivedMintEvent, ReceivedPaymentEvent,
         SentPaymentEvent, ToXDXExchangeRateUpdateEvent,
-    },
-    account_state::AccountState,
-    account_state_blob::{AccountStateBlob, AccountStateWithProof},
-    contract_event::{ContractEvent, EventWithProof},
-    diem_id_identifier::DiemIdVaspDomainIdentifier,
-    epoch_change::EpochChangeProof,
-    event::EventKey,
-    ledger_info::LedgerInfoWithSignatures,
-    proof::{
+    }, account_state::AccountState, account_state_blob::{AccountStateBlob, AccountStateWithProof}, contract_event::{ContractEvent, EventWithProof}, diem_id_identifier::DiemIdVaspDomainIdentifier, epoch_change::EpochChangeProof, event::EventKey, ledger_info::LedgerInfoWithSignatures, ol_oracle_upgrade_state::{OracleResource, UpgradeOracle}, proof::{
         AccountStateProof, AccumulatorConsistencyProof, SparseMerkleProof,
         TransactionAccumulatorProof, TransactionInfoWithProof, TransactionListProof,
-    },
-    transaction::{
+    }, transaction::{
         Script, ScriptFunction, Transaction, TransactionArgument, TransactionInfo,
         TransactionListWithProof, TransactionPayload,
-    },
-    vm_status::KeptVMStatus,
-};
+    }, vm_status::KeptVMStatus};
 use hex::FromHex;
 use move_core_types::{
     account_address::AccountAddress,
@@ -42,8 +30,6 @@ use std::{
     collections::BTreeMap,
     convert::{TryFrom, TryInto},
 };
-// use ol_types::miner_state::MinerStateResource;
-use ol_types::oracle_upgrade::{UpgradeOracle, OracleResource};
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct AmountView {
@@ -1480,17 +1466,13 @@ impl TryFrom<AccountState> for MinerStateResourceView {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct OracleUpgradeStateView {
     pub upgrade: UpgradeOracle,
-    // pub votes: Vec<Vote>,
-    // pub consensus: VoteCount,
 }
 
 impl TryFrom<OracleResource> for OracleUpgradeStateView {
     type Error = Error;
-    fn try_from(state: OracleResource) -> Result<OracleUpgradeStateView, Error> {
+    fn try_from(state: OracleResource) -> Result<OracleUpgradeStateView, Self::Error> {
       Ok(OracleUpgradeStateView {
             upgrade: state.upgrade,
-            // votes: compressed.votes.clone(),
-            // consensus: compressed.consensus.clone(),
         })
     }
 }
@@ -1499,25 +1481,11 @@ impl TryFrom<OracleResource> for OracleUpgradeStateView {
 impl TryFrom<AccountState> for OracleUpgradeStateView {
     type Error = Error;
 
-    fn try_from(state: AccountState) -> Result<OracleUpgradeStateView, Error> {
-        let m = state.get_miner_state()?.unwrap();
+    fn try_from(state: AccountState) -> Result<OracleUpgradeStateView, Self::Error> {
+        let m = state.get_oracle_state()?.unwrap();
+        // TODO: duplication UpgradeResource is the same as OracleUpgradeStateView
         Ok(OracleUpgradeStateView {
-            upgrade: UpgradeOracle{
-                id: state,
-                validators_voted: (),
-                vote_counts: (),
-                votes: (),
-                vote_window: (),
-                version_id: (),
-                consensus: (),
-            },
-            // previous_proof_hash: BytesView::from( m.previous_proof_hash),
-            // verified_tower_height: m.verified_tower_height, // user's latest verified_tower_height
-            // latest_epoch_mining: m.latest_epoch_mining,
-            // count_proofs_in_epoch: m.count_proofs_in_epoch,
-            // epochs_validating_and_mining: m.epochs_validating_and_mining,
-            // contiguous_epochs_validating_and_mining: m.contiguous_epochs_validating_and_mining,
-            // epochs_since_last_account_creation: m.epochs_since_last_account_creation
+            upgrade: m.upgrade,
         })
     }
 }

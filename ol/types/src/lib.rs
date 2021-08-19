@@ -13,7 +13,6 @@ pub mod account;
 pub mod pay_instruction;
 pub mod block;
 pub mod config;
-pub mod oracle_upgrade;
 pub mod dialogue;
 pub mod autopay;
 pub mod validator_config;
