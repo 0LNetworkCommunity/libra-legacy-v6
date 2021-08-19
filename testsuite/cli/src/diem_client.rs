@@ -2,13 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::{/*bail,*/ ensure, Error, Result};
-use diem_client::{
-    views, 
-    views::{MinerStateResourceView, OracleUpgradeStateView},
-    BlockingClient, 
-    Response, 
-    WaitForTransactionError
-};
+use diem_client::{BlockingClient, Response, WaitForTransactionError, views, views::{MinerStateResourceView, OracleUpgradeStateView, TransactionView}};
 use diem_logger::prelude::info;
 use diem_types::{
     account_address::AccountAddress,
@@ -250,27 +244,20 @@ impl DiemClient {
 
     // 0L todo: Not sure if it is possible to implement this fn with diem 1.3.0 code
     /////// 0L /////////
-    // /// Get all transactions for an account within a range
-    // pub fn get_txn_by_acc_range(
-    //     &mut self,
-    //     account: AccountAddress,
-    //     start_height: u64,
-    //     num_txs_limit: u64,
-    //     fetch_events: bool
-    // ) -> Result<Vec<TransactionView>> {
-    //     let mut batch = JsonRpcBatch::new();
-    //     batch.add_get_account_transactions_request(account, start_height, num_txs_limit, fetch_events);
-    //     batch.add_get_state_proof_request(self.trusted_state.latest_version());
+    /// Get all transactions for an account within a range
+    pub fn get_txn_by_acc_range(
+        &mut self,
+        account: AccountAddress,
+        start_height: u64,
+        num_txs_limit: u64,
+        fetch_events: bool
+    ) -> Result<Vec<TransactionView>> {
 
-    //     let responses = self.client.execute(batch)?;
-    //     let state_proof_view = get_response_from_batch(1, &responses)?.as_ref();
-    //     self.process_state_proof_response(state_proof_view)?;
-
-    //     match get_response_from_batch(0, &responses)? {
-    //         Ok(result) => Ok(TransactionView::vec_from_response(result.clone())?),
-    //         Err(e) => bail!("Failed to get transactions with error: {:?}", e),
-    //     }
-    // }
+      self.client
+            .get_account_transactions(account, start_height, num_txs_limit, fetch_events)
+            .map_err(Into::into)
+            .map(Response::into_inner)
+    }
 
     /// Get transactions in range (start_version..start_version + limit - 1) from validator.
     pub fn get_txn_by_range(
