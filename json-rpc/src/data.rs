@@ -10,6 +10,7 @@ use crate::{
     },
 };
 use anyhow::{format_err, Result};
+// use diem_client::views::MinerStateResourceView;
 use diem_crypto::HashValue;
 use diem_types::{
     account_address::AccountAddress,
