@@ -18,3 +18,5 @@ pub mod miner_state;
 pub mod dialogue;
 pub mod autopay;
 pub mod validator_config;
+pub mod fullnode_counter;
+pub mod wallet;

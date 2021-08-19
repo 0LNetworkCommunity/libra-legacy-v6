@@ -1,13 +1,10 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    account_config::{
+use crate::{account_config::{
         constants::ACCOUNT_MODULE_IDENTIFIER, KeyRotationCapabilityResource,
         WithdrawCapabilityResource,
-    },
-    event::EventHandle,
-};
+    }, event::EventHandle};
 use move_core_types::{
     identifier::IdentStr,
     move_resource::{MoveResource, MoveStructType},
@@ -77,6 +74,20 @@ impl AccountResource {
     /// Return the received_events handle for the given AccountResource
     pub fn received_events(&self) -> &EventHandle {
         &self.received_events
+    }
+
+    //////// 0L /////////
+    /// Replace the authkey in place
+    pub fn rotate_auth_key(mut self, new_key: Vec<u8>) -> Self {
+        self.authentication_key = new_key;
+        AccountResource {
+            authentication_key: self.authentication_key,
+            withdrawal_capability: self.withdrawal_capability,
+            key_rotation_capability: self.key_rotation_capability,
+            received_events: self.received_events,
+            sent_events: self.sent_events,
+            sequence_number: self.sequence_number,
+        }
     }
 }
 

@@ -438,3 +438,30 @@ clean-tags:
 	git push origin --delete ${TAG}
 	git tag -d ${TAG}
 	
+##### FORK TESTS #####
+
+EPOCH_HEIGHT = $(shell cargo r -p ol -- query --epoch | cut -d ":" -f 2)
+
+epoch:
+	cargo r -p ol -- query --epoch
+	echo ${EPOCH_HEIGHT}
+
+fork-backup:
+		rm -rf ${SOURCE}/ol/devnet/snapshot/*
+		cargo run -p backup-cli --bin db-backup -- one-shot backup --backup-service-address http://localhost:6186 state-snapshot --state-version ${EPOCH_HEIGHT} local-fs --dir ${SOURCE}ol/devnet/snapshot/
+
+# Make genesis file
+fork-genesis:
+		cargo run -p ol-genesis-tools -- --fork --output-path ${DATA_PATH}/genesis_from_snapshot.blob --snapshot-path ${SOURCE}ol/devnet/snapshot/state_ver*
+
+# Use onboard to create all node files
+fork-config:
+	cargo run -p onboard -- fork -u http://167.172.248.37 --prebuilt-genesis ${DATA_PATH}/genesis_from_snapshot.blob
+
+# start node from files
+
+fork-start: 
+	rm -rf ~/.0L/db
+	cargo run -p libra-node -- --config ~/.0L/validator.node.yaml
+
+fork: stdlib fork-genesis fork-config fork-start

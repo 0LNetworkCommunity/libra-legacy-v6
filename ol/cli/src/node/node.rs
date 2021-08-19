@@ -221,9 +221,11 @@ impl Node {
         //         Err(_e) => (),
         //     }
         // }
-        panic!("Error: Incomplete function"); // Remove this after fixing this fn
+        // return false;
+        todo!();
+        // panic!("Error: Incomplete function"); // Remove this after fixing this fn
 
-        return false;
+        
     }
 
     /// database is initialized, Please do NOT invoke this function frequently
