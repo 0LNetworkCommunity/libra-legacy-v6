@@ -44,6 +44,7 @@ pub use account_address::AccountAddress as PeerId;
 pub mod ol_upgrade_payload; 
 pub mod ol_validators_stats;
 pub mod ol_miner_state;
+pub mod ol_oracle_upgrade_state;
 
 #[cfg(test)]
 mod unit_tests;

@@ -459,3 +459,7 @@ sw-init:
 
 sw-miner:
 		cd ${SOURCE} && cargo r -p miner -- --swarm-path ${DATA_PATH}/swarm_temp --swarm-persona alice start
+
+sw-query:
+		cd ${SOURCE} && cargo r -p ol -- --swarm-path ${DATA_PATH}/swarm_temp --swarm-persona alice query --epoch
+

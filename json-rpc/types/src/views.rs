@@ -1494,3 +1494,30 @@ impl TryFrom<OracleResource> for OracleUpgradeStateView {
         })
     }
 }
+
+
+impl TryFrom<AccountState> for OracleUpgradeStateView {
+    type Error = Error;
+
+    fn try_from(state: AccountState) -> Result<OracleUpgradeStateView, Error> {
+        let m = state.get_miner_state()?.unwrap();
+        Ok(OracleUpgradeStateView {
+            upgrade: UpgradeOracle{
+                id: state,
+                validators_voted: (),
+                vote_counts: (),
+                votes: (),
+                vote_window: (),
+                version_id: (),
+                consensus: (),
+            },
+            // previous_proof_hash: BytesView::from( m.previous_proof_hash),
+            // verified_tower_height: m.verified_tower_height, // user's latest verified_tower_height
+            // latest_epoch_mining: m.latest_epoch_mining,
+            // count_proofs_in_epoch: m.count_proofs_in_epoch,
+            // epochs_validating_and_mining: m.epochs_validating_and_mining,
+            // contiguous_epochs_validating_and_mining: m.contiguous_epochs_validating_and_mining,
+            // epochs_since_last_account_creation: m.epochs_since_last_account_creation
+        })
+    }
+}

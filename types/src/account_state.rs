@@ -6,7 +6,8 @@ use crate::{access_path::Path, account_address::AccountAddress, account_config::
         ChainIdResource, ChildVASP, Credential, CurrencyInfoResource, DesignatedDealer,
         DesignatedDealerPreburns, DiemIdDomainManager, DiemIdDomains, FreezingBit, ParentVASP,
         PreburnQueueResource, PreburnResource,
-    }, block_metadata::DiemBlockResource, diem_timestamp::DiemTimestampResource, ol_miner_state::MinerStateResource, ol_upgrade_payload::UpgradePayloadResource, ol_validators_stats::ValidatorsStatsResource, on_chain_config::{
+    }, block_metadata::DiemBlockResource, diem_timestamp::DiemTimestampResource, ol_miner_state::MinerStateResource, ol_upgrade_payload::UpgradePayloadResource, 
+    ol_oracle_upgrade_state::OracleResource, ol_validators_stats::ValidatorsStatsResource, on_chain_config::{
         ConfigurationResource, DiemVersion, OnChainConfig, RegisteredCurrencies,
         VMPublishingOption, ValidatorSet,
     }, validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource}};
@@ -199,6 +200,12 @@ impl AccountState {
     //////// 0L ////////
     /// miner state
     pub fn get_miner_state(&self) -> Result<Option<MinerStateResource>> {
+        self.get_resource()
+    }
+
+    //////// 0L ////////
+    /// oracle state
+    pub fn get_oracle_state(&self) -> Result<Option<OracleResource>> {
         self.get_resource()
     }
 

@@ -188,6 +188,9 @@ impl<'a> Handler<'a> {
             MethodRequest::GetMinerStateView(params) => {
                 serde_json::to_value(self.get_miner_state(params).await?)?
             }
+            MethodRequest::GetOracleUpgradeStateView() => {
+                serde_json::to_value(self.get_oracle_upgrade_state().await?)?
+            }
         };
         Ok(response)
     }
@@ -377,6 +380,12 @@ impl<'a> Handler<'a> {
         params: GetMinerStateParams,
     ) -> Result<MinerStateResourceView, JsonRpcError> {
         data::get_miner_state(self.service.db.borrow(), self.version(), params.account)
+    }
+
+    async fn get_oracle_upgrade_state(
+        &self,
+    ) -> Result<OracleUpgradeStateView, JsonRpcError> {
+        data::get_oracle_upgrade_state(self.service.db.borrow(), self.version())
     }
 }
 
