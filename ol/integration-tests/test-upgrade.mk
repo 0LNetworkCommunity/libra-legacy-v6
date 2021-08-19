@@ -13,6 +13,8 @@ ifndef SOURCE_PATH
 SOURCE_PATH = ${HOME}/libra
 endif
 
+STDLIB_BIN = ${SOURCE_PATH}/language/diem-framework/staged/stdlib.mv
+
 # alice
 ifndef PERSONA
 PERSONA=alice
@@ -23,11 +25,11 @@ MNEM="talent sunset lizard pill fame nuclear spy noodle basket okay critic grow 
 NUM_NODES = 2
 
 ifndef PREV_VERSION
-PREV_VERSION=v4.3.2
+PREV_VERSION=v5-rpc
 endif
 
 ifndef BRANCH_NAME
-BRANCH_NAME=main
+BRANCH_NAME=v5-rpc
 endif
 
 # USAGE: BRANCH_NAME=<latest branch> make -f test-upgrade.mk upgrade
@@ -57,16 +59,16 @@ get-test:
 	cd ${SOURCE_PATH} && git checkout ${BRANCH_NAME} -f
 
 stdlib:
-	cd ${SOURCE_PATH} && cargo run --release -p diem-framework
-	cd ${SOURCE_PATH} && cargo run --release -p diem-framework -- --create-upgrade-payload
-	sha256sum ${SOURCE_PATH}/language/stdlib/staged/stdlib.mv
+	cd ${SOURCE_PATH} && cargo run --release -p stdlib
+	cd ${SOURCE_PATH} && cargo run --release -p stdlib -- --create-upgrade-payload
+	sha256sum ${STDLIB_BIN}
 
 init:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init
 	cp ${SWARM_TEMP}/0/0L.toml ${HOME}/.0L/0L.toml
 
 submit:
-	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-upgrade -f ${SOURCE_PATH}/language/stdlib/staged/stdlib.mv
+	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-upgrade -f ${STDLIB_BIN}
 
 query:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --blockheight | grep -Eo [0-9]+ | tail -n1
