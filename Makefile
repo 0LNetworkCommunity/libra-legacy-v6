@@ -463,4 +463,6 @@ sw-miner:
 
 sw-query:
 		cd ${SOURCE} && cargo r -p ol -- --swarm-path ${DATA_PATH}/swarm_temp --swarm-persona alice query --txs
+sw-tx:
+		cd ${SOURCE} && cargo r -p txs -- --swarm-path ${DATA_PATH}/swarm_temp --swarm-persona alice wallet -s
 
