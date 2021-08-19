@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main, ci ]
   pull_request:
-    branches: [ main, 'release**' ]
+    branches: [ main, 'release**', v5 ]
     
 jobs:
   functional:
@@ -31,7 +31,7 @@ jobs:
       - name: check version
         run: rustc -V
       - name: Build stdlib
-        run: cd language/stdlib && cargo run --release
+        run: cd language/diem-framework && cargo run --release
       - name: Run 0L functional tests
         run: cd language/move-lang/functional-tests && NODE_ENV=test cargo test 0L
   tools:
@@ -85,7 +85,7 @@ jobs:
             override: true
             components: rustfmt, clippy
       - name: Build stdlib
-        run: cd language/stdlib && cargo run --release
+        run: cd language/diem-framework && cargo run --release
       - name: Run 0L e2e tests
         run: cd language/e2e-testsuite && NODE_ENV=test cargo test ol
   
