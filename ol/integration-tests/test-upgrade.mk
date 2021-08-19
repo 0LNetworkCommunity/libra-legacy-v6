@@ -57,8 +57,8 @@ get-test:
 	cd ${SOURCE_PATH} && git checkout ${BRANCH_NAME} -f
 
 stdlib:
-	cd ${SOURCE_PATH} && cargo run --release -p stdlib
-	cd ${SOURCE_PATH} && cargo run --release -p stdlib -- --create-upgrade-payload
+	cd ${SOURCE_PATH} && cargo run --release -p diem-framework
+	cd ${SOURCE_PATH} && cargo run --release -p diem-framework -- --create-upgrade-payload
 	sha256sum ${SOURCE_PATH}/language/stdlib/staged/stdlib.mv
 
 init:
