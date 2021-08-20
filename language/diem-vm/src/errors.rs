@@ -44,6 +44,10 @@ pub fn convert_prologue_error(
     log_context: &impl LogContext,
 ) -> Result<(), VMStatus> {
     let status = error.into_vm_status();
+
+    // This is needed for UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION failures
+    dbg!("Error", &status); /////// 0L /////////
+
     Err(match status {
         VMStatus::Executed => VMStatus::Executed,
         VMStatus::MoveAbort(location, code)
@@ -122,6 +126,10 @@ pub fn convert_epilogue_error(
     log_context: &impl LogContext,
 ) -> Result<(), VMStatus> {
     let status = error.into_vm_status();
+
+    // This is needed for UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION failures
+    dbg!("Error", &status); /////// 0L /////////
+
     Err(match status {
         VMStatus::Executed => VMStatus::Executed,
         VMStatus::MoveAbort(location, code)
@@ -170,6 +178,10 @@ pub fn expect_only_successful_execution(
     log_context: &impl LogContext,
 ) -> Result<(), VMStatus> {
     let status = error.into_vm_status();
+
+    // This is needed for UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION failures
+    dbg!("Error", &status); /////// 0L /////////
+
     Err(match status {
         VMStatus::Executed => VMStatus::Executed,
 
