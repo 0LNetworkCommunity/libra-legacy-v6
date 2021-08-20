@@ -221,6 +221,8 @@ address 0x1 {
 
               // check payees are community wallets
               let list = Wallet::get_comm_list();
+
+              // TODO: `amount` cannot be zero otherwise DiemAccount::deposit<Token: store>() aborts
               if (Vector::contains<address>(&list, &payment.payee) && 
                   amount != 0 && 
                   amount <= account_bal && 

@@ -564,6 +564,8 @@ Attempt to add instruction when too many already exist
 
           // check payees are community wallets
           <b>let</b> list = <a href="Wallet.md#0x1_Wallet_get_comm_list">Wallet::get_comm_list</a>();
+
+          // TODO: `amount` cannot be zero otherwise <a href="DiemAccount.md#0x1_DiemAccount_deposit">DiemAccount::deposit</a>&lt;Token: store&gt;() aborts
           <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(&list, &payment.payee) &&
               amount != 0 &&
               amount &lt;= account_bal &&
