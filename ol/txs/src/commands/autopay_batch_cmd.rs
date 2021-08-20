@@ -131,27 +131,29 @@ pub fn sign_instructions(
 fn test_instruction_script_match() {
   use diem_types::account_address::AccountAddress;
   use ol_types::pay_instruction::InstructionType;
-  let script = transaction_builder::encode_autopay_create_instruction_script_function(
+  if let TransactionPayload::Script(s) = transaction_builder::encode_autopay_create_instruction_script_function(
       1, 
       0, 
       AccountAddress::ZERO, 
       10, 
       1000
-  );
+  ) {
+    let instr = PayInstruction {
+        uid: Some(1),
+        type_of: InstructionType::PercentOfBalance,
+        destination: AccountAddress::ZERO,
+        end_epoch: Some(10),
+        duration_epochs: None,
+        note: Some("test".to_owned()),
+        type_move: Some(0),
+        value: 10f64,
+        value_move: Some(1000u64),
+    };
 
-  let instr = PayInstruction {
-      uid: Some(1),
-      type_of: InstructionType::PercentOfBalance,
-      destination: AccountAddress::ZERO,
-      end_epoch: Some(10),
-      duration_epochs: None,
-      note: Some("test".to_owned()),
-      type_move: Some(0),
-      value: 10f64,
-      value_move: Some(1000u64),
-  };
+    instr.check_instruction_match_tx(s).unwrap();
+  }
 
-  instr.check_instruction_match_tx(script).unwrap();
+
 
 }
 
