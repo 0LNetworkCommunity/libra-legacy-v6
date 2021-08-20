@@ -6011,6 +6011,7 @@ dependencies = [
  "gumdrop 0.7.0",
  "miner",
  "ol",
+ "ol-fixtures",
  "ol-keys",
  "ol-types",
  "once_cell",

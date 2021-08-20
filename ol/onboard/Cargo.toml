@@ -26,6 +26,8 @@ ol-keys = { path = "../keys/" }
 ol = { path = "../cli"}
 txs = { path = "../txs"}
 ol-types = { path = "../../ol/types"}
+ol-fixtures = { path = "../../ol/fixtures"}
+
 miner = { path = "../miner" }
 zip = "0.5.12"
 dialoguer = "0.8.0"

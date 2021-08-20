@@ -10,6 +10,7 @@ use diem_genesis_tool::ol_node_files;
 use diem_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use diem_wallet::WalletLibrary;
 use ol::{commands::init_cmd, config::AppCfg};
+use ol_fixtures::get_test_genesis_blob;
 use ol_keys::{scheme::KeyScheme, wallet};
 use ol_types::block::Block;
 use ol_types::config::IS_TEST;
@@ -140,7 +141,7 @@ impl Runnable for ValWizardCmd {
                 );
             }
         } else if self.ci {
-          fs::copy("/root/libra/ol/fixtures/genesis/swarm_genesis.blob", home_path.join("genesis.blob")).unwrap();
+          fs::copy(get_test_genesis_blob().as_os_str(), home_path.join("genesis.blob")).unwrap();
         }
 
         let home_dir = app_config.workspace.node_home.to_owned();
