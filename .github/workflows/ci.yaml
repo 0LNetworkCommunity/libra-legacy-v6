@@ -55,13 +55,13 @@ jobs:
             toolchain: 1.52.1
             override: true
             components: rustfmt, clippy
-      - name: Run Miner tests
+      - name: miner tests
         run: cd ol/miner && NODE_ENV=test cargo test
-      - name: Run Types tests
+      - name: types tests
         run: cd ol/types && NODE_ENV=test cargo test
-      - name: Run TXS tests
+      - name: txs tests
         run: cd ol/txs && NODE_ENV=test cargo test
-      - name: Run keygen tests
+      - name: keys tests
         run: cd ol/keys && NODE_ENV=test cargo test
   e2e:
     name: E2E Tests
