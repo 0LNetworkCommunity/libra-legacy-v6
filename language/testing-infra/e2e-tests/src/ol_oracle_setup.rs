@@ -33,8 +33,8 @@ pub fn upgrade_foo_tx(
     seq_num: u64,
 ) -> SignedTransaction {
     let file = UPGRADE_DIR
-        .get_file("ol_oracle_upgrade_foo_tx.mv")
-        .unwrap_or_else(|| panic!("File ol_oracle_upgrade_foo_tx.mv does not exist"));
+        .get_file("071_OracleUpgradeFooTx.mv")
+        .unwrap_or_else(|| panic!("File 071_OracleUpgradeFooTx.mv does not exist"));
 
     let compiled_code = CompiledBytes::new(file.contents().to_vec()).into_vec();
 

@@ -6,7 +6,7 @@
 
   ## Building Fixtures
 
-  TLDR; there is a makefile in `/ol/fixtures/upgrade/make-upgrade-fixtures.mk` which needs to be called whenever there are major architectural changes, or changes to the Upgrade contract.
+  TLDR; there is a makefile in `/ol/fixtures/upgrade/make-e2e-upgrade-fixtures.mk` which needs to be called whenever there are major architectural changes, or changes to the Upgrade contract.
 
   The e2e test located at `language/e2e-testsuite/src/tests/ol_upgrade_oracle.rs` tests if the current stack can take an alternate stdlib, which is exacly the same as in the dev tree, except for there being a canary API: Upgrade::foo() which will only be callable if the upgrade was successful.
 
