@@ -160,7 +160,7 @@ address 0x1 {
     // any payments they have due in the current epoch from their list of payments.
     // Note: payments from epoch n are processed at the epoch_length/2
     // Function code 03
-    use 0x1::Debug::print;
+    // use 0x1::Debug::print;
     public fun process_autopay(
       vm: &signer,
     ) acquires AccountList, Data, AccountLimitsEnable {
@@ -168,16 +168,16 @@ address 0x1 {
       assert(Signer::address_of(vm) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(010003));
 
       let epoch = DiemConfig::get_current_epoch();
-print(&02100);
+// print(&02100);
 
       // Go through all accounts in AccountList
       // This is the list of accounts which currently have autopay enabled
       let account_list = &borrow_global<AccountList>(CoreAddresses::DIEM_ROOT_ADDRESS()).accounts;
       let accounts_length = Vector::length<address>(account_list);
       let account_idx = 0;
-print(&02200);
+// print(&02200);
       while (account_idx < accounts_length) {
-print(&02210);
+// print(&02210);
 
         let account_addr = Vector::borrow<address>(account_list, account_idx);
         // Obtain the account balance
@@ -186,10 +186,10 @@ print(&02210);
         let payments = &mut borrow_global_mut<Data>(*account_addr).payments;
         let payments_len = Vector::length<Payment>(payments);
         let payments_idx = 0;
-print(&02220);
+// print(&02220);
 
         while (payments_idx < payments_len) {
-print(&02221);
+// print(&02221);
 
           let delete_payment = false;
           {
@@ -226,37 +226,37 @@ print(&02221);
               
               // check payees are community wallets
               let list = Wallet::get_comm_list();
-print(&02222);
+// print(&02222);
 
               // Payeee is a community wallet
               if (!Vector::contains<address>(&list, &payment.payee)){
-print(&0222201);
+// print(&0222201);
                 return
               };
 
               if (amount == 0){
-print(&0222202);
+// print(&0222202);
                 return
               };
 
               if (amount > account_bal){
-print(&0222203);
+// print(&0222203);
                 return
               };
 
               if (// transfers are enabled between accounts, need to consider transfer limits
                   borrow_global<AccountLimitsEnable>(Signer::address_of(vm)).enabled) {
-print(&0222204);
+// print(&0222204);
                   DiemAccount::vm_make_payment<GAS>(
                     *account_addr, payment.payee, amount, b"autopay - transfer limits", x"", vm
                   );
               } else {
-print(&0222205);
+// print(&0222205);
                   DiemAccount::vm_make_payment_no_limit<GAS>(
                     *account_addr, payment.payee, amount, b"autopay - no limit", x"", vm
                   );
               };
-print(&02223);
+// print(&02223);
               // update previous balance for next calculation
               payment.prev_bal = DiemAccount::balance<GAS>(*account_addr);
 
@@ -271,7 +271,7 @@ print(&02223);
               delete_payment = true;
             };
           };
-print(&02230);
+// print(&02230);
           if (delete_payment == true) {
             Vector::remove<Payment>(payments, payments_idx);
             payments_len = payments_len - 1;
@@ -280,7 +280,7 @@ print(&02230);
             payments_idx = payments_idx + 1;
           };
         };
-print(&02240);
+// print(&02240);
         account_idx = account_idx + 1;
       };
     }

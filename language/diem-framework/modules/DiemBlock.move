@@ -15,7 +15,7 @@ module DiemBlock {
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
     use 0x1::Migrations;
-    use 0x1::Debug::print;
+    // use 0x1::Debug::print;
 
     struct BlockMetadata has key {
         /// Height of the current block
@@ -90,13 +90,13 @@ module DiemBlock {
         Stats::inc_prop(&vm, *&proposer);    
 
         if (AutoPay2::tick(&vm)){
-            print(&1);
+            // print(&1);
             //triggers autopay at beginning of each epoch 
             //tick is reset at end of previous epoch
             DiemAccount::process_escrow<GAS>(&vm);
-            print(&2);
+            // print(&2);
             AutoPay2::process_autopay(&vm);
-            print(&3);
+            // print(&3);
         };        
 
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(CoreAddresses::DIEM_ROOT_ADDRESS());
