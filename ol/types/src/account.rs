@@ -83,10 +83,10 @@ impl ValConfigs {
         autopay_instructions: Option<Vec<PayInstruction>>,
         autopay_signed: Option<Vec<SignedTransaction>>,
     ) -> Self {
-        // let keys = KeyScheme::new_from_mnemonic(mnemonic_string);
-        let owner_address = keys.child_0_owner.get_address().to_string();
-        // let op_authkey = keys.child_1_operator.get_address();
-        // let net_addr: Ipv4Addr = ip_address.parse().expect("could not parse ip_address");
+
+      let owner_address = keys.child_0_owner.get_address().to_string();
+        
+        // Create the list of validator addresses
         let val_network_string = format!("/ip4/{}/tcp/6180", ip_address);
         let val_addr_obj: NetworkAddress = val_network_string
             .parse()
@@ -106,8 +106,8 @@ impl ValConfigs {
                 0,
             )
             .expect("unable to encrypt network address")];
-        // let serialized_addr = bcs::to_bytes(&encrypted_addr).unwrap();
 
+        // Create the list of fullnode addresses
         let fullnode_network_string = format!("/ip4/{}/tcp/6179", ip_address);
         let fn_addr_obj: NetworkAddress = fullnode_network_string
             .parse()
@@ -117,6 +117,7 @@ impl ValConfigs {
         )
         .unwrap();
         let fn_addr_obj = fn_addr_obj.append_prod_protos(fn_pubkey, 0);
+        
         Self {
             /// Block zero of the onboarded miner
             block_zero: block,
@@ -129,7 +130,7 @@ impl ValConfigs {
                 .to_vec(),
             op_consensus_pubkey: keys.child_4_consensus.get_public().to_bytes().to_vec(),
             op_validator_network_addresses: bcs::to_bytes(&encrypted_addr).unwrap(),
-            op_fullnode_network_addresses: bcs::to_bytes(&fn_addr_obj).unwrap(),
+            op_fullnode_network_addresses: bcs::to_bytes(&vec![&fn_addr_obj]).unwrap(),
             op_fullnode_network_addresses_string: fn_addr_obj.to_owned(),
             op_human_name: format!("{}-oper", owner_address),
             autopay_instructions,
@@ -258,10 +259,10 @@ fn val_config_ip_address() {
 
     let val = ValConfigs::new(block, eve_keys, "161.35.13.169".to_string(), None, None);
 
-    let correct_fn_hex = "2d0400a1230da9052318072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800".to_owned();
+    let correct_fn_hex = "012d0400a1230da9052318072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800".to_owned();
     assert_eq!(encode(&val.op_fullnode_network_addresses), correct_fn_hex);
 
-    let correct_hex = "010000000000000000000000003e250c102074e46ce6160d0efb958f48e4ba3b5a5ac468080135881b885f9baef0da93a2a0b993823448da4d8bf0414d9acd8fea5b664688b864b54c8ec8ae".to_owned();
+    let correct_hex = "010000000000000000000000003ef11392fbf03e110919bc236ebd2bb3cd5d18778e337b2e9f4ec92e93660ac600b28157829f87a5dad729c3cad6fab3f4bba56fca9781150f26bd1d022090".to_owned();
     assert_eq!(encode(&val.op_validator_network_addresses), correct_hex);
 
     let mut enc_addr: Vec<EncNetworkAddress> = bcs::from_bytes(&val.op_validator_network_addresses)
