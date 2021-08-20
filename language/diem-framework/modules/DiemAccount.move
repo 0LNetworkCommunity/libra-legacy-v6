@@ -260,17 +260,20 @@ module DiemAccount {
 
     }
 
+    use 0x1::Debug::print;
     /////// 0L /////////
     public fun process_escrow<Token: store>(
         account: &signer
     ) acquires EscrowList, AutopayEscrow, Balance, AccountOperationsCapability {
+        print(&01000);
         Roles::assert_diem_root(account);
 
         let account_list = &borrow_global<EscrowList<Token>>(CoreAddresses::DIEM_ROOT_ADDRESS()).accounts;
         let account_len = Vector::length<EscrowSettings>(account_list);
         let account_idx = 0;
-
+        print(&010100);
         while (account_idx < account_len) {
+            print(&010110);
             let EscrowSettings {account: account_addr, share: percentage} = Vector::borrow<EscrowSettings>(account_list, account_idx);
 
             //get transfer limit room
@@ -281,18 +284,21 @@ module DiemAccount {
             };
 
             limit_room = FixedPoint32::multiply_u64(limit_room , FixedPoint32::create_from_rational(*percentage, 100));
-
+            print(&010120);
             let amount_sent: u64 = 0;
 
             let payment_list = &mut borrow_global_mut<AutopayEscrow<Token>>(*account_addr).list;
             let num_payments = FIFO::len<Escrow<Token>>(payment_list);
-            
+            print(&010130);
             //pay out escrow until limit is reached
             while (limit_room > 0 && num_payments > 0) {
+                print(&010131);
                 let Escrow<Token> {to_account, escrow} = FIFO::pop<Escrow<Token>>(payment_list);
                 let recipient_coins = borrow_global_mut<Balance<Token>>(to_account);
                 let payment_size = Diem::value<Token>(&escrow);
+                print(&010132);
                 if (payment_size > limit_room) {
+                    print(&010133);
                     let (coin1, coin2) = Diem::split<Token>(escrow, limit_room);
                     Diem::deposit<Token>(&mut recipient_coins.coin, coin2);
                     let new_escrow = Escrow {
@@ -302,24 +308,29 @@ module DiemAccount {
                     FIFO::push_LIFO<Escrow<Token>>(payment_list, new_escrow);
                     amount_sent = amount_sent + limit_room;
                     limit_room = 0;
+                    print(&010134);
                 } else {
+                    print(&01015);
                     //This entire escrow is being paid out
                     Diem::deposit<Token>(&mut recipient_coins.coin, escrow);
                     limit_room = limit_room - payment_size;
                     amount_sent = amount_sent + payment_size;
                     num_payments = num_payments - 1;
+                    print(&010136);
                 }
             };
             //update account limits
             if (amount_sent > 0) { 
+                print(&010140);
                 _ = AccountLimits::update_withdrawal_limits<Token>(
                     amount_sent,
                     *account_addr,
                     &borrow_global<AccountOperationsCapability>(CoreAddresses::DIEM_ROOT_ADDRESS()).limits_cap
                 );
+                print(&010141);
             };
 
-
+            print(&010150);
             account_idx = account_idx + 1;
         }
 
@@ -1209,6 +1220,7 @@ module DiemAccount {
     }
 
     /////// 0L /////////
+    /// This function bypasses transaction limits. vm_make_payment on the other hand considers payment limits.
     public fun vm_make_payment_no_limit<Token: store>(
         payer : address,
         payee: address,

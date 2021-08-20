@@ -65,7 +65,6 @@ module DiemBlock {
     fun is_initialized(): bool {
         exists<BlockMetadata>(CoreAddresses::DIEM_ROOT_ADDRESS())
     }
-
     /// Set the metadata for the current block.
     /// The runtime always runs this before executing the transactions in a block.
     fun block_prologue(
