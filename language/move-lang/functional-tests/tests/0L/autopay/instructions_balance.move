@@ -1,6 +1,7 @@
-//! account: bob, 10000GAS, 0, validator
-//! account: alice, 10000GAS, 0
-//! account: jim, 10000GAS, 0
+// Todo: These GAS values have no effect, all accounts start with 1M GAS
+//! account: bob,   1000000GAS, 0, validator
+//! account: alice, 1000000GAS, 0
+//! account: jim,   1000000GAS, 0
 
 // test runs various autopay instruction types to ensure they are being executed as expected
 
@@ -98,9 +99,10 @@ script {
 script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
+
   fun main(_vm: signer) {
     let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
-    assert(ending_balance == 9501, 735705);
+    assert(ending_balance == 950001, 735705);
   }
 }
 // check: EXECUTED
@@ -136,17 +138,14 @@ script {
 script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
+
   fun main(_vm: signer) {
     let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
-
-    assert(ending_balance == 9026, 735711);
+    assert(ending_balance == 902501, 735711);
 
     // check balance of recipients
     let ending_balance = DiemAccount::balance<GAS>(@{{jim}});
-    assert(ending_balance == 10974, 735712);
-
+    assert(ending_balance == 1097499, 735712);
   }
-
-
 }
 // check: EXECUTED
