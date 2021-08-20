@@ -282,6 +282,7 @@ fn test_no_quorum_on_upgrade_tx() {
 }
 
 #[test]
+#[ignore]
 fn test_successful_upgrade_txs() {
   let mut executor = FakeExecutor::from_genesis_file();
 
