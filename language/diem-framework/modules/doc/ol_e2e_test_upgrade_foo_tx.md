@@ -20,7 +20,7 @@
 
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_oracle_upgrade_foo_tx.md#0x1_OracleUpgradeFooTx_ol_oracle_upgrade_foo_tx">ol_oracle_upgrade_foo_tx</a>()
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_e2e_test_upgrade_foo_tx.md#0x1_OracleUpgradeFooTx_ol_oracle_upgrade_foo_tx">ol_oracle_upgrade_foo_tx</a>()
 </code></pre>
 
 
@@ -29,7 +29,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_oracle_upgrade_foo_tx.md#0x1_OracleUpgradeFooTx_ol_oracle_upgrade_foo_tx">ol_oracle_upgrade_foo_tx</a> () {
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_e2e_test_upgrade_foo_tx.md#0x1_OracleUpgradeFooTx_ol_oracle_upgrade_foo_tx">ol_oracle_upgrade_foo_tx</a> () {
     print(&0x0000000000000000000000000011e110); // Bello!
     <a href="Upgrade.md#0x1_Upgrade_foo">Upgrade::foo</a>();
 }

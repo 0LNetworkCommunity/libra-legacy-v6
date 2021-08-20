@@ -231,18 +231,7 @@ fn set_up_validators(
 
 // hardcoding a sender with seq_num = 1
 fn test_foo (sender: &Account, executor: &mut FakeExecutor, should_pass: bool) {
-  // This tests if the new Stdlib includes a function Upgrade::foo(). This is a dummy function.
-  // if the function is not found, that means the upgrade did not take place.
-  // The fixtures for creating this test are complex. We need:
-  // 1. A "proposed" stdlib compile
-  // 2. The tx scripts to call the ::foo() function
-
-  // 1. First there needs to be a "proposed" new Stdlib compile.
-  // To create the compile, the Upgrade.move file, needs to contain the ::foo() function.
-  // for convenience we keep an Upgrade.move.e2e file, which can be used in an alternate build of the stdlib.mv. This happens rarely, so the dev should just rename the files (removeing the .e2e), and build the stdlib.
-  // The Stdlib compile should be placed in ol/fixtures/upgrade
-  // 2. The tx scripts which are used by client or SDK are used only for testing purposes.
-  // these do not need to change, and can be found alongside other tx scripts.
+  // NOTE: See documentation here: ol/documentation/devs/e2e_upgrade_test.md
 
   // Construct a valid and signed tx script.
   let txn = upgrade_foo_tx(sender, 3);
@@ -251,6 +240,7 @@ fn test_foo (sender: &Account, executor: &mut FakeExecutor, should_pass: bool) {
   executor.new_custom_block(2);
   
   let output = &executor.execute_transaction(txn);
+  dbg!(&output);
   if should_pass {
       assert_eq!(
           output.status().status(),

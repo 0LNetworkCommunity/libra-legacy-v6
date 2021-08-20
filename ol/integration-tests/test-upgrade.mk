@@ -25,11 +25,11 @@ MNEM="talent sunset lizard pill fame nuclear spy noodle basket okay critic grow 
 NUM_NODES = 2
 
 ifndef PREV_VERSION
-PREV_VERSION=v5-rpc
+PREV_VERSION=v5
 endif
 
 ifndef BRANCH_NAME
-BRANCH_NAME=v5-rpc
+BRANCH_NAME=v5
 endif
 
 # USAGE: BRANCH_NAME=<latest branch> make -f test-upgrade.mk upgrade
