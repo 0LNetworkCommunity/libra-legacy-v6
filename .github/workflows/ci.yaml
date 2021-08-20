@@ -87,7 +87,7 @@ jobs:
       - name: Build stdlib
         run: cd language/diem-framework && cargo run --release
       - name: Run 0L e2e tests
-        run: cd language/e2e-testsuite && NODE_ENV=test cargo test ol
+        run: cd language/e2e-testsuite && NODE_ENV=test cargo test ol_
   
   # genesis_smoke:
   #   name: Genesis Smoke Test
