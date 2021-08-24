@@ -528,7 +528,11 @@ Attempt to add instruction when too many already exist
     <b>let</b> payments = &<b>mut</b> borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay2_Data">Data</a>&gt;(*account_addr).payments;
     <b>let</b> payments_len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="AutoPay.md#0x1_AutoPay2_Payment">Payment</a>&gt;(payments);
     <b>let</b> payments_idx = 0;
+// print(&02220);
+
     <b>while</b> (payments_idx &lt; payments_len) {
+// print(&02221);
+
       <b>let</b> delete_payment = <b>false</b>;
       {
         <b>let</b> payment = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>&lt;<a href="AutoPay.md#0x1_AutoPay2_Payment">Payment</a>&gt;(payments, payments_idx);
@@ -564,21 +568,37 @@ Attempt to add instruction when too many already exist
 
           // check payees are community wallets
           <b>let</b> list = <a href="Wallet.md#0x1_Wallet_get_comm_list">Wallet::get_comm_list</a>();
+// print(&02222);
 
-          // TODO: `amount` cannot be zero otherwise <a href="DiemAccount.md#0x1_DiemAccount_deposit">DiemAccount::deposit</a>&lt;Token: store&gt;() aborts
-          <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(&list, &payment.payee) &&
-              amount != 0 &&
-              amount &lt;= account_bal &&
-              borrow_global&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountLimitsEnable">AccountLimitsEnable</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm)).enabled) {
-              <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment">DiemAccount::vm_make_payment</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
-                *account_addr, payment.payee, amount, x"", x"", vm
-              );
-          } <b>else</b> {
-              <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">DiemAccount::vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
-                *account_addr, payment.payee, amount, x"", x"", vm
-              );
+          // Payeee is a community wallet
+          <b>if</b> (!<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(&list, &payment.payee)){
+// print(&0222201);
+            <b>return</b>
           };
 
+          <b>if</b> (amount == 0){
+// print(&0222202);
+            <b>return</b>
+          };
+
+          <b>if</b> (amount &gt; account_bal){
+// print(&0222203);
+            <b>return</b>
+          };
+
+          <b>if</b> (// transfers are enabled between accounts, need <b>to</b> consider transfer limits
+              borrow_global&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountLimitsEnable">AccountLimitsEnable</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm)).enabled) {
+// print(&0222204);
+              <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment">DiemAccount::vm_make_payment</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+                *account_addr, payment.payee, amount, b"autopay - transfer limits", x"", vm
+              );
+          } <b>else</b> {
+// print(&0222205);
+              <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">DiemAccount::vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+                *account_addr, payment.payee, amount, b"autopay - no limit", x"", vm
+              );
+          };
+// print(&02223);
           // <b>update</b> previous balance for next calculation
           payment.prev_bal = <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*account_addr);
 
@@ -593,6 +613,7 @@ Attempt to add instruction when too many already exist
           delete_payment = <b>true</b>;
         };
       };
+// print(&02230);
       <b>if</b> (delete_payment == <b>true</b>) {
         <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>&lt;<a href="AutoPay.md#0x1_AutoPay2_Payment">Payment</a>&gt;(payments, payments_idx);
         payments_len = payments_len - 1;
@@ -601,6 +622,7 @@ Attempt to add instruction when too many already exist
         payments_idx = payments_idx + 1;
       };
     };
+// print(&02240);
     account_idx = account_idx + 1;
   };
 }
