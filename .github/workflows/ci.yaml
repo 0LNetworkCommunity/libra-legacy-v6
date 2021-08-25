@@ -85,7 +85,7 @@ jobs:
             override: true
             components: rustfmt, clippy
       - name: Create foo_stdlib.mv fixtures
-        run: cd ol/fixtures/upgrade_payload && make -f make-e2e-upgrade-fixtures.mk fixtures
+        run: cd ol/fixtures/upgrade_payload && SOURCE_PATH=./ make -f make-e2e-upgrade-fixtures.mk fixtures
       - name: Build stdlib
         run: cd language/diem-framework && cargo run --release
       - name: Run 0L e2e tests
