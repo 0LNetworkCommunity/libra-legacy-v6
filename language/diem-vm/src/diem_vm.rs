@@ -501,7 +501,6 @@ impl DiemVMImpl {
         Ok(())
     }
 
-    // 0L todo: See the caller "fn process_block_prologue"
     //////// 0L ////////    
     pub(crate) fn apply_stdlib_upgrade<S: MoveStorage> (
         &self,

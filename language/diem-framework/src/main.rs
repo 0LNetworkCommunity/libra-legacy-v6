@@ -128,7 +128,7 @@ fn main() {
             module_file.write_all(&bytes).unwrap();
         });
     }
-    //////// 0L end ////////    
+    //////// 0L end ////////
 
     let output_path = matches
         .value_of("output")
