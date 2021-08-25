@@ -1,12 +1,14 @@
 use crate::account::Account;
-use diem_framework_releases::legacy::transaction_scripts::CompiledBytes;
 use diem_transaction_builder::stdlib as transaction_builder;
-use diem_types::transaction::{SignedTransaction, Script};
 use include_dir::{include_dir, Dir};
-
-// NOTE: rerun fixtures with: cargo run -p stdlib --release -- --create-upgrade-payload
-const UPGRADE_DIR: Dir =
-    include_dir!("../../../ol/fixtures/upgrade_payload/tx_scripts");
+use move_core_types::{
+    ident_str,
+    language_storage::ModuleId,
+};
+use diem_types::{
+    account_address::AccountAddress,
+    transaction::{ScriptFunction, SignedTransaction, TransactionArgument, TransactionPayload},
+};
 
 pub fn oracle_helper_tx(
     sender: &Account,
@@ -27,24 +29,29 @@ pub fn oracle_helper_tx(
         .sign()
 }
 
+// Generated temporarily and copied from `sdk/transaction-builder/src/stdlib.rs`
+// See https://github.com/OLSF/libra/wiki/Stdlib-Upgrade-payload-(v5)
+pub fn encode_ol_oracle_upgrade_foo_tx_script_function() -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("OracleUpgradeFooTx").to_owned(),
+        ),
+        ident_str!("ol_oracle_upgrade_foo_tx").to_owned(),
+        vec![],
+        vec![],
+    ))
+}
+
 // For upgrade testing
 pub fn upgrade_foo_tx(
     sender: &Account,
     seq_num: u64,
 ) -> SignedTransaction {
-    let file = UPGRADE_DIR
-        .get_file("071_OracleUpgradeFooTx.mv")
-        .unwrap_or_else(|| panic!("File 071_OracleUpgradeFooTx.mv does not exist"));
-
-    let compiled_code = CompiledBytes::new(file.contents().to_vec()).into_vec();
-
+    let payload = encode_ol_oracle_upgrade_foo_tx_script_function();
     sender
         .transaction()
-        .script(Script::new(
-            compiled_code,
-            vec![],
-            vec![],
-        ))
+        .payload(payload)
         .sequence_number(seq_num)
         .sign()
 }

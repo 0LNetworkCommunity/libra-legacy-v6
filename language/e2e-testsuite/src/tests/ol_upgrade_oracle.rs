@@ -240,7 +240,6 @@ fn test_foo (sender: &Account, executor: &mut FakeExecutor, should_pass: bool) {
   executor.new_custom_block(2);
   
   let output = &executor.execute_transaction(txn);
-  dbg!(&output);
   if should_pass {
       assert_eq!(
           output.status().status(),
@@ -282,7 +281,6 @@ fn test_no_quorum_on_upgrade_tx() {
 }
 
 #[test]
-#[ignore]
 fn test_successful_upgrade_txs() {
   let mut executor = FakeExecutor::from_genesis_file();
 
@@ -317,7 +315,7 @@ fn test_successful_upgrade_txs() {
   );
   
 
-  // verify that the foo transaction should fail
+  // verify that the foo transaction should fail w/o the updated stdlib
   test_foo(&accounts.get(3).unwrap(), &mut executor, false);
 
   // The creation of these blocks update the stdlib
