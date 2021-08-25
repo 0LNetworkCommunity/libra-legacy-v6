@@ -1,5 +1,4 @@
-
-  #   TLDR: run upgrade test with
+  # TLDR: run upgrade test with
 
   ```
   cd ./ol/fixtures/upgrade/ 
@@ -19,16 +18,20 @@
   We need to make a `foo_stdlib.mv`, which will be submitted for upgrade. It is modified such that we can test if it is different than the production `stdlib.mv`
   
   The e2e test is located at `language/e2e-testsuite/src/tests/ol_upgrade_oracle.rs`. It tests if the current stack can take an alternate stdlib binary (.mv file). The alternate is exacly the same as what is build in source, except for there being a canary API: Upgrade::foo() which will only be callable if the upgrade was successful.
-  ## Building Fixtures
-
-  TLDR; We need to make a foo_stdlib.mv, which will be submitted for upgrade.
   
-  there is a makefile in `/ol/fixtures/upgrade/make-e2e-upgrade-fixtures.mk` which needs to be called whenever there are major architectural changes, or changes to the Upgrade contract. Call with: `make -f make-e2e-upgrade-fixtures.mk fixtures`
+  
+  # Fixtures
+
+  TLDR; call the makefile to make fixtures.
+  
+  There is a makefile in `/ol/fixtures/upgrade/make-e2e-upgrade-fixtures.mk` which needs to be called whenever there are major architectural changes, or changes to the Upgrade contract. Call with: `make -f make-e2e-upgrade-fixtures.mk fixtures`
+
+
+  ## Building Fixtures
 
   The fixtures for creating this test are complex. We need:
   1. A "proposed" stdlib compile
   2. The tx scripts to call the ::foo() function
-
   ## Making the proposed upgrade stdlib
   1. First there needs to be a "proposed" new Stdlib compile.
   To create the compile, the Upgrade.move file, needs to contain the ::foo() function.
