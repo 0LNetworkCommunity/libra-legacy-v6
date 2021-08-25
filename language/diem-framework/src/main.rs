@@ -5,9 +5,7 @@
 
 use clap::{App, Arg};
 use diem_framework::*;
-use move_stdlib::utils::time_it;
-use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 //////// 0L ////////
 // for Upgrade oracle
@@ -87,7 +85,7 @@ fn main() {
         script_builder: !matches.is_present("no-script-builder"),
         errmap: !matches.is_present("no-errmap"),
         time_it: true,
-        upgrade_payload: matches.is_present("upgrade"),
+        upgrade_payload: matches.is_present("create-upgrade-payload"),
     };
 
     // Make sure that the current directory is `language/diem-framework` from now on.
@@ -103,44 +101,48 @@ fn main() {
         println!("NOTE: run this program in --release mode for better speed");
     }
 
-    //////// 0L ////////
-    let staged_path = PathBuf::from(STAGED_OUTPUT_PATH);
-    std::fs::create_dir_all(&staged_path).unwrap();
-    // for upgrade oracle
-    let create_upgrade_payload =
-        matches.is_present("create-upgrade-payload");
-
-    if create_upgrade_payload {
-        time_it("Creating staged/stdlib.mv for upgrade oracle", || {
-            let mut module_path = PathBuf::from(STAGED_OUTPUT_PATH);
-            module_path.push(STAGED_STDLIB_NAME);
-            module_path.set_extension(STAGED_EXTENSION);
-            let modules: Vec<Vec<u8>> = build_stdlib()
-                .values().into_iter()
-                .map(|compiled_module| {
-                    let mut ser = Vec::new();
-                    compiled_module.serialize(&mut ser).unwrap();
-                    ser
-                })
-                .collect();
-            let bytes = bcs::to_bytes(&modules).unwrap();
-            let mut module_file = std::fs::File::create(module_path).unwrap();
-            module_file.write_all(&bytes).unwrap();
-        });
-    }
-    //////// 0L end ////////
+    dbg!(&options.upgrade_payload);
 
     let output_path = matches
         .value_of("output")
         .unwrap_or("releases/artifacts/current");
 
     release::create_release(
-        &Path::new(output_path), &options, create_upgrade_payload
+        &Path::new(output_path), &options
     );
 
     // Sync the generated docs for the modules and docs to their old locations to maintain
     // documentation locations.
     if matches.value_of("output").is_none() {
         release::sync_doc_files(&output_path);
-    }    
+    }
+
+    //////// 0L ////////
+    // concatenate all files into a staged stdlib.mv, including tx scripts
+    // this is necessary for hot upgrades via oracle
+    // let staged_path = PathBuf::from(STAGED_OUTPUT_PATH);
+    // std::fs::create_dir_all(&staged_path).unwrap();
+    // for upgrade oracle
+    // let create_upgrade_payload =
+    //     matches.is_present("create-upgrade-payload");
+
+    // if options.upgrade_payload {
+    //     time_it("Creating staged/stdlib.mv for upgrade oracle", || {
+    //         let mut module_path = PathBuf::from(STAGED_OUTPUT_PATH);
+    //         module_path.push(STAGED_STDLIB_NAME);
+    //         module_path.set_extension(STAGED_EXTENSION);
+    //         let modules: Vec<Vec<u8>> = build_stdlib()
+    //             .values().into_iter()
+    //             .map(|compiled_module| {
+    //                 let mut ser = Vec::new();
+    //                 compiled_module.serialize(&mut ser).unwrap();
+    //                 ser
+    //             })
+    //             .collect();
+    //         let bytes = bcs::to_bytes(&modules).unwrap();
+    //         let mut module_file = std::fs::File::create(module_path).unwrap();
+    //         module_file.write_all(&bytes).unwrap();
+    //     });
+    // }
+    //////// 0L end ////////
 }

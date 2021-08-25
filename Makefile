@@ -85,7 +85,7 @@ bins: stdlib
 	cargo build -p diem-node -p miner -p backup-cli -p ol -p txs -p onboard --release
 
 stdlib:
-	cargo run --release -p diem-framework
+# cargo run --release -p diem-framework
 	cargo run --release -p diem-framework -- --create-upgrade-payload
 	sha256sum language/diem-framework/staged/stdlib.mv
   
