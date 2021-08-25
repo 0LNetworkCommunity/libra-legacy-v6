@@ -100,8 +100,9 @@ pub fn interpret_with_options(
             }
             //////// 0L ////////
             TransactionArgument::AddressVector(v) => {
-                // 0L todo: Not sure about the correctness of this patch
-                MoveValue::Vector(v.into_iter().map(MoveValue::Address).collect())
+                MoveValue::Vector(v.into_iter().map(|a|{
+                  MoveValue::Address(a)
+                }).collect())
             }
         }))
         .collect();

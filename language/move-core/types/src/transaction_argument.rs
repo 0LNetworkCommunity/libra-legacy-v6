@@ -12,6 +12,7 @@ pub enum TransactionArgument {
     U128(u128),
     Address(AccountAddress),
     U8Vector(#[serde(with = "serde_bytes")] Vec<u8>),
+    //TODO(0L): AddressVector is not implemented anywhere. Though there were plans to include this in tx scripts.
     AddressVector(Vec<AccountAddress>), //////// 0L ////////
     Bool(bool),
 }
