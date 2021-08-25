@@ -41,8 +41,6 @@ pub struct ValWizardCmd {
     prebuilt_genesis: Option<PathBuf>,
     #[options(help = "fetching genesis blob from github")]
     fetch_git_genesis: bool,
-    // #[options(help = "skip fetching genesis blob")]
-    // skip_fetch_genesis: bool,
     #[options(help = "skip mining a block zero")]
     skip_mining: bool,
     #[options(short = "u", help = "template account.json to configure from")]
