@@ -523,7 +523,6 @@ impl DiemVM {
             log_context
         )?;
 
-        // 0L todo: How to update this fn call? There is no remote_cache anymore.
         // //////// 0L ////////
         // Apply upgrade for Upgrade oracle
         self.0.apply_stdlib_upgrade(
