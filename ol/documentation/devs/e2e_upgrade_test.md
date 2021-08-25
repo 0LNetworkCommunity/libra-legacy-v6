@@ -1,16 +1,29 @@
 
+  #   TLDR: run upgrade test with
+
+  ```
+  cd ./ol/fixtures/upgrade/ 
+  make -f make-e2e-upgrade-fixtures.mk fixtures
+
+  cd ./language/e2e-testsuite
+  cargo test test_successful_upgrade_txs
+  ```
   # E2E Testing of Upgrade
-  The way we test if a new STdlib compile was successfully upgraded is by inserting a dummy (canary) function in an otherwise production stdlib. If the Upgrade::foo() function is not found, that means the upgrade did not take place.
+
+  The way we test if a new Stdlib compile was successfully upgraded is by inserting a dummy (canary) function in an otherwise production stdlib. If the Upgrade::foo() function is not found, that means the upgrade did not take place.
   
   This requires using alternate Move files, and alternate builds. Which is very annoying to do.
 
+  ## How it works
+
+  We need to make a `foo_stdlib.mv`, which will be submitted for upgrade. It is modified such that we can test if it is different than the production `stdlib.mv`
+  
+  The e2e test is located at `language/e2e-testsuite/src/tests/ol_upgrade_oracle.rs`. It tests if the current stack can take an alternate stdlib binary (.mv file). The alternate is exacly the same as what is build in source, except for there being a canary API: Upgrade::foo() which will only be callable if the upgrade was successful.
   ## Building Fixtures
 
-  TLDR; there is a makefile in `/ol/fixtures/upgrade/make-e2e-upgrade-fixtures.mk` which needs to be called whenever there are major architectural changes, or changes to the Upgrade contract.
-
-  The e2e test located at `language/e2e-testsuite/src/tests/ol_upgrade_oracle.rs` tests if the current stack can take an alternate stdlib, which is exacly the same as in the dev tree, except for there being a canary API: Upgrade::foo() which will only be callable if the upgrade was successful.
-
+  TLDR; We need to make a foo_stdlib.mv, which will be submitted for upgrade.
   
+  there is a makefile in `/ol/fixtures/upgrade/make-e2e-upgrade-fixtures.mk` which needs to be called whenever there are major architectural changes, or changes to the Upgrade contract. Call with: `make -f make-e2e-upgrade-fixtures.mk fixtures`
 
   The fixtures for creating this test are complex. We need:
   1. A "proposed" stdlib compile
@@ -27,7 +40,7 @@
 
   2. The tx scripts which are used by client or SDK are used only for testing purposes. These do not need to change, and can be found alongside other tx scripts.
   
-  At the same time as using the Upgrade.move.e2e, the matchin transaction script needs to be renamed for inclusion in the compilation. That file is: 0L_transaction_scripts/ol_e2e_test_upgrade_foo_tx.move.e2e .
+  At the same time as using the Upgrade.move.e2e, the matching transaction script needs to be renamed for inclusion in the compilation. That file is: 0L_transaction_scripts/ol_e2e_test_upgrade_foo_tx.move.e2e .
 
   As above, just remove the e2e ending on compile.
 
