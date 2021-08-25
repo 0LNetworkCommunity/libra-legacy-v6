@@ -38,7 +38,7 @@ jobs:
       - name: AUTOPAY fixed-once
         run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-autopay.mk test-fixed-once
       - name: AUTOPAY all
-        run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-autopay.mk test-all
+        run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-autopay.mk test
       - name: ONBOARD
         run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-onboard.mk test
       - name: File permissions
