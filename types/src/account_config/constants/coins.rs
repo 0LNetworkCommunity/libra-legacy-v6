@@ -10,11 +10,11 @@ use move_core_types::{
 use once_cell::sync::Lazy;
 
 //////// 0L ////////
+// other coins besides GAS are only used for tests, and come from upstream
 pub const GAS_NAME: &str = "GAS";
 pub const GAS_IDENTIFIER: &IdentStr = ident_str!(GAS_NAME);
 pub const XUS_NAME: &str = "GAS";
 pub const XUS_IDENTIFIER: &IdentStr = ident_str!(XUS_NAME);
-// 0L todo: is this patch correct?
 pub const XDX_NAME: &str = "GAS";
 pub const XDX_IDENTIFIER: &IdentStr = ident_str!(XDX_NAME);
 
@@ -27,9 +27,10 @@ pub fn xus_tag() -> TypeTag {
     })
 }
 
+//////// 0L ////////
 pub static GAS_MODULE: Lazy<ModuleId> =
     Lazy::new(|| ModuleId::new(CORE_CODE_ADDRESS, GAS_IDENTIFIER.to_owned()));
-
+    
 pub fn gas_type_tag() -> TypeTag {
     TypeTag::Struct(StructTag {
         address: CORE_CODE_ADDRESS,
