@@ -27,6 +27,7 @@ ol = { path = "../cli"}
 txs = { path = "../txs"}
 ol-types = { path = "../../ol/types"}
 ol-fixtures = { path = "../../ol/fixtures"}
+bcs = "0.1.2"
 
 miner = { path = "../miner" }
 zip = "0.5.12"
