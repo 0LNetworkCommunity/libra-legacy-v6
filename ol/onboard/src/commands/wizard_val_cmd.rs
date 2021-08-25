@@ -138,9 +138,14 @@ impl Runnable for ValWizardCmd {
                 "\n...........................\n"
             );
 
-            prebuilt_genesis_path = Some(home_path.join("genesis.blob"))
+            prebuilt_genesis_path = Some(home_path.join("genesis.blob"));
         } else if self.ci {
           fs::copy(get_test_genesis_blob().as_os_str(), home_path.join("genesis.blob")).unwrap();
+          prebuilt_genesis_path = Some(home_path.join("genesis.blob"));
+          status_ok!(
+                "\nUsing test genesis.blob",
+                "\n...........................\n"
+            );
         }
 
         let home_dir = app_config.workspace.node_home.to_owned();
