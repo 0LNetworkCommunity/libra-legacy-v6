@@ -320,13 +320,13 @@ where
 pub fn create_release(
     output_path: impl AsRef<Path>, 
     options: &ReleaseOptions,
-    create_upgrade_payload: bool
+    // create_upgrade_payload: bool
 ) {
     let output_path = output_path.as_ref();
 
     let msg = |s: &'static str| if options.time_it { Some(s) } else { None };
 
-    if create_upgrade_payload || options.build_modules { /////// 0L /////////
+    if options.build_modules { /////// 0L /////////
         let modules_path = output_path.join("modules");
         let mut old_module_apis = None;
         if options.check_layout_compatibility {
@@ -370,7 +370,7 @@ pub fn create_release(
         });
     }
 
-    if create_upgrade_payload || options.script_abis { /////// 0L /////////
+    if options.script_abis { /////// 0L /////////
         let script_abis_path = output_path.join("script_abis");
         run_step(msg("Generating script ABIs"), || {
             generate_script_abis(&script_abis_path, &Path::new("releases/legacy/scripts"))
@@ -388,7 +388,7 @@ pub fn create_release(
         }
     }
 
-    if !create_upgrade_payload && options.errmap { //////// 0L ////////
+    if options.errmap { //////// 0L ////////
         let mut err_exp_path = output_path
             .join("error_description")
             .join("error_description");
@@ -426,7 +426,7 @@ pub fn create_release(
 pub fn create_upgrade_payload_fn(build:  &BTreeMap<String, CompiledModule> ) {
     // let mut module_path = PathBuf::from(STAGED_OUTPUT_PATH);
     // TODO: set the .0L path the right way.
-    let mut module_path = PathBuf::from("/root/.0L/");
+    let mut module_path = PathBuf::from(STAGED_OUTPUT_PATH);
     module_path.push(STAGED_STDLIB_NAME);
     module_path.set_extension(STAGED_EXTENSION);
     print!("{:?} ", &module_path);

@@ -6,19 +6,28 @@ endif
 
 FIXTURES_PATH = ${SOURCE_PATH}ol/fixtures/upgrade_payload/
 
-fixtures: rename-files stdlib copy reverse-rename
+fixtures: rename-files stdlib check-foo copy reverse-rename stdlib-again
 
 stdlib:
-	cd ${SOURCE_PATH} && cargo run -p diem-framework
+	cd ${SOURCE_PATH} && cargo run --release -p diem-framework -- --create-upgrade-payload
+
+stdlib-again:
+# TODO: can't run recipes twice?
+	cd ${SOURCE_PATH} && cargo run --release -p diem-framework -- --create-upgrade-payload
+
 
 rename-files:
 # Module rename
 	mv ${SOURCE_PATH}/language/diem-framework/modules/0L/Upgrade.move ${SOURCE_PATH}/language/diem-framework/modules/0L/Upgrade.move.temp
+
 	mv ${SOURCE_PATH}/language/diem-framework/modules/0L/Upgrade.move.e2e ${SOURCE_PATH}/language/diem-framework/modules/0L/Upgrade.move
 
 # transaction script rename
 	mv ${SOURCE_PATH}language/diem-framework/modules/0L_transaction_scripts/ol_e2e_test_upgrade_foo_tx.move.e2e ${SOURCE_PATH}language/diem-framework/modules/0L_transaction_scripts/ol_e2e_test_upgrade_foo_tx.move
 
+check-foo:
+# checks the foo function exists in the compile
+	grep ${SOURCE_PATH}/language/diem-framework/staged/stdlib.mv -e foo
 
 copy:
 	cp ${SOURCE_PATH}/language/diem-framework/staged/stdlib.mv ${FIXTURES_PATH}/foo_stdlib.mv
@@ -37,6 +46,3 @@ reverse-rename:
 
 # transaction script rename
 	mv ${SOURCE_PATH}language/diem-framework/modules/0L_transaction_scripts/ol_e2e_test_upgrade_foo_tx.move ${SOURCE_PATH}language/diem-framework/modules/0L_transaction_scripts/ol_e2e_test_upgrade_foo_tx.move.e2e
-
-# cant run recipes twice?
-	cd ${SOURCE_PATH} && cargo run -p diem-framework
