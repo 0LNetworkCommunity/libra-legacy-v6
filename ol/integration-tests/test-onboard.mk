@@ -60,7 +60,7 @@ create-json:
 # we pass all these params so that the wizard does not dialogue with us.
 
 # TODO: Makefile question: Why do we need to set MNEM set to itself here?
-	MNEM=${MNEM} cargo r -p onboard -- --swarm-path ~/swarm_temp val --upstream-peer http://localhost --epoch 5 --waypoint '0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2' --home-path ${DATA_PATH} --output-path ${DATA_PATH} --ci --skip-fetch-genesis
+	MNEM=${MNEM} cargo r -p onboard -- --swarm-path ~/swarm_temp val --upstream-peer http://localhost --epoch 5 --waypoint '0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2' --home-path ${DATA_PATH} --output-path ${DATA_PATH} --ci
 
 
  

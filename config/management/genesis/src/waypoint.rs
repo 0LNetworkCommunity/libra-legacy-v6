@@ -4,7 +4,7 @@
 use diem_config::config::RocksdbConfig;
 use diem_management::{config::ConfigPath, error::Error, secure_backend::SharedBackend};
 use diem_temppath::TempPath;
-use diem_types::{chain_id::ChainId, waypoint::Waypoint};
+use diem_types::{chain_id::ChainId, transaction::Transaction, waypoint::Waypoint};
 use diem_vm::DiemVM;
 use diemdb::DiemDB;
 use executor::db_bootstrapper;
@@ -44,5 +44,16 @@ impl CreateWaypoint {
 
         db_bootstrapper::generate_waypoint::<DiemVM>(&db_rw, &genesis)
             .map_err(|e| Error::UnexpectedError(e.to_string()))
+    }
+
+    //////// 0L ////////
+    pub fn extract_waypoint(gen_tx: Transaction) -> Result<Waypoint, Error> {
+      let path = TempPath::new();
+      let libradb =
+          DiemDB::open(&path, false, None, RocksdbConfig::default()).map_err(|e| Error::UnexpectedError(e.to_string()))?;
+      let db_rw = DbReaderWriter::new(libradb);
+
+      db_bootstrapper::generate_waypoint::<DiemVM>(&db_rw, &gen_tx)
+          .map_err(|e| Error::UnexpectedError(e.to_string()))
     }
 }
