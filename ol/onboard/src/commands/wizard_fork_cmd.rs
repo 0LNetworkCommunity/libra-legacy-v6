@@ -3,27 +3,27 @@
 #![allow(clippy::never_loop)]
 
 use super::files_cmd;
-use crate::prelude::app_config;
+
 use crate::entrypoint;
+use crate::prelude::app_config;
+use crate::read_genesis::gen_tx_from_blob;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
-use diem_genesis_tool::ol_node_files;
-use diem_types::{transaction::SignedTransaction, waypoint::Waypoint};
+use diem_genesis_tool::{ol_node_files, waypoint};
+use diem_types::transaction::SignedTransaction;
+use diem_types::waypoint::Waypoint;
 use diem_wallet::WalletLibrary;
 use ol::{commands::init_cmd, config::AppCfg};
-use ol_fixtures::get_test_genesis_blob;
 use ol_keys::{scheme::KeyScheme, wallet};
 use ol_types::block::Block;
 use ol_types::config::IS_TEST;
-use ol_types::{account::ValConfigs, pay_instruction::PayInstruction, config::TxType};
+use ol_types::{account::ValConfigs, config::TxType, pay_instruction::PayInstruction};
 use reqwest::Url;
-use std::fs;
 use std::process::exit;
 use std::{fs::File, io::Write, path::PathBuf};
 use txs::{commands::autopay_batch_cmd, submit_tx};
-
 /// `validator wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
-pub struct ValWizardCmd {
+pub struct ForkCmd {
     #[options(
         short = "a",
         help = "where to output the account.json file, defaults to node home"
@@ -37,7 +37,7 @@ pub struct ValWizardCmd {
     github_org: Option<String>,
     #[options(help = "repo with with genesis transactions")]
     repo: Option<String>,
-    #[options(help = "use a genesis file instead of building")]
+    #[options(help = "build genesis from ceremony repo")]
     prebuilt_genesis: Option<PathBuf>,
     #[options(help = "fetching genesis blob from github")]
     fetch_git_genesis: bool,
@@ -54,19 +54,16 @@ pub struct ValWizardCmd {
     #[options(short = "w", help = "If validator is building from source")]
     waypoint: Option<Waypoint>,
     #[options(short = "e", help = "If validator is building from source")]
-    epoch: Option<u64>,    
-    #[options(help = "For testing in ci, use genesis.blob fixtures")]
-    ci: bool,   
+    epoch: Option<u64>,
 }
 
-impl Runnable for ValWizardCmd {
+impl Runnable for ForkCmd {
+    /// Print version message
     fn run(&self) {
         // Note. `onboard` command DOES NOT READ CONFIGS FROM 0L.toml
 
-        status_info!(
-            "\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys, run the standalone keygen tool with 'ol keygen'.\n\nYour first 0L proof-of-work will be mined now. Expect this to take up to 15 minutes on modern CPUs.\n"
-        );
-        
+        status_info!("\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys, run the standalone keygen tool with 'ol keygen'.\n\nYour first 0L proof-of-work will be mined now. Expect this to take up to 15 minutes on modern CPUs.\n");
+
         let entry_args = entrypoint::get_args();
 
         // Get credentials from prompt
@@ -74,31 +71,34 @@ impl Runnable for ValWizardCmd {
 
         let mut upstream = self.upstream_peer.clone().unwrap_or_else(|| {
             self.template_url.clone().unwrap_or_else(|| {
-                println!(
-                    "ERROR: Must set a URL to query chain. Use --upstream-peer of --template-url. Exiting."
-                );
+                println!("ERROR: Must set a URL to query chain. Use --upstream-peer or --template-url. Exiting.");
                 exit(1);
             })
         });
         upstream.set_port(Some(8080)).unwrap();
-        println!(
-            "Setting upstream peer URL to: {:?}",
-            &upstream
-        );
+        println!("Setting upstream peer URL to: {:?}", &upstream);
+
+        let mut wp = self.waypoint.clone();
+        if let Some(path) = &self.prebuilt_genesis {
+          let tx = gen_tx_from_blob(path).unwrap();
+          wp = Some(waypoint::CreateWaypoint::extract_waypoint(tx).unwrap());
+          dbg!(&wp);
+        }
 
         let app_config = AppCfg::init_app_configs(
             authkey,
             account,
             &Some(upstream.clone()),
             &self.home_path,
-            &self.epoch,
-            &self.waypoint,
+            &Some(0),
+            &wp,
             &self.source_path,
             None,
             None,
         );
         let home_path = &app_config.workspace.node_home;
         let base_waypoint = app_config.chain_info.base_waypoint.clone();
+        dbg!(&base_waypoint);
 
         status_ok!("\nApp configs written", "\n...........................\n");
 
@@ -118,7 +118,7 @@ impl Runnable for ValWizardCmd {
             home_path,
             &app_config,
             &wallet,
-            entry_args.swarm_path.as_ref().is_some()
+            entry_args.swarm_path.as_ref().is_some(),
         );
         status_ok!(
             "\nAutopay transactions signed",
@@ -138,15 +138,10 @@ impl Runnable for ValWizardCmd {
                 "\n...........................\n"
             );
 
-            prebuilt_genesis_path = Some(home_path.join("genesis.blob"));
-        } else if self.ci {
-          fs::copy(get_test_genesis_blob().as_os_str(), home_path.join("genesis.blob")).unwrap();
-          prebuilt_genesis_path = Some(home_path.join("genesis.blob"));
-          status_ok!(
-                "\nUsing test genesis.blob",
-                "\n...........................\n"
-            );
+            prebuilt_genesis_path = Some(home_path.join("genesis.blob"))
+            
         }
+
 
         let home_dir = app_config.workspace.node_home.to_owned();
         // 0L convention is for the namespace of the operator to be appended by '-oper'
@@ -192,13 +187,7 @@ impl Runnable for ValWizardCmd {
             "\n...........................\n"
         );
 
-        status_info!(
-            "Your validator node and miner app are now configured.", 
-            &format!(
-                "\nStart your node with `ol start`, and then ask someone with GAS to do this transaction `txs create-validator -u http://{}`",
-                &app_config.profile.ip
-            )
-        );
+        status_info!("Your validator node and miner app are now configured.", &format!("\nStart your node with `ol start`, and then ask someone with GAS to do this transaction `txs create-validator -u http://{}`", &app_config.profile.ip));
     }
 }
 
@@ -225,27 +214,31 @@ pub fn get_autopay_batch(
         None,
     )
     .unwrap();
-    let script_vec = autopay_batch_cmd::process_instructions(
-        instr_vec.clone()
-    );
+    let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone());
     let url = cfg.what_url(false);
-    let mut tx_params =
-        submit_tx::get_tx_params_from_toml(
-            cfg.to_owned(), TxType::Miner, Some(wallet), url, None, is_swarm
-        ).unwrap();
+    let mut tx_params = submit_tx::get_tx_params_from_toml(
+        cfg.to_owned(),
+        TxType::Miner,
+        Some(wallet),
+        url,
+        None,
+        is_swarm,
+    )
+    .unwrap();
     let tx_expiration_sec = if *IS_TEST {
-      // creating fixtures here, so give it near infinite expiry
-      100 * 360 * 24 * 60 * 60
+        // creating fixtures here, so give it near infinite expiry
+        100 * 360 * 24 * 60 * 60
     } else {
-      // give the tx a very long expiration, 7 days.
-      7 * 24 * 60 * 60
+        // give the tx a very long expiration, 7 days.
+        7 * 24 * 60 * 60
     };
+
     tx_params.tx_cost.user_tx_timeout = tx_expiration_sec;
     let txn_vec = autopay_batch_cmd::sign_instructions(script_vec, 0, &tx_params);
     (Some(instr_vec), Some(txn_vec))
 }
 
-/// save template file
+/// save a template file from an upstream
 pub fn save_template(url: &Url, home_path: &PathBuf) -> PathBuf {
     let g_res = reqwest::blocking::get(&url.to_string());
     let g_path = home_path.join("template.json");

@@ -6001,6 +6001,7 @@ version = "0.1.0"
 dependencies = [
  "abscissa_core",
  "anyhow",
+ "bcs",
  "criterion",
  "dialoguer",
  "diem-genesis-tool",

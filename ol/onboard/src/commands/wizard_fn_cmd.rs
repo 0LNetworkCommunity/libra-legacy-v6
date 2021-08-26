@@ -19,8 +19,8 @@ pub struct FnWizardCmd {
     github_org: Option<String>,
     #[options(help = "repo with with genesis transactions")]
     repo: Option<String>,   
-    #[options(help = "build genesis from ceremony repo")]
-    rebuild_genesis: bool,
+    #[options(help = "use a genesis file instead of building")]
+    prebuilt_genesis: Option<PathBuf>,
     #[options(help = "skip fetching genesis blob")]
     skip_fetch_genesis: bool,
     #[options(help = "optional waypoint")]
@@ -63,7 +63,7 @@ impl Runnable for FnWizardCmd {
                 .clone()
                 .unwrap_or("experimental-genesis".to_string()),
             &namespace,
-            &self.rebuild_genesis,
+            &self.prebuilt_genesis,
             &true,
             self.waypoint,
         ).unwrap();
