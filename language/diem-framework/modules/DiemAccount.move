@@ -2929,6 +2929,15 @@ module DiemAccount {
             metadata_signature
         );
     }
+    
+    /////// 0L /////////
+    public fun vm_migrate_slow_wallet(vm: &signer, addr: address) {
+      CoreAddresses::assert_diem_root(vm);
+      let sig = create_signer(addr);
+      Wallet::set_slow(&sig);
+      // destroy_signer(sig); // 0L todo: this fn deleted, delete this line?
+    }    
+
 
     /////// TEST HELPERS //////
 

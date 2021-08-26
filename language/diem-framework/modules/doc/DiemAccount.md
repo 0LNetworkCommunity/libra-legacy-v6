@@ -84,9 +84,8 @@ before and after every transaction.
 -  [Function `create_validator_account`](#0x1_DiemAccount_create_validator_account)
 -  [Function `create_validator_operator_account`](#0x1_DiemAccount_create_validator_operator_account)
 -  [Function `vm_deposit_with_metadata`](#0x1_DiemAccount_vm_deposit_with_metadata)
--  [Function `vm_set_slow_wallet`](#0x1_DiemAccount_vm_set_slow_wallet)
+-  [Function `vm_migrate_slow_wallet`](#0x1_DiemAccount_vm_migrate_slow_wallet)
 -  [Function `test_helper_create_signer`](#0x1_DiemAccount_test_helper_create_signer)
--  [Function `test_helper_destroy_signer`](#0x1_DiemAccount_test_helper_destroy_signer)
 -  [Module Specification](#@Module_Specification_4)
     -  [Access Control](#@Access_Control_5)
         -  [Key Rotation Capability](#@Key_Rotation_Capability_6)
@@ -5506,13 +5505,13 @@ Create a Validator Operator account
 
 </details>
 
-<a name="0x1_DiemAccount_vm_set_slow_wallet"></a>
+<a name="0x1_DiemAccount_vm_migrate_slow_wallet"></a>
 
-## Function `vm_set_slow_wallet`
+## Function `vm_migrate_slow_wallet`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_set_slow_wallet">vm_set_slow_wallet</a>(vm: &signer, addr: address)
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_migrate_slow_wallet">vm_migrate_slow_wallet</a>(vm: &signer, addr: address)
 </code></pre>
 
 
@@ -5521,7 +5520,7 @@ Create a Validator Operator account
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_set_slow_wallet">vm_set_slow_wallet</a>(vm: &signer, addr: address) {
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_migrate_slow_wallet">vm_migrate_slow_wallet</a>(vm: &signer, addr: address) {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
   <b>let</b> sig = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(addr);
   <a href="Wallet.md#0x1_Wallet_set_slow">Wallet::set_slow</a>(&sig);
@@ -5552,32 +5551,6 @@ Create a Validator Operator account
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
     <b>assert</b>(is_testnet(), 120102011021);
     <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(addr)
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_DiemAccount_test_helper_destroy_signer"></a>
-
-## Function `test_helper_destroy_signer`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_test_helper_destroy_signer">test_helper_destroy_signer</a>(vm: &signer, _to_destroy: signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_test_helper_destroy_signer">test_helper_destroy_signer</a>(vm: &signer, _to_destroy: signer) {
-    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
-    <b>assert</b>(is_testnet(), 120103011021);
-    // destroy_signer(sig); // 0L todo: this fn deleted, delete this line?
 }
 </code></pre>
 

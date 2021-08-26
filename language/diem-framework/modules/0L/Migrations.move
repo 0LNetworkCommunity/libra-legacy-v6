@@ -70,14 +70,13 @@ module MigrateWallets {
   public fun migrate_slow_wallets(vm: &signer) {
 
     let vec_addr = ValidatorUniverse::get_eligible_validators(vm);
-    // TODO: how to get other accounts?
-
+    
     // tag as 
     let len = Vector::length<address>(&vec_addr);
     let i = 0;
     while (i < len) {
       let addr = *Vector::borrow<address>(&vec_addr, i);
-      DiemAccount::vm_set_slow_wallet(vm, addr);
+      DiemAccount::vm_migrate_slow_wallet(vm, addr);
       i = i + 1;
     };
     Migrations::push(UID, b"MigrateWallets");
