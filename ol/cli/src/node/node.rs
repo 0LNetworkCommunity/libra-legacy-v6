@@ -3,7 +3,8 @@
 use crate::{cache::Vitals, check::items::Items, config::AppCfg, mgmt::management::NodeMode};
 use anyhow::Error;
 use cli::diem_client::DiemClient;
-use diem_config::config::NodeConfig;
+use diem_config::config::{NodeConfig, RocksdbConfig};
+use diemdb::DiemDB;
 use std::path::PathBuf;
 use std::{process::Command, str};
 use sysinfo::SystemExt;
@@ -13,6 +14,7 @@ use diem_types::waypoint::Waypoint;
 use diem_types::{account_address::AccountAddress, account_state::AccountState};
 use super::client;
 use super::{account::OwnerAccountView, states::HostState};
+use storage_interface::DbReader;
 
 /// name of key in kv store for sync
 pub const SYNC_KEY: &str = "is_synced";
@@ -205,27 +207,19 @@ impl Node {
 
     /// database is initialized, Please do NOT invoke this function frequently
     pub fn db_bootstrapped(&mut self) -> bool {
-        let _file = self.app_conf.workspace.db_path.clone();
-
-        // 0L todo: New DiemDB::open() requires RocksDB options
-        // https://github.com/OLSF/libra/issues/530
-        //
-        // if file.exists() {
-        //     // When not committing, we open the DB as secondary so the tool 
-        //     // is usable along side a running node on the same DB. 
-        //     // Using a TempPath since it won't run for long.
-        //     match DiemDB::open(file, true, None) {
-        //         Ok(db) => {
-        //             return db.get_latest_version().is_ok();
-        //         }
-        //         Err(_e) => (),
-        //     }
-        // }
-        // return false;
-        todo!();
-        // panic!("Error: Incomplete function"); // Remove this after fixing this fn
-
-        
+        let file = self.app_conf.workspace.db_path.clone();
+        if file.exists() {
+            // When not committing, we open the DB as secondary so the tool 
+            // is usable along side a running node on the same DB. 
+            // Using a TempPath since it won't run for long.
+            match DiemDB::open(file, true, None, RocksdbConfig::default()) {
+                Ok(db) => {
+                    return db.get_latest_version().is_ok();
+                }
+                Err(_e) => (),
+            }
+        }
+        return false;
     }
 
     /// database is initialized, Please do NOT invoke this function frequently

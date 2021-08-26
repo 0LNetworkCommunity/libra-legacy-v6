@@ -9,7 +9,6 @@ use crate::{
     function_target_pipeline::{FunctionTargetProcessor, FunctionTargetsHolder, FunctionVariant},
     stackless_bytecode::{Bytecode, Operation},
 };
-use diem_types::account_config;
 use move_binary_format::file_format::CodeOffset;
 use move_core_types::language_storage::{StructTag, TypeTag};
 use move_model::{
@@ -29,7 +28,7 @@ use std::collections::BTreeSet;
 pub fn get_packed_types(
     env: &GlobalEnv,
     targets: &FunctionTargetsHolder,
-    _coin_types: Vec<Type>, //////// 0L ////////
+    coin_types: Vec<Type>,
 ) -> BTreeSet<StructTag> {
     let mut packed_types = BTreeSet::new();
     for module_env in env.get_modules() {
@@ -52,16 +51,6 @@ pub fn get_packed_types(
                     assert!(num_type_parameters <= 1, "Assuming that transaction scripts have <= 1 type parameters for simplicity. If there can be >1 type parameter, the code here must account for all permutations of type params");
 
                     if num_type_parameters == 1 {
-                        // 0L todo: Do we need this 0L change? In the new fn signature, 
-                        //          there is already `coin_types: Vec<Type>`
-                        let coin_types: Vec<Type> =
-                            //////// 0L ////////
-                            // vec![account_config::xus_tag(), account_config::xdx_type_tag()]
-                            vec![account_config::xus_tag(), account_config::gas_type_tag()] 
-                                .into_iter()
-                                .map(|t| Type::from_type_tag(&t, env))
-                                .collect();
-
                         for open_ty in annotation.open_types.iter() {
                             for coin_ty in &coin_types {
                                 match open_ty.instantiate(vec![coin_ty.clone()].as_slice()).into_type_tag(env) {

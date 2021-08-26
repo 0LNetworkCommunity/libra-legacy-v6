@@ -127,9 +127,6 @@ impl Node {
                     _ => format!("Error, cannot find account state for {:#?}", account),
                 }
             },
-            // 0L todo: no get_txn_by_acc_range() in new diem client
-            // https://github.com/OLSF/libra/issues/530               
-            //             
             Txs {
                 account,
                 txs_height,

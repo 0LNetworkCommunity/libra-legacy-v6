@@ -2930,29 +2930,14 @@ module DiemAccount {
         );
     }
 
-    /////// 0L /////////
-    public fun vm_set_slow_wallet(vm: &signer, addr: address) {
-      CoreAddresses::assert_diem_root(vm);
-      let sig = create_signer(addr);
-      Wallet::set_slow(&sig);
-      // destroy_signer(sig); // 0L todo: this fn deleted, delete this line?
-    }    
-
     /////// TEST HELPERS //////
 
     /////// 0L /////////
-    // TODO: This is scary stuff.
+    // TODO: This is scary. How else to lock down this function for testing only?
     public fun test_helper_create_signer(vm: &signer, addr: address): signer {
         CoreAddresses::assert_diem_root(vm);
         assert(is_testnet(), 120102011021);
         create_signer(addr)
     } 
-
-    /////// 0L /////////
-    public fun test_helper_destroy_signer(vm: &signer, _to_destroy: signer) {
-        CoreAddresses::assert_diem_root(vm);
-        assert(is_testnet(), 120103011021);
-        // destroy_signer(sig); // 0L todo: this fn deleted, delete this line?
-    }    
 }
 }
