@@ -170,11 +170,6 @@ impl Node {
                     format!("{:#?}", txs)
                 }
             },
-            // Txs {..} => {        
-            //     panic!(
-            //         "Txs query is currently not supported, see https://github.com/OLSF/libra/issues/530
-            //     ")
-            // }            
             Events {
                 account,
                 sent_or_received,
