@@ -12,13 +12,13 @@ use anyhow::{bail, Error};
 use diem_types::access_path::AccessPath;
 use diem_types::account_address::AccountAddress;
 use diem_types::account_config::{BalanceResource, CurrencyInfoResource};
+use diem_types::ol_miner_state::MinerStateResource;
 use diem_types::transaction::{ChangeSet, Transaction, WriteSetPayload};
 use diem_types::write_set::{WriteOp, WriteSetMut};
 use move_core_types::identifier::Identifier;
 use move_core_types::move_resource::MoveResource;
 use ol_types::autopay::AutoPayResource;
 use ol_types::fullnode_counter::FullnodeCounterResource;
-use ol_types::miner_state::MinerStateResource;
 use ol_types::wallet::{CommunityWalletsResource, SlowWalletResource};
 use vm_genesis::encode_recovery_genesis_changeset;
 
