@@ -50,14 +50,13 @@ Module providing debug functionality.
 <pre><code><b>public</b> <b>fun</b> <a href="Migrations.md#0x1_MigrateWallets_migrate_slow_wallets">migrate_slow_wallets</a>(vm: &signer) {
 
   <b>let</b> vec_addr = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm);
-  // TODO: how <b>to</b> get other accounts?
 
   // tag <b>as</b>
   <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&vec_addr);
   <b>let</b> i = 0;
   <b>while</b> (i &lt; len) {
     <b>let</b> addr = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&vec_addr, i);
-    <a href="DiemAccount.md#0x1_DiemAccount_vm_set_slow_wallet">DiemAccount::vm_set_slow_wallet</a>(vm, addr);
+    <a href="DiemAccount.md#0x1_DiemAccount_vm_migrate_slow_wallet">DiemAccount::vm_migrate_slow_wallet</a>(vm, addr);
     i = i + 1;
   };
   <a href="Migrations.md#0x1_Migrations_push">Migrations::push</a>(<a href="Migrations.md#0x1_MigrateWallets_UID">UID</a>, b"<a href="Migrations.md#0x1_MigrateWallets">MigrateWallets</a>");
