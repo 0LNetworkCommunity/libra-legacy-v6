@@ -7,6 +7,7 @@ use diem_types::{
     account_state::AccountState,
     account_state_blob::AccountStateBlob,
     network_address::NetworkAddress,
+    ol_miner_state::MinerStateResource,
     on_chain_config::ConfigurationResource,
     transaction::authenticator::AuthenticationKey,
     validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource},
@@ -14,7 +15,7 @@ use diem_types::{
 use move_core_types::{identifier::Identifier, move_resource::MoveResource};
 use ol_types::{
     autopay::AutoPayResource, fullnode_counter::FullnodeCounterResource,
-    miner_state::MinerStateResource, wallet::CommunityWalletsResource,
+    wallet::CommunityWalletsResource,
 };
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, fs, io::Write, path::PathBuf};
