@@ -117,8 +117,6 @@ fun main(vm: signer) {
   if (ValidatorUniverse::is_jailed(eve_addr)) {
       ValidatorUniverse::unjail_self(&new_signer);
   };
-
-  DiemAccount::test_helper_destroy_signer(&vm, new_signer);
 }
 }
 

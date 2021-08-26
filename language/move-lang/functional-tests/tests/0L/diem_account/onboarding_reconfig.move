@@ -230,7 +230,6 @@ script {
         };
 
         Reconfigure::reconfigure(vm, 15); // reconfigure at height 15
-        DiemAccount::test_helper_destroy_signer(vm, new_val);
     }
 }
 // check: EXECUTED
