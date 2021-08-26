@@ -17,7 +17,7 @@ use diem_json_rpc_types::request::{
     GetAccountParams, GetAccountStateWithProofParams, GetAccountTransactionParams,
     GetAccountTransactionsParams, GetCurrenciesParams, GetEventsParams, GetEventsWithProofsParams,
     GetMetadataParams, GetMinerStateParams, GetNetworkStatusParams, GetStateProofParams,
-    GetTransactionsParams, GetTransactionsWithProofsParams, JsonRpcRequest, MethodRequest,
+    GetTransactionsParams, GetTransactionsWithProofsParams, MethodRequest,
     SubmitParams,
 };
 use diem_mempool::{MempoolClientSender, SubmissionStatus};
