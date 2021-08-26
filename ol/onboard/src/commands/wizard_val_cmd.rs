@@ -41,8 +41,6 @@ pub struct ValWizardCmd {
     prebuilt_genesis: Option<PathBuf>,
     #[options(help = "fetching genesis blob from github")]
     fetch_git_genesis: bool,
-    // #[options(help = "skip fetching genesis blob")]
-    // skip_fetch_genesis: bool,
     #[options(help = "skip mining a block zero")]
     skip_mining: bool,
     #[options(short = "u", help = "template account.json to configure from")]
@@ -140,9 +138,14 @@ impl Runnable for ValWizardCmd {
                 "\n...........................\n"
             );
 
-            prebuilt_genesis_path = Some(home_path.join("genesis.blob"))
+            prebuilt_genesis_path = Some(home_path.join("genesis.blob"));
         } else if self.ci {
           fs::copy(get_test_genesis_blob().as_os_str(), home_path.join("genesis.blob")).unwrap();
+          prebuilt_genesis_path = Some(home_path.join("genesis.blob"));
+          status_ok!(
+                "\nUsing test genesis.blob",
+                "\n...........................\n"
+            );
         }
 
         let home_dir = app_config.workspace.node_home.to_owned();
