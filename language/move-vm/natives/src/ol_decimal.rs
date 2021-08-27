@@ -223,18 +223,4 @@ fn test_decimal_power() {
 
     let out = MoveDecimalType::from_decimal(res);
     assert_eq!(out.int, 4);
-
-    // let left = into_decimal(2, 200, true);
-    // let right = into_decimal(3, 1230, false);
-
-    // let pow = right.to_f64().unwrap();
-    // let res = left.powf(pow).normalize();
-    // dbg!(&res.to_string());
-
-    // let out = out_of_decimal(res);
-
-    // dbg!(&out);
-
-    // let new = into_decimal(out.scale, out.int, out.sign);
-    // dbg!(&new.to_string());
 }
