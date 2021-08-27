@@ -5,6 +5,8 @@ use anyhow::Error;
 use anyhow::Result;
 use cli::diem_client::DiemClient;
 use diem_types::waypoint::Waypoint;
+use rand::prelude::IteratorRandom;
+use rand::thread_rng;
 use reqwest::Url;
 use std::path::PathBuf;
 
@@ -52,16 +54,22 @@ pub fn default_remote_client(
     config: &AppCfg,
     waypoint: Waypoint,
 ) -> Result<DiemClient, Error> {
-    let remote_url = config
+    let mut rng = thread_rng();
+    for remote_url in config
         .profile
         .upstream_nodes
         .clone()
         .unwrap()
         .into_iter()
-        .next()
-        .unwrap(); // upstream_node_url.clone();
+        .choose(&mut rng) {
+        if let Ok(c) =  make_client(Some(remote_url), waypoint) {
+            if c.get_metadata().is_ok() {
+                return Ok(c)
+            }
+        }
 
-    make_client(Some(remote_url.clone()), waypoint)
+    }
+    Err(Error::msg("Not found available remote server"))
 }
 
 /// get client type with defaults from toml for local node
