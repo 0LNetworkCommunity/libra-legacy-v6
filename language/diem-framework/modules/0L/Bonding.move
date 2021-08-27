@@ -47,7 +47,7 @@ module Bonding {
     move_to<Token>(service, first_token);
   }
 
-//   ///////// Calculations /////////
+  /////////// Calculations /////////
   public fun deposit_calc(add_to_reserve: u64, reserve: u64, supply: u64) {
 
     let one = Decimal::new(true, 1, 0);
@@ -152,10 +152,10 @@ module Bonding {
 //   ///////// GETTERS /////////
 
 
-//   public fun get_curve_state(sponsor_address: address): (Decimal, Decimal) acquires CurveState {
-//     let state = borrow_global<CurveState>(sponsor_address);
-//     (state.reserve, state.supply)
-//   }
+  public fun get_curve_state(sponsor_address: address): (u64, u64) acquires CurveState {
+    let state = borrow_global<CurveState>(sponsor_address); 
+    (state.reserve, state.supply_issued)
+  }
 
 //   public fun get_user_balance(addr: address): Decimal acquires Token {
 //     let state = borrow_global<Token>(addr);
