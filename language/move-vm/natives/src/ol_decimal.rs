@@ -12,175 +12,6 @@ use rust_decimal::{self, prelude::ToPrimitive, Decimal, MathematicalOps};
 use smallvec::smallvec;
 use std::collections::VecDeque;
 
-pub fn native_decimal_demo(
-    context: &impl NativeContext,
-    _ty_args: Vec<Type>,
-    mut arguments: VecDeque<Value>,
-) -> PartialVMResult<NativeResult> {
-    debug_assert!(_ty_args.is_empty());
-    debug_assert!(arguments.len() == 3);
-
-    // pop arguments in reverse order
-    let scale = pop_arg!(arguments, u8) as u32;
-    let mut signed_int = pop_arg!(arguments, u64) as i64;
-    let sign = pop_arg!(arguments, bool);
-
-    if !sign {
-        signed_int = signed_int * -1
-    }
-
-    let dec = Decimal::new(signed_int, scale);
-
-    let new_sign = dec.is_sign_positive();
-    let new_int = dec.mantissa();
-    let new_scale = dec.scale();
-
-    let cost = native_gas(
-        context.cost_table(),
-        NativeCostIndex::DECIMAL,
-        signed_int.to_be_bytes().len(),
-    );
-
-    Ok(NativeResult::ok(
-        cost,
-        smallvec![
-            Value::bool(new_sign),
-            Value::u64(new_int as u64),
-            Value::u8(new_scale as u8)
-        ],
-    ))
-}
-
-pub fn native_decimal_single(
-    context: &impl NativeContext,
-    _ty_args: Vec<Type>,
-    mut arguments: VecDeque<Value>,
-) -> PartialVMResult<NativeResult> {
-    debug_assert!(_ty_args.is_empty());
-    debug_assert!(arguments.len() == 4);
-
-    // pop arguments in reverse order
-    let scale = pop_arg!(arguments, u8) as u32;
-    let mut signed_int = pop_arg!(arguments, u64) as i64;
-    let sign = pop_arg!(arguments, bool);
-    let op_id = pop_arg!(arguments, u8);
-
-    if !sign {
-        signed_int = signed_int * -1
-    }
-
-    let dec = Decimal::new(signed_int, scale);
-
-    let result = match op_id {
-        5 => dec.sqrt().unwrap().normalize(),
-        _ => return Err(PartialVMError::new(StatusCode::INDEX_OUT_OF_BOUNDS)),
-    };
-
-    let new_sign = result.is_sign_positive();
-    let new_int = result.mantissa();
-    let new_scale = result.scale();
-
-    let cast_new_int = new_int as u64;
-    let cast_new_scale = new_scale as u8;
-
-    let cost = native_gas(
-        context.cost_table(),
-        NativeCostIndex::DECIMAL,
-        signed_int.to_be_bytes().len(),
-    );
-
-    Ok(NativeResult::ok(
-        cost,
-        smallvec![
-            Value::bool(new_sign),
-            Value::u64(cast_new_int),
-            Value::u8(cast_new_scale)
-        ],
-    ))
-}
-
-pub fn native_decimal_pair(
-    context: &impl NativeContext,
-    _ty_args: Vec<Type>,
-    mut arguments: VecDeque<Value>,
-) -> PartialVMResult<NativeResult> {
-    debug_assert!(_ty_args.is_empty());
-    debug_assert!(arguments.len() == 8);
-
-    // pop arguments in reverse order
-    let scale_right = pop_arg!(arguments, u8) as u32;
-    let mut signed_int_right = pop_arg!(arguments, u64) as i64;
-    let sign_right = pop_arg!(arguments, bool);
-    if !sign_right {
-        signed_int_right = signed_int_right * -1
-    }
-
-    let scale_left = pop_arg!(arguments, u8) as u32;
-    let mut signed_int_left = pop_arg!(arguments, u64) as i64;
-    let sign_left = pop_arg!(arguments, bool);
-    if !sign_left {
-        signed_int_left = signed_int_left * -1
-    }
-
-    let _rounding_strategy = pop_arg!(arguments, u8);
-    let op_id = pop_arg!(arguments, u8);
-
-    let mut dec_left = Decimal::new(signed_int_left, scale_left);
-    let dec_right = Decimal::new(signed_int_right, scale_right);
-
-    let result = match op_id {
-        0 => {
-            dec_left.rescale(signed_int_right as u32);
-            dec_left
-        }
-        1 => dec_left.checked_add(dec_right).unwrap().normalize(),
-        2 => dec_left.checked_sub(dec_right).unwrap().normalize(),
-        3 => dec_left.checked_mul(dec_right).unwrap().normalize(),
-        4 => dec_left.checked_div(dec_right).unwrap().normalize(),
-        5 => {
-            let pow = dec_right.to_f64().unwrap();
-            dec_left.powf(pow).normalize()
-        }
-
-        _ => return Err(PartialVMError::new(StatusCode::INDEX_OUT_OF_BOUNDS)),
-    };
-
-    let new_sign = result.is_sign_positive();
-    let new_int = result.mantissa();
-    let new_scale = result.scale();
-
-    let cast_new_int = new_int as u64;
-    let cast_new_scale = new_scale as u8;
-
-    let cost = native_gas(
-        context.cost_table(),
-        NativeCostIndex::DECIMAL,
-        signed_int_left.to_be_bytes().len(),
-    );
-
-    Ok(NativeResult::ok(
-        cost,
-        smallvec![
-            Value::bool(new_sign),
-            Value::u64(cast_new_int),
-            Value::u8(cast_new_scale)
-        ],
-    ))
-}
-
-fn into_decimal(scale: u8, int: u64, sign: bool) -> Decimal {
-    let scale_right = scale as u32;
-    dbg!(&scale_right);
-    // let test = int as i128;
-    // dbg!(&test);
-    let mut signed_int_right = int as i64;
-    dbg!(&signed_int_right);
-    let sign_right = sign;
-    if !sign_right {
-        signed_int_right = signed_int_right * -1
-    }
-    Decimal::new(signed_int_right, scale_right)
-}
 
 #[derive(Debug)]
 struct MoveDecimalType {
@@ -223,14 +54,142 @@ impl MoveDecimalType {
     }
 }
 
-// fn test_single(scale: u8, int: u64, sign: bool) {
-//     left = into_decimal(scale, int, sign);
-// }
+pub fn native_decimal_demo(
+    context: &impl NativeContext,
+    _ty_args: Vec<Type>,
+    mut arguments: VecDeque<Value>,
+) -> PartialVMResult<NativeResult> {
+    debug_assert!(_ty_args.is_empty());
+    debug_assert!(arguments.len() == 3);
 
-// fn test_power(left: Decimal, right: Decimal) -> Decimal {
-//     let pow = right.to_f64().unwrap();
-//     left.powf(pow).normalize()
-// }
+    // pop arguments in reverse order
+    let scale = pop_arg!(arguments, u8);
+    let int = pop_arg!(arguments, u64);
+    let sign = pop_arg!(arguments, bool);
+
+    let m = MoveDecimalType::new(scale, int, sign);
+    let dec = m.into_decimal();
+
+    let cost = native_gas(
+        context.cost_table(),
+        NativeCostIndex::DECIMAL,
+        m.int.to_be_bytes().len(),
+    );
+
+    let new_m = MoveDecimalType::from_decimal(dec);
+    Ok(NativeResult::ok(
+        cost,
+        smallvec![
+            Value::bool(new_m.sign),
+            Value::u64(new_m.int),
+            Value::u8(new_m.scale)
+        ],
+    ))
+}
+
+pub fn native_decimal_single(
+    context: &impl NativeContext,
+    _ty_args: Vec<Type>,
+    mut arguments: VecDeque<Value>,
+) -> PartialVMResult<NativeResult> {
+    debug_assert!(_ty_args.is_empty());
+    debug_assert!(arguments.len() == 4);
+    
+    // pop arguments in reverse order
+    let scale = pop_arg!(arguments, u8);
+    let int = pop_arg!(arguments, u64);
+    let sign = pop_arg!(arguments, bool);
+    let op_id = pop_arg!(arguments, u8);
+
+
+    let m = MoveDecimalType::new(scale, int, sign);
+    let dec = m.into_decimal();
+
+    let result = match op_id {
+        5 => dec.sqrt().unwrap().normalize(),
+        _ => return Err(PartialVMError::new(StatusCode::INDEX_OUT_OF_BOUNDS)),
+    };
+
+    let cost = native_gas(
+        context.cost_table(),
+        NativeCostIndex::DECIMAL,
+        m.int.to_be_bytes().len(),
+    );
+
+    let out = MoveDecimalType::from_decimal(result);
+
+    Ok(NativeResult::ok(
+        cost,
+        smallvec![
+            Value::bool(out.sign),
+            Value::u64(out.int),
+            Value::u8(out.scale)
+        ],
+    ))
+}
+
+pub fn native_decimal_pair(
+    context: &impl NativeContext,
+    _ty_args: Vec<Type>,
+    mut arguments: VecDeque<Value>,
+) -> PartialVMResult<NativeResult> {
+    debug_assert!(_ty_args.is_empty());
+    debug_assert!(arguments.len() == 8);
+
+    // pop arguments in reverse order
+    let scale_right = pop_arg!(arguments, u8);
+    let int_right = pop_arg!(arguments, u64);
+    let sign_right = pop_arg!(arguments, bool);
+
+
+    let m_right = MoveDecimalType::new(scale_right, int_right, sign_right);
+    let dec_right = m_right.into_decimal();
+
+    // pop arguments in reverse order
+    let scale_left = pop_arg!(arguments, u8);
+    let int_left = pop_arg!(arguments, u64);
+    let sign_left = pop_arg!(arguments, bool);
+
+    let m_left = MoveDecimalType::new(scale_left, int_left, sign_left);
+    let mut dec_left = m_left.into_decimal();
+
+    let _rounding_strategy = pop_arg!(arguments, u8);
+    let op_id = pop_arg!(arguments, u8);
+
+    let result = match op_id {
+        0 => {
+            dec_left.rescale(dec_right.to_u32().unwrap());
+            dec_left
+        }
+        1 => dec_left.checked_add(dec_right).unwrap().normalize(),
+        2 => dec_left.checked_sub(dec_right).unwrap().normalize(),
+        3 => dec_left.checked_mul(dec_right).unwrap().normalize(),
+        4 => dec_left.checked_div(dec_right).unwrap().normalize(),
+        5 => {
+            let pow = dec_right.to_f64().unwrap();
+            dec_left.powf(pow).normalize()
+        }
+
+        _ => return Err(PartialVMError::new(StatusCode::INDEX_OUT_OF_BOUNDS)),
+    };
+
+    let out = MoveDecimalType::from_decimal(result);
+
+    let cost = native_gas(
+        context.cost_table(),
+        NativeCostIndex::DECIMAL,
+        m_left.int.to_be_bytes().len(),
+    );
+
+    Ok(NativeResult::ok(
+        cost,
+        smallvec![
+            Value::bool(out.sign),
+            Value::u64(out.int),
+            Value::u8(out.scale)
+        ],
+    ))
+}
 
 #[test]
 fn test_into_dec() {
