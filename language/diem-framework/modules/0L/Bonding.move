@@ -48,7 +48,7 @@ module Bonding {
   }
 
 //   ///////// Calculations /////////
-  public fun deposit_calc(add_to_reserve: u128, reserve: u128, supply: u128) {
+  public fun deposit_calc(add_to_reserve: u64, reserve: u64, supply: u64) {
 
     let one = Decimal::new(true, 1, 0);
     print(&one);
