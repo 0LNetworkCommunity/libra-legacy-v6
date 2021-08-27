@@ -51,17 +51,21 @@ pub fn get_client() -> Option<DiemClient> {
 pub fn default_remote_client(
     config: &AppCfg,
     waypoint: Waypoint,
-) -> Result<DiemClient, Error> {
-    let remote_url = config
+) -> Result<LibraClient, Error> {
+    for remote_url in config
         .profile
         .upstream_nodes
         .clone()
         .unwrap()
-        .into_iter()
-        .next()
-        .unwrap(); // upstream_node_url.clone();
+        .into_iter() {
+        if let Ok(mut c) =  make_client(Some(remote_url), waypoint) {
+            if c.get_state_proof().is_ok() {
+                return Ok(c)
+            }
+        }
 
-    make_client(Some(remote_url.clone()), waypoint)
+    }
+    Err(Error::msg("Not found available remote server"))
 }
 
 /// get client type with defaults from toml for local node
