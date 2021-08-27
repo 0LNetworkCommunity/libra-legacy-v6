@@ -103,6 +103,7 @@ The Move modules in the Diem Framework can be bucketed in to a couple categories
 -  [`0x1::ChainId`](ChainId.md#0x1_ChainId)
 -  [`0x1::CoreAddresses`](CoreAddresses.md#0x1_CoreAddresses)
 -  [`0x1::Debug`](Debug.md#0x1_Debug)
+-  [`0x1::Decimal`](ol_Decimal.md#0x1_Decimal)
 -  [`0x1::DemoScripts`](ol_demo_e2e.md#0x1_DemoScripts)
 -  [`0x1::DesignatedDealer`](DesignatedDealer.md#0x1_DesignatedDealer)
 -  [`0x1::Diem`](Diem.md#0x1_Diem)
