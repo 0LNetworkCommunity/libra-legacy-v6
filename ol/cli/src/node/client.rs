@@ -5,6 +5,8 @@ use anyhow::Error;
 use anyhow::Result;
 use cli::diem_client::DiemClient;
 use diem_types::waypoint::Waypoint;
+use rand::prelude::IteratorRandom;
+use rand::thread_rng;
 use reqwest::Url;
 use std::path::PathBuf;
 
@@ -51,15 +53,17 @@ pub fn get_client() -> Option<DiemClient> {
 pub fn default_remote_client(
     config: &AppCfg,
     waypoint: Waypoint,
-) -> Result<LibraClient, Error> {
+) -> Result<DiemClient, Error> {
+    let mut rng = thread_rng();
     for remote_url in config
         .profile
         .upstream_nodes
         .clone()
         .unwrap()
-        .into_iter() {
-        if let Ok(mut c) =  make_client(Some(remote_url), waypoint) {
-            if c.get_state_proof().is_ok() {
+        .into_iter()
+        .choose(&mut rng) {
+        if let Ok(c) =  make_client(Some(remote_url), waypoint) {
+            if c.get_metadata().is_ok() {
                 return Ok(c)
             }
         }
