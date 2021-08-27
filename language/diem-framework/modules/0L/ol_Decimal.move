@@ -6,11 +6,13 @@ module Decimal {
 
     struct Decimal has key, store, drop {
         sign: bool,
-        int: u128,
+        int: u64,
         scale: u8, // max intger is number 28
     }
 
-    const MAX_RUST_U64: u128 = 18446744073709551615;
+    // TODO: What is the largest integer rust_decimal can take?
+
+    const MAX_RUST_U64: u64 = 18446744073709551615;
     // pair decimal ops
     const ADD: u8 = 1;
     const SUB: u8 = 2;
@@ -22,24 +24,24 @@ module Decimal {
 
     const ROUNDING_UP: u8 = 1;
 
-    native public fun decimal_demo(sign: bool, int: u128, scale: u8): (bool, u128, u8);
+    native public fun decimal_demo(sign: bool, int: u64, scale: u8): (bool, u64, u8);
 
-    native public fun single_op(op_id: u8, sign: bool, int: u128, scale: u8): (bool, u128, u8);
+    native public fun single_op(op_id: u8, sign: bool, int: u64, scale: u8): (bool, u64, u8);
 
     native public fun pair_op(
       op_id: u8,
       rounding_strategy_id: u8,
       // left number
       sign_1: bool,
-      int_1: u128,
+      int_1: u64,
       scale_1: u8,
       // right number
       sign_2: bool,
-      int_2: u128,
+      int_2: u64,
       scale_3: u8
-    ): (bool, u128, u8);
+    ): (bool, u64, u8);
 
-    public fun new(sign: bool, int: u128, scale: u8): Decimal {
+    public fun new(sign: bool, int: u64, scale: u8): Decimal {
       // in Rust, the integer is downcast to u64
       // so we limit new Decimal types to that scale.
       assert(int < MAX_RUST_U64, 01);
@@ -122,7 +124,7 @@ module Decimal {
     ///// GETTERS /////
 
     // unwrap creates a new decimal instance
-    public fun unwrap(d: &Decimal): (bool, u128, u8) {
+    public fun unwrap(d: &Decimal): (bool, u64, u8) {
       return (*&d.sign, *&d.int, *&d.scale)
     }
 
@@ -132,7 +134,7 @@ module Decimal {
     }
 
     // borrows the value of the integer
-    public fun borrow_int(d: &Decimal): &u128 {
+    public fun borrow_int(d: &Decimal): &u64 {
       return &d.int
     }
 

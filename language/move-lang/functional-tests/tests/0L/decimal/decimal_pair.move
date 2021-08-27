@@ -21,6 +21,8 @@ fun main(_s: signer) {
     assert(Decimal::borrow_int(&sum) == &579, 7357004);
 
     //////// SUB ////////
+
+
     //////// MULT ////////
 
     // let left = Decimal::new(true, 2, 0);
@@ -49,7 +51,8 @@ fun main(_s: signer) {
     let right = Decimal::new(false, 123, 2);
 
     let res = Decimal::power(&left, &right);
-    assert(Decimal::borrow_int(&res) == &4262755343444522533359278975, 7357006);
+    print(&res);
+    assert(Decimal::borrow_int(&res) == &17660818682273794327, 7357006);
 
 
     //////// RESCALE ////////

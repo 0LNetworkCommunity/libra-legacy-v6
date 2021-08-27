@@ -8,7 +8,7 @@ use move_vm_types::{
     natives::function::{native_gas, NativeContext, NativeResult},
     values::Value,
 };
-use rust_decimal::{self, Decimal, MathematicalOps, prelude::ToPrimitive};
+use rust_decimal::{self, prelude::ToPrimitive, Decimal, MathematicalOps};
 use smallvec::smallvec;
 use std::collections::VecDeque;
 
@@ -22,7 +22,7 @@ pub fn native_decimal_demo(
 
     // pop arguments in reverse order
     let scale = pop_arg!(arguments, u8) as u32;
-    let mut signed_int = pop_arg!(arguments, u128) as i64;
+    let mut signed_int = pop_arg!(arguments, u64) as i64;
     let sign = pop_arg!(arguments, bool);
 
     if !sign {
@@ -45,7 +45,7 @@ pub fn native_decimal_demo(
         cost,
         smallvec![
             Value::bool(new_sign),
-            Value::u128(new_int as u128),
+            Value::u64(new_int as u64),
             Value::u8(new_scale as u8)
         ],
     ))
@@ -61,7 +61,7 @@ pub fn native_decimal_single(
 
     // pop arguments in reverse order
     let scale = pop_arg!(arguments, u8) as u32;
-    let mut signed_int = pop_arg!(arguments, u128) as i64;
+    let mut signed_int = pop_arg!(arguments, u64) as i64;
     let sign = pop_arg!(arguments, bool);
     let op_id = pop_arg!(arguments, u8);
 
@@ -80,7 +80,7 @@ pub fn native_decimal_single(
     let new_int = result.mantissa();
     let new_scale = result.scale();
 
-    let cast_new_int = new_int as u128;
+    let cast_new_int = new_int as u64;
     let cast_new_scale = new_scale as u8;
 
     let cost = native_gas(
@@ -93,7 +93,7 @@ pub fn native_decimal_single(
         cost,
         smallvec![
             Value::bool(new_sign),
-            Value::u128(cast_new_int),
+            Value::u64(cast_new_int),
             Value::u8(cast_new_scale)
         ],
     ))
@@ -109,14 +109,14 @@ pub fn native_decimal_pair(
 
     // pop arguments in reverse order
     let scale_right = pop_arg!(arguments, u8) as u32;
-    let mut signed_int_right = pop_arg!(arguments, u128) as i64;
+    let mut signed_int_right = pop_arg!(arguments, u64) as i64;
     let sign_right = pop_arg!(arguments, bool);
     if !sign_right {
         signed_int_right = signed_int_right * -1
     }
 
     let scale_left = pop_arg!(arguments, u8) as u32;
-    let mut signed_int_left = pop_arg!(arguments, u128) as i64;
+    let mut signed_int_left = pop_arg!(arguments, u64) as i64;
     let sign_left = pop_arg!(arguments, bool);
     if !sign_left {
         signed_int_left = signed_int_left * -1
@@ -129,15 +129,18 @@ pub fn native_decimal_pair(
     let dec_right = Decimal::new(signed_int_right, scale_right);
 
     let result = match op_id {
-        0 => { dec_left.rescale(signed_int_right as u32); dec_left },
+        0 => {
+            dec_left.rescale(signed_int_right as u32);
+            dec_left
+        }
         1 => dec_left.checked_add(dec_right).unwrap().normalize(),
         2 => dec_left.checked_sub(dec_right).unwrap().normalize(),
         3 => dec_left.checked_mul(dec_right).unwrap().normalize(),
         4 => dec_left.checked_div(dec_right).unwrap().normalize(),
         5 => {
-          let pow = dec_right.to_f64().unwrap();
-          dec_left.powf(pow).normalize()
-        },
+            let pow = dec_right.to_f64().unwrap();
+            dec_left.powf(pow).normalize()
+        }
 
         _ => return Err(PartialVMError::new(StatusCode::INDEX_OUT_OF_BOUNDS)),
     };
@@ -146,7 +149,7 @@ pub fn native_decimal_pair(
     let new_int = result.mantissa();
     let new_scale = result.scale();
 
-    let cast_new_int = new_int as u128;
+    let cast_new_int = new_int as u64;
     let cast_new_scale = new_scale as u8;
 
     let cost = native_gas(
@@ -159,8 +162,120 @@ pub fn native_decimal_pair(
         cost,
         smallvec![
             Value::bool(new_sign),
-            Value::u128(cast_new_int),
+            Value::u64(cast_new_int),
             Value::u8(cast_new_scale)
         ],
     ))
+}
+
+fn into_decimal(scale: u8, int: u64, sign: bool) -> Decimal {
+    let scale_right = scale as u32;
+    dbg!(&scale_right);
+    // let test = int as i128;
+    // dbg!(&test);
+    let mut signed_int_right = int as i64;
+    dbg!(&signed_int_right);
+    let sign_right = sign;
+    if !sign_right {
+        signed_int_right = signed_int_right * -1
+    }
+    Decimal::new(signed_int_right, scale_right)
+}
+
+#[derive(Debug)]
+struct MoveDecimalType {
+    sign: bool,
+    int: u64,
+    scale: u8,
+}
+
+impl MoveDecimalType {
+    fn new(scale: u8, int: u64, sign: bool) -> Self {
+        MoveDecimalType { sign, int, scale }
+    }
+    fn into_decimal(&self) -> Decimal {
+        let scale_right = self.scale as u32;
+        dbg!(&scale_right);
+        // let test = int as i128;
+        dbg!(&self.int);
+        let mut signed_int_right = self.int as i64;
+        dbg!(&signed_int_right);
+        if !self.sign {
+            signed_int_right = signed_int_right * -1
+        }
+
+        Decimal::new(signed_int_right, scale_right)
+    }
+
+    fn from_decimal(dec: Decimal) -> MoveDecimalType {
+        let new_sign = dec.is_sign_positive();
+        let new_int = dec.mantissa();
+        let new_scale = dec.scale();
+
+        let cast_new_int = new_int as u64;
+        let cast_new_scale = new_scale as u8;
+
+        MoveDecimalType {
+            sign: new_sign,
+            int: cast_new_int,
+            scale: cast_new_scale,
+        }
+    }
+}
+
+// fn test_single(scale: u8, int: u64, sign: bool) {
+//     left = into_decimal(scale, int, sign);
+// }
+
+// fn test_power(left: Decimal, right: Decimal) -> Decimal {
+//     let pow = right.to_f64().unwrap();
+//     left.powf(pow).normalize()
+// }
+
+#[test]
+fn test_into_dec() {
+    let m = MoveDecimalType {
+        sign: true,
+        int: 999999999999999999,
+        scale: 0,
+    };
+
+    let dec = m.into_decimal();
+    dbg!(&dec.to_string());
+    assert_eq!(dec.to_u64(), Some(m.int));
+
+    let new_m = MoveDecimalType::from_decimal(dec);
+    dbg!(&new_m);
+    assert_eq!(m.int, new_m.int);
+
+
+    let new_dec = new_m.into_decimal();
+    dbg!(&new_dec.to_string());
+    assert_eq!(new_dec.to_u64(), Some(m.int));
+}
+
+#[test]
+fn test_decimal_power() {
+    let left = MoveDecimalType::new(2, 200, true).into_decimal();
+    let right =  MoveDecimalType::new(2, 200, true).into_decimal();
+
+    let pow = right.to_f64().unwrap();
+    let res = left.powf(pow).normalize();
+
+    let out = MoveDecimalType::from_decimal(res);
+    assert_eq!(out.int, 4);
+
+    // let left = into_decimal(2, 200, true);
+    // let right = into_decimal(3, 1230, false);
+
+    // let pow = right.to_f64().unwrap();
+    // let res = left.powf(pow).normalize();
+    // dbg!(&res.to_string());
+
+    // let out = out_of_decimal(res);
+
+    // dbg!(&out);
+
+    // let new = into_decimal(out.scale, out.int, out.sign);
+    // dbg!(&new.to_string());
 }
