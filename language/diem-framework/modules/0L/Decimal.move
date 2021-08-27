@@ -10,9 +10,9 @@ module Decimal {
         scale: u8, // max intger is number 28
     }
 
-    // TODO: What is the largest integer rust_decimal can take?
+    // the largest integer possible is 2ˆ64 / 2
 
-    const MAX_RUST_U64: u64 = 18446744073709551615;
+    const MAX_RUST_U64: u64 = 9223372036854775807;
     // pair decimal ops
     const ADD: u8 = 1;
     const SUB: u8 = 2;

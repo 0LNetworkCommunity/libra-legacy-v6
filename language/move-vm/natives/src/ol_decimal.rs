@@ -8,7 +8,7 @@ use move_vm_types::{
     natives::function::{native_gas, NativeContext, NativeResult},
     values::Value,
 };
-use rust_decimal::{self, prelude::ToPrimitive, Decimal, MathematicalOps};
+use rust_decimal::{self, Decimal, MathematicalOps, RoundingStrategy, prelude::ToPrimitive};
 use smallvec::smallvec;
 use std::collections::VecDeque;
 
@@ -41,9 +41,12 @@ impl MoveDecimalType {
     fn from_decimal(dec: Decimal) -> MoveDecimalType {
         let new_sign = dec.is_sign_positive();
         let new_int = dec.mantissa();
-        let new_scale = dec.scale();
 
-        let cast_new_int = new_int as u64;
+        dbg!(&new_int);
+        let new_scale = dec.scale();
+        dbg!(&new_scale);
+
+        let cast_new_int = new_int as u64; //to_u64().expect("oh no can't cast this");
         let cast_new_scale = new_scale as u8;
 
         MoveDecimalType {
@@ -77,6 +80,7 @@ pub fn native_decimal_demo(
     );
 
     let new_m = MoveDecimalType::from_decimal(dec);
+
     Ok(NativeResult::ok(
         cost,
         smallvec![
@@ -195,11 +199,12 @@ pub fn native_decimal_pair(
 fn test_into_dec() {
     let m = MoveDecimalType {
         sign: true,
-        int: 999999999999999999,
+        int: 9999999999,
         scale: 0,
     };
 
     let dec = m.into_decimal();
+
     dbg!(&dec.to_string());
     assert_eq!(dec.to_u64(), Some(m.int));
 
@@ -211,6 +216,31 @@ fn test_into_dec() {
     let new_dec = new_m.into_decimal();
     dbg!(&new_dec.to_string());
     assert_eq!(new_dec.to_u64(), Some(m.int));
+}
+
+#[test]
+fn test_irrational() {
+    let m = MoveDecimalType {
+        sign: true,
+        int: 3,
+        scale: 0,
+    };
+
+    let dec = m.into_decimal();
+    dbg!(&dec.to_string());
+
+    let i = dec.sqrt().unwrap().normalize();
+    dbg!(&i.to_string());
+    // assert_eq!(dec.to_u64(), Some(m.int));
+
+    let new_m = MoveDecimalType::from_decimal(i);
+    dbg!(&new_m);
+    // assert_eq!(m.int, new_m.int);
+
+
+    // let new_dec = new_m.into_decimal();
+    // dbg!(&new_dec.to_string());
+    // assert_eq!(new_dec.to_u64(), Some(m.int));
 }
 
 #[test]
