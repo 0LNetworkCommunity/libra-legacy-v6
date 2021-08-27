@@ -48,7 +48,7 @@ pub struct Node {
 
 impl Node {
     /// Create a instance of Check
-    pub fn new(client: DiemClient, conf: AppCfg, is_swarm: bool) -> Self {
+    pub fn new(client: DiemClient, conf: &AppCfg, is_swarm: bool) -> Self {
         let node_yaml = if is_swarm {
             "node.yaml"
         } else {
@@ -81,7 +81,7 @@ impl Node {
     pub fn default_from_cfg(mut cfg: AppCfg, swarm_path: Option<PathBuf>) -> Node {
         // NOTE: not intended for swarm.
         let client = client::pick_client(swarm_path.clone(), &mut cfg).unwrap();
-        Node::new(client, cfg, swarm_path.is_some())
+        Node::new(client, &cfg, swarm_path.is_some())
     }
 
     /// refresh all checks

@@ -15,7 +15,11 @@ pub struct StartCmd {
   
     /// Check if DB needs to be restored.
     #[options(short = "r", help = "check if DB bootstraps if not will attempt restore")]
-    restore: bool    
+    restore: bool,
+
+    /// Check if DB needs to be restored.
+    #[options(short = "u", help = "fetches list of fullnode peers from onchain discovery, and saves to 0L.toml")]
+    refresh_upstream: bool,
 }
 
 impl Runnable for StartCmd {
@@ -25,7 +29,14 @@ impl Runnable for StartCmd {
         let is_swarm = *&args.swarm_path.is_some();
         let mut cfg = app_config().clone();
         let client = client::pick_client(args.swarm_path, &mut cfg).unwrap();
-        let mut node = Node::new(client, cfg, is_swarm);
+        let mut node = Node::new(client, &cfg, is_swarm);
+        
+        if *&self.refresh_upstream {
+            // fix 0L.toml file
+            let cfg_path = cfg.workspace.node_home;
+            node.refresh_peers_update_toml(cfg_path.join("0L.toml")).ok();
+            return
+        };
         if *&self.restore { pilot::maybe_restore_db(&mut node, !self.silent); }
         check::runner::run_checks(&mut node, true ,true, !self.silent, !self.silent);
     }
