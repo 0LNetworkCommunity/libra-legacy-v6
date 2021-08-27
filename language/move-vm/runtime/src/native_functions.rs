@@ -7,7 +7,7 @@ use move_core_types::{
     account_address::AccountAddress, gas_schedule::CostTable, language_storage::CORE_CODE_ADDRESS,
     value::MoveTypeLayout, vm_status::StatusType,
 };
-use move_vm_natives::{account, bcs, debug, event, hash, signature, signer, vector, vdf};
+use move_vm_natives::{account, bcs, debug, event, hash, signature, signer, vector, vdf, ol_decimal}; //////// 0L ////////
 use move_vm_types::{
     data_store::DataStore,
     gas_schedule::GasStatus,
@@ -47,7 +47,10 @@ pub(crate) enum NativeFunction {
     DestroySigner,
     //////// 0L ////////
     VDFVerify,
-    RedeemAuthKeyParse,    
+    RedeemAuthKeyParse,   
+    DecimalDemo,
+    DecimalSingle,
+    DecimalPair,
 }
 
 impl NativeFunction {
@@ -82,7 +85,11 @@ impl NativeFunction {
             (&CORE_CODE_ADDRESS, "DiemAccount", "destroy_signer") => DestroySigner,
             //////// 0L ////////
             (&CORE_CODE_ADDRESS, "VDF", "verify") => VDFVerify,
-            (&CORE_CODE_ADDRESS, "VDF", "extract_address_from_challenge") => RedeemAuthKeyParse,            
+            (&CORE_CODE_ADDRESS, "VDF", "extract_address_from_challenge") => RedeemAuthKeyParse,
+            (&CORE_CODE_ADDRESS, "Decimal", "decimal_demo") => DecimalDemo,
+            (&CORE_CODE_ADDRESS, "Decimal", "single_op") => DecimalSingle,
+            (&CORE_CODE_ADDRESS, "Decimal", "pair_op") => DecimalPair,
+
             _ => return None,
         })
     }
@@ -118,7 +125,10 @@ impl NativeFunction {
             Self::DestroySigner => account::native_destroy_signer(ctx, t, v),
             //////// 0L ////////
             Self::VDFVerify => vdf::verify(ctx, t, v),
-            Self::RedeemAuthKeyParse => vdf::extract_address_from_challenge(ctx, t, v),            
+            Self::RedeemAuthKeyParse => vdf::extract_address_from_challenge(ctx, t, v),
+            Self::DecimalDemo => ol_decimal::native_decimal_demo(ctx, t, v),
+            Self::DecimalSingle => ol_decimal::native_decimal_single(ctx, t, v),
+            Self::DecimalPair => ol_decimal::native_decimal_pair(ctx, t, v),
         };
         debug_assert!(match &result {
             Err(e) => e.major_status().status_type() == StatusType::InvariantViolation,
