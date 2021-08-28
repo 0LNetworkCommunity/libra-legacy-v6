@@ -4,11 +4,10 @@
 //! sender: alice
 script {
 use 0x1::Decimal;
-use 0x1::Debug::print;
 
 fun main(_s: signer) {
     // do a square root directly with single_op
-    let (sign, int, scale) = Decimal::single_op(5, true, 100, 0);
+    let (sign, int, scale) = Decimal::single_op(100, true, 100, 0);
 
     assert(sign, 7357001);
     assert(int == 10, 7357002);

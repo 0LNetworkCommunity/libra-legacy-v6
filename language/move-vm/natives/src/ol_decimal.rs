@@ -196,16 +196,16 @@ fn test_into_dec() {
 
     let dec = m.into_decimal();
 
-    dbg!(&dec.to_string());
+    // dbg!(&dec.to_string());
     assert_eq!(dec.to_u128(), Some(m.int));
 
     let new_m = MoveDecimalType::from_decimal(dec);
-    dbg!(&new_m);
+    // dbg!(&new_m);
     assert_eq!(m.int, new_m.int);
 
 
     let new_dec = new_m.into_decimal();
-    dbg!(&new_dec.to_string());
+    // dbg!(&new_dec.to_string());
     assert_eq!(new_dec.to_u128(), Some(m.int));
 }
 
@@ -218,8 +218,8 @@ fn sanity() {
 
   let neg_one = Decimal::from_i128_with_scale(-1, 0);
   let res = two.checked_mul(neg_one).unwrap();
-  dbg!(&res);
-  dbg!(&res.mantissa());
+  // dbg!(&res);
+  // dbg!(&res.mantissa());
 
 
 }
@@ -233,14 +233,14 @@ fn test_irrational() {
     };
 
     let dec = m.into_decimal();
-    dbg!(&dec.to_string());
+    // dbg!(&dec.to_string());
 
     let i = dec.sqrt().unwrap().normalize();
-    dbg!(&i.to_string());
+    // dbg!(&i.to_string());
     // assert_eq!(dec.to_u128(), Some(m.int));
 
     let new_m = MoveDecimalType::from_decimal(i);
-    dbg!(&new_m);
+    // dbg!(&new_m);
     // assert_eq!(m.int, new_m.int);
 
 

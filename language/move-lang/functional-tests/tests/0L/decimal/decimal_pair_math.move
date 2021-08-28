@@ -4,7 +4,6 @@
 //! sender: alice
 script {
 use 0x1::Decimal;
-use 0x1::Debug::print;
 
 fun main(_s: signer) {
     let (sign, int, scale) = Decimal::pair_op(1, 0, true, 123, 2, true, 456, 2);
@@ -36,7 +35,6 @@ fun main(_s: signer) {
 
     let neg_one = Decimal::new(false, 1, 0);
     let res = Decimal::mul(&two, &neg_one);
-    print(&res);
     assert(Decimal::borrow_int(&res) == &2, 7357007);
     assert(Decimal::borrow_sign(&res) == &false, 7357008);
 
@@ -44,7 +42,6 @@ fun main(_s: signer) {
 
     let hundred = Decimal::new(true, 100, 0);
     let res = Decimal::div(&hundred, &two);
-    print(&res);
     assert(Decimal::borrow_int(&res) == &50, 7357009);
 }
 }

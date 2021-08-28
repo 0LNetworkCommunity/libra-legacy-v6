@@ -4,14 +4,12 @@
 //! sender: alice
 script {
 use 0x1::Decimal;
-use 0x1::Debug::print;
 
 fun main(_s: signer) {
     // MUL
     let two = Decimal::new(true, 2, 0);
     let neg_one = Decimal::new(false, 1, 0);
     let res = Decimal::mul(&two, &neg_one);
-    print(&res);
     assert(Decimal::borrow_sign(&res) == &false, 7357007);
     assert(Decimal::borrow_int(&res) == &2, 7357008);
     assert(Decimal::borrow_scale(&res) == &0, 7357009);
@@ -19,7 +17,6 @@ fun main(_s: signer) {
     let neg_two = Decimal::new(false, 2, 0);
     let neg_one = Decimal::new(false, 1, 0);
     let res = Decimal::mul(&neg_two, &neg_one);
-    print(&res);
     assert(Decimal::borrow_sign(&res) == &true, 7357007);
     assert(Decimal::borrow_int(&res) == &2, 7357008);
     assert(Decimal::borrow_scale(&res) == &0, 7357009);

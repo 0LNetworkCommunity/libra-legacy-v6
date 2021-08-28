@@ -4,7 +4,6 @@
 //! sender: alice
 script {
 use 0x1::Decimal;
-use 0x1::Debug::print;
 
 fun main(_s: signer) {
     // test pair_op function.
