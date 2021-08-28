@@ -6,12 +6,12 @@ module Bonding {
 
   struct CurveState has key {
     is_deprecated: bool,
-    reserve: u64, //todo: change to Diem<XUS>,
-    supply_issued: u64,
+    reserve: u128, //todo: change to Diem<XUS>,
+    supply_issued: u128,
   }
 
   struct Token has key, store { 
-    value: u64
+    value: u128
   }
 
   // fun sunset() {
@@ -24,8 +24,8 @@ module Bonding {
   ///////// Initialization /////////
   public fun initialize_curve(
     service: &signer,
-    deposit: u64, // Diem<XUS>,
-    supply_init: u64,
+    deposit: u128, // Diem<XUS>,
+    supply_init: u128,
   ) {
     // let deposit_value = Diem::value<XUS>(&deposit);
     assert(deposit > 0, 7357001);
@@ -48,7 +48,7 @@ module Bonding {
   }
 
   /////////// Calculations /////////
-  public fun deposit_calc(add_to_reserve: u64, reserve: u64, supply: u64) {
+  public fun deposit_calc(add_to_reserve: u128, reserve: u128, supply: u128) {
 
     let one = Decimal::new(true, 1, 0);
     print(&one);
@@ -98,7 +98,7 @@ module Bonding {
 //     let post_supply: Decimal = curve(delta_reserve, state.supply, state.reserve);
     
 //     let mint: Decimal = Decimal::sub(depost_supply, Decimal::new(state.supply));
-//     let mint_int: u64 = Decimal::to_u64(mint);
+//     let mint_int: u128 = Decimal::to_u128(mint);
 
 //     deposit_token_to(sender, mint_int);
 
@@ -108,7 +108,7 @@ module Bonding {
 //     mint
 //   }
 
-//   public fun burn_to_withdraw(sender: &signer, service_addr: address, burn_value: u64):Decimal acquires CurveState, Token {
+//   public fun burn_to_withdraw(sender: &signer, service_addr: address, burn_value: u128):Decimal acquires CurveState, Token {
 
 //     assert(exists<CurveState>(service_addr), 73570002);
 //     let sender_addr = Signer::address_of(sender);
@@ -152,7 +152,7 @@ module Bonding {
 //   ///////// GETTERS /////////
 
 
-  public fun get_curve_state(sponsor_address: address): (u64, u64) acquires CurveState {
+  public fun get_curve_state(sponsor_address: address): (u128, u128) acquires CurveState {
     let state = borrow_global<CurveState>(sponsor_address); 
     (state.reserve, state.supply_issued)
   }
