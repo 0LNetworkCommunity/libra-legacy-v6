@@ -35,20 +35,10 @@ impl MoveDecimalType {
     }
 
     fn from_decimal(dec: Decimal) -> MoveDecimalType {
-        let new_sign = dec.is_sign_positive();
-        let new_int = dec.mantissa();
-
-        dbg!(&new_int);
-        let new_scale = dec.scale();
-        dbg!(&new_scale);
-
-        let cast_new_int = new_int as u128; //to_u128().expect("oh no can't cast this");
-        let cast_new_scale = new_scale as u8;
-
         MoveDecimalType {
-            sign: new_sign,
-            int: cast_new_int,
-            scale: cast_new_scale,
+            sign: dec.is_sign_positive(),
+            int: dec.mantissa().abs() as u128,
+            scale: dec.scale() as u8,
         }
     }
 }
@@ -106,7 +96,7 @@ pub fn native_decimal_single(
     let dec = m.into_decimal();
 
     let result = match op_id {
-        5 => dec.sqrt().unwrap().normalize(),
+        100 => dec.sqrt().unwrap().normalize(),
         _ => return Err(PartialVMError::new(StatusCode::INDEX_OUT_OF_BOUNDS)),
     };
 
@@ -156,6 +146,10 @@ pub fn native_decimal_pair(
     let _rounding_strategy = pop_arg!(arguments, u8);
     let op_id = pop_arg!(arguments, u8);
 
+    dbg!(&op_id);
+    dbg!(&dec_left);
+    dbg!(&dec_right);
+    
     let result = match op_id {
         0 => {
             dec_left.rescale(dec_right.to_u32().unwrap());
@@ -174,6 +168,7 @@ pub fn native_decimal_pair(
     };
 
     let out = MoveDecimalType::from_decimal(result);
+    dbg!(&out);
 
     let cost = native_gas(
         context.cost_table(),
@@ -218,10 +213,13 @@ fn test_into_dec() {
 fn sanity() {
 
   // let d = Decimal::new(1, 1);
-  let d = Decimal::MAX;
-  // let d = Decimal::from_i128_with_scale(max * 3, 1);
-  dbg!(&d);
-  dbg!(&d.mantissa());
+  // let d = Decimal::MAX;
+  let two = Decimal::from_i128_with_scale(2, 0);
+
+  let neg_one = Decimal::from_i128_with_scale(-1, 0);
+  let res = two.checked_mul(neg_one).unwrap();
+  dbg!(&res);
+  dbg!(&res.mantissa());
 
 
 }

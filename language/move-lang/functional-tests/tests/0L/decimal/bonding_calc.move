@@ -3,9 +3,7 @@
 //! new-transaction
 //! sender: diemroot
 script {
-  // use 0x1::Decimal;
   use 0x1::Bonding;
-  // use 0x1::Debug::print;
 
   fun main(_diemroot: signer) {
     let add_to_reserve = 300;

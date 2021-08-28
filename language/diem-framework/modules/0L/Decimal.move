@@ -10,7 +10,7 @@ module Decimal {
         scale: u8, // max intger is number 28
     }
 
-    // While stored in u128, the largest integer possible in the rust_decimal vm dependency is 2^96
+    // while stored in u128, the largest integer possible in the rust_decimal vm dependency is 2^96
     const MAX_RUST_DECIMAL_U128: u128 = 79228162514264337593543950335;
 
     // pair decimal ops
@@ -18,11 +18,12 @@ module Decimal {
     const SUB: u8 = 2;
     const MUL: u8 = 3;
     const DIV: u8 = 4;
+    const POW: u8 = 5;
 
     // single ops
-    const SQRT: u8 = 5;
+    const SQRT: u8 = 100;
 
-    const ROUNDING_UP: u8 = 1;
+    const ROUNDING_BANKERS: u8 = 0;
 
     native public fun decimal_demo(sign: bool, int: u128, scale: u8): (bool, u128, u8);
 
@@ -58,7 +59,7 @@ module Decimal {
     /////// SUGAR /////////
     
     public fun sqrt(d: &Decimal): Decimal {
-      let (sign, int, scale) = single_op(5, *&d.sign, *&d.int, *&d.scale);
+      let (sign, int, scale) = single_op(SQRT, *&d.sign, *&d.int, *&d.scale);
       return Decimal {
         sign: sign,
         int: int,
@@ -67,7 +68,7 @@ module Decimal {
     }
 
     public fun add(l: &Decimal, r: &Decimal): Decimal {
-      let (sign, int, scale) = pair_op(1, 0, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+      let (sign, int, scale) = pair_op(ADD, ROUNDING_BANKERS, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
       return Decimal {
         sign: sign,
         int: int,
@@ -76,7 +77,7 @@ module Decimal {
     }
 
     public fun sub(l: &Decimal, r: &Decimal): Decimal {
-      let (sign, int, scale) = pair_op(2, 0, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+      let (sign, int, scale) = pair_op(SUB, ROUNDING_BANKERS, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
       return Decimal {
         sign: sign,
         int: int,
@@ -84,7 +85,7 @@ module Decimal {
       }
     }
     public fun mul(l: &Decimal, r: &Decimal): Decimal {
-      let (sign, int, scale) = pair_op(3, 0, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+      let (sign, int, scale) = pair_op(MUL, ROUNDING_BANKERS, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
       return Decimal {
         sign: sign,
         int: int,
@@ -93,7 +94,7 @@ module Decimal {
     }
 
      public fun div(l: &Decimal, r: &Decimal): Decimal {
-      let (sign, int, scale) = pair_op(4, 0, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+      let (sign, int, scale) = pair_op(DIV, ROUNDING_BANKERS, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
       return Decimal {
         sign: sign,
         int: int,
@@ -103,7 +104,7 @@ module Decimal {
 
 
     public fun rescale(l: &Decimal, r: &Decimal): Decimal {
-      let (sign, int, scale) = pair_op(0, 0, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+      let (sign, int, scale) = pair_op(0, ROUNDING_BANKERS, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
       return Decimal {
         sign: sign,
         int: int,
@@ -112,7 +113,7 @@ module Decimal {
     }
 
     public fun power(l: &Decimal, r: &Decimal): Decimal {
-      let (sign, int, scale) = pair_op(5, 0, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+      let (sign, int, scale) = pair_op(POW, ROUNDING_BANKERS, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
       return Decimal {
         sign: sign,
         int: int,
