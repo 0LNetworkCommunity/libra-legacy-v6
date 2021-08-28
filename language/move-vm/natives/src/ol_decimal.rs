@@ -8,7 +8,7 @@ use move_vm_types::{
     natives::function::{native_gas, NativeContext, NativeResult},
     values::Value,
 };
-use rust_decimal::{self, Decimal, MathematicalOps, RoundingStrategy, prelude::ToPrimitive};
+use rust_decimal::{self, Decimal, Error, MathematicalOps, RoundingStrategy, prelude::ToPrimitive};
 use smallvec::smallvec;
 use std::collections::VecDeque;
 
@@ -16,26 +16,22 @@ use std::collections::VecDeque;
 #[derive(Debug)]
 struct MoveDecimalType {
     sign: bool,
-    int: u64,
+    int: u128,
     scale: u8,
 }
 
 impl MoveDecimalType {
-    fn new(scale: u8, int: u64, sign: bool) -> Self {
+    fn new(scale: u8, int: u128, sign: bool) -> Self {
         MoveDecimalType { sign, int, scale }
     }
     fn into_decimal(&self) -> Decimal {
         let scale_right = self.scale as u32;
-        dbg!(&scale_right);
-        // let test = int as i128;
-        dbg!(&self.int);
-        let mut signed_int_right = self.int as i64;
-        dbg!(&signed_int_right);
+        let mut signed_int_right = self.int as i128;
         if !self.sign {
             signed_int_right = signed_int_right * -1
         }
 
-        Decimal::new(signed_int_right, scale_right)
+        Decimal::from_i128_with_scale(signed_int_right, scale_right)
     }
 
     fn from_decimal(dec: Decimal) -> MoveDecimalType {
@@ -46,7 +42,7 @@ impl MoveDecimalType {
         let new_scale = dec.scale();
         dbg!(&new_scale);
 
-        let cast_new_int = new_int as u64; //to_u64().expect("oh no can't cast this");
+        let cast_new_int = new_int as u128; //to_u128().expect("oh no can't cast this");
         let cast_new_scale = new_scale as u8;
 
         MoveDecimalType {
@@ -67,7 +63,7 @@ pub fn native_decimal_demo(
 
     // pop arguments in reverse order
     let scale = pop_arg!(arguments, u8);
-    let int = pop_arg!(arguments, u64);
+    let int = pop_arg!(arguments, u128);
     let sign = pop_arg!(arguments, bool);
 
     let m = MoveDecimalType::new(scale, int, sign);
@@ -85,7 +81,7 @@ pub fn native_decimal_demo(
         cost,
         smallvec![
             Value::bool(new_m.sign),
-            Value::u64(new_m.int),
+            Value::u128(new_m.int),
             Value::u8(new_m.scale)
         ],
     ))
@@ -101,7 +97,7 @@ pub fn native_decimal_single(
     
     // pop arguments in reverse order
     let scale = pop_arg!(arguments, u8);
-    let int = pop_arg!(arguments, u64);
+    let int = pop_arg!(arguments, u128);
     let sign = pop_arg!(arguments, bool);
     let op_id = pop_arg!(arguments, u8);
 
@@ -126,7 +122,7 @@ pub fn native_decimal_single(
         cost,
         smallvec![
             Value::bool(out.sign),
-            Value::u64(out.int),
+            Value::u128(out.int),
             Value::u8(out.scale)
         ],
     ))
@@ -142,7 +138,7 @@ pub fn native_decimal_pair(
 
     // pop arguments in reverse order
     let scale_right = pop_arg!(arguments, u8);
-    let int_right = pop_arg!(arguments, u64);
+    let int_right = pop_arg!(arguments, u128);
     let sign_right = pop_arg!(arguments, bool);
 
 
@@ -151,7 +147,7 @@ pub fn native_decimal_pair(
 
     // pop arguments in reverse order
     let scale_left = pop_arg!(arguments, u8);
-    let int_left = pop_arg!(arguments, u64);
+    let int_left = pop_arg!(arguments, u128);
     let sign_left = pop_arg!(arguments, bool);
 
     let m_left = MoveDecimalType::new(scale_left, int_left, sign_left);
@@ -189,7 +185,7 @@ pub fn native_decimal_pair(
         cost,
         smallvec![
             Value::bool(out.sign),
-            Value::u64(out.int),
+            Value::u128(out.int),
             Value::u8(out.scale)
         ],
     ))
@@ -199,14 +195,14 @@ pub fn native_decimal_pair(
 fn test_into_dec() {
     let m = MoveDecimalType {
         sign: true,
-        int: 9999999999,
+        int: Decimal::MAX.to_u128().unwrap(), //79228162514264337593543950335
         scale: 0,
     };
 
     let dec = m.into_decimal();
 
     dbg!(&dec.to_string());
-    assert_eq!(dec.to_u64(), Some(m.int));
+    assert_eq!(dec.to_u128(), Some(m.int));
 
     let new_m = MoveDecimalType::from_decimal(dec);
     dbg!(&new_m);
@@ -215,7 +211,19 @@ fn test_into_dec() {
 
     let new_dec = new_m.into_decimal();
     dbg!(&new_dec.to_string());
-    assert_eq!(new_dec.to_u64(), Some(m.int));
+    assert_eq!(new_dec.to_u128(), Some(m.int));
+}
+
+#[test]
+fn sanity() {
+
+  // let d = Decimal::new(1, 1);
+  let d = Decimal::MAX;
+  // let d = Decimal::from_i128_with_scale(max * 3, 1);
+  dbg!(&d);
+  dbg!(&d.mantissa());
+
+
 }
 
 #[test]
@@ -231,7 +239,7 @@ fn test_irrational() {
 
     let i = dec.sqrt().unwrap().normalize();
     dbg!(&i.to_string());
-    // assert_eq!(dec.to_u64(), Some(m.int));
+    // assert_eq!(dec.to_u128(), Some(m.int));
 
     let new_m = MoveDecimalType::from_decimal(i);
     dbg!(&new_m);
@@ -240,7 +248,7 @@ fn test_irrational() {
 
     // let new_dec = new_m.into_decimal();
     // dbg!(&new_dec.to_string());
-    // assert_eq!(new_dec.to_u64(), Some(m.int));
+    // assert_eq!(new_dec.to_u128(), Some(m.int));
 }
 
 #[test]
