@@ -8,7 +8,7 @@ use move_vm_types::{
     natives::function::{native_gas, NativeContext, NativeResult},
     values::Value,
 };
-use rust_decimal::{self, Decimal, Error, MathematicalOps, RoundingStrategy, prelude::ToPrimitive};
+use rust_decimal::{self, Decimal, MathematicalOps, prelude::ToPrimitive};
 use smallvec::smallvec;
 use std::collections::VecDeque;
 
