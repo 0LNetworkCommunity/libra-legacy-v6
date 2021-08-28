@@ -48,7 +48,7 @@ module Bonding {
   }
 
   /////////// Calculations /////////
-  public fun deposit_calc(add_to_reserve: u128, reserve: u128, supply: u128) {
+  public fun deposit_calc(add_to_reserve: u128, reserve: u128, supply: u128): u128 {
 
     let one = Decimal::new(true, 1, 0);
     print(&one);
@@ -64,9 +64,6 @@ module Bonding {
 
     // formula: 
     // supply * sqrt(one+(add_to_reserve/reserve))
-    // let add_to_reserve = 10;
-    // let reserve = 100;
-    // let supply = 10000;
 
     let a = Decimal::div(&add_dec, &reserve_dec);
     print(&a);
@@ -76,37 +73,38 @@ module Bonding {
     print(&c);
     let d = Decimal::mul(&supply_dec, &c);
     print(&d);
-    let int = Decimal::borrow_int(&d);
+    let int = Decimal::borrow_int(&Decimal::trunc(&d));
     print(int);
+
+    return *int
   }
 
-//   fun withdraw_curve(remove_from_supply: Decimal, supply: Decimal, reserve: Decimal):Decimal {
-//     // TODO:
-//     // let one = Decimal::new(1);
-//     // reserve * (one - remove_from_supply/supply )^2
-//     return Decimal::new(1);
+//   fun withdraw_curve(remove_from_supply: u128, supply: u128, reserve: u128):u128 {
+//     // TODO: 
+//     // formula: reserve * (one - remove_from_supply/supply )^2
+//     // let one = Decimal::new(true, 1, 0);
+//     
+//     
 //   }
 
 
-//   ///////// API /////////
-//   public fun bond_to_mint(sender: &signer, service_addr: address, deposit: XUS):Decimal acquires CurveState, Token {
-//     assert(exists<CurveState>(service_addr), 73570002);
-//     let state = borrow_global_mut<CurveState>(service_addr);
+  ///////// API /////////
+  // this simulates the depositing and getting a minted token out, but just using integers, not coin types for now.
+  public fun test_bond_to_mint(_sender: &signer, service_addr: address, deposit: u128): u128 acquires CurveState {
+    assert(exists<CurveState>(service_addr), 73570002);
+    let state = borrow_global_mut<CurveState>(service_addr);
 
-//     let delta_reserve = Coin::balance<XUS>(deposit);
-//     // supply is a Decimal
-//     let post_supply: Decimal = curve(delta_reserve, state.supply, state.reserve);
-    
-//     let mint: Decimal = Decimal::sub(depost_supply, Decimal::new(state.supply));
-//     let mint_int: u128 = Decimal::to_u128(mint);
-
-//     deposit_token_to(sender, mint_int);
-
-//     // new curve state
-//     state.reserve = state.reserve + add_to_reserve;
-//     state.supply = state.supply + mint_int;
-//     mint
-//   }
+    let post_supply = deposit_calc(deposit, state.reserve, state.supply_issued);
+    print(&post_supply);
+    assert(post_supply > state.supply_issued, 73570003);
+    let mint = post_supply - state.supply_issued;
+    print(&mint);
+    // update the new curve state
+    state.reserve = state.reserve + deposit;
+    state.supply_issued = state.supply_issued + mint;
+    // print(&state);
+    mint
+  }
 
 //   public fun burn_to_withdraw(sender: &signer, service_addr: address, burn_value: u128):Decimal acquires CurveState, Token {
 
@@ -129,28 +127,18 @@ module Bonding {
 //   }
 
 
-//   // Merges a token.
-//   fun deposit_token_to(sender: &signer, new_value: Decimal) acquires Token {
-//     let to_addr = Signer::address_of(sender);
-//     if (!exists<Token>(to_addr)) {
-//       move_to<Token>(sender, Token { value: new_value });
-//     } else {
-//       let user_token = borrow_global_mut<Token>(to_addr);
-//       user_token.value = user_token.value + new_value;
-//     }
+//   // Merges a GAS coin.
+//   fun deposit_gas_and_merge(sender: &signer, coin: GAS) acquires Token {
+//     //TODO: merges gas coin to bonding curve reserve
 //   }
 
 //   // Splits a coin to be used.
-//   fun withdraw_token_from(sender: &signer, sub_value: Decimal) acquires Token {
-//     let from_addr = Signer::address_of(sender);
-//     assert(exists<Token>(from_addr), 73570005);
-//     let user_token = borrow_global_mut<Token>(from_addr);
-//     user_token.value = user_token.value - sub_value;
+//   fun withdraw_token_and_split_gas(sender: &signer, sub_value: Decimal) acquires Token {
+//    //TODO:
 //   }
 
 
 //   ///////// GETTERS /////////
-
 
   public fun get_curve_state(sponsor_address: address): (u128, u128) acquires CurveState {
     let state = borrow_global<CurveState>(sponsor_address); 

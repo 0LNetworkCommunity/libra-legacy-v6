@@ -8,7 +8,7 @@ use move_vm_types::{
     natives::function::{native_gas, NativeContext, NativeResult},
     values::Value,
 };
-use rust_decimal::{self, Decimal, MathematicalOps, prelude::ToPrimitive};
+use rust_decimal::{self, Decimal, MathematicalOps, RoundingStrategy, prelude::ToPrimitive};
 use smallvec::smallvec;
 use std::collections::VecDeque;
 
@@ -97,6 +97,7 @@ pub fn native_decimal_single(
 
     let result = match op_id {
         100 => dec.sqrt().unwrap().normalize(),
+        101 => dec.trunc(),
         _ => return Err(PartialVMError::new(StatusCode::INDEX_OUT_OF_BOUNDS)),
     };
 
@@ -143,7 +144,13 @@ pub fn native_decimal_pair(
     let m_left = MoveDecimalType::new(scale_left, int_left, sign_left);
     let mut dec_left = m_left.into_decimal();
 
-    let _rounding_strategy = pop_arg!(arguments, u8);
+    let strategy = match pop_arg!(arguments, u8) {
+      0=> RoundingStrategy::MidpointNearestEven,
+      1 => RoundingStrategy::MidpointAwayFromZero,
+      _ => RoundingStrategy::MidpointNearestEven
+      
+    };
+
     let op_id = pop_arg!(arguments, u8);
 
     dbg!(&op_id);
@@ -152,7 +159,7 @@ pub fn native_decimal_pair(
     
     let result = match op_id {
         0 => {
-            dec_left.rescale(dec_right.to_u32().unwrap());
+            dec_left.rescale(dec_right.trunc().to_u32().unwrap());
             dec_left
         }
         1 => dec_left.checked_add(dec_right).unwrap().normalize(),
@@ -162,8 +169,11 @@ pub fn native_decimal_pair(
         5 => {
             let pow = dec_right.to_f64().unwrap();
             dec_left.powf(pow).normalize()
-        }
-
+        },
+        6 => {
+            // let pow = dec_right.to_f64().unwrap();
+            dec_left.round_dp_with_strategy(dec_right.trunc().to_u32().unwrap(), strategy)
+        },
         _ => return Err(PartialVMError::new(StatusCode::INDEX_OUT_OF_BOUNDS)),
     };
 

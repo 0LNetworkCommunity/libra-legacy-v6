@@ -1,7 +1,7 @@
 address 0x1 {
 module Decimal {
     // The Move Decimal data structure is optimized for readability and compatibility.
-    // In particular it is indended for compatibility with the underlying rust_decimal crate https://github.com/paupino/rust-decimal. In that library a new decimal type is initialized with Decimal::new(mantissa: i64, scale: u32)
+    // In particular it is indended for compatibility with the underlying rust_decimal crate https://github.com/paupino/rust-decimal. In that library a new decimal type is initialized with Decimal::from_i128_with_scale(mantissa: i128, scale: u32)
     // Note: While the underlying Rust crate type has optimal storage characteristics, this Move decimal representation is NOT optimized for storage.
 
     struct Decimal has key, store, drop {
@@ -19,11 +19,16 @@ module Decimal {
     const MUL: u8 = 3;
     const DIV: u8 = 4;
     const POW: u8 = 5;
+    const ROUND: u8 = 6;
 
     // single ops
     const SQRT: u8 = 100;
+    const TRUNC: u8 = 101;
 
-    const ROUNDING_BANKERS: u8 = 0;
+    const ROUND_MID_TO_EVEN: u8 = 0; // This is the default in the rust_decimal lib.
+    const ROUND_MID_FROM_ZERO: u8 = 1;
+
+
 
     native public fun decimal_demo(sign: bool, int: u128, scale: u8): (bool, u128, u8);
 
@@ -57,7 +62,15 @@ module Decimal {
     }
 
     /////// SUGAR /////////
-    
+    public fun trunc(d: &Decimal): Decimal {
+      let (sign, int, scale) = single_op(TRUNC, *&d.sign, *&d.int, *&d.scale);
+      return Decimal {
+        sign: sign,
+        int: int,
+        scale: scale,
+      }
+    }
+
     public fun sqrt(d: &Decimal): Decimal {
       let (sign, int, scale) = single_op(SQRT, *&d.sign, *&d.int, *&d.scale);
       return Decimal {
@@ -68,7 +81,7 @@ module Decimal {
     }
 
     public fun add(l: &Decimal, r: &Decimal): Decimal {
-      let (sign, int, scale) = pair_op(ADD, ROUNDING_BANKERS, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+      let (sign, int, scale) = pair_op(ADD, ROUND_MID_TO_EVEN, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
       return Decimal {
         sign: sign,
         int: int,
@@ -77,7 +90,7 @@ module Decimal {
     }
 
     public fun sub(l: &Decimal, r: &Decimal): Decimal {
-      let (sign, int, scale) = pair_op(SUB, ROUNDING_BANKERS, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+      let (sign, int, scale) = pair_op(SUB, ROUND_MID_TO_EVEN, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
       return Decimal {
         sign: sign,
         int: int,
@@ -85,7 +98,7 @@ module Decimal {
       }
     }
     public fun mul(l: &Decimal, r: &Decimal): Decimal {
-      let (sign, int, scale) = pair_op(MUL, ROUNDING_BANKERS, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+      let (sign, int, scale) = pair_op(MUL, ROUND_MID_TO_EVEN, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
       return Decimal {
         sign: sign,
         int: int,
@@ -94,7 +107,7 @@ module Decimal {
     }
 
      public fun div(l: &Decimal, r: &Decimal): Decimal {
-      let (sign, int, scale) = pair_op(DIV, ROUNDING_BANKERS, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+      let (sign, int, scale) = pair_op(DIV, ROUND_MID_TO_EVEN, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
       return Decimal {
         sign: sign,
         int: int,
@@ -104,7 +117,7 @@ module Decimal {
 
 
     public fun rescale(l: &Decimal, r: &Decimal): Decimal {
-      let (sign, int, scale) = pair_op(0, ROUNDING_BANKERS, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+      let (sign, int, scale) = pair_op(0, ROUND_MID_TO_EVEN, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
       return Decimal {
         sign: sign,
         int: int,
@@ -112,8 +125,18 @@ module Decimal {
       }
     }
 
+    public fun round(l: &Decimal, r: &Decimal, strategy: u8): Decimal {
+      let (sign, int, scale) = pair_op(ROUND, strategy, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+      return Decimal {
+        sign: sign,
+        int: int,
+        scale: scale,
+      }
+    }
+
+
     public fun power(l: &Decimal, r: &Decimal): Decimal {
-      let (sign, int, scale) = pair_op(POW, ROUNDING_BANKERS, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+      let (sign, int, scale) = pair_op(POW, ROUND_MID_TO_EVEN, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
       return Decimal {
         sign: sign,
         int: int,
