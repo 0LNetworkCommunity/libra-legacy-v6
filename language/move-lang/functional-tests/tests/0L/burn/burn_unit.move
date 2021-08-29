@@ -76,14 +76,12 @@ script {
     Burn::epoch_start_burn(&vm, @{{alice}}, 100);
 
     let bal_alice = DiemAccount::balance<GAS>(@{{alice}});
-
     assert(bal_alice == 299901, 7357007); // rounding issues
+    
     let bal_bob = DiemAccount::balance<GAS>(@{{bob}});
-
     assert(bal_bob == 1100040, 7357008);
 
     let bal_carol = DiemAccount::balance<GAS>(@{{carol}});
-
     assert(bal_carol == 1600059, 7357009);
   }
 }
