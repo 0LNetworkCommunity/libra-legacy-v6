@@ -6,7 +6,6 @@ module Burn {
   use 0x1::DiemAccount;
   use 0x1::CoreAddresses;
   use 0x1::GAS::GAS;
-  // use 0x1::Deposits;
 
   struct BurnPreference has key {
     is_burn: bool

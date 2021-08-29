@@ -27,6 +27,7 @@ module Reconfigure {
     use 0x1::DiemConfig;
     use 0x1::Audit;
     use 0x1::DiemAccount;
+    use 0x1::Burn;
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
@@ -115,14 +116,14 @@ module Reconfigure {
 
         let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
 
-        // Burn::reset_ratios(vm);
+        Burn::reset_ratios(vm);
         // // let incoming_count = Vector::length<address>(&top_accounts) - Vector::length<address>(&jailed_set);
         // // let burn_value = Subsidy::subsidy_curve(
         // //   Globals::get_subsidy_ceiling_gas(),
         // //   incoming_count,
         // //   Globals::get_max_node_density()
         // // )/4;
-        // let burn_value = 1000000; // TODO: switch to a variable cost, as above.
+        let burn_value = 1000000; // TODO: switch to a variable cost, as above.
 
 // print(&03250);
 
@@ -137,7 +138,7 @@ module Reconfigure {
               Audit::val_audit_passing(addr)
             ) {
                 Vector::push_back(&mut proposed_set, addr);
-                // Burn::epoch_start_burn(vm, addr, burn_value);
+                Burn::epoch_start_burn(vm, addr, burn_value);
 
             };
             i = i+ 1;
