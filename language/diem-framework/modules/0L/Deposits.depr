@@ -56,7 +56,7 @@ module Deposits {
     }
 
 
-
+    //////// GETTERS ////////
     public fun get_cumulative_deposits(addr: address): u64 acquires CumulativeDeposits {
       if (!exists<CumulativeDeposits>(addr)) return 0;
 
@@ -67,6 +67,10 @@ module Deposits {
       if (!exists<CumulativeDeposits>(addr)) return 0;
 
       borrow_global<CumulativeDeposits>(addr).index
+    }
+
+    public fun is_init(addr: address): bool {
+      exists<CumulativeDeposits>(addr)
     }
 }
 }

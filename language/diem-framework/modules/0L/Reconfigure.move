@@ -114,6 +114,16 @@ module Reconfigure {
         let top_accounts = NodeWeight::top_n_accounts(vm, Globals::get_max_validator_per_epoch());
 
         let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
+
+        // Burn::reset_ratios(vm);
+        // // let incoming_count = Vector::length<address>(&top_accounts) - Vector::length<address>(&jailed_set);
+        // // let burn_value = Subsidy::subsidy_curve(
+        // //   Globals::get_subsidy_ceiling_gas(),
+        // //   incoming_count,
+        // //   Globals::get_max_node_density()
+        // // )/4;
+        // let burn_value = 1000000; // TODO: switch to a variable cost, as above.
+
 // print(&03250);
 
         let i = 0;
@@ -127,6 +137,8 @@ module Reconfigure {
               Audit::val_audit_passing(addr)
             ) {
                 Vector::push_back(&mut proposed_set, addr);
+                // Burn::epoch_start_burn(vm, addr, burn_value);
+
             };
             i = i+ 1;
         };

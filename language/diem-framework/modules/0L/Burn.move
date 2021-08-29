@@ -6,7 +6,7 @@ module Burn {
   use 0x1::DiemAccount;
   use 0x1::CoreAddresses;
   use 0x1::GAS::GAS;
-  use 0x1::Deposits;
+  // use 0x1::Deposits;
 
   struct BurnPreference has key {
     is_burn: bool
@@ -30,7 +30,7 @@ module Burn {
     while (i < len) {
 
       let addr = *Vector::borrow(&list, i);
-      let cumu = Deposits::get_index_cumu_deposits(addr);
+      let cumu = DiemAccount::get_index_cumu_deposits(addr);
 
       global_deposits = global_deposits + cumu;
       Vector::push_back(&mut deposit_vec, cumu);
