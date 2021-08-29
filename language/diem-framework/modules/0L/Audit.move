@@ -5,8 +5,10 @@ address 0x1 {
     use 0x1::GAS::GAS;
     use 0x1::AutoPay2;
     use 0x1::MinerState;
+    use 0x1::Testnet;
 
     public fun val_audit_passing(val: address): bool {
+      if (Testnet::is_testnet()){ return true };
       // has valid configs
       if (!ValidatorConfig::is_valid(val)) return false;
 

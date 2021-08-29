@@ -8,14 +8,14 @@
 //! sender: alice
 script {    
     use 0x1::MinerState;
-    // use 0x1::Burn;
+    use 0x1::Burn;
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
         MinerState::test_helper_mock_mining(&sender, 5);
-        
-        // alice's preferences are set to always burn
+        // set alice burn preferences as sending to community wallets.
+        Burn::set_send_community(&sender);
     }
 }
 //check: EXECUTED
@@ -127,16 +127,12 @@ script {
 
     print(&bal);
 
-    // should not change bob's balance
-    let bal = DiemAccount::balance<GAS>(@{{bob}});
-    assert(bal == 1500000, 7357002);
 
-    print(&bal);
     // bob's community wallet increased after epoch change.
-    let bal = DiemAccount::balance<GAS>(@0xDEADDEAD);
+    let bal = DiemAccount::balance<GAS>(@{{bob}});
 
     print(&bal);
-    // assert(bal == 2100399, 7357002);
+    assert(bal == 2100399, 7357002);
   }
 }
 

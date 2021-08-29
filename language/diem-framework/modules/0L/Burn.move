@@ -6,9 +6,10 @@ module Burn {
   use 0x1::DiemAccount;
   use 0x1::CoreAddresses;
   use 0x1::GAS::GAS;
+  use 0x1::Signer;
 
   struct BurnPreference has key {
-    is_burn: bool
+    send_community: bool
   }
 
   struct DepositInfo has key {
@@ -78,11 +79,11 @@ module Burn {
 
   public fun epoch_start_burn(vm: &signer, payer: address, value: u64) acquires DepositInfo, BurnPreference {
     if (exists<BurnPreference>(payer)) {
-      if (borrow_global<BurnPreference>(payer).is_burn) {
-        return burn(vm, payer, value)
+      if (borrow_global<BurnPreference>(payer).send_community) {
+        return send(vm, payer, value)
       }
     };
-    send(vm, payer, value);
+    burn(vm, payer, value)
   }
 
   fun burn(vm: &signer, payer: address, value: u64) {
@@ -118,6 +119,20 @@ module Burn {
       i = i + 1;
     };
   }
+
+  public fun set_send_community(sender: &signer) acquires BurnPreference {
+    let addr = Signer::address_of(sender);
+    if (exists<BurnPreference>(addr)) {
+      let b = borrow_global_mut<BurnPreference>(addr);
+      b.send_community = true;
+    } else {
+      move_to<BurnPreference>(sender, BurnPreference {
+        send_community: true
+      });
+    }
+  }
+
+
   //////// GETTERS ////////
   public fun get_ratios(): (vector<address>, vector<u64>, vector<FixedPoint32::FixedPoint32>) acquires DepositInfo {
     let d = borrow_global<DepositInfo>(CoreAddresses::VM_RESERVED_ADDRESS());

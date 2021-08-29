@@ -1728,7 +1728,7 @@ module DiemAccount {
                 upgrade_events: Event::new_event_handle<Self::AdminTransactionEvent>(&dr_account),
             }
         );
-        make_account(dr_account, auth_key_prefix)
+        make_account(dr_account, copy auth_key_prefix);
     }
 
     spec create_diem_root_account {
@@ -1989,6 +1989,16 @@ module DiemAccount {
         ensures exists_at(child_addr);
         ensures Roles::spec_has_child_VASP_role_addr(child_addr);
     }
+
+      //////// 0L ////////
+      // make burn address
+      public fun create_burn_account(vm: &signer) acquires AccountOperationsCapability {
+        CoreAddresses::assert_vm(vm);
+        DiemTimestamp::assert_genesis();
+        make_account(create_signer(CoreAddresses::BURN_ADDRESS()), Hash::sha3_256(b"Protests rage across the nation"));
+      }
+        
+
 
     ///////////////////////////////////////////////////////////////////////////
     // General purpose methods
