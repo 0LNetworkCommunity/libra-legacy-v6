@@ -21,19 +21,19 @@ module Deposits {
 
     //////// 0L ////////
     // init struct for storing cumulative deposits, for community wallets
-    public fun init_cumulative_deposits(sender: signer, starting_balance: u64) {
-      let addr = Signer::address_of(&sender);
+    public fun init_cumulative_deposits(sender: &signer, starting_balance: u64) {
+      let addr = Signer::address_of(sender);
 
       if (!exists<CumulativeDeposits>(addr)) {
-        move_to<CumulativeDeposits>(&sender, CumulativeDeposits {
+        move_to<CumulativeDeposits>(sender, CumulativeDeposits {
           value: starting_balance,
           index: starting_balance,
         })
       };
     }
 
-    public fun vm_maybe_update_deposit(vm: signer, payee: address, epoch: u64, deposit_value: u64) acquires CumulativeDeposits {
-        CoreAddresses::assert_vm(&vm);
+    public fun vm_maybe_update_deposit(vm: &signer, payee: address, epoch: u64, deposit_value: u64) acquires CumulativeDeposits {
+        CoreAddresses::assert_vm(vm);
             // update cumulative deposits if the account has the struct.
         if (exists<CumulativeDeposits>(payee)) {
           // let epoch = LibraConfig::get_current_epoch();
