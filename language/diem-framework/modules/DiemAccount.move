@@ -153,6 +153,7 @@ module DiemAccount {
         role_id: u64
     }
 
+
     const MAX_U64: u128 = 18446744073709551615;
 
     /////// 0L /////////
