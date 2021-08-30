@@ -189,12 +189,12 @@ impl AppCfg {
 
         // skip questionnaire if CI
         if *IS_TEST {
-            AppCfg::save_file(&default_config);
+            default_config.save_file();
 
             return default_config;
         }
         fs::create_dir_all(&default_config.workspace.node_home).unwrap();
-        AppCfg::save_file(&default_config);
+        default_config.save_file();
 
         default_config
     }
@@ -207,25 +207,10 @@ impl AppCfg {
     ) -> AppCfg{
         // println!("init_swarm_config: {:?}", swarm_path); already logged in commands.rs
         let host_config = AppCfg::make_swarm_configs(swarm_path, node_home, source_path);
-        AppCfg::save_file(&host_config);
+        host_config.save_file();
         host_config
   }
 
-    fn save_file(host_config: &AppCfg) {
-        let toml = toml::to_string(host_config).unwrap();
-        let home_path = host_config.workspace.node_home.clone();
-        // create home path if doesn't exist, usually only in dev/ci environments.
-        fs::create_dir_all(&home_path).expect("could not create 0L home directory");
-        let toml_path = home_path.join(CONFIG_FILE);
-        let file = fs::File::create(&toml_path);
-        file.unwrap()
-            .write(&toml.as_bytes())
-            .expect("Could not write toml file");
-        println!(
-            "\nhost configs initialized, file saved to: {:?}",
-            &toml_path
-        );
-    }
 
   /// get configs from swarm
   /// swarm_path points to the swarm_temp directory
@@ -297,6 +282,23 @@ impl AppCfg {
                 .clone()
                 .expect("no url provided in config toml")
         }
+    }
+
+    /// save the config file to 0L.toml to the workspace home path
+    pub fn save_file(&self) {
+        let toml = toml::to_string(&self).unwrap();
+        let home_path = &self.workspace.node_home.clone();
+        // create home path if doesn't exist, usually only in dev/ci environments.
+        fs::create_dir_all(&home_path).expect("could not create 0L home directory");
+        let toml_path = home_path.join(CONFIG_FILE);
+        let file = fs::File::create(&toml_path);
+        file.unwrap()
+            .write(&toml.as_bytes())
+            .expect("Could not write toml file");
+        println!(
+            "\nhost configs initialized, file saved to: {:?}",
+            &toml_path
+        );
     }
 }
 
