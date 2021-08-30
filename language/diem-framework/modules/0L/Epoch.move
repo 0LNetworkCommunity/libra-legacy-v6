@@ -42,7 +42,7 @@ module Epoch {
       let sender = Signer::address_of(vm);
       assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(050002));
       let time = borrow_global_mut<Timer>(CoreAddresses::DIEM_ROOT_ADDRESS());
-      time.epoch = DiemConfig::get_current_epoch() + 1;
+      time.epoch = DiemConfig::get_current_epoch();
       time.height_start = height;
       time.seconds_start = DiemTimestamp::now_seconds();
   }
