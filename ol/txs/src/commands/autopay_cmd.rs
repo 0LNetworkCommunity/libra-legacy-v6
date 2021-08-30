@@ -8,7 +8,7 @@ use diem_transaction_builder::stdlib as transaction_builder;
 use crate::{entrypoint, submit_tx::{ maybe_submit, tx_params_wrapper}};
 use ol_types::{config::TxType};
 
-/// command to submit a batch of autopay tx from file
+/// command to enable or disable autopay
 #[derive(Command, Debug, Default, Options)]
 pub struct AutopayCmd {
     #[options(help = "enable autopay on account")]
@@ -38,7 +38,7 @@ impl Runnable for AutopayCmd {
         ) {
             Err(e) => {
                 println!(
-                    "ERROR: could not submit autopay transaction, message: \n{:?}", &e
+                    "ERROR: could not submit autopay enable transaction, message: \n{:?}", &e
                 );
                 exit(1);
             },
