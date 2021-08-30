@@ -33,7 +33,17 @@ impl Runnable for OracleUpgradeCmd {
 
         let path = self.upgrade_file_path.clone().unwrap_or_else(|| {
           let cfg = app_config();
-          cfg.workspace.stdlib_bin_path.clone().unwrap()
+          match cfg.workspace.stdlib_bin_path.clone() {
+            Some(p) => p,
+            None => {
+              println!(
+                "could not find path to compiled stdlib.mv, was this set in 0L.toml? \
+                 Alternatively pass the full path with: \
+                 -f <project_root>/language/stdlib/staged/stdlib.mv"
+              );
+              exit(1);
+            },
+          }
         });
         
         match maybe_submit(
