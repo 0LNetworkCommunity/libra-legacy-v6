@@ -86,15 +86,13 @@ module Burn {
     burn(vm, payer, value)
   }
 
-  fun burn(vm: &signer, payer: address, value: u64) {
-      DiemAccount::vm_make_payment_no_limit<GAS>(
-          payer,
-          @0xDEADDEAD,
-          value,
-          b"epoch start burn",
-          b"",
-          vm,
-      );
+  fun burn(vm: &signer, addr: address, value: u64) {
+      DiemAccount::vm_burn_from_balance<GAS>(
+        addr,
+        value,
+        b"burn",
+        vm,
+      );      
   }
 
 

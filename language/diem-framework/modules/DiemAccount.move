@@ -1237,7 +1237,7 @@ module DiemAccount {
     ) acquires DiemAccount , Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
         if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
         // don't try to send a 0 balance, will halt.
-        if (amount < 0) return; 
+        if (amount < 1) return; 
 
         // Check payee can receive funds in this currency.
         if (!exists<Balance<Token>>(payee)) return; 
@@ -1267,6 +1267,32 @@ module DiemAccount {
             metadata_signature
         );
         restore_withdraw_capability(cap);
+    }
+    
+    /////// 0L /////////
+    /// VM can burn from an account's balance for administrative purposes (e.g. at epoch boundaries)
+    public fun vm_burn_from_balance<Token: store>(
+        addr : address,
+        amount: u64,
+        metadata: vector<u8>,
+        vm: &signer
+    ) acquires DiemAccount, Balance, AccountOperationsCapability { 
+        if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
+        // don't try to send a 0 balance, will halt.
+        if (amount < 1) return; 
+
+        // Check there is a payer and has balance
+        if (!exists_at(addr)) return; 
+        if (!exists<Balance<Token>>(addr)) return; 
+
+        // Check the payer is in possession of withdraw token.
+        if (delegated_withdraw_capability(addr)) return; 
+
+        // VM can extract the withdraw token.
+        let account = borrow_global_mut<DiemAccount>(addr);
+        let cap = Option::extract(&mut account.withdraw_capability);
+        let coin = withdraw_from<Token>(&cap, addr, amount, copy metadata);
+        Diem::vm_burn_this_coin<Token>(vm, coin);
     }
     
 
@@ -1990,14 +2016,6 @@ module DiemAccount {
         ensures Roles::spec_has_child_VASP_role_addr(child_addr);
     }
 
-      //////// 0L ////////
-      // make burn address
-      public fun create_burn_account(vm: &signer) acquires AccountOperationsCapability {
-        CoreAddresses::assert_vm(vm);
-        DiemTimestamp::assert_genesis();
-        make_account(create_signer(CoreAddresses::BURN_ADDRESS()), Hash::sha3_256(b"Protests rage across the nation"));
-      }
-        
 
 
     ///////////////////////////////////////////////////////////////////////////
