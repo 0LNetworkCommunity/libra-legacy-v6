@@ -6,7 +6,6 @@ script {
   use 0x1::GAS::GAS;
   use 0x1::Diem;
   use 0x1::DiemAccount;
-  use 0x1::Debug::print;
     
   fun main(vm: signer) {
     let cap = Diem::market_cap<GAS>();
