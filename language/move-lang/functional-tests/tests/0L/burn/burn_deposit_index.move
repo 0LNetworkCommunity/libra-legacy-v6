@@ -47,59 +47,21 @@ script {
 script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
+  
+  fun main(vm: signer) {
+    // bobs_indexed amount changes
+    let index_before = DiemAccount::get_index_cumu_deposits(@{{bob}});
+    let index_carol_before = DiemAccount::get_index_cumu_deposits(@{{carol}});
 
-  fun main(vm: &signer) {
     // send to community wallet Bob
-    DiemAccount::vm_make_payment_no_limit<GAS>( @{{alice}}, @{{bob}}, 500000, x"", x"", &vm);
+    DiemAccount::vm_make_payment_no_limit<GAS>( @{{alice}}, @{{bob}}, 100000, x"", x"", &vm);
+    let index_after = DiemAccount::get_index_cumu_deposits(@{{bob}});
+    assert(index_after > index_before, 735701);
+
+    // carol's amount DOES NOT change
+    // send to community wallet Bob
+    let carol_after = DiemAccount::get_index_cumu_deposits(@{{carol}});
+    assert(index_carol_before == carol_after, 735702)
   }
 }
 
-
-//////////////////////////////////////////////
-/// Trigger reconfiguration at 61 seconds ////
-//! block-prologue
-//! proposer: alice
-//! block-time: 61000000
-
-////// TEST RECONFIGURATION IS HAPPENING /////
-// check: NewEpochEvent
-//////////////////////////////////////////////
-
-
-//! new-transaction
-//! sender: diemroot
-script {
-  use 0x1::DiemAccount;
-  use 0x1::GAS::GAS;
-  use 0x1::Burn;
-  use 0x1::Vector;
-  use 0x1::FixedPoint32;
-
-  fun main(vm: &signer) {
-    // send to community wallet Carol
-    DiemAccount::vm_make_payment_no_limit<GAS>( @{{alice}}, @{{carol}}, 500000, x"", x"", &vm);
-
-    let bal = DiemAccount::balance<GAS>(@{{bob}});
-    assert(bal == 500000, 7357003);
-    let index = DiemAccount::get_index_cumu_deposits(@{{bob}});
-    assert(index == 502500, 7357004);
-
-    let bal = DiemAccount::balance<GAS>(@{{carol}});
-    assert(bal == 500000, 7357005);
-    let index = DiemAccount::get_index_cumu_deposits(@{{carol}});
-    assert(index == 505000, 7357006);
-
-    Burn::reset_ratios(&vm);
-    let (addr, _ , ratios) = Burn::get_ratios();
-    assert(Vector::length(&addr) == 2, 7357007);
-
-    let bob_mult = *Vector::borrow<FixedPoint32::FixedPoint32>(&ratios, 0);
-    let pct_bob = FixedPoint32::multiply_u64(100000, bob_mult);
-    assert(pct_bob == 49875, 7357008);
-
-    let carol_mult = *Vector::borrow<FixedPoint32::FixedPoint32>(&ratios, 1);
-    let pct_carol = FixedPoint32::multiply_u64(100000, carol_mult);
-    assert(pct_carol == 50124, 7357009);
-  }
-}
-// check: EXECUTED

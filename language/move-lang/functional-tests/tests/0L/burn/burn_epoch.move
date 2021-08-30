@@ -88,14 +88,14 @@ script {
 script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
-  use 0x1::Debug::print;
+  // use 0x1::Debug::print;
 
   fun main(vm: signer) {
     // send to community wallet Bob
     DiemAccount::vm_make_payment_no_limit<GAS>(@{{alice}}, @{{bob}}, 500000, x"", x"", &vm);
 
     let bal = DiemAccount::balance<GAS>(@{{bob}});
-    print(&bal);
+    // print(&bal);
     assert(bal == 1500000, 7357001);
   }
 }
@@ -120,22 +120,22 @@ script {
 script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
-  use 0x1::Debug::print;
+  // use 0x1::Debug::print;
 
   fun main(_vm: signer) {
     let bal = DiemAccount::balance<GAS>(@{{alice}});
 
-    print(&bal);
+    // print(&bal);
 
     // should not change bob's balance
     let bal = DiemAccount::balance<GAS>(@{{bob}});
     assert(bal == 1500000, 7357002);
 
-    print(&bal);
+    // print(&bal);
     // bob's community wallet increased after epoch change.
     let bal = DiemAccount::balance<GAS>(@0xDEADDEAD);
 
-    print(&bal);
+    // print(&bal);
     // assert(bal == 2100399, 7357002);
   }
 }
