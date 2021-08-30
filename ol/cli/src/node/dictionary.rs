@@ -42,7 +42,7 @@ impl AccountDictionary {
     pub fn get_note_for_address(&self, address: AccountAddress) -> String {
         match self.accounts.iter().find(| entry | entry.address == address ) {
             Some(found) => found.note.clone(),
-            None => String::from("?")
+            None => String::from("")
         }
     }
 }
