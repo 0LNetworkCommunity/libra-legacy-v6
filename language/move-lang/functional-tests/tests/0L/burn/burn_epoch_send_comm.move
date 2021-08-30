@@ -2,7 +2,7 @@
 //! account: bob, 10000000GAS
 //! account: carol, 10000000GAS
 
-// // make Alice a case 1 validator, so that she is in the next validator set.
+// make Alice a case 1 validator, so that she is in the next validator set.
 
 //! new-transaction
 //! sender: alice
@@ -88,20 +88,16 @@ script {
 script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
-  // use 0x1::Debug::print;
 
   fun main(vm: signer) {
     // send to community wallet Bob
     DiemAccount::vm_make_payment_no_limit<GAS>(@{{alice}}, @{{bob}}, 500000, x"", x"", &vm);
 
     let bal = DiemAccount::balance<GAS>(@{{bob}});
-    // print(&bal);
     assert(bal == 1500000, 7357001);
   }
 }
 // check: EXECUTED
-
-
 
 //////////////////////////////////////////////
 /// Trigger reconfiguration at 61 seconds ////
@@ -114,24 +110,15 @@ script {
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-
 //! new-transaction
 //! sender: diemroot
 script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
-  // use 0x1::Debug::print;
 
   fun main(_vm: signer) {
-    let bal = DiemAccount::balance<GAS>(@{{alice}});
-
-    // print(&bal);
-
-
     // bob's community wallet increased after epoch change.
     let bal = DiemAccount::balance<GAS>(@{{bob}});
-
-    // print(&bal);
     assert(bal == 2100399, 7357002);
   }
 }
