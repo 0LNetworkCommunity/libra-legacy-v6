@@ -80,7 +80,7 @@ impl Runnable for QueryCmd {
             println!("ERROR: Cannot connect to a client. Message: {}", e);
             exit(1);
         });
-        let mut node = Node::new(client, cfg, is_swarm);
+        let mut node = Node::new(client, &cfg, is_swarm);
         let mut info = String::new();
         let mut display = "";
 

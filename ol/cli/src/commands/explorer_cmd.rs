@@ -39,7 +39,7 @@ impl Runnable for ExplorerCMD {
         let is_swarm = *&args.swarm_path.is_some();
         let mut cfg = app_config().clone();
         let client = client::pick_client(args.swarm_path, &mut cfg).unwrap();
-        let mut node = Node::new(client, cfg, is_swarm);
+        let mut node = Node::new(client, &cfg, is_swarm);
 
         if *&self.pilot {
           node.start_pilot(false);
