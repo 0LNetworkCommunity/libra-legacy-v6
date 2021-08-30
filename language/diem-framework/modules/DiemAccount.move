@@ -1293,6 +1293,7 @@ module DiemAccount {
         let cap = Option::extract(&mut account.withdraw_capability);
         let coin = withdraw_from<Token>(&cap, addr, amount, copy metadata);
         Diem::vm_burn_this_coin<Token>(vm, coin);
+        restore_withdraw_capability(cap);
     }
     
 
