@@ -9,6 +9,7 @@ script {
   use 0x1::Debug::print;
     
   fun main(vm: signer) {
+    let cap = Diem::market_cap<GAS>();
     DiemAccount::vm_burn_from_balance<GAS>(
         @{{alice}},
         100000,
@@ -16,8 +17,7 @@ script {
         &vm,
       );      
     let cap_later = Diem::market_cap<GAS>();
-    print(&cap_later);
-    // assert(cap_later < cap, 735701);
+    assert(cap_later < cap, 735701);
   }
 }
 
