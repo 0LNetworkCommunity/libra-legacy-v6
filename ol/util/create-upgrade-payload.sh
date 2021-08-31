@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e # exit on error
 
-echo "Building and creating upgrade payload ..."
-cargo r --release -p diem-framework -- --create-upgrade-payload
-
-printf "\nDone\n"
+echo "Creating upgrade payload ..."
+THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+$THIS_DIR/build-stdlib.sh --create-upgrade-payload
