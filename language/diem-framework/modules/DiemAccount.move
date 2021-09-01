@@ -47,7 +47,7 @@ module DiemAccount {
     use 0x1::Wallet;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
-    struct DiemAccount has key, store { /////// 0L /////////
+    struct DiemAccount has key {
         /// The current authentication key.
         /// This can be different from the key used to create the account
         authentication_key: vector<u8>,
@@ -77,7 +77,7 @@ module DiemAccount {
 
     /// A resource that holds the total value of currency of type `Token`
     /// currently held by the account.
-    struct Balance<Token> has key, store { /////// 0L /////////
+    struct Balance<Token> has key {
         /// Stores the value of the balance in its balance field. A coin has
         /// a `value` field. The amount of money in the balance is changed
         /// by modifying this field.
