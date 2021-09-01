@@ -146,7 +146,7 @@ before and after every transaction.
 An <code>address</code> is a Diem Account iff it has a published DiemAccount resource.
 
 
-<pre><code><b>struct</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> has store, key
+<pre><code><b>struct</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> has key
 </code></pre>
 
 
@@ -218,7 +218,7 @@ A resource that holds the total value of currency of type <code>Token</code>
 currently held by the account.
 
 
-<pre><code><b>struct</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt; has store, key
+<pre><code><b>struct</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt; has key
 </code></pre>
 
 
