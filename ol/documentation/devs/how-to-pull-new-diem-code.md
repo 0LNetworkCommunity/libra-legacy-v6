@@ -1,4 +1,6 @@
 
+## How to pull new diem code
+
 - [x] Choose latest diem-core version (e.g. `diem-core-v1.3.0`): https://github.com/diem/diem/releases 
 - [ ] From the chosen diem-core version, checkout a new 0L branch e.g. `v5-base-diem-1.3.0` - this will be the diem code without 0L changes.
 - [ ] From the chosen diem-core version, checkout a new 0L branch e.g. `v5` - this will be the diem code with the 0L changes.
@@ -28,7 +30,7 @@ Initializing with env: test
 - [x] Final check - all 0L tests and swarm work
 - [x] Final cargo clean, cargo b --all and cargo b --all-targets
 
-### Some useful info might be found in these issues:  
+### Some more useful info might be found in these issues:  
 https://github.com/OLSF/libra/issues/616  
 https://github.com/OLSF/libra/issues/530  
 
