@@ -1381,7 +1381,10 @@ Initialize this module. This is only callable from genesis.
     <b>assert</b>(valid, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(120103));
 
     // check there's enough balance for bootstrapping both operator and validator account
-    <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender_addr)  &gt;= 2 * <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EINSUFFICIENT_BALANCE">EINSUFFICIENT_BALANCE</a>));
+    <b>assert</b>(
+        <a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender_addr) &gt;= 2 * <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>,
+        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EINSUFFICIENT_BALANCE">EINSUFFICIENT_BALANCE</a>)
+    );
 
     //Create Owner Account
     <b>let</b> (new_account_address, auth_key_prefix) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(challenge);
@@ -2614,7 +2617,8 @@ Return the withdraw capability to the account it originally came from
 
 ## Function `vm_make_payment_no_limit`
 
-This function bypasses transaction limits. vm_make_payment on the other hand considers payment limits.
+This function bypasses transaction limits.
+vm_make_payment on the other hand considers payment limits.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">vm_make_payment_no_limit</a>&lt;Token: store&gt;(payer: address, payee: address, amount: u64, metadata: vector&lt;u8&gt;, metadata_signature: vector&lt;u8&gt;, vm: &signer)
@@ -2677,11 +2681,11 @@ This function bypasses transaction limits. vm_make_payment on the other hand con
 
 ## Function `pay_from`
 
-Withdraw <code>amount</code> Diem<Token> from the address embedded in <code><a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">WithdrawCapability</a></code> and
-deposits it into the <code>payee</code>'s account balance.
+Withdraw <code>amount</code> Diem<Token> from the address embedded in
+<code><a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">WithdrawCapability</a></code> and deposits it into the <code>payee</code>'s account balance.
 The included <code>metadata</code> will appear in the <code><a href="DiemAccount.md#0x1_DiemAccount_SentPaymentEvent">SentPaymentEvent</a></code> and <code><a href="DiemAccount.md#0x1_DiemAccount_ReceivedPaymentEvent">ReceivedPaymentEvent</a></code>.
-The <code>metadata_signature</code> will only be checked if this payment is subject to the dual
-attestation protocol
+The <code>metadata_signature</code> will only be checked if this payment is
+subject to the dual attestation protocol
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_pay_from">pay_from</a>&lt;Token: store&gt;(cap: &<a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">DiemAccount::WithdrawCapability</a>, payee: address, amount: u64, metadata: vector&lt;u8&gt;, metadata_signature: vector&lt;u8&gt;)

@@ -223,14 +223,17 @@ module DiemAccount {
         escrow: Diem::Diem<Token>,
     }
 
+    //////// 0L //////////
     struct AutopayEscrow <Token> has key, store {
         list: FIFO::FIFO<Escrow<Token>>,
     }
 
+    //////// 0L //////////
     struct EscrowList<Token> has key {
         accounts: vector<EscrowSettings>
     }
 
+    //////// 0L //////////
     struct EscrowSettings has store {
         account: address, 
         //what percent of your available account limit should be dedicated to autopay?
@@ -438,8 +441,10 @@ module DiemAccount {
 
     //////// 0L ////////
     // Permissions: PUBLIC, ANYONE, OPEN!
-    // This function has no permissions, it doesn't check the signer. And it exceptionally is moving a resource to a different account than the signer.
-    // DiemAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
+    // This function has no permissions, it doesn't check the signer. 
+    // And it exceptionally is moving a resource to a different account than the signer.
+    // DiemAccount is the only code in the VM which can place a resource in an account.
+    // As such the module and especially this function has an attack surface.
 
     /////// 0L ////////
     // Function code: 01
@@ -474,7 +479,7 @@ module DiemAccount {
     // And it exceptionally is moving a resource to a different account than the signer.
     // DiemAccount is the only code in the VM which can place a resource in an account. 
     // As such the module and especially this function has an attack surface.
-    //Function code:02
+    // Function code:02
     public fun create_validator_account_with_proof(
         sender: &signer,
         challenge: &vector<u8>,
@@ -499,7 +504,10 @@ module DiemAccount {
         assert(valid, Errors::invalid_argument(120103));
 
         // check there's enough balance for bootstrapping both operator and validator account
-        assert(balance<GAS>(sender_addr)  >= 2 * BOOTSTRAP_COIN_VALUE, Errors::limit_exceeded(EINSUFFICIENT_BALANCE));
+        assert(
+            balance<GAS>(sender_addr) >= 2 * BOOTSTRAP_COIN_VALUE, 
+            Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
+        );
 
         //Create Owner Account
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
@@ -1220,7 +1228,8 @@ module DiemAccount {
     }
 
     /////// 0L /////////
-    /// This function bypasses transaction limits. vm_make_payment on the other hand considers payment limits.
+    /// This function bypasses transaction limits. 
+    /// vm_make_payment on the other hand considers payment limits.
     public fun vm_make_payment_no_limit<Token: store>(
         payer : address,
         payee: address,
@@ -1264,11 +1273,11 @@ module DiemAccount {
     }
     
 
-    /// Withdraw `amount` Diem<Token> from the address embedded in `WithdrawCapability` and
-    /// deposits it into the `payee`'s account balance.
+    /// Withdraw `amount` Diem<Token> from the address embedded in 
+    /// `WithdrawCapability` and deposits it into the `payee`'s account balance.
     /// The included `metadata` will appear in the `SentPaymentEvent` and `ReceivedPaymentEvent`.
-    /// The `metadata_signature` will only be checked if this payment is subject to the dual
-    /// attestation protocol
+    /// The `metadata_signature` will only be checked if this payment is 
+    /// subject to the dual attestation protocol
     // Function code: 13 Prefix: 170113         /////// 0L /////////
     public fun pay_from<Token: store>(
         cap: &WithdrawCapability,
@@ -1367,10 +1376,12 @@ module DiemAccount {
     }
 
     //////// 0L ////////
-    // when a new account is created it doesn't have any gas, and cannot
-    // mine or do other operations
-    // without this the new account must wait until the next epoch change to receive the fullnode subsidy, only to then begin interacting with the network.
-    // the person submitting the account creation transaction can bootstrap the account, until the epoch change when the fullnode subsidy will be paid.
+    // When a new account is created it doesn't have any gas, and cannot
+    // mine or do other operations.
+    // Without this the new account must wait until the next epoch change 
+    // to receive the fullnode subsidy, only to then begin interacting with the network.
+    // The person submitting the account creation transaction can bootstrap 
+    // the account, until the epoch change when the fullnode subsidy will be paid.
     // This transfer option skips all account limit checks.
     // Can be used to send a bootstrapping amout to the Owner account and/or Operator.
     // Can only be called within this module, and by create_valiator_account_with_proof
@@ -2936,8 +2947,7 @@ module DiemAccount {
       let sig = create_signer(addr);
       Wallet::set_slow(&sig);
       // destroy_signer(sig); // 0L todo: this fn deleted, delete this line?
-    }    
-
+    }
 
     /////// TEST HELPERS //////
 
