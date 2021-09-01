@@ -27,3 +27,8 @@ Initializing with env: test
 - [x] Get integrations tests pass https://github.com/OLSF/libra/tree/main/ol/integration-tests
 - [x] Final check - all 0L tests and swarm work
 - [x] Final cargo clean, cargo b --all and cargo b --all-targets
+
+### Some useful info might be found in these issues:  
+https://github.com/OLSF/libra/issues/616  
+https://github.com/OLSF/libra/issues/530  
+
