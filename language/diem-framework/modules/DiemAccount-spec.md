@@ -30,3 +30,6 @@ This creates a validator account.
 
 There's an extra level of rate-limiting, but this time on the side of the person sending the account creation. There's a significant attack that can be carried out if it were possible for a person to create many new validator accounts in any given time. So we use VDFs for the user onboarding as well. The onboarder needs to complete VDFs for 7 epochs before they can create a validator account. This is checked in: MinerState::can_create_val_account(sender_addr)
 
+## Transfers
+
+WIP
