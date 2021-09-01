@@ -1,11 +1,12 @@
 
-DiemAccount
+# DiemAccount
 
 # Definitions
-prospective account: an account not created on chain.
-user account: an end user, that holds balance.
-validator account: a special account that can run a consensus node.
-onboarder: a account that simply relays an account creation transaction.
+
+- prospective account: an account not created on chain.
+- user account: an end user, that holds balance.
+- validator account: a special account that can run a consensus node.
+- onboarder: a account that simply relays an account creation transaction.
 
 # Spec
 
