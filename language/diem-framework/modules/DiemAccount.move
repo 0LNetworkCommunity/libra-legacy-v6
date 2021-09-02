@@ -257,10 +257,8 @@ module DiemAccount {
             to_account: payee,
             escrow: coin,
         };
-
         let state = borrow_global_mut<AutopayEscrow<Token>>(payer);
         FIFO::push<Escrow<Token>>(&mut state.list, new_escrow);
-
     }
 
     // use 0x1::Debug::print;
@@ -271,29 +269,37 @@ module DiemAccount {
 // print(&01000);
         Roles::assert_diem_root(account);
 
-        let account_list = &borrow_global<EscrowList<Token>>(CoreAddresses::DIEM_ROOT_ADDRESS()).accounts;
+        let account_list = &borrow_global<EscrowList<Token>>(
+            CoreAddresses::DIEM_ROOT_ADDRESS()
+        ).accounts;
         let account_len = Vector::length<EscrowSettings>(account_list);
         let account_idx = 0;
 // print(&010100);
         while (account_idx < account_len) {
 // print(&010110);
-            let EscrowSettings {account: account_addr, share: percentage} = Vector::borrow<EscrowSettings>(account_list, account_idx);
+            let EscrowSettings {account: account_addr, share: percentage} 
+                = Vector::borrow<EscrowSettings>(account_list, account_idx);
 
             //get transfer limit room
-            let (limit_room, withdrawal_allowed) = AccountLimits::max_withdrawal<Token>(*account_addr);
+            let (limit_room, withdrawal_allowed) 
+                = AccountLimits::max_withdrawal<Token>(*account_addr);
+
             if (!withdrawal_allowed) {
                 account_idx = account_idx + 1;
                 continue
             };
 
-            limit_room = FixedPoint32::multiply_u64(limit_room , FixedPoint32::create_from_rational(*percentage, 100));
+            limit_room = FixedPoint32::multiply_u64(
+                limit_room , 
+                FixedPoint32::create_from_rational(*percentage, 100)
+            );
 // print(&010120);
             let amount_sent: u64 = 0;
 
             let payment_list = &mut borrow_global_mut<AutopayEscrow<Token>>(*account_addr).list;
             let num_payments = FIFO::len<Escrow<Token>>(payment_list);
 // print(&010130);
-            //pay out escrow until limit is reached
+            // Pay out escrow until limit is reached
             while (limit_room > 0 && num_payments > 0) {
 // print(&010131);
                 let Escrow<Token> {to_account, escrow} = FIFO::pop<Escrow<Token>>(payment_list);
@@ -314,7 +320,7 @@ module DiemAccount {
 // print(&010134);
                 } else {
 // print(&01015);
-                    //This entire escrow is being paid out
+                    // This entire escrow is being paid out
                     Diem::deposit<Token>(&mut recipient_coins.coin, escrow);
                     limit_room = limit_room - payment_size;
                     amount_sent = amount_sent + payment_size;
@@ -328,7 +334,9 @@ module DiemAccount {
                 _ = AccountLimits::update_withdrawal_limits<Token>(
                     amount_sent,
                     *account_addr,
-                    &borrow_global<AccountOperationsCapability>(CoreAddresses::DIEM_ROOT_ADDRESS()).limits_cap
+                    &borrow_global<AccountOperationsCapability>(
+                        CoreAddresses::DIEM_ROOT_ADDRESS()
+                    ).limits_cap
                 );
 // print(&010141);
             };
@@ -336,7 +344,6 @@ module DiemAccount {
 // print(&010150);
             account_idx = account_idx + 1;
         }
-
     }
 
     /////// 0L /////////
@@ -345,14 +352,16 @@ module DiemAccount {
     ) acquires EscrowList {
         let account = Signer::address_of(sender);
         if (!exists<AutopayEscrow<Token>>(account)) {
-            move_to<AutopayEscrow<Token>>(sender, AutopayEscrow {
-                list: FIFO::empty<Escrow<Token>>()
-            });
-            let escrow_list = &mut borrow_global_mut<EscrowList<Token>>(CoreAddresses::DIEM_ROOT_ADDRESS()).accounts;
+            move_to<AutopayEscrow<Token>>(
+                sender, 
+                AutopayEscrow { list: FIFO::empty<Escrow<Token>>() }
+            );
+            let escrow_list = &mut borrow_global_mut<EscrowList<Token>>(
+                CoreAddresses::DIEM_ROOT_ADDRESS()
+            ).accounts;
             let idx = 0;
             let len = Vector::length<EscrowSettings>(escrow_list);
             let found = false;
-
             while (idx < len) {
                 let account_addr = Vector::borrow<EscrowSettings>(escrow_list, idx).account;
                 if (account_addr == account) {
@@ -362,20 +371,19 @@ module DiemAccount {
                 idx = idx + 1;
             };
             if (!found){
-                //share initialized to 100
+                // Share initialized to 100
                 let default_percentage: u64 = 100;
-                let settings = EscrowSettings{ account: account, share: default_percentage};
+                let settings = EscrowSettings { account: account, share: default_percentage };
                 Vector::push_back<EscrowSettings>(escrow_list, settings);
             };
         };
-
     }
 
     /////// 0L /////////
-    public fun initialize_escrow_root<Token: store>(
-        sender: &signer
-    ) {
-        move_to<EscrowList<Token>>(sender, EscrowList<Token>{ accounts: Vector::empty<EscrowSettings>()});
+    public fun initialize_escrow_root<Token: store>(sender: &signer) {
+        move_to<EscrowList<Token>>(
+            sender, EscrowList<Token> { accounts: Vector::empty<EscrowSettings>() }
+        );
     }
 
     /////// 0L /////////
@@ -386,11 +394,12 @@ module DiemAccount {
         assert(new_percentage >= 50, 1);
         assert(new_percentage <= 100, 1);
 
-        let escrow_list = &mut borrow_global_mut<EscrowList<Token>>(CoreAddresses::DIEM_ROOT_ADDRESS()).accounts; 
+        let escrow_list = &mut borrow_global_mut<EscrowList<Token>>(
+            CoreAddresses::DIEM_ROOT_ADDRESS()
+        ).accounts;
         let account = Signer::address_of(sender);
         let idx = 0;
         let len = Vector::length<EscrowSettings>(escrow_list);
-
         while (idx < len) {
             let settings = Vector::borrow_mut<EscrowSettings>(escrow_list, idx);
             if (settings.account == account) {
@@ -399,10 +408,8 @@ module DiemAccount {
             };
             idx = idx + 1;
         };
-        //should never reach this point, if you do, autopay does not exist for the account.
+        // Should never reach this point, if you do, autopay does not exist for the account.
         assert(false, 1);
-
-
     }
 
     /// Initialize this module. This is only callable from genesis.
@@ -458,8 +465,8 @@ module DiemAccount {
             &Globals::get_difficulty(),
             solution
         );
-        let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         assert(valid, Errors::invalid_argument(120101));
+        let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
         Roles::new_user_role_with_proof(&new_signer);
         Event::publish_generator(&new_signer);
@@ -494,8 +501,8 @@ module DiemAccount {
     ):address acquires DiemAccount, Balance, AccountOperationsCapability {
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
-
         assert(MinerState::can_create_val_account(sender_addr), Errors::limit_exceeded(120102));
+
         let valid = VDF::verify(
             challenge,
             &Globals::get_difficulty(),
@@ -503,13 +510,13 @@ module DiemAccount {
         );
         assert(valid, Errors::invalid_argument(120103));
 
-        // check there's enough balance for bootstrapping both operator and validator account
+        // Check there's enough balance for bootstrapping both operator and validator account
         assert(
             balance<GAS>(sender_addr) >= 2 * BOOTSTRAP_COIN_VALUE, 
             Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
         );
 
-        //Create Owner Account
+        // Create Owner Account
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
         // The dr_account account is verified to have the diem root role in `Roles::new_validator_role`
@@ -539,8 +546,7 @@ module DiemAccount {
             op_fullnode_network_addresses
         );
 
-        /////// 0L /////////
-        // user can join validator universe list, but will only join if 
+        // User can join validator universe list, but will only join if 
         // the mining is above the threshold in the preceeding period.
         ValidatorUniverse::add_self(&new_signer);        
         
@@ -1154,20 +1160,17 @@ module DiemAccount {
 
         // Check there is a payer
         if (!exists_at(payer)) return; 
-
         // assert(exists_at(payer), Errors::not_published(EACCOUNT));
 
         // Check the payer is in possession of withdraw token.
         if (delegated_withdraw_capability(payer)) return; 
 
         let (max_withdraw, withdrawal_allowed) = AccountLimits::max_withdrawal<Token>(payer);
-
         if (!withdrawal_allowed) return;
 
         // VM can extract the withdraw token.
         let account = borrow_global_mut<DiemAccount>(payer);
         let cap = Option::extract(&mut account.withdraw_capability);
-        
 
         let transfer_now = 
             if (max_withdraw >= amount) { 
@@ -1186,8 +1189,7 @@ module DiemAccount {
             );
         };
 
-        if (transfer_later > 0)
-        {
+        if (transfer_later > 0) {
             new_escrow<Token>(vm, payer, payee, transfer_later);
         };
 
@@ -1196,7 +1198,8 @@ module DiemAccount {
 
     //////// 0L ////////
     public fun process_community_wallets(
-        vm: &signer, epoch: u64
+        vm: &signer,
+        epoch: u64
     ) acquires DiemAccount, Balance, AccountOperationsCapability {
         if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
         
@@ -1207,11 +1210,9 @@ module DiemAccount {
         };
 
         let v = Wallet::list_tx_by_epoch(epoch);
-
         let len = Vector::length<Wallet::TimedTransfer>(&v);
         let i = 0;
         while (i < len) {
-            
             let t: Wallet::TimedTransfer = *Vector::borrow(&v, i);
             // TODO: Is this the best way to access a struct property from 
             // outside a module?
@@ -1240,7 +1241,7 @@ module DiemAccount {
     ) acquires DiemAccount , Balance, AccountOperationsCapability {
         if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
         // don't try to send a 0 balance, will halt.
-        if (amount < 0) return; 
+        if (amount < 0) return; // Todo: Use "==" or change the comment ?
 
         // Check payee can receive funds in this currency.
         if (!exists<Balance<Token>>(payee)) return; 
@@ -1248,7 +1249,6 @@ module DiemAccount {
 
         // Check there is a payer
         if (!exists_at(payer)) return; 
-
         // assert(exists_at(payer), Errors::not_published(EACCOUNT));
 
         // Check the payer is in possession of withdraw token.
@@ -1272,7 +1272,6 @@ module DiemAccount {
         restore_withdraw_capability(cap);
     }
     
-
     /// Withdraw `amount` Diem<Token> from the address embedded in 
     /// `WithdrawCapability` and deposits it into the `payee`'s account balance.
     /// The included `metadata` will appear in the `SentPaymentEvent` and `ReceivedPaymentEvent`.
@@ -1293,16 +1292,15 @@ module DiemAccount {
             // Ensure that this withdrawal is compliant with the account limits on
             // this account.
             assert(
-                    AccountLimits::update_withdrawal_limits<Token>(
-                        amount,
-                        {{*&cap.account_address}},
-                        &borrow_global<AccountOperationsCapability>(
-                            CoreAddresses::DIEM_ROOT_ADDRESS()
-                            ).limits_cap
-                    ),
-                    Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
-                );
-    
+                AccountLimits::update_withdrawal_limits<Token>(
+                    amount,
+                    {{*&cap.account_address}},
+                    &borrow_global<AccountOperationsCapability>(
+                        CoreAddresses::DIEM_ROOT_ADDRESS()
+                    ).limits_cap
+                ),
+                Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
+            );
         } else {
             assert(
                 *&cap.account_address == CoreAddresses::DIEM_ROOT_ADDRESS(),
@@ -1385,6 +1383,9 @@ module DiemAccount {
     // This transfer option skips all account limit checks.
     // Can be used to send a bootstrapping amout to the Owner account and/or Operator.
     // Can only be called within this module, and by create_valiator_account_with_proof
+        // Todo: Can we enforce this in line above 
+        //       "Can be called only ... by create_valiator_account_with_proof" 
+        //       using "spec schema" ?
     fun onboarding_gas_transfer<Token: store>(
         payer_sig: &signer,
         payee: address
@@ -1394,7 +1395,7 @@ module DiemAccount {
         let balance_coin = &mut account_balance.coin;
         // Doubly check balance exists.
         assert(
-            Diem::value(balance_coin) > BOOTSTRAP_COIN_VALUE,
+            Diem::value(balance_coin) > BOOTSTRAP_COIN_VALUE, // Todo: ">=" ?
             Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
         );
         // Should abort if the 
