@@ -25,7 +25,7 @@ module Reconfigure {
     use 0x1::AccountLimits;
     use 0x1::GAS::GAS;
     use 0x1::DiemConfig;
-    // use 0x1::Audit;
+    use 0x1::Audit;
     use 0x1::DiemAccount;
     use 0x1::Burn;
     // use 0x1::Debug::print;
@@ -138,8 +138,8 @@ module Reconfigure {
             // TODO: temporary until jail-refactor merge.
             if (
               (!Vector::contains(&jailed_set, &addr)) && 
-              mined_last_epoch
-              // Audit::val_audit_passing(addr)
+              mined_last_epoch &&
+              Audit::val_audit_passing(addr)
             ) {
                 // print(&03252);
 
@@ -169,6 +169,7 @@ module Reconfigure {
 
         // If the cardinality of validator_set in the next epoch is less than 4, we keep the same validator set. 
         if (Vector::length<address>(&proposed_set)<= 3) proposed_set = *&top_accounts;
+        print(&proposed_set);
         // Usually an issue in staging network for QA only.
         // This is very rare and theoretically impossible for network with at least 6 nodes and 6 rounds. If we reach an epoch boundary with at least 6 rounds, we would have at least 2/3rd of the validator set with at least 66% liveliness. 
 // print(&03270);
