@@ -37,7 +37,7 @@ Hint: Tests should use 0L coin "GAS"
 
 - [ ] Get all e2e tests build & pass -> `PRETTY=1 cargo test -p language-e2e-testsuite -- --nocapture ol_`
 
-- [ ] Make sure we have 0L patched SALT and test val_config_ip_address is passing
+- [ ] Make sure we have 0L patched SALT and test `val_config_ip_address` in `ol/types/src/account.rs` is passing
 
 ```
 // types/src/network_address/encrypted.rs
