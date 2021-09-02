@@ -13,7 +13,7 @@
 - Genesis.move
 ```
 
-- [ ] Make sure all the coins patcehd as "GAS" in types/src/account_config/constants/coins.rs
+- [ ] Make sure all the coins patched as "GAS" in types/src/account_config/constants/coins.rs
 
 E.g.
 ```
