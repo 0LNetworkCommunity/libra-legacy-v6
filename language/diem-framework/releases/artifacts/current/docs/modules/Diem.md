@@ -38,6 +38,7 @@ minting and burning of coins.
 -  [Function `remove_preburn_from_queue`](#0x1_Diem_remove_preburn_from_queue)
 -  [Function `burn_with_capability`](#0x1_Diem_burn_with_capability)
 -  [Function `burn_with_resource_cap`](#0x1_Diem_burn_with_resource_cap)
+-  [Function `vm_burn_this_coin`](#0x1_Diem_vm_burn_this_coin)
 -  [Function `cancel_burn_with_capability`](#0x1_Diem_cancel_burn_with_capability)
 -  [Function `burn_now`](#0x1_Diem_burn_now)
 -  [Function `remove_burn_capability`](#0x1_Diem_remove_burn_capability)
@@ -2108,7 +2109,7 @@ the preburn queue with a <code>to_burn</code> amount equal to <code>amount</code
     // Remove the preburn request
     <b>let</b> <a href="Diem.md#0x1_Diem_PreburnWithMetadata">PreburnWithMetadata</a>{ preburn, metadata: _ } = <a href="Diem.md#0x1_Diem_remove_preburn_from_queue">remove_preburn_from_queue</a>&lt;CoinType&gt;(preburn_address, amount);
 
-    // Burn the contained coins
+    // <a href="Burn.md#0x1_Burn">Burn</a> the contained coins
     <a href="Diem.md#0x1_Diem_burn_with_resource_cap">burn_with_resource_cap</a>(&<b>mut</b> preburn, preburn_address, capability);
 
     <b>let</b> <a href="Diem.md#0x1_Diem_Preburn">Preburn</a> { to_burn } = preburn;
@@ -2288,6 +2289,55 @@ Calls to this function will fail if the preburn <code>to_burn</code> area for <c
 
 </details>
 
+<a name="0x1_Diem_vm_burn_this_coin"></a>
+
+## Function `vm_burn_this_coin`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Diem.md#0x1_Diem_vm_burn_this_coin">vm_burn_this_coin</a>&lt;CoinType: store&gt;(vm: &signer, coin: <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;CoinType&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Diem.md#0x1_Diem_vm_burn_this_coin">vm_burn_this_coin</a>&lt;CoinType: store&gt;(
+    vm: &signer,
+    coin: <a href="Diem.md#0x1_Diem">Diem</a>&lt;CoinType&gt;,
+) <b>acquires</b> <a href="Diem.md#0x1_Diem_CurrencyInfo">CurrencyInfo</a> {
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+    <b>let</b> currency_code = <a href="Diem.md#0x1_Diem_currency_code">currency_code</a>&lt;CoinType&gt;();
+    <b>let</b> value = coin.value;
+
+    // <b>update</b> the market cap
+    <a href="Diem.md#0x1_Diem_assert_is_currency">assert_is_currency</a>&lt;CoinType&gt;();
+    <b>let</b> info = borrow_global_mut&lt;<a href="Diem.md#0x1_Diem_CurrencyInfo">CurrencyInfo</a>&lt;CoinType&gt;&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_CURRENCY_INFO_ADDRESS">CoreAddresses::CURRENCY_INFO_ADDRESS</a>());
+    <b>assert</b>(info.total_value &gt;= (value <b>as</b> u128), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="Diem.md#0x1_Diem_ECURRENCY_INFO">ECURRENCY_INFO</a>));
+    info.total_value = info.total_value - (value <b>as</b> u128);
+
+    // zero and destroy
+    coin.value = 0;
+    <a href="Diem.md#0x1_Diem_destroy_zero">destroy_zero</a>(coin);
+
+    <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_emit_event">Event::emit_event</a>(
+        &<b>mut</b> info.burn_events,
+        <a href="Diem.md#0x1_Diem_BurnEvent">BurnEvent</a> {
+            amount: value,
+            currency_code,
+            preburn_address: <a href="CoreAddresses.md#0x1_CoreAddresses_BURN_ADDRESS">CoreAddresses::BURN_ADDRESS</a>(),
+        }
+    );
+    // TODO: formal verfication specs
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_Diem_cancel_burn_with_capability"></a>
 
 ## Function `cancel_burn_with_capability`
@@ -2441,6 +2491,7 @@ used for administrative burns, like unpacking an GAS coin or charging fees.
     <b>assert</b>(coin.value &gt; 0, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="Diem.md#0x1_Diem_ECOIN">ECOIN</a>));
     <a href="Diem.md#0x1_Diem_preburn_with_resource">preburn_with_resource</a>(coin, preburn, preburn_address);
     <a href="Diem.md#0x1_Diem_burn_with_resource_cap">burn_with_resource_cap</a>(preburn, preburn_address, capability);
+    // QUESTION: Why is there no destroy_zero here?
 }
 </code></pre>
 

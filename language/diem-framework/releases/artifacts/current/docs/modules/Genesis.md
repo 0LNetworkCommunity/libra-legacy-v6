@@ -106,6 +106,7 @@ Initializes the Diem framework.
     <a href="DiemBlock.md#0x1_DiemBlock_initialize_block_metadata">DiemBlock::initialize_block_metadata</a>(dm_account);
 
     /////// 0L /////////
+    // DiemAccount::create_burn_account(dm_account, x"00000000000000000000000000000000");
     // Outside of testing, brick the diemroot account.
     <b>if</b> (chain_id == 1 || chain_id == 7) {
         dm_auth_key = <a href="../../../../../../move-stdlib/docs/Hash.md#0x1_Hash_sha3_256">Hash::sha3_256</a>(b"Protests rage across the nation");

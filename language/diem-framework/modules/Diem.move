@@ -937,6 +937,42 @@ module Diem {
         };
     }
 
+        spec burn_with_resource_cap {
+        let pre_preburn = preburn;
+        include BurnWithResourceCapAbortsIf<CoinType>{preburn: pre_preburn};
+        include BurnWithResourceCapEnsures<CoinType>{preburn: pre_preburn};
+        include BurnWithResourceCapEmits<CoinType>{preburn: pre_preburn};
+    }
+    spec schema BurnWithResourceCapAbortsIf<CoinType> {
+        preburn: Preburn<CoinType>;
+        include AbortsIfNoCurrency<CoinType>;
+        let to_burn = preburn.to_burn.value;
+        let info = spec_currency_info<CoinType>();
+        aborts_if to_burn == 0 with Errors::INVALID_STATE;
+        aborts_if info.total_value < to_burn with Errors::LIMIT_EXCEEDED;
+        aborts_if info.preburn_value < to_burn with Errors::LIMIT_EXCEEDED;
+    }
+    spec schema BurnWithResourceCapEnsures<CoinType> {
+        preburn: Preburn<CoinType>;
+        ensures spec_currency_info<CoinType>().total_value
+                == old(spec_currency_info<CoinType>().total_value) - preburn.to_burn.value;
+        ensures spec_currency_info<CoinType>().preburn_value
+                == old(spec_currency_info<CoinType>().preburn_value) - preburn.to_burn.value;
+    }
+    spec schema BurnWithResourceCapEmits<CoinType> {
+        preburn: Preburn<CoinType>;
+        preburn_address: address;
+        let info = spec_currency_info<CoinType>();
+        let currency_code = spec_currency_code<CoinType>();
+        let handle = info.burn_events;
+        emits BurnEvent {
+                amount: preburn.to_burn.value,
+                currency_code,
+                preburn_address,
+            }
+            to handle if !info.is_synthetic;
+    }
+    
     //////// 0L ////////
     // Only the VM should at times be able to burn a coin in its posession.
     // should burn immediately, and bypass the Diem preburn stuff.
