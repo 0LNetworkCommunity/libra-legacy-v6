@@ -290,7 +290,7 @@ address 0x1 {
     // Enable, disable, create/delete instructions //
     /////////////////////////////////////////////////
 
-    // Each account needs to initialize autopay on it's account
+    // Each account needs to initialize autopay on its account
     // Function code 010102
     public fun enable_autopay(acc: &signer) acquires AccountList{
       let addr = Signer::address_of(acc);
