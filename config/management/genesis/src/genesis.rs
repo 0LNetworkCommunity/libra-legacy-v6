@@ -37,6 +37,8 @@ impl Genesis {
     }
 
     pub fn execute(self) -> Result<Transaction, Error> {
+
+        //TODO(LG): get layout optionally from own file.
         let layout = self.layout()?;
         //////// 0L ////////        
         // let diem_root_key = self.diem_root_key(&layout)?;
