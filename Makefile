@@ -153,8 +153,8 @@ treasury:
 
 #### GENESIS REGISTRATION ####
 ceremony:
-	cargo r -p ol -- init --skip-val
-  cargo r -p miner -- zero
+		cargo run -p ol -- init --skip-val
+		cargo run -p miner -- zero
 
 register:
 # export ACC=$(shell toml get ${DATA_PATH}/0L.toml profile.account)
