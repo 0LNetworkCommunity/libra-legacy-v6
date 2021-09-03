@@ -30,7 +30,7 @@ ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
 MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
 else
-REPO_NAME = experimental-genesis
+REPO_NAME = rex-testnet-genesis
 NODE_ENV = prod
 endif
 
