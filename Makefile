@@ -284,7 +284,7 @@ clear:
 ifeq (${TEST}, y)
 
 	@if test -d ${DATA_PATH}; then \
-		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml; \
+		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml *waypoint; \
 	fi
 	@if test -d ${DATA_PATH}/blocks; then \
 		rm -f ${DATA_PATH}/blocks/*.json; \
