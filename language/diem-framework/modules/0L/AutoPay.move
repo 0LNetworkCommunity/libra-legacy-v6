@@ -290,7 +290,7 @@ address 0x1 {
     // Enable, disable, create/delete instructions //
     /////////////////////////////////////////////////
 
-    // Each account needs to initialize autopay on it's account
+    // Each account needs to initialize autopay on its account
     // Function code 010102
     public fun enable_autopay(acc: &signer) acquires AccountList{
       let addr = Signer::address_of(acc);
@@ -309,8 +309,9 @@ address 0x1 {
     // An account can disable autopay on it's account
     // Function code 010103
     public fun disable_autopay(acc: &signer) acquires AccountList, Data {
-      
+
       let addr = Signer::address_of(acc);
+      if (!is_enabled(addr)) return;
 
       // We destroy the data resource for sender
       let sender_data = move_from<Data>(addr);

@@ -99,6 +99,7 @@ The Move modules in the Diem Framework can be bucketed in to a couple categories
 -  [`0x1::AutoPay2`](AutoPay.md#0x1_AutoPay2)
 -  [`0x1::AutoPayScripts`](ol_autopay.md#0x1_AutoPayScripts)
 -  [`0x1::BCS`](../../../../../../move-stdlib/docs/BCS.md#0x1_BCS)
+-  [`0x1::Burn`](Burn.md#0x1_Burn)
 -  [`0x1::Cases`](Cases.md#0x1_Cases)
 -  [`0x1::ChainId`](ChainId.md#0x1_ChainId)
 -  [`0x1::CoreAddresses`](CoreAddresses.md#0x1_CoreAddresses)

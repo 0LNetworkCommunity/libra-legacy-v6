@@ -153,6 +153,7 @@ module DiemAccount {
         role_id: u64
     }
 
+
     const MAX_U64: u128 = 18446744073709551615;
 
     /////// 0L /////////
@@ -500,7 +501,7 @@ module DiemAccount {
         op_validator_network_addresses: vector<u8>,
         op_fullnode_network_addresses: vector<u8>,
         op_human_name: vector<u8>,
-    ):address acquires DiemAccount, Balance, AccountOperationsCapability {
+    ):address acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
         assert(MinerState::can_create_val_account(sender_addr), Errors::limit_exceeded(120102));
@@ -621,7 +622,7 @@ module DiemAccount {
         to_deposit: Diem<Token>,
         metadata: vector<u8>,
         metadata_signature: vector<u8>
-    ) acquires DiemAccount, Balance, AccountOperationsCapability {
+    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
         DiemTimestamp::assert_operating();
         AccountFreezing::assert_not_frozen(payee);
 
@@ -655,7 +656,7 @@ module DiemAccount {
         };
 
         // Deposit the `to_deposit` coin
-        Diem::deposit(&mut borrow_global_mut<Balance<Token>>(payee).coin, to_deposit);
+        Diem::deposit(&mut borrow_global_mut<Balance<Token>>(payee).coin, to_deposit); 
 
         // Log a received event
         Event::emit_event<ReceivedPaymentEvent>(
@@ -667,6 +668,11 @@ module DiemAccount {
                 metadata
             }
         );
+
+        //////// 0L ////////
+        // if the account wants to be tracked add tracking
+        maybe_update_deposit(payee, deposit_value);
+
     }
     spec deposit {
         pragma opaque;
@@ -754,7 +760,7 @@ module DiemAccount {
         designated_dealer_address: address,
         mint_amount: u64,
         tier_index: u64,
-    ) acquires DiemAccount, Balance, AccountOperationsCapability {
+    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
         let coin = DesignatedDealer::tiered_mint<Token>(
             tc_account, mint_amount, designated_dealer_address, tier_index
         );
@@ -816,7 +822,7 @@ module DiemAccount {
         account: &signer,
         preburn_address: address,
         amount: u64,
-    ) acquires DiemAccount, Balance, AccountOperationsCapability {
+    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
         let coin = Diem::cancel_burn<Token>(account, preburn_address, amount);
         // record both sender and recipient as `preburn_address`: the coins are moving from
         // `preburn_address`'s `Preburn` resource to its balance
@@ -1152,7 +1158,7 @@ module DiemAccount {
         metadata: vector<u8>,
         metadata_signature: vector<u8>,
         vm: &signer
-    ) acquires DiemAccount , Balance, AccountOperationsCapability, AutopayEscrow {
+    ) acquires DiemAccount , Balance, AccountOperationsCapability, AutopayEscrow, CumulativeDeposits { //////// 0L ////////
         if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
         if (amount < 0) return; // Todo: Use "==" ?
 
@@ -1200,9 +1206,8 @@ module DiemAccount {
 
     //////// 0L ////////
     public fun process_community_wallets(
-        vm: &signer,
-        epoch: u64
-    ) acquires DiemAccount, Balance, AccountOperationsCapability {
+        vm: &signer, epoch: u64
+    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
         if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
         
         // Migrate on the fly if state doesn't exist on upgrade.
@@ -1236,10 +1241,10 @@ module DiemAccount {
         metadata: vector<u8>,
         metadata_signature: vector<u8>,
         vm: &signer
-    ) acquires DiemAccount , Balance, AccountOperationsCapability {
+    ) acquires DiemAccount , Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
         if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
         // don't try to send a 0 balance, will halt.
-        if (amount < 0) return; // Todo: Use "==" or change the comment ?
+        if (amount < 1) return; 
 
         // Check payee can receive funds in this currency.
         if (!exists<Balance<Token>>(payee)) return; 
@@ -1270,8 +1275,36 @@ module DiemAccount {
         restore_withdraw_capability(cap);
     }
     
-    /// Withdraw `amount` Diem<Token> from the address embedded in 
-    /// `WithdrawCapability` and deposits it into the `payee`'s account balance.
+    /////// 0L /////////
+    /// VM can burn from an account's balance for administrative purposes (e.g. at epoch boundaries)
+    public fun vm_burn_from_balance<Token: store>(
+        addr : address,
+        amount: u64,
+        metadata: vector<u8>,
+        vm: &signer
+    ) acquires DiemAccount, Balance, AccountOperationsCapability { 
+        if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
+        // don't try to send a 0 balance, will halt.
+        if (amount < 1) return; 
+
+        // Check there is a payer and has balance
+        if (!exists_at(addr)) return; 
+        if (!exists<Balance<Token>>(addr)) return; 
+
+        // Check the payer is in possession of withdraw token.
+        if (delegated_withdraw_capability(addr)) return; 
+
+        // VM can extract the withdraw token.
+        let account = borrow_global_mut<DiemAccount>(addr);
+        let cap = Option::extract(&mut account.withdraw_capability);
+        let coin = withdraw_from<Token>(&cap, addr, amount, copy metadata);
+        Diem::vm_burn_this_coin<Token>(vm, coin);
+        restore_withdraw_capability(cap);
+    }
+    
+
+    /// Withdraw `amount` Diem<Token> from the address embedded in `WithdrawCapability` and
+    /// deposits it into the `payee`'s account balance.
     /// The included `metadata` will appear in the `SentPaymentEvent` and `ReceivedPaymentEvent`.
     /// The `metadata_signature` will only be checked if this payment is 
     /// subject to the dual attestation protocol
@@ -1282,7 +1315,7 @@ module DiemAccount {
         amount: u64,
         metadata: vector<u8>,
         metadata_signature: vector<u8>
-    ) acquires DiemAccount, Balance, AccountOperationsCapability {
+    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
         //////// 0L //////// Transfers disabled by default
         //////// 0L //////// Transfers of 10 GAS 
         //////// 0L //////// enabled when validator count is 100. 
@@ -1387,7 +1420,7 @@ module DiemAccount {
     fun onboarding_gas_transfer<Token: store>(
         payer_sig: &signer,
         payee: address
-    ) acquires DiemAccount, Balance, AccountOperationsCapability {
+    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
         let payer_addr = Signer::address_of(payer_sig);
         let account_balance = borrow_global_mut<Balance<Token>>(payer_addr);
         let balance_coin = &mut account_balance.coin;
@@ -1732,7 +1765,7 @@ module DiemAccount {
                 upgrade_events: Event::new_event_handle<Self::AdminTransactionEvent>(&dr_account),
             }
         );
-        make_account(dr_account, auth_key_prefix)
+        make_account(dr_account, copy auth_key_prefix);
     }
 
     spec create_diem_root_account {
@@ -1994,6 +2027,8 @@ module DiemAccount {
         ensures Roles::spec_has_child_VASP_role_addr(child_addr);
     }
 
+
+
     ///////////////////////////////////////////////////////////////////////////
     // General purpose methods
     ///////////////////////////////////////////////////////////////////////////
@@ -2004,15 +2039,18 @@ module DiemAccount {
     fun balance_for<Token: store>(balance: &Balance<Token>): u64 {
         Diem::value<Token>(&balance.coin)
     }
-
+    
+    //////// 0L //////// 
     /// Return the current balance of the account at `addr`.
+    /// 0L change, return zero if it doesn't hold balance. In case the VM calls this on a bad account it won't halt
     public fun balance<Token: store>(addr: address): u64 acquires Balance {
+        // if (!exists<Balance<Token>>(addr)) { return 0 };
         assert(exists<Balance<Token>>(addr), Errors::not_published(EPAYER_DOESNT_HOLD_CURRENCY));
         balance_for(borrow_global<Balance<Token>>(addr))
     }
     spec balance {
         aborts_if !exists<Balance<Token>>(addr) with Errors::NOT_PUBLISHED;
-    }
+    }    
 
     /// Add a balance of `Token` type to the sending account
     public fun add_currency<Token: store>(account: &signer) {
@@ -2929,7 +2967,7 @@ module DiemAccount {
         to_deposit: Diem<Token>,
         metadata: vector<u8>,
         metadata_signature: vector<u8>
-    ) acquires DiemAccount, Balance, AccountOperationsCapability {
+    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
         let sender = Signer::address_of(payer);
         assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), 4010);
         deposit(
@@ -2947,6 +2985,71 @@ module DiemAccount {
       let sig = create_signer(addr);
       Wallet::set_slow(&sig);
     }
+
+
+    //////// 0L ////////
+    //////// DEPOSITS ////////
+    /// Separate struct to track cumulative deposits
+    struct CumulativeDeposits has key {
+        /// Store the cumulative deposits made to this account.
+        /// not all accounts will have this enabled.
+        value: u64,
+        index: u64, 
+    }
+
+    //////// 0L ////////
+    // init struct for storing cumulative deposits, for community wallets
+    public fun init_cumulative_deposits(sender: &signer, starting_balance: u64) {
+      let addr = Signer::address_of(sender);
+
+      if (!exists<CumulativeDeposits>(addr)) {
+        move_to<CumulativeDeposits>(sender, CumulativeDeposits {
+          value: starting_balance,
+          index: starting_balance,
+        })
+      };
+    }
+
+    fun maybe_update_deposit(payee: address, deposit_value: u64) acquires CumulativeDeposits {
+        // update cumulative deposits if the account has the struct.
+        if (exists<CumulativeDeposits>(payee)) {
+          let epoch = DiemConfig::get_current_epoch();
+          let index = deposit_index_curve(epoch, deposit_value);
+          let cumu = borrow_global_mut<CumulativeDeposits>(payee);
+          cumu.value = cumu.value + deposit_value;
+          cumu.index = cumu.index + index;
+        };
+    }
+
+    /// adjust the points of the deposits favoring more recent deposits.
+    /// inflation by x% per day from the start of network.
+    fun deposit_index_curve(
+      epoch: u64,
+      value: u64,
+    ): u64 {
+      
+      // increment 1/2 percent per day, not compounded.
+      (value * (1000 + (epoch * 5))) / 1000
+    }
+
+
+    //////// GETTERS ////////
+    public fun get_cumulative_deposits(addr: address): u64 acquires CumulativeDeposits {
+      if (!exists<CumulativeDeposits>(addr)) return 0;
+
+      borrow_global<CumulativeDeposits>(addr).value
+    }
+
+    public fun get_index_cumu_deposits(addr: address): u64 acquires CumulativeDeposits {
+      if (!exists<CumulativeDeposits>(addr)) return 0;
+
+      borrow_global<CumulativeDeposits>(addr).index
+    }
+
+    public fun is_init(addr: address): bool {
+      exists<CumulativeDeposits>(addr)
+    }
+
 
     /////// TEST HELPERS //////
 
