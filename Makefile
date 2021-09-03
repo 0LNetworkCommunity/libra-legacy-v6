@@ -153,7 +153,8 @@ treasury:
 
 #### GENESIS REGISTRATION ####
 ceremony:
-	export NODE_ENV=prod && miner ceremony
+	cargo r -p ol -- init --skip-val
+  cargo r -p miner -- zero
 
 register:
 # export ACC=$(shell toml get ${DATA_PATH}/0L.toml profile.account)
