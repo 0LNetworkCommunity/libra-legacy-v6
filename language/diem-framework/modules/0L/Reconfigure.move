@@ -28,7 +28,7 @@ module Reconfigure {
     use 0x1::Audit;
     use 0x1::DiemAccount;
     use 0x1::Burn;
-    use 0x1::Debug::print;
+    // use 0x1::Debug::print;
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
@@ -126,23 +126,22 @@ module Reconfigure {
         // // )/4;
         let burn_value = 1000000; // TODO: switch to a variable cost, as above.
 
-print(&03250);
+// print(&03250);
 
         let i = 0;
         while (i < Vector::length<address>(&top_accounts)) {
-          print(&03251);
+// print(&03251);
 
             let addr = *Vector::borrow(&top_accounts, i);
             let mined_last_epoch = MinerState::node_above_thresh(vm, addr);
             // print(&mined_last_epoch);
             // TODO: temporary until jail-refactor merge.
-            print(&Audit::val_audit_passing(addr));
             if (
               (!Vector::contains(&jailed_set, &addr)) && 
               mined_last_epoch &&
               Audit::val_audit_passing(addr)
             ) {
-                print(&03252);
+// print(&03252);
 
                 Vector::push_back(&mut proposed_set, addr);
                 Burn::epoch_start_burn(vm, addr, burn_value);
@@ -170,7 +169,6 @@ print(&03250);
 
         // If the cardinality of validator_set in the next epoch is less than 4, we keep the same validator set. 
         if (Vector::length<address>(&proposed_set)<= 3) proposed_set = *&top_accounts;
-        print(&proposed_set);
         // Usually an issue in staging network for QA only.
         // This is very rare and theoretically impossible for network with at least 6 nodes and 6 rounds. If we reach an epoch boundary with at least 6 rounds, we would have at least 2/3rd of the validator set with at least 66% liveliness. 
 // print(&03270);
