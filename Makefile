@@ -31,7 +31,7 @@ REPO_NAME = dev-genesis
 MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
 else
 REPO_NAME = rex-testnet-genesis
-NODE_ENV = prod
+# NODE_ENV = prod
 endif
 
 # Registration params
