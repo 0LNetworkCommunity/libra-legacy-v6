@@ -684,6 +684,7 @@ Attempt to add instruction when too many already exist
 <pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay2_disable_autopay">disable_autopay</a>(acc: &signer) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a>, <a href="AutoPay.md#0x1_AutoPay2_Data">Data</a> {
 
   <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(acc);
+  <b>if</b> (!<a href="AutoPay.md#0x1_AutoPay2_is_enabled">is_enabled</a>(addr)) <b>return</b>;
 
   // We destroy the data <b>resource</b> for sender
   <b>let</b> sender_data = move_from&lt;<a href="AutoPay.md#0x1_AutoPay2_Data">Data</a>&gt;(addr);

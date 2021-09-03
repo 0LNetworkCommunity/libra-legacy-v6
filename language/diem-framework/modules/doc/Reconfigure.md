@@ -10,6 +10,7 @@
 
 
 <pre><code><b>use</b> <a href="AccountLimits.md#0x1_AccountLimits">0x1::AccountLimits</a>;
+<b>use</b> <a href="Audit.md#0x1_Audit">0x1::Audit</a>;
 <b>use</b> <a href="AutoPay.md#0x1_AutoPay2">0x1::AutoPay2</a>;
 <b>use</b> <a href="Burn.md#0x1_Burn">0x1::Burn</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
@@ -146,7 +147,7 @@
 
     <b>let</b> i = 0;
     <b>while</b> (i &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&top_accounts)) {
-      // print(&03251);
+// print(&03251);
 
         <b>let</b> addr = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&top_accounts, i);
         <b>let</b> mined_last_epoch = <a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(vm, addr);
@@ -154,10 +155,10 @@
         // TODO: temporary until jail-refactor merge.
         <b>if</b> (
           (!<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&jailed_set, &addr)) &&
-          mined_last_epoch
-          // <a href="Audit.md#0x1_Audit_val_audit_passing">Audit::val_audit_passing</a>(addr)
+          mined_last_epoch &&
+          <a href="Audit.md#0x1_Audit_val_audit_passing">Audit::val_audit_passing</a>(addr)
         ) {
-            // print(&03252);
+// print(&03252);
 
             <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> proposed_set, addr);
             <a href="Burn.md#0x1_Burn_epoch_start_burn">Burn::epoch_start_burn</a>(vm, addr, burn_value);
