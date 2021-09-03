@@ -241,7 +241,7 @@ module DiemAccount {
     }
 
     //////// 0L ////////
-    public fun new_escrow<Token: store>(
+    fun new_escrow<Token: store>(
         account: &signer,
         payer: address,
         payee: address,
@@ -382,35 +382,37 @@ module DiemAccount {
     /////// 0L /////////
     public fun initialize_escrow_root<Token: store>(sender: &signer) {
         move_to<EscrowList<Token>>(
-            sender, EscrowList<Token> { accounts: Vector::empty<EscrowSettings>() }
+            sender,
+            EscrowList<Token> { accounts: Vector::empty<EscrowSettings>() }
         );
     }
 
-    /////// 0L /////////
-    public fun update_escrow_percentage<Token: store>(
-        sender: &signer, 
-        new_percentage: u64,
-    ) acquires EscrowList {
-        assert(new_percentage >= 50, 1);
-        assert(new_percentage <= 100, 1);
+    // Unused
+    // /////// 0L /////////
+    // public fun update_escrow_percentage<Token: store>(
+    //     sender: &signer, 
+    //     new_percentage: u64,
+    // ) acquires EscrowList {
+    //     assert(new_percentage >= 50, 1);
+    //     assert(new_percentage <= 100, 1);
 
-        let escrow_list = &mut borrow_global_mut<EscrowList<Token>>(
-            CoreAddresses::DIEM_ROOT_ADDRESS()
-        ).accounts;
-        let account = Signer::address_of(sender);
-        let idx = 0;
-        let len = Vector::length<EscrowSettings>(escrow_list);
-        while (idx < len) {
-            let settings = Vector::borrow_mut<EscrowSettings>(escrow_list, idx);
-            if (settings.account == account) {
-                settings.share = new_percentage;
-                return
-            };
-            idx = idx + 1;
-        };
-        // Should never reach this point, if you do, autopay does not exist for the account.
-        assert(false, 1);
-    }
+    //     let escrow_list = &mut borrow_global_mut<EscrowList<Token>>(
+    //         CoreAddresses::DIEM_ROOT_ADDRESS()
+    //     ).accounts;
+    //     let account = Signer::address_of(sender);
+    //     let idx = 0;
+    //     let len = Vector::length<EscrowSettings>(escrow_list);
+    //     while (idx < len) {
+    //         let settings = Vector::borrow_mut<EscrowSettings>(escrow_list, idx);
+    //         if (settings.account == account) {
+    //             settings.share = new_percentage;
+    //             return
+    //         };
+    //         idx = idx + 1;
+    //     };
+    //     // Should never reach this point, if you do, autopay does not exist for the account.
+    //     assert(false, 1);
+    // }
 
     /// Initialize this module. This is only callable from genesis.
     public fun initialize(
@@ -502,6 +504,11 @@ module DiemAccount {
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
         assert(MinerState::can_create_val_account(sender_addr), Errors::limit_exceeded(120102));
+        // Check there's enough balance for bootstrapping both operator and validator account
+        assert(
+            balance<GAS>(sender_addr) >= 2 * BOOTSTRAP_COIN_VALUE, 
+            Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
+        );
 
         let valid = VDF::verify(
             challenge,
@@ -510,16 +517,11 @@ module DiemAccount {
         );
         assert(valid, Errors::invalid_argument(120103));
 
-        // Check there's enough balance for bootstrapping both operator and validator account
-        assert(
-            balance<GAS>(sender_addr) >= 2 * BOOTSTRAP_COIN_VALUE, 
-            Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
-        );
-
         // Create Owner Account
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
-        // The dr_account account is verified to have the diem root role in `Roles::new_validator_role`
+        // The dr_account account is verified to have the diem root role in 
+        // `Roles::new_validator_role`
         Roles::new_validator_role_with_proof(&new_signer);
         Event::publish_generator(&new_signer);
         ValidatorConfig::publish_with_proof(&new_signer, ow_human_name);
@@ -1152,7 +1154,7 @@ module DiemAccount {
         vm: &signer
     ) acquires DiemAccount , Balance, AccountOperationsCapability, AutopayEscrow {
         if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
-        if (amount < 0) return;
+        if (amount < 0) return; // Todo: Use "==" ?
 
         // Check payee can receive funds in this currency.
         if (!exists<Balance<Token>>(payee)) return; 
@@ -1217,13 +1219,9 @@ module DiemAccount {
             // TODO: Is this the best way to access a struct property from 
             // outside a module?
             let (payer, payee, value, description) = Wallet::get_tx_args(t);
-            
             if (Wallet::is_frozen(payer)) continue;
-
             vm_make_payment_no_limit<GAS>(payer, payee, value, description, b"", vm);
-            
             Wallet::maybe_reset_rejection_counter(vm, payer);
-            
             i = i + 1;
         };
     }
@@ -2923,7 +2921,8 @@ module DiemAccount {
 
     /////// 0L /////////
     // Methods for vm to deposit
-    // Deposits the `to_deposit` coin into the `payee`'s account balance with the attached `metadata`
+    // Deposits the `to_deposit` coin into the `payee`'s account balance 
+    // with the attached `metadata`
     public fun vm_deposit_with_metadata<Token: store>(
         payer: &signer,
         payee: address,
@@ -2947,7 +2946,6 @@ module DiemAccount {
       CoreAddresses::assert_diem_root(vm);
       let sig = create_signer(addr);
       Wallet::set_slow(&sig);
-      // destroy_signer(sig); // 0L todo: this fn deleted, delete this line?
     }
 
     /////// TEST HELPERS //////
