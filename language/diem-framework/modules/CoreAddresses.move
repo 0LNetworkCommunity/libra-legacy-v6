@@ -46,6 +46,13 @@ module CoreAddresses {
         @0x1
     }
 
+    //////// 0L ////////
+    /// The reserved address where all core modules are published. No
+    /// account can be created at this address.
+    public fun BURN_ADDRESS(): address {
+        @0xDEADDEAD
+    }
+
     /// The operation can only be performed by the account at 0xA550C18 (Diem Root)
     const EDIEM_ROOT: u64 = 0;
     /// The operation can only be performed by the account at 0xB1E55ED (Treasury & Compliance)
