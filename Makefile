@@ -288,6 +288,8 @@ ifeq (${TEST}, y)
 	fi
 	@if test -d ${DATA_PATH}/blocks; then \
 		rm -f ${DATA_PATH}/blocks/*.json; \
+  else
+    mkdir ${DATA_PATH}/blocks/
 	fi
 endif
 
