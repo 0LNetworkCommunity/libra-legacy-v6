@@ -95,7 +95,7 @@ stdlib:
 # cargo run --release -p diem-framework
 	cargo run --release -p diem-framework -- --create-upgrade-payload
 	sha256sum language/diem-framework/staged/stdlib.mv
-  
+	
 
 install: mv-bin bin-path
 	mkdir ${USER_BIN_PATH} | true
@@ -151,13 +151,13 @@ layout:
 gen-fork-repo:
 	cargo run -p diem-genesis-tool --release -- create-repo \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
-  --repo-owner ${REPO_ORG} \
+	--repo-owner ${REPO_ORG} \
 	--repo-name ${REPO_NAME}
 
 gen-pull-req:
 	cargo run -p diem-genesis-tool --release -- create-repo \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
-  --repo-owner ${REPO_ORG} \
+	--repo-owner ${REPO_ORG} \
 	--repo-name ${REPO_NAME} \
 	--pull-username ${GITHUB_USER}
 
@@ -173,13 +173,14 @@ treasury:
 
 #### GENESIS REGISTRATION ####
 ceremony: gen-fork-repo
-	@echo Initializing from ${DATA_PATH}/0L.toml with account:
-	@echo ${ACC}
-	make init
+	cargo run -p ol -- init --skip-val
 	@echo Creating first tower proof
 	cargo run -p miner -- zero
 
 register:
+	@echo Initializing from ${DATA_PATH}/0L.toml with account:
+	@echo ${ACC}
+	make init
 
 	@echo the OPER initializes local accounts and submit pubkeys to github
 	ACC=${ACC}-oper make oper-key
