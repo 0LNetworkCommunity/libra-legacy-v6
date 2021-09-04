@@ -17,7 +17,6 @@ use std::{
     io::{Read, Write}, 
     net::Ipv4Addr, 
     path::PathBuf, 
-    process::exit, 
     str::FromStr
 };
 
