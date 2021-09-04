@@ -131,7 +131,7 @@ impl Command {
             Command::Init(_) => self.init(),
             Command::Files(_) => self.files().map(|_| "Success!".to_string()),
             Command::Mining(_) => self.mining(),
-            Command::CreateRepo(_) => self.mining(),
+            Command::CreateRepo(_) => self.create_repo(),
 
         }
     }

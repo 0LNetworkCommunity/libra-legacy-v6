@@ -141,6 +141,12 @@ layout:
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
 	--path ./ol/devnet/set_layout_${NODE_ENV}.toml
 
+create-repo:
+	cargo run -p diem-genesis-tool --release -- create-repo \
+	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
+	--repo-name genesis-${ACC}
+
+
 root:
 		cargo run -p diem-genesis-tool --release -- diem-root-key \
 		--validator-backend ${LOCAL} \
