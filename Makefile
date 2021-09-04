@@ -148,13 +148,13 @@ layout:
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
 	--path ./ol/devnet/set_layout_${NODE_ENV}.toml
 
-create-repo:
+gen-fork-repo:
 	cargo run -p diem-genesis-tool --release -- create-repo \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
   --repo-owner ${REPO_ORG} \
 	--repo-name ${REPO_NAME}
 
-pull-repo:
+gen-pull-req:
 	cargo run -p diem-genesis-tool --release -- create-repo \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
   --repo-owner ${REPO_ORG} \
