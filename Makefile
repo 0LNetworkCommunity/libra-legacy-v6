@@ -34,8 +34,11 @@ REPO_NAME = rex-testnet-genesis
 # NODE_ENV = prod
 endif
 
+GITHUB_USER = lpgeiger
+
 # Registration params
-REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
+# REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
+REMOTE = 'backend=github;repository_owner=${GITHUB_USER};repository=${MY_GENESIS_REPO};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
 LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
 
 RELEASE_URL=https://github.com/OLSF/libra/releases/download
@@ -144,7 +147,8 @@ layout:
 create-repo:
 	cargo run -p diem-genesis-tool --release -- create-repo \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
-	--repo-name genesis-${ACC}
+  --repo-owner ${REPO_ORG} \
+	--repo-name ${REPO_NAME}
 
 
 root:

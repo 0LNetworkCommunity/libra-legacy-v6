@@ -21,6 +21,8 @@ pub struct NewRepo {
     #[structopt(flatten)]
     pub backend: SharedBackend,
     #[structopt(long)]
+    pub repo_owner: String,
+    #[structopt(long)]
     pub repo_name: String,
 }
 
@@ -45,7 +47,7 @@ impl NewRepo {
                         .read_token()
                         .expect("could not get github token"),
                 );
-                match github.create_repo(&self.repo_name) {
+                match github.create_repo(&self.repo_owner, &self.repo_name) {
                     Ok(_) => Ok(format!("Created new repo {}", &self.repo_name)),
                     Err(e) => Err(Error::StorageWriteError(
                         "github",

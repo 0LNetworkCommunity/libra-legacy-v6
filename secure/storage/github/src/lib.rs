@@ -244,9 +244,30 @@ impl Client {
     }
 
     ///////// 0L ////////
-    pub fn create_repo(&self, new_repo_name: &str) -> Result<(), Error> {
+    pub fn create_repo(&self, genesis_repo_owner: &str, genesis_repo_name: &str) -> Result<(), Error> {
 
-        let json = json!({ "name":  new_repo_name });
+        // let genesis_repo_owner = "OLSF";
+        // let genesis_repo_name = "experimental_genesis";
+        // let json = json!({ "name":  new_repo_name, "auto_init": true });
+        let json = json!({});
+
+        let api_path = format!("https://api.github.com/repos/{}/{}/forks", genesis_repo_owner, genesis_repo_name);
+        let resp = self
+            .upgrade_request(ureq::post(&api_path))
+            .send_json(json);
+
+        match resp.status() {
+            200 => Ok(()),
+            201 => Ok(()),
+            _ => Err(resp.into()),
+        }
+    }
+
+    ///////// 0L ////////
+    pub fn create_pull(&self, pull_username: &str) -> Result<(), Error> {
+
+        let head = format!("{}:main", pull_username);
+        let json = json!({"head": &head, "base": "main" });
 
         let resp = self
             .upgrade_request(ureq::post("https://api.github.com/user/repos"))
@@ -258,6 +279,7 @@ impl Client {
             _ => Err(resp.into()),
         }
     }
+
 
 
     fn post_url(&self, path: &str) -> String {
