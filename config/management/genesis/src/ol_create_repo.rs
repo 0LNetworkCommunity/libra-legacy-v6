@@ -3,7 +3,6 @@
 
 use diem_github_client::Client;
 use diem_management::{config::ConfigPath, error::Error, secure_backend::SharedBackend};
-use diem_types::chain_id::ChainId;
 use std::process::exit;
 use structopt::StructOpt;
 
