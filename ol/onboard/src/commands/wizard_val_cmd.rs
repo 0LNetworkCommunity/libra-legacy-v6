@@ -165,6 +165,7 @@ impl Runnable for ValWizardCmd {
             &prebuilt_genesis_path,
             &false,
             base_waypoint,
+            None,
         )
         .unwrap();
 

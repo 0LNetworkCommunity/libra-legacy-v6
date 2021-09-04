@@ -160,6 +160,7 @@ impl Runnable for ForkCmd {
             &prebuilt_genesis_path,
             &false,
             base_waypoint,
+            None,
         )
         .unwrap();
 
