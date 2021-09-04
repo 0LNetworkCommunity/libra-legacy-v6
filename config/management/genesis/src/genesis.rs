@@ -42,7 +42,7 @@ impl Genesis {
         ///////// 0L ////////
         // for a decentralized genesis allow the participants to set their own layout file (will not have a central repo providing one).
         // for dev and testnets layouts can be found on genesis repo
-        let layout: Layout = match self.layout_path {
+        let layout: Layout = match &self.layout_path {
           Some(p) => {
             let mut file = File::open(p).expect("could not open layout file");
             let mut layout = String::new();

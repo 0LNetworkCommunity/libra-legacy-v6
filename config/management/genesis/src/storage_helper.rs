@@ -334,11 +334,38 @@ impl StorageHelper {
     }
 
     ///////// 0L  /////////
+    pub fn build_genesis_with_layout(
+        &self,
+        chain_id: ChainId,
+        remote: &str,
+        genesis_path: &PathBuf,
+        layout_path: &PathBuf,
+    ) -> Result<Waypoint, Error> {
+        let args = format!(
+        "
+            diem-genesis-tool
+            create-waypoint
+            --chain-id {chain_id}
+            --shared-backend {remote}
+            --genesis-path {genesis_path}
+            --layout-path {layout_path}
+        ",
+        chain_id = chain_id,
+        remote = remote,
+        genesis_path = genesis_path.to_str().unwrap(),
+        layout_path = layout_path.to_str().unwrap(),
+        );
+
+        let command = Command::from_iter(args.split_whitespace());
+        command.create_waypoint()
+    }    
+
+        ///////// 0L  /////////
     pub fn build_genesis_from_github(
         &self,
         chain_id: ChainId,
         remote: &str,
-        genesis_path: &std::path::PathBuf,
+        genesis_path: &PathBuf,
     ) -> Result<Waypoint, Error> {
         let args = format!(
         "
