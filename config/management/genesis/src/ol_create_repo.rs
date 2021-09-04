@@ -3,12 +3,9 @@
 
 use diem_github_client::Client;
 use diem_management::{config::ConfigPath, error::Error, secure_backend::SharedBackend};
-use diem_types::{
-    chain_id::ChainId,
-};
+use diem_types::chain_id::ChainId;
 use std::process::exit;
 use structopt::StructOpt;
-
 
 /// Note, it is implicitly expected that the storage supports
 /// a namespace but one has not been set.
@@ -24,6 +21,8 @@ pub struct NewRepo {
     pub repo_owner: String,
     #[structopt(long)]
     pub repo_name: String,
+    #[structopt(long)]
+    pub pull_username: Option<String>,
 }
 
 impl NewRepo {
@@ -39,21 +38,32 @@ impl NewRepo {
         match config.shared_backend {
             diem_config::config::SecureBackend::GitHub(config) => {
                 let github = Client::new(
-                    config.repository_owner,
-                    config.repository,
+                    config.repository_owner.clone(),
+                    config.repository.clone(),
                     config.branch.unwrap_or("main".to_string()),
                     config
                         .token
                         .read_token()
                         .expect("could not get github token"),
                 );
-                match github.create_repo(&self.repo_owner, &self.repo_name) {
-                    Ok(_) => Ok(format!("Created new repo {}", &self.repo_name)),
-                    Err(e) => Err(Error::StorageWriteError(
-                        "github",
-                        "repo name",
-                        e.to_string(),
-                    )),
+                if let Some(user) = self.pull_username {
+                    match github.create_pull(&user, &config.repository_owner, &config.repository) {
+                        Ok(_) => Ok("created pull request to genesis repo".to_string()),
+                        Err(e) => Err(Error::StorageWriteError(
+                            "github",
+                            "fork",
+                            e.to_string(),
+                        )),
+                    }
+                } else {
+                    match github.create_repo(&self.repo_owner, &self.repo_name) {
+                        Ok(_) => Ok(format!("Created new repo {}", &self.repo_name)),
+                        Err(e) => Err(Error::StorageWriteError(
+                            "github",
+                            "repo name",
+                            e.to_string(),
+                        )),
+                    }
                 }
             }
             _ => {

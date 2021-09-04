@@ -154,6 +154,12 @@ create-repo:
   --repo-owner ${REPO_ORG} \
 	--repo-name ${REPO_NAME}
 
+pull-repo:
+	cargo run -p diem-genesis-tool --release -- create-repo \
+	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
+  --repo-owner ${REPO_ORG} \
+	--repo-name ${REPO_NAME} \
+	--pull-username ${GITHUB_USER}
 
 root:
 		cargo run -p diem-genesis-tool --release -- diem-root-key \
@@ -167,14 +173,13 @@ treasury:
 
 #### GENESIS REGISTRATION ####
 ceremony:
-		cargo run -p ol -- init --skip-val
-		cargo run -p miner -- zero
-
-register:
-# export ACC=$(shell toml get ${DATA_PATH}/0L.toml profile.account)
 	@echo Initializing from ${DATA_PATH}/0L.toml with account:
 	@echo ${ACC}
 	make init
+	@echo Creating first tower proof
+	cargo run -p miner -- zero
+
+register:
 
 	@echo the OPER initializes local accounts and submit pubkeys to github
 	ACC=${ACC}-oper make oper-key
@@ -192,7 +197,7 @@ init-test:
 	echo ${MNEM} | head -c -1 | cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
 
 init:
-	cargo run -p diem-genesis-tool --release --  init --path=${DATA_PATH} --namespace=${ACC}
+	cargo run -p diem-genesis-tool --release -- init --path=${DATA_PATH} --namespace=${ACC} --skip-val
 # OWNER does this
 # Submits proofs to shared storage
 add-proofs:
