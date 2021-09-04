@@ -37,7 +37,9 @@ pub enum Command {
     #[structopt(about = "Generates the config files for a validator node")]
     Files(crate::ol_node_files::Files),
     #[structopt(about = "Includes proof of work to the validator registrations")]
-    Mining(crate::mining::Mining),    
+    Mining(crate::mining::Mining),
+    #[structopt(about = "Creates own repo for submitting genesis info")]
+    CreateRepo(crate::ol_create_repo::Mining),   
 }
 
 #[derive(Debug, PartialEq)]
@@ -56,7 +58,8 @@ pub enum CommandName {
     //////// 0L ////////
     Init,
     Files,
-    Mining,    
+    Mining,
+    CreateRepo, 
 }
 
 impl From<&Command> for CommandName {
@@ -76,7 +79,8 @@ impl From<&Command> for CommandName {
             //////// 0L ////////
             Command::Init(_) => CommandName::Init,
             Command::Files(_) => CommandName::Files,
-            Command::Mining(_) => CommandName::Mining,            
+            Command::Mining(_) => CommandName::Mining,  
+            Command::CreateRepo(_) => CommandName::CreateRepo,          
         }
     }
 }
@@ -98,7 +102,8 @@ impl std::fmt::Display for CommandName {
             //////// 0L ////////
             CommandName::Init => "init",
             CommandName::Files => "files",
-            CommandName::Mining => "mining",            
+            CommandName::Mining => "mining",
+            CommandName::Mining => "create-repo",
         };
         write!(f, "{}", name)
     }
@@ -125,7 +130,9 @@ impl Command {
             //////// 0L ////////
             Command::Init(_) => self.init(),
             Command::Files(_) => self.files().map(|_| "Success!".to_string()),
-            Command::Mining(_) => self.mining(),            
+            Command::Mining(_) => self.mining(),
+            Command::CreateRepo(_) => self.mining(),
+
         }
     }
 
@@ -186,7 +193,10 @@ impl Command {
     }
     pub fn mining(self) -> Result<String, Error> {
         execute_command!(self, Command::Mining, CommandName::Mining)
-    }    
+    }
+    pub fn create_repo(self) -> Result<String, Error> {
+        execute_command!(self, Command::CreateRepo, CommandName::CreateRepo)
+    }
 }
 
 /// These tests depends on running Vault, which can be done by using the provided docker run script

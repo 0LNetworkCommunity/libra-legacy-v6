@@ -78,7 +78,7 @@ impl Genesis {
         Ok(genesis)
     }
 
-    //////// 0L ////////
+    //////// 0L //////// commented out
     // /// Retrieves the diem root key from the remote storage. Note, at this point in time, genesis
     // /// only supports a single diem root key.
     // pub fn diem_root_key(&self, layout: &Layout) -> Result<Ed25519PublicKey, Error> {
