@@ -10,7 +10,7 @@ use diem_types::{
     chain_id::ChainId,
     transaction::{Transaction, TransactionPayload},
 };
-use std::{fs::File, io::Write, path::PathBuf};
+use std::{fs::File, io::{Read, Write}, path::PathBuf};
 use structopt::StructOpt;
 use vm_genesis::{OperatorAssignment, OperatorRegistration, GenesisMiningProof};
 
@@ -26,6 +26,8 @@ pub struct Genesis {
     pub backend: SharedBackend,
     #[structopt(long)]
     pub path: Option<PathBuf>,
+    #[structopt(long)]
+    pub layout_path: Option<PathBuf>,
 }
 
 impl Genesis {
@@ -37,9 +39,22 @@ impl Genesis {
     }
 
     pub fn execute(self) -> Result<Transaction, Error> {
+        ///////// 0L ////////
+        // for a decentralized genesis allow the participants to set their own layout file (will not have a central repo providing one).
+        // for dev and testnets layouts can be found on genesis repo
+        let layout: Layout = match self.layout_path {
+          Some(p) => {
+            let mut file = File::open(p).expect("could not open layout file");
+            let mut layout = String::new();
+            file.read_to_string(&mut layout).expect("could not read");
+            Layout::parse(&layout)
+            .map_err(|e| Error::UnableToParse(constants::LAYOUT, e.to_string()))?
+          },
+          None => self.layout()?
 
+        };
         //TODO(LG): get layout optionally from own file.
-        let layout = self.layout()?;
+        // let layout = 
         //////// 0L ////////        
         // let diem_root_key = self.diem_root_key(&layout)?;
         // let treasury_compliance_key = self.treasury_compliance_key(&layout)?;
