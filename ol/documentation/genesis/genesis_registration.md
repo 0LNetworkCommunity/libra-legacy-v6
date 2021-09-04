@@ -43,7 +43,6 @@ In the step `miner keygen` below you will be asked for this.
 
 ## 1.  Build project
 
-
 Clone the project onto your machine. Cd into the project directory. Checkout the correct tag. Install all dependencies and compile in one step, with the Makefile helper.
 
 ```
@@ -90,17 +89,33 @@ env: prod
 test mode:
 ```
 
+## 4. Initialize app configs
 
-## 4. Register for genesis
-
-The following script wraps many steps. Including:
-- forking the GENESIS_REPO into the CANDIDATE_REPO
-- creating credentials and configs
-- writing configs the CANDIDATE_REPO
-- submitting a pull request from CANDIDATE_REPO to GENESIS_REPO
+This creates the files your validator needs to run 0L tools. By default files will be created in `$HOME/.0L/`.
 
 ```
-make register
+make app-configs
+```
+
+## 5. Mine your first proof
+
+NOTE: if you already have a puzzle tower, and you are porting it to this chain. Then skip this step, and simply copy the block_0.json into your data path (e.g. ~/.0L/blocks/block_0.json).
+
+```
+make genesis-miner
+```
+This will mine the 0th proof of your tower, which is needed for genesis.
+
+## 6. Register for genesis
+
+The following script does several steps:
+- fork: forking the GENESIS_REPO into the CANDIDATE_REPO
+- keys init: creating credentials and configs
+- register: writing configs the CANDIDATE_REPO
+- pull: submitting a pull request from CANDIDATE_REPO to GENESIS_REPO
+
+```
+make ceremony
 ```
 
 After this step check your data at `http://github.com/0LSF/experimental-genesis`

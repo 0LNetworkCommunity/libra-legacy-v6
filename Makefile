@@ -148,19 +148,6 @@ layout:
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
 	--path ./ol/devnet/set_layout_${NODE_ENV}.toml
 
-gen-fork-repo:
-	cargo run -p diem-genesis-tool --release -- create-repo \
-	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
-	--repo-owner ${REPO_ORG} \
-	--repo-name ${REPO_NAME}
-
-gen-pull-req:
-	cargo run -p diem-genesis-tool --release -- create-repo \
-	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
-	--repo-owner ${REPO_ORG} \
-	--repo-name ${REPO_NAME} \
-	--pull-username ${GITHUB_USER}
-
 root:
 		cargo run -p diem-genesis-tool --release -- diem-root-key \
 		--validator-backend ${LOCAL} \
@@ -172,10 +159,25 @@ treasury:
 		--shared-backend ${REMOTE}
 
 #### GENESIS REGISTRATION ####
-ceremony: gen-fork-repo
-	cargo run -p ol -- init --skip-val
+
+app-configs:
+	@echo creating local account configs
+	cargo run -p ol -- init
+
+genesis-proof:
 	@echo Creating first tower proof
 	cargo run -p miner -- zero
+
+ceremony:
+	@echo forking the genesis coordination repo
+	make gen-fork-repo
+
+	@echo does all the registration steps
+	make register
+
+	@echo submitting pull request to GENESIS_REPO
+	make gen-pull-req
+
 
 register:
 	@echo Initializing from ${DATA_PATH}/0L.toml with account:
@@ -194,8 +196,20 @@ register:
 	@echo OPER send signed transaction with configurations for *OWNER* account
 	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
 
-	@echo submitting pull request to GENESIS_REPO
-	make gen-pull-req
+# Fork the genesis repo into your own github user
+gen-fork-repo:
+	cargo run -p diem-genesis-tool --release -- create-repo \
+	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
+	--repo-owner ${REPO_ORG} \
+	--repo-name ${REPO_NAME}
+
+# submit a pull request of your genesis registration to the coordination github repo.
+gen-pull-req:
+	cargo run -p diem-genesis-tool --release -- create-repo \
+	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
+	--repo-owner ${REPO_ORG} \
+	--repo-name ${REPO_NAME} \
+	--pull-username ${GITHUB_USER}
 
 init-test:
 	echo ${MNEM} | head -c -1 | cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}

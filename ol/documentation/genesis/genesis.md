@@ -19,7 +19,7 @@ Tools are provided to a) fork the GENESIS_REPO b) write registration info ro CAN
 
 The GENESIS_REPO coordinator then has the task of manually approving all PRs.
 
-TOC: 
+Read Next: 
 
-1. [registration](./genesis_registration.md])
-1. [genesis](./genesis_registration.md])
+1. [genesis registration](./genesis_registration.md])
+1. [create genesis block](./genesis_transaction.md])
