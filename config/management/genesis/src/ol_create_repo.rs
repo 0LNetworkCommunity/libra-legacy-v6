@@ -1,45 +1,59 @@
-use diem_management::{config::ConfigPath, error::Error, secure_backend::{ SharedBackend}};
-// use miner::block::Block;
-use std::path::PathBuf;
+// Copyright (c) The Diem Core Contributors
+// SPDX-License-Identifier: Apache-2.0
+
+use crate::layout::Layout;
+use diem_global_constants::{OPERATOR_KEY, OWNER_KEY};
+use diem_management::{config::ConfigPath, constants, error::Error, secure_backend::SharedBackend};
+use diem_transaction_builder::stdlib as transaction_builder;
+use diem_types::{
+    account_address,
+    chain_id::ChainId,
+    transaction::{Transaction, TransactionPayload},
+};
+use std::{fs::File, io::Write, path::PathBuf, process::exit};
 use structopt::StructOpt;
-use serde_json;
+use vm_genesis::{OperatorAssignment, OperatorRegistration, GenesisMiningProof};
+use diem_github_client::Client;
 
+/// Note, it is implicitly expected that the storage supports
+/// a namespace but one has not been set.
 #[derive(Debug, StructOpt)]
-pub struct Mining {
+pub struct NewRepo {
     #[structopt(flatten)]
-    config: ConfigPath,
-    #[structopt(long, short)]
-    pub path_to_genesis_pow: PathBuf,
+    pub config: ConfigPath,
+    #[structopt(long, required_unless("config"))]
+    pub chain_id: Option<ChainId>,
     #[structopt(flatten)]
-    shared_backend: SharedBackend,
+    pub backend: SharedBackend,
+    #[structopt(long)]
+    pub repo_name: String,
 }
 
-impl Mining {
-    pub fn execute(self) -> Result<String, Error> {
-        let config = self
-            .config
+impl NewRepo {
+    fn config(&self) -> Result<diem_management::config::Config, Error> {
+        self.config
             .load()?
-            .override_shared_backend(&self.shared_backend.shared_backend)?;
-
-        
-        let (preimage, proof) = get_genesis_tx_data(&self.path_to_genesis_pow)
-            .map_err(|e| Error::UnexpectedError(e.to_string()))?;
-
-        let mut shared_storage = config.shared_backend();
-        shared_storage.set(diem_global_constants::PROOF_OF_WORK_PREIMAGE, preimage)?;
-        shared_storage.set(diem_global_constants::PROOF_OF_WORK_PROOF, proof)?;
-
-        Ok("Sent Proof".to_string())
+            .override_chain_id(self.chain_id)
+            .override_shared_backend(&self.backend.shared_backend)
     }
+
+    pub fn execute(self) -> Result<String, Error> {
+        let config = self.config()?;
+        match config.shared_backend {
+            diem_config::config::SecureBackend::GitHub(config) => {
+              let github = Client::new(config.repository_owner, config.repository, config.branch.unwrap_or("main".to_string()), config.token.read_token().expect("could not get github token"));
+              match github.create_repo(&self.repo_name) {
+                Ok(_) => Ok(format!("Created new repo {}", &self.repo_name)),
+                Err(e) => Err(Error::StorageWriteError("github", "repo name", e.to_string())),
+            }
+            },
+            _ => {
+              println!("Not a github storage, exiting");
+              exit(1);
+            }
+        }
+
+
+    }
+
 }
-
-pub fn get_genesis_tx_data(path: &std::path::PathBuf) -> Result<(String, String),std::io::Error> {
-        let file = std::fs::File::open(path)?;
-        let reader = std::io::BufReader::new(file);
-        let json: serde_json::Value = serde_json::from_reader(reader).expect("Genesis block should deserialize");
-        let block = json.as_object().unwrap();
-        return Ok((
-            block["preimage"].as_str().unwrap().to_owned(),
-            block["proof"].as_str().unwrap().to_owned()
-        ));
-    }

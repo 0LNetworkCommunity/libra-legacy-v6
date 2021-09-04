@@ -44,6 +44,7 @@ hex = "0.4.2"
 dirs = "2.0.2"
 serde_json = "1"
 ol-fixtures = {path = "../../../ol/fixtures"}
+diem-github-client = { path = "../../../secure/storage/github" }
 
 [dev-dependencies]
 diem-config = { path = "../..", features = ["fuzzing"]}

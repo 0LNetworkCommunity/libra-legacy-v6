@@ -39,7 +39,7 @@ pub enum Command {
     #[structopt(about = "Includes proof of work to the validator registrations")]
     Mining(crate::mining::Mining),
     #[structopt(about = "Creates own repo for submitting genesis info")]
-    CreateRepo(crate::ol_create_repo::Mining),   
+    CreateRepo(crate::ol_create_repo::NewRepo),   
 }
 
 #[derive(Debug, PartialEq)]
@@ -103,7 +103,7 @@ impl std::fmt::Display for CommandName {
             CommandName::Init => "init",
             CommandName::Files => "files",
             CommandName::Mining => "mining",
-            CommandName::Mining => "create-repo",
+            CommandName::CreateRepo => "create-repo",
         };
         write!(f, "{}", name)
     }

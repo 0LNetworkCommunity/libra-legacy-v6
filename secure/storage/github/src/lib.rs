@@ -244,19 +244,12 @@ impl Client {
     }
 
     ///////// 0L ////////
-    pub fn create_repo(&self, path: &str, content: &str) -> Result<(), Error> {
-        let json = match self.get_sha(path) {
-            Ok(hash) => {
-                json!({ "branch": self.branch.to_string(), "content": content, "message": format!("[diem-management] {}", path), "sha": hash })
-            }
-            Err(Error::NotFound(_)) => {
-                json!({ "branch": self.branch.to_string(), "content": content, "message": format!("[diem-management] {}", path) })
-            }
-            Err(e) => return Err(e),
-        };
+    pub fn create_repo(&self, new_repo_name: &str) -> Result<(), Error> {
+
+        let json = json!({ "name":  new_repo_name });
 
         let resp = self
-            .upgrade_request(ureq::put(&self.post_url(path)))
+            .upgrade_request(ureq::post("https://api.github.com/user/repos"))
             .send_json(json);
 
         match resp.status() {
