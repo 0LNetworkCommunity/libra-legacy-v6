@@ -246,9 +246,6 @@ impl Client {
     ///////// 0L ////////
     pub fn create_repo(&self, genesis_repo_owner: &str, genesis_repo_name: &str) -> Result<(), Error> {
 
-        // let genesis_repo_owner = "OLSF";
-        // let genesis_repo_name = "experimental_genesis";
-        // let json = json!({ "name":  new_repo_name, "auto_init": true });
         let json = json!({});
 
         let api_path = format!("https://api.github.com/repos/{}/{}/forks", genesis_repo_owner, genesis_repo_name);
@@ -259,6 +256,7 @@ impl Client {
         match resp.status() {
             200 => Ok(()),
             201 => Ok(()),
+            202 => Ok(()),
             _ => Err(resp.into()),
         }
     }

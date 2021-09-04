@@ -26,20 +26,24 @@ IP=$(shell toml get ${DATA_PATH}/0L.toml profile.ip)
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
 REPO_ORG = OLSF
 
-ifeq (${TEST}, y)
-REPO_NAME = dev-genesis
-MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
-else
-REPO_NAME = rex-testnet-genesis
-# NODE_ENV = prod
-endif
+
 
 GITHUB_USER = lpgeiger
 
 # Registration params
-# REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
-REMOTE = 'backend=github;repository_owner=${GITHUB_USER};repository=${MY_GENESIS_REPO};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
+REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
+
 LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
+
+ifeq (${TEST}, y)
+REPO_NAME = dev-genesis
+MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
+REGISTER_REMOTE = REMOTE
+else
+REPO_NAME = rex-testnet-genesis
+REGISTER_REMOTE = 'backend=github;repository_owner=${GITHUB_USER};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
+# NODE_ENV = prod
+endif
 
 RELEASE_URL=https://github.com/OLSF/libra/releases/download
 
@@ -194,28 +198,28 @@ init:
 add-proofs:
 	cargo run -p diem-genesis-tool --release --  mining \
 	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
-	--shared-backend ${REMOTE}
+	--shared-backend ${REGISTER_REMOTE}
 
 # OPER does this
 # Submits operator key to github, and creates local OPERATOR_ACCOUNT
 oper-key:
 	cargo run -p diem-genesis-tool --release --  operator-key \
 	--validator-backend ${LOCAL} \
-	--shared-backend ${REMOTE}
+	--shared-backend ${REGISTER_REMOTE}
 
 # OWNER does this
 # Submits operator key to github, does *NOT* create the OWNER_ACCOUNT locally
 owner-key:
 	cargo run -p diem-genesis-tool --release --  owner-key \
 	--validator-backend ${LOCAL} \
-	--shared-backend ${REMOTE}
+	--shared-backend ${REGISTER_REMOTE}
 
 # OWNER does this
 # Links to an operator on github, creates the OWNER_ACCOUNT locally
 assign: 
 	cargo run -p diem-genesis-tool --release --  set-operator \
 	--operator-name ${OPER} \
-	--shared-backend ${REMOTE}
+	--shared-backend ${REGISTER_REMOTE}
 
 # OPER does this
 # Submits signed validator registration transaction to github.
@@ -226,7 +230,7 @@ reg:
 	--validator-address "/ip4/${IP}/tcp/6180" \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
 	--validator-backend ${LOCAL} \
-	--shared-backend ${REMOTE}
+	--shared-backend ${REGISTER_REMOTE}
 	
 
 # Helpers to verify the local state.
