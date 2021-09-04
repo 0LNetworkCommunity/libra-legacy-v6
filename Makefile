@@ -179,7 +179,7 @@ ceremony:
 	@echo Creating first tower proof
 	cargo run -p miner -- zero
 
-register:
+register: gen-fork-repo
 
 	@echo the OPER initializes local accounts and submit pubkeys to github
 	ACC=${ACC}-oper make oper-key
@@ -192,6 +192,9 @@ register:
 
 	@echo OPER send signed transaction with configurations for *OWNER* account
 	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
+
+	@echo submitting pull request to GENESIS_REPO
+	make gen-pull-req
 
 init-test:
 	echo ${MNEM} | head -c -1 | cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
@@ -251,12 +254,6 @@ verify-gen:
 
 
 #### GENESIS  ####
-# build-gen:
-# 	cargo run -p diem-genesis-tool --release -- genesis \
-# 	--chain-id ${CHAIN_ID} \
-# 	--shared-backend ${REMOTE} \
-# 	--path ${DATA_PATH}/genesis.blob
-
 genesis:
 	cargo run -p diem-genesis-tool --release -- files \
 	--chain-id ${CHAIN_ID} \
@@ -264,8 +261,17 @@ genesis:
 	--data-path ${DATA_PATH} \
 	--namespace ${ACC}-oper \
 	--repo ${REPO_NAME} \
-	--github-org ${REPO_ORG}
+	--github-org ${REPO_ORG} \
+	--layout-path ${DATA_PATH}/set_layout.toml
 
+genesis-github:
+	cargo run -p diem-genesis-tool --release -- files \
+	--chain-id ${CHAIN_ID} \
+	--validator-backend ${LOCAL} \
+	--data-path ${DATA_PATH} \
+	--namespace ${ACC}-oper \
+	--repo ${REPO_NAME} \
+	--github-org ${REPO_ORG}
 
 #### NODE MANAGEMENT ####
 start:
@@ -382,15 +388,8 @@ client: set-waypoint
 	cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}
 # endif
 
-
-
 keygen:
 	cd ${DATA_PATH} && miner keygen
-
-# miner-genesis:
-# 	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner genesis
-
-# reset: stop clear fixtures init keys  daemon
 
 remove-keys:
 	make stop
@@ -438,7 +437,7 @@ dev-wizard:
 # Do the ceremony: and also save the genesis fixtures, needs to happen before fix.
 dev-register: clear fix register
 # Do a dev genesis on each node after EVERY NODE COMPLETED registration.
-dev-genesis: genesis dev-save-genesis fix-genesis
+dev-genesis: genesis-github dev-save-genesis fix-genesis
 
 #### DEVNET INFRA ####
 # To make reproducible devnet files.
