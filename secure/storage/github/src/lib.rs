@@ -265,8 +265,10 @@ impl Client {
     pub fn create_pull(&self, genesis_repo_owner: &str, genesis_repo_name: &str, pull_username: &str) -> Result<(), Error> {
 
         let head = format!("{}:master", pull_username);
-        let json = json!({"head": &head, "base": "master" });
+        let json = json!({"head": &head, "base": "master", "title": pull_username});
         let api_path = format!("https://api.github.com/repos/{}/{}/pulls", genesis_repo_owner, genesis_repo_name);
+
+        dbg!(&api_path);
 
         let resp = self
             .upgrade_request(ureq::post(&api_path))

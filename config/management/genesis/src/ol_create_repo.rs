@@ -47,7 +47,7 @@ impl NewRepo {
                         .expect("could not get github token"),
                 );
                 if let Some(user) = self.pull_username {
-                    match github.create_pull(&user, &config.repository_owner, &config.repository) {
+                    match github.create_pull(&config.repository_owner, &config.repository, &user) {
                         Ok(_) => Ok("created pull request to genesis repo".to_string()),
                         Err(e) => Err(Error::StorageWriteError(
                             "github",
