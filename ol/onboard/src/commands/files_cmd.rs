@@ -65,7 +65,7 @@ pub fn genesis_files(
         prebuilt_genesis,
         fullnode_only,
         way_opt,
-        None,
+        &None,
     ).unwrap();
 
     println!("validator configurations initialized, file saved to: {:?}", 

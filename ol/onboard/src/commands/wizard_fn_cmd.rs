@@ -66,7 +66,7 @@ impl Runnable for FnWizardCmd {
             &self.prebuilt_genesis,
             &true,
             self.waypoint,
-            None,
+            &None,
         ).unwrap();
         status_ok!("\nNode config OK", "\n...........................\n");
     }
