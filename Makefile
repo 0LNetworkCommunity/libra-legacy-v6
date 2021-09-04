@@ -38,7 +38,7 @@ LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
 ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
 MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
-REGISTER_REMOTE = REMOTE
+REGISTER_REMOTE = ${REMOTE}
 else
 REPO_NAME = rex-testnet-genesis
 REGISTER_REMOTE = 'backend=github;repository_owner=${GITHUB_USER};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
@@ -172,14 +172,14 @@ treasury:
 		--shared-backend ${REMOTE}
 
 #### GENESIS REGISTRATION ####
-ceremony:
+ceremony: gen-fork-repo
 	@echo Initializing from ${DATA_PATH}/0L.toml with account:
 	@echo ${ACC}
 	make init
 	@echo Creating first tower proof
 	cargo run -p miner -- zero
 
-register: gen-fork-repo
+register:
 
 	@echo the OPER initializes local accounts and submit pubkeys to github
 	ACC=${ACC}-oper make oper-key
@@ -200,7 +200,7 @@ init-test:
 	echo ${MNEM} | head -c -1 | cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
 
 init:
-	cargo run -p diem-genesis-tool --release -- init --path=${DATA_PATH} --namespace=${ACC} --skip-val
+	cargo run -p diem-genesis-tool --release -- init --path=${DATA_PATH} --namespace=${ACC}
 # OWNER does this
 # Submits proofs to shared storage
 add-proofs:
