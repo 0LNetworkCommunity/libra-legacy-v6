@@ -109,7 +109,7 @@ impl WalletLibrary {
     }
 
     /// Function that generates a new key and adds it to the addr_map and subsequently returns the
-    /// AuthenticationKey associated to the PrivateKey, along with it's ChildNumber
+    /// AuthenticationKey associated to the PrivateKey, along with its ChildNumber
     pub fn new_address(&mut self) -> Result<(AuthenticationKey, ChildNumber)> {
         let child = self.key_factory.private_child(self.key_leaf)?;
         let authentication_key = child.get_authentication_key();

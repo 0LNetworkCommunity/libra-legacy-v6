@@ -27,6 +27,8 @@ module Reconfigure {
     use 0x1::DiemConfig;
     use 0x1::Audit;
     use 0x1::DiemAccount;
+    use 0x1::Burn;
+    // use 0x1::Debug::print;
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
@@ -114,19 +116,36 @@ module Reconfigure {
         let top_accounts = NodeWeight::top_n_accounts(vm, Globals::get_max_validator_per_epoch());
 
         let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
+
+        Burn::reset_ratios(vm);
+        // // let incoming_count = Vector::length<address>(&top_accounts) - Vector::length<address>(&jailed_set);
+        // // let burn_value = Subsidy::subsidy_curve(
+        // //   Globals::get_subsidy_ceiling_gas(),
+        // //   incoming_count,
+        // //   Globals::get_max_node_density()
+        // // )/4;
+        let burn_value = 1000000; // TODO: switch to a variable cost, as above.
+
 // print(&03250);
 
         let i = 0;
         while (i < Vector::length<address>(&top_accounts)) {
+// print(&03251);
+
             let addr = *Vector::borrow(&top_accounts, i);
             let mined_last_epoch = MinerState::node_above_thresh(vm, addr);
+            // print(&mined_last_epoch);
             // TODO: temporary until jail-refactor merge.
             if (
               (!Vector::contains(&jailed_set, &addr)) && 
-              mined_last_epoch && 
+              mined_last_epoch &&
               Audit::val_audit_passing(addr)
             ) {
+// print(&03252);
+
                 Vector::push_back(&mut proposed_set, addr);
+                Burn::epoch_start_burn(vm, addr, burn_value);
+
             };
             i = i+ 1;
         };
