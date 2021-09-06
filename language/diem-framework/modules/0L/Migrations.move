@@ -36,7 +36,7 @@ module Migrations {
   /// initialize the Migrations structure
   public fun init(vm: &signer){
     CoreAddresses::assert_diem_root(vm);
-    if (!exists<Migrations>(0x0)) {
+    if (!exists<Migrations>(@0x0)) {
       move_to<Migrations>(vm, Migrations {
         list: Vector::empty<Job>(),
       })
@@ -61,7 +61,7 @@ module Migrations {
   public fun push(vm: &signer, uid: u64, text: vector<u8>) acquires Migrations {   
     CoreAddresses::assert_diem_root(vm);
     if (has_run(uid)) return;
-    let s = borrow_global_mut<Migrations>(0x0);
+    let s = borrow_global_mut<Migrations>(@0x0);
     let j = Job {
       uid: uid,
       name: text,
@@ -73,7 +73,7 @@ module Migrations {
   /// Searches for a job within the Migrations list, returns `some` if 
   /// is found, returns `none` otherwise
   fun find(uid: u64): Option<Job> acquires Migrations {
-    let job_list = &borrow_global<Migrations>(0x0).list;
+    let job_list = &borrow_global<Migrations>(@0x0).list;
     let len = Vector::length(job_list);
     let i = 0;
     while (i < len) {
