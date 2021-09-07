@@ -157,7 +157,10 @@ address 0x1 {
         let subsidy_granted = distribute_onboarding_subsidy(vm_sig, node_address);
         //Confirm the calculations, and that the ending balance is incremented accordingly.
 
-        assert(DiemAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, Errors::invalid_argument(190104));
+        assert(
+          DiemAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, 
+          Errors::invalid_argument(190104)
+        );
 
         i = i + 1;
       };
@@ -169,13 +172,15 @@ address 0x1 {
       outgoing_set: &vector<address>,
       _fee_ratio: &vector<FixedPoint32>,
     ){
-      assert(Signer::address_of(vm) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190105));
+      assert(
+        Signer::address_of(vm) == CoreAddresses::DIEM_ROOT_ADDRESS(), 
+        Errors::requires_role(190105)
+      );
+
       let capability_token = DiemAccount::extract_withdraw_capability(vm);
-
       let len = Vector::length<address>(outgoing_set);
-
       let bal = TransactionFee::get_amount_to_distribute(vm);
-    // leave fees in tx_fee if there isn't at least 1 gas coin per validator.
+      // leave fees in tx_fee if there isn't at least 1 gas coin per validator.
       if (bal < len) {
         DiemAccount::restore_withdraw_capability(capability_token);
         return
@@ -214,10 +219,12 @@ address 0x1 {
       let genesis_validators = DiemSystem::get_val_set_addr();
       let validator_count = Vector::length(&genesis_validators);
       if (validator_count < 10) validator_count = 10;
-      // baseline_cap: baseline units per epoch times the mininmum as used in tx, times minimum gas per unit.
+      // baseline_cap: baseline units per epoch times the mininmum as used in tx, 
+      // times minimum gas per unit.
 
       let ceiling = baseline_auction_units() * BASELINE_TX_COST * validator_count;
 
+      // Todo: Move these asserts to fn beginning?
       Roles::assert_diem_root(vm);
       assert(!exists<FullnodeSubsidy>(Signer::address_of(vm)), Errors::not_published(190106));
       move_to<FullnodeSubsidy>(vm, FullnodeSubsidy{
@@ -234,7 +241,8 @@ address 0x1 {
       vm: &signer,
       miner: address
     ):u64 acquires FullnodeSubsidy {
-      // Bootstrap gas if it's the first payment to a prospective validator. Check no fullnode payments have been made, and is in validator universe. 
+      // Bootstrap gas if it's the first payment to a prospective validator. 
+      // Check no fullnode payments have been made, and is in validator universe. 
       CoreAddresses::assert_diem_root(vm);
 
       FullnodeState::is_onboarding(miner);
@@ -258,21 +266,22 @@ address 0x1 {
     }
 
 
-    public fun distribute_fullnode_subsidy(vm: &signer, miner: address, count: u64):u64 acquires FullnodeSubsidy{
+    public fun distribute_fullnode_subsidy(
+      vm: &signer, miner: address, count: u64
+    ):u64 acquires FullnodeSubsidy{
       CoreAddresses::assert_diem_root(vm);
       // Payment is only for fullnodes, ie. not in current validator set.
       if (DiemSystem::is_validator(miner)) return 0;
 
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
-      let subsidy;
-
       // fail fast, abort if ceiling was met
       if (state.current_subsidy_distributed > state.current_cap) return 0;
 
       let proposed_subsidy = state.current_proof_price * count;
-
       if (proposed_subsidy == 0) return 0;
+
       // check if payments will exceed ceiling.
+      let subsidy;
       if (state.current_subsidy_distributed + proposed_subsidy > state.current_cap) {
         // pay the remainder only
         // TODO: This creates a race. Check ordering of list.
@@ -303,7 +312,7 @@ address 0x1 {
       // update values for the proof auction.
       auctioneer(vm);
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
-       // save 
+      // save 
       state.previous_epoch_proofs = state.current_proofs_verified;
       // reset counters
       state.current_subsidy_distributed = 0u64;
@@ -323,7 +332,6 @@ address 0x1 {
     }
 
     fun auctioneer(vm: &signer) acquires FullnodeSubsidy {
-
       Roles::assert_diem_root(vm);
 
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
@@ -332,7 +340,6 @@ address 0x1 {
       let baseline_auction_units = baseline_auction_units(); 
       // The max subsidy that can be paid out in the next epoch.
       let ceiling = fullnode_subsidy_ceiling(vm);
-
 
       // Failure case
       if (ceiling < 1) ceiling = 1;
@@ -346,7 +353,6 @@ address 0x1 {
       state.current_cap = ceiling;
     }
 
-    
     public fun calc_auction(
       ceiling: u64,
       baseline_auction_units: u64,
@@ -407,7 +413,8 @@ address 0x1 {
       subsidy_value
     }
 
-    // Operators may run out of balance to submit txs for the Validator. This is true for mining, where the operator receives no network subsidy.
+    // Operators may run out of balance to submit txs for the Validator. 
+    // This is true for mining, where the operator receives no network subsidy.
     fun refund_operator_tx_fees(vm: &signer, miner_addr: address) {
         // get operator for validator
         let oper_addr = ValidatorConfig::get_operator(miner_addr);
@@ -437,7 +444,6 @@ address 0x1 {
           );
         };
     }
-
 
     //////// TEST HELPERS ///////
     public fun test_set_fullnode_fixtures(
