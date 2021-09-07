@@ -4059,7 +4059,8 @@ Helper to return the u64 value of the <code>balance</code> for <code>account</co
 ## Function `balance`
 
 Return the current balance of the account at <code>addr</code>.
-0L change, return zero if it doesn't hold balance. In case the VM calls this on a bad account it won't halt
+0L change, return zero if it doesn't hold balance. In case the VM calls
+this on a bad account it won't halt
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;Token: store&gt;(addr: address): u64

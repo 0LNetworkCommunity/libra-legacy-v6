@@ -2042,7 +2042,8 @@ module DiemAccount {
     
     //////// 0L //////// 
     /// Return the current balance of the account at `addr`.
-    /// 0L change, return zero if it doesn't hold balance. In case the VM calls this on a bad account it won't halt
+    /// 0L change, return zero if it doesn't hold balance. In case the VM calls 
+    /// this on a bad account it won't halt
     public fun balance<Token: store>(addr: address): u64 acquires Balance {
         // if (!exists<Balance<Token>>(addr)) { return 0 };
         assert(exists<Balance<Token>>(addr), Errors::not_published(EPAYER_DOESNT_HOLD_CURRENCY));
