@@ -11,15 +11,12 @@
 -  [Function `init_list`](#0x1_MinerState_init_list)
 -  [Function `is_init`](#0x1_MinerState_is_init)
 -  [Function `create_proof_blob`](#0x1_MinerState_create_proof_blob)
--  [Function `add_self_list`](#0x1_MinerState_add_self_list)
 -  [Function `increment_miners_list`](#0x1_MinerState_increment_miners_list)
--  [Function `genesis_helper`](#0x1_MinerState_genesis_helper)
 -  [Function `commit_state`](#0x1_MinerState_commit_state)
 -  [Function `commit_state_by_operator`](#0x1_MinerState_commit_state_by_operator)
 -  [Function `verify_and_update_state`](#0x1_MinerState_verify_and_update_state)
 -  [Function `update_metrics`](#0x1_MinerState_update_metrics)
 -  [Function `node_above_thresh`](#0x1_MinerState_node_above_thresh)
--  [Function `get_validator_weight`](#0x1_MinerState_get_validator_weight)
 -  [Function `reconfig`](#0x1_MinerState_reconfig)
 -  [Function `init_miner_state`](#0x1_MinerState_init_miner_state)
 -  [Function `first_challenge_includes_address`](#0x1_MinerState_first_challenge_includes_address)
@@ -50,7 +47,6 @@
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Hash.md#0x1_Hash">0x1::Hash</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="Testnet.md#0x1_StagingNet">0x1::StagingNet</a>;
-<b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="VDF.md#0x1_VDF">0x1::VDF</a>;
 <b>use</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig">0x1::ValidatorConfig</a>;
@@ -271,31 +267,6 @@
 
 </details>
 
-<a name="0x1_MinerState_add_self_list"></a>
-
-## Function `add_self_list`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_add_self_list">add_self_list</a>(sender: &signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_add_self_list">add_self_list</a>(sender: &signer) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a> {
-  <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
-  <a href="MinerState.md#0x1_MinerState_increment_miners_list">increment_miners_list</a>(addr);
-}
-</code></pre>
-
-
-
-</details>
-
 <a name="0x1_MinerState_increment_miners_list"></a>
 
 ## Function `increment_miners_list`
@@ -325,44 +296,6 @@
 
 </details>
 
-<a name="0x1_MinerState_genesis_helper"></a>
-
-## Function `genesis_helper`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_genesis_helper">genesis_helper</a>(vm_sig: &signer, miner_sig: &signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_genesis_helper">genesis_helper</a> (
-  vm_sig: &signer,
-  miner_sig: &signer,
-  challenge: vector&lt;u8&gt;,
-  solution: vector&lt;u8&gt;
-) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>, <a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a> {
-  // In rustland the vm_genesis creates a <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a> for the miner. So the SENDER is not the same and the <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a>.
-
-  //TODO: Previously in OLv3 is_genesis() returned <b>true</b>. How <b>to</b> check that this is part of genesis? is_genesis returns <b>false</b> here.
-  // <b>assert</b>(<a href="DiemTimestamp.md#0x1_DiemTimestamp_is_genesis">DiemTimestamp::is_genesis</a>(), 130101024010);
-  <a href="MinerState.md#0x1_MinerState_init_miner_state">init_miner_state</a>(miner_sig, &challenge, &solution);
-
-  // TODO: Move this elsewhere?
-  // Initialize stats for first validator set from rust genesis.
-  <b>let</b> node_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig);
-  <a href="Stats.md#0x1_Stats_init_address">Stats::init_address</a>(vm_sig, node_addr);
-}
-</code></pre>
-
-
-
-</details>
-
 <a name="0x1_MinerState_commit_state"></a>
 
 ## Function `commit_state`
@@ -383,7 +316,8 @@
   proof: <a href="MinerState.md#0x1_MinerState_Proof">Proof</a>
 ) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>, <a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a> {
 
-  //NOTE: Does not check that the Sender is the <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a>. Which we must skip for the onboarding transaction.
+  // NOTE: Does not check that the Sender is the <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a>. Which we must skip
+  // for the onboarding transaction.
 
   // Get address, assumes the sender is the signer.
   <b>let</b> miner_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sign);
@@ -446,7 +380,8 @@
   <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);
 
   // TODO: The operator mining needs its own <b>struct</b> <b>to</b> count mining.
-  // For now it is implicit there is only 1 operator per validator, and that the fullnode state is the place <b>to</b> count.
+  // For now it is implicit there is only 1 operator per validator,
+  // and that the fullnode state is the place <b>to</b> count.
   // This will require a breaking change <b>to</b> <a href="MinerState.md#0x1_MinerState">MinerState</a>
   // FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
 }
@@ -534,7 +469,6 @@
   // Miner may not have been initialized. Simply <b>return</b> in this case (don't <b>abort</b>)
   <b>if</b>(!<a href="MinerState.md#0x1_MinerState_is_init">is_init</a>(miner_addr)) { <b>return</b> };
 
-
   // Check that there was mining and validating in period.
   // Account may not have any proofs submitted in epoch, since the <b>resource</b> was last emptied.
   <b>let</b> passed = <a href="MinerState.md#0x1_MinerState_node_above_thresh">node_above_thresh</a>(account, miner_addr);
@@ -544,12 +478,12 @@
   <b>if</b> (passed) {
       <b>let</b> this_epoch = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
       miner_history.latest_epoch_mining = this_epoch;
-
-      miner_history.epochs_validating_and_mining = miner_history.epochs_validating_and_mining + 1u64;
-
-      miner_history.contiguous_epochs_validating_and_mining = miner_history.contiguous_epochs_validating_and_mining + 1u64;
-
-      miner_history.epochs_since_last_account_creation = miner_history.epochs_since_last_account_creation + 1u64;
+      miner_history.epochs_validating_and_mining
+        = miner_history.epochs_validating_and_mining + 1u64;
+      miner_history.contiguous_epochs_validating_and_mining
+        = miner_history.contiguous_epochs_validating_and_mining + 1u64;
+      miner_history.epochs_since_last_account_creation
+        = miner_history.epochs_since_last_account_creation + 1u64;
   } <b>else</b> {
     // didn't meet the threshold, reset this count
     miner_history.contiguous_epochs_validating_and_mining = 0;
@@ -580,46 +514,8 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_node_above_thresh">node_above_thresh</a>(_account: &signer, miner_addr: address): bool <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
-  <b>let</b> miner_history= borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr);
+  <b>let</b> miner_history = borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr);
   miner_history.count_proofs_in_epoch &gt; <a href="Globals.md#0x1_Globals_get_mining_threshold">Globals::get_mining_threshold</a>()
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_MinerState_get_validator_weight"></a>
-
-## Function `get_validator_weight`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_get_validator_weight">get_validator_weight</a>(account: &signer, miner_addr: address): u64
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_get_validator_weight">get_validator_weight</a>(account: &signer, miner_addr: address): u64 <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
-  <b>let</b> sender = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
-  <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(130105));
-
-  // Miner may not have been initialized. (don't <b>abort</b>, just <b>return</b> 0)
-  <b>if</b>( !<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr)){
-    <b>return</b> 0
-  };
-
-  // Update the statistics.
-  <b>let</b> miner_history= borrow_global_mut&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr);
-  <b>let</b> this_epoch = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
-  miner_history.latest_epoch_mining = this_epoch;
-
-  // Return its weight
-  miner_history.epochs_validating_and_mining
 }
 </code></pre>
 
@@ -673,7 +569,7 @@
       i = i + 1;
   };
 
-  //reset miner list
+  // reset miner list
   minerlist_state.list = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
 
 }
@@ -702,7 +598,10 @@
 
   // NOTE Only <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a> can <b>update</b> own state.
   // Should only happen once.
-  <b>assert</b>(!<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig)), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(130107));
+  <b>assert</b>(
+    !<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig)),
+    <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(130107)
+  );
   // <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> calls this.
   // Exception is <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> which can simulate a <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a>.
   // Initialize <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> object and give <b>to</b> miner account
@@ -750,8 +649,8 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_first_challenge_includes_address">first_challenge_includes_address</a>(new_account_address: address, challenge: &vector&lt;u8&gt;) {
   // Checks that the preimage/challenge of the FIRST <a href="VDF.md#0x1_VDF">VDF</a> proof blob contains a given address.
-  // This is <b>to</b> ensure that the same proof is not sent repeatedly, since all the minerstate is on a
-  // the address of a miner.
+  // This is <b>to</b> ensure that the same proof is not sent repeatedly, since
+  // all the minerstate is on the address of a miner.
   // Note: The bytes of the miner challenge is <b>as</b> follows:
   //         32 // 0L Key
   //         +64 // chain_id
@@ -1016,7 +915,8 @@ Public Getters ///
   <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);
 
   // TODO: The operator mining needs its own <b>struct</b> <b>to</b> count mining.
-  // For now it is implicit there is only 1 operator per validator, and that the fullnode state is the place <b>to</b> count.
+  // For now it is implicit there is only 1 operator per validator, and
+  // that the fullnode state is the place <b>to</b> count.
   // This will require a breaking change <b>to</b> <a href="MinerState.md#0x1_MinerState">MinerState</a>
   // FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
 }
@@ -1069,7 +969,10 @@ Public Getters ///
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_mock_mining_vm">test_helper_mock_mining_vm</a>(vm: &signer, addr: address, count: u64) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
-  <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(130113));
+  <b>assert</b>(
+    <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(),
+    <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(130113)
+  );
 
   <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130113));
   <b>let</b> state = borrow_global_mut&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(addr);
