@@ -111,7 +111,7 @@ module MigrateWallets {
       let i = 0;
       while (i < len) {
         let addr = *Vector::borrow<address>(&vec_addr, i);
-        DiemAccount::vm_set_slow_wallet(vm, addr);
+        DiemAccount::vm_migrate_slow_wallet(vm, addr);
         i = i + 1;
       };
       Migrations::push(vm, UID, b"MigrateWallets");
