@@ -13,6 +13,7 @@ ifndef SOURCE_PATH
 SOURCE_PATH = ${HOME}/libra
 endif
 
+HASH := $(shell sha256sum -z ${SOURCE_PATH}/language/stdlib/staged/stdlib.mv | cut -d " " -f 1)
 STDLIB_BIN = ${SOURCE_PATH}/language/diem-framework/staged/stdlib.mv
 
 # alice
@@ -61,6 +62,7 @@ get-test:
 stdlib:
 	cd ${SOURCE_PATH} && cargo run --release -p diem-framework
 	cd ${SOURCE_PATH} && cargo run --release -p diem-framework -- --create-upgrade-payload
+	sha256sum ${SOURCE_PATH}/language/stdlib/staged/stdlib.mv
 
 
 init:
@@ -69,6 +71,10 @@ init:
 
 submit:
 	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-upgrade -f ${STDLIB_BIN}
+
+submit-hash:
+	echo ${HASH}
+	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-upgrade-hash -h ${HASH}
 
 query:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --blockheight | grep -Eo [0-9]+ | tail -n1
@@ -88,6 +94,7 @@ START_TEXT = "To run the Diem CLI client"
 UPGRADE_TEXT = "stdlib upgrade: published"
 
 upgrade: 
+# Note, in order to have bob vote with hash, change 'submit' in his command to 'submit-hash', will only work if PREV_VERSION also has the submit-hash command
 	@while [[ ${NOW} -le ${END} ]] ; do \
 			if grep -q ${START_TEXT} ${LOG} ; then \
 				make -f ${SAFE_MAKE_FILE} get-test stdlib ; \
