@@ -14,7 +14,6 @@ address 0x1 {
     use 0x1::DiemConfig;
     use 0x1::Signer;
     use 0x1::StagingNet;
-    use 0x1::Stats;
     use 0x1::Testnet;
     use 0x1::ValidatorConfig;
     use 0x1::VDF;
@@ -52,6 +51,7 @@ address 0x1 {
     public fun is_init(addr: address):bool {
       exists<MinerProofHistory>(addr)
     }
+
     // Creates proof blob object from input parameters
     // Permissions: PUBLIC, ANYONE can call this function.
     public fun create_proof_blob(
@@ -66,10 +66,12 @@ address 0x1 {
       }
     }
 
-    public fun add_self_list(sender: &signer) acquires MinerList {
-      let addr = Signer::address_of(sender);
-      increment_miners_list(addr);
-    }
+    // Unused
+    // public fun add_self_list(sender: &signer) acquires MinerList {
+    //   let addr = Signer::address_of(sender);
+    //   increment_miners_list(addr);
+    // }
+
     // Private, can only be called within module
     fun increment_miners_list(miner: address) acquires MinerList {
       if (exists<MinerList>(@0x0)) {
@@ -79,25 +81,27 @@ address 0x1 {
         }
       }
     }
-    // Helper function for genesis to process genesis proofs.
-    // Permissions: PUBLIC, ONLY VM, AT GENESIS.
-    public fun genesis_helper (
-      vm_sig: &signer,
-      miner_sig: &signer,
-      challenge: vector<u8>,
-      solution: vector<u8>
-    ) acquires MinerProofHistory, MinerList {
-      // In rustland the vm_genesis creates a Signer for the miner. So the SENDER is not the same and the Signer.
 
-      //TODO: Previously in OLv3 is_genesis() returned true. How to check that this is part of genesis? is_genesis returns false here.
-      // assert(DiemTimestamp::is_genesis(), 130101024010);
-      init_miner_state(miner_sig, &challenge, &solution);
+    // Unused
+    // // Helper function for genesis to process genesis proofs.
+    // // Permissions: PUBLIC, ONLY VM, AT GENESIS.
+    // public fun genesis_helper (
+    //   vm_sig: &signer,
+    //   miner_sig: &signer,
+    //   challenge: vector<u8>,
+    //   solution: vector<u8>
+    // ) acquires MinerProofHistory, MinerList {
+    //   // In rustland the vm_genesis creates a Signer for the miner. So the SENDER is not the same and the Signer.
 
-      // TODO: Move this elsewhere? 
-      // Initialize stats for first validator set from rust genesis. 
-      let node_addr = Signer::address_of(miner_sig);
-      Stats::init_address(vm_sig, node_addr);
-    }
+    //   //TODO: Previously in OLv3 is_genesis() returned true. How to check that this is part of genesis? is_genesis returns false here.
+    //   // assert(DiemTimestamp::is_genesis(), 130101024010);
+    //   init_miner_state(miner_sig, &challenge, &solution);
+
+    //   // TODO: Move this elsewhere? 
+    //   // Initialize stats for first validator set from rust genesis. 
+    //   let node_addr = Signer::address_of(miner_sig);
+    //   Stats::init_address(vm_sig, node_addr);
+    // }
 
   //   // Function index: 03
   //   // Permissions: PUBLIC, SIGNER, TEST ONLY
@@ -139,7 +143,8 @@ address 0x1 {
       proof: Proof
     ) acquires MinerProofHistory, MinerList {
 
-      //NOTE: Does not check that the Sender is the Signer. Which we must skip for the onboarding transaction.
+      // NOTE: Does not check that the Sender is the Signer. Which we must skip 
+      // for the onboarding transaction.
 
       // Get address, assumes the sender is the signer.
       let miner_addr = Signer::address_of(miner_sign);
@@ -158,7 +163,8 @@ address 0x1 {
       verify_and_update_state(miner_addr, proof, true);
     }
 
-    // This function is called by the OPERATOR associated with node, it verifies the proof and commits to chain.
+    // This function is called by the OPERATOR associated with node, 
+    // it verifies the proof and commits to chain.
     // Function index: 02
     // Permissions: PUBLIC, ANYONE
     public fun commit_state_by_operator(
@@ -185,7 +191,8 @@ address 0x1 {
       verify_and_update_state(miner_addr, proof, true);
       
       // TODO: The operator mining needs its own struct to count mining.
-      // For now it is implicit there is only 1 operator per validator, and that the fullnode state is the place to count.
+      // For now it is implicit there is only 1 operator per validator, 
+      // and that the fullnode state is the place to count.
       // This will require a breaking change to MinerState
       // FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
     }
@@ -228,7 +235,9 @@ address 0x1 {
     }
 
     // Checks that the validator has been mining above the count threshold
-    // Note: this is only called on a validator successfully meeting the validation thresholds (different than mining threshold). So the function presumes the validator is in good standing for that epoch.
+    // Note: this is only called on a validator successfully meeting the 
+    // validation thresholds (different than mining threshold). So the function 
+    // presumes the validator is in good standing for that epoch.
     // Permissions: private function
     // Function index: 04
     fun update_metrics(account: &signer, miner_addr: address) acquires MinerProofHistory {
@@ -240,7 +249,6 @@ address 0x1 {
       // Miner may not have been initialized. Simply return in this case (don't abort)
       if(!is_init(miner_addr)) { return };
 
-
       // Check that there was mining and validating in period.
       // Account may not have any proofs submitted in epoch, since the resource was last emptied.
       let passed = node_above_thresh(account, miner_addr);
@@ -250,12 +258,12 @@ address 0x1 {
       if (passed) {
           let this_epoch = DiemConfig::get_current_epoch();
           miner_history.latest_epoch_mining = this_epoch;
-
-          miner_history.epochs_validating_and_mining = miner_history.epochs_validating_and_mining + 1u64;
-
-          miner_history.contiguous_epochs_validating_and_mining = miner_history.contiguous_epochs_validating_and_mining + 1u64;
-
-          miner_history.epochs_since_last_account_creation = miner_history.epochs_since_last_account_creation + 1u64;
+          miner_history.epochs_validating_and_mining 
+            = miner_history.epochs_validating_and_mining + 1u64;
+          miner_history.contiguous_epochs_validating_and_mining 
+            = miner_history.contiguous_epochs_validating_and_mining + 1u64;
+          miner_history.epochs_since_last_account_creation 
+            = miner_history.epochs_since_last_account_creation + 1u64;
       } else {
         // didn't meet the threshold, reset this count
         miner_history.contiguous_epochs_validating_and_mining = 0;
@@ -266,32 +274,34 @@ address 0x1 {
     }
 
     public fun node_above_thresh(_account: &signer, miner_addr: address): bool acquires MinerProofHistory {
-      let miner_history= borrow_global<MinerProofHistory>(miner_addr);
+      let miner_history = borrow_global<MinerProofHistory>(miner_addr);
       miner_history.count_proofs_in_epoch > Globals::get_mining_threshold()
     }
-    // Get weight of validator identified by address
-    // Permissions: public, only VM can call this function.
-    // TODO: change this name.
-    // Function code: 05
-    public fun get_validator_weight(account: &signer, miner_addr: address): u64 acquires MinerProofHistory {
-      let sender = Signer::address_of(account);
-      assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(130105));
 
-      // Miner may not have been initialized. (don't abort, just return 0)
-      if( !exists<MinerProofHistory>(miner_addr)){
-        return 0
-      };
+    // // Get weight of validator identified by address
+    // // Permissions: public, only VM can call this function.
+    // // TODO: change this name.
+    // // Function code: 05
+    // public fun get_validator_weight(account: &signer, miner_addr: address): u64 acquires MinerProofHistory {
+    //   let sender = Signer::address_of(account);
+    //   assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(130105));
 
-      // Update the statistics.
-      let miner_history= borrow_global_mut<MinerProofHistory>(miner_addr);
-      let this_epoch = DiemConfig::get_current_epoch();
-      miner_history.latest_epoch_mining = this_epoch;
+    //   // Miner may not have been initialized. (don't abort, just return 0)
+    //   if( !exists<MinerProofHistory>(miner_addr)){
+    //     return 0
+    //   };
 
-      // Return its weight
-      miner_history.epochs_validating_and_mining
-    }
+    //   // Update the statistics.
+    //   let miner_history= borrow_global_mut<MinerProofHistory>(miner_addr);
+    //   let this_epoch = DiemConfig::get_current_epoch();
+    //   miner_history.latest_epoch_mining = this_epoch;
 
-    // Used at end of epoch with reconfig bulk_update the MinerState with the vector of validators from current epoch.
+    //   // Return its weight
+    //   miner_history.epochs_validating_and_mining
+    // }
+
+    // Used at end of epoch with reconfig bulk_update the MinerState with 
+    // the vector of validators from current epoch.
     // Permissions: PUBLIC, ONLY VM.
     public fun reconfig(vm: &signer, migrate_eligible_validators: &vector<address>) acquires MinerProofHistory, MinerList {
       // Check permissions
@@ -324,7 +334,7 @@ address 0x1 {
           i = i + 1;
       };
 
-      //reset miner list
+      // reset miner list
       minerlist_state.list = Vector::empty<address>();
 
     }
@@ -336,7 +346,10 @@ address 0x1 {
       
       // NOTE Only Signer can update own state.
       // Should only happen once.
-      assert(!exists<MinerProofHistory>(Signer::address_of(miner_sig)), Errors::requires_role(130107));
+      assert(
+        !exists<MinerProofHistory>(Signer::address_of(miner_sig)),
+        Errors::requires_role(130107)
+      );
       // DiemAccount calls this.
       // Exception is DiemAccount which can simulate a Signer.
       // Initialize MinerProofHistory object and give to miner account
@@ -362,14 +375,13 @@ address 0x1 {
       verify_and_update_state(Signer::address_of(miner_sig), proof, false);
     }
 
-
     // Process and check the first proof blob submitted for validity (includes correct address)
     // Permissions: PUBLIC, ANYONE. (used in onboarding transaction).
     // Function code: 08
     public fun first_challenge_includes_address(new_account_address: address, challenge: &vector<u8>) {
       // Checks that the preimage/challenge of the FIRST VDF proof blob contains a given address.
-      // This is to ensure that the same proof is not sent repeatedly, since all the minerstate is on a
-      // the address of a miner.
+      // This is to ensure that the same proof is not sent repeatedly, since 
+      // all the minerstate is on the address of a miner.
       // Note: The bytes of the miner challenge is as follows:
       //         32 // 0L Key
       //         +64 // chain_id
@@ -496,7 +508,8 @@ address 0x1 {
       verify_and_update_state(miner_addr, proof, true);
       
       // TODO: The operator mining needs its own struct to count mining.
-      // For now it is implicit there is only 1 operator per validator, and that the fullnode state is the place to count.
+      // For now it is implicit there is only 1 operator per validator, and 
+      // that the fullnode state is the place to count.
       // This will require a breaking change to MinerState
       // FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
     }
@@ -511,7 +524,10 @@ address 0x1 {
 
     // Function code: 13
     public fun test_helper_mock_mining_vm(vm: &signer, addr: address, count: u64) acquires MinerProofHistory {
-      assert(Signer::address_of(vm) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(130113));
+      assert(
+        Signer::address_of(vm) == CoreAddresses::DIEM_ROOT_ADDRESS(),
+        Errors::requires_role(130113)
+      );
 
       assert(Testnet::is_testnet(), Errors::invalid_state(130113));
       let state = borrow_global_mut<MinerProofHistory>(addr);
