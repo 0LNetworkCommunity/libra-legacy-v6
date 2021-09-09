@@ -671,7 +671,7 @@ fn create_and_initialize_owners_operators(
                         // );
                     });
                 }
-                None => todo!(),
+                None => {},
             }
         }
 
