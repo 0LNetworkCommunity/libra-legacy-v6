@@ -138,6 +138,7 @@ impl Genesis {
             let pow = GenesisMiningProof {
                 preimage: owner_storage.string(diem_global_constants::PROOF_OF_WORK_PREIMAGE).unwrap(),
                 proof: owner_storage.string(diem_global_constants::PROOF_OF_WORK_PROOF).unwrap(),
+                profile: None,
             };
 
             let owner_name_vec = owner.as_bytes().to_vec();
