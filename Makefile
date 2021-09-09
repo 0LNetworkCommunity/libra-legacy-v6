@@ -184,6 +184,7 @@ init:
 add-proofs:
 	cargo run -p diem-genesis-tool --release --  mining \
 	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
+  --path-to-account-json ${DATA_PATH}/account.json \
 	--shared-backend ${REMOTE}
 
 # OPER does this

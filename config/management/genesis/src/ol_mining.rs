@@ -1,7 +1,7 @@
 use diem_management::{config::ConfigPath, error::Error, secure_backend::SharedBackend};
 // use miner::block::Block;
 use serde_json;
-use std::path::PathBuf;
+use std::{fs, path::PathBuf};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -31,8 +31,9 @@ impl Mining {
         shared_storage.set(diem_global_constants::PROOF_OF_WORK_PREIMAGE, preimage)?;
         shared_storage.set(diem_global_constants::PROOF_OF_WORK_PROOF, proof)?;
         
-        if let Some(profile_json) = &self.path_to_account_json {
-          shared_storage.set(diem_global_constants::ACCOUNT_PROFILE, profile_json)?;
+        if let Some(path) = &self.path_to_account_json {
+          let string = fs::read_to_string(path).unwrap();
+          shared_storage.set(diem_global_constants::ACCOUNT_PROFILE, string)?;
         }
 
         Ok("Sent Proof".to_string())
