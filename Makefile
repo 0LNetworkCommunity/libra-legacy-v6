@@ -31,7 +31,6 @@ REPO_NAME = dev-genesis
 MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
 else
 REPO_NAME = rex-testnet-genesis
-NODE_ENV = prod
 endif
 
 # Registration params
@@ -153,8 +152,8 @@ treasury:
 
 #### GENESIS REGISTRATION ####
 ceremony:
-	NODE_ENV=prod ol init
-  NODE_ENV=prod miner zero
+		ol init
+		miner zero
 
 register:
 # export ACC=$(shell toml get ${DATA_PATH}/0L.toml profile.account)

@@ -1,7 +1,7 @@
 use diem_management::{config::ConfigPath, error::Error, secure_backend::SharedBackend};
 // use miner::block::Block;
 use serde_json;
-use std::{fs, path::PathBuf};
+use std::{fs, path::PathBuf, process::exit};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -26,13 +26,15 @@ impl Mining {
         let (preimage, proof) = get_proof_zero_data(&self.path_to_genesis_pow)
             .map_err(|e| Error::UnexpectedError(e.to_string()))?;
 
-
         let mut shared_storage = config.shared_backend();
         shared_storage.set(diem_global_constants::PROOF_OF_WORK_PREIMAGE, preimage)?;
         shared_storage.set(diem_global_constants::PROOF_OF_WORK_PROOF, proof)?;
         
         if let Some(path) = &self.path_to_account_json {
-          let string = fs::read_to_string(path).unwrap();
+          let string = fs::read_to_string(path).unwrap_or_else(|_| {
+            println!("ERROR: account.json path with genesis preferences was not found at: {:?}, exiting.", &self.path_to_account_json);
+            exit(1);
+          });
           shared_storage.set(diem_global_constants::ACCOUNT_PROFILE, string)?;
         }
 
