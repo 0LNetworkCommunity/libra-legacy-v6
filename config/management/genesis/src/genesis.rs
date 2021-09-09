@@ -47,6 +47,7 @@ impl Genesis {
         // for dev and testnets layouts can be found on genesis repo
         let layout: Layout = match &self.layout_path {
           Some(p) => {
+            println!("Getting genesis validator set from file: {:?}\n", &self.layout_path);
             let mut file = File::open(p).expect("could not open layout file");
             let mut layout = String::new();
             file.read_to_string(&mut layout).expect("could not read");

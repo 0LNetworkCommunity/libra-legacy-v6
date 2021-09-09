@@ -246,7 +246,8 @@ genesis:
 	--data-path ${DATA_PATH} \
 	--namespace ${ACC}-oper \
 	--repo ${REPO_NAME} \
-	--github-org ${REPO_ORG}
+	--github-org ${REPO_ORG} \
+  --layout-path ${DATA_PATH}/set_layout.toml
 
 
 #### NODE MANAGEMENT ####
