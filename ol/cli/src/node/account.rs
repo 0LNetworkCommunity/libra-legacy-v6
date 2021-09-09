@@ -104,9 +104,9 @@ impl Node {
         }
     }
 
-    /// Enrich with notes freom dictionary
+    /// Enrich with notes from dictionary file
     fn enrich_note(&mut self, mut autopay: AutoPayView) -> AutoPayView {
-        let dic= self.load_account_dictionary();
+        let dic = self.load_account_dictionary();
         for payment in autopay.payments.iter_mut()  {
             payment.note = Some(dic.get_note_for_address(payment.payee));
         }        
