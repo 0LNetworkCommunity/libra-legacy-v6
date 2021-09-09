@@ -12,6 +12,7 @@
 -  [Function `is_init`](#0x1_MinerState_is_init)
 -  [Function `create_proof_blob`](#0x1_MinerState_create_proof_blob)
 -  [Function `increment_miners_list`](#0x1_MinerState_increment_miners_list)
+-  [Function `genesis_helper`](#0x1_MinerState_genesis_helper)
 -  [Function `commit_state`](#0x1_MinerState_commit_state)
 -  [Function `commit_state_by_operator`](#0x1_MinerState_commit_state_by_operator)
 -  [Function `verify_and_update_state`](#0x1_MinerState_verify_and_update_state)
@@ -47,6 +48,7 @@
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Hash.md#0x1_Hash">0x1::Hash</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="Testnet.md#0x1_StagingNet">0x1::StagingNet</a>;
+<b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="VDF.md#0x1_VDF">0x1::VDF</a>;
 <b>use</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig">0x1::ValidatorConfig</a>;
@@ -289,6 +291,44 @@
       <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(&<b>mut</b> state.list, miner);
     }
   }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MinerState_genesis_helper"></a>
+
+## Function `genesis_helper`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_genesis_helper">genesis_helper</a>(vm_sig: &signer, miner_sig: &signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_genesis_helper">genesis_helper</a> (
+  vm_sig: &signer,
+  miner_sig: &signer,
+  challenge: vector&lt;u8&gt;,
+  solution: vector&lt;u8&gt;
+) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>, <a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a> {
+  // In rustland the vm_genesis creates a <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a> for the miner. So the SENDER is not the same and the <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a>.
+
+  //TODO: Previously in OLv3 is_genesis() returned <b>true</b>. How <b>to</b> check that this is part of genesis? is_genesis returns <b>false</b> here.
+  // <b>assert</b>(<a href="DiemTimestamp.md#0x1_DiemTimestamp_is_genesis">DiemTimestamp::is_genesis</a>(), 130101024010);
+  <a href="MinerState.md#0x1_MinerState_init_miner_state">init_miner_state</a>(miner_sig, &challenge, &solution);
+
+  // TODO: Move this elsewhere?
+  // Initialize stats for first validator set from rust genesis.
+  <b>let</b> node_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig);
+  <a href="Stats.md#0x1_Stats_init_address">Stats::init_address</a>(vm_sig, node_addr);
 }
 </code></pre>
 

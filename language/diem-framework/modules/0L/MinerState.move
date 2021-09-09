@@ -14,6 +14,7 @@ address 0x1 {
     use 0x1::DiemConfig;
     use 0x1::Signer;
     use 0x1::StagingNet;
+    use 0x1::Stats;
     use 0x1::Testnet;
     use 0x1::ValidatorConfig;
     use 0x1::VDF;
@@ -82,26 +83,25 @@ address 0x1 {
       }
     }
 
-    // Unused
-    // // Helper function for genesis to process genesis proofs.
-    // // Permissions: PUBLIC, ONLY VM, AT GENESIS.
-    // public fun genesis_helper (
-    //   vm_sig: &signer,
-    //   miner_sig: &signer,
-    //   challenge: vector<u8>,
-    //   solution: vector<u8>
-    // ) acquires MinerProofHistory, MinerList {
-    //   // In rustland the vm_genesis creates a Signer for the miner. So the SENDER is not the same and the Signer.
+    // Helper function for genesis to process genesis proofs.
+    // Permissions: PUBLIC, ONLY VM, AT GENESIS.
+    public fun genesis_helper (
+      vm_sig: &signer,
+      miner_sig: &signer,
+      challenge: vector<u8>,
+      solution: vector<u8>
+    ) acquires MinerProofHistory, MinerList {
+      // In rustland the vm_genesis creates a Signer for the miner. So the SENDER is not the same and the Signer.
 
-    //   //TODO: Previously in OLv3 is_genesis() returned true. How to check that this is part of genesis? is_genesis returns false here.
-    //   // assert(DiemTimestamp::is_genesis(), 130101024010);
-    //   init_miner_state(miner_sig, &challenge, &solution);
+      //TODO: Previously in OLv3 is_genesis() returned true. How to check that this is part of genesis? is_genesis returns false here.
+      // assert(DiemTimestamp::is_genesis(), 130101024010);
+      init_miner_state(miner_sig, &challenge, &solution);
 
-    //   // TODO: Move this elsewhere? 
-    //   // Initialize stats for first validator set from rust genesis. 
-    //   let node_addr = Signer::address_of(miner_sig);
-    //   Stats::init_address(vm_sig, node_addr);
-    // }
+      // TODO: Move this elsewhere? 
+      // Initialize stats for first validator set from rust genesis. 
+      let node_addr = Signer::address_of(miner_sig);
+      Stats::init_address(vm_sig, node_addr);
+    }
 
   //   // Function index: 03
   //   // Permissions: PUBLIC, SIGNER, TEST ONLY
