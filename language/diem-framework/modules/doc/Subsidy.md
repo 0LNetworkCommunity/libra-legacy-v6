@@ -148,9 +148,7 @@
 
   <b>let</b> i = 0;
   <b>while</b> (i &lt; len) {
-
     <b>let</b> node_address = *(<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(outgoing_set, i));
-
     // Transfer gas from vm address <b>to</b> validator
     <b>let</b> minted_coins = <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm_sig, subsidy_granted);
     <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">DiemAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
@@ -187,7 +185,6 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">calculate_subsidy</a>(vm: &signer, height_start: u64, height_end: u64):u64 {
-
   <b>let</b> sender = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190102));
 
@@ -211,6 +208,7 @@
   <b>if</b> (guaranteed_minimum &gt; txn_fee_amount ){
     <b>return</b> guaranteed_minimum - txn_fee_amount
   };
+
   0u64
 }
 </code></pre>
@@ -251,10 +249,10 @@
   <b>let</b> slope = <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_divide_u64">FixedPoint32::divide_u64</a>(
     subsidy_ceiling_gas,
     <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(max_node_count - min_node_count, 1)
-    );
-  //y-intercept
+  );
+  // y-intercept
   <b>let</b> intercept = slope * max_node_count;
-  //calculating subsidy and burn units
+  // calculating subsidy and burn units
   // NOTE: confirm order of operations here:
   <b>let</b> guaranteed_minimum = intercept - slope * network_density;
   guaranteed_minimum
@@ -281,7 +279,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_genesis">genesis</a>(vm_sig: &signer) <b>acquires</b> <a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>{
-  //Need <b>to</b> check for association or vm account
+  // Need <b>to</b> check for association or vm account
   <b>let</b> vm_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm_sig);
   <b>assert</b>(vm_addr == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190104));
 
@@ -291,7 +289,6 @@
 
   <b>let</b> i = 0;
   <b>while</b> (i &lt; len) {
-
     <b>let</b> node_address = *(<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&genesis_validators, i));
     <b>let</b> old_validator_bal = <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(node_address);
     // <b>let</b> count_proofs = 1;
@@ -302,7 +299,7 @@
     // };
 
     <b>let</b> subsidy_granted = <a href="Subsidy.md#0x1_Subsidy_distribute_onboarding_subsidy">distribute_onboarding_subsidy</a>(vm_sig, node_address);
-    //Confirm the calculations, and that the ending balance is incremented accordingly.
+    // Confirm the calculations, and that the ending balance is incremented accordingly.
 
     <b>assert</b>(
       <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(node_address) == old_validator_bal + subsidy_granted,
@@ -404,7 +401,8 @@
   <b>assert</b>(!<b>exists</b>&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm)), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(190106));
   move_to&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(vm, <a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>{
     previous_epoch_proofs: 0u64,
-    current_proof_price: <a href="Subsidy.md#0x1_Subsidy_BASELINE_TX_COST">BASELINE_TX_COST</a> * 24 * 8 * 3, // number of proof submisisons in 3 initial epochs.
+    // number of proof submisisons in 3 initial epochs
+    current_proof_price: <a href="Subsidy.md#0x1_Subsidy_BASELINE_TX_COST">BASELINE_TX_COST</a> * 24 * 8 * 3,
     current_cap: ceiling,
     current_subsidy_distributed: 0u64,
     current_proofs_verified: 0u64,
@@ -440,12 +438,11 @@
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
 
   <a href="FullnodeState.md#0x1_FullnodeState_is_onboarding">FullnodeState::is_onboarding</a>(miner);
-
   <b>let</b> state = borrow_global&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
-
   <b>let</b> subsidy = <a href="Subsidy.md#0x1_Subsidy_bootstrap_validator_balance">bootstrap_validator_balance</a>();
   // give max possible subisidy, <b>if</b> auction is higher
-  <b>if</b> (state.current_proof_price &gt; subsidy) subsidy = state.current_proof_price;
+  <b>if</b> (state.current_proof_price &gt; subsidy)
+    subsidy = state.current_proof_price;
 
   <b>let</b> minted_coins = <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, subsidy);
   <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">DiemAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
