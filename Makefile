@@ -12,9 +12,7 @@ MAKEFILE_DIR := $(dir $(MAKEFILE_PATH))
 SOURCE=${MAKEFILE_DIR}
 endif
 
-ifndef V
-V=previous
-endif
+
 
 # Account settings
 ifndef ACC
@@ -33,6 +31,11 @@ else
 REPO_NAME = rex-testnet-genesis
 endif
 
+CARGO_ARGS = --release
+ifeq (${NODE_ENV}, test)
+CARGO_ARGS = --verbose
+endif
+
 # Registration params
 REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
 LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
@@ -45,6 +48,9 @@ endif
 
 BINS= db-backup db-backup-verify db-restore diem-node miner ol txs stdlib
 
+ifndef V
+V=previous
+endif
 
 
 ##### DEPENDENCIES #####
@@ -81,11 +87,11 @@ bins: stdlib
 # Build and install genesis tool, diem-node, and miner
 # NOTE: stdlib is built for cli bindings
 
-	cargo build -p diem-node -p miner -p backup-cli -p ol -p txs -p onboard --release
+	cargo build -p diem-node -p miner -p backup-cli -p ol -p txs -p onboard ${CARGO_ARGS}
 
 stdlib:
-# cargo run --release -p diem-framework
-	cargo run --release -p diem-framework -- --create-upgrade-payload
+# cargo run ${CARGO_ARGS} -p diem-framework
+	cargo run ${CARGO_ARGS} -p diem-framework -- --create-upgrade-payload
 	sha256sum language/diem-framework/staged/stdlib.mv
   
 
@@ -136,24 +142,24 @@ init-backend:
 	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
 
 layout:
-	cargo run -p diem-genesis-tool --release -- set-layout \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- set-layout \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
 	--path ./ol/devnet/set_layout_${NODE_ENV}.toml
 
 root:
-		cargo run -p diem-genesis-tool --release -- diem-root-key \
+		cargo run -p diem-genesis-tool ${CARGO_ARGS} -- diem-root-key \
 		--validator-backend ${LOCAL} \
 		--shared-backend ${REMOTE}
 
 treasury:
-		cargo run -p diem-genesis-tool --release --  treasury-compliance-key \
+		cargo run -p diem-genesis-tool ${CARGO_ARGS} --  treasury-compliance-key \
 		--validator-backend ${LOCAL} \
 		--shared-backend ${REMOTE}
 
 #### GENESIS REGISTRATION ####
 ceremony:
-		cargo run -p ol --release -- init
-		cargo run -p miner --release -- zero
+		cargo run -p ol ${CARGO_ARGS} -- init
+		cargo run -p miner ${CARGO_ARGS} -- zero
 
 register:
 # export ACC=$(shell toml get ${DATA_PATH}/0L.toml profile.account)
@@ -177,11 +183,11 @@ init-test:
 	echo ${MNEM} | head -c -1 | cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
 
 init:
-	cargo run -p diem-genesis-tool --release --  init --path=${DATA_PATH} --namespace=${ACC}
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  init --path=${DATA_PATH} --namespace=${ACC}
 # OWNER does this
 # Submits proofs to shared storage
 add-proofs:
-	cargo run -p diem-genesis-tool --release --  mining \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  mining \
 	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
   --path-to-account-json ${DATA_PATH}/account.json \
 	--shared-backend ${REMOTE}
@@ -189,28 +195,28 @@ add-proofs:
 # OPER does this
 # Submits operator key to github, and creates local OPERATOR_ACCOUNT
 oper-key:
-	cargo run -p diem-genesis-tool --release --  operator-key \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  operator-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
 # OWNER does this
 # Submits operator key to github, does *NOT* create the OWNER_ACCOUNT locally
 owner-key:
-	cargo run -p diem-genesis-tool --release --  owner-key \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  owner-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
 # OWNER does this
 # Links to an operator on github, creates the OWNER_ACCOUNT locally
 assign: 
-	cargo run -p diem-genesis-tool --release --  set-operator \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  set-operator \
 	--operator-name ${OPER} \
 	--shared-backend ${REMOTE}
 
 # OPER does this
 # Submits signed validator registration transaction to github.
 reg:
-	cargo run -p diem-genesis-tool --release --  validator-config \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  validator-config \
 	--owner-name ${OWNER} \
 	--chain-id ${CHAIN_ID} \
 	--validator-address "/ip4/${IP}/tcp/6180" \
@@ -221,25 +227,25 @@ reg:
 
 # Helpers to verify the local state.
 verify:
-	cargo run -p diem-genesis-tool --release --  verify \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  verify \
 	--validator-backend ${LOCAL}
 # --genesis-path ${DATA_PATH}/genesis.blob
 
 verify-gen:
-	cargo run -p diem-genesis-tool --release --  verify \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  verify \
 	--validator-backend ${LOCAL} \
 	--genesis-path ${DATA_PATH}/genesis.blob
 
 
 #### GENESIS  ####
 # build-gen:
-# 	cargo run -p diem-genesis-tool --release -- genesis \
+# 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- genesis \
 # 	--chain-id ${CHAIN_ID} \
 # 	--shared-backend ${REMOTE} \
 # 	--path ${DATA_PATH}/genesis.blob
 
 genesis:
-	cargo run -p diem-genesis-tool --release -- files \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- files \
 	--chain-id ${CHAIN_ID} \
 	--validator-backend ${LOCAL} \
 	--data-path ${DATA_PATH} \
@@ -451,17 +457,17 @@ sw: sw-build sw-start sw-init
 
 ## Build
 sw-stdlib:
-	cd ${SOURCE} && cargo run -p diem-framework --release
+	cd ${SOURCE} && cargo run -p diem-framework ${CARGO_ARGS}
 
 sw-build:
-	cargo build -p diem-node -p diem-swarm -p cli --release
+	cargo build -p diem-node -p diem-swarm -p cli ${CARGO_ARGS}
 
 ## Swarm
 sw-start:
-	cd ${SOURCE} && cargo run --release -p diem-swarm -- --diem-node target/debug/diem-node -c ${DATA_PATH}/swarm_temp -n 1 -s --cli-path ${SOURCE}/target/debug/cli
+	cd ${SOURCE} && cargo run ${CARGO_ARGS} -p diem-swarm -- --diem-node target/debug/diem-node -c ${DATA_PATH}/swarm_temp -n 1 -s --cli-path ${SOURCE}/target/debug/cli
 
 sw-init:
-	cd ${SOURCE} && cargo r --release -p ol -- --swarm-path ${DATA_PATH}/swarm_temp/ --swarm-persona alice init --source-path ~/libra
+	cd ${SOURCE} && cargo r ${CARGO_ARGS} -p ol -- --swarm-path ${DATA_PATH}/swarm_temp/ --swarm-persona alice init --source-path ~/libra
 
 sw-miner:
 		cd ${SOURCE} && cargo r -p miner -- --swarm-path ${DATA_PATH}/swarm_temp --swarm-persona alice start
