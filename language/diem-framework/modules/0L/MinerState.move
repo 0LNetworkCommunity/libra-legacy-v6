@@ -201,7 +201,8 @@ address 0x1 {
       // Get a mutable ref to the current state
       let miner_history = borrow_global_mut<MinerProofHistory>(miner_addr);
       
-        // If not genesis proof, check hash to ensure the proof continues the chain
+      // If not genesis proof, check hash to ensure the proof continues the chain
+      if (steady_state) {
         assert(
           &proof.challenge == &miner_history.previous_proof_hash,
           Errors::invalid_state(130103)
