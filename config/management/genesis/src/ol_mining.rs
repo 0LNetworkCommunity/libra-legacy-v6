@@ -1,8 +1,8 @@
-use diem_management::{config::ConfigPath, error::Error, secure_backend::{ SharedBackend}};
+use diem_management::{config::ConfigPath, error::Error, secure_backend::SharedBackend};
 // use miner::block::Block;
+use serde_json;
 use std::path::PathBuf;
 use structopt::StructOpt;
-use serde_json;
 
 #[derive(Debug, StructOpt)]
 pub struct Mining {
@@ -21,8 +21,7 @@ impl Mining {
             .load()?
             .override_shared_backend(&self.shared_backend.shared_backend)?;
 
-        
-        let (preimage, proof) = get_genesis_tx_data(&self.path_to_genesis_pow)
+        let (preimage, proof) = get_proof_zero_data(&self.path_to_genesis_pow)
             .map_err(|e| Error::UnexpectedError(e.to_string()))?;
 
         let mut shared_storage = config.shared_backend();
@@ -33,13 +32,14 @@ impl Mining {
     }
 }
 
-pub fn get_genesis_tx_data(path: &std::path::PathBuf) -> Result<(String, String),std::io::Error> {
-        let file = std::fs::File::open(path)?;
-        let reader = std::io::BufReader::new(file);
-        let json: serde_json::Value = serde_json::from_reader(reader).expect("Genesis block should deserialize");
-        let block = json.as_object().unwrap();
-        return Ok((
-            block["preimage"].as_str().unwrap().to_owned(),
-            block["proof"].as_str().unwrap().to_owned()
-        ));
-    }
+pub fn get_proof_zero_data(path: &std::path::PathBuf) -> Result<(String, String), std::io::Error> {
+    let file = std::fs::File::open(path)?;
+    let reader = std::io::BufReader::new(file);
+    let json: serde_json::Value =
+        serde_json::from_reader(reader).expect("Genesis block should deserialize");
+    let block = json.as_object().unwrap();
+    return Ok((
+        block["preimage"].as_str().unwrap().to_owned(),
+        block["proof"].as_str().unwrap().to_owned(),
+    ));
+}

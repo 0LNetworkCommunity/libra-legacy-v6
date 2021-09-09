@@ -26,24 +26,17 @@ IP=$(shell toml get ${DATA_PATH}/0L.toml profile.ip)
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
 REPO_ORG = OLSF
 
-
-
-GITHUB_USER = lpgeiger
-
-# Registration params
-REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
-
-LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
-
 ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
 MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
-REGISTER_REMOTE = ${REMOTE}
 else
 REPO_NAME = rex-testnet-genesis
-REGISTER_REMOTE = 'backend=github;repository_owner=${GITHUB_USER};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
-# NODE_ENV = prod
+NODE_ENV = prod
 endif
+
+# Registration params
+REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
+LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
 
 RELEASE_URL=https://github.com/OLSF/libra/releases/download
 
@@ -95,7 +88,7 @@ stdlib:
 # cargo run --release -p diem-framework
 	cargo run --release -p diem-framework -- --create-upgrade-payload
 	sha256sum language/diem-framework/staged/stdlib.mv
-	
+  
 
 install: mv-bin bin-path
 	mkdir ${USER_BIN_PATH} | true
@@ -159,27 +152,12 @@ treasury:
 		--shared-backend ${REMOTE}
 
 #### GENESIS REGISTRATION ####
-
-app-configs:
-	@echo creating local account configs
-	cargo run -p ol -- init
-
-genesis-proof:
-	@echo Creating first tower proof
-	cargo run -p miner -- zero
-
 ceremony:
-	@echo forking the genesis coordination repo
-	make gen-fork-repo
-
-	@echo does all the registration steps
-	make register
-
-	@echo submitting pull request to GENESIS_REPO
-	make gen-pull-req
-
+	NODE_ENV=prod ol init
+  NODE_ENV=prod miner zero
 
 register:
+# export ACC=$(shell toml get ${DATA_PATH}/0L.toml profile.account)
 	@echo Initializing from ${DATA_PATH}/0L.toml with account:
 	@echo ${ACC}
 	make init
@@ -196,53 +174,38 @@ register:
 	@echo OPER send signed transaction with configurations for *OWNER* account
 	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
 
-# Fork the genesis repo into your own github user
-gen-fork-repo:
-	cargo run -p diem-genesis-tool --release -- create-repo \
-	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
-	--repo-owner ${REPO_ORG} \
-	--repo-name ${REPO_NAME}
-
-# submit a pull request of your genesis registration to the coordination github repo.
-gen-pull-req:
-	cargo run -p diem-genesis-tool --release -- create-repo \
-	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
-	--repo-owner ${REPO_ORG} \
-	--repo-name ${REPO_NAME} \
-	--pull-username ${GITHUB_USER}
-
 init-test:
 	echo ${MNEM} | head -c -1 | cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
 
 init:
-	cargo run -p diem-genesis-tool --release -- init --path=${DATA_PATH} --namespace=${ACC}
+	cargo run -p diem-genesis-tool --release --  init --path=${DATA_PATH} --namespace=${ACC}
 # OWNER does this
 # Submits proofs to shared storage
 add-proofs:
 	cargo run -p diem-genesis-tool --release --  mining \
 	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
-	--shared-backend ${REGISTER_REMOTE}
+	--shared-backend ${REMOTE}
 
 # OPER does this
 # Submits operator key to github, and creates local OPERATOR_ACCOUNT
 oper-key:
 	cargo run -p diem-genesis-tool --release --  operator-key \
 	--validator-backend ${LOCAL} \
-	--shared-backend ${REGISTER_REMOTE}
+	--shared-backend ${REMOTE}
 
 # OWNER does this
 # Submits operator key to github, does *NOT* create the OWNER_ACCOUNT locally
 owner-key:
 	cargo run -p diem-genesis-tool --release --  owner-key \
 	--validator-backend ${LOCAL} \
-	--shared-backend ${REGISTER_REMOTE}
+	--shared-backend ${REMOTE}
 
 # OWNER does this
 # Links to an operator on github, creates the OWNER_ACCOUNT locally
 assign: 
 	cargo run -p diem-genesis-tool --release --  set-operator \
 	--operator-name ${OPER} \
-	--shared-backend ${REGISTER_REMOTE}
+	--shared-backend ${REMOTE}
 
 # OPER does this
 # Submits signed validator registration transaction to github.
@@ -253,7 +216,7 @@ reg:
 	--validator-address "/ip4/${IP}/tcp/6180" \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
 	--validator-backend ${LOCAL} \
-	--shared-backend ${REGISTER_REMOTE}
+	--shared-backend ${REMOTE}
 	
 
 # Helpers to verify the local state.
@@ -269,6 +232,12 @@ verify-gen:
 
 
 #### GENESIS  ####
+# build-gen:
+# 	cargo run -p diem-genesis-tool --release -- genesis \
+# 	--chain-id ${CHAIN_ID} \
+# 	--shared-backend ${REMOTE} \
+# 	--path ${DATA_PATH}/genesis.blob
+
 genesis:
 	cargo run -p diem-genesis-tool --release -- files \
 	--chain-id ${CHAIN_ID} \
@@ -276,17 +245,8 @@ genesis:
 	--data-path ${DATA_PATH} \
 	--namespace ${ACC}-oper \
 	--repo ${REPO_NAME} \
-	--github-org ${REPO_ORG} \
-	--layout-path ${DATA_PATH}/set_layout.toml
-
-genesis-github:
-	cargo run -p diem-genesis-tool --release -- files \
-	--chain-id ${CHAIN_ID} \
-	--validator-backend ${LOCAL} \
-	--data-path ${DATA_PATH} \
-	--namespace ${ACC}-oper \
-	--repo ${REPO_NAME} \
 	--github-org ${REPO_ORG}
+
 
 #### NODE MANAGEMENT ####
 start:
@@ -324,12 +284,10 @@ clear:
 ifeq (${TEST}, y)
 
 	@if test -d ${DATA_PATH}; then \
-		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml *waypoint; \
+		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml; \
 	fi
 	@if test -d ${DATA_PATH}/blocks; then \
 		rm -f ${DATA_PATH}/blocks/*.json; \
-	else \
-		mkdir ${DATA_PATH}/blocks/; \
 	fi
 endif
 
@@ -403,8 +361,15 @@ client: set-waypoint
 	cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}
 # endif
 
+
+
 keygen:
 	cd ${DATA_PATH} && miner keygen
+
+# miner-genesis:
+# 	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner genesis
+
+# reset: stop clear fixtures init keys  daemon
 
 remove-keys:
 	make stop
@@ -452,7 +417,7 @@ dev-wizard:
 # Do the ceremony: and also save the genesis fixtures, needs to happen before fix.
 dev-register: clear fix register
 # Do a dev genesis on each node after EVERY NODE COMPLETED registration.
-dev-genesis: genesis-github dev-save-genesis fix-genesis
+dev-genesis: genesis dev-save-genesis fix-genesis
 
 #### DEVNET INFRA ####
 # To make reproducible devnet files.

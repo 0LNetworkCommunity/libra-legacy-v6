@@ -37,7 +37,7 @@ pub enum Command {
     #[structopt(about = "Generates the config files for a validator node")]
     Files(crate::ol_node_files::Files),
     #[structopt(about = "Includes proof of work to the validator registrations")]
-    Mining(crate::mining::Mining),
+    Mining(crate::ol_mining::Mining),
     #[structopt(about = "Creates own repo for submitting genesis info")]
     CreateRepo(crate::ol_create_repo::NewRepo),   
 }

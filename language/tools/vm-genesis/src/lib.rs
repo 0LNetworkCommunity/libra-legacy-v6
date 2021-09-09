@@ -7,6 +7,7 @@ mod genesis_context;
 pub mod genesis_gas_schedule;
 
 use anyhow::Error;
+use ol_types::account::ValConfigs;
 use serde::{Deserialize, Serialize};
 use std::env;
 
@@ -49,6 +50,9 @@ use move_vm_types::gas_schedule::GasStatus;
 use once_cell::sync::Lazy;
 use rand::prelude::*;
 use transaction_builder::encode_create_designated_dealer_script_function;
+
+//////// 0L ////////
+// use 
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
@@ -633,6 +637,9 @@ fn create_and_initialize_owners_operators(
                 MoveValue::vector_u8(proof)
             ])
         );
+
+      //////// 0L ////////
+      // submit any transactions for user e.g. Autopay
 
         exec_function(
             session,
@@ -1312,11 +1319,12 @@ fn get_env() -> String {
 
 //////// 0L ////////
 // 0L Change: Necessary for genesis transaction.
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct GenesisMiningProof {
     pub preimage: String,
     pub proof: String,
+    pub profile: Option<ValConfigs>,
 }
 
 //////// 0L ////////
@@ -1340,12 +1348,14 @@ impl Default for GenesisMiningProof {
             return GenesisMiningProof {
                 preimage: easy_preimage,
                 proof: easy_proof,
+                profile: None,
             }
 
         } else {
             return GenesisMiningProof {
                 preimage: hard_preimage,
                 proof: hard_proof,
+                profile: None,
             }
         }
     }
