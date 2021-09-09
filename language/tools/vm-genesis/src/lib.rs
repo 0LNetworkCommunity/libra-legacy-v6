@@ -641,7 +641,7 @@ fn create_and_initialize_owners_operators(
         if let Some(profile) = &genesis_proof.profile {
             match &profile.autopay_instructions {
                 Some(list) => {
-                    list.into_iter().map(|ins| {
+                    list.into_iter().for_each(|ins| {
                         let autopay_instruction =
                             transaction_builder::encode_autopay_create_instruction_script_function(
                                 ins.uid.unwrap(),
