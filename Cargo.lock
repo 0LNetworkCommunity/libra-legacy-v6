@@ -1992,6 +1992,7 @@ dependencies = [
  "hex 0.4.3",
  "ol-fixtures",
  "ol-keys",
+ "ol-types",
  "rand 0.8.3",
  "rustyline 6.3.0",
  "serde",

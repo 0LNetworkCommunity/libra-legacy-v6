@@ -14,6 +14,9 @@ use std::{fs::File, io::{Read, Write}, path::PathBuf};
 use structopt::StructOpt;
 use vm_genesis::{OperatorAssignment, OperatorRegistration, GenesisMiningProof};
 
+//////// 0L ////////
+use ol_types::account::ValConfigs;
+
 /// Note, it is implicitly expected that the storage supports
 /// a namespace but one has not been set.
 #[derive(Debug, StructOpt)]
@@ -135,10 +138,17 @@ impl Genesis {
                 .into_script_function();
 
             //////// 0L ////////
+            let profile: Option<ValConfigs> = match owner_storage.string(diem_global_constants::ACCOUNT_PROFILE) {
+              Ok(s) => {
+                serde_json::from_str(&s).ok()
+              }
+              Err(_) => None
+            };
+
             let pow = GenesisMiningProof {
                 preimage: owner_storage.string(diem_global_constants::PROOF_OF_WORK_PREIMAGE).unwrap(),
                 proof: owner_storage.string(diem_global_constants::PROOF_OF_WORK_PROOF).unwrap(),
-                profile: None,
+                profile,
             };
 
             let owner_name_vec = owner.as_bytes().to_vec();

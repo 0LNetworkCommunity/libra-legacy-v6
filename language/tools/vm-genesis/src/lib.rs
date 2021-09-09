@@ -7,7 +7,6 @@ mod genesis_context;
 pub mod genesis_gas_schedule;
 
 use anyhow::Error;
-use ol_types::account::ValConfigs;
 use serde::{Deserialize, Serialize};
 use std::env;
 
@@ -52,7 +51,8 @@ use rand::prelude::*;
 use transaction_builder::encode_create_designated_dealer_script_function;
 
 //////// 0L ////////
-// use 
+use ol_types::account::ValConfigs;
+
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
