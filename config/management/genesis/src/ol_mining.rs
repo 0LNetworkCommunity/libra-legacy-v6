@@ -12,6 +12,8 @@ pub struct Mining {
     pub path_to_genesis_pow: PathBuf,
     #[structopt(flatten)]
     shared_backend: SharedBackend,
+    #[structopt(long)]
+    path_to_account_json: Option<PathBuf>,
 }
 
 impl Mining {
@@ -24,14 +26,20 @@ impl Mining {
         let (preimage, proof) = get_proof_zero_data(&self.path_to_genesis_pow)
             .map_err(|e| Error::UnexpectedError(e.to_string()))?;
 
+
         let mut shared_storage = config.shared_backend();
         shared_storage.set(diem_global_constants::PROOF_OF_WORK_PREIMAGE, preimage)?;
         shared_storage.set(diem_global_constants::PROOF_OF_WORK_PROOF, proof)?;
+        
+        if let Some(profile_json) = &self.path_to_account_json {
+          shared_storage.set(diem_global_constants::ACCOUNT_PROFILE, profile_json)?;
+        }
 
         Ok("Sent Proof".to_string())
     }
 }
 
+// TODO: This can be retrieved from profile data as well. So it's duplicated.
 pub fn get_proof_zero_data(path: &std::path::PathBuf) -> Result<(String, String), std::io::Error> {
     let file = std::fs::File::open(path)?;
     let reader = std::io::BufReader::new(file);
