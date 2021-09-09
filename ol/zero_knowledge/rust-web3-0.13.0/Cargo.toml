@@ -1,0 +1,55 @@
+[package]
+name = "web3"
+version = "0.13.0"
+description = "Ethereum JSON-RPC client."
+homepage = "https://github.com/tomusdrw/rust-web3"
+repository = "https://github.com/tomusdrw/rust-web3"
+documentation = "https://docs.rs/web3"
+license = "MIT"
+keywords = ["jsonrpc", "web3", "ethereum", "rpc", "client"]
+authors = ["Tomasz Drwięga <tomasz@parity.io>"]
+readme = "README.md"
+edition = "2018"
+
+[dependencies]
+arrayvec = "0.5.0"
+derive_more = "0.99.1"
+ethabi = "12.0.0"
+ethereum-types = "0.9.0"
+futures = "0.3.5"
+futures-timer = "3.0.2"
+jsonrpc-core = "14.0.0"
+log = "0.4.6"
+parking_lot = "0.11.0"
+rlp = "0.4"
+rustc-hex = "2.1.0"
+secp256k1 = { version = "0.18.0", features = ["recovery"] }
+serde = { version = "1.0.90", features = ["derive"] }
+serde_json = "1.0.39"
+tiny-keccak = { version = "2.0.1", features = ["keccak"] }
+# Optional deps
+## HTTP
+base64 = { version = "0.12.0", optional = true }
+hyper = { version = "0.13", optional = true, default-features = false, features = ["stream", "tcp"] }
+hyper-tls = { version = "0.4", optional = true }
+## WS
+async-native-tls = { version = "0.3", optional = true }
+async-std = { version = "1.5.0", optional = true }
+soketto = { version = "0.4.1", optional = true }
+## Shared (WS, HTTP)
+native-tls = { version = "0.2", optional = true }
+url = { version = "2.1.0", optional = true }
+
+[dev-dependencies]
+# For examples
+env_logger = "0.7.0"
+tokio = { version = "0.2", features = ["full"] }
+# WS test
+async-std = { version = "1.5.0", features = ["attributes"] }
+
+[features]
+default = ["http", "ws", "http-tls", "ws-tls"]
+http = ["hyper", "url", "base64"]
+http-tls = ["hyper-tls", "native-tls", "http"]
+ws = ["soketto", "async-std", "url"]
+ws-tls = ["async-native-tls", "native-tls", "ws"]
