@@ -121,6 +121,7 @@ impl Runnable for ValWizardCmd {
             &app_config,
             &wallet,
             entry_args.swarm_path.as_ref().is_some(),
+            *&self.genesis_ceremony,
         );
         status_ok!(
             "\nAutopay transactions signed",
@@ -219,6 +220,7 @@ pub fn get_autopay_batch(
     cfg: &AppCfg,
     wallet: &WalletLibrary,
     is_swarm: bool,
+    is_genesis: bool,
 ) -> (Option<Vec<PayInstruction>>, Option<Vec<SignedTransaction>>) {
     let file_name = if template.is_some() {
         // assumes the template was downloaded from URL
@@ -234,6 +236,10 @@ pub fn get_autopay_batch(
         None,
     )
     .unwrap();
+
+    if is_genesis { return (Some(instr_vec), None ) }
+
+
     let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone());
     let url = cfg.what_url(false);
     let mut tx_params = submit_tx::get_tx_params_from_toml(
