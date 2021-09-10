@@ -57,9 +57,7 @@ address 0x1 {
 
       let i = 0;
       while (i < len) {
-
         let node_address = *(Vector::borrow<address>(outgoing_set, i));
-
         // Transfer gas from vm address to validator
         let minted_coins = Diem::mint<GAS>(vm_sig, subsidy_granted);
         DiemAccount::vm_deposit_with_metadata<GAS>(
@@ -75,10 +73,8 @@ address 0x1 {
       };
     }
 
-
     // Function code: 02 Prefix: 190102
     public fun calculate_subsidy(vm: &signer, height_start: u64, height_end: u64):u64 {
-
       let sender = Signer::address_of(vm);
       assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190102));
 
@@ -102,6 +98,7 @@ address 0x1 {
       if (guaranteed_minimum > txn_fee_amount ){
         return guaranteed_minimum - txn_fee_amount
       };
+
       0u64
     }
 
@@ -123,10 +120,10 @@ address 0x1 {
       let slope = FixedPoint32::divide_u64(
         subsidy_ceiling_gas,
         FixedPoint32::create_from_rational(max_node_count - min_node_count, 1)
-        );
-      //y-intercept
+      );
+      // y-intercept
       let intercept = slope * max_node_count;
-      //calculating subsidy and burn units
+      // calculating subsidy and burn units
       // NOTE: confirm order of operations here:
       let guaranteed_minimum = intercept - slope * network_density;
       guaranteed_minimum
@@ -134,7 +131,7 @@ address 0x1 {
 
     // Function code: 04 Prefix: 190104
     public fun genesis(vm_sig: &signer) acquires FullnodeSubsidy{
-      //Need to check for association or vm account
+      // Need to check for association or vm account
       let vm_addr = Signer::address_of(vm_sig);
       assert(vm_addr == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190104));
 
@@ -144,7 +141,6 @@ address 0x1 {
 
       let i = 0;
       while (i < len) {
-
         let node_address = *(Vector::borrow<address>(&genesis_validators, i));
         let old_validator_bal = DiemAccount::balance<GAS>(node_address);
         // let count_proofs = 1;
@@ -155,7 +151,7 @@ address 0x1 {
         // };
         
         let subsidy_granted = distribute_onboarding_subsidy(vm_sig, node_address);
-        //Confirm the calculations, and that the ending balance is incremented accordingly.
+        // Confirm the calculations, and that the ending balance is incremented accordingly.
 
         assert(
           DiemAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, 
@@ -229,7 +225,8 @@ address 0x1 {
       assert(!exists<FullnodeSubsidy>(Signer::address_of(vm)), Errors::not_published(190106));
       move_to<FullnodeSubsidy>(vm, FullnodeSubsidy{
         previous_epoch_proofs: 0u64,
-        current_proof_price: BASELINE_TX_COST * 24 * 8 * 3, // number of proof submisisons in 3 initial epochs.
+        // number of proof submisisons in 3 initial epochs
+        current_proof_price: BASELINE_TX_COST * 24 * 8 * 3,
         current_cap: ceiling,
         current_subsidy_distributed: 0u64,
         current_proofs_verified: 0u64,
@@ -246,12 +243,11 @@ address 0x1 {
       CoreAddresses::assert_diem_root(vm);
 
       FullnodeState::is_onboarding(miner);
-      
       let state = borrow_global<FullnodeSubsidy>(CoreAddresses::DIEM_ROOT_ADDRESS());
-
       let subsidy = bootstrap_validator_balance();
       // give max possible subisidy, if auction is higher
-      if (state.current_proof_price > subsidy) subsidy = state.current_proof_price;
+      if (state.current_proof_price > subsidy) 
+        subsidy = state.current_proof_price;
       
       let minted_coins = Diem::mint<GAS>(vm, subsidy);
       DiemAccount::vm_deposit_with_metadata<GAS>(
@@ -446,6 +442,7 @@ address 0x1 {
     }
 
     //////// TEST HELPERS ///////
+
     public fun test_set_fullnode_fixtures(
       vm: &signer,
       previous_epoch_proofs: u64,
