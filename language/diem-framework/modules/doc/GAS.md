@@ -4,7 +4,15 @@
 # Module `0x1::GAS`
 
 
+<a name="@Summary_0"></a>
 
+## Summary
+
+Code to instantiate the GAS token
+This is uninteresting, you may be looking for Diem.move
+
+
+-  [Summary](#@Summary_0)
 -  [Struct `GAS`](#0x1_GAS_GAS)
 -  [Function `initialize`](#0x1_GAS_initialize)
 
@@ -13,6 +21,7 @@
 <b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
 <b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
+<b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 </code></pre>
 
 
@@ -48,6 +57,7 @@
 
 ## Function `initialize`
 
+Called by root in genesis to initialize the GAS coin
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="GAS.md#0x1_GAS_initialize">initialize</a>(lr_account: &signer)
@@ -63,6 +73,7 @@
     lr_account: &signer,
     // tc_account: &signer,
 ) {
+    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(lr_account);
     <a href="DiemTimestamp.md#0x1_DiemTimestamp_assert_genesis">DiemTimestamp::assert_genesis</a>();
     <a href="Diem.md#0x1_Diem_register_SCS_currency">Diem::register_SCS_currency</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
         lr_account,

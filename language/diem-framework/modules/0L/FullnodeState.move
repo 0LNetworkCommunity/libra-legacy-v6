@@ -1,12 +1,17 @@
-address 0x1 {
 ///////////////////////////////////////////////////////////////////////////
 // File Prefix for errors: 0600
 ///////////////////////////////////////////////////////////////////////////
+
+address 0x1 {
+
+/// # Summary
+/// This module tracks the activity of the network's fullnodes 
 module FullnodeState {
   use 0x1::CoreAddresses;
   use 0x1::Errors;
   use 0x1::Signer;
   use 0x1::Testnet::is_testnet;
+  use 0x1::Roles;
   
   struct FullnodeCounter has key {
     proofs_submitted_in_epoch: u64,
@@ -33,12 +38,12 @@ module FullnodeState {
       );
   }
 
-  /// On recongfiguration events, reset.
   // Function code: 2
+  /// Called by root at the epoch boundary for each fullnode, updates the cumulative stats and resets the others
   public fun reconfig(vm: &signer, addr: address, proofs_in_epoch: u64) acquires FullnodeCounter {
-      let sender = Signer::address_of(vm);
-      assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(060001));
+      Roles::assert_diem_root(vm);
       let state = borrow_global_mut<FullnodeCounter>(addr);
+      // update cumulative values
       state.cumulative_proofs_submitted = state.cumulative_proofs_submitted + proofs_in_epoch;
       state.cumulative_proofs_paid = state.cumulative_proofs_paid + state.proofs_paid_in_epoch;
       state.cumulative_subsidy = state.cumulative_subsidy + state.subsidy_in_epoch;
@@ -48,43 +53,30 @@ module FullnodeState {
       state.subsidy_in_epoch = 0;
   }
 
-  // /// Miner increments proofs by 1
-  // /// TO
-  // public fun inc_proof(sender: &signer) acquires FullnodeCounter {
-  //     let addr = Signer::address_of(sender);
-  //     let state = borrow_global_mut<FullnodeCounter>(addr);
-  //     state.proofs_submitted_in_epoch = state.proofs_submitted_in_epoch + 1;
-  // }
-
-  // /// Miner increments proofs by 1
-  // //Function Code:03
-  // public fun inc_proof_by_operator(operator_sig: &signer, miner_addr: address) acquires FullnodeCounter {
-  //   assert(ValidatorConfig::get_operator(miner_addr) == Signer::address_of(operator_sig), Errors::requires_role(0600103));
-  //     let state = borrow_global_mut<FullnodeCounter>(miner_addr);
-  //     state.proofs_submitted_in_epoch = state.proofs_submitted_in_epoch + 1;
-  // }
-
-  /// VM Increments payments in epoch. Increases by `count`
+  /// VM Increments payments in epoch for `addr`. Increases by `count`
   // Function code:04
   public fun inc_payment_count(vm: &signer, addr: address, count: u64) acquires FullnodeCounter {
-    assert(Signer::address_of(vm) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(060004));
+    Roles::assert_diem_root(vm);
     let state = borrow_global_mut<FullnodeCounter>(addr);
     state.proofs_paid_in_epoch = state.proofs_paid_in_epoch + count;
   }
 
-  /// VM Increments payments in epoch. Increases by `count`
+  /// VM Increments subsidy in epoch for `addr`. Increases by `value`
   //Function code:05
   public fun inc_payment_value(vm: &signer, addr: address, value: u64) acquires FullnodeCounter {
-    assert(Signer::address_of(vm) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(060005));
+    Roles::assert_diem_root(vm);
     let state = borrow_global_mut<FullnodeCounter>(addr);
     state.subsidy_in_epoch = state.subsidy_in_epoch + value;
   }
 
+  /// Function to check whether or not the module has been initialized 
   public fun is_init(addr: address): bool {
     exists<FullnodeCounter>(addr)
   }
 
-
+  /// Function checks to see if the node is in the process of onboarding 
+  /// The first proof is submitted by the node doing the onboarding, so if 
+  /// proof submitted < 2, the node hasn't yet produced a proof 
   public fun is_onboarding(addr: address): bool acquires FullnodeCounter{
     let state = borrow_global<FullnodeCounter>(addr);
 
@@ -95,10 +87,12 @@ module FullnodeState {
 
   //////// GETTERS /////////
 
+  /// Get the number of proofs submitted in the current epoch for `addr`
   public fun get_address_proof_count(addr:address): u64 acquires FullnodeCounter {
     borrow_global<FullnodeCounter>(addr).proofs_submitted_in_epoch
   }
 
+  /// Get the cumulative subsity for `addr`
   public fun get_cumulative_subsidy(addr: address): u64 acquires FullnodeCounter{
     let state = borrow_global<FullnodeCounter>(addr);
     state.cumulative_subsidy
@@ -107,6 +101,7 @@ module FullnodeState {
   //////// TEST HELPERS /////////
   
   // Function code:06
+  /// initialize fullnode state for a node and set stats to given values 
   public fun test_set_fullnode_fixtures(
     vm: &signer,
     addr: address,
@@ -129,8 +124,9 @@ module FullnodeState {
     state.cumulative_subsidy = cumulative_subsidy;
   }
 
-  /// Testhelper
+  /// Add `count` proofs to the number submitted by `sender`
   public fun mock_proof(sender: &signer, count: u64) acquires FullnodeCounter {
+    assert(is_testnet(), Errors::invalid_state(060006));
     let addr = Signer::address_of(sender);
     let state = borrow_global_mut<FullnodeCounter>(addr);
     state.proofs_submitted_in_epoch = state.proofs_submitted_in_epoch + count;
