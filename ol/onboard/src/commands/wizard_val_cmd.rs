@@ -129,7 +129,7 @@ impl Runnable for ValWizardCmd {
         );
 
         // Initialize Validator Keys
-        init_cmd::initialize_validator(&wallet, &app_config, base_waypoint).unwrap();
+        init_cmd::initialize_validator(&wallet, &app_config, base_waypoint, *&self.genesis_ceremony).expect("could not initialize validator key_store.json");
         status_ok!("\nKey file written", "\n...........................\n");
 
         if !self.genesis_ceremony {

@@ -164,9 +164,9 @@ ceremony:
 
 register:
 # export ACC=$(shell toml get ${DATA_PATH}/0L.toml profile.account)
-	@echo Initializing from ${DATA_PATH}/0L.toml with account:
-	@echo ${ACC}
-	make init
+# @echo Initializing from ${DATA_PATH}/0L.toml with account:
+# @echo ${ACC}
+# make init
 
 	@echo the OPER initializes local accounts and submit pubkeys to github
 	ACC=${ACC}-oper make oper-key
@@ -184,7 +184,7 @@ init-test:
 	echo ${MNEM} | head -c -1 | cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
 
 init:
-	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  init --path=${DATA_PATH} --namespace=${ACC}
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- init --path=${DATA_PATH} --namespace=${ACC}
 # OWNER does this
 # Submits proofs to shared storage
 add-proofs:
