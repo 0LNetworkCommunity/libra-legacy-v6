@@ -7,9 +7,9 @@ address 0x1 {
     use 0x1::Signer;
     use 0x1::Errors;
     use 0x1::Testnet;
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     use 0x1::Upgrade;
-    use 0x1::LibraBlock;
+    use 0x1::DiemBlock;
     use 0x1::CoreAddresses;
     use 0x1::Hash;
     use 0x1::NodeWeight;
@@ -29,13 +29,13 @@ address 0x1 {
       const VOTE_ALREADY_DELEGATED: u64 = 150003;
       const DELEGATION_NOT_PRESENT: u64 = 150004;
   
-      resource struct Oracles {
+      struct Oracles has key {
         upgrade: UpgradeOracle
         //Other oracles, price, BTC header, etc.
   
       }
   
-      struct Vote {
+      struct Vote has store, drop {
         validator: address,
         data: vector<u8>,
         version_id: u64,
@@ -43,14 +43,14 @@ address 0x1 {
         // More stuff?
       }
   
-      struct VoteCount {
+      struct VoteCount has store, copy, drop {
         data: vector<u8>,
         validators: vector<address>,
         hash: vector<u8>,
         total_weight: u64,
       }
   
-      struct UpgradeOracle {
+      struct UpgradeOracle has store {
         // id of the upgrade oracle
         id: u64,                            // 1
   
@@ -63,7 +63,7 @@ address 0x1 {
         consensus: VoteCount,
       }
 
-      resource struct VoteDelegation {
+      struct VoteDelegation has key{
         vote_delegated: bool,
         delegates: vector<address>,
         delegated_to_address: address, 
@@ -72,7 +72,7 @@ address 0x1 {
   
      // Function code: 01
       public fun initialize(vm: &signer) {
-        if (Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS()) {
+        if (Signer::address_of(vm) == CoreAddresses::DIEM_ROOT_ADDRESS()) {
           move_to(vm, Oracles { 
             upgrade: UpgradeOracle {
                 id: 1,
@@ -101,7 +101,7 @@ address 0x1 {
       public fun handler (sender: &signer, id: u64, data: vector<u8>) acquires Oracles, VoteDelegation {
         // receives payload from oracle_tx.move
         // Check the sender is a validator. 
-        assert(LibraSystem::is_validator(Signer::address_of(sender)), Errors::requires_role(150002)); 
+        assert(DiemSystem::is_validator(Signer::address_of(sender)), Errors::requires_role(150002)); 
   
         if (id == 1) {
           upgrade_handler(Signer::address_of(sender), copy data);
@@ -112,7 +112,7 @@ address 0x1 {
             let hash = Hash::sha2_256(data);
             while (i < l) {
               let addr = *Vector::borrow<address>(&del.delegates, i);
-              if(LibraSystem::is_validator(addr)) {
+              if(DiemSystem::is_validator(addr)) {
                 upgrade_handler_hash(addr, copy hash);
               };
               i = i + 1;
@@ -127,7 +127,7 @@ address 0x1 {
             let i = 0;
             while (i < l) {
               let addr = *Vector::borrow<address>(&del.delegates, i);
-              if(LibraSystem::is_validator(addr)) {
+              if(DiemSystem::is_validator(addr)) {
                 upgrade_handler_hash(addr, copy data);
               };
               i = i + 1;
@@ -138,8 +138,8 @@ address 0x1 {
       }
       
       fun upgrade_handler (sender: address, data: vector<u8>) acquires Oracles {
-        let current_height = LibraBlock::get_current_block_height();
-        let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::LIBRA_ROOT_ADDRESS()).upgrade;
+        let current_height = DiemBlock::get_current_block_height();
+        let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::DIEM_ROOT_ADDRESS()).upgrade;
   
         // check if qualifies as a new round
         let is_new_round = current_height > upgrade_oracle.vote_window;
@@ -166,8 +166,8 @@ address 0x1 {
       }
       
       fun upgrade_handler_hash (sender: address, data: vector<u8>) acquires Oracles {
-        let current_height = LibraBlock::get_current_block_height();
-        let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::LIBRA_ROOT_ADDRESS()).upgrade;
+        let current_height = DiemBlock::get_current_block_height();
+        let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::DIEM_ROOT_ADDRESS()).upgrade;
   
         // check if qualifies as a new round
         let is_new_round = current_height > upgrade_oracle.vote_window;
@@ -281,15 +281,15 @@ address 0x1 {
       // Function call for vm to check consensus
       // Function code: 03
       public fun check_upgrade(vm: &signer) acquires Oracles {
-        assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::requires_role(150003)); 
-        let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::LIBRA_ROOT_ADDRESS()).upgrade;
+        assert(Signer::address_of(vm) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(150003)); 
+        let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::DIEM_ROOT_ADDRESS()).upgrade;
   
         let payload = *&upgrade_oracle.consensus.data;
         let validators = *&upgrade_oracle.consensus.validators;
   
         if (!Vector::is_empty(&payload)) {
           Upgrade::set_update(vm, *&payload); 
-          let current_height = LibraBlock::get_current_block_height();
+          let current_height = DiemBlock::get_current_block_height();
           Upgrade::record_history(vm, upgrade_oracle.version_id, payload, validators, current_height);
           enter_new_upgrade_round(upgrade_oracle, current_height);
         }
@@ -312,7 +312,7 @@ address 0x1 {
 
       fun get_threshold (type: u8): u64 {
         if (type == VOTE_TYPE_ONE_FOR_ONE) {
-          let validator_num = LibraSystem::validator_set_size();
+          let validator_num = DiemSystem::validator_set_size();
           let threshold = validator_num * 2 / 3;
           threshold 
         }
@@ -326,11 +326,11 @@ address 0x1 {
       }
 
       fun calculate_proportional_voting_threshold(): u64 {
-        let val_set_size = LibraSystem::validator_set_size();
+        let val_set_size = DiemSystem::validator_set_size();
         let i = 0;
         let voting_power = 0;
         while (i < val_set_size) {
-          let addr = LibraSystem::get_ith_validator_address(i);
+          let addr = DiemSystem::get_ith_validator_address(i);
           voting_power = voting_power + NodeWeight::proof_of_weight(addr);
           i = i + 1;
         };
@@ -392,7 +392,7 @@ address 0x1 {
       // Function code: 04
       public fun test_helper_query_oracle_votes(): vector<address> acquires Oracles {
         assert(Testnet::is_testnet(), Errors::invalid_state(150004));
-        let s = borrow_global<Oracles>(0x0);
+        let s = borrow_global<Oracles>(@0x0);
         let len = Vector::length<Vote>(&s.upgrade.votes);
     
         let voters = Vector::empty<address>();
@@ -408,7 +408,7 @@ address 0x1 {
 
       public fun test_check_upgrade(): bool acquires Oracles {
         assert(Testnet::is_testnet(), Errors::invalid_state(150004)); 
-        let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::LIBRA_ROOT_ADDRESS()).upgrade;
+        let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::DIEM_ROOT_ADDRESS()).upgrade;
   
         let payload = *&upgrade_oracle.consensus.data;
   
