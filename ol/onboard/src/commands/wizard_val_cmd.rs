@@ -3,8 +3,8 @@
 #![allow(clippy::never_loop)]
 
 use super::files_cmd;
-use crate::prelude::app_config;
 use crate::entrypoint;
+use crate::prelude::app_config;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use diem_genesis_tool::ol_node_files;
 use diem_types::{transaction::SignedTransaction, waypoint::Waypoint};
@@ -14,7 +14,7 @@ use ol_fixtures::get_test_genesis_blob;
 use ol_keys::{scheme::KeyScheme, wallet};
 use ol_types::block::Block;
 use ol_types::config::IS_TEST;
-use ol_types::{account::ValConfigs, pay_instruction::PayInstruction, config::TxType};
+use ol_types::{account::ValConfigs, config::TxType, pay_instruction::PayInstruction};
 use reqwest::Url;
 use std::fs;
 use std::process::exit;
@@ -54,9 +54,11 @@ pub struct ValWizardCmd {
     #[options(short = "w", help = "If validator is building from source")]
     waypoint: Option<Waypoint>,
     #[options(short = "e", help = "If validator is building from source")]
-    epoch: Option<u64>,    
+    epoch: Option<u64>,
     #[options(help = "For testing in ci, use genesis.blob fixtures")]
-    ci: bool,   
+    ci: bool,
+    #[options(help = "Used only on genesis ceremony")]
+    genesis_ceremony: bool,
 }
 
 impl Runnable for ValWizardCmd {
@@ -66,30 +68,30 @@ impl Runnable for ValWizardCmd {
         status_info!(
             "\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys, run the standalone keygen tool with 'ol keygen'.\n\nYour first 0L proof-of-work will be mined now. Expect this to take up to 15 minutes on modern CPUs.\n"
         );
-        
+
         let entry_args = entrypoint::get_args();
 
         // Get credentials from prompt
         let (authkey, account, wallet) = wallet::get_account_from_prompt();
 
-        let mut upstream = self.upstream_peer.clone().unwrap_or_else(|| {
-            self.template_url.clone().unwrap_or_else(|| {
-                println!(
-                    "ERROR: Must set a URL to query chain. Use --upstream-peer of --template-url. Exiting."
-                );
-                exit(1);
-            })
-        });
-        upstream.set_port(Some(8080)).unwrap();
-        println!(
-            "Setting upstream peer URL to: {:?}",
-            &upstream
-        );
+        let upstream_peer = if *&self.genesis_ceremony {
+            None
+        } else {
+            let mut upstream = self.upstream_peer.clone().unwrap_or_else(|| {
+              self.template_url.clone().unwrap_or_else(|| {
+                  print!("ERROR: Must set a URL to query chain. Use --upstream-peer of --template-url, exiting.");
+                  exit(1)  
+              })
+            });
+            upstream.set_port(Some(8080)).unwrap();
+            println!("Setting upstream peer URL to: {:?}", &upstream.as_str());
+            Some(upstream)
+        };
 
         let app_config = AppCfg::init_app_configs(
             authkey,
             account,
-            &Some(upstream.clone()),
+            &upstream_peer,
             &self.home_path,
             &self.epoch,
             &self.waypoint,
@@ -118,7 +120,7 @@ impl Runnable for ValWizardCmd {
             home_path,
             &app_config,
             &wallet,
-            entry_args.swarm_path.as_ref().is_some()
+            entry_args.swarm_path.as_ref().is_some(),
         );
         status_ok!(
             "\nAutopay transactions signed",
@@ -129,47 +131,53 @@ impl Runnable for ValWizardCmd {
         init_cmd::initialize_validator(&wallet, &app_config, base_waypoint).unwrap();
         status_ok!("\nKey file written", "\n...........................\n");
 
-        // fetching the genesis files from genesis-archive, will override the path for prebuilt genesis.
-        let mut prebuilt_genesis_path = self.prebuilt_genesis.clone();
-        if self.fetch_git_genesis {
-            files_cmd::get_files(home_path.clone(), &self.github_org, &self.repo);
-            status_ok!(
-                "\nDownloaded genesis files",
-                "\n...........................\n"
-            );
+        if !self.genesis_ceremony {
+            // fetching the genesis files from genesis-archive, will override the path for prebuilt genesis.
+            let mut prebuilt_genesis_path = self.prebuilt_genesis.clone();
+            if self.fetch_git_genesis {
+                files_cmd::get_files(home_path.clone(), &self.github_org, &self.repo);
+                status_ok!(
+                    "\nDownloaded genesis files",
+                    "\n...........................\n"
+                );
 
-            prebuilt_genesis_path = Some(home_path.join("genesis.blob"));
-        } else if self.ci {
-          fs::copy(get_test_genesis_blob().as_os_str(), home_path.join("genesis.blob")).unwrap();
-          prebuilt_genesis_path = Some(home_path.join("genesis.blob"));
-          status_ok!(
-                "\nUsing test genesis.blob",
-                "\n...........................\n"
-            );
+                prebuilt_genesis_path = Some(home_path.join("genesis.blob"));
+            } else if self.ci {
+                fs::copy(
+                    get_test_genesis_blob().as_os_str(),
+                    home_path.join("genesis.blob"),
+                )
+                .unwrap();
+                prebuilt_genesis_path = Some(home_path.join("genesis.blob"));
+                status_ok!(
+                    "\nUsing test genesis.blob",
+                    "\n...........................\n"
+                );
+            }
+
+            let home_dir = app_config.workspace.node_home.to_owned();
+            // 0L convention is for the namespace of the operator to be appended by '-oper'
+            let namespace = app_config.profile.auth_key.clone() + "-oper";
+
+            // TODO: use node_config to get the seed peers and then write upstream_node vec in 0L.toml from that.
+            ol_node_files::write_node_config_files(
+                home_dir.clone(),
+                self.chain_id.unwrap_or(1),
+                &self.github_org.clone().unwrap_or("OLSF".to_string()),
+                &self
+                    .repo
+                    .clone()
+                    .unwrap_or("experimental-genesis".to_string()),
+                &namespace,
+                &prebuilt_genesis_path,
+                &false,
+                base_waypoint,
+                &None,
+            )
+            .unwrap();
+
+            status_ok!("\nNode config written", "\n...........................\n");
         }
-
-        let home_dir = app_config.workspace.node_home.to_owned();
-        // 0L convention is for the namespace of the operator to be appended by '-oper'
-        let namespace = app_config.profile.auth_key.clone() + "-oper";
-
-        // TODO: use node_config to get the seed peers and then write upstream_node vec in 0L.toml from that.
-        ol_node_files::write_node_config_files(
-            home_dir.clone(),
-            self.chain_id.unwrap_or(1),
-            &self.github_org.clone().unwrap_or("OLSF".to_string()),
-            &self
-                .repo
-                .clone()
-                .unwrap_or("experimental-genesis".to_string()),
-            &namespace,
-            &prebuilt_genesis_path,
-            &false,
-            base_waypoint,
-            &None,
-        )
-        .unwrap();
-
-        status_ok!("\nNode config written", "\n...........................\n");
 
         if !self.skip_mining {
             // Mine Block
@@ -219,27 +227,30 @@ pub fn get_autopay_batch(
         "autopay_batch.json"
     };
 
-    let starting_epoch = cfg.chain_info.base_epoch.unwrap();
+    let starting_epoch = cfg.chain_info.base_epoch.unwrap_or(0);
     let instr_vec = PayInstruction::parse_autopay_instructions(
         &file_path.clone().unwrap_or(home_path.join(file_name)),
         Some(starting_epoch.clone()),
         None,
     )
     .unwrap();
-    let script_vec = autopay_batch_cmd::process_instructions(
-        instr_vec.clone()
-    );
+    let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone());
     let url = cfg.what_url(false);
-    let mut tx_params =
-        submit_tx::get_tx_params_from_toml(
-            cfg.to_owned(), TxType::Miner, Some(wallet), url, None, is_swarm
-        ).unwrap();
+    let mut tx_params = submit_tx::get_tx_params_from_toml(
+        cfg.to_owned(),
+        TxType::Miner,
+        Some(wallet),
+        url,
+        None,
+        is_swarm,
+    )
+    .unwrap();
     let tx_expiration_sec = if *IS_TEST {
-      // creating fixtures here, so give it near infinite expiry
-      100 * 360 * 24 * 60 * 60
+        // creating fixtures here, so give it near infinite expiry
+        100 * 360 * 24 * 60 * 60
     } else {
-      // give the tx a very long expiration, 7 days.
-      7 * 24 * 60 * 60
+        // give the tx a very long expiration, 7 days.
+        7 * 24 * 60 * 60
     };
     tx_params.tx_cost.user_tx_timeout = tx_expiration_sec;
     let txn_vec = autopay_batch_cmd::sign_instructions(script_vec, 0, &tx_params);
