@@ -8,6 +8,8 @@ address 0x1 {
 
 // TODO: This module is not complete, as Metadata has not been implemented.
 
+/// # Summary 
+/// This module provides global variables and constants that have no specific owner 
 module Globals {
     use 0x1::Vector;
     use 0x1::Testnet;
@@ -15,7 +17,18 @@ module Globals {
     use 0x1::StagingNet;
     use 0x1::Diem;
     use 0x1::GAS;
-    // Some constants need to changed based on environment; dev, testing, prod.
+    
+    /// Global constants determining validator settings & requirements 
+    /// Some constants need to changed based on environment; dev, testing, prod.
+    /// epoch_length: The length of an epoch in seconds (~1 day for prod.) 
+    /// max_validator_per_epoch: The maximum number of validators that can participate 
+    /// subsidy_ceiling_gas: TODO I don't really know what this is
+    /// min_node_density: The minimum number of nodes that can receive a subsidy 
+    /// max_node_density: The maximum number of nodes that can receive a subsidy 
+    /// burn_accounts: The address to which burnt tokens should be sent 
+    /// difficulty: The difficulty required for VDF proofs submitting by miners 
+    /// epoch_mining_threshold: The number of proofs that must be submitted each 
+    ///       epoch by a miner to remain compliant  
     struct GlobalConstants has drop {
       // For validator set.
       epoch_length: u64,
@@ -28,94 +41,47 @@ module Globals {
       epoch_mining_threshold: u64,
     }
 
-    // // Some global state needs to be accesible to every module. Using Diemblock causes
-    // // cyclic dependency issues.
-    // resource struct BlockMetadataGlobal {
-    //   // TODO: This is duplicated with DiemBlockGlobal, but that one causes a cyclic dependency issue because of stats.
-    //   height: u64,
-    //   round: u64,
-    //   previous_block_votes: vector<address>,
-    //   proposer: address,
-    //   time_microseconds: u64,
-    // }
-    // // This can only be invoked by the Association address, and only a single time.
-    // // Currently, it is invoked in the genesis transaction
-    // public fun initialize_block_metadata(account: &signer) {
-    //   // Only callable by the Association address
-    //   Transaction::assert(Signer::address_of(account) == 0x0, 1);
-
-    //   move_to<BlockMetadataGlobal>(
-    //       account,
-    //       BlockMetadataGlobal {
-    //         height: 0,
-    //         round: 0,
-    //         previous_block_votes: Vector::singleton(0x0),
-    //         proposer: 0x0,
-    //         time_microseconds: 0,
-    //       }
-    //   );
-    // }
-
-
-    // ////////////////////
-    // //// Metadata /////
-    // ///////////////////
-    // // Get the current block height
-    // public fun get_current_block_height(): u64 acquires BlockMetadataGlobal {
-    //   borrow_global<BlockMetadataGlobal>(0x0).height
-    // }
-
-    // // Get the previous block voters
-    // public fun get_previous_voters(): vector<address> acquires BlockMetadataGlobal {
-    //    let voters = *&borrow_global<BlockMetadataGlobal>(0x0).previous_block_votes;
-    //    return voters //vector<address>
-    // }
-
-    // Get the current block height
-    // public fun update_global_metadata(vm: &signer) acquires BlockMetadataGlobal {
-    //   Transaction::assert(Signer::address_of(vm) == 0x0, 33);
-    //   let data = borrow_global_mut<BlockMetadataGlobal>(0x0);
-    //   data.height = 999
-    // }
 
     ////////////////////
     //// Constants ////
     ///////////////////
 
-    // Get the epoch length
+    /// Get the epoch length
     public fun get_epoch_length(): u64 {
        get_constants().epoch_length
     }
 
-    // Get max validator per epoch
+    /// Get max validator per epoch
     public fun get_max_validator_per_epoch(): u64 {
        get_constants().max_validator_per_epoch
     }
 
-    // Get max validator per epoch
+    /// Get max validator per epoch
     public fun get_subsidy_ceiling_gas(): u64 {
        get_constants().subsidy_ceiling_gas
     }
 
-    // Get max validator per epoch
+    /// Get max validator per epoch
     public fun get_max_node_density(): u64 {
        get_constants().max_node_density
     }
 
-    // Get the burn accounts
+    /// Get the burn accounts
     public fun get_burn_accounts(): vector<address> {
        *&get_constants().burn_accounts
     }
 
+    /// Get the current difficulty
     public fun get_difficulty(): u64 {
       get_constants().difficulty
     }
 
+    /// Get the mining threshold 
     public fun get_mining_threshold(): u64 {
       get_constants().epoch_mining_threshold
     }
 
-
+    /// get the constants for the current network 
     fun get_constants(): GlobalConstants {
       
       let coin_scale = 1000000; //Diem::scaling_factor<GAS::T>();
