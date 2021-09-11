@@ -12,7 +12,7 @@ use std::{convert::TryFrom, path::PathBuf, str::FromStr};
 use diem_secure_storage::{
     CryptoStorage, OnDiskStorage, KVStorage
 };
-use diem_types::{transaction::authenticator::AuthenticationKey, waypoint::Waypoint, account_address::AccountAddress};
+use diem_types::{waypoint::Waypoint, account_address::AccountAddress};
 use structopt::StructOpt;
 
 diem_management::secure_backend!(

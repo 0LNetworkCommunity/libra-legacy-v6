@@ -74,7 +74,7 @@ pub type OperatorAssignment = (
     ScriptFunction,
     //////// 0L ////////
     GenesisMiningProof, //proof of work
-    AccountAddress, // operator address
+    AccountAddress,     // operator address
 );
 
 //////// 0L ////////
@@ -163,6 +163,8 @@ pub fn encode_genesis_change_set(
 
     distribute_genesis_subsidy(&mut session, &log_context);
     println!("OK Genesis subsidy =============== ");
+
+    fund_operators(&mut session, &log_context, &operator_assignments);
     //////// 0L end ////////
 
     reconfigure(&mut session, &log_context);
@@ -280,87 +282,6 @@ pub fn encode_recovery_genesis_changeset(
     verify_genesis_write_set(&events);
     Ok(ChangeSet::new(write_set, events))
 }
-
-// //////// 0L ////////
-// pub fn encode_recovery_genesis_changeset(
-//     val_assignments: &[ValRecover],
-//     operator_registrations: &[OperRecover],
-//     val_set: &[AccountAddress],
-//     chain: u8,
-// ) -> Result<ChangeSet, Error> {
-//     let chain_id = ChainId::new(chain);
-//     let stdlib_modules = stdlib_modules(StdLibOptions::Compiled);
-//     let vm_publishing_option = VMPublishingOption::open();
-
-//     // create a data view for move_vm
-//     let mut state_view = GenesisStateView::new();
-//     for module in stdlib_modules {
-//         let module_id = module.self_id();
-//         state_view.add_module(&module_id, &module);
-//     }
-//     let data_cache = StateViewCache::new(&state_view);
-
-//     let move_vm = MoveVM::new();
-//     let mut session = move_vm.new_session(&data_cache);
-//     let log_context = NoContextLog::new();
-
-//     let lbr_ty = TypeTag::Struct(StructTag {
-//         address: *account_config::LBR_MODULE.address(),
-//         module: account_config::LBR_MODULE.name().to_owned(),
-//         name: account_config::LBR_STRUCT_NAME.to_owned(),
-//         type_params: vec![],
-//     });
-
-//     create_and_initialize_main_accounts(
-//         &mut session,
-//         &log_context,
-//         None,
-//         None,
-//         vm_publishing_option,
-//         &lbr_ty,
-//         chain_id,
-//     );
-//     println!("GENESIS: created system accounts");
-
-//     //////// 0L ////////
-//     let genesis_env = get_env();
-//     println!("Initializing with env: {}", genesis_env);
-//     if genesis_env != "prod" {
-//         initialize_testnet(&mut session, &log_context);
-//     }
-//     // generate the genesis WriteSet
-//     recovery_owners_operators(
-//         &mut session,
-//         &log_context,
-//         &val_assignments,
-//         &operator_registrations,
-//         &val_set,
-//     );
-
-//     println!("GENESIS: recovered owners and operators");
-
-//     reconfigure(&mut session, &log_context);
-
-//     let effects_1 = session.finish().unwrap();
-//     let state_view = GenesisStateView::new();
-//     let data_cache = StateViewCache::new(&state_view);
-//     let mut session = move_vm.new_session(&data_cache);
-
-//     publish_stdlib(&mut session, &log_context, stdlib_modules);
-
-//     let effects_2 = session.finish().unwrap();
-
-//     let effects = merge_txn_effects(effects_1, effects_2);
-
-//     let (write_set, events) = txn_effects_to_writeset_and_events(effects).unwrap();
-
-//     assert!(!write_set.iter().any(|(_, op)| op.is_deletion()));
-//     verify_genesis_write_set(&events);
-
-//     println!("GENESIS: done");
-
-//     Ok(ChangeSet::new(write_set, events))
-// }
 
 fn exec_function(
     session: &mut Session<StateViewCache>,
@@ -658,21 +579,9 @@ fn create_and_initialize_owners_operators(
                             owner_address,
                             &autopay_instruction,
                         );
-                        // exec_function(
-                        //   session,
-                        //   log_context,
-                        //   "AutoPay2",
-                        //   "genesis_helper",
-                        //   vec![],
-                        //   serialize_values(&vec![
-                        //       MoveValue::Signer(owner_address),
-                        //       MoveValue::vector_u8(preimage),
-                        //       MoveValue::vector_u8(proof),
-                        //   ]),
-                        // );
                     });
                 }
-                None => {},
+                None => {}
             }
         }
 
@@ -711,7 +620,7 @@ fn create_and_initialize_owners_operators(
                 operator_name.clone(),
             )
             .into_script_function();
-        
+
         exec_script_function(
             session,
             log_context,
@@ -722,13 +631,14 @@ fn create_and_initialize_owners_operators(
 
     println!("2 ======== Link owner to OP");
     // Authorize an operator for a validator/owner
-    for (owner_key, _owner_name, op_assignment_script, _genesis_proof, _operator) in operator_assignments {
+    for (owner_key, _owner_name, op_assignment_script, _genesis_proof, _operator) in
+        operator_assignments
+    {
         // let owner_address = diem_config::utils::validator_owner_account_from_name(owner_name);
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
         exec_script_function(session, log_context, owner_address, op_assignment_script);
     }
-
 
     println!("3 ======== OP sends network info to Owner config");
     // Set the validator operator configs for each owner
@@ -739,7 +649,9 @@ fn create_and_initialize_owners_operators(
 
     println!("4 ======== Add owner to validator set");
     // Add each validator to the validator set
-    for (owner_key, _owner_name, _op_assignment, _genesis_proof, operator_account) in operator_assignments {
+    for (owner_key, _owner_name, _op_assignment, _genesis_proof, operator_account) in
+        operator_assignments
+    {
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
         // let owner_address = diem_config::utils::validator_owner_account_from_name(owner_name);
@@ -756,19 +668,18 @@ fn create_and_initialize_owners_operators(
         );
 
         // give the operator balance to be able to send txs for owner, e.g. tower-builder
-        exec_function(
-            session,
-            log_context,
-            "DiemAccount",
-            "genesis_fund_operator",
-            vec![],
-            serialize_values(&vec![
-                MoveValue::Signer(diem_root_address),
-                MoveValue::Signer(owner_address),
-                MoveValue::Address(*operator_account),
-
-            ]),
-        );
+        // exec_function(
+        //     session,
+        //     log_context,
+        //     "DiemAccount",
+        //     "genesis_fund_operator",
+        //     vec![],
+        //     serialize_values(&vec![
+        //         MoveValue::Signer(diem_root_address),
+        //         MoveValue::Signer(owner_address),
+        //         MoveValue::Address(*operator_account),
+        //     ]),
+        // );
     }
 }
 
@@ -978,175 +889,6 @@ fn recovery_owners_operators(
     }
 }
 
-// //////// 0L ////////
-// /// Restores  owner and operator state to a genesis, in a recovery or fork scenario. No need to bootstrap all the state.
-// fn recovery_owners_operators(
-//     session: &mut Session<StateViewCache>,
-//     log_context: &impl LogContext,
-//     val_assignments: &[ValRecover],
-//     operator_registrations: &[OperRecover],
-//     val_set: &[AccountAddress],
-// ) {
-//     let libra_root_address = account_config::libra_root_address();
-
-//     // Create accounts for each validator owner. The inputs for creating an account are the auth
-//     // key prefix and account address. Internally move then computes the auth key as auth key
-//     // prefix || address. Because of this, the initial auth key will be invalid as we produce the
-//     // account address from the name and not the public key.
-//     println!("======== Create Owner Accounts");
-//     for i in val_assignments {
-//         println!("account: {:?}", i.val_account);
-
-//         let create_owner_script = transaction_builder::encode_create_validator_account_script(
-//             0,
-//             i.val_account,
-//             i.val_auth_key.prefix().to_vec(),
-//             i.val_account.to_vec(),
-//         );
-//         exec_script(
-//             session,
-//             log_context,
-//             libra_root_address,
-//             &create_owner_script,
-//         );
-
-//         println!("======== recover miner state");
-//             exec_function(
-//             session,
-//             log_context,
-//             libra_root_address,
-//             "MinerState",
-//             "recover_miner_state",
-//             vec![],
-//             vec![
-//                 Value::transaction_argument_signer_reference(libra_root_address),
-//                 Value::transaction_argument_signer_reference(i.val_account),
-//                 // Value::vector_u8(preimage),
-//                 // Value::vector_u8(proof),
-//             ],
-//         );
-
-//         println!("======== add to validator universe");
-//         exec_function(
-//             session,
-//             log_context,
-//             libra_root_address,
-//             "ValidatorUniverse",
-//             "genesis_helper",
-//             vec![],
-//             vec![
-//                 Value::transaction_argument_signer_reference(libra_root_address),
-//                 Value::transaction_argument_signer_reference(i.val_account),
-//             ],
-//         );
-
-//         println!("======== init fullnode state");
-
-//         exec_function(
-//             session,
-//             log_context,
-//             libra_root_address,
-//             "FullnodeState",
-//             "init",
-//             vec![],
-//             vec![
-//                 Value::transaction_argument_signer_reference(i.val_account),
-//                 // Value::address(owner_address),
-//             ],
-//         );
-//     }
-
-//     println!("======== Create OP Accounts");
-//     // Create accounts for each validator operator
-//     for i in operator_registrations {
-//         let create_operator_script =
-//             transaction_builder::encode_create_validator_operator_account_script(
-//                 0,
-//                 i.operator_account,
-//                 i.operator_auth_key.prefix().to_vec(),
-//                 i.operator_account.to_vec(),
-//             );
-//         exec_script(
-//             session,
-//             log_context,
-//             libra_root_address,
-//             &create_operator_script,
-//         );
-//     }
-
-//     println!("======== Link owner to OP");
-
-//     let mut n = 0u64;
-//     // Owner/Validator is authorizing an Operator. This is sent by Owner. Operators need to have registered before this step.
-//     for i in val_assignments {
-//         let script = transaction_builder::encode_set_validator_operator_with_nonce_admin_script(
-//             n,
-//             i.operator_delegated_account.to_vec(),
-//             i.operator_delegated_account,
-//         );
-
-//         session
-//             .execute_script(
-//                 script.code().to_vec(),
-//                 script.ty_args().to_vec(),
-//                 convert_txn_args(script.args()),
-//                 vec![libra_root_address, i.val_account],
-//                 &mut CostStrategy::system(&ZERO_COST_SCHEDULE, GasUnits::new(100_000_000)),
-//                 log_context,
-//             )
-//             .unwrap();
-
-//         n = n + 1;
-//     }
-
-//     println!("======== OP sends network info to Owner config");
-//     // Set the validator operator configs for each owner. The Validator/owner needs to have linked to the Operator before this step.
-//     for i in operator_registrations {
-//         // let addresses = i.fullnode_network_addresses.clone();
-//         // dbg!(&i.fullnode_network_addresses.clone());
-//         // let a: Vec<NetworkAddress> = i.fullnode_network_addresses.clone().try_into().unwrap();
-//         // dbg!(&a);
-//         // Operator is signing this
-//         let register_val_script = transaction_builder::encode_register_validator_config_script(
-//             i.validator_to_represent,
-//             i.operator_consensus_pubkey.clone(),
-//             i.validator_network_addresses.clone(),
-//             i.fullnode_network_addresses.clone(),
-//         );
-
-//         session
-//             .execute_script(
-//                 register_val_script.code().to_vec(),
-//                 register_val_script.ty_args().to_vec(),
-//                 convert_txn_args(register_val_script.args()),
-//                 vec![i.operator_account],
-//                 &mut CostStrategy::system(&ZERO_COST_SCHEDULE, GasUnits::new(100_000_000)),
-//                 log_context,
-//             )
-//             .unwrap()
-//     }
-
-//     println!("======== Add owner to validator set");
-
-//     // NOTE: In recovery scenarios the validator set is NOT the same as the total validators.
-//     // Add each validator to the validator set. The Validators configs need be valid before this step runs.
-
-//     for i in val_set {
-//         exec_function(
-//             session,
-//             log_context,
-//             libra_root_address,
-//             "LibraSystem",
-//             "add_validator",
-//             vec![],
-//             vec![
-//                 Value::transaction_argument_signer_reference(libra_root_address),
-//                 Value::address(*i),
-//             ],
-//         );
-//     }
-// }
-
 /// Publish the standard library.
 fn publish_stdlib(
     session: &mut Session<StateViewCache>,
@@ -1353,6 +1095,36 @@ fn distribute_genesis_subsidy(
     )
 }
 
+//////// 0L /////////
+fn fund_operators(
+  session: &mut Session<StateViewCache>,
+  log_context: &impl LogContext,
+  operator_assignments: &[OperatorAssignment],
+) {
+    println!("4 ======== Add owner to validator set");
+    // Add each validator to the validator set
+    for (owner_key, _owner_name, _op_assignment, _genesis_proof, operator_account) in
+        operator_assignments
+    {
+        let diem_root_address = account_config::diem_root_address();
+
+        let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
+        let owner_address = staged_owner_auth_key.derived_address();
+        // give the operator balance to be able to send txs for owner, e.g. tower-builder
+        exec_function(
+            session,
+            log_context,
+            "DiemAccount",
+            "genesis_fund_operator",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(diem_root_address),
+                MoveValue::Signer(owner_address),
+                MoveValue::Address(*operator_account),
+            ]),
+        );
+    }
+}
 //////// 0L ////////
 fn get_env() -> String {
     match env::var("NODE_ENV") {
