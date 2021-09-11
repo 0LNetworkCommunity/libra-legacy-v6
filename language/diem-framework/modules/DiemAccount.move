@@ -1450,6 +1450,17 @@ module DiemAccount {
         include DepositEmits<Token>{payer: payer};
         include WithdrawFromEmits<Token>;
     }
+    //////// 0L ////////
+    public fun genesis_fund_operator(
+      vm: &signer,
+      owner_sig: &signer,
+      oper: address,
+    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits {
+      CoreAddresses::assert_vm(vm);
+      onboarding_gas_transfer<GAS>(owner_sig, oper);
+
+
+    }
 
     /// Rotate the authentication key for the account under cap.account_address
     public fun rotate_authentication_key(
@@ -2962,13 +2973,13 @@ module DiemAccount {
     // Deposits the `to_deposit` coin into the `payee`'s account balance 
     // with the attached `metadata`
     public fun vm_deposit_with_metadata<Token: store>(
-        payer: &signer,
+        vm: &signer,
         payee: address,
         to_deposit: Diem<Token>,
         metadata: vector<u8>,
         metadata_signature: vector<u8>
     ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
-        let sender = Signer::address_of(payer);
+        let sender = Signer::address_of(vm);
         assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), 4010);
         deposit(
             CoreAddresses::DIEM_ROOT_ADDRESS(),

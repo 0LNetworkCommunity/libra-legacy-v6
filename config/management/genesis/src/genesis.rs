@@ -159,7 +159,8 @@ impl Genesis {
                     owner_name_vec, 
                     set_operator_script,  
                     //////// 0L ////////
-                    pow
+                    pow,
+                    operator_account,
                 )
             );
         }
@@ -193,7 +194,7 @@ impl Genesis {
                 operator_key,
                 operator_name.as_bytes().to_vec(),
                 validator_config_tx,
-                operator_account,                
+                operator_account,              
             ));
         }
         //////// 0L end ////////

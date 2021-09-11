@@ -72,7 +72,9 @@ pub type OperatorAssignment = (
     Option<Ed25519PublicKey>,
     Name,
     ScriptFunction,
-    GenesisMiningProof,
+    //////// 0L ////////
+    GenesisMiningProof, //proof of work
+    AccountAddress, // operator address
 );
 
 //////// 0L ////////
@@ -368,7 +370,6 @@ fn exec_function(
     ty_args: Vec<TypeTag>,
     args: Vec<Vec<u8>>,
 ) {
-    dbg!(&module_name);
     session
         .execute_function(
             &ModuleId::new(
@@ -578,7 +579,7 @@ fn create_and_initialize_owners_operators(
     // prefix || address. Because of this, the initial auth key will be invalid as we produce the
     // account address from the name and not the public key.
     println!("0 ======== Create Owner Accounts");
-    for (owner_key, owner_name, _op_assignment, genesis_proof) in operator_assignments {
+    for (owner_key, owner_name, _op_assignment, genesis_proof, _operator) in operator_assignments {
         // TODO: Remove. Temporary Authkey for genesis, because accounts are being created from human names.
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
@@ -710,6 +711,7 @@ fn create_and_initialize_owners_operators(
                 operator_name.clone(),
             )
             .into_script_function();
+        
         exec_script_function(
             session,
             log_context,
@@ -720,12 +722,13 @@ fn create_and_initialize_owners_operators(
 
     println!("2 ======== Link owner to OP");
     // Authorize an operator for a validator/owner
-    for (owner_key, _owner_name, op_assignment_script, _genesis_proof) in operator_assignments {
+    for (owner_key, _owner_name, op_assignment_script, _genesis_proof, _operator) in operator_assignments {
         // let owner_address = diem_config::utils::validator_owner_account_from_name(owner_name);
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
         exec_script_function(session, log_context, owner_address, op_assignment_script);
     }
+
 
     println!("3 ======== OP sends network info to Owner config");
     // Set the validator operator configs for each owner
@@ -736,7 +739,7 @@ fn create_and_initialize_owners_operators(
 
     println!("4 ======== Add owner to validator set");
     // Add each validator to the validator set
-    for (owner_key, _owner_name, _op_assignment, _genesis_proof) in operator_assignments {
+    for (owner_key, _owner_name, _op_assignment, _genesis_proof, operator_account) in operator_assignments {
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
         // let owner_address = diem_config::utils::validator_owner_account_from_name(owner_name);
@@ -749,6 +752,21 @@ fn create_and_initialize_owners_operators(
             serialize_values(&vec![
                 MoveValue::Signer(diem_root_address),
                 MoveValue::Address(owner_address),
+            ]),
+        );
+
+        // give the operator balance to be able to send txs for owner, e.g. tower-builder
+        exec_function(
+            session,
+            log_context,
+            "DiemAccount",
+            "genesis_fund_operator",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(diem_root_address),
+                MoveValue::Signer(owner_address),
+                MoveValue::Address(*operator_account),
+
             ]),
         );
     }
@@ -1270,6 +1288,7 @@ impl Validator {
             script_function,
             //////// 0L ////////
             GenesisMiningProof::default(), // NOTE: For testing only
+            self.operator_address,
         )
     }
 
