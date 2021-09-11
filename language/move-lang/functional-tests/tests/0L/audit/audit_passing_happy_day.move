@@ -1,6 +1,5 @@
-//! account: alice, 1000000, 0, validator
+//! account: alice, 1000000GAS, 0, validator
 
-// Test audit function val_audit_passing satisfying all conditions
 //! new-transaction
 //! sender: diemroot
 //! execute-as: alice
@@ -13,19 +12,12 @@ script {
     use 0x1::DiemAccount;
     
     fun main(dm: signer, alice_account: signer) {
+        // Test audit function val_audit_passing satisfying all conditions
         assert(ValidatorConfig::is_valid(@{{alice}}), 7357007003001);
         
-        // transfer enough coins to operator
+        // operator has gas from genesis
         let oper = ValidatorConfig::get_operator(@{{alice}});
-        DiemAccount::vm_make_payment_no_limit<GAS>(
-            @{{alice}},
-            oper, // has a 0 in balance
-            50009,
-            x"",
-            x"",
-            &dm
-        );               
-        assert(DiemAccount::balance<GAS>(oper) == 50009, 7357007003002);
+        assert(DiemAccount::balance<GAS>(oper) == 1000000, 7357007003002);
         
         // enable autopay
         assert(!AutoPay2::is_enabled(@{{alice}}), 7357007003003);
