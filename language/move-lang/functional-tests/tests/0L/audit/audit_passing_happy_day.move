@@ -11,7 +11,7 @@ script {
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
     
-    fun main(dm: signer, alice_account: signer) {
+    fun main(_: signer, alice_account: signer) {
         // Test audit function val_audit_passing satisfying all conditions
         assert(ValidatorConfig::is_valid(@{{alice}}), 7357007003001);
         
