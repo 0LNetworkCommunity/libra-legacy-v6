@@ -72,6 +72,7 @@ script {
 
     // Automatically is a candidate for validator set
     assert(ValidatorUniverse::is_in_universe(eve_addr), 7357130101091000);
+    
     // Should have a jailed bit
     assert(ValidatorUniverse::exists_jailedbit(eve_addr), 7357130101101000);
 

@@ -37,7 +37,7 @@ module DiemAccount {
     use 0x1::VDF;
     use 0x1::Globals;
     use 0x1::MinerState;
-    use 0x1::TrustedAccounts;
+    // use 0x1::TrustedAccounts;
     use 0x1::FullnodeState;
     use 0x1::Testnet::is_testnet;
     use 0x1::FIFO;
@@ -562,6 +562,10 @@ module DiemAccount {
         onboarding_gas_transfer<GAS>(sender, new_account_address);
         // Transfer for operator as well
         onboarding_gas_transfer<GAS>(sender, op_address);
+
+        let new_signer = create_signer(new_account_address);
+        Wallet::set_slow(&new_signer);
+
         new_account_address
     }
 
@@ -1662,8 +1666,8 @@ module DiemAccount {
         );
         
         //////// 0L ////////
-        TrustedAccounts::initialize(&new_account);
-        Wallet::set_slow(&new_account);
+        // NOTE: if all accounts are to be slow set this
+        // Wallet::set_slow(&new_account);
     }
     spec make_account {
         pragma opaque;
@@ -2682,7 +2686,10 @@ module DiemAccount {
         Event::publish_generator(&new_account);
         ValidatorConfig::publish(&new_account, dr_account, human_name);
         add_currencies_for_account<GAS>(&new_account, false); /////// 0L /////////
-        make_account(new_account, auth_key_prefix)
+        make_account(new_account, auth_key_prefix);
+
+        let new_account = create_signer(new_account_address);
+        Wallet::set_slow(&new_account);
     }
 
     spec create_validator_account {

@@ -68,6 +68,12 @@ module Wallet {
         move_to<CommunityWallets>(vm, CommunityWallets {
           list: Vector::empty<address>()
         });  
+      };
+
+      if (!exists<SlowWalletList>(@0x0)) {
+        move_to<SlowWalletList>(vm, SlowWalletList {
+          list: Vector::empty<address>()
+        });  
       }
     }
 
@@ -390,19 +396,58 @@ module Wallet {
 
     //////// SLOW WALLETS ////////
     struct SlowWallet has key {
-        is_slow: bool
+        is_slow: bool,
+        unlocked: u64,
+        transferred: u64,
     }
 
-    public fun set_slow(sig: &signer) {
-      if (!exists<SlowWallet>(Signer::address_of(sig))) {
-        move_to<SlowWallet>(sig, SlowWallet {
-          is_slow: true
-        });  
+    struct SlowWalletList has key {
+        list: vector<address>
+    }
+
+    // public fun set_slow(sig: &signer) {
+    //   if (!exists<SlowWallet>(Signer::address_of(sig))) {
+    //     move_to<SlowWallet>(sig, SlowWallet {
+    //       is_slow: true,
+    //       unlocked: 0,
+    //       transferred: 0,
+    //     });  
+    //   }
+    // }
+
+    public fun set_slow(sig: &signer) acquires SlowWalletList {
+      if (exists<SlowWalletList>(@0x0)) {
+        let addr = Signer::address_of(sig);
+        let list = get_slow_list();
+        if (!Vector::contains<address>(&list, &addr)) {
+            let s = borrow_global_mut<SlowWalletList>(@0x0);
+            Vector::push_back(&mut s.list, addr);
+        };
+
+        if (!exists<SlowWallet>(Signer::address_of(sig))) {
+          move_to<SlowWallet>(sig, SlowWallet {
+            is_slow: true,
+            unlocked: 0,
+            transferred: 0,
+          });  
+        }
       }
     }
 
+    ///////// GETTERS ////////
+
     public fun is_slow(addr: address): bool {
       exists<SlowWallet>(addr)
+    }
+
+    // Getter for retrieving the list of slow wallets.
+    public fun get_slow_list(): vector<address> acquires SlowWalletList{
+      if (exists<SlowWalletList>(@0x0)) {
+        let s = borrow_global<SlowWalletList>(@0x0);
+        return *&s.list
+      } else {
+        return Vector::empty<address>()
+      }
     }
 }
 }
