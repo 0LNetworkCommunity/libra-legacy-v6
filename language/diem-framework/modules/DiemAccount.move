@@ -1162,7 +1162,7 @@ module DiemAccount {
         metadata: vector<u8>,
         metadata_signature: vector<u8>,
         vm: &signer
-    ) acquires DiemAccount , Balance, AccountOperationsCapability, AutopayEscrow, CumulativeDeposits { //////// 0L ////////
+    ) acquires DiemAccount , Balance, AccountOperationsCapability, AutopayEscrow, CumulativeDeposits, SlowWallet { //////// 0L ////////
         if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
         if (amount < 0) return; // Todo: Use "==" ?
 
@@ -1279,7 +1279,7 @@ module DiemAccount {
         restore_withdraw_capability(cap);
     }
     
-    /////// 0L /////////
+    //////// 0L ////////
     /// VM can burn from an account's balance for administrative purposes (e.g. at epoch boundaries)
     public fun vm_burn_from_balance<Token: store>(
         addr : address,
@@ -1319,7 +1319,7 @@ module DiemAccount {
         amount: u64,
         metadata: vector<u8>,
         metadata_signature: vector<u8>
-    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
+    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWallet { //////// 0L ////////
         //////// 0L //////// Transfers disabled by default
         //////// 0L //////// Transfers of 10 GAS 
         //////// 0L //////// enabled when validator count is 100. 
@@ -1342,6 +1342,15 @@ module DiemAccount {
                 Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
             );
         };
+        
+        // check amount if it is a slow wallet
+        if (is_slow(*&cap.account_address)) {
+          assert(
+                amount < unlocked_amount(*&cap.account_address),
+                Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
+            );
+
+        };
 
         deposit<Token>(
             *&cap.account_address,
@@ -1350,6 +1359,14 @@ module DiemAccount {
             metadata,
             metadata_signature
         );
+
+        // in case of slow wallet update the tracker
+        if (is_slow(*&cap.account_address)) {
+          update_unlocked_tracker(*&cap.account_address, amount);
+
+        };
+
+        
     }
     spec pay_from {
         pragma opaque;
@@ -3120,22 +3137,26 @@ module DiemAccount {
       }
     }
 
-    fun update_unlocked_tracker(payer_sig: &signer, amount: u64) acquires SlowWallet {
-      let payer = Signer::address_of(payer_sig);
+    // NOTE: danger, this is a private function that should only be called with account capability or VM.
+    fun update_unlocked_tracker(payer: address, amount: u64) acquires SlowWallet {
       let s = borrow_global_mut<SlowWallet>(payer);
-      // let invar = s.transferred + s.unlocked + amount;
-
       s.transferred = s.transferred + amount;
       s.unlocked = s.unlocked - amount;
-      
-      // assert(invar = s.transferred + s.unlocked + amount)
-
     }
 
     ///////// SLOW GETTERS ////////
 
     public fun is_slow(addr: address): bool {
       exists<SlowWallet>(addr)
+    }
+
+    public fun unlocked_amount(addr: address): u64 acquires Balance, SlowWallet{
+      if (exists<SlowWallet>(addr)) {
+        let s = borrow_global<SlowWallet>(addr);
+        return s.unlocked
+      };
+      // this is a normal account, so return the normal balance
+      balance<GAS>(addr)
     }
 
     // Getter for retrieving the list of slow wallets.
