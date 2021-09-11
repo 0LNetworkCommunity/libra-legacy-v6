@@ -21,6 +21,7 @@ script {
         assert(AutoPay2::is_enabled(@{{alice}}), 7357007002001);
         assert(ValidatorConfig::is_valid(@{{alice}}), 7357007002002);
         assert(MinerState::is_init(@{{alice}}), 7357007002003);
+        
         // check operator zero balance
         let oper = ValidatorConfig::get_operator(@{{alice}});
         assert(DiemAccount::balance<GAS>(oper) == 0, 7357007002004);  
