@@ -9,8 +9,6 @@ script {
     use 0x1::ValidatorConfig;
     use 0x1::AutoPay2;
     use 0x1::MinerState;
-    use 0x1::GAS::GAS;
-    use 0x1::DiemAccount;
     
     fun main(_: signer, alice_account: signer) {
         assert(ValidatorConfig::is_valid(@{{alice}}), 7357007001001);
