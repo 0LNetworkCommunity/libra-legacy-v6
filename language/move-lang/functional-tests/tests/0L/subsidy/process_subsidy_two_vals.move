@@ -1,14 +1,14 @@
 // ALICE is CASE 1
-//! account: alice, 1GAS, 0, validator
+//! account: alice, 1000000GAS, 0, validator
 
 // BOB is CASE 4
-//! account: bob, 1GAS, 0, validator
+//! account: bob, 1000000GAS, 0, validator
 
 // CAROL is CASE 1 AS WELL
-//! account: carol, 1GAS, 0, validator
+//! account: carol, 1000000GAS, 0, validator
 
 // DAVE is CASE 4
-//! account: dave, 1GAS, 0, validator
+//! account: dave, 1000000GAS, 0, validator
 
 //! new-transaction
 //! sender: alice
