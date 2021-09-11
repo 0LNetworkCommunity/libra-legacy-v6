@@ -1,6 +1,6 @@
-//! account: alice, 10000000GAS, 0, validator
-//! account: bob, 10000000GAS
-//! account: carol, 10000000GAS
+//! account: alice, 1000000GAS, 0, validator
+//! account: bob, 1000000GAS
+//! account: carol, 1000000GAS
 
 // // make Alice a case 1 validator, so that she is in the next validator set.
 
