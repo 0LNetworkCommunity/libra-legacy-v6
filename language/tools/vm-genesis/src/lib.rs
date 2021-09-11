@@ -649,7 +649,7 @@ fn create_and_initialize_owners_operators(
 
     println!("4 ======== Add owner to validator set");
     // Add each validator to the validator set
-    for (owner_key, _owner_name, _op_assignment, _genesis_proof, operator_account) in
+    for (owner_key, _owner_name, _op_assignment, _genesis_proof, _operator_account) in
         operator_assignments
     {
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());

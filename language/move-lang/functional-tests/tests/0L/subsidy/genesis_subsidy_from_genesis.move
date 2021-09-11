@@ -14,7 +14,7 @@ script {
         while (index < num_validators) {
             let addr = DiemSystem::get_ith_validator_address(index);
             print(&DiemAccount::balance<GAS>(addr));
-            assert(DiemAccount::balance<GAS>(addr) == 2497536, 7357001);
+            assert(DiemAccount::balance<GAS>(addr) == 1497536, 7357001);
             index = index + 1;
         };
     }
