@@ -13,7 +13,6 @@ script {
   use 0x1::Roles;
   use 0x1::Signer;
   use 0x1::ValidatorUniverse;
-  use 0x1::Wallet;
 
   // Test Prefix: 1301
   fun main(sender: signer) {
@@ -77,7 +76,7 @@ script {
     assert(ValidatorUniverse::exists_jailedbit(eve_addr), 7357130101101000);
 
     // new accounts tagged as slow wallets
-    assert(Wallet::is_slow(eve_addr), 7357130101111000);
+    assert(DiemAccount::is_slow(eve_addr), 7357130101111000);
   }
 }
 // check: EXECUTED
