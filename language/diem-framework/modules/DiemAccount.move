@@ -1070,6 +1070,7 @@ module DiemAccount {
     public fun extract_withdraw_capability(
         sender: &signer
     ): WithdrawCapability acquires DiemAccount {
+      print(&2001);
         //////// 0L //////// Transfers disabled by default
         //////// 0L //////// Transfers of 10 GAS 
         //////// 0L //////// enabled when epoch is 1000
@@ -1082,23 +1083,28 @@ module DiemAccount {
             !Vector::contains(&community_wallets, &sender_addr), 
             Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
         );
-
+        print(&2002);
         /////// 0L /////////
         if (DiemConfig::check_transfer_enabled()) {
-            if(!AccountLimits::has_limits_published<GAS>(sender_addr)){
-                AccountLimits::publish_restricted_limits_definition_OL<GAS>(sender);
-            };
+          print(&20021);
+            // if(!AccountLimits::has_limits_published<GAS>(sender_addr)){
+            //     AccountLimits::publish_restricted_limits_definition_OL<GAS>(sender);
+            // };
+            print(&20022);
             // Check if limits window is published
-            if(!AccountLimits::has_window_published<GAS>(sender_addr)){
-                AccountLimits::publish_window_OL<GAS>(sender, sender_addr);
-            };
+            // if(!AccountLimits::has_window_published<GAS>(sender_addr)){
+            //     AccountLimits::publish_window_OL<GAS>(sender, sender_addr);
+            // };
+            print(&20023);
         } else {
+          print(&20024);
+            // only VM can make TXs if transfers are not enabled.
             assert(
                 sender_addr == CoreAddresses::DIEM_ROOT_ADDRESS(), 
                 Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
             );
         };
-
+        print(&2003);
         // Abort if we already extracted the unique withdraw capability for this account.
         assert(
             !delegated_withdraw_capability(sender_addr),
@@ -1306,52 +1312,56 @@ module DiemAccount {
         restore_withdraw_capability(cap);
     }
     
-
+    use 0x1::Debug::print;
+    /////// 0L /////////
     /// Withdraw `amount` Diem<Token> from the address embedded in `WithdrawCapability` and
     /// deposits it into the `payee`'s account balance.
     /// The included `metadata` will appear in the `SentPaymentEvent` and `ReceivedPaymentEvent`.
     /// The `metadata_signature` will only be checked if this payment is 
     /// subject to the dual attestation protocol
-    // Function code: 13 Prefix: 170113         /////// 0L /////////
+    // Function code: 13 Prefix: 170113
     public fun pay_from<Token: store>(
         cap: &WithdrawCapability,
         payee: address,
         amount: u64,
         metadata: vector<u8>,
         metadata_signature: vector<u8>
-    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWallet { //////// 0L ////////
+    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWallet {
         //////// 0L //////// Transfers disabled by default
         //////// 0L //////// Transfers of 10 GAS 
         //////// 0L //////// enabled when validator count is 100. 
-        if (DiemConfig::check_transfer_enabled()) {
-            // Ensure that this withdrawal is compliant with the account limits on
-            // this account.
-            assert(
-                AccountLimits::update_withdrawal_limits<Token>(
-                    amount,
-                    {{*&cap.account_address}},
-                    &borrow_global<AccountOperationsCapability>(
-                        CoreAddresses::DIEM_ROOT_ADDRESS()
-                    ).limits_cap
-                ),
-                Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
-            );
-        } else {
-            assert(
-                *&cap.account_address == CoreAddresses::DIEM_ROOT_ADDRESS(),
-                Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
-            );
-        };
+        print(&0100);
+        // if (DiemConfig::check_transfer_enabled()) {
+        //     // Ensure that this withdrawal is compliant with the account limits on
+        //     // this account.
+        //     assert(
+        //         AccountLimits::update_withdrawal_limits<Token>(
+        //             amount,
+        //             {{*&cap.account_address}},
+        //             &borrow_global<AccountOperationsCapability>(
+        //                 CoreAddresses::DIEM_ROOT_ADDRESS()
+        //             ).limits_cap
+        //         ),
+        //         Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
+        //     );
+        // } else {
+        //     assert(
+        //         *&cap.account_address == CoreAddresses::DIEM_ROOT_ADDRESS(),
+        //         Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
+        //     );
+        // };
         
         // check amount if it is a slow wallet
+        print(&0101);
         if (is_slow(*&cap.account_address)) {
+          print(&01011);
           assert(
                 amount < unlocked_amount(*&cap.account_address),
                 Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
             );
 
         };
-
+        print(&0102);
         deposit<Token>(
             *&cap.account_address,
             payee,
@@ -1359,7 +1369,7 @@ module DiemAccount {
             metadata,
             metadata_signature
         );
-
+        print(&0103);
         // in case of slow wallet update the tracker
         if (is_slow(*&cap.account_address)) {
           update_unlocked_tracker(*&cap.account_address, amount);

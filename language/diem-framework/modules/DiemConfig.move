@@ -465,8 +465,13 @@ module DiemConfig {
         let transfer_enabled_epoch = TRANSFER_ENABLED_EPOCH;
         let config_ref = borrow_global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
         
-        // Calculating transfer limit in multiples of epoch
-        ((config_ref.epoch - transfer_enabled_epoch) * 10)
+        if (transfer_enabled_epoch > config_ref.epoch) {
+          // Calculating transfer limit in multiples of epoch
+          ((config_ref.epoch - transfer_enabled_epoch) * 10)
+        } else {
+          0
+        }
+        
     }
 
     public fun check_transfer_enabled(): bool acquires Configuration {
