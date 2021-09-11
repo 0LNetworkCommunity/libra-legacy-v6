@@ -4,7 +4,14 @@
 # Module `0x1::FullnodeState`
 
 
+<a name="@Summary_0"></a>
 
+## Summary
+
+This module tracks the activity of the network's fullnodes
+
+
+-  [Summary](#@Summary_0)
 -  [Resource `FullnodeCounter`](#0x1_FullnodeState_FullnodeCounter)
 -  [Function `init`](#0x1_FullnodeState_init)
 -  [Function `reconfig`](#0x1_FullnodeState_reconfig)
@@ -20,6 +27,7 @@
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
+<b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 </code></pre>
@@ -122,7 +130,7 @@
 
 ## Function `reconfig`
 
-On recongfiguration events, reset.
+Called by root at the epoch boundary for each fullnode, updates the cumulative stats and resets the others
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_reconfig">reconfig</a>(vm: &signer, addr: address, proofs_in_epoch: u64)
@@ -135,9 +143,9 @@ On recongfiguration events, reset.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_reconfig">reconfig</a>(vm: &signer, addr: address, proofs_in_epoch: u64) <b>acquires</b> <a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a> {
-    <b>let</b> sender = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
-    <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(060001));
+    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(vm);
     <b>let</b> state = borrow_global_mut&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(addr);
+    // <b>update</b> cumulative values
     state.cumulative_proofs_submitted = state.cumulative_proofs_submitted + proofs_in_epoch;
     state.cumulative_proofs_paid = state.cumulative_proofs_paid + state.proofs_paid_in_epoch;
     state.cumulative_subsidy = state.cumulative_subsidy + state.subsidy_in_epoch;
@@ -156,7 +164,7 @@ On recongfiguration events, reset.
 
 ## Function `inc_payment_count`
 
-VM Increments payments in epoch. Increases by <code>count</code>
+VM Increments payments in epoch for <code>addr</code>. Increases by <code>count</code>
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_inc_payment_count">inc_payment_count</a>(vm: &signer, addr: address, count: u64)
@@ -169,7 +177,7 @@ VM Increments payments in epoch. Increases by <code>count</code>
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_inc_payment_count">inc_payment_count</a>(vm: &signer, addr: address, count: u64) <b>acquires</b> <a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a> {
-  <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(060004));
+  <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(vm);
   <b>let</b> state = borrow_global_mut&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(addr);
   state.proofs_paid_in_epoch = state.proofs_paid_in_epoch + count;
 }
@@ -183,7 +191,7 @@ VM Increments payments in epoch. Increases by <code>count</code>
 
 ## Function `inc_payment_value`
 
-VM Increments payments in epoch. Increases by <code>count</code>
+VM Increments subsidy in epoch for <code>addr</code>. Increases by <code>value</code>
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_inc_payment_value">inc_payment_value</a>(vm: &signer, addr: address, value: u64)
@@ -196,7 +204,7 @@ VM Increments payments in epoch. Increases by <code>count</code>
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_inc_payment_value">inc_payment_value</a>(vm: &signer, addr: address, value: u64) <b>acquires</b> <a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a> {
-  <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(060005));
+  <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(vm);
   <b>let</b> state = borrow_global_mut&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(addr);
   state.subsidy_in_epoch = state.subsidy_in_epoch + value;
 }
@@ -210,6 +218,7 @@ VM Increments payments in epoch. Increases by <code>count</code>
 
 ## Function `is_init`
 
+Function to check whether or not the module has been initialized
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_is_init">is_init</a>(addr: address): bool
@@ -234,6 +243,9 @@ VM Increments payments in epoch. Increases by <code>count</code>
 
 ## Function `is_onboarding`
 
+Function checks to see if the node is in the process of onboarding
+The first proof is submitted by the node doing the onboarding, so if
+proof submitted < 2, the node hasn't yet produced a proof
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_is_onboarding">is_onboarding</a>(addr: address): bool
@@ -262,6 +274,7 @@ VM Increments payments in epoch. Increases by <code>count</code>
 
 ## Function `get_address_proof_count`
 
+Get the number of proofs submitted in the current epoch for <code>addr</code>
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_get_address_proof_count">get_address_proof_count</a>(addr: address): u64
@@ -286,6 +299,7 @@ VM Increments payments in epoch. Increases by <code>count</code>
 
 ## Function `get_cumulative_subsidy`
 
+Get the cumulative subsity for <code>addr</code>
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_get_cumulative_subsidy">get_cumulative_subsidy</a>(addr: address): u64
@@ -311,6 +325,7 @@ VM Increments payments in epoch. Increases by <code>count</code>
 
 ## Function `test_set_fullnode_fixtures`
 
+initialize fullnode state for a node and set stats to given values
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_test_set_fullnode_fixtures">test_set_fullnode_fixtures</a>(vm: &signer, addr: address, proofs_submitted_in_epoch: u64, proofs_paid_in_epoch: u64, subsidy_in_epoch: u64, cumulative_proofs_submitted: u64, cumulative_proofs_paid: u64, cumulative_subsidy: u64)
@@ -353,7 +368,7 @@ VM Increments payments in epoch. Increases by <code>count</code>
 
 ## Function `mock_proof`
 
-Testhelper
+Add <code>count</code> proofs to the number submitted by <code>sender</code>
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_mock_proof">mock_proof</a>(sender: &signer, count: u64)
@@ -366,6 +381,7 @@ Testhelper
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_mock_proof">mock_proof</a>(sender: &signer, count: u64) <b>acquires</b> <a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a> {
+  <b>assert</b>(is_testnet(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(060006));
   <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   <b>let</b> state = borrow_global_mut&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(addr);
   state.proofs_submitted_in_epoch = state.proofs_submitted_in_epoch + count;

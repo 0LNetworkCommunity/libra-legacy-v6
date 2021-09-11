@@ -556,7 +556,7 @@ module DiemAccount {
         make_account(new_signer, auth_key_prefix);
         make_account(new_op_account, op_auth_key_prefix);
 
-        MinerState::reset_rate_limit(sender_addr);
+        MinerState::reset_rate_limit(sender);
 
         // Transfer for owner
         onboarding_gas_transfer<GAS>(sender, new_account_address);

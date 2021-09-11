@@ -1430,7 +1430,7 @@ Initialize this module. This is only callable from genesis.
     <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_signer, auth_key_prefix);
     <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_op_account, op_auth_key_prefix);
 
-    <a href="MinerState.md#0x1_MinerState_reset_rate_limit">MinerState::reset_rate_limit</a>(sender_addr);
+    <a href="MinerState.md#0x1_MinerState_reset_rate_limit">MinerState::reset_rate_limit</a>(sender);
 
     // Transfer for owner
     <a href="DiemAccount.md#0x1_DiemAccount_onboarding_gas_transfer">onboarding_gas_transfer</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender, new_account_address);
