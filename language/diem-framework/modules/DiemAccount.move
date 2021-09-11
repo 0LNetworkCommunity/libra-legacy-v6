@@ -501,7 +501,7 @@ module DiemAccount {
         op_validator_network_addresses: vector<u8>,
         op_fullnode_network_addresses: vector<u8>,
         op_human_name: vector<u8>,
-    ):address acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
+    ):address acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWalletList { //////// 0L ////////
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
         assert(MinerState::can_create_val_account(sender_addr), Errors::limit_exceeded(120102));
@@ -564,7 +564,7 @@ module DiemAccount {
         onboarding_gas_transfer<GAS>(sender, op_address);
 
         let new_signer = create_signer(new_account_address);
-        Wallet::set_slow(&new_signer);
+        set_slow(&new_signer);
 
         new_account_address
     }
@@ -1667,7 +1667,7 @@ module DiemAccount {
         
         //////// 0L ////////
         // NOTE: if all accounts are to be slow set this
-        // Wallet::set_slow(&new_account);
+        // set_slow(&new_account);
     }
     spec make_account {
         pragma opaque;
@@ -2679,7 +2679,7 @@ module DiemAccount {
         new_account_address: address,
         auth_key_prefix: vector<u8>,
         human_name: vector<u8>,
-    ) acquires AccountOperationsCapability {
+    ) acquires AccountOperationsCapability, SlowWalletList {
         let new_account = create_signer(new_account_address);
         // The dr_account account is verified to have the diem root role in `Roles::new_validator_role`
         Roles::new_validator_role(dr_account, &new_account);
@@ -2689,7 +2689,7 @@ module DiemAccount {
         make_account(new_account, auth_key_prefix);
 
         let new_account = create_signer(new_account_address);
-        Wallet::set_slow(&new_account);
+        set_slow(&new_account);
     }
 
     spec create_validator_account {
@@ -2998,10 +2998,10 @@ module DiemAccount {
     }
     
     /////// 0L /////////
-    public fun vm_migrate_slow_wallet(vm: &signer, addr: address) {
+    public fun vm_migrate_slow_wallet(vm: &signer, addr: address) acquires SlowWalletList{
       CoreAddresses::assert_diem_root(vm);
       let sig = create_signer(addr);
-      Wallet::set_slow(&sig);
+      set_slow(&sig);
     }
 
 
@@ -3068,6 +3068,85 @@ module DiemAccount {
       exists<CumulativeDeposits>(addr)
     }
 
+
+    //////// SLOW WALLETS ////////
+    // Slow wallets have a limited amount available to spend at every epoch.
+    // Every epoch a new amount is made available (unlocked)
+    // slow wallets can use the normal payment and transfer mechanisms to move the unlocked amount.
+    struct SlowWallet has key {
+        unlocked: u64,
+        transferred: u64,
+    }
+
+    struct SlowWalletList has key {
+        list: vector<address>
+    }
+
+    public fun vm_init_slow(vm: &signer){
+      CoreAddresses::assert_vm(vm);
+      if (!exists<SlowWalletList>(@0x0)) {
+        move_to<SlowWalletList>(vm, SlowWalletList {
+          list: Vector::empty<address>()
+        });  
+      }
+    }
+
+    public fun set_slow(sig: &signer) acquires SlowWalletList {
+      if (exists<SlowWalletList>(@0x0)) {
+        let addr = Signer::address_of(sig);
+        let list = get_slow_list();
+        if (!Vector::contains<address>(&list, &addr)) {
+            let s = borrow_global_mut<SlowWalletList>(@0x0);
+            Vector::push_back(&mut s.list, addr);
+        };
+
+        if (!exists<SlowWallet>(Signer::address_of(sig))) {
+          move_to<SlowWallet>(sig, SlowWallet {
+            unlocked: 0,
+            transferred: 0,
+          });  
+        }
+      }
+    }
+
+    public fun increment_all(vm: &signer, amount: u64) acquires SlowWallet, SlowWalletList{
+      CoreAddresses::assert_vm(vm);
+      let list = get_slow_list();
+      let i = 0;
+      while (i < Vector::length<address>(&list)) {
+        let addr = Vector::borrow<address>(&list, i);
+        let s = borrow_global_mut<SlowWallet>(*addr);
+        s.unlocked = s.unlocked + amount;
+      }
+    }
+
+    fun update_unlocked_tracker(payer_sig: &signer, amount: u64) acquires SlowWallet {
+      let payer = Signer::address_of(payer_sig);
+      let s = borrow_global_mut<SlowWallet>(payer);
+      // let invar = s.transferred + s.unlocked + amount;
+
+      s.transferred = s.transferred + amount;
+      s.unlocked = s.unlocked - amount;
+      
+      // assert(invar = s.transferred + s.unlocked + amount)
+
+    }
+
+    ///////// SLOW GETTERS ////////
+
+    public fun is_slow(addr: address): bool {
+      exists<SlowWallet>(addr)
+    }
+
+    // Getter for retrieving the list of slow wallets.
+    public fun get_slow_list(): vector<address> acquires SlowWalletList{
+      if (exists<SlowWalletList>(@0x0)) {
+        let s = borrow_global<SlowWalletList>(@0x0);
+        return *&s.list
+      } else {
+        return Vector::empty<address>()
+      }
+    }
 
     /////// TEST HELPERS //////
 

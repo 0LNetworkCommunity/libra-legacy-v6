@@ -69,12 +69,6 @@ module Wallet {
           list: Vector::empty<address>()
         });  
       };
-
-      if (!exists<SlowWalletList>(@0x0)) {
-        move_to<SlowWalletList>(vm, SlowWalletList {
-          list: Vector::empty<address>()
-        });  
-      }
     }
 
     public fun is_init_comm():bool {
@@ -394,58 +388,79 @@ module Wallet {
     }
 
 
-    //////// SLOW WALLETS ////////
-    struct SlowWallet has key {
-        unlocked: u64,
-        transferred: u64,
-    }
+    // //////// SLOW WALLETS ////////
+    // struct SlowWallet has key {
+    //     unlocked: u64,
+    //     transferred: u64,
+    // }
 
-    struct SlowWalletList has key {
-        list: vector<address>
-    }
+    // struct SlowWalletList has key {
+    //     list: vector<address>
+    // }
 
-    // public fun set_slow(sig: &signer) {
-    //   if (!exists<SlowWallet>(Signer::address_of(sig))) {
-    //     move_to<SlowWallet>(sig, SlowWallet {
-    //       is_slow: true,
-    //       unlocked: 0,
-    //       transferred: 0,
+    // public fun vm_init_slow(vm: &signer){
+    //   CoreAddresses::assert_vm(vm);
+    //   if (!exists<SlowWalletList>(@0x0)) {
+    //     move_to<SlowWalletList>(vm, SlowWalletList {
+    //       list: Vector::empty<address>()
     //     });  
     //   }
     // }
 
-    public fun set_slow(sig: &signer) acquires SlowWalletList {
-      if (exists<SlowWalletList>(@0x0)) {
-        let addr = Signer::address_of(sig);
-        let list = get_slow_list();
-        if (!Vector::contains<address>(&list, &addr)) {
-            let s = borrow_global_mut<SlowWalletList>(@0x0);
-            Vector::push_back(&mut s.list, addr);
-        };
+    // public fun set_slow(sig: &signer) acquires SlowWalletList {
+    //   if (exists<SlowWalletList>(@0x0)) {
+    //     let addr = Signer::address_of(sig);
+    //     let list = get_slow_list();
+    //     if (!Vector::contains<address>(&list, &addr)) {
+    //         let s = borrow_global_mut<SlowWalletList>(@0x0);
+    //         Vector::push_back(&mut s.list, addr);
+    //     };
 
-        if (!exists<SlowWallet>(Signer::address_of(sig))) {
-          move_to<SlowWallet>(sig, SlowWallet {
-            unlocked: 0,
-            transferred: 0,
-          });  
-        }
-      }
-    }
+    //     if (!exists<SlowWallet>(Signer::address_of(sig))) {
+    //       move_to<SlowWallet>(sig, SlowWallet {
+    //         unlocked: 0,
+    //         transferred: 0,
+    //       });  
+    //     }
+    //   }
+    // }
 
-    ///////// GETTERS ////////
+    // public fun increment_all(vm: &signer, amount: u64) {
+    //   CoreAddresses::assert_vm(vm);
+    //   let list = get_slow_list();
+    //   let i = 0;
+    //   while i < Vector::length<address>(list) {
+    //     let addr = Vector::borrow<Element>(&list, &i);
+    //     let s = borrow_global_mut<SlowWallet>(@addr);
+    //     s.unlocked = s.unlocked + amount;
+    //   }
+    // }
 
-    public fun is_slow(addr: address): bool {
-      exists<SlowWallet>(addr)
-    }
+    // public fun transfer_from_unlocked(payer_sig: &signer, destination: address, amount: u64) {
+    //   let s = borrow_global_mut<SlowWalletList>(@Signer::address_of(payer_sig));
+    //   // let invar = s.transferred + s.unlocked + amount;
 
-    // Getter for retrieving the list of slow wallets.
-    public fun get_slow_list(): vector<address> acquires SlowWalletList{
-      if (exists<SlowWalletList>(@0x0)) {
-        let s = borrow_global<SlowWalletList>(@0x0);
-        return *&s.list
-      } else {
-        return Vector::empty<address>()
-      }
-    }
+    //   s.transferred = s.transferred + amount;
+    //   s.unlocked = s.unlocked - amount;
+      
+    //   // assert(invar = s.transferred + s.unlocked + amount)
+
+    // }
+
+    // ///////// GETTERS ////////
+
+    // public fun is_slow(addr: address): bool {
+    //   exists<SlowWallet>(addr)
+    // }
+
+    // // Getter for retrieving the list of slow wallets.
+    // public fun get_slow_list(): vector<address> acquires SlowWalletList{
+    //   if (exists<SlowWalletList>(@0x0)) {
+    //     let s = borrow_global<SlowWalletList>(@0x0);
+    //     return *&s.list
+    //   } else {
+    //     return Vector::empty<address>()
+    //   }
+    // }
 }
 }
