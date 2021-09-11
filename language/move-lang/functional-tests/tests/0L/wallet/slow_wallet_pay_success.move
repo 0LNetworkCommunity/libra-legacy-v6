@@ -4,18 +4,11 @@
 
 
 //! new-transaction
-//! sender: carol
+//! sender: diemroot
 script {
-use 0x1::GAS::GAS;
 use 0x1::DiemAccount;
-use 0x1::Debug::print;
-fun main(account: signer) {
-    let with_cap = DiemAccount::extract_withdraw_capability(&account);
-    DiemAccount::pay_from<GAS>(&with_cap, @{{bob}}, 10, x"", x"");
-    DiemAccount::restore_withdraw_capability(with_cap);
-    print(&DiemAccount::balance<GAS>(@{{bob}}));
-    // assert(DiemAccount::balance<GAS>(@{{bob}}) == 10, 735701);
-    // assert(DiemAccount::sequence_number(addr) == 0, 84);
+fun main(vm: signer) {
+    DiemAccount::increment_all(&vm, 100);
 }
 }
 
@@ -30,6 +23,7 @@ use 0x1::GAS::GAS;
 use 0x1::DiemAccount;
 use 0x1::Debug::print;
 fun main(account: signer) {
+
     let with_cap = DiemAccount::extract_withdraw_capability(&account);
     DiemAccount::pay_from<GAS>(&with_cap, @{{bob}}, 10, x"", x"");
     DiemAccount::restore_withdraw_capability(with_cap);
@@ -40,4 +34,4 @@ fun main(account: signer) {
 }
 
 
-// check: ABORTED
+// check: EXECUTED
