@@ -1451,14 +1451,12 @@ module DiemAccount {
         include WithdrawFromEmits<Token>;
     }
     //////// 0L ////////
-    use 0x1::Debug::print;
     public fun genesis_fund_operator(
       vm: &signer,
       owner_sig: &signer,
       oper: address,
     ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits {
       CoreAddresses::assert_vm(vm);
-      print(&balance<GAS>(Signer::address_of(owner_sig)));
       onboarding_gas_transfer<GAS>(owner_sig, oper);
 
 
