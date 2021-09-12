@@ -30,7 +30,7 @@ ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
 MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
 else
-REPO_NAME = experimental-genesis
+REPO_NAME = rex-testnet-genesis
 NODE_ENV = prod
 endif
 
@@ -153,7 +153,8 @@ treasury:
 
 #### GENESIS REGISTRATION ####
 ceremony:
-	export NODE_ENV=prod && miner ceremony
+	NODE_ENV=prod ol init
+  NODE_ENV=prod miner zero
 
 register:
 # export ACC=$(shell toml get ${DATA_PATH}/0L.toml profile.account)
