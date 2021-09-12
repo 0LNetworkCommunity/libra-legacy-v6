@@ -1,6 +1,6 @@
 
 ## Writing and Using ZK-Mechanisms in Move
-Zero-Knowledge Proofs are an emerging technology in Blockchains that have lots of potential. We can leverage ZK-STARKs to generate and verify proofs use and use the Cairo programming language to define what to check when verifying.
+Zero-Knowledge Proofs are an emerging technology in Blockchains that have lots of potential. We can leverage ZK-STARKs to generate and verify proofs use and use the Cairo programming language to define what to check when verifying. Currently Move instructions are defined for checking if a number is greater than another value. This document is targeted for those who wish to create their own functionality.
 
 
 ### Step 1: Write the Cairo Program

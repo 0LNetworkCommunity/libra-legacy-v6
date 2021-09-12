@@ -1,5 +1,5 @@
 use std::env;
-use std::panic;
+
 use crate::ropsten_query;
 use crate::cairo_sharp;
 use cairo_verifier::verify_proof as cairo_verifier;
