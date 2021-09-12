@@ -318,4 +318,6 @@ pub enum NativeCostIndex {
     //////// 0L ////////
     VDF_VERIFY = 18,
     VDF_PARSE = 19,
+    ZK_VERIFY = 20,
+    ZK_PROVE = 21,
 }

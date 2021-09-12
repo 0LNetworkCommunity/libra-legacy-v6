@@ -25,6 +25,7 @@ vm = { path = "../../vm", version = "0.1.0" }
 vdf = { path="../../../ol/verifiable_delay/vdf",version = "0.1.0"}
 hex = "0.4.2"
 libra-global-constants = { path = "../../../config/global-constants", version = "0.1.0"}
+zero-knowledge = { path="../../../ol/zero_knowledge/move_zk_native_function_linker",version = "0.1.0" }
 
 [features]
 default = []
