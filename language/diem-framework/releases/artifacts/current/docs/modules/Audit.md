@@ -15,7 +15,6 @@
 <b>use</b> <a href="MinerState.md#0x1_MinerState">0x1::MinerState</a>;
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig">0x1::ValidatorConfig</a>;
-<b>use</b> <a href="Wallet.md#0x1_Wallet">0x1::Wallet</a>;
 </code></pre>
 
 
@@ -48,7 +47,7 @@
   // has mining state
   <b>if</b> (!<a href="MinerState.md#0x1_MinerState_is_init">MinerState::is_init</a>(val)) <b>return</b> <b>false</b>;
   // is a slow wallet
-  <b>if</b> (!<a href="Wallet.md#0x1_Wallet_is_slow">Wallet::is_slow</a>(val)) <b>return</b> <b>false</b>;
+  <b>if</b> (!<a href="DiemAccount.md#0x1_DiemAccount_is_slow">DiemAccount::is_slow</a>(val)) <b>return</b> <b>false</b>;
 
   // TODO: has network settings for validator
 

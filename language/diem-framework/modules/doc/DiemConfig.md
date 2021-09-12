@@ -1072,8 +1072,13 @@ emits msg <b>to</b> handle;
     <b>let</b> transfer_enabled_epoch = <a href="DiemConfig.md#0x1_DiemConfig_TRANSFER_ENABLED_EPOCH">TRANSFER_ENABLED_EPOCH</a>;
     <b>let</b> config_ref = borrow_global&lt;<a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
 
-    // Calculating transfer limit in multiples of epoch
-    ((config_ref.epoch - transfer_enabled_epoch) * 10)
+    <b>if</b> (transfer_enabled_epoch &gt; config_ref.epoch) {
+      // Calculating transfer limit in multiples of epoch
+      ((config_ref.epoch - transfer_enabled_epoch) * 10)
+    } <b>else</b> {
+      0
+    }
+
 }
 </code></pre>
 

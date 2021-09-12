@@ -3116,7 +3116,7 @@ module DiemAccount {
       }
     }
 
-    public fun increment_all(vm: &signer, amount: u64) acquires SlowWallet, SlowWalletList{
+    public fun slow_wallet_epoch_drip(vm: &signer, amount: u64) acquires SlowWallet, SlowWalletList{
       CoreAddresses::assert_vm(vm);
       let list = get_slow_list();
       let i = 0;

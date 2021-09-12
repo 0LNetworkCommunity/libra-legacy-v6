@@ -3,17 +3,28 @@
 //! account: carol, 10GAS,
 
 
-//! new-transaction
-//! sender: diemroot
-script {
-use 0x1::DiemAccount;
-fun main(vm: signer) {
-    DiemAccount::slow_wallet_epoch_drip(&vm, 100);
-}
-}
+// //! new-transaction
+// //! sender: diemroot
+// script {
+// use 0x1::DiemAccount;
+// fun main(vm: signer) {
+//     DiemAccount::slow_wallet_epoch_drip(&vm, 100);
+// }
+// }
 
 
-// check: EXECUTED
+// // check: EXECUTED
+
+//////////////////////////////////////////////
+///// Trigger reconfiguration at 61 seconds ////
+//! block-prologue
+//! proposer: alice
+//! block-time: 61000000
+//! round: 15
+
+///// TEST RECONFIGURATION IS HAPPENING ////
+// check: NewEpochEvent
+//////////////////////////////////////////////
 
 // This transaction should fail because alice is a slow wallet, and has no GAS unlocked.
 //! new-transaction
