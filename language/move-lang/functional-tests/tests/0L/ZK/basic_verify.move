@@ -10,23 +10,24 @@ fun main() {
 	Vector::push_back(&mut name, 65);
 	let val1: u128 = 11;
 
-	let test1 = ZK::verify(name, val1);
-	assert(test1 == false, 41);
+	let (proof, proofParams, cairoAuxInput, taskMetadata, fact) = ZK::prove(name, val1);
+	let success = ZK::verify(proof, proofParams, cairoAuxInput, taskMetadata, fact);
+	assert( success == false, 41);
 
 	/* Test Case 2: val2 > x */
-	let name = Vector::empty<u8>();
-	Vector::push_back(&mut name, 65);
-	let val2: u128 = 3;
+	// let name = Vector::empty<u8>();
+	// Vector::push_back(&mut name, 65);
+	// let val2: u128 = 3;
 
-	let test2 = ZK::verify(name, val2);
-	assert(test2 == true, 4);
+	// let test2 = ZK::verify(name, val2);
+	// assert(test2 == true, 4);
 
-	/* Test Case 3: Empty name */
-	let name = Vector::empty<u8>();
-	let val3: u128 = 11;
+	// /* Test Case 3: Empty name */
+	// let name = Vector::empty<u8>();
+	// let val3: u128 = 11;
 
-	let test3 = ZK::verify(name, val3);
-	assert(test3 == true, 43);
+	// let test3 = ZK::verify(name, val3);
+	// assert(test3 == true, 43);
 
 	/* Test Case 4: Name with non-printable characters (Returns (intentional) error, fails functional tests at runtime) */
 	// let name = Vector::empty<u8>();

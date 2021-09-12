@@ -49,6 +49,7 @@ pub(crate) enum NativeFunction {
     VDFVerify,
     RedeemAuthKeyParse,
     ZKVerify,
+    ZKProve,
 }
 
 impl NativeFunction {
@@ -84,6 +85,7 @@ impl NativeFunction {
             (&CORE_CODE_ADDRESS, "VDF", "verify") => VDFVerify, // OL Change
             (&CORE_CODE_ADDRESS, "VDF", "extract_address_from_challenge") => RedeemAuthKeyParse,   // 0L change
             (&CORE_CODE_ADDRESS, "ZK", "verify") => ZKVerify,
+            (&CORE_CODE_ADDRESS, "ZK", "prove") => ZKProve,
             _ => return None,
 
         })
@@ -121,6 +123,7 @@ impl NativeFunction {
             Self::VDFVerify => vdf::verify(ctx, t, v), // 0L change
             Self::RedeemAuthKeyParse => vdf::extract_address_from_challenge(ctx, t, v),
             Self::ZKVerify => zk::verify(ctx, t, v),
+            Self::ZKProve => zk::prove(ctx, t, v),
         };
         debug_assert!(match &result {
             Err(e) => e.major_status().status_type() == StatusType::InvariantViolation,

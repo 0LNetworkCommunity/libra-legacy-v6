@@ -19,3 +19,4 @@ ethereum_abi = { path = "../rust-ethereum-abi-0.1.0" }
 hex = "^0.3.0"
 cairo-verifier = { git = "https://github.com/patrickbiel01/Cairo_Verifier", branch = "main" }
 tokio = { version = "0.2.22", features = ["full"] }
+num256 = "^0.2.12"

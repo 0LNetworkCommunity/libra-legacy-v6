@@ -9092,6 +9092,7 @@ dependencies = [
  "cairo-verifier",
  "ethereum_abi",
  "hex 0.3.2",
+ "num256",
  "project-root",
  "tokio",
  "web3",
