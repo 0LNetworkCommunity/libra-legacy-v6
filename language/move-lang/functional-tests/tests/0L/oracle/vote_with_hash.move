@@ -9,16 +9,16 @@
 script {
     use 0x1::MinerState;
     use 0x1::NodeWeight;
-    fun main(sender: &signer) {
-        MinerState::test_helper_set_weight_vm(sender, @{{alice}}, 10);
+    fun main(sender: signer) {
+        MinerState::test_helper_set_weight_vm(&sender, @{{alice}}, 10);
         assert(NodeWeight::proof_of_weight(@{{alice}}) == 10, 7357300101011088);
-        MinerState::test_helper_set_weight_vm(sender, @{{bob}}, 10);
+        MinerState::test_helper_set_weight_vm(&sender, @{{bob}}, 10);
         assert(NodeWeight::proof_of_weight(@{{bob}}) == 10, 7357300101011088);
-        MinerState::test_helper_set_weight_vm(sender, @{{carol}}, 10);
+        MinerState::test_helper_set_weight_vm(&sender, @{{carol}}, 10);
         assert(NodeWeight::proof_of_weight(@{{carol}}) == 10, 7357300101011088);
-        MinerState::test_helper_set_weight_vm(sender, @{{dave}}, 31);
+        MinerState::test_helper_set_weight_vm(&sender, @{{dave}}, 31);
         assert(NodeWeight::proof_of_weight(@{{dave}}) == 31, 7357300101011088);
-        MinerState::test_helper_set_weight_vm(sender, @{{eve}}, 31);
+        MinerState::test_helper_set_weight_vm(&sender, @{{eve}}, 31);
         assert(NodeWeight::proof_of_weight(@{{eve}}) == 31, 7357300101011088);
     }
 }
@@ -33,10 +33,10 @@ script {
   use 0x1::Oracle;
   use 0x1::Vector;
   use 0x1::Upgrade;
-  fun main(sender: &signer){
+  fun main(sender: signer){
       let id = 1;
       let data = b"bello";
-      Oracle::handler(sender, id, data);
+      Oracle::handler(&sender, id, data);
       let vec = Oracle::test_helper_query_oracle_votes();
 
       let e = *Vector::borrow<address>(&vec, 0);
@@ -55,10 +55,10 @@ script {
   use 0x1::Oracle;
   use 0x1::Vector;
   use 0x1::Upgrade;
-  fun main(sender: &signer){
+  fun main(sender: signer){
       let id = 1;
       let data = b"bello";
-      Oracle::handler(sender, id, data);
+      Oracle::handler(&sender, id, data);
       let vec = Oracle::test_helper_query_oracle_votes();
 
       let e = *Vector::borrow<address>(&vec, 1);
@@ -77,12 +77,12 @@ script {
   use 0x1::Vector;
   use 0x1::Upgrade;
   use 0x1::Hash;
-  fun main(sender: &signer){
+  fun main(sender: signer){
       let id = 2;
       let data = b"bello";
       let hash = Hash::sha2_256(data);
       //print(&hash);
-      Oracle::handler(sender, id, hash);
+      Oracle::handler(&sender, id, hash);
       let vec = Oracle::test_helper_query_oracle_votes();
       let e = *Vector::borrow<address>(&vec, 2);
       assert(e == @{{carol}}, 7357123401011000);
@@ -112,10 +112,10 @@ script {
   use 0x1::Oracle;
   use 0x1::Vector;
   use 0x1::Upgrade;
-  fun main(sender: &signer){
+  fun main(sender: signer){
       let id = 1;
       let data = b"hello";
-      Oracle::handler(sender, id, data);
+      Oracle::handler(&sender, id, data);
       let vec = Oracle::test_helper_query_oracle_votes();
       let e = *Vector::borrow<address>(&vec, 3);
       assert(e == @{{dave}}, 7357123401011000);
@@ -146,12 +146,12 @@ script {
   use 0x1::Upgrade;
   use 0x1::Hash;
   //use 0x1::Debug::print;
-  fun main(sender: &signer){
+  fun main(sender: signer){
       let id = 2;
       let data = b"hello";
       let hash = Hash::sha2_256(data);
       //print(&hash);
-      Oracle::handler(sender, id, hash);
+      Oracle::handler(&sender, id, hash);
       let vec = Oracle::test_helper_query_oracle_votes();
       let e = *Vector::borrow<address>(&vec, 4);
       assert(e == @{{eve}}, 7357123401011000);

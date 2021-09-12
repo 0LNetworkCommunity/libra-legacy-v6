@@ -11,18 +11,18 @@
 script {
     use 0x1::MinerState;
     use 0x1::NodeWeight;
-    fun main(sender: &signer) {
-        MinerState::test_helper_set_weight_vm(sender, @{{alice}}, 10);
+    fun main(sender: signer) {
+        MinerState::test_helper_set_weight_vm(&sender, @{{alice}}, 10);
         assert(NodeWeight::proof_of_weight(@{{alice}}) == 10, 7357300101011088);
-        MinerState::test_helper_set_weight_vm(sender, @{{bob}}, 10);
+        MinerState::test_helper_set_weight_vm(&sender, @{{bob}}, 10);
         assert(NodeWeight::proof_of_weight(@{{bob}}) == 10, 7357300101011088);
-        MinerState::test_helper_set_weight_vm(sender, @{{charlie}}, 10);
+        MinerState::test_helper_set_weight_vm(&sender, @{{charlie}}, 10);
         assert(NodeWeight::proof_of_weight(@{{charlie}}) == 10, 7357300101011088);
-        MinerState::test_helper_set_weight_vm(sender, @{{jim}}, 31);
+        MinerState::test_helper_set_weight_vm(&sender, @{{jim}}, 31);
         assert(NodeWeight::proof_of_weight(@{{jim}}) == 31, 7357300101011088);
-        MinerState::test_helper_set_weight_vm(sender, @{{lucy}}, 31);
+        MinerState::test_helper_set_weight_vm(&sender, @{{lucy}}, 31);
         assert(NodeWeight::proof_of_weight(@{{lucy}}) == 31, 7357300101011088);
-        MinerState::test_helper_set_weight_vm(sender, @{{thomas}}, 31);
+        MinerState::test_helper_set_weight_vm(&sender, @{{thomas}}, 31);
         assert(NodeWeight::proof_of_weight(@{{thomas}}) == 31, 7357300101011088);
     }
 }
@@ -32,9 +32,9 @@ script {
 //! sender: lucy
 script {
   use 0x1::Oracle;
-  fun main(sender: &signer){
+  fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
-      Oracle::enable_delegation(sender);
+      Oracle::enable_delegation(&sender);
     }
   }
 }
@@ -44,10 +44,10 @@ script {
 //! sender: jim
 script {
   use 0x1::Oracle;
-  fun main(sender: &signer){
+  fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
-      Oracle::enable_delegation(sender);
-      Oracle::delegate_vote(sender, @{{lucy}});
+      Oracle::enable_delegation(&sender);
+      Oracle::delegate_vote(&sender, @{{lucy}});
       assert(Oracle::check_number_delegates(@{{lucy}}) == 1, 5);
     }
   }
@@ -58,9 +58,9 @@ script {
 //! sender: alice
 script {
   use 0x1::Oracle;
-  fun main(sender: &signer){
+  fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
-      Oracle::enable_delegation(sender);
+      Oracle::enable_delegation(&sender);
     }
   }
 }
@@ -70,10 +70,10 @@ script {
 //! sender: thomas
 script {
   use 0x1::Oracle;
-  fun main(sender: &signer){
+  fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
-      Oracle::enable_delegation(sender);
-      Oracle::delegate_vote(sender, @{{alice}});
+      Oracle::enable_delegation(&sender);
+      Oracle::delegate_vote(&sender, @{{alice}});
       assert(Oracle::check_number_delegates(@{{alice}}) == 1, 5);
     }
   }
@@ -84,10 +84,10 @@ script {
 //! sender: charlie
 script {
   use 0x1::Oracle;
-  fun main(sender: &signer){
+  fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
-      Oracle::enable_delegation(sender);
-      Oracle::delegate_vote(sender, @{{lucy}});
+      Oracle::enable_delegation(&sender);
+      Oracle::delegate_vote(&sender, @{{lucy}});
       assert(Oracle::check_number_delegates(@{{lucy}}) == 2, 5);
     }
   }
@@ -98,9 +98,9 @@ script {
 //! sender: charlie
 script {
   use 0x1::Oracle;
-  fun main(sender: &signer){
+  fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
-      Oracle::remove_delegate_vote(sender);
+      Oracle::remove_delegate_vote(&sender);
       assert(Oracle::check_number_delegates(@{{lucy}}) == 1, 5);
     }
   }
@@ -113,11 +113,11 @@ script {
   use 0x1::Oracle;
   use 0x1::Vector;
   use 0x1::Upgrade;
-  fun main(sender: &signer){
+  fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       let id = 1;
       let data = b"bello";
-      Oracle::handler(sender, id, data);
+      Oracle::handler(&sender, id, data);
       let vec = Oracle::test_helper_query_oracle_votes();
 
       let e = *Vector::borrow<address>(&vec, 0);
@@ -138,11 +138,11 @@ script {
   use 0x1::Oracle;
   use 0x1::Vector;
   use 0x1::Upgrade;
-  fun main(sender: &signer){
+  fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       let id = 1;
       let data = b"hello";
-      Oracle::handler(sender, id, data);
+      Oracle::handler(&sender, id, data);
       let vec = Oracle::test_helper_query_oracle_votes();
 
       let e = *Vector::borrow<address>(&vec, 2);
@@ -165,14 +165,14 @@ script {
   use 0x1::Vector;
   use 0x1::Hash;
   //use 0x1::Debug::print;
-  fun main(sender: &signer){
+  fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       //already voted, must ensure vote not counted again
       let id = 2;
       let data = b"bello";
       let hash = Hash::sha2_256(data);
       //print(&hash);
-      Oracle::handler(sender, id, hash);
+      Oracle::handler(&sender, id, hash);
       let vec = Oracle::test_helper_query_oracle_votes();
       let e = Vector::length<address>(&vec);
       assert(e == 3, 7357123401011002);
@@ -190,12 +190,12 @@ script {
   use 0x1::Vector;
   use 0x1::Upgrade;
   use 0x1::Hash;
-  fun main(sender: &signer){
+  fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       let id = 2;
       let data = b"hello";
       let hash = Hash::sha2_256(data);
-      Oracle::handler(sender, id, hash);
+      Oracle::handler(&sender, id, hash);
       let vec = Oracle::test_helper_query_oracle_votes();
       let e = *Vector::borrow<address>(&vec, 3);
       assert(e == @{{lucy}}, 7357123401011000);
@@ -215,11 +215,11 @@ script {
 script {
   use 0x1::Oracle;
   use 0x1::Vector;
-  fun main(sender: &signer){
+  fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       let id = 1;
       let data = b"hello";
-      Oracle::handler(sender, id, data);
+      Oracle::handler(&sender, id, data);
       // ensure jim's vote is not counted twice
       let vec = Oracle::test_helper_query_oracle_votes();
       let e = Vector::length<address>(&vec);
@@ -237,13 +237,13 @@ script {
   use 0x1::Upgrade;
   use 0x1::Hash;
   //use 0x1::Debug::print;
-  fun main(sender: &signer){
+  fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       let id = 2;
       let data = b"hello";
       let hash = Hash::sha2_256(data);
       //print(&hash);
-      Oracle::handler(sender, id, hash);
+      Oracle::handler(&sender, id, hash);
       let vec = Oracle::test_helper_query_oracle_votes();
       let e = *Vector::borrow<address>(&vec, 5);
       assert(e == @{{charlie}}, 7357123401011000);
