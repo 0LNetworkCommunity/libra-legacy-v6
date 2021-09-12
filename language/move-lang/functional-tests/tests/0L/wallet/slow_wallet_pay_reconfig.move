@@ -22,6 +22,8 @@ script {
 use 0x1::GAS::GAS;
 use 0x1::DiemAccount;
 fun main(account: signer) {
+    assert(DiemAccount::unlocked_amount(@{{alice}}) == 10, 735701);
+    assert(DiemAccount::balance<GAS>(@{{bob}}) == 10, 735701);
 
     let with_cap = DiemAccount::extract_withdraw_capability(&account);
     DiemAccount::pay_from<GAS>(&with_cap, @{{bob}}, 5, x"", x"");
