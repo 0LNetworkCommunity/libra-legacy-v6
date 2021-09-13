@@ -7,6 +7,22 @@ A network genesis ceremony has two steps:
 
 After the ceremony completes, one or more genesis blocks will exist. The canonical chain will be the block that has the most consensus.
 
+# TL;DR
+You will need a few files in place before starting with genesis registration. 
+
+- .0L/github_token.txt: the Github authentication token (required). [Link](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token)
+
+- .0L/blocks/block_0.json of a prexisting Delay tower (optional - you can always use the tools to start a new tower)
+- .0L/autopay_batch.json: autopay instructions to include in registration profile (optional)
+
+If you don't already have a mnemonic and block_0.json, see instructions to generate are below.
+
+Then using the makefile helpers you can register as such:
+
+```
+make ceremony register
+```
+
 ## infrastructure
 
 A central github repository will be provided for genesis (GENESIS_REPO). The repository is initialized in an empty state. All Pull Requests to this repository are to be accepted without review. The repository only aims to collect expressions of interest in participating in genesis.
@@ -49,10 +65,16 @@ Clone the project onto your machine. Cd into the project directory. Checkout the
 git clone https://github.com/OLSF/libra.git
 cd <project root>
 git checkout <version> -f
-sudo apt install make // install make (if needed)
-make deps // installs ubuntu dependencies and rust. 
-          // it's best to exit your terminal and log in again to automatically have Cargo's bin dir added to your path
-make bins // builds the necessary binaries for registration
+
+// (optional) install `make`
+sudo apt install make 
+
+// installs ubuntu dependencies and rust. 
+make deps 
+// it's best to exit your terminal and log in again to automatically have Cargo's bin dir added to your path
+
+// builds the necessary binaries for registration (and node operations) and installs them
+make bins install 
 ```
 
 
@@ -61,7 +83,7 @@ make bins // builds the necessary binaries for registration
 * You may encounter errors related to memory running out.
 * Dependencies such as jq and rq are platform specific. The makefile targets Ubuntu.
 
-## 2. (Optional) Generate new account and keys
+## 2 (Optional) Generate new account and keys
 
 Unless you have previously generated an 0L mnemonic (e.g. for experimental network), you should create new keys.
 
@@ -97,7 +119,7 @@ This creates the files your validator needs to run 0L tools. By default files wi
 make app-configs
 ```
 
-## 5. Mine your first proof
+## 5. Mine your first proof (or bring first proof from elsewhere)
 
 NOTE: if you already have a puzzle tower, and you are porting it to this chain. Then skip this step, and simply copy the block_0.json into your data path (e.g. ~/.0L/blocks/block_0.json).
 
@@ -106,6 +128,9 @@ make genesis-miner
 ```
 This will mine the 0th proof of your tower, which is needed for genesis.
 
+### (Optional) bring previous tower proof 0
+
+If you are using a mnemonic and have previously generated a tower, then you can simply add the block_0.json to .0L/blocks/. You will eventually want to include all proofs of a previous tower.
 ## 6. Register for genesis
 
 The following script does several steps:
@@ -115,7 +140,7 @@ The following script does several steps:
 - pull: submitting a pull request from CANDIDATE_REPO to GENESIS_REPO
 
 ```
-make ceremony
+make ceremony register
 ```
 
 After this step check your data at `http://github.com/0LSF/experimental-genesis`
