@@ -36,9 +36,10 @@ module Globals {
       subsidy_ceiling_gas: u64,
       min_node_density: u64,
       max_node_density: u64,
-      burn_accounts: vector<address>,
+      burn_accounts: vector<address>, // TODO: remove
       difficulty: u64,
-      epoch_mining_threshold: u64,
+      epoch_mining_threshold: u64, //TODO: lower and upperbound threshold
+      epoch_slow_wallet_unlock: u64,
     }
 
 
@@ -81,6 +82,11 @@ module Globals {
       get_constants().epoch_mining_threshold
     }
 
+    /// Get the mining threshold 
+    public fun get_unlock(): u64 {
+      get_constants().epoch_slow_wallet_unlock
+    }
+
     /// get the constants for the current network 
     fun get_constants(): GlobalConstants {
       
@@ -97,6 +103,7 @@ module Globals {
           burn_accounts: Vector::singleton(@0xDEADDEAD),
           difficulty: 100,
           epoch_mining_threshold: 1,
+          epoch_slow_wallet_unlock: 10,
         }
 
       } else {
@@ -110,6 +117,7 @@ module Globals {
           burn_accounts: Vector::singleton(@0xDEADDEAD),
           difficulty: 5000000,
           epoch_mining_threshold: 1,
+          epoch_slow_wallet_unlock: 10000000,
         } 
       } else {
           return GlobalConstants {
@@ -126,6 +134,7 @@ module Globals {
           burn_accounts: Vector::singleton(@0xDEADDEAD),
           difficulty: 5000000, //10 mins on macbook pro 2.5 ghz quadcore
           epoch_mining_threshold: 20,
+          epoch_slow_wallet_unlock: 10000000,
           }
         }
       }

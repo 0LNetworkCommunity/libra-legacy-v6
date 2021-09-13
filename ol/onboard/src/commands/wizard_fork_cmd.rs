@@ -126,7 +126,7 @@ impl Runnable for ForkCmd {
         );
 
         // Initialize Validator Keys
-        init_cmd::initialize_validator(&wallet, &app_config, base_waypoint).unwrap();
+        init_cmd::initialize_validator(&wallet, &app_config, base_waypoint, false).unwrap();
         status_ok!("\nKey file written", "\n...........................\n");
 
         // fetching the genesis files from genesis-archive, will override the path for prebuilt genesis.
@@ -160,6 +160,7 @@ impl Runnable for ForkCmd {
             &prebuilt_genesis_path,
             &false,
             base_waypoint,
+            &None,
         )
         .unwrap();
 

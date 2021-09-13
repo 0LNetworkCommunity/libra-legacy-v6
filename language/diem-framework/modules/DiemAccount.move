@@ -37,7 +37,7 @@ module DiemAccount {
     use 0x1::VDF;
     use 0x1::Globals;
     use 0x1::MinerState;
-    use 0x1::TrustedAccounts;
+    // use 0x1::TrustedAccounts;
     use 0x1::FullnodeState;
     use 0x1::Testnet::is_testnet;
     use 0x1::FIFO;
@@ -262,7 +262,6 @@ module DiemAccount {
         FIFO::push<Escrow<Token>>(&mut state.list, new_escrow);
     }
 
-    // use 0x1::Debug::print;
     /////// 0L /////////
     public fun process_escrow<Token: store>(
         account: &signer
@@ -501,7 +500,7 @@ module DiemAccount {
         op_validator_network_addresses: vector<u8>,
         op_fullnode_network_addresses: vector<u8>,
         op_human_name: vector<u8>,
-    ):address acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
+    ):address acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWalletList { //////// 0L ////////
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
         assert(MinerState::can_create_val_account(sender_addr), Errors::limit_exceeded(120102));
@@ -562,6 +561,10 @@ module DiemAccount {
         onboarding_gas_transfer<GAS>(sender, new_account_address);
         // Transfer for operator as well
         onboarding_gas_transfer<GAS>(sender, op_address);
+
+        let new_signer = create_signer(new_account_address);
+        set_slow(&new_signer);
+
         new_account_address
     }
 
@@ -1078,23 +1081,14 @@ module DiemAccount {
             !Vector::contains(&community_wallets, &sender_addr), 
             Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
         );
-
         /////// 0L /////////
-        if (DiemConfig::check_transfer_enabled()) {
-            if(!AccountLimits::has_limits_published<GAS>(sender_addr)){
-                AccountLimits::publish_restricted_limits_definition_OL<GAS>(sender);
-            };
-            // Check if limits window is published
-            if(!AccountLimits::has_window_published<GAS>(sender_addr)){
-                AccountLimits::publish_window_OL<GAS>(sender, sender_addr);
-            };
-        } else {
+        if (!DiemConfig::check_transfer_enabled()) {
+            // only VM can make TXs if transfers are not enabled.
             assert(
                 sender_addr == CoreAddresses::DIEM_ROOT_ADDRESS(), 
                 Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
             );
         };
-
         // Abort if we already extracted the unique withdraw capability for this account.
         assert(
             !delegated_withdraw_capability(sender_addr),
@@ -1158,7 +1152,7 @@ module DiemAccount {
         metadata: vector<u8>,
         metadata_signature: vector<u8>,
         vm: &signer
-    ) acquires DiemAccount , Balance, AccountOperationsCapability, AutopayEscrow, CumulativeDeposits { //////// 0L ////////
+    ) acquires DiemAccount , Balance, AccountOperationsCapability, AutopayEscrow, CumulativeDeposits, SlowWallet { //////// 0L ////////
         if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
         if (amount < 0) return; // Todo: Use "==" ?
 
@@ -1275,7 +1269,7 @@ module DiemAccount {
         restore_withdraw_capability(cap);
     }
     
-    /////// 0L /////////
+    //////// 0L ////////
     /// VM can burn from an account's balance for administrative purposes (e.g. at epoch boundaries)
     public fun vm_burn_from_balance<Token: store>(
         addr : address,
@@ -1302,43 +1296,53 @@ module DiemAccount {
         restore_withdraw_capability(cap);
     }
     
-
+    // use 0x1::Debug::print;
+    /////// 0L /////////
     /// Withdraw `amount` Diem<Token> from the address embedded in `WithdrawCapability` and
     /// deposits it into the `payee`'s account balance.
     /// The included `metadata` will appear in the `SentPaymentEvent` and `ReceivedPaymentEvent`.
     /// The `metadata_signature` will only be checked if this payment is 
     /// subject to the dual attestation protocol
-    // Function code: 13 Prefix: 170113         /////// 0L /////////
+    // Function code: 13 Prefix: 170113
     public fun pay_from<Token: store>(
         cap: &WithdrawCapability,
         payee: address,
         amount: u64,
         metadata: vector<u8>,
         metadata_signature: vector<u8>
-    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
+    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWallet {
         //////// 0L //////// Transfers disabled by default
         //////// 0L //////// Transfers of 10 GAS 
         //////// 0L //////// enabled when validator count is 100. 
-        if (DiemConfig::check_transfer_enabled()) {
-            // Ensure that this withdrawal is compliant with the account limits on
-            // this account.
-            assert(
-                AccountLimits::update_withdrawal_limits<Token>(
-                    amount,
-                    {{*&cap.account_address}},
-                    &borrow_global<AccountOperationsCapability>(
-                        CoreAddresses::DIEM_ROOT_ADDRESS()
-                    ).limits_cap
-                ),
+        // print(&0100);
+        // if (DiemConfig::check_transfer_enabled()) {
+        //     // Ensure that this withdrawal is compliant with the account limits on
+        //     // this account.
+        //     assert(
+        //         AccountLimits::update_withdrawal_limits<Token>(
+        //             amount,
+        //             {{*&cap.account_address}},
+        //             &borrow_global<AccountOperationsCapability>(
+        //                 CoreAddresses::DIEM_ROOT_ADDRESS()
+        //             ).limits_cap
+        //         ),
+        //         Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
+        //     );
+        // } else {
+        //     assert(
+        //         *&cap.account_address == CoreAddresses::DIEM_ROOT_ADDRESS(),
+        //         Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
+        //     );
+        // };
+        
+        // check amount if it is a slow wallet
+        if (is_slow(*&cap.account_address)) {
+          assert(
+                amount < unlocked_amount(*&cap.account_address),
                 Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
             );
-        } else {
-            assert(
-                *&cap.account_address == CoreAddresses::DIEM_ROOT_ADDRESS(),
-                Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
-            );
-        };
 
+        };
         deposit<Token>(
             *&cap.account_address,
             payee,
@@ -1346,6 +1350,13 @@ module DiemAccount {
             metadata,
             metadata_signature
         );
+        // in case of slow wallet update the tracker
+        if (is_slow(*&cap.account_address)) {
+          update_unlocked_tracker(*&cap.account_address, amount);
+
+        };
+
+        
     }
     spec pay_from {
         pragma opaque;
@@ -1449,6 +1460,17 @@ module DiemAccount {
         let payer = cap.account_address;
         include DepositEmits<Token>{payer: payer};
         include WithdrawFromEmits<Token>;
+    }
+    //////// 0L ////////
+    public fun genesis_fund_operator(
+      vm: &signer,
+      owner_sig: &signer,
+      oper: address,
+    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits {
+      CoreAddresses::assert_vm(vm);
+      onboarding_gas_transfer<GAS>(owner_sig, oper);
+
+
     }
 
     /// Rotate the authentication key for the account under cap.account_address
@@ -1651,8 +1673,8 @@ module DiemAccount {
         );
         
         //////// 0L ////////
-        TrustedAccounts::initialize(&new_account);
-        Wallet::set_slow(&new_account);
+        // NOTE: if all accounts are to be slow set this
+        // set_slow(&new_account);
     }
     spec make_account {
         pragma opaque;
@@ -2042,8 +2064,7 @@ module DiemAccount {
     
     //////// 0L //////// 
     /// Return the current balance of the account at `addr`.
-    /// 0L change, return zero if it doesn't hold balance. In case the VM calls 
-    /// this on a bad account it won't halt
+    /// 0L change, return zero if it doesn't hold balance. In case the VM calls this on a bad account it won't halt
     public fun balance<Token: store>(addr: address): u64 acquires Balance {
         // if (!exists<Balance<Token>>(addr)) { return 0 };
         assert(exists<Balance<Token>>(addr), Errors::not_published(EPAYER_DOESNT_HOLD_CURRENCY));
@@ -2665,14 +2686,17 @@ module DiemAccount {
         new_account_address: address,
         auth_key_prefix: vector<u8>,
         human_name: vector<u8>,
-    ) acquires AccountOperationsCapability {
+    ) acquires AccountOperationsCapability, SlowWalletList {
         let new_account = create_signer(new_account_address);
         // The dr_account account is verified to have the diem root role in `Roles::new_validator_role`
         Roles::new_validator_role(dr_account, &new_account);
         Event::publish_generator(&new_account);
         ValidatorConfig::publish(&new_account, dr_account, human_name);
         add_currencies_for_account<GAS>(&new_account, false); /////// 0L /////////
-        make_account(new_account, auth_key_prefix)
+        make_account(new_account, auth_key_prefix);
+
+        let new_account = create_signer(new_account_address);
+        set_slow(&new_account);
     }
 
     spec create_validator_account {
@@ -2963,13 +2987,13 @@ module DiemAccount {
     // Deposits the `to_deposit` coin into the `payee`'s account balance 
     // with the attached `metadata`
     public fun vm_deposit_with_metadata<Token: store>(
-        payer: &signer,
+        vm: &signer,
         payee: address,
         to_deposit: Diem<Token>,
         metadata: vector<u8>,
         metadata_signature: vector<u8>
     ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
-        let sender = Signer::address_of(payer);
+        let sender = Signer::address_of(vm);
         assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), 4010);
         deposit(
             CoreAddresses::DIEM_ROOT_ADDRESS(),
@@ -2981,10 +3005,10 @@ module DiemAccount {
     }
     
     /////// 0L /////////
-    public fun vm_migrate_slow_wallet(vm: &signer, addr: address) {
+    public fun vm_migrate_slow_wallet(vm: &signer, addr: address) acquires SlowWalletList{
       CoreAddresses::assert_diem_root(vm);
       let sig = create_signer(addr);
-      Wallet::set_slow(&sig);
+      set_slow(&sig);
     }
 
 
@@ -3051,6 +3075,90 @@ module DiemAccount {
       exists<CumulativeDeposits>(addr)
     }
 
+
+    //////// SLOW WALLETS ////////
+    // Slow wallets have a limited amount available to spend at every epoch.
+    // Every epoch a new amount is made available (unlocked)
+    // slow wallets can use the normal payment and transfer mechanisms to move the unlocked amount.
+    struct SlowWallet has key {
+        unlocked: u64,
+        transferred: u64,
+    }
+
+    struct SlowWalletList has key {
+        list: vector<address>
+    }
+
+    public fun vm_init_slow(vm: &signer){
+      CoreAddresses::assert_vm(vm);
+      if (!exists<SlowWalletList>(@0x0)) {
+        move_to<SlowWalletList>(vm, SlowWalletList {
+          list: Vector::empty<address>()
+        });  
+      }
+    }
+
+    public fun set_slow(sig: &signer) acquires SlowWalletList {
+      if (exists<SlowWalletList>(@0x0)) {
+        let addr = Signer::address_of(sig);
+        let list = get_slow_list();
+        if (!Vector::contains<address>(&list, &addr)) {
+            let s = borrow_global_mut<SlowWalletList>(@0x0);
+            Vector::push_back(&mut s.list, addr);
+        };
+
+        if (!exists<SlowWallet>(Signer::address_of(sig))) {
+          move_to<SlowWallet>(sig, SlowWallet {
+            unlocked: 0,
+            transferred: 0,
+          });  
+        }
+      }
+    }
+
+    public fun slow_wallet_epoch_drip(vm: &signer, amount: u64) acquires SlowWallet, SlowWalletList{
+      CoreAddresses::assert_vm(vm);
+      let list = get_slow_list();
+      let i = 0;
+      while (i < Vector::length<address>(&list)) {
+        let addr = Vector::borrow<address>(&list, i);
+        let s = borrow_global_mut<SlowWallet>(*addr);
+        s.unlocked = s.unlocked + amount;
+        i = i + 1;
+      }
+    }
+
+    // NOTE: danger, this is a private function that should only be called with account capability or VM.
+    fun update_unlocked_tracker(payer: address, amount: u64) acquires SlowWallet {
+      let s = borrow_global_mut<SlowWallet>(payer);
+      s.transferred = s.transferred + amount;
+      s.unlocked = s.unlocked - amount;
+    }
+
+    ///////// SLOW GETTERS ////////
+
+    public fun is_slow(addr: address): bool {
+      exists<SlowWallet>(addr)
+    }
+
+    public fun unlocked_amount(addr: address): u64 acquires Balance, SlowWallet{
+      if (exists<SlowWallet>(addr)) {
+        let s = borrow_global<SlowWallet>(addr);
+        return s.unlocked
+      };
+      // this is a normal account, so return the normal balance
+      balance<GAS>(addr)
+    }
+
+    // Getter for retrieving the list of slow wallets.
+    public fun get_slow_list(): vector<address> acquires SlowWalletList{
+      if (exists<SlowWalletList>(@0x0)) {
+        let s = borrow_global<SlowWalletList>(@0x0);
+        return *&s.list
+      } else {
+        return Vector::empty<address>()
+      }
+    }
 
     /////// TEST HELPERS //////
 

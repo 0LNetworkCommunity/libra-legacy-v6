@@ -1,4 +1,4 @@
-//! account: bob, 2000001, 0, validator
+// ! account: bob, 2000001GAS, 0, validator
 
 //! new-transaction
 //! sender: bob
@@ -13,7 +13,6 @@ script {
   use 0x1::Roles;
   use 0x1::Signer;
   use 0x1::ValidatorUniverse;
-  use 0x1::Wallet;
 
   // Test Prefix: 1301
   fun main(sender: signer) {
@@ -72,11 +71,12 @@ script {
 
     // Automatically is a candidate for validator set
     assert(ValidatorUniverse::is_in_universe(eve_addr), 7357130101091000);
+    
     // Should have a jailed bit
     assert(ValidatorUniverse::exists_jailedbit(eve_addr), 7357130101101000);
 
     // new accounts tagged as slow wallets
-    assert(Wallet::is_slow(eve_addr), 7357130101111000);
+    assert(DiemAccount::is_slow(eve_addr), 7357130101111000);
   }
 }
 // check: EXECUTED

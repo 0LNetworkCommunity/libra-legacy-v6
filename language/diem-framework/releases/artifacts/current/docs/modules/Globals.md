@@ -20,6 +20,7 @@ This module provides global variables and constants that have no specific owner
 -  [Function `get_burn_accounts`](#0x1_Globals_get_burn_accounts)
 -  [Function `get_difficulty`](#0x1_Globals_get_difficulty)
 -  [Function `get_mining_threshold`](#0x1_Globals_get_mining_threshold)
+-  [Function `get_unlock`](#0x1_Globals_get_unlock)
 -  [Function `get_constants`](#0x1_Globals_get_constants)
 
 
@@ -104,6 +105,12 @@ epoch by a miner to remain compliant
 </dd>
 <dt>
 <code>epoch_mining_threshold: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>epoch_slow_wallet_unlock: u64</code>
 </dt>
 <dd>
 
@@ -288,6 +295,31 @@ Get the mining threshold
 
 </details>
 
+<a name="0x1_Globals_get_unlock"></a>
+
+## Function `get_unlock`
+
+Get the mining threshold
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_unlock">get_unlock</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_unlock">get_unlock</a>(): u64 {
+  <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>().epoch_slow_wallet_unlock
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_Globals_get_constants"></a>
 
 ## Function `get_constants`
@@ -319,6 +351,7 @@ get the constants for the current network
       burn_accounts: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_singleton">Vector::singleton</a>(@0xDEADDEAD),
       difficulty: 100,
       epoch_mining_threshold: 1,
+      epoch_slow_wallet_unlock: 10,
     }
 
   } <b>else</b> {
@@ -332,6 +365,7 @@ get the constants for the current network
       burn_accounts: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_singleton">Vector::singleton</a>(@0xDEADDEAD),
       difficulty: 5000000,
       epoch_mining_threshold: 1,
+      epoch_slow_wallet_unlock: 10000000,
     }
   } <b>else</b> {
       <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
@@ -348,6 +382,7 @@ get the constants for the current network
       burn_accounts: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_singleton">Vector::singleton</a>(@0xDEADDEAD),
       difficulty: 5000000, //10 mins on macbook pro 2.5 ghz quadcore
       epoch_mining_threshold: 20,
+      epoch_slow_wallet_unlock: 10000000,
       }
     }
   }
