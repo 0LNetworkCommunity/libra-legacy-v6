@@ -775,7 +775,8 @@ Attempt to use a UID that is already taken
 
   <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="AutoPay.md#0x1_AutoPay2_Payment">Payment</a>&gt;(payments) &lt; <a href="AutoPay.md#0x1_AutoPay2_MAX_NUMBER_OF_INSTRUCTIONS">MAX_NUMBER_OF_INSTRUCTIONS</a>, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="AutoPay.md#0x1_AutoPay2_TOO_MANY_INSTRUCTIONS">TOO_MANY_INSTRUCTIONS</a>));
 
-  <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_exists_at">DiemAccount::exists_at</a>(payee), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="AutoPay.md#0x1_AutoPay2_EPAYEE_DOES_NOT_EXIST">EPAYEE_DOES_NOT_EXIST</a>));
+  // This is not a necessary check at genesis.
+  // <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_exists_at">DiemAccount::exists_at</a>(payee), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="AutoPay.md#0x1_AutoPay2_EPAYEE_DOES_NOT_EXIST">EPAYEE_DOES_NOT_EXIST</a>));
 
   <b>assert</b>(in_type &lt;= <a href="AutoPay.md#0x1_AutoPay2_MAX_TYPE">MAX_TYPE</a>, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="AutoPay.md#0x1_AutoPay2_INVALID_PAYMENT_TYPE">INVALID_PAYMENT_TYPE</a>));
 

@@ -8,16 +8,12 @@ use diem_config::{
     network_id::NetworkId,
 };
 
+use crate::seeds::Seeds;
+use crate::storage_helper::StorageHelper;
 use diem_global_constants::{FULLNODE_NETWORK_KEY, OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
-use diem_management::{
-    config::ConfigPath,
-    error::Error,
-    secure_backend::ValidatorBackend
-};
+use diem_management::{config::ConfigPath, error::Error, secure_backend::ValidatorBackend};
 use diem_types::{chain_id::ChainId, waypoint::Waypoint};
 use structopt::StructOpt;
-use crate::storage_helper::StorageHelper;
-use crate::seeds::Seeds;
 /// Prints the public information within a store
 #[derive(Debug, StructOpt)]
 pub struct Files {
@@ -43,20 +39,23 @@ pub struct Files {
     #[structopt(long, verbatim_doc_comment)]
     fullnode_only: bool,
     #[structopt(long, verbatim_doc_comment)]
-    waypoint: Option<Waypoint>,    
+    waypoint: Option<Waypoint>,
+    #[structopt(long, verbatim_doc_comment)]
+    layout_path: Option<PathBuf>,
 }
 
 impl Files {
     pub fn execute(self) -> Result<NodeConfig, Error> {
         write_node_config_files(
-            self.data_path, 
-            self.chain_id, 
-            &self.github_org, 
+            self.data_path,
+            self.chain_id,
+            &self.github_org,
             &self.repo,
             &self.namespace,
             &None,
             &self.fullnode_only,
             self.waypoint,
+            &self.layout_path,
         )
     }
 }
@@ -70,19 +69,19 @@ pub fn write_node_config_files(
     prebuilt_genesis: &Option<PathBuf>,
     fullnode_only: &bool,
     mut way_opt: Option<Waypoint>,
+    layout_path: &Option<PathBuf>,
 ) -> Result<NodeConfig, Error> {
-
     // TODO: Do we need github token path with public repo?
     let github_token_path = output_dir.join("github_token.txt");
     let chain_id = ChainId::new(chain_id);
-    
+
     let remote = format!(
         "backend=github;repository_owner={github_org};repository={repo};token={path};namespace={ns}",
         repo=&repo,
         github_org=&github_org,
         path=github_token_path.to_str().unwrap(),
         ns=&namespace
-    ); 
+    );
 
     let storage_helper = StorageHelper::get_with_path(output_dir.clone());
 
@@ -93,9 +92,15 @@ pub fn write_node_config_files(
             genesis_path = path.to_owned();
         }
         None => {
-            let genesis_waypoint = storage_helper
-                .build_genesis_from_github(chain_id, &remote, &genesis_path)
-                .unwrap();
+            let genesis_waypoint = match layout_path {
+                Some(layout_path) => storage_helper
+                    .build_genesis_with_layout(chain_id, &remote, &genesis_path, &layout_path)
+                    .unwrap(),
+                None => storage_helper
+                    .build_genesis_from_github(chain_id, &remote, &genesis_path)
+                    .unwrap(),
+            };
+
             // for genesis cases, need to insert the waypoint in the key_store.json
             storage_helper
                 .insert_waypoint(&namespace, genesis_waypoint)
@@ -104,7 +109,7 @@ pub fn write_node_config_files(
             way_opt = Some(genesis_waypoint);
         }
     };
-   
+
     // if *rebuild_genesis {
     //     // Create genesis blob from repo and saves waypoint
     //     // Create genesis blob from repo and saves waypoint
@@ -138,14 +143,13 @@ pub fn write_node_config_files(
         let mut c = NodeConfig::default();
 
         // Note skip setting namepace for later.
-        c.base.waypoint = WaypointConfig::FromStorage(
-            SecureBackend::OnDiskStorage(disk_storage.clone())
-        );
+        c.base.waypoint =
+            WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
 
         // If validator configs set val network configs
         let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
-    
-        // NOTE: Using configs as described in cluster tests: 
+
+        // NOTE: Using configs as described in cluster tests:
         // testsuite/cluster-test/src/cluster_swarm/configs/validator.yaml
         network.discovery_method = DiscoveryMethod::Onchain;
         network.mutual_authentication = true;
@@ -154,21 +158,19 @@ pub fn write_node_config_files(
             OWNER_ACCOUNT.to_string(),
             SecureBackend::OnDiskStorage(disk_storage.clone()),
         );
-        network.network_address_key_backend = Some(
-            SecureBackend::OnDiskStorage(disk_storage.clone())
-        );
+        network.network_address_key_backend =
+            Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
 
         c.validator_network = Some(network.clone());
 
         c.json_rpc.address = "0.0.0.0:8080".parse().unwrap();
-            // NOTE: for future reference, seed addresses are not necessary 
-            // for setting a validator if on-chain discovery is used.
-    
+        // NOTE: for future reference, seed addresses are not necessary
+        // for setting a validator if on-chain discovery is used.
+
         // Consensus
-        c.base.waypoint = WaypointConfig::FromStorage(
-            SecureBackend::OnDiskStorage(disk_storage.clone())
-        );
-        
+        c.base.waypoint =
+            WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
+
         c.execution.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
         c.execution.genesis_file_location = genesis_path.clone();
 
@@ -182,36 +184,43 @@ pub fn write_node_config_files(
 
     ///////// FULL NODE CONFIGS ////////
     let mut fn_network = NetworkConfig::network_with_id(NetworkId::Public);
-    
-    fn_network.seed_addrs = Seeds::new(
-        genesis_path.clone()
-    ).get_network_peers_info().expect("Could not get seed peers");
+
+    fn_network.seed_addrs = Seeds::new(genesis_path.clone())
+        .get_network_peers_info()
+        .expect("Could not get seed peers");
 
     fn_network.discovery_method = DiscoveryMethod::Onchain;
     fn_network.listen_address = "/ip4/0.0.0.0/tcp/6179".parse().unwrap();
     fn_network.identity = Identity::from_storage(
-            FULLNODE_NETWORK_KEY.to_string(),
-            OWNER_ACCOUNT.to_string(),
-            SecureBackend::OnDiskStorage(disk_storage.clone()),
-        );
+        FULLNODE_NETWORK_KEY.to_string(),
+        OWNER_ACCOUNT.to_string(),
+        SecureBackend::OnDiskStorage(disk_storage.clone()),
+    );
     config.full_node_networks = vec![fn_network];
 
     // NOTE: for future reference, "upstream" is not necessary for validator settings.
-    config.upstream = UpstreamConfig { networks: vec![NetworkId::Public]};
-    
+    config.upstream = UpstreamConfig {
+        networks: vec![NetworkId::Public],
+    };
+
     // Prune window for state snapshots
     config.storage.prune_window = Some(20_000);
 
     // Write yaml
     let yaml_path = if *fullnode_only {
         output_dir.join("fullnode.node.yaml")
-    } else { 
+    } else {
         output_dir.join("validator.node.yaml")
     };
 
     fs::create_dir_all(&output_dir).expect("Unable to create output directory");
-    config.save(&yaml_path).expect("Unable to save node configs");
-    
-    println!("validator configurations initialized, file saved to: {:?}", &yaml_path);
+    config
+        .save(&yaml_path)
+        .expect("Unable to save node configs");
+
+    println!(
+        "validator configurations initialized, file saved to: {:?}",
+        &yaml_path
+    );
     Ok(config)
 }

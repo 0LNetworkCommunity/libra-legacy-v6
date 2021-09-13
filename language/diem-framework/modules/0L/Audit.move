@@ -6,7 +6,6 @@ address 0x1 {
     use 0x1::AutoPay2;
     use 0x1::MinerState;
     use 0x1::Testnet;
-    use 0x1::Wallet;
 
     public fun val_audit_passing(val: address): bool {
       // has valid configs
@@ -21,7 +20,7 @@ address 0x1 {
       // has mining state
       if (!MinerState::is_init(val)) return false;
       // is a slow wallet
-      if (!Wallet::is_slow(val)) return false;
+      if (!DiemAccount::is_slow(val)) return false;
 
       // TODO: has network settings for validator
 

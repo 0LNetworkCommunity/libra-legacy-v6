@@ -10,9 +10,12 @@ use diem_types::{
     chain_id::ChainId,
     transaction::{Transaction, TransactionPayload},
 };
-use std::{fs::File, io::Write, path::PathBuf};
+use std::{fs::File, io::{Read, Write}, path::PathBuf};
 use structopt::StructOpt;
 use vm_genesis::{OperatorAssignment, OperatorRegistration, GenesisMiningProof};
+
+//////// 0L ////////
+use ol_types::account::ValConfigs;
 
 /// Note, it is implicitly expected that the storage supports
 /// a namespace but one has not been set.
@@ -26,6 +29,8 @@ pub struct Genesis {
     pub backend: SharedBackend,
     #[structopt(long)]
     pub path: Option<PathBuf>,
+    #[structopt(long)]
+    pub layout_path: Option<PathBuf>,
 }
 
 impl Genesis {
@@ -37,7 +42,23 @@ impl Genesis {
     }
 
     pub fn execute(self) -> Result<Transaction, Error> {
-        let layout = self.layout()?;
+        ///////// 0L ////////
+        // for a decentralized genesis allow the participants to set their own layout file (will not have a central repo providing one).
+        // for dev and testnets layouts can be found on genesis repo
+        let layout: Layout = match &self.layout_path {
+          Some(p) => {
+            println!("Getting genesis validator set from file: {:?}\n", &self.layout_path);
+            let mut file = File::open(p).expect("could not open layout file");
+            let mut layout = String::new();
+            file.read_to_string(&mut layout).expect("could not read");
+            Layout::parse(&layout)
+            .map_err(|e| Error::UnableToParse(constants::LAYOUT, e.to_string()))?
+          },
+          None => self.layout()?
+
+        };
+        //TODO(LG): get layout optionally from own file.
+        // let layout = 
         //////// 0L ////////        
         // let diem_root_key = self.diem_root_key(&layout)?;
         // let treasury_compliance_key = self.treasury_compliance_key(&layout)?;
@@ -76,7 +97,7 @@ impl Genesis {
         Ok(genesis)
     }
 
-    //////// 0L ////////
+    //////// 0L //////// commented out
     // /// Retrieves the diem root key from the remote storage. Note, at this point in time, genesis
     // /// only supports a single diem root key.
     // pub fn diem_root_key(&self, layout: &Layout) -> Result<Ed25519PublicKey, Error> {
@@ -118,9 +139,17 @@ impl Genesis {
                 .into_script_function();
 
             //////// 0L ////////
+            let profile: Option<ValConfigs> = match owner_storage.string(diem_global_constants::ACCOUNT_PROFILE) {
+              Ok(s) => {
+                serde_json::from_str(&s).ok()
+              }
+              Err(_) => None
+            };
+
             let pow = GenesisMiningProof {
                 preimage: owner_storage.string(diem_global_constants::PROOF_OF_WORK_PREIMAGE).unwrap(),
                 proof: owner_storage.string(diem_global_constants::PROOF_OF_WORK_PROOF).unwrap(),
+                profile,
             };
 
             let owner_name_vec = owner.as_bytes().to_vec();
@@ -130,7 +159,8 @@ impl Genesis {
                     owner_name_vec, 
                     set_operator_script,  
                     //////// 0L ////////
-                    pow
+                    pow,
+                    operator_account,
                 )
             );
         }
@@ -164,7 +194,7 @@ impl Genesis {
                 operator_key,
                 operator_name.as_bytes().to_vec(),
                 validator_config_tx,
-                operator_account,                
+                operator_account,              
             ));
         }
         //////// 0L end ////////

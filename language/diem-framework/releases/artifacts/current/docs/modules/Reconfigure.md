@@ -6,11 +6,9 @@
 
 
 -  [Function `reconfigure`](#0x1_Reconfigure_reconfigure)
--  [Function `update_validator_withdrawal_limit`](#0x1_Reconfigure_update_validator_withdrawal_limit)
 
 
-<pre><code><b>use</b> <a href="AccountLimits.md#0x1_AccountLimits">0x1::AccountLimits</a>;
-<b>use</b> <a href="Audit.md#0x1_Audit">0x1::Audit</a>;
+<pre><code><b>use</b> <a href="Audit.md#0x1_Audit">0x1::Audit</a>;
 <b>use</b> <a href="AutoPay.md#0x1_AutoPay2">0x1::AutoPay2</a>;
 <b>use</b> <a href="Burn.md#0x1_Burn">0x1::Burn</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
@@ -21,7 +19,6 @@
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="FullnodeState.md#0x1_FullnodeState">0x1::FullnodeState</a>;
-<b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="MinerState.md#0x1_MinerState">0x1::MinerState</a>;
 <b>use</b> <a href="NodeWeight.md#0x1_NodeWeight">0x1::NodeWeight</a>;
@@ -193,7 +190,8 @@
     // Update all validators <b>with</b> account limits
     // After <a href="Epoch.md#0x1_Epoch">Epoch</a> 1000.
     <b>if</b> (<a href="DiemConfig.md#0x1_DiemConfig_check_transfer_enabled">DiemConfig::check_transfer_enabled</a>()) {
-        <a href="Reconfigure.md#0x1_Reconfigure_update_validator_withdrawal_limit">update_validator_withdrawal_limit</a>(vm);
+        <a href="DiemAccount.md#0x1_DiemAccount_slow_wallet_epoch_drip">DiemAccount::slow_wallet_epoch_drip</a>(vm, <a href="Globals.md#0x1_Globals_get_unlock">Globals::get_unlock</a>());
+        // update_validator_withdrawal_limit(vm);
     };
     // needs <b>to</b> be set before the auctioneer runs in <a href="Subsidy.md#0x1_Subsidy_fullnode_reconfig">Subsidy::fullnode_reconfig</a>
     <a href="Subsidy.md#0x1_Subsidy_set_global_count">Subsidy::set_global_count</a>(vm, global_proofs_count);
@@ -226,42 +224,6 @@
 //  print(&032140);
     <a href="Epoch.md#0x1_Epoch_reset_timer">Epoch::reset_timer</a>(vm, height_now);
 //  print(&032150);
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_Reconfigure_update_validator_withdrawal_limit"></a>
-
-## Function `update_validator_withdrawal_limit`
-
-OL function to update withdrawal limits in all validator accounts
-
-
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_update_validator_withdrawal_limit">update_validator_withdrawal_limit</a>(vm: &signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_update_validator_withdrawal_limit">update_validator_withdrawal_limit</a>(vm: &signer) {
-    <b>let</b> validator_set = <a href="DiemSystem.md#0x1_DiemSystem_get_val_set_addr">DiemSystem::get_val_set_addr</a>();
-    <b>let</b> k = 0;
-    <b>while</b>(k &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&validator_set)){
-        <b>let</b> addr = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&validator_set, k);
-
-        // Check <b>if</b> limits definition is published
-        <b>if</b>(<a href="AccountLimits.md#0x1_AccountLimits_has_limits_published">AccountLimits::has_limits_published</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(addr)) {
-            <a href="AccountLimits.md#0x1_AccountLimits_update_limits_definition">AccountLimits::update_limits_definition</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, addr, 0, <a href="DiemConfig.md#0x1_DiemConfig_get_epoch_transfer_limit">DiemConfig::get_epoch_transfer_limit</a>(), 0, 0);
-        };
-
-        k = k + 1;
-    };
 }
 </code></pre>
 
