@@ -22,7 +22,13 @@ IP=$(shell toml get ${DATA_PATH}/0L.toml profile.ip)
 
 # Github settings
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
+
+ifndef GENESIS_USER
+GENESIS_USER = OLSF
+endif
+
 REPO_ORG = OLSF
+
 
 ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
@@ -37,7 +43,10 @@ CARGO_ARGS = --verbose
 endif
 
 # Registration params
-REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
+REMOTE = 'backend=github;repository_owner=${GENESIS_USER};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
+
+GENESIS_REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
+
 LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
 
 RELEASE_URL=https://github.com/OLSF/libra/releases/download
@@ -46,7 +55,7 @@ ifndef RELEASE
 RELEASE=$(shell curl -sL https://api.github.com/repos/OLSF/libra/releases/latest | jq -r '.assets[].browser_download_url')
 endif
 
-BINS= db-backup db-backup-verify db-restore diem-node miner ol txs stdlib
+BINS=db-backup db-backup-verify db-restore diem-node miner ol txs stdlib
 
 ifndef V
 V=previous
@@ -156,9 +165,24 @@ treasury:
 		--validator-backend ${LOCAL} \
 		--shared-backend ${REMOTE}
 
+
 #### GENESIS REGISTRATION ####
-ceremony:
+gen-fork-repo:
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
+	--repo-name ${REPO_NAME} \
+	--repo-owner ${REPO_ORG} \
+	--shared-backend ${REMOTE}
+
+gen-make-pull:
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
+	--repo-name ${REPO_NAME} \
+	--repo-owner ${REPO_ORG} \
+	--shared-backend ${GENESIS_REMOTE} \
+	--pull-request-user ${GENESIS_USER}
+
+ceremony: gen-fork-repo
 		cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony
+		
 
 # cargo run -p miner ${CARGO_ARGS} -- zero
 
@@ -179,6 +203,9 @@ register:
 
 	@echo OPER send signed transaction with configurations for *OWNER* account
 	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
+
+	@echo Making pull request to genesis coordination repo
+	make gen-make-pull
 
 init-test:
 	echo ${MNEM} | head -c -1 | cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}

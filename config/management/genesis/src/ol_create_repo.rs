@@ -9,7 +9,7 @@ use structopt::StructOpt;
 /// Note, it is implicitly expected that the storage supports
 /// a namespace but one has not been set.
 #[derive(Debug, StructOpt)]
-pub struct NewRepo {
+pub struct CreateGenesisRepo {
     #[structopt(flatten)]
     pub config: ConfigPath,
     // #[structopt(long, required_unless("config"))]
@@ -21,10 +21,10 @@ pub struct NewRepo {
     #[structopt(long)]
     pub repo_name: String,
     #[structopt(long)]
-    pub pull_username: Option<String>,
+    pub pull_request_user: Option<String>,
 }
 
-impl NewRepo {
+impl CreateGenesisRepo {
     fn config(&self) -> Result<diem_management::config::Config, Error> {
         self.config
             .load()?
@@ -45,21 +45,23 @@ impl NewRepo {
                         .read_token()
                         .expect("could not get github token"),
                 );
-                if let Some(user) = self.pull_username {
-                    match github.create_pull(&config.repository_owner, &config.repository, &user) {
+                // Make a pull request of the the forked repo, back to the genesis coordination repository.
+                if let Some(user) = self.pull_request_user {
+                    match github.make_genesis_pull_request(&config.repository_owner, &config.repository, &user) {
                         Ok(_) => Ok("created pull request to genesis repo".to_string()),
                         Err(e) => Err(Error::StorageWriteError(
                             "github",
-                            "fork",
+                            "pull request",
                             e.to_string(),
                         )),
                     }
                 } else {
-                    match github.create_repo(&self.repo_owner, &self.repo_name) {
+                // Fork the genesis coordination repo into a personal repo
+                    match github.fork_genesis_repo(&self.repo_owner, &self.repo_name) {
                         Ok(_) => Ok(format!("Created new repo {}", &self.repo_name)),
                         Err(e) => Err(Error::StorageWriteError(
                             "github",
-                            "repo name",
+                            "fork genesis repo",
                             e.to_string(),
                         )),
                     }

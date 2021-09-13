@@ -39,7 +39,7 @@ pub enum Command {
     #[structopt(about = "Includes proof of work to the validator registrations")]
     Mining(crate::ol_mining::Mining),
     #[structopt(about = "Creates own repo for submitting genesis info")]
-    CreateRepo(crate::ol_create_repo::NewRepo),   
+    CreateRepo(crate::ol_create_repo::CreateGenesisRepo),   
 }
 
 #[derive(Debug, PartialEq)]
