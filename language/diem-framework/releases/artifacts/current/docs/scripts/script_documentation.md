@@ -5300,7 +5300,6 @@ a reconfiguration of the system.
 -  [`0x1::Testnet`](../../../../../releases/artifacts/current/docs/modules/Testnet.md#0x1_Testnet)
 -  [`0x1::TransactionFee`](../../../../../releases/artifacts/current/docs/modules/TransactionFee.md#0x1_TransactionFee)
 -  [`0x1::TreasuryComplianceScripts`](script_documentation.md#0x1_TreasuryComplianceScripts)
--  [`0x1::TrustedAccounts`](../../../../../releases/artifacts/current/docs/modules/TrustedAccounts.md#0x1_TrustedAccounts)
 -  [`0x1::Upgrade`](../../../../../releases/artifacts/current/docs/modules/Upgrade.md#0x1_Upgrade)
 -  [`0x1::VASP`](../../../../../releases/artifacts/current/docs/modules/VASP.md#0x1_VASP)
 -  [`0x1::VDF`](../../../../../releases/artifacts/current/docs/modules/VDF.md#0x1_VDF)

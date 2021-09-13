@@ -17,7 +17,6 @@ use std::{
     io::{Read, Write}, 
     net::Ipv4Addr, 
     path::PathBuf, 
-    process::exit, 
     str::FromStr
 };
 
@@ -180,10 +179,12 @@ impl AppCfg {
               let epoch_url = &web_monitor_url.join("epoch.json").unwrap();
               let (e, w) = bootstrap_waypoint_from_upstream(epoch_url).unwrap();
               default_config.chain_info.base_epoch = Some(e);
-              default_config.chain_info.base_waypoint = Some(w)
+              default_config.chain_info.base_waypoint = Some(w);
           } else {
-            println!("ERROR: Trying to get a starting epoch, and waypoint for configs. Either pass --epoch and --waypoint as CLI args, or provide a URL to fetch this data from --upstream-peer or --template-url");
-            exit(1);
+            default_config.chain_info.base_epoch = None;
+            default_config.chain_info.base_waypoint = None;
+            println!("WARN: No --epoch or --waypoint or upstream --url passed. This should only be done at genesis. If that's not correct either pass --epoch and --waypoint as CLI args, or provide a URL to fetch this data from --upstream-peer or --template-url");
+            // exit(1);
           }
         }
 

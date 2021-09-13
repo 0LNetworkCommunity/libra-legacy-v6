@@ -15,8 +15,9 @@ mod verify;
 //////// 0L ////////
 pub mod init;
 pub mod ol_node_files;
-mod mining;
+mod ol_mining;
 pub mod seeds;
+pub mod ol_create_repo;
 
 #[cfg(any(test, feature = "testing"))]
 pub mod config_builder;

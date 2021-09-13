@@ -1,6 +1,6 @@
-//! account: alice, 100GAS, 0, validator
+//! account: alice, 1000000GAS, 0, validator
 //// frank is a fullnode
-//! account: frank, 100GAS, 0
+//! account: frank, 1000000GAS, 0
 
 //! new-transaction
 //! sender: diemroot

@@ -1,5 +1,5 @@
 //// frank is a fullnode
-//! account: frank, 1GAS, 0
+//! account: frank, 1000000GAS, 0
 
 //! new-transaction
 // Check if genesis subsidies have been distributed

@@ -23,7 +23,9 @@ pub struct CreateWaypoint {
     shared_backend: SharedBackend,
     //////// 0L ////////
     #[structopt(long)]
-    genesis_path: Option<std::path::PathBuf>,    
+    genesis_path: Option<std::path::PathBuf>,
+    #[structopt(long)]
+    layout_path: Option<std::path::PathBuf>,   
 }
 
 impl CreateWaypoint {
@@ -33,6 +35,7 @@ impl CreateWaypoint {
             chain_id: self.chain_id,
             backend: self.shared_backend,            
             path: self.genesis_path, //////// 0L ////////
+            layout_path: self.layout_path, //////// 0L ////////
         };
 
         let genesis = genesis_helper.execute()?;

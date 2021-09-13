@@ -1,4 +1,4 @@
-//! account: bob, 0, 0, validator
+//! account: bob, 3000000, 0, validator
 
 //! new-transaction
 //! sender: bob
@@ -16,18 +16,21 @@ use 0x1::Signer;
 // Test Prefix: 1301
 
   fun main(sender: signer) {
-    // Scenario: Bob, an existing validator, is sending a transaction for Eve, 
-    // with a challenge and proof not yet submitted to the chain.
-    let challenge = TestFixtures::eve_0_easy_chal();
-    let solution = TestFixtures::eve_0_easy_sol();
-    // // Parse key and check
-    let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
-    assert(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 401);
-    
+    // Scenario: Bob, an existing validator, is sending an onboarding transaction for Eve.
+
+    // mock bob's account limits so he's not rate limited from onboarding eve
     let sender_addr = Signer::address_of(&sender);
     let epochs_since_creation = 10;
     MinerState::test_helper_set_rate_limit(sender_addr, epochs_since_creation);
 
+
+    // Use a miner challenge and proof not yet submitted to the chain.
+    let challenge = TestFixtures::eve_0_easy_chal();
+    let solution = TestFixtures::eve_0_easy_sol();
+    // Parse miner challenge and check
+    let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
+    assert(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 401);
+    
     DiemAccount::create_validator_account_with_proof(
         &sender,
         &challenge,
@@ -69,15 +72,15 @@ use 0x1::Signer;
     // Check the account exists and the balance is 10, from Bob's onboarding transfer
     assert(DiemAccount::balance<GAS>(eve_addr) == 1000000, 7357130101081000);
 
-    // // assert the operator has balance
+    // assert the operator has balance
     assert(
       DiemAccount::balance<GAS>(@0xfa72817f1b5aab94658238ddcdc08010) == 1000000, 
       7357130101091000
     );
 
-    // // Bob's balance should have gone down by 2M gas (operator and owner)
+    // Bob's balance should have gone down by 2M microgas, because he sent 1 GAS each to Eve's operator and owner.
 
-    assert(DiemAccount::balance<GAS>(@{{bob}}) == 497536, 73571301011000);
+    assert(DiemAccount::balance<GAS>(@{{bob}}) == 1000000, 73571301011000);
 
   }
 }

@@ -334,7 +334,8 @@ address 0x1 {
 
       assert(Vector::length<Payment>(payments) < MAX_NUMBER_OF_INSTRUCTIONS, Errors::limit_exceeded(TOO_MANY_INSTRUCTIONS));
 
-      assert(DiemAccount::exists_at(payee), Errors::not_published(EPAYEE_DOES_NOT_EXIST));
+      // This is not a necessary check at genesis.
+      // assert(DiemAccount::exists_at(payee), Errors::not_published(EPAYEE_DOES_NOT_EXIST));
 
       assert(in_type <= MAX_TYPE, Errors::invalid_argument(INVALID_PAYMENT_TYPE));
 
