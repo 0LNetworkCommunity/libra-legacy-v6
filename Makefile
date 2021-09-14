@@ -40,7 +40,7 @@ endif
 
 CARGO_ARGS = --release
 ifeq (${NODE_ENV}, test)
-CARGO_ARGS = --locked
+CARGO_ARGS = --locked # just keeping this from doing --release mode, while in testnet mode.
 endif
 
 # Registration params
@@ -185,7 +185,7 @@ genesis-miner:
 	cargo run -p miner -- zero
 
 ceremony: gen-fork-repo
-		cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony --skip-mining
+		cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony
 		
 
 # cargo run -p miner ${CARGO_ARGS} -- zero
