@@ -537,3 +537,17 @@ fork-start:
 	rm -rf ~/.0L/db
 	cargo run -p libra-node -- --config ~/.0L/validator.node.yaml
 
+
+nuke-testnet:
+	@echo WIPING EVERYTHING
+
+	@if test -d ${DATA_PATH}; then \
+		cd ${DATA_PATH} && cp github_token.txt autopay_batch.json set_layout.toml ~/; \
+		cd ${DATA_PATH} && rm -rf *; \
+		cd ~ && cp github_token.txt autopay_batch.json set_layout.toml ${DATA_PATH}; \
+	fi
+	
+	@if test -d ${DATA_PATH}/blocks; then \
+		cd ${DATA_PATH}/blocks && cp block_0.json ~/; \
+		cd ~ && cp block_0.json ${DATA_PATH}/blocks; \
+	fi
