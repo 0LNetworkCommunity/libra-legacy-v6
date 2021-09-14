@@ -13,8 +13,8 @@ ifndef SOURCE_PATH
 SOURCE_PATH = ${HOME}/libra
 endif
 
-HASH := $(shell sha256sum -z ${SOURCE_PATH}/language/stdlib/staged/stdlib.mv | cut -d " " -f 1)
 STDLIB_BIN = ${SOURCE_PATH}/language/diem-framework/staged/stdlib.mv
+HASH := $(shell sha256sum -z ${STDLIB_BIN} | cut -d " " -f 1)
 
 # alice
 ifndef PERSONA
@@ -62,7 +62,7 @@ get-test:
 stdlib:
 	cd ${SOURCE_PATH} && cargo run --release -p diem-framework
 	cd ${SOURCE_PATH} && cargo run --release -p diem-framework -- --create-upgrade-payload
-	sha256sum ${SOURCE_PATH}/language/stdlib/staged/stdlib.mv
+	sha256sum ${STDLIB_BIN}
 
 
 init:
