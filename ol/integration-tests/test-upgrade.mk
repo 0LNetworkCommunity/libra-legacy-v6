@@ -14,7 +14,7 @@ SOURCE_PATH = ${HOME}/libra
 endif
 
 STDLIB_BIN = ${SOURCE_PATH}/language/diem-framework/staged/stdlib.mv
-HASH := $(shell sha256sum -z ${STDLIB_BIN} | cut -d " " -f 1)
+HASH := $(shell sha256sum ${STDLIB_BIN} | cut -d " " -f 1)
 
 # alice
 ifndef PERSONA
