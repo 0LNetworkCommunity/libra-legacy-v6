@@ -1,27 +1,27 @@
-module TestPureFun {
+module 0x42::TestPureFun {
+
     use 0x1::CoreAddresses;
     use 0x1::Signer;
     use 0x1::Vector;
-
-    resource struct T {
+    struct T has key {
         x: u64,
     }
 
-    public fun init(lr_account: &signer): bool {
-        assert(Signer::address_of(lr_account) == 0xA550C18, 0);
-        move_to(lr_account, T { x: 2 });
+    public fun init(dr_account: &signer): bool {
+        assert(Signer::address_of(dr_account) == @0xA550C18, 0);
+        move_to(dr_account, T { x: 2 });
         false
     }
 
-    spec fun init {
-        aborts_if Signer::spec_address_of(lr_account) != CoreAddresses::LIBRA_ROOT_ADDRESS();
-        aborts_if exists<T>(Signer::spec_address_of(lr_account));
-        ensures lr_x() == pure_f_2();
+    spec init {
+        aborts_if Signer::spec_address_of(dr_account) != CoreAddresses::DIEM_ROOT_ADDRESS();
+        aborts_if exists<T>(Signer::spec_address_of(dr_account));
+        ensures dr_x() == pure_f_2();
     }
 
     public fun get_x(addr: address): u64 acquires T {
         assert(exists<T>(addr), 10);
-        assert(true, 0); // assertions are ignored when translating Move funs to spec funs.
+        assert(true, 0); // assertions are ignored when translating Move funs to specs.
         *&borrow_global<T>(addr).x
     }
 
@@ -35,7 +35,7 @@ module TestPureFun {
         t.x = t.x + 1;
     }
 
-    spec fun increment_x {
+    spec increment_x {
         ensures get_x(addr) == old(get_x(addr)) + 1;
         ensures get_x(addr) == old(get_x_plus_one(addr));
     }
@@ -56,13 +56,13 @@ module TestPureFun {
         Vector::borrow(v, 0).x
     }
 
-    spec fun get_elem {
+    spec get_elem {
         aborts_if Vector::is_empty(v);
     }
 
     spec module {
-        define lr_x(): u64 {
-            get_x(CoreAddresses::LIBRA_ROOT_ADDRESS())
+        fun dr_x(): u64 {
+            get_x(CoreAddresses::DIEM_ROOT_ADDRESS())
         }
     }
 

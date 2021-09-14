@@ -1,8 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 
+mod configurable_validator_signer;
 mod consensus_state;
 mod counters;
 mod error;

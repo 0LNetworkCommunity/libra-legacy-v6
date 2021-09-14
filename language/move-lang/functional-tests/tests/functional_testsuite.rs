@@ -1,32 +1,68 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::{bail, Result};
+use diem_types::account_address::AccountAddress as DiemAddress;
 use functional_tests::{
     compiler::{Compiler, ScriptOrModule},
     testsuite,
 };
-use libra_types::account_address::AccountAddress as LibraAddress;
 use move_lang::{
-    compiled_unit::CompiledUnit, move_compile_no_report, shared::Address, test_utils::read_bool_var,
+    self,
+    command_line::read_bool_env_var,
+    compiled_unit::CompiledUnit,
+    errors,
+    shared::{CompilationEnv, Flags},
+    FullyCompiledProgram,
 };
-use std::{convert::TryFrom, fmt, io::Write, path::Path};
+use once_cell::sync::Lazy;
+use std::{fmt, io::Write, path::Path};
 use tempfile::NamedTempFile;
 
-pub const STD_LIB_DIR: &str = "../../stdlib/modules";
+pub const STD_LIB_DIR: &str = "../../diem-framework/modules";
 pub const FUNCTIONAL_TEST_DIR: &str = "tests";
 
-struct MoveSourceCompiler {
+struct MoveSourceCompiler<'a> {
+    pre_compiled_deps: &'a FullyCompiledProgram,
     deps: Vec<String>,
     temp_files: Vec<NamedTempFile>,
 }
 
-impl MoveSourceCompiler {
-    fn new(stdlib_dir: String) -> Self {
+impl<'a> MoveSourceCompiler<'a> {
+    fn new(pre_compiled_deps: &'a FullyCompiledProgram) -> Self {
         MoveSourceCompiler {
-            deps: vec![stdlib_dir],
+            pre_compiled_deps,
+            deps: vec![],
             temp_files: vec![],
         }
+    }
+
+    fn move_compile_with_stdlib(
+        &self,
+        targets: &[String],
+    ) -> anyhow::Result<(
+        errors::FilesSourceText,
+        Result<Vec<CompiledUnit>, errors::Errors>,
+    )> {
+        let mut compilation_env = CompilationEnv::new(Flags::empty());
+        let (files, pprog_and_comments_res) =
+            move_lang::move_parse(&compilation_env, targets, &self.deps, None)?;
+        let (_comments, pprog) = match pprog_and_comments_res {
+            Err(errors) => return Ok((files, Err(errors))),
+            Ok(res) => res,
+        };
+
+        let result = match move_lang::move_continue_up_to(
+            &mut compilation_env,
+            Some(&self.pre_compiled_deps),
+            move_lang::PassResult::Parser(pprog),
+            move_lang::Pass::Compilation,
+        ) {
+            Ok(move_lang::PassResult::Compilation(units)) => Ok(units),
+            Ok(_) => unreachable!(),
+            Err(errors) => Err(errors),
+        };
+        Ok((files, result))
     }
 }
 
@@ -41,25 +77,30 @@ impl fmt::Display for MoveSourceCompilerError {
 
 impl std::error::Error for MoveSourceCompilerError {}
 
-impl Compiler for MoveSourceCompiler {
+impl<'a> Compiler for MoveSourceCompiler<'a> {
     /// Compile a transaction script or module.
     fn compile<Logger: FnMut(String)>(
         &mut self,
         _log: Logger,
-        address: LibraAddress,
+        _address: DiemAddress,
         input: &str,
     ) -> Result<ScriptOrModule> {
         let cur_file = NamedTempFile::new()?;
-        let sender_addr = Address::try_from(address.as_ref()).unwrap();
         cur_file.reopen()?.write_all(input.as_bytes())?;
         let cur_path = cur_file.path().to_str().unwrap().to_owned();
 
         let targets = &vec![cur_path.clone()];
-        let sender = Some(sender_addr);
-        let (files, units_or_errors) = move_compile_no_report(targets, &self.deps, sender, None)?;
+        let (mut files, units_or_errors) = self.move_compile_with_stdlib(targets)?;
         let unit = match units_or_errors {
             Err(errors) => {
-                let error_buffer = if read_bool_var(testsuite::PRETTY) {
+                for (file_name, text) in &self.pre_compiled_deps.files {
+                    // TODO This is bad. Rethink this when errors are redone
+                    if !files.contains_key(file_name) {
+                        files.insert(&**file_name, text.clone());
+                    }
+                }
+
+                let error_buffer = if read_bool_env_var(testsuite::PRETTY) {
                     move_lang::errors::report_errors_to_color_buffer(files, errors)
                 } else {
                     move_lang::errors::report_errors_to_buffer(files, errors)
@@ -78,13 +119,8 @@ impl Compiler for MoveSourceCompiler {
         };
 
         Ok(match unit {
-            CompiledUnit::Script { script, .. } => ScriptOrModule::Script(script),
+            CompiledUnit::Script { script, .. } => ScriptOrModule::Script(None, script),
             CompiledUnit::Module { module, .. } => {
-                let input = if input.starts_with("address") {
-                    input.to_string()
-                } else {
-                    format!("address {} {{\n{}\n}}", sender_addr, input)
-                };
                 cur_file.reopen()?.write_all(input.as_bytes())?;
                 self.temp_files.push(cur_file);
                 self.deps.push(cur_path);
@@ -98,8 +134,24 @@ impl Compiler for MoveSourceCompiler {
     }
 }
 
+static DIEM_PRECOMPILED_STDLIB: Lazy<FullyCompiledProgram> = Lazy::new(|| {
+    let program_res = move_lang::move_construct_pre_compiled_lib(
+        &mut CompilationEnv::new(Flags::empty().set_sources_shadow_deps(false)),
+        &diem_framework::diem_stdlib_files(),
+        None,
+    )
+    .unwrap();
+    match program_res {
+        Ok(stdlib) => stdlib,
+        Err((files, errors)) => {
+            eprintln!("!!!Standard library failed to compile!!!");
+            errors::report_errors(files, errors)
+        }
+    }
+});
+
 fn functional_testsuite(path: &Path) -> datatest_stable::Result<()> {
-    testsuite::functional_tests(MoveSourceCompiler::new(STD_LIB_DIR.to_string()), path)
+    testsuite::functional_tests(MoveSourceCompiler::new(&*DIEM_PRECOMPILED_STDLIB), path)
 }
 
 datatest_stable::harness!(functional_testsuite, FUNCTIONAL_TEST_DIR, r".*\.move$");

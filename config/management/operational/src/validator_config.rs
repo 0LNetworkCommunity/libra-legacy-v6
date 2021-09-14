@@ -1,15 +1,17 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{auto_validate::AutoValidate, json_rpc::JsonRpcClientWrapper, TransactionContext};
-use libra_crypto::{ed25519::Ed25519PublicKey, x25519};
-use libra_global_constants::{
+use diem_crypto::{ed25519::Ed25519PublicKey, x25519};
+use diem_global_constants::{
     CONSENSUS_KEY, FULLNODE_NETWORK_KEY, OPERATOR_ACCOUNT, OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY,
 };
-use libra_management::{error::Error, secure_backend::ValidatorBackend, storage::to_x25519};
-use libra_network_address::{NetworkAddress, Protocol};
-use libra_network_address_encryption::Encryptor;
-use libra_types::account_address::AccountAddress;
+use diem_management::{error::Error, secure_backend::ValidatorBackend, storage::to_x25519};
+use diem_network_address_encryption::Encryptor;
+use diem_types::{
+    account_address::AccountAddress,
+    network_address::{NetworkAddress, Protocol},
+};
 use serde::Serialize;
 use std::{convert::TryFrom, str::FromStr};
 use structopt::StructOpt;
@@ -21,7 +23,7 @@ pub struct SetValidatorConfig {
     #[structopt(long, required_unless = "config")]
     json_server: Option<String>,
     #[structopt(flatten)]
-    validator_config: libra_management::validator_config::ValidatorConfig,
+    validator_config: diem_management::validator_config::ValidatorConfig,
     #[structopt(
         long,
         required_unless = "fullnode-address",
@@ -34,7 +36,6 @@ pub struct SetValidatorConfig {
         help = "Full Node Network Address"
     )]
     fullnode_address: Option<NetworkAddress>,
-    //////// 0L ////////
     #[structopt(flatten)]
     auto_validate: AutoValidate,
     #[structopt(long, help = "Disables network address validation")]
@@ -42,7 +43,6 @@ pub struct SetValidatorConfig {
 }
 
 impl SetValidatorConfig {
-    //////// 0L ////////    
     pub fn execute(self) -> Result<TransactionContext, Error> {
         let config = self
             .validator_config
@@ -124,8 +124,7 @@ pub struct RotateKey {
     #[structopt(long, required_unless = "config")]
     json_server: Option<String>,
     #[structopt(flatten)]
-    validator_config: libra_management::validator_config::ValidatorConfig,
-	//////// 0L ////////    
+    validator_config: diem_management::validator_config::ValidatorConfig,
     #[structopt(flatten)]
     auto_validate: AutoValidate,
 }
@@ -142,7 +141,6 @@ impl RotateKey {
             .override_json_server(&self.json_server);
         let mut storage = config.validator_backend();
         let encryptor = config.validator_backend().encryptor();
-        //////// 0L ////////
         let client = JsonRpcClientWrapper::new(config.json_server.clone());
 
         // Fetch the current on-chain validator config for the node
@@ -178,7 +176,6 @@ impl RotateKey {
             storage_key = storage.rotate_key(key_name)?;
         }
 
-        //////// 0L ////////
         // Create and set the validator config state on the blockchain.
         let set_validator_config = SetValidatorConfig {
             json_server: self.json_server.clone(),
@@ -196,7 +193,6 @@ impl RotateKey {
             .execute(config.json_server, transaction_context)?;
 
         Ok((transaction_context, storage_key))
-        //////// 0L end ////////        
     }
 }
 
@@ -243,15 +239,17 @@ pub fn strip_address(address: &NetworkAddress) -> NetworkAddress {
     let protocols = address
         .as_slice()
         .iter()
-        .filter(|protocol| match protocol {
-            Protocol::Dns(_)
-            | Protocol::Dns4(_)
-            | Protocol::Dns6(_)
-            | Protocol::Ip4(_)
-            | Protocol::Ip6(_)
-            | Protocol::Memory(_)
-            | Protocol::Tcp(_) => true,
-            _ => false,
+        .filter(|protocol| {
+            matches!(
+                protocol,
+                Protocol::Dns(_)
+                    | Protocol::Dns4(_)
+                    | Protocol::Dns6(_)
+                    | Protocol::Ip4(_)
+                    | Protocol::Ip6(_)
+                    | Protocol::Memory(_)
+                    | Protocol::Tcp(_)
+            )
         })
         .cloned()
         .collect::<Vec<_>>();
@@ -263,23 +261,29 @@ pub struct ValidatorConfig {
     #[structopt(long, help = "Validator account address to display the config")]
     account_address: AccountAddress,
     #[structopt(flatten)]
-    config: libra_management::config::ConfigPath,
+    config: diem_management::config::ConfigPath,
     /// JSON-RPC Endpoint (e.g. http://localhost:8080)
     #[structopt(long, required_unless = "config")]
     json_server: Option<String>,
-    #[structopt(flatten)]
-    validator_backend: ValidatorBackend,
+    #[structopt(
+        long,
+        help = "The secure backend that contains the network address encryption keys"
+    )]
+    validator_backend: Option<ValidatorBackend>,
 }
 
 impl ValidatorConfig {
     pub fn execute(self) -> Result<DecryptedValidatorConfig, Error> {
-        let config = self
-            .config
-            .load()?
-            .override_json_server(&self.json_server)
-            .override_validator_backend(&self.validator_backend.validator_backend)?;
-        let encryptor = config.validator_backend().encryptor();
-        let client = JsonRpcClientWrapper::new(config.json_server);
+        let mut config = self.config.load()?.override_json_server(&self.json_server);
+        let client = JsonRpcClientWrapper::new(config.clone().json_server);
+
+        let encryptor = if let Some(backend) = &self.validator_backend {
+            config = config.override_validator_backend(&backend.validator_backend)?;
+            config.validator_backend().encryptor()
+        } else {
+            Encryptor::empty()
+        };
+
         client
             .validator_config(self.account_address)
             .and_then(|vc| {
@@ -302,7 +306,7 @@ pub struct DecryptedValidatorConfig {
 
 impl DecryptedValidatorConfig {
     pub fn from_validator_config_resource(
-        config_resource: &libra_types::validator_config::ValidatorConfigResource,
+        config_resource: &diem_types::validator_config::ValidatorConfigResource,
         account_address: AccountAddress,
         encryptor: &Encryptor,
     ) -> Result<Self, Error> {
@@ -316,22 +320,14 @@ impl DecryptedValidatorConfig {
     }
 
     pub fn from_validator_config(
-        config: &libra_types::validator_config::ValidatorConfig,
+        config: &diem_types::validator_config::ValidatorConfig,
         account_address: AccountAddress,
         encryptor: &Encryptor,
     ) -> Result<Self, Error> {
-        let fullnode_network_addresses = config
-            .fullnode_network_addresses()
-            .map_err(|e| Error::NetworkAddressDecodeError(e.to_string()))?;
-
-        let validator_network_addresses = encryptor
-            .decrypt(&config.validator_network_addresses, account_address)
-            //////// 0L ////////
+        let fullnode_network_addresses = fullnode_addresses(config)?;
+        let validator_network_addresses = validator_addresses(config, account_address, encryptor)
             .unwrap_or_else(|error| {
-                println!(
-                    "Unable to decode network address for account {}: {}. Using a dummy validator network address!",
-                    account_address, error
-                );
+                println!("{}: Using a dummy validator network address!", error);
                 vec![NetworkAddress::from_str("/dns4/could-not-decrypt").unwrap()]
             });
 
@@ -348,4 +344,27 @@ impl DecryptedValidatorConfig {
             .map(|v| v.to_string())
             .unwrap_or_else(|_| hex::encode(name))
     }
+}
+
+pub fn fullnode_addresses(
+    config: &diem_types::validator_config::ValidatorConfig,
+) -> Result<Vec<NetworkAddress>, Error> {
+    config
+        .fullnode_network_addresses()
+        .map_err(|e| Error::NetworkAddressDecodeError(e.to_string()))
+}
+
+pub fn validator_addresses(
+    config: &diem_types::validator_config::ValidatorConfig,
+    account_address: AccountAddress,
+    encryptor: &Encryptor,
+) -> Result<Vec<NetworkAddress>, Error> {
+    encryptor
+        .decrypt(&config.validator_network_addresses, account_address)
+        .map_err(|error| {
+            Error::CommandArgumentError(format!(
+                "Unable to decode network address for account {}: {}",
+                account_address, error
+            ))
+        })
 }

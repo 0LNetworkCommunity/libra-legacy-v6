@@ -9,7 +9,7 @@
 /// code is not performance optimized
 /// reads and writes the config file for each attribute, but it's a one time job...
 ///
-use libra_global_constants::{CONFIG_FILE, NODE_HOME};
+use diem_global_constants::{CONFIG_FILE, NODE_HOME};
 
 use chrono::{DateTime, Utc};
 use fs_extra::file::{copy, CopyOptions};

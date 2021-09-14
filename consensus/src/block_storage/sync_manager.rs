@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -17,8 +17,8 @@ use consensus_types::{
     quorum_cert::QuorumCert,
     sync_info::SyncInfo,
 };
-use libra_logger::prelude::*;
-use libra_types::{account_address::AccountAddress, epoch_change::EpochChangeProof};
+use diem_logger::prelude::*;
+use diem_types::{account_address::AccountAddress, epoch_change::EpochChangeProof};
 use mirai_annotations::checked_precondition;
 use rand::{prelude::*, Rng};
 use std::{clone::Clone, sync::Arc, time::Duration};
@@ -210,8 +210,7 @@ impl BlockStore {
             blocks.last().expect("should have 3-chain").id(),
             highest_commit_cert.commit_info().id(),
         );
-        let mut quorum_certs = vec![];
-        quorum_certs.push(highest_commit_cert.clone());
+        let mut quorum_certs = vec![highest_commit_cert.clone()];
         quorum_certs.extend(
             blocks
                 .iter()
@@ -325,7 +324,7 @@ impl BlockRetriever {
             return self.preferred_peer;
         }
 
-        let peer_idx = thread_rng().gen_range(0, peers.len());
+        let peer_idx = thread_rng().gen_range(0..peers.len());
         *peers.remove(peer_idx)
     }
 }

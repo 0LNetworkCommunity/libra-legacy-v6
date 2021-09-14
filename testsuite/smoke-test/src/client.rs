@@ -1,19 +1,13 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::test_utils::{
     compare_balances,
-    libra_swarm_utils::{get_op_tool, load_libra_root_storage},
+    diem_swarm_utils::{get_op_tool, load_diem_root_storage},
     setup_swarm_and_client_proxy,
 };
 use cli::client_proxy::ClientProxy;
-use debug_interface::NodeDebugClient;
-use libra_trace::trace::trace_node;
-use libra_types::{
-    account_config::{libra_root_address, testnet_dd_account_address},
-    ledger_info::LedgerInfo,
-    waypoint::Waypoint,
-};
+use diem_types::{ledger_info::LedgerInfo, waypoint::Waypoint};
 
 #[test]
 fn test_create_mint_transfer_block_metadata() {
@@ -24,10 +18,9 @@ fn test_create_mint_transfer_block_metadata() {
 
     // Test if we commit not only user transactions but also block metadata transactions,
     // assert committed version > # of user transactions
-    let (_account, version) = env
-        .get_validator_client(0, None)
-        .get_latest_account(&["q", &libra_root_address().to_string()])
-        .unwrap();
+    let mut vclient = env.get_validator_client(0, None);
+    vclient.test_trusted_connection().expect("success");
+    let version = vclient.get_latest_version();
     assert!(
         version > 4,
         "BlockMetadata txn not produced, current version: {}",
@@ -49,46 +42,42 @@ fn test_basic_restartability() {
 
     client.create_next_account(false).unwrap();
     client.create_next_account(false).unwrap();
+    client.mint_coins(&["mb", "0", "100", "XUS"], true).unwrap();
+    client.mint_coins(&["mb", "1", "10", "XUS"], true).unwrap();
     client
-        .mint_coins(&["mb", "0", "100", "Coin1"], true)
-        .unwrap();
-    client
-        .mint_coins(&["mb", "1", "10", "Coin1"], true)
-        .unwrap();
-    client
-        .transfer_coins(&["tb", "0", "1", "10", "Coin1"], true)
+        .transfer_coins(&["tb", "0", "1", "10", "XUS"], true)
         .unwrap();
     assert!(compare_balances(
-        vec![(90.0, "Coin1".to_string())],
+        vec![(90.0, "XUS".to_string())],
         client.get_balances(&["b", "0"]).unwrap(),
     ));
     assert!(compare_balances(
-        vec![(20.0, "Coin1".to_string())],
+        vec![(20.0, "XUS".to_string())],
         client.get_balances(&["b", "1"]).unwrap(),
     ));
 
     let peer_to_restart = 0;
     env.validator_swarm.kill_node(peer_to_restart);
 
-    assert!(env.validator_swarm.add_node(peer_to_restart).is_ok());
+    assert!(env.validator_swarm.start_node(peer_to_restart).is_ok());
     assert!(compare_balances(
-        vec![(90.0, "Coin1".to_string())],
+        vec![(90.0, "XUS".to_string())],
         client.get_balances(&["b", "0"]).unwrap(),
     ));
     assert!(compare_balances(
-        vec![(20.0, "Coin1".to_string())],
+        vec![(20.0, "XUS".to_string())],
         client.get_balances(&["b", "1"]).unwrap(),
     ));
 
     client
-        .transfer_coins(&["tb", "0", "1", "10", "Coin1"], true)
+        .transfer_coins(&["tb", "0", "1", "10", "XUS"], true)
         .unwrap();
     assert!(compare_balances(
-        vec![(80.0, "Coin1".to_string())],
+        vec![(80.0, "XUS".to_string())],
         client.get_balances(&["b", "0"]).unwrap(),
     ));
     assert!(compare_balances(
-        vec![(30.0, "Coin1".to_string())],
+        vec![(30.0, "XUS".to_string())],
         client.get_balances(&["b", "1"]).unwrap(),
     ));
 }
@@ -99,7 +88,7 @@ fn test_client_waypoints() {
 
     client.create_next_account(false).unwrap();
     client
-        .mint_coins(&["mintb", "0", "10", "Coin1"], true)
+        .mint_coins(&["mintb", "0", "10", "XUS"], true)
         .unwrap();
 
     // Create the waypoint for the initial epoch
@@ -115,25 +104,20 @@ fn test_client_waypoints() {
         genesis_li
     );
 
+    // This ugly blob is to remove a validator, we can do better... //////// 0L ////////
     // Start next epoch
-    let peer_id = env
-        .validator_swarm
-        .get_validator(0)
-        .unwrap()
-        .validator_peer_id()
-        .unwrap();
+    let peer_id = env.validator_swarm.get_node(0).unwrap().peer_id();
     let op_tool = get_op_tool(&env.validator_swarm, 1);
-    let libra_root = load_libra_root_storage(&env.validator_swarm, 0);
-    //////// 0L ////////
+    let diem_root = load_diem_root_storage(&env.validator_swarm, 0);
     let _ = op_tool
-        .remove_validator(peer_id, &libra_root, false)
+        .remove_validator(peer_id, &diem_root, false)
         .unwrap();
 
     client
-        .mint_coins(&["mintb", "0", "10", "Coin1"], true)
+        .mint_coins(&["mintb", "0", "10", "XUS"], true)
         .unwrap();
     assert!(compare_balances(
-        vec![(20.0, "Coin1".to_string())],
+        vec![(20.0, "XUS".to_string())],
         client.get_balances(&["b", "0"]).unwrap(),
     ));
     let epoch_1_li = client
@@ -165,58 +149,31 @@ fn test_concurrent_transfers_single_node() {
 
     client.create_next_account(false).unwrap();
     client
-        .mint_coins(&["mintb", "0", "100", "Coin1"], true)
+        .mint_coins(&["mintb", "0", "100", "XUS"], true)
         .unwrap();
 
     client.create_next_account(false).unwrap();
     client
-        .mint_coins(&["mintb", "1", "10", "Coin1"], true)
+        .mint_coins(&["mintb", "1", "10", "XUS"], true)
         .unwrap();
 
     for _ in 0..20 {
         client
-            .transfer_coins(&["t", "0", "1", "1", "Coin1"], false)
+            .transfer_coins(&["t", "0", "1", "1", "XUS"], false)
             .unwrap();
     }
     client
-        .transfer_coins(&["tb", "0", "1", "1", "Coin1"], true)
+        .transfer_coins(&["tb", "0", "1", "1", "XUS"], true)
         .unwrap();
 
     assert!(compare_balances(
-        vec![(79.0, "Coin1".to_string())],
+        vec![(79.0, "XUS".to_string())],
         client.get_balances(&["b", "0"]).unwrap(),
     ));
     assert!(compare_balances(
-        vec![(31.0, "Coin1".to_string())],
+        vec![(31.0, "XUS".to_string())],
         client.get_balances(&["b", "1"]).unwrap(),
     ));
-}
-
-#[test]
-fn test_trace() {
-    let (env, mut client) = setup_swarm_and_client_proxy(1, 0);
-
-    let port = env.validator_swarm.get_validators_debug_ports()[0];
-    let mut debug_client = NodeDebugClient::new("localhost", port);
-
-    client.create_next_account(false).unwrap();
-    client
-        .mint_coins(&["mintb", "0", "100", "Coin1"], true)
-        .unwrap();
-
-    client.create_next_account(false).unwrap();
-    client
-        .mint_coins(&["mintb", "1", "10", "Coin1"], true)
-        .unwrap();
-    client
-        .transfer_coins(&["t", "0", "1", "1", "Coin1"], false)
-        .unwrap();
-
-    let events = debug_client.get_events().expect("Failed to get events");
-    let txn_node = format!("txn::{}::{}", testnet_dd_account_address(), 1);
-    println!("Tracing {}", txn_node);
-
-    trace_node(&events[..], &txn_node);
 }
 
 /// This helper function creates 3 new accounts, mints funds, transfers funds
@@ -225,37 +182,37 @@ fn check_create_mint_transfer(mut client: ClientProxy) {
     // Create account 0, mint 10 coins and check balance
     client.create_next_account(false).unwrap();
     client
-        .mint_coins(&["mintb", "0", "10", "Coin1"], true)
+        .mint_coins(&["mintb", "0", "10", "XUS"], true)
         .unwrap();
     assert!(compare_balances(
-        vec![(10.0, "Coin1".to_string())],
+        vec![(10.0, "XUS".to_string())],
         client.get_balances(&["b", "0"]).unwrap(),
     ));
 
     // Create account 1, mint 1 coin, transfer 3 coins from account 0 to 1, check balances
     client.create_next_account(false).unwrap();
     client
-        .mint_coins(&["mintb", "1", "1", "Coin1"], true)
+        .mint_coins(&["mintb", "1", "1", "XUS"], true)
         .unwrap();
     client
-        .transfer_coins(&["tb", "0", "1", "3", "Coin1"], true)
+        .transfer_coins(&["tb", "0", "1", "3", "XUS"], true)
         .unwrap();
     assert!(compare_balances(
-        vec![(7.0, "Coin1".to_string())],
+        vec![(7.0, "XUS".to_string())],
         client.get_balances(&["b", "0"]).unwrap(),
     ));
     assert!(compare_balances(
-        vec![(4.0, "Coin1".to_string())],
+        vec![(4.0, "XUS".to_string())],
         client.get_balances(&["b", "1"]).unwrap(),
     ));
 
     // Create account 2, mint 15 coins and check balance
     client.create_next_account(false).unwrap();
     client
-        .mint_coins(&["mintb", "2", "15", "Coin1"], true)
+        .mint_coins(&["mintb", "2", "15", "XUS"], true)
         .unwrap();
     assert!(compare_balances(
-        vec![(15.0, "Coin1".to_string())],
+        vec![(15.0, "XUS".to_string())],
         client.get_balances(&["b", "2"]).unwrap(),
     ));
 }

@@ -1,8 +1,8 @@
-module TestAssertWithReferences {
+module 0x42::TestAssertWithReferences {
+
     spec module {
         pragma verify = true;
     }
-
     // This function verifies.
     // Feature: An input parameter is mutated
     fun simple1(x: u64, y: u64) {
@@ -75,8 +75,7 @@ module TestAssertWithReferences {
         };
         x
     }
-    spec fun simple5 {
-        pragma verify=true;
+    spec simple5 {
         ensures result == n;
     }
 
@@ -97,23 +96,7 @@ module TestAssertWithReferences {
         };
         x
     }
-    spec fun simple6 {
-        pragma verify=true;
+    spec simple6 {
         ensures result == n;
-    }
-
-    // This function fails.
-    fun simple7(n: u64): u64 {
-        let x = 0;
-
-        while ({
-            spec {
-                assert x == 0;
-            };
-            (x < n)
-        }) {
-            x = x + 1;
-        };
-        x
     }
 }

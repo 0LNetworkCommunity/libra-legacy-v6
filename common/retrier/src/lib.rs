@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 
-use libra_logger::debug;
+use diem_logger::debug;
 use std::{cmp::min, future::Future, pin::Pin, thread, time::Duration};
 
 /// Given an operation retries it successfully sleeping everytime it fails
@@ -41,7 +41,7 @@ where
             Err(err) => {
                 if let Some(delay) = iterator.next() {
                     debug!("{}. Retrying in {} seconds..", err, delay.as_secs());
-                    tokio::time::delay_for(delay).await;
+                    tokio::time::sleep(delay).await;
                 } else {
                     return Err(err);
                 }

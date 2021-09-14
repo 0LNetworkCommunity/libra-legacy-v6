@@ -17,7 +17,6 @@ use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use std::path::PathBuf;
 use ol_types::config::AppCfg;
 
-
 /// MinerApp Configuration Filename
 pub const CONFIG_FILE: &str = "0L.toml";
 

@@ -1,12 +1,10 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module provides an API for the accountable threshold multi-sig PureEdDSA signature scheme
 //! over the ed25519 twisted Edwards curve as defined in [RFC8032](https://tools.ietf.org/html/rfc8032).
 //!
 //! Signature verification also checks and rejects non-canonical signatures.
-#[cfg(any(feature = "vanilla-u64", feature = "vanilla-u32"))]
-use vanilla_ed25519_dalek as ed25519_dalek;
 
 use crate::{
     ed25519::{
@@ -18,7 +16,7 @@ use crate::{
 };
 use anyhow::{anyhow, Result};
 use core::convert::TryFrom;
-use libra_crypto_derive::{DeserializeKey, SerializeKey, SilentDebug, SilentDisplay};
+use diem_crypto_derive::{DeserializeKey, SerializeKey, SilentDebug, SilentDisplay};
 use mirai_annotations::*;
 use rand::Rng;
 use serde::Serialize;
@@ -186,7 +184,7 @@ impl Uniform for MultiEd25519PrivateKey {
     where
         R: ::rand::RngCore + ::rand::CryptoRng,
     {
-        let num_of_keys = rng.gen_range(1, MAX_NUM_OF_KEYS + 1);
+        let num_of_keys = rng.gen_range(1..=MAX_NUM_OF_KEYS);
         let mut private_keys: Vec<Ed25519PrivateKey> = Vec::with_capacity(num_of_keys);
         for _ in 0..num_of_keys {
             private_keys.push(
@@ -196,7 +194,7 @@ impl Uniform for MultiEd25519PrivateKey {
                 .unwrap(),
             );
         }
-        let threshold = rng.gen_range(1, num_of_keys + 1) as u8;
+        let threshold = rng.gen_range(1..=num_of_keys) as u8;
         MultiEd25519PrivateKey {
             private_keys,
             threshold,
@@ -490,7 +488,7 @@ impl Signature for MultiEd25519Signature {
         // Public keys should be validated to be safe against small subgroup attacks, etc.
         precondition!(has_tag!(public_key, ValidatedPublicKeyTag));
         let mut bytes = <T as CryptoHash>::Hasher::seed().to_vec();
-        lcs::serialize_into(&mut bytes, &message)
+        bcs::serialize_into(&mut bytes, &message)
             .map_err(|_| CryptoMaterialError::SerializationError)?;
         Self::verify_arbitrary_msg(self, &bytes, public_key)
     }

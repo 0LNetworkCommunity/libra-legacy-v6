@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use bytes::BytesMut;
@@ -97,20 +97,18 @@ mod test {
         drop(a);
 
         let result = block_on(read_u16frame_len(&mut b));
-        assert!(result.is_err(), true);
+        assert!(result.is_err());
 
         Ok(())
     }
 
     #[test]
-    fn write_u16frame_len_eof() -> Result<()> {
+    fn write_u16frame_len_eof() {
         let (mut a, b) = MemorySocket::new_pair();
         drop(b);
 
         let result = block_on(a.write_all(&[42]));
-        assert!(result.is_err(), true);
-
-        Ok(())
+        assert!(result.is_err());
     }
 
     #[test]
@@ -150,15 +148,13 @@ mod test {
     }
 
     #[test]
-    fn write_large_u16frame() -> Result<()> {
+    fn write_large_u16frame() {
         let (mut a, _b) = MemorySocket::new_pair();
 
         let mut buf = Vec::new();
         buf.resize((u16::max_value() as usize) * 2, 0);
 
         let result = block_on(write_u16frame(&mut a, &buf));
-        assert!(result.is_err(), true);
-
-        Ok(())
+        assert!(result.is_err());
     }
 }

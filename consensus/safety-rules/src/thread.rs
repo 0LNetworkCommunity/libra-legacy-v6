@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This provides a execution separation between SafetyRules and Consensus without requiring the
@@ -11,7 +11,7 @@ use crate::{
     persistent_safety_storage::PersistentSafetyStorage,
     remote_service::{self, RemoteService},
 };
-use libra_config::utils;
+use diem_config::utils;
 use std::{
     net::{IpAddr, Ipv4Addr, SocketAddr},
     thread::{self, JoinHandle},
@@ -29,6 +29,7 @@ impl ThreadService {
     pub fn new(
         storage: PersistentSafetyStorage,
         verify_vote_proposal_signature: bool,
+        export_consensus_key: bool,
         timeout: u64,
     ) -> Self {
         let listen_port = utils::get_available_port();
@@ -40,6 +41,7 @@ impl ThreadService {
                 storage,
                 listen_addr,
                 verify_vote_proposal_signature,
+                export_consensus_key,
                 timeout,
             )
         });

@@ -1,41 +1,41 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-//! Support for mocking the Libra data store.
+//! Support for mocking the Diem data store.
 
 use crate::account::AccountData;
 use anyhow::Result;
-use compiled_stdlib::StdLibOptions;
-use libra_state_view::StateView;
-use libra_types::{
+use diem_state_view::StateView;
+use diem_types::{
     access_path::AccessPath,
     on_chain_config::ConfigStorage,
     transaction::ChangeSet,
     write_set::{WriteOp, WriteSet},
 };
-use libra_vm::data_cache::RemoteStorage;
+use diem_vm::data_cache::RemoteStorage;
+use move_binary_format::errors::*;
 use move_core_types::{
     account_address::AccountAddress,
     language_storage::{ModuleId, StructTag},
 };
-use move_vm_runtime::data_cache::RemoteCache;
+use move_vm_runtime::data_cache::MoveStorage;
 use once_cell::sync::Lazy;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use vm::{errors::*, CompiledModule};
-use vm_genesis::generate_genesis_change_set_for_testing;
+use vm_genesis::{generate_genesis_change_set_for_testing, GenesisOptions};
 
 /// Dummy genesis ChangeSet for testing
 pub static GENESIS_CHANGE_SET: Lazy<ChangeSet> =
-    Lazy::new(|| generate_genesis_change_set_for_testing(StdLibOptions::Compiled));
+    Lazy::new(|| generate_genesis_change_set_for_testing(GenesisOptions::Compiled));
 
 pub static GENESIS_CHANGE_SET_FRESH: Lazy<ChangeSet> =
-    Lazy::new(|| generate_genesis_change_set_for_testing(StdLibOptions::Fresh));
+    Lazy::new(|| generate_genesis_change_set_for_testing(GenesisOptions::Fresh));
 
 /// An in-memory implementation of [`StateView`] and [`RemoteCache`] for the VM.
 ///
 /// Tests use this to set up state, and pass in a reference to the cache whenever a `StateView` or
 /// `RemoteCache` is needed.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct FakeDataStore {
     data: HashMap<AccessPath, Vec<u8>>,
 }
@@ -83,13 +83,14 @@ impl FakeDataStore {
     /// Adds a [`CompiledModule`] to this data store.
     ///
     /// Does not do any sort of verification on the module.
-    pub fn add_module(&mut self, module_id: &ModuleId, module: &CompiledModule) {
+    pub fn add_module(&mut self, module_id: &ModuleId, blob: Vec<u8>) {
         let access_path = AccessPath::from(module_id);
-        let mut blob = vec![];
-        module
-            .serialize(&mut blob)
-            .expect("serializing this module should work");
         self.set(access_path, blob);
+    }
+
+    /// Yields a reference to the internal data structure of the global state
+    pub fn inner(&self) -> &HashMap<AccessPath, Vec<u8>> {
+        &self.data
     }
 }
 
@@ -107,16 +108,12 @@ impl StateView for FakeDataStore {
         Ok(self.data.get(access_path).cloned())
     }
 
-    fn multi_get(&self, _access_paths: &[AccessPath]) -> Result<Vec<Option<Vec<u8>>>> {
-        unimplemented!();
-    }
-
     fn is_genesis(&self) -> bool {
         self.data.is_empty()
     }
 }
 
-impl RemoteCache for FakeDataStore {
+impl MoveStorage for FakeDataStore {
     fn get_module(&self, module_id: &ModuleId) -> VMResult<Option<Vec<u8>>> {
         RemoteStorage::new(self).get_module(module_id)
     }

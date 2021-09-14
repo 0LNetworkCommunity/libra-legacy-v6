@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::storage::{BackupHandle, BackupStorage, FileHandleRef};
@@ -13,7 +13,7 @@ use tokio::io::AsyncReadExt;
 pub trait BackupStorageExt {
     async fn read_all(&self, file_handle: &FileHandleRef) -> Result<Vec<u8>>;
     async fn load_json_file<T: DeserializeOwned>(&self, file_handle: &FileHandleRef) -> Result<T>;
-    async fn load_lcs_file<T: DeserializeOwned>(&self, file_handle: &FileHandleRef) -> Result<T>;
+    async fn load_bcs_file<T: DeserializeOwned>(&self, file_handle: &FileHandleRef) -> Result<T>;
     /// Adds a random suffix ".XXXX" to the backup name, so a retry won't pass a same backup name to
     /// the storage.
     async fn create_backup_with_random_suffix(&self, name: &str) -> Result<BackupHandle>;
@@ -28,8 +28,8 @@ impl BackupStorageExt for Arc<dyn BackupStorage> {
         Ok(bytes)
     }
 
-    async fn load_lcs_file<T: DeserializeOwned>(&self, file_handle: &FileHandleRef) -> Result<T> {
-        Ok(lcs::from_bytes(&self.read_all(&file_handle).await?)?)
+    async fn load_bcs_file<T: DeserializeOwned>(&self, file_handle: &FileHandleRef) -> Result<T> {
+        Ok(bcs::from_bytes(&self.read_all(&file_handle).await?)?)
     }
 
     async fn load_json_file<T: DeserializeOwned>(&self, file_handle: &FileHandleRef) -> Result<T> {

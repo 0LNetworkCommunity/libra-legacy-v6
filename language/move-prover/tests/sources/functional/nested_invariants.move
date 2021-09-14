@@ -1,4 +1,4 @@
-module TestNestedInvariants {
+module 0x42::TestNestedInvariants {
 
     spec module {
         pragma verify = true;
@@ -7,11 +7,11 @@ module TestNestedInvariants {
 
     // Tests scenarios for invariants with nested structs
 
-    struct Nested {
+    struct Nested has copy, drop {
         x: u64
     }
 
-    spec struct Nested {
+    spec Nested {
         // We must always have a value greater one.
         invariant x > 0;
 
@@ -19,12 +19,12 @@ module TestNestedInvariants {
         // invariant update x <= old(x);
     }
 
-    struct Outer {
+    struct Outer has copy, drop  {
         y: u64,
         n: Nested
     }
 
-    spec struct Outer {
+    spec Outer {
         // Invariant for own field.
         invariant y < 4;
 

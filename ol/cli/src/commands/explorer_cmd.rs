@@ -34,7 +34,7 @@ pub struct ExplorerCMD {
 impl Runnable for ExplorerCMD {
     /// Start the application.
     fn run(&self) {
-
+    
         let args = entrypoint::get_args();
         let is_swarm = *&args.swarm_path.is_some();
         let mut cfg = app_config().clone();

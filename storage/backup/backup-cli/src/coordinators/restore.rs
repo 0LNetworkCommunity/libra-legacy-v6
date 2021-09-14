@@ -1,11 +1,11 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     backup_types::{
         epoch_ending::restore::EpochHistoryRestoreController,
         state_snapshot::restore::{StateSnapshotRestoreController, StateSnapshotRestoreOpt},
-        transaction::restore::{TransactionRestoreController, TransactionRestoreOpt},
+        transaction::restore::TransactionRestoreBatchController,
     },
     metadata,
     metadata::{cache::MetadataCacheOpt, TransactionBackupMeta},
@@ -16,8 +16,8 @@ use crate::{
     utils::{unix_timestamp_sec, GlobalRestoreOptions, RestoreRunMode},
 };
 use anyhow::{bail, Result};
-use libra_logger::prelude::*;
-use libra_types::transaction::Version;
+use diem_logger::prelude::*;
+use diem_types::transaction::Version;
 use std::sync::Arc;
 use structopt::StructOpt;
 
@@ -25,12 +25,18 @@ use structopt::StructOpt;
 pub struct RestoreCoordinatorOpt {
     #[structopt(flatten)]
     pub metadata_cache_opt: MetadataCacheOpt,
+    #[structopt(
+        long,
+        help = "Replay all transactions, don't try to use a state snapshot."
+    )]
+    pub replay_all: bool,
 }
 
 pub struct RestoreCoordinator {
     storage: Arc<dyn BackupStorage>,
     global_opt: GlobalRestoreOptions,
     metadata_cache_opt: MetadataCacheOpt,
+    replay_all: bool,
 }
 
 impl RestoreCoordinator {
@@ -43,6 +49,7 @@ impl RestoreCoordinator {
             storage,
             global_opt,
             metadata_cache_opt: opt.metadata_cache_opt,
+            replay_all: opt.replay_all,
         }
     }
 
@@ -67,14 +74,21 @@ impl RestoreCoordinator {
     }
 
     async fn run_impl(self) -> Result<()> {
-        let metadata_view =
-            metadata::cache::sync_and_load(&self.metadata_cache_opt, Arc::clone(&self.storage))
-                .await?;
+        let metadata_view = metadata::cache::sync_and_load(
+            &self.metadata_cache_opt,
+            Arc::clone(&self.storage),
+            self.global_opt.concurrent_downloads,
+        )
+        .await?;
 
         let transactions = metadata_view.select_transaction_backups(self.target_version())?;
         let actual_target_version = self.get_actual_target_version(&transactions)?;
         let epoch_endings = metadata_view.select_epoch_ending_backups(actual_target_version)?;
-        let state_snapshot = metadata_view.select_state_snapshot(actual_target_version)?;
+        let state_snapshot = if self.replay_all {
+            None
+        } else {
+            metadata_view.select_state_snapshot(actual_target_version)?
+        };
         let replay_transactions_from_version = match &state_snapshot {
             Some(b) => b.version + 1,
             None => 0,
@@ -124,24 +138,20 @@ impl RestoreCoordinator {
             .await?;
         }
 
-        for backup in transactions {
-            if backup.last_version < txn_resume_point {
-                info!("Skipping {} due to non-empty DB.", backup.manifest);
-                continue;
-            }
-
-            TransactionRestoreController::new(
-                TransactionRestoreOpt {
-                    manifest_handle: backup.manifest,
-                    replay_from_version: Some(replay_transactions_from_version),
-                },
-                self.global_opt.clone(),
-                Arc::clone(&self.storage),
-                Some(Arc::clone(&epoch_history)),
-            )
-            .run()
-            .await?;
-        }
+        let txn_manifests = transactions
+            .into_iter()
+            .skip_while(|b| b.last_version < txn_resume_point)
+            .map(|b| b.manifest)
+            .collect();
+        TransactionRestoreBatchController::new(
+            self.global_opt,
+            self.storage,
+            txn_manifests,
+            Some(replay_transactions_from_version),
+            Some(epoch_history),
+        )
+        .run()
+        .await?;
 
         Ok(())
     }

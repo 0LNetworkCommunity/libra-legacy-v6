@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 
 use std::{fs, path::{Path}, process::{Command, Stdio}, thread, time::{self, Duration}};
-use libra_config::config::NodeConfig;
+use diem_config::config::NodeConfig;
 use ol::config::AppCfg;
 use txs::submit_tx::{TxParams, get_tx_params_from_swarm};
 use anyhow::{bail, Error};
@@ -25,17 +25,17 @@ pub fn integration_submit_tx() {
         Err(_) => {},
     }
 
-    let node_exec = &root_source_path.join("target/debug/libra-node");
+    let node_exec = &root_source_path.join("target/debug/diem-node");
     // TODO: Assert that block_0.json is in blocks folder.
     std::env::set_var("RUST_LOG", "debug");
     let mut swarm_cmd = Command::new("cargo");
     swarm_cmd.current_dir(&root_source_path.as_os_str());
     swarm_cmd.env("NODE_ENV", "test")
             .arg("run")
-            .arg("-p").arg("libra-swarm")
+            .arg("-p").arg("diem-swarm")
             .arg("--")
             .arg("-n").arg("1")
-            .arg("--libra-node").arg(node_exec.to_str().unwrap())
+            .arg("--diem-node").arg(node_exec.to_str().unwrap())
             .arg("-c").arg(swarm_configs_path.to_str().unwrap());
     let cmd = swarm_cmd.stdout(Stdio::inherit())
                 .stderr(Stdio::inherit())

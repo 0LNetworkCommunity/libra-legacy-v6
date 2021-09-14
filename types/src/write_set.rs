@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! For each transaction the VM executes, the VM will output a `WriteSet` that contains each access
@@ -88,6 +88,13 @@ impl WriteSetMut {
     pub fn freeze(self) -> Result<WriteSet> {
         // TODO: add structural validation
         Ok(WriteSet(self))
+    }
+
+    //////// 0L ////////
+    /// Get an owned instance of the mutable writeset
+    pub fn get(self) -> Vec<(AccessPath, WriteOp)> {
+      // TODO: add structural validation
+      self.write_set
     }
 }
 

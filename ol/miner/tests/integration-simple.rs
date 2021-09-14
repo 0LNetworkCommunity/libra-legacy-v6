@@ -13,7 +13,9 @@ pub fn integration() {
     // these are equivalent to fixtures/block_0.json.test.alice 
     // for the test to work:
 
-    // the miner needs to start producing block_1.json. If block_1.json is not successful, then block_2 cannot be either, because it depends on certain on-chain state from block_1 correct submission.
+    // the miner needs to start producing block_1.json. If block_1.json is not 
+    // successful, then block_2 cannot be either, because it depends on certain 
+    // on-chain state from block_1 correct submission.
     let miner_source_path = Path::new(env!("CARGO_MANIFEST_DIR"));
     let root_source_path = miner_source_path.parent().unwrap().parent().unwrap();
     let home = dirs::home_dir().unwrap();
@@ -21,17 +23,16 @@ pub fn integration() {
     // clear from side effects
     fs::remove_dir_all(&swarm_configs_path).unwrap();
 
-    let node_exec = &root_source_path.join("target/debug/libra-node");
+    let node_exec = &root_source_path.join("target/debug/diem-node");
     // TODO: Assert that block_0.json is in blocks folder.
     std::env::set_var("RUST_LOG", "debug");
     let mut swarm_cmd = Command::new("cargo");
     swarm_cmd.current_dir(&root_source_path.as_os_str());
     swarm_cmd.arg("run")
-            .arg("-p").arg("libra-swarm")
+            .arg("-p").arg("diem-swarm")
             .arg("--")
-            .arg("-n")
-            .arg("1")
-            .arg("--libra-node").arg(node_exec.to_str().unwrap())
+            .arg("-n").arg("1")
+            .arg("--diem-node").arg(node_exec.to_str().unwrap())
             .arg("-c").arg(swarm_configs_path.to_str().unwrap());
     let cmd = swarm_cmd.stdout(Stdio::inherit())
                 .stderr(Stdio::inherit())
@@ -39,14 +40,16 @@ pub fn integration() {
     match cmd {
         // Swarm has started
         Ok(mut swarm_child) => {
-            // need to wait for swarm to start-up before we have the configs needed to connect to it. Check stdout.
+            // need to wait for swarm to start-up before we have the configs 
+            // needed to connect to it. Check stdout.
             block_until_swarm_ready();
             println!("READY!");
-            // wait a bit more, because the previous command only checks for config fils creation.
+            // wait a bit more, because the previous command only checks for 
+            // config fils creation.
             let test_timeout = Duration::from_secs(30);
             thread::sleep(test_timeout);
 
-                        // start the miner swarm test helper.
+            // start the miner swarm test helper.
             let mut init_cmd = Command::new("cargo");
             init_cmd.arg("run")
                     .arg("-p")
@@ -96,7 +99,7 @@ pub fn integration() {
             init_child.kill().unwrap();
             swarm_child.kill().unwrap();
             miner_child.kill().unwrap();
-            
+
             // TODO: get output and evaluate with assert
             // assert_eq!()
         }

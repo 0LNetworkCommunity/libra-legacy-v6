@@ -1,149 +1,49 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    errors::{JsonRpcError, ServerCode},
-    tests::{
-        genesis::generate_genesis_state,
-        utils::{test_bootstrap, MockLibraDB},
+    errors::ServerCode,
+    runtime::check_latest_ledger_info_timestamp,
+    tests::utils::{
+        create_database_client_and_runtime, create_db_and_runtime, mock_db, test_bootstrap,
+        MockDiemDB,
     },
+    util::{sdk_info_from_user_agent, SdkInfo, SdkLang, SdkVersion},
+    views::VMStatusView,
 };
-use futures::{
-    channel::{
-        mpsc::{channel, Receiver},
-        oneshot,
-    },
-    StreamExt,
-};
-use libra_config::{config::DEFAULT_CONTENT_LENGTH_LIMIT, utils};
-use libra_crypto::{ed25519::Ed25519PrivateKey, hash::CryptoHash, HashValue, PrivateKey, Uniform};
-use libra_json_rpc_client::{
-    views::{
-        AccountStateWithProofView, AccountView, BytesView, EventView, MetadataView, StateProofView,
-        TransactionDataView, TransactionView, VMStatusView,
-    },
-    JsonRpcAsyncClient, JsonRpcBatch, JsonRpcResponse, ResponseAsView,
-};
-use libra_mempool::SubmissionStatus;
-use libra_metrics::get_all_metrics;
-use libra_proptest_helpers::ValueGenerator;
-use libra_types::{
+use diem_client::{views::TransactionDataView, BlockingClient, MethodRequest};
+use diem_config::{config::DEFAULT_CONTENT_LENGTH_LIMIT, utils};
+use diem_crypto::{ed25519::Ed25519PrivateKey, hash::CryptoHash, HashValue, PrivateKey, Uniform};
+use diem_metrics::get_all_metrics;
+use diem_types::{
     account_address::AccountAddress,
-    account_config::{from_currency_code_string, AccountResource, FreezingBit, COIN1_NAME},
+    account_config::AccountResource,
     account_state::AccountState,
     account_state_blob::{AccountStateBlob, AccountStateWithProof},
     chain_id::ChainId,
-    contract_event::ContractEvent,
     event::EventKey,
     ledger_info::LedgerInfoWithSignatures,
     mempool_status::{MempoolStatus, MempoolStatusCode},
     proof::{SparseMerkleProof, TransactionAccumulatorProof, TransactionInfoWithProof},
     test_helpers::transaction_test_helpers::get_test_signed_txn,
-    transaction::{SignedTransaction, Transaction, TransactionInfo, TransactionPayload},
+    transaction::{Transaction, TransactionInfo, TransactionPayload},
     vm_status::StatusCode,
 };
-use libradb::test_helper::arb_blocks_to_commit;
-use move_core_types::{
-    language_storage::TypeTag,
-    move_resource::MoveResource,
-    value::{MoveStructLayout, MoveTypeLayout},
-};
-use move_vm_types::values::{Struct, Value};
-use proptest::prelude::*;
+use futures::{channel::mpsc::channel, StreamExt};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use std::{
     cmp::{max, min},
-    collections::HashMap,
     convert::TryFrom,
-    str::FromStr,
+    ops::Sub,
     sync::Arc,
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
 use storage_interface::DbReader;
-use tokio::runtime::Runtime;
 use vm_validator::{
     mocks::mock_vm_validator::MockVMValidator, vm_validator::TransactionValidation,
 };
 
 use serde_json::json;
-
-// returns MockLibraDB for unit-testing
-fn mock_db() -> MockLibraDB {
-    let mut gen = ValueGenerator::new();
-    let blocks = gen.generate(arb_blocks_to_commit());
-    let mut account_state_with_proof = gen.generate(any::<AccountStateWithProof>());
-
-    let mut version = 1;
-    let mut all_accounts = HashMap::new();
-    let mut all_txns = vec![];
-    let mut events = vec![];
-    let mut timestamps = vec![0 as u64];
-
-    for (txns_to_commit, ledger_info_with_sigs) in &blocks {
-        for (idx, txn) in txns_to_commit.iter().enumerate() {
-            timestamps.push(ledger_info_with_sigs.ledger_info().timestamp_usecs());
-            events.extend(
-                txn.events()
-                    .iter()
-                    .map(|e| ((idx + version) as u64, e.clone())),
-            );
-        }
-        version += txns_to_commit.len();
-        let mut account_states = HashMap::new();
-        // Get the ground truth of account states.
-        txns_to_commit.iter().for_each(|txn_to_commit| {
-            account_states.extend(txn_to_commit.account_states().clone())
-        });
-
-        // Record all account states.
-        for (address, blob) in account_states.into_iter() {
-            let mut state = AccountState::try_from(&blob).unwrap();
-            let freezing_bit = Value::struct_(Struct::pack(vec![Value::bool(false)], true))
-                .value_as::<Struct>()
-                .unwrap()
-                .simple_serialize(&MoveStructLayout::new(vec![MoveTypeLayout::Bool]))
-                .unwrap();
-            state.insert(FreezingBit::resource_path(), freezing_bit);
-            all_accounts.insert(address, AccountStateBlob::try_from(&state).unwrap());
-        }
-
-        // Record all transactions.
-        all_txns.extend(txns_to_commit.iter().map(|txn_to_commit| {
-            (
-                txn_to_commit.transaction().clone(),
-                txn_to_commit.status().clone(),
-            )
-        }));
-    }
-
-    if account_state_with_proof.blob.is_none() {
-        let (_, blob) = all_accounts.iter().next().unwrap();
-        account_state_with_proof.blob = Some(blob.clone());
-    }
-
-    let account_state_with_proof = vec![account_state_with_proof];
-
-    if events.is_empty() {
-        // mock the first event
-        let mock_event = ContractEvent::new(
-            EventKey::new_from_address(&AccountAddress::random(), 0),
-            0,
-            TypeTag::Bool,
-            b"event_data".to_vec(),
-        );
-        events.push((version as u64, mock_event));
-    }
-
-    let (genesis, _) = generate_genesis_state();
-    MockLibraDB {
-        version: version as u64,
-        genesis,
-        all_accounts,
-        all_txns,
-        events,
-        account_state_with_proof,
-        timestamps,
-    }
-}
 
 #[test]
 fn test_cors() {
@@ -155,7 +55,7 @@ fn test_cors() {
     let request = client
         .request(reqwest::Method::OPTIONS, &url)
         .header("origin", origin)
-        .header("access-control-headers", "content-type") //////// 0L ////////
+        .header("access-control-headers", "content-type")
         .header("access-control-request-method", "POST");
     let resp = request.send().unwrap();
     assert_eq!(resp.status(), 200);
@@ -208,30 +108,30 @@ fn test_json_rpc_protocol_invalid_requests() {
     let calls = vec![
         (
             "invalid protocol version",
-            json!({"jsonrpc": "1.0", "method": "get_metadata", "params": [], "id": 1}),
+            json!({"jsonrpc": "1.0", "method": "get_metadata", "id": 1}),
             json!({
                 "error": {
                     "code": -32600, "data": null, "message": "Invalid Request",
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
             "invalid request format: invalid id type",
-            json!({"jsonrpc": "2.0", "method": "get_metadata", "params": [], "id": true}),
+            json!({"jsonrpc": "2.0", "method": "get_metadata", "id": true}),
             json!({
                 "error": {
                     "code": -32604, "data": null, "message": "Invalid request format",
                 },
                 "id": null,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -243,97 +143,83 @@ fn test_json_rpc_protocol_invalid_requests() {
                 },
                 "id": null,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
             "method not found",
-            json!({"jsonrpc": "2.0", "method": "add", "params": [], "id": 1}),
+            json!({"jsonrpc": "2.0", "method": "add", "id": 1}),
             json!({
                 "error": {
                     "code": -32601, "data": null, "message": "Method not found",
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
             "method not given",
-            json!({"jsonrpc": "2.0", "params": [], "id": 1}),
+            json!({"jsonrpc": "2.0", "id": 1}),
             json!({
                 "error": {
                     "code": -32601, "data": null, "message": "Method not found",
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
-            }),
-        ),
-        (
-            "params not given",
-            json!({"jsonrpc": "2.0", "method": "get_metadata", "id": 1}),
-            json!({
-                "error": {
-                    "code": -32602, "data": null, "message": "Invalid params",
-                },
-                "id": 1,
-                "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
             "jsonrpc not given",
-            json!({"method": "get_metadata", "params": [], "id": 1}),
+            json!({"method": "get_metadata", "id": 1}),
             json!({
                 "error": {
                     "code": -32600, "data": null, "message": "Invalid Request",
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
             "invalid arguments: too many arguments",
-            json!({"jsonrpc": "2.0", "method": "get_account", "params": [1, 2], "id": 1}),
+            json!({"jsonrpc": "2.0", "method": "get_currencies", "params": [1, 2], "id": 1}),
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid params: wrong number of arguments (given 2, expected 1)",
+                    "message": "Invalid params for method 'get_currencies'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
             "invalid arguments: not enough arguments",
-            json!({"jsonrpc": "2.0", "method": "get_account", "params": [], "id": 1}),
+            json!({"jsonrpc": "2.0", "method": "get_events", "id": 1}),
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid params: wrong number of arguments (given 0, expected 1)",
+                    "message": "Invalid params for method 'get_events'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -342,14 +228,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid params: wrong number of arguments (given 2, expected 0..1)",
+                    "message": "Invalid params for method 'get_metadata'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -358,14 +244,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": format!("Invalid param version(params[0]): should be <= known latest version {}", version),
+                    "message": format!("Invalid param version should be <= known latest version {}", version),
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -374,14 +260,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid param account address(params[0]): should be hex-encoded string",
+                    "message": "Invalid params for method 'get_account'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -390,14 +276,30 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid param account address(params[0]): should be hex-encoded string",
+                    "message": "Invalid params for method 'get_account'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
+            }),
+        ),
+        (
+            "get_account: invalid version param type",
+            json!({"jsonrpc": "2.0", "method": "get_account", "params": ["e1b3d22871989e9fd9dc6814b2f4fc41", true], "id": 1}),
+            json!({
+                "error": {
+                    "code": -32602,
+                    "message": "Invalid params for method 'get_account'",
+                    "data": null
+                },
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -406,14 +308,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid param data(params[0]): should be hex-encoded string of LCS serialized Libra SignedTransaction type",
+                    "message": "Invalid params for method 'submit'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -422,14 +324,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid param start_version(params[0]): should be unsigned int64",
+                    "message": "Invalid params for method 'get_transactions'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -438,9 +340,9 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version,
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version,
                 "result": []
             }),
         ),
@@ -450,14 +352,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid param limit(params[1]): should be unsigned int64",
+                    "message": "Invalid params for method 'get_transactions'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -466,14 +368,74 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid param include_events(params[2]): should be boolean",
+                    "message": "Invalid params for method 'get_transactions'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
+            }),
+        ),
+        (
+            "get_transactions_with_proofs: invalid start_version param",
+            json!({"jsonrpc": "2.0", "method": "get_transactions_with_proofs", "params": ["helloworld", 1, true], "id": 1}),
+            json!({
+                "error": {
+                    "code": -32602,
+                    "message": "Invalid params for method 'get_transactions_with_proofs'",
+                    "data": null
+                },
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
+            }),
+        ),
+        (
+            "get_transactions_with_proofs: start_version is too big, returns empty array",
+            json!({"jsonrpc": "2.0", "method": "get_transactions_with_proofs", "params": [version+1, 1, false], "id": 1}),
+            json!({
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version,
+                "result": null
+            }),
+        ),
+        (
+            "get_transactions_with_proofs: invalid limit param",
+            json!({"jsonrpc": "2.0", "method": "get_transactions_with_proofs", "params": [1, false, false], "id": 1}),
+            json!({
+                "error": {
+                    "code": -32602,
+                    "message": "Invalid params for method 'get_transactions_with_proofs'",
+                    "data": null
+                },
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
+            }),
+        ),
+        (
+            "get_transactions_with_proofs: limit is too big",
+            json!({"jsonrpc": "2.0", "method": "get_transactions_with_proofs", "params": [1, 1001, false], "id": 1}),
+            json!({
+                "error": {
+                    "code": -32600,
+                    "message": "Invalid Request: page size = 1001, exceed limit 1000",
+                    "data": null
+                },
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -482,14 +444,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid param event key(params[0]): should be hex-encoded string",
+                    "message": "Invalid params for method 'get_events'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -498,14 +460,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid param event key(params[0]): should be hex-encoded string",
+                    "message": "Invalid params for method 'get_events'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -514,14 +476,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid param start(params[1]): should be unsigned int64",
+                    "message": "Invalid params for method 'get_events'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -530,9 +492,9 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version,
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version,
                 "result": []
             }),
         ),
@@ -542,14 +504,78 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid param limit(params[2]): should be unsigned int64",
+                    "message": "Invalid params for method 'get_events'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
+            }),
+        ),
+        (
+            "get_events_with_proofs: invalid event_key type",
+            json!({"jsonrpc": "2.0", "method": "get_events_with_proofs", "params": [false, 1, 10], "id": 1}),
+            json!({
+                "error": {
+                    "code": -32602,
+                    "message": "Invalid params for method 'get_events_with_proofs'",
+                    "data": null
+                },
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
+            }),
+        ),
+        (
+            "get_events_with_proofs: event_key is not hex-encoded string",
+            json!({"jsonrpc": "2.0", "method": "get_events_with_proofs", "params": ["helloworld", 1, 10], "id": 1}),
+            json!({
+                "error": {
+                    "code": -32602,
+                    "message": "Invalid params for method 'get_events_with_proofs'",
+                    "data": null
+                },
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
+            }),
+        ),
+        (
+            "get_events_with_proofs: invalid start param",
+            json!({"jsonrpc": "2.0", "method": "get_events_with_proofs", "params": ["13000000000000000000000000000000000000000a550c18", false, 1], "id": 1}),
+            json!({
+                "error": {
+                    "code": -32602,
+                    "message": "Invalid params for method 'get_events_with_proofs'",
+                    "data": null
+                },
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
+            }),
+        ),
+        (
+            "get_events_with_proofs: invalid limit param",
+            json!({"jsonrpc": "2.0", "method": "get_events_with_proofs", "params": ["13000000000000000000000000000000000000000a550c18", 1, "invalid"], "id": 1}),
+            json!({
+                "error": {
+                    "code": -32602,
+                    "message": "Invalid params for method 'get_events_with_proofs'",
+                    "data": null
+                },
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -558,14 +584,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid param account address(params[0]): should be hex-encoded string",
+                    "message": "Invalid params for method 'get_account_transaction'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -574,14 +600,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid param account sequence number(params[1]): should be unsigned int64",
+                    "message": "Invalid params for method 'get_account_transaction'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -590,14 +616,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid param include_events(params[2]): should be boolean",
+                    "message": "Invalid params for method 'get_account_transaction'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -606,9 +632,9 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version,
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version,
                 "result": null
             }),
         ),
@@ -618,14 +644,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid param account address(params[0]): should be hex-encoded string",
+                    "message": "Invalid params for method 'get_account_transactions'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -639,9 +665,9 @@ fn test_json_rpc_protocol_invalid_requests() {
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -650,14 +676,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid param start(params[1]): should be unsigned int64",
+                    "message": "Invalid params for method 'get_account_transactions'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -666,9 +692,9 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version,
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version,
                 "result": []
             }),
         ),
@@ -678,14 +704,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid param limit(params[2]): should be unsigned int64",
+                    "message": "Invalid params for method 'get_account_transactions'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -694,14 +720,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid param include_events(params[3]): should be boolean",
+                    "message": "Invalid params for method 'get_account_transactions'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -710,14 +736,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid param version(params[0]): should be unsigned int64",
+                    "message": "Invalid params for method 'get_state_proof'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -726,14 +752,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": format!("Invalid param version(params[0]): should be <= known latest version {}", version),
+                    "message": format!("Invalid param version should be <= known latest version {}", version),
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -742,14 +768,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid param account address(params[0]): should be hex-encoded string",
+                    "message": "Invalid params for method 'get_account_state_with_proof'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -758,14 +784,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid param version(params[1]): should be unsigned int64",
+                    "message": "Invalid params for method 'get_account_state_with_proof'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -779,9 +805,9 @@ fn test_json_rpc_protocol_invalid_requests() {
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -790,14 +816,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": format!("Invalid param ledger version for proof(params[2]): should be <= known latest version {}", version),
+                    "message": format!("Invalid param ledger_version should be <= known latest version {}", version),
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -806,14 +832,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": "Invalid param ledger version for proof(params[2]): should be unsigned int64",
+                    "message": "Invalid params for method 'get_account_state_with_proof'",
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -822,14 +848,14 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": format!("Invalid param version(params[1]): should be <= known latest version {}", version),
+                    "message": format!("Invalid param version should be <= known latest version {}", version),
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
         (
@@ -838,44 +864,57 @@ fn test_json_rpc_protocol_invalid_requests() {
             json!({
                 "error": {
                     "code": -32602,
-                    "message": format!("Invalid param ledger version for proof(params[2]): should be <= known latest version {}", version),
+                    "message": format!("Invalid param ledger_version should be <= known latest version {}", version),
                     "data": null
                 },
                 "id": 1,
                 "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version
-            }),
-        ),
-        (
-            "id not given",
-            json!({"jsonrpc": "2.0", "method": "get_metadata", "params": []}),
-            json!({
-                "id": null,
-                "jsonrpc": "2.0",
-                "libra_chain_id": ChainId::test().id(),
-                "libra_ledger_timestampusec": timestamp,
-                "libra_ledger_version": version,
-                "result": {
-                    "chain_id": ChainId::test().id(),
-                    "timestamp": timestamp,
-                    "version": version,
-                    "script_hash_allow_list": [],
-                    "module_publishing_allowed": true,
-                    "libra_version": 1,
-                    "accumulator_root_hash": "0000000000000000000000000000000000000000000000000000000000000000"
-                }
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
             }),
         ),
     ];
     for (name, request, expected) in calls {
         let resp = client.post(&url).json(&request).send().unwrap();
         assert_eq!(resp.status(), 200);
+        let headers = resp.headers().clone();
+        assert_eq!(
+            headers.get("X-Diem-Chain-Id").unwrap().to_str().unwrap(),
+            "4"
+        );
+        assert_eq!(
+            headers
+                .get("X-Diem-Ledger-Version")
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            version.to_string()
+        );
+        assert_eq!(
+            headers
+                .get("X-Diem-Ledger-TimestampUsec")
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            timestamp.to_string()
+        );
 
         let resp_json: serde_json::Value = resp.json().unwrap();
         assert_eq!(expected, resp_json, "test: {}", name);
     }
+}
+
+#[test]
+fn test_no_params_request_is_valid() {
+    let (_mock_db, _runtime, url, _) = create_db_and_runtime();
+    let client = reqwest::blocking::Client::new();
+    let request = json!({"jsonrpc": "2.0", "method": "get_currencies", "id": 1});
+    let resp = client.post(&url).json(&request).send().unwrap();
+    assert_eq!(resp.status(), 200);
+    let resp_json: serde_json::Value = resp.json().unwrap();
+    assert!(resp_json.get("result").is_some(), "{}", resp_json);
+    assert!(resp_json.get("error").is_none(), "{}", resp_json);
 }
 
 #[test]
@@ -884,13 +923,13 @@ fn test_metrics() {
     let calls = vec![
         (
             "success single call",
-            json!({"jsonrpc": "2.0", "method": "get_currencies", "params": [], "id": 1}),
+            json!({"jsonrpc": "2.0", "method": "get_currencies", "id": 1}),
         ),
         (
             "success batch call",
             json!([
-                {"jsonrpc": "2.0", "method": "get_currencies", "params": [], "id": 1},
-                {"jsonrpc": "2.0", "method": "get_currencies", "params": [], "id": 2}
+                {"jsonrpc": "2.0", "method": "get_currencies", "id": 1},
+                {"jsonrpc": "2.0", "method": "get_currencies", "id": 2}
             ]),
         ),
         (
@@ -898,7 +937,10 @@ fn test_metrics() {
             json!({"jsonrpc": "2.0", "method": "get_currencies", "params": ["invalid"], "id": 1}),
         ),
     ];
-    let client = reqwest::blocking::Client::new();
+    let client = reqwest::blocking::ClientBuilder::new()
+        .user_agent("diem-client-sdk-python / 2.11.15")
+        .build()
+        .expect("Client::new()");
     for (_name, request) in calls {
         let _ = client.post(&url).json(&request).send();
     }
@@ -906,18 +948,18 @@ fn test_metrics() {
     let metrics = get_all_metrics();
     let expected_metrics = vec![
         // rpc request count
-        "libra_client_service_rpc_requests_count{type=single}",
-        "libra_client_service_rpc_requests_count{type=batch}",
+        "diem_client_service_rpc_requests_count{type=single}",
+        "diem_client_service_rpc_requests_count{type=batch}",
         // rpc request latency
-        "libra_client_service_rpc_request_latency_seconds{type=single}",
-        "libra_client_service_rpc_request_latency_seconds{type=batch}",
+        "diem_client_service_rpc_request_latency_seconds{type=single}",
+        "diem_client_service_rpc_request_latency_seconds{type=batch}",
         // method request count
-        "libra_client_service_requests_count{method=get_currencies,result=success,type=single}",
+        "diem_client_service_requests_count{method=get_currencies,result=success,sdk_lang=python,sdk_ver=2.11.15,type=single}",
         // method latency
-        "libra_client_service_method_latency_seconds{method=get_currencies,type=single}",
-        "libra_client_service_method_latency_seconds{method=get_currencies,type=batch}",
+        "diem_client_service_method_latency_seconds{method=get_currencies,type=single}",
+        "diem_client_service_method_latency_seconds{method=get_currencies,type=batch}",
         // invalid params
-        "libra_client_service_invalid_requests_count{errortype=invalid_params,method=get_currencies,type=single}",
+        "diem_client_service_invalid_requests_count{errortype=invalid_params,method=get_currencies,sdk_lang=python,sdk_ver=2.11.15,type=single}",
     ];
 
     for name in expected_metrics {
@@ -936,11 +978,8 @@ fn test_transaction_submission() {
     let mock_db = mock_db();
     let port = utils::get_available_port();
     let address = format!("0.0.0.0:{}", port);
-    let mut runtime = test_bootstrap(address.parse().unwrap(), Arc::new(mock_db), mp_sender);
-    let client = JsonRpcAsyncClient::new(
-        reqwest::Url::from_str(format!("http://{}:{}/v1", "127.0.0.1", port).as_str())
-            .expect("invalid url"),
-    );
+    let runtime = test_bootstrap(address.parse().unwrap(), Arc::new(mock_db), mp_sender);
+    let client = BlockingClient::new(format!("http://127.0.0.1:{}/v1", port));
 
     // future that mocks shared mempool execution
     runtime.spawn(async move {
@@ -957,60 +996,48 @@ fn test_transaction_submission() {
     });
 
     // closure that checks transaction submission for given account
-    let mut txn_submission = move |sender| {
+    let txn_submission = move |sender| {
         let privkey = Ed25519PrivateKey::generate_for_testing();
         let txn = get_test_signed_txn(sender, 0, &privkey, privkey.public_key(), None);
-        let mut batch = JsonRpcBatch::default();
-        batch.add_submit_request(txn).unwrap();
-        runtime.block_on(client.execute(batch)).unwrap()
+        client.submit(&txn)
     };
 
     // check successful submission
     let sender = AccountAddress::new([9; AccountAddress::LENGTH]);
-    assert!(txn_submission(sender)[0].as_ref().unwrap() == &JsonRpcResponse::SubmissionResponse);
+    txn_submission(sender).unwrap();
 
     // check vm error submission
     let sender = AccountAddress::new([0; AccountAddress::LENGTH]);
-    let response = &txn_submission(sender)[0];
+    let response = txn_submission(sender);
 
-    if let Err(e) = response {
-        if let Some(error) = e.downcast_ref::<JsonRpcError>() {
-            assert_eq!(error.code, ServerCode::VmValidationError as i16);
-            let status_code: StatusCode = error.as_status_code().unwrap();
-            assert_eq!(status_code, StatusCode::SENDING_ACCOUNT_DOES_NOT_EXIST);
-        } else {
-            panic!("unexpected error format");
-        }
-    } else {
-        panic!("expected error");
-    }
+    let error = response.unwrap_err();
+    let error = error.json_rpc_error().unwrap();
+    assert_eq!(error.code, ServerCode::VmValidationError as i16);
+    let status_code: StatusCode = error.as_status_code().unwrap();
+    assert_eq!(status_code, StatusCode::SENDING_ACCOUNT_DOES_NOT_EXIST);
 }
 
 #[test]
 fn test_get_account() {
-    let (mock_db, client, mut runtime) = create_database_client_and_runtime();
+    let (mock_db, client, _runtime) = create_database_client_and_runtime();
 
     // test case 1: single call
     let (first_account, blob) = mock_db.all_accounts.iter().next().unwrap();
     let expected_resource = AccountState::try_from(blob).unwrap();
 
-    let mut batch = JsonRpcBatch::default();
-    batch.add_get_account_request(*first_account);
-    let result = execute_batch_and_get_first_response(&client, &mut runtime, batch);
-    let account = AccountView::optional_from_response(result)
+    let account = client
+        .get_account(*first_account)
         .unwrap()
-        .expect("account does not exist");
+        .into_inner()
+        .unwrap();
     let account_balances: Vec<_> = account.balances.iter().map(|bal| bal.amount).collect();
     let expected_resource_balances: Vec<_> = expected_resource
-        .get_balance_resources(&[from_currency_code_string(COIN1_NAME).unwrap()])
+        .get_balance_resources()
         .unwrap()
         .iter()
         .map(|(_, bal_resource)| bal_resource.coin())
         .collect();
-    assert_eq!(
-        account.address.into_bytes().unwrap(),
-        first_account.to_vec()
-    );
+    assert_eq!(account.address, *first_account);
     assert_eq!(account_balances, expected_resource_balances);
     assert_eq!(
         account.sequence_number,
@@ -1022,7 +1049,7 @@ fn test_get_account() {
     );
 
     // test case 2: batch call
-    let mut batch = JsonRpcBatch::default();
+    let mut batch = Vec::new();
     let mut states = vec![];
 
     for (account, blob) in mock_db.all_accounts.iter() {
@@ -1030,19 +1057,17 @@ fn test_get_account() {
             continue;
         }
         states.push(AccountState::try_from(blob).unwrap());
-        batch.add_get_account_request(*account);
+        batch.push(MethodRequest::get_account(*account));
     }
 
-    let responses = runtime.block_on(client.execute(batch)).unwrap();
+    let responses = client.batch(batch).unwrap();
     assert_eq!(responses.len(), states.len());
 
     for (idx, response) in responses.into_iter().enumerate() {
-        let account = AccountView::optional_from_response(response.expect("error in response"))
-            .unwrap()
-            .expect("account does not exist");
+        let account = response.unwrap().into_inner().unwrap_get_account().unwrap();
         let account_balances: Vec<_> = account.balances.iter().map(|bal| bal.amount).collect();
         let expected_resource_balances: Vec<_> = states[idx]
-            .get_balance_resources(&[from_currency_code_string(COIN1_NAME).unwrap()])
+            .get_balance_resources()
             .unwrap()
             .iter()
             .map(|(_, bal_resource)| bal_resource.coin())
@@ -1061,98 +1086,86 @@ fn test_get_account() {
 
 #[test]
 fn test_get_metadata_latest() {
-    let (mock_db, client, mut runtime) = create_database_client_and_runtime();
+    let (mock_db, client, _runtime) = create_database_client_and_runtime();
 
     let (actual_version, actual_timestamp) = mock_db.get_latest_commit_metadata().unwrap();
-    let mut batch = JsonRpcBatch::default();
-    batch.add_get_metadata_request(None);
 
-    let result = execute_batch_and_get_first_response(&client, &mut runtime, batch);
-
-    let result_view = MetadataView::from_response(result).unwrap();
-    assert_eq!(result_view.version, actual_version);
-    assert_eq!(result_view.timestamp, actual_timestamp);
+    let metadata = client.get_metadata().unwrap().into_inner();
+    assert_eq!(metadata.version, actual_version);
+    assert_eq!(metadata.timestamp, actual_timestamp);
 }
 
 #[test]
 fn test_get_metadata() {
-    let (mock_db, client, mut runtime) = create_database_client_and_runtime();
+    let (mock_db, client, _runtime) = create_database_client_and_runtime();
 
-    let mut batch = JsonRpcBatch::default();
-    batch.add_get_metadata_request(Some(1));
-
-    let result = execute_batch_and_get_first_response(&client, &mut runtime, batch);
-
-    let result_view = MetadataView::from_response(result).unwrap();
-    assert_eq!(result_view.version, 1);
-    assert_eq!(result_view.timestamp, mock_db.timestamps[1]);
+    let metadata = client.get_metadata_by_version(1).unwrap().into_inner();
+    assert_eq!(metadata.version, 1);
+    assert_eq!(metadata.timestamp, mock_db.timestamps[1]);
 }
 
 #[test]
 fn test_limit_batch_size() {
-    let (_, client, mut runtime) = create_database_client_and_runtime();
+    let (_, client, _runtime) = create_database_client_and_runtime();
 
-    let mut batch = JsonRpcBatch::default();
+    let mut batch = Vec::new();
 
     for i in 0..21 {
-        batch.add_get_metadata_request(Some(i));
+        batch.push(MethodRequest::get_metadata_by_version(i));
     }
 
-    let ret = runtime.block_on(client.execute(batch));
-    assert!(ret.is_err());
-    let expected = "JsonRpcError JsonRpcError { code: -32600, message: \"Invalid Request: batch size = 21, exceed limit 20\", data: None }";
-    assert_eq!(ret.unwrap_err().to_string(), expected)
+    let ret = client.batch(batch).unwrap_err();
+
+    let error = ret.json_rpc_error().unwrap();
+    let expected = "JsonRpcError { code: -32600, message: \"Invalid Request: batch size = 21, exceed limit 20\", data: None }";
+    assert_eq!(format!("{:?}", error), expected)
 }
 
 #[test]
 fn test_get_events_page_limit() {
-    let (_, client, mut runtime) = create_database_client_and_runtime();
+    let (_, client, _runtime) = create_database_client_and_runtime();
 
-    let mut batch = JsonRpcBatch::default();
+    let ret = client
+        .get_events(
+            EventKey::from_hex("13000000000000000000000000000000000000000a550c18").unwrap(),
+            0,
+            1001,
+        )
+        .unwrap_err();
 
-    batch.add_get_events_request(
-        "13000000000000000000000000000000000000000a550c18".to_string(),
-        0,
-        1001,
-    );
-
-    let ret = runtime.block_on(client.execute(batch)).unwrap().remove(0);
-    assert!(ret.is_err());
+    let error = ret.json_rpc_error().unwrap();
     let expected = "JsonRpcError { code: -32600, message: \"Invalid Request: page size = 1001, exceed limit 1000\", data: None }";
-    assert_eq!(ret.unwrap_err().to_string(), expected)
+    assert_eq!(format!("{:?}", error), expected)
 }
 
 #[test]
 fn test_get_transactions_page_limit() {
-    let (_, client, mut runtime) = create_database_client_and_runtime();
+    let (_, client, _runtime) = create_database_client_and_runtime();
 
-    let mut batch = JsonRpcBatch::default();
-    batch.add_get_transactions_request(0, 1001, false);
-
-    let ret = runtime.block_on(client.execute(batch)).unwrap().remove(0);
-    assert!(ret.is_err());
+    let ret = client.get_transactions(0, 1001, false).unwrap_err();
+    let error = ret.json_rpc_error().unwrap();
     let expected = "JsonRpcError { code: -32600, message: \"Invalid Request: page size = 1001, exceed limit 1000\", data: None }";
-    assert_eq!(ret.unwrap_err().to_string(), expected)
+    assert_eq!(format!("{:?}", error), expected)
 }
 
 #[test]
 fn test_get_events() {
-    let (mock_db, client, mut runtime) = create_database_client_and_runtime();
+    let (mock_db, client, _runtime) = create_database_client_and_runtime();
 
     let event_index = 0;
     let mock_db_events = mock_db.events;
     let (first_event_version, first_event) = mock_db_events[event_index].clone();
-    let event_key = hex::encode(first_event.key().as_bytes());
+    let event_key = first_event.key();
 
-    let mut batch = JsonRpcBatch::default();
-    batch.add_get_events_request(
-        event_key,
-        first_event.sequence_number(),
-        first_event.sequence_number() + 10,
-    );
-    let result = execute_batch_and_get_first_response(&client, &mut runtime, batch);
+    let events = client
+        .get_events(
+            *event_key,
+            first_event.sequence_number(),
+            first_event.sequence_number() + 10,
+        )
+        .unwrap()
+        .into_inner();
 
-    let events = EventView::vec_from_response(result).unwrap();
     let fetched_event = &events[event_index];
     assert_eq!(
         fetched_event.sequence_number,
@@ -1167,7 +1180,7 @@ fn test_get_events() {
 
 #[test]
 fn test_get_transactions() {
-    let (mock_db, client, mut runtime) = create_database_client_and_runtime();
+    let (mock_db, client, _runtime) = create_database_client_and_runtime();
 
     let version = mock_db.get_latest_version().unwrap();
     let page = 800usize;
@@ -1178,16 +1191,16 @@ fn test_get_transactions() {
         .collect::<Vec<_>>()
         .into_iter()
     {
-        let mut batch = JsonRpcBatch::default();
-        batch.add_get_transactions_request(base_version, page as u64, true);
-        let result = execute_batch_and_get_first_response(&client, &mut runtime, batch);
-        let txns = TransactionView::vec_from_response(result).unwrap();
+        let txns = client
+            .get_transactions(base_version, page as u64, true)
+            .unwrap()
+            .into_inner();
 
         for (i, view) in txns.iter().enumerate() {
             let version = base_version + i as u64;
             assert_eq!(view.version, version);
             let (tx, status) = &mock_db.all_txns[version as usize];
-            assert_eq!(view.hash, tx.hash().to_hex());
+            assert_eq!(view.hash, tx.hash());
 
             // Check we returned correct events
             let expected_events = mock_db
@@ -1204,17 +1217,14 @@ fn test_get_transactions() {
                 let expected_event = expected_events.get(i).expect("Expected event didn't find");
                 assert_eq!(event_view.sequence_number, expected_event.sequence_number());
                 assert_eq!(event_view.transaction_version, version);
-                assert_eq!(
-                    event_view.key.0,
-                    BytesView::from(expected_event.key().as_bytes()).0
-                );
+                assert_eq!(event_view.key, *expected_event.key());
                 // TODO: check event_data
             }
 
             match tx {
                 Transaction::BlockMetadata(t) => match view.transaction {
                     TransactionDataView::BlockMetadata { timestamp_usecs } => {
-                        assert_eq!(t.clone().into_inner().unwrap().1, timestamp_usecs);
+                        assert_eq!(t.clone().into_inner().1, timestamp_usecs);
                     }
                     _ => panic!("Returned value doesn't match!"),
                 },
@@ -1229,11 +1239,11 @@ fn test_get_transactions() {
                         chain_id,
                         ..
                     } => {
-                        assert_eq!(&t.sender().to_string(), sender);
+                        assert_eq!(t.sender(), *sender);
                         assert_eq!(&t.chain_id().id(), chain_id);
                         // TODO: verify every field
                         if let TransactionPayload::Script(s) = t.payload() {
-                            assert_eq!(script_hash, &HashValue::sha3_256_of(s.code()).to_hex());
+                            assert_eq!(*script_hash, HashValue::sha3_256_of(s.code()));
                         }
                     }
                     _ => panic!("Returned value doesn't match!"),
@@ -1245,18 +1255,16 @@ fn test_get_transactions() {
 
 #[test]
 fn test_get_account_transaction() {
-    let (mock_db, client, mut runtime) = create_database_client_and_runtime();
+    let (mock_db, client, _runtime) = create_database_client_and_runtime();
 
     for (acc, blob) in mock_db.all_accounts.iter() {
         let ar = AccountResource::try_from(blob).unwrap();
         for seq in 1..ar.sequence_number() {
-            let mut batch = JsonRpcBatch::default();
-            batch.add_get_account_transaction_request(*acc, seq, true);
-
-            let result = execute_batch_and_get_first_response(&client, &mut runtime, batch);
-            let tx_view = TransactionView::optional_from_response(result)
+            let tx_view = client
+                .get_account_transaction(*acc, seq, true)
                 .unwrap()
-                .expect("Transaction didn't exists!");
+                .into_inner()
+                .unwrap();
 
             let (expected_tx, expected_status) = mock_db
                 .all_txns
@@ -1264,7 +1272,7 @@ fn test_get_account_transaction() {
                 .find_map(|(t, status)| {
                     if let Ok(x) = t.as_signed_user_txn() {
                         if x.sender() == *acc && x.sequence_number() == seq {
-                            assert_eq!(tx_view.hash, t.hash().to_hex());
+                            assert_eq!(tx_view.hash, t.hash());
                             return Some((x, status));
                         }
                     }
@@ -1289,10 +1297,7 @@ fn test_get_account_transaction() {
                 let expected_event = expected_events.get(i).expect("Expected event didn't find");
                 assert_eq!(event_view.sequence_number, expected_event.sequence_number());
                 assert_eq!(event_view.transaction_version, tx_view.version);
-                assert_eq!(
-                    event_view.key.0,
-                    BytesView::from(expected_event.key().as_bytes()).0
-                );
+                assert_eq!(event_view.key, *expected_event.key());
                 // TODO: check event_data
             }
 
@@ -1306,11 +1311,11 @@ fn test_get_account_transaction() {
                     script_hash,
                     ..
                 } => {
-                    assert_eq!(acc.to_string(), sender);
+                    assert_eq!(*acc, sender);
                     assert_eq!(seq, sequence_number);
 
                     if let TransactionPayload::Script(s) = expected_tx.payload() {
-                        assert_eq!(script_hash, HashValue::sha3_256_of(s.code()).to_hex());
+                        assert_eq!(script_hash, HashValue::sha3_256_of(s.code()));
                     }
                 }
                 _ => panic!("wrong type"),
@@ -1321,16 +1326,15 @@ fn test_get_account_transaction() {
 
 #[test]
 fn test_get_account_transactions() {
-    let (mock_db, client, mut runtime) = create_database_client_and_runtime();
+    let (mock_db, client, _runtime) = create_database_client_and_runtime();
 
     for (acc, blob) in mock_db.all_accounts.iter() {
         let total = AccountResource::try_from(blob).unwrap().sequence_number();
 
-        let mut batch = JsonRpcBatch::default();
-        batch.add_get_account_transactions_request(*acc, 0, max(1, min(1000, total * 2)), true);
-
-        let result = execute_batch_and_get_first_response(&client, &mut runtime, batch);
-        let tx_views = TransactionView::vec_from_response(result).unwrap();
+        let tx_views = client
+            .get_account_transactions(*acc, 0, max(1, min(1000, total * 2)), true)
+            .unwrap()
+            .into_inner();
         assert_eq!(tx_views.len() as u64, total);
     }
 }
@@ -1338,15 +1342,13 @@ fn test_get_account_transactions() {
 // Check that if version and ledger_version parameters are None, then the server returns the latest
 // known state.
 fn test_get_account_state_with_proof_null_versions() {
-    let (mock_db, client, mut runtime) = create_database_client_and_runtime();
+    let (mock_db, client, _runtime) = create_database_client_and_runtime();
 
     let account = get_first_account_from_mock_db(&mock_db);
-    let mut batch = JsonRpcBatch::default();
-    batch.add_get_account_state_with_proof_request(account, None, None);
-
-    let result = execute_batch_and_get_first_response(&client, &mut runtime, batch);
-
-    let received_proof = AccountStateWithProofView::from_response(result).unwrap();
+    let received_proof = client
+        .get_account_state_with_proof(account, None, None)
+        .unwrap()
+        .into_inner();
     let expected_proof = get_first_state_proof_from_mock_db(&mock_db);
 
     // Check latest version returned, when no version specified
@@ -1355,15 +1357,14 @@ fn test_get_account_state_with_proof_null_versions() {
 
 #[test]
 fn test_get_account_state_with_proof() {
-    let (mock_db, client, mut runtime) = create_database_client_and_runtime();
+    let (mock_db, client, _runtime) = create_database_client_and_runtime();
 
     let account = get_first_account_from_mock_db(&mock_db);
-    let mut batch = JsonRpcBatch::default();
-    batch.add_get_account_state_with_proof_request(account, Some(0), Some(0));
 
-    let result = execute_batch_and_get_first_response(&client, &mut runtime, batch);
-
-    let received_proof = AccountStateWithProofView::from_response(result).unwrap();
+    let received_proof = client
+        .get_account_state_with_proof(account, Some(0), Some(0))
+        .unwrap()
+        .into_inner();
     let expected_proof = get_first_state_proof_from_mock_db(&mock_db);
     let expected_blob = expected_proof.blob.as_ref().unwrap();
     let expected_sm_proof = expected_proof.proof.transaction_info_to_account_proof();
@@ -1373,101 +1374,144 @@ fn test_get_account_state_with_proof() {
     assert_eq!(received_proof.version, expected_proof.version);
 
     // blob
-    let account_blob: AccountStateBlob =
-        lcs::from_bytes(&received_proof.blob.unwrap().into_bytes().unwrap()).unwrap();
+    let account_blob: AccountStateBlob = bcs::from_bytes(&received_proof.blob.unwrap()).unwrap();
     assert_eq!(account_blob, *expected_blob);
 
     // proof
-    let sm_proof: SparseMerkleProof = lcs::from_bytes(
-        &received_proof
-            .proof
-            .transaction_info_to_account_proof
-            .into_bytes()
-            .unwrap(),
-    )
-    .unwrap();
+    let sm_proof: SparseMerkleProof<AccountStateBlob> =
+        bcs::from_bytes(&received_proof.proof.transaction_info_to_account_proof).unwrap();
     assert_eq!(sm_proof, *expected_sm_proof);
     let txn_info: TransactionInfo =
-        lcs::from_bytes(&received_proof.proof.transaction_info.into_bytes().unwrap()).unwrap();
-    let li_proof: TransactionAccumulatorProof = lcs::from_bytes(
-        &received_proof
-            .proof
-            .ledger_info_to_transaction_info_proof
-            .into_bytes()
-            .unwrap(),
-    )
-    .unwrap();
+        bcs::from_bytes(&received_proof.proof.transaction_info).unwrap();
+    let li_proof: TransactionAccumulatorProof =
+        bcs::from_bytes(&received_proof.proof.ledger_info_to_transaction_info_proof).unwrap();
     let txn_info_with_proof = TransactionInfoWithProof::new(li_proof, txn_info);
     assert_eq!(txn_info_with_proof, *expected_txn_info_with_proof);
 }
 
 #[test]
 fn test_get_state_proof() {
-    let (mock_db, client, mut runtime) = create_database_client_and_runtime();
+    let (mock_db, client, _runtime) = create_database_client_and_runtime();
 
     let version = mock_db.version;
-    let mut batch = JsonRpcBatch::default();
-    batch.add_get_state_proof_request(version);
-    let result = execute_batch_and_get_first_response(&client, &mut runtime, batch);
-    let proof = StateProofView::from_response(result).unwrap();
-    let li: LedgerInfoWithSignatures =
-        lcs::from_bytes(&proof.ledger_info_with_signatures.into_bytes().unwrap()).unwrap();
+    let proof = client.get_state_proof(version).unwrap().into_inner();
+    let li: LedgerInfoWithSignatures = bcs::from_bytes(&proof.ledger_info_with_signatures).unwrap();
     assert_eq!(li.ledger_info().version(), version);
 }
 
 #[test]
 fn test_get_network_status() {
-    let (_mock_db, client, mut runtime) = create_database_client_and_runtime();
+    let (_mock_db, client, _runtime) = create_database_client_and_runtime();
 
-    let mut batch = JsonRpcBatch::default();
-    batch.add_get_network_status_request();
-
-    if let JsonRpcResponse::NetworkStatusResponse(connected_peers) =
-        execute_batch_and_get_first_response(&client, &mut runtime, batch)
-    {
-        // expect no connected peers when no network is running
-        assert_eq!(connected_peers.as_u64().unwrap(), 0);
-    } else {
-        panic!("did not receive expected json rpc response");
-    }
+    let connected_peers = client.get_network_status().unwrap().into_inner();
+    // expect no connected peers when no network is running
+    assert_eq!(connected_peers, 0);
 }
 
-/// Creates and returns a MockLibraDB, JsonRpcAsyncClient and corresponding server Runtime tuple for
-/// testing. The given channel_buffer specifies the buffer size of the mempool client sender channel.
-fn create_database_client_and_runtime() -> (MockLibraDB, JsonRpcAsyncClient, Runtime) {
-    let (mock_db, runtime, url, _) = create_db_and_runtime();
-    let client =
-        JsonRpcAsyncClient::new(reqwest::Url::from_str(url.as_str()).expect("invalid url"));
+#[test]
+fn test_health_check() {
+    let (_mock_db, _runtime, url, _) = create_db_and_runtime();
 
-    (mock_db, client, runtime)
-}
+    let client = reqwest::blocking::Client::new();
+    let healthy_url = format!("{}/-/healthy", url);
+    let resp = client.get(&healthy_url).send().unwrap();
+    assert_eq!(resp.status(), 200);
 
-fn create_db_and_runtime() -> (
-    MockLibraDB,
-    Runtime,
-    String,
-    Receiver<(
-        SignedTransaction,
-        oneshot::Sender<anyhow::Result<SubmissionStatus>>,
-    )>,
-) {
-    let mock_db = mock_db();
-
-    let host = "127.0.0.1";
-    let port = utils::get_available_port();
-    let address = format!("{}:{}", host, port);
-    let (mp_sender, mp_events) = channel(1);
-
-    let runtime = test_bootstrap(
-        address.parse().unwrap(),
-        Arc::new(mock_db.clone()),
-        mp_sender,
+    let healthy_url = format!(
+        "{}/-/healthy?duration={}",
+        url,
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs()
     );
-    (mock_db, runtime, format!("http://{}", address), mp_events)
+    let resp = client.get(&healthy_url).send().unwrap();
+    assert_eq!(resp.status(), 200);
+}
+
+#[test]
+fn test_sdk_info_from_user_agent() {
+    // Invalid user agents:
+    assert_eq!(sdk_info_from_user_agent(None), SdkInfo::default());
+    assert_eq!(sdk_info_from_user_agent(Some("")), SdkInfo::default());
+    // If we have a bad language, don't trust the version
+    assert_eq!(
+        sdk_info_from_user_agent(Some("very-custom-unreal / 1.1.1")),
+        SdkInfo::default()
+    );
+    // If we have a bad version, don't trust the language
+    assert_eq!(
+        sdk_info_from_user_agent(Some("diem-client-sdk-python / 0.12.223")),
+        SdkInfo::default()
+    );
+    assert_eq!(
+        sdk_info_from_user_agent(Some("diem-client-sdk-python / 105.12.22")),
+        SdkInfo::default()
+    );
+
+    // Valid user agents:
+    assert_eq!(
+        sdk_info_from_user_agent(Some("diem-client-SdK-JaVa/ 3.21.09")),
+        SdkInfo {
+            language: SdkLang::Java,
+            version: SdkVersion {
+                major: 3,
+                minor: 21,
+                patch: 9
+            }
+        }
+    );
+    assert_eq!(
+        sdk_info_from_user_agent(Some("diem-client-SdK-cpp/3.21.09")),
+        SdkInfo {
+            language: SdkLang::Cpp,
+            version: SdkVersion {
+                major: 3,
+                minor: 21,
+                patch: 9
+            }
+        }
+    );
+    assert_eq!(
+        sdk_info_from_user_agent(Some("diem-client-sdk-python / 0.1.22")),
+        SdkInfo {
+            language: SdkLang::Python,
+            version: SdkVersion {
+                major: 0,
+                minor: 1,
+                patch: 22
+            }
+        }
+    );
+}
+
+#[test]
+fn test_check_latest_ledger_info_timestamp() {
+    let now = SystemTime::now();
+    let ledger_latest_timestamp_lack = 10;
+
+    let ledger_latest_timestamp = now
+        .sub(Duration::from_secs(ledger_latest_timestamp_lack))
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_micros() as u64;
+
+    assert!(check_latest_ledger_info_timestamp(
+        ledger_latest_timestamp_lack - 1,
+        ledger_latest_timestamp,
+        now
+    )
+    .is_err());
+    assert!(check_latest_ledger_info_timestamp(
+        ledger_latest_timestamp_lack + 1,
+        ledger_latest_timestamp,
+        now
+    )
+    .is_ok());
 }
 
 /// Returns the first account address stored in the given mock database.
-fn get_first_account_from_mock_db(mock_db: &MockLibraDB) -> AccountAddress {
+fn get_first_account_from_mock_db(mock_db: &MockDiemDB) -> AccountAddress {
     *mock_db
         .all_accounts
         .keys()
@@ -1476,7 +1520,7 @@ fn get_first_account_from_mock_db(mock_db: &MockLibraDB) -> AccountAddress {
 }
 
 /// Returns the first account_state_with_proof stored in the given mock database.
-fn get_first_state_proof_from_mock_db(mock_db: &MockLibraDB) -> AccountStateWithProof {
+fn get_first_state_proof_from_mock_db(mock_db: &MockDiemDB) -> AccountStateWithProof {
     mock_db
         .account_state_with_proof
         .get(0)
@@ -1484,24 +1528,11 @@ fn get_first_state_proof_from_mock_db(mock_db: &MockLibraDB) -> AccountStateWith
         .clone()
 }
 
-/// Executes the given JsonRPCBatch using the specified JsonRpcAsyncClient and Runtime, and returns
-/// the first JsonRpcResponse produced for the batch.
-fn execute_batch_and_get_first_response(
-    client: &JsonRpcAsyncClient,
-    runtime: &mut Runtime,
-    batch: JsonRpcBatch,
-) -> JsonRpcResponse {
-    runtime
-        .block_on(client.execute(batch))
-        .unwrap()
-        .remove(0)
-        .unwrap()
-}
-
 fn gen_string(len: usize) -> String {
     let mut rng = thread_rng();
     std::iter::repeat(())
         .map(|()| rng.sample(Alphanumeric))
         .take(len)
+        .map(char::from)
         .collect()
 }

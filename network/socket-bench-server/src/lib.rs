@@ -1,33 +1,33 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 
+use diem_config::network_id::NetworkContext;
+use diem_crypto::{test_utils::TEST_SEED, x25519, Uniform as _};
+use diem_logger::prelude::*;
+use diem_types::network_address::NetworkAddress;
 use futures::{
     future::Future,
     io::{AsyncRead, AsyncWrite},
     sink::SinkExt,
     stream::{Stream, StreamExt},
 };
-use libra_config::network_id::NetworkContext;
-use libra_crypto::{test_utils::TEST_SEED, x25519, Uniform as _};
-use libra_logger::prelude::*;
-use libra_network_address::NetworkAddress;
-use libra_types::PeerId;
 use memsocket::MemorySocket;
-use netcore::{
-    compat::IoCompat,
-    transport::{
-        memory::MemoryTransport,
-        tcp::{TcpSocket, TcpTransport},
-        Transport, TransportExt,
-    },
+use netcore::transport::{
+    memory::MemoryTransport,
+    tcp::{TcpSocket, TcpTransport},
+    Transport, TransportExt,
 };
-use network::noise::{stream::NoiseStream, HandshakeAuthMode, NoiseUpgrader};
+use network::{
+    constants,
+    noise::{stream::NoiseStream, HandshakeAuthMode, NoiseUpgrader},
+    protocols::wire::messaging::v1::network_message_frame_codec,
+};
 use rand::prelude::*;
 use std::{env, ffi::OsString, io, sync::Arc};
 use tokio::runtime::Handle;
-use tokio_util::codec::{Framed, LengthDelimitedCodec};
+use tokio_util::{codec::Framed, compat::FuturesAsyncReadCompatExt};
 
 #[derive(Debug)]
 pub struct Args {
@@ -83,11 +83,11 @@ pub fn build_memsocket_noise_transport() -> impl Transport<Output = NoiseStream<
         let mut rng: StdRng = SeedableRng::from_seed(TEST_SEED);
         let private = x25519::PrivateKey::generate(&mut rng);
         let public = private.public_key();
-        let peer_id = PeerId::from_identity_public_key(public);
+        let peer_id = diem_types::account_address::from_identity_public_key(public);
         let noise_config = Arc::new(NoiseUpgrader::new(
             NetworkContext::mock_with_peer_id(peer_id),
             private,
-            HandshakeAuthMode::ServerOnly,
+            HandshakeAuthMode::server_only(),
         ));
         let remote_public_key = addr.find_noise_proto();
         let (_remote_static_key, socket) = noise_config
@@ -104,11 +104,11 @@ pub fn build_tcp_noise_transport() -> impl Transport<Output = NoiseStream<TcpSoc
         let mut rng: StdRng = SeedableRng::from_seed(TEST_SEED);
         let private = x25519::PrivateKey::generate(&mut rng);
         let public = private.public_key();
-        let peer_id = PeerId::from_identity_public_key(public);
+        let peer_id = diem_types::account_address::from_identity_public_key(public);
         let noise_config = Arc::new(NoiseUpgrader::new(
             NetworkContext::mock_with_peer_id(peer_id),
             private,
-            HandshakeAuthMode::ServerOnly,
+            HandshakeAuthMode::server_only(),
         ));
         let remote_public_key = addr.find_noise_proto();
         let (_remote_static_key, socket) = noise_config
@@ -136,8 +136,8 @@ where
                 Ok((f_stream, _)) => {
                     match f_stream.await {
                         Ok(stream) => {
-                            let mut stream =
-                                Framed::new(IoCompat::new(stream), LengthDelimitedCodec::new());
+                            let codec = network_message_frame_codec(constants::MAX_FRAME_SIZE);
+                            let mut stream = Framed::new(stream.compat(), codec);
 
                             tokio::task::spawn(async move {
                                 // Drain all messages from the client.
@@ -170,7 +170,8 @@ where
     S: AsyncRead + AsyncWrite + Unpin + Send + 'static,
     E: ::std::error::Error + Send + Sync + 'static,
 {
-    let (listener, server_addr) = executor.enter(move || transport.listen_on(listen_addr).unwrap());
+    let _gaurd = executor.enter();
+    let (listener, server_addr) = transport.listen_on(listen_addr).unwrap();
     executor.spawn(server_stream_handler(listener));
     server_addr
 }

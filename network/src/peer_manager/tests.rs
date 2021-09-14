@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -10,25 +10,33 @@ use crate::{
     },
     protocols::wire::{
         handshake::v1::MessagingProtocolVersion,
-        messaging::v1::{ErrorCode, NetworkMessage},
+        messaging::v1::{ErrorCode, NetworkMessage, NetworkMessageSink, NetworkMessageStream},
     },
     transport,
     transport::{Connection, ConnectionId, ConnectionMetadata},
     ProtocolId,
 };
-use channel::{libra_channel, message_queues::QueueStyle};
-use futures::{channel::oneshot, io::AsyncWriteExt, sink::SinkExt, stream::StreamExt};
-use libra_config::network_id::NetworkContext;
-use libra_network_address::NetworkAddress;
-use libra_types::PeerId;
-use memsocket::MemorySocket;
-use netcore::{
-    compat::IoCompat,
-    transport::{boxed::BoxedTransport, memory::MemoryTransport, ConnectionOrigin, TransportExt},
+use anyhow::anyhow;
+use bytes::Bytes;
+use channel::{diem_channel, message_queues::QueueStyle};
+use diem_config::{
+    config::{PeerRole, MAX_INBOUND_CONNECTIONS},
+    network_id::NetworkContext,
 };
-use std::{collections::HashMap, iter::FromIterator, num::NonZeroUsize};
+use diem_infallible::RwLock;
+use diem_rate_limiter::rate_limit::TokenBucketRateLimiter;
+use diem_time_service::TimeService;
+use diem_types::{network_address::NetworkAddress, PeerId};
+use futures::{channel::oneshot, io::AsyncWriteExt, stream::StreamExt};
+use memsocket::MemorySocket;
+use netcore::transport::{
+    boxed::BoxedTransport, memory::MemoryTransport, ConnectionOrigin, TransportExt,
+};
+use std::{collections::HashMap, sync::Arc};
 use tokio::runtime::Handle;
-use tokio_util::codec::{Framed, LengthDelimitedCodec};
+use tokio_util::compat::{
+    FuturesAsyncReadCompatExt, TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt,
+};
 
 const TEST_PROTOCOL: ProtocolId = ProtocolId::ConsensusRpc;
 
@@ -50,6 +58,7 @@ pub fn build_test_transport(
                     origin,
                     MessagingProtocolVersion::V1,
                     [TEST_PROTOCOL].iter().into(),
+                    PeerRole::Unknown,
                 ),
             })
         })
@@ -77,32 +86,34 @@ fn build_test_peer_manager(
         BoxedTransport<Connection<MemorySocket>, impl std::error::Error + Sync + Send + 'static>,
         MemorySocket,
     >,
-    libra_channel::Sender<(PeerId, ProtocolId), PeerManagerRequest>,
-    libra_channel::Sender<PeerId, ConnectionRequest>,
-    libra_channel::Receiver<(PeerId, ProtocolId), PeerManagerNotification>,
+    diem_channel::Sender<(PeerId, ProtocolId), PeerManagerRequest>,
+    diem_channel::Sender<PeerId, ConnectionRequest>,
+    diem_channel::Receiver<(PeerId, ProtocolId), PeerManagerNotification>,
     conn_notifs_channel::Receiver,
 ) {
     let (peer_manager_request_tx, peer_manager_request_rx) =
-        libra_channel::new(QueueStyle::FIFO, NonZeroUsize::new(1).unwrap(), None);
-    let (connection_reqs_tx, connection_reqs_rx) =
-        libra_channel::new(QueueStyle::FIFO, NonZeroUsize::new(1).unwrap(), None);
-    let (hello_tx, hello_rx) =
-        libra_channel::new(QueueStyle::FIFO, NonZeroUsize::new(1).unwrap(), None);
+        diem_channel::new(QueueStyle::FIFO, 1, None);
+    let (connection_reqs_tx, connection_reqs_rx) = diem_channel::new(QueueStyle::FIFO, 1, None);
+    let (hello_tx, hello_rx) = diem_channel::new(QueueStyle::FIFO, 1, None);
     let (conn_status_tx, conn_status_rx) = conn_notifs_channel::new();
 
     let peer_manager = PeerManager::new(
         executor,
+        TimeService::mock(),
         build_test_transport(),
         NetworkContext::mock_with_peer_id(peer_id),
         "/memory/0".parse().unwrap(),
+        Arc::new(RwLock::new(HashMap::new())),
         peer_manager_request_rx,
         connection_reqs_rx,
-        HashMap::from_iter([(TEST_PROTOCOL, hello_tx)].iter().cloned()),
+        [(TEST_PROTOCOL, hello_tx)].iter().cloned().collect(),
         vec![conn_status_tx],
         constants::NETWORK_CHANNEL_SIZE,
         constants::MAX_CONCURRENT_NETWORK_REQS,
-        constants::MAX_CONCURRENT_NETWORK_NOTIFS,
         constants::MAX_FRAME_SIZE,
+        MAX_INBOUND_CONNECTIONS,
+        TokenBucketRateLimiter::open("inbound"),
+        TokenBucketRateLimiter::open("outbound"),
     );
 
     (
@@ -115,15 +126,21 @@ fn build_test_peer_manager(
 }
 
 async fn ping_pong(connection: &mut MemorySocket) -> Result<(), PeerManagerError> {
-    let mut connection = Framed::new(IoCompat::new(connection), LengthDelimitedCodec::new());
-    let bad_message = vec![255, 111];
-    connection.send(bad_message.into()).await?;
-    let raw_error = connection.next().await.ok_or_else(|| {
-        PeerManagerError::TransportError(anyhow::anyhow!("Failed to read pong msg"))
-    })??;
-    let error: NetworkMessage = lcs::from_bytes(&raw_error)?;
+    let (read_half, write_half) = tokio::io::split(connection.compat());
+    let mut msg_tx =
+        NetworkMessageSink::new(write_half.compat_write(), constants::MAX_FRAME_SIZE, None);
+    let mut msg_rx = NetworkMessageStream::new(read_half.compat(), constants::MAX_FRAME_SIZE, None);
+
+    // Send a garbage frame to trigger an expected Error response message
+    msg_tx
+        .send_raw_frame(Bytes::from_static(&[255, 111]))
+        .await?;
+    let error_msg = msg_rx
+        .next()
+        .await
+        .ok_or_else(|| PeerManagerError::Error(anyhow!("Failed to read pong msg")))??;
     assert_eq!(
-        error,
+        error_msg,
         NetworkMessage::Error(ErrorCode::parsing_error(255, 111))
     );
     Ok(())
@@ -222,14 +239,15 @@ fn create_connection<TSocket: transport::TSocket>(
             origin,
             MessagingProtocolVersion::V1,
             [TEST_PROTOCOL].iter().into(),
+            PeerRole::Unknown,
         ),
     }
 }
 
 #[test]
 fn peer_manager_simultaneous_dial_two_inbound() {
-    ::libra_logger::Logger::init_for_testing();
-    let mut runtime = ::tokio::runtime::Runtime::new().unwrap();
+    ::diem_logger::Logger::init_for_testing();
+    let runtime = ::tokio::runtime::Runtime::new().unwrap();
 
     // Create a list of ordered PeerIds so we can ensure how PeerIds will be compared.
     let ids = ordered_peer_ids(2);
@@ -276,8 +294,8 @@ fn peer_manager_simultaneous_dial_two_inbound() {
 
 #[test]
 fn peer_manager_simultaneous_dial_inbound_outbound_remote_id_larger() {
-    ::libra_logger::Logger::init_for_testing();
-    let mut runtime = ::tokio::runtime::Runtime::new().unwrap();
+    ::diem_logger::Logger::init_for_testing();
+    let runtime = ::tokio::runtime::Runtime::new().unwrap();
 
     // Create a list of ordered PeerIds so we can ensure how PeerIds will be compared.
     let ids = ordered_peer_ids(2);
@@ -325,8 +343,8 @@ fn peer_manager_simultaneous_dial_inbound_outbound_remote_id_larger() {
 
 #[test]
 fn peer_manager_simultaneous_dial_inbound_outbound_own_id_larger() {
-    ::libra_logger::Logger::init_for_testing();
-    let mut runtime = ::tokio::runtime::Runtime::new().unwrap();
+    ::diem_logger::Logger::init_for_testing();
+    let runtime = ::tokio::runtime::Runtime::new().unwrap();
 
     // Create a list of ordered PeerIds so we can ensure how PeerIds will be compared.
     let ids = ordered_peer_ids(2);
@@ -374,8 +392,8 @@ fn peer_manager_simultaneous_dial_inbound_outbound_own_id_larger() {
 
 #[test]
 fn peer_manager_simultaneous_dial_outbound_inbound_remote_id_larger() {
-    ::libra_logger::Logger::init_for_testing();
-    let mut runtime = ::tokio::runtime::Runtime::new().unwrap();
+    ::diem_logger::Logger::init_for_testing();
+    let runtime = ::tokio::runtime::Runtime::new().unwrap();
 
     // Create a list of ordered PeerIds so we can ensure how PeerIds will be compared.
     let ids = ordered_peer_ids(2);
@@ -423,8 +441,8 @@ fn peer_manager_simultaneous_dial_outbound_inbound_remote_id_larger() {
 
 #[test]
 fn peer_manager_simultaneous_dial_outbound_inbound_own_id_larger() {
-    ::libra_logger::Logger::init_for_testing();
-    let mut runtime = ::tokio::runtime::Runtime::new().unwrap();
+    ::diem_logger::Logger::init_for_testing();
+    let runtime = ::tokio::runtime::Runtime::new().unwrap();
 
     // Create a list of ordered PeerIds so we can ensure how PeerIds will be compared.
     let ids = ordered_peer_ids(2);
@@ -472,8 +490,8 @@ fn peer_manager_simultaneous_dial_outbound_inbound_own_id_larger() {
 
 #[test]
 fn peer_manager_simultaneous_dial_two_outbound() {
-    ::libra_logger::Logger::init_for_testing();
-    let mut runtime = ::tokio::runtime::Runtime::new().unwrap();
+    ::diem_logger::Logger::init_for_testing();
+    let runtime = ::tokio::runtime::Runtime::new().unwrap();
 
     // Create a list of ordered PeerIds so we can ensure how PeerIds will be compared.
     let ids = ordered_peer_ids(2);
@@ -518,7 +536,7 @@ fn peer_manager_simultaneous_dial_two_outbound() {
 
 #[test]
 fn peer_manager_simultaneous_dial_disconnect_event() {
-    let mut runtime = ::tokio::runtime::Runtime::new().unwrap();
+    let runtime = ::tokio::runtime::Runtime::new().unwrap();
 
     // Create a list of ordered PeerIds so we can ensure how PeerIds will be compared.
     let ids = ordered_peer_ids(2);
@@ -546,6 +564,7 @@ fn peer_manager_simultaneous_dial_disconnect_event() {
                 ConnectionOrigin::Inbound,
                 MessagingProtocolVersion::V1,
                 [TEST_PROTOCOL].iter().into(),
+                PeerRole::Unknown,
             ),
             DisconnectReason::ConnectionLost,
         );
@@ -559,8 +578,8 @@ fn peer_manager_simultaneous_dial_disconnect_event() {
 
 #[test]
 fn test_dial_disconnect() {
-    ::libra_logger::Logger::init_for_testing();
-    let mut runtime = ::tokio::runtime::Runtime::new().unwrap();
+    ::diem_logger::Logger::init_for_testing();
+    let runtime = ::tokio::runtime::Runtime::new().unwrap();
 
     // Create a list of ordered PeerIds so we can ensure how PeerIds will be compared.
     let ids = ordered_peer_ids(2);
@@ -580,10 +599,7 @@ fn test_dial_disconnect() {
 
         // Expect NewPeer notification from PeerManager.
         let conn_notif = conn_status_rx.next().await.unwrap();
-        assert!(matches!(
-            conn_notif,
-            ConnectionNotification::NewPeer(_, _, _, _)
-        ));
+        assert!(matches!(conn_notif, ConnectionNotification::NewPeer(_, _)));
 
         // Send DisconnectPeer request to PeerManager.
         let (disconnect_resp_tx, disconnect_resp_rx) = oneshot::channel();
@@ -603,6 +619,7 @@ fn test_dial_disconnect() {
                 ConnectionOrigin::Outbound,
                 MessagingProtocolVersion::V1,
                 [TEST_PROTOCOL].iter().into(),
+                PeerRole::Unknown,
             ),
             DisconnectReason::Requested,
         );
@@ -612,7 +629,7 @@ fn test_dial_disconnect() {
         let conn_notif = conn_status_rx.next().await.unwrap();
         assert!(matches!(
             conn_notif,
-            ConnectionNotification::LostPeer(_, _, _, _)
+            ConnectionNotification::LostPeer(_, _, _)
         ));
 
         // Sender of disconnect request should receive acknowledgement once connection is closed.

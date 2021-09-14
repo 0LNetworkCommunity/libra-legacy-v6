@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -13,7 +13,7 @@ mod verify;
 mod waypoint;
 //////// 0L ////////
 pub mod init;
-pub mod node_files;
+pub mod ol_node_files;
 mod mining;
 pub mod seeds;
 
@@ -23,7 +23,6 @@ pub mod config_builder;
 // #[cfg(any(test, feature = "testing"))]
 // This was previously only for tests 0L uses for init key_store.json.
 pub mod storage_helper;
-
 #[cfg(any(test, feature = "testing"))]
 pub mod swarm_config;
 

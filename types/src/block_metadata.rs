@@ -1,14 +1,17 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     account_address::AccountAddress,
-    account_config::libra_root_address,
+    account_config::diem_root_address,
     event::{EventHandle, EventKey},
 };
-use anyhow::Result;
-use libra_crypto::HashValue;
-use move_core_types::move_resource::MoveResource;
+use diem_crypto::HashValue;
+use move_core_types::{
+    ident_str,
+    identifier::IdentStr,
+    move_resource::{MoveResource, MoveStructType},
+};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 
@@ -54,13 +57,13 @@ impl BlockMetadata {
         self.id
     }
 
-    pub fn into_inner(self) -> Result<(u64, u64, Vec<AccountAddress>, AccountAddress)> {
-        Ok((
+    pub fn into_inner(self) -> (u64, u64, Vec<AccountAddress>, AccountAddress) {
+        (
             self.round,
             self.timestamp_usecs,
             self.previous_block_votes.clone(),
             self.proposer,
-        ))
+        )
     }
 
     pub fn timestamp_usec(&self) -> u64 {
@@ -70,36 +73,43 @@ impl BlockMetadata {
     pub fn proposer(&self) -> AccountAddress {
         self.proposer
     }
+
+    //////// 0L ////////
+    pub fn round(&self) -> u64 {
+        self.round
+    }
 }
 
 pub fn new_block_event_key() -> EventKey {
-    EventKey::new_from_address(&libra_root_address(), 12) //////// 0L ////////
+    EventKey::new_from_address(&diem_root_address(), 12) //////// 0L ////////
 }
 
-/// The path to the new block event handle under a LibraBlock::BlockMetadata resource.
+/// The path to the new block event handle under a DiemBlock::BlockMetadata resource.
 pub static NEW_BLOCK_EVENT_PATH: Lazy<Vec<u8>> = Lazy::new(|| {
-    let mut path = LibraBlockResource::resource_path();
+    let mut path = DiemBlockResource::resource_path();
     // it can be anything as long as it's referenced in AccountState::get_event_handle_by_query_path
     path.extend_from_slice(b"/new_block_event/");
     path
 });
 
 #[derive(Deserialize, Serialize)]
-pub struct LibraBlockResource {
+pub struct DiemBlockResource {
     height: u64,
     new_block_events: EventHandle,
 }
 
-impl LibraBlockResource {
+impl DiemBlockResource {
     pub fn new_block_events(&self) -> &EventHandle {
         &self.new_block_events
     }
 }
 
-impl MoveResource for LibraBlockResource {
-    const MODULE_NAME: &'static str = "LibraBlock";
-    const STRUCT_NAME: &'static str = "BlockMetadata";
+impl MoveStructType for DiemBlockResource {
+    const MODULE_NAME: &'static IdentStr = ident_str!("DiemBlock");
+    const STRUCT_NAME: &'static IdentStr = ident_str!("BlockMetadata");
 }
+
+impl MoveResource for DiemBlockResource {}
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct NewBlockEvent {

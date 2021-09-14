@@ -1,18 +1,23 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::{format_err, Error, Result};
-use libra_config::config::{
-    RoleType, DEFAULT_BATCH_SIZE_LIMIT, DEFAULT_CONTENT_LENGTH_LIMIT, DEFAULT_PAGE_SIZE_LIMIT,
+use diem_config::{
+    config::{
+        RoleType, DEFAULT_BATCH_SIZE_LIMIT, DEFAULT_CONTENT_LENGTH_LIMIT, DEFAULT_PAGE_SIZE_LIMIT,
+    },
+    utils,
 };
-use libra_crypto::HashValue;
-use libra_mempool::MempoolClientSender;
-use libra_types::{
+use diem_crypto::HashValue;
+use diem_mempool::{MempoolClientSender, SubmissionStatus};
+
+use diem_types::{
     account_address::AccountAddress,
+    account_state::AccountState,
     account_state_blob::{AccountStateBlob, AccountStateWithProof},
     block_info::BlockInfo,
     chain_id::ChainId,
-    contract_event::ContractEvent,
+    contract_event::{ContractEvent, EventWithProof},
     epoch_change::EpochChangeProof,
     event::EventKey,
     ledger_info::{LedgerInfo, LedgerInfoWithSignatures},
@@ -21,12 +26,31 @@ use libra_types::{
         TransactionAccumulatorProof, TransactionInfoWithProof, TransactionListProof,
     },
     transaction::{
-        Transaction, TransactionInfo, TransactionListWithProof, TransactionWithProof, Version,
+        SignedTransaction, Transaction, TransactionInfo, TransactionListWithProof,
+        TransactionWithProof, Version,
     },
     vm_status::KeptVMStatus,
 };
+use diemdb::test_helper::arb_blocks_to_commit;
+
+use crate::tests::genesis::generate_genesis_state;
+use diem_client::BlockingClient;
+use diem_proptest_helpers::ValueGenerator;
+use diem_types::account_config::FreezingBit;
+use futures::channel::{
+    mpsc::{channel, Receiver},
+    oneshot,
+};
+use move_core_types::{
+    language_storage::TypeTag,
+    move_resource::MoveResource,
+    value::{MoveStructLayout, MoveTypeLayout},
+};
+use move_vm_types::values::{Struct, Value};
+use proptest::prelude::*;
 use std::{
     collections::{BTreeMap, HashMap},
+    convert::TryFrom,
     net::SocketAddr,
     sync::Arc,
 };
@@ -35,9 +59,10 @@ use tokio::runtime::Runtime;
 
 /// Creates JSON RPC server for a Validator node
 /// Should only be used for unit-tests
+#[allow(unused)]
 pub fn test_bootstrap(
     address: SocketAddr,
-    libra_db: Arc<dyn DbReader>,
+    diem_db: Arc<dyn DbReader>,
     mp_sender: MempoolClientSender,
 ) -> Runtime {
     crate::bootstrap(
@@ -45,16 +70,19 @@ pub fn test_bootstrap(
         DEFAULT_BATCH_SIZE_LIMIT,
         DEFAULT_PAGE_SIZE_LIMIT,
         DEFAULT_CONTENT_LENGTH_LIMIT,
-        libra_db,
+        &None,
+        &None,
+        diem_db,
         mp_sender,
         RoleType::Validator,
         ChainId::test(),
     )
 }
 
-/// Lightweight mock of LibraDB
+/// Lightweight mock of DiemDB
 #[derive(Clone)]
-pub struct MockLibraDB {
+#[allow(unused)]
+pub struct MockDiemDB {
     pub version: u64,
     pub genesis: HashMap<AccountAddress, AccountStateBlob>,
     pub all_accounts: HashMap<AccountAddress, AccountStateBlob>,
@@ -64,7 +92,7 @@ pub struct MockLibraDB {
     pub timestamps: Vec<u64>,
 }
 
-impl DbReader for MockLibraDB {
+impl DbReader for MockDiemDB {
     fn get_latest_account_state(
         &self,
         address: AccountAddress,
@@ -146,9 +174,18 @@ impl DbReader for MockLibraDB {
         &self,
         start_version: u64,
         limit: u64,
-        _ledger_version: u64,
+        ledger_version: u64,
         fetch_events: bool,
     ) -> Result<TransactionListWithProof, Error> {
+        // ensure inputs are validated before we enter mock DB
+        assert!(
+            start_version <= ledger_version,
+            "start_version: {}, ledger_version: {}",
+            start_version,
+            ledger_version
+        );
+        assert!(limit > 0, "limit: {}", limit);
+        let limit = std::cmp::min(limit, ledger_version - start_version + 1);
         let mut transactions = vec![];
         let mut txn_infos = vec![];
         self.all_txns
@@ -168,24 +205,25 @@ impl DbReader for MockLibraDB {
         let first_transaction_version = transactions.first().map(|_| start_version);
         let proof = TransactionListProof::new(AccumulatorRangeProof::new_empty(), txn_infos);
 
+        let events = if fetch_events {
+            let events = (start_version..start_version + transactions.len() as u64)
+                .map(|version| {
+                    self.events
+                        .iter()
+                        .filter(|(v, _)| *v == version)
+                        .map(|(_, e)| e)
+                        .cloned()
+                        .collect()
+                })
+                .collect::<Vec<_>>();
+            Some(events)
+        } else {
+            None
+        };
+
         Ok(TransactionListWithProof {
             transactions,
-            events: if fetch_events {
-                Some(
-                    (start_version..start_version + limit)
-                        .map(|version| {
-                            self.events
-                                .iter()
-                                .filter(|(v, _)| *v == version)
-                                .map(|(_, e)| e)
-                                .cloned()
-                                .collect()
-                        })
-                        .collect(),
-                )
-            } else {
-                None
-            },
+            events,
             first_transaction_version,
             proof,
         })
@@ -209,6 +247,17 @@ impl DbReader for MockLibraDB {
             .cloned()
             .collect();
         Ok(events)
+    }
+
+    fn get_events_with_proofs(
+        &self,
+        _key: &EventKey,
+        _start: u64,
+        _order: Order,
+        _limit: u64,
+        _known_version: Option<u64>,
+    ) -> Result<Vec<EventWithProof>> {
+        unimplemented!()
     }
 
     fn get_state_proof(
@@ -260,7 +309,10 @@ impl DbReader for MockLibraDB {
         &self,
         address: AccountAddress,
         _version: u64,
-    ) -> Result<(Option<AccountStateBlob>, SparseMerkleProof)> {
+    ) -> Result<(
+        Option<AccountStateBlob>,
+        SparseMerkleProof<AccountStateBlob>,
+    )> {
         Ok((
             self.get_latest_account_state(address)?,
             SparseMerkleProof::new(None, vec![]),
@@ -297,4 +349,119 @@ impl DbReader for MockLibraDB {
     fn get_accumulator_root_hash(&self, _version: Version) -> Result<HashValue> {
         Ok(HashValue::zero())
     }
+}
+
+// returns MockDiemDB for unit-testing
+#[allow(unused)]
+pub fn mock_db() -> MockDiemDB {
+    let mut gen = ValueGenerator::new();
+    let blocks = gen.generate(arb_blocks_to_commit());
+    let mut account_state_with_proof = gen.generate(any::<AccountStateWithProof>());
+
+    let mut version = 1;
+    let mut all_accounts = HashMap::new();
+    let mut all_txns = vec![];
+    let mut events = vec![];
+    let mut timestamps = vec![0_u64];
+
+    for (txns_to_commit, ledger_info_with_sigs) in &blocks {
+        for (idx, txn) in txns_to_commit.iter().enumerate() {
+            timestamps.push(ledger_info_with_sigs.ledger_info().timestamp_usecs());
+            events.extend(
+                txn.events()
+                    .iter()
+                    .map(|e| ((idx + version) as u64, e.clone())),
+            );
+        }
+        version += txns_to_commit.len();
+        let mut account_states = HashMap::new();
+        // Get the ground truth of account states.
+        txns_to_commit.iter().for_each(|txn_to_commit| {
+            account_states.extend(txn_to_commit.account_states().clone())
+        });
+
+        // Record all account states.
+        for (address, blob) in account_states.into_iter() {
+            let mut state = AccountState::try_from(&blob).unwrap();
+            let freezing_bit = Value::struct_(Struct::pack(vec![Value::bool(false)]))
+                .value_as::<Struct>()
+                .unwrap()
+                .simple_serialize(&MoveStructLayout::new(vec![MoveTypeLayout::Bool]))
+                .unwrap();
+            state.insert(FreezingBit::resource_path(), freezing_bit);
+            all_accounts.insert(address, AccountStateBlob::try_from(&state).unwrap());
+        }
+
+        // Record all transactions.
+        all_txns.extend(txns_to_commit.iter().map(|txn_to_commit| {
+            (
+                txn_to_commit.transaction().clone(),
+                txn_to_commit.status().clone(),
+            )
+        }));
+    }
+
+    if account_state_with_proof.blob.is_none() {
+        let (_, blob) = all_accounts.iter().next().unwrap();
+        account_state_with_proof.blob = Some(blob.clone());
+    }
+
+    let account_state_with_proof = vec![account_state_with_proof];
+
+    if events.is_empty() {
+        // mock the first event
+        let mock_event = ContractEvent::new(
+            EventKey::new_from_address(&AccountAddress::random(), 0),
+            0,
+            TypeTag::Bool,
+            b"event_data".to_vec(),
+        );
+        events.push((version as u64, mock_event));
+    }
+
+    let (genesis, _) = generate_genesis_state();
+    MockDiemDB {
+        version: version as u64,
+        genesis,
+        all_accounts,
+        all_txns,
+        events,
+        account_state_with_proof,
+        timestamps,
+    }
+}
+
+/// Creates and returns a MockDiemDB, JsonRpcAsyncClient and corresponding server Runtime tuple for
+/// testing. The given channel_buffer specifies the buffer size of the mempool client sender channel.
+#[allow(unused)]
+pub fn create_database_client_and_runtime() -> (MockDiemDB, BlockingClient, Runtime) {
+    let (mock_db, runtime, url, _) = create_db_and_runtime();
+    let client = BlockingClient::new(url);
+
+    (mock_db, client, runtime)
+}
+
+#[allow(unused)]
+pub fn create_db_and_runtime() -> (
+    MockDiemDB,
+    Runtime,
+    String,
+    Receiver<(
+        SignedTransaction,
+        oneshot::Sender<anyhow::Result<SubmissionStatus>>,
+    )>,
+) {
+    let mock_db = mock_db();
+
+    let host = "127.0.0.1";
+    let port = utils::get_available_port();
+    let address = format!("{}:{}", host, port);
+    let (mp_sender, mp_events) = channel(1);
+
+    let runtime = test_bootstrap(
+        address.parse().unwrap(),
+        Arc::new(mock_db.clone()),
+        mp_sender,
+    );
+    (mock_db, runtime, format!("http://{}", address), mp_events)
 }

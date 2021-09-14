@@ -1,9 +1,9 @@
 // This module contains just some arbitrary code to smoke test the basic functionality of translation from Move
 // to stackless bytecode. Coverage for byte code translation is achieved by many more tests in the prover.
 
-// dep: ../../stdlib/modules/Signer.move
+// dep: ../../move-stdlib/modules/Signer.move
 
-module SmokeTest {
+module 0x42::SmokeTest {
     use 0x1::Signer;
 
     // -----------------
@@ -30,7 +30,7 @@ module SmokeTest {
     // Resources
     // -----------------
 
-    resource struct R {
+    struct R has key {
         x: u64
     }
 
@@ -60,7 +60,7 @@ module SmokeTest {
         _ = r2;
     }
 
-    resource struct G<X> {
+    struct G<X> has key {
         x: X
     }
 
@@ -69,17 +69,17 @@ module SmokeTest {
     }
 
 
-    resource struct A {
+    struct A {
         addr: address,
         val: u64,
     }
 
-    resource struct B {
+    struct B {
         val: u64,
         a: A,
     }
 
-    resource struct C {
+    struct C {
         val: u64,
         b: B,
     }

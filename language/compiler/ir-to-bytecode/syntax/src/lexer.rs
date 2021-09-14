@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::syntax::ParseError;
@@ -84,8 +84,9 @@ pub enum Tok {
     Native,
     Old,
     Public,
+    Script,
+    Friend,
     Requires,
-    Resource,
     /// Return in the specification language
     SpecReturn,
     /// Return statement in the Move language
@@ -99,7 +100,6 @@ pub enum Tok {
     U64,
     U128,
     Vector,
-    Copyable,
     While,
     LBrace,
     Pipe,
@@ -361,20 +361,14 @@ fn get_name_len(text: &str) -> usize {
         return 0;
     }
     text.chars()
-        .position(|c| match c {
-            'a'..='z' | 'A'..='Z' | '$' | '_' | '0'..='9' => false,
-            _ => true,
-        })
+        .position(|c| !matches!(c, 'a'..='z' | 'A'..='Z' | '$' | '_' | '0'..='9'))
         .unwrap_or_else(|| text.len())
 }
 
 fn get_decimal_number(text: &str) -> (Tok, usize) {
     let len = text
         .chars()
-        .position(|c| match c {
-            '0'..='9' => false,
-            _ => true,
-        })
+        .position(|c| !matches!(c, '0'..='9'))
         .unwrap_or_else(|| text.len());
     let rest = &text[len..];
     if rest.starts_with("u8") {
@@ -391,10 +385,7 @@ fn get_decimal_number(text: &str) -> (Tok, usize) {
 // Return the length of the substring containing characters in [0-9a-fA-F].
 fn get_hex_digits_len(text: &str) -> usize {
     text.chars()
-        .position(|c| match c {
-            'a'..='f' | 'A'..='F' | '0'..='9' => false,
-            _ => true,
-        })
+        .position(|c| !matches!(c, 'a'..='f' | 'A'..='F' | '0'..='9'))
         .unwrap_or_else(|| text.len())
 }
 
@@ -420,10 +411,12 @@ fn get_name_token(name: &str) -> Tok {
         "bool" => Tok::Bool,
         "break" => Tok::Break,
         "continue" => Tok::Continue,
+        "copy" => Tok::Copy,
         "else" => Tok::Else,
         "ensures" => Tok::Ensures,
         "false" => Tok::False,
         "freeze" => Tok::Freeze,
+        "friend" => Tok::Friend,
         "global" => Tok::Global,              // spec language
         "global_exists" => Tok::GlobalExists, // spec language
         "to_u8" => Tok::ToU8,
@@ -440,9 +433,9 @@ fn get_name_token(name: &str) -> Tok {
         "old" => Tok::Old,
         "public" => Tok::Public,
         "requires" => Tok::Requires,
-        "resource" => Tok::Resource,
         "RET" => Tok::SpecReturn,
         "return" => Tok::Return,
+        "script" => Tok::Script,
         "signer" => Tok::Signer,
         "struct" => Tok::Struct,
         "succeeds_if" => Tok::SucceedsIf,
@@ -451,7 +444,6 @@ fn get_name_token(name: &str) -> Tok {
         "u8" => Tok::U8,
         "u64" => Tok::U64,
         "u128" => Tok::U128,
-        "copyable" => Tok::Copyable,
         "while" => Tok::While,
         _ => Tok::NameValue,
     }

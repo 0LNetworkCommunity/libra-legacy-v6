@@ -1,17 +1,17 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::compiler::{as_module, compile_units};
 use move_core_types::{
     account_address::AccountAddress,
-    gas_schedule::{GasAlgebra, GasUnits},
     identifier::Identifier,
     language_storage::ModuleId,
+    value::{serialize_values, MoveValue},
     vm_status::StatusType,
 };
 use move_vm_runtime::{logging::NoContextLog, move_vm::MoveVM};
 use move_vm_test_utils::{BlankStorage, InMemoryStorage};
-use move_vm_types::gas_schedule::{zero_cost_schedule, CostStrategy};
+use move_vm_types::gas_schedule::GasStatus;
 
 const TEST_ADDR: AccountAddress = AccountAddress::new([42; AccountAddress::LENGTH]);
 
@@ -23,8 +23,7 @@ fn call_non_existent_module() {
     let mut sess = vm.new_session(&storage);
     let module_id = ModuleId::new(TEST_ADDR, Identifier::new("M").unwrap());
     let fun_name = Identifier::new("foo").unwrap();
-    let cost_table = zero_cost_schedule();
-    let mut cost_strategy = CostStrategy::system(&cost_table, GasUnits::new(0));
+    let mut gas_status = GasStatus::new_unmetered();
     let context = NoContextLog::new();
 
     let err = sess
@@ -32,23 +31,23 @@ fn call_non_existent_module() {
             &module_id,
             &fun_name,
             vec![],
-            vec![],
-            TEST_ADDR,
-            &mut cost_strategy,
+            serialize_values(&vec![MoveValue::Signer(TEST_ADDR)]),
+            &mut gas_status,
             &context,
         )
         .unwrap_err();
 
-    assert_eq!(err.status_type(), StatusType::InvariantViolation);
+    assert_eq!(err.status_type(), StatusType::Verification);
 }
 
 #[test]
 fn call_non_existent_function() {
     let code = r#"
-        module M {}
+        module {{ADDR}}::M {}
     "#;
+    let code = code.replace("{{ADDR}}", &format!("0x{}", TEST_ADDR.to_string()));
 
-    let mut units = compile_units(TEST_ADDR, &code).unwrap();
+    let mut units = compile_units(&code).unwrap();
     let m = as_module(units.pop().unwrap());
     let mut blob = vec![];
     m.serialize(&mut blob).unwrap();
@@ -61,8 +60,7 @@ fn call_non_existent_function() {
     let mut sess = vm.new_session(&storage);
 
     let fun_name = Identifier::new("foo").unwrap();
-    let cost_table = zero_cost_schedule();
-    let mut cost_strategy = CostStrategy::system(&cost_table, GasUnits::new(0));
+    let mut gas_status = GasStatus::new_unmetered();
     let context = NoContextLog::new();
 
     let err = sess
@@ -70,12 +68,11 @@ fn call_non_existent_function() {
             &module_id,
             &fun_name,
             vec![],
-            vec![],
-            TEST_ADDR,
-            &mut cost_strategy,
+            serialize_values(&vec![MoveValue::Signer(TEST_ADDR)]),
+            &mut gas_status,
             &context,
         )
         .unwrap_err();
 
-    assert_eq!(err.status_type(), StatusType::InvariantViolation);
+    assert_eq!(err.status_type(), StatusType::Verification);
 }

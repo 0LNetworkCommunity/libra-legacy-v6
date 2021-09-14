@@ -1,8 +1,8 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    parser::ast::ModuleIdent,
+    expansion::ast::ModuleIdent,
     shared::{remembering_unique_map::RememberingUniqueMap, *},
 };
 use move_ir_types::location::*;

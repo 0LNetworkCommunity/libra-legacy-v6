@@ -1,11 +1,11 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{error::Error, storage::StorageWrapper};
-use libra_config::config;
-use libra_types::chain_id::{self, ChainId};
+use diem_config::config;
+use diem_types::chain_id::{self, ChainId};
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
 /// A config file for working with management tooling.
@@ -13,7 +13,7 @@ use structopt::StructOpt;
 /// # Example:
 ///
 /// ```
-/// use libra_management::config::ConfigPath;
+/// use diem_management::config::ConfigPath;
 /// use structopt::StructOpt;
 ///
 /// #[derive(Clone, Debug, StructOpt)]
@@ -38,7 +38,7 @@ use structopt::StructOpt;
 /// // Output:
 /// // ...
 /// // OPTIONS:
-/// //         --config <config>    Path to a libra-management configuration file
+/// //         --config <config>    Path to a diem-management configuration file
 /// //         --test <test>
 ///
 /// // let none  = "cmd";
@@ -52,7 +52,7 @@ use structopt::StructOpt;
 /// //     cmd [OPTIONS] --test <test>
 ///```
 
-/// Config for libra management tools
+/// Config for diem management tools
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
@@ -75,7 +75,7 @@ impl Default for Config {
 }
 
 impl Config {
-    pub fn load(path: &PathBuf) -> Result<Config, Error> {
+    pub fn load(path: &Path) -> Result<Config, Error> {
         let reader = std::fs::File::open(path).map_err(|e| Error::ConfigError(e.to_string()))?;
         serde_yaml::from_reader(reader).map_err(|e| Error::ConfigError(e.to_string()))
     }
@@ -143,10 +143,9 @@ impl Config {
     }
 }
 
-//////// 0L ////////
 #[derive(Clone, Debug, Default, StructOpt)]
 pub struct ConfigPath {
-    /// Path to a libra-management configuration file
+    /// Path to a diem-management configuration file
     #[structopt(long)]
     config: Option<PathBuf>,
 }
@@ -164,8 +163,8 @@ impl ConfigPath {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use libra_config::config::{SecureBackend, Token, VaultConfig};
-    use libra_types::chain_id::NamedChain;
+    use diem_config::config::{SecureBackend, Token, VaultConfig};
+    use diem_types::chain_id::NamedChain;
 
     #[test]
     fn example() {
@@ -179,6 +178,8 @@ mod tests {
                 token: Token::FromConfig("test".to_string()),
                 renew_ttl_secs: None,
                 disable_cas: None,
+                connection_timeout_ms: None,
+                response_timeout_ms: None,
             }),
             validator_backend: SecureBackend::Vault(VaultConfig {
                 namespace: None,
@@ -187,6 +188,8 @@ mod tests {
                 token: Token::FromConfig("test".to_string()),
                 renew_ttl_secs: None,
                 disable_cas: None,
+                connection_timeout_ms: None,
+                response_timeout_ms: None,
             }),
         };
 

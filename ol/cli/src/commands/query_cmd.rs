@@ -1,7 +1,5 @@
 //! `bal` subcommand
 
-use std::process::exit;
-
 use abscissa_core::{Command, Options, Runnable, status_info};
 use crate::{
     entrypoint,
@@ -10,6 +8,7 @@ use crate::{
     node::client,
     node::node::Node
 };
+use std::process::exit;
 
 /// `bal` subcommand
 ///
@@ -63,7 +62,7 @@ pub struct QueryCmd {
     move_struct: Option<String>,
 
     #[options(help = "move value name")]
-    move_value: Option<String>,
+    move_value: Option<String>,    
 }
 
 impl Runnable for QueryCmd {
@@ -75,9 +74,11 @@ impl Runnable for QueryCmd {
             if args.account.is_some() { args.account.unwrap() }
             else { cfg.profile.account };
             
-        let client = client::pick_client(args.swarm_path.clone(), &mut cfg).unwrap_or_else(|e| {
-          println!("ERROR: Cannot connect to a client. Message: {}", e);
-          exit(1);
+        let client = client::pick_client(
+            args.swarm_path.clone(), &mut cfg
+        ).unwrap_or_else(|e| {
+            println!("ERROR: Cannot connect to a client. Message: {}", e);
+            exit(1);
         });
         let mut node = Node::new(client, cfg, is_swarm);
         let mut info = String::new();
@@ -113,10 +114,14 @@ impl Runnable for QueryCmd {
             display = "EPOCH";
         } else if self.events_received {
             
-            info = node.query(QueryType::Events{account, sent_or_received: false, seq_start: self.txs_height});
+            info = node.query(QueryType::Events{
+                account, sent_or_received: false, seq_start: self.txs_height
+            });
             display = "EVENTS";
         } else if self.events_sent {
-            info = node.query(QueryType::Events{account, sent_or_received: true, seq_start: self.txs_height});
+            info = node.query(QueryType::Events{
+                account, sent_or_received: true, seq_start: self.txs_height
+            });
             display = "EVENTS";
         }
         else if self.txs {

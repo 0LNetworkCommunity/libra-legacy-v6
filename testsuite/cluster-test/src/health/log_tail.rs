@@ -1,14 +1,14 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 
 use crate::health::ValidatorEvent;
-use libra_infallible::{duration_since_epoch, Mutex};
-use libra_logger::{json_log::JsonLogEntry as DebugInterfaceEvent, *};
+use diem_infallible::duration_since_epoch;
+use diem_logger::*;
 use std::{
     sync::{
-        atomic::{AtomicBool, AtomicI64, Ordering},
+        atomic::{AtomicI64, Ordering},
         mpsc, Arc,
     },
     thread,
@@ -18,11 +18,6 @@ use std::{
 pub struct LogTail {
     pub event_receiver: mpsc::Receiver<ValidatorEvent>,
     pub pending_messages: Arc<AtomicI64>,
-}
-
-pub struct TraceTail {
-    pub trace_receiver: Mutex<mpsc::Receiver<(String, DebugInterfaceEvent)>>,
-    pub trace_enabled: Arc<AtomicBool>,
 }
 
 impl LogTail {
@@ -60,19 +55,6 @@ impl LogTail {
         let mut events = vec![];
         while let Ok(event) = self.event_receiver.try_recv() {
             self.pending_messages.fetch_sub(1, Ordering::Relaxed);
-            events.push(event);
-        }
-        events
-    }
-}
-
-impl TraceTail {
-    pub async fn capture_trace(&self, duration: Duration) -> Vec<(String, DebugInterfaceEvent)> {
-        self.trace_enabled.store(true, Ordering::Relaxed);
-        tokio::time::delay_for(duration).await;
-        self.trace_enabled.store(false, Ordering::Relaxed);
-        let mut events = vec![];
-        while let Ok(event) = self.trace_receiver.lock().try_recv() {
             events.push(event);
         }
         events

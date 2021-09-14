@@ -9,10 +9,12 @@ use crate::{
     submit_tx::{tx_params_wrapper, maybe_submit},
 };
 use abscissa_core::{Command, Options, Runnable};
-use libra_types::transaction::Script;
+use diem_transaction_builder::stdlib as transaction_builder;
+use diem_types::transaction::TransactionPayload;
 use ol_types::{account::ValConfigs, config::TxType};
 use reqwest::Url;
 use std::{fs::{self, File}, io::Write, path::PathBuf, process::exit};
+
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Options)]
 pub struct CreateValidatorCmd {
@@ -23,10 +25,10 @@ pub struct CreateValidatorCmd {
 }
 
 /// create validator account by submitting transaction on chain
-pub fn create_validator_script(new_account: &ValConfigs) -> Script {
+pub fn create_validator_script_function(new_account: &ValConfigs) -> TransactionPayload {
     let new_account = new_account.to_owned();
 
-    transaction_builder::encode_create_acc_val_script(
+    transaction_builder::encode_create_acc_val_script_function(
         new_account.block_zero.preimage,
         new_account.block_zero.proof,
         new_account.ow_human_name.as_bytes().to_vec(),
@@ -76,19 +78,22 @@ impl Runnable for CreateValidatorCmd {
         let file = fs::File::open(account_json_path).expect("file should open read only");
         let new_account: ValConfigs =
             serde_json::from_reader(file).expect("file should be proper JSON");
-                // submit initial autopay if there are any
+        // submit initial autopay if there are any
         match new_account.check_autopay() {
             Ok(_) => {
                 println!("Sending account creation transaction");
                 maybe_submit(
-                    create_validator_script(&new_account),
+                    create_validator_script_function(&new_account),
                     &tx_params,
                     entry_args.no_send,
                     entry_args.save_path,
                 )
                 .unwrap();
-                
-                println!("\nRelaying previously signed transactions from: {:?}\n", &new_account.ow_human_name);
+
+                println!(
+                    "\nRelaying previously signed transactions from: {:?}\n", 
+                    &new_account.ow_human_name
+                );
                 match relay::relay_batch(&new_account.autopay_signed.unwrap(), &tx_params) {
                     Ok(_) => {
                       println!("\nUser transactions successfully relayed\n")
@@ -101,7 +106,8 @@ impl Runnable for CreateValidatorCmd {
             }
             Err(e) => {
                 println!(
-                    "\nError: cannot send atomic account creation transaction. Message: {:?}", e
+                    "\nError: cannot send atomic account creation transaction. Message: {:?}", 
+                    e
                 );
                 exit(1);
             }

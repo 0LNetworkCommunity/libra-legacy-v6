@@ -1,9 +1,10 @@
 //! `chain_info`
 use chrono::Utc;
-use libra_json_rpc_client::views::{OracleResourceView};
-use libra_types::{
-  account_address::AccountAddress, account_state::AccountState, waypoint::Waypoint,
-  validators_stats::ValidatorsStatsResource
+use diem_json_rpc_client::views::{OracleUpgradeStateView};
+use diem_types::{
+    account_address::AccountAddress, 
+    account_state::AccountState, waypoint::Waypoint,
+    ol_validators_stats::ValidatorsStatsResource
 };
 use ol_types::{validator_config::ValidatorConfigView, autopay::AutoPayView};
 
@@ -34,7 +35,7 @@ pub struct ChainView {
   /// waypoint
   pub waypoint: Option<Waypoint>,
   /// upgrade
-  pub upgrade: Option<OracleResourceView>,
+  pub upgrade: Option<OracleUpgradeStateView>,
   /// validator view
   pub validator_view: Option<Vec<ValidatorView>>,
   /// validators stats
@@ -78,8 +79,6 @@ pub struct ValidatorView {
   pub validator_config: Option<ValidatorConfigView>,
   /// autopay instructions
   pub autopay: Option<AutoPayView>,
-  /// note
-  pub note: String,
 }
 
 /// Validators config stats
@@ -106,14 +105,14 @@ impl Node {
   pub fn refresh_chain_info(&mut self) -> (Option<ChainView>, Option<Vec<ValidatorView>>) {
     // let mut client = client::pick_client();
     let (blob, _version) = match self.client
-      .get_account_state_blob(AccountAddress::ZERO) {
-      Ok(t)=> t,
-      Err(_) => (None, 0),
+      .get_account_state_blob(&AccountAddress::ZERO) {
+        Ok(t)=> t,
+        Err(_) => (None, 0),
     };
     let mut cs = ChainView::default();
 
     // TODO: This is duplicated with check.rs
-    let _ = self.client.get_state_proof();
+    let _ = self.client.update_and_verify_state_proof();
     
     cs.waypoint = self.client.waypoint().ok();
 
@@ -168,9 +167,10 @@ impl Node {
 
       cs.height = meta.version;
 
-      cs.upgrade = self.client.query_oracle_upgrade().expect("could not get upgrade oracle view");
+      cs.upgrade = self.client.get_oracle_upgrade_state().expect(
+        "could not get upgrade oracle view"
+      );
 
-      let dict = self.load_account_dictionary();
       let validators: Vec<ValidatorView> = account_state
         .get_validator_set()
         .unwrap()
@@ -200,7 +200,7 @@ impl Node {
           };
           let ms = self
             .client
-            .get_miner_state(v.account_address().clone())
+            .get_miner_state(&v.account_address().clone())
             .unwrap()
             .unwrap();
 
@@ -227,7 +227,6 @@ impl Node {
             prop_count_in_epoch: validator_stats.prop_count,
             validator_config: val_config,
             autopay: autopay,
-            note: dict.get_note_for_address(*v.account_address())
           }
         })
         .collect();

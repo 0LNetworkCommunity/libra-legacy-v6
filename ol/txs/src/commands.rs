@@ -37,10 +37,9 @@ use self::{
     relay_cmd::RelayCmd,
     valset_cmd::ValSetCmd,
     wallet_cmd::WalletCmd,
-    authkey_cmd::AuthkeyCmd,
+    authkey_cmd::AuthkeyCmd,    
 };
 use std::path::PathBuf;
-
 
 /// TxsApp Subcommands
 #[derive(Command, Debug, Options, Runnable)]
@@ -93,7 +92,7 @@ pub enum TxsCmd {
   
     /// The `authkey` subcommand to rotate an auth key (change mnemonic that controls address)
     #[options(help = "rotate an account's authorization key")]
-    Authkey(AuthkeyCmd),
+    Authkey(AuthkeyCmd),    
 }
 
 /// This trait allows you to define how application configuration is loaded.

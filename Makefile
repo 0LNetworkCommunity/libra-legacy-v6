@@ -85,9 +85,9 @@ bins: stdlib
 	cargo build -p libra-node -p miner -p backup-cli -p ol -p txs -p onboard --release
 
 stdlib:
-	cargo run --release -p stdlib
-	cargo run --release -p stdlib -- --create-upgrade-payload
-	sha256sum language/stdlib/staged/stdlib.mv
+	cargo run --release -p diem-framework
+	cargo run --release -p diem-framework -- --create-upgrade-payload
+	sha256sum language/diem-framework/staged/stdlib.mv
   
 
 install: mv-bin bin-path
@@ -438,3 +438,31 @@ clean-tags:
 	git push origin --delete ${TAG}
 	git tag -d ${TAG}
 	
+
+
+####### SWARM ########
+
+sw: sw-build sw-start sw-init
+
+## Build
+sw-stdlib:
+	cd ${SOURCE} && cargo run -p diem-framework
+
+sw-build:
+	cargo build -p diem-node -p diem-swarm -p cli
+
+## Swarm
+sw-start:
+	cd ${SOURCE} && cargo run -p diem-swarm -- --diem-node target/debug/diem-node -c ${DATA_PATH}/swarm_temp -n 1 -s --cli-path ${SOURCE}/target/debug/cli
+
+sw-init:
+	cd ${SOURCE} && cargo r -p ol -- --swarm-path ${DATA_PATH}/swarm_temp/ --swarm-persona alice init --source-path ~/libra
+
+sw-miner:
+		cd ${SOURCE} && cargo r -p miner -- --swarm-path ${DATA_PATH}/swarm_temp --swarm-persona alice start
+
+sw-query:
+		cd ${SOURCE} && cargo r -p ol -- --swarm-path ${DATA_PATH}/swarm_temp --swarm-persona alice query --txs
+sw-tx:
+		cd ${SOURCE} && cargo r -p txs -- --swarm-path ${DATA_PATH}/swarm_temp --swarm-persona alice wallet -s
+

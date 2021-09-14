@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -8,13 +8,17 @@ use crate::{
     transaction::build_raw_transaction,
 };
 use core::str::FromStr;
-use libra_config::config::HANDSHAKE_VERSION;
-use libra_global_constants::{
+use diem_config::config::HANDSHAKE_VERSION;
+use diem_global_constants::{
     CONSENSUS_KEY, FULLNODE_NETWORK_KEY, OPERATOR_ACCOUNT, OPERATOR_KEY, OWNER_ACCOUNT,
     VALIDATOR_NETWORK_KEY,
 };
-use libra_network_address::{NetworkAddress, Protocol};
-use libra_types::{chain_id::ChainId, transaction::Transaction};
+use diem_transaction_builder::stdlib as transaction_builder;
+use diem_types::{
+    chain_id::ChainId,
+    network_address::{NetworkAddress, Protocol},
+    transaction::Transaction,
+};
 use std::net::{Ipv4Addr, ToSocketAddrs};
 use structopt::StructOpt;
 
@@ -42,9 +46,9 @@ impl ValidatorConfig {
         fullnode_address: NetworkAddress,
         validator_address: NetworkAddress,
         reconfigure: bool,
-        disable_address_validation: bool, //////// 0L ////////
+        disable_address_validation: bool,
     ) -> Result<Transaction, Error> {
-        if !disable_address_validation { //////// 0L ////////
+        if !disable_address_validation {
             // Verify addresses
             validate_address("validator address", &validator_address)?;
             validate_address("fullnode address", &fullnode_address)?;
@@ -64,6 +68,7 @@ impl ValidatorConfig {
         // and encrypt the validator address.
         let validator_address =
             validator_address.append_prod_protos(validator_network_key, HANDSHAKE_VERSION);
+
         dbg!(&validator_address); //////// 0L ////////
 
         let encryptor = config.validator_backend().encryptor();
@@ -82,20 +87,21 @@ impl ValidatorConfig {
             fullnode_address.append_prod_protos(fullnode_network_key, HANDSHAKE_VERSION);
 
         dbg!(&fullnode_address); //////// 0L ////////
-        
+
         // Generate the validator config script
         let transaction_callback = if reconfigure {
-            transaction_builder::encode_set_validator_config_and_reconfigure_script
+            transaction_builder::encode_set_validator_config_and_reconfigure_script_function
         } else {
-            transaction_builder::encode_register_validator_config_script
+            transaction_builder::encode_register_validator_config_script_function
         };
-
+        
         let validator_config_script = transaction_callback(
             owner_account,
             consensus_key.to_bytes().to_vec(),
             validator_addresses,
-            lcs::to_bytes(&vec![fullnode_address]).unwrap(),
-        );
+            bcs::to_bytes(&vec![fullnode_address]).unwrap(),
+        )
+        .into_script_function();
 
         // Create and sign the validator-config transaction
         let raw_txn = build_raw_transaction(

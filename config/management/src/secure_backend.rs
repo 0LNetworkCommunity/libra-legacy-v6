@@ -1,8 +1,8 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::error::Error;
-use libra_config::config::{self, GitHubConfig, OnDiskStorageConfig, Token, VaultConfig};
+use diem_config::config::{self, GitHubConfig, OnDiskStorageConfig, Token, VaultConfig};
 use std::{
     collections::HashMap,
     convert::{TryFrom, TryInto},
@@ -16,6 +16,10 @@ pub const DISK: &str = "disk";
 pub const GITHUB: &str = "github";
 pub const MEMORY: &str = "memory";
 pub const VAULT: &str = "vault";
+
+// Custom timeouts for vault backend operations when using the management tooling.
+const CONNECTION_TIMEOUT_MS: u64 = 10_000;
+const RESPONSE_TIMEOUT_MS: u64 = 10_000;
 
 /// SecureBackend is a parameter that is stored as set of semi-colon separated key/value pairs. The
 /// only expected key is backend which defines which of the SecureBackends the parameters refer to.
@@ -85,6 +89,7 @@ impl TryInto<config::SecureBackend> for SecureBackend {
                     .parameters
                     .remove("repository")
                     .ok_or_else(|| Error::BackendParsingError("missing repository".into()))?;
+                let branch = self.parameters.remove("branch");
                 let token = self
                     .parameters
                     .remove("token")
@@ -93,6 +98,7 @@ impl TryInto<config::SecureBackend> for SecureBackend {
                     namespace: self.parameters.remove("namespace"),
                     repository_owner,
                     repository,
+                    branch,
                     token: Token::FromDisk(PathBuf::from(token)),
                 })
             }
@@ -114,6 +120,8 @@ impl TryInto<config::SecureBackend> for SecureBackend {
                     token: Token::FromDisk(PathBuf::from(token)),
                     renew_ttl_secs: None,
                     disable_cas: Some(true),
+                    connection_timeout_ms: Some(CONNECTION_TIMEOUT_MS),
+                    response_timeout_ms: Some(RESPONSE_TIMEOUT_MS),
                 })
             }
             _ => panic!("Invalid backend: {}", self.backend),
@@ -147,12 +155,25 @@ pair: "k0=v0;k1=v1;...".  The current supported formats are:
         an optional namespace: "namespace=NAMESPACE"
         an optional server certificate: "ca_certificate=PATH_TO_CERT"
     GitHub: "backend=github;repository_owner=REPOSITORY_OWNER;repository=REPOSITORY;token=PATH_TO_TOKEN"
+        an optional branch: "branch=BRANCH", defaults to master
         an optional namespace: "namespace=NAMESPACE"
     InMemory: "backend=memory"
     OnDisk: "backend=disk;path=LOCAL_PATH"
                 "#)
             )]
             pub $field_name: Option<SecureBackend>,
+        }
+
+        impl FromStr for $struct_name {
+            type Err = Error;
+
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                let secure_backend = SecureBackend::try_from(s)?;
+                let $field_name = $struct_name {
+                    $field_name: Some(secure_backend),
+                };
+                Ok($field_name)
+            }
         }
     };
 }
@@ -188,7 +209,7 @@ mod tests {
 
     #[test]
     fn test_disk() {
-        let path = libra_temppath::TempPath::new();
+        let path = diem_temppath::TempPath::new();
         path.create_as_file().unwrap();
         let disk = format!("backend=disk;path={}", path.path().to_str().unwrap());
         storage(&disk).unwrap();
@@ -199,31 +220,38 @@ mod tests {
 
     #[test]
     fn test_github() {
-        let path = libra_temppath::TempPath::new();
+        let path = diem_temppath::TempPath::new();
         path.create_as_file().unwrap();
         let mut file = File::create(path.path()).unwrap();
         file.write_all(b"disk_token").unwrap();
         let path_str = path.path().to_str().unwrap();
 
         let github = format!(
-            "backend=github;repository_owner=libra;repository=libra;token={}",
+            "backend=github;repository_owner=diem;repository=diem;token={}",
             path_str
         );
         storage(&github).unwrap();
 
         let github = format!(
-            "backend=github;repository_owner=libra;repository=libra;token={};namespace=test",
+            "backend=github;repository_owner=diem;repository=diem;token={};namespace=test",
+            path_str
+        );
+        storage(&github).unwrap();
+
+        let github = format!(
+            "backend=github;repository_owner=diem;repository=diem;branch=genesis;token={};namespace=test",
             path_str
         );
         storage(&github).unwrap();
 
         let github = "backend=github";
+
         storage(github).unwrap_err();
     }
 
     #[test]
     fn test_vault() {
-        let path = libra_temppath::TempPath::new();
+        let path = diem_temppath::TempPath::new();
         path.create_as_file().unwrap();
         let mut file = File::create(path.path()).unwrap();
         file.write_all(b"disk_token").unwrap();

@@ -1,14 +1,15 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use consensus_types::{
     executed_block::ExecutedBlock, quorum_cert::QuorumCert, timeout_certificate::TimeoutCertificate,
 };
-use libra_crypto::HashValue;
+use diem_crypto::HashValue;
 use std::sync::Arc;
 
 mod block_store;
 mod block_tree;
+pub mod tracing;
 
 pub use block_store::{sync_manager::BlockRetriever, BlockStore};
 use consensus_types::sync_info::SyncInfo;

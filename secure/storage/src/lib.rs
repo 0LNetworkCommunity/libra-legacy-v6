@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -9,7 +9,7 @@ mod error;
 mod github;
 mod in_memory;
 mod kv_storage;
-mod namespaced_storage;
+mod namespaced;
 mod on_disk;
 mod policy;
 mod storage;
@@ -20,10 +20,10 @@ pub use crate::{
     crypto_storage::{CryptoStorage, PublicKeyResponse},
     error::Error,
     github::GitHubStorage,
-    in_memory::{InMemoryStorage, InMemoryStorageInternal},
+    in_memory::InMemoryStorage,
     kv_storage::{GetResponse, KVStorage},
-    namespaced_storage::NamespacedStorage,
-    on_disk::{OnDiskStorage, OnDiskStorageInternal},
+    namespaced::Namespaced,
+    on_disk::OnDiskStorage,
     policy::{Capability, Identity, Permission, Policy},
     storage::Storage,
     vault::VaultStorage,

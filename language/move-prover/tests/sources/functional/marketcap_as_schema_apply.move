@@ -3,6 +3,10 @@ address 0x1 {
 
 module TestMarketCapWithSchemas {
 
+    /*
+    TODO(refactoring): this test is deactivated until we have ported this (or a similar) feature, or decided to
+      drop it in which case the test should be removed.
+
     spec module {
         pragma verify = true;
     }
@@ -23,18 +27,18 @@ module TestMarketCapWithSchemas {
         apply SumOfCoinsModuleInvariant<X1> to public *deposit*<X1> except excepted_*;
     }
 
-    // A resource representing the Libra coin
+    // A resource representing the Diem coin
     resource struct T<X> {
         // The value of the coin. May be zero
         value: u64,
     }
-    spec struct T {
+    spec T {
         invariant pack sum_of_coins<X> = sum_of_coins<X> + value;
         invariant unpack sum_of_coins<X> = sum_of_coins<X> - value;
     }
 
     resource struct MarketCap<X> {
-        // The sum of the values of all LibraCoin::T resources in the system
+        // The sum of the values of all DiemCoin::T resources in the system
         total_value: u128,
     }
 
@@ -59,7 +63,7 @@ module TestMarketCapWithSchemas {
         let T { value } = check;
         coin_ref.value = coin_ref.value + value;
     }
-    spec fun deposit {
+    spec deposit {
         include DepositCorrect<Token>;
     }
 
@@ -68,7 +72,7 @@ module TestMarketCapWithSchemas {
         let T { value } = check;
         coin_ref.value = coin_ref.value + value / 2;
     }
-    spec fun deposit_incorrect {
+    spec deposit_incorrect {
         include DepositIncorrect<Token>;
     }
 
@@ -78,7 +82,7 @@ module TestMarketCapWithSchemas {
         let T { value } = check;
         coin_ref.value = coin_ref.value + value / 2;
     }
-    spec fun deposit_not_public {
+    spec deposit_not_public {
         include DepositIncorrect<Token>;
     }
 
@@ -88,7 +92,7 @@ module TestMarketCapWithSchemas {
         let T { value } = check;
         coin_ref.value = coin_ref.value + value / 2;
     }
-    spec fun excepted_deposit {
+    spec excepted_deposit {
         include DepositIncorrect<Token>;
     }
 
@@ -98,9 +102,11 @@ module TestMarketCapWithSchemas {
         let T { value } = check;
         coin_ref.value = coin_ref.value + value / 2;
     }
-    spec fun deposit_different_type_params {
+    spec deposit_different_type_params {
         include DepositIncorrect<Token>;
     }
+
+    */
 }
 
 }

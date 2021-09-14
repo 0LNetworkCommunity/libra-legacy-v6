@@ -1,17 +1,43 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 //! Loaded representation for runtime types.
 
-use libra_types::{account_address::AccountAddress, vm_status::StatusCode};
+use diem_types::{account_address::AccountAddress, vm_status::StatusCode};
+use move_binary_format::{
+    errors::{PartialVMError, PartialVMResult},
+    file_format::AbilitySet,
+};
 use move_core_types::{
     identifier::Identifier,
     language_storage::{StructTag, TypeTag},
     value::{MoveStructLayout, MoveTypeLayout},
 };
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::convert::TryInto;
-use vm::errors::{PartialVMError, PartialVMResult};
 
-use serde::{Deserialize, Serialize};
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct WrappedAbilitySet(pub AbilitySet);
+
+impl Serialize for WrappedAbilitySet {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.0.into_u8().serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for WrappedAbilitySet {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let byte = u8::deserialize(deserializer)?;
+        Ok(WrappedAbilitySet(AbilitySet::from_u8(byte).ok_or_else(
+            || serde::de::Error::custom(format!("Invalid ability set: {:X}", byte)),
+        )?))
+    }
+}
 
 /// VM representation of a struct type in Move.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -19,7 +45,7 @@ pub(crate) struct FatStructType {
     pub address: AccountAddress,
     pub module: Identifier,
     pub name: Identifier,
-    pub is_resource: bool,
+    pub abilities: WrappedAbilitySet,
     pub ty_args: Vec<FatType>,
     pub layout: Vec<FatType>,
 }
@@ -45,7 +71,7 @@ impl FatStructType {
             address: self.address,
             module: self.module.clone(),
             name: self.name.clone(),
-            is_resource: self.is_resource,
+            abilities: self.abilities,
             ty_args: self
                 .ty_args
                 .iter()

@@ -6,7 +6,13 @@ use std::{thread, time::Duration};
 use chrono::Utc;
 
 /// Start the node monitor
-pub fn run_checks(mut node: &mut Node, pilot: bool, is_live: bool, verbose_check: bool, verbose_pilot: bool) {
+pub fn run_checks(
+    mut node: &mut Node,
+    pilot: bool,
+    is_live: bool,
+    verbose_check: bool,
+    verbose_pilot: bool
+) {
     loop {
         // update all the checks
         node.check_once(verbose_check);

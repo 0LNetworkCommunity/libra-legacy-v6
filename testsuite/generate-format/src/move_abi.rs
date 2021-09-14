@@ -1,7 +1,7 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use libra_types::transaction;
+use diem_types::transaction;
 use move_core_types::language_storage;
 use serde_reflection::{Registry, Result, Samples, Tracer, TracerConfig};
 
@@ -12,7 +12,7 @@ pub fn output_file() -> Option<&'static str> {
 
 pub fn get_registry() -> Result<Registry> {
     let mut tracer =
-        Tracer::new(TracerConfig::default().is_human_readable(lcs::is_human_readable()));
+        Tracer::new(TracerConfig::default().is_human_readable(bcs::is_human_readable()));
     let samples = Samples::new();
     // 1. Record samples for types with custom deserializers.
 

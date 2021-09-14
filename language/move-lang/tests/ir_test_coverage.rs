@@ -1,7 +1,7 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use move_lang::test_utils::*;
+use move_lang_test_utils::*;
 use std::{collections::HashSet, path::Path};
 
 #[test]
@@ -31,13 +31,13 @@ fn test_ir_test_coverage() {
         }
         msg.push_str("\nA corresponding test needs to be added:\n");
         msg.push_str(&format!(
-            "    {}/{}/<dir name>/<test name>.{}\n",
-            MOVE_CHECK_DIR, STD_LIB_TRANSACTION_SCRIPTS_DIR, MOVE_EXTENSION
+            "    {}/<dir name>/<test name>.{}\n",
+            MOVE_CHECK_DIR, MOVE_EXTENSION
         ));
         msg.push_str("  or\n");
         msg.push_str(&format!(
-            "    {}/{}/<dir name>/<test name>.{}\n",
-            FUNCTIONAL_TEST_DIR, STD_LIB_TRANSACTION_SCRIPTS_DIR, MOVE_EXTENSION
+            "    {}/<dir name>/<test name>.{}\n",
+            FUNCTIONAL_TEST_DIR, MOVE_EXTENSION
         ));
         msg.push_str(&format!(
             "Replace the extension '.{}' with '.{}' to mark the test as present, but it will not \
@@ -45,8 +45,10 @@ fn test_ir_test_coverage() {
             MOVE_EXTENSION, TODO_EXTENSION
         ));
         msg.push_str("Running the following tool may help with the migration:\n");
-        msg.push_str("  cargo run -p move-lang --bin ir-test-translation -- -d <dir_name>\n\n");
-        panic!(msg)
+        msg.push_str(
+            "  cargo run -p move-lang-ir-utils --bin ir-test-translation -- -d <dir_name>\n\n",
+        );
+        panic!("{}", msg)
     }
 }
 

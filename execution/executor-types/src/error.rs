@@ -1,7 +1,7 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use libra_crypto::HashValue;
+use diem_crypto::HashValue;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -26,14 +26,14 @@ impl From<anyhow::Error> for Error {
     }
 }
 
-impl From<lcs::Error> for Error {
-    fn from(error: lcs::Error) -> Self {
+impl From<bcs::Error> for Error {
+    fn from(error: bcs::Error) -> Self {
         Self::SerializationError(format!("{}", error))
     }
 }
 
-impl From<libra_secure_net::Error> for Error {
-    fn from(error: libra_secure_net::Error) -> Self {
+impl From<diem_secure_net::Error> for Error {
+    fn from(error: diem_secure_net::Error) -> Self {
         Self::InternalError {
             error: format!("{}", error),
         }

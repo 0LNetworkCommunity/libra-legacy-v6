@@ -1,18 +1,17 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use compiled_stdlib::StdLibOptions;
-use libra_types::{
+use diem_types::{
     access_path::AccessPath,
     account_address::AccountAddress,
     contract_event::ContractEvent,
     transaction::ChangeSet,
     write_set::{WriteOp, WriteSet},
 };
+use move_binary_format::CompiledModule;
 use resource_viewer::{MoveValueAnnotator, NullStateView};
 use std::collections::{BTreeMap, BTreeSet};
 use structopt::StructOpt;
-use vm::CompiledModule;
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "Genesis Viewer")]
@@ -73,7 +72,8 @@ pub fn main() {
     // we default to `all`
     let arg_count = std::env::args().len();
     let args = Args::from_args();
-    let ws = vm_genesis::generate_genesis_change_set_for_testing(StdLibOptions::Compiled);
+    let ws =
+        vm_genesis::generate_genesis_change_set_for_testing(vm_genesis::GenesisOptions::Compiled);
     if args.all || arg_count == 3 {
         print_all(&ws);
     } else {

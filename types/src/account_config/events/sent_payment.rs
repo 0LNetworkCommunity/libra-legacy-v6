@@ -1,25 +1,16 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    account_address::AccountAddress,
-    account_config::{constants::ACCOUNT_MODULE_NAME, resources::AccountResource},
+    account_address::AccountAddress, account_config::constants::ACCOUNT_MODULE_IDENTIFIER,
 };
 use anyhow::Result;
 use move_core_types::{
+    ident_str,
     identifier::{IdentStr, Identifier},
-    move_resource::MoveResource,
+    move_resource::MoveStructType,
 };
-use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-
-/// The path to the sent event counter for an Account resource.
-/// It can be used to query the event DB for the given event.
-pub static ACCOUNT_SENT_EVENT_PATH: Lazy<Vec<u8>> = Lazy::new(|| {
-    let mut path = AccountResource::resource_path();
-    path.extend_from_slice(b"/sent_events_count/");
-    path
-});
 
 /// Struct that represents a SentPaymentEvent.
 #[derive(Debug, Serialize, Deserialize)]
@@ -31,7 +22,7 @@ pub struct SentPaymentEvent {
 }
 
 impl SentPaymentEvent {
-    // TODO: should only be used for libra client testing and be removed eventually
+    // TODO: should only be used for diem client testing and be removed eventually
     pub fn new(
         amount: u64,
         currency_code: Identifier,
@@ -47,7 +38,7 @@ impl SentPaymentEvent {
     }
 
     pub fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
-        lcs::from_bytes(bytes).map_err(Into::into)
+        bcs::from_bytes(bytes).map_err(Into::into)
     }
 
     /// Get the sender of this transaction event.
@@ -61,7 +52,7 @@ impl SentPaymentEvent {
     }
 
     /// Get the metadata associated with this event
-    pub fn metadata(&self) -> &Vec<u8> {
+    pub fn metadata(&self) -> &[u8] {
         &self.metadata
     }
 
@@ -71,7 +62,7 @@ impl SentPaymentEvent {
     }
 }
 
-impl MoveResource for SentPaymentEvent {
-    const MODULE_NAME: &'static str = ACCOUNT_MODULE_NAME;
-    const STRUCT_NAME: &'static str = "SentPaymentEvent";
+impl MoveStructType for SentPaymentEvent {
+    const MODULE_NAME: &'static IdentStr = ACCOUNT_MODULE_IDENTIFIER;
+    const STRUCT_NAME: &'static IdentStr = ident_str!("SentPaymentEvent");
 }

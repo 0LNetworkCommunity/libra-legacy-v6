@@ -1,7 +1,7 @@
 module M {
     import 0x1.Signer;
 
-    resource Foo {
+    struct Foo has key {
         x: u64,
     }
 
@@ -21,15 +21,15 @@ module M {
 //! new-transaction
 import {{default}}.M;
 
-main(account: &signer) {
-    M.foo(move(account));
+main(account: signer) {
+    M.foo(&account);
     return;
 }
 
 //! new-transaction
 import {{default}}.M;
 
-main(account: &signer) {
-    assert(M.bar(move(account)) == 100u64, 42);
+main(account: signer) {
+    assert(M.bar(&account) == 100u64, 42);
     return;
 }

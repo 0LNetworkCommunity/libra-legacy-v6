@@ -1,7 +1,7 @@
 //! `autopay`
 
 use anyhow::Error;
-use libra_types::{
+use diem_types::{
     account_address::AccountAddress,
     transaction::{Script, TransactionArgument},
 };

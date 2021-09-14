@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -12,8 +12,8 @@ use crate::{
     instance::Instance,
 };
 use async_trait::async_trait;
+use diem_logger::info;
 use futures::future::try_join_all;
-use libra_logger::info;
 use std::{
     collections::HashSet,
     fmt::{Error, Formatter},
@@ -49,7 +49,7 @@ impl Experiment for RebootCluster {
         for inst in &self.instances {
             info!("Starting node {}", inst.peer_name());
             inst.start().await?;
-            time::delay_for(Duration::from_secs(10)).await;
+            time::sleep(Duration::from_secs(10)).await;
         }
         Ok(())
     }

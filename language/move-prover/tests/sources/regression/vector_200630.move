@@ -1,4 +1,4 @@
-module TestVector {
+module 0x42::TestVector {
     use 0x1::Vector;
     struct T {
         x: u64,
@@ -15,7 +15,7 @@ module TestVector {
 
         *int_ref = 42;
         spec {
-            assert int_ref == v[i].x;
+            assert 42 == v[i].x;
         };
         true
     }

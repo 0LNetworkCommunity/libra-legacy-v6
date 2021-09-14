@@ -1,31 +1,28 @@
 <script lang="ts">
   import AutoPaySummary from "./AutoPaySummary.svelte";
-  import AddressNoteTip from '../address/AddressNoteTip.svelte';
   import "/layout/Style.svelte";
   export let account;
 
-  let payments;
-  let has_notes = false;
+  let total;
   $: if (account && account.autopay) {
-    payments = account.autopay.payments;
-    has_notes = payments.some(e => e.note != "");
+    total = account.autopay.payments.reduce((a, b) => a + (b.amt || 0), 0);
   }
 </script>
 
 <div>
   <h2 class="uk-text-center uk-text-uppercase uk-text-muted uk-text-light uk-margin-medium-bottom">
-    Autopay Instructions {#if payments && payments.length > 0 && !has_notes}<AddressNoteTip />{/if}
+    Autopay Instructions
   </h2>
   
-  {#if payments}
-    {#if payments.length > 0}
-      <AutoPaySummary payments={payments}/>
+  {#if account}
+    {#if account.autopay && account.autopay.payments.length > 0}
+      <AutoPaySummary payments={account.autopay.payments}/>
       <div class="uk-overflow-auto">
         <table class="uk-table uk-table-hover">
           <thead>
             <tr>
               <th class="uk-text-center">uid</th>
-              {#if has_notes}<th class="uk-text-center">note</th>{/if}
+              <th class="uk-text-center">note</th>
               <th class="uk-text-center">payee</th>
               <th class="uk-text-center">type</th>
               <th class="uk-text-center">end epoch</th>
@@ -33,10 +30,10 @@
             </tr>
           </thead>
           <tbody>
-            {#each payments as {uid, note, type_desc, payee, end_epoch, amount}}
+            {#each account.autopay.payments as {uid, note, type_desc, payee, end_epoch, amount}}
               <tr>
                 <td class="uk-text-center">{uid}</td>
-                {#if has_notes}<td class="uk-text-center">{note}</td>{/if}
+                <td class="uk-text-center">{note || ""}</td>
                 <td class="uk-visible@s uk-text-center">{payee}</td>
                 <td class="uk-hidden@s uk-text-truncate">{payee}</td>
                 <td class="uk-text-center">{type_desc}</td>

@@ -1,10 +1,12 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use libra_global_constants::{OWNER_ACCOUNT, OWNER_KEY};
-use libra_management::{constants, error::Error, secure_backend::SharedBackend};
-use libra_network_address::NetworkAddress;
-use libra_types::transaction::{authenticator::AuthenticationKey, Transaction};
+use diem_global_constants::{OWNER_ACCOUNT, OWNER_KEY};
+use diem_management::{constants, error::Error, secure_backend::SharedBackend};
+use diem_types::{
+    network_address::NetworkAddress, 
+    transaction::{authenticator::AuthenticationKey, Transaction}
+};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -12,14 +14,13 @@ pub struct ValidatorConfig {
     #[structopt(long)]
     owner_name: String,
     #[structopt(flatten)]
-    validator_config: libra_management::validator_config::ValidatorConfig,
+    validator_config: diem_management::validator_config::ValidatorConfig,
     #[structopt(long)]
     validator_address: NetworkAddress,
     #[structopt(long)]
     fullnode_address: NetworkAddress,
     #[structopt(flatten)]
     shared_backend: SharedBackend,
-    //////// 0L ////////
     #[structopt(long, help = "Disables network address validation")]
     disable_address_validation: bool,
 }
@@ -42,6 +43,7 @@ impl ValidatorConfig {
 
         //////// 0L ////////
         // This means Operators can only have 1 owner, at least at genesis.
+
         let mut validator_storage = config.validator_backend();
         validator_storage.set(OWNER_ACCOUNT, owner_account)?;
 
@@ -50,7 +52,6 @@ impl ValidatorConfig {
             self.fullnode_address,
             self.validator_address,
             false,
-            //////// 0L ////////
             self.disable_address_validation,
         )?;
 

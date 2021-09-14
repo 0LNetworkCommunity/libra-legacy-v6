@@ -1,7 +1,7 @@
 module Token {
     import 0x1.Signer;
 
-    resource T {v: u64}
+    struct T has key {v: u64}
 
     public new(v: u64): Self.T {
         return T{v: move(v)};
@@ -40,4 +40,4 @@ module Token {
         return;
     }
 }
-// check: READREF_RESOURCE_ERROR
+// check: READREF_WITHOUT_COPY_ABILITY

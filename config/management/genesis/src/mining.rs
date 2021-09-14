@@ -1,4 +1,4 @@
-use libra_management::{config::ConfigPath, error::Error, secure_backend::{ SharedBackend}};
+use diem_management::{config::ConfigPath, error::Error, secure_backend::{ SharedBackend}};
 // use miner::block::Block;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -26,8 +26,8 @@ impl Mining {
             .map_err(|e| Error::UnexpectedError(e.to_string()))?;
 
         let mut shared_storage = config.shared_backend();
-        shared_storage.set(libra_global_constants::PROOF_OF_WORK_PREIMAGE, preimage)?;
-        shared_storage.set(libra_global_constants::PROOF_OF_WORK_PROOF, proof)?;
+        shared_storage.set(diem_global_constants::PROOF_OF_WORK_PREIMAGE, preimage)?;
+        shared_storage.set(diem_global_constants::PROOF_OF_WORK_PROOF, proof)?;
 
         Ok("Sent Proof".to_string())
     }

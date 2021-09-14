@@ -1,31 +1,32 @@
 [package]
 name = "consensus-types"
 version = "0.1.0"
-authors = ["Libra Association <opensource@libra.org>"]
+authors = ["Diem Association <opensource@diem.com>"]
 license = "Apache-2.0"
 publish = false
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0.33"
+anyhow = "1.0.38"
 mirai-annotations = { version = "1.10.1", default-features = false }
-proptest = { version = "0.10.1", optional = true }
-serde = { version = "1.0.116", default-features = false }
+proptest = { version = "1.0.0", optional = true }
+serde = { version = "1.0.124", default-features = false }
 
-executor-types = { path = "../../execution/executor-types", version = "0.1.0" }
-lcs = { path = "../../common/lcs", version = "0.1.0", package = "libra-canonical-serialization" }
-libra-crypto = { path = "../../crypto/crypto", version = "0.1.0" }
-libra-crypto-derive = { path = "../../crypto/crypto-derive", version = "0.1.0" }
-libra-infallible = { path = "../../common/infallible", version = "0.1.0" }
-libra-types = { path = "../../types", version = "0.1.0" }
-libra-workspace-hack = { path = "../../common/workspace-hack", version = "0.1.0" }
+executor-types = { path = "../../execution/executor-types" }
+bcs = "0.1.2"
+diem-crypto = { path = "../../crypto/crypto" }
+diem-crypto-derive = { path = "../../crypto/crypto-derive" }
+diem-infallible = { path = "../../common/infallible" }
+diem-types = { path = "../../types" }
+diem-workspace-hack = { path = "../../common/workspace-hack" }
+short-hex-str = { path = "../../common/short-hex-str" }
 
 
 [dev-dependencies]
-proptest = "0.10.1"
+proptest = "1.0.0"
 
-libra-types = { path = "../../types", version = "0.1.0", features = ["fuzzing"] }
+diem-types = { path = "../../types", features = ["fuzzing"] }
 
 [features]
 default = []
-fuzzing = ["proptest", "libra-types/fuzzing", "libra-crypto/fuzzing"]
+fuzzing = ["proptest", "diem-types/fuzzing", "diem-crypto/fuzzing"]

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module implements a checker for verifying that each vector in a CompiledModule contains
@@ -8,10 +8,7 @@
 //! - struct and field definitions are consistent
 //! - the handles in struct and function definitions point to the self module index
 //! - all struct and function handles pointing to the self module index have a definition
-use libra_types::vm_status::StatusCode;
-use move_core_types::{account_address::AccountAddress, identifier::Identifier};
-use std::{collections::HashSet, hash::Hash};
-use vm::{
+use move_binary_format::{
     access::{ModuleAccess, ScriptAccess},
     errors::{verification_error, Location, PartialVMResult, VMResult},
     file_format::{
@@ -21,6 +18,10 @@ use vm::{
     },
     IndexKind,
 };
+use move_core_types::{
+    account_address::AccountAddress, identifier::Identifier, vm_status::StatusCode,
+};
+use std::{collections::HashSet, hash::Hash};
 
 pub struct DuplicationChecker<'a> {
     module: &'a CompiledModule,
@@ -37,6 +38,7 @@ impl<'a> DuplicationChecker<'a> {
         Self::check_constants(module.constant_pool())?;
         Self::check_signatures(module.signatures())?;
         Self::check_module_handles(module.module_handles())?;
+        Self::check_module_handles(module.friend_decls())?;
         Self::check_struct_handles(module.struct_handles())?;
         Self::check_function_handles(module.function_handles())?;
         Self::check_function_instantiations(module.function_instantiations())?;
@@ -272,7 +274,7 @@ impl<'a> DuplicationChecker<'a> {
             let acquires = function_def.acquires_global_resources.iter();
             if Self::first_duplicate_element(acquires).is_some() {
                 return Err(verification_error(
-                    StatusCode::DUPLICATE_ACQUIRES_RESOURCE_ANNOTATION_ERROR,
+                    StatusCode::DUPLICATE_ACQUIRES_ANNOTATION,
                     IndexKind::FunctionDefinition,
                     idx as TableIndex,
                 ));

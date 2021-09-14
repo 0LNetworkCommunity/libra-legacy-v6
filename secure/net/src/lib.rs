@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -15,8 +15,8 @@
 //! Internally both the client and server leverage a NetworkStream that communications in blocks
 //! where a block is a length prefixed array of bytes.
 
-use libra_logger::{info, trace, warn, Schema};
-use libra_secure_push_metrics::{register_int_counter_vec, IntCounterVec};
+use diem_logger::{info, trace, warn, Schema};
+use diem_secure_push_metrics::{register_int_counter_vec, IntCounterVec};
 use once_cell::sync::Lazy;
 use serde::Serialize;
 use std::{
@@ -78,7 +78,7 @@ impl NetworkMode {
 
 static EVENT_COUNTER: Lazy<IntCounterVec> = Lazy::new(|| {
     register_int_counter_vec!(
-        "libra_secure_net_events",
+        "diem_secure_net_events",
         "Outcome of secure net events",
         &["service", "mode", "method", "result"]
     )
@@ -198,7 +198,7 @@ impl NetworkClient {
             LogEvent::Shutdown,
         ));
 
-        let stream = self.stream.take().ok_or_else(|| Error::NoActiveStream)?;
+        let stream = self.stream.take().ok_or(Error::NoActiveStream)?;
         stream.shutdown()?;
         Ok(())
     }
@@ -265,7 +265,7 @@ impl NetworkClient {
             .remote_peer(&self.server));
         }
 
-        self.stream.as_mut().ok_or_else(|| Error::NoActiveStream)
+        self.stream.as_mut().ok_or(Error::NoActiveStream)
     }
 }
 
@@ -328,8 +328,8 @@ impl NetworkServer {
             LogEvent::Shutdown,
         ));
 
-        self.listener.take().ok_or_else(|| Error::AlreadyShutdown)?;
-        let stream = self.stream.take().ok_or_else(|| Error::NoActiveStream)?;
+        self.listener.take().ok_or(Error::AlreadyShutdown)?;
+        let stream = self.stream.take().ok_or(Error::NoActiveStream)?;
         stream.shutdown()?;
         Ok(())
     }
@@ -371,10 +371,7 @@ impl NetworkServer {
                 LogEvent::ConnectionAttempt,
             ));
 
-            let listener = self
-                .listener
-                .as_mut()
-                .ok_or_else(|| Error::AlreadyShutdown)?;
+            let listener = self.listener.as_mut().ok_or(Error::AlreadyShutdown)?;
 
             let (stream, stream_addr) = match listener.accept() {
                 Ok(ok) => ok,
@@ -403,7 +400,7 @@ impl NetworkServer {
             self.stream = Some(NetworkStream::new(stream, stream_addr, self.timeout_ms));
         }
 
-        self.stream.as_mut().ok_or_else(|| Error::NoActiveStream)
+        self.stream.as_mut().ok_or(Error::NoActiveStream)
     }
 }
 
@@ -501,7 +498,7 @@ impl NetworkStream {
     /// Writing to a TCP socket will take in as much data as the underlying buffer has space for.
     /// This wraps around that buffer and blocks until all the data has been pushed.
     fn write_all(&mut self, data: &[u8]) -> Result<(), Error> {
-        let mut unwritten = &data[..];
+        let mut unwritten = data;
         let mut total_written = 0;
 
         while !unwritten.is_empty() {
@@ -516,7 +513,7 @@ impl NetworkStream {
 #[cfg(test)]
 mod test {
     use super::*;
-    use libra_config::utils;
+    use diem_config::utils;
     use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
     /// Read, Write, Connect timeout in milliseconds.

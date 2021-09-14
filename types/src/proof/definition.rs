@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module has definition of various proofs.
@@ -14,8 +14,8 @@ use crate::{
 };
 use anyhow::{bail, ensure, format_err, Result};
 #[cfg(any(test, feature = "fuzzing"))]
-use libra_crypto::hash::TestOnlyHasher;
-use libra_crypto::{
+use diem_crypto::hash::TestOnlyHasher;
+use diem_crypto::{
     hash::{
         CryptoHash, CryptoHasher, EventAccumulatorHasher, TransactionAccumulatorHasher,
         SPARSE_MERKLE_PLACEHOLDER_HASH,
@@ -132,7 +132,7 @@ pub type TestAccumulatorProof = AccumulatorProof<TestOnlyHasher>;
 /// A proof that can be used to authenticate an element in a Sparse Merkle Tree given trusted root
 /// hash. For example, `TransactionInfoToAccountProof` can be constructed on top of this structure.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-pub struct SparseMerkleProof {
+pub struct SparseMerkleProof<V> {
     /// This proof can be used to authenticate whether a given leaf exists in the tree or not.
     ///     - If this is `Some(leaf_node)`
     ///         - If `leaf_node.key` equals requested key, this is an inclusion proof and
@@ -147,12 +147,21 @@ pub struct SparseMerkleProof {
     /// All siblings in this proof, including the default ones. Siblings are ordered from the bottom
     /// level to the root level.
     siblings: Vec<HashValue>,
+
+    phantom: PhantomData<V>,
 }
 
-impl SparseMerkleProof {
+impl<V> SparseMerkleProof<V>
+where
+    V: CryptoHash,
+{
     /// Constructs a new `SparseMerkleProof` using leaf and a list of siblings.
     pub fn new(leaf: Option<SparseMerkleLeafNode>, siblings: Vec<HashValue>) -> Self {
-        SparseMerkleProof { leaf, siblings }
+        SparseMerkleProof {
+            leaf,
+            siblings,
+            phantom: PhantomData,
+        }
     }
 
     /// Returns the leaf node in this proof.
@@ -165,15 +174,15 @@ impl SparseMerkleProof {
         &self.siblings
     }
 
-    /// If `element_blob` is present, verifies an element whose key is `element_key` and value is
-    /// `element_blob` exists in the Sparse Merkle Tree using the provided proof. Otherwise
+    /// If `element_value` is present, verifies an element whose key is `element_key` and value is
+    /// `element_value` exists in the Sparse Merkle Tree using the provided proof. Otherwise
     /// verifies the proof is a valid non-inclusion proof that shows this key doesn't exist in the
     /// tree.
     pub fn verify(
         &self,
         expected_root_hash: HashValue,
         element_key: HashValue,
-        element_blob: Option<&AccountStateBlob>,
+        element_value: Option<&V>,
     ) -> Result<()> {
         ensure!(
             self.siblings.len() <= HashValue::LENGTH_IN_BITS,
@@ -182,8 +191,8 @@ impl SparseMerkleProof {
             self.siblings.len(),
         );
 
-        match (element_blob, self.leaf) {
-            (Some(blob), Some(leaf)) => {
+        match (element_value, self.leaf) {
+            (Some(value), Some(leaf)) => {
                 // This is an inclusion proof, so the key and value hash provided in the proof
                 // should match element_key and element_value_hash. `siblings` should prove the
                 // route from the leaf node to the root.
@@ -193,7 +202,7 @@ impl SparseMerkleProof {
                     leaf.key,
                     element_key
                 );
-                let hash = blob.hash();
+                let hash = value.hash();
                 ensure!(
                     hash == leaf.value_hash,
                     "Value hashes do not match. Value hash in proof: {:x}. \
@@ -202,7 +211,7 @@ impl SparseMerkleProof {
                     hash,
                 );
             }
-            (Some(_blob), None) => bail!("Expected inclusion proof. Found non-inclusion proof."),
+            (Some(_value), None) => bail!("Expected inclusion proof. Found non-inclusion proof."),
             (None, Some(leaf)) => {
                 // This is a non-inclusion proof. The proof intends to show that if a leaf node
                 // representing `element_key` is inserted, it will break a currently existing leaf
@@ -508,10 +517,10 @@ impl SparseMerkleRangeProof {
 pub struct TransactionInfoWithProof {
     /// The accumulator proof from ledger info root to leaf that authenticates the hash of the
     /// `TransactionInfo` object.
-    ledger_info_to_transaction_info_proof: TransactionAccumulatorProof,
+    pub ledger_info_to_transaction_info_proof: TransactionAccumulatorProof,
 
     /// The `TransactionInfo` object at the leaf of the accumulator.
-    transaction_info: TransactionInfo,
+    pub transaction_info: TransactionInfo,
 }
 
 impl TransactionInfoWithProof {
@@ -559,7 +568,7 @@ pub struct AccountStateProof {
     transaction_info_with_proof: TransactionInfoWithProof,
 
     /// The sparse merkle proof from state root to the account state.
-    transaction_info_to_account_proof: SparseMerkleProof,
+    transaction_info_to_account_proof: SparseMerkleProof<AccountStateBlob>,
 }
 
 impl AccountStateProof {
@@ -567,7 +576,7 @@ impl AccountStateProof {
     /// `transaction_info` and `transaction_info_to_account_proof`.
     pub fn new(
         transaction_info_with_proof: TransactionInfoWithProof,
-        transaction_info_to_account_proof: SparseMerkleProof,
+        transaction_info_to_account_proof: SparseMerkleProof<AccountStateBlob>,
     ) -> Self {
         AccountStateProof {
             transaction_info_with_proof,
@@ -581,7 +590,7 @@ impl AccountStateProof {
     }
 
     /// Returns the `transaction_info_to_account_proof` object in this proof.
-    pub fn transaction_info_to_account_proof(&self) -> &SparseMerkleProof {
+    pub fn transaction_info_to_account_proof(&self) -> &SparseMerkleProof<AccountStateBlob> {
         &self.transaction_info_to_account_proof
     }
 
@@ -669,10 +678,10 @@ impl EventProof {
 pub struct TransactionListProof {
     /// The accumulator range proof from ledger info root to leaves that authenticates the hashes
     /// of all `TransactionInfo` objects.
-    ledger_info_to_transaction_infos_proof: TransactionAccumulatorRangeProof,
+    pub ledger_info_to_transaction_infos_proof: TransactionAccumulatorRangeProof,
 
     /// The `TransactionInfo` objects that correspond to all the transactions.
-    transaction_infos: Vec<TransactionInfo>,
+    pub transaction_infos: Vec<TransactionInfo>,
 }
 
 impl TransactionListProof {

@@ -1,7 +1,8 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    configurable_validator_signer::ConfigurableValidatorSigner,
     consensus_state::ConsensusState,
     counters,
     error::Error,
@@ -20,23 +21,25 @@ use consensus_types::{
     vote_data::VoteData,
     vote_proposal::{MaybeSignedVoteProposal, VoteProposal},
 };
-use libra_crypto::{
+use diem_crypto::{
     ed25519::{Ed25519PublicKey, Ed25519Signature},
-    hash::HashValue,
+    hash::{CryptoHash, HashValue},
     traits::Signature,
 };
-use libra_logger::prelude::*;
-use libra_types::{
+use diem_logger::prelude::*;
+use diem_types::{
     block_info::BlockInfo, epoch_change::EpochChangeProof, epoch_state::EpochState,
-    ledger_info::LedgerInfo, validator_signer::ValidatorSigner, waypoint::Waypoint,
+    ledger_info::LedgerInfo, waypoint::Waypoint,
 };
+use serde::Serialize;
 use std::cmp::Ordering;
 
 /// @TODO consider a cache of verified QCs to cut down on verification costs
 pub struct SafetyRules {
     persistent_storage: PersistentSafetyStorage,
     execution_public_key: Option<Ed25519PublicKey>,
-    validator_signer: Option<ValidatorSigner>,
+    export_consensus_key: bool,
+    validator_signer: Option<ConfigurableValidatorSigner>,
     epoch_state: Option<EpochState>,
 }
 
@@ -46,6 +49,7 @@ impl SafetyRules {
     pub fn new(
         persistent_storage: PersistentSafetyStorage,
         verify_vote_proposal_signature: bool,
+        export_consensus_key: bool,
     ) -> Self {
         let execution_public_key = if verify_vote_proposal_signature {
             Some(
@@ -59,12 +63,18 @@ impl SafetyRules {
         Self {
             persistent_storage,
             execution_public_key,
+            export_consensus_key,
             validator_signer: None,
             epoch_state: None,
         }
     }
 
-    fn signer(&self) -> Result<&ValidatorSigner, Error> {
+    fn sign<T: Serialize + CryptoHash>(&self, message: &T) -> Result<Ed25519Signature, Error> {
+        let signer = self.signer()?;
+        signer.sign(message, &self.persistent_storage)
+    }
+
+    fn signer(&self) -> Result<&ConfigurableValidatorSigner, Error> {
         self.validator_signer
             .as_ref()
             .ok_or_else(|| Error::NotInitialized("validator_signer".into()))
@@ -104,7 +114,11 @@ impl SafetyRules {
     /// 1) B0 <- B1 <- B2 <--
     /// 2) round(B0) + 1 = round(B1), and
     /// 3) round(B1) + 1 = round(B2).
-    pub fn construct_ledger_info(&self, proposed_block: &Block) -> Result<LedgerInfo, Error> {
+    pub fn construct_ledger_info(
+        &self,
+        proposed_block: &Block,
+        consensus_data_hash: HashValue,
+    ) -> Result<LedgerInfo, Error> {
         let block2 = proposed_block.round();
         let block1 = proposed_block.quorum_cert().certified_block().round();
         let block0 = proposed_block.quorum_cert().parent_block().round();
@@ -115,16 +129,13 @@ impl SafetyRules {
         let commit = next_round(block0)? == block1 && next_round(block1)? == block2;
 
         // create a ledger info
-        let ledger_info = if commit {
-            LedgerInfo::new(
-                proposed_block.quorum_cert().parent_block().clone(),
-                HashValue::zero(),
-            )
+        let commit_info = if commit {
+            proposed_block.quorum_cert().parent_block().clone()
         } else {
-            LedgerInfo::new(BlockInfo::empty(), HashValue::zero())
+            BlockInfo::empty()
         };
 
-        Ok(ledger_info)
+        Ok(LedgerInfo::new(commit_info, consensus_data_hash))
     }
 
     /// Second voting rule
@@ -180,12 +191,11 @@ impl SafetyRules {
 
     /// This verifies the epoch given against storage for consistent verification
     fn verify_epoch(&self, epoch: u64, safety_data: &SafetyData) -> Result<(), Error> {
-        let expected_epoch = safety_data.epoch;
-        if epoch != expected_epoch {
-            Err(Error::IncorrectEpoch(epoch, expected_epoch))
-        } else {
-            Ok(())
+        if epoch != safety_data.epoch {
+            return Err(Error::IncorrectEpoch(epoch, safety_data.epoch));
         }
+
+        Ok(())
     }
 
     /// First voting rule
@@ -194,17 +204,20 @@ impl SafetyRules {
         round: Round,
         safety_data: &mut SafetyData,
     ) -> Result<(), Error> {
-        let last_voted_round = safety_data.last_voted_round;
-        if round > last_voted_round {
-            safety_data.last_voted_round = round;
-            info!(
-                SafetyLogSchema::new(LogEntry::LastVotedRound, LogEvent::Update)
-                    .last_voted_round(safety_data.last_voted_round)
-            );
-            return Ok(());
+        if round <= safety_data.last_voted_round {
+            return Err(Error::IncorrectLastVotedRound(
+                round,
+                safety_data.last_voted_round,
+            ));
         }
 
-        Err(Error::IncorrectLastVotedRound(round, last_voted_round))
+        safety_data.last_voted_round = round;
+        info!(
+            SafetyLogSchema::new(LogEntry::LastVotedRound, LogEvent::Update)
+                .last_voted_round(safety_data.last_voted_round)
+        );
+
+        Ok(())
     }
 
     /// This verifies a QC has valid signatures.
@@ -236,7 +249,6 @@ impl SafetyRules {
         ))
     }
 
-    //////// 0L ////////
     fn guarded_initialize(&mut self, proof: &EpochChangeProof) -> Result<(), Error> {
         let waypoint = self.persistent_storage.waypoint()?;
         let last_li = proof
@@ -281,14 +293,17 @@ impl SafetyRules {
                         "in set",
                     );
                     Ok(())
-                } else {
+                } else if self.export_consensus_key {
+                    // Try to export the consensus key directly from storage.
                     match self
                         .persistent_storage
                         .consensus_key_for_version(expected_key)
                     {
                         Ok(consensus_key) => {
-                            self.validator_signer =
-                                Some(ValidatorSigner::new(author, consensus_key));
+                            self.validator_signer = Some(ConfigurableValidatorSigner::new_signer(
+                                author,
+                                consensus_key,
+                            ));
                             Ok(())
                         }
                         Err(Error::SecureStorageMissingDataError(error)) => {
@@ -296,6 +311,16 @@ impl SafetyRules {
                         }
                         Err(error) => Err(error),
                     }
+                } else {
+                    // Try to generate a signature over a test message to ensure the expected key
+                    // is actually held in storage.
+                    self.validator_signer = Some(ConfigurableValidatorSigner::new_handle(
+                        author,
+                        expected_key,
+                    ));
+                    self.sign(&Timeout::new(0, 0))
+                        .map(|_signature| ())
+                        .map_err(|error| Error::ValidatorKeyNotFound(error.to_string()))
                 }
             }
         };
@@ -315,47 +340,46 @@ impl SafetyRules {
         // Exit early if we cannot sign
         self.signer()?;
 
-        let (vote_proposal, execution_signature) = (
-            &maybe_signed_vote_proposal.vote_proposal,
-            maybe_signed_vote_proposal.signature.as_ref(),
-        );
+        let vote_proposal = &maybe_signed_vote_proposal.vote_proposal;
+        let execution_signature = maybe_signed_vote_proposal.signature.as_ref();
 
         if let Some(public_key) = self.execution_public_key.as_ref() {
             execution_signature
-                .ok_or_else(|| Error::VoteProposalSignatureNotFound)?
+                .ok_or(Error::VoteProposalSignatureNotFound)?
                 .verify(vote_proposal, public_key)
                 .map_err(|error| Error::InternalError(error.to_string()))?;
         }
 
         let proposed_block = vote_proposal.block();
         let mut safety_data = self.persistent_storage.safety_data()?;
+
         self.verify_epoch(proposed_block.epoch(), &safety_data)?;
+
+        // if already voted on this round, send back the previous vote
+        // note: this needs to happen after verifying the epoch as we just check the round here
+        if let Some(vote) = safety_data.last_vote.clone() {
+            if vote.vote_data().proposed().round() == proposed_block.round() {
+                return Ok(vote);
+            }
+        }
+
         self.verify_qc(proposed_block.quorum_cert())?;
         proposed_block
             .validate_signature(&self.epoch_state()?.verifier)
             .map_err(|error| Error::InternalError(error.to_string()))?;
 
         self.verify_and_update_preferred_round(proposed_block.quorum_cert(), &mut safety_data)?;
-        // if already voted on this round, send back the previous vote.
-        if let Some(vote) = safety_data.last_vote.clone() {
-            if vote.vote_data().proposed().round() == proposed_block.round() {
-                safety_data.last_voted_round = proposed_block.round();
-                self.persistent_storage.set_safety_data(safety_data)?;
-                return Ok(vote);
-            }
-        }
         self.verify_and_update_last_vote_round(
             proposed_block.block_data().round(),
             &mut safety_data,
         )?;
 
-        let validator_signer = self.signer()?;
-        let vote = Vote::new(
-            self.extension_check(vote_proposal)?,
-            validator_signer.author(),
-            self.construct_ledger_info(proposed_block)?,
-            validator_signer,
-        );
+        // Construct and sign vote
+        let vote_data = self.extension_check(vote_proposal)?;
+        let author = self.signer()?.author();
+        let ledger_info = self.construct_ledger_info(proposed_block, vote_data.hash())?;
+        let signature = self.sign(&ledger_info)?;
+        let vote = Vote::new_with_signature(vote_data, author, ledger_info, signature);
 
         safety_data.last_vote = Some(vote.clone());
         self.persistent_storage.set_safety_data(safety_data)?;
@@ -383,9 +407,9 @@ impl SafetyRules {
             self.persistent_storage.set_safety_data(safety_data)?;
         }
 
-        Ok(Block::new_proposal_from_block_data(
-            block_data,
-            self.signer()?,
+        let signature = self.sign(&block_data)?;
+        Ok(Block::new_proposal_from_block_data_and_signature(
+            block_data, signature,
         ))
     }
 
@@ -412,7 +436,7 @@ impl SafetyRules {
             self.persistent_storage.set_safety_data(safety_data)?;
         }
 
-        let signature = timeout.sign(self.signer()?);
+        let signature = self.sign(timeout)?;
         Ok(signature)
     }
 }

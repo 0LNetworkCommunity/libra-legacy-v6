@@ -1,28 +1,29 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    function_target::FunctionTargetData,
+    function_target::FunctionData,
     stackless_bytecode::{
         AssignKind, AttrId,
         Bytecode::{self},
-        Constant, Label, Operation, SpecBlockId, TempIndex,
+        Constant, Label, Operation, PropKind,
     },
 };
 use itertools::Itertools;
-use move_core_types::value::MoveValue;
-use spec_lang::{
-    env::{FunctionEnv, Loc, ModuleEnv, StructId},
-    ty::{PrimitiveType, Type},
-};
-use std::{collections::BTreeMap, matches};
-use vm::{
+use move_binary_format::{
     access::ModuleAccess,
     file_format::{
         Bytecode as MoveBytecode, CodeOffset, CompiledModule, FieldHandleIndex, SignatureIndex,
     },
     views::{FunctionHandleView, ViewInternals},
 };
+use move_core_types::value::MoveValue;
+use move_model::{
+    ast::{ConditionKind, TempIndex},
+    model::{FunctionEnv, Loc, StructId},
+    ty::{PrimitiveType, Type},
+};
+use std::{collections::BTreeMap, matches};
 
 pub struct StacklessBytecodeGenerator<'a> {
     func_env: &'a FunctionEnv<'a>,
@@ -50,7 +51,7 @@ impl<'a> StacklessBytecodeGenerator<'a> {
         }
     }
 
-    pub fn generate_function(mut self) -> FunctionTargetData {
+    pub fn generate_function(mut self) -> FunctionData {
         let original_code = self.func_env.get_bytecode();
         let mut label_map = BTreeMap::new();
 
@@ -76,14 +77,8 @@ impl<'a> StacklessBytecodeGenerator<'a> {
         }
 
         // Generate bytecode.
-        let mut given_spec_blocks = BTreeMap::new();
         for (code_offset, bytecode) in original_code.iter().enumerate() {
-            self.generate_bytecode(
-                bytecode,
-                code_offset as CodeOffset,
-                &label_map,
-                &mut given_spec_blocks,
-            );
+            self.generate_bytecode(bytecode, code_offset as CodeOffset, &label_map);
         }
 
         // Eliminate fall-through for non-branching instructions
@@ -97,19 +92,26 @@ impl<'a> StacklessBytecodeGenerator<'a> {
             self.code.push(bytecode);
         }
 
-        FunctionTargetData::new(
+        FunctionData::new(
+            self.func_env,
             self.code,
             self.local_types,
             self.func_env.get_return_types(),
             self.location_table,
             self.func_env.get_acquires_global_resources(),
-            given_spec_blocks,
         )
     }
 
     /// Create a new attribute id and populate location table.
     fn new_loc_attr(&mut self, code_offset: CodeOffset) -> AttrId {
         let loc = self.func_env.get_bytecode_loc(code_offset);
+        let attr = AttrId::new(self.location_table.len());
+        self.location_table.insert(attr, loc);
+        attr
+    }
+
+    /// Create a new attribute id and populate location table from node_id.
+    fn new_loc_attr_from_loc(&mut self, loc: Loc) -> AttrId {
         let attr = AttrId::new(self.location_table.len());
         self.location_table.insert(attr, loc);
         attr
@@ -135,7 +137,6 @@ impl<'a> StacklessBytecodeGenerator<'a> {
         bytecode: &MoveBytecode,
         code_offset: CodeOffset,
         label_map: &BTreeMap<CodeOffset, Label>,
-        spec_blocks: &mut BTreeMap<SpecBlockId, CodeOffset>,
     ) {
         // Add label if defined at this code offset.
         if let Some(label) = label_map.get(&code_offset) {
@@ -143,13 +144,18 @@ impl<'a> StacklessBytecodeGenerator<'a> {
             self.code.push(Bytecode::Label(label_attr_id, *label));
         }
 
-        // Add spec block if defined at this code offset.
-        if self.func_env.get_spec().on_impl.get(&code_offset).is_some() {
-            let block_id = SpecBlockId::new(spec_blocks.len());
-            spec_blocks.insert(block_id, code_offset);
-            let spec_block_attr_id = self.new_loc_attr(code_offset);
-            self.code
-                .push(Bytecode::SpecBlock(spec_block_attr_id, block_id));
+        // Handle spec block if defined at this code offset.
+        if let Some(spec) = self.func_env.get_spec().on_impl.get(&code_offset) {
+            for cond in &spec.conditions {
+                let attr_id = self.new_loc_attr_from_loc(cond.loc.clone());
+                let kind = match cond.kind {
+                    ConditionKind::Assert => PropKind::Assert,
+                    ConditionKind::Assume => PropKind::Assume,
+                    _ => panic!("unsupported spec condition in code"),
+                };
+                self.code
+                    .push(Bytecode::Prop(attr_id, kind, cond.exp.clone()));
+            }
 
             // If the current instruction is just a Nop, skip it. It has been generated to support
             // spec blocks.
@@ -161,13 +167,13 @@ impl<'a> StacklessBytecodeGenerator<'a> {
         let attr_id = self.new_loc_attr(code_offset);
 
         let mk_call = |op: Operation, dsts: Vec<usize>, srcs: Vec<usize>| -> Bytecode {
-            Bytecode::Call(attr_id, dsts, op, srcs)
+            Bytecode::Call(attr_id, dsts, op, srcs, None)
         };
         let mk_unary = |op: Operation, dst: usize, src: usize| -> Bytecode {
-            Bytecode::Call(attr_id, vec![dst], op, vec![src])
+            Bytecode::Call(attr_id, vec![dst], op, vec![src], None)
         };
         let mk_binary = |op: Operation, dst: usize, src1: usize, src2: usize| -> Bytecode {
-            Bytecode::Call(attr_id, vec![dst], op, vec![src1, src2])
+            Bytecode::Call(attr_id, vec![dst], op, vec![src1, src2], None)
         };
 
         match bytecode {
@@ -465,7 +471,7 @@ impl<'a> StacklessBytecodeGenerator<'a> {
                     self.temp_count += 1;
                 }
                 arg_temp_indices.reverse();
-                let callee_env = self.func_env.module_env.get_called_function(*idx);
+                let callee_env = self.func_env.module_env.get_used_function(*idx);
                 self.code.push(mk_call(
                     Operation::Function(
                         callee_env.module_env.get_id(),
@@ -506,7 +512,7 @@ impl<'a> StacklessBytecodeGenerator<'a> {
                 let callee_env = self
                     .func_env
                     .module_env
-                    .get_called_function(func_instantiation.handle);
+                    .get_used_function(func_instantiation.handle);
                 self.code.push(mk_call(
                     Operation::Function(
                         callee_env.module_env.get_id(),
@@ -1046,7 +1052,7 @@ impl<'a> StacklessBytecodeGenerator<'a> {
             (Type::Primitive(PrimitiveType::U64), MoveValue::U64(b)) => Constant::U64(*b),
             (Type::Primitive(PrimitiveType::U128), MoveValue::U128(b)) => Constant::U128(*b),
             (Type::Primitive(PrimitiveType::Address), MoveValue::Address(a)) => {
-                Constant::Address(ModuleEnv::addr_to_big_uint(a))
+                Constant::Address(move_model::addr_to_big_uint(a))
             }
             _ => panic!("Unexpected (and possibly invalid) constant type: {:?}", ty),
         }

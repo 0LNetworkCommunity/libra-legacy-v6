@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -9,20 +9,27 @@ use crate::{
     },
     metadata,
     metadata::cache::MetadataCacheOpt,
+    metrics::backup::{
+        EPOCH_ENDING_EPOCH, HEARTBEAT_TS, STATE_SNAPSHOT_VERSION, TRANSACTION_VERSION,
+    },
     storage::BackupStorage,
-    utils::{backup_service_client::BackupServiceClient, GlobalBackupOpt},
+    utils::{
+        backup_service_client::BackupServiceClient, unix_timestamp_sec, ConcurrentDownloadsOpt,
+        GlobalBackupOpt,
+    },
 };
 use anyhow::{anyhow, ensure, Result};
+use diem_logger::prelude::*;
+use diem_types::transaction::Version;
+use diemdb::backup::backup_handler::DbState;
 use futures::{stream, Future, StreamExt};
-use libra_logger::prelude::*;
-use libra_types::transaction::Version;
-use libradb::backup::backup_handler::DbState;
 use std::{fmt::Debug, sync::Arc};
 use structopt::StructOpt;
 use tokio::{
     sync::watch,
     time::{interval, Duration},
 };
+use tokio_stream::wrappers::IntervalStream;
 
 #[derive(StructOpt)]
 pub struct BackupCoordinatorOpt {
@@ -39,6 +46,8 @@ pub struct BackupCoordinatorOpt {
     // slower than expected.
     #[structopt(long, default_value = "100000")]
     pub transaction_batch_size: usize,
+    #[structopt(flatten)]
+    pub concurernt_downloads: ConcurrentDownloadsOpt,
 }
 
 impl BackupCoordinatorOpt {
@@ -46,6 +55,13 @@ impl BackupCoordinatorOpt {
         ensure!(
             self.state_snapshot_interval > 0 && self.transaction_batch_size > 0,
             "Backup interval and batch size must be greater than 0."
+        );
+        ensure!(
+            self.state_snapshot_interval % self.transaction_batch_size == 0,
+            "State snapshot interval should be N x transaction_batch_size, N >= 1. \
+             Otherwise there can be edge case where the only snapshot is taken at a version  \
+             that's not yet in a transaction backup, resulting in replaying all transactions \
+             at restore time."
         );
         Ok(())
     }
@@ -58,6 +74,7 @@ pub struct BackupCoordinator {
     metadata_cache_opt: MetadataCacheOpt,
     state_snapshot_interval: usize,
     transaction_batch_size: usize,
+    concurrent_downloads: usize,
 }
 
 impl BackupCoordinator {
@@ -75,14 +92,18 @@ impl BackupCoordinator {
             metadata_cache_opt: opt.metadata_cache_opt,
             state_snapshot_interval: opt.state_snapshot_interval,
             transaction_batch_size: opt.transaction_batch_size,
+            concurrent_downloads: opt.concurernt_downloads.get(),
         }
     }
     pub async fn run(&self) -> Result<()> {
-        // Connect to both the local Libra node and the backup storage.
-        let backup_state =
-            metadata::cache::sync_and_load(&self.metadata_cache_opt, Arc::clone(&self.storage))
-                .await?
-                .get_storage_state();
+        // Connect to both the local Diem node and the backup storage.
+        let backup_state = metadata::cache::sync_and_load(
+            &self.metadata_cache_opt,
+            Arc::clone(&self.storage),
+            self.concurrent_downloads,
+        )
+        .await?
+        .get_storage_state();
 
         // On new DbState retrieved:
         // `watch_db_state` informs `backup_epoch_endings` via channel 1,
@@ -93,7 +114,7 @@ impl BackupCoordinator {
         let (tx2, rx2) = watch::channel::<Option<DbState>>(None);
 
         // Schedule work streams.
-        let watch_db_state = interval(Duration::from_secs(1))
+        let watch_db_state = IntervalStream::new(interval(Duration::from_secs(1)))
             .then(|_| self.try_refresh_db_state(&tx1))
             .boxed_local();
 
@@ -142,17 +163,18 @@ impl BackupCoordinator {
     async fn try_refresh_db_state(&self, db_state_broadcast: &watch::Sender<Option<DbState>>) {
         match self.client.get_db_state().await {
             Ok(s) => {
+                HEARTBEAT_TS.set(unix_timestamp_sec());
                 if s.is_none() {
                     warn!("DB not bootstrapped.");
                 } else {
                     db_state_broadcast
-                        .broadcast(s)
+                        .send(s)
                         .map_err(|e| anyhow!("Receivers should not be cancelled: {}", e))
                         .unwrap()
                 }
             }
             Err(e) => warn!(
-                "Failed pulling DbState from local Libra node: {}. Will keep trying.",
+                "Failed pulling DbState from local Diem node: {}. Will keep trying.",
                 e
             ),
         };
@@ -165,6 +187,9 @@ impl BackupCoordinator {
         downstream_db_state_broadcaster: &watch::Sender<Option<DbState>>,
     ) -> Result<Option<u64>> {
         loop {
+            if let Some(epoch) = last_epoch_ending_epoch_in_backup {
+                EPOCH_ENDING_EPOCH.set(epoch as i64);
+            }
             let (first, last) = get_batch_range(last_epoch_ending_epoch_in_backup, 1);
 
             if db_state.epoch <= last {
@@ -187,7 +212,7 @@ impl BackupCoordinator {
         }
 
         downstream_db_state_broadcaster
-            .broadcast(Some(db_state))
+            .send(Some(db_state))
             .map_err(|e| anyhow!("Receivers should not be cancelled: {}", e))
             .unwrap();
         Ok(last_epoch_ending_epoch_in_backup)
@@ -198,6 +223,9 @@ impl BackupCoordinator {
         last_snapshot_version_in_backup: Option<Version>,
         db_state: DbState,
     ) -> Result<Option<Version>> {
+        if let Some(version) = last_snapshot_version_in_backup {
+            STATE_SNAPSHOT_VERSION.set(version as i64);
+        }
         let next_snapshot_version = get_next_snapshot(
             last_snapshot_version_in_backup,
             db_state,
@@ -229,6 +257,9 @@ impl BackupCoordinator {
         db_state: DbState,
     ) -> Result<Option<u64>> {
         loop {
+            if let Some(version) = last_transaction_version_in_backup {
+                TRANSACTION_VERSION.set(version as i64);
+            }
             let (first, last) = get_batch_range(
                 last_transaction_version_in_backup,
                 self.transaction_batch_size,
@@ -269,11 +300,8 @@ impl BackupCoordinator {
         stream::unfold(
             (initial_state, db_state_rx.clone()),
             move |(s, mut rx)| async move {
-                let db_state = rx
-                    .recv()
-                    .await
-                    .ok_or_else(|| anyhow!("The broadcaster has been dropped."))
-                    .unwrap();
+                rx.changed().await.unwrap();
+                let db_state = *rx.borrow();
                 if let Some(db_state) = db_state {
                     let next_state = worker(self, s, db_state).await.unwrap_or_else(|e| {
                         warn!("backup failed: {}. Keep trying with state {:?}.", e, s);
@@ -332,7 +360,7 @@ fn get_next_snapshot(last_in_backup: Option<u64>, db_state: DbState, interval: u
 #[cfg(test)]
 mod tests {
     use crate::coordinators::backup::{get_batch_range, get_next_snapshot};
-    use libradb::backup::backup_handler::DbState;
+    use diemdb::backup::backup_handler::DbState;
 
     #[test]
     fn test_get_batch_range() {

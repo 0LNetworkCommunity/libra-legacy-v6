@@ -1,14 +1,14 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use std::path::Path;
 
 use codespan_reporting::term::termcolor::Buffer;
 
-use libra_temppath::TempPath;
 use move_prover::{cli::Options, run_move_prover};
+use move_prover_test_utils::baseline_test::verify_or_update_baseline;
 use std::path::PathBuf;
-use test_utils::baseline_test::verify_or_update_baseline;
+use tempfile::TempDir;
 
 use itertools::Itertools;
 #[allow(unused_imports)]
@@ -17,7 +17,8 @@ use std::{fs::File, io::Read};
 
 const FLAGS: &[&str] = &[
     "--verbose=warn",
-    "--dependency=../../stdlib/modules",
+    "--dependency=../../move-stdlib/modules",
+    "--dependency=../../diem-framework/modules",
     "--docgen",
 ];
 
@@ -71,7 +72,7 @@ fn test_runner(path: &Path) -> datatest_stable::Result<()> {
 }
 
 fn test_docgen(path: &Path, mut options: Options, suffix: &str) -> anyhow::Result<()> {
-    let mut temp_path = PathBuf::from(TempPath::new().path());
+    let mut temp_path = PathBuf::from(TempDir::new()?.path());
     options.docgen.output_directory = temp_path.to_string_lossy().to_string();
     let base_name = format!(
         "{}.md",

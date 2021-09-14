@@ -1,11 +1,11 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use libra_config::{
+use diem_config::{
     config::{NodeConfig, PersistableConfig, RemoteService, SafetyRulesService},
     utils,
 };
-use libra_types::validator_signer::ValidatorSigner;
+use diem_types::validator_signer::ValidatorSigner;
 use safety_rules::{test_utils, SafetyRulesManager};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
@@ -24,7 +24,7 @@ fn test_consensus_state() {
     let server_address = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), server_port).into();
     config.service = SafetyRulesService::Process(RemoteService { server_address });
 
-    let config_path = libra_temppath::TempPath::new();
+    let config_path = diem_temppath::TempPath::new();
     config_path.create_as_file().unwrap();
     config.save_config(config_path.path()).unwrap();
 
@@ -34,9 +34,17 @@ fn test_consensus_state() {
         .stdin(std::process::Stdio::inherit())
         .stdout(std::process::Stdio::inherit())
         .stderr(std::process::Stdio::inherit());
-    command.spawn().unwrap();
+    let mut child = command.spawn().unwrap();
 
     let safety_rules_manager = SafetyRulesManager::new(&config);
     let mut safety_rules = safety_rules_manager.client();
-    safety_rules.consensus_state().unwrap();
+    let consensus_state = safety_rules.consensus_state();
+
+    // Ensure the safety-rules subprocess is killed whether the test passes or fails.
+    // Not doing this would result in a zombie process.
+    child.kill().expect("could not kill safety-rules process");
+    child
+        .wait()
+        .expect("could not wait on safety-rules process");
+    consensus_state.unwrap();
 }

@@ -1,7 +1,7 @@
 use anyhow::Result;
-use cli::libra_client::LibraClient;
-use libra_json_rpc_client::views::EventView;
-use libra_types::{
+use cli::diem_client::DiemClient;
+use diem_json_rpc_client::views::EventView;
+use diem_types::{
     account_address::AccountAddress,
     account_state::AccountState,
     event::{EventHandle, EventKey},
@@ -10,10 +10,10 @@ use std::convert::TryFrom;
 
 const BATCH_SIZE: u64 = 500;
 
-pub struct EventsFetcher(LibraClient);
+pub struct EventsFetcher(DiemClient);
 
 impl EventsFetcher {
-    pub fn new(client: LibraClient) -> Result<Self> {
+    pub fn new(client: DiemClient) -> Result<Self> {
         Ok(Self(client))
     }
 

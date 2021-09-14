@@ -13,18 +13,19 @@
 //! block-time: 1
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::Stats;
 
     // Assumes an epoch changed at round 15
-    fun main(vm: &signer) {
+    fun main(vm: signer) {
+      let vm = &vm;
       //proposals
-      assert(Stats::node_current_props(vm, {{alice}}) == 1, 0);
-      assert(Stats::node_current_props(vm, {{bob}}) == 0, 0);
+      assert(Stats::node_current_props(vm, @{{alice}}) == 1, 0);
+      assert(Stats::node_current_props(vm, @{{bob}}) == 0, 0);
       //votes
-      assert(Stats::node_current_votes(vm, {{alice}}) == 0, 0);
-      assert(Stats::node_current_votes(vm, {{bob}}) == 0, 0);
+      assert(Stats::node_current_votes(vm, @{{alice}}) == 0, 0);
+      assert(Stats::node_current_votes(vm, @{{bob}}) == 0, 0);
 
     }
 }
@@ -37,22 +38,24 @@ script {
 
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::Vector;
     use 0x1::Stats;
     // This is the the epoch boundary.
-    fun main(vm: &signer) {
-      assert(Stats::node_current_props(vm, {{alice}}) == 2, 735700001);
-      assert(Stats::node_current_props(vm, {{bob}}) == 0, 735700002);
-      assert(Stats::node_current_votes(vm, {{alice}}) == 0, 735700003);
-      assert(Stats::node_current_votes(vm, {{bob}}) == 0, 735700004);
+    fun main(vm: signer) {
+      let vm = &vm;
+
+      assert(Stats::node_current_props(vm, @{{alice}}) == 2, 735700001);
+      assert(Stats::node_current_props(vm, @{{bob}}) == 0, 735700002);
+      assert(Stats::node_current_votes(vm, @{{alice}}) == 0, 735700003);
+      assert(Stats::node_current_votes(vm, @{{bob}}) == 0, 735700004);
 
       let voters = Vector::empty<address>();
-      Vector::push_back<address>(&mut voters, {{alice}});
-      Vector::push_back<address>(&mut voters, {{bob}});
-      Vector::push_back<address>(&mut voters, {{carol}});
-      Vector::push_back<address>(&mut voters, {{dave}});
+      Vector::push_back<address>(&mut voters, @{{alice}});
+      Vector::push_back<address>(&mut voters, @{{bob}});
+      Vector::push_back<address>(&mut voters, @{{carol}});
+      Vector::push_back<address>(&mut voters, @{{dave}});
 
         // Overwrite the statistics to mock that all have been validating.
         let i = 1;
@@ -62,10 +65,10 @@ script {
             i = i + 1;
         };
 
-      assert(Stats::node_above_thresh(vm, {{alice}}, 0, 15), 735700005);
-      assert(Stats::node_above_thresh(vm, {{bob}}, 0, 15), 735700006);
-      assert(Stats::node_above_thresh(vm, {{carol}}, 0, 15), 735700007);
-      assert(Stats::node_above_thresh(vm, {{dave}}, 0, 15), 735700008);
+      assert(Stats::node_above_thresh(vm, @{{alice}}, 0, 15), 735700005);
+      assert(Stats::node_above_thresh(vm, @{{bob}}, 0, 15), 735700006);
+      assert(Stats::node_above_thresh(vm, @{{carol}}, 0, 15), 735700007);
+      assert(Stats::node_above_thresh(vm, @{{dave}}, 0, 15), 735700008);
 
       assert(Stats::network_density(vm, 0, 15) == 4, 735700009);
     }
@@ -85,19 +88,20 @@ script {
 
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::Stats;
     // use 0x1::Vector;
-    fun main(vm: &signer) {
+    fun main(vm: signer) {
+      let vm = &vm;
       // Testing that reconfigure reset the counter for current epoch.
-      assert(!Stats::node_above_thresh(vm, {{alice}}, 16, 17), 735700010);
+      assert(!Stats::node_above_thresh(vm, @{{alice}}, 16, 17), 735700010);
 
       // should reset alice's count
-      assert(Stats::node_current_props(vm, {{alice}}) == 0, 735700011);
-      assert(Stats::node_current_props(vm, {{bob}}) == 0, 735700012);
-      assert(Stats::node_current_votes(vm, {{alice}}) == 0, 735700013);
-      assert(Stats::node_current_votes(vm, {{bob}}) == 0, 735700014);
+      assert(Stats::node_current_props(vm, @{{alice}}) == 0, 735700011);
+      assert(Stats::node_current_props(vm, @{{bob}}) == 0, 735700012);
+      assert(Stats::node_current_votes(vm, @{{alice}}) == 0, 735700013);
+      assert(Stats::node_current_votes(vm, @{{bob}}) == 0, 735700014);
     }
 }
 // check: EXECUTED

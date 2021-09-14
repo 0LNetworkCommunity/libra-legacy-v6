@@ -32,3 +32,8 @@ pub fn get_demo_autopay_json() -> (String, PathBuf) {
     buf
   )
 }
+
+pub fn get_test_genesis_blob() -> PathBuf {
+  let path= env!("CARGO_MANIFEST_DIR");
+  Path::new(path).join("genesis").join("swarm_genesis.blob")
+}

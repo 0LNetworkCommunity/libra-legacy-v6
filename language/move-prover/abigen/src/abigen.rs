@@ -1,18 +1,21 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #[allow(unused_imports)]
 use log::{debug, info, warn};
 
 use anyhow::bail;
+use bytecode_verifier::script_signature;
+use diem_types::transaction::{
+    ArgumentABI, ScriptABI, ScriptFunctionABI, TransactionScriptABI, TypeArgumentABI,
+};
 use heck::SnakeCase;
-use libra_types::transaction::{ArgumentABI, ScriptABI, TypeArgumentABI};
-use move_core_types::language_storage::TypeTag;
-use serde::{Deserialize, Serialize};
-use spec_lang::{
-    env::{GlobalEnv, ModuleEnv},
+use move_core_types::{identifier::IdentStr, language_storage::TypeTag};
+use move_model::{
+    model::{FunctionEnv, FunctionVisibility, GlobalEnv, ModuleEnv},
     ty,
 };
+use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, io::Read, path::PathBuf};
 
 /// Options passed into the ABI generator.
@@ -60,7 +63,7 @@ impl<'env> Abigen<'env> {
         std::mem::take(&mut self.output)
             .into_iter()
             .map(|(path, abi)| {
-                let content = lcs::to_bytes(&abi).expect("ABI serialization should not fail");
+                let content = bcs::to_bytes(&abi).expect("ABI serialization should not fail");
                 (path, content)
             })
             .collect()
@@ -69,39 +72,81 @@ impl<'env> Abigen<'env> {
     /// Generates ABIs for all script modules in the environment (excluding the dependency set).
     pub fn gen(&mut self) {
         for module in self.env.get_modules() {
-            if module.is_script_module() && !module.is_dependency() {
+            if module.is_target() {
                 let mut path = PathBuf::from(&self.options.output_directory);
-                path.push(
-                    PathBuf::from(module.get_source_path())
-                        .with_extension("abi")
-                        .file_name()
-                        .expect("file name"),
-                );
+                // We make a directory for all of the script function ABIs in a module. But, if
+                // it's a script, we don't create a directory.
+                if !module.is_script_module() {
+                    path.push(
+                        PathBuf::from(module.get_source_path())
+                            .file_stem()
+                            .expect("file extension"),
+                    )
+                }
 
-                match self.compute_abi(&module) {
-                    Ok(abi) => {
-                        self.output.insert(path.to_string_lossy().to_string(), abi);
-                    }
-                    Err(error) => panic!(
-                        "Error while processing script file {:?}: {}",
-                        module.get_source_path(),
-                        error
-                    ),
+                for abi in self
+                    .compute_abi(&module)
+                    .map_err(|err| {
+                        format!(
+                            "Error while processing file {:?}: {}",
+                            module.get_source_path(),
+                            err
+                        )
+                    })
+                    .unwrap()
+                {
+                    // If the module is a script module, then the generated ABI is a transaction
+                    // script ABI. If the module is not a script module, then all generated ABIs
+                    // are script function ABIs.
+                    let mut path = path.clone();
+                    path.push(
+                        PathBuf::from(abi.name())
+                            .with_extension("abi")
+                            .file_name()
+                            .expect("file name"),
+                    );
+                    self.output.insert(path.to_str().unwrap().to_string(), abi);
                 }
             }
         }
     }
 
-    /// Compute the ABI of a script module.
-    fn compute_abi(&self, module_env: &ModuleEnv<'env>) -> anyhow::Result<ScriptABI> {
-        let symbol_pool = module_env.symbol_pool();
-        let func = match module_env.get_functions().next() {
-            Some(f) => f,
-            None => bail!("A script module should define a function."),
+    /// Compute the ABIs of all script functions in a module.
+    fn compute_abi(&self, module_env: &ModuleEnv<'env>) -> anyhow::Result<Vec<ScriptABI>> {
+        // Get all the script functions in this module
+        let script_iter: Vec<_> = if module_env.is_script_module() {
+            module_env.get_functions().collect()
+        } else {
+            module_env
+                .get_functions()
+                .filter(|func| {
+                    let module = module_env.get_verified_module();
+                    let func_name = module_env.symbol_pool().string(func.get_name());
+                    let func_ident = IdentStr::new(&func_name).unwrap();
+                    // only pick up script functions that also have a script-callable signature.
+                    func.visibility() == FunctionVisibility::Script
+                        && script_signature::verify_module_script_function(module, func_ident)
+                            .is_ok()
+                })
+                .collect()
         };
+
+        let mut abis = Vec::new();
+        for func in script_iter.iter() {
+            abis.push(self.generate_abi_for_function(func, module_env)?);
+        }
+
+        Ok(abis)
+    }
+
+    fn generate_abi_for_function(
+        &self,
+        func: &FunctionEnv<'env>,
+        module_env: &ModuleEnv<'env>,
+    ) -> anyhow::Result<ScriptABI> {
+        let symbol_pool = module_env.symbol_pool();
         let name = symbol_pool.string(func.get_name()).to_string();
         let doc = func.get_doc().to_string();
-        let code = self.load_compiled_bytes(&module_env)?.to_vec();
         let ty_args = func
             .get_named_type_parameters()
             .iter()
@@ -112,18 +157,32 @@ impl<'env> Abigen<'env> {
         let args = func
             .get_parameters()
             .iter()
-            .filter_map(
-                |param| match self.get_type_tag_skipping_references(&param.1) {
-                    Ok(Some(tag)) => Some(Ok(ArgumentABI::new(
-                        symbol_pool.string(param.0).to_string(),
-                        tag,
-                    ))),
-                    Ok(None) => None,
-                    Err(error) => Some(Err(error)),
-                },
-            )
+            .filter(|param| !matches!(&param.1, ty::Type::Primitive(ty::PrimitiveType::Signer)))
+            .map(|param| {
+                let tag = self.get_type_tag(&param.1)?;
+                Ok(ArgumentABI::new(
+                    symbol_pool.string(param.0).to_string(),
+                    tag,
+                ))
+            })
             .collect::<anyhow::Result<_>>()?;
-        Ok(ScriptABI::new(name, doc, code, ty_args, args))
+
+        // This is a transaction script, so include the code, but no module ID
+        if module_env.is_script_module() {
+            let code = self.load_compiled_bytes(&module_env)?.to_vec();
+            Ok(ScriptABI::TransactionScript(TransactionScriptABI::new(
+                name, doc, code, ty_args, args,
+            )))
+        } else {
+            // This is a script function, so no code. But we need to include the module ID
+            Ok(ScriptABI::ScriptFunction(ScriptFunctionABI::new(
+                name,
+                module_env.get_verified_module().self_id(),
+                doc,
+                ty_args,
+                args,
+            )))
+        }
     }
 
     fn load_compiled_bytes(&self, module_env: &ModuleEnv<'env>) -> anyhow::Result<Vec<u8>> {
@@ -143,7 +202,7 @@ impl<'env> Abigen<'env> {
         Ok(bytes)
     }
 
-    fn get_type_tag_skipping_references(&self, ty0: &ty::Type) -> anyhow::Result<Option<TypeTag>> {
+    fn get_type_tag(&self, ty0: &ty::Type) -> anyhow::Result<TypeTag> {
         use ty::Type::*;
         let tag = match ty0 {
             Primitive(prim) => {
@@ -155,12 +214,10 @@ impl<'env> Abigen<'env> {
                     U128 => TypeTag::U128,
                     Address => TypeTag::Address,
                     Signer => TypeTag::Signer,
-                    Num | Range | TypeValue => bail!("Type {:?} is not allowed in scripts.", ty0),
+                    Num | Range | TypeValue | EventStore => {
+                        bail!("Type {:?} is not allowed in scripts.", ty0)
+                    }
                 }
-            }
-            Reference(_, _) => {
-                // Skip references (most likely a `&signer` type)
-                return Ok(None);
             }
             Vector(ty) => {
                 let tag = self.get_type_tag(ty)?;
@@ -171,20 +228,12 @@ impl<'env> Abigen<'env> {
             | TypeParameter(_)
             | Fun(_, _)
             | TypeDomain(_)
+            | ResourceDomain(..)
             | TypeLocal(_)
             | Error
-            | Var(_) => bail!("Type {:?} is not allowed in scripts.", ty0),
+            | Var(_)
+            | Reference(_, _) => bail!("Type {:?} is not allowed in scripts.", ty0),
         };
-        Ok(Some(tag))
-    }
-
-    fn get_type_tag(&self, ty: &ty::Type) -> anyhow::Result<TypeTag> {
-        if let Some(tag) = self.get_type_tag_skipping_references(ty)? {
-            return Ok(tag);
-        }
-        bail!(
-            "References such as {:?} are only allowed in the list of parameters.",
-            ty
-        );
+        Ok(tag)
     }
 }

@@ -1,8 +1,8 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! An implementation of HKDF, the HMAC-based Extract-and-Expand Key Derivation Function for the
-//! Libra project based on [RFC 5869](https://tools.ietf.org/html/rfc5869).
+//! Diem project based on [RFC 5869](https://tools.ietf.org/html/rfc5869).
 //!
 //! The key derivation function (KDF) is intended to support a wide range of applications and
 //! requirements, and is conservative in its use of cryptographic hash functions. In particular,
@@ -21,7 +21,7 @@
 //!
 //! HKDF is intended for use in a wide variety of KDF applications (see [Key derivation function](https://en.wikipedia.org/wiki/Key_derivation_function)), including:
 //! a) derivation of keys from an origin high-entropy master seed. This is the recommended approach
-//! for generating keys in Libra, especially when a True Random Generator is not available.
+//! for generating keys in Diem, especially when a True Random Generator is not available.
 //! b) derivation of session keys from a shared Diffie-Hellman value in a key-agreement protocol.
 //! c) combining entropy from multiple sources of randomness, such as entropy collected
 //! from system events, user's keystrokes, /dev/urandom etc. The combined seed can then be used to
@@ -58,7 +58,7 @@
 //! Run HKDF extract-then-expand so as to return 64 bytes, using 'salt', 'seed' and 'info' as
 //! inputs.
 //! ```
-//! use libra_crypto::hkdf::Hkdf;
+//! use diem_crypto::hkdf::Hkdf;
 //! use sha2::Sha256;
 //!
 //! // some bytes required for this example.
@@ -85,8 +85,14 @@ use generic_array::typenum::{IsGreaterOrEqual, True, U32};
 use std::marker::PhantomData;
 use thiserror::Error;
 
-/// Hash function are not supported if their output is less than 32 bits.
+/// Hash function is not supported if its output is less than 32 bits.
 type DMinimumSize = U32;
+
+/// Seed (ikm = initial key material) is not accepted if its size is less than 16 bytes. This is a
+/// precautionary measure to prevent HKDF misuse. 128 bits is the minimum accepted seed entropy
+/// length in the majority of today's applications to avoid brute forcing.
+/// Note that for Ed25519 keys, random seeds of at least 32 bytes are recommended.
+const MINIMUM_SEED_LENGTH: usize = 16;
 
 /// Structure representing the HKDF, capable of HKDF-Extract and HKDF-Expand operations, as defined
 /// in RFC 5869.
@@ -110,8 +116,15 @@ where
 {
     /// The RFC5869 HKDF-Extract operation.
     pub fn extract(salt: Option<&[u8]>, ikm: &[u8]) -> Result<Vec<u8>, HkdfError> {
+        if ikm.len() < MINIMUM_SEED_LENGTH {
+            return Err(HkdfError::InvalidSeedLengthError);
+        }
+        Ok(Hkdf::<D>::extract_no_ikm_check(salt, ikm))
+    }
+
+    fn extract_no_ikm_check(salt: Option<&[u8]>, ikm: &[u8]) -> Vec<u8> {
         let (arr, _hkdf) = hkdf::Hkdf::<D>::extract(salt, ikm);
-        Ok(arr.to_vec())
+        arr.to_vec()
     }
 
     /// The RFC5869 HKDF-Expand operation.
@@ -142,6 +155,22 @@ where
         let prk = Hkdf::<D>::extract(salt, ikm)?;
         Hkdf::<D>::expand(&prk, info, length)
     }
+
+    /// CAUTION: This is not recommended because it does not take an ikm (seed) as an input and
+    /// thus, it is not fully compliant with the HKDF RFC (which always expects a non-zero ikm).
+    /// Please use `extract_then_expand` instead, unless you know what you are doing.
+    ///
+    /// This api is currently required by the Noise protocol [HKDF specs](https://noiseprotocol.org/noise.html#hash-functions).
+    ///
+    /// HKDF Extract then Expand operation as a single step, but without an ikm input.
+    pub fn extract_then_expand_no_ikm(
+        salt: Option<&[u8]>,
+        info: Option<&[u8]>,
+        length: usize,
+    ) -> Result<Vec<u8>, HkdfError> {
+        let prk = Hkdf::<D>::extract_no_ikm_check(salt, &[]);
+        Hkdf::<D>::expand(&prk, info, length)
+    }
 }
 
 /// An error type for HKDF key derivation issues.
@@ -165,4 +194,7 @@ pub enum HkdfError {
     /// HMAC key related error; unlikely to happen because every key size is accepted in HMAC.
     #[error("HMAC key error")]
     MACKeyError,
+    /// HKDF extract input seed should not be less than the minimum accepted.
+    #[error("HKDF extract error - input seed is too small")]
+    InvalidSeedLengthError,
 }

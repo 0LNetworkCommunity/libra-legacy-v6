@@ -1,14 +1,14 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::{format_err, Result};
-use libra_crypto::{hash::CryptoHash, traits::SigningKey};
-use libra_json_rpc_types::response::JsonRpcResponse;
-use libra_types::{
+use diem_crypto::{hash::CryptoHash, traits::SigningKey};
+use diem_json_rpc_types::response::JsonRpcResponse;
+use diem_types::{
     account_address::AccountAddress,
     account_config::{
-        coin1_tmp_tag, libra_root_address, testnet_dd_account_address,
-        treasury_compliance_account_address, COIN1_NAME,
+        diem_root_address, testnet_dd_account_address, treasury_compliance_account_address,
+        xus_tag, XUS_NAME,
     },
     chain_id::ChainId,
     transaction::SignedTransaction,
@@ -27,7 +27,7 @@ pub struct Env {
 }
 
 impl Env {
-    pub fn gen(root_private_key: libra_crypto::ed25519::Ed25519PrivateKey, url: String) -> Self {
+    pub fn gen(root_private_key: diem_crypto::ed25519::Ed25519PrivateKey, url: String) -> Self {
         Self {
             url,
             tc: Account::new_with_address(
@@ -35,7 +35,7 @@ impl Env {
                 root_private_key.clone(),
             ),
             dd: Account::new_with_address(testnet_dd_account_address(), root_private_key.clone()),
-            root: Account::new_with_address(libra_root_address(), root_private_key),
+            root: Account::new_with_address(diem_root_address(), root_private_key),
             vasps: vec![],
             client: reqwest::blocking::Client::new(),
             allow_execution_failures: false,
@@ -67,15 +67,14 @@ impl Env {
 
     pub fn create_parent_vasp(&mut self) {
         let vasp = Account::gen();
-        let script =
-            transaction_builder_generated::stdlib::encode_create_parent_vasp_account_script(
-                coin1_tmp_tag(),
-                0, // sliding nonce
-                vasp.address,
-                vasp.auth_key().prefix().to_vec(),
-                format!("Novi {}", self.vasps.len()).as_bytes().to_owned(),
-                false, /* add all currencies */
-            );
+        let script = diem_transaction_builder::stdlib::encode_create_parent_vasp_account_script(
+            xus_tag(),
+            0, // sliding nonce
+            vasp.address,
+            vasp.auth_key().prefix().to_vec(),
+            format!("Novi {}", self.vasps.len()).as_bytes().to_owned(),
+            false, /* add all currencies */
+        );
         let txn = self.create_txn(&self.tc, script);
         self.submit_and_wait(txn);
         self.vasps.push(vasp);
@@ -83,8 +82,8 @@ impl Env {
 
     pub fn create_child_vasp(&mut self, parent_vasp_index: usize, amount: u64) {
         let child = Account::gen();
-        let script = transaction_builder_generated::stdlib::encode_create_child_vasp_account_script(
-            coin1_tmp_tag(),
+        let script = diem_transaction_builder::stdlib::encode_create_child_vasp_account_script(
+            xus_tag(),
             child.address,
             child.auth_key().prefix().to_vec(),
             false, /* add all currencies */
@@ -96,14 +95,13 @@ impl Env {
     }
 
     pub fn transfer_coins_to_vasp(&mut self, index: usize, amount: u64) {
-        let script =
-            transaction_builder_generated::stdlib::encode_peer_to_peer_with_metadata_script(
-                coin1_tmp_tag(),
-                self.vasps[index].address,
-                amount,
-                vec![],
-                vec![],
-            );
+        let script = diem_transaction_builder::stdlib::encode_peer_to_peer_with_metadata_script(
+            xus_tag(),
+            self.vasps[index].address,
+            amount,
+            vec![],
+            vec![],
+        );
         let txn = self.create_txn(&self.dd, script);
         self.submit_and_wait(txn);
     }
@@ -127,15 +125,14 @@ impl Env {
     ) -> SignedTransaction {
         let (rid, rcid) = receiver;
         let receiver_address = self.vasps[rid].children[rcid].address;
-        let script =
-            transaction_builder_generated::stdlib::encode_peer_to_peer_with_metadata_script(
-                coin1_tmp_tag(),
-                receiver_address,
-                amount,
-                // todo: add metadata
-                vec![],
-                vec![],
-            );
+        let script = diem_transaction_builder::stdlib::encode_peer_to_peer_with_metadata_script(
+            xus_tag(),
+            receiver_address,
+            amount,
+            // todo: add metadata
+            vec![],
+            vec![],
+        );
         self.create_txn(&self.vasps[sender.0].children[sender.1], script)
     }
 
@@ -152,30 +149,65 @@ impl Env {
     pub fn create_txn(
         &self,
         account: &Account,
-        script: libra_types::transaction::Script,
+        script: diem_types::transaction::Script,
     ) -> SignedTransaction {
         self.create_txn_by_payload(
             account,
-            libra_types::transaction::TransactionPayload::Script(script),
+            diem_types::transaction::TransactionPayload::Script(script),
         )
+    }
+
+    pub fn create_multi_agent_txn(
+        &self,
+        sender: &Account,
+        secondary_signers: Vec<&Account>,
+        payload: diem_types::transaction::TransactionPayload,
+    ) -> SignedTransaction {
+        let seq = self
+            .get_account_sequence(sender.address.to_string())
+            .expect("account should exist onchain for create transaction");
+        let raw_txn = diem_types::transaction::helpers::create_unsigned_txn(
+            payload,
+            sender.address,
+            seq,
+            1_000_000,
+            0,
+            XUS_NAME.to_owned(),
+            30,
+            ChainId::test(),
+        );
+        raw_txn
+            .sign_multi_agent(
+                &sender.private_key,
+                secondary_signers
+                    .iter()
+                    .map(|signer| signer.address)
+                    .collect(),
+                secondary_signers
+                    .iter()
+                    .map(|signer| &signer.private_key)
+                    .collect(),
+            )
+            .unwrap()
+            .into_inner()
     }
 
     pub fn create_txn_by_payload(
         &self,
         account: &Account,
-        payload: libra_types::transaction::TransactionPayload,
+        payload: diem_types::transaction::TransactionPayload,
     ) -> SignedTransaction {
         let seq = self
             .get_account_sequence(account.address.to_string())
             .expect("account should exist onchain for create transaction");
-        libra_types::transaction::helpers::create_user_txn(
+        diem_types::transaction::helpers::create_user_txn(
             account,
             payload,
             account.address,
             seq,
             1_000_000,
             0,
-            COIN1_NAME.to_owned(),
+            XUS_NAME.to_owned(),
             30,
             ChainId::test(),
         )
@@ -195,7 +227,7 @@ impl Env {
     }
 
     pub fn submit(&self, txn: &SignedTransaction) -> JsonRpcResponse {
-        let txn_hex = hex::encode(lcs::to_bytes(txn).expect("lcs txn failed"));
+        let txn_hex = hex::encode(bcs::to_bytes(txn).expect("bcs txn failed"));
         self.send("submit", json!([txn_hex]))
     }
 
@@ -212,7 +244,7 @@ impl Env {
     }
 
     pub fn wait_for_txn(&self, txn: &SignedTransaction) -> Value {
-        let txn_hash = libra_types::transaction::Transaction::UserTransaction(txn.clone())
+        let txn_hash = diem_types::transaction::Transaction::UserTransaction(txn.clone())
             .hash()
             .to_hex();
         for _i in 0..60 {
@@ -226,7 +258,7 @@ impl Env {
                     return result;
                 }
             }
-            ::std::thread::sleep(::std::time::Duration::from_millis(100));
+            ::std::thread::sleep(::std::time::Duration::from_millis(500));
         }
         panic!("transaction not executed?");
     }
@@ -240,12 +272,46 @@ impl Env {
             .send()
             .expect("request success");
         assert_eq!(resp.status(), 200);
-
+        let headers = resp.headers().clone();
         let json: serde_json::Value = resp.json().unwrap();
         if !self.allow_execution_failures {
             assert_eq!(json.get("error"), None);
         }
-        serde_json::from_value(json).expect("should be valid JsonRpcResponse")
+        let rpc_resp: JsonRpcResponse =
+            serde_json::from_value(json).expect("should be valid JsonRpcResponse");
+        assert_eq!(
+            headers.get("X-Diem-Chain-Id").unwrap().to_str().unwrap(),
+            rpc_resp.diem_chain_id.to_string()
+        );
+        assert_eq!(
+            headers
+                .get("X-Diem-Ledger-Version")
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            rpc_resp.diem_ledger_version.to_string()
+        );
+        assert_eq!(
+            headers
+                .get("X-Diem-Ledger-TimestampUsec")
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            rpc_resp.diem_ledger_timestampusec.to_string()
+        );
+        rpc_resp
+    }
+
+    pub fn send_request(&self, request: Value) -> Value {
+        let resp = self
+            .client
+            .post(self.url.as_str())
+            .json(&request)
+            .send()
+            .expect("request success");
+        assert_eq!(resp.status(), 200);
+
+        resp.json().unwrap()
     }
 
     pub fn get_account(&self, vasp_id: usize, child_id: usize) -> &Account {
@@ -257,28 +323,28 @@ impl std::panic::UnwindSafe for Env {}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Account {
-    pub private_key: libra_crypto::ed25519::Ed25519PrivateKey,
-    pub public_key: libra_crypto::ed25519::Ed25519PublicKey,
-    pub address: libra_types::account_address::AccountAddress,
+    pub private_key: diem_crypto::ed25519::Ed25519PrivateKey,
+    pub public_key: diem_crypto::ed25519::Ed25519PublicKey,
+    pub address: diem_types::account_address::AccountAddress,
     pub seq: u64,
     pub children: Vec<Account>,
 }
 
 impl Account {
-    pub fn new(private_key: libra_crypto::ed25519::Ed25519PrivateKey) -> Self {
-        let public_key: libra_crypto::ed25519::Ed25519PublicKey = (&private_key).into();
+    pub fn new(private_key: diem_crypto::ed25519::Ed25519PrivateKey) -> Self {
+        let public_key: diem_crypto::ed25519::Ed25519PublicKey = (&private_key).into();
         Account {
             private_key,
             public_key: public_key.clone(),
-            address: libra_types::account_address::from_public_key(&public_key),
+            address: diem_types::account_address::from_public_key(&public_key),
             seq: 0,
             children: vec![],
         }
     }
 
     pub fn new_with_address(
-        address: libra_types::account_address::AccountAddress,
-        private_key: libra_crypto::ed25519::Ed25519PrivateKey,
+        address: diem_types::account_address::AccountAddress,
+        private_key: diem_crypto::ed25519::Ed25519PrivateKey,
     ) -> Self {
         let public_key = (&private_key).into();
         Account {
@@ -298,20 +364,20 @@ impl Account {
         hex::encode(self.address)
     }
 
-    pub fn auth_key(&self) -> libra_types::transaction::authenticator::AuthenticationKey {
-        libra_types::transaction::authenticator::AuthenticationKey::ed25519(&self.public_key)
+    pub fn auth_key(&self) -> diem_types::transaction::authenticator::AuthenticationKey {
+        diem_types::transaction::authenticator::AuthenticationKey::ed25519(&self.public_key)
     }
 }
 
-impl libra_types::transaction::helpers::TransactionSigner for Account {
+impl diem_types::transaction::helpers::TransactionSigner for Account {
     fn sign_txn(
         &self,
-        raw_txn: libra_types::transaction::RawTransaction,
+        raw_txn: diem_types::transaction::RawTransaction,
     ) -> Result<SignedTransaction> {
         let signature = self.private_key.sign(&raw_txn);
         Ok(SignedTransaction::new(
             raw_txn,
-            libra_crypto::ed25519::Ed25519PublicKey::from(&self.private_key),
+            diem_crypto::ed25519::Ed25519PublicKey::from(&self.private_key),
             signature,
         ))
     }

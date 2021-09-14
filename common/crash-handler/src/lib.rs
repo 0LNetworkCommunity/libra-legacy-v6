@@ -1,14 +1,14 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 
 use backtrace::Backtrace;
-use libra_logger::prelude::*;
+use diem_logger::prelude::*;
 use serde::Serialize;
 use std::{
     panic::{self, PanicInfo},
-    process, thread, time,
+    process,
 };
 
 #[derive(Debug, Serialize)]
@@ -37,8 +37,8 @@ fn handle_panic(panic_info: &PanicInfo<'_>) {
     let info = CrashInfo { details, backtrace };
     error!("{}", crash_info = toml::to_string_pretty(&info).unwrap());
 
-    // Provide some time to save the log to disk
-    thread::sleep(time::Duration::from_millis(100));
+    // Wait till the logs have been flushed
+    diem_logger::flush();
 
     // Kill the process
     process::exit(12);

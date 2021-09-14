@@ -1,11 +1,11 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use move_cli::test;
 
 use std::path::PathBuf;
 
-pub const CLI_BINARY_PATH: [&str; 6] = ["..", "..", "..", "target", "debug", "move-cli"];
+pub const CLI_BINARY_PATH: [&str; 6] = ["..", "..", "..", "target", "debug", "move"];
 pub const CLI_METATEST_PATH: [&str; 3] = ["tests", "metatests", "args.txt"];
 
 fn get_cli_binary_path() -> String {
@@ -20,5 +20,11 @@ fn get_metatest_path() -> String {
 
 #[test]
 fn run_metatest() {
-    assert!(test::run_all(&get_metatest_path(), &get_cli_binary_path()).is_ok());
+    let path_cli_binary = get_cli_binary_path();
+    let path_metatest = get_metatest_path();
+
+    // with coverage
+    assert!(test::run_all(&path_metatest, &path_cli_binary, true).is_ok());
+    // without coverage
+    assert!(test::run_all(&path_metatest, &path_cli_binary, false).is_ok());
 }

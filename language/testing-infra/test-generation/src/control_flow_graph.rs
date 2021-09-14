@@ -1,11 +1,11 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::abstract_state::{AbstractValue, BorrowState};
-use libra_logger::debug;
+use diem_logger::debug;
+use move_binary_format::file_format::{AbilitySet, Bytecode, Signature, SignatureToken};
 use rand::{rngs::StdRng, Rng};
 use std::collections::{HashMap, VecDeque};
-use vm::file_format::{Bytecode, Kind, Signature, SignatureToken};
 
 /// This type holds basic block identifiers
 type BlockIDSize = u16;
@@ -263,7 +263,7 @@ impl CFG {
                         (
                             i,
                             (
-                                AbstractValue::new_value(token.clone(), Kind::Copyable),
+                                AbstractValue::new_value(token.clone(), AbilitySet::PRIMITIVES),
                                 borrow_state,
                             ),
                         )

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -12,9 +12,9 @@ use crate::{
 };
 use anyhow::{anyhow, Result};
 use bytes::Bytes;
-use libra_crypto::HashValue;
-use libra_logger::prelude::*;
-use libra_types::{
+use diem_crypto::HashValue;
+use diem_logger::prelude::*;
+use diem_types::{
     account_state_blob::AccountStateBlob, ledger_info::LedgerInfoWithSignatures,
     proof::TransactionInfoWithProof, transaction::Version,
 };
@@ -155,7 +155,7 @@ impl StateSnapshotBackupController {
     }
 
     fn parse_key(record: &Bytes) -> Result<HashValue> {
-        let (key, _): (HashValue, AccountStateBlob) = lcs::from_bytes(record)?;
+        let (key, _): (HashValue, AccountStateBlob) = bcs::from_bytes(record)?;
         Ok(key)
     }
 
@@ -205,7 +205,7 @@ impl StateSnapshotBackupController {
     ) -> Result<FileHandle> {
         let proof_bytes = self.client.get_state_root_proof(self.version).await?;
         let (txn_info, _): (TransactionInfoWithProof, LedgerInfoWithSignatures) =
-            lcs::from_bytes(&proof_bytes)?;
+            bcs::from_bytes(&proof_bytes)?;
 
         let (proof_handle, mut proof_file) = self
             .storage

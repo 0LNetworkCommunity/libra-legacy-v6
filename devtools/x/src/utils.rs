@@ -1,9 +1,14 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{cargo::Cargo, context::XContext, Result};
-use serde::Deserialize;
-use std::path::{Path, PathBuf};
+use crate::{config::CargoConfig, installer::install_if_needed, Result};
+use anyhow::anyhow;
+use log::{info, warn};
+use std::{
+    env::var_os,
+    path::Path,
+    process::{Command, Stdio},
+};
 
 /// The number of directories between the project root and the root of this crate.
 pub const X_DEPTH: usize = 2;
@@ -16,19 +21,131 @@ pub fn project_root() -> &'static Path {
         .unwrap()
 }
 
-pub fn locate_project(xctx: &XContext) -> Result<PathBuf> {
-    #[derive(Deserialize)]
-    struct LocateProject {
-        root: PathBuf,
-    };
-
-    let output = Cargo::new(xctx.config().cargo_config(), "locate-project").run_with_output()?;
-    Ok(serde_json::from_slice::<LocateProject>(&output)?.root)
+/// If the project is configured for sccache, and the env variable SKIP_SCCACHE is unset then returns true.
+/// If the warn_if_not_correct_location parameter is set to true, warnings will be logged if the project is configured for sccache
+/// but the CARGO_HOME or project root are not in the right locations.
+pub fn sccache_should_run(cargo_config: &CargoConfig, warn_if_not_correct_location: bool) -> bool {
+    if var_os("SKIP_SCCACHE").is_none() {
+        if let Some(sccache_config) = &cargo_config.sccache {
+            // Are we work on items in the right location:
+            // See: https://github.com/mozilla/sccache#known-caveats
+            let correct_location = var_os("CARGO_HOME")
+                .unwrap_or_default()
+                .to_str()
+                .unwrap_or_default()
+                == sccache_config.required_cargo_home
+                && sccache_config.required_git_home == project_root().to_str().unwrap_or_default();
+            if !correct_location && warn_if_not_correct_location {
+                warn!("You will not benefit from sccache in this build!!!");
+                warn!(
+                    "To get the best experience, please move your diem source code to {} and your set your CARGO_HOME to be {}, simply export it in your .profile or .bash_rc",
+                    &sccache_config.required_git_home, &sccache_config.required_cargo_home
+                );
+                warn!(
+                    "Current diem root is '{}',  and current CARGO_HOME is '{}'",
+                    project_root().to_str().unwrap_or_default(),
+                    var_os("CARGO_HOME").unwrap_or_default().to_string_lossy()
+                );
+            }
+            correct_location
+        } else {
+            false
+        }
+    } else {
+        false
+    }
 }
 
-pub fn project_is_root(xctx: &XContext) -> Result<bool> {
-    let mut project = locate_project(xctx)?;
-    project.pop();
+/// Logs the output of "sccache --show-stats"
+pub fn log_sccache_stats() {
+    info!("Sccache statistics:");
+    let mut sccache = Command::new("sccache");
+    sccache.arg("--show-stats");
+    sccache.stdout(Stdio::inherit()).stderr(Stdio::inherit());
+    if let Err(error) = sccache.output() {
+        warn!("Could not log sccache statistics: {}", error);
+    }
+}
 
-    Ok(project == project_root())
+pub fn stop_sccache_server() {
+    let mut sccache = Command::new("sccache");
+    sccache.arg("--stop-server");
+    sccache.stdout(Stdio::piped()).stderr(Stdio::piped());
+    match sccache.output() {
+        Ok(output) => {
+            if output.status.success() {
+                info!("Stopped already running sccache.");
+            } else {
+                info!("Failed to stopped already running sccache.");
+                warn!("status: {}", output.status);
+                warn!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+                warn!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+            }
+        }
+        Err(error) => {
+            warn!("Failed to stop running sccache: {}", error)
+        }
+    }
+}
+
+pub fn apply_sccache_if_possible(
+    cargo_config: &CargoConfig,
+) -> Result<Vec<(&str, Option<String>)>> {
+    let mut envs = vec![];
+
+    if sccache_should_run(cargo_config, true) {
+        if let Some(sccache_config) = &cargo_config.sccache {
+            if !install_if_needed(cargo_config, "sccache", &sccache_config.installer) {
+                return Err(anyhow!("Failed to install sccache, bailing"));
+            }
+            stop_sccache_server();
+            envs.push(("RUSTC_WRAPPER", Some("sccache".to_owned())));
+            envs.push(("CARGO_INCREMENTAL", Some("false".to_owned())));
+            envs.push(("SCCACHE_BUCKET", Some(sccache_config.bucket.to_owned())));
+            if let Some(ssl) = &sccache_config.ssl {
+                envs.push((
+                    "SCCACHE_S3_USE_SSL",
+                    if *ssl {
+                        Some("true".to_owned())
+                    } else {
+                        Some("false".to_owned())
+                    },
+                ));
+            }
+
+            if let Some(url) = &sccache_config.endpoint {
+                envs.push(("SCCACHE_ENDPOINT", Some(url.to_owned())));
+            }
+
+            if let Some(extra_envs) = &sccache_config.envs {
+                for (key, value) in extra_envs {
+                    envs.push((key, Some(value.to_owned())));
+                }
+            }
+
+            if let Some(region) = &sccache_config.region {
+                envs.push(("SCCACHE_REGION", Some(region.to_owned())));
+            }
+
+            if let Some(prefix) = &sccache_config.prefix {
+                envs.push(("SCCACHE_S3_KEY_PREFIX", Some(prefix.to_owned())));
+            }
+            let access_key_id =
+                var_os("SCCACHE_AWS_ACCESS_KEY_ID").map(|val| val.to_string_lossy().to_string());
+            let access_key_secret = var_os("SCCACHE_AWS_SECRET_ACCESS_KEY")
+                .map(|val| val.to_string_lossy().to_string());
+            // if either the access or secret key is not set, attempt to perform a public read.
+            // do not set this flag if attempting to write, as it will prevent the use of the aws creds.
+            if (access_key_id.is_none() || access_key_secret.is_none())
+                && sccache_config.public.unwrap_or(true)
+            {
+                envs.push(("SCCACHE_S3_PUBLIC", Some("true".to_owned())));
+            }
+
+            //Note: that this is also used to _unset_ AWS_ACCESS_KEY_ID & AWS_SECRET_ACCESS_KEY
+            envs.push(("AWS_ACCESS_KEY_ID", access_key_id));
+            envs.push(("AWS_SECRET_ACCESS_KEY", access_key_secret));
+        }
+    }
+    Ok(envs)
 }

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -10,27 +10,23 @@ use crate::{
     },
     instance,
     instance::Instance,
-    tx_emitter::{execute_and_wait_transactions, AccountData, EmitJobRequest},
+    tx_emitter::{execute_and_wait_transactions, EmitJobRequest},
 };
 use anyhow::format_err;
 use async_trait::async_trait;
-use libra_logger::prelude::*;
-use libra_types::{
-    account_config::{coin1_tmp_tag, COIN1_NAME},
-    chain_id::ChainId,
-    transaction::{helpers::create_user_txn, TransactionPayload},
-};
+use diem_logger::prelude::*;
+use diem_sdk::{transaction_builder::TransactionFactory, types::LocalAccount};
+use diem_transaction_builder::stdlib::encode_update_diem_version_script;
+use diem_types::{chain_id::ChainId, transaction::TransactionPayload};
+use language_e2e_tests::common_transactions::multi_agent_p2p_script;
 use std::{collections::HashSet, fmt, time::Duration};
 use structopt::StructOpt;
-use transaction_builder::{
-    encode_peer_to_peer_with_metadata_script, encode_update_libra_version_script,
-};
 
 #[derive(StructOpt, Debug)]
 pub struct ValidatorVersioningParams {
     #[structopt(
         long,
-        default_value = "10",
+        default_value = "15",
         help = "Number of nodes to update in the first batch"
     )]
     pub count: usize,
@@ -43,7 +39,7 @@ pub struct ValidatorVersioning {
     first_batch_lsr: Vec<Instance>,
     second_batch: Vec<Instance>,
     second_batch_lsr: Vec<Instance>,
-    full_nodes: Vec<Instance>,
+    _full_nodes: Vec<Instance>,
     updated_image_tag: String,
 }
 
@@ -72,7 +68,7 @@ impl ExperimentParam for ValidatorVersioningParams {
             first_batch_lsr,
             second_batch,
             second_batch_lsr,
-            full_nodes: cluster.fullnode_instances().to_vec(),
+            _full_nodes: cluster.fullnode_instances().to_vec(),
             updated_image_tag: self.updated_image_tag,
         }
     }
@@ -96,12 +92,48 @@ impl Experiment for ValidatorVersioning {
                     context.cluster.validator_instances().to_vec(),
                     context.global_emit_job_request,
                     0,
+                    0,
                 ),
                 150,
             )
             .await?;
+        let mut account = context.tx_emitter.take_account();
+        let secondary_signer_account = context.tx_emitter.take_account();
 
-        info!("1. Changing the images for the instances in the first batch");
+        // Define the transaction generator
+        //
+        // TODO: In the future we may want to pass this functor as an argument to the experiment
+        // to make versioning test extensible.
+        // Define a multi-agent p2p transaction.
+        let txn_payload = TransactionPayload::Script(multi_agent_p2p_script(10));
+
+        let tx_factory =
+            TransactionFactory::new(ChainId::test()).with_transaction_expiration_time(420);
+        let txn_gen = |account: &mut LocalAccount, secondary_signer_account: &LocalAccount| {
+            account.sign_multi_agent_with_transaction_builder(
+                vec![secondary_signer_account],
+                tx_factory.payload(txn_payload.clone()),
+            )
+        };
+
+        // grab a validator node
+        let old_validator_node = context.cluster.random_validator_instance();
+        let mut old_client = old_validator_node.json_rpc_client();
+
+        info!("1. Send a transaction using the new feature to a validator node");
+        let txn1 = txn_gen(&mut account, &secondary_signer_account);
+        if execute_and_wait_transactions(&mut old_client, &mut account, vec![txn1])
+            .await
+            .is_ok()
+        {
+            return Err(format_err!(
+                "The transaction should be rejected as the new feature is not yet recognized \
+                by any of the validator nodes"
+            ));
+        };
+        info!("-- [Expected] The transaction is rejected by the validator node");
+
+        info!("2. Update the first batch of validator nodes");
         update_batch_instance(
             context,
             &self.first_batch,
@@ -110,45 +142,26 @@ impl Experiment for ValidatorVersioning {
         )
         .await?;
 
-        info!("2. Send a transaction to make sure it is not rejected nor cause any fork");
-        let full_node = context.cluster.random_fullnode_instance();
-        let mut full_node_client = full_node.json_rpc_client();
-        let mut account_1 = context.tx_emitter.take_account();
-        let account_2 = context.tx_emitter.take_account();
+        // choose an updated validator
+        let new_validator_node = self
+            .first_batch
+            .get(0)
+            .expect("getting an updated validator instance requires a non-empty list");
+        let mut new_client = new_validator_node.json_rpc_client();
 
-        let txn_payload = TransactionPayload::Script(encode_peer_to_peer_with_metadata_script(
-            coin1_tmp_tag(),
-            account_2.address,
-            1,
-            vec![],
-            vec![],
-        ));
+        info!("3. Send the transaction using the new feature to an updated validator node");
+        let txn3 = txn_gen(&mut account, &secondary_signer_account);
+        if execute_and_wait_transactions(&mut new_client, &mut account, vec![txn3])
+            .await
+            .is_ok()
+        {
+            return Err(format_err!(
+                "The transaction should be rejected as the feature is under gating",
+            ));
+        }
+        info!("-- The transaction is rejected as expected");
 
-        // Generate a transaction that uses the new feature defined in #4416. In the future we would
-        // replace this transaction with transactions that causes real behavioral change in
-        // validator software.
-        let txn_gen = |account: &mut AccountData| {
-            account.sequence_number += 1;
-            create_user_txn(
-                &account.key_pair,
-                txn_payload.clone(),
-                account.address,
-                account.sequence_number,
-                123456,
-                0,
-                COIN1_NAME.to_owned(),
-                10,
-                ChainId::test(),
-            )
-            .map_err(|e| format_err!("Failed to create signed transaction: {}", e))
-        };
-
-        let txn1 = txn_gen(&mut account_1)?;
-
-        execute_and_wait_transactions(&mut full_node_client, &mut account_1, vec![txn1.clone()])
-            .await?;
-
-        info!("3. Change the rest of the images in the second batch");
+        info!("4. Update the rest of the validator nodes");
         update_batch_instance(
             context,
             &self.second_batch,
@@ -157,78 +170,40 @@ impl Experiment for ValidatorVersioning {
         )
         .await?;
 
-        info!("4. Send a transaction to make sure this feature is still not activated.");
-        let txn2 = txn_gen(&mut account_1)?;
-        account_1.sequence_number += 1;
-        execute_and_wait_transactions(&mut full_node_client, &mut account_1, vec![txn2.clone()])
-            .await?;
-
-        info!("5. Send a transaction to activate such feature");
-        let mut faucet_account = context
-            .tx_emitter
-            .load_faucet_account(&full_node.json_rpc_client())
-            .await?;
-        let allowed_nonce = 0;
-        let update_txn = create_user_txn(
-            &faucet_account.key_pair,
-            TransactionPayload::Script(encode_update_libra_version_script(allowed_nonce, 11)),
-            faucet_account.address,
-            faucet_account.sequence_number,
-            123456,
-            0,
-            COIN1_NAME.to_owned(),
-            10,
-            ChainId::test(),
-        )
-        .map_err(|e| format_err!("Failed to create signed transaction: {}", e))?;
-        faucet_account.sequence_number += 1;
-
-        execute_and_wait_transactions(
-            &mut full_node_client,
-            &mut faucet_account,
-            vec![update_txn.clone()],
-        )
-        .await?;
-
-        info!("6. Send a transaction to make sure it passes the full node mempool but will not be committed by updated validators.");
-        let txn3 = txn_gen(&mut account_1)?;
-
-        full_node_client
-            .submit_transaction(txn3.clone())
-            .await
-            .map_err(|e| format_err!("Transaction should pass the full node mempool: {}", e))?;
-
-        if execute_and_wait_transactions(&mut full_node_client, &mut account_1, vec![txn3.clone()])
+        info!("5. Send the transaction using the new feature to an updated validator node again");
+        let txn4 = txn_gen(&mut account, &secondary_signer_account);
+        if execute_and_wait_transactions(&mut new_client, &mut account, vec![txn4])
             .await
             .is_ok()
         {
             return Err(format_err!(
-                "Transaction should not be committed by the validators"
+                "The transaction should be rejected as the feature is still gated",
             ));
-        };
+        }
+        info!("-- The transaction is still rejected as expected, because the new feature is gated");
 
-        info!("7. Change the images for the full nodes");
-        update_batch_instance(
-            context,
-            &self.full_nodes,
-            &[],
-            self.updated_image_tag.clone(),
-        )
-        .await?;
+        info!("6. Activate the new feature multi agent");
+        let mut diem_root_account = context
+            .tx_emitter
+            .load_diem_root_account(&new_client)
+            .await?;
+        let allowed_nonce = 0;
+        let update_txn = diem_root_account.sign_with_transaction_builder(tx_factory.payload(
+            TransactionPayload::Script(encode_update_diem_version_script(allowed_nonce, 3)),
+        ));
+        execute_and_wait_transactions(&mut new_client, &mut diem_root_account, vec![update_txn])
+            .await?;
 
-        info!("8. Send a transaction to make sure it gets dropped by the full node mempool.");
+        info!("7. Send the transaction using the new feature after Diem version update");
+        let txn5 = txn_gen(&mut account, &secondary_signer_account);
+        execute_and_wait_transactions(&mut new_client, &mut account, vec![txn5]).await?;
+        info!("-- [Expected] The transaction goes through");
 
-        let updated_full_node = context.cluster.random_fullnode_instance().json_rpc_client();
-        if updated_full_node.submit_transaction(txn3).await.is_ok() {
-            return Err(format_err!(
-                "Transaction should not be accepted by the full node."
-            ));
-        };
         Ok(())
     }
 
     fn deadline(&self) -> Duration {
-        Duration::from_secs(6 * 60)
+        Duration::from_secs(15 * 60)
     }
 }
 

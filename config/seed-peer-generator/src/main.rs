@@ -1,16 +1,11 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 
-use libra_config::config::PersistableConfig;
-use libra_network_address::NetworkAddress;
-use libra_types::PeerId;
-use std::{collections::HashMap, path::PathBuf};
+use diem_config::config::{PersistableConfig, RoleType};
+use std::path::PathBuf;
 use structopt::StructOpt;
-
-// TODO: Use the definition from network?
-pub type SeedPeersConfig = HashMap<PeerId, Vec<NetworkAddress>>;
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, StructOpt)]
@@ -22,12 +17,20 @@ struct Args {
     #[structopt(short = "e", long)]
     /// JSON RPC endpoint
     endpoint: String,
+    #[structopt(short = "r", long)]
+    role: RoleType,
 }
 
 fn main() {
     let args = Args::from_args();
 
-    let seed_peers_config = seed_peer_generator::utils::gen_seed_peer_config(args.endpoint);
+    let seed_peers_config = match args.role {
+        RoleType::FullNode => {
+            seed_peer_generator::utils::gen_validator_full_node_seed_peer_config(args.endpoint)
+        }
+        _ => panic!("{} not yet supported", args.role),
+    }
+    .expect("Should have generated a trusted peer set");
 
     // Save to a file for loading later
     seed_peers_config
