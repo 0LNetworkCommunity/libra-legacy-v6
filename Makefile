@@ -185,7 +185,7 @@ genesis-miner:
 	cargo run -p miner -- zero
 
 ceremony: gen-fork-repo
-		cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony
+		cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony --skip-mining
 		
 
 # cargo run -p miner ${CARGO_ARGS} -- zero
