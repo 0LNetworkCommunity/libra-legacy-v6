@@ -181,6 +181,9 @@ gen-make-pull:
 	--shared-backend ${GENESIS_REMOTE} \
 	--pull-request-user ${GENESIS_USER}
 
+genesis-miner:
+	cargo run -p miner -- zero
+
 ceremony: gen-fork-repo
 		cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony
 		
