@@ -23,6 +23,7 @@ IP=$(shell toml get ${DATA_PATH}/0L.toml profile.ip)
 # Github settings
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
 
+# this is for quick setup of devnet, uses OLSF repo
 ifndef GENESIS_USER
 GENESIS_USER = OLSF
 endif

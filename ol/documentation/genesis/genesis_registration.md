@@ -57,9 +57,9 @@ https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/
 
 In the step `miner keygen` below you will be asked for this.
 
-## 1.  Build project
+## 1.  Install OS dependencies and build project
 
-Clone the project onto your machine. Cd into the project directory. Checkout the correct tag. Install all dependencies and compile in one step, with the Makefile helper.
+Clone the project onto your machine. `cd` into the project directory. Checkout the correct tag. Install all dependencies and compile in one step, with the Makefile helper.
 
 ```
 git clone https://github.com/OLSF/libra.git
@@ -96,11 +96,24 @@ You will be prompted to enter the Github token above, IP address of your node, a
 IMMEDIATELY SAVE YOUR MNEMONIC TO A PASSWORD MANAGER
 
 
-## 3. Pause and check your work ##
-Check all your data in `$HOME/.0L/0L.toml` is correct with `make check`. Otherwise edit it.
+## 3. Initialize configs for node.
+This creates the files your validator needs to run 0L tools. By default files will be created in `$HOME/.0L/`.
+
+The following script does several steps:
+- OL app configs: defaults to `$HOME/.0L/0L.toml` 
+- keys init: creating credentials and configs
+- fork: on github this forks the GENESIS_REPO into the CANDIDATE_REPO
+
+```
+make ceremony
+```
+
+## 4. Pause and check your work ##
+Check all your configs are correct before registering is correct: `make check`. 
 
 ```
 $ make check
+
 account: 3F48012938129deadbeef
 github_token: <secret>
 ip: 5.5.5.5
@@ -111,13 +124,7 @@ env: prod
 test mode:
 ```
 
-## 4. Initialize app configs
-
-This creates the files your validator needs to run 0L tools. By default files will be created in `$HOME/.0L/`.
-
-```
-make app-configs
-```
+If the data looks incorrect, you can doublecheck `$HOME/.0L/0L.toml`, and you may optionally edit those.
 
 ## 5. Mine your first proof (or bring first proof from elsewhere)
 
@@ -134,13 +141,11 @@ If you are using a mnemonic and have previously generated a tower, then you can 
 ## 6. Register for genesis
 
 The following script does several steps:
-- fork: forking the GENESIS_REPO into the CANDIDATE_REPO
-- keys init: creating credentials and configs
 - register: writing configs the CANDIDATE_REPO
 - pull: submitting a pull request from CANDIDATE_REPO to GENESIS_REPO
 
 ```
-make ceremony register
+make register
 ```
 
 After this step check your data at `http://github.com/0LSF/experimental-genesis`
