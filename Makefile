@@ -539,7 +539,7 @@ fork-start:
 
 
 nuke-testnet:
-	@echo WIPING EVERYTHING
+	@echo WIPING EVERYTHING but keeping: github_token.txt, autopay_batch.json, set_layout.toml, /blocks/block_0.json
 
 	@if test -d ${DATA_PATH}; then \
 		cd ${DATA_PATH} && cp github_token.txt autopay_batch.json set_layout.toml ~/; \
