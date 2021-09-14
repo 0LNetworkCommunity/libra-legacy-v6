@@ -40,7 +40,7 @@ endif
 
 CARGO_ARGS = --release
 ifeq (${NODE_ENV}, test)
-CARGO_ARGS = --verbose
+CARGO_ARGS = --locked
 endif
 
 # Registration params
