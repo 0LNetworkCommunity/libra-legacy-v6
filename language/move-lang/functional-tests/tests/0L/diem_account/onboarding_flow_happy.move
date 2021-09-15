@@ -54,6 +54,7 @@ use 0x1::DiemAccount;
 use 0x1::GAS::GAS;
 use 0x1::Subsidy;
 use 0x1::ValidatorUniverse;
+use 0x1::Debug::print;
 
 fun main(vm: signer) {
   let eve_addr = @0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
@@ -66,6 +67,7 @@ fun main(vm: signer) {
   let bal = DiemAccount::balance<GAS>(eve_addr);
   // we expect 1 gas (1,000,000 microgas) from bob's transfer, plus 0.576000 
   // GAS from the first proof submitted.
+  print(&bal);
   let expected = 1000000 + 576000;
   assert(bal == expected, 7357401003);
 

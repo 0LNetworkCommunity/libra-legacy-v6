@@ -112,6 +112,7 @@ address 0x1 {
       unjail(sender);
     }
 
+    // TODO: this is unused as of v5.
     fun unjail(sender: &signer) acquires JailedBit {
       let addr = Signer::address_of(sender);
       if (!exists<JailedBit>(addr)) {
