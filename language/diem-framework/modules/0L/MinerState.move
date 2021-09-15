@@ -568,10 +568,17 @@ address 0x1 {
     }
 
     public fun test_helper_set_epochs_mining(node_addr: address, value: u64)acquires MinerProofHistory {
-      assert(Testnet::is_testnet()== true, Errors::invalid_state(130127));
+      assert(Testnet::is_testnet()== true, Errors::invalid_state(130126));
 
       let s = borrow_global_mut<MinerProofHistory>(node_addr);
       s.epochs_validating_and_mining = value;
+    }
+
+    public fun test_helper_set_proofs_in_epoch(node_addr: address, value: u64)acquires MinerProofHistory {
+      assert(Testnet::is_testnet()== true, Errors::invalid_state(130126));
+
+      let s = borrow_global_mut<MinerProofHistory>(node_addr);
+      s.count_proofs_in_epoch = value;
     }
 
     // Function code: 18
