@@ -109,7 +109,7 @@ script {
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
-    use 0x1::Debug::print;
+    // use 0x1::Debug::print;
     use 0x1::Subsidy;
     use 0x1::Globals;
 
@@ -125,20 +125,13 @@ script {
           5,
           Globals::get_max_validators_per_set(),
         );
-        print(&Globals::get_subsidy_ceiling_gas());
-        print(&Globals::get_max_validators_per_set());
 
-        assert(expected_subsidy == 292916635, 7357000180112);
-
-        print(&expected_subsidy);
         let starting_balance = 1000000;
-        // let expected_subsidy = 295000000; //294978321
+
         let operator_refund = 4336 * 5; // BASELINE_TX_COST * proofs = 21680
 
         let ending_balance = starting_balance + expected_subsidy - operator_refund;
 
-        print(&ending_balance);
-        print(&DiemAccount::balance<GAS>(@{{alice}}));
         assert(DiemAccount::balance<GAS>(@{{alice}}) == ending_balance, 7357000180113);  
         assert(NodeWeight::proof_of_weight(@{{alice}}) == 1, 7357000180114);  
     }

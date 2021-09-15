@@ -27,7 +27,7 @@ address 0x1 {
     use 0x1::FullnodeState;
     use 0x1::ValidatorConfig;
     use 0x1::MinerState;
-    use 0x1::Debug::print;
+
     // estimated gas unit cost for proof verification divided coin scaling factor
     // Cost for verification test/easy difficulty: 1173 / 1000000
     // Cost for verification prod/hard difficulty: 2294 / 1000000
@@ -59,7 +59,6 @@ address 0x1 {
       while (i < len) {
 
         let node_address = *(Vector::borrow<address>(outgoing_set, i));
-        print(&subsidy_granted);
         // Transfer gas from vm address to validator
         let minted_coins = Diem::mint<GAS>(vm_sig, subsidy_granted);
         
@@ -93,9 +92,6 @@ address 0x1 {
       let subsidy_ceiling_gas = Globals::get_subsidy_ceiling_gas();
       let network_density = Stats::network_density(vm, height_start, height_end);
       let max_node_count = Globals::get_max_validators_per_set();
-      print(&subsidy_ceiling_gas);
-      print(&network_density);
-      print(&max_node_count);
 
       let guaranteed_minimum = subsidy_curve(
         subsidy_ceiling_gas,
@@ -430,7 +426,6 @@ address 0x1 {
           cost = BASELINE_TX_COST * proofs_in_epoch;
         };
 
-        print(&cost);
         // deduct from subsidy from Validator
         // send payment to operator
         if (cost > 0) {

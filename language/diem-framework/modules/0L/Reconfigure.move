@@ -22,13 +22,10 @@ module Reconfigure {
     use 0x1::AutoPay2;
     use 0x1::Epoch;
     use 0x1::FullnodeState;
-    // use 0x1::AccountLimits;
-    // use 0x1::GAS::GAS;
     use 0x1::DiemConfig;
     use 0x1::Audit;
     use 0x1::DiemAccount;
     use 0x1::Burn;
-    use 0x1::Debug::print;
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
@@ -92,7 +89,6 @@ module Reconfigure {
         if (Vector::length<address>(&outgoing_set) > 0) {
             let subsidy_units = Subsidy::calculate_subsidy(vm, height_start, height_now);
 // print(&03241);
-            print(&subsidy_units);
 
             if (subsidy_units > 0) {
                 Subsidy::process_subsidy(vm, subsidy_units, &outgoing_set, &fee_ratio);
