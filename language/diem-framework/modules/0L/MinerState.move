@@ -42,7 +42,7 @@ address 0x1 {
     /// Struct to encapsulate information about the state of a miner
     /// `previous_proof_hash`: the hash of their latest proof (used as seed for next proof)
     /// `verified_tower_height`: the height of the miner's tower (more proofs -> higher tower)
-    /// `latest_epoch_mining`: the latest epoch the miner submitted sufficient proofs (see GlobalConstants.epoch_mining_threshold)
+    /// `latest_epoch_mining`: the latest epoch the miner submitted sufficient proofs (see GlobalConstants.epoch_mining_thres_lower)
     /// `count_proofs_in_epoch`: the number of proofs the miner has submitted in the current epoch 
     /// `epochs_validating_and_mining`: the cumulative number of epochs the miner has been mining above threshold TODO does this actually only apply to validators? 
     /// `contiguous_epochs_validating_and_mining`: the number of contiguous epochs the miner has been mining above threshold TODO does this actually only apply to validators?
@@ -192,15 +192,18 @@ address 0x1 {
     ) acquires MinerProofHistory, MinerList {
       // Get a mutable ref to the current state
       let miner_history = borrow_global_mut<MinerProofHistory>(miner_addr);
-      
+
+      // return early if the miner is running too fast, no advantage to asics
+      assert(miner_history.count_proofs_in_epoch < Globals::get_epoch_mining_thres_upper(), Errors::invalid_state(130106));
+
       // If not genesis proof, check hash to ensure the proof continues the chain
       if (steady_state) {
         //If not genesis proof, check hash 
-        assert(&proof.challenge == &miner_history.previous_proof_hash, Errors::invalid_state(130106));      
+        assert(&proof.challenge == &miner_history.previous_proof_hash, Errors::invalid_state(130107));      
       };
 
       let valid = VDF::verify(&proof.challenge, &proof.difficulty, &proof.solution);
-      assert(valid, Errors::invalid_argument(130107));
+      assert(valid, Errors::invalid_argument(130108));
 
       // add the miner to the miner list if not present
       increment_miners_list(miner_addr);
@@ -259,8 +262,8 @@ address 0x1 {
 
     /// Checks to see if miner submitted enough proofs to be considered compliant
     public fun node_above_thresh(_account: &signer, miner_addr: address): bool acquires MinerProofHistory {
-      let miner_history= borrow_global<MinerProofHistory>(miner_addr);
-      miner_history.count_proofs_in_epoch > Globals::get_mining_threshold()
+      let miner_history = borrow_global<MinerProofHistory>(miner_addr);
+      miner_history.count_proofs_in_epoch > Globals::get_epoch_mining_thres_lower()
     }
     // Get weight of validator identified by address
     // Permissions: public, only VM can call this function.

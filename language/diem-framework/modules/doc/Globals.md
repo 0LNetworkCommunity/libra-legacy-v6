@@ -47,7 +47,7 @@ min_node_density: The minimum number of nodes that can receive a subsidy
 max_node_density: The maximum number of nodes that can receive a subsidy
 burn_accounts: The address to which burnt tokens should be sent
 difficulty: The difficulty required for VDF proofs submitting by miners
-epoch_mining_threshold: The number of proofs that must be submitted each
+epoch_mining_thres_lower: The number of proofs that must be submitted each
 epoch by a miner to remain compliant
 
 
@@ -104,7 +104,13 @@ epoch by a miner to remain compliant
 
 </dd>
 <dt>
-<code>epoch_mining_threshold: u64</code>
+<code>epoch_mining_thres_lower: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>epoch_mining_thres_upper: u64</code>
 </dt>
 <dd>
 
@@ -287,7 +293,7 @@ Get the mining threshold
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_mining_threshold">get_mining_threshold</a>(): u64 {
-  <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>().epoch_mining_threshold
+  <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>().epoch_mining_thres_lower
 }
 </code></pre>
 
@@ -350,7 +356,8 @@ get the constants for the current network
       max_node_density: 300,
       burn_accounts: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_singleton">Vector::singleton</a>(@0xDEADDEAD),
       difficulty: 100,
-      epoch_mining_threshold: 1,
+      epoch_mining_thres_lower: 1,
+      epoch_mining_thres_upper: 200,
       epoch_slow_wallet_unlock: 10,
     }
 
@@ -364,7 +371,8 @@ get the constants for the current network
       max_node_density: 300,
       burn_accounts: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_singleton">Vector::singleton</a>(@0xDEADDEAD),
       difficulty: 5000000,
-      epoch_mining_threshold: 1,
+      epoch_mining_thres_lower: 1,
+      epoch_mining_thres_upper: 200,
       epoch_slow_wallet_unlock: 10000000,
     }
   } <b>else</b> {
@@ -381,7 +389,8 @@ get the constants for the current network
       max_node_density: 300,
       burn_accounts: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_singleton">Vector::singleton</a>(@0xDEADDEAD),
       difficulty: 5000000, //10 mins on macbook pro 2.5 ghz quadcore
-      epoch_mining_threshold: 20,
+      epoch_mining_thres_lower: 20,
+      epoch_mining_thres_upper: 200,
       epoch_slow_wallet_unlock: 10000000,
       }
     }

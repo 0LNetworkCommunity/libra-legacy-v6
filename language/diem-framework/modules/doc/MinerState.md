@@ -145,7 +145,7 @@ Struct to store information about a VDF proof submitted
 Struct to encapsulate information about the state of a miner
 <code>previous_proof_hash</code>: the hash of their latest proof (used as seed for next proof)
 <code>verified_tower_height</code>: the height of the miner's tower (more proofs -> higher tower)
-<code>latest_epoch_mining</code>: the latest epoch the miner submitted sufficient proofs (see GlobalConstants.epoch_mining_threshold)
+<code>latest_epoch_mining</code>: the latest epoch the miner submitted sufficient proofs (see GlobalConstants.epoch_mining_thres_lower)
 <code>count_proofs_in_epoch</code>: the number of proofs the miner has submitted in the current epoch
 <code>epochs_validating_and_mining</code>: the cumulative number of epochs the miner has been mining above threshold TODO does this actually only apply to validators?
 <code>contiguous_epochs_validating_and_mining</code>: the number of contiguous epochs the miner has been mining above threshold TODO does this actually only apply to validators?
