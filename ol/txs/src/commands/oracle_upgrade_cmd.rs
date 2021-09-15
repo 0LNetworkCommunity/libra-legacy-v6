@@ -60,3 +60,32 @@ impl Runnable for OracleUpgradeCmd {
         }
     }
 }
+
+/// `OracleUpgradeHash` subcommand
+#[derive(Command, Debug, Default, Options)]
+pub struct OracleUpgradeHashCmd {
+    #[options(short = "h", help = "Upgrade hash")]
+    upgrade_hash: String,
+}
+
+pub fn oracle_hash_tx_script(upgrade_hash: Vec<u8>) -> TransactionPayload {
+    let id = 2; // upgrade with hash is oracle #2
+    transaction_builder::encode_ol_oracle_tx_script_function(id, upgrade_hash)
+}
+
+impl Runnable for OracleUpgradeHashCmd {
+    fn run(&self) {  
+        let entry_args = entrypoint::get_args();
+        let tx_params = tx_params_wrapper(TxType::Critical).unwrap();
+
+        let hash = self.upgrade_hash.clone();
+        let hex_hash = hex::decode(hash).expect("Input must be a hex string");
+        
+        maybe_submit(
+          oracle_hash_tx_script(hex_hash),
+          &tx_params,
+          entry_args.no_send,
+          entry_args.save_path
+        ).unwrap();
+    }
+}
