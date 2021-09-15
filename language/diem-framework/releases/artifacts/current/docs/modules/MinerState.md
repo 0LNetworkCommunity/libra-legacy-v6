@@ -47,6 +47,7 @@ TODO
 -  [Function `test_helper_set_rate_limit`](#0x1_MinerState_test_helper_set_rate_limit)
 -  [Function `test_helper_set_epochs_mining`](#0x1_MinerState_test_helper_set_epochs_mining)
 -  [Function `test_helper_hash`](#0x1_MinerState_test_helper_hash)
+-  [Function `test_helper_set_weight_vm`](#0x1_MinerState_test_helper_set_weight_vm)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
@@ -981,7 +982,7 @@ Public Getters ///
       verified_tower_height: 0u64,
       latest_epoch_mining: 0u64,
       count_proofs_in_epoch: 0u64,
-      epochs_validating_and_mining: 0u64,
+      epochs_validating_and_mining: 1u64,
       contiguous_epochs_validating_and_mining: 0u64,
       epochs_since_last_account_creation: 10u64, // is not rate-limited
     });
@@ -1282,6 +1283,32 @@ Public Getters ///
 <pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_hash">test_helper_hash</a>(miner_addr: address): vector&lt;u8&gt; <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
   <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()== <b>true</b>, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130128));
   *&borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr).previous_proof_hash
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MinerState_test_helper_set_weight_vm"></a>
+
+## Function `test_helper_set_weight_vm`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_set_weight_vm">test_helper_set_weight_vm</a>(_vm: &signer, addr: address, weight: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_set_weight_vm">test_helper_set_weight_vm</a>(_vm: &signer, addr: address, weight: u64) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
+  <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130113));
+  <b>let</b> state = borrow_global_mut&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(addr);
+  state.epochs_validating_and_mining = weight;
 }
 </code></pre>
 

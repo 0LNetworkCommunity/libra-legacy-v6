@@ -30,6 +30,8 @@ pub struct Vote {
     pub data: Vec<u8>,
     /// version
     pub version_id: u64,
+    /// weight
+    pub weight: u64,
 }
 
 ///
@@ -40,6 +42,10 @@ pub struct VoteCount {
     pub data: Vec<u8>,
     /// voters
     pub validators: Vec<AccountAddress>,
+    /// hash
+    pub hash: Vec<u8>,
+    /// weight of votes for this proposal
+    pub total_weight: u64,
 }
 
 ///
