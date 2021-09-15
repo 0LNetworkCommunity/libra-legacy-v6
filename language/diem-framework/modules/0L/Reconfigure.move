@@ -28,7 +28,7 @@ module Reconfigure {
     use 0x1::Audit;
     use 0x1::DiemAccount;
     use 0x1::Burn;
-    // use 0x1::Debug::print;
+    use 0x1::Debug::print;
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
@@ -92,6 +92,7 @@ module Reconfigure {
         if (Vector::length<address>(&outgoing_set) > 0) {
             let subsidy_units = Subsidy::calculate_subsidy(vm, height_start, height_now);
 // print(&03241);
+            print(&subsidy_units);
 
             if (subsidy_units > 0) {
                 Subsidy::process_subsidy(vm, subsidy_units, &outgoing_set, &fee_ratio);
@@ -113,7 +114,7 @@ module Reconfigure {
         // save all the eligible list, before the jailing removes them.
         let proposed_set = Vector::empty();
 
-        let top_accounts = NodeWeight::top_n_accounts(vm, Globals::get_max_validator_per_epoch());
+        let top_accounts = NodeWeight::top_n_accounts(vm, Globals::get_max_validators_per_set());
 
         let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
 
@@ -162,7 +163,7 @@ module Reconfigure {
 
         // 2. get top accounts.
         // TODO: This is temporary. Top N is after jailed have been removed
-        // let proposed_set = NodeWeight::top_n_accounts(vm, Globals::get_max_validator_per_epoch());
+        // let proposed_set = NodeWeight::top_n_accounts(vm, Globals::get_max_validators_per_set());
         // let proposed_set = top_accounts;
 
 // print(&03260);

@@ -27,7 +27,7 @@ address 0x1 {
     use 0x1::FullnodeState;
     use 0x1::ValidatorConfig;
     use 0x1::MinerState;
-
+    use 0x1::Debug::print;
     // estimated gas unit cost for proof verification divided coin scaling factor
     // Cost for verification test/easy difficulty: 1173 / 1000000
     // Cost for verification prod/hard difficulty: 2294 / 1000000
@@ -59,9 +59,10 @@ address 0x1 {
       while (i < len) {
 
         let node_address = *(Vector::borrow<address>(outgoing_set, i));
-
+        print(&subsidy_granted);
         // Transfer gas from vm address to validator
         let minted_coins = Diem::mint<GAS>(vm_sig, subsidy_granted);
+        
         DiemAccount::vm_deposit_with_metadata<GAS>(
           vm_sig,
           node_address,
@@ -91,7 +92,11 @@ address 0x1 {
       // Calculate the split for subsidy and burn
       let subsidy_ceiling_gas = Globals::get_subsidy_ceiling_gas();
       let network_density = Stats::network_density(vm, height_start, height_end);
-      let max_node_count = Globals::get_max_node_density();
+      let max_node_count = Globals::get_max_validators_per_set();
+      print(&subsidy_ceiling_gas);
+      print(&network_density);
+      print(&max_node_count);
+
       let guaranteed_minimum = subsidy_curve(
         subsidy_ceiling_gas,
         network_density,
@@ -118,6 +123,10 @@ address 0x1 {
       // This applies only to test environments where there is network of 1.
       if (network_density <= min_node_count) {
         return subsidy_ceiling_gas
+      };
+
+      if (network_density >= max_node_count) {
+        return 0u64
       };
 
       let slope = FixedPoint32::divide_u64(
@@ -214,6 +223,7 @@ address 0x1 {
       let genesis_validators = DiemSystem::get_val_set_addr();
       let validator_count = Vector::length(&genesis_validators);
       if (validator_count < 10) validator_count = 10;
+
       // baseline_cap: baseline units per epoch times the mininmum as used in tx, times minimum gas per unit.
 
       let ceiling = baseline_auction_units() * BASELINE_TX_COST * validator_count;
@@ -419,7 +429,9 @@ address 0x1 {
         if (proofs_in_epoch > 0) {
           cost = BASELINE_TX_COST * proofs_in_epoch;
         };
-        // deduct from subsidy to miner
+
+        print(&cost);
+        // deduct from subsidy from Validator
         // send payment to operator
         if (cost > 0) {
           let owner_balance = DiemAccount::balance<GAS>(miner_addr);
