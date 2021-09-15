@@ -20,7 +20,7 @@ script {
   use 0x1::Subsidy;
   use 0x1::Vector;
   use 0x1::Stats;
-  use 0x1::Debug::print;
+  use 0x1::Globals;
 
   fun main(vm: signer) {
     // check the case of a network density of 7 active validators.
@@ -40,8 +40,15 @@ script {
       Stats::process_set_votes(vm, &validators);
       i = i + 1;
     };
-    print(&Subsidy::calculate_subsidy(vm, 0, 15));
-    assert(Subsidy::calculate_subsidy(vm, 0, 15) == 293000000, 7357190101021000);
+
+    let expected_subsidy = Subsidy::subsidy_curve(
+      Globals::get_subsidy_ceiling_gas(),
+      7,
+      Globals::get_max_validators_per_set(),
+    );
+
+
+    assert(Subsidy::calculate_subsidy(vm, 0, 15) == expected_subsidy, 7357190101021000);
 
   }
 }
