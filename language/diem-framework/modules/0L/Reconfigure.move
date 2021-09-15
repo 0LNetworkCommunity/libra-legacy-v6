@@ -62,16 +62,17 @@ module Reconfigure {
             // check if is in onboarding state (or stuck)
 // print(&03220);
 
-            if (FullnodeState::is_onboarding(addr)) {
-// print(&03221);
+//             if (FullnodeState::is_onboarding(addr)) {
+// // print(&03221);
 
-              // TODO: onboarding subsidy is not necessary with onboarding transfer.
-                value = Subsidy::distribute_onboarding_subsidy(vm, addr);
-            } else {
-                // steady state
-                value = Subsidy::distribute_fullnode_subsidy(vm, addr, count);
-            };
-
+//               // // TODO: onboarding subsidy is not necessary with onboarding transfer.
+//               //   value = Subsidy::distribute_onboarding_subsidy(vm, addr);
+//             } else {
+//                 // steady state
+//                 value = Subsidy::distribute_fullnode_subsidy(vm, addr, count);
+//             };
+            value = Subsidy::distribute_fullnode_subsidy(vm, addr, count);
+            
 // print(&03230);
             FullnodeState::inc_payment_count(vm, addr, count);
             FullnodeState::inc_payment_value(vm, addr, value);

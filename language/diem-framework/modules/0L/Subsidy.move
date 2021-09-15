@@ -24,7 +24,7 @@ address 0x1 {
     use 0x1::TransactionFee;
     use 0x1::Roles;
     use 0x1::Testnet::is_testnet;
-    use 0x1::FullnodeState;
+    // use 0x1::FullnodeState;
     use 0x1::ValidatorConfig;
     use 0x1::MinerState;
 
@@ -138,7 +138,7 @@ address 0x1 {
     }
 
     // Function code: 04 Prefix: 190104
-    public fun genesis(vm_sig: &signer) acquires FullnodeSubsidy{
+    public fun genesis(vm_sig: &signer) {
       //Need to check for association or vm account
       let vm_addr = Signer::address_of(vm_sig);
       assert(vm_addr == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190104));
@@ -146,23 +146,25 @@ address 0x1 {
       // Get eligible validators list
       let genesis_validators = ValidatorUniverse::get_eligible_validators(vm_sig);
       let len = Vector::length(&genesis_validators);
+      let subsidy = 2000000; // one coin for validator, and a second which the validator will send to operator.
 
       let i = 0;
       while (i < len) {
 
         let node_address = *(Vector::borrow<address>(&genesis_validators, i));
         let old_validator_bal = DiemAccount::balance<GAS>(node_address);
-        // let count_proofs = 1;
-
-        // if (is_testnet()) {
-        //   // start with sufficient gas for expensive tests e.g. upgrade
-        //   count_proofs = 10;
-        // };
         
-        let subsidy_granted = distribute_onboarding_subsidy(vm_sig, node_address);
-        //Confirm the calculations, and that the ending balance is incremented accordingly.
-
-        assert(DiemAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, Errors::invalid_argument(190104));
+        let minted_coins = Diem::mint<GAS>(vm_sig, *&subsidy);
+        DiemAccount::vm_deposit_with_metadata<GAS>(
+          vm_sig,
+          node_address,
+          minted_coins,
+          b"genesis subsidy",
+          b""
+        );
+        
+        // Confirm the calculations, and that the ending balance is incremented accordingly.
+        assert(DiemAccount::balance<GAS>(node_address) == old_validator_bal + subsidy, Errors::invalid_argument(190104));
 
         i = i + 1;
       };
@@ -235,33 +237,33 @@ address 0x1 {
       });
     }
 
-    // TODO: Deprecate in v4.2.9+ since the onboarding gas transfer resolves this issue.
-    public fun distribute_onboarding_subsidy(
-      vm: &signer,
-      miner: address
-    ):u64 acquires FullnodeSubsidy {
-      // Bootstrap gas if it's the first payment to a prospective validator. Check no fullnode payments have been made, and is in validator universe. 
-      CoreAddresses::assert_diem_root(vm);
+    // // TODO: Deprecate in v4.2.9+ since the onboarding gas transfer resolves this issue.
+    // public fun distribute_onboarding_subsidy(
+    //   vm: &signer,
+    //   miner: address
+    // ):u64 acquires FullnodeSubsidy {
+    //   // Bootstrap gas if it's the first payment to a prospective validator. Check no fullnode payments have been made, and is in validator universe. 
+    //   CoreAddresses::assert_diem_root(vm);
 
-      FullnodeState::is_onboarding(miner);
+    //   FullnodeState::is_onboarding(miner);
       
-      let state = borrow_global<FullnodeSubsidy>(CoreAddresses::DIEM_ROOT_ADDRESS());
+    //   let state = borrow_global<FullnodeSubsidy>(CoreAddresses::DIEM_ROOT_ADDRESS());
 
-      let subsidy = bootstrap_validator_balance();
-      // give max possible subisidy, if auction is higher
-      if (state.current_proof_price > subsidy) subsidy = state.current_proof_price;
+    //   let subsidy = bootstrap_validator_balance();
+    //   // give max possible subisidy, if auction is higher
+    //   if (state.current_proof_price > subsidy) subsidy = state.current_proof_price;
       
-      let minted_coins = Diem::mint<GAS>(vm, subsidy);
-      DiemAccount::vm_deposit_with_metadata<GAS>(
-        vm,
-        miner,
-        minted_coins,
-        b"onboarding_subsidy",
-        b""
-      );
+    //   let minted_coins = Diem::mint<GAS>(vm, subsidy);
+    //   DiemAccount::vm_deposit_with_metadata<GAS>(
+    //     vm,
+    //     miner,
+    //     minted_coins,
+    //     b"onboarding_subsidy",
+    //     b""
+    //   );
 
-      subsidy
-    }
+    //   subsidy
+    // }
 
 
     public fun distribute_fullnode_subsidy(vm: &signer, miner: address, count: u64):u64 acquires FullnodeSubsidy{
@@ -405,13 +407,13 @@ address 0x1 {
       fees
     }
 
-    fun bootstrap_validator_balance():u64 {
-      let mins_per_day = 60 * 24;
-      let proofs_per_day = mins_per_day / 10; // 10 min proofs
-      let proof_cost = 4000; // assumes 1 microgas per gas unit 
-      let subsidy_value = proofs_per_day * proof_cost;
-      subsidy_value
-    }
+    // fun bootstrap_validator_balance():u64 {
+    //   let mins_per_day = 60 * 24;
+    //   let proofs_per_day = mins_per_day / 10; // 10 min proofs
+    //   let proof_cost = 40000; // assumes 1 microgas per gas unit 
+    //   let subsidy_value = proofs_per_day * proof_cost;
+    //   subsidy_value
+    // }
 
     // Operators may run out of balance to submit txs for the Validator. This is true for mining, where the operator receives no network subsidy.
     fun refund_operator_tx_fees(vm: &signer, miner_addr: address) {
