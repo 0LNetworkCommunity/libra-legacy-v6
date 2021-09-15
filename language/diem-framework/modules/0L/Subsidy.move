@@ -211,15 +211,15 @@ address 0x1 {
 
     // Function code: 06 Prefix: 190106
     public fun init_fullnode_sub(vm: &signer) {
+      Roles::assert_diem_root(vm);
+      assert(!exists<FullnodeSubsidy>(Signer::address_of(vm)), Errors::not_published(190106));
+      
       let genesis_validators = DiemSystem::get_val_set_addr();
       let validator_count = Vector::length(&genesis_validators);
       if (validator_count < 10) validator_count = 10;
-      // baseline_cap: baseline units per epoch times the mininmum as used in tx, times minimum gas per unit.
-
+      // baseline_cap: baseline units per epoch times the mininmum as used in tx, 
+      // times minimum gas per unit.
       let ceiling = baseline_auction_units() * BASELINE_TX_COST * validator_count;
-
-      Roles::assert_diem_root(vm);
-      assert(!exists<FullnodeSubsidy>(Signer::address_of(vm)), Errors::not_published(190106));
       move_to<FullnodeSubsidy>(vm, FullnodeSubsidy{
         previous_epoch_proofs: 0u64,
         current_proof_price: BASELINE_TX_COST * 24 * 8 * 3, // number of proof submisisons in 3 initial epochs.
