@@ -250,13 +250,12 @@ address 0x1 {
         // check payees are community wallets, only community wallets are allowed
         // to receive autopay (bypassing account limits)
         if (amount != 0 && amount <= account_bal) {
-          // Todo: if and else have the same code
-          if (borrow_global<AccountLimitsEnable>(Signer::address_of(vm)).enabled &&
-              Wallet::is_comm(payment.payee)
-          ) {
-            DiemAccount::vm_make_payment_no_limit<GAS>(
-              *account_addr, payment.payee, amount, x"", x"", vm
-            );
+          if (borrow_global<AccountLimitsEnable>(Signer::address_of(vm)).enabled) {
+            if (Wallet::is_comm(payment.payee)) {
+              DiemAccount::vm_make_payment_no_limit<GAS>(
+                *account_addr, payment.payee, amount, x"", x"", vm
+              );
+            }
           }
           else {
             DiemAccount::vm_make_payment_no_limit<GAS>(
