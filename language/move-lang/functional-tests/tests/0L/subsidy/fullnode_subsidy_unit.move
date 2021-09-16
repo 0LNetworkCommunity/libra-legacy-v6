@@ -5,13 +5,13 @@
 // Check if genesis subsidies have been distributed
 //! sender: diemroot
 script {
-    use 0x1::Subsidy;
+    use 0x1::FullnodeSubsidy;
     use 0x1::DiemAccount;
     use 0x1::GAS::GAS;
 
     fun main(vm: signer) {
         let old_account_bal = DiemAccount::balance<GAS>(@{{frank}});
-        let value = Subsidy::distribute_fullnode_subsidy(&vm, @{{frank}}, 10);
+        let value = FullnodeSubsidy::distribute_fullnode_subsidy(&vm, @{{frank}}, 10);
         let new_account_bal = DiemAccount::balance<GAS>(@{{frank}});
 
         assert(value == 24975360, 735701);

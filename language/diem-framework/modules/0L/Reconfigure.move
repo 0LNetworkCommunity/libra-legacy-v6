@@ -25,6 +25,7 @@ module Reconfigure { // TODO: Rename to Boundary
     use 0x1::Audit;
     use 0x1::DiemAccount;
     use 0x1::Burn;
+    use 0x1::FullnodeSubsidy;
 
     // use 0x1::Debug::print;
 
@@ -80,7 +81,7 @@ module Reconfigure { // TODO: Rename to Boundary
             
             let value: u64;
 
-            value = Subsidy::distribute_fullnode_subsidy(vm, addr, count);
+            value = FullnodeSubsidy::distribute_fullnode_subsidy(vm, addr, count);
             
             // print(&03230);
             FullnodeState::inc_payment_count(vm, addr, count);
@@ -91,7 +92,7 @@ module Reconfigure { // TODO: Rename to Boundary
         };
 
          // needs to be set before the auctioneer runs in Subsidy::fullnode_reconfig
-        Subsidy::set_global_count(vm, global_proofs_count);
+        FullnodeSubsidy::set_global_count(vm, global_proofs_count);
     }
 
     fun process_validators(vm: &signer, height_start: u64, height_now: u64) {
@@ -189,7 +190,7 @@ module Reconfigure { // TODO: Rename to Boundary
         // print(&032110);
 
         // reset clocks
-        Subsidy::fullnode_reconfig(vm);
+        FullnodeSubsidy::fullnode_reconfig(vm);
         // print(&032120);
 
         // process community wallets

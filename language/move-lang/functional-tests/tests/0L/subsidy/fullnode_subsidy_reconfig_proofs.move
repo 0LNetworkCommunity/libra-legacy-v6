@@ -23,7 +23,7 @@ script {
 // Check if genesis subsidies have been distributed
 //! sender: diemroot
 script {
-    use 0x1::Subsidy;
+    use 0x1::FullnodeSubsidy;
     use 0x1::DiemAccount;
     use 0x1::GAS::GAS;
 
@@ -31,10 +31,10 @@ script {
         // No proofs submitted in current epoch. So a single proof is worth 
         // the ceiling, i.e. equivalent to tx fees.
         let vm = &vm;
-        Subsidy::set_global_count(vm, 10000);
-        Subsidy::fullnode_reconfig(vm);
+        FullnodeSubsidy::set_global_count(vm, 10000);
+        FullnodeSubsidy::fullnode_reconfig(vm);
         let old_account_bal = DiemAccount::balance<GAS>(@{{frank}});
-        let value = Subsidy::distribute_fullnode_subsidy(vm, @{{frank}}, 1,);
+        let value = FullnodeSubsidy::distribute_fullnode_subsidy(vm, @{{frank}}, 1,);
         let new_account_bal = DiemAccount::balance<GAS>(@{{frank}});
         assert(value == 84, 735702);
         assert(new_account_bal>old_account_bal, 73570001);
