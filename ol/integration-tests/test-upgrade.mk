@@ -16,6 +16,7 @@ SOURCE_PATH = ${HOME}/libra
 endif
 
 STDLIB_BIN = ${SOURCE_PATH}/language/diem-framework/staged/stdlib.mv
+STDLIB_BIN_HOLDING = ${UPGRADE_TEMP}/stdlib.mv
 HASH := $(shell sha256sum ${STDLIB_BIN} | cut -d " " -f 1)
 
 
@@ -38,7 +39,7 @@ endif
 
 # USAGE: BRANCH_NAME=<latest branch> make -f test-upgrade.mk upgrade
 # NOTE: BRANCH_NAME shares semantics with https://github.com/marketplace/actions/get-branch-name
-test: prep get-prev stdlib start upgrade check progress stop
+test: prep stdlib get-prev prev-stdlib start upgrade check progress stop
 
 start:
 	@echo Building Swarm
@@ -58,14 +59,14 @@ get-prev:
 	cd ${SOURCE_PATH} && git reset --hard && git fetch
 	cd ${SOURCE_PATH} && git checkout ${PREV_VERSION} -f
 
-get-test:
-	cd ${SOURCE_PATH} && git reset --hard && git fetch
-	cd ${SOURCE_PATH} && git checkout ${BRANCH_NAME} -f
-
 stdlib:
 	cd ${SOURCE_PATH} && cargo run --release -p diem-framework
 	cd ${SOURCE_PATH} && cargo run --release -p diem-framework -- --create-upgrade-payload
 	sha256sum ${STDLIB_BIN}
+	cp ${STDLIB_BIN} ${STDLIB_BIN_HOLDING}
+
+prev-stdlib:
+	cd ${SOURCE_PATH} && cargo run --release -p diem-framework
 
 
 init:
@@ -73,7 +74,7 @@ init:
 	cp ${SWARM_TEMP}/0/0L.toml ${HOME}/.0L/0L.toml
 
 submit:
-	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-upgrade -f ${STDLIB_BIN}
+	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-upgrade -f ${STDLIB_BIN_HOLDING}
 
 submit-hash:
 	echo ${HASH}
@@ -100,7 +101,6 @@ upgrade:
 # Note, in order to have bob vote with hash, change 'submit' in his command to 'submit-hash', will only work if PREV_VERSION also has the submit-hash command
 	@while [[ ${NOW} -le ${END} ]] ; do \
 			if grep -q ${START_TEXT} ${LOG} ; then \
-				make -f ${SAFE_MAKE_FILE} get-test stdlib ; \
 				PERSONA=alice make -f ${SAFE_MAKE_FILE} submit; \
 				PERSONA=bob make -f ${SAFE_MAKE_FILE} submit; \
 				break; \
