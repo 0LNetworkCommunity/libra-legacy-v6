@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Get branch names
         id: branch-name
-        uses: tj-actions/branch-names@v4
+        uses: tj-actions/branch-names@v5
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
