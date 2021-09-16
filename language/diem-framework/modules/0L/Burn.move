@@ -77,16 +77,12 @@ module Burn {
     FixedPoint32::multiply_u64(value, ratio)
   }
 
-  use 0x1::Debug::print;
-
   public fun epoch_start_burn(vm: &signer, payer: address, value: u64) acquires DepositInfo, BurnPreference {
     if (exists<BurnPreference>(payer)) {
-      print(&4001);
       if (borrow_global<BurnPreference>(payer).send_community) {
         return send(vm, payer, value)
       }
     } else {
-      print(&4002);
       burn(vm, payer, value)
     }
   }

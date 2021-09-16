@@ -1253,7 +1253,7 @@ module DiemAccount {
 
         // TODO: review this in 5.1
         // VM should not force an account below 1GAS, since the account may not recover.
-        if (balance<GAS>(addr) < 1000000) return;
+        if (balance<GAS>(payer) < 1000000) return;
 
         // prevent halting on low balance.
         // burn the remaining balance if the amount is greater than balance
