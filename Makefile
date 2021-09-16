@@ -184,9 +184,11 @@ gen-make-pull:
 genesis-miner:
 	cargo run -p miner -- zero
 
-ceremony: gen-fork-repo
+
+gen-onboard:
 		cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony --skip-mining
-		
+
+ceremony: gen-fork-repo gen-onboard		
 
 # cargo run -p miner ${CARGO_ARGS} -- zero
 
