@@ -12,11 +12,11 @@ TEST=y
 RUST_BACKTRACE=1
 
 ifndef SOURCE_PATH
-SOURCE_PATH = ${HOME}/OL/myrepo/libra
+SOURCE_PATH = ${HOME}/libra
 endif
 
 STDLIB_BIN = ${SOURCE_PATH}/language/diem-framework/staged/stdlib.mv
-HASH := $(shell sha256sum -z ${STDLIB_BIN} | cut -d " " -f 1)
+HASH := $(shell sha256sum ${STDLIB_BIN} | cut -d " " -f 1)
 
 
 # alice
@@ -29,7 +29,7 @@ MNEM="talent sunset lizard pill fame nuclear spy noodle basket okay critic grow 
 NUM_NODES = 2
 
 ifndef PREV_VERSION
-PREV_VERSION=tmp
+PREV_VERSION=v5
 endif
 
 ifndef BRANCH_NAME
