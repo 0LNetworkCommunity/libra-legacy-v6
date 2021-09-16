@@ -1,8 +1,8 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::Result;
-use move_core_types::move_resource::MoveResource;
+use move_core_types::{ident_str, identifier::IdentStr, move_resource::MoveStructType};
 use serde::{Deserialize, Serialize};
 
 /// Struct that represents a BaseUrlRotationEvent.
@@ -24,11 +24,11 @@ impl BaseUrlRotationEvent {
     }
 
     pub fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
-        lcs::from_bytes(bytes).map_err(Into::into)
+        bcs::from_bytes(bytes).map_err(Into::into)
     }
 }
 
-impl MoveResource for BaseUrlRotationEvent {
-    const MODULE_NAME: &'static str = "DualAttestation";
-    const STRUCT_NAME: &'static str = "BaseUrlRotationEvent";
+impl MoveStructType for BaseUrlRotationEvent {
+    const MODULE_NAME: &'static IdentStr = ident_str!("DualAttestation");
+    const STRUCT_NAME: &'static IdentStr = ident_str!("BaseUrlRotationEvent");
 }

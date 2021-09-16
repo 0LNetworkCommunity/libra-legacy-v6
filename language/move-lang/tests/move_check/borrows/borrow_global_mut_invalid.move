@@ -1,5 +1,5 @@
-module M {
-    resource struct R { f: u64 }
+module 0x8675309::M {
+    struct R has key { f: u64 }
 
     fun t0(addr: address) acquires R {
         let r1 = borrow_global_mut<R>(addr);

@@ -1,8 +1,12 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::account_address::AccountAddress;
-use move_core_types::move_resource::MoveResource;
+use move_core_types::{
+    ident_str,
+    identifier::IdentStr,
+    move_resource::{MoveResource, MoveStructType},
+};
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
@@ -30,12 +34,15 @@ impl ChildVASP {
     }
 }
 
-impl MoveResource for ParentVASP {
-    const MODULE_NAME: &'static str = "VASP";
-    const STRUCT_NAME: &'static str = "ParentVASP";
+impl MoveStructType for ParentVASP {
+    const MODULE_NAME: &'static IdentStr = ident_str!("VASP");
+    const STRUCT_NAME: &'static IdentStr = ident_str!("ParentVASP");
 }
 
-impl MoveResource for ChildVASP {
-    const MODULE_NAME: &'static str = "VASP";
-    const STRUCT_NAME: &'static str = "ChildVASP";
+impl MoveStructType for ChildVASP {
+    const MODULE_NAME: &'static IdentStr = ident_str!("VASP");
+    const STRUCT_NAME: &'static IdentStr = ident_str!("ChildVASP");
 }
+
+impl MoveResource for ParentVASP {}
+impl MoveResource for ChildVASP {}

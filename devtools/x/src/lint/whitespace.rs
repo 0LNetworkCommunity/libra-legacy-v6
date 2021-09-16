@@ -1,21 +1,30 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use glob::Pattern;
+use anyhow::Context;
+use globset::{Glob, GlobSet, GlobSetBuilder};
 use x_lint::prelude::*;
 
 #[derive(Clone, Copy, Debug)]
-pub(super) struct EofNewline;
+pub(super) struct EofNewline<'cfg> {
+    exceptions: &'cfg GlobSet,
+}
 
-impl Linter for EofNewline {
+impl<'cfg> EofNewline<'cfg> {
+    pub fn new(exceptions: &'cfg GlobSet) -> Self {
+        Self { exceptions }
+    }
+}
+
+impl<'cfg> Linter for EofNewline<'cfg> {
     fn name(&self) -> &'static str {
         "eof-newline"
     }
 }
 
-impl ContentLinter for EofNewline {
-    fn pre_run<'l>(&self, file_ctx: &FileContext<'l>) -> Result<RunStatus<'l>> {
-        Ok(skip_whitespace_checks(file_ctx))
+impl<'cfg> ContentLinter for EofNewline<'cfg> {
+    fn pre_run<'l>(&self, file_ctx: &FilePathContext<'l>) -> Result<RunStatus<'l>> {
+        Ok(skip_whitespace_checks(self.exceptions, file_ctx))
     }
 
     fn run<'l>(
@@ -25,7 +34,7 @@ impl ContentLinter for EofNewline {
     ) -> Result<RunStatus<'l>> {
         let content = match ctx.content() {
             Some(text) => text,
-            None => return Ok(RunStatus::Skipped(SkipReason::NonUtf8)),
+            None => return Ok(RunStatus::Skipped(SkipReason::NonUtf8Content)),
         };
         if !content.is_empty() && !content.ends_with('\n') {
             out.write(LintLevel::Error, "missing newline at EOF");
@@ -35,17 +44,25 @@ impl ContentLinter for EofNewline {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub(super) struct TrailingWhitespace;
+pub(super) struct TrailingWhitespace<'cfg> {
+    exceptions: &'cfg GlobSet,
+}
 
-impl Linter for TrailingWhitespace {
+impl<'cfg> TrailingWhitespace<'cfg> {
+    pub fn new(exceptions: &'cfg GlobSet) -> Self {
+        Self { exceptions }
+    }
+}
+
+impl<'cfg> Linter for TrailingWhitespace<'cfg> {
     fn name(&self) -> &'static str {
         "trailing-whitespace"
     }
 }
 
-impl ContentLinter for TrailingWhitespace {
-    fn pre_run<'l>(&self, file_ctx: &FileContext<'l>) -> Result<RunStatus<'l>> {
-        Ok(skip_whitespace_checks(file_ctx))
+impl<'cfg> ContentLinter for TrailingWhitespace<'cfg> {
+    fn pre_run<'l>(&self, file_ctx: &FilePathContext<'l>) -> Result<RunStatus<'l>> {
+        Ok(skip_whitespace_checks(self.exceptions, file_ctx))
     }
 
     fn run<'l>(
@@ -55,7 +72,7 @@ impl ContentLinter for TrailingWhitespace {
     ) -> Result<RunStatus<'l>> {
         let content = match ctx.content() {
             Some(text) => text,
-            None => return Ok(RunStatus::Skipped(SkipReason::NonUtf8)),
+            None => return Ok(RunStatus::Skipped(SkipReason::NonUtf8Content)),
         };
 
         for (ln, line) in content.lines().enumerate().map(|(ln, line)| (ln + 1, line)) {
@@ -81,28 +98,25 @@ impl ContentLinter for TrailingWhitespace {
     }
 }
 
-fn skip_whitespace_checks<'l>(file: &FileContext<'l>) -> RunStatus<'l> {
-    // glob based opt outs
-    // TODO Reevaluate skipping whitespace checks in .md files for the website
-    let patterns = [".github/actions/*/dist/*", "developers.libra.org/**/*.md"];
+pub(super) fn build_exceptions(patterns: &[String]) -> crate::Result<GlobSet> {
+    let mut builder = GlobSetBuilder::new();
+    for pattern in patterns {
+        let glob = Glob::new(pattern).with_context(|| {
+            format!(
+                "error while processing whitespace exception glob '{}'",
+                pattern
+            )
+        })?;
+        builder.add(glob);
+    }
+    builder
+        .build()
+        .with_context(|| "error while building globset for whitespace patterns")
+}
 
-    if let Some(pattern) = patterns
-        .iter()
-        .find(|s| Pattern::new(s).unwrap().matches_path(file.file_path()))
-    {
-        return RunStatus::Skipped(SkipReason::GlobExemption(pattern));
-    };
-
-    // extension based opt outs
-    #[allow(clippy::single_match)]
-    match file.extension() {
-        Some("exp") => {
-            return RunStatus::Skipped(SkipReason::UnsupportedExtension(file.extension()))
-        }
-        Some("errmap") => {
-            return RunStatus::Skipped(SkipReason::UnsupportedExtension(file.extension()))
-        }
-        _ => (),
+fn skip_whitespace_checks<'l>(exceptions: &GlobSet, file: &FilePathContext<'l>) -> RunStatus<'l> {
+    if exceptions.is_match(file.file_path()) {
+        return RunStatus::Skipped(SkipReason::UnsupportedFile(file.file_path()));
     }
 
     RunStatus::Executed

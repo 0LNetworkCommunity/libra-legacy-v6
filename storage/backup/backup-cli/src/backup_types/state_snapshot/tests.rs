@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -10,12 +10,13 @@ use crate::{
     utils::{
         backup_service_client::BackupServiceClient,
         test_utils::{start_local_backup_service, tmp_db_with_random_content},
-        GlobalBackupOpt, GlobalRestoreOpt,
+        ConcurrentDownloadsOpt, GlobalBackupOpt, GlobalRestoreOpt, RocksdbOpt, TrustedWaypointOpt,
     },
 };
-use libra_temppath::TempPath;
-use libra_types::transaction::PRE_GENESIS_VERSION;
-use libradb::LibraDB;
+use diem_config::config::RocksdbConfig;
+use diem_temppath::TempPath;
+use diem_types::transaction::PRE_GENESIS_VERSION;
+use diemdb::DiemDB;
 use std::{convert::TryInto, sync::Arc};
 use storage_interface::DbReader;
 use tokio::time::Duration;
@@ -33,7 +34,7 @@ fn end_to_end() {
     let version = latest_tree_state.num_transactions - 1;
     let state_root_hash = latest_tree_state.account_state_root_hash;
 
-    let (mut rt, port) = start_local_backup_service(src_db);
+    let (rt, port) = start_local_backup_service(src_db);
     let client = Arc::new(BackupServiceClient::new(format!(
         "http://localhost:{}",
         port
@@ -63,6 +64,9 @@ fn end_to_end() {
                 dry_run: false,
                 db_dir: Some(tgt_db_dir.path().to_path_buf()),
                 target_version: None, // max
+                trusted_waypoints: TrustedWaypointOpt::default(),
+                rocksdb_opt: RocksdbOpt::default(),
+                concurernt_downloads: ConcurrentDownloadsOpt::default(),
             }
             .try_into()
             .unwrap(),
@@ -73,10 +77,11 @@ fn end_to_end() {
     )
     .unwrap();
 
-    let tgt_db = LibraDB::open(
+    let tgt_db = DiemDB::open(
         &tgt_db_dir,
         true, /* read_only */
         None, /* pruner */
+        RocksdbConfig::default(),
     )
     .unwrap();
     assert_eq!(

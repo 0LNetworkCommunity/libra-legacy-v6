@@ -1,5 +1,5 @@
-module TestLiveVars {
-    struct R {
+module 0x42::TestLiveVars {
+    struct R has copy, drop {
         x: u64
     }
 

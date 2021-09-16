@@ -1,12 +1,10 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     account_address::AccountAddress,
     identifier::{IdentStr, Identifier},
 };
-use libra_crypto::hash::CryptoHash;
-use libra_crypto_derive::{CryptoHasher, LCSCryptoHash};
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
@@ -31,19 +29,7 @@ pub enum TypeTag {
     Struct(StructTag),
 }
 
-#[derive(
-    Serialize,
-    Deserialize,
-    Debug,
-    PartialEq,
-    Hash,
-    Eq,
-    Clone,
-    PartialOrd,
-    Ord,
-    CryptoHasher,
-    LCSCryptoHash,
-)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Hash, Eq, Clone, PartialOrd, Ord)]
 pub struct StructTag {
     pub address: AccountAddress,
     pub module: Identifier,
@@ -54,10 +40,8 @@ pub struct StructTag {
 
 impl StructTag {
     pub fn access_vector(&self) -> Vec<u8> {
-        let mut key = vec![];
-        key.push(RESOURCE_TAG);
-
-        key.append(&mut self.hash().to_vec());
+        let mut key = vec![RESOURCE_TAG];
+        key.append(&mut bcs::to_bytes(self).unwrap());
         key
     }
 
@@ -70,8 +54,8 @@ impl StructTag {
 /// the struct tag
 #[derive(Serialize, Deserialize, Debug, PartialEq, Hash, Eq, Clone, PartialOrd, Ord)]
 pub struct ResourceKey {
-    address: AccountAddress,
-    type_: StructTag,
+    pub address: AccountAddress,
+    pub type_: StructTag,
 }
 
 impl ResourceKey {
@@ -92,19 +76,7 @@ impl ResourceKey {
 
 /// Represents the initial key into global storage where we first index by the address, and then
 /// the struct tag
-#[derive(
-    Serialize,
-    Deserialize,
-    Debug,
-    PartialEq,
-    Hash,
-    Eq,
-    Clone,
-    PartialOrd,
-    Ord,
-    CryptoHasher,
-    LCSCryptoHash,
-)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Hash, Eq, Clone, PartialOrd, Ord)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
 #[cfg_attr(any(test, feature = "fuzzing"), proptest(no_params))]
 pub struct ModuleId {
@@ -132,10 +104,8 @@ impl ModuleId {
     }
 
     pub fn access_vector(&self) -> Vec<u8> {
-        let mut key = vec![];
-        key.push(CODE_TAG);
-
-        key.append(&mut self.hash().to_vec());
+        let mut key = vec![CODE_TAG];
+        key.append(&mut bcs::to_bytes(self).unwrap());
         key
     }
 }
@@ -150,8 +120,8 @@ impl Display for StructTag {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         write!(
             f,
-            "{}::{}::{}",
-            self.address.short_str(),
+            "0x{}::{}::{}",
+            self.address.short_str_lossless(),
             self.module,
             self.name
         )?;

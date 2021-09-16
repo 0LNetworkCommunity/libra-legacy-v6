@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -6,7 +6,7 @@ use crate::{
     commands::{subcommand_execute, Command},
 };
 use chrono::{DateTime, Utc};
-use libra_types::waypoint::Waypoint;
+use diem_types::waypoint::Waypoint;
 use std::time::{Duration, UNIX_EPOCH};
 
 /// Major command for account related operations.
@@ -26,10 +26,10 @@ impl Command for DevCommand {
             Box::new(DevCommandExecute {}),
             Box::new(DevCommandUpgradeStdlib {}),
             Box::new(DevCommandGenWaypoint {}),
-            Box::new(DevCommandChangeLibraVersion {}),
+            Box::new(DevCommandChangeDiemVersion {}),
             Box::new(DevCommandEnableCustomScript {}),
-            Box::new(AddToScriptAllowList {}),
-            Box::new(DevCommandNoop {}), //////// 0L ////////
+            Box::new(DevSubmitWriteSet {}),
+            Box::new(DevCommandNoop {}), //////// 0L ////////            
         ];
         subcommand_execute(&params[0], commands, client, &params[1..]);
     }
@@ -142,26 +142,26 @@ impl Command for DevCommandEnableCustomScript {
             println!("Invalid number of arguments");
             return;
         }
-        match client.enable_custom_script(params, true) {
+        match client.enable_custom_script(params, false, true) {
             Ok(_) => println!("Successfully finished execution"),
             Err(e) => println!("{}", e),
         }
     }
 }
 
-pub struct AddToScriptAllowList {}
+pub struct DevCommandChangeDiemVersion {}
 
-impl Command for AddToScriptAllowList {
+impl Command for DevCommandChangeDiemVersion {
     fn get_aliases(&self) -> Vec<&'static str> {
-        vec!["add_to_script_allow_list", "a"]
+        vec!["change_diem_version", "v"]
     }
 
     fn get_params_help(&self) -> &'static str {
-        "<hash>"
+        "<new_diem_version>"
     }
 
     fn get_description(&self) -> &'static str {
-        "Add a script hash to the allow list. This enables script hash verification."
+        "Change the diem_version stored on chain"
     }
 
     fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
@@ -169,34 +169,7 @@ impl Command for AddToScriptAllowList {
             println!("Invalid number of arguments");
             return;
         }
-        match client.add_to_script_allow_list(params, true) {
-            Ok(_) => println!("Successfully finished execution"),
-            Err(e) => println!("{}", e),
-        }
-    }
-}
-
-pub struct DevCommandChangeLibraVersion {}
-
-impl Command for DevCommandChangeLibraVersion {
-    fn get_aliases(&self) -> Vec<&'static str> {
-        vec!["change_libra_version", "v"]
-    }
-
-    fn get_params_help(&self) -> &'static str {
-        "<new_libra_version>"
-    }
-
-    fn get_description(&self) -> &'static str {
-        "Change the libra_version stored on chain"
-    }
-
-    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
-        if params.len() != 2 {
-            println!("Invalid number of arguments");
-            return;
-        }
-        match client.change_libra_version(params, true) {
+        match client.change_diem_version(params, true) {
             Ok(_) => println!("Successfully finished execution"),
             Err(e) => println!("{}", e),
         }
@@ -300,6 +273,34 @@ impl Command for DevCommandGenWaypoint {
                 li_time_str,
                 waypoint
             ),
+        }
+    }
+}
+
+/// Sub command to execute a custom Move script
+pub struct DevSubmitWriteSet {}
+
+impl Command for DevSubmitWriteSet {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["submit_writeset", "ws"]
+    }
+
+    fn get_params_help(&self) -> &'static str {
+        "<path_to_writeset>"
+    }
+
+    fn get_description(&self) -> &'static str {
+        "Submit a WriteSet with local diem root account. Path should be a bcs serialized TransactionPayload."
+    }
+
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        if params.len() < 2 {
+            println!("Invalid number of arguments to execute script");
+            return;
+        }
+        match client.submit_writeset(params) {
+            Ok(_) => println!("Successfully finished execution"),
+            Err(e) => println!("{}", e),
         }
     }
 }

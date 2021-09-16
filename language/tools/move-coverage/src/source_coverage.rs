@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -7,6 +7,11 @@ use crate::coverage_map::CoverageMap;
 use bytecode_source_map::source_map::SourceMap;
 use codespan::{Files, Span};
 use colored::*;
+use move_binary_format::{
+    access::ModuleAccess,
+    file_format::{CodeOffset, FunctionDefinitionIndex},
+    CompiledModule,
+};
 use move_core_types::identifier::Identifier;
 use move_ir_types::location::Loc;
 use serde::Serialize;
@@ -15,11 +20,6 @@ use std::{
     fs,
     io::{self, Write},
     path::Path,
-};
-use vm::{
-    access::ModuleAccess,
-    file_format::{CodeOffset, FunctionDefinitionIndex},
-    CompiledModule,
 };
 
 #[derive(Clone, Debug, Serialize)]
@@ -60,7 +60,8 @@ impl SourceCoverageBuilder {
         source_map: &SourceMap<Loc>,
     ) -> Self {
         let module_name = module.self_id();
-        let module_map = coverage_map
+        let unified_exec_map = coverage_map.to_unified_exec_map();
+        let module_map = unified_exec_map
             .module_maps
             .get(&(*module_name.address(), module_name.name().to_owned()));
 

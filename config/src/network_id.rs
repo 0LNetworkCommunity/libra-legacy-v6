@@ -1,18 +1,20 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
-use crate::config::RoleType;
-use libra_types::PeerId;
+use crate::config::{PeerRole, RoleType};
+use diem_types::PeerId;
 use serde::{Deserialize, Serialize, Serializer};
-use std::fmt;
+use short_hex_str::AsShortHexStr;
+use std::{cmp::Ordering, fmt, str::FromStr};
 
 /// A grouping of common information between all networking code for logging.
 /// This should greatly reduce the groupings between these given everywhere, and will allow
 /// for logging accordingly.
 #[derive(Clone, Eq, PartialEq, Serialize)]
 pub struct NetworkContext {
+    /// The type of node
+    role: RoleType,
     #[serde(serialize_with = "NetworkId::serialize_str")]
     network_id: NetworkId,
-    role: RoleType,
     peer_id: PeerId,
 }
 
@@ -27,28 +29,28 @@ impl fmt::Display for NetworkContext {
         write!(
             f,
             "[{},{},{}]",
-            self.network_id.as_str(),
             self.role,
+            self.network_id.as_str(),
             self.peer_id.short_str(),
         )
     }
 }
 
 impl NetworkContext {
-    pub fn new(network_id: NetworkId, role: RoleType, peer_id: PeerId) -> NetworkContext {
+    pub fn new(role: RoleType, network_id: NetworkId, peer_id: PeerId) -> NetworkContext {
         NetworkContext {
-            network_id,
             role,
+            network_id,
             peer_id,
         }
     }
 
-    pub fn network_id(&self) -> &NetworkId {
-        &self.network_id
-    }
-
     pub fn role(&self) -> RoleType {
         self.role
+    }
+
+    pub fn network_id(&self) -> &NetworkId {
+        &self.network_id
     }
 
     pub fn peer_id(&self) -> PeerId {
@@ -58,8 +60,8 @@ impl NetworkContext {
     #[cfg(any(test, feature = "testing", feature = "fuzzing"))]
     pub fn mock_with_peer_id(peer_id: PeerId) -> std::sync::Arc<Self> {
         std::sync::Arc::new(Self::new(
-            NetworkId::Validator,
             RoleType::Validator,
+            NetworkId::Validator,
             peer_id,
         ))
     }
@@ -67,8 +69,8 @@ impl NetworkContext {
     #[cfg(any(test, feature = "testing", feature = "fuzzing"))]
     pub fn mock() -> std::sync::Arc<Self> {
         std::sync::Arc::new(Self::new(
-            NetworkId::Validator,
             RoleType::Validator,
+            NetworkId::Validator,
             PeerId::random(),
         ))
     }
@@ -85,6 +87,41 @@ pub enum NetworkId {
     Validator,
     Public,
     Private(String),
+}
+
+impl Ord for NetworkId {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(other).unwrap()
+    }
+}
+
+impl PartialOrd for NetworkId {
+    /// Generalized ordering for determining which network is the most important.
+    /// The lower the ordering, the higher the importance (i.e., the validator
+    /// network is less than all other networks because it has the highest priority).
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        // To simplify logic below, if it's the same it's equal
+        Some(if self == other {
+            Ordering::Equal
+        } else {
+            // Everywhere below assumes that equal has already been covered
+            match self {
+                NetworkId::Validator => Ordering::Less,
+                NetworkId::Public => Ordering::Greater,
+                NetworkId::Private(_) => match other {
+                    NetworkId::Validator => Ordering::Greater,
+                    NetworkId::Public => Ordering::Less,
+                    NetworkId::Private(_) => {
+                        if self.is_vfn_network() {
+                            Ordering::Less
+                        } else {
+                            Ordering::Greater
+                        }
+                    }
+                },
+            }
+        })
+    }
 }
 
 /// An intra-node identifier for a network of a node unique for a network
@@ -135,10 +172,67 @@ impl fmt::Display for NetworkId {
     }
 }
 
+const VFN_NETWORK: &str = "vfn";
+
 impl NetworkId {
     /// Convenience function to specify the VFN network
     pub fn vfn_network() -> NetworkId {
-        NetworkId::Private("vfn".to_string())
+        NetworkId::Private(VFN_NETWORK.to_string())
+    }
+
+    pub fn is_vfn_network(&self) -> bool {
+        matches!(self, NetworkId::Private(network) if network == VFN_NETWORK)
+    }
+
+    pub fn is_validator_network(&self) -> bool {
+        matches!(self, NetworkId::Validator)
+    }
+
+    /// Roles for a prioritization of relative upstreams
+    pub fn upstream_roles(&self, role: &RoleType) -> &'static [PeerRole] {
+        match self {
+            NetworkId::Validator => &[PeerRole::Validator],
+            NetworkId::Public => &[
+                PeerRole::PreferredUpstream,
+                PeerRole::Upstream,
+                PeerRole::ValidatorFullNode,
+            ],
+            NetworkId::Private(_) => {
+                if self.is_vfn_network() {
+                    match role {
+                        RoleType::Validator => &[],
+                        RoleType::FullNode => &[PeerRole::Validator],
+                    }
+                } else {
+                    &[PeerRole::PreferredUpstream, PeerRole::Upstream]
+                }
+            }
+        }
+    }
+
+    /// Roles for a prioritization of relative downstreams
+    pub fn downstream_roles(&self, role: &RoleType) -> &'static [PeerRole] {
+        match self {
+            NetworkId::Validator => &[PeerRole::Validator],
+            // In order to allow fallbacks, we must allow for nodes to accept ValidatorFullNodes
+            NetworkId::Public => &[
+                PeerRole::ValidatorFullNode,
+                PeerRole::Downstream,
+                PeerRole::Known,
+                PeerRole::Unknown,
+            ],
+            NetworkId::Private(_) => {
+                if self.is_vfn_network() {
+                    match role {
+                        RoleType::Validator => &[PeerRole::ValidatorFullNode],
+                        RoleType::FullNode => &[],
+                    }
+                } else {
+                    // It's a private network, disallow unknown peers
+                    &[PeerRole::Downstream, PeerRole::Known]
+                }
+            }
+        }
     }
 
     pub fn as_str(&self) -> &str {
@@ -163,13 +257,32 @@ impl NetworkId {
     }
 }
 
+impl FromStr for NetworkId {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "Validator" => NetworkId::Validator,
+            "Public" => NetworkId::Public,
+            other => NetworkId::Private(other.to_string()),
+        })
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
 
     #[test]
+    fn test_ensure_network_id_order() {
+        assert!(NetworkId::Validator < NetworkId::vfn_network());
+        assert!(NetworkId::vfn_network() < NetworkId::Public);
+        assert!(NetworkId::Validator < NetworkId::Public);
+    }
+
+    #[test]
     fn test_serialization() {
-        let id = NetworkId::Private("fooo".to_string());
+        let id = NetworkId::vfn_network();
         let encoded = serde_yaml::to_string(&id).unwrap();
         let decoded: NetworkId = serde_yaml::from_str(encoded.as_str()).unwrap();
         assert_eq!(id, decoded);
@@ -188,13 +301,13 @@ mod test {
 
     #[test]
     fn test_network_context_serialization() {
-        let network_name = "Awesome".to_string();
-        let role = RoleType::Validator;
         let peer_id = PeerId::random();
-        let context = NetworkContext::new(NetworkId::Private(network_name.clone()), role, peer_id);
+        let context = NetworkContext::new(RoleType::Validator, NetworkId::vfn_network(), peer_id);
         let expected = format!(
-            "---\nnetwork_id: {}\nrole: {}\npeer_id: {}",
-            network_name, role, peer_id
+            "---\nrole: {}\nnetwork_id: {}\npeer_id: {:x}\n",
+            RoleType::Validator,
+            VFN_NETWORK,
+            peer_id
         );
         assert_eq!(expected, serde_yaml::to_string(&context).unwrap());
     }

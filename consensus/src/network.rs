@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -8,24 +8,23 @@ use crate::{
 };
 use anyhow::{anyhow, ensure};
 use bytes::Bytes;
-use channel::{self, libra_channel, message_queues::QueueStyle};
+use channel::{self, diem_channel, message_queues::QueueStyle};
 use consensus_types::{
     block_retrieval::{BlockRetrievalRequest, BlockRetrievalResponse, MAX_BLOCKS_PER_REQUEST},
     common::Author,
     sync_info::SyncInfo,
     vote_msg::VoteMsg,
 };
-use futures::{channel::oneshot, stream::select, SinkExt, Stream, StreamExt};
-use libra_logger::prelude::*;
-use libra_metrics::monitor;
-use libra_types::{
+use diem_logger::prelude::*;
+use diem_metrics::monitor;
+use diem_types::{
     account_address::AccountAddress, epoch_change::EpochChangeProof,
     validator_verifier::ValidatorVerifier,
 };
+use futures::{channel::oneshot, stream::select, SinkExt, Stream, StreamExt};
 use network::protocols::{network::Event, rpc::error::RpcError};
 use std::{
     mem::{discriminant, Discriminant},
-    num::NonZeroUsize,
     time::Duration,
 };
 
@@ -41,11 +40,11 @@ pub struct IncomingBlockRetrievalRequest {
 /// Will be returned by the NetworkTask upon startup.
 pub struct NetworkReceivers {
     /// Provide a LIFO buffer for each (Author, MessageType) key
-    pub consensus_messages: libra_channel::Receiver<
+    pub consensus_messages: diem_channel::Receiver<
         (AccountAddress, Discriminant<ConsensusMsg>),
         (AccountAddress, ConsensusMsg),
     >,
-    pub block_retrieval: libra_channel::Receiver<AccountAddress, IncomingBlockRetrievalRequest>,
+    pub block_retrieval: diem_channel::Receiver<AccountAddress, IncomingBlockRetrievalRequest>,
 }
 
 /// Implements the actual networking support for all consensus messaging.
@@ -196,11 +195,11 @@ impl NetworkSender {
 }
 
 pub struct NetworkTask {
-    consensus_messages_tx: libra_channel::Sender<
+    consensus_messages_tx: diem_channel::Sender<
         (AccountAddress, Discriminant<ConsensusMsg>),
         (AccountAddress, ConsensusMsg),
     >,
-    block_retrieval_tx: libra_channel::Sender<AccountAddress, IncomingBlockRetrievalRequest>,
+    block_retrieval_tx: diem_channel::Sender<AccountAddress, IncomingBlockRetrievalRequest>,
     all_events: Box<dyn Stream<Item = Event<ConsensusMsg>> + Send + Unpin>,
 }
 
@@ -210,14 +209,11 @@ impl NetworkTask {
         network_events: ConsensusNetworkEvents,
         self_receiver: channel::Receiver<Event<ConsensusMsg>>,
     ) -> (NetworkTask, NetworkReceivers) {
-        let (consensus_messages_tx, consensus_messages) = libra_channel::new(
+        let (consensus_messages_tx, consensus_messages) =
+            diem_channel::new(QueueStyle::LIFO, 1, Some(&counters::CONSENSUS_CHANNEL_MSGS));
+        let (block_retrieval_tx, block_retrieval) = diem_channel::new(
             QueueStyle::LIFO,
-            NonZeroUsize::new(1).unwrap(),
-            Some(&counters::CONSENSUS_CHANNEL_MSGS),
-        );
-        let (block_retrieval_tx, block_retrieval) = libra_channel::new(
-            QueueStyle::LIFO,
-            NonZeroUsize::new(1).unwrap(),
+            1,
             Some(&counters::BLOCK_RETRIEVAL_CHANNEL_MSGS),
         );
         let all_events = Box::new(select(network_events, self_receiver));
@@ -269,7 +265,7 @@ impl NetworkTask {
                             response_sender: callback,
                         };
                         if let Err(e) = self.block_retrieval_tx.push(peer_id, req_with_callback) {
-                            warn!(error = ?e, "libra channel closed");
+                            warn!(error = ?e, "diem channel closed");
                         }
                     }
                     _ => {
@@ -277,11 +273,11 @@ impl NetworkTask {
                         continue;
                     }
                 },
-                Event::NewPeer(peer_id, _origin) => {
-                    debug!(remote_peer = peer_id, "Peer connected");
+                Event::NewPeer(metadata) => {
+                    debug!(remote_peer = metadata.remote_peer_id, "Peer connected");
                 }
-                Event::LostPeer(peer_id, _origin) => {
-                    debug!(remote_peer = peer_id, "Peer disconnected");
+                Event::LostPeer(metadata) => {
+                    debug!(remote_peer = metadata.remote_peer_id, "Peer disconnected");
                 }
             }
         }

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -71,8 +71,8 @@ impl TempPath {
 
     pub fn create_as_file(&self) -> io::Result<()> {
         let mut builder = fs::OpenOptions::new();
-        ///////// 0L  /////////
-        builder.write(true).create(true); //overwrite keystore file
+        // Overwrite keystore file
+        builder.write(true).create(true); ///////// 0L  /////////
         builder.open(self.path())?;
         Ok(())
     }

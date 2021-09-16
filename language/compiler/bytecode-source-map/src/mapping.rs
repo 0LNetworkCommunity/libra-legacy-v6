@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{marking::MarkedSourceMapping, source_map::SourceMap};
 use anyhow::Result;
-use vm::file_format::{CompiledModule, CompiledScript};
+use move_binary_format::file_format::{CompiledModule, CompiledScript};
 
 /// An object that associates source code with compiled bytecode and source map.
 #[derive(Debug)]
@@ -41,8 +41,11 @@ impl<Location: Clone + Eq> SourceMapping<Location> {
         ))
     }
 
-    pub fn new_from_script(source_map: SourceMap<Location>, bytecode: CompiledScript) -> Self {
-        Self::new(source_map, bytecode.into_module().1)
+    pub fn new_from_script(bytecode: CompiledScript, default_loc: Location) -> Result<Self> {
+        Ok(Self::new(
+            SourceMap::dummy_from_script(&bytecode, default_loc)?,
+            bytecode.into_module().1,
+        ))
     }
 
     pub fn with_marks(&mut self, marks: MarkedSourceMapping) {

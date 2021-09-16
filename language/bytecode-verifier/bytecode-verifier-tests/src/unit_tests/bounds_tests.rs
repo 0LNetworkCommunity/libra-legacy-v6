@@ -1,18 +1,38 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use invalid_mutations::bounds::{
     ApplyCodeUnitBoundsContext, ApplyOutOfBoundsContext, CodeUnitBoundsMutation,
     OutOfBoundsMutation,
 };
-use libra_types::{account_address::AccountAddress, vm_status::StatusCode};
-use move_core_types::identifier::Identifier;
+use move_binary_format::{
+    check_bounds::BoundsChecker, file_format::*, file_format_common,
+    proptest_types::CompiledModuleStrategyGen,
+};
+use move_core_types::{
+    account_address::AccountAddress, identifier::Identifier, vm_status::StatusCode,
+};
 use proptest::{collection::vec, prelude::*};
-use vm::{check_bounds::BoundsChecker, file_format::*, proptest_types::CompiledModuleStrategyGen};
 
 #[test]
 fn empty_module_no_errors() {
     basic_test_module().freeze().unwrap();
+}
+
+#[test]
+fn invalid_default_module() {
+    let m = CompiledModuleMut {
+        version: file_format_common::VERSION_MAX,
+        ..Default::default()
+    };
+    m.freeze().unwrap_err();
+}
+
+#[test]
+fn invalid_self_module_handle_index() {
+    let mut m = basic_test_module();
+    m.self_module_handle_idx = ModuleHandleIndex(12);
+    m.freeze().unwrap_err();
 }
 
 #[test]
@@ -137,6 +157,26 @@ fn invalid_struct_as_type_actual_in_exists() {
     m.freeze().unwrap_err();
 }
 
+#[test]
+fn invalid_friend_module_address() {
+    let mut m = basic_test_module();
+    m.friend_decls.push(ModuleHandle {
+        address: AddressIdentifierIndex::new(m.address_identifiers.len() as TableIndex),
+        name: IdentifierIndex::new(0),
+    });
+    m.freeze().unwrap_err();
+}
+
+#[test]
+fn invalid_friend_module_name() {
+    let mut m = basic_test_module();
+    m.friend_decls.push(ModuleHandle {
+        address: AddressIdentifierIndex::new(0),
+        name: IdentifierIndex::new(m.identifiers.len() as TableIndex),
+    });
+    m.freeze().unwrap_err();
+}
+
 proptest! {
     #[test]
     fn valid_bounds(_module in CompiledModule::valid_strategy(20)) {
@@ -195,9 +235,11 @@ proptest! {
     ) {
         // If there are no module handles, the only other things that can be stored are intrinsic
         // data.
-        let mut module = CompiledModuleMut::default();
-        module.identifiers = identifiers;
-        module.address_identifiers = address_identifiers;
+        let module = CompiledModuleMut {
+            identifiers,
+            address_identifiers,
+            ..Default::default()
+        };
 
         prop_assert_eq!(
             BoundsChecker::verify(&module).map_err(|e| e.major_status()),

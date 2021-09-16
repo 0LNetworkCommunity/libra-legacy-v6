@@ -1,8 +1,8 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::config::SafetyRulesConfig;
-use libra_types::{account_address::AccountAddress, block_info::Round};
+use diem_types::{account_address::AccountAddress, block_info::Round};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf};
 
@@ -12,6 +12,10 @@ pub struct ConsensusConfig {
     pub contiguous_rounds: u32,
     pub max_block_size: u64,
     pub max_pruned_blocks_in_mem: usize,
+    // Timeout for consensus to get an ack from mempool for executed transactions (in milliseconds)
+    pub mempool_executed_txn_timeout_ms: u64,
+    // Timeout for consensus to pull transactions from mempool and get a response (in milliseconds)
+    pub mempool_txn_pull_timeout_ms: u64,
     pub round_initial_timeout_ms: u64,
     pub proposer_type: ConsensusProposerType,
     pub safety_rules: SafetyRulesConfig,
@@ -27,7 +31,9 @@ impl Default for ConsensusConfig {
         ConsensusConfig {
             contiguous_rounds: 2,
             max_block_size: 1000,
-            max_pruned_blocks_in_mem: 100, //////// 0L ////////
+            max_pruned_blocks_in_mem: 100,
+            mempool_txn_pull_timeout_ms: 1000,
+            mempool_executed_txn_timeout_ms: 1000,
             round_initial_timeout_ms: 1000,
             proposer_type: ConsensusProposerType::LeaderReputation(LeaderReputationConfig {
                 active_weights: 99,

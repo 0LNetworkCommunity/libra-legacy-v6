@@ -1,6 +1,6 @@
-module M {
+module 0x8675309::M {
     struct S { f: u64 }
-    resource struct R {}
+    struct R {}
 
     fun t0(u: u64, cond: bool, addr: address) {
         &0.f;

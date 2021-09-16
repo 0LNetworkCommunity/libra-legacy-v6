@@ -1,7 +1,7 @@
 use std::path::PathBuf;
-use libra_global_constants::NODE_HOME;
+use diem_global_constants::NODE_HOME;
 use structopt::StructOpt;
-use libra_management::error::Error;
+use diem_management::error::Error;
 use ol_keys::{wallet::get_account_from_prompt, scheme::KeyScheme};
 use crate::{storage_helper::StorageHelper};
 use dirs;

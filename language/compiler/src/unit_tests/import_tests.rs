@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::unit_tests::testutils::{
@@ -9,7 +9,7 @@ use crate::unit_tests::testutils::{
 fn compile_script_with_imports() {
     let code = String::from(
         "
-        import 0x1.LibraCoin;
+        import 0x1.DiemCoin;
 
         main() {
             let x: u64;
@@ -29,9 +29,9 @@ fn compile_module_with_imports() {
     let code = String::from(
         "
         module Foobar {
-            import 0x1.LibraCoin;
+            import 0x1.DiemCoin;
 
-            resource FooCoin { value: u64 }
+            struct FooCoin { value: u64 }
 
             public value(this: &Self.FooCoin): u64 {
                 let value_ref: &u64;

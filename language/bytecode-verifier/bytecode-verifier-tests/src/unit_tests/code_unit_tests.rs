@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use bytecode_verifier::CodeUnitVerifier;
-use libra_types::vm_status::StatusCode;
-use vm::file_format::{self, Bytecode};
+use move_binary_format::file_format::{self, Bytecode};
+use move_core_types::vm_status::StatusCode;
 
 #[test]
 fn invalid_fallthrough_br_true() {

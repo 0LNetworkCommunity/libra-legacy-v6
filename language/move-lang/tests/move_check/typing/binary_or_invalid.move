@@ -1,6 +1,6 @@
-module M {
+module 0x8675309::M {
     struct S { u: u64 }
-    resource struct R {
+    struct R {
         f: u64
     }
 
@@ -8,7 +8,7 @@ module M {
         0 || 1;
         1 || false;
         false || 1;
-        0x0 || 0x1;
+        @0x0 || @0x1;
         (0: u8) || (1: u128);
         r || r;
         s || s;

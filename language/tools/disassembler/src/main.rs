@@ -1,19 +1,18 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 
 use bytecode_source_map::{
     mapping::SourceMapping,
-    source_map::SourceMap,
     utils::{remap_owned_loc_to_loc, source_map_from_file, OwnedLoc},
 };
 use disassembler::disassembler::{Disassembler, DisassemblerOptions};
+use move_binary_format::file_format::{CompiledModule, CompiledScript};
 use move_coverage::coverage_map::CoverageMap;
 use move_ir_types::location::Spanned;
 use std::{fs, path::Path};
 use structopt::StructOpt;
-use vm::file_format::{CompiledModule, CompiledScript};
 
 #[derive(Debug, StructOpt)]
 #[structopt(
@@ -83,26 +82,27 @@ fn main() {
 
     let mut disassembler_options = DisassemblerOptions::new();
     disassembler_options.print_code = !args.skip_code;
-    disassembler_options.only_public = args.skip_private;
+    disassembler_options.only_externally_visible = args.skip_private;
     disassembler_options.print_basic_blocks = !args.skip_basic_blocks;
     disassembler_options.print_locals = !args.skip_locals;
 
     // TODO: make source mapping work with the Move source language
     let no_loc = Spanned::unsafe_no_loc(()).loc;
-    let mut source_mapping = if args.is_script {
-        let compiled_script = CompiledScript::deserialize(&bytecode_bytes)
-            .expect("Script blob can't be deserialized");
-        source_map
-            .or_else(|_| SourceMap::dummy_from_script(&compiled_script, no_loc))
-            .map(|source_map| SourceMapping::new_from_script(source_map, compiled_script))
-            .expect("Unable to build source mapping for compiled script")
-    } else {
-        let compiled_module = CompiledModule::deserialize(&bytecode_bytes)
-            .expect("Module blob can't be deserialized");
-        source_map
-            .or_else(|_| SourceMap::dummy_from_module(&compiled_module, no_loc))
-            .map(|source_map| SourceMapping::new(source_map, compiled_module))
-            .expect("Unable to build source mapping for compiled module")
+    let mut source_mapping = {
+        let bytecode = if args.is_script {
+            CompiledScript::deserialize(&bytecode_bytes)
+                .expect("Script blob can't be deserialized")
+                .into_module()
+                .1
+        } else {
+            CompiledModule::deserialize(&bytecode_bytes).expect("Module blob can't be deserialized")
+        };
+        if let Ok(s) = source_map {
+            SourceMapping::new(s, bytecode)
+        } else {
+            SourceMapping::new_from_module(bytecode, no_loc)
+                .expect("Unable to build dummy source mapping")
+        }
     };
 
     if let Some(source_code) = source {
@@ -112,7 +112,8 @@ fn main() {
     let mut disassembler = Disassembler::new(source_mapping, disassembler_options);
 
     if let Some(file_path) = &args.code_coverage_path {
-        disassembler.add_coverage_map(CoverageMap::from_binary_file(file_path));
+        disassembler
+            .add_coverage_map(CoverageMap::from_binary_file(file_path).to_unified_exec_map());
     }
 
     let dissassemble_string = disassembler.disassemble().expect("Unable to dissassemble");

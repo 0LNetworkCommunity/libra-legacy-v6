@@ -2,12 +2,15 @@
 
 use crate::node::node::Node;
 use anyhow::{Error, Result};
-use libra_json_rpc_client::{views::{AccountView, EventView}, AccountAddress};
-use libra_types::{account_state::AccountState, event::{EventHandle, EventKey}, transaction::Version};
+use diem_json_rpc_client::{views::{AccountView, EventView}, AccountAddress};
+use diem_types::{account_state::AccountState, event::{EventHandle, EventKey}, transaction::Version};
+use ol_types::{
+    autopay::{AutoPayResource, AutoPayView}, 
+    validator_config::{ValidatorConfigResource, ValidatorConfigView}
+};
 use resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator, NullStateView};
 use serde::{Deserialize, Serialize};
-use std::{convert::TryFrom};
-use ol_types::{autopay::{AutoPayResource, AutoPayView}, validator_config::{ValidatorConfigResource, ValidatorConfigView}};
+use std::convert::TryFrom;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 /// information on the owner account of this node.
@@ -23,7 +26,7 @@ pub struct OwnerAccountView {
     /// operator account
     operator_account: Option<AccountAddress>,
     /// operator balance
-    operator_balance: Option<f64>,    
+    operator_balance: Option<f64>,
 }
 
 impl OwnerAccountView {
@@ -35,7 +38,7 @@ impl OwnerAccountView {
             is_in_validator_set: false,
             autopay: None,
             operator_account: None,
-            operator_balance: None,
+            operator_balance: None,            
         }
     }
 
@@ -58,7 +61,7 @@ impl OwnerAccountView {
             Some(balance) => balance > 0.0,
             None => false
         }
-    }
+    }    
 }
 
 impl Node {
@@ -67,12 +70,18 @@ impl Node {
         match self.get_account_view() {
             Some(av) => {
                 self.vitals.account_view.balance = get_balance(av);
-                self.vitals.account_view.is_in_validator_set = self.is_in_validator_set();
-                self.vitals.account_view.autopay = self.get_autopay_view(self.vitals.account_view.address);
-                let operator = self.get_validator_operator_account(self.vitals.account_view.address);
+                self.vitals.account_view.is_in_validator_set = 
+                    self.is_in_validator_set();
+                self.vitals.account_view.autopay = 
+                    self.get_autopay_view(self.vitals.account_view.address);
+                let operator = 
+                    self.get_validator_operator_account(
+                        self.vitals.account_view.address
+                    );
                 self.vitals.account_view.operator_account = operator;
                 if operator.is_some() {
-                    self.vitals.account_view.operator_balance = self.get_account_balance(operator.unwrap());
+                    self.vitals.account_view.operator_balance = 
+                        self.get_account_balance(operator.unwrap());
                 }
                 Some(&self.vitals.account_view)
             }
@@ -83,8 +92,8 @@ impl Node {
     /// Get the account view struct
     pub fn get_account_view(&mut self) -> Option<AccountView> {
         let account = self.app_conf.profile.account;
-        match self.client.get_account(account, true) {
-            Ok((account_view, _)) => account_view,
+        match self.client.get_account(&account) {
+            Ok(account_view) => account_view,
             Err(_) => None
         }
     }
@@ -93,7 +102,7 @@ impl Node {
     pub fn get_autopay_view(&mut self, account: AccountAddress) -> Option<AutoPayView> {
         let state = self.get_account_state(account);
         match state {
-            Ok(state) => match state.get_resource::<AutoPayResource>(
+            Ok(state) => match state.get_resource_impl::<AutoPayResource>(
                 AutoPayResource::resource_path().as_slice()
             ) {
                 Ok(Some(res)) => Some(self.enrich_note(res.get_view())),
@@ -104,7 +113,7 @@ impl Node {
         }
     }
 
-    /// Enrich with notes from dictionary file
+    /// Enrich with notes from dictionary
     fn enrich_note(&mut self, mut autopay: AutoPayView) -> AutoPayView {
         let dic = self.load_account_dictionary();
         for payment in autopay.payments.iter_mut()  {
@@ -114,17 +123,20 @@ impl Node {
     }
 
     /// Get validator config view
-    pub fn get_validator_config(&mut self, address: AccountAddress) -> Option<ValidatorConfigView> {
+    pub fn get_validator_config(
+        &mut self, address: AccountAddress
+    ) -> Option<ValidatorConfigView> {
         let state = self.get_account_state(address);
         match state {
-            Ok(state) => match state.get_resource::<ValidatorConfigResource>(
+            Ok(state) => match state.get_resource_impl::<ValidatorConfigResource>(
                 ValidatorConfigResource::resource_path().as_slice()
             ) {
                 Ok(Some(res)) => {
                     let mut view = res.get_view();
                     let operator = view.operator_account;
                     if operator.is_some() {
-                        view.operator_has_balance = Some(self.has_positive_balance(operator.unwrap()))
+                        view.operator_has_balance = 
+                            Some(self.has_positive_balance(operator.unwrap()))
                     }
                     Some(view)
                 },
@@ -141,7 +153,9 @@ impl Node {
     }
 
     /// Get operator account addres from validator
-    pub fn get_validator_operator_account(&mut self, address: AccountAddress) -> Option<AccountAddress> {
+    pub fn get_validator_operator_account(
+        &mut self, address: AccountAddress
+    ) -> Option<AccountAddress> {
         match self.get_validator_config(address) {
             Some(config) => config.operator_account,
             None => None
@@ -150,18 +164,18 @@ impl Node {
 
     /// Get account balance
     pub fn get_account_balance(&mut self, address: AccountAddress) -> Option<f64> {
-        match self.client.get_account(address, true) {
-            Ok((account_view, _)) => Some(get_balance(account_view.unwrap())),
+        match self.client.get_account(&address) {
+            Ok(account_view) => Some(get_balance(account_view.unwrap())),
             Err(_) => None
         }
-    }
+    }    
 
     /// Return a full Move-annotated account resource struct
     pub fn get_annotate_account_blob(
         &mut self,
         account: AccountAddress,
     ) -> Result<(Option<AnnotatedAccountStateBlob>, Version)> {
-        let (blob, ver) = self.client.get_account_state_blob(account)?;
+        let (blob, ver) = self.client.get_account_state_blob(&account)?;
         if let Some(account_blob) = blob {
             let state_view = NullStateView::default();
             let annotator = MoveValueAnnotator::new(&state_view);
@@ -172,10 +186,10 @@ impl Node {
             Ok((None, ver))
         }
     }
-    
+
     /// get any account state with client
     pub fn get_account_state(&mut self, address: AccountAddress) -> Result<AccountState, Error> {
-        let (blob, _ver) = self.client.get_account_state_blob(address)?;
+        let (blob, _ver) = self.client.get_account_state_blob(&address)?;
         if let Some(account_blob) = blob {
             Ok(AccountState::try_from(&account_blob).unwrap())
         } else {
@@ -211,14 +225,14 @@ impl Node {
         start: u64,
         limit: u64,
     ) -> Result<Vec<EventView>> {
-        let key = hex::encode(event_key.as_bytes());
-        
-        self.client.get_events(key, start, limit)
+        self.client.get_events(*event_key, start, limit)
     }
 
     /// get all events associated with an EventHandle
     // change this to async and do paging.
-    pub fn get_handle_events(&mut self, event_handle: &EventHandle, seq_start: Option<u64>) -> Result<Vec<EventView>> {
+    pub fn get_handle_events(
+        &mut self, event_handle: &EventHandle, seq_start: Option<u64>
+    ) -> Result<Vec<EventView>> {
         if event_handle.count() == 0 {
             return Ok(vec![]);
         }
@@ -228,11 +242,11 @@ impl Node {
           seq_start.unwrap_or(0), 
           event_handle.count()
         )
-    }
+    }    
 }
 
 /// get balance from AccountView
-fn get_balance(account_view: AccountView) -> f64 {
+pub fn get_balance(account_view: AccountView) -> f64 {
     for av in account_view.balances.iter() {
         if av.currency == "GAS" {
             return av.amount as f64 / 1_000_000_f64; // apply scaling factor

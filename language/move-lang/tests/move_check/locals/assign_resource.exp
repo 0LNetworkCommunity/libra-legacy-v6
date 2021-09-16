@@ -3,7 +3,7 @@ error:
    ┌── tests/move_check/locals/assign_resource.move:5:13 ───
    │
  5 │         let r = R{};
-   │             ^ Unused assignment or binding for local 'r'. Consider removing or replacing it with '_'
+   │             ^ Unused assignment or binding for local 'r'. Consider removing, replacing with '_', or prefixing with '_' (e.g., '_r')
    │
 
 error: 
@@ -14,7 +14,13 @@ error:
    │         ^ Invalid assignment to local 'r'
    ·
  5 │         let r = R{};
-   │             - The local contains a resource value due to this assignment. The resource must be used before you assign to this local again
+   │             - The local contains a value due to this assignment. The value does not have the 'drop' ability and must be used before you assign to this local again
+   ·
+ 5 │         let r = R{};
+   │                 --- The type '0x8675309::M::R' does not have the ability 'drop'
+   ·
+ 2 │     struct R {}
+   │            - To satisfy the constraint, the 'drop' ability would need to be added here
    │
 
 error: 
@@ -25,7 +31,13 @@ error:
     │                     ^ Invalid assignment to local 'r'
     ·
  11 │         let r = R{};
-    │             - The local contains a resource value due to this assignment. The resource must be used before you assign to this local again
+    │             - The local contains a value due to this assignment. The value does not have the 'drop' ability and must be used before you assign to this local again
+    ·
+ 11 │         let r = R{};
+    │                 --- The type '0x8675309::M::R' does not have the ability 'drop'
+    ·
+  2 │     struct R {}
+    │            - To satisfy the constraint, the 'drop' ability would need to be added here
     │
 
 error: 
@@ -36,7 +48,13 @@ error:
     │                             ^ Invalid assignment to local 'r'
     ·
  17 │         let r = R{};
-    │             - The local contains a resource value due to this assignment. The resource must be used before you assign to this local again
+    │             - The local contains a value due to this assignment. The value does not have the 'drop' ability and must be used before you assign to this local again
+    ·
+ 17 │         let r = R{};
+    │                 --- The type '0x8675309::M::R' does not have the ability 'drop'
+    ·
+  2 │     struct R {}
+    │            - To satisfy the constraint, the 'drop' ability would need to be added here
     │
 
 error: 
@@ -47,7 +65,13 @@ error:
     │                        ^ Invalid assignment to local 'r'
     ·
  23 │         let r = R{};
-    │             - The local contains a resource value due to this assignment. The resource must be used before you assign to this local again
+    │             - The local contains a value due to this assignment. The value does not have the 'drop' ability and must be used before you assign to this local again
+    ·
+ 23 │         let r = R{};
+    │                 --- The type '0x8675309::M::R' does not have the ability 'drop'
+    ·
+  2 │     struct R {}
+    │            - To satisfy the constraint, the 'drop' ability would need to be added here
     │
 
 error: 
@@ -55,7 +79,7 @@ error:
     ┌── tests/move_check/locals/assign_resource.move:29:13 ───
     │
  29 │         let r = R{};
-    │             ^ Unused assignment or binding for local 'r'. Consider removing or replacing it with '_'
+    │             ^ Unused assignment or binding for local 'r'. Consider removing, replacing with '_', or prefixing with '_' (e.g., '_r')
     │
 
 error: 
@@ -66,7 +90,13 @@ error:
     │                ^ Invalid assignment to local 'r'
     ·
  29 │         let r = R{};
-    │             - The local might contain a resource value due to this assignment. The resource must be used before you assign to this local again
+    │             - The local might contain a value due to this assignment. The value does not have the 'drop' ability and must be used before you assign to this local again
+    ·
+ 29 │         let r = R{};
+    │                 --- The type '0x8675309::M::R' does not have the ability 'drop'
+    ·
+  2 │     struct R {}
+    │            - To satisfy the constraint, the 'drop' ability would need to be added here
     │
 
 error: 
@@ -77,6 +107,12 @@ error:
     │         ^ Invalid assignment to local 'x'
     ·
  33 │     fun t5<T>(x: T, y: T): T {
-    │               - The local might contain a resource value due to this assignment. The resource must be used before you assign to this local again
+    │               - The local contains a value due to this assignment. The value does not have the 'drop' ability and must be used before you assign to this local again
+    ·
+ 33 │     fun t5<T>(x: T, y: T): T {
+    │                  - The type 'T' does not have the ability 'drop'
+    ·
+ 33 │     fun t5<T>(x: T, y: T): T {
+    │            - To satisfy the constraint, the 'drop' ability would need to be added here
     │
 

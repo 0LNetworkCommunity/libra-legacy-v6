@@ -1,13 +1,19 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! Project and package linters that run queries on guppy.
 
-use crate::config::{BannedDepsConfig, EnforcedAttributesConfig, OverlayConfig};
-use guppy::{graph::feature::FeatureFilterFn, Version};
+use crate::config::{
+    BannedDepsConfig, EnforcedAttributesConfig, MoveToDiemDepsConfig, OverlayConfig,
+};
+use anyhow::anyhow;
+use guppy::{
+    graph::{feature::FeatureFilterFn, PackagePublish},
+    Version, VersionReq,
+};
+use hakari::summaries::HakariBuilderSummary;
 use std::{
     collections::{BTreeMap, HashMap},
-    ffi::OsStr,
     iter,
 };
 use x_core::WorkspaceStatus;
@@ -156,15 +162,11 @@ impl PackageLinter for CrateNamesPaths {
         }
 
         let workspace_path = ctx.workspace_path();
-        if let Some(path) = workspace_path.to_str() {
-            if path.contains('_') {
-                out.write(
-                    LintLevel::Error,
-                    "workspace path contains '_' (use '-' instead)",
-                );
-            }
-        } else {
-            // Workspace path is invalid UTF-8. A different lint should catch this.
+        if workspace_path.as_str().contains('_') {
+            out.write(
+                LintLevel::Error,
+                "workspace path contains '_' (use '-' instead)",
+            );
         }
 
         for build_target in ctx.metadata().build_targets() {
@@ -172,7 +174,7 @@ impl PackageLinter for CrateNamesPaths {
             if target_name.contains('_') {
                 // If the path is implicitly specified by the name, don't warn about it.
                 let file_stem = build_target.path().file_stem();
-                if file_stem != Some(OsStr::new(target_name)) {
+                if file_stem != Some(target_name) {
                     out.write(
                         LintLevel::Error,
                         format!(
@@ -182,47 +184,6 @@ impl PackageLinter for CrateNamesPaths {
                     );
                 }
             }
-        }
-
-        Ok(RunStatus::Executed)
-    }
-}
-
-/// Ensure libra-workspace-hack is a dependency
-#[derive(Debug)]
-pub struct WorkspaceHack;
-
-impl Linter for WorkspaceHack {
-    fn name(&self) -> &'static str {
-        "workspace-hack"
-    }
-}
-
-impl PackageLinter for WorkspaceHack {
-    fn run<'l>(
-        &self,
-        ctx: &PackageContext<'l>,
-        out: &mut LintFormatter<'l, '_>,
-    ) -> Result<RunStatus<'l>> {
-        let package = ctx.metadata();
-        let pkg_graph = ctx.package_graph();
-        let workspace_hack_id = pkg_graph
-            .workspace()
-            .member_by_name("libra-workspace-hack")
-            .expect("can't find libra-workspace-hack package")
-            .id();
-
-        // libra-workspace-hack does not need to depend on itself
-        if package.id() == workspace_hack_id {
-            return Ok(RunStatus::Executed);
-        }
-
-        let has_links = package.direct_links().next().is_some();
-        let has_hack_dep = pkg_graph
-            .directly_depends_on(package.id(), workspace_hack_id)
-            .expect("valid package ID");
-        if has_links && !has_hack_dep {
-            out.write(LintLevel::Error, "missing libra-workspace-hack dependency");
         }
 
         Ok(RunStatus::Executed)
@@ -261,15 +222,27 @@ impl PackageLinter for IrrelevantBuildDeps {
 
 /// Ensure that packages within the workspace only depend on one version of a third-party crate.
 #[derive(Debug)]
-pub struct DirectDepDups;
+pub struct DirectDepDups<'cfg> {
+    hakari_package: &'cfg str,
+}
 
-impl Linter for DirectDepDups {
+impl<'cfg> DirectDepDups<'cfg> {
+    pub fn new(hakari_config: &'cfg HakariBuilderSummary) -> crate::Result<Self> {
+        let hakari_package = hakari_config
+            .hakari_package
+            .as_deref()
+            .ok_or_else(|| anyhow!("hakari.hakari-package not defined in x.toml"))?;
+        Ok(Self { hakari_package })
+    }
+}
+
+impl<'cfg> Linter for DirectDepDups<'cfg> {
     fn name(&self) -> &'static str {
         "direct-dep-dups"
     }
 }
 
-impl ProjectLinter for DirectDepDups {
+impl<'cfg> ProjectLinter for DirectDepDups<'cfg> {
     fn run<'l>(
         &self,
         ctx: &ProjectContext<'l>,
@@ -282,6 +255,10 @@ impl ProjectLinter for DirectDepDups {
         package_graph.query_workspace().resolve_with_fn(|_, link| {
             // Collect direct dependencies of workspace packages.
             let (from, to) = link.endpoints();
+            if from.name() == self.hakari_package {
+                // Skip the workspace hack package.
+                return false;
+            }
             if from.in_workspace() && !to.in_workspace() {
                 direct_deps
                     .entry(to.name())
@@ -361,12 +338,10 @@ impl<'cfg> PackageLinter for OverlayFeatures<'cfg> {
 
         let package_graph = ctx.package_graph();
 
-        let package_query = package_graph
-            .query_forward(iter::once(package.id()))
-            .expect("valid package ID");
         let feature_query = package_graph
-            .feature_graph()
-            .query_packages(&package_query, filter);
+            .query_forward(iter::once(package.id()))
+            .expect("valid package ID")
+            .to_feature_query(filter);
 
         let mut overlays: Vec<(Option<&str>, &str, Option<&str>)> = vec![];
 
@@ -407,8 +382,216 @@ impl<'cfg> PackageLinter for OverlayFeatures<'cfg> {
 }
 
 fn feature_str(feature: Option<&str>) -> &str {
-    match feature {
-        Some(feature) => feature,
-        None => "[base]",
+    feature.unwrap_or("[base]")
+}
+
+/// Ensure that all unpublished packages only use path dependencies for workspace dependencies
+#[derive(Debug)]
+pub struct UnpublishedPackagesOnlyUsePathDependencies {
+    no_version_req: VersionReq,
+}
+
+impl UnpublishedPackagesOnlyUsePathDependencies {
+    pub fn new() -> Self {
+        Self {
+            no_version_req: VersionReq::parse(">=0.0.0").expect(">=0.0.0 should be a valid req"),
+        }
+    }
+}
+
+impl Linter for UnpublishedPackagesOnlyUsePathDependencies {
+    fn name(&self) -> &'static str {
+        "unpublished-packages-only-use-path-dependencies"
+    }
+}
+
+impl PackageLinter for UnpublishedPackagesOnlyUsePathDependencies {
+    fn run<'l>(
+        &self,
+        ctx: &PackageContext<'l>,
+        out: &mut LintFormatter<'l, '_>,
+    ) -> Result<RunStatus<'l>> {
+        let metadata = ctx.metadata();
+
+        // Skip all packages which aren't 'publish = false'
+        if !metadata.publish().is_never() {
+            return Ok(RunStatus::Executed);
+        }
+
+        for direct_dep in metadata.direct_links().filter(|p| p.to().in_workspace()) {
+            if direct_dep.version_req() != &self.no_version_req {
+                let msg = format!(
+                    "unpublished package specifies a version of first-party dependency '{}'; \
+                    unpublished packages should only use path dependencies for first-party packages.",
+                    direct_dep.dep_name(),
+                );
+                out.write(LintLevel::Error, msg);
+            }
+        }
+
+        Ok(RunStatus::Executed)
+    }
+}
+
+/// Ensure that all published packages only depend on other, published packages
+#[derive(Debug)]
+pub struct PublishedPackagesDontDependOnUnpublishedPackages;
+
+impl Linter for PublishedPackagesDontDependOnUnpublishedPackages {
+    fn name(&self) -> &'static str {
+        "published-packages-dont-depend-on-unpublished-packages"
+    }
+}
+
+impl PackageLinter for PublishedPackagesDontDependOnUnpublishedPackages {
+    fn run<'l>(
+        &self,
+        ctx: &PackageContext<'l>,
+        out: &mut LintFormatter<'l, '_>,
+    ) -> Result<RunStatus<'l>> {
+        let metadata = ctx.metadata();
+
+        // Skip all packages which aren't publishable
+        if metadata.publish().is_never() {
+            return Ok(RunStatus::Executed);
+        }
+
+        for direct_dep in metadata
+            .direct_links()
+            .filter(|p| !p.dev_only() && p.to().in_workspace())
+        {
+            // If the direct dependency isn't publishable
+            if direct_dep.to().publish().is_never() {
+                out.write(
+                    LintLevel::Error,
+                    format!(
+                        "published package can't depend on unpublished package '{}'",
+                        direct_dep.dep_name()
+                    ),
+                );
+            }
+        }
+
+        Ok(RunStatus::Executed)
+    }
+}
+
+/// Only allow crates to be published to crates.io
+#[derive(Debug)]
+pub struct OnlyPublishToCratesIo;
+
+impl Linter for OnlyPublishToCratesIo {
+    fn name(&self) -> &'static str {
+        "only-publish-to-crates-io"
+    }
+}
+
+impl PackageLinter for OnlyPublishToCratesIo {
+    fn run<'l>(
+        &self,
+        ctx: &PackageContext<'l>,
+        out: &mut LintFormatter<'l, '_>,
+    ) -> Result<RunStatus<'l>> {
+        let metadata = ctx.metadata();
+
+        let is_ok = match metadata.publish() {
+            PackagePublish::Unrestricted => false,
+            PackagePublish::Registries(&[ref registry]) => registry == PackagePublish::CRATES_IO,
+            // Unpublished package.
+            PackagePublish::Registries(&[]) => true,
+            // Multiple registries or something else.
+            _ => false,
+        };
+
+        if !is_ok {
+            out.write(
+                LintLevel::Error,
+                "published package should only be publishable to crates.io. \
+                    If you intend to publish this package, ensure the 'publish' \
+                    field in the package's Cargo.toml is 'publish = [\"crates-io\"]. \
+                    Otherwise set the 'publish' field to 'publish = false'.",
+            );
+        }
+
+        Ok(RunStatus::Executed)
+    }
+}
+
+// Ensure that Move crates do not depend on Diem crates.
+#[derive(Debug)]
+pub struct MoveCratesDontDependOnDiemCrates<'cfg> {
+    config: &'cfg MoveToDiemDepsConfig,
+}
+
+impl<'cfg> MoveCratesDontDependOnDiemCrates<'cfg> {
+    pub fn new(config: &'cfg MoveToDiemDepsConfig) -> Self {
+        Self { config }
+    }
+}
+
+impl<'cfg> Linter for MoveCratesDontDependOnDiemCrates<'cfg> {
+    fn name(&self) -> &'static str {
+        "move-crates-dont-depend-on-diem-crates"
+    }
+}
+
+impl<'cfg> PackageLinter for MoveCratesDontDependOnDiemCrates<'cfg> {
+    fn run<'l>(
+        &self,
+        ctx: &PackageContext<'l>,
+        out: &mut LintFormatter<'l, '_>,
+    ) -> Result<RunStatus<'l>> {
+        let metadata = ctx.metadata();
+
+        let crate_name = metadata.name();
+        let crate_path = metadata.source().to_string();
+
+        // Determine if a crate is considered a Move crate or Diem crate.
+        //
+        // Current criteria:
+        //   1. All crates outside language are considered Diem crates.
+        //   2. All crates inside language are considered Move crates, unless marked otherwise.
+        let is_move_crate = |crate_path: &str, crate_name: &str| {
+            if crate_path.starts_with("language/") {
+                if self.config.diem_crates_in_language.contains(crate_name) {
+                    return false;
+                }
+                return true;
+            }
+            false
+        };
+
+        let is_existing_move_to_diem_dep = |name1: &str, name2: &str| {
+            self.config
+                .existing_deps
+                .contains(&(name1.to_string(), name2.to_string()))
+        };
+
+        if is_move_crate(&crate_path, crate_name) {
+            for direct_dep in metadata.direct_links() {
+                let dep = direct_dep.to();
+                let dep_name = dep.name();
+
+                if dep.in_workspace()
+                    && !self.config.exclude.contains(dep_name)
+                    && !is_move_crate(&dep.source().to_string(), dep_name)
+                    && !is_existing_move_to_diem_dep(crate_name, dep_name)
+                {
+                    println!("(\"{}\", \"{}\"),", crate_name, dep_name);
+                    out.write(
+                        LintLevel::Error,
+                        format!(
+                            "depending on non-move crate `{}`\n\
+                                Note: all crates in language/ are considered Move crates by default. \
+                                If you are creating a new Diem crate in language, you need to add its name to the \
+                                diem_crates_in_language list in x.toml to make the linter recognize it.",
+                            dep_name
+                        ),
+                    );
+                }
+            }
+        }
+
+        Ok(RunStatus::Executed)
     }
 }

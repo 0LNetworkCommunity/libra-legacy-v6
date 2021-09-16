@@ -1,6 +1,6 @@
-module ReachingDefTest {
+module 0x42::ReachingDefTest {
 
-    resource struct R {
+    struct R has key {
         x: u64,
         y: bool
     }

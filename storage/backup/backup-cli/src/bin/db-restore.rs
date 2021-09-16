@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::Result;
@@ -12,8 +12,8 @@ use backup_cli::{
     storage::StorageOpt,
     utils::{GlobalRestoreOpt, GlobalRestoreOptions},
 };
-use libra_logger::{prelude::*, Level, Logger};
-use libra_secure_push_metrics::MetricsPusher;
+use diem_logger::{prelude::*, Level, Logger};
+use diem_secure_push_metrics::MetricsPusher;
 use std::convert::TryInto;
 use structopt::StructOpt;
 
@@ -63,7 +63,7 @@ async fn main() -> Result<()> {
 }
 
 async fn main_impl() -> Result<()> {
-    Logger::new().level(Level::Info).init();
+    Logger::new().level(Level::Info).read_env().init();
     let _mp = MetricsPusher::start();
 
     let opt = Opt::from_args();
@@ -71,8 +71,8 @@ async fn main_impl() -> Result<()> {
 
     match opt.restore_type {
         RestoreType::EpochEnding { opt, storage } => {
-            EpochEndingRestoreController::new(opt, global_opt, storage.init_storage().await?, None)
-                .run()
+            EpochEndingRestoreController::new(opt, global_opt, storage.init_storage().await?)
+                .run(None)
                 .await?;
         }
         RestoreType::StateSnapshot { opt, storage } => {

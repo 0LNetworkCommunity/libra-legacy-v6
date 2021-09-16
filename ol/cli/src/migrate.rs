@@ -9,7 +9,7 @@
 /// code is not performance optimized
 /// reads and writes the config file for each attribute, but it's a one time job...
 ///
-use libra_global_constants::{CONFIG_FILE, NODE_HOME};
+use diem_global_constants::{CONFIG_FILE, NODE_HOME};
 
 use chrono::{DateTime, Utc};
 use fs_extra::file::{copy, CopyOptions};
@@ -39,7 +39,7 @@ fn migrate_toml(config_file: PathBuf, node_home: PathBuf) {
 
     // ---------------------- udate [workspace] config start ----------------------
     let default_db_path = node_home.join("db").as_path().display().to_string();
-    let default_source_path = dirs::home_dir().unwrap().join("libra").as_path().display().to_string();
+    let default_source_path = dirs::home_dir().unwrap().join("diem").as_path().display().to_string();
     add_or_update_s(&config_file, "workspace", "db_path", default_db_path);
     add_or_update_s(&config_file, "workspace", "source_path", default_source_path);
     // ---------------------- udate [workspace] config finished ----------------------

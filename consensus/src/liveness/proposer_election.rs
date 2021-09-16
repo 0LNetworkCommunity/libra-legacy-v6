@@ -1,10 +1,11 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use consensus_types::{
     block::Block,
     common::{Author, Round},
 };
+use fallible::copy_from_slice::copy_slice_to_vec;
 
 /// ProposerElection incorporates the logic of choosing a leader among multiple candidates.
 /// We are open to a possibility for having multiple proposers per round, the ultimate choice
@@ -32,9 +33,9 @@ pub trait ProposerElection {
 // next continuously mutates a state and returns a u64-index
 pub(crate) fn next(state: &mut Vec<u8>) -> u64 {
     // state = SHA-3-256(state)
-    *state = libra_crypto::HashValue::sha3_256_of(state).to_vec();
+    *state = diem_crypto::HashValue::sha3_256_of(state).to_vec();
     let mut temp = [0u8; 8];
-    temp.copy_from_slice(&state[..8]);
+    copy_slice_to_vec(&state[..8], &mut temp).expect("next failed");
     // return state[0..8]
     u64::from_le_bytes(temp)
 }

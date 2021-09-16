@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -9,43 +9,40 @@
 //! [`storage-client`](../storage-client/index.html) instead of via
 
 use anyhow::Result;
-use libra_config::config::NodeConfig;
-use libra_logger::prelude::*;
-use libra_secure_net::NetworkServer;
-use libra_types::{account_state_blob::AccountStateBlob, proof::SparseMerkleProof};
-use libradb::LibraDB;
+use diem_config::config::NodeConfig;
+use diem_logger::prelude::*;
+use diem_secure_net::NetworkServer;
+use diem_types::{account_state_blob::AccountStateBlob, proof::SparseMerkleProof};
+use diemdb::DiemDB;
 use std::{
     sync::Arc,
     thread::{self, JoinHandle},
 };
 use storage_interface::{DbReader, DbWriter, Error, StartupInfo};
 
-/// Starts storage service with a given LibraDB
-pub fn start_storage_service_with_db(
-    config: &NodeConfig,
-    libra_db: Arc<LibraDB>,
-) -> JoinHandle<()> {
-    let storage_service = StorageService { db: libra_db };
+/// Starts storage service with a given DiemDB
+pub fn start_storage_service_with_db(config: &NodeConfig, diem_db: Arc<DiemDB>) -> JoinHandle<()> {
+    let storage_service = StorageService { db: diem_db };
     storage_service.run(config)
 }
 
 #[derive(Clone)]
 pub struct StorageService {
-    db: Arc<LibraDB>,
+    db: Arc<DiemDB>,
 }
 
 impl StorageService {
     fn handle_message(&self, input_message: Vec<u8>) -> Result<Vec<u8>, Error> {
-        let input = lcs::from_bytes(&input_message)?;
+        let input = bcs::from_bytes(&input_message)?;
         let output = match input {
             storage_interface::StorageRequest::GetAccountStateWithProofByVersionRequest(req) => {
-                lcs::to_bytes(&self.get_account_state_with_proof_by_version(&req))
+                bcs::to_bytes(&self.get_account_state_with_proof_by_version(&req))
             }
             storage_interface::StorageRequest::GetStartupInfoRequest => {
-                lcs::to_bytes(&self.get_startup_info())
+                bcs::to_bytes(&self.get_startup_info())
             }
             storage_interface::StorageRequest::SaveTransactionsRequest(req) => {
-                lcs::to_bytes(&self.save_transactions(&req))
+                bcs::to_bytes(&self.save_transactions(&req))
             }
         };
         Ok(output?)
@@ -54,7 +51,13 @@ impl StorageService {
     fn get_account_state_with_proof_by_version(
         &self,
         req: &storage_interface::GetAccountStateWithProofByVersionRequest,
-    ) -> Result<(Option<AccountStateBlob>, SparseMerkleProof), Error> {
+    ) -> Result<
+        (
+            Option<AccountStateBlob>,
+            SparseMerkleProof<AccountStateBlob>,
+        ),
+        Error,
+    > {
         Ok(self
             .db
             .get_account_state_with_proof_by_version(req.address, req.version)?)
@@ -78,14 +81,16 @@ impl StorageService {
     fn run(self, config: &NodeConfig) -> JoinHandle<()> {
         let mut network_server =
             NetworkServer::new("storage", config.storage.address, config.storage.timeout_ms);
-        thread::spawn(move || loop {
+        let ret = thread::spawn(move || loop {
             if let Err(e) = self.process_one_message(&mut network_server) {
                 warn!(
                     error = ?e,
                     "Failed to process message.",
                 );
             }
-        })
+        });
+        info!("StorageService spawned.");
+        ret
     }
 
     fn process_one_message(&self, network_server: &mut NetworkServer) -> Result<(), Error> {

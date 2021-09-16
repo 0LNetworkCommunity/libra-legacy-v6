@@ -1,6 +1,6 @@
-// ensure that generic structs instantiated with resource types behave like resources
+// ensure that generic structs instantiated with struct types behave like resources
 module M1 {
-    resource MyResource { b: bool }
+    struct MyResource { b: bool }
     struct S<T> { t: T }
 
     // verifer should reject; didn't move resource;
@@ -9,11 +9,11 @@ module M1 {
     }
 }
 
-// check: UNSAFE_RET_UNUSED_RESOURCES
+// check: UNSAFE_RET_UNUSED_VALUES_WITHOUT_DROP
 
 //! new-transaction
 module M2 {
-    resource MyResource { b: bool }
+    struct MyResource { b: bool }
     struct S<T> { t: T }
 
     // verifier should reject; drops s2 on the floor
@@ -27,7 +27,7 @@ module M2 {
 
 //! new-transaction
 module M3 {
-    resource MyResource { b: bool }
+    struct MyResource { b: bool }
     struct S<T> { t: T }
 
     // verifier should reject; copies s
@@ -36,11 +36,11 @@ module M3 {
     }
 }
 
-// check: READREF_RESOURCE_ERROR
+// check: READREF_WITHOUT_COPY_ABILITY
 
 //! new-transaction
 module M4 {
-    resource MyResource { b: bool }
+    struct MyResource { b: bool }
     struct S<T> { t: T }
 
     // verifier should reject; drops s1 on the floor
@@ -50,11 +50,11 @@ module M4 {
     }
 }
 
-// check: WRITEREF_RESOURCE_ERROR
+// check: WRITEREF_WITHOUT_DROP_ABILITY
 
 //! new-transaction
 module M5 {
-    resource MyResource { b: bool }
+    struct MyResource { b: bool }
     struct S<T> { t: T }
 
     // verifier should reject; copies s
@@ -63,4 +63,4 @@ module M5 {
     }
 }
 
-// check: COPYLOC_RESOURCE_ERROR
+// check: COPYLOC_WITHOUT_COPY_ABILITY

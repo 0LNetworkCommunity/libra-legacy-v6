@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use std::convert::AsRef;
@@ -90,15 +90,5 @@ impl<T> LineSp<T> {
 impl<T> AsRef<T> for LineSp<T> {
     fn as_ref(&self) -> &T {
         self.as_inner()
-    }
-}
-
-/// Checks if `s` starts with `prefix`. If yes, returns a reference to the remaining part
-/// with the prefix stripped away.
-pub fn strip<'a>(s: &'a str, prefix: &str) -> Option<&'a str> {
-    if s.starts_with(prefix) {
-        Some(&s[prefix.len()..])
-    } else {
-        None
     }
 }

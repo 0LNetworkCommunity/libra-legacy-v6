@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use super::*;
@@ -6,7 +6,7 @@ use crate::storage::test_util::{
     arb_backups, arb_metadata_files, test_save_and_list_metadata_files_impl,
     test_write_and_read_impl,
 };
-use libra_temppath::TempPath;
+use diem_temppath::TempPath;
 use proptest::prelude::*;
 use tokio::runtime::Runtime;
 
@@ -21,7 +21,7 @@ proptest! {
         tmpdir.create_as_dir().unwrap();
         let store = LocalFs::new(tmpdir.path().to_path_buf());
 
-        let mut rt = Runtime::new().unwrap();
+        let rt = Runtime::new().unwrap();
         rt.block_on(test_write_and_read_impl(Box::new(store), backups));
     }
 
@@ -33,7 +33,7 @@ proptest! {
         tmpdir.create_as_dir().unwrap();
         let store = LocalFs::new(tmpdir.path().to_path_buf());
 
-        let mut rt = Runtime::new().unwrap();
+        let rt = Runtime::new().unwrap();
         rt.block_on(test_save_and_list_metadata_files_impl(Box::new(store), input));
     }
 }

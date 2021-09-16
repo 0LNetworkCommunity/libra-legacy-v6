@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 // Allow KiB, MiB consts
@@ -7,19 +7,21 @@
 #![allow(clippy::trivially_copy_pass_by_ref)]
 // Allow writing 1 * KiB or 1 * MiB
 #![allow(clippy::identity_op)]
+// Criterion API has changed, TODO: Remove parameterized groups, and bench()
+#![allow(deprecated)]
 
 use bytes::Bytes;
 use criterion::{
     criterion_group, criterion_main, AxisScale, Bencher, Criterion, ParameterizedBenchmark,
     PlotConfiguration, Throughput,
 };
+use diem_types::PeerId;
 use futures::{
     channel::mpsc,
     executor::block_on,
     sink::SinkExt,
     stream::{FuturesUnordered, StreamExt},
 };
-use libra_types::PeerId;
 use network::protocols::{network::Event, rpc::error::RpcError};
 use network_builder::dummy::{setup_network, DummyMsg, DummyNetworkSender};
 use std::time::Duration;
@@ -78,7 +80,7 @@ fn rpc_bench(b: &mut Bencher, msg_len: &usize) {
     // Compose RequestBlock message and RespondBlock message with `msg_len` bytes payload
     let req = DummyMsg(vec![]);
     let res = DummyMsg(vec![0u8; *msg_len]);
-    let res: Bytes = lcs::to_bytes(&res)
+    let res: Bytes = bcs::to_bytes(&res)
         .expect("failed to serialize message")
         .into();
 
@@ -123,7 +125,7 @@ async fn send_rpc(
 }
 
 fn network_crate_benchmark(c: &mut Criterion) {
-    ::libra_logger::Logger::init_for_testing();
+    ::diem_logger::Logger::init_for_testing();
 
     // Parameterize benchmarks over the message length.
     let msg_lens = vec![32usize, 256, 1 * KiB, 4 * KiB, 64 * KiB, 256 * KiB, 1 * MiB];

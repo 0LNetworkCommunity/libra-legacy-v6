@@ -1,6 +1,6 @@
 use crate::explorer::App;
 use crate::{cache::Vitals};
-use libra_types::{account_address::AccountAddress, account_state::AccountState};
+use diem_types::{account_address::AccountAddress, account_state::AccountState};
 use std::convert::TryFrom;
 use tui::layout::Alignment;
 use tui::{
@@ -54,11 +54,11 @@ where
     } else {
         "web monitor is NOT SERVING"
     };
-    let mut status_db_bootstrapped = "LibraDB is NOT BOOTSTRAPPED";
+    let mut status_db_bootstrapped = "DiemDB is NOT BOOTSTRAPPED";
     
     let status_file = if cached_vitals.items.db_files_exist {
         if cached_vitals.items.db_restored {
-            status_db_bootstrapped = "LibraDB is bootstrapped."
+            status_db_bootstrapped = "DiemDB is bootstrapped."
         }
         "DB files exist".to_owned()
     } else {
@@ -295,9 +295,9 @@ where
         let meta = metadata.unwrap();
         let text = vec![
             Spans::from(vec![
-                Span::from("Libra Version: "),
+                Span::from("Diem Version: "),
                 Span::styled(
-                    format!("{}", meta.libra_version.unwrap()),
+                    format!("{}", meta.diem_version.unwrap()),
                     Style::default().add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("    Chain ID: "),
@@ -322,7 +322,7 @@ where
             ]),
             Spans::from(vec![
                 Span::raw(" Root Hash: "),
-                Span::raw(meta.accumulator_root_hash),
+                Span::raw(meta.accumulator_root_hash.to_hex()),
             ]),
             Spans::from(format!(
                 "Allow Publish Module: {}",
@@ -429,9 +429,10 @@ where
     B: Backend,
 {
     let mut items: Vec<Row<'_>> = vec![];
-    let (blob, _version) = match app.node.client.get_account_state_blob(AccountAddress::ZERO) {
-        Ok(t) => t,
-        Err(_) => (None, 0),
+    let (blob, _version) = 
+        match app.node.client.get_account_state_blob(&AccountAddress::ZERO) {
+            Ok(t) => t,
+            Err(_) => (None, 0),
     };
     if let Some(account_blob) = blob {
         let account_state = AccountState::try_from(&account_blob).unwrap();

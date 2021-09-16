@@ -2,10 +2,9 @@
 
 #![allow(clippy::never_loop)]
 
-use std::{path::PathBuf, process::exit};
-
 use abscissa_core::{Command, Options, Runnable};
 use crate::relay::relay_from_file;
+use std::{path::PathBuf, process::exit};
 
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Options)]
@@ -14,7 +13,6 @@ pub struct RelayCmd {
     #[options(short = "f", help = "Path to relay file")]
     relay_file: PathBuf,
 }
-
 
 impl Runnable for RelayCmd {    
     fn run(&self) {

@@ -2,15 +2,13 @@
 
 #![allow(clippy::never_loop)]
 
-use std::{fs::File, path::{PathBuf}};
-
+use std::{fs::File, io::Write, path::{PathBuf}};
 use crate::{application::app_config};
 use abscissa_core::{Command, Options, Runnable};
-use libra_genesis_tool::node_files;
-use libra_types::waypoint::Waypoint;
-use std::io::Write;
-
+use diem_genesis_tool::ol_node_files;
+use diem_types::waypoint::Waypoint;
 use ol_types::config::AppCfg;
+
 /// `files` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct FilesCmd {
@@ -20,14 +18,13 @@ pub struct FilesCmd {
     github_org: Option<String>,
     #[options(help = "repo with with genesis transactions")]
     repo: Option<String>,   
-    #[options(help = "build genesis from ceremony repo")]
-    rebuild_genesis: bool, 
+    #[options(help = "use a genesis file instead of building")]
+    prebuilt_genesis: Option<PathBuf>,
     #[options(help = "only make fullnode config files")]
     fullnode_only: bool,
     #[options(help = "optional waypoint")]
-    waypoint: Option<Waypoint>,
+    waypoint: Option<Waypoint>,    
 }
-
 
 impl Runnable for FilesCmd {
     /// Print version message
@@ -38,7 +35,7 @@ impl Runnable for FilesCmd {
             &self.chain_id,
             &self.github_org,
             &self.repo,
-            &self.rebuild_genesis,
+            &self.prebuilt_genesis,
             &self.fullnode_only,
             self.waypoint,
         ) 
@@ -46,12 +43,12 @@ impl Runnable for FilesCmd {
 }
 
 /// create genesis files
-fn genesis_files(
+pub fn genesis_files(
     miner_config: &AppCfg,
     chain_id: &Option<u8>,
     github_org: &Option<String>,
     repo: &Option<String>,
-    rebuild_genesis: &bool,
+    prebuilt_genesis: &Option<PathBuf>,
     fullnode_only: &bool,
     way_opt: Option<Waypoint>,
 ) {
@@ -59,18 +56,21 @@ fn genesis_files(
     // 0L convention is for the namespace of the operator to be appended by '-oper'
     let namespace = miner_config.profile.auth_key.clone() + "-oper";
     
-    node_files::write_node_config_files(
+    ol_node_files::write_node_config_files(
         home_dir.clone(), 
         chain_id.unwrap_or(1),
         &github_org.clone().unwrap_or("OLSF".to_string()),
         &repo.clone().unwrap_or("experimetal-genesis".to_string()),
         &namespace,
-        rebuild_genesis,
+        prebuilt_genesis,
         fullnode_only,
-        way_opt
+        way_opt,
+        &None,
     ).unwrap();
 
-    println!("validator configurations initialized, file saved to: {:?}", &home_dir.join("validator.node.yaml"));
+    println!("validator configurations initialized, file saved to: {:?}", 
+        &home_dir.join("validator.node.yaml")
+    );
 
 }
 
@@ -84,10 +84,13 @@ pub fn get_files(
     let repo = repo.clone().unwrap_or("genesis-archive".to_string());
 
 
-    let base_url = format!("https://raw.githubusercontent.com/{github_org}/{repo}/main/genesis/", github_org=github_org, repo=repo);
+    let base_url = format!(
+        "https://raw.githubusercontent.com/{github_org}/{repo}/main/genesis/", 
+        github_org=github_org, 
+        repo=repo
+    );
 
-    let w_res = reqwest::blocking::get(&format!("{}genesis_waypoint", base_url));
-
+    let w_res = reqwest::blocking::get(&format!("{}genesis_waypoint.txt", base_url));
     let w_path = &home_dir.join("genesis_waypoint");
     let mut w_file = File::create(&w_path).expect("couldn't create file");
     let w_content =  w_res.unwrap().text().unwrap();

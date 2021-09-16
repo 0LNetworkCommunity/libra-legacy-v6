@@ -1,21 +1,23 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use bytecode_verifier::verify_module;
 use compiler::Compiler;
-use language_e2e_tests::{
-    account::AccountData, compile::compile_script_with_address, executor::FakeExecutor,
-};
-use libra_types::{
+use diem_types::{
     transaction::{Module, SignedTransaction, Transaction, TransactionStatus},
     vm_status::KeptVMStatus,
 };
-use vm::CompiledModule;
+use language_e2e_tests::{
+    account::AccountData, compile::compile_script_with_address, current_function_name,
+    executor::FakeExecutor,
+};
+use move_binary_format::CompiledModule;
 
 #[test]
 fn move_from_across_blocks() {
     let mut executor = FakeExecutor::from_genesis_file();
-    let sender = AccountData::new(1_000_000, 10);
+    executor.set_golden_file(current_function_name!());
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
 
     // publish module with add and remove resource
@@ -93,7 +95,8 @@ fn move_from_across_blocks() {
 #[test]
 fn borrow_after_move() {
     let mut executor = FakeExecutor::from_genesis_file();
-    let sender = AccountData::new(1_000_000, 10);
+    executor.set_golden_file(current_function_name!());
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
 
     // publish module with add and remove resource
@@ -143,7 +146,8 @@ fn borrow_after_move() {
 #[test]
 fn change_after_move() {
     let mut executor = FakeExecutor::from_genesis_file();
-    let sender = AccountData::new(1_000_000, 10);
+    executor.set_golden_file(current_function_name!());
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
 
     // publish module with add and remove resource
@@ -205,7 +209,7 @@ fn add_module_txn(sender: &AccountData, seq_num: u64) -> (CompiledModule, Signed
         "
         module M {
             import 0x1.Signer;
-            resource T1 { v: u64 }
+            struct T1 has key { v: u64 }
 
             public borrow_t1(account: &signer) acquires T1 {
                 let t1: &Self.T1;
@@ -236,7 +240,8 @@ fn add_module_txn(sender: &AccountData, seq_num: u64) -> (CompiledModule, Signed
 
     let compiler = Compiler {
         address: *sender.address(),
-        ..Compiler::default()
+        skip_stdlib_deps: false,
+        extra_deps: vec![],
     };
     let module = compiler
         .into_compiled_module("file_name", module_code.as_str())
@@ -266,8 +271,8 @@ fn add_resource_txn(
         "
             import 0x{}.M;
 
-            main(account: &signer) {{
-                M.publish_t1(move(account));
+            main(account: signer) {{
+                M.publish_t1(&account);
                 return;
             }}
         ",
@@ -292,8 +297,8 @@ fn remove_resource_txn(
         "
             import 0x{}.M;
 
-            main(account: &signer) {{
-                M.remove_t1(move(account));
+            main(account: signer) {{
+                M.remove_t1(&account);
                 return;
             }}
         ",
@@ -318,8 +323,8 @@ fn borrow_resource_txn(
         "
             import 0x{}.M;
 
-            main(account: &signer) {{
-                M.borrow_t1(move(account));
+            main(account: signer) {{
+                M.borrow_t1(&account);
                 return;
             }}
         ",
@@ -344,8 +349,8 @@ fn change_resource_txn(
         "
             import 0x{}.M;
 
-            main(account: &signer) {{
-                M.change_t1(move(account), 20);
+            main(account: signer) {{
+                M.change_t1(&account, 20);
                 return;
             }}
         ",

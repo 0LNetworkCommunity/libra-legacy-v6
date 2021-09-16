@@ -5,7 +5,7 @@ authors = [""]
 edition = "2018"
 
 [dependencies]
-libra-global-constants = { path = "../../config/global-constants", version = "0.1.0"}
+diem-global-constants = { path = "../../config/global-constants" }
 dirs = "2.0.2"
 regex = "1"
 chrono = "0.4"

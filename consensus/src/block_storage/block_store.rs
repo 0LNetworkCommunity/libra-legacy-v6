@@ -1,8 +1,12 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    block_storage::{block_tree::BlockTree, BlockReader},
+    block_storage::{
+        block_tree::BlockTree,
+        tracing::{observe_block, BlockStage},
+        BlockReader,
+    },
     counters,
     logging::{LogEvent, LogSchema},
     persistent_liveness_storage::{
@@ -16,12 +20,12 @@ use consensus_types::{
     block::Block, executed_block::ExecutedBlock, quorum_cert::QuorumCert, sync_info::SyncInfo,
     timeout_certificate::TimeoutCertificate,
 };
+use diem_crypto::HashValue;
+use diem_infallible::RwLock;
+use diem_logger::prelude::*;
+use diem_types::{ledger_info::LedgerInfoWithSignatures, transaction::TransactionStatus};
 use executor_types::{Error, StateComputeResult};
-use libra_crypto::HashValue;
-use libra_infallible::{duration_since_epoch, RwLock};
-use libra_logger::prelude::*;
-use libra_trace::prelude::*;
-use libra_types::{ledger_info::LedgerInfoWithSignatures, transaction::TransactionStatus};
+use short_hex_str::AsShortHexStr;
 use std::{collections::vec_deque::VecDeque, sync::Arc, time::Duration};
 
 #[cfg(test)]
@@ -37,11 +41,7 @@ pub mod sync_manager;
 
 fn update_counters_for_committed_blocks(blocks_to_commit: &[Arc<ExecutedBlock>]) {
     for block in blocks_to_commit {
-        if let Some(time_to_commit) =
-            duration_since_epoch().checked_sub(Duration::from_micros(block.timestamp_usecs()))
-        {
-            counters::CREATION_TO_COMMIT_S.observe_duration(time_to_commit);
-        }
+        observe_block(block.block().timestamp_usecs(), BlockStage::COMMITTED);
         let txn_status = block.compute_result().compute_status();
         counters::NUM_TXNS_PER_BLOCK.observe(txn_status.len() as f64);
         counters::COMMITTED_BLOCKS_COUNT.inc();
@@ -213,9 +213,6 @@ impl BlockStore {
         let blocks_to_commit = self
             .path_from_root(block_id_to_commit)
             .unwrap_or_else(Vec::new);
-        for block in &blocks_to_commit {
-            end_trace!("commit", {"block", block.id()});
-        }
 
         self.state_computer
             .commit(
@@ -328,11 +325,10 @@ impl BlockStore {
     }
 
     fn execute_block(&self, block: Block) -> anyhow::Result<ExecutedBlock, Error> {
-        trace_code_block!("block_store::execute_block", {"block", block.id()});
-
         // Although NIL blocks don't have a payload, we still send a T::default() to compute
         // because we may inject a block prologue transaction.
         let state_compute_result = self.state_computer.compute(&block, block.parent_id())?;
+        observe_block(block.timestamp_usecs(), BlockStage::EXECUTED);
 
         Ok(ExecutedBlock::new(block, state_compute_result))
     }
@@ -353,9 +349,13 @@ impl BlockStore {
                     qc.certified_block(),
                     executed_block.block_info()
                 );
+                observe_block(
+                    executed_block.block().timestamp_usecs(),
+                    BlockStage::QC_ADDED,
+                );
             }
             None => bail!("Insert {} without having the block in store first", qc),
-        }
+        };
 
         self.storage
             .save_tree(vec![], vec![qc.clone()])
@@ -472,6 +472,6 @@ impl BlockStore {
     /// Helper function to insert the block with the qc together
     pub fn insert_block_with_qc(&self, block: Block) -> anyhow::Result<Arc<ExecutedBlock>> {
         self.insert_single_quorum_cert(block.quorum_cert().clone())?;
-        Ok(self.execute_and_insert_block(block)?)
+        self.execute_and_insert_block(block)
     }
 }

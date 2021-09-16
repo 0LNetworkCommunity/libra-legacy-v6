@@ -1,8 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::config::TestOnlyConfig;
-use guppy::graph::{BuildTargetId, BuildTargetKind};
+use anyhow::Context;
+use guppy::graph::{BuildTargetId, BuildTargetKind, PackageGraph, PackageSet};
 use indoc::indoc;
 use x_core::WorkspaceStatus;
 use x_lint::prelude::*;
@@ -10,12 +11,15 @@ use x_lint::prelude::*;
 /// Ensure that every package in the workspace is classified as either a default member or test-only.
 #[derive(Debug)]
 pub struct DefaultOrTestOnly<'cfg> {
-    config: &'cfg TestOnlyConfig,
+    test_only: PackageSet<'cfg>,
 }
 
 impl<'cfg> DefaultOrTestOnly<'cfg> {
-    pub fn new(config: &'cfg TestOnlyConfig) -> Self {
-        Self { config }
+    pub fn new(package_graph: &'cfg PackageGraph, config: &TestOnlyConfig) -> crate::Result<Self> {
+        let test_only = package_graph
+            .resolve_workspace_names(&config.members)
+            .with_context(|| "error while initializing default-or-test-only lint")?;
+        Ok(Self { test_only })
     }
 }
 
@@ -64,7 +68,10 @@ impl<'cfg> PackageLinter for DefaultOrTestOnly<'cfg> {
             .next();
 
         let status = default_members.status_of(package.id());
-        let test_only = self.config.members.contains(ctx.workspace_path());
+        let test_only = self
+            .test_only
+            .contains(package.id())
+            .expect("package is known");
 
         match (binary_kind, status, test_only) {
             (None, WorkspaceStatus::Absent, false) => {
@@ -84,21 +91,47 @@ impl<'cfg> PackageLinter for DefaultOrTestOnly<'cfg> {
             }
             (None, WorkspaceStatus::Dependency, true) => {
                 // Library, dependency of default members and listed in test-only.
-                let msg = indoc!(
-                    "library package, dependency of default members and test-only:
-                    * remove from test-only if production code
-                    * otherwise, ensure it is not a dependency of default members"
+
+                // For a better error message, look at what immediately depends on the package and
+                // is in default members.
+                let mut reverse_deps = package
+                    .reverse_direct_links()
+                    .filter_map(|link| {
+                        if !link.dev_only()
+                            && default_members.status_of(link.from().id())
+                                != WorkspaceStatus::Absent
+                        {
+                            Some(link.from().name())
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<_>>();
+                reverse_deps.sort_unstable();
+                let reverse_str = reverse_deps.join(", ");
+                let msg = format!(
+                    "{} {}",
+                    indoc!(
+                        "library package, dependency of default members and test-only:
+                        * remove from test-only if production code
+                        * otherwise, ensure it is not a dependency of default members:",
+                    ),
+                    reverse_str,
                 );
                 out.write(LintLevel::Error, msg);
             }
             (None, WorkspaceStatus::RootMember, false) => {
-                // Library, listed in default members. It shouldn't be.
-                let msg = indoc!(
-                    "library package, listed in default-members:
-                     * if test-only, add to test-only in x.toml instead
-                     * otherwise, remove it from default-members and make it a dependency of a binary"
-                );
-                out.write(LintLevel::Error, msg);
+                if package.publish().is_never() {
+                    // Library, listed in default members. It shouldn't be.
+                    // unless it is a published library
+                    let msg = indoc!(
+                        "library package, listed in default-members:
+                         * if test-only, add to test-only in x.toml instead
+                         * if the library is intended to be published, add `publish = [\"crates-io\"] to the Cargo.toml of this package
+                         * otherwise, remove it from default-members and make it a dependency of a binary"
+                    );
+                    out.write(LintLevel::Error, msg);
+                }
             }
             (None, WorkspaceStatus::RootMember, true) => {
                 // Library, listed in default members and in test-only. It shouldn't be.

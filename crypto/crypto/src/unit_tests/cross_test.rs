@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 // This is necessary for the derive macros which rely on being used in a
 // context where the crypto crate is external
-use crate as libra_crypto;
+use crate as diem_crypto;
 use crate::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
     multi_ed25519::{MultiEd25519PrivateKey, MultiEd25519PublicKey, MultiEd25519Signature},
@@ -11,7 +11,7 @@ use crate::{
     traits::*,
 };
 
-use libra_crypto_derive::{
+use diem_crypto_derive::{
     PrivateKey, PublicKey, Signature, SigningKey, SilentDebug, ValidCryptoMaterial, VerifyingKey,
 };
 use proptest::prelude::*;
@@ -79,8 +79,7 @@ proptest! {
         // this is impossible to write statically, due to the trait not being
         // object-safe (voluntarily), see unsupported_sigs below
         // let mut l: Vec<Box<dyn PrivateKey>> = vec![];
-        let mut l: Vec<Ed25519PrivateKey> = vec![];
-        l.push(ed_keypair1.private_key);
+        let mut l: Vec<Ed25519PrivateKey> = vec![ed_keypair1.private_key];
         let ed_key = l.pop().unwrap();
         let signature = ed_key.sign(&message);
 
@@ -88,9 +87,10 @@ proptest! {
         prop_assert!(signature.verify(&message, &ed_keypair1.public_key).is_ok());
 
         // signature-publickey mixups are statically impossible, see unsupported_sigs below
-        let mut l2: Vec<PrivateK> = vec![];
-        l2.push(PrivateK::MultiEd(med_keypair.private_key));
-        l2.push(PrivateK::Ed(ed_keypair2.private_key));
+        let mut l2: Vec<PrivateK> = vec![
+            PrivateK::MultiEd(med_keypair.private_key),
+            PrivateK::Ed(ed_keypair2.private_key),
+        ];
 
         let ed_key = l2.pop().unwrap();
         let ed_signature = ed_key.sign(&message);

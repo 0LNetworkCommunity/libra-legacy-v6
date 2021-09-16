@@ -1,9 +1,9 @@
 #!/bin/bash
-# Copyright (c) The Libra Core Contributors
+# Copyright (c) The Diem Core Contributors
 # SPDX-License-Identifier: Apache-2.0
 
 ######################################################################################################################
-# Takes a slug org/repo ( libra/client ) and deletes all tags with release-* over 90 days and all other              #
+# Takes a slug org/repo ( diem/client ) and deletes all tags with release-* over 90 days and all other              #
 # over 2 days (assumed to be test images).                                                                           #
 ######################################################################################################################
 
@@ -16,7 +16,7 @@ usage() {
   echo "-p dockerhub password"
   echo "-x do not perform a dry run, delete images."
   echo "-h this message."
-  echo "deletes release-* tags over 90 days old, and other over 2 days old."
+  echo "deletes release-* tags over 180 days old, and other over 7 days old."
   echo "Done in shell, there is some TZ/leap second slop."
 }
 
@@ -77,7 +77,7 @@ function del_tag {
 
 
 ######################################################################################################################
-# Takes a slug org/repo ( libra/client ) and deletes all tags with release-* over 90 days and all other
+# Takes a slug org/repo ( diem/client ) and deletes all tags with release-* over 180 days and all other
 # over 2 days (assumed to be test images).
 ######################################################################################################################
 function prune_repo {
@@ -119,7 +119,7 @@ function prune_repo {
           DAYS_SINCE_0=$(( TIME / 86400));
           AGE_DAYS=$(( NOW_DAYS - DAYS_SINCE_0 ));
 
-          if [[ $TAG == "release-"* ]] && [[ $AGE_DAYS -gt 90 ]]; then
+          if [[ $TAG == "release-"* ]] && [[ $AGE_DAYS -gt 180 ]]; then
               echo "$REPO:$TAG is a release. It's age is $AGE_DAYS -- will delete"
               TO_DELETE="${TO_DELETE}"'
               '"${TAG}"
@@ -152,12 +152,13 @@ function prune_repo {
 
 }
 
-prune_repo "libra/client"
-prune_repo "libra/cluster_test"
-prune_repo "libra/init"
-prune_repo "libra/faucet"
-prune_repo "libra/tools"
-prune_repo "libra/validator"
-prune_repo "libra/validator_tcb"
+prune_repo "diem/client"
+prune_repo "diem/cluster_test"
+prune_repo "diem/init"
+prune_repo "diem/faucet"
+prune_repo "diem/tools"
+prune_repo "diem/validator"
+prune_repo "diem/validator_tcb"
+
 #We currently overwrite, no need to delete.
-#prune_repo "libra/build_environment"
+#prune_repo "diem/build_environment"

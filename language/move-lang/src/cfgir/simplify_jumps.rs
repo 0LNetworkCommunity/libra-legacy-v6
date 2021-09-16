@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use super::cfg::BlockCFG;
@@ -36,7 +36,10 @@ fn optimize_cmd(sp!(_, cmd_): &mut Command) -> bool {
             if_false,
         } => {
             let lbl = if *cond { *if_true } else { *if_false };
-            *cmd_ = C::Jump(lbl);
+            *cmd_ = C::Jump {
+                target: lbl,
+                from_user: false,
+            };
             true
         }
         _ => false,

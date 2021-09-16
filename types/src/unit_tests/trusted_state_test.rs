@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -13,7 +13,8 @@ use crate::{
     validator_verifier::{random_validator_verifier, ValidatorConsensusInfo, ValidatorVerifier},
     waypoint::Waypoint,
 };
-use libra_crypto::{ed25519::Ed25519Signature, hash::HashValue};
+use bcs::test_helpers::assert_canonical_encode_decode;
+use diem_crypto::{ed25519::Ed25519Signature, hash::HashValue};
 use proptest::{
     collection::{size_range, vec, SizeRange},
     prelude::*,
@@ -215,6 +216,11 @@ proptest! {
     #![proptest_config(ProptestConfig::with_cases(100))]
 
     #[test]
+    fn test_trusted_state_roundtrip_canonical_serialization(trusted_state in any::<TrustedState>()) {
+        assert_canonical_encode_decode(trusted_state);
+    }
+
+    #[test]
     fn test_ratchet_from(
         (_vsets, lis_with_sigs, latest_li) in arb_update_proof(
             10,   /* start epoch */
@@ -245,7 +251,7 @@ proptest! {
                 new_state,
                 latest_epoch_change_li,
             } => {
-                assert_eq!(new_state.latest_version(), expected_latest_version);
+                assert_eq!(new_state.version(), expected_latest_version);
                 assert_eq!(Some(latest_epoch_change_li), expected_latest_epoch_change_li.as_ref());
                 assert_eq!(latest_epoch_change_li.ledger_info().next_epoch_state(), expected_validator_set);
             }
@@ -280,9 +286,9 @@ proptest! {
             TrustedStateChange::Version {
                 new_state,
             } => {
-                assert_eq!(new_state.latest_version(), expected_latest_version);
+                assert_eq!(new_state.version(), expected_latest_version);
             }
-            TrustedStateChange::NoChange => assert_eq!(trusted_state.latest_version(), expected_latest_version),
+            TrustedStateChange::NoChange => assert_eq!(trusted_state.version(), expected_latest_version),
         };
     }
 
@@ -320,14 +326,14 @@ proptest! {
                 new_state,
                 latest_epoch_change_li,
             } => {
-                assert_eq!(new_state.latest_version(), expected_latest_version);
+                assert_eq!(new_state.version(), expected_latest_version);
                 assert_eq!(Some(latest_epoch_change_li), expected_latest_epoch_change_li.as_ref());
                 assert_eq!(latest_epoch_change_li.ledger_info().next_epoch_state(), expected_validator_set);
             }
             TrustedStateChange::Version {
                 new_state,
             } => {
-                assert_eq!(new_state.latest_version(), expected_latest_version);
+                assert_eq!(new_state.version(), expected_latest_version);
             }
             _ => (),
         };
@@ -400,7 +406,7 @@ proptest! {
                 new_state,
                 latest_epoch_change_li,
             } => {
-                assert_eq!(new_state.latest_version(), expected_latest_version);
+                assert_eq!(new_state.version(), expected_latest_version);
                 assert_eq!(Some(latest_epoch_change_li), expected_latest_epoch_change_li.as_ref());
                 assert_eq!(latest_epoch_change_li.ledger_info().next_epoch_state(), expected_validator_set);
             }
@@ -453,7 +459,7 @@ proptest! {
         let good_li = latest_li.ledger_info();
         let change_proof = EpochChangeProof::new(lis_with_sigs, false /* more */);
 
-        if good_li.version() == trusted_state.latest_version() {
+        if good_li.version() == trusted_state.version() {
             // Verifying a latest ledger info (inside the last epoch) with
             // invalid data should fail.
             let bad_li = LedgerInfoWithSignatures::new(

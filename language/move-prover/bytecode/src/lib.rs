@@ -1,31 +1,45 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 
 use crate::function_target_pipeline::FunctionTargetsHolder;
-use spec_lang::env::GlobalEnv;
+use move_model::model::GlobalEnv;
 
+pub mod access_path;
+pub mod access_path_trie;
 pub mod annotations;
 pub mod borrow_analysis;
 pub mod clean_and_optimize;
+pub mod compositional_analysis;
+pub mod data_invariant_instrumentation;
 pub mod dataflow_analysis;
+pub mod dataflow_domains;
+pub mod debug_instrumentation;
 pub mod eliminate_imm_refs;
-pub mod eliminate_mut_refs;
+pub mod function_data_builder;
 pub mod function_target;
 pub mod function_target_pipeline;
+pub mod global_invariant_instrumentation;
+pub mod global_invariant_instrumentation_v2;
 pub mod graph;
 pub mod livevar_analysis;
+pub mod loop_analysis;
 pub mod memory_instrumentation;
+pub mod mono_analysis;
+pub mod mut_ref_instrumentation;
+pub mod options;
+pub mod packed_types_analysis;
+pub mod pipeline_factory;
 pub mod reaching_def_analysis;
+pub mod read_write_set_analysis;
+pub mod spec_instrumentation;
 pub mod stackless_bytecode;
 pub mod stackless_bytecode_generator;
 pub mod stackless_control_flow_graph;
-pub mod test_instrumenter;
 pub mod usage_analysis;
-
-#[cfg(test)]
-pub mod unit_tests;
+pub mod verification_analysis;
+pub mod verification_analysis_v2;
 
 /// Print function targets for testing and debugging.
 pub fn print_targets_for_test(
@@ -37,9 +51,12 @@ pub fn print_targets_for_test(
     text.push_str(&format!("============ {} ================\n", header));
     for module_env in env.get_modules() {
         for func_env in module_env.get_functions() {
-            let target = targets.get_target(&func_env);
-            target.register_annotation_formatters_for_test();
-            text += &format!("\n{}\n", target);
+            for (variant, target) in targets.get_targets(&func_env) {
+                if !target.data.code.is_empty() || target.func_env.is_native_or_intrinsic() {
+                    target.register_annotation_formatters_for_test();
+                    text += &format!("\n[variant {}]\n{}\n", variant, target);
+                }
+            }
         }
     }
     text

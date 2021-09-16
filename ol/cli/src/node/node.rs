@@ -2,25 +2,25 @@
 
 use crate::{cache::Vitals, check::items::Items, config::AppCfg, mgmt::management::NodeMode};
 use anyhow::Error;
-use cli::libra_client::LibraClient;
-use libra_config::config::NodeConfig;
-use libradb::LibraDB;
+use cli::diem_client::DiemClient;
+use diem_config::config::{NodeConfig, RocksdbConfig};
+use diemdb::DiemDB;
 use std::path::PathBuf;
 use std::{process::Command, str};
 use sysinfo::SystemExt;
 use sysinfo::{ProcessExt, ProcessStatus};
-use libra_json_rpc_client::views::{MinerStateResourceView};
-use libra_types::waypoint::Waypoint;
-use libra_types::{account_address::AccountAddress, account_state::AccountState};
-use storage_interface::DbReader;
+use diem_json_rpc_client::views::MinerStateResourceView;
+use diem_types::waypoint::Waypoint;
+use diem_types::{account_address::AccountAddress, account_state::AccountState};
 use super::client;
 use super::{account::OwnerAccountView, states::HostState};
+use storage_interface::DbReader;
 
 /// name of key in kv store for sync
 pub const SYNC_KEY: &str = "is_synced";
 
 /// node process name:
-pub const NODE_PROCESS: &str = "libra-node";
+pub const NODE_PROCESS: &str = "diem-node";
 
 /// miner process name:
 pub const MINER_PROCESS: &str = "miner";
@@ -30,14 +30,15 @@ pub struct ProcInfo {
     is_running: bool,
     mode: Option<NodeMode>,
 }
+
 /// Configuration and state of node, account, and host.
 pub struct Node {
     /// 0L configs
     pub app_conf: AppCfg,
     /// node conf
-    pub node_conf: NodeConfig,
-    /// libraclient for connecting
-    pub client: LibraClient,
+    pub node_conf: NodeConfig,    
+    /// diemclient for connecting
+    pub client: DiemClient,
     /// vitals
     pub vitals: Vitals,
     /// TODO: deduplicate these
@@ -47,14 +48,16 @@ pub struct Node {
 
 impl Node {
     /// Create a instance of Check
-    pub fn new(client: LibraClient, conf: AppCfg, is_swarm: bool) -> Self {
+    pub fn new(client: DiemClient, conf: &AppCfg, is_swarm: bool) -> Self {
         let node_yaml = if is_swarm {
             "node.yaml"
         } else {
             "validator.node.yaml"
         };
 
-        let node_conf = NodeConfig::load(conf.workspace.node_home.join(node_yaml)).unwrap();
+        let node_conf = NodeConfig::load(
+            conf.workspace.node_home.join(node_yaml)
+        ).unwrap();
 
         return Self {
             client,
@@ -78,9 +81,8 @@ impl Node {
     pub fn default_from_cfg(mut cfg: AppCfg, swarm_path: Option<PathBuf>) -> Node {
         // NOTE: not intended for swarm.
         let client = client::pick_client(swarm_path.clone(), &mut cfg).unwrap();
-        Node::new(client, cfg, swarm_path.is_some())
+        Node::new(client, &cfg, swarm_path.is_some())
     }
-
 
     /// refresh all checks
     pub fn refresh_checks(&mut self) -> &mut Self {
@@ -95,18 +97,19 @@ impl Node {
         // TODO: make SyncState an item, so we don't need to assign.
         // affects web-monitor structs
         if let Ok(s) = self.check_sync() {
-            self.vitals.items.is_synced = s.is_synced;
-            self.vitals.items.sync_delay = s.sync_delay;
-            self.vitals.items.sync_height = s.sync_height
+          self.vitals.items.is_synced = s.is_synced;
+          self.vitals.items.sync_delay = s.sync_delay;
+          self.vitals.items.sync_height = s.sync_height
         } else {
-            self.vitals.items.is_synced = false;
-            self.vitals.items.sync_delay = 404;
-            self.vitals.items.sync_height = 404;
+          self.vitals.items.is_synced = false;
+          self.vitals.items.sync_delay = 404;
+          self.vitals.items.sync_height = 404;
         }
         self.vitals.items.validator_set = self.is_in_validator_set();
         self.vitals.items.has_autopay = self.vitals.account_view.has_autopay_not_empty();
         self.vitals.items.has_operator_set = self.vitals.account_view.has_operator();
-        self.vitals.items.has_operator_positive_balance = self.vitals.account_view.has_operator_positive_balance();
+        self.vitals.items.has_operator_positive_balance = 
+            self.vitals.account_view.has_operator_positive_balance();
         self
     }
 
@@ -116,7 +119,9 @@ impl Node {
             Ok(account_state) => Some(account_state),
             Err(_) => None,
         };
-        self.miner_state = match self.client.get_miner_state(self.app_conf.profile.account) {
+        self.miner_state = match self.client.get_miner_state(
+            &self.app_conf.profile.account
+        ) {
             Ok(state) => state,
             _ => None,
         };
@@ -153,7 +158,7 @@ impl Node {
 
     /// Get waypoint from client
     pub fn waypoint(&mut self) -> Result<Waypoint, Error> {
-        match self.client.get_state_proof() {
+        match self.client.update_and_verify_state_proof() {
             Ok(_t) => self.client.waypoint(),
             Err(_) => self.app_conf.get_waypoint(None),
         }
@@ -190,9 +195,9 @@ impl Node {
     /// the owner and operator accounts exist on chain
     pub fn accounts_exist_on_chain(&mut self) -> bool {
         let addr = self.app_conf.profile.account;
-        let account = self.client.get_account(addr, false);
+        let account = self.client.get_account(&addr);
         match account {
-            Ok((opt, _)) => match opt {
+            Ok(opt) => match opt {
                 Some(_) => true,
                 None => false,
             },
@@ -204,9 +209,10 @@ impl Node {
     pub fn db_bootstrapped(&mut self) -> bool {
         let file = self.app_conf.workspace.db_path.clone();
         if file.exists() {
-            // When not committing, we open the DB as secondary so the tool is usable along side a
-            // running node on the same DB. Using a TempPath since it won't run for long.
-            match LibraDB::open(file, true, None) {
+            // When not committing, we open the DB as secondary so the tool 
+            // is usable along side a running node on the same DB. 
+            // Using a TempPath since it won't run for long.
+            match DiemDB::open(file, true, None, RocksdbConfig::default()) {
                 Ok(db) => {
                     return db.get_latest_version().is_ok();
                 }
@@ -219,7 +225,7 @@ impl Node {
     /// database is initialized, Please do NOT invoke this function frequently
     pub fn db_files_exist(&mut self) -> bool {
         // check to see no files are present
-        let db_path = self.app_conf.workspace.db_path.clone().join("libradb");
+        let db_path = self.app_conf.workspace.db_path.clone().join("diemdb");
         db_path.exists()
     }
 
@@ -291,6 +297,7 @@ impl Node {
         let p = system.get_process_by_name(process_str);
         !p.is_empty()
     }
+
     /// check what mode the node is running in
     pub fn what_node_mode() -> Result<NodeMode, Error> {
         match Node::node_proc_info() {
@@ -307,7 +314,7 @@ impl Node {
     /// check what mode the node is running in
     pub fn node_mode_systemd() -> Result<NodeMode, Error> {
         let output = Command::new("service")
-            .args(&["libra-node", "status"])
+            .args(&["diem-node", "status"])
             .output();
         match output {
             Ok(out) => {
@@ -329,7 +336,6 @@ impl Node {
         let mut system = sysinfo::System::new_all();
         system.refresh_all();
         let all_p = system.get_process_by_name(NODE_PROCESS);
-        // dbg!(&all_p);
         let process = all_p
             .into_iter()
             .filter(|i| match i.status() {

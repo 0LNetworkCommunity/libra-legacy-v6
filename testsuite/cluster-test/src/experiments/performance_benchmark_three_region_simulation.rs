@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -60,11 +60,13 @@ impl Experiment for PerformanceBenchmarkThreeRegionSimulation {
                 context.cluster.validator_instances().to_vec(),
                 context.global_emit_job_request,
                 0,
+                0,
             )
         } else {
             EmitJobRequest::for_instances(
                 context.cluster.fullnode_instances().to_vec(),
                 context.global_emit_job_request,
+                0,
                 0,
             )
         };

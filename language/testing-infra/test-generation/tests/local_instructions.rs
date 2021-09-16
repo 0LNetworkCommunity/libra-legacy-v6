@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 extern crate test_generation;
+use move_binary_format::file_format::{AbilitySet, Bytecode, SignatureToken};
 use test_generation::abstract_state::{AbstractState, AbstractValue, BorrowState};
-use vm::file_format::{Bytecode, Kind, SignatureToken};
 
 mod common;
 
@@ -106,7 +106,7 @@ fn bytecode_mutborrowloc() {
         state2.stack_peek(0),
         Some(AbstractValue::new_reference(
             SignatureToken::MutableReference(Box::new(SignatureToken::U64)),
-            Kind::Copyable
+            AbilitySet::PRIMITIVES
         )),
         "stack type postcondition not met"
     );
@@ -133,7 +133,7 @@ fn bytecode_immborrowloc() {
         state2.stack_peek(0),
         Some(AbstractValue::new_reference(
             SignatureToken::Reference(Box::new(SignatureToken::U64),),
-            Kind::Copyable
+            AbilitySet::PRIMITIVES
         )),
         "stack type postcondition not met"
     );

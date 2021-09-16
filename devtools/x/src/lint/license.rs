@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use x_lint::prelude::*;
 
-static LICENSE_HEADER: &str = "Copyright (c) The Libra Core Contributors\n\
+static LICENSE_HEADER: &str = "Copyright (c) The Diem Core Contributors\n\
                                SPDX-License-Identifier: Apache-2.0\n\
                                ";
 
@@ -17,7 +17,7 @@ impl Linter for LicenseHeader {
 }
 
 impl ContentLinter for LicenseHeader {
-    fn pre_run<'l>(&self, file_ctx: &FileContext<'l>) -> Result<RunStatus<'l>> {
+    fn pre_run<'l>(&self, file_ctx: &FilePathContext<'l>) -> Result<RunStatus<'l>> {
         // TODO: Add a way to pass around state between pre_run and run, so that this computation
         // only needs to be done once.
         match FileType::new(file_ctx) {
@@ -37,7 +37,7 @@ impl ContentLinter for LicenseHeader {
             Some(content) => content,
             None => {
                 // This is not a UTF-8 file -- don't analyze it.
-                return Ok(RunStatus::Skipped(SkipReason::NonUtf8));
+                return Ok(RunStatus::Skipped(SkipReason::NonUtf8Content));
             }
         };
 
@@ -78,7 +78,7 @@ enum FileType {
 }
 
 impl FileType {
-    fn new(ctx: &FileContext<'_>) -> Option<Self> {
+    fn new(ctx: &FilePathContext<'_>) -> Option<Self> {
         match ctx.extension() {
             Some("rs") => Some(FileType::Rust),
             Some("sh") => Some(FileType::Shell),

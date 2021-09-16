@@ -1,14 +1,15 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{common::Author, timeout::Timeout, vote_data::VoteData};
 use anyhow::{ensure, Context};
-use libra_crypto::{ed25519::Ed25519Signature, hash::CryptoHash};
-use libra_types::{
+use diem_crypto::{ed25519::Ed25519Signature, hash::CryptoHash};
+use diem_types::{
     ledger_info::LedgerInfo, validator_signer::ValidatorSigner,
     validator_verifier::ValidatorVerifier,
 };
 use serde::{Deserialize, Serialize};
+use short_hex_str::AsShortHexStr;
 use std::fmt::{Debug, Display, Formatter};
 
 /// Vote is the struct that is ultimately sent by the voter in response for
@@ -59,12 +60,22 @@ impl Vote {
         validator_signer: &ValidatorSigner,
     ) -> Self {
         ledger_info_placeholder.set_consensus_data_hash(vote_data.hash());
-        let li_sig = validator_signer.sign(&ledger_info_placeholder);
+        let signature = validator_signer.sign(&ledger_info_placeholder);
+        Self::new_with_signature(vote_data, author, ledger_info_placeholder, signature)
+    }
+
+    /// Generates a new Vote using a signature over the specified ledger_info
+    pub fn new_with_signature(
+        vote_data: VoteData,
+        author: Author,
+        ledger_info: LedgerInfo,
+        signature: Ed25519Signature,
+    ) -> Self {
         Self {
             vote_data,
             author,
-            ledger_info: ledger_info_placeholder,
-            signature: li_sig,
+            ledger_info,
+            signature,
             timeout_signature: None,
         }
     }

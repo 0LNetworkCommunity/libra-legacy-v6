@@ -1,5 +1,5 @@
-module M {
-    struct S {}
+module 0x8675309::M {
+    struct S has copy, drop {}
 
     fun tmove() {
         let x = 0;

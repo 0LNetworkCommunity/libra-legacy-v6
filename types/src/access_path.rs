@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! Suppose we have the following data structure in a smart contract:
@@ -36,12 +36,12 @@
 //! `path` will be set to "/a" and use the `get_prefix()` method from statedb
 
 use crate::account_address::AccountAddress;
-use libra_crypto::hash::HashValue;
+use diem_crypto::hash::HashValue;
 use move_core_types::language_storage::{ModuleId, ResourceKey, StructTag, CODE_TAG, RESOURCE_TAG};
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
-use std::fmt;
+use std::{convert::TryFrom, fmt};
 
 #[derive(Clone, Eq, PartialEq, Hash, Serialize, Deserialize, Ord, PartialOrd)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
@@ -51,37 +51,52 @@ pub struct AccessPath {
     pub path: Vec<u8>,
 }
 
-impl AccessPath {
-    pub const CODE_TAG: u8 = 0;
-    pub const RESOURCE_TAG: u8 = 1;
+#[derive(Clone, Eq, PartialEq, Hash, Serialize, Deserialize, Ord, PartialOrd)]
+pub enum Path {
+    Code(ModuleId),
+    Resource(StructTag),
+}
 
+impl AccessPath {
     pub fn new(address: AccountAddress, path: Vec<u8>) -> Self {
         AccessPath { address, path }
     }
 
-    pub fn resource_access_vec(tag: &StructTag) -> Vec<u8> {
-        tag.access_vector()
+    pub fn resource_access_vec(tag: StructTag) -> Vec<u8> {
+        bcs::to_bytes(&Path::Resource(tag)).expect("Unexpected serialization error")
     }
 
     /// Convert Accesses into a byte offset which would be used by the storage layer to resolve
     /// where fields are stored.
-    pub fn resource_access_path(key: &ResourceKey) -> AccessPath {
-        let path = AccessPath::resource_access_vec(&key.type_());
+    pub fn resource_access_path(key: ResourceKey) -> AccessPath {
+        let path = AccessPath::resource_access_vec(key.type_);
         AccessPath {
-            address: key.address().to_owned(),
+            address: key.address,
             path,
         }
     }
 
-    fn code_access_path_vec(key: &ModuleId) -> Vec<u8> {
-        key.access_vector()
+    fn code_access_path_vec(key: ModuleId) -> Vec<u8> {
+        bcs::to_bytes(&Path::Code(key)).expect("Unexpected serialization error")
     }
 
-    pub fn code_access_path(key: &ModuleId) -> AccessPath {
+    pub fn code_access_path(key: ModuleId) -> AccessPath {
+        let address = *key.address();
         let path = AccessPath::code_access_path_vec(key);
-        AccessPath {
-            address: *key.address(),
-            path,
+        AccessPath { address, path }
+    }
+
+    /// Extract the structured resource or module `Path` from `self`
+    pub fn get_path(&self) -> Path {
+        bcs::from_bytes::<Path>(&self.path).expect("Unexpected serialization error")
+    }
+
+    /// Extract a StructTag from `self`. Returns Some if this is a resource access
+    /// path and None otherwise
+    pub fn get_struct_tag(&self) -> Option<StructTag> {
+        match self.get_path() {
+            Path::Resource(s) => Some(s),
+            Path::Code(_) => None,
         }
     }
 }
@@ -128,5 +143,21 @@ impl From<&ModuleId> for AccessPath {
             address: *id.address(),
             path: id.access_vector(),
         }
+    }
+}
+
+impl TryFrom<&[u8]> for Path {
+    type Error = bcs::Error;
+
+    fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
+        bcs::from_bytes::<Path>(bytes)
+    }
+}
+
+impl TryFrom<&Vec<u8>> for Path {
+    type Error = bcs::Error;
+
+    fn try_from(bytes: &Vec<u8>) -> Result<Self, Self::Error> {
+        bcs::from_bytes::<Path>(bytes)
     }
 }

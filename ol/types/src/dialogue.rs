@@ -1,7 +1,7 @@
 //! get home path or set it
 use anyhow::Error;
 use dialoguer::{Confirm, Input};
-use libra_global_constants::NODE_HOME;
+use diem_global_constants::NODE_HOME;
 use std::{net::Ipv4Addr, path::PathBuf};
 
 use crate::config::IS_TEST;

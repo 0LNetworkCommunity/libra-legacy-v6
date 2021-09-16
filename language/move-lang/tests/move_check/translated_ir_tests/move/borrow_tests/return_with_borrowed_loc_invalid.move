@@ -1,6 +1,6 @@
-module M {
-    struct X { y: Y }
-    struct Y { u: u64 }
+module 0x8675309::M {
+    struct X has copy, drop { y: Y }
+    struct Y has copy, drop { u: u64 }
 
     fun t1(): &u64 {
         let x = 0;

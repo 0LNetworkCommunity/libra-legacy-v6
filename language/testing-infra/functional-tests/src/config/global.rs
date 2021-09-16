@@ -1,16 +1,16 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 // The config holds the options that define the testing environment.
 // A config entry starts with "//!", differentiating it from a directive.
 
-use crate::{common::strip, errors::*, genesis_accounts::make_genesis_accounts};
+use crate::{errors::*, genesis_accounts::make_genesis_accounts};
+use diem_crypto::PrivateKey;
+use diem_types::account_config;
 use language_e2e_tests::{
     account::{Account, AccountData, AccountRoleSpecifier},
     keygen::KeyGen,
 };
-use libra_crypto::PrivateKey;
-use libra_types::account_config;
 use move_core_types::identifier::Identifier;
 use once_cell::sync::Lazy;
 use std::{
@@ -20,7 +20,7 @@ use std::{
 
 static DEFAULT_BALANCE: Lazy<Balance> = Lazy::new(|| Balance {
     amount: 1_000_000,
-    currency_code: account_config::from_currency_code_string(account_config::COIN1_NAME).unwrap(),
+    currency_code: account_config::from_currency_code_string(account_config::XUS_NAME).unwrap(),
 });
 
 #[derive(Debug)]
@@ -42,7 +42,7 @@ impl FromStr for Balance {
 
     fn from_str(s: &str) -> Result<Self> {
         // TODO: Try to get this from the on-chain config?
-        let coin_types = vec!["GAS"]; //////// 0L ////////
+        let coin_types = vec!["XDX", "XUS", "GAS"]; //////// 0L ////////
         let mut coin_type: Vec<&str> = coin_types.into_iter().filter(|x| s.ends_with(x)).collect();
         let currency_code = coin_type.pop().unwrap_or("GAS"); //////// 0L ////////
         if !coin_type.is_empty() {
@@ -121,11 +121,12 @@ impl FromStr for Entry {
 
     fn from_str(s: &str) -> Result<Self> {
         let s = s.split_whitespace().collect::<String>();
-        let s = strip(&s, "//!")
+        let s = &s
+            .strip_prefix("//!")
             .ok_or_else(|| ErrorKind::Other("txn config entry must start with //!".to_string()))?
             .trim_start();
 
-        if let Some(s) = strip(s, "account:") {
+        if let Some(s) = s.strip_prefix("account:") {
             let v: Vec<_> = s
                 .split(|c: char| c == ',' || c.is_whitespace())
                 .filter(|s| !s.is_empty())

@@ -1,12 +1,12 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! The socket module implements the post-handshake part of the protocol.
-//! Its main type (`NoiseStream`) is returned after a successful [handshake].
+//! Its main type [`NoiseStream`] is returned after a successful [handshake].
 //! functions in this module enables encrypting and decrypting messages from a socket.
 //! Note that since noise is length-unaware, we have to prefix every noise message with its length
 //!
-//! [handshake]: network::noise::handshake
+//! [handshake]: crate::noise::handshake
 
 use futures::{
     io::{AsyncRead, AsyncWrite},
@@ -19,8 +19,8 @@ use std::{
     task::{Context, Poll},
 };
 
-use libra_crypto::{noise, x25519};
-use libra_logger::prelude::*;
+use diem_crypto::{noise, x25519};
+use diem_logger::prelude::*;
 
 //
 // NoiseStream
@@ -68,7 +68,7 @@ impl<TSocket> NoiseStream<TSocket> {
 // ----------------
 //
 
-/// Possible read states for a [NoiseStream]
+/// Possible read states for a [`NoiseStream`]
 #[derive(Debug)]
 enum ReadState {
     /// Initial State
@@ -206,7 +206,7 @@ where
 // ----------------
 //
 
-/// Possible write states for a [NoiseStream]
+/// Possible write states for a [`NoiseStream`]
 #[derive(Debug)]
 enum WriteState {
     /// Initial State
@@ -431,7 +431,7 @@ where
 const MAX_WRITE_BUFFER_LENGTH: usize = noise::decrypted_len(noise::MAX_SIZE_NOISE_MSG);
 
 /// Collection of buffers used for buffering data during the various read/write states of a
-/// NoiseStream
+/// [`NoiseStream`]
 struct NoiseBuffers {
     /// A read buffer, used for both a received ciphertext and then for its decrypted content.
     read_buffer: [u8; noise::MAX_SIZE_NOISE_MSG],
@@ -550,14 +550,13 @@ mod test {
         noise::{AntiReplayTimestamps, HandshakeAuthMode, NoiseUpgrader},
         testutils::fake_socket::{ReadOnlyTestSocket, ReadWriteTestSocket},
     };
+    use diem_config::network_id::NetworkContext;
+    use diem_crypto::{test_utils::TEST_SEED, traits::Uniform as _, x25519};
     use futures::{
         executor::block_on,
         future::join,
         io::{AsyncReadExt, AsyncWriteExt},
     };
-    use libra_config::network_id::NetworkContext;
-    use libra_crypto::{test_utils::TEST_SEED, traits::Uniform as _, x25519};
-    use libra_types::PeerId;
     use memsocket::MemorySocket;
     use rand::SeedableRng as _;
     use std::io;
@@ -571,21 +570,21 @@ mod test {
 
         let client_private = x25519::PrivateKey::generate(&mut rng);
         let client_public = client_private.public_key();
-        let client_peer_id = PeerId::from_identity_public_key(client_public);
+        let client_peer_id = diem_types::account_address::from_identity_public_key(client_public);
 
         let server_private = x25519::PrivateKey::generate(&mut rng);
         let server_public = server_private.public_key();
-        let server_peer_id = PeerId::from_identity_public_key(server_public);
+        let server_peer_id = diem_types::account_address::from_identity_public_key(server_public);
 
         let client = NoiseUpgrader::new(
             NetworkContext::mock_with_peer_id(client_peer_id),
             client_private,
-            HandshakeAuthMode::ServerOnly,
+            HandshakeAuthMode::server_only(),
         );
         let server = NoiseUpgrader::new(
             NetworkContext::mock_with_peer_id(server_peer_id),
             server_private,
-            HandshakeAuthMode::ServerOnly,
+            HandshakeAuthMode::server_only(),
         );
 
         ((client, client_public), (server, server_public))
@@ -608,7 +607,7 @@ mod test {
 
         //
         let client_session = client_session.unwrap();
-        let (server_session, _) = server_session.unwrap();
+        let (server_session, _, _) = server_session.unwrap();
         (client_session, server_session)
     }
 
@@ -714,7 +713,7 @@ mod test {
 
         // get session
         let mut client = client.unwrap();
-        let (mut server, _) = server.unwrap();
+        let (mut server, _, _) = server.unwrap();
 
         // test send and receive
         block_on(client.write_all(b"The Name of the Wind")).unwrap();

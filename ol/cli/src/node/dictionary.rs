@@ -1,6 +1,6 @@
 //! dictionary to associate notes to account addresses
 
-use libra_types::account_address::AccountAddress;
+use diem_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
 use std::{path::Path, fs::File};
 use super::node::Node;

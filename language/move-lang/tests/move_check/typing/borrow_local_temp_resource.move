@@ -1,6 +1,6 @@
-module M {
+module 0x8675309::M {
     struct S {}
-    resource struct R {}
+    struct R {}
 
     fun t0() {
         &R{};

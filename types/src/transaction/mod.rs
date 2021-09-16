@@ -1,28 +1,29 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     account_address::AccountAddress,
-    account_config::COIN1_NAME,
+    account_config::XUS_NAME,
     account_state_blob::AccountStateBlob,
     block_metadata::BlockMetadata,
     chain_id::ChainId,
     contract_event::ContractEvent,
     ledger_info::LedgerInfo,
     proof::{accumulator::InMemoryAccumulator, TransactionInfoWithProof, TransactionListProof},
-    transaction::authenticator::TransactionAuthenticator,
+    transaction::authenticator::{AccountAuthenticator, TransactionAuthenticator},
     vm_status::{DiscardedVMStatus, KeptVMStatus, StatusCode, StatusType, VMStatus},
     write_set::WriteSet,
 };
 use anyhow::{ensure, format_err, Error, Result};
-use libra_crypto::{
+use diem_crypto::{
     ed25519::*,
     hash::{CryptoHash, EventAccumulatorHasher},
     multi_ed25519::{MultiEd25519PublicKey, MultiEd25519Signature},
     traits::SigningKey,
     HashValue,
 };
-use libra_crypto_derive::{CryptoHasher, LCSCryptoHash};
+use diem_crypto_derive::{BCSCryptoHash, CryptoHasher};
+use move_core_types::transaction_argument::convert_txn_args;
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
@@ -43,9 +44,12 @@ mod transaction_argument;
 
 pub use change_set::ChangeSet;
 pub use module::Module;
-pub use script::{ArgumentABI, Script, ScriptABI, TypeArgumentABI, SCRIPT_HASH_LENGTH};
+pub use script::{
+    ArgumentABI, Script, ScriptABI, ScriptFunction, ScriptFunctionABI, TransactionScriptABI,
+    TypeArgumentABI,
+};
 
-use std::ops::Deref;
+use std::{collections::BTreeSet, ops::Deref};
 pub use transaction_argument::{parse_transaction_argument, TransactionArgument};
 
 pub type Version = u64; // Height - also used for MVCC in StateDB
@@ -54,7 +58,9 @@ pub type Version = u64; // Height - also used for MVCC in StateDB
 pub const PRE_GENESIS_VERSION: Version = u64::max_value();
 
 /// RawTransaction is the portion of a transaction that a client signs.
-#[derive(Clone, Debug, Hash, Eq, PartialEq, Serialize, Deserialize, CryptoHasher, LCSCryptoHash)]
+#[derive(
+    Clone, Debug, Hash, Eq, PartialEq, Serialize, Deserialize, CryptoHasher, BCSCryptoHash,
+)]
 pub struct RawTransaction {
     /// Sender's address.
     sender: AccountAddress,
@@ -72,7 +78,7 @@ pub struct RawTransaction {
     /// Price to be paid per gas unit.
     gas_unit_price: u64,
 
-    /// The currency code, e.g., "Coin1", used to pay for gas. The `max_gas_amount`
+    /// The currency code, e.g., "XUS", used to pay for gas. The `max_gas_amount`
     /// and `gas_unit_price` values refer to units of this currency.
     gas_currency_code: String,
 
@@ -83,7 +89,7 @@ pub struct RawTransaction {
     /// in the future to indicate that a transaction does not expire.
     expiration_timestamp_secs: u64,
 
-    /// Chain ID of the Libra network this transaction is intended for.
+    /// Chain ID of the Diem network this transaction is intended for.
     chain_id: ChainId,
 }
 
@@ -131,6 +137,31 @@ impl RawTransaction {
             sender,
             sequence_number,
             payload: TransactionPayload::Script(script),
+            max_gas_amount,
+            gas_unit_price,
+            gas_currency_code,
+            expiration_timestamp_secs,
+            chain_id,
+        }
+    }
+
+    /// Create a new `RawTransaction` with a script function.
+    ///
+    /// A script transaction contains only code to execute. No publishing is allowed in scripts.
+    pub fn new_script_function(
+        sender: AccountAddress,
+        sequence_number: u64,
+        script_function: ScriptFunction,
+        max_gas_amount: u64,
+        gas_unit_price: u64,
+        gas_currency_code: String,
+        expiration_timestamp_secs: u64,
+        chain_id: ChainId,
+    ) -> Self {
+        RawTransaction {
+            sender,
+            sequence_number,
+            payload: TransactionPayload::ScriptFunction(script_function),
             max_gas_amount,
             gas_unit_price,
             gas_currency_code,
@@ -192,7 +223,7 @@ impl RawTransaction {
             // Since write-set transactions bypass the VM, these fields aren't relevant.
             max_gas_amount: 0,
             gas_unit_price: 0,
-            gas_currency_code: COIN1_NAME.to_owned(),
+            gas_currency_code: XUS_NAME.to_owned(),
             // Write-set transactions are special and important and shouldn't expire.
             expiration_timestamp_secs: u64::max_value(),
             chain_id,
@@ -216,7 +247,7 @@ impl RawTransaction {
             // Since write-set transactions bypass the VM, these fields aren't relevant.
             max_gas_amount: 0,
             gas_unit_price: 0,
-            gas_currency_code: COIN1_NAME.to_owned(),
+            gas_currency_code: XUS_NAME.to_owned(),
             // Write-set transactions are special and important and shouldn't expire.
             expiration_timestamp_secs: u64::max_value(),
             chain_id,
@@ -238,6 +269,50 @@ impl RawTransaction {
         )))
     }
 
+    /// Signs the given multi-agent `RawTransaction`, which is a transaction with secondary
+    /// signers in addition to a sender. The private keys of the sender and the
+    /// secondary signers are used to sign the transaction.
+    ///
+    /// The order and length of the secondary keys provided here have to match the order and
+    /// length of the `secondary_signers`.
+    pub fn sign_multi_agent(
+        self,
+        sender_private_key: &Ed25519PrivateKey,
+        secondary_signers: Vec<AccountAddress>,
+        secondary_private_keys: Vec<&Ed25519PrivateKey>,
+    ) -> Result<SignatureCheckedTransaction> {
+        let message =
+            RawTransactionWithData::new_multi_agent(self.clone(), secondary_signers.clone());
+        let sender_signature = sender_private_key.sign(&message);
+        let sender_authenticator = AccountAuthenticator::ed25519(
+            Ed25519PublicKey::from(sender_private_key),
+            sender_signature,
+        );
+
+        if secondary_private_keys.len() != secondary_signers.len() {
+            return Err(format_err!(
+                "number of secondary private keys and number of secondary signers don't match"
+            ));
+        }
+        let mut secondary_authenticators = vec![];
+        for priv_key in secondary_private_keys {
+            let signature = priv_key.sign(&message);
+            secondary_authenticators.push(AccountAuthenticator::ed25519(
+                Ed25519PublicKey::from(priv_key),
+                signature,
+            ));
+        }
+
+        Ok(SignatureCheckedTransaction(
+            SignedTransaction::new_multi_agent(
+                self,
+                sender_authenticator,
+                secondary_signers,
+                secondary_authenticators,
+            ),
+        ))
+    }
+
     #[cfg(any(test, feature = "fuzzing"))]
     pub fn multi_sign_for_testing(
         self,
@@ -255,17 +330,21 @@ impl RawTransaction {
     }
 
     pub fn format_for_client(&self, get_transaction_name: impl Fn(&[u8]) -> String) -> String {
-        let empty_vec = vec![];
         let (code, args) = match &self.payload {
-            TransactionPayload::WriteSet(_) => ("genesis".to_string(), &empty_vec[..]),
-            TransactionPayload::Script(script) => {
-                (get_transaction_name(script.code()), script.args())
-            }
-            TransactionPayload::Module(_) => ("module publishing".to_string(), &empty_vec[..]),
+            TransactionPayload::WriteSet(_) => ("genesis".to_string(), vec![]),
+            TransactionPayload::Script(script) => (
+                get_transaction_name(script.code()),
+                convert_txn_args(script.args()),
+            ),
+            TransactionPayload::ScriptFunction(script_fn) => (
+                format!("{}::{}", script_fn.module(), script_fn.function()),
+                script_fn.args().to_vec(),
+            ),
+            TransactionPayload::Module(_) => ("module publishing".to_string(), vec![]),
         };
         let mut f_args: String = "".to_string();
         for arg in args {
-            f_args = format!("{}\n\t\t\t{:#?},", f_args, arg);
+            f_args = format!("{}\n\t\t\t{:02X?},", f_args, arg);
         }
         format!(
             "RawTransaction {{ \n\
@@ -299,6 +378,28 @@ impl RawTransaction {
     }
 }
 
+#[derive(
+    Clone, Debug, Hash, Eq, PartialEq, Serialize, Deserialize, CryptoHasher, BCSCryptoHash,
+)]
+pub enum RawTransactionWithData {
+    MultiAgent {
+        raw_txn: RawTransaction,
+        secondary_signer_addresses: Vec<AccountAddress>,
+    },
+}
+
+impl RawTransactionWithData {
+    pub fn new_multi_agent(
+        raw_txn: RawTransaction,
+        secondary_signer_addresses: Vec<AccountAddress>,
+    ) -> Self {
+        Self::MultiAgent {
+            raw_txn,
+            secondary_signer_addresses,
+        }
+    }
+}
+
 /// Different kinds of transactions.
 #[derive(Clone, Debug, Hash, Eq, PartialEq, Serialize, Deserialize)]
 pub enum TransactionPayload {
@@ -308,13 +409,22 @@ pub enum TransactionPayload {
     Script(Script),
     /// A transaction that publishes code.
     Module(Module),
+    /// A transaction that executes an existing script function published on-chain.
+    ScriptFunction(ScriptFunction),
 }
 
 impl TransactionPayload {
     pub fn should_trigger_reconfiguration_by_default(&self) -> bool {
         match self {
             Self::WriteSet(ws) => ws.should_trigger_reconfiguration_by_default(),
-            Self::Script(_) | Self::Module(_) => false,
+            Self::Script(_) | Self::ScriptFunction(_) | Self::Module(_) => false,
+        }
+    }
+
+    pub fn into_script_function(self) -> ScriptFunction {
+        match self {
+            Self::ScriptFunction(f) => f,
+            payload => panic!("Expected ScriptFunction(_) payload, found: {:#?}", payload),
         }
     }
 }
@@ -423,6 +533,22 @@ impl SignedTransaction {
         }
     }
 
+    pub fn new_multi_agent(
+        raw_txn: RawTransaction,
+        sender: AccountAuthenticator,
+        secondary_signer_addresses: Vec<AccountAddress>,
+        secondary_signers: Vec<AccountAuthenticator>,
+    ) -> Self {
+        SignedTransaction {
+            raw_txn,
+            authenticator: TransactionAuthenticator::multi_agent(
+                sender,
+                secondary_signer_addresses,
+                secondary_signers,
+            ),
+        }
+    }
+
     pub fn authenticator(&self) -> TransactionAuthenticator {
         self.authenticator.clone()
     }
@@ -464,7 +590,7 @@ impl SignedTransaction {
     }
 
     pub fn raw_txn_bytes_len(&self) -> usize {
-        lcs::to_bytes(&self.raw_txn)
+        bcs::to_bytes(&self.raw_txn)
             .expect("Unable to serialize RawTransaction")
             .len()
     }
@@ -476,6 +602,13 @@ impl SignedTransaction {
         Ok(SignatureCheckedTransaction(self))
     }
 
+    pub fn contains_duplicate_signers(&self) -> bool {
+        let mut all_signer_addresses = self.authenticator.secondary_signer_addreses();
+        all_signer_addresses.push(self.sender());
+        let mut s = BTreeSet::new();
+        all_signer_addresses.iter().any(|a| !s.insert(*a))
+    }
+
     pub fn format_for_client(&self, get_transaction_name: impl Fn(&[u8]) -> String) -> String {
         format!(
             "SignedTransaction {{ \n \
@@ -484,6 +617,13 @@ impl SignedTransaction {
              }}",
             self.raw_txn.format_for_client(get_transaction_name),
             self.authenticator
+        )
+    }
+
+    pub fn is_multi_agent(&self) -> bool {
+        matches!(
+            self.authenticator,
+            TransactionAuthenticator::MultiAgent { .. }
         )
     }
 }
@@ -584,7 +724,7 @@ pub enum TransactionStatus {
     /// Keep the transaction output
     Keep(KeptVMStatus),
 
-    /// Retry the transaction because it is after a ValidatorSetChange txn
+    /// Retry the transaction, e.g., after a reconfiguration
     Retry,
 }
 
@@ -617,7 +757,7 @@ impl From<VMStatus> for TransactionStatus {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum GovernanceRole {
-    LibraRoot,
+    DiemRoot,
     TreasuryCompliance,
     Validator,
     ValidatorOperator,
@@ -629,7 +769,7 @@ impl GovernanceRole {
     pub fn from_role_id(role_id: u64) -> Self {
         use GovernanceRole::*;
         match role_id {
-            0 => LibraRoot,
+            0 => DiemRoot,
             1 => TreasuryCompliance,
             2 => DesignatedDealer,
             3 => Validator,
@@ -645,7 +785,7 @@ impl GovernanceRole {
     pub fn priority(&self) -> u64 {
         use GovernanceRole::*;
         match self {
-            LibraRoot => 3,
+            DiemRoot => 3,
             TreasuryCompliance => 2,
             Validator | ValidatorOperator | DesignatedDealer => 1,
             NonGovernanceRole => 0,
@@ -694,6 +834,14 @@ impl VMValidatorResult {
         }
     }
 
+    pub fn error(vm_status: DiscardedVMStatus) -> Self {
+        Self {
+            status: Some(vm_status),
+            score: 0,
+            governance_role: GovernanceRole::NonGovernanceRole,
+        }
+    }
+
     pub fn status(&self) -> Option<DiscardedVMStatus> {
         self.status
     }
@@ -708,7 +856,7 @@ impl VMValidatorResult {
 }
 
 /// The output of executing a transaction.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct TransactionOutput {
     /// The list of writes this transaction intends to do.
     write_set: WriteSet,
@@ -738,6 +886,10 @@ impl TransactionOutput {
         }
     }
 
+    pub fn into(self) -> (WriteSet, Vec<ContractEvent>) {
+        (self.write_set, self.events)
+    }
+
     pub fn write_set(&self) -> &WriteSet {
         &self.write_set
     }
@@ -757,7 +909,7 @@ impl TransactionOutput {
 
 /// `TransactionInfo` is the object we store in the transaction accumulator. It consists of the
 /// transaction as well as the execution result of this transaction.
-#[derive(Clone, CryptoHasher, LCSCryptoHash, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, CryptoHasher, BCSCryptoHash, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
 pub struct TransactionInfo {
     /// The hash of this transaction.
@@ -982,14 +1134,14 @@ impl TransactionListWithProof {
     }
 }
 
-/// `Transaction` will be the transaction type used internally in the libra node to represent the
+/// `Transaction` will be the transaction type used internally in the diem node to represent the
 /// transaction to be processed and persisted.
 ///
 /// We suppress the clippy warning here as we would expect most of the transaction to be user
 /// transaction.
 #[allow(clippy::large_enum_variant)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, CryptoHasher, LCSCryptoHash)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, CryptoHasher, BCSCryptoHash)]
 pub enum Transaction {
     /// Transaction submitted by the user. e.g: P2P payment transaction, publishing module
     /// transaction, etc.

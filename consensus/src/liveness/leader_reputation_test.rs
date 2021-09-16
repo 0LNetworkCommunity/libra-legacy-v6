@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::liveness::{
@@ -11,7 +11,7 @@ use consensus_types::{
     block::{block_test_utils::certificate_for_genesis, Block},
     common::{Author, Round},
 };
-use libra_types::{block_metadata::NewBlockEvent, validator_signer::ValidatorSigner};
+use diem_types::{block_metadata::NewBlockEvent, validator_signer::ValidatorSigner};
 
 struct MockHistory {
     window_size: usize,
@@ -50,7 +50,7 @@ fn test_simple_heuristic() {
         proposers.push(signer.author());
         signers.push(signer);
     }
-    let heuristic = ActiveInactiveHeuristic::new(active_weight, inactive_weight);
+    let heuristic = ActiveInactiveHeuristic::new(proposers[0], active_weight, inactive_weight);
     // 1. Window size not enough
     let weights = heuristic.get_weights(&proposers, &[]);
     assert_eq!(weights.len(), proposers.len());
@@ -94,7 +94,11 @@ fn test_api() {
     let leader_reputation = LeaderReputation::new(
         proposers.clone(),
         Box::new(MockHistory::new(1, history)),
-        Box::new(ActiveInactiveHeuristic::new(active_weight, inactive_weight)),
+        Box::new(ActiveInactiveHeuristic::new(
+            proposers[0],
+            active_weight,
+            inactive_weight,
+        )),
     );
     let round = 42u64;
     // first metadata is ignored because of window size 1

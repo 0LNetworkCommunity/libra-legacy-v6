@@ -1,22 +1,20 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 
 use anyhow::Context;
-use bytecode_verifier::{verify_module, verify_script, DependencyChecker};
-use compiled_stdlib::{stdlib_modules, StdLibOptions};
+use bytecode_verifier::{dependencies, verify_module, verify_script};
 use compiler::{util, Compiler};
 use ir_to_bytecode::parser::{parse_module, parse_script};
-use libra_types::{access_path::AccessPath, account_address::AccountAddress, account_config};
+use move_binary_format::{errors::VMError, file_format::CompiledModule};
+use move_core_types::account_address::AccountAddress;
 use std::{
-    convert::TryFrom,
     fs,
     io::Write,
     path::{Path, PathBuf},
 };
 use structopt::StructOpt;
-use vm::{errors::VMError, file_format::CompiledModule};
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "IR Compiler", about = "Move IR to bytecode compiler.")]
@@ -26,7 +24,7 @@ struct Args {
     pub module_input: bool,
     /// Account address used for publishing
     #[structopt(short = "a", long = "address")]
-    pub address: Option<String>,
+    pub address: String,
     /// Do not automatically compile stdlib dependencies
     #[structopt(long = "no-stdlib")]
     pub no_stdlib: bool,
@@ -55,13 +53,13 @@ fn print_error_and_exit(verification_error: &VMError) -> ! {
 
 fn do_verify_module(module: CompiledModule, dependencies: &[CompiledModule]) -> CompiledModule {
     verify_module(&module).unwrap_or_else(|err| print_error_and_exit(&err));
-    if let Err(err) = DependencyChecker::verify_module(&module, dependencies) {
+    if let Err(err) = dependencies::verify_module(&module, dependencies) {
         print_error_and_exit(&err);
     }
     module
 }
 
-fn write_output(path: &PathBuf, buf: &[u8]) {
+fn write_output(path: &Path, buf: &[u8]) {
     let mut f = fs::File::create(path)
         .with_context(|| format!("Unable to open output file {:?}", path))
         .unwrap();
@@ -73,10 +71,13 @@ fn write_output(path: &PathBuf, buf: &[u8]) {
 fn main() {
     let args = Args::from_args();
 
-    let address = args
-        .address
-        .map(|a| AccountAddress::try_from(a).unwrap())
-        .unwrap_or(account_config::CORE_CODE_ADDRESS);
+    let address = match AccountAddress::from_hex_literal(&args.address) {
+        Ok(address) => address,
+        Err(_) => {
+            println!("Bad address: {}", args.address);
+            std::process::exit(1);
+        }
+    };
     let source_path = Path::new(&args.source_path);
     let mvir_extension = "mvir";
     let mv_extension = "mv";
@@ -96,16 +97,13 @@ fn main() {
 
     if args.list_dependencies {
         let source = fs::read_to_string(args.source_path.clone()).expect("Unable to read file");
-        let dependency_list: Vec<AccessPath> = if args.module_input {
+        let dependency_list = if args.module_input {
             let module = parse_module(file_name, &source).expect("Unable to parse module");
             module.get_external_deps()
         } else {
             let script = parse_script(file_name, &source).expect("Unable to parse module");
             script.get_external_deps()
-        }
-        .into_iter()
-        .map(|m| AccessPath::code_access_path(&m))
-        .collect();
+        };
         println!(
             "{}",
             serde_json::to_string(&dependency_list).expect("Unable to serialize dependencies")
@@ -130,7 +128,7 @@ fn main() {
         } else if args.no_stdlib {
             vec![]
         } else {
-            stdlib_modules(StdLibOptions::Compiled).to_vec()
+            diem_framework_releases::current_modules().to_vec()
         }
     };
 
@@ -140,7 +138,6 @@ fn main() {
             address,
             skip_stdlib_deps: args.no_stdlib,
             extra_deps: deps,
-            ..Compiler::default()
         };
         let (compiled_script, source_map) = compiler
             .into_compiled_script_and_source_map(file_name, &source)
@@ -150,7 +147,7 @@ fn main() {
 
         if args.output_source_maps {
             let source_map_bytes =
-                lcs::to_bytes(&source_map).expect("Unable to serialize source maps for script");
+                bcs::to_bytes(&source_map).expect("Unable to serialize source maps for script");
             write_output(
                 &source_path.with_extension(source_map_extension),
                 &source_map_bytes,
@@ -173,7 +170,7 @@ fn main() {
 
         if args.output_source_maps {
             let source_map_bytes =
-                lcs::to_bytes(&source_map).expect("Unable to serialize source maps for module");
+                bcs::to_bytes(&source_map).expect("Unable to serialize source maps for module");
             write_output(
                 &source_path.with_extension(source_map_extension),
                 &source_map_bytes,

@@ -9,7 +9,7 @@ An event emitted during a transaction
 
 | Name                | Type                     | Description                                                    |
 |---------------------|--------------------------|----------------------------------------------------------------|
-| key                 | string                   | Gobally unique identifier of event stream                      |
+| key                 | string                   | Globally unique identifier of event stream                     |
 | sequence_number     | unsigned int64           | Sequence number of the current event in the given even stream  |
 | transaction_version | unsigned int64           | Version of the transaction that emitted this event             |
 | data                | [EventData](#event-data) | Typed event data object                                        |
@@ -54,13 +54,13 @@ Event data is serialized into one JSON object with a "type" field to indicate it
 | type                | string                   | constant string "mint"            |
 | amount              | [Amount](type_amount.md) | amount mint                       |
 
-#### to_lbr_exchange_rate_update
+#### to_xdx_exchange_rate_update
 
 | Name                     | Type     | Description                                  |
 |--------------------------|----------|----------------------------------------------|
-| type                     | string   | constant string "to_lbr_exchange_rate_update"|
+| type                     | string   | constant string "to_xdx_exchange_rate_update"|
 | currency_code            | string   | currency code of the exchange rate updated   |
-| new_to_lbr_exchange_rate | float32  | currency code of the exchange rate updated   |
+| new_to_xdx_exchange_rate | float32  | currency code of the exchange rate updated   |
 
 #### receivedpayment
 
@@ -131,7 +131,7 @@ Event emitted when a new block is created
 |---------------|------------------------------|---------------------------------------|
 | type          | string                       | Constant string "newblock"            |
 | round         | unsigned int64               | Round number                          |
-| proposer      | unsigned int64               | proposer account address, hex-encoded |
+| proposer      | string                       | proposer account address, hex-encoded |
 | proposed_time | unsigned int64(microseconds) | proposed timestamp                    |
 
 #### receivedmint
@@ -152,14 +152,26 @@ Event emitted when a new account is created
 |-----------------|--------|--------------------------------|
 | type            | string | Constant string "createaccount"|
 | created_address | string | Address of the created account |
-| role_id         | u64    | Role id of the created account, see [LIP-2](https://lip.libra.org/lip-2/#move-implementation) for more details |
+| role_id         | u64    | Role id of the created account, see [DIP-2](https://dip.diem.com/dip-2/#move-implementation) for more details |
+
+#### diemiddomain
+
+Event emitted under TC account when a diem id domain is added or removed from parent VASP account
+
+| Name            | Type   | Description                    |
+|-----------------|--------|--------------------------------|
+| type            | string | Constant string "diemiddomain"|
+| address | string | On-chain account address of parent VASP |
+| domain         | string    | Diem ID domain string of the account |
+| removed         | boolean    | Whether a domain was added or removed |
 
 #### unknown
 
 Represents events currently unsupported by JSON-RPC API.
 
-| Name    | Type   | Description                 |
-|---------|--------|-----------------------------|
-| type    | string | Constant string "unknown"   |
+| Name  | Type   | Description                             |
+|-------|--------|-----------------------------------------|
+| type  | string | Constant string "unknown"               |
+| bytes | string | Hex-encoded BCS bytes of the event data |
 
-[1]: https://developers.libra.org/docs/rustdocs/libra_canonical_serialization/index.html "LCS"
+[1]: https://docs.rs/bcs/ "BCS"

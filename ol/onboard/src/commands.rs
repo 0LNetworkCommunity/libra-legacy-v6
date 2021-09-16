@@ -4,6 +4,7 @@ pub mod version_cmd;
 pub mod wizard_fn_cmd;
 pub mod wizard_user_cmd;
 pub mod wizard_val_cmd;
+pub mod wizard_fork_cmd;
 pub mod keygen_cmd;
 pub mod fix_cmd;
 
@@ -12,11 +13,12 @@ use self::{
     wizard_val_cmd::ValWizardCmd,
     keygen_cmd::KeygenCmd,
     fix_cmd::FixCmd,
+    wizard_fork_cmd::ForkCmd
+
 };
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use std::path::PathBuf;
 use ol_types::config::AppCfg;
-
 
 /// MinerApp Configuration Filename
 pub const CONFIG_FILE: &str = "0L.toml";
@@ -51,6 +53,10 @@ pub enum WizCmd {
     /// The `fix` subcommand
     #[options(help = "migrate account.json")]
     Fix(FixCmd),
+
+        /// The `fork` subcommand
+    #[options(help = "create configs for a fork, from genesis")]
+    Fork(ForkCmd),
     
 }
 

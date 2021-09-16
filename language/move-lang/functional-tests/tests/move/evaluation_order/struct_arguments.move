@@ -1,13 +1,13 @@
 //! new-transaction
 
-module M {
-    struct S {
+module {{default}}::M {
+    struct S has drop {
         a: u64,
         b: u64,
     }
 
-    resource struct R {}
-    resource struct Cup {
+    struct R has key, store {}
+    struct Cup has key {
         a: u64,
         b: R,
     }
@@ -33,7 +33,7 @@ module M {
     }
 
     public fun t5(account: &signer) acquires R {
-        move_to(account, Cup { b: move_from(0x0), a: fail(0) });
+        move_to(account, Cup { b: move_from(@0x0), a: fail(0) });
     }
 
     public fun t6(account: &signer) {
@@ -100,8 +100,8 @@ fun main() {
 // check: MISSING_DATA
 script {
 use {{default}}::M;
-fun main(account: &signer) {
-  M::t5(account)
+fun main(account: signer) {
+  M::t5(&account)
 }
 }
 
@@ -109,7 +109,7 @@ fun main(account: &signer) {
 // check: RESOURCE_ALREADY_EXISTS
 script {
 use {{default}}::M;
-fun main(account: &signer) {
-  M::t6(account)
+fun main(account: signer) {
+  M::t6(&account)
 }
 }

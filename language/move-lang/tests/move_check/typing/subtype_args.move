@@ -1,5 +1,5 @@
-module M {
-    struct S {}
+module 0x8675309::M {
+    struct S has drop {}
 
     fun imm<T>(_x: &T) {}
     fun imm_mut<T>(_x: &T, _y: &mut T) {}

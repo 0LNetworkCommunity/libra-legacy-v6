@@ -1,6 +1,10 @@
 address 0x1 {
 module TestMutRefsAccrossModule {
 
+    /*
+    TODO(refactoring): this test is deactivated until we have ported this (or a similar) feature, or decided to
+      drop it in which case the test should be removed.
+
     spec module {
         pragma verify = true;
     }
@@ -13,7 +17,7 @@ module TestMutRefsAccrossModule {
         sum: u64
     }
 
-    spec struct T {
+    spec T {
         // global specification variable tracking sum of values.
         global spec_sum: u64;
 
@@ -36,7 +40,7 @@ module TestMutRefsAccrossModule {
         r.sum = r.sum + x;
         T{value: x}
     }
-    spec fun new {
+    spec new {
         requires x > 0;
     }
 
@@ -122,9 +126,12 @@ module TestMutRefsAccrossModule {
          increment(r);
          x
      }
+
+     */
 }
 
-module TestMutRefsUser {
+/*
+module 0x42::TestMutRefsUser {
     use 0x1::TestMutRefsAccrossModule;
 
     public fun valid() {
@@ -133,4 +140,6 @@ module TestMutRefsUser {
         TestMutRefsAccrossModule::delete(x);
     }
 }
+*/
+
 }

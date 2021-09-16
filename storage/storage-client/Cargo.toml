@@ -1,26 +1,26 @@
 [package]
 name = "storage-client"
 version = "0.1.0"
-authors = ["Libra Association <opensource@libra.org>"]
-description = "Libra storage client"
-repository = "https://github.com/libra/libra"
-homepage = "https://libra.org"
+authors = ["Diem Association <opensource@diem.com>"]
+description = "Diem storage client"
+repository = "https://github.com/diem/diem"
+homepage = "https://diem.com"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0.33"
-serde = "1.0.116"
+anyhow = "1.0.38"
+serde = "1.0.124"
 
-lcs = { path = "../../common/lcs", version = "0.1.0", package = "libra-canonical-serialization" }
-libra-crypto = { path = "../../crypto/crypto", version = "0.1.0" }
-libra-logger = { path = "../../common/logger", version = "0.1.0" }
-libra-infallible = { path = "../../common/infallible", version = "0.1.0" }
-libra-secure-net = { path = "../../secure/net", version = "0.1.0" }
-libra-types = { path = "../../types", version = "0.1.0" }
-libra-workspace-hack = { path = "../../common/workspace-hack", version = "0.1.0" }
-storage-interface = { path = "../storage-interface", version = "0.1.0" }
+bcs = "0.1.2"
+diem-crypto = { path = "../../crypto/crypto" }
+diem-logger = { path = "../../common/logger" }
+diem-infallible = { path = "../../common/infallible" }
+diem-secure-net = { path = "../../secure/net" }
+diem-types = { path = "../../types" }
+diem-workspace-hack = { path = "../../common/workspace-hack" }
+storage-interface = { path = "../storage-interface" }
 
 [features]
 default = []

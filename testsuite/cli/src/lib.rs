@@ -1,20 +1,21 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
+#![allow(missing_docs)] //////// 0L ////////
 
-//! Libra Client
+//! Diem Client
 //!
-//! Client (binary) is the CLI tool to interact with Libra validator.
+//! Client (binary) is the CLI tool to interact with Diem validator.
 //! It supposes all public APIs.
 
-use libra_crypto::{
+use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     test_utils::KeyPair,
     traits::ValidCryptoMaterialStringExt,
 };
-use libra_types::account_address::AccountAddress;
+use diem_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
 
 mod account_commands;
@@ -24,15 +25,14 @@ pub mod client_proxy;
 pub mod commands;
 mod counters;
 mod dev_commands;
-mod info_commands;
 /// Client wrapper to connect to validator.
-pub mod libra_client;
+pub mod diem_client; //////// 0L ////////
+mod info_commands;
 mod query_commands;
 mod transfer_commands;
 //////// 0L ////////
-mod node_commands;
-mod oracle_commands;
-
+mod ol_node_commands;
+mod ol_oracle_commands;
 /// Struct used to store data for each created account.  We track the sequence number
 /// so we can create new transactions easily
 #[derive(Debug, Serialize, Deserialize, PartialEq)]

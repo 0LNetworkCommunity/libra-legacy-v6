@@ -1,8 +1,8 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::config::{Error, RootPath, SecureBackend};
-use libra_types::transaction::Transaction;
+use diem_types::transaction::Transaction;
 use serde::{Deserialize, Serialize};
 use std::{
     fs::File,
@@ -69,7 +69,7 @@ impl ExecutionConfig {
             let mut buffer = vec![];
             file.read_to_end(&mut buffer)
                 .map_err(|e| Error::IO("genesis".into(), e))?;
-            let data = lcs::from_bytes(&buffer).map_err(|e| Error::LCS("genesis", e))?;
+            let data = bcs::from_bytes(&buffer).map_err(|e| Error::BCS("genesis", e))?;
             self.genesis = Some(data);
         }
 
@@ -83,7 +83,7 @@ impl ExecutionConfig {
             }
             let path = root_dir.full_path(&self.genesis_file_location);
             let mut file = File::create(&path).map_err(|e| Error::IO("genesis".into(), e))?;
-            let data = lcs::to_bytes(&genesis).map_err(|e| Error::LCS("genesis", e))?;
+            let data = bcs::to_bytes(&genesis).map_err(|e| Error::BCS("genesis", e))?;
             file.write_all(&data)
                 .map_err(|e| Error::IO("genesis".into(), e))?;
         }
@@ -121,8 +121,8 @@ pub struct RemoteExecutionService {
 #[cfg(test)]
 mod test {
     use super::*;
-    use libra_temppath::TempPath;
-    use libra_types::{
+    use diem_temppath::TempPath;
+    use diem_types::{
         transaction::{ChangeSet, Transaction, WriteSetPayload},
         write_set::WriteSetMut,
     };

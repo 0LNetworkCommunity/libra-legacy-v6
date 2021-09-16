@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module implements an in-memory Merkle Accumulator that is similar to what we use in
@@ -16,7 +16,7 @@ mod accumulator_test;
 use super::MerkleTreeInternalNode;
 use crate::proof::definition::{LeafCount, MAX_ACCUMULATOR_LEAVES};
 use anyhow::{ensure, format_err, Result};
-use libra_crypto::{
+use diem_crypto::{
     hash::{CryptoHash, CryptoHasher, ACCUMULATOR_PLACEHOLDER_HASH},
     HashValue,
 };
@@ -225,7 +225,7 @@ where
         current_num_leaves += remaining_new_leaves;
         current_subtree_roots.extend(subtree_iter);
 
-        Ok(Self::new(current_subtree_roots, current_num_leaves)?)
+        Self::new(current_subtree_roots, current_num_leaves)
     }
 
     /// Returns the root hash of the accumulator.

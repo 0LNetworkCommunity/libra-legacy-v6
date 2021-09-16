@@ -1,22 +1,21 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{interpreter::Interpreter, loader::Resolver, logging::LogContext};
-use libra_types::account_config::CORE_CODE_ADDRESS;
+use move_binary_format::errors::PartialVMResult;
 use move_core_types::{
-    account_address::AccountAddress, gas_schedule::CostTable, value::MoveTypeLayout,
-    vm_status::StatusType,
+    account_address::AccountAddress, gas_schedule::CostTable, language_storage::CORE_CODE_ADDRESS,
+    value::MoveTypeLayout, vm_status::StatusType,
 };
-use move_vm_natives::{account, debug, event, hash, lcs, signature, signer, vector, vdf};
+use move_vm_natives::{account, bcs, debug, event, hash, signature, signer, vector, vdf};
 use move_vm_types::{
     data_store::DataStore,
-    gas_schedule::CostStrategy,
+    gas_schedule::GasStatus,
     loaded_data::runtime_types::Type,
     natives::function::{NativeContext, NativeResult},
     values::Value,
 };
 use std::{collections::VecDeque, fmt::Write};
-use vm::errors::PartialVMResult;
 
 // The set of native functions the VM supports.
 // The functions can line in any crate linked in but the VM declares them here.
@@ -28,7 +27,7 @@ use vm::errors::PartialVMResult;
 pub(crate) enum NativeFunction {
     HashSha2_256,
     HashSha3_256,
-    LCSToBytes,
+    BCSToBytes,
     PubED25519Validate,
     SigED25519Verify,
     VectorLength,
@@ -44,10 +43,11 @@ pub(crate) enum NativeFunction {
     DebugPrintStackTrace,
     SignerBorrowAddress,
     CreateSigner,
+    // functions below this line are deprecated and remain only for replaying old transactions
     DestroySigner,
     //////// 0L ////////
     VDFVerify,
-    RedeemAuthKeyParse,
+    RedeemAuthKeyParse,    
 }
 
 impl NativeFunction {
@@ -62,7 +62,7 @@ impl NativeFunction {
         Some(match case {
             (&CORE_CODE_ADDRESS, "Hash", "sha2_256") => HashSha2_256,
             (&CORE_CODE_ADDRESS, "Hash", "sha3_256") => HashSha3_256,
-            (&CORE_CODE_ADDRESS, "LCS", "to_bytes") => LCSToBytes,
+            (&CORE_CODE_ADDRESS, "BCS", "to_bytes") => BCSToBytes,
             (&CORE_CODE_ADDRESS, "Signature", "ed25519_validate_pubkey") => PubED25519Validate,
             (&CORE_CODE_ADDRESS, "Signature", "ed25519_verify") => SigED25519Verify,
             (&CORE_CODE_ADDRESS, "Vector", "length") => VectorLength,
@@ -74,16 +74,16 @@ impl NativeFunction {
             (&CORE_CODE_ADDRESS, "Vector", "destroy_empty") => VectorDestroyEmpty,
             (&CORE_CODE_ADDRESS, "Vector", "swap") => VectorSwap,
             (&CORE_CODE_ADDRESS, "Event", "write_to_event_store") => AccountWriteEvent,
-            (&CORE_CODE_ADDRESS, "LibraAccount", "create_signer") => CreateSigner,
-            (&CORE_CODE_ADDRESS, "LibraAccount", "destroy_signer") => DestroySigner,
+            (&CORE_CODE_ADDRESS, "DiemAccount", "create_signer") => CreateSigner,
             (&CORE_CODE_ADDRESS, "Debug", "print") => DebugPrint,
             (&CORE_CODE_ADDRESS, "Debug", "print_stack_trace") => DebugPrintStackTrace,
             (&CORE_CODE_ADDRESS, "Signer", "borrow_address") => SignerBorrowAddress,
+            // functions below this line are deprecated and remain only for replaying old transactions
+            (&CORE_CODE_ADDRESS, "DiemAccount", "destroy_signer") => DestroySigner,
             //////// 0L ////////
-            (&CORE_CODE_ADDRESS, "VDF", "verify") => VDFVerify, // OL Change
-            (&CORE_CODE_ADDRESS, "VDF", "extract_address_from_challenge") => RedeemAuthKeyParse,   // 0L change
+            (&CORE_CODE_ADDRESS, "VDF", "verify") => VDFVerify,
+            (&CORE_CODE_ADDRESS, "VDF", "extract_address_from_challenge") => RedeemAuthKeyParse,            
             _ => return None,
-
         })
     }
 
@@ -109,15 +109,16 @@ impl NativeFunction {
             Self::VectorSwap => vector::native_swap(ctx, t, v),
             // natives that need the full API of `NativeContext`
             Self::AccountWriteEvent => event::native_emit_event(ctx, t, v),
-            Self::LCSToBytes => lcs::native_to_bytes(ctx, t, v),
+            Self::BCSToBytes => bcs::native_to_bytes(ctx, t, v),
             Self::DebugPrint => debug::native_print(ctx, t, v),
             Self::DebugPrintStackTrace => debug::native_print_stack_trace(ctx, t, v),
             Self::SignerBorrowAddress => signer::native_borrow_address(ctx, t, v),
             Self::CreateSigner => account::native_create_signer(ctx, t, v),
+            // functions below this line are deprecated and remain only for replaying old transactions
             Self::DestroySigner => account::native_destroy_signer(ctx, t, v),
             //////// 0L ////////
-            Self::VDFVerify => vdf::verify(ctx, t, v), // 0L change
-            Self::RedeemAuthKeyParse => vdf::extract_address_from_challenge(ctx, t, v),
+            Self::VDFVerify => vdf::verify(ctx, t, v),
+            Self::RedeemAuthKeyParse => vdf::extract_address_from_challenge(ctx, t, v),            
         };
         debug_assert!(match &result {
             Err(e) => e.major_status().status_type() == StatusType::InvariantViolation,
@@ -130,7 +131,7 @@ impl NativeFunction {
 pub(crate) struct FunctionContext<'a, L: LogContext> {
     interpreter: &'a mut Interpreter<L>,
     data_store: &'a mut dyn DataStore,
-    cost_strategy: &'a CostStrategy<'a>,
+    gas_status: &'a GasStatus<'a>,
     resolver: &'a Resolver<'a>,
 }
 
@@ -138,13 +139,13 @@ impl<'a, L: LogContext> FunctionContext<'a, L> {
     pub(crate) fn new(
         interpreter: &'a mut Interpreter<L>,
         data_store: &'a mut dyn DataStore,
-        cost_strategy: &'a mut CostStrategy,
+        gas_status: &'a mut GasStatus,
         resolver: &'a Resolver<'a>,
     ) -> FunctionContext<'a, L> {
         FunctionContext {
             interpreter,
             data_store,
-            cost_strategy,
+            gas_status,
             resolver,
         }
     }
@@ -157,7 +158,7 @@ impl<'a, L: LogContext> NativeContext for FunctionContext<'a, L> {
     }
 
     fn cost_table(&self) -> &CostTable {
-        self.cost_strategy.cost_table()
+        self.gas_status.cost_table()
     }
 
     fn save_event(
@@ -180,9 +181,5 @@ impl<'a, L: LogContext> NativeContext for FunctionContext<'a, L> {
             Err(e) if e.major_status().status_type() == StatusType::InvariantViolation => Err(e),
             Err(_) => Ok(None),
         }
-    }
-
-    fn is_resource(&self, ty: &Type) -> bool {
-        self.resolver.is_resource(ty)
     }
 }

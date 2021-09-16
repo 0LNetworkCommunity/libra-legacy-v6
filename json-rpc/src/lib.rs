@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! JSON RPC endpoint
@@ -17,10 +17,11 @@
 mod util;
 
 mod counters;
+pub mod data;
 mod methods;
 mod runtime;
 
-pub use libra_json_rpc_types::{errors, response, views};
+pub use diem_json_rpc_types::{errors, response, views};
 
 pub use runtime::{bootstrap, bootstrap_from_config};
 
@@ -28,6 +29,6 @@ pub use runtime::{bootstrap, bootstrap_from_config};
 /// Fuzzer for JSON RPC service
 pub mod fuzzing;
 #[cfg(any(test, feature = "fuzzing"))]
-mod tests;
+pub(crate) mod tests;
 #[cfg(any(test, feature = "fuzzing"))]
-pub use tests::test_bootstrap;
+pub use tests::utils::test_bootstrap;

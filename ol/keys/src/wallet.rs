@@ -1,8 +1,8 @@
 //! Key generation
 use std::env;
 
-use libra_wallet::{Mnemonic, WalletLibrary};
-use libra_types::{
+use diem_wallet::{Mnemonic, WalletLibrary};
+use diem_types::{
   account_address::AccountAddress,
   transaction::authenticator::AuthenticationKey
 };
@@ -79,7 +79,7 @@ pub fn get_account_from_prompt()
 
 #[test]
 fn wallet() { 
-    use libra_wallet::Mnemonic;
+    use diem_wallet::Mnemonic;
     let mut wallet = WalletLibrary::new();
 
     let (auth_key, child_number) = wallet.new_address().expect(

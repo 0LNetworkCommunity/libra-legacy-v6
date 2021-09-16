@@ -1,15 +1,13 @@
 //! `start`
 
-use std::process::exit;
-
 use ol_types::config::AppCfg;
 use crate::{backlog, block::*, entrypoint};
 use crate::{entrypoint::EntryPointTxsCmd, prelude::*};
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
-
 use ol_types::config::TxType;
 use reqwest::Url;
 use txs::submit_tx::tx_params;
+use std::process::exit;
 
 /// `start` subcommand
 #[derive(Command, Default, Debug, Options)]
@@ -74,10 +72,10 @@ impl Runnable for StartCmd {
             is_operator,
             use_upstream_url,
         ).expect("could not get tx parameters");
-
+        dbg!(&tx_params);
         // Check for, and submit backlog proofs.
         if !self.skip_backlog {
-          // TODO: remove is_operator from signature, since tx_params has it.
+            // TODO: remove is_operator from signature, since tx_params has it.
             match backlog::process_backlog(&cfg, &tx_params, is_operator) {
                 Ok(()) => status_ok!("Backlog:", "backlog committed to chain"),
                 Err(e) => {
@@ -87,7 +85,7 @@ impl Runnable for StartCmd {
         }
 
         println!("url: {}", tx_params.url.clone());
-        
+
         if !self.backlog_only {
             // Steady state.
             let result = mine_and_submit(&cfg, tx_params, is_operator);
@@ -96,9 +94,7 @@ impl Runnable for StartCmd {
                 Err(err) => {
                     println!("ERROR: miner failed, message: {:?}", err);
                     // exit on unrecoverable error.
-                    exit(1);
-
-                }
+                    exit(1);                }
             }
         }
     }

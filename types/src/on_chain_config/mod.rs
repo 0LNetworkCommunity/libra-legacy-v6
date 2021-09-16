@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -9,22 +9,26 @@ use crate::{
 };
 use anyhow::{format_err, Result};
 use move_core_types::{
-    identifier::Identifier,
+    ident_str,
+    identifier::{IdentStr, Identifier},
     language_storage::{StructTag, TypeTag},
-    move_resource::MoveResource,
+    move_resource::{MoveResource, MoveStructType},
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{collections::HashMap, fmt, sync::Arc};
 
-mod libra_version;
+mod diem_version;
 mod registered_currencies;
 mod validator_set;
 mod vm_config;
 mod vm_publishing_option;
 
 pub use self::{
-    libra_version::LibraVersion, registered_currencies::RegisteredCurrencies,
-    validator_set::ValidatorSet, vm_config::VMConfig, vm_publishing_option::VMPublishingOption,
+    diem_version::{DiemVersion, DIEM_MAX_KNOWN_VERSION, DIEM_VERSION_2, DIEM_VERSION_3},
+    registered_currencies::RegisteredCurrencies,
+    validator_set::ValidatorSet,
+    vm_config::VMConfig,
+    vm_publishing_option::VMPublishingOption,
 };
 
 /// To register an on-chain config in Rust:
@@ -63,7 +67,7 @@ impl fmt::Display for ConfigID {
 pub const ON_CHAIN_CONFIG_REGISTRY: &[ConfigID] = &[
     VMConfig::CONFIG_ID,
     VMPublishingOption::CONFIG_ID,
-    LibraVersion::CONFIG_ID,
+    DiemVersion::CONFIG_ID,
     ValidatorSet::CONFIG_ID,
     RegisteredCurrencies::CONFIG_ID,
 ];
@@ -118,12 +122,12 @@ pub trait ConfigStorage {
 /// Trait to be implemented by a Rust struct representation of an on-chain config
 /// that is stored in storage as a serialized byte array
 pub trait OnChainConfig: Send + Sync + DeserializeOwned {
-    // libra_root_address
+    // diem_root_address
     const ADDRESS: &'static str = CONFIG_ADDRESS_STR;
     const IDENTIFIER: &'static str;
     const CONFIG_ID: ConfigID = ConfigID(Self::ADDRESS, Self::IDENTIFIER);
 
-    // Single-round LCS deserialization from bytes to `Self`
+    // Single-round BCS deserialization from bytes to `Self`
     // This is the expected deserialization pattern for most Rust representations,
     // but sometimes `deserialize_into_config` may need an extra customized round of deserialization
     // (e.g. enums like `VMPublishingOption`)
@@ -131,12 +135,12 @@ pub trait OnChainConfig: Send + Sync + DeserializeOwned {
     // Note: we cannot directly call the default `deserialize_into_config` implementation
     // in its override - this will just refer to the override implementation itself
     fn deserialize_default_impl(bytes: &[u8]) -> Result<Self> {
-        lcs::from_bytes::<Self>(&bytes)
+        bcs::from_bytes::<Self>(&bytes)
             .map_err(|e| format_err!("[on-chain config] Failed to deserialize into config: {}", e))
     }
 
     // Function for deserializing bytes to `Self`
-    // It will by default try one round of LCS deserialization directly to `Self`
+    // It will by default try one round of BCS deserialization directly to `Self`
     // The implementation for the concrete type should override this function if this
     // logic needs to be customized
     fn deserialize_into_config(bytes: &[u8]) -> Result<Self> {
@@ -160,10 +164,10 @@ pub fn new_epoch_event_key() -> EventKey {
 pub fn access_path_for_config(address: AccountAddress, config_name: Identifier) -> AccessPath {
     AccessPath::new(
         address,
-        AccessPath::resource_access_vec(&StructTag {
+        AccessPath::resource_access_vec(StructTag {
             address: CORE_CODE_ADDRESS,
-            module: Identifier::new("LibraConfig").unwrap(),
-            name: Identifier::new("LibraConfig").unwrap(),
+            module: ConfigurationResource::MODULE_NAME.to_owned(),
+            name: ConfigurationResource::MODULE_NAME.to_owned(),
             type_params: vec![TypeTag::Struct(StructTag {
                 address: CORE_CODE_ADDRESS,
                 module: config_name.clone(),
@@ -215,12 +219,14 @@ impl Default for ConfigurationResource {
         Self {
             epoch: 0,
             last_reconfiguration_time: 0,
-            events: EventHandle::new_from_address(&crate::account_config::libra_root_address(), 16),
+            events: EventHandle::new_from_address(&crate::account_config::diem_root_address(), 16),
         }
     }
 }
 
-impl MoveResource for ConfigurationResource {
-    const MODULE_NAME: &'static str = "LibraConfig";
-    const STRUCT_NAME: &'static str = "Configuration";
+impl MoveStructType for ConfigurationResource {
+    const MODULE_NAME: &'static IdentStr = ident_str!("DiemConfig");
+    const STRUCT_NAME: &'static IdentStr = ident_str!("Configuration");
 }
+
+impl MoveResource for ConfigurationResource {}

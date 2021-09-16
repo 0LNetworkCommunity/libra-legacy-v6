@@ -12,9 +12,7 @@ MAKEFILE_DIR := $(dir $(MAKEFILE_PATH))
 SOURCE=${MAKEFILE_DIR}
 endif
 
-ifndef V
-V=previous
-endif
+
 
 # Account settings
 ifndef ACC
@@ -24,18 +22,31 @@ IP=$(shell toml get ${DATA_PATH}/0L.toml profile.ip)
 
 # Github settings
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
+
+ifndef GENESIS_USER
+GENESIS_USER = OLSF
+endif
+
 REPO_ORG = OLSF
+
 
 ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
 MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
 else
-REPO_NAME = experimental-genesis
-NODE_ENV = prod
+REPO_NAME = rex-testnet-genesis
+endif
+
+CARGO_ARGS = --release
+ifeq (${NODE_ENV}, test)
+CARGO_ARGS = --verbose
 endif
 
 # Registration params
-REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
+REMOTE = 'backend=github;repository_owner=${GENESIS_USER};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
+
+GENESIS_REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
+
 LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
 
 RELEASE_URL=https://github.com/OLSF/libra/releases/download
@@ -44,8 +55,11 @@ ifndef RELEASE
 RELEASE=$(shell curl -sL https://api.github.com/repos/OLSF/libra/releases/latest | jq -r '.assets[].browser_download_url')
 endif
 
-BINS= db-backup db-backup-verify db-restore libra-node miner ol txs stdlib
+BINS=db-backup db-backup-verify db-restore diem-node miner ol txs stdlib
 
+ifndef V
+V=previous
+endif
 
 
 ##### DEPENDENCIES #####
@@ -79,22 +93,22 @@ uninstall:
 	done
 
 bins: stdlib
-# Build and install genesis tool, libra-node, and miner
+# Build and install genesis tool, diem-node, and miner
 # NOTE: stdlib is built for cli bindings
 
-	cargo build -p libra-node -p miner -p backup-cli -p ol -p txs -p onboard --release
+	cargo build -p diem-node -p miner -p backup-cli -p ol -p txs -p onboard ${CARGO_ARGS}
 
 stdlib:
-	cargo run --release -p stdlib
-	cargo run --release -p stdlib -- --create-upgrade-payload
-	sha256sum language/stdlib/staged/stdlib.mv
+# cargo run ${CARGO_ARGS} -p diem-framework
+	cargo run ${CARGO_ARGS} -p diem-framework -- --create-upgrade-payload
+	sha256sum language/diem-framework/staged/stdlib.mv
   
 
 install: mv-bin bin-path
 	mkdir ${USER_BIN_PATH} | true
 
 	cp -f ${SOURCE}/target/release/miner ${USER_BIN_PATH}/miner
-	cp -f ${SOURCE}/target/release/libra-node ${USER_BIN_PATH}/libra-node
+	cp -f ${SOURCE}/target/release/diem-node ${USER_BIN_PATH}/diem-node
 	cp -f ${SOURCE}/target/release/db-restore ${USER_BIN_PATH}/db-restore
 	cp -f ${SOURCE}/target/release/db-backup ${USER_BIN_PATH}/db-backup
 	cp -f ${SOURCE}/target/release/db-backup-verify ${USER_BIN_PATH}/db-backup-verify
@@ -137,29 +151,46 @@ init-backend:
 	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
 
 layout:
-	cargo run -p libra-genesis-tool --release -- set-layout \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- set-layout \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
-	--path ./ol/util/set_layout_${NODE_ENV}.toml
+	--path ./ol/devnet/set_layout_${NODE_ENV}.toml
 
 root:
-		cargo run -p libra-genesis-tool --release -- libra-root-key \
+		cargo run -p diem-genesis-tool ${CARGO_ARGS} -- diem-root-key \
 		--validator-backend ${LOCAL} \
 		--shared-backend ${REMOTE}
 
 treasury:
-		cargo run -p libra-genesis-tool --release --  treasury-compliance-key \
+		cargo run -p diem-genesis-tool ${CARGO_ARGS} --  treasury-compliance-key \
 		--validator-backend ${LOCAL} \
 		--shared-backend ${REMOTE}
 
+
 #### GENESIS REGISTRATION ####
-ceremony:
-	export NODE_ENV=prod && miner ceremony
+gen-fork-repo:
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
+	--repo-name ${REPO_NAME} \
+	--repo-owner ${REPO_ORG} \
+	--shared-backend ${REMOTE}
+
+gen-make-pull:
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
+	--repo-name ${REPO_NAME} \
+	--repo-owner ${REPO_ORG} \
+	--shared-backend ${GENESIS_REMOTE} \
+	--pull-request-user ${GENESIS_USER}
+
+ceremony: gen-fork-repo
+		cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony
+		
+
+# cargo run -p miner ${CARGO_ARGS} -- zero
 
 register:
 # export ACC=$(shell toml get ${DATA_PATH}/0L.toml profile.account)
-	@echo Initializing from ${DATA_PATH}/0L.toml with account:
-	@echo ${ACC}
-	make init
+# @echo Initializing from ${DATA_PATH}/0L.toml with account:
+# @echo ${ACC}
+# make init
 
 	@echo the OPER initializes local accounts and submit pubkeys to github
 	ACC=${ACC}-oper make oper-key
@@ -173,43 +204,47 @@ register:
 	@echo OPER send signed transaction with configurations for *OWNER* account
 	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
 
+	@echo Making pull request to genesis coordination repo
+	make gen-make-pull
+
 init-test:
-	echo ${MNEM} | head -c -1 | cargo run -p libra-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
+	echo ${MNEM} | head -c -1 | cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
 
 init:
-	cargo run -p libra-genesis-tool --release --  init --path=${DATA_PATH} --namespace=${ACC}
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- init --path=${DATA_PATH} --namespace=${ACC}
 # OWNER does this
 # Submits proofs to shared storage
 add-proofs:
-	cargo run -p libra-genesis-tool --release --  mining \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  mining \
 	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
+  --path-to-account-json ${DATA_PATH}/account.json \
 	--shared-backend ${REMOTE}
 
 # OPER does this
 # Submits operator key to github, and creates local OPERATOR_ACCOUNT
 oper-key:
-	cargo run -p libra-genesis-tool --release --  operator-key \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  operator-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
 # OWNER does this
 # Submits operator key to github, does *NOT* create the OWNER_ACCOUNT locally
 owner-key:
-	cargo run -p libra-genesis-tool --release --  owner-key \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  owner-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
 # OWNER does this
 # Links to an operator on github, creates the OWNER_ACCOUNT locally
 assign: 
-	cargo run -p libra-genesis-tool --release --  set-operator \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  set-operator \
 	--operator-name ${OPER} \
 	--shared-backend ${REMOTE}
 
 # OPER does this
 # Submits signed validator registration transaction to github.
 reg:
-	cargo run -p libra-genesis-tool --release --  validator-config \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  validator-config \
 	--owner-name ${OWNER} \
 	--chain-id ${CHAIN_ID} \
 	--validator-address "/ip4/${IP}/tcp/6180" \
@@ -220,45 +255,46 @@ reg:
 
 # Helpers to verify the local state.
 verify:
-	cargo run -p libra-genesis-tool --release --  verify \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  verify \
 	--validator-backend ${LOCAL}
 # --genesis-path ${DATA_PATH}/genesis.blob
 
 verify-gen:
-	cargo run -p libra-genesis-tool --release --  verify \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  verify \
 	--validator-backend ${LOCAL} \
 	--genesis-path ${DATA_PATH}/genesis.blob
 
 
 #### GENESIS  ####
 # build-gen:
-# 	cargo run -p libra-genesis-tool --release -- genesis \
+# 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- genesis \
 # 	--chain-id ${CHAIN_ID} \
 # 	--shared-backend ${REMOTE} \
 # 	--path ${DATA_PATH}/genesis.blob
 
 genesis:
-	cargo run -p libra-genesis-tool --release -- files \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- files \
 	--chain-id ${CHAIN_ID} \
 	--validator-backend ${LOCAL} \
 	--data-path ${DATA_PATH} \
 	--namespace ${ACC}-oper \
 	--repo ${REPO_NAME} \
-	--github-org ${REPO_ORG}
+	--github-org ${REPO_ORG} \
+  --layout-path ${DATA_PATH}/set_layout.toml
 
 
 #### NODE MANAGEMENT ####
 start:
 # run in foreground. Only for testing, use a daemon for net.
-	cargo run -p libra-node -- --config ${DATA_PATH}/validator.node.yaml
+	cargo run -p diem-node -- --config ${DATA_PATH}/validator.node.yaml
 
 # Start a fullnode instead of a validator node
 start-full:
-	cargo run -p libra-node -- --config ${DATA_PATH}/fullnode.node.yaml
+	cargo run -p diem-node -- --config ${DATA_PATH}/fullnode.node.yaml
 
 daemon:
-# your node's custom libra-node.service lives in ~/.0L. Take the template from libra/util and edit for your needs.
-	cp -f ~/.0L/libra-node.service /lib/systemd/system/
+# your node's custom diem-node.service lives in ~/.0L. Take the template from libra/util and edit for your needs.
+	cp -f ~/.0L/diem-node.service /lib/systemd/system/
 
 	@if test -d ~/logs; then \
 		echo "WIPING SYSTEMD LOGS"; \
@@ -271,10 +307,10 @@ daemon:
 	chmod 777 ~/logs/node.log
 
 	systemctl daemon-reload
-	systemctl stop libra-node.service
-	systemctl start libra-node.service
+	systemctl stop diem-node.service
+	systemctl start diem-node.service
 	sleep 2
-	systemctl status libra-node.service &
+	systemctl status diem-node.service &
 	tail -f ~/logs/node.log
 
 #### TEST SETUP ####
@@ -381,7 +417,7 @@ wipe:
 	srm ~/.bash_history
 
 stop:
-	service libra-node stop
+	service diem-node stop
 
 debug:
 	make smoke-onboard <<< $$'${MNEM}'
@@ -410,13 +446,16 @@ dev-wizard:
 #  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
 	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis --upstream-peer http://161.35.13.169:8080
 
-#### DEVNET INFRASTRUCTURE ####
+#### DEVNET RESTART ####
 # usually do this on Alice, which has the dev-epoch-archive repo, and dev-genesis
 
 # Do the ceremony: and also save the genesis fixtures, needs to happen before fix.
 dev-register: clear fix register
 # Do a dev genesis on each node after EVERY NODE COMPLETED registration.
 dev-genesis: genesis dev-save-genesis fix-genesis
+
+#### DEVNET INFRA ####
+# To make reproducible devnet files.
 
 # Save the files to mock infrastructure i.e. devnet github
 dev-infra: dev-backup-archive dev-commit
@@ -438,3 +477,59 @@ clean-tags:
 	git push origin --delete ${TAG}
 	git tag -d ${TAG}
 	
+
+
+####### SWARM ########
+
+sw: sw-build sw-start sw-init
+
+## Build
+sw-stdlib:
+	cd ${SOURCE} && cargo run -p diem-framework ${CARGO_ARGS}
+
+sw-build:
+	cargo build -p diem-node -p diem-swarm -p cli ${CARGO_ARGS}
+
+## Swarm
+sw-start:
+	cd ${SOURCE} && cargo run ${CARGO_ARGS} -p diem-swarm -- --diem-node target/debug/diem-node -c ${DATA_PATH}/swarm_temp -n 1 -s --cli-path ${SOURCE}/target/debug/cli
+
+sw-init:
+	cd ${SOURCE} && cargo r ${CARGO_ARGS} -p ol -- --swarm-path ${DATA_PATH}/swarm_temp/ --swarm-persona alice init --source-path ~/libra
+
+sw-miner:
+		cd ${SOURCE} && cargo r -p miner -- --swarm-path ${DATA_PATH}/swarm_temp --swarm-persona alice start
+
+sw-query:
+		cd ${SOURCE} && cargo r -p ol -- --swarm-path ${DATA_PATH}/swarm_temp --swarm-persona alice query --txs
+sw-tx:
+		cd ${SOURCE} && cargo r -p txs -- --swarm-path ${DATA_PATH}/swarm_temp --swarm-persona alice wallet -s
+
+
+##### FORK TESTS #####
+
+fork: stdlib fork-genesis fork-config fork-start
+
+EPOCH_HEIGHT = $(shell cargo r -p ol -- query --epoch | cut -d ":" -f 2)
+
+epoch:
+	cargo r -p ol -- query --epoch
+	echo ${EPOCH_HEIGHT}
+
+fork-backup:
+		rm -rf ${SOURCE}/ol/devnet/snapshot/*
+		cargo run -p backup-cli --bin db-backup -- one-shot backup --backup-service-address http://localhost:6186 state-snapshot --state-version ${EPOCH_HEIGHT} local-fs --dir ${SOURCE}/ol/devnet/snapshot/
+
+# Make genesis file
+fork-genesis:
+		cargo run -p ol-genesis-tools -- --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ${SOURCE}/ol/devnet/snapshot/state_ver*
+
+# Use onboard to create all node files
+fork-config:
+	cargo run -p onboard -- fork -u http://167.172.248.37 --prebuilt-genesis ${DATA_PATH}/genesis_from_snapshot.blob
+
+# start node from files
+fork-start: 
+	rm -rf ~/.0L/db
+	cargo run -p libra-node -- --config ~/.0L/validator.node.yaml
+

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::Result;
@@ -21,8 +21,8 @@ define_schema!(TestSchema2, TestField, TestField, "TestCF2");
 struct TestField(u32);
 
 impl TestField {
-    fn to_bytes(&self) -> Result<Vec<u8>> {
-        Ok(self.0.to_le_bytes().to_vec())
+    fn to_bytes(&self) -> Vec<u8> {
+        self.0.to_le_bytes().to_vec()
     }
 
     fn from_bytes(data: &[u8]) -> Result<Self> {
@@ -33,7 +33,7 @@ impl TestField {
 
 impl KeyCodec<TestSchema1> for TestField {
     fn encode_key(&self) -> Result<Vec<u8>> {
-        self.to_bytes()
+        Ok(self.to_bytes())
     }
 
     fn decode_key(data: &[u8]) -> Result<Self> {
@@ -43,7 +43,7 @@ impl KeyCodec<TestSchema1> for TestField {
 
 impl ValueCodec<TestSchema1> for TestField {
     fn encode_value(&self) -> Result<Vec<u8>> {
-        self.to_bytes()
+        Ok(self.to_bytes())
     }
 
     fn decode_value(data: &[u8]) -> Result<Self> {
@@ -53,7 +53,7 @@ impl ValueCodec<TestSchema1> for TestField {
 
 impl KeyCodec<TestSchema2> for TestField {
     fn encode_key(&self) -> Result<Vec<u8>> {
-        self.to_bytes()
+        Ok(self.to_bytes())
     }
 
     fn decode_key(data: &[u8]) -> Result<Self> {
@@ -63,7 +63,7 @@ impl KeyCodec<TestSchema2> for TestField {
 
 impl ValueCodec<TestSchema2> for TestField {
     fn encode_value(&self) -> Result<Vec<u8>> {
-        self.to_bytes()
+        Ok(self.to_bytes())
     }
 
     fn decode_value(data: &[u8]) -> Result<Self> {
@@ -79,27 +79,42 @@ fn get_column_families() -> Vec<ColumnFamilyName> {
     ]
 }
 
-fn open_db(dir: &libra_temppath::TempPath) -> DB {
-    DB::open(&dir.path(), "test", get_column_families()).expect("Failed to open DB.")
+fn open_db(dir: &diem_temppath::TempPath) -> DB {
+    let mut db_opts = rocksdb::Options::default();
+    db_opts.create_if_missing(true);
+    db_opts.create_missing_column_families(true);
+    DB::open(&dir.path(), "test", get_column_families(), &db_opts).expect("Failed to open DB.")
 }
 
-fn open_db_read_only(dir: &libra_temppath::TempPath) -> DB {
-    DB::open_readonly(&dir.path(), "test", get_column_families()).expect("Failed to open DB.")
+fn open_db_read_only(dir: &diem_temppath::TempPath) -> DB {
+    DB::open_readonly(
+        &dir.path(),
+        "test",
+        get_column_families(),
+        &rocksdb::Options::default(),
+    )
+    .expect("Failed to open DB.")
 }
 
-fn open_db_as_secondary(dir: &libra_temppath::TempPath, dir_sec: &libra_temppath::TempPath) -> DB {
-    DB::open_as_secondary(&dir.path(), &dir_sec.path(), "test", get_column_families())
-        .expect("Failed to open DB.")
+fn open_db_as_secondary(dir: &diem_temppath::TempPath, dir_sec: &diem_temppath::TempPath) -> DB {
+    DB::open_as_secondary(
+        &dir.path(),
+        &dir_sec.path(),
+        "test",
+        get_column_families(),
+        &rocksdb::Options::default(),
+    )
+    .expect("Failed to open DB.")
 }
 
 struct TestDB {
-    _tmpdir: libra_temppath::TempPath,
+    _tmpdir: diem_temppath::TempPath,
     db: DB,
 }
 
 impl TestDB {
     fn new() -> Self {
-        let tmpdir = libra_temppath::TempPath::new();
+        let tmpdir = diem_temppath::TempPath::new();
         let db = open_db(&tmpdir);
 
         TestDB {
@@ -286,7 +301,7 @@ fn test_two_schema_batches() {
 
 #[test]
 fn test_reopen() {
-    let tmpdir = libra_temppath::TempPath::new();
+    let tmpdir = diem_temppath::TempPath::new();
     {
         let db = open_db(&tmpdir);
         db.put::<TestSchema1>(&TestField(0), &TestField(0)).unwrap();
@@ -306,7 +321,7 @@ fn test_reopen() {
 
 #[test]
 fn test_open_read_only() {
-    let tmpdir = libra_temppath::TempPath::new();
+    let tmpdir = diem_temppath::TempPath::new();
     {
         let db = open_db(&tmpdir);
         db.put::<TestSchema1>(&TestField(0), &TestField(0)).unwrap();
@@ -323,8 +338,8 @@ fn test_open_read_only() {
 
 #[test]
 fn test_open_as_secondary() {
-    let tmpdir = libra_temppath::TempPath::new();
-    let tmpdir_sec = libra_temppath::TempPath::new();
+    let tmpdir = diem_temppath::TempPath::new();
+    let tmpdir_sec = diem_temppath::TempPath::new();
 
     let db = open_db(&tmpdir);
     db.put::<TestSchema1>(&TestField(0), &TestField(0)).unwrap();
@@ -353,8 +368,19 @@ fn test_report_size() {
 
     db.flush_all().unwrap();
 
-    let cf_sizes = db.get_approximate_sizes_cf().unwrap();
-    assert!(*cf_sizes.get("TestCF1").unwrap() > 0);
-    assert!(*cf_sizes.get("TestCF2").unwrap() > 0);
-    assert_eq!(*cf_sizes.get("default").unwrap(), 0);
+    assert!(
+        db.get_property("TestCF1", "rocksdb.estimate-live-data-size")
+            .unwrap()
+            > 0
+    );
+    assert!(
+        db.get_property("TestCF2", "rocksdb.estimate-live-data-size")
+            .unwrap()
+            > 0
+    );
+    assert_eq!(
+        db.get_property("default", "rocksdb.estimate-live-data-size")
+            .unwrap(),
+        0
+    );
 }

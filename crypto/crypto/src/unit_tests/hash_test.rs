@@ -1,9 +1,8 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::hash::*;
 use bitvec::prelude::*;
-use libra_nibble::Nibble;
 use proptest::{collection::vec, prelude::*};
 use rand::{rngs::StdRng, SeedableRng};
 use serde::Serialize;
@@ -16,7 +15,7 @@ struct Foo(u32);
 fn test_default_hasher() {
     assert_eq!(
         Foo(3).test_only_hash(),
-        HashValue::from_iter_sha3(vec![lcs::to_bytes(&Foo(3)).unwrap().as_slice()]),
+        HashValue::from_iter_sha3(vec![bcs::to_bytes(&Foo(3)).unwrap().as_slice()]),
     );
     assert_eq!(
         format!("{:x}", b"hello".test_only_hash()),
@@ -35,12 +34,12 @@ fn test_primitive_type() {
     wtr.extend_from_slice(&x.to_le_bytes());
     assert_eq!(x.test_only_hash(), HashValue::sha3_256_of(&wtr[..]));
 
-    let x = 0x_ff001234_u32;
+    let x = 0xff00_1234_u32;
     let mut wtr: Vec<u8> = vec![];
     wtr.extend_from_slice(&x.to_le_bytes());
     assert_eq!(x.test_only_hash(), HashValue::sha3_256_of(&wtr[..]));
 
-    let x = 0x_89abcdef_01234567_u64;
+    let x = 0x89ab_cdef_0123_4567_u64;
     let mut wtr: Vec<u8> = vec![];
     wtr.extend_from_slice(&x.to_le_bytes());
     assert_eq!(x.test_only_hash(), HashValue::sha3_256_of(&wtr[..]));
@@ -140,17 +139,6 @@ fn test_fmt_binary() {
 }
 
 #[test]
-fn test_get_nibble() {
-    let hash = b"hello".test_only_hash();
-    assert_eq!(hash.get_nibble(0), Nibble::from(3));
-    assert_eq!(hash.get_nibble(1), Nibble::from(3));
-    assert_eq!(hash.get_nibble(2), Nibble::from(3));
-    assert_eq!(hash.get_nibble(3), Nibble::from(8));
-    assert_eq!(hash.get_nibble(62), Nibble::from(9));
-    assert_eq!(hash.get_nibble(63), Nibble::from(2));
-}
-
-#[test]
 fn test_common_prefix_bits_len() {
     {
         let hash1 = b"hello".test_only_hash();
@@ -181,41 +169,6 @@ fn test_common_prefix_bits_len() {
         assert_eq!(
             hash1.common_prefix_bits_len(hash2),
             HashValue::LENGTH_IN_BITS
-        );
-    }
-}
-
-#[test]
-fn test_common_prefix_nibbles_len() {
-    {
-        let hash1 = b"hello".test_only_hash();
-        let hash2 = b"HELLO".test_only_hash();
-        assert_eq!(hash1[0], 0b0011_0011);
-        assert_eq!(hash2[0], 0b1011_1000);
-        assert_eq!(hash1.common_prefix_nibbles_len(hash2), 0);
-    }
-    {
-        let hash1 = b"hello".test_only_hash();
-        let hash2 = b"world".test_only_hash();
-        assert_eq!(hash1[0], 0b0011_0011);
-        assert_eq!(hash2[0], 0b0100_0010);
-        assert_eq!(hash1.common_prefix_nibbles_len(hash2), 0);
-    }
-    {
-        let hash1 = b"hello".test_only_hash();
-        let hash2 = b"100011001000".test_only_hash();
-        assert_eq!(hash1[0], 0b0011_0011);
-        assert_eq!(hash2[0], 0b0011_0011);
-        assert_eq!(hash1[1], 0b0011_1000);
-        assert_eq!(hash2[1], 0b0010_0010);
-        assert_eq!(hash1.common_prefix_nibbles_len(hash2), 2);
-    }
-    {
-        let hash1 = b"hello".test_only_hash();
-        let hash2 = b"hello".test_only_hash();
-        assert_eq!(
-            hash1.common_prefix_nibbles_len(hash2),
-            HashValue::LENGTH_IN_NIBBLES
         );
     }
 }

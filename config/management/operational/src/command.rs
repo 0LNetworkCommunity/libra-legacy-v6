@@ -1,14 +1,16 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     account_resource::SimplifiedAccountResource, validator_config::DecryptedValidatorConfig,
     validator_set::DecryptedValidatorInfo, TransactionContext,
 };
-use libra_crypto::{ed25519::Ed25519PublicKey, x25519};
-use libra_management::{error::Error, execute_command};
-use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
+use diem_config::config::Peer;
+use diem_crypto::{ed25519::Ed25519PublicKey, x25519};
+use diem_management::{error::Error, execute_command};
+use diem_types::{account_address::AccountAddress, waypoint::Waypoint, PeerId};
 use serde::Serialize;
+use std::collections::HashMap;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -20,24 +22,36 @@ pub enum Command {
     AddValidator(crate::governance::AddValidator),
     #[structopt(about = "Check an endpoint for a listening socket")]
     CheckEndpoint(crate::network_checker::CheckEndpoint),
+    #[structopt(about = "Check all on-chain endpoints for a listening socket")]
+    CheckValidatorSetEndpoints(crate::network_checker::CheckValidatorSetEndpoints),
     #[structopt(about = "Create a new validator account")]
     CreateValidator(crate::governance::CreateValidator),
     #[structopt(about = "Create a new validator operator account")]
     CreateValidatorOperator(crate::governance::CreateValidatorOperator),
+    #[structopt(about = "Extract a trusted peer identity from an x25519 PrivateKey file")]
+    ExtractPeerFromFile(crate::keys::ExtractPeerFromFile),
+    #[structopt(about = "Extract a trusted peer identity from storage")]
+    ExtractPeerFromStorage(crate::keys::ExtractPeerFromStorage),
+    #[structopt(about = "Extract trusted peer identities from a list of Public Keys")]
+    ExtractPeersFromKeys(crate::keys::ExtractPeersFromKeys),
     #[structopt(about = "Extract a private key from the validator storage")]
     ExtractPrivateKey(crate::keys::ExtractPrivateKey),
     #[structopt(about = "Extract a public key from the validator storage")]
     ExtractPublicKey(crate::keys::ExtractPublicKey),
+    #[structopt(about = "Generate a PrivateKey to a file")]
+    GenerateKey(crate::keys::GenerateKey),
     #[structopt(about = "Set the waypoint in the validator storage")]
-    InsertWaypoint(libra_management::waypoint::InsertWaypoint),
+    InsertWaypoint(diem_management::waypoint::InsertWaypoint),
     #[structopt(about = "Prints an account from the validator storage")]
-    //////// 0L ////////
     PrintAccount(crate::print::PrintAccount),
-    #[structopt(about = "Prints a public key from the validator storage")]
+    #[structopt(about = "Prints an ed25519 public key from the validator storage")]
     PrintKey(crate::print::PrintKey),
+    #[structopt(
+        about = "Prints an x25519 public key from the validator storage, suitable for noise handshakes"
+    )]
+    PrintXKey(crate::print::PrintXKey),
     #[structopt(about = "Prints a waypoint from the validator storage")]
     PrintWaypoint(crate::print::PrintWaypoint),
-    //////// 0L end ////////
     #[structopt(about = "Remove a validator from ValidatorSet")]
     RemoveValidator(crate::governance::RemoveValidator),
     #[structopt(about = "Rotates the consensus key for a validator")]
@@ -65,16 +79,20 @@ pub enum CommandName {
     AccountResource,
     AddValidator,
     CheckEndpoint,
+    CheckValidatorSetEndpoints,
     CreateValidator,
     CreateValidatorOperator,
+    ExtractPeerFromFile,
+    ExtractPeerFromStorage,
+    ExtractPeersFromKeys,
     ExtractPrivateKey,
     ExtractPublicKey,
+    GenerateKey,
     InsertWaypoint,
     PrintAccount,
-    //////// 0L ////////
     PrintKey,
+    PrintXKey,
     PrintWaypoint,
-    //////// 0L end ////////
     RemoveValidator,
     RotateConsensusKey,
     RotateOperatorKey,
@@ -93,16 +111,20 @@ impl From<&Command> for CommandName {
             Command::AccountResource(_) => CommandName::AccountResource,
             Command::AddValidator(_) => CommandName::AddValidator,
             Command::CheckEndpoint(_) => CommandName::CheckEndpoint,
+            Command::CheckValidatorSetEndpoints(_) => CommandName::CheckValidatorSetEndpoints,
             Command::CreateValidator(_) => CommandName::CreateValidator,
             Command::CreateValidatorOperator(_) => CommandName::CreateValidatorOperator,
             Command::ExtractPrivateKey(_) => CommandName::ExtractPrivateKey,
             Command::ExtractPublicKey(_) => CommandName::ExtractPublicKey,
+            Command::ExtractPeerFromFile(_) => CommandName::ExtractPeerFromFile,
+            Command::ExtractPeerFromStorage(_) => CommandName::ExtractPeerFromStorage,
+            Command::ExtractPeersFromKeys(_) => CommandName::ExtractPeersFromKeys,
+            Command::GenerateKey(_) => CommandName::GenerateKey,
             Command::InsertWaypoint(_) => CommandName::InsertWaypoint,
             Command::PrintAccount(_) => CommandName::PrintAccount,
-            //////// 0L ////////
             Command::PrintKey(_) => CommandName::PrintKey,
+            Command::PrintXKey(_) => CommandName::PrintXKey,
             Command::PrintWaypoint(_) => CommandName::PrintWaypoint,
-            //////// 0L end ////////
             Command::RemoveValidator(_) => CommandName::RemoveValidator,
             Command::RotateConsensusKey(_) => CommandName::RotateConsensusKey,
             Command::RotateOperatorKey(_) => CommandName::RotateOperatorKey,
@@ -118,28 +140,29 @@ impl From<&Command> for CommandName {
 }
 
 impl std::fmt::Display for CommandName {
-    //////// 0L ////////
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let name = match self {
             CommandName::AccountResource => "account-resource",
             CommandName::AddValidator => "add-validator",
             CommandName::CheckEndpoint => "check-endpoint",
+            CommandName::CheckValidatorSetEndpoints => "check-validator-set-endpoints",
             CommandName::CreateValidator => "create-validator",
             CommandName::CreateValidatorOperator => "create-validator-operator",
             CommandName::ExtractPrivateKey => "extract-private-key",
             CommandName::ExtractPublicKey => "extract-public-key",
+            CommandName::ExtractPeerFromFile => "extract-peer-from-file",
+            CommandName::ExtractPeerFromStorage => "extract-peer-from-storage",
+            CommandName::ExtractPeersFromKeys => "extract-peers-from-keys",
+            CommandName::GenerateKey => "generate-key",
             CommandName::InsertWaypoint => "insert-waypoint",
             CommandName::PrintAccount => "print-account",
-            //////// 0L ////////
             CommandName::PrintKey => "print-key",
+            CommandName::PrintXKey => "print-x-key",
             CommandName::PrintWaypoint => "print-waypoint",
-            //////// 0L end ////////
             CommandName::RemoveValidator => "remove-validator",
             CommandName::RotateConsensusKey => "rotate-consensus-key",
             CommandName::RotateOperatorKey => "rotate-operator-key",
-            //////// 0L ////////
             CommandName::RotateFullNodeNetworkKey => "rotate-full-node-network-key",
-            //////// 0L end ////////
             CommandName::RotateValidatorNetworkKey => "rotate-validator-network-key",
             CommandName::SetValidatorConfig => "set-validator-config",
             CommandName::SetValidatorOperator => "set-validator-operator",
@@ -152,12 +175,12 @@ impl std::fmt::Display for CommandName {
 }
 
 impl Command {
-    //////// 0L ////////
     pub fn execute(self) -> Result<String, Error> {
         match self {
             Command::AccountResource(cmd) => Self::pretty_print(cmd.execute()),
             Command::AddValidator(cmd) => Self::print_transaction_context(cmd.execute()),
             Command::CheckEndpoint(cmd) => Self::pretty_print(cmd.execute()),
+            Command::CheckValidatorSetEndpoints(cmd) => Self::pretty_print(cmd.execute()),
             Command::CreateValidator(cmd) => {
                 Self::print_transaction_context(cmd.execute().map(|(txn_ctx, _)| txn_ctx))
             }
@@ -165,13 +188,16 @@ impl Command {
                 Self::print_transaction_context(cmd.execute().map(|(txn_ctx, _)| txn_ctx))
             }
             Command::InsertWaypoint(cmd) => Self::print_success(cmd.execute()),
+            Command::ExtractPeerFromFile(cmd) => Self::pretty_print(cmd.execute()),
+            Command::ExtractPeerFromStorage(cmd) => Self::pretty_print(cmd.execute()),
+            Command::ExtractPeersFromKeys(cmd) => Self::pretty_print(cmd.execute()),
             Command::ExtractPrivateKey(cmd) => Self::print_success(cmd.execute()),
             Command::ExtractPublicKey(cmd) => Self::print_success(cmd.execute()),
+            Command::GenerateKey(cmd) => Self::print_success(cmd.execute().map(|_| ())),
             Command::PrintAccount(cmd) => Self::pretty_print(cmd.execute()),
-            //////// 0L ////////
             Command::PrintKey(cmd) => Self::pretty_print(cmd.execute()),
+            Command::PrintXKey(cmd) => Self::pretty_print(cmd.execute()),
             Command::PrintWaypoint(cmd) => Self::pretty_print(cmd.execute()),
-            //////// 0L end ////////
             Command::RemoveValidator(cmd) => Self::print_transaction_context(cmd.execute()),
             Command::RotateConsensusKey(cmd) => {
                 Self::print_transaction_context(cmd.execute().map(|(txn_ctx, _)| txn_ctx))
@@ -193,7 +219,6 @@ impl Command {
         }
     }
 
-    //////// 0L ////////
     /// Show the transaction context and validation result in a friendly way
     pub fn print_transaction_context(
         result: Result<TransactionContext, Error>,
@@ -207,7 +232,6 @@ impl Command {
         }
     }
 
-    //////// 0L ////////
     /// Show a transaction context without an execution result
     fn print_unvalidated_transaction_context(
         transaction_context: &TransactionContext,
@@ -241,6 +265,14 @@ impl Command {
         execute_command!(self, Command::CheckEndpoint, CommandName::CheckEndpoint)
     }
 
+    pub fn check_validator_set_endpoints(self) -> Result<String, Error> {
+        execute_command!(
+            self,
+            Command::CheckValidatorSetEndpoints,
+            CommandName::CheckValidatorSetEndpoints
+        )
+    }
+
     pub fn create_validator(self) -> Result<(TransactionContext, AccountAddress), Error> {
         execute_command!(self, Command::CreateValidator, CommandName::CreateValidator)
     }
@@ -269,6 +301,34 @@ impl Command {
         )
     }
 
+    pub fn extract_peer_from_storage(self) -> Result<HashMap<PeerId, Peer>, Error> {
+        execute_command!(
+            self,
+            Command::ExtractPeerFromStorage,
+            CommandName::ExtractPeerFromStorage
+        )
+    }
+
+    pub fn extract_peer_from_file(self) -> Result<HashMap<PeerId, Peer>, Error> {
+        execute_command!(
+            self,
+            Command::ExtractPeerFromFile,
+            CommandName::ExtractPeerFromFile
+        )
+    }
+
+    pub fn extract_peers_from_keys(self) -> Result<HashMap<PeerId, Peer>, Error> {
+        execute_command!(
+            self,
+            Command::ExtractPeersFromKeys,
+            CommandName::ExtractPeersFromKeys
+        )
+    }
+
+    pub fn generate_key(self) -> Result<(), Error> {
+        execute_command!(self, Command::GenerateKey, CommandName::GenerateKey)
+    }
+
     pub fn insert_waypoint(self) -> Result<(), Error> {
         execute_command!(self, Command::InsertWaypoint, CommandName::InsertWaypoint)
     }
@@ -277,12 +337,14 @@ impl Command {
         execute_command!(self, Command::PrintAccount, CommandName::PrintAccount)
     }
 
-    //////// 0L ////////
     pub fn print_key(self) -> Result<Ed25519PublicKey, Error> {
         execute_command!(self, Command::PrintKey, CommandName::PrintKey)
     }
 
-    //////// 0L ////////
+    pub fn print_x_key(self) -> Result<x25519::PublicKey, Error> {
+        execute_command!(self, Command::PrintXKey, CommandName::PrintXKey)
+    }
+
     pub fn print_waypoint(self) -> Result<Waypoint, Error> {
         execute_command!(self, Command::PrintWaypoint, CommandName::PrintWaypoint)
     }
@@ -343,7 +405,6 @@ impl Command {
         )
     }
 
-    //////// 0L ////////    
     pub fn validate_transaction(self) -> Result<TransactionContext, Error> {
         execute_command!(
             self,
@@ -361,7 +422,6 @@ impl Command {
     }
 }
 
-//////// 0L ////////
 /// A result wrapper for displaying either a correct execution result or an error.
 #[derive(Serialize)]
 pub enum ResultWrapper<T> {
@@ -369,7 +429,6 @@ pub enum ResultWrapper<T> {
     Error(String),
 }
 
-//////// 0L ////////
 /// A struct wrapper for displaying unvalidated transaction contexts.
 #[derive(Serialize)]
 struct UnvalidatedTransactionContext<'a> {

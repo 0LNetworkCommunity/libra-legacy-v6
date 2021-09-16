@@ -1,13 +1,8 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 use anyhow::{ensure, format_err, Error, Result};
 use serde::{de::Visitor, Deserialize, Deserializer, Serialize};
-use std::{
-    convert::TryFrom,
-    fmt::{Display, Formatter},
-    str::FromStr,
-};
-use std::fmt::Debug;
+use std::{convert::TryFrom, fmt, str::FromStr};
 
 /// A registry of named chain IDs
 /// Its main purpose is to improve human readability of reserved chain IDs in config files and CLI
@@ -18,7 +13,7 @@ use std::fmt::Debug;
 pub enum NamedChain {
     /// Users might accidentally initialize the ChainId field to 0, hence reserving ChainId 0 for accidental
     /// initialization.
-    /// MAINNET is the Libra mainnet production chain and is reserved for 1
+    /// MAINNET is the Diem mainnet production chain and is reserved for 1
     MAINNET = 1,
     // Even though these CHAIN IDs do not correspond to MAINNET, changing them should be avoided since they
     // can break test environments for various organisations.
@@ -26,19 +21,19 @@ pub enum NamedChain {
     DEVNET = 3,
     TESTING = 4,
     PREMAINNET = 5,
-    EXPERIMENTAL = 7, //////// 0L ////////
+    EXPERIMENTAL = 7, //////// 0L ////////    
 }
 
 impl NamedChain {
     fn str_to_chain_id(s: &str) -> Result<ChainId> {
-        // TODO implement custom macro that derives FromStr impl for enum (similar to libra/common/num-variants)
+        // TODO implement custom macro that derives FromStr impl for enum (similar to diem/common/num-variants)
         let reserved_chain = match s {
             "MAINNET" => NamedChain::MAINNET,
             "TESTNET" => NamedChain::TESTNET,
             "DEVNET" => NamedChain::DEVNET,
             "TESTING" => NamedChain::TESTING,
             "PREMAINNET" => NamedChain::PREMAINNET,
-            "EXPERIMENTAL" => NamedChain::EXPERIMENTAL, //////// 0L ////////
+            "EXPERIMENTAL" => NamedChain::EXPERIMENTAL, //////// 0L ////////            
             _ => {
                 return Err(format_err!("Not a reserved chain: {:?}", s));
             }
@@ -50,14 +45,14 @@ impl NamedChain {
         *self as u8
     }
 
-    fn from_chain_id(chain_id: &ChainId) -> Result<NamedChain, String> {
+    pub fn from_chain_id(chain_id: &ChainId) -> Result<NamedChain, String> {
         match chain_id.id() {
             1 => Ok(NamedChain::MAINNET),
             2 => Ok(NamedChain::TESTNET),
             3 => Ok(NamedChain::DEVNET),
             4 => Ok(NamedChain::TESTING),
             5 => Ok(NamedChain::PREMAINNET),
-            7 => Ok(NamedChain::EXPERIMENTAL), //////// 0L ////////
+            7 => Ok(NamedChain::EXPERIMENTAL), //////// 0L ////////            
             _ => Err(String::from("Not a named chain")),
         }
     }
@@ -79,8 +74,8 @@ where
     impl<'de> Visitor<'de> for ChainIdVisitor {
         type Value = ChainId;
 
-        fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            formatter.write_str("ChainId as string or u8")
+        fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            f.write_str("ChainId as string or u8")
         }
 
         fn visit_str<E>(self, value: &str) -> std::result::Result<Self::Value, E>
@@ -103,14 +98,14 @@ where
     deserializer.deserialize_any(ChainIdVisitor)
 }
 
-impl Debug for ChainId {
-    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+impl fmt::Debug for ChainId {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self)
     }
 }
 
-impl Display for ChainId {
-    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+impl fmt::Display for ChainId {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
             "{}",
@@ -120,8 +115,8 @@ impl Display for ChainId {
     }
 }
 
-impl Display for NamedChain {
-    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+impl fmt::Display for NamedChain {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
             "{}",
@@ -131,8 +126,7 @@ impl Display for NamedChain {
                 NamedChain::MAINNET => "MAINNET",
                 NamedChain::TESTING => "TESTING",
                 NamedChain::PREMAINNET => "PREMAINNET",
-                //////// 0L ////////
-                NamedChain::EXPERIMENTAL => "EXPERIMENTAL", 
+                NamedChain::EXPERIMENTAL => "EXPERIMENTAL", //////// 0L ////////
             }
         )
     }

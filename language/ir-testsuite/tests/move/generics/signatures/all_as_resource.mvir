@@ -1,5 +1,5 @@
 module M {
-    struct S<T: resource> { b: bool }
+    struct S<T: key> { b: bool }
 
     foo<T>() {
         let x: Self.S<T>;
@@ -7,4 +7,4 @@ module M {
     }
 }
 
-// check: CONSTRAINT_KIND_MISMATCH
+// check: CONSTRAINT_NOT_SATISFIED

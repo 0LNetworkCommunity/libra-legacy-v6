@@ -1,14 +1,13 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::{bail, Result};
-use move_core_types::account_address::AccountAddress;
-use move_lang::{compiled_unit::CompiledUnit, shared::Address};
+use move_binary_format::file_format::{CompiledModule, CompiledScript};
+use move_lang::{compiled_unit::CompiledUnit, shared::Flags};
 use std::{fs::File, io::Write, path::Path};
 use tempfile::tempdir;
-use vm::file_format::{CompiledModule, CompiledScript};
 
-pub fn compile_units(addr: AccountAddress, s: &str) -> Result<Vec<CompiledUnit>> {
+pub fn compile_units(s: &str) -> Result<Vec<CompiledUnit>> {
     let dir = tempdir()?;
 
     let file_path = dir.path().join("modules.move");
@@ -17,11 +16,11 @@ pub fn compile_units(addr: AccountAddress, s: &str) -> Result<Vec<CompiledUnit>>
         writeln!(file, "{}", s)?;
     }
 
-    let (_, units) = move_lang::move_compile(
+    let (_, units) = move_lang::move_compile_and_report(
         &[file_path.to_str().unwrap().to_string()],
         &[],
-        Some(Address::new(addr.to_u8())),
         None,
+        Flags::empty().set_sources_shadow_deps(false),
     )?;
 
     dir.close()?;
@@ -38,20 +37,20 @@ fn expect_modules(
     })
 }
 
-pub fn compile_modules_in_file(addr: AccountAddress, path: &Path) -> Result<Vec<CompiledModule>> {
-    let (_, units) = move_lang::move_compile(
+pub fn compile_modules_in_file(path: &Path) -> Result<Vec<CompiledModule>> {
+    let (_, units) = move_lang::move_compile_and_report(
         &[path.to_str().unwrap().to_string()],
         &[],
-        Some(Address::new(addr.to_u8())),
         None,
+        Flags::empty().set_sources_shadow_deps(false),
     )?;
 
     expect_modules(units).collect()
 }
 
 #[allow(dead_code)]
-pub fn compile_modules(addr: AccountAddress, s: &str) -> Result<Vec<CompiledModule>> {
-    expect_modules(compile_units(addr, s)?).collect()
+pub fn compile_modules(s: &str) -> Result<Vec<CompiledModule>> {
+    expect_modules(compile_units(s)?).collect()
 }
 
 pub fn as_module(unit: CompiledUnit) -> CompiledModule {

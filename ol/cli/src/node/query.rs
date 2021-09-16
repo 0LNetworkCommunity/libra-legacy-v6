@@ -2,7 +2,8 @@
 use std::collections::BTreeMap;
 
 use hex::decode;
-use libra_json_rpc_client::{AccountAddress, views::{BytesView, EventView, TransactionView}};
+use diem_json_rpc_client::{AccountAddress, views::{BytesView, EventView, TransactionView}};
+use move_binary_format::{file_format::{Ability, AbilitySet}};
 use move_core_types::{
     identifier::Identifier,
     language_storage::{StructTag, TypeTag},
@@ -73,8 +74,8 @@ impl Node {
         match query_type {
             Balance { account } => {
                 // TODO: get scaling factor from chain.
-                match self.client.get_account(account, true) {
-                    Ok((Some(account_view), _)) => {
+                match self.client.get_account(&account) {
+                    Ok(Some(account_view)) => {
                         for av in account_view.balances.iter() {
                             if av.currency == "GAS" {
                                 let amount = av.amount / SCALING_FACTOR;
@@ -83,7 +84,7 @@ impl Node {
                         }
                         return "No GAS found on account".to_owned();
                     }
-                    Ok((None, _)) => format!("No account {} found on chain, account", account),
+                    Ok(None) => format!("No account {} found on chain, account", account),
                     Err(e) => format!("Chain query error: {:?}", e),
                 }
             }
@@ -151,43 +152,46 @@ impl Node {
                     .unwrap();
 
                 if let Some(t) = txs_type {
+                    use diem_json_rpc_client::views::TransactionDataView;
                     let filter: Vec<TransactionView> = txs.into_iter()
-          .filter(|tv|{
-            match &tv.transaction {
-                libra_json_rpc_client::views::TransactionDataView::UserTransaction {  script, .. } => {
-                  return  script.r#type == t;
-                },
-                _ => false
-            }
-          })
-          .collect();
-                    format!("{:#?}", filter)
+                        .filter(|tv|{
+                            match &tv.transaction {
+                                TransactionDataView::UserTransaction {  
+                                    script, .. 
+                                } => {
+                                    return  script.r#type == t;
+                                },
+                                _ => false
+                            }
+                        })
+                        .collect();
+                        format!("{:#?}", filter)
                 } else {
                     format!("{:#?}", txs)
                 }
-          },
-          Events {
-            account,
-            sent_or_received,
-            seq_start,
-          } => {
-            // TODO: should borrow and not create a new client.
-            let mut print = "Events \n".to_string();
-            let handles = self
-            .get_payment_event_handles(account)
-            .unwrap();
+            },
+            Events {
+                account,
+                sent_or_received,
+                seq_start,
+            } => {
+                // TODO: should borrow and not create a new client.
+                let mut print = "Events \n".to_string();
+                let handles = self
+                .get_payment_event_handles(account)
+                .unwrap();
 
-            
-            if let Some((sent_handle, received_handle)) = handles {
-                  for evt in self.get_handle_events(&sent_handle, seq_start).unwrap() {
-                    if sent_or_received { print.push_str(&format_event_view(evt)) }
-                  }
-                  for evt in self.get_handle_events(&received_handle, seq_start).unwrap() {
-                    if !sent_or_received { print.push_str(&format_event_view(evt)) }
-                  }
-              };
-            print
-          }
+                
+                if let Some((sent_handle, received_handle)) = handles {
+                    for evt in self.get_handle_events(&sent_handle, seq_start).unwrap() {
+                        if sent_or_received { print.push_str(&format_event_view(evt)) }
+                    }
+                    for evt in self.get_handle_events(&received_handle, seq_start).unwrap() {
+                        if !sent_or_received { print.push_str(&format_event_view(evt)) }
+                    }
+                };
+                print
+            }
         }
     }
 }
@@ -197,22 +201,26 @@ fn format_event_view(e: EventView) -> String {
 
   // TODO: make this more idiomatic.
 
-  use libra_json_rpc_client::views::EventDataView::*;
-  let (a, BytesView(s), BytesView(r), BytesView(m), ..) = match e.data {
+  use diem_json_rpc_client::views::EventDataView::*;
+  let (a, s, r, BytesView(m), ..) = match e.data {
     ReceivedPayment { amount, sender, receiver, metadata } => {
       (amount, sender, receiver,  metadata)
     },
     SentPayment { amount, receiver, sender, metadata } => {
       (amount, sender, receiver,  metadata)
     },
-    _ => { panic!("trying to parse a payment event type, but event is not a ReceivedPayment or SentPayment")}
+    _ => { 
+        panic!(
+            "trying to parse a payment event type, but event is not a ReceivedPayment or SentPayment"
+        )
+    }
   };
   let scaled = a.amount / SCALING_FACTOR;
   format!(
     "id: {:?}, sender: {:?}, recipient: {:?}, amount: {:?}, metadata: {:?}\n",
     e.sequence_number,
-    s,
-    r,
+    s.to_string(),
+    r.to_string(),
     scaled.to_formatted_string(&Locale::en),
     String::from_utf8_lossy(&decode(m).unwrap()),
   )
@@ -305,7 +313,7 @@ pub fn test_fixture_struct() -> AnnotatedMoveStruct {
     let value = AnnotatedMoveValue::Bool(true);
 
     AnnotatedMoveStruct {
-        is_resource: true,
+        abilities: AbilitySet::EMPTY | Ability::Key,
         type_: module_tag.clone(),
         value: vec![(key, value)],
     }

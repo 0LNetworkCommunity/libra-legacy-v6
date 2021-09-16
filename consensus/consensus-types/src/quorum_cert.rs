@@ -1,10 +1,10 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::vote_data::VoteData;
 use anyhow::{ensure, Context};
-use libra_crypto::{hash::CryptoHash, HashValue};
-use libra_types::{
+use diem_crypto::{hash::CryptoHash, HashValue};
+use diem_types::{
     block_info::BlockInfo,
     ledger_info::{LedgerInfo, LedgerInfoWithSignatures},
     validator_verifier::ValidatorVerifier,
@@ -76,7 +76,10 @@ impl QuorumCert {
         genesis_id: HashValue,
     ) -> QuorumCert {
         let ancestor = BlockInfo::new(
-            ledger_info.epoch() + 1,
+            ledger_info
+                .epoch()
+                .checked_add(1)
+                .expect("Integer overflow when creating cert for genesis from ledger info"),
             0,
             genesis_id,
             ledger_info.transaction_accumulator_hash(),

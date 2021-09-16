@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! NibblePath library simplify operations with nibbles in a compact format for modified sparse
@@ -8,7 +8,7 @@
 mod nibble_path_test;
 
 use crate::ROOT_NIBBLE_HEIGHT;
-use libra_nibble::Nibble;
+use diem_nibble::Nibble;
 use mirai_annotations::*;
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest::{collection::vec, prelude::*};
@@ -33,7 +33,7 @@ pub struct NibblePath {
 /// nibbles will be printed as "12a".
 impl fmt::Debug for NibblePath {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.nibbles().map(|x| write!(f, "{:x}", x)).collect()
+        self.nibbles().try_for_each(|x| write!(f, "{:x}", x))
     }
 }
 
@@ -90,7 +90,7 @@ impl NibblePath {
     pub fn new(bytes: Vec<u8>) -> Self {
         checked_precondition!(bytes.len() <= ROOT_NIBBLE_HEIGHT / 2);
         let num_nibbles = bytes.len() * 2;
-        NibblePath { bytes, num_nibbles }
+        NibblePath { num_nibbles, bytes }
     }
 
     /// Similar to `new()` but assumes that the bytes have one less nibble.
@@ -102,7 +102,7 @@ impl NibblePath {
             "Last nibble must be 0."
         );
         let num_nibbles = bytes.len() * 2 - 1;
-        NibblePath { bytes, num_nibbles }
+        NibblePath { num_nibbles, bytes }
     }
 
     /// Adds a nibble to the end of the nibble path.

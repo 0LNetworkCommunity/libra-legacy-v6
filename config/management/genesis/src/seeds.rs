@@ -1,16 +1,20 @@
-use libra_crypto::x25519::PublicKey;
-use libra_management::error::Error;
-use libra_config::config::{SeedAddresses};
-use libra_temppath::TempPath;
-use libra_types::{account_config, account_state::AccountState, PeerId, on_chain_config::ValidatorSet};
+use diem_crypto::x25519::PublicKey;
+use diem_management::error::Error;
+use diem_temppath::TempPath;
+use diem_types::{
+    account_config, account_state::AccountState, PeerId, 
+    on_chain_config::ValidatorSet, network_address::NetworkAddress,
+};
 use structopt::StructOpt;
 use std::{
     convert::TryFrom,
+    collections::{HashMap},
     path::{PathBuf},
 };
 
 use crate::verify::compute_genesis;
 
+type SeedAddresses = HashMap<PeerId, Vec<NetworkAddress>>; 
 
 // NOTE: Deprecated for use on validator config. Kept here for reference.
 

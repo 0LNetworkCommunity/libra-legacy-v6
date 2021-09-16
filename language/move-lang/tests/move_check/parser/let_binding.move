@@ -1,8 +1,8 @@
-module M {
-    struct R {
+module 0x8675309::M {
+    struct R has copy, drop {
         f: u64
     }
-    struct Generic<T> {
+    struct Generic<T> has copy, drop {
         g: T
     }
     fun f() {

@@ -1,23 +1,26 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    expansion::ast::SpecId,
+    errors::Error,
+    expansion::ast::{Address, ModuleIdent, ModuleIdent_, SpecId},
     hlir::ast as H,
-    parser::ast::{
-        ConstantName, FunctionName, ModuleIdent, ModuleIdent_, ModuleName, StructName, Var,
-    },
+    parser::ast::{ConstantName, FunctionName, StructName, Var},
+    shared::{unique_map::UniqueMap, AddressBytes, CompilationEnv, Name},
 };
-use libra_types::account_address::AccountAddress as LibraAddress;
-use move_ir_types::ast as IR;
+use move_core_types::account_address::AccountAddress as MoveAddress;
+use move_ir_types::{ast as IR, location::Loc};
 use std::{
     clone::Clone,
     collections::{BTreeMap, BTreeSet, HashMap},
 };
+use IR::Ability;
 
 /// Compilation context for a single compilation unit (module or script).
 /// Contains all of the dependencies actually used in the module
 pub struct Context<'a> {
+    pub env: &'a mut CompilationEnv,
+    addresses: &'a UniqueMap<Name, AddressBytes>,
     current_module: Option<&'a ModuleIdent>,
     seen_structs: BTreeSet<(ModuleIdent, StructName)>,
     seen_functions: BTreeSet<(ModuleIdent, FunctionName)>,
@@ -25,11 +28,14 @@ pub struct Context<'a> {
 }
 
 impl<'a> Context<'a> {
-    /// Given the dependencies and the current module, creates an empty context.
-    /// The current module is a dummy `Self` for CompiledScript.
-    /// It initializes an "import" of `Self` as the alias for the current_module.
-    pub fn new(current_module: Option<&'a ModuleIdent>) -> Self {
+    pub fn new(
+        env: &'a mut CompilationEnv,
+        addresses: &'a UniqueMap<Name, AddressBytes>,
+        current_module: Option<&'a ModuleIdent>,
+    ) -> Self {
         Self {
+            env,
+            addresses,
             current_module,
             seen_structs: BTreeSet::new(),
             seen_functions: BTreeSet::new(),
@@ -60,7 +66,10 @@ impl<'a> Context<'a> {
         dependency_orderings: &HashMap<ModuleIdent, usize>,
         struct_declarations: &HashMap<
             (ModuleIdent, StructName),
-            (bool, Vec<(IR::TypeVar, IR::Kind)>),
+            (
+                BTreeSet<IR::Ability>,
+                Vec<(IR::TypeVar, BTreeSet<IR::Ability>)>,
+            ),
         >,
         function_declarations: &HashMap<
             (ModuleIdent, FunctionName),
@@ -68,25 +77,33 @@ impl<'a> Context<'a> {
         >,
     ) -> (Vec<IR::ImportDefinition>, Vec<IR::ModuleDependency>) {
         let Context {
+            env,
+            addresses,
             current_module: _current_module,
-            seen_structs,
+            mut seen_structs,
             seen_functions,
             ..
         } = self;
         let mut module_dependencies = BTreeMap::new();
-        Self::struct_dependencies(struct_declarations, &mut module_dependencies, seen_structs);
         Self::function_dependencies(
-            struct_declarations,
             function_declarations,
             &mut module_dependencies,
+            &mut seen_structs,
             seen_functions,
         );
+        Self::struct_dependencies(struct_declarations, &mut module_dependencies, seen_structs);
         let mut imports = vec![];
         let mut ordered_dependencies = vec![];
         for (module, (structs, functions)) in module_dependencies {
             let dependency_order = dependency_orderings[&module];
             let ir_name = Self::ir_module_alias(&module);
-            let ir_ident = Self::translate_module_ident(module);
+            let ir_ident = match Self::translate_module_ident_impl(addresses, module) {
+                Ok(ident) => ident,
+                Err(e) => {
+                    env.add_error(e);
+                    continue;
+                }
+            };
             imports.push(IR::ImportDefinition::new(ir_ident, Some(ir_name.clone())));
             ordered_dependencies.push((
                 dependency_order,
@@ -135,7 +152,7 @@ impl<'a> Context<'a> {
     fn struct_dependencies(
         struct_declarations: &HashMap<
             (ModuleIdent, StructName),
-            (bool, Vec<(IR::TypeVar, IR::Kind)>),
+            (BTreeSet<Ability>, Vec<(IR::TypeVar, BTreeSet<IR::Ability>)>),
         >,
         module_dependencies: &mut BTreeMap<
             ModuleIdent,
@@ -152,26 +169,22 @@ impl<'a> Context<'a> {
     fn struct_dependency(
         struct_declarations: &HashMap<
             (ModuleIdent, StructName),
-            (bool, Vec<(IR::TypeVar, IR::Kind)>),
+            (BTreeSet<Ability>, Vec<(IR::TypeVar, BTreeSet<IR::Ability>)>),
         >,
         module: &ModuleIdent,
         sname: StructName,
     ) -> IR::StructDependency {
         let key = (module.clone(), sname.clone());
-        let (is_nominal_resource, type_formals) = struct_declarations.get(&key).unwrap().clone();
+        let (abilities, type_formals) = struct_declarations.get(&key).unwrap().clone();
         let name = Self::translate_struct_name(sname);
         IR::StructDependency {
+            abilities,
             name,
-            is_nominal_resource,
             type_formals,
         }
     }
 
     fn function_dependencies(
-        struct_declarations: &HashMap<
-            (ModuleIdent, StructName),
-            (bool, Vec<(IR::TypeVar, IR::Kind)>),
-        >,
         function_declarations: &HashMap<
             (ModuleIdent, FunctionName),
             (BTreeSet<(ModuleIdent, StructName)>, IR::FunctionSignature),
@@ -180,13 +193,14 @@ impl<'a> Context<'a> {
             ModuleIdent,
             (Vec<IR::StructDependency>, Vec<IR::FunctionDependency>),
         >,
+        seen_structs: &mut BTreeSet<(ModuleIdent, StructName)>,
         seen_functions: BTreeSet<(ModuleIdent, FunctionName)>,
     ) {
         for (module, fname) in seen_functions {
-            let (seen_structs, function_dep) =
+            let (functions_seen_structs, function_dep) =
                 Self::function_dependency(function_declarations, &module, fname);
             Self::insert_function_dependency(module_dependencies, module, function_dep);
-            Self::struct_dependencies(struct_declarations, module_dependencies, seen_structs)
+            seen_structs.extend(functions_seen_structs)
         }
     }
 
@@ -208,22 +222,44 @@ impl<'a> Context<'a> {
     // Name translation
     //**********************************************************************************************
 
-    fn ir_module_alias(ident: &ModuleIdent) -> IR::ModuleName {
-        let ModuleIdent_ { address, name } = &ident.0.value;
-        IR::ModuleName::new(format!("{}::{}", address, name))
+    fn ir_module_alias(sp!(_, ModuleIdent_ { address, module }): &ModuleIdent) -> IR::ModuleName {
+        IR::ModuleName::new(format!("{}::{}", address, module))
     }
 
-    fn translate_module_ident(ident: ModuleIdent) -> IR::ModuleIdent {
-        let ModuleIdent_ { address, name } = ident.0.value;
-        let name = Self::translate_module_name(name);
-        IR::ModuleIdent::Qualified(IR::QualifiedModuleIdent::new(
+    pub fn resolve_address(&mut self, loc: Loc, addr: Address, case: &str) -> Option<AddressBytes> {
+        match addr.into_addr_bytes(self.addresses, loc, case) {
+            Ok(addr) => Some(addr),
+            Err(e) => {
+                self.env.add_error(e);
+                None
+            }
+        }
+    }
+
+    pub fn translate_module_ident(&mut self, ident: ModuleIdent) -> Option<IR::ModuleIdent> {
+        match Self::translate_module_ident_impl(&self.addresses, ident) {
+            Ok(ident) => Some(ident),
+            Err(e) => {
+                self.env.add_error(e);
+                None
+            }
+        }
+    }
+
+    fn translate_module_ident_impl(
+        addresses: &UniqueMap<Name, AddressBytes>,
+        sp!(loc, ModuleIdent_ { address, module }): ModuleIdent,
+    ) -> Result<IR::ModuleIdent, Error> {
+        let address_bytes = address.into_addr_bytes(addresses, loc, "module identifier")?;
+        let name = Self::translate_module_name_(module.0.value);
+        Ok(IR::ModuleIdent::Qualified(IR::QualifiedModuleIdent::new(
             name,
-            LibraAddress::new(address.to_u8()),
-        ))
+            MoveAddress::new(address_bytes.into_bytes()),
+        )))
     }
 
-    fn translate_module_name(n: ModuleName) -> IR::ModuleName {
-        IR::ModuleName::new(n.0.value)
+    fn translate_module_name_(s: String) -> IR::ModuleName {
+        IR::ModuleName::new(s)
     }
 
     fn translate_struct_name(n: StructName) -> IR::StructName {

@@ -6,13 +6,12 @@ use crate::{
     backlog,
 };
 use anyhow::{Error, bail};
-
 use byteorder::{LittleEndian, WriteBytesExt};
 use glob::glob;
 use hex::decode;
-use libra_crypto::hash::HashValue;
+use diem_crypto::hash::HashValue;
 use ol_types::block::Block;
-use txs::submit_tx::{TxParams};
+use txs::submit_tx::TxParams;
 use std::{
     fs,
     io::{BufReader, Write},
@@ -99,7 +98,7 @@ pub fn mine_and_submit(
 
     // If there are NO files in path, mine the genesis proof.
     if current_block_number.is_none() {
-      bail!("ERROR: Genesis block_0.json not found.");
+        bail!("ERROR: Genesis block_0.json not found.");
     } else {
         // the max block that has been succesfully submitted to client
         let mut mining_height = current_block_number.unwrap() + 1;
@@ -121,7 +120,7 @@ pub fn mine_and_submit(
                 }
             }
 
-            mining_height = block.height + 1; 
+            mining_height = block.height + 1;
         }
     }
 }
@@ -194,7 +193,7 @@ fn test_helper_clear_block_dir(blocks_dir: &PathBuf) {
 #[ignore]
 //Not really a test, just a way to generate fixtures.
 fn create_fixtures() {
-    use libra_wallet::WalletLibrary;
+    use diem_wallet::WalletLibrary;
 
     // if no file is found, the block height is 0
     //let blocks_dir = Path::new("./test_blocks");
@@ -453,4 +452,3 @@ pub fn genesis_preimage(cfg: &AppCfg) -> Vec<u8> {
     );
     return preimage;
 }
-

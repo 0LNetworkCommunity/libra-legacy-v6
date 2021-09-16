@@ -1,11 +1,10 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{options::ModuleGeneratorOptions, utils::random_string};
-use libra_types::account_address::AccountAddress;
-use move_core_types::identifier::Identifier;
+use move_binary_format::file_format::{Bytecode, CompiledModuleMut, Signature};
+use move_core_types::{account_address::AccountAddress, identifier::Identifier};
 use rand::{rngs::StdRng, Rng, SeedableRng};
-use vm::file_format::{Bytecode, CompiledModuleMut, Signature};
 
 ///////////////////////////////////////////////////////////////////////////
 // Padding of tables in compiled modules
@@ -40,7 +39,7 @@ impl Pad {
     fn pad_identifier_table(&mut self, module: &mut CompiledModuleMut) {
         module.identifiers = (0..(self.table_size + module.identifiers.len()))
             .map(|_| {
-                let len = self.gen.gen_range(10, self.options.max_string_size);
+                let len = self.gen.gen_range(10..self.options.max_string_size);
                 Identifier::new(random_string(&mut self.gen, len)).unwrap()
             })
             .collect()

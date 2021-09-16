@@ -13,6 +13,9 @@ ifndef SOURCE_PATH
 SOURCE_PATH = ${HOME}/libra
 endif
 
+STDLIB_BIN = ${SOURCE_PATH}/language/diem-framework/staged/stdlib.mv
+HASH := $(shell sha256sum ${STDLIB_BIN} | cut -d " " -f 1)
+
 # alice
 ifndef PERSONA
 PERSONA=alice
@@ -23,11 +26,11 @@ MNEM="talent sunset lizard pill fame nuclear spy noodle basket okay critic grow 
 NUM_NODES = 2
 
 ifndef PREV_VERSION
-PREV_VERSION=v4.3.2
+PREV_VERSION=v5
 endif
 
 ifndef BRANCH_NAME
-BRANCH_NAME=main
+BRANCH_NAME=v5
 endif
 
 # USAGE: BRANCH_NAME=<latest branch> make -f test-upgrade.mk upgrade
@@ -36,11 +39,11 @@ test: prep get-prev stdlib start upgrade check progress stop
 
 start:
 	@echo Building Swarm
-	cd ${SOURCE_PATH} && cargo build -p libra-node -p cli
-	cd ${SOURCE_PATH} && cargo run -p libra-swarm -- --libra-node ${SOURCE_PATH}/target/debug/libra-node -c ${SWARM_TEMP} -n ${NUM_NODES} &> ${LOG}&
+	cd ${SOURCE_PATH} && cargo build -p diem-node -p cli
+	cd ${SOURCE_PATH} && cargo run -p diem-swarm -- --diem-node ${SOURCE_PATH}/target/debug/diem-node -c ${SWARM_TEMP} -n ${NUM_NODES} &> ${LOG}&
 
 stop:
-	killall libra-swarm libra-node miner ol txs cli | true
+	killall diem-swarm diem-node miner ol txs cli | true
 
 prep:
 # save makefile outside of repo, since we'll need it across branches
@@ -57,16 +60,21 @@ get-test:
 	cd ${SOURCE_PATH} && git checkout ${BRANCH_NAME} -f
 
 stdlib:
-	cd ${SOURCE_PATH} && cargo run --release -p stdlib
-	cd ${SOURCE_PATH} && cargo run --release -p stdlib -- --create-upgrade-payload
-	sha256sum ${SOURCE_PATH}/language/stdlib/staged/stdlib.mv
+	cd ${SOURCE_PATH} && cargo run --release -p diem-framework
+	cd ${SOURCE_PATH} && cargo run --release -p diem-framework -- --create-upgrade-payload
+	sha256sum ${STDLIB_BIN}
+
 
 init:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init
 	cp ${SWARM_TEMP}/0/0L.toml ${HOME}/.0L/0L.toml
 
 submit:
-	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-upgrade -f ${SOURCE_PATH}/language/stdlib/staged/stdlib.mv
+	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-upgrade -f ${STDLIB_BIN}
+
+submit-hash:
+	echo ${HASH}
+	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-upgrade-hash -h ${HASH}
 
 query:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --blockheight | grep -Eo [0-9]+ | tail -n1
@@ -82,10 +90,11 @@ END = $(shell date -ud "5 minutes" +%s)
 NOW = $(shell date -u +%s)
 endif
 
-START_TEXT = "To run the Libra CLI client"
+START_TEXT = "To run the Diem CLI client"
 UPGRADE_TEXT = "stdlib upgrade: published"
 
 upgrade: 
+# Note, in order to have bob vote with hash, change 'submit' in his command to 'submit-hash', will only work if PREV_VERSION also has the submit-hash command
 	@while [[ ${NOW} -le ${END} ]] ; do \
 			if grep -q ${START_TEXT} ${LOG} ; then \
 				make -f ${SAFE_MAKE_FILE} get-test stdlib ; \

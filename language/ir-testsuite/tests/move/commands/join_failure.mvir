@@ -1,5 +1,5 @@
 module M {
-    resource R { f:bool }
+    struct R { f:bool }
     t0() {
         let r: Self.R;
         let f: bool;
@@ -18,7 +18,7 @@ module M {
 
 //! new-transaction
 module M {
-    resource R { f:bool }
+    struct R { f:bool }
     t0() {
         let r: Self.R;
         let f: bool;
@@ -32,11 +32,11 @@ module M {
         return;
     }
 }
-// check: UNSAFE_RET_UNUSED_RESOURCES
+// check: UNSAFE_RET_UNUSED_VALUES_WITHOUT_DROP
 
 //! new-transaction
 module M {
-    resource R { f:bool }
+    struct R { f:bool }
     t0() {
         let r: Self.R;
         let f: bool;
@@ -55,7 +55,7 @@ module M {
 
 //! new-transaction
 module M {
-    resource R { f:bool }
+    struct R { f:bool }
     t0() {
         let r: Self.R;
         let f: bool;
@@ -70,11 +70,11 @@ module M {
         return;
     }
 }
-// check: COPYLOC_RESOURCE_ERROR
+// check: COPYLOC_WITHOUT_COPY_ABILITY
 
 //! new-transaction
 module M {
-    resource R { f:bool }
+    struct R { f:bool }
     t0() {
         let r: Self.R;
         let ref: &Self.R;

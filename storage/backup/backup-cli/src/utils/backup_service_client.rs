@@ -1,13 +1,14 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::utils::error_notes::ErrorNotes;
 use anyhow::Result;
+use diem_crypto::HashValue;
+use diem_types::transaction::Version;
+use diemdb::backup::backup_handler::DbState;
 use futures::TryStreamExt;
-use libra_crypto::HashValue;
-use libra_types::transaction::Version;
-use libradb::backup::backup_handler::DbState;
 use structopt::StructOpt;
-use tokio::prelude::*;
+use tokio::io::{AsyncRead, AsyncReadExt};
 use tokio_util::compat::FuturesAsyncReadCompatExt;
 
 #[derive(StructOpt)]
@@ -41,12 +42,15 @@ impl BackupServiceClient {
     }
 
     async fn get(&self, path: &str) -> Result<impl AsyncRead> {
+        let url = format!("{}/{}", self.address, path);
         Ok(self
             .client
-            .get(&format!("{}/{}", self.address, path))
+            .get(&url)
             .send()
-            .await?
-            .error_for_status()?
+            .await
+            .err_notes(&url)?
+            .error_for_status()
+            .err_notes(&url)?
             .bytes_stream()
             .map_err(|e| futures::io::Error::new(futures::io::ErrorKind::Other, e))
             .into_async_read()
@@ -56,7 +60,7 @@ impl BackupServiceClient {
     pub async fn get_db_state(&self) -> Result<Option<DbState>> {
         let mut buf = Vec::new();
         self.get("db_state").await?.read_to_end(&mut buf).await?;
-        Ok(lcs::from_bytes(&buf)?)
+        Ok(bcs::from_bytes(&buf)?)
     }
 
     pub async fn get_account_range_proof(

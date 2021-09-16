@@ -1,11 +1,11 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use super::{balance_ap, encode_mint_transaction, encode_transfer_transaction, seqnum_ap, MockVM};
 use anyhow::Result;
-use libra_state_view::StateView;
-use libra_types::{access_path::AccessPath, account_address::AccountAddress, write_set::WriteOp};
-use libra_vm::VMExecutor;
+use diem_state_view::StateView;
+use diem_types::{access_path::AccessPath, account_address::AccountAddress, write_set::WriteOp};
+use diem_vm::VMExecutor;
 
 fn gen_address(index: u8) -> AccountAddress {
     AccountAddress::new([index; AccountAddress::LENGTH])
@@ -16,10 +16,6 @@ struct MockStateView;
 impl StateView for MockStateView {
     fn get(&self, _access_path: &AccessPath) -> Result<Option<Vec<u8>>> {
         Ok(None)
-    }
-
-    fn multi_get(&self, _access_paths: &[AccessPath]) -> Result<Vec<Option<Vec<u8>>>> {
-        unimplemented!();
     }
 
     fn is_genesis(&self) -> bool {
@@ -87,14 +83,11 @@ fn test_mock_vm_same_sender() {
 
 #[test]
 fn test_mock_vm_payment() {
-    let mut txns = vec![];
-    txns.push(encode_mint_transaction(gen_address(0), 100));
-    txns.push(encode_mint_transaction(gen_address(1), 100));
-    txns.push(encode_transfer_transaction(
-        gen_address(0),
-        gen_address(1),
-        50,
-    ));
+    let txns = vec![
+        encode_mint_transaction(gen_address(0), 100),
+        encode_mint_transaction(gen_address(1), 100),
+        encode_transfer_transaction(gen_address(0), gen_address(1), 50),
+    ];
 
     let output =
         MockVM::execute_block(txns, &MockStateView).expect("MockVM should not fail to start");
