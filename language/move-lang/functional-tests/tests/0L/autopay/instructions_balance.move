@@ -1,6 +1,6 @@
 // Todo: These GAS values have no effect, all accounts start with 1M GAS
+//! account: alice, 10000000GAS, 0
 //! account: bob,   1000000GAS, 0, validator
-//! account: alice, 1000000GAS, 0
 //! account: jim,   1000000GAS, 0
 
 // test runs various autopay instruction types to ensure they are being executed as expected
@@ -60,7 +60,14 @@ script {
     assert(AutoPay2::is_enabled(Signer::address_of(sender)), 0);
     
     // instruction type percent of balance
-    AutoPay2::create_instruction(sender, 1, 0, @{{jim}}, 2, 500);
+    AutoPay2::create_instruction(
+      sender,
+      1, // UID
+      0, // percent of balance type
+      @{{jim}},
+      2, // until epoch two
+      500 // 5 percent
+    );
 
     let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(
       Signer::address_of(sender), 1
@@ -102,7 +109,7 @@ script {
 
   fun main(_vm: signer) {
     let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
-    assert(ending_balance == 950001, 735705);
+    assert(ending_balance == 9500001, 735705);
   }
 }
 // check: EXECUTED
@@ -138,14 +145,17 @@ script {
 script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
+  // use 0x1::Debug::print;
 
   fun main(_vm: signer) {
     let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
-    assert(ending_balance == 902501, 735711);
+    // print(&ending_balance);
+    assert(ending_balance == 9025001, 735711);
 
     // check balance of recipients
     let ending_balance = DiemAccount::balance<GAS>(@{{jim}});
-    assert(ending_balance == 1097499, 735712);
+    // print(&ending_balance);
+    assert(ending_balance == 1974999, 735712);
   }
 }
 // check: EXECUTED
