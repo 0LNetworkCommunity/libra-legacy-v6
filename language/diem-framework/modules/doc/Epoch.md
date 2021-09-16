@@ -92,11 +92,11 @@ Called in genesis to initialize timer
 <pre><code><b>public</b> <b>fun</b> <a href="Epoch.md#0x1_Epoch_initialize">initialize</a>(vm: &signer) {
     <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(vm);
     move_to&lt;<a href="Epoch.md#0x1_Epoch_Timer">Timer</a>&gt;(
-    vm,
-    <a href="Epoch.md#0x1_Epoch_Timer">Timer</a> {
-        epoch: 0,
-        height_start: 0,
-        seconds_start: <a href="DiemTimestamp.md#0x1_DiemTimestamp_now_seconds">DiemTimestamp::now_seconds</a>()
+        vm,
+        <a href="Epoch.md#0x1_Epoch_Timer">Timer</a> {
+            epoch: 0,
+            height_start: 0,
+            seconds_start: <a href="DiemTimestamp.md#0x1_DiemTimestamp_now_seconds">DiemTimestamp::now_seconds</a>()
         }
     );
 }
