@@ -349,18 +349,18 @@ script {
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-//! new-transaction
-//! sender: diemroot
-script {
-    use 0x1::DiemSystem;
-    use 0x1::DiemConfig;
-    use 0x1::Debug::print;
+// //! new-transaction
+// //! sender: diemroot
+// script {
+//     use 0x1::DiemSystem;
+//     use 0x1::DiemConfig;
+//     use 0x1::Debug::print;
 
-    fun main(_account: signer) {
-        assert(DiemConfig::get_current_epoch() == 3, 7357008006020);
-        print(&DiemSystem::validator_set_size());
-        assert(DiemSystem::validator_set_size() == 6, 7357008006021);
-        assert(DiemSystem::is_validator(@{{frank}}), 7357008006022);
-    }
-}
-//check: EXECUTED
+//     fun main(_account: signer) {
+//         assert(DiemConfig::get_current_epoch() == 3, 7357008006020);
+//         print(&DiemSystem::validator_set_size());
+//         assert(DiemSystem::validator_set_size() == 6, 7357008006021);
+//         assert(DiemSystem::is_validator(@{{frank}}), 7357008006022);
+//     }
+// }
+// //check: EXECUTED
