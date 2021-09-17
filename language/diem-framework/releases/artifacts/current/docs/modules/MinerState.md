@@ -57,6 +57,7 @@ TODO
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
@@ -283,10 +284,12 @@ Struct to encapsulate information about the state of a miner
 
 
 <pre><code><b>fun</b> <a href="MinerState.md#0x1_MinerState_increment_stats">increment_stats</a>(<b>global</b>: u64, validator: u64, fullnode: u64) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerStats">MinerStats</a> {
-   <b>let</b> state = borrow_global_mut&lt;<a href="MinerState.md#0x1_MinerState_MinerStats">MinerStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
-   state.proofs_in_epoch = <b>global</b>;
-   state.validator_proofs = validator;
-   state.fullnode_proofs = fullnode;
+  <b>assert</b>(<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerStats">MinerStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>()), 1301001);
+  <b>let</b> state = borrow_global_mut&lt;<a href="MinerState.md#0x1_MinerState_MinerStats">MinerStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+
+  state.proofs_in_epoch = <b>global</b>;
+  state.validator_proofs = validator;
+  state.fullnode_proofs = fullnode;
 }
 </code></pre>
 
@@ -369,11 +372,11 @@ Create an empty list of miners
     list: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;()
   });
 
-  // move_to&lt;<a href="MinerState.md#0x1_MinerState_MinerStats">MinerStats</a>&gt;(vm, <a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a> {
-  //   proofs_in_epoch: 0u64,
-  //   validator_proofs: 0u64,
-  //   fullnode_proofs: 0u64,
-  // });
+  move_to&lt;<a href="MinerState.md#0x1_MinerState_MinerStats">MinerStats</a>&gt;(vm, <a href="MinerState.md#0x1_MinerState_MinerStats">MinerStats</a> {
+    proofs_in_epoch: 0u64,
+    validator_proofs: 0u64,
+    fullnode_proofs: 0u64,
+  });
 }
 </code></pre>
 
@@ -521,11 +524,13 @@ adds <code>miner</code> to list of miners
 
   //TODO: Previously in OLv3 is_genesis() returned <b>true</b>. How <b>to</b> check that this is part of genesis? is_genesis returns <b>false</b> here.
   // <b>assert</b>(<a href="DiemTimestamp.md#0x1_DiemTimestamp_is_genesis">DiemTimestamp::is_genesis</a>(), 130101024010);
+  print(&10001);
   <a href="MinerState.md#0x1_MinerState_init_miner_state">init_miner_state</a>(miner_sig, &challenge, &solution);
-
+  print(&10002);
   // TODO: Move this elsewhere?
   // Initialize stats for first validator set from rust genesis.
   <b>let</b> node_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig);
+  print(&10003);
   <a href="Stats.md#0x1_Stats_init_address">Stats::init_address</a>(vm_sig, node_addr);
 }
 </code></pre>

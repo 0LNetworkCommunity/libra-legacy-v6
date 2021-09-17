@@ -27,29 +27,30 @@ module Reconfigure { // TODO: Rename to Boundary
     use 0x1::Burn;
     use 0x1::FullnodeSubsidy;
 
-    // use 0x1::Debug::print;
+    use 0x1::Debug::print;
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
     public fun reconfigure(vm: &signer, height_now: u64) {
+        print(&1800100);
         CoreAddresses::assert_vm(vm);
 
         let height_start = Epoch::get_timer_height_start(vm);
-
+        print(&1800101);
         let (subsidy_units, subsidy_per) = Subsidy::calculate_subsidy(vm, height_start, height_now);
-
+        print(&1800102);
         process_fullnodes(vm, subsidy_per);
-
+        print(&1800103);
         process_validators(vm, height_start, height_now, subsidy_units);
-
+        print(&1800104);
         let proposed_set = propose_new_set(vm, height_start, height_now);
-
+        print(&1800105);
         // Update all slow wallet limits
         if (DiemConfig::check_transfer_enabled()) {
             DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock());
             // update_validator_withdrawal_limit(vm);
         };
-       
+        print(&1800106);
         reset_counters(vm, proposed_set, height_now)
     }
 
@@ -59,39 +60,31 @@ module Reconfigure { // TODO: Rename to Boundary
         // loop through validators and pay full node subsidies.
         // Should happen before transactionfees get distributed.
         // Note: need to check, there may be new validators which have not mined yet.
-        // print(&03100);
-
+        print(&1800200);
         let miners = MinerState::get_miner_list();
-
+        print(&1800201);
         // fullnode subsidy is a fraction of the total subsidy available to validators.
         let proof_price = FullnodeSubsidy::get_proof_price(subsidy_per_node);
 
         let k = 0;
-        // print(&03200);
         // Distribute mining subsidy to fullnodes
+        print(&1800202);
         while (k < Vector::length(&miners)) {
             let addr = *Vector::borrow(&miners, k);
-            // print(&03210);
-          
-            // if (!FullnodeState::is_init(addr)) continue; // fail-safe
-            if (DiemSystem::is_validator(addr)) continue; // skip validators
-
+            print(&1800203);
+            if (DiemSystem::is_validator(addr)) { // skip validators
+              k = k + 1;
+              continue
+            };
+            print(&1800204);
             let count = MinerState::get_count_in_epoch(addr);
             
             let miner_subsidy = count * proof_price;
-
+            print(&1800205);
             FullnodeSubsidy::distribute_fullnode_subsidy(vm, addr, miner_subsidy);
-            
-            // print(&03230);
-            // FullnodeState::inc_payment_count(vm, addr, count);
-            // FullnodeState::inc_payment_value(vm, addr, value);
-            // FullnodeState::reconfig(vm, addr, count);
 
             k = k + 1;
         };
-
-         // needs to be set before the auctioneer runs in Subsidy::fullnode_reconfig
-        // FullnodeSubsidy::set_global_count(vm, global_proofs_count);
     }
 
     fun process_validators(vm: &signer, height_start: u64, height_now: u64, subsidy_units: u64) {
@@ -129,6 +122,7 @@ module Reconfigure { // TODO: Rename to Boundary
         let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
 
         Burn::reset_ratios(vm);
+        // LEAVE THIS CODE COMMENTED for future use
         // TODO: Make the burn value dynamic.
         // let incoming_count = Vector::length<address>(&top_accounts) - Vector::length<address>(&jailed_set);
         // let burn_value = Subsidy::subsidy_curve(
@@ -136,6 +130,7 @@ module Reconfigure { // TODO: Rename to Boundary
         //   incoming_count,
         //   Globals::get_max_node_density()
         // )/4;
+
         let burn_value = 1000000; // TODO: switch to a variable cost, as above.
 
         // print(&03250);
