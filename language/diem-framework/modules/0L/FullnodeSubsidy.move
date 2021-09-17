@@ -19,6 +19,7 @@ address 0x1 {
     use 0x1::TransactionFee;
     use 0x1::Roles;
     use 0x1::Testnet::is_testnet;
+    use 0x1::MinerState;
 
     // estimated gas unit cost for proof verification divided coin scaling factor
     // Cost for verification test/easy difficulty: 1173 / 1000000
@@ -59,60 +60,20 @@ address 0x1 {
       });
     }
 
-    // // TODO: Deprecate in v4.2.9+ since the onboarding gas transfer resolves this issue.
-    // public fun distribute_onboarding_subsidy(
-    //   vm: &signer,
-    //   miner: address
-    // ):u64 acquires FullnodeSubsidy {
-    //   // Bootstrap gas if it's the first payment to a prospective validator. Check no fullnode payments have been made, and is in validator universe. 
-    //   CoreAddresses::assert_diem_root(vm);
 
-    //   FullnodeState::is_onboarding(miner);
-      
-    //   let state = borrow_global<FullnodeSubsidy>(CoreAddresses::DIEM_ROOT_ADDRESS());
+    public fun get_proof_price(subsidy: u64): u64 {
+      // TODO: Check this exclude proofs submitted by validator nodes, or the total reward paid will not equal the pool for fullnodes.
 
-    //   let subsidy = bootstrap_validator_balance();
-    //   // give max possible subisidy, if auction is higher
-    //   if (state.current_proof_price > subsidy) subsidy = state.current_proof_price;
-      
-    //   let minted_coins = Diem::mint<GAS>(vm, subsidy);
-    //   DiemAccount::vm_deposit_with_metadata<GAS>(
-    //     vm,
-    //     miner,
-    //     minted_coins,
-    //     b"onboarding_subsidy",
-    //     b""
-    //   );
+      let global_proofs = MinerState::get_fullnode_proofs();
+      subsidy/global_proofs
+    }
 
-    //   subsidy
-    // }
-
-
-    public fun distribute_fullnode_subsidy(vm: &signer, miner: address, count: u64):u64 acquires FullnodeSubsidy{
+    public fun distribute_fullnode_subsidy(vm: &signer, miner: address, subsidy: u64):u64 {
       CoreAddresses::assert_diem_root(vm);
       // Payment is only for fullnodes, ie. not in current validator set.
-      if (DiemSystem::is_validator(miner)) return 0;
-
-      let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
-      let subsidy;
-
-      // fail fast, abort if ceiling was met
-      if (state.current_subsidy_distributed > state.current_cap) return 0;
-
-      let proposed_subsidy = state.current_proof_price * count;
-
-      if (proposed_subsidy == 0) return 0;
-      // check if payments will exceed ceiling.
-      if (state.current_subsidy_distributed + proposed_subsidy > state.current_cap) {
-        // pay the remainder only
-        // TODO: This creates a race. Check ordering of list.
-        subsidy = state.current_cap - state.current_subsidy_distributed;
-      } else {
-        // happy case, the ceiling is not met.
-        subsidy = proposed_subsidy;
-      };
-
+      if (DiemSystem::is_validator(miner)) return 0; // TODO: this check is duplicated in reconfigure 
       if (subsidy == 0) return 0;
+
       let minted_coins = Diem::mint<GAS>(vm, subsidy);
       DiemAccount::vm_deposit_with_metadata<GAS>(
         vm,
@@ -121,8 +82,6 @@ address 0x1 {
         b"fullnode_subsidy",
         b""
       );
-
-      state.current_subsidy_distributed = state.current_subsidy_distributed + subsidy;
 
       subsidy
     }

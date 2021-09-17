@@ -10,7 +10,7 @@ address 0x1 {
   module MinerState {
     use 0x1::Errors;
     use 0x1::CoreAddresses;
-    use 0x1::FullnodeState;
+    // use 0x1::FullnodeState;
     use 0x1::Globals;
     use 0x1::Hash;
     use 0x1::DiemConfig;
@@ -28,6 +28,32 @@ address 0x1 {
     struct MinerList has key {
       list: vector<address>
     }
+
+    struct MinerStats has key {
+      proofs_in_epoch: u64,
+      validator_proofs: u64,
+      fullnode_proofs: u64,
+    }
+
+  fun increment_stats(global: u64, validator: u64, fullnode: u64) acquires MinerStats {
+     let state = borrow_global_mut<MinerStats>(CoreAddresses::VM_RESERVED_ADDRESS());
+     state.proofs_in_epoch = global;
+     state.validator_proofs = validator;
+     state.fullnode_proofs = fullnode;
+  }
+
+  public fun epoch_reset(vm: &signer) acquires MinerStats {
+    CoreAddresses::assert_vm(vm);
+    let state = borrow_global_mut<MinerStats>(CoreAddresses::VM_RESERVED_ADDRESS());
+    state.proofs_in_epoch = 0;
+    state.validator_proofs = 0;
+    state.fullnode_proofs = 0;
+   }
+
+  public fun get_fullnode_proofs(): u64 acquires MinerStats{
+    let state = borrow_global<MinerStats>(CoreAddresses::VM_RESERVED_ADDRESS());
+    state.fullnode_proofs
+  }
 
     /// Struct to store information about a VDF proof submitted
     /// `challenge`: the seed for the proof 
@@ -62,12 +88,26 @@ address 0x1 {
       CoreAddresses::assert_diem_root(vm);
       move_to<MinerList>(vm, MinerList {
         list: Vector::empty<address>()
-      });  
+      }); 
+
+      // move_to<MinerStats>(vm, MinerList {
+      //   proofs_in_epoch: 0u64,
+      //   validator_proofs: 0u64,
+      //   fullnode_proofs: 0u64,
+      // });
     }
 
     /// returns true if miner at `addr` has been initialized 
     public fun is_init(addr: address):bool {
       exists<MinerProofHistory>(addr)
+    }
+
+    // is onboarding
+    public fun is_onboarding(addr: address): bool acquires MinerProofHistory{
+      let state = borrow_global<MinerProofHistory>(addr);
+
+      state.count_proofs_in_epoch < 2 &&
+      state.epochs_since_last_account_creation < 2
     }
     // Creates proof blob object from input parameters
     // Permissions: PUBLIC, ANYONE can call this function.
@@ -107,8 +147,8 @@ address 0x1 {
       miner_sig: &signer,
       challenge: vector<u8>,
       solution: vector<u8>
-    ) acquires MinerProofHistory, MinerList {
-      // In rustland the vm_genesis creates a Signer for the miner. So the SENDER is not the same and the Signer.
+    ) acquires MinerProofHistory, MinerList, MinerStats {
+      // In rust the vm_genesis creates a Signer for the miner. So the SENDER is not the same and the Signer.
 
       //TODO: Previously in OLv3 is_genesis() returned true. How to check that this is part of genesis? is_genesis returns false here.
       // assert(DiemTimestamp::is_genesis(), 130101024010);
@@ -127,7 +167,7 @@ address 0x1 {
     public fun commit_state(
       miner_sign: &signer,
       proof: Proof
-    ) acquires MinerProofHistory, MinerList {
+    ) acquires MinerProofHistory, MinerList, MinerStats {
 
       //NOTE: Does not check that the Sender is the Signer. Which we must skip for the onboarding transaction.
 
@@ -156,7 +196,7 @@ address 0x1 {
       operator_sig: &signer,
       miner_addr: address, 
       proof: Proof
-    ) acquires MinerProofHistory, MinerList {
+    ) acquires MinerProofHistory, MinerList, MinerStats {
 
       // Check the signer is in fact an operator delegated by the owner.
       
@@ -189,7 +229,7 @@ address 0x1 {
       miner_addr: address,
       proof: Proof,
       steady_state: bool
-    ) acquires MinerProofHistory, MinerList {
+    ) acquires MinerProofHistory, MinerList, MinerStats {
       // Get a mutable ref to the current state
       let miner_history = borrow_global_mut<MinerProofHistory>(miner_addr);
 
@@ -221,6 +261,16 @@ address 0x1 {
       };
     
       miner_history.latest_epoch_mining = DiemConfig::get_current_epoch();
+
+      if (ValidatorConfig::is_valid(miner_addr)) {
+        // TODO: ValidatorConfig::is_valid is being used here instead of DiemSystem::is_validator() because of dependency cycling. is_validator is used in reconfigure and FullnodeSubsidy
+        
+        // increment validator count
+        increment_stats(1, 1, 0);
+      } else {
+        // increment fullnode count
+        increment_stats(1, 0, 1);
+      }
     }
 
     // Checks that the validator has been mining above the count threshold
@@ -334,7 +384,7 @@ address 0x1 {
     // Function to initialize miner state
     // Permissions: PUBLIC, Signer, Validator only
     // Function code: 07
-    public fun init_miner_state(miner_sig: &signer, challenge: &vector<u8>, solution: &vector<u8>) acquires MinerProofHistory, MinerList {
+    public fun init_miner_state(miner_sig: &signer, challenge: &vector<u8>, solution: &vector<u8>) acquires MinerProofHistory, MinerList, MinerStats {
       
       // NOTE Only Signer can update own state.
       // Should only happen once.
@@ -406,6 +456,8 @@ address 0x1 {
       state.epochs_since_last_account_creation = 0;
     }
 
+
+
     //////////////////////
     /// Public Getters ///
     /////////////////////
@@ -452,7 +504,7 @@ address 0x1 {
         difficulty: u64,
         challenge: vector<u8>,
         solution: vector<u8>
-      ) acquires MinerProofHistory, MinerList {
+      ) acquires MinerProofHistory, MinerList, MinerStats {
         assert(Testnet::is_testnet(), 130102014010);
 
         move_to<MinerProofHistory>(miner_sig, MinerProofHistory{
@@ -473,7 +525,7 @@ address 0x1 {
         };
 
         verify_and_update_state(Signer::address_of(miner_sig), proof, false);
-        FullnodeState::init(miner_sig);
+        // FullnodeState::init(miner_sig);
 
     }
 
@@ -484,7 +536,7 @@ address 0x1 {
       operator_addr: address, // Testrunner does not allow arbitrary accounts to submit txs, need to use address, so this will differ slightly from api
       miner_addr: address, 
       proof: Proof
-    ) acquires MinerProofHistory, MinerList {
+    ) acquires MinerProofHistory, MinerList, MinerStats {
       assert(Testnet::is_testnet(), 130102014010);
       
       // Get address, assumes the sender is the signer.
@@ -514,7 +566,7 @@ address 0x1 {
       assert(Testnet::is_testnet(), Errors::invalid_state(130118));
       let state = borrow_global_mut<MinerProofHistory>(Signer::address_of(sender));
       state.count_proofs_in_epoch = count;
-      FullnodeState::mock_proof(sender, count);
+      // FullnodeState::mock_proof(sender, count);
     }
 
     // Function code: 13

@@ -20,7 +20,7 @@ module Reconfigure { // TODO: Rename to Boundary
     use 0x1::ValidatorUniverse;
     use 0x1::AutoPay2;
     use 0x1::Epoch;
-    use 0x1::FullnodeState;
+    // use 0x1::FullnodeState;
     use 0x1::DiemConfig;
     use 0x1::Audit;
     use 0x1::DiemAccount;
@@ -36,9 +36,11 @@ module Reconfigure { // TODO: Rename to Boundary
 
         let height_start = Epoch::get_timer_height_start(vm);
 
-        process_fullnodes(vm);
+        let (subsidy_units, subsidy_per) = Subsidy::calculate_subsidy(vm, height_start, height_now);
 
-        process_validators(vm, height_start, height_now);
+        process_fullnodes(vm, subsidy_per);
+
+        process_validators(vm, height_start, height_now, subsidy_units);
 
         let proposed_set = propose_new_set(vm, height_start, height_now);
 
@@ -52,7 +54,7 @@ module Reconfigure { // TODO: Rename to Boundary
     }
 
     // process fullnode subsidy
-    fun process_fullnodes(vm: &signer) {
+    fun process_fullnodes(vm: &signer, subsidy_per_node: u64) {
         // Fullnode subsidy
         // loop through validators and pay full node subsidies.
         // Should happen before transactionfees get distributed.
@@ -60,59 +62,54 @@ module Reconfigure { // TODO: Rename to Boundary
         // print(&03100);
 
         let miners = MinerState::get_miner_list();
-        
-        // Migration for miner list.
-        if (Vector::length(&miners) == 0) { miners = ValidatorUniverse::get_eligible_validators(vm) };
 
-        let global_proofs_count = 0;
+        // fullnode subsidy is a fraction of the total subsidy available to validators.
+        let proof_price = FullnodeSubsidy::get_proof_price(subsidy_per_node);
+
         let k = 0;
         // print(&03200);
-
-              // Distribute mining subsidy to fullnodes
+        // Distribute mining subsidy to fullnodes
         while (k < Vector::length(&miners)) {
             let addr = *Vector::borrow(&miners, k);
             // print(&03210);
           
-            if (!FullnodeState::is_init(addr)) continue; // fail-safe
+            // if (!FullnodeState::is_init(addr)) continue; // fail-safe
+            if (DiemSystem::is_validator(addr)) continue; // skip validators
 
             let count = MinerState::get_count_in_epoch(addr);
             
-            global_proofs_count = global_proofs_count + count;
-            
-            let value: u64;
+            let miner_subsidy = count * proof_price;
 
-            value = FullnodeSubsidy::distribute_fullnode_subsidy(vm, addr, count);
+            FullnodeSubsidy::distribute_fullnode_subsidy(vm, addr, miner_subsidy);
             
             // print(&03230);
-            FullnodeState::inc_payment_count(vm, addr, count);
-            FullnodeState::inc_payment_value(vm, addr, value);
-            FullnodeState::reconfig(vm, addr, count);
+            // FullnodeState::inc_payment_count(vm, addr, count);
+            // FullnodeState::inc_payment_value(vm, addr, value);
+            // FullnodeState::reconfig(vm, addr, count);
 
             k = k + 1;
         };
 
          // needs to be set before the auctioneer runs in Subsidy::fullnode_reconfig
-        FullnodeSubsidy::set_global_count(vm, global_proofs_count);
+        // FullnodeSubsidy::set_global_count(vm, global_proofs_count);
     }
 
-    fun process_validators(vm: &signer, height_start: u64, height_now: u64) {
+    fun process_validators(vm: &signer, height_start: u64, height_now: u64, subsidy_units: u64) {
         // Process outgoing validators:
         // Distribute Transaction fees and subsidy payments to all outgoing validators
-        
-
         // print(&03240);
-
-        let (outgoing_set, fee_ratio) = DiemSystem::get_fee_ratio(vm, height_start, height_now);
+        let (outgoing_set, _) = DiemSystem::get_fee_ratio(vm, height_start, height_now);
+        
         if (Vector::length<address>(&outgoing_set) > 0) {
-            let subsidy_units = Subsidy::calculate_subsidy(vm, height_start, height_now);
+            // let (subsidy_units, _) = Subsidy::calculate_subsidy(vm, height_start, height_now);
             // print(&03241);
 
             if (subsidy_units > 0) {
-                Subsidy::process_subsidy(vm, subsidy_units, &outgoing_set, &fee_ratio);
+                Subsidy::process_subsidy(vm, subsidy_units, &outgoing_set);
             };
             // print(&03241);
 
-            Subsidy::process_fees(vm, &outgoing_set, &fee_ratio);
+            Subsidy::process_fees(vm, &outgoing_set);
         };
 
     }

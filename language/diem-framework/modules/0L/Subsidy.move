@@ -15,7 +15,6 @@ address 0x1 {
     use 0x1::Signer;
     use 0x1::DiemAccount;
     use 0x1::Vector;
-    use 0x1::FixedPoint32::{Self, FixedPoint32};    
     use 0x1::Stats;
     use 0x1::ValidatorUniverse;
     use 0x1::Globals;
@@ -23,6 +22,7 @@ address 0x1 {
     use 0x1::TransactionFee;
     use 0x1::ValidatorConfig;
     use 0x1::MinerState;
+    use 0x1::FixedPoint32;
 
     // estimated gas unit cost for proof verification divided coin scaling factor
     // Cost for verification test/easy difficulty: 1173 / 1000000
@@ -35,12 +35,11 @@ address 0x1 {
     // This method should be used to get the units at the beginning of the epoch.
     // Function code: 01 Prefix: 190101
     public fun process_subsidy(
-      vm_sig: &signer,
+      vm: &signer,
       subsidy_units: u64,
       outgoing_set: &vector<address>,
-      _fee_ratio: &vector<FixedPoint32>) {
-      let sender = Signer::address_of(vm_sig);
-      assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190101));
+    ) {
+      CoreAddresses::assert_vm(vm);
 
       // Get the split of payments from Stats.
       let len = Vector::length<address>(outgoing_set);
@@ -56,28 +55,25 @@ address 0x1 {
 
         let node_address = *(Vector::borrow<address>(outgoing_set, i));
         // Transfer gas from vm address to validator
-        let minted_coins = Diem::mint<GAS>(vm_sig, subsidy_granted);
+        let minted_coins = Diem::mint<GAS>(vm, subsidy_granted);
         
         DiemAccount::vm_deposit_with_metadata<GAS>(
-          vm_sig,
+          vm,
           node_address,
           minted_coins,
           b"validator subsidy",
           b""
         );
         // refund operator tx fees for mining
-        refund_operator_tx_fees(vm_sig, node_address);
+        refund_operator_tx_fees(vm, node_address);
         i = i + 1;
       };
     }
 
 
     // Function code: 02 Prefix: 190102
-    public fun calculate_subsidy(vm: &signer, height_start: u64, height_end: u64):u64 {
-
-      let sender = Signer::address_of(vm);
-      assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190102));
-
+    public fun calculate_subsidy(vm: &signer, height_start: u64, height_end: u64): (u64, u64) {
+      CoreAddresses::assert_vm(vm);
       // skip genesis
       assert(!DiemTimestamp::is_genesis(), Errors::invalid_state(190102));
 
@@ -97,9 +93,11 @@ address 0x1 {
 
       // deduct transaction fees from guaranteed minimum.
       if (guaranteed_minimum > txn_fee_amount ){
-        return guaranteed_minimum - txn_fee_amount
+        let subsidy = guaranteed_minimum - txn_fee_amount;
+        // return global subsidy and subsidy per node.
+        return (subsidy, subsidy/network_density)
       };
-      0u64
+      (0u64, 0u64)
     }
 
     // Function code: 03 Prefix: 190103
@@ -170,9 +168,8 @@ address 0x1 {
     public fun process_fees(
       vm: &signer,
       outgoing_set: &vector<address>,
-      _fee_ratio: &vector<FixedPoint32>,
     ){
-      assert(Signer::address_of(vm) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190105));
+      CoreAddresses::assert_vm(vm);
       let capability_token = DiemAccount::extract_withdraw_capability(vm);
 
       let len = Vector::length<address>(outgoing_set);
