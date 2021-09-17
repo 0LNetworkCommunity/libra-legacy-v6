@@ -152,7 +152,7 @@ script {
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
-    use 0x1::FullnodeState;
+    // use 0x1::FullnodeState;
 
 
     fun main(vm: signer) {

@@ -21,7 +21,7 @@ script {
   use 0x1::TransactionFee;
   use 0x1::GAS::GAS;
   use 0x1::Diem;
-  use 0x1::Debug::print;
+  // use 0x1::Debug::print;
   
   fun main(vm: signer) {
     // check the case of a network density of 4 active validators.
@@ -40,8 +40,9 @@ script {
     };
 
     TransactionFee::pay_fee(Diem::mint<GAS>(vm, 100000000));
-    print(&Subsidy::calculate_subsidy(vm, 0, 15));
-    assert(Subsidy::calculate_subsidy(vm, 0, 15) == 196000000, 7357190101021000);
+    // print(&Subsidy::calculate_subsidy(vm, 0, 15));
+    let (subsidy, _) = Subsidy::calculate_subsidy(vm, 0, 15);
+    assert(subsidy == 196000000, 7357190101021000);
 
     }
 }

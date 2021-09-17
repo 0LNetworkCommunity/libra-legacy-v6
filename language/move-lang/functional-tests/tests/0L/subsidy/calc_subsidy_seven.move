@@ -47,8 +47,8 @@ script {
       Globals::get_max_validators_per_set(),
     );
 
-
-    assert(Subsidy::calculate_subsidy(vm, 0, 15) == expected_subsidy, 7357190101021000);
+    let (subsidy, _) = Subsidy::calculate_subsidy(vm, 0, 15);
+    assert( subsidy == expected_subsidy, 7357190101021000);
 
   }
 }

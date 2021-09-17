@@ -95,6 +95,7 @@ script {
   use 0x1::Reconfigure;
   use 0x1::MinerState;
   use 0x1::Testnet;
+  use 0x1::Debug::print;
   
   fun main(vm: signer) {
       // need to remove testnet for this test, since testnet does not ratelimit account creation.
@@ -108,6 +109,7 @@ script {
       let new_account_bal = DiemAccount::balance<GAS>(eve);
 
       assert(old_account_bal == 1000000, 7357001);
+      print(&new_account_bal);
       assert(new_account_bal == 3497536, 7357002);
 
       // Operator account should not increase after epoch change

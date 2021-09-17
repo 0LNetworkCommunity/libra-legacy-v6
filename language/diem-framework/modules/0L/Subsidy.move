@@ -48,6 +48,7 @@ address 0x1 {
       print(&1901002);
       // equal subsidy for all active validators
       let subsidy_granted;
+      // TODO: This calculation is duplicated with get_subsidy
       if (subsidy_units > len && subsidy_units > 0 ) { // arithmetic safety check
         subsidy_granted = subsidy_units/len;
       } else { return };
@@ -122,7 +123,7 @@ address 0x1 {
       subsidy_ceiling_gas: u64,
       network_density: u64,
       max_node_count: u64
-      ): u64 {
+    ): u64 {
       
       let min_node_count = 4u64;
 
@@ -247,6 +248,5 @@ address 0x1 {
           );
         };
     }
-
 }
 }

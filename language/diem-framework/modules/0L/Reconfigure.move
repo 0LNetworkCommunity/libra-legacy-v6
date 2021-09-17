@@ -36,14 +36,19 @@ module Reconfigure { // TODO: Rename to Boundary
         CoreAddresses::assert_vm(vm);
 
         let height_start = Epoch::get_timer_height_start(vm);
+        
         print(&1800101);
         let (subsidy_units, subsidy_per) = Subsidy::calculate_subsidy(vm, height_start, height_now);
+        
         print(&1800102);
         process_fullnodes(vm, subsidy_per);
+        
         print(&1800103);
         process_validators(vm, height_start, height_now, subsidy_units);
+        
         print(&1800104);
         let proposed_set = propose_new_set(vm, height_start, height_now);
+        
         print(&1800105);
         // Update all slow wallet limits
         if (DiemConfig::check_transfer_enabled()) {
@@ -94,7 +99,6 @@ module Reconfigure { // TODO: Rename to Boundary
         let (outgoing_set, _) = DiemSystem::get_fee_ratio(vm, height_start, height_now);
         
         if (Vector::length<address>(&outgoing_set) > 0) {
-            // let (subsidy_units, _) = Subsidy::calculate_subsidy(vm, height_start, height_now);
             // print(&03241);
 
             if (subsidy_units > 0) {
