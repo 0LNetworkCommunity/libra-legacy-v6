@@ -155,7 +155,7 @@ script {
     // use 0x1::FullnodeState;
 
 
-    fun main(vm: signer) {
+    fun main(_vm: signer) {
         // This is not an onboarding case, steady state.
         // FullnodeState::test_set_fullnode_fixtures(
         //     &vm, @{{dave}}, 0, 0, 0, 200, 200, 1000000

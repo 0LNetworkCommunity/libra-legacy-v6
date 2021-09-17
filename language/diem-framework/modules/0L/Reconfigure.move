@@ -38,13 +38,16 @@ module Reconfigure { // TODO: Rename to Boundary
         let height_start = Epoch::get_timer_height_start(vm);
         
         print(&1800101);
-        let (subsidy_units, subsidy_per) = Subsidy::calculate_subsidy(vm, height_start, height_now);
+        let (outgoing_compliant_set, _) = DiemSystem::get_fee_ratio(vm, height_start, height_now);
+        // NOTE: This is "nominal" because it doesn't check
+        let compliant_nodes_count = Vector::length(&outgoing_compliant_set);
+        let (subsidy_units, nominal_subsidy_per) = Subsidy::calculate_subsidy(vm, compliant_nodes_count);
         
         print(&1800102);
-        process_fullnodes(vm, subsidy_per);
+        process_fullnodes(vm, nominal_subsidy_per);
         
         print(&1800103);
-        process_validators(vm, height_start, height_now, subsidy_units);
+        process_validators(vm, subsidy_units, outgoing_compliant_set);
         
         print(&1800104);
         let proposed_set = propose_new_set(vm, height_start, height_now);
@@ -60,7 +63,7 @@ module Reconfigure { // TODO: Rename to Boundary
     }
 
     // process fullnode subsidy
-    fun process_fullnodes(vm: &signer, subsidy_per_node: u64) {
+    fun process_fullnodes(vm: &signer, nominal_subsidy_per_node: u64) {
         // Fullnode subsidy
         // loop through validators and pay full node subsidies.
         // Should happen before transactionfees get distributed.
@@ -69,7 +72,7 @@ module Reconfigure { // TODO: Rename to Boundary
         let miners = MinerState::get_miner_list();
         print(&1800201);
         // fullnode subsidy is a fraction of the total subsidy available to validators.
-        let proof_price = FullnodeSubsidy::get_proof_price(subsidy_per_node);
+        let proof_price = FullnodeSubsidy::get_proof_price(nominal_subsidy_per_node);
 
         let k = 0;
         // Distribute mining subsidy to fullnodes
@@ -92,21 +95,21 @@ module Reconfigure { // TODO: Rename to Boundary
         };
     }
 
-    fun process_validators(vm: &signer, height_start: u64, height_now: u64, subsidy_units: u64) {
+    fun process_validators(vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector<address>) {
         // Process outgoing validators:
         // Distribute Transaction fees and subsidy payments to all outgoing validators
         // print(&03240);
-        let (outgoing_set, _) = DiemSystem::get_fee_ratio(vm, height_start, height_now);
         
-        if (Vector::length<address>(&outgoing_set) > 0) {
+        
+        if (Vector::length<address>(&outgoing_compliant_set) > 0) {
             // print(&03241);
 
             if (subsidy_units > 0) {
-                Subsidy::process_subsidy(vm, subsidy_units, &outgoing_set);
+                Subsidy::process_subsidy(vm, subsidy_units, &outgoing_compliant_set);
             };
             // print(&03241);
 
-            Subsidy::process_fees(vm, &outgoing_set);
+            Subsidy::process_fees(vm, &outgoing_compliant_set);
         };
 
     }

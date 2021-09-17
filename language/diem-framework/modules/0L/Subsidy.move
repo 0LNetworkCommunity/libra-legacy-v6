@@ -15,7 +15,7 @@ address 0x1 {
     use 0x1::Signer;
     use 0x1::DiemAccount;
     use 0x1::Vector;
-    use 0x1::Stats;
+    // use 0x1::Stats;
     use 0x1::ValidatorUniverse;
     use 0x1::Globals;
     use 0x1::DiemTimestamp;
@@ -51,6 +51,7 @@ address 0x1 {
       // TODO: This calculation is duplicated with get_subsidy
       if (subsidy_units > len && subsidy_units > 0 ) { // arithmetic safety check
         subsidy_granted = subsidy_units/len;
+        print(&subsidy_granted);
       } else { return };
 
       let i = 0;
@@ -77,7 +78,7 @@ address 0x1 {
 
 
     // Function code: 02 Prefix: 190102
-    public fun calculate_subsidy(vm: &signer, height_start: u64, height_end: u64): (u64, u64) {
+    public fun calculate_subsidy(vm: &signer, network_density: u64): (u64, u64) {
       CoreAddresses::assert_vm(vm);
       print(&1901006);
       // skip genesis
@@ -88,7 +89,9 @@ address 0x1 {
       print(&1901007);
       // Calculate the split for subsidy and burn
       let subsidy_ceiling_gas = Globals::get_subsidy_ceiling_gas();
-      let network_density = Stats::network_density(vm, height_start, height_end);
+      // TODO: This metric network density is different than DiemSystem::get_fee_ratio which actually checks the cases.
+
+      // let network_density = Stats::network_density(vm, height_start, height_end);
       let max_node_count = Globals::get_max_validators_per_set();
       print(&1901008);
       let guaranteed_minimum = subsidy_curve(
@@ -112,6 +115,8 @@ address 0x1 {
           print(&network_density);
           
           subsidy_per_node = subsidy/network_density;
+          print(&subsidy_per_node);
+
         };
       };
       print(&1901010);
