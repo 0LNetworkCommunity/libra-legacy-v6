@@ -637,13 +637,12 @@ Attempt to use a UID that is already taken
     // check payees are community wallets, only community wallets are allowed
     // <b>to</b> receive autopay (bypassing account limits)
     <b>if</b> (amount != 0 && amount &lt;= account_bal) {
-      // Todo: <b>if</b> and <b>else</b> have the same code
-      <b>if</b> (borrow_global&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountLimitsEnable">AccountLimitsEnable</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm)).enabled &&
-          <a href="Wallet.md#0x1_Wallet_is_comm">Wallet::is_comm</a>(payment.payee)
-      ) {
-        <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">DiemAccount::vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
-          *account_addr, payment.payee, amount, x"", x"", vm
-        );
+      <b>if</b> (borrow_global&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountLimitsEnable">AccountLimitsEnable</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm)).enabled) {
+        <b>if</b> (<a href="Wallet.md#0x1_Wallet_is_comm">Wallet::is_comm</a>(payment.payee)) {
+          <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">DiemAccount::vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+            *account_addr, payment.payee, amount, x"", x"", vm
+          );
+        }
       }
       <b>else</b> {
         <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">DiemAccount::vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
