@@ -36,10 +36,12 @@ address 0x1 {
     }
 
   fun increment_stats(global: u64, validator: u64, fullnode: u64) acquires MinerStats {
-     let state = borrow_global_mut<MinerStats>(CoreAddresses::VM_RESERVED_ADDRESS());
-     state.proofs_in_epoch = global;
-     state.validator_proofs = validator;
-     state.fullnode_proofs = fullnode;
+    assert(exists<MinerStats>(CoreAddresses::VM_RESERVED_ADDRESS()), 1301001);
+    let state = borrow_global_mut<MinerStats>(CoreAddresses::VM_RESERVED_ADDRESS());
+
+    state.proofs_in_epoch = global;
+    state.validator_proofs = validator;
+    state.fullnode_proofs = fullnode;
   }
 
   public fun epoch_reset(vm: &signer) acquires MinerStats {
@@ -90,11 +92,11 @@ address 0x1 {
         list: Vector::empty<address>()
       }); 
 
-      // move_to<MinerStats>(vm, MinerList {
-      //   proofs_in_epoch: 0u64,
-      //   validator_proofs: 0u64,
-      //   fullnode_proofs: 0u64,
-      // });
+      move_to<MinerStats>(vm, MinerStats {
+        proofs_in_epoch: 0u64,
+        validator_proofs: 0u64,
+        fullnode_proofs: 0u64,
+      });
     }
 
     /// returns true if miner at `addr` has been initialized 
@@ -140,6 +142,8 @@ address 0x1 {
         }
       }
     }
+
+    use 0x1::Debug::print;
     // Helper function for genesis to process genesis proofs.
     // Permissions: PUBLIC, ONLY VM, AT GENESIS.
     public fun genesis_helper (
@@ -152,11 +156,13 @@ address 0x1 {
 
       //TODO: Previously in OLv3 is_genesis() returned true. How to check that this is part of genesis? is_genesis returns false here.
       // assert(DiemTimestamp::is_genesis(), 130101024010);
+      print(&10001);
       init_miner_state(miner_sig, &challenge, &solution);
-
+      print(&10002);
       // TODO: Move this elsewhere? 
       // Initialize stats for first validator set from rust genesis. 
       let node_addr = Signer::address_of(miner_sig);
+      print(&10003);
       Stats::init_address(vm_sig, node_addr);
     }
 
