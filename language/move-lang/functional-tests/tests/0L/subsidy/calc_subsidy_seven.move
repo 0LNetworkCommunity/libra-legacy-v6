@@ -13,7 +13,7 @@ script {
 
   use 0x1::Globals;
 
-  fun main(_vm: signer) {
+  fun main(vm: signer) {
     let expected_subsidy = Subsidy::subsidy_curve(
       Globals::get_subsidy_ceiling_gas(),
       7,
@@ -22,7 +22,7 @@ script {
 
     // assumes no tx fees were paid
 
-    let (subsidy, _) = Subsidy::calculate_subsidy(&vm, 0, 15);
+    let (subsidy, _) = Subsidy::calculate_subsidy(&vm, 7);
     assert(subsidy == expected_subsidy, 7357190101021000);
 
   }
