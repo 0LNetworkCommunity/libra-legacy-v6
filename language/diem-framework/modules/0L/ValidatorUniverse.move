@@ -48,7 +48,7 @@ address 0x1 {
       if (MinerState::is_onboarding(addr)) {
         add(sender);
       } else {      
-        assert(MinerState::node_above_thresh(sender, addr), 220102014010);
+        assert(MinerState::node_above_thresh(addr), 220102014010);
         add(sender);
       }
     }
@@ -109,7 +109,7 @@ address 0x1 {
       // only a validator can un-jail themselves.
       let validator = Signer::address_of(sender);
       // check the node has been mining before unjailing.
-      assert(MinerState::node_above_thresh(sender, validator), 220102014010);
+      assert(MinerState::node_above_thresh(validator), 220102014010);
       unjail(sender);
     }
 

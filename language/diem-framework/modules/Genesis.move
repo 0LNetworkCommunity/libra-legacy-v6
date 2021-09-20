@@ -25,7 +25,7 @@ module Genesis {
     use 0x1::AutoPay2;
     use 0x1::Oracle;
     use 0x1::Hash;
-    use 0x1::FullnodeSubsidy;
+    // use 0x1::FullnodeSubsidy;
     use 0x1::Epoch;
     use 0x1::MinerState;
     use 0x1::Wallet;
@@ -111,7 +111,7 @@ module Genesis {
         Stats::initialize(dm_account);
         ValidatorUniverse::initialize(dm_account);
         AutoPay2::initialize(dm_account);
-        FullnodeSubsidy::init_fullnode_sub(dm_account);
+        // FullnodeSubsidy::init_fullnode_sub(dm_account);
         Oracle::initialize(dm_account);
         MinerState::init_list(dm_account);
         Wallet::init(dm_account);

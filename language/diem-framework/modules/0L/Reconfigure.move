@@ -68,6 +68,7 @@ module Reconfigure { // TODO: Rename to Boundary
         // loop through validators and pay full node subsidies.
         // Should happen before transactionfees get distributed.
         // Note: need to check, there may be new validators which have not mined yet.
+
         print(&1800200);
         let miners = MinerState::get_miner_list();
         print(&1800201);
@@ -85,11 +86,13 @@ module Reconfigure { // TODO: Rename to Boundary
               continue
             };
             print(&1800204);
-            let count = MinerState::get_count_in_epoch(addr);
             
-            let miner_subsidy = count * proof_price;
-            print(&1800205);
-            FullnodeSubsidy::distribute_fullnode_subsidy(vm, addr, miner_subsidy);
+            if (MinerState::node_above_thresh(addr)){ // TODO: this call is repeated in propose_new_set. Not sure if the performance hit at epoch boundary is worth the refactor.
+              let count = MinerState::get_count_in_epoch(addr);
+              let miner_subsidy = count * proof_price;
+              print(&1800205);
+              FullnodeSubsidy::distribute_fullnode_subsidy(vm, addr, miner_subsidy);
+            };
 
             k = k + 1;
         };
@@ -147,7 +150,7 @@ module Reconfigure { // TODO: Rename to Boundary
             // print(&03251);
 
             let addr = *Vector::borrow(&top_accounts, i);
-            let mined_last_epoch = MinerState::node_above_thresh(vm, addr);
+            let mined_last_epoch = MinerState::node_above_thresh(addr);
             // print(&mined_last_epoch);
             // TODO: temporary until jail-refactor merge.
             if (
@@ -189,7 +192,7 @@ module Reconfigure { // TODO: Rename to Boundary
         // print(&032110);
 
         // reset clocks
-        FullnodeSubsidy::fullnode_reconfig(vm);
+        // FullnodeSubsidy::fullnode_reconfig(vm);
         // print(&032120);
 
         // process community wallets

@@ -294,7 +294,7 @@ address 0x1 {
 
       // Check that there was mining and validating in period.
       // Account may not have any proofs submitted in epoch, since the resource was last emptied.
-      let passed = node_above_thresh(account, miner_addr);
+      let passed = node_above_thresh(miner_addr);
       let miner_history = borrow_global_mut<MinerProofHistory>(miner_addr);
       
       // Update statistics.
@@ -317,7 +317,7 @@ address 0x1 {
     }
 
     /// Checks to see if miner submitted enough proofs to be considered compliant
-    public fun node_above_thresh(_account: &signer, miner_addr: address): bool acquires MinerProofHistory {
+    public fun node_above_thresh(miner_addr: address): bool acquires MinerProofHistory {
       let miner_history = borrow_global<MinerProofHistory>(miner_addr);
       miner_history.count_proofs_in_epoch > Globals::get_epoch_mining_thres_lower()
     }
