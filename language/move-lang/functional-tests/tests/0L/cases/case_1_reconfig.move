@@ -47,7 +47,7 @@ script {
 script {
     use 0x1::Vector;
     use 0x1::Stats;
-    // use 0x1::FullnodeState;
+
     // This is the the epoch boundary.
     fun main(vm: signer) {
         // This is not an onboarding case, steady state.
@@ -77,6 +77,8 @@ script {
 //! sender: diemroot
 script {
     use 0x1::Cases;
+    use 0x1::Vector;
+    use 0x1::DiemSystem;
     
     fun main(vm: signer) {
         // We are in a new epoch.
@@ -86,6 +88,10 @@ script {
         assert(Cases::get_case(&vm, @{{carol}}, 0, 15) == 2, 735700018010903);
         assert(Cases::get_case(&vm, @{{dave}}, 0, 15) == 2, 735700018010904);
         assert(Cases::get_case(&vm, @{{eve}}, 0, 15) == 2, 735700018010905);
+
+        // check only 1 val is getting the subsidy
+        let (vals, _) = DiemSystem::get_fee_ratio(&vm, 0, 100);
+        assert(Vector::length<address>(&vals) == 1, 7357000180111);
 
     }
 }
@@ -105,24 +111,18 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {  
-    use 0x1::DiemSystem;
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
-    // use 0x1::Debug::print;
     use 0x1::Subsidy;
     use 0x1::Globals;
 
-    fun main(_account: signer) {
+    fun main(_vm: signer) {
         // We are in a new epoch.
-
-        // Check the validator set is at expected size
-        assert(DiemSystem::validator_set_size() == 5, 7357000180110);
-        assert(DiemSystem::is_validator(@{{alice}}) == true, 7357000180111);
 
         let expected_subsidy = Subsidy::subsidy_curve(
           Globals::get_subsidy_ceiling_gas(),
-          5,
+          1,
           Globals::get_max_validators_per_set(),
         );
 
