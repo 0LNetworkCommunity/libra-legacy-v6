@@ -113,7 +113,7 @@ impl Node {
         }
     }
 
-    /// Enrich with notes from dictionary
+    /// Enrich with notes from dictionary file
     fn enrich_note(&mut self, mut autopay: AutoPayView) -> AutoPayView {
         let dic = self.load_account_dictionary();
         for payment in autopay.payments.iter_mut()  {
