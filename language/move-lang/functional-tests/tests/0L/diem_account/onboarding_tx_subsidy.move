@@ -96,6 +96,7 @@ script {
   use 0x1::MinerState;
   use 0x1::Testnet;
   use 0x1::Debug::print;
+  use 0x1::Cases;
   
   fun main(vm: signer) {
       // need to remove testnet for this test, since testnet does not ratelimit account creation.
