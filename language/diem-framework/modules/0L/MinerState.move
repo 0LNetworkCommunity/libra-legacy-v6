@@ -46,8 +46,8 @@ address 0x1 {
     };
     
     state.proofs_in_epoch = state.proofs_in_epoch + 1;
-    print(&miner_addr);
-    print(state);
+    // print(&miner_addr);
+    // print(state);
 
   }
 
@@ -150,7 +150,7 @@ address 0x1 {
       }
     }
 
-    use 0x1::Debug::print;
+    // use 0x1::Debug::print;
     // Helper function for genesis to process genesis proofs.
     // Permissions: PUBLIC, ONLY VM, AT GENESIS.
     public fun genesis_helper (
@@ -163,13 +163,13 @@ address 0x1 {
 
       //TODO: Previously in OLv3 is_genesis() returned true. How to check that this is part of genesis? is_genesis returns false here.
       // assert(DiemTimestamp::is_genesis(), 130101024010);
-      print(&10001);
+      // print(&10001);
       init_miner_state(miner_sig, &challenge, &solution);
-      print(&10002);
+      // print(&10002);
       // TODO: Move this elsewhere? 
       // Initialize stats for first validator set from rust genesis. 
       let node_addr = Signer::address_of(miner_sig);
-      print(&10003);
+      // print(&10003);
       Stats::init_address(vm_sig, node_addr);
     }
 
