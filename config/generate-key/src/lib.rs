@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 
-use libra_crypto::{ed25519::Ed25519PrivateKey, Uniform};
+use diem_crypto::{ed25519::Ed25519PrivateKey, Uniform};
 use rand::{rngs::OsRng, Rng, SeedableRng};
 use std::{
     fs::{self, File},
@@ -28,7 +28,7 @@ pub fn save_key<P: AsRef<Path>>(key: Ed25519PrivateKey, output_file: P) -> Ed255
         panic!("Specified output file path is a directory");
     }
 
-    let encoded = lcs::to_bytes(&key).expect("Unable to serialize keys");
+    let encoded = bcs::to_bytes(&key).expect("Unable to serialize keys");
     let mut file =
         File::create(output_file_path).expect("Unable to create/truncate file at specified path");
     file.write_all(&encoded)
@@ -39,13 +39,13 @@ pub fn save_key<P: AsRef<Path>>(key: Ed25519PrivateKey, output_file: P) -> Ed255
 pub fn load_key<P: AsRef<Path>>(input_file: P) -> Ed25519PrivateKey {
     let input_file_path = input_file.as_ref();
     let data = fs::read(input_file_path).expect("Unable to read key at the specified path");
-    lcs::from_bytes(&data).expect("Unable to parse key")
+    bcs::from_bytes(&data).expect("Unable to parse key")
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use libra_temppath::TempPath;
+    use diem_temppath::TempPath;
 
     #[test]
     fn verify_test_create_and_load_key() {

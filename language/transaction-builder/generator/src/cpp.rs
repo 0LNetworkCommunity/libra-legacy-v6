@@ -1,9 +1,14 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::common;
-use libra_types::transaction::{ArgumentABI, ScriptABI, TypeArgumentABI};
-use move_core_types::language_storage::TypeTag;
+use diem_types::transaction::{
+    ArgumentABI, ScriptABI, ScriptFunctionABI, TransactionScriptABI, TypeArgumentABI,
+};
+use move_core_types::{
+    account_address::AccountAddress,
+    language_storage::{ModuleId, TypeTag},
+};
 use serde_generate::indent::{IndentConfig, IndentedWriter};
 
 use std::{
@@ -22,7 +27,14 @@ pub fn output(out: &mut dyn Write, abis: &[ScriptABI], namespace: Option<&str>) 
     emitter.output_open_namespace()?;
     emitter.output_using_namespaces()?;
     for abi in abis {
-        emitter.output_builder_definition(abi)?;
+        match abi {
+            ScriptABI::TransactionScript(abi) => {
+                emitter.output_transaction_script_builder_definition(abi)?
+            }
+            ScriptABI::ScriptFunction(abi) => {
+                emitter.output_script_function_builder_definition(abi)?
+            }
+        };
     }
     emitter.output_close_namespace()
 }
@@ -63,7 +75,14 @@ pub fn output_library_body(
     emitter.output_open_namespace()?;
     emitter.output_using_namespaces()?;
     for abi in abis {
-        emitter.output_builder_definition(abi)?;
+        match abi {
+            ScriptABI::TransactionScript(abi) => {
+                emitter.output_transaction_script_builder_definition(abi)?
+            }
+            ScriptABI::ScriptFunction(abi) => {
+                emitter.output_script_function_builder_definition(abi)?
+            }
+        };
     }
     emitter.output_close_namespace()
 }
@@ -87,7 +106,7 @@ where
             self.out,
             r#"#pragma once
 
-#include "libra_types.hpp"
+#include "diem_types.hpp"
 "#
         )
     }
@@ -97,7 +116,7 @@ where
             self.out,
             r#"
 using namespace serde;
-using namespace libra_types;
+using namespace diem_types;
 "#
         )
     }
@@ -117,24 +136,36 @@ using namespace libra_types;
     }
 
     fn output_builder_declaration(&mut self, abi: &ScriptABI) -> Result<()> {
-        write!(self.out, "\n{}", Self::quote_doc(abi.doc()))?;
-        writeln!(
-            self.out,
-            "Script encode_{}_script({});",
-            abi.name(),
-            [
-                Self::quote_type_parameters(abi.ty_args()),
-                Self::quote_parameters(abi.args()),
-            ]
-            .concat()
-            .join(", ")
-        )?;
+        self.output_doc(abi.doc())?;
+        let parameters = [
+            Self::quote_type_parameters(abi.ty_args()),
+            Self::quote_parameters(abi.args()),
+        ]
+        .concat()
+        .join(", ");
+        match abi {
+            ScriptABI::TransactionScript(abi) => writeln!(
+                self.out,
+                "Script encode_{}_script({});",
+                abi.name(),
+                parameters,
+            )?,
+            ScriptABI::ScriptFunction(abi) => writeln!(
+                self.out,
+                "TransactionPayload encode_{}_script_function({});",
+                abi.name(),
+                parameters,
+            )?,
+        };
         Ok(())
     }
 
-    fn output_builder_definition(&mut self, abi: &ScriptABI) -> Result<()> {
+    fn output_transaction_script_builder_definition(
+        &mut self,
+        abi: &TransactionScriptABI,
+    ) -> Result<()> {
         if self.inlined_definitions {
-            write!(self.out, "\n{}", Self::quote_doc(abi.doc()))?;
+            self.output_doc(abi.doc())?;
         }
         writeln!(
             self.out,
@@ -155,11 +186,50 @@ using namespace libra_types;
         writeln!(
             self.out,
             r#"    return Script {{
-        {},
-        std::vector<TypeTag> {{{}}},
-        std::vector<TransactionArgument> {{{}}},
-    }};"#,
+                {},
+                std::vector<TypeTag> {{{}}},
+                std::vector<TransactionArgument> {{{}}},
+            }};"#,
             Self::quote_code(abi.code()),
+            Self::quote_type_arguments(abi.ty_args()),
+            Self::quote_arguments_for_script(abi.args()),
+        )?;
+        writeln!(self.out, "}}")?;
+        Ok(())
+    }
+
+    fn output_script_function_builder_definition(&mut self, abi: &ScriptFunctionABI) -> Result<()> {
+        if self.inlined_definitions {
+            self.output_doc(abi.doc())?;
+        }
+        writeln!(
+            self.out,
+            "{}TransactionPayload encode_{}_script_function({}) {{",
+            if self.inlined_definitions {
+                "inline "
+            } else {
+                ""
+            },
+            abi.name(),
+            [
+                Self::quote_type_parameters(abi.ty_args()),
+                Self::quote_parameters(abi.args()),
+            ]
+            .concat()
+            .join(", ")
+        )?;
+        writeln!(
+            self.out,
+            r#"    return TransactionPayload {{
+                TransactionPayload::ScriptFunction {{
+                    {},
+                    {},
+                    std::vector<TypeTag> {{{}}},
+                    std::vector<std::vector<uint8_t>> {{{}}},
+                }}
+            }};"#,
+            Self::quote_module_id(abi.module_name()),
+            Self::quote_identifier(abi.name()),
             Self::quote_type_arguments(abi.ty_args()),
             Self::quote_arguments(abi.args()),
         )?;
@@ -167,9 +237,10 @@ using namespace libra_types;
         Ok(())
     }
 
-    fn quote_doc(doc: &str) -> String {
+    fn output_doc(&mut self, doc: &str) -> Result<()> {
         let doc = crate::common::prepare_doc_string(doc);
-        textwrap::indent(&doc, "/// ").replace("\n\n", "\n///\n")
+        let text = textwrap::indent(&doc, "/// ").replace("\n\n", "\n///\n");
+        write!(self.out, "\n{}\n", text)
     }
 
     fn quote_type_parameters(ty_args: &[TypeArgumentABI]) -> Vec<String> {
@@ -195,6 +266,30 @@ using namespace libra_types;
         )
     }
 
+    fn quote_identifier(ident: &str) -> String {
+        format!("Identifier {{ \"{}\" }}", ident)
+    }
+
+    fn quote_address(address: &AccountAddress) -> String {
+        format!(
+            "std::array<uint8_t, 16>{{ {} }}",
+            address
+                .to_vec()
+                .iter()
+                .map(|x| format!("{}", x))
+                .collect::<Vec<_>>()
+                .join(", "),
+        )
+    }
+
+    fn quote_module_id(module_id: &ModuleId) -> String {
+        format!(
+            "ModuleId {{ {}, {} }}",
+            Self::quote_address(module_id.address()),
+            Self::quote_identifier(module_id.name().as_str())
+        )
+    }
+
     fn quote_type_arguments(ty_args: &[TypeArgumentABI]) -> String {
         ty_args
             .iter()
@@ -206,6 +301,13 @@ using namespace libra_types;
     fn quote_arguments(args: &[ArgumentABI]) -> String {
         args.iter()
             .map(|arg| Self::quote_transaction_argument(arg.type_tag(), arg.name()))
+            .collect::<Vec<_>>()
+            .join(", ")
+    }
+
+    fn quote_arguments_for_script(args: &[ArgumentABI]) -> String {
+        args.iter()
+            .map(|arg| Self::quote_transaction_argument_for_script(arg.type_tag(), arg.name()))
             .collect::<Vec<_>>()
             .join(", ")
     }
@@ -227,6 +329,20 @@ using namespace libra_types;
     }
 
     fn quote_transaction_argument(type_tag: &TypeTag, name: &str) -> String {
+        match Self::bcs_primitive_type_name(type_tag) {
+            None => format!("{}.bcsSerialize()", name),
+            Some(type_name) => format!(
+                r#"({{
+            auto s = BcsSerializer();
+            Serializable<{}>::serialize({}, s);
+            std::move(s).bytes();
+            }})"#,
+                type_name, name
+            ),
+        }
+    }
+
+    fn quote_transaction_argument_for_script(type_tag: &TypeTag, name: &str) -> String {
         use TypeTag::*;
         match type_tag {
             Bool => format!("{{TransactionArgument::Bool {{{}}} }}", name),
@@ -240,6 +356,26 @@ using namespace libra_types;
                 _ => common::type_not_allowed(type_tag),
             },
 
+            Struct(_) | Signer => common::type_not_allowed(type_tag),
+        }
+    }
+
+    // - if a `type_tag` is a primitive type in BCS, we can call
+    //   `Serializable<name>::serialize(arg, &s)` and `Deserializable<name>::deserialize(arg, &d)`
+    //   to convert into and from `std::vector<uint8_t>`.
+    // - otherwise, we can use `<arg>.bcsSerialize()`, `<arg>.bcsDeserialize()` to do the work.
+    fn bcs_primitive_type_name(type_tag: &TypeTag) -> Option<&'static str> {
+        use TypeTag::*;
+        match type_tag {
+            Bool => Some("bool"),
+            U8 => Some("uint8_t"),
+            U64 => Some("uint64_t"),
+            U128 => Some("uint128_t"),
+            Address => None,
+            Vector(type_tag) => match type_tag.as_ref() {
+                U8 => Some("std::vector<uint8_t>"),
+                _ => common::type_not_allowed(type_tag),
+            },
             Struct(_) | Signer => common::type_not_allowed(type_tag),
         }
     }

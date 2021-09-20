@@ -1,6 +1,6 @@
-module M {
-    struct S { f: u64 }
-    resource struct R { s1: S, s2: S }
+module 0x8675309::M {
+    struct S has drop { f: u64 }
+    struct R { s1: S, s2: S }
 
     fun t0() {
         let R { s1: S { f }, s2 }: R;

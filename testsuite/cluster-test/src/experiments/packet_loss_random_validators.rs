@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -73,7 +73,7 @@ impl Experiment for PacketLossRandomValidators {
             .map(|instance| PacketLoss::new(instance, self.percent))
             .collect();
         effects::activate_all(&mut effects).await?;
-        time::delay_for(self.duration).await;
+        time::sleep(self.duration).await;
         effects::deactivate_all(&mut effects).await?;
         Ok(())
     }

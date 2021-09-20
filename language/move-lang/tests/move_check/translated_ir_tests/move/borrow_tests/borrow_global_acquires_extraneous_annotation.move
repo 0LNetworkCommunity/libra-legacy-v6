@@ -1,5 +1,5 @@
-module A {
-    resource struct T1 {v: u64}
+module 0x8675309::A {
+    struct T1 has key {v: u64}
 
     public fun test() acquires T1 {
     }

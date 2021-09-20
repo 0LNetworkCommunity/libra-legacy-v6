@@ -1,15 +1,14 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::Executor;
 use anyhow::Result;
-use executor_types::{BlockExecutor, ChunkExecutor};
-use libra_crypto::{hash::SPARSE_MERKLE_PLACEHOLDER_HASH, HashValue};
-use libra_state_view::StateView;
-use libra_types::{
+use diem_crypto::{hash::SPARSE_MERKLE_PLACEHOLDER_HASH, HashValue};
+use diem_state_view::StateView;
+use diem_types::{
     account_address::AccountAddress,
     account_state_blob::{AccountStateBlob, AccountStateWithProof},
-    contract_event::ContractEvent,
+    contract_event::{ContractEvent, EventWithProof},
     epoch_change::EpochChangeProof,
     event::EventKey,
     ledger_info::LedgerInfoWithSignatures,
@@ -20,7 +19,8 @@ use libra_types::{
     },
     vm_status::VMStatus,
 };
-use libra_vm::VMExecutor;
+use diem_vm::VMExecutor;
+use executor_types::{BlockExecutor, ChunkExecutor};
 use storage_interface::{DbReader, DbReaderWriter, DbWriter, Order, StartupInfo, TreeState};
 
 fn create_test_executor() -> Executor<FakeVM> {
@@ -103,6 +103,17 @@ impl DbReader for FakeDb {
         unimplemented!();
     }
 
+    fn get_events_with_proofs(
+        &self,
+        _event_key: &EventKey,
+        _start: u64,
+        _order: Order,
+        _limit: u64,
+        _known_version: Option<u64>,
+    ) -> Result<Vec<EventWithProof>> {
+        unimplemented!();
+    }
+
     fn get_latest_account_state(
         &self,
         _address: AccountAddress,
@@ -170,7 +181,10 @@ impl DbReader for FakeDb {
         &self,
         _address: AccountAddress,
         _version: Version,
-    ) -> Result<(Option<AccountStateBlob>, SparseMerkleProof)> {
+    ) -> Result<(
+        Option<AccountStateBlob>,
+        SparseMerkleProof<AccountStateBlob>,
+    )> {
         unimplemented!();
     }
 

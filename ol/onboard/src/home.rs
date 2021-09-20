@@ -1,6 +1,6 @@
 //! get home path or set it
 use dialoguer::{Confirm, Input};
-use libra_global_constants::NODE_HOME;
+use diem_global_constants::NODE_HOME;
 use std::path::PathBuf;
 
 use crate::entrypoint::get_args;

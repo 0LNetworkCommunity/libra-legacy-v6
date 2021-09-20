@@ -7,24 +7,23 @@ use crate::{
     save_tx::save_tx,
     sign_tx::sign_tx,
 };
-use abscissa_core::{status_ok, status_warn};
 use anyhow::Error;
-use cli::{libra_client::LibraClient, AccountData, AccountStatus};
+use cli::{diem_client::DiemClient, AccountData, AccountStatus};
 use ol_keys::{wallet, scheme::KeyScheme};
-use libra_crypto::{
+use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     test_utils::KeyPair,
 };
-use libra_global_constants::OPERATOR_KEY;
-use libra_json_rpc_types::views::{TransactionView, VMStatusView};
-use libra_secure_storage::{CryptoStorage, NamespacedStorage, OnDiskStorageInternal, Storage};
-use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
-use libra_types::{
+use diem_global_constants::OPERATOR_KEY;
+use diem_json_rpc_types::views::{TransactionView, VMStatusView};
+use diem_secure_storage::{CryptoStorage, Namespaced, OnDiskStorage, Storage};
+use diem_types::{account_address::AccountAddress, waypoint::Waypoint};
+use diem_types::{
     chain_id::ChainId,
-    transaction::{authenticator::AuthenticationKey, Script, SignedTransaction},
+    transaction::{authenticator::AuthenticationKey, SignedTransaction, TransactionPayload},
 };
 
-use libra_wallet::WalletLibrary;
+use diem_wallet::WalletLibrary;
 use ol_types::{
     self,
     config::{TxCost, TxType},
@@ -86,12 +85,12 @@ pub struct TxParams {
 // }
 /// wrapper which checks entry point arguments before submitting tx, possibly saving the tx script
 pub fn maybe_submit(
-    script: Script,
+    script: TransactionPayload,
     tx_params: &TxParams,
     no_send: bool,
     save_path: Option<PathBuf>,
 ) -> Result<SignedTransaction, Error> {
-    let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+    let mut client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
     let (mut account_data, txn) = stage(script, tx_params, &mut client);
     if let Some(path) = save_path {
@@ -113,7 +112,7 @@ pub fn maybe_submit(
 }
 /// convenience for wrapping multiple transactions
 pub fn batch_wrapper(
-    batch: Vec<Script>,
+    batch: Vec<TransactionPayload>,
     tx_params: &TxParams,
     no_send: bool,
     save_path: Option<PathBuf>,
@@ -133,15 +132,15 @@ pub fn batch_wrapper(
 }
 
 fn stage(
-    script: Script,
+    script: TransactionPayload,
     tx_params: &TxParams,
-    client: &mut LibraClient,
+    client: &mut DiemClient,
 ) -> (AccountData, SignedTransaction) {
-    // let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+    // let mut client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
     let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
-    let (account_state, _) = client
-        .get_account(tx_params.signer_address.clone(), true)
+    let account_state = client
+        .get_account(&tx_params.signer_address)
         .unwrap();
 
     let sequence_number = match account_state {
@@ -149,7 +148,7 @@ fn stage(
         None => 0,
     };
     // Sign the transaction script
-    let txn = sign_tx(&script, tx_params, sequence_number, chain_id).unwrap();
+    let txn = sign_tx(script, tx_params, sequence_number, chain_id).unwrap();
 
     // Get account_data struct
     let signer_account_data = AccountData {
@@ -161,17 +160,16 @@ fn stage(
     };
     (signer_account_data, txn)
 }
+
 /// Submit a transaction to the network.
-
-
 pub fn submit_tx(
-    mut client: LibraClient,
+    mut client: DiemClient,
     txn: SignedTransaction,
-    mut signer_account_data: &mut AccountData,
+    mut _signer_account_data: &mut AccountData,
 ) -> Result<TransactionView, Error> {
-    // let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
-    // Submit the transaction with libra_client
-    match client.submit_transaction(Some(&mut signer_account_data), txn.clone()) {
+    // let mut client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+    // Submit the transaction with diem_client
+    match client.submit_transaction(&txn) {
         Ok(_) => match wait_for_tx(txn.sender(), txn.sequence_number(), &mut client) {
             Some(res) => Ok(res),
             None => Err(Error::msg("No Transaction View returned")),
@@ -234,7 +232,9 @@ pub fn tx_params(
             get_oper_params( &config, tx_type, url, waypoint)
         } else {
             // Get from 0L.toml e.g. ~/.0L/0L.toml, or use Profile::default()
-            get_tx_params_from_toml(config.clone(), tx_type, None, url, waypoint, swarm_path.as_ref().is_some()).unwrap()
+            get_tx_params_from_toml(
+                config.clone(), tx_type, None, url, waypoint, swarm_path.as_ref().is_some()
+            ).unwrap()
         }
     };
 
@@ -296,13 +296,15 @@ pub fn get_oper_params(
     // url_opt: Option<Url>,
     // upstream_url: bool,
 ) -> TxParams {
-    let orig_storage = Storage::OnDiskStorage(OnDiskStorageInternal::new(
+    let orig_storage = Storage::OnDiskStorage(OnDiskStorage::new(
         config.workspace.node_home.join("key_store.json").to_owned(),
     ));
-    let storage = Storage::NamespacedStorage(NamespacedStorage::new(
-        orig_storage,
-        format!("{}-oper", &config.profile.auth_key),
-    ));
+    let storage = Storage::NamespacedStorage(
+        Namespaced::new(
+            format!("{}-oper", &config.profile.account.to_hex()),
+            Box::new(orig_storage),
+        )
+    );
     // export_private_key_for_version
     let privkey = storage
         .export_private_key(OPERATOR_KEY)
@@ -313,7 +315,7 @@ pub fn get_oper_params(
     let auth_key = AuthenticationKey::ed25519(pubkey);
 
     let waypoint = wp.unwrap_or_else(|| {
-      config.get_waypoint(None).unwrap()
+        config.get_waypoint(None).unwrap()
     });
 
     let tx_cost = config.tx_configs.get_cost(tx_type);
@@ -354,12 +356,12 @@ pub fn get_tx_params_from_toml(
     let tx_cost = config.tx_configs.get_cost(tx_type);
 
     let chain_id = if is_swarm {
-      ChainId::new(4)
+        ChainId::new(4)
     } else {
-      // main net id
-      ChainId::new(1)
+        // main net id
+        ChainId::new(1)
     };
-
+    
     let tx_params = TxParams {
         auth_key,
         signer_address: address,
@@ -377,28 +379,27 @@ pub fn get_tx_params_from_toml(
     Ok(tx_params)
 }
 
-/// Wait for the response from the libra RPC.
+/// Wait for the response from the diem RPC.
 pub fn wait_for_tx(
     signer_address: AccountAddress,
     sequence_number: u64,
-    client: &mut LibraClient,
+    client: &mut DiemClient,
 ) -> Option<TransactionView> {
     println!(
-      "\nAwaiting tx status \nSubmitted from account: {} with sequence number: {}",
-      signer_address,
-      sequence_number
+        "\nAwaiting tx status \nSubmitted from account: {} with sequence number: {}",
+        signer_address, sequence_number
     );
 
     const MAX_ITERATIONS: u8 = 30;
 
-    let mut iter = 0;
+    let mut iter = 0;    
     loop {
         thread::sleep(time::Duration::from_millis(1_000));
         // prevent all the logging the client does while
         // it loops through the query.
         stdout().flush().unwrap();
 
-        match &mut client.get_txn_by_acc_seq(signer_address, sequence_number, false) {
+        match &mut client.get_txn_by_acc_seq(&signer_address, sequence_number, false) {
             Ok(Some(txn_view)) => {
                 return Some(txn_view.to_owned());
             }
@@ -414,7 +415,7 @@ pub fn wait_for_tx(
         if iter==MAX_ITERATIONS {
             println!("Timeout waiting for response");
             return None;
-        }
+        }        
     }
 }
 
@@ -422,11 +423,11 @@ pub fn wait_for_tx(
 pub fn eval_tx_status(result: TransactionView) -> Result<(), Error> {
     match result.vm_status == VMStatusView::Executed {
         true => {
-            status_ok!("\nSuccess:", "transaction executed");
+            println!("\nSuccess: transaction executed");
             Ok(())
         }
         false => {
-            status_warn!("Transaction failed");
+            println!("Transaction failed");
             let msg = format!("Rejected with code:{:?}", result.vm_status);
             Err(Error::msg(msg))
         }

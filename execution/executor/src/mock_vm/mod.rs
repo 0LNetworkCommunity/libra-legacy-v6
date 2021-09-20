@@ -1,15 +1,15 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #[cfg(test)]
 mod mock_vm_test;
 
-use libra_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
-use libra_state_view::StateView;
-use libra_types::{
+use diem_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
+use diem_state_view::StateView;
+use diem_types::{
     access_path::AccessPath,
     account_address::AccountAddress,
-    account_config::{libra_root_address, validator_set_address, COIN1_NAME},
+    account_config::{diem_root_address, validator_set_address, XUS_NAME},
     chain_id::ChainId,
     contract_event::ContractEvent,
     event::EventKey,
@@ -23,7 +23,7 @@ use libra_types::{
     vm_status::{KeptVMStatus, StatusCode, VMStatus},
     write_set::{WriteOp, WriteSet, WriteSetMut},
 };
-use libra_vm::VMExecutor;
+use diem_vm::VMExecutor;
 use move_core_types::{language_storage::TypeTag, move_resource::MoveResource};
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
@@ -45,7 +45,7 @@ enum MockVMTransaction {
 pub static KEEP_STATUS: Lazy<TransactionStatus> =
     Lazy::new(|| TransactionStatus::Keep(KeptVMStatus::Executed));
 
-// We use 10 as the assertion error code for insufficient balance within the Libra coin contract.
+// We use 10 as the assertion error code for insufficient balance within the Diem coin contract.
 pub static DISCARD_STATUS: Lazy<TransactionStatus> =
     Lazy::new(|| TransactionStatus::Discard(StatusCode::INSUFFICIENT_BALANCE_FOR_TRANSACTION_FEE));
 
@@ -69,7 +69,7 @@ impl VMExecutor for MockVM {
                     new_epoch_event_key(),
                     0,
                     TypeTag::Bool,
-                    lcs::to_bytes(&0).unwrap(),
+                    bcs::to_bytes(&0).unwrap(),
                 )],
                 0,
                 KEEP_STATUS.clone(),
@@ -145,7 +145,7 @@ impl VMExecutor for MockVM {
                 }
                 MockVMTransaction::Reconfiguration => {
                     read_balance_from_storage(state_view, &balance_ap(validator_set_address()));
-                    read_balance_from_storage(state_view, &balance_ap(libra_root_address()));
+                    read_balance_from_storage(state_view, &balance_ap(diem_root_address()));
                     outputs.push(TransactionOutput::new(
                         // WriteSet cannot be empty so use genesis writeset only for testing.
                         gen_genesis_writeset(),
@@ -154,7 +154,7 @@ impl VMExecutor for MockVM {
                             new_epoch_event_key(),
                             0,
                             TypeTag::Bool,
-                            lcs::to_bytes(&0).unwrap(),
+                            bcs::to_bytes(&0).unwrap(),
                         )],
                         0,
                         KEEP_STATUS.clone(),
@@ -225,11 +225,11 @@ fn gen_genesis_writeset() -> WriteSet {
     let validator_set_ap = ValidatorSet::CONFIG_ID.access_path();
     write_set.push((
         validator_set_ap,
-        WriteOp::Value(lcs::to_bytes(&ValidatorSet::new(vec![])).unwrap()),
+        WriteOp::Value(bcs::to_bytes(&ValidatorSet::new(vec![])).unwrap()),
     ));
     write_set.push((
         AccessPath::new(config_address(), ConfigurationResource::resource_path()),
-        WriteOp::Value(lcs::to_bytes(&ConfigurationResource::default()).unwrap()),
+        WriteOp::Value(bcs::to_bytes(&ConfigurationResource::default()).unwrap()),
     ));
     write_set
         .freeze()
@@ -313,7 +313,7 @@ fn encode_transaction(sender: AccountAddress, program: Script) -> Transaction {
         program,
         0,
         0,
-        COIN1_NAME.to_owned(),
+        XUS_NAME.to_owned(),
         0,
         ChainId::test(),
     );
@@ -367,6 +367,10 @@ fn decode_transaction(txn: &SignedTransaction) -> MockVMTransaction {
                 },
                 _ => unimplemented!("Transaction must have one or two arguments."),
             }
+        }
+        TransactionPayload::ScriptFunction(_) => {
+            // TODO: we need to migrate Script to ScriptFunction later
+            unimplemented!("MockVM does not support script function transaction payload.")
         }
         TransactionPayload::WriteSet(_) => {
             // Use WriteSet for reconfig only for testing.

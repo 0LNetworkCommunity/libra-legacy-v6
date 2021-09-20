@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -6,8 +6,8 @@
 use crate::cluster_swarm::cluster_swarm_kube::ClusterSwarmKube;
 use anyhow::{format_err, Result};
 use debug_interface::AsyncNodeDebugClient;
-use libra_config::config::NodeConfig;
-use libra_json_rpc_client::{JsonRpcAsyncClient, JsonRpcBatch};
+use diem_client::Client as JsonRpcClient;
+use diem_config::config::NodeConfig;
 use reqwest::{Client, Url};
 use serde_json::Value;
 use std::{
@@ -182,9 +182,9 @@ impl Instance {
             peer_name,
             ip,
             ac_port,
-            backend,
             debug_interface_port,
             http_client,
+            backend,
         }
     }
 
@@ -239,7 +239,7 @@ impl Instance {
     }
 
     pub async fn try_json_rpc(&self) -> Result<()> {
-        self.json_rpc_client().execute(JsonRpcBatch::new()).await?;
+        self.json_rpc_client().batch(Vec::new()).await?;
         Ok(())
     }
 
@@ -248,7 +248,7 @@ impl Instance {
             if Instant::now() > deadline {
                 return Err(format_err!("wait_json_rpc for {} timed out", self));
             }
-            time::delay_for(Duration::from_secs(3)).await;
+            time::sleep(Duration::from_secs(3)).await;
         }
         Ok(())
     }
@@ -284,8 +284,8 @@ impl Instance {
         self.debug_interface_port
     }
 
-    pub fn json_rpc_client(&self) -> JsonRpcAsyncClient {
-        JsonRpcAsyncClient::new_with_client(self.http_client.clone(), self.json_rpc_url())
+    pub fn json_rpc_client(&self) -> JsonRpcClient {
+        JsonRpcClient::new(self.json_rpc_url().to_string())
     }
 
     pub async fn stop(&self) -> Result<()> {
@@ -303,10 +303,10 @@ impl Instance {
             .map(|_| ())
     }
 
-    /// If deleting /opt/libra/data/* is required, call Instance::clean_date before calling
+    /// If deleting /opt/diem/data/* is required, call Instance::clean_date before calling
     /// Instance::start.
     pub async fn clean_data(&self) -> Result<()> {
-        self.util_cmd("rm -rf /opt/libra/data/*; ", "clean-data")
+        self.util_cmd("rm -rf /opt/diem/data/*; ", "clean-data")
             .await
     }
 
@@ -366,7 +366,7 @@ impl Instance {
         if mute {
             cmd.stdout(Stdio::null()).stderr(Stdio::null());
         }
-        let child = cmd.spawn().map_err(|e| {
+        let mut child = cmd.spawn().map_err(|e| {
             format_err!(
                 "Failed to spawn child process {} on {}: {}",
                 command,
@@ -375,6 +375,7 @@ impl Instance {
             )
         })?;
         let status = child
+            .wait()
             .await
             .map_err(|e| format_err!("Error running {} on {}: {}", command, self.peer_name(), e))?;
         if !status.success() {

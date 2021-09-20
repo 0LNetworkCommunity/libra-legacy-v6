@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -9,27 +9,30 @@ use crate::{
         wire::handshake::v1::{HandshakeMsg, MessagingProtocolVersion, SupportedProtocols},
     },
 };
+use diem_config::{
+    config::{PeerRole, HANDSHAKE_VERSION},
+    network_id::{NetworkContext, NetworkId},
+};
+use diem_crypto::x25519;
+use diem_logger::prelude::*;
+use diem_time_service::{timeout, TimeService, TimeServiceTrait};
+use diem_types::{
+    chain_id::ChainId,
+    network_address::{parse_dns_tcp, parse_ip_tcp, parse_memory, NetworkAddress},
+    PeerId,
+};
 use futures::{
     future::{Future, FutureExt},
     io::{AsyncRead, AsyncWrite},
     stream::{Stream, StreamExt, TryStreamExt},
 };
-use libra_config::{
-    config::HANDSHAKE_VERSION,
-    network_id::{NetworkContext, NetworkId},
-};
-use libra_crypto::x25519;
-use libra_infallible::RwLock;
-use libra_logger::prelude::*;
-use libra_network_address::{parse_dns_tcp, parse_ip_tcp, parse_memory, NetworkAddress};
-use libra_types::{chain_id::ChainId, PeerId};
 use netcore::transport::{proxy_protocol, tcp, ConnectionOrigin, Transport};
-use serde::{export::Formatter, Serialize};
+use serde::Serialize;
+use short_hex_str::AsShortHexStr;
 use std::{
-    collections::{BTreeMap, HashMap, HashSet},
+    collections::BTreeMap,
     convert::TryFrom,
-    fmt::Debug,
-    io,
+    fmt, io,
     pin::Pin,
     sync::{
         atomic::{AtomicU32, Ordering},
@@ -37,7 +40,6 @@ use std::{
     },
     time::Duration,
 };
-use tokio::time::timeout;
 
 #[cfg(test)]
 mod test;
@@ -52,21 +54,18 @@ pub const SUPPORTED_MESSAGING_PROTOCOL: MessagingProtocolVersion = MessagingProt
 /// Global connection-id generator.
 static CONNECTION_ID_GENERATOR: ConnectionIdGenerator = ConnectionIdGenerator::new();
 
-/// tcp::Transport with Libra-specific configuration applied.
-pub const LIBRA_TCP_TRANSPORT: tcp::TcpTransport = tcp::TcpTransport {
+/// tcp::Transport with Diem-specific configuration applied.
+pub const DIEM_TCP_TRANSPORT: tcp::TcpTransport = tcp::TcpTransport {
     // Use default options.
-    recv_buffer_size: None,
-    send_buffer_size: None,
     ttl: None,
-    keepalive: None,
-    // Use TCP_NODELAY for libra tcp connections.
+    // Use TCP_NODELAY for diem tcp connections.
     nodelay: Some(true),
 };
 
 /// A trait alias for "socket-like" things.
-pub trait TSocket: AsyncRead + AsyncWrite + Send + Debug + Unpin + 'static {}
+pub trait TSocket: AsyncRead + AsyncWrite + Send + fmt::Debug + Unpin + 'static {}
 
-impl<T> TSocket for T where T: AsyncRead + AsyncWrite + Send + Debug + Unpin + 'static {}
+impl<T> TSocket for T where T: AsyncRead + AsyncWrite + Send + fmt::Debug + Unpin + 'static {}
 
 /// Unique local identifier for a connection.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Hash, Serialize)]
@@ -97,7 +96,7 @@ impl ConnectionIdGenerator {
 }
 
 /// Metadata associated with an established and fully upgraded connection.
-#[derive(Clone, Serialize)]
+#[derive(Clone, PartialEq, Serialize)]
 pub struct ConnectionMetadata {
     pub remote_peer_id: PeerId,
     pub connection_id: ConnectionId,
@@ -105,6 +104,7 @@ pub struct ConnectionMetadata {
     pub origin: ConnectionOrigin,
     pub messaging_protocol: MessagingProtocolVersion,
     pub application_protocols: SupportedProtocols,
+    pub role: PeerRole,
 }
 
 impl ConnectionMetadata {
@@ -115,6 +115,7 @@ impl ConnectionMetadata {
         origin: ConnectionOrigin,
         messaging_protocol: MessagingProtocolVersion,
         application_protocols: SupportedProtocols,
+        role: PeerRole,
     ) -> ConnectionMetadata {
         ConnectionMetadata {
             remote_peer_id,
@@ -123,38 +124,54 @@ impl ConnectionMetadata {
             origin,
             messaging_protocol,
             application_protocols,
+            role,
         }
     }
 
     #[cfg(any(test, feature = "fuzzing"))]
     pub fn mock(remote_peer_id: PeerId) -> ConnectionMetadata {
+        Self::mock_with_role_and_origin(
+            remote_peer_id,
+            PeerRole::Unknown,
+            ConnectionOrigin::Inbound,
+        )
+    }
+
+    #[cfg(any(test, feature = "fuzzing"))]
+    pub fn mock_with_role_and_origin(
+        remote_peer_id: PeerId,
+        role: PeerRole,
+        origin: ConnectionOrigin,
+    ) -> ConnectionMetadata {
         ConnectionMetadata {
             remote_peer_id,
+            role,
+            origin,
             connection_id: ConnectionId::default(),
             addr: NetworkAddress::mock(),
-            origin: ConnectionOrigin::Inbound,
             messaging_protocol: MessagingProtocolVersion::V1,
             application_protocols: [].iter().into(),
         }
     }
 }
 
-impl std::fmt::Debug for ConnectionMetadata {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl fmt::Debug for ConnectionMetadata {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self)
     }
 }
 
-impl std::fmt::Display for ConnectionMetadata {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for ConnectionMetadata {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "[{},{},{},{},{:?}]",
+            "[{},{},{},{},{:?},{:?}]",
             self.remote_peer_id,
             self.addr,
             self.origin,
             self.messaging_protocol,
-            self.application_protocols
+            self.application_protocols,
+            self.role
         )
     }
 }
@@ -168,24 +185,42 @@ pub struct Connection<TSocket> {
 }
 
 /// Convenience function for adding a timeout to a Future that returns an `io::Result`.
-async fn timeout_io<F, T>(duration: Duration, fut: F) -> io::Result<T>
+async fn timeout_io<F, T>(time_service: TimeService, duration: Duration, fut: F) -> io::Result<T>
 where
     F: Future<Output = io::Result<T>>,
 {
-    let res = timeout(duration, fut).await;
+    let res = time_service.timeout(duration, fut).await;
     match res {
         Ok(out) => out,
-        Err(err) => Err(io::Error::new(io::ErrorKind::TimedOut, err)),
+        Err(timeout::Elapsed) => Err(io::Error::new(io::ErrorKind::TimedOut, timeout::Elapsed)),
     }
 }
 
 /// Common context for performing both inbound and outbound connection upgrades.
-struct UpgradeContext {
+pub struct UpgradeContext {
     noise: NoiseUpgrader,
     handshake_version: u8,
     supported_protocols: BTreeMap<MessagingProtocolVersion, SupportedProtocols>,
     chain_id: ChainId,
     network_id: NetworkId,
+}
+
+impl UpgradeContext {
+    pub fn new(
+        noise: NoiseUpgrader,
+        handshake_version: u8,
+        supported_protocols: BTreeMap<MessagingProtocolVersion, SupportedProtocols>,
+        chain_id: ChainId,
+        network_id: NetworkId,
+    ) -> Self {
+        UpgradeContext {
+            noise,
+            handshake_version,
+            supported_protocols,
+            chain_id,
+            network_id,
+        }
+    }
 }
 
 /// If we have proxy protocol enabled, then prepend the un-proxied address to the error.
@@ -233,22 +268,23 @@ async fn upgrade_inbound<T: TSocket>(
     };
 
     // try authenticating via noise handshake
-    let (mut socket, remote_peer_id) = ctxt.noise.upgrade_inbound(socket).await.map_err(|err| {
-        if err.should_security_log() {
-            sample!(
-                SampleRate::Duration(Duration::from_secs(15)),
-                error!(
-                    SecurityEvent::NoiseHandshake,
-                    NetworkSchema::new(&ctxt.noise.network_context)
-                        .network_address(&addr)
-                        .connection_origin(&origin),
-                    error = %err,
-                )
-            );
-        }
-        let err = io::Error::new(io::ErrorKind::Other, err);
-        add_pp_addr(proxy_protocol_enabled, err, &addr)
-    })?;
+    let (mut socket, remote_peer_id, peer_role) =
+        ctxt.noise.upgrade_inbound(socket).await.map_err(|err| {
+            if err.should_security_log() {
+                sample!(
+                    SampleRate::Duration(Duration::from_secs(15)),
+                    error!(
+                        SecurityEvent::NoiseHandshake,
+                        NetworkSchema::new(&ctxt.noise.network_context)
+                            .network_address(&addr)
+                            .connection_origin(&origin),
+                        error = %err,
+                    )
+                );
+            }
+            let err = io::Error::new(io::ErrorKind::Other, err);
+            add_pp_addr(proxy_protocol_enabled, err, &addr)
+        })?;
     let remote_pubkey = socket.get_remote_static();
     let addr = addr.append_prod_protos(remote_pubkey, HANDSHAKE_VERSION);
 
@@ -262,7 +298,7 @@ async fn upgrade_inbound<T: TSocket>(
         .await
         .map_err(|err| add_pp_addr(proxy_protocol_enabled, err, &addr))?;
 
-    // try to negotiate common libranet version and supported application protocols
+    // try to negotiate common diemnet version and supported application protocols
     let (messaging_protocol, application_protocols) = handshake_msg
         .perform_handshake(&remote_handshake)
         .map_err(|err| {
@@ -288,13 +324,14 @@ async fn upgrade_inbound<T: TSocket>(
             origin,
             messaging_protocol,
             application_protocols,
+            peer_role,
         ),
     })
 }
 
 /// Upgrade an inbound connection. This means we run a Noise IK handshake for
 /// authentication and then negotiate common supported protocols.
-async fn upgrade_outbound<T: TSocket>(
+pub async fn upgrade_outbound<T: TSocket>(
     ctxt: Arc<UpgradeContext>,
     fut_socket: impl Future<Output = io::Result<T>>,
     addr: NetworkAddress,
@@ -336,7 +373,7 @@ async fn upgrade_outbound<T: TSocket>(
     };
     let remote_handshake = exchange_handshake(&handshake_msg, &mut socket).await?;
 
-    // try to negotiate common libranet version and supported application protocols
+    // try to negotiate common diemnet version and supported application protocols
     let (messaging_protocol, application_protocols) = handshake_msg
         .perform_handshake(&remote_handshake)
         .map_err(|e| {
@@ -357,11 +394,12 @@ async fn upgrade_outbound<T: TSocket>(
             origin,
             messaging_protocol,
             application_protocols,
+            PeerRole::Unknown,
         ),
     })
 }
 
-/// The common LibraNet Transport.
+/// The common DiemNet Transport.
 ///
 /// The base transport layer is pluggable, so long as it provides a reliable,
 /// ordered, connection-oriented, byte-stream abstraction (e.g., TCP). We currently
@@ -372,15 +410,16 @@ async fn upgrade_outbound<T: TSocket>(
 /// protocol). Finally, we negotiate common supported application protocols with
 /// the `Handshake` protocol.
 // TODO(philiphayes): rework Transport trait, possibly include Upgrade trait.
-// ideas in this PR thread: https://github.com/libra/libra/pull/3478#issuecomment-617385633
-pub struct LibraNetTransport<TTransport> {
+// ideas in this PR thread: https://github.com/diem/diem/pull/3478#issuecomment-617385633
+pub struct DiemNetTransport<TTransport> {
     base_transport: TTransport,
     ctxt: Arc<UpgradeContext>,
+    time_service: TimeService,
     identity_pubkey: x25519::PublicKey,
     enable_proxy_protocol: bool,
 }
 
-impl<TTransport> LibraNetTransport<TTransport>
+impl<TTransport> DiemNetTransport<TTransport>
 where
     TTransport: Transport<Error = io::Error>,
     TTransport::Output: TSocket,
@@ -391,8 +430,9 @@ where
     pub fn new(
         base_transport: TTransport,
         network_context: Arc<NetworkContext>,
+        time_service: TimeService,
         identity_key: x25519::PrivateKey,
-        trusted_peers: Option<Arc<RwLock<HashMap<PeerId, HashSet<x25519::PublicKey>>>>>,
+        auth_mode: HandshakeAuthMode,
         handshake_version: u8,
         chain_id: ChainId,
         application_protocols: SupportedProtocols,
@@ -402,26 +442,21 @@ where
         let mut supported_protocols = BTreeMap::new();
         supported_protocols.insert(SUPPORTED_MESSAGING_PROTOCOL, application_protocols);
 
-        // create upgrade context
-        // TODO(mimoo): should we build this based on the networkid, and not on trusted peers
-        let auth_mode = match trusted_peers.as_ref() {
-            Some(trusted_peers) => HandshakeAuthMode::mutual(trusted_peers.clone()),
-            None => HandshakeAuthMode::ServerOnly,
-        };
         let identity_pubkey = identity_key.public_key();
         let network_id = network_context.network_id().clone();
 
-        let upgrade_context = UpgradeContext {
-            noise: NoiseUpgrader::new(network_context, identity_key, auth_mode),
+        let upgrade_context = UpgradeContext::new(
+            NoiseUpgrader::new(network_context, identity_key, auth_mode),
             handshake_version,
             supported_protocols,
             chain_id,
             network_id,
-        };
+        );
 
         Self {
-            ctxt: Arc::new(upgrade_context),
             base_transport,
+            ctxt: Arc::new(upgrade_context),
+            time_service,
             identity_pubkey,
             enable_proxy_protocol,
         }
@@ -430,7 +465,7 @@ where
     fn parse_dial_addr(
         addr: &NetworkAddress,
     ) -> io::Result<(NetworkAddress, x25519::PublicKey, u8)> {
-        use libra_network_address::Protocol::*;
+        use diem_types::network_address::Protocol::*;
 
         let protos = addr.as_slice();
 
@@ -453,7 +488,7 @@ where
                 )
             })?;
 
-        // parse out the libranet protocols (noise ik and handshake)
+        // parse out the diemnet protocols (noise ik and handshake)
         match base_transport_suffix {
             [NoiseIK(pubkey), Handshake(version)] => {
                 let base_addr = NetworkAddress::try_from(base_transport_protos.to_vec())
@@ -500,7 +535,7 @@ where
     ) -> io::Result<
         impl Future<Output = io::Result<Connection<NoiseStream<TTransport::Output>>>> + Send + 'static,
     > {
-        // parse libranet protocols
+        // parse diemnet protocols
         // TODO(philiphayes): `Transport` trait should include parsing in `dial`?
         let (base_addr, pubkey, handshake_version) = Self::parse_dial_addr(&addr)?;
 
@@ -520,7 +555,7 @@ where
 
         // outbound dial upgrade task
         let upgrade_fut = upgrade_outbound(self.ctxt.clone(), fut_socket, addr, peer_id, pubkey);
-        let upgrade_fut = timeout_io(TRANSPORT_TIMEOUT, upgrade_fut);
+        let upgrade_fut = timeout_io(self.time_service.clone(), TRANSPORT_TIMEOUT, upgrade_fut);
         Ok(upgrade_fut)
     }
 
@@ -566,6 +601,7 @@ where
 
         // need to move a ctxt into stream task
         let ctxt = self.ctxt.clone();
+        let time_service = self.time_service.clone();
         let enable_proxy_protocol = self.enable_proxy_protocol;
         // stream of inbound upgrade tasks
         let inbounds = listener.map_ok(move |(fut_socket, addr)| {
@@ -576,7 +612,7 @@ where
                 addr.clone(),
                 enable_proxy_protocol,
             );
-            let fut_upgrade = timeout_io(TRANSPORT_TIMEOUT, fut_upgrade);
+            let fut_upgrade = timeout_io(time_service.clone(), TRANSPORT_TIMEOUT, fut_upgrade);
             (fut_upgrade, addr)
         });
 
@@ -584,14 +620,14 @@ where
     }
 }
 
-// If using `LibraNetTransport` as a `Transport` trait, then all upgrade futures
+// If using `DiemNetTransport` as a `Transport` trait, then all upgrade futures
 // and listening streams must be boxed, since `upgrade_inbound` and `upgrade_outbound`
 // are async fns (and therefore unnamed types).
 //
 // TODO(philiphayes): We can change these `Pin<Box<dyn Future<..>>> to `impl Future<..>`
 // when/if this rust feature is stabilized: https://github.com/rust-lang/rust/issues/63063
 
-impl<TTransport: Transport> Transport for LibraNetTransport<TTransport>
+impl<TTransport: Transport> Transport for DiemNetTransport<TTransport>
 where
     TTransport: Transport<Error = io::Error> + Send + 'static,
     TTransport::Output: TSocket,

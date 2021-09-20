@@ -1,20 +1,20 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::core_mempool::{CoreMempool, TimelineState, TxnPointer};
 use anyhow::{format_err, Result};
-use libra_config::config::NodeConfig;
-use libra_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
-use libra_types::{
+use diem_config::config::NodeConfig;
+use diem_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
+use diem_types::{
     account_address::AccountAddress,
-    account_config::COIN1_NAME,
+    account_config::XUS_NAME,
     chain_id::ChainId,
     mempool_status::MempoolStatusCode,
     transaction::{GovernanceRole, RawTransaction, Script, SignedTransaction},
 };
 use once_cell::sync::Lazy;
 use rand::{rngs::StdRng, SeedableRng};
-use std::{collections::HashSet, iter::FromIterator};
+use std::collections::HashSet;
 
 pub(crate) fn setup_mempool() -> (CoreMempool, ConsensusMock) {
     (
@@ -79,7 +79,7 @@ impl TestTransaction {
             Script::new(vec![], vec![], vec![]),
             max_gas_amount,
             self.gas_price,
-            COIN1_NAME.to_owned(),
+            XUS_NAME.to_owned(),
             exp_timestamp_secs,
             ChainId::test(),
         );
@@ -98,7 +98,6 @@ impl TestTransaction {
     }
 }
 
-// adds transactions to mempool
 pub(crate) fn add_txns_to_mempool(
     pool: &mut CoreMempool,
     txns: Vec<TestTransaction>,
@@ -152,7 +151,7 @@ pub(crate) fn batch_add_signed_txn(
     Ok(())
 }
 
-// helper struct that keeps state between `.get_block` calls. Imitates work of Consensus
+// Helper struct that keeps state between `.get_block` calls. Imitates work of Consensus.
 pub struct ConsensusMock(HashSet<TxnPointer>);
 
 impl ConsensusMock {
@@ -168,9 +167,12 @@ impl ConsensusMock {
         let block = mempool.get_block(block_size, self.0.clone());
         self.0 = self
             .0
-            .union(&HashSet::from_iter(
-                block.iter().map(|t| (t.sender(), t.sequence_number())),
-            ))
+            .union(
+                &block
+                    .iter()
+                    .map(|t| (t.sender(), t.sequence_number()))
+                    .collect(),
+            )
             .cloned()
             .collect();
         block

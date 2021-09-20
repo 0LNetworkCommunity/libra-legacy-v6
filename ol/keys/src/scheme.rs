@@ -1,7 +1,7 @@
 //! Key derivation for 0L.
 
-use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
-use libra_wallet::{
+use diem_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
+use diem_wallet::{
     key_factory::{ChildNumber, ExtendedPrivKey},
     Mnemonic, WalletLibrary,
 };

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! Internal module containing convenience utility functions mainly for testing
@@ -70,8 +70,8 @@ where
     Pub: Serialize + for<'a> From<&'a Priv>,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut v = lcs::to_bytes(&self.private_key).unwrap();
-        v.extend(&lcs::to_bytes(&self.public_key).unwrap());
+        let mut v = bcs::to_bytes(&self.private_key).unwrap();
+        v.extend(&bcs::to_bytes(&self.public_key).unwrap());
         write!(f, "{}", hex::encode(&v[..]))
     }
 }
@@ -98,53 +98,77 @@ where
         .no_shrink()
 }
 
+/// Produces a uniformly random keypair from a seed and the user can alter this sleed slightly.
+/// Useful for circumstances where you want two disjoint keypair generations that may interact with
+/// each other.
+#[cfg(any(test, feature = "fuzzing"))]
+pub fn uniform_keypair_strategy_with_perturbation<Priv, Pub>(
+    perturbation: u8,
+) -> impl Strategy<Value = KeyPair<Priv, Pub>>
+where
+    Pub: Serialize + for<'a> From<&'a Priv>,
+    Priv: Serialize + Uniform,
+{
+    // The no_shrink is because keypairs should be fixed -- shrinking would cause a different
+    // keypair to be generated, which appears to not be very useful.
+    any::<[u8; 32]>()
+        .prop_map(move |mut seed| {
+            for elem in seed.iter_mut() {
+                *elem = elem.saturating_add(perturbation);
+            }
+            let mut rng = StdRng::from_seed(seed);
+            KeyPair::<Priv, Pub>::generate(&mut rng)
+        })
+        .no_shrink()
+}
+
 /// This struct provides a means of testing signing and verification through
-/// LCS serialization and domain separation
+/// BCS serialization and domain separation
 #[cfg(any(test, feature = "fuzzing"))]
 #[derive(Debug, Serialize, Deserialize)]
-pub struct TestLibraCrypto(pub String);
+pub struct TestDiemCrypto(pub String);
 
-// the following block is macro expanded from derive(CryptoHasher, LCSCryptoHash)
+// the following block is macro expanded from derive(CryptoHasher, BCSCryptoHash)
 
-/// Cryptographic hasher for an LCS-serializable #item
+/// Cryptographic hasher for an BCS-serializable #item
 #[cfg(any(test, feature = "fuzzing"))]
-pub struct TestLibraCryptoHasher(crate::hash::DefaultHasher);
+pub struct TestDiemCryptoHasher(crate::hash::DefaultHasher);
 #[cfg(any(test, feature = "fuzzing"))]
-impl ::core::clone::Clone for TestLibraCryptoHasher {
+impl ::core::clone::Clone for TestDiemCryptoHasher {
     #[inline]
-    fn clone(&self) -> TestLibraCryptoHasher {
+    fn clone(&self) -> TestDiemCryptoHasher {
         match *self {
-            TestLibraCryptoHasher(ref __self_0_0) => {
-                TestLibraCryptoHasher(::core::clone::Clone::clone(&(*__self_0_0)))
+            TestDiemCryptoHasher(ref __self_0_0) => {
+                TestDiemCryptoHasher(::core::clone::Clone::clone(&(*__self_0_0)))
             }
         }
     }
 }
 #[cfg(any(test, feature = "fuzzing"))]
-static TEST_LIBRA_CRYPTO_SEED: crate::_once_cell::sync::OnceCell<[u8; 32]> =
+static TEST_DIEM_CRYPTO_SEED: crate::_once_cell::sync::OnceCell<[u8; 32]> =
     crate::_once_cell::sync::OnceCell::new();
 #[cfg(any(test, feature = "fuzzing"))]
-impl TestLibraCryptoHasher {
+impl TestDiemCryptoHasher {
     fn new() -> Self {
-        let name = crate::_serde_name::trace_name::<TestLibraCrypto>()
+        let name = crate::_serde_name::trace_name::<TestDiemCrypto>()
             .expect("The `CryptoHasher` macro only applies to structs and enums");
-        TestLibraCryptoHasher(crate::hash::DefaultHasher::new(&name.as_bytes()))
+        TestDiemCryptoHasher(crate::hash::DefaultHasher::new(&name.as_bytes()))
     }
 }
 #[cfg(any(test, feature = "fuzzing"))]
-static TEST_LIBRA_CRYPTO_HASHER: crate::_once_cell::sync::Lazy<TestLibraCryptoHasher> =
-    crate::_once_cell::sync::Lazy::new(TestLibraCryptoHasher::new);
+static TEST_DIEM_CRYPTO_HASHER: crate::_once_cell::sync::Lazy<TestDiemCryptoHasher> =
+    crate::_once_cell::sync::Lazy::new(TestDiemCryptoHasher::new);
 #[cfg(any(test, feature = "fuzzing"))]
-impl std::default::Default for TestLibraCryptoHasher {
+impl std::default::Default for TestDiemCryptoHasher {
     fn default() -> Self {
-        TEST_LIBRA_CRYPTO_HASHER.clone()
+        TEST_DIEM_CRYPTO_HASHER.clone()
     }
 }
 #[cfg(any(test, feature = "fuzzing"))]
-impl crate::hash::CryptoHasher for TestLibraCryptoHasher {
+impl crate::hash::CryptoHasher for TestDiemCryptoHasher {
     fn seed() -> &'static [u8; 32] {
-        TEST_LIBRA_CRYPTO_SEED.get_or_init(|| {
-            let name = crate::_serde_name::trace_name::<TestLibraCrypto>()
+        TEST_DIEM_CRYPTO_SEED.get_or_init(|| {
+            let name = crate::_serde_name::trace_name::<TestDiemCrypto>()
                 .expect("The `CryptoHasher` macro only applies to structs and enums.")
                 .as_bytes();
             crate::hash::DefaultHasher::prefixed_hash(&name)
@@ -158,7 +182,7 @@ impl crate::hash::CryptoHasher for TestLibraCryptoHasher {
     }
 }
 #[cfg(any(test, feature = "fuzzing"))]
-impl std::io::Write for TestLibraCryptoHasher {
+impl std::io::Write for TestDiemCryptoHasher {
     fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
         self.0.update(bytes);
         Ok(bytes.len())
@@ -168,19 +192,19 @@ impl std::io::Write for TestLibraCryptoHasher {
     }
 }
 #[cfg(any(test, feature = "fuzzing"))]
-impl crate::hash::CryptoHash for TestLibraCrypto {
-    type Hasher = TestLibraCryptoHasher;
+impl crate::hash::CryptoHash for TestDiemCrypto {
+    type Hasher = TestDiemCryptoHasher;
     fn hash(&self) -> crate::hash::HashValue {
         use crate::hash::CryptoHasher;
         let mut state = Self::Hasher::default();
-        lcs::serialize_into(&mut state, &self)
-            .expect("LCS serialization of TestLibraCrypto should not fail");
+        bcs::serialize_into(&mut state, &self)
+            .expect("BCS serialization of TestDiemCrypto should not fail");
         state.finish()
     }
 }
 
-/// Produces a random TestLibraCrypto signable / verifiable struct.
+/// Produces a random TestDiemCrypto signable / verifiable struct.
 #[cfg(any(test, feature = "fuzzing"))]
-pub fn random_serializable_struct() -> impl Strategy<Value = TestLibraCrypto> {
-    (String::arbitrary()).prop_map(TestLibraCrypto).no_shrink()
+pub fn random_serializable_struct() -> impl Strategy<Value = TestDiemCrypto> {
+    (String::arbitrary()).prop_map(TestDiemCrypto).no_shrink()
 }

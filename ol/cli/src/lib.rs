@@ -9,6 +9,7 @@
 )]
 
 pub mod application;
+pub mod checkup;
 pub mod commands;
 pub mod config;
 pub mod entrypoint;
@@ -20,5 +21,4 @@ pub mod cache;
 pub mod check;
 pub mod explorer;
 pub mod server;
-pub mod checkup;
 pub mod migrate;

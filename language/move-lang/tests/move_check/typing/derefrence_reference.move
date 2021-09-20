@@ -1,6 +1,6 @@
-module M {
-    resource struct R {}
-    resource struct B { r: R }
+module 0x8675309::M {
+    struct R {}
+    struct B { r: R }
 
     fun t0(r: &R, b: &B) {
         R {} = *r;

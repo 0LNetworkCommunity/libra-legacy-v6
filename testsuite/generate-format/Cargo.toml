@@ -1,32 +1,31 @@
 [package]
 name = "generate-format"
 version = "0.1.0"
-authors = ["Libra Association <opensource@libra.org>"]
-description = "Libra types"
-repository = "https://github.com/libra/libra"
-homepage = "https://libra.org"
+authors = ["Diem Association <opensource@diem.com>"]
+description = "Diem types"
+repository = "https://github.com/diem/diem"
+homepage = "https://diem.com"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
 
 [dependencies]
-rand = "0.7.3"
-serde = { version = "1.0.116", features = ["derive"] }
+rand = "0.8.3"
+serde = { version = "1.0.124", features = ["derive"] }
 serde-reflection = "0.3.2"
-serde_yaml = "0.8.13"
-structopt = "0.3.18"
+serde_yaml = "0.8.17"
+structopt = "0.3.21"
 
-consensus = { path = "../../consensus", version = "0.1.0", features=["fuzzing"] }
-consensus-types = { path = "../../consensus/consensus-types", version = "0.1.0", features=["fuzzing"] }
-lcs = { path = "../../common/lcs", version = "0.1.0", package = "libra-canonical-serialization" }
-libra-config = { path = "../../config", version = "0.1.0" }
-libra-crypto = { path = "../../crypto/crypto", version = "0.1.0", features=["fuzzing"] }
-libra-crypto-derive = { path = "../../crypto/crypto-derive", version = "0.1.0"}
-libra-types = { path = "../../types", version = "0.1.0", features=["fuzzing"] }
-libra-workspace-hack = { path = "../../common/workspace-hack", version = "0.1.0" }
-network = { path = "../../network", version = "0.1.0" }
-libra-network-address = { path = "../../network/network-address", version = "0.1.0", features=["fuzzing"] }
-move-core-types = { path = "../../language/move-core/types", version = "0.1.0", features=["fuzzing"] }
+consensus = { path = "../../consensus", features=["fuzzing"] }
+consensus-types = { path = "../../consensus/consensus-types", features=["fuzzing"] }
+bcs = "0.1.2"
+diem-config = { path = "../../config" }
+diem-crypto = { path = "../../crypto/crypto", features=["fuzzing"] }
+diem-crypto-derive = { path = "../../crypto/crypto-derive"}
+diem-types = { path = "../../types", features=["fuzzing"] }
+diem-workspace-hack = { path = "../../common/workspace-hack" }
+network = { path = "../../network" }
+move-core-types = { path = "../../language/move-core/types", features=["fuzzing"] }
 
 [[bin]]
 name = "compute"

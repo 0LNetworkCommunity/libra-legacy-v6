@@ -1,13 +1,13 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use super::*;
 
 // Ensure serialization of MessagingProtocolVersion enum takes 1 byte.
 #[test]
-fn net_protocol() -> lcs::Result<()> {
+fn net_protocol() -> bcs::Result<()> {
     let protocol = MessagingProtocolVersion::V1;
-    assert_eq!(lcs::to_bytes(&protocol)?, vec![0x00]);
+    assert_eq!(bcs::to_bytes(&protocol)?, vec![0x00]);
     Ok(())
 }
 
@@ -30,7 +30,7 @@ fn protocols_to_from_vec() {
 #[test]
 fn represents_same_network() {
     let mut handshake_msg = HandshakeMsg::new_for_testing();
-    handshake_msg.network_id = NetworkId::Private("h1".to_string());
+    handshake_msg.network_id = NetworkId::vfn_network();
 
     // succeeds: Positive case
     let h1 = handshake_msg.clone();
@@ -105,9 +105,9 @@ fn common_protocols() {
     let mut supported_protocols = BTreeMap::new();
     supported_protocols.insert(MessagingProtocolVersion::V1, SupportedProtocols::default());
     let h2 = HandshakeMsg {
+        supported_protocols,
         chain_id,
         network_id,
-        supported_protocols,
     };
 
     assert_eq!(

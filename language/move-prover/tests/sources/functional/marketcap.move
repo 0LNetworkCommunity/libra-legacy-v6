@@ -3,6 +3,10 @@ address 0x1 {
 
 module TestMarketCap {
 
+    /*
+    TODO(refactoring): this test is deactivated until we have ported this (or a similar) feature, or decided to
+      drop it in which case the test should be removed.
+
     spec module {
         pragma verify = true;
     }
@@ -16,19 +20,19 @@ module TestMarketCap {
         invariant global<MarketCap>(0xA550C18).total_value == sum_of_coins;
     }
 
-    // A resource representing the Libra coin
+    // A resource representing the Diem coin
     resource struct T {
         // The value of the coin. May be zero
         value: u64,
     }
-    spec struct T {
+    spec T {
         // maintain true sum_of_coins
         invariant pack sum_of_coins = sum_of_coins + value;
         invariant unpack sum_of_coins = sum_of_coins - value;
     }
 
     resource struct MarketCap {
-        // The sum of the values of all LibraCoin::T resources in the system
+        // The sum of the values of all DiemCoin::T resources in the system
         total_value: u128,
     }
 
@@ -39,7 +43,7 @@ module TestMarketCap {
         let T { value } = check;
         coin_ref.value = coin_ref.value + value;
     }
-    spec fun deposit {
+    spec deposit {
         aborts_if coin_ref.value + check.value > max_u64();
         ensures coin_ref.value == old(coin_ref.value) + check.value;
     }
@@ -49,10 +53,12 @@ module TestMarketCap {
          let T { value } = check;
          coin_ref.value = coin_ref.value + value / 2;
      }
-     spec fun deposit_invalid {
+     spec deposit_invalid {
          aborts_if coin_ref.value + check.value / 2 > max_u64();
          ensures coin_ref.value == old(coin_ref.value) + check.value / 2;
      }
+
+     */
 }
 
 }

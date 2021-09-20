@@ -8,21 +8,22 @@ script {
   use 0x1::Oracle;
   use 0x1::Vector;
   use 0x1::Upgrade;
-  fun main(sender: &signer){
+
+  fun main(sender: signer){
       let id = 1;
       let data = b"hello";
-      Oracle::handler(sender, id, data);
+      Oracle::handler(&sender, id, data);
       let vec = Oracle::test_helper_query_oracle_votes();
 
       let e = *Vector::borrow<address>(&vec, 0);
-      assert(e == {{alice}}, 7357123401011000);
+      assert(e == @{{alice}}, 7357123401011000);
 
       assert(Upgrade::has_upgrade() == false, 7357123401011000); 
 
       // duplicated vote
       let id = 1;
       let data = b"hello";
-      Oracle::handler(sender, id, data);
+      Oracle::handler(&sender, id, data);
       let vec = Oracle::test_helper_query_oracle_votes();
 
       let len = Vector::length<address>(&vec);
@@ -38,14 +39,15 @@ script {
   use 0x1::Oracle;
   use 0x1::Vector;
   use 0x1::Upgrade;
-  fun main(sender: &signer){
+
+  fun main(sender: signer){
       let id = 1;
       let data = b"bello";
-      Oracle::handler(sender, id, data);
+      Oracle::handler(&sender, id, data);
       let vec = Oracle::test_helper_query_oracle_votes();
 
       let e = *Vector::borrow<address>(&vec, 1);
-      assert(e == {{bob}}, 7357123401011000);
+      assert(e == @{{bob}}, 7357123401011000);
 
       assert(Upgrade::has_upgrade() == false, 7357123401011000); 
   }
@@ -57,10 +59,11 @@ script {
 script {
   use 0x1::Oracle;
   use 0x1::Upgrade;
-  fun main(sender: &signer){
+
+  fun main(sender: signer){
       let id = 1;
       let data = b"hello";
-      Oracle::handler(sender, id, *&data);
+      Oracle::handler(&sender, id, *&data);
 
       assert(Upgrade::has_upgrade() == false, 7357123401011000); 
   }
@@ -68,14 +71,15 @@ script {
 // check: EXECUTED
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
   use 0x1::Oracle;
   use 0x1::Upgrade;
   use 0x1::Vector;
-  fun main(sender: &signer){
+  
+  fun main(sender: signer){
       let data = b"hello";
-      Oracle::check_upgrade(sender);
+      Oracle::check_upgrade(&sender);
 
       // check if payload and history are recorded correctly
       assert(Upgrade::has_upgrade() == true, 7357123401011000); 
@@ -86,8 +90,8 @@ script {
       assert(payload == data, 7357123401011000);
 
       let validators = Vector::empty<address>();
-      Vector::push_back(&mut validators, {{alice}});
-      Vector::push_back(&mut validators, {{charlie}});
+      Vector::push_back(&mut validators, @{{alice}});
+      Vector::push_back(&mut validators, @{{charlie}});
       assert(Vector::compare(&voters, &validators), 7357123401011000);
   }
 }

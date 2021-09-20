@@ -3,10 +3,10 @@
 #![allow(clippy::never_loop)]
 
 use std::process::exit;
-
 use abscissa_core::{Command, Options, Runnable};
 use ol_types::config::TxType;
 use crate::{entrypoint, submit_tx::{tx_params_wrapper, maybe_submit}};
+use diem_transaction_builder::stdlib as transaction_builder;
 
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -16,7 +16,6 @@ pub struct WalletCmd {
     #[options(short = "s", help = "set this address as a slow wallet")]
     slow: bool,
 }
-
 
 impl Runnable for WalletCmd {    
     fn run(&self) {
@@ -33,7 +32,7 @@ impl Runnable for WalletCmd {
 
         let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
         match maybe_submit(
-          transaction_builder::encode_set_wallet_type_script(type_int),
+          transaction_builder::encode_set_wallet_type_script_function(type_int),
           &tx_params,
           entry_args.no_send,
           entry_args.save_path

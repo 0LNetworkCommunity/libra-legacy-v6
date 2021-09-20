@@ -1,10 +1,10 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     test_utils::{
         compare_balances,
-        libra_swarm_utils::{insert_waypoint, load_node_config, save_node_config},
+        diem_swarm_utils::{insert_waypoint, load_node_config, save_node_config},
         setup_swarm_and_client_proxy,
     },
     workspace_builder,
@@ -13,8 +13,8 @@ use crate::{
 use anyhow::{bail, Result};
 use backup_cli::metadata::view::BackupStorageState;
 use cli::client_proxy::ClientProxy;
-use libra_temppath::TempPath;
-use libra_types::transaction::Version;
+use diem_temppath::TempPath;
+use diem_types::{transaction::Version, waypoint::Waypoint};
 use rand::random;
 use std::{
     fs,
@@ -41,20 +41,20 @@ fn test_db_restore() {
     client.create_next_account(false).unwrap();
     client.create_next_account(false).unwrap();
     client
-        .mint_coins(&["mb", "0", "1000000", "Coin1"], true)
+        .mint_coins(&["mb", "0", "1000000", "XUS"], true)
         .unwrap();
     client
-        .mint_coins(&["mb", "1", "1000000", "Coin1"], true)
+        .mint_coins(&["mb", "1", "1000000", "XUS"], true)
         .unwrap();
     client
-        .transfer_coins(&["tb", "0", "1", "1", "Coin1"], true)
+        .transfer_coins(&["tb", "0", "1", "1", "XUS"], true)
         .unwrap();
     assert!(compare_balances(
-        vec![(999999.0, "Coin1".to_string())],
+        vec![(999999.0, "XUS".to_string())],
         client.get_balances(&["b", "0"]).unwrap(),
     ));
     assert!(compare_balances(
-        vec![(1000001.0, "Coin1".to_string())],
+        vec![(1000001.0, "XUS".to_string())],
         client.get_balances(&["b", "1"]).unwrap(),
     ));
 
@@ -68,7 +68,14 @@ fn test_db_restore() {
 
     // make a backup from node 1
     let (node1_config, _) = load_node_config(&env.validator_swarm, 1);
-    let backup_path = db_backup(node1_config.storage.backup_service_address.port(), 1, 50);
+    let backup_path = db_backup(
+        node1_config.storage.backup_service_address.port(),
+        1,
+        50,
+        20,
+        40,
+        &[],
+    );
 
     // take down node 0
     env.validator_swarm.kill_node(0);
@@ -79,15 +86,15 @@ fn test_db_restore() {
     insert_waypoint(&mut node0_config, genesis_waypoint);
     save_node_config(&mut node0_config, &env.validator_swarm, 0);
     let db_dir = node0_config.storage.dir();
-    fs::remove_dir_all(db_dir.join("libradb")).unwrap();
+    fs::remove_dir_all(db_dir.join("diemdb")).unwrap();
     fs::remove_dir_all(db_dir.join("consensusdb")).unwrap();
 
     // restore db from backup
-    db_restore(backup_path.path(), db_dir.as_path());
+    db_restore(backup_path.path(), db_dir.as_path(), &[]);
 
     // start node 0 on top of restored db
     // (add_node() waits for it to connect to peers)
-    env.validator_swarm.add_node(0).unwrap();
+    env.validator_swarm.start_node(0).unwrap();
 
     // stop transferring
     transfer_quit.store(true, Ordering::Relaxed);
@@ -98,20 +105,26 @@ fn test_db_restore() {
     let mut client0 = env.get_validator_client(0, None);
     client0.set_accounts(accounts);
     assert!(compare_balances(
-        vec![(999999.0 - transferred, "Coin1".to_string())],
+        vec![(999999.0 - transferred, "XUS".to_string())],
         client0.get_balances(&["b", "0"]).unwrap(),
     ));
 }
 
-fn db_backup_verify(backup_path: &Path) {
+fn db_backup_verify(backup_path: &Path, trusted_waypoints: &[Waypoint]) {
     let now = Instant::now();
     let bin_path = workspace_builder::get_bin("db-backup-verify");
     let metadata_cache_path = TempPath::new();
 
     metadata_cache_path.create_as_dir().unwrap();
 
-    let output = Command::new(bin_path.as_path())
-        .current_dir(workspace_root())
+    let mut cmd = Command::new(bin_path.as_path());
+
+    trusted_waypoints.iter().for_each(|w| {
+        cmd.arg("--trust-waypoint");
+        cmd.arg(&w.to_string());
+    });
+
+    let output = cmd
         .args(&[
             "--metadata-cache-dir",
             metadata_cache_path.path().to_str().unwrap(),
@@ -119,6 +132,7 @@ fn db_backup_verify(backup_path: &Path) {
             "--dir",
             backup_path.to_str().unwrap(),
         ])
+        .current_dir(workspace_root())
         .output()
         .unwrap();
     if !output.status.success() {
@@ -134,10 +148,11 @@ fn wait_for_backups(
     bin_path: &Path,
     metadata_cache_path: &Path,
     backup_path: &Path,
+    trusted_waypoints: &[Waypoint],
 ) -> Result<()> {
     for _ in 0..60 {
         // the verify should always succeed.
-        db_backup_verify(backup_path);
+        db_backup_verify(backup_path, trusted_waypoints);
 
         let output = Command::new(bin_path)
             .current_dir(workspace_root())
@@ -170,7 +185,14 @@ fn wait_for_backups(
     bail!("Failed to create backup.");
 }
 
-fn db_backup(backup_service_port: u16, target_epoch: u64, target_version: Version) -> TempPath {
+pub(crate) fn db_backup(
+    backup_service_port: u16,
+    target_epoch: u64,
+    target_version: Version,
+    transaction_batch_size: usize,
+    state_snapshot_interval: usize,
+    trusted_waypoints: &[Waypoint],
+) -> TempPath {
     let now = Instant::now();
     let bin_path = workspace_builder::get_bin("db-backup");
     let metadata_cache_path1 = TempPath::new();
@@ -190,9 +212,9 @@ fn db_backup(backup_service_port: u16, target_epoch: u64, target_version: Versio
             "--backup-service-address",
             &format!("http://localhost:{}", backup_service_port),
             "--transaction-batch-size",
-            "20",
+            &transaction_batch_size.to_string(),
             "--state-snapshot-interval",
-            "50",
+            &state_snapshot_interval.to_string(),
             "--metadata-cache-dir",
             metadata_cache_path1.path().to_str().unwrap(),
             "local-fs",
@@ -210,21 +232,27 @@ fn db_backup(backup_service_port: u16, target_epoch: u64, target_version: Versio
         bin_path.as_path(),
         metadata_cache_path2.path(),
         backup_path.path(),
+        trusted_waypoints,
     );
     backup_coordinator.kill().unwrap();
     wait_res.unwrap();
     backup_path
 }
 
-fn db_restore(backup_path: &Path, db_path: &Path) {
+pub(crate) fn db_restore(backup_path: &Path, db_path: &Path, trusted_waypoints: &[Waypoint]) {
     let now = Instant::now();
     let bin_path = workspace_builder::get_bin("db-restore");
     let metadata_cache_path = TempPath::new();
 
     metadata_cache_path.create_as_dir().unwrap();
 
-    let output = Command::new(bin_path.as_path())
-        .current_dir(workspace_root())
+    let mut cmd = Command::new(bin_path.as_path());
+    trusted_waypoints.iter().for_each(|w| {
+        cmd.arg("--trust-waypoint");
+        cmd.arg(&w.to_string());
+    });
+
+    let output = cmd
         .args(&[
             "--target-db-dir",
             db_path.to_str().unwrap(),
@@ -235,6 +263,7 @@ fn db_restore(backup_path: &Path, db_path: &Path) {
             "--dir",
             backup_path.to_str().unwrap(),
         ])
+        .current_dir(workspace_root())
         .output()
         .unwrap();
     if !output.status.success() {
@@ -254,26 +283,24 @@ fn transfer_and_reconfig(
     while !quit.load(Ordering::Relaxed) {
         if random::<u16>() % 10 == 0 {
             println!(
-                "Changing libra version to {}: {:?}",
+                "Changing diem version to {}: {:?}",
                 transferred,
-                client.change_libra_version(
-                    &["change_libra_version", &transferred.to_string()],
-                    true
-                )
+                client
+                    .change_diem_version(&["change_diem_version", &transferred.to_string()], true)
             );
         }
 
         client
-            .transfer_coins(&["tb", "0", "1", "1", "Coin1"], true)
+            .transfer_coins(&["tb", "0", "1", "1", "XUS"], true)
             .unwrap();
         transferred += 1.0;
 
         assert!(compare_balances(
-            vec![(balance0 - transferred, "Coin1".to_string())],
+            vec![(balance0 - transferred, "XUS".to_string())],
             client.get_balances(&["b", "0"]).unwrap(),
         ));
         assert!(compare_balances(
-            vec![(balance1 + transferred, "Coin1".to_string())],
+            vec![(balance1 + transferred, "XUS".to_string())],
             client.get_balances(&["b", "1"]).unwrap(),
         ));
     }

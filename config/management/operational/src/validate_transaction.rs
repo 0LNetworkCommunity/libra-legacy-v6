@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{json_rpc::JsonRpcClientWrapper, TransactionContext};
-use libra_management::{config::ConfigPath, error::Error};
-use libra_types::account_address::AccountAddress;
+use diem_management::{config::ConfigPath, error::Error};
+use diem_types::account_address::AccountAddress;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -21,7 +21,6 @@ pub struct ValidateTransaction {
 
 /// Returns `true` if we've passed by the expected sequence number
 impl ValidateTransaction {
-    //////// 0L ////////
     pub fn new(json_server: String, account_address: AccountAddress, sequence_number: u64) -> Self {
         Self {
             config: Default::default(),
@@ -31,7 +30,6 @@ impl ValidateTransaction {
         }
     }
 
-    //////// 0L ////////
     pub fn execute(&self) -> Result<TransactionContext, Error> {
         let config = self.config.load()?.override_json_server(&self.json_server);
         let vm_status = JsonRpcClientWrapper::new(config.json_server)

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -12,15 +12,10 @@ use crate::{
 };
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use futures::{future::try_join_all, join, FutureExt};
-use libra_infallible::duration_since_epoch;
-use libra_logger::{info, warn};
-use libra_trace::{
-    trace::{find_peer_with_stage, random_node, trace_node},
-    LibraTraceClient,
-};
+use diem_infallible::duration_since_epoch;
+use diem_logger::{info, warn};
+use futures::{future::try_join_all, FutureExt};
 use rand::{rngs::ThreadRng, seq::SliceRandom};
-use serde_json::Value;
 use std::{
     collections::HashSet,
     fmt::{Display, Error, Formatter},
@@ -37,15 +32,6 @@ pub struct PerformanceBenchmarkParams {
         help = "Percent of nodes which should be down"
     )]
     pub percent_nodes_down: usize,
-    #[structopt(long, help = "Whether benchmark should perform trace")]
-    pub trace: bool,
-    #[structopt(long, help = "Whether benchmark should trace only one libra node")]
-    pub trace_single: bool,
-    #[structopt(
-        long,
-        help = "Whether benchmark should perform trace from elastic search logs"
-    )]
-    pub use_logs_for_trace: bool,
     #[structopt(
     long,
     default_value = Box::leak(format!("{}", DEFAULT_BENCH_DURATION).into_boxed_str()),
@@ -63,6 +49,8 @@ pub struct PerformanceBenchmarkParams {
     pub gas_price: u64,
     #[structopt(long, help = "Set periodic stat aggregator step")]
     pub periodic_stats: Option<u64>,
+    #[structopt(long, default_value = "0", help = "Set percentage of invalid tx")]
+    pub invalid_tx: u64,
 }
 
 pub struct PerformanceBenchmark {
@@ -71,13 +59,11 @@ pub struct PerformanceBenchmark {
     up_fullnodes: Vec<Instance>,
     percent_nodes_down: usize,
     duration: Duration,
-    trace: bool,
-    trace_single: bool,
     tps: Option<u64>,
-    use_logs_for_trace: bool,
     backup: bool,
     gas_price: u64,
     periodic_stats: Option<u64>,
+    invalid_tx: u64,
 }
 
 pub const DEFAULT_BENCH_DURATION: u64 = 120;
@@ -87,13 +73,11 @@ impl PerformanceBenchmarkParams {
         Self {
             percent_nodes_down,
             duration: DEFAULT_BENCH_DURATION,
-            trace: false,
-            trace_single: false,
             tps: None,
-            use_logs_for_trace: false,
             backup: false,
             gas_price: 0,
             periodic_stats: None,
+            invalid_tx: 0,
         }
     }
 
@@ -101,13 +85,11 @@ impl PerformanceBenchmarkParams {
         Self {
             percent_nodes_down,
             duration: DEFAULT_BENCH_DURATION,
-            trace: false,
-            trace_single: false,
             tps: Some(fixed_tps),
-            use_logs_for_trace: false,
             backup: false,
             gas_price: 0,
             periodic_stats: None,
+            invalid_tx: 0,
         }
     }
 
@@ -115,13 +97,23 @@ impl PerformanceBenchmarkParams {
         Self {
             percent_nodes_down,
             duration: DEFAULT_BENCH_DURATION,
-            trace: false,
-            trace_single: false,
             tps: None,
-            use_logs_for_trace: false,
             backup: false,
             gas_price,
             periodic_stats: None,
+            invalid_tx: 0,
+        }
+    }
+
+    pub fn mix_invalid_tx(percent_nodes_down: usize, invalid_tx: u64) -> Self {
+        Self {
+            percent_nodes_down,
+            duration: DEFAULT_BENCH_DURATION,
+            tps: None,
+            backup: false,
+            gas_price: 0,
+            periodic_stats: None,
+            invalid_tx,
         }
     }
 
@@ -154,13 +146,11 @@ impl ExperimentParam for PerformanceBenchmarkParams {
             up_fullnodes,
             percent_nodes_down: self.percent_nodes_down,
             duration: Duration::from_secs(self.duration),
-            trace: self.trace,
-            trace_single: self.trace_single,
             tps: self.tps,
-            use_logs_for_trace: self.use_logs_for_trace,
             backup: self.backup,
             gas_price: self.gas_price,
             periodic_stats: self.periodic_stats,
+            invalid_tx: self.invalid_tx,
         }
     }
 }
@@ -184,11 +174,12 @@ impl Experiment for PerformanceBenchmark {
             self.up_fullnodes.clone()
         };
         let emit_job_request = match self.tps {
-            Some(tps) => EmitJobRequest::fixed_tps(instances, tps, self.gas_price),
+            Some(tps) => EmitJobRequest::fixed_tps(instances, tps, self.gas_price, self.invalid_tx),
             None => EmitJobRequest::for_instances(
                 instances,
                 context.global_emit_job_request,
                 self.gas_price,
+                self.invalid_tx,
             ),
         };
         let emit_txn = match self.periodic_stats {
@@ -202,73 +193,7 @@ impl Experiment for PerformanceBenchmark {
                 .boxed(),
         };
 
-        let start = chrono::Utc::now();
-        let trace_tail = &context.trace_tail;
-        let trace_delay = buffer;
-        let trace = self.trace;
-        let capture_trace = async move {
-            if trace {
-                tokio::time::delay_for(trace_delay).await;
-                Some(trace_tail.capture_trace(Duration::from_secs(5)).await)
-            } else {
-                None
-            }
-        };
-        let (stats, mut trace) = join!(emit_txn, capture_trace);
-
-        // Trace
-        let trace_log = self.use_logs_for_trace;
-        if trace_log {
-            let start = start + chrono::Duration::seconds(60);
-            let libra_trace_client = LibraTraceClient::new("elasticsearch-master", 9200);
-            trace = match libra_trace_client
-                .get_libra_trace(start, chrono::Duration::seconds(5))
-                .await
-            {
-                Ok(trace) => Some(trace),
-                Err(err) => {
-                    info!("Failed to capture traces from elastic search {}", err);
-                    None
-                }
-            };
-        }
-        if let Some(trace) = trace {
-            info!("Traced {} events", trace.len());
-            let mut events = vec![];
-            for (node, mut event) in trace {
-                // This could be done more elegantly, but for now this will do
-                event
-                    .json
-                    .as_object_mut()
-                    .unwrap()
-                    .insert("peer".to_string(), Value::String(node));
-                events.push(event);
-            }
-            events.sort_by_key(|k| k.timestamp);
-            let node =
-                random_node(&events[..], "json-rpc::submit", "txn::").expect("No trace node found");
-            info!("Tracing {}", node);
-            if self.trace_single {
-                let filter_peer =
-                    find_peer_with_stage(&events[..], &node, "libra_vm::execute_block_impl")
-                        .expect("Can not find peer with libra_vm::execute_block_impl")
-                        .to_string();
-                events = events
-                    .into_iter()
-                    .filter(|node| {
-                        node.json
-                            .as_object()
-                            .unwrap()
-                            .get("peer")
-                            .unwrap()
-                            .as_str()
-                            .unwrap()
-                            == filter_peer
-                    })
-                    .collect();
-            }
-            trace_node(&events[..], &node);
-        }
+        let stats = emit_txn.await;
 
         // Report
         self.report(context, buffer, window, stats?).await?;
@@ -299,10 +224,10 @@ impl PerformanceBenchmark {
             .ok_or_else(|| anyhow!("No up validator."))?
             .clone();
 
-        const COMMAND: &str = "/opt/libra/bin/db-backup coordinator run \
+        const COMMAND: &str = "/opt/diem/bin/db-backup coordinator run \
             --transaction-batch-size 20000 \
             --state-snapshot-interval 1 \
-            local-fs --dir $(mktemp -d -t libra_backup_XXXXXXXX);";
+            local-fs --dir $(mktemp -d -t diem_backup_XXXXXXXX);";
 
         Ok(Some(tokio::spawn(async move {
             validator.exec(COMMAND, true).await.unwrap_or_else(|e| {

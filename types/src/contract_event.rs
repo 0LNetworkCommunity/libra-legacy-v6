@@ -1,12 +1,12 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     account_config::{
         AdminTransactionEvent, BaseUrlRotationEvent, BurnEvent, CancelBurnEvent,
-        ComplianceKeyRotationEvent, CreateAccountEvent, MintEvent, NewBlockEvent, NewEpochEvent,
-        PreburnEvent, ReceivedMintEvent, ReceivedPaymentEvent, SentPaymentEvent,
-        ToLBRExchangeRateUpdateEvent,
+        ComplianceKeyRotationEvent, CreateAccountEvent, DiemIdDomainEvent, MintEvent,
+        NewBlockEvent, NewEpochEvent, PreburnEvent, ReceivedMintEvent, ReceivedPaymentEvent,
+        SentPaymentEvent, ToXDXExchangeRateUpdateEvent,
     },
     event::EventKey,
     ledger_info::LedgerInfo,
@@ -14,9 +14,9 @@ use crate::{
     transaction::Version,
 };
 use anyhow::{ensure, Error, Result};
-use libra_crypto::hash::CryptoHash;
-use libra_crypto_derive::{CryptoHasher, LCSCryptoHash};
-use move_core_types::{language_storage::TypeTag, move_resource::MoveResource};
+use diem_crypto::hash::CryptoHash;
+use diem_crypto_derive::{BCSCryptoHash, CryptoHasher};
+use move_core_types::{language_storage::TypeTag, move_resource::MoveStructType};
 
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
@@ -24,7 +24,7 @@ use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, ops::Deref};
 
 /// Support versioning of the data structure.
-#[derive(Hash, Clone, Eq, PartialEq, Serialize, Deserialize, CryptoHasher, LCSCryptoHash)]
+#[derive(Hash, Clone, Eq, PartialEq, Serialize, Deserialize, CryptoHasher, BCSCryptoHash)]
 pub enum ContractEvent {
     V0(ContractEventV0),
 }
@@ -125,12 +125,12 @@ impl TryFrom<&ContractEvent> for ReceivedPaymentEvent {
     }
 }
 
-impl TryFrom<&ContractEvent> for ToLBRExchangeRateUpdateEvent {
+impl TryFrom<&ContractEvent> for ToXDXExchangeRateUpdateEvent {
     type Error = Error;
 
     fn try_from(event: &ContractEvent) -> Result<Self> {
-        if event.type_tag != TypeTag::Struct(ToLBRExchangeRateUpdateEvent::struct_tag()) {
-            anyhow::bail!("Expected ToLBRExchangeRateUpdateEvent")
+        if event.type_tag != TypeTag::Struct(ToXDXExchangeRateUpdateEvent::struct_tag()) {
+            anyhow::bail!("Expected ToXDXExchangeRateUpdateEvent")
         }
         Self::try_from_bytes(&event.event_data)
     }
@@ -249,6 +249,16 @@ impl TryFrom<&ContractEvent> for CreateAccountEvent {
     fn try_from(event: &ContractEvent) -> Result<Self> {
         if event.type_tag != TypeTag::Struct(Self::struct_tag()) {
             anyhow::bail!("Expected CreateAccountEvent")
+        }
+        Self::try_from_bytes(&event.event_data)
+    }
+}
+
+impl TryFrom<&ContractEvent> for DiemIdDomainEvent {
+    type Error = Error;
+    fn try_from(event: &ContractEvent) -> Result<Self> {
+        if event.type_tag != TypeTag::Struct(Self::struct_tag()) {
+            anyhow::bail!("Expected DiemIdDomainEvent")
         }
         Self::try_from_bytes(&event.event_data)
     }

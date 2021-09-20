@@ -1,11 +1,8 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use libra_proptest_helpers::pick_slice_idxs;
-use libra_types::vm_status::StatusCode;
-use proptest::{prelude::*, sample::Index as PropIndex};
-use std::collections::BTreeMap;
-use vm::{
+use diem_proptest_helpers::pick_slice_idxs;
+use move_binary_format::{
     errors::{offset_out_of_bounds, PartialVMError},
     file_format::{
         Bytecode, CodeOffset, CompiledModuleMut, ConstantPoolIndex, FieldHandleIndex,
@@ -16,6 +13,9 @@ use vm::{
     internals::ModuleIndex,
     IndexKind,
 };
+use move_core_types::vm_status::StatusCode;
+use proptest::{prelude::*, sample::Index as PropIndex};
+use std::collections::BTreeMap;
 
 /// Represents a single mutation onto a code unit to make it out of bounds.
 #[derive(Debug)]
@@ -27,7 +27,7 @@ pub struct CodeUnitBoundsMutation {
 
 impl CodeUnitBoundsMutation {
     pub fn strategy() -> impl Strategy<Value = Self> {
-        (any::<PropIndex>(), any::<PropIndex>(), 0..16 as usize).prop_map(
+        (any::<PropIndex>(), any::<PropIndex>(), 0..16_usize).prop_map(
             |(function_def, bytecode, offset)| Self {
                 function_def,
                 bytecode,

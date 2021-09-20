@@ -1,14 +1,11 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    expansion::ast::{Fields, SpecId, Value},
+    expansion::ast::{Attribute, Fields, Friend, ModuleIdent, SpecId, Value},
     naming::ast::{FunctionSignature, StructDefinition, Type, TypeName_, Type_},
-    parser::ast::{
-        BinOp, ConstantName, Field, FunctionName, FunctionVisibility, ModuleIdent, StructName,
-        UnaryOp, Var,
-    },
-    shared::{ast_debug::*, unique_map::UniqueMap},
+    parser::ast::{BinOp, ConstantName, Field, FunctionName, StructName, UnaryOp, Var, Visibility},
+    shared::{ast_debug::*, unique_map::UniqueMap, AddressBytes, Name},
 };
 use move_ir_types::location::*;
 use std::{
@@ -20,8 +17,10 @@ use std::{
 // Program
 //**************************************************************************************************
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Program {
+    // Map of known named address values. Not all addresses will be present
+    pub addresses: UniqueMap<Name, AddressBytes>,
     pub modules: UniqueMap<ModuleIdent, ModuleDefinition>,
     pub scripts: BTreeMap<String, Script>,
 }
@@ -30,8 +29,9 @@ pub struct Program {
 // Scripts
 //**************************************************************************************************
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Script {
+    pub attributes: Vec<Attribute>,
     pub loc: Loc,
     pub constants: UniqueMap<ConstantName, Constant>,
     pub function_name: FunctionName,
@@ -42,11 +42,13 @@ pub struct Script {
 // Modules
 //**************************************************************************************************
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ModuleDefinition {
+    pub attributes: Vec<Attribute>,
     pub is_source_module: bool,
     /// `dependency_order` is the topological order/rank in the dependency graph.
     pub dependency_order: usize,
+    pub friends: UniqueMap<ModuleIdent, Friend>,
     pub structs: UniqueMap<StructName, StructDefinition>,
     pub constants: UniqueMap<ConstantName, Constant>,
     pub functions: UniqueMap<FunctionName, Function>,
@@ -56,16 +58,17 @@ pub struct ModuleDefinition {
 // Functions
 //**************************************************************************************************
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum FunctionBody_ {
     Defined(Sequence),
     Native,
 }
 pub type FunctionBody = Spanned<FunctionBody_>;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Function {
-    pub visibility: FunctionVisibility,
+    pub attributes: Vec<Attribute>,
+    pub visibility: Visibility,
     pub signature: FunctionSignature,
     pub acquires: BTreeMap<StructName, Loc>,
     pub body: FunctionBody,
@@ -75,8 +78,9 @@ pub struct Function {
 // Constants
 //**************************************************************************************************
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Constant {
+    pub attributes: Vec<Attribute>,
     pub loc: Loc,
     pub signature: Type,
     pub value: Exp,
@@ -86,7 +90,7 @@ pub struct Constant {
 // Expressions
 //**************************************************************************************************
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 #[allow(clippy::large_enum_variant)]
 pub enum LValue_ {
     Ignore,
@@ -104,7 +108,7 @@ pub type LValue = Spanned<LValue_>;
 pub type LValueList_ = Vec<LValue>;
 pub type LValueList = Spanned<LValueList_>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ModuleCall {
     pub module: ModuleIdent,
     pub name: FunctionName,
@@ -114,7 +118,7 @@ pub struct ModuleCall {
     pub acquires: BTreeMap<StructName, Loc>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 #[allow(clippy::large_enum_variant)]
 pub enum BuiltinFunction_ {
     MoveTo(Type),
@@ -126,11 +130,10 @@ pub enum BuiltinFunction_ {
 }
 pub type BuiltinFunction = Spanned<BuiltinFunction_>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum UnannotatedExp_ {
     Unit { trailing: bool },
     Value(Value),
-    InferredNum(u128),
     Move { from_user: bool, var: Var },
     Copy { from_user: bool, var: Var },
     Use(Var),
@@ -169,7 +172,7 @@ pub enum UnannotatedExp_ {
     UnresolvedError,
 }
 pub type UnannotatedExp = Spanned<UnannotatedExp_>;
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Exp {
     pub ty: Type,
     pub exp: UnannotatedExp,
@@ -179,7 +182,7 @@ pub fn exp(ty: Type, exp: UnannotatedExp) -> Exp {
 }
 
 pub type Sequence = VecDeque<SequenceItem>;
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum SequenceItem_ {
     Seq(Box<Exp>),
     Declare(LValueList),
@@ -187,7 +190,7 @@ pub enum SequenceItem_ {
 }
 pub type SequenceItem = Spanned<SequenceItem_>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ExpListItem {
     Single(Exp, Box<Type>),
     Splat(Loc, Exp, Vec<Type>),
@@ -243,8 +246,16 @@ impl fmt::Display for BuiltinFunction_ {
 
 impl AstDebug for Program {
     fn ast_debug(&self, w: &mut AstWriter) {
-        let Program { modules, scripts } = self;
-        for (m, mdef) in modules {
+        let Program {
+            addresses,
+            modules,
+            scripts,
+        } = self;
+        for (_, addr, bytes) in addresses {
+            w.writeln(&format!("address {} = {};", addr, bytes));
+        }
+
+        for (m, mdef) in modules.key_cloned_iter() {
             w.write(&format!("module {}", m));
             w.block(|w| mdef.ast_debug(w));
             w.new_line();
@@ -261,12 +272,14 @@ impl AstDebug for Program {
 impl AstDebug for Script {
     fn ast_debug(&self, w: &mut AstWriter) {
         let Script {
+            attributes,
             loc: _loc,
             constants,
             function_name,
             function,
         } = self;
-        for cdef in constants {
+        attributes.ast_debug(w);
+        for cdef in constants.key_cloned_iter() {
             cdef.ast_debug(w);
             w.new_line();
         }
@@ -277,27 +290,34 @@ impl AstDebug for Script {
 impl AstDebug for ModuleDefinition {
     fn ast_debug(&self, w: &mut AstWriter) {
         let ModuleDefinition {
+            attributes,
             is_source_module,
             dependency_order,
+            friends,
             structs,
             constants,
             functions,
         } = self;
+        attributes.ast_debug(w);
         if *is_source_module {
             w.writeln("library module")
         } else {
             w.writeln("source module")
         }
         w.writeln(&format!("dependency order #{}", dependency_order));
-        for sdef in structs {
+        for (mident, _loc) in friends.key_cloned_iter() {
+            w.write(&format!("friend {};", mident));
+            w.new_line();
+        }
+        for sdef in structs.key_cloned_iter() {
             sdef.ast_debug(w);
             w.new_line();
         }
-        for cdef in constants {
+        for cdef in constants.key_cloned_iter() {
             cdef.ast_debug(w);
             w.new_line();
         }
-        for fdef in functions {
+        for fdef in functions.key_cloned_iter() {
             fdef.ast_debug(w);
             w.new_line();
         }
@@ -309,12 +329,14 @@ impl AstDebug for (FunctionName, &Function) {
         let (
             name,
             Function {
+                attributes,
                 visibility,
                 signature,
                 acquires,
                 body,
             },
         ) = self;
+        attributes.ast_debug(w);
         visibility.ast_debug(w);
         if let FunctionBody_::Native = &body.value {
             w.write("native ");
@@ -338,11 +360,13 @@ impl AstDebug for (ConstantName, &Constant) {
         let (
             name,
             Constant {
+                attributes,
                 loc: _loc,
                 signature,
                 value,
             },
         ) = self;
+        attributes.ast_debug(w);
         w.write(&format!("const {}:", name));
         signature.ast_debug(w);
         w.write(" = ");
@@ -388,7 +412,6 @@ impl AstDebug for UnannotatedExp_ {
                 trailing: _trailing,
             } => w.write("/*()*/"),
             E::Value(v) => v.ast_debug(w),
-            E::InferredNum(u) => w.write(&format!("{}", u)),
             E::Move {
                 from_user: false,
                 var: v,
@@ -423,7 +446,7 @@ impl AstDebug for UnannotatedExp_ {
                 tys.ast_debug(w);
                 w.write(">");
                 w.write("{");
-                w.comma(fields, |w, (f, idx_bt_e)| {
+                w.comma(fields, |w, (_, f, idx_bt_e)| {
                     let (idx, (bt, e)) = idx_bt_e;
                     w.write(&format!("({}#{}:", idx, f));
                     bt.ast_debug(w);
@@ -666,7 +689,7 @@ impl AstDebug for LValue_ {
                 tys.ast_debug(w);
                 w.write(">");
                 w.write("{");
-                w.comma(fields, |w, (f, idx_bt_a)| {
+                w.comma(fields, |w, (_, f, idx_bt_a)| {
                     let (idx, (bt, a)) = idx_bt_a;
                     w.annotate(|w| w.write(&format!("{}#{}", idx, f)), bt);
                     w.write(": ");
@@ -684,7 +707,7 @@ impl AstDebug for LValue_ {
                 tys.ast_debug(w);
                 w.write(">");
                 w.write("{");
-                w.comma(fields, |w, (f, idx_bt_a)| {
+                w.comma(fields, |w, (_, f, idx_bt_a)| {
                     let (idx, (bt, a)) = idx_bt_a;
                     w.annotate(|w| w.write(&format!("{}#{}", idx, f)), bt);
                     w.write(": ");

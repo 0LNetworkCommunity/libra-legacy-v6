@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -8,12 +8,16 @@
 //! `capacity`.
 
 use futures::future::{Future, FutureExt};
-use futures_semaphore::{Permit, Semaphore};
-use tokio::{runtime::Handle, task::JoinHandle};
+use std::sync::Arc;
+use tokio::{
+    runtime::Handle,
+    sync::{OwnedSemaphorePermit, Semaphore},
+    task::JoinHandle,
+};
 
 #[derive(Clone, Debug)]
 pub struct BoundedExecutor {
-    semaphore: Semaphore,
+    semaphore: Arc<Semaphore>,
     executor: Handle,
 }
 
@@ -21,7 +25,7 @@ impl BoundedExecutor {
     /// Create a new `BoundedExecutor` from an existing tokio [`Handle`]
     /// with a maximum concurrent task capacity of `capacity`.
     pub fn new(capacity: usize, executor: Handle) -> Self {
-        let semaphore = Semaphore::new(capacity);
+        let semaphore = Arc::new(Semaphore::new(capacity));
         Self {
             semaphore,
             executor,
@@ -37,7 +41,7 @@ impl BoundedExecutor {
         F: Future + Send + 'static,
         F::Output: Send + 'static,
     {
-        let permit = self.semaphore.acquire().await;
+        let permit = self.semaphore.clone().acquire_owned().await.unwrap();
         self.spawn_with_permit(f, permit)
     }
 
@@ -51,13 +55,17 @@ impl BoundedExecutor {
         F: Future + Send + 'static,
         F::Output: Send + 'static,
     {
-        match self.semaphore.try_acquire() {
+        match self.semaphore.clone().try_acquire_owned().ok() {
             Some(permit) => Ok(self.spawn_with_permit(f, permit)),
             None => Err(f),
         }
     }
 
-    fn spawn_with_permit<F>(&self, f: F, spawn_permit: Permit) -> JoinHandle<F::Output>
+    fn spawn_with_permit<F>(
+        &self,
+        f: F,
+        spawn_permit: OwnedSemaphorePermit,
+    ) -> JoinHandle<F::Output>
     where
         F: Future + Send + 'static,
         F::Output: Send + 'static,
@@ -79,7 +87,7 @@ mod test {
         sync::atomic::{AtomicU32, Ordering},
         time::Duration,
     };
-    use tokio::{runtime::Runtime, time::delay_for};
+    use tokio::{runtime::Runtime, time::sleep};
 
     #[test]
     fn try_spawn() {
@@ -115,7 +123,7 @@ mod test {
     }
 
     fn yield_task() -> impl Future<Output = ()> {
-        delay_for(Duration::from_millis(1)).map(|_| ())
+        sleep(Duration::from_millis(1)).map(|_| ())
     }
 
     // spawn NUM_TASKS futures on a BoundedExecutor, ensuring that no more than
@@ -155,7 +163,7 @@ mod test {
             if completed == NUM_TASKS {
                 break;
             } else {
-                ::std::sync::atomic::spin_loop_hint();
+                std::hint::spin_loop()
             }
         }
     }

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![allow(clippy::unit_arg)]
@@ -311,47 +311,39 @@ impl std::error::Error for VMStatus {}
 
 pub mod known_locations {
     use crate::{
-        identifier::Identifier,
+        ident_str,
+        identifier::IdentStr,
         language_storage::{ModuleId, CORE_CODE_ADDRESS},
         vm_status::AbortLocation,
     };
     use once_cell::sync::Lazy;
 
-    /// The name of the Account module.
-    pub const ACCOUNT_MODULE_NAME: &str = "LibraAccount";
     /// The Identifier for the Account module.
-    pub static ACCOUNT_MODULE_IDENTIFIER: Lazy<Identifier> =
-        Lazy::new(|| Identifier::new(ACCOUNT_MODULE_NAME).unwrap());
+    pub const ACCOUNT_MODULE_IDENTIFIER: &IdentStr = ident_str!("DiemAccount");
     /// The ModuleId for the Account module.
     pub static ACCOUNT_MODULE: Lazy<ModuleId> =
-        Lazy::new(|| ModuleId::new(CORE_CODE_ADDRESS, ACCOUNT_MODULE_IDENTIFIER.clone()));
+        Lazy::new(|| ModuleId::new(CORE_CODE_ADDRESS, ACCOUNT_MODULE_IDENTIFIER.to_owned()));
     /// Location for an abort in the Account module
     pub fn account_module_abort() -> AbortLocation {
         AbortLocation::Module(ACCOUNT_MODULE.clone())
     }
 
-    /// The name of the Libra module.
-    pub const LIBRA_MODULE_NAME: &str = "Libra";
-    /// The Identifier for the Libra module.
-    pub static LIBRA_MODULE_IDENTIFIER: Lazy<Identifier> =
-        Lazy::new(|| Identifier::new(LIBRA_MODULE_NAME).unwrap());
-    /// The ModuleId for the Libra module.
-    pub static LIBRA_MODULE: Lazy<ModuleId> =
-        Lazy::new(|| ModuleId::new(CORE_CODE_ADDRESS, LIBRA_MODULE_IDENTIFIER.clone()));
-    pub fn libra_module_abort() -> AbortLocation {
-        AbortLocation::Module(LIBRA_MODULE.clone())
+    /// The Identifier for the Diem module.
+    pub const DIEM_MODULE_IDENTIFIER: &IdentStr = ident_str!("Diem");
+    /// The ModuleId for the Diem module.
+    pub static DIEM_MODULE: Lazy<ModuleId> =
+        Lazy::new(|| ModuleId::new(CORE_CODE_ADDRESS, DIEM_MODULE_IDENTIFIER.to_owned()));
+    pub fn diem_module_abort() -> AbortLocation {
+        AbortLocation::Module(DIEM_MODULE.clone())
     }
 
-    /// The name of the Designated Dealer module.
-    pub const DESIGNATED_DEALER_MODULE_NAME: &str = "DesignatedDealer";
     /// The Identifier for the Designated Dealer module.
-    pub static DESIGNATED_DEALER_MODULE_IDENTIFIER: Lazy<Identifier> =
-        Lazy::new(|| Identifier::new(DESIGNATED_DEALER_MODULE_NAME).unwrap());
+    pub const DESIGNATED_DEALER_MODULE_IDENTIFIER: &IdentStr = ident_str!("DesignatedDealer");
     /// The ModuleId for the Designated Dealer module.
     pub static DESIGNATED_DEALER_MODULE: Lazy<ModuleId> = Lazy::new(|| {
         ModuleId::new(
             CORE_CODE_ADDRESS,
-            DESIGNATED_DEALER_MODULE_IDENTIFIER.clone(),
+            DESIGNATED_DEALER_MODULE_IDENTIFIER.to_owned(),
         )
     });
     pub fn designated_dealer_module_abort() -> AbortLocation {
@@ -461,6 +453,17 @@ pub enum StatusCode {
     NO_ACCOUNT_ROLE = 22,
     // The transaction's chain_id does not match the one published on-chain
     BAD_CHAIN_ID = 23,
+    // The sequence number is too large and would overflow if the transaction were executed
+    SEQUENCE_NUMBER_TOO_BIG = 24,
+    // The gas currency is not registered as a TransactionFee currency
+    BAD_TRANSACTION_FEE_CURRENCY = 25,
+    // The feature requested is intended for a future Diem version instead of the current one
+    FEATURE_UNDER_GATING = 26,
+    // The number of secondary signer addresses is different from the number of secondary
+    // public keys provided.
+    SECONDARY_KEYS_ADDRESSES_COUNT_MISMATCH = 27,
+    // There are duplicates among signers, including the sender and all the secondary signers
+    SIGNERS_CONTAIN_DUPLICATES = 28,
 
     // When a code module/script is published it is verified. These are the
     // possible errors that can arise from the verification process.
@@ -469,7 +472,7 @@ pub enum StatusCode {
     INDEX_OUT_OF_BOUNDS = 1001,
     INVALID_SIGNATURE_TOKEN = 1003,
     RECURSIVE_STRUCT_DEFINITION = 1005,
-    INVALID_RESOURCE_FIELD = 1006,
+    FIELD_MISSING_TYPE_ABILITY = 1006,
     INVALID_FALL_THROUGH = 1007,
     NEGATIVE_STACK_SIZE_WITHIN_BLOCK = 1009,
     INVALID_MAIN_FUNCTION_SIGNATURE = 1011,
@@ -479,7 +482,7 @@ pub enum StatusCode {
     LOOKUP_FAILED = 1017,
     TYPE_MISMATCH = 1020,
     MISSING_DEPENDENCY = 1021,
-    POP_RESOURCE_ERROR = 1023,
+    POP_WITHOUT_DROP_ABILITY = 1023,
     BR_TYPE_MISMATCH_ERROR = 1025,
     ABORT_TYPE_MISMATCH_ERROR = 1026,
     STLOC_TYPE_MISMATCH_ERROR = 1027,
@@ -493,7 +496,7 @@ pub enum StatusCode {
     BORROWFIELD_BAD_FIELD_ERROR = 1035,
     BORROWFIELD_EXISTS_MUTABLE_BORROW_ERROR = 1036,
     COPYLOC_UNAVAILABLE_ERROR = 1037,
-    COPYLOC_RESOURCE_ERROR = 1038,
+    COPYLOC_WITHOUT_COPY_ABILITY = 1038,
     COPYLOC_EXISTS_BORROW_ERROR = 1039,
     MOVELOC_UNAVAILABLE_ERROR = 1040,
     MOVELOC_EXISTS_BORROW_ERROR = 1041,
@@ -505,34 +508,34 @@ pub enum StatusCode {
     PACK_TYPE_MISMATCH_ERROR = 1047,
     UNPACK_TYPE_MISMATCH_ERROR = 1048,
     READREF_TYPE_MISMATCH_ERROR = 1049,
-    READREF_RESOURCE_ERROR = 1050,
+    READREF_WITHOUT_COPY_ABILITY = 1050,
     READREF_EXISTS_MUTABLE_BORROW_ERROR = 1051,
     WRITEREF_TYPE_MISMATCH_ERROR = 1052,
-    WRITEREF_RESOURCE_ERROR = 1053,
+    WRITEREF_WITHOUT_DROP_ABILITY = 1053,
     WRITEREF_EXISTS_BORROW_ERROR = 1054,
     WRITEREF_NO_MUTABLE_REFERENCE_ERROR = 1055,
     INTEGER_OP_TYPE_MISMATCH_ERROR = 1056,
     BOOLEAN_OP_TYPE_MISMATCH_ERROR = 1057,
     EQUALITY_OP_TYPE_MISMATCH_ERROR = 1058,
-    EXISTS_RESOURCE_TYPE_MISMATCH_ERROR = 1059,
+    EXISTS_WITHOUT_KEY_ABILITY_OR_BAD_ARGUMENT = 1059,
     BORROWGLOBAL_TYPE_MISMATCH_ERROR = 1060,
-    BORROWGLOBAL_NO_RESOURCE_ERROR = 1061,
+    BORROWGLOBAL_WITHOUT_KEY_ABILITY= 1061,
     MOVEFROM_TYPE_MISMATCH_ERROR = 1062,
-    MOVEFROM_NO_RESOURCE_ERROR = 1063,
+    MOVEFROM_WITHOUT_KEY_ABILITY = 1063,
     MOVETO_TYPE_MISMATCH_ERROR = 1064,
-    MOVETO_NO_RESOURCE_ERROR = 1065,
+    MOVETO_WITHOUT_KEY_ABILITY= 1065,
     // The self address of a module the transaction is publishing is not the sender address
     MODULE_ADDRESS_DOES_NOT_MATCH_SENDER = 1067,
     // The module does not have any module handles. Each module or script must have at least one
     // module handle.
     NO_MODULE_HANDLES = 1068,
     POSITIVE_STACK_SIZE_AT_BLOCK_END = 1069,
-    MISSING_ACQUIRES_RESOURCE_ANNOTATION_ERROR = 1070,
-    EXTRANEOUS_ACQUIRES_RESOURCE_ANNOTATION_ERROR = 1071,
-    DUPLICATE_ACQUIRES_RESOURCE_ANNOTATION_ERROR = 1072,
-    INVALID_ACQUIRES_RESOURCE_ANNOTATION_ERROR = 1073,
+    MISSING_ACQUIRES_ANNOTATION = 1070,
+    EXTRANEOUS_ACQUIRES_ANNOTATION = 1071,
+    DUPLICATE_ACQUIRES_ANNOTATION = 1072,
+    INVALID_ACQUIRES_ANNOTATION = 1073,
     GLOBAL_REFERENCE_ERROR = 1074,
-    CONSTRAINT_KIND_MISMATCH = 1075,
+    CONSTRAINT_NOT_SATISFIED = 1075,
     NUMBER_OF_TYPE_ARGUMENTS_MISMATCH = 1076,
     LOOP_IN_INSTANTIATION_GRAPH = 1077,
     // Reported when a struct has zero fields
@@ -544,7 +547,7 @@ pub enum StatusCode {
     INVALID_LOOP_SPLIT = 1085,
     INVALID_LOOP_BREAK = 1086,
     INVALID_LOOP_CONTINUE = 1087,
-    UNSAFE_RET_UNUSED_RESOURCES = 1088,
+    UNSAFE_RET_UNUSED_VALUES_WITHOUT_DROP = 1088,
     TOO_MANY_LOCALS = 1089,
     GENERIC_MEMBER_OPCODE_MISMATCH = 1090,
     FUNCTION_RESOLUTION_FAILURE = 1091,
@@ -552,6 +555,24 @@ pub enum StatusCode {
     // The sender is trying to publish a module named `M`, but the sender's account already
     // contains a module with this name.
     DUPLICATE_MODULE_NAME = 1095,
+    // The sender is trying to publish a module that breaks the compatibility checks
+    BACKWARD_INCOMPATIBLE_MODULE_UPDATE = 1096,
+    // The updated module introduces a cyclic dependency (i.e., A uses B and B also uses A)
+    CYCLIC_MODULE_DEPENDENCY = 1097,
+    NUMBER_OF_ARGUMENTS_MISMATCH = 1098,
+    INVALID_PARAM_TYPE_FOR_DESERIALIZATION = 1099,
+    FAILED_TO_DESERIALIZE_ARGUMENT = 1100,
+    NUMBER_OF_SIGNER_ARGUMENTS_MISMATCH = 1101,
+    CALLED_SCRIPT_VISIBLE_FROM_NON_SCRIPT_VISIBLE = 1102,
+    EXECUTE_SCRIPT_FUNCTION_CALLED_ON_NON_SCRIPT_VISIBLE = 1103,
+    // Cannot mark the module itself as a friend
+    INVALID_FRIEND_DECL_WITH_SELF = 1104,
+    // Cannot declare modules outside of account address as friends
+    INVALID_FRIEND_DECL_WITH_MODULES_OUTSIDE_ACCOUNT_ADDRESS = 1105,
+    // Cannot declare modules that this module depends on as friends
+    INVALID_FRIEND_DECL_WITH_MODULES_IN_DEPENDENCIES = 1106,
+    // The updated module introduces a cyclic friendship (i.e., A friends B and B also friends A)
+    CYCLIC_MODULE_FRIENDSHIP = 1107,
 
     // These are errors that the VM might raise if a violation of internal
     // invariants takes place.
@@ -587,14 +608,14 @@ pub enum StatusCode {
     BAD_HEADER_TABLE = 3008,
     UNEXPECTED_SIGNATURE_TYPE = 3009,
     DUPLICATE_TABLE = 3010,
-    UNKNOWN_NOMINAL_RESOURCE = 3012,
-    UNKNOWN_KIND = 3013,
+    UNKNOWN_ABILITY = 3013,
     UNKNOWN_NATIVE_STRUCT_FLAG = 3014,
     BAD_U64 = 3019,
     BAD_U128 = 3020,
     VALUE_SERIALIZATION_ERROR = 3022,
     VALUE_DESERIALIZATION_ERROR = 3023,
     CODE_DESERIALIZATION_ERROR = 3024,
+    INVALID_FLAG_BITS = 3025,
 
     // Errors that can arise at runtime
     // Runtime Errors: 4000-4999
@@ -703,8 +724,8 @@ impl From<StatusCode> for u64 {
 pub mod sub_status {
     // Native Function Error sub-codes
     pub const NFE_VECTOR_ERROR_BASE: u64 = 0;
-    // Failure in LCS deserialization
-    pub const NFE_LCS_SERIALIZATION_FAILURE: u64 = 0x1C5;
+    // Failure in BCS deserialization
+    pub const NFE_BCS_SERIALIZATION_FAILURE: u64 = 0x1C5;
 }
 
 /// The `Arbitrary` impl only generates validation statuses since the full enum is too large.

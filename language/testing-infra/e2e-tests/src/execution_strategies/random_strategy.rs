@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -6,7 +6,7 @@ use crate::{
     execution_strategies::types::{Block, Executor, ExecutorResult, PartitionStrategy},
     executor::FakeExecutor,
 };
-use libra_types::{transaction::SignedTransaction, vm_status::VMStatus};
+use diem_types::{transaction::SignedTransaction, vm_status::VMStatus};
 use rand::{
     rngs::{OsRng, StdRng},
     Rng, SeedableRng,
@@ -36,7 +36,7 @@ impl PartitionStrategy for RandomizedStrategy {
     fn partition(&mut self, mut block: Block<Self::Txn>) -> Vec<Block<SignedTransaction>> {
         let mut blocks = vec![];
         while !block.is_empty() {
-            let block_size = self.gen.gen_range(0, block.len());
+            let block_size = self.gen.gen_range(0..block.len());
             let new_block: Vec<_> = block.drain(0..block_size + 1).collect();
             blocks.push(new_block);
         }

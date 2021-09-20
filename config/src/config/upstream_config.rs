@@ -1,11 +1,13 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::network_id::{NetworkId, NodeNetworkId};
-use libra_types::PeerId;
+use diem_types::PeerId;
 use serde::{Deserialize, Serialize};
+use short_hex_str::AsShortHexStr;
 use std::fmt;
 
+//////// 0L ////////
 /// If a node considers a network 'upstream', the node will broadcast transactions (via mempool) to and
 /// send sync requests (via state sync) to all its peers in this network.
 /// For validators, it is unnecessary to declare their validator network as their upstream network in this config
@@ -43,6 +45,7 @@ impl UpstreamConfig {
         std::cmp::max(1, self.networks.len())
     }
 }
+//////// 0L end ////////
 
 #[derive(Clone, Deserialize, Eq, Hash, PartialEq, Serialize)]
 /// Identifier of a node, represented as (network_id, peer_id)

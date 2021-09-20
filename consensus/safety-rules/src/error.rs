@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use serde::{Deserialize, Serialize};
@@ -28,38 +28,37 @@ pub enum Error {
     #[error("Invalid QC: {0}")]
     InvalidQuorumCertificate(String),
     #[error("{0} is not set, SafetyRules is not initialized")]
-    NotInitialized(String),        
+    NotInitialized(String),
     #[error("Data not found in secure storage: {0}")]
-    SecureStorageMissingDataError(String), //////// 0L ////////
+    SecureStorageMissingDataError(String),
     #[error("Unexpected error returned by secure storage: {0}")]
-    SecureStorageUnexpectedError(String), //////// 0L ////////
+    SecureStorageUnexpectedError(String),
     #[error("Serialization error: {0}")]
     SerializationError(String),
     #[error("Validator key not found: {0}")]
-    ValidatorKeyNotFound(String), //////// 0L ////////
+    ValidatorKeyNotFound(String),
     #[error("The validator is not in the validator set. Address not in set: {0}")]
-    ValidatorNotInSet(String), //////// 0L ////////    
+    ValidatorNotInSet(String),
     #[error("Vote proposal missing expected signature")]
     VoteProposalSignatureNotFound,
 }
 
-impl From<lcs::Error> for Error {
-    fn from(error: lcs::Error) -> Self {
+impl From<bcs::Error> for Error {
+    fn from(error: bcs::Error) -> Self {
         Self::SerializationError(format!("{}", error))
     }
 }
 
-impl From<libra_secure_net::Error> for Error {
-    fn from(error: libra_secure_net::Error) -> Self {
+impl From<diem_secure_net::Error> for Error {
+    fn from(error: diem_secure_net::Error) -> Self {
         Self::InternalError(error.to_string())
     }
 }
 
-impl From<libra_secure_storage::Error> for Error {
-    //////// 0L ////////    
-    fn from(error: libra_secure_storage::Error) -> Self {
+impl From<diem_secure_storage::Error> for Error {
+    fn from(error: diem_secure_storage::Error) -> Self {
         match error {
-            libra_secure_storage::Error::PermissionDenied => {
+            diem_secure_storage::Error::PermissionDenied => {
                 // If a storage error is thrown that indicates a permission failure, we
                 // want to panic immediately to alert an operator that something has gone
                 // wrong. For example, this error is thrown when a storage (e.g., vault)
@@ -70,8 +69,8 @@ impl From<libra_secure_storage::Error> for Error {
                     error
                 );
             }
-            libra_secure_storage::Error::KeyVersionNotFound(_, _)
-            | libra_secure_storage::Error::KeyNotSet(_) => {
+            diem_secure_storage::Error::KeyVersionNotFound(_, _)
+            | diem_secure_storage::Error::KeyNotSet(_) => {
                 Self::SecureStorageMissingDataError(error.to_string())
             }
             _ => Self::SecureStorageUnexpectedError(error.to_string()),

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module implements a checker for verifies control flow. The following properties are
@@ -6,12 +6,12 @@
 //! - All forward jumps do not enter into the middle of a loop
 //! - All "breaks" (forward, loop-exiting jumps) go to the "end" of the loop
 //! - All "continues" (back jumps in a loop) are only to the current loop
-use libra_types::vm_status::StatusCode;
-use std::{collections::HashSet, convert::TryInto};
-use vm::{
+use move_binary_format::{
     errors::{PartialVMError, PartialVMResult},
     file_format::{Bytecode, CodeOffset, CodeUnit, FunctionDefinitionIndex},
 };
+use move_core_types::vm_status::StatusCode;
+use std::{collections::HashSet, convert::TryInto};
 
 pub fn verify(
     current_function_opt: Option<FunctionDefinitionIndex>,

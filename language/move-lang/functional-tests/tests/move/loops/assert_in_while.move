@@ -1,5 +1,5 @@
-module Test {
-    struct Tester {
+module {{default}}::Test {
+    struct Tester has drop {
         f: u64
     }
 

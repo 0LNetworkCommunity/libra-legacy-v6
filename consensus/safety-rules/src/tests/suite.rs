@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{test_utils, Error, SafetyRules, TSafetyRules};
@@ -6,13 +6,13 @@ use consensus_types::{
     block::block_test_utils::random_payload, common::Round, quorum_cert::QuorumCert,
     timeout::Timeout, vote_proposal::MaybeSignedVoteProposal,
 };
-use libra_crypto::{
+use diem_crypto::{
     ed25519::Ed25519PrivateKey,
     hash::{CryptoHash, HashValue},
 };
-use libra_global_constants::CONSENSUS_KEY;
-use libra_secure_storage::CryptoStorage;
-use libra_types::{
+use diem_global_constants::CONSENSUS_KEY;
+use diem_secure_storage::CryptoStorage;
+use diem_types::{
     epoch_state::EpochState, validator_signer::ValidatorSigner,
     validator_verifier::ValidatorVerifier,
 };
@@ -664,7 +664,6 @@ fn test_validator_not_in_set(safety_rules: &Callback) {
     proof
         .ledger_info_with_sigs
         .push(a2.block().quorum_cert().ledger_info().clone());
-    //////// 0L ////////
     assert!(matches!(
         safety_rules.initialize(&proof),
         Err(Error::ValidatorNotInSet(_))
@@ -685,7 +684,7 @@ fn test_reconcile_key(_safety_rules: &Callback) {
     let mut storage = test_utils::test_storage(&signer);
 
     let new_pub_key = storage.internal_store().rotate_key(CONSENSUS_KEY).unwrap();
-    let mut safety_rules = Box::new(SafetyRules::new(storage, false));
+    let mut safety_rules = Box::new(SafetyRules::new(storage, false, false));
 
     let (mut proof, genesis_qc) = test_utils::make_genesis(&signer);
     let round = genesis_qc.certified_block().round();

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -21,7 +21,7 @@ use crate::{
     },
     util::time_service::{ClockTimeService, TimeService},
 };
-use channel::{self, libra_channel, message_queues::QueueStyle};
+use channel::{self, diem_channel, message_queues::QueueStyle};
 use consensus_types::{
     block::{
         block_test_utils::{certificate_for_genesis, gen_test_certificate},
@@ -35,27 +35,27 @@ use consensus_types::{
     timeout_certificate::TimeoutCertificate,
     vote_msg::VoteMsg,
 };
-use futures::{
-    channel::{mpsc, oneshot},
-    executor::block_on,
-    stream::select,
-    Stream, StreamExt,
-};
-use libra_crypto::{ed25519::Ed25519PrivateKey, HashValue, Uniform};
-use libra_secure_storage::Storage;
-use libra_types::{
+use diem_crypto::{ed25519::Ed25519PrivateKey, HashValue, Uniform};
+use diem_secure_storage::Storage;
+use diem_types::{
     epoch_state::EpochState,
     ledger_info::{LedgerInfo, LedgerInfoWithSignatures},
     validator_signer::ValidatorSigner,
     validator_verifier::random_validator_verifier,
     waypoint::Waypoint,
 };
+use futures::{
+    channel::{mpsc, oneshot},
+    executor::block_on,
+    stream::select,
+    Stream, StreamExt,
+};
 use network::{
     peer_manager::{conn_notifs_channel, ConnectionRequestSender, PeerManagerRequestSender},
     protocols::network::{Event, NewNetworkEvents, NewNetworkSender},
 };
 use safety_rules::{PersistentSafetyStorage, SafetyRulesManager};
-use std::{num::NonZeroUsize, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 use tokio::runtime::Handle;
 
 /// Auxiliary struct that is setting up node environment for the test.
@@ -100,14 +100,14 @@ impl NodeSetup {
             let (initial_data, storage) = MockStorage::start_for_testing((&validators).into());
 
             let safety_storage = PersistentSafetyStorage::initialize(
-                Storage::from(libra_secure_storage::InMemoryStorage::new()),
+                Storage::from(diem_secure_storage::InMemoryStorage::new()),
                 signer.author(),
                 signer.private_key().clone(),
                 Ed25519PrivateKey::generate_for_testing(),
                 waypoint,
                 true,
             );
-            let safety_rules_manager = SafetyRulesManager::new_local(safety_storage, false);
+            let safety_rules_manager = SafetyRulesManager::new_local(safety_storage, false, false);
 
             nodes.push(Self::new(
                 playground,
@@ -138,12 +138,9 @@ impl NodeSetup {
             verifier: storage.get_validator_set().into(),
         };
         let validators = epoch_state.verifier.clone();
-        let (network_reqs_tx, network_reqs_rx) =
-            libra_channel::new(QueueStyle::FIFO, NonZeroUsize::new(8).unwrap(), None);
-        let (connection_reqs_tx, _) =
-            libra_channel::new(QueueStyle::FIFO, NonZeroUsize::new(8).unwrap(), None);
-        let (consensus_tx, consensus_rx) =
-            libra_channel::new(QueueStyle::FIFO, NonZeroUsize::new(8).unwrap(), None);
+        let (network_reqs_tx, network_reqs_rx) = diem_channel::new(QueueStyle::FIFO, 8, None);
+        let (connection_reqs_tx, _) = diem_channel::new(QueueStyle::FIFO, 8, None);
+        let (consensus_tx, consensus_rx) = diem_channel::new(QueueStyle::FIFO, 8, None);
         let (_conn_mgr_reqs_tx, conn_mgr_reqs_rx) = channel::new_test(8);
         let (_, conn_status_rx) = conn_notifs_channel::new();
         let network_sender = ConsensusNetworkSender::new(
@@ -563,7 +560,7 @@ fn response_on_block_retrieval() {
             .unwrap();
         match rx1.await {
             Ok(Ok(bytes)) => {
-                let response = match lcs::from_bytes(&bytes) {
+                let response = match bcs::from_bytes(&bytes) {
                     Ok(ConsensusMsg::BlockRetrievalResponse(resp)) => *resp,
                     _ => panic!("block retrieval failure"),
                 };
@@ -586,7 +583,7 @@ fn response_on_block_retrieval() {
             .unwrap();
         match rx2.await {
             Ok(Ok(bytes)) => {
-                let response = match lcs::from_bytes(&bytes) {
+                let response = match bcs::from_bytes(&bytes) {
                     Ok(ConsensusMsg::BlockRetrievalResponse(resp)) => *resp,
                     _ => panic!("block retrieval failure"),
                 };
@@ -608,7 +605,7 @@ fn response_on_block_retrieval() {
             .unwrap();
         match rx3.await {
             Ok(Ok(bytes)) => {
-                let response = match lcs::from_bytes(&bytes) {
+                let response = match bcs::from_bytes(&bytes) {
                     Ok(ConsensusMsg::BlockRetrievalResponse(resp)) => *resp,
                     _ => panic!("block retrieval failure"),
                 };
@@ -863,7 +860,7 @@ fn safety_rules_crash() {
 
     fn reset_safety_rules(node: &mut NodeSetup) {
         let safety_storage = PersistentSafetyStorage::initialize(
-            Storage::from(libra_secure_storage::InMemoryStorage::new()),
+            Storage::from(diem_secure_storage::InMemoryStorage::new()),
             node.signer.author(),
             node.signer.private_key().clone(),
             Ed25519PrivateKey::generate_for_testing(),
@@ -871,11 +868,11 @@ fn safety_rules_crash() {
             true,
         );
 
-        node.safety_rules_manager = SafetyRulesManager::new_local(safety_storage, false);
+        node.safety_rules_manager = SafetyRulesManager::new_local(safety_storage, false, false);
         let safety_rules =
             MetricsSafetyRules::new(node.safety_rules_manager.client(), node.storage.clone());
         node.round_manager.set_safety_rules(safety_rules);
-    };
+    }
 
     timed_block_on(&mut runtime, async {
         for _ in 0..2 {

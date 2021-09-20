@@ -1,16 +1,17 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 
 use anyhow::Result;
-use libra_logger::info;
-use libradb::LibraDB;
+use diem_config::config::RocksdbConfig;
+use diem_framework_releases::name_for_script;
+use diem_logger::info;
+use diemdb::DiemDB;
 use std::path::PathBuf;
 use storage_interface::DbReader;
-use transaction_builder::get_transaction_name;
 
-use libra_types::{
+use diem_types::{
     account_address::AccountAddress, account_config::AccountResource, account_state::AccountState,
 };
 use std::convert::TryFrom;
@@ -41,7 +42,7 @@ enum Command {
 }
 
 /// Print out latest information stored in the DB.
-fn print_head(db: &LibraDB) -> Result<()> {
+fn print_head(db: &DiemDB) -> Result<()> {
     let si = db
         .get_startup_info()
         .expect("Can't get startup info")
@@ -69,7 +70,7 @@ fn print_head(db: &LibraDB) -> Result<()> {
     Ok(())
 }
 
-fn print_txn(db: &LibraDB, version: u64) {
+fn print_txn(db: &DiemDB, version: u64) {
     let tx_list = db
         .get_transactions(version, 1, version, false)
         .expect("Unable to load latest TXN");
@@ -77,11 +78,11 @@ fn print_txn(db: &LibraDB, version: u64) {
     println!(
         "Transaction {}: {}",
         version,
-        tx.format_for_client(get_transaction_name)
+        tx.format_for_client(|bytes| name_for_script(bytes).unwrap())
     );
 }
 
-fn print_account(db: &LibraDB, addr: AccountAddress) {
+fn print_account(db: &DiemDB, addr: AccountAddress) {
     let maybe_blob = db
         .get_latest_account_state(addr)
         .expect("Unable to read AccountState");
@@ -102,7 +103,7 @@ fn print_account(db: &LibraDB, addr: AccountAddress) {
     }
 }
 
-fn list_txns(db: &LibraDB) {
+fn list_txns(db: &DiemDB) {
     let version = db
         .get_latest_version()
         .expect("Unable to get latest version");
@@ -116,12 +117,12 @@ fn list_txns(db: &LibraDB) {
             v,
             tx.expect("Unable to read TX")
                 .0
-                .format_for_client(get_transaction_name)
+                .format_for_client(|bytes| name_for_script(bytes).unwrap())
         );
     }
 }
 
-fn list_accounts(db: &LibraDB) {
+fn list_accounts(db: &DiemDB) {
     let version = db
         .get_latest_version()
         .expect("Unable to get latest version");
@@ -152,7 +153,7 @@ fn list_accounts(db: &LibraDB) {
 }
 
 fn main() {
-    ::libra_logger::LibraLogger::builder().build();
+    ::diem_logger::DiemLogger::builder().build();
 
     let opt = Opt::from_args();
 
@@ -166,8 +167,13 @@ fn main() {
     let log_dir = tempfile::tempdir().expect("Unable to get temp dir");
     info!("Opening DB at: {:?}, log at {:?}", p, log_dir.path());
 
-    let db =
-        LibraDB::open(p, true /* readonly */, None /* pruner */).expect("Unable to open LibraDB");
+    let db = DiemDB::open(
+        p,
+        true, /* readonly */
+        None, /* pruner */
+        RocksdbConfig::default(),
+    )
+    .expect("Unable to open DiemDB");
     info!("DB opened successfully.");
 
     if let Some(cmd) = opt.cmd {

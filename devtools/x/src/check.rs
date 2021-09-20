@@ -1,42 +1,29 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    cargo::{CargoArgs, CargoCommand},
+    cargo::{build_args::BuildArgs, selected_package::SelectedPackageArgs, CargoCommand},
     context::XContext,
-    utils, Result,
+    Result,
 };
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 pub struct Args {
-    #[structopt(long, short, number_of_values = 1)]
-    /// Run check on the provided packages
-    pub(crate) package: Vec<String>,
-    #[structopt(long)]
-    /// Run check on all packages in the workspace
-    pub(crate) workspace: bool,
-    #[structopt(long)]
-    /// Run check on all targets of a package (lib, bin, test, example)
-    pub(crate) all_targets: bool,
+    #[structopt(flatten)]
+    pub(crate) package_args: SelectedPackageArgs,
+    #[structopt(flatten)]
+    pub(crate) build_args: BuildArgs,
 }
 
 pub fn run(args: Args, xctx: XContext) -> Result<()> {
-    let cmd = CargoCommand::Check(xctx.config().cargo_config());
-    run_with(cmd, args, &xctx)
-}
+    let mut direct_args = vec![];
+    args.build_args.add_args(&mut direct_args);
 
-pub fn run_with(cmd: CargoCommand<'_>, args: Args, xctx: &XContext) -> Result<()> {
-    let base_args = CargoArgs {
-        all_targets: args.all_targets,
+    let cmd = CargoCommand::Check {
+        cargo_config: xctx.config().cargo_config(),
+        direct_args: &direct_args,
     };
-
-    if !args.package.is_empty() {
-        cmd.run_on_packages(args.package.iter(), &base_args)?;
-    } else if utils::project_is_root(&xctx)? || args.workspace {
-        cmd.run_on_all_packages(&base_args)?;
-    } else {
-        cmd.run_on_local_package(&base_args)?;
-    }
-    Ok(())
+    let packages = args.package_args.to_selected_packages(&xctx)?;
+    cmd.run_on_packages(&packages)
 }

@@ -3,14 +3,14 @@ id: coding-guidelines
 title: Coding Guidelines
 ---
 
-This document describes the coding guidelines for the Libra Core Rust codebase.
+This document describes the coding guidelines for the Diem Core Rust codebase.
 
 ## Code formatting
 
-All code formatting is enforced with [rustfmt](https://github.com/rust-lang/rustfmt) with a project-specific configuration.  Below is an example command to adhere to the Libra Core project conventions.
+All code formatting is enforced with [rustfmt](https://github.com/rust-lang/rustfmt) with a project-specific configuration.  Below is an example command to adhere to the Diem Core project conventions.
 
 ```
-libra$ cargo xfmt
+diem$ cargo xfmt
 ```
 
 ## Code analysis
@@ -18,7 +18,7 @@ libra$ cargo xfmt
 [Clippy](https://github.com/rust-lang/rust-clippy) is used to catch common mistakes and is run as a part of continuous integration.  Before submitting your code for review, you can run clippy with our configuration:
 
 ```
-libra$ cargo xclippy --all-features
+diem$ cargo xclippy --all-targets
 ```
 
 In general, we follow the recommendations from [rust-lang-nursery](https://rust-lang-nursery.github.io/api-guidelines/about.html) and [The Rust Programming Language](https://doc.rust-lang.org/book/).  The remainder of this guide provides detailed guidelines on specific topics in order to achieve uniformity of the codebase.
@@ -53,7 +53,7 @@ struct Point {
 
 ### Terminology
 
-The Libra codebase uses inclusive terminology (similar to other projects such as [the Linux kernel](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=49decddd39e5f6132ccd7d9fdc3d7c470b0061bb)).  The terms below are recommended when appropriate.
+The Diem codebase uses inclusive terminology (similar to other projects such as [the Linux kernel](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=49decddd39e5f6132ccd7d9fdc3d7c470b0061bb)).  The terms below are recommended when appropriate.
 * allowlist - a set of entities allowed access
 * blocklist - a set of entities that are blocked from access
 * primary/leader/main - a primary entity
@@ -76,16 +76,16 @@ Document the following for each function:
 
 ### README.md for top-level directories and other major components
 
-Each major component of Libra Core needs to have a `README.md` file. Major components are:
-* top-level directories (e.g. `libra/network`, `libra/language`)
+Each major component of Diem Core needs to have a `README.md` file. Major components are:
+* top-level directories (e.g. `diem/network`, `diem/language`)
 * the most important crates in the system (e.g. `vm-runtime`)
 
 This file should contain:
 
  * The *conceptual* *documentation* of the component.
  * A link to the external API documentation for the component.
- * A link to the master license of the project.
- * A link to the master contributing guide for the project.
+ * A link to the main license of the project.
+ * A link to the main contributing guide for the project.
 
 A template for readmes:
 
@@ -118,14 +118,14 @@ For the external API of this crate refer to [Link to rustdoc API].
 
 ## Contributing
 
-Refer to the Libra Project contributing guide [LINK].
+Refer to the Diem Project contributing guide [LINK].
 
 ## License
 
-Refer to the Libra Project License [LINK].
+Refer to the Diem Project License [LINK].
 ```
 
-A good example of README.md is `libra/network/README.md` that describes the networking crate.
+A good example of README.md is `diem/network/README.md` that describes the networking crate.
 
 ## Binary, Argument, and Crate Naming
 
@@ -181,8 +181,8 @@ Error handling suggestions follow the [Rust book guidance](https://doc.rust-lang
 
 *Fallible functions*
 
-* `duration_since_epoch()` - to obtain the unix time, call the function provided by `libra-infallible`.
-* `RwLock` and `Mutex` - Instead of calling `unwrap()` on the standard library implementations of these functions, use the infallible equivalent types that we provide in `libra-infallible`.
+* `duration_since_epoch()` - to obtain the unix time, call the function provided by `diem-infallible`.
+* `RwLock` and `Mutex` - Instead of calling `unwrap()` on the standard library implementations of these functions, use the infallible equivalent types that we provide in `diem-infallible`.
 
 *Panic*
 
@@ -227,6 +227,18 @@ impl Foo {
 }
 ```
 
+### Integer Arithmetic
+
+As every integer operation (`+`, `-`, `/`, `*`, etc.) implies edge-cases (e.g. overflows `u64::MAX + 1`, underflows `0u64 -1`, division by zero, etc.),
+we use checked arithmetic instead of directly using math symbols.
+It forces us to think of edge-cases, and handle them explicitely.
+This is a brief and simplified mini guide of the different functions that exist to handle integer arithmetic:
+
+* [checked_](https://doc.rust-lang.org/std/primitive.u32.html#method.checked_add): use this function if you want to handle overflows and underflows as a special edge-case. It returns `None` if an underflow or overflow has happened, and `Some(operation_result)` otherwise.
+* [overflowing_](https://doc.rust-lang.org/std/primitive.u32.html#method.overflowing_add): use this function if you want the result of an overflow to potentially wrap around (e.g. `u64::MAX.overflow_add(10) == (9, true)`). It returns the underflowed or overflowed result as well as a flag indicating if an overflow has occured or not.
+* [wrapping_](https://doc.rust-lang.org/std/primitive.u32.html#method.wrapping_add): this is similar to overflowing operations, except that it returns the result directly. Use this function if you are sure that you want to handle underflows and overflows by wrapping around.
+* [saturating_](https://doc.rust-lang.org/std/primitive.u32.html#method.saturating_add): if an overflow occurs, the result is kept within the boundary of the type (e.g. `u64::MAX.saturating_add(1) == u64::MAX`).
+
 ### Logging
 
 We currently use [log](https://docs.rs/log/) for logging.
@@ -264,9 +276,9 @@ mod tests {
 
 *Property-based tests*
 
-Libra contains [property-based tests](https://blog.jessitron.com/2013/04/25/property-based-testing-what-is-it/) written in Rust using the [`proptest` framework](https://github.com/AltSysrq/proptest). Property-based tests generate random test cases and assert that invariants, also called *properties*, hold for the code under test.
+Diem contains [property-based tests](https://blog.jessitron.com/2013/04/25/property-based-testing-what-is-it/) written in Rust using the [`proptest` framework](https://github.com/AltSysrq/proptest). Property-based tests generate random test cases and assert that invariants, also called *properties*, hold for the code under test.
 
-Some examples of properties tested in Libra:
+Some examples of properties tested in Diem:
 
 * Every serializer and deserializer pair is tested for correctness with random inputs to the serializer. Any pair of functions that are inverses of each other can be tested this way.
 * The results of executing common transactions through the VM are tested using randomly generated scenarios and verified with an *Oracle*.
@@ -281,11 +293,11 @@ References:
 
 *Fuzzing*
 
-Libra contains harnesses for fuzzing crash-prone code like deserializers, using [`libFuzzer`](https://llvm.org/docs/LibFuzzer.html) through [`cargo fuzz`](https://rust-fuzz.github.io/book/cargo-fuzz.html). For more examples, see the `testsuite/libra_fuzzer` directory.
+Diem contains harnesses for fuzzing crash-prone code like deserializers, using [`libFuzzer`](https://llvm.org/docs/LibFuzzer.html) through [`cargo fuzz`](https://rust-fuzz.github.io/book/cargo-fuzz.html). For more examples, see the `testsuite/diem_fuzzer` directory.
 
 ### Conditional compilation of tests
 
-Libra [conditionally
+Diem [conditionally
 compiles](https://doc.rust-lang.org/stable/reference/conditional-compilation.html)
 code that is *only relevant for tests, but does not consist of tests* (unitary
 or otherwise). Examples of this include proptest strategies, implementations
@@ -304,7 +316,7 @@ As a consequence, it is recommended that you set up your test-only code in the f
 
 **For production crates:**
 
-Production crates are defined as the set of crates that create externally published artifacts, e.g. the Libra validator,
+Production crates are defined as the set of crates that create externally published artifacts, e.g. the Diem validator,
 the Move compiler, and so on.
 
 For the sake of example, we'll consider you are defining a test-only helper function `foo` in `foo_crate`:
@@ -352,9 +364,9 @@ elements in another crate need to activate the "fuzzing" feature through the
 `[features]` section in their `Cargo.toml`. [Integration
 tests](https://doc.rust-lang.org/rust-by-example/testing/integration_testing.html)
 can neither rely on the `test` flag nor do they have a proper `Cargo.toml` for
-feature activation. In the Libra codebase, we therefore recommend that
+feature activation. In the Diem codebase, we therefore recommend that
 *integration tests which depend on test-only code in their tested crate* be
-extracted to their own test-only crate. See `language/vm/serializer_tests`
+extracted to their own test-only crate. See `language/move-binary-format/serializer_tests`
 for an example of such an extracted integration test.
 
 *Note for developers*: The reason we use a feature re-export (in the `[features]` section of the `Cargo.toml` is that a profile is not enough to activate the `"fuzzing"` feature flag. See [cargo-issue #291](https://github.com/rust-lang/cargo/issues/2911) for details).

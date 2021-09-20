@@ -1,10 +1,13 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::loader::Loader;
 
+use move_binary_format::errors::*;
 use move_core_types::{
     account_address::AccountAddress,
+    effects::{AccountChangeSet, ChangeSet, Event},
+    identifier::Identifier,
     language_storage::{ModuleId, StructTag, TypeTag},
     value::MoveTypeLayout,
     vm_status::StatusCode,
@@ -15,7 +18,6 @@ use move_vm_types::{
     values::{GlobalValue, GlobalValueEffect, Value},
 };
 use std::collections::btree_map::BTreeMap;
-use vm::errors::*;
 
 /// Trait for the Move VM to abstract storage operations.
 ///
@@ -36,7 +38,7 @@ use vm::errors::*;
 /// Eventually we should replace (Partial)VMError with a dedicated VMStorageError or
 /// an associated error type so that storage implementations will no longer be able to
 /// return a bogus VMError.
-pub trait RemoteCache {
+pub trait MoveStorage {
     fn get_module(&self, module_id: &ModuleId) -> VMResult<Option<Vec<u8>>>;
     fn get_resource(
         &self,
@@ -47,7 +49,7 @@ pub trait RemoteCache {
 
 pub struct AccountDataCache {
     data_map: BTreeMap<Type, (MoveTypeLayout, GlobalValue)>,
-    module_map: BTreeMap<ModuleId, Vec<u8>>,
+    module_map: BTreeMap<Identifier, Vec<u8>>,
 }
 
 impl AccountDataCache {
@@ -72,29 +74,17 @@ impl AccountDataCache {
 /// The Move VM takes a `DataStore` in input and this is the default and correct implementation
 /// for a data store related to a transaction. Clients should create an instance of this type
 /// and pass it to the Move VM.
-pub(crate) struct TransactionDataCache<'r, 'l, R> {
-    remote: &'r R,
+pub(crate) struct TransactionDataCache<'r, 'l, S> {
+    remote: &'r S,
     loader: &'l Loader,
     account_map: BTreeMap<AccountAddress, AccountDataCache>,
     event_data: Vec<(Vec<u8>, u64, Type, MoveTypeLayout, Value)>,
 }
 
-/// Collection of side effects produced by a Session.
-///
-/// The Move VM MUST guarantee that no duplicate entries exist.
-pub struct TransactionEffects {
-    pub resources: Vec<(
-        AccountAddress,
-        Vec<(StructTag, Option<(MoveTypeLayout, Value)>)>,
-    )>,
-    pub modules: Vec<(ModuleId, Vec<u8>)>,
-    pub events: Vec<(Vec<u8>, u64, TypeTag, MoveTypeLayout, Value)>,
-}
-
-impl<'r, 'l, R: RemoteCache> TransactionDataCache<'r, 'l, R> {
+impl<'r, 'l, S: MoveStorage> TransactionDataCache<'r, 'l, S> {
     /// Create a `TransactionDataCache` with a `RemoteCache` that provides access to data
     /// not updated in the transaction.
-    pub(crate) fn new(remote: &'r R, loader: &'l Loader) -> Self {
+    pub(crate) fn new(remote: &'r S, loader: &'l Loader) -> Self {
         TransactionDataCache {
             remote,
             loader,
@@ -107,58 +97,64 @@ impl<'r, 'l, R: RemoteCache> TransactionDataCache<'r, 'l, R> {
     /// published modules.
     ///
     /// Gives all proper guarantees on lifetime of global data as well.
-    pub(crate) fn into_effects(self) -> PartialVMResult<TransactionEffects> {
-        let mut modules = vec![];
-        let mut resources = vec![];
-        for (addr, account_cache) in self.account_map {
-            let mut vals = vec![];
-            for (ty, (ty_layout, gv)) in account_cache.data_map {
+    pub(crate) fn into_effects(self) -> PartialVMResult<(ChangeSet, Vec<Event>)> {
+        let mut change_set = ChangeSet::new();
+        for (addr, account_data_cache) in self.account_map.into_iter() {
+            let mut modules = BTreeMap::new();
+            for (module_name, module_blob) in account_data_cache.module_map {
+                modules.insert(module_name, Some(module_blob));
+            }
+
+            let mut resources = BTreeMap::new();
+            for (ty, (layout, gv)) in account_data_cache.data_map {
                 match gv.into_effect()? {
                     GlobalValueEffect::None => (),
                     GlobalValueEffect::Deleted => {
-                        if let TypeTag::Struct(s_tag) = self.loader.type_to_type_tag(&ty)? {
-                            vals.push((s_tag, None))
-                        } else {
-                            // non-struct top-level value; can't happen
-                            return Err(PartialVMError::new(StatusCode::INTERNAL_TYPE_ERROR));
-                        }
+                        let struct_tag = match self.loader.type_to_type_tag(&ty)? {
+                            TypeTag::Struct(struct_tag) => struct_tag,
+                            _ => return Err(PartialVMError::new(StatusCode::INTERNAL_TYPE_ERROR)),
+                        };
+                        resources.insert(struct_tag, None);
                     }
                     GlobalValueEffect::Changed(val) => {
-                        if let TypeTag::Struct(s_tag) = self.loader.type_to_type_tag(&ty)? {
-                            vals.push((s_tag, Some((ty_layout, val))))
-                        } else {
-                            // non-struct top-level value; can't happen
-                            return Err(PartialVMError::new(StatusCode::INTERNAL_TYPE_ERROR));
-                        }
+                        let struct_tag = match self.loader.type_to_type_tag(&ty)? {
+                            TypeTag::Struct(struct_tag) => struct_tag,
+                            _ => return Err(PartialVMError::new(StatusCode::INTERNAL_TYPE_ERROR)),
+                        };
+                        let resource_blob = val
+                            .simple_serialize(&layout)
+                            .ok_or_else(|| PartialVMError::new(StatusCode::INTERNAL_TYPE_ERROR))?;
+                        resources.insert(struct_tag, Some(resource_blob));
                     }
                 }
             }
-            if !vals.is_empty() {
-                resources.push((addr, vals));
-            }
-            modules.extend(
-                account_cache
-                    .module_map
-                    .into_iter()
-                    .map(|(module_id, blob)| (module_id, blob)),
+            change_set.publish_or_overwrite_account_change_set(
+                addr,
+                AccountChangeSet::from_modules_resources(modules, resources),
             );
         }
 
         let mut events = vec![];
         for (guid, seq_num, ty, ty_layout, val) in self.event_data {
             let ty_tag = self.loader.type_to_type_tag(&ty)?;
-            events.push((guid, seq_num, ty_tag, ty_layout, val))
+            let blob = val
+                .simple_serialize(&ty_layout)
+                .ok_or_else(|| PartialVMError::new(StatusCode::INTERNAL_TYPE_ERROR))?;
+            events.push((guid, seq_num, ty_tag, blob))
         }
 
-        Ok(TransactionEffects {
-            resources,
-            modules,
-            events,
-        })
+        Ok((change_set, events))
     }
 
-    pub(crate) fn num_mutated_accounts(&self) -> u64 {
-        self.account_map.keys().len() as u64
+    pub(crate) fn num_mutated_accounts(&self, sender: &AccountAddress) -> u64 {
+        // The sender's account will always be mutated.
+        let mut total_mutated_accounts: u64 = 1;
+        for (addr, entry) in self.account_map.iter() {
+            if addr != sender && entry.data_map.values().any(|(_, v)| v.is_mutated()) {
+                total_mutated_accounts += 1;
+            }
+        }
+        total_mutated_accounts
     }
 
     fn get_mut_or_insert_with<'a, K, V, F>(map: &'a mut BTreeMap<K, V>, k: &K, gen: F) -> &'a mut V
@@ -175,7 +171,7 @@ impl<'r, 'l, R: RemoteCache> TransactionDataCache<'r, 'l, R> {
 }
 
 // `DataStore` implementation for the `TransactionDataCache`
-impl<'r, 'l, C: RemoteCache> DataStore for TransactionDataCache<'r, 'l, C> {
+impl<'r, 'l, S: MoveStorage> DataStore for TransactionDataCache<'r, 'l, S> {
     // Retrieve data from the local cache or loads it from the remote cache into the local cache.
     // All operations on the global data are based on this API and they all load the data
     // into the cache.
@@ -201,8 +197,7 @@ impl<'r, 'l, C: RemoteCache> DataStore for TransactionDataCache<'r, 'l, C> {
 
             let gv = match self.remote.get_resource(&addr, &ty_tag) {
                 Ok(Some(blob)) => {
-                    let ty_kind_info = self.loader.type_to_kind_info(ty)?;
-                    let val = match Value::simple_deserialize(&blob, &ty_kind_info, &ty_layout) {
+                    let val = match Value::simple_deserialize(&blob, &ty_layout) {
                         Some(val) => val,
                         None => {
                             let msg =
@@ -243,7 +238,7 @@ impl<'r, 'l, C: RemoteCache> DataStore for TransactionDataCache<'r, 'l, C> {
 
     fn load_module(&self, module_id: &ModuleId) -> VMResult<Vec<u8>> {
         if let Some(account_cache) = self.account_map.get(module_id.address()) {
-            if let Some(blob) = account_cache.module_map.get(module_id) {
+            if let Some(blob) = account_cache.module_map.get(module_id.name()) {
                 return Ok(blob.clone());
             }
         }
@@ -273,14 +268,16 @@ impl<'r, 'l, C: RemoteCache> DataStore for TransactionDataCache<'r, 'l, C> {
                 (*module_id.address(), AccountDataCache::new())
             });
 
-        account_cache.module_map.insert(module_id.clone(), blob);
+        account_cache
+            .module_map
+            .insert(module_id.name().to_owned(), blob);
 
         Ok(())
     }
 
     fn exists_module(&self, module_id: &ModuleId) -> VMResult<bool> {
         if let Some(account_cache) = self.account_map.get(module_id.address()) {
-            if account_cache.module_map.contains_key(module_id) {
+            if account_cache.module_map.contains_key(module_id.name()) {
                 return Ok(true);
             }
         }

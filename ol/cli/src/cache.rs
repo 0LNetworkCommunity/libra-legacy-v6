@@ -7,10 +7,13 @@ use crate::{
 use anyhow::Error;
 use serde::{Deserialize, Serialize};
 use std::{fs::{self, File}, io::Write, path::PathBuf, fs::rename};
+
 /// caching database name, to be appended to node_home
 pub const MONITOR_DB_PATH: &str = "/tmp/0L/monitor_db";
+
 /// filename for monitor cache
 pub const CACHE_JSON_NAME: &str = "monitor_cache.json";
+
 /// filename for temp monitor cache
 pub const CACHE_TEMP_NAME: &str = "monitor_cache.temp";
 
@@ -39,7 +42,9 @@ impl Vitals {
     pub fn read_json(node_home: &PathBuf) -> Vitals {
         let cache_path = get_cache_path(node_home);
         let file = fs::File::open(cache_path).expect("file should open read only");
-        let deser: Vitals = serde_json::from_reader(file).expect("file should be proper JSON");
+        let deser: Vitals = serde_json::from_reader(file).expect(
+            "file should be proper JSON"
+        );
 
         deser
     }
@@ -58,7 +63,6 @@ impl Vitals {
         rename(temp_path, cache_path).expect("temporary cache file should be renamed");
         Ok(())
     }
-
 }
 
 /// Get cache path

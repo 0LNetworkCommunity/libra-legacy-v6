@@ -1,10 +1,10 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::block::Block;
-use libra_crypto::{ed25519::Ed25519Signature, hash::TransactionAccumulatorHasher};
-use libra_crypto_derive::{CryptoHasher, LCSCryptoHash};
-use libra_types::{epoch_state::EpochState, proof::AccumulatorExtensionProof};
+use diem_crypto::{ed25519::Ed25519Signature, hash::TransactionAccumulatorHasher};
+use diem_crypto_derive::{BCSCryptoHash, CryptoHasher};
+use diem_types::{epoch_state::EpochState, proof::AccumulatorExtensionProof};
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::{Display, Formatter},
@@ -13,7 +13,7 @@ use std::{
 
 /// This structure contains all the information needed by safety rules to
 /// evaluate a proposal / block for correctness / safety and to produce a Vote.
-#[derive(Clone, Debug, CryptoHasher, Deserialize, LCSCryptoHash, Serialize)]
+#[derive(Clone, Debug, CryptoHasher, Deserialize, BCSCryptoHash, Serialize)]
 pub struct VoteProposal {
     /// Contains the data necessary to construct the parent's execution output state
     /// and the childs in a verifiable way
@@ -65,7 +65,7 @@ pub struct MaybeSignedVoteProposal {
     /// The vote proposal to be signed.
     pub vote_proposal: VoteProposal,
 
-    /// The signature of this proposal's hash from Libra Execution Correctness service. It is
+    /// The signature of this proposal's hash from Diem Execution Correctness service. It is
     /// an `Option` because the LEC can be configured to not sign the vote hash.
     pub signature: Option<Ed25519Signature>,
 }

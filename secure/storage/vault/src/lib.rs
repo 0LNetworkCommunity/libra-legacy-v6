@@ -1,11 +1,11 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 
 pub mod dev;
 
-use libra_crypto::{
+use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature, ED25519_PRIVATE_KEY_LENGTH},
     PrivateKey,
 };
@@ -15,6 +15,7 @@ use std::{
     collections::BTreeMap,
     convert::{TryFrom, TryInto},
     sync::Arc,
+    time::Duration,
 };
 use thiserror::Error;
 use ureq::Response;
@@ -26,8 +27,14 @@ pub mod fuzzing;
 /// Keys are trimmed in FIFO order.
 const MAX_NUM_KEY_VERSIONS: u32 = 4;
 
-/// Request timeout for vault operations
-const TIMEOUT: u64 = 10_000;
+/// Default request timeouts for vault operations.
+/// Note: there is a bug in ureq v 1.5.4 where it's not currently possible to set
+/// different timeouts for connections and operations. The connection timeout
+/// will override any other timeouts (including reads and writes). This has been
+/// fixed in ureq 2. Once we upgrade, we'll be able to have separate timeouts.
+/// Until then, the connection timeout is used for all operations.
+const DEFAULT_CONNECTION_TIMEOUT_MS: u64 = 1_000;
+const DEFAULT_RESPONSE_TIMEOUT_MS: u64 = 1_000;
 
 #[derive(Debug, Error, PartialEq)]
 pub enum Error {
@@ -41,6 +48,8 @@ pub enum Error {
     NotFound(String, String),
     #[error("Serialization error: {0}")]
     SerializationError(String),
+    #[error("Synthetic error returned: {0}")]
+    SyntheticError(String),
 }
 
 impl From<base64::DecodeError> for Error {
@@ -49,8 +58,8 @@ impl From<base64::DecodeError> for Error {
     }
 }
 
-impl From<libra_crypto::traits::CryptoMaterialError> for Error {
-    fn from(error: libra_crypto::traits::CryptoMaterialError) -> Self {
+impl From<diem_crypto::traits::CryptoMaterialError> for Error {
+    fn from(error: diem_crypto::traits::CryptoMaterialError) -> Self {
         Self::SerializationError(format!("{}", error))
     }
 }
@@ -63,16 +72,17 @@ impl From<std::io::Error> for Error {
 
 impl From<ureq::Response> for Error {
     fn from(resp: ureq::Response) -> Self {
-        if let Some(e) = resp.synthetic_error() {
-            // Local error
-            Error::InternalError(e.to_string())
+        if resp.synthetic() {
+            match resp.into_string() {
+                Ok(resp) => Error::SyntheticError(resp),
+                Err(error) => Error::InternalError(error.to_string()),
+            }
         } else {
-            // Clear the buffer
             let status = resp.status();
             let status_text = resp.status_text().to_string();
             match resp.into_string() {
                 Ok(body) => Error::HttpError(status, status_text, body),
-                Err(e) => Error::InternalError(e.to_string()),
+                Err(error) => Error::InternalError(error.to_string()),
             }
         }
     }
@@ -103,10 +113,21 @@ pub struct Client {
     host: String,
     token: String,
     tls_connector: Arc<native_tls::TlsConnector>,
+
+    /// Timeout for new socket connections to vault.
+    connection_timeout_ms: u64,
+    /// Timeout for generic vault responses (e.g., reads and writes).
+    response_timeout_ms: u64,
 }
 
 impl Client {
-    pub fn new(host: String, token: String, ca_certificate: Option<String>) -> Self {
+    pub fn new(
+        host: String,
+        token: String,
+        ca_certificate: Option<String>,
+        connection_timeout_ms: Option<u64>,
+        response_timeout_ms: Option<u64>,
+    ) -> Self {
         let mut tls_builder = native_tls::TlsConnector::builder();
         tls_builder.min_protocol_version(Some(native_tls::Protocol::Tlsv12));
         if let Some(certificate) = ca_certificate {
@@ -119,11 +140,16 @@ impl Client {
         }
         let tls_connector = Arc::new(tls_builder.build().unwrap());
 
+        let connection_timeout_ms = connection_timeout_ms.unwrap_or(DEFAULT_CONNECTION_TIMEOUT_MS);
+        let response_timeout_ms = response_timeout_ms.unwrap_or(DEFAULT_RESPONSE_TIMEOUT_MS);
+
         Self {
             agent: ureq::Agent::new().set("connection", "keep-alive").build(),
             host,
             token,
             tls_connector,
+            connection_timeout_ms,
+            response_timeout_ms,
         }
     }
 
@@ -451,7 +477,8 @@ impl Client {
     }
 
     fn upgrade_request_without_token(&self, mut request: ureq::Request) -> ureq::Request {
-        request.timeout_connect(TIMEOUT);
+        request.timeout_connect(self.connection_timeout_ms);
+        request.timeout(Duration::from_millis(self.response_timeout_ms));
         request.set_tls_connector(self.tls_connector.clone());
         request
     }
@@ -695,7 +722,7 @@ pub fn process_unsealed_response(resp: Response) -> Result<bool, Error> {
 ///       "name":"local_owner_key__consensus",
 ///       "keys":{
 ///          "1":{
-///             "key":"C3R5O8uAfrgv7sJmCMSLEp1R2HmkZtwdfGT/xVvZVvgCGo6TkWga/ojplJFMM+i2805X3CV7IRyNLCSJcr4AqQ==",
+///             "key":"C3R5O8uAfrgv7sJmCMSLEp1R2HmkZtwdfGT/xVvZVvgCGo6TkWga/ojplJFMM+i2805X3CV7IRyNBCSJcr4AqQ==",
 ///             "hmac_key":null,
 ///             "time":"2020-05-29T06:27:38.1233515Z",
 ///             "ec_x":null,
@@ -748,24 +775,29 @@ impl KeyBackup {
         let now = chrono::Utc::now();
         let time_as_str = now.to_rfc3339();
 
-        let mut info = KeyBackupInfo::default();
-        info.key = Some(base64::encode(key_bytes));
-        info.public_key = Some(base64::encode(pub_key_bytes));
-        info.creation_time = now.timestamp_subsec_millis();
-        info.time = time_as_str.clone();
-
-        let mut key_backup = Self {
-            policy: KeyBackupPolicy::default(),
+        let info = KeyBackupInfo {
+            key: Some(base64::encode(key_bytes)),
+            public_key: Some(base64::encode(pub_key_bytes)),
+            creation_time: now.timestamp_subsec_millis(),
+            time: time_as_str.clone(),
+            ..Default::default()
         };
 
-        key_backup.policy.exportable = true;
-        key_backup.policy.min_decryption_version = 1;
-        key_backup.policy.latest_version = 1;
-        key_backup.policy.archive_version = 1;
-        key_backup.policy.backup_type = 2;
+        let mut key_backup = Self {
+            policy: KeyBackupPolicy {
+                exportable: true,
+                min_decryption_version: 1,
+                latest_version: 1,
+                archive_version: 1,
+                backup_type: 2,
+                backup_info: BackupInfo {
+                    time: time_as_str,
+                    version: 1,
+                },
+                ..Default::default()
+            },
+        };
         key_backup.policy.keys.insert(1, info);
-        key_backup.policy.backup_info.time = time_as_str;
-        key_backup.policy.backup_info.version = 1;
         key_backup
     }
 }

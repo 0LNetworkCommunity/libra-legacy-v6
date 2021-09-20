@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -11,8 +11,8 @@ use crate::{
     },
 };
 use anyhow::{anyhow, ensure, Result};
-use libra_logger::prelude::*;
-use libra_types::{ledger_info::LedgerInfoWithSignatures, waypoint::Waypoint};
+use diem_logger::prelude::*;
+use diem_types::{ledger_info::LedgerInfoWithSignatures, waypoint::Waypoint};
 use once_cell::sync::Lazy;
 use std::{convert::TryInto, str::FromStr, sync::Arc};
 use structopt::StructOpt;
@@ -138,7 +138,7 @@ impl EpochEndingBackupController {
     }
 
     fn get_waypoint(record: &[u8], epoch: u64) -> Result<Waypoint> {
-        let li: LedgerInfoWithSignatures = lcs::from_bytes(record)?;
+        let li: LedgerInfoWithSignatures = bcs::from_bytes(record)?;
         ensure!(
             li.ledger_info().epoch() == epoch,
             "Epoch not expected. expected: {}, actual: {}.",

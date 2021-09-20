@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use super::cfg::{BlockCFG, CFG};
@@ -39,7 +39,7 @@ fn find_single_target_labels(start: Label, blocks: &BasicBlocks) -> BTreeSet<Lab
                 *counts.entry(*if_true).or_insert(0) += 1;
                 *counts.entry(*if_false).or_insert(0) += 1
             }
-            C::Jump(lbl) => *counts.entry(*lbl).or_insert(0) += 1,
+            C::Jump { target, .. } => *counts.entry(*target).or_insert(0) += 1,
             _ => (),
         }
     }
@@ -50,11 +50,13 @@ fn find_single_target_labels(start: Label, blocks: &BasicBlocks) -> BTreeSet<Lab
         .collect()
 }
 
+#[allow(clippy::needless_collect)]
 fn inline_single_target_blocks(
     single_jump_targets: &BTreeSet<Label>,
     start: Label,
     blocks: &mut BasicBlocks,
 ) -> bool {
+    //cleanup of needless_collect would result in mut and non mut borrows, and compilation warning.
     let labels_vec = blocks.keys().cloned().collect::<Vec<_>>();
     let mut labels = labels_vec.into_iter();
     let mut next = labels.next();
@@ -76,7 +78,7 @@ fn inline_single_target_blocks(
             // Do not need to worry about infinitely unwrapping loops as loop heads will always
             // be the target of at least 2 jumps: the jump to the loop and the "continue" jump
             // This is always true as long as we start the count for the start label at 1
-            sp!(_, Command_::Jump(target)) if single_jump_targets.contains(target) => {
+            sp!(_, Command_::Jump { target, .. }) if single_jump_targets.contains(target) => {
                 remapping.insert(cur, *target);
                 let target_block = working_blocks.remove(target).unwrap();
                 block.pop_back();

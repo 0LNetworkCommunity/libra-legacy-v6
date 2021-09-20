@@ -1,14 +1,14 @@
 //! Key generation
 use std::env;
 
-use libra_wallet::{Mnemonic, WalletLibrary};
-use libra_types::{
+use diem_wallet::{Mnemonic, WalletLibrary};
+use diem_types::{
   account_address::AccountAddress,
   transaction::authenticator::AuthenticationKey
 };
 
 /// Genereates keys from WalletLibrary, updates a MinerConfig
-pub fn keygen() -> (AuthenticationKey, AccountAddress, WalletLibrary) {
+pub fn keygen() -> (AuthenticationKey, AccountAddress, WalletLibrary, String) {
         // Generate new keys
         let mut wallet = WalletLibrary::new();
         let mnemonic_string = wallet.mnemonic();
@@ -35,7 +35,7 @@ pub fn keygen() -> (AuthenticationKey, AccountAddress, WalletLibrary) {
                   this mnemonic. It is not saved anywhere. Nobody can help \
                   you if you lose it.\n\n");
 
-        (auth_key, account, wallet)
+        (auth_key, account, wallet, mnemonic_string)
 }
 
 /// Get authkey and account from mnemonic
@@ -79,7 +79,7 @@ pub fn get_account_from_prompt()
 
 #[test]
 fn wallet() { 
-    use libra_wallet::Mnemonic;
+    use diem_wallet::Mnemonic;
     let mut wallet = WalletLibrary::new();
 
     let (auth_key, child_number) = wallet.new_address().expect(

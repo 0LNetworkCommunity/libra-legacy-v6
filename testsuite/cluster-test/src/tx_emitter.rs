@@ -1,45 +1,43 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 
 use crate::{atomic_histogram::*, cluster::Cluster, instance::Instance};
-use std::{
-    env, fmt, slice,
-    sync::Arc,
-    time::{Duration, Instant},
-};
-
 use anyhow::{format_err, Result};
-use itertools::zip;
-use libra_crypto::{
+use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     test_utils::KeyPair,
-    traits::Uniform,
 };
-use libra_logger::*;
-use libra_types::{
+use diem_logger::*;
+use diem_sdk::transaction_builder::{Currency, TransactionFactory};
+use diem_types::{
     account_address::AccountAddress,
-    account_config::{self, testnet_dd_account_address, COIN1_NAME},
+    account_config::{testnet_dd_account_address, XUS_NAME},
     chain_id::ChainId,
-    transaction::{
-        authenticator::AuthenticationKey, helpers::create_user_txn, Script, TransactionPayload,
-    },
+    transaction::authenticator::AuthenticationKey,
 };
+use itertools::zip;
 use rand::{
     prelude::ThreadRng,
     rngs::{OsRng, StdRng},
     seq::{IteratorRandom, SliceRandom},
     Rng, SeedableRng,
 };
+use std::{
+    env, fmt, slice,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 use tokio::runtime::Handle;
 
-use futures::future::{try_join_all, FutureExt};
-use libra_json_rpc_client::{views::AmountView, JsonRpcAsyncClient};
-use libra_types::{
-    account_config::{libra_root_address, treasury_compliance_account_address},
+use diem_client::{views::AmountView, Client as JsonRpcClient, MethodRequest};
+use diem_sdk::types::{AccountKey, LocalAccount};
+use diem_types::{
+    account_config::{diem_root_address, treasury_compliance_account_address},
     transaction::SignedTransaction,
 };
+use futures::future::{try_join_all, FutureExt};
 use once_cell::sync::Lazy;
 use std::{
     cmp::{max, min},
@@ -50,15 +48,30 @@ use tokio::{task::JoinHandle, time};
 
 const MAX_TXN_BATCH_SIZE: usize = 100; // Max transactions per account in mempool
                                        // Please make 'MAX_CHILD_VASP_NUM' consistency with 'MAX_CHILD_ACCOUNTS' constant under VASP.move
-const MAX_CHILD_VASP_NUM: usize = 256;
+const MAX_CHILD_VASP_NUM: usize = 65536;
 const MAX_VASP_ACCOUNT_NUM: usize = 16;
 const DD_KEY: &str = "dd.key";
 
+#[derive(Debug)]
+pub enum InvalidTxType {
+    /// invalid tx with wrong chain id
+    ChainId,
+    /// invalid tx with sender not on chain
+    Sender,
+    /// invalid tx with receiver not on chain
+    Receiver,
+    /// duplicate an exist tx
+    Duplication,
+    /// Last element of enum, please add new case above
+    MaxValue,
+}
+
 pub struct TxEmitter {
-    accounts: Vec<AccountData>,
+    accounts: Vec<LocalAccount>,
     mint_key_pair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey>,
     chain_id: ChainId,
-    premainnet: bool,
+    vasp: bool,
+    tx_factory: TransactionFactory,
 }
 
 pub struct EmitJob {
@@ -116,23 +129,29 @@ pub struct EmitJobRequest {
     pub workers_per_ac: Option<usize>,
     pub thread_params: EmitThreadParams,
     pub gas_price: u64,
+    pub invalid_tx: u64,
 }
 
 pub static REUSE_ACC: Lazy<bool> = Lazy::new(|| env::var("REUSE_ACC").is_ok());
+// This can let CT has ability to switch between legacy tx script type and script fn tx type
+// with more types of tx need to be supported, this can be changed to an enum in the future
+pub static SCRIPT_FN: Lazy<bool> = Lazy::new(|| env::var("SCRIPT_FN").is_ok());
 
 impl EmitJobRequest {
     pub fn for_instances(
         instances: Vec<Instance>,
         global_emit_job_request: &Option<EmitJobRequest>,
         gas_price: u64,
+        invalid_tx: u64,
     ) -> Self {
-        match global_emit_job_request {
+        let mut req = match global_emit_job_request {
             Some(global_emit_job_request) => EmitJobRequest {
                 instances,
                 accounts_per_client: global_emit_job_request.accounts_per_client,
                 workers_per_ac: global_emit_job_request.workers_per_ac,
                 thread_params: global_emit_job_request.thread_params.clone(),
                 gas_price,
+                invalid_tx,
             },
             None => Self {
                 instances,
@@ -140,8 +159,13 @@ impl EmitJobRequest {
                 workers_per_ac: None,
                 thread_params: EmitThreadParams::default(),
                 gas_price,
+                invalid_tx,
             },
+        };
+        if invalid_tx != 0 {
+            req.thread_params.wait_committed = false;
         }
+        req
     }
 
     pub fn fixed_tps_params(instance_count: usize, tps: u64) -> (usize, u64) {
@@ -153,7 +177,7 @@ impl EmitJobRequest {
         (num_workers, wait_time)
     }
 
-    pub fn fixed_tps(instances: Vec<Instance>, tps: u64, gas_price: u64) -> Self {
+    pub fn fixed_tps(instances: Vec<Instance>, tps: u64, gas_price: u64, invalid_tx: u64) -> Self {
         let (num_workers, wait_time) = EmitJobRequest::fixed_tps_params(instances.len(), tps);
         Self {
             instances,
@@ -161,29 +185,35 @@ impl EmitJobRequest {
             workers_per_ac: Some(num_workers),
             thread_params: EmitThreadParams {
                 wait_millis: wait_time,
-                wait_committed: true,
+                wait_committed: invalid_tx == 0,
             },
             gas_price,
+            invalid_tx,
         }
     }
 }
 
 impl TxEmitter {
-    pub fn new(cluster: &Cluster, premainnet: bool) -> Self {
+    pub fn new(cluster: &Cluster, vasp: bool) -> Self {
         Self {
             accounts: vec![],
             mint_key_pair: cluster.mint_key_pair().clone(),
             chain_id: cluster.chain_id,
-            premainnet,
+            vasp,
+            tx_factory: TransactionFactory::new(cluster.chain_id),
         }
     }
 
-    pub fn take_account(&mut self) -> AccountData {
+    pub fn take_account(&mut self) -> LocalAccount {
         self.accounts.remove(0)
     }
 
     pub fn clear(&mut self) {
         self.accounts.clear();
+    }
+
+    fn account_key(&self) -> AccountKey {
+        AccountKey::from_private_key(self.mint_key_pair.private_key.clone())
     }
 
     fn pick_mint_instance<'a, 'b>(&'a self, instances: &'b [Instance]) -> &'b Instance {
@@ -193,25 +223,24 @@ impl TxEmitter {
             .expect("Instances can not be empty")
     }
 
-    fn pick_mint_client(&self, instances: &[Instance]) -> JsonRpcAsyncClient {
+    fn pick_mint_client(&self, instances: &[Instance]) -> JsonRpcClient {
         self.pick_mint_instance(instances).json_rpc_client()
     }
 
     pub async fn submit_single_transaction(
         &self,
         instance: &Instance,
-        sender: &mut AccountData,
+        sender: &mut LocalAccount,
         receiver: &AccountAddress,
         num_coins: u64,
     ) -> Result<Instant> {
         let client = instance.json_rpc_client();
         client
-            .submit_transaction(gen_transfer_txn_request(
+            .submit(&gen_transfer_txn_request(
                 sender,
                 receiver,
                 num_coins,
-                self.chain_id,
-                0,
+                self.tx_factory.clone(),
             ))
             .await?;
         let deadline = Instant::now() + TXN_MAX_WAIT;
@@ -236,7 +265,7 @@ impl TxEmitter {
             workers_per_ac, num_clients
         );
         let num_accounts = req.accounts_per_client * num_clients;
-        if self.premainnet {
+        if self.vasp {
             assert!(
                 num_accounts <= MAX_VASP_ACCOUNT_NUM * MAX_CHILD_VASP_NUM,
                 "VASP only supports to create max {} child accounts, but try to create {} accounts",
@@ -251,7 +280,7 @@ impl TxEmitter {
         self.mint_accounts(&req, num_accounts).await?;
         let all_accounts = self.accounts.split_off(self.accounts.len() - num_accounts);
         let mut workers = vec![];
-        let all_addresses: Vec<_> = all_accounts.iter().map(|d| d.address).collect();
+        let all_addresses: Vec<_> = all_accounts.iter().map(|d| d.address()).collect();
         let all_addresses = Arc::new(all_addresses);
         let mut all_accounts = all_accounts.into_iter();
         let stop = Arc::new(AtomicBool::new(false));
@@ -273,6 +302,7 @@ impl TxEmitter {
                     params,
                     stats,
                     chain_id: self.chain_id,
+                    invalid_tx: req.invalid_tx,
                 };
                 let join_handle = tokio_handle.spawn(worker.run(req.gas_price).boxed());
                 workers.push(Worker { join_handle });
@@ -288,9 +318,9 @@ impl TxEmitter {
 
     async fn load_account_with_mint_key(
         &self,
-        client: &JsonRpcAsyncClient,
+        client: &JsonRpcClient,
         address: AccountAddress,
-    ) -> Result<AccountData> {
+    ) -> Result<LocalAccount> {
         let sequence_number = query_sequence_numbers(&client, &[address])
             .await
             .map_err(|e| {
@@ -301,35 +331,32 @@ impl TxEmitter {
                     e
                 )
             })?[0];
-        Ok(AccountData {
+        Ok(LocalAccount::new(
             address,
-            key_pair: self.mint_key_pair.clone(),
+            self.account_key(),
             sequence_number,
-        })
+        ))
     }
 
-    pub async fn load_libra_root_account(
-        &self,
-        client: &JsonRpcAsyncClient,
-    ) -> Result<AccountData> {
-        self.load_account_with_mint_key(client, libra_root_address())
+    pub async fn load_diem_root_account(&self, client: &JsonRpcClient) -> Result<LocalAccount> {
+        self.load_account_with_mint_key(client, diem_root_address())
             .await
     }
 
-    pub async fn load_faucet_account(&self, client: &JsonRpcAsyncClient) -> Result<AccountData> {
+    pub async fn load_faucet_account(&self, client: &JsonRpcClient) -> Result<LocalAccount> {
         self.load_account_with_mint_key(client, testnet_dd_account_address())
             .await
     }
 
-    pub async fn load_tc_account(&self, client: &JsonRpcAsyncClient) -> Result<AccountData> {
+    pub async fn load_tc_account(&self, client: &JsonRpcClient) -> Result<LocalAccount> {
         self.load_account_with_mint_key(client, treasury_compliance_account_address())
             .await
     }
 
-    pub async fn load_dd_account(&self, client: &JsonRpcAsyncClient) -> Result<AccountData> {
+    pub async fn load_dd_account(&self, client: &JsonRpcClient) -> Result<LocalAccount> {
         let mint_key: Ed25519PrivateKey = generate_key::load_key(DD_KEY);
-        let mint_key_pair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey> = KeyPair::from(mint_key);
-        let address = libra_types::account_address::from_public_key(&mint_key_pair.public_key);
+        let account_key = AccountKey::from_private_key(mint_key);
+        let address = account_key.authentication_key().derived_address();
         let sequence_number = query_sequence_numbers(&client, &[address])
             .await
             .map_err(|e| {
@@ -339,22 +366,18 @@ impl TxEmitter {
                     e
                 )
             })?[0];
-        Ok(AccountData {
-            address,
-            key_pair: mint_key_pair.clone(),
-            sequence_number,
-        })
+        Ok(LocalAccount::new(address, account_key, sequence_number))
     }
 
     pub async fn load_vasp_account(
         &self,
-        client: &JsonRpcAsyncClient,
+        client: &JsonRpcClient,
         index: usize,
-    ) -> Result<AccountData> {
+    ) -> Result<LocalAccount> {
         let file = "vasp".to_owned() + index.to_string().as_str() + ".key";
         let mint_key: Ed25519PrivateKey = generate_key::load_key(file);
-        let mint_key_pair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey> = KeyPair::from(mint_key);
-        let address = libra_types::account_address::from_public_key(&mint_key_pair.public_key);
+        let account_key = AccountKey::from_private_key(mint_key);
+        let address = account_key.authentication_key().derived_address();
         let sequence_number = query_sequence_numbers(&client, &[address])
             .await
             .map_err(|e| {
@@ -364,23 +387,19 @@ impl TxEmitter {
                     e
                 )
             })?[0];
-        Ok(AccountData {
-            address,
-            key_pair: mint_key_pair.clone(),
-            sequence_number,
-        })
+        Ok(LocalAccount::new(address, account_key, sequence_number))
     }
 
     pub async fn get_money_source(
         &self,
         instances: &[Instance],
         coins_total: u64,
-    ) -> Result<AccountData> {
+    ) -> Result<LocalAccount> {
         let client = self.pick_mint_instance(instances).json_rpc_client();
-        let faucet_account = if !self.premainnet {
+        let faucet_account = if !self.vasp {
             info!("Creating and minting faucet account");
             let mut account = self.load_faucet_account(&client).await?;
-            let mint_txn = gen_mint_request(&mut account, coins_total, self.chain_id);
+            let mint_txn = gen_mint_request(&mut account, coins_total, &self.tx_factory);
             execute_and_wait_transactions(
                 &mut self.pick_mint_client(instances),
                 &mut account,
@@ -393,9 +412,9 @@ impl TxEmitter {
             info!("Loading faucet account from DD account");
             self.load_dd_account(&client).await?
         };
-        let balance = retrieve_account_balance(&client, faucet_account.address).await?;
+        let balance = retrieve_account_balance(&client, faucet_account.address()).await?;
         for b in balance {
-            if b.currency.eq(COIN1_NAME) {
+            if b.currency.eq(XUS_NAME) {
                 info!(
                     "DD account current balances are {}, requested {} coins",
                     b.amount, coins_total
@@ -410,9 +429,9 @@ impl TxEmitter {
         &self,
         instances: &[Instance],
         seed_account_num: usize,
-    ) -> Result<Vec<AccountData>> {
+    ) -> Result<Vec<LocalAccount>> {
         let client = self.pick_mint_instance(instances).json_rpc_client();
-        let seed_accounts = if !self.premainnet {
+        let seed_accounts = if !self.vasp {
             info!("Creating and minting seeds accounts");
             let mut account = self.load_tc_account(&client).await?;
             let seed_accounts = create_seed_accounts(
@@ -482,7 +501,7 @@ impl TxEmitter {
         info!("Minting additional {} accounts", num_accounts);
 
         let seed_rngs = gen_rng_for_reusable_account(actual_num_seed_accounts);
-        // For each seed account, create a future and transfer libra from that seed account to new accounts
+        // For each seed account, create a future and transfer diem from that seed account to new accounts
         let account_futures = seed_accounts
             .into_iter()
             .enumerate()
@@ -498,7 +517,7 @@ impl TxEmitter {
                     20,
                     client,
                     self.chain_id,
-                    self.premainnet || *REUSE_ACC,
+                    self.vasp || *REUSE_ACC,
                     seed_rngs[i].clone(),
                 )
             });
@@ -541,7 +560,7 @@ impl TxEmitter {
         let mut prev_stats: Option<TxStats> = None;
         while Instant::now() < deadline {
             let window = Duration::from_secs(interval_secs);
-            tokio::time::delay_for(window).await;
+            tokio::time::sleep(window).await;
             let stats = self.peek_job_stats(job);
             let delta = &stats - &prev_stats.unwrap_or_default();
             prev_stats = Some(stats);
@@ -555,7 +574,7 @@ impl TxEmitter {
         emit_job_request: EmitJobRequest,
     ) -> Result<TxStats> {
         let job = self.start_job(emit_job_request).await?;
-        tokio::time::delay_for(duration).await;
+        tokio::time::sleep(duration).await;
         let stats = self.stop_job(job).await;
         Ok(stats)
     }
@@ -579,10 +598,11 @@ impl TxEmitter {
     ) -> Result<u64> {
         let client = instance.json_rpc_client();
         let resp = client
-            .get_accounts(slice::from_ref(address))
+            .get_account(*address)
             .await
-            .map_err(|e| format_err!("[{:?}] get_accounts failed: {:?} ", client, e))?;
-        Ok(resp[0]
+            .map_err(|e| format_err!("[{:?}] get_accounts failed: {:?} ", client, e))?
+            .into_inner();
+        Ok(resp
             .as_ref()
             .ok_or_else(|| format_err!("account does not exist"))?
             .sequence_number)
@@ -590,22 +610,77 @@ impl TxEmitter {
 }
 
 struct Worker {
-    join_handle: JoinHandle<Vec<AccountData>>,
+    join_handle: JoinHandle<Vec<LocalAccount>>,
 }
 
 struct SubmissionWorker {
-    accounts: Vec<AccountData>,
-    client: JsonRpcAsyncClient,
+    accounts: Vec<LocalAccount>,
+    client: JsonRpcClient,
     all_addresses: Arc<Vec<AccountAddress>>,
     stop: Arc<AtomicBool>,
     params: EmitThreadParams,
     stats: Arc<StatsAccumulator>,
     chain_id: ChainId,
+    invalid_tx: u64,
+}
+
+fn get_invalid_type() -> InvalidTxType {
+    let mut rng = rand::thread_rng();
+    match rng.gen_range(0..InvalidTxType::MaxValue as usize) {
+        1 => InvalidTxType::Receiver,
+        2 => InvalidTxType::Sender,
+        3 => InvalidTxType::ChainId,
+        _ => InvalidTxType::Duplication,
+    }
+}
+
+fn invalid_tx(
+    sender: &mut LocalAccount,
+    receiver: &AccountAddress,
+    chain_id: ChainId,
+    gas_price: u64,
+    reqs: &[SignedTransaction],
+) -> SignedTransaction {
+    let seed: [u8; 32] = OsRng.gen();
+    let mut rng = StdRng::from_seed(seed);
+    let mut invalid_account = LocalAccount::generate(&mut rng);
+    let invalid_address = invalid_account.address();
+    let tx_factory = TransactionFactory::new(chain_id).with_gas_unit_price(gas_price);
+    match get_invalid_type() {
+        InvalidTxType::Receiver => {
+            gen_transfer_txn_request(sender, &invalid_address, SEND_AMOUNT, tx_factory)
+        }
+        InvalidTxType::Sender => {
+            gen_transfer_txn_request(&mut invalid_account, receiver, SEND_AMOUNT, tx_factory)
+        }
+        InvalidTxType::ChainId => gen_transfer_txn_request(
+            sender,
+            receiver,
+            SEND_AMOUNT,
+            tx_factory.with_chain_id(ChainId::new(255)),
+        ),
+        InvalidTxType::Duplication => {
+            // if this is the first tx, default to generate invalid tx with wrong chain id
+            // otherwise, make a duplication of an exist valid tx
+            if reqs.is_empty() {
+                gen_transfer_txn_request(
+                    sender,
+                    receiver,
+                    SEND_AMOUNT,
+                    tx_factory.with_chain_id(ChainId::new(255)),
+                )
+            } else {
+                let random_index = rng.gen_range(0..reqs.len() as usize);
+                reqs[random_index].clone()
+            }
+        }
+        _ => panic!("wrong invalid type"),
+    }
 }
 
 impl SubmissionWorker {
     #[allow(clippy::collapsible_if)]
-    async fn run(mut self, gas_price: u64) -> Vec<AccountData> {
+    async fn run(mut self, gas_price: u64) -> Vec<LocalAccount> {
         let wait = Duration::from_millis(self.params.wait_millis);
         while !self.stop.load(Ordering::Relaxed) {
             let requests = self.gen_requests(gas_price);
@@ -617,7 +692,7 @@ impl SubmissionWorker {
                 let cur_time = Instant::now();
                 tx_offset_time += (cur_time - start_time).as_millis() as u64;
                 self.stats.submitted.fetch_add(1, Ordering::Relaxed);
-                let resp = self.client.submit_transaction(request).await;
+                let resp = self.client.submit(&request).await;
                 if let Err(e) = resp {
                     warn!("[{:?}] Failed to submit request: {:?}", self.client, e);
                 }
@@ -667,7 +742,7 @@ impl SubmissionWorker {
             }
             let now = Instant::now();
             if wait_util > now {
-                time::delay_for(wait_util - now).await;
+                time::sleep(wait_util - now).await;
             }
         }
         self.accounts
@@ -681,25 +756,40 @@ impl SubmissionWorker {
             .iter_mut()
             .choose_multiple(&mut rng, batch_size);
         let mut requests = Vec::with_capacity(accounts.len());
+        let invalid_size = if self.invalid_tx != 0 {
+            // if enable mix invalid tx, at least 1 invalid tx per batch
+            max(1, accounts.len() * self.invalid_tx as usize / 100)
+        } else {
+            0
+        };
+        let mut num_valid_tx = accounts.len() - invalid_size;
         for sender in accounts {
             let receiver = self
                 .all_addresses
                 .choose(&mut rng)
                 .expect("all_addresses can't be empty");
-            let request =
-                gen_transfer_txn_request(sender, receiver, SEND_AMOUNT, self.chain_id, gas_price);
-            requests.push(request);
+            if num_valid_tx > 0 {
+                let tx_factory =
+                    TransactionFactory::new(self.chain_id).with_gas_unit_price(gas_price);
+                let request = gen_transfer_txn_request(sender, receiver, SEND_AMOUNT, tx_factory);
+                requests.push(request);
+                num_valid_tx -= 1;
+            } else {
+                let request = invalid_tx(sender, receiver, self.chain_id, gas_price, &requests);
+                requests.push(request);
+            }
         }
+
         requests
     }
 }
 
 async fn wait_for_accounts_sequence(
-    client: &JsonRpcAsyncClient,
-    accounts: &mut [AccountData],
+    client: &JsonRpcClient,
+    accounts: &mut [LocalAccount],
 ) -> Result<(), Vec<(AccountAddress, u64)>> {
     let deadline = Instant::now() + TXN_MAX_WAIT;
-    let addresses: Vec<_> = accounts.iter().map(|d| d.address).collect();
+    let addresses: Vec<_> = accounts.iter().map(|d| d.address()).collect();
     loop {
         match query_sequence_numbers(client, &addresses).await {
             Err(e) => {
@@ -707,7 +797,7 @@ async fn wait_for_accounts_sequence(
                     "Failed to query ledger info on accounts {:?} for instance {:?} : {:?}",
                     addresses, client, e
                 );
-                time::delay_for(Duration::from_millis(300)).await;
+                time::sleep(Duration::from_millis(300)).await;
             }
             Ok(sequence_numbers) => {
                 if is_sequence_equal(accounts, &sequence_numbers) {
@@ -716,24 +806,24 @@ async fn wait_for_accounts_sequence(
                 let mut uncommitted = vec![];
                 if Instant::now() > deadline {
                     for (account, sequence_number) in zip(accounts, &sequence_numbers) {
-                        if account.sequence_number != *sequence_number {
-                            warn!("Wait deadline exceeded for account {}, expected sequence {}, got from server: {}", account.address, account.sequence_number, sequence_number);
-                            uncommitted.push((account.address, *sequence_number));
-                            account.sequence_number = *sequence_number;
+                        if account.sequence_number() != *sequence_number {
+                            warn!("Wait deadline exceeded for account {}, expected sequence {}, got from server: {}", account.address(), account.sequence_number(), sequence_number);
+                            uncommitted.push((account.address(), *sequence_number));
+                            *account.sequence_number_mut() = *sequence_number;
                         }
                     }
                     return Err(uncommitted);
                 }
             }
         }
-        time::delay_for(Duration::from_millis(100)).await;
+        time::sleep(Duration::from_millis(100)).await;
     }
     Ok(())
 }
 
-fn is_sequence_equal(accounts: &[AccountData], sequence_numbers: &[u64]) -> bool {
+fn is_sequence_equal(accounts: &[LocalAccount], sequence_numbers: &[u64]) -> bool {
     for (account, sequence_number) in zip(accounts, sequence_numbers) {
-        if *sequence_number != account.sequence_number {
+        if *sequence_number != account.sequence_number() {
             return false;
         }
     }
@@ -741,14 +831,23 @@ fn is_sequence_equal(accounts: &[AccountData], sequence_numbers: &[u64]) -> bool
 }
 
 async fn query_sequence_numbers(
-    client: &JsonRpcAsyncClient,
+    client: &JsonRpcClient,
     addresses: &[AccountAddress],
 ) -> Result<Vec<u64>> {
     let mut result = vec![];
     for addresses_batch in addresses.chunks(20) {
         let resp = client
-            .get_accounts(addresses_batch)
-            .await
+            .batch(
+                addresses_batch
+                    .iter()
+                    .map(|a| MethodRequest::get_account(*a))
+                    .collect(),
+            )
+            .await?
+            .into_iter()
+            .map(|r| r.map_err(anyhow::Error::new))
+            .map(|r| r.map(|response| response.into_inner().unwrap_get_account()))
+            .collect::<Result<Vec<_>>>()
             .map_err(|e| format_err!("[{:?}] get_accounts failed: {:?} ", client, e))?;
 
         for item in resp.into_iter() {
@@ -761,167 +860,104 @@ async fn query_sequence_numbers(
     Ok(result)
 }
 
-const MAX_GAS_AMOUNT: u64 = 1_000_000;
-const GAS_CURRENCY_CODE: &str = COIN1_NAME;
-const TXN_EXPIRATION_SECONDS: i64 = 50;
+const TXN_EXPIRATION_SECONDS: i64 = 150;
 const TXN_MAX_WAIT: Duration = Duration::from_secs(TXN_EXPIRATION_SECONDS as u64 + 30);
 const MAX_TXNS: u64 = 1_000_000;
 const SEND_AMOUNT: u64 = 1;
 
 async fn retrieve_account_balance(
-    client: &JsonRpcAsyncClient,
+    client: &JsonRpcClient,
     address: AccountAddress,
 ) -> Result<Vec<AmountView>> {
     let resp = client
-        .get_accounts(&[address])
+        .get_account(address)
         .await
-        .map_err(|e| format_err!("[{:?}] get_accounts failed: {:?} ", client, e))?;
-    Ok(resp[0]
-        .clone()
+        .map_err(|e| format_err!("[{:?}] get_accounts failed: {:?} ", client, e))?
+        .into_inner();
+    Ok(resp
         .ok_or_else(|| format_err!("account does not exist"))?
         .balances)
 }
 
-pub fn gen_submit_transaction_request(
-    script: Script,
-    sender_account: &mut AccountData,
-    chain_id: ChainId,
-    gas_price: u64,
-) -> SignedTransaction {
-    let transaction = create_user_txn(
-        &sender_account.key_pair,
-        TransactionPayload::Script(script),
-        sender_account.address,
-        sender_account.sequence_number,
-        MAX_GAS_AMOUNT,
-        gas_price,
-        GAS_CURRENCY_CODE.to_owned(),
-        TXN_EXPIRATION_SECONDS,
-        chain_id,
-    )
-    .expect("Failed to create signed transaction");
-    sender_account.sequence_number += 1;
-    transaction
-}
-
 fn gen_mint_request(
-    faucet_account: &mut AccountData,
+    faucet_account: &mut LocalAccount,
     num_coins: u64,
-    chain_id: ChainId,
+    tx_factory: &TransactionFactory,
 ) -> SignedTransaction {
-    let receiver = faucet_account.address;
-    gen_submit_transaction_request(
-        transaction_builder::encode_peer_to_peer_with_metadata_script(
-            account_config::coin1_tmp_tag(),
-            receiver,
-            num_coins,
-            vec![],
-            vec![],
-        ),
-        faucet_account,
-        chain_id,
-        0,
-    )
+    let receiver = faucet_account.address();
+    faucet_account.sign_with_transaction_builder(tx_factory.peer_to_peer(
+        Currency::XUS,
+        receiver,
+        num_coins,
+    ))
 }
 
-fn gen_transfer_txn_request(
-    sender: &mut AccountData,
+pub fn gen_transfer_txn_request(
+    sender: &mut LocalAccount,
     receiver: &AccountAddress,
     num_coins: u64,
-    chain_id: ChainId,
-    gas_price: u64,
+    mut tx_factory: TransactionFactory,
 ) -> SignedTransaction {
-    gen_submit_transaction_request(
-        transaction_builder::encode_peer_to_peer_with_metadata_script(
-            account_config::coin1_tmp_tag(),
-            *receiver,
-            num_coins,
-            vec![],
-            vec![],
-        ),
-        sender,
-        chain_id,
-        gas_price,
-    )
+    if *SCRIPT_FN {
+        tx_factory = tx_factory.with_diem_version(2);
+    }
+    sender.sign_with_transaction_builder(tx_factory.peer_to_peer(
+        Currency::XUS,
+        *receiver,
+        num_coins,
+    ))
 }
 
 fn gen_create_child_txn_request(
-    sender: &mut AccountData,
-    receiver: &AccountAddress,
-    receiver_auth_key_prefix: Vec<u8>,
+    sender: &mut LocalAccount,
+    receiver_auth_key: AuthenticationKey,
     num_coins: u64,
     chain_id: ChainId,
 ) -> SignedTransaction {
-    let add_all_currencies = false;
-    gen_submit_transaction_request(
-        transaction_builder::encode_create_child_vasp_account_script(
-            account_config::coin1_tmp_tag(),
-            *receiver,
-            receiver_auth_key_prefix,
-            add_all_currencies,
+    sender.sign_with_transaction_builder(
+        TransactionFactory::new(chain_id).create_child_vasp_account(
+            Currency::XUS,
+            receiver_auth_key,
+            false,
             num_coins,
         ),
-        sender,
-        chain_id,
-        0,
     )
 }
 
 fn gen_create_account_txn_request(
-    sender: &mut AccountData,
-    receiver: &AccountAddress,
-    auth_key_prefix: Vec<u8>,
+    creation_account: &mut LocalAccount,
+    account: &LocalAccount,
     chain_id: ChainId,
 ) -> SignedTransaction {
-    gen_submit_transaction_request(
-        transaction_builder::encode_create_parent_vasp_account_script(
-            account_config::coin1_tmp_tag(),
+    creation_account.sign_with_transaction_builder(
+        TransactionFactory::new(chain_id).create_parent_vasp_account(
+            Currency::XUS,
             0,
-            *receiver,
-            auth_key_prefix,
-            vec![],
+            account.authentication_key(),
+            "",
             false,
         ),
-        sender,
-        chain_id,
-        0,
     )
 }
 
 fn gen_mint_txn_request(
-    sender: &mut AccountData,
+    sender: &mut LocalAccount,
     receiver: &AccountAddress,
     num_coins: u64,
     chain_id: ChainId,
 ) -> SignedTransaction {
-    gen_submit_transaction_request(
-        transaction_builder::encode_peer_to_peer_with_metadata_script(
-            account_config::coin1_tmp_tag(),
-            *receiver,
-            num_coins,
-            vec![],
-            vec![],
-        ),
-        sender,
-        chain_id,
-        0,
-    )
+    sender.sign_with_transaction_builder(TransactionFactory::new(chain_id).peer_to_peer(
+        Currency::XUS,
+        *receiver,
+        num_coins,
+    ))
 }
 
-fn gen_random_account(rng: &mut StdRng) -> AccountData {
-    let key_pair = KeyPair::generate(rng);
-    AccountData {
-        address: libra_types::account_address::from_public_key(&key_pair.public_key),
-        key_pair,
-        sequence_number: 0,
-    }
-}
-
-fn gen_random_accounts(num_accounts: usize) -> Vec<AccountData> {
+fn gen_random_accounts(num_accounts: usize) -> Vec<LocalAccount> {
     let seed: [u8; 32] = OsRng.gen();
     let mut rng = StdRng::from_seed(seed);
     (0..num_accounts)
-        .map(|_| gen_random_account(&mut rng))
+        .map(|_| LocalAccount::generate(&mut rng))
         .collect()
 }
 
@@ -939,28 +975,21 @@ fn gen_rng_for_reusable_account(count: usize) -> Vec<StdRng> {
     rngs
 }
 
-async fn gen_reusable_account(
-    client: &JsonRpcAsyncClient,
-    rng: &mut StdRng,
-) -> Result<AccountData> {
-    let mint_key_pair = KeyPair::generate(rng);
-    let address = libra_types::account_address::from_public_key(&mint_key_pair.public_key);
+async fn gen_reusable_account(client: &JsonRpcClient, rng: &mut StdRng) -> Result<LocalAccount> {
+    let account_key = AccountKey::generate(rng);
+    let address = account_key.authentication_key().derived_address();
     let sequence_number = match query_sequence_numbers(&client, &[address]).await {
         Ok(v) => v[0],
         Err(_) => 0,
     };
-    Ok(AccountData {
-        address,
-        key_pair: mint_key_pair.clone(),
-        sequence_number,
-    })
+    Ok(LocalAccount::new(address, account_key, sequence_number))
 }
 
 async fn gen_reusable_accounts(
-    client: &JsonRpcAsyncClient,
+    client: &JsonRpcClient,
     num_accounts: usize,
     rng: &mut StdRng,
-) -> Result<Vec<AccountData>> {
+) -> Result<Vec<LocalAccount>> {
     let mut vasp_accounts = vec![];
     let mut i = 0;
     while i < num_accounts {
@@ -971,8 +1000,8 @@ async fn gen_reusable_accounts(
 }
 
 fn gen_create_child_txn_requests(
-    source_account: &mut AccountData,
-    accounts: &[AccountData],
+    source_account: &mut LocalAccount,
+    accounts: &[LocalAccount],
     amount: u64,
     chain_id: ChainId,
 ) -> Vec<SignedTransaction> {
@@ -981,8 +1010,7 @@ fn gen_create_child_txn_requests(
         .map(|account| {
             gen_create_child_txn_request(
                 source_account,
-                &account.address,
-                account.auth_key_prefix(),
+                account.authentication_key(),
                 amount,
                 chain_id,
             )
@@ -991,56 +1019,49 @@ fn gen_create_child_txn_requests(
 }
 
 fn gen_account_creation_txn_requests(
-    sending_account: &mut AccountData,
-    accounts: &[AccountData],
+    creation_account: &mut LocalAccount,
+    accounts: &[LocalAccount],
     chain_id: ChainId,
 ) -> Vec<SignedTransaction> {
     accounts
         .iter()
-        .map(|account| {
-            gen_create_account_txn_request(
-                sending_account,
-                &account.address,
-                account.auth_key_prefix(),
-                chain_id,
-            )
-        })
+        .map(|account| gen_create_account_txn_request(creation_account, account, chain_id))
         .collect()
 }
 
 fn gen_mint_txn_requests(
-    sending_account: &mut AccountData,
-    accounts: &[AccountData],
+    sending_account: &mut LocalAccount,
+    accounts: &[LocalAccount],
     amount: u64,
     chain_id: ChainId,
 ) -> Vec<SignedTransaction> {
     accounts
         .iter()
-        .map(|account| gen_mint_txn_request(sending_account, &account.address, amount, chain_id))
+        .map(|account| gen_mint_txn_request(sending_account, &account.address(), amount, chain_id))
         .collect()
 }
 
 pub async fn execute_and_wait_transactions(
-    client: &mut JsonRpcAsyncClient,
-    account: &mut AccountData,
+    client: &mut JsonRpcClient,
+    account: &mut LocalAccount,
     txn: Vec<SignedTransaction>,
 ) -> Result<()> {
     debug!(
         "[{:?}] Submitting transactions {} - {} for {}",
         client,
-        account.sequence_number - txn.len() as u64,
-        account.sequence_number,
-        account.address
+        account.sequence_number() - txn.len() as u64,
+        account.sequence_number(),
+        account.address()
     );
     for request in txn {
-        libra_retrier::retry_async(libra_retrier::fixed_retry_strategy(5_000, 20), || {
+        diem_retrier::retry_async(diem_retrier::fixed_retry_strategy(5_000, 20), || {
             let request = request.clone();
             let c = client.clone();
             let client_name = format!("{:?}", client);
             Box::pin(async move {
                 let txn_str = format!("{}::{}", request.sender(), request.sequence_number());
                 debug!("Submitting txn {}", txn_str);
-                let resp = c.submit_transaction(request).await;
+                let resp = c.submit(&request).await;
                 debug!("txn {} status: {:?}", txn_str, resp);
 
                 resp.map_err(|e| format_err!("[{}] Failed to submit request: {:?}", client_name, e))
@@ -1053,23 +1074,25 @@ pub async fn execute_and_wait_transactions(
         .map_err(|_| format_err!("Mint transactions were not committed before expiration"));
     debug!(
         "[{:?}] Account {} is at sequence number {} now",
-        client, account.address, account.sequence_number
+        client,
+        account.address(),
+        account.sequence_number()
     );
     r
 }
 
-/// Create `num_new_accounts` by transferring libra from `source_account`. Return Vec of created
+/// Create `num_new_accounts` by transferring diem from `source_account`. Return Vec of created
 /// accounts
 async fn create_new_accounts(
-    mut source_account: AccountData,
+    mut source_account: LocalAccount,
     num_new_accounts: usize,
-    libra_per_new_account: u64,
+    diem_per_new_account: u64,
     max_num_accounts_per_batch: u64,
-    mut client: JsonRpcAsyncClient,
+    mut client: JsonRpcClient,
     chain_id: ChainId,
     reuse_account: bool,
     mut rng: StdRng,
-) -> Result<Vec<AccountData>> {
+) -> Result<Vec<LocalAccount>> {
     let mut i = 0;
     let mut accounts = vec![];
     while i < num_new_accounts {
@@ -1086,7 +1109,7 @@ async fn create_new_accounts(
         let requests = gen_create_child_txn_requests(
             &mut source_account,
             &batch,
-            libra_per_new_account,
+            diem_per_new_account,
             chain_id,
         );
         execute_and_wait_transactions(&mut client, &mut source_account, requests).await?;
@@ -1098,12 +1121,12 @@ async fn create_new_accounts(
 
 /// Create `num_new_accounts`. Return Vec of created accounts
 async fn create_seed_accounts(
-    creation_account: &mut AccountData,
+    creation_account: &mut LocalAccount,
     num_new_accounts: usize,
     max_num_accounts_per_batch: u64,
-    mut client: JsonRpcAsyncClient,
+    mut client: JsonRpcClient,
     chain_id: ChainId,
-) -> Result<Vec<AccountData>> {
+) -> Result<Vec<LocalAccount>> {
     let mut i = 0;
     let mut accounts = vec![];
     while i < num_new_accounts {
@@ -1119,13 +1142,13 @@ async fn create_seed_accounts(
     Ok(accounts)
 }
 
-/// Mint `libra_per_new_account` from `minting_account` to each account in `accounts`.
+/// Mint `diem_per_new_account` from `minting_account` to each account in `accounts`.
 async fn mint_to_new_accounts(
-    minting_account: &mut AccountData,
-    accounts: &[AccountData],
-    libra_per_new_account: u64,
+    minting_account: &mut LocalAccount,
+    accounts: &[LocalAccount],
+    diem_per_new_account: u64,
     max_num_accounts_per_batch: u64,
-    mut client: JsonRpcAsyncClient,
+    mut client: JsonRpcClient,
     chain_id: ChainId,
 ) -> Result<()> {
     let mut left = accounts;
@@ -1139,27 +1162,12 @@ async fn mint_to_new_accounts(
             );
         let (to_batch, rest) = left.split_at(batch_size + 1);
         let mint_requests =
-            gen_mint_txn_requests(minting_account, to_batch, libra_per_new_account, chain_id);
+            gen_mint_txn_requests(minting_account, to_batch, diem_per_new_account, chain_id);
         execute_and_wait_transactions(&mut client, minting_account, mint_requests).await?;
         i += to_batch.len();
         left = rest;
     }
     Ok(())
-}
-
-#[derive(Clone)]
-pub struct AccountData {
-    pub address: AccountAddress,
-    pub key_pair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey>,
-    pub sequence_number: u64,
-}
-
-impl AccountData {
-    pub fn auth_key_prefix(&self) -> Vec<u8> {
-        AuthenticationKey::ed25519(&self.key_pair.public_key)
-            .prefix()
-            .to_vec()
-    }
 }
 
 impl StatsAccumulator {

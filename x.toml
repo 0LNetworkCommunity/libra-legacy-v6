@@ -1,14 +1,29 @@
-tools = [
-   ["sccache", "0.2.13"],
-   ["grcov", "0.5.15"],
-]
+[grcov.installer]
+version = "0.6.1"
 
 [system-tests]
 smoke-test = { path = "smoke-test" }
 
-[cargo]
-toolchain = "nightly-2020-07-08"
-flags = "-Zfeatures=all"
+[cargo.sccache]
+bucket = "ci-artifacts.diem.com"
+prefix = "sccache/diem/"
+public = true
+region = "us-west-2"
+endpoint = "https://s3-us-west-2.amazonaws.com"
+required-cargo-home = "/opt/cargo/"
+required-git-home = "/opt/git/diem"
+envs = [
+   #To debug sccache uncomment the two lines below.
+   #["SCCACHE_ERROR_LOG","/tmp/sccache_log"],
+   #["SCCACHE_LOG", "sccache::compiler::compiler=trace,rusoto_core::request=trace"],
+]
+
+[cargo.sccache.installer]
+version = "0.2.16-alpha.0"
+git = "https://github.com/diem/sccache.git"
+git-rev = "ef50d87a58260c30767520045e242ccdbdb965af"
+features = [ "s3" ]
+
 
 [fix]
 
@@ -16,20 +31,72 @@ flags = "-Zfeatures=all"
 allowed = [
     # Deriving Arbitrary often causes this warning to show up.
     "clippy::unit_arg",
-    # Known to have false positive at the moment,
-    "clippy::mutable_key_type",
     "clippy::eval-order-dependence",
     "clippy::new-without-default",
+    "clippy::rc_buffer",
+    "clippy::upper_case_acronyms",
+    "clippy::len-without-is-empty",
 ]
 warn = [
     "clippy::wildcard_dependencies",
 ]
 
+[hakari]
+version = "v2"
+hakari-package = "diem-workspace-hack"
+unify-target-host = "replicate-target-as-host"
+
+[[hakari.platforms]]
+triple = "x86_64-unknown-linux-gnu"
+target-features = "unknown"
+
+[[hakari.platforms]]
+triple = "x86_64-apple-darwin"
+target-features = "unknown"
+
+# Ideally we'd have powerpc-unknown-linux-gnu here as well, but unification causes openssl-sys to be included,
+# and openssl can't be cross-compiled without extra work. This may need to be fixed in hakari through being able
+# to say "consider only these packages for these target platforms".
+
+# Don't consider the crypto packages as they do weird things with mutually exclusive features.
+[[hakari.omitted-packages]]
+name = "diem-crypto"
+version = "0.1.0"
+workspace-path = "crypto/crypto"
+
+[[hakari.omitted-packages]]
+name = "diem-crypto-derive"
+version = "0.1.0"
+workspace-path = "crypto/crypto-derive"
+
+# Also exclude the devtools packages since they get compiled with a different set of options.
+[[hakari.omitted-packages]]
+name = "x"
+version = "0.1.0"
+workspace-path = "devtools/x"
+
+[[hakari.omitted-packages]]
+name = "x-core"
+version = "0.1.0"
+workspace-path = "devtools/x-core"
+
+[[hakari.omitted-packages]]
+name = "x-lint"
+version = "0.1.0"
+workspace-path = "devtools/x-lint"
+
+# Exclude the fail crate because the failpoints feature should only be enabled
+# for certain builds.
+[[hakari.omitted-packages]]
+name = "fail"
+version = "0.4.0"
+crates-io = true
+
 # This follows the same syntax as CargoOptionsSummary in guppy.
 [summaries.default]
 version = "v2"
 include-dev = false
-proc-macros-on-target = false
+initials-platform = "standard"
 
 [summaries.default.target-platform]
 triple = "x86_64-unknown-linux-gnu"
@@ -40,18 +107,32 @@ triple = "x86_64-unknown-linux-gnu"
 target-features = "all"
 
 [[summaries.default.omitted-packages]]
-name = "libra-workspace-hack"
+name = "diem-workspace-hack"
 version = "0.1.0"
 workspace-path = "common/workspace-hack"
 
 [summaries.full]
 version = "v2"
 include-dev = true
-proc-macros-on-target = false
+initials-platform = "standard"
 # Don't set target or host platforms, or omitted packages, for the full set.
 
+[workspace]
+
+# Regex for allowed characters in paths. Regex must have ^ and $ anchors.
+allowed-paths = "^([a-zA-Z0-9._\\-/@:]|-)+$"
+
+whitespace-exceptions = [
+    ".github/actions/*/dist/*",
+    # TODO: reevaluate skipping whitespace checks in .md files for the website
+    "developers.diem.com/**/*.md",
+    "**/*.exp",
+    "**/*.errmap",
+    "**/*.abi",
+]
+
 [workspace.enforced-attributes]
-authors = ["Libra Association <opensource@libra.org>"]
+authors = ["Diem Association <opensource@diem.com>"]
 license = "Apache-2.0"
 
 [workspace.banned-deps.direct]
@@ -65,11 +146,11 @@ proptest = "proptest is only for testing and fuzzing"
 features = ["fuzzing"]
 
 # This is a list of test-only members. These are workspace members that do not form part of the main
-# Libra production codebase, and are only used to verify correctness and/or performance.
+# Diem production codebase, and are only used to verify correctness and/or performance.
 #
 # *** IMPORTANT ***
 #
-# Published developer tools (e.g. Move compiler) ARE part of the production Libra codebase.
+# Published developer tools (e.g. Move compiler) ARE part of the production Diem codebase.
 # They should be listed in the root Cargo.toml's default-members, not here!
 #
 # Before adding a new crate to this list, ensure that it is *actually* test-only. If not, add it
@@ -78,62 +159,194 @@ features = ["fuzzing"]
 # For more, see the "Conditional compilation for tests" section in documentation/coding_guidelines.md.
 [workspace.test-only]
 members = [
-    "common/channel/many-keys-stress-test",
-    "common/libradoc",
-    "common/proptest-helpers",
-    "common/retrier",
-    "devtools/x",
-    "devtools/x-core",
-    "devtools/x-lint",
-    "execution/executor-benchmark",
-    "execution/executor-test-helpers",
-    "language/benchmarks",
-    "language/bytecode-verifier/bytecode-verifier-tests",
-    "language/bytecode-verifier/invalid-mutations",
-    "language/e2e-testsuite",
-    "language/testing-infra/e2e-tests",
-    "language/testing-infra/functional-tests",
-    "language/testing-infra/test-generation",
-    "language/testing-infra/module-generation",
-    "language/ir-testsuite",
-    "language/move-lang/functional-tests",
-    "language/move-prover/test-utils",
-    "language/move-vm/integration-tests",
-    "language/vm/serializer-tests",
-    "network/memsocket",
-    "network/socket-bench-server",
-    "testsuite/cli",
-    "testsuite/cli/libra-wallet",
-    "testsuite/cluster-test",
-    "testsuite/generate-format",
-    "testsuite/libra-fuzzer",
-    "testsuite/libra-fuzzer/fuzz",
-    "testsuite/libra-swarm",
-    "testsuite/smoke-test",
+    # Please keep this list in alphabetical order!
+
+    "bytecode-interpreter-testsuite",
+    "bytecode-verifier-tests",
+    "cli",
+    "cluster-test",
+    "diem-documentation-tool",
+    "diem-fuzz",
+    "diem-fuzzer",
+    "diem-json-rpc-client",
+    "diem-proptest-helpers",
+    "diem-read-write-set",
+    "diem-retrier",
+    "diem-smoke-test-attribute",
+    "diem-swarm",
+    "diem-wallet",
+    "diemdb-benchmark",
+    "executor-benchmark",
+    "executor-test-helpers",
+    "forge",
+    "functional-tests",
+    "generate-format",
+    "invalid-mutations",
+    "ir-testsuite",
+    "jsonrpc-types-proto",
+    "language-benchmarks",
+    "language-e2e-tests",
+    "language-e2e-testsuite",
+    "many-keys-stress-test",
+    "memsocket",
+    "module-generation",
+    "move-lang-functional-tests",
+    "move-lang-ir-utils",
+    "move-lang-test-utils",
+    "move-oncall-trainer",
+    "move-prover-test-utils",
+    "move-vm-integration-tests",
+    "offchain",
+    "scratchpad-benchmark",
+    "sdk-compatibility",
+    "serializer-tests",
+    "smoke-test",
+    "socket-bench-server",
+    "test-generation",
+    "x",
+    "x-core",
+    "x-lint",
+
+    # Please keep this list in alphabetical order!
+]
+
+[workspace.move-to-diem-deps]
+diem_crates_in_language = [
+    "diem-framework",
+    "diem-framework-releases",
+    "diem-events-fetcher",
+    "diem-read-write-set",
+    "diem-validator-interface",
+    "diem-transaction-replay",
+    "diem-writeset-generator",
+    "diem-vm",
+    "language-e2e-testsuite",
+    "ir-testsuite",
+    "language-e2e-tests",
+    "move-oncall-trainer",
+    "functional-tests",
+    "genesis-viewer",
+    "vm-genesis",
+    "transaction-builder",
+    "transaction-builder-generator",
+    "move-lang-functional-tests",
+]
+exclude = [
+    "diem-workspace-hack",
+]
+# This is a list of existing move to diem dependencies that we plan to eliminate over time.
+# You should refrain from adding new entries to this list in general.
+existing_deps = [
+    # Tier 0 - essential components that must be included in the first batch of crates getting
+    #          moved to the new repo
+    ["move-lang", "diem-framework"],                          # sanity check to ensure that the diem-framework compiles
+    ["invalid-mutations", "diem-proptest-helpers"],           # pick_slice_idxs
+    ["bytecode-verifier-tests", "diem-framework-releases"],
+    ["bytecode-interpreter", "diem-crypto"],                  # implementation of native functions
+    ["compiler", "diem-framework-releases"],
+    ["move-vm-natives", "diem-crypto"],
+    ["move-vm-runtime", "diem-logger"],
+    ["move-vm-runtime", "diem-crypto"],                       # using `HashValue` as keys in the script cache
+    ["abigen", "diem-types"],                                 # ABI types
+    ["move-cli", "vm-genesis"],
+    ["move-cli", "diem-vm"],
+    ["move-cli", "diem-types"],                               # `ContractEvent`
+    ["move-cli", "diem-framework"],
+    ["move-cli", "diem-framework-releases"],
+    ["move-binary-format", "num-variants"],                   # counting the number of bytecodes
+
+    # Tier 1 - crates that can wait a little bit longer?
+    ["language-benchmarks", "language-e2e-tests"],
+    ["language-benchmarks", "diem-vm"],
+    ["language-benchmarks", "diem-types"],
+    ["language-benchmarks", "diem-state-view"],
+    ["test-generation", "language-e2e-tests"],
+    ["test-generation", "diem-vm"],
+    ["test-generation", "diem-types"],
+    ["test-generation", "diem-state-view"],
+    ["test-generation", "diem-logger"],
+    ["test-generation", "diem-config"],
+    ["resource-viewer", "diem-framework-releases"],
+    ["resource-viewer", "diem-types"],
+    ["resource-viewer", "diem-state-view"],
+    ["move-explain", "diem-framework-releases"],
 ]
 
 # Interesting subsets of the workspace, These are used for generating and
 # checking dependency summaries.
 
-[workspace.subsets.lsr]
-# The Libra safety rules TCB.
-members = [
-    "consensus/safety-rules",
+[subsets.lsr]
+# The Diem safety rules TCB.
+root-members = [
+    "safety-rules",
 ]
 
-[workspace.subsets.lec]
-# The Libra execution correctness TCB.
-members = [
-    "execution/execution-correctness",
+[subsets.lec]
+# The Diem execution correctness TCB.
+root-members = [
+    "execution-correctness",
 ]
 
-[workspace.subsets.release]
-# The Libra release binaries
-members = [
-    "config/management/genesis",
-    "consensus/safety-rules",
-    "execution/db-bootstrapper",
-    "libra-node",
-    "secure/key-manager",
-    "storage/backup/backup-cli",
+[subsets.key-manager]
+# The Diem key manager TCB.
+root-members = [
+    "diem-key-manager",
 ]
+
+[subsets.release]
+# The Diem release binaries
+root-members = [
+    "backup-cli",
+    "db-bootstrapper",
+    "diem-genesis-tool",
+    "diem-key-manager",
+    "diem-node",
+    "diem-operational-tool",
+    "execution-correctness",
+    "safety-rules",
+]
+
+# ---
+# Determinator rules
+# ---
+
+# CI-related files. TODO: maybe have separate rules for local and CI?
+[[determinator.path-rule]]
+globs = [".github/**/*", "codecov.yml"]
+mark-changed = "all"
+
+# Core devtools files.
+[[determinator.path-rule]]
+globs = ["scripts/dev_setup.sh", "x.toml"]
+mark-changed = "all"
+
+[[determinator.path-rule]]
+# Ignore website and other ancillary files, and scripts not listed above.
+globs = ["developers.diem.com/**/*", "documentation/**/*", "docker/**/*", "helm/**/*", "specifications/**/*", "scripts/**/*"]
+mark-changed = []
+
+[[determinator.path-rule]]
+# A bunch of images that should be ignored, I guess.
+globs = ["diem.png", ".assets/diem.png", "storage/data.png"]
+mark-changed = []
+
+[[determinator.path-rule]]
+# Ignore *.md documentation
+globs = ["*.md"]
+mark-changed = []
+
+[[determinator.path-rule]]
+# Required by get_stdlib_script_abis in transaction-builder-generator.
+globs = ["language/diem-framework/releases/artifacts/current/script_abis/**/*"]
+mark-changed = ["transaction-builder-generator"]
+post-rule = "skip-rules"
+
+[[determinator.path-rule]]
+# On changes of diem-framework or move-stdlib, rerun the tests in move-prover.
+globs = ["language/diem-framework/**/*", "language/move-stdlib/**/*"]
+mark-changed = ["move-prover"]
+
+[[determinator.package-rule]]
+# x controls the build process, so if it changes, build everything.
+on-affected = ["x"]
+mark-changed = "all"

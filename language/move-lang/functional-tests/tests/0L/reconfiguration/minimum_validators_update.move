@@ -13,47 +13,47 @@
 //! NewBlockEvent
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
-    
-    use 0x1::LibraSystem;
-    fun main(_account: &signer) {
+    use 0x1::DiemSystem;
+
+    fun main(_account: signer) {
         // Tests on initial size of validators 
-        assert(LibraSystem::validator_set_size() == 4, 7357000180101);
-        assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
+        assert(DiemSystem::validator_set_size() == 4, 7357008004001);
+        assert(DiemSystem::is_validator(@{{alice}}) == true, 7357008004002);
     }
 }
 // check: EXECUTED
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
-    
-    use 0x1::LibraSystem;
-    fun main(_account: &signer) {
+    use 0x1::DiemSystem;
+
+    fun main(_account: signer) {
         // Tests on initial size of validators 
-        assert(LibraSystem::validator_set_size() == 4, 7357000180103);
+        assert(DiemSystem::validator_set_size() == 4, 7357000180103);
     }
 }
 
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::Vector;
     use 0x1::Stats;
 
-    fun main(vm: &signer) {
+    fun main(vm: signer) {
         let voters = Vector::empty<address>();
-        Vector::push_back<address>(&mut voters, {{alice}});
-        Vector::push_back<address>(&mut voters, {{bob}});
-        Vector::push_back<address>(&mut voters, {{carol}});
-        Vector::push_back<address>(&mut voters, {{dave}});
+        Vector::push_back<address>(&mut voters, @{{alice}});
+        Vector::push_back<address>(&mut voters, @{{bob}});
+        Vector::push_back<address>(&mut voters, @{{carol}});
+        Vector::push_back<address>(&mut voters, @{{dave}});
 
         let i = 1;
         while (i < 16) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
-            Stats::process_set_votes(vm, &voters);
+            Stats::process_set_votes(&vm, &voters);
             i = i + 1;
         };
     }
@@ -72,14 +72,14 @@ script {
 
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
+    use 0x1::DiemSystem;
     
-    use 0x1::LibraSystem;
-    fun main(_account: &signer) {
+    fun main(_account: signer) {
         // Tests on initial size of validators 
-        assert(LibraSystem::validator_set_size() == 4, 7357008004001);
-        assert(LibraSystem::is_validator({{alice}}) == true, 7357008004002);        
+        assert(DiemSystem::validator_set_size() == 4, 7357000180104);
+        assert(DiemSystem::is_validator(@{{alice}}) == true, 7357000180105);        
     }
 }
 //check: EXECUTED

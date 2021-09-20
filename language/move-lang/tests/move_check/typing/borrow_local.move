@@ -1,6 +1,6 @@
-module M {
-    struct S {}
-    resource struct R {}
+module 0x8675309::M {
+    struct S has drop {}
+    struct R {}
 
     fun t0(b: bool, u: u64, s: S, r: R): R {
         (&b : &bool);

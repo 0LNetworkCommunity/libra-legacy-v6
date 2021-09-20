@@ -1,25 +1,46 @@
 [package]
 name = "scratchpad"
 version = "0.1.0"
-authors = ["Libra Association <opensource@libra.org>"]
-description = "Libra scratchpad"
-repository = "https://github.com/libra/libra"
-homepage = "https://libra.org"
+authors = ["Diem Association <opensource@diem.com>"]
+description = "Diem scratchpad"
+repository = "https://github.com/diem/diem"
+homepage = "https://diem.com"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
 
 [dependencies]
-itertools = "0.9.0"
+arc-swap = "1.2.0"
+bitvec = {version = "0.19.4", optional = true}
+itertools = "0.10.0"
+proptest = { version = "1.0.0", optional = true }
+rayon = "1.5.0"
 
-libra-crypto = { path = "../../crypto/crypto", version = "0.1.0" }
-libra-infallible = { path = "../../common/infallible", version = "0.1.0" }
-libra-types = { path = "../../types", version = "0.1.0" }
-libra-workspace-hack = { path = "../../common/workspace-hack", version = "0.1.0" }
+diem-crypto = { path = "../../crypto/crypto" }
+diem-infallible = { path = "../../common/infallible" }
+diem-types = { path = "../../types" }
+diem-workspace-hack = { path = "../../common/workspace-hack" }
+
 
 [dev-dependencies]
-proptest = "0.10.1"
+bitvec = "0.19.4"
+criterion = "0.3.4"
+rand = "0.8.3"
+proptest = "1.0.0"
+
+diem-types = { path = "../../types", features = ["fuzzing"] }
+storage-interface = { path = "../storage-interface" }
 
 [features]
-default = []
-fuzzing = ["libra-types/fuzzing"]
+fuzzing = ["bitvec", "diem-types/fuzzing", "proptest"]
+bench = ["bitvec", "proptest"]
+
+[[bench]]
+name = "sparse_merkle"
+harness = false
+required-features = ["bench"]
+
+[lib]
+# Allow Criterion benchmarks to take command line arguments
+# https://bheisler.github.io/criterion.rs/book/faq.html#cargo-bench-gives-unrecognized-option-errors-for-valid-command-line-options
+bench = false

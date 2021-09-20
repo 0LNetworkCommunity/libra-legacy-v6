@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 extern crate test_generation;
+use move_binary_format::file_format::{Bytecode, ConstantPoolIndex, SignatureToken};
 use test_generation::abstract_state::{AbstractState, AbstractValue};
-use vm::file_format::{Bytecode, ConstantPoolIndex, SignatureToken};
 
 mod common;
 

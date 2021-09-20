@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use super::cfg::BlockCFG;
 use crate::{
-    expansion::ast::{Value, Value_},
+    expansion::ast::{Address, Value, Value_},
     hlir::ast::{Command, Command_, Exp, ExpListItem, UnannotatedExp_},
     naming::ast::{BuiltinTypeName, BuiltinTypeName_},
     parser::ast::{BinOp, BinOp_, UnaryOp, UnaryOp_},
@@ -36,11 +36,12 @@ fn optimize_cmd(sp!(_, cmd_): &mut Command) -> bool {
             let c2 = optimize_exp(el);
             c1 || c2
         }
-        C::Return(e) | C::Abort(e) | C::IgnoreAndPop { exp: e, .. } | C::JumpIf { cond: e, .. } => {
-            optimize_exp(e)
-        }
+        C::Return { exp: e, .. }
+        | C::Abort(e)
+        | C::IgnoreAndPop { exp: e, .. }
+        | C::JumpIf { cond: e, .. } => optimize_exp(e),
 
-        C::Jump(_) => false,
+        C::Jump { .. } => false,
         C::Break | C::Continue => panic!("ICE break/continue not translated to jumps"),
     }
 }
@@ -64,21 +65,15 @@ fn optimize_exp(e: &mut Exp) -> bool {
         E::ModuleCall(mcall) => optimize_exp(&mut mcall.arguments),
         E::Builtin(_, e) | E::Freeze(e) | E::Dereference(e) | E::Borrow(_, e, _) => optimize_exp(e),
 
-        E::Pack(_, _, fields) => {
-            let results = fields
-                .iter_mut()
-                .map(|(_, _, e)| optimize_exp(e))
-                .collect::<Vec<_>>();
-            results.into_iter().any(|changed| changed)
-        }
+        E::Pack(_, _, fields) => fields
+            .iter_mut()
+            .map(|(_, _, e)| optimize_exp(e))
+            .any(|changed| changed),
 
-        E::ExpList(es) => {
-            let results = es
-                .iter_mut()
-                .map(|item| optimize_exp_item(item))
-                .collect::<Vec<_>>();
-            results.into_iter().any(|changed| changed)
-        }
+        E::ExpList(es) => es
+            .iter_mut()
+            .map(|item| optimize_exp_item(item))
+            .any(|changed| changed),
 
         //************************************
         // Foldable cases
@@ -93,13 +88,8 @@ fn optimize_exp(e: &mut Exp) -> bool {
                 Some(v) => v,
                 None => return changed,
             };
-            match fold_unary_op(e.exp.loc, op, v) {
-                Some(folded) => {
-                    *e_ = folded;
-                    true
-                }
-                None => changed,
-            }
+            *e_ = fold_unary_op(e.exp.loc, op, v);
+            true
         }
 
         e_ @ E::BinopExp(_, _, _) => {
@@ -154,14 +144,14 @@ fn optimize_exp_item(item: &mut ExpListItem) -> bool {
 // Folding
 //**************************************************************************************************
 
-fn fold_unary_op(loc: Loc, sp!(_, op_): &UnaryOp, v: FoldableValue) -> Option<UnannotatedExp_> {
+fn fold_unary_op(loc: Loc, sp!(_, op_): &UnaryOp, v: FoldableValue) -> UnannotatedExp_ {
     use FoldableValue as FV;
     use UnaryOp_ as U;
     let folded = match (op_, v) {
         (U::Not, FV::Bool(b)) => FV::Bool(!b),
         (op_, v) => panic!("ICE unknown unary op. combo while folding: {} {:?}", op_, v),
     };
-    Some(evalue_(loc, folded))
+    evalue_(loc, folded)
 }
 
 fn fold_binary_op(
@@ -286,7 +276,7 @@ fn evalue_(loc: Loc, fv: FoldableValue) -> UnannotatedExp_ {
         FV::U64(u) => V::U64(u),
         FV::U128(u) => V::U128(u),
         FV::Bool(b) => V::Bool(b),
-        FV::Address(a) => V::Address(a),
+        FV::Address(a) => V::Address(Address::Anonymous(sp(loc, a))),
         FV::Bytearray(b) => V::Bytearray(b),
     };
 
@@ -303,7 +293,7 @@ enum FoldableValue {
     U64(u64),
     U128(u128),
     Bool(bool),
-    Address(Address),
+    Address(AddressBytes),
     Bytearray(Vec<u8>),
 }
 
@@ -311,12 +301,14 @@ fn foldable_value(sp!(_, v_): &Value) -> Option<FoldableValue> {
     use FoldableValue as FV;
     use Value_ as V;
     Some(match v_ {
+        V::InferredNum(_) => panic!("ICE inferred num should have been expanded"),
         V::U8(u) => FV::U8(*u),
         V::U64(u) => FV::U64(*u),
         V::U128(u) => FV::U128(*u),
         V::Bool(b) => FV::Bool(*b),
-        V::Address(a) => FV::Address(*a),
         V::Bytearray(b) => FV::Bytearray(b.clone()),
+        V::Address(Address::Anonymous(a)) => FV::Address(a.value),
+        V::Address(Address::Named(_)) => return None,
     })
 }
 

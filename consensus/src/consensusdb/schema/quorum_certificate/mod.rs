@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module defines physical storage schema for consensus quorum certificate (of a block).
@@ -12,7 +12,7 @@
 use super::QC_CF_NAME;
 use anyhow::Result;
 use consensus_types::quorum_cert::QuorumCert;
-use libra_crypto::HashValue;
+use diem_crypto::HashValue;
 use schemadb::{
     define_schema,
     schema::{KeyCodec, ValueCodec},
@@ -32,11 +32,11 @@ impl KeyCodec<QCSchema> for HashValue {
 
 impl ValueCodec<QCSchema> for QuorumCert {
     fn encode_value(&self) -> Result<Vec<u8>> {
-        Ok(lcs::to_bytes(self)?)
+        Ok(bcs::to_bytes(self)?)
     }
 
     fn decode_value(data: &[u8]) -> Result<Self> {
-        Ok(lcs::from_bytes(data)?)
+        Ok(bcs::from_bytes(data)?)
     }
 }
 

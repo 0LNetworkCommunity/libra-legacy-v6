@@ -1,13 +1,14 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    account_config::{
-        constants::ACCOUNT_MODULE_NAME, KeyRotationCapabilityResource, WithdrawCapabilityResource,
-    },
-    event::EventHandle,
+use crate::{account_config::{
+        constants::ACCOUNT_MODULE_IDENTIFIER, KeyRotationCapabilityResource,
+        WithdrawCapabilityResource,
+    }, event::EventHandle};
+use move_core_types::{
+    identifier::IdentStr,
+    move_resource::{MoveResource, MoveStructType},
 };
-use move_core_types::move_resource::MoveResource;
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
@@ -36,12 +37,12 @@ impl AccountResource {
         received_events: EventHandle,
     ) -> Self {
         AccountResource {
-            sequence_number,
+            authentication_key,
             withdrawal_capability,
             key_rotation_capability,
-            authentication_key,
-            sent_events,
             received_events,
+            sent_events,
+            sequence_number,
         }
     }
 
@@ -74,9 +75,25 @@ impl AccountResource {
     pub fn received_events(&self) -> &EventHandle {
         &self.received_events
     }
+
+    //////// 0L /////////
+    /// Replace the authkey in place
+    pub fn rotate_auth_key(mut self, new_key: Vec<u8>) -> Self {
+        self.authentication_key = new_key;
+        AccountResource {
+            authentication_key: self.authentication_key,
+            withdrawal_capability: self.withdrawal_capability,
+            key_rotation_capability: self.key_rotation_capability,
+            received_events: self.received_events,
+            sent_events: self.sent_events,
+            sequence_number: self.sequence_number,
+        }
+    }
 }
 
-impl MoveResource for AccountResource {
-    const MODULE_NAME: &'static str = ACCOUNT_MODULE_NAME;
-    const STRUCT_NAME: &'static str = ACCOUNT_MODULE_NAME;
+impl MoveStructType for AccountResource {
+    const MODULE_NAME: &'static IdentStr = ACCOUNT_MODULE_IDENTIFIER;
+    const STRUCT_NAME: &'static IdentStr = ACCOUNT_MODULE_IDENTIFIER;
 }
+
+impl MoveResource for AccountResource {}

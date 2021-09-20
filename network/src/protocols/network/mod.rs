@@ -1,7 +1,7 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-//! Convenience Network API for Libra
+//! Convenience Network API for Diem
 
 pub use crate::protocols::rpc::error::RpcError;
 use crate::{
@@ -10,22 +10,22 @@ use crate::{
         ConnectionNotification, ConnectionRequestSender, PeerManagerNotification,
         PeerManagerRequestSender,
     },
+    transport::ConnectionMetadata,
     ProtocolId,
 };
 use bytes::Bytes;
-use channel::libra_channel;
+use channel::diem_channel;
+use diem_logger::prelude::*;
+use diem_types::{network_address::NetworkAddress, PeerId};
 use futures::{
     channel::oneshot,
     future,
     stream::{FilterMap, FusedStream, Map, Select, Stream, StreamExt},
     task::{Context, Poll},
 };
-use libra_logger::prelude::*;
-use libra_network_address::NetworkAddress;
-use libra_types::PeerId;
-use netcore::transport::ConnectionOrigin;
 use pin_project::pin_project;
 use serde::{de::DeserializeOwned, Serialize};
+use short_hex_str::AsShortHexStr;
 use std::{cmp::min, marker::PhantomData, pin::Pin, time::Duration};
 
 pub trait Message: DeserializeOwned + Serialize {}
@@ -34,12 +34,12 @@ impl<T: DeserializeOwned + Serialize> Message for T {}
 /// Events received by network clients in a validator
 ///
 /// An enumeration of the various types of messages that the network will be sending
-/// to its clients. This differs from [`NetworkNotification`] since the contents are deserialized
+/// to its clients. This differs from [`PeerNotification`] since the contents are deserialized
 /// into the type `TMessage` over which `Event` is generic. Note that we assume here that for every
 /// consumer of this API there's a singleton message type, `TMessage`,  which encapsulates all the
 /// messages and RPCs that are received by that consumer.
 ///
-/// [`NetworkNotification`]: crate::interface::NetworkNotification
+/// [`PeerNotification`]: crate::peer::PeerNotification
 #[derive(Debug)]
 pub enum Event<TMessage> {
     /// New inbound direct-send message from peer.
@@ -49,9 +49,9 @@ pub enum Event<TMessage> {
     /// layer will handle sending the response over-the-wire.
     RpcRequest(PeerId, TMessage, oneshot::Sender<Result<Bytes, RpcError>>),
     /// Peer which we have a newly established connection with.
-    NewPeer(PeerId, ConnectionOrigin),
+    NewPeer(ConnectionMetadata),
     /// Peer with which we've lost our connection.
-    LostPeer(PeerId, ConnectionOrigin),
+    LostPeer(ConnectionMetadata),
 }
 
 /// impl PartialEq for simpler testing
@@ -62,10 +62,8 @@ impl<TMessage: PartialEq> PartialEq for Event<TMessage> {
             (Message(pid1, msg1), Message(pid2, msg2)) => pid1 == pid2 && msg1 == msg2,
             // ignore oneshot::Sender in comparison
             (RpcRequest(pid1, msg1, _), RpcRequest(pid2, msg2, _)) => pid1 == pid2 && msg1 == msg2,
-            (NewPeer(pid1, origin1), NewPeer(pid2, origin2)) => pid1 == pid2 && origin1 == origin2,
-            (LostPeer(pid1, origin1), LostPeer(pid2, origin2)) => {
-                pid1 == pid2 && origin1 == origin2
-            }
+            (NewPeer(metadata1), NewPeer(metadata2)) => metadata1 == metadata2,
+            (LostPeer(metadata1), LostPeer(metadata2)) => metadata1 == metadata2,
             _ => false,
         }
     }
@@ -77,18 +75,18 @@ impl<TMessage: PartialEq> PartialEq for Event<TMessage> {
 /// and dropped.
 ///
 /// `NetworkEvents` is really just a thin wrapper around a
-/// `channel::Receiver<NetworkNotification>` that deserializes inbound messages.
+/// `channel::Receiver<PeerNotification>` that deserializes inbound messages.
 #[pin_project]
 pub struct NetworkEvents<TMessage> {
     #[pin]
     event_stream: Select<
         FilterMap<
-            libra_channel::Receiver<(PeerId, ProtocolId), PeerManagerNotification>,
+            diem_channel::Receiver<(PeerId, ProtocolId), PeerManagerNotification>,
             future::Ready<Option<Event<TMessage>>>,
             fn(PeerManagerNotification) -> future::Ready<Option<Event<TMessage>>>,
         >,
         Map<
-            libra_channel::Receiver<PeerId, ConnectionNotification>,
+            diem_channel::Receiver<PeerId, ConnectionNotification>,
             fn(ConnectionNotification) -> Event<TMessage>,
         >,
     >,
@@ -98,15 +96,15 @@ pub struct NetworkEvents<TMessage> {
 /// Trait specifying the signature for `new()` `NetworkEvents`
 pub trait NewNetworkEvents {
     fn new(
-        peer_mgr_notifs_rx: libra_channel::Receiver<(PeerId, ProtocolId), PeerManagerNotification>,
-        connection_notifs_rx: libra_channel::Receiver<PeerId, ConnectionNotification>,
+        peer_mgr_notifs_rx: diem_channel::Receiver<(PeerId, ProtocolId), PeerManagerNotification>,
+        connection_notifs_rx: diem_channel::Receiver<PeerId, ConnectionNotification>,
     ) -> Self;
 }
 
 impl<TMessage: Message> NewNetworkEvents for NetworkEvents<TMessage> {
     fn new(
-        peer_mgr_notifs_rx: libra_channel::Receiver<(PeerId, ProtocolId), PeerManagerNotification>,
-        connection_notifs_rx: libra_channel::Receiver<PeerId, ConnectionNotification>,
+        peer_mgr_notifs_rx: diem_channel::Receiver<(PeerId, ProtocolId), PeerManagerNotification>,
+        connection_notifs_rx: diem_channel::Receiver<PeerId, ConnectionNotification>,
     ) -> Self {
         let data_event_stream = peer_mgr_notifs_rx.filter_map(
             peer_mgr_notif_to_event
@@ -140,7 +138,7 @@ fn peer_mgr_notif_to_event<TMessage: Message>(
 ) -> future::Ready<Option<Event<TMessage>>> {
     let maybe_event = match notif {
         PeerManagerNotification::RecvRpc(peer_id, rpc_req) => {
-            match lcs::from_bytes(&rpc_req.data) {
+            match bcs::from_bytes(&rpc_req.data) {
                 Ok(req_msg) => Some(Event::RpcRequest(peer_id, req_msg, rpc_req.res_tx)),
                 Err(err) => {
                     let data = &rpc_req.data;
@@ -155,7 +153,7 @@ fn peer_mgr_notif_to_event<TMessage: Message>(
                 }
             }
         }
-        PeerManagerNotification::RecvMessage(peer_id, msg) => match lcs::from_bytes(&msg.mdata) {
+        PeerManagerNotification::RecvMessage(peer_id, msg) => match bcs::from_bytes(&msg.mdata) {
             Ok(msg) => Some(Event::Message(peer_id, msg)),
             Err(err) => {
                 let data = &msg.mdata;
@@ -175,12 +173,8 @@ fn peer_mgr_notif_to_event<TMessage: Message>(
 
 fn control_msg_to_event<TMessage>(notif: ConnectionNotification) -> Event<TMessage> {
     match notif {
-        ConnectionNotification::NewPeer(peer_id, _addr, origin, _context) => {
-            Event::NewPeer(peer_id, origin)
-        }
-        ConnectionNotification::LostPeer(peer_id, _addr, origin, _reason) => {
-            Event::LostPeer(peer_id, origin)
-        }
+        ConnectionNotification::NewPeer(metadata, _context) => Event::NewPeer(metadata),
+        ConnectionNotification::LostPeer(metadata, _context, _reason) => Event::LostPeer(metadata),
     }
 }
 
@@ -197,7 +191,7 @@ impl<TMessage> FusedStream for NetworkEvents<TMessage> {
 /// keys.
 ///
 /// `NetworkSender` is in fact a thin wrapper around a `PeerManagerRequestSender`, which in turn is
-/// a thin wrapper on `libra_channel::Sender<(PeerId, ProtocolId), PeerManagerRequest>`,
+/// a thin wrapper on `diem_channel::Sender<(PeerId, ProtocolId), PeerManagerRequest>`,
 /// mostly focused on providing a more ergonomic API. However, network applications will usually
 /// provide their own thin wrapper around `NetworkSender` that narrows the API to the specific
 /// interface they need. For instance, `mempool` only requires direct-send functionality so its
@@ -261,7 +255,7 @@ impl<TMessage: Message> NetworkSender<TMessage> {
         protocol: ProtocolId,
         message: TMessage,
     ) -> Result<(), NetworkError> {
-        let mdata = lcs::to_bytes(&message)?.into();
+        let mdata = bcs::to_bytes(&message)?.into();
         self.peer_mgr_reqs_tx.send_to(recipient, protocol, mdata)?;
         Ok(())
     }
@@ -275,7 +269,7 @@ impl<TMessage: Message> NetworkSender<TMessage> {
         message: TMessage,
     ) -> Result<(), NetworkError> {
         // Serialize message.
-        let mdata = lcs::to_bytes(&message)?.into();
+        let mdata = bcs::to_bytes(&message)?.into();
         self.peer_mgr_reqs_tx
             .send_to_many(recipients, protocol, mdata)?;
         Ok(())
@@ -292,12 +286,12 @@ impl<TMessage: Message> NetworkSender<TMessage> {
         timeout: Duration,
     ) -> Result<TMessage, RpcError> {
         // serialize request
-        let req_data = lcs::to_bytes(&req_msg)?.into();
+        let req_data = bcs::to_bytes(&req_msg)?.into();
         let res_data = self
             .peer_mgr_reqs_tx
             .send_rpc(recipient, protocol, req_data, timeout)
             .await?;
-        let res_msg: TMessage = lcs::from_bytes(&res_data)?;
+        let res_msg: TMessage = bcs::from_bytes(&res_data)?;
         Ok(res_msg)
     }
 }

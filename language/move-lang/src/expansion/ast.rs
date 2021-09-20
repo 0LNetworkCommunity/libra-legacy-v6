@@ -1,37 +1,71 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    errors::Error,
     parser::ast::{
-        BinOp, ConstantName, Field, FunctionName, FunctionVisibility, Kind, ModuleIdent,
-        ResourceLoc, SpecApplyPattern, SpecBlockTarget, SpecConditionKind, StructName, UnaryOp,
-        Var,
+        Ability, Ability_, BinOp, ConstantName, Field, FunctionName, ModuleName, QuantKind,
+        SpecApplyPattern, SpecConditionKind, StructName, UnaryOp, Var, Visibility,
     },
-    shared::{ast_debug::*, unique_map::UniqueMap, *},
+    shared::{ast_debug::*, unique_map::UniqueMap, unique_set::UniqueSet, *},
 };
 use move_ir_types::location::*;
 use std::{
     collections::{BTreeMap, BTreeSet, VecDeque},
     fmt,
+    hash::Hash,
 };
 
 //**************************************************************************************************
 // Program
 //**************************************************************************************************
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Program {
+    // Map of declared named addresses, and their values if specified
+    pub addresses: UniqueMap<Name, Option<Spanned<AddressBytes>>>,
     pub modules: UniqueMap<ModuleIdent, ModuleDefinition>,
     pub scripts: BTreeMap<String, Script>,
+}
+
+//**************************************************************************************************
+// Attributes
+//**************************************************************************************************
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum AttributeValue_ {
+    Value(Value),
+    ModuleAccess(ModuleAccess),
+}
+pub type AttributeValue = Spanned<AttributeValue_>;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Attribute_ {
+    Name(Name),
+    Assigned(Name, Box<AttributeValue>),
+    Parameterized(Name, Vec<Attribute>),
+}
+pub type Attribute = Spanned<Attribute_>;
+
+impl Attribute_ {
+    pub fn attribute_name(&self) -> &Name {
+        match self {
+            Attribute_::Name(nm)
+            | Attribute_::Assigned(nm, _)
+            | Attribute_::Parameterized(nm, _) => nm,
+        }
+    }
 }
 
 //**************************************************************************************************
 // Scripts
 //**************************************************************************************************
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Script {
+    pub attributes: Vec<Attribute>,
     pub loc: Loc,
+    pub immediate_neighbors: UniqueMap<ModuleIdent, Neighbor>,
     pub constants: UniqueMap<ConstantName, Constant>,
     pub function_name: FunctionName,
     pub function: Function,
@@ -42,14 +76,48 @@ pub struct Script {
 // Modules
 //**************************************************************************************************
 
-#[derive(Debug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Address {
+    Anonymous(Spanned<AddressBytes>),
+    Named(Name),
+}
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ModuleIdent_ {
+    pub address: Address,
+    pub module: ModuleName,
+}
+pub type ModuleIdent = Spanned<ModuleIdent_>;
+
+#[derive(Debug, Clone)]
 pub struct ModuleDefinition {
+    pub attributes: Vec<Attribute>,
     pub loc: Loc,
     pub is_source_module: bool,
+    /// `dependency_order` is the topological order/rank in the dependency graph.
+    /// `dependency_order` is initialized at `0` and set in the uses pass
+    pub dependency_order: usize,
+    pub immediate_neighbors: UniqueMap<ModuleIdent, Neighbor>,
+    pub friends: UniqueMap<ModuleIdent, Friend>,
     pub structs: UniqueMap<StructName, StructDefinition>,
     pub functions: UniqueMap<FunctionName, Function>,
     pub constants: UniqueMap<ConstantName, Constant>,
     pub specs: Vec<SpecBlock>,
+}
+
+//**************************************************************************************************
+// Friend
+//**************************************************************************************************
+
+#[derive(Debug, Clone)]
+pub struct Friend {
+    pub attributes: Vec<Attribute>,
+    pub loc: Loc,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
+pub enum Neighbor {
+    Dependency,
+    Friend,
 }
 
 //**************************************************************************************************
@@ -58,15 +126,16 @@ pub struct ModuleDefinition {
 
 pub type Fields<T> = UniqueMap<Field, (usize, T)>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct StructDefinition {
+    pub attributes: Vec<Attribute>,
     pub loc: Loc,
-    pub resource_opt: ResourceLoc,
-    pub type_parameters: Vec<(Name, Kind)>,
+    pub abilities: AbilitySet,
+    pub type_parameters: Vec<(Name, AbilitySet)>,
     pub fields: StructFields,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum StructFields {
     Defined(Fields<Type>),
     Native(Loc),
@@ -76,15 +145,14 @@ pub enum StructFields {
 // Functions
 //**************************************************************************************************
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Clone, Debug)]
 pub struct FunctionSignature {
-    pub type_parameters: Vec<(Name, Kind)>,
+    pub type_parameters: Vec<(Name, AbilitySet)>,
     pub parameters: Vec<(Var, Type)>,
     pub return_type: Type,
 }
 
-#[derive(PartialEq, Debug)]
-
+#[derive(PartialEq, Clone, Debug)]
 pub enum FunctionBody_ {
     Defined(Sequence),
     Native,
@@ -94,10 +162,11 @@ pub type FunctionBody = Spanned<FunctionBody_>;
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct SpecId(usize);
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Clone, Debug)]
 pub struct Function {
+    pub attributes: Vec<Attribute>,
     pub loc: Loc,
-    pub visibility: FunctionVisibility,
+    pub visibility: Visibility,
     pub signature: FunctionSignature,
     pub acquires: Vec<ModuleAccess>,
     pub body: FunctionBody,
@@ -108,8 +177,9 @@ pub struct Function {
 // Constants
 //**************************************************************************************************
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Clone, Debug)]
 pub struct Constant {
+    pub attributes: Vec<Attribute>,
     pub loc: Loc,
     pub signature: Type,
     pub value: Exp,
@@ -119,14 +189,25 @@ pub struct Constant {
 // Specification Blocks
 //**************************************************************************************************
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SpecBlock_ {
+    pub attributes: Vec<Attribute>,
     pub target: SpecBlockTarget,
     pub members: Vec<SpecBlockMember>,
 }
 pub type SpecBlock = Spanned<SpecBlock_>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
+pub enum SpecBlockTarget_ {
+    Code,
+    Module,
+    Member(Name, Option<Box<FunctionSignature>>),
+    Schema(Name, Vec<(Name, AbilitySet)>),
+}
+
+pub type SpecBlockTarget = Spanned<SpecBlockTarget_>;
+
+#[derive(Debug, Clone, PartialEq)]
 #[allow(clippy::large_enum_variant)]
 pub enum SpecBlockMember_ {
     Condition {
@@ -144,11 +225,12 @@ pub enum SpecBlockMember_ {
     Variable {
         is_global: bool,
         name: Name,
-        type_parameters: Vec<(Name, Kind)>,
+        type_parameters: Vec<(Name, AbilitySet)>,
         type_: Type,
     },
     Let {
         name: Name,
+        post_state: bool,
         def: Exp,
     },
     Include {
@@ -166,25 +248,34 @@ pub enum SpecBlockMember_ {
 }
 pub type SpecBlockMember = Spanned<SpecBlockMember_>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PragmaProperty_ {
     pub name: Name,
-    pub value: Option<Value>,
+    pub value: Option<PragmaValue>,
 }
 pub type PragmaProperty = Spanned<PragmaProperty_>;
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum PragmaValue {
+    Literal(Value),
+    Ident(ModuleAccess),
+}
 
 //**************************************************************************************************
 // Types
 //**************************************************************************************************
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct AbilitySet(UniqueSet<Ability>);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ModuleAccess_ {
     Name(Name),
     ModuleAccess(ModuleIdent, Name),
 }
 pub type ModuleAccess = Spanned<ModuleAccess_>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(clippy::large_enum_variant)]
 pub enum Type_ {
     Unit,
@@ -200,7 +291,7 @@ pub type Type = Spanned<Type_>;
 // Expressions
 //**************************************************************************************************
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum LValue_ {
     Var(ModuleAccess, Option<Vec<Type>>),
     Unpack(ModuleAccess, Option<Vec<Type>>, Fields<LValue>),
@@ -209,7 +300,12 @@ pub type LValue = Spanned<LValue_>;
 pub type LValueList_ = Vec<LValue>;
 pub type LValueList = Spanned<LValueList_>;
 
-#[derive(Debug, PartialEq)]
+pub type LValueWithRange_ = (LValue, Exp);
+pub type LValueWithRange = Spanned<LValueWithRange_>;
+pub type LValueWithRangeList_ = Vec<LValueWithRange>;
+pub type LValueWithRangeList = Spanned<LValueWithRangeList_>;
+
+#[derive(Debug, Clone, PartialEq)]
 #[allow(clippy::large_enum_variant)]
 pub enum ExpDotted_ {
     Exp(Exp),
@@ -217,10 +313,12 @@ pub enum ExpDotted_ {
 }
 pub type ExpDotted = Spanned<ExpDotted_>;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Value_ {
     // 0x<hex representation up to 64 digits with padding 0s>
     Address(Address),
+    // <num>
+    InferredNum(u128),
     // <num>u8
     U8(u8),
     // <num>u64
@@ -234,11 +332,10 @@ pub enum Value_ {
 }
 pub type Value = Spanned<Value_>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(clippy::large_enum_variant)]
 pub enum Exp_ {
     Value(Value),
-    InferredNum(u128),
     Move(Var),
     Copy(Var),
 
@@ -251,6 +348,13 @@ pub enum Exp_ {
     Loop(Box<Exp>),
     Block(Sequence),
     Lambda(LValueList, Box<Exp>), // spec only
+    Quant(
+        QuantKind,
+        LValueWithRangeList,
+        Vec<Vec<Exp>>,
+        Option<Box<Exp>>,
+        Box<Exp>,
+    ), // spec only
 
     Assign(LValueList, Box<Exp>),
     FieldMutate(Box<ExpDotted>, Box<Exp>),
@@ -266,7 +370,9 @@ pub enum Exp_ {
     BinopExp(Box<Exp>, BinOp, Box<Exp>),
 
     ExpList(Vec<Exp>),
-    Unit { trailing: bool },
+    Unit {
+        trailing: bool,
+    },
 
     Borrow(bool, Box<Exp>),
     ExpDotted(Box<ExpDotted>),
@@ -282,7 +388,7 @@ pub enum Exp_ {
 pub type Exp = Spanned<Exp_>;
 
 pub type Sequence = VecDeque<SequenceItem>;
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum SequenceItem_ {
     Seq(Exp),
     Declare(LValueList, Option<Type>),
@@ -291,8 +397,76 @@ pub enum SequenceItem_ {
 pub type SequenceItem = Spanned<SequenceItem_>;
 
 //**************************************************************************************************
+// Traits
+//**************************************************************************************************
+
+impl TName for ModuleIdent {
+    type Key = ModuleIdent_;
+    type Loc = Loc;
+
+    fn drop_loc(self) -> (Loc, ModuleIdent_) {
+        (self.loc, self.value)
+    }
+
+    fn add_loc(loc: Loc, value: ModuleIdent_) -> ModuleIdent {
+        sp(loc, value)
+    }
+
+    fn borrow(&self) -> (&Loc, &ModuleIdent_) {
+        (&self.loc, &self.value)
+    }
+}
+
+impl fmt::Debug for Address {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self)
+    }
+}
+
+//**************************************************************************************************
 // impls
 //**************************************************************************************************
+
+impl Address {
+    pub const fn anonymous(loc: Loc, address: [u8; ADDRESS_LENGTH]) -> Self {
+        Self::Anonymous(sp(loc, AddressBytes::new(address)))
+    }
+
+    pub fn into_addr_bytes_opt(
+        self,
+        addresses: &UniqueMap<Name, AddressBytes>,
+    ) -> Option<AddressBytes> {
+        match self {
+            Self::Anonymous(sp!(_, bytes)) => Some(bytes),
+            Self::Named(n) => addresses.get(&n).cloned(),
+        }
+    }
+
+    pub fn into_addr_bytes(
+        self,
+        addresses: &UniqueMap<Name, AddressBytes>,
+        loc: Loc,
+        case: &str,
+    ) -> Result<AddressBytes, Error> {
+        match self {
+            Self::Anonymous(sp!(_, bytes)) => Ok(bytes),
+            Self::Named(n) => match addresses.get(&n) {
+                Some(a) => Ok(*a),
+                None => {
+                    let unable_msg = format!("Unable to fully compile and resolve {}", case);
+                    let addr_msg = format!("No value specified for address '{}'", n);
+                    Err(vec![(loc, unable_msg), (n.loc, addr_msg)])
+                }
+            },
+        }
+    }
+}
+
+impl ModuleIdent_ {
+    pub fn new(address: Address, module: ModuleName) -> Self {
+        Self { address, module }
+    }
+}
 
 impl SpecId {
     pub fn new(u: usize) -> Self {
@@ -304,9 +478,176 @@ impl SpecId {
     }
 }
 
+impl AbilitySet {
+    /// All abilities
+    pub const ALL: [Ability_; 4] = [
+        Ability_::Copy,
+        Ability_::Drop,
+        Ability_::Store,
+        Ability_::Key,
+    ];
+    /// Abilities for bool, u8, u64, u128, and address
+    pub const PRIMITIVES: [Ability_; 3] = [Ability_::Copy, Ability_::Drop, Ability_::Store];
+    /// Abilities for &_ and &mut _
+    pub const REFERENCES: [Ability_; 2] = [Ability_::Copy, Ability_::Drop];
+    /// Abilities for signer
+    pub const SIGNER: [Ability_; 1] = [Ability_::Drop];
+    /// Abilities for vector<_>, note they are predicated on the type argument
+    pub const COLLECTION: [Ability_; 3] = [Ability_::Copy, Ability_::Drop, Ability_::Store];
+
+    pub fn empty() -> Self {
+        AbilitySet(UniqueSet::new())
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn add(&mut self, a: Ability) -> Result<(), Loc> {
+        self.0.add(a).map_err(|(_a, loc)| loc)
+    }
+
+    pub fn has_ability(&self, a: &Ability) -> bool {
+        self.0.contains(&a)
+    }
+
+    pub fn has_ability_(&self, a: Ability_) -> bool {
+        self.0.contains_(&a)
+    }
+
+    // intersection of two sets. Keeps the loc of the first set
+    pub fn intersect(&self, other: &Self) -> Self {
+        Self(self.0.intersect(&other.0))
+    }
+
+    // union of two sets. Prefers the loc of the first set
+    pub fn union(&self, other: &Self) -> Self {
+        Self(self.0.union(&other.0))
+    }
+
+    pub fn is_subset(&self, other: &Self) -> bool {
+        self.0.is_subset(&other.0)
+    }
+
+    pub fn iter(&self) -> AbilitySetIter {
+        self.into_iter()
+    }
+
+    pub fn from_abilities(
+        iter: impl IntoIterator<Item = Ability>,
+    ) -> Result<Self, (Ability_, Loc, Loc)> {
+        Ok(Self(UniqueSet::from_elements(iter)?))
+    }
+
+    pub fn from_abilities_(
+        loc: Loc,
+        iter: impl IntoIterator<Item = Ability_>,
+    ) -> Result<Self, (Ability_, Loc, Loc)> {
+        Ok(Self(UniqueSet::from_elements_(loc, iter)?))
+    }
+
+    pub fn all(loc: Loc) -> Self {
+        Self::from_abilities_(loc, Self::ALL.to_vec()).unwrap()
+    }
+
+    pub fn primitives(loc: Loc) -> Self {
+        Self::from_abilities_(loc, Self::PRIMITIVES.to_vec()).unwrap()
+    }
+
+    pub fn references(loc: Loc) -> Self {
+        Self::from_abilities_(loc, Self::REFERENCES.to_vec()).unwrap()
+    }
+
+    pub fn signer(loc: Loc) -> Self {
+        Self::from_abilities_(loc, Self::SIGNER.to_vec()).unwrap()
+    }
+
+    pub fn collection(loc: Loc) -> Self {
+        Self::from_abilities_(loc, Self::COLLECTION.to_vec()).unwrap()
+    }
+}
+
+//**************************************************************************************************
+// Iter
+//**************************************************************************************************
+
+pub struct AbilitySetIter<'a>(unique_set::Iter<'a, Ability>);
+
+impl<'a> Iterator for AbilitySetIter<'a> {
+    type Item = Ability;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next().map(|(loc, a_)| sp(loc, *a_))
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
+    }
+}
+
+impl<'a> IntoIterator for &'a AbilitySet {
+    type Item = Ability;
+    type IntoIter = AbilitySetIter<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        AbilitySetIter(self.0.iter())
+    }
+}
+
+pub struct AbilitySetIntoIter(unique_set::IntoIter<Ability>);
+
+impl Iterator for AbilitySetIntoIter {
+    type Item = Ability;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
+    }
+}
+
+impl<'a> IntoIterator for AbilitySet {
+    type Item = Ability;
+    type IntoIter = AbilitySetIntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        AbilitySetIntoIter(self.0.into_iter())
+    }
+}
+
 //**************************************************************************************************
 // Display
 //**************************************************************************************************
+
+impl fmt::Display for Address {
+    fn fmt(&self, f: &mut fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Self::Anonymous(sp!(_, bytes)) => write!(f, "{}", bytes),
+            Self::Named(n) => write!(f, "{}", n),
+        }
+    }
+}
+
+impl fmt::Display for Neighbor {
+    fn fmt(&self, f: &mut fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Neighbor::Dependency => write!(f, "neighbor#dependency"),
+            Neighbor::Friend => write!(f, "neighbor#friend"),
+        }
+    }
+}
+
+impl fmt::Display for ModuleIdent_ {
+    fn fmt(&self, f: &mut fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}::{}", self.address, &self.module)
+    }
+}
 
 impl fmt::Display for ModuleAccess_ {
     fn fmt(&self, f: &mut fmt::Formatter) -> std::fmt::Result {
@@ -356,8 +697,20 @@ impl fmt::Display for SpecId {
 
 impl AstDebug for Program {
     fn ast_debug(&self, w: &mut AstWriter) {
-        let Program { modules, scripts } = self;
-        for (m, mdef) in modules {
+        let Program {
+            addresses,
+            modules,
+            scripts,
+        } = self;
+        for (_, addr, bytes) in addresses {
+            w.write(&format!("address {}", addr));
+            if let Some(bytes) = bytes {
+                w.write(&format!(" = {}", bytes))
+            }
+            w.writeln(";");
+        }
+
+        for (m, mdef) in modules.key_cloned_iter() {
             w.write(&format!("module {}", m));
             w.block(|w| mdef.ast_debug(w));
             w.new_line();
@@ -371,16 +724,65 @@ impl AstDebug for Program {
     }
 }
 
+impl AstDebug for AttributeValue_ {
+    fn ast_debug(&self, w: &mut AstWriter) {
+        match self {
+            AttributeValue_::Value(v) => v.ast_debug(w),
+            AttributeValue_::ModuleAccess(n) => n.ast_debug(w),
+        }
+    }
+}
+
+impl AstDebug for Attribute_ {
+    fn ast_debug(&self, w: &mut AstWriter) {
+        match self {
+            Attribute_::Name(n) => w.write(&format!("{}", n)),
+            Attribute_::Assigned(n, v) => {
+                w.write(&format!("{}", n));
+                w.write(" = ");
+                v.ast_debug(w);
+            }
+            Attribute_::Parameterized(n, inners) => {
+                w.write(&format!("{}", n));
+                w.write("(");
+                w.list(inners, ", ", |w, inner| {
+                    inner.ast_debug(w);
+                    false
+                });
+                w.write(")");
+            }
+        }
+    }
+}
+
+impl AstDebug for Vec<Attribute> {
+    fn ast_debug(&self, w: &mut AstWriter) {
+        w.write("#[");
+        w.list(self, ", ", |w, attr| {
+            attr.ast_debug(w);
+            false
+        });
+        w.write("]");
+    }
+}
+
 impl AstDebug for Script {
     fn ast_debug(&self, w: &mut AstWriter) {
         let Script {
+            attributes,
             loc: _loc,
+            immediate_neighbors,
             constants,
             function_name,
             function,
             specs,
         } = self;
-        for cdef in constants {
+        attributes.ast_debug(w);
+        for (mident, neighbor) in immediate_neighbors.key_cloned_iter() {
+            w.write(&format!("{} {};", neighbor, mident));
+            w.new_line();
+        }
+        for cdef in constants.key_cloned_iter() {
             cdef.ast_debug(w);
             w.new_line();
         }
@@ -395,27 +797,41 @@ impl AstDebug for Script {
 impl AstDebug for ModuleDefinition {
     fn ast_debug(&self, w: &mut AstWriter) {
         let ModuleDefinition {
+            attributes,
             loc: _loc,
             is_source_module,
+            dependency_order,
+            immediate_neighbors,
+            friends,
             structs,
             functions,
             constants,
             specs,
         } = self;
+        attributes.ast_debug(w);
         w.writeln(if *is_source_module {
             "source module"
         } else {
             "library module"
         });
-        for sdef in structs {
+        w.writeln(&format!("dependency order #{}", dependency_order));
+        for (mident, neighbor) in immediate_neighbors.key_cloned_iter() {
+            w.write(&format!("{} {};", neighbor, mident));
+            w.new_line();
+        }
+        for (mident, _loc) in friends.key_cloned_iter() {
+            w.write(&format!("friend {};", mident));
+            w.new_line();
+        }
+        for sdef in structs.key_cloned_iter() {
             sdef.ast_debug(w);
             w.new_line();
         }
-        for cdef in constants {
+        for cdef in constants.key_cloned_iter() {
             cdef.ast_debug(w);
             w.new_line();
         }
-        for fdef in functions {
+        for fdef in functions.key_cloned_iter() {
             fdef.ast_debug(w);
             w.new_line();
         }
@@ -426,28 +842,41 @@ impl AstDebug for ModuleDefinition {
     }
 }
 
+pub fn ability_modifiers_ast_debug(w: &mut AstWriter, abilities: &AbilitySet) {
+    if !abilities.is_empty() {
+        w.write(" has ");
+        w.list(abilities, " ", |w, ab| {
+            ab.ast_debug(w);
+            false
+        });
+    }
+}
+
 impl AstDebug for (StructName, &StructDefinition) {
     fn ast_debug(&self, w: &mut AstWriter) {
         let (
             name,
             StructDefinition {
+                attributes,
                 loc: _loc,
-                resource_opt,
+                abilities,
                 type_parameters,
                 fields,
             },
         ) = self;
+
+        attributes.ast_debug(w);
+
         if let StructFields::Native(_) = fields {
             w.write("native ");
         }
-        if resource_opt.is_some() {
-            w.write("resource ");
-        }
+
         w.write(&format!("struct {}", name));
         type_parameters.ast_debug(w);
+        ability_modifiers_ast_debug(w, abilities);
         if let StructFields::Defined(fields) = fields {
             w.block(|w| {
-                w.list(fields, ",", |w, (f, idx_st)| {
+                w.list(fields, ",", |w, (_, f, idx_st)| {
                     let (idx, st) = idx_st;
                     w.write(&format!("{}#{}: ", idx, f));
                     st.ast_debug(w);
@@ -465,6 +894,32 @@ impl AstDebug for SpecBlock_ {
         w.write("{");
         w.semicolon(&self.members, |w, m| m.ast_debug(w));
         w.write("}");
+    }
+}
+
+impl AstDebug for SpecBlockTarget_ {
+    fn ast_debug(&self, w: &mut AstWriter) {
+        match self {
+            SpecBlockTarget_::Code => {}
+            SpecBlockTarget_::Module => w.write("module "),
+            SpecBlockTarget_::Member(name, sign_opt) => {
+                w.write(&name.value);
+                if let Some(sign) = sign_opt {
+                    sign.ast_debug(w);
+                }
+            }
+            SpecBlockTarget_::Schema(n, tys) => {
+                w.write(&format!("schema {}", n.value));
+                if !tys.is_empty() {
+                    w.write("<");
+                    w.list(tys, ", ", |w, ty| {
+                        ty.ast_debug(w);
+                        true
+                    });
+                    w.write(">");
+                }
+            }
+        }
     }
 }
 
@@ -518,8 +973,16 @@ impl AstDebug for SpecBlockMember_ {
                 w.write(": ");
                 type_.ast_debug(w);
             }
-            SpecBlockMember_::Let { name, def } => {
-                w.write(&format!("let {} = ", name));
+            SpecBlockMember_::Let {
+                name,
+                post_state,
+                def,
+            } => {
+                w.write(&format!(
+                    "let {}{} = ",
+                    if *post_state { "post " } else { "" },
+                    name
+                ));
                 def.ast_debug(w);
             }
             SpecBlockMember_::Include { properties: _, exp } => {
@@ -562,7 +1025,10 @@ impl AstDebug for PragmaProperty_ {
         w.write(&self.name.value);
         if let Some(value) = &self.value {
             w.write(" = ");
-            value.ast_debug(w);
+            match value {
+                PragmaValue::Literal(l) => l.ast_debug(w),
+                PragmaValue::Ident(i) => i.ast_debug(w),
+            }
         }
     }
 }
@@ -572,14 +1038,16 @@ impl AstDebug for (FunctionName, &Function) {
         let (
             name,
             Function {
+                attributes,
                 loc: _loc,
                 visibility,
                 signature,
                 acquires,
                 body,
-                ..
+                specs: _specs,
             },
         ) = self;
+        attributes.ast_debug(w);
         visibility.ast_debug(w);
         if let FunctionBody_::Native = &body.value {
             w.write("native ");
@@ -621,11 +1089,13 @@ impl AstDebug for (ConstantName, &Constant) {
         let (
             name,
             Constant {
+                attributes,
                 loc: _loc,
                 signature,
                 value,
             },
         ) = self;
+        attributes.ast_debug(w);
         w.write(&format!("const {}:", name));
         signature.ast_debug(w);
         w.write(" = ");
@@ -666,6 +1136,34 @@ impl AstDebug for Type_ {
             }
             Type_::UnresolvedError => w.write("_|_"),
         }
+    }
+}
+
+impl AstDebug for Vec<(Name, AbilitySet)> {
+    fn ast_debug(&self, w: &mut AstWriter) {
+        if !self.is_empty() {
+            w.write("<");
+            w.comma(self, |w, tp| tp.ast_debug(w));
+            w.write(">")
+        }
+    }
+}
+
+pub fn ability_constraints_ast_debug(w: &mut AstWriter, abilities: &AbilitySet) {
+    if !abilities.is_empty() {
+        w.write(": ");
+        w.list(abilities, "+", |w, ab| {
+            ab.ast_debug(w);
+            false
+        })
+    }
+}
+
+impl AstDebug for (Name, AbilitySet) {
+    fn ast_debug(&self, w: &mut AstWriter) {
+        let (n, abilities) = self;
+        w.write(&n.value);
+        ability_constraints_ast_debug(w, abilities)
     }
 }
 
@@ -716,7 +1214,8 @@ impl AstDebug for Value_ {
     fn ast_debug(&self, w: &mut AstWriter) {
         use Value_ as V;
         w.write(&match self {
-            V::Address(addr) => format!("{}", addr),
+            V::Address(addr) => format!("@{}", addr),
+            V::InferredNum(u) => format!("{}", u),
             V::U8(u) => format!("{}u8", u),
             V::U64(u) => format!("{}u64", u),
             V::U128(u) => format!("{}u128", u),
@@ -734,7 +1233,6 @@ impl AstDebug for Exp_ {
             E::Unit {
                 trailing: _trailing,
             } => w.write("/*()*/"),
-            E::InferredNum(u) => w.write(&format!("{}", u)),
             E::Value(v) => v.ast_debug(w),
             E::Move(v) => w.write(&format!("move {}", v)),
             E::Copy(v) => w.write(&format!("copy {}", v)),
@@ -765,7 +1263,7 @@ impl AstDebug for Exp_ {
                     w.write(">");
                 }
                 w.write("{");
-                w.comma(fields, |w, (f, idx_e)| {
+                w.comma(fields, |w, (_, f, idx_e)| {
                     let (idx, e) = idx_e;
                     w.write(&format!("{}#{}: ", idx, f));
                     e.ast_debug(w);
@@ -795,6 +1293,18 @@ impl AstDebug for Exp_ {
                 w.write("fun ");
                 bs.ast_debug(w);
                 w.write(" ");
+                e.ast_debug(w);
+            }
+            E::Quant(kind, sp!(_, rs), trs, c_opt, e) => {
+                kind.ast_debug(w);
+                w.write(" ");
+                rs.ast_debug(w);
+                trs.ast_debug(w);
+                if let Some(c) = c_opt {
+                    w.write(" where ");
+                    c.ast_debug(w);
+                }
+                w.write(" : ");
                 e.ast_debug(w);
             }
             E::ExpList(es) => {
@@ -933,13 +1443,44 @@ impl AstDebug for LValue_ {
                     w.write(">");
                 }
                 w.write("{");
-                w.comma(fields, |w, (f, idx_b)| {
+                w.comma(fields, |w, (_, f, idx_b)| {
                     let (idx, b) = idx_b;
                     w.write(&format!("{}#{}: ", idx, f));
                     b.ast_debug(w);
                 });
                 w.write("}");
             }
+        }
+    }
+}
+
+impl AstDebug for Vec<LValueWithRange> {
+    fn ast_debug(&self, w: &mut AstWriter) {
+        let parens = self.len() != 1;
+        if parens {
+            w.write("(");
+        }
+        w.comma(self, |w, b| b.ast_debug(w));
+        if parens {
+            w.write(")");
+        }
+    }
+}
+
+impl AstDebug for (LValue, Exp) {
+    fn ast_debug(&self, w: &mut AstWriter) {
+        self.0.ast_debug(w);
+        w.write(" in ");
+        self.1.ast_debug(w);
+    }
+}
+
+impl AstDebug for Vec<Vec<Exp>> {
+    fn ast_debug(&self, w: &mut AstWriter) {
+        for trigger in self {
+            w.write("{");
+            w.comma(trigger, |w, b| b.ast_debug(w));
+            w.write("}");
         }
     }
 }

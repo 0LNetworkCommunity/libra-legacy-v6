@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 // Allow KiB, MiB consts
@@ -7,6 +7,8 @@
 #![allow(clippy::trivially_copy_pass_by_ref)]
 // Allow writing 1 * KiB or 1 * MiB
 #![allow(clippy::identity_op)]
+// Criterion API has changed, TODO: Remove parameterized groups, and bench()
+#![allow(deprecated)]
 
 //! Network Benchmarks
 //! ==================
@@ -42,25 +44,22 @@ use criterion::{
     criterion_group, criterion_main, AxisScale, Bencher, Criterion, ParameterizedBenchmark,
     PlotConfiguration, Throughput,
 };
+use diem_logger::prelude::*;
+use diem_types::{network_address::NetworkAddress, PeerId};
 use futures::{
     executor::block_on,
     io::{AsyncRead, AsyncWrite},
     sink::{Sink, SinkExt},
     stream::{self, FuturesUnordered, Stream, StreamExt},
 };
-use libra_logger::prelude::*;
-use libra_network_address::NetworkAddress;
-use libra_types::PeerId;
-use netcore::{
-    compat::IoCompat,
-    transport::{memory::MemoryTransport, tcp::TcpTransport, Transport},
-};
+use netcore::transport::{memory::MemoryTransport, tcp::TcpTransport, Transport};
+use network::{constants, protocols::wire::messaging::v1::network_message_frame_codec};
 use socket_bench_server::{
     build_memsocket_noise_transport, build_tcp_noise_transport, start_stream_server, Args,
 };
 use std::{fmt::Debug, io, time::Duration};
 use tokio::runtime::{Builder, Runtime};
-use tokio_util::codec::{Framed, LengthDelimitedCodec};
+use tokio_util::{codec::Framed, compat::FuturesAsyncReadCompatExt};
 
 const KiB: usize = 1 << 10;
 const MiB: usize = 1 << 20;
@@ -114,7 +113,8 @@ where
     let client_socket = runtime
         .block_on(client_transport.dial(server_peer_id, server_addr).unwrap())
         .unwrap();
-    let mut client_stream = Framed::new(IoCompat::new(client_socket), LengthDelimitedCodec::new());
+    let codec = network_message_frame_codec(constants::MAX_FRAME_SIZE);
+    let mut client_stream = Framed::new(client_socket.compat(), codec);
 
     // Benchmark client sending data to server.
     bench_client_send(b, msg_len, &mut client_stream);
@@ -214,7 +214,7 @@ fn bench_tcp_noise_send(b: &mut Bencher, msg_len: &usize, server_addr: NetworkAd
 ///    `$TCP_NOISE_ADDR`  for
 ///    benchmarks `remote_tcp`, `remote_tcp+noise` and `remote_tcp+nodelay` respectively.
 fn socket_bench(c: &mut Criterion) {
-    ::libra_logger::Logger::init_for_testing();
+    ::diem_logger::Logger::init_for_testing();
 
     let rt = Runtime::new().unwrap();
     let executor = rt.handle().clone();
@@ -321,9 +321,8 @@ fn bench_client_connection<F, T, S>(
     S: AsyncRead + AsyncWrite + Unpin + Send + 'static,
 {
     let peer_id = PeerId::random();
-    let mut runtime = Builder::new()
-        .threaded_scheduler()
-        .core_threads(concurrency as usize)
+    let runtime = Builder::new_multi_thread()
+        .worker_threads(concurrency as usize)
         .enable_all()
         .build()
         .unwrap();
@@ -372,7 +371,7 @@ fn bench_client_connection<F, T, S>(
 ///                         time:   [-9.0403% -4.6666% -0.6491%] (p = 0.06 > 0.05)
 ///                         thrpt:  [+0.6533% +4.8951% +9.9388%]
 fn connection_bench(c: &mut Criterion) {
-    ::libra_logger::Logger::init_for_testing();
+    ::diem_logger::Logger::init_for_testing();
     let concurrency_param: Vec<u64> = vec![16, 32, 64, 128];
     let args = Args::from_env();
     let bench = if let Some(noise_addr) = args.tcp_noise_addr {

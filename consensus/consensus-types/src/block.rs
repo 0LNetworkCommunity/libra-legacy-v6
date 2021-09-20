@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -7,9 +7,9 @@ use crate::{
     quorum_cert::QuorumCert,
 };
 use anyhow::{bail, ensure, format_err};
-use libra_crypto::{ed25519::Ed25519Signature, hash::CryptoHash, HashValue};
-use libra_infallible::duration_since_epoch;
-use libra_types::{
+use diem_crypto::{ed25519::Ed25519Signature, hash::CryptoHash, HashValue};
+use diem_infallible::duration_since_epoch;
+use diem_types::{
     account_address::AccountAddress, block_info::BlockInfo, block_metadata::BlockMetadata,
     epoch_state::EpochState, ledger_info::LedgerInfo, transaction::Version,
     validator_signer::ValidatorSigner, validator_verifier::ValidatorVerifier,
@@ -197,11 +197,16 @@ impl Block {
         block_data: BlockData,
         validator_signer: &ValidatorSigner,
     ) -> Self {
-        let id = block_data.hash();
         let signature = validator_signer.sign(&block_data);
+        Self::new_proposal_from_block_data_and_signature(block_data, signature)
+    }
 
+    pub fn new_proposal_from_block_data_and_signature(
+        block_data: BlockData,
+        signature: Ed25519Signature,
+    ) -> Self {
         Block {
-            id,
+            id: block_data.hash(),
             block_data,
             signature: Some(signature),
         }
@@ -262,7 +267,7 @@ impl Block {
             // we can say that too far is 5 minutes in the future
             const TIMEBOUND: u64 = 300_000_000;
             ensure!(
-                self.timestamp_usecs() <= current_ts.as_micros() as u64 + TIMEBOUND,
+                self.timestamp_usecs() <= (current_ts.as_micros() as u64).saturating_add(TIMEBOUND),
                 "Blocks must not be too far in the future"
             );
         }
@@ -289,7 +294,7 @@ impl<'de> Deserialize<'de> for Block {
         struct BlockWithoutId {
             block_data: BlockData,
             signature: Option<Ed25519Signature>,
-        };
+        }
 
         let BlockWithoutId {
             block_data,

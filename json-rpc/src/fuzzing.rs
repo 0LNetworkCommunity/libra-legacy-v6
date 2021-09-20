@@ -1,11 +1,11 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{methods, runtime, tests};
+use diem_config::config;
+use diem_proptest_helpers::ValueGenerator;
+use diem_types::account_state_blob::AccountStateWithProof;
 use futures::{channel::mpsc::channel, StreamExt};
-use libra_config::config;
-use libra_proptest_helpers::ValueGenerator;
-use libra_types::account_state_blob::AccountStateWithProof;
 use std::sync::Arc;
 use warp::reply::Reply;
 
@@ -75,9 +75,9 @@ pub fn method_fuzzer(params_data: &[u8], method: &str) {
 pub fn generate_corpus(gen: &mut ValueGenerator) -> Vec<u8> {
     // use proptest to generate a SignedTransaction
     let txn = gen.generate(proptest::arbitrary::any::<
-        libra_types::transaction::SignedTransaction,
+        diem_types::transaction::SignedTransaction,
     >());
-    let payload = hex::encode(lcs::to_bytes(&txn).unwrap());
+    let payload = hex::encode(bcs::to_bytes(&txn).unwrap());
     let request =
         serde_json::json!({"jsonrpc": "2.0", "method": "submit", "params": [payload], "id": 1});
     serde_json::to_vec(&request).expect("failed to convert JSON to byte array")
@@ -104,8 +104,8 @@ pub fn request_fuzzer(json_request: serde_json::Value) {
     let mut gen = ValueGenerator::new();
     let account_state_with_proof = gen.generate(proptest::prelude::any::<AccountStateWithProof>());
 
-    let db = tests::MockLibraDB {
-        version: 1 as u64,
+    let db = tests::utils::MockDiemDB {
+        version: 1,
         genesis: std::collections::HashMap::new(),
         all_accounts: std::collections::HashMap::new(),
         all_txns: vec![],
@@ -113,17 +113,15 @@ pub fn request_fuzzer(json_request: serde_json::Value) {
         account_state_with_proof: vec![account_state_with_proof],
         timestamps: vec![1598223353000000],
     };
-    let registry = Arc::new(methods::build_registry());
     let service = methods::JsonRpcService::new(
         Arc::new(db),
         mp_sender,
         config::RoleType::Validator,
-        libra_types::chain_id::ChainId::test(),
+        diem_types::chain_id::ChainId::test(),
         config::DEFAULT_BATCH_SIZE_LIMIT,
         config::DEFAULT_PAGE_SIZE_LIMIT,
     );
-    let mut rt = tokio::runtime::Builder::new()
-        .basic_scheduler()
+    let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
         .unwrap();
@@ -131,8 +129,8 @@ pub fn request_fuzzer(json_request: serde_json::Value) {
     rt.spawn(async move {
         if let Some((_, cb)) = mp_events.next().await {
             cb.send(Ok((
-                libra_types::mempool_status::MempoolStatus::new(
-                    libra_types::mempool_status::MempoolStatusCode::Accepted,
+                diem_types::mempool_status::MempoolStatus::new(
+                    diem_types::mempool_status::MempoolStatusCode::Accepted,
                 ),
                 None,
             )))
@@ -140,7 +138,7 @@ pub fn request_fuzzer(json_request: serde_json::Value) {
         }
     });
     let body = rt.block_on(async {
-        let reply = runtime::rpc_endpoint(json_request, service, registry)
+        let reply = runtime::rpc_endpoint(json_request, service, None)
             .await
             .unwrap();
 

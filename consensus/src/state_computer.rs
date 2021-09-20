@@ -1,31 +1,31 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{error::StateSyncError, state_replication::StateComputer};
 use anyhow::Result;
 use consensus_types::block::Block;
+use diem_crypto::HashValue;
+use diem_infallible::Mutex;
+use diem_logger::prelude::*;
+use diem_metrics::monitor;
+use diem_types::ledger_info::LedgerInfoWithSignatures;
 use execution_correctness::ExecutionCorrectness;
 use executor_types::{Error as ExecutionError, StateComputeResult};
 use fail::fail_point;
-use libra_crypto::HashValue;
-use libra_infallible::Mutex;
-use libra_logger::prelude::*;
-use libra_metrics::monitor;
-use libra_types::ledger_info::LedgerInfoWithSignatures;
-use state_synchronizer::StateSyncClient;
-use std::{boxed::Box, sync::Arc};
+use state_sync::client::StateSyncClient;
+use std::boxed::Box;
 
 /// Basic communication with the Execution module;
 /// implements StateComputer traits.
 pub struct ExecutionProxy {
     execution_correctness_client: Mutex<Box<dyn ExecutionCorrectness + Send + Sync>>,
-    synchronizer: Arc<StateSyncClient>,
+    synchronizer: StateSyncClient,
 }
 
 impl ExecutionProxy {
     pub fn new(
         execution_correctness_client: Box<dyn ExecutionCorrectness + Send + Sync>,
-        synchronizer: Arc<StateSyncClient>,
+        synchronizer: StateSyncClient,
     ) -> Self {
         Self {
             execution_correctness_client: Mutex::new(execution_correctness_client),
@@ -94,13 +94,16 @@ impl StateComputer for ExecutionProxy {
         // Here to start to do state synchronization where ChunkExecutor inside will
         // process chunks and commit to Storage. However, after block execution and
         // commitments, the the sync state of ChunkExecutor may be not up to date so
-        // it is required to reset the cache of ChunkExecutor in StateSynchronizer
+        // it is required to reset the cache of ChunkExecutor in State Sync
         // when requested to sync.
         let res = monitor!("sync_to", self.synchronizer.sync_to(target).await);
         // Similarily, after the state synchronization, we have to reset the cache
         // of BlockExecutor to guarantee the latest committed state is up to date.
         self.execution_correctness_client.lock().reset()?;
-        res?;
-        Ok(())
+
+        res.map_err(|error| {
+            let anyhow_error: anyhow::Error = error.into();
+            anyhow_error.into()
+        })
     }
 }

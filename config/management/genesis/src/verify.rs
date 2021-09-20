@@ -1,23 +1,24 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use executor::db_bootstrapper;
-use libra_global_constants::{
+use diem_config::config::RocksdbConfig;
+use diem_global_constants::{
     CONSENSUS_KEY, FULLNODE_NETWORK_KEY, OPERATOR_ACCOUNT, OPERATOR_KEY, OWNER_ACCOUNT, OWNER_KEY,
     SAFETY_DATA, VALIDATOR_NETWORK_KEY, WAYPOINT,
 };
-use libra_management::{
+use diem_management::{
     config::ConfigPath, error::Error, secure_backend::ValidatorBackend,
     storage::StorageWrapper as Storage,
 };
-use libra_network_address::NetworkAddress;
-use libra_temppath::TempPath;
-use libra_types::{
+use diem_temppath::TempPath;
+use diem_types::{
     account_address::AccountAddress, account_config, account_state::AccountState,
-    on_chain_config::ValidatorSet, validator_config::ValidatorConfig, waypoint::Waypoint,
+    network_address::NetworkAddress, on_chain_config::ValidatorSet,
+    validator_config::ValidatorConfig, waypoint::Waypoint,
 };
-use libra_vm::LibraVM;
-use libradb::LibraDB;
+use diem_vm::DiemVM;
+use diemdb::DiemDB;
+use executor::db_bootstrapper;
 use std::{
     convert::TryFrom,
     fmt::Write,
@@ -110,7 +111,7 @@ fn write_x25519_key(storage: &Storage, buffer: &mut String, key: &'static str) {
         .x25519_public_from_private(key)
         .map(|v| v.to_string())
         .unwrap_or_else(|e| e.to_string());
-    //////// 0L ////////        
+    //////// 0L ////////          
     writeln!(buffer, "{} x25519 - {}", key, value).unwrap();
 }
 
@@ -147,7 +148,7 @@ fn write_waypoint(storage: &Storage, buffer: &mut String, key: &'static str) {
 fn compare_genesis(
     storage: Storage,
     buffer: &mut String,
-    genesis_path: &PathBuf,
+    genesis_path: &Path,
 ) -> Result<(), Error> {
     // Compute genesis and waypoint and compare to given waypoint
     let db_path = TempPath::new();
@@ -201,28 +202,27 @@ fn compare_genesis(
     Ok(())
 }
 
-//////// 0L ////////
 /// Compute the ledger given a genesis writeset transaction and return access to that ledger and
 /// the waypoint for that state.
-pub fn compute_genesis(
-    genesis_path: &PathBuf,
+pub fn compute_genesis( //////// 0L ////////
+    genesis_path: &Path,
     db_path: &Path,
 ) -> Result<(DbReaderWriter, Waypoint), Error> {
-    let libradb =
-        LibraDB::open(db_path, false, None).map_err(|e| Error::UnexpectedError(e.to_string()))?;
-    let db_rw = DbReaderWriter::new(libradb);
+    let diemdb = DiemDB::open(db_path, false, None, RocksdbConfig::default())
+        .map_err(|e| Error::UnexpectedError(e.to_string()))?;
+    let db_rw = DbReaderWriter::new(diemdb);
 
     let mut file = File::open(genesis_path)
         .map_err(|e| Error::UnexpectedError(format!("Unable to open genesis file: {}", e)))?;
     let mut buffer = vec![];
     file.read_to_end(&mut buffer)
         .map_err(|e| Error::UnexpectedError(format!("Unable to read genesis: {}", e)))?;
-    let genesis = lcs::from_bytes(&buffer)
+    let genesis = bcs::from_bytes(&buffer)
         .map_err(|e| Error::UnexpectedError(format!("Unable to parse genesis: {}", e)))?;
 
-    let waypoint = db_bootstrapper::generate_waypoint::<LibraVM>(&db_rw, &genesis)
+    let waypoint = db_bootstrapper::generate_waypoint::<DiemVM>(&db_rw, &genesis)
         .map_err(|e| Error::UnexpectedError(e.to_string()))?;
-    db_bootstrapper::maybe_bootstrap::<LibraVM>(&db_rw, &genesis, waypoint)
+    db_bootstrapper::maybe_bootstrap::<DiemVM>(&db_rw, &genesis, waypoint)
         .map_err(|e| Error::UnexpectedError(format!("Unable to commit genesis: {}", e)))?;
 
     Ok((db_rw, waypoint))

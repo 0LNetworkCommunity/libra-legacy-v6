@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module defines traits and implementations of
 //! [cryptographic hash functions](https://en.wikipedia.org/wiki/Cryptographic_hash_function)
-//! for the Libra project.
+//! for the Diem project.
 //!
 //! It is designed to help authors protect against two types of real world attacks:
 //!
@@ -21,9 +21,9 @@
 //!    same input to the hash function and therefore the same hash. This
 //!    creates a collision.
 //!
-//! Regarding (1), this library makes it easy for Libra developers to create as
+//! Regarding (1), this library makes it easy for Diem developers to create as
 //! many new "hashable" Rust types as needed so that each Rust type hashed and signed
-//! in Libra has a unique meaning, that is, unambiguously captures the intent of a signer.
+//! in Diem has a unique meaning, that is, unambiguously captures the intent of a signer.
 //!
 //! Regarding (2), this library provides the `CryptoHasher` abstraction to easily manage
 //! cryptographic seeds for hashing. Hashing seeds aim to ensure that
@@ -31,18 +31,18 @@
 //! from another type.
 //!
 //! Finally, to prevent format ambiguity within a same type `MyNewStruct` and facilitate protocol
-//! specifications, we use [Libra Canonical Serialization (LCS)](../../libra_canonical_serialization/index.html)
+//! specifications, we use [Binary Canonical Serialization (BCS)](https://docs.rs/bcs/)
 //! as the recommended solution to write Rust values into a hasher.
 //!
 //! # Quick Start
 //!
 //! To obtain a `hash()` method for any new type `MyNewStruct`, it is (strongly) recommended to
-//! use the derive macros of `serde` and `libra_crypto_derive` as follows:
+//! use the derive macros of `serde` and `diem_crypto_derive` as follows:
 //! ```
-//! use libra_crypto::hash::CryptoHash;
-//! use libra_crypto_derive::{CryptoHasher, LCSCryptoHash};
+//! use diem_crypto::hash::CryptoHash;
+//! use diem_crypto_derive::{CryptoHasher, BCSCryptoHash};
 //! use serde::{Deserialize, Serialize};
-//! #[derive(Serialize, Deserialize, CryptoHasher, LCSCryptoHash)]
+//! #[derive(Serialize, Deserialize, CryptoHasher, BCSCryptoHash)]
 //! struct MyNewStruct { /*...*/ }
 //!
 //! let value = MyNewStruct { /*...*/ };
@@ -50,7 +50,7 @@
 //! ```
 //!
 //! Under the hood, this will generate a new implementation `MyNewStructHasher` for the trait
-//! `CryptoHasher` and implement the trait `CryptoHash` for `MyNewStruct` using LCS.
+//! `CryptoHasher` and implement the trait `CryptoHash` for `MyNewStruct` using BCS.
 //!
 //! # Implementing New Hashers
 //!
@@ -63,7 +63,7 @@
 //! use the derive macro [`CryptoHasher`](https://doc.rust-lang.org/reference/procedural-macros.html).
 //!
 //! ```
-//! use libra_crypto_derive::CryptoHasher;
+//! use diem_crypto_derive::CryptoHasher;
 //! use serde::Deserialize;
 //! #[derive(Deserialize, CryptoHasher)]
 //! #[serde(rename = "OptionalCustomSerdeName")]
@@ -92,31 +92,33 @@
 //! **IMPORTANT:** Do NOT use this for new code unless you know what you are doing.
 //!
 //! ```
-//! use libra_crypto::hash::{CryptoHasher, TestOnlyHasher};
+//! use diem_crypto::hash::{CryptoHasher, TestOnlyHasher};
 //!
 //! let mut hasher = TestOnlyHasher::default();
 //! hasher.update("Test message".as_bytes());
 //! let hash_value = hasher.finish();
 //! ```
-
-use anyhow::{ensure, Error, Result};
+#![allow(clippy::integer_arithmetic)]
 use bytes::Bytes;
-use libra_nibble::Nibble;
+use hex::FromHex;
 use mirai_annotations::*;
 use once_cell::sync::{Lazy, OnceCell};
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
 use rand::{rngs::OsRng, Rng};
 use serde::{de, ser};
-use short_hex_str::ShortHexStr;
-use static_assertions::const_assert;
-use std::{self, convert::AsRef, fmt, str::FromStr};
+use std::{
+    self,
+    convert::{AsRef, TryFrom},
+    fmt,
+    str::FromStr,
+};
 use tiny_keccak::{Hasher, Sha3};
 
-/// A prefix used to begin the salt of every libra hashable structure. The salt
+/// A prefix used to begin the salt of every diem hashable structure. The salt
 /// consists in this global prefix, concatenated with the specified
 /// serialization name of the struct.
-pub(crate) const LIBRA_HASH_PREFIX: &[u8] = b"LIBRA::";
+pub(crate) const DIEM_HASH_PREFIX: &[u8] = b"DIEM::";
 
 /// Output value of our hash function. Intentionally opaque for safety and modularity.
 #[derive(Clone, Copy, Eq, Hash, PartialEq, PartialOrd, Ord)]
@@ -130,8 +132,6 @@ impl HashValue {
     pub const LENGTH: usize = 32;
     /// The length of the hash in bits.
     pub const LENGTH_IN_BITS: usize = Self::LENGTH * 8;
-    /// The length of the hash in nibbles.
-    pub const LENGTH_IN_NIBBLES: usize = Self::LENGTH * 2;
 
     /// Create a new [`HashValue`] from a byte array.
     pub fn new(hash: [u8; HashValue::LENGTH]) -> Self {
@@ -139,17 +139,10 @@ impl HashValue {
     }
 
     /// Create from a slice (e.g. retrieved from storage).
-    pub fn from_slice(src: &[u8]) -> Result<Self> {
-        ensure!(
-            src.len() == HashValue::LENGTH,
-            "HashValue decoding failed due to length mismatch. HashValue \
-             length: {}, src length: {}",
-            HashValue::LENGTH,
-            src.len()
-        );
-        let mut value = Self::zero();
-        value.hash.copy_from_slice(src);
-        Ok(value)
+    pub fn from_slice<T: AsRef<[u8]>>(bytes: T) -> Result<Self, HashValueParseError> {
+        <[u8; Self::LENGTH]>::try_from(bytes.as_ref())
+            .map_err(|_| HashValueParseError)
+            .map(Self::new)
     }
 
     /// Dumps into a vector.
@@ -211,19 +204,26 @@ impl HashValue {
         hash
     }
 
+    /// Returns the `index`-th bit in the bytes.
+    pub fn bit(&self, index: usize) -> bool {
+        assume!(index < Self::LENGTH_IN_BITS); // assumed precondition
+        let pos = index / 8;
+        let bit = 7 - index % 8;
+        (self.hash[pos] >> bit) & 1 != 0
+    }
+
     /// Returns a `HashValueBitIterator` over all the bits that represent this `HashValue`.
     pub fn iter_bits(&self) -> HashValueBitIterator<'_> {
         HashValueBitIterator::new(self)
     }
 
     /// Constructs a `HashValue` from an iterator of bits.
-    pub fn from_bit_iter(iter: impl ExactSizeIterator<Item = bool>) -> Result<Self> {
-        ensure!(
-            iter.len() == Self::LENGTH_IN_BITS,
-            "The iterator should yield exactly {} bits. Actual number of bits: {}.",
-            Self::LENGTH_IN_BITS,
-            iter.len(),
-        );
+    pub fn from_bit_iter(
+        iter: impl ExactSizeIterator<Item = bool>,
+    ) -> Result<Self, HashValueParseError> {
+        if iter.len() != Self::LENGTH_IN_BITS {
+            return Err(HashValueParseError);
+        }
 
         let mut buf = [0; Self::LENGTH];
         for (i, bit) in iter.enumerate() {
@@ -242,42 +242,21 @@ impl HashValue {
             .count()
     }
 
-    /// Returns the length of common prefix of `self` and `other` in nibbles.
-    pub fn common_prefix_nibbles_len(&self, other: HashValue) -> usize {
-        self.common_prefix_bits_len(other) / 4
-    }
-
-    /// Returns the `index`-th nibble.
-    pub fn get_nibble(&self, index: usize) -> Nibble {
-        precondition!(index < HashValue::LENGTH);
-        Nibble::from(if index % 2 == 0 {
-            self[index / 2] >> 4
-        } else {
-            self[index / 2] & 0x0F
-        })
-    }
-
-    /// Returns first 4 bytes as hex-formatted string
-    pub fn short_str(&self) -> ShortHexStr {
-        const_assert!(HashValue::LENGTH >= ShortHexStr::SOURCE_LENGTH);
-        ShortHexStr::try_from_bytes(&self.hash)
-            .expect("This can never fail since HashValue::LENGTH >= ShortHexStr::SOURCE_LENGTH")
-    }
-
     /// Full hex representation of a given hash value.
     pub fn to_hex(&self) -> String {
-        hex::encode(self.hash)
+        format!("{:x}", self)
     }
 
     /// Parse a given hex string to a hash value.
-    pub fn from_hex(hex_str: &str) -> Result<Self> {
-        Self::from_slice(hex::decode(hex_str)?.as_slice())
+    pub fn from_hex<T: AsRef<[u8]>>(hex: T) -> Result<Self, HashValueParseError> {
+        <[u8; Self::LENGTH]>::from_hex(hex)
+            .map_err(|_| HashValueParseError)
+            .map(Self::new)
     }
 }
 
-// TODO(#1307)
 impl ser::Serialize for HashValue {
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: ser::Serializer,
     {
@@ -294,7 +273,7 @@ impl ser::Serialize for HashValue {
 }
 
 impl<'de> de::Deserialize<'de> for HashValue {
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: de::Deserializer<'de>,
     {
@@ -322,6 +301,14 @@ impl Default for HashValue {
 
 impl AsRef<[u8; HashValue::LENGTH]> for HashValue {
     fn as_ref(&self) -> &[u8; HashValue::LENGTH] {
+        &self.hash
+    }
+}
+
+impl std::ops::Deref for HashValue {
+    type Target = [u8; Self::LENGTH];
+
+    fn deref(&self) -> &Self::Target {
         &self.hash
     }
 }
@@ -378,12 +365,24 @@ impl From<HashValue> for Bytes {
 }
 
 impl FromStr for HashValue {
-    type Err = Error;
+    type Err = HashValueParseError;
 
-    fn from_str(s: &str) -> Result<Self> {
+    fn from_str(s: &str) -> Result<Self, HashValueParseError> {
         HashValue::from_hex(s)
     }
 }
+
+/// Parse error when attempting to construct a HashValue
+#[derive(Clone, Copy, Debug)]
+pub struct HashValueParseError;
+
+impl fmt::Display for HashValueParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "unable to parse HashValue")
+    }
+}
+
+impl std::error::Error for HashValueParseError {}
 
 /// An iterator over `HashValue` that generates one bit for each iteration.
 pub struct HashValueBitIterator<'a> {
@@ -437,7 +436,7 @@ impl<'a> std::iter::ExactSizeIterator for HashValueBitIterator<'a> {}
 /// A type that can be cryptographically hashed to produce a `HashValue`.
 ///
 /// In most cases, this trait should not be implemented manually but rather derived using
-/// the macros `serde::Serialize`, `CryptoHasher`, and `LCSCryptoHash`.
+/// the macros `serde::Serialize`, `CryptoHasher`, and `BCSCryptoHash`.
 pub trait CryptoHash {
     /// The associated `Hasher` type which comes with a unique salt for this type.
     type Hasher: CryptoHasher;
@@ -469,11 +468,11 @@ impl DefaultHasher {
     #[doc(hidden)]
     /// This function does not return a HashValue in the sense of our usual
     /// hashes, but a construction of initial bytes that are fed into any hash
-    /// provided we're passed  a (lcs) serialization name as argument.
+    /// provided we're passed  a (bcs) serialization name as argument.
     pub fn prefixed_hash(buffer: &[u8]) -> [u8; HashValue::LENGTH] {
         // The salt is initial material we prefix to actual value bytes for
         // domain separation. Its length is variable.
-        let salt: Vec<u8> = [LIBRA_HASH_PREFIX, buffer].concat();
+        let salt: Vec<u8> = [DIEM_HASH_PREFIX, buffer].concat();
         // The seed is a fixed-length hash of the salt, thereby preventing
         // suffix attacks on the domain separation bytes.
         HashValue::sha3_256_of(&salt[..]).hash
@@ -640,7 +639,7 @@ pub static GENESIS_BLOCK_ID: Lazy<HashValue> = Lazy::new(|| {
 ///
 /// # Example
 /// ```
-/// use libra_crypto::hash::TestOnlyHash;
+/// use diem_crypto::hash::TestOnlyHash;
 ///
 /// b"hello world".test_only_hash();
 /// ```
@@ -651,7 +650,7 @@ pub trait TestOnlyHash {
 
 impl<T: ser::Serialize + ?Sized> TestOnlyHash for T {
     fn test_only_hash(&self) -> HashValue {
-        let bytes = lcs::to_bytes(self).expect("serialize failed during hash.");
+        let bytes = bcs::to_bytes(self).expect("serialize failed during hash.");
         let mut hasher = TestOnlyHasher::default();
         hasher.update(&bytes);
         hasher.finish()

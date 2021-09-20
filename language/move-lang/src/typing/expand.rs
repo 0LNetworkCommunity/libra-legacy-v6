@@ -1,11 +1,10 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use super::core::{self, Context};
 use crate::{
     expansion::ast::Value_,
-    naming::ast::{BuiltinTypeName_, FunctionSignature, TParam, Type, Type_},
-    parser::ast::{Kind, Kind_},
+    naming::ast::{BuiltinTypeName_, FunctionSignature, Type, TypeName_, Type_},
     typing::ast as T,
 };
 use move_ir_types::location::*;
@@ -34,10 +33,8 @@ pub fn function_signature(context: &mut Context, sig: &mut FunctionSignature) {
 //**************************************************************************************************
 
 fn expected_types(context: &mut Context, ss: &mut Vec<Option<Type>>) {
-    for st_opt in ss {
-        if let Some(ss) = st_opt {
-            type_(context, ss);
-        }
+    for st_opt in ss.iter_mut().flatten() {
+        type_(context, st_opt);
     }
 }
 
@@ -58,7 +55,7 @@ pub fn type_(context: &mut Context, ty: &mut Type) {
             let replacement = match replacement {
                 sp!(_, Var(_)) => panic!("ICE unfold_type_base failed to expand"),
                 sp!(loc, Anything) => {
-                    context.error(vec![(
+                    context.env.add_error(vec![(
                         ty.loc,
                         "Could not infer this type. Try adding an annotation",
                     )]);
@@ -69,28 +66,18 @@ pub fn type_(context: &mut Context, ty: &mut Type) {
             *ty = replacement;
             type_(context, ty);
         }
-        Apply(Some(_), _, tys) => types(context, tys),
-        Apply(_, _, _) => {
-            let kind = core::infer_kind(&context, &context.subst, ty.clone()).unwrap();
+        Apply(Some(_), sp!(_, TypeName_::Builtin(_)), tys) => types(context, tys),
+        Apply(Some(_), _, _) => panic!("ICE expanding pre expanded type"),
+        Apply(None, _, _) => {
+            let abilities = core::infer_abilities(&context, &context.subst, ty.clone());
             match &mut ty.value {
-                Apply(k_opt, _, bs) => {
-                    *k_opt = Some(kind);
-                    types(context, bs);
+                Apply(abilities_opt, _, tys) => {
+                    *abilities_opt = Some(abilities);
+                    types(context, tys);
                 }
                 _ => panic!("ICE impossible. tapply switched to nontapply"),
             }
         }
-    }
-}
-
-fn get_kind(sp!(loc, ty_): &Type) -> Kind {
-    use Type_::*;
-    match ty_ {
-        Anything | UnresolvedError | Unit | Ref(_, _) => sp(*loc, Kind_::Copyable),
-        Var(_) => panic!("ICE unexpanded type"),
-        Param(TParam { kind, .. }) => kind.clone(),
-        Apply(Some(kind), _, _) => kind.clone(),
-        Apply(None, _, _) => panic!("ICE unexpanded type"),
     }
 }
 
@@ -153,12 +140,13 @@ pub fn exp(context: &mut Context, e: &mut T::Exp) {
         E::Use(v) => {
             let from_user = false;
             let var = v.clone();
-            e.exp.value = match get_kind(&e.ty).value {
-                Kind_::Copyable => E::Copy { from_user, var },
-                Kind_::Unknown | Kind_::Affine | Kind_::Resource => E::Move { from_user, var },
+            e.exp.value = if core::is_implicitly_copyable(&context.subst, &e.ty) {
+                E::Copy { from_user, var }
+            } else {
+                E::Move { from_user, var }
             }
         }
-        E::InferredNum(v) => {
+        E::Value(sp!(vloc, Value_::InferredNum(v))) => {
             use BuiltinTypeName_ as BT;
             let bt = match e.ty.value.builtin_name() {
                 Some(sp!(_, bt)) if bt.is_numeric() => bt,
@@ -190,7 +178,7 @@ pub fn exp(context: &mut Context, e: &mut T::Exp) {
                     value=v,
                     type=fix_bt,
                 );
-                context.error(vec![
+                context.env.add_error(vec![
                     (e.exp.loc, "Invalid numerical literal".into()),
                     (e.ty.loc, msg),
                     (e.exp.loc, fix),
@@ -203,7 +191,7 @@ pub fn exp(context: &mut Context, e: &mut T::Exp) {
                     BT::U128 => Value_::U128(v),
                     _ => unreachable!(),
                 };
-                E::Value(sp(e.exp.loc, value_))
+                E::Value(sp(*vloc, value_))
             };
             e.exp.value = new_exp;
         }
@@ -261,7 +249,7 @@ pub fn exp(context: &mut Context, e: &mut T::Exp) {
 
         E::Pack(_, _, bs, fields) => {
             types(context, bs);
-            for (_, (_, (bt, fe))) in fields.iter_mut() {
+            for (_, _, (_, (bt, fe))) in fields.iter_mut() {
                 type_(context, bt);
                 exp(context, fe)
             }
@@ -289,7 +277,7 @@ fn lvalue(context: &mut Context, b: &mut T::LValue) {
         }
         L::BorrowUnpack(_, _, _, bts, fields) | L::Unpack(_, _, bts, fields) => {
             types(context, bts);
-            for (_, (_, (bt, innerb))) in fields.iter_mut() {
+            for (_, _, (_, (bt, innerb))) in fields.iter_mut() {
                 type_(context, bt);
                 lvalue(context, innerb)
             }

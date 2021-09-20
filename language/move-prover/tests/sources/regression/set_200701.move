@@ -1,4 +1,4 @@
-module TestSet {
+module 0x42::TestSet {
     use 0x1::Vector;
 
     // Issue #4872.
@@ -20,13 +20,15 @@ module TestSet {
         }
     }
 
-    spec fun remove_everything {
+    spec remove_everything {
+        // TODO(refactoring): reactivate once loop invariants are implemented.
+        pragma verify = false;
         requires is_set(v);
         aborts_if false;
     }
 
     spec module {
-        define is_set(v: vector<u64>): bool {
+        fun is_set(v: vector<u64>): bool {
             forall ii: u64, jj: u64 where
                 0 <= ii && ii < len(v) &&
                 0 <= jj && jj < len(v):

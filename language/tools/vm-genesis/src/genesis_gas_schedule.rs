@@ -1,12 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This file contains the starting gas schedule published at genesis.
 
-use move_core_types::gas_schedule::{CostTable, GasCost};
-use move_vm_types::gas_schedule::{self, NativeCostIndex as N};
-use once_cell::sync::Lazy;
-use vm::{
+use move_binary_format::{
     file_format::{
         Bytecode, ConstantPoolIndex, FieldHandleIndex, FieldInstantiationIndex,
         FunctionHandleIndex, FunctionInstantiationIndex, StructDefInstantiationIndex,
@@ -14,6 +11,9 @@ use vm::{
     },
     file_format_common::instruction_key,
 };
+use move_core_types::gas_schedule::{CostTable, GasCost};
+use move_vm_types::gas_schedule::{self, NativeCostIndex as N};
+use once_cell::sync::Lazy;
 
 pub static INITIAL_GAS_SCHEDULE: Lazy<CostTable> = Lazy::new(|| {
     use Bytecode::*;
@@ -121,7 +121,7 @@ pub static INITIAL_GAS_SCHEDULE: Lazy<CostTable> = Lazy::new(|| {
         ),
         (Nop, GasCost::new(1, 1)),
     ];
-    // Note that the LibraVM is expecting the table sorted by instruction order.
+    // Note that the DiemVM is expecting the table sorted by instruction order.
     instrs.sort_by_key(|cost| instruction_key(&cost.0));
 
     let mut native_table = vec![
@@ -129,7 +129,7 @@ pub static INITIAL_GAS_SCHEDULE: Lazy<CostTable> = Lazy::new(|| {
         (N::SHA3_256, GasCost::new(64, 1)),
         (N::ED25519_VERIFY, GasCost::new(61, 1)),
         (N::ED25519_THRESHOLD_VERIFY, GasCost::new(3351, 1)),
-        (N::LCS_TO_BYTES, GasCost::new(181, 1)),
+        (N::BCS_TO_BYTES, GasCost::new(181, 1)),
         (N::LENGTH, GasCost::new(98, 1)),
         (N::EMPTY, GasCost::new(84, 1)),
         (N::BORROW, GasCost::new(1334, 1)),
@@ -145,8 +145,7 @@ pub static INITIAL_GAS_SCHEDULE: Lazy<CostTable> = Lazy::new(|| {
         (N::EMIT_EVENT, GasCost::new(52, 1)),
         //////// 0L ////////
         (N::VDF_VERIFY, GasCost::new(1000000, 1)), // one second of cost.
-        (N::VDF_PARSE, GasCost::new(100, 1)),
-
+        (N::VDF_PARSE, GasCost::new(100, 1)),        
     ];
     native_table.sort_by_key(|cost| cost.0 as u64);
     let raw_native_table = native_table

@@ -23,7 +23,6 @@ pub struct UserWizardCmd {
 impl Runnable for UserWizardCmd {
     /// Print version message
     fn run(&self) {
-        // let miner_configs = app_config();
         let path = self.output_dir.clone().unwrap_or_else(|| PathBuf::from("."));
         
         if let Some(file) = &self.check_file {
@@ -53,16 +52,14 @@ fn wizard(path: PathBuf, block_zero: &Option<PathBuf>) {
     }
 
     // Create Manifest
-    account::UserConfigs::new(block)
-    .create_manifest(path);
+    account::UserConfigs::new(block).create_manifest(path);
 }
 
 /// Checks the format of the account manifest, including vdf proof
-fn check(path: PathBuf) {
-    let user_data = account::UserConfigs::get_init_data(&path).expect(&format!("could not parse manifest in {:?}", &path));
+pub fn check(path: PathBuf) -> bool {
+    let user_data = account::UserConfigs::get_init_data(&path).expect(
+        &format!("could not parse manifest in {:?}", &path)
+    );
 
-    match delay::verify(&user_data.block_zero.preimage, &user_data.block_zero.proof) {
-        true => println!("Proof verified in {:?}", &path),
-        false => println!("Invalid proof in {:?}", &path)
-    }
+    delay::verify(&user_data.block_zero.preimage, &user_data.block_zero.proof)
 }

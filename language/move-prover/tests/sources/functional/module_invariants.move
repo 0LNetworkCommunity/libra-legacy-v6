@@ -1,6 +1,10 @@
 address 0x1 {
 module TestModuleInvariants {
 
+    /*
+    TODO(refactoring): this test is deactivated until we have ported this (or a similar) feature, or decided to
+      drop it in which case the test should be removed.
+
     spec module {
         pragma verify = true;
     }
@@ -15,7 +19,7 @@ module TestModuleInvariants {
     }
 
     // Resource invariants counting the number of S instances.
-    spec struct S {
+    spec S {
         // A counter for the # of alive instances of R
         global spec_count: u64;
 
@@ -67,13 +71,16 @@ module TestModuleInvariants {
         let x = new_S();
         x
     }
-    spec fun private_calls_public {
+    spec private_calls_public {
         requires global<SCounter>(0x0).n == spec_count;
     }
 
+*/
 }
 
-module TestModuleInvariantsExternal {
+
+/*
+module 0x42::TestModuleInvariantsExternal {
     use 0x1::TestModuleInvariants;
 
     public fun call_other() {
@@ -82,4 +89,6 @@ module TestModuleInvariantsExternal {
         TestModuleInvariants::delete_S(x);
     }
 }
+*/
+
 }

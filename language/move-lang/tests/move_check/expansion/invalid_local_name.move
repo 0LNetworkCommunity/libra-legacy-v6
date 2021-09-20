@@ -1,5 +1,5 @@
-module M {
-    struct F { No: u64 }
+module 0x8675309::M {
+    struct F has drop { No: u64 }
 
     fun t(No: u64) {
         No;
@@ -13,6 +13,10 @@ module M {
     fun t3() {
         let No = 100;
         F { No };
+    }
+
+    fun t4() {
+        let _No;
     }
 
 }

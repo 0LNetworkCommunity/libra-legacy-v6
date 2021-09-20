@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module defines the transfer functions for verifying reference safety of a procedure body.
@@ -15,14 +15,14 @@ use crate::{
 };
 use abstract_state::{AbstractState, AbstractValue};
 use mirai_annotations::*;
-use std::collections::{BTreeSet, HashMap};
-use vm::{
+use move_binary_format::{
     errors::{PartialVMError, PartialVMResult},
     file_format::{
         Bytecode, CodeOffset, FunctionDefinitionIndex, FunctionHandle, IdentifierIndex,
         SignatureToken, StructDefinition, StructFieldInformation,
     },
 };
+use std::collections::{BTreeSet, HashMap};
 
 struct ReferenceSafetyAnalysis<'a> {
     resolver: &'a BinaryIndexedView<'a>,

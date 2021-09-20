@@ -1,5 +1,5 @@
-module M {
-    struct S { f: u64 }
+module 0x8675309::M {
+    struct S has copy, drop { f: u64 }
     fun id<T>(r: &T): &T {
         r
     }

@@ -1,10 +1,10 @@
 ---
 id: move-lang
 title: Move Source Language
-custom_edit_url: https://github.com/libra/libra/edit/master/language/move-lang/README.md
+custom_edit_url: https://github.com/diem/diem/edit/main/language/move-lang/README.md
 ---
 
-## Code under this subtree is experimental. It is out of scope for the Libra Bug Bounty until it is no longer marked experimental.
+## Code under this subtree is experimental. It is out of scope for the Diem Bug Bounty until it is no longer marked experimental.
 
 # Move Source Language
 
@@ -100,7 +100,7 @@ FLAGS:
 OPTIONS:
     -s, --sender <ADDRESS>                           The sender address for modules and scripts
     -d, --dependency <PATH_TO_DEPENDENCY_FILE>...    The library files needed as dependencies
-    -o, --out-dir <PATH_TO_OUTPUT_DIRECTORY>         The Move bytecode output directory [default: move_build_output]
+    -o, --out-dir <PATH_TO_OUTPUT_DIRECTORY>         The Move bytecode output directory [default: build]
 
 ARGS:
     <PATH_TO_SOURCE_FILE>...    The source files to check and compile

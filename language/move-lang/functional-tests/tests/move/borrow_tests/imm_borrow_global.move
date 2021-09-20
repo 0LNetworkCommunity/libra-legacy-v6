@@ -3,8 +3,8 @@
 
 //! sender: alice
 
-module A {
-    resource struct Coin { u: u64 }
+module {{alice}}::A {
+    struct Coin has store { u: u64 }
 
     public fun new(): Coin {
         Coin { u: 1 }
@@ -26,11 +26,11 @@ module A {
 //! new-transaction
 //! sender: bob
 
-module Tester {
+module {{bob}}::Tester {
     use {{alice}}::A;
     use 0x1::Signer;
 
-    resource struct Pair { x: A::Coin, y: A::Coin }
+    struct Pair has key { x: A::Coin, y: A::Coin }
 
     public fun test_eq(addr1: address, addr2: address): bool acquires Pair {
         let p1 = borrow_global<Pair>(addr1);
@@ -50,7 +50,8 @@ module Tester {
 script {
 use {{bob}}::Tester;
 
-fun main(account: &signer) {
+fun main(account: signer) {
+    let account = &account;
     Tester::test(account);
 }
 }

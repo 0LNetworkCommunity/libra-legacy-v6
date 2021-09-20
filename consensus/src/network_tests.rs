@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -6,7 +6,7 @@ use crate::{
     network_interface::{ConsensusMsg, ConsensusNetworkEvents, ConsensusNetworkSender},
     test_utils::{self, consensus_runtime, placeholder_ledger_info, timed_block_on},
 };
-use channel::{self, libra_channel, message_queues::QueueStyle};
+use channel::{self, diem_channel, message_queues::QueueStyle};
 use consensus_types::{
     block::{block_test_utils::certificate_for_genesis, Block},
     common::Author,
@@ -16,9 +16,9 @@ use consensus_types::{
     vote_data::VoteData,
     vote_msg::VoteMsg,
 };
+use diem_infallible::{Mutex, RwLock};
+use diem_types::{block_info::BlockInfo, PeerId};
 use futures::{channel::mpsc, SinkExt, StreamExt};
-use libra_infallible::{Mutex, RwLock};
-use libra_types::{block_info::BlockInfo, PeerId};
 use network::{
     peer_manager::{
         conn_notifs_channel, ConnectionRequestSender, PeerManagerNotification, PeerManagerRequest,
@@ -32,7 +32,6 @@ use network::{
 };
 use std::{
     collections::{HashMap, HashSet},
-    num::NonZeroUsize,
     sync::Arc,
     time::Duration,
 };
@@ -62,9 +61,7 @@ pub struct NetworkPlayground {
     /// `ConsensusNetworkImpl`.
     ///
     node_consensus_txs: Arc<
-        Mutex<
-            HashMap<TwinId, libra_channel::Sender<(PeerId, ProtocolId), PeerManagerNotification>>,
-        >,
+        Mutex<HashMap<TwinId, diem_channel::Sender<(PeerId, ProtocolId), PeerManagerNotification>>>,
     >,
     /// Nodes' outbound handlers forward their outbound non-rpc messages to this
     /// queue.
@@ -108,13 +105,13 @@ impl NetworkPlayground {
     async fn start_node_outbound_handler(
         drop_config: Arc<RwLock<DropConfig>>,
         src_twin_id: TwinId,
-        mut network_reqs_rx: libra_channel::Receiver<(PeerId, ProtocolId), PeerManagerRequest>,
+        mut network_reqs_rx: diem_channel::Receiver<(PeerId, ProtocolId), PeerManagerRequest>,
         mut outbound_msgs_tx: mpsc::Sender<(TwinId, PeerManagerRequest)>,
         node_consensus_txs: Arc<
             Mutex<
                 HashMap<
                     TwinId,
-                    libra_channel::Sender<(PeerId, ProtocolId), PeerManagerNotification>,
+                    diem_channel::Sender<(PeerId, ProtocolId), PeerManagerNotification>,
                 >,
             >,
         >,
@@ -175,11 +172,11 @@ impl NetworkPlayground {
         twin_id: TwinId,
         // The `Sender` of inbound network events. The `Receiver` end of this
         // queue is usually wrapped in a `ConsensusNetworkEvents` adapter.
-        consensus_tx: libra_channel::Sender<(PeerId, ProtocolId), PeerManagerNotification>,
+        consensus_tx: diem_channel::Sender<(PeerId, ProtocolId), PeerManagerNotification>,
         // The `Receiver` of outbound network events this node sends. The
         // `Sender` side of this queue is usually wrapped in a
         // `ConsensusNetworkSender` adapter.
-        network_reqs_rx: libra_channel::Receiver<(PeerId, ProtocolId), PeerManagerRequest>,
+        network_reqs_rx: diem_channel::Receiver<(PeerId, ProtocolId), PeerManagerRequest>,
         conn_mgr_reqs_rx: channel::Receiver<network::ConnectivityRequest>,
     ) {
         self.node_consensus_txs.lock().insert(twin_id, consensus_tx);
@@ -218,7 +215,7 @@ impl NetworkPlayground {
         // copy message data
         let msg_copy = match &msg_notif {
             PeerManagerNotification::RecvMessage(src, msg) => {
-                let msg: ConsensusMsg = lcs::from_bytes(&msg.mdata).unwrap();
+                let msg: ConsensusMsg = bcs::from_bytes(&msg.mdata).unwrap();
                 (*src, msg)
             }
             msg_notif => panic!(
@@ -254,7 +251,7 @@ impl NetworkPlayground {
             // Convert PeerManagerRequest to corresponding PeerManagerNotification,
             // and extract destination peer
             let (dst, msg) = match &net_req {
-                PeerManagerRequest::SendMessage(dst_inner, msg_inner) => {
+                PeerManagerRequest::SendDirectSend(dst_inner, msg_inner) => {
                     (*dst_inner, msg_inner.clone())
                 }
                 msg_inner => panic!(
@@ -265,7 +262,7 @@ impl NetworkPlayground {
 
             let dst_twin_ids = self.get_twin_ids(dst);
             for (idx, dst_twin_id) in dst_twin_ids.iter().enumerate() {
-                let consensus_msg = lcs::from_bytes(&msg.mdata).unwrap();
+                let consensus_msg = bcs::from_bytes(&msg.mdata).unwrap();
 
                 // Deliver and copy message if it's not dropped
                 if !self.is_message_dropped(&src_twin_id, dst_twin_id, consensus_msg) {
@@ -367,7 +364,7 @@ impl NetworkPlayground {
             // Convert PeerManagerRequest to corresponding PeerManagerNotification,
             // and extract destination peer
             let (dst, msg) = match &net_req {
-                PeerManagerRequest::SendMessage(dst_inner, msg_inner) => {
+                PeerManagerRequest::SendDirectSend(dst_inner, msg_inner) => {
                     (*dst_inner, msg_inner.clone())
                 }
                 msg_inner => panic!(
@@ -381,7 +378,7 @@ impl NetworkPlayground {
             for dst_twin_id in dst_twin_ids.iter() {
                 let msg_notif =
                     PeerManagerNotification::RecvMessage(src_twin_id.author, msg.clone());
-                let consensus_msg = lcs::from_bytes(&msg.mdata).unwrap();
+                let consensus_msg = bcs::from_bytes(&msg.mdata).unwrap();
 
                 // Deliver and copy message it if it's not dropped
                 if !self.is_message_dropped(&src_twin_id, &dst_twin_id, consensus_msg) {
@@ -472,9 +469,9 @@ mod tests {
     use consensus_types::block_retrieval::{
         BlockRetrievalRequest, BlockRetrievalResponse, BlockRetrievalStatus,
     };
+    use diem_crypto::HashValue;
+    use diem_types::validator_verifier::random_validator_verifier;
     use futures::{channel::oneshot, future};
-    use libra_crypto::HashValue;
-    use libra_types::validator_verifier::random_validator_verifier;
     use network::protocols::direct_send::Message;
 
     #[test]
@@ -536,12 +533,9 @@ mod tests {
         let peers: Vec<_> = signers.iter().map(|signer| signer.author()).collect();
 
         for (peer_id, peer) in peers.iter().enumerate() {
-            let (network_reqs_tx, network_reqs_rx) =
-                libra_channel::new(QueueStyle::FIFO, NonZeroUsize::new(8).unwrap(), None);
-            let (connection_reqs_tx, _) =
-                libra_channel::new(QueueStyle::FIFO, NonZeroUsize::new(8).unwrap(), None);
-            let (consensus_tx, consensus_rx) =
-                libra_channel::new(QueueStyle::FIFO, NonZeroUsize::new(8).unwrap(), None);
+            let (network_reqs_tx, network_reqs_rx) = diem_channel::new(QueueStyle::FIFO, 8, None);
+            let (connection_reqs_tx, _) = diem_channel::new(QueueStyle::FIFO, 8, None);
+            let (consensus_tx, consensus_rx) = diem_channel::new(QueueStyle::FIFO, 8, None);
             let (_conn_mgr_reqs_tx, conn_mgr_reqs_rx) = channel::new_test(8);
             let (_, conn_status_rx) = conn_notifs_channel::new();
             let network_sender = ConsensusNetworkSender::new(
@@ -625,12 +619,9 @@ mod tests {
         let peers: Vec<_> = signers.iter().map(|signer| signer.author()).collect();
 
         for (peer_id, peer) in peers.iter().enumerate() {
-            let (network_reqs_tx, network_reqs_rx) =
-                libra_channel::new(QueueStyle::FIFO, NonZeroUsize::new(8).unwrap(), None);
-            let (connection_reqs_tx, _) =
-                libra_channel::new(QueueStyle::FIFO, NonZeroUsize::new(8).unwrap(), None);
-            let (consensus_tx, consensus_rx) =
-                libra_channel::new(QueueStyle::FIFO, NonZeroUsize::new(8).unwrap(), None);
+            let (network_reqs_tx, network_reqs_rx) = diem_channel::new(QueueStyle::FIFO, 8, None);
+            let (connection_reqs_tx, _) = diem_channel::new(QueueStyle::FIFO, 8, None);
+            let (consensus_tx, consensus_rx) = diem_channel::new(QueueStyle::FIFO, 8, None);
             let (_conn_mgr_reqs_tx, conn_mgr_reqs_rx) = channel::new_test(8);
             let (_, conn_status_rx) = conn_notifs_channel::new();
             let network_sender = ConsensusNetworkSender::new(
@@ -687,7 +678,7 @@ mod tests {
                 let response =
                     BlockRetrievalResponse::new(BlockRetrievalStatus::IdNotFound, vec![]);
                 let response = ConsensusMsg::BlockRetrievalResponse(Box::new(response));
-                let bytes = lcs::to_bytes(&response).unwrap();
+                let bytes = bcs::to_bytes(&response).unwrap();
                 request.response_sender.send(Ok(bytes.into())).unwrap();
             }
         };
@@ -709,9 +700,9 @@ mod tests {
     #[test]
     fn test_bad_message() {
         let (mut peer_mgr_notifs_tx, peer_mgr_notifs_rx) =
-            libra_channel::new(QueueStyle::FIFO, NonZeroUsize::new(8).unwrap(), None);
+            diem_channel::new(QueueStyle::FIFO, 8, None);
         let (connection_notifs_tx, connection_notifs_rx) =
-            libra_channel::new(QueueStyle::FIFO, NonZeroUsize::new(8).unwrap(), None);
+            diem_channel::new(QueueStyle::FIFO, 8, None);
         let consensus_network_events =
             ConsensusNetworkEvents::new(peer_mgr_notifs_rx, connection_notifs_rx);
         let (self_sender, self_receiver) = channel::new_test(8);
@@ -743,7 +734,7 @@ mod tests {
             peer_id,
             InboundRpcRequest {
                 protocol_id,
-                data: Bytes::from(lcs::to_bytes(&liveness_check_msg).unwrap()),
+                data: Bytes::from(bcs::to_bytes(&liveness_check_msg).unwrap()),
                 res_tx,
             },
         );

@@ -1,11 +1,11 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 
 use move_lang::{
     command_line::{self as cli},
-    shared::*,
+    shared::Flags,
 };
 use structopt::*;
 
@@ -24,15 +24,6 @@ pub struct Options {
     )]
     pub dependencies: Vec<String>,
 
-    /// The sender address for modules and scripts
-    #[structopt(
-        name = "ADDRESS",
-        short = cli::SENDER_SHORT,
-        long = cli::SENDER,
-        parse(try_from_str = cli::parse_address)
-    )]
-    pub sender: Option<Address>,
-
     /// The Move bytecode output directory
     #[structopt(
         name = "PATH_TO_OUTPUT_DIRECTORY",
@@ -49,23 +40,26 @@ pub struct Options {
         long = cli::SOURCE_MAP,
     )]
     pub emit_source_map: bool,
+
+    #[structopt(flatten)]
+    pub flags: Flags,
 }
 
 pub fn main() -> anyhow::Result<()> {
     let Options {
         source_files,
         dependencies,
-        sender,
         out_dir,
         emit_source_map,
+        flags,
     } = Options::from_args();
 
     let interface_files_dir = format!("{}/generated_interface_files", out_dir);
-    let (files, compiled_units) = move_lang::move_compile(
+    let (files, compiled_units) = move_lang::move_compile_and_report(
         &source_files,
         &dependencies,
-        sender,
         Some(interface_files_dir),
+        flags,
     )?;
     move_lang::output_compiled_units(emit_source_map, files, compiled_units, &out_dir)
 }

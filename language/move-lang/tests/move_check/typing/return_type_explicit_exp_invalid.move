@@ -1,5 +1,5 @@
-module M {
-    resource struct R {}
+module 0x8675309::M {
+    struct R {}
 
     fun t0(): u64 {
         return ()

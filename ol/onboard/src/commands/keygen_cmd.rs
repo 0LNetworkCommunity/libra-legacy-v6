@@ -1,4 +1,4 @@
-//! `version` subcommand
+//! `keygen` subcommand
 
 #![allow(clippy::never_loop)]
 
@@ -10,7 +10,6 @@ pub struct KeygenCmd {}
 
 
 impl Runnable for KeygenCmd {
-    /// Print version message
     fn run(&self) {
         wallet::keygen();
     }

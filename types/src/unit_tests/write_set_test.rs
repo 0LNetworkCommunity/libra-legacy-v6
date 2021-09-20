@@ -1,8 +1,8 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::write_set::WriteSet;
-use lcs::test_helpers::assert_canonical_encode_decode;
+use bcs::test_helpers::assert_canonical_encode_decode;
 use proptest::prelude::*;
 
 proptest! {

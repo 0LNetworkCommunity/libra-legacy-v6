@@ -1,21 +1,21 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::storage::FileHandle;
 use anyhow::{ensure, Result};
-use libra_types::transaction::Version;
+use diem_types::transaction::Version;
 use serde::{Deserialize, Serialize};
 
 /// A chunk of a transaction backup manifest to represent the
 /// [`first_version`, `last_version`] range (right side inclusive).
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct TransactionChunk {
     pub first_version: Version,
     pub last_version: Version,
-    /// Repeated `len(record) + record`, where `record` is LCS serialized tuple
+    /// Repeated `len(record) + record`, where `record` is BCS serialized tuple
     /// `(Transaction, TransactionInfo)`
     pub transactions: FileHandle,
-    /// LCS serialized `(TransactionAccumulatorRangeProof, LedgerInfoWithSignatures)`.
+    /// BCS serialized `(TransactionAccumulatorRangeProof, LedgerInfoWithSignatures)`.
     /// The `TransactionAccumulatorRangeProof` links the transactions to the
     /// `LedgerInfoWithSignatures`, and the `LedgerInfoWithSignatures` can be verified by the
     /// signatures it carries, against the validator set in the epoch. (Hence proper

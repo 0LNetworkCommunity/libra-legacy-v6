@@ -20,7 +20,7 @@ A transaction on the blockchain.
 
 Note:
 * For the gas_used, internally within the VM we scale the gas units down by 1000 in order to allow granularity of costing for instruction, but without having to use floating point numbers, but we do round-up the gas used to the nearest "1" when we convert back out.
-* Formula to create hash for a signed transaction before it is executed: hex-encode(sha3-256([]byte("LIBRA::Transaction")) + []byte(0) + signed transaction bytes) ([implementation example](https://github.com/libra/libra-client-sdk-go/blob/master/libratypes/hash.go#L27))
+* Formula to create hash for a signed transaction before it is executed: hex-encode(sha3-256([]byte("DIEM::Transaction")) + []byte(0) + signed transaction bytes) ([implementation example](https://github.com/diem/client-sdk-go/blob/master/diemtypes/hash.go#L27))
 
 
 ### Example
@@ -50,7 +50,7 @@ Transaction data is serialized into one JSON object with a "type" field to indic
 
 #### blockmetadata
 
-A Libra network transaction that contains the metadata for the block. This transaction is always at the beginning of a block.
+A Diem network transaction that contains the metadata for the block. This transaction is always at the beginning of a block.
 
 | Name                | Type           | Description                                                    |
 |---------------------|----------------|----------------------------------------------------------------|
@@ -59,7 +59,7 @@ A Libra network transaction that contains the metadata for the block. This trans
 
 #### writeset
 
-A Libra network transaction that modifies storage data directly. Currently, no details are exposed in the API.
+A Diem network transaction that modifies storage data directly. Currently, no details are exposed in the API.
 
 | Name                | Type           | Description                                                    |
 |---------------------|----------------|----------------------------------------------------------------|
@@ -69,32 +69,36 @@ A Libra network transaction that modifies storage data directly. Currently, no d
 
 User submitted transaction.
 
-| Name                      | Type                   | Description                                                           |
-|---------------------------|------------------------|-----------------------------------------------------------------------|
-| type                      | string                 | constant of string "user"                                             |
-| sender                    | string                 | Hex-encoded account address of the sender                             |
-| signature_scheme          | string                 | Signature scheme used to sign this transaction                        |
-| signature                 | string                 | Hex-encoded signature of this transaction                             |
-| public_key                | string                 | Hex-encoded public key of the transaction sender                      |
-| sequence_number           | unsigned int64         | Sequence number of this transaction corresponding to sender's account |
-| chain_id                  | unsigned int8          | Chain ID of the Libra network this transaction is intended for        |
-| max_gas_amount            | unsigned int64         | Maximum amount of gas that can be spent for this transaction          |
-| gas_unit_price            | unsigned int64         | Maximum gas price to be paid per unit of gas                          |
-| gas_currency              | string                 | Gas price currency code                                               |
-| expiration_timestamp_secs | unsigned int64         | The expiration time (Unix Epoch in seconds) for this transaction      |
-| script_hash               | string                 | Hex-encoded sha3 256 hash of the script binary code bytes used in this transaction |
-| script_bytes              | string                 | Hex-encoded string of LCS bytes of the script, decode it to get back transaction script arguments |
-| script                    | [Script](#type-script) | The transaction script and arguments of this transaction, you can decode `script_bytes` by LCS to get same data. |
+| Name                        | Type                   | Description                                                           |
+|-----------------------------|------------------------|-----------------------------------------------------------------------|
+| type                        | string                 | constant of string "user"                                             |
+| sender                      | string                 | Hex-encoded account address of the sender                             |
+| signature_scheme            | string                 | Signature scheme used by the sender to sign this transaction          |
+| signature                   | string                 | Hex-encoded signature of this transaction signed by the sender        |
+| public_key                  | string                 | Hex-encoded public key of the transaction sender                      |
+| secondary_signers           | List<string>           | Hex-encoded account addresses of the secondary signers                |
+| secondary_signature_schemes | List<string>           | Signature schemes used by the secondary signers to sign this transaction |
+| secondary_signatures        | List<string>           | Hex-encoded signatures of this transaction signed by the primary signers |
+| secondary_public_keys       | List<string>           | Hex-encoded public keys of the secondary signers                      |
+| sequence_number             | unsigned int64         | Sequence number of this transaction corresponding to sender's account |
+| chain_id                    | unsigned int8          | Chain ID of the Diem network this transaction is intended for        |
+| max_gas_amount              | unsigned int64         | Maximum amount of gas that can be spent for this transaction          |
+| gas_unit_price              | unsigned int64         | Maximum gas price to be paid per unit of gas                          |
+| gas_currency                | string                 | Gas price currency code                                               |
+| expiration_timestamp_secs   | unsigned int64         | The expiration time (Unix Epoch in seconds) for this transaction      |
+| script_hash                 | string                 | Hex-encoded sha3 256 hash of the script binary code bytes used in this transaction |
+| script_bytes                | string                 | Hex-encoded string of BCS bytes of the script, decode it to get back transaction script arguments |
+| script                      | [Script](#type-script) | The transaction script and arguments of this transaction, you can decode `script_bytes` by BCS to get same data. |
 
 Note: script_hash is not hash of the script_bytes, it's hash of the script binary code bytes. More specifically, you can get same hash string by the following steps:
 
-    1. Decode script_bytes into script call [struct](https://developers.libra.org/docs/rustdocs/libra_types/transaction/struct.Script.html).
+    1. Decode script_bytes into script call [struct](https://developers.diem.com/docs/rustdocs/diem_types/transaction/struct.Script.html).
     2. Sha3 256 hash of the code binary bytes in the script call struct.
     3. Hex-encode the hash result bytes.
 
-* You can decode transaction script call ([struct](https://developers.libra.org/docs/rustdocs/libra_types/transaction/struct.Script.html)) from script_bytes by LCS deserializer.
-* If script_bytes is empty, it means transaction is not a [TransactionPayload#Script](https://developers.libra.org/docs/rustdocs/libra_types/transaction/enum.TransactionPayload.html#variant.Script).
-You may decode Transaction#bytes by LCS deserializer for more details.
+* You can decode transaction script call ([struct](https://developers.diem.com/docs/rustdocs/diem_types/transaction/struct.Script.html)) from script_bytes by BCS deserializer.
+* If script_bytes is empty, it means transaction is not a [TransactionPayload#Script](https://developers.diem.com/docs/rustdocs/diem_types/transaction/enum.TransactionPayload.html#variant.Script).
+You may decode Transaction#bytes by BCS deserializer for more details.
 
 
 #### unknown
@@ -112,10 +116,14 @@ The transaction script and arguments of the script call.
 
 | Name           | Type         | Description                                   |
 |----------------|--------------|-----------------------------------------------|
-| type           | string       | Name of the script code, see [transaction script doc](../../language/stdlib/transaction_scripts/doc/transaction_script_documentation.md) for all available script names. |
+| type           | string       | Name of the script code, see [transaction script doc](../../language/diem-framework/script_documentation/script_documentation.md) for all available script names. If a script function, this field is set to the string `"script_function"`. |
 | code           | string       | Hex-encoded compiled move script bytes        |
-| arguments      | List<string> | List of string value of the script arguments. Contains type information. |
+| arguments      | List<string> | List of string value of the script arguments. Contains type information. This field will not be rendered if the `type` is `"script_function"`, instead, `arguments_bcs` will be rendered. |
+| arguments_bcs  | List<string> | List of hex-encoded string of BCS bytes representing script function arguments. Does not contain type information. Note that `arguments_bcs` is only set when the `type` is `"script_function"`. |
 | type_arguments | List<string> | List of type arguments, converted into string |
+| module_address | string       | Null if not a script function. Module address where the function being called is defined. |
+| module_name    | string       | Null if not a script function. Module name where the function being called is defined. |
+| function_name  | string       | Null if not a script function. Name of the function being called by a script function transaction. |
 
 * Argument value to string formatting:
   * u8 value `12` => "{U8: 12}"
@@ -131,7 +139,7 @@ The transaction script and arguments of the script call.
 Transaction script is unknown.
 
 * When script code can't be recognized, type will be set to `unknown`, code, arguments and type_arguments will still be provided.
-* When transaction payload is not a script (see [TransactionPayload](https://developers.libra.org/docs/rustdocs/libra_types/transaction/enum.TransactionPayload.html)),
+* When transaction payload is not a script (see [TransactionPayload](https://developers.diem.com/docs/rustdocs/diem_types/transaction/enum.TransactionPayload.html)),
 type will be set to `unknown`, code, arguments and type_arguments will not be provided.
 
 | Name                      | Type           | Description                  |
@@ -149,10 +157,10 @@ This is the only type we decoded script arguments and type_arguments as named fi
 | receiver                  | string         | Hex-encoded account address of the receiver                         |
 | amount                    | unsigned int64 | Amount transfered.                                                  |
 | currency                  | string         | Currency code.                                                      |
-| metadata                  | string         | Metadata of the transaction, LCS serialized hex-encoded string.     |
+| metadata                  | string         | Metadata of the transaction, BCS serialized hex-encoded string.     |
 | metadata_signature        | string         | Hex-encoded metadata signature, use this to validate metadata       |
 
-Note: for metadata and metadata_signature, see [LIP-4](https://lip.libra.org/lip-4/) for more details.
+Note: for metadata and metadata_signature, see [DIP-4](https://dip.diem.com/dip-4/) for more details.
 
 ### Type VMStatus
 
@@ -245,7 +253,7 @@ error reason for the error e.g., `EPAYEE_CANT_ACCEPT_CURRENCY_TYPE`. Both the ca
       "category":"INVALID_ARGUMENT",
       "category_description":" An argument provided to an operation is invalid. Example: a signing key has the wrong format.",
       "reason":"EPAYEE_CANT_ACCEPT_CURRENCY_TYPE",
-      "reason_description":" Attempted to send funds in a currency that the receiving account does not hold.\n e.g., `Libra<LBR> to an account that exists, but does not have a `Balance<LBR>` resource"
+      "reason_description":" Attempted to send funds in a currency that the receiving account does not hold.\n e.g., `Diem<XDX> to an account that exists, but does not have a `Balance<XDX>` resource"
    }
 ```
 

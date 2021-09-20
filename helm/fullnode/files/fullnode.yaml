@@ -1,0 +1,22 @@
+base:
+  role: "full_node"
+  waypoint:
+    from_file: "/opt/diem/genesis/waypoint.txt"
+
+execution:
+  genesis_file_location: "/opt/diem/genesis/genesis.blob"
+
+full_node_networks:
+- network_id: "public"
+  discovery_method: "onchain"
+  seeds:
+    {{- (get .Values.diem_chains .Values.chain.name).seeds | default dict | toYaml | nindent 6 }}
+
+metrics:
+  enabled: false
+
+storage:
+  backup_service_address: "0.0.0.0:6186"
+
+json_rpc:
+  address: "0.0.0.0:8080"

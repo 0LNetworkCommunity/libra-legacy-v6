@@ -1,37 +1,34 @@
 [package]
-name = "libra-faucet"
+name = "diem-faucet"
 version = "0.1.0"
-authors = ["Libra Association <opensource@libra.org>"]
-description = "Libra Testnet utility services"
-repository = "https://github.com/libra/libra"
-homepage = "https://libra.org"
+authors = ["Diem Association <opensource@diem.com>"]
+description = "Diem Testnet utility services"
+repository = "https://github.com/diem/diem"
+homepage = "https://diem.com"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0.33"
-hex = "0.4.2"
-reqwest = { version = "0.10.8", features = ["blocking"], default-features = false }
-serde = "1.0.116"
-serde_derive = "1.0.115"
-structopt = "0.3.18"
-tokio = { version = "0.2.22", features = ["full"] }
-warp = "0.2.5"
+anyhow = "1.0.38"
+bcs = "0.1.2"
+hex = "0.4.3"
+rand = "0.8.3"
+reqwest = { version = "0.11.2", features = ["blocking"], default-features = false }
+serde = { version = "1.0.124", features = ["derive"] }
+structopt = "0.3.21"
+tokio = { version = "1.3.0", features = ["full"] }
+warp = "0.3.0"
 
-generate-key = { path = "../../config/generate-key", version = "0.1.0" }
-lcs = { path = "../../common/lcs", version = "0.1.0", package = "libra-canonical-serialization" }
-libra-crypto = { path = "../../crypto/crypto/", version = "0.1.0" }
-libra-infallible = { path = "../../common/infallible", version = "0.1.0" }
-libra-json-rpc-client = { path = "../json-rpc", version = "0.1.0" }
-libra-logger = { path = "../../common/logger", version = "0.1.0" }
-libra-types = { path = "../../types", version = "0.1.0" }
-libra-workspace-hack = { path = "../../common/workspace-hack", version = "0.1.0" }
-move-core-types = { path = "../../language/move-core/types", version = "0.1.0" }
-transaction-builder-generated = { path = "../transaction-builder", version = "0.1.0" }
+generate-key = { path = "../../config/generate-key" }
+diem-logger = { path = "../../common/logger" }
+diem-sdk = { path = "../../sdk" }
+
+diem-workspace-hack = { path = "../../common/workspace-hack" }
 
 [dev-dependencies]
-serde_json = "1.0.58"
-tempfile = "3.1.0"
+serde_json = "1.0.64"
+tempfile = "3.2.0"
 
-libra-config = { path = "../../config", version = "0.1.0" }
+diem-config = { path = "../../config" }
+diem-infallible = { path = "../../common/infallible" }

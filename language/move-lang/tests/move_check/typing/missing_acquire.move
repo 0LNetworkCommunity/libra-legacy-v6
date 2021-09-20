@@ -1,6 +1,6 @@
-module M {
-    resource struct R1 {}
-    resource struct R2 {}
+module 0x8675309::M {
+    struct R1 has key {}
+    struct R2 has key {}
 
     fun t1(a: address) acquires R2 {
         borrow_global<R2>(a);

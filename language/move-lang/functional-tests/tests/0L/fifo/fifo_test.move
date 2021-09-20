@@ -1,10 +1,11 @@
 //! account: alice, 1000000, 0, validator
 
 //! new-transaction
-//! sender: alice
+//! sender: diemroot
+
 script {
     use 0x1::FIFO;
-    fun main(_s: &signer) {
+    fun main(_s: signer) {
         let f = FIFO::empty<u64>();
         let len = FIFO::len<u64>(& f);
         assert(len == 0, 1);
@@ -74,8 +75,7 @@ script {
         assert(j == 10, 1);  
 
         let len = FIFO::len<u64>(& f);
-        assert(len == 0, 1);      
-
+        assert(len == 0, 1);
     }
 }
 // check: EXECUTED

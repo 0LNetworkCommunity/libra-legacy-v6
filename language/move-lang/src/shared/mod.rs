@@ -1,18 +1,52 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::{command_line as cli, errors::Errors};
 use move_ir_types::location::*;
 use petgraph::{algo::astar as petgraph_astar, graphmap::DiGraphMap};
 use std::{
     convert::TryFrom,
     fmt,
     hash::Hash,
+    num::ParseIntError,
     sync::atomic::{AtomicUsize, Ordering as AtomicOrdering},
 };
+use structopt::*;
 
 pub mod ast_debug;
 pub mod remembering_unique_map;
 pub mod unique_map;
+pub mod unique_set;
+
+//**************************************************************************************************
+// Numbers
+//**************************************************************************************************
+
+// Determines the base of the number literal, depending on the prefix
+fn determine_num_text_and_base(s: &str) -> (&str, u32) {
+    match s.strip_prefix("0x") {
+        Some(s_hex) => (s_hex, 16),
+        None => (s, 10),
+    }
+}
+
+// Parse a u8 from a decimal or hex encoding
+pub fn parse_u8(s: &str) -> Result<u8, ParseIntError> {
+    let (txt, base) = determine_num_text_and_base(s);
+    u8::from_str_radix(txt, base)
+}
+
+// Parse a u64 from a decimal or hex encoding
+pub fn parse_u64(s: &str) -> Result<u64, ParseIntError> {
+    let (txt, base) = determine_num_text_and_base(s);
+    u64::from_str_radix(txt, base)
+}
+
+// Parse a u128 from a decimal or hex encoding
+pub fn parse_u128(s: &str) -> Result<u128, ParseIntError> {
+    let (txt, base) = determine_num_text_and_base(s);
+    u128::from_str_radix(txt, base)
+}
 
 //**************************************************************************************************
 // Address
@@ -20,69 +54,57 @@ pub mod unique_map;
 
 pub const ADDRESS_LENGTH: usize = 16;
 
-#[derive(Ord, PartialOrd, Eq, PartialEq, Hash, Default, Clone, Copy)]
-pub struct Address([u8; ADDRESS_LENGTH]);
+#[derive(Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Copy)]
+pub struct AddressBytes([u8; ADDRESS_LENGTH]);
 
-impl Address {
-    pub const LIBRA_CORE: Address = Address::new([
+impl AddressBytes {
+    // bytes used for errors when an address is not known but is needed
+    pub const DEFAULT_ERROR_BYTES: Self = AddressBytes([
         0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8,
     ]);
 
-    pub const fn new(address: [u8; ADDRESS_LENGTH]) -> Self {
-        Address(address)
+    pub const fn new(bytes: [u8; ADDRESS_LENGTH]) -> Self {
+        Self(bytes)
     }
 
-    pub fn to_u8(self) -> [u8; ADDRESS_LENGTH] {
+    pub fn into_bytes(self) -> [u8; ADDRESS_LENGTH] {
         self.0
     }
 
-    pub fn parse_str(s: &str) -> Result<Address, String> {
-        let mut hex_string = String::from(&s[2..]);
-        if hex_string.len() % 2 != 0 {
-            hex_string.insert(0, '0');
-        }
-
-        let mut result = hex::decode(hex_string.as_str())
-            .map_err(|e| format!("hex string {} fails to decode with Error {}", hex_string, e))?;
-        let len = result.len();
-        if len < ADDRESS_LENGTH {
-            result.reverse();
-            for _ in len..ADDRESS_LENGTH {
-                result.push(0);
+    pub fn parse_str(s: &str) -> Result<AddressBytes, String> {
+        let decoded = match parse_u128(s) {
+            Ok(n) => n.to_be_bytes(),
+            Err(_) => {
+                // TODO the kind of error is in an unstable nightly API
+                // But currently the only way this should fail is if the number is too long
+                return Err("Invalid address literal. The numeric value is too large. \
+                    The maximum size is 16 bytes"
+                    .to_owned());
             }
-            result.reverse();
-        }
-
-        assert!(result.len() >= ADDRESS_LENGTH);
-        Self::try_from(&result[..]).map_err(|_| {
-            format!(
-                "Address is {} bytes long. The maximum size is {} bytes",
-                result.len(),
-                ADDRESS_LENGTH
-            )
-        })
+        };
+        Ok(AddressBytes(decoded))
     }
 }
 
-impl AsRef<[u8]> for Address {
+impl AsRef<[u8]> for AddressBytes {
     fn as_ref(&self) -> &[u8] {
         &self.0
     }
 }
 
-impl fmt::Display for Address {
+impl fmt::Display for AddressBytes {
     fn fmt(&self, f: &mut fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:#X}", self)
     }
 }
 
-impl fmt::Debug for Address {
+impl fmt::Debug for AddressBytes {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "0x{:#X}", self)
     }
 }
 
-impl fmt::LowerHex for Address {
+impl fmt::LowerHex for AddressBytes {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let encoded = hex::encode(&self.0);
         let dropped = encoded
@@ -97,7 +119,21 @@ impl fmt::LowerHex for Address {
     }
 }
 
-impl fmt::UpperHex for Address {
+impl TryFrom<&[u8]> for AddressBytes {
+    type Error = String;
+
+    fn try_from(bytes: &[u8]) -> Result<AddressBytes, String> {
+        if bytes.len() != ADDRESS_LENGTH {
+            Err(format!("The address {:?} is of invalid length", bytes))
+        } else {
+            let mut addr = [0u8; ADDRESS_LENGTH];
+            addr.copy_from_slice(bytes);
+            Ok(AddressBytes(addr))
+        }
+    }
+}
+
+impl fmt::UpperHex for AddressBytes {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let encoded = hex::encode_upper(&self.0);
         let dropped = encoded
@@ -112,20 +148,6 @@ impl fmt::UpperHex for Address {
     }
 }
 
-impl TryFrom<&[u8]> for Address {
-    type Error = String;
-
-    fn try_from(bytes: &[u8]) -> Result<Address, String> {
-        if bytes.len() != ADDRESS_LENGTH {
-            Err(format!("The Address {:?} is of invalid length", bytes))
-        } else {
-            let mut addr = [0u8; ADDRESS_LENGTH];
-            addr.copy_from_slice(bytes);
-            Ok(Address(addr))
-        }
-    }
-}
-
 //**************************************************************************************************
 // Name
 //**************************************************************************************************
@@ -134,8 +156,8 @@ pub trait TName: Eq + Ord + Clone {
     type Key: Ord + Clone;
     type Loc: Copy;
     fn drop_loc(self) -> (Self::Loc, Self::Key);
-    fn clone_drop_loc(&self) -> (Self::Loc, Self::Key);
     fn add_loc(loc: Self::Loc, key: Self::Key) -> Self;
+    fn borrow(&self) -> (&Self::Loc, &Self::Key);
 }
 
 pub trait Identifier {
@@ -154,12 +176,12 @@ impl TName for Name {
         (self.loc, self.value)
     }
 
-    fn clone_drop_loc(&self) -> (Loc, String) {
-        (self.loc, self.value.clone())
-    }
-
     fn add_loc(loc: Loc, key: String) -> Self {
         sp(loc, key)
+    }
+
+    fn borrow(&self) -> (&Loc, &String) {
+        (&self.loc, &self.value)
     }
 }
 
@@ -198,6 +220,56 @@ pub fn shortest_cycle<'a, T: Ord + Hash>(
 }
 
 //**************************************************************************************************
+// Compilation Env
+//**************************************************************************************************
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CompilationEnv {
+    flags: Flags,
+    errors: Errors,
+    // TODO(tzakian): Remove the global counter and use this counter instead
+    // pub counter: u64,
+}
+
+impl CompilationEnv {
+    pub fn new(flags: Flags) -> Self {
+        Self {
+            flags,
+            errors: Vec::new(),
+        }
+    }
+
+    pub fn add_error(&mut self, e: Vec<(Loc, impl Into<String>)>) {
+        self.errors
+            .push(e.into_iter().map(|(loc, msg)| (loc, msg.into())).collect())
+    }
+
+    pub fn add_errors(&mut self, es: Errors) {
+        self.errors.extend(es)
+    }
+
+    pub fn has_errors(&self) -> bool {
+        !self.errors.is_empty()
+    }
+
+    pub fn count_errors(&self) -> usize {
+        self.errors.len()
+    }
+
+    pub fn check_errors(&mut self) -> Result<(), Errors> {
+        if self.has_errors() {
+            Err(std::mem::take(&mut self.errors))
+        } else {
+            Ok(())
+        }
+    }
+
+    pub fn flags(&self) -> &Flags {
+        &self.flags
+    }
+}
+
+//**************************************************************************************************
 // Counter
 //**************************************************************************************************
 
@@ -226,4 +298,98 @@ pub fn format_delim<T: fmt::Display, I: IntoIterator<Item = T>>(items: I, delim:
 
 pub fn format_comma<T: fmt::Display, I: IntoIterator<Item = T>>(items: I) -> String {
     format_delim(items, ", ")
+}
+
+//**************************************************************************************************
+// Flags
+//**************************************************************************************************
+
+#[derive(Clone, Debug, Eq, PartialEq, StructOpt)]
+pub struct Flags {
+    /// Compile in test mode
+    #[structopt(
+        short = cli::TEST_SHORT,
+        long = cli::TEST,
+    )]
+    test: bool,
+
+    /// If set, do not allow modules defined in source_files to shadow modules of the same id that
+    /// exist in dependencies. Checking will fail in this case.
+    #[structopt(
+        name = "SOURCES_DO_NOT_SHADOW_DEPS",
+        short = cli::NO_SHADOW_SHORT,
+        long = cli::NO_SHADOW,
+    )]
+    no_shadow: bool,
+}
+
+impl Flags {
+    pub fn empty() -> Self {
+        Self {
+            test: false,
+            no_shadow: false,
+        }
+    }
+
+    pub fn testing() -> Self {
+        Self {
+            test: true,
+            no_shadow: false,
+        }
+    }
+
+    pub fn set_sources_shadow_deps(self, sources_shadow_deps: bool) -> Self {
+        Self {
+            no_shadow: !sources_shadow_deps,
+            ..self
+        }
+    }
+
+    pub fn is_testing(&self) -> bool {
+        self.test
+    }
+
+    pub fn sources_shadow_deps(&self) -> bool {
+        !self.no_shadow
+    }
+}
+
+//**************************************************************************************************
+// Attributes
+//**************************************************************************************************
+
+pub mod known_attributes {
+    #[derive(Debug, PartialEq, Clone, PartialOrd, Eq, Ord)]
+    pub enum TestingAttributes {
+        // Can be called by other testing code, and included in compilation in test mode
+        TestOnly,
+        // Is a test that will be run
+        Test,
+        // This test is expected to fail
+        ExpectedFailure,
+    }
+
+    impl TestingAttributes {
+        pub const TEST: &'static str = "test";
+        pub const EXPECTED_FAILURE: &'static str = "expected_failure";
+        pub const TEST_ONLY: &'static str = "test_only";
+        pub const CODE_ASSIGNMENT_NAME: &'static str = "abort_code";
+
+        pub fn resolve(attribute_str: &str) -> Option<Self> {
+            Some(match attribute_str {
+                Self::TEST => Self::Test,
+                Self::TEST_ONLY => Self::TestOnly,
+                Self::EXPECTED_FAILURE => Self::ExpectedFailure,
+                _ => return None,
+            })
+        }
+
+        pub fn name(&self) -> &str {
+            match self {
+                Self::Test => Self::TEST,
+                Self::TestOnly => Self::TEST_ONLY,
+                Self::ExpectedFailure => Self::EXPECTED_FAILURE,
+            }
+        }
+    }
 }

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use thiserror::Error;
@@ -18,7 +18,7 @@ pub enum Error {
     #[error("Error accessing '{0}': {1}")]
     IO(String, #[source] std::io::Error),
     #[error("Error (de)serializing '{0}': {1}")]
-    LCS(String, #[source] lcs::Error),
+    BCS(String, #[source] bcs::Error),
     #[error("Failed to read '{0}' from JSON-RPC: {1}")]
     JsonRpcReadError(&'static str, String),
     #[error("Failed to write '{0}' from JSON-RPC: {1}")]
@@ -33,6 +33,8 @@ pub enum Error {
     StorageSigningError(&'static str, &'static str, &'static str, String),
     #[error("Failed to write '{1}' to {0} storage: {2}")]
     StorageWriteError(&'static str, &'static str, String),
+    #[error("{0} timed out: {1}")]
+    Timeout(&'static str, String),
     #[error("Unable to parse '{0}': error: {1}")]
     UnableToParse(&'static str, String),
     #[error("Unable to parse file '{0}', error: {1}")]

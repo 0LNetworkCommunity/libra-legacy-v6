@@ -1,13 +1,15 @@
 //! autopay view for web monitor
 
-use libra_types::{
+use diem_types::{
     access_path::AccessPath,
     account_config::constants:: CORE_CODE_ADDRESS,
 };
 use anyhow::Result;
 use move_core_types::{
+    ident_str,
+    identifier::IdentStr,
     language_storage::{ResourceKey, StructTag},
-    move_resource::MoveResource,
+    move_resource::{MoveResource, MoveStructType},
 };
 use serde::{Deserialize, Serialize};
 use move_core_types::account_address::AccountAddress;
@@ -97,10 +99,11 @@ impl Payment {
     }
 }
 
-impl MoveResource for AutoPayResource {
-    const MODULE_NAME: &'static str = "AutoPay2";
-    const STRUCT_NAME: &'static str = "Data";
+impl MoveStructType for AutoPayResource {
+    const MODULE_NAME: &'static IdentStr = ident_str!("AutoPay2");
+    const STRUCT_NAME: &'static IdentStr = ident_str!("Data");
 }
+impl MoveResource for AutoPayResource {}
 
 impl AutoPayResource {
     ///
@@ -118,16 +121,16 @@ impl AutoPayResource {
             account,
             AutoPayResource::struct_tag(),
         );
-        AccessPath::resource_access_path(&resource_key)
+        AccessPath::resource_access_path(resource_key)
     }
     ///
     pub fn resource_path() -> Vec<u8> {
-        AccessPath::resource_access_vec(&AutoPayResource::struct_tag())
+        AccessPath::resource_access_vec(AutoPayResource::struct_tag())
     }
 
     /// 
     pub fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
-        lcs::from_bytes(bytes).map_err(Into::into)
+        bcs::from_bytes(bytes).map_err(Into::into)
     }
 
     ///

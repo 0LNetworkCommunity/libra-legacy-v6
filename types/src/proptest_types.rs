@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -27,18 +27,18 @@ use crate::{
     vm_status::{KeptVMStatus, VMStatus},
     write_set::{WriteOp, WriteSet, WriteSetMut},
 };
-use libra_crypto::{
+use diem_crypto::{
     ed25519::{self, Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
     test_utils::KeyPair,
     traits::*,
     HashValue,
 };
-use libra_proptest_helpers::Index;
 use move_core_types::language_storage::TypeTag;
 use proptest::{
     collection::{vec, SizeRange},
     option,
     prelude::*,
+    sample::Index,
 };
 use proptest_derive::Arbitrary;
 use serde_json::Value;
@@ -339,6 +339,16 @@ fn new_raw_transaction(
             sender,
             sequence_number,
             script,
+            max_gas_amount,
+            gas_unit_price,
+            gas_currency_code,
+            expiration_time_secs,
+            chain_id,
+        ),
+        TransactionPayload::ScriptFunction(script_fn) => RawTransaction::new_script_function(
+            sender,
+            sequence_number,
+            script_fn,
             max_gas_amount,
             gas_unit_price,
             gas_currency_code,

@@ -1,17 +1,18 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     bootstrap_genesis, gen_block_id, gen_ledger_info_with_sigs, get_test_signed_transaction,
 };
 use anyhow::{anyhow, ensure, Result};
-use executor::Executor;
-use executor_types::BlockExecutor;
-use libra_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
-use libra_types::{
+use diem_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
+use diem_transaction_builder::stdlib::{
+    encode_create_parent_vasp_account_script, encode_peer_to_peer_with_metadata_script,
+};
+use diem_types::{
     account_config::{
-        coin1_tmp_tag, from_currency_code_string, testnet_dd_account_address,
-        treasury_compliance_account_address, COIN1_NAME,
+        from_currency_code_string, testnet_dd_account_address, treasury_compliance_account_address,
+        xus_tag, XUS_NAME,
     },
     account_state::AccountState,
     account_state_blob::AccountStateWithProof,
@@ -23,26 +24,25 @@ use libra_types::{
     trusted_state::{TrustedState, TrustedStateChange},
     waypoint::Waypoint,
 };
-use libra_vm::LibraVM;
-use libradb::LibraDB;
+use diem_vm::DiemVM;
+use diemdb::DiemDB;
+use executor::Executor;
+use executor_types::BlockExecutor;
 use rand::SeedableRng;
 use std::{convert::TryFrom, sync::Arc};
 use storage_interface::{DbReaderWriter, Order};
-use transaction_builder::{
-    encode_create_parent_vasp_account_script, encode_peer_to_peer_with_metadata_script,
-};
 
-pub fn test_execution_with_storage_impl() -> Arc<LibraDB> {
+pub fn test_execution_with_storage_impl() -> Arc<DiemDB> {
     let (genesis, validators) = vm_genesis::test_genesis_change_set_and_validators(Some(1));
     let genesis_txn = Transaction::GenesisTransaction(WriteSetPayload::Direct(genesis));
     let genesis_key = &vm_genesis::GENESIS_KEYPAIR.0;
 
-    let path = libra_temppath::TempPath::new();
+    let path = diem_temppath::TempPath::new();
     path.create_as_dir().unwrap();
-    let (libra_db, db, mut executor, waypoint) = create_db_and_executor(path.path(), &genesis_txn);
+    let (diem_db, db, mut executor, waypoint) = create_db_and_executor(path.path(), &genesis_txn);
 
     let parent_block_id = executor.committed_block_id();
-    let signer = libra_types::validator_signer::ValidatorSigner::new(
+    let signer = diem_types::validator_signer::ValidatorSigner::new(
         validators[0].owner_address,
         validators[0].key.clone(),
     );
@@ -77,7 +77,7 @@ pub fn test_execution_with_storage_impl() -> Arc<LibraDB> {
         genesis_key.clone(),
         genesis_key.public_key(),
         Some(encode_create_parent_vasp_account_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             0,
             account1,
             account1_auth_key.prefix().to_vec(),
@@ -92,7 +92,7 @@ pub fn test_execution_with_storage_impl() -> Arc<LibraDB> {
         genesis_key.clone(),
         genesis_key.public_key(),
         Some(encode_create_parent_vasp_account_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             0,
             account2,
             account2_auth_key.prefix().to_vec(),
@@ -107,7 +107,7 @@ pub fn test_execution_with_storage_impl() -> Arc<LibraDB> {
         genesis_key.clone(),
         genesis_key.public_key(),
         Some(encode_create_parent_vasp_account_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             0,
             account3,
             account3_auth_key.prefix().to_vec(),
@@ -123,7 +123,7 @@ pub fn test_execution_with_storage_impl() -> Arc<LibraDB> {
         genesis_key.clone(),
         genesis_key.public_key(),
         Some(encode_peer_to_peer_with_metadata_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             account1,
             2_000_000,
             vec![],
@@ -138,7 +138,7 @@ pub fn test_execution_with_storage_impl() -> Arc<LibraDB> {
         genesis_key.clone(),
         genesis_key.public_key(),
         Some(encode_peer_to_peer_with_metadata_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             account2,
             1_200_000,
             vec![],
@@ -153,7 +153,7 @@ pub fn test_execution_with_storage_impl() -> Arc<LibraDB> {
         genesis_key.clone(),
         genesis_key.public_key(),
         Some(encode_peer_to_peer_with_metadata_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             account3,
             1_000_000,
             vec![],
@@ -169,7 +169,7 @@ pub fn test_execution_with_storage_impl() -> Arc<LibraDB> {
         privkey1.clone(),
         pubkey1.clone(),
         Some(encode_peer_to_peer_with_metadata_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             account2,
             20_000,
             vec![],
@@ -185,7 +185,7 @@ pub fn test_execution_with_storage_impl() -> Arc<LibraDB> {
         privkey2,
         pubkey2,
         Some(encode_peer_to_peer_with_metadata_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             account3,
             10_000,
             vec![],
@@ -201,7 +201,7 @@ pub fn test_execution_with_storage_impl() -> Arc<LibraDB> {
         privkey1.clone(),
         pubkey1.clone(),
         Some(encode_peer_to_peer_with_metadata_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             account3,
             70_000,
             vec![],
@@ -223,7 +223,7 @@ pub fn test_execution_with_storage_impl() -> Arc<LibraDB> {
             privkey1.clone(),
             pubkey1.clone(),
             Some(encode_peer_to_peer_with_metadata_script(
-                coin1_tmp_tag(),
+                xus_tag(),
                 account3,
                 10_000,
                 vec![],
@@ -252,7 +252,7 @@ pub fn test_execution_with_storage_impl() -> Arc<LibraDB> {
         _ => panic!("unexpected state change"),
     }
     let current_version = li.ledger_info().version();
-    assert_eq!(trusted_state.latest_version(), 9);
+    assert_eq!(trusted_state.version(), 9);
 
     let t1 = db
         .reader
@@ -420,10 +420,8 @@ pub fn test_execution_with_storage_impl() -> Arc<LibraDB> {
         .commit_blocks(vec![block2_id], ledger_info_with_sigs)
         .unwrap();
 
-    let (li, epoch_change_proof, _accumulator_consistency_proof) = db
-        .reader
-        .get_state_proof(trusted_state.latest_version())
-        .unwrap();
+    let (li, epoch_change_proof, _accumulator_consistency_proof) =
+        db.reader.get_state_proof(trusted_state.version()).unwrap();
     trusted_state
         .verify_and_ratchet(&li, &epoch_change_proof)
         .unwrap();
@@ -506,16 +504,16 @@ pub fn test_execution_with_storage_impl() -> Arc<LibraDB> {
     assert_eq!(account3_received_events_batch2.len(), 7);
     assert_eq!(account3_received_events_batch2[0].1.sequence_number(), 6);
 
-    libra_db
+    diem_db
 }
 
 pub fn create_db_and_executor<P: AsRef<std::path::Path>>(
     path: P,
     genesis: &Transaction,
-) -> (Arc<LibraDB>, DbReaderWriter, Executor<LibraVM>, Waypoint) {
-    let (db, dbrw) = DbReaderWriter::wrap(LibraDB::new_for_test(&path));
-    let waypoint = bootstrap_genesis::<LibraVM>(&dbrw, genesis).unwrap();
-    let executor = Executor::<LibraVM>::new(dbrw.clone());
+) -> (Arc<DiemDB>, DbReaderWriter, Executor<DiemVM>, Waypoint) {
+    let (db, dbrw) = DbReaderWriter::wrap(DiemDB::new_for_test(&path));
+    let waypoint = bootstrap_genesis::<DiemVM>(&dbrw, genesis).unwrap();
+    let executor = Executor::<DiemVM>::new(dbrw.clone());
 
     (db, dbrw, executor, waypoint)
 }
@@ -529,8 +527,8 @@ where
 {
     let balance = if let Some(blob) = &account_state_with_proof.blob {
         AccountState::try_from(blob)?
-            .get_balance_resources(&[from_currency_code_string(COIN1_NAME).unwrap()])?
-            .get(&from_currency_code_string(COIN1_NAME).unwrap())
+            .get_balance_resources()?
+            .get(&from_currency_code_string(XUS_NAME).unwrap())
             .map(|b| b.coin())
             .unwrap_or(0)
     } else {
