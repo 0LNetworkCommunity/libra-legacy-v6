@@ -74,6 +74,8 @@ module Reconfigure { // TODO: Rename to Boundary
         print(&1800201);
         // fullnode subsidy is a fraction of the total subsidy available to validators.
         let proof_price = FullnodeSubsidy::get_proof_price(nominal_subsidy_per_node);
+        print(&nominal_subsidy_per_node);
+        print(&proof_price);
 
         let k = 0;
         // Distribute mining subsidy to fullnodes
@@ -89,8 +91,11 @@ module Reconfigure { // TODO: Rename to Boundary
             
             if (MinerState::node_above_thresh(addr)){ // TODO: this call is repeated in propose_new_set. Not sure if the performance hit at epoch boundary is worth the refactor.
               let count = MinerState::get_count_in_epoch(addr);
+              print(&count);
+
               let miner_subsidy = count * proof_price;
               print(&1800205);
+              print(&miner_subsidy);
               FullnodeSubsidy::distribute_fullnode_subsidy(vm, addr, miner_subsidy);
             };
 

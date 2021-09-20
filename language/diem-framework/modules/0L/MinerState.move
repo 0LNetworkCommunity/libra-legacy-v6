@@ -35,13 +35,20 @@ address 0x1 {
       fullnode_proofs: u64,
     }
 
-  fun increment_stats(global: u64, validator: u64, fullnode: u64) acquires MinerStats {
+  fun increment_stats(miner_addr: address) acquires MinerStats {
     assert(exists<MinerStats>(CoreAddresses::VM_RESERVED_ADDRESS()), 1301001);
     let state = borrow_global_mut<MinerStats>(CoreAddresses::VM_RESERVED_ADDRESS());
 
-    state.proofs_in_epoch = global;
-    state.validator_proofs = validator;
-    state.fullnode_proofs = fullnode;
+    if (ValidatorConfig::is_valid(miner_addr)) {
+      state.validator_proofs = state.validator_proofs + 1;
+    } else {
+      state.fullnode_proofs = state.fullnode_proofs + 1;
+    };
+    
+    state.proofs_in_epoch = state.proofs_in_epoch + 1;
+    print(&miner_addr);
+    print(state);
+
   }
 
   public fun epoch_reset(vm: &signer) acquires MinerStats {
@@ -268,15 +275,7 @@ address 0x1 {
     
       miner_history.latest_epoch_mining = DiemConfig::get_current_epoch();
 
-      if (ValidatorConfig::is_valid(miner_addr)) {
-        // TODO: ValidatorConfig::is_valid is being used here instead of DiemSystem::is_validator() because of dependency cycling. is_validator is used in reconfigure and FullnodeSubsidy
-        
-        // increment validator count
-        increment_stats(1, 1, 0);
-      } else {
-        // increment fullnode count
-        increment_stats(1, 0, 1);
-      }
+      increment_stats(miner_addr);
     }
 
     // Checks that the validator has been mining above the count threshold
@@ -482,12 +481,19 @@ address 0x1 {
     // Permissions: PUBLIC, ANYONE
     // TODO: Rename
     public fun get_epochs_mining(node_addr: address): u64 acquires MinerProofHistory {
-      borrow_global<MinerProofHistory>(node_addr).epochs_validating_and_mining
+      if (exists<MinerProofHistory>(node_addr)) {
+        return borrow_global<MinerProofHistory>(node_addr).epochs_validating_and_mining
+
+      };
+      0
     }
 
     // returns the number of proofs for a miner in the current epoch
     public fun get_count_in_epoch(miner_addr: address): u64 acquires MinerProofHistory {
-      borrow_global<MinerProofHistory>(miner_addr).count_proofs_in_epoch
+      if (exists<MinerProofHistory>(miner_addr)) {
+        return borrow_global<MinerProofHistory>(miner_addr).count_proofs_in_epoch
+      };
+      0
     }
 
     // Returns if the miner is above the account creation rate-limit
@@ -495,7 +501,10 @@ address 0x1 {
     public fun can_create_val_account(node_addr: address): bool acquires MinerProofHistory {
       if(Testnet::is_testnet() || StagingNet::is_staging_net()) return true;
       // check if rate limited, needs 7 epochs of validating.
-      borrow_global<MinerProofHistory>(node_addr).epochs_since_last_account_creation > EPOCHS_UNTIL_ACCOUNT_CREATION
+      if (exists<MinerProofHistory>(node_addr)) { 
+        return borrow_global<MinerProofHistory>(node_addr).epochs_since_last_account_creation > EPOCHS_UNTIL_ACCOUNT_CREATION
+      };
+      false 
     }
 
     //////////////////
@@ -568,21 +577,33 @@ address 0x1 {
 
     // Function code: 12
     // Use in testing to mock mining without producing proofs
-    public fun test_helper_mock_mining(sender: &signer,  count: u64) acquires MinerProofHistory {
+    public fun test_helper_mock_mining(sender: &signer,  count: u64) acquires MinerProofHistory, MinerStats {
       assert(Testnet::is_testnet(), Errors::invalid_state(130118));
-      let state = borrow_global_mut<MinerProofHistory>(Signer::address_of(sender));
+      let addr = Signer::address_of(sender);
+      let state = borrow_global_mut<MinerProofHistory>(addr);
       state.count_proofs_in_epoch = count;
+      let i = 0;
+      while (i < count) {
+        increment_stats(addr);
+        i = i + 1;
+      }
+      
       // FullnodeState::mock_proof(sender, count);
     }
 
     // Function code: 13
     // mocks mining for an arbitrary account from the vm 
-    public fun test_helper_mock_mining_vm(vm: &signer, addr: address, count: u64) acquires MinerProofHistory {
-      CoreAddresses::assert_diem_root(vm);
-
+    public fun test_helper_mock_mining_vm(vm: &signer, addr: address, count: u64) acquires MinerProofHistory, MinerStats {
       assert(Testnet::is_testnet(), Errors::invalid_state(130120));
+      CoreAddresses::assert_diem_root(vm);
       let state = borrow_global_mut<MinerProofHistory>(addr);
       state.count_proofs_in_epoch = count;
+
+      let i = 0;
+      while (i < count) {
+        increment_stats(addr);
+        i = i + 1;
+      }
     }
 
     // Permissions: PUBLIC, VM, TESTING 
