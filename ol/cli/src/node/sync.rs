@@ -71,7 +71,7 @@ impl Node {
         };
         let client = BackupServiceClient::new_with_opt(bk);
 
-        let mut rt = Runtime::new().unwrap();
+        let rt = Runtime::new().unwrap();
         rt.block_on(client.get_db_state()).unwrap()
     }
 }

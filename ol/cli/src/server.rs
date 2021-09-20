@@ -4,6 +4,7 @@ use ol_types::config::IS_PROD;
 use serde_json::json;
 use std::{convert::Infallible, fs, path::PathBuf, process::Command, thread, time::Duration};
 use tokio::time::interval;
+use tokio_stream::wrappers::IntervalStream;
 use warp::{sse::ServerSentEvent, Filter};
 
 use crate::{cache::Vitals, check::runner, node::node::Node};
@@ -24,7 +25,8 @@ pub async fn start_server(mut node: Node, run_checks: bool) {
     let vitals_route = warp::path("vitals").and(warp::get()).map(move || {
         let path = node_home.clone();
         // create server event source from Check object
-        let event_stream = interval(Duration::from_secs(10)).map(move |_| {
+        let interval = interval(Duration::from_secs(10));
+        let event_stream = IntervalStream::new(interval).map(move |_| {
             let vitals = Vitals::read_json(&path);
             // let items = health.refresh_checks();
             sse_vitals(vitals)
