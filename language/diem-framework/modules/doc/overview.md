@@ -125,7 +125,7 @@ The Move modules in the Diem Framework can be bucketed in to a couple categories
 -  [`0x1::Event`](../../../../../../move-stdlib/docs/Event.md#0x1_Event)
 -  [`0x1::FIFO`](FIFO.md#0x1_FIFO)
 -  [`0x1::FixedPoint32`](../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32)
--  [`0x1::FullnodeState`](FullnodeState.md#0x1_FullnodeState)
+-  [`0x1::FullnodeSubsidy`](FullnodeSubsidy.md#0x1_FullnodeSubsidy)
 -  [`0x1::GAS`](GAS.md#0x1_GAS)
 -  [`0x1::Genesis`](Genesis.md#0x1_Genesis)
 -  [`0x1::Globals`](Globals.md#0x1_Globals)

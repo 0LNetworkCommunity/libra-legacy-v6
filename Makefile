@@ -23,9 +23,10 @@ IP=$(shell toml get ${DATA_PATH}/0L.toml profile.ip)
 # Github settings
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
 
-ifndef GENESIS_USER
-GENESIS_USER = OLSF
-endif
+# # this is for quick setup of devnet, uses OLSF repo
+# ifndef GENESIS_USER
+# GENESIS_USER = OLSF
+# endif
 
 REPO_ORG = OLSF
 
@@ -39,7 +40,7 @@ endif
 
 CARGO_ARGS = --release
 ifeq (${NODE_ENV}, test)
-CARGO_ARGS = --verbose
+CARGO_ARGS = --locked # just keeping this from doing --release mode, while in testnet mode.
 endif
 
 # Registration params
@@ -180,9 +181,14 @@ gen-make-pull:
 	--shared-backend ${GENESIS_REMOTE} \
 	--pull-request-user ${GENESIS_USER}
 
-ceremony: gen-fork-repo
-		cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony
-		
+genesis-miner:
+	cargo run -p miner -- zero
+
+
+gen-onboard:
+		cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony --skip-mining
+
+ceremony: gen-fork-repo gen-onboard		
 
 # cargo run -p miner ${CARGO_ARGS} -- zero
 
@@ -533,3 +539,17 @@ fork-start:
 	rm -rf ~/.0L/db
 	cargo run -p libra-node -- --config ~/.0L/validator.node.yaml
 
+
+nuke-testnet:
+	@echo WIPING EVERYTHING but keeping: github_token.txt, autopay_batch.json, set_layout.toml, /blocks/block_0.json
+
+	@if test -d ${DATA_PATH}; then \
+		cd ${DATA_PATH} && cp github_token.txt autopay_batch.json set_layout.toml ~/; \
+		cd ${DATA_PATH} && rm -rf *; \
+		cd ~ && cp github_token.txt autopay_batch.json set_layout.toml ${DATA_PATH}; \
+	fi
+	
+	@if test -d ${DATA_PATH}/blocks; then \
+		cd ${DATA_PATH}/blocks && cp block_0.json ~/; \
+		cd ~ && cp block_0.json ${DATA_PATH}/blocks; \
+	fi
