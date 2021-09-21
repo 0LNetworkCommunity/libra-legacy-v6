@@ -15,6 +15,8 @@ module DiemBlock {
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
     use 0x1::Migrations;
+    use 0x1::Oracle;
+    use 0x1::BlockHeight;
     // use 0x1::Debug::print;
 
     struct BlockMetadata has key {
@@ -97,11 +99,14 @@ module DiemBlock {
             // print(&2);
             AutoPay2::process_autopay(&vm);
             // print(&3);
-        };        
+        };  
+
+        Oracle::clear_expired_ballots(&vm);      
 
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(CoreAddresses::DIEM_ROOT_ADDRESS());
         DiemTimestamp::update_global_time(&vm, proposer, timestamp);
         block_metadata_ref.height = block_metadata_ref.height + 1;
+        BlockHeight::set_height(&vm, block_metadata_ref.height);
         Event::emit_event<NewBlockEvent>(
             &mut block_metadata_ref.new_block_events,
             NewBlockEvent {

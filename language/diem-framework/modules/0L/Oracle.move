@@ -9,10 +9,11 @@ address 0x1 {
     use 0x1::Testnet;
     use 0x1::DiemSystem;
     use 0x1::Upgrade;
-    use 0x1::DiemBlock;
+    use 0x1::BlockHeight;
     use 0x1::CoreAddresses;
     use 0x1::Hash;
     use 0x1::NodeWeight;
+    use 0x1::Roles;
 
       //possible vote types
       const VOTE_TYPE_ONE_FOR_ONE: u8 = 0;
@@ -138,7 +139,7 @@ address 0x1 {
       }
       
       fun upgrade_handler (sender: address, data: vector<u8>) acquires Oracles {
-        let current_height = DiemBlock::get_current_block_height();
+        let current_height = BlockHeight::get_height();
         let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::DIEM_ROOT_ADDRESS()).upgrade;
   
         // check if qualifies as a new round
@@ -166,7 +167,7 @@ address 0x1 {
       }
       
       fun upgrade_handler_hash (sender: address, data: vector<u8>) acquires Oracles {
-        let current_height = DiemBlock::get_current_block_height();
+        let current_height = BlockHeight::get_height();
         let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::DIEM_ROOT_ADDRESS()).upgrade;
   
         // check if qualifies as a new round
@@ -266,6 +267,26 @@ address 0x1 {
           total_weight: 0,
         };
       }
+
+      /// This function will clear ballots if the current voting round has expired 
+      /// Unlike enter_new_upgrade_round, it will not start a new round 
+      /// it also does not clear the consensus so that it can be checked by the vm later
+      /// (that only happens if someone submits a proposal)
+      public fun clear_expired_ballots(vm: &signer) acquires Oracles {
+        Roles::assert_diem_root(vm);
+        let current_height = BlockHeight::get_height();
+        let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::DIEM_ROOT_ADDRESS()).upgrade;
+  
+        // check if qualifies as a new round
+        let is_new_round = current_height > upgrade_oracle.vote_window;
+
+        if (is_new_round) {
+          upgrade_oracle.validators_voted = Vector::empty<address>();
+          upgrade_oracle.vote_counts = Vector::empty<VoteCount>();
+          upgrade_oracle.votes = Vector::empty<Vote>();
+
+        }
+      }
   
       // check to see if threshold is reached every time receiving a vote
       // TODO: Not sure we still want to do this every time as tallying is more costly when using node weight (as the threshold must be summed), fine for now. 
@@ -289,7 +310,7 @@ address 0x1 {
   
         if (!Vector::is_empty(&payload)) {
           Upgrade::set_update(vm, *&payload); 
-          let current_height = DiemBlock::get_current_block_height();
+          let current_height = BlockHeight::get_height();
           Upgrade::record_history(vm, upgrade_oracle.version_id, payload, validators, current_height);
           enter_new_upgrade_round(upgrade_oracle, current_height);
         }
@@ -428,4 +449,33 @@ address 0x1 {
         VOTE_TYPE_UPGRADE
       }
     }
+
+    module BlockHeight {
+        use 0x1::Roles;
+        use 0x1::CoreAddresses;
+
+        struct BlockHeight has key {
+            height: u64,
+        }
+
+        public fun set_height(vm: &signer, height: u64) acquires BlockHeight {
+            Roles::assert_diem_root(vm);
+            if (!exists<BlockHeight>(CoreAddresses::DIEM_ROOT_ADDRESS())) {
+                move_to(vm, BlockHeight{height: height});
+            }
+            else {
+                borrow_global_mut<BlockHeight>(CoreAddresses::DIEM_ROOT_ADDRESS()).height = height;
+            };
+        }
+
+        public fun get_height(): u64 acquires BlockHeight {
+            if (!exists<BlockHeight>(CoreAddresses::DIEM_ROOT_ADDRESS())) {
+                0 
+            }
+            else {
+                borrow_global<BlockHeight>(CoreAddresses::DIEM_ROOT_ADDRESS()).height
+            }
+        }
+
+    }  
   }
