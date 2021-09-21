@@ -27,13 +27,13 @@ when executing from a fresh state.
 <b>use</b> <a href="DiemVersion.md#0x1_DiemVersion">0x1::DiemVersion</a>;
 <b>use</b> <a href="DualAttestation.md#0x1_DualAttestation">0x1::DualAttestation</a>;
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
+<b>use</b> <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy">0x1::FullnodeSubsidy</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Hash.md#0x1_Hash">0x1::Hash</a>;
 <b>use</b> <a href="Migrations.md#0x1_Migrations">0x1::Migrations</a>;
 <b>use</b> <a href="MinerState.md#0x1_MinerState">0x1::MinerState</a>;
 <b>use</b> <a href="Oracle.md#0x1_Oracle">0x1::Oracle</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
-<b>use</b> <a href="Subsidy.md#0x1_Subsidy">0x1::Subsidy</a>;
 <b>use</b> <a href="TransactionFee.md#0x1_TransactionFee">0x1::TransactionFee</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="Wallet.md#0x1_Wallet">0x1::Wallet</a>;
@@ -136,7 +136,7 @@ Initializes the Diem framework.
     <a href="Stats.md#0x1_Stats_initialize">Stats::initialize</a>(dm_account);
     <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_initialize">ValidatorUniverse::initialize</a>(dm_account);
     <a href="AutoPay.md#0x1_AutoPay2_initialize">AutoPay2::initialize</a>(dm_account);
-    <a href="Subsidy.md#0x1_Subsidy_init_fullnode_sub">Subsidy::init_fullnode_sub</a>(dm_account);
+    <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_init_fullnode_sub">FullnodeSubsidy::init_fullnode_sub</a>(dm_account);
     <a href="Oracle.md#0x1_Oracle_initialize">Oracle::initialize</a>(dm_account);
     <a href="MinerState.md#0x1_MinerState_init_list">MinerState::init_list</a>(dm_account);
     <a href="Wallet.md#0x1_Wallet_init">Wallet::init</a>(dm_account);

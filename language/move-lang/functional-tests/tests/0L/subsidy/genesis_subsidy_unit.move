@@ -15,6 +15,7 @@ fun main(vm: signer) {
     Subsidy::genesis(&vm);
     let new_account_bal = DiemAccount::balance<GAS>(@{{alice}});
     assert(new_account_bal>old_account_bal, 73570001);
-    assert(new_account_bal == 3497536, 73570002);
+    // two coins are added at genesis, one for validator and a second which will go to operator.
+    assert(new_account_bal == 3000000, 73570002);
 }
 }
