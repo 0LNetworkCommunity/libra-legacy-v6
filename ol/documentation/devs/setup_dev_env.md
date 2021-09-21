@@ -6,10 +6,10 @@ Building on Rust is slow, and on first build you may experience cc errors relate
 Optionally connect to a cloud remote machine, instead of using local. VS Code has mature tools for this. https://code.visualstudio.com/docs/remote/remote-overview
 
 # Get OS dependencies
-Full guide here: https://github.com/OLSF/libra/wiki/OS-Dependencies
+Full guide here: (OS-Dependencies.md)
 
 # Set up sccache for faster build times
-Full guide here: https://github.com/OLSF/libra/wiki/Improve-Rust-compile-times-with-sccache
+Full guide here: (Improve-Rust-compile-times-with-sccache.md)
 
 # Install VS Code extensions
 - Install rust-wrapper extension from [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=matklad.rust-analyzer)
