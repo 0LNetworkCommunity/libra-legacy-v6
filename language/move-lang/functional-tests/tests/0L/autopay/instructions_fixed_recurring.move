@@ -1,6 +1,6 @@
 // Todo: These GAS values have no effect, all accounts start with 1M GAS
+//! account: alice, 2000000GAS, 0 
 //! account: bob,   1000000GAS, 0, validator
-//! account: alice, 1000000GAS, 0 
 //! account: carol, 1000000GAS, 0 
 
 // test runs various autopay instruction types to ensure they are being executed as expected
@@ -20,33 +20,6 @@ script {
 
 // check: EXECUTED
 
-//! new-transaction
-//! sender: diemroot
-script {
-  use 0x1::AccountLimits;
-  use 0x1::CoreAddresses;
-  use 0x1::GAS::GAS;
-  fun main(account: signer) {
-    AccountLimits::update_limits_definition<GAS>(
-      &account, CoreAddresses::DIEM_ROOT_ADDRESS(), 0, 10000, 0, 1
-    );
-  }
-}
-// check: "Keep(EXECUTED)"
-
-//! new-transaction
-//! sender: diemroot
-//! execute-as: alice
-script {
-use 0x1::AccountLimits;
-use 0x1::GAS::GAS;
-  fun main(dm: signer, alice_account: signer) {
-    AccountLimits::publish_unrestricted_limits<GAS>(&alice_account);
-    AccountLimits::update_limits_definition<GAS>(&dm, @{{alice}}, 0, 10000, 0, 1);
-    AccountLimits::publish_window<GAS>(&dm, &alice_account, @{{alice}});
-  }
-}
-// check: "Keep(EXECUTED)"
 
 // alice commits to paying carol 200 GAS per epoch
 //! new-transaction
@@ -100,7 +73,7 @@ script {
   use 0x1::GAS::GAS;
   fun main(_vm: signer) {
     let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
-    assert(ending_balance == 999800, 7357002);
+    assert(ending_balance == 1999800, 7357002);
   }
 }
 // check: EXECUTED
@@ -136,13 +109,16 @@ script {
 script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
+  // use 0x1::Debug::print;
   fun main(_vm: signer) {
     // alice will have paid 5% on the 10000 she received last epoch
     let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
-    assert(ending_balance == 999600, 7357003);
+    // print(&ending_balance);
+    assert(ending_balance == 1999600, 7357003);
 
     // check balance of recipients
     let ending_balance = DiemAccount::balance<GAS>(@{{carol}});
+    // print(&ending_balance);
     assert(ending_balance == 1000400, 7357004);
   }
 }

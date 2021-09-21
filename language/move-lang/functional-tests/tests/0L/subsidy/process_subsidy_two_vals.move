@@ -82,12 +82,12 @@ script {
   use 0x1::DiemSystem;
 
   fun main(vm: signer) {
-    let (validators, fee_ratios) = DiemSystem::get_fee_ratio(&vm, 0, 15);
+    let (validators, _) = DiemSystem::get_fee_ratio(&vm, 0, 15);
     let subsidy_amount = 1000000;
     // from Subsidy::BASELINE_TX_COST * genesis five submitted (mock)
     let mining_proofs = 5;
     let refund_to_operator = 4336 * mining_proofs;  
-    Subsidy::process_subsidy(&vm, subsidy_amount, &validators, &fee_ratios);
+    Subsidy::process_subsidy(&vm, subsidy_amount, &validators);
     assert(
       DiemAccount::balance<GAS>(@{{alice}}) == 1000000 + subsidy_amount/2 - refund_to_operator, 
       7357190102091000

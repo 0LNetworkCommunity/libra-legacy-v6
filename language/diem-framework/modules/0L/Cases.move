@@ -32,7 +32,7 @@ address 0x1{
             Roles::assert_diem_root(vm);
             // did the validator sign blocks above threshold?
             let signs = Stats::node_above_thresh(vm, node_addr, height_start, height_end);
-            let mines = MinerState::node_above_thresh(vm, node_addr);
+            let mines = MinerState::node_above_thresh(node_addr);
 
             if (signs && mines) {
                 // compliant: in next set, gets paid, weight increments

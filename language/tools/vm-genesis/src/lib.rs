@@ -597,14 +597,14 @@ fn create_and_initialize_owners_operators(
             ]),
         );
 
-        exec_function(
-            session,
-            log_context,
-            "FullnodeState",
-            "init",
-            vec![],
-            serialize_values(&vec![MoveValue::Signer(owner_address)]),
-        );
+        // exec_function(
+        //     session,
+        //     log_context,
+        //     "FullnodeState",
+        //     "init",
+        //     vec![],
+        //     serialize_values(&vec![MoveValue::Signer(owner_address)]),
+        // );
     }
 
     println!("1 ======== Create OP Accounts");
@@ -801,14 +801,14 @@ fn recovery_owners_operators(
             ]),
         );
 
-        exec_function(
-            session,
-            log_context,
-            "FullnodeState",
-            "init",
-            vec![],
-            serialize_values(&vec![MoveValue::Signer(i.val_account)]),
-        );
+        // exec_function(
+        //     session,
+        //     log_context,
+        //     "FullnodeState",
+        //     "init",
+        //     vec![],
+        //     serialize_values(&vec![MoveValue::Signer(i.val_account)]),
+        // );
     }
 
     println!("1 ======== Create OP Accounts");
