@@ -19,7 +19,7 @@ module Globals {
     use 0x1::GAS;
     
     /// Global constants determining validator settings & requirements 
-    /// Some constants need to changed based on environment; dev, testing, prod.
+    /// Some constants need to be changed based on environment; dev, testing, prod.
     /// epoch_length: The length of an epoch in seconds (~1 day for prod.) 
     /// max_validator_per_epoch: The maximum number of validators that can participate 
     /// subsidy_ceiling_gas: TODO I don't really know what this is
@@ -28,7 +28,7 @@ module Globals {
     /// burn_accounts: The address to which burnt tokens should be sent 
     /// difficulty: The difficulty required for VDF proofs submitting by miners 
     /// epoch_mining_threshold: The number of proofs that must be submitted each 
-    ///       epoch by a miner to remain compliant  
+    ///       epoch by a miner to remain compliant
     struct GlobalConstants has drop {
       // For validator set.
       epoch_length: u64,
@@ -38,10 +38,9 @@ module Globals {
       max_node_density: u64,
       burn_accounts: vector<address>, // TODO: remove
       difficulty: u64,
-      epoch_mining_threshold: u64, //TODO: lower and upperbound threshold
+      epoch_mining_threshold: u64, // TODO: lower and upperbound threshold
       epoch_slow_wallet_unlock: u64,
     }
-
 
     ////////////////////
     //// Constants ////
@@ -87,10 +86,9 @@ module Globals {
       get_constants().epoch_slow_wallet_unlock
     }
 
-    /// get the constants for the current network 
+    /// Get the constants for the current network 
     fun get_constants(): GlobalConstants {
-      
-      let coin_scale = 1000000; //Diem::scaling_factor<GAS::T>();
+      let coin_scale = 1000000; // Diem::scaling_factor<GAS::T>();
       assert(coin_scale == Diem::scaling_factor<GAS::GAS>(), Errors::invalid_argument(070001));
 
       if (Testnet::is_testnet()) {
@@ -105,9 +103,9 @@ module Globals {
           epoch_mining_threshold: 1,
           epoch_slow_wallet_unlock: 10,
         }
+      };
 
-      } else {
-        if (StagingNet::is_staging_net()){
+      if (StagingNet::is_staging_net()) {
         return GlobalConstants {
           epoch_length: 60 * 20, // 20 mins, enough for a hard miner proof.
           max_validator_per_epoch: 300,
@@ -118,9 +116,9 @@ module Globals {
           difficulty: 5000000,
           epoch_mining_threshold: 1,
           epoch_slow_wallet_unlock: 10000000,
-        } 
+        }
       } else {
-          return GlobalConstants {
+        return GlobalConstants {
           epoch_length: 60 * 60 * 24, // approx 24 hours at 1.4 blocks/sec
           max_validator_per_epoch: 300, // max expected for BFT limits.
           // See DiemVMConfig for gas constants:
@@ -132,12 +130,12 @@ module Globals {
           min_node_density: 4,
           max_node_density: 300,
           burn_accounts: Vector::singleton(@0xDEADDEAD),
-          difficulty: 5000000, //10 mins on macbook pro 2.5 ghz quadcore
+          difficulty: 5000000, // 10 mins on macbook pro 2.5 ghz quadcore
           epoch_mining_threshold: 20,
           epoch_slow_wallet_unlock: 10000000,
-          }
         }
       }
     }
+
   }
 }

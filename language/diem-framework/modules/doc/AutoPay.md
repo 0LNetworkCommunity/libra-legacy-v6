@@ -152,12 +152,6 @@ This module enables automatic payments from accounts to community wallets at epo
 <dd>
 
 </dd>
-<dt>
-<code>current_epoch: u64</code>
-</dt>
-<dd>
-
-</dd>
 </dl>
 
 
@@ -424,7 +418,7 @@ Attempt to use a UID that is already taken
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay2_reconfig_reset_tick">reconfig_reset_tick</a>(vm: &signer) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay2_Tick">Tick</a>{
+<pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay2_reconfig_reset_tick">reconfig_reset_tick</a>(vm: &signer) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay2_Tick">Tick</a> {
   <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(vm);
   <b>let</b> tick_state = borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay2_Tick">Tick</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm));
   tick_state.triggered = <b>false</b>;
@@ -454,11 +448,18 @@ Attempt to use a UID that is already taken
   <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(sender);
 
   // initialize resources for the <b>module</b>
-  move_to&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a>&gt;(sender, <a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a> { accounts: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;(), current_epoch: 0, });
+  move_to&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a>&gt;(
+    sender,
+    <a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a> {
+      accounts: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;(),
+      // current_epoch: 0, // todo: unused, delete?
+    }
+  );
   move_to&lt;<a href="AutoPay.md#0x1_AutoPay2_Tick">Tick</a>&gt;(sender, <a href="AutoPay.md#0x1_AutoPay2_Tick">Tick</a> {triggered: <b>false</b>});
   move_to&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountLimitsEnable">AccountLimitsEnable</a>&gt;(sender, <a href="AutoPay.md#0x1_AutoPay2_AccountLimitsEnable">AccountLimitsEnable</a> {enabled: <b>false</b>});
 
-  // set this <b>to</b> enable escrow of funds. Not used unless account limits are enabled (i.e. AccoundLimitsEnable set <b>to</b> <b>true</b>)
+  // set this <b>to</b> enable escrow of funds. Not used unless account limits
+  // are enabled (i.e. AccoundLimitsEnable set <b>to</b> <b>true</b>)
   <a href="DiemAccount.md#0x1_DiemAccount_initialize_escrow_root">DiemAccount::initialize_escrow_root</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender);
 }
 </code></pre>
@@ -516,7 +517,9 @@ Attempt to use a UID that is already taken
 
   // Go through all accounts in <a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a>
   // This is the list of accounts which currently have autopay enabled
-  <b>let</b> account_list = &borrow_global&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).accounts;
+  <b>let</b> account_list = &borrow_global&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a>&gt;(
+    <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()
+  ).accounts;
   <b>let</b> accounts_length = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(account_list);
   <b>let</b> account_idx = 0;
   <b>while</b> (account_idx &lt; accounts_length) {
@@ -549,8 +552,7 @@ Attempt to use a UID that is already taken
 <pre><code><b>fun</b> <a href="AutoPay.md#0x1_AutoPay2_process_autopay_account">process_autopay_account</a>(
   vm: &signer,
   account_addr: &address,
-) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay2_Data">Data</a>, <a href="AutoPay.md#0x1_AutoPay2_AccountLimitsEnable">AccountLimitsEnable</a>
-{
+) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay2_Data">Data</a>, <a href="AutoPay.md#0x1_AutoPay2_AccountLimitsEnable">AccountLimitsEnable</a> {
   <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(vm);
 
   // Get the payment list from the account
@@ -628,20 +630,19 @@ Attempt to use a UID that is already taken
         0
       }
     } <b>else</b> {
-      // in remaining cases, payment is simple amaount given, not a percentage
+      // in remaining cases, payment is simple amount given, not a percentage
       payment.amt
     };
 
     // check payees are community wallets, only community wallets are allowed
     // <b>to</b> receive autopay (bypassing account limits)
-    <b>if</b> ( amount != 0 && amount &lt;= account_bal){
+    <b>if</b> (amount != 0 && amount &lt;= account_bal) {
       <b>if</b> (borrow_global&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountLimitsEnable">AccountLimitsEnable</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm)).enabled) {
         <b>if</b> (<a href="Wallet.md#0x1_Wallet_is_comm">Wallet::is_comm</a>(payment.payee)) {
           <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">DiemAccount::vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
-          *account_addr, payment.payee, amount, x"", x"", vm
-        );
+            *account_addr, payment.payee, amount, x"", x"", vm
+          );
         }
-
       }
       <b>else</b> {
         <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">DiemAccount::vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
@@ -654,12 +655,7 @@ Attempt to use a UID that is already taken
   };
 
   // <b>if</b> the payment expired or is one-time only, it may be deleted
-  <b>if</b> (payment.in_type == <a href="AutoPay.md#0x1_AutoPay2_FIXED_ONCE">FIXED_ONCE</a> || payment.end_epoch &lt;= epoch){
-    <b>true</b>
-  }
-  <b>else</b> {
-    <b>false</b>
-  }
+  payment.in_type == <a href="AutoPay.md#0x1_AutoPay2_FIXED_ONCE">FIXED_ONCE</a> || payment.end_epoch &lt;= epoch
 }
 </code></pre>
 
@@ -685,11 +681,13 @@ Attempt to use a UID that is already taken
 <pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay2_enable_autopay">enable_autopay</a>(acc: &signer) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a>{
   <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(acc);
   // append <b>to</b> account list in system state 0x0
-  <b>let</b> accounts = &<b>mut</b> borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).accounts;
+  <b>let</b> accounts = &<b>mut</b> borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a>&gt;(
+    <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()
+  ).accounts;
   <b>if</b> (!<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(accounts, &addr)) {
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(accounts, addr);
     // Initialize the instructions <a href="AutoPay.md#0x1_AutoPay2_Data">Data</a> on user account state
-    move_to&lt;<a href="AutoPay.md#0x1_AutoPay2_Data">Data</a>&gt;(acc, <a href="AutoPay.md#0x1_AutoPay2_Data">Data</a> { payments: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="AutoPay.md#0x1_AutoPay2_Payment">Payment</a>&gt;()});
+    move_to&lt;<a href="AutoPay.md#0x1_AutoPay2_Data">Data</a>&gt;(acc, <a href="AutoPay.md#0x1_AutoPay2_Data">Data</a> { payments: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="AutoPay.md#0x1_AutoPay2_Payment">Payment</a>&gt;() });
   };
 
   // Initialize Escrow data
@@ -717,7 +715,6 @@ Attempt to use a UID that is already taken
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay2_disable_autopay">disable_autopay</a>(acc: &signer) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a>, <a href="AutoPay.md#0x1_AutoPay2_Data">Data</a> {
-
   <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(acc);
   <b>if</b> (!<a href="AutoPay.md#0x1_AutoPay2_is_enabled">is_enabled</a>(addr)) <b>return</b>;
 
@@ -726,7 +723,9 @@ Attempt to use a UID that is already taken
   <b>let</b> <a href="AutoPay.md#0x1_AutoPay2_Data">Data</a> { payments: _ } = sender_data;
 
   // pop that account from <a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a>
-  <b>let</b> accounts = &<b>mut</b> borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).accounts;
+  <b>let</b> accounts = &<b>mut</b> borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a>&gt;(
+    <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()
+  ).accounts;
   <b>let</b> (status, index) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(accounts, &addr);
   <b>if</b> (status) {
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>&lt;address&gt;(accounts, index);
@@ -764,7 +763,6 @@ Attempt to use a UID that is already taken
   <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   // Confirm that no payment <b>exists</b> <b>with</b> the same uid
   <b>let</b> index = <a href="AutoPay.md#0x1_AutoPay2_find">find</a>(addr, uid);
-
   <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_is_none">Option::is_none</a>&lt;u64&gt;(&index), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="AutoPay.md#0x1_AutoPay2_UID_TAKEN">UID_TAKEN</a>));
 
   <b>if</b> (borrow_global&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountLimitsEnable">AccountLimitsEnable</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).enabled) {
@@ -772,8 +770,10 @@ Attempt to use a UID that is already taken
   };
 
   <b>let</b> payments = &<b>mut</b> borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay2_Data">Data</a>&gt;(addr).payments;
-
-  <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="AutoPay.md#0x1_AutoPay2_Payment">Payment</a>&gt;(payments) &lt; <a href="AutoPay.md#0x1_AutoPay2_MAX_NUMBER_OF_INSTRUCTIONS">MAX_NUMBER_OF_INSTRUCTIONS</a>, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="AutoPay.md#0x1_AutoPay2_TOO_MANY_INSTRUCTIONS">TOO_MANY_INSTRUCTIONS</a>));
+  <b>assert</b>(
+    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="AutoPay.md#0x1_AutoPay2_Payment">Payment</a>&gt;(payments) &lt; <a href="AutoPay.md#0x1_AutoPay2_MAX_NUMBER_OF_INSTRUCTIONS">MAX_NUMBER_OF_INSTRUCTIONS</a>,
+    <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="AutoPay.md#0x1_AutoPay2_TOO_MANY_INSTRUCTIONS">TOO_MANY_INSTRUCTIONS</a>)
+  );
 
   // This is not a necessary check at genesis.
   // <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_exists_at">DiemAccount::exists_at</a>(payee), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="AutoPay.md#0x1_AutoPay2_EPAYEE_DOES_NOT_EXIST">EPAYEE_DOES_NOT_EXIST</a>));
@@ -848,12 +848,10 @@ Attempt to use a UID that is already taken
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay2_is_enabled">is_enabled</a>(account: address): bool <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a> {
-  <b>let</b> accounts = &<b>mut</b> borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).accounts;
-  <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(accounts, &account)) {
-    <b>true</b>
-  } <b>else</b> {
-    <b>false</b>
-  }
+  <b>let</b> accounts = &borrow_global&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountList">AccountList</a>&gt;(
+      <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()
+    ).accounts;
+  <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(accounts, &account)
 }
 </code></pre>
 
@@ -882,7 +880,7 @@ Attempt to use a UID that is already taken
     // Case <b>where</b> payment is not found
     <b>return</b> (0, @0x0, 0, 0)
   } <b>else</b> {
-    <b>let</b> payments = &borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay2_Data">Data</a>&gt;(account).payments;
+    <b>let</b> payments = &borrow_global&lt;<a href="AutoPay.md#0x1_AutoPay2_Data">Data</a>&gt;(account).payments;
     <b>let</b> payment = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(payments, <a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_extract">Option::extract</a>&lt;u64&gt;(&<b>mut</b> index));
     <b>return</b> (payment.in_type, payment.payee, payment.end_epoch, payment.amt)
   }

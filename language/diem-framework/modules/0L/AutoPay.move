@@ -75,10 +75,9 @@ address 0x1 {
     // It keeps track of all accounts that have autopay enabled and updates the 
     // list as accounts change their Status structs
 
-    // current_epoch value is unused and should be ignored
     struct AccountList has key {
       accounts: vector<address>,
-      current_epoch: u64, //unused
+      // current_epoch: u64, // todo: unused, delete?
     }
 
     // This is the structure of each Payment struct which represents one automatic
@@ -93,7 +92,7 @@ address 0x1 {
       in_type: u8,
       payee: address,
       end_epoch: u64,  // end epoch is inclusive, ignored for type 3
-      prev_bal: u64, //only used for type 1
+      prev_bal: u64, // only used for type 1
       amt: u64, // percentage for types 0 & 1, absolute value for 2 & 3
     }
 
@@ -118,7 +117,7 @@ address 0x1 {
     }
 
     // called at the beginning of each epoch, to reset the tick and tricker the autopay
-    public fun reconfig_reset_tick(vm: &signer) acquires Tick{
+    public fun reconfig_reset_tick(vm: &signer) acquires Tick {
       Roles::assert_diem_root(vm);
       let tick_state = borrow_global_mut<Tick>(Signer::address_of(vm));
       tick_state.triggered = false;
@@ -131,11 +130,18 @@ address 0x1 {
       Roles::assert_diem_root(sender);
 
       // initialize resources for the module
-      move_to<AccountList>(sender, AccountList { accounts: Vector::empty<address>(), current_epoch: 0, });
+      move_to<AccountList>(
+        sender,
+        AccountList {
+          accounts: Vector::empty<address>(),
+          // current_epoch: 0, // todo: unused, delete?
+        }
+      );
       move_to<Tick>(sender, Tick {triggered: false});
       move_to<AccountLimitsEnable>(sender, AccountLimitsEnable {enabled: false});
 
-      // set this to enable escrow of funds. Not used unless account limits are enabled (i.e. AccoundLimitsEnable set to true)
+      // set this to enable escrow of funds. Not used unless account limits 
+      // are enabled (i.e. AccoundLimitsEnable set to true)
       DiemAccount::initialize_escrow_root<GAS>(sender);
     }
 
@@ -161,7 +167,9 @@ address 0x1 {
 
       // Go through all accounts in AccountList
       // This is the list of accounts which currently have autopay enabled
-      let account_list = &borrow_global<AccountList>(CoreAddresses::DIEM_ROOT_ADDRESS()).accounts;
+      let account_list = &borrow_global<AccountList>(
+        CoreAddresses::DIEM_ROOT_ADDRESS()
+      ).accounts;
       let accounts_length = Vector::length<address>(account_list);
       let account_idx = 0;
       while (account_idx < accounts_length) {
@@ -175,10 +183,9 @@ address 0x1 {
     fun process_autopay_account(
       vm: &signer,
       account_addr: &address,
-    ) acquires Data, AccountLimitsEnable
-    {
+    ) acquires Data, AccountLimitsEnable {
       Roles::assert_diem_root(vm);
-      
+
       // Get the payment list from the account
       let payments = &mut borrow_global_mut<Data>(*account_addr).payments;
       let payments_len = Vector::length<Payment>(payments);
@@ -236,20 +243,19 @@ address 0x1 {
             0
           }
         } else {
-          // in remaining cases, payment is simple amaount given, not a percentage
+          // in remaining cases, payment is simple amount given, not a percentage
           payment.amt
         };
 
         // check payees are community wallets, only community wallets are allowed
         // to receive autopay (bypassing account limits)
-        if ( amount != 0 && amount <= account_bal){
+        if (amount != 0 && amount <= account_bal) {
           if (borrow_global<AccountLimitsEnable>(Signer::address_of(vm)).enabled) {
             if (Wallet::is_comm(payment.payee)) {
               DiemAccount::vm_make_payment_no_limit<GAS>(
-              *account_addr, payment.payee, amount, x"", x"", vm
-            );
+                *account_addr, payment.payee, amount, x"", x"", vm
+              );
             }
-
           }
           else {
             DiemAccount::vm_make_payment_no_limit<GAS>(
@@ -262,12 +268,7 @@ address 0x1 {
       };
 
       // if the payment expired or is one-time only, it may be deleted
-      if (payment.in_type == FIXED_ONCE || payment.end_epoch <= epoch){
-        true
-      }
-      else {
-        false
-      }
+      payment.in_type == FIXED_ONCE || payment.end_epoch <= epoch
     }
 
     ////////////////////////////////////////////
@@ -280,11 +281,13 @@ address 0x1 {
     public fun enable_autopay(acc: &signer) acquires AccountList{
       let addr = Signer::address_of(acc);
       // append to account list in system state 0x0
-      let accounts = &mut borrow_global_mut<AccountList>(CoreAddresses::DIEM_ROOT_ADDRESS()).accounts;
+      let accounts = &mut borrow_global_mut<AccountList>(
+        CoreAddresses::DIEM_ROOT_ADDRESS()
+      ).accounts;
       if (!Vector::contains<address>(accounts, &addr)) {
         Vector::push_back<address>(accounts, addr);
         // Initialize the instructions Data on user account state 
-        move_to<Data>(acc, Data { payments: Vector::empty<Payment>()});
+        move_to<Data>(acc, Data { payments: Vector::empty<Payment>() });
       };
 
       // Initialize Escrow data
@@ -294,7 +297,6 @@ address 0x1 {
     // An account can disable autopay on it's account
     // Function code 010103
     public fun disable_autopay(acc: &signer) acquires AccountList, Data {
-
       let addr = Signer::address_of(acc);
       if (!is_enabled(addr)) return;
 
@@ -303,7 +305,9 @@ address 0x1 {
       let Data { payments: _ } = sender_data;
 
       // pop that account from AccountList
-      let accounts = &mut borrow_global_mut<AccountList>(CoreAddresses::DIEM_ROOT_ADDRESS()).accounts;
+      let accounts = &mut borrow_global_mut<AccountList>(
+        CoreAddresses::DIEM_ROOT_ADDRESS()
+      ).accounts;
       let (status, index) = Vector::index_of<address>(accounts, &addr);
       if (status) {
         Vector::remove<address>(accounts, index);
@@ -323,7 +327,6 @@ address 0x1 {
       let addr = Signer::address_of(sender);
       // Confirm that no payment exists with the same uid
       let index = find(addr, uid);
-
       assert(Option::is_none<u64>(&index), Errors::invalid_argument(UID_TAKEN));
 
       if (borrow_global<AccountLimitsEnable>(CoreAddresses::DIEM_ROOT_ADDRESS()).enabled) {
@@ -331,8 +334,10 @@ address 0x1 {
       };
 
       let payments = &mut borrow_global_mut<Data>(addr).payments;
-
-      assert(Vector::length<Payment>(payments) < MAX_NUMBER_OF_INSTRUCTIONS, Errors::limit_exceeded(TOO_MANY_INSTRUCTIONS));
+      assert(
+        Vector::length<Payment>(payments) < MAX_NUMBER_OF_INSTRUCTIONS,
+        Errors::limit_exceeded(TOO_MANY_INSTRUCTIONS)
+      );
 
       // This is not a necessary check at genesis.
       // assert(DiemAccount::exists_at(payee), Errors::not_published(EPAYEE_DOES_NOT_EXIST));
@@ -376,12 +381,10 @@ address 0x1 {
     // Any account can check to see if any of the accounts has autopay enabled
     // by checking in 0x0's AccountList
     public fun is_enabled(account: address): bool acquires AccountList {
-      let accounts = &mut borrow_global_mut<AccountList>(CoreAddresses::DIEM_ROOT_ADDRESS()).accounts;
-      if (Vector::contains<address>(accounts, &account)) {
-        true
-      } else {
-        false
-      }
+      let accounts = &borrow_global<AccountList>(
+          CoreAddresses::DIEM_ROOT_ADDRESS()
+        ).accounts;
+      Vector::contains<address>(accounts, &account)
     }
 
     // Returns (sender address,  end_epoch, percentage)
@@ -391,7 +394,7 @@ address 0x1 {
         // Case where payment is not found
         return (0, @0x0, 0, 0)
       } else {
-        let payments = &borrow_global_mut<Data>(account).payments;
+        let payments = &borrow_global<Data>(account).payments;
         let payment = Vector::borrow(payments, Option::extract<u64>(&mut index));
         return (payment.in_type, payment.payee, payment.end_epoch, payment.amt)
       }

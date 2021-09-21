@@ -39,7 +39,7 @@ This module provides global variables and constants that have no specific owner
 ## Struct `GlobalConstants`
 
 Global constants determining validator settings & requirements
-Some constants need to changed based on environment; dev, testing, prod.
+Some constants need to be changed based on environment; dev, testing, prod.
 epoch_length: The length of an epoch in seconds (~1 day for prod.)
 max_validator_per_epoch: The maximum number of validators that can participate
 subsidy_ceiling_gas: TODO I don't really know what this is
@@ -324,7 +324,7 @@ Get the mining threshold
 
 ## Function `get_constants`
 
-get the constants for the current network
+Get the constants for the current network
 
 
 <pre><code><b>fun</b> <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>(): <a href="Globals.md#0x1_Globals_GlobalConstants">Globals::GlobalConstants</a>
@@ -337,8 +337,7 @@ get the constants for the current network
 
 
 <pre><code><b>fun</b> <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>(): <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
-
-  <b>let</b> coin_scale = 1000000; //<a href="Diem.md#0x1_Diem_scaling_factor">Diem::scaling_factor</a>&lt;GAS::T&gt;();
+  <b>let</b> coin_scale = 1000000; // <a href="Diem.md#0x1_Diem_scaling_factor">Diem::scaling_factor</a>&lt;GAS::T&gt;();
   <b>assert</b>(coin_scale == <a href="Diem.md#0x1_Diem_scaling_factor">Diem::scaling_factor</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(070001));
 
   <b>if</b> (<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()) {
@@ -353,9 +352,9 @@ get the constants for the current network
       epoch_mining_threshold: 1,
       epoch_slow_wallet_unlock: 10,
     }
+  };
 
-  } <b>else</b> {
-    <b>if</b> (<a href="Testnet.md#0x1_StagingNet_is_staging_net">StagingNet::is_staging_net</a>()){
+  <b>if</b> (<a href="Testnet.md#0x1_StagingNet_is_staging_net">StagingNet::is_staging_net</a>()) {
     <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
       epoch_length: 60 * 20, // 20 mins, enough for a hard miner proof.
       max_validator_per_epoch: 300,
@@ -368,7 +367,7 @@ get the constants for the current network
       epoch_slow_wallet_unlock: 10000000,
     }
   } <b>else</b> {
-      <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
+    <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
       epoch_length: 60 * 60 * 24, // approx 24 hours at 1.4 blocks/sec
       max_validator_per_epoch: 300, // max expected for BFT limits.
       // See <a href="DiemVMConfig.md#0x1_DiemVMConfig">DiemVMConfig</a> for gas constants:
@@ -380,10 +379,9 @@ get the constants for the current network
       min_node_density: 4,
       max_node_density: 300,
       burn_accounts: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_singleton">Vector::singleton</a>(@0xDEADDEAD),
-      difficulty: 5000000, //10 mins on macbook pro 2.5 ghz quadcore
+      difficulty: 5000000, // 10 mins on macbook pro 2.5 ghz quadcore
       epoch_mining_threshold: 20,
       epoch_slow_wallet_unlock: 10000000,
-      }
     }
   }
 }

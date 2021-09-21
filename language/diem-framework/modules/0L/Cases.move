@@ -20,26 +20,38 @@ address 0x1{
         const VALIDATOR_DOUBLY_NOT_COMPLIANT: u64 = 4;
 
         // Determine the consensus case for the validator.
-        // This happens at an epoch prologue, and labels the validator based on performance in the outgoing epoch.
-        // The consensus case determines if the validator receives transaction fees or subsidy for performance, inclusion in following epoch, and at what voting power. 
+        // This happens at an epoch prologue, and labels the validator based on 
+        // performance in the outgoing epoch.
+        // The consensus case determines if the validator receives transaction 
+        // fees or subsidy for performance, inclusion in following epoch, and 
+        // at what voting power. 
         // Permissions: Public, VM Only
-        public fun get_case(vm: &signer, node_addr: address, height_start: u64, height_end: u64): u64 {
+        public fun get_case(
+            vm: &signer, node_addr: address, height_start: u64, height_end: u64
+        ): u64 {
             Roles::assert_diem_root(vm);
             // did the validator sign blocks above threshold?
             let signs = Stats::node_above_thresh(vm, node_addr, height_start, height_end);
             let mines = MinerState::node_above_thresh(vm, node_addr);
 
             if (signs && mines) {
-                VALIDATOR_COMPLIANT // compliant: in next set, gets paid, weight increments
+                // compliant: in next set, gets paid, weight increments
+                VALIDATOR_COMPLIANT
             } 
-            else if (signs && !mines) { 
-                VALIDATOR_HALF_COMPLIANT // half compliant: not in next set, does not get paid, weight does not increment.
+            else if (signs && !mines) {
+                // half compliant: not in next set, does not get paid, weight 
+                // does not increment.
+                VALIDATOR_HALF_COMPLIANT
             }
-            else if (!signs && mines) { 
-                VALIDATOR_NOT_COMPLIANT // not compliant: jailed, not in next set, does not get paid, weight increments.
+            else if (!signs && mines) {
+                // not compliant: jailed, not in next set, does not get paid, 
+                // weight increments.
+                VALIDATOR_NOT_COMPLIANT
             }
             else {
-                VALIDATOR_DOUBLY_NOT_COMPLIANT // not compliant: jailed, not in next set, does not get paid, weight does not increment.
+                // not compliant: jailed, not in next set, does not get paid, 
+                // weight does not increment.
+                VALIDATOR_DOUBLY_NOT_COMPLIANT
             }
         }
     }
