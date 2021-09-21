@@ -29,6 +29,6 @@ The project is a mono-repo, and all code is in Rust, targeting stable version 1.
 # Note on Move compiler
 Note that when Move stdlib code changes, it is necessary to rerun the stdlib compiler. The compiler also created generated code bindings in Rust for transaction scripts.
 
-`cargo r -p stdlib --release`
+`cargo r -p move-stdlib --release`
 
 The one exception for this, is when running functional tests, which will run stdlib for you. If your e2e tests or swarm are failing inexplicably, it's likely that the stdlib has not been compiled.
