@@ -9,7 +9,7 @@ The swarm simulates a diem network by running some diem nodes on localhost. The 
 
 Throughout this documentation the following paths are used, but they can be changed, if the setup is different on your system:
 
-* diem source is cloned into $HOME/diem
+* diem source is cloned into $HOME/libra
 * the temp directory for swarm files is created in $HOME/swarm_temp
 
 ### Initial compile steps
@@ -17,7 +17,7 @@ Throughout this documentation the following paths are used, but they can be chan
 The following compile steps are mandatory for the swarm to run correctly using the latest source code. All other rust dependencies will get compiled by cargo when needed:
 
 ```
-cd $HOME/diem
+cd $HOME/libra
 cargo build -p diem-node -p cli
 cd language/move-stdlib
 cargo run --release
@@ -36,14 +36,14 @@ Also `NODE_ENV="test"` is important to use. In this documentation we will set it
 ### Swarm with 2 nodes without cli:
 
 ```
-cd $HOME/diem
+cd $HOME/libra
 NODE_ENV="test" cargo run -p diem-swarm -- --diem-node target/debug/diem-node -c $HOME/swarm_temp -n 2
 ```
 
 ### Swarm with 2 nodes and with cli:
 
 ```
-cd $HOME/diem
+cd $HOME/libra
 NODE_ENV="test" cargo run -p diem-swarm -- --diem-node target/debug/diem-node -c $HOME/swarm_temp -n 2 -s --cli-path target/debug/cli
 ```
 
@@ -55,10 +55,10 @@ At the cli prompt when asked to "Enter your 0L mnemonic:" you can use the mnemon
 After starting the swarm, the 0L.toml and other configs have to be created by:
 
 ```
-cd $HOME/diem
+cd $HOME/libra
 export NODE_ENV="test"
-cargo run -p ol -- --swarm-path=$HOME/swarm_temp --swarm-persona=alice init --source-path $HOME/diem
-cargo run -p ol -- --swarm-path=$HOME/swarm_temp --swarm-persona=bob init --source-path $HOME/diem
+cargo run -p ol -- --swarm-path=$HOME/swarm_temp --swarm-persona=alice init --source-path $HOME/libra
+cargo run -p ol -- --swarm-path=$HOME/swarm_temp --swarm-persona=bob init --source-path $HOME/libra
 ```
 
 If more than 2 swarm nodes are running, the same commands have to be run also for swarm-persona carol, dave and eve.
@@ -133,14 +133,14 @@ Known inaccuracy:
 To start web monitor for swarm, in one terminal window you have to start the svelte dev server. This updates the HTML and JS bundles as files are changed. You need this for realtime feedback.
 
 ```
-cd $HOME/diem/ol/cli/web-monitor
+cd $HOME/libra/ol/cli/web-monitor
 npm run dev
 ```
 
 Then in a second terminal window, you can start the "warp" server, which will serve the web monitor on port 3030:
 
 ```
-cd $HOME/diem
+cd $HOME/libra
 cargo r -p ol -- --swarm-path $HOME/swarm_temp/ --swarm-persona alice serve
 ```
 
@@ -175,14 +175,14 @@ This transaction will appear with bob's signature and apply changes to `bob` acc
 #### Save a noop test transaction, by `bob` for `alice` to later send
 
 ```
-cd $HOME/diem
+cd $HOME/libra
 cargo r -p txs -- --swarm-path=$HOME/swarm_temp/ --swarm-persona=bob --save-path ./noop_tx.json --no-send demo
 ```
 
 #### submit as `alice`
 
 ```
-cd $HOME/diem
+cd $HOME/libra
 cargo r -p txs -- --swarm-path=$HOME/swarm_temp/ --swarm-persona=bob relay --relay-file ./noop_tx.json
 ```
 
@@ -196,13 +196,13 @@ We've debated putting a switch to have a different behavior in testnet mode, but
 
 #### set autopay for `alice`
 ```
-cd $HOME/diem
+cd $HOME/libra
 cargo r -p txs -- --swarm-path=$HOME/swarm_temp/ --swarm-persona=alice autopay-batch -f ol/fixtures/autopay/alice.autopay_batch.json
 ```
 
 #### stop autopay for `alice`
 ```
-cd $HOME/diem
+cd $HOME/libra
 cargo r -p txs -- --swarm-path=$HOME/swarm_temp/ --swarm-persona=alice autopay --disable
 ```
 
