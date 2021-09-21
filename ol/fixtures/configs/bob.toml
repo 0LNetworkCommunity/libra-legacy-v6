@@ -6,7 +6,7 @@ stdlib_bin_path = "/root/libra/language/stdlib/staged/stdlib.mv"
 db_path = "/root/.0L/db"
 
 [profile]
-account = "88E74DFED34420F2AD8032148280A84B"
+account = "88e74dfed34420f2ad8032148280a84b"
 auth_key = "74ea911c261e07ba0198baf4d9ac852e88e74dfed34420f2ad8032148280a84b"
 ip = "167.71.191.162"
 statement = "Protests rage across the nation"

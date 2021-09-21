@@ -33,6 +33,9 @@ diem-transaction-builder = { path = "../../../sdk/transaction-builder"}
 move-binary-format = { path = "../../move-binary-format" }
 diem-vm = { path = "../../diem-vm" }
 
+ol-types = {path = "../../../ol/types"}
+
+
 [dev-dependencies]
 proptest = "1.0.0"
 proptest-derive = "0.3.0"

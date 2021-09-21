@@ -1,10 +1,12 @@
 <script lang="ts">
+  import AddressNoteTip from '../address/AddressNoteTip.svelte';
   import ValidatorModal from "./ValidatorModal.svelte";
   export let data;
 
   const modal_id = "vals-tab-val-modal";
 
   interface ValInfo {
+    note: String;
     account_address: string;
     pub_key: string;
     voting_power: Number;
@@ -32,8 +34,10 @@
   let sortOption: string = "voting_power";
   let sortOrder = 1;
 
+  let has_notes = false;
   $: if (data.chain_view && data.chain_view.validator_view) {
     set = data.chain_view.validator_view;
+    has_notes = set.some(e => e.note != "");
     selectedVal = set[0];
   }
   $: set = set.sort((a, b) => (a[sortOption] > b[sortOption]) ? sortOrder : -sortOrder);
@@ -54,13 +58,16 @@
 
 <main uk-height-viewport="expand: true">
   <h2 class="uk-text-center uk-text-uppercase uk-text-muted uk-text-light uk-margin-medium-bottom">
-    <span>{set.length} Validators</span>
+    <span>{set.length} Validators {#if !has_notes}<AddressNoteTip />{/if}</span>
   </h2>
  
   <div class="uk-overflow-auto">
     <table class="uk-table uk-table-hover uk-text-muted">
       <thead>
         <tr>
+            {#if has_notes}
+              <th class="uk-text-center">note</th>
+            {/if}
             <th class="uk-text-center">account</th>
             {#each sortableColumns as col}
               <th class="uk-text-right" on:click={() => thOnClick(col.sortKey)}>
@@ -80,6 +87,9 @@
       <tbody>
         {#each set as val, i}
         <tr class="{val.account_address === data.account_view.address ? 'owner' : ''}" on:click={() => selectedVal = val}>        
+            {#if has_notes}
+              <td class="uk-text-center">{val.note}</td>
+            {/if}
             <td class="uk-visible@s uk-text-center">{val.account_address}</td>
             <td class="uk-hidden@s uk-text-truncate">{val.account_address}</td>
             <td class="uk-text-right">{val.voting_power}</td>

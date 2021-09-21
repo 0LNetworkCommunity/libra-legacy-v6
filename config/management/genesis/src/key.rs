@@ -12,7 +12,7 @@ use std::{convert::TryFrom, path::PathBuf, str::FromStr};
 use diem_secure_storage::{
     CryptoStorage, OnDiskStorage, KVStorage
 };
-use diem_types::{transaction::authenticator::AuthenticationKey, waypoint::Waypoint};
+use diem_types::{waypoint::Waypoint, account_address::AccountAddress};
 use structopt::StructOpt;
 
 diem_management::secure_backend!(
@@ -84,9 +84,12 @@ pub fn set_owner_key(path: &PathBuf, namespace: &str) {
     let mut storage = diem_secure_storage::Storage::OnDiskStorage(
         OnDiskStorage::new(path.join("key_store.json").to_owned())
     );
-    let authkey: AuthenticationKey = namespace.parse().unwrap();
-    let account = authkey.derived_address();
+    // let authkey: AuthenticationKey = namespace.parse().unwrap();
+    // let account = authkey.derived_address();
+    let account = namespace.parse::<AccountAddress>().unwrap();
     storage.set(&format!("{}-oper/{}", namespace, OWNER_ACCOUNT), account).unwrap();
+    // storage.set(&format!("{}/{}", namespace, OWNER_ACCOUNT), account).unwrap();
+
 }
 
 

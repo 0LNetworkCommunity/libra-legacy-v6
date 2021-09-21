@@ -106,6 +106,7 @@ Initializes the Diem framework.
     <a href="DiemBlock.md#0x1_DiemBlock_initialize_block_metadata">DiemBlock::initialize_block_metadata</a>(dm_account);
 
     /////// 0L /////////
+    // DiemAccount::create_burn_account(dm_account, x"00000000000000000000000000000000");
     // Outside of testing, brick the diemroot account.
     <b>if</b> (chain_id == 1 || chain_id == 7) {
         dm_auth_key = <a href="../../../../../../move-stdlib/docs/Hash.md#0x1_Hash_sha3_256">Hash::sha3_256</a>(b"Protests rage across the nation");
@@ -139,6 +140,7 @@ Initializes the Diem framework.
     <a href="Oracle.md#0x1_Oracle_initialize">Oracle::initialize</a>(dm_account);
     <a href="MinerState.md#0x1_MinerState_init_list">MinerState::init_list</a>(dm_account);
     <a href="Wallet.md#0x1_Wallet_init">Wallet::init</a>(dm_account);
+    <a href="DiemAccount.md#0x1_DiemAccount_vm_init_slow">DiemAccount::vm_init_slow</a>(dm_account);
     <a href="Migrations.md#0x1_Migrations_init">Migrations::init</a>(dm_account);
 
     // After we have called this function, all invariants which are guarded by

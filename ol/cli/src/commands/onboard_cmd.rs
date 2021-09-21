@@ -34,7 +34,7 @@ impl Runnable for OnboardCmd {
             println!("You can pass --trigger-actions or -t to attempt the next transition\n")
         }
         // let mut host = transitions::HostState::init(client, cfg);
-        let mut node = Node::new(client, cfg, is_swarm);
+        let mut node = Node::new(client, &cfg, is_swarm);
         let state = node.node_maybe_advance(self.trigger_actions);
 
         println!(

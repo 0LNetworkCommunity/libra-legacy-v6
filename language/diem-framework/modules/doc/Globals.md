@@ -4,7 +4,14 @@
 # Module `0x1::Globals`
 
 
+<a name="@Summary_0"></a>
 
+## Summary
+
+This module provides global variables and constants that have no specific owner
+
+
+-  [Summary](#@Summary_0)
 -  [Struct `GlobalConstants`](#0x1_Globals_GlobalConstants)
 -  [Function `get_epoch_length`](#0x1_Globals_get_epoch_length)
 -  [Function `get_max_validator_per_epoch`](#0x1_Globals_get_max_validator_per_epoch)
@@ -13,6 +20,7 @@
 -  [Function `get_burn_accounts`](#0x1_Globals_get_burn_accounts)
 -  [Function `get_difficulty`](#0x1_Globals_get_difficulty)
 -  [Function `get_mining_threshold`](#0x1_Globals_get_mining_threshold)
+-  [Function `get_unlock`](#0x1_Globals_get_unlock)
 -  [Function `get_constants`](#0x1_Globals_get_constants)
 
 
@@ -30,6 +38,17 @@
 
 ## Struct `GlobalConstants`
 
+Global constants determining validator settings & requirements
+Some constants need to changed based on environment; dev, testing, prod.
+epoch_length: The length of an epoch in seconds (~1 day for prod.)
+max_validator_per_epoch: The maximum number of validators that can participate
+subsidy_ceiling_gas: TODO I don't really know what this is
+min_node_density: The minimum number of nodes that can receive a subsidy
+max_node_density: The maximum number of nodes that can receive a subsidy
+burn_accounts: The address to which burnt tokens should be sent
+difficulty: The difficulty required for VDF proofs submitting by miners
+epoch_mining_threshold: The number of proofs that must be submitted each
+epoch by a miner to remain compliant
 
 
 <pre><code><b>struct</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> has drop
@@ -90,6 +109,12 @@
 <dd>
 
 </dd>
+<dt>
+<code>epoch_slow_wallet_unlock: u64</code>
+</dt>
+<dd>
+
+</dd>
 </dl>
 
 
@@ -99,6 +124,7 @@
 
 ## Function `get_epoch_length`
 
+Get the epoch length
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_epoch_length">get_epoch_length</a>(): u64
@@ -123,6 +149,7 @@
 
 ## Function `get_max_validator_per_epoch`
 
+Get max validator per epoch
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_max_validator_per_epoch">get_max_validator_per_epoch</a>(): u64
@@ -147,6 +174,7 @@
 
 ## Function `get_subsidy_ceiling_gas`
 
+Get max validator per epoch
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_subsidy_ceiling_gas">get_subsidy_ceiling_gas</a>(): u64
@@ -171,6 +199,7 @@
 
 ## Function `get_max_node_density`
 
+Get max validator per epoch
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_max_node_density">get_max_node_density</a>(): u64
@@ -195,6 +224,7 @@
 
 ## Function `get_burn_accounts`
 
+Get the burn accounts
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_burn_accounts">get_burn_accounts</a>(): vector&lt;address&gt;
@@ -219,6 +249,7 @@
 
 ## Function `get_difficulty`
 
+Get the current difficulty
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_difficulty">get_difficulty</a>(): u64
@@ -243,6 +274,7 @@
 
 ## Function `get_mining_threshold`
 
+Get the mining threshold
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_mining_threshold">get_mining_threshold</a>(): u64
@@ -263,10 +295,36 @@
 
 </details>
 
+<a name="0x1_Globals_get_unlock"></a>
+
+## Function `get_unlock`
+
+Get the mining threshold
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_unlock">get_unlock</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_unlock">get_unlock</a>(): u64 {
+  <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>().epoch_slow_wallet_unlock
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_Globals_get_constants"></a>
 
 ## Function `get_constants`
 
+get the constants for the current network
 
 
 <pre><code><b>fun</b> <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>(): <a href="Globals.md#0x1_Globals_GlobalConstants">Globals::GlobalConstants</a>
@@ -293,6 +351,7 @@
       burn_accounts: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_singleton">Vector::singleton</a>(@0xDEADDEAD),
       difficulty: 100,
       epoch_mining_threshold: 1,
+      epoch_slow_wallet_unlock: 10,
     }
 
   } <b>else</b> {
@@ -306,6 +365,7 @@
       burn_accounts: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_singleton">Vector::singleton</a>(@0xDEADDEAD),
       difficulty: 5000000,
       epoch_mining_threshold: 1,
+      epoch_slow_wallet_unlock: 10000000,
     }
   } <b>else</b> {
       <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
@@ -322,6 +382,7 @@
       burn_accounts: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_singleton">Vector::singleton</a>(@0xDEADDEAD),
       difficulty: 5000000, //10 mins on macbook pro 2.5 ghz quadcore
       epoch_mining_threshold: 20,
+      epoch_slow_wallet_unlock: 10000000,
       }
     }
   }

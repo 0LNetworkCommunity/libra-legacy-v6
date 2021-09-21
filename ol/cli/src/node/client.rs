@@ -112,7 +112,7 @@ pub fn pick_client(
     // check if is in sync
     let local_client = default_local_client(config, waypoint.clone())?;
     
-    let mut node = Node::new(local_client, config.clone(), is_swarm);
+    let mut node = Node::new(local_client, config, is_swarm);
     if let Ok(s) = node.check_sync() {
         if s.is_synced {
             return Ok(node.client)

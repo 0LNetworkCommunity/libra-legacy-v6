@@ -8,7 +8,8 @@
 -  [Function `set_wallet_type`](#0x1_WalletScripts_set_wallet_type)
 
 
-<pre><code><b>use</b> <a href="Wallet.md#0x1_Wallet">0x1::Wallet</a>;
+<pre><code><b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
+<b>use</b> <a href="Wallet.md#0x1_Wallet">0x1::Wallet</a>;
 </code></pre>
 
 
@@ -30,7 +31,7 @@
 
 <pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_wallet.md#0x1_WalletScripts_set_wallet_type">set_wallet_type</a>(sender: signer, type_of: u8) {
   <b>if</b> (type_of == 0) {
-    <a href="Wallet.md#0x1_Wallet_set_slow">Wallet::set_slow</a>(&sender);
+    <a href="DiemAccount.md#0x1_DiemAccount_set_slow">DiemAccount::set_slow</a>(&sender);
   };
 
   <b>if</b> (type_of == 1) {

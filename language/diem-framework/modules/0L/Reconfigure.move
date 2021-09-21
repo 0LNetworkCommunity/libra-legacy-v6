@@ -22,11 +22,13 @@ module Reconfigure {
     use 0x1::AutoPay2;
     use 0x1::Epoch;
     use 0x1::FullnodeState;
-    use 0x1::AccountLimits;
-    use 0x1::GAS::GAS;
+    // use 0x1::AccountLimits;
+    // use 0x1::GAS::GAS;
     use 0x1::DiemConfig;
     use 0x1::Audit;
     use 0x1::DiemAccount;
+    use 0x1::Burn;
+    // use 0x1::Debug::print;
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
@@ -114,19 +116,36 @@ module Reconfigure {
         let top_accounts = NodeWeight::top_n_accounts(vm, Globals::get_max_validator_per_epoch());
 
         let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
+
+        Burn::reset_ratios(vm);
+        // // let incoming_count = Vector::length<address>(&top_accounts) - Vector::length<address>(&jailed_set);
+        // // let burn_value = Subsidy::subsidy_curve(
+        // //   Globals::get_subsidy_ceiling_gas(),
+        // //   incoming_count,
+        // //   Globals::get_max_node_density()
+        // // )/4;
+        let burn_value = 1000000; // TODO: switch to a variable cost, as above.
+
 // print(&03250);
 
         let i = 0;
         while (i < Vector::length<address>(&top_accounts)) {
+// print(&03251);
+
             let addr = *Vector::borrow(&top_accounts, i);
             let mined_last_epoch = MinerState::node_above_thresh(vm, addr);
+            // print(&mined_last_epoch);
             // TODO: temporary until jail-refactor merge.
             if (
               (!Vector::contains(&jailed_set, &addr)) && 
-              mined_last_epoch && 
+              mined_last_epoch &&
               Audit::val_audit_passing(addr)
             ) {
+// print(&03252);
+
                 Vector::push_back(&mut proposed_set, addr);
+                Burn::epoch_start_burn(vm, addr, burn_value);
+
             };
             i = i+ 1;
         };
@@ -157,7 +176,8 @@ module Reconfigure {
         // Update all validators with account limits
         // After Epoch 1000. 
         if (DiemConfig::check_transfer_enabled()) {
-            update_validator_withdrawal_limit(vm);
+            DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock());
+            // update_validator_withdrawal_limit(vm);
         };
         // needs to be set before the auctioneer runs in Subsidy::fullnode_reconfig
         Subsidy::set_global_count(vm, global_proofs_count);
@@ -192,21 +212,21 @@ module Reconfigure {
 //  print(&032150);
     }
 
-    /// OL function to update withdrawal limits in all validator accounts
-    fun update_validator_withdrawal_limit(vm: &signer) {
-        let validator_set = DiemSystem::get_val_set_addr();
-        let k = 0;
-        while(k < Vector::length(&validator_set)){
-            let addr = *Vector::borrow<address>(&validator_set, k);
+    // /// OL function to update withdrawal limits in all validator accounts
+    // fun update_validator_withdrawal_limit(vm: &signer) {
+    //     let validator_set = DiemSystem::get_val_set_addr();
+    //     let k = 0;
+    //     while(k < Vector::length(&validator_set)){
+    //         let addr = *Vector::borrow<address>(&validator_set, k);
 
-            // Check if limits definition is published
-            if(AccountLimits::has_limits_published<GAS>(addr)) {
-                AccountLimits::update_limits_definition<GAS>(vm, addr, 0, DiemConfig::get_epoch_transfer_limit(), 0, 0);
-            };  
+    //         // Check if limits definition is published
+    //         if(AccountLimits::has_limits_published<GAS>(addr)) {
+    //             AccountLimits::update_limits_definition<GAS>(vm, addr, 0, DiemConfig::get_epoch_transfer_limit(), 0, 0);
+    //         };  
             
-            k = k + 1;
-        };
-    }
+    //         k = k + 1;
+    //     };
+    // }
 
 }
 }

@@ -3,11 +3,11 @@
 // DID validate successfully.
 // DID mine above the threshold for the epoch.
 
-//! account: alice, 1GAS, 0, validator
-//! account: bob, 1GAS, 0, validator
-//! account: carol, 1GAS, 0, validator
-//! account: dave, 1GAS, 0, validator
-//! account: eve, 1GAS, 0, validator
+//! account: alice, 1000000GAS, 0, validator
+//! account: bob, 1000000GAS, 0, validator
+//! account: carol, 1000000GAS, 0, validator
+//! account: dave, 1000000GAS, 0, validator
+//! account: eve, 1000000GAS, 0, validator
 
 //! block-prologue
 //! proposer: alice

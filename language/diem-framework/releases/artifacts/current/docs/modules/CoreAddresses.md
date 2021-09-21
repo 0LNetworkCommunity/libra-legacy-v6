@@ -16,6 +16,7 @@ Module providing well-known addresses and related logic.
 -  [Function `TREASURY_COMPLIANCE_ADDRESS`](#0x1_CoreAddresses_TREASURY_COMPLIANCE_ADDRESS)
 -  [Function `VM_RESERVED_ADDRESS`](#0x1_CoreAddresses_VM_RESERVED_ADDRESS)
 -  [Function `CORE_CODE_ADDRESS`](#0x1_CoreAddresses_CORE_CODE_ADDRESS)
+-  [Function `BURN_ADDRESS`](#0x1_CoreAddresses_BURN_ADDRESS)
 -  [Function `assert_diem_root`](#0x1_CoreAddresses_assert_diem_root)
 -  [Function `assert_treasury_compliance`](#0x1_CoreAddresses_assert_treasury_compliance)
 -  [Function `assert_vm`](#0x1_CoreAddresses_assert_vm)
@@ -203,6 +204,32 @@ account can be created at this address.
 
 <pre><code><b>public</b> <b>fun</b> <a href="CoreAddresses.md#0x1_CoreAddresses_CORE_CODE_ADDRESS">CORE_CODE_ADDRESS</a>(): address {
     @0x1
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_CoreAddresses_BURN_ADDRESS"></a>
+
+## Function `BURN_ADDRESS`
+
+The reserved address where all core modules are published. No
+account can be created at this address.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="CoreAddresses.md#0x1_CoreAddresses_BURN_ADDRESS">BURN_ADDRESS</a>(): address
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="CoreAddresses.md#0x1_CoreAddresses_BURN_ADDRESS">BURN_ADDRESS</a>(): address {
+    @0xDEADDEAD
 }
 </code></pre>
 

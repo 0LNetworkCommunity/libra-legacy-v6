@@ -1,7 +1,7 @@
+
 //! Miner resubmit backlog transactions module
 #![forbid(unsafe_code)]
 
-use abscissa_core::status_info;
 use cli::{diem_client::DiemClient};
 use ol_types::block::Block;
 use txs::submit_tx::{TxParams, eval_tx_status};
@@ -30,13 +30,14 @@ pub fn process_backlog(
     if let Some(current_block_number) = current_block_number {
         println!("Local tower height: {:?}", current_block_number);
         if current_block_number > remote_height { 
-            status_info!("Backlog:","resubmitting missing blocks.");
+            println!("Backlog: resubmitting missing proofs.");
 
             let mut i = remote_height + 1;
             while i <= current_block_number {
                 let path = PathBuf::from(
                     format!("{}/block_{}.json", blocks_dir.display(), i)
                 );
+                println!("submitting proof {}", i);
                 let file = File::open(&path)?;
                 let reader = BufReader::new(file);
                 let block: Block = serde_json::from_reader(reader)?;

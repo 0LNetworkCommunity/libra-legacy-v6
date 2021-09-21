@@ -5,12 +5,11 @@
 
 
 
--  [Resource `CommunityWallets`](#0x1_Wallet_CommunityWallets)
+-  [Resource `CommunityWalletList`](#0x1_Wallet_CommunityWalletList)
 -  [Resource `CommunityTransfers`](#0x1_Wallet_CommunityTransfers)
 -  [Resource `TimedTransfer`](#0x1_Wallet_TimedTransfer)
 -  [Struct `Veto`](#0x1_Wallet_Veto)
 -  [Resource `CommunityFreeze`](#0x1_Wallet_CommunityFreeze)
--  [Resource `SlowWallet`](#0x1_Wallet_SlowWallet)
 -  [Constants](#@Constants_0)
 -  [Function `init`](#0x1_Wallet_init)
 -  [Function `is_init_comm`](#0x1_Wallet_is_init_comm)
@@ -34,8 +33,6 @@
 -  [Function `get_comm_list`](#0x1_Wallet_get_comm_list)
 -  [Function `is_comm`](#0x1_Wallet_is_comm)
 -  [Function `is_frozen`](#0x1_Wallet_is_frozen)
--  [Function `set_slow`](#0x1_Wallet_set_slow)
--  [Function `is_slow`](#0x1_Wallet_is_slow)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
@@ -50,13 +47,13 @@
 
 
 
-<a name="0x1_Wallet_CommunityWallets"></a>
+<a name="0x1_Wallet_CommunityWalletList"></a>
 
-## Resource `CommunityWallets`
+## Resource `CommunityWalletList`
 
 
 
-<pre><code><b>struct</b> <a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a> has key
+<pre><code><b>struct</b> <a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a> has key
 </code></pre>
 
 
@@ -263,33 +260,6 @@
 
 </details>
 
-<a name="0x1_Wallet_SlowWallet"></a>
-
-## Resource `SlowWallet`
-
-
-
-<pre><code><b>struct</b> <a href="Wallet.md#0x1_Wallet_SlowWallet">SlowWallet</a> has key
-</code></pre>
-
-
-
-<details>
-<summary>Fields</summary>
-
-
-<dl>
-<dt>
-<code>is_slow: bool</code>
-</dt>
-<dd>
-
-</dd>
-</dl>
-
-
-</details>
-
 <a name="@Constants_0"></a>
 
 ## Constants
@@ -358,11 +328,11 @@
       })
     };
 
-  <b>if</b> (!<b>exists</b>&lt;<a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a>&gt;(@0x0)) {
-    move_to&lt;<a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a>&gt;(vm, <a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a> {
+  <b>if</b> (!<b>exists</b>&lt;<a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0)) {
+    move_to&lt;<a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a>&gt;(vm, <a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a> {
       list: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;()
     });
-  }
+  };
 }
 </code></pre>
 
@@ -409,12 +379,12 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_set_comm">set_comm</a>(sig: &signer) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a> {
-  <b>if</b> (<b>exists</b>&lt;<a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a>&gt;(@0x0)) {
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_set_comm">set_comm</a>(sig: &signer) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a> {
+  <b>if</b> (<b>exists</b>&lt;<a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0)) {
     <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
     <b>let</b> list = <a href="Wallet.md#0x1_Wallet_get_comm_list">get_comm_list</a>();
     <b>if</b> (!<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(&list, &addr)) {
-        <b>let</b> s = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a>&gt;(@0x0);
+        <b>let</b> s = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0);
         <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> s.list, addr);
     };
 
@@ -446,13 +416,13 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_vm_remove_comm">vm_remove_comm</a>(vm: &signer, addr: address) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_vm_remove_comm">vm_remove_comm</a>(vm: &signer, addr: address) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a> {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
-  <b>if</b> (<b>exists</b>&lt;<a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a>&gt;(@0x0)) {
+  <b>if</b> (<b>exists</b>&lt;<a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0)) {
     <b>let</b> list = <a href="Wallet.md#0x1_Wallet_get_comm_list">get_comm_list</a>();
     <b>let</b> (yes, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(&list, &addr);
     <b>if</b> (yes) {
-      <b>let</b> s = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a>&gt;(@0x0);
+      <b>let</b> s = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0);
       <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>(&<b>mut</b> s.list, i);
     }
   }
@@ -478,7 +448,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_new_timed_transfer">new_timed_transfer</a>(sender: &signer, payee: address, value: u64, description: vector&lt;u8&gt;): u64 <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>, <a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_new_timed_transfer">new_timed_transfer</a>(sender: &signer, payee: address, value: u64, description: vector&lt;u8&gt;): u64 <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>, <a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a> {
     <b>let</b> sender_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
     <b>let</b> list = <a href="Wallet.md#0x1_Wallet_get_comm_list">get_comm_list</a>();
 
@@ -1005,9 +975,9 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_get_comm_list">get_comm_list</a>(): vector&lt;address&gt; <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a>{
-  <b>if</b> (<b>exists</b>&lt;<a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a>&gt;(@0x0)) {
-    <b>let</b> s = borrow_global&lt;<a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a>&gt;(@0x0);
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_get_comm_list">get_comm_list</a>(): vector&lt;address&gt; <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a>{
+  <b>if</b> (<b>exists</b>&lt;<a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0)) {
+    <b>let</b> s = borrow_global&lt;<a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0);
     <b>return</b> *&s.list
   } <b>else</b> {
     <b>return</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;()
@@ -1034,8 +1004,8 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_is_comm">is_comm</a>(addr: address): bool <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a>{
-  <b>let</b> s = borrow_global&lt;<a href="Wallet.md#0x1_Wallet_CommunityWallets">CommunityWallets</a>&gt;(@0x0);
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_is_comm">is_comm</a>(addr: address): bool <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a>{
+  <b>let</b> s = borrow_global&lt;<a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0);
   <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(&s.list, &addr)
 }
 </code></pre>
@@ -1062,58 +1032,6 @@
 <pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_is_frozen">is_frozen</a>(addr: address): bool <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a>{
   <b>let</b> f = borrow_global&lt;<a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a>&gt;(addr);
   f.is_frozen
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_Wallet_set_slow"></a>
-
-## Function `set_slow`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_set_slow">set_slow</a>(sig: &signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_set_slow">set_slow</a>(sig: &signer) {
-  <b>if</b> (!<b>exists</b>&lt;<a href="Wallet.md#0x1_Wallet_SlowWallet">SlowWallet</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig))) {
-    move_to&lt;<a href="Wallet.md#0x1_Wallet_SlowWallet">SlowWallet</a>&gt;(sig, <a href="Wallet.md#0x1_Wallet_SlowWallet">SlowWallet</a> {
-      is_slow: <b>true</b>
-    });
-  }
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_Wallet_is_slow"></a>
-
-## Function `is_slow`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_is_slow">is_slow</a>(addr: address): bool
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_is_slow">is_slow</a>(addr: address): bool {
-  <b>exists</b>&lt;<a href="Wallet.md#0x1_Wallet_SlowWallet">SlowWallet</a>&gt;(addr)
 }
 </code></pre>
 

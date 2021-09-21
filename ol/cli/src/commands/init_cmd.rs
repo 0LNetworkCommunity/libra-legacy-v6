@@ -87,7 +87,7 @@ impl Runnable for InitCmd {
         };
 
         if !self.skip_val {
-            initialize_validator(&wallet, &app_cfg, self.waypoint).unwrap() 
+            initialize_validator(&wallet, &app_cfg, self.waypoint, false).unwrap() 
         };
     }
 }
@@ -148,12 +148,12 @@ pub fn initialize_host_swarm(
 
 /// Initializes the necessary validator config files: genesis.blob, key_store.json
 pub fn initialize_validator(
-    wallet: &WalletLibrary, miner_config: &AppCfg, way_opt: Option<Waypoint>
+    wallet: &WalletLibrary, miner_config: &AppCfg, way_opt: Option<Waypoint>, is_genesis: bool
 ) -> Result <(), Error>{
     let home_dir = &miner_config.workspace.node_home;
     let keys = KeyScheme::new(wallet);
-    let namespace = miner_config.profile.auth_key.to_owned();
-    init::key_store_init(home_dir, &namespace, keys, false);
+    let namespace = miner_config.profile.account.to_hex(); // same format as serializer for 0L/toml
+    init::key_store_init(home_dir, &namespace, keys, is_genesis);
     key::set_operator_key(home_dir, &namespace);
     key::set_owner_key(home_dir, &namespace);
     if let Some(way) = way_opt {

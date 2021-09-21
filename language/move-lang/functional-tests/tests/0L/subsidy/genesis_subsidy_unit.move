@@ -1,4 +1,4 @@
-//! account: alice, 1GAS, 0, validator
+//! account: alice, 1000000GAS, 0, validator
 
 // Check if genesis subsidies have been distributed
 

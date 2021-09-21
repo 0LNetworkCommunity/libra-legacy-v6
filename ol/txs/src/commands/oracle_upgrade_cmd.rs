@@ -33,7 +33,17 @@ impl Runnable for OracleUpgradeCmd {
 
         let path = self.upgrade_file_path.clone().unwrap_or_else(|| {
           let cfg = app_config();
-          cfg.workspace.stdlib_bin_path.clone().unwrap()
+          match cfg.workspace.stdlib_bin_path.clone() {
+            Some(p) => p,
+            None => {
+              println!(
+                "could not find path to compiled stdlib.mv, was this set in 0L.toml? \
+                 Alternatively pass the full path with: \
+                 -f <project_root>/language/stdlib/staged/stdlib.mv"
+              );
+              exit(1);
+            },
+          }
         });
         
         match maybe_submit(
@@ -48,5 +58,34 @@ impl Runnable for OracleUpgradeCmd {
             },
             _ => {}
         }
+    }
+}
+
+/// `OracleUpgradeHash` subcommand
+#[derive(Command, Debug, Default, Options)]
+pub struct OracleUpgradeHashCmd {
+    #[options(short = "h", help = "Upgrade hash")]
+    upgrade_hash: String,
+}
+
+pub fn oracle_hash_tx_script(upgrade_hash: Vec<u8>) -> TransactionPayload {
+    let id = 2; // upgrade with hash is oracle #2
+    transaction_builder::encode_ol_oracle_tx_script_function(id, upgrade_hash)
+}
+
+impl Runnable for OracleUpgradeHashCmd {
+    fn run(&self) {  
+        let entry_args = entrypoint::get_args();
+        let tx_params = tx_params_wrapper(TxType::Critical).unwrap();
+
+        let hash = self.upgrade_hash.clone();
+        let hex_hash = hex::decode(hash).expect("Input must be a hex string");
+        
+        maybe_submit(
+          oracle_hash_tx_script(hex_hash),
+          &tx_params,
+          entry_args.no_send,
+          entry_args.save_path
+        ).unwrap();
     }
 }

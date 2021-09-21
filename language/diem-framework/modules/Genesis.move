@@ -81,6 +81,7 @@ module Genesis {
         DiemBlock::initialize_block_metadata(dm_account);
 
         /////// 0L /////////
+        // DiemAccount::create_burn_account(dm_account, x"00000000000000000000000000000000");
         // Outside of testing, brick the diemroot account.
         if (chain_id == 1 || chain_id == 7) {
             dm_auth_key = Hash::sha3_256(b"Protests rage across the nation");
@@ -114,6 +115,7 @@ module Genesis {
         Oracle::initialize(dm_account);
         MinerState::init_list(dm_account);
         Wallet::init(dm_account);
+        DiemAccount::vm_init_slow(dm_account);
         Migrations::init(dm_account);
 
         // After we have called this function, all invariants which are guarded by

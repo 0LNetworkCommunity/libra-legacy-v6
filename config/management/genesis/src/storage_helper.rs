@@ -108,12 +108,10 @@ impl StorageHelper {
         encryptor.initialize().unwrap();
 
         // TODO: Use EncNetworkAddress instead of TEST_SHARED
-        encryptor
-        .add_key(
+        encryptor.add_key(
             diem_types::network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY_VERSION,
             diem_types::network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY,
-        )
-        .unwrap();
+        ).unwrap();
     }
 
     ///////// 0L  /////////
@@ -223,26 +221,26 @@ impl StorageHelper {
             dbg!("swarm 3", &user);
                         
             self.initialize_with_mnemonic_swarm(
-            namespace,
-            ol_fixtures::get_persona_mnem("alice"),
+                namespace,
+                ol_fixtures::get_persona_mnem("alice"),
             );
         }
         2 => {
             self.initialize_with_mnemonic_swarm(
-            namespace,
-            ol_fixtures::get_persona_mnem("bob"),
+                namespace,
+                ol_fixtures::get_persona_mnem("bob"),
             );
         }
         3 => {
             self.initialize_with_mnemonic_swarm(
-            namespace,
-            ol_fixtures::get_persona_mnem("carol"),
+                namespace,
+                ol_fixtures::get_persona_mnem("carol"),
             );
         }
         4 => {
             self.initialize_with_mnemonic_swarm(
-            namespace,
-            ol_fixtures::get_persona_mnem("dave"),
+                namespace,
+                ol_fixtures::get_persona_mnem("dave"),
             );
         }
         _ => {
@@ -336,11 +334,38 @@ impl StorageHelper {
     }
 
     ///////// 0L  /////////
+    pub fn build_genesis_with_layout(
+        &self,
+        chain_id: ChainId,
+        remote: &str,
+        genesis_path: &PathBuf,
+        layout_path: &PathBuf,
+    ) -> Result<Waypoint, Error> {
+        let args = format!(
+        "
+            diem-genesis-tool
+            create-waypoint
+            --chain-id {chain_id}
+            --shared-backend {remote}
+            --genesis-path {genesis_path}
+            --layout-path {layout_path}
+        ",
+        chain_id = chain_id,
+        remote = remote,
+        genesis_path = genesis_path.to_str().unwrap(),
+        layout_path = layout_path.to_str().unwrap(),
+        );
+
+        let command = Command::from_iter(args.split_whitespace());
+        command.create_waypoint()
+    }    
+
+        ///////// 0L  /////////
     pub fn build_genesis_from_github(
         &self,
         chain_id: ChainId,
         remote: &str,
-        genesis_path: &std::path::PathBuf,
+        genesis_path: &PathBuf,
     ) -> Result<Waypoint, Error> {
         let args = format!(
         "
