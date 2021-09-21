@@ -37,6 +37,7 @@ This module enables automatic payments from accounts to community wallets at epo
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
+<b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
@@ -776,7 +777,9 @@ Attempt to use a UID that is already taken
   );
 
   // This is not a necessary check at genesis.
-  // <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_exists_at">DiemAccount::exists_at</a>(payee), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="AutoPay.md#0x1_AutoPay2_EPAYEE_DOES_NOT_EXIST">EPAYEE_DOES_NOT_EXIST</a>));
+  <b>if</b> (<a href="DiemTimestamp.md#0x1_DiemTimestamp_is_operating">DiemTimestamp::is_operating</a>()) {
+    <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_exists_at">DiemAccount::exists_at</a>(payee), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="AutoPay.md#0x1_AutoPay2_EPAYEE_DOES_NOT_EXIST">EPAYEE_DOES_NOT_EXIST</a>));
+  };
 
   <b>assert</b>(in_type &lt;= <a href="AutoPay.md#0x1_AutoPay2_MAX_TYPE">MAX_TYPE</a>, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="AutoPay.md#0x1_AutoPay2_INVALID_PAYMENT_TYPE">INVALID_PAYMENT_TYPE</a>));
 

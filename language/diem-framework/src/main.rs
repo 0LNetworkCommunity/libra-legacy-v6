@@ -101,8 +101,6 @@ fn main() {
         println!("NOTE: run this program in --release mode for better speed");
     }
 
-    dbg!(&options.upgrade_payload);
-
     let output_path = matches
         .value_of("output")
         .unwrap_or("releases/artifacts/current");

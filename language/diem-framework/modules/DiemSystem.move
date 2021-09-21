@@ -727,6 +727,7 @@ module DiemSystem {
             };
             i = i + 1;
         };
+        // calculate the ratio of votes per node.
         let fee_ratios = Vector::empty<FixedPoint32::FixedPoint32>();
         let k = 0;
         while (k < Vector::length(&compliant_nodes)) {
