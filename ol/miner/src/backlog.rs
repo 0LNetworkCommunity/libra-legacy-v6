@@ -1,7 +1,7 @@
+
 //! Miner resubmit backlog transactions module
 #![forbid(unsafe_code)]
 
-use abscissa_core::status_info;
 use cli::{diem_client::DiemClient};
 use ol_types::block::Block;
 use txs::submit_tx::{TxParams, eval_tx_status};
