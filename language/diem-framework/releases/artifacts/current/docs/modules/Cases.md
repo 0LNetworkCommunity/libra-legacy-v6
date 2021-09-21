@@ -85,7 +85,7 @@ set and/or jailed. To be compliant, validators must be BOTH validating and minin
     <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(vm);
     // did the validator sign blocks above threshold?
     <b>let</b> signs = <a href="Stats.md#0x1_Stats_node_above_thresh">Stats::node_above_thresh</a>(vm, node_addr, height_start, height_end);
-    <b>let</b> mines = <a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(vm, node_addr);
+    <b>let</b> mines = <a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(node_addr);
 
     <b>if</b> (signs && mines) {
         <a href="Cases.md#0x1_Cases_VALIDATOR_COMPLIANT">VALIDATOR_COMPLIANT</a> // compliant: in next set, gets paid, weight increments

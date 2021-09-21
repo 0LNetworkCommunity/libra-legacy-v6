@@ -1471,7 +1471,7 @@ Initialize this module. This is only callable from genesis.
     // NOTE: <a href="VDF.md#0x1_VDF">VDF</a> verification is being called twice!
     <a href="MinerState.md#0x1_MinerState_init_miner_state">MinerState::init_miner_state</a>(&new_signer, challenge, solution);
     // TODO: Should fullnode init happen here, or under MinerState::init?
-    // <a href="FullnodeState.md#0x1_FullnodeState_init">FullnodeState::init</a>(&new_signer);
+    // FullnodeState::init(&new_signer);
     // Create OP Account
     <b>let</b> new_op_account = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(op_address);
     <a href="Roles.md#0x1_Roles_new_validator_operator_role_with_proof">Roles::new_validator_operator_role_with_proof</a>(&new_op_account);
@@ -2663,7 +2663,10 @@ Return the withdraw capability to the account it originally came from
         // TODO: Is this the best way <b>to</b> access a <b>struct</b> property from
         // outside a <b>module</b>?
         <b>let</b> (payer, payee, value, description) = <a href="Wallet.md#0x1_Wallet_get_tx_args">Wallet::get_tx_args</a>(t);
-        <b>if</b> (<a href="Wallet.md#0x1_Wallet_is_frozen">Wallet::is_frozen</a>(payer)) <b>continue</b>;
+        <b>if</b> (<a href="Wallet.md#0x1_Wallet_is_frozen">Wallet::is_frozen</a>(payer)) {
+          i = i + 1;
+          <b>continue</b>
+        };
         <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(payer, payee, value, description, b"", vm);
         <a href="Wallet.md#0x1_Wallet_maybe_reset_rejection_counter">Wallet::maybe_reset_rejection_counter</a>(vm, payer);
         i = i + 1;

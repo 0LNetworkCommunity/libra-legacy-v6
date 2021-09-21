@@ -138,7 +138,7 @@
   <b>if</b> (<a href="MinerState.md#0x1_MinerState_is_onboarding">MinerState::is_onboarding</a>(addr)) {
     <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add">add</a>(sender);
   } <b>else</b> {
-    <b>assert</b>(<a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(sender, addr), 220102014010);
+    <b>assert</b>(<a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(addr), 220102014010);
     <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add">add</a>(sender);
   }
 }
@@ -333,7 +333,7 @@
   // only a validator can un-jail themselves.
   <b>let</b> validator = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   // check the node has been mining before unjailing.
-  <b>assert</b>(<a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(sender, validator), 220102014010);
+  <b>assert</b>(<a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(validator), 220102014010);
   <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_unjail">unjail</a>(sender);
 }
 </code></pre>

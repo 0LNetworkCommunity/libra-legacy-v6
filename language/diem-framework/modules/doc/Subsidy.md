@@ -15,6 +15,7 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
@@ -24,7 +25,6 @@
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="MinerState.md#0x1_MinerState">0x1::MinerState</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
-<b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="TransactionFee.md#0x1_TransactionFee">0x1::TransactionFee</a>;
 <b>use</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig">0x1::ValidatorConfig</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
@@ -68,23 +68,25 @@
   outgoing_set: &vector&lt;address&gt;,
 ) {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
-
+  print(&1901001);
   // Get the split of payments from <a href="Stats.md#0x1_Stats">Stats</a>.
   <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(outgoing_set);
-
+  print(&1901002);
   // equal subsidy for all active validators
   <b>let</b> subsidy_granted;
+  // TODO: This calculation is duplicated <b>with</b> get_subsidy
   <b>if</b> (subsidy_units &gt; len && subsidy_units &gt; 0 ) { // arithmetic safety check
     subsidy_granted = subsidy_units/len;
+    print(&subsidy_granted);
   } <b>else</b> { <b>return</b> };
 
   <b>let</b> i = 0;
   <b>while</b> (i &lt; len) {
-
+    print(&1901003);
     <b>let</b> node_address = *(<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(outgoing_set, i));
     // Transfer gas from vm address <b>to</b> validator
     <b>let</b> minted_coins = <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, subsidy_granted);
-
+    print(&1901004);
     <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">DiemAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
       vm,
       node_address,
@@ -92,6 +94,8 @@
       b"validator subsidy",
       b""
     );
+    print(&1901005);
+
     // refund operator tx fees for mining
     <a href="Subsidy.md#0x1_Subsidy_refund_operator_tx_fees">refund_operator_tx_fees</a>(vm, node_address);
     i = i + 1;
@@ -109,7 +113,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">calculate_subsidy</a>(vm: &signer, height_start: u64, height_end: u64): (u64, u64)
+<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">calculate_subsidy</a>(vm: &signer, network_density: u64): (u64, u64)
 </code></pre>
 
 
@@ -118,32 +122,49 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">calculate_subsidy</a>(vm: &signer, height_start: u64, height_end: u64): (u64, u64) {
+<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">calculate_subsidy</a>(vm: &signer, network_density: u64): (u64, u64) {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  print(&1901006);
   // skip genesis
   <b>assert</b>(!<a href="DiemTimestamp.md#0x1_DiemTimestamp_is_genesis">DiemTimestamp::is_genesis</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(190102));
 
   // Gets the transaction fees in the epoch
   <b>let</b> txn_fee_amount = <a href="TransactionFee.md#0x1_TransactionFee_get_amount_to_distribute">TransactionFee::get_amount_to_distribute</a>(vm);
-
+  print(&1901007);
   // Calculate the split for subsidy and burn
   <b>let</b> subsidy_ceiling_gas = <a href="Globals.md#0x1_Globals_get_subsidy_ceiling_gas">Globals::get_subsidy_ceiling_gas</a>();
-  <b>let</b> network_density = <a href="Stats.md#0x1_Stats_network_density">Stats::network_density</a>(vm, height_start, height_end);
-  <b>let</b> max_node_count = <a href="Globals.md#0x1_Globals_get_max_validators_per_set">Globals::get_max_validators_per_set</a>();
+  // TODO: This metric network density is different than <a href="DiemSystem.md#0x1_DiemSystem_get_fee_ratio">DiemSystem::get_fee_ratio</a> which actually checks the cases.
 
+  // <b>let</b> network_density = <a href="Stats.md#0x1_Stats_network_density">Stats::network_density</a>(vm, height_start, height_end);
+  <b>let</b> max_node_count = <a href="Globals.md#0x1_Globals_get_max_validators_per_set">Globals::get_max_validators_per_set</a>();
+  print(&1901008);
   <b>let</b> guaranteed_minimum = <a href="Subsidy.md#0x1_Subsidy_subsidy_curve">subsidy_curve</a>(
     subsidy_ceiling_gas,
     network_density,
     max_node_count,
   );
-
+  print(&1901009);
+  <b>let</b> subsidy = 0;
+  <b>let</b> subsidy_per_node = 0;
   // deduct transaction fees from guaranteed minimum.
   <b>if</b> (guaranteed_minimum &gt; txn_fee_amount ){
-    <b>let</b> subsidy = guaranteed_minimum - txn_fee_amount;
+    print(&190100901);
+    subsidy = guaranteed_minimum - txn_fee_amount;
     // <b>return</b> <b>global</b> subsidy and subsidy per node.
-    <b>return</b> (subsidy, subsidy/network_density)
+    print(&190100902);
+    // TODO: we are doing this computation twice at reconfigure time.
+    <b>if</b> ((subsidy &gt; network_density) && (network_density &gt; 0)) {
+      print(&190100903);
+      print(&subsidy);
+      print(&network_density);
+
+      subsidy_per_node = subsidy/network_density;
+      print(&subsidy_per_node);
+
+    };
   };
-  (0u64, 0u64)
+  print(&1901010);
+  (subsidy, subsidy_per_node)
 }
 </code></pre>
 
@@ -170,7 +191,7 @@
   subsidy_ceiling_gas: u64,
   network_density: u64,
   max_node_count: u64
-  ): u64 {
+): u64 {
 
   <b>let</b> min_node_count = 4u64;
 

@@ -16,6 +16,7 @@
 <b>use</b> <a href="AutoPay.md#0x1_AutoPay2">0x1::AutoPay2</a>;
 <b>use</b> <a href="Burn.md#0x1_Burn">0x1::Burn</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
@@ -49,24 +50,33 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) {
+    print(&1800100);
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
 
     <b>let</b> height_start = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>(vm);
 
-    <b>let</b> (subsidy_units, subsidy_per) = <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, height_start, height_now);
+    print(&1800101);
+    <b>let</b> (outgoing_compliant_set, _) = <a href="DiemSystem.md#0x1_DiemSystem_get_fee_ratio">DiemSystem::get_fee_ratio</a>(vm, height_start, height_now);
+    // NOTE: This is "nominal" because it doesn't check
+    <b>let</b> compliant_nodes_count = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&outgoing_compliant_set);
+    <b>let</b> (subsidy_units, nominal_subsidy_per) = <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, compliant_nodes_count);
 
-    <a href="Reconfigure.md#0x1_Reconfigure_process_fullnodes">process_fullnodes</a>(vm, subsidy_per);
+    print(&1800102);
+    <a href="Reconfigure.md#0x1_Reconfigure_process_fullnodes">process_fullnodes</a>(vm, nominal_subsidy_per);
 
-    <a href="Reconfigure.md#0x1_Reconfigure_process_validators">process_validators</a>(vm, height_start, height_now, subsidy_units);
+    print(&1800103);
+    <a href="Reconfigure.md#0x1_Reconfigure_process_validators">process_validators</a>(vm, subsidy_units, outgoing_compliant_set);
 
+    print(&1800104);
     <b>let</b> proposed_set = <a href="Reconfigure.md#0x1_Reconfigure_propose_new_set">propose_new_set</a>(vm, height_start, height_now);
 
+    print(&1800105);
     // Update all slow wallet limits
     <b>if</b> (<a href="DiemConfig.md#0x1_DiemConfig_check_transfer_enabled">DiemConfig::check_transfer_enabled</a>()) {
         <a href="DiemAccount.md#0x1_DiemAccount_slow_wallet_epoch_drip">DiemAccount::slow_wallet_epoch_drip</a>(vm, <a href="Globals.md#0x1_Globals_get_unlock">Globals::get_unlock</a>());
         // update_validator_withdrawal_limit(vm);
     };
-
+    print(&1800106);
     <a href="Reconfigure.md#0x1_Reconfigure_reset_counters">reset_counters</a>(vm, proposed_set, height_now)
 }
 </code></pre>
@@ -81,7 +91,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_process_fullnodes">process_fullnodes</a>(vm: &signer, subsidy_per_node: u64)
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_process_fullnodes">process_fullnodes</a>(vm: &signer, nominal_subsidy_per_node: u64)
 </code></pre>
 
 
@@ -90,44 +100,44 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_process_fullnodes">process_fullnodes</a>(vm: &signer, subsidy_per_node: u64) {
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_process_fullnodes">process_fullnodes</a>(vm: &signer, nominal_subsidy_per_node: u64) {
     // Fullnode subsidy
     // <b>loop</b> through validators and pay full node subsidies.
     // Should happen before transactionfees get distributed.
     // Note: need <b>to</b> check, there may be new validators which have not mined yet.
-    // print(&03100);
 
+    print(&1800200);
     <b>let</b> miners = <a href="MinerState.md#0x1_MinerState_get_miner_list">MinerState::get_miner_list</a>();
-
+    print(&1800201);
     // fullnode subsidy is a fraction of the total subsidy available <b>to</b> validators.
-    <b>let</b> proof_price = <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_get_proof_price">FullnodeSubsidy::get_proof_price</a>(subsidy_per_node);
+    <b>let</b> proof_price = <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_get_proof_price">FullnodeSubsidy::get_proof_price</a>(nominal_subsidy_per_node);
+    // print(&nominal_subsidy_per_node);
+    // print(&proof_price);
 
     <b>let</b> k = 0;
-    // print(&03200);
     // Distribute mining subsidy <b>to</b> fullnodes
+    print(&1800202);
     <b>while</b> (k &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&miners)) {
         <b>let</b> addr = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&miners, k);
-        // print(&03210);
+        print(&1800203);
+        <b>if</b> (<a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(addr)) { // skip validators
+          k = k + 1;
+          <b>continue</b>
+        };
+        print(&1800204);
 
-        // <b>if</b> (!<a href="FullnodeState.md#0x1_FullnodeState_is_init">FullnodeState::is_init</a>(addr)) <b>continue</b>; // fail-safe
-        <b>if</b> (<a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(addr)) <b>continue</b>; // skip validators
+        <b>if</b> (<a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(addr)){ // TODO: this call is repeated in propose_new_set. Not sure <b>if</b> the performance hit at epoch boundary is worth the refactor.
+          <b>let</b> count = <a href="MinerState.md#0x1_MinerState_get_count_in_epoch">MinerState::get_count_in_epoch</a>(addr);
+          // print(&count);
 
-        <b>let</b> count = <a href="MinerState.md#0x1_MinerState_get_count_in_epoch">MinerState::get_count_in_epoch</a>(addr);
-
-        <b>let</b> miner_subsidy = count * proof_price;
-
-        <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_distribute_fullnode_subsidy">FullnodeSubsidy::distribute_fullnode_subsidy</a>(vm, addr, miner_subsidy);
-
-        // print(&03230);
-        // <a href="FullnodeState.md#0x1_FullnodeState_inc_payment_count">FullnodeState::inc_payment_count</a>(vm, addr, count);
-        // <a href="FullnodeState.md#0x1_FullnodeState_inc_payment_value">FullnodeState::inc_payment_value</a>(vm, addr, value);
-        // <a href="FullnodeState.md#0x1_FullnodeState_reconfig">FullnodeState::reconfig</a>(vm, addr, count);
+          <b>let</b> miner_subsidy = count * proof_price;
+          print(&1800205);
+          // print(&miner_subsidy);
+          <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_distribute_fullnode_subsidy">FullnodeSubsidy::distribute_fullnode_subsidy</a>(vm, addr, miner_subsidy);
+        };
 
         k = k + 1;
     };
-
-     // needs <b>to</b> be set before the auctioneer runs in Subsidy::fullnode_reconfig
-    // <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_set_global_count">FullnodeSubsidy::set_global_count</a>(vm, global_proofs_count);
 }
 </code></pre>
 
@@ -141,7 +151,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_process_validators">process_validators</a>(vm: &signer, height_start: u64, height_now: u64, subsidy_units: u64)
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_process_validators">process_validators</a>(vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector&lt;address&gt;)
 </code></pre>
 
 
@@ -150,22 +160,21 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_process_validators">process_validators</a>(vm: &signer, height_start: u64, height_now: u64, subsidy_units: u64) {
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_process_validators">process_validators</a>(vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector&lt;address&gt;) {
     // Process outgoing validators:
     // Distribute Transaction fees and subsidy payments <b>to</b> all outgoing validators
     // print(&03240);
-    <b>let</b> (outgoing_set, _) = <a href="DiemSystem.md#0x1_DiemSystem_get_fee_ratio">DiemSystem::get_fee_ratio</a>(vm, height_start, height_now);
 
-    <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&outgoing_set) &gt; 0) {
-        // <b>let</b> (subsidy_units, _) = <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, height_start, height_now);
+
+    <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&outgoing_compliant_set) &gt; 0) {
         // print(&03241);
 
         <b>if</b> (subsidy_units &gt; 0) {
-            <a href="Subsidy.md#0x1_Subsidy_process_subsidy">Subsidy::process_subsidy</a>(vm, subsidy_units, &outgoing_set);
+            <a href="Subsidy.md#0x1_Subsidy_process_subsidy">Subsidy::process_subsidy</a>(vm, subsidy_units, &outgoing_compliant_set);
         };
         // print(&03241);
 
-        <a href="Subsidy.md#0x1_Subsidy_process_fees">Subsidy::process_fees</a>(vm, &outgoing_set);
+        <a href="Subsidy.md#0x1_Subsidy_process_fees">Subsidy::process_fees</a>(vm, &outgoing_compliant_set);
     };
 
 }
@@ -205,6 +214,7 @@
     <b>let</b> jailed_set = <a href="DiemSystem.md#0x1_DiemSystem_get_jailed_set">DiemSystem::get_jailed_set</a>(vm, height_start, height_now);
 
     <a href="Burn.md#0x1_Burn_reset_ratios">Burn::reset_ratios</a>(vm);
+    // LEAVE THIS CODE COMMENTED for future <b>use</b>
     // TODO: Make the burn value dynamic.
     // <b>let</b> incoming_count = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&top_accounts) - <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&jailed_set);
     // <b>let</b> burn_value = <a href="Subsidy.md#0x1_Subsidy_subsidy_curve">Subsidy::subsidy_curve</a>(
@@ -212,6 +222,7 @@
     //   incoming_count,
     //   Globals::get_max_node_density()
     // )/4;
+
     <b>let</b> burn_value = 1000000; // TODO: switch <b>to</b> a variable cost, <b>as</b> above.
 
     // print(&03250);
@@ -221,7 +232,7 @@
         // print(&03251);
 
         <b>let</b> addr = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&top_accounts, i);
-        <b>let</b> mined_last_epoch = <a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(vm, addr);
+        <b>let</b> mined_last_epoch = <a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(addr);
         // print(&mined_last_epoch);
         // TODO: temporary until jail-refactor merge.
         <b>if</b> (
@@ -283,7 +294,7 @@
     // print(&032110);
 
     // reset clocks
-    <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_fullnode_reconfig">FullnodeSubsidy::fullnode_reconfig</a>(vm);
+    // FullnodeSubsidy::fullnode_reconfig(vm);
     // print(&032120);
 
     // process community wallets
