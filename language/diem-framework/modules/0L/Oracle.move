@@ -450,6 +450,12 @@ address 0x1 {
       }
     }
 
+
+    /// This module simply contains the current block height
+    /// It is updated each block by DiemBlock
+    /// It is neccessary to prevent circular dependencies between modules that 
+    /// DiemBlock needs to run and DiemBlock itself, which may arise if said 
+    /// Modules require the block height
     module BlockHeight {
         use 0x1::Roles;
         use 0x1::CoreAddresses;
