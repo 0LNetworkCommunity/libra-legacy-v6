@@ -43,7 +43,7 @@ test-fixed-once:
 
 test:
 # tests all types of txs
-	export AUTOPAY_FILE=all.autopay_batch.json SUCCESS_TEXT="'with sequence number: 7'" && make -f ${MAKE_FILE} test-wrapper
+	export AUTOPAY_FILE=all.autopay_batch.json SUCCESS_TEXT="'with sequence number: 6'" && make -f ${MAKE_FILE} test-wrapper
 
 swarm:
 	@echo Building Swarm
