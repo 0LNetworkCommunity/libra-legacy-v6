@@ -51,7 +51,7 @@ address 0x1 {
       // TODO: This calculation is duplicated with get_subsidy
       if (subsidy_units > len && subsidy_units > 0 ) { // arithmetic safety check
         subsidy_granted = subsidy_units/len;
-        print(&subsidy_granted);
+        // print(&subsidy_granted);
       } else { return };
 
       let i = 0;
@@ -111,11 +111,11 @@ address 0x1 {
         // TODO: we are doing this computation twice at reconfigure time.
         if ((subsidy > network_density) && (network_density > 0)) {
           print(&190100903);
-          print(&subsidy);
-          print(&network_density);
+          // print(&subsidy);
+          // print(&network_density);
           
           subsidy_per_node = subsidy/network_density;
-          print(&subsidy_per_node);
+          // print(&subsidy_per_node);
 
         };
       };
@@ -163,7 +163,7 @@ address 0x1 {
       // Get eligible validators list
       let genesis_validators = ValidatorUniverse::get_eligible_validators(vm_sig);
       let len = Vector::length(&genesis_validators);
-      let subsidy = 2000000; // one coin for validator, and a second which the validator will send to operator.
+      let subsidy = 11000000; // ten coins for validator, sufficient for first epoch of transactions, and an extra which the validator will send to operator.
 
       let i = 0;
       while (i < len) {
