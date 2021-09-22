@@ -77,7 +77,7 @@
   // TODO: This calculation is duplicated <b>with</b> get_subsidy
   <b>if</b> (subsidy_units &gt; len && subsidy_units &gt; 0 ) { // arithmetic safety check
     subsidy_granted = subsidy_units/len;
-    print(&subsidy_granted);
+    // print(&subsidy_granted);
   } <b>else</b> { <b>return</b> };
 
   <b>let</b> i = 0;
@@ -155,11 +155,11 @@
     // TODO: we are doing this computation twice at reconfigure time.
     <b>if</b> ((subsidy &gt; network_density) && (network_density &gt; 0)) {
       print(&190100903);
-      print(&subsidy);
-      print(&network_density);
+      // print(&subsidy);
+      // print(&network_density);
 
       subsidy_per_node = subsidy/network_density;
-      print(&subsidy_per_node);
+      // print(&subsidy_per_node);
 
     };
   };
@@ -245,7 +245,7 @@
   // Get eligible validators list
   <b>let</b> genesis_validators = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm_sig);
   <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&genesis_validators);
-  <b>let</b> subsidy = 2000000; // one coin for validator, and a second which the validator will send <b>to</b> operator.
+  <b>let</b> subsidy = 11000000; // ten coins for validator, sufficient for first epoch of transactions, and an extra which the validator will send <b>to</b> operator.
 
   <b>let</b> i = 0;
   <b>while</b> (i &lt; len) {
