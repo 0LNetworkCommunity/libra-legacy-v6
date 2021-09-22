@@ -134,6 +134,7 @@ To start web monitor for swarm, in one terminal window you have to start the sve
 
 ```
 cd $HOME/libra/ol/cli/web-monitor
+# run `npm install` if this is the first time otherwise:
 npm run dev
 ```
 
