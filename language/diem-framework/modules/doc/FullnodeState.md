@@ -109,8 +109,8 @@ This module tracks the activity of the network's fullnodes
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_init">init</a>(sender: &signer) {
     <b>assert</b>(!<b>exists</b>&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender)), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(060001));
     move_to&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(
-    sender,
-    <a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a> {
+      sender,
+      <a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a> {
         proofs_submitted_in_epoch: 0,
         proofs_paid_in_epoch: 0, // count
         subsidy_in_epoch: 0, // value
@@ -130,7 +130,8 @@ This module tracks the activity of the network's fullnodes
 
 ## Function `reconfig`
 
-Called by root at the epoch boundary for each fullnode, updates the cumulative stats and resets the others
+Called by root at the epoch boundary for each fullnode, updates the
+cumulative stats and resets the others
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_reconfig">reconfig</a>(vm: &signer, addr: address, proofs_in_epoch: u64)

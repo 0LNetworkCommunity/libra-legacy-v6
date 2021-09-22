@@ -1154,7 +1154,7 @@ module DiemAccount {
         vm: &signer
     ) acquires DiemAccount , Balance, AccountOperationsCapability, AutopayEscrow, CumulativeDeposits, SlowWallet { //////// 0L ////////
         if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
-        if (amount < 0) return; // Todo: Use "==" ?
+        if (amount == 0) return;
 
         // Check payee can receive funds in this currency.
         if (!exists<Balance<Token>>(payee)) return; 
@@ -1238,7 +1238,7 @@ module DiemAccount {
     ) acquires DiemAccount , Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
         if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
         // don't try to send a 0 balance, will halt.
-        if (amount < 1) return; 
+        if (amount < 1) return;
 
         // Check payee can receive funds in this currency.
         if (!exists<Balance<Token>>(payee)) return; 
@@ -1437,7 +1437,7 @@ module DiemAccount {
         let balance_coin = &mut account_balance.coin;
         // Doubly check balance exists.
         assert(
-            Diem::value(balance_coin) > BOOTSTRAP_COIN_VALUE, // Todo: ">=" ?
+            Diem::value(balance_coin) >= BOOTSTRAP_COIN_VALUE,
             Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
         );
         // Should abort if the 

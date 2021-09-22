@@ -26,8 +26,8 @@ module FullnodeState {
   public fun init(sender: &signer) {
       assert(!exists<FullnodeCounter>(Signer::address_of(sender)), Errors::not_published(060001));
       move_to<FullnodeCounter>(
-      sender, 
-      FullnodeCounter {
+        sender,
+        FullnodeCounter {
           proofs_submitted_in_epoch: 0,
           proofs_paid_in_epoch: 0, // count
           subsidy_in_epoch: 0, // value
@@ -39,7 +39,8 @@ module FullnodeState {
   }
 
   // Function code: 2
-  /// Called by root at the epoch boundary for each fullnode, updates the cumulative stats and resets the others
+  /// Called by root at the epoch boundary for each fullnode, updates the 
+  /// cumulative stats and resets the others
   public fun reconfig(vm: &signer, addr: address, proofs_in_epoch: u64) acquires FullnodeCounter {
       Roles::assert_diem_root(vm);
       let state = borrow_global_mut<FullnodeCounter>(addr);
@@ -62,7 +63,7 @@ module FullnodeState {
   }
 
   /// VM Increments subsidy in epoch for `addr`. Increases by `value`
-  //Function code:05
+  // Function code:05
   public fun inc_payment_value(vm: &signer, addr: address, value: u64) acquires FullnodeCounter {
     Roles::assert_diem_root(vm);
     let state = borrow_global_mut<FullnodeCounter>(addr);
