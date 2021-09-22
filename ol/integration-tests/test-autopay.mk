@@ -33,7 +33,7 @@ endif
 
 export
 
-test-wrapper: swarm check-swarm set-community send-tx check-tx  check-autopay check-transfer stop
+test-wrapper: swarm check-swarm set-community send-tx check-tx check-autopay check-transfer stop
 
 test-percent-bal:
 	AUTOPAY_FILE=alice.autopay_batch.json make -f ${MAKE_FILE} test-wrapper
@@ -58,8 +58,9 @@ stop:
 init:
 	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}
 
-tx:
+tx: balance
 	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} autopay-batch -f ${SOURCE_PATH}/ol/fixtures/autopay/${AUTOPAY_FILE}
+	
 
 set-community:
 	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona bob wallet -c

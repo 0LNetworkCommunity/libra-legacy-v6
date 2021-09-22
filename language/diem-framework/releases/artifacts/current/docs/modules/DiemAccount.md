@@ -2720,7 +2720,7 @@ vm_make_payment on the other hand considers payment limits.
 
     // TODO: review this in 5.1
     // VM should not force an account below 1GAS, since the account may not recover.
-    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(payer) &lt; 1000000) <b>return</b>;
+    // <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(payer) &lt; <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>) <b>return</b>;
 
     // prevent halting on low balance.
     // burn the remaining balance <b>if</b> the amount is greater than balance
@@ -2778,7 +2778,7 @@ VM can burn from an account's balance for administrative purposes (e.g. at epoch
 
     // TODO: review this in 5.1
     // VM should not force an account below 1GAS, since the account may not recover.
-    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(addr) &lt; 1000000) <b>return</b>;
+    // <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(addr) &lt; <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>) <b>return</b>;
 
     // prevent halting on low balance.
     // burn the remaining balance <b>if</b> the amount is greater than balance
@@ -5103,6 +5103,7 @@ The main properties that it verifies:
         );
         <b>let</b> balance_amount = <a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;Token&gt;(transaction_sender);
         // [PCA8]: Check that the account can cover the maximum transaction fee
+
         <b>assert</b>(
             balance_amount &gt;= max_transaction_fee,
             <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DiemAccount.md#0x1_DiemAccount_PROLOGUE_ECANT_PAY_GAS_DEPOSIT">PROLOGUE_ECANT_PAY_GAS_DEPOSIT</a>)

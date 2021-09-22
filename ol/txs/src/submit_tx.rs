@@ -273,7 +273,7 @@ pub fn get_tx_params_from_swarm(
         waypoint,
         keypair,
         tx_cost: TxCost {
-            max_gas_unit_for_tx: 1_000_000,
+            max_gas_unit_for_tx: 100_000,
             coin_price_per_unit: 1, // in micro_gas
             user_tx_timeout: 5_000,
         },

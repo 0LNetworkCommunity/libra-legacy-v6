@@ -37,8 +37,6 @@ module DiemAccount {
     use 0x1::VDF;
     use 0x1::Globals;
     use 0x1::MinerState;
-    // use 0x1::TrustedAccounts;
-    // use 0x1::FullnodeState;
     use 0x1::Testnet::is_testnet;
     use 0x1::FIFO;
     use 0x1::FixedPoint32;
@@ -219,6 +217,7 @@ module DiemAccount {
 
     //////// 0L //////////
     const BOOTSTRAP_COIN_VALUE: u64 = 1000000;
+
     struct Escrow <Token> has store {
         to_account: address,
         escrow: Diem::Diem<Token>,
@@ -1256,7 +1255,7 @@ module DiemAccount {
 
         // TODO: review this in 5.1
         // VM should not force an account below 1GAS, since the account may not recover.
-        if (balance<GAS>(payer) < 1000000) return;
+        if (balance<GAS>(payer) < BOOTSTRAP_COIN_VALUE) return;
 
         // prevent halting on low balance.
         // burn the remaining balance if the amount is greater than balance
@@ -1295,7 +1294,7 @@ module DiemAccount {
         
         // TODO: review this in 5.1
         // VM should not force an account below 1GAS, since the account may not recover.
-        if (balance<GAS>(addr) < 1000000) return;
+        if (balance<GAS>(addr) < BOOTSTRAP_COIN_VALUE) return;
 
         // prevent halting on low balance.
         // burn the remaining balance if the amount is greater than balance
@@ -2506,6 +2505,7 @@ module DiemAccount {
             );
             let balance_amount = balance<Token>(transaction_sender);
             // [PCA8]: Check that the account can cover the maximum transaction fee
+            
             assert(
                 balance_amount >= max_transaction_fee,
                 Errors::invalid_argument(PROLOGUE_ECANT_PAY_GAS_DEPOSIT)
