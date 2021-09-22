@@ -88,8 +88,8 @@ script {
         let bal = TransactionFee::get_amount_to_distribute(vm);
         assert(bal == 0, 7357190103011000);
 
-        let (validators, fee_ratios) = DiemSystem::get_fee_ratio(vm, 0, 15);
-        Subsidy::process_fees(vm, &validators, &fee_ratios);
+        let (validators, _) = DiemSystem::get_fee_ratio(vm, 0, 15);
+        Subsidy::process_fees(vm, &validators);
 
         assert(DiemAccount::balance<GAS>(@{{alice}}) == 1000000, 7357190103021000);
         assert(DiemAccount::balance<GAS>(@{{bob}}) == 1000000, 7357190103031000);
