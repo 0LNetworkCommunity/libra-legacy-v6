@@ -20,7 +20,7 @@ If you don't already have a mnemonic and block_0.json, see instructions to gener
 Then using the makefile helpers you can register as such:
 
 ```
-GENESIS_USER=<your_github_user> make ceremony register
+GITHUB_USER=<your_github_user> make ceremony register
 ```
 
 ## infrastructure
@@ -105,7 +105,7 @@ The following script does several steps:
 - fork: on github this forks the GENESIS_REPO into the CANDIDATE_REPO
 
 ```
-GENESIS_USER=<your_github_user> make ceremony
+GITHUB_USER=<your_github_user> make ceremony
 ```
 
 ## 4. Pause and check your work ##
@@ -145,7 +145,7 @@ The following script does several steps:
 - pull: submitting a pull request from CANDIDATE_REPO to GENESIS_REPO
 
 ```
-GENESIS_USER=<your_github_user> make register
+GITHUB_USER=<your_github_user> make register
 ```
 
 After this step check your data at `http://github.com/0LSF/experimental-genesis`
