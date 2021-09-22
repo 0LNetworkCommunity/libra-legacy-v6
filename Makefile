@@ -23,7 +23,7 @@ GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
 
 REPO_ORG = OLSF
 REPO_NAME = genesis-registration
-CARGO_ARGS = --locked
+CARGO_ARGS = --release
 
 # testnet automation settings
 ifeq (${TEST}, y)

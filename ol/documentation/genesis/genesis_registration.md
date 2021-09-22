@@ -35,6 +35,14 @@ Tools are provided to a) fork the GENESIS_REPO b) write registration info ro CAN
 
 The GENESIS_REPO coordinator then has the task of manually approving all PRs.
 
+# Warning - Don't lose your Tower
+
+If you have a Delay Tower on a node: you should back up the proofs. You will want these for your identity on a new chain.
+
+```
+tar -zcvf my-tower.tar.gz ~/.0L/blocks/
+```
+
 # Registration
 
 Have these things ready:
