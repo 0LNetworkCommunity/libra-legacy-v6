@@ -20,7 +20,7 @@ endif
 # Eve mnemonic
 MNEM="recall october regret kite undo choice outside season business wall quit arrest vacant arrow giggle vote ghost winter hawk soft cheap decide exhaust spare"
 
-NUM_NODES = 4
+NUM_NODES = 2
 EVE = 3DC18D1CF61FAAC6AC70E3A63F062E4B
 
 # ONBOARD_FILE=${SOURCE_PATH}/ol/fixtures/account/swarm/eve.fixed_recurring.account.json

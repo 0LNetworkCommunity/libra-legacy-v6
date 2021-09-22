@@ -390,7 +390,7 @@ pub fn wait_for_tx(
         signer_address, sequence_number
     );
 
-    const MAX_ITERATIONS: u8 = 30;
+    const MAX_ITERATIONS: u8 = 60;
 
     let mut iter = 0;    
     loop {
