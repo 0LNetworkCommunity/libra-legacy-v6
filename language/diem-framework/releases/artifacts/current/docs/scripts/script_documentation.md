@@ -5258,6 +5258,7 @@ a reconfiguration of the system.
 -  [`0x1::Audit`](../../../../../releases/artifacts/current/docs/modules/Audit.md#0x1_Audit)
 -  [`0x1::Authenticator`](../../../../../releases/artifacts/current/docs/modules/Authenticator.md#0x1_Authenticator)
 -  [`0x1::AutoPay2`](../../../../../releases/artifacts/current/docs/modules/AutoPay.md#0x1_AutoPay2)
+-  [`0x1::BlockHeight`](../../../../../releases/artifacts/current/docs/modules/Oracle.md#0x1_BlockHeight)
 -  [`0x1::Burn`](../../../../../releases/artifacts/current/docs/modules/Burn.md#0x1_Burn)
 -  [`0x1::Cases`](../../../../../releases/artifacts/current/docs/modules/Cases.md#0x1_Cases)
 -  [`0x1::ChainId`](../../../../../releases/artifacts/current/docs/modules/ChainId.md#0x1_ChainId)

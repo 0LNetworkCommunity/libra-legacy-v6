@@ -19,6 +19,7 @@
 -  [Function `increment_vote_count_hash`](#0x1_Oracle_increment_vote_count_hash)
 -  [Function `check_consensus`](#0x1_Oracle_check_consensus)
 -  [Function `enter_new_upgrade_round`](#0x1_Oracle_enter_new_upgrade_round)
+-  [Function `clear_expired_ballots`](#0x1_Oracle_clear_expired_ballots)
 -  [Function `tally_upgrade`](#0x1_Oracle_tally_upgrade)
 -  [Function `check_upgrade`](#0x1_Oracle_check_upgrade)
 -  [Function `get_weight`](#0x1_Oracle_get_weight)
@@ -34,12 +35,13 @@
 -  [Function `upgrade_vote_type`](#0x1_Oracle_upgrade_vote_type)
 
 
-<pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="DiemBlock.md#0x1_DiemBlock">0x1::DiemBlock</a>;
+<pre><code><b>use</b> <a href="Oracle.md#0x1_BlockHeight">0x1::BlockHeight</a>;
+<b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Hash.md#0x1_Hash">0x1::Hash</a>;
 <b>use</b> <a href="NodeWeight.md#0x1_NodeWeight">0x1::NodeWeight</a>;
+<b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="Upgrade.md#0x1_Upgrade">0x1::Upgrade</a>;
@@ -474,7 +476,7 @@
 
 
 <pre><code><b>fun</b> <a href="Oracle.md#0x1_Oracle_upgrade_handler">upgrade_handler</a> (sender: address, data: vector&lt;u8&gt;) <b>acquires</b> <a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a> {
-  <b>let</b> current_height = <a href="DiemBlock.md#0x1_DiemBlock_get_current_block_height">DiemBlock::get_current_block_height</a>();
+  <b>let</b> current_height = <a href="Oracle.md#0x1_BlockHeight_get_height">BlockHeight::get_height</a>();
   <b>let</b> upgrade_oracle = &<b>mut</b> borrow_global_mut&lt;<a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).upgrade;
 
   // check <b>if</b> qualifies <b>as</b> a new round
@@ -522,7 +524,7 @@
 
 
 <pre><code><b>fun</b> <a href="Oracle.md#0x1_Oracle_upgrade_handler_hash">upgrade_handler_hash</a> (sender: address, data: vector&lt;u8&gt;) <b>acquires</b> <a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a> {
-  <b>let</b> current_height = <a href="DiemBlock.md#0x1_DiemBlock_get_current_block_height">DiemBlock::get_current_block_height</a>();
+  <b>let</b> current_height = <a href="Oracle.md#0x1_BlockHeight_get_height">BlockHeight::get_height</a>();
   <b>let</b> upgrade_oracle = &<b>mut</b> borrow_global_mut&lt;<a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).upgrade;
 
   // check <b>if</b> qualifies <b>as</b> a new round
@@ -707,6 +709,46 @@
 
 </details>
 
+<a name="0x1_Oracle_clear_expired_ballots"></a>
+
+## Function `clear_expired_ballots`
+
+This function will clear ballots if the current voting round has expired
+Unlike enter_new_upgrade_round, it will not start a new round
+it also does not clear the consensus so that it can be checked by the vm later
+(that only happens if someone submits a proposal)
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Oracle.md#0x1_Oracle_clear_expired_ballots">clear_expired_ballots</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Oracle.md#0x1_Oracle_clear_expired_ballots">clear_expired_ballots</a>(vm: &signer) <b>acquires</b> <a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a> {
+  <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(vm);
+  <b>let</b> current_height = <a href="Oracle.md#0x1_BlockHeight_get_height">BlockHeight::get_height</a>();
+  <b>let</b> upgrade_oracle = &<b>mut</b> borrow_global_mut&lt;<a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).upgrade;
+
+  // check <b>if</b> qualifies <b>as</b> a new round
+  <b>let</b> is_new_round = current_height &gt; upgrade_oracle.vote_window;
+
+  <b>if</b> (is_new_round) {
+    upgrade_oracle.validators_voted = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
+    upgrade_oracle.vote_counts = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="Oracle.md#0x1_Oracle_VoteCount">VoteCount</a>&gt;();
+    upgrade_oracle.votes = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="Oracle.md#0x1_Oracle_Vote">Vote</a>&gt;();
+
+  }
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_Oracle_tally_upgrade"></a>
 
 ## Function `tally_upgrade`
@@ -760,7 +802,7 @@
 
   <b>if</b> (!<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_is_empty">Vector::is_empty</a>(&payload)) {
     <a href="Upgrade.md#0x1_Upgrade_set_update">Upgrade::set_update</a>(vm, *&payload);
-    <b>let</b> current_height = <a href="DiemBlock.md#0x1_DiemBlock_get_current_block_height">DiemBlock::get_current_block_height</a>();
+    <b>let</b> current_height = <a href="Oracle.md#0x1_BlockHeight_get_height">BlockHeight::get_height</a>();
     <a href="Upgrade.md#0x1_Upgrade_record_history">Upgrade::record_history</a>(vm, upgrade_oracle.version_id, payload, validators, current_height);
     <a href="Oracle.md#0x1_Oracle_enter_new_upgrade_round">enter_new_upgrade_round</a>(upgrade_oracle, current_height);
   }
