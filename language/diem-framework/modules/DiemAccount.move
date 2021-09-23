@@ -505,7 +505,7 @@ module DiemAccount {
         assert(MinerState::can_create_val_account(sender_addr), Errors::limit_exceeded(120102));
         // Check there's enough balance for bootstrapping both operator and validator account
         assert(
-            balance<GAS>(sender_addr) >= 2 * BOOTSTRAP_COIN_VALUE, 
+            balance<GAS>(sender_addr) > 2 * BOOTSTRAP_COIN_VALUE, 
             Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
         );
 
@@ -1455,7 +1455,7 @@ module DiemAccount {
         let balance_coin = &mut account_balance.coin;
         // Doubly check balance exists.
         assert(
-            Diem::value(balance_coin) >= BOOTSTRAP_COIN_VALUE,
+            Diem::value(balance_coin) > BOOTSTRAP_COIN_VALUE,
             Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
         );
         // Should abort if the 
