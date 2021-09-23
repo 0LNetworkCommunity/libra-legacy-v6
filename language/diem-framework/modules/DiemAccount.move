@@ -37,8 +37,6 @@ module DiemAccount {
     use 0x1::VDF;
     use 0x1::Globals;
     use 0x1::MinerState;
-    // use 0x1::TrustedAccounts;
-    use 0x1::FullnodeState;
     use 0x1::Testnet::is_testnet;
     use 0x1::FIFO;
     use 0x1::FixedPoint32;
@@ -219,6 +217,7 @@ module DiemAccount {
 
     //////// 0L //////////
     const BOOTSTRAP_COIN_VALUE: u64 = 1000000;
+
     struct Escrow <Token> has store {
         to_account: address,
         escrow: Diem::Diem<Token>,
@@ -530,7 +529,7 @@ module DiemAccount {
         // NOTE: VDF verification is being called twice!
         MinerState::init_miner_state(&new_signer, challenge, solution);
         // TODO: Should fullnode init happen here, or under MinerState::init?
-        FullnodeState::init(&new_signer);
+        // FullnodeState::init(&new_signer);
         // Create OP Account
         let new_op_account = create_signer(op_address);
         Roles::new_validator_operator_role_with_proof(&new_op_account);
@@ -1218,7 +1217,10 @@ module DiemAccount {
             // TODO: Is this the best way to access a struct property from 
             // outside a module?
             let (payer, payee, value, description) = Wallet::get_tx_args(t);
-            if (Wallet::is_frozen(payer)) continue;
+            if (Wallet::is_frozen(payer)) {
+              i = i + 1;
+              continue
+            };
             vm_make_payment_no_limit<GAS>(payer, payee, value, description, b"", vm);
             Wallet::maybe_reset_rejection_counter(vm, payer);
             i = i + 1;
@@ -1235,7 +1237,7 @@ module DiemAccount {
         metadata: vector<u8>,
         metadata_signature: vector<u8>,
         vm: &signer
-    ) acquires DiemAccount , Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
+    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
         if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
         // don't try to send a 0 balance, will halt.
         if (amount < 1) return;
@@ -1251,10 +1253,16 @@ module DiemAccount {
         // Check the payer is in possession of withdraw token.
         if (delegated_withdraw_capability(payer)) return; 
 
-        // assert(
-        //     !delegated_withdraw_capability(payer),
-        //     Errors::invalid_state(EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED)
-        // );
+        // TODO: review this in 5.1
+        // VM should not force an account below 1GAS, since the account may not recover.
+        if (balance<GAS>(payer) < BOOTSTRAP_COIN_VALUE) return;
+
+        // prevent halting on low balance.
+        // burn the remaining balance if the amount is greater than balance
+        if (balance<GAS>(payer) < amount) { 
+          amount = balance<GAS>(payer);
+        };
+
 
         // VM can extract the withdraw token.
         let account = borrow_global_mut<DiemAccount>(payer);
@@ -1280,10 +1288,20 @@ module DiemAccount {
         if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
         // don't try to send a 0 balance, will halt.
         if (amount < 1) return; 
-
         // Check there is a payer and has balance
         if (!exists_at(addr)) return; 
-        if (!exists<Balance<Token>>(addr)) return; 
+        if (!exists<Balance<Token>>(addr)) return;
+        
+        // TODO: review this in 5.1
+        // VM should not force an account below 1GAS, since the account may not recover.
+        if (balance<GAS>(addr) < BOOTSTRAP_COIN_VALUE) return;
+
+        // prevent halting on low balance.
+        // burn the remaining balance if the amount is greater than balance
+        // but leave 1GAS to be able to recover
+        if (balance<GAS>(addr) < amount) { 
+          amount = balance<GAS>(addr);
+        };
 
         // Check the payer is in possession of withdraw token.
         if (delegated_withdraw_capability(addr)) return; 
@@ -2487,6 +2505,7 @@ module DiemAccount {
             );
             let balance_amount = balance<Token>(transaction_sender);
             // [PCA8]: Check that the account can cover the maximum transaction fee
+            
             assert(
                 balance_amount >= max_transaction_fee,
                 Errors::invalid_argument(PROLOGUE_ECANT_PAY_GAS_DEPOSIT)

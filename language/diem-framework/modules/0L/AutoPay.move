@@ -19,6 +19,7 @@ address 0x1 {
     use 0x1::Errors;
     use 0x1::Wallet;
     use 0x1::Roles;
+    use 0x1::DiemTimestamp;
 
     /// Attempted to send funds to an account that does not exist
     /// Maximum value for the Payment type selection
@@ -271,10 +272,10 @@ address 0x1 {
       payment.in_type == FIXED_ONCE || payment.end_epoch <= epoch
     }
 
-    ////////////////////////////////////////////
-    // Public functions only account owner    //
+    /////////////////////////////////////////////////
+    // Public functions only account owner         //
     // Enable, disable, create/delete instructions //
-    ////////////////////////////////////////////
+    /////////////////////////////////////////////////
 
     // Each account needs to initialize autopay on its account
     // Function code 010102
@@ -314,6 +315,7 @@ address 0x1 {
       }      
     }
 
+    use 0x1::Debug::print;
     // Create a instruction from the sender's account
     // Function code 010104
     public fun create_instruction(
@@ -325,6 +327,7 @@ address 0x1 {
       amt: u64
     ) acquires Data, AccountLimitsEnable {
       let addr = Signer::address_of(sender);
+      print(&701);
       // Confirm that no payment exists with the same uid
       let index = find(addr, uid);
       assert(Option::is_none<u64>(&index), Errors::invalid_argument(UID_TAKEN));
@@ -332,24 +335,26 @@ address 0x1 {
       if (borrow_global<AccountLimitsEnable>(CoreAddresses::DIEM_ROOT_ADDRESS()).enabled) {
         assert(Wallet::is_comm(payee), Errors::invalid_argument(PAYEE_NOT_COMMUNITY_WALLET));
       };
-
+print(&702);
       let payments = &mut borrow_global_mut<Data>(addr).payments;
       assert(
         Vector::length<Payment>(payments) < MAX_NUMBER_OF_INSTRUCTIONS,
         Errors::limit_exceeded(TOO_MANY_INSTRUCTIONS)
       );
-
+print(&703);
       // This is not a necessary check at genesis.
-      // assert(DiemAccount::exists_at(payee), Errors::not_published(EPAYEE_DOES_NOT_EXIST));
-
+      if (DiemTimestamp::is_operating()) {
+        assert(DiemAccount::exists_at(payee), Errors::not_published(EPAYEE_DOES_NOT_EXIST));
+      };
+print(&704);
       assert(in_type <= MAX_TYPE, Errors::invalid_argument(INVALID_PAYMENT_TYPE));
 
       if (in_type == PERCENT_OF_BALANCE || in_type == PERCENT_OF_CHANGE) {
         assert(amt <= MAX_PERCENTAGE, Errors::invalid_argument(INVALID_PERCENTAGE));
       };
-
+print(&705);
       let account_bal = DiemAccount::balance<GAS>(addr);
-
+print(&706);
       Vector::push_back<Payment>(payments, Payment {
         uid: uid,
         in_type: in_type,

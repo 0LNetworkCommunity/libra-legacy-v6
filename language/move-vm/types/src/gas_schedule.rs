@@ -317,5 +317,6 @@ pub enum NativeCostIndex {
     EMIT_EVENT = 17,
     //////// 0L ////////
     VDF_VERIFY = 18,
-    VDF_PARSE = 19,    
+    VDF_PARSE = 19,
+    DECIMAL = 20,
 }

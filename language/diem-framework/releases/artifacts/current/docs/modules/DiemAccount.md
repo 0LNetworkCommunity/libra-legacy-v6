@@ -132,7 +132,6 @@ before and after every transaction.
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event">0x1::Event</a>;
 <b>use</b> <a href="FIFO.md#0x1_FIFO">0x1::FIFO</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
-<b>use</b> <a href="FullnodeState.md#0x1_FullnodeState">0x1::FullnodeState</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Hash.md#0x1_Hash">0x1::Hash</a>;
@@ -1472,7 +1471,7 @@ Initialize this module. This is only callable from genesis.
     // NOTE: <a href="VDF.md#0x1_VDF">VDF</a> verification is being called twice!
     <a href="MinerState.md#0x1_MinerState_init_miner_state">MinerState::init_miner_state</a>(&new_signer, challenge, solution);
     // TODO: Should fullnode init happen here, or under MinerState::init?
-    <a href="FullnodeState.md#0x1_FullnodeState_init">FullnodeState::init</a>(&new_signer);
+    // FullnodeState::init(&new_signer);
     // Create OP Account
     <b>let</b> new_op_account = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(op_address);
     <a href="Roles.md#0x1_Roles_new_validator_operator_role_with_proof">Roles::new_validator_operator_role_with_proof</a>(&new_op_account);
@@ -2664,7 +2663,10 @@ Return the withdraw capability to the account it originally came from
         // TODO: Is this the best way <b>to</b> access a <b>struct</b> property from
         // outside a <b>module</b>?
         <b>let</b> (payer, payee, value, description) = <a href="Wallet.md#0x1_Wallet_get_tx_args">Wallet::get_tx_args</a>(t);
-        <b>if</b> (<a href="Wallet.md#0x1_Wallet_is_frozen">Wallet::is_frozen</a>(payer)) <b>continue</b>;
+        <b>if</b> (<a href="Wallet.md#0x1_Wallet_is_frozen">Wallet::is_frozen</a>(payer)) {
+          i = i + 1;
+          <b>continue</b>
+        };
         <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(payer, payee, value, description, b"", vm);
         <a href="Wallet.md#0x1_Wallet_maybe_reset_rejection_counter">Wallet::maybe_reset_rejection_counter</a>(vm, payer);
         i = i + 1;
@@ -2700,7 +2702,7 @@ vm_make_payment on the other hand considers payment limits.
     metadata: vector&lt;u8&gt;,
     metadata_signature: vector&lt;u8&gt;,
     vm: &signer
-) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> , <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a> { //////// 0L ////////
+) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a> { //////// 0L ////////
     <b>if</b> (<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()) <b>return</b>;
     // don't try <b>to</b> send a 0 balance, will halt.
     <b>if</b> (amount &lt; 1) <b>return</b>;
@@ -2716,10 +2718,16 @@ vm_make_payment on the other hand considers payment limits.
     // Check the payer is in possession of withdraw token.
     <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(payer)) <b>return</b>;
 
-    // <b>assert</b>(
-    //     !<a href="DiemAccount.md#0x1_DiemAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(payer),
-    //     <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED">EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED</a>)
-    // );
+    // TODO: review this in 5.1
+    // VM should not force an account below 1GAS, since the account may not recover.
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(payer) &lt; <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>) <b>return</b>;
+
+    // prevent halting on low balance.
+    // burn the remaining balance <b>if</b> the amount is greater than balance
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(payer) &lt; amount) {
+      amount = <a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(payer);
+    };
+
 
     // VM can extract the withdraw token.
     <b>let</b> account = borrow_global_mut&lt;<a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>&gt;(payer);
@@ -2764,10 +2772,20 @@ VM can burn from an account's balance for administrative purposes (e.g. at epoch
     <b>if</b> (<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()) <b>return</b>;
     // don't try <b>to</b> send a 0 balance, will halt.
     <b>if</b> (amount &lt; 1) <b>return</b>;
-
     // Check there is a payer and has balance
     <b>if</b> (!<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(addr)) <b>return</b>;
     <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(addr)) <b>return</b>;
+
+    // TODO: review this in 5.1
+    // VM should not force an account below 1GAS, since the account may not recover.
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(addr) &lt; <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>) <b>return</b>;
+
+    // prevent halting on low balance.
+    // burn the remaining balance <b>if</b> the amount is greater than balance
+    // but leave 1GAS <b>to</b> be able <b>to</b> recover
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(addr) &lt; amount) {
+      amount = <a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(addr);
+    };
 
     // Check the payer is in possession of withdraw token.
     <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(addr)) <b>return</b>;
@@ -5085,6 +5103,7 @@ The main properties that it verifies:
         );
         <b>let</b> balance_amount = <a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;Token&gt;(transaction_sender);
         // [PCA8]: Check that the account can cover the maximum transaction fee
+
         <b>assert</b>(
             balance_amount &gt;= max_transaction_fee,
             <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DiemAccount.md#0x1_DiemAccount_PROLOGUE_ECANT_PAY_GAS_DEPOSIT">PROLOGUE_ECANT_PAY_GAS_DEPOSIT</a>)
