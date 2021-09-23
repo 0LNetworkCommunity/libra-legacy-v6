@@ -73,7 +73,7 @@ or reset your terminal
 reset
 ```
 
-For more details: https://github.com/OLSF/libra/wiki/OS-Dependencies
+For more details: (../OS-Dependencies.md)
 
 1.5. Build the source and install binaries:
 This takes a while, run inside `tmux` in case your session gets disconnected 
@@ -84,7 +84,7 @@ make bins && make install
 
 ## 2. Generate an account
 
-[In-depth guide](https://github.com/OLSF/libra/wiki/Account-creation-for-validators) 
+[In-depth guide](Account-creation-for-validators.md) 
 
 Before you start: have the static IP address you wish to associate with your validator, and a fun personal statement 
 to place in your first proof.
