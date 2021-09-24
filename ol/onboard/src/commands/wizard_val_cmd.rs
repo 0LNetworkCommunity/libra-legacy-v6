@@ -66,7 +66,7 @@ impl Runnable for ValWizardCmd {
         // Note. `onboard` command DOES NOT READ CONFIGS FROM 0L.toml
 
         status_info!(
-            "\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys, run the standalone keygen tool with 'ol keygen'."
+            "\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys, run the standalone keygen tool with 'onboard keygen'."
         );
 
         if !self.skip_mining {
