@@ -56,10 +56,13 @@
     <b>let</b> height_start = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>(vm);
 
     print(&1800101);
-    <b>let</b> (outgoing_compliant_set, _) = <a href="DiemSystem.md#0x1_DiemSystem_get_fee_ratio">DiemSystem::get_fee_ratio</a>(vm, height_start, height_now);
+    <b>let</b> (outgoing_compliant_set, _) =
+        <a href="DiemSystem.md#0x1_DiemSystem_get_fee_ratio">DiemSystem::get_fee_ratio</a>(vm, height_start, height_now);
+
     // NOTE: This is "nominal" because it doesn't check
     <b>let</b> compliant_nodes_count = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&outgoing_compliant_set);
-    <b>let</b> (subsidy_units, nominal_subsidy_per) = <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, compliant_nodes_count);
+    <b>let</b> (subsidy_units, nominal_subsidy_per) =
+        <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, compliant_nodes_count);
 
     print(&1800102);
     <a href="Reconfigure.md#0x1_Reconfigure_process_fullnodes">process_fullnodes</a>(vm, nominal_subsidy_per);
@@ -126,7 +129,9 @@
         };
         print(&1800204);
 
-        <b>if</b> (<a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(addr)){ // TODO: this call is repeated in propose_new_set. Not sure <b>if</b> the performance hit at epoch boundary is worth the refactor.
+        // TODO: this call is repeated in propose_new_set.
+        // Not sure <b>if</b> the performance hit at epoch boundary is worth the refactor.
+        <b>if</b> (<a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(addr)) {
           <b>let</b> count = <a href="MinerState.md#0x1_MinerState_get_count_in_epoch">MinerState::get_count_in_epoch</a>(addr);
           // print(&count);
 
@@ -160,23 +165,22 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_process_validators">process_validators</a>(vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector&lt;address&gt;) {
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_process_validators">process_validators</a>(
+    vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector&lt;address&gt;
+) {
     // Process outgoing validators:
     // Distribute Transaction fees and subsidy payments <b>to</b> all outgoing validators
     // print(&03240);
 
+    <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_is_empty">Vector::is_empty</a>&lt;address&gt;(&outgoing_compliant_set)) <b>return</b>;
 
-    <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&outgoing_compliant_set) &gt; 0) {
-        // print(&03241);
-
-        <b>if</b> (subsidy_units &gt; 0) {
-            <a href="Subsidy.md#0x1_Subsidy_process_subsidy">Subsidy::process_subsidy</a>(vm, subsidy_units, &outgoing_compliant_set);
-        };
-        // print(&03241);
-
-        <a href="Subsidy.md#0x1_Subsidy_process_fees">Subsidy::process_fees</a>(vm, &outgoing_compliant_set);
+    // print(&03241);
+    <b>if</b> (subsidy_units &gt; 0) {
+        <a href="Subsidy.md#0x1_Subsidy_process_subsidy">Subsidy::process_subsidy</a>(vm, subsidy_units, &outgoing_compliant_set);
     };
+    // print(&03241);
 
+    <a href="Subsidy.md#0x1_Subsidy_process_fees">Subsidy::process_fees</a>(vm, &outgoing_compliant_set);
 }
 </code></pre>
 
@@ -209,7 +213,9 @@
     // save all the eligible list, before the jailing removes them.
     <b>let</b> proposed_set = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>();
 
-    <b>let</b> top_accounts = <a href="NodeWeight.md#0x1_NodeWeight_top_n_accounts">NodeWeight::top_n_accounts</a>(vm, <a href="Globals.md#0x1_Globals_get_max_validators_per_set">Globals::get_max_validators_per_set</a>());
+    <b>let</b> top_accounts = <a href="NodeWeight.md#0x1_NodeWeight_top_n_accounts">NodeWeight::top_n_accounts</a>(
+        vm, <a href="Globals.md#0x1_Globals_get_max_validators_per_set">Globals::get_max_validators_per_set</a>()
+    );
 
     <b>let</b> jailed_set = <a href="DiemSystem.md#0x1_DiemSystem_get_jailed_set">DiemSystem::get_jailed_set</a>(vm, height_start, height_now);
 
@@ -236,23 +242,25 @@
         // print(&mined_last_epoch);
         // TODO: temporary until jail-refactor merge.
         <b>if</b> (
-          (!<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&jailed_set, &addr)) &&
-          mined_last_epoch &&
-          <a href="Audit.md#0x1_Audit_val_audit_passing">Audit::val_audit_passing</a>(addr)
+            !<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&jailed_set, &addr) &&
+            mined_last_epoch &&
+            <a href="Audit.md#0x1_Audit_val_audit_passing">Audit::val_audit_passing</a>(addr)
         ) {
         //print(&03252);
-
             <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> proposed_set, addr);
             <a href="Burn.md#0x1_Burn_epoch_start_burn">Burn::epoch_start_burn</a>(vm, addr, burn_value);
-
         };
         i = i+ 1;
     };
 
-    // If the cardinality of validator_set in the next epoch is less than 4, we keep the same validator set.
-    <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&proposed_set)&lt;= 3) proposed_set = *&top_accounts;
+    // If the cardinality of validator_set in the next epoch is less than 4,
+    // we keep the same validator set.
+    <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&proposed_set) &lt;= 3) proposed_set = *&top_accounts;
     // Usually an issue in staging network for QA only.
-    // This is very rare and theoretically impossible for network <b>with</b> at least 6 nodes and 6 rounds. If we reach an epoch boundary <b>with</b> at least 6 rounds, we would have at least 2/3rd of the validator set <b>with</b> at least 66% liveliness.
+    // This is very rare and theoretically impossible for network <b>with</b>
+    // at least 6 nodes and 6 rounds. If we reach an epoch boundary <b>with</b>
+    // at least 6 rounds, we would have at least 2/3rd of the validator
+    // set <b>with</b> at least 66% liveliness.
     // print(&03270);
     proposed_set
 }
@@ -280,11 +288,12 @@
 <pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, height_now: u64) {
     // print(&03280);
 
-    //Reset Counters
+    // Reset Counters
     <a href="Stats.md#0x1_Stats_reconfig">Stats::reconfig</a>(vm, &proposed_set);
     // print(&03290);
 
-    // Migrate <a href="MinerState.md#0x1_MinerState">MinerState</a> list from elegible: in case there is no minerlist <b>struct</b>, <b>use</b> eligible for migrate_eligible_validators
+    // Migrate <a href="MinerState.md#0x1_MinerState">MinerState</a> list from elegible: in case there is no minerlist
+    // <b>struct</b>, <b>use</b> eligible for migrate_eligible_validators
     <b>let</b> eligible = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm);
     <a href="MinerState.md#0x1_MinerState_reconfig">MinerState::reconfig</a>(vm, &eligible);
     // print(&032100);

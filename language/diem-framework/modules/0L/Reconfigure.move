@@ -38,10 +38,13 @@ module Reconfigure { // TODO: Rename to Boundary
         let height_start = Epoch::get_timer_height_start(vm);
         
         print(&1800101);
-        let (outgoing_compliant_set, _) = DiemSystem::get_fee_ratio(vm, height_start, height_now);
+        let (outgoing_compliant_set, _) = 
+            DiemSystem::get_fee_ratio(vm, height_start, height_now);
+
         // NOTE: This is "nominal" because it doesn't check
         let compliant_nodes_count = Vector::length(&outgoing_compliant_set);
-        let (subsidy_units, nominal_subsidy_per) = Subsidy::calculate_subsidy(vm, compliant_nodes_count);
+        let (subsidy_units, nominal_subsidy_per) = 
+            Subsidy::calculate_subsidy(vm, compliant_nodes_count);
         
         print(&1800102);
         process_fullnodes(vm, nominal_subsidy_per);
@@ -89,7 +92,9 @@ module Reconfigure { // TODO: Rename to Boundary
             };
             print(&1800204);
             
-            if (MinerState::node_above_thresh(addr)){ // TODO: this call is repeated in propose_new_set. Not sure if the performance hit at epoch boundary is worth the refactor.
+            // TODO: this call is repeated in propose_new_set. 
+            // Not sure if the performance hit at epoch boundary is worth the refactor. 
+            if (MinerState::node_above_thresh(addr)) {
               let count = MinerState::get_count_in_epoch(addr);
               // print(&count);
 
@@ -103,23 +108,22 @@ module Reconfigure { // TODO: Rename to Boundary
         };
     }
 
-    fun process_validators(vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector<address>) {
+    fun process_validators(
+        vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector<address>
+    ) {
         // Process outgoing validators:
         // Distribute Transaction fees and subsidy payments to all outgoing validators
         // print(&03240);
         
-        
-        if (Vector::length<address>(&outgoing_compliant_set) > 0) {
-            // print(&03241);
+        if (Vector::is_empty<address>(&outgoing_compliant_set)) return;
 
-            if (subsidy_units > 0) {
-                Subsidy::process_subsidy(vm, subsidy_units, &outgoing_compliant_set);
-            };
-            // print(&03241);
-
-            Subsidy::process_fees(vm, &outgoing_compliant_set);
+        // print(&03241);
+        if (subsidy_units > 0) {
+            Subsidy::process_subsidy(vm, subsidy_units, &outgoing_compliant_set);
         };
+        // print(&03241);
 
+        Subsidy::process_fees(vm, &outgoing_compliant_set);
     }
 
     fun propose_new_set(vm: &signer, height_start: u64, height_now: u64): vector<address> {
@@ -132,7 +136,9 @@ module Reconfigure { // TODO: Rename to Boundary
         // save all the eligible list, before the jailing removes them.
         let proposed_set = Vector::empty();
 
-        let top_accounts = NodeWeight::top_n_accounts(vm, Globals::get_max_validators_per_set());
+        let top_accounts = NodeWeight::top_n_accounts(
+            vm, Globals::get_max_validators_per_set()
+        );
 
         let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
 
@@ -159,23 +165,25 @@ module Reconfigure { // TODO: Rename to Boundary
             // print(&mined_last_epoch);
             // TODO: temporary until jail-refactor merge.
             if (
-              (!Vector::contains(&jailed_set, &addr)) && 
-              mined_last_epoch &&
-              Audit::val_audit_passing(addr)
+                !Vector::contains(&jailed_set, &addr) && 
+                mined_last_epoch &&
+                Audit::val_audit_passing(addr)
             ) {
             //print(&03252);
-
                 Vector::push_back(&mut proposed_set, addr);
                 Burn::epoch_start_burn(vm, addr, burn_value);
-
             };
             i = i+ 1;
         };
 
-        // If the cardinality of validator_set in the next epoch is less than 4, we keep the same validator set. 
-        if (Vector::length<address>(&proposed_set)<= 3) proposed_set = *&top_accounts;
+        // If the cardinality of validator_set in the next epoch is less than 4, 
+        // we keep the same validator set. 
+        if (Vector::length<address>(&proposed_set) <= 3) proposed_set = *&top_accounts;
         // Usually an issue in staging network for QA only.
-        // This is very rare and theoretically impossible for network with at least 6 nodes and 6 rounds. If we reach an epoch boundary with at least 6 rounds, we would have at least 2/3rd of the validator set with at least 66% liveliness. 
+        // This is very rare and theoretically impossible for network with 
+        // at least 6 nodes and 6 rounds. If we reach an epoch boundary with 
+        // at least 6 rounds, we would have at least 2/3rd of the validator 
+        // set with at least 66% liveliness. 
         // print(&03270);
         proposed_set
     }
@@ -183,11 +191,12 @@ module Reconfigure { // TODO: Rename to Boundary
     fun reset_counters(vm: &signer, proposed_set: vector<address>, height_now: u64) {
         // print(&03280);
 
-        //Reset Counters
+        // Reset Counters
         Stats::reconfig(vm, &proposed_set);
         // print(&03290);
 
-        // Migrate MinerState list from elegible: in case there is no minerlist struct, use eligible for migrate_eligible_validators
+        // Migrate MinerState list from elegible: in case there is no minerlist 
+        // struct, use eligible for migrate_eligible_validators
         let eligible = ValidatorUniverse::get_eligible_validators(vm);
         MinerState::reconfig(vm, &eligible);
         // print(&032100);
