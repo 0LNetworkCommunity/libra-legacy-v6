@@ -304,10 +304,9 @@ module Wallet {
     }
     
     // Todo: Where is the "maybe" here?
-    public fun maybe_reset_rejection_counter(vm: &signer, wallet: address) acquires CommunityFreeze {
+    public fun reset_rejection_counter(vm: &signer, wallet: address) acquires CommunityFreeze {
       CoreAddresses::assert_diem_root(vm);
-      let f = borrow_global_mut<CommunityFreeze>(wallet);
-      f.consecutive_rejections = 0;
+      borrow_global_mut<CommunityFreeze>(wallet).consecutive_rejections = 0;
     }
 
     // Private function to freeze a community wallet
