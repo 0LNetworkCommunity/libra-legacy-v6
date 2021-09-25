@@ -302,8 +302,7 @@ module Wallet {
       };
       return pending
     }
-    
-    // Todo: Where is the "maybe" here?
+
     public fun reset_rejection_counter(vm: &signer, wallet: address) acquires CommunityFreeze {
       CoreAddresses::assert_diem_root(vm);
       borrow_global_mut<CommunityFreeze>(wallet).consecutive_rejections = 0;
