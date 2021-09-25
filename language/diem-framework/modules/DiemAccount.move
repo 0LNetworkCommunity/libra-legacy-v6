@@ -459,7 +459,7 @@ module DiemAccount {
     public fun create_user_account_with_proof(
         challenge: &vector<u8>,
         solution: &vector<u8>,
-    ):address acquires AccountOperationsCapability {        
+    ):address acquires AccountOperationsCapability, SlowWalletList {        
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
         Roles::new_user_role_with_proof(&new_signer);
@@ -472,7 +472,7 @@ module DiemAccount {
         // account will not be created if this step fails.
         let new_signer = create_signer(new_account_address);
         MinerState::init_miner_state(&new_signer, challenge, solution);
-
+        set_slow(&new_signer);
         new_account_address
     }
 
@@ -535,8 +535,7 @@ module DiemAccount {
           )
         };
 
-        // The dr_account account is verified to have the diem root role in 
-        // `Roles::new_validator_role`
+        // TODO: Perhaps this needs to be moved to the epoch boundary, so that it is only the VM which can escalate these privileges.
         Roles::new_validator_role_with_proof(&new_signer);
         Event::publish_generator(&new_signer);
         ValidatorConfig::publish_with_proof(&new_signer, ow_human_name);
@@ -582,6 +581,7 @@ module DiemAccount {
         new_account_address
     }
 
+    use 0x1::Debug::print;
 
     /////// 0L ////////
     // Permissions: PUBLIC, ANYONE, OPEN!
@@ -602,6 +602,7 @@ module DiemAccount {
         op_fullnode_network_addresses: vector<u8>,
         op_human_name: vector<u8>,
     ):address acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWalletList { //////// 0L ////////
+    print(&500);
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
         assert(MinerState::can_create_val_account(sender_addr), Errors::limit_exceeded(120103));
@@ -610,14 +611,14 @@ module DiemAccount {
             balance<GAS>(sender_addr) > 2 * BOOTSTRAP_COIN_VALUE, 
             Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
         );
-
+print(&501);
         // Create Owner Account
         let (new_account_address, _auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
 
         assert(exists_at(new_account_address), Errors::not_published(EACCOUNT));
         assert(MinerState::is_init(new_account_address), 120104);
-
+print(&502);
         // verifies the VDF proof, since we are not calling MinerState init.
         let valid = VDF::verify(
             challenge,
@@ -626,11 +627,14 @@ module DiemAccount {
         );
         assert(valid, Errors::invalid_argument(120105));
         
+print(&503);
 
-        // The dr_account account is verified to have the diem root role in 
-        // `Roles::new_validator_role`
-        Roles::new_validator_role_with_proof(&new_signer);
-        Event::publish_generator(&new_signer);
+        // TODO: Perhaps this needs to be moved to the epoch boundary, so that it is only the VM which can escalate these privileges.
+        // Upgrade the user
+        Roles::upgrade_user_to_validator(&new_signer);
+        print(&504);
+        // Event::publish_generator(&new_signer);
+        print(&505);
         ValidatorConfig::publish_with_proof(&new_signer, ow_human_name);
 
         // currencies already added for owner account
@@ -643,7 +647,7 @@ module DiemAccount {
         Roles::new_validator_operator_role_with_proof(&new_op_account);
         Event::publish_generator(&new_op_account);
         ValidatorOperatorConfig::publish_with_proof(&new_op_account, op_human_name);
-
+print(&506);
         add_currencies_for_account<GAS>(&new_op_account, false);
 
         // Link owner to OP
@@ -656,7 +660,7 @@ module DiemAccount {
             op_validator_network_addresses,
             op_fullnode_network_addresses
         );
-
+print(&507);
         // User can join validator universe list, but will only join if 
         // the mining is above the threshold in the preceeding period.
         ValidatorUniverse::add_self(&new_signer);        
@@ -664,20 +668,21 @@ module DiemAccount {
         // no need to make the owner address.
 
         // make_account(new_signer, auth_key_prefix);
-
+print(&508);
         make_account(new_op_account, op_auth_key_prefix);
+print(&509);
 
         MinerState::reset_rate_limit(sender);
-
+print(&510);
         // the miner who is upgrading may have coins, but better safe...
         // Transfer for owner
         onboarding_gas_transfer<GAS>(sender, new_account_address);
         // Transfer for operator as well
         onboarding_gas_transfer<GAS>(sender, op_address);
-
+print(&510);
         let new_signer = create_signer(new_account_address);
         set_slow(&new_signer);
-
+print(&511);
         new_account_address
     }
 

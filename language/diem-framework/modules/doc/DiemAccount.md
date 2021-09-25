@@ -1568,7 +1568,7 @@ Initialize this module. This is only callable from genesis.
     );
 
     // Create Owner Account
-    <b>let</b> (new_account_address, auth_key_prefix) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(challenge);
+    <b>let</b> (new_account_address, _auth_key_prefix) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(challenge);
     <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
 
     <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(new_account_address), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EACCOUNT">EACCOUNT</a>));
@@ -1617,7 +1617,10 @@ Initialize this module. This is only callable from genesis.
     // the mining is above the threshold in the preceeding period.
     <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_self">ValidatorUniverse::add_self</a>(&new_signer);
 
-    <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_signer, auth_key_prefix);
+    // no need <b>to</b> make the owner address.
+
+    // <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_signer, auth_key_prefix);
+
     <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_op_account, op_auth_key_prefix);
 
     <a href="MinerState.md#0x1_MinerState_reset_rate_limit">MinerState::reset_rate_limit</a>(sender);
