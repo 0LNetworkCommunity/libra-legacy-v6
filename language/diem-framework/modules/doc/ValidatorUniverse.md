@@ -19,6 +19,7 @@
 -  [Function `unjail`](#0x1_ValidatorUniverse_unjail)
 -  [Function `exists_jailedbit`](#0x1_ValidatorUniverse_exists_jailedbit)
 -  [Function `is_jailed`](#0x1_ValidatorUniverse_is_jailed)
+-  [Function `genesis_helper`](#0x1_ValidatorUniverse_genesis_helper)
 -  [Function `test_helper_add_self_onboard`](#0x1_ValidatorUniverse_test_helper_add_self_onboard)
 
 
@@ -415,6 +416,31 @@
     <b>return</b> <b>false</b>
   };
   borrow_global&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a>&gt;(validator).is_jailed
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ValidatorUniverse_genesis_helper"></a>
+
+## Function `genesis_helper`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_genesis_helper">genesis_helper</a>(vm: &signer, validator: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_genesis_helper">genesis_helper</a>(vm: &signer, validator: &signer) <b>acquires</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a>, <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a> {
+  <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), 220101014010);
+  <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add">add</a>(validator);
 }
 </code></pre>
 
