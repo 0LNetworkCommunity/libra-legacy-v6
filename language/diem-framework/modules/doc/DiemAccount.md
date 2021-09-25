@@ -1462,6 +1462,23 @@ Initialize this module. This is only callable from genesis.
     // Create Owner Account
     <b>let</b> (new_account_address, auth_key_prefix) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(challenge);
     <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
+
+    // <b>if</b> the new account <b>exists</b>, the function is meant <b>to</b> be upgrading the account.
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(new_account_address)) {
+      <b>return</b> <a href="DiemAccount.md#0x1_DiemAccount_upgrade_validator_account_with_proof">upgrade_validator_account_with_proof</a>(
+        sender,
+        challenge,
+        solution,
+        ow_human_name,
+        op_address,
+        op_auth_key_prefix,
+        op_consensus_pubkey,
+        op_validator_network_addresses,
+        op_fullnode_network_addresses,
+        op_human_name,
+      )
+    };
+
     // The dr_account account is verified <b>to</b> have the diem root role in
     // `<a href="Roles.md#0x1_Roles_new_validator_role">Roles::new_validator_role</a>`
     <a href="Roles.md#0x1_Roles_new_validator_role_with_proof">Roles::new_validator_role_with_proof</a>(&new_signer);

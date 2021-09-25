@@ -612,7 +612,7 @@ module DiemAccount {
         );
 
         // Create Owner Account
-        let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
+        let (new_account_address, _auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
 
         assert(exists_at(new_account_address), Errors::not_published(EACCOUNT));
@@ -661,7 +661,10 @@ module DiemAccount {
         // the mining is above the threshold in the preceeding period.
         ValidatorUniverse::add_self(&new_signer);        
         
-        make_account(new_signer, auth_key_prefix);
+        // no need to make the owner address.
+
+        // make_account(new_signer, auth_key_prefix);
+
         make_account(new_op_account, op_auth_key_prefix);
 
         MinerState::reset_rate_limit(sender);
