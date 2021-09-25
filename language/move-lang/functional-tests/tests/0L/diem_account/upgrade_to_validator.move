@@ -72,3 +72,38 @@ fun main(sender: signer) {
 }
 }
 // check: EXECUTED
+
+
+
+//! new-transaction
+//! sender: diemroot
+script {
+use 0x1::Reconfigure;
+use 0x1::DiemAccount;
+use 0x1::GAS::GAS;
+use 0x1::ValidatorUniverse;
+use 0x1::Debug::print;
+use 0x1::ValidatorConfig;
+
+fun main(vm: signer) {
+  let eve_addr = @0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
+  /// set the fullnode proof price to 0, to check if onboarding subsidy is given.
+  // FullnodeSubsidy::test_set_fullnode_fixtures(&vm, 0, 0, 0, 0, 0);
+  Reconfigure::reconfigure(&vm, 10); 
+    // need to remove testnet for this test, since testnet does not ratelimit 
+    // account creation.
+  let oper_eve = ValidatorConfig::get_operator(eve_addr);
+  print(&oper_eve);
+  let bal = DiemAccount::balance<GAS>(oper_eve);
+  // we expect 1 gas (1,000,000 microgas) from bob's transfer
+  print(&bal);
+  assert(bal == 1000000, 7357401003);
+
+  // validator should have jailedbit
+  assert(ValidatorUniverse::exists_jailedbit(eve_addr), 7357401004);
+  // validator should be in universe if just joined.
+  assert(ValidatorUniverse::is_in_universe(eve_addr), 7357401005);
+  // should not be jailed
+  assert(!ValidatorUniverse::is_jailed(eve_addr), 7357401006);
+}
+}
