@@ -191,13 +191,22 @@ Struct to store information about a VDF proof submitted
 ## Resource `MinerProofHistory`
 
 Struct to encapsulate information about the state of a miner
-<code>previous_proof_hash</code>: the hash of their latest proof (used as seed for next proof)
-<code>verified_tower_height</code>: the height of the miner's tower (more proofs -> higher tower)
-<code>latest_epoch_mining</code>: the latest epoch the miner submitted sufficient proofs (see GlobalConstants.epoch_mining_thres_lower)
-<code>count_proofs_in_epoch</code>: the number of proofs the miner has submitted in the current epoch
-<code>epochs_validating_and_mining</code>: the cumulative number of epochs the miner has been mining above threshold TODO does this actually only apply to validators?
-<code>contiguous_epochs_validating_and_mining</code>: the number of contiguous epochs the miner has been mining above threshold TODO does this actually only apply to validators?
-<code>epochs_since_last_account_creation</code>: the number of epochs since the miner last created a new account
+<code>previous_proof_hash</code>: the hash of their latest proof
+(used as seed for next proof)
+<code>verified_tower_height</code>: the height of the miner's tower
+(more proofs -> higher tower)
+<code>latest_epoch_mining</code>: the latest epoch the miner submitted sufficient
+proofs (see GlobalConstants.epoch_mining_thres_lower)
+<code>count_proofs_in_epoch</code>: the number of proofs the miner has submitted
+in the current epoch
+<code>epochs_validating_and_mining</code>: the cumulative number of epochs
+the miner has been mining above threshold
+TODO does this actually only apply to validators?
+<code>contiguous_epochs_validating_and_mining</code>: the number of contiguous
+epochs the miner has been mining above threshold
+TODO does this actually only apply to validators?
+<code>epochs_since_last_account_creation</code>: the number of epochs since
+the miner last created a new account
 
 
 <pre><code><b>struct</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> has key
@@ -579,9 +588,11 @@ adds <code>miner</code> to list of miners
   challenge: vector&lt;u8&gt;,
   solution: vector&lt;u8&gt;
 ) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>, <a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a>, <a href="MinerState.md#0x1_MinerState_MinerStats">MinerStats</a> {
-  // In rust the vm_genesis creates a <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a> for the miner. So the SENDER is not the same and the <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a>.
+  // In rust the vm_genesis creates a <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a> for the miner.
+  // So the SENDER is not the same and the <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a>.
 
-  //TODO: Previously in OLv3 is_genesis() returned <b>true</b>. How <b>to</b> check that this is part of genesis? is_genesis returns <b>false</b> here.
+  // TODO: Previously in OLv3 is_genesis() returned <b>true</b>.
+  // How <b>to</b> check that this is part of genesis? is_genesis returns <b>false</b> here.
   // <b>assert</b>(<a href="DiemTimestamp.md#0x1_DiemTimestamp_is_genesis">DiemTimestamp::is_genesis</a>(), 130101024010);
   // print(&10001);
   <a href="MinerState.md#0x1_MinerState_init_miner_state">init_miner_state</a>(miner_sig, &challenge, &solution);
@@ -603,7 +614,8 @@ adds <code>miner</code> to list of miners
 ## Function `commit_state`
 
 This function is called to submit proofs to the chain
-Note, the sender of this transaction can differ from the signer, to facilitate onboarding
+Note, the sender of this transaction can differ from the signer,
+to facilitate onboarding
 Function index: 01
 Permissions: PUBLIC, ANYONE
 
@@ -622,7 +634,8 @@ Permissions: PUBLIC, ANYONE
   proof: <a href="MinerState.md#0x1_MinerState_Proof">Proof</a>
 ) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>, <a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a>, <a href="MinerState.md#0x1_MinerState_MinerStats">MinerStats</a> {
 
-  //NOTE: Does not check that the Sender is the <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a>. Which we must skip for the onboarding transaction.
+  // NOTE: Does not check that the Sender is the <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a>.
+  // Which we must skip for the onboarding transaction.
 
   // Get address, assumes the sender is the signer.
   <b>let</b> miner_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sign);
@@ -687,7 +700,8 @@ Permissions: PUBLIC, ANYONE
   <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);
 
   // TODO: The operator mining needs its own <b>struct</b> <b>to</b> count mining.
-  // For now it is implicit there is only 1 operator per validator, and that the fullnode state is the place <b>to</b> count.
+  // For now it is implicit there is only 1 operator per validator,
+  // and that the fullnode state is the place <b>to</b> count.
   // This will require a breaking change <b>to</b> <a href="MinerState.md#0x1_MinerState">MinerState</a>
   // FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
 }
@@ -857,18 +871,6 @@ Checks to see if miner submitted enough proofs to be considered compliant
 <pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_get_validator_weight">get_validator_weight</a>(account: &signer, miner_addr: address): u64 <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
   <b>let</b> sender = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(130109));
-
-// //Get the number of epochs a validator has been validating and mining.
-// // Permissions: <b>public</b>, only VM can call this function.
-// // Function code: 05
-// <b>public</b> <b>fun</b> get_validator_epochs_validating_and_mining(account: &signer, miner_addr: address): u64 <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
-//   <b>let</b> sender = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
-//   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(130105));
-
-//   // Miner may not have been initialized. (don't <b>abort</b>, just <b>return</b> 0)
-//   <b>if</b>( !<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr)){
-//     <b>return</b> 0
-//   };
 
   // Update the statistics.
   <b>let</b> miner_history= borrow_global_mut&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr);
@@ -1400,7 +1402,6 @@ Public Getters ///
 
 <pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_get_height">test_helper_get_height</a>(miner_addr: address): u64 <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
   <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130123));
-
   <b>assert</b>(<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(130124));
 
   <b>let</b> state = borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr);

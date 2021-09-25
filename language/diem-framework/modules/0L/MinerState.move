@@ -76,15 +76,23 @@ module MinerState {
     }
 
     /// Struct to encapsulate information about the state of a miner
-    /// `previous_proof_hash`: the hash of their latest proof (used as seed for next proof)
-    /// `verified_tower_height`: the height of the miner's tower (more proofs -> higher tower)
-    /// `latest_epoch_mining`: the latest epoch the miner submitted sufficient proofs (see GlobalConstants.epoch_mining_thres_lower)
-    /// `count_proofs_in_epoch`: the number of proofs the miner has submitted in the current epoch 
-    /// `epochs_validating_and_mining`: the cumulative number of epochs the miner has been mining above threshold TODO does this actually only apply to validators? 
-    /// `contiguous_epochs_validating_and_mining`: the number of contiguous epochs the miner has been mining above threshold TODO does this actually only apply to validators?
-    /// `epochs_since_last_account_creation`: the number of epochs since the miner last created a new account
-    // Todo: rename to MinerState ?
-    struct MinerProofHistory has key {
+    /// `previous_proof_hash`: the hash of their latest proof 
+    ///     (used as seed for next proof)
+    /// `verified_tower_height`: the height of the miner's tower 
+    ///     (more proofs -> higher tower)
+    /// `latest_epoch_mining`: the latest epoch the miner submitted sufficient
+    ///     proofs (see GlobalConstants.epoch_mining_thres_lower)
+    /// `count_proofs_in_epoch`: the number of proofs the miner has submitted 
+    ///     in the current epoch 
+    /// `epochs_validating_and_mining`: the cumulative number of epochs 
+    ///     the miner has been mining above threshold 
+    ///     TODO does this actually only apply to validators? 
+    /// `contiguous_epochs_validating_and_mining`: the number of contiguous 
+    ///     epochs the miner has been mining above threshold 
+    ///     TODO does this actually only apply to validators?
+    /// `epochs_since_last_account_creation`: the number of epochs since 
+    ///     the miner last created a new account
+    struct MinerProofHistory has key { // Todo: rename to MinerState ?
         previous_proof_hash: vector<u8>,
         verified_tower_height: u64, 
         latest_epoch_mining: u64,
@@ -171,9 +179,11 @@ module MinerState {
       challenge: vector<u8>,
       solution: vector<u8>
     ) acquires MinerProofHistory, MinerList, MinerStats {
-      // In rust the vm_genesis creates a Signer for the miner. So the SENDER is not the same and the Signer.
+      // In rust the vm_genesis creates a Signer for the miner. 
+      // So the SENDER is not the same and the Signer.
 
-      //TODO: Previously in OLv3 is_genesis() returned true. How to check that this is part of genesis? is_genesis returns false here.
+      // TODO: Previously in OLv3 is_genesis() returned true. 
+      // How to check that this is part of genesis? is_genesis returns false here.
       // assert(DiemTimestamp::is_genesis(), 130101024010);
       // print(&10001);
       init_miner_state(miner_sig, &challenge, &solution);
@@ -186,7 +196,8 @@ module MinerState {
     }
 
     /// This function is called to submit proofs to the chain 
-    /// Note, the sender of this transaction can differ from the signer, to facilitate onboarding
+    /// Note, the sender of this transaction can differ from the signer, 
+    /// to facilitate onboarding
     /// Function index: 01
     /// Permissions: PUBLIC, ANYONE
     public fun commit_state(
@@ -194,7 +205,8 @@ module MinerState {
       proof: Proof
     ) acquires MinerProofHistory, MinerList, MinerStats {
 
-      //NOTE: Does not check that the Sender is the Signer. Which we must skip for the onboarding transaction.
+      // NOTE: Does not check that the Sender is the Signer.
+      // Which we must skip for the onboarding transaction.
 
       // Get address, assumes the sender is the signer.
       let miner_addr = Signer::address_of(miner_sign);
@@ -242,7 +254,8 @@ module MinerState {
       verify_and_update_state(miner_addr, proof, true);
       
       // TODO: The operator mining needs its own struct to count mining.
-      // For now it is implicit there is only 1 operator per validator, and that the fullnode state is the place to count.
+      // For now it is implicit there is only 1 operator per validator, 
+      // and that the fullnode state is the place to count.
       // This will require a breaking change to MinerState
       // FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
     }
@@ -335,6 +348,7 @@ module MinerState {
       let miner_history = borrow_global<MinerProofHistory>(miner_addr);
       miner_history.count_proofs_in_epoch > Globals::get_epoch_mining_thres_lower()
     }
+
     // Get weight of validator identified by address
     // Permissions: public, only VM can call this function.
     // TODO: change this name.
@@ -342,6 +356,15 @@ module MinerState {
     public fun get_validator_weight(account: &signer, miner_addr: address): u64 acquires MinerProofHistory {
       let sender = Signer::address_of(account);
       assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(130109));
+
+      // Update the statistics.
+      let miner_history= borrow_global_mut<MinerProofHistory>(miner_addr);
+      let this_epoch = DiemConfig::get_current_epoch();
+      miner_history.latest_epoch_mining = this_epoch;
+
+      // Return its weight
+      miner_history.epochs_validating_and_mining
+    }
 
     // //Get the number of epochs a validator has been validating and mining.
     // // Permissions: public, only VM can call this function.
@@ -354,15 +377,6 @@ module MinerState {
     //   if( !exists<MinerProofHistory>(miner_addr)){
     //     return 0
     //   };
-
-      // Update the statistics.
-      let miner_history= borrow_global_mut<MinerProofHistory>(miner_addr);
-      let this_epoch = DiemConfig::get_current_epoch();
-      miner_history.latest_epoch_mining = this_epoch;
-
-      // Return its weight
-      miner_history.epochs_validating_and_mining
-    }
 
     // Used at end of epoch with reconfig bulk_update the MinerState with the vector of validators from current epoch.
     // Permissions: PUBLIC, ONLY VM.
@@ -634,23 +648,22 @@ module MinerState {
     // Function code: 15
     public fun test_helper_get_height(miner_addr: address): u64 acquires MinerProofHistory {
       assert(Testnet::is_testnet(), Errors::invalid_state(130123));
-
       assert(exists<MinerProofHistory>(miner_addr), Errors::not_published(130124));
 
       let state = borrow_global<MinerProofHistory>(miner_addr);
       *&state.verified_tower_height
     }
-      public fun test_helper_get_count(miner_addr: address): u64 acquires MinerProofHistory {
-          assert(Testnet::is_testnet(), 130115014011);
-          borrow_global<MinerProofHistory>(miner_addr).count_proofs_in_epoch
-      }
+
+    public fun test_helper_get_count(miner_addr: address): u64 acquires MinerProofHistory {
+        assert(Testnet::is_testnet(), 130115014011);
+        borrow_global<MinerProofHistory>(miner_addr).count_proofs_in_epoch
+    }
 
     // Function code: 16
     public fun test_helper_get_contiguous(miner_addr: address): u64 acquires MinerProofHistory {
       assert(Testnet::is_testnet(), Errors::invalid_state(130125));
       borrow_global<MinerProofHistory>(miner_addr).contiguous_epochs_validating_and_mining
     }
-
 
     // Function code: 17
     // Sets the epochs since last account creation variable to allow `miner_addr` to create a new account
