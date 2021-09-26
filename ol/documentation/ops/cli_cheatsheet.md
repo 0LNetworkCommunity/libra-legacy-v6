@@ -87,3 +87,8 @@ For example getting the transaction fees accumulated in an epoch.
 ```
 ol --account 00000000000000000000000000000000 query --move-state --move-module TransactionFee --move-struct TransactionFee --move-value balance
 ```
+
+### more about txs
+
+More insights into the txs command can be found in
+https://github.com/OLSF/libra/tree/main/ol/txs
