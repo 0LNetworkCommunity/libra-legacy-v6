@@ -41,7 +41,7 @@ TODO
 -  [Function `get_epochs_mining`](#0x1_MinerState_get_epochs_mining)
 -  [Function `get_count_in_epoch`](#0x1_MinerState_get_count_in_epoch)
 -  [Function `can_create_val_account`](#0x1_MinerState_can_create_val_account)
--  [Function `test_helper`](#0x1_MinerState_test_helper)
+-  [Function `test_helper_init_miner`](#0x1_MinerState_test_helper_init_miner)
 -  [Function `test_helper_operator_submits`](#0x1_MinerState_test_helper_operator_submits)
 -  [Function `test_helper_mock_mining`](#0x1_MinerState_test_helper_mock_mining)
 -  [Function `test_helper_mock_mining_vm`](#0x1_MinerState_test_helper_mock_mining_vm)
@@ -52,7 +52,7 @@ TODO
 -  [Function `test_helper_set_rate_limit`](#0x1_MinerState_test_helper_set_rate_limit)
 -  [Function `test_helper_set_epochs_mining`](#0x1_MinerState_test_helper_set_epochs_mining)
 -  [Function `test_helper_set_proofs_in_epoch`](#0x1_MinerState_test_helper_set_proofs_in_epoch)
--  [Function `test_helper_hash`](#0x1_MinerState_test_helper_hash)
+-  [Function `test_helper_previous_proof_hash`](#0x1_MinerState_test_helper_previous_proof_hash)
 -  [Function `test_helper_set_weight_vm`](#0x1_MinerState_test_helper_set_weight_vm)
 
 
@@ -1137,13 +1137,13 @@ Public Getters ///
 
 </details>
 
-<a name="0x1_MinerState_test_helper"></a>
+<a name="0x1_MinerState_test_helper_init_miner"></a>
 
-## Function `test_helper`
+## Function `test_helper_init_miner`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper">test_helper</a>(miner_sig: &signer, difficulty: u64, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_init_miner">test_helper_init_miner</a>(miner_sig: &signer, difficulty: u64, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -1152,7 +1152,7 @@ Public Getters ///
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper">test_helper</a>(
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_init_miner">test_helper_init_miner</a>(
     miner_sig: &signer,
     difficulty: u64,
     challenge: vector&lt;u8&gt;,
@@ -1218,7 +1218,7 @@ Public Getters ///
   <b>let</b> difficulty_constant = <a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>();
 
   // Skip this check on local tests, we need tests <b>to</b> send different difficulties.
-  <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
+  <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){ // todo: remove?
     <b>assert</b>(&proof.difficulty == &difficulty_constant, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130117));
   };
 
@@ -1487,13 +1487,13 @@ Public Getters ///
 
 </details>
 
-<a name="0x1_MinerState_test_helper_hash"></a>
+<a name="0x1_MinerState_test_helper_previous_proof_hash"></a>
 
-## Function `test_helper_hash`
+## Function `test_helper_previous_proof_hash`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_hash">test_helper_hash</a>(miner_addr: address): vector&lt;u8&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_previous_proof_hash">test_helper_previous_proof_hash</a>(miner_addr: address): vector&lt;u8&gt;
 </code></pre>
 
 
@@ -1502,7 +1502,9 @@ Public Getters ///
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_hash">test_helper_hash</a>(miner_addr: address): vector&lt;u8&gt; <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_previous_proof_hash">test_helper_previous_proof_hash</a>(
+  miner_addr: address
+): vector&lt;u8&gt; <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
   <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()== <b>true</b>, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130128));
   *&borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr).previous_proof_hash
 }

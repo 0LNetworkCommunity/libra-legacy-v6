@@ -37,7 +37,7 @@ use 0x1::Testnet;
     public(script) fun minerstate_helper(sender: signer) {
         assert(Testnet::is_testnet(), 01);
         
-        MinerState::test_helper(
+        MinerState::test_helper_init_miner(
             &sender,
             Globals::get_difficulty(),
             TestFixtures::alice_0_easy_chal(),

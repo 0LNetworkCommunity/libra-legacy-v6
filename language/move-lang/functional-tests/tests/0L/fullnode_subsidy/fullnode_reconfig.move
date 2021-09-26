@@ -12,7 +12,7 @@ script {
 
     fun main(sender: signer) {
         // add one proof and init the state.
-        MinerState::test_helper(
+        MinerState::test_helper_init_miner(
             &sender,
             Globals::get_difficulty(),
             TestFixtures::alice_0_easy_chal(),

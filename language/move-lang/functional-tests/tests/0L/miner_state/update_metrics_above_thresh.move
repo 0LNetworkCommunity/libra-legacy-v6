@@ -12,7 +12,7 @@ script {
     fun main(sender: signer) {
         let difficulty = 100;
         // return solution
-        MinerState::test_helper(
+        MinerState::test_helper_init_miner(
             &sender,
             difficulty,
             TestFixtures::alice_0_easy_chal(),
