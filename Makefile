@@ -12,8 +12,6 @@ MAKEFILE_DIR := $(dir $(MAKEFILE_PATH))
 SOURCE=${MAKEFILE_DIR}
 endif
 
-
-
 # Account settings
 ifndef ACC
 ACC=$(shell toml get ${DATA_PATH}/0L.toml profile.account | tr -d '"')
@@ -23,28 +21,20 @@ IP=$(shell toml get ${DATA_PATH}/0L.toml profile.ip)
 # Github settings
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
 
-# # this is for quick setup of devnet, uses OLSF repo
-# ifndef GENESIS_USER
-# GENESIS_USER = OLSF
-# endif
-
 REPO_ORG = OLSF
+REPO_NAME = genesis-registration
+CARGO_ARGS = --release
 
-
+# testnet automation settings
 ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
 MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
-else
-REPO_NAME = rex-testnet-genesis
-endif
-
-CARGO_ARGS = --release
-ifeq (${NODE_ENV}, test)
 CARGO_ARGS = --locked # just keeping this from doing --release mode, while in testnet mode.
+GITHUB_USER = OLSF
 endif
 
 # Registration params
-REMOTE = 'backend=github;repository_owner=${GENESIS_USER};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
+REMOTE = 'backend=github;repository_owner=${GITHUB_USER};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
 
 GENESIS_REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
 
@@ -179,7 +169,7 @@ gen-make-pull:
 	--repo-name ${REPO_NAME} \
 	--repo-owner ${REPO_ORG} \
 	--shared-backend ${GENESIS_REMOTE} \
-	--pull-request-user ${GENESIS_USER}
+	--pull-request-user ${GITHUB_USER}
 
 genesis-miner:
 	cargo run -p miner -- zero
@@ -544,12 +534,11 @@ nuke-testnet:
 	@echo WIPING EVERYTHING but keeping: github_token.txt, autopay_batch.json, set_layout.toml, /blocks/block_0.json
 
 	@if test -d ${DATA_PATH}; then \
-		cd ${DATA_PATH} && cp github_token.txt autopay_batch.json set_layout.toml ~/; \
+		cd ${DATA_PATH} && cp github_token.txt autopay_batch.json set_layout.toml blocks/block_0.json ~/; \
 		cd ${DATA_PATH} && rm -rf *; \
 		cd ~ && cp github_token.txt autopay_batch.json set_layout.toml ${DATA_PATH}; \
+		cd ${DATA_PATH} && mkdir blocks;\
+		cd ~ && cp block_0.json ${DATA_PATH}/blocks/; \
 	fi
 	
-	@if test -d ${DATA_PATH}/blocks; then \
-		cd ${DATA_PATH}/blocks && cp block_0.json ~/; \
-		cd ~ && cp block_0.json ${DATA_PATH}/blocks; \
-	fi
+
