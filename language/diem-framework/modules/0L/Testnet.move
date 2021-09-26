@@ -13,8 +13,12 @@ module Testnet {
 
     struct IsTestnet has key { }
 
+    // Todo: never used, is this ok?
     public fun initialize(account: &signer) {
-        assert(Signer::address_of(account) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(200201));
+        assert(
+            Signer::address_of(account) == CoreAddresses::DIEM_ROOT_ADDRESS(),
+            Errors::requires_role(200201)
+        );
         move_to(account, IsTestnet{})
     }
 
@@ -23,16 +27,19 @@ module Testnet {
     }
 
     // only used for testing purposes
-    public fun remove_testnet(account: &signer)
-    acquires IsTestnet {
-        assert(Signer::address_of(account) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(200202));
+    public fun remove_testnet(account: &signer) acquires IsTestnet {
+        assert(
+            Signer::address_of(account) == CoreAddresses::DIEM_ROOT_ADDRESS(),
+            Errors::requires_role(200202)
+        );
         IsTestnet{} = move_from<IsTestnet>(CoreAddresses::DIEM_ROOT_ADDRESS());
     }
 }
 
 module StagingNet {
     ///////////////////////////////////////////////////////////////////////////
-    // sets an env variable for testing production settings except with shorter epochs and lower vdf difficulty.
+    // sets an env variable for testing production settings except with 
+    // shorter epochs and lower vdf difficulty.
     // File Prefix for errors: 1903
     ///////////////////////////////////////////////////////////////////////////
     use 0x1::CoreAddresses;
@@ -42,13 +49,18 @@ module StagingNet {
     struct IsStagingNet has key { }
 
     public fun initialize(account: &signer) {
-        assert(Signer::address_of(account) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190301));
+        assert(
+            Signer::address_of(account) == CoreAddresses::DIEM_ROOT_ADDRESS(),
+            Errors::requires_role(190301)
+        );
         move_to(account, IsStagingNet{})
     }
 
     public fun is_staging_net(): bool {
         exists<IsStagingNet>(CoreAddresses::DIEM_ROOT_ADDRESS())
     }
+
+    // Todo: no remove_staging_net()? Can this be a problem in production?
 
 }
 }

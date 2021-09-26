@@ -1184,7 +1184,9 @@ Public Getters ///
   <b>if</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>() || <a href="Testnet.md#0x1_StagingNet_is_staging_net">StagingNet::is_staging_net</a>()) <b>return</b> <b>true</b>;
   // check <b>if</b> rate limited, needs 7 epochs of validating.
   <b>if</b> (<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(node_addr)) {
-    <b>return</b> borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(node_addr).epochs_since_last_account_creation &gt; <a href="MinerState.md#0x1_MinerState_EPOCHS_UNTIL_ACCOUNT_CREATION">EPOCHS_UNTIL_ACCOUNT_CREATION</a>
+    <b>return</b>
+      borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(node_addr).epochs_since_last_account_creation
+      &gt; <a href="MinerState.md#0x1_MinerState_EPOCHS_UNTIL_ACCOUNT_CREATION">EPOCHS_UNTIL_ACCOUNT_CREATION</a>
   };
   <b>false</b>
 }
@@ -1217,7 +1219,7 @@ Public Getters ///
   ) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>, <a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a>, <a href="MinerState.md#0x1_MinerState_MinerStats">MinerStats</a> {
     <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 130102014010);
 
-    move_to&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_sig, <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>{
+    move_to&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_sig, <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
       previous_proof_hash: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
       verified_tower_height: 0u64,
       latest_epoch_mining: 0u64,
@@ -1236,7 +1238,6 @@ Public Getters ///
 
     <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig), proof, <b>false</b>);
     // FullnodeState::init(miner_sig);
-
 }
 </code></pre>
 
@@ -1260,14 +1261,19 @@ Public Getters ///
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_operator_submits">test_helper_operator_submits</a>(
-  operator_addr: address, // Testrunner does not allow arbitrary accounts <b>to</b> submit txs, need <b>to</b> <b>use</b> address, so this will differ slightly from api
+  operator_addr: address, // Testrunner does not allow arbitrary accounts
+                          // <b>to</b> submit txs, need <b>to</b> <b>use</b> address, so this will
+                          // differ slightly from api
   miner_addr: address,
   proof: <a href="MinerState.md#0x1_MinerState_Proof">Proof</a>
 ) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>, <a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a>, <a href="MinerState.md#0x1_MinerState_MinerStats">MinerStats</a> {
   <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 130102014010);
 
   // Get address, assumes the sender is the signer.
-  <b>assert</b>(<a href="ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(miner_addr) == operator_addr, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_address">Errors::requires_address</a>(130111));
+  <b>assert</b>(
+    <a href="ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(miner_addr) == operator_addr,
+    <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_address">Errors::requires_address</a>(130111)
+  );
   // Abort <b>if</b> not initialized.
   <b>assert</b>(<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(130116));
 
@@ -1275,14 +1281,15 @@ Public Getters ///
   <b>let</b> difficulty_constant = <a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>();
 
   // Skip this check on local tests, we need tests <b>to</b> send different difficulties.
-  <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
+  <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()) {
     <b>assert</b>(&proof.difficulty == &difficulty_constant, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130117));
   };
 
   <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);
 
   // TODO: The operator mining needs its own <b>struct</b> <b>to</b> count mining.
-  // For now it is implicit there is only 1 operator per validator, and that the fullnode state is the place <b>to</b> count.
+  // For now it is implicit there is only 1 operator per validator,
+  // and that the fullnode state is the place <b>to</b> count.
   // This will require a breaking change <b>to</b> <a href="MinerState.md#0x1_MinerState">MinerState</a>
   // FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
 }

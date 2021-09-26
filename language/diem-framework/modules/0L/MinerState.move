@@ -530,7 +530,9 @@ module MinerState {
       if(Testnet::is_testnet() || StagingNet::is_staging_net()) return true;
       // check if rate limited, needs 7 epochs of validating.
       if (exists<MinerProofHistory>(node_addr)) { 
-        return borrow_global<MinerProofHistory>(node_addr).epochs_since_last_account_creation > EPOCHS_UNTIL_ACCOUNT_CREATION
+        return 
+          borrow_global<MinerProofHistory>(node_addr).epochs_since_last_account_creation 
+          > EPOCHS_UNTIL_ACCOUNT_CREATION
       };
       false 
     }
@@ -550,7 +552,7 @@ module MinerState {
       ) acquires MinerProofHistory, MinerList, MinerStats {
         assert(Testnet::is_testnet(), 130102014010);
 
-        move_to<MinerProofHistory>(miner_sig, MinerProofHistory{
+        move_to<MinerProofHistory>(miner_sig, MinerProofHistory {
           previous_proof_hash: Vector::empty(),
           verified_tower_height: 0u64,
           latest_epoch_mining: 0u64,
@@ -563,27 +565,32 @@ module MinerState {
         // Needs difficulty to test between easy and hard mode.
         let proof = Proof {
           challenge,
-          difficulty,  
+          difficulty,
           solution,
         };
 
         verify_and_update_state(Signer::address_of(miner_sig), proof, false);
         // FullnodeState::init(miner_sig);
-
     }
 
     // Function index: 11
-    // provides a different method to submit from the operator for use in tests where the operator cannot sign a transaction
+    // provides a different method to submit from the operator for use in tests 
+    // where the operator cannot sign a transaction
     // Permissions: PUBLIC, SIGNER, TEST ONLY
     public fun test_helper_operator_submits(
-      operator_addr: address, // Testrunner does not allow arbitrary accounts to submit txs, need to use address, so this will differ slightly from api
-      miner_addr: address, 
+      operator_addr: address, // Testrunner does not allow arbitrary accounts 
+                              // to submit txs, need to use address, so this will 
+                              // differ slightly from api
+      miner_addr: address,
       proof: Proof
     ) acquires MinerProofHistory, MinerList, MinerStats {
       assert(Testnet::is_testnet(), 130102014010);
       
       // Get address, assumes the sender is the signer.
-      assert(ValidatorConfig::get_operator(miner_addr) == operator_addr, Errors::requires_address(130111));
+      assert(
+        ValidatorConfig::get_operator(miner_addr) == operator_addr,
+        Errors::requires_address(130111)
+      );
       // Abort if not initialized.
       assert(exists<MinerProofHistory>(miner_addr), Errors::not_published(130116));
 
@@ -591,14 +598,15 @@ module MinerState {
       let difficulty_constant = Globals::get_difficulty();
 
       // Skip this check on local tests, we need tests to send different difficulties.
-      if (!Testnet::is_testnet()){
+      if (!Testnet::is_testnet()) {
         assert(&proof.difficulty == &difficulty_constant, Errors::invalid_state(130117));
       };
-      
+
       verify_and_update_state(miner_addr, proof, true);
       
       // TODO: The operator mining needs its own struct to count mining.
-      // For now it is implicit there is only 1 operator per validator, and that the fullnode state is the place to count.
+      // For now it is implicit there is only 1 operator per validator,
+      // and that the fullnode state is the place to count.
       // This will require a breaking change to MinerState
       // FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
     }
@@ -666,7 +674,8 @@ module MinerState {
     }
 
     // Function code: 17
-    // Sets the epochs since last account creation variable to allow `miner_addr` to create a new account
+    // Sets the epochs since last account creation variable to allow `miner_addr`
+    // to create a new account
     public fun test_helper_set_rate_limit(miner_addr: address, value: u64) acquires MinerProofHistory {
       assert(Testnet::is_testnet(), Errors::invalid_state(130126));
       let state = borrow_global_mut<MinerProofHistory>(miner_addr);
