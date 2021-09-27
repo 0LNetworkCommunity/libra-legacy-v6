@@ -18,17 +18,17 @@ module Wallet {
     //////// COMMUNITY WALLETS ////////
 
     struct CommunityWalletList has key {
-        list: vector<address>
+      list: vector<address>
     }
 
-        // Timed transfer submission
+    // Timed transfer submission
     struct CommunityTransfers has key {
       proposed: vector<TimedTransfer>,
       approved: vector<TimedTransfer>,
       rejected: vector<TimedTransfer>,
       max_uid: u64,
-
     }
+
     struct TimedTransfer has copy, drop, key, store {
       uid: u64,
       expire_epoch: u64,
@@ -46,28 +46,31 @@ module Wallet {
     }
 
     struct CommunityFreeze has key {
-        is_frozen: bool,
-        consecutive_rejections: u64,
-        unfreeze_votes: vector<address>,
+      is_frozen: bool,
+      consecutive_rejections: u64,
+      unfreeze_votes: vector<address>,
     }
 
     // Utility used at genesis (and on upgrade) to initialize the system state.
     public fun init(vm: &signer) {
-        CoreAddresses::assert_diem_root(vm);
-        
-        if ((!exists<CommunityTransfers>(@0x0))) {
-          move_to<CommunityTransfers>(vm, CommunityTransfers{
+      CoreAddresses::assert_diem_root(vm);
+      
+      if (!exists<CommunityTransfers>(@0x0)) {
+        move_to<CommunityTransfers>(
+          vm,
+          CommunityTransfers {
             proposed: Vector::empty<TimedTransfer>(),
             approved: Vector::empty<TimedTransfer>(),
             rejected: Vector::empty<TimedTransfer>(),
             max_uid: 0,
-          })
-        }; 
+          }
+        )
+      }; 
 
       if (!exists<CommunityWalletList>(@0x0)) {
         move_to<CommunityWalletList>(vm, CommunityWalletList {
           list: Vector::empty<address>()
-        });  
+        });
       };
     }
 
@@ -76,104 +79,117 @@ module Wallet {
     }
 
     public fun set_comm(sig: &signer) acquires CommunityWalletList {
-      if (exists<CommunityWalletList>(@0x0)) {
-        let addr = Signer::address_of(sig);
-        let list = get_comm_list();
-        if (!Vector::contains<address>(&list, &addr)) {
-            let s = borrow_global_mut<CommunityWalletList>(@0x0);
-            Vector::push_back(&mut s.list, addr);
-        };
+      if (!exists<CommunityWalletList>(@0x0)) return;
 
-        move_to<CommunityFreeze>(sig, CommunityFreeze {
+      let addr = Signer::address_of(sig);
+      let list = get_comm_list();
+      if (!Vector::contains<address>(&list, &addr)) {
+        let s = borrow_global_mut<CommunityWalletList>(@0x0);
+        Vector::push_back(&mut s.list, addr);
+      };
+
+      move_to<CommunityFreeze>(
+        sig, 
+        CommunityFreeze {
           is_frozen: false,
           consecutive_rejections: 0,
           unfreeze_votes: Vector::empty<address>()
-        })
-      }
+        }
+      )
     }
-
 
     // Utility for vm to remove the CommunityWallet tag from an address
     public fun vm_remove_comm(vm: &signer, addr: address) acquires CommunityWalletList {
       CoreAddresses::assert_diem_root(vm);
-      if (exists<CommunityWalletList>(@0x0)) {
-        let list = get_comm_list();
-        let (yes, i) = Vector::index_of<address>(&list, &addr);
-        if (yes) {
-          let s = borrow_global_mut<CommunityWalletList>(@0x0);
-          Vector::remove(&mut s.list, i);
-        }
+      if (!exists<CommunityWalletList>(@0x0)) return;
+     
+      let list = get_comm_list();
+      let (yes, i) = Vector::index_of<address>(&list, &addr);
+      if (yes) {
+        let s = borrow_global_mut<CommunityWalletList>(@0x0);
+        Vector::remove(&mut s.list, i);
       }
     }
 
-
-  // The community wallet Signer can propose a timed transaction.
-  // the timed transaction defaults to occurring in the 3rd following epoch.
-  // TODO: Increase this time?
-  // the transaction will automatically occur at the epoch boundary, unless a veto vote by the validator set is successful.
-  // at that point the transaction leves the proposed queue, and is added the rejected list.
-  public fun new_timed_transfer(sender: &signer, payee: address, value: u64, description: vector<u8>): u64 acquires CommunityTransfers, CommunityWalletList {
+    // Todo: Can be private, used only in tests
+    // The community wallet Signer can propose a timed transaction.
+    // the timed transaction defaults to occurring in the 3rd following epoch.
+    // TODO: Increase this time?
+    // the transaction will automatically occur at the epoch boundary, 
+    // unless a veto vote by the validator set is successful.
+    // at that point the transaction leves the proposed queue, and is added 
+    // the rejected list.
+    public fun new_timed_transfer(
+      sender: &signer, payee: address, value: u64, description: vector<u8>
+    ): u64 acquires CommunityTransfers, CommunityWalletList {
       let sender_addr = Signer::address_of(sender);
       let list = get_comm_list();
-        
       assert(
-        Vector::contains<address>(&list, &sender_addr), Errors::requires_role(ERR_PREFIX + 001)
+        Vector::contains<address>(&list, &sender_addr),
+        Errors::requires_role(ERR_PREFIX + 001)
       );
 
-      let d = borrow_global_mut<CommunityTransfers>(@0x0);
-      d.max_uid = d.max_uid + 1;
+      let transfers = borrow_global_mut<CommunityTransfers>(@0x0);
+      transfers.max_uid = transfers.max_uid + 1;
       
       // add current epoch + 1
       let current_epoch = DiemConfig::get_current_epoch();
 
       let t = TimedTransfer {
-          uid: d.max_uid,
-          expire_epoch: current_epoch + 3,
-          payer: sender_addr,
-          payee: payee,
-          value: value,
-          description: description,
-          veto: Veto {
-            list: Vector::empty<address>(),
-            count: 0,
-            threshold: 0,
-          }
+        uid: transfers.max_uid,
+        expire_epoch: current_epoch + 3,
+        payer: sender_addr,
+        payee: payee,
+        value: value,
+        description: description,
+        veto: Veto {
+          list: Vector::empty<address>(),
+          count: 0,
+          threshold: 0,
+        }
       };
 
-      Vector::push_back<TimedTransfer>(&mut d.proposed, t);
-      return d.max_uid
+      Vector::push_back<TimedTransfer>(&mut transfers.proposed, t);
+      return transfers.max_uid
     }
 
-  // utlity to query a CommunityWallet transfer wallet.
-  // Note: doesn not need to be a public function, except for use in tests.
-  public fun find(uid: u64, type_of: u8): (Option<TimedTransfer>, u64) acquires CommunityTransfers {
-    let c = borrow_global<CommunityTransfers>(@0x0);
-    let list = if (type_of == 0) {
-      &c.proposed
-    } else if (type_of == 1) {
-      &c.approved
-    } else {
-      &c.rejected
-    };
-
-    let len = Vector::length(list);
-    let i = 0;
-    while (i < len) {
-      let t = *Vector::borrow<TimedTransfer>(list, i);
-      if (t.uid == uid) {
-        return (Option::some<TimedTransfer>(t), i)
+    // Todo: Can be private, used only in tests
+    // Utlity to query a CommunityWallet transfer wallet.
+    // Note: does not need to be a public function, except for use in tests.
+    public fun find(
+      uid: u64,
+      type_of: u8
+    ): (Option<TimedTransfer>, u64) acquires CommunityTransfers {
+      let c = borrow_global<CommunityTransfers>(@0x0);
+      let list = if (type_of == 0) {
+        &c.proposed
+      } else if (type_of == 1) {
+        &c.approved
+      } else {
+        &c.rejected
       };
-      i = i + 1;
-    };
-    (Option::none<TimedTransfer>(), 0)
-  }
-  
-  // A validator casts a vote to veto a proposed/pending transaction by a community wallet.
-  // The validator identifies the transaction by a unique id.
-  // tallies are computed on the fly, such that if a veto happens, the community which
-  // is faster than waiting for epoch boundaries.
 
-  public fun veto(sender: &signer, uid: u64) acquires CommunityTransfers, CommunityFreeze {
+      let len = Vector::length(list);
+      let i = 0;
+      while (i < len) {
+        let t = *Vector::borrow<TimedTransfer>(list, i);
+        if (t.uid == uid) {
+          return (Option::some<TimedTransfer>(t), i)
+        };
+        i = i + 1;
+      };
+      (Option::none<TimedTransfer>(), 0)
+    }
+  
+  // A validator casts a vote to veto a proposed/pending transaction 
+  // by a community wallet.
+  // The validator identifies the transaction by a unique id.
+  // Tallies are computed on the fly, such that if a veto happens, 
+  // the community which is faster than waiting for epoch boundaries.
+  public fun veto(
+    sender: &signer,
+    uid: u64
+  ) acquires CommunityTransfers, CommunityFreeze {
     let addr = Signer::address_of(sender);
     assert(
       DiemSystem::is_validator(addr),
@@ -195,7 +211,8 @@ module Wallet {
     };
   }
 
-  // private function. Once vetoed, the CommunityWallet transaction is remove from proposed list.
+  // private function. Once vetoed, the CommunityWallet transaction is 
+  // removed from proposed list.
   fun reject(uid: u64) acquires CommunityTransfers, CommunityFreeze {
     let c = borrow_global_mut<CommunityTransfers>(@0x0);
     let list = *&c.proposed;
@@ -208,7 +225,6 @@ module Wallet {
         let f = borrow_global_mut<CommunityFreeze>(*&t.payer);
         f.consecutive_rejections = f.consecutive_rejections + 1;
         Vector::push_back(&mut c.rejected, t);
-        
       };
 
       i = i + 1;
@@ -219,8 +235,8 @@ module Wallet {
   // private function to tally vetos.
   // checks if a voter is in the validator set.
   // tallies everytime called. Only counts votes in the validator set.
-  // does not remove an address if not in the validator set, in case the validator returns
-  // to the set on the next tally.
+  // does not remove an address if not in the validator set, in case 
+  // the validator returns to the set on the next tally.
   fun tally_veto(index: u64): bool acquires CommunityTransfers {
     let c = borrow_global_mut<CommunityTransfers>(@0x0);
     let t = Vector::borrow_mut<TimedTransfer>(&mut c.proposed, index);
@@ -234,7 +250,8 @@ module Wallet {
     while (k < len) {
       let addr = *Vector::borrow<address>(&t.veto.list, k);
       // ignore votes that are no longer in the validator set,
-      // BUT DON'T REMOVE, since they may rejoin the validator set, and shouldn't need to vote again.
+      // BUT DON'T REMOVE, since they may rejoin the validator set,
+      // and shouldn't need to vote again.
 
       if (DiemSystem::is_validator(addr)) {
         votes = votes + NodeWeight::proof_of_weight(addr)
@@ -248,7 +265,8 @@ module Wallet {
     return votes > threshold
   }
 
-  // private function to get the total voting power of the validator set, and find the 2/3rds threshold
+  // private function to get the total voting power of the validator set,
+  // and find the 2/3rds threshold
   fun calculate_proportional_voting_threshold(): u64 {
       let val_set_size = DiemSystem::validator_set_size();
       let i = 0;
@@ -284,61 +302,58 @@ module Wallet {
       };
       return pending
     }
-    
-    public fun maybe_reset_rejection_counter(vm: &signer, wallet: address) acquires CommunityFreeze {
+
+    public fun reset_rejection_counter(vm: &signer, wallet: address) acquires CommunityFreeze {
       CoreAddresses::assert_diem_root(vm);
-      let f = borrow_global_mut<CommunityFreeze>(wallet);
-      f.consecutive_rejections = 0;
+      borrow_global_mut<CommunityFreeze>(wallet).consecutive_rejections = 0;
     }
 
     // Private function to freeze a community wallet
     // community wallets get frozen if 3 consecutive attempts to transfer are rejected.
     fun maybe_freeze(wallet: address) acquires CommunityFreeze {
-      let f = borrow_global_mut<CommunityFreeze>(wallet);
-      if (f.consecutive_rejections > 2) {
+      if (borrow_global<CommunityFreeze>(wallet).consecutive_rejections > 2) {
+        let f = borrow_global_mut<CommunityFreeze>(wallet);
         f.is_frozen = true;
       }
     }
 
-    // Unfreezing a wallet requires the same threshold, as rejecting a transaction.
-    // validators can vote to unfreeze.
-    // unfreezing happens as soon as a vote passes threshold (not at epoch boundary)
-    public fun vote_to_unfreeze(val: &signer, wallet: address) acquires CommunityFreeze {
-      let f = borrow_global_mut<CommunityFreeze>(wallet);
-      let val_addr = Signer::address_of(val);
-      Vector::push_back<address>(&mut f.unfreeze_votes, val_addr);
+    // Unused
+    // // Unfreezing a wallet requires the same threshold, as rejecting a transaction.
+    // // validators can vote to unfreeze.
+    // // unfreezing happens as soon as a vote passes threshold (not at epoch boundary)
+    // public fun vote_to_unfreeze(val: &signer, wallet: address) acquires CommunityFreeze {
+    //   let f = borrow_global_mut<CommunityFreeze>(wallet);
+    //   let val_addr = Signer::address_of(val);
+    //   Vector::push_back<address>(&mut f.unfreeze_votes, val_addr);
       
-      if (tally_unfreeze(wallet)) {
-        let f = borrow_global_mut<CommunityFreeze>(wallet);
-        f.is_frozen = false;
-      }
-    }
+    //   if (tally_unfreeze(wallet)) {
+    //     f.is_frozen = false;
+    //   }
+    // }
 
-    // private function to tall the unfreezing of a wallet.
-    fun tally_unfreeze(wallet: address): bool acquires CommunityFreeze {
-      let f = borrow_global<CommunityFreeze>(wallet);
+    // Unused
+    // // private function to tall the unfreezing of a wallet.
+    // fun tally_unfreeze(wallet: address): bool acquires CommunityFreeze {
+    //   let votes = 0;
+    //   let k = 0;
+    //   let f = borrow_global<CommunityFreeze>(wallet);
+    //   let len = Vector::length<address>(&f.unfreeze_votes);
 
-      let votes = 0;
-      let threshold = calculate_proportional_voting_threshold();
-      
-      let k = 0;
-      let len = Vector::length<address>(&f.unfreeze_votes);
+    //   while (k < len) {
+    //     let addr = *Vector::borrow<address>(&f.unfreeze_votes, k);
+    //     // ignore votes that are no longer in the validator set,
+    //     // BUT DON'T REMOVE, since they may rejoin the validator set, 
+    //     // and shouldn't need to vote again.
 
-      while (k < len) {
-        let addr = *Vector::borrow<address>(&f.unfreeze_votes, k);
-        // ignore votes that are no longer in the validator set,
-        // BUT DON'T REMOVE, since they may rejoin the validator set, and shouldn't need to vote again.
+    //     if (DiemSystem::is_validator(addr)) {
+    //       votes = votes + NodeWeight::proof_of_weight(addr)
+    //     };
+    //     k = k + 1;
+    //   };
 
-        if (DiemSystem::is_validator(addr)) {
-          votes = votes + NodeWeight::proof_of_weight(addr)
-        };
-        k = k + 1;
-      };
-
-      return votes > threshold
-    }
-
-
+    //   let threshold = calculate_proportional_voting_threshold();
+    //   return votes > threshold
+    // }
 
     //////// GETTERS ////////
     public fun get_tx_args(t: TimedTransfer): (address, address, u64, vector<u8>) {

@@ -20,7 +20,7 @@ endif
 # Eve mnemonic
 MNEM="recall october regret kite undo choice outside season business wall quit arrest vacant arrow giggle vote ghost winter hawk soft cheap decide exhaust spare"
 
-NUM_NODES = 4
+NUM_NODES = 2
 EVE = 3DC18D1CF61FAAC6AC70E3A63F062E4B
 
 # ONBOARD_FILE=${SOURCE_PATH}/ol/fixtures/account/swarm/eve.fixed_recurring.account.json
@@ -64,8 +64,8 @@ create-json:
 
 
  
-tx:
-	@echo TX
+tx: balance-alice
+	@echo SENDING ONBOARDING TX
 	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} create-validator -f ${ONBOARD_FILE}
 
 set-community:
@@ -76,6 +76,9 @@ resources:
 
 balance:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} --account 3DC18D1CF61FAAC6AC70E3A63F062E4B query --balance
+
+balance-alice:
+	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} --account 4C613C2F4B1E67CA8D98A542EE3F59F5 query --balance
 
 balance-bob:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --account 88E74DFED34420F2AD8032148280A84B --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --balance

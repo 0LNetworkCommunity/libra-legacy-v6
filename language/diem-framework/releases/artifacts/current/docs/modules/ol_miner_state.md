@@ -103,7 +103,7 @@
 <pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_miner_state.md#0x1_MinerStateScripts_minerstate_helper">minerstate_helper</a>(sender: signer) {
     <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 01);
 
-    <a href="MinerState.md#0x1_MinerState_test_helper">MinerState::test_helper</a>(
+    <a href="MinerState.md#0x1_MinerState_test_helper_init_miner">MinerState::test_helper_init_miner</a>(
         &sender,
         <a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>(),
         <a href="TestFixtures.md#0x1_TestFixtures_alice_0_easy_chal">TestFixtures::alice_0_easy_chal</a>(),

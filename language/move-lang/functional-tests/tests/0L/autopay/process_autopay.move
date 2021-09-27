@@ -4,36 +4,6 @@
 // We test processing of autopay at differnt epochs and balance transfers
 // Finally, we also check the end_epoch functionality of autopay
 
-
-//! new-transaction
-//! sender: diemroot
-script {
-    use 0x1::AccountLimits;
-    use 0x1::CoreAddresses;
-    use 0x1::GAS::GAS;
-    fun main(account: signer) {
-      AccountLimits::update_limits_definition<GAS>(
-        &account, CoreAddresses::DIEM_ROOT_ADDRESS(), 0, 10, 0, 1
-      );
-    }
-}
-// check: "Keep(EXECUTED)"
-
-//! new-transaction
-//! sender: diemroot
-//! execute-as: alice
-script {
-use 0x1::AccountLimits;
-use 0x1::GAS::GAS;
-fun main(dm: signer, alice_account: signer) {
-    AccountLimits::publish_unrestricted_limits<GAS>(&alice_account);
-    AccountLimits::update_limits_definition<GAS>(&dm, @{{alice}}, 0, 10, 0, 0);
-    AccountLimits::publish_window<GAS>(&dm, &alice_account, @{{alice}});
-}
-}
-// check: "Keep(EXECUTED)"
-
-
 // creating the instruction
 //! new-transaction
 //! sender: alice

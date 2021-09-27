@@ -152,6 +152,23 @@ module Roles {
     //     include GrantRole{addr: Signer::address_of(new_account), role_id: USER_ID};
     // }
 
+    use 0x1::Debug::print;
+
+    /// upgrades a user role to validator role
+    public fun upgrade_user_to_validator(
+        new_account: &signer
+    ) acquires RoleId {
+        print(&600);
+        let addr = Signer::address_of(new_account);
+        // grant_role(new_account, USER_ID);
+        let role = borrow_global_mut<RoleId>(addr);
+        print(role);
+        assert(role.role_id == USER_ID, EROLE_ID);
+        role.role_id = VALIDATOR_ROLE_ID;
+    }
+
+
+
 
     //////// 0L ////////
     /// Publish a Validator `RoleId` under `new_account`.

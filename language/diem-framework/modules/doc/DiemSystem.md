@@ -1377,6 +1377,7 @@ Private function checks for membership of <code>addr</code> in validator set.
         };
         i = i + 1;
     };
+    // calculate the ratio of votes per node.
     <b>let</b> fee_ratios = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>&gt;();
     <b>let</b> k = 0;
     <b>while</b> (k &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&compliant_nodes)) {
