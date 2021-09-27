@@ -22,7 +22,7 @@
 -  [Function `tally_veto`](#0x1_Wallet_tally_veto)
 -  [Function `calculate_proportional_voting_threshold`](#0x1_Wallet_calculate_proportional_voting_threshold)
 -  [Function `list_tx_by_epoch`](#0x1_Wallet_list_tx_by_epoch)
--  [Function `maybe_reset_rejection_counter`](#0x1_Wallet_maybe_reset_rejection_counter)
+-  [Function `reset_rejection_counter`](#0x1_Wallet_reset_rejection_counter)
 -  [Function `maybe_freeze`](#0x1_Wallet_maybe_freeze)
 -  [Function `get_tx_args`](#0x1_Wallet_get_tx_args)
 -  [Function `get_tx_epoch`](#0x1_Wallet_get_tx_epoch)
@@ -742,13 +742,13 @@
 
 </details>
 
-<a name="0x1_Wallet_maybe_reset_rejection_counter"></a>
+<a name="0x1_Wallet_reset_rejection_counter"></a>
 
-## Function `maybe_reset_rejection_counter`
+## Function `reset_rejection_counter`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_maybe_reset_rejection_counter">maybe_reset_rejection_counter</a>(vm: &signer, wallet: address)
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_reset_rejection_counter">reset_rejection_counter</a>(vm: &signer, wallet: address)
 </code></pre>
 
 
@@ -757,10 +757,9 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_maybe_reset_rejection_counter">maybe_reset_rejection_counter</a>(vm: &signer, wallet: address) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_reset_rejection_counter">reset_rejection_counter</a>(vm: &signer, wallet: address) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a> {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
-  <b>let</b> f = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a>&gt;(wallet);
-  f.consecutive_rejections = 0;
+  borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a>&gt;(wallet).consecutive_rejections = 0;
 }
 </code></pre>
 
