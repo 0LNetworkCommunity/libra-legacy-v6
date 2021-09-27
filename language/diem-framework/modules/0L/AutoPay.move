@@ -343,9 +343,12 @@ print(&702);
       );
 print(&703);
       // This is not a necessary check at genesis.
-      if (!DiemTimestamp::is_genesis()) {
+      // TODO: the genesis timestamp is not correctly identifying transactions in genesis. 
+      // if (!DiemTimestamp::is_genesis()) {
+      if (DiemConfig::get_current_epoch() > 1) {
         assert(DiemAccount::exists_at(payee), Errors::not_published(EPAYEE_DOES_NOT_EXIST));
       };
+
 print(&704);
       assert(in_type <= MAX_TYPE, Errors::invalid_argument(INVALID_PAYMENT_TYPE));
 

@@ -1,3 +1,11 @@
+# Quick Start
+
+```
+# make sure you have a set_layout.toml in ~/.0L/
+# from project root:
+
+NODE_ENV=prod make genesis
+```
 # Genesis Transaction
 
 Once the registration period has closed, all participants must create a genesis block themselves before starting validators nodes. *No genesis transaction will be provided by a central party.*
@@ -44,3 +52,11 @@ For every `owner` there is an `operator` and the owners and operators need to ma
 
 If an element of the owner or operator list cannot be found in the genesis registration repo, then the program will exit without producing a genesis transaction.
 
+
+# Create genesis files
+
+From the project root you can use the `make` helper file:
+
+```
+NODE_ENV=prod make genesis
+```
