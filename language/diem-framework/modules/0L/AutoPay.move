@@ -343,7 +343,7 @@ print(&702);
       );
 print(&703);
       // This is not a necessary check at genesis.
-      if (DiemTimestamp::is_operating()) {
+      if (!DiemTimestamp::is_genesis()) {
         assert(DiemAccount::exists_at(payee), Errors::not_published(EPAYEE_DOES_NOT_EXIST));
       };
 print(&704);
