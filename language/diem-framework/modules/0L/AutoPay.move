@@ -19,7 +19,7 @@ address 0x1 {
     use 0x1::Errors;
     use 0x1::Wallet;
     use 0x1::Roles;
-    use 0x1::DiemTimestamp;
+    // use 0x1::DiemTimestamp;
 
     /// Attempted to send funds to an account that does not exist
     /// Maximum value for the Payment type selection
