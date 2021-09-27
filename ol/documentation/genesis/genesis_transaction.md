@@ -1,8 +1,13 @@
 # Genesis Transaction
 
+Once the registration period has closed, all participants must create a genesis block themselves before starting validators nodes. *No genesis transaction will be provided by a central party.*
+
+Additionally, no validator set will be selected by any one party. All participants will choose the registrants they wish to include in the genesis validator set. *No validator layout file will be provided*
+
+## Outputs
+
 The output of the genesis process is a `genesis.blob` which is the initial network block. Additionally a `validator.node.yaml` file is created which contains all the configurations necessary to start a validator node (using the genesis.blob above).
 
-Once the registration period has closed, all participants must create a genesis block themselves before starting validators nodes. No genesis transaction will be provided by a central party.
 
 ## Decentralized start
 
