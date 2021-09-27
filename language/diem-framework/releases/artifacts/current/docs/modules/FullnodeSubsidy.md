@@ -37,10 +37,13 @@
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_get_proof_price">get_proof_price</a>(one_val_subsidy: u64): u64 {
   <b>let</b> global_proofs = <a href="MinerState.md#0x1_MinerState_get_fullnode_proofs">MinerState::get_fullnode_proofs</a>();
 
-  // proof price is simple, miners divide the equivalent of one compliant validator's subsidy.
-  // miners get a subsidy per proof in their tower.
+  // proof price is simple, miners divide the equivalent of one compliant
+  // validator's subsidy.
+  // Miners get a subsidy per proof in their tower.
 
-  // Note <b>to</b> rascals: I know what you're thinking, but for the same effort you'll put into that idea, it would be more profitable <b>to</b> just run a validator node.
+  // Note <b>to</b> rascals: I know what you're thinking, but for the same effort
+  // you'll put into that idea, it would be more profitable <b>to</b> just run
+  // a validator node.
 
   one_val_subsidy/global_proofs
 }
@@ -65,10 +68,15 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_distribute_fullnode_subsidy">distribute_fullnode_subsidy</a>(vm: &signer, miner: address, subsidy: u64):u64 {
+<pre><code><b>public</b> <b>fun</b> <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_distribute_fullnode_subsidy">distribute_fullnode_subsidy</a>(
+  vm: &signer,
+  miner: address,
+  subsidy: u64
+):u64 {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
   // Payment is only for fullnodes, ie. not validator candidates
-  <b>if</b> (<a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(miner)) <b>return</b> 0; // TODO: this check is duplicated in reconfigure
+  // TODO: this check is duplicated in reconfigure
+  <b>if</b> (<a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(miner)) <b>return</b> 0;
   <b>if</b> (subsidy == 0) <b>return</b> 0;
 
   <b>let</b> minted_coins = <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, subsidy);
