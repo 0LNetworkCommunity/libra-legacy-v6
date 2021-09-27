@@ -514,7 +514,7 @@ address 0x1 {
     // Initiates a miner for a testnet
     // Function index: 10
     // Permissions: PUBLIC, SIGNER, TEST ONLY
-    public fun test_helper(
+    public fun test_helper_init_miner(
         miner_sig: &signer,
         difficulty: u64,
         challenge: vector<u8>,
@@ -563,7 +563,7 @@ address 0x1 {
       let difficulty_constant = Globals::get_difficulty();
 
       // Skip this check on local tests, we need tests to send different difficulties.
-      if (!Testnet::is_testnet()){
+      if (!Testnet::is_testnet()){ // todo: remove?
         assert(&proof.difficulty == &difficulty_constant, Errors::invalid_state(130117));
       };
       
@@ -662,7 +662,9 @@ address 0x1 {
 
     // Function code: 18
     // returns the previous proof hash for `miner_addr`
-    public fun test_helper_hash(miner_addr: address): vector<u8> acquires MinerProofHistory {
+    public fun test_helper_previous_proof_hash(
+      miner_addr: address
+    ): vector<u8> acquires MinerProofHistory {
       assert(Testnet::is_testnet()== true, Errors::invalid_state(130128));
       *&borrow_global<MinerProofHistory>(miner_addr).previous_proof_hash
     }

@@ -12,7 +12,7 @@ script {
     use 0x1::TestFixtures;
 
     fun main(sender: signer) {
-        MinerState::test_helper(
+        MinerState::test_helper_init_miner(
             &sender,
             100u64, //difficulty
             TestFixtures::easy_chal(),

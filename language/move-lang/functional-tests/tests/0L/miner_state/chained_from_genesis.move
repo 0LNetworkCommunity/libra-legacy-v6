@@ -16,7 +16,11 @@ fun main(sender: signer) {
 
     let difficulty = 100u64;
     assert(MinerState::test_helper_get_height(@{{alice}}) == 0, 10008001);
-    assert(MinerState::test_helper_hash(@{{alice}}) == TestFixtures::alice_1_easy_chal(), 10008002);
+    assert(
+        MinerState::test_helper_previous_proof_hash(@{{alice}}) 
+            == TestFixtures::alice_1_easy_chal(),
+        10008002
+    );
         
     let proof = MinerState::create_proof_blob(
         TestFixtures::alice_1_easy_chal(),
