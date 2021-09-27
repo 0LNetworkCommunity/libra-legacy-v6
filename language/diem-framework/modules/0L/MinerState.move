@@ -16,7 +16,6 @@ module MinerState {
     use 0x1::DiemConfig;
     use 0x1::Signer;
     use 0x1::StagingNet;
-    use 0x1::Stats;
     use 0x1::Testnet;
     use 0x1::ValidatorConfig;
     use 0x1::VDF;
@@ -52,6 +51,7 @@ module MinerState {
       // print(state);
     }
 
+    // Note: Used only in tests
     public fun epoch_reset(vm: &signer) acquires MinerStats {
       CoreAddresses::assert_vm(vm);
       let state = borrow_global_mut<MinerStats>(CoreAddresses::VM_RESERVED_ADDRESS());
@@ -67,7 +67,8 @@ module MinerState {
 
     /// Struct to store information about a VDF proof submitted
     /// `challenge`: the seed for the proof 
-    /// `difficulty`: the difficulty for the proof (higher difficulty -> longer proof time)
+    /// `difficulty`: the difficulty for the proof 
+    ///               (higher difficulty -> longer proof time)
     /// `solution`: the solution for the proof (the result)
     struct Proof has drop {
         challenge: vector<u8>,
@@ -110,7 +111,7 @@ module MinerState {
       }); 
     }
 
-    /// Create an empty miners stats 
+    /// Create an empty miner stats 
     fun init_miner_stats(vm: &signer) {
       move_to<MinerStats>(vm, MinerStats {
         proofs_in_epoch: 0u64,
@@ -152,7 +153,7 @@ module MinerState {
       }
     }
 
-    // Unused
+    // Todo: Unused
     // /// add `sender` to the list of miners
     // public fun add_self_list(sender: &signer) acquires MinerList {
     //   let addr = Signer::address_of(sender);
@@ -170,30 +171,31 @@ module MinerState {
       }
     }
 
-    // use 0x1::Debug::print;
-    // Helper function for genesis to process genesis proofs.
-    // Permissions: PUBLIC, ONLY VM, AT GENESIS.
-    public fun genesis_helper (
-      vm_sig: &signer,
-      miner_sig: &signer,
-      challenge: vector<u8>,
-      solution: vector<u8>
-    ) acquires MinerProofHistory, MinerList, MinerStats {
-      // In rust the vm_genesis creates a Signer for the miner. 
-      // So the SENDER is not the same and the Signer.
+    // Todo: Unused
+    // // use 0x1::Debug::print;
+    // // Helper function for genesis to process genesis proofs.
+    // // Permissions: PUBLIC, ONLY VM, AT GENESIS.
+    // public fun genesis_helper(
+    //   vm_sig: &signer,
+    //   miner_sig: &signer,
+    //   challenge: vector<u8>,
+    //   solution: vector<u8>
+    // ) acquires MinerProofHistory, MinerList, MinerStats {
+    //   // In rust the vm_genesis creates a Signer for the miner. 
+    //   // So the SENDER is not the same and the Signer.
 
-      // TODO: Previously in OLv3 is_genesis() returned true. 
-      // How to check that this is part of genesis? is_genesis returns false here.
-      // assert(DiemTimestamp::is_genesis(), 130101024010);
-      // print(&10001);
-      init_miner_state(miner_sig, &challenge, &solution);
-      // print(&10002);
-      // TODO: Move this elsewhere? 
-      // Initialize stats for first validator set from rust genesis. 
-      let node_addr = Signer::address_of(miner_sig);
-      // print(&10003);
-      Stats::init_address(vm_sig, node_addr);
-    }
+    //   // TODO: Previously in OLv3 is_genesis() returned true. 
+    //   // How to check that this is part of genesis? is_genesis returns false here.
+    //   // assert(DiemTimestamp::is_genesis(), 130101024010);
+    //   // print(&10001);
+    //   init_miner_state(miner_sig, &challenge, &solution);
+    //   // print(&10002);
+    //   // TODO: Move this elsewhere? 
+    //   // Initialize stats for first validator set from rust genesis. 
+    //   let node_addr = Signer::address_of(miner_sig);
+    //   // print(&10003);
+    //   Stats::init_address(vm_sig, node_addr);
+    // }
 
     /// This function is called to submit proofs to the chain 
     /// Note, the sender of this transaction can differ from the signer, 
@@ -226,7 +228,8 @@ module MinerState {
       verify_and_update_state(miner_addr, proof, true);
     }
 
-    // This function is called by the OPERATOR associated with node, it verifies the proof and commits to chain.
+    // This function is called by the OPERATOR associated with node,
+    // it verifies the proof and commits to chain.
     // Function index: 02
     // Permissions: PUBLIC, ANYONE
     public fun commit_state_by_operator(
@@ -245,7 +248,7 @@ module MinerState {
       // Get vdf difficulty constant. Will be different in tests than in production.
       let difficulty_constant = Globals::get_difficulty();
 
-      // Skip this check on local tests, we need tests to send different difficulties.
+      // Skip this check on local tests, we need tests to send differentdifficulties.
       if (!Testnet::is_testnet()){
         assert(&proof.difficulty == &difficulty_constant, Errors::invalid_argument(130105));
       };
@@ -268,8 +271,7 @@ module MinerState {
       proof: Proof,
       steady_state: bool
     ) acquires MinerProofHistory, MinerList, MinerStats {
-      // Get a mutable ref to the current state
-      let miner_history = borrow_global_mut<MinerProofHistory>(miner_addr);
+      let miner_history = borrow_global<MinerProofHistory>(miner_addr);
 
       // return early if the miner is running too fast, no advantage to asics
       assert(
@@ -280,7 +282,8 @@ module MinerState {
       // If not genesis proof, check hash to ensure the proof continues the chain
       if (steady_state) {
         //If not genesis proof, check hash 
-        assert(&proof.challenge == &miner_history.previous_proof_hash, Errors::invalid_state(130107));      
+        assert(&proof.challenge == &miner_history.previous_proof_hash,
+        Errors::invalid_state(130107));      
       };
 
       let valid = VDF::verify(&proof.challenge, &proof.difficulty, &proof.solution);
@@ -288,6 +291,9 @@ module MinerState {
 
       // add the miner to the miner list if not present
       increment_miners_list(miner_addr);
+
+      // Get a mutable ref to the current state
+      let miner_history = borrow_global_mut<MinerProofHistory>(miner_addr);
 
       // update the miner proof history (result is used as seed for next proof)
       miner_history.previous_proof_hash = Hash::sha3_256(*&proof.solution);
@@ -307,7 +313,9 @@ module MinerState {
     }
 
     // Checks that the validator has been mining above the count threshold
-    // Note: this is only called on a validator successfully meeting the validation thresholds (different than mining threshold). So the function presumes the validator is in good standing for that epoch.
+    // Note: this is only called on a validator successfully meeting 
+    // the validation thresholds (different than mining threshold). 
+    // So the function presumes the validator is in good standing for that epoch.
     // Permissions: private function
     // Function index: 04
     fun update_metrics(account: &signer, miner_addr: address) acquires MinerProofHistory {
@@ -315,12 +323,13 @@ module MinerState {
       // an epoch, but also that there were mining proofs submitted in that epoch.
       CoreAddresses::assert_diem_root(account);
 
-      // Miner may not have been initialized. Simply return in this case (don't abort)
+      // Miner may not have been initialized. 
+      // Simply return in this case (don't abort)
       if(!is_init(miner_addr)) { return };
 
-
       // Check that there was mining and validating in period.
-      // Account may not have any proofs submitted in epoch, since the resource was last emptied.
+      // Account may not have any proofs submitted in epoch, since 
+      // the resource was last emptied.
       let passed = node_above_thresh(miner_addr);
       let miner_history = borrow_global_mut<MinerProofHistory>(miner_addr);
       
@@ -328,12 +337,12 @@ module MinerState {
       if (passed) {
           let this_epoch = DiemConfig::get_current_epoch();
           miner_history.latest_epoch_mining = this_epoch;
-
-          miner_history.epochs_validating_and_mining = miner_history.epochs_validating_and_mining + 1u64;
-
-          miner_history.contiguous_epochs_validating_and_mining = miner_history.contiguous_epochs_validating_and_mining + 1u64;
-
-          miner_history.epochs_since_last_account_creation = miner_history.epochs_since_last_account_creation + 1u64;
+          miner_history.epochs_validating_and_mining 
+            = miner_history.epochs_validating_and_mining + 1u64;
+          miner_history.contiguous_epochs_validating_and_mining 
+            = miner_history.contiguous_epochs_validating_and_mining + 1u64;
+          miner_history.epochs_since_last_account_creation 
+            = miner_history.epochs_since_last_account_creation + 1u64;
       } else {
         // didn't meet the threshold, reset this count
         miner_history.contiguous_epochs_validating_and_mining = 0;
@@ -349,23 +358,28 @@ module MinerState {
       miner_history.count_proofs_in_epoch > Globals::get_epoch_mining_thres_lower()
     }
 
-    // Get weight of validator identified by address
-    // Permissions: public, only VM can call this function.
-    // TODO: change this name.
-    // Function code: 05
-    public fun get_validator_weight(account: &signer, miner_addr: address): u64 acquires MinerProofHistory {
-      let sender = Signer::address_of(account);
-      assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(130109));
+    // // Todo: Unused
+    // // TODO: change the name, this is not a getter
+    // // Get weight of validator identified by address
+    // // Permissions: public, only VM can call this function.
+    // // Function code: 05
+    // public fun get_validator_weight(account: &signer, miner_addr: address): u64 acquires MinerProofHistory {
+    //   let sender = Signer::address_of(account);
+    //   assert(
+    //     sender == CoreAddresses::DIEM_ROOT_ADDRESS(), 
+    //     Errors::requires_role(130109)
+    //   );
 
-      // Update the statistics.
-      let miner_history= borrow_global_mut<MinerProofHistory>(miner_addr);
-      let this_epoch = DiemConfig::get_current_epoch();
-      miner_history.latest_epoch_mining = this_epoch;
+    //   // Update the statistics.
+    //   let miner_history= borrow_global_mut<MinerProofHistory>(miner_addr);
+    //   let this_epoch = DiemConfig::get_current_epoch();
+    //   miner_history.latest_epoch_mining = this_epoch;
 
-      // Return its weight
-      miner_history.epochs_validating_and_mining
-    }
+    //   // Return its weight
+    //   miner_history.epochs_validating_and_mining
+    // }
 
+    // // Todo: Unused
     // //Get the number of epochs a validator has been validating and mining.
     // // Permissions: public, only VM can call this function.
     // // Function code: 05
