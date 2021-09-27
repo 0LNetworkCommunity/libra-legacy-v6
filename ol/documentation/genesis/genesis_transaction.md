@@ -4,7 +4,7 @@
 # make sure you have a set_layout.toml in ~/.0L/
 # from project root:
 
-NODE_ENV=prod make genesis
+NODE_ENV=prod make stdlib genesis
 ```
 # Genesis Transaction
 
@@ -57,6 +57,8 @@ If an element of the owner or operator list cannot be found in the genesis regis
 
 From the project root you can use the `make` helper file:
 
+The Move framework and standard library should be compiled before this step.
+
 ```
-NODE_ENV=prod make genesis
+NODE_ENV=prod make stdlib genesis
 ```
