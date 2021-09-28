@@ -73,7 +73,7 @@ or reset your terminal
 reset
 ```
 
-For more details: (../OS-Dependencies.md)
+For more details: (../devs/OS_dependencies.md)
 
 1.5. Build the source and install binaries:
 This takes a while, run inside `tmux` in case your session gets disconnected 

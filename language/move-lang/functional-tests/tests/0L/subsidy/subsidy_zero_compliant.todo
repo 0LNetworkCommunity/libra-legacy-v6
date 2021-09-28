@@ -21,7 +21,7 @@ script {
         assert(DiemSystem::is_validator(@{{alice}}), 7357300101021000);
         assert(!DiemSystem::is_validator(@{{bob}}), 7357300101031000);
         
-        MinerState::test_helper(
+        MinerState::test_helper_init_miner(
             &sender,
             Globals::get_difficulty(),
             TestFixtures::alice_0_easy_chal(),

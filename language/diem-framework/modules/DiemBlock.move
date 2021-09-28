@@ -91,8 +91,8 @@ module DiemBlock {
 
         if (AutoPay2::tick(&vm)){
             // print(&1);
-            //triggers autopay at beginning of each epoch 
-            //tick is reset at end of previous epoch
+            // triggers autopay at beginning of each epoch 
+            // tick is reset at end of previous epoch
             DiemAccount::process_escrow<GAS>(&vm);
             // print(&2);
             AutoPay2::process_autopay(&vm);

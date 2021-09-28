@@ -20,7 +20,7 @@ If you don't already have a mnemonic and block_0.json, see instructions to gener
 Then using the makefile helpers you can register as such:
 
 ```
-GENESIS_USER=<your_github_user> make ceremony register
+GITHUB_USER=<your_github_user> make ceremony register
 ```
 
 ## infrastructure
@@ -34,6 +34,14 @@ For each candidate there will be a CANDIDATE_REPO, which will have the specific 
 Tools are provided to a) fork the GENESIS_REPO b) write registration info ro CANDIDATE_REPO, and c) submit a pull-request of CANDIDATE_REPO to GENESIS_REPO.
 
 The GENESIS_REPO coordinator then has the task of manually approving all PRs.
+
+# Warning - Don't lose your Tower
+
+If you have a Delay Tower on a node: you should back up the proofs. You will want these for your identity on a new chain.
+
+```
+tar -zcvf my-tower.tar.gz ~/.0L/blocks/
+```
 
 # Registration
 
@@ -105,7 +113,7 @@ The following script does several steps:
 - fork: on github this forks the GENESIS_REPO into the CANDIDATE_REPO
 
 ```
-GENESIS_USER=<your_github_user> make ceremony
+GITHUB_USER=<your_github_user> make ceremony
 ```
 
 ## 4. Pause and check your work ##
@@ -145,7 +153,7 @@ The following script does several steps:
 - pull: submitting a pull request from CANDIDATE_REPO to GENESIS_REPO
 
 ```
-GENESIS_USER=<your_github_user> make register
+GITHUB_USER=<your_github_user> make register
 ```
 
 After this step check your data at `http://github.com/0LSF/experimental-genesis`

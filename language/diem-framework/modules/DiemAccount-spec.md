@@ -30,6 +30,17 @@ This creates a validator account.
 
 There's an extra level of rate-limiting, but this time on the side of the person sending the account creation. There's a significant attack that can be carried out if it were possible for a person to create many new validator accounts in any given time. So we use VDFs for the user onboarding as well. The onboarder needs to complete VDFs for 7 epochs before they can create a validator account. This is checked in: MinerState::can_create_val_account(sender_addr)
 
+
+### upgrade_validator_account_with_proof
+
+The function adds validator configurations to an ordinary 0L account, whose address already exists on chain.
+
+Common accounts will also have a MinerState structs. Meaning they may be mining without having been validators.
+
+Similar to creating a validator account (when the address did not previously exist), the sender is rate limited from upgrading accounts.
+
+The function signature is identical to create_validator_account_with_proof.
+
 ## Transfers
 
 WIP

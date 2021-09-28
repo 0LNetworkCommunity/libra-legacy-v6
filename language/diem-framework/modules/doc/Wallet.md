@@ -24,8 +24,6 @@
 -  [Function `list_tx_by_epoch`](#0x1_Wallet_list_tx_by_epoch)
 -  [Function `maybe_reset_rejection_counter`](#0x1_Wallet_maybe_reset_rejection_counter)
 -  [Function `maybe_freeze`](#0x1_Wallet_maybe_freeze)
--  [Function `vote_to_unfreeze`](#0x1_Wallet_vote_to_unfreeze)
--  [Function `tally_unfreeze`](#0x1_Wallet_tally_unfreeze)
 -  [Function `get_tx_args`](#0x1_Wallet_get_tx_args)
 -  [Function `get_tx_epoch`](#0x1_Wallet_get_tx_epoch)
 -  [Function `transfer_is_proposed`](#0x1_Wallet_transfer_is_proposed)
@@ -317,16 +315,19 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_init">init</a>(vm: &signer) {
-    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
 
-    <b>if</b> ((!<b>exists</b>&lt;<a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>&gt;(@0x0))) {
-      move_to&lt;<a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>&gt;(vm, <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>{
+  <b>if</b> (!<b>exists</b>&lt;<a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>&gt;(@0x0)) {
+    move_to&lt;<a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>&gt;(
+      vm,
+      <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a> {
         proposed: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(),
         approved: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(),
         rejected: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(),
         max_uid: 0,
-      })
-    };
+      }
+    )
+  };
 
   <b>if</b> (!<b>exists</b>&lt;<a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0)) {
     move_to&lt;<a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a>&gt;(vm, <a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a> {
@@ -380,20 +381,23 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_set_comm">set_comm</a>(sig: &signer) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a> {
-  <b>if</b> (<b>exists</b>&lt;<a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0)) {
-    <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
-    <b>let</b> list = <a href="Wallet.md#0x1_Wallet_get_comm_list">get_comm_list</a>();
-    <b>if</b> (!<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(&list, &addr)) {
-        <b>let</b> s = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0);
-        <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> s.list, addr);
-    };
+  <b>if</b> (!<b>exists</b>&lt;<a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0)) <b>return</b>;
 
-    move_to&lt;<a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a>&gt;(sig, <a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a> {
+  <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
+  <b>let</b> list = <a href="Wallet.md#0x1_Wallet_get_comm_list">get_comm_list</a>();
+  <b>if</b> (!<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(&list, &addr)) {
+    <b>let</b> s = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0);
+    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> s.list, addr);
+  };
+
+  move_to&lt;<a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a>&gt;(
+    sig,
+    <a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a> {
       is_frozen: <b>false</b>,
       consecutive_rejections: 0,
       unfreeze_votes: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;()
-    })
-  }
+    }
+  )
 }
 </code></pre>
 
@@ -418,13 +422,13 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_vm_remove_comm">vm_remove_comm</a>(vm: &signer, addr: address) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a> {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
-  <b>if</b> (<b>exists</b>&lt;<a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0)) {
-    <b>let</b> list = <a href="Wallet.md#0x1_Wallet_get_comm_list">get_comm_list</a>();
-    <b>let</b> (yes, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(&list, &addr);
-    <b>if</b> (yes) {
-      <b>let</b> s = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0);
-      <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>(&<b>mut</b> s.list, i);
-    }
+  <b>if</b> (!<b>exists</b>&lt;<a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0)) <b>return</b>;
+
+  <b>let</b> list = <a href="Wallet.md#0x1_Wallet_get_comm_list">get_comm_list</a>();
+  <b>let</b> (yes, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(&list, &addr);
+  <b>if</b> (yes) {
+    <b>let</b> s = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0);
+    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>(&<b>mut</b> s.list, i);
   }
 }
 </code></pre>
@@ -448,37 +452,39 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_new_timed_transfer">new_timed_transfer</a>(sender: &signer, payee: address, value: u64, description: vector&lt;u8&gt;): u64 <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>, <a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a> {
-    <b>let</b> sender_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
-    <b>let</b> list = <a href="Wallet.md#0x1_Wallet_get_comm_list">get_comm_list</a>();
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_new_timed_transfer">new_timed_transfer</a>(
+  sender: &signer, payee: address, value: u64, description: vector&lt;u8&gt;
+): u64 <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>, <a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a> {
+  <b>let</b> sender_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+  <b>let</b> list = <a href="Wallet.md#0x1_Wallet_get_comm_list">get_comm_list</a>();
+  <b>assert</b>(
+    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(&list, &sender_addr),
+    <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(<a href="Wallet.md#0x1_Wallet_ERR_PREFIX">ERR_PREFIX</a> + 001)
+  );
 
-    <b>assert</b>(
-      <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(&list, &sender_addr), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(<a href="Wallet.md#0x1_Wallet_ERR_PREFIX">ERR_PREFIX</a> + 001)
-    );
+  <b>let</b> transfers = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>&gt;(@0x0);
+  transfers.max_uid = transfers.max_uid + 1;
 
-    <b>let</b> d = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>&gt;(@0x0);
-    d.max_uid = d.max_uid + 1;
+  // add current epoch + 1
+  <b>let</b> current_epoch = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
 
-    // add current epoch + 1
-    <b>let</b> current_epoch = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
+  <b>let</b> t = <a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a> {
+    uid: transfers.max_uid,
+    expire_epoch: current_epoch + 3,
+    payer: sender_addr,
+    payee: payee,
+    value: value,
+    description: description,
+    veto: <a href="Wallet.md#0x1_Wallet_Veto">Veto</a> {
+      list: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;(),
+      count: 0,
+      threshold: 0,
+    }
+  };
 
-    <b>let</b> t = <a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a> {
-        uid: d.max_uid,
-        expire_epoch: current_epoch + 3,
-        payer: sender_addr,
-        payee: payee,
-        value: value,
-        description: description,
-        veto: <a href="Wallet.md#0x1_Wallet_Veto">Veto</a> {
-          list: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;(),
-          count: 0,
-          threshold: 0,
-        }
-    };
-
-    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(&<b>mut</b> d.proposed, t);
-    <b>return</b> d.max_uid
-  }
+  <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(&<b>mut</b> transfers.proposed, t);
+  <b>return</b> transfers.max_uid
+}
 </code></pre>
 
 
@@ -500,7 +506,10 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_find">find</a>(uid: u64, type_of: u8): (<a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option">Option</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;, u64) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_find">find</a>(
+  uid: u64,
+  type_of: u8
+): (<a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option">Option</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;, u64) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a> {
   <b>let</b> c = borrow_global&lt;<a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>&gt;(@0x0);
   <b>let</b> list = <b>if</b> (type_of == 0) {
     &c.proposed
@@ -542,7 +551,10 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_veto">veto</a>(sender: &signer, uid: u64) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>, <a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_veto">veto</a>(
+  sender: &signer,
+  uid: u64
+) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>, <a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a> {
   <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   <b>assert</b>(
     <a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(addr),
@@ -596,7 +608,6 @@
       <b>let</b> f = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a>&gt;(*&t.payer);
       f.consecutive_rejections = f.consecutive_rejections + 1;
       <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> c.rejected, t);
-
     };
 
     i = i + 1;
@@ -637,7 +648,8 @@
   <b>while</b> (k &lt; len) {
     <b>let</b> addr = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&t.veto.list, k);
     // ignore votes that are no longer in the validator set,
-    // BUT DON'T REMOVE, since they may rejoin the validator set, and shouldn't need <b>to</b> vote again.
+    // BUT DON'T REMOVE, since they may rejoin the validator set,
+    // and shouldn't need <b>to</b> vote again.
 
     <b>if</b> (<a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(addr)) {
       votes = votes + <a href="NodeWeight.md#0x1_NodeWeight_proof_of_weight">NodeWeight::proof_of_weight</a>(addr)
@@ -772,84 +784,10 @@
 
 
 <pre><code><b>fun</b> <a href="Wallet.md#0x1_Wallet_maybe_freeze">maybe_freeze</a>(wallet: address) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a> {
-  <b>let</b> f = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a>&gt;(wallet);
-  <b>if</b> (f.consecutive_rejections &gt; 2) {
+  <b>if</b> (borrow_global&lt;<a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a>&gt;(wallet).consecutive_rejections &gt; 2) {
+    <b>let</b> f = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a>&gt;(wallet);
     f.is_frozen = <b>true</b>;
   }
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_Wallet_vote_to_unfreeze"></a>
-
-## Function `vote_to_unfreeze`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_vote_to_unfreeze">vote_to_unfreeze</a>(val: &signer, wallet: address)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_vote_to_unfreeze">vote_to_unfreeze</a>(val: &signer, wallet: address) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a> {
-  <b>let</b> f = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a>&gt;(wallet);
-  <b>let</b> val_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(val);
-  <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(&<b>mut</b> f.unfreeze_votes, val_addr);
-
-  <b>if</b> (<a href="Wallet.md#0x1_Wallet_tally_unfreeze">tally_unfreeze</a>(wallet)) {
-    <b>let</b> f = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a>&gt;(wallet);
-    f.is_frozen = <b>false</b>;
-  }
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_Wallet_tally_unfreeze"></a>
-
-## Function `tally_unfreeze`
-
-
-
-<pre><code><b>fun</b> <a href="Wallet.md#0x1_Wallet_tally_unfreeze">tally_unfreeze</a>(wallet: address): bool
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="Wallet.md#0x1_Wallet_tally_unfreeze">tally_unfreeze</a>(wallet: address): bool <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a> {
-  <b>let</b> f = borrow_global&lt;<a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a>&gt;(wallet);
-
-  <b>let</b> votes = 0;
-  <b>let</b> threshold = <a href="Wallet.md#0x1_Wallet_calculate_proportional_voting_threshold">calculate_proportional_voting_threshold</a>();
-
-  <b>let</b> k = 0;
-  <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&f.unfreeze_votes);
-
-  <b>while</b> (k &lt; len) {
-    <b>let</b> addr = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&f.unfreeze_votes, k);
-    // ignore votes that are no longer in the validator set,
-    // BUT DON'T REMOVE, since they may rejoin the validator set, and shouldn't need <b>to</b> vote again.
-
-    <b>if</b> (<a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(addr)) {
-      votes = votes + <a href="NodeWeight.md#0x1_NodeWeight_proof_of_weight">NodeWeight::proof_of_weight</a>(addr)
-    };
-    k = k + 1;
-  };
-
-  <b>return</b> votes &gt; threshold
 }
 </code></pre>
 

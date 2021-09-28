@@ -33,6 +33,7 @@ before and after every transaction.
 -  [Function `initialize`](#0x1_DiemAccount_initialize)
 -  [Function `create_user_account_with_proof`](#0x1_DiemAccount_create_user_account_with_proof)
 -  [Function `create_validator_account_with_proof`](#0x1_DiemAccount_create_validator_account_with_proof)
+-  [Function `upgrade_validator_account_with_proof`](#0x1_DiemAccount_upgrade_validator_account_with_proof)
 -  [Function `has_published_account_limits`](#0x1_DiemAccount_has_published_account_limits)
 -  [Function `should_track_limits_for_account`](#0x1_DiemAccount_should_track_limits_for_account)
 -  [Function `deposit`](#0x1_DiemAccount_deposit)
@@ -1394,19 +1395,19 @@ Initialize this module. This is only callable from genesis.
     challenge: &vector&lt;u8&gt;,
     solution: &vector&lt;u8&gt;,
 ):address <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
-    // Rate limit <b>with</b> vdf proof.
-    <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(
-        challenge,
-        &<a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>(),
-        solution
-    );
-    <b>assert</b>(valid, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(120101));
     <b>let</b> (new_account_address, auth_key_prefix) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(challenge);
     <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
     <a href="Roles.md#0x1_Roles_new_user_role_with_proof">Roles::new_user_role_with_proof</a>(&new_signer);
     <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_signer);
     <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_signer, <b>false</b>);
     <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_signer, auth_key_prefix);
+
+    // Init the miner state
+    // this verifies the <a href="VDF.md#0x1_VDF">VDF</a> proof, which we <b>use</b> <b>to</b> rate limit account creation.
+    // account will not be created <b>if</b> this step fails.
+    <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
+    <a href="MinerState.md#0x1_MinerState_init_miner_state">MinerState::init_miner_state</a>(&new_signer, challenge, solution);
+
     new_account_address
 }
 </code></pre>
@@ -1451,16 +1452,33 @@ Initialize this module. This is only callable from genesis.
         <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EINSUFFICIENT_BALANCE">EINSUFFICIENT_BALANCE</a>)
     );
 
-    <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(
-        challenge,
-        &<a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>(),
-        solution
-    );
-    <b>assert</b>(valid, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(120103));
+    // <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(
+    //     challenge,
+    //     &<a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>(),
+    //     solution
+    // );
+    // <b>assert</b>(valid, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(120103));
 
     // Create Owner Account
     <b>let</b> (new_account_address, auth_key_prefix) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(challenge);
     <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
+
+    // <b>if</b> the new account <b>exists</b>, the function is meant <b>to</b> be upgrading the account.
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(new_account_address)) {
+      <b>return</b> <a href="DiemAccount.md#0x1_DiemAccount_upgrade_validator_account_with_proof">upgrade_validator_account_with_proof</a>(
+        sender,
+        challenge,
+        solution,
+        ow_human_name,
+        op_address,
+        op_auth_key_prefix,
+        op_consensus_pubkey,
+        op_validator_network_addresses,
+        op_fullnode_network_addresses,
+        op_human_name,
+      )
+    };
+
     // The dr_account account is verified <b>to</b> have the diem root role in
     // `<a href="Roles.md#0x1_Roles_new_validator_role">Roles::new_validator_role</a>`
     <a href="Roles.md#0x1_Roles_new_validator_role_with_proof">Roles::new_validator_role_with_proof</a>(&new_signer);
@@ -1468,10 +1486,9 @@ Initialize this module. This is only callable from genesis.
     <a href="ValidatorConfig.md#0x1_ValidatorConfig_publish_with_proof">ValidatorConfig::publish_with_proof</a>(&new_signer, ow_human_name);
     <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_signer, <b>false</b>);
 
-    // NOTE: <a href="VDF.md#0x1_VDF">VDF</a> verification is being called twice!
+    // This also verifies the <a href="VDF.md#0x1_VDF">VDF</a> proof, which we <b>use</b> <b>to</b> rate limit account creation.
     <a href="MinerState.md#0x1_MinerState_init_miner_state">MinerState::init_miner_state</a>(&new_signer, challenge, solution);
-    // TODO: Should fullnode init happen here, or under MinerState::init?
-    // FullnodeState::init(&new_signer);
+
     // Create OP Account
     <b>let</b> new_op_account = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(op_address);
     <a href="Roles.md#0x1_Roles_new_validator_operator_role_with_proof">Roles::new_validator_operator_role_with_proof</a>(&new_op_account);
@@ -1498,6 +1515,117 @@ Initialize this module. This is only callable from genesis.
 
     <a href="MinerState.md#0x1_MinerState_reset_rate_limit">MinerState::reset_rate_limit</a>(sender);
 
+    // Transfer for owner
+    <a href="DiemAccount.md#0x1_DiemAccount_onboarding_gas_transfer">onboarding_gas_transfer</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender, new_account_address);
+    // Transfer for operator <b>as</b> well
+    <a href="DiemAccount.md#0x1_DiemAccount_onboarding_gas_transfer">onboarding_gas_transfer</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender, op_address);
+
+    <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
+    <a href="DiemAccount.md#0x1_DiemAccount_set_slow">set_slow</a>(&new_signer);
+
+    new_account_address
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_upgrade_validator_account_with_proof"></a>
+
+## Function `upgrade_validator_account_with_proof`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_upgrade_validator_account_with_proof">upgrade_validator_account_with_proof</a>(sender: &signer, challenge: &vector&lt;u8&gt;, solution: &vector&lt;u8&gt;, ow_human_name: vector&lt;u8&gt;, op_address: address, op_auth_key_prefix: vector&lt;u8&gt;, op_consensus_pubkey: vector&lt;u8&gt;, op_validator_network_addresses: vector&lt;u8&gt;, op_fullnode_network_addresses: vector&lt;u8&gt;, op_human_name: vector&lt;u8&gt;): address
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_upgrade_validator_account_with_proof">upgrade_validator_account_with_proof</a>(
+    sender: &signer,
+    challenge: &vector&lt;u8&gt;,
+    solution: &vector&lt;u8&gt;,
+    ow_human_name: vector&lt;u8&gt;,
+    op_address: address,
+    op_auth_key_prefix: vector&lt;u8&gt;,
+    op_consensus_pubkey: vector&lt;u8&gt;,
+    op_validator_network_addresses: vector&lt;u8&gt;,
+    op_fullnode_network_addresses: vector&lt;u8&gt;,
+    op_human_name: vector&lt;u8&gt;,
+):address <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>, <a href="DiemAccount.md#0x1_DiemAccount_SlowWalletList">SlowWalletList</a> { //////// 0L ////////
+    <b>let</b> sender_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+    // Rate limit spam accounts.
+    <b>assert</b>(<a href="MinerState.md#0x1_MinerState_can_create_val_account">MinerState::can_create_val_account</a>(sender_addr), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(120103));
+    // Check there's enough balance for bootstrapping both operator and validator account
+    <b>assert</b>(
+        <a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender_addr) &gt; 2 * <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>,
+        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EINSUFFICIENT_BALANCE">EINSUFFICIENT_BALANCE</a>)
+    );
+
+    // Create Owner Account
+    <b>let</b> (new_account_address, _auth_key_prefix) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(challenge);
+    <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
+
+    <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(new_account_address), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EACCOUNT">EACCOUNT</a>));
+    <b>assert</b>(<a href="MinerState.md#0x1_MinerState_is_init">MinerState::is_init</a>(new_account_address), 120104);
+
+    // verifies the <a href="VDF.md#0x1_VDF">VDF</a> proof, since we are not calling <a href="MinerState.md#0x1_MinerState">MinerState</a> init.
+    <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(
+        challenge,
+        &<a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>(),
+        solution
+    );
+    <b>assert</b>(valid, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(120105));
+
+
+    // The dr_account account is verified <b>to</b> have the diem root role in
+    // `<a href="Roles.md#0x1_Roles_new_validator_role">Roles::new_validator_role</a>`
+    <a href="Roles.md#0x1_Roles_new_validator_role_with_proof">Roles::new_validator_role_with_proof</a>(&new_signer);
+    <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_signer);
+    <a href="ValidatorConfig.md#0x1_ValidatorConfig_publish_with_proof">ValidatorConfig::publish_with_proof</a>(&new_signer, ow_human_name);
+
+    // currencies already added for owner account
+    // <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_signer, <b>false</b>);
+
+    // checks the operator account has not been created yet.
+
+    // Create OP Account
+    <b>let</b> new_op_account = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(op_address);
+    <a href="Roles.md#0x1_Roles_new_validator_operator_role_with_proof">Roles::new_validator_operator_role_with_proof</a>(&new_op_account);
+    <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_op_account);
+    <a href="ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_publish_with_proof">ValidatorOperatorConfig::publish_with_proof</a>(&new_op_account, op_human_name);
+
+    <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_op_account, <b>false</b>);
+
+    // Link owner <b>to</b> OP
+    <a href="ValidatorConfig.md#0x1_ValidatorConfig_set_operator">ValidatorConfig::set_operator</a>(&new_signer, op_address);
+    // OP sends network info <b>to</b> Owner config"
+    <a href="ValidatorConfig.md#0x1_ValidatorConfig_set_config">ValidatorConfig::set_config</a>(
+        &new_op_account, // signer
+        new_account_address,
+        op_consensus_pubkey,
+        op_validator_network_addresses,
+        op_fullnode_network_addresses
+    );
+
+    // User can join validator universe list, but will only join <b>if</b>
+    // the mining is above the threshold in the preceeding period.
+    <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_self">ValidatorUniverse::add_self</a>(&new_signer);
+
+    // no need <b>to</b> make the owner address.
+
+    // <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_signer, auth_key_prefix);
+
+    <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_op_account, op_auth_key_prefix);
+
+    <a href="MinerState.md#0x1_MinerState_reset_rate_limit">MinerState::reset_rate_limit</a>(sender);
+
+    // the miner who is upgrading may have coins, but better safe...
     // Transfer for owner
     <a href="DiemAccount.md#0x1_DiemAccount_onboarding_gas_transfer">onboarding_gas_transfer</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender, new_account_address);
     // Transfer for operator <b>as</b> well
