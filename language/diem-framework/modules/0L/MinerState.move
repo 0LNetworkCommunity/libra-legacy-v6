@@ -171,31 +171,30 @@ module MinerState {
       }
     }
 
-    // Todo: Unused
-    // // use 0x1::Debug::print;
-    // // Helper function for genesis to process genesis proofs.
-    // // Permissions: PUBLIC, ONLY VM, AT GENESIS.
-    // public fun genesis_helper(
-    //   vm_sig: &signer,
-    //   miner_sig: &signer,
-    //   challenge: vector<u8>,
-    //   solution: vector<u8>
-    // ) acquires MinerProofHistory, MinerList, MinerStats {
-    //   // In rust the vm_genesis creates a Signer for the miner. 
-    //   // So the SENDER is not the same and the Signer.
+    // use 0x1::Debug::print;
+    // Helper function for genesis to process genesis proofs.
+    // Permissions: PUBLIC, ONLY VM, AT GENESIS.
+    public fun genesis_helper(
+      vm_sig: &signer,
+      miner_sig: &signer,
+      challenge: vector<u8>,
+      solution: vector<u8>
+    ) acquires MinerProofHistory, MinerList, MinerStats {
+      // In rust the vm_genesis creates a Signer for the miner. 
+      // So the SENDER is not the same and the Signer.
 
-    //   // TODO: Previously in OLv3 is_genesis() returned true. 
-    //   // How to check that this is part of genesis? is_genesis returns false here.
-    //   // assert(DiemTimestamp::is_genesis(), 130101024010);
-    //   // print(&10001);
-    //   init_miner_state(miner_sig, &challenge, &solution);
-    //   // print(&10002);
-    //   // TODO: Move this elsewhere? 
-    //   // Initialize stats for first validator set from rust genesis. 
-    //   let node_addr = Signer::address_of(miner_sig);
-    //   // print(&10003);
-    //   Stats::init_address(vm_sig, node_addr);
-    // }
+      // TODO: Previously in OLv3 is_genesis() returned true. 
+      // How to check that this is part of genesis? is_genesis returns false here.
+      // assert(DiemTimestamp::is_genesis(), 130101024010);
+      // print(&10001);
+      init_miner_state(miner_sig, &challenge, &solution);
+      // print(&10002);
+      // TODO: Move this elsewhere? 
+      // Initialize stats for first validator set from rust genesis. 
+      let node_addr = Signer::address_of(miner_sig);
+      // print(&10003);
+      Stats::init_address(vm_sig, node_addr);
+    }
 
     /// This function is called to submit proofs to the chain 
     /// Note, the sender of this transaction can differ from the signer, 
