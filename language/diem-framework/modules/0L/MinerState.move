@@ -15,6 +15,7 @@ module MinerState {
     use 0x1::Hash;
     use 0x1::DiemConfig;
     use 0x1::Signer;
+    use 0x1::Stats;
     use 0x1::StagingNet;
     use 0x1::Testnet;
     use 0x1::ValidatorConfig;
