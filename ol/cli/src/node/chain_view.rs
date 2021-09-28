@@ -294,7 +294,7 @@ impl Node {
         address: *payee, 
         payers: stat.payers, 
         average_percent: stat.amount as f64 / stat.payers as f64,
-        balance: self.get_account_balance(*payee).unwrap(), 
+        balance: self.get_account_balance(*payee).unwrap_or(0.0), 
         sum_percentage: stat.amount,
         all_percentage: (stat.amount * 10000) as f64 / total as f64,
       }
