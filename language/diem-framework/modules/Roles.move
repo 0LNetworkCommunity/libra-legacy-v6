@@ -156,9 +156,11 @@ module Roles {
 
     /// upgrades a user role to validator role
     public fun upgrade_user_to_validator(
-        new_account: &signer
+        new_account: &signer, 
+        vm: &signer,
     ) acquires RoleId {
         print(&600);
+        Roles::assert_diem_root(vm);
         let addr = Signer::address_of(new_account);
         // grant_role(new_account, USER_ID);
         let role = borrow_global_mut<RoleId>(addr);
@@ -177,9 +179,10 @@ module Roles {
     /// Needs to be a signer, is called from LibraAccount, which can create a signer. 
     // Otherwise, not callable publicly, and can only grant role to the signer's address.
     public fun new_validator_role_with_proof(
-        new_account: &signer
+        new_account: &signer, 
+        vm: &signer,
     ) {
-        // assert_libra_root(creating_account);
+        Roles::assert_diem_root(vm);
         grant_role(new_account, VALIDATOR_ROLE_ID);
     }
 
