@@ -22,7 +22,7 @@ script {
     assert(DiemAccount::balance<GAS>(eve_addr) == 0, 735701);
 
     // is a slow wallet
-    assert(DiemAccount::is_slow(eve_addr), 735702);
+    assert(!DiemAccount::is_slow(eve_addr), 735702);
   }
 }
 // check: EXECUTED
@@ -82,7 +82,6 @@ use 0x1::Reconfigure;
 use 0x1::DiemAccount;
 use 0x1::GAS::GAS;
 use 0x1::ValidatorUniverse;
-use 0x1::Debug::print;
 use 0x1::ValidatorConfig;
 
 fun main(vm: signer) {
@@ -93,10 +92,8 @@ fun main(vm: signer) {
     // need to remove testnet for this test, since testnet does not ratelimit 
     // account creation.
   let oper_eve = ValidatorConfig::get_operator(eve_addr);
-  print(&oper_eve);
   let bal = DiemAccount::balance<GAS>(oper_eve);
   // we expect 1 gas (1,000,000 microgas) from bob's transfer
-  print(&bal);
   assert(bal == 1000000, 7357401003);
 
   // validator should have jailedbit
@@ -105,5 +102,7 @@ fun main(vm: signer) {
   assert(ValidatorUniverse::is_in_universe(eve_addr), 7357401005);
   // should not be jailed
   assert(!ValidatorUniverse::is_jailed(eve_addr), 7357401006);
+  // is a slow wallet
+  assert(DiemAccount::is_slow(eve_addr), 7357401007);
 }
 }
