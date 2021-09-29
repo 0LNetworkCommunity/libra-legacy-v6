@@ -20,7 +20,6 @@ module Reconfigure { // TODO: Rename to Boundary
     use 0x1::ValidatorUniverse;
     use 0x1::AutoPay2;
     use 0x1::Epoch;
-    // use 0x1::FullnodeState;
     use 0x1::DiemConfig;
     use 0x1::Audit;
     use 0x1::DiemAccount;
@@ -77,8 +76,6 @@ module Reconfigure { // TODO: Rename to Boundary
         print(&1800201);
         // fullnode subsidy is a fraction of the total subsidy available to validators.
         let proof_price = FullnodeSubsidy::get_proof_price(nominal_subsidy_per_node);
-        // print(&nominal_subsidy_per_node);
-        // print(&proof_price);
 
         let k = 0;
         // Distribute mining subsidy to fullnodes
@@ -189,36 +186,24 @@ module Reconfigure { // TODO: Rename to Boundary
     }
 
     fun reset_counters(vm: &signer, proposed_set: vector<address>, height_now: u64) {
-        // print(&03280);
 
-        // Reset Counters
+        // Reset Stats
         Stats::reconfig(vm, &proposed_set);
-        // print(&03290);
 
         // Migrate MinerState list from elegible: in case there is no minerlist 
         // struct, use eligible for migrate_eligible_validators
         let eligible = ValidatorUniverse::get_eligible_validators(vm);
         MinerState::reconfig(vm, &eligible);
-        // print(&032100);
 
         // Reconfigure the network
         DiemSystem::bulk_update_validators(vm, proposed_set);
-        // print(&032110);
-
-        // reset clocks
-        // FullnodeSubsidy::fullnode_reconfig(vm);
-        // print(&032120);
 
         // process community wallets
-        DiemAccount::process_community_wallets(vm, 
-        DiemConfig::get_current_epoch());
-        // print(&032130);
-
+        DiemAccount::process_community_wallets(vm, DiemConfig::get_current_epoch());
+        
+        // reset counters
         AutoPay2::reconfig_reset_tick(vm);
-        // print(&032140);
-
         Epoch::reset_timer(vm, height_now);
-        // print(&032150);
     }
 }
 }

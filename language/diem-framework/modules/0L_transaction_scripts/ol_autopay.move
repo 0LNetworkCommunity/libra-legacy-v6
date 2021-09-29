@@ -4,7 +4,6 @@ module AutoPayScripts {
     use 0x1::AutoPay2;
     use 0x1::Signer;
     use 0x1::Errors;
-    use 0x1::Debug::print;
 
     const EAUTOPAY_NOT_ENABLED: u64 = 01001;
 
@@ -34,7 +33,6 @@ module AutoPayScripts {
         end_epoch: u64,
         value: u64,
     ) {
-        print(&777777777777);
         let account = Signer::address_of(&sender);
         if (!AutoPay2::is_enabled(account)) {
             AutoPay2::enable_autopay(&sender);

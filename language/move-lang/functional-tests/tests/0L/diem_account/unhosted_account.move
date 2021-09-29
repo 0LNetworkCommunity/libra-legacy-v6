@@ -22,7 +22,7 @@ script {
     assert(DiemAccount::balance<GAS>(eve_addr) == 0, 735701);
 
     // is a slow wallet
-    assert(DiemAccount::is_slow(eve_addr), 735702);
+    assert(!DiemAccount::is_slow(eve_addr), 735702);
   }
 }
 // check: EXECUTED
