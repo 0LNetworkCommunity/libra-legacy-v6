@@ -19,6 +19,7 @@ For a conceptual discussion of roles, see the [DIP-2 document][ACCESS_CONTROL].
 -  [Function `new_designated_dealer_role`](#0x1_Roles_new_designated_dealer_role)
 -  [Function `new_validator_role`](#0x1_Roles_new_validator_role)
 -  [Function `new_user_role_with_proof`](#0x1_Roles_new_user_role_with_proof)
+-  [Function `upgrade_user_to_validator`](#0x1_Roles_upgrade_user_to_validator)
 -  [Function `new_validator_role_with_proof`](#0x1_Roles_new_validator_role_with_proof)
 -  [Function `new_validator_operator_role_with_proof`](#0x1_Roles_new_validator_operator_role_with_proof)
 -  [Function `new_validator_operator_role`](#0x1_Roles_new_validator_operator_role)
@@ -54,6 +55,7 @@ For a conceptual discussion of roles, see the [DIP-2 document][ACCESS_CONTROL].
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
@@ -475,6 +477,41 @@ Needs to be a signer, is called from LibraAccount, which can create a signer.
 
 </details>
 
+<a name="0x1_Roles_upgrade_user_to_validator"></a>
+
+## Function `upgrade_user_to_validator`
+
+upgrades a user role to validator role
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_upgrade_user_to_validator">upgrade_user_to_validator</a>(new_account: &signer, vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_upgrade_user_to_validator">upgrade_user_to_validator</a>(
+    new_account: &signer,
+    vm: &signer,
+) <b>acquires</b> <a href="Roles.md#0x1_Roles_RoleId">RoleId</a> {
+    print(&600);
+    <a href="Roles.md#0x1_Roles_assert_diem_root">assert_diem_root</a>(vm);
+    <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(new_account);
+    // <a href="Roles.md#0x1_Roles_grant_role">grant_role</a>(new_account, <a href="Roles.md#0x1_Roles_USER_ID">USER_ID</a>);
+    <b>let</b> role = borrow_global_mut&lt;<a href="Roles.md#0x1_Roles_RoleId">RoleId</a>&gt;(addr);
+    print(role);
+    <b>assert</b>(role.role_id == <a href="Roles.md#0x1_Roles_USER_ID">USER_ID</a>, <a href="Roles.md#0x1_Roles_EROLE_ID">EROLE_ID</a>);
+    role.role_id = <a href="Roles.md#0x1_Roles_VALIDATOR_ROLE_ID">VALIDATOR_ROLE_ID</a>;
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_Roles_new_validator_role_with_proof"></a>
 
 ## Function `new_validator_role_with_proof`
@@ -485,7 +522,7 @@ Permissions: PUBLIC, ANYONE, SIGNER
 Needs to be a signer, is called from LibraAccount, which can create a signer.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_new_validator_role_with_proof">new_validator_role_with_proof</a>(new_account: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_new_validator_role_with_proof">new_validator_role_with_proof</a>(new_account: &signer, vm: &signer)
 </code></pre>
 
 
@@ -495,9 +532,10 @@ Needs to be a signer, is called from LibraAccount, which can create a signer.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_new_validator_role_with_proof">new_validator_role_with_proof</a>(
-    new_account: &signer
-) {
-    // assert_libra_root(creating_account);
+    new_account: &signer,
+    vm: &signer,
+) <b>acquires</b> <a href="Roles.md#0x1_Roles_RoleId">RoleId</a> {
+    <a href="Roles.md#0x1_Roles_assert_diem_root">assert_diem_root</a>(vm);
     <a href="Roles.md#0x1_Roles_grant_role">grant_role</a>(new_account, <a href="Roles.md#0x1_Roles_VALIDATOR_ROLE_ID">VALIDATOR_ROLE_ID</a>);
 }
 </code></pre>

@@ -160,7 +160,7 @@ module Roles {
         vm: &signer,
     ) acquires RoleId {
         print(&600);
-        Roles::assert_diem_root(vm);
+        assert_diem_root(vm);
         let addr = Signer::address_of(new_account);
         // grant_role(new_account, USER_ID);
         let role = borrow_global_mut<RoleId>(addr);
@@ -181,8 +181,8 @@ module Roles {
     public fun new_validator_role_with_proof(
         new_account: &signer, 
         vm: &signer,
-    ) {
-        Roles::assert_diem_root(vm);
+    ) acquires RoleId {
+        assert_diem_root(vm);
         grant_role(new_account, VALIDATOR_ROLE_ID);
     }
 
