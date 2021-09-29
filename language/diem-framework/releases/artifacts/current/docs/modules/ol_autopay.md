@@ -12,7 +12,6 @@
 
 
 <pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay2">0x1::AutoPay2</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 </code></pre>
@@ -114,7 +113,6 @@
     end_epoch: u64,
     value: u64,
 ) {
-    print(&777777777777);
     <b>let</b> account = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(&sender);
     <b>if</b> (!<a href="AutoPay.md#0x1_AutoPay2_is_enabled">AutoPay2::is_enabled</a>(account)) {
         <a href="AutoPay.md#0x1_AutoPay2_enable_autopay">AutoPay2::enable_autopay</a>(&sender);

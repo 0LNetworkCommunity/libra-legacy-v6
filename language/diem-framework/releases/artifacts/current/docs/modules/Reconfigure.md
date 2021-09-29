@@ -114,8 +114,6 @@
     print(&1800201);
     // fullnode subsidy is a fraction of the total subsidy available <b>to</b> validators.
     <b>let</b> proof_price = <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_get_proof_price">FullnodeSubsidy::get_proof_price</a>(nominal_subsidy_per_node);
-    // print(&nominal_subsidy_per_node);
-    // print(&proof_price);
 
     <b>let</b> k = 0;
     // Distribute mining subsidy <b>to</b> fullnodes
@@ -286,36 +284,24 @@
 
 
 <pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, height_now: u64) {
-    // print(&03280);
 
-    // Reset Counters
+    // Reset <a href="Stats.md#0x1_Stats">Stats</a>
     <a href="Stats.md#0x1_Stats_reconfig">Stats::reconfig</a>(vm, &proposed_set);
-    // print(&03290);
 
     // Migrate <a href="MinerState.md#0x1_MinerState">MinerState</a> list from elegible: in case there is no minerlist
     // <b>struct</b>, <b>use</b> eligible for migrate_eligible_validators
     <b>let</b> eligible = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm);
     <a href="MinerState.md#0x1_MinerState_reconfig">MinerState::reconfig</a>(vm, &eligible);
-    // print(&032100);
 
     // <a href="Reconfigure.md#0x1_Reconfigure">Reconfigure</a> the network
     <a href="DiemSystem.md#0x1_DiemSystem_bulk_update_validators">DiemSystem::bulk_update_validators</a>(vm, proposed_set);
-    // print(&032110);
-
-    // reset clocks
-    // FullnodeSubsidy::fullnode_reconfig(vm);
-    // print(&032120);
 
     // process community wallets
-    <a href="DiemAccount.md#0x1_DiemAccount_process_community_wallets">DiemAccount::process_community_wallets</a>(vm,
-    <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>());
-    // print(&032130);
+    <a href="DiemAccount.md#0x1_DiemAccount_process_community_wallets">DiemAccount::process_community_wallets</a>(vm, <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>());
 
+    // reset counters
     <a href="AutoPay.md#0x1_AutoPay2_reconfig_reset_tick">AutoPay2::reconfig_reset_tick</a>(vm);
-    // print(&032140);
-
     <a href="Epoch.md#0x1_Epoch_reset_timer">Epoch::reset_timer</a>(vm, height_now);
-    // print(&032150);
 }
 </code></pre>
 

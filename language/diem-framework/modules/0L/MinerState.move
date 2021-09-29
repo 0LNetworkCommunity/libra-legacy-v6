@@ -246,8 +246,11 @@ address 0x1 {
       // Get a mutable ref to the current state
       let miner_history = borrow_global_mut<MinerProofHistory>(miner_addr);
 
+      // NOTE: The upper limit is an issue for chains which rely on verifying towers from other chains.
+      // this possibly should only be enabled after bootstrapping of a network.
+
       // return early if the miner is running too fast, no advantage to asics
-      assert(miner_history.count_proofs_in_epoch < Globals::get_epoch_mining_thres_upper(), Errors::invalid_state(130106));
+      // assert(miner_history.count_proofs_in_epoch < Globals::get_epoch_mining_thres_upper(), Errors::invalid_state(130106));
 
       // If not genesis proof, check hash to ensure the proof continues the chain
       if (steady_state) {

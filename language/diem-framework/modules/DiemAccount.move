@@ -459,7 +459,7 @@ module DiemAccount {
     public fun create_user_account_with_proof(
         challenge: &vector<u8>,
         solution: &vector<u8>,
-    ):address acquires AccountOperationsCapability, SlowWalletList {        
+    ):address acquires AccountOperationsCapability {        
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
         Roles::new_user_role_with_proof(&new_signer);
@@ -472,7 +472,7 @@ module DiemAccount {
         // account will not be created if this step fails.
         let new_signer = create_signer(new_account_address);
         MinerState::init_miner_state(&new_signer, challenge, solution);
-        set_slow(&new_signer);
+        // set_slow(&new_signer);
         new_account_address
     }
 
