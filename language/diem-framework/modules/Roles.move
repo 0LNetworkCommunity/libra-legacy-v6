@@ -154,6 +154,7 @@ module Roles {
 
     use 0x1::Debug::print;
 
+    //////// 0L ////////
     /// upgrades a user role to validator role
     public fun upgrade_user_to_validator(
         new_account: &signer, 
