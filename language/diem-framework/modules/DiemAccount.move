@@ -536,7 +536,7 @@ module DiemAccount {
         };
 
         // TODO: Perhaps this needs to be moved to the epoch boundary, so that it is only the VM which can escalate these privileges.
-        Roles::new_validator_role_with_proof(&new_signer);
+        Roles::new_validator_role_with_proof(&new_signer, &create_signer(CoreAddresses::DIEM_ROOT_ADDRESS()));
         Event::publish_generator(&new_signer);
         ValidatorConfig::publish_with_proof(&new_signer, ow_human_name);
         add_currencies_for_account<GAS>(&new_signer, false);
@@ -631,7 +631,7 @@ print(&503);
 
         // TODO: Perhaps this needs to be moved to the epoch boundary, so that it is only the VM which can escalate these privileges.
         // Upgrade the user
-        Roles::upgrade_user_to_validator(&new_signer);
+        Roles::upgrade_user_to_validator(&new_signer, &create_signer(CoreAddresses::DIEM_ROOT_ADDRESS()));
         print(&504);
         // Event::publish_generator(&new_signer);
         print(&505);
