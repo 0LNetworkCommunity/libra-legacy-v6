@@ -13,7 +13,6 @@ module Testnet {
 
     struct IsTestnet has key { }
 
-    // Todo: never used, is this ok?
     public fun initialize(account: &signer) {
         assert(
             Signer::address_of(account) == CoreAddresses::DIEM_ROOT_ADDRESS(),
@@ -59,8 +58,6 @@ module StagingNet {
     public fun is_staging_net(): bool {
         exists<IsStagingNet>(CoreAddresses::DIEM_ROOT_ADDRESS())
     }
-
-    // Todo: no remove_staging_net()? Can this be a problem in production?
 
 }
 }
