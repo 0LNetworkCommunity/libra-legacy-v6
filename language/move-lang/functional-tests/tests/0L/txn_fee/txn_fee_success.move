@@ -93,14 +93,14 @@ script {
         let bal = TransactionFee::get_amount_to_distribute(vm);
         assert(bal == 1000, 7357190103011000);
 
-        let (validators, fee_ratios) = DiemSystem::get_fee_ratio(vm, 0, 15);
+        let (validators, _) = DiemSystem::get_fee_ratio(vm, 0, 15);
         //TODO: The fee ratio is unused in this proposal.
-        Subsidy::process_fees(vm, &validators, &fee_ratios);
+        Subsidy::process_fees(vm, &validators);
 
         assert(DiemAccount::balance<GAS>(@{{alice}}) == 1001000, 7357190103021000);
         assert(DiemAccount::balance<GAS>(@{{bob}}) == 1000000, 7357190103031000);
-        assert(DiemAccount::balance<GAS>(@{{carol}}) == 1000000, 7357190103031000);
-        assert(DiemAccount::balance<GAS>(@{{dave}}) == 1000000, 7357190103031000);
+        assert(DiemAccount::balance<GAS>(@{{carol}}) == 1000000, 7357190103041000);
+        assert(DiemAccount::balance<GAS>(@{{dave}}) == 1000000, 7357190103051000);
     }
 }
 // check: EXECUTED

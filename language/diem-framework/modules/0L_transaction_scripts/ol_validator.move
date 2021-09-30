@@ -41,7 +41,7 @@ module ValidatorScripts {
         let addr = Signer::address_of(&validator);
         // if is above threshold continue, or raise error.
         assert(
-            MinerState::node_above_thresh(&validator, addr), 
+            MinerState::node_above_thresh(addr), 
             Errors::invalid_state(NOT_ABOVE_THRESH_JOIN)
         );
         // if is not in universe, add back
@@ -71,7 +71,7 @@ module ValidatorScripts {
         let addr = Signer::address_of(validator);
         // if is above threshold continue, or raise error.
         assert(
-            MinerState::node_above_thresh(validator, addr), 
+            MinerState::node_above_thresh(addr), 
             Errors::invalid_state(NOT_ABOVE_THRESH_ADD)
         );
         // if is not in universe, add back

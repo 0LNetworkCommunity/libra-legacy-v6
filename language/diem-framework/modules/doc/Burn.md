@@ -233,8 +233,9 @@
     <b>if</b> (borrow_global&lt;<a href="Burn.md#0x1_Burn_BurnPreference">BurnPreference</a>&gt;(payer).send_community) {
       <b>return</b> <a href="Burn.md#0x1_Burn_send">send</a>(vm, payer, value)
     }
-  };
-  <a href="Burn.md#0x1_Burn_burn">burn</a>(vm, payer, value)
+  } <b>else</b> {
+    <a href="Burn.md#0x1_Burn_burn">burn</a>(vm, payer, value)
+  }
 }
 </code></pre>
 

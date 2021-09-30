@@ -30,11 +30,12 @@ MNEM="talent sunset lizard pill fame nuclear spy noodle basket okay critic grow 
 NUM_NODES = 2
 
 ifndef PREV_VERSION
-PREV_VERSION=v5
+#TODO: decide how to programmatically tell the tests what version is in production.
+PREV_VERSION = $(shell git branch --show-current)
 endif
 
 ifndef BRANCH_NAME
-BRANCH_NAME=v5
+BRANCH_NAME = $(shell git branch --show-current)
 endif
 
 # USAGE: BRANCH_NAME=<latest branch> make -f test-upgrade.mk upgrade

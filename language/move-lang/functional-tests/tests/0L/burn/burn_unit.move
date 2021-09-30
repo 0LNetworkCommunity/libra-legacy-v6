@@ -1,4 +1,4 @@
-//! account: alice, 1000000GAS, 0, validator
+//! account: alice, 2000000GAS, 0, validator
 //! account: bob, 1000000GAS
 //! account: carol, 1000000GAS
 
@@ -76,7 +76,7 @@ script {
     Burn::epoch_start_burn(&vm, @{{alice}}, 100000);
 
     let bal_alice = DiemAccount::balance<GAS>(@{{alice}});
-    assert(bal_alice == 200000, 7357007); // rounding issues
+    assert(bal_alice == 1200000, 7357007); // rounding issues
     
     // unchanged balance
     let bal_bob = DiemAccount::balance<GAS>(@{{bob}});
@@ -118,7 +118,7 @@ script {
     Burn::epoch_start_burn(&vm, @{{alice}}, 100000);
 
     let bal_alice = DiemAccount::balance<GAS>(@{{alice}});
-    assert(bal_alice == 100001, 7357010); // rounding issues
+    assert(bal_alice == 1100001, 7357010); // rounding issues
     
     // balances are greater than before.
     let bal_bob = DiemAccount::balance<GAS>(@{{bob}});

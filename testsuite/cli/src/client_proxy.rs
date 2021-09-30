@@ -41,7 +41,6 @@ use diem_types::{
 use diem_wallet::{io_utils, Mnemonic, WalletLibrary};
 use num_traits::{
     cast::{FromPrimitive, ToPrimitive},
-    identities::Zero,
 };
 use reqwest::Url;
 use resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator, NullStateView};

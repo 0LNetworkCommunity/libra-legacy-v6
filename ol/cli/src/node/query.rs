@@ -78,8 +78,9 @@ impl Node {
                     Ok(Some(account_view)) => {
                         for av in account_view.balances.iter() {
                             if av.currency == "GAS" {
-                                let amount = av.amount / SCALING_FACTOR;
-                                return amount.to_formatted_string(&Locale::en);
+                                let amount = av.amount as f64; // / SCALING_FACTOR as f64;
+                                return amount.to_string();
+                                // return amount.to_formatted_string(&Locale::en);
                             }
                         }
                         return "No GAS found on account".to_owned();

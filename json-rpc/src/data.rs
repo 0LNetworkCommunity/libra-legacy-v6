@@ -303,20 +303,21 @@ pub fn get_miner_state(
     account: AccountAddress,
     // ledger_info: &LedgerInfoWithSignatures,
 ) -> Result<MinerStateResourceView, JsonRpcError> {
-    let s = get_account_state(db, account, version)?.unwrap();
+    match get_account_state(db, account, version)? {
+        Some(s) => MinerStateResourceView::try_from(s).map_err(Into::into),
+        None => Err(JsonRpcError::internal_error("No account state found".to_owned())),
+    }
 
-    MinerStateResourceView::try_from(s).map_err(Into::into)
+    
 }
 
 /// Get miner state
 pub fn get_oracle_upgrade_state(
     db: &dyn DbReader,
     version: u64,
-    // account: AccountAddress,
-    // ledger_info: &LedgerInfoWithSignatures,
 ) -> Result<OracleUpgradeStateView, JsonRpcError> {
-    let s = get_account_state(db, diem_root_address(), version)?.unwrap();
-
-    OracleUpgradeStateView::try_from(s).map_err(Into::into)
+    match get_account_state(db, diem_root_address(), version)? {
+        Some(s) =>  OracleUpgradeStateView::try_from(s).map_err(Into::into),
+        None => Err(JsonRpcError::internal_error("No account state found".to_owned())),
+    }
 }
-

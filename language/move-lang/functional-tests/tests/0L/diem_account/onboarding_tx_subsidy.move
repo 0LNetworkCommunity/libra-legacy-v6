@@ -95,6 +95,8 @@ script {
   use 0x1::Reconfigure;
   use 0x1::MinerState;
   use 0x1::Testnet;
+  use 0x1::Debug::print;
+  use 0x1::Cases;
   
   fun main(vm: signer) {
       // need to remove testnet for this test, since testnet does not ratelimit account creation.
@@ -108,7 +110,11 @@ script {
       let new_account_bal = DiemAccount::balance<GAS>(eve);
 
       assert(old_account_bal == 1000000, 7357001);
-      assert(new_account_bal == 3497536, 7357002);
+      print(&new_account_bal);
+
+      // eve did not mine or validator in last epoch, case != 1. So there wont be a reward 
+      assert(Cases::get_case(&vm, @{{bob}}, 0, 100) != 1, 7357002);
+      assert(new_account_bal == 1000000, 7357003);
 
       // Operator account should not increase after epoch change
       assert(

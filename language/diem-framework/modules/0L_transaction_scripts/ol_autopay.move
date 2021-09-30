@@ -41,7 +41,7 @@ module AutoPayScripts {
                 Errors::invalid_state(EAUTOPAY_NOT_ENABLED)
             );
         };
-
+        
         AutoPay2::create_instruction(
             &sender, 
             uid,
