@@ -35,10 +35,8 @@ This module enables automatic payments from accounts to community wallets at epo
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
-<b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
@@ -763,7 +761,6 @@ Attempt to use a UID that is already taken
   amt: u64
 ) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay2_Data">Data</a>, <a href="AutoPay.md#0x1_AutoPay2_AccountLimitsEnable">AccountLimitsEnable</a> {
   <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
-  print(&701);
   // Confirm that no payment <b>exists</b> <b>with</b> the same uid
   <b>let</b> index = <a href="AutoPay.md#0x1_AutoPay2_find">find</a>(addr, uid);
   <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_is_none">Option::is_none</a>&lt;u64&gt;(&index), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="AutoPay.md#0x1_AutoPay2_UID_TAKEN">UID_TAKEN</a>));
@@ -771,26 +768,25 @@ Attempt to use a UID that is already taken
   <b>if</b> (borrow_global&lt;<a href="AutoPay.md#0x1_AutoPay2_AccountLimitsEnable">AccountLimitsEnable</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).enabled) {
     <b>assert</b>(<a href="Wallet.md#0x1_Wallet_is_comm">Wallet::is_comm</a>(payee), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="AutoPay.md#0x1_AutoPay2_PAYEE_NOT_COMMUNITY_WALLET">PAYEE_NOT_COMMUNITY_WALLET</a>));
   };
-print(&702);
   <b>let</b> payments = &<b>mut</b> borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay2_Data">Data</a>&gt;(addr).payments;
   <b>assert</b>(
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="AutoPay.md#0x1_AutoPay2_Payment">Payment</a>&gt;(payments) &lt; <a href="AutoPay.md#0x1_AutoPay2_MAX_NUMBER_OF_INSTRUCTIONS">MAX_NUMBER_OF_INSTRUCTIONS</a>,
     <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="AutoPay.md#0x1_AutoPay2_TOO_MANY_INSTRUCTIONS">TOO_MANY_INSTRUCTIONS</a>)
   );
-print(&703);
   // This is not a necessary check at genesis.
-  <b>if</b> (<a href="DiemTimestamp.md#0x1_DiemTimestamp_is_operating">DiemTimestamp::is_operating</a>()) {
+  // TODO: the genesis timestamp is not correctly identifying transactions in genesis.
+  // <b>if</b> (!<a href="DiemTimestamp.md#0x1_DiemTimestamp_is_genesis">DiemTimestamp::is_genesis</a>()) {
+  <b>if</b> (<a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>() &gt; 1) {
     <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_exists_at">DiemAccount::exists_at</a>(payee), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="AutoPay.md#0x1_AutoPay2_EPAYEE_DOES_NOT_EXIST">EPAYEE_DOES_NOT_EXIST</a>));
   };
-print(&704);
+
   <b>assert</b>(in_type &lt;= <a href="AutoPay.md#0x1_AutoPay2_MAX_TYPE">MAX_TYPE</a>, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="AutoPay.md#0x1_AutoPay2_INVALID_PAYMENT_TYPE">INVALID_PAYMENT_TYPE</a>));
 
   <b>if</b> (in_type == <a href="AutoPay.md#0x1_AutoPay2_PERCENT_OF_BALANCE">PERCENT_OF_BALANCE</a> || in_type == <a href="AutoPay.md#0x1_AutoPay2_PERCENT_OF_CHANGE">PERCENT_OF_CHANGE</a>) {
     <b>assert</b>(amt &lt;= <a href="AutoPay.md#0x1_AutoPay2_MAX_PERCENTAGE">MAX_PERCENTAGE</a>, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="AutoPay.md#0x1_AutoPay2_INVALID_PERCENTAGE">INVALID_PERCENTAGE</a>));
   };
-print(&705);
   <b>let</b> account_bal = <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(addr);
-print(&706);
+
   <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<a href="AutoPay.md#0x1_AutoPay2_Payment">Payment</a>&gt;(payments, <a href="AutoPay.md#0x1_AutoPay2_Payment">Payment</a> {
     uid: uid,
     in_type: in_type,

@@ -667,8 +667,11 @@ Permissions: PUBLIC, ANYONE
   // Get a mutable ref <b>to</b> the current state
   <b>let</b> miner_history = borrow_global_mut&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr);
 
+  // NOTE: The upper limit is an issue for chains which rely on verifying towers from other chains.
+  // this possibly should only be enabled after bootstrapping of a network.
+
   // <b>return</b> early <b>if</b> the miner is running too fast, no advantage <b>to</b> asics
-  <b>assert</b>(miner_history.count_proofs_in_epoch &lt; <a href="Globals.md#0x1_Globals_get_epoch_mining_thres_upper">Globals::get_epoch_mining_thres_upper</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130106));
+  // <b>assert</b>(miner_history.count_proofs_in_epoch &lt; <a href="Globals.md#0x1_Globals_get_epoch_mining_thres_upper">Globals::get_epoch_mining_thres_upper</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130106));
 
   // If not genesis proof, check hash <b>to</b> ensure the proof continues the chain
   <b>if</b> (steady_state) {

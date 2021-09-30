@@ -1,8 +1,21 @@
+# Quick Start
+
+```
+# make sure you have a set_layout.toml in ~/.0L/
+# from project root:
+
+NODE_ENV=prod make stdlib genesis
+```
 # Genesis Transaction
+
+Once the registration period has closed, all participants must create a genesis block themselves before starting validators nodes. *No genesis transaction will be provided by a central party.*
+
+Additionally, no validator set will be selected by any one party. All participants will choose the registrants they wish to include in the genesis validator set. *No validator layout file will be provided*
+
+## Outputs
 
 The output of the genesis process is a `genesis.blob` which is the initial network block. Additionally a `validator.node.yaml` file is created which contains all the configurations necessary to start a validator node (using the genesis.blob above).
 
-Once the registration period has closed, all participants must create a genesis block themselves before starting validators nodes. No genesis transaction will be provided by a central party.
 
 ## Decentralized start
 
@@ -39,3 +52,13 @@ For every `owner` there is an `operator` and the owners and operators need to ma
 
 If an element of the owner or operator list cannot be found in the genesis registration repo, then the program will exit without producing a genesis transaction.
 
+
+# Create genesis files
+
+From the project root you can use the `make` helper file:
+
+The Move framework and standard library should be compiled before this step.
+
+```
+NODE_ENV=prod make stdlib genesis
+```

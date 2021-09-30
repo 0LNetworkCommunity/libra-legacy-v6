@@ -1,4 +1,4 @@
-# Genesis
+# Genesis Registration
 
 A network genesis ceremony has two steps: 
 
@@ -69,6 +69,7 @@ In the step `miner keygen` below you will be asked for this.
 
 Clone the project onto your machine. `cd` into the project directory. Checkout the correct tag. Install all dependencies and compile in one step, with the Makefile helper.
 
+
 ```
 git clone https://github.com/OLSF/libra.git
 cd <project root>
@@ -90,8 +91,9 @@ make bins install
 * You may encounter errors related to Rust, version should be same as: https://github.com/OLSF/libra/blob/OLv4/rust-toolchain.
 * You may encounter errors related to memory running out.
 * Dependencies such as jq and rq are platform specific. The makefile targets Ubuntu.
+* `toml` may not be installed, you can install with `cargo install toml-cli`
 
-## 2 (Optional) Generate new account and keys
+## 2. (Optional) Generate new account and keys
 
 Unless you have previously generated an 0L mnemonic (e.g. for experimental network), you should create new keys.
 
@@ -127,7 +129,7 @@ github_token: <secret>
 ip: 5.5.5.5
 node path: /root/.0L
 github_org: OLSF
-github_repo: experimental-genesis
+github_repo: genesis-registration
 env: prod
 test mode:
 ```
