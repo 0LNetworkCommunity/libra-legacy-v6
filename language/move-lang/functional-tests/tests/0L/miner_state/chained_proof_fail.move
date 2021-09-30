@@ -16,7 +16,7 @@ script {
         let height_after = 0;
 
         // return solution
-        MinerState::test_helper(
+        MinerState::test_helper_init_miner(
             &sender,
             difficulty,
             TestFixtures::alice_0_easy_chal(),

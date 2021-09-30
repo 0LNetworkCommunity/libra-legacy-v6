@@ -1,4 +1,4 @@
-//! account: alice, 1000000GAS, 0, validator
+//! account: alice, 2000000GAS, 0, validator
 //! account: bob, 1000000GAS
 //! account: carol, 1000000GAS
 
@@ -50,7 +50,6 @@ script {
   use 0x1::Burn;
   use 0x1::Vector;
   use 0x1::FixedPoint32;
-  // use 0x1::Debug::print;
 
   fun main(vm: signer) {
     // send to community wallet Bob
@@ -68,7 +67,6 @@ script {
     // print(&bob_deposits_indexed);
     assert(bob_deposits_indexed == 1100500, 7357006);
     let carol_deposits_indexed = *Vector::borrow<u64>(&deps, 1);
-    // print(&carol_deposits_indexed);
     assert(carol_deposits_indexed == 1904500, 7357007);
 
     let bob_mult = *Vector::borrow<FixedPoint32::FixedPoint32>(&ratios, 0);

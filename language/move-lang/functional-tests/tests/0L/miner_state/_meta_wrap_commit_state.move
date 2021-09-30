@@ -13,7 +13,7 @@ script {
     fun main(sender: signer) {
         // Testing that state can be initialized, and a proof submitted as if it were genesis.
         // buildign block for other tests.
-        MinerState::test_helper(
+        MinerState::test_helper_init_miner(
             &sender,
             100u64, // difficulty
             TestFixtures::easy_chal(),

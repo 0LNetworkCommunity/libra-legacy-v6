@@ -1,4 +1,4 @@
-# Genesis
+# Genesis Registration
 
 A network genesis ceremony has two steps: 
 
@@ -20,7 +20,7 @@ If you don't already have a mnemonic and block_0.json, see instructions to gener
 Then using the makefile helpers you can register as such:
 
 ```
-make ceremony register
+GITHUB_USER=<your_github_user> make ceremony register
 ```
 
 ## infrastructure
@@ -34,6 +34,14 @@ For each candidate there will be a CANDIDATE_REPO, which will have the specific 
 Tools are provided to a) fork the GENESIS_REPO b) write registration info ro CANDIDATE_REPO, and c) submit a pull-request of CANDIDATE_REPO to GENESIS_REPO.
 
 The GENESIS_REPO coordinator then has the task of manually approving all PRs.
+
+# Warning - Don't lose your Tower
+
+If you have a Delay Tower on a node: you should back up the proofs. You will want these for your identity on a new chain.
+
+```
+tar -zcvf my-tower.tar.gz ~/.0L/blocks/
+```
 
 # Registration
 
@@ -57,9 +65,10 @@ https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/
 
 In the step `miner keygen` below you will be asked for this.
 
-## 1.  Build project
+## 1.  Install OS dependencies and build project
 
-Clone the project onto your machine. Cd into the project directory. Checkout the correct tag. Install all dependencies and compile in one step, with the Makefile helper.
+Clone the project onto your machine. `cd` into the project directory. Checkout the correct tag. Install all dependencies and compile in one step, with the Makefile helper.
+
 
 ```
 git clone https://github.com/OLSF/libra.git
@@ -82,8 +91,9 @@ make bins install
 * You may encounter errors related to Rust, version should be same as: https://github.com/OLSF/libra/blob/OLv4/rust-toolchain.
 * You may encounter errors related to memory running out.
 * Dependencies such as jq and rq are platform specific. The makefile targets Ubuntu.
+* `toml` may not be installed, you can install with `cargo install toml-cli`
 
-## 2 (Optional) Generate new account and keys
+## 2. (Optional) Generate new account and keys
 
 Unless you have previously generated an 0L mnemonic (e.g. for experimental network), you should create new keys.
 
@@ -96,28 +106,35 @@ You will be prompted to enter the Github token above, IP address of your node, a
 IMMEDIATELY SAVE YOUR MNEMONIC TO A PASSWORD MANAGER
 
 
-## 3. Pause and check your work ##
-Check all your data in `$HOME/.0L/0L.toml` is correct with `make check`. Otherwise edit it.
+## 3. Initialize configs for node.
+This creates the files your validator needs to run 0L tools. By default files will be created in `$HOME/.0L/`.
+
+The following script does several steps:
+- OL app configs: defaults to `$HOME/.0L/0L.toml` 
+- keys init: creating credentials and configs
+- fork: on github this forks the GENESIS_REPO into the CANDIDATE_REPO
+
+```
+GITHUB_USER=<your_github_user> make ceremony
+```
+
+## 4. Pause and check your work ##
+Check all your configs are correct before registering is correct: `make check`. 
 
 ```
 $ make check
+
 account: 3F48012938129deadbeef
 github_token: <secret>
 ip: 5.5.5.5
 node path: /root/.0L
 github_org: OLSF
-github_repo: experimental-genesis
+github_repo: genesis-registration
 env: prod
 test mode:
 ```
 
-## 4. Initialize app configs
-
-This creates the files your validator needs to run 0L tools. By default files will be created in `$HOME/.0L/`.
-
-```
-make app-configs
-```
+If the data looks incorrect, you can doublecheck `$HOME/.0L/0L.toml`, and you may optionally edit those.
 
 ## 5. Mine your first proof (or bring first proof from elsewhere)
 
@@ -134,13 +151,11 @@ If you are using a mnemonic and have previously generated a tower, then you can 
 ## 6. Register for genesis
 
 The following script does several steps:
-- fork: forking the GENESIS_REPO into the CANDIDATE_REPO
-- keys init: creating credentials and configs
 - register: writing configs the CANDIDATE_REPO
 - pull: submitting a pull request from CANDIDATE_REPO to GENESIS_REPO
 
 ```
-make ceremony register
+GITHUB_USER=<your_github_user> make register
 ```
 
 After this step check your data at `http://github.com/0LSF/experimental-genesis`

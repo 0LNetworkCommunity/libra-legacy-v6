@@ -254,8 +254,8 @@ The runtime always runs this before executing the transactions in a block.
 
     <b>if</b> (<a href="AutoPay.md#0x1_AutoPay2_tick">AutoPay2::tick</a>(&vm)){
         // print(&1);
-        //triggers autopay at beginning of each epoch
-        //tick is reset at end of previous epoch
+        // triggers autopay at beginning of each epoch
+        // tick is reset at end of previous epoch
         <a href="DiemAccount.md#0x1_DiemAccount_process_escrow">DiemAccount::process_escrow</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&vm);
         // print(&2);
         <a href="AutoPay.md#0x1_AutoPay2_process_autopay">AutoPay2::process_autopay</a>(&vm);

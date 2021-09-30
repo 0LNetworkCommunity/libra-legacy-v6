@@ -156,7 +156,6 @@ impl BlockingClient {
     /////// 0L /////////
     pub fn get_miner_state(&self, address: AccountAddress) 
     -> Result<Response<Option<MinerStateResourceView>>> {
-        dbg!("get_miner_state");
         self.send(MethodRequest::get_miner_state(address))
     }
 

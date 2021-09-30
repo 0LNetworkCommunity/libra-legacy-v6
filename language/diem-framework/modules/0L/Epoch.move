@@ -29,11 +29,11 @@ module Epoch {
   public fun initialize(vm: &signer) {
       Roles::assert_diem_root(vm);
       move_to<Timer>(
-      vm, 
-      Timer {
-          epoch: 0,
-          height_start: 0,
-          seconds_start: DiemTimestamp::now_seconds()
+          vm, 
+          Timer {
+              epoch: 0,
+              height_start: 0,
+              seconds_start: DiemTimestamp::now_seconds()
           }
       );
   }

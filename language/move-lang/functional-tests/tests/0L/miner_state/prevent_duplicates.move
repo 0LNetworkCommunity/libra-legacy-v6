@@ -11,7 +11,7 @@ script {
     use 0x1::TestFixtures;
 
     fun main(sender: signer) {
-        MinerState::test_helper(
+        MinerState::test_helper_init_miner(
             &sender,
             100u64, //difficulty
             TestFixtures::easy_chal(),
@@ -42,4 +42,4 @@ script {
         MinerState::commit_state(&sender, proof);
     }
 }
-// check: VMExecutionFailure(ABORTED { code: 130106
+// check: VMExecutionFailure(ABORTED { code: 130107

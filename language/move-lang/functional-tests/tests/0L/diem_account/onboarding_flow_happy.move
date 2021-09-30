@@ -52,22 +52,21 @@ script {
 use 0x1::Reconfigure;
 use 0x1::DiemAccount;
 use 0x1::GAS::GAS;
-use 0x1::Subsidy;
+// use 0x1::FullnodeSubsidy;
 use 0x1::ValidatorUniverse;
+// use 0x1::Debug::print;
 
 fun main(vm: signer) {
   let eve_addr = @0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
   /// set the fullnode proof price to 0, to check if onboarding subsidy is given.
-  Subsidy::test_set_fullnode_fixtures(&vm, 0, 0, 0, 0, 0);
+  // FullnodeSubsidy::test_set_fullnode_fixtures(&vm, 0, 0, 0, 0, 0);
   Reconfigure::reconfigure(&vm, 10); 
     // need to remove testnet for this test, since testnet does not ratelimit 
     // account creation.
   
   let bal = DiemAccount::balance<GAS>(eve_addr);
-  // we expect 1 gas (1,000,000 microgas) from bob's transfer, plus 0.576000 
-  // GAS from the first proof submitted.
-  let expected = 1000000 + 576000;
-  assert(bal == expected, 7357401003);
+  // we expect 1 gas (1,000,000 microgas) from bob's transfer
+  assert(bal == 1000000, 7357401003);
 
   // validator should have jailedbit
   assert(ValidatorUniverse::exists_jailedbit(eve_addr), 7357401004);
@@ -108,7 +107,7 @@ fun main(vm: signer) {
   // let addr = Signer::address_of(validator);
   // if is above threshold continue, or raise error.
   let new_signer = DiemAccount::test_helper_create_signer(&vm, eve_addr);
-  assert(MinerState::node_above_thresh(&new_signer, eve_addr), 7357401007);
+  assert(MinerState::node_above_thresh(eve_addr), 7357401007);
   // if is not in universe, add back
   if (!ValidatorUniverse::is_in_universe(eve_addr)) {
       ValidatorUniverse::add_self(&new_signer);

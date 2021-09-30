@@ -19,10 +19,10 @@ script {
       &solution,
     );
 
-    assert(DiemAccount::balance<GAS>(eve_addr) == 0, 7357130101081000);
+    assert(DiemAccount::balance<GAS>(eve_addr) == 0, 735701);
 
-    // is not a slow wallet, only validator wallets are slow.
-    assert(!DiemAccount::is_slow(eve_addr), 7357130101081001);
+    // is a slow wallet
+    assert(!DiemAccount::is_slow(eve_addr), 735702);
   }
 }
 // check: EXECUTED

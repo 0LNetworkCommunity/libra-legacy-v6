@@ -82,8 +82,9 @@ module Burn {
       if (borrow_global<BurnPreference>(payer).send_community) {
         return send(vm, payer, value)
       }
-    };
-    burn(vm, payer, value)
+    } else {
+      burn(vm, payer, value)
+    }
   }
 
   fun burn(vm: &signer, addr: address, value: u64) {
