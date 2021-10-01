@@ -719,8 +719,16 @@ module MinerState {
       *&borrow_global<MinerProofHistory>(miner_addr).previous_proof_hash
     }
 
-    public fun test_helper_set_weight_vm(_vm: &signer, addr: address, weight: u64) acquires MinerProofHistory {
+    public fun test_helper_set_weight_vm(vm: &signer, addr: address, weight: u64) acquires MinerProofHistory {
       assert(Testnet::is_testnet(), Errors::invalid_state(130113));
+      CoreAddresses::assert_diem_root(vm);
+      let state = borrow_global_mut<MinerProofHistory>(addr);
+      state.epochs_validating_and_mining = weight;
+    }
+
+    public fun test_helper_set_weight(account: &signer, weight: u64) acquires MinerProofHistory {
+      assert(Testnet::is_testnet(), Errors::invalid_state(130113));
+      let addr = Signer::address_of(account);
       let state = borrow_global_mut<MinerProofHistory>(addr);
       state.epochs_validating_and_mining = weight;
     }
