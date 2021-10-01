@@ -134,7 +134,7 @@ address 0x1 {
       borrow_global<JailedBit>(validator).is_jailed
     }
 
-    // Todo: Unused. Better name? add_validator()?
+    // Todo: Better name? genesis_helper_add_validator()?
     public fun genesis_helper(vm: &signer, validator: &signer) acquires ValidatorUniverse, JailedBit {
       assert(Signer::address_of(vm) == CoreAddresses::DIEM_ROOT_ADDRESS(), 220101014010);
       add(validator);
