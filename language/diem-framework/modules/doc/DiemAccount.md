@@ -1481,7 +1481,7 @@ Initialize this module. This is only callable from genesis.
     };
 
     // TODO: Perhaps this needs <b>to</b> be moved <b>to</b> the epoch boundary, so that it is only the VM which can escalate these privileges.
-    <a href="Roles.md#0x1_Roles_new_validator_role_with_proof">Roles::new_validator_role_with_proof</a>(&new_signer);
+    <a href="Roles.md#0x1_Roles_new_validator_role_with_proof">Roles::new_validator_role_with_proof</a>(&new_signer, &<a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()));
     <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_signer);
     <a href="ValidatorConfig.md#0x1_ValidatorConfig_publish_with_proof">ValidatorConfig::publish_with_proof</a>(&new_signer, ow_human_name);
     <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_signer, <b>false</b>);
@@ -1587,7 +1587,7 @@ print(&503);
 
     // TODO: Perhaps this needs <b>to</b> be moved <b>to</b> the epoch boundary, so that it is only the VM which can escalate these privileges.
     // <a href="Upgrade.md#0x1_Upgrade">Upgrade</a> the user
-    <a href="Roles.md#0x1_Roles_upgrade_user_to_validator">Roles::upgrade_user_to_validator</a>(&new_signer);
+    <a href="Roles.md#0x1_Roles_upgrade_user_to_validator">Roles::upgrade_user_to_validator</a>(&new_signer, &<a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()));
     print(&504);
     // <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_signer);
     print(&505);
