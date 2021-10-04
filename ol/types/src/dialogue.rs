@@ -8,9 +8,14 @@ use crate::config::IS_TEST;
 
 /// interact with user to get the home path for files
 pub fn what_home(swarm_path: Option<PathBuf>, swarm_persona: Option<String>) -> PathBuf {
+
     // For dev and CI setup
     if let Some(path) = swarm_path {
       return swarm_home(path, swarm_persona);
+    } else {
+      if *IS_TEST {
+        return dirs::home_dir().unwrap().join(NODE_HOME)
+      }
     }
 
     let mut default_home_dir = dirs::home_dir().unwrap();
@@ -57,22 +62,25 @@ pub fn what_source() -> Option<PathBuf> {
 
 /// interact with user to get ip address
 pub fn what_ip() -> Result<Ipv4Addr, Error> {
-    if *IS_TEST {
-      return Ok("127.0.0.1".parse::<Ipv4Addr>().unwrap())
-    }
+
     let system_ip = match machine_ip::get() {
         Some(ip) => ip.to_string(),
         None => "127.0.0.1".to_string(),
     };
+    let ip = system_ip
+            .parse::<Ipv4Addr>()
+            .expect("Could not parse IP address: {:?}");
+
+    if *IS_TEST {
+      return Ok(ip)
+    }
 
     let txt = &format!(
         "Will you use this host, and this IP address {:?}, for your node?",
         system_ip
     );
     let ip = match Confirm::new().with_prompt(txt).interact().unwrap() {
-        true => system_ip
-            .parse::<Ipv4Addr>()
-            .expect("Could not parse IP address: {:?}"),
+        true => ip,
         false => {
             let input: String = Input::new()
                 .with_prompt("Enter the IP address of the node")
