@@ -22,7 +22,7 @@ script {
         Burn::set_send_community(&sender);
         print(&@0x1);
         // validator needs to qualify for next epoch for the burn to register
-        Audit::make_passing(&sender);
+        Audit::test_helper_make_passing(&sender);
         print(&AutoPay2::is_enabled(@{{alice}}));
 
 
