@@ -368,6 +368,8 @@ ifdef TEST
 	cp ./ol/fixtures/autopay/${NS}.autopay_batch.json ${DATA_PATH}/autopay_batch.json
 # place a mock account.json in root, used as template for onboarding
 	cp ./ol/fixtures/account/${NS}.account.json ${DATA_PATH}/account.json
+# replace the set_layout
+	cp ./ol/devnet/set_layout_test.toml ${DATA_PATH}/set_layout.toml
 endif
 
 fix-genesis:
