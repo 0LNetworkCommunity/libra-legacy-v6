@@ -64,7 +64,7 @@ module Globals {
       get_constants().epoch_mining_thres_lower
     }
 
-        /// Get the mining threshold 
+    /// Get the mining threshold 
     public fun get_epoch_mining_thres_upper(): u64 {
       get_constants().epoch_mining_thres_upper
     }

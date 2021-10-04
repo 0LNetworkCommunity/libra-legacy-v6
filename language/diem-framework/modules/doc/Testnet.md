@@ -60,7 +60,10 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Testnet.md#0x1_StagingNet_initialize">initialize</a>(account: &signer) {
-    <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account) == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190301));
+    <b>assert</b>(
+        <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account) == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(),
+        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190301)
+    );
     move_to(account, <a href="Testnet.md#0x1_StagingNet_IsStagingNet">IsStagingNet</a>{})
 }
 </code></pre>

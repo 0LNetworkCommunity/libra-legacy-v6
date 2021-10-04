@@ -133,7 +133,8 @@
   print(&1901007);
   // Calculate the split for subsidy and burn
   <b>let</b> subsidy_ceiling_gas = <a href="Globals.md#0x1_Globals_get_subsidy_ceiling_gas">Globals::get_subsidy_ceiling_gas</a>();
-  // TODO: This metric network density is different than <a href="DiemSystem.md#0x1_DiemSystem_get_fee_ratio">DiemSystem::get_fee_ratio</a> which actually checks the cases.
+  // TODO: This metric network density is different than
+  // <a href="DiemSystem.md#0x1_DiemSystem_get_fee_ratio">DiemSystem::get_fee_ratio</a> which actually checks the cases.
 
   // <b>let</b> network_density = <a href="Stats.md#0x1_Stats_network_density">Stats::network_density</a>(vm, height_start, height_end);
   <b>let</b> max_node_count = <a href="Globals.md#0x1_Globals_get_max_validators_per_set">Globals::get_max_validators_per_set</a>();
@@ -160,7 +161,6 @@
 
       subsidy_per_node = subsidy/network_density;
       // print(&subsidy_per_node);
-
     };
   };
   print(&1901010);
@@ -192,7 +192,6 @@
   network_density: u64,
   max_node_count: u64
 ): u64 {
-
   <b>let</b> min_node_count = 4u64;
 
   // Return early <b>if</b> we know the value is below 4.
@@ -208,10 +207,10 @@
   <b>let</b> slope = <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_divide_u64">FixedPoint32::divide_u64</a>(
     subsidy_ceiling_gas,
     <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(max_node_count - min_node_count, 1)
-    );
-  //y-intercept
+  );
+  // y-intercept
   <b>let</b> intercept = slope * max_node_count;
-  //calculating subsidy and burn units
+  // calculating subsidy and burn units
   // NOTE: confirm order of operations here:
   <b>let</b> guaranteed_minimum = intercept - slope * network_density;
   guaranteed_minimum
@@ -237,19 +236,19 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_genesis">genesis</a>(vm_sig: &signer) {
-  //Need <b>to</b> check for association or vm account
+<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_genesis">genesis</a>(vm_sig: &signer) { // Todo: rename <b>to</b> "genesis_deposit" ?
+  // Need <b>to</b> check for association or vm account
   <b>let</b> vm_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm_sig);
   <b>assert</b>(vm_addr == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190104));
 
   // Get eligible validators list
   <b>let</b> genesis_validators = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm_sig);
   <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&genesis_validators);
-  <b>let</b> subsidy = 11000000; // ten coins for validator, sufficient for first epoch of transactions, and an extra which the validator will send <b>to</b> operator.
-
+  // ten coins for validator, sufficient for first epoch of transactions,
+  // and an extra which the validator will send <b>to</b> operator.
+  <b>let</b> subsidy = 11000000; // todo: 10 or 11? comment says different
   <b>let</b> i = 0;
   <b>while</b> (i &lt; len) {
-
     <b>let</b> node_address = *(<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&genesis_validators, i));
     <b>let</b> old_validator_bal = <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(node_address);
 
@@ -263,7 +262,10 @@
     );
 
     // Confirm the calculations, and that the ending balance is incremented accordingly.
-    <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(node_address) == old_validator_bal + subsidy, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(190104));
+    <b>assert</b>(
+      <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(node_address) == old_validator_bal + subsidy,
+      <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(190104)
+    );
 
     i = i + 1;
   };
@@ -292,14 +294,13 @@
 <pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_process_fees">process_fees</a>(
   vm: &signer,
   outgoing_set: &vector&lt;address&gt;,
-){
+) {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+
   <b>let</b> capability_token = <a href="DiemAccount.md#0x1_DiemAccount_extract_withdraw_capability">DiemAccount::extract_withdraw_capability</a>(vm);
-
   <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(outgoing_set);
-
   <b>let</b> bal = <a href="TransactionFee.md#0x1_TransactionFee_get_amount_to_distribute">TransactionFee::get_amount_to_distribute</a>(vm);
-// leave fees in tx_fee <b>if</b> there isn't at least 1 gas coin per validator.
+  // leave fees in tx_fee <b>if</b> there isn't at least 1 gas coin per validator.
   <b>if</b> (bal &lt; len) {
     <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">DiemAccount::restore_withdraw_capability</a>(capability_token);
     <b>return</b>

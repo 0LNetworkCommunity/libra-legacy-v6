@@ -113,7 +113,7 @@ module Genesis {
         AutoPay2::initialize(dm_account);
         // FullnodeSubsidy::init_fullnode_sub(dm_account);
         Oracle::initialize(dm_account);
-        MinerState::init_list(dm_account);
+        MinerState::init_miner_list_and_stats(dm_account);
         Wallet::init(dm_account);
         DiemAccount::vm_init_slow(dm_account);
         Migrations::init(dm_account);

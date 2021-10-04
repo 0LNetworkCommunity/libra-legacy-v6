@@ -113,13 +113,11 @@ address 0x1 {
       unjail(sender);
     }
 
-    // TODO: this is unused as of v5.
     fun unjail(sender: &signer) acquires JailedBit {
       let addr = Signer::address_of(sender);
       if (!exists<JailedBit>(addr)) {
-        move_to<JailedBit>(sender, JailedBit{
-          is_jailed: false
-        });
+        move_to<JailedBit>(sender, JailedBit { is_jailed: false });
+        return
       };
 
       borrow_global_mut<JailedBit>(addr).is_jailed = false;
@@ -127,7 +125,7 @@ address 0x1 {
 
     public fun exists_jailedbit(addr: address): bool {
       exists<JailedBit>(addr)
-    }    
+    }
 
     public fun is_jailed(validator: address): bool acquires JailedBit {
       if (!exists<JailedBit>(validator)) {
@@ -136,6 +134,7 @@ address 0x1 {
       borrow_global<JailedBit>(validator).is_jailed
     }
 
+    // Todo: Better name? genesis_helper_add_validator()?
     public fun genesis_helper(vm: &signer, validator: &signer) acquires ValidatorUniverse, JailedBit {
       assert(Signer::address_of(vm) == CoreAddresses::DIEM_ROOT_ADDRESS(), 220101014010);
       add(validator);
@@ -144,7 +143,7 @@ address 0x1 {
     //////// TEST ////////
 
     public fun test_helper_add_self_onboard(vm: &signer, addr:address) acquires ValidatorUniverse {
-      assert(Testnet::is_testnet()== true, 220116014011);
+      assert(Testnet::is_testnet(), 220116014011);
       assert(Signer::address_of(vm) == CoreAddresses::DIEM_ROOT_ADDRESS(), 220101015010);
       let state = borrow_global_mut<ValidatorUniverse>(CoreAddresses::DIEM_ROOT_ADDRESS());
       Vector::push_back<address>(&mut state.validators, addr);
