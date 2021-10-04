@@ -676,34 +676,37 @@ module MinerState {
       *&state.verified_tower_height
     }
 
-    public fun test_helper_get_count(miner_addr: address): u64 acquires MinerProofHistory {
+    public fun test_helper_get_count(account: &signer): u64 acquires MinerProofHistory {
         assert(Testnet::is_testnet(), 130115014011);
-        borrow_global<MinerProofHistory>(miner_addr).count_proofs_in_epoch
+        let addr = Signer::address_of(account);
+        borrow_global<MinerProofHistory>(addr).count_proofs_in_epoch
     }
 
     // Function code: 16
-    public fun test_helper_get_contiguous(miner_addr: address): u64 acquires MinerProofHistory {
+    public fun test_helper_get_contiguous_vm(vm: &signer, miner_addr: address): u64 acquires MinerProofHistory {
       assert(Testnet::is_testnet(), Errors::invalid_state(130125));
+      CoreAddresses::assert_diem_root(vm);
       borrow_global<MinerProofHistory>(miner_addr).contiguous_epochs_validating_and_mining
     }
 
     // Function code: 17
-    // Sets the epochs since last account creation variable to allow `miner_addr`
+    // Sets the epochs since last account creation variable to allow `account`
     // to create a new account
-    public fun test_helper_set_rate_limit(miner_addr: address, value: u64) acquires MinerProofHistory {
+    public fun test_helper_set_rate_limit(account: &signer, value: u64) acquires MinerProofHistory {
       assert(Testnet::is_testnet(), Errors::invalid_state(130126));
-      let state = borrow_global_mut<MinerProofHistory>(miner_addr);
+      let addr = Signer::address_of(account);
+      let state = borrow_global_mut<MinerProofHistory>(addr);
       state.epochs_since_last_account_creation = value;
     }
 
-    public fun test_helper_set_epochs_mining(node_addr: address, value: u64)acquires MinerProofHistory {
+    public fun test_helper_set_epochs_mining(node_addr: address, value: u64) acquires MinerProofHistory {
       assert(Testnet::is_testnet(), Errors::invalid_state(130126));
 
       let s = borrow_global_mut<MinerProofHistory>(node_addr);
       s.epochs_validating_and_mining = value;
     }
 
-    public fun test_helper_set_proofs_in_epoch(node_addr: address, value: u64)acquires MinerProofHistory {
+    public fun test_helper_set_proofs_in_epoch(node_addr: address, value: u64) acquires MinerProofHistory {
       assert(Testnet::is_testnet(), Errors::invalid_state(130126));
 
       let s = borrow_global_mut<MinerProofHistory>(node_addr);
@@ -711,12 +714,13 @@ module MinerState {
     }
 
     // Function code: 18
-    // returns the previous proof hash for `miner_addr`
+    // returns the previous proof hash for `account`
     public fun test_helper_previous_proof_hash(
-      miner_addr: address
+      account: &signer
     ): vector<u8> acquires MinerProofHistory {
       assert(Testnet::is_testnet()== true, Errors::invalid_state(130128));
-      *&borrow_global<MinerProofHistory>(miner_addr).previous_proof_hash
+      let addr = Signer::address_of(account);
+      *&borrow_global<MinerProofHistory>(addr).previous_proof_hash
     }
 
     public fun test_helper_set_weight_vm(vm: &signer, addr: address, weight: u64) acquires MinerProofHistory {
