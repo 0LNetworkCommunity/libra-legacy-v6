@@ -1,9 +1,8 @@
 
 ### Step 1. Install tools
 
-Follow steps here (but be aware these docs were un-updated at the time of writing this, so combine them with the notes in this doc.):  
-https://github.com/OLSF/libra/blob/main/language/move-prover/doc/user/install.md  
-and  
+Follow these docs: (but be aware these docs were un-updated at the time of writing, so combine them with the notes in this doc.)
+https://github.com/OLSF/libra/blob/main/language/move-prover/doc/user/install.md
 https://github.com/OLSF/libra/blob/main/language/move-prover/doc/user/prover-guide.md
 
 
@@ -18,17 +17,20 @@ CVC4_VERSION=aac53f51
 
 Double check the version numbers and see install functions e.g. `function install_boogie {..}` in `./scripts/dev_setup.sh`.
 
-**Some Notes**:
+### Some Notes
 
-Install dotnet   
+**Install dotnet**  
 - Download https://dot.net/v1/dotnet-install.sh
 - `dotnet-install.sh --channel 3.1 --version latest `
 
-Install boogie   
+**Install boogie**  
 `$HOME/.dotnet/dotnet tool update --global Boogie --version 2.8.32`
-	   
-     
-~/.mvprc
+
+**Install z3**  
+Download/copy the z3 binary into `/usr/bin/`  
+https://github.com/Z3Prover/z3/releases
+
+**~/.mvprc**  
 ```
 move_deps = [
     "/home/<user>/libra-fork/language/diem-framework/modules/",
@@ -42,6 +44,7 @@ z3_exe = "/usr/bin/z3"
 
 ### Step 2. Run move-prover with sample code
 
+Run 
 ```
 cargo r --release -p move-prover -- /opt/counter.move 
 
@@ -74,6 +77,8 @@ module M {
 
 }
 ```
+
+Uncomment the line above to see the prover error.
 
 ### Troubleshooting
 
