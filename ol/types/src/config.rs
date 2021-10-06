@@ -404,7 +404,7 @@ impl Default for Profile {
     fn default() -> Self {
         Self {
             account: AccountAddress::from_hex_literal("0x0").unwrap(),
-            auth_key: AuthenticationKey::from_str("0x0").unwrap(),
+            auth_key: AuthenticationKey::from_str("0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
             statement: "Protests rage across the nation".to_owned(),
             ip: "0.0.0.0".parse().unwrap(),
             default_node: Some("http://localhost:8080".parse().expect("parse url")),
