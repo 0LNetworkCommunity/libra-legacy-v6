@@ -381,6 +381,43 @@ pub fn get_tx_params_from_toml(
     Ok(tx_params)
 }
 
+
+/// Gets transaction params from the 0L project root.
+pub fn get_tx_params_from_keypair(
+    config: AppCfg,
+    tx_type: TxType,
+    keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey>,
+    url: Url,
+    wp: Option<Waypoint>,
+    is_swarm: bool,
+) -> Result<TxParams, Error> {
+
+    let waypoint = wp.unwrap_or_else(|| {
+        config.get_waypoint(None).unwrap()
+    });
+
+    let chain_id = if is_swarm {
+        ChainId::new(4)
+    } else {
+        // main net id
+        ChainId::new(1)
+    };
+    
+    let tx_params = TxParams {
+        auth_key: config.profile.auth_key,
+        signer_address: config.profile.account,
+        owner_address: config.profile.account,
+        url,
+        waypoint,
+        keypair,
+        tx_cost: config.tx_configs.get_cost(tx_type),
+        chain_id,
+    };
+
+    Ok(tx_params)
+}
+
+
 /// Wait for the response from the diem RPC.
 pub fn wait_for_tx(
     signer_address: AccountAddress,

@@ -54,7 +54,7 @@ pub fn genesis_files(
 ) {
     let home_dir = miner_config.workspace.node_home.to_owned();
     // 0L convention is for the namespace of the operator to be appended by '-oper'
-    let namespace = miner_config.profile.auth_key.clone() + "-oper";
+    let namespace = miner_config.profile.auth_key.clone().to_string() + "-oper";
     
     ol_node_files::write_node_config_files(
         home_dir.clone(), 
