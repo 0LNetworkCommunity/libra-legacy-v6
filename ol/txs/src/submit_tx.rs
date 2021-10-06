@@ -387,8 +387,8 @@ pub fn get_tx_params_from_keypair(
     config: AppCfg,
     tx_type: TxType,
     keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey>,
-    url: Url,
     wp: Option<Waypoint>,
+    use_upstream_url: bool,
     is_swarm: bool,
 ) -> Result<TxParams, Error> {
 
@@ -402,12 +402,12 @@ pub fn get_tx_params_from_keypair(
         // main net id
         ChainId::new(1)
     };
-    
+
     let tx_params = TxParams {
         auth_key: config.profile.auth_key,
         signer_address: config.profile.account,
         owner_address: config.profile.account,
-        url,
+        url: config.what_url(use_upstream_url),
         waypoint,
         keypair,
         tx_cost: config.tx_configs.get_cost(tx_type),
