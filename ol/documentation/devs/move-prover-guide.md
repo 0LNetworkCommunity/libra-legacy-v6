@@ -4,7 +4,7 @@
 Follow these docs: (but be aware these docs were un-updated at the time of writing, so combine them with the notes in this doc.)
 https://github.com/OLSF/libra/blob/main/language/move-prover/doc/user/install.md
 https://github.com/OLSF/libra/blob/main/language/move-prover/doc/user/prover-guide.md
-
+https://github.com/OLSF/libra/blob/main/ol/documentation/writing_and_publishing_thirdparty_modules.md#formal-verification
 
 **Hint**: If `./scripts/dev_setup.sh` does not work, install the followings manually with the following order:
 
