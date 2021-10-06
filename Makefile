@@ -200,8 +200,10 @@ register:
 	@echo OPER send signed transaction with configurations for *OWNER* account
 	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
 
+ifeq (${TEST}, y)
 	@echo Making pull request to genesis coordination repo
 	make gen-make-pull
+endif
 
 init-test:
 	echo ${MNEM} | head -c -1 | cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
@@ -368,6 +370,8 @@ ifdef TEST
 	cp ./ol/fixtures/autopay/${NS}.autopay_batch.json ${DATA_PATH}/autopay_batch.json
 # place a mock account.json in root, used as template for onboarding
 	cp ./ol/fixtures/account/${NS}.account.json ${DATA_PATH}/account.json
+# replace the set_layout
+	cp ./ol/devnet/set_layout_test.toml ${DATA_PATH}/set_layout.toml
 endif
 
 fix-genesis:
@@ -440,13 +444,13 @@ dev-join: clear fix fix-genesis dev-wizard
 
 dev-wizard:
 #  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
-	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis --upstream-peer http://161.35.13.169:8080
+	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --genesis-ceremony --chain-id 1 --github-org OLSF --repo dev-genesis --upstream-peer http://161.35.13.169:8080
 
 #### DEVNET RESTART ####
 # usually do this on Alice, which has the dev-epoch-archive repo, and dev-genesis
 
 # Do the ceremony: and also save the genesis fixtures, needs to happen before fix.
-dev-register: clear fix register
+dev-register: clear fix dev-wizard register
 # Do a dev genesis on each node after EVERY NODE COMPLETED registration.
 dev-genesis: genesis dev-save-genesis fix-genesis
 

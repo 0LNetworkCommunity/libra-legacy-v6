@@ -200,6 +200,7 @@ pub fn tx_params_wrapper(tx_type: TxType) -> Result<TxParams, Error> {
         tx_type,
         is_operator,
         use_upstream_url,
+        None,
     )
 }
 
@@ -213,6 +214,7 @@ pub fn tx_params(
     tx_type: TxType,
     is_operator: bool,
     use_upstream_url: bool,
+    wallet_opt: Option<&WalletLibrary>,
 ) -> Result<TxParams, Error> {
     let url = if url_opt.is_some() {
         url_opt.unwrap()
@@ -233,7 +235,7 @@ pub fn tx_params(
         } else {
             // Get from 0L.toml e.g. ~/.0L/0L.toml, or use Profile::default()
             get_tx_params_from_toml(
-                config.clone(), tx_type, None, url, waypoint, swarm_path.as_ref().is_some()
+                config.clone(), tx_type, wallet_opt, url, waypoint, swarm_path.as_ref().is_some()
             ).unwrap()
         }
     };
