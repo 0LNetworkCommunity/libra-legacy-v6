@@ -173,8 +173,12 @@ move sandbox run src/scripts/persistence_test_3.move --signers 0x2
 ## Formal Verification
 ---
 
+Also see this for a more recent guide: [move-prover-guide](/ol/documentation/devs/move-prover-guide.md)
+
+---
+
 This is a step by step guide to verifying the demo.move module at diem/language/move-stdlib/demo/demo.move
-1. [Install move prover](../language/move-prover/doc/userinstall.md) 
+1. [Install move prover](/language/move-prover/doc/user/install.md) 
 > Note on the current version of Diem, Boogie 2.8.32 may need to be manually install to work
 2.  As mentioned above to run the prover use the command ```cargo run --release --quiet --package move-prover --``` or set an alias to this in your shell's configuration file
 3.  Move to the directory of demo.move
