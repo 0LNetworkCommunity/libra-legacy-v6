@@ -7,7 +7,6 @@ use 0x1::VDF;
 use 0x1::DiemAccount;
 use 0x1::MinerState;
 use 0x1::TestFixtures;
-use 0x1::Signer;
 use 0x1::Vector;
 
 
@@ -21,9 +20,8 @@ fun main(sender: signer) {
   let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
   assert(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 7357401001);
   
-  let sender_addr = Signer::address_of(&sender);
   let epochs_since_creation = 10;
-  MinerState::test_helper_set_rate_limit(sender_addr, epochs_since_creation);
+  MinerState::test_helper_set_rate_limit(&sender, epochs_since_creation);
 
   DiemAccount::create_validator_account_with_proof(
       &sender,

@@ -7,20 +7,19 @@ script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
   use 0x1::TestFixtures;
+  use 0x1::Signer;
   use 0x1::VDF;
   use 0x1::ValidatorConfig;
   use 0x1::Roles;
   use 0x1::MinerState;
-  use 0x1::Signer;
 
   fun main(sender: signer) {
     let challenge = TestFixtures::eve_0_easy_chal();
     let solution = TestFixtures::eve_0_easy_sol();
     let (parsed_address, _auth_key_prefix) = VDF::extract_address_from_challenge(&challenge);
 
-    let sender_addr = Signer::address_of(&sender);
     let epochs_since_creation = 6;
-    MinerState::test_helper_set_rate_limit(sender_addr, epochs_since_creation);
+    MinerState::test_helper_set_rate_limit(&sender, epochs_since_creation);
 
     DiemAccount::create_validator_account_with_proof(
         &sender,
@@ -41,6 +40,7 @@ script {
     assert(ValidatorConfig::is_valid(parsed_address), 7357130101021000);
     // Check the account exists and the balance is 0
     assert(DiemAccount::balance<GAS>(parsed_address) == 0, 7357130101031000);
+    let sender_addr = Signer::address_of(&sender);
     assert(MinerState::can_create_val_account(sender_addr) == false, 7357130101041000);
   }
 }

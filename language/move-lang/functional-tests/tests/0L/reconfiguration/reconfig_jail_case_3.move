@@ -72,7 +72,7 @@ script {
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{bob}}) == 5, 7357008009002);
+        assert(MinerState::test_helper_get_count(&sender) == 5, 7357008009002);
     }
 }
 //check: EXECUTED
@@ -89,7 +89,7 @@ script {
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{carol}}) == 5, 7357008009003);
+        assert(MinerState::test_helper_get_count(&sender) == 5, 7357008009003);
     }
 }
 //check: EXECUTED
@@ -106,7 +106,7 @@ script {
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{dave}}) == 5, 7357008009004);
+        assert(MinerState::test_helper_get_count(&sender) == 5, 7357008009004);
     }
 }
 //check: EXECUTED
