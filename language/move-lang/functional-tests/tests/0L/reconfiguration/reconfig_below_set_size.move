@@ -29,7 +29,7 @@ script {
         // Hence this first transaction.
 
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{alice}}) == 5, 7357008005001);
+        assert(MinerState::test_helper_get_count(&sender) == 5, 7357008005001);
     }
 }
 //check: EXECUTED
@@ -43,7 +43,7 @@ script {
         // Hence this first transaction.
 
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{eve}}) == 5, 7357008005002);
+        assert(MinerState::test_helper_get_count(&sender) == 5, 7357008005002);
     }
 }
 //check: EXECUTED

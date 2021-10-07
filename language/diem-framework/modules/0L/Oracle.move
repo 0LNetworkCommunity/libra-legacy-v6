@@ -389,6 +389,16 @@ address 0x1 {
 
       }
 
+      public fun delegation_enabled_upgrade(): bool {
+        DELEGATION_ENABLED_UPGRADE
+      }
+
+      public fun upgrade_vote_type(): u8 {
+        VOTE_TYPE_UPGRADE
+      }
+
+      ////////// TEST HELPERS
+
       // Function code: 04
       public fun test_helper_query_oracle_votes(): vector<address> acquires Oracles {
         assert(Testnet::is_testnet(), Errors::invalid_state(150004));
@@ -406,7 +416,7 @@ address 0x1 {
         voters
       }
 
-      public fun test_check_upgrade(): bool acquires Oracles {
+      public fun test_helper_check_upgrade(): bool acquires Oracles {
         assert(Testnet::is_testnet(), Errors::invalid_state(150004)); 
         let upgrade_oracle = &borrow_global<Oracles>(
           CoreAddresses::DIEM_ROOT_ADDRESS()
@@ -421,12 +431,6 @@ address 0x1 {
         }
       }
 
-      public fun delegation_enabled_upgrade(): bool {
-        DELEGATION_ENABLED_UPGRADE
-      }
 
-      public fun upgrade_vote_type(): u8 {
-        VOTE_TYPE_UPGRADE
-      }
     }
   }

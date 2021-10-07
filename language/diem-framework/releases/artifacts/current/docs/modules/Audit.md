@@ -6,7 +6,7 @@
 
 
 -  [Function `val_audit_passing`](#0x1_Audit_val_audit_passing)
--  [Function `make_passing`](#0x1_Audit_make_passing)
+-  [Function `test_helper_make_passing`](#0x1_Audit_test_helper_make_passing)
 
 
 <pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay2">0x1::AutoPay2</a>;
@@ -59,13 +59,13 @@
 
 </details>
 
-<a name="0x1_Audit_make_passing"></a>
+<a name="0x1_Audit_test_helper_make_passing"></a>
 
-## Function `make_passing`
+## Function `test_helper_make_passing`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Audit.md#0x1_Audit_make_passing">make_passing</a>(val: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="Audit.md#0x1_Audit_test_helper_make_passing">test_helper_make_passing</a>(account: &signer)
 </code></pre>
 
 
@@ -74,8 +74,9 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Audit.md#0x1_Audit_make_passing">make_passing</a>(val: &signer){
-  <a href="AutoPay.md#0x1_AutoPay2_enable_autopay">AutoPay2::enable_autopay</a>(val);
+<pre><code><b>public</b> <b>fun</b> <a href="Audit.md#0x1_Audit_test_helper_make_passing">test_helper_make_passing</a>(account: &signer){
+  <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 1905001);
+  <a href="AutoPay.md#0x1_AutoPay2_enable_autopay">AutoPay2::enable_autopay</a>(account);
 }
 </code></pre>
 

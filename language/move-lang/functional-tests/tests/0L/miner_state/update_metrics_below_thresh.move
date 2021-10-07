@@ -21,7 +21,7 @@ script {
             TestFixtures::alice_0_easy_sol()
         );
         //above test function was updated to set height to 1 for oracle E2E test, need to reset to 0 here. 
-        MinerState::test_helper_set_weight_vm(&sender, @{{alice}}, 0);
+        MinerState::test_helper_set_weight(&sender, 0);
 
         // check for initialized MinerState
         let verified_tower_height_after = MinerState::test_helper_get_height(@{{alice}});
@@ -52,7 +52,7 @@ script {
         assert(MinerState::get_miner_latest_epoch(sender, @{{alice}}) == 1, 10009002);
         assert(MinerState::get_count_in_epoch(@{{alice}}) == 1, 10009003);
         assert(MinerState::get_epochs_mining(@{{alice}}) == 0, 10009004);
-        assert(MinerState::test_helper_get_contiguous(@{{alice}}) == 0, 10009005);
+        assert(MinerState::test_helper_get_contiguous_vm(sender, @{{alice}}) == 0, 10009005);
         
         MinerState::test_helper_mock_reconfig(sender, @{{alice}});
 
@@ -60,7 +60,7 @@ script {
         assert(MinerState::get_miner_latest_epoch(sender, @{{alice}}) == 1, 10009007);
         assert(MinerState::get_count_in_epoch(@{{alice}}) == 0, 10009008);
         assert(MinerState::get_epochs_mining(@{{alice}}) == 0, 10009009);
-        assert(MinerState::test_helper_get_contiguous(@{{alice}}) == 0, 10009010);
+        assert(MinerState::test_helper_get_contiguous_vm(sender, @{{alice}}) == 0, 10009010);
     }
 }
 // check: EXECUTED

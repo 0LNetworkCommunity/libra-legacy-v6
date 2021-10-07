@@ -11,7 +11,6 @@ use 0x1::NodeWeight;
 use 0x1::TestFixtures;
 use 0x1::ValidatorConfig;
 use 0x1::Roles;
-use 0x1::Signer;
 
 // Test Prefix: 1301
 
@@ -19,10 +18,8 @@ use 0x1::Signer;
     // Scenario: Bob, an existing validator, is sending an onboarding transaction for Eve.
 
     // mock bob's account limits so he's not rate limited from onboarding eve
-    let sender_addr = Signer::address_of(&sender);
     let epochs_since_creation = 10;
-    MinerState::test_helper_set_rate_limit(sender_addr, epochs_since_creation);
-
+    MinerState::test_helper_set_rate_limit(&sender, epochs_since_creation);
 
     // Use a miner challenge and proof not yet submitted to the chain.
     let challenge = TestFixtures::eve_0_easy_chal();

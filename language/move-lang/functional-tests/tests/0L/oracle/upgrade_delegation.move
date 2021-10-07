@@ -126,7 +126,7 @@ script {
       assert(e == @{{thomas}}, 7357123401011000);
 
       assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-      assert(Oracle::test_check_upgrade() == false, 7357123401011001);
+      assert(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
     }
   }
 }
@@ -149,7 +149,7 @@ script {
       assert(e == @{{bob}}, 7357123401011000);
 
       assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-      assert(Oracle::test_check_upgrade() == false, 7357123401011001);
+      assert(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
     }
   }
 }
@@ -203,7 +203,7 @@ script {
       assert(e == @{{jim}}, 7357123401011000);
 
       assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-      assert(Oracle::test_check_upgrade() == false, 7357123401011001);
+      assert(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
     }
   }
 }
@@ -249,7 +249,7 @@ script {
       assert(e == @{{charlie}}, 7357123401011000);
 
       assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-      assert(Oracle::test_check_upgrade() == true, 7357123401011001);
+      assert(Oracle::test_helper_check_upgrade() == true, 7357123401011001);
     }
   }
 }

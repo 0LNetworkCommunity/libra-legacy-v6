@@ -209,8 +209,8 @@ module Stats{
   public fun test_helper_inc_vote_addr(vm: &signer, node_addr: address) acquires ValStats {
     let sender = Signer::address_of(vm);
     assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190015));
-
     assert(Testnet::is_testnet(), Errors::invalid_state(190015));
+
     inc_vote(vm, node_addr);
   }
 

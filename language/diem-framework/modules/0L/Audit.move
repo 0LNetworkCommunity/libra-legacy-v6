@@ -1,3 +1,9 @@
+/////////////////////////////////////////////////////////////////////////
+// 0L Module
+// Audit Module
+// Error code: 1905
+/////////////////////////////////////////////////////////////////////////
+
 address 0x1 {
   module Audit {
     use 0x1::ValidatorConfig;
@@ -28,8 +34,9 @@ address 0x1 {
     }
 
     ////////// TEST HELPERS
-    public fun make_passing(val: &signer){
-      AutoPay2::enable_autopay(val);
+    public fun test_helper_make_passing(account: &signer){
+      assert(Testnet::is_testnet(), 1905001);
+      AutoPay2::enable_autopay(account);
     }
   }
 }

@@ -66,7 +66,7 @@ script {
         
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{bob}}) == 5, 7357008016002);
+        assert(MinerState::test_helper_get_count(&sender) == 5, 7357008016002);
     }
 }
 //check: EXECUTED
@@ -82,7 +82,7 @@ script {
         
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{carol}}) == 5, 7357008016003);
+        assert(MinerState::test_helper_get_count(&sender) == 5, 7357008016003);
     }
 }
 //check: EXECUTED
@@ -98,7 +98,7 @@ script {
         
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{dave}}) == 5, 7357008016004);
+        assert(MinerState::test_helper_get_count(&sender) == 5, 7357008016004);
     }
 }
 //check: EXECUTED
@@ -218,7 +218,7 @@ script {
         
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{bob}}) == 5, 7357008016013);
+        assert(MinerState::test_helper_get_count(&sender) == 5, 7357008016013);
     }
 }
 //check: EXECUTED
@@ -234,7 +234,7 @@ script {
         
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{carol}}) == 5, 7357008016014);
+        assert(MinerState::test_helper_get_count(&sender) == 5, 7357008016014);
     }
 }
 //check: EXECUTED
@@ -250,7 +250,7 @@ script {
         
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{dave}}) == 5, 7357008016014);
+        assert(MinerState::test_helper_get_count(&sender) == 5, 7357008016014);
     }
 }
 //check: EXECUTED

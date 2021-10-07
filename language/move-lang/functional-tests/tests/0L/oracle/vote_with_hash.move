@@ -43,7 +43,7 @@ script {
       assert(e == @{{alice}}, 7357123401011000);
 
       assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-      assert(Oracle::test_check_upgrade() == false, 7357123401011001);
+      assert(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
   }
 }
 // check: EXECUTED
@@ -65,7 +65,7 @@ script {
       assert(e == @{{bob}}, 7357123401011000);
 
       assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-      assert(Oracle::test_check_upgrade() == false, 7357123401011001);
+      assert(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
   }
 }
 // check: EXECUTED
@@ -90,12 +90,12 @@ script {
       if (Oracle::upgrade_vote_type() == 0) {
           //One validator, one vote
           assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-          assert(Oracle::test_check_upgrade() == true, 7357123401011001);
+          assert(Oracle::test_helper_check_upgrade() == true, 7357123401011001);
       }
       else if (Oracle::upgrade_vote_type() == 1) {
           //Weighted vote based on mining
           assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-          assert(Oracle::test_check_upgrade() == false, 7357123401011001);
+          assert(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
       }
       else {
           //test must be upgraded for new vote type
@@ -123,12 +123,12 @@ script {
       if (Oracle::upgrade_vote_type() == 0) {
           //One validator, one vote
           assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-          assert(Oracle::test_check_upgrade() == true, 7357123401011001);
+          assert(Oracle::test_helper_check_upgrade() == true, 7357123401011001);
       }
       else if (Oracle::upgrade_vote_type() == 1) {
           //Weighted vote based on mining
           assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-          assert(Oracle::test_check_upgrade() == false, 7357123401011001);
+          assert(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
       }
       else {
           //test must be upgraded for new vote type
@@ -159,12 +159,12 @@ script {
       if (Oracle::upgrade_vote_type() == 0) {
           //One validator, one vote
           assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-          assert(Oracle::test_check_upgrade() == true, 7357123401011001);
+          assert(Oracle::test_helper_check_upgrade() == true, 7357123401011001);
       }
       else if (Oracle::upgrade_vote_type() == 1) {
           //Weighted vote based on mining
           assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-          assert(Oracle::test_check_upgrade() == true, 7357123401011001);
+          assert(Oracle::test_helper_check_upgrade() == true, 7357123401011001);
       }
       else {
           //test must be upgraded for new vote type
