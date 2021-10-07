@@ -201,9 +201,10 @@
 
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190002));
 
-  <b>let</b> stats = borrow_global_mut&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(sender);
-  <b>let</b> (is_init, _) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(&<b>mut</b> stats.current.addr, &node_addr);
+  <b>let</b> stats = borrow_global&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(sender);
+  <b>let</b> (is_init, _) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(&stats.current.addr, &node_addr);
   <b>if</b> (!is_init) {
+    <b>let</b> stats = borrow_global_mut&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(sender);
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> stats.current.addr, node_addr);
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> stats.current.prop_count, 0);
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> stats.current.vote_count, 0);
@@ -516,7 +517,7 @@
 <pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_get_total_votes">get_total_votes</a>(vm: &signer): u64 <b>acquires</b> <a href="Stats.md#0x1_Stats_ValStats">ValStats</a> {
   <b>let</b> sender = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190012));
-  *&borrow_global_mut&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).current.total_votes
+  *&borrow_global&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).current.total_votes
 }
 </code></pre>
 
@@ -542,7 +543,7 @@
 <pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_get_total_props">get_total_props</a>(vm: &signer): u64 <b>acquires</b> <a href="Stats.md#0x1_Stats_ValStats">ValStats</a> {
   <b>let</b> sender = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190013));
-  *&borrow_global_mut&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).current.total_props
+  *&borrow_global&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).current.total_props
 }
 </code></pre>
 
@@ -566,7 +567,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_get_history">get_history</a>(): vector&lt;<a href="Stats.md#0x1_Stats_SetData">SetData</a>&gt; <b>acquires</b> <a href="Stats.md#0x1_Stats_ValStats">ValStats</a> {
-  *&borrow_global_mut&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).history
+  *&borrow_global&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).history
 }
 </code></pre>
 

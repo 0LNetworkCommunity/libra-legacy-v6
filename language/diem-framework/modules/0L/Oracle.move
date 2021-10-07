@@ -418,10 +418,11 @@ address 0x1 {
 
       public fun test_helper_check_upgrade(): bool acquires Oracles {
         assert(Testnet::is_testnet(), Errors::invalid_state(150004)); 
-        let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::DIEM_ROOT_ADDRESS()).upgrade;
-  
+        let upgrade_oracle = &borrow_global<Oracles>(
+          CoreAddresses::DIEM_ROOT_ADDRESS()
+        ).upgrade;
         let payload = *&upgrade_oracle.consensus.data;
-  
+
         if (!Vector::is_empty(&payload)) {
           true
         }

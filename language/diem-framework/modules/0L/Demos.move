@@ -46,7 +46,7 @@ address 0x1{
 
           // Resource Struct state is always "borrowed" and "moved" and generally 
           // cannot be copied. A struct can be mutably borrowed, if it is written to, 
-          // useing `borrow_global_mut`. Note the Type State
+          // using `borrow_global_mut`. Note the Type State
           let st = borrow_global_mut<State>(Signer::address_of(sender));
           // the `&` as in Rust makes the assignment to a borrowed value. Each 
           // Vector operation below with use a st.hist and return it before the 

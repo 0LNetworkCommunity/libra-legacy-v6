@@ -1044,8 +1044,24 @@
 <summary>Implementation</summary>
 
 
+<<<<<<< HEAD
+<pre><code><b>public</b> <b>fun</b> <a href="Oracle.md#0x1_Oracle_test_check_upgrade">test_check_upgrade</a>(): bool <b>acquires</b> <a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a> {
+  <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(150004));
+  <b>let</b> upgrade_oracle = &borrow_global&lt;<a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a>&gt;(
+    <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()
+  ).upgrade;
+  <b>let</b> payload = *&upgrade_oracle.consensus.data;
+
+  <b>if</b> (!<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_is_empty">Vector::is_empty</a>(&payload)) {
+    <b>true</b>
+  }
+  <b>else</b> {
+    <b>false</b>
+  }
+=======
 <pre><code><b>public</b> <b>fun</b> <a href="Oracle.md#0x1_Oracle_upgrade_vote_type">upgrade_vote_type</a>(): u8 {
   <a href="Oracle.md#0x1_Oracle_VOTE_TYPE_UPGRADE">VOTE_TYPE_UPGRADE</a>
+>>>>>>> my-fork/main
 }
 </code></pre>
 
