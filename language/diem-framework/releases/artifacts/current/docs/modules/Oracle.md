@@ -25,6 +25,7 @@
 -  [Function `get_threshold`](#0x1_Oracle_get_threshold)
 -  [Function `calculate_proportional_voting_threshold`](#0x1_Oracle_calculate_proportional_voting_threshold)
 -  [Function `enable_delegation`](#0x1_Oracle_enable_delegation)
+-  [Function `has_delegated`](#0x1_Oracle_has_delegated)
 -  [Function `check_number_delegates`](#0x1_Oracle_check_number_delegates)
 -  [Function `delegate_vote`](#0x1_Oracle_delegate_vote)
 -  [Function `remove_delegate_vote`](#0x1_Oracle_remove_delegate_vote)
@@ -890,11 +891,41 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Oracle.md#0x1_Oracle_enable_delegation">enable_delegation</a> (sender: &signer) {
-  move_to&lt;<a href="Oracle.md#0x1_Oracle_VoteDelegation">VoteDelegation</a>&gt;(sender, <a href="Oracle.md#0x1_Oracle_VoteDelegation">VoteDelegation</a>{
-    vote_delegated: <b>false</b>,
-    delegates: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;(),
-    delegated_to_address: <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender),
-  });
+  <b>if</b> (!<b>exists</b>&lt;<a href="Oracle.md#0x1_Oracle_VoteDelegation">VoteDelegation</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender))) {
+    move_to&lt;<a href="Oracle.md#0x1_Oracle_VoteDelegation">VoteDelegation</a>&gt;(sender, <a href="Oracle.md#0x1_Oracle_VoteDelegation">VoteDelegation</a>{
+      vote_delegated: <b>false</b>,
+      delegates: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;(),
+      delegated_to_address: <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender),
+    });
+  }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Oracle_has_delegated"></a>
+
+## Function `has_delegated`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Oracle.md#0x1_Oracle_has_delegated">has_delegated</a>(account: address): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Oracle.md#0x1_Oracle_has_delegated">has_delegated</a> (account: address): bool <b>acquires</b> <a href="Oracle.md#0x1_Oracle_VoteDelegation">VoteDelegation</a> {
+  <b>if</b> (<b>exists</b>&lt;<a href="Oracle.md#0x1_Oracle_VoteDelegation">VoteDelegation</a>&gt;(account)) {
+    <b>let</b> del = borrow_global&lt;<a href="Oracle.md#0x1_Oracle_VoteDelegation">VoteDelegation</a>&gt;(account);
+    <b>return</b> del.vote_delegated
+  };
+  <b>false</b>
 }
 </code></pre>
 
@@ -945,6 +976,8 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="Oracle.md#0x1_Oracle_delegate_vote">delegate_vote</a> (sender: &signer, vote_dest: address) <b>acquires</b> <a href="Oracle.md#0x1_Oracle_VoteDelegation">VoteDelegation</a>{
   <b>assert</b>(<b>exists</b>&lt;<a href="Oracle.md#0x1_Oracle_VoteDelegation">VoteDelegation</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender)), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="Oracle.md#0x1_Oracle_DELEGATION_NOT_ENABLED">DELEGATION_NOT_ENABLED</a>));
+
+  // check <b>if</b> the receipient/destination has enabled delegation.
   <b>assert</b>(<b>exists</b>&lt;<a href="Oracle.md#0x1_Oracle_VoteDelegation">VoteDelegation</a>&gt;(vote_dest), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="Oracle.md#0x1_Oracle_DELEGATION_NOT_ENABLED">DELEGATION_NOT_ENABLED</a>));
 
   <b>let</b> del = borrow_global_mut&lt;<a href="Oracle.md#0x1_Oracle_VoteDelegation">VoteDelegation</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender));

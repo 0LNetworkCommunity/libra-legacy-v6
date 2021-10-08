@@ -163,7 +163,7 @@ impl AppCfg {
             // let source_path = what_source();
             default_config.workspace.source_path = source_path.clone();
             default_config.workspace.stdlib_bin_path = Some(
-                source_path.as_ref().unwrap().join("language/stdlib/staged/stdlib.mv")
+                source_path.as_ref().unwrap().join("language/diem-framework/staged/stdlib.mv")
             );
         }
 
@@ -332,7 +332,7 @@ pub struct Workspace {
     #[serde(default = "default_db_path")]
     pub db_path: PathBuf,
     /// Path to which stdlib binaries for upgrades get built typically 
-    /// /language/stdlib/staged/stdlib.mv
+    /// /language/diem-framework/staged/stdlib.mv
     pub stdlib_bin_path: Option<PathBuf>,
 }
 

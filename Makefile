@@ -327,7 +327,7 @@ endif
 
 fixture-stdlib:
 	make stdlib
-	cp language/stdlib/staged/stdlib.mv ol/fixtures/stdlib/fresh_stdlib.mv
+	cp language/diem-framework/staged/stdlib.mv ol/fixtures/stdlib/fresh_stdlib.mv
 
 #### HELPERS ####
 check:

@@ -14,7 +14,7 @@ You need a newly compiled stdlib, otherwise you risk using stale code.
 
 `ol/util/create-upgrade-payload.sh`
 
-- this should write a stdlib file to `language/stdlib/staged/stdlib.mv`
+- this should write a stdlib file to `language/diem-framework/staged/stdlib.mv`
 
 
 ## e2e Testing
