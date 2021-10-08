@@ -14,7 +14,7 @@ You need a newly compiled stdlib, otherwise you risk using stale code.
 
 `cargo run --release -p stdlib -- --create-upgrade-payload`
 
-- this should write a stdlib file to `language/stdlib/staged/stdlib.mv`
+- this should write a stdlib file to `language/diem-framework/staged/stdlib.mv`
 
 
 ## e2e Testing
@@ -39,7 +39,7 @@ The important feature of this file is that it is essentially identical to the st
 
 4. Copy concatenated file from `stdlib/staged/stdlib.mv`, to `fixtures/upgrade_payload/foo_stdlib.mv`
 
-- `cp language/stdlib/staged/stdlib.mv fixtures/upgrade_payload/foo_stdlib.mv`
+- `cp language/diem-framework/staged/stdlib.mv fixtures/upgrade_payload/foo_stdlib.mv`
 
 5. Important, you must now *comment away* the foo() code again in Upgrade.move.
 6. Rebuild stdlib again.  Otherwise the e2e test will be starting from an stdlib which includes foo(), when it should not.

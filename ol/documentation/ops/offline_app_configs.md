@@ -38,5 +38,5 @@ ol --config path/to/config/0L.toml explorer
 ### TXS
 ```
 # submit upgrade tx
-txs --config path/to/config/0L.toml  oracle-upgrade -f path/to/libra/language/stdlib/staged/stdlib.mv
+txs --config path/to/config/0L.toml  oracle-upgrade -f path/to/libra/language/diem-framework/staged/stdlib.mv
 ```

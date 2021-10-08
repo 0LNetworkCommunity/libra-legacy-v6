@@ -50,7 +50,7 @@ impl Runnable for OracleUpgradeCmd {
                 println!(
                   "could not find path to compiled stdlib.mv, was this set in 0L.toml? \
                   Alternatively pass the full path with: \
-                  -f <project_root>/language/stdlib/staged/stdlib.mv"
+                  -f <project_root>/language/diem-framework/staged/stdlib.mv"
                 );
                 exit(1);
               },
