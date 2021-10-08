@@ -2220,6 +2220,14 @@ pub enum ScriptFunctionCall {
 
     MinerstateHelper {},
 
+    /// A validator (Alice) can delegate the authority for the operation of an upgrade to another validator (Bob). When Oracle delegation happens, effectively the consensus voting power of Alice, is added to Bob only for the effect of calculating the preference on electing a stdlib binary. Whatever binary Bob proposes, Alice will also propose without needing to be submitting transactions.
+    OlDelegateVote {
+        dest: AccountAddress,
+    },
+
+    /// First Bob must have delegation enabled, which can be done with:
+    OlEnableDelegation {},
+
     OlOracleTx {
         id: u64,
         data: Bytes,
@@ -2232,6 +2240,9 @@ pub enum ScriptFunctionCall {
         sha: AccountAddress,
         ram: AccountAddress,
     },
+
+    /// Alice can remove Bob as the delegate with this function.
+    OlRemoveDelegation {},
 
     /// # Summary
     /// Transfers a given number of coins in a specified currency from one account to another.
@@ -3611,6 +3622,8 @@ impl ScriptFunctionCall {
                 solution,
             ),
             MinerstateHelper {} => encode_minerstate_helper_script_function(),
+            OlDelegateVote { dest } => encode_ol_delegate_vote_script_function(dest),
+            OlEnableDelegation {} => encode_ol_enable_delegation_script_function(),
             OlOracleTx { id, data } => encode_ol_oracle_tx_script_function(id, data),
             OlReconfigBulkUpdateSetup {
                 alice,
@@ -3619,6 +3632,7 @@ impl ScriptFunctionCall {
                 sha,
                 ram,
             } => encode_ol_reconfig_bulk_update_setup_script_function(alice, bob, carol, sha, ram),
+            OlRemoveDelegation {} => encode_ol_remove_delegation_script_function(),
             PeerToPeerWithMetadata {
                 currency,
                 payee,
@@ -4923,6 +4937,32 @@ pub fn encode_minerstate_helper_script_function() -> TransactionPayload {
     ))
 }
 
+/// A validator (Alice) can delegate the authority for the operation of an upgrade to another validator (Bob). When Oracle delegation happens, effectively the consensus voting power of Alice, is added to Bob only for the effect of calculating the preference on electing a stdlib binary. Whatever binary Bob proposes, Alice will also propose without needing to be submitting transactions.
+pub fn encode_ol_delegate_vote_script_function(dest: AccountAddress) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("OracleScripts").to_owned(),
+        ),
+        ident_str!("ol_delegate_vote").to_owned(),
+        vec![],
+        vec![bcs::to_bytes(&dest).unwrap()],
+    ))
+}
+
+/// First Bob must have delegation enabled, which can be done with:
+pub fn encode_ol_enable_delegation_script_function() -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("OracleScripts").to_owned(),
+        ),
+        ident_str!("ol_enable_delegation").to_owned(),
+        vec![],
+        vec![],
+    ))
+}
+
 pub fn encode_ol_oracle_tx_script_function(id: u64, data: Vec<u8>) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
@@ -4956,6 +4996,19 @@ pub fn encode_ol_reconfig_bulk_update_setup_script_function(
             bcs::to_bytes(&sha).unwrap(),
             bcs::to_bytes(&ram).unwrap(),
         ],
+    ))
+}
+
+/// Alice can remove Bob as the delegate with this function.
+pub fn encode_ol_remove_delegation_script_function() -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("OracleScripts").to_owned(),
+        ),
+        ident_str!("ol_remove_delegation").to_owned(),
+        vec![],
+        vec![],
     ))
 }
 
@@ -8236,6 +8289,28 @@ fn decode_minerstate_helper_script_function(
     }
 }
 
+fn decode_ol_delegate_vote_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::OlDelegateVote {
+            dest: bcs::from_bytes(script.args().get(0)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_ol_enable_delegation_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(_script) = payload {
+        Some(ScriptFunctionCall::OlEnableDelegation {})
+    } else {
+        None
+    }
+}
+
 fn decode_ol_oracle_tx_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::OlOracleTx {
@@ -8258,6 +8333,16 @@ fn decode_ol_reconfig_bulk_update_setup_script_function(
             sha: bcs::from_bytes(script.args().get(3)?).ok()?,
             ram: bcs::from_bytes(script.args().get(4)?).ok()?,
         })
+    } else {
+        None
+    }
+}
+
+fn decode_ol_remove_delegation_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(_script) = payload {
+        Some(ScriptFunctionCall::OlRemoveDelegation {})
     } else {
         None
     }
@@ -9116,12 +9201,24 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_minerstate_helper_script_function),
         );
         map.insert(
+            "OracleScriptsol_delegate_vote".to_string(),
+            Box::new(decode_ol_delegate_vote_script_function),
+        );
+        map.insert(
+            "OracleScriptsol_enable_delegation".to_string(),
+            Box::new(decode_ol_enable_delegation_script_function),
+        );
+        map.insert(
             "OracleScriptsol_oracle_tx".to_string(),
             Box::new(decode_ol_oracle_tx_script_function),
         );
         map.insert(
             "ValidatorScriptsol_reconfig_bulk_update_setup".to_string(),
             Box::new(decode_ol_reconfig_bulk_update_setup_script_function),
+        );
+        map.insert(
+            "OracleScriptsol_remove_delegation".to_string(),
+            Box::new(decode_ol_remove_delegation_script_function),
         );
         map.insert(
             "PaymentScriptspeer_to_peer_with_metadata".to_string(),

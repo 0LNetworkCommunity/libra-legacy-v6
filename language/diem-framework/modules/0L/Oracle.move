@@ -339,11 +339,21 @@ address 0x1 {
       }
 
       public fun enable_delegation (sender: &signer) {
-        move_to<VoteDelegation>(sender, VoteDelegation{
-          vote_delegated: false,
-          delegates: Vector::empty<address>(),
-          delegated_to_address: Signer::address_of(sender),
-        });
+        if (!exists<VoteDelegation>(Signer::address_of(sender))) {
+          move_to<VoteDelegation>(sender, VoteDelegation{
+            vote_delegated: false,
+            delegates: Vector::empty<address>(),
+            delegated_to_address: Signer::address_of(sender),
+          });
+        }
+      }
+
+      public fun has_delegated (account: address): bool acquires VoteDelegation {
+        if (exists<VoteDelegation>(account)) {
+          let del = borrow_global<VoteDelegation>(account); 
+          return del.vote_delegated
+        };
+        false
       }
 
       public fun check_number_delegates (addr: address): u64 acquires VoteDelegation {
@@ -354,6 +364,8 @@ address 0x1 {
 
       public fun delegate_vote (sender: &signer, vote_dest: address) acquires VoteDelegation{
         assert(exists<VoteDelegation>(Signer::address_of(sender)), Errors::not_published(DELEGATION_NOT_ENABLED));
+
+        // check if the receipient/destination has enabled delegation.
         assert(exists<VoteDelegation>(vote_dest), Errors::not_published(DELEGATION_NOT_ENABLED));
 
         let del = borrow_global_mut<VoteDelegation>(Signer::address_of(sender)); 

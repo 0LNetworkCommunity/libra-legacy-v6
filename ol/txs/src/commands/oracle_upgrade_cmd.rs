@@ -12,8 +12,18 @@ use std::{fs, io::prelude::*, path::PathBuf, process::exit};
 /// `OracleUpgrade` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct OracleUpgradeCmd {
+    #[options(short = "v", help = "Do the vote tx")]
+    vote: bool,
     #[options(short = "f", help = "Path of upgrade file")]
     upgrade_file_path: Option<PathBuf>,
+    #[options(short = "h", help = "Use hash instead of binary")]
+    hash: Option<String>,
+    #[options(short = "d", help = "Delegate voting power to another validator")]
+    delegate: Option<AccountAddress>,
+    #[options(short = "e", help = "Remove delegation")]
+    enable_delegation: bool, 
+    #[options(short = "r", help = "Remove delegation")]
+    remove_delegation: bool, 
 }
 
 pub fn oracle_tx_script(upgrade_file_path: &PathBuf) -> TransactionPayload {
@@ -30,24 +40,41 @@ impl Runnable for OracleUpgradeCmd {
     fn run(&self) {  
         let entry_args = entrypoint::get_args();
         let tx_params = tx_params_wrapper(TxType::Critical).unwrap();
+        let script;
 
-        let path = self.upgrade_file_path.clone().unwrap_or_else(|| {
-          let cfg = app_config();
-          match cfg.workspace.stdlib_bin_path.clone() {
-            Some(p) => p,
-            None => {
-              println!(
-                "could not find path to compiled stdlib.mv, was this set in 0L.toml? \
-                 Alternatively pass the full path with: \
-                 -f <project_root>/language/stdlib/staged/stdlib.mv"
-              );
-              exit(1);
-            },
+        if self.vote {
+          let path = self.upgrade_file_path.clone().unwrap_or_else(|| {
+            let cfg = app_config();
+            match cfg.workspace.stdlib_bin_path.clone() {
+              Some(p) => p,
+              None => {
+                println!(
+                  "could not find path to compiled stdlib.mv, was this set in 0L.toml? \
+                  Alternatively pass the full path with: \
+                  -f <project_root>/language/stdlib/staged/stdlib.mv"
+                );
+                exit(1);
+              },
+            }
+          });
+
+          if let Some(hex_hash) = self.hash {
+            let hex_hash = hex::decode(hash).expect("Input must be a hex string");
+            script = oracle_hash_tx_script(hex_hash);
+          } else {
+            script = oracle_tx_script(&path);
           }
-        });
+        } else if self.enable_delegation {
+          script = transaction_builder::encode_ol_enable_delegation_script_function()
+        } else if self.remove_delegation {
+          script = transaction_builder::encode_ol_remove_delegation_script_function()
+        } else if let Some(destination) = self.delegate {
+          script = transaction_builder::encode_ol_delegate_vote_script_function(destination)
+        }
+
         
         match maybe_submit(
-          oracle_tx_script(&path),
+          script,
           &tx_params,
           entry_args.no_send,
           entry_args.save_path
