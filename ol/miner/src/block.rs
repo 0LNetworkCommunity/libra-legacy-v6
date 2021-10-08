@@ -297,6 +297,7 @@ fn test_mine_genesis() {
     // if no file is found, the block height is 0
     //let blocks_dir = Path::new("./test_blocks");
     let configs_fixture = test_make_configs_fixture();
+    dbg!(&configs_fixture);
 
     //clear from sideffects.
     test_helper_clear_block_dir(&configs_fixture.get_block_dir());
@@ -364,7 +365,7 @@ pub fn test_make_configs_fixture() -> AppCfg {
     cfg.workspace.block_dir = "test_blocks_temp_1".to_owned();
     cfg.chain_info.chain_id = "0L testnet".to_owned();
     cfg.profile.auth_key =
-        "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".to_string();
+        "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".parse().unwrap();
     cfg
 }
 
@@ -376,7 +377,7 @@ pub fn genesis_preimage(cfg: &AppCfg) -> Vec<u8> {
 
     let mut preimage: Vec<u8> = vec![];
 
-    let mut padded_key_bytes = match decode(cfg.profile.auth_key.clone()) {
+    let mut padded_key_bytes = match decode(cfg.profile.auth_key.clone().to_string()) {
         Err(x) => panic!("Invalid 0L Auth Key: {}", x),
         Ok(key_bytes) => {
             if key_bytes.len() != AUTH_KEY_BYTES {
