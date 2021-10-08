@@ -14,20 +14,16 @@ At the beginning of each epoch (specifically round 2), the VM checks if the quor
 ## A First Proposal
 If there is no stdlib binary yet proposed, any validator can submit one with these steps. You will need to have the source code.
 
-1. (Rust) Checkout the tag of the release indended for upgrade of the `libra` repo.
-2. (Move) Build the new stdlib using the Makefile helper `make stdlib`.
+1. Checkout the tag of the release indended for upgrade of the `libra` repo.
+2. Build the new stdlib using the Makefile helper `make stdlib`.
 3. From a CLI issue the oracle upgrade command to vote on upgrade:
 
-```
-txs oracle-upgrade --vote
-```
-
-If however the compiled stdlib is not in the usual location (i.e. `./language/diem-framework/staged/stdlib.mv`) then you should pass the path explicitly with:
+When you compile the stdlib by default they go to: `<0L source>/language/diem-framework/staged/stdlib.mv`). You should pass the path explicitly with:
 
 ```
-txs oracle-upgrade -v -f <path/to/file>
+txs oracle-upgrade --vote -f <path/to/file>
 ```
-
+Note: You may edit your 0L.toml file under `workspace` to include `stdlib_bin_path = "/root/libra/language/diem-framework/staged/stdlib.mv`. Then you don't need to pass the file path explicitly. This may become deprecated.
 ## Subsequent Proposals
 Subsequent proposals can use the exact same step above. In that case the validator is verifying the compilation of stdlib when voting. That is the preferred method.
 
