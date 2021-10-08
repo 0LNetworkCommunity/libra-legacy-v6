@@ -5,7 +5,7 @@
 use abscissa_core::{Command, Options, Runnable};
 use ol_types::config::TxType;
 use crate::{entrypoint, prelude::app_config, submit_tx::{tx_params_wrapper, maybe_submit}};
-use diem_types::transaction::TransactionPayload;
+use diem_types::{account_address::AccountAddress, transaction::TransactionPayload};
 use diem_transaction_builder::stdlib as transaction_builder;
 use std::{fs, io::prelude::*, path::PathBuf, process::exit};
 
@@ -40,9 +40,8 @@ impl Runnable for OracleUpgradeCmd {
     fn run(&self) {  
         let entry_args = entrypoint::get_args();
         let tx_params = tx_params_wrapper(TxType::Critical).unwrap();
-        let script;
-
-        if self.vote {
+        
+        let script = if self.vote {
           let path = self.upgrade_file_path.clone().unwrap_or_else(|| {
             let cfg = app_config();
             match cfg.workspace.stdlib_bin_path.clone() {
@@ -58,21 +57,23 @@ impl Runnable for OracleUpgradeCmd {
             }
           });
 
-          if let Some(hex_hash) = self.hash {
-            let hex_hash = hex::decode(hash).expect("Input must be a hex string");
-            script = oracle_hash_tx_script(hex_hash);
+          if let Some(hex_hash) = &self.hash {
+            let bytes = hex::decode(hex_hash).expect("Input must be a hex string");
+            oracle_hash_tx_script(bytes)
           } else {
-            script = oracle_tx_script(&path);
+            oracle_tx_script(&path)
           }
         } else if self.enable_delegation {
-          script = transaction_builder::encode_ol_enable_delegation_script_function()
+          transaction_builder::encode_ol_enable_delegation_script_function()
         } else if self.remove_delegation {
-          script = transaction_builder::encode_ol_remove_delegation_script_function()
+          transaction_builder::encode_ol_remove_delegation_script_function()
         } else if let Some(destination) = self.delegate {
-          script = transaction_builder::encode_ol_delegate_vote_script_function(destination)
-        }
+          transaction_builder::encode_ol_delegate_vote_script_function(destination)
+        } else {
+          println!("Nothing to do from command line args. Did you mean to pass --vote?");
+          exit(1);
+        };
 
-        
         match maybe_submit(
           script,
           &tx_params,
@@ -88,31 +89,33 @@ impl Runnable for OracleUpgradeCmd {
     }
 }
 
-/// `OracleUpgradeHash` subcommand
-#[derive(Command, Debug, Default, Options)]
-pub struct OracleUpgradeHashCmd {
-    #[options(short = "h", help = "Upgrade hash")]
-    upgrade_hash: String,
-}
-
 pub fn oracle_hash_tx_script(upgrade_hash: Vec<u8>) -> TransactionPayload {
     let id = 2; // upgrade with hash is oracle #2
     transaction_builder::encode_ol_oracle_tx_script_function(id, upgrade_hash)
 }
 
-impl Runnable for OracleUpgradeHashCmd {
-    fn run(&self) {  
-        let entry_args = entrypoint::get_args();
-        let tx_params = tx_params_wrapper(TxType::Critical).unwrap();
 
-        let hash = self.upgrade_hash.clone();
-        let hex_hash = hex::decode(hash).expect("Input must be a hex string");
+// /// `OracleUpgradeHash` subcommand
+// #[derive(Command, Debug, Default, Options)]
+// pub struct OracleUpgradeHashCmd {
+//     #[options(short = "h", help = "Upgrade hash")]
+//     upgrade_hash: String,
+// }
+
+
+// impl Runnable for OracleUpgradeHashCmd {
+//     fn run(&self) {  
+//         let entry_args = entrypoint::get_args();
+//         let tx_params = tx_params_wrapper(TxType::Critical).unwrap();
+
+//         let hash = self.upgrade_hash.clone();
+//         let hex_hash = hex::decode(hash).expect("Input must be a hex string");
         
-        maybe_submit(
-          oracle_hash_tx_script(hex_hash),
-          &tx_params,
-          entry_args.no_send,
-          entry_args.save_path
-        ).unwrap();
-    }
-}
+//         maybe_submit(
+//           oracle_hash_tx_script(hex_hash),
+//           &tx_params,
+//           entry_args.no_send,
+//           entry_args.save_path
+//         ).unwrap();
+//     }
+// }
