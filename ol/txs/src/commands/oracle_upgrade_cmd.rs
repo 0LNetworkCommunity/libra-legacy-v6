@@ -20,7 +20,7 @@ pub struct OracleUpgradeCmd {
     hash: Option<String>,
     #[options(short = "d", help = "Delegate voting power to another validator")]
     delegate: Option<AccountAddress>,
-    #[options(short = "e", help = "Remove delegation")]
+    #[options(short = "e", help = "Enable delegation")]
     enable_delegation: bool, 
     #[options(short = "r", help = "Remove delegation")]
     remove_delegation: bool, 
@@ -52,7 +52,7 @@ impl Runnable for OracleUpgradeCmd {
                 },
               }
             });
-            
+
             oracle_tx_script(&path)
           }
         } else if self.enable_delegation {
@@ -73,7 +73,7 @@ impl Runnable for OracleUpgradeCmd {
           entry_args.save_path
         ) {
             Err(e) => {
-              println!("ERROR: could not submit upgrade transaction, message: \n{:?}", &e);
+              println!("ERROR: could not submit oracle transaction, message: \n{:?}", &e);
               exit(1);
             },
             _ => {}
