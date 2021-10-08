@@ -149,7 +149,7 @@ impl Runnable for ForkCmd {
 
         let home_dir = app_config.workspace.node_home.to_owned();
         // 0L convention is for the namespace of the operator to be appended by '-oper'
-        let namespace = app_config.profile.auth_key.clone() + "-oper";
+        let namespace = app_config.profile.auth_key.clone().to_string() + "-oper";
 
         // TODO: use node_config to get the seed peers and then write upstream_node vec in 0L.toml from that.
         ol_node_files::write_node_config_files(

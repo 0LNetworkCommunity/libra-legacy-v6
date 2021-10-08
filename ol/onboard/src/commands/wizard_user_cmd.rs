@@ -40,7 +40,7 @@ fn wizard(path: PathBuf, block_zero: &Option<PathBuf>) {
 
     // Where to save block_0
     app_cfg.workspace.node_home = path.clone();
-    app_cfg.profile.auth_key = authkey.to_string();
+    app_cfg.profile.auth_key = authkey;
     app_cfg.profile.account = account;
 
     // Create block zero, if there isn't one.

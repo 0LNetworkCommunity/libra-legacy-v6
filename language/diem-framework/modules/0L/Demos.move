@@ -11,7 +11,7 @@ address 0x1{
         use 0x1::Signer;
         use 0x1::Errors;
         use 0x1::Testnet::is_testnet;
-    
+
         // In Move the types for data storage are `resource struct`. Here a type 
         // State is being defined. Once a type is initialized in the global state, 
         // the resource is treated as if in-memory on the heap, the diem database 
@@ -24,7 +24,7 @@ address 0x1{
         }
 
         // The operation can only be performed on testnet
-         const ETESTNET : u64 = 04001;
+        const ETESTNET : u64 = 04001;
 
         // For this demo, the `initialize` function writes a PersistenceDemo::State 
         // resource at the "sender" address. The access path will be 
@@ -36,6 +36,14 @@ address 0x1{
           assert(is_testnet(), Errors::invalid_state(ETESTNET));
           // In the actual module, must assert that this is the sender is the association
           move_to<State>(sender, State{ hist: Vector::empty() });
+        }
+
+        // A simple example/demo spec 
+        spec initialize {
+            let addr = Signer::address_of(sender);
+            // Note: Change this to non-zero value to get move prover error
+            let init_size = 0;
+            ensures Vector::length(global<State>(addr).hist) == init_size;
         }
 
         // To read or write to a Resource Struct an `acquires` tag is needed to 
