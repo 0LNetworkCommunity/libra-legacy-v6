@@ -654,7 +654,7 @@ fn create_and_initialize_owners_operators(
     {
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
-        // let owner_address = diem_config::utils::validator_owner_account_from_name(owner_name);
+
         exec_function(
             session,
             log_context,
@@ -667,19 +667,17 @@ fn create_and_initialize_owners_operators(
             ]),
         );
 
-        // give the operator balance to be able to send txs for owner, e.g. tower-builder
-        // exec_function(
-        //     session,
-        //     log_context,
-        //     "DiemAccount",
-        //     "genesis_fund_operator",
-        //     vec![],
-        //     serialize_values(&vec![
-        //         MoveValue::Signer(diem_root_address),
-        //         MoveValue::Signer(owner_address),
-        //         MoveValue::Address(*operator_account),
-        //     ]),
-        // );
+        // enable oracle upgrade delegation for all genesis nodes.
+        exec_function(
+            session,
+            log_context,
+            "Oracle",
+            "enable_delegation",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(owner_address),
+            ]),
+        );
     }
 }
 
