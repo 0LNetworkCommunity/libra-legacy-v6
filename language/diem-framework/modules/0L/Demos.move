@@ -24,7 +24,7 @@ address 0x1{
         }
 
         // The operation can only be performed on testnet
-          const ETESTNET : u64 = 04001;
+        const ETESTNET : u64 = 04001;
 
         // For this demo, the `initialize` function writes a PersistenceDemo::State 
         // resource at the "sender" address. The access path will be 
