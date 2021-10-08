@@ -26,15 +26,6 @@ pub struct OracleUpgradeCmd {
     remove_delegation: bool, 
 }
 
-pub fn oracle_tx_script(upgrade_file_path: &PathBuf) -> TransactionPayload {
-    let mut file = fs::File::open(upgrade_file_path)
-        .expect("file should open read only");
-    let mut buffer = Vec::new();
-    file.read_to_end(&mut buffer).expect("failed to read the file");
-
-    let id = 1; // upgrade is oracle #1
-    transaction_builder::encode_ol_oracle_tx_script_function(id, buffer)
-}
 
 impl Runnable for OracleUpgradeCmd {
     fn run(&self) {  
@@ -42,25 +33,26 @@ impl Runnable for OracleUpgradeCmd {
         let tx_params = tx_params_wrapper(TxType::Critical).unwrap();
         
         let script = if self.vote {
-          let path = self.upgrade_file_path.clone().unwrap_or_else(|| {
-            let cfg = app_config();
-            match cfg.workspace.stdlib_bin_path.clone() {
-              Some(p) => p,
-              None => {
-                println!(
-                  "could not find path to compiled stdlib.mv, was this set in 0L.toml? \
-                  Alternatively pass the full path with: \
-                  -f <project_root>/language/diem-framework/staged/stdlib.mv"
-                );
-                exit(1);
-              },
-            }
-          });
 
           if let Some(hex_hash) = &self.hash {
             let bytes = hex::decode(hex_hash).expect("Input must be a hex string");
             oracle_hash_tx_script(bytes)
           } else {
+            let path = self.upgrade_file_path.clone().unwrap_or_else(|| {
+              let cfg = app_config();
+              match cfg.workspace.stdlib_bin_path.clone() {
+                Some(p) => p,
+                None => {
+                  println!(
+                    "could not find path to compiled stdlib.mv, was this set in 0L.toml? \
+                    Alternatively pass the full path with: \
+                    -f <project_root>/language/diem-framework/staged/stdlib.mv"
+                  );
+                  exit(1);
+                },
+              }
+            });
+            
             oracle_tx_script(&path)
           }
         } else if self.enable_delegation {
@@ -89,33 +81,19 @@ impl Runnable for OracleUpgradeCmd {
     }
 }
 
+
+
+pub fn oracle_tx_script(upgrade_file_path: &PathBuf) -> TransactionPayload {
+    let mut file = fs::File::open(upgrade_file_path)
+        .expect("file should open read only");
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer).expect("failed to read the file");
+
+    let id = 1; // upgrade is oracle #1
+    transaction_builder::encode_ol_oracle_tx_script_function(id, buffer)
+}
+
 pub fn oracle_hash_tx_script(upgrade_hash: Vec<u8>) -> TransactionPayload {
     let id = 2; // upgrade with hash is oracle #2
     transaction_builder::encode_ol_oracle_tx_script_function(id, upgrade_hash)
 }
-
-
-// /// `OracleUpgradeHash` subcommand
-// #[derive(Command, Debug, Default, Options)]
-// pub struct OracleUpgradeHashCmd {
-//     #[options(short = "h", help = "Upgrade hash")]
-//     upgrade_hash: String,
-// }
-
-
-// impl Runnable for OracleUpgradeHashCmd {
-//     fn run(&self) {  
-//         let entry_args = entrypoint::get_args();
-//         let tx_params = tx_params_wrapper(TxType::Critical).unwrap();
-
-//         let hash = self.upgrade_hash.clone();
-//         let hex_hash = hex::decode(hash).expect("Input must be a hex string");
-        
-//         maybe_submit(
-//           oracle_hash_tx_script(hex_hash),
-//           &tx_params,
-//           entry_args.no_send,
-//           entry_args.save_path
-//         ).unwrap();
-//     }
-// }
