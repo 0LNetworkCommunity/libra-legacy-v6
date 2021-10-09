@@ -6,7 +6,7 @@ use crate::{
 use chrono::{DateTime, Utc};
 use diem_types::waypoint::Waypoint;
 use std::time::{Duration, UNIX_EPOCH};
-// use diem_json_rpc_client::views::MinerStateResourceView;
+// use diem_json_rpc_client::views::TowerStateResourceView;
 // use anyhow::Error;
 
 /// Major command for query operations.
@@ -21,7 +21,7 @@ impl Command for NodeCommand {
     }
     fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
         let commands: Vec<Box<dyn Command>> = vec![
-            Box::new(CommandQueryMinerState {}),
+            Box::new(CommandQueryTowerState {}),
             Box::new(CommandGenWaypoint {}),
         ];
 
@@ -30,9 +30,9 @@ impl Command for NodeCommand {
 }
 
 /// Sub commands to query balance for the account specified.
-pub struct CommandQueryMinerState {}
+pub struct CommandQueryTowerState {}
 
-impl Command for CommandQueryMinerState {
+impl Command for CommandQueryTowerState {
     fn get_aliases(&self) -> Vec<&'static str> {
         vec!["get_miner_state", "ms"]
     }

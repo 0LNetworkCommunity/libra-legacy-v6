@@ -12,7 +12,7 @@ use crate::{
     },
     block_metadata::DiemBlockResource,
     diem_timestamp::DiemTimestampResource,
-    ol_miner_state::MinerStateResource,
+    ol_miner_state::TowerStateResource,
     ol_oracle_upgrade_state::OracleResource,
     ol_upgrade_payload::UpgradePayloadResource,
     ol_validators_stats::ValidatorsStatsResource,
@@ -209,7 +209,7 @@ impl AccountState {
 
     //////// 0L ////////
     /// miner state
-    pub fn get_miner_state(&self) -> Result<Option<MinerStateResource>> {
+    pub fn get_miner_state(&self) -> Result<Option<TowerStateResource>> {
         self.get_resource()
     }
 

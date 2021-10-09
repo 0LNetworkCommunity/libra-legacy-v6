@@ -153,7 +153,7 @@ pub fn merge_writeset(left: WriteSetMut, right: WriteSetMut) -> Result<WriteSetM
 pub fn test_accounts_into_recovery() {
     use diem_types::{account_config::BalanceResource, validator_config::ValidatorConfigResource};
     use move_core_types::move_resource::MoveResource;
-    use ol_types::miner_state::MinerStateResource;
+    use ol_types::miner_state::TowerStateResource;
 
     use std::path::Path;
 
@@ -208,15 +208,15 @@ pub fn test_accounts_into_recovery() {
                             }
                         }
                     }
-                    if k.clone() == MinerStateResource::resource_path() {
+                    if k.clone() == TowerStateResource::resource_path() {
                         match &gr.miner_state {
                             Some(miner_state) => {
                                 if bcs::to_bytes(&miner_state).unwrap() != v.clone() {
-                                    panic!("MinerStateResource not found in GenesisRecovery object: {:?}", gr.account);
+                                    panic!("TowerStateResource not found in GenesisRecovery object: {:?}", gr.account);
                                 }
                             }
                             None => {
-                                panic!("MinerStateResource not found");
+                                panic!("TowerStateResource not found");
                             }
                         }
                     }
