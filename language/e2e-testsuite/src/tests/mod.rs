@@ -40,8 +40,8 @@ mod writeset_builder;
 //////// 0L ////////
 mod ol_reconfig;
 mod ol_upgrade_oracle;
-mod ol_Tower_commit;
-mod ol_Tower_onboarding;
+mod ol_tower_commit;
+mod ol_tower_onboarding;
 mod ol_demo;
 mod ol_autopay_enable;
 mod ol_autopay_create;

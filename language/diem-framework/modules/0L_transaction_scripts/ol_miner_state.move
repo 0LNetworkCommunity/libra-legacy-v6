@@ -7,7 +7,7 @@ use 0x1::Tower;
 use 0x1::TestFixtures;
 use 0x1::Testnet;
 
-    public(script) fun Tower_commit_by_operator(
+    public(script) fun tower_commit_by_operator(
         operator_sig: signer, owner_address: address, 
         challenge: vector<u8>, 
         solution: vector<u8>
@@ -21,7 +21,7 @@ use 0x1::Testnet;
         Tower::commit_state_by_operator(&operator_sig, owner_address, proof);
     }
 
-    public(script) fun Tower_commit(
+    public(script) fun tower_commit(
         sender: signer, challenge: vector<u8>, 
         solution: vector<u8>
     ) {
