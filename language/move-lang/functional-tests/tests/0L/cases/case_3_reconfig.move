@@ -47,10 +47,10 @@ script {
 script {    
     use 0x1::MinerState;
     use 0x1::Signer;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
         MinerState::test_helper_mock_mining(&sender, 5);
         assert(MinerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
@@ -63,10 +63,10 @@ script {
     
     use 0x1::MinerState;
     use 0x1::Signer;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
         MinerState::test_helper_mock_mining(&sender, 5);
         assert(MinerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
@@ -79,10 +79,10 @@ script {
     
     use 0x1::MinerState;
     use 0x1::Signer;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
         MinerState::test_helper_mock_mining(&sender, 5);
         assert(MinerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
@@ -95,10 +95,10 @@ script {
     
     use 0x1::MinerState;
     use 0x1::Signer;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
         MinerState::test_helper_mock_mining(&sender, 5);
         assert(MinerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
@@ -111,10 +111,10 @@ script {
     
     use 0x1::MinerState;
     use 0x1::Signer;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
         MinerState::test_helper_mock_mining(&sender, 5);
         assert(MinerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
@@ -127,10 +127,10 @@ script {
     
     use 0x1::MinerState;
     use 0x1::Signer;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
         MinerState::test_helper_mock_mining(&sender, 5);
         assert(MinerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }

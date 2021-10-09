@@ -47,10 +47,10 @@ script {
 //! sender: alice
 script {
     use 0x1::MinerState;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
     
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
@@ -64,10 +64,10 @@ script {
 //! sender: bob
 script {
     use 0x1::MinerState;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
 
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
@@ -82,10 +82,10 @@ script {
 //! sender: carol
 script {
     use 0x1::MinerState;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
 
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
@@ -100,10 +100,10 @@ script {
 //! sender: dave
 script {
     use 0x1::MinerState;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
 
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
@@ -117,10 +117,10 @@ script {
 //! sender: eve
 script {
     use 0x1::MinerState;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
 
         // Miner is the only one that can update her mining stats. 
         // Hence this first transaction.

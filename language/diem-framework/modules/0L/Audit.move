@@ -9,7 +9,7 @@ address 0x1 {
     use 0x1::ValidatorConfig;
     use 0x1::DiemAccount;
     use 0x1::GAS::GAS;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
     use 0x1::MinerState;
     use 0x1::Testnet;
 
@@ -22,7 +22,7 @@ address 0x1 {
       // operator account has balance
       if (DiemAccount::balance<GAS>(oper) < 50000 && !Testnet::is_testnet()) return false;
       // has autopay enabled
-      if (!AutoPay2::is_enabled(val)) return false;
+      if (!AutoPay::is_enabled(val)) return false;
       // has mining state
       if (!MinerState::is_init(val)) return false;
       // is a slow wallet
@@ -36,7 +36,7 @@ address 0x1 {
     ////////// TEST HELPERS
     public fun test_helper_make_passing(account: &signer){
       assert(Testnet::is_testnet(), 1905001);
-      AutoPay2::enable_autopay(account);
+      AutoPay::enable_autopay(account);
     }
   }
 }

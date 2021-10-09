@@ -100,7 +100,7 @@ impl Payment {
 }
 
 impl MoveStructType for AutoPayResource {
-    const MODULE_NAME: &'static IdentStr = ident_str!("AutoPay2");
+    const MODULE_NAME: &'static IdentStr = ident_str!("AutoPay");
     const STRUCT_NAME: &'static IdentStr = ident_str!("Data");
 }
 impl MoveResource for AutoPayResource {}

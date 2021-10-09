@@ -18,7 +18,7 @@ module Reconfigure { // TODO: Rename to Boundary
     use 0x1::Vector;
     use 0x1::Stats;
     use 0x1::ValidatorUniverse;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
     use 0x1::Epoch;
     use 0x1::DiemConfig;
     use 0x1::Audit;
@@ -202,7 +202,7 @@ module Reconfigure { // TODO: Rename to Boundary
         DiemAccount::process_community_wallets(vm, DiemConfig::get_current_epoch());
         
         // reset counters
-        AutoPay2::reconfig_reset_tick(vm);
+        AutoPay::reconfig_reset_tick(vm);
         Epoch::reset_timer(vm, height_now);
     }
 }

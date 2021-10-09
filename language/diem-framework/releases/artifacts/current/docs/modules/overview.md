@@ -96,7 +96,7 @@ The Move modules in the Diem Framework can be bucketed in to a couple categories
 -  [`0x1::AccountScripts`](ol_account.md#0x1_AccountScripts)
 -  [`0x1::Audit`](Audit.md#0x1_Audit)
 -  [`0x1::Authenticator`](Authenticator.md#0x1_Authenticator)
--  [`0x1::AutoPay2`](AutoPay.md#0x1_AutoPay2)
+-  [`0x1::AutoPay`](AutoPay.md#0x1_AutoPay)
 -  [`0x1::AutoPayScripts`](ol_autopay.md#0x1_AutoPayScripts)
 -  [`0x1::BCS`](../../../../../../move-stdlib/docs/BCS.md#0x1_BCS)
 -  [`0x1::Bonding`](Demo_Bonding.md#0x1_Bonding)

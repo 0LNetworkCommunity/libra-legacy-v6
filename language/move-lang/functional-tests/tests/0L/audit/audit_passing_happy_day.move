@@ -6,7 +6,7 @@
 script {
     use 0x1::Audit;
     use 0x1::ValidatorConfig;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
     use 0x1::MinerState;
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
@@ -20,9 +20,9 @@ script {
         assert(DiemAccount::balance<GAS>(oper) == 1000000, 7357007003002);
         
         // enable autopay
-        assert(!AutoPay2::is_enabled(@{{alice}}), 7357007003003);
-        AutoPay2::enable_autopay(&alice_account);
-        assert(AutoPay2::is_enabled(@{{alice}}), 7357007003004);
+        assert(!AutoPay::is_enabled(@{{alice}}), 7357007003003);
+        AutoPay::enable_autopay(&alice_account);
+        assert(AutoPay::is_enabled(@{{alice}}), 7357007003004);
 
         assert(MinerState::is_init(@{{alice}}), 7357007003005);
 

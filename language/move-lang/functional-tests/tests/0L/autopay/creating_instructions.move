@@ -9,14 +9,14 @@
 //! new-transaction
 //! sender: carol
 script {
-  use 0x1::AutoPay2;
+  use 0x1::AutoPay;
   use 0x1::Signer;
   fun main(sender: signer) {
     let sender = &sender;
-    AutoPay2::enable_autopay(sender);
-    assert(AutoPay2::is_enabled(Signer::address_of(sender)), 0);
-    AutoPay2::create_instruction(sender, 1, 0, @{{bob}}, 2, 5);
-    let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(
+    AutoPay::enable_autopay(sender);
+    assert(AutoPay::is_enabled(Signer::address_of(sender)), 0);
+    AutoPay::create_instruction(sender, 1, 0, @{{bob}}, 2, 5);
+    let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(
       Signer::address_of(sender), 1
     );
     assert(type == 0u8, 1);
@@ -31,11 +31,11 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-  use 0x1::AutoPay2;
+  use 0x1::AutoPay;
   use 0x1::Signer;
   fun main(sender: signer) {    
-    assert(AutoPay2::is_enabled(Signer::address_of(&sender)), 0);
-    AutoPay2::create_instruction(&sender, 2, 0, @{{alice}}, 4, 5);
+    assert(AutoPay::is_enabled(Signer::address_of(&sender)), 0);
+    AutoPay::create_instruction(&sender, 2, 0, @{{alice}}, 4, 5);
   }
 }
 // check: EXECUTED
@@ -44,13 +44,13 @@ script {
 // //! new-transaction
 // //! sender: carol
 // script {
-//   use 0x0::AutoPay2;
+//   use 0x0::AutoPay;
 //   use 0x0::Transaction;
 //   use 0x0::Signer;
 //   fun main(sender: signer) {
-//     AutoPay2::enable_autopay();
-//     Transaction::assert(AutoPay2::is_enabled(Signer::address_of(sender)), 0);
-//     AutoPay2::create_instruction(2, @{{bob}}, 5, 5);
+//     AutoPay::enable_autopay();
+//     Transaction::assert(AutoPay::is_enabled(Signer::address_of(sender)), 0);
+//     AutoPay::create_instruction(2, @{{bob}}, 5, 5);
 //     }
 // }
 // // check: EXECUTED
