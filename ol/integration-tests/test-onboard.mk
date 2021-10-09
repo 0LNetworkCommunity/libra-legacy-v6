@@ -45,7 +45,7 @@ swarm:
 	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo run -p diem-swarm -- --diem-node ${SOURCE_PATH}/target/debug/diem-node -c ${SWARM_TEMP} -n ${NUM_NODES} &> ${LOG} &
 
 stop:
-	killall diem-swarm diem-node miner ol txs cli | true
+	killall diem-swarm diem-node tower ol txs cli | true
 
 init:
 	@echo INIT

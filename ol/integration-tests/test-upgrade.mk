@@ -48,7 +48,7 @@ start:
 	cd ${SOURCE_PATH} && cargo run -p diem-swarm -- --diem-node ${SOURCE_PATH}/target/debug/diem-node -c ${SWARM_TEMP} -n ${NUM_NODES} 2>&1 | tee ${LOG}&
 
 stop:
-	killall diem-swarm diem-node miner ol txs cli | true
+	killall diem-swarm diem-node tower ol txs cli | true
 
 prep:
 # save makefile outside of repo, since we'll need it across branches
