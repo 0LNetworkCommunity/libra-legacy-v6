@@ -17,7 +17,7 @@ This module defines a struct storing the metadata of the block and new block eve
     -  [Initialization](#@Initialization_2)
 
 
-<pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay2">0x1::AutoPay2</a>;
+<pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
@@ -252,13 +252,13 @@ The runtime always runs this before executing the transactions in a block.
     <a href="Stats.md#0x1_Stats_process_set_votes">Stats::process_set_votes</a>(&vm, &previous_block_votes);
     <a href="Stats.md#0x1_Stats_inc_prop">Stats::inc_prop</a>(&vm, *&proposer);
 
-    <b>if</b> (<a href="AutoPay.md#0x1_AutoPay2_tick">AutoPay2::tick</a>(&vm)){
+    <b>if</b> (<a href="AutoPay.md#0x1_AutoPay_tick">AutoPay::tick</a>(&vm)){
         // print(&1);
         // triggers autopay at beginning of each epoch
         // tick is reset at end of previous epoch
         <a href="DiemAccount.md#0x1_DiemAccount_process_escrow">DiemAccount::process_escrow</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&vm);
         // print(&2);
-        <a href="AutoPay.md#0x1_AutoPay2_process_autopay">AutoPay2::process_autopay</a>(&vm);
+        <a href="AutoPay.md#0x1_AutoPay_process_autopay">AutoPay::process_autopay</a>(&vm);
         // print(&3);
     };
 

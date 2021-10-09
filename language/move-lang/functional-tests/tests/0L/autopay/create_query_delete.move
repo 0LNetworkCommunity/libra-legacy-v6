@@ -8,14 +8,14 @@
 //! new-transaction
 //! sender: alice
 script {
-  use 0x1::AutoPay2;
+  use 0x1::AutoPay;
   use 0x1::Signer;
   fun main(sender: signer) {
     let sender = &sender;
-    AutoPay2::enable_autopay(sender);
-    assert(AutoPay2::is_enabled(Signer::address_of(sender)), 0);
-    AutoPay2::create_instruction(sender, 1, 0, @{{bob}}, 2, 5);
-    let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(
+    AutoPay::enable_autopay(sender);
+    assert(AutoPay::is_enabled(Signer::address_of(sender)), 0);
+    AutoPay::create_instruction(sender, 1, 0, @{{bob}}, 2, 5);
+    let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(
       Signer::address_of(sender), 1
     );
     assert(type == 0, 1);
@@ -30,9 +30,9 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-  use 0x1::AutoPay2;
+  use 0x1::AutoPay;
   fun main() {
-    let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(@{{alice}}, 1);
+    let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(@{{alice}}, 1);
     assert(type == 0, 1);
     assert(payee == @{{bob}}, 1);
     assert(end_epoch == 2, 1);
@@ -46,12 +46,12 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-  use 0x1::AutoPay2;
+  use 0x1::AutoPay;
   use 0x1::Signer;
   fun main(sender: signer) {
     let sender = &sender;
-    AutoPay2::delete_instruction(sender, 1);
-    let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(
+    AutoPay::delete_instruction(sender, 1);
+    let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(
       Signer::address_of(sender), 1
     );
     // If autopay instruction doesn't exists, it returns (@0x0, 0, 0)

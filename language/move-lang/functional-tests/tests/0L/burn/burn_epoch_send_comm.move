@@ -11,7 +11,7 @@ script {
     use 0x1::Burn;
     use 0x1::Audit;
     use 0x1::Debug::print;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
@@ -23,13 +23,13 @@ script {
         print(&@0x1);
         // validator needs to qualify for next epoch for the burn to register
         Audit::test_helper_make_passing(&sender);
-        print(&AutoPay2::is_enabled(@{{alice}}));
+        print(&AutoPay::is_enabled(@{{alice}}));
 
 
         print(&Audit::val_audit_passing(@{{alice}}));
 
-        AutoPay2::enable_autopay(&sender);
-        print(&AutoPay2::is_enabled(@{{alice}}));
+        AutoPay::enable_autopay(&sender);
+        print(&AutoPay::is_enabled(@{{alice}}));
         print(&Audit::val_audit_passing(@{{alice}}));
 
     }

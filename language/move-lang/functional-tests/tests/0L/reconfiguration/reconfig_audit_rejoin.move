@@ -43,10 +43,10 @@ script {
 //! sender: alice
 script {
     use 0x1::MinerState;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
         
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(&sender, 5);
@@ -59,10 +59,10 @@ script {
 //! sender: bob
 script {
     use 0x1::MinerState;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
         
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(&sender, 5);
@@ -75,10 +75,10 @@ script {
 //! sender: carol
 script {
     use 0x1::MinerState;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
         
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(&sender, 5);
@@ -91,10 +91,10 @@ script {
 //! sender: dave
 script {
     use 0x1::MinerState;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
         
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(&sender, 5);
@@ -110,7 +110,7 @@ script {
 
     fun main(sender: signer) {
         // Skip eve forcing audit to fail
-        // AutoPay2::enable_autopay(&sender);
+        // AutoPay::enable_autopay(&sender);
         
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(&sender, 5);
@@ -179,10 +179,10 @@ script {
 //! sender: eve
 script {
     use 0x1::MinerState;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
         
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(&sender, 5);
@@ -195,10 +195,10 @@ script {
 //! sender: alice
 script {
     use 0x1::MinerState;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
         
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(&sender, 5);
@@ -211,10 +211,10 @@ script {
 //! sender: bob
 script {
     use 0x1::MinerState;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
         
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(&sender, 5);
@@ -227,10 +227,10 @@ script {
 //! sender: carol
 script {
     use 0x1::MinerState;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
         
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(&sender, 5);
@@ -243,10 +243,10 @@ script {
 //! sender: dave
 script {
     use 0x1::MinerState;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
         
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         MinerState::test_helper_mock_mining(&sender, 5);
