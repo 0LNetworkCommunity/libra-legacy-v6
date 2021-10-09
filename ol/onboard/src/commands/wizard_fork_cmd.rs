@@ -172,7 +172,7 @@ impl Runnable for ForkCmd {
 
         if !self.skip_mining {
             // Mine Block
-            miner::block::write_genesis(&app_config);
+            tower::block::write_genesis(&app_config);
             status_ok!(
                 "\nGenesis proof complete",
                 "\n...........................\n"

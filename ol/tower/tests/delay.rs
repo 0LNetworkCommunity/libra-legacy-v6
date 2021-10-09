@@ -1,7 +1,7 @@
 //! Functional test for delay module
 
 #![forbid(unsafe_code)]
-use miner::delay;
+use tower::delay;
 
 #[test]
 fn test_do_delay() {

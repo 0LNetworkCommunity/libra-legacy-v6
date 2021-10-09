@@ -29,7 +29,7 @@ ol-types = { path = "../../ol/types"}
 ol-fixtures = { path = "../../ol/fixtures"}
 bcs = "0.1.2"
 
-miner = { path = "../miner" }
+tower = { path = "../tower" }
 zip = "0.5.12"
 dialoguer = "0.8.0"
 

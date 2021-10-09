@@ -101,7 +101,7 @@ pub fn integration_submit_tx() {
             blocks_dir.push(&config.workspace.block_dir);
 
 
-            let (current_block_number, _current_block_path) = miner::block::parse_block_height(&blocks_dir);
+            let (current_block_number, _current_block_path) = tower::block::parse_block_height(&blocks_dir);
             let block_number_before_block = current_block_number.unwrap();
             
 
@@ -134,7 +134,7 @@ pub fn integration_submit_tx() {
             let test_timeout = Duration::from_secs(240); // To let the timeout happen and continue mining. 
             thread::sleep(test_timeout);
             
-            let (current_block_number, _current_block_path) = miner::block::parse_block_height(&blocks_dir);
+            let (current_block_number, _current_block_path) = tower::block::parse_block_height(&blocks_dir);
             let block_number_after_unblock = current_block_number.unwrap();
             
             // Miner should have continued mining. +1 to consider atleast 2 blocks mined. 
@@ -204,13 +204,13 @@ fn get_node_port() -> u16 {
 }
 
 fn check_node_sync(tx_params: &TxParams, config: &AppCfg) -> Result<(), Error> {
-    let remote_state = miner::backlog::get_remote_state(&tx_params).unwrap();
+    let remote_state = tower::backlog::get_remote_state(&tx_params).unwrap();
     let remote_height = remote_state.verified_tower_height;
     println!("Remote tower height: {}", remote_height);
 
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
-    let (current_block_number, _current_block_path) = miner::block::parse_block_height(&blocks_dir);
+    let (current_block_number, _current_block_path) = tower::block::parse_block_height(&blocks_dir);
     let current_block_number = current_block_number.unwrap();
     println!("Local tower height: {}", current_block_number);
 

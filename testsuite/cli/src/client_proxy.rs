@@ -499,7 +499,7 @@ impl ClientProxy {
             "Invalid number of arguments to create user. Did you pass your account and the file path?"
         );
 
-        //TODO: Parsing json should use Serde to deserialize from the miner::accounts::ValConfigs obj, but importing miner causes a circular dependency. Refactor...
+        //TODO: Parsing json should use Serde to deserialize from the tower::accounts::ValConfigs obj, but importing miner causes a circular dependency. Refactor...
 
         let file = fs::File::open(space_delim_strings[2])
             .expect("file should open read only");
@@ -631,7 +631,7 @@ impl ClientProxy {
             "Invalid number of arguments to create user. Did you pass your account and the file path?"
         );
 
-        //TODO: Parsing json should use Serde to deserialize from the miner::accounts::ValConfigs obj, but importing miner causes a circular dependency. Refactor...
+        //TODO: Parsing json should use Serde to deserialize from the tower::accounts::ValConfigs obj, but importing miner causes a circular dependency. Refactor...
 
         let file = fs::File::open(space_delim_strings[2])
             .expect("file should open read only");
