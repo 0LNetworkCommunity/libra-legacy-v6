@@ -9,14 +9,14 @@
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::MinerState;
+    use 0x1::TowerState;
 
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::get_count_in_epoch(@{{alice}}) == 5, 7357300101011000);
+        TowerState::test_helper_mock_mining(&sender, 5);
+        assert(TowerState::get_count_in_epoch(@{{alice}}) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -25,14 +25,14 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::MinerState;
+    use 0x1::TowerState;
 
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
-        MinerState::test_helper_mock_mining(&sender, 4);
-        assert(MinerState::get_count_in_epoch(@{{bob}}) == 4, 7357300102011000);
+        TowerState::test_helper_mock_mining(&sender, 4);
+        assert(TowerState::get_count_in_epoch(@{{bob}}) == 4, 7357300102011000);
     }
 }
 //check: EXECUTED
@@ -40,14 +40,14 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::MinerState;
+    use 0x1::TowerState;
 
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
-        MinerState::test_helper_mock_mining(&sender, 3);
-        assert(MinerState::get_count_in_epoch(@{{carol}}) == 3, 7357300103011000);
+        TowerState::test_helper_mock_mining(&sender, 3);
+        assert(TowerState::get_count_in_epoch(@{{carol}}) == 3, 7357300103011000);
     }
 }
 //check: EXECUTED
@@ -55,14 +55,14 @@ script {
 //! new-transaction
 //! sender: dave
 script {
-    use 0x1::MinerState;
+    use 0x1::TowerState;
 
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
-        MinerState::test_helper_mock_mining(&sender, 2);
-        assert(MinerState::get_count_in_epoch(@{{dave}}) == 2, 7357300104011000);
+        TowerState::test_helper_mock_mining(&sender, 2);
+        assert(TowerState::get_count_in_epoch(@{{dave}}) == 2, 7357300104011000);
     }
 }
 //check: EXECUTED
@@ -73,7 +73,7 @@ script {
     use 0x1::Vector;
     use 0x1::NodeWeight;
     use 0x1::ValidatorUniverse;
-    use 0x1::MinerState;
+    use 0x1::TowerState;
 
     fun main(vm: signer) {
         // Base Case: If validator universe vector length is less than the 
@@ -86,7 +86,7 @@ script {
         let len = Vector::length<address>(&vec);
         assert(len == 5, 7357140102011000);
 
-        MinerState::reconfig(vm, &vec);
+        TowerState::reconfig(vm, &vec);
 
         // This is the base case: check case of the validator set limit being 
         // less than universe size.
