@@ -1,13 +1,13 @@
 ///////////////////////////////////////////////////////////////////
 // 0L Module
-// MinerState
+// TowerState
 // Error Code = 1301
 ///////////////////////////////////////////////////////////////////
 
 address 0x1 {
 /// # Summary 
 /// TODO
-module MinerState {
+module TowerState {
     use 0x1::Errors;
     use 0x1::CoreAddresses;
     // use 0x1::FullnodeState;
@@ -94,7 +94,7 @@ module MinerState {
     ///     TODO does this actually only apply to validators?
     /// `epochs_since_last_account_creation`: the number of epochs since 
     ///     the miner last created a new account
-    struct MinerProofHistory has key { // Todo: rename to MinerState ?
+    struct MinerProofHistory has key { // Todo: rename to TowerState ?
         previous_proof_hash: vector<u8>,
         verified_tower_height: u64, 
         latest_epoch_mining: u64,
@@ -259,7 +259,7 @@ module MinerState {
       // TODO: The operator mining needs its own struct to count mining.
       // For now it is implicit there is only 1 operator per validator, 
       // and that the fullnode state is the place to count.
-      // This will require a breaking change to MinerState
+      // This will require a breaking change to TowerState
       // FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
     }
 
@@ -392,7 +392,7 @@ module MinerState {
     //     return 0
     //   };
 
-    // Used at end of epoch with reconfig bulk_update the MinerState with the vector of validators from current epoch.
+    // Used at end of epoch with reconfig bulk_update the TowerState with the vector of validators from current epoch.
     // Permissions: PUBLIC, ONLY VM.
     public fun reconfig(vm: &signer, migrate_eligible_validators: &vector<address>) acquires MinerProofHistory, MinerList {
       // Check permissions
@@ -621,7 +621,7 @@ module MinerState {
       // TODO: The operator mining needs its own struct to count mining.
       // For now it is implicit there is only 1 operator per validator,
       // and that the fullnode state is the place to count.
-      // This will require a breaking change to MinerState
+      // This will require a breaking change to TowerState
       // FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
     }
 

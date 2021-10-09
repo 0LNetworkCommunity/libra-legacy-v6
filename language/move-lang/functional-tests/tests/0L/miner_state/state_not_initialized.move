@@ -1,4 +1,4 @@
-// Scenario: Alice is NOT a validator, and has not mined before. she tries to submit block_0.json the genesis proof without any MinerState being initialized. The tx should abort.
+// Scenario: Alice is NOT a validator, and has not mined before. she tries to submit block_0.json the genesis proof without any TowerState being initialized. The tx should abort.
 
 //! account: dummy-prevents-genesis-reload, 100000 ,0, validator
 
@@ -7,7 +7,7 @@
 //! account: alice, 10000000GAS
 //! sender: alice
 script {
-    use 0x1::MinerState;
+    use 0x1::TowerState;
 
     fun main(sender: signer) {
         // TestFixtures::alice_1_easy_chal(),
@@ -21,9 +21,9 @@ script {
         let reported_tower_height = 0;
 
         // return solution
-        let proof = MinerState::create_proof_blob(challenge, difficulty, solution);
-        MinerState::commit_state(&sender, proof);
-        let verified_tower_height_after = MinerState::test_helper_get_height(@{{alice}});
+        let proof = TowerState::create_proof_blob(challenge, difficulty, solution);
+        TowerState::commit_state(&sender, proof);
+        let verified_tower_height_after = TowerState::test_helper_get_height(@{{alice}});
 
         assert(verified_tower_height_after == reported_tower_height, 10008001);
     }

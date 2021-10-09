@@ -123,12 +123,12 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
 
     //////// MINER RULES ///////
     if node.vitals.items.miner_running {
-        node.vitals.host_state.miner_state = MinerState::Mining;
+        node.vitals.host_state.miner_state = TowerState::Mining;
         if verbose {
             println!("Miner: miner is running")
         }
     } else {
-        node.vitals.host_state.miner_state = MinerState::Stopped;
+        node.vitals.host_state.miner_state = TowerState::Stopped;
         if verbose {
             println!("Miner: WARN: is NOT running");
         }
@@ -152,7 +152,7 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
                         println!(".... Miner: attempting to start miner.");
                     }
                     node.start_miner(verbose);
-                    node.vitals.host_state.miner_state = MinerState::Mining;
+                    node.vitals.host_state.miner_state = TowerState::Mining;
                 } else {
                     if verbose {
                         println!(".... Account: Owner account does NOT exist on chain. Was the account creation transaction submitted?")

@@ -14,7 +14,7 @@
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
-<b>use</b> <a href="MinerState.md#0x1_MinerState">0x1::MinerState</a>;
+<b>use</b> <a href="MinerState.md#0x1_TowerState">0x1::TowerState</a>;
 </code></pre>
 
 
@@ -35,7 +35,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_get_proof_price">get_proof_price</a>(one_val_subsidy: u64): u64 {
-  <b>let</b> global_proofs = <a href="MinerState.md#0x1_MinerState_get_fullnode_proofs">MinerState::get_fullnode_proofs</a>();
+  <b>let</b> global_proofs = <a href="MinerState.md#0x1_TowerState_get_fullnode_proofs">TowerState::get_fullnode_proofs</a>();
 
   // proof price is simple, miners divide the equivalent of one compliant
   // validator's subsidy.

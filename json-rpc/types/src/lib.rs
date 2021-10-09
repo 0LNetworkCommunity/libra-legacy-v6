@@ -46,7 +46,7 @@ pub enum Method {
     GetEventsWithProofs,
 
     //////// 0L ////////
-    GetMinerStateView,
+    GetTowerStateView,
     GetOracleUpgradeStateView,
 }
 
@@ -68,7 +68,7 @@ impl Method {
             Method::GetEventsWithProofs => "get_events_with_proofs",
 
             //////// 0L ////////
-            Method::GetMinerStateView => "get_miner_state_view", // Name is not used in json RPC, only for errors, what matters is the type name, which serde formats as snakecase.
+            Method::GetTowerStateView => "get_miner_state_view", // Name is not used in json RPC, only for errors, what matters is the type name, which serde formats as snakecase.
             
             Method::GetOracleUpgradeStateView => "get_oracle_upgrade_state_view", 
         }

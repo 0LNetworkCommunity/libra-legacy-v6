@@ -7,7 +7,7 @@ use crate::{
     errors::JsonRpcError,
     views::{
         AccountStateWithProofView, AccountView, CurrencyInfoView, EventView, EventWithProofView,
-        MetadataView, MinerStateResourceView, OracleUpgradeStateView, StateProofView,
+        MetadataView, TowerStateResourceView, OracleUpgradeStateView, StateProofView,
         TransactionListView, TransactionView, TransactionsWithProofsView,
     },
 };
@@ -16,7 +16,7 @@ use diem_config::config::RoleType;
 use diem_json_rpc_types::request::{
     GetAccountParams, GetAccountStateWithProofParams, GetAccountTransactionParams,
     GetAccountTransactionsParams, GetCurrenciesParams, GetEventsParams, GetEventsWithProofsParams,
-    GetMetadataParams, GetMinerStateParams, GetNetworkStatusParams, GetStateProofParams,
+    GetMetadataParams, GetTowerStateParams, GetNetworkStatusParams, GetStateProofParams,
     GetTransactionsParams, GetTransactionsWithProofsParams, MethodRequest,
     SubmitParams,
 };
@@ -183,7 +183,7 @@ impl<'a> Handler<'a> {
             }
 
             //////// 0L ////////
-            MethodRequest::GetMinerStateView(params) => {
+            MethodRequest::GetTowerStateView(params) => {
                 serde_json::to_value(self.get_miner_state(params).await?)?
             }
             MethodRequest::GetOracleUpgradeStateView() => {
@@ -375,8 +375,8 @@ impl<'a> Handler<'a> {
     //////// 0L ////////
     async fn get_miner_state(
         &self,
-        params: GetMinerStateParams,
-    ) -> Result<MinerStateResourceView, JsonRpcError> {
+        params: GetTowerStateParams,
+    ) -> Result<TowerStateResourceView, JsonRpcError> {
         data::get_miner_state(self.service.db.borrow(), self.version(), params.account)
     }
 

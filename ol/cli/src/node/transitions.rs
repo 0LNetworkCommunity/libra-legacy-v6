@@ -5,7 +5,7 @@ use crate::{entrypoint, mgmt::{management, restore}, prelude::app_config};
 
 
 
-use super::{node::Node, states::{MinerEvents, MinerState, NodeEvents, OnboardEvents, OnboardState, NodeState}};
+use super::{node::Node, states::{MinerEvents, TowerState, NodeEvents, OnboardEvents, OnboardState, NodeState}};
 
 impl Node {
 
@@ -47,8 +47,8 @@ impl Node {
   /// the transitions in the miner state machine
   pub fn miner_transition(&mut self, action: MinerEvents, _trigger_action: bool) -> &Self {
     match action {
-      MinerEvents::Started => self.vitals.host_state.miner_state = MinerState::Mining,
-      MinerEvents::Failed => self.vitals.host_state.miner_state = MinerState::Stopped,
+      MinerEvents::Started => self.vitals.host_state.miner_state = TowerState::Mining,
+      MinerEvents::Failed => self.vitals.host_state.miner_state = TowerState::Stopped,
     };
     self
   }
@@ -56,12 +56,12 @@ impl Node {
   /// try to advance the state machine
   pub fn miner_maybe_advance(&mut self, trigger_action: bool) -> &Self {
     match &self.vitals.host_state.miner_state {
-      MinerState::Mining => {
+      TowerState::Mining => {
         if !Node::miner_running() {
           &self.miner_transition(MinerEvents::Failed, trigger_action);
         }
       }
-      MinerState::Stopped => {
+      TowerState::Stopped => {
         if Node::miner_running() {
           &self.miner_transition(MinerEvents::Started, trigger_action);
         } else {

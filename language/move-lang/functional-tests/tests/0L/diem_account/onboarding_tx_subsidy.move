@@ -6,7 +6,7 @@ script {
 use 0x1::VDF;
 use 0x1::DiemAccount;
 use 0x1::GAS::GAS;
-use 0x1::MinerState;
+use 0x1::TowerState;
 use 0x1::NodeWeight;
 use 0x1::TestFixtures;
 use 0x1::ValidatorConfig;
@@ -19,7 +19,7 @@ use 0x1::Roles;
 
     // mock bob's account limits so he's not rate limited from onboarding eve
     let epochs_since_creation = 10;
-    MinerState::test_helper_set_rate_limit(&sender, epochs_since_creation);
+    TowerState::test_helper_set_rate_limit(&sender, epochs_since_creation);
 
     // Use a miner challenge and proof not yet submitted to the chain.
     let challenge = TestFixtures::eve_0_easy_chal();
@@ -61,7 +61,7 @@ use 0x1::Roles;
       7357130101051000
     );
 
-    assert(MinerState::test_helper_get_height(eve_addr) == 0, 7357130101061000);
+    assert(TowerState::test_helper_get_height(eve_addr) == 0, 7357130101061000);
 
     //Check the validator is in the validator universe.
     assert(NodeWeight::proof_of_weight(eve_addr) == 0, 7357130101071000);
@@ -90,7 +90,7 @@ script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
   use 0x1::EpochBoundary;
-  use 0x1::MinerState;
+  use 0x1::TowerState;
   use 0x1::Testnet;
   use 0x1::Debug::print;
   use 0x1::Cases;
@@ -119,7 +119,7 @@ script {
         7357003
       );
 
-      assert(MinerState::can_create_val_account(@{{bob}}) == false, 7357004);
+      assert(TowerState::can_create_val_account(@{{bob}}) == false, 7357004);
       
   }
 }

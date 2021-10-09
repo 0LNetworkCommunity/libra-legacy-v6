@@ -7,7 +7,7 @@ use diem_types::{
     account_state::AccountState,
     account_state_blob::AccountStateBlob,
     network_address::NetworkAddress,
-    ol_miner_state::MinerStateResource,
+    ol_miner_state::TowerStateResource,
     on_chain_config::ConfigurationResource,
     transaction::authenticator::AuthenticationKey,
     validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource},
@@ -60,7 +60,7 @@ pub struct LegacyRecovery {
     ///
     pub val_cfg: Option<ValidatorConfigResource>,
     ///
-    pub miner_state: Option<MinerStateResource>,
+    pub miner_state: Option<TowerStateResource>,
     ///
     pub comm_wallet: Option<CommunityWalletsResource>,
     ///
@@ -157,7 +157,7 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
                 l.val_cfg = Some(config);
             } else if k == &ValidatorOperatorConfigResource::resource_path() {
                 l.role = AccountRole::Operator;
-            } else if k == &MinerStateResource::resource_path() {
+            } else if k == &TowerStateResource::resource_path() {
                 l.miner_state = bcs::from_bytes(v).ok();
             } else if k == &AutoPayResource::resource_path() {
                 l.autopay = bcs::from_bytes(v).ok();
