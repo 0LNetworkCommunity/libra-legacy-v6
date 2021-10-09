@@ -46,36 +46,36 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
     }
 }
 
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
     }
 }
 
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
     }
 }
 
 //! new-transaction
 //! sender: dave
 script {
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
     }
 }
 
@@ -171,7 +171,7 @@ script {
     use 0x1::MinerState;
     use 0x1::Stats;
     use 0x1::ValidatorUniverse;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
     use 0x1::DiemAccount;
     use 0x1::GAS::GAS;
     use 0x1::ValidatorConfig;    
@@ -204,7 +204,7 @@ script {
         let new_val = DiemAccount::test_helper_create_signer(
             vm, @0x3DC18D1CF61FAAC6AC70E3A63F062E4B
         );
-        AutoPay2::enable_autopay(&new_val);
+        AutoPay::enable_autopay(&new_val);
         let new_oper = ValidatorConfig::get_operator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B);
         DiemAccount::vm_make_payment_no_limit<GAS>(
             @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, new_oper, 60009, x"", x"", vm

@@ -14,7 +14,7 @@ when executing from a fresh state.
 
 
 <pre><code><b>use</b> <a href="AccountFreezing.md#0x1_AccountFreezing">0x1::AccountFreezing</a>;
-<b>use</b> <a href="AutoPay.md#0x1_AutoPay2">0x1::AutoPay2</a>;
+<b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
 <b>use</b> <a href="ChainId.md#0x1_ChainId">0x1::ChainId</a>;
 <b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
@@ -134,7 +134,7 @@ Initializes the Diem framework.
     // <a href="DiemAccount.md#0x1_DiemAccount_restore_key_rotation_capability">DiemAccount::restore_key_rotation_capability</a>(tc_rotate_key_cap);
     <a href="Stats.md#0x1_Stats_initialize">Stats::initialize</a>(dm_account);
     <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_initialize">ValidatorUniverse::initialize</a>(dm_account);
-    <a href="AutoPay.md#0x1_AutoPay2_initialize">AutoPay2::initialize</a>(dm_account);
+    <a href="AutoPay.md#0x1_AutoPay_initialize">AutoPay::initialize</a>(dm_account);
     // FullnodeSubsidy::init_fullnode_sub(dm_account);
     <a href="Oracle.md#0x1_Oracle_initialize">Oracle::initialize</a>(dm_account);
     <a href="MinerState.md#0x1_MinerState_init_miner_list_and_stats">MinerState::init_miner_list_and_stats</a>(dm_account);

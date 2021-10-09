@@ -9,7 +9,7 @@
 -  [Function `test_helper_make_passing`](#0x1_Audit_test_helper_make_passing)
 
 
-<pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay2">0x1::AutoPay2</a>;
+<pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="MinerState.md#0x1_MinerState">0x1::MinerState</a>;
@@ -43,7 +43,7 @@
   // operator account has balance
   <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(oper) &lt; 50000 && !<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()) <b>return</b> <b>false</b>;
   // has autopay enabled
-  <b>if</b> (!<a href="AutoPay.md#0x1_AutoPay2_is_enabled">AutoPay2::is_enabled</a>(val)) <b>return</b> <b>false</b>;
+  <b>if</b> (!<a href="AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(val)) <b>return</b> <b>false</b>;
   // has mining state
   <b>if</b> (!<a href="MinerState.md#0x1_MinerState_is_init">MinerState::is_init</a>(val)) <b>return</b> <b>false</b>;
   // is a slow wallet
@@ -76,7 +76,7 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="Audit.md#0x1_Audit_test_helper_make_passing">test_helper_make_passing</a>(account: &signer){
   <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 1905001);
-  <a href="AutoPay.md#0x1_AutoPay2_enable_autopay">AutoPay2::enable_autopay</a>(account);
+  <a href="AutoPay.md#0x1_AutoPay_enable_autopay">AutoPay::enable_autopay</a>(account);
 }
 </code></pre>
 

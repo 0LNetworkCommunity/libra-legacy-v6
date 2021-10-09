@@ -10,7 +10,7 @@ module DiemBlock {
     //////// 0L ////////
     use 0x1::EpochBoundary;
     use 0x1::Stats;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
     use 0x1::Epoch;
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
@@ -89,13 +89,13 @@ module DiemBlock {
         Stats::process_set_votes(&vm, &previous_block_votes);
         Stats::inc_prop(&vm, *&proposer);    
 
-        if (AutoPay2::tick(&vm)){
+        if (AutoPay::tick(&vm)){
             // print(&1);
             // triggers autopay at beginning of each epoch 
             // tick is reset at end of previous epoch
             DiemAccount::process_escrow<GAS>(&vm);
             // print(&2);
-            AutoPay2::process_autopay(&vm);
+            AutoPay::process_autopay(&vm);
             // print(&3);
         };        
 

@@ -8,14 +8,14 @@
 //! new-transaction
 //! sender: alice
 script {
-  use 0x1::AutoPay2;
+  use 0x1::AutoPay;
   use 0x1::Signer;
   fun main(sender: signer) {
     let sender = &sender;    
-    AutoPay2::enable_autopay(sender);
-    assert(AutoPay2::is_enabled(Signer::address_of(sender)), 7357001);
-    AutoPay2::create_instruction(sender, 1, 0, @{{bob}}, 2, 500);
-    let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(
+    AutoPay::enable_autopay(sender);
+    assert(AutoPay::is_enabled(Signer::address_of(sender)), 7357001);
+    AutoPay::create_instruction(sender, 1, 0, @{{bob}}, 2, 500);
+    let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(
       Signer::address_of(sender), 1
     );
     assert(type == 0u8, 7357002);
@@ -53,18 +53,18 @@ script {
 
 // check: EXECUTED
 
-// Processing AutoPay2 to see if payments are done
+// Processing AutoPay to see if payments are done
 //! new-transaction
 //! sender: diemroot
 script {
-  use 0x1::AutoPay2;
+  use 0x1::AutoPay;
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
   fun main(sender: signer) {
     let alice_balance = DiemAccount::balance<GAS>(@{{alice}});
     let bob_balance = DiemAccount::balance<GAS>(@{{bob}});
     assert(alice_balance == 1000000, 7357007);
-    AutoPay2::process_autopay(&sender);
+    AutoPay::process_autopay(&sender);
     
     let alice_balance_after = DiemAccount::balance<GAS>(@{{alice}});
     assert(alice_balance_after < alice_balance, 7357008);
