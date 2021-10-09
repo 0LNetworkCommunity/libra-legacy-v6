@@ -1,15 +1,15 @@
 
-<a name="0x1_Reconfigure"></a>
+<a name="0x1_EpochBoundary"></a>
 
-# Module `0x1::Reconfigure`
+# Module `0x1::EpochBoundary`
 
 
 
--  [Function `reconfigure`](#0x1_Reconfigure_reconfigure)
--  [Function `process_fullnodes`](#0x1_Reconfigure_process_fullnodes)
--  [Function `process_validators`](#0x1_Reconfigure_process_validators)
--  [Function `propose_new_set`](#0x1_Reconfigure_propose_new_set)
--  [Function `reset_counters`](#0x1_Reconfigure_reset_counters)
+-  [Function `reconfigure`](#0x1_EpochBoundary_reconfigure)
+-  [Function `process_fullnodes`](#0x1_EpochBoundary_process_fullnodes)
+-  [Function `process_validators`](#0x1_EpochBoundary_process_validators)
+-  [Function `propose_new_set`](#0x1_EpochBoundary_propose_new_set)
+-  [Function `reset_counters`](#0x1_EpochBoundary_reset_counters)
 
 
 <pre><code><b>use</b> <a href="Audit.md#0x1_Audit">0x1::Audit</a>;
@@ -34,13 +34,13 @@
 
 
 
-<a name="0x1_Reconfigure_reconfigure"></a>
+<a name="0x1_EpochBoundary_reconfigure"></a>
 
 ## Function `reconfigure`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_reconfigure">reconfigure</a>(vm: &signer, height_now: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64)
 </code></pre>
 
 
@@ -49,7 +49,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) {
+<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) {
     print(&1800100);
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
 
@@ -65,13 +65,13 @@
         <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, compliant_nodes_count);
 
     print(&1800102);
-    <a href="Reconfigure.md#0x1_Reconfigure_process_fullnodes">process_fullnodes</a>(vm, nominal_subsidy_per);
+    <a href="Reconfigure.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm, nominal_subsidy_per);
 
     print(&1800103);
-    <a href="Reconfigure.md#0x1_Reconfigure_process_validators">process_validators</a>(vm, subsidy_units, outgoing_compliant_set);
+    <a href="Reconfigure.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm, subsidy_units, outgoing_compliant_set);
 
     print(&1800104);
-    <b>let</b> proposed_set = <a href="Reconfigure.md#0x1_Reconfigure_propose_new_set">propose_new_set</a>(vm, height_start, height_now);
+    <b>let</b> proposed_set = <a href="Reconfigure.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm, height_start, height_now);
 
     print(&1800105);
     // Update all slow wallet limits
@@ -80,7 +80,7 @@
         // update_validator_withdrawal_limit(vm);
     };
     print(&1800106);
-    <a href="Reconfigure.md#0x1_Reconfigure_reset_counters">reset_counters</a>(vm, proposed_set, height_now)
+    <a href="Reconfigure.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, proposed_set, height_now)
 }
 </code></pre>
 
@@ -88,13 +88,13 @@
 
 </details>
 
-<a name="0x1_Reconfigure_process_fullnodes"></a>
+<a name="0x1_EpochBoundary_process_fullnodes"></a>
 
 ## Function `process_fullnodes`
 
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_process_fullnodes">process_fullnodes</a>(vm: &signer, nominal_subsidy_per_node: u64)
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm: &signer, nominal_subsidy_per_node: u64)
 </code></pre>
 
 
@@ -103,7 +103,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_process_fullnodes">process_fullnodes</a>(vm: &signer, nominal_subsidy_per_node: u64) {
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm: &signer, nominal_subsidy_per_node: u64) {
     // Fullnode subsidy
     // <b>loop</b> through validators and pay full node subsidies.
     // Should happen before transactionfees get distributed.
@@ -148,13 +148,13 @@
 
 </details>
 
-<a name="0x1_Reconfigure_process_validators"></a>
+<a name="0x1_EpochBoundary_process_validators"></a>
 
 ## Function `process_validators`
 
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_process_validators">process_validators</a>(vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector&lt;address&gt;)
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector&lt;address&gt;)
 </code></pre>
 
 
@@ -163,7 +163,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_process_validators">process_validators</a>(
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_process_validators">process_validators</a>(
     vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector&lt;address&gt;
 ) {
     // Process outgoing validators:
@@ -186,13 +186,13 @@
 
 </details>
 
-<a name="0x1_Reconfigure_propose_new_set"></a>
+<a name="0x1_EpochBoundary_propose_new_set"></a>
 
 ## Function `propose_new_set`
 
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;address&gt;
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;address&gt;
 </code></pre>
 
 
@@ -201,7 +201,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;address&gt; {
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;address&gt; {
     // Propose upcoming validator set:
     // Step 1: Sort Top N eligible validators
     // Step 2: Jail non-performing validators
@@ -268,13 +268,13 @@
 
 </details>
 
-<a name="0x1_Reconfigure_reset_counters"></a>
+<a name="0x1_EpochBoundary_reset_counters"></a>
 
 ## Function `reset_counters`
 
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, height_now: u64)
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, height_now: u64)
 </code></pre>
 
 
@@ -283,7 +283,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, height_now: u64) {
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, height_now: u64) {
 
     // Reset <a href="Stats.md#0x1_Stats">Stats</a>
     <a href="Stats.md#0x1_Stats_reconfig">Stats::reconfig</a>(vm, &proposed_set);
@@ -293,7 +293,7 @@
     <b>let</b> eligible = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm);
     <a href="MinerState.md#0x1_MinerState_reconfig">MinerState::reconfig</a>(vm, &eligible);
 
-    // <a href="Reconfigure.md#0x1_Reconfigure">Reconfigure</a> the network
+    // Reconfigure the network
     <a href="DiemSystem.md#0x1_DiemSystem_bulk_update_validators">DiemSystem::bulk_update_validators</a>(vm, proposed_set);
 
     // process community wallets

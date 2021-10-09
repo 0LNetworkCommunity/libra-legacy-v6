@@ -8,7 +8,7 @@ module DiemBlock {
     use 0x1::DiemSystem;
     use 0x1::DiemTimestamp;
     //////// 0L ////////
-    use 0x1::Reconfigure;
+    use 0x1::EpochBoundary;
     use 0x1::Stats;
     use 0x1::AutoPay;
     use 0x1::Epoch;
@@ -117,10 +117,10 @@ module DiemBlock {
         if (Epoch::epoch_finished()) {
           // Run migrations
           Migrations::init(&vm);
-          // TODO: We don't need to pass block height to ReconfigureOL. 
+          // TODO: We don't need to pass block height to EpochBoundaryOL. 
           // It should use the BlockMetadata. But there's a circular reference 
           // there when we try.
-          Reconfigure::reconfigure(&vm, get_current_block_height());
+          EpochBoundary::reconfigure(&vm, get_current_block_height());
         };        
     }
     spec block_prologue {

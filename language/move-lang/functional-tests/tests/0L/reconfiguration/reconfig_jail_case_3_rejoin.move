@@ -145,7 +145,7 @@ script {
     // use 0x1::MinerState;
     use 0x1::Stats;
     use 0x1::Vector;
-    // use 0x1::Reconfigure;
+    // use 0x1::EpochBoundary;
     use 0x1::DiemSystem;
 
     fun main(vm: signer) {
@@ -201,7 +201,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    // use 0x1::Reconfigure;
+    // use 0x1::EpochBoundary;
     use 0x1::Cases;
     use 0x1::Vector;
     use 0x1::Stats;
@@ -227,7 +227,7 @@ script {
         // Even though Eve will be considered a case 2, it was because she was 
         // jailed. She will rejoin next epoch.
         assert(Cases::get_case(vm, @{{eve}}, 0, 15) == 2, 7357008008012);
-        // Reconfigure::reconfigure(vm, 30);
+        // EpochBoundary::reconfigure(vm, 30);
     }
 }
 //check: EXECUTED

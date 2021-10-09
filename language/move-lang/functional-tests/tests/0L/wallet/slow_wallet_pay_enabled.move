@@ -9,7 +9,7 @@ script {
 use 0x1::DiemAccount;
 use 0x1::DiemConfig;
 use 0x1::Testnet;
-use 0x1::Reconfigure;
+use 0x1::EpochBoundary;
 fun main(vm: signer) {
     // transfers are always enabled on testnet, unsetting testnet would make transfers not work, unless the conditions are met.
     Testnet::remove_testnet(&vm);
@@ -18,7 +18,7 @@ fun main(vm: signer) {
 
     // TODO: simulate epoch boundary with testsuite directives. Annoying to do with production values. Note: after an epoch change event subsequent transactions appear expired after long epochs in tests. Using reconfigure() for now.
 
-    Reconfigure::reconfigure(&vm, 30);
+    EpochBoundary::reconfigure(&vm, 30);
 }
 }
 

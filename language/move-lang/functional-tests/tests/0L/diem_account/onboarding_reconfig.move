@@ -84,7 +84,7 @@ script {
 //! sender: diemroot
 script {
     use 0x1::DiemSystem;
-    use 0x1::Reconfigure;
+    use 0x1::EpochBoundary;
     use 0x1::Vector;
     use 0x1::MinerState;
     use 0x1::Stats;
@@ -132,7 +132,7 @@ script {
             i = i + 1;
         };
 
-        Reconfigure::reconfigure(vm, 15); // reconfigure at height 15
+        EpochBoundary::reconfigure(vm, 15); // reconfigure at height 15
         assert(DiemSystem::validator_set_size() == 4, 7357000180106);
     }
 }
@@ -166,7 +166,7 @@ script {
 //! sender: diemroot
 script {
     use 0x1::DiemSystem;
-    use 0x1::Reconfigure;
+    use 0x1::EpochBoundary;
     use 0x1::Vector;
     use 0x1::MinerState;
     use 0x1::Stats;
@@ -227,7 +227,7 @@ script {
             i = i + 1;
         };
 
-        Reconfigure::reconfigure(vm, 15); // reconfigure at height 15
+        EpochBoundary::reconfigure(vm, 15); // reconfigure at height 15
     }
 }
 // check: EXECUTED

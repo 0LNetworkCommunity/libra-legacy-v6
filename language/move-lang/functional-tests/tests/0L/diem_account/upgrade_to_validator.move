@@ -76,7 +76,7 @@ fun main(sender: signer) {
 //! new-transaction
 //! sender: diemroot
 script {
-use 0x1::Reconfigure;
+use 0x1::EpochBoundary;
 use 0x1::DiemAccount;
 use 0x1::GAS::GAS;
 use 0x1::ValidatorUniverse;
@@ -86,7 +86,7 @@ fun main(vm: signer) {
   let eve_addr = @0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
   /// set the fullnode proof price to 0, to check if onboarding subsidy is given.
   // FullnodeSubsidy::test_set_fullnode_fixtures(&vm, 0, 0, 0, 0, 0);
-  Reconfigure::reconfigure(&vm, 10); 
+  EpochBoundary::reconfigure(&vm, 10); 
     // need to remove testnet for this test, since testnet does not ratelimit 
     // account creation.
   let oper_eve = ValidatorConfig::get_operator(eve_addr);
