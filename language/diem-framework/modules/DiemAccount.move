@@ -36,7 +36,7 @@ module DiemAccount {
     //////// 0L ////////
     use 0x1::VDF;
     use 0x1::Globals;
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::Testnet::is_testnet;
     use 0x1::FIFO;
     use 0x1::FixedPoint32;
@@ -471,7 +471,7 @@ module DiemAccount {
         // this verifies the VDF proof, which we use to rate limit account creation.
         // account will not be created if this step fails.
         let new_signer = create_signer(new_account_address);
-        MinerState::init_miner_state(&new_signer, challenge, solution);
+        Tower::init_miner_state(&new_signer, challenge, solution);
         // set_slow(&new_signer);
         new_account_address
     }
@@ -501,7 +501,7 @@ module DiemAccount {
     ):address acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWalletList { //////// 0L ////////
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
-        assert(MinerState::can_create_val_account(sender_addr), Errors::limit_exceeded(120102));
+        assert(Tower::can_create_val_account(sender_addr), Errors::limit_exceeded(120102));
         // Check there's enough balance for bootstrapping both operator and validator account
         assert(
             balance<GAS>(sender_addr) > 2 * BOOTSTRAP_COIN_VALUE, 
@@ -542,7 +542,7 @@ module DiemAccount {
         add_currencies_for_account<GAS>(&new_signer, false);
 
         // This also verifies the VDF proof, which we use to rate limit account creation.
-        MinerState::init_miner_state(&new_signer, challenge, solution);
+        Tower::init_miner_state(&new_signer, challenge, solution);
 
         // Create OP Account
         let new_op_account = create_signer(op_address);
@@ -568,7 +568,7 @@ module DiemAccount {
         make_account(new_signer, auth_key_prefix);
         make_account(new_op_account, op_auth_key_prefix);
 
-        MinerState::reset_rate_limit(sender);
+        Tower::reset_rate_limit(sender);
 
 
 
@@ -607,7 +607,7 @@ module DiemAccount {
     print(&500);
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
-        assert(MinerState::can_create_val_account(sender_addr), Errors::limit_exceeded(120103));
+        assert(Tower::can_create_val_account(sender_addr), Errors::limit_exceeded(120103));
         // Check there's enough balance for bootstrapping both operator and validator account
         assert(
             balance<GAS>(sender_addr) > 2 * BOOTSTRAP_COIN_VALUE, 
@@ -619,9 +619,9 @@ print(&501);
         let new_signer = create_signer(new_account_address);
 
         assert(exists_at(new_account_address), Errors::not_published(EACCOUNT));
-        assert(MinerState::is_init(new_account_address), 120104);
+        assert(Tower::is_init(new_account_address), 120104);
 print(&502);
-        // verifies the VDF proof, since we are not calling MinerState init.
+        // verifies the VDF proof, since we are not calling Tower init.
         let valid = VDF::verify(
             challenge,
             &Globals::get_difficulty(),
@@ -674,7 +674,7 @@ print(&508);
         make_account(new_op_account, op_auth_key_prefix);
 print(&509);
 
-        MinerState::reset_rate_limit(sender);
+        Tower::reset_rate_limit(sender);
 print(&510);
         // the miner who is upgrading may have coins, but better safe...
         // Transfer for owner

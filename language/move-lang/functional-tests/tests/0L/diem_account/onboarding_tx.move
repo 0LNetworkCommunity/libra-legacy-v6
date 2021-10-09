@@ -6,7 +6,7 @@ script {
   use 0x1::VDF;
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
-  use 0x1::MinerState;
+  use 0x1::Tower;
   use 0x1::NodeWeight;
   use 0x1::TestFixtures;
   use 0x1::ValidatorConfig;
@@ -24,7 +24,7 @@ script {
     assert(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 401);
     
     let epochs_since_creation = 10;
-    MinerState::test_helper_set_rate_limit(&sender, epochs_since_creation);
+    Tower::test_helper_set_rate_limit(&sender, epochs_since_creation);
 
     DiemAccount::create_validator_account_with_proof(
         &sender,
@@ -59,7 +59,7 @@ script {
       7357130101051000
     );
 
-    assert(MinerState::test_helper_get_height(eve_addr) == 0, 7357130101061000);
+    assert(Tower::test_helper_get_height(eve_addr) == 0, 7357130101061000);
 
     //Check the validator has 0 proof of weight.
     assert(NodeWeight::proof_of_weight(eve_addr) == 0, 7357130101071000);
@@ -82,7 +82,7 @@ script {
   //! new-transaction
   //! sender: diemroot
 script {
-  use 0x1::MinerState;
+  use 0x1::Tower;
   use 0x1::Testnet;
 
   fun main(vm: signer) {
@@ -90,6 +90,6 @@ script {
     Testnet::remove_testnet(&vm);
     
     // check is rate-limited
-    assert(MinerState::can_create_val_account(@{{bob}}) == false, 7357130101091000);
+    assert(Tower::can_create_val_account(@{{bob}}) == false, 7357130101091000);
   }
 }

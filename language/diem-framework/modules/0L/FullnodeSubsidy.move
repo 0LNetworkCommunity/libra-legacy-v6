@@ -14,10 +14,10 @@ address 0x1 {
     use 0x1::Diem;
     use 0x1::DiemAccount;
     use 0x1::DiemSystem;
-    use 0x1::MinerState;
+    use 0x1::Tower;
 
     public fun get_proof_price(one_val_subsidy: u64): u64 {
-      let global_proofs = MinerState::get_fullnode_proofs();
+      let global_proofs = Tower::get_fullnode_proofs();
 
       // proof price is simple, miners divide the equivalent of one compliant 
       // validator's subsidy.

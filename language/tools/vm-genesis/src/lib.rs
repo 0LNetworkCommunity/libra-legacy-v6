@@ -547,7 +547,7 @@ fn create_and_initialize_owners_operators(
         exec_function(
             session,
             log_context,
-            "MinerState",
+            "Tower",
             "genesis_helper",
             vec![],
             serialize_values(&vec![
@@ -778,7 +778,7 @@ fn recovery_owners_operators(
         exec_function(
             session,
             log_context,
-            "MinerState",
+            "Tower",
             "recover_miner_state",
             vec![],
             serialize_values(&vec![

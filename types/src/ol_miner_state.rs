@@ -16,7 +16,7 @@ use move_core_types::account_address::AccountAddress;
 
 /// Struct that represents a CurrencyInfo resource
 #[derive(Debug, Serialize, Deserialize)]
-pub struct MinerStateResource {
+pub struct TowerResource {
     ///
     pub previous_proof_hash: Vec<u8>,
     /// user's latest verified_tower_height
@@ -33,19 +33,19 @@ pub struct MinerStateResource {
     pub epochs_since_last_account_creation: u64,
 }
 
-impl MoveStructType for MinerStateResource {
-    const MODULE_NAME: &'static IdentStr = ident_str!("MinerState");
+impl MoveStructType for TowerResource {
+    const MODULE_NAME: &'static IdentStr = ident_str!("Tower");
     const STRUCT_NAME: &'static IdentStr = ident_str!("MinerProofHistory");
 }
-impl MoveResource for MinerStateResource {}
+impl MoveResource for TowerResource {}
 
-impl MinerStateResource {
+impl TowerResource {
     ///
     pub fn struct_tag() -> StructTag {
         StructTag {
             address: CORE_CODE_ADDRESS,
-            module: MinerStateResource::module_identifier(),
-            name: MinerStateResource::struct_identifier(),
+            module: TowerResource::module_identifier(),
+            name: TowerResource::struct_identifier(),
             type_params: vec![],
         }
     }
@@ -53,13 +53,13 @@ impl MinerStateResource {
     pub fn access_path(account: AccountAddress) -> AccessPath {
         let resource_key = ResourceKey::new(
             account,
-            MinerStateResource::struct_tag(),
+            TowerResource::struct_tag(),
         );
         AccessPath::resource_access_path(resource_key)
     }
     ///
     pub fn resource_path() -> Vec<u8> {
-        AccessPath::resource_access_vec(MinerStateResource::struct_tag())
+        AccessPath::resource_access_vec(TowerResource::struct_tag())
     }
 
     /// 

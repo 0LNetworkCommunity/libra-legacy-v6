@@ -2207,18 +2207,18 @@ pub enum ScriptFunctionCall {
 
     Leave {},
 
-    MinerstateCommit {
+    TowerCommit {
         challenge: Bytes,
         solution: Bytes,
     },
 
-    MinerstateCommitByOperator {
+    TowerCommitByOperator {
         owner_address: AccountAddress,
         challenge: Bytes,
         solution: Bytes,
     },
 
-    MinerstateHelper {},
+    TowerHelper {},
 
     /// A validator (Alice) can delegate the authority for the operation of an upgrade to another validator (Bob). When Oracle delegation happens, effectively the consensus voting power of Alice, is added to Bob only for the effect of calculating the preference on electing a stdlib binary. Whatever binary Bob proposes, Alice will also propose without needing to be submitting transactions.
     OlDelegateVote {
@@ -3608,20 +3608,20 @@ impl ScriptFunctionCall {
             }
             Join {} => encode_join_script_function(),
             Leave {} => encode_leave_script_function(),
-            MinerstateCommit {
+            TowerCommit {
                 challenge,
                 solution,
-            } => encode_minerstate_commit_script_function(challenge, solution),
-            MinerstateCommitByOperator {
+            } => encode_Tower_commit_script_function(challenge, solution),
+            TowerCommitByOperator {
                 owner_address,
                 challenge,
                 solution,
-            } => encode_minerstate_commit_by_operator_script_function(
+            } => encode_Tower_commit_by_operator_script_function(
                 owner_address,
                 challenge,
                 solution,
             ),
-            MinerstateHelper {} => encode_minerstate_helper_script_function(),
+            TowerHelper {} => encode_Tower_helper_script_function(),
             OlDelegateVote { dest } => encode_ol_delegate_vote_script_function(dest),
             OlEnableDelegation {} => encode_ol_enable_delegation_script_function(),
             OlOracleTx { id, data } => encode_ol_oracle_tx_script_function(id, data),
@@ -4887,16 +4887,16 @@ pub fn encode_leave_script_function() -> TransactionPayload {
     ))
 }
 
-pub fn encode_minerstate_commit_script_function(
+pub fn encode_Tower_commit_script_function(
     challenge: Vec<u8>,
     solution: Vec<u8>,
 ) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
             AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("MinerStateScripts").to_owned(),
+            ident_str!("TowerScripts").to_owned(),
         ),
-        ident_str!("minerstate_commit").to_owned(),
+        ident_str!("Tower_commit").to_owned(),
         vec![],
         vec![
             bcs::to_bytes(&challenge).unwrap(),
@@ -4905,7 +4905,7 @@ pub fn encode_minerstate_commit_script_function(
     ))
 }
 
-pub fn encode_minerstate_commit_by_operator_script_function(
+pub fn encode_Tower_commit_by_operator_script_function(
     owner_address: AccountAddress,
     challenge: Vec<u8>,
     solution: Vec<u8>,
@@ -4913,9 +4913,9 @@ pub fn encode_minerstate_commit_by_operator_script_function(
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
             AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("MinerStateScripts").to_owned(),
+            ident_str!("TowerScripts").to_owned(),
         ),
-        ident_str!("minerstate_commit_by_operator").to_owned(),
+        ident_str!("Tower_commit_by_operator").to_owned(),
         vec![],
         vec![
             bcs::to_bytes(&owner_address).unwrap(),
@@ -4925,13 +4925,13 @@ pub fn encode_minerstate_commit_by_operator_script_function(
     ))
 }
 
-pub fn encode_minerstate_helper_script_function() -> TransactionPayload {
+pub fn encode_Tower_helper_script_function() -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
             AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("MinerStateScripts").to_owned(),
+            ident_str!("TowerScripts").to_owned(),
         ),
-        ident_str!("minerstate_helper").to_owned(),
+        ident_str!("Tower_helper").to_owned(),
         vec![],
         vec![],
     ))
@@ -8252,11 +8252,11 @@ fn decode_leave_script_function(payload: &TransactionPayload) -> Option<ScriptFu
     }
 }
 
-fn decode_minerstate_commit_script_function(
+fn decode_Tower_commit_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
-        Some(ScriptFunctionCall::MinerstateCommit {
+        Some(ScriptFunctionCall::TowerCommit {
             challenge: bcs::from_bytes(script.args().get(0)?).ok()?,
             solution: bcs::from_bytes(script.args().get(1)?).ok()?,
         })
@@ -8265,11 +8265,11 @@ fn decode_minerstate_commit_script_function(
     }
 }
 
-fn decode_minerstate_commit_by_operator_script_function(
+fn decode_Tower_commit_by_operator_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
-        Some(ScriptFunctionCall::MinerstateCommitByOperator {
+        Some(ScriptFunctionCall::TowerCommitByOperator {
             owner_address: bcs::from_bytes(script.args().get(0)?).ok()?,
             challenge: bcs::from_bytes(script.args().get(1)?).ok()?,
             solution: bcs::from_bytes(script.args().get(2)?).ok()?,
@@ -8279,11 +8279,11 @@ fn decode_minerstate_commit_by_operator_script_function(
     }
 }
 
-fn decode_minerstate_helper_script_function(
+fn decode_Tower_helper_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::MinerstateHelper {})
+        Some(ScriptFunctionCall::TowerHelper {})
     } else {
         None
     }
@@ -9189,16 +9189,16 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_leave_script_function),
         );
         map.insert(
-            "MinerStateScriptsminerstate_commit".to_string(),
-            Box::new(decode_minerstate_commit_script_function),
+            "TowerScriptsTower_commit".to_string(),
+            Box::new(decode_Tower_commit_script_function),
         );
         map.insert(
-            "MinerStateScriptsminerstate_commit_by_operator".to_string(),
-            Box::new(decode_minerstate_commit_by_operator_script_function),
+            "TowerScriptsTower_commit_by_operator".to_string(),
+            Box::new(decode_Tower_commit_by_operator_script_function),
         );
         map.insert(
-            "MinerStateScriptsminerstate_helper".to_string(),
-            Box::new(decode_minerstate_helper_script_function),
+            "TowerScriptsTower_helper".to_string(),
+            Box::new(decode_Tower_helper_script_function),
         );
         map.insert(
             "OracleScriptsol_delegate_vote".to_string(),

@@ -16,15 +16,15 @@
 //! sender: alice
 script {
 
-    use 0x1::MinerState;
+    use 0x1::Tower;
 
     fun main(sender: signer) {
         // Alice mines (case 1)
         // "Sender" is the only one that can update her mining stats. 
         // Hence this first transaction.
 
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::get_count_in_epoch(@{{alice}}) == 5, 7357008003001);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::get_count_in_epoch(@{{alice}}) == 5, 7357008003001);
     }
 }
 //check: EXECUTED
@@ -32,11 +32,11 @@ script {
 //! new-transaction
 //! sender: eve
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     fun main(sender: signer) {
         // Eve mines (case 3)
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::get_count_in_epoch(@{{eve}}) == 5, 7357008003002);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::get_count_in_epoch(@{{eve}}) == 5, 7357008003002);
     }
 }
 //check: EXECUTED

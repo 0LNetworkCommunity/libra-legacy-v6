@@ -10,7 +10,7 @@ address 0x1{
     /// Validators who are no longer compliant may be kicked out of the validator 
     /// set and/or jailed. To be compliant, validators must be BOTH validating and mining. 
     module Cases{
-        use 0x1::MinerState;
+        use 0x1::Tower;
         use 0x1::Stats;
         use 0x1::Roles;
 
@@ -32,7 +32,7 @@ address 0x1{
             Roles::assert_diem_root(vm);
             // did the validator sign blocks above threshold?
             let signs = Stats::node_above_thresh(vm, node_addr, height_start, height_end);
-            let mines = MinerState::node_above_thresh(node_addr);
+            let mines = Tower::node_above_thresh(node_addr);
 
             if (signs && mines) {
                 // compliant: in next set, gets paid, weight increments

@@ -7,7 +7,7 @@ script {
     use 0x1::Audit;
     use 0x1::ValidatorConfig;
     use 0x1::AutoPay2;
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
     
@@ -24,7 +24,7 @@ script {
         AutoPay2::enable_autopay(&alice_account);
         assert(AutoPay2::is_enabled(@{{alice}}), 7357007003004);
 
-        assert(MinerState::is_init(@{{alice}}), 7357007003005);
+        assert(Tower::is_init(@{{alice}}), 7357007003005);
 
         // audit must pass
         assert(Audit::val_audit_passing(@{{alice}}), 7357007003006);

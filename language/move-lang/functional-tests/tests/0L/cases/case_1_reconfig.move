@@ -18,7 +18,7 @@
 //! sender: alice
 script {
     use 0x1::DiemSystem;
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
@@ -29,14 +29,14 @@ script {
         assert(DiemSystem::is_validator(@{{alice}}) == true, 7357300101021000);
         assert(DiemSystem::is_validator(@{{eve}}) == true, 7357300101031000);
 
-        assert(MinerState::get_count_in_epoch(@{{alice}}) == 1, 7357300101041000);
+        assert(Tower::get_count_in_epoch(@{{alice}}) == 1, 7357300101041000);
         assert(DiemAccount::balance<GAS>(@{{alice}}) == 1000000, 7357300101051000);
         assert(NodeWeight::proof_of_weight(@{{alice}}) == 0, 7357300101051000);
 
         // Alice continues to mine after genesis.
         // This test is adapted from chained_from_genesis.move
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::get_count_in_epoch(@{{alice}}) == 5, 7357300101071000);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::get_count_in_epoch(@{{alice}}) == 5, 7357300101071000);
     }
 }
 // check: EXECUTED

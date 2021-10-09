@@ -46,7 +46,7 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
@@ -54,8 +54,8 @@ script {
     
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::get_count_in_epoch(@{{alice}}) == 5, 7357008010001);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::get_count_in_epoch(@{{alice}}) == 5, 7357008010001);
     }
 }
 //check: EXECUTED
@@ -63,7 +63,7 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
@@ -71,8 +71,8 @@ script {
 
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::get_count_in_epoch(@{{bob}}) == 5, 7357008010002);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::get_count_in_epoch(@{{bob}}) == 5, 7357008010002);
     }
 }
 //check: EXECUTED
@@ -81,7 +81,7 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
@@ -89,8 +89,8 @@ script {
 
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::get_count_in_epoch(@{{carol}}) == 5, 7357008010003);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::get_count_in_epoch(@{{carol}}) == 5, 7357008010003);
     }
 }
 //check: EXECUTED
@@ -99,7 +99,7 @@ script {
 //! new-transaction
 //! sender: dave
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
@@ -107,8 +107,8 @@ script {
 
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::get_count_in_epoch(@{{dave}}) == 5, 7357008010004);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::get_count_in_epoch(@{{dave}}) == 5, 7357008010004);
     }
 }
 //check: EXECUTED
@@ -116,7 +116,7 @@ script {
 //! new-transaction
 //! sender: eve
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
@@ -124,8 +124,8 @@ script {
 
         // Miner is the only one that can update her mining stats. 
         // Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::get_count_in_epoch(@{{eve}}) == 5, 7357008010005);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::get_count_in_epoch(@{{eve}}) == 5, 7357008010005);
     }
 }
 //check: EXECUTED
@@ -138,14 +138,14 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    // use 0x1::MinerState;
+    // use 0x1::Tower;
     use 0x1::Stats;
     use 0x1::Vector;
     use 0x1::DiemSystem;
 
     fun main(vm: signer) {
         // todo: change name to Mock epochs
-        // MinerState::test_helper_set_epochs(&sender, 5);
+        // Tower::test_helper_set_epochs(&sender, 5);
         let voters = Vector::singleton<address>(@{{alice}});
         Vector::push_back<address>(&mut voters, @{{bob}});
         Vector::push_back<address>(&mut voters, @{{carol}});
@@ -162,8 +162,8 @@ script {
 
         assert(DiemSystem::validator_set_size() == 6, 7357008010006);
         assert(DiemSystem::is_validator(@{{alice}}) == true, 7357008010007);
-        // Mock end of epoch for minerstate
-        // MinerState::test_helper_mock_reconfig(@{{alice}});
+        // Mock end of epoch for Tower
+        // Tower::test_helper_mock_reconfig(@{{alice}});
     }
 }
 //check: EXECUTED

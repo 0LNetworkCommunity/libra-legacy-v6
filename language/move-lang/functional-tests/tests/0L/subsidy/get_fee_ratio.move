@@ -4,9 +4,9 @@
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     fun main(sender: signer) {
-        MinerState::test_helper_mock_mining(&sender, 5);
+        Tower::test_helper_mock_mining(&sender, 5);
     }
 }
 //check: EXECUTED
@@ -14,9 +14,9 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     fun main(sender: signer) {
-        MinerState::test_helper_mock_mining(&sender, 5);
+        Tower::test_helper_mock_mining(&sender, 5);
     }
 }
 //check: EXECUTED

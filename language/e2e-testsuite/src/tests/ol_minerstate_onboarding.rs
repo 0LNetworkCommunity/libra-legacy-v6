@@ -34,7 +34,7 @@ fn miner_onboarding() {
     executor.add_account_data(&sender);
     executor.add_account_data(&receiver);
 
-    let payload = transaction_builder::encode_minerstate_helper_script_function();
+    let payload = transaction_builder::encode_Tower_helper_script_function();
     let txn_help = sender.account()
         .transaction()
         .payload(payload)

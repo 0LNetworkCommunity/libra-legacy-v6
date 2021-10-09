@@ -13,11 +13,11 @@
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
 
     fun main(sender: signer) {
       //NOTE: Alice is Case 1, she validates and mines. Setting up mining.
-        MinerState::test_helper_mock_mining(&sender, 5);
+        Tower::test_helper_mock_mining(&sender, 5);
 
     }
 }
@@ -27,10 +27,10 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     fun main(sender: signer) {
       //NOTE: Carol is Case 3, she mines but does not validate. Setting up mining.
-        MinerState::test_helper_mock_mining(&sender, 5);
+        Tower::test_helper_mock_mining(&sender, 5);
 
     }
 }

@@ -3,14 +3,14 @@
 //! new-transaction
 //! sender: alice
 script {    
-    use 0x1::MinerState;
+    use 0x1::Tower;
 
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
-        MinerState::test_helper_mock_mining(&sender, 0);
-        assert(MinerState::get_count_in_epoch(@{{alice}}) == 0, 7357300101011000);
+        Tower::test_helper_mock_mining(&sender, 0);
+        assert(Tower::get_count_in_epoch(@{{alice}}) == 0, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -28,7 +28,7 @@ script {
         // only voted on 1 block out of 200
         Stats::process_set_votes(&sender, &voters);
 
-        // Mock end of epoch for minerstate
+        // Mock end of epoch for Tower
         assert(Cases::get_case(&sender, @{{alice}}, 0, 200) == 4, 7357300103011000);
     }
 }

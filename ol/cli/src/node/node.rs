@@ -9,7 +9,7 @@ use std::path::PathBuf;
 use std::{process::Command, str};
 use sysinfo::SystemExt;
 use sysinfo::{ProcessExt, ProcessStatus};
-use diem_json_rpc_client::views::MinerStateResourceView;
+use diem_json_rpc_client::views::TowerResourceView;
 use diem_types::waypoint::Waypoint;
 use diem_types::{account_address::AccountAddress, account_state::AccountState};
 use super::client;
@@ -43,7 +43,7 @@ pub struct Node {
     pub vitals: Vitals,
     /// TODO: deduplicate these
     chain_state: Option<AccountState>,
-    miner_state: Option<MinerStateResourceView>,
+    miner_state: Option<TowerResourceView>,
 }
 
 impl Node {

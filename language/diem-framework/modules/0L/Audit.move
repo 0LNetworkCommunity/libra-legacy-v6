@@ -10,7 +10,7 @@ address 0x1 {
     use 0x1::DiemAccount;
     use 0x1::GAS::GAS;
     use 0x1::AutoPay2;
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::Testnet;
 
     public fun val_audit_passing(val: address): bool {
@@ -24,7 +24,7 @@ address 0x1 {
       // has autopay enabled
       if (!AutoPay2::is_enabled(val)) return false;
       // has mining state
-      if (!MinerState::is_init(val)) return false;
+      if (!Tower::is_init(val)) return false;
       // is a slow wallet
       if (!DiemAccount::is_slow(val)) return false;
 

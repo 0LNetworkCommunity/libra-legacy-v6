@@ -7,13 +7,13 @@
 //! new-transaction
 //! sender: alice
 script {    
-    use 0x1::MinerState;
+    use 0x1::Tower;
     // use 0x1::Burn;
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
-        MinerState::test_helper_mock_mining(&sender, 5);
+        Tower::test_helper_mock_mining(&sender, 5);
         
         // alice's preferences are set to always burn
     }

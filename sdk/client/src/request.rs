@@ -32,7 +32,7 @@ pub enum MethodRequest {
     GetEventsWithProofs(EventKey, u64, u64),
 
     //////// 0L ////////
-    GetMinerStateView((AccountAddress,)), // this is the format for passing a list of params
+    GetTowerView((AccountAddress,)), // this is the format for passing a list of params
     GetOracleUpgradeStateView(),
 }
 
@@ -60,7 +60,7 @@ impl MethodRequest {
 
     /////// 0L /////////
     pub fn get_miner_state(address: AccountAddress) -> Self {
-        Self::GetMinerStateView((address,))
+        Self::GetTowerView((address,))
     }
 
     /////// 0L /////////
@@ -144,7 +144,7 @@ impl MethodRequest {
             MethodRequest::GetTransactionsWithProofs(_, _, _) => Method::GetTransactionsWithProofs,
             MethodRequest::GetEventsWithProofs(_, _, _) => Method::GetEventsWithProofs,
             /////// 0L /////////
-            MethodRequest::GetMinerStateView(_) => Method::GetMinerStateView,
+            MethodRequest::GetTowerView(_) => Method::GetTowerView,
             MethodRequest::GetOracleUpgradeStateView() => Method::GetOracleUpgradeStateView,
         }
     }

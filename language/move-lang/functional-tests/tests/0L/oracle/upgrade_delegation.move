@@ -9,20 +9,20 @@
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::NodeWeight;
     fun main(sender: signer) {
-        MinerState::test_helper_set_weight_vm(&sender, @{{alice}}, 10);
+        Tower::test_helper_set_weight_vm(&sender, @{{alice}}, 10);
         assert(NodeWeight::proof_of_weight(@{{alice}}) == 10, 7357300101011088);
-        MinerState::test_helper_set_weight_vm(&sender, @{{bob}}, 10);
+        Tower::test_helper_set_weight_vm(&sender, @{{bob}}, 10);
         assert(NodeWeight::proof_of_weight(@{{bob}}) == 10, 7357300101011088);
-        MinerState::test_helper_set_weight_vm(&sender, @{{charlie}}, 10);
+        Tower::test_helper_set_weight_vm(&sender, @{{charlie}}, 10);
         assert(NodeWeight::proof_of_weight(@{{charlie}}) == 10, 7357300101011088);
-        MinerState::test_helper_set_weight_vm(&sender, @{{jim}}, 31);
+        Tower::test_helper_set_weight_vm(&sender, @{{jim}}, 31);
         assert(NodeWeight::proof_of_weight(@{{jim}}) == 31, 7357300101011088);
-        MinerState::test_helper_set_weight_vm(&sender, @{{lucy}}, 31);
+        Tower::test_helper_set_weight_vm(&sender, @{{lucy}}, 31);
         assert(NodeWeight::proof_of_weight(@{{lucy}}) == 31, 7357300101011088);
-        MinerState::test_helper_set_weight_vm(&sender, @{{thomas}}, 31);
+        Tower::test_helper_set_weight_vm(&sender, @{{thomas}}, 31);
         assert(NodeWeight::proof_of_weight(@{{thomas}}) == 31, 7357300101011088);
     }
 }

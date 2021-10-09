@@ -83,7 +83,7 @@ pub enum Method {
     GetTransactionsWithProofs,
     GetEventsWithProofs,
 
-    GetMinerStateView,         /////// 0L /////////
+    GetTowerView,         /////// 0L /////////
     GetOracleUpgradeStateView, /////// 0L /////////
 }
 

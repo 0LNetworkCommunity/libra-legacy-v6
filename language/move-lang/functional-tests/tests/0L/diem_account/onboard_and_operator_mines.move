@@ -8,7 +8,7 @@
 script {
 use 0x1::VDF;
 use 0x1::TestFixtures;
-use 0x1::MinerState;
+use 0x1::Tower;
 use 0x1::DiemAccount;
 
 // Test Prefix: 1301
@@ -21,7 +21,7 @@ fun main(alice_sig: signer) {
   assert(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 401);
   
   let epochs_since_creation = 10;
-  MinerState::test_helper_set_rate_limit(&alice_sig, epochs_since_creation);
+  Tower::test_helper_set_rate_limit(&alice_sig, epochs_since_creation);
 
   DiemAccount::create_validator_account_with_proof(
       &alice_sig,
@@ -42,7 +42,7 @@ fun main(alice_sig: signer) {
 //! new-transaction
 //! sender: diemroot
 script {
-use 0x1::MinerState;
+use 0x1::Tower;
 use 0x1::TestFixtures;
 
 // SIMULATES A MINER ONBOARDING PROOF (block_0.json)
@@ -50,19 +50,19 @@ fun main(_: signer) {
   let eve = @0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
   let oper = @0xfa72817f1b5aab94658238ddcdc08010;
 
-    let proof = MinerState::create_proof_blob(
+    let proof = Tower::create_proof_blob(
       TestFixtures::eve_1_easy_chal(),
       100, // difficulty
       TestFixtures::eve_1_easy_sol(),
     );
-    MinerState::test_helper_operator_submits(
+    Tower::test_helper_operator_submits(
       oper,
       eve,
       proof
     );
 
-    // // check for initialized MinerState
-    let verified_tower_height_after = MinerState::test_helper_get_height(eve);
+    // // check for initialized Tower
+    let verified_tower_height_after = Tower::test_helper_get_height(eve);
 
     assert(verified_tower_height_after > 0, 10008001);
 

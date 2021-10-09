@@ -10,7 +10,7 @@ address 0x1 {
   module ValidatorUniverse {
     use 0x1::CoreAddresses;
     use 0x1::Errors;
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::Signer;
     use 0x1::Testnet;
     use 0x1::Vector;
@@ -45,10 +45,10 @@ address 0x1 {
       let addr = Signer::address_of(sender);
       
       // Miner can only add self to set if the mining is above a threshold.
-      if (MinerState::is_onboarding(addr)) {
+      if (Tower::is_onboarding(addr)) {
         add(sender);
       } else {      
-        assert(MinerState::node_above_thresh(addr), 220102014010);
+        assert(Tower::node_above_thresh(addr), 220102014010);
         add(sender);
       }
     }
@@ -112,7 +112,7 @@ address 0x1 {
       // only a validator can un-jail themselves.
       let validator = Signer::address_of(sender);
       // check the node has been mining before unjailing.
-      assert(MinerState::node_above_thresh(validator), 220102014010);
+      assert(Tower::node_above_thresh(validator), 220102014010);
       unjail(sender);
     }
 

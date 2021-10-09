@@ -7,13 +7,13 @@
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::Globals;
     use 0x1::TestFixtures;
 
     fun main(sender: signer) {
         // add one proof and init the state.
-        MinerState::test_helper_init_miner(
+        Tower::test_helper_init_miner(
             &sender,
             Globals::get_difficulty(),
             TestFixtures::alice_0_easy_chal(),
@@ -25,13 +25,13 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::Globals;
     use 0x1::TestFixtures;
 
     fun main(sender: signer) {
         // add one proof and init the state.
-        MinerState::test_helper_init_miner(
+        Tower::test_helper_init_miner(
             &sender,
             Globals::get_difficulty(),
             TestFixtures::alice_0_easy_chal(),
@@ -45,10 +45,10 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
 
     fun main(vm: signer) {
-      MinerState::epoch_reset(&vm);
+      Tower::epoch_reset(&vm);
     }
 }
 
@@ -64,7 +64,7 @@ script {
 //! sender: alice
 script {
     use 0x1::DiemSystem;
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
@@ -74,14 +74,14 @@ script {
         // assert(DiemSystem::validator_set_size() == 5, 7357300101011000);
         assert(DiemSystem::is_validator(@{{alice}}) == true, 735701);
 
-        assert(MinerState::get_count_in_epoch(@{{alice}}) == 1, 735702);
+        assert(Tower::get_count_in_epoch(@{{alice}}) == 1, 735702);
         assert(DiemAccount::balance<GAS>(@{{alice}}) == 1000000, 735703);
         assert(NodeWeight::proof_of_weight(@{{alice}}) == 0, 735704);
 
         // Alice continues to mine after genesis.
         // This test is adapted from chained_from_genesis.move
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::get_count_in_epoch(@{{alice}}) == 5, 735705);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::get_count_in_epoch(@{{alice}}) == 5, 735705);
 
     }
 }
@@ -116,7 +116,7 @@ script {
 //! sender: bob
 script {
     use 0x1::DiemSystem;
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::Debug::print;
 
     fun main(sender: signer) {
@@ -124,14 +124,14 @@ script {
         assert(DiemSystem::is_validator(@{{alice}}), 735706);
         assert(!DiemSystem::is_validator(@{{bob}}), 735707);
         
-        print(&MinerState::get_count_in_epoch(@{{bob}}));
+        print(&Tower::get_count_in_epoch(@{{bob}}));
 
         // bring bob to 10 proofs. (Note: alice has one proof as a fullnode from genesis, so it will total 11 fullnode proofs.);
-        MinerState::test_helper_mock_mining(&sender, 10);
+        Tower::test_helper_mock_mining(&sender, 10);
 
-        // assert(MinerState::get_count_in_epoch(@{{bob}}) == 1, 7357300101041000);
-        print(&MinerState::get_count_in_epoch(@{{bob}}));
-        print(&MinerState::get_fullnode_proofs());
+        // assert(Tower::get_count_in_epoch(@{{bob}}) == 1, 7357300101041000);
+        print(&Tower::get_count_in_epoch(@{{bob}}));
+        print(&Tower::get_fullnode_proofs());
     }
 }
 // check: EXECUTED
@@ -139,12 +139,12 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
 
     fun main(sender: signer) {
 
         // bring bob to 10 proofs. (Note: alice has one proof as a fullnode from genesis, so it will total 11 fullnode proofs.);
-        MinerState::test_helper_mock_mining(&sender, 10);
+        Tower::test_helper_mock_mining(&sender, 10);
     }
 }
 // check: EXECUTED

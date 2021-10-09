@@ -27,12 +27,12 @@ pub fn commit_proof_tx(
     };
 
     let script = if is_operator {
-        transaction_builder::encode_minerstate_commit_by_operator_script_function(
+        transaction_builder::encode_Tower_commit_by_operator_script_function(
             tx_params.owner_address.clone(), preimage, proof
         )
     } else {
         // if owner sending with mnemonic
-        transaction_builder::encode_minerstate_commit_script_function(preimage, proof)
+        transaction_builder::encode_Tower_commit_script_function(preimage, proof)
     };
 
     let signed_tx = sign_tx(script, tx_params, sequence_number, chain_id)?;

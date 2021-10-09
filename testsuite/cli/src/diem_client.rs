@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::{/*bail,*/ ensure, Error, Result};
-use diem_client::{BlockingClient, Response, WaitForTransactionError, views, views::{MinerStateResourceView, OracleUpgradeStateView, TransactionView}};
+use diem_client::{BlockingClient, Response, WaitForTransactionError, views, views::{TowerResourceView, OracleUpgradeStateView, TransactionView}};
 use diem_logger::prelude::info;
 use diem_types::{
     account_address::AccountAddress,
@@ -77,7 +77,7 @@ impl DiemClient {
     pub fn get_miner_state(
         &self,
         account: &AccountAddress,
-    ) -> Result<Option<MinerStateResourceView>> {
+    ) -> Result<Option<TowerResourceView>> {
         self.client
             .get_miner_state(*account)
             .map_err(Into::into)

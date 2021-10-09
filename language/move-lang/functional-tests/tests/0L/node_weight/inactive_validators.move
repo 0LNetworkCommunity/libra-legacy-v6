@@ -11,14 +11,14 @@
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
 
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::get_count_in_epoch(@{{alice}}) == 5, 7357300101011000);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::get_count_in_epoch(@{{alice}}) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -29,7 +29,7 @@ script {
     use 0x1::Vector;
     use 0x1::NodeWeight;
     use 0x1::ValidatorUniverse;
-    use 0x1::MinerState;
+    use 0x1::Tower;
 
     fun main(vm: signer) {
         let vm = &vm;
@@ -43,7 +43,7 @@ script {
         let len = Vector::length<address>(&vec);
         assert(len == 5, 7357140102011000);
 
-        MinerState::reconfig(vm, &vec);
+        Tower::reconfig(vm, &vec);
 
         // This is the base case: check case of the validator set limit being 
         // less than universe size.

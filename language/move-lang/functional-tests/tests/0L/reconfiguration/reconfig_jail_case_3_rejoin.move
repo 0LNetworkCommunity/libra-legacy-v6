@@ -46,15 +46,15 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
         AutoPay2::enable_autopay(&sender);
 
         // Miner is the only one that can update her mining stats. Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::get_count_in_epoch(@{{alice}}) == 5, 7357180101011000);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::get_count_in_epoch(@{{alice}}) == 5, 7357180101011000);
     }
 }
 //check: EXECUTED
@@ -62,15 +62,15 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
         AutoPay2::enable_autopay(&sender);
 
         // Miner is the only one that can update their mining stats. Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(&sender) == 5, 7357300101011000);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::test_helper_get_count(&sender) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -78,15 +78,15 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
         AutoPay2::enable_autopay(&sender);
 
         // Miner is the only one that can update their mining stats. Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(&sender) == 5, 7357300101011000);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::test_helper_get_count(&sender) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -94,15 +94,15 @@ script {
 //! new-transaction
 //! sender: dave
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
         AutoPay2::enable_autopay(&sender);
 
         // Miner is the only one that can update their mining stats. Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(&sender) == 5, 7357300101011000);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::test_helper_get_count(&sender) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -110,15 +110,15 @@ script {
 //! new-transaction
 //! sender: eve
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
         AutoPay2::enable_autopay(&sender);
 
         // Miner is the only one that can update her mining stats. Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::get_count_in_epoch(@{{eve}}) == 5, 7357180102011000);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::get_count_in_epoch(@{{eve}}) == 5, 7357180102011000);
     }
 }
 //check: EXECUTED
@@ -126,15 +126,15 @@ script {
 //! new-transaction
 //! sender: frank
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
         AutoPay2::enable_autopay(&sender);
 
         // Miner is the only one that can update her mining stats. Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(&sender) == 5, 7357180102011000);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::test_helper_get_count(&sender) == 5, 7357180102011000);
     }
 }
 //check: EXECUTED
@@ -142,7 +142,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    // use 0x1::MinerState;
+    // use 0x1::Tower;
     use 0x1::Stats;
     use 0x1::Vector;
     // use 0x1::Reconfigure;
@@ -150,7 +150,7 @@ script {
 
     fun main(vm: signer) {
         // todo: change name to Mock epochs
-        // MinerState::test_helper_set_epochs(&sender, 5);
+        // Tower::test_helper_set_epochs(&sender, 5);
         let voters = Vector::singleton<address>(@{{alice}});
         Vector::push_back<address>(&mut voters, @{{bob}});
         Vector::push_back<address>(&mut voters, @{{carol}});
@@ -236,15 +236,15 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
         AutoPay2::enable_autopay(&sender);
 
         // Miner is the only one that can update her mining stats. Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(&sender) == 5, 7357008008013);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::test_helper_get_count(&sender) == 5, 7357008008013);
     }
 }
 //check: EXECUTED
@@ -252,15 +252,15 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
         AutoPay2::enable_autopay(&sender);
 
         // Miner is the only one that can update their mining stats. Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(&sender) == 5, 7357008008014);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::test_helper_get_count(&sender) == 5, 7357008008014);
     }
 }
 //check: EXECUTED
@@ -268,15 +268,15 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
         AutoPay2::enable_autopay(&sender);
 
         // Miner is the only one that can update their mining stats. Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(&sender) == 5, 7357008008015);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::test_helper_get_count(&sender) == 5, 7357008008015);
     }
 }
 //check: EXECUTED
@@ -284,15 +284,15 @@ script {
 //! new-transaction
 //! sender: dave
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
         AutoPay2::enable_autopay(&sender);
 
         // Miner is the only one that can update their mining stats. Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(&sender) == 5, 7357008008016);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::test_helper_get_count(&sender) == 5, 7357008008016);
     }
 }
 //check: EXECUTED
@@ -300,15 +300,15 @@ script {
 //! new-transaction
 //! sender: eve
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
         AutoPay2::enable_autopay(&sender);
 
         // Miner is the only one that can update her mining stats. Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(&sender) == 5, 7357008008017);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::test_helper_get_count(&sender) == 5, 7357008008017);
     }
 }
 //check: EXECUTED
@@ -316,15 +316,15 @@ script {
 //! new-transaction
 //! sender: frank
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
         AutoPay2::enable_autopay(&sender);
 
         // Miner is the only one that can update her mining stats. Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(&sender) == 5, 7357008008018);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::test_helper_get_count(&sender) == 5, 7357008008018);
     }
 }
 //check: EXECUTED
@@ -358,11 +358,11 @@ script {
 //! new-transaction
 //! sender: eve
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
 
     fun main(sender: signer) {
         // Mock some mining so Eve can send rejoin tx
-        MinerState::test_helper_mock_mining(&sender, 100);
+        Tower::test_helper_mock_mining(&sender, 100);
     }
 }
 

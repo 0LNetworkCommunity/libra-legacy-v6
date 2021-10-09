@@ -5,7 +5,7 @@
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::TestFixtures;
 
     // SIMULATES A MINER ONBOARDING PROOF (block_0.json)
@@ -14,17 +14,17 @@ script {
         let height_after = 0;
 
         // return solution
-        MinerState::test_helper_init_miner(
+        Tower::test_helper_init_miner(
             &sender,
             difficulty,
             TestFixtures::alice_0_easy_chal(),
             TestFixtures::alice_0_easy_sol()
         );
         //above test function was updated to set height to 1 for oracle E2E test, need to reset to 0 here. 
-        MinerState::test_helper_set_weight(&sender, 0);
+        Tower::test_helper_set_weight(&sender, 0);
 
-        // check for initialized MinerState
-        let verified_tower_height_after = MinerState::test_helper_get_height(@{{alice}});
+        // check for initialized Tower
+        let verified_tower_height_after = Tower::test_helper_get_height(@{{alice}});
 
         assert(verified_tower_height_after == height_after, 10008001);
     }
@@ -34,7 +34,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::MinerState;
+    use 0x1::Tower;
 
     // Simulating the VM calling epoch boundary update_metrics.
     fun main(sender: signer) {
@@ -48,19 +48,19 @@ script {
         // epochs_validating_and_mining: u64,
         // contiguous_epochs_validating_and_mining: u64,
 
-        assert(MinerState::test_helper_get_height(@{{alice}}) == 0, 10009001);
-        assert(MinerState::get_miner_latest_epoch(sender, @{{alice}}) == 1, 10009002);
-        assert(MinerState::get_count_in_epoch(@{{alice}}) == 1, 10009003);
-        assert(MinerState::get_epochs_mining(@{{alice}}) == 0, 10009004);
-        assert(MinerState::test_helper_get_contiguous_vm(sender, @{{alice}}) == 0, 10009005);
+        assert(Tower::test_helper_get_height(@{{alice}}) == 0, 10009001);
+        assert(Tower::get_miner_latest_epoch(sender, @{{alice}}) == 1, 10009002);
+        assert(Tower::get_count_in_epoch(@{{alice}}) == 1, 10009003);
+        assert(Tower::get_epochs_mining(@{{alice}}) == 0, 10009004);
+        assert(Tower::test_helper_get_contiguous_vm(sender, @{{alice}}) == 0, 10009005);
         
-        MinerState::test_helper_mock_reconfig(sender, @{{alice}});
+        Tower::test_helper_mock_reconfig(sender, @{{alice}});
 
-        assert(MinerState::test_helper_get_height(@{{alice}}) == 0, 10009006);
-        assert(MinerState::get_miner_latest_epoch(sender, @{{alice}}) == 1, 10009007);
-        assert(MinerState::get_count_in_epoch(@{{alice}}) == 0, 10009008);
-        assert(MinerState::get_epochs_mining(@{{alice}}) == 0, 10009009);
-        assert(MinerState::test_helper_get_contiguous_vm(sender, @{{alice}}) == 0, 10009010);
+        assert(Tower::test_helper_get_height(@{{alice}}) == 0, 10009006);
+        assert(Tower::get_miner_latest_epoch(sender, @{{alice}}) == 1, 10009007);
+        assert(Tower::get_count_in_epoch(@{{alice}}) == 0, 10009008);
+        assert(Tower::get_epochs_mining(@{{alice}}) == 0, 10009009);
+        assert(Tower::test_helper_get_contiguous_vm(sender, @{{alice}}) == 0, 10009010);
     }
 }
 // check: EXECUTED

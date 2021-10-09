@@ -5,7 +5,7 @@ use super::Method;
 use crate::{
     views::{
         AccountStateWithProofView, AccountView, CurrencyInfoView, EventView, 
-        MetadataView, MinerStateResourceView, OracleUpgradeStateView,
+        MetadataView, TowerResourceView, OracleUpgradeStateView,
         StateProofView, TransactionView,
     },
     Error, State,
@@ -65,7 +65,7 @@ pub enum MethodResponse {
     GetEvents(Vec<EventView>),
     GetCurrencies(Vec<CurrencyInfoView>),
     GetNetworkStatus(u64),    
-    GetMinerStateView(MinerStateResourceView),         //////// 0L ////////
+    GetTowerView(TowerResourceView),         //////// 0L ////////
     GetOracleUpgradeStateView(OracleUpgradeStateView), //////// 0L ////////
 
     GetStateProof(StateProofView),
@@ -95,8 +95,8 @@ impl MethodResponse {
                 MethodResponse::GetNetworkStatus(serde_json::from_value(json)?)
             }
             //////// 0L ////////
-            Method::GetMinerStateView => {
-                MethodResponse::GetMinerStateView(serde_json::from_value(json)?)
+            Method::GetTowerView => {
+                MethodResponse::GetTowerView(serde_json::from_value(json)?)
             }
             Method::GetOracleUpgradeStateView => {
                 MethodResponse::GetOracleUpgradeStateView(serde_json::from_value(json)?)
@@ -129,7 +129,7 @@ impl MethodResponse {
             MethodResponse::GetCurrencies(_) => Method::GetCurrencies,
             MethodResponse::GetNetworkStatus(_) => Method::GetNetworkStatus,  
             /////// 0L /////////          
-            MethodResponse::GetMinerStateView(_) => Method::GetMinerStateView,
+            MethodResponse::GetTowerView(_) => Method::GetTowerView,
             MethodResponse::GetOracleUpgradeStateView(_) => Method::GetOracleUpgradeStateView,
             //////// 0L end ////////
             MethodResponse::GetStateProof(_) => Method::GetStateProof,

@@ -22,7 +22,7 @@ address 0x1 {
     use 0x1::DiemTimestamp;
     use 0x1::TransactionFee;
     use 0x1::ValidatorConfig;
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::FixedPoint32;
 
     use 0x1::Debug::print;
@@ -230,7 +230,7 @@ address 0x1 {
         // get operator for validator
         let oper_addr = ValidatorConfig::get_operator(miner_addr);
         // count OWNER's proofs submitted
-        let proofs_in_epoch = MinerState::get_count_in_epoch(miner_addr);
+        let proofs_in_epoch = Tower::get_count_in_epoch(miner_addr);
 
         let cost = 0;
         // find cost from baseline

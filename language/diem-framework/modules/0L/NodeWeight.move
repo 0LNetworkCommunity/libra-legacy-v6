@@ -12,7 +12,7 @@ address 0x1 {
   module NodeWeight {
     use 0x1::CoreAddresses;
     use 0x1::Errors;
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::Signer;
     use 0x1::ValidatorUniverse;
     use 0x1::Vector;
@@ -20,7 +20,7 @@ address 0x1 {
     public fun proof_of_weight (node_addr: address): u64 {
       // Calculate the weight/voting power for the next round.
       // TODO: This assumes that validator passed the validation threshold this epoch, perhaps double check here.
-      MinerState::get_epochs_mining(node_addr)
+      Tower::get_epochs_mining(node_addr)
     }
 
     // Recommend a new validator set. This uses a Proof of Weight calculation in

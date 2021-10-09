@@ -13,7 +13,7 @@ module Reconfigure { // TODO: Rename to Boundary
     use 0x1::Subsidy;
     use 0x1::NodeWeight;
     use 0x1::DiemSystem;
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::Globals;
     use 0x1::Vector;
     use 0x1::Stats;
@@ -72,7 +72,7 @@ module Reconfigure { // TODO: Rename to Boundary
         // Note: need to check, there may be new validators which have not mined yet.
 
         print(&1800200);
-        let miners = MinerState::get_miner_list();
+        let miners = Tower::get_miner_list();
         print(&1800201);
         // fullnode subsidy is a fraction of the total subsidy available to validators.
         let proof_price = FullnodeSubsidy::get_proof_price(nominal_subsidy_per_node);
@@ -91,8 +91,8 @@ module Reconfigure { // TODO: Rename to Boundary
             
             // TODO: this call is repeated in propose_new_set. 
             // Not sure if the performance hit at epoch boundary is worth the refactor. 
-            if (MinerState::node_above_thresh(addr)) {
-              let count = MinerState::get_count_in_epoch(addr);
+            if (Tower::node_above_thresh(addr)) {
+              let count = Tower::get_count_in_epoch(addr);
               // print(&count);
 
               let miner_subsidy = count * proof_price;
@@ -158,7 +158,7 @@ module Reconfigure { // TODO: Rename to Boundary
             // print(&03251);
 
             let addr = *Vector::borrow(&top_accounts, i);
-            let mined_last_epoch = MinerState::node_above_thresh(addr);
+            let mined_last_epoch = Tower::node_above_thresh(addr);
             // print(&mined_last_epoch);
             // TODO: temporary until jail-refactor merge.
             if (
@@ -190,10 +190,10 @@ module Reconfigure { // TODO: Rename to Boundary
         // Reset Stats
         Stats::reconfig(vm, &proposed_set);
 
-        // Migrate MinerState list from elegible: in case there is no minerlist 
+        // Migrate Tower list from elegible: in case there is no minerlist 
         // struct, use eligible for migrate_eligible_validators
         let eligible = ValidatorUniverse::get_eligible_validators(vm);
-        MinerState::reconfig(vm, &eligible);
+        Tower::reconfig(vm, &eligible);
 
         // Reconfigure the network
         DiemSystem::bulk_update_validators(vm, proposed_set);

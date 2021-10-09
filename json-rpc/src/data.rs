@@ -6,11 +6,11 @@ use crate::{
     views::{
         AccountStateWithProofView, AccountView, CurrencyInfoView, EventView, EventWithProofView,
         MetadataView, StateProofView, TransactionListView, TransactionView,
-        TransactionsWithProofsView, MinerStateResourceView, OracleUpgradeStateView
+        TransactionsWithProofsView, TowerResourceView, OracleUpgradeStateView
     },
 };
 use anyhow::{format_err, Result};
-// use diem_client::views::MinerStateResourceView;
+// use diem_client::views::TowerResourceView;
 use diem_crypto::HashValue;
 use diem_types::{
     account_address::AccountAddress,
@@ -302,9 +302,9 @@ pub fn get_miner_state(
     version: u64,
     account: AccountAddress,
     // ledger_info: &LedgerInfoWithSignatures,
-) -> Result<MinerStateResourceView, JsonRpcError> {
+) -> Result<TowerResourceView, JsonRpcError> {
     match get_account_state(db, account, version)? {
-        Some(s) => MinerStateResourceView::try_from(s).map_err(Into::into),
+        Some(s) => TowerResourceView::try_from(s).map_err(Into::into),
         None => Err(JsonRpcError::internal_error("No account state found".to_owned())),
     }
 

@@ -45,14 +45,14 @@ script {
 //! new-transaction
 //! sender: alice
 script {    
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::Signer;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
         AutoPay2::enable_autopay(&sender);
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -61,14 +61,14 @@ script {
 //! sender: bob
 script {
     
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::Signer;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
         AutoPay2::enable_autopay(&sender);
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -77,14 +77,14 @@ script {
 //! sender: carol
 script {
     
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::Signer;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
         AutoPay2::enable_autopay(&sender);
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -93,14 +93,14 @@ script {
 //! sender: dave
 script {
     
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::Signer;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
         AutoPay2::enable_autopay(&sender);
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -109,14 +109,14 @@ script {
 //! sender: eve
 script {
     
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::Signer;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
         AutoPay2::enable_autopay(&sender);
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -125,14 +125,14 @@ script {
 //! sender: frank
 script {
     
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::Signer;
     use 0x1::AutoPay2;
 
     fun main(sender: signer) {
         AutoPay2::enable_autopay(&sender);
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
+        Tower::test_helper_mock_mining(&sender, 5);
+        assert(Tower::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -141,7 +141,7 @@ script {
 //! sender: diemroot
 script {
     use 0x1::DiemSystem;
-    use 0x1::MinerState;
+    use 0x1::Tower;
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
     // use 0x1::FullnodeState;
@@ -155,9 +155,9 @@ script {
         // Tests on initial size of validators 
         assert(DiemSystem::validator_set_size() == 6, 7357000180101);
         assert(DiemSystem::is_validator(@{{carol}}) == true, 7357000180102);
-        assert(MinerState::test_helper_get_height(@{{carol}}) == 0, 7357000180104);
+        assert(Tower::test_helper_get_height(@{{carol}}) == 0, 7357000180104);
         assert(DiemAccount::balance<GAS>(@{{carol}}) == 949991, 7357000180106);
-        assert(MinerState::test_helper_get_height(@{{carol}}) == 0, 7357000180108);
+        assert(Tower::test_helper_get_height(@{{carol}}) == 0, 7357000180108);
     }
 }
 // check: EXECUTED

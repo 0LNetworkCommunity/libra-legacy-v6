@@ -33,7 +33,7 @@ script {
 script {
 // use 0x1::VDF;
 use 0x1::DiemAccount;
-// use 0x1::MinerState;
+// use 0x1::Tower;
 use 0x1::TestFixtures;
 // use 0x1::Vector;
 
@@ -49,7 +49,7 @@ fun main(sender: signer) {
   // assert(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 7357401001);
   
   // let epochs_since_creation = 10;
-  // MinerState::test_helper_set_rate_limit(&sender, epochs_since_creation);
+  // Tower::test_helper_set_rate_limit(&sender, epochs_since_creation);
 
   DiemAccount::create_validator_account_with_proof(
       &sender,
@@ -66,7 +66,7 @@ fun main(sender: signer) {
   );
 
   // the prospective validator is in the current miner list.
-  // assert(Vector::contains<address>(&MinerState::get_miner_list(), &eve_addr), 7357401002);
+  // assert(Vector::contains<address>(&Tower::get_miner_list(), &eve_addr), 7357401002);
 }
 }
 // check: EXECUTED

@@ -12,7 +12,7 @@ use anyhow::{bail, Error};
 use diem_types::access_path::AccessPath;
 use diem_types::account_address::AccountAddress;
 use diem_types::account_config::{BalanceResource, CurrencyInfoResource};
-use diem_types::ol_miner_state::MinerStateResource;
+use diem_types::ol_miner_state::TowerResource;
 use diem_types::transaction::{ChangeSet, Transaction, WriteSetPayload};
 use diem_types::write_set::{WriteOp, WriteSetMut};
 use move_core_types::identifier::Identifier;
@@ -117,7 +117,7 @@ pub fn migrate_account(legacy: &LegacyRecovery) -> Result<WriteSetMut, Error> {
 
     if let Some(m) = &legacy.miner_state {
         // TODO: confirm no transformation is needed since the serialization remains the same.
-        //   let new = MinerStateResource {
+        //   let new = TowerResource {
         //     previous_proof_hash: m.previous_proof_hash,
         //     verified_tower_height: m.verified_tower_height,
         //     latest_epoch_mining: m.latest_epoch_mining,
@@ -127,7 +127,7 @@ pub fn migrate_account(legacy: &LegacyRecovery) -> Result<WriteSetMut, Error> {
         //     epochs_since_last_account_creation: m.epochs_since_last_account_creation,
         // };
         write_set_mut.push((
-            AccessPath::new(account, MinerStateResource::resource_path()),
+            AccessPath::new(account, TowerResource::resource_path()),
             WriteOp::Value(bcs::to_bytes(&m).unwrap()),
         ));
     }
