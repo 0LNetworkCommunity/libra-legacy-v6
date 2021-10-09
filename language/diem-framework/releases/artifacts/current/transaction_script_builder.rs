@@ -1441,6 +1441,19 @@ pub enum ScriptCall {
 #[cfg_attr(feature = "fuzzing", derive(proptest_derive::Arbitrary))]
 #[cfg_attr(feature = "fuzzing", proptest(no_params))]
 pub enum ScriptFunctionCall {
+    TowerCommit {
+        challenge: Bytes,
+        solution: Bytes,
+    },
+
+    TowerCommitByOperator {
+        owner_address: AccountAddress,
+        challenge: Bytes,
+        solution: Bytes,
+    },
+
+    TowerHelper {},
+
     /// # Summary
     /// Adds a zero `Currency` balance to the sending `account`. This will enable `account` to
     /// send, receive, and hold `Diem::Diem<Currency>` coins. This transaction can be
@@ -2206,19 +2219,6 @@ pub enum ScriptFunctionCall {
     Join {},
 
     Leave {},
-
-    TowerCommit {
-        challenge: Bytes,
-        solution: Bytes,
-    },
-
-    TowerCommitByOperator {
-        owner_address: AccountAddress,
-        challenge: Bytes,
-        solution: Bytes,
-    },
-
-    TowerHelper {},
 
     /// A validator (Alice) can delegate the authority for the operation of an upgrade to another validator (Bob). When Oracle delegation happens, effectively the consensus voting power of Alice, is added to Bob only for the effect of calculating the preference on electing a stdlib binary. Whatever binary Bob proposes, Alice will also propose without needing to be submitting transactions.
     OlDelegateVote {
@@ -3460,6 +3460,18 @@ impl ScriptFunctionCall {
     pub fn encode(self) -> TransactionPayload {
         use ScriptFunctionCall::*;
         match self {
+            TowerCommit {
+                challenge,
+                solution,
+            } => encode_Tower_commit_script_function(challenge, solution),
+            TowerCommitByOperator {
+                owner_address,
+                challenge,
+                solution,
+            } => {
+                encode_Tower_commit_by_operator_script_function(owner_address, challenge, solution)
+            }
+            TowerHelper {} => encode_Tower_helper_script_function(),
             AddCurrencyToAccount { currency } => {
                 encode_add_currency_to_account_script_function(currency)
             }
@@ -3608,20 +3620,6 @@ impl ScriptFunctionCall {
             }
             Join {} => encode_join_script_function(),
             Leave {} => encode_leave_script_function(),
-            TowerCommit {
-                challenge,
-                solution,
-            } => encode_Tower_commit_script_function(challenge, solution),
-            TowerCommitByOperator {
-                owner_address,
-                challenge,
-                solution,
-            } => encode_Tower_commit_by_operator_script_function(
-                owner_address,
-                challenge,
-                solution,
-            ),
-            TowerHelper {} => encode_Tower_helper_script_function(),
             OlDelegateVote { dest } => encode_ol_delegate_vote_script_function(dest),
             OlEnableDelegation {} => encode_ol_enable_delegation_script_function(),
             OlOracleTx { id, data } => encode_ol_oracle_tx_script_function(id, data),
@@ -3822,6 +3820,56 @@ impl ScriptFunctionCall {
             None
         }
     }
+}
+
+pub fn encode_Tower_commit_script_function(
+    challenge: Vec<u8>,
+    solution: Vec<u8>,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("TowerScripts").to_owned(),
+        ),
+        ident_str!("Tower_commit").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&challenge).unwrap(),
+            bcs::to_bytes(&solution).unwrap(),
+        ],
+    ))
+}
+
+pub fn encode_Tower_commit_by_operator_script_function(
+    owner_address: AccountAddress,
+    challenge: Vec<u8>,
+    solution: Vec<u8>,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("TowerScripts").to_owned(),
+        ),
+        ident_str!("Tower_commit_by_operator").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&owner_address).unwrap(),
+            bcs::to_bytes(&challenge).unwrap(),
+            bcs::to_bytes(&solution).unwrap(),
+        ],
+    ))
+}
+
+pub fn encode_Tower_helper_script_function() -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("TowerScripts").to_owned(),
+        ),
+        ident_str!("Tower_helper").to_owned(),
+        vec![],
+        vec![],
+    ))
 }
 
 /// # Summary
@@ -4882,56 +4930,6 @@ pub fn encode_leave_script_function() -> TransactionPayload {
             ident_str!("ValidatorScripts").to_owned(),
         ),
         ident_str!("leave").to_owned(),
-        vec![],
-        vec![],
-    ))
-}
-
-pub fn encode_Tower_commit_script_function(
-    challenge: Vec<u8>,
-    solution: Vec<u8>,
-) -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("TowerScripts").to_owned(),
-        ),
-        ident_str!("Tower_commit").to_owned(),
-        vec![],
-        vec![
-            bcs::to_bytes(&challenge).unwrap(),
-            bcs::to_bytes(&solution).unwrap(),
-        ],
-    ))
-}
-
-pub fn encode_Tower_commit_by_operator_script_function(
-    owner_address: AccountAddress,
-    challenge: Vec<u8>,
-    solution: Vec<u8>,
-) -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("TowerScripts").to_owned(),
-        ),
-        ident_str!("Tower_commit_by_operator").to_owned(),
-        vec![],
-        vec![
-            bcs::to_bytes(&owner_address).unwrap(),
-            bcs::to_bytes(&challenge).unwrap(),
-            bcs::to_bytes(&solution).unwrap(),
-        ],
-    ))
-}
-
-pub fn encode_Tower_helper_script_function() -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("TowerScripts").to_owned(),
-        ),
-        ident_str!("Tower_helper").to_owned(),
         vec![],
         vec![],
     ))
@@ -7940,6 +7938,39 @@ pub fn encode_update_minting_ability_script(currency: TypeTag, allow_minting: bo
     )
 }
 
+fn decode_Tower_commit_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::TowerCommit {
+            challenge: bcs::from_bytes(script.args().get(0)?).ok()?,
+            solution: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_Tower_commit_by_operator_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::TowerCommitByOperator {
+            owner_address: bcs::from_bytes(script.args().get(0)?).ok()?,
+            challenge: bcs::from_bytes(script.args().get(1)?).ok()?,
+            solution: bcs::from_bytes(script.args().get(2)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_Tower_helper_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(_script) = payload {
+        Some(ScriptFunctionCall::TowerHelper {})
+    } else {
+        None
+    }
+}
+
 fn decode_add_currency_to_account_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -8247,43 +8278,6 @@ fn decode_join_script_function(payload: &TransactionPayload) -> Option<ScriptFun
 fn decode_leave_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
         Some(ScriptFunctionCall::Leave {})
-    } else {
-        None
-    }
-}
-
-fn decode_Tower_commit_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(script) = payload {
-        Some(ScriptFunctionCall::TowerCommit {
-            challenge: bcs::from_bytes(script.args().get(0)?).ok()?,
-            solution: bcs::from_bytes(script.args().get(1)?).ok()?,
-        })
-    } else {
-        None
-    }
-}
-
-fn decode_Tower_commit_by_operator_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(script) = payload {
-        Some(ScriptFunctionCall::TowerCommitByOperator {
-            owner_address: bcs::from_bytes(script.args().get(0)?).ok()?,
-            challenge: bcs::from_bytes(script.args().get(1)?).ok()?,
-            solution: bcs::from_bytes(script.args().get(2)?).ok()?,
-        })
-    } else {
-        None
-    }
-}
-
-fn decode_Tower_helper_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::TowerHelper {})
     } else {
         None
     }
@@ -9093,6 +9087,18 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
     once_cell::sync::Lazy::new(|| {
         let mut map: ScriptFunctionDecoderMap = std::collections::HashMap::new();
         map.insert(
+            "TowerScriptsTower_commit".to_string(),
+            Box::new(decode_Tower_commit_script_function),
+        );
+        map.insert(
+            "TowerScriptsTower_commit_by_operator".to_string(),
+            Box::new(decode_Tower_commit_by_operator_script_function),
+        );
+        map.insert(
+            "TowerScriptsTower_helper".to_string(),
+            Box::new(decode_Tower_helper_script_function),
+        );
+        map.insert(
             "AccountAdministrationScriptsadd_currency_to_account".to_string(),
             Box::new(decode_add_currency_to_account_script_function),
         );
@@ -9187,18 +9193,6 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "ValidatorScriptsleave".to_string(),
             Box::new(decode_leave_script_function),
-        );
-        map.insert(
-            "TowerScriptsTower_commit".to_string(),
-            Box::new(decode_Tower_commit_script_function),
-        );
-        map.insert(
-            "TowerScriptsTower_commit_by_operator".to_string(),
-            Box::new(decode_Tower_commit_by_operator_script_function),
-        );
-        map.insert(
-            "TowerScriptsTower_helper".to_string(),
-            Box::new(decode_Tower_helper_script_function),
         );
         map.insert(
             "OracleScriptsol_delegate_vote".to_string(),
