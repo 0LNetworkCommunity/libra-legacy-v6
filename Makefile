@@ -46,7 +46,7 @@ ifndef RELEASE
 RELEASE=$(shell curl -sL https://api.github.com/repos/OLSF/libra/releases/latest | jq -r '.assets[].browser_download_url')
 endif
 
-BINS=db-backup db-backup-verify db-restore diem-node miner ol txs stdlib
+BINS=db-backup db-backup-verify db-restore diem-node tower ol txs stdlib
 
 ifndef V
 V=previous
@@ -84,10 +84,10 @@ uninstall:
 	done
 
 bins: stdlib
-# Build and install genesis tool, diem-node, and miner
+# Build and install genesis tool, diem-node, and tower
 # NOTE: stdlib is built for cli bindings
 
-	cargo build -p diem-node -p miner -p backup-cli -p ol -p txs -p onboard ${CARGO_ARGS}
+	cargo build -p diem-node -p tower -p backup-cli -p ol -p txs -p onboard ${CARGO_ARGS}
 
 stdlib:
 # cargo run ${CARGO_ARGS} -p diem-framework
@@ -98,7 +98,7 @@ stdlib:
 install: mv-bin bin-path
 	mkdir ${USER_BIN_PATH} | true
 
-	cp -f ${SOURCE}/target/release/miner ${USER_BIN_PATH}/miner
+	cp -f ${SOURCE}/target/release/tower ${USER_BIN_PATH}/tower
 	cp -f ${SOURCE}/target/release/diem-node ${USER_BIN_PATH}/diem-node
 	cp -f ${SOURCE}/target/release/db-restore ${USER_BIN_PATH}/db-restore
 	cp -f ${SOURCE}/target/release/db-backup ${USER_BIN_PATH}/db-backup
@@ -172,7 +172,7 @@ gen-make-pull:
 	--pull-request-user ${GITHUB_USER}
 
 genesis-miner:
-	cargo run -p miner -- zero
+	cargo run -p tower -- zero
 
 
 gen-onboard:
@@ -180,7 +180,7 @@ gen-onboard:
 
 ceremony: gen-fork-repo gen-onboard		
 
-# cargo run -p miner ${CARGO_ARGS} -- zero
+# cargo run -p tower ${CARGO_ARGS} -- zero
 
 register:
 # export ACC=$(shell toml get ${DATA_PATH}/0L.toml profile.account)
@@ -399,7 +399,7 @@ client: set-waypoint
 
 
 keygen:
-	cd ${DATA_PATH} && miner keygen
+	cd ${DATA_PATH} && onboard keygen
 
 # miner-genesis:
 # 	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner genesis
@@ -498,7 +498,7 @@ sw-init:
 	cd ${SOURCE} && cargo r ${CARGO_ARGS} -p ol -- --swarm-path ${DATA_PATH}/swarm_temp/ --swarm-persona alice init --source-path ~/libra
 
 sw-miner:
-		cd ${SOURCE} && cargo r -p miner -- --swarm-path ${DATA_PATH}/swarm_temp --swarm-persona alice start
+		cd ${SOURCE} && cargo r -p tower -- --swarm-path ${DATA_PATH}/swarm_temp --swarm-persona alice start
 
 sw-query:
 		cd ${SOURCE} && cargo r -p ol -- --swarm-path ${DATA_PATH}/swarm_temp --swarm-persona alice query --txs
