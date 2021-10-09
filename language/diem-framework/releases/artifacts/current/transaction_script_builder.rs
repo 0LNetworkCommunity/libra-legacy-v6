@@ -4894,7 +4894,7 @@ pub fn encode_minerstate_commit_script_function(
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
             AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("MinerStateScripts").to_owned(),
+            ident_str!("TowerStateScripts").to_owned(),
         ),
         ident_str!("minerstate_commit").to_owned(),
         vec![],
@@ -4913,7 +4913,7 @@ pub fn encode_minerstate_commit_by_operator_script_function(
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
             AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("MinerStateScripts").to_owned(),
+            ident_str!("TowerStateScripts").to_owned(),
         ),
         ident_str!("minerstate_commit_by_operator").to_owned(),
         vec![],
@@ -4929,7 +4929,7 @@ pub fn encode_minerstate_helper_script_function() -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
             AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("MinerStateScripts").to_owned(),
+            ident_str!("TowerStateScripts").to_owned(),
         ),
         ident_str!("minerstate_helper").to_owned(),
         vec![],
@@ -9189,15 +9189,15 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_leave_script_function),
         );
         map.insert(
-            "MinerStateScriptsminerstate_commit".to_string(),
+            "TowerStateScriptsminerstate_commit".to_string(),
             Box::new(decode_minerstate_commit_script_function),
         );
         map.insert(
-            "MinerStateScriptsminerstate_commit_by_operator".to_string(),
+            "TowerStateScriptsminerstate_commit_by_operator".to_string(),
             Box::new(decode_minerstate_commit_by_operator_script_function),
         );
         map.insert(
-            "MinerStateScriptsminerstate_helper".to_string(),
+            "TowerStateScriptsminerstate_helper".to_string(),
             Box::new(decode_minerstate_helper_script_function),
         );
         map.insert(
