@@ -23,7 +23,7 @@ script {
     // use 0x1::MinerState;
     use 0x1::Stats;
     use 0x1::Vector;
-    // use 0x1::Reconfigure;
+    // use 0x1::EpochBoundary;
     use 0x1::DiemSystem;
 
     fun main(vm: signer) {
@@ -83,7 +83,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    // use 0x1::Reconfigure;
+    // use 0x1::EpochBoundary;
     use 0x1::Vector;
     use 0x1::Stats;
     

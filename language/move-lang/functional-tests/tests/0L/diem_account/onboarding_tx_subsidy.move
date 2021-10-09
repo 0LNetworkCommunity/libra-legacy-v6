@@ -89,7 +89,7 @@ use 0x1::Roles;
 script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
-  use 0x1::Reconfigure;
+  use 0x1::EpochBoundary;
   use 0x1::MinerState;
   use 0x1::Testnet;
   use 0x1::Debug::print;
@@ -103,7 +103,7 @@ script {
       let old_account_bal = DiemAccount::balance<GAS>(eve);
       let old_account_bal_oper = DiemAccount::balance<GAS>(@0xfa72817f1b5aab94658238ddcdc08010);
 
-      Reconfigure::reconfigure(&vm, 100);
+      EpochBoundary::reconfigure(&vm, 100);
       let new_account_bal = DiemAccount::balance<GAS>(eve);
 
       assert(old_account_bal == 1000000, 7357001);

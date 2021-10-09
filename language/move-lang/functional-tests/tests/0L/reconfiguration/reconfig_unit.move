@@ -8,7 +8,7 @@
 script {
     use 0x1::Stats;
     use 0x1::Vector;
-    use 0x1::Reconfigure;
+    use 0x1::EpochBoundary;
 
     fun main(vm: signer){
       let vm = &vm;
@@ -38,7 +38,7 @@ script {
       Vector::push_back<address>(&mut set, @{{bob}});
 
 
-      Reconfigure::reconfigure(vm, 15); // reconfigure at height 15
+      EpochBoundary::reconfigure(vm, 15); // reconfigure at height 15
 
       assert(Stats::node_current_props(vm, @{{alice}}) == 0, 7357008014009);
       assert(Stats::node_current_props(vm, @{{bob}}) == 0, 7357008014010);

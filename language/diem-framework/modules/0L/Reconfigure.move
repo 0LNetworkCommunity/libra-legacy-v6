@@ -8,7 +8,7 @@
 
 
 address 0x1 {
-module Reconfigure { // TODO: Rename to Boundary
+module EpochBoundary { // TODO: Rename to Boundary
     use 0x1::CoreAddresses;
     use 0x1::Subsidy;
     use 0x1::NodeWeight;
