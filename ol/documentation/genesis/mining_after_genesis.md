@@ -4,7 +4,7 @@
 2. build binaries
 ```
 cd libra/
-make bins
+make bins install
 ```
 3. start tower app
 NOTE: `miner` binary has been renamed `tower`
