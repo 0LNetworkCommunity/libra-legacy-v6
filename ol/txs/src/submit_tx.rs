@@ -429,11 +429,11 @@ pub fn wait_for_tx(
         signer_address, sequence_number
     );
 
-    const MAX_ITERATIONS: u8 = 60;
+    const MAX_ITERATIONS: u8 = 120;
 
     let mut iter = 0;    
     loop {
-        thread::sleep(time::Duration::from_millis(1_000));
+        thread::sleep(time::Duration::from_millis(3_000));
         // prevent all the logging the client does while
         // it loops through the query.
         stdout().flush().unwrap();
