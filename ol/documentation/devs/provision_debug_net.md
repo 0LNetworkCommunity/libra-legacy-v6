@@ -46,21 +46,21 @@ For the debug-net simulation, the github token (when saved to `github_token.txt`
 # Generate Keys
 (For Testing: skip this step, this file block_0.json will be set later)
 
-The 0L miner creates your initial keys, and produces a first proof of your vdf tower. You need both the proof output (block_0.json) and the mnemonic to be able to participate in genesis.
+The 0L tower creates your initial keys, and produces a first proof of your vdf tower. You need both the proof output (block_0.json) and the mnemonic to be able to participate in genesis.
 
 4. Create keys with `make keygen`. A mnemonic will be printed on the screen.
 
 DO NOT SAVE THE MNEMONIC TO A FILE. Write it down. Use a password manager. This will be the last time you will see the mnemonic. 
 
-The 0L auth key (public key) and account will be printed as well. The auth_key will be included in your miner.toml config file.
+The 0L auth key (public key) and account will be printed as well. The auth_key will be included in your key_store.json config file.
 
 If you type the mnemonic in the shell for any reason, clear your shell history thoroughly. (See commands in `make wipe`)
 
-# Mine first proof
+# Create first delay tower proof
 
-5. The first proof can be created with `make miner`. It will subsequently ask you for your mnemonic (from previous step).
+5. The first proof can be created with `make tower`. It will subsequently ask you for your mnemonic (from previous step).
 
-Check the data in `../miner/miner.toml`. This includes a `statement` field which is an optional and free statement, anyone can add to their genesis proof. This will be included in the VDF preimage, which will be submitted to genesis block. It is hex-encoded but not encrypted and readable for all eternity.
+Check the data in `../.OL/OL.toml`. This includes a `statement` field which is an optional and free statement, anyone can add to their genesis proof. This will be included in the VDF preimage, which will be submitted to genesis block. It is hex-encoded but not encrypted and readable for all eternity.
 
 This is the proof-of-work which is submitted for inclusion in genesis. 
 

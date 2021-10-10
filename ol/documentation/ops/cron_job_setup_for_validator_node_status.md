@@ -29,7 +29,7 @@ In case you would like to send email to gmail. Instructions here:https://askubun
 
 ## Tmux sessions for nodes
 
-Setup Tmux session for all the commands ex: running miner, tailing logs and viewing explorer. 
+Setup Tmux session for all the commands ex: running tower, tailing logs and viewing explorer. 
 
 Tmux should be installed in your linux machine already. 
 
@@ -43,9 +43,9 @@ Create a script file lets say ``status.sh``:
 ``` 
  #!/bin/bash
  tmux capture-pane -J -p -t 0 > node.txt
- tmux capture-pane -J -p -t 1 > miner.txt
+ tmux capture-pane -J -p -t 1 > tower.txt
  tmux capture-pane -J -p -t 2 > explorer.txt
- echo "Status today" | mail -s "Node Status" mail@utoronto.ca -A ~/node.txt -A ~/miner.txt -A ~/explorer.txt
+ echo "Status today" | mail -s "Node Status" mail@utoronto.ca -A ~/node.txt -A ~/tower.txt -A ~/explorer.txt
 ```
 
 Save and exit.
