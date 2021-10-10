@@ -119,17 +119,17 @@ After EVERY validator has registered, each validator can build genesis locally.
 - for testing run with `make genesis ENV=test TEST=y`, etc.
 
 11. Start the network with `make start`.
-- After you confirm the network starts. Stop libra-node (ctrl+c), and proceed to start a daemon, to keep the libra-node running and restarting in background.
+- After you confirm the network starts. Stop diem-node (ctrl+c), and proceed to start a daemon, to keep the diem-node running and restarting in background.
 
 (For testing: do this on each machine for each persona).
 
-# Make libra-node run in background
+# Make diem-node run in background
 
 12. Install and start the systemd daemon configs with `make daemon`.
 - NOTE: These instructions are for systemd targeted at debian/ubuntu.
 
 
-This will pause for a couple of seconds and then show the status of daemon, and then tail the logs of libra-node.
+This will pause for a couple of seconds and then show the status of daemon, and then tail the logs of diem-node.
 You can exit the logs with `ctrl+c`, it will not affect the running node.
 
 
