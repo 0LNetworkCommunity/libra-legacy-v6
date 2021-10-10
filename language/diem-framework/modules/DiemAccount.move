@@ -1453,29 +1453,6 @@ print(&511);
         metadata: vector<u8>,
         metadata_signature: vector<u8>
     ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWallet {
-        //////// 0L //////// Transfers disabled by default
-        //////// 0L //////// Transfers of 10 GAS 
-        //////// 0L //////// enabled when validator count is 100. 
-        // print(&0100);
-        // if (DiemConfig::check_transfer_enabled()) {
-        //     // Ensure that this withdrawal is compliant with the account limits on
-        //     // this account.
-        //     assert(
-        //         AccountLimits::update_withdrawal_limits<Token>(
-        //             amount,
-        //             {{*&cap.account_address}},
-        //             &borrow_global<AccountOperationsCapability>(
-        //                 CoreAddresses::DIEM_ROOT_ADDRESS()
-        //             ).limits_cap
-        //         ),
-        //         Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
-        //     );
-        // } else {
-        //     assert(
-        //         *&cap.account_address == CoreAddresses::DIEM_ROOT_ADDRESS(),
-        //         Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
-        //     );
-        // };
         
         // check amount if it is a slow wallet
         if (is_slow(*&cap.account_address)) {
