@@ -333,7 +333,7 @@ Get the constants for the current network
       vdf_difficulty: 5000000, //10 mins on macbook pro 2.5 ghz quadcore
       epoch_mining_thres_lower: 20,
       epoch_mining_thres_upper: 500,
-      epoch_slow_wallet_unlock: 10000000,
+      epoch_slow_wallet_unlock: 1000 * coin_scale, // approx 10 years for largest accounts in genesis.
     }
   }
 }
