@@ -457,9 +457,11 @@ module DiemAccount {
     /////// 0L ////////
     // Function code: 01
     public fun create_user_account_with_proof(
+        sender: &signer,
         challenge: &vector<u8>,
         solution: &vector<u8>,
-    ):address acquires AccountOperationsCapability {        
+    ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount {
+             
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
         Roles::new_user_role_with_proof(&new_signer);
@@ -467,6 +469,7 @@ module DiemAccount {
         add_currencies_for_account<GAS>(&new_signer, false);
         make_account(new_signer, auth_key_prefix);
 
+        onboarding_gas_transfer<GAS>(sender, new_account_address);
         // Init the miner state
         // this verifies the VDF proof, which we use to rate limit account creation.
         // account will not be created if this step fails.

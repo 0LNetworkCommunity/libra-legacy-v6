@@ -7,7 +7,7 @@ script {
   use 0x1::TestFixtures;
   use 0x1::GAS::GAS;
 
-  fun main(_sender: signer) {
+  fun main(sender: signer) {
     // Scenario: Bob, an existing user, is sending a transaction for Eve, 
     // with a challenge and proof not yet submitted to the chain.
     // This proof will create a new account, with the preimage data.
@@ -15,6 +15,7 @@ script {
     let solution = TestFixtures::eve_0_easy_sol();
     
     let eve_addr = DiemAccount::create_user_account_with_proof(
+      &sender,
       &challenge,
       &solution,
     );
