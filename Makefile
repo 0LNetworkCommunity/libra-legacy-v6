@@ -538,6 +538,7 @@ fork-start:
 nuke-prod:
 	@echo WIPING DB
 	rm -rf ${DATA_PATH}/db | true
+	@echo BACKING UP KEYSTORE FILE
 	mv ${DATA_PATH}/key_store.json mv ${DATA_PATH}/key_store.json.bak | true
 
 nuke-testnet:
