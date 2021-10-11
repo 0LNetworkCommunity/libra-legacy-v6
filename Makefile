@@ -535,6 +535,11 @@ fork-start:
 	cargo run -p libra-node -- --config ~/.0L/validator.node.yaml
 
 
+nuke-prod:
+	@echo WIPING DB
+	rm -rf ${DATA_PATH}/db | true
+	mv ${DATA_PATH}/key_store.json mv ${DATA_PATH}/key_store.json.bak | true
+
 nuke-testnet:
 	@echo WIPING EVERYTHING but keeping: github_token.txt, autopay_batch.json, set_layout.toml, /blocks/block_0.json
 
