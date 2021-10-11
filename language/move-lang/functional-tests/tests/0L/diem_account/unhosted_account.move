@@ -1,4 +1,4 @@
-//! account: bob, 100000, 0
+//! account: bob, 10000000, 0
 
 //! new-transaction
 //! sender: bob
