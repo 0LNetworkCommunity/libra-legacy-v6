@@ -280,6 +280,7 @@ genesis:
 	--github-org ${REPO_ORG} \
   --layout-path ${DATA_PATH}/set_layout.toml
 
+	sha256sum ${DATA_PATH}/genesis.blob
 
 #### NODE MANAGEMENT ####
 start:
