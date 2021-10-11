@@ -13,11 +13,12 @@ module AccountScripts {
     use 0x1::ValidatorConfig;
   
     public(script) fun create_acc_user(
-        _sender: signer,
+        sender: signer,
         challenge: vector<u8>,
         solution: vector<u8>,
     ) {
         let new_account_address = DiemAccount::create_user_account_with_proof(
+            &sender,
             &challenge,
             &solution,
         );

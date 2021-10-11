@@ -16,10 +16,10 @@ address 0x1 {
 /// >TODO: determine what kind of stability guarantees we give about reasons/associated module.
 module Errors {
     /// A function to create an error from from a category and a reason.
-    fun make(_category: u8, reason: u64): u64 {
+    fun make(category: u8, reason: u64): u64 {
+        (category as u64) + (reason << 8)
         /////// 0L /////////
-        // (category as u64) + (reason << 8)
-        (reason as u64) // Changed error codes make to easily track them in 0L
+        // (reason as u64) // Changed error codes make to easily track them in 0L
     }
     spec make {
         pragma opaque = true;
