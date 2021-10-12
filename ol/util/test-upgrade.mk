@@ -59,14 +59,14 @@ get-test:
 stdlib:
 	cd ${SOURCE_PATH} && cargo run --release -p stdlib
 	cd ${SOURCE_PATH} && cargo run --release -p stdlib -- --create-upgrade-payload
-	sha256sum ${SOURCE_PATH}/language/stdlib/staged/stdlib.mv
+	sha256sum ${SOURCE_PATH}/language/diem-framework/staged/stdlib.mv
 
 init:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init
 	cp ${SWARM_TEMP}/0/0L.toml ${HOME}/.0L/0L.toml
 
 submit:
-	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-upgrade -f ${SOURCE_PATH}/language/stdlib/staged/stdlib.mv
+	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-upgrade -f ${SOURCE_PATH}/language/diem-framework/staged/stdlib.mv
 
 query:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --blockheight | grep -Eo [0-9]+ | tail -n1

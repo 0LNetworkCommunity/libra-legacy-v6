@@ -82,7 +82,7 @@ pub enum MethodRequest {
     GetEventsWithProofs(GetEventsWithProofsParams),
 
     //////// 0L ////////
-    GetMinerStateView(GetMinerStateParams),
+    GetTowerStateView(GetTowerStateParams),
     GetOracleUpgradeStateView(),
 }
 
@@ -118,8 +118,8 @@ impl MethodRequest {
             }
 
             //////// 0L ////////
-            Method::GetMinerStateView => {
-                MethodRequest::GetMinerStateView(serde_json::from_value(value)?)
+            Method::GetTowerStateView => {
+                MethodRequest::GetTowerStateView(serde_json::from_value(value)?)
             }
 
             Method::GetOracleUpgradeStateView => {
@@ -149,7 +149,7 @@ impl MethodRequest {
             MethodRequest::GetTransactionsWithProofs(_) => Method::GetTransactionsWithProofs,
             MethodRequest::GetEventsWithProofs(_) => Method::GetEventsWithProofs,
             ///////// 0L ////////
-            MethodRequest::GetMinerStateView(_) =>  Method::GetMinerStateView, 
+            MethodRequest::GetTowerStateView(_) =>  Method::GetTowerStateView, 
             MethodRequest::GetOracleUpgradeStateView() =>  Method::GetOracleUpgradeStateView,        }
     }
 }
@@ -349,7 +349,7 @@ pub struct GetEventsWithProofsParams {
 
 //////// 0L ////////
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct GetMinerStateParams {
+pub struct GetTowerStateParams {
     pub account: AccountAddress,
 }
 
@@ -364,11 +364,11 @@ mod test {
 
         // json object
         let value = serde_json::json!({"account": account});
-        serde_json::from_value::<GetMinerStateParams>(value).unwrap();
+        serde_json::from_value::<GetTowerStateParams>(value).unwrap();
 
         // json list
         let value = serde_json::json!([account]);
-        serde_json::from_value::<GetMinerStateParams>(value).unwrap();
+        serde_json::from_value::<GetTowerStateParams>(value).unwrap();
     }
 
     #[test]

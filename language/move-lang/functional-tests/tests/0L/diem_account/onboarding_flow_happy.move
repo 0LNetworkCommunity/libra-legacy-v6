@@ -5,9 +5,8 @@
 script {
 use 0x1::VDF;
 use 0x1::DiemAccount;
-use 0x1::MinerState;
+use 0x1::TowerState;
 use 0x1::TestFixtures;
-use 0x1::Signer;
 use 0x1::Vector;
 
 
@@ -21,9 +20,8 @@ fun main(sender: signer) {
   let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
   assert(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 7357401001);
   
-  let sender_addr = Signer::address_of(&sender);
   let epochs_since_creation = 10;
-  MinerState::test_helper_set_rate_limit(sender_addr, epochs_since_creation);
+  TowerState::test_helper_set_rate_limit(&sender, epochs_since_creation);
 
   DiemAccount::create_validator_account_with_proof(
       &sender,
@@ -40,7 +38,7 @@ fun main(sender: signer) {
   );
 
   // the prospective validator is in the current miner list.
-  assert(Vector::contains<address>(&MinerState::get_miner_list(), &eve_addr), 7357401002);
+  assert(Vector::contains<address>(&TowerState::get_miner_list(), &eve_addr), 7357401002);
 }
 }
 // check: EXECUTED
@@ -49,7 +47,7 @@ fun main(sender: signer) {
 //! new-transaction
 //! sender: diemroot
 script {
-use 0x1::Reconfigure;
+use 0x1::EpochBoundary;
 use 0x1::DiemAccount;
 use 0x1::GAS::GAS;
 // use 0x1::FullnodeSubsidy;
@@ -60,7 +58,7 @@ fun main(vm: signer) {
   let eve_addr = @0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
   /// set the fullnode proof price to 0, to check if onboarding subsidy is given.
   // FullnodeSubsidy::test_set_fullnode_fixtures(&vm, 0, 0, 0, 0, 0);
-  Reconfigure::reconfigure(&vm, 10); 
+  EpochBoundary::reconfigure(&vm, 10); 
     // need to remove testnet for this test, since testnet does not ratelimit 
     // account creation.
   
@@ -82,11 +80,11 @@ fun main(vm: signer) {
 //! new-transaction
 //! sender: diemroot
 script {
-use 0x1::MinerState;
+use 0x1::TowerState;
 fun main(vm: signer) {
   let eve_addr = @0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
   /// mock mining above threshold.
-  MinerState::test_helper_mock_mining_vm(&vm, eve_addr, 100);
+  TowerState::test_helper_mock_mining_vm(&vm, eve_addr, 100);
 }
 }
 
@@ -97,7 +95,7 @@ fun main(vm: signer) {
 //! new-transaction
 //! sender: diemroot
 script {
-use 0x1::MinerState;
+use 0x1::TowerState;
 use 0x1::DiemAccount;
 use 0x1::ValidatorUniverse;
 
@@ -107,7 +105,7 @@ fun main(vm: signer) {
   // let addr = Signer::address_of(validator);
   // if is above threshold continue, or raise error.
   let new_signer = DiemAccount::test_helper_create_signer(&vm, eve_addr);
-  assert(MinerState::node_above_thresh(eve_addr), 7357401007);
+  assert(TowerState::node_above_thresh(eve_addr), 7357401007);
   // if is not in universe, add back
   if (!ValidatorUniverse::is_in_universe(eve_addr)) {
       ValidatorUniverse::add_self(&new_signer);

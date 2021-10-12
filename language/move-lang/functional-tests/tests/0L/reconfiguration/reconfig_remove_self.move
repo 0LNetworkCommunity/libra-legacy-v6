@@ -20,15 +20,15 @@ stdlib_script::ValidatorScripts::leave
 //! new-transaction
 //! sender: diemroot
 script {
-    // use 0x1::MinerState;
+    // use 0x1::TowerState;
     use 0x1::Stats;
     use 0x1::Vector;
-    // use 0x1::Reconfigure;
+    // use 0x1::EpochBoundary;
     use 0x1::DiemSystem;
 
     fun main(vm: signer) {
         // todo: change name to Mock epochs
-        // MinerState::test_helper_set_epochs(&sender, 5);
+        // TowerState::test_helper_set_epochs(&sender, 5);
         let voters = Vector::singleton<address>(@{{alice}});
         Vector::push_back<address>(&mut voters, @{{bob}});
         Vector::push_back<address>(&mut voters, @{{carol}});
@@ -83,7 +83,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    // use 0x1::Reconfigure;
+    // use 0x1::EpochBoundary;
     use 0x1::Vector;
     use 0x1::Stats;
     
@@ -134,11 +134,11 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-use 0x1::MinerState;
+use 0x1::TowerState;
 // use 0x1::DiemConfig;
 fun main(sender: signer) {
     // Mock some mining so carol can send rejoin tx
-    MinerState::test_helper_mock_mining(&sender, 100);
+    TowerState::test_helper_mock_mining(&sender, 100);
 }
 }
 

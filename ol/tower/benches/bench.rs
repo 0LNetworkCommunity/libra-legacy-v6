@@ -1,7 +1,7 @@
 //! Benchmarks
 
 use criterion::{criterion_group, criterion_main, Criterion};
-use miner::delay;
+use tower::delay;
 
 // exammple code
 // fn fibonacci(n: u64) -> u64 {

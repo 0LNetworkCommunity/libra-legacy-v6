@@ -10,8 +10,7 @@ script {
   use 0x1::ValidatorConfig;
   use 0x1::TestFixtures;
   use 0x1::VDF;
-  use 0x1::Signer;
-  use 0x1::MinerState;
+  use 0x1::TowerState;
 
   fun main(sender: signer) {
     // Scenario: Alice, an existing validator, is sending a transaction for Eve, 
@@ -22,9 +21,8 @@ script {
     let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
     assert(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 401);
 
-    let sender_addr = Signer::address_of(&sender);
     let epochs_since_creation = 10;
-    MinerState::test_helper_set_rate_limit(sender_addr, epochs_since_creation);
+    TowerState::test_helper_set_rate_limit(&sender, epochs_since_creation);
 
     DiemAccount::create_validator_account_with_proof(
         &sender,
@@ -48,36 +46,36 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
     }
 }
 
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
     }
 }
 
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
     }
 }
 
 //! new-transaction
 //! sender: dave
 script {
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
     }
 }
 
@@ -86,9 +84,9 @@ script {
 //! sender: diemroot
 script {
     use 0x1::DiemSystem;
-    use 0x1::Reconfigure;
+    use 0x1::EpochBoundary;
     use 0x1::Vector;
-    use 0x1::MinerState;
+    use 0x1::TowerState;
     use 0x1::Stats;
     use 0x1::DiemAccount;
     use 0x1::GAS::GAS;
@@ -104,12 +102,12 @@ script {
             DiemSystem::is_validator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B) == false, 
             7357000180104
         );
-        assert(MinerState::is_init(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180105);
+        assert(TowerState::is_init(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180105);
 
-        MinerState::test_helper_mock_mining_vm(vm, @{{alice}}, 20);
-        MinerState::test_helper_mock_mining_vm(vm, @{{bob}}, 20);
-        MinerState::test_helper_mock_mining_vm(vm, @{{carol}}, 20);
-        MinerState::test_helper_mock_mining_vm(vm, @{{dave}}, 20);
+        TowerState::test_helper_mock_mining_vm(vm, @{{alice}}, 20);
+        TowerState::test_helper_mock_mining_vm(vm, @{{bob}}, 20);
+        TowerState::test_helper_mock_mining_vm(vm, @{{carol}}, 20);
+        TowerState::test_helper_mock_mining_vm(vm, @{{dave}}, 20);
 
         // Transfer coins to operators
         let oper_alice = ValidatorConfig::get_operator(@{{alice}});
@@ -134,7 +132,7 @@ script {
             i = i + 1;
         };
 
-        Reconfigure::reconfigure(vm, 15); // reconfigure at height 15
+        EpochBoundary::reconfigure(vm, 15); // reconfigure at height 15
         assert(DiemSystem::validator_set_size() == 4, 7357000180106);
     }
 }
@@ -168,12 +166,12 @@ script {
 //! sender: diemroot
 script {
     use 0x1::DiemSystem;
-    use 0x1::Reconfigure;
+    use 0x1::EpochBoundary;
     use 0x1::Vector;
-    use 0x1::MinerState;
+    use 0x1::TowerState;
     use 0x1::Stats;
     use 0x1::ValidatorUniverse;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
     use 0x1::DiemAccount;
     use 0x1::GAS::GAS;
     use 0x1::ValidatorConfig;    
@@ -196,17 +194,17 @@ script {
         Vector::push_back<address>(&mut voters, @{{carol}});
         Vector::push_back<address>(&mut voters, @{{dave}});
 
-        MinerState::test_helper_mock_mining_vm(vm, @{{alice}}, 20);
-        MinerState::test_helper_mock_mining_vm(vm, @{{bob}}, 20);
-        MinerState::test_helper_mock_mining_vm(vm, @{{carol}}, 20);
-        MinerState::test_helper_mock_mining_vm(vm, @{{dave}}, 20);
-        MinerState::test_helper_mock_mining_vm(vm, @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 20);
+        TowerState::test_helper_mock_mining_vm(vm, @{{alice}}, 20);
+        TowerState::test_helper_mock_mining_vm(vm, @{{bob}}, 20);
+        TowerState::test_helper_mock_mining_vm(vm, @{{carol}}, 20);
+        TowerState::test_helper_mock_mining_vm(vm, @{{dave}}, 20);
+        TowerState::test_helper_mock_mining_vm(vm, @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 20);
 
         // enable autopay and transfer coins to the new operator
         let new_val = DiemAccount::test_helper_create_signer(
             vm, @0x3DC18D1CF61FAAC6AC70E3A63F062E4B
         );
-        AutoPay2::enable_autopay(&new_val);
+        AutoPay::enable_autopay(&new_val);
         let new_oper = ValidatorConfig::get_operator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B);
         DiemAccount::vm_make_payment_no_limit<GAS>(
             @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, new_oper, 60009, x"", x"", vm
@@ -229,7 +227,7 @@ script {
             i = i + 1;
         };
 
-        Reconfigure::reconfigure(vm, 15); // reconfigure at height 15
+        EpochBoundary::reconfigure(vm, 15); // reconfigure at height 15
     }
 }
 // check: EXECUTED

@@ -2,7 +2,8 @@
 // 0L Module
 // Subsidy 
 ///////////////////////////////////////////////////////////////////////////
-// The logic for determining the appropriate level of subsidies at a given time in the network
+// The logic for determining the appropriate level of subsidies 
+// at a given time in the network
 // File Prefix for errors: 1901
 ///////////////////////////////////////////////////////////////////////////
 
@@ -21,7 +22,7 @@ address 0x1 {
     use 0x1::DiemTimestamp;
     use 0x1::TransactionFee;
     use 0x1::ValidatorConfig;
-    use 0x1::MinerState;
+    use 0x1::TowerState;
     use 0x1::FixedPoint32;
 
     use 0x1::Debug::print;
@@ -76,7 +77,6 @@ address 0x1 {
       };
     }
 
-
     // Function code: 02 Prefix: 190102
     public fun calculate_subsidy(vm: &signer, network_density: u64): (u64, u64) {
       CoreAddresses::assert_vm(vm);
@@ -89,7 +89,8 @@ address 0x1 {
       print(&1901007);
       // Calculate the split for subsidy and burn
       let subsidy_ceiling_gas = Globals::get_subsidy_ceiling_gas();
-      // TODO: This metric network density is different than DiemSystem::get_fee_ratio which actually checks the cases.
+      // TODO: This metric network density is different than 
+      // DiemSystem::get_fee_ratio which actually checks the cases.
 
       // let network_density = Stats::network_density(vm, height_start, height_end);
       let max_node_count = Globals::get_max_validators_per_set();
@@ -116,7 +117,6 @@ address 0x1 {
           
           subsidy_per_node = subsidy/network_density;
           // print(&subsidy_per_node);
-
         };
       };
       print(&1901010);
@@ -129,7 +129,6 @@ address 0x1 {
       network_density: u64,
       max_node_count: u64
     ): u64 {
-      
       let min_node_count = 4u64;
 
       // Return early if we know the value is below 4.
@@ -145,29 +144,30 @@ address 0x1 {
       let slope = FixedPoint32::divide_u64(
         subsidy_ceiling_gas,
         FixedPoint32::create_from_rational(max_node_count - min_node_count, 1)
-        );
-      //y-intercept
+      );
+      // y-intercept
       let intercept = slope * max_node_count;
-      //calculating subsidy and burn units
+      // calculating subsidy and burn units
       // NOTE: confirm order of operations here:
       let guaranteed_minimum = intercept - slope * network_density;
       guaranteed_minimum
     }
 
+    // Todo: Can be private, used only in tests
     // Function code: 04 Prefix: 190104
-    public fun genesis(vm_sig: &signer) {
-      //Need to check for association or vm account
+    public fun genesis(vm_sig: &signer) { // Todo: rename to "genesis_deposit" ?
+      // Need to check for association or vm account
       let vm_addr = Signer::address_of(vm_sig);
       assert(vm_addr == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190104));
 
       // Get eligible validators list
       let genesis_validators = ValidatorUniverse::get_eligible_validators(vm_sig);
       let len = Vector::length(&genesis_validators);
-      let subsidy = 11000000; // ten coins for validator, sufficient for first epoch of transactions, and an extra which the validator will send to operator.
-
+      // ten coins for validator, sufficient for first epoch of transactions,
+      // and an extra which the validator will send to operator.
+      let subsidy = 11000000; // todo: 10 or 11? comment says different 
       let i = 0;
       while (i < len) {
-
         let node_address = *(Vector::borrow<address>(&genesis_validators, i));
         let old_validator_bal = DiemAccount::balance<GAS>(node_address);
         
@@ -181,7 +181,10 @@ address 0x1 {
         );
         
         // Confirm the calculations, and that the ending balance is incremented accordingly.
-        assert(DiemAccount::balance<GAS>(node_address) == old_validator_bal + subsidy, Errors::invalid_argument(190104));
+        assert(
+          DiemAccount::balance<GAS>(node_address) == old_validator_bal + subsidy,
+          Errors::invalid_argument(190104)
+        );
 
         i = i + 1;
       };
@@ -191,14 +194,13 @@ address 0x1 {
     public fun process_fees(
       vm: &signer,
       outgoing_set: &vector<address>,
-    ){
+    ) {
       CoreAddresses::assert_vm(vm);
+
       let capability_token = DiemAccount::extract_withdraw_capability(vm);
-
       let len = Vector::length<address>(outgoing_set);
-
       let bal = TransactionFee::get_amount_to_distribute(vm);
-    // leave fees in tx_fee if there isn't at least 1 gas coin per validator.
+      // leave fees in tx_fee if there isn't at least 1 gas coin per validator.
       if (bal < len) {
         DiemAccount::restore_withdraw_capability(capability_token);
         return
@@ -222,12 +224,13 @@ address 0x1 {
       DiemAccount::restore_withdraw_capability(capability_token);
     }
 
-    // Operators may run out of balance to submit txs for the Validator. This is true for mining, where the operator receives no network subsidy.
+    // Operators may run out of balance to submit txs for the Validator. 
+    // This is true for mining, where the operator receives no network subsidy.
     fun refund_operator_tx_fees(vm: &signer, miner_addr: address) {
         // get operator for validator
         let oper_addr = ValidatorConfig::get_operator(miner_addr);
         // count OWNER's proofs submitted
-        let proofs_in_epoch = MinerState::get_count_in_epoch(miner_addr);
+        let proofs_in_epoch = TowerState::get_count_in_epoch(miner_addr);
 
         let cost = 0;
         // find cost from baseline

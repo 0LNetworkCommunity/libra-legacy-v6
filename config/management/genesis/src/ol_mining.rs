@@ -1,5 +1,4 @@
 use diem_management::{config::ConfigPath, error::Error, secure_backend::SharedBackend};
-// use miner::block::Block;
 use serde_json;
 use std::{fs, path::PathBuf, process::exit};
 use structopt::StructOpt;

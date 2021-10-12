@@ -53,7 +53,7 @@ script {
 //! sender: bob
 script {
     use 0x1::DiemSystem;
-    use 0x1::MinerState;
+    use 0x1::TowerState;
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
@@ -63,13 +63,13 @@ script {
         assert(DiemSystem::validator_set_size() == 5, 7357000180101);
         assert(DiemSystem::is_validator(@{{bob}}) == true, 7357000180102);
         assert(DiemSystem::is_validator(@{{eve}}) == true, 7357000180103);
-        assert(MinerState::test_helper_get_height(@{{bob}}) == 0, 7357000180104);
+        assert(TowerState::test_helper_get_height(@{{bob}}) == 0, 7357000180104);
 
         //// NO MINING ////
 
         assert(DiemAccount::balance<GAS>(@{{bob}}) == 949991, 7357000180106);
         assert(NodeWeight::proof_of_weight(@{{bob}}) == 0, 7357000180107);  
-        assert(MinerState::test_helper_get_height(@{{bob}}) == 0, 7357000180108);
+        assert(TowerState::test_helper_get_height(@{{bob}}) == 0, 7357000180108);
     }
 }
 // check: EXECUTED

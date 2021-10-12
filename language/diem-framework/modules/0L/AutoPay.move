@@ -7,7 +7,7 @@
 address 0x1 {
   /// # Summary
   /// This module enables automatic payments from accounts to community wallets at epoch boundaries.
-  module AutoPay2 { // renamed to preventhalting from state corruption
+  module AutoPay { // renamed to preventhalting from state corruption
     use 0x1::Vector;
     use 0x1::Option::{Self,Option};
     use 0x1::Signer;
@@ -162,7 +162,7 @@ address 0x1 {
     // Function code 03
     public fun process_autopay(
       vm: &signer,
-    ) acquires AccountList, Data, AccountLimitsEnable {
+    ) acquires AccountList, Data {
       // Only account 0x0 should be triggering this autopayment each block
       Roles::assert_diem_root(vm);
 
@@ -184,7 +184,7 @@ address 0x1 {
     fun process_autopay_account(
       vm: &signer,
       account_addr: &address,
-    ) acquires Data, AccountLimitsEnable {
+    ) acquires Data {
       Roles::assert_diem_root(vm);
 
       // Get the payment list from the account
@@ -213,7 +213,11 @@ address 0x1 {
       vm: &signer, 
       account_addr: &address,
       payment: &mut Payment,
-    ): bool acquires AccountLimitsEnable {
+    ): bool {
+      // check payees are community wallets, only community wallets are allowed
+      // to receive autopay (bypassing account limits)
+      if (!Wallet::is_comm(payment.payee)) { return false }; // do nothing but don't delete instruction };
+
       Roles::assert_diem_root(vm);
       let epoch = DiemConfig::get_current_epoch();
       let account_bal = DiemAccount::balance<GAS>(*account_addr);
@@ -247,22 +251,11 @@ address 0x1 {
           // in remaining cases, payment is simple amount given, not a percentage
           payment.amt
         };
-
-        // check payees are community wallets, only community wallets are allowed
-        // to receive autopay (bypassing account limits)
+        
         if (amount != 0 && amount <= account_bal) {
-          if (borrow_global<AccountLimitsEnable>(Signer::address_of(vm)).enabled) {
-            if (Wallet::is_comm(payment.payee)) {
-              DiemAccount::vm_make_payment_no_limit<GAS>(
-                *account_addr, payment.payee, amount, x"", x"", vm
+           DiemAccount::vm_make_payment_no_limit<GAS>(
+                *account_addr, payment.payee, amount, b"autopay", b"", vm
               );
-            }
-          }
-          else {
-            DiemAccount::vm_make_payment_no_limit<GAS>(
-              *account_addr, payment.payee, amount, x"", x"", vm
-            );
-          };
         };
 
         payment.prev_bal = DiemAccount::balance<GAS>(*account_addr);

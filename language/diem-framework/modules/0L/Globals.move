@@ -64,7 +64,7 @@ module Globals {
       get_constants().epoch_mining_thres_lower
     }
 
-        /// Get the mining threshold 
+    /// Get the mining threshold 
     public fun get_epoch_mining_thres_upper(): u64 {
       get_constants().epoch_mining_thres_upper
     }
@@ -114,7 +114,7 @@ module Globals {
           vdf_difficulty: 5000000, //10 mins on macbook pro 2.5 ghz quadcore
           epoch_mining_thres_lower: 20,
           epoch_mining_thres_upper: 500,
-          epoch_slow_wallet_unlock: 10000000,
+          epoch_slow_wallet_unlock: 1000 * coin_scale, // approx 10 years for largest accounts in genesis.
         }
       }
     }

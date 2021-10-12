@@ -165,7 +165,7 @@ members = [
     # //////// 0L ////////
     "ol/cli",    
     "ol/keys",
-    "ol/miner",
+    "ol/tower",
     "ol/onboard",
     "ol/txs",
     "ol/types",

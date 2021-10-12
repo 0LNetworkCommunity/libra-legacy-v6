@@ -7,8 +7,8 @@
 script {
     use 0x1::Audit;
     use 0x1::ValidatorConfig;
-    use 0x1::AutoPay2;
-    use 0x1::MinerState;
+    use 0x1::AutoPay;
+    use 0x1::TowerState;
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
     use 0x1::Testnet;
@@ -17,10 +17,10 @@ script {
         // Need to unset testnet to properly test this function
         Testnet::remove_testnet(&vm);
         // enable autopay
-        AutoPay2::enable_autopay(&alice_account);
-        assert(AutoPay2::is_enabled(@{{alice}}), 7357007002001);
+        AutoPay::enable_autopay(&alice_account);
+        assert(AutoPay::is_enabled(@{{alice}}), 7357007002001);
         assert(ValidatorConfig::is_valid(@{{alice}}), 7357007002002);
-        assert(MinerState::is_init(@{{alice}}), 7357007002003);
+        assert(TowerState::is_init(@{{alice}}), 7357007002003);
         
         // check operator zero balance
         let oper = ValidatorConfig::get_operator(@{{alice}});

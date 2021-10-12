@@ -1,19 +1,19 @@
 
-<a name="0x1_Reconfigure"></a>
+<a name="0x1_EpochBoundary"></a>
 
-# Module `0x1::Reconfigure`
+# Module `0x1::EpochBoundary`
 
 
 
--  [Function `reconfigure`](#0x1_Reconfigure_reconfigure)
--  [Function `process_fullnodes`](#0x1_Reconfigure_process_fullnodes)
--  [Function `process_validators`](#0x1_Reconfigure_process_validators)
--  [Function `propose_new_set`](#0x1_Reconfigure_propose_new_set)
--  [Function `reset_counters`](#0x1_Reconfigure_reset_counters)
+-  [Function `reconfigure`](#0x1_EpochBoundary_reconfigure)
+-  [Function `process_fullnodes`](#0x1_EpochBoundary_process_fullnodes)
+-  [Function `process_validators`](#0x1_EpochBoundary_process_validators)
+-  [Function `propose_new_set`](#0x1_EpochBoundary_propose_new_set)
+-  [Function `reset_counters`](#0x1_EpochBoundary_reset_counters)
 
 
 <pre><code><b>use</b> <a href="Audit.md#0x1_Audit">0x1::Audit</a>;
-<b>use</b> <a href="AutoPay.md#0x1_AutoPay2">0x1::AutoPay2</a>;
+<b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
 <b>use</b> <a href="Burn.md#0x1_Burn">0x1::Burn</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
@@ -24,23 +24,23 @@
 <b>use</b> <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy">0x1::FullnodeSubsidy</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
-<b>use</b> <a href="MinerState.md#0x1_MinerState">0x1::MinerState</a>;
 <b>use</b> <a href="NodeWeight.md#0x1_NodeWeight">0x1::NodeWeight</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="Subsidy.md#0x1_Subsidy">0x1::Subsidy</a>;
+<b>use</b> <a href="MinerState.md#0x1_TowerState">0x1::TowerState</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
 
 
-<a name="0x1_Reconfigure_reconfigure"></a>
+<a name="0x1_EpochBoundary_reconfigure"></a>
 
 ## Function `reconfigure`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_reconfigure">reconfigure</a>(vm: &signer, height_now: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64)
 </code></pre>
 
 
@@ -49,7 +49,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) {
+<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) {
     print(&1800100);
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
 
@@ -65,13 +65,13 @@
         <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, compliant_nodes_count);
 
     print(&1800102);
-    <a href="Reconfigure.md#0x1_Reconfigure_process_fullnodes">process_fullnodes</a>(vm, nominal_subsidy_per);
+    <a href="Reconfigure.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm, nominal_subsidy_per);
 
     print(&1800103);
-    <a href="Reconfigure.md#0x1_Reconfigure_process_validators">process_validators</a>(vm, subsidy_units, outgoing_compliant_set);
+    <a href="Reconfigure.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm, subsidy_units, outgoing_compliant_set);
 
     print(&1800104);
-    <b>let</b> proposed_set = <a href="Reconfigure.md#0x1_Reconfigure_propose_new_set">propose_new_set</a>(vm, height_start, height_now);
+    <b>let</b> proposed_set = <a href="Reconfigure.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm, height_start, height_now);
 
     print(&1800105);
     // Update all slow wallet limits
@@ -80,7 +80,7 @@
         // update_validator_withdrawal_limit(vm);
     };
     print(&1800106);
-    <a href="Reconfigure.md#0x1_Reconfigure_reset_counters">reset_counters</a>(vm, proposed_set, height_now)
+    <a href="Reconfigure.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, proposed_set, height_now)
 }
 </code></pre>
 
@@ -88,13 +88,13 @@
 
 </details>
 
-<a name="0x1_Reconfigure_process_fullnodes"></a>
+<a name="0x1_EpochBoundary_process_fullnodes"></a>
 
 ## Function `process_fullnodes`
 
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_process_fullnodes">process_fullnodes</a>(vm: &signer, nominal_subsidy_per_node: u64)
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm: &signer, nominal_subsidy_per_node: u64)
 </code></pre>
 
 
@@ -103,19 +103,17 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_process_fullnodes">process_fullnodes</a>(vm: &signer, nominal_subsidy_per_node: u64) {
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm: &signer, nominal_subsidy_per_node: u64) {
     // Fullnode subsidy
     // <b>loop</b> through validators and pay full node subsidies.
     // Should happen before transactionfees get distributed.
     // Note: need <b>to</b> check, there may be new validators which have not mined yet.
 
     print(&1800200);
-    <b>let</b> miners = <a href="MinerState.md#0x1_MinerState_get_miner_list">MinerState::get_miner_list</a>();
+    <b>let</b> miners = <a href="MinerState.md#0x1_TowerState_get_miner_list">TowerState::get_miner_list</a>();
     print(&1800201);
     // fullnode subsidy is a fraction of the total subsidy available <b>to</b> validators.
     <b>let</b> proof_price = <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_get_proof_price">FullnodeSubsidy::get_proof_price</a>(nominal_subsidy_per_node);
-    // print(&nominal_subsidy_per_node);
-    // print(&proof_price);
 
     <b>let</b> k = 0;
     // Distribute mining subsidy <b>to</b> fullnodes
@@ -131,8 +129,8 @@
 
         // TODO: this call is repeated in propose_new_set.
         // Not sure <b>if</b> the performance hit at epoch boundary is worth the refactor.
-        <b>if</b> (<a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(addr)) {
-          <b>let</b> count = <a href="MinerState.md#0x1_MinerState_get_count_in_epoch">MinerState::get_count_in_epoch</a>(addr);
+        <b>if</b> (<a href="MinerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr)) {
+          <b>let</b> count = <a href="MinerState.md#0x1_TowerState_get_count_in_epoch">TowerState::get_count_in_epoch</a>(addr);
           // print(&count);
 
           <b>let</b> miner_subsidy = count * proof_price;
@@ -150,13 +148,13 @@
 
 </details>
 
-<a name="0x1_Reconfigure_process_validators"></a>
+<a name="0x1_EpochBoundary_process_validators"></a>
 
 ## Function `process_validators`
 
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_process_validators">process_validators</a>(vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector&lt;address&gt;)
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector&lt;address&gt;)
 </code></pre>
 
 
@@ -165,7 +163,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_process_validators">process_validators</a>(
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_process_validators">process_validators</a>(
     vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector&lt;address&gt;
 ) {
     // Process outgoing validators:
@@ -188,13 +186,13 @@
 
 </details>
 
-<a name="0x1_Reconfigure_propose_new_set"></a>
+<a name="0x1_EpochBoundary_propose_new_set"></a>
 
 ## Function `propose_new_set`
 
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;address&gt;
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;address&gt;
 </code></pre>
 
 
@@ -203,7 +201,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;address&gt; {
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;address&gt; {
     // Propose upcoming validator set:
     // Step 1: Sort Top N eligible validators
     // Step 2: Jail non-performing validators
@@ -238,7 +236,7 @@
         // print(&03251);
 
         <b>let</b> addr = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&top_accounts, i);
-        <b>let</b> mined_last_epoch = <a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(addr);
+        <b>let</b> mined_last_epoch = <a href="MinerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr);
         // print(&mined_last_epoch);
         // TODO: temporary until jail-refactor merge.
         <b>if</b> (
@@ -270,13 +268,13 @@
 
 </details>
 
-<a name="0x1_Reconfigure_reset_counters"></a>
+<a name="0x1_EpochBoundary_reset_counters"></a>
 
 ## Function `reset_counters`
 
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, height_now: u64)
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, height_now: u64)
 </code></pre>
 
 
@@ -285,37 +283,25 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, height_now: u64) {
-    // print(&03280);
+<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, height_now: u64) {
 
-    // Reset Counters
+    // Reset <a href="Stats.md#0x1_Stats">Stats</a>
     <a href="Stats.md#0x1_Stats_reconfig">Stats::reconfig</a>(vm, &proposed_set);
-    // print(&03290);
 
-    // Migrate <a href="MinerState.md#0x1_MinerState">MinerState</a> list from elegible: in case there is no minerlist
+    // Migrate <a href="MinerState.md#0x1_TowerState">TowerState</a> list from elegible: in case there is no minerlist
     // <b>struct</b>, <b>use</b> eligible for migrate_eligible_validators
     <b>let</b> eligible = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm);
-    <a href="MinerState.md#0x1_MinerState_reconfig">MinerState::reconfig</a>(vm, &eligible);
-    // print(&032100);
+    <a href="MinerState.md#0x1_TowerState_reconfig">TowerState::reconfig</a>(vm, &eligible);
 
-    // <a href="Reconfigure.md#0x1_Reconfigure">Reconfigure</a> the network
+    // Reconfigure the network
     <a href="DiemSystem.md#0x1_DiemSystem_bulk_update_validators">DiemSystem::bulk_update_validators</a>(vm, proposed_set);
-    // print(&032110);
-
-    // reset clocks
-    // FullnodeSubsidy::fullnode_reconfig(vm);
-    // print(&032120);
 
     // process community wallets
-    <a href="DiemAccount.md#0x1_DiemAccount_process_community_wallets">DiemAccount::process_community_wallets</a>(vm,
-    <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>());
-    // print(&032130);
+    <a href="DiemAccount.md#0x1_DiemAccount_process_community_wallets">DiemAccount::process_community_wallets</a>(vm, <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>());
 
-    <a href="AutoPay.md#0x1_AutoPay2_reconfig_reset_tick">AutoPay2::reconfig_reset_tick</a>(vm);
-    // print(&032140);
-
+    // reset counters
+    <a href="AutoPay.md#0x1_AutoPay_reconfig_reset_tick">AutoPay::reconfig_reset_tick</a>(vm);
     <a href="Epoch.md#0x1_Epoch_reset_timer">Epoch::reset_timer</a>(vm, height_now);
-    // print(&032150);
 }
 </code></pre>
 

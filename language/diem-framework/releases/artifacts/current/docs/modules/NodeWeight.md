@@ -11,8 +11,8 @@
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
-<b>use</b> <a href="MinerState.md#0x1_MinerState">0x1::MinerState</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
+<b>use</b> <a href="MinerState.md#0x1_TowerState">0x1::TowerState</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
@@ -37,7 +37,7 @@
 <pre><code><b>public</b> <b>fun</b> <a href="NodeWeight.md#0x1_NodeWeight_proof_of_weight">proof_of_weight</a> (node_addr: address): u64 {
   // Calculate the weight/voting power for the next round.
   // TODO: This assumes that validator passed the validation threshold this epoch, perhaps double check here.
-  <a href="MinerState.md#0x1_MinerState_get_epochs_mining">MinerState::get_epochs_mining</a>(node_addr)
+  <a href="MinerState.md#0x1_TowerState_get_epochs_mining">TowerState::get_epochs_mining</a>(node_addr)
 }
 </code></pre>
 

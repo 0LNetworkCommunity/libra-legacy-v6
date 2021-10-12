@@ -22,12 +22,12 @@ module Genesis {
     use 0x1::Stats;
     use 0x1::ValidatorUniverse;
     use 0x1::GAS;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
     use 0x1::Oracle;
     use 0x1::Hash;
     // use 0x1::FullnodeSubsidy;
     use 0x1::Epoch;
-    use 0x1::MinerState;
+    use 0x1::TowerState;
     use 0x1::Wallet;
     use 0x1::Migrations;
 
@@ -110,10 +110,10 @@ module Genesis {
         // DiemAccount::restore_key_rotation_capability(tc_rotate_key_cap);
         Stats::initialize(dm_account);
         ValidatorUniverse::initialize(dm_account);
-        AutoPay2::initialize(dm_account);
+        AutoPay::initialize(dm_account);
         // FullnodeSubsidy::init_fullnode_sub(dm_account);
         Oracle::initialize(dm_account);
-        MinerState::init_list(dm_account);
+        TowerState::init_miner_list_and_stats(dm_account);
         Wallet::init(dm_account);
         DiemAccount::vm_init_slow(dm_account);
         Migrations::init(dm_account);

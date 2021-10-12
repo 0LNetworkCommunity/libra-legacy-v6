@@ -7,7 +7,7 @@ script {
   use 0x1::TestFixtures;
   use 0x1::GAS::GAS;
 
-  fun main(_sender: signer) {
+  fun main(sender: signer) {
     // Scenario: Bob, an existing user, is sending a transaction for Eve, 
     // with a challenge and proof not yet submitted to the chain.
     // This proof will create a new account, with the preimage data.
@@ -15,11 +15,12 @@ script {
     let solution = TestFixtures::eve_0_easy_sol();
     
     let eve_addr = DiemAccount::create_user_account_with_proof(
+      &sender,
       &challenge,
       &solution,
     );
 
-    assert(DiemAccount::balance<GAS>(eve_addr) == 0, 735701);
+    assert(DiemAccount::balance<GAS>(eve_addr) == 1000000, 735701);
 
     // is a slow wallet
     assert(!DiemAccount::is_slow(eve_addr), 735702);
@@ -33,9 +34,8 @@ script {
 script {
 // use 0x1::VDF;
 use 0x1::DiemAccount;
-// use 0x1::MinerState;
+// use 0x1::TowerState;
 use 0x1::TestFixtures;
-// use 0x1::Signer;
 // use 0x1::Vector;
 
 
@@ -49,9 +49,8 @@ fun main(sender: signer) {
   // let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
   // assert(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 7357401001);
   
-  // let sender_addr = Signer::address_of(&sender);
   // let epochs_since_creation = 10;
-  // MinerState::test_helper_set_rate_limit(sender_addr, epochs_since_creation);
+  // TowerState::test_helper_set_rate_limit(&sender, epochs_since_creation);
 
   DiemAccount::create_validator_account_with_proof(
       &sender,
@@ -68,7 +67,7 @@ fun main(sender: signer) {
   );
 
   // the prospective validator is in the current miner list.
-  // assert(Vector::contains<address>(&MinerState::get_miner_list(), &eve_addr), 7357401002);
+  // assert(Vector::contains<address>(&TowerState::get_miner_list(), &eve_addr), 7357401002);
 }
 }
 // check: EXECUTED
@@ -78,7 +77,7 @@ fun main(sender: signer) {
 //! new-transaction
 //! sender: diemroot
 script {
-use 0x1::Reconfigure;
+use 0x1::EpochBoundary;
 use 0x1::DiemAccount;
 use 0x1::GAS::GAS;
 use 0x1::ValidatorUniverse;
@@ -88,7 +87,7 @@ fun main(vm: signer) {
   let eve_addr = @0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
   /// set the fullnode proof price to 0, to check if onboarding subsidy is given.
   // FullnodeSubsidy::test_set_fullnode_fixtures(&vm, 0, 0, 0, 0, 0);
-  Reconfigure::reconfigure(&vm, 10); 
+  EpochBoundary::reconfigure(&vm, 10); 
     // need to remove testnet for this test, since testnet does not ratelimit 
     // account creation.
   let oper_eve = ValidatorConfig::get_operator(eve_addr);
