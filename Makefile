@@ -538,3 +538,14 @@ nuke-testnet:
 	fi
 	
 
+EMPTY_SAFETY='"value": { \
+      "epoch": 0, \
+      "last_voted_round": 0, \
+      "preferred_round": 0, \
+      "last_vote": null \
+    }'
+
+JQ = '. [ keys[] | select(contains("safety"))] | .value '
+
+reset-safety:
+	 jq  ${JQ} ${DATA_PATH}/key_store.json

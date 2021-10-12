@@ -686,14 +686,14 @@ module TowerState {
       assert(Testnet::is_testnet(), Errors::invalid_state(130113));
       CoreAddresses::assert_diem_root(vm);
       let state = borrow_global_mut<TowerProofHistory>(addr);
-      state.epochs_validating_and_mining = weight;
+      state.verified_tower_height = weight;
     }
 
     public fun test_helper_set_weight(account: &signer, weight: u64) acquires TowerProofHistory {
       assert(Testnet::is_testnet(), Errors::invalid_state(130113));
       let addr = Signer::address_of(account);
       let state = borrow_global_mut<TowerProofHistory>(addr);
-      state.epochs_validating_and_mining = weight;
+      state.verified_tower_height = weight;
     }
 }
 }
