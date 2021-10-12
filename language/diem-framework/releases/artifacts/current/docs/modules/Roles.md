@@ -484,7 +484,7 @@ Needs to be a signer, is called from LibraAccount, which can create a signer.
 upgrades a user role to validator role
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_upgrade_user_to_validator">upgrade_user_to_validator</a>(new_account: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_upgrade_user_to_validator">upgrade_user_to_validator</a>(new_account: &signer, vm: &signer)
 </code></pre>
 
 
@@ -494,9 +494,11 @@ upgrades a user role to validator role
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_upgrade_user_to_validator">upgrade_user_to_validator</a>(
-    new_account: &signer
+    new_account: &signer,
+    vm: &signer,
 ) <b>acquires</b> <a href="Roles.md#0x1_Roles_RoleId">RoleId</a> {
     print(&600);
+    <a href="Roles.md#0x1_Roles_assert_diem_root">assert_diem_root</a>(vm);
     <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(new_account);
     // <a href="Roles.md#0x1_Roles_grant_role">grant_role</a>(new_account, <a href="Roles.md#0x1_Roles_USER_ID">USER_ID</a>);
     <b>let</b> role = borrow_global_mut&lt;<a href="Roles.md#0x1_Roles_RoleId">RoleId</a>&gt;(addr);
@@ -520,7 +522,7 @@ Permissions: PUBLIC, ANYONE, SIGNER
 Needs to be a signer, is called from LibraAccount, which can create a signer.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_new_validator_role_with_proof">new_validator_role_with_proof</a>(new_account: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_new_validator_role_with_proof">new_validator_role_with_proof</a>(new_account: &signer, vm: &signer)
 </code></pre>
 
 
@@ -530,9 +532,10 @@ Needs to be a signer, is called from LibraAccount, which can create a signer.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_new_validator_role_with_proof">new_validator_role_with_proof</a>(
-    new_account: &signer
-) {
-    // assert_libra_root(creating_account);
+    new_account: &signer,
+    vm: &signer,
+) <b>acquires</b> <a href="Roles.md#0x1_Roles_RoleId">RoleId</a> {
+    <a href="Roles.md#0x1_Roles_assert_diem_root">assert_diem_root</a>(vm);
     <a href="Roles.md#0x1_Roles_grant_role">grant_role</a>(new_account, <a href="Roles.md#0x1_Roles_VALIDATOR_ROLE_ID">VALIDATOR_ROLE_ID</a>);
 }
 </code></pre>

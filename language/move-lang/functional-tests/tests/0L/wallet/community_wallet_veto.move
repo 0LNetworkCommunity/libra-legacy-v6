@@ -14,10 +14,10 @@
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::MinerState;
+    use 0x1::TowerState;
     fun main(_sender: signer) {
-      MinerState::test_helper_set_epochs_mining(@{{carol}}, 50);
-      MinerState::test_helper_set_epochs_mining(@{{dave}}, 50);
+      TowerState::test_helper_set_epochs_mining(@{{carol}}, 50);
+      TowerState::test_helper_set_epochs_mining(@{{dave}}, 50);
     }
 }
 // check: EXECUTED

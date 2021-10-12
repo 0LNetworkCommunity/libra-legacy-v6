@@ -4456,7 +4456,7 @@ dependencies = [
  "tokio 1.11.0",
  "tokio-native-tls",
  "tokio-util",
- "tower",
+ "tower 0.4.6",
  "url",
 ]
 
@@ -4715,57 +4715,6 @@ checksum = "2684d4c2e97d99848d30b324b00c8fcc7e5c897b7cbb5819b09e7c90e8baf212"
 dependencies = [
  "mime",
  "unicase",
-]
-
-[[package]]
-name = "miner"
-version = "0.1.0"
-dependencies = [
- "abscissa_core",
- "ajson",
- "anyhow",
- "bcs",
- "byteorder",
- "classgroup",
- "cli",
- "criterion",
- "diem-config",
- "diem-crypto",
- "diem-genesis-tool",
- "diem-global-constants",
- "diem-json-rpc-types",
- "diem-logger",
- "diem-management",
- "diem-secure-storage",
- "diem-transaction-builder",
- "diem-types",
- "diem-wallet",
- "diemdb",
- "dirs 2.0.2",
- "glob",
- "gumdrop 0.7.0",
- "hex 0.4.3",
- "machine-ip",
- "move-core-types",
- "ol",
- "ol-fixtures",
- "ol-keys",
- "ol-types",
- "once_cell",
- "regex",
- "reqwest",
- "rpassword",
- "rustyline 6.3.0",
- "serde",
- "serde_json",
- "storage-interface",
- "thiserror",
- "toml",
- "txs",
- "url",
- "vdf",
- "vm-genesis",
- "wait-timeout",
 ]
 
 [[package]]
@@ -5845,7 +5794,6 @@ dependencies = [
  "diem-wallet",
  "dirs 2.0.2",
  "gumdrop 0.7.0",
- "miner",
  "ol",
  "ol-fixtures",
  "ol-keys",
@@ -5857,6 +5805,7 @@ dependencies = [
  "serde_json",
  "thiserror",
  "toml",
+ "tower 0.1.0",
  "txs",
  "wait-timeout",
  "zip",
@@ -8578,6 +8527,57 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a31142970826733df8241ef35dc040ef98c679ab14d7c3e54d827099b3acecaa"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "tower"
+version = "0.1.0"
+dependencies = [
+ "abscissa_core",
+ "ajson",
+ "anyhow",
+ "bcs",
+ "byteorder",
+ "classgroup",
+ "cli",
+ "criterion",
+ "diem-config",
+ "diem-crypto",
+ "diem-genesis-tool",
+ "diem-global-constants",
+ "diem-json-rpc-types",
+ "diem-logger",
+ "diem-management",
+ "diem-secure-storage",
+ "diem-transaction-builder",
+ "diem-types",
+ "diem-wallet",
+ "diemdb",
+ "dirs 2.0.2",
+ "glob",
+ "gumdrop 0.7.0",
+ "hex 0.4.3",
+ "machine-ip",
+ "move-core-types",
+ "ol",
+ "ol-fixtures",
+ "ol-keys",
+ "ol-types",
+ "once_cell",
+ "regex",
+ "reqwest",
+ "rpassword",
+ "rustyline 6.3.0",
+ "serde",
+ "serde_json",
+ "storage-interface",
+ "thiserror",
+ "toml",
+ "txs",
+ "url",
+ "vdf",
+ "vm-genesis",
+ "wait-timeout",
 ]
 
 [[package]]

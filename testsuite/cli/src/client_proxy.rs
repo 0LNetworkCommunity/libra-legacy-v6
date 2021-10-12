@@ -13,7 +13,7 @@ use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
     test_utils::KeyPair,
 };
-use diem_json_rpc_client::views::{MinerStateResourceView, OracleUpgradeStateView};
+use diem_json_rpc_client::views::{TowerStateResourceView, OracleUpgradeStateView};
 use diem_logger::prelude::{error, info};
 use diem_temppath::TempPath;
 use diem_transaction_builder::stdlib as transaction_builder;
@@ -499,7 +499,7 @@ impl ClientProxy {
             "Invalid number of arguments to create user. Did you pass your account and the file path?"
         );
 
-        //TODO: Parsing json should use Serde to deserialize from the miner::accounts::ValConfigs obj, but importing miner causes a circular dependency. Refactor...
+        //TODO: Parsing json should use Serde to deserialize from the tower::accounts::ValConfigs obj, but importing miner causes a circular dependency. Refactor...
 
         let file = fs::File::open(space_delim_strings[2])
             .expect("file should open read only");
@@ -631,7 +631,7 @@ impl ClientProxy {
             "Invalid number of arguments to create user. Did you pass your account and the file path?"
         );
 
-        //TODO: Parsing json should use Serde to deserialize from the miner::accounts::ValConfigs obj, but importing miner causes a circular dependency. Refactor...
+        //TODO: Parsing json should use Serde to deserialize from the tower::accounts::ValConfigs obj, but importing miner causes a circular dependency. Refactor...
 
         let file = fs::File::open(space_delim_strings[2])
             .expect("file should open read only");
@@ -891,7 +891,7 @@ impl ClientProxy {
     /// Get balance from validator for the account specified.
     pub fn get_miner_state(
         &mut self, space_delim_strings: &[&str]
-    ) -> Result<Option<MinerStateResourceView>> {
+    ) -> Result<Option<TowerStateResourceView>> {
         ensure!(
             space_delim_strings.len() == 2,
             "Invalid number of arguments for getting miner status."

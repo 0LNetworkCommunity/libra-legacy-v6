@@ -35,7 +35,7 @@ swarm:
 	cd ${SOURCE_PATH} && cargo run -p diem-swarm -- --diem-node ${SOURCE_PATH}/target/debug/diem-node -c ${SWARM_TEMP} -n ${NUM_NODES} &> ${LOG} &
 
 stop:
-	killall diem-swarm diem-node miner ol txs cli | true
+	killall diem-swarm diem-node tower ol txs cli | true
 
 echo: 
 	@echo hi &> ${LOG} &
@@ -44,7 +44,7 @@ init:
 	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}
 
 mine:
-	cd ${SOURCE_PATH} && cargo r -p miner -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} start
+	cd ${SOURCE_PATH} && cargo r -p tower -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} start
 
 create-stage:
 	cd ${SOURCE_PATH} && cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} create-validator -f ol/fixtures/account/stage.eve.account.json 

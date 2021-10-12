@@ -11,7 +11,7 @@ address 0x1{
         use 0x1::Signer;
         use 0x1::Errors;
         use 0x1::Testnet::is_testnet;
-    
+
         // In Move the types for data storage are `resource struct`. Here a type 
         // State is being defined. Once a type is initialized in the global state, 
         // the resource is treated as if in-memory on the heap, the diem database 
@@ -24,7 +24,7 @@ address 0x1{
         }
 
         // The operation can only be performed on testnet
-         const ETESTNET : u64 = 04001;
+        const ETESTNET : u64 = 04001;
 
         // For this demo, the `initialize` function writes a PersistenceDemo::State 
         // resource at the "sender" address. The access path will be 
@@ -38,6 +38,14 @@ address 0x1{
           move_to<State>(sender, State{ hist: Vector::empty() });
         }
 
+        // A simple example/demo spec 
+        spec initialize {
+            let addr = Signer::address_of(sender);
+            // Note: Change this to non-zero value to get move prover error
+            let init_size = 0;
+            ensures Vector::length(global<State>(addr).hist) == init_size;
+        }
+
         // To read or write to a Resource Struct an `acquires` tag is needed to 
         // permission a function. NOTE all downsteam functions will also need 
         // permission on that data struct, i.e. need the same `acquires` parameters.
@@ -46,7 +54,7 @@ address 0x1{
 
           // Resource Struct state is always "borrowed" and "moved" and generally 
           // cannot be copied. A struct can be mutably borrowed, if it is written to, 
-          // useing `borrow_global_mut`. Note the Type State
+          // using `borrow_global_mut`. Note the Type State
           let st = borrow_global_mut<State>(Signer::address_of(sender));
           // the `&` as in Rust makes the assignment to a borrowed value. Each 
           // Vector operation below with use a st.hist and return it before the 

@@ -9,14 +9,14 @@
 //! new-transaction
 //! sender: alice
 script {
-  use 0x1::AutoPay2;
+  use 0x1::AutoPay;
   use 0x1::Signer;
   fun main(sender: signer) {
     let sender = &sender;
-    AutoPay2::enable_autopay(sender);
-    assert(AutoPay2::is_enabled(Signer::address_of(sender)), 73570001);
-    AutoPay2::create_instruction(sender, 1, 0, @{{bob}}, 2, 5);
-    let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(
+    AutoPay::enable_autopay(sender);
+    assert(AutoPay::is_enabled(Signer::address_of(sender)), 73570001);
+    AutoPay::create_instruction(sender, 1, 0, @{{bob}}, 2, 5);
+    let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(
       Signer::address_of(sender), 1
     );
     assert(type == 0, 7357005);
@@ -31,12 +31,12 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-  use 0x1::AutoPay2;
+  use 0x1::AutoPay;
   use 0x1::Signer;
   fun main(sender: signer) {
     let sender = &sender;
-    assert(AutoPay2::is_enabled(Signer::address_of(sender)), 73570005);    
-    AutoPay2::create_instruction(sender, 2, 0, @{{alice}}, 4, 5);
+    assert(AutoPay::is_enabled(Signer::address_of(sender)), 73570005);    
+    AutoPay::create_instruction(sender, 2, 0, @{{alice}}, 4, 5);
   }
 }
 // check: EXECUTED

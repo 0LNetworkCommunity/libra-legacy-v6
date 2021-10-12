@@ -46,7 +46,7 @@ ifndef RELEASE
 RELEASE=$(shell curl -sL https://api.github.com/repos/OLSF/libra/releases/latest | jq -r '.assets[].browser_download_url')
 endif
 
-BINS=db-backup db-backup-verify db-restore diem-node miner ol txs stdlib
+BINS=db-backup db-backup-verify db-restore diem-node tower ol txs stdlib
 
 ifndef V
 V=previous
@@ -84,10 +84,10 @@ uninstall:
 	done
 
 bins: stdlib
-# Build and install genesis tool, diem-node, and miner
+# Build and install genesis tool, diem-node, and tower
 # NOTE: stdlib is built for cli bindings
 
-	cargo build -p diem-node -p miner -p backup-cli -p ol -p txs -p onboard ${CARGO_ARGS}
+	cargo build -p diem-node -p tower -p backup-cli -p ol -p txs -p onboard ${CARGO_ARGS}
 
 stdlib:
 # cargo run ${CARGO_ARGS} -p diem-framework
@@ -98,7 +98,7 @@ stdlib:
 install: mv-bin bin-path
 	mkdir ${USER_BIN_PATH} | true
 
-	cp -f ${SOURCE}/target/release/miner ${USER_BIN_PATH}/miner
+	cp -f ${SOURCE}/target/release/tower ${USER_BIN_PATH}/tower
 	cp -f ${SOURCE}/target/release/diem-node ${USER_BIN_PATH}/diem-node
 	cp -f ${SOURCE}/target/release/db-restore ${USER_BIN_PATH}/db-restore
 	cp -f ${SOURCE}/target/release/db-backup ${USER_BIN_PATH}/db-backup
@@ -132,6 +132,9 @@ mv-bin:
 
 reset:
 	onboard val --skip-mining --upstream-peer http://167.172.248.37/ --source-path ~/libra
+
+reset-safety:
+	jq -r '.["${ACC}-oper/safety_data"].value = { "epoch": 0, "last_voted_round": 0, "preferred_round": 0, "last_vote": null }' ${DATA_PATH}/key_store.json > ${DATA_PATH}/temp_key_store && mv ${DATA_PATH}/temp_key_store ${DATA_PATH}/key_store.json
 
 
 backup:
@@ -172,7 +175,7 @@ gen-make-pull:
 	--pull-request-user ${GITHUB_USER}
 
 genesis-miner:
-	cargo run -p miner -- zero
+	cargo run -p tower -- zero
 
 
 gen-onboard:
@@ -180,7 +183,7 @@ gen-onboard:
 
 ceremony: gen-fork-repo gen-onboard		
 
-# cargo run -p miner ${CARGO_ARGS} -- zero
+# cargo run -p tower ${CARGO_ARGS} -- zero
 
 register:
 # export ACC=$(shell toml get ${DATA_PATH}/0L.toml profile.account)
@@ -200,8 +203,10 @@ register:
 	@echo OPER send signed transaction with configurations for *OWNER* account
 	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
 
+ifeq (${TEST}, y)
 	@echo Making pull request to genesis coordination repo
 	make gen-make-pull
+endif
 
 init-test:
 	echo ${MNEM} | head -c -1 | cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
@@ -325,7 +330,7 @@ endif
 
 fixture-stdlib:
 	make stdlib
-	cp language/stdlib/staged/stdlib.mv ol/fixtures/stdlib/fresh_stdlib.mv
+	cp language/diem-framework/staged/stdlib.mv ol/fixtures/stdlib/fresh_stdlib.mv
 
 #### HELPERS ####
 check:
@@ -368,6 +373,8 @@ ifdef TEST
 	cp ./ol/fixtures/autopay/${NS}.autopay_batch.json ${DATA_PATH}/autopay_batch.json
 # place a mock account.json in root, used as template for onboarding
 	cp ./ol/fixtures/account/${NS}.account.json ${DATA_PATH}/account.json
+# replace the set_layout
+	cp ./ol/devnet/set_layout_test.toml ${DATA_PATH}/set_layout.toml
 endif
 
 fix-genesis:
@@ -395,7 +402,7 @@ client: set-waypoint
 
 
 keygen:
-	cd ${DATA_PATH} && miner keygen
+	cd ${DATA_PATH} && onboard keygen
 
 # miner-genesis:
 # 	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner genesis
@@ -440,13 +447,13 @@ dev-join: clear fix fix-genesis dev-wizard
 
 dev-wizard:
 #  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
-	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis --upstream-peer http://161.35.13.169:8080
+	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --genesis-ceremony --chain-id 1 --github-org OLSF --repo dev-genesis --upstream-peer http://161.35.13.169:8080
 
 #### DEVNET RESTART ####
 # usually do this on Alice, which has the dev-epoch-archive repo, and dev-genesis
 
 # Do the ceremony: and also save the genesis fixtures, needs to happen before fix.
-dev-register: clear fix register
+dev-register: clear fix dev-wizard register
 # Do a dev genesis on each node after EVERY NODE COMPLETED registration.
 dev-genesis: genesis dev-save-genesis fix-genesis
 
@@ -494,7 +501,7 @@ sw-init:
 	cd ${SOURCE} && cargo r ${CARGO_ARGS} -p ol -- --swarm-path ${DATA_PATH}/swarm_temp/ --swarm-persona alice init --source-path ~/libra
 
 sw-miner:
-		cd ${SOURCE} && cargo r -p miner -- --swarm-path ${DATA_PATH}/swarm_temp --swarm-persona alice start
+		cd ${SOURCE} && cargo r -p tower -- --swarm-path ${DATA_PATH}/swarm_temp --swarm-persona alice start
 
 sw-query:
 		cd ${SOURCE} && cargo r -p ol -- --swarm-path ${DATA_PATH}/swarm_temp --swarm-persona alice query --txs

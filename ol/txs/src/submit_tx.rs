@@ -200,6 +200,7 @@ pub fn tx_params_wrapper(tx_type: TxType) -> Result<TxParams, Error> {
         tx_type,
         is_operator,
         use_upstream_url,
+        None,
     )
 }
 
@@ -213,6 +214,7 @@ pub fn tx_params(
     tx_type: TxType,
     is_operator: bool,
     use_upstream_url: bool,
+    wallet_opt: Option<&WalletLibrary>,
 ) -> Result<TxParams, Error> {
     let url = if url_opt.is_some() {
         url_opt.unwrap()
@@ -233,7 +235,7 @@ pub fn tx_params(
         } else {
             // Get from 0L.toml e.g. ~/.0L/0L.toml, or use Profile::default()
             get_tx_params_from_toml(
-                config.clone(), tx_type, None, url, waypoint, swarm_path.as_ref().is_some()
+                config.clone(), tx_type, wallet_opt, url, waypoint, swarm_path.as_ref().is_some()
             ).unwrap()
         }
     };
@@ -379,6 +381,43 @@ pub fn get_tx_params_from_toml(
     Ok(tx_params)
 }
 
+
+/// Gets transaction params from the 0L project root.
+pub fn get_tx_params_from_keypair(
+    config: AppCfg,
+    tx_type: TxType,
+    keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey>,
+    wp: Option<Waypoint>,
+    use_upstream_url: bool,
+    is_swarm: bool,
+) -> Result<TxParams, Error> {
+
+    let waypoint = wp.unwrap_or_else(|| {
+        config.get_waypoint(None).unwrap()
+    });
+
+    let chain_id = if is_swarm {
+        ChainId::new(4)
+    } else {
+        // main net id
+        ChainId::new(1)
+    };
+
+    let tx_params = TxParams {
+        auth_key: config.profile.auth_key,
+        signer_address: config.profile.account,
+        owner_address: config.profile.account,
+        url: config.what_url(use_upstream_url),
+        waypoint,
+        keypair,
+        tx_cost: config.tx_configs.get_cost(tx_type),
+        chain_id,
+    };
+
+    Ok(tx_params)
+}
+
+
 /// Wait for the response from the diem RPC.
 pub fn wait_for_tx(
     signer_address: AccountAddress,
@@ -390,11 +429,11 @@ pub fn wait_for_tx(
         signer_address, sequence_number
     );
 
-    const MAX_ITERATIONS: u8 = 60;
+    const MAX_ITERATIONS: u8 = 120;
 
     let mut iter = 0;    
     loop {
-        thread::sleep(time::Duration::from_millis(1_000));
+        thread::sleep(time::Duration::from_millis(3_000));
         // prevent all the logging the client does while
         // it loops through the query.
         stdout().flush().unwrap();

@@ -4,13 +4,13 @@
 use cli::{diem_client::DiemClient};
 use ol_types::block::Block;
 use txs::submit_tx::{TxParams, eval_tx_status};
-use std::{fs::File, path::PathBuf};
+use std::{fs::File, path::PathBuf, thread, time};
 use ol_types::config::AppCfg;
 use crate::commit_proof::commit_proof_tx;
 use std::io::BufReader;
 use crate::block::parse_block_height;
 use anyhow::{bail, Result, Error};
-use diem_json_rpc_types::views::{MinerStateResourceView};
+use diem_json_rpc_types::views::{TowerStateResourceView};
 
 /// Submit a backlog of blocks that may have been mined while network is offline. 
 /// Likely not more than 1. 
@@ -43,7 +43,13 @@ pub fn process_backlog(
                 let view = commit_proof_tx(
                     &tx_params, block.preimage, block.proof, is_operator
                 )?;
-                eval_tx_status(view)?;
+                match eval_tx_status(view) {
+                    Ok(_) => {},
+                    Err(e) => {
+                      println!("WARN: could not fetch TX status, continuing to next block in backlog after 30 seconds. Message: {:?} ", e);
+                      thread::sleep(time::Duration::from_millis(30_000));
+                    },
+                };
                 i = i + 1;
             }
         }
@@ -52,7 +58,7 @@ pub fn process_backlog(
 }
 
 /// returns remote node state given tx_params
-pub fn get_remote_state(tx_params: &TxParams) -> Result<MinerStateResourceView, Error> {
+pub fn get_remote_state(tx_params: &TxParams) -> Result<TowerStateResourceView, Error> {
     let client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
     println!("Fetching remote tower height: {}, {}", 
         tx_params.url.clone(), tx_params.owner_address.clone()

@@ -142,7 +142,7 @@ impl AppCfg {
     ) -> AppCfg {
         // TODO: Check if configs exist and warn on overwrite.
         let mut default_config = AppCfg::default();
-        default_config.profile.auth_key = authkey.to_string();
+        default_config.profile.auth_key = authkey;
         default_config.profile.account = account;
 
         // Get statement which goes into genesis block
@@ -163,7 +163,7 @@ impl AppCfg {
             // let source_path = what_source();
             default_config.workspace.source_path = source_path.clone();
             default_config.workspace.stdlib_bin_path = Some(
-                source_path.as_ref().unwrap().join("language/stdlib/staged/stdlib.mv")
+                source_path.as_ref().unwrap().join("language/diem-framework/staged/stdlib.mv")
             );
         }
 
@@ -332,7 +332,7 @@ pub struct Workspace {
     #[serde(default = "default_db_path")]
     pub db_path: PathBuf,
     /// Path to which stdlib binaries for upgrades get built typically 
-    /// /language/stdlib/staged/stdlib.mv
+    /// /language/diem-framework/staged/stdlib.mv
     pub stdlib_bin_path: Option<PathBuf>,
 }
 
@@ -385,7 +385,7 @@ pub struct Profile {
     pub account: AccountAddress,
 
     /// Miner Authorization Key for 0L Blockchain. Note: not the same as public key, nor account.
-    pub auth_key: String,
+    pub auth_key: AuthenticationKey,
 
     /// An opportunity for the Miner to write a message on their genesis block.
     pub statement: String,
@@ -403,8 +403,8 @@ pub struct Profile {
 impl Default for Profile {
     fn default() -> Self {
         Self {
-            auth_key: "".to_owned(),
             account: AccountAddress::from_hex_literal("0x0").unwrap(),
+            auth_key: AuthenticationKey::from_str("0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
             statement: "Protests rage across the nation".to_owned(),
             ip: "0.0.0.0".parse().unwrap(),
             default_node: Some("http://localhost:8080".parse().expect("parse url")),

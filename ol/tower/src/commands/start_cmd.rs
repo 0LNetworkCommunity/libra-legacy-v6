@@ -71,8 +71,9 @@ impl Runnable for StartCmd {
             TxType::Miner,
             is_operator,
             use_upstream_url,
+            None,
         ).expect("could not get tx parameters");
-        dbg!(&tx_params);
+
         // Check for, and submit backlog proofs.
         if !self.skip_backlog {
             // TODO: remove is_operator from signature, since tx_params has it.

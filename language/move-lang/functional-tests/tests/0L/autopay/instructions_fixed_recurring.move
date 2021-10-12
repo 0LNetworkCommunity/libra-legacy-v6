@@ -25,16 +25,16 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-  use 0x1::AutoPay2;
+  use 0x1::AutoPay;
   use 0x1::Signer;
   fun main(sender: signer) {
     let sender = &sender;
-    AutoPay2::enable_autopay(sender);
-    assert(AutoPay2::is_enabled(Signer::address_of(sender)), 0);
+    AutoPay::enable_autopay(sender);
+    assert(AutoPay::is_enabled(Signer::address_of(sender)), 0);
     
-    AutoPay2::create_instruction(sender, 1, 2, @{{carol}}, 2, 200);
+    AutoPay::create_instruction(sender, 1, 2, @{{carol}}, 2, 200);
 
-    let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(
+    let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(
       Signer::address_of(sender), 1
     );
     assert(type == 2, 1);

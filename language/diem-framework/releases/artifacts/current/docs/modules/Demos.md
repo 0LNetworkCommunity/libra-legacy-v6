@@ -93,6 +93,20 @@
 
 </details>
 
+<details>
+<summary>Specification</summary>
+
+
+
+<pre><code><b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+<b>let</b> init_size = 0;
+<b>ensures</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(<b>global</b>&lt;<a href="Demos.md#0x1_PersistenceDemo_State">State</a>&gt;(addr).hist) == init_size;
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_PersistenceDemo_add_stuff"></a>
 
 ## Function `add_stuff`
@@ -113,7 +127,7 @@
 
   // Resource Struct state is always "borrowed" and "moved" and generally
   // cannot be copied. A <b>struct</b> can be mutably borrowed, <b>if</b> it is written <b>to</b>,
-  // useing `borrow_global_mut`. Note the Type <a href="Demos.md#0x1_PersistenceDemo_State">State</a>
+  // using `borrow_global_mut`. Note the Type <a href="Demos.md#0x1_PersistenceDemo_State">State</a>
   <b>let</b> st = borrow_global_mut&lt;<a href="Demos.md#0x1_PersistenceDemo_State">State</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender));
   // the `&` <b>as</b> in Rust makes the assignment <b>to</b> a borrowed value. Each
   // <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector">Vector</a> operation below <b>with</b> <b>use</b> a st.hist and <b>return</b> it before the

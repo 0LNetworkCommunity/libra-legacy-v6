@@ -3,14 +3,14 @@
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::MinerState;
+    use 0x1::TowerState;
 
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
-        MinerState::test_helper_mock_mining(&sender, 0);
-        assert(MinerState::get_count_in_epoch(@{{alice}}) == 0, 7357300101011000);
+        TowerState::test_helper_mock_mining(&sender, 0);
+        assert(TowerState::get_count_in_epoch(@{{alice}}) == 0, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -25,7 +25,7 @@ script {
     
     fun main(sender: signer) {
         // todo: change name to Mock epochs
-        // MinerState::test_helper_set_epochs(sender, 5);
+        // TowerState::test_helper_set_epochs(sender, 5);
         let voters = Vector::singleton<address>(@{{alice}});
         let i = 1;
         while (i < 16) {
