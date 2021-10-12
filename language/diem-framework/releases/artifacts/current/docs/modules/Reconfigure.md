@@ -27,7 +27,7 @@
 <b>use</b> <a href="NodeWeight.md#0x1_NodeWeight">0x1::NodeWeight</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="Subsidy.md#0x1_Subsidy">0x1::Subsidy</a>;
-<b>use</b> <a href="MinerState.md#0x1_TowerState">0x1::TowerState</a>;
+<b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
@@ -110,7 +110,7 @@
     // Note: need <b>to</b> check, there may be new validators which have not mined yet.
 
     print(&1800200);
-    <b>let</b> miners = <a href="MinerState.md#0x1_TowerState_get_miner_list">TowerState::get_miner_list</a>();
+    <b>let</b> miners = <a href="TowerState.md#0x1_TowerState_get_miner_list">TowerState::get_miner_list</a>();
     print(&1800201);
     // fullnode subsidy is a fraction of the total subsidy available <b>to</b> validators.
     <b>let</b> proof_price = <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_get_proof_price">FullnodeSubsidy::get_proof_price</a>(nominal_subsidy_per_node);
@@ -129,8 +129,8 @@
 
         // TODO: this call is repeated in propose_new_set.
         // Not sure <b>if</b> the performance hit at epoch boundary is worth the refactor.
-        <b>if</b> (<a href="MinerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr)) {
-          <b>let</b> count = <a href="MinerState.md#0x1_TowerState_get_count_in_epoch">TowerState::get_count_in_epoch</a>(addr);
+        <b>if</b> (<a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr)) {
+          <b>let</b> count = <a href="TowerState.md#0x1_TowerState_get_count_in_epoch">TowerState::get_count_in_epoch</a>(addr);
           // print(&count);
 
           <b>let</b> miner_subsidy = count * proof_price;
@@ -236,7 +236,7 @@
         // print(&03251);
 
         <b>let</b> addr = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&top_accounts, i);
-        <b>let</b> mined_last_epoch = <a href="MinerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr);
+        <b>let</b> mined_last_epoch = <a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr);
         // print(&mined_last_epoch);
         // TODO: temporary until jail-refactor merge.
         <b>if</b> (
@@ -288,10 +288,10 @@
     // Reset <a href="Stats.md#0x1_Stats">Stats</a>
     <a href="Stats.md#0x1_Stats_reconfig">Stats::reconfig</a>(vm, &proposed_set);
 
-    // Migrate <a href="MinerState.md#0x1_TowerState">TowerState</a> list from elegible: in case there is no minerlist
+    // Migrate <a href="TowerState.md#0x1_TowerState">TowerState</a> list from elegible: in case there is no minerlist
     // <b>struct</b>, <b>use</b> eligible for migrate_eligible_validators
     <b>let</b> eligible = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm);
-    <a href="MinerState.md#0x1_TowerState_reconfig">TowerState::reconfig</a>(vm, &eligible);
+    <a href="TowerState.md#0x1_TowerState_reconfig">TowerState::reconfig</a>(vm, &eligible);
 
     // Reconfigure the network
     <a href="DiemSystem.md#0x1_DiemSystem_bulk_update_validators">DiemSystem::bulk_update_validators</a>(vm, proposed_set);

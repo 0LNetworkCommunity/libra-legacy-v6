@@ -15,7 +15,7 @@
 <pre><code><b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
-<b>use</b> <a href="MinerState.md#0x1_TowerState">0x1::TowerState</a>;
+<b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
@@ -109,7 +109,7 @@
     <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(&validator);
     // <b>if</b> is above threshold <b>continue</b>, or raise error.
     <b>assert</b>(
-        <a href="MinerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr),
+        <a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr),
         <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="ol_validator.md#0x1_ValidatorScripts_NOT_ABOVE_THRESH_JOIN">NOT_ABOVE_THRESH_JOIN</a>)
     );
     // <b>if</b> is not in universe, add back
@@ -179,7 +179,7 @@
     <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(validator);
     // <b>if</b> is above threshold <b>continue</b>, or raise error.
     <b>assert</b>(
-        <a href="MinerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr),
+        <a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr),
         <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="ol_validator.md#0x1_ValidatorScripts_NOT_ABOVE_THRESH_ADD">NOT_ABOVE_THRESH_ADD</a>)
     );
     // <b>if</b> is not in universe, add back

@@ -33,22 +33,9 @@ address 0x1 {
 
       assert(Signer::address_of(account) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(140101));
 
-      // let eligible_validators = Vector::empty<address>();
-
       //Get all validators from Validator Universe and then find the eligible validators 
       let eligible_validators = ValidatorUniverse::get_eligible_validators(account);
-      // let val_uni_length = Vector::length<address>(&validators_universe);
-     
-      // let k = 0;
-      // while(k < val_uni_length){
-      //   let addr = *Vector::borrow<address>(&validators_universe, k);
 
-      //   // consensus case 1 and 2, allow inclusion into the next validator set.
-      //   if (Cases::get_case(addr) == 1 || Cases::get_case(addr) == 2){
-      //     Vector::push_back<address>(&mut eligible_validators, addr)
-      //   };
-      //   k = k + 1;
-      // };
 
       let length = Vector::length<address>(&eligible_validators);
 

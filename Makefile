@@ -262,14 +262,6 @@ verify-gen:
 	--validator-backend ${LOCAL} \
 	--genesis-path ${DATA_PATH}/genesis.blob
 
-
-#### GENESIS  ####
-# build-gen:
-# 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- genesis \
-# 	--chain-id ${CHAIN_ID} \
-# 	--shared-backend ${REMOTE} \
-# 	--path ${DATA_PATH}/genesis.blob
-
 genesis:
 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- files \
 	--chain-id ${CHAIN_ID} \
