@@ -37,7 +37,7 @@
 <pre><code><b>public</b> <b>fun</b> <a href="NodeWeight.md#0x1_NodeWeight_proof_of_weight">proof_of_weight</a> (node_addr: address): u64 {
   // Calculate the weight/voting power for the next round.
   // TODO: This assumes that validator passed the validation threshold this epoch, perhaps double check here.
-  <a href="TowerState.md#0x1_TowerState_get_epochs_mining">TowerState::get_epochs_mining</a>(node_addr)
+  <a href="TowerState.md#0x1_TowerState_get_tower_height">TowerState::get_tower_height</a>(node_addr)
 }
 </code></pre>
 

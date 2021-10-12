@@ -20,11 +20,11 @@ address 0x1 {
     public fun proof_of_weight (node_addr: address): u64 {
       // Calculate the weight/voting power for the next round.
       // TODO: This assumes that validator passed the validation threshold this epoch, perhaps double check here.
-      TowerState::get_epochs_mining(node_addr)
+      TowerState::get_tower_height(node_addr)
     }
 
     // Recommend a new validator set. This uses a Proof of Weight calculation in
-    // ValidatorUniverse::get_validator_weight. Every miner that has performed a VDF proof-of-work offline
+
     // is now eligible for the second step of the proof of work of running a validator.
     // the validator weight will determine the subsidy and transaction fees.
     // Function code: 01 Prefix: 140101

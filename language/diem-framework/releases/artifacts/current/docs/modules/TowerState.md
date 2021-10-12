@@ -39,6 +39,7 @@ TODO
 -  [Function `get_miner_latest_epoch`](#0x1_TowerState_get_miner_latest_epoch)
 -  [Function `reset_rate_limit`](#0x1_TowerState_reset_rate_limit)
 -  [Function `get_miner_list`](#0x1_TowerState_get_miner_list)
+-  [Function `get_tower_height`](#0x1_TowerState_get_tower_height)
 -  [Function `get_epochs_mining`](#0x1_TowerState_get_epochs_mining)
 -  [Function `get_count_in_epoch`](#0x1_TowerState_get_count_in_epoch)
 -  [Function `can_create_val_account`](#0x1_TowerState_can_create_val_account)
@@ -593,7 +594,6 @@ adds <code>tower</code> to list of towers
 
 
   <a href="TowerState.md#0x1_TowerState_init_miner_state">init_miner_state</a>(miner_sig, &challenge, &solution);
-  // print(&10002);
   // TODO: Move this elsewhere?
   // Initialize stats for first validator set from rust genesis.
   <b>let</b> node_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig);
@@ -881,16 +881,16 @@ Checks to see if miner submitted enough proofs to be considered compliant
     });
   };
 
-  <b>let</b> minerlist_state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>&gt;(@0x0);
+  <b>let</b> towerlist_state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>&gt;(@0x0);
 
   // Get list of validators from <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a>
   // <b>let</b> eligible_validators = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm);
 
   // Iterate through validators and call update_metrics for each validator that had proofs this epoch
-  <b>let</b> size = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(& *&minerlist_state.list); //TODO: These references are weird
+  <b>let</b> size = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(& *&towerlist_state.list); //TODO: These references are weird
   <b>let</b> i = 0;
   <b>while</b> (i &lt; size) {
-      <b>let</b> val = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&minerlist_state.list, i);
+      <b>let</b> val = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&towerlist_state.list, i);
 
       // For testing: don't call update_metrics unless there is account state for the address.
       <b>if</b> (<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(*val)){
@@ -900,8 +900,7 @@ Checks to see if miner submitted enough proofs to be considered compliant
   };
 
   //reset miner list
-  minerlist_state.list = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
-
+  towerlist_state.list = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
 }
 </code></pre>
 
@@ -1069,6 +1068,33 @@ Public Getters ///
     <b>return</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;()
   };
   *&borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>&gt;(@0x0).list
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_get_tower_height"></a>
+
+## Function `get_tower_height`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_tower_height">get_tower_height</a>(node_addr: address): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_tower_height">get_tower_height</a>(node_addr: address): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
+  <b>if</b> (<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(node_addr)) {
+    <b>return</b> borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(node_addr).verified_tower_height
+  };
+  0
 }
 </code></pre>
 

@@ -305,7 +305,7 @@ Get the constants for the current network
       subsidy_ceiling_gas: 296 * coin_scale,
       vdf_difficulty: 100,
       epoch_mining_thres_lower: 1,
-      epoch_mining_thres_upper: 500,
+      epoch_mining_thres_upper: 1000,
       epoch_slow_wallet_unlock: 10,
     }
   };
@@ -317,7 +317,7 @@ Get the constants for the current network
       subsidy_ceiling_gas: 8640000 * coin_scale,
       vdf_difficulty: 5000000,
       epoch_mining_thres_lower: 1,
-      epoch_mining_thres_upper: 500,
+      epoch_mining_thres_upper: 1000,
       epoch_slow_wallet_unlock: 10000000,
     }
   } <b>else</b> {
@@ -332,7 +332,7 @@ Get the constants for the current network
       subsidy_ceiling_gas: 8640000 * coin_scale, // subsidy amount assumes 24 hour epoch lengths. Also needs <b>to</b> be adjusted for coin_scale the onchain representation of human readable value.
       vdf_difficulty: 5000000, //10 mins on macbook pro 2.5 ghz quadcore
       epoch_mining_thres_lower: 20,
-      epoch_mining_thres_upper: 500,
+      epoch_mining_thres_upper: 1000,
       epoch_slow_wallet_unlock: 1000 * coin_scale, // approx 10 years for largest accounts in genesis.
     }
   }
