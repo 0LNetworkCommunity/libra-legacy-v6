@@ -16,7 +16,6 @@
 <b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
 <b>use</b> <a href="Burn.md#0x1_Burn">0x1::Burn</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
@@ -50,12 +49,10 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) {
-    print(&1800100);
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
 
     <b>let</b> height_start = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>(vm);
 
-    print(&1800101);
     <b>let</b> (outgoing_compliant_set, _) =
         <a href="DiemSystem.md#0x1_DiemSystem_get_fee_ratio">DiemSystem::get_fee_ratio</a>(vm, height_start, height_now);
 
@@ -64,22 +61,17 @@
     <b>let</b> (subsidy_units, nominal_subsidy_per) =
         <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, compliant_nodes_count);
 
-    print(&1800102);
     <a href="Reconfigure.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm, nominal_subsidy_per);
 
-    print(&1800103);
     <a href="Reconfigure.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm, subsidy_units, outgoing_compliant_set);
 
-    print(&1800104);
     <b>let</b> proposed_set = <a href="Reconfigure.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm, height_start, height_now);
 
-    print(&1800105);
     // Update all slow wallet limits
     <b>if</b> (<a href="DiemConfig.md#0x1_DiemConfig_check_transfer_enabled">DiemConfig::check_transfer_enabled</a>()) {
         <a href="DiemAccount.md#0x1_DiemAccount_slow_wallet_epoch_drip">DiemAccount::slow_wallet_epoch_drip</a>(vm, <a href="Globals.md#0x1_Globals_get_unlock">Globals::get_unlock</a>());
         // update_validator_withdrawal_limit(vm);
     };
-    print(&1800106);
     <a href="Reconfigure.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, proposed_set, height_now)
 }
 </code></pre>
@@ -108,24 +100,18 @@
     // <b>loop</b> through validators and pay full node subsidies.
     // Should happen before transactionfees get distributed.
     // Note: need <b>to</b> check, there may be new validators which have not mined yet.
-
-    print(&1800200);
     <b>let</b> miners = <a href="TowerState.md#0x1_TowerState_get_miner_list">TowerState::get_miner_list</a>();
-    print(&1800201);
     // fullnode subsidy is a fraction of the total subsidy available <b>to</b> validators.
     <b>let</b> proof_price = <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_get_proof_price">FullnodeSubsidy::get_proof_price</a>(nominal_subsidy_per_node);
 
     <b>let</b> k = 0;
     // Distribute mining subsidy <b>to</b> fullnodes
-    print(&1800202);
     <b>while</b> (k &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&miners)) {
         <b>let</b> addr = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&miners, k);
-        print(&1800203);
         <b>if</b> (<a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(addr)) { // skip validators
           k = k + 1;
           <b>continue</b>
         };
-        print(&1800204);
 
         // TODO: this call is repeated in propose_new_set.
         // Not sure <b>if</b> the performance hit at epoch boundary is worth the refactor.
@@ -134,7 +120,6 @@
           // print(&count);
 
           <b>let</b> miner_subsidy = count * proof_price;
-          print(&1800205);
           // print(&miner_subsidy);
           <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_distribute_fullnode_subsidy">FullnodeSubsidy::distribute_fullnode_subsidy</a>(vm, addr, miner_subsidy);
         };
