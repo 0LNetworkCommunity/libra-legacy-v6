@@ -20,11 +20,11 @@ address 0x1 {
     public fun proof_of_weight (node_addr: address): u64 {
       // Calculate the weight/voting power for the next round.
       // TODO: This assumes that validator passed the validation threshold this epoch, perhaps double check here.
-      TowerState::get_epochs_mining(node_addr)
+      TowerState::get_tower_height(node_addr)
     }
 
     // Recommend a new validator set. This uses a Proof of Weight calculation in
-    // ValidatorUniverse::get_validator_weight. Every miner that has performed a VDF proof-of-work offline
+
     // is now eligible for the second step of the proof of work of running a validator.
     // the validator weight will determine the subsidy and transaction fees.
     // Function code: 01 Prefix: 140101
@@ -33,22 +33,9 @@ address 0x1 {
 
       assert(Signer::address_of(account) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(140101));
 
-      // let eligible_validators = Vector::empty<address>();
-
       //Get all validators from Validator Universe and then find the eligible validators 
       let eligible_validators = ValidatorUniverse::get_eligible_validators(account);
-      // let val_uni_length = Vector::length<address>(&validators_universe);
-     
-      // let k = 0;
-      // while(k < val_uni_length){
-      //   let addr = *Vector::borrow<address>(&validators_universe, k);
 
-      //   // consensus case 1 and 2, allow inclusion into the next validator set.
-      //   if (Cases::get_case(addr) == 1 || Cases::get_case(addr) == 2){
-      //     Vector::push_back<address>(&mut eligible_validators, addr)
-      //   };
-      //   k = k + 1;
-      // };
 
       let length = Vector::length<address>(&eligible_validators);
 
