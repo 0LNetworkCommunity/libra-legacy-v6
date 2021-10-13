@@ -137,6 +137,12 @@ reset:
 backup:
 	cd ~ && rsync -av --exclude db/ --exclude logs/ ~/.0L ~/0L_backup_$(shell date +"%m-%d-%y")
 
+clear-prod-db:
+	@echo WIPING DB
+	rm -rf ${DATA_PATH}/db | true
+	@echo BACKING UP KEYSTORE FILE
+	mv ${DATA_PATH}/key_store.json ${DATA_PATH}/key_store.json.bak | true
+	
 #### GENESIS BACKEND SETUP ####
 init-backend: 
 	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
@@ -280,6 +286,7 @@ genesis:
 	--github-org ${REPO_ORG} \
   --layout-path ${DATA_PATH}/set_layout.toml
 
+	sha256sum ${DATA_PATH}/genesis.blob
 
 #### NODE MANAGEMENT ####
 start:
@@ -477,7 +484,17 @@ clean-tags:
 	git push origin --delete ${TAG}
 	git tag -d ${TAG}
 	
+nuke-testnet:
+	@echo WIPING EVERYTHING but keeping: github_token.txt, autopay_batch.json, set_layout.toml, /blocks/block_0.json
 
+	@if test -d ${DATA_PATH}; then \
+		cd ${DATA_PATH} && cp github_token.txt autopay_batch.json set_layout.toml blocks/block_0.json ~/; \
+		cd ${DATA_PATH} && rm -rf *; \
+		cd ~ && cp github_token.txt autopay_batch.json set_layout.toml ${DATA_PATH}; \
+		cd ${DATA_PATH} && mkdir blocks;\
+		cd ~ && cp block_0.json ${DATA_PATH}/blocks/; \
+	fi
+	
 
 ####### SWARM ########
 
@@ -532,17 +549,4 @@ fork-config:
 fork-start: 
 	rm -rf ~/.0L/db
 	cargo run -p libra-node -- --config ~/.0L/validator.node.yaml
-
-
-nuke-testnet:
-	@echo WIPING EVERYTHING but keeping: github_token.txt, autopay_batch.json, set_layout.toml, /blocks/block_0.json
-
-	@if test -d ${DATA_PATH}; then \
-		cd ${DATA_PATH} && cp github_token.txt autopay_batch.json set_layout.toml blocks/block_0.json ~/; \
-		cd ${DATA_PATH} && rm -rf *; \
-		cd ~ && cp github_token.txt autopay_batch.json set_layout.toml ${DATA_PATH}; \
-		cd ${DATA_PATH} && mkdir blocks;\
-		cd ~ && cp block_0.json ${DATA_PATH}/blocks/; \
-	fi
-	
 
