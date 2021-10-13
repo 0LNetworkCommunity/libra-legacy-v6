@@ -260,11 +260,19 @@ module TowerState {
     ) acquires TowerProofHistory, TowerList, TowerStats {
       let miner_history = borrow_global<TowerProofHistory>(miner_addr);
 
-      // return early if the miner is running too fast, no advantage to asics
-      assert(
-        miner_history.count_proofs_in_epoch < Globals::get_epoch_mining_thres_upper(), 
-        Errors::invalid_state(130106)
-      );
+      let epoch = DiemConfig::get_current_epoch();
+      if (epoch < 60) { // network is bootstrapping
+        assert(
+          miner_history.count_proofs_in_epoch < 1000, 
+          Errors::invalid_state(130106)
+        );
+      } else { // steady state, return early if a miner is running too fast, no advantage to asics
+        assert(
+          miner_history.count_proofs_in_epoch < Globals::get_epoch_mining_thres_upper(), 
+          Errors::invalid_state(130106)
+        );
+      };
+
 
       // If not genesis proof, check hash to ensure the proof continues the chain
       if (steady_state) {
