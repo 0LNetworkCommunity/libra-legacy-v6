@@ -133,8 +133,7 @@ mv-bin:
 reset:
 	onboard val --skip-mining --upstream-peer http://167.172.248.37/ --source-path ~/libra
 
-reset-safety:
-	jq -r '.["${ACC}-oper/safety_data"].value = { "epoch": 0, "last_voted_round": 0, "preferred_round": 0, "last_vote": null }' ${DATA_PATH}/key_store.json > ${DATA_PATH}/temp_key_store && mv ${DATA_PATH}/temp_key_store ${DATA_PATH}/key_store.json
+
 
 
 backup:
@@ -143,8 +142,10 @@ backup:
 clear-prod-db:
 	@echo WIPING DB
 	rm -rf ${DATA_PATH}/db | true
-	@echo BACKING UP KEYSTORE FILE
-	mv ${DATA_PATH}/key_store.json ${DATA_PATH}/key_store.json.bak | true
+
+reset-safety:
+	@echo CLEARING SAFETY RULES IN KEY_STORE.JSON
+	jq -r '.["${ACC}-oper/safety_data"].value = { "epoch": 0, "last_voted_round": 0, "preferred_round": 0, "last_vote": null }' ${DATA_PATH}/key_store.json > ${DATA_PATH}/temp_key_store && mv ${DATA_PATH}/temp_key_store ${DATA_PATH}/key_store.json
 	
 #### GENESIS BACKEND SETUP ####
 init-backend: 
