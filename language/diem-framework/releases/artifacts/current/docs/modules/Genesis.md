@@ -14,7 +14,7 @@ when executing from a fresh state.
 
 
 <pre><code><b>use</b> <a href="AccountFreezing.md#0x1_AccountFreezing">0x1::AccountFreezing</a>;
-<b>use</b> <a href="AutoPay.md#0x1_AutoPay2">0x1::AutoPay2</a>;
+<b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
 <b>use</b> <a href="ChainId.md#0x1_ChainId">0x1::ChainId</a>;
 <b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
@@ -30,10 +30,9 @@ when executing from a fresh state.
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Hash.md#0x1_Hash">0x1::Hash</a>;
 <b>use</b> <a href="Migrations.md#0x1_Migrations">0x1::Migrations</a>;
-<b>use</b> <a href="MinerState.md#0x1_MinerState">0x1::MinerState</a>;
 <b>use</b> <a href="Oracle.md#0x1_Oracle">0x1::Oracle</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
-<b>use</b> <a href="Subsidy.md#0x1_Subsidy">0x1::Subsidy</a>;
+<b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
 <b>use</b> <a href="TransactionFee.md#0x1_TransactionFee">0x1::TransactionFee</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="Wallet.md#0x1_Wallet">0x1::Wallet</a>;
@@ -135,10 +134,10 @@ Initializes the Diem framework.
     // <a href="DiemAccount.md#0x1_DiemAccount_restore_key_rotation_capability">DiemAccount::restore_key_rotation_capability</a>(tc_rotate_key_cap);
     <a href="Stats.md#0x1_Stats_initialize">Stats::initialize</a>(dm_account);
     <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_initialize">ValidatorUniverse::initialize</a>(dm_account);
-    <a href="AutoPay.md#0x1_AutoPay2_initialize">AutoPay2::initialize</a>(dm_account);
-    <a href="Subsidy.md#0x1_Subsidy_init_fullnode_sub">Subsidy::init_fullnode_sub</a>(dm_account);
+    <a href="AutoPay.md#0x1_AutoPay_initialize">AutoPay::initialize</a>(dm_account);
+    // FullnodeSubsidy::init_fullnode_sub(dm_account);
     <a href="Oracle.md#0x1_Oracle_initialize">Oracle::initialize</a>(dm_account);
-    <a href="MinerState.md#0x1_MinerState_init_list">MinerState::init_list</a>(dm_account);
+    <a href="TowerState.md#0x1_TowerState_init_miner_list_and_stats">TowerState::init_miner_list_and_stats</a>(dm_account);
     <a href="Wallet.md#0x1_Wallet_init">Wallet::init</a>(dm_account);
     <a href="DiemAccount.md#0x1_DiemAccount_vm_init_slow">DiemAccount::vm_init_slow</a>(dm_account);
     <a href="Migrations.md#0x1_Migrations_init">Migrations::init</a>(dm_account);

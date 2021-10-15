@@ -1435,7 +1435,7 @@ mod tests {
 
 //////// 0L ////////
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct MinerStateResourceView {
+pub struct TowerStateResourceView {
     pub previous_proof_hash: BytesView,
     pub verified_tower_height: u64, // user's latest verified_tower_height
     pub latest_epoch_mining: u64,
@@ -1445,12 +1445,12 @@ pub struct MinerStateResourceView {
     pub epochs_since_last_account_creation: u64
 }
 
-impl TryFrom<AccountState> for MinerStateResourceView {
+impl TryFrom<AccountState> for TowerStateResourceView {
     type Error = Error;
 
-    fn try_from(state: AccountState) -> Result<MinerStateResourceView, Error> {
+    fn try_from(state: AccountState) -> Result<TowerStateResourceView, Error> {
         let m = state.get_miner_state()?.unwrap();
-        Ok(MinerStateResourceView {
+        Ok(TowerStateResourceView {
             previous_proof_hash: BytesView::from( m.previous_proof_hash),
             verified_tower_height: m.verified_tower_height, // user's latest verified_tower_height
             latest_epoch_mining: m.latest_epoch_mining,

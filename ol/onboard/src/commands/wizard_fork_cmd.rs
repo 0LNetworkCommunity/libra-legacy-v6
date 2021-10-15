@@ -62,7 +62,11 @@ impl Runnable for ForkCmd {
     fn run(&self) {
         // Note. `onboard` command DOES NOT READ CONFIGS FROM 0L.toml
 
-        status_info!("\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys, run the standalone keygen tool with 'ol keygen'.\n\nYour first 0L proof-of-work will be mined now. Expect this to take up to 15 minutes on modern CPUs.\n");
+        status_info!("\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys, run the standalone keygen tool with 'onboard keygen'.");
+
+        if !self.skip_mining {
+          println!("\nYour first 0L proof-of-work will be mined now. Expect this to take up to 15 minutes on modern CPUs.\n");
+        }
 
         let entry_args = entrypoint::get_args();
 
@@ -145,7 +149,7 @@ impl Runnable for ForkCmd {
 
         let home_dir = app_config.workspace.node_home.to_owned();
         // 0L convention is for the namespace of the operator to be appended by '-oper'
-        let namespace = app_config.profile.auth_key.clone() + "-oper";
+        let namespace = app_config.profile.auth_key.clone().to_string() + "-oper";
 
         // TODO: use node_config to get the seed peers and then write upstream_node vec in 0L.toml from that.
         ol_node_files::write_node_config_files(
@@ -168,7 +172,7 @@ impl Runnable for ForkCmd {
 
         if !self.skip_mining {
             // Mine Block
-            miner::block::write_genesis(&app_config);
+            tower::block::write_genesis(&app_config);
             status_ok!(
                 "\nGenesis proof complete",
                 "\n...........................\n"

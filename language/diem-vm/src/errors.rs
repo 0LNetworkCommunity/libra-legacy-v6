@@ -45,9 +45,6 @@ pub fn convert_prologue_error(
 ) -> Result<(), VMStatus> {
     let status = error.into_vm_status();
 
-    // This is needed for UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION failures
-    dbg!("Error", &status); /////// 0L /////////
-
     Err(match status {
         VMStatus::Executed => VMStatus::Executed,
         VMStatus::MoveAbort(location, code)
@@ -100,6 +97,8 @@ pub fn convert_prologue_error(
                         "[diem_vm] Unexpected prologue Move abort: {:?}::{:?} (Category: {:?} Reason: {:?})",
                         location, code, category, reason,
                     );
+
+                    // TODO: Improve error reporting for devs https://github.com/OLSF/libra/issues/760
                     return Err(VMStatus::Error(
                         StatusCode::UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION,
                     ));
@@ -126,9 +125,6 @@ pub fn convert_epilogue_error(
     log_context: &impl LogContext,
 ) -> Result<(), VMStatus> {
     let status = error.into_vm_status();
-
-    // This is needed for UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION failures
-    dbg!("Error", &status); /////// 0L /////////
 
     Err(match status {
         VMStatus::Executed => VMStatus::Executed,
@@ -179,9 +175,6 @@ pub fn expect_only_successful_execution(
 ) -> Result<(), VMStatus> {
     let status = error.into_vm_status();
 
-    // This is needed for UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION failures
-    dbg!("Error", &status); /////// 0L /////////
-
     Err(match status {
         VMStatus::Executed => VMStatus::Executed,
 
@@ -193,6 +186,8 @@ pub fn expect_only_successful_execution(
                 function_name,
                 status,
             );
+            // TODO: Improve error reporting for devs https://github.com/OLSF/libra/issues/760
+
             VMStatus::Error(StatusCode::UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION)
         }
     })

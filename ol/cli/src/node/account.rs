@@ -165,10 +165,11 @@ impl Node {
     /// Get account balance
     pub fn get_account_balance(&mut self, address: AccountAddress) -> Option<f64> {
         match self.client.get_account(&address) {
-            Ok(account_view) => Some(get_balance(account_view.unwrap())),
+            Ok(Some(account_view)) => Some(get_balance(account_view)),
+            Ok(None) => None,
             Err(_) => None
         }
-    }    
+    }
 
     /// Return a full Move-annotated account resource struct
     pub fn get_annotate_account_blob(

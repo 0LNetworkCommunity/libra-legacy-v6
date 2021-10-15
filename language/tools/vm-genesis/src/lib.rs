@@ -169,15 +169,6 @@ pub fn encode_genesis_change_set(
 
     reconfigure(&mut session, &log_context);
 
-    //////// 0L ////////
-    // if [NamedChain::TESTNET, NamedChain::DEVNET, NamedChain::TESTING]
-    //     .iter()
-    //     .any(|test_chain_id| test_chain_id.id() == chain_id.id())
-    // {
-    //     create_and_initialize_testnet_minting(
-    //         &mut session, &log_context, &treasury_compliance_key.unwrap()   //////// 0L ////////
-    //     );
-    // }
 
     let (mut changeset1, mut events1) = session.finish().unwrap();
 
@@ -547,7 +538,7 @@ fn create_and_initialize_owners_operators(
         exec_function(
             session,
             log_context,
-            "MinerState",
+            "TowerState",
             "genesis_helper",
             vec![],
             serialize_values(&vec![
@@ -595,15 +586,6 @@ fn create_and_initialize_owners_operators(
                 MoveValue::Signer(diem_root_address),
                 MoveValue::Signer(owner_address),
             ]),
-        );
-
-        exec_function(
-            session,
-            log_context,
-            "FullnodeState",
-            "init",
-            vec![],
-            serialize_values(&vec![MoveValue::Signer(owner_address)]),
         );
     }
 
@@ -654,7 +636,7 @@ fn create_and_initialize_owners_operators(
     {
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
-        // let owner_address = diem_config::utils::validator_owner_account_from_name(owner_name);
+
         exec_function(
             session,
             log_context,
@@ -667,19 +649,17 @@ fn create_and_initialize_owners_operators(
             ]),
         );
 
-        // give the operator balance to be able to send txs for owner, e.g. tower-builder
-        // exec_function(
-        //     session,
-        //     log_context,
-        //     "DiemAccount",
-        //     "genesis_fund_operator",
-        //     vec![],
-        //     serialize_values(&vec![
-        //         MoveValue::Signer(diem_root_address),
-        //         MoveValue::Signer(owner_address),
-        //         MoveValue::Address(*operator_account),
-        //     ]),
-        // );
+        // enable oracle upgrade delegation for all genesis nodes.
+        exec_function(
+            session,
+            log_context,
+            "Oracle",
+            "enable_delegation",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(owner_address),
+            ]),
+        );
     }
 }
 
@@ -713,6 +693,8 @@ pub struct OperRecover {
 }
 
 //////// 0L ////////
+/// TODO: recovery mode is WIP.
+/// 
 /// Creates and initializes each validator owner and validator operator. This method creates all
 /// the required accounts, sets the validator operators for each validator owner, and sets the
 /// validator config on-chain.
@@ -732,13 +714,7 @@ fn recovery_owners_operators(
     println!("0 ======== Create Owner Accounts");
     for i in val_assignments {
         println!("account: {:?}", i.val_account);
-        // TODO: Remove. Temporary Authkey for genesis, because accounts are being created from human names.
-        // let staged_owner_auth_key =
-        //     AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
-        // let owner_address = staged_owner_auth_key.derived_address();
-        // dbg!(owner_address);
-        // let staged_owner_auth_key = diem_config::utils::default_validator_owner_auth_key_from_name(owner_name);
-        //TODO: why does this need to be derived from human name?
+        // TODO: why does this need to be derived from human name?
         // let owner_address = staged_owner_auth_key.derived_address();
         let create_owner_script =
             transaction_builder::encode_create_validator_account_script_function(
@@ -755,39 +731,19 @@ fn recovery_owners_operators(
             &create_owner_script,
         );
 
-        // If there is a key, make it the auth key, otherwise use a zero auth key.
-        // let real_owner_auth_key = if let Some(owner_key) = owner_key {
-        //     AuthenticationKey::ed25519(owner_key).to_vec()
-        // } else {
-        //     ZERO_AUTH_KEY.to_vec() // TODO: is this used for tests?
-        // };
-
-        // // Rotate auth key.
-        // exec_script_function(
+        println!("======== recover miner state");
+        // TODO: Where's this function recover_miner_state. Lost from v4 to v5?
+        // exec_function(
         //     session,
         //     log_context,
-        //     owner_address.clone(),
-        //     &transaction_builder::encode_rotate_authentication_key_script_function(
-        //         real_owner_auth_key,
-        //     )
-        //     .into_script_function(),
+        //     "TowerState",
+        //     "recover_miner_state", 
+        //     vec![],
+        //     serialize_values(&vec![
+        //         MoveValue::Signer(diem_root_address),
+        //         MoveValue::Signer(i.val_account),
+        //     ]),
         // );
-
-        println!("======== recover miner state");
-        // // Submit mining proof
-        // let preimage = hex::decode(&genesis_proof.preimage).unwrap();
-        // let proof = hex::decode(&genesis_proof.proof).unwrap();
-        exec_function(
-            session,
-            log_context,
-            "MinerState",
-            "recover_miner_state",
-            vec![],
-            serialize_values(&vec![
-                MoveValue::Signer(diem_root_address),
-                MoveValue::Signer(i.val_account),
-            ]),
-        );
 
         exec_function(
             session,
@@ -800,22 +756,11 @@ fn recovery_owners_operators(
                 MoveValue::Signer(i.val_account),
             ]),
         );
-
-        exec_function(
-            session,
-            log_context,
-            "FullnodeState",
-            "init",
-            vec![],
-            serialize_values(&vec![MoveValue::Signer(i.val_account)]),
-        );
     }
 
     println!("1 ======== Create OP Accounts");
     // Create accounts for each validator operator
     for i in operator_registrations {
-        // let operator_auth_key = AuthenticationKey::ed25519(&operator_key);
-        // let operator_account = account_address::from_public_key(operator_key);
         let create_operator_script =
             transaction_builder::encode_create_validator_operator_account_script_function(
                 0,
@@ -1078,7 +1023,7 @@ pub fn generate_test_genesis(
 }
 
 //////// 0L ////////
-/// Genesis subsidy to miners
+/// Genesis subsidy to genesis set
 fn distribute_genesis_subsidy(
     session: &mut Session<StateViewCache>,
     log_context: &impl LogContext,
@@ -1147,7 +1092,6 @@ pub struct GenesisMiningProof {
 impl Default for GenesisMiningProof {
     fn default() -> GenesisMiningProof {
         // These use "alice" fixtures from ../fixtures and used elsewhere in the project, in both easy(stage) and hard(Prod) mode.
-        //TODO: These fixtures should be moved to /fixtures/miner_fixtures.rs
 
         let easy_preimage = "87515d94a244235a1433d7117bc0cb154c613c2f4b1e67ca8d98a542ee3f59f5000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000304c20746573746e65746400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000050726f74657374732072616765206163726f737320746865206e6174696f6e".to_owned();
 

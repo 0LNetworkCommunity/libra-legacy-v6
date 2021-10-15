@@ -7,20 +7,20 @@
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::MinerState;
+    use 0x1::TowerState;
     use 0x1::TestFixtures;
 
     fun main(sender: signer) {
         // Testing that state can be initialized, and a proof submitted as if it were genesis.
         // buildign block for other tests.
-        MinerState::test_helper(
+        TowerState::test_helper_init_miner(
             &sender,
             100u64, // difficulty
             TestFixtures::easy_chal(),
             TestFixtures::easy_sol()
         );
 
-        let height = MinerState::test_helper_get_height(@{{bob}});
+        let height = TowerState::test_helper_get_height(@{{bob}});
         assert(height==0, 01);
     }
 }

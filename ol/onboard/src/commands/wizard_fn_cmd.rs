@@ -52,7 +52,7 @@ impl Runnable for FnWizardCmd {
 
         let home_dir = cfg.workspace.node_home.to_owned();
         // 0L convention is for the namespace of the operator to be appended by '-oper'
-        let namespace = cfg.profile.auth_key.clone() + "-oper";
+        let namespace = cfg.profile.auth_key.clone().to_string() + "-oper";
         
         ol_node_files::write_node_config_files(
             home_dir.clone(),

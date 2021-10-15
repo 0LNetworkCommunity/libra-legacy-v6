@@ -8,9 +8,9 @@ module DiemBlock {
     use 0x1::DiemSystem;
     use 0x1::DiemTimestamp;
     //////// 0L ////////
-    use 0x1::Reconfigure;
+    use 0x1::EpochBoundary;
     use 0x1::Stats;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
     use 0x1::Epoch;
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
@@ -89,13 +89,13 @@ module DiemBlock {
         Stats::process_set_votes(&vm, &previous_block_votes);
         Stats::inc_prop(&vm, *&proposer);    
 
-        if (AutoPay2::tick(&vm)){
+        if (AutoPay::tick(&vm)){
             // print(&1);
-            //triggers autopay at beginning of each epoch 
-            //tick is reset at end of previous epoch
+            // triggers autopay at beginning of each epoch 
+            // tick is reset at end of previous epoch
             DiemAccount::process_escrow<GAS>(&vm);
             // print(&2);
-            AutoPay2::process_autopay(&vm);
+            AutoPay::process_autopay(&vm);
             // print(&3);
         };        
 
@@ -117,10 +117,10 @@ module DiemBlock {
         if (Epoch::epoch_finished()) {
           // Run migrations
           Migrations::init(&vm);
-          // TODO: We don't need to pass block height to ReconfigureOL. 
+          // TODO: We don't need to pass block height to EpochBoundaryOL. 
           // It should use the BlockMetadata. But there's a circular reference 
           // there when we try.
-          Reconfigure::reconfigure(&vm, get_current_block_height());
+          EpochBoundary::reconfigure(&vm, get_current_block_height());
         };        
     }
     spec block_prologue {

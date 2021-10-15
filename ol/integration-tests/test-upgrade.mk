@@ -48,7 +48,7 @@ start:
 	cd ${SOURCE_PATH} && cargo run -p diem-swarm -- --diem-node ${SOURCE_PATH}/target/debug/diem-node -c ${SWARM_TEMP} -n ${NUM_NODES} 2>&1 | tee ${LOG}&
 
 stop:
-	killall diem-swarm diem-node miner ol txs cli | true
+	killall diem-swarm diem-node tower ol txs cli | true
 
 prep:
 # save makefile outside of repo, since we'll need it across branches
@@ -75,11 +75,11 @@ init:
 	cp ${SWARM_TEMP}/0/0L.toml ${HOME}/.0L/0L.toml
 
 submit:
-	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-upgrade -f ${STDLIB_BIN_HOLDING}
+	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-upgrade -v -f ${STDLIB_BIN_HOLDING}
 
 submit-hash:
 	echo ${HASH}
-	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-upgrade-hash -h ${HASH}
+	cd ${SOURCE_PATH} && cargo run -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} oracle-upgrade -v -h ${HASH}
 
 query:
 	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} query --blockheight | grep -Eo [0-9]+ | tail -n1

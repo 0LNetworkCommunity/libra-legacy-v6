@@ -7,18 +7,18 @@
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::MinerState;
+    use 0x1::TowerState;
     use 0x1::NodeWeight;
     fun main(sender: signer) {
-        MinerState::test_helper_set_weight_vm(&sender, @{{alice}}, 10);
+        TowerState::test_helper_set_weight_vm(&sender, @{{alice}}, 10);
         assert(NodeWeight::proof_of_weight(@{{alice}}) == 10, 7357300101011088);
-        MinerState::test_helper_set_weight_vm(&sender, @{{bob}}, 10);
+        TowerState::test_helper_set_weight_vm(&sender, @{{bob}}, 10);
         assert(NodeWeight::proof_of_weight(@{{bob}}) == 10, 7357300101011088);
-        MinerState::test_helper_set_weight_vm(&sender, @{{carol}}, 10);
+        TowerState::test_helper_set_weight_vm(&sender, @{{carol}}, 10);
         assert(NodeWeight::proof_of_weight(@{{carol}}) == 10, 7357300101011088);
-        MinerState::test_helper_set_weight_vm(&sender, @{{dave}}, 31);
+        TowerState::test_helper_set_weight_vm(&sender, @{{dave}}, 31);
         assert(NodeWeight::proof_of_weight(@{{dave}}) == 31, 7357300101011088);
-        MinerState::test_helper_set_weight_vm(&sender, @{{eve}}, 31);
+        TowerState::test_helper_set_weight_vm(&sender, @{{eve}}, 31);
         assert(NodeWeight::proof_of_weight(@{{eve}}) == 31, 7357300101011088);
     }
 }
@@ -43,7 +43,7 @@ script {
       assert(e == @{{alice}}, 7357123401011000);
 
       assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-      assert(Oracle::test_check_upgrade() == false, 7357123401011001);
+      assert(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
   }
 }
 // check: EXECUTED
@@ -65,7 +65,7 @@ script {
       assert(e == @{{bob}}, 7357123401011000);
 
       assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-      assert(Oracle::test_check_upgrade() == false, 7357123401011001);
+      assert(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
   }
 }
 // check: EXECUTED
@@ -90,12 +90,12 @@ script {
       if (Oracle::upgrade_vote_type() == 0) {
           //One validator, one vote
           assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-          assert(Oracle::test_check_upgrade() == true, 7357123401011001);
+          assert(Oracle::test_helper_check_upgrade() == true, 7357123401011001);
       }
       else if (Oracle::upgrade_vote_type() == 1) {
           //Weighted vote based on mining
           assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-          assert(Oracle::test_check_upgrade() == false, 7357123401011001);
+          assert(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
       }
       else {
           //test must be upgraded for new vote type
@@ -123,12 +123,12 @@ script {
       if (Oracle::upgrade_vote_type() == 0) {
           //One validator, one vote
           assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-          assert(Oracle::test_check_upgrade() == true, 7357123401011001);
+          assert(Oracle::test_helper_check_upgrade() == true, 7357123401011001);
       }
       else if (Oracle::upgrade_vote_type() == 1) {
           //Weighted vote based on mining
           assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-          assert(Oracle::test_check_upgrade() == false, 7357123401011001);
+          assert(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
       }
       else {
           //test must be upgraded for new vote type
@@ -159,12 +159,12 @@ script {
       if (Oracle::upgrade_vote_type() == 0) {
           //One validator, one vote
           assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-          assert(Oracle::test_check_upgrade() == true, 7357123401011001);
+          assert(Oracle::test_helper_check_upgrade() == true, 7357123401011001);
       }
       else if (Oracle::upgrade_vote_type() == 1) {
           //Weighted vote based on mining
           assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-          assert(Oracle::test_check_upgrade() == true, 7357123401011001);
+          assert(Oracle::test_helper_check_upgrade() == true, 7357123401011001);
       }
       else {
           //test must be upgraded for new vote type

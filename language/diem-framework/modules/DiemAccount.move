@@ -36,9 +36,7 @@ module DiemAccount {
     //////// 0L ////////
     use 0x1::VDF;
     use 0x1::Globals;
-    use 0x1::MinerState;
-    // use 0x1::TrustedAccounts;
-    use 0x1::FullnodeState;
+    use 0x1::TowerState;
     use 0x1::Testnet::is_testnet;
     use 0x1::FIFO;
     use 0x1::FixedPoint32;
@@ -219,6 +217,7 @@ module DiemAccount {
 
     //////// 0L //////////
     const BOOTSTRAP_COIN_VALUE: u64 = 1000000;
+
     struct Escrow <Token> has store {
         to_account: address,
         escrow: Diem::Diem<Token>,
@@ -458,22 +457,25 @@ module DiemAccount {
     /////// 0L ////////
     // Function code: 01
     public fun create_user_account_with_proof(
+        sender: &signer,
         challenge: &vector<u8>,
         solution: &vector<u8>,
-    ):address acquires AccountOperationsCapability {
-        // Rate limit with vdf proof.
-        let valid = VDF::verify(
-            challenge,
-            &Globals::get_difficulty(),
-            solution
-        );
-        assert(valid, Errors::invalid_argument(120101));
+    ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount {
+             
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
         Roles::new_user_role_with_proof(&new_signer);
         Event::publish_generator(&new_signer);
         add_currencies_for_account<GAS>(&new_signer, false);
         make_account(new_signer, auth_key_prefix);
+
+        onboarding_gas_transfer<GAS>(sender, new_account_address);
+        // Init the miner state
+        // this verifies the VDF proof, which we use to rate limit account creation.
+        // account will not be created if this step fails.
+        let new_signer = create_signer(new_account_address);
+        TowerState::init_miner_state(&new_signer, challenge, solution);
+        // set_slow(&new_signer);
         new_account_address
     }
 
@@ -484,8 +486,7 @@ module DiemAccount {
 
     /////// 0L ////////
     // Permissions: PUBLIC, ANYONE, OPEN!
-    // This function has no permissions, it doesn't check the signer. 
-    // And it exceptionally is moving a resource to a different account than the signer.
+    // Warning: this function exceptionally is moving a resource to a different account than the signer.
     // DiemAccount is the only code in the VM which can place a resource in an account. 
     // As such the module and especially this function has an attack surface.
     // Function code:02
@@ -503,34 +504,49 @@ module DiemAccount {
     ):address acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWalletList { //////// 0L ////////
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
-        assert(MinerState::can_create_val_account(sender_addr), Errors::limit_exceeded(120102));
+        assert(TowerState::can_create_val_account(sender_addr), Errors::limit_exceeded(120102));
         // Check there's enough balance for bootstrapping both operator and validator account
         assert(
-            balance<GAS>(sender_addr) >= 2 * BOOTSTRAP_COIN_VALUE, 
+            balance<GAS>(sender_addr) > 2 * BOOTSTRAP_COIN_VALUE, 
             Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
         );
 
-        let valid = VDF::verify(
-            challenge,
-            &Globals::get_difficulty(),
-            solution
-        );
-        assert(valid, Errors::invalid_argument(120103));
+        // let valid = VDF::verify(
+        //     challenge,
+        //     &Globals::get_difficulty(),
+        //     solution
+        // );
+        // assert(valid, Errors::invalid_argument(120103));
 
         // Create Owner Account
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
-        // The dr_account account is verified to have the diem root role in 
-        // `Roles::new_validator_role`
-        Roles::new_validator_role_with_proof(&new_signer);
+
+        // if the new account exists, the function is meant to be upgrading the account.
+        if (exists_at(new_account_address)) {
+          return upgrade_validator_account_with_proof(
+            sender,
+            challenge,
+            solution,
+            ow_human_name,
+            op_address,
+            op_auth_key_prefix,
+            op_consensus_pubkey,
+            op_validator_network_addresses,
+            op_fullnode_network_addresses,
+            op_human_name,
+          )
+        };
+
+        // TODO: Perhaps this needs to be moved to the epoch boundary, so that it is only the VM which can escalate these privileges.
+        Roles::new_validator_role_with_proof(&new_signer, &create_signer(CoreAddresses::DIEM_ROOT_ADDRESS()));
         Event::publish_generator(&new_signer);
         ValidatorConfig::publish_with_proof(&new_signer, ow_human_name);
         add_currencies_for_account<GAS>(&new_signer, false);
 
-        // NOTE: VDF verification is being called twice!
-        MinerState::init_miner_state(&new_signer, challenge, solution);
-        // TODO: Should fullnode init happen here, or under MinerState::init?
-        FullnodeState::init(&new_signer);
+        // This also verifies the VDF proof, which we use to rate limit account creation.
+        TowerState::init_miner_state(&new_signer, challenge, solution);
+
         // Create OP Account
         let new_op_account = create_signer(op_address);
         Roles::new_validator_operator_role_with_proof(&new_op_account);
@@ -550,12 +566,14 @@ module DiemAccount {
 
         // User can join validator universe list, but will only join if 
         // the mining is above the threshold in the preceeding period.
-        ValidatorUniverse::add_self(&new_signer);        
-        
+        ValidatorUniverse::add_self(&new_signer);
+
         make_account(new_signer, auth_key_prefix);
         make_account(new_op_account, op_auth_key_prefix);
 
-        MinerState::reset_rate_limit(sender);
+        TowerState::reset_rate_limit(sender);
+
+
 
         // Transfer for owner
         onboarding_gas_transfer<GAS>(sender, new_account_address);
@@ -565,6 +583,111 @@ module DiemAccount {
         let new_signer = create_signer(new_account_address);
         set_slow(&new_signer);
 
+        new_account_address
+    }
+
+    use 0x1::Debug::print;
+
+    /////// 0L ////////
+    // Permissions: PUBLIC, ANYONE, OPEN!
+    // upgrades a regular account, to a validator account.
+    // Warning: this function exceptionally is moving a resource to a different account than the signer.
+    // DiemAccount is the only code in the VM which can place a resource in an account. 
+    // As such the module and especially this function has an attack surface.
+    // Function code:02
+    public fun upgrade_validator_account_with_proof(
+        sender: &signer,
+        challenge: &vector<u8>,
+        solution: &vector<u8>,
+        ow_human_name: vector<u8>,
+        op_address: address,
+        op_auth_key_prefix: vector<u8>,
+        op_consensus_pubkey: vector<u8>,
+        op_validator_network_addresses: vector<u8>,
+        op_fullnode_network_addresses: vector<u8>,
+        op_human_name: vector<u8>,
+    ):address acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWalletList { //////// 0L ////////
+    print(&500);
+        let sender_addr = Signer::address_of(sender);
+        // Rate limit spam accounts.
+        assert(TowerState::can_create_val_account(sender_addr), Errors::limit_exceeded(120103));
+        // Check there's enough balance for bootstrapping both operator and validator account
+        assert(
+            balance<GAS>(sender_addr) > 2 * BOOTSTRAP_COIN_VALUE, 
+            Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
+        );
+print(&501);
+        // Create Owner Account
+        let (new_account_address, _auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
+        let new_signer = create_signer(new_account_address);
+
+        assert(exists_at(new_account_address), Errors::not_published(EACCOUNT));
+        assert(TowerState::is_init(new_account_address), 120104);
+print(&502);
+        // verifies the VDF proof, since we are not calling TowerState init.
+        let valid = VDF::verify(
+            challenge,
+            &Globals::get_difficulty(),
+            solution
+        );
+        assert(valid, Errors::invalid_argument(120105));
+        
+print(&503);
+
+        // TODO: Perhaps this needs to be moved to the epoch boundary, so that it is only the VM which can escalate these privileges.
+        // Upgrade the user
+        Roles::upgrade_user_to_validator(&new_signer, &create_signer(CoreAddresses::DIEM_ROOT_ADDRESS()));
+        print(&504);
+        // Event::publish_generator(&new_signer);
+        print(&505);
+        ValidatorConfig::publish_with_proof(&new_signer, ow_human_name);
+
+        // currencies already added for owner account
+        // add_currencies_for_account<GAS>(&new_signer, false);
+
+        // checks the operator account has not been created yet.
+
+        // Create OP Account
+        let new_op_account = create_signer(op_address);
+        Roles::new_validator_operator_role_with_proof(&new_op_account);
+        Event::publish_generator(&new_op_account);
+        ValidatorOperatorConfig::publish_with_proof(&new_op_account, op_human_name);
+print(&506);
+        add_currencies_for_account<GAS>(&new_op_account, false);
+
+        // Link owner to OP
+        ValidatorConfig::set_operator(&new_signer, op_address);
+        // OP sends network info to Owner config"
+        ValidatorConfig::set_config(
+            &new_op_account, // signer
+            new_account_address,
+            op_consensus_pubkey,
+            op_validator_network_addresses,
+            op_fullnode_network_addresses
+        );
+print(&507);
+        // User can join validator universe list, but will only join if 
+        // the mining is above the threshold in the preceeding period.
+        ValidatorUniverse::add_self(&new_signer);        
+        
+        // no need to make the owner address.
+
+        // make_account(new_signer, auth_key_prefix);
+print(&508);
+        make_account(new_op_account, op_auth_key_prefix);
+print(&509);
+
+        TowerState::reset_rate_limit(sender);
+print(&510);
+        // the miner who is upgrading may have coins, but better safe...
+        // Transfer for owner
+        onboarding_gas_transfer<GAS>(sender, new_account_address);
+        // Transfer for operator as well
+        onboarding_gas_transfer<GAS>(sender, op_address);
+print(&510);
+        let new_signer = create_signer(new_account_address);
+        set_slow(&new_signer);
+print(&511);
         new_account_address
     }
 
@@ -1218,9 +1341,12 @@ module DiemAccount {
             // TODO: Is this the best way to access a struct property from 
             // outside a module?
             let (payer, payee, value, description) = Wallet::get_tx_args(t);
-            if (Wallet::is_frozen(payer)) continue;
+            if (Wallet::is_frozen(payer)) {
+              i = i + 1;
+              continue
+            };
             vm_make_payment_no_limit<GAS>(payer, payee, value, description, b"", vm);
-            Wallet::maybe_reset_rejection_counter(vm, payer);
+            Wallet::reset_rejection_counter(vm, payer);
             i = i + 1;
         };
     }
@@ -1235,7 +1361,7 @@ module DiemAccount {
         metadata: vector<u8>,
         metadata_signature: vector<u8>,
         vm: &signer
-    ) acquires DiemAccount , Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
+    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
         if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
         // don't try to send a 0 balance, will halt.
         if (amount < 1) return;
@@ -1251,10 +1377,16 @@ module DiemAccount {
         // Check the payer is in possession of withdraw token.
         if (delegated_withdraw_capability(payer)) return; 
 
-        // assert(
-        //     !delegated_withdraw_capability(payer),
-        //     Errors::invalid_state(EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED)
-        // );
+        // TODO: review this in 5.1
+        // VM should not force an account below 1GAS, since the account may not recover.
+        if (balance<GAS>(payer) < BOOTSTRAP_COIN_VALUE) return;
+
+        // prevent halting on low balance.
+        // burn the remaining balance if the amount is greater than balance
+        if (balance<GAS>(payer) < amount) { 
+          amount = balance<GAS>(payer);
+        };
+
 
         // VM can extract the withdraw token.
         let account = borrow_global_mut<DiemAccount>(payer);
@@ -1280,10 +1412,20 @@ module DiemAccount {
         if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
         // don't try to send a 0 balance, will halt.
         if (amount < 1) return; 
-
         // Check there is a payer and has balance
         if (!exists_at(addr)) return; 
-        if (!exists<Balance<Token>>(addr)) return; 
+        if (!exists<Balance<Token>>(addr)) return;
+        
+        // TODO: review this in 5.1
+        // VM should not force an account below 1GAS, since the account may not recover.
+        if (balance<GAS>(addr) < BOOTSTRAP_COIN_VALUE) return;
+
+        // prevent halting on low balance.
+        // burn the remaining balance if the amount is greater than balance
+        // but leave 1GAS to be able to recover
+        if (balance<GAS>(addr) < amount) { 
+          amount = balance<GAS>(addr);
+        };
 
         // Check the payer is in possession of withdraw token.
         if (delegated_withdraw_capability(addr)) return; 
@@ -1311,29 +1453,6 @@ module DiemAccount {
         metadata: vector<u8>,
         metadata_signature: vector<u8>
     ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWallet {
-        //////// 0L //////// Transfers disabled by default
-        //////// 0L //////// Transfers of 10 GAS 
-        //////// 0L //////// enabled when validator count is 100. 
-        // print(&0100);
-        // if (DiemConfig::check_transfer_enabled()) {
-        //     // Ensure that this withdrawal is compliant with the account limits on
-        //     // this account.
-        //     assert(
-        //         AccountLimits::update_withdrawal_limits<Token>(
-        //             amount,
-        //             {{*&cap.account_address}},
-        //             &borrow_global<AccountOperationsCapability>(
-        //                 CoreAddresses::DIEM_ROOT_ADDRESS()
-        //             ).limits_cap
-        //         ),
-        //         Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
-        //     );
-        // } else {
-        //     assert(
-        //         *&cap.account_address == CoreAddresses::DIEM_ROOT_ADDRESS(),
-        //         Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
-        //     );
-        // };
         
         // check amount if it is a slow wallet
         if (is_slow(*&cap.account_address)) {
@@ -1437,7 +1556,7 @@ module DiemAccount {
         let balance_coin = &mut account_balance.coin;
         // Doubly check balance exists.
         assert(
-            Diem::value(balance_coin) >= BOOTSTRAP_COIN_VALUE,
+            Diem::value(balance_coin) > BOOTSTRAP_COIN_VALUE,
             Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
         );
         // Should abort if the 
@@ -2487,6 +2606,7 @@ module DiemAccount {
             );
             let balance_amount = balance<Token>(transaction_sender);
             // [PCA8]: Check that the account can cover the maximum transaction fee
+            
             assert(
                 balance_amount >= max_transaction_fee,
                 Errors::invalid_argument(PROLOGUE_ECANT_PAY_GAS_DEPOSIT)

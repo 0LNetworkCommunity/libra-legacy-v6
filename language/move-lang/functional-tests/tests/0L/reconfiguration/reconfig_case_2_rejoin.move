@@ -46,16 +46,16 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::MinerState;
-    use 0x1::AutoPay2;
+    use 0x1::TowerState;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
 
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{alice}}) == 5, 7357008006001);
+        TowerState::test_helper_mock_mining(&sender, 5);
+        assert(TowerState::test_helper_get_count(&sender) == 5, 7357008006001);
     }
 }
 //check: EXECUTED
@@ -63,16 +63,16 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::MinerState;
-    use 0x1::AutoPay2;
+    use 0x1::TowerState;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
 
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{bob}}) == 5, 7357008006002);
+        TowerState::test_helper_mock_mining(&sender, 5);
+        assert(TowerState::test_helper_get_count(&sender) == 5, 7357008006002);
     }
 }
 //check: EXECUTED
@@ -80,16 +80,16 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::MinerState;
-    use 0x1::AutoPay2;
+    use 0x1::TowerState;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
 
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{carol}}) == 5, 7357008006003);
+        TowerState::test_helper_mock_mining(&sender, 5);
+        assert(TowerState::test_helper_get_count(&sender) == 5, 7357008006003);
     }
 }
 //check: EXECUTED
@@ -97,16 +97,16 @@ script {
 //! new-transaction
 //! sender: dave
 script {
-    use 0x1::MinerState;
-    use 0x1::AutoPay2;
+    use 0x1::TowerState;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
 
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{dave}}) == 5, 7357008006004);
+        TowerState::test_helper_mock_mining(&sender, 5);
+        assert(TowerState::test_helper_get_count(&sender) == 5, 7357008006004);
     }
 }
 //check: EXECUTED
@@ -114,16 +114,16 @@ script {
 //! new-transaction
 //! sender: eve
 script {
-    use 0x1::MinerState;
-    use 0x1::AutoPay2;
+    use 0x1::TowerState;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
 
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{eve}}) == 5, 7357008006005);
+        TowerState::test_helper_mock_mining(&sender, 5);
+        assert(TowerState::test_helper_get_count(&sender) == 5, 7357008006005);
     }
 }
 //check: EXECUTED
@@ -131,10 +131,10 @@ script {
 //! new-transaction
 //! sender: frank
 script {
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        AutoPay2::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
     }
 }
 //check: EXECUTED
@@ -183,12 +183,10 @@ script {
 script {
     use 0x1::DiemSystem;
     use 0x1::DiemConfig;
-    use 0x1::Debug::print;
 
     fun main(_account: signer) {
         // We are in a new epoch.
         assert(DiemConfig::get_current_epoch() == 2, 7357008006008);
-        print(&DiemSystem::validator_set_size());
         // Tests on initial size of validators 
         assert(DiemSystem::validator_set_size() == 5, 7357008006009);
         assert(DiemSystem::is_validator(@{{frank}}) == false, 7357008006010);
@@ -216,7 +214,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    // use 0x1::Reconfigure;
+    // use 0x1::EpochBoundary;
     use 0x1::Cases;
     use 0x1::Vector;
     use 0x1::Stats;
@@ -242,7 +240,7 @@ script {
         // Even though Eve will be considered a case 2, it was because she 
         // was jailed. She will rejoin next epoch.
         assert(Cases::get_case(vm, @{{eve}}, 0, 15) == 2, 7357008006013);
-        // Reconfigure::reconfigure(vm, 30);
+        // EpochBoundary::reconfigure(vm, 30);
     }
 }
 //check: EXECUTED
@@ -251,14 +249,14 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::MinerState;
+    use 0x1::TowerState;
 
     fun main(sender: signer) {
         // Miner is the only one that can update her mining stats. 
         // Hence this first transaction.
 
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{alice}}) == 5, 7357008006014);
+        TowerState::test_helper_mock_mining(&sender, 5);
+        assert(TowerState::test_helper_get_count(&sender) == 5, 7357008006014);
     }
 }
 //check: EXECUTED
@@ -266,14 +264,14 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::MinerState;
+    use 0x1::TowerState;
 
     fun main(sender: signer) {
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
 
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{bob}}) == 5, 7357008006015);
+        TowerState::test_helper_mock_mining(&sender, 5);
+        assert(TowerState::test_helper_get_count(&sender) == 5, 7357008006015);
     }
 }
 //check: EXECUTED
@@ -281,14 +279,14 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::MinerState;
+    use 0x1::TowerState;
 
     fun main(sender: signer) {
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
 
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{carol}}) == 5, 7357008006016);
+        TowerState::test_helper_mock_mining(&sender, 5);
+        assert(TowerState::test_helper_get_count(&sender) == 5, 7357008006016);
     }
 }
 //check: EXECUTED
@@ -296,14 +294,14 @@ script {
 //! new-transaction
 //! sender: dave
 script {
-    use 0x1::MinerState;
+    use 0x1::TowerState;
 
     fun main(sender: signer) {
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
 
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{dave}}) == 5, 7357008006017);
+        TowerState::test_helper_mock_mining(&sender, 5);
+        assert(TowerState::test_helper_get_count(&sender) == 5, 7357008006017);
     }
 }
 //check: EXECUTED
@@ -311,14 +309,14 @@ script {
 //! new-transaction
 //! sender: eve
 script {
-    use 0x1::MinerState;
+    use 0x1::TowerState;
 
     fun main(sender: signer) {
         // Miner is the only one that can update her mining stats. 
         // Hence this first transaction.
 
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{eve}}) == 5, 7357008006018);
+        TowerState::test_helper_mock_mining(&sender, 5);
+        assert(TowerState::test_helper_get_count(&sender) == 5, 7357008006018);
     }
 }
 //check: EXECUTED
@@ -326,14 +324,14 @@ script {
 //! new-transaction
 //! sender: frank
 script {
-    use 0x1::MinerState;
+    use 0x1::TowerState;
 
     fun main(sender: signer) {
         // Miner is the only one that can update her mining stats. 
         // Hence this first transaction.
 
-        MinerState::test_helper_mock_mining(&sender, 5);
-        assert(MinerState::test_helper_get_count(@{{frank}}) == 5, 7357008006019);
+        TowerState::test_helper_mock_mining(&sender, 5);
+        assert(TowerState::test_helper_get_count(&sender) == 5, 7357008006019);
     }
 }
 //check: EXECUTED
@@ -354,11 +352,9 @@ script {
 script {
     use 0x1::DiemSystem;
     use 0x1::DiemConfig;
-    use 0x1::Debug::print;
 
     fun main(_account: signer) {
         assert(DiemConfig::get_current_epoch() == 3, 7357008006020);
-        print(&DiemSystem::validator_set_size());
         assert(DiemSystem::validator_set_size() == 6, 7357008006021);
         assert(DiemSystem::is_validator(@{{frank}}), 7357008006022);
     }

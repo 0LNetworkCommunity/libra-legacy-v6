@@ -339,11 +339,21 @@ address 0x1 {
       }
 
       public fun enable_delegation (sender: &signer) {
-        move_to<VoteDelegation>(sender, VoteDelegation{
-          vote_delegated: false,
-          delegates: Vector::empty<address>(),
-          delegated_to_address: Signer::address_of(sender),
-        });
+        if (!exists<VoteDelegation>(Signer::address_of(sender))) {
+          move_to<VoteDelegation>(sender, VoteDelegation{
+            vote_delegated: false,
+            delegates: Vector::empty<address>(),
+            delegated_to_address: Signer::address_of(sender),
+          });
+        }
+      }
+
+      public fun has_delegated (account: address): bool acquires VoteDelegation {
+        if (exists<VoteDelegation>(account)) {
+          let del = borrow_global<VoteDelegation>(account); 
+          return del.vote_delegated
+        };
+        false
       }
 
       public fun check_number_delegates (addr: address): u64 acquires VoteDelegation {
@@ -354,6 +364,8 @@ address 0x1 {
 
       public fun delegate_vote (sender: &signer, vote_dest: address) acquires VoteDelegation{
         assert(exists<VoteDelegation>(Signer::address_of(sender)), Errors::not_published(DELEGATION_NOT_ENABLED));
+
+        // check if the receipient/destination has enabled delegation.
         assert(exists<VoteDelegation>(vote_dest), Errors::not_published(DELEGATION_NOT_ENABLED));
 
         let del = borrow_global_mut<VoteDelegation>(Signer::address_of(sender)); 
@@ -389,6 +401,16 @@ address 0x1 {
 
       }
 
+      public fun delegation_enabled_upgrade(): bool {
+        DELEGATION_ENABLED_UPGRADE
+      }
+
+      public fun upgrade_vote_type(): u8 {
+        VOTE_TYPE_UPGRADE
+      }
+
+      ////////// TEST HELPERS
+
       // Function code: 04
       public fun test_helper_query_oracle_votes(): vector<address> acquires Oracles {
         assert(Testnet::is_testnet(), Errors::invalid_state(150004));
@@ -406,12 +428,13 @@ address 0x1 {
         voters
       }
 
-      public fun test_check_upgrade(): bool acquires Oracles {
+      public fun test_helper_check_upgrade(): bool acquires Oracles {
         assert(Testnet::is_testnet(), Errors::invalid_state(150004)); 
-        let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::DIEM_ROOT_ADDRESS()).upgrade;
-  
+        let upgrade_oracle = &borrow_global<Oracles>(
+          CoreAddresses::DIEM_ROOT_ADDRESS()
+        ).upgrade;
         let payload = *&upgrade_oracle.consensus.data;
-  
+
         if (!Vector::is_empty(&payload)) {
           true
         }
@@ -420,12 +443,6 @@ address 0x1 {
         }
       }
 
-      public fun delegation_enabled_upgrade(): bool {
-        DELEGATION_ENABLED_UPGRADE
-      }
 
-      public fun upgrade_vote_type(): u8 {
-        VOTE_TYPE_UPGRADE
-      }
     }
   }

@@ -1,4 +1,4 @@
-//! account: bob, 100000, 0
+//! account: bob, 10000000, 0
 
 //! new-transaction
 //! sender: bob
@@ -7,7 +7,7 @@ script {
   use 0x1::TestFixtures;
   use 0x1::GAS::GAS;
 
-  fun main(_sender: signer) {
+  fun main(sender: signer) {
     // Scenario: Bob, an existing user, is sending a transaction for Eve, 
     // with a challenge and proof not yet submitted to the chain.
     // This proof will create a new account, with the preimage data.
@@ -15,14 +15,15 @@ script {
     let solution = TestFixtures::eve_0_easy_sol();
     
     let eve_addr = DiemAccount::create_user_account_with_proof(
+      &sender,
       &challenge,
       &solution,
     );
 
-    assert(DiemAccount::balance<GAS>(eve_addr) == 0, 7357130101081000);
+    assert(DiemAccount::balance<GAS>(eve_addr) == 1000000, 735701);
 
-    // is not a slow wallet, only validator wallets are slow.
-    assert(!DiemAccount::is_slow(eve_addr), 7357130101081001);
+    // is a slow wallet
+    assert(!DiemAccount::is_slow(eve_addr), 735702);
   }
 }
 // check: EXECUTED

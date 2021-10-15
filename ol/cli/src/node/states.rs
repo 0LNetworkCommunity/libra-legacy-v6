@@ -84,7 +84,7 @@ pub enum NodeEvents {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 /// All states a miner can be in
-pub enum MinerState {
+pub enum TowerState {
     /// Miner stopped
     Stopped,
     /// Miner running
@@ -122,7 +122,7 @@ pub struct HostState {
     /// state of node
     pub node_state: NodeState,
     /// state of miner
-    pub miner_state: MinerState,
+    pub miner_state: TowerState,
     /// state of monitor
     pub monitor_state: MonitorState,
     /// state of account
@@ -136,7 +136,7 @@ impl HostState {
         Self {
             onboard_state: OnboardState::EmptyBox,
             node_state: NodeState::Stopped,
-            miner_state: MinerState::Stopped,
+            miner_state: TowerState::Stopped,
             monitor_state: MonitorState::Stopped,
             account_state: AccountState::None,
         }

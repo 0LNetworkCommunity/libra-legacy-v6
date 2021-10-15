@@ -13,7 +13,7 @@ use crate::{
     views::{
         AccountStateWithProofView, AccountView, CurrencyInfoView, EventView, 
         EventWithProofView, MetadataView, StateProofView, TransactionView, 
-        TransactionsWithProofsView, MinerStateResourceView, OracleUpgradeStateView,
+        TransactionsWithProofsView, TowerStateResourceView, OracleUpgradeStateView,
     },
     Error, Result, Retry, State,
 };
@@ -155,8 +155,7 @@ impl BlockingClient {
 
     /////// 0L /////////
     pub fn get_miner_state(&self, address: AccountAddress) 
-    -> Result<Response<Option<MinerStateResourceView>>> {
-        dbg!("get_miner_state");
+    -> Result<Response<Option<TowerStateResourceView>>> {
         self.send(MethodRequest::get_miner_state(address))
     }
 

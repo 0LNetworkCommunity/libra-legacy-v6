@@ -7,23 +7,24 @@
 address 0x1 {
 module AccountScripts {
 
-    use 0x1::Debug::print;
+    // use 0x1::Debug::print;
     use 0x1::DiemAccount;
     use 0x1::GAS::GAS;
     use 0x1::ValidatorConfig;
   
     public(script) fun create_acc_user(
-        _sender: signer,
+        sender: signer,
         challenge: vector<u8>,
         solution: vector<u8>,
     ) {
         let new_account_address = DiemAccount::create_user_account_with_proof(
+            &sender,
             &challenge,
             &solution,
         );
 
         // Check the account exists and the balance is 0
-        assert(DiemAccount::balance<GAS>(new_account_address) == 0, 01);
+        assert(DiemAccount::balance<GAS>(new_account_address) > 0, 01);
     }
 
     public(script) fun create_acc_val(
@@ -38,7 +39,6 @@ module AccountScripts {
         op_fullnode_network_addresses: vector<u8>,
         op_human_name: vector<u8>,
     ) {
-        print(&0x1);
         let new_account_address = DiemAccount::create_validator_account_with_proof(
             &sender,
             &challenge,
@@ -52,11 +52,9 @@ module AccountScripts {
             op_human_name,
         );
         
-        print(&0x2);
         // Check the account has the Validator role
         assert(ValidatorConfig::is_valid(new_account_address), 03);
         
-        print(&0x3);
         // Check the account exists and the balance is greater than 0
         assert(DiemAccount::balance<GAS>(new_account_address) > 0, 04);
     }

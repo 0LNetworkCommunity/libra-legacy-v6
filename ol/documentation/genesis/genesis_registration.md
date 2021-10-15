@@ -1,4 +1,4 @@
-# Genesis
+# Genesis Registration
 
 A network genesis ceremony has two steps: 
 
@@ -20,7 +20,7 @@ If you don't already have a mnemonic and block_0.json, see instructions to gener
 Then using the makefile helpers you can register as such:
 
 ```
-GENESIS_USER=<your_github_user> make ceremony register
+GITHUB_USER=<your_github_user> make ceremony register
 ```
 
 ## infrastructure
@@ -34,6 +34,14 @@ For each candidate there will be a CANDIDATE_REPO, which will have the specific 
 Tools are provided to a) fork the GENESIS_REPO b) write registration info ro CANDIDATE_REPO, and c) submit a pull-request of CANDIDATE_REPO to GENESIS_REPO.
 
 The GENESIS_REPO coordinator then has the task of manually approving all PRs.
+
+# Warning - Don't lose your Tower
+
+If you have a Delay Tower on a node: you should back up the proofs. You will want these for your identity on a new chain.
+
+```
+tar -zcvf my-tower.tar.gz ~/.0L/blocks/
+```
 
 # Registration
 
@@ -61,6 +69,7 @@ In the step `miner keygen` below you will be asked for this.
 
 Clone the project onto your machine. `cd` into the project directory. Checkout the correct tag. Install all dependencies and compile in one step, with the Makefile helper.
 
+
 ```
 git clone https://github.com/OLSF/libra.git
 cd <project root>
@@ -82,8 +91,9 @@ make bins install
 * You may encounter errors related to Rust, version should be same as: https://github.com/OLSF/libra/blob/OLv4/rust-toolchain.
 * You may encounter errors related to memory running out.
 * Dependencies such as jq and rq are platform specific. The makefile targets Ubuntu.
+* `toml` may not be installed, you can install with `cargo install toml-cli`
 
-## 2 (Optional) Generate new account and keys
+## 2. (Optional) Generate new account and keys
 
 Unless you have previously generated an 0L mnemonic (e.g. for experimental network), you should create new keys.
 
@@ -105,7 +115,7 @@ The following script does several steps:
 - fork: on github this forks the GENESIS_REPO into the CANDIDATE_REPO
 
 ```
-GENESIS_USER=<your_github_user> make ceremony
+GITHUB_USER=<your_github_user> make ceremony
 ```
 
 ## 4. Pause and check your work ##
@@ -119,7 +129,7 @@ github_token: <secret>
 ip: 5.5.5.5
 node path: /root/.0L
 github_org: OLSF
-github_repo: experimental-genesis
+github_repo: genesis-registration
 env: prod
 test mode:
 ```
@@ -145,7 +155,7 @@ The following script does several steps:
 - pull: submitting a pull request from CANDIDATE_REPO to GENESIS_REPO
 
 ```
-GENESIS_USER=<your_github_user> make register
+GITHUB_USER=<your_github_user> make register
 ```
 
 After this step check your data at `http://github.com/0LSF/experimental-genesis`

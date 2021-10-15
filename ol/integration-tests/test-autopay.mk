@@ -33,7 +33,7 @@ endif
 
 export
 
-test-wrapper: swarm check-swarm set-community send-tx check-tx  check-autopay check-transfer stop
+test-wrapper: swarm check-swarm set-community send-tx check-tx check-autopay check-transfer stop
 
 test-percent-bal:
 	AUTOPAY_FILE=alice.autopay_batch.json make -f ${MAKE_FILE} test-wrapper
@@ -43,7 +43,7 @@ test-fixed-once:
 
 test:
 # tests all types of txs
-	export AUTOPAY_FILE=all.autopay_batch.json SUCCESS_TEXT="'with sequence number: 7'" && make -f ${MAKE_FILE} test-wrapper
+	export AUTOPAY_FILE=all.autopay_batch.json SUCCESS_TEXT="'with sequence number: 6'" && make -f ${MAKE_FILE} test-wrapper
 
 swarm:
 	@echo Building Swarm
@@ -53,13 +53,14 @@ swarm:
 	cd ${SOURCE_PATH} && cargo run -p diem-swarm -- --diem-node ${SOURCE_PATH}/target/debug/diem-node -c ${SWARM_TEMP} -n ${NUM_NODES} &> ${LOG} &
 
 stop:
-	killall diem-swarm diem-node miner ol txs cli | true
+	killall diem-swarm diem-node tower ol txs cli | true
 
 init:
 	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}
 
-tx:
+tx: balance
 	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} autopay-batch -f ${SOURCE_PATH}/ol/fixtures/autopay/${AUTOPAY_FILE}
+	
 
 set-community:
 	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona bob wallet -c

@@ -13,11 +13,11 @@
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::MinerState;
+    use 0x1::TowerState;
     fun main(sender: signer) {
         //NOTE: Alice is Case 1, she validates and mines. Setting up mining.
         let mining_proofs = 5;
-        MinerState::test_helper_mock_mining(&sender, mining_proofs);
+        TowerState::test_helper_mock_mining(&sender, mining_proofs);
 
     }
 }
@@ -27,11 +27,11 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::MinerState;
+    use 0x1::TowerState;
     fun main(sender: signer) {
         let mining_proofs = 5;
       //NOTE: Carol is Case 3, she mines but does not validate. Setting up mining.
-        MinerState::test_helper_mock_mining(&sender, mining_proofs);
+        TowerState::test_helper_mock_mining(&sender, mining_proofs);
     }
 }
 //check: EXECUTED
@@ -84,12 +84,12 @@ script {
   use 0x1::DiemSystem;
 
   fun main(vm: signer) {
-    let (validators, fee_ratios) = DiemSystem::get_fee_ratio(&vm, 0, 15);
+    let (validators, _) = DiemSystem::get_fee_ratio(&vm, 0, 15);
     let subsidy_amount = 1000000;
     let mining_proofs = 5; // mocked above
     // from Subsidy::BASELINE_TX_COST * genesis proof for account
     let refund_to_operator = 4336 * mining_proofs; 
-    Subsidy::process_subsidy(&vm, subsidy_amount, &validators, &fee_ratios);
+    Subsidy::process_subsidy(&vm, subsidy_amount, &validators);
     // starting balance + subsidy amount - refund operator tx fees for mining
     assert(
       DiemAccount::balance<GAS>(@{{alice}}) == 1000000 + subsidy_amount - refund_to_operator,

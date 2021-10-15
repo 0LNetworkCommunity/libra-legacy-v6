@@ -6,12 +6,10 @@
 
 address 0x1 {
 
-// TODO: This module is not complete, as Metadata has not been implemented.
 
 /// # Summary 
 /// This module provides global variables and constants that have no specific owner 
 module Globals {
-    use 0x1::Vector;
     use 0x1::Testnet;
     use 0x1::Errors;
     use 0x1::StagingNet;
@@ -21,24 +19,19 @@ module Globals {
     /// Global constants determining validator settings & requirements 
     /// Some constants need to be changed based on environment; dev, testing, prod.
     /// epoch_length: The length of an epoch in seconds (~1 day for prod.) 
-    /// max_validator_per_epoch: The maximum number of validators that can participate 
+    /// max_validators_per_set: The maximum number of validators that can participate 
     /// subsidy_ceiling_gas: TODO I don't really know what this is
-    /// min_node_density: The minimum number of nodes that can receive a subsidy 
-    /// max_node_density: The maximum number of nodes that can receive a subsidy 
-    /// burn_accounts: The address to which burnt tokens should be sent 
-    /// difficulty: The difficulty required for VDF proofs submitting by miners 
-    /// epoch_mining_threshold: The number of proofs that must be submitted each 
-    ///       epoch by a miner to remain compliant
+    /// vdf_difficulty: The difficulty required for VDF proofs submitting by miners 
+    /// epoch_mining_thres_lower: The number of proofs that must be submitted each 
+    /// epoch by a miner to remain compliant  
     struct GlobalConstants has drop {
       // For validator set.
       epoch_length: u64,
-      max_validator_per_epoch: u64,
+      max_validators_per_set: u64,
       subsidy_ceiling_gas: u64,
-      min_node_density: u64,
-      max_node_density: u64,
-      burn_accounts: vector<address>, // TODO: remove
-      difficulty: u64,
-      epoch_mining_threshold: u64, // TODO: lower and upperbound threshold
+      vdf_difficulty: u64,
+      epoch_mining_thres_lower: u64,
+      epoch_mining_thres_upper: u64,
       epoch_slow_wallet_unlock: u64,
     }
 
@@ -52,8 +45,8 @@ module Globals {
     }
 
     /// Get max validator per epoch
-    public fun get_max_validator_per_epoch(): u64 {
-       get_constants().max_validator_per_epoch
+    public fun get_max_validators_per_set(): u64 {
+       get_constants().max_validators_per_set
     }
 
     /// Get max validator per epoch
@@ -61,24 +54,19 @@ module Globals {
        get_constants().subsidy_ceiling_gas
     }
 
-    /// Get max validator per epoch
-    public fun get_max_node_density(): u64 {
-       get_constants().max_node_density
-    }
-
-    /// Get the burn accounts
-    public fun get_burn_accounts(): vector<address> {
-       *&get_constants().burn_accounts
-    }
-
-    /// Get the current difficulty
+    /// Get the current vdf_difficulty
     public fun get_difficulty(): u64 {
-      get_constants().difficulty
+      get_constants().vdf_difficulty
     }
 
     /// Get the mining threshold 
-    public fun get_mining_threshold(): u64 {
-      get_constants().epoch_mining_threshold
+    public fun get_epoch_mining_thres_lower(): u64 {
+      get_constants().epoch_mining_thres_lower
+    }
+
+    /// Get the mining threshold 
+    public fun get_epoch_mining_thres_upper(): u64 {
+      get_constants().epoch_mining_thres_upper
     }
 
     /// Get the mining threshold 
@@ -94,13 +82,11 @@ module Globals {
       if (Testnet::is_testnet()) {
         return GlobalConstants {
           epoch_length: 60, // seconds
-          max_validator_per_epoch: 10,
+          max_validators_per_set: 100,
           subsidy_ceiling_gas: 296 * coin_scale,
-          min_node_density: 4,
-          max_node_density: 300,
-          burn_accounts: Vector::singleton(@0xDEADDEAD),
-          difficulty: 100,
-          epoch_mining_threshold: 1,
+          vdf_difficulty: 100,
+          epoch_mining_thres_lower: 1,
+          epoch_mining_thres_upper: 240, // upper bound enforced at 6 mins per proof.
           epoch_slow_wallet_unlock: 10,
         }
       };
@@ -108,31 +94,27 @@ module Globals {
       if (StagingNet::is_staging_net()) {
         return GlobalConstants {
           epoch_length: 60 * 20, // 20 mins, enough for a hard miner proof.
-          max_validator_per_epoch: 300,
+          max_validators_per_set: 100,
           subsidy_ceiling_gas: 8640000 * coin_scale,
-          min_node_density: 4,
-          max_node_density: 300,
-          burn_accounts: Vector::singleton(@0xDEADDEAD),
-          difficulty: 5000000,
-          epoch_mining_threshold: 1,
+          vdf_difficulty: 5000000,
+          epoch_mining_thres_lower: 1,
+          epoch_mining_thres_upper: 240, // upper bound enforced at 6 mins per proof.
           epoch_slow_wallet_unlock: 10000000,
         }
       } else {
         return GlobalConstants {
           epoch_length: 60 * 60 * 24, // approx 24 hours at 1.4 blocks/sec
-          max_validator_per_epoch: 300, // max expected for BFT limits.
+          max_validators_per_set: 100, // max expected for BFT limits.
           // See DiemVMConfig for gas constants:
           // Target max gas units per transaction 100000000
           // target max block time: 2 secs
           // target transaction per sec max gas: 20
           // uses "scaled representation", since there are no decimals.
           subsidy_ceiling_gas: 8640000 * coin_scale, // subsidy amount assumes 24 hour epoch lengths. Also needs to be adjusted for coin_scale the onchain representation of human readable value.
-          min_node_density: 4,
-          max_node_density: 300,
-          burn_accounts: Vector::singleton(@0xDEADDEAD),
-          difficulty: 5000000, // 10 mins on macbook pro 2.5 ghz quadcore
-          epoch_mining_threshold: 20,
-          epoch_slow_wallet_unlock: 10000000,
+          vdf_difficulty: 5000000, // FYI approx 10 mins per proof on 2020 macbook pro 2.5 ghz quadcore
+          epoch_mining_thres_lower: 20,
+          epoch_mining_thres_upper: 240, // upper bound enforced at 6 mins per proof.
+          epoch_slow_wallet_unlock: 1000 * coin_scale, // approx 10 years for largest accounts in genesis.
         }
       }
     }

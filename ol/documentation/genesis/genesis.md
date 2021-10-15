@@ -21,5 +21,5 @@ The GENESIS_REPO coordinator then has the task of manually approving all PRs.
 
 Read Next: 
 
-1. [genesis registration](./genesis_registration.md])
-1. [create genesis block](./genesis_transaction.md])
+1. [genesis registration](./genesis_registration.md)
+1. [create genesis block](./genesis_transaction.md)

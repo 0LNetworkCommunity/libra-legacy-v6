@@ -57,9 +57,10 @@ module Stats{
 
     assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190002));
 
-    let stats = borrow_global_mut<ValStats>(sender);
-    let (is_init, _) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
+    let stats = borrow_global<ValStats>(sender);
+    let (is_init, _) = Vector::index_of<address>(&stats.current.addr, &node_addr);
     if (!is_init) {
+      let stats = borrow_global_mut<ValStats>(sender);
       Vector::push_back(&mut stats.current.addr, node_addr);
       Vector::push_back(&mut stats.current.prop_count, 0);
       Vector::push_back(&mut stats.current.vote_count, 0);
@@ -175,8 +176,12 @@ module Stats{
     let sender = Signer::address_of(vm);
     assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190011));
     let stats = borrow_global_mut<ValStats>(sender);
-    // Archive outgoing epoch stats.
-    //TODO: limit the size of the history and drop ancient records.
+    
+    // Keep only the most recent epoch stats
+    if (Vector::length(&stats.history) > 7) {
+      Vector::pop_back<SetData>(&mut stats.history); // just drop last record
+    };
+
     Vector::push_back(&mut stats.history, *&stats.current);
 
     stats.current = blank();
@@ -188,19 +193,19 @@ module Stats{
   public fun get_total_votes(vm: &signer): u64 acquires ValStats {
     let sender = Signer::address_of(vm);
     assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190012));
-    *&borrow_global_mut<ValStats>(CoreAddresses::DIEM_ROOT_ADDRESS()).current.total_votes
+    *&borrow_global<ValStats>(CoreAddresses::DIEM_ROOT_ADDRESS()).current.total_votes
   }
 
   //Function: 13
   public fun get_total_props(vm: &signer): u64 acquires ValStats {
     let sender = Signer::address_of(vm);
     assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190013));
-    *&borrow_global_mut<ValStats>(CoreAddresses::DIEM_ROOT_ADDRESS()).current.total_props
+    *&borrow_global<ValStats>(CoreAddresses::DIEM_ROOT_ADDRESS()).current.total_props
   }
 
   //Function: 14
   public fun get_history(): vector<SetData> acquires ValStats {
-    *&borrow_global_mut<ValStats>(CoreAddresses::DIEM_ROOT_ADDRESS()).history
+    *&borrow_global<ValStats>(CoreAddresses::DIEM_ROOT_ADDRESS()).history
   }
 
   /// TEST HELPERS
@@ -208,8 +213,8 @@ module Stats{
   public fun test_helper_inc_vote_addr(vm: &signer, node_addr: address) acquires ValStats {
     let sender = Signer::address_of(vm);
     assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190015));
-
     assert(Testnet::is_testnet(), Errors::invalid_state(190015));
+
     inc_vote(vm, node_addr);
   }
 

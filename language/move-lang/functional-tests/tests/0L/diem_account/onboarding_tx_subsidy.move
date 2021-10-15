@@ -6,12 +6,11 @@ script {
 use 0x1::VDF;
 use 0x1::DiemAccount;
 use 0x1::GAS::GAS;
-use 0x1::MinerState;
+use 0x1::TowerState;
 use 0x1::NodeWeight;
 use 0x1::TestFixtures;
 use 0x1::ValidatorConfig;
 use 0x1::Roles;
-use 0x1::Signer;
 
 // Test Prefix: 1301
 
@@ -19,10 +18,8 @@ use 0x1::Signer;
     // Scenario: Bob, an existing validator, is sending an onboarding transaction for Eve.
 
     // mock bob's account limits so he's not rate limited from onboarding eve
-    let sender_addr = Signer::address_of(&sender);
     let epochs_since_creation = 10;
-    MinerState::test_helper_set_rate_limit(sender_addr, epochs_since_creation);
-
+    TowerState::test_helper_set_rate_limit(&sender, epochs_since_creation);
 
     // Use a miner challenge and proof not yet submitted to the chain.
     let challenge = TestFixtures::eve_0_easy_chal();
@@ -64,7 +61,7 @@ use 0x1::Signer;
       7357130101051000
     );
 
-    assert(MinerState::test_helper_get_height(eve_addr) == 0, 7357130101061000);
+    assert(TowerState::test_helper_get_height(eve_addr) == 0, 7357130101061000);
 
     //Check the validator is in the validator universe.
     assert(NodeWeight::proof_of_weight(eve_addr) == 0, 7357130101071000);
@@ -92,9 +89,11 @@ use 0x1::Signer;
 script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
-  use 0x1::Reconfigure;
-  use 0x1::MinerState;
+  use 0x1::EpochBoundary;
+  use 0x1::TowerState;
   use 0x1::Testnet;
+  use 0x1::Debug::print;
+  use 0x1::Cases;
   
   fun main(vm: signer) {
       // need to remove testnet for this test, since testnet does not ratelimit account creation.
@@ -104,11 +103,15 @@ script {
       let old_account_bal = DiemAccount::balance<GAS>(eve);
       let old_account_bal_oper = DiemAccount::balance<GAS>(@0xfa72817f1b5aab94658238ddcdc08010);
 
-      Reconfigure::reconfigure(&vm, 100);
+      EpochBoundary::reconfigure(&vm, 100);
       let new_account_bal = DiemAccount::balance<GAS>(eve);
 
       assert(old_account_bal == 1000000, 7357001);
-      assert(new_account_bal == 3497536, 7357002);
+      print(&new_account_bal);
+
+      // eve did not mine or validator in last epoch, case != 1. So there wont be a reward 
+      assert(Cases::get_case(&vm, @{{bob}}, 0, 100) != 1, 7357002);
+      assert(new_account_bal == 1000000, 7357003);
 
       // Operator account should not increase after epoch change
       assert(
@@ -116,7 +119,7 @@ script {
         7357003
       );
 
-      assert(MinerState::can_create_val_account(@{{bob}}) == false, 7357004);
+      assert(TowerState::can_create_val_account(@{{bob}}) == false, 7357004);
       
   }
 }

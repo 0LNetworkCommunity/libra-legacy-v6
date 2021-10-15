@@ -3,7 +3,7 @@ module ValidatorScripts {
 
     use 0x1::DiemSystem;
     use 0x1::Errors;
-    use 0x1::MinerState;
+    use 0x1::TowerState;
     use 0x1::Signer;
     use 0x1::ValidatorUniverse;
     use 0x1::Vector;
@@ -41,7 +41,7 @@ module ValidatorScripts {
         let addr = Signer::address_of(&validator);
         // if is above threshold continue, or raise error.
         assert(
-            MinerState::node_above_thresh(&validator, addr), 
+            TowerState::node_above_thresh(addr), 
             Errors::invalid_state(NOT_ABOVE_THRESH_JOIN)
         );
         // if is not in universe, add back
@@ -71,7 +71,7 @@ module ValidatorScripts {
         let addr = Signer::address_of(validator);
         // if is above threshold continue, or raise error.
         assert(
-            MinerState::node_above_thresh(validator, addr), 
+            TowerState::node_above_thresh(addr), 
             Errors::invalid_state(NOT_ABOVE_THRESH_ADD)
         );
         // if is not in universe, add back

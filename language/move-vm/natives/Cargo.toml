@@ -22,11 +22,14 @@ diem-workspace-hack = { path = "../../../common/workspace-hack" }
 move-core-types = { path = "../../move-core/types" }
 move-vm-types = { path = "../types" }
 move-binary-format = { path = "../../move-binary-format" }
+
 ######### 0L ########
 diem-global-constants = { path = "../../../config/global-constants"}
 hex = "0.4.2"
 diem-types = { path = "../../../types"}
 vdf = { path="../../../ol/verifiable_delay/vdf"}
+rust_decimal= { version = "1.14.2", default-features = true, features = ["maths"] }
+
 
 [features]
 default = []

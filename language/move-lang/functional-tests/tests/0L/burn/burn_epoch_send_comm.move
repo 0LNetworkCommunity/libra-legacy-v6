@@ -7,29 +7,29 @@
 //! new-transaction
 //! sender: alice
 script {    
-    use 0x1::MinerState;
+    use 0x1::TowerState;
     use 0x1::Burn;
     use 0x1::Audit;
     use 0x1::Debug::print;
-    use 0x1::AutoPay2;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
-        MinerState::test_helper_mock_mining(&sender, 5);
+        TowerState::test_helper_mock_mining(&sender, 5);
         // set alice burn preferences as sending to community wallets.
         Burn::set_send_community(&sender);
         print(&@0x1);
         // validator needs to qualify for next epoch for the burn to register
-        Audit::make_passing(&sender);
-        print(&AutoPay2::is_enabled(@{{alice}}));
+        Audit::test_helper_make_passing(&sender);
+        print(&AutoPay::is_enabled(@{{alice}}));
 
 
         print(&Audit::val_audit_passing(@{{alice}}));
 
-        AutoPay2::enable_autopay(&sender);
-        print(&AutoPay2::is_enabled(@{{alice}}));
+        AutoPay::enable_autopay(&sender);
+        print(&AutoPay::is_enabled(@{{alice}}));
         print(&Audit::val_audit_passing(@{{alice}}));
 
     }
