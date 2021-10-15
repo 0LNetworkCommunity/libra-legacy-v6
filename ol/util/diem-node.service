@@ -3,7 +3,8 @@
 Description=0L Node Service
 
 [Service]
-LimitNOFILE=20000
+LimitNOFILE=200000
+
 WorkingDirectory=/home/node/.0L
 ExecStart=/home/node/bin/diem-node --config /home/node/.0L/validator.node.yaml
 
