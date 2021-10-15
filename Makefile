@@ -300,6 +300,7 @@ start-full:
 
 daemon:
 # your node's custom diem-node.service lives in ~/.0L. Take the template from libra/util and edit for your needs.
+	@echo REMEMBER TO COPY A TEMPLATE from ./ol/util/diem-node.service and edit the username
 	mkdir -p ~/.config/systemd/user/
 	cp ~/.0L/diem-node.service ~/.config/systemd/user/
 
@@ -310,13 +311,12 @@ daemon:
 
 	mkdir ~/logs
 	touch ~/logs/node.log
-	# chmod 777 ~/logs
-	# chmod 777 ~/logs/node.log
 
 	systemctl --user daemon-reload
 	systemctl --user stop diem-node.service
 	systemctl --user start diem-node.service
 	sleep 2
+	
 	systemctl --user status diem-node.service &
 	tail -f ~/logs/node.log
 
