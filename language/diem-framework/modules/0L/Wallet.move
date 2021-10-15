@@ -317,44 +317,6 @@ module Wallet {
       }
     }
 
-    // Unused
-    // // Unfreezing a wallet requires the same threshold, as rejecting a transaction.
-    // // validators can vote to unfreeze.
-    // // unfreezing happens as soon as a vote passes threshold (not at epoch boundary)
-    // public fun vote_to_unfreeze(val: &signer, wallet: address) acquires CommunityFreeze {
-    //   let f = borrow_global_mut<CommunityFreeze>(wallet);
-    //   let val_addr = Signer::address_of(val);
-    //   Vector::push_back<address>(&mut f.unfreeze_votes, val_addr);
-      
-    //   if (tally_unfreeze(wallet)) {
-    //     f.is_frozen = false;
-    //   }
-    // }
-
-    // Unused
-    // // private function to tall the unfreezing of a wallet.
-    // fun tally_unfreeze(wallet: address): bool acquires CommunityFreeze {
-    //   let votes = 0;
-    //   let k = 0;
-    //   let f = borrow_global<CommunityFreeze>(wallet);
-    //   let len = Vector::length<address>(&f.unfreeze_votes);
-
-    //   while (k < len) {
-    //     let addr = *Vector::borrow<address>(&f.unfreeze_votes, k);
-    //     // ignore votes that are no longer in the validator set,
-    //     // BUT DON'T REMOVE, since they may rejoin the validator set, 
-    //     // and shouldn't need to vote again.
-
-    //     if (DiemSystem::is_validator(addr)) {
-    //       votes = votes + NodeWeight::proof_of_weight(addr)
-    //     };
-    //     k = k + 1;
-    //   };
-
-    //   let threshold = calculate_proportional_voting_threshold();
-    //   return votes > threshold
-    // }
-
     //////// GETTERS ////////
     public fun get_tx_args(t: TimedTransfer): (address, address, u64, vector<u8>) {
       (t.payer, t.payee, t.value, *&t.description)

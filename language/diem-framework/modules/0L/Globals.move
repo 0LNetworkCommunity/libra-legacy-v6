@@ -6,7 +6,6 @@
 
 address 0x1 {
 
-
 /// # Summary 
 /// This module provides global variables and constants that have no specific owner 
 module Globals {

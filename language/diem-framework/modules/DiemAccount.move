@@ -1560,7 +1560,7 @@ print(&511);
             Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
         );
         // Should abort if the 
-        let metadata = b"onboarding transfer";
+        let metadata = b"onboarding coin transfer";
         let coin_to_deposit = Diem::withdraw(balance_coin, BOOTSTRAP_COIN_VALUE);
         deposit<Token>(
             payer_addr,
