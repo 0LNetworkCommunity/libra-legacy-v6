@@ -4,8 +4,10 @@ Description=0L Node Service
 
 [Service]
 LimitNOFILE=200000
+
 WorkingDirectory=/home/<<YOUR USERNAME!>>/.0L
 ExecStart=/home/<<YOUR USERNAME!>>/bin/diem-node --config /home/<<YOUR USERNAME!>>/.0L/validator.node.yaml
+
 
 Restart=always
 RestartSec=10s
