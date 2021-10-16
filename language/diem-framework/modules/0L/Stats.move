@@ -176,8 +176,12 @@ module Stats{
     let sender = Signer::address_of(vm);
     assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190011));
     let stats = borrow_global_mut<ValStats>(sender);
-    // Archive outgoing epoch stats.
-    //TODO: limit the size of the history and drop ancient records.
+    
+    // Keep only the most recent epoch stats
+    if (Vector::length(&stats.history) > 7) {
+      Vector::pop_back<SetData>(&mut stats.history); // just drop last record
+    };
+
     Vector::push_back(&mut stats.history, *&stats.current);
 
     stats.current = blank();

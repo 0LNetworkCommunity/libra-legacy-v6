@@ -22,7 +22,7 @@
 
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_account.md#0x1_AccountScripts_create_acc_user">create_acc_user</a>(_sender: signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_account.md#0x1_AccountScripts_create_acc_user">create_acc_user</a>(sender: signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -32,17 +32,18 @@
 
 
 <pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_account.md#0x1_AccountScripts_create_acc_user">create_acc_user</a>(
-    _sender: signer,
+    sender: signer,
     challenge: vector&lt;u8&gt;,
     solution: vector&lt;u8&gt;,
 ) {
     <b>let</b> new_account_address = <a href="DiemAccount.md#0x1_DiemAccount_create_user_account_with_proof">DiemAccount::create_user_account_with_proof</a>(
+        &sender,
         &challenge,
         &solution,
     );
 
     // Check the account <b>exists</b> and the balance is 0
-    <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(new_account_address) == 0, 01);
+    <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(new_account_address) &gt; 0, 01);
 }
 </code></pre>
 

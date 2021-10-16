@@ -217,13 +217,14 @@ fn format_event_view(e: EventView) -> String {
     }
   };
   let scaled = a.amount / SCALING_FACTOR;
+  dbg!(&m);
   format!(
     "id: {:?}, sender: {:?}, recipient: {:?}, amount: {:?}, metadata: {:?}\n",
     e.sequence_number,
     s.to_string(),
     r.to_string(),
     scaled.to_formatted_string(&Locale::en),
-    String::from_utf8_lossy(&decode(m).unwrap()),
+    String::from_utf8_lossy(&decode(m).unwrap_or(vec![])),
   )
 }
 

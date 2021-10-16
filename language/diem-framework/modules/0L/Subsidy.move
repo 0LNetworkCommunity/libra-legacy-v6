@@ -25,8 +25,6 @@ address 0x1 {
     use 0x1::TowerState;
     use 0x1::FixedPoint32;
 
-    use 0x1::Debug::print;
-
     // estimated gas unit cost for proof verification divided coin scaling factor
     // Cost for verification test/easy difficulty: 1173 / 1000000
     // Cost for verification prod/hard difficulty: 2294 / 1000000
@@ -43,25 +41,20 @@ address 0x1 {
       outgoing_set: &vector<address>,
     ) {
       CoreAddresses::assert_vm(vm);
-      print(&1901001);
       // Get the split of payments from Stats.
       let len = Vector::length<address>(outgoing_set);
-      print(&1901002);
       // equal subsidy for all active validators
       let subsidy_granted;
       // TODO: This calculation is duplicated with get_subsidy
       if (subsidy_units > len && subsidy_units > 0 ) { // arithmetic safety check
         subsidy_granted = subsidy_units/len;
-        // print(&subsidy_granted);
       } else { return };
 
       let i = 0;
       while (i < len) {
-        print(&1901003);
         let node_address = *(Vector::borrow<address>(outgoing_set, i));
         // Transfer gas from vm address to validator
         let minted_coins = Diem::mint<GAS>(vm, subsidy_granted);
-        print(&1901004);
         DiemAccount::vm_deposit_with_metadata<GAS>(
           vm,
           node_address,
@@ -69,7 +62,6 @@ address 0x1 {
           b"validator subsidy",
           b""
         );
-        print(&1901005);
 
         // refund operator tx fees for mining
         refund_operator_tx_fees(vm, node_address);
@@ -80,13 +72,11 @@ address 0x1 {
     // Function code: 02 Prefix: 190102
     public fun calculate_subsidy(vm: &signer, network_density: u64): (u64, u64) {
       CoreAddresses::assert_vm(vm);
-      print(&1901006);
       // skip genesis
       assert(!DiemTimestamp::is_genesis(), Errors::invalid_state(190102));
 
       // Gets the transaction fees in the epoch
       let txn_fee_amount = TransactionFee::get_amount_to_distribute(vm);
-      print(&1901007);
       // Calculate the split for subsidy and burn
       let subsidy_ceiling_gas = Globals::get_subsidy_ceiling_gas();
       // TODO: This metric network density is different than 
@@ -94,32 +84,22 @@ address 0x1 {
 
       // let network_density = Stats::network_density(vm, height_start, height_end);
       let max_node_count = Globals::get_max_validators_per_set();
-      print(&1901008);
       let guaranteed_minimum = subsidy_curve(
         subsidy_ceiling_gas,
         network_density,
         max_node_count,
       );
-      print(&1901009);
       let subsidy = 0;
       let subsidy_per_node = 0;
       // deduct transaction fees from guaranteed minimum.
       if (guaranteed_minimum > txn_fee_amount ){
-        print(&190100901);
         subsidy = guaranteed_minimum - txn_fee_amount;
         // return global subsidy and subsidy per node.
-        print(&190100902);
         // TODO: we are doing this computation twice at reconfigure time.
         if ((subsidy > network_density) && (network_density > 0)) {
-          print(&190100903);
-          // print(&subsidy);
-          // print(&network_density);
-          
           subsidy_per_node = subsidy/network_density;
-          // print(&subsidy_per_node);
         };
       };
-      print(&1901010);
       (subsidy, subsidy_per_node)
     }
 

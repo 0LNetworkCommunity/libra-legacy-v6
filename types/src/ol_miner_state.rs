@@ -1,4 +1,4 @@
-//! miner state view for cli
+//! tower state view for cli
 
 use crate::{
     access_path::AccessPath,
@@ -35,7 +35,7 @@ pub struct TowerStateResource {
 
 impl MoveStructType for TowerStateResource {
     const MODULE_NAME: &'static IdentStr = ident_str!("TowerState");
-    const STRUCT_NAME: &'static IdentStr = ident_str!("MinerProofHistory");
+    const STRUCT_NAME: &'static IdentStr = ident_str!("TowerProofHistory");
 }
 impl MoveResource for TowerStateResource {}
 

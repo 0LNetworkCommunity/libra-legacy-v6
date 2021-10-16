@@ -1,9 +1,9 @@
-//! account: dummy-prevents-genesis-reload, 100000 ,0, validator
-
-// Prepare the state for the next test.
-// Bob Submits a CORRECT VDF Proof, and that updates the state.
+//! account: dummy-prevents-genesis-reload, 100000, 0, validator
 //! account: alice, 10000000GAS
 //! account: bob, 10000000GAS
+
+// Bob Submits a CORRECT VDF Proof, and that updates the state.
+
 //! new-transaction
 //! sender: bob
 script {
@@ -42,4 +42,4 @@ script {
         TowerState::commit_state(&sender, proof);
     }
 }
-// check: VMExecutionFailure(ABORTED { code: 130107
+// check: VMExecutionFailure(ABORTED { code: 33307393

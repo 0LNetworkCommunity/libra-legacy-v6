@@ -20,7 +20,7 @@ set and/or jailed. To be compliant, validators must be BOTH validating and minin
 
 <pre><code><b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
-<b>use</b> <a href="MinerState.md#0x1_TowerState">0x1::TowerState</a>;
+<b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
 </code></pre>
 
 
@@ -87,7 +87,7 @@ set and/or jailed. To be compliant, validators must be BOTH validating and minin
     <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(vm);
     // did the validator sign blocks above threshold?
     <b>let</b> signs = <a href="Stats.md#0x1_Stats_node_above_thresh">Stats::node_above_thresh</a>(vm, node_addr, height_start, height_end);
-    <b>let</b> mines = <a href="MinerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(node_addr);
+    <b>let</b> mines = <a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(node_addr);
 
     <b>if</b> (signs && mines) {
         // compliant: in next set, gets paid, weight increments

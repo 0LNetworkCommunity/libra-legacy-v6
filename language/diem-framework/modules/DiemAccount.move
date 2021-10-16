@@ -457,9 +457,11 @@ module DiemAccount {
     /////// 0L ////////
     // Function code: 01
     public fun create_user_account_with_proof(
+        sender: &signer,
         challenge: &vector<u8>,
         solution: &vector<u8>,
-    ):address acquires AccountOperationsCapability {        
+    ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount {
+             
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
         Roles::new_user_role_with_proof(&new_signer);
@@ -467,6 +469,7 @@ module DiemAccount {
         add_currencies_for_account<GAS>(&new_signer, false);
         make_account(new_signer, auth_key_prefix);
 
+        onboarding_gas_transfer<GAS>(sender, new_account_address);
         // Init the miner state
         // this verifies the VDF proof, which we use to rate limit account creation.
         // account will not be created if this step fails.
@@ -1450,29 +1453,6 @@ print(&511);
         metadata: vector<u8>,
         metadata_signature: vector<u8>
     ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWallet {
-        //////// 0L //////// Transfers disabled by default
-        //////// 0L //////// Transfers of 10 GAS 
-        //////// 0L //////// enabled when validator count is 100. 
-        // print(&0100);
-        // if (DiemConfig::check_transfer_enabled()) {
-        //     // Ensure that this withdrawal is compliant with the account limits on
-        //     // this account.
-        //     assert(
-        //         AccountLimits::update_withdrawal_limits<Token>(
-        //             amount,
-        //             {{*&cap.account_address}},
-        //             &borrow_global<AccountOperationsCapability>(
-        //                 CoreAddresses::DIEM_ROOT_ADDRESS()
-        //             ).limits_cap
-        //         ),
-        //         Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
-        //     );
-        // } else {
-        //     assert(
-        //         *&cap.account_address == CoreAddresses::DIEM_ROOT_ADDRESS(),
-        //         Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
-        //     );
-        // };
         
         // check amount if it is a slow wallet
         if (is_slow(*&cap.account_address)) {
@@ -1580,7 +1560,7 @@ print(&511);
             Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
         );
         // Should abort if the 
-        let metadata = b"onboarding transfer";
+        let metadata = b"onboarding coin transfer";
         let coin_to_deposit = Diem::withdraw(balance_coin, BOOTSTRAP_COIN_VALUE);
         deposit<Token>(
             payer_addr,

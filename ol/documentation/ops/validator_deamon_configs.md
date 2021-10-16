@@ -1,5 +1,9 @@
 # Running 0L validator as a system service
+<<<<<<< HEAD
+This guide will create a daemon service which runs a `diem-node` and restarts on failure and on reboot. 
+=======
 This guide will create a daemon service which runs `diem-node` and restarts on failure and on reboot. 
+>>>>>>> 4d472361166d7f7fa816b02bb0002d3858d68390
 
 Note that this guide:
 - targets Ubuntu 20.4.
@@ -19,9 +23,15 @@ There are a few file paths you will be working from:
 
 This will use a `make` recipe to start the node daemon and install the daemon configs.
 
+<<<<<<< HEAD
+First. Copy a template for systemd from `<project root>/util/diem-node.system` into your 0L home path, usually `~/.0L`. This is non-root template file needs to be edited: replace occurrences of `<<YOUR USERNAME!>>` with the username under which the service will run.
+=======
 First. Copy a template for systemd from `<project root>/util/diem-node.system.template` into your 0L home path, usually `~/.0L`. There are two templates for running as `root` or with a `user`. Note that the non-root template file needs to be edited: replace occurrences of `[USER]` with the username under which the service will run.
+>>>>>>> 4d472361166d7f7fa816b02bb0002d3858d68390
 
-Then the makefile can do a number of things including coping that file to the usual place, and then (re)starting the service.
+BEFORE PROCEEDING: Check you have `~/.0L/diem-node.system` in place and edited with your usename.
+
+Now the Makefile can do a number of things including coping that file to the usual place, and then (re)starting the service.
 
 From the project root:
 
@@ -30,6 +40,13 @@ From the project root:
 # Slow Start
 
 ## Build binaries and copy to appropriate path
+<<<<<<< HEAD
+Use `make bins install` or alternatively:
+
+
+## Create the service configurations for Systemd
+In `~/.config/systemd/user/` you should create a file like this. (Note: again, `make daemon` does this for you)
+=======
 Use `make bins`
 
 ## Validator Wizard
@@ -40,9 +57,19 @@ If your config files have not been created or misplaced run:
 ## Create the service configurations for Systemd
 cd /lib/systemd/system/
 vim diem-node.service
+>>>>>>> 4d472361166d7f7fa816b02bb0002d3858d68390
 
 ```
+# edit this document and replace <<YOUR USERNAME!>> with your linux user
 [Unit]
+<<<<<<< HEAD
+Description=0L Node Service
+
+[Service]
+LimitNOFILE=20000
+WorkingDirectory=/home/node/.0L
+ExecStart=/home/node/bin/diem-node --config /home/node/.0L/validator.node.yaml
+=======
 Description=Diem Node Service
 
 [Service]
@@ -50,17 +77,22 @@ Description=Diem Node Service
 LimitNOFILE=65536
 WorkingDirectory=/root/.0L
 ExecStart=/usr/local/bin/diem-node --config /root/.0L/node.yaml
+>>>>>>> 4d472361166d7f7fa816b02bb0002d3858d68390
 
 Restart=always
 RestartSec=10s
 
 # Make sure you CREATE the directory and file for your node.log
-StandardOutput=file:/root/logs/node.log
-StandardError=file:/root/logs/node.log
+StandardOutput=file:/home/node/logs/node.log
+StandardError=file:/home/node/logs/node.log
 
 [Install]
 WantedBy=multi-user.target
 Alias=diem-node.service
+<<<<<<< HEAD
+
+=======
+>>>>>>> 4d472361166d7f7fa816b02bb0002d3858d68390
 ```
 ### NOTE: When you update any `*service` file, you must reload `ststemctl`
 `systemctl daemon-reload`
@@ -101,10 +133,14 @@ if you have been successful when you run you will see:
            └─15499 /usr/local/bin/diem-node --config /root/.0L/node.yaml
 ```
 
-
 ### Set up proper logging
 
 Logs are being written to a flat file. This is not ideal. You may want to configure `journalctl`.
 
 https://www.digitalocean.com/community/tutorials/how-to-use-journalctl-to-view-and-manipulate-systemd-logs
 
+
+# Trouble shooting
+## Validator Wizard
+
+If your config files have not been created you'll need to do onboarding. Check if you have a  ~/.0L/0L.toml file. This is a sign that you are not yet onboarded.

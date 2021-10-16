@@ -162,7 +162,7 @@ address 0x1 {
     // Function code 03
     public fun process_autopay(
       vm: &signer,
-    ) acquires AccountList, Data, AccountLimitsEnable {
+    ) acquires AccountList, Data {
       // Only account 0x0 should be triggering this autopayment each block
       Roles::assert_diem_root(vm);
 
@@ -184,7 +184,7 @@ address 0x1 {
     fun process_autopay_account(
       vm: &signer,
       account_addr: &address,
-    ) acquires Data, AccountLimitsEnable {
+    ) acquires Data {
       Roles::assert_diem_root(vm);
 
       // Get the payment list from the account
@@ -213,7 +213,11 @@ address 0x1 {
       vm: &signer, 
       account_addr: &address,
       payment: &mut Payment,
-    ): bool acquires AccountLimitsEnable {
+    ): bool {
+      // check payees are community wallets, only community wallets are allowed
+      // to receive autopay (bypassing account limits)
+      if (!Wallet::is_comm(payment.payee)) { return false }; // do nothing but don't delete instruction };
+
       Roles::assert_diem_root(vm);
       let epoch = DiemConfig::get_current_epoch();
       let account_bal = DiemAccount::balance<GAS>(*account_addr);
@@ -247,22 +251,11 @@ address 0x1 {
           // in remaining cases, payment is simple amount given, not a percentage
           payment.amt
         };
-
-        // check payees are community wallets, only community wallets are allowed
-        // to receive autopay (bypassing account limits)
+        
         if (amount != 0 && amount <= account_bal) {
-          if (borrow_global<AccountLimitsEnable>(Signer::address_of(vm)).enabled) {
-            if (Wallet::is_comm(payment.payee)) {
-              DiemAccount::vm_make_payment_no_limit<GAS>(
-                *account_addr, payment.payee, amount, x"", x"", vm
+           DiemAccount::vm_make_payment_no_limit<GAS>(
+                *account_addr, payment.payee, amount, b"autopay", b"", vm
               );
-            }
-          }
-          else {
-            DiemAccount::vm_make_payment_no_limit<GAS>(
-              *account_addr, payment.payee, amount, x"", x"", vm
-            );
-          };
         };
 
         payment.prev_bal = DiemAccount::balance<GAS>(*account_addr);
@@ -330,9 +323,11 @@ address 0x1 {
       let index = find(addr, uid);
       assert(Option::is_none<u64>(&index), Errors::invalid_argument(UID_TAKEN));
 
+      // TODO: This check already exists at the time of execution.
       if (borrow_global<AccountLimitsEnable>(CoreAddresses::DIEM_ROOT_ADDRESS()).enabled) {
         assert(Wallet::is_comm(payee), Errors::invalid_argument(PAYEE_NOT_COMMUNITY_WALLET));
       };
+
       let payments = &mut borrow_global_mut<Data>(addr).payments;
       assert(
         Vector::length<Payment>(payments) < MAX_NUMBER_OF_INSTRUCTIONS,

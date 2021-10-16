@@ -485,8 +485,12 @@
   <b>let</b> sender = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190011));
   <b>let</b> stats = borrow_global_mut&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(sender);
-  // Archive outgoing epoch stats.
-  //TODO: limit the size of the history and drop ancient records.
+
+  // Keep only the most recent epoch stats
+  <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&stats.history) &gt; 7) {
+    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_pop_back">Vector::pop_back</a>&lt;<a href="Stats.md#0x1_Stats_SetData">SetData</a>&gt;(&<b>mut</b> stats.history); // just drop last record
+  };
+
   <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> stats.history, *&stats.current);
 
   stats.current = <a href="Stats.md#0x1_Stats_blank">blank</a>();

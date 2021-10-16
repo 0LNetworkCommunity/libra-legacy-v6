@@ -4,7 +4,7 @@
 use cli::{diem_client::DiemClient};
 use ol_types::block::Block;
 use txs::submit_tx::{TxParams, eval_tx_status};
-use std::{fs::File, path::PathBuf};
+use std::{fs::File, path::PathBuf, thread, time};
 use ol_types::config::AppCfg;
 use crate::commit_proof::commit_proof_tx;
 use std::io::BufReader;
@@ -43,7 +43,13 @@ pub fn process_backlog(
                 let view = commit_proof_tx(
                     &tx_params, block.preimage, block.proof, is_operator
                 )?;
-                eval_tx_status(view)?;
+                match eval_tx_status(view) {
+                    Ok(_) => {},
+                    Err(e) => {
+                      println!("WARN: could not fetch TX status, continuing to next block in backlog after 30 seconds. Message: {:?} ", e);
+                      thread::sleep(time::Duration::from_millis(30_000));
+                    },
+                };
                 i = i + 1;
             }
         }

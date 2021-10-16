@@ -32,7 +32,7 @@ when executing from a fresh state.
 <b>use</b> <a href="Migrations.md#0x1_Migrations">0x1::Migrations</a>;
 <b>use</b> <a href="Oracle.md#0x1_Oracle">0x1::Oracle</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
-<b>use</b> <a href="MinerState.md#0x1_TowerState">0x1::TowerState</a>;
+<b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
 <b>use</b> <a href="TransactionFee.md#0x1_TransactionFee">0x1::TransactionFee</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="Wallet.md#0x1_Wallet">0x1::Wallet</a>;
@@ -137,7 +137,7 @@ Initializes the Diem framework.
     <a href="AutoPay.md#0x1_AutoPay_initialize">AutoPay::initialize</a>(dm_account);
     // FullnodeSubsidy::init_fullnode_sub(dm_account);
     <a href="Oracle.md#0x1_Oracle_initialize">Oracle::initialize</a>(dm_account);
-    <a href="MinerState.md#0x1_TowerState_init_miner_list_and_stats">TowerState::init_miner_list_and_stats</a>(dm_account);
+    <a href="TowerState.md#0x1_TowerState_init_miner_list_and_stats">TowerState::init_miner_list_and_stats</a>(dm_account);
     <a href="Wallet.md#0x1_Wallet_init">Wallet::init</a>(dm_account);
     <a href="DiemAccount.md#0x1_DiemAccount_vm_init_slow">DiemAccount::vm_init_slow</a>(dm_account);
     <a href="Migrations.md#0x1_Migrations_init">Migrations::init</a>(dm_account);

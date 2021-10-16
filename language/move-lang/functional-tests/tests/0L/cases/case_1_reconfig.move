@@ -133,7 +133,7 @@ script {
         let ending_balance = starting_balance + expected_subsidy - operator_refund;
 
         assert(DiemAccount::balance<GAS>(@{{alice}}) == ending_balance, 7357000180113);  
-        assert(NodeWeight::proof_of_weight(@{{alice}}) == 1, 7357000180114);  
+        assert(NodeWeight::proof_of_weight(@{{alice}}) == 0, 7357000180114);  
     }
 }
 //check: EXECUTED

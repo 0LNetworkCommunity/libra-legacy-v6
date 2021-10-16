@@ -6,7 +6,6 @@
 
 address 0x1 {
 
-
 /// # Summary 
 /// This module provides global variables and constants that have no specific owner 
 module Globals {
@@ -23,7 +22,7 @@ module Globals {
     /// subsidy_ceiling_gas: TODO I don't really know what this is
     /// vdf_difficulty: The difficulty required for VDF proofs submitting by miners 
     /// epoch_mining_thres_lower: The number of proofs that must be submitted each 
-    ///       epoch by a miner to remain compliant  
+    /// epoch by a miner to remain compliant  
     struct GlobalConstants has drop {
       // For validator set.
       epoch_length: u64,
@@ -86,7 +85,7 @@ module Globals {
           subsidy_ceiling_gas: 296 * coin_scale,
           vdf_difficulty: 100,
           epoch_mining_thres_lower: 1,
-          epoch_mining_thres_upper: 500,
+          epoch_mining_thres_upper: 240, // upper bound enforced at 6 mins per proof.
           epoch_slow_wallet_unlock: 10,
         }
       };
@@ -98,7 +97,7 @@ module Globals {
           subsidy_ceiling_gas: 8640000 * coin_scale,
           vdf_difficulty: 5000000,
           epoch_mining_thres_lower: 1,
-          epoch_mining_thres_upper: 500,
+          epoch_mining_thres_upper: 240, // upper bound enforced at 6 mins per proof.
           epoch_slow_wallet_unlock: 10000000,
         }
       } else {
@@ -111,10 +110,10 @@ module Globals {
           // target transaction per sec max gas: 20
           // uses "scaled representation", since there are no decimals.
           subsidy_ceiling_gas: 8640000 * coin_scale, // subsidy amount assumes 24 hour epoch lengths. Also needs to be adjusted for coin_scale the onchain representation of human readable value.
-          vdf_difficulty: 5000000, //10 mins on macbook pro 2.5 ghz quadcore
+          vdf_difficulty: 5000000, // FYI approx 10 mins per proof on 2020 macbook pro 2.5 ghz quadcore
           epoch_mining_thres_lower: 20,
-          epoch_mining_thres_upper: 500,
-          epoch_slow_wallet_unlock: 10000000,
+          epoch_mining_thres_upper: 240, // upper bound enforced at 6 mins per proof.
+          epoch_slow_wallet_unlock: 1000 * coin_scale, // approx 10 years for largest accounts in genesis.
         }
       }
     }

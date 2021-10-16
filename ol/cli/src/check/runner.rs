@@ -58,7 +58,7 @@ Web monitor: {web_running}
 Is synced: {synced}
 Sync delay: {delay}
 Node running: {node}
-Miner running: {miner}
+Tower running: {miner}
 Account on chain: {account}
 In validator set: {in_set}
 \n",

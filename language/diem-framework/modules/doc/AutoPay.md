@@ -511,7 +511,7 @@ Attempt to use a UID that is already taken
 
 <pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay_process_autopay">process_autopay</a>(
   vm: &signer,
-) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_AccountList">AccountList</a>, <a href="AutoPay.md#0x1_AutoPay_Data">Data</a>, <a href="AutoPay.md#0x1_AutoPay_AccountLimitsEnable">AccountLimitsEnable</a> {
+) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_AccountList">AccountList</a>, <a href="AutoPay.md#0x1_AutoPay_Data">Data</a> {
   // Only account 0x0 should be triggering this autopayment each block
   <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(vm);
 
@@ -552,7 +552,7 @@ Attempt to use a UID that is already taken
 <pre><code><b>fun</b> <a href="AutoPay.md#0x1_AutoPay_process_autopay_account">process_autopay_account</a>(
   vm: &signer,
   account_addr: &address,
-) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_Data">Data</a>, <a href="AutoPay.md#0x1_AutoPay_AccountLimitsEnable">AccountLimitsEnable</a> {
+) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_Data">Data</a> {
   <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(vm);
 
   // Get the payment list from the account
@@ -599,7 +599,11 @@ Attempt to use a UID that is already taken
   vm: &signer,
   account_addr: &address,
   payment: &<b>mut</b> <a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>,
-): bool <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_AccountLimitsEnable">AccountLimitsEnable</a> {
+): bool {
+  // check payees are community wallets, only community wallets are allowed
+  // <b>to</b> receive autopay (bypassing account limits)
+  <b>if</b> (!<a href="Wallet.md#0x1_Wallet_is_comm">Wallet::is_comm</a>(payment.payee)) { <b>return</b> <b>false</b> }; // do nothing but don't delete instruction };
+
   <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(vm);
   <b>let</b> epoch = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
   <b>let</b> account_bal = <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*account_addr);
@@ -634,21 +638,10 @@ Attempt to use a UID that is already taken
       payment.amt
     };
 
-    // check payees are community wallets, only community wallets are allowed
-    // <b>to</b> receive autopay (bypassing account limits)
     <b>if</b> (amount != 0 && amount &lt;= account_bal) {
-      <b>if</b> (borrow_global&lt;<a href="AutoPay.md#0x1_AutoPay_AccountLimitsEnable">AccountLimitsEnable</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm)).enabled) {
-        <b>if</b> (<a href="Wallet.md#0x1_Wallet_is_comm">Wallet::is_comm</a>(payment.payee)) {
-          <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">DiemAccount::vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
-            *account_addr, payment.payee, amount, x"", x"", vm
+       <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">DiemAccount::vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+            *account_addr, payment.payee, amount, b"autopay", b"", vm
           );
-        }
-      }
-      <b>else</b> {
-        <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">DiemAccount::vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
-          *account_addr, payment.payee, amount, x"", x"", vm
-        );
-      };
     };
 
     payment.prev_bal = <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*account_addr);
@@ -765,9 +758,11 @@ Attempt to use a UID that is already taken
   <b>let</b> index = <a href="AutoPay.md#0x1_AutoPay_find">find</a>(addr, uid);
   <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_is_none">Option::is_none</a>&lt;u64&gt;(&index), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="AutoPay.md#0x1_AutoPay_UID_TAKEN">UID_TAKEN</a>));
 
+  // TODO: This check already <b>exists</b> at the time of execution.
   <b>if</b> (borrow_global&lt;<a href="AutoPay.md#0x1_AutoPay_AccountLimitsEnable">AccountLimitsEnable</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).enabled) {
     <b>assert</b>(<a href="Wallet.md#0x1_Wallet_is_comm">Wallet::is_comm</a>(payee), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="AutoPay.md#0x1_AutoPay_PAYEE_NOT_COMMUNITY_WALLET">PAYEE_NOT_COMMUNITY_WALLET</a>));
   };
+
   <b>let</b> payments = &<b>mut</b> borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay_Data">Data</a>&gt;(addr).payments;
   <b>assert</b>(
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>&gt;(payments) &lt; <a href="AutoPay.md#0x1_AutoPay_MAX_NUMBER_OF_INSTRUCTIONS">MAX_NUMBER_OF_INSTRUCTIONS</a>,

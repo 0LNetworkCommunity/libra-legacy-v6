@@ -172,7 +172,7 @@ impl Runnable for ValWizardCmd {
                 &self
                     .repo
                     .clone()
-                    .unwrap_or("experimental-genesis".to_string()),
+                    .unwrap_or("genesis-registration".to_string()),
                 &namespace,
                 &prebuilt_genesis_path,
                 &false,

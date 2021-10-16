@@ -12,12 +12,12 @@
 // Set voting power of the validtors
 
 //! new-transaction
-//! sender: alice
+//! sender: diemroot
 script {
     use 0x1::TowerState;
-    fun main(_sender: signer) {
-      TowerState::test_helper_set_epochs_mining(@{{carol}}, 50);
-      TowerState::test_helper_set_epochs_mining(@{{dave}}, 50);
+    fun main(vm: signer) {
+      TowerState::test_helper_set_weight_vm(&vm, @{{carol}}, 50);
+      TowerState::test_helper_set_weight_vm(&vm, @{{dave}}, 50);
     }
 }
 // check: EXECUTED

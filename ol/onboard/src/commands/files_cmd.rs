@@ -81,7 +81,7 @@ pub fn get_files(
     repo: &Option<String>
 ) {
     let github_org = github_org.clone().unwrap_or("OLSF".to_string());
-    let repo = repo.clone().unwrap_or("genesis-archive".to_string());
+    let repo = repo.clone().unwrap_or("genesis-registration".to_string());
 
 
     let base_url = format!(
