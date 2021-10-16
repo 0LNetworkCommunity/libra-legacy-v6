@@ -16,7 +16,7 @@ impl Node {
 
         let url_list: Vec<Url>;
 
-        match &self.vitals.chain_view {
+        match &self.refresh_chain_info().0 {
             Some(v) => {
                 url_list = v
                     .validator_view
@@ -31,6 +31,7 @@ impl Node {
                         let mut u = Url::parse("http://localhost").unwrap();
                         u.set_ip_host(a).ok();
                         u.set_port(Some(8080)).ok();
+                        dbg!(&u);
                         Some(u)
                     })
                     .collect();

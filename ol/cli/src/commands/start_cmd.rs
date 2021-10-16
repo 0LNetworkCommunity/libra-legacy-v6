@@ -42,8 +42,14 @@ impl Runnable for StartCmd {
         if *&self.refresh_upstream {
             // fix 0L.toml file
             let cfg_path = cfg.workspace.node_home;
-            node.refresh_peers_update_toml(cfg_path.join("0L.toml")).ok();
-            return
+            match node.refresh_peers_update_toml(cfg_path.join("0L.toml")) {
+                Ok(_) => return,
+                Err(e) => {
+                  println!("ERROR: unable to update seed peers, message:{:?}", e);
+                  exit(1);
+                },
+            };
+            
         };
         if *&self.restore { pilot::maybe_restore_db(&mut node, !self.silent); }
         check::runner::run_checks(&mut node, true ,true, !self.silent, !self.silent);
