@@ -152,7 +152,7 @@ The Move modules in the Diem Framework can be bucketed in to a couple categories
 -  [`0x1::SystemAdministrationScripts`](SystemAdministrationScripts.md#0x1_SystemAdministrationScripts)
 -  [`0x1::TestFixtures`](TestFixtures.md#0x1_TestFixtures)
 -  [`0x1::Testnet`](Testnet.md#0x1_Testnet)
--  [`0x1::TowerState`](MinerState.md#0x1_TowerState)
+-  [`0x1::TowerState`](TowerState.md#0x1_TowerState)
 -  [`0x1::TowerStateScripts`](ol_miner_state.md#0x1_TowerStateScripts)
 -  [`0x1::TransactionFee`](TransactionFee.md#0x1_TransactionFee)
 -  [`0x1::TreasuryComplianceScripts`](TreasuryComplianceScripts.md#0x1_TreasuryComplianceScripts)

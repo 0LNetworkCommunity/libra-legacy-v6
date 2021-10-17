@@ -12,7 +12,7 @@
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
-<b>use</b> <a href="MinerState.md#0x1_TowerState">0x1::TowerState</a>;
+<b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
@@ -37,7 +37,7 @@
 <pre><code><b>public</b> <b>fun</b> <a href="NodeWeight.md#0x1_NodeWeight_proof_of_weight">proof_of_weight</a> (node_addr: address): u64 {
   // Calculate the weight/voting power for the next round.
   // TODO: This assumes that validator passed the validation threshold this epoch, perhaps double check here.
-  <a href="MinerState.md#0x1_TowerState_get_epochs_mining">TowerState::get_epochs_mining</a>(node_addr)
+  <a href="TowerState.md#0x1_TowerState_get_tower_height">TowerState::get_tower_height</a>(node_addr)
 }
 </code></pre>
 
@@ -64,22 +64,9 @@
 
   <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account) == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(140101));
 
-  // <b>let</b> eligible_validators = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
-
   //Get all validators from Validator Universe and then find the eligible validators
   <b>let</b> eligible_validators = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(account);
-  // <b>let</b> val_uni_length = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&validators_universe);
 
-  // <b>let</b> k = 0;
-  // <b>while</b>(k &lt; val_uni_length){
-  //   <b>let</b> addr = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&validators_universe, k);
-
-  //   // consensus case 1 and 2, allow inclusion into the next validator set.
-  //   <b>if</b> (<a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(addr) == 1 || <a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(addr) == 2){
-  //     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(&<b>mut</b> eligible_validators, addr)
-  //   };
-  //   k = k + 1;
-  // };
 
   <b>let</b> length = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&eligible_validators);
 
