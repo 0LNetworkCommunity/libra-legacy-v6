@@ -26,17 +26,13 @@ module EpochBoundary { // TODO: Rename to Boundary
     use 0x1::Burn;
     use 0x1::FullnodeSubsidy;
 
-    use 0x1::Debug::print;
-
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
     public fun reconfigure(vm: &signer, height_now: u64) {
-        print(&1800100);
         CoreAddresses::assert_vm(vm);
 
         let height_start = Epoch::get_timer_height_start(vm);
         
-        print(&1800101);
         let (outgoing_compliant_set, _) = 
             DiemSystem::get_fee_ratio(vm, height_start, height_now);
 
@@ -45,22 +41,17 @@ module EpochBoundary { // TODO: Rename to Boundary
         let (subsidy_units, nominal_subsidy_per) = 
             Subsidy::calculate_subsidy(vm, compliant_nodes_count);
         
-        print(&1800102);
         process_fullnodes(vm, nominal_subsidy_per);
         
-        print(&1800103);
         process_validators(vm, subsidy_units, outgoing_compliant_set);
         
-        print(&1800104);
         let proposed_set = propose_new_set(vm, height_start, height_now);
         
-        print(&1800105);
         // Update all slow wallet limits
         if (DiemConfig::check_transfer_enabled()) {
             DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock());
             // update_validator_withdrawal_limit(vm);
         };
-        print(&1800106);
         reset_counters(vm, proposed_set, height_now)
     }
 
@@ -70,24 +61,18 @@ module EpochBoundary { // TODO: Rename to Boundary
         // loop through validators and pay full node subsidies.
         // Should happen before transactionfees get distributed.
         // Note: need to check, there may be new validators which have not mined yet.
-
-        print(&1800200);
         let miners = TowerState::get_miner_list();
-        print(&1800201);
         // fullnode subsidy is a fraction of the total subsidy available to validators.
         let proof_price = FullnodeSubsidy::get_proof_price(nominal_subsidy_per_node);
 
         let k = 0;
         // Distribute mining subsidy to fullnodes
-        print(&1800202);
         while (k < Vector::length(&miners)) {
             let addr = *Vector::borrow(&miners, k);
-            print(&1800203);
             if (DiemSystem::is_validator(addr)) { // skip validators
               k = k + 1;
               continue
             };
-            print(&1800204);
             
             // TODO: this call is repeated in propose_new_set. 
             // Not sure if the performance hit at epoch boundary is worth the refactor. 
@@ -96,7 +81,6 @@ module EpochBoundary { // TODO: Rename to Boundary
               // print(&count);
 
               let miner_subsidy = count * proof_price;
-              print(&1800205);
               // print(&miner_subsidy);
               FullnodeSubsidy::distribute_fullnode_subsidy(vm, addr, miner_subsidy);
             };

@@ -24,7 +24,7 @@ module AccountScripts {
         );
 
         // Check the account exists and the balance is 0
-        assert(DiemAccount::balance<GAS>(new_account_address) == 0, 01);
+        assert(DiemAccount::balance<GAS>(new_account_address) > 0, 01);
     }
 
     public(script) fun create_acc_val(

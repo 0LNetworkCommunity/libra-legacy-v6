@@ -137,9 +137,19 @@ reset-safety:
 	jq -r '.["${ACC}-oper/safety_data"].value = { "epoch": 0, "last_voted_round": 0, "preferred_round": 0, "last_vote": null }' ${DATA_PATH}/key_store.json > ${DATA_PATH}/temp_key_store && mv ${DATA_PATH}/temp_key_store ${DATA_PATH}/key_store.json
 
 
+
+
 backup:
 	cd ~ && rsync -av --exclude db/ --exclude logs/ ~/.0L ~/0L_backup_$(shell date +"%m-%d-%y")
 
+clear-prod-db:
+	@echo WIPING DB
+	rm -rf ${DATA_PATH}/db | true
+
+reset-safety:
+	@echo CLEARING SAFETY RULES IN KEY_STORE.JSON
+	jq -r '.["${ACC}-oper/safety_data"].value = { "epoch": 0, "last_voted_round": 0, "preferred_round": 0, "last_vote": null }' ${DATA_PATH}/key_store.json > ${DATA_PATH}/temp_key_store && mv ${DATA_PATH}/temp_key_store ${DATA_PATH}/key_store.json
+	
 #### GENESIS BACKEND SETUP ####
 init-backend: 
 	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
@@ -265,14 +275,6 @@ verify-gen:
 	--validator-backend ${LOCAL} \
 	--genesis-path ${DATA_PATH}/genesis.blob
 
-
-#### GENESIS  ####
-# build-gen:
-# 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- genesis \
-# 	--chain-id ${CHAIN_ID} \
-# 	--shared-backend ${REMOTE} \
-# 	--path ${DATA_PATH}/genesis.blob
-
 genesis:
 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- files \
 	--chain-id ${CHAIN_ID} \
@@ -283,6 +285,7 @@ genesis:
 	--github-org ${REPO_ORG} \
   --layout-path ${DATA_PATH}/set_layout.toml
 
+	sha256sum ${DATA_PATH}/genesis.blob
 
 #### NODE MANAGEMENT ####
 start:
@@ -295,7 +298,9 @@ start-full:
 
 daemon:
 # your node's custom diem-node.service lives in ~/.0L. Take the template from libra/util and edit for your needs.
-	cp -f ~/.0L/diem-node.service /lib/systemd/system/
+	@echo REMEMBER TO COPY A TEMPLATE from ./ol/util/diem-node.service and edit the username
+	mkdir -p ~/.config/systemd/user/
+	cp ~/.0L/diem-node.service ~/.config/systemd/user/
 
 	@if test -d ~/logs; then \
 		echo "WIPING SYSTEMD LOGS"; \
@@ -304,14 +309,13 @@ daemon:
 
 	mkdir ~/logs
 	touch ~/logs/node.log
-	chmod 777 ~/logs
-	chmod 777 ~/logs/node.log
 
-	systemctl daemon-reload
-	systemctl stop diem-node.service
-	systemctl start diem-node.service
+	systemctl --user daemon-reload
+	systemctl --user stop diem-node.service
+	systemctl --user start diem-node.service
 	sleep 2
-	systemctl status diem-node.service &
+	
+	systemctl --user status diem-node.service &
 	tail -f ~/logs/node.log
 
 #### TEST SETUP ####
@@ -480,7 +484,17 @@ clean-tags:
 	git push origin --delete ${TAG}
 	git tag -d ${TAG}
 	
+nuke-testnet:
+	@echo WIPING EVERYTHING but keeping: github_token.txt, autopay_batch.json, set_layout.toml, /blocks/block_0.json
 
+	@if test -d ${DATA_PATH}; then \
+		cd ${DATA_PATH} && cp github_token.txt autopay_batch.json set_layout.toml blocks/block_0.json ~/; \
+		cd ${DATA_PATH} && rm -rf *; \
+		cd ~ && cp github_token.txt autopay_batch.json set_layout.toml ${DATA_PATH}; \
+		cd ${DATA_PATH} && mkdir blocks;\
+		cd ~ && cp block_0.json ${DATA_PATH}/blocks/; \
+	fi
+	
 
 ####### SWARM ########
 
@@ -535,17 +549,3 @@ fork-config:
 fork-start: 
 	rm -rf ~/.0L/db
 	cargo run -p libra-node -- --config ~/.0L/validator.node.yaml
-
-
-nuke-testnet:
-	@echo WIPING EVERYTHING but keeping: github_token.txt, autopay_batch.json, set_layout.toml, /blocks/block_0.json
-
-	@if test -d ${DATA_PATH}; then \
-		cd ${DATA_PATH} && cp github_token.txt autopay_batch.json set_layout.toml blocks/block_0.json ~/; \
-		cd ${DATA_PATH} && rm -rf *; \
-		cd ~ && cp github_token.txt autopay_batch.json set_layout.toml ${DATA_PATH}; \
-		cd ${DATA_PATH} && mkdir blocks;\
-		cd ~ && cp block_0.json ${DATA_PATH}/blocks/; \
-	fi
-	
-

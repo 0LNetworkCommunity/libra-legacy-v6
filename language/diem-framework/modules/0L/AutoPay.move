@@ -323,9 +323,11 @@ address 0x1 {
       let index = find(addr, uid);
       assert(Option::is_none<u64>(&index), Errors::invalid_argument(UID_TAKEN));
 
+      // TODO: This check already exists at the time of execution.
       if (borrow_global<AccountLimitsEnable>(CoreAddresses::DIEM_ROOT_ADDRESS()).enabled) {
         assert(Wallet::is_comm(payee), Errors::invalid_argument(PAYEE_NOT_COMMUNITY_WALLET));
       };
+
       let payments = &mut borrow_global_mut<Data>(addr).payments;
       assert(
         Vector::length<Payment>(payments) < MAX_NUMBER_OF_INSTRUCTIONS,
