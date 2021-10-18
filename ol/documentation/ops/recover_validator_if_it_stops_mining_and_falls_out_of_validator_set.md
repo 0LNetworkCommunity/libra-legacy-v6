@@ -13,9 +13,9 @@ While your node is recovering, the easiest thing to do is to set your tower app 
 
 `upstream_nodes = ["http://167.172.248.37:8080/"]`
 
-Now restart the tower app with the --backup-url flag, like this:
+Now restart the tower app with the --use-upstream-url flag, like this:
 
-`tower start --backup-url`
+`tower --use-upstream-url start`
 
 # Second Step -- The Node
 
