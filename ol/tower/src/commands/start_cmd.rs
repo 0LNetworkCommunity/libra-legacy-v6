@@ -5,7 +5,6 @@ use crate::{backlog, block::*, entrypoint};
 use crate::{entrypoint::EntryPointTxsCmd, prelude::*};
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use ol_types::config::TxType;
-use reqwest::Url;
 use txs::submit_tx::tx_params;
 use std::process::exit;
 
