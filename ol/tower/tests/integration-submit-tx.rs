@@ -204,7 +204,11 @@ fn get_node_port() -> u16 {
 }
 
 fn check_node_sync(tx_params: &TxParams, config: &AppCfg) -> Result<(), Error> {
-    let remote_state = tower::backlog::get_remote_state(&tx_params).unwrap();
+    let upstream_url = match &config.profile.default_node {
+        Some(url) => url,
+        None => &tx_params.url,
+    };
+    let remote_state = tower::backlog::get_remote_state(upstream_url, &tx_params).unwrap();
     let remote_height = remote_state.verified_tower_height;
     println!("Remote tower height: {}", remote_height);
 
