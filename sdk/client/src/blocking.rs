@@ -342,7 +342,6 @@ impl BlockingClient {
     // Executes the specified request method using the given parameters by contacting the JSON RPC
     // server. If the 'http_proxy' or 'https_proxy' environment variable is set, enable the proxy.
     fn send_impl<S: Serialize, T: DeserializeOwned>(&self, payload: &S) -> Result<T> {
-        dbg!("send_impl");
         let mut request = ureq::post(&self.url)
             .timeout_connect(REQUEST_TIMEOUT)
             .set("User-Agent", USER_AGENT)

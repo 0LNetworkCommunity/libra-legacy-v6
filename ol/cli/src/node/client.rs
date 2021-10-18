@@ -54,7 +54,6 @@ pub fn find_a_remote_jsonrpc(config: &AppCfg, waypoint: Waypoint) -> Result<Diem
     let mut rng = thread_rng();
     if let Some(list) = &config.profile.upstream_nodes {
         let len = list.len();
-        dbg!(len);
         let url = list.choose_multiple(&mut rng, len)
             .into_iter()
             .find(|&remote_url| {
@@ -120,9 +119,7 @@ pub fn pick_client(swarm_path: Option<PathBuf>, config: &mut AppCfg) -> Result<D
     // check if is in sync
     let local_client = default_local_client(config, waypoint.clone())?;
 
-    dbg!(&1);
     let remote_client = find_a_remote_jsonrpc(config, waypoint.clone())?;
-    dbg!(&1);
     // compares to an upstream random remote client. If it is synced, use the local client as the default
     let mut node = Node::new(local_client, config, is_swarm);
     match node.check_sync()?.is_synced {
