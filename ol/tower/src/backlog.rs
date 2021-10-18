@@ -11,6 +11,7 @@ use std::io::BufReader;
 use crate::block::parse_block_height;
 use anyhow::{bail, Result, Error};
 use diem_json_rpc_types::views::{TowerStateResourceView};
+use reqwest::Url;
 
 /// Submit a backlog of blocks that may have been mined while network is offline. 
 /// Likely not more than 1. 
@@ -18,7 +19,11 @@ pub fn process_backlog(
     config: &AppCfg, tx_params: &TxParams, is_operator: bool
 ) -> Result<(), Error> {
     // Getting remote miner state
-    let remote_state = get_remote_state(tx_params)?;
+    let upstream_url = match &config.profile.default_node {
+        Some(url) => url,
+        None => &tx_params.url,
+    };
+    let remote_state = get_remote_state(&upstream_url, tx_params)?;
     let remote_height = remote_state.verified_tower_height;
 
     println!("Remote tower height: {}", remote_height);
@@ -41,7 +46,7 @@ pub fn process_backlog(
                 let reader = BufReader::new(file);
                 let block: Block = serde_json::from_reader(reader)?;
                 let view = commit_proof_tx(
-                    &tx_params, block.preimage, block.proof, is_operator
+                    &upstream_url, &tx_params, block.preimage, block.proof, is_operator
                 )?;
                 match eval_tx_status(view) {
                     Ok(_) => {},
@@ -58,10 +63,10 @@ pub fn process_backlog(
 }
 
 /// returns remote node state given tx_params
-pub fn get_remote_state(tx_params: &TxParams) -> Result<TowerStateResourceView, Error> {
-    let client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+pub fn get_remote_state(upstream_url: &Url, tx_params: &TxParams) -> Result<TowerStateResourceView, Error> {
+    let client = DiemClient::new(upstream_url.clone(), tx_params.waypoint).unwrap();
     println!("Fetching remote tower height: {}, {}", 
-        tx_params.url.clone(), tx_params.owner_address.clone()
+        upstream_url.clone(), tx_params.owner_address.clone()
     );
     let remote_state = client.get_miner_state(&tx_params.owner_address);
     match remote_state {

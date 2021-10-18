@@ -5,9 +5,11 @@ use cli::{diem_client::DiemClient, AccountData, AccountStatus};
 use txs::{sign_tx::sign_tx, submit_tx::{TxParams, submit_tx}};
 use diem_json_rpc_types::views::{TransactionView};
 use diem_transaction_builder::stdlib as transaction_builder;
+use reqwest::Url;
 
 /// Submit a miner transaction to the network.
 pub fn commit_proof_tx(
+    upstream_url: &Url,
     tx_params: &TxParams,
     preimage: Vec<u8>,
     proof: Vec<u8>,
@@ -15,7 +17,7 @@ pub fn commit_proof_tx(
 ) -> Result<TransactionView, Error> {
 
     // Create a client object
-    let client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+    let client = DiemClient::new(upstream_url.clone(), tx_params.waypoint).unwrap();
 
     let chain_id = tx_params.chain_id;
 
