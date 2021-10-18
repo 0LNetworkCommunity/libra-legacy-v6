@@ -1,5 +1,6 @@
 //! Proof block datastructure
 
+use diem_global_constants::VDF_SECURITY_PARAM_NEW;
 use ol_types::config::AppCfg;
 use crate::{
     delay::*,
@@ -24,7 +25,11 @@ pub fn mine_genesis(config: &AppCfg) -> Block {
     println!("Mining Genesis Proof");
     let preimage = genesis_preimage(&config);
     let now = Instant::now();
-    let proof = do_delay(&preimage);
+
+    let difficulty = delay_difficulty();
+    let security = VDF_SECURITY_PARAM_NEW;
+
+    let proof = do_delay(&preimage, difficulty, security);
     let elapsed_secs = now.elapsed().as_secs();
     println!("Delay: {:?} seconds", elapsed_secs);
     let block = Block {
@@ -32,6 +37,8 @@ pub fn mine_genesis(config: &AppCfg) -> Block {
         elapsed_secs,
         preimage,
         proof,
+        difficulty: Some(difficulty),
+        security: Some(security),
     };
 
     block
@@ -64,9 +71,11 @@ pub fn mine_once(config: &AppCfg) -> Result<Block, Error> {
         // Otherwise this is the first time the app is run, and it needs a genesis preimage, which comes from configs.
         let height = latest_block.height + 1;
         // TODO: cleanup this duplication with mine_genesis_once?
+        let difficulty = delay_difficulty();
+        let security = VDF_SECURITY_PARAM_NEW;
 
         let now = Instant::now();
-        let data = do_delay(&preimage);
+        let data = do_delay(&preimage, difficulty, security);
         let elapsed_secs = now.elapsed().as_secs();
         println!("Delay: {:?} seconds", elapsed_secs);
 
@@ -75,6 +84,8 @@ pub fn mine_once(config: &AppCfg) -> Result<Block, Error> {
             elapsed_secs,
             preimage,
             proof: data.clone(),
+            difficulty: Some(difficulty),
+            security: Some(security),
         };
 
         write_json(&block, &config.get_block_dir());

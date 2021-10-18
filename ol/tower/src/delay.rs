@@ -3,8 +3,10 @@
 
 /// Functions for running the VDF.
 use vdf::{VDFParams, WesolowskiVDFParams, VDF};
-use std::{env, fs, io::Write};
-use diem_global_constants::VDF_SECURITY_PARAM;
+use std::env;
+
+#[cfg(test)]
+use std::{fs, io::Write};
 
 /// Switch settings between production and testing
 pub fn delay_difficulty() -> u64 {
@@ -20,19 +22,18 @@ pub fn delay_difficulty() -> u64 {
 }
 
 /// Runs the VDF
-pub fn do_delay(preimage: &[u8]) -> Vec<u8> {
-    let delay_length = delay_difficulty();
+pub fn do_delay(preimage: &[u8], difficulty: u64, security: u16) -> Vec<u8> {
     // Functions for running the VDF.
-    let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(VDF_SECURITY_PARAM).new();
-    vdf.solve(preimage, delay_length)
-        .expect("iterations should have been valiated earlier")
+    let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
+    vdf.solve(preimage, difficulty)
+        .expect("cannot create delay proof")
 }
 
 /// Verifies a proof
-pub fn verify(preimage: &[u8], proof: &[u8]) -> bool{
-    let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(VDF_SECURITY_PARAM).new();
+pub fn verify(preimage: &[u8], proof: &[u8], difficulty: u64, security: u16) -> bool{
+    let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
     
-    match vdf.verify(preimage, delay_difficulty(), proof) {
+    match vdf.verify(preimage, difficulty, proof) {
        Ok(_) => true,
        Err(e) => {
         println!("Proof is not valid. {:?}", e);
@@ -62,6 +63,21 @@ fn prove_1000_512() {
     let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
     vdf.solve(preimage_bytes.as_slice(), difficulty)
         .expect("iterations should have been valiated earlier");
+}
+
+
+#[test]
+fn prove_5m_2048() {
+    let security = 2048;
+    let difficulty = 5_000_000;
+    let preimage_bytes = hex::decode(ALICE_PREIMAGE).unwrap();
+
+    let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
+    let proof = vdf.solve(preimage_bytes.as_slice(), difficulty)
+        .expect("iterations should have been valiated earlier");
+    let mut file = fs::File::create("./test.prove_5m_2048").unwrap();
+    file.write_all(hex::encode(proof).as_bytes())
+        .expect("Could not write block");
 }
 
 #[test]

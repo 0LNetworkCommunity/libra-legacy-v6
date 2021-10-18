@@ -4,7 +4,7 @@
 
 use ol_keys::wallet;
 use ol_types::block::Block;
-use tower::{delay, block::write_genesis};
+use tower::{block::write_genesis, delay::{self, delay_difficulty}};
 use ol_types::config::AppCfg;
 use abscissa_core::{Command, Options, Runnable};
 use std::{path::PathBuf};
@@ -61,5 +61,5 @@ pub fn check(path: PathBuf) -> bool {
         &format!("could not parse manifest in {:?}", &path)
     );
 
-    delay::verify(&user_data.block_zero.preimage, &user_data.block_zero.proof)
+    delay::verify(&user_data.block_zero.preimage, &user_data.block_zero.proof, delay_difficulty(), VDF_SECURITY_PARAM)
 }

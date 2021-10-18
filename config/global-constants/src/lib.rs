@@ -34,5 +34,7 @@ pub const ACCOUNT_PROFILE: &str = "account_profile";
 pub const SALT_0L: &str = "0L";
 pub const SOURCE_DIR: &str = "libra/";
 pub const VDF_SECURITY_PARAM: u16 = 2048;
+pub const VDF_SECURITY_PARAM_NEW: u16 = 256;
+
 /// Filename for 0L configs
 pub const CONFIG_FILE: &str = "0L.toml";

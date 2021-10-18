@@ -17,6 +17,10 @@ pub struct Block {
     /// VDF proof. AKA solution
     #[serde(with = "hex")]
     pub proof: Vec<u8>,
+    /// The iterations of the circuit
+    pub difficulty: Option<u64>, // option to make backwards compatible reads
+    /// the security parameter of the proof.
+    pub security: Option<u16>,
 }
 
 impl Block {
