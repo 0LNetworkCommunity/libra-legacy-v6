@@ -280,6 +280,8 @@ fn test_mine_once() {
         elapsed_secs: 0u64,
         preimage: Vec::new(),
         proof: fixture_previous_proof,
+        difficulty: Some(100),
+        security: Some(2048),
     };
 
     write_json(&fixture_block, &configs_fixture.get_block_dir());
@@ -349,6 +351,8 @@ fn test_parse_one_file() {
         elapsed_secs: 0u64,
         preimage: Vec::new(),
         proof: Vec::new(),
+        difficulty: Some(100),
+        security: Some(2048),
     };
 
     // write the file temporarilty
