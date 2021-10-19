@@ -60,6 +60,7 @@ TODO
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
@@ -282,15 +283,6 @@ the miner last created a new account
 
 
 <pre><code><b>const</b> <a href="TowerState.md#0x1_TowerState_EPOCHS_UNTIL_ACCOUNT_CREATION">EPOCHS_UNTIL_ACCOUNT_CREATION</a>: u64 = 6;
-</code></pre>
-
-
-
-<a name="0x1_TowerState_VDF_SECURITY_PARAM"></a>
-
-
-
-<pre><code><b>const</b> <a href="TowerState.md#0x1_TowerState_VDF_SECURITY_PARAM">VDF_SECURITY_PARAM</a>: u64 = 2048;
 </code></pre>
 
 
@@ -523,7 +515,7 @@ is onboarding
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_create_proof_blob">create_proof_blob</a>(challenge: vector&lt;u8&gt;, difficulty: u64, solution: vector&lt;u8&gt;, security: u64): <a href="TowerState.md#0x1_TowerState_Proof">TowerState::Proof</a>
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_create_proof_blob">create_proof_blob</a>(challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;, difficulty: u64, security: u64): <a href="TowerState.md#0x1_TowerState_Proof">TowerState::Proof</a>
 </code></pre>
 
 
@@ -534,8 +526,8 @@ is onboarding
 
 <pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_create_proof_blob">create_proof_blob</a>(
   challenge: vector&lt;u8&gt;,
-  difficulty: u64,
   solution: vector&lt;u8&gt;,
+  difficulty: u64,
   security: u64,
 ): <a href="TowerState.md#0x1_TowerState_Proof">Proof</a> {
    <a href="TowerState.md#0x1_TowerState_Proof">Proof</a> {
@@ -605,6 +597,7 @@ adds <code>tower</code> to list of towers
   difficulty: u64,
   security: u64,
 ) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
+  print(&001);
   // TODO: Previously in OLv3 is_genesis() returned <b>true</b>.
   // How <b>to</b> check that this is part of genesis? is_genesis returns <b>false</b> here.
 
@@ -748,7 +741,7 @@ Permissions: PUBLIC, ANYONE
   steady_state: bool
 ) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
   <b>let</b> miner_history = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr);
-
+  print(&10010);
   <b>let</b> epoch = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
   <b>if</b> (epoch &lt; 60) { // network is bootstrapping
     <b>assert</b>(
@@ -762,25 +755,29 @@ Permissions: PUBLIC, ANYONE
     );
   };
 
-
+  print(&10020);
   // If not genesis proof, check hash <b>to</b> ensure the proof continues the chain
   <b>if</b> (steady_state) {
     //If not genesis proof, check hash
     <b>assert</b>(&proof.challenge == &miner_history.previous_proof_hash,
     <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130107));
   };
+  print(&10030);
 
-  <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(&proof.challenge, &proof.difficulty, &proof.solution, &<a href="TowerState.md#0x1_TowerState_VDF_SECURITY_PARAM">VDF_SECURITY_PARAM</a>);
+  <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(&proof.challenge, &proof.solution, &proof.difficulty, &proof.security);
   <b>assert</b>(valid, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130108));
+  print(&10040);
 
   // add the miner <b>to</b> the miner list <b>if</b> not present
   <a href="TowerState.md#0x1_TowerState_increment_miners_list">increment_miners_list</a>(miner_addr);
 
+  print(&10050);
   // Get a mutable ref <b>to</b> the current state
   <b>let</b> miner_history = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr);
 
   // <b>update</b> the miner proof history (result is used <b>as</b> seed for next proof)
   miner_history.previous_proof_hash = <a href="../../../../../../move-stdlib/docs/Hash.md#0x1_Hash_sha3_256">Hash::sha3_256</a>(*&proof.solution);
+    print(&10050);
 
   // Increment the verified_tower_height
   <b>if</b> (steady_state) {
@@ -790,10 +787,14 @@ Permissions: PUBLIC, ANYONE
     miner_history.verified_tower_height = 0;
     miner_history.count_proofs_in_epoch = 1
   };
+  print(&10060);
 
   miner_history.latest_epoch_mining = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
+  print(&10070);
 
   <a href="TowerState.md#0x1_TowerState_increment_stats">increment_stats</a>(miner_addr);
+  print(&10080);
+
 }
 </code></pre>
 
@@ -950,7 +951,13 @@ Checks to see if miner submitted enough proofs to be considered compliant
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_init_miner_state">init_miner_state</a>(miner_sig: &signer, challenge: &vector&lt;u8&gt;, solution: &vector&lt;u8&gt;, difficulty: u64, security: u64) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_init_miner_state">init_miner_state</a>(
+  miner_sig: &signer,
+  challenge: &vector&lt;u8&gt;,
+  solution: &vector&lt;u8&gt;,
+  difficulty: u64,
+  security: u64
+) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
 
   // NOTE Only <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a> can <b>update</b> own state.
   // Should only happen once.
@@ -976,7 +983,7 @@ Checks to see if miner submitted enough proofs to be considered compliant
     solution: *solution,
     security,
   };
-
+  print(&10000);
   //submit the proof
   <a href="TowerState.md#0x1_TowerState_verify_and_update_state">verify_and_update_state</a>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig), proof, <b>false</b>);
 }
@@ -1221,7 +1228,7 @@ Public Getters ///
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_helper_init_miner">test_helper_init_miner</a>(miner_sig: &signer, difficulty: u64, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;, security: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_helper_init_miner">test_helper_init_miner</a>(miner_sig: &signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;, difficulty: u64, security: u64)
 </code></pre>
 
 
@@ -1232,9 +1239,9 @@ Public Getters ///
 
 <pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_helper_init_miner">test_helper_init_miner</a>(
     miner_sig: &signer,
-    difficulty: u64,
     challenge: vector&lt;u8&gt;,
     solution: vector&lt;u8&gt;,
+    difficulty: u64,
     security: u64,
   ) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
     <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 130102014010);
