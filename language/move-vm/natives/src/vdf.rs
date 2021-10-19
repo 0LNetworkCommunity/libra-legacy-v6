@@ -58,7 +58,7 @@ pub fn verify(
     // TODO change the `cost_index` when we have our own cost table.
     let cost = native_gas(context.cost_table(), NativeCostIndex::VDF_VERIFY, 1);
 
-    let v = vdf::WesolowskiVDFParams(security as u16).new();
+    let v = vdf::PietrzakVDFParams(security as u16).new();
     let result = v.verify(&challenge, difficulty, &solution);
 
     let return_values = smallvec![Value::bool(result.is_ok())];
