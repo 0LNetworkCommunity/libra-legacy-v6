@@ -8,18 +8,18 @@ use std::env;
 #[cfg(test)]
 use std::{fs, io::Write};
 
-/// Switch settings between production and testing
-pub fn delay_difficulty() -> u64 {
-    let node_env = match env::var("NODE_ENV") {
-        Ok(val) => val,
-        _ => "prod".to_string() // default to "prod" if not set
-    };
-    // must explicitly set env to prod to use production difficulty.
-    if node_env == "prod" {
-        return 5_000_000
-    }
-    return 100 // difficulty for test suites and on local for debugging purposes.
-}
+// /// Switch settings between production and testing
+// pub fn delay_difficulty() -> u64 {
+//     let node_env = match env::var("NODE_ENV") {
+//         Ok(val) => val,
+//         _ => "prod".to_string() // default to "prod" if not set
+//     };
+//     // must explicitly set env to prod to use production difficulty.
+//     if node_env == "prod" {
+//         return 5_000_000
+//     }
+//     return 100 // difficulty for test suites and on local for debugging purposes.
+// }
 
 /// Runs the VDF
 pub fn do_delay(preimage: &[u8], difficulty: u64, security: u16) -> Vec<u8> {

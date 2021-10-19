@@ -12,7 +12,9 @@ fun main(sender: signer) {
     TowerState::init_miner_state(
         &sender,
         &TestFixtures::alice_0_easy_chal(),
-        &TestFixtures::alice_0_easy_sol()
+        &TestFixtures::alice_0_easy_sol(),
+        100,
+        2048
     );
 }
 }

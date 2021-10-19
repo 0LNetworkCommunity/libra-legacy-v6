@@ -1,10 +1,10 @@
 //! `start` subcommand - example of how to write a subcommand
 
-use crate::{application::app_config, block::write_genesis, delay::delay_difficulty};
+use crate::{application::app_config, block::write_genesis};
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
 use abscissa_core::{Command, Options, Runnable};
-use diem_global_constants::VDF_SECURITY_PARAM;
+use diem_global_constants::{VDF_SECURITY_PARAM, delay_difficulty};
 
 
 #[derive(Command, Debug, Options)]

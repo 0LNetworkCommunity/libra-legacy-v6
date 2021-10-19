@@ -49,6 +49,7 @@ use transaction_builder::encode_create_designated_dealer_script_function;
 
 //////// 0L ////////
 use ol_types::account::ValConfigs;
+use diem_global_constants::{VDF_SECURITY_PARAM, delay_difficulty};
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
@@ -533,21 +534,26 @@ fn create_and_initialize_owners_operators(
         );
 
         // Submit mining proof
+        // Todo this should use the 0L Block type.
         let preimage = hex::decode(&genesis_proof.preimage).unwrap();
         let proof = hex::decode(&genesis_proof.proof).unwrap();
-        exec_function(
-            session,
-            log_context,
-            "TowerState",
-            "genesis_helper",
-            vec![],
-            serialize_values(&vec![
-                MoveValue::Signer(diem_root_address),
-                MoveValue::Signer(owner_address),
-                MoveValue::vector_u8(preimage),
-                MoveValue::vector_u8(proof),
-            ]),
-        );
+        // exec_function(
+        //     session,
+        //     log_context,
+        //     "TowerState",
+        //     "genesis_helper",
+        //     vec![],
+        //     serialize_values(&vec![
+        //         MoveValue::Signer(diem_root_address),
+        //         MoveValue::Signer(owner_address),
+        //         MoveValue::vector_u8(preimage),
+        //         MoveValue::vector_u8(proof),
+        //         MoveValue::U64(100),
+        //         MoveValue::U64(2048),
+        //         // MoveValue::U64(delay_difficulty()), // TODO: make this part of genesis registration
+        //         // MoveValue::U64(VDF_SECURITY_PARAM.into()),
+        //     ]),
+        // );
 
         //////// 0L ////////
         // submit any transactions for user e.g. Autopay

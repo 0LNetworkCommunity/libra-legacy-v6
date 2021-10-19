@@ -9066,6 +9066,7 @@ dependencies = [
  "diem-crypto",
  "diem-framework",
  "diem-framework-releases",
+ "diem-global-constants",
  "diem-proptest-helpers",
  "diem-state-view",
  "diem-transaction-builder",

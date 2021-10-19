@@ -25,14 +25,18 @@ pub fn verify(
     _ty_args: Vec<Type>,
     mut arguments: VecDeque<Value>,
 ) -> PartialVMResult<NativeResult> {
-    if arguments.len() != 3 {
+    if arguments.len() != 4 {
         let msg = format!(
             "wrong number of arguments for vdf_verify expected 4 found {}",
             arguments.len()
         );
         return Err(PartialVMError::new(StatusCode::UNREACHABLE).with_message(msg));
     }
-
+    
+    // pop the arguments (reverse order).
+    let security = pop_arg!(arguments, Reference)
+        .read_ref()?
+        .value_as::<u64>()?;
     let alleged_solution = pop_arg!(arguments, Reference)
         .read_ref()?
         .value_as::<Vec<u8>>()?;
@@ -42,9 +46,11 @@ pub fn verify(
     let challenge = pop_arg!(arguments, Reference)
         .read_ref()?
         .value_as::<Vec<u8>>()?;
-    let security = pop_arg!(arguments, Reference)
-        .read_ref()?
-        .value_as::<u64>()?;
+
+    // refuse to try anthing with a security parameter above 2048 for DOS risk.
+    if security > 2048 {
+      return Err(PartialVMError::new(StatusCode::UNREACHABLE).with_message("VDF security parameter above threshold".to_string()));
+    }
 
     // TODO change the `cost_index` when we have our own cost table.
     let cost = native_gas(context.cost_table(), NativeCostIndex::VDF_VERIFY, 1);

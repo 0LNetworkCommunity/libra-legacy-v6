@@ -8,6 +8,8 @@
 //! (and better allow these constants to be updated in a single location), we define them here.
 #![forbid(unsafe_code)]
 
+use std::env;
+
 /// Definitions of global cryptographic keys (e.g., as held in secure storage)
 pub const CONSENSUS_KEY: &str = "consensus";
 pub const EXECUTION_KEY: &str = "execution";
@@ -38,3 +40,18 @@ pub const VDF_SECURITY_PARAM_NEW: u16 = 256;
 
 /// Filename for 0L configs
 pub const CONFIG_FILE: &str = "0L.toml";
+
+
+// TODO: make this lazy static.
+/// Switch settings between production and testing
+pub fn delay_difficulty() -> u64 {
+    let node_env = match env::var("NODE_ENV") {
+        Ok(val) => val,
+        _ => "prod".to_string() // default to "prod" if not set
+    };
+    // must explicitly set env to prod to use production difficulty.
+    if node_env == "prod" {
+        return 5_000_000
+    }
+    return 100 // difficulty for test suites and on local for debugging purposes.
+}
