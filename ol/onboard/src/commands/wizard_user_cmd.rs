@@ -2,6 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
+use diem_global_constants::{VDF_SECURITY_PARAM, delay_difficulty};
 use ol_keys::wallet;
 use ol_types::block::Block;
 use tower::{block::write_genesis, delay};
