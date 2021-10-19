@@ -7,14 +7,35 @@ use vdf::WesolowskiVDFParams;
 use vdf::VDF;
 
 fn bench_delay(c: &mut Criterion) {
-    c.bench_function("do_delay_100", |b| {
+    c.bench_function("delay_100", |b| {
         b.iter(|| delay::do_delay(b"test preimage", 100, 2048))
     });
 
-    c.bench_function("do_delay_preimage", |b| {
+    c.bench_function("delay_preimage_100_2048", |b| {
         b.iter(|| {
             let bytes = hex::decode(ALICE_PREIMAGE).unwrap();
             delay::do_delay(bytes.as_slice(), 100, 2048)
+        })
+    });
+
+    c.bench_function("delay_preimage_5m_2048", |b| {
+        b.iter(|| {
+            let bytes = hex::decode(ALICE_PREIMAGE).unwrap();
+            delay::do_delay(bytes.as_slice(), 5_000_000, 2048)
+        })
+    });
+
+    c.bench_function("delay_preimage_5m_512", |b| {
+        b.iter(|| {
+            let bytes = hex::decode(ALICE_PREIMAGE).unwrap();
+            delay::do_delay(bytes.as_slice(), 5_000_000, 512)
+        })
+    });
+
+    c.bench_function("delay_preimage_5m_256", |b| {
+        b.iter(|| {
+            let bytes = hex::decode(ALICE_PREIMAGE).unwrap();
+            delay::do_delay(bytes.as_slice(), 5_000_000, 256)
         })
     });
 
