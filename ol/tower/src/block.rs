@@ -20,8 +20,8 @@ use std::{
     time::Instant,
 };
 
-/// writes a JSON file with the vdf proof, ordered by a blockheight
-pub fn mine_genesis(config: &AppCfg, difficulty: u64, security: u16) -> Block {
+// writes a JSON file with the vdf proof, ordered by a blockheight
+fn mine_genesis(config: &AppCfg, difficulty: u64, security: u16) -> Block {
     println!("Mining Genesis Proof");
     let preimage = genesis_preimage(&config);
     let now = Instant::now();
@@ -42,7 +42,9 @@ pub fn mine_genesis(config: &AppCfg, difficulty: u64, security: u16) -> Block {
 }
 
 /// Mines genesis and writes the file
-pub fn write_genesis(config: &AppCfg, difficulty: u64, security: u16) -> Block {
+pub fn write_genesis(config: &AppCfg) -> Block {
+    let difficulty = delay_difficulty();
+    let security = VDF_SECURITY_PARAM;
     let block = mine_genesis(config, difficulty, security);
     //TODO: check for overwriting file...
     write_json(&block, &config.get_block_dir());
@@ -218,9 +220,7 @@ fn create_fixtures() {
         configs_fixture.workspace.block_dir = save_to.clone();
 
         // mine to save_to path
-        let difficulty = delay_difficulty();
-        let security = VDF_SECURITY_PARAM;
-        write_genesis(&configs_fixture, difficulty, security);
+        write_genesis(&configs_fixture);
 
         // also create mnemonic
         let mut mnemonic_path = PathBuf::from(save_to.clone());
@@ -295,10 +295,8 @@ fn test_mine_genesis() {
     //clear from sideffects.
     test_helper_clear_block_dir(&configs_fixture.get_block_dir());
 
-    let difficulty = 100;
-    let security = 2048;
     // mine
-    write_genesis(&configs_fixture, difficulty, security);
+    write_genesis(&configs_fixture);
     // read file
     let block_file =
         // TODO: make this work: let latest_block_path = &configs_fixture.chain_info.block_dir.to_string().push(format!("block_0.json"));

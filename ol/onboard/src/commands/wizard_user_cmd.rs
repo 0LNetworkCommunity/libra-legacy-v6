@@ -4,7 +4,7 @@
 
 use ol_keys::wallet;
 use ol_types::block::Block;
-use tower::{block::write_genesis, delay::{self, delay_difficulty}};
+use tower::{block::write_genesis, delay};
 use ol_types::config::AppCfg;
 use abscissa_core::{Command, Options, Runnable};
 use std::{path::PathBuf};
