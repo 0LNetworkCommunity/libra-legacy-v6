@@ -67,6 +67,7 @@ fn prove_1000_512() {
 
 
 #[test]
+#[ignore] // only for creating test fixtures
 fn prove_5m_2048() {
     let security = 2048;
     let difficulty = 5_000_000;
@@ -81,6 +82,8 @@ fn prove_5m_2048() {
 }
 
 #[test]
+#[ignore] // only for creating test fixtures
+
 fn prove_5m_512() {
     let security = 512;
     let difficulty = 5_000_000;
@@ -95,6 +98,8 @@ fn prove_5m_512() {
 }
 
 #[test]
+#[ignore] // only for creating test fixtures
+
 fn prove_5m_256() {
     let security = 256;
     let difficulty = 5_000_000;

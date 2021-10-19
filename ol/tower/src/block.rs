@@ -1,6 +1,6 @@
 //! Proof block datastructure
 
-use diem_global_constants::VDF_SECURITY_PARAM_NEW;
+use diem_global_constants::VDF_SECURITY_PARAM;
 use ol_types::config::AppCfg;
 use crate::{
     delay::*,
@@ -21,13 +21,10 @@ use std::{
 };
 
 /// writes a JSON file with the vdf proof, ordered by a blockheight
-pub fn mine_genesis(config: &AppCfg) -> Block {
+pub fn mine_genesis(config: &AppCfg, difficulty: u64, security: u16) -> Block {
     println!("Mining Genesis Proof");
     let preimage = genesis_preimage(&config);
     let now = Instant::now();
-
-    let difficulty = delay_difficulty();
-    let security = VDF_SECURITY_PARAM_NEW;
 
     let proof = do_delay(&preimage, difficulty, security);
     let elapsed_secs = now.elapsed().as_secs();
@@ -45,8 +42,8 @@ pub fn mine_genesis(config: &AppCfg) -> Block {
 }
 
 /// Mines genesis and writes the file
-pub fn write_genesis(config: &AppCfg) -> Block {
-    let block = mine_genesis(config);
+pub fn write_genesis(config: &AppCfg, difficulty: u64, security: u16) -> Block {
+    let block = mine_genesis(config, difficulty, security);
     //TODO: check for overwriting file...
     write_json(&block, &config.get_block_dir());
     println!(
@@ -72,7 +69,7 @@ pub fn mine_once(config: &AppCfg) -> Result<Block, Error> {
         let height = latest_block.height + 1;
         // TODO: cleanup this duplication with mine_genesis_once?
         let difficulty = delay_difficulty();
-        let security = VDF_SECURITY_PARAM_NEW;
+        let security = VDF_SECURITY_PARAM;
 
         let now = Instant::now();
         let data = do_delay(&preimage, difficulty, security);
@@ -221,7 +218,9 @@ fn create_fixtures() {
         configs_fixture.workspace.block_dir = save_to.clone();
 
         // mine to save_to path
-        write_genesis(&configs_fixture);
+        let difficulty = delay_difficulty();
+        let security = VDF_SECURITY_PARAM;
+        write_genesis(&configs_fixture, difficulty, security);
 
         // also create mnemonic
         let mut mnemonic_path = PathBuf::from(save_to.clone());
@@ -249,25 +248,6 @@ fn test_mine_once() {
     // if no file is found, the block height is 0
     let mut configs_fixture = test_make_configs_fixture();
     configs_fixture.workspace.block_dir = "test_blocks_temp_2".to_owned();
-    // let configs_fixture = OlCliConfig {
-    //     workspace: Workspace{
-    //         node_home: PathBuf::from("."),
-    //     },
-    //     profile: Profile {
-    //         auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
-    //             .to_owned(),
-    //         account: PeerId::from_hex_literal("0x000000000000000000000000deadbeef").unwrap(),
-    //         ip: "1.1.1.1".parse().unwrap(),
-    //         statement: "Protests rage across the nation".to_owned(),
-    //     },
-    //     chain_info: ChainInfo {
-    //         chain_id: "0L testnet".to_owned(),
-    //         block_dir: "test_blocks_temp_2".to_owned(),
-    //         base_waypoint: None,
-    //         default_node: Some("http://localhost:8080".parse().unwrap()),
-    //         upstream_nodes: None,
-    //     },
-    // };
 
     // Clear at start. Clearing at end can pollute the path when tests fail.
     test_helper_clear_block_dir(&configs_fixture.get_block_dir());
@@ -315,8 +295,10 @@ fn test_mine_genesis() {
     //clear from sideffects.
     test_helper_clear_block_dir(&configs_fixture.get_block_dir());
 
+    let difficulty = 100;
+    let security = 2048;
     // mine
-    write_genesis(&configs_fixture);
+    write_genesis(&configs_fixture, difficulty, security);
     // read file
     let block_file =
         // TODO: make this work: let latest_block_path = &configs_fixture.chain_info.block_dir.to_string().push(format!("block_0.json"));

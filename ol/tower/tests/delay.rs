@@ -6,7 +6,7 @@ use tower::delay;
 #[test]
 fn test_do_delay() {
     // use a test pre image and a 100 difficulty
-    let proof = delay::do_delay(b"test preimage");
+    let proof = delay::do_delay(b"test preimage", 100, 2048);
 
     // print to copy/paste the correct_proof string below.
     println!("proof:\n{:?}", hex::encode(&proof));
