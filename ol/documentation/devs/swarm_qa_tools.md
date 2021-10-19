@@ -89,18 +89,18 @@ Balance is: 4.995072GAS
 ```
 
 
-## Miner
+## Tower App
 
-In swarm you can run the miner for alice by the following command:
+In swarm you can run the tower app for alice by the following command:
 
 ```
-NODE_ENV="test" cargo r -p miner -- --swarm-path $HOME/swarm_temp --swarm-persona alice start
+NODE_ENV="test" cargo r -p tower -- --swarm-path $HOME/swarm_temp --swarm-persona alice start
 ```
 
 
 ## Explorer
 
-The explorer to show network activity can be run by the following command. Usually it only makes sense to do this after the miner is running:
+The explorer to show network activity can be run by the following command. Usually it only makes sense to do this after the tower app is running:
 
 ```
 NODE_ENV="test" cargo r -p ol -- --swarm-path=$HOME/swarm_temp --swarm-persona=alice explorer
@@ -109,7 +109,7 @@ NODE_ENV="test" cargo r -p ol -- --swarm-path=$HOME/swarm_temp --swarm-persona=a
 
 ## Pilot
 
-Pilot is also running for swarm and correctly detects, which components are not ok. But is not able to start the missing components, e.g. web monitor or miner:
+Pilot is also running for swarm and correctly detects, which components are not ok. But is not able to start the missing components, e.g. web monitor or tower app:
 
 ```
 NODE_ENV="test" cargo r -p ol -- --swarm-path=$HOME/swarm_temp --swarm-persona=alice pilot
