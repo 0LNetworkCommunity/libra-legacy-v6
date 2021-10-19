@@ -5704,6 +5704,9 @@ dependencies = [
 [[package]]
 name = "ol-fixtures"
 version = "0.1.0"
+dependencies = [
+ "ol-types",
+]
 
 [[package]]
 name = "ol-genesis-tools"

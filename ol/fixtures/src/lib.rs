@@ -1,5 +1,7 @@
 use std::{fs, path::{Path, PathBuf}};
 
+use ol_types::config::{AppCfg, parse_toml};
+
 pub fn get_persona_mnem(persona: &str) -> String {
   let path= env!("CARGO_MANIFEST_DIR");
   let buf = Path::new(path).join("mnemonic").join(format!("{}.mnem", persona));
@@ -37,3 +39,10 @@ pub fn get_test_genesis_blob() -> PathBuf {
   let path= env!("CARGO_MANIFEST_DIR");
   Path::new(path).join("genesis").join("swarm_genesis.blob")
 }
+
+pub fn get_persona_toml_configs(persona: &str) -> AppCfg {
+  let path= env!("CARGO_MANIFEST_DIR");
+  let buf = Path::new(path).join("configs").join(format!("{}.toml", persona));
+  parse_toml(buf.to_str().unwrap().to_owned()).expect("could not parse app config from file")
+}
+
