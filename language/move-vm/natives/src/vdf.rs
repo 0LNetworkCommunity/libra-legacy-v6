@@ -42,7 +42,7 @@ pub fn verify(
     .read_ref()?
     .value_as::<u64>()?;
     
-    let alleged_solution = pop_arg!(arguments, Reference)
+    let solution = pop_arg!(arguments, Reference)
     .read_ref()?
     .value_as::<Vec<u8>>()?;
 
@@ -59,7 +59,7 @@ pub fn verify(
     let cost = native_gas(context.cost_table(), NativeCostIndex::VDF_VERIFY, 1);
 
     let v = vdf::WesolowskiVDFParams(security as u16).new();
-    let result = v.verify(&challenge, difficulty, &alleged_solution);
+    let result = v.verify(&challenge, difficulty, &solution);
 
     let return_values = smallvec![Value::bool(result.is_ok())];
     Ok(NativeResult::ok(cost, return_values))

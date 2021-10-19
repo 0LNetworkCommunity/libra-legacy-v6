@@ -1,25 +1,10 @@
 //! MinerApp delay module
 #![forbid(unsafe_code)]
-
 /// Functions for running the VDF.
 use vdf::{VDFParams, WesolowskiVDFParams, VDF};
-use std::env;
 
 #[cfg(test)]
 use std::{fs, io::Write};
-
-// /// Switch settings between production and testing
-// pub fn delay_difficulty() -> u64 {
-//     let node_env = match env::var("NODE_ENV") {
-//         Ok(val) => val,
-//         _ => "prod".to_string() // default to "prod" if not set
-//     };
-//     // must explicitly set env to prod to use production difficulty.
-//     if node_env == "prod" {
-//         return 5_000_000
-//     }
-//     return 100 // difficulty for test suites and on local for debugging purposes.
-// }
 
 /// Runs the VDF
 pub fn do_delay(preimage: &[u8], difficulty: u64, security: u16) -> Vec<u8> {
@@ -96,6 +81,53 @@ fn prove_5m_512() {
     file.write_all(hex::encode(proof).as_bytes())
         .expect("Could not write block");
 }
+
+// #[test]
+// fn verify_10_000_001_256_and_verify() {
+//     let security = 256;
+//     let difficulty = 10_000_001;
+//     let preimage = "df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59";
+//     let preimage_bytes = hex::decode(preimage).unwrap();
+
+//     let proof = "005e7aa10240f31b5ca8f0f4a736ee835bffb6d5207bccca69a720f24e840783badf0014d515be4562e96463391813ff49468700023e54763cf578330bd9d15e2510faef";
+//     let proof_bytes =  hex::decode(proof).unwrap();
+
+//     let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
+//     // let proof = vdf.solve(preimage_bytes.as_slice(), difficulty)
+//     //     .expect("iterations should have been valiated earlier");
+    
+//     match vdf.verify(&preimage_bytes, difficulty, &proof_bytes) {
+//         Ok(_) => println!("proof is ok"),
+//         Err(e) => {
+//           dbg!(&e);
+//         },
+//     }
+
+//     // let mut file = fs::File::create("./test.prove_5m_512").unwrap();
+//     // file.write_all(hex::encode(proof).as_bytes())
+//     //     .expect("Could not write block");
+// }
+
+
+#[test]
+fn roundtrip_10_000_001_256() {
+    let security = 256;
+    let difficulty = 10_000_001;
+    let preimage = "df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59";
+    let preimage_bytes = hex::decode(preimage).unwrap();
+
+    let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
+    let proof_bytes = vdf.solve(preimage_bytes.as_slice(), difficulty)
+        .expect("iterations should have been valiated earlier");
+    
+    match vdf.verify(&preimage_bytes, difficulty, &proof_bytes) {
+        Ok(_) => println!("proof is ok"),
+        Err(e) => {
+          dbg!(&e);
+        },
+    }
+}
+
 
 #[test]
 #[ignore] // only for creating test fixtures

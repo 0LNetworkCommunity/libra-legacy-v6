@@ -1,6 +1,6 @@
 //! Proof block datastructure
 
-use diem_global_constants::VDF_SECURITY_PARAM;
+use diem_global_constants::{VDF_SECURITY_PARAM, delay_difficulty};
 use ol_types::config::AppCfg;
 use crate::{
     delay::*,
