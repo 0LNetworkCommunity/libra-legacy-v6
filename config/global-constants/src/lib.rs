@@ -35,8 +35,7 @@ pub const PROOF_OF_WORK_PROOF: &str = "pow_proof";
 pub const ACCOUNT_PROFILE: &str = "account_profile";
 pub const SALT_0L: &str = "0L";
 pub const SOURCE_DIR: &str = "libra/";
-pub const VDF_SECURITY_PARAM: u16 = 2048;
-pub const VDF_SECURITY_PARAM_NEW: u16 = 256;
+pub const VDF_SECURITY_PARAM: u16 = 512;
 
 /// Filename for 0L configs
 pub const CONFIG_FILE: &str = "0L.toml";
@@ -51,7 +50,7 @@ pub fn delay_difficulty() -> u64 {
     };
     // must explicitly set env to prod to use production difficulty.
     if node_env == "prod" {
-        return 5_000_000
+        return 120_000_000
     }
     return 100 // difficulty for test suites and on local for debugging purposes.
 }
