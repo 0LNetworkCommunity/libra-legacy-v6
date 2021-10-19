@@ -12,15 +12,18 @@ script {
     // The first transaction should succeed, but the second sends a valid 
     // vdf proof but is not matched to previous proof. 
     fun main(sender: signer) {
-        let difficulty = 100;
+
         let height_after = 0;
 
-        // return solution
+        let difficulty = 100;
+        let security = 2048;
+
         TowerState::test_helper_init_miner(
             &sender,
-            difficulty,
             TestFixtures::alice_0_easy_chal(),
-            TestFixtures::alice_0_easy_sol()
+            TestFixtures::alice_0_easy_sol(),
+            difficulty,
+            security
         );
 
         // check for initialized TowerState
@@ -40,15 +43,18 @@ script {
 
     // SIMULATES THE SECOND PROOF OF THE MINER (block_1.json)
     fun main(sender: signer) {
-        let difficulty = 100u64;
+        let difficulty = 100;
+        let security = 2048;
         assert(TowerState::test_helper_get_height(@{{alice}}) == 0, 10008001);
         let height_after = 1;
         
         let proof = TowerState::create_proof_blob(
             // a correct pair, but does not match the previous proof alice sent.
             TestFixtures::easy_chal(),
+            
+            TestFixtures::easy_sol(),
             difficulty,
-            TestFixtures::easy_sol()
+            security,
         );
         TowerState::commit_state(&sender, proof);
 

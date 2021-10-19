@@ -8,16 +8,19 @@
 //! sender: bob
 script {
     use 0x1::TowerState;
-    use 0x1::Globals;
     use 0x1::TestFixtures;
 
     fun main(sender: signer) {
         // add one proof and init the state.
+        let difficulty = 100;
+        let security = 2048;
+
         TowerState::test_helper_init_miner(
             &sender,
-            Globals::get_difficulty(),
             TestFixtures::alice_0_easy_chal(),
-            TestFixtures::alice_0_easy_sol()
+            TestFixtures::alice_0_easy_sol(),
+            difficulty,
+            security
         );
     }
 }
@@ -26,16 +29,19 @@ script {
 //! sender: carol
 script {
     use 0x1::TowerState;
-    use 0x1::Globals;
     use 0x1::TestFixtures;
 
     fun main(sender: signer) {
         // add one proof and init the state.
+        let difficulty = 100;
+        let security = 2048;
+
         TowerState::test_helper_init_miner(
             &sender,
-            Globals::get_difficulty(),
             TestFixtures::alice_0_easy_chal(),
-            TestFixtures::alice_0_easy_sol()
+            TestFixtures::alice_0_easy_sol(),
+            difficulty,
+            security
         );
     }
 }

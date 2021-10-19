@@ -537,23 +537,21 @@ fn create_and_initialize_owners_operators(
         // Todo this should use the 0L Block type.
         let preimage = hex::decode(&genesis_proof.preimage).unwrap();
         let proof = hex::decode(&genesis_proof.proof).unwrap();
-        // exec_function(
-        //     session,
-        //     log_context,
-        //     "TowerState",
-        //     "genesis_helper",
-        //     vec![],
-        //     serialize_values(&vec![
-        //         MoveValue::Signer(diem_root_address),
-        //         MoveValue::Signer(owner_address),
-        //         MoveValue::vector_u8(preimage),
-        //         MoveValue::vector_u8(proof),
-        //         MoveValue::U64(100),
-        //         MoveValue::U64(2048),
-        //         // MoveValue::U64(delay_difficulty()), // TODO: make this part of genesis registration
-        //         // MoveValue::U64(VDF_SECURITY_PARAM.into()),
-        //     ]),
-        // );
+        exec_function(
+            session,
+            log_context,
+            "TowerState",
+            "genesis_helper",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(diem_root_address),
+                MoveValue::Signer(owner_address),
+                MoveValue::vector_u8(preimage),
+                MoveValue::vector_u8(proof),
+                MoveValue::U64(delay_difficulty()), // TODO: make this part of genesis registration
+                MoveValue::U64(VDF_SECURITY_PARAM.into()),
+            ]),
+        );
 
         //////// 0L ////////
         // submit any transactions for user e.g. Autopay

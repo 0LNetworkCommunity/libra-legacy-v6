@@ -13,11 +13,14 @@ script {
     fun main(sender: signer) {
         // Testing that state can be initialized, and a proof submitted as if it were genesis.
         // buildign block for other tests.
+        let difficulty = 100;
+        let security = 2048;
         TowerState::test_helper_init_miner(
             &sender,
-            100u64, // difficulty
             TestFixtures::easy_chal(),
-            TestFixtures::easy_sol()
+            TestFixtures::easy_sol(),
+            difficulty,
+            security,
         );
 
         let height = TowerState::test_helper_get_height(@{{bob}});

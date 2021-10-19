@@ -143,8 +143,8 @@ module TowerState {
     // Permissions: PUBLIC, ANYONE can call this function.
     public fun create_proof_blob(
       challenge: vector<u8>,
-      difficulty: u64,
       solution: vector<u8>,
+      difficulty: u64,
       security: u64,
     ): Proof {
        Proof {
@@ -550,9 +550,9 @@ module TowerState {
     // Permissions: PUBLIC, SIGNER, TEST ONLY
     public fun test_helper_init_miner(
         miner_sig: &signer,
-        difficulty: u64,
         challenge: vector<u8>,
         solution: vector<u8>,
+        difficulty: u64,
         security: u64,
       ) acquires TowerProofHistory, TowerList, TowerStats {
         assert(Testnet::is_testnet(), 130102014010);

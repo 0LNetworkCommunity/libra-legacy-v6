@@ -10,15 +10,17 @@ script {
 
     // SIMULATES A MINER ONBOARDING PROOF (block_0.json)
     fun main(sender: signer) {
-        let difficulty = 100;
         let height_after = 0;
 
-        // return solution
+        let difficulty = 100;
+        let security = 2048;
+
         TowerState::test_helper_init_miner(
             &sender,
-            difficulty,
             TestFixtures::alice_0_easy_chal(),
-            TestFixtures::alice_0_easy_sol()
+            TestFixtures::alice_0_easy_sol(),
+            difficulty,
+            security
         );
 
         // check for initialized TowerState
@@ -39,13 +41,16 @@ script {
     // SIMULATES THE SECOND PROOF OF THE MINER (block_1.json)
     fun main(sender: signer) {
         let difficulty = 100u64;
+        let security = 2048;
+
         assert(TowerState::test_helper_get_height(@{{alice}}) == 0, 10008001);
         let height_after = 1;
         
         let proof = TowerState::create_proof_blob(
             TestFixtures::alice_1_easy_chal(),
+            TestFixtures::alice_1_easy_sol(),
             difficulty,
-            TestFixtures::alice_1_easy_sol()
+            security,
         );
         TowerState::commit_state(&sender, proof);
 

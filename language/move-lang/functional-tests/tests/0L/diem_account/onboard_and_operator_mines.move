@@ -52,8 +52,9 @@ fun main(_: signer) {
 
     let proof = TowerState::create_proof_blob(
       TestFixtures::eve_1_easy_chal(),
-      100, // difficulty
       TestFixtures::eve_1_easy_sol(),
+      100, // difficulty
+      2048, // security
     );
     TowerState::test_helper_operator_submits(
       oper,

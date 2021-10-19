@@ -17,8 +17,8 @@ use 0x1::Testnet;
     ) {
         let proof = TowerState::create_proof_blob(
             challenge,
-            difficulty,
             solution,
+            difficulty,
             security,
         );
         
@@ -34,8 +34,8 @@ use 0x1::Testnet;
     ) {
         let proof = TowerState::create_proof_blob(
             challenge,
-            difficulty,
             solution,
+            difficulty,
             security,
         );
 
@@ -47,9 +47,9 @@ use 0x1::Testnet;
         
         TowerState::test_helper_init_miner(
             &sender,
-            Globals::get_difficulty(),
             TestFixtures::alice_0_easy_chal(),
             TestFixtures::alice_0_easy_sol(),
+            Globals::get_difficulty(),
             Globals::get_min_vdf_security(),
         );
     }
