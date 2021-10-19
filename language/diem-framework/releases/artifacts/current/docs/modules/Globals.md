@@ -17,6 +17,7 @@ This module provides global variables and constants that have no specific owner
 -  [Function `get_max_validators_per_set`](#0x1_Globals_get_max_validators_per_set)
 -  [Function `get_subsidy_ceiling_gas`](#0x1_Globals_get_subsidy_ceiling_gas)
 -  [Function `get_difficulty`](#0x1_Globals_get_difficulty)
+-  [Function `get_min_vdf_security`](#0x1_Globals_get_min_vdf_security)
 -  [Function `get_epoch_mining_thres_lower`](#0x1_Globals_get_epoch_mining_thres_lower)
 -  [Function `get_epoch_mining_thres_upper`](#0x1_Globals_get_epoch_mining_thres_upper)
 -  [Function `get_unlock`](#0x1_Globals_get_unlock)
@@ -196,6 +197,31 @@ Get the current vdf_difficulty
 
 <pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_difficulty">get_difficulty</a>(): u64 {
   <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>().vdf_difficulty
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Globals_get_min_vdf_security"></a>
+
+## Function `get_min_vdf_security`
+
+Get the current vdf_difficulty
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_min_vdf_security">get_min_vdf_security</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_min_vdf_security">get_min_vdf_security</a>(): u64 {
+  256
 }
 </code></pre>
 

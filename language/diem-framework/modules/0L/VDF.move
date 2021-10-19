@@ -8,7 +8,8 @@ address 0x1 {
       native public fun verify(
         challenge: &vector<u8>,
         difficulty: &u64,
-        alleged_solution: &vector<u8>
+        alleged_solution: &vector<u8>,
+        security: &u64,
       ): bool;
       native public fun extract_address_from_challenge(challenge: &vector<u8>): (address, vector<u8>);
   }

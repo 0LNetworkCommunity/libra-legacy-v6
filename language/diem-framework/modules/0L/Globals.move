@@ -58,6 +58,12 @@ module Globals {
       get_constants().vdf_difficulty
     }
 
+        /// Get the current vdf_difficulty
+    public fun get_min_vdf_security(): u64 {
+      256
+    }
+
+
     /// Get the mining threshold 
     public fun get_epoch_mining_thres_lower(): u64 {
       get_constants().epoch_mining_thres_lower

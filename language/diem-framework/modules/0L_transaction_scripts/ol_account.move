@@ -16,11 +16,15 @@ module AccountScripts {
         sender: signer,
         challenge: vector<u8>,
         solution: vector<u8>,
+        difficulty: u64,
+        security: u64,
     ) {
         let new_account_address = DiemAccount::create_user_account_with_proof(
             &sender,
             &challenge,
             &solution,
+            difficulty,
+            security
         );
 
         // Check the account exists and the balance is 0
@@ -31,6 +35,8 @@ module AccountScripts {
         sender: signer,
         challenge: vector<u8>,
         solution: vector<u8>,
+        difficulty: u64,
+        security: u64,
         ow_human_name: vector<u8>,
         op_address: address,
         op_auth_key_prefix: vector<u8>,
@@ -43,6 +49,8 @@ module AccountScripts {
             &sender,
             &challenge,
             &solution,
+            difficulty,
+            security,
             ow_human_name,
             op_address,
             op_auth_key_prefix,

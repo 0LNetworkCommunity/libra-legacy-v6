@@ -24,7 +24,7 @@
 
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_miner_state.md#0x1_TowerStateScripts_minerstate_commit_by_operator">minerstate_commit_by_operator</a>(operator_sig: signer, owner_address: address, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_miner_state.md#0x1_TowerStateScripts_minerstate_commit_by_operator">minerstate_commit_by_operator</a>(operator_sig: signer, owner_address: address, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;, difficulty: u64, security: u64)
 </code></pre>
 
 
@@ -34,14 +34,18 @@
 
 
 <pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_miner_state.md#0x1_TowerStateScripts_minerstate_commit_by_operator">minerstate_commit_by_operator</a>(
-    operator_sig: signer, owner_address: address,
+    operator_sig: signer,
+    owner_address: address,
     challenge: vector&lt;u8&gt;,
-    solution: vector&lt;u8&gt;
+    solution: vector&lt;u8&gt;,
+    difficulty: u64,
+    security: u64,
 ) {
     <b>let</b> proof = <a href="TowerState.md#0x1_TowerState_create_proof_blob">TowerState::create_proof_blob</a>(
         challenge,
-        <a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>(),
-        solution
+        difficulty,
+        solution,
+        security,
     );
 
     <a href="TowerState.md#0x1_TowerState_commit_state_by_operator">TowerState::commit_state_by_operator</a>(&operator_sig, owner_address, proof);
@@ -58,7 +62,7 @@
 
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_miner_state.md#0x1_TowerStateScripts_minerstate_commit">minerstate_commit</a>(sender: signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_miner_state.md#0x1_TowerStateScripts_minerstate_commit">minerstate_commit</a>(sender: signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;, difficulty: u64, security: u64)
 </code></pre>
 
 
@@ -68,13 +72,17 @@
 
 
 <pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_miner_state.md#0x1_TowerStateScripts_minerstate_commit">minerstate_commit</a>(
-    sender: signer, challenge: vector&lt;u8&gt;,
-    solution: vector&lt;u8&gt;
+    sender: signer,
+    challenge: vector&lt;u8&gt;,
+    solution: vector&lt;u8&gt;,
+    difficulty: u64,
+    security: u64,
 ) {
     <b>let</b> proof = <a href="TowerState.md#0x1_TowerState_create_proof_blob">TowerState::create_proof_blob</a>(
         challenge,
-        <a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>(),
-        solution
+        difficulty,
+        solution,
+        security,
     );
 
     <a href="TowerState.md#0x1_TowerState_commit_state">TowerState::commit_state</a>(&sender, proof);
@@ -107,7 +115,8 @@
         &sender,
         <a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>(),
         <a href="TestFixtures.md#0x1_TestFixtures_alice_0_easy_chal">TestFixtures::alice_0_easy_chal</a>(),
-        <a href="TestFixtures.md#0x1_TestFixtures_alice_0_easy_sol">TestFixtures::alice_0_easy_sol</a>()
+        <a href="TestFixtures.md#0x1_TestFixtures_alice_0_easy_sol">TestFixtures::alice_0_easy_sol</a>(),
+        <a href="Globals.md#0x1_Globals_get_min_vdf_security">Globals::get_min_vdf_security</a>(),
     );
 }
 </code></pre>

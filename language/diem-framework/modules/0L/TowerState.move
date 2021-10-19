@@ -21,6 +21,8 @@ module TowerState {
     use 0x1::VDF;
     use 0x1::Vector;
 
+    const VDF_SECURITY_PARAM: u64 = 2048;
+
     const EPOCHS_UNTIL_ACCOUNT_CREATION: u64 = 6;
 
     /// A list of all miners' addresses 
@@ -71,6 +73,7 @@ module TowerState {
         challenge: vector<u8>,
         difficulty: u64,
         solution: vector<u8>,
+        security: u64,
     }
 
     /// Struct to encapsulate information about the state of a miner
@@ -141,12 +144,14 @@ module TowerState {
     public fun create_proof_blob(
       challenge: vector<u8>,
       difficulty: u64,
-      solution: vector<u8>
+      solution: vector<u8>,
+      security: u64,
     ): Proof {
        Proof {
          challenge,
          difficulty,
          solution,
+         security,
       }
     }
 
@@ -167,7 +172,9 @@ module TowerState {
       vm_sig: &signer,
       miner_sig: &signer,
       challenge: vector<u8>,
-      solution: vector<u8>
+      solution: vector<u8>,
+      difficulty: u64,
+      security: u64,
     ) acquires TowerProofHistory, TowerList, TowerStats {
       // TODO: Previously in OLv3 is_genesis() returned true. 
       // How to check that this is part of genesis? is_genesis returns false here.
@@ -176,7 +183,7 @@ module TowerState {
       // So the SENDER is not the same and the Signer.
 
 
-      init_miner_state(miner_sig, &challenge, &solution);
+      init_miner_state(miner_sig, &challenge, &solution, difficulty, security);
       // TODO: Move this elsewhere? 
       // Initialize stats for first validator set from rust genesis. 
       let node_addr = Signer::address_of(miner_sig);
@@ -221,7 +228,7 @@ module TowerState {
     // Permissions: PUBLIC, ANYONE
     public fun commit_state_by_operator(
       operator_sig: &signer,
-      miner_addr: address, 
+      miner_addr: address,
       proof: Proof
     ) acquires TowerProofHistory, TowerList, TowerStats {
 
@@ -281,7 +288,7 @@ module TowerState {
         Errors::invalid_state(130107));      
       };
 
-      let valid = VDF::verify(&proof.challenge, &proof.difficulty, &proof.solution);
+      let valid = VDF::verify(&proof.challenge, &proof.difficulty, &proof.solution, &VDF_SECURITY_PARAM);
       assert(valid, Errors::invalid_argument(130108));
 
       // add the miner to the miner list if not present
@@ -392,7 +399,7 @@ module TowerState {
     // Function to initialize miner state
     // Permissions: PUBLIC, Signer, Validator only
     // Function code: 07
-    public fun init_miner_state(miner_sig: &signer, challenge: &vector<u8>, solution: &vector<u8>) acquires TowerProofHistory, TowerList, TowerStats {
+    public fun init_miner_state(miner_sig: &signer, challenge: &vector<u8>, solution: &vector<u8>, difficulty: u64, security: u64) acquires TowerProofHistory, TowerList, TowerStats {
       
       // NOTE Only Signer can update own state.
       // Should only happen once.
@@ -411,11 +418,12 @@ module TowerState {
       });
 
       // create the initial proof submission
-      let difficulty = Globals::get_difficulty();
+      // let difficulty = Globals::get_difficulty();
       let proof = Proof {
         challenge: *challenge,
         difficulty,  
         solution: *solution,
+        security,
       };
 
       //submit the proof
@@ -529,7 +537,8 @@ module TowerState {
         miner_sig: &signer,
         difficulty: u64,
         challenge: vector<u8>,
-        solution: vector<u8>
+        solution: vector<u8>,
+        security: u64,
       ) acquires TowerProofHistory, TowerList, TowerStats {
         assert(Testnet::is_testnet(), 130102014010);
 
@@ -548,6 +557,7 @@ module TowerState {
           challenge,
           difficulty,
           solution,
+          security,
         };
 
         verify_and_update_state(Signer::address_of(miner_sig), proof, false);

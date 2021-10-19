@@ -181,6 +181,12 @@ Struct to store information about a VDF proof submitted
 <dd>
 
 </dd>
+<dt>
+<code>security: u64</code>
+</dt>
+<dd>
+
+</dd>
 </dl>
 
 
@@ -276,6 +282,15 @@ the miner last created a new account
 
 
 <pre><code><b>const</b> <a href="TowerState.md#0x1_TowerState_EPOCHS_UNTIL_ACCOUNT_CREATION">EPOCHS_UNTIL_ACCOUNT_CREATION</a>: u64 = 6;
+</code></pre>
+
+
+
+<a name="0x1_TowerState_VDF_SECURITY_PARAM"></a>
+
+
+
+<pre><code><b>const</b> <a href="TowerState.md#0x1_TowerState_VDF_SECURITY_PARAM">VDF_SECURITY_PARAM</a>: u64 = 2048;
 </code></pre>
 
 
@@ -508,7 +523,7 @@ is onboarding
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_create_proof_blob">create_proof_blob</a>(challenge: vector&lt;u8&gt;, difficulty: u64, solution: vector&lt;u8&gt;): <a href="TowerState.md#0x1_TowerState_Proof">TowerState::Proof</a>
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_create_proof_blob">create_proof_blob</a>(challenge: vector&lt;u8&gt;, difficulty: u64, solution: vector&lt;u8&gt;, security: u64): <a href="TowerState.md#0x1_TowerState_Proof">TowerState::Proof</a>
 </code></pre>
 
 
@@ -520,12 +535,14 @@ is onboarding
 <pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_create_proof_blob">create_proof_blob</a>(
   challenge: vector&lt;u8&gt;,
   difficulty: u64,
-  solution: vector&lt;u8&gt;
+  solution: vector&lt;u8&gt;,
+  security: u64,
 ): <a href="TowerState.md#0x1_TowerState_Proof">Proof</a> {
    <a href="TowerState.md#0x1_TowerState_Proof">Proof</a> {
      challenge,
      difficulty,
      solution,
+     security,
   }
 }
 </code></pre>
@@ -571,7 +588,7 @@ adds <code>tower</code> to list of towers
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_genesis_helper">genesis_helper</a>(vm_sig: &signer, miner_sig: &signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_genesis_helper">genesis_helper</a>(vm_sig: &signer, miner_sig: &signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;, difficulty: u64, security: u64)
 </code></pre>
 
 
@@ -584,7 +601,9 @@ adds <code>tower</code> to list of towers
   vm_sig: &signer,
   miner_sig: &signer,
   challenge: vector&lt;u8&gt;,
-  solution: vector&lt;u8&gt;
+  solution: vector&lt;u8&gt;,
+  difficulty: u64,
+  security: u64,
 ) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
   // TODO: Previously in OLv3 is_genesis() returned <b>true</b>.
   // How <b>to</b> check that this is part of genesis? is_genesis returns <b>false</b> here.
@@ -593,7 +612,7 @@ adds <code>tower</code> to list of towers
   // So the SENDER is not the same and the <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a>.
 
 
-  <a href="TowerState.md#0x1_TowerState_init_miner_state">init_miner_state</a>(miner_sig, &challenge, &solution);
+  <a href="TowerState.md#0x1_TowerState_init_miner_state">init_miner_state</a>(miner_sig, &challenge, &solution, difficulty, security);
   // TODO: Move this elsewhere?
   // Initialize stats for first validator set from rust genesis.
   <b>let</b> node_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig);
@@ -751,7 +770,7 @@ Permissions: PUBLIC, ANYONE
     <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130107));
   };
 
-  <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(&proof.challenge, &proof.difficulty, &proof.solution);
+  <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(&proof.challenge, &proof.difficulty, &proof.solution, &<a href="TowerState.md#0x1_TowerState_VDF_SECURITY_PARAM">VDF_SECURITY_PARAM</a>);
   <b>assert</b>(valid, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130108));
 
   // add the miner <b>to</b> the miner list <b>if</b> not present
@@ -922,7 +941,7 @@ Checks to see if miner submitted enough proofs to be considered compliant
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_init_miner_state">init_miner_state</a>(miner_sig: &signer, challenge: &vector&lt;u8&gt;, solution: &vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_init_miner_state">init_miner_state</a>(miner_sig: &signer, challenge: &vector&lt;u8&gt;, solution: &vector&lt;u8&gt;, difficulty: u64, security: u64)
 </code></pre>
 
 
@@ -931,7 +950,7 @@ Checks to see if miner submitted enough proofs to be considered compliant
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_init_miner_state">init_miner_state</a>(miner_sig: &signer, challenge: &vector&lt;u8&gt;, solution: &vector&lt;u8&gt;) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_init_miner_state">init_miner_state</a>(miner_sig: &signer, challenge: &vector&lt;u8&gt;, solution: &vector&lt;u8&gt;, difficulty: u64, security: u64) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
 
   // NOTE Only <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a> can <b>update</b> own state.
   // Should only happen once.
@@ -950,11 +969,12 @@ Checks to see if miner submitted enough proofs to be considered compliant
   });
 
   // create the initial proof submission
-  <b>let</b> difficulty = <a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>();
+  // <b>let</b> difficulty = <a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>();
   <b>let</b> proof = <a href="TowerState.md#0x1_TowerState_Proof">Proof</a> {
     challenge: *challenge,
     difficulty,
     solution: *solution,
+    security,
   };
 
   //submit the proof
@@ -1201,7 +1221,7 @@ Public Getters ///
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_helper_init_miner">test_helper_init_miner</a>(miner_sig: &signer, difficulty: u64, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_helper_init_miner">test_helper_init_miner</a>(miner_sig: &signer, difficulty: u64, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;, security: u64)
 </code></pre>
 
 
@@ -1214,7 +1234,8 @@ Public Getters ///
     miner_sig: &signer,
     difficulty: u64,
     challenge: vector&lt;u8&gt;,
-    solution: vector&lt;u8&gt;
+    solution: vector&lt;u8&gt;,
+    security: u64,
   ) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
     <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 130102014010);
 
@@ -1233,6 +1254,7 @@ Public Getters ///
       challenge,
       difficulty,
       solution,
+      security,
     };
 
     <a href="TowerState.md#0x1_TowerState_verify_and_update_state">verify_and_update_state</a>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig), proof, <b>false</b>);

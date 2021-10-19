@@ -1767,11 +1767,15 @@ pub enum ScriptFunctionCall {
     CreateAccUser {
         challenge: Bytes,
         solution: Bytes,
+        difficulty: u64,
+        security: u64,
     },
 
     CreateAccVal {
         challenge: Bytes,
         solution: Bytes,
+        difficulty: u64,
+        security: u64,
         ow_human_name: Bytes,
         op_address: AccountAddress,
         op_auth_key_prefix: Bytes,
@@ -2210,12 +2214,16 @@ pub enum ScriptFunctionCall {
     MinerstateCommit {
         challenge: Bytes,
         solution: Bytes,
+        difficulty: u64,
+        security: u64,
     },
 
     MinerstateCommitByOperator {
         owner_address: AccountAddress,
         challenge: Bytes,
         solution: Bytes,
+        difficulty: u64,
+        security: u64,
     },
 
     MinerstateHelper {},
@@ -3509,10 +3517,14 @@ impl ScriptFunctionCall {
             CreateAccUser {
                 challenge,
                 solution,
-            } => encode_create_acc_user_script_function(challenge, solution),
+                difficulty,
+                security,
+            } => encode_create_acc_user_script_function(challenge, solution, difficulty, security),
             CreateAccVal {
                 challenge,
                 solution,
+                difficulty,
+                security,
                 ow_human_name,
                 op_address,
                 op_auth_key_prefix,
@@ -3523,6 +3535,8 @@ impl ScriptFunctionCall {
             } => encode_create_acc_val_script_function(
                 challenge,
                 solution,
+                difficulty,
+                security,
                 ow_human_name,
                 op_address,
                 op_auth_key_prefix,
@@ -3611,15 +3625,23 @@ impl ScriptFunctionCall {
             MinerstateCommit {
                 challenge,
                 solution,
-            } => encode_minerstate_commit_script_function(challenge, solution),
+                difficulty,
+                security,
+            } => {
+                encode_minerstate_commit_script_function(challenge, solution, difficulty, security)
+            }
             MinerstateCommitByOperator {
                 owner_address,
                 challenge,
                 solution,
+                difficulty,
+                security,
             } => encode_minerstate_commit_by_operator_script_function(
                 owner_address,
                 challenge,
                 solution,
+                difficulty,
+                security,
             ),
             MinerstateHelper {} => encode_minerstate_helper_script_function(),
             OlDelegateVote { dest } => encode_ol_delegate_vote_script_function(dest),
@@ -4266,6 +4288,8 @@ pub fn encode_cancel_burn_with_amount_script_function(
 pub fn encode_create_acc_user_script_function(
     challenge: Vec<u8>,
     solution: Vec<u8>,
+    difficulty: u64,
+    security: u64,
 ) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
@@ -4277,6 +4301,8 @@ pub fn encode_create_acc_user_script_function(
         vec![
             bcs::to_bytes(&challenge).unwrap(),
             bcs::to_bytes(&solution).unwrap(),
+            bcs::to_bytes(&difficulty).unwrap(),
+            bcs::to_bytes(&security).unwrap(),
         ],
     ))
 }
@@ -4284,6 +4310,8 @@ pub fn encode_create_acc_user_script_function(
 pub fn encode_create_acc_val_script_function(
     challenge: Vec<u8>,
     solution: Vec<u8>,
+    difficulty: u64,
+    security: u64,
     ow_human_name: Vec<u8>,
     op_address: AccountAddress,
     op_auth_key_prefix: Vec<u8>,
@@ -4302,6 +4330,8 @@ pub fn encode_create_acc_val_script_function(
         vec![
             bcs::to_bytes(&challenge).unwrap(),
             bcs::to_bytes(&solution).unwrap(),
+            bcs::to_bytes(&difficulty).unwrap(),
+            bcs::to_bytes(&security).unwrap(),
             bcs::to_bytes(&ow_human_name).unwrap(),
             bcs::to_bytes(&op_address).unwrap(),
             bcs::to_bytes(&op_auth_key_prefix).unwrap(),
@@ -4890,6 +4920,8 @@ pub fn encode_leave_script_function() -> TransactionPayload {
 pub fn encode_minerstate_commit_script_function(
     challenge: Vec<u8>,
     solution: Vec<u8>,
+    difficulty: u64,
+    security: u64,
 ) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
@@ -4901,6 +4933,8 @@ pub fn encode_minerstate_commit_script_function(
         vec![
             bcs::to_bytes(&challenge).unwrap(),
             bcs::to_bytes(&solution).unwrap(),
+            bcs::to_bytes(&difficulty).unwrap(),
+            bcs::to_bytes(&security).unwrap(),
         ],
     ))
 }
@@ -4909,6 +4943,8 @@ pub fn encode_minerstate_commit_by_operator_script_function(
     owner_address: AccountAddress,
     challenge: Vec<u8>,
     solution: Vec<u8>,
+    difficulty: u64,
+    security: u64,
 ) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
@@ -4921,6 +4957,8 @@ pub fn encode_minerstate_commit_by_operator_script_function(
             bcs::to_bytes(&owner_address).unwrap(),
             bcs::to_bytes(&challenge).unwrap(),
             bcs::to_bytes(&solution).unwrap(),
+            bcs::to_bytes(&difficulty).unwrap(),
+            bcs::to_bytes(&security).unwrap(),
         ],
     ))
 }
@@ -8075,6 +8113,8 @@ fn decode_create_acc_user_script_function(
         Some(ScriptFunctionCall::CreateAccUser {
             challenge: bcs::from_bytes(script.args().get(0)?).ok()?,
             solution: bcs::from_bytes(script.args().get(1)?).ok()?,
+            difficulty: bcs::from_bytes(script.args().get(2)?).ok()?,
+            security: bcs::from_bytes(script.args().get(3)?).ok()?,
         })
     } else {
         None
@@ -8088,13 +8128,15 @@ fn decode_create_acc_val_script_function(
         Some(ScriptFunctionCall::CreateAccVal {
             challenge: bcs::from_bytes(script.args().get(0)?).ok()?,
             solution: bcs::from_bytes(script.args().get(1)?).ok()?,
-            ow_human_name: bcs::from_bytes(script.args().get(2)?).ok()?,
-            op_address: bcs::from_bytes(script.args().get(3)?).ok()?,
-            op_auth_key_prefix: bcs::from_bytes(script.args().get(4)?).ok()?,
-            op_consensus_pubkey: bcs::from_bytes(script.args().get(5)?).ok()?,
-            op_validator_network_addresses: bcs::from_bytes(script.args().get(6)?).ok()?,
-            op_fullnode_network_addresses: bcs::from_bytes(script.args().get(7)?).ok()?,
-            op_human_name: bcs::from_bytes(script.args().get(8)?).ok()?,
+            difficulty: bcs::from_bytes(script.args().get(2)?).ok()?,
+            security: bcs::from_bytes(script.args().get(3)?).ok()?,
+            ow_human_name: bcs::from_bytes(script.args().get(4)?).ok()?,
+            op_address: bcs::from_bytes(script.args().get(5)?).ok()?,
+            op_auth_key_prefix: bcs::from_bytes(script.args().get(6)?).ok()?,
+            op_consensus_pubkey: bcs::from_bytes(script.args().get(7)?).ok()?,
+            op_validator_network_addresses: bcs::from_bytes(script.args().get(8)?).ok()?,
+            op_fullnode_network_addresses: bcs::from_bytes(script.args().get(9)?).ok()?,
+            op_human_name: bcs::from_bytes(script.args().get(10)?).ok()?,
         })
     } else {
         None
@@ -8259,6 +8301,8 @@ fn decode_minerstate_commit_script_function(
         Some(ScriptFunctionCall::MinerstateCommit {
             challenge: bcs::from_bytes(script.args().get(0)?).ok()?,
             solution: bcs::from_bytes(script.args().get(1)?).ok()?,
+            difficulty: bcs::from_bytes(script.args().get(2)?).ok()?,
+            security: bcs::from_bytes(script.args().get(3)?).ok()?,
         })
     } else {
         None
@@ -8273,6 +8317,8 @@ fn decode_minerstate_commit_by_operator_script_function(
             owner_address: bcs::from_bytes(script.args().get(0)?).ok()?,
             challenge: bcs::from_bytes(script.args().get(1)?).ok()?,
             solution: bcs::from_bytes(script.args().get(2)?).ok()?,
+            difficulty: bcs::from_bytes(script.args().get(3)?).ok()?,
+            security: bcs::from_bytes(script.args().get(4)?).ok()?,
         })
     } else {
         None

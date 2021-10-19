@@ -15,7 +15,7 @@ use std::collections::VecDeque;
 use std::convert::TryFrom;
 use move_binary_format::errors::{PartialVMError, PartialVMResult};
 // use hex;
-use diem_global_constants::VDF_SECURITY_PARAM;
+// use diem_global_constants::VDF_SECURITY_PARAM;
 // const SECURITY_PARAM: u16 = 2048;
 use smallvec::smallvec;
 
@@ -27,7 +27,7 @@ pub fn verify(
 ) -> PartialVMResult<NativeResult> {
     if arguments.len() != 3 {
         let msg = format!(
-            "wrong number of arguments for sha3_256 expected 3 found {}",
+            "wrong number of arguments for vdf_verify expected 4 found {}",
             arguments.len()
         );
         return Err(PartialVMError::new(StatusCode::UNREACHABLE).with_message(msg));
@@ -42,16 +42,15 @@ pub fn verify(
     let challenge = pop_arg!(arguments, Reference)
         .read_ref()?
         .value_as::<Vec<u8>>()?;
+    let security = pop_arg!(arguments, Reference)
+        .read_ref()?
+        .value_as::<u64>()?;
 
     // TODO change the `cost_index` when we have our own cost table.
     let cost = native_gas(context.cost_table(), NativeCostIndex::VDF_VERIFY, 1);
 
-    let v = vdf::WesolowskiVDFParams(VDF_SECURITY_PARAM).new();
+    let v = vdf::WesolowskiVDFParams(security as u16).new();
     let result = v.verify(&challenge, difficulty, &alleged_solution);
-
-    // dbg!( hex::encode(&challenge));
-    // dbg!(&difficulty);
-    // dbg!(&result);
 
     let return_values = smallvec![Value::bool(result.is_ok())];
     Ok(NativeResult::ok(cost, return_values))
