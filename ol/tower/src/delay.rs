@@ -105,47 +105,6 @@ fn verify_10_000_000_768() {
 
 
 #[test]
-fn roundtrip_10_000_001_256() {
-    let security = 256;
-    let difficulty = 10_000_001;
-    let preimage = "df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59";
-    let preimage_bytes = hex::decode(preimage).unwrap();
-
-    let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
-    let proof_bytes = vdf.solve(preimage_bytes.as_slice(), difficulty)
-        .expect("iterations should have been valiated earlier");
-    
-    match vdf.verify(&preimage_bytes, difficulty, &proof_bytes) {
-        Ok(_) => println!("proof is ok"),
-        Err(e) => {
-          dbg!(&e);
-        },
-    }
-}
-
-
-#[test]
-fn roundtrip_10_000_001_128() {
-    let security = 128;
-    let difficulty = 10_000_001;
-    let preimage = "df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59";
-    let preimage_bytes = hex::decode(preimage).unwrap();
-
-    let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
-    let proof_bytes = vdf.solve(preimage_bytes.as_slice(), difficulty)
-        .expect("iterations should have been valiated earlier");
-    
-        match vdf.verify(&preimage_bytes, difficulty, &proof_bytes) {
-        Ok(_) => println!("proof is ok"),
-        Err(e) => {
-          dbg!(&e);
-          panic!("cannot verify");
-        },
-    }
-}
-
-
-#[test]
 #[ignore] // only for creating test fixtures
 
 fn prove_5m_256() {
