@@ -8,9 +8,9 @@ address 0x1 {
 
       // verifies a VDF proof with security parameters.
       native public fun verify(
-        challenge: &vector<u8>,
+        preimage: &vector<u8>,
+        proof: &vector<u8>,
         difficulty: &u64,
-        alleged_solution: &vector<u8>,
         security: &u64,
       ): bool;
 

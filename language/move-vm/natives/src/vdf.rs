@@ -32,17 +32,20 @@ pub fn verify(
         );
         return Err(PartialVMError::new(StatusCode::UNREACHABLE).with_message(msg));
     }
-    
+
     // pop the arguments (reverse order).
     let security = pop_arg!(arguments, Reference)
-        .read_ref()?
-        .value_as::<u64>()?;
-    let alleged_solution = pop_arg!(arguments, Reference)
-        .read_ref()?
-        .value_as::<Vec<u8>>()?;
+    .read_ref()?
+    .value_as::<u64>()?;
+
     let difficulty = pop_arg!(arguments, Reference)
-        .read_ref()?
-        .value_as::<u64>()?;
+    .read_ref()?
+    .value_as::<u64>()?;
+    
+    let alleged_solution = pop_arg!(arguments, Reference)
+    .read_ref()?
+    .value_as::<Vec<u8>>()?;
+
     let challenge = pop_arg!(arguments, Reference)
         .read_ref()?
         .value_as::<Vec<u8>>()?;

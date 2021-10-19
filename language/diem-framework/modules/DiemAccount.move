@@ -635,8 +635,8 @@ print(&502);
         // verifies the VDF proof, since we are not calling TowerState init.
         let valid = VDF::verify(
             challenge,
-            &difficulty,
             solution,
+            &difficulty,
             &security,
         );
         assert(valid, Errors::invalid_argument(120105));

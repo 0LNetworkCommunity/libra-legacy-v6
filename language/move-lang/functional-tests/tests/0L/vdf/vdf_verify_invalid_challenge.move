@@ -13,10 +13,14 @@ script{
     // parameter, and fails gracefully with error.
 
     let difficulty = 100;
-    // incorrect challenge.
-    let challenge = x"bb";
-    let solution = TestFixtures::easy_sol();
+    let security = 2048;
 
-    assert(VDF::verify(&challenge, &difficulty, &solution) ==false, 1);
+    // incorrect preimage.
+    let wrong_preimage = b"aa";
+    // Generate solutions with cd ./verfiable_delay/vdf-cli && cargo run -- -l=2048 aa 100
+    // the -l=2048 is important because this is the security paramater of 0L miner.
+    let proof = TestFixtures::hard_sol();
+
+    assert(VDF::verify(&wrong_preimage, &proof, &difficulty, &security) == false, 1);
   }
 }

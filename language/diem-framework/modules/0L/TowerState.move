@@ -290,7 +290,7 @@ module TowerState {
       };
       print(&10030);
 
-      let valid = VDF::verify(&proof.challenge, &proof.difficulty, &proof.solution, &proof.security);
+      let valid = VDF::verify(&proof.challenge, &proof.solution, &proof.difficulty, &proof.security);
       assert(valid, Errors::invalid_argument(130108));
       print(&10040);
 

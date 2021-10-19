@@ -4,16 +4,20 @@
 script{
   use 0x1::VDF;
   use 0x1::TestFixtures;
+  use 0x1::Debug::print;
   fun main() {
     // this tests the happy case, that a proof is submitted with all three 
     // correct parameters.
 
-    let difficulty = 24000000;
-    let challenge = TestFixtures::easy_chal();
+    let wrong_difficulty = 100;
+    let security = 2048;
+    let challenge = TestFixtures::hard_chal();
     // Generate solutions with cd ./verfiable_delay/vdf-cli && cargo run -- -l=2048 aa 100
     // the -l=2048 is important because this is the security paramater of 0L miner.
-    let solution = TestFixtures::easy_sol();
+    let proof = TestFixtures::hard_sol();
 
-    assert(VDF::verify(&challenge, &difficulty, &solution) == false, 1);
+    let res = VDF::verify(&challenge, &proof, &wrong_difficulty, &security);
+    print(&res);
+    assert(res == false, 1);
   }
 }
