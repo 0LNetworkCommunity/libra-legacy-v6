@@ -3,12 +3,12 @@
 #![allow(clippy::never_loop)]
 
 use abscissa_core::{Command, Options, Runnable};
-use ol_types::config::TxType;
+use ol_types::{account::UserConfigs, config::TxType};
 use crate::{entrypoint, submit_tx::{tx_params_wrapper, maybe_submit}};
 use diem_types::transaction::TransactionPayload;
 use diem_transaction_builder::stdlib as transaction_builder;
 use std::{fs, path::PathBuf, process::exit};
-
+use std::io::Read;
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct CreateAccountCmd {
@@ -17,28 +17,20 @@ pub struct CreateAccountCmd {
 }
 
 pub fn create_user_account_script_function(account_json_path: &str) -> TransactionPayload {
-    let file = fs::File::open(account_json_path)
-        .expect("file should open read only");
-    let json: serde_json::Value = serde_json::from_reader(file)
-        .expect("file should be proper JSON");
-    let block = json.get("block_zero")
-        .expect("file should have block_zero and preimage key");
 
-    let preimage = block
-        .as_object().unwrap()
-        .get("preimage").unwrap()
-        .as_str().unwrap();
-    
-    let pre_hex = hex::decode(preimage).unwrap();
+    let mut json_string = String::new();
+    let mut file = fs::File::open(account_json_path).expect("file should open read only");
+    file.read_to_string(&mut json_string)
+      .unwrap_or_else(|err| panic!("Error while reading file: [{}]", err));
 
-    let proof = block
-        .as_object().unwrap()
-        .get("proof").unwrap()
-        .as_str().unwrap();
+    let user: UserConfigs = serde_json::from_str(&json_string).expect("could not parse json file");
     
-    let proof_hex = hex::decode(proof).unwrap();
-    
-    transaction_builder::encode_create_acc_user_script_function(pre_hex, proof_hex)    
+    transaction_builder::encode_create_acc_user_script_function(
+      user.block_zero.preimage.clone(),
+      user.block_zero.proof.clone(),
+      user.block_zero.difficulty(),
+      user.block_zero.security(),
+    )    
 }
 
 impl Runnable for CreateAccountCmd {    

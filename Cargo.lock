@@ -1021,6 +1021,7 @@ dependencies = [
  "hex 0.4.3",
  "num-traits",
  "ol-keys",
+ "ol-types",
  "once_cell",
  "proptest",
  "reqwest",
