@@ -17,7 +17,7 @@ faucet = ["reqwest", "reqwest/blocking", "blocking"]
 
 [dependencies]
 # TODO: Temporarily adding log levels at compile time, since ureq is verbose with info prints.
-log = { version = "*", features = ["max_level_log", "release_max_level_warn"] }
+log = { version = "*", features = ["max_level_warn", "release_max_level_warn"] }
 anyhow = "1.0.38"
 bcs = "0.1.2"
 hex = "0.4.3"
