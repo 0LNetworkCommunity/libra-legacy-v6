@@ -192,6 +192,8 @@ fn set_up_validators(
   let payload = transaction_builder::encode_minerstate_commit_script_function(
       preimage,
       proof,
+      100,
+      2048,
   );
 
   for i in 0..5 {

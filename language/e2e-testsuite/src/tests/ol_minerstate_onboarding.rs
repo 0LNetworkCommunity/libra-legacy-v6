@@ -56,6 +56,8 @@ fn miner_onboarding() {
     let payload = transaction_builder::encode_create_acc_val_script_function(
         preimage,
         proof,
+        100,
+        2048,
         "3DC18D1CF61FAAC6AC70E3A63F062E4B".as_bytes().to_vec(),
         PeerId::from_hex_literal("0x0E04E58B354EF058D08DD493F2352454").unwrap(),
         "ecc59a4a0963f65b5eceb0fffa01ea99".as_bytes().to_vec(),

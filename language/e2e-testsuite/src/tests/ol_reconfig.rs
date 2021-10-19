@@ -175,7 +175,7 @@ fn reconfig_bulk_update_test() {
     }
     println!("--- minerstate_helper_script executed successfully");
 
-    let payload = encode_minerstate_commit_script_function(preimage, proof);
+    let payload = encode_minerstate_commit_script_function(preimage, proof, 100, 2048);
 
     for i in 0..5 {
         executor.execute_and_apply(
