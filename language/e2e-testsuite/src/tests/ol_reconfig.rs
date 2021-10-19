@@ -33,7 +33,7 @@ fn reconfig_bulk_update_test() {
     // Create some accounts to be able to call a tx script and be validators
     let diem_root = Account::new_diem_root();
     let mut validators = vec![];
-
+    dbg!(&100);
     for _i in 0..5 {
         validators.push(Account::new());
     }

@@ -50,7 +50,7 @@ use 0x1::Testnet;
             TestFixtures::alice_0_easy_chal(),
             TestFixtures::alice_0_easy_sol(),
             Globals::get_difficulty(),
-            Globals::get_min_vdf_security(),
+            Globals::get_vdf_security(),
         );
     }
 

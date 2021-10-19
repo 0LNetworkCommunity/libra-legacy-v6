@@ -116,7 +116,7 @@
         <a href="TestFixtures.md#0x1_TestFixtures_alice_0_easy_chal">TestFixtures::alice_0_easy_chal</a>(),
         <a href="TestFixtures.md#0x1_TestFixtures_alice_0_easy_sol">TestFixtures::alice_0_easy_sol</a>(),
         <a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>(),
-        <a href="Globals.md#0x1_Globals_get_min_vdf_security">Globals::get_min_vdf_security</a>(),
+        <a href="Globals.md#0x1_Globals_get_vdf_security">Globals::get_vdf_security</a>(),
     );
 }
 </code></pre>

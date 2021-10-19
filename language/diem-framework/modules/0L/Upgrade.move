@@ -94,6 +94,7 @@ module Upgrade {
     }
 
     //////// FOR E2E Testing ////////
+    // NOTE: See file Upgrade.move.e2e
     // Do not delete these lines. Uncomment when needed to generate e2e test fixtures. 
     // use 0x1::Debug::print;
     // public fun foo() {
