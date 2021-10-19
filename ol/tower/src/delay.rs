@@ -82,31 +82,26 @@ fn prove_5m_512() {
         .expect("Could not write block");
 }
 
-// #[test]
-// fn verify_10_000_001_256_and_verify() {
-//     let security = 256;
-//     let difficulty = 10_000_001;
-//     let preimage = "df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59";
-//     let preimage_bytes = hex::decode(preimage).unwrap();
+#[test]
+fn verify_10_000_000_768() {
+    let security = 768;
+    let difficulty = 10_000_000;
+    let preimage = "df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59";
+    let preimage_bytes = hex::decode(preimage).unwrap();
 
-//     let proof = "005e7aa10240f31b5ca8f0f4a736ee835bffb6d5207bccca69a720f24e840783badf0014d515be4562e96463391813ff49468700023e54763cf578330bd9d15e2510faef";
-//     let proof_bytes =  hex::decode(proof).unwrap();
+    let proof = "004a66ec4c910a2f21c05fae502c1b08ece08cda787f3d218d6335f2ade4ab944acdb3a7ae34d3ff4e95b78f87a5405e3a0028b366207833c40c854df37d2d32c8806d14c681fc91addefb79e3c4ec48747b8e2c1199ca3994090b8b304b33b880eb0071568ed37c909fd28346431a3630c88dd4be09c89d4f98f6d5e95cd804fdfca1f12640fc9e31915e544f9dfaaa93a4520036644e9ce54454d9c48d1c158c112b75e1e71fffdab0593f8b334877904c83ebbbf38f8836e36ebd99043f076151b7cb";
+    let proof_bytes =  hex::decode(proof).unwrap();
 
-//     let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
-//     // let proof = vdf.solve(preimage_bytes.as_slice(), difficulty)
-//     //     .expect("iterations should have been valiated earlier");
+    let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
+    // let proof = vdf.solve(preimage_bytes.as_slice(), difficulty)
+    //     .expect("iterations should have been valiated earlier");
     
-//     match vdf.verify(&preimage_bytes, difficulty, &proof_bytes) {
-//         Ok(_) => println!("proof is ok"),
-//         Err(e) => {
-//           dbg!(&e);
-//         },
-//     }
+    vdf.verify(&preimage_bytes, difficulty, &proof_bytes);
 
-//     // let mut file = fs::File::create("./test.prove_5m_512").unwrap();
-//     // file.write_all(hex::encode(proof).as_bytes())
-//     //     .expect("Could not write block");
-// }
+    // let mut file = fs::File::create("./test.prove_5m_512").unwrap();
+    // file.write_all(hex::encode(proof).as_bytes())
+    //     .expect("Could not write block");
+}
 
 
 #[test]
@@ -124,6 +119,27 @@ fn roundtrip_10_000_001_256() {
         Ok(_) => println!("proof is ok"),
         Err(e) => {
           dbg!(&e);
+        },
+    }
+}
+
+
+#[test]
+fn roundtrip_10_000_001_128() {
+    let security = 128;
+    let difficulty = 10_000_001;
+    let preimage = "df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59";
+    let preimage_bytes = hex::decode(preimage).unwrap();
+
+    let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
+    let proof_bytes = vdf.solve(preimage_bytes.as_slice(), difficulty)
+        .expect("iterations should have been valiated earlier");
+    
+        match vdf.verify(&preimage_bytes, difficulty, &proof_bytes) {
+        Ok(_) => println!("proof is ok"),
+        Err(e) => {
+          dbg!(&e);
+          panic!("cannot verify");
         },
     }
 }
