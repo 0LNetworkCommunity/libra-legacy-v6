@@ -18,6 +18,8 @@ script {
       &sender,
       &challenge,
       &solution,
+      100,
+      2048,
     );
 
     assert(DiemAccount::balance<GAS>(eve_addr) == 1000000, 735701);
@@ -56,6 +58,8 @@ fun main(sender: signer) {
       &sender,
       &challenge,
       &solution,
+      100,
+      2048,
       b"leet",
       @0xfa72817f1b5aab94658238ddcdc08010,
       x"fa72817f1b5aab94658238ddcdc08010",

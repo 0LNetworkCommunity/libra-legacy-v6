@@ -18,6 +18,8 @@ script {
       &sender,
       &challenge,
       &solution,
+      100,
+      2048
     );
 
     assert(DiemAccount::balance<GAS>(eve_addr) == 1000000, 735701);

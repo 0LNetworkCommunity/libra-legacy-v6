@@ -253,7 +253,10 @@ fn val_config_ip_address() {
         elapsed_secs: 0u64,
         preimage: Vec::new(),
         proof: Vec::new(),
+        difficulty: Some(100),
+        security: Some(2048),
     };
+    
     let eve_keys = KeyScheme::new_from_mnemonic("recall october regret kite undo choice outside season business wall quit arrest vacant arrow giggle vote ghost winter hawk soft cheap decide exhaust spare".to_string());
     let eve_account = eve_keys.derived_address();
 
