@@ -1,6 +1,6 @@
 use std::{fs, path::{Path, PathBuf}};
 
-use ol_types::{block::Block, config::{AppCfg, parse_toml}};
+use crate::{block::Block, config::{AppCfg, parse_toml}};
 
 pub fn get_persona_mnem(persona: &str) -> String {
   let path= env!("CARGO_MANIFEST_DIR");
@@ -49,8 +49,14 @@ pub fn get_persona_toml_configs(persona: &str) -> AppCfg {
 // TODO: duplicated with ol/types/genesis proof
 pub fn get_persona_block_zero(persona: &str, env: &str) -> Block {
   let path= env!("CARGO_MANIFEST_DIR");
-  let buf = Path::new(path).join(format!("blocks/{}/{}/block_0.json", env, persona));
+  let buf = Path::new(path).parent().unwrap().join(format!("fixtures/blocks/{}/{}/block_0.json", env, persona));
   let s = fs::read_to_string(&buf).expect("could not find block file");
   serde_json::from_str(&s).expect(&format!("could not parse block from file: {:?}", &buf))
 
+}
+
+#[test]
+fn test_block() {
+  let b = get_persona_block_zero("alice", "test");
+  assert_eq!(b.difficulty, Some(100));
 }
