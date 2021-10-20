@@ -34,8 +34,7 @@ script {
     use 0x1::TestFixtures;
 
     fun main(sender: signer) {
-        TowerState::test_helper_init_miner(
-            &sender,
+        let proof = TowerState::create_proof_blob(
             TestFixtures::easy_chal(),
             TestFixtures::easy_sol(),
             TestFixtures::easy_difficulty(),

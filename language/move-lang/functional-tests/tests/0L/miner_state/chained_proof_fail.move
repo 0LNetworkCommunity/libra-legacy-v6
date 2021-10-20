@@ -40,8 +40,6 @@ script {
 
     // SIMULATES THE SECOND PROOF OF THE MINER (block_1.json)
     fun main(sender: signer) {
-        let difficulty = 100;
-        let security = 2048;
         assert(TowerState::test_helper_get_height(@{{alice}}) == 0, 10008001);
         let height_after = 1;
         
@@ -50,8 +48,8 @@ script {
             TestFixtures::easy_chal(),
             
             TestFixtures::easy_sol(),
-            difficulty,
-            security,
+            TestFixtures::easy_difficulty(),
+            TestFixtures::security(),
         );
         TowerState::commit_state(&sender, proof);
 

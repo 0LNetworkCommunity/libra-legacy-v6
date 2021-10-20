@@ -7,7 +7,6 @@ mod genesis_context;
 pub mod genesis_gas_schedule;
 
 use anyhow::Error;
-use serde::{Deserialize, Serialize};
 use std::env;
 
 use crate::{genesis_context::GenesisStateView, genesis_gas_schedule::INITIAL_GAS_SCHEDULE};
@@ -48,7 +47,7 @@ use rand::prelude::*;
 use transaction_builder::encode_create_designated_dealer_script_function;
 
 //////// 0L ////////
-use ol_types::{account::ValConfigs, genesis_proof::GenesisMiningProof};
+use ol_types::genesis_proof::GenesisMiningProof;
 use diem_global_constants::{VDF_SECURITY_PARAM, delay_difficulty};
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
