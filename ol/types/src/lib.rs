@@ -18,3 +18,5 @@ pub mod autopay;
 pub mod validator_config;
 pub mod fullnode_counter;
 pub mod wallet;
+pub mod genesis_proof;
+

@@ -5706,6 +5706,7 @@ name = "ol-fixtures"
 version = "0.1.0"
 dependencies = [
  "ol-types",
+ "serde_json",
 ]
 
 [[package]]
