@@ -22,17 +22,6 @@ pub struct StartCmd {
     /// don't process backlog
     #[options(short = "s", help = "Skip backlog")]
     skip_backlog: bool,
-
-    /// Option to us rpc url to connect
-    #[options(help = "Connect to upstream node, instead of default (local) node")]
-    upstream_url: bool,
-
-    /// Option to us rpc url to connect
-    #[options(
-        short = "u",
-        help = "Connect to upstream node, instead of default (local) node"
-    )]
-    url: Option<Url>,
 }
 
 impl Runnable for StartCmd {

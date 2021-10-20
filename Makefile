@@ -424,7 +424,7 @@ wipe:
 	srm ~/.bash_history
 
 stop:
-	service diem-node stop
+	systemctl --user stop diem-node.service
 
 debug:
 	make smoke-onboard <<< $$'${MNEM}'
