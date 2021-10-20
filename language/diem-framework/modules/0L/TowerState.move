@@ -212,7 +212,7 @@ module TowerState {
       assert(exists<TowerProofHistory>(miner_addr), Errors::not_published(130101));
 
       // Get vdf difficulty constant. Will be different in tests than in production.
-      let difficulty_constant = Globals::get_difficulty();
+      let difficulty_constant = Globals::get_vdf_difficulty();
 
       // Skip this check on local tests, we need tests to send different difficulties.
       if (!Testnet::is_testnet()){
@@ -240,12 +240,12 @@ module TowerState {
       // Abort if not initialized.
       assert(exists<TowerProofHistory>(miner_addr), Errors::not_published(130104));
 
-      // Get vdf difficulty constant. Will be different in tests than in production.
-      let difficulty_constant = Globals::get_difficulty();
-
+      // return early if difficulty and security are not correct.
+      // Check vdf difficulty constant. Will be different in tests than in production.
       // Skip this check on local tests, we need tests to send differentdifficulties.
       if (!Testnet::is_testnet()){
-        assert(&proof.difficulty == &difficulty_constant, Errors::invalid_argument(130105));
+        assert(&proof.difficulty == &Globals::get_vdf_difficulty(), Errors::invalid_argument(130105));
+        assert(&proof.security == &Globals::get_vdf_security(), Errors::invalid_state(130106));
       };
       
       // Process the proof
@@ -266,11 +266,6 @@ module TowerState {
       proof: Proof,
       steady_state: bool
     ) acquires TowerProofHistory, TowerList, TowerStats {
-      assert(
-        proof.security == Globals::get_vdf_security(), 
-        Errors::invalid_state(130106)
-      );
-
       let miner_history = borrow_global<TowerProofHistory>(miner_addr);
       print(&10010);
       assert(
@@ -430,7 +425,6 @@ module TowerState {
       });
 
       // create the initial proof submission
-      // let difficulty = Globals::get_difficulty();
       let proof = Proof {
         challenge: *challenge,
         difficulty,  
@@ -597,12 +591,10 @@ module TowerState {
       // Abort if not initialized.
       assert(exists<TowerProofHistory>(miner_addr), Errors::not_published(130116));
 
-      // Get vdf difficulty constant. Will be different in tests than in production.
-      let difficulty_constant = Globals::get_difficulty();
-
+      // Check vdf difficulty constant. Will be different in tests than in production.
       // Skip this check on local tests, we need tests to send different difficulties.
       if (!Testnet::is_testnet()){ // todo: remove?
-        assert(&proof.difficulty == &difficulty_constant, Errors::invalid_state(130117));
+        assert(&proof.difficulty == &Globals::get_vdf_difficulty(), Errors::invalid_state(130117));
       };
 
       verify_and_update_state(miner_addr, proof, true);

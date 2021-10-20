@@ -514,14 +514,7 @@ module DiemAccount {
             balance<GAS>(sender_addr) > 2 * BOOTSTRAP_COIN_VALUE, 
             Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
         );
-
-        // let valid = VDF::verify(
-        //     challenge,
-        //     &Globals::get_difficulty(),
-        //     solution
-        // );
-        // assert(valid, Errors::invalid_argument(120103));
-
+        
         // Create Owner Account
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
