@@ -20,8 +20,8 @@ script{
     let res = VDF::verify(
       &challenge,
       &proof,
-      wrong_difficulty,
-      TestFixtures::security()
+      &wrong_difficulty,
+      &TestFixtures::security()
     );
     
     print(&res);

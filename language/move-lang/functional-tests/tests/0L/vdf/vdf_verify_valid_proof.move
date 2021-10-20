@@ -13,6 +13,6 @@ fun main() {
     // NOTE: the -l=512 is important because this is the security paramater of 0L miner.
   let proof = TestFixtures::easy_sol();
   
-  assert(VDF::verify(&challenge, &proof, TestFixtures::easy_difficulty(), TestFixtures::security()) == true, 1);
+  assert(VDF::verify(&challenge, &proof, &TestFixtures::easy_difficulty(), &TestFixtures::security()) == true, 1);
 }
 }
