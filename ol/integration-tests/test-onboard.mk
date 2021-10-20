@@ -116,9 +116,9 @@ check-account-created:
 	PERSONA=alice make -f ${MAKE_FILE} resources | grep -e 'payee'
 
 check-transfer:
-# swarm accounts start with a balance of 4
+# swarm accounts start with a balance of 10, check that the balance increases
 	@while [[ ${NOW} -le ${END} ]] ; do \
-			if PERSONA=alice make -f ${MAKE_FILE} balance-bob | grep -e '5'; then \
+			if PERSONA=alice make -f ${MAKE_FILE} balance-bob | grep -e '10' -e '11' -e '15'; then \
 				echo TX SUCCESS ; \
 				break ; \
 			else \
