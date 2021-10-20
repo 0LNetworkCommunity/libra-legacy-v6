@@ -1,20 +1,17 @@
 //! MinerApp delay module
 #![forbid(unsafe_code)]
+use anyhow::{Error, bail};
 /// Functions for running the VDF.
 use vdf::{PietrzakVDFParams, VDF, VDFParams};
 
-#[cfg(test)]
-use std::{fs, io::Write};
-
 /// Runs the VDF
-pub fn do_delay(preimage: &[u8], difficulty: u64, security: u16) -> Vec<u8> {
+pub fn do_delay(preimage: &[u8], difficulty: u64, security: u16) -> Result<Vec<u8>, Error> {
     // Functions for running the VDF.
     let vdf: vdf::PietrzakVDF = PietrzakVDFParams(security).new();
-    vdf.solve(preimage, difficulty)
-        .expect("cannot create delay proof")
-    // let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
-    // vdf.solve(preimage, difficulty)
-    //     .expect("cannot create delay proof")
+    match vdf.solve(preimage, difficulty) {
+        Ok(proof) => Ok(proof),
+        Err(e) => bail!(format!("ERROR: cannot solve VDF, message {:?}", e)),
+    }
 }
 
 /// Verifies a proof
