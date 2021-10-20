@@ -43,8 +43,6 @@ pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
 /// check this is CI environment
 pub static IS_TEST: Lazy<bool> = Lazy::new(|| {
     // assume default if NODE_ENV=prod and TEST=y.
-    pub static IS_TEST: Lazy<bool> = Lazy::new(|| {
-    // assume default if NODE_ENV=prod and TEST=y.
     std::env::var("TEST").unwrap_or("n".to_string()) != "n".to_string() 
 });
 
