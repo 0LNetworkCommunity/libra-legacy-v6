@@ -11,10 +11,10 @@ script{
 
     let wrong_difficulty = 100;
     let security = 2048;
-    let challenge = TestFixtures::hard_chal();
+    let challenge = TestFixtures::alice_0_hard_chal();
     // Generate solutions with cd ./verfiable_delay/vdf-cli && cargo run -- -l=2048 aa 100
     // the -l=2048 is important because this is the security paramater of 0L miner.
-    let proof = TestFixtures::hard_sol();
+    let proof = TestFixtures::alice_0_hard_sol();
 
     let res = VDF::verify(&challenge, &proof, &wrong_difficulty, &security);
     print(&res);
