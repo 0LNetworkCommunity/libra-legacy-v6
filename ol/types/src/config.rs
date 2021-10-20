@@ -39,16 +39,13 @@ pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
     }
 });
 
+// TODO: this is duplicated in ol/keys/wallet due to dependency cycle. Move to Global constants?
 /// check this is CI environment
 pub static IS_TEST: Lazy<bool> = Lazy::new(|| {
     // assume default if NODE_ENV=prod and TEST=y.
-    if std::env::var("NODE_ENV").unwrap_or("prod".to_string()) != "prod".to_string() 
-       && std::env::var("TEST").unwrap_or("n".to_string()) != "n".to_string() 
-    {
-        true
-    } else {
-        false
-    }
+    pub static IS_TEST: Lazy<bool> = Lazy::new(|| {
+    // assume default if NODE_ENV=prod and TEST=y.
+    std::env::var("TEST").unwrap_or("n".to_string()) != "n".to_string() 
 });
 
 /// MinerApp Configuration

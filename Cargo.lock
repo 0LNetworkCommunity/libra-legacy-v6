@@ -5740,6 +5740,7 @@ version = "0.1.0"
 dependencies = [
  "diem-types",
  "diem-wallet",
+ "once_cell",
  "rpassword",
 ]
 
