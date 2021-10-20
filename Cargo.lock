@@ -1986,7 +1986,6 @@ dependencies = [
  "executor",
  "generate-key",
  "hex 0.4.3",
- "ol-fixtures",
  "ol-keys",
  "ol-types",
  "rand 0.8.3",

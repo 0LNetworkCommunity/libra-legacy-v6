@@ -11,15 +11,12 @@ script {
     // SIMULATES A MINER ONBOARDING PROOF (block_0.json)
     fun main(sender: signer) {
         let height_after = 0;
-        let difficulty = 100;
-        let security = 2048;
-
         TowerState::test_helper_init_miner(
             &sender,
-            TestFixtures::alice_0_easy_chal(),
-            TestFixtures::alice_0_easy_sol(),
-            difficulty,
-            security
+            TestFixtures::easy_chal(),
+            TestFixtures::easy_sol(),
+            TestFixtures::easy_difficulty(),
+            TestFixtures::security(),
         );
         //above test function was updated to set height to 1 for oracle E2E test, need to reset to 0 here. 
         TowerState::test_helper_set_weight(&sender, 0);

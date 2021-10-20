@@ -13,8 +13,8 @@ fun main(sender: signer) {
         &sender,
         &TestFixtures::alice_0_easy_chal(),
         &TestFixtures::alice_0_easy_sol(),
-        100,
-        2048
+        TestFixtures::easy_difficulty(),
+        TestFixtures::security(),
     );
 }
 }

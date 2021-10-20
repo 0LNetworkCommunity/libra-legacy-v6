@@ -7,6 +7,19 @@
 address 0x1 {
 module TestFixtures{
   use 0x1::Testnet;
+    public fun easy_difficulty(): u64 {
+      100
+    }
+
+    public fun hard_difficulty(): u64 {
+      120000000
+    }
+
+    public fun security(): u64 {
+      512
+    }
+
+
 
     public fun easy_chal(): vector<u8> {
       assert(Testnet::is_testnet(), 130102014010);

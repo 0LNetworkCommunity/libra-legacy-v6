@@ -12,15 +12,12 @@ script {
 
     fun main(sender: signer) {
         // add one proof and init the state.
-        let difficulty = 100;
-        let security = 2048;
-
         TowerState::test_helper_init_miner(
             &sender,
-            TestFixtures::alice_0_easy_chal(),
-            TestFixtures::alice_0_easy_sol(),
-            difficulty,
-            security
+            TestFixtures::easy_chal(),
+            TestFixtures::easy_sol(),
+            TestFixtures::easy_difficulty(),
+            TestFixtures::security(),
         );
     }
 }
@@ -33,15 +30,12 @@ script {
 
     fun main(sender: signer) {
         // add one proof and init the state.
-        let difficulty = 100;
-        let security = 2048;
-
         TowerState::test_helper_init_miner(
             &sender,
-            TestFixtures::alice_0_easy_chal(),
-            TestFixtures::alice_0_easy_sol(),
-            difficulty,
-            security
+            TestFixtures::easy_chal(),
+            TestFixtures::easy_sol(),
+            TestFixtures::easy_difficulty(),
+            TestFixtures::security(),
         );
     }
 }

@@ -11,15 +11,12 @@ script {
     use 0x1::TestFixtures;
 
     fun main(sender: signer) {
-        let difficulty = 100;
-        let security = 2048;
-
         TowerState::test_helper_init_miner(
             &sender,
-            TestFixtures::alice_0_easy_chal(),
-            TestFixtures::alice_0_easy_sol(),
-            difficulty,
-            security
+            TestFixtures::easy_chal(),
+            TestFixtures::easy_sol(),
+            TestFixtures::easy_difficulty(),
+            TestFixtures::security(),
         );
 
         let height = TowerState::test_helper_get_height(@{{bob}});
@@ -37,15 +34,14 @@ script {
     use 0x1::TestFixtures;
 
     fun main(sender: signer) {
-        let difficulty = 100;
-        let security = 2048;
-        let proof = TowerState::create_proof_blob(
+        TowerState::test_helper_init_miner(
+            &sender,
             TestFixtures::easy_chal(),
             TestFixtures::easy_sol(),
-            difficulty,
-            security,
+            TestFixtures::easy_difficulty(),
+            TestFixtures::security(),
         );
         TowerState::commit_state(&sender, proof);
     }
 }
-// check: VMExecutionFailure(ABORTED { code: 33307393
+// check: ABORTED

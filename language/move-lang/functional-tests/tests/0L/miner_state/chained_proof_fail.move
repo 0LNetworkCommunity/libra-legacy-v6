@@ -15,15 +15,12 @@ script {
 
         let height_after = 0;
 
-        let difficulty = 100;
-        let security = 2048;
-
         TowerState::test_helper_init_miner(
             &sender,
-            TestFixtures::alice_0_easy_chal(),
-            TestFixtures::alice_0_easy_sol(),
-            difficulty,
-            security
+            TestFixtures::easy_chal(),
+            TestFixtures::easy_sol(),
+            TestFixtures::easy_difficulty(),
+            TestFixtures::security(),
         );
 
         // check for initialized TowerState
