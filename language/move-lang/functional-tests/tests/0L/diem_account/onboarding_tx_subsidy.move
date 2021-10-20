@@ -32,8 +32,8 @@ use 0x1::Roles;
         &sender,
         &challenge,
         &solution,
-        100,
-        2048,
+        TestFixtures::easy_difficulty(), // difficulty
+        TestFixtures::security(), // security
         b"leet",
         @0xfa72817f1b5aab94658238ddcdc08010,
         x"fa72817f1b5aab94658238ddcdc08010",

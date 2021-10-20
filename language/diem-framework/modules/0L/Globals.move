@@ -60,7 +60,7 @@ module Globals {
 
         /// Get the current vdf_difficulty
     public fun get_vdf_security(): u64 {
-      2048
+      512
     }
 
 

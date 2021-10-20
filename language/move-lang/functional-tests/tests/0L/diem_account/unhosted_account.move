@@ -18,8 +18,8 @@ script {
       &sender,
       &challenge,
       &solution,
-      100,
-      2048
+      TestFixtures::easy_difficulty(), // difficulty
+      TestFixtures::security(), // security
     );
 
     assert(DiemAccount::balance<GAS>(eve_addr) == 1000000, 735701);

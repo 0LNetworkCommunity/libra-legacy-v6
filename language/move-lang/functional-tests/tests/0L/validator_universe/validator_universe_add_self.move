@@ -33,8 +33,8 @@ fun main(eve_sig: signer) {
         eve_sig,
         &TestFixtures::easy_chal(),
         &TestFixtures::easy_sol(),
-        100,
-        2048,
+        TestFixtures::easy_difficulty(), // difficulty
+        TestFixtures::security(), // security
     );
     // FullnodeState::init(eve_sig);
 
