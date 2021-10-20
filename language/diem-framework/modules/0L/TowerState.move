@@ -266,32 +266,29 @@ module TowerState {
       proof: Proof,
       steady_state: bool
     ) acquires TowerProofHistory, TowerList, TowerStats {
+      assert(
+        proof.security == Globals::get_vdf_security(), 
+        Errors::invalid_state(130106)
+      );
+
       let miner_history = borrow_global<TowerProofHistory>(miner_addr);
       print(&10010);
-      let epoch = DiemConfig::get_current_epoch();
-      if (epoch < 60) { // network is bootstrapping
-        assert(
-          miner_history.count_proofs_in_epoch < 1000, 
-          Errors::invalid_state(130106)
-        );
-      } else { // steady state, return early if a miner is running too fast, no advantage to asics
-        assert(
-          miner_history.count_proofs_in_epoch < Globals::get_epoch_mining_thres_upper(), 
-          Errors::invalid_state(130106)
-        );
-      };
+      assert(
+        miner_history.count_proofs_in_epoch < Globals::get_epoch_mining_thres_upper(), 
+        Errors::invalid_state(130108)
+      );
 
       print(&10020);
       // If not genesis proof, check hash to ensure the proof continues the chain
       if (steady_state) {
         //If not genesis proof, check hash 
         assert(&proof.challenge == &miner_history.previous_proof_hash,
-        Errors::invalid_state(130107));      
+        Errors::invalid_state(130109));      
       };
       print(&10030);
 
       let valid = VDF::verify(&proof.challenge, &proof.solution, &proof.difficulty, &proof.security);
-      assert(valid, Errors::invalid_argument(130108));
+      assert(valid, Errors::invalid_argument(130110));
       print(&10040);
 
       // add the miner to the miner list if not present

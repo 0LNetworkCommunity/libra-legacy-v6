@@ -46,12 +46,12 @@ module TestFixtures{
 
     public fun alice_1_easy_chal(): vector<u8> {
       assert(Testnet::is_testnet(), 130102014010);
-      x"a0a0"
+      x"19b7be4956ca7cb08a981ce38c30afd5a3f9699d716b606e447c32daa06d9074"
     }
 
     public fun alice_1_easy_sol(): vector<u8>  {
       assert(Testnet::is_testnet(), 130102014010);
-      x"a0a0"
+      x"002b1970e1ccc00707639ad5bd5228e61567074043a0c897563c10249580abd776ffdc2e76b8d49d2d639ef5544bdb713abab00d74490e7759788d0c6bf6df6be59d"
     }
 
     public fun alice_0_hard_chal(): vector<u8> {
@@ -85,12 +85,12 @@ module TestFixtures{
 
     public fun eve_1_easy_chal(): vector<u8> {
       assert(Testnet::is_testnet(), 130102014010);
-      x"a0a0"
+      x"a1296523f609723639bf9150e5f331204e19bd10ea9396cdb67a8e5a4ac849a0"
     }
 
     public fun eve_1_easy_sol(): vector<u8> {
       assert(Testnet::is_testnet(), 130102014010);
-      x"a0a0"
+      x"00105f2013b1de8c7b6ba93501c6136dbbc16ebb728f12199222f9878f68515b7cfff6d75658cd87a0e39449c613290b5820fdb255758c57e5675a4d7dcc473f1341"
     }
   }
 }
