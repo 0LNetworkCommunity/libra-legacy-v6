@@ -4,8 +4,8 @@
 
 use diem_global_constants::{VDF_SECURITY_PARAM, delay_difficulty};
 use ol_keys::wallet;
-use ol_types::block::Block;
-use tower::{block::write_genesis, delay};
+use ol_types::block::VDFProof;
+use tower::{proof::write_genesis, delay};
 use ol_types::config::AppCfg;
 use abscissa_core::{Command, Options, Runnable};
 use std::{path::PathBuf};
@@ -47,7 +47,7 @@ fn wizard(path: PathBuf, block_zero: &Option<PathBuf>) {
     // Create block zero, if there isn't one.
     let block;
     if let Some(block_path) = block_zero {
-        block = Block::parse_block_file(block_path.to_owned());
+        block = VDFProof::parse_block_file(block_path.to_owned());
     } else {
         block = write_genesis(&app_cfg);
     }

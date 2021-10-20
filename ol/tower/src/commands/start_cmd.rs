@@ -1,7 +1,7 @@
 //! `start`
 
 use ol_types::config::AppCfg;
-use crate::{backlog, block::*, entrypoint};
+use crate::{backlog, proof::*, entrypoint};
 use crate::{entrypoint::EntryPointTxsCmd, prelude::*};
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use ol_types::config::TxType;

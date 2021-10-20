@@ -340,7 +340,7 @@ impl Default for Workspace {
         Self {
             node_home: dirs::home_dir().unwrap().join(NODE_HOME),
             source_path: None,
-            block_dir: "blocks".to_owned(),
+            block_dir: "vdf_proofs".to_owned(),
             db_path: default_db_path(),
             stdlib_bin_path: None,
         }
@@ -365,7 +365,7 @@ pub struct ChainInfo {
 impl Default for ChainInfo {
     fn default() -> Self {
         Self {
-            chain_id: "experimental".to_owned(),
+            chain_id: "1".to_string(),
             base_epoch: Some(0),
             // Mock Waypoint. Miner complains without.
             base_waypoint: Waypoint::from_str(BASE_WAYPOINT).ok(),
@@ -393,6 +393,9 @@ pub struct Profile {
 
     /// Other nodes to connect for fallback connections
     pub upstream_nodes: Option<Vec<Url>>,
+
+    /// Link to another delay tower.
+    pub tower_link: Option<String>,
 }
 
 impl Default for Profile {
@@ -404,6 +407,7 @@ impl Default for Profile {
             ip: "0.0.0.0".parse().unwrap(),
             default_node: Some("http://localhost:8080".parse().expect("parse url")),
             upstream_nodes: Some(vec!["http://localhost:8080".parse().expect("parse url")]),
+            tower_link: None,
         }
     }
 }

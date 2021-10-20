@@ -1,5 +1,5 @@
 //! Formatters for libra account creation
-use crate::{block::Block, config::IS_TEST};
+use crate::{block::VDFProof, config::IS_TEST};
 use dialoguer::Confirm;
 use diem_crypto::x25519::PublicKey;
 use diem_types::{
@@ -24,7 +24,7 @@ use std::{fs::File, io::Write, path::PathBuf, process::exit};
 /// Configuration data necessary to initialize a validator.
 pub struct ValConfigs {
     /// Block zero of the onboarded miner
-    pub block_zero: Block,
+    pub block_zero: VDFProof,
     /// Human readable name of Owner account
     pub ow_human_name: String,
     /// IP address of Operator
@@ -55,7 +55,7 @@ pub struct ValConfigs {
 /// Configuration data necessary to initialize an end user.
 pub struct UserConfigs {
     /// Block zero of the onboarded miner
-    pub block_zero: Block,
+    pub block_zero: VDFProof,
 }
 // TODO: Duplicated from block.rs
 fn as_hex<S>(data: &[u8], serializer: S) -> Result<S::Ok, S::Error>
@@ -77,7 +77,7 @@ where
 impl ValConfigs {
     /// New val config.
     pub fn new(
-        block: Block,
+        block: VDFProof,
         keys: KeyScheme,
         ip_address: String,
         autopay_instructions: Option<Vec<PayInstruction>>,
@@ -196,7 +196,7 @@ impl ValConfigs {
 
 impl UserConfigs {
     /// New user configs
-    pub fn new(block: Block) -> UserConfigs {
+    pub fn new(block: VDFProof) -> UserConfigs {
         UserConfigs {
             /// Block zero of the onboarded miner
             block_zero: block,
@@ -248,7 +248,7 @@ fn test_parse_account_file() {
 fn val_config_ip_address() {
     use diem_types::network_address::encrypted::EncNetworkAddress;
 
-    let block = Block {
+    let block = VDFProof {
         height: 0u64,
         elapsed_secs: 0u64,
         preimage: Vec::new(),

@@ -2,7 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use ol_types::{block::Block, config::AppCfg};
+use ol_types::{block::VDFProof, config::AppCfg};
 use ol_keys::scheme::KeyScheme;
 
 use diem_types::transaction::SignedTransaction;
@@ -28,7 +28,7 @@ pub fn write_manifest(
     );
 
     let keys = KeyScheme::new(&wallet);
-    let block = Block::parse_block_file(cfg.get_block_dir().join("block_0.json").to_owned());
+    let block = VDFProof::parse_block_file(cfg.get_block_dir().join("block_0.json").to_owned());
 
     ValConfigs::new(
         block,
