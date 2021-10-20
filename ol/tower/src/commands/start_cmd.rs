@@ -1,12 +1,12 @@
 //! `start`
 
-use ol_types::config::AppCfg;
-use crate::{backlog, proof::*, entrypoint};
+use crate::{backlog, entrypoint, proof::*};
 use crate::{entrypoint::EntryPointTxsCmd, prelude::*};
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
+use ol_types::config::AppCfg;
 use ol_types::config::TxType;
-use txs::submit_tx::tx_params;
 use std::process::exit;
+use txs::submit_tx::tx_params;
 
 /// `start` subcommand
 #[derive(Command, Default, Debug, Options)]
@@ -35,7 +35,7 @@ impl Runnable for StartCmd {
             use_upstream_url,
             ..
         } = entrypoint::get_args();
-        
+
         // config reading respects swarm setup
         // so also cfg.get_waypoint will return correct data
         let cfg = app_config().clone();
@@ -48,7 +48,9 @@ impl Runnable for StartCmd {
                     exit(-1);
                 }
             }
-        } else { waypoint };
+        } else {
+            waypoint
+        };
 
         let tx_params = tx_params(
             cfg.clone(),
@@ -60,7 +62,8 @@ impl Runnable for StartCmd {
             is_operator,
             use_upstream_url,
             None,
-        ).expect("could not get tx parameters");
+        )
+        .expect("could not get tx parameters");
 
         // Check for, and submit backlog proofs.
         if !self.skip_backlog {
@@ -83,7 +86,8 @@ impl Runnable for StartCmd {
                 Err(err) => {
                     println!("ERROR: miner failed, message: {:?}", err);
                     // exit on unrecoverable error.
-                    exit(1);                }
+                    exit(1);
+                }
             }
         }
     }

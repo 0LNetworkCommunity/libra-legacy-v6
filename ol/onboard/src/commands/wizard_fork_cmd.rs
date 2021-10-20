@@ -268,7 +268,7 @@ pub fn write_account_json(
     let cfg = wizard_config.unwrap_or(app_config().clone());
     let json_path = json_path.clone().unwrap_or(cfg.workspace.node_home.clone());
     let keys = KeyScheme::new(&wallet);
-    let block = VDFProof::parse_block_file(cfg.get_block_dir().join("block_0.json").to_owned());
+    let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned());
 
     ValConfigs::new(
         block,

@@ -205,14 +205,18 @@ impl Runnable for ValWizardCmd {
             "\nAccount manifest written",
             "\n...........................\n"
         );
+      
 
         status_info!(
-            "Your validator node and miner app are now configured.", 
-            &format!(
+            "Success", "Your validator node and miner app are now configured.\n");
+
+
+        if !self.genesis_ceremony {
+            println!(
                 "\nStart your node with `ol start`, and then ask someone with GAS to do this transaction `txs create-validator -u http://{}`",
                 &app_config.profile.ip
-            )
-        );
+            );
+        }
     }
 }
 
@@ -292,7 +296,7 @@ pub fn write_account_json(
     let cfg = wizard_config.unwrap_or(app_config().clone());
     let json_path = json_path.clone().unwrap_or(cfg.workspace.node_home.clone());
     let keys = KeyScheme::new(&wallet);
-    let block = VDFProof::parse_block_file(cfg.get_block_dir().join("block_0.json").to_owned());
+    let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned());
 
     ValConfigs::new(
         block,

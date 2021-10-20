@@ -13,8 +13,8 @@ pub fn genesis_preimage(cfg: &AppCfg) -> Vec<u8> {
     const DIFFICULTY_BYTES: usize = 8;
     const SECURITY_BYTES: usize = 8;
     const PIETRZAK: usize = 1; // PIETRZAK = 1, WESOLOWSKI = 2
-    const LINK_TO_TOWER: usize = 32; // optional, hash of the last proof of an existing tower.
-    const STATEMENT_BYTES: usize = 927; // remainder
+    const LINK_TO_TOWER: usize = 64; // optional, hash of the last proof of an existing tower.
+    const STATEMENT_BYTES: usize = 895; // remainder
     
 
     let mut preimage: Vec<u8> = vec![];

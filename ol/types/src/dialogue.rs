@@ -1,21 +1,23 @@
 //! get home path or set it
-use anyhow::Error;
+use anyhow::{bail, Error};
 use dialoguer::{Confirm, Input};
+use diem_crypto::HashValue;
 use diem_global_constants::NODE_HOME;
-use std::{net::Ipv4Addr, path::PathBuf};
+use glob::glob;
+use hex::encode;
+use std::{fs, net::Ipv4Addr, path::PathBuf};
 
-use crate::config::IS_TEST;
+use crate::{block::VDFProof, config::{AppCfg, IS_TEST}};
 
 /// interact with user to get the home path for files
 pub fn what_home(swarm_path: Option<PathBuf>, swarm_persona: Option<String>) -> PathBuf {
-
     // For dev and CI setup
     if let Some(path) = swarm_path {
-      return swarm_home(path, swarm_persona);
+        return swarm_home(path, swarm_persona);
     } else {
-      if *IS_TEST {
-        return dirs::home_dir().unwrap().join(NODE_HOME)
-      }
+        if *IS_TEST {
+            return dirs::home_dir().unwrap().join(NODE_HOME);
+        }
     }
 
     let mut default_home_dir = dirs::home_dir().unwrap();
@@ -62,17 +64,16 @@ pub fn what_source() -> Option<PathBuf> {
 
 /// interact with user to get ip address
 pub fn what_ip() -> Result<Ipv4Addr, Error> {
-
     let system_ip = match machine_ip::get() {
         Some(ip) => ip.to_string(),
         None => "127.0.0.1".to_string(),
     };
     let ip = system_ip
-            .parse::<Ipv4Addr>()
-            .expect("Could not parse IP address: {:?}");
+        .parse::<Ipv4Addr>()
+        .expect("Could not parse IP address: {:?}");
 
     if *IS_TEST {
-      return Ok(ip)
+        return Ok(ip);
     }
 
     let txt = &format!(
@@ -98,7 +99,7 @@ pub fn what_ip() -> Result<Ipv4Addr, Error> {
 /// interact with user to get a statement
 pub fn what_statement() -> String {
     if *IS_TEST {
-      return "test".to_owned()
+        return "test".to_owned();
     }
     Input::new()
         .with_prompt("Enter a (fun) statement to go into your first transaction")
@@ -106,6 +107,29 @@ pub fn what_statement() -> String {
         .expect(
             "We need some text unique to you which will go into your the first proof of your tower",
         )
+}
+
+/// interact with user to get a statement
+pub fn add_tower(config: &AppCfg) -> Option<String> {
+    let block = find_last_legacy_block(&config.workspace.node_home.join("blocks")).unwrap();
+    let hash = hash_last_proof(&block.proof);
+    let txt = "(optional) want to add a hash to previous tower?";
+    match Confirm::new().with_prompt(txt).interact().unwrap() {
+        false => None,
+        true => {
+          let hash_string = encode(hash);
+          let txt = format!("Use this as your tower link? {} ", &hash_string);
+          match Confirm::new().with_prompt(txt).interact().unwrap() {
+            true => Some(hash_string),
+            false => { 
+              Input::new()
+                .with_prompt("Enter hash of last proof")
+                .interact_text()
+                .ok()
+            },
+        }
+    }
+  }
 }
 /// returns node_home
 /// usually something like "/root/.0L"
@@ -120,4 +144,44 @@ fn swarm_home(mut swarm_path: PathBuf, swarm_persona: Option<String>) -> PathBuf
         swarm_path.push("0"); // default
     }
     swarm_path
+}
+
+// helper to parse the existing blocks in the miner's path. This function receives any path. Note: the path is configured in miner.toml which abscissa Configurable parses, see commands.rs.
+fn find_last_legacy_block(blocks_dir: &PathBuf) -> Result<VDFProof, Error> {
+    let mut max_block: Option<u64> = None;
+    let mut max_block_path = None;
+    // iterate through all json files in the directory.
+    for entry in glob(&format!("{}/block_*.json", blocks_dir.display()))
+        .expect("Failed to read glob pattern")
+    {
+        if let Ok(entry) = entry {
+            let block_file =
+                fs::read_to_string(&entry).expect("Could not read latest block file in path");
+
+            let block: VDFProof = serde_json::from_str(&block_file)?;
+            let blocknumber = block.height;
+            if max_block.is_none() {
+                max_block = Some(blocknumber);
+                max_block_path = Some(entry);
+            } else {
+                if blocknumber > max_block.unwrap() {
+                    max_block = Some(blocknumber);
+                    max_block_path = Some(entry);
+                }
+            }
+        }
+    }
+    
+    if let Some(p) = max_block_path {
+        let b = fs::read_to_string(p).expect("Could not read latest block file in path");
+        match serde_json::from_str(&b) {
+            Ok(v) => Ok(v),
+            Err(e) => bail!(e),
+        }
+    } else {
+        bail!("cannot find a legacy block in: {:?}", blocks_dir)
+    }
+}
+fn hash_last_proof(proof: &Vec<u8>) -> Vec<u8>{
+  HashValue::sha3_256_of(proof).to_vec()
 }

@@ -20,7 +20,7 @@ use std::{
     str::FromStr
 };
 
-use crate::dialogue::{what_home, what_ip, what_statement};
+use crate::dialogue::{add_tower, what_home, what_ip, what_statement};
 
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
 
@@ -146,6 +146,7 @@ impl AppCfg {
             None => what_statement(),
         };
 
+
         default_config.profile.ip = match ip {
             Some(i) => i,
             None => what_ip().unwrap(),
@@ -153,6 +154,10 @@ impl AppCfg {
         default_config.workspace.node_home = config_path.clone().unwrap_or_else(||{
             what_home(None, None)
         });
+
+        // Add link to previous tower
+        default_config.profile.tower_link = add_tower(&default_config);
+
 
         if source_path.is_some() {
             // let source_path = what_source();

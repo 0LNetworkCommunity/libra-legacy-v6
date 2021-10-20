@@ -54,43 +54,31 @@ pub fn write_genesis(config: &AppCfg) -> VDFProof {
 }
 /// Mine one block
 pub fn mine_once(config: &AppCfg) -> Result<VDFProof, Error> {
-    let (_current_block_number, current_block_path) = parse_block_height(&config.get_block_dir());
     // If there are files in path, continue mining.
-    if let Some(max_block_path) = current_block_path {
-        // current_block_path is Option type, check if destructures to Some.
-        let block_file =
-            fs::read_to_string(max_block_path).expect("Could not read latest block file in path");
+    let latest_block = get_latest_proof(config)?;
+    let preimage = HashValue::sha3_256_of(&latest_block.proof).to_vec();
+    // Otherwise this is the first time the app is run, and it needs a genesis preimage, which comes from configs.
+    let height = latest_block.height + 1;
+    // TODO: cleanup this duplication with mine_genesis_once?
+    let difficulty = delay_difficulty();
+    let security = VDF_SECURITY_PARAM;
 
-        let latest_block: VDFProof =
-            serde_json::from_str(&block_file).expect("could not deserialize latest block");
+    let now = Instant::now();
+    let data = do_delay(&preimage, difficulty, security)?;
+    let elapsed_secs = now.elapsed().as_secs();
+    println!("Delay: {:?} seconds", elapsed_secs);
 
-        let preimage = HashValue::sha3_256_of(&latest_block.proof).to_vec();
-        // Otherwise this is the first time the app is run, and it needs a genesis preimage, which comes from configs.
-        let height = latest_block.height + 1;
-        // TODO: cleanup this duplication with mine_genesis_once?
-        let difficulty = delay_difficulty();
-        let security = VDF_SECURITY_PARAM;
+    let block = VDFProof {
+        height,
+        elapsed_secs,
+        preimage,
+        proof: data.clone(),
+        difficulty: Some(difficulty),
+        security: Some(security),
+    };
 
-        let now = Instant::now();
-        let data = do_delay(&preimage, difficulty, security)?;
-        let elapsed_secs = now.elapsed().as_secs();
-        println!("Delay: {:?} seconds", elapsed_secs);
-
-        let block = VDFProof {
-            height,
-            elapsed_secs,
-            preimage,
-            proof: data.clone(),
-            difficulty: Some(difficulty),
-            security: Some(security),
-        };
-
-        write_json(&block, &config.get_block_dir());
-        Ok(block)
-    // Err(ErrorKind::Io.context(format!("submit_vdf_proof_tx_to_network {:?}", block_dir)).into())
-    } else {
-        bail!(format!("No files found in {:?}", &config.get_block_dir()));
-    }
+    write_json(&block, &config.get_block_dir());
+    Ok(block)
 }
 
 /// Write block to file
@@ -181,11 +169,27 @@ pub fn parse_block_height(blocks_dir: &PathBuf) -> (Option<u64>, Option<PathBuf>
 }
 
 /// Parse a block_x.json file and return a Block
-pub fn parse_block_file(path: PathBuf) -> VDFProof {
-    let file =
-        fs::File::open(&path).expect(&format!("Could not open block file: {:?}", path.to_str()));
-    let reader = BufReader::new(file);
-    serde_json::from_reader(reader).unwrap()
+pub fn parse_block_file(path: &PathBuf) -> Result<VDFProof, Error> {
+    let block_file = fs::read_to_string(path).expect("Could not read latest block file in path");
+
+    match serde_json::from_str(&block_file) {
+        Ok(v) => Ok(v),
+        Err(e) => bail!(e),
+    }
+}
+
+/// find the most recent proof on disk
+pub fn get_latest_proof(config: &AppCfg) -> Result<VDFProof, Error> {
+    let (_current_block_number, current_block_path) = parse_block_height(&config.get_block_dir());
+
+    match current_block_path {
+        // current_block_path is Option type, check if destructures to Some.
+        Some(p) => parse_block_file(&p),
+        None => bail!(format!(
+            "ERROR: cannot find a block in directory, path: {:?}",
+            &config.get_block_dir()
+        )),
+    }
 }
 
 /* ////////////// */
