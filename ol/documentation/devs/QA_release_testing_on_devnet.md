@@ -68,7 +68,7 @@ Devnet typically starts with three nodes, personas: alice, bob, carol. A fourth,
 
 - if transaction is successfully completed, eve can start the node in validator mode.
 
-`<stop libra-node from before>`
+`<stop diem-node from before>`
 
 `cargo r -p diem-node -- --config ~/.0L/validator.node.yaml`
 

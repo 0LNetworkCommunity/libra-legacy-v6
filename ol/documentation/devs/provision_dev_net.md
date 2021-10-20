@@ -159,7 +159,7 @@ NOTE: backups of devnet should be created for this version number at this repo: 
 Do as the typical onboarding procedure.
 
 0. pull same <version> number as above, and build with `make bins`
-1. `miner keygen` to make new keys
+1. `onboard keygen` to make new keys
 2. `ol onboard --next -t` to start each step of the onboarding process.
 
 NOTE: the validator-wizard will be pulling data from `dev-epoch-archive`
@@ -167,7 +167,7 @@ NOTE: the validator-wizard will be pulling data from `dev-epoch-archive`
 
 # Mining
 
-To start a miner, you'll need to exit `screen`, and start a new one. (ctrl+a then ctrl+d to exit without disconnecting screen)
-1. Start a new screen with `screen -S miner` or reconnect to existing with `screen -rd miner`
-2. execute the miner app `cargo run -p miner -- start`
+To start the tower app, you'll need to exit `screen`, and start a new one. (ctrl+a then ctrl+d to exit without disconnecting screen)
+1. Start a new screen with `screen -S tower` or reconnect to existing with `screen -rd tower`
+2. execute the tower app `cargo run -p tower -- start`
 3. Enter the mnemonic for the persona of that node. Can be found for example in `/fixtures/mnemonic/alice.mnem`

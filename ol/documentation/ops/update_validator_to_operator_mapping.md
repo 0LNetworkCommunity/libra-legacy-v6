@@ -1,6 +1,6 @@
 # Update Validator to Operator mapping
 
-Validators nominate an Operator to execute transactions. Ordinarily this is carried out by the onboarding transaction, with the configuratiosn formatted by the miner validator wizard tool.
+Validators nominate an Operator to execute transactions. Ordinarily this is carried out by the onboarding transaction, with the configurations formatted by the ol wizard tool.
 
 However sometimes this must be changed after the initialization, either to correct the parameters, or to change an operator.
 
@@ -11,10 +11,10 @@ However sometimes this must be changed after the initialization, either to corre
 
 # Create an account.json
 
-If the `miner` has been used in the past, on the host, it likely has config files in place. So simply run the `miner account` subcommand.
+If the `tower` app has been used in the past, on the host, it likely you already have an account.json file.
 
-If this is the first time using `miner` on the host, a new account.json can be created with `val-wizard` subcommand if the miner application has not been initialized.
-`miner val-wizard`
+If this is the first time using `tower` app on the host, a new account.json can be created with `val` subcommand of the onboard application:
+`onboard val`
 
 # Updating Validator-Operator pair
 

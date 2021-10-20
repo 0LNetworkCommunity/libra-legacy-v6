@@ -31,12 +31,6 @@
       is_true: false,
     },
     {
-      id: "miner",
-      title: "Miner is running",
-      description: "process `miner` has started",
-      is_true: false,
-    },
-    {
       id: "node",
       title: "Node is running",
       description: "process `libra-node` has started",
@@ -52,6 +46,12 @@
       id: "set",
       title: "In validator set",
       description: "owner account is in the validator set",
+      is_true: false,
+    },
+    {
+      id: "tower",
+      title: "Tower",
+      description: "process `tower` has started",
       is_true: false,
     },
     {
@@ -94,14 +94,17 @@
       if (i.id === "node") {
         i.is_true = health_data.node_running;
       }
-      if (i.id === "miner") {
-        i.is_true = health_data.miner_running;
-      }
       if (i.id === "sync") {
         i.is_true = health_data.is_synced;
       }
       if (i.id === "set") {
         i.is_true = health_data.validator_set;
+      }
+      if (i.id === "tower") {
+        i.is_true = health_data.miner_running;
+        i.description = i.is_true 
+          ? "process `tower` has started"
+          : "process `tower` is not running";
       }
       if (i.id === "correct_mode") {
         i.is_true = false; 

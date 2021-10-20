@@ -14,7 +14,7 @@ Hint: Search for "FASTEST"
 ### Ubuntu 20.04 - ~5x faster incremental builds:
 
 ```
-cargo b miner
+cargo b tower
 
     // default 
     Full build: 7m
@@ -67,7 +67,7 @@ rustflags = ["-C", "link-arg=-Wl,--compress-debug-sections=zlib-gabi"]
 ### macOS (MacBook Pro Mid 2015) - 5x faster incremental builds:
 
 ```
-cargo b miner
+cargo b tower
 
     // default 
     Full build: 5:58
@@ -125,9 +125,9 @@ see also: (Improve-Rust-compile-times-with-sccache.md)
 Measure your build time first without 'sccache':  
 
 ```
-// Clean build of `miner` takes around 7min
+// Clean build of `tower` takes around 7min
 cargo clean 
-cargo b -p miner 
+cargo b -p tower 
 ```
 
 Setup  
@@ -145,11 +145,11 @@ Use `sccache`
 ```
 // Ignore this build - caching here
 cargo clean 
-cargo b -p miner 
+cargo b -p tower 
 
 // Now, this takes `3min` instead of `7min` - Incredible!
 cargo clean 
-cargo b -p miner 
+cargo b -p tower 
 
 ```
 

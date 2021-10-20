@@ -21,7 +21,7 @@ If <their-ip> is unreachable it is likely that the server is not running, or tha
 If it is not reachable, the `file` option below is possible.
 
 #### Tx Sequence number
-If there is an issue with sequence_number being out of sync. It's like that an automated transaction (like `miner`), got a transaction sent concurrently. Retry the transaction.
+If there is an issue with sequence_number being out of sync. It's like that an automated transaction (like `tower`), got a transaction sent concurrently. Retry the transaction.
 
 
 
