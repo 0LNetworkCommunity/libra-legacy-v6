@@ -14,8 +14,8 @@ script {
 
         TowerState::test_helper_init_miner(
             &sender,
-            TestFixtures::easy_chal(),
-            TestFixtures::easy_sol(),
+            TestFixtures::alice_0_easy_chal(),
+            TestFixtures::alice_0_easy_sol(),
             TestFixtures::easy_difficulty(),
             TestFixtures::security(),
         );
