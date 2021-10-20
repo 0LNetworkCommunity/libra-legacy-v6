@@ -19266,7 +19266,7 @@ var app = (function () {
     			attr_dev(span, "uk-icon", "icon: info");
     			add_location(span, file$b, 1, 4, 170);
     			attr_dev(a, "target", "_blank");
-    			attr_dev(a, "href", "https://github.com/OLSF/libra/wiki/How-to-Config-Web-Monitor-Account-Dictionary");
+    			attr_dev(a, "href", "https://github.com/OLSF/libra/blob/main/ol/documentation/ops/web_monitor_account_dictionary.md");
     			attr_dev(a, "uk-tooltip", "click and learn how to add notes to addresses");
     			add_location(a, file$b, 0, 0, 0);
     		},
