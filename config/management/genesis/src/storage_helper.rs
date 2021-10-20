@@ -27,9 +27,8 @@ use std::{
     path::{Path, PathBuf},
   };
 use structopt::StructOpt;
-use vm_genesis::GenesisMiningProof;
 use ol_keys::scheme::KeyScheme;
-use ol_types::fixtures;
+use ol_types::{ fixtures, genesis_proof::GenesisMiningProof};
 
 pub struct StorageHelper {
     temppath: diem_temppath::TempPath,
