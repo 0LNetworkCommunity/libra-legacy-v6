@@ -14,6 +14,6 @@ script{
     // NOTE: the -l=512 is important because this is the security paramater of 0L miner.
     let proof = TestFixtures::alice_0_hard_sol();
 
-    assert(VDF::verify(&challenge, &proof, &TestFixtures::easy_difficulty(), &TestFixtures::security()) == true, 1);
+    assert(VDF::verify(&challenge, &proof, &TestFixtures::hard_difficulty(), &TestFixtures::security()) == true, 1);
   }
 }
