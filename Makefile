@@ -244,15 +244,15 @@ init:
 # OWNER does this
 # Submits proofs to shared storage
 add-proofs:
-	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  mining \
-	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- mining \
+	--path-to-genesis-pow ${DATA_PATH}/vdf_proofs/proof_0.json \
   --path-to-account-json ${DATA_PATH}/account.json \
 	--shared-backend ${REMOTE}
 
 # OPER does this
 # Submits operator key to github, and creates local OPERATOR_ACCOUNT
 oper-key:
-	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  operator-key \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- operator-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
