@@ -190,7 +190,7 @@ genesis-miner:
 
 
 gen-onboard:
-		cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony --skip-mining
+		cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony
 
 ceremony: gen-fork-repo gen-onboard		
 
