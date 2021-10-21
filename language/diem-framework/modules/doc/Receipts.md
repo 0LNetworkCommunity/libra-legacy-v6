@@ -25,7 +25,7 @@
 
 
 
-<pre><code><b>struct</b> <a href="Receipt.md#0x1_Receipts_UserReceipts">UserReceipts</a> has key
+<pre><code><b>struct</b> <a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a> has key
 </code></pre>
 
 
@@ -70,7 +70,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Receipt.md#0x1_Receipts_init">init</a>(account: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="Receipts.md#0x1_Receipts_init">init</a>(account: &signer)
 </code></pre>
 
 
@@ -79,12 +79,12 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Receipt.md#0x1_Receipts_init">init</a>(account: &signer) {
+<pre><code><b>public</b> <b>fun</b> <a href="Receipts.md#0x1_Receipts_init">init</a>(account: &signer) {
   <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
-  <b>if</b> (!<b>exists</b>&lt;<a href="Receipt.md#0x1_Receipts_UserReceipts">UserReceipts</a>&gt;(addr)) {
-    move_to&lt;<a href="Receipt.md#0x1_Receipts_UserReceipts">UserReceipts</a>&gt;(
+  <b>if</b> (!<b>exists</b>&lt;<a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a>&gt;(addr)) {
+    move_to&lt;<a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a>&gt;(
       account,
-      <a href="Receipt.md#0x1_Receipts_UserReceipts">UserReceipts</a> {
+      <a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a> {
         destination: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;(),
         last_payment_timestamp: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u64&gt;(),
         last_payment_value: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u64&gt;(),
@@ -105,7 +105,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Receipt.md#0x1_Receipts_write_receipt">write_receipt</a>(vm: &signer, payer: address, destination: address, value: u64): (u64, u64, u64)
+<pre><code><b>public</b> <b>fun</b> <a href="Receipts.md#0x1_Receipts_write_receipt">write_receipt</a>(vm: &signer, payer: address, destination: address, value: u64): (u64, u64, u64)
 </code></pre>
 
 
@@ -114,10 +114,10 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Receipt.md#0x1_Receipts_write_receipt">write_receipt</a>(vm: &signer, payer: address, destination: address, value: u64):(u64, u64, u64) <b>acquires</b> <a href="Receipt.md#0x1_Receipts_UserReceipts">UserReceipts</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="Receipts.md#0x1_Receipts_write_receipt">write_receipt</a>(vm: &signer, payer: address, destination: address, value: u64):(u64, u64, u64) <b>acquires</b> <a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a> {
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
     // <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
-    <b>let</b> r = borrow_global_mut&lt;<a href="Receipt.md#0x1_Receipts_UserReceipts">UserReceipts</a>&gt;(payer);
+    <b>let</b> r = borrow_global_mut&lt;<a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a>&gt;(payer);
     <b>let</b> (_, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>(&r.destination, &destination);
 
     <b>let</b> timestamp = <a href="DiemTimestamp.md#0x1_DiemTimestamp_now_seconds">DiemTimestamp::now_seconds</a>();
@@ -147,7 +147,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Receipt.md#0x1_Receipts_read_receipt">read_receipt</a>(account: address, destination: address): (u64, u64, u64)
+<pre><code><b>public</b> <b>fun</b> <a href="Receipts.md#0x1_Receipts_read_receipt">read_receipt</a>(account: address, destination: address): (u64, u64, u64)
 </code></pre>
 
 
@@ -156,8 +156,8 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Receipt.md#0x1_Receipts_read_receipt">read_receipt</a>(account: address, destination: address):(u64, u64, u64) <b>acquires</b> <a href="Receipt.md#0x1_Receipts_UserReceipts">UserReceipts</a> {
-  <b>let</b> r = borrow_global&lt;<a href="Receipt.md#0x1_Receipts_UserReceipts">UserReceipts</a>&gt;(account);
+<pre><code><b>public</b> <b>fun</b> <a href="Receipts.md#0x1_Receipts_read_receipt">read_receipt</a>(account: address, destination: address):(u64, u64, u64) <b>acquires</b> <a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a> {
+  <b>let</b> r = borrow_global&lt;<a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a>&gt;(account);
   <b>let</b> (_, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>(&r.destination, &destination);
 
   <b>let</b> time = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&r.last_payment_timestamp, i);

@@ -43,6 +43,7 @@ module DiemAccount {
     use 0x1::GAS::GAS;
     use 0x1::ValidatorUniverse;
     use 0x1::Wallet;
+    use 0x1::Receipts;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key {
@@ -510,13 +511,6 @@ module DiemAccount {
             balance<GAS>(sender_addr) > 2 * BOOTSTRAP_COIN_VALUE, 
             Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
         );
-
-        // let valid = VDF::verify(
-        //     challenge,
-        //     &Globals::get_difficulty(),
-        //     solution
-        // );
-        // assert(valid, Errors::invalid_argument(120103));
 
         // Create Owner Account
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
@@ -1346,6 +1340,8 @@ print(&511);
               continue
             };
             vm_make_payment_no_limit<GAS>(payer, payee, value, description, b"", vm);
+            Receipts::write_receipt(vm, payer, payee, value);
+
             Wallet::reset_rejection_counter(vm, payer);
             i = i + 1;
         };
