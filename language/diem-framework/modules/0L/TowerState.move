@@ -185,6 +185,7 @@ module TowerState {
 
 
       init_miner_state(miner_sig, &challenge, &solution, difficulty, security);
+      
       // TODO: Move this elsewhere? 
       // Initialize stats for first validator set from rust genesis. 
       let node_addr = Signer::address_of(miner_sig);
