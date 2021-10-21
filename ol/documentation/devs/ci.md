@@ -46,7 +46,7 @@ These were created by 0L, and are simple Makefiles to drive 0L command line tool
 
 ```
 cd ol/integration-tests
-# miner tests
+# delay tower tests
 
 make -f ol/integration-tests/test-mining.mk test
 

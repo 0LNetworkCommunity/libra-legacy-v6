@@ -25,7 +25,7 @@ cargo r -p stdlib
 ## Start Swarm
 ```
 
-cargo build -p libra-node -p cli && NODE_ENV="test" cargo run -p libra-swarm -- --libra-node target/debug/libra-node -c ~/swarm_temp  -n 1 -s --cli-path target/debug/cli
+cargo build -p diem-node -p cli && NODE_ENV="test" cargo run -p libra-swarm -- --diem-node target/debug/diem-node -c ~/swarm_temp  -n 1 -s --cli-path target/debug/cli
 ```
 
 

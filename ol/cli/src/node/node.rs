@@ -23,7 +23,7 @@ pub const SYNC_KEY: &str = "is_synced";
 pub const NODE_PROCESS: &str = "diem-node";
 
 /// miner process name:
-pub const MINER_PROCESS: &str = "miner";
+pub const MINER_PROCESS: &str = "tower";
 
 /// Node process info
 pub struct ProcInfo {
