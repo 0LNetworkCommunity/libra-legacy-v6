@@ -13,6 +13,8 @@ module Stats{
   use 0x1::Testnet;
   use 0x1::Vector;    
 
+  // TODO: yes we know this slows down block production. In "make it fast" mode this will be moved to Rust, in the vm execution block prologue. TBD.
+  
   struct SetData has copy, drop, store {
     addr: vector<address>,
     prop_count: vector<u64>,

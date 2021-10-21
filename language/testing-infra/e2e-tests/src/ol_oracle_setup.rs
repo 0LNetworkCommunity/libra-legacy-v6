@@ -26,7 +26,7 @@ pub fn oracle_helper_tx(
 }
 
 // Generated temporarily and copied from `sdk/transaction-builder/src/stdlib.rs`
-// See https://github.com/OLSF/libra/wiki/Stdlib-Upgrade-payload-(v5)
+// See https://github.com/OLSF/libra/blob/main/ol/documentation/ops/stdlib_upgrade_payload.md
 pub fn encode_ol_oracle_upgrade_foo_tx_script_function() -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
