@@ -2,9 +2,7 @@
 
 How to test Chain upgrades locally with swarm.
 
-In depth on starting swarm: https://github.com/OLSF/libra/wiki/Start-a-network-locally-(libra-swarm)
-Instructions on using 0L tooling with swarm: [https://github.com/OLSF/libra/wiki/QA-0L-tools-using-Swarm]
-
+In depth on starting swarm: (swarm_qa_tools.md)
 
 # Prepare Env
 ## Pull the previous version
