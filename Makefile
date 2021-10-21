@@ -135,7 +135,7 @@ reset:
 
 
 backup:
-	cd ~ && rsync -av --exclude db/ --exclude logs/ ~/.0L ~/0L_backup_$(shell date +"%m-%d-%y")
+	cd ~ && rsync -av --exclude db/ --exclude logs/ ~/.0L ~/0L_backup_$(shell date +"%m-%d-%y-%T")
 
 
 confirm:
@@ -149,11 +149,9 @@ confirm:
 danger-delete-all:
 	@echo THIS WILL WIPE ALL YOUR FILES in ${HOME}/.0L
 	@echo it will also make a backup at ${HOME}/backup_0L/
-	@echo the files github_token.txt and blocks/ will be returned to ${HOME}/.0L/
+	@echo the files github_token.txt, autopay_batch.json, set_layout, ./vdf_proofs/ and ./blocks/ will be returned to ${HOME}/.0L/
 	make confirm
-	make clear-prod-db
-	mkdir ${HOME}/backup_0L/ | true
-	rsync -rtv ${HOME}/.0L/ ${HOME}/backup_0L/
+	make backup
 	rm -rf ${HOME}/.0L | true
 	mkdir ${HOME}/.0L/
 	make danger-restore
