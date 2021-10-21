@@ -17987,7 +17987,7 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (142:2) {:else}
+    // (145:2) {:else}
     function create_else_block$7(ctx) {
     	let p;
 
@@ -17995,7 +17995,7 @@ var app = (function () {
     		c: function create() {
     			p = element("p");
     			p.textContent = "loading...";
-    			add_location(p, file$f, 142, 4, 4073);
+    			add_location(p, file$f, 145, 4, 4200);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, p, anchor);
@@ -18012,14 +18012,14 @@ var app = (function () {
     		block,
     		id: create_else_block$7.name,
     		type: "else",
-    		source: "(142:2) {:else}",
+    		source: "(145:2) {:else}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (132:2) {#if health_data}
+    // (135:2) {#if health_data}
     function create_if_block$9(ctx) {
     	let dl;
     	let current;
@@ -18044,7 +18044,7 @@ var app = (function () {
     			}
 
     			attr_dev(dl, "class", "uk-description-list");
-    			add_location(dl, file$f, 132, 4, 3854);
+    			add_location(dl, file$f, 135, 4, 3981);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, dl, anchor);
@@ -18112,14 +18112,14 @@ var app = (function () {
     		block,
     		id: create_if_block$9.name,
     		type: "if",
-    		source: "(132:2) {#if health_data}",
+    		source: "(135:2) {#if health_data}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (134:6) {#each allChecks as c}
+    // (137:6) {#each allChecks as c}
     function create_each_block$6(ctx) {
     	let check;
     	let current;
@@ -18166,7 +18166,7 @@ var app = (function () {
     		block,
     		id: create_each_block$6.name,
     		type: "each",
-    		source: "(134:6) {#each allChecks as c}",
+    		source: "(137:6) {#each allChecks as c}",
     		ctx
     	});
 
@@ -18199,9 +18199,9 @@ var app = (function () {
     			t1 = space();
     			if_block.c();
     			attr_dev(h3, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted");
-    			add_location(h3, file$f, 128, 2, 3732);
+    			add_location(h3, file$f, 131, 2, 3859);
     			attr_dev(div, "class", "uk-card uk-card-default uk-card-body uk-margin-bottom");
-    			add_location(div, file$f, 127, 0, 3662);
+    			add_location(div, file$f, 130, 0, 3789);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -18291,12 +18291,6 @@ var app = (function () {
     			is_true: false
     		},
     		{
-    			id: "miner",
-    			title: "Miner is running",
-    			description: "process `miner` has started",
-    			is_true: false
-    		},
-    		{
     			id: "node",
     			title: "Node is running",
     			description: "process `libra-node` has started",
@@ -18312,6 +18306,12 @@ var app = (function () {
     			id: "set",
     			title: "In validator set",
     			description: "owner account is in the validator set",
+    			is_true: false
+    		},
+    		{
+    			id: "tower",
+    			title: "Tower",
+    			description: "process `tower` has started",
     			is_true: false
     		},
     		{
@@ -18381,16 +18381,20 @@ var app = (function () {
     						i.is_true = health_data.node_running;
     					}
 
-    					if (i.id === "miner") {
-    						i.is_true = health_data.miner_running;
-    					}
-
     					if (i.id === "sync") {
     						i.is_true = health_data.is_synced;
     					}
 
     					if (i.id === "set") {
     						i.is_true = health_data.validator_set;
+    					}
+
+    					if (i.id === "tower") {
+    						i.is_true = health_data.miner_running;
+
+    						i.description = i.is_true
+    						? "process `tower` has started"
+    						: "process `tower` is not running";
     					}
 
     					if (i.id === "correct_mode") {
@@ -19262,7 +19266,7 @@ var app = (function () {
     			attr_dev(span, "uk-icon", "icon: info");
     			add_location(span, file$b, 1, 4, 170);
     			attr_dev(a, "target", "_blank");
-    			attr_dev(a, "href", "https://github.com/OLSF/libra/wiki/How-to-Config-Web-Monitor-Account-Dictionary");
+    			attr_dev(a, "href", "https://github.com/OLSF/libra/blob/main/ol/documentation/ops/web_monitor_account_dictionary.md");
     			attr_dev(a, "uk-tooltip", "click and learn how to add notes to addresses");
     			add_location(a, file$b, 0, 0, 0);
     		},

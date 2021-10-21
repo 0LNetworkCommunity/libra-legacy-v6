@@ -5287,6 +5287,7 @@ a reconfiguration of the system.
 -  [`0x1::NodeWeight`](../../../../../releases/artifacts/current/docs/modules/NodeWeight.md#0x1_NodeWeight)
 -  [`0x1::Oracle`](../../../../../releases/artifacts/current/docs/modules/Oracle.md#0x1_Oracle)
 -  [`0x1::PaymentScripts`](script_documentation.md#0x1_PaymentScripts)
+-  [`0x1::Receipts`](../../../../../releases/artifacts/current/docs/modules/Receipts.md#0x1_Receipts)
 -  [`0x1::RecoveryAddress`](../../../../../releases/artifacts/current/docs/modules/RecoveryAddress.md#0x1_RecoveryAddress)
 -  [`0x1::RegisteredCurrencies`](../../../../../releases/artifacts/current/docs/modules/RegisteredCurrencies.md#0x1_RegisteredCurrencies)
 -  [`0x1::Roles`](../../../../../releases/artifacts/current/docs/modules/Roles.md#0x1_Roles)

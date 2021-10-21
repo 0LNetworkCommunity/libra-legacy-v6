@@ -2,9 +2,7 @@
 
 How to test Chain upgrades locally with swarm.
 
-In depth on starting swarm: https://github.com/OLSF/libra/wiki/Start-a-network-locally-(libra-swarm)
-Instructions on using 0L tooling with swarm: [https://github.com/OLSF/libra/wiki/QA-0L-tools-using-Swarm]
-
+In depth on starting swarm: (swarm_qa_tools.md)
 
 # Prepare Env
 ## Pull the previous version
@@ -25,7 +23,7 @@ cargo r -p stdlib
 ## Start Swarm
 ```
 
-cargo build -p libra-node -p cli && NODE_ENV="test" cargo run -p libra-swarm -- --libra-node target/debug/libra-node -c ~/swarm_temp  -n 1 -s --cli-path target/debug/cli
+cargo build -p diem-node -p cli && NODE_ENV="test" cargo run -p libra-swarm -- --diem-node target/debug/diem-node -c ~/swarm_temp  -n 1 -s --cli-path target/debug/cli
 ```
 
 

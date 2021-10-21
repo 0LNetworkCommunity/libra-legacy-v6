@@ -67,7 +67,7 @@ libra% `query account_state <account>` or `q as <account>`
 ### Check account balance
 libra% `query balance <account>` or `q b <account>`
 
-### Check miner state
+### Check tower state
 libra% `ol miner_state <account>`
 
 
