@@ -4530,6 +4530,7 @@ dependencies = [
  "compiler",
  "diem-crypto",
  "diem-framework-releases",
+ "diem-global-constants",
  "diem-logger",
  "diem-transaction-builder",
  "diem-types",
@@ -4542,6 +4543,7 @@ dependencies = [
  "move-core-types",
  "move-vm-runtime",
  "move-vm-types",
+ "ol-types",
  "proptest",
  "serde_json",
 ]
