@@ -225,8 +225,10 @@ impl UserConfigs {
 
 #[test]
 fn test_parse_account_file() {
+
     use crate::account::ValConfigs;
-    let path = ol_fixtures::get_persona_account_json("eve").1;
+
+    let path = crate::fixtures::get_persona_account_json("eve").1;
     let init_configs = ValConfigs::get_init_data(&path).unwrap();
     assert_eq!(init_configs.op_fullnode_network_addresses, decode("012d0400a5e36a0a052318072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800").unwrap(), "Could not parse network address");
 

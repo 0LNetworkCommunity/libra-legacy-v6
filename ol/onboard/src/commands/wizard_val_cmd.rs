@@ -10,10 +10,10 @@ use diem_genesis_tool::ol_node_files;
 use diem_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use diem_wallet::WalletLibrary;
 use ol::{commands::init_cmd, config::AppCfg};
-use ol_fixtures::get_test_genesis_blob;
 use ol_keys::{scheme::KeyScheme, wallet};
 use ol_types::block::Block;
 use ol_types::config::IS_TEST;
+use ol_types::fixtures;
 use ol_types::{account::ValConfigs, config::TxType, pay_instruction::PayInstruction};
 use reqwest::Url;
 use std::fs;
@@ -149,7 +149,7 @@ impl Runnable for ValWizardCmd {
                 prebuilt_genesis_path = Some(home_path.join("genesis.blob"));
             } else if self.ci {
                 fs::copy(
-                    get_test_genesis_blob().as_os_str(),
+                    fixtures::get_test_genesis_blob().as_os_str(),
                     home_path.join("genesis.blob"),
                 )
                 .unwrap();

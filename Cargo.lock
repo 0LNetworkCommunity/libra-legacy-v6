@@ -2208,7 +2208,6 @@ dependencies = [
  "diem-workspace-hack",
  "dirs 2.0.2",
  "hex 0.4.3",
- "ol-fixtures",
  "ol-keys",
  "rustyline 6.3.0",
  "serde",
@@ -5703,14 +5702,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ol-fixtures"
-version = "0.1.0"
-dependencies = [
- "ol-types",
- "serde_json",
-]
-
-[[package]]
 name = "ol-genesis-tools"
 version = "0.1.0"
 dependencies = [
@@ -5725,7 +5716,6 @@ dependencies = [
  "gumdrop 0.8.0",
  "move-core-types",
  "ol",
- "ol-fixtures",
  "ol-keys",
  "ol-types",
  "serde",
@@ -5764,7 +5754,6 @@ dependencies = [
  "machine-ip",
  "move-core-types",
  "num-format",
- "ol-fixtures",
  "ol-keys",
  "once_cell",
  "reqwest",
@@ -5803,7 +5792,6 @@ dependencies = [
  "dirs 2.0.2",
  "gumdrop 0.7.0",
  "ol",
- "ol-fixtures",
  "ol-keys",
  "ol-types",
  "once_cell",
@@ -8568,7 +8556,6 @@ dependencies = [
  "machine-ip",
  "move-core-types",
  "ol",
- "ol-fixtures",
  "ol-keys",
  "ol-types",
  "once_cell",
@@ -8809,7 +8796,6 @@ dependencies = [
  "hex 0.4.3",
  "move-core-types",
  "ol",
- "ol-fixtures",
  "ol-keys",
  "ol-types",
  "once_cell",

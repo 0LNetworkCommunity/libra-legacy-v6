@@ -14,8 +14,8 @@ use diem_types::{
     write_set::{WriteOp, WriteSetMut},
 };
 use move_core_types::move_resource::MoveResource;
-use ol_fixtures::get_persona_mnem;
 use ol_keys::wallet::get_account_from_mnem;
+use ol_types::fixtures;
 use std::convert::TryFrom;
 use std::path::PathBuf;
 
@@ -67,7 +67,7 @@ async fn accounts_from_snapshot_backup(
 }
 
 fn get_alice_authkey_for_swarm() -> Vec<u8> {
-    let mnemonic_string = get_persona_mnem("alice");
+    let mnemonic_string = fixtures::get_persona_mnem("alice");
     let account_details = get_account_from_mnem(mnemonic_string);
     account_details.0.to_vec()
 }
