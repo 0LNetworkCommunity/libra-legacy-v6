@@ -64,7 +64,7 @@ pub fn get_persona_block_zero(persona: &str, env: &str) -> VDFProof {
 }
 
 /// get block 0
-pub fn get_persona_block_one(persona: &str, env: &str) -> Block {
+pub fn get_persona_block_one(persona: &str, env: &str) -> VDFProof {
   let path= env!("CARGO_MANIFEST_DIR");
   let buf = Path::new(path).parent().unwrap().join(format!("fixtures/blocks/{}/{}/block_1.json", env, persona));
   let s = fs::read_to_string(&buf).expect("could not find block file");

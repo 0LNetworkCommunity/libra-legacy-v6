@@ -171,7 +171,7 @@ impl Runnable for ForkCmd {
         status_ok!("\nNode config written", "\n...........................\n");
 
         if !self.skip_mining {
-            // Mine Block
+            // Mine Proof
             tower::proof::write_genesis(&app_config);
             status_ok!(
                 "\nGenesis proof complete",

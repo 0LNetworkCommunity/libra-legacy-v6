@@ -168,7 +168,7 @@ pub fn parse_block_height(blocks_dir: &PathBuf) -> (Option<u64>, Option<PathBuf>
     (max_block, max_block_path)
 }
 
-/// Parse a block_x.json file and return a Block
+/// Parse a proof_x.json file and return a VDFProof
 pub fn parse_block_file(path: &PathBuf) -> Result<VDFProof, Error> {
     let block_file = fs::read_to_string(path).expect("Could not read latest block file in path");
 
@@ -262,8 +262,7 @@ fn test_mine_once() {
     let fixture_previous_proof = decode("0016f43606b957ab9d93046cdffa73a1e6be4f21f3848eb7b55b81756f7d31919affef388c0d92ca7d68232de4fea46884186c23ef1d6c86f63f5c586000048bce05").unwrap();
 
     let fixture_block = VDFProof {
-        /// Block Height
-        height: 0u64,
+        height: 0u64, // Tower height
         elapsed_secs: 0u64,
         preimage: Vec::new(),
         proof: fixture_previous_proof,

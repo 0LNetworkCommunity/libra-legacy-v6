@@ -7,7 +7,7 @@ use std::{fs, io::BufReader, path::PathBuf};
 /// Data structure and serialization of 0L delay proof.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct VDFProof {
-    /// Block Height
+    /// Proof Height
     pub height: u64,
     /// Elapsed Time in seconds
     pub elapsed_secs: u64,

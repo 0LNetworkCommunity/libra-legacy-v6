@@ -23,7 +23,7 @@ use std::{fs::File, io::Write, path::PathBuf, process::exit};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 /// Configuration data necessary to initialize a validator.
 pub struct ValConfigs {
-    /// Block zero of the onboarded miner
+    /// Proof zero of the onboarded miner
     pub block_zero: VDFProof,
     /// Human readable name of Owner account
     pub ow_human_name: String,
@@ -54,7 +54,7 @@ pub struct ValConfigs {
 #[derive(Serialize, Deserialize, Debug)]
 /// Configuration data necessary to initialize an end user.
 pub struct UserConfigs {
-    /// Block zero of the onboarded miner
+    /// Proof zero of the onboarded miner
     pub block_zero: VDFProof,
 }
 // TODO: Duplicated from block.rs
@@ -119,7 +119,7 @@ impl ValConfigs {
         let fn_addr_obj = fn_addr_obj.append_prod_protos(fn_pubkey, 0);
         
         Self {
-            /// Block zero of the onboarded miner
+            /// Proof zero of the onboarded miner
             block_zero: block,
             ow_human_name: owner_address.clone(),
             op_address: keys.child_1_operator.get_address().to_string(),
@@ -198,7 +198,7 @@ impl UserConfigs {
     /// New user configs
     pub fn new(block: VDFProof) -> UserConfigs {
         UserConfigs {
-            /// Block zero of the onboarded miner
+            /// Proof zero of the onboarded miner
             block_zero: block,
         }
     }

@@ -185,7 +185,7 @@ impl Runnable for ValWizardCmd {
         }
 
         if !self.skip_mining {
-            // Mine Block
+            // Mine Proof
             tower::proof::write_genesis(&app_config);
             status_ok!(
                 "\nGenesis proof complete",
