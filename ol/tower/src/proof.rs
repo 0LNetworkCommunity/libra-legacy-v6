@@ -15,7 +15,7 @@ use std::{
 };
 use txs::submit_tx::TxParams;
 
-const FILENAME: &str = "proof";
+pub const FILENAME: &str = "proof";
 
 // writes a JSON file with the first vdf proof
 fn mine_genesis(config: &AppCfg, difficulty: u64, security: u16) -> VDFProof {
