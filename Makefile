@@ -162,6 +162,9 @@ danger-restore:
 	cp ${HOME}/backup_0L/github_token.txt ${HOME}/.0L/ | true
 	cp ${HOME}/backup_0L/autopay_batch.json ${HOME}/.0L/ | true
 	rsync -rtv ${HOME}/backup_0L/blocks/ ${HOME}/.0L/blocks | true
+	rsync -rtv ${HOME}/backup_0L/vdf_proofs/ ${HOME}/.0L/vdf_proofs | true
+	rsync -rtv ${HOME}/backup_0L/set_layout.toml ${HOME}/.0L/ | true
+
 
 	
 
