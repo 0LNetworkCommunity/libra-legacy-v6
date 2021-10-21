@@ -142,7 +142,7 @@ pub fn encode_genesis_change_set(
         chain_id,
     );
     //////// 0L ////////
-    println!("OK create_and_initialize_main_accounts =============== ");
+    // println!("OK create_and_initialize_main_accounts =============== ");
 
     let genesis_env = get_env();
     println!("Initializing with env: {}", genesis_env);
@@ -159,10 +159,10 @@ pub fn encode_genesis_change_set(
         &operator_registrations,
     );
     //////// 0L ////////
-    println!("OK create_and_initialize_owners_operators =============== ");
+    // println!("OK create_and_initialize_owners_operators =============== ");
 
     distribute_genesis_subsidy(&mut session, &log_context);
-    println!("OK Genesis subsidy =============== ");
+    // println!("OK Genesis subsidy =============== ");
 
     fund_operators(&mut session, &log_context, &operator_assignments);
     //////// 0L end ////////
@@ -229,7 +229,7 @@ pub fn encode_recovery_genesis_changeset(
         ChainId::new(chain),
     );
     //////// 0L ////////
-    println!("OK create_and_initialize_main_accounts =============== ");
+    // println!("OK create_and_initialize_main_accounts =============== ");
 
     let genesis_env = get_env();
     println!("Initializing with env: {}", genesis_env);
@@ -248,7 +248,7 @@ pub fn encode_recovery_genesis_changeset(
         &val_set,
     );
     //////// 0L ////////
-    println!("OK create_and_initialize_owners_operators =============== ");
+    // println!("OK create_and_initialize_owners_operators =============== ");
 
     // distribute_genesis_subsidy(&mut session, &log_context);
     // println!("OK Genesis subsidy =============== ");
@@ -490,12 +490,12 @@ fn create_and_initialize_owners_operators(
     // key prefix and account address. Internally move then computes the auth key as auth key
     // prefix || address. Because of this, the initial auth key will be invalid as we produce the
     // account address from the name and not the public key.
-    println!("0 ======== Create Owner Accounts");
+    // println!("0 ======== Create Owner Accounts");
     for (owner_key, owner_name, _op_assignment, genesis_proof, _operator) in operator_assignments {
         // TODO: Remove. Temporary Authkey for genesis, because accounts are being created from human names.
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
-        dbg!(owner_address);
+        println!("initializing owner: {}", owner_address);
         // let staged_owner_auth_key = diem_config::utils::default_validator_owner_auth_key_from_name(owner_name);
         //TODO: why does this need to be derived from human name?
         // let owner_address = staged_owner_auth_key.derived_address();
@@ -589,7 +589,7 @@ fn create_and_initialize_owners_operators(
         );
     }
 
-    println!("1 ======== Create OP Accounts");
+    // println!("1 ======== Create OP Accounts");
     // Create accounts for each validator operator
     for (operator_key, operator_name, _, _) in operator_registrations {
         let operator_auth_key = AuthenticationKey::ed25519(&operator_key);
@@ -611,7 +611,7 @@ fn create_and_initialize_owners_operators(
         );
     }
 
-    println!("2 ======== Link owner to OP");
+    // println!("2 ======== Link owner to OP");
     // Authorize an operator for a validator/owner
     for (owner_key, _owner_name, op_assignment_script, _genesis_proof, _operator) in
         operator_assignments
@@ -622,14 +622,14 @@ fn create_and_initialize_owners_operators(
         exec_script_function(session, log_context, owner_address, op_assignment_script);
     }
 
-    println!("3 ======== OP sends network info to Owner config");
+    // println!("3 ======== OP sends network info to Owner config");
     // Set the validator operator configs for each owner
     for (operator_key, _, registration, _account) in operator_registrations {
         let operator_account = account_address::from_public_key(operator_key);
         exec_script_function(session, log_context, operator_account, registration);
     }
 
-    println!("4 ======== Add owner to validator set");
+    // println!("4 ======== Add owner to validator set");
     // Add each validator to the validator set
     for (owner_key, _owner_name, _op_assignment, _genesis_proof, _operator_account) in
         operator_assignments
@@ -711,7 +711,7 @@ fn recovery_owners_operators(
     // key prefix and account address. Internally move then computes the auth key as auth key
     // prefix || address. Because of this, the initial auth key will be invalid as we produce the
     // account address from the name and not the public key.
-    println!("0 ======== Create Owner Accounts");
+    // println!("0 ======== Create Owner Accounts");
     for i in val_assignments {
         println!("account: {:?}", i.val_account);
         // TODO: why does this need to be derived from human name?
@@ -731,7 +731,7 @@ fn recovery_owners_operators(
             &create_owner_script,
         );
 
-        println!("======== recover miner state");
+        // println!("======== recover miner state");
         // TODO: Where's this function recover_miner_state. Lost from v4 to v5?
         // exec_function(
         //     session,
@@ -758,7 +758,7 @@ fn recovery_owners_operators(
         );
     }
 
-    println!("1 ======== Create OP Accounts");
+    // println!("1 ======== Create OP Accounts");
     // Create accounts for each validator operator
     for i in operator_registrations {
         let create_operator_script =
@@ -777,7 +777,7 @@ fn recovery_owners_operators(
         );
     }
 
-    println!("2 ======== Link owner to OP");
+    // println!("2 ======== Link owner to OP");
     // Authorize an operator for a validator/owner
     for i in val_assignments {
         let create_operator_script =
@@ -795,7 +795,7 @@ fn recovery_owners_operators(
         );
     }
 
-    println!("3 ======== OP sends network info to Owner config");
+    // println!("3 ======== OP sends network info to Owner config");
     // Set the validator operator configs for each owner
     for i in operator_registrations {
         let create_operator_script =
@@ -814,7 +814,7 @@ fn recovery_owners_operators(
         );
     }
 
-    println!("4 ======== Add owner to validator set");
+    // println!("4 ======== Add owner to validator set");
     // Add each validator to the validator set
     for i in val_set {
         // let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
@@ -1046,7 +1046,7 @@ fn fund_operators(
   log_context: &impl LogContext,
   operator_assignments: &[OperatorAssignment],
 ) {
-    println!("4 ======== Add owner to validator set");
+    // println!("4 ======== Add owner to validator set");
     // Add each validator to the validator set
     for (owner_key, _owner_name, _op_assignment, _genesis_proof, operator_account) in
         operator_assignments

@@ -43,6 +43,7 @@ module DiemAccount {
     use 0x1::GAS::GAS;
     use 0x1::ValidatorUniverse;
     use 0x1::Wallet;
+    use 0x1::Receipts;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key {
@@ -510,13 +511,6 @@ module DiemAccount {
             balance<GAS>(sender_addr) > 2 * BOOTSTRAP_COIN_VALUE, 
             Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
         );
-
-        // let valid = VDF::verify(
-        //     challenge,
-        //     &Globals::get_difficulty(),
-        //     solution
-        // );
-        // assert(valid, Errors::invalid_argument(120103));
 
         // Create Owner Account
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
@@ -1265,61 +1259,63 @@ print(&511);
         ensures spec_holds_own_withdraw_cap(cap_addr);
     }
 
-    /////// 0L /////////
-    // 0L function for AutoPay module
-    // 0L error suffix 120101
-    public fun vm_make_payment<Token: store>(
-        payer : address,
-        payee: address,
-        amount: u64,
-        metadata: vector<u8>,
-        metadata_signature: vector<u8>,
-        vm: &signer
-    ) acquires DiemAccount , Balance, AccountOperationsCapability, AutopayEscrow, CumulativeDeposits, SlowWallet { //////// 0L ////////
-        if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
-        if (amount == 0) return;
+    // TODO: We don't use this any longer for autopay. Check.
 
-        // Check payee can receive funds in this currency.
-        if (!exists<Balance<Token>>(payee)) return; 
-        // assert(exists<Balance<Token>>(payee), Errors::not_published(EROLE_CANT_STORE_BALANCE));
+    // /////// 0L /////////
+    // // 0L function for AutoPay module
+    // // 0L error suffix 120101
+    // public fun vm_make_payment<Token: store>(
+    //     payer : address,
+    //     payee: address,
+    //     amount: u64,
+    //     metadata: vector<u8>,
+    //     metadata_signature: vector<u8>,
+    //     vm: &signer
+    // ) acquires DiemAccount , Balance, AccountOperationsCapability, AutopayEscrow, CumulativeDeposits, SlowWallet { //////// 0L ////////
+    //     if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
+    //     if (amount == 0) return;
 
-        // Check there is a payer
-        if (!exists_at(payer)) return; 
-        // assert(exists_at(payer), Errors::not_published(EACCOUNT));
+    //     // Check payee can receive funds in this currency.
+    //     if (!exists<Balance<Token>>(payee)) return; 
+    //     // assert(exists<Balance<Token>>(payee), Errors::not_published(EROLE_CANT_STORE_BALANCE));
 
-        // Check the payer is in possession of withdraw token.
-        if (delegated_withdraw_capability(payer)) return; 
+    //     // Check there is a payer
+    //     if (!exists_at(payer)) return; 
+    //     // assert(exists_at(payer), Errors::not_published(EACCOUNT));
 
-        let (max_withdraw, withdrawal_allowed) = AccountLimits::max_withdrawal<Token>(payer);
-        if (!withdrawal_allowed) return;
+    //     // Check the payer is in possession of withdraw token.
+    //     if (delegated_withdraw_capability(payer)) return; 
 
-        // VM can extract the withdraw token.
-        let account = borrow_global_mut<DiemAccount>(payer);
-        let cap = Option::extract(&mut account.withdraw_capability);
+    //     let (max_withdraw, withdrawal_allowed) = AccountLimits::max_withdrawal<Token>(payer);
+    //     if (!withdrawal_allowed) return;
 
-        let transfer_now = 
-            if (max_withdraw >= amount) { 
-                amount 
-            } else {
-                max_withdraw
-            };
-        let transfer_later = amount - transfer_now;
-        if (transfer_now > 0) {
-            pay_from<Token>(
-                &cap,
-                payee,
-                transfer_now,
-                metadata,
-                metadata_signature
-            );
-        };
+    //     // VM can extract the withdraw token.
+    //     let account = borrow_global_mut<DiemAccount>(payer);
+    //     let cap = Option::extract(&mut account.withdraw_capability);
 
-        if (transfer_later > 0) {
-            new_escrow<Token>(vm, payer, payee, transfer_later);
-        };
+    //     let transfer_now = 
+    //         if (max_withdraw >= amount) { 
+    //             amount 
+    //         } else {
+    //             max_withdraw
+    //         };
+    //     let transfer_later = amount - transfer_now;
+    //     if (transfer_now > 0) {
+    //         pay_from<Token>(
+    //             &cap,
+    //             payee,
+    //             transfer_now,
+    //             metadata,
+    //             metadata_signature
+    //         );
+    //     };
 
-        restore_withdraw_capability(cap);
-    }
+    //     if (transfer_later > 0) {
+    //         new_escrow<Token>(vm, payer, payee, transfer_later);
+    //     };
+
+    //     restore_withdraw_capability(cap);
+    // }
 
     //////// 0L ////////
     public fun process_community_wallets(
@@ -1398,6 +1394,9 @@ print(&511);
             metadata,
             metadata_signature
         );
+        
+        Receipts::write_receipt(vm, payer, payee, amount);
+
         restore_withdraw_capability(cap);
     }
     
@@ -1791,6 +1790,7 @@ print(&511);
             }
         );
         
+        Receipts::init(&new_account);
         //////// 0L ////////
         // NOTE: if all accounts are to be slow set this
         // set_slow(&new_account);

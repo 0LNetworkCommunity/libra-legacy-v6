@@ -139,6 +139,7 @@ The Move modules in the Diem Framework can be bucketed in to a couple categories
 -  [`0x1::OracleScripts`](ol_oracle.md#0x1_OracleScripts)
 -  [`0x1::PaymentScripts`](PaymentScripts.md#0x1_PaymentScripts)
 -  [`0x1::PersistenceDemo`](Demos.md#0x1_PersistenceDemo)
+-  [`0x1::Receipts`](Receipts.md#0x1_Receipts)
 -  [`0x1::RecoveryAddress`](RecoveryAddress.md#0x1_RecoveryAddress)
 -  [`0x1::RegisteredCurrencies`](RegisteredCurrencies.md#0x1_RegisteredCurrencies)
 -  [`0x1::Roles`](Roles.md#0x1_Roles)
