@@ -30,6 +30,6 @@ You do not need an account for this step, you are simply syncing the database.
 
 2.1. Restore from most recent backup in epoch-archive: `ol restore`
 
-2.2. `libra-node --config $HOME/.0L/fullnode.node.yaml`
+2.2. `diem-node --config $HOME/.0L/fullnode.node.yaml`
 
 **You can start the next steps while your node is catching up**

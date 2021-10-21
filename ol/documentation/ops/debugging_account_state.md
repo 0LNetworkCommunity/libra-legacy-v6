@@ -6,7 +6,7 @@ Use libra client with
 cargo run --bin cli -- -u http://localhost:<port> --waypoint <waypoint>
 ```
 
-Note the `auth_key` of the miner in question.
+Note the `auth_key` of the tower app in question.
 Then in the libra shell:
 ```
 query account_state <auth_key>

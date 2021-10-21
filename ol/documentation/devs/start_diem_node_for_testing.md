@@ -1,6 +1,6 @@
 # Start a diem node for testing
 
-We have shared configs for starting a libra-node network that is always the same. See  `./0L_dev_config/` in the repo. 
+We have shared configs for starting a diem-node network that is always the same. See  `./0L_dev_config/` in the repo. 
 
 NOTE: YOU MUST GENERATE A NEW GENESIS.BLOB IF YOU ARE CHANGING MOVE CODE and using this to test interactively. See below.
 
