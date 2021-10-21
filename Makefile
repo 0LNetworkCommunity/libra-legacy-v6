@@ -160,6 +160,7 @@ danger-delete-all:
 
 danger-restore:
 	cp ${HOME}/backup_0L/github_token.txt ${HOME}/.0L/ | true
+	cp ${HOME}/backup_0L/autopay_batch.json ${HOME}/.0L/ | true
 	rsync -rtv ${HOME}/backup_0L/blocks/ ${HOME}/.0L/blocks | true
 
 	
@@ -211,22 +212,14 @@ gen-make-pull:
 	--shared-backend ${GENESIS_REMOTE} \
 	--pull-request-user ${GITHUB_USER}
 
-genesis-miner:
-	cargo run -p tower -- zero
-
 
 gen-onboard:
-		cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony
+	cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony
 
-ceremony: gen-fork-repo gen-onboard		
+gen-reset:
+	cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony --skip-mining
 
-# cargo run -p tower ${CARGO_ARGS} -- zero
-
-register:
-# export ACC=$(shell toml get ${DATA_PATH}/0L.toml profile.account)
-# @echo Initializing from ${DATA_PATH}/0L.toml with account:
-# @echo ${ACC}
-# make init
+gen-register:
 
 	@echo the OPER initializes local accounts and submit pubkeys to github
 	ACC=${ACC}-oper make oper-key
@@ -240,10 +233,8 @@ register:
 	@echo OPER send signed transaction with configurations for *OWNER* account
 	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
 
-ifeq (${TEST}, y)
 	@echo Making pull request to genesis coordination repo
 	make gen-make-pull
-endif
 
 init-test:
 	echo ${MNEM} | head -c -1 | cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
