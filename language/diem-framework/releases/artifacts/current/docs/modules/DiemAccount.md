@@ -2800,8 +2800,6 @@ Return the withdraw capability to the account it originally came from
           <b>continue</b>
         };
         <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(payer, payee, value, description, b"", vm);
-        <a href="Receipts.md#0x1_Receipts_write_receipt">Receipts::write_receipt</a>(vm, payer, payee, value);
-
         <a href="Wallet.md#0x1_Wallet_reset_rejection_counter">Wallet::reset_rejection_counter</a>(vm, payer);
         i = i + 1;
     };
@@ -2873,6 +2871,9 @@ vm_make_payment on the other hand considers payment limits.
         metadata,
         metadata_signature
     );
+
+    <a href="Receipts.md#0x1_Receipts_write_receipt">Receipts::write_receipt</a>(vm, payer, payee, amount);
+
     <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">restore_withdraw_capability</a>(cap);
 }
 </code></pre>

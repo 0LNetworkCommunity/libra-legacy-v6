@@ -495,7 +495,7 @@ fn create_and_initialize_owners_operators(
         // TODO: Remove. Temporary Authkey for genesis, because accounts are being created from human names.
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
-        dbg!(owner_address);
+        println!("initializing owner: {}", owner_address);
         // let staged_owner_auth_key = diem_config::utils::default_validator_owner_auth_key_from_name(owner_name);
         //TODO: why does this need to be derived from human name?
         // let owner_address = staged_owner_auth_key.derived_address();

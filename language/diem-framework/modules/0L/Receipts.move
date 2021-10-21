@@ -37,31 +37,46 @@ module Receipts {
       }; 
     }
     
-  public fun write_receipt(vm: &signer, payer: address, destination: address, value: u64):(u64, u64, u64) acquires UserReceipts {
-      CoreAddresses::assert_vm(vm);
-      // let addr = Signer::address_of(account);
+  public fun write_receipt(sender: &signer, payer: address, destination: address, value: u64):(u64, u64, u64) acquires UserReceipts {
+      // TODO: make a function for user to write own receipt.
+      CoreAddresses::assert_vm(sender);
+      if (!exists<UserReceipts>(payer)) {
+        return (0, 0, 0)
+      };
+
       let r = borrow_global_mut<UserReceipts>(payer);
-      let (_, i) = Vector::index_of(&r.destination, &destination);
-      
-      let timestamp = DiemTimestamp::now_seconds();
+      let (found_it, i) = Vector::index_of(&r.destination, &destination);
 
-      let cumu = *Vector::borrow<u64>(&r.cumulative, i);
+      let cumu = 0;
+      if (found_it) {
+        cumu = *Vector::borrow<u64>(&r.cumulative, i);
+      };
       cumu = cumu + value;
-
-      Vector::push_back(&mut r.last_payment_timestamp, *&timestamp);
-      Vector::swap_remove(&mut r.last_payment_timestamp, i);
-
-      Vector::push_back(&mut r.last_payment_value, *&value);
-      Vector::swap_remove(&mut r.last_payment_value, i);
-
       Vector::push_back(&mut r.cumulative, *&cumu);
-      Vector::swap_remove(&mut r.cumulative, i);
+
+      let timestamp = DiemTimestamp::now_seconds();
+      Vector::push_back(&mut r.last_payment_timestamp, *&timestamp);
+      Vector::push_back(&mut r.last_payment_value, *&value);
+
+      if (found_it) { // put in same index if the account was already there.
+        Vector::swap_remove(&mut r.last_payment_timestamp, i);
+        Vector::swap_remove(&mut r.last_payment_value, i);
+        Vector::swap_remove(&mut r.cumulative, i);
+      } else {
+        Vector::push_back(&mut r.destination, destination);
+      };
+      
       (timestamp, value, cumu)
   }
 
     public fun read_receipt(account: address, destination: address):(u64, u64, u64) acquires UserReceipts {
+      if (!exists<UserReceipts>(account)) {
+        return (0, 0, 0)
+      };
+
       let r = borrow_global<UserReceipts>(account);
-      let (_, i) = Vector::index_of(&r.destination, &destination);
+      let (found_it, i) = Vector::index_of(&r.destination, &destination);
+      if (!found_it) return (0, 0, 0);
 
       let time = Vector::borrow<u64>(&r.last_payment_timestamp, i);
       let value = Vector::borrow<u64>(&r.last_payment_value, i);
