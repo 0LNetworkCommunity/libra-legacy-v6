@@ -309,7 +309,7 @@ genesis:
 #### NODE MANAGEMENT ####
 start:
 # run in foreground. Only for testing, use a daemon for net.
-	cargo run -p diem-node -- --config ${DATA_PATH}/validator.node.yaml
+	NODE_ENV=error cargo run -p diem-node -- --config ${DATA_PATH}/validator.node.yaml
 
 # Start a fullnode instead of a validator node
 start-full:
