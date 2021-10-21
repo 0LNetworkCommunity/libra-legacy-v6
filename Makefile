@@ -133,15 +133,41 @@ mv-bin:
 reset:
 	onboard val --skip-mining --upstream-peer http://167.172.248.37/ --source-path ~/libra
 
-reset-safety:
-	jq -r '.["${ACC}-oper/safety_data"].value = { "epoch": 0, "last_voted_round": 0, "preferred_round": 0, "last_vote": null }' ${DATA_PATH}/key_store.json > ${DATA_PATH}/temp_key_store && mv ${DATA_PATH}/temp_key_store ${DATA_PATH}/key_store.json
-
 
 backup:
 	cd ~ && rsync -av --exclude db/ --exclude logs/ ~/.0L ~/0L_backup_$(shell date +"%m-%d-%y")
 
+
+confirm:
+	@read -p "Continue (y/n)?" CONT; \
+	if [ "$$CONT" = "y" ]; then \
+		echo "deleting...."; \
+	else \
+		exit 1; \
+	fi \
+
+danger-delete-all:
+	@echo THIS WILL WIPE ALL YOUR FILES in ${HOME}/.0L
+	@echo it will also make a backup at ${HOME}/backup_0L/
+	@echo the files github_token.txt and blocks/ will be returned to ${HOME}/.0L/
+	make confirm
+	make clear-prod-db
+	mkdir ${HOME}/backup_0L/ | true
+	rsync -rtv ${HOME}/.0L/ ${HOME}/backup_0L/
+	rm -rf ${HOME}/.0L | true
+	mkdir ${HOME}/.0L/
+	make danger-restore
+
+danger-restore:
+	cp ${HOME}/backup_0L/github_token.txt ${HOME}/.0L/ | true
+	rsync -rtv ${HOME}/backup_0L/blocks/ ${HOME}/.0L/blocks | true
+
+	
+
+
 clear-prod-db:
 	@echo WIPING DB
+	make confirm
 	rm -rf ${DATA_PATH}/db | true
 
 reset-safety:
