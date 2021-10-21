@@ -6,14 +6,23 @@ use crate::{block::VDFProof, config::{AppCfg, parse_toml}};
 /// get mnemonic
 pub fn get_persona_mnem(persona: &str) -> String {
   let path= env!("CARGO_MANIFEST_DIR");
-  let buf = Path::new(path).join("mnemonic").join(format!("{}.mnem", persona));
+  let buf = Path::new(path)
+  .parent()
+  .unwrap()
+  .join("fixtures/mnemonic")
+  .join(format!("{}.mnem", persona));
+
   fs::read_to_string(&buf).expect("could not find mnemonic file")
 }
 
 /// get account json
 pub fn get_persona_account_json(persona: &str) -> (String, PathBuf) {
   let path= env!("CARGO_MANIFEST_DIR");
-  let buf = Path::new(path).join("account").join(format!("{}.account.json", persona));
+  let buf = Path::new(path)
+  .parent()
+  .unwrap()
+  .join("fixtures/account")
+  .join(format!("{}.account.json", persona));
   (
     fs::read_to_string(&buf).expect("could not account file"),
     buf
@@ -23,7 +32,11 @@ pub fn get_persona_account_json(persona: &str) -> (String, PathBuf) {
 /// get autopay
 pub fn get_persona_autopay_json(persona: &str) -> (String, PathBuf) {
   let path= env!("CARGO_MANIFEST_DIR");
-  let buf = Path::new(path).join("autopay").join(format!("{}.autopay_batch.json", persona));
+  let buf = Path::new(path)
+  .parent()
+  .unwrap()
+  .join("fixtures/autopay")
+  .join(format!("{}.autopay_batch.json", persona));
   (
     fs::read_to_string(&buf).expect("could not find autopay file"),
     buf
@@ -33,7 +46,11 @@ pub fn get_persona_autopay_json(persona: &str) -> (String, PathBuf) {
 /// get demo autopay
 pub fn get_demo_autopay_json() -> (String, PathBuf) {
   let path= env!("CARGO_MANIFEST_DIR");
-  let buf = Path::new(path).join("autopay").join("all.autopay_batch.json");
+  let buf = Path::new(path)
+  .parent()
+  .unwrap()
+  .join("fixtures/autopay")
+  .join("all.autopay_batch.json");
   (
     fs::read_to_string(&buf).expect("could not find autopay file"),
     buf
@@ -43,13 +60,20 @@ pub fn get_demo_autopay_json() -> (String, PathBuf) {
 /// get genesis blob for tests
 pub fn get_test_genesis_blob() -> PathBuf {
   let path= env!("CARGO_MANIFEST_DIR");
-  Path::new(path).join("genesis").join("swarm_genesis.blob")
+  Path::new(path)
+  .parent()
+  .unwrap()
+  .join("fixtures/genesis")
+  .join("swarm_genesis.blob")
 }
 
 /// get configs from toml
 pub fn get_persona_toml_configs(persona: &str) -> AppCfg {
   let path= env!("CARGO_MANIFEST_DIR");
-  let buf = Path::new(path).join("configs").join(format!("{}.toml", persona));
+  let buf = Path::new(path)
+  .parent()
+  .unwrap()
+  .join("fixtures/configs").join(format!("{}.toml", persona));
   parse_toml(buf.to_str().unwrap().to_owned()).expect("could not parse app config from file")
 }
 
@@ -57,7 +81,11 @@ pub fn get_persona_toml_configs(persona: &str) -> AppCfg {
 /// get block 0
 pub fn get_persona_block_zero(persona: &str, env: &str) -> VDFProof {
   let path= env!("CARGO_MANIFEST_DIR");
-  let buf = Path::new(path).parent().unwrap().join(format!("fixtures/blocks/{}/{}/block_0.json", env, persona));
+  let buf = Path::new(path)
+  .parent()
+  .unwrap()
+  .join(format!("fixtures/blocks/{}/{}/block_0.json", env, persona));
+
   let s = fs::read_to_string(&buf).expect("could not find block file");
   serde_json::from_str(&s).expect(&format!("could not parse block from file: {:?}", &buf))
 
@@ -66,7 +94,11 @@ pub fn get_persona_block_zero(persona: &str, env: &str) -> VDFProof {
 /// get block 0
 pub fn get_persona_block_one(persona: &str, env: &str) -> VDFProof {
   let path= env!("CARGO_MANIFEST_DIR");
-  let buf = Path::new(path).parent().unwrap().join(format!("fixtures/blocks/{}/{}/block_1.json", env, persona));
+  let buf = Path::new(path)
+  .parent()
+  .unwrap()
+  .join(format!("fixtures/blocks/{}/{}/block_1.json", env, persona));
+
   let s = fs::read_to_string(&buf).expect("could not find block file");
   serde_json::from_str(&s).expect(&format!("could not parse block from file: {:?}", &buf))
 
