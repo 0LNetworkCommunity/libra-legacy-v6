@@ -99,7 +99,6 @@ module Upgrade {
     public fun foo() {
         print(&0x050D1AC);
     }
-
     //////// FOR E2E Testing ////////
 }
 }

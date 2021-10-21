@@ -12,11 +12,20 @@ script{
     // This checks that the VDF verifier catches an invalide "challenge" 
     // parameter, and fails gracefully with error.
 
-    let difficulty = 100;
     // incorrect challenge.
-    let challenge = x"bb";
-    let solution = TestFixtures::easy_sol();
+    let wrong_challenge = b"aa";
+    // Generate solutions with:
+    // cd ./verfiable_delay/vdf-cli && cargo run --release -- -l=512 aa 100 -tpietrzak
+    // NOTE: the -l=512 is important because this is the security paramater of 0L miner.
+    let proof = TestFixtures::alice_0_easy_sol();
 
-    assert(VDF::verify(&challenge, &difficulty, &solution) ==false, 1);
+    let res = VDF::verify(
+      &wrong_challenge,
+      &proof,
+      &TestFixtures::easy_difficulty(), // difficulty
+      &TestFixtures::security(), // security
+    );
+
+    assert( res == false, 1);
   }
 }

@@ -41,7 +41,6 @@ mod writeset_builder;
 mod ol_reconfig;
 mod ol_upgrade_oracle;
 mod ol_minerstate_commit;
-mod ol_minerstate_onboarding;
 mod ol_demo;
 mod ol_autopay_enable;
 mod ol_autopay_create;

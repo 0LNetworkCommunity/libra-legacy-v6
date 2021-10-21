@@ -9,6 +9,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{fs::{self, File}, io::Write, path::PathBuf, process::exit, u64};
 
+#[cfg(test)]
+use crate::fixtures;
+
 // These match Autpay2.move
 /// send percent of balance at end of epoch payment type
 const PERCENT_OF_BALANCE: u8 = 0;
@@ -282,13 +285,13 @@ fn scale_percent(fract_percent: f64) -> Option<u64> {
 
 #[test]
 fn parse_file() {
-    let path = ol_fixtures::get_demo_autopay_json().1;
+    let path = fixtures::get_demo_autopay_json().1;
     PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
 }
 
 #[test]
 fn parse_pct_balance_type() {
-    let path = ol_fixtures::get_demo_autopay_json().1;
+    let path = fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let first = &inst[0];
     
@@ -303,7 +306,7 @@ fn parse_pct_balance_type() {
 
 #[test]
 fn parse_pct_change_type() {
-    let path = ol_fixtures::get_demo_autopay_json().1;
+    let path = fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let second = &inst[1];
     
@@ -319,7 +322,7 @@ fn parse_pct_change_type() {
 
 #[test]
 fn parse_fixed_recurr_type() {
-    let path = ol_fixtures::get_demo_autopay_json().1;
+    let path = fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let third = &inst[2];
     
@@ -334,7 +337,7 @@ fn parse_fixed_recurr_type() {
 
 #[test]
 fn parse_fixed_once_type() {
-    let path = ol_fixtures::get_demo_autopay_json().1;
+    let path = fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let fourth = &inst[3];
     
@@ -349,7 +352,7 @@ fn parse_fixed_once_type() {
 
 #[test]
 fn parse_pct_balance_end_epoch_type() {
-    let path = ol_fixtures::get_demo_autopay_json().1;
+    let path = fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let fifth = &inst[4];
     
@@ -364,7 +367,7 @@ fn parse_pct_balance_end_epoch_type() {
 
 #[test]
 fn parse_pct_change_end_epoch_type() {
-    let path = ol_fixtures::get_demo_autopay_json().1;
+    let path = fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let sixth = &inst[5];
     
@@ -380,7 +383,7 @@ fn parse_pct_change_end_epoch_type() {
 
 #[test]
 fn parse_fixed_recurr_end_epoch_type() {
-    let path = ol_fixtures::get_demo_autopay_json().1;
+    let path = fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let seventh = &inst[6];
     

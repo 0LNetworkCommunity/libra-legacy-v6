@@ -13,7 +13,6 @@ fun main(sender: signer) {
     use 0x1::Debug::print;
     print(&02100);
 
-    let difficulty = 100u64;
     assert(TowerState::test_helper_get_height(@{{alice}}) == 0, 10008001);
     assert(
         TowerState::test_helper_previous_proof_hash(&sender) 
@@ -23,8 +22,9 @@ fun main(sender: signer) {
         
     let proof = TowerState::create_proof_blob(
         TestFixtures::alice_1_easy_chal(),
-        difficulty,
-        TestFixtures::alice_1_easy_sol()
+        TestFixtures::alice_1_easy_sol(),
+        TestFixtures::easy_difficulty(),
+        TestFixtures::security(),
     );
     TowerState::commit_state(&sender, proof);
 

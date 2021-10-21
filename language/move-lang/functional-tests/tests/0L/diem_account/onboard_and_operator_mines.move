@@ -27,6 +27,8 @@ fun main(alice_sig: signer) {
       &alice_sig,
       &challenge,
       &solution,
+      TestFixtures::easy_difficulty(),
+      TestFixtures::security(),
       b"leet",
       @0xfa72817f1b5aab94658238ddcdc08010,
       x"fa72817f1b5aab94658238ddcdc08010",
@@ -52,8 +54,9 @@ fun main(_: signer) {
 
     let proof = TowerState::create_proof_blob(
       TestFixtures::eve_1_easy_chal(),
-      100, // difficulty
       TestFixtures::eve_1_easy_sol(),
+      TestFixtures::easy_difficulty(), // difficulty
+      TestFixtures::security(), // security
     );
     TowerState::test_helper_operator_submits(
       oper,

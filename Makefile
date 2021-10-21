@@ -137,8 +137,6 @@ reset-safety:
 	jq -r '.["${ACC}-oper/safety_data"].value = { "epoch": 0, "last_voted_round": 0, "preferred_round": 0, "last_vote": null }' ${DATA_PATH}/key_store.json > ${DATA_PATH}/temp_key_store && mv ${DATA_PATH}/temp_key_store ${DATA_PATH}/key_store.json
 
 
-
-
 backup:
 	cd ~ && rsync -av --exclude db/ --exclude logs/ ~/.0L ~/0L_backup_$(shell date +"%m-%d-%y")
 
@@ -150,6 +148,9 @@ reset-safety:
 	@echo CLEARING SAFETY RULES IN KEY_STORE.JSON
 	jq -r '.["${ACC}-oper/safety_data"].value = { "epoch": 0, "last_voted_round": 0, "preferred_round": 0, "last_vote": null }' ${DATA_PATH}/key_store.json > ${DATA_PATH}/temp_key_store && mv ${DATA_PATH}/temp_key_store ${DATA_PATH}/key_store.json
 	
+
+move-test:
+	cd language/move-lang/functional-tests/ && cargo t 0L
 #### GENESIS BACKEND SETUP ####
 init-backend: 
 	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
@@ -189,7 +190,7 @@ genesis-miner:
 
 
 gen-onboard:
-		cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony --skip-mining
+		cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony
 
 ceremony: gen-fork-repo gen-onboard		
 

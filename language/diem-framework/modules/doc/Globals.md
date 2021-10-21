@@ -16,8 +16,8 @@ This module provides global variables and constants that have no specific owner
 -  [Function `get_epoch_length`](#0x1_Globals_get_epoch_length)
 -  [Function `get_max_validators_per_set`](#0x1_Globals_get_max_validators_per_set)
 -  [Function `get_subsidy_ceiling_gas`](#0x1_Globals_get_subsidy_ceiling_gas)
--  [Function `get_difficulty`](#0x1_Globals_get_difficulty)
--  [Function `get_min_vdf_security`](#0x1_Globals_get_min_vdf_security)
+-  [Function `get_vdf_difficulty`](#0x1_Globals_get_vdf_difficulty)
+-  [Function `get_vdf_security`](#0x1_Globals_get_vdf_security)
 -  [Function `get_epoch_mining_thres_lower`](#0x1_Globals_get_epoch_mining_thres_lower)
 -  [Function `get_epoch_mining_thres_upper`](#0x1_Globals_get_epoch_mining_thres_upper)
 -  [Function `get_unlock`](#0x1_Globals_get_unlock)
@@ -179,14 +179,14 @@ Get max validator per epoch
 
 </details>
 
-<a name="0x1_Globals_get_difficulty"></a>
+<a name="0x1_Globals_get_vdf_difficulty"></a>
 
-## Function `get_difficulty`
+## Function `get_vdf_difficulty`
 
 Get the current vdf_difficulty
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_difficulty">get_difficulty</a>(): u64
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_vdf_difficulty">get_vdf_difficulty</a>(): u64
 </code></pre>
 
 
@@ -195,7 +195,7 @@ Get the current vdf_difficulty
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_difficulty">get_difficulty</a>(): u64 {
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_vdf_difficulty">get_vdf_difficulty</a>(): u64 {
   <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>().vdf_difficulty
 }
 </code></pre>
@@ -204,14 +204,14 @@ Get the current vdf_difficulty
 
 </details>
 
-<a name="0x1_Globals_get_min_vdf_security"></a>
+<a name="0x1_Globals_get_vdf_security"></a>
 
-## Function `get_min_vdf_security`
+## Function `get_vdf_security`
 
 Get the current vdf_difficulty
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_min_vdf_security">get_min_vdf_security</a>(): u64
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_vdf_security">get_vdf_security</a>(): u64
 </code></pre>
 
 
@@ -220,8 +220,8 @@ Get the current vdf_difficulty
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_min_vdf_security">get_min_vdf_security</a>(): u64 {
-  256
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_vdf_security">get_vdf_security</a>(): u64 {
+  512
 }
 </code></pre>
 
@@ -331,7 +331,7 @@ Get the constants for the current network
       subsidy_ceiling_gas: 296 * coin_scale,
       vdf_difficulty: 100,
       epoch_mining_thres_lower: 1,
-      epoch_mining_thres_upper: 240, // upper bound enforced at 6 mins per proof.
+      epoch_mining_thres_upper: 1000, // upper bound unlimited
       epoch_slow_wallet_unlock: 10,
     }
   };
@@ -343,7 +343,7 @@ Get the constants for the current network
       subsidy_ceiling_gas: 8640000 * coin_scale,
       vdf_difficulty: 5000000,
       epoch_mining_thres_lower: 1,
-      epoch_mining_thres_upper: 240, // upper bound enforced at 6 mins per proof.
+      epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
       epoch_slow_wallet_unlock: 10000000,
     }
   } <b>else</b> {
@@ -357,8 +357,8 @@ Get the constants for the current network
       // uses "scaled representation", since there are no decimals.
       subsidy_ceiling_gas: 8640000 * coin_scale, // subsidy amount assumes 24 hour epoch lengths. Also needs <b>to</b> be adjusted for coin_scale the onchain representation of human readable value.
       vdf_difficulty: 5000000, // FYI approx 10 mins per proof on 2020 macbook pro 2.5 ghz quadcore
-      epoch_mining_thres_lower: 20,
-      epoch_mining_thres_upper: 240, // upper bound enforced at 6 mins per proof.
+      epoch_mining_thres_lower: 7, // NOTE: bootstrapping, allowance for operator error.
+      epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
       epoch_slow_wallet_unlock: 1000 * coin_scale, // approx 10 years for largest accounts in genesis.
     }
   }

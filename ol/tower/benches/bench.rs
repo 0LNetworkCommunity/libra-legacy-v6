@@ -2,40 +2,89 @@
 
 use criterion::{criterion_group, criterion_main, Criterion};
 use tower::delay;
+use vdf::PietrzakVDFParams;
 use vdf::VDFParams;
 use vdf::WesolowskiVDFParams;
 use vdf::VDF;
 
 fn bench_delay(c: &mut Criterion) {
-    c.bench_function("delay_100", |b| {
-        b.iter(|| delay::do_delay(b"test preimage", 100, 2048))
-    });
+    // c.bench_function("delay_100", |b| {
+    //     b.iter(|| delay::do_delay(b"test preimage", 100, 2048))
+    // });
 
-    c.bench_function("delay_preimage_100_2048", |b| {
+    // c.bench_function("delay_preimage_100_2048", |b| {
+    //     b.iter(|| {
+    //         let bytes = hex::decode(ALICE_PREIMAGE).unwrap();
+    //         delay::do_delay(bytes.as_slice(), 100, 2048)
+    //     })
+    // });
+
+    // c.bench_function("delay_preimage_5m_2048", |b| {
+    //     b.iter(|| {
+    //         let bytes = hex::decode(ALICE_PREIMAGE).unwrap();
+    //         delay::do_delay(bytes.as_slice(), 5_000_000, 2048)
+    //     })
+    // });
+
+    // c.bench_function("delay_preimage_5m_512", |b| {
+    //     b.iter(|| {
+    //         let bytes = hex::decode(ALICE_PREIMAGE).unwrap();
+    //         delay::do_delay(bytes.as_slice(), 5_000_000, 512)
+    //     })
+    // });
+
+    // c.bench_function("delay_preimage_5m_256", |b| {
+    //     b.iter(|| {
+    //         let bytes = hex::decode(ALICE_PREIMAGE).unwrap();
+    //         delay::do_delay(bytes.as_slice(), 5_000_000, 256)
+    //     })
+    // });
+
+    c.bench_function("verify_5m_256", |b| {
         b.iter(|| {
-            let bytes = hex::decode(ALICE_PREIMAGE).unwrap();
-            delay::do_delay(bytes.as_slice(), 100, 2048)
+            let preimage_bytes = hex::decode(ALICE_PREIMAGE).unwrap();
+            let proof_bytes = hex::decode(ALICE_PROOF_5M_256).unwrap();
+            let difficulty = 5_000_000;
+            let security = 256;
+            let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
+            vdf.verify(
+                preimage_bytes.as_slice(),
+                difficulty,
+                proof_bytes.as_slice(),
+            )
+            .unwrap();
         })
     });
 
-    c.bench_function("delay_preimage_5m_2048", |b| {
+    c.bench_function("verify_5m_512", |b| {
         b.iter(|| {
-            let bytes = hex::decode(ALICE_PREIMAGE).unwrap();
-            delay::do_delay(bytes.as_slice(), 5_000_000, 2048)
+            let preimage_bytes = hex::decode(ALICE_PREIMAGE).unwrap();
+            let proof_bytes = hex::decode(ALICE_PROOF_5M_512).unwrap();
+            let difficulty = 5_000_000;
+            let security = 512;
+            let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
+            vdf.verify(
+                preimage_bytes.as_slice(),
+                difficulty,
+                proof_bytes.as_slice(),
+            )
+            .unwrap();
         })
     });
 
-    c.bench_function("delay_preimage_5m_512", |b| {
+    c.bench_function("verify_5m_2048", |b| {
         b.iter(|| {
-            let bytes = hex::decode(ALICE_PREIMAGE).unwrap();
-            delay::do_delay(bytes.as_slice(), 5_000_000, 512)
-        })
-    });
-
-    c.bench_function("delay_preimage_5m_256", |b| {
-        b.iter(|| {
-            let bytes = hex::decode(ALICE_PREIMAGE).unwrap();
-            delay::do_delay(bytes.as_slice(), 5_000_000, 256)
+            let preimage_bytes = hex::decode(PREIMAGE_5M_2048).unwrap();
+            let proof_bytes = hex::decode(PROOF_5M_2048).unwrap();
+            let difficulty = 5_000_000;
+            let security = 2048;
+            let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
+            vdf.verify(
+                preimage_bytes.as_slice(),
+                difficulty,
+                proof_bytes.as_slice(),
+            )
+            .unwrap();
         })
     });
 
@@ -47,77 +96,252 @@ fn bench_delay(c: &mut Criterion) {
         })
     });
 
-    c.bench_function("verify_5m_2048", |b| {
+    c.bench_function("verify_10m_768", |b| {
         b.iter(|| {
-            let preimage_bytes = hex::decode(PREIMAGE_5M_2048).unwrap();
-            let proof_bytes = hex::decode(PROOF_5M_2048).unwrap();
-            let difficulty = 5_000_000;
-            let security = 2048;
-            let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
-            vdf.verify(preimage_bytes.as_slice(), difficulty, proof_bytes.as_slice()).unwrap();
-        })
-    });
-    
-    c.bench_function("verify_5m_512", |b| {
-        b.iter(|| {
-            let preimage_bytes = hex::decode(ALICE_PREIMAGE).unwrap();
-            let proof_bytes = hex::decode(ALICE_PROOF_5M_512).unwrap();
-            let difficulty = 5_000_000;
-            let security = 512;
+            let preimage_bytes = hex::decode("df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59").unwrap();
+            let proof_bytes = hex::decode("004a66ec4c910a2f21c05fae502c1b08ece08cda787f3d218d6335f2ade4ab944acdb3a7ae34d3ff4e95b78f87a5405e3a0028b366207833c40c854df37d2d32c8806d14c681fc91addefb79e3c4ec48747b8e2c1199ca3994090b8b304b33b880eb0071568ed37c909fd28346431a3630c88dd4be09c89d4f98f6d5e95cd804fdfca1f12640fc9e31915e544f9dfaaa93a4520036644e9ce54454d9c48d1c158c112b75e1e71fffdab0593f8b334877904c83ebbbf38f8836e36ebd99043f076151b7cb").unwrap();
+            let difficulty = 10_000_000;
+            let security = 768;
             let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
             vdf.verify(preimage_bytes.as_slice(), difficulty, proof_bytes.as_slice()).unwrap();
         })
     });
 
-
-
-    c.bench_function("verify_5m_256", |b| {
+    c.bench_function("verify_10m_1024", |b| {
         b.iter(|| {
-            let preimage_bytes = hex::decode(ALICE_PREIMAGE).unwrap();
-            let proof_bytes = hex::decode(ALICE_PROOF_5M_256).unwrap();
-            let difficulty = 5_000_000;
-            let security = 256;
-            let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
-            vdf.verify(preimage_bytes.as_slice(), difficulty, proof_bytes.as_slice()).unwrap();
-        })
-    });
-
-    c.bench_function("prove_100_2048", |b| {
-        b.iter(|| {
-            let security = 2048;
-            let difficulty = 100;
-            let preimage_bytes = hex::decode(ALICE_PREIMAGE).unwrap();
-
-            let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
-            vdf.solve(preimage_bytes.as_slice(), difficulty)
-                .expect("iterations should have been valiated earlier")
-        })
-    });
-    
-    c.bench_function("prove_100_1024", |b| {
-        b.iter(|| {
+            let preimage_bytes = hex::decode("df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59").unwrap();
+            let proof_bytes = hex::decode("002b6295a96240f37cb94d11934dff657ff6c82876a5d80a18efbb19fcca21980f0f23234be6c1e10dbc4b07d9ce886d298cc3d335ad9fca72168beb371eaa2cd1000069ee0c9723968c47d6ef5d7d2782bd2694d0b8bf776f36e3bee92285ad2b1f7412e7d3d4bc4cf522de5fe1993a804fb35550fedc959ccb22620b36c4568cf100273464133396cc530fb8f9561b134f1404bf9a04ffa361b35fd4b488e55528696b658163249f5a49a7b57a1ba2c4f501eb3b0aa66d0629b688c3375697cb78c60004c02cb9e9c690efb7e25ad48dc4455444808afadb24080e2ee110abcd1297a074ce203f91b852172decc61e1bf4f446892acf7c9481b694a1c22bda0a00cac3").unwrap();
+            let difficulty = 10_000_000;
             let security = 1024;
-            let difficulty = 100;
-            let preimage_bytes = hex::decode(ALICE_PREIMAGE).unwrap();
-
             let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
-            vdf.solve(preimage_bytes.as_slice(), difficulty)
-                .expect("iterations should have been valiated earlier")
+            vdf.verify(preimage_bytes.as_slice(), difficulty, proof_bytes.as_slice()).unwrap();
         })
     });
 
-    c.bench_function("prove_100_512", |b| {
+    c.bench_function("verify_10m_1536", |b| {
         b.iter(|| {
-            let security = 512;
-            let difficulty = 100;
-            let preimage_bytes = hex::decode(ALICE_PREIMAGE).unwrap();
-
+            let preimage_bytes = hex::decode("df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59").unwrap();
+            let proof_bytes = hex::decode("007c3f822773afc5db37b4f594a71989d526a9cc2ec027a88241ebef6f13afc47e6ce2fc6177dea0097ffb6a99b1aa6c64de141318cd052695a3961e01b646c3651b98e1d580329f7b0f9d6893def1a717061eb2e3b3b0a921bf81caff7f1a5c8e007824e8468cd2c3b3c60651110c1924ce499297b97d7ea89e99de120397ef790bc2454708f55e483c51da97844d4860e539b3663c69add8a092b30388c8210e8dc88fc0d57c9f12f9ad93d48e0e28fa635b5872dc7ac901edae76474b8aad54ab000c58cfa5091524ddd7ce000ab3ace5cfc69b3f04ef1486bf5380862a3115c60c2cda638a50bee1db271273caf63a9c3b22e3f00e64e6cf6ca824573eac408d5a544ab694aa89f46a130ae13b42491299d4595ec0060764629410e4f1e32473e20001d676d13e2bc2be6097055bd14616dd8f18f551a04c5660dc76e80901cdf76241512c49b559260414e497e2796eb007bae214b8839146631465ee0e918d4378da26be303f78382c43cb669e5d69f95f976941b9a8d38d8e556c302a944edf33").unwrap();
+            let difficulty = 10_000_000;
+            let security = 1536;
             let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
-            vdf.solve(preimage_bytes.as_slice(), difficulty)
-                .expect("iterations should have been valiated earlier")
+            vdf.verify(preimage_bytes.as_slice(), difficulty, proof_bytes.as_slice()).unwrap();
+        })
+    });
+
+    c.bench_function("verify_10m_2048", |b| {
+        b.iter(|| {
+            let preimage_bytes = hex::decode("df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59").unwrap();
+            let proof_bytes = hex::decode("002ffdbff74d56595e3553bdcf8abd488e05297298bd67eeeff73a19c53666fce264ebdcd1f9c6034774319155f2aa40305226ee55326abb4d2fa83f07c8d83b0c479de66f9e2941fc4ce72199b478eff13962725570657d95129a68317f9b29e8adce28968ac2cfeb386ee5bad4e4dee8b2574d4ac633300ff4ae347c30939a2c002244bb57c85c24d73f3966e5b8d0fa97521665111318fa1c0ef8108ce2db0519511389a087d3b86872d5d736bfe11e688ac1f8120290783460863d8b24a07ae3112d969e0dc9a3d166c73f2e776daa714f52f58bfa7a5d7130525e705a80a2b149330a4e7d05c4a3860a9e1fc38e899bcf198370322eead79e54c7346b440a0b004f7172653f78ab6e040bf3d46afe3f52b91928dbcfb8ce00561f1ad26a4fec81037c0bc37ebb6e518dff136c2b179a5249f5778edabda28c4037446fc71a3bb03632fbd05151129582c9d8d029aeb5c00c2f4731109114b2e0ac40a64868845644d20d55358862edbf8a23c63df36301dd35403fc845b4c437499bde4248a56d004de9e9236714ae1f5fa3b6ed85338c03557d37ae615072b856d7cbdb1079280983509be60fe6edb68cd9a8046cff248e27dbf692d279accc0d99fb4ec25f43d2b60b4b58ca5d47a31365229cd74532594fed6931bf20cdef8c91fcb1f360989c0427973b6b2b830d7714b430d2eca818b310aa47fb825a3ca2123fd1cd65447f").unwrap();
+            let difficulty = 10_000_000;
+            let security = 2048;
+            let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
+            vdf.verify(preimage_bytes.as_slice(), difficulty, proof_bytes.as_slice()).unwrap();
+        })
+    });
+
+    // c.bench_function("prove_100_2048", |b| {
+    //     b.iter(|| {
+    //         let security = 2048;
+    //         let difficulty = 100;
+    //         let preimage_bytes = hex::decode(ALICE_PREIMAGE).unwrap();
+
+    //         let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
+    //         vdf.solve(preimage_bytes.as_slice(), difficulty)
+    //             .expect("iterations should have been valiated earlier")
+    //     })
+    // });
+
+    // c.bench_function("prove_100_1024", |b| {
+    //     b.iter(|| {
+    //         let security = 1024;
+    //         let difficulty = 100;
+    //         let preimage_bytes = hex::decode(ALICE_PREIMAGE).unwrap();
+
+    //         let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
+    //         vdf.solve(preimage_bytes.as_slice(), difficulty)
+    //             .expect("iterations should have been valiated earlier")
+    //     })
+    // });
+
+    // c.bench_function("prove_100_512", |b| {
+    //     b.iter(|| {
+    //         let security = 512;
+    //         let difficulty = 100;
+    //         let preimage_bytes = hex::decode(ALICE_PREIMAGE).unwrap();
+
+    //         let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(security).new();
+    //         vdf.solve(preimage_bytes.as_slice(), difficulty)
+    //             .expect("iterations should have been valiated earlier")
+    //     })
+    // });
+
+    // PIETRZAK
+    c.bench_function("verify_pz_10m_256", |b| {
+        b.iter(|| {
+            let preimage_bytes = hex::decode("df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59").unwrap();
+            let proof_bytes = hex::decode("0057499a5765047e6fd232a1f6d57ddaa00001049fba70607c86d2adfe32404898b5002b542da0cb8bfc5f41cedc3c0a6930aeffdc2b14ec6c999d12166232b51dc8e9bf002a1d5af0627ef9ae86aabf0e242f22da00069b2ca53693f470c5fee6e8989888cd004746579b403fdc947265ac5475c23ab9fff0c8e38b6ce9c80e34282c6d0ba39a17000c9ca92607591cb5221d7d1398e1ecc90000e13b84496a4509a70982ca82c2a27500249df230f3157a2ca2b10bb2add3278e0010eca3d8c38aedf0b71ef14b7ba7326900432808e3493255761e6b7d64e911bf3e003d791519be4b8254b553204d989fa5bd006a0a7877d0de48ea9a795cd96283f130ffde9931e266ae9b5406959c030e8c46eb00486a6fcf511be657f3510faf11739ad7ffffeb1506c82965c2f736d76863ac1317004ecf68364732c13b152ff990ba9513e2003b89419496969f841f414186971546e7000a19cd3c3ae1174523b34fe1b5931660fff9d66bcf0efc1e5123a80e79f1d733750028af82e435df0a874f557d95e64011b4fffd0eacf4ee23f2b56c3c9ca3dc5fe8bb00186362064601f29d8565753b61064b45000fc4510b896f51bfacfc283806b5350d006dca7f54ebecb48605b731d6ced0d07effba0dfe48961aa387846e6d6bdb8b94ed00097e9618b06e9b55bd22d0d9af0381c7fffb8da1e353cb7d96c77cad4f2fbadeb30029b2105efb8f0d634d274fba6942d04300072d85a8507b41fde27166e336eb5f790066e030dda999c94e3516028601a5386dffc478154ae0aafc1740d6c6b621c356e9001d6d070af6fa2d6bad0d9014aaf090db0005ee323c72e967258975cf1acfaddcb5").unwrap();
+            let difficulty = 10_000_000;
+            let security = 256;
+
+            let vdf: vdf::PietrzakVDF = PietrzakVDFParams(security).new();
+            vdf.verify(preimage_bytes.as_slice(), difficulty, proof_bytes.as_slice()).unwrap();
+        })
+    });
+    c.bench_function("verify_pz_10m_512", |b| {
+        b.iter(|| {
+            let preimage_bytes = hex::decode("df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59").unwrap();
+            let proof_bytes = hex::decode("0018e35ec952892def942adede957241b700db089d7b81dc95ae9df6333e1f051a00013bf1a5a5ae6229ebc9b722a687e6a322ac78db2eef166ed54e0afa2343208d003f514c69159eacfe164e4065b8e35b08a2f9a382257271e72acd4cd55a5952d3ffd6f7b30e6bf3277f6f3edb90dd0175d04f9b6640e45948857d965500757f2169003e1025b73ce5c187f6c3913de1b9c6f440985828a30df7abae74bb7aff70105effd8dbba4cff5f989fdf9118010fbb453c65625718f558830d522657732b3f41c700093b454cb1f8896dbe53a0192524e152b6b52fb1dce3fdb24ad8b48e29ca741a0001ff13ed61849cd49301d84082d436a65fa898ad120f0c41516d0a30debf41e5004c37de00d2e1b3773d64a7bb987864d6ef8ce77e526f1d9e0f51fbd00813f79d00223b07d7aa69b7734b01cdba85271ee4e7f930fcc077d045ee5b30bcdc948d790068393ed85897d377fce50f7f7cac43b2b2b0ddddecc599445cc6b79a28be1a6a00310b4f844d86f9ce26b28b7aed0f71c6e1c0dff0f62d64b7e3332f2dbd2edd490019de144fb64150dc582a2c6cc69d1448239540673eaaae9f44a6abdcbde6bdab0003465011f15749380e20b35181354cdf13502102f219d3c2e90e63dc834c710900472e511250d04f6cc8360d83e80be9a7bd8d90c27eecf4233d0938ed747955f20003bec1a41b4681eddec24ba6c2756461ad91f0c780b6eca25694cbe9b669d6f1001d86bb836e5923b8c6ab477ea83200fce16d6f98d6a154daaa8adc88e757b8c70018422a944c709cb468151eb77cfc6343eda23815ee056a7d66167050a36b1197006c923453f68292613ae6cfbd652605a832ee73565060f2fb7bd5571fa174357000137f51d3ee165beaa9e6aabd4d04ad4b65fe6582cd66513f3e5c1fea0826b9ad0024249688a6a3966eaf08b5254d6e6ac75e467ac80b67dcaa8ebd4cc03925b00900184a187febc2bb3997a0da2a2477eecee8080622000f0cdb57f97c7c08529a93005a5b3b2e99edfa83cd55b6a74ef079b9a38f2cdd0bc370b65aa1608f5a44c0c8ffd58b260e3dfc31648de9a59fa9dd09e4f1594c216648a709f206a1681f20705d0020ec597d6ba282398695b4c5745a7cd6b9a2b2e189f5f78e1ec3d837e48ba118ffede95d5d7b9542bde8b207eaa907bb5103dc7c4485b9b238ac1401a766a86503004b2f0052a4727185ec2c48be227ee35d3b4019bb20c1088838ff7eb3d9d7c6ecffd6fcb764deeb7df97861ac88a8b341d99d2d8f6fb107aecac6dd2bc64cd526ab00519fc337eb8c9efce546f7a74fcf73b3f850d4227f82237bde4c606551bb717cffc3a177e562b9c69a5b954923fc6dfbd2902a6aedd398dc534a78397f93d9048b004bc508b30b74aacd33854d53ea2deeec9d6643cc7203be1f8f3d0afe2a8002c6fff9237289fc82fe945c3a1d9e8521941e68fbbffb2f5b6bcb02305fe0b9fb083900270845c7946fc299065bb1e17ba48b26ce5c731904b8b15ec52e84edd392fcf0ffdad032f50a13fb6f209490329f3c8afb685689fc1d78e4b5b3369d97794b7273000001f7e217d8355c9d16f137f0040843d986383ce2ee351a9f50742054b47608fffffecc0c942481c84f0ab44052ab6a0829db9ebd40fd29e7ef21b5043bc0cddd").unwrap();
+            let difficulty = 10_000_000;
+            let security = 512;
+
+            let vdf: vdf::PietrzakVDF = PietrzakVDFParams(security).new();
+            vdf.verify(preimage_bytes.as_slice(), difficulty, proof_bytes.as_slice()).unwrap();
+        })
+    });
+
+    c.bench_function("verify_pz_10m_1024", |b| {
+        b.iter(|| {
+            let preimage_bytes = hex::decode("df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59").unwrap();
+            let proof_bytes = hex::decode("002b6295a96240f37cb94d11934dff657ff6c82876a5d80a18efbb19fcca21980f0f23234be6c1e10dbc4b07d9ce886d298cc3d335ad9fca72168beb371eaa2cd1000069ee0c9723968c47d6ef5d7d2782bd2694d0b8bf776f36e3bee92285ad2b1f7412e7d3d4bc4cf522de5fe1993a804fb35550fedc959ccb22620b36c4568cf1003ce7399c2204a39639ffb6fd8ca91fd5ebe5f7d6e858a3a3c66ab184404b3b002f81b71c16de5196fedc556622be8192c9e3145bfa29dcfa0acb9e15efb39335002e2b4a7b8c5f053a632a983e0e6ae55d407b37d34e8a6ef63f971b95702f4aab55111218628e69c0c5435569ca8e9be71fd3fb7d1cf36a394b805be22804c36f0050f41f0765553a6ed262d2792fad5d95b5288242fa7fa10381e6ca5784b20cb70665db349dbdf20fe227bc5c9891cd53ad79dbd852849d4ce1e128d15a823de0002911f1d06e66f2d805fec82580919a10a124103d0d77afed32891e991a630dc13ee73480bee9e620a8e18980aca3136795165b4a38395913390c0b20719a327b0022de3450c655d5683ec3166da0cce66b7bd52dfc31c7be31dbf63fe18f699be97d1eb244d376d7d90c56c3c4c2f815443a9ca9046eab150ee256e85ad813980afff4d94f189ff6aea737317b66b5b912e274989f119249ded972f91ba1eab9829af6459976380b37f7b03933a3c44350de4d02cd1af10a647facd3a68485e33e110009db28b2515e3592a689f613b78a5f6fd9aaece288ce9e4b2f751fd43ffa7067b9d0fa7dc2b10620e915749c38b8729f0c586b03b2fbfd9601908936ec7421cefffedea91c167cf8868dc1a2c48526f9b2f0d4bb59669e21960eab5b306f62717f1434a19e0c605d4ec673eadea1f65812e0f9b0976ebf2fda1d5af8657f3bc4190073387822f473f62f7eaa1e962a2a768b780a8561c245cc49bf2a18f58aea182eedf55a8e95b5547228287ee9b7a94f2edab5fc3b303c4c31e439cdc409314c160043b353a434f5d8d3889ab2f4a2d208de8fc51c7b6d7d07ed5c228feb42b7021a2e1e4c1596767d9e2f7601109a98ee0b20d333552702d5bfe7ddde167bec0321006ba4787ce60d3fc98249ececbdf17b5facce0a12fa3312c58f5584cc783aa12570df4c4c40849798b8916d858b726d797b1fe8e226f62d224c105645b6767039005272a37714f30e57b4c317c6cf1c6793b3512d2e653acc7842dd8f5bf89231c423fda6793ece5b1d028abef7afedba802fb735d56349c6f73301da81b870536f00506ecf10937a31bbbb722cac987adbd0cdaf32bafc054da14b0896d5c24471060a82fa1a4eaec93d0ee978f060d86f339b1633c81df561dbbcb86e2bf1d4ae31ffe91e6ff26261f6b667410de00b57b4c37837077e41c72946938e03d782541a4fd48c195c083c3d6c2d384613705f1aa95da37e8137c3d7f6b33402518f653efb0014a69e90c4436baacd4851442c5400019c231e64006b1db78953b835594ab76d7821b6a02049835f4385b601f57ca49c8e265d8dd934abe49ec20a86870ce447fff00e3f778fd3fe982bbff3bdf3cc564ab9c0b3ff2399f99d282528e8ce06791e20c8e503c1fb6e7323700c4a114ed5638b6ed6fc11e223485ae369b464935cd30008428862553db8ee45273f1febeee886557783c8f9e4250911ff478f166aa4ac375fb16218376dc15e3496206bd1f79f2015206d2b60e1f8eb6dc6d59ba36f2900076f5696f3789a38287e9450461869ae84938fcab5ee768f4768e4de1961f44da0edec83b899c3d0fd0758e288b6fb2e7e135f5147592ec3cecfd66426d35d530043d8c1da83b3a33f297ad5a96c8303c6c3bc4dbe121242b03be7a6d19286cacb938417b1f0b2c73f496e3b67f1ed9822487ce0f791e0a01b82f553ff253923e2002c06e88cacdce7397eb4f498d3a4ea0811a7b03e09a4c2c50c94d400958ead7f93c8d58b792bb5658f06a111a71c519f7257d1d201b29a4cd1b8a9578727fb2b0066dd61f60755a0383e956a856c07a798b7bbe880b4a034f84cc4ad3096affb00167177348fd49a6aca3b4e2b330a7d3d06342af4c0bca05157a119b17dc2c521ffbcbf46083f216138e707b86a9c79dc633ad34758d4f7802bd52e7e52af95a0be2d3a807791321381ddb6cc8296a2272951564fee4a97e8c334bf9132131622cb006b9e51802ac7ddfc5a03624a8dd4d114684f5dd3e4c0a1e740767acaa694a1cda581de200aa2ce6a06e2a7df88a0135f4e3596a4341a2a16f9066732afc36c77ffd047bee867a6128bbae66298341f3667fc9a0a82c6545bc70d17717fe921dd5541ed5cbb95805d05f89072867878b413f463e4869608ec3abfcb86e37d6368cf0016832d037784b71075ff9e05e60fb5791650b5e8161cb73f8cf9c260d3f7b3aed6060aeff674a069c45821b475c9a8c264280415c19ef5181fc3729417891698ffeadd17c9ecb3d0f679a80e5a7e7d8f89cbb542e1c8466fd18d0cf580a8b45e4eb35a7970322e2695e0746dc72ca467e220729ae66572f6b13e5a969693830b25006a2284ac6c832c819a8ad8a3036e15be05341145924dbe9303212c17be9b2ef8d6d70daf4b8dfbb3e076effb8733ad570840466e9006ff455910ff961a71febbffcd81152f205dd61f8b1f19a1ff9d3efbfc237c549fe31d52ac690080d094cb547237ea750eac57e1b70e588532e5627d19f12dfb3bfe4a543cbd175dcc6c10bd002c7d03255eb2b394ba9c81f5a54ac647faa3c7840a186e9a27c0843b7663973c514b2102dd687fe0e369ecd3407728cd8dfab6b7cfdf92f36642c31e296a2dd7000169a944c994ab4ac81a3e05fe86b4c7147449d7d7052ce1da36969bc8e1c4d8027e9854282b489ae8ceb4e68f4684da7551021af8ae8c4955d1c44ad9d4fe5f0031973f58a41e0cd070de850c0f307243a8cc34d29d35487f5e7c46eea6bf67a916dbc8581fb7ed61bb8dc8e8b3193b7028e933964859ee5870f4b4667f4ab338000729044daa760810836ca48198d34028436476e7815e887c9344126043324a8323497fa69b5425304f51389b42fa18b718930ad40bea8e2106429966ff607535006e2f68b231cb9974bfc0fc597963417b6bd3f3c7950f888770322e1e9b6ccef5a0c3a7bc986d3700f05f2660c2d587fa891bfa4d5ac3a428228bf77ef9f30836ffd4c357212989abcdaaccc51599ed27916e8067c05f334f71b506d87c5f81f22d8d62373244e7d500d8db847fc082d9ff563ea683ec4a1262e1cee82c345d06fd").unwrap();
+            let difficulty = 10_000_000;
+            let security = 1024;
+
+            let vdf: vdf::PietrzakVDF = PietrzakVDFParams(security).new();
+            vdf.verify(preimage_bytes.as_slice(), difficulty, proof_bytes.as_slice()).unwrap();
+        })
+    });
+
+    c.bench_function("verify_pz_20m_512", |b| {
+        b.iter(|| {
+            let preimage_bytes = hex::decode("df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59").unwrap();
+            let proof_bytes = hex::decode("0000326aa0b04a20f0df5864595a5667debacc3b85c9799e75c76ea2149d880efdffffcf08c058825c2e938b08aeec4ab5dc3480f5fb81958c68f5c5af3f7a3efb070018e35ec952892def942adede957241b700db089d7b81dc95ae9df6333e1f051a00013bf1a5a5ae6229ebc9b722a687e6a322ac78db2eef166ed54e0afa2343208d002ca1646946e957b7b5bd7598d36274591859eb9eedfb9d765ebe05a9fc110e87001da2c9d807a0e0ba7357156bf599d15e1f3b37546380657cee9f2adff5631b3b00014688a2b82fc7f49f4fbc07079e7212277637031628300a4f81c622cbea78da00004ce0e0bda67d09d9c67d2e92ec6011457e24f4b8533ee4294b94f90e2aac93006214b5174988df7464bed4e4f34b0a6f390d193eca7581e53a91fdbfff8678a0ffa9ccd1e058c000736a6c945505f8904e4d36e289fd79709b6ddd3fe2ed7e64f3003102d76e6b3cef069389f85497bc6940ed7c5a4de32812830730a950d2239490ffd6f054eb23e517826d22f54639d3e93ca75fc1c6945dd74756a7183ca474a5cd005a0b26b12ed57cce3efd553381bcb41cf78342670e1b7cc3ff122c3984e1d509003c648c8a062e1663558d275b4bee52efafc87efa91bc17d4ad44fc1f7e975865002af2ec298955b31368a63386e637a29d32259b82a30d6cd20454c211971ed97c0008f3b8e944f926ae996b228e2364f1c56239204b19f994ba6e2b5198881580e500483b51eb3a8624ff33b3cb943b51f2b6396a1fc2c70aeba0ebc84d63c474cc63ffec3a1dc56e57b957c55a6dbe12381bd63ca8f27ce87cfd9aa429705ec5f0d30100652ba6fa43df9fc696a24ad161b134f7531d396829b240e0f343a7a201d56edcffb79f9ce2e2ee276013c82ceffc61b9ea5a0b1c2fc771a30835ec7184fb50117d0064aa8973b13232848957ecf05ed68e095118606d3767b96cc7009dc968949a34003d4fc33e35082ba683308f2b469f788884b7d6d1aa84fc3e61a3eaf69a9d14ab005daa769a2c437bbeb9edb5cb59056f68c80996d175bf08817169af793aa5c9540000b2afe8174ef9c820f6491fcb08d9e5172a59a4c15211cbef8b1d336d23223d00145c139b265657b3a88d8f9390b27c54969bc816c5e51e8076b4eaa61f8ad0c500017fd620c060e9f60d27e64a9bae9d4434bee1a350079ab7c6239b87a899ae1f0015a02d3d281a44554a154800ee43862a1c0ad26984d48fbed0ca4430769b1e7d000611d439915082f426f9ad371557f22b0ffae4616ac51faf3e7476fe0c41e5f30051abdd2ee4972c370e55d9c424ff2396d85429c26973efe4323a4860beec67bf0030826cd783a00175d0531677c86a7b295ef95dc0c96ac9e31d836681fc7c27c7007c46b6fa773dd240fd3e0844a2749f16886cc6f783bc715068e1eec66378f1f0005e33f29ffcabe6db162bb77b7c7c3f069e7bcea9c8fa282d4a3df7672c3eaab3000c984b099f69867099661cfd67093e40c4b1589e7ccabf4f83b2b1d6c3279760fffd7620338930e70695e31c60def1296296f9ce840d6a7ecd0db42d2fda89208d000feea332f813682fcfc87e7a6f31fac9d352c95e39eea56446403a95640459e0fffef7ea60e335532a87cd2c497d5e5b7498573579f5b7204c6abb997268500973007344c8c12bc891c216ccedf27cf9ce82abe0728b284fbae4019df050be3b651b000007d9e958860f054dbb142699cf66f1b64022ef7726aad31ae0d019eeb41887").unwrap();
+            let difficulty = 20_000_000;
+            let security = 512;
+
+            let vdf: vdf::PietrzakVDF = PietrzakVDFParams(security).new();
+            vdf.verify(preimage_bytes.as_slice(), difficulty, proof_bytes.as_slice()).unwrap();
+        })
+    });
+
+    
+    c.bench_function("verify_pz_20m_1024", |b| {
+        b.iter(|| {
+            let preimage_bytes = hex::decode("df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59").unwrap();
+            let proof_bytes = hex::decode("006e7afafd54f04c011c407b35a37161a37d707f4891deedeb49b14140df6f9eb76f2a7f7821180b552ca7ce0590ef4e8f38c2dea8b18f0d2a48c0ec7d3ffb7c91002e955f04e88b4f4332475b58e731b26526a389904a9bdbdc03503dbd579ba0e8a66ec9a7cf941bf09e98ad20488a4d8033ba1d473aa83a978366e620998ffa01002b6295a96240f37cb94d11934dff657ff6c82876a5d80a18efbb19fcca21980f0f23234be6c1e10dbc4b07d9ce886d298cc3d335ad9fca72168beb371eaa2cd1000069ee0c9723968c47d6ef5d7d2782bd2694d0b8bf776f36e3bee92285ad2b1f7412e7d3d4bc4cf522de5fe1993a804fb35550fedc959ccb22620b36c4568cf10037d77ba3df28b9693cfb43e0fb5877d757636b889c50d152fcafe6b63bd9d7dbf5c0fbc5621c8702f67754afe23b5d8f902c39a9f37b8827648ca32979d4748f00024676c0b3ebf681cec247710a8b3ee8d2909fa0a919b7fa1e1d3daa3af42cc51a73d617dfc322f83209ff8eb9ad080db3f29ee2e8abe722247f3bb57b3f948f0003ae8a338d7f888ab793c9387796b99b5cc4141f955c5e36a001428c9c9faa72541cc194120967f17b28558faceec90d0397b4825284ec630045ab5293d9a9d6ffffe7828c569af2506a14e6087411f9d540700e277cb13a99f03421c2d363ff4b3390e0ed443ace87d205522955e7da7631835f64b5cd932eef149beca2912715005d1fabcd2428dc42b61e30ab1a4715c9a03609e0279449ebfbc2916db648ef39671a6928de75b8aa77d995c759fd84d16773eec1a23d1f2d9f4516483c6d51beffbfea14d783ce3d4945ac77bfa5c930fc85d9e0bd71597e50e711c82827c206237dd8636f07fd2f4a72d0fc233b2444121712ce1876645dfc9bfe6092fb6a1fb5006ce015e833d4be9b04f6a1182a13213031f83cb0ee6f7b43b74de23fcee3f92fc8d5b0044ba85cbaa540b6c22b5243b7df42a3a8b94238898e7684ed79ffea6900325bc6b5c1544bff540b804dfa96327fe5e7fe62e36cf0da69cd3ed64480b367237f8cc8be4eaaf102378f7b00ad512774f51362c2fac3e382b7c2c7f21d3ea9002616e7ccb61c56e2a79ad5163ba190b47ee96ecc142c8d691b47d309feacf696e1bbd642327615c4e776ba352db19cc37a488e4eec838a49598a128db259d3c0000d86852948c5bfaf7c64a3b799a8667050f83faae1d618d3d22578530094374b31d0062cf6d173afac9749b44de33e042403d0d4a0df611bb4c164b0e2f7707b002f3c5d7396f6c8a79194116b0e585e1291d0c57df90bbd025354ffa5276b23443dd86126232492e5930fbef810cfaa6e9bbddf755b401676b0881666352ec28f002e8705fa3ae446e5b2514c233111bf6002cb411d4df05770062d692aa37bbbe5d7e156223c49203944d27e891d3eeba7d813e8fdab6ad4e6290e2445c6a3068f0078650db11bbb58cf4a6f3418ccd06957301e35e318876cca1e107d50bdaf5e9eca77c6cd1809e9b878a01e7fc2dc5f4ca12d27f86589cdbf41675942b9fed6e7fff565b7f9942388f204c332e1859e02af2faeab863d1938f959e0489b58d97977f9198197a2bddec265473d802bcdf3809aff7a3180e44b599dd23d4d095cec95002144dcbd5f587429159912c3ddef3d5aef43503762ffb2ce046ba060d1d69ce06400c45c83cd0f555ed0928e1df4327e886bda66196e1324b28ca86a78ff07ec0017909bf1293cbc1e4ee7c455514a30f9368459692e914827ee1623c28c3baa87be341254145491dfbc4b453a636a7dd634ada7f4c8aee92f9673d07a6cb1b9d300190ab088a5a5256467f5d0c0615f6236976bf2e0a9be1fbc2008f2e1dd625450f13855a3b2f765e532ddff3cfb688399474f720b725810b41c8008aa72b6de18fff002d54db50769186d4b9f535951970deef0f8cbe8a7c2555da3819080fa0ee67131742c0e548afcc65cdb6ef13eef9450c16a2c69a8cbb40bfaa135f224cadb00344c850baef61fae1cb8251bf855bbadaca4fa55f180a6248d9822ca3c2b68b36264e34e229d407052f859bfd52d815db9aabecd77458d3fe87ef15d16f20b4a000f9c30413c40b02220cdbe7eeadb443ee635a443a29dbdd2c01fcef3fcdb3a148ee73a73e481e566e91a0e941be754a33317db47a1ae8105472586adf75b7aed0022e992c1fb4642bd120c80e45a18c42580dd3695d7512201bea078f10058b30eddaaec3206b189c052199e0d69aa4a08ebc023b12c3378cf9a7ddba627ad0303fff609b347af13fc1ecc89c87becc08bab96269cb11aab0be2aaee2c7f3503d44e83fa59e57d7cc71aaf24b84405c5b4c10f8f443feddc2d04d11e64f273af2ed50048075f6d5c48e386d3525d3c66c439b6144f9e6fd797ddb3db70b0b5a7f74802423d36a1d4591d9e061625486edf7f4a73dc30e738401373e0c8911ace915bb5ffc478dfaba55b2b8d4657d3a8d4821255724350cfbb2541624973ef9ab61ff30f90e60f12c9d5f781139b8445b883235f5005f8efaa8491938108d99795678cef003e37b09da6b590df8c59b29c530cf50dedc2e56073a8c2e24a1641bf0a399110f735b228fb01186679953adae1a2448ea596ac8dd4289af59eff5292be0941ba0015d161110b1dc6cb40068204e6ca63745ea4342105cd4864e4fe900dc4cc3fc9ed3ae12267f05f2e61f7607fa247be3ed8efff0e532146f278673aeb57812d75002e07fd6f7ef76a66f6c913752303372eebe94cac00270fb9d5e0786af859401a02d2e275743dfec97f695b6537266be59787e875d7ec8ce4441847fbef21caa5ffddf69b5a9e476f9b3b9f3592d6635a31252feeacb8c0da94832edcd831988ca2db8ffdbce279f035d0c92840145e1f0a84c7001b49cac898d4c1853c0efaabf3001fc3123be5ddc17747ecb6fe2a5889b36746646c9e12f4b04da362ca38ed44d8fad6b0e7c56af74a1ad66f9b4470b29fd1c6de8f42c9fd5007dea22dc545abc6ffe3b9e0c2cf5718d48c22aa479b7029a89be53fb204c09ab2fe021428874157d38a5b5ad0ba02b9aee72e56ca1f25c0c455ecb15a073f6faa08ae4ea992c8790b001e6408165686dc0f0a8c923a41366d58335591342005bb5771d72b54d170eaea737680f633d3437ba5a29c8a9c9d3c7b092e85ba9a7bcd0491418802a0cf4e72001bab28000eba463796730bc94cb2fd36fb96dd6496f0022bc6bfcc670cc2cbce60b7697949830f68456a56a2b1138a147b44478f4fd2e4f49a5f795d40f4a535007784a2cb93c38c8b72c435a82bf7e5ec9b3b75544073383dd4d71e0135686e5b66b9bda5ccbdce95092cce3aff8fe050d233392e1e28cd2cbffdaa3c5f47f889006f9bcd54b7b7c85d2238bcf902927c47487ff1305b6df5bd8f492d91b01baf4d9907c0dfd4b52e8276f0c37488ae251d52e401ac76c3e0aa042b62c09f8f8b6b").unwrap();
+            let difficulty = 20_000_000;
+            let security = 1024;
+
+            let vdf: vdf::PietrzakVDF = PietrzakVDFParams(security).new();
+            vdf.verify(preimage_bytes.as_slice(), difficulty, proof_bytes.as_slice()).unwrap();
+        })
+    });
+
+    c.bench_function("verify_pz_40m_256", |b| {
+        b.iter(|| {
+            let preimage_bytes = hex::decode("df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59").unwrap();
+            let proof_bytes = hex::decode("00462cd86a7abb33d8786c9de09cd0e3070041ed43e0e2c8ea1018a83a7a2f5f0d8b003e6fe7142b77e5dc0c1ec4dedae8af4c001802c89df1063274e4443bef5ff5fe6d0079fce373b5fdeb05cc148f34b4cde9d20040b214d21aaf1ebe52e65e57f705bfbf005bda00cf0c894c31a8fe83e4bd5cd11effb2a1d6398046a292305c936d85ae2be50061d3b818df6ade08572e584a99aed255ffa373f4d53dcebfb80f8c0bea12cb827f00473df7048bf240c37ab3ccd725944ce8ffc49429efbbe9858aea29171708189e5b007d02ad5e68818e6685e64e8170875c2f0058b93c4b6c32bb526f8469cf945b0d3d004cf29a68d0646250719caef8e544312b0048f03e59b0d60c37adcbb76942a698af002d1d701313a6557b4ad9617923affb67fff47fbeeaaa43316e4e320b632603b2050045d9e6bb43905c3814a26be3b8452022ffec0eda37093c32a0d8ed5b14b805516b0026d7df5cf6cad0c62fe2ac6153610712fff6dfdb03b0d5d6b18c6c6cae532f4c7f0078739ca3426f3e528a7e72a7aea0302a00751bb15ba7ef6f05f26af791ec003e15001cbd426df35797538899d9b185d1a7f4fffd5c97a61543931e0f5adc7323237de500532b45b8d0378f00572cf55d21bce06efff47ee4e8305e3b1fd6c0b2c40d3ef6b7002d4c02d1043cf5d10a1caa029f2db2dc002747fd557f762804fa3097dfe89e440300343ddc1f21560fdf2e2ad8f8a733e82e0018492da4728f456bf9cda704860c227f0077748604556afb7029ce4b56ee9887c7ffc8bfe17006d0822f0eb1993a40c6dea7001e5d5eb4e591fee0b91c8072f9a4d8c4fff019f6fa6196554b7853a609a4403c13001e2b9876946d176224e9e4cb0e68406e0015ab3b8ea27d8966d51a98abce57185d006d137f67db3689c366e9483de074f885002651830dcc94557bd21bf2f2f529c563").unwrap();
+            let difficulty = 40_000_000;
+            let security = 256;
+
+            let vdf: vdf::PietrzakVDF = PietrzakVDFParams(security).new();
+            vdf.verify(preimage_bytes.as_slice(), difficulty, proof_bytes.as_slice()).unwrap();
+        })
+    });
+
+    c.bench_function("verify_pz_60m_256", |b| {
+        b.iter(|| {
+            let preimage_bytes = hex::decode("df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59").unwrap();
+            let proof_bytes = hex::decode("0064740ba8d48dc40c33fb6cc06e3d7859004130760495c9f58ce4b12f81b99e1837001a44d8e3555b3540a312a3dd651b56c6ffeb58d68d15d20ca15c0e6998a1488d1d00423c31760edb0c049a9fb59c611140e3ffe81e184c424c1bc0b97b259086d593470073af3b274f10256befa0839f60e35e58002d9c785e44ab1a3942a7e6c0a3572e0b0002a28efda22404516f3789e0be369b260001cb4312182dfef8201f42da76029c3f0085edb78a35292ca888e650529110ad0a00835762d888c062546149ce82af684d6300319c2f24fff4398094d1074571f0c403000ffe827499d6bd73489202902eb4c863000acc33eb67551dbd1cd7699adf77b4ce0009def0edddfe453e2a0c08c216b238b9000dfcf490d8377ed9447aa9032a9d8e29fffb26704971974e2bbb2ab92b0a6abd870050d67c679a31b285bc5c5182ee44eb2afff0f3b25153d7046213c9ede6340cbb65004c2d52b7385499f00eafbe6b82177cd6004ab057ee7dd2de6030464888022455650020d8ec850bfe7f3afd9aa4028abed097fff01c8de012c22ada650381940f9ab4ef003154c0d5ce4ee32ffd61b6685b3fb6090016d2fa5c1158b4b1f472ab21450c8637004fbbf8dd79b74429d998e819818705cb002247145fa21cba0f718696ed0484def9004641b0268b7c955e63d73510e4fc6730000ca2814efcffcbc12c6922c14aaa3555001b736ccccbb5b6eb26ac084936ce760affe5c236aeadb3f805f237360e39e787c100436b362859110f5cb8122415d08358a2ffca21418d9a2f060d1245b0e0d462dbbf0056e4216dfec0cad96f2fa9c21852c73cffd4311cead688c11e27d97920248b9853001585379cf4907e089a707d2c2b2538d00004e544d6336b1b15ab4e31f55d2c79f500727cb31a6f5f08fe1084e21b9720494600420f06ac0c81660486f509b8ed91d7cf").unwrap();
+            let difficulty = 60_000_000;
+            let security = 256;
+
+            let vdf: vdf::PietrzakVDF = PietrzakVDFParams(security).new();
+            vdf.verify(preimage_bytes.as_slice(), difficulty, proof_bytes.as_slice()).unwrap();
+        })
+    });
+
+    c.bench_function("verify_pz_40m_512", |b| {
+        b.iter(|| {
+            let preimage_bytes = hex::decode("df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59").unwrap();
+            let proof_bytes = hex::decode("00611902bd30a03970eaf6a1866a40a588885d623d88e6de79e4f848738e297d46ffed41ebe16409a1eb16b9fd1de825e8c8de8bebe2a83c54e522b1c2c6d0ec45910000326aa0b04a20f0df5864595a5667debacc3b85c9799e75c76ea2149d880efdffffcf08c058825c2e938b08aeec4ab5dc3480f5fb81958c68f5c5af3f7a3efb07007cc85efef3e51468d0686265a813929ac2b9f44c24753b4702d184eff784027e005ad9a0209201a00b7999e7f71689108da6a1521561a606b341947d209f7adfdb0011e8228d007c0d8a076cf5673585680f588b387d98a13a74ed4241c978d30f86fff3155780e3d14315654ab1d24bee6d499298b171838e6e4eb0613fb8929d26cd000711aef33e98132a414fd5e4e07336ae4360132311bf6a446f62c7c5f1c0c82efffc167c231c39ece9d2fe1e13eb0c24914c246bfb2a0fb78e56b5672aa25d54f7001ece17d0e17dee08d6d28b4b9cc31f90c04c069ced7930b79ea2d6c7f27239c9ffe867099a6afee8d728f28c978dc1a4ead396e87a04440301a53dff85bdac597d000c1560d0535199d664ae1882489b64322ddbfccd4de2d0f12b22c41e1d150b9afff97bee0a7b1fb9f8e217680a6aa09b9eb65c80cc8d16bbff226cfbea249ff06700081f38a78be6326bf4ffdef22f8ffe8c2e2bf311b8299be12fa36fc2c606354c000464bf98a4cafed6a1015ba891eeeaeab2e4726e8c5a1eb7cd116928b843d6350036a7bff29a65cdde756672a4593876791a285a72cc49ee84a5aff060db57ea60fff5c789efca266f5cb98aac21b88dfc1273df157ee4f053a8700529fb1173d28d0000923b25c792cb878d7f1f64c77bc33e0e338cb2d343203bd1c926fca26db9800000714d261ad7042b0ab94e68aa0b20a29abddd33a6ce3ecca4fcd21a9525820d0059c61c84313f97fc2fc56b50217123f765f622fb58ec1b2a735431a1d7214b69fff34135ec6e97c79a199a5853af9274d9ca485645645c4587eda6ea3a98e5c34100087f24041c62e5fb527ad835f49b045a5d281ece4eda2e975440fb90da4689d900030fb90110f5cbb7c140cc71211a1c61725c771c116bf2156a22270f1b724ab3006defbca895f312d36f80a7b03101aba2e286705ae660ea9d0580ddf9d59f4ebefff3e05a43deefcb4c285d1fbdd00421c85818b4ea3eaa48702869c2676138887f00292cb9bf3f343cb3ad41e12d3da8f396b37445a92f782727f6bc4d0b802b6ba9ffe1a1b593285a522ef6c8897e7aa519ba0996234104fe7ce233587eaeb254e501000bc31983741f6a140eb2f1962d95c14a38556fb70c5d2d29fd11c3e5a51bc85cfff8ae4781988abb111b18f83b4396245e90265932a0486ae876cd8f08b9c46d950058b7b4a1751a21299523cedd91dddf6888145a2bf9d26659dfde64ee67334cd00017d5e3eff8f2868a76fffe53134ed8d50dc4cc06303c11d6504c3ddf5a210e0d00203d6b319ef811445f11ab9f8001f0358d5df851f3235805bd2a83c489f2e287ffe23d422d66e276a49917ec8d6445fd3c7a3edd7ffb6264c391cafdc78cac68eb00067eae895f55b463a9d8d09ba1441779b4f16671c18c6145449b970601a4fff00003e73231fd93a0ba68e69c80480abf6bd629d18f824a94d5a87714f1c27d4ab300620fb042abfc6c052ddf95cb73068140eb0bb5146389bacee2b2edb0668b935c001ca6702306641fcac3093293eb3a7e7c6e453683c568af0ade88bba39fdd04f5002f8b94bdebbc0701f77de5744c9dda47d2c04d8469215e8e1c478187215d2802fff31d68098369bf0e610e3c98734829fc6092cebb9220550609cf7c8396c513c1").unwrap();
+            let difficulty = 40_000_000;
+            let security = 512;
+
+            let vdf: vdf::PietrzakVDF = PietrzakVDFParams(security).new();
+            vdf.verify(preimage_bytes.as_slice(), difficulty, proof_bytes.as_slice()).unwrap();
+        })
+    });
+
+    c.bench_function("verify_pz_80m_256", |b| {
+        b.iter(|| {
+            let preimage_bytes = hex::decode("df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59").unwrap();
+            let proof_bytes = hex::decode("003a82f404abd6176f320692a5e07abb590027eb0c169c7135ab9e46f026fe864a4500462cd86a7abb33d8786c9de09cd0e3070041ed43e0e2c8ea1018a83a7a2f5f0d8b0002ef28f052dd018a2ab445eb9a7e0706fffdd1fabda798eeae63fbaf1d252a2e61002684d99392e6aad71cc92928d0e899d8000d2cd01fd8fb6d654d042b53ee9a861b007353c7dda17fb7fab7b9f1fe2ecf1145005c434ac3fe7e19c1c61ee2c7465d6139000ec447804319d3092285802be2644ed10003ad4498172c6e7f86f91c94bd23accd000811f8f7d4fda8f8293339ef128cb7a20001ca5366e7c49abc8c35f43b97fa15b300094254b9f6527a04315d18d51482e78200047c52bb7f0d9666a16a7defca615aa1005245de64dbdd32988bb4b8c584b0397afff8a859a9bfe723e7e510b5530eb8b5e50029d9c271d7a786325bcf30f878a76a2900161f0d7a87f51b6a18141a2a59cfdbeb006ef725473d091606bc275558d3d4eb71ffb6036c7a81db6c4f03fe684f9595ec65002448d16f38e4d26289267ed9c14076860011bbbef8115d2000d34d63548e9187970034938dc1e817225d7954d84b20984314001681ee700bdabcd16b459fcec484db2b003730f06fa5fa2639d6ecfec24c457872fff180d2cdec0b996fbcc7783174524afd004410f9c7a9aac42943b08ccfacfdae78ffcc0bd021bcd6bf49f3345411cf982975007fdcd38a2641ef91f4e59bff0425d32e005bf3fd508b298c46df83fe4c07bdab4d005830e646f1d9cd7d0cd560da43d9ac0e003091bb4be83a53216a5c7827b13be52d001b2a36f9f709a69599a45254b9ed1b8a0001f86452c3b4b99dbe1a68d24dbed27300137c2a9b91e7f41f99110a550cbe9b82fff650ec052ddc1008c9a10ce4fd85abff003f362088fa24730cc1f43a896c387336002cdc6c1e1c0ffdc4c93ef58b1400b73d001afe9eed2ea6a863d166e431d35616b7001971971f8844c965c1265a219c076401").unwrap();
+            let difficulty = 80_000_000;
+            let security = 256;
+
+            let vdf: vdf::PietrzakVDF = PietrzakVDFParams(security).new();
+            vdf.verify(preimage_bytes.as_slice(), difficulty, proof_bytes.as_slice()).unwrap();
+        })
+    });
+
+
+
+    c.bench_function("verify_pz_80m_512", |b| {
+        b.iter(|| {
+            let preimage_bytes = hex::decode("df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59").unwrap();
+            let proof_bytes = hex::decode("0017c75d30370b29cee7dab2b6d0dcc4ca228e42fda1f7c7c4c2313bae55ec8941ffef83fc7cad518a372b2ae846e411024f0f9d7254d9376bef55d5bc6ab0e0b2e500611902bd30a03970eaf6a1866a40a588885d623d88e6de79e4f848738e297d46ffed41ebe16409a1eb16b9fd1de825e8c8de8bebe2a83c54e522b1c2c6d0ec45910012574dc17432d7c8c86ebdcea2fe040826d22306b271dc4a874e24fa76813bc2fff27aec56105d781812b1407d078d20c3aeae5fd544e1382de9eefb6fc067e26b005099266de06cdee6af4e1e5fe2d62d09c494ffa5066ac5f422c8fb712b073fefffd3b4add20c3be1e42507796f755264b24c0c347f9487971f771b20ed72d2ba4900361a8ba40fa85e66aa02311d8ee5b309f8061c6889d93794da96d2ee65d646060035ac3bd22c8b6df5a7f5d8d6f3f997be9b07b0ea5abca949a615aa2edb28d7450074edb6d2b8006baf17d8e20de22ef2d264603c08da38ca3c1262da1a5c7b0fbeffc398d9e9cf434c241ff7192a4b4af6975ad980c1a3f6c3f0377638265b3a7bff0079cb1b5e2c22350767c33d664168f6900bd53e39fbe2f7ceb9822587d401bb32ffdb5491f79f2d4d9dfc16eaa56d57a269f1d01834e57f8e7077a91e30740db1cf005ec4622c18bd3e8263868ac23d86c2c3efecb66f030bf716177fdac612b6f337ffbebd228bc8337aacc432c106a61b607e1c183d45932bbd2ab2b3edb2c8abb3e700739b4c63ff9893b8626dc08013ea3f4b24781f6b5b8515f2c2133f9bfca794b2ffdfb466a3439e6af571d199ca2c6520cf849662d68b9ae2d5a0d0e3fd43f33991000ee4b265e63e4a12e4d9c0873527f2673032cb7ba6cba3e28fc4afe03815c441000b9722d8b829326741f25ff28c934878f89264208785efab90a208f29fec226b0010aae1031d8ae2789d9394c16fa58c64152163d63b61561b47a8ac2121b3b0a6000818afc2977b2a7ccd1eb0ea7f50ccaef0f99545c360c1039a494cb3d1ed210f0012fd63086e31c5b649667dd8b8375971ad4662d3c3ebbb5b9ced5eeb34bb20e9fff1fcaa8ed1bf26b791d1a08903fc63bbb33c0c429497f865c253b956e54d554f003d2a315f50814cd74af4cdbd7963b14caee3849f0419cc3ebc2af33a0b332c6affc74ee3dad4c8b17c8fca325cac3d19b477ee63375080820687c81253558edc1d0015b4e57f1174b67bd6979f450e637e484ba804bcd3804946ff13ccc88e596738ffeeb008357baad702da8e5f274500523c29ea03daa38027952cc3789519a470830026d17af26f5f62220d7ec40fa96fd502899a3b50c8b58b76af7a43b50a5fd9eeffed1a3835a4da8bddc3d9bc468863f693cba60f2241dd8c4622fcf8a54b694efd004a6722abdd509788cd98c8a844a5e2ef96c34f7593f3bd25641b6fd7e3c6645a000897d2deed1d3e6f0e0aa8b5e633eeba1ace021b219bfe2e19b6da7da1180ae5000631a2e596b9bcba536ade6926af4a3d0a1363586221c0bf43cff9fa59b6fa640003fc1021c59bb2baf0896c88ef748ee6782e44582b21402449e28a2c88896d2b004fc6421445add1e1521ea61d4888605f169001a481815ab286f8456bf2d1ffeeffe6a10dca4332b93abd3423ce9c83b5a501d949d140545bef5a9c9678dc12a253004b51b8ca696b1e2be8e9c0aed21ef1df5ff1072c77578c2720ff753e25b2fc0a0047a4e95604429288344dd479f19c935b9c2894af86102c1f74564abfd683253500124f643f9cbe08fef159776c550363c46390a7c120d86c76bf7ba4ba82720d4cfff821077a46d4b4e3e98dbb86b25c5b2d9fba8b63d35aecce1f21f18bba9c059b0028f231e75fb4bedce61e8aba257bfad26131668871eb3506b4e1a5365c9677f6fff9f842e770d415616db0125525076bb257c2152f21e91186ee3204ed3377eda3").unwrap();
+            let difficulty = 80_000_000;
+            let security = 512;
+
+            let vdf: vdf::PietrzakVDF = PietrzakVDFParams(security).new();
+            vdf.verify(preimage_bytes.as_slice(), difficulty, proof_bytes.as_slice()).unwrap();
+        })
+    });
+
+    c.bench_function("verify_pz_120m_512", |b| {
+        b.iter(|| {
+            let preimage_bytes = hex::decode("df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59").unwrap();
+            let proof_bytes = hex::decode("00735b39a21f85e67a6a1f3773ce93325895bf0cfcf9fbb790cc519f0b312160f0ffb6ba6c4181d3feb33f7383e28eab4dd1edb16dc0236791614b72fa4513c3f7130077b8c622995ad176b607b6e145c6f4f3c6e652b5c10fcd4cfee9d57931c45c58ff9a4c713a8d57b1ab96686ecaccd2df05b8fe6cca970d7ab62e128cd25ac9df8d000ece5e424382b8bbb072cc2b655a4a83bd1441be291839e91560e201959f7fbefff5bf993a2c31a154062c46ec98a0d75b73066678bacb2346c045cdbd29b44f970076da57481e4efa960733aaca711537875a6ae5ce25aaa18ad26afd205f7ee0feffb8c6aa3acc804ac40f45c77c95f86d99446fa30aaf23312c60a1eb94ce5083e3007746376b876e466f11bbf70d0390d27273efd7c43ce33dfc9abb5cf3d58f5c020050d4459064d5b0314cb9a94444187ec04ff0a98108eb738edcf827a89ec1a643002cf4deea8134d1c95a9ae358755878a46bb5de1d0ecf1c3424719ee781853384ffec0373b189361312b25d31e68da813f90613c7d568011e97b57d1fee2d0d169b00780d31cc631ef086f89f6118001155dfdc2cff6fbb7470b35b3a59c0af37d2adfff6588a074d0404c95faeab9067ab7a48af1bcca825d6ace32d7feb098ddb8c470053cd7ee37421b476263dc3c82a41009bea063c35c03eecdb4045c03752e976a9fff0644ed37e3788e76ba2b4b393c1acaf0d01c6453043d7b3816d818247d793b3005017ef46b324e56d1b0638c2127c76243af84ecacc07b79da6426797b512a494fff46193e829a5b353a1cf11e23861aeef32396a193b369b4d411e5900079156b50000d4c74be374f35b0bcf10d8b7dd6f9639912a59a25f672a725716bc78c26f48ffff649e31ae5a4a47587498561ffd8e05c001f333202e4b372b365b4cc3cf538d003f573c74a72270409ec57070246a121d1c71888bde8f7b86f6a46e4383bb831c0005339ff19784be6e88fc6a26226fb2268025df7ba8ae6d6ab47bea21c73c41cb000c7223642b630a48c7fba7bf756cd229258fdd428ecb8da3ca8c51cc584aa102000c48cdf6896d40647531c52cf8b01b519b8a6c2019409da8323c1bd731437609006f9aadf768551835ce7095fc5ce3930c0cb06c60d8a90ca36b81f23d75d6497c0028347c674aac5cabe4f87b64439a44567c190b2442acbd5800726d5e0bcbaa5d003ebffcdf149dce47f9f7abe0ca502c7caa6dcd316ad3a7e2073587b41d3b9c90ffe0881771421164c2a41d4fe4f8209cfcfe26fe6deca86e6c86e70f7d48e1b573007697800d7fa8b483d0e3e5ba6e616b10a8caeafb51c2f606e6b012883490c0ab0053b93ad3520ef361b2d95429f2a717b592f76dfd7cf4da75400a6df1240643ff006e5a81e25d34a73aacfc9a803ca14ee5365a761773d1e9239fa08e0c46892eb4ff95b76f6fdc0c4d30d2ebc99eec69b4a945cb226540370441522dfce4e31d5323003fc6fb6ec087922d8280d5dd5acc3019adacea47eb8a1eed25cd324586fb7ac5ffe306638043a1a92cd5d3d8a6dbbaf7e149fbbdc166e890bae18a37a9b2e0b05f001ee98bb8ee9607e8b1230bbbd06def81ac4929e531167df7f523135583cedcfefff20666d7dd3500af3cdeae4e50096e419595541c42ca389c7ae1de3cd27fe305000de828ed207cb5902c5d36016a0ba631c6f3c6087ba537375617fae55cda0e8afffdb36cd4987b454945b564b82d3f0da2a44ed776567fbbf4a0b6754df138f83f0020b8f059044744b996e9f9ea0f6f38115209fb514b0e9858ebfa83ed3d3ea1ccffffdd8783d06a2f564d3ac9e88bdd94cd78e9b4fb03fb4e5044641d73d58f78b3000578b6aa455beb9042afe73862864a222a81360b0bae190785c1f387505a3707fffdde70f743b5aeba914bc4a2e7894775af9e3debb38a6f51d26a10b3a38a201f").unwrap();
+            let difficulty = 120_000_000;
+            let security = 512;
+
+            let vdf: vdf::PietrzakVDF = PietrzakVDFParams(security).new();
+            vdf.verify(preimage_bytes.as_slice(), difficulty, proof_bytes.as_slice()).unwrap();
+        })
+    });
+
+    c.bench_function("verify_pz_200m_256", |b| {
+        b.iter(|| {
+            let preimage_bytes = hex::decode("df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59").unwrap();
+            let proof_bytes = hex::decode("002518259b342cf3a58b8aac7792e2314bffe6ff57ddf859671b749ecadbed7f7137007711ec5ee6a44d1f3ad38419b09413c9004fe5c1866c4b12379d59c2aad1b62ecd000ec1bc16c2763fa02ecfa851c62e5c6affff312c37b3a2aa2c64b0421bab0db91d000081ac6db54aa4a5c1b68c415cca5aa300004590a9b7b1e356b9cc741fdd91ea2b0054d2ab81c8fbcf010adb1945147ef4f1ffb522f5a4b79afb3f1de311c5356b4e73003b8c66ca17d06357919a2e04dcd3e020fffc7f8eae7b03b1d05ce593fa52074bf50042d540d83bc24610258256df5244b297ffcda5694833fc449865230bcc0fdfd70f002af3bdbba0854ad3dcc1a02a69b35df70004497501af46f32a853cbb37a2cca1cf007168fa453f662f122ff48ab1f7a3d0ba0041c6d955d802b704da38802b5e63522d005a160ccc726346910419c8750b5e3bb70000e66bf4eb8d0781b78b164c9bb9ba03006339a18d8ce594d14b25cad13d0b6cbbfffabf5cdecb309d343718d82d5368363b0075d7cf2b5c243402c3fa263cf0e6963eff9fcc29cf7728370200c94967ad21b74b000019d929c1a730dcb8fda5dc0371a0930000053cc0a70c543b93ee1d366fc33a650004bcda586dd8674357a8d3121fe9a37600005d2613d6fef425ec28779abb925d15001a26f52862c2e3197a5fc0850e22323d001570081ab55a6f32ffcd324e1205b00500615cc74ad3276edc2cc0018c5b6ddeb2ffc1eb542fa81a99aca3313b1b6dab5ccf0029e4e0a7c480ee8d93476d7d831d5576000f9c5615afbb191ac6bcb9efee1993c5000f2b5e3f01e120bda9b799cea6112cc2000ee0e7307e08690c55a5f3137926d7210047ba6ce101dc14e02382d4cf851e1114001af52a36fef1ed91c3e4fc9237f2a8fd0028d7edbac850436512e19b2d2918a6b00001bccae96edf9228f9cae812d2367dcb006fa7c5c7452e23e5779a4175f2d2f198003df8c220ca934d37561d76868dc4b88500021cebddceb110573d045b77645ad26800003ab8e4caaf83bc504e772f26ecdd6b").unwrap();
+            let difficulty = 200_000_000;
+            let security = 256;
+
+            let vdf: vdf::PietrzakVDF = PietrzakVDFParams(security).new();
+            vdf.verify(preimage_bytes.as_slice(), difficulty, proof_bytes.as_slice()).unwrap();
+        })
+    });
+
+
+    c.bench_function("verify_pz_250m_256", |b| {
+        b.iter(|| {
+            let preimage_bytes = hex::decode("df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59").unwrap();
+            let proof_bytes = hex::decode("006bae8f24788a63be805813a6fc061f20ff94c93106bc356fc3715e5c73538a690b00268ec39b26b026d72c102ced5187c55cfff3171cd093000a588a439bc45bfb1c3500509277217108b1d3bdfa7c6d09a329effffe27eab200ba9afe7048703b6d2aba7f0071517c28c7d2f68e87c1d2813ae857fdff9c35dc557f5fa7d34031ff3cb6b2c2cb00634908edccbda16c3669edb91de74e1affb4788f8e813318704f48d801dcd498fb001270749170734915fa924af65ccddaf1000fc20ebf56e40446aa933cf0cdc1cc770003c12ef4d68a5f0c641b7ca0cc03b39cfffd8d7d94abac96b314d6e04c4c5d7beb001f4ae1a3178a7dfb61d87dafa8b70d65fffff31ff3a34ff15fae17c539146a33f9003a6f6b8a9d039a737da71d2342ae100300159c0a0d129466857dfba6aef0a00f6d001120700b4126496d54249d43deebd869fff7ad1905dfdabda36b363c426bcc2f85006615737e21e5a9cb562d18b74a52ad9300562c4e3165c2939faa60e99416b602930055c6de654f2a827719ac3aab42c08e3cffba05ef8475acf1a4c542514a523978bb005bbf4bca219bfe27cae48e36d9599d72ffcb17dae49e0c72b6fb465881a26c0063002aac225911af95c0e4816cb3e950cfd6ffe0df919441420ca582a213866aac14770030c9d4a670d65e2ec176eeffcc5a9d26fff2c5c354207af694b276971599c921dd000f028302fc3faea4c6f340221975fe5ffffa5bd79615b0bfc3ec25d051ba8bf1bb008012048a0a88d5cc2c2a80bfbb4b4d52ff8fa2ed5b26a69e56d2d2cc6615b834bf003a9072140c1f312cbc1b824b6e8d5cfd00279e5eec6da649e1d32b0ab7694c6ff500199d62fb0069ef66fbddceb32b39638300033b10fab299e31d80c4591b61f96c890055b318e9c660baf3ccc97fd1defe554dffb9ec274e2d8505326ad29d5861b24a0b0016752ce91ed3ba411cc793167bd9e2ce0005ae98fa188ae8b89a134b3ad005cc79000924ad4e22a7fdd7bfac71a0cac304060002e6af0b3278df732c4c4214e2795e35").unwrap();
+            let difficulty = 250_000_000;
+            let security = 256;
+
+            let vdf: vdf::PietrzakVDF = PietrzakVDFParams(security).new();
+            vdf.verify(preimage_bytes.as_slice(), difficulty, proof_bytes.as_slice()).unwrap();
         })
     });
 }
+
+
+
+
+// 
+//
 
 // sample size configs not documented. Found here: https://github.com/bheisler/criterion.rs/issues/407
 criterion_group! {
@@ -132,11 +356,9 @@ const ALICE_PREIMAGE: &str = "87515d94a244235a1433d7117bc0cb154c613c2f4b1e67ca8d
 
 const ALICE_PROOF_100_2048: &str = "002c4dc1276a8a58ea88fc9974c847f14866420cbc62e5712baf1ae26b6c38a393c4acba3f72d8653e4b2566c84369601bdd1de5249233f60391913b59f0b7f797f66897de17fb44a6024570d2f60e6c5c08e3156d559fbd901fad0f1343e0109a9083e661e5d7f8c1cc62e815afeee31d04af8b8f31c39a5f4636af2b468bf59a0010f48d79e7475be62e7007d71b7355944f8164e761cd9aca671a4066114e1382fbe98834fe32cf494d01f31d1b98e3ef6bffa543928810535a063c7bbf491c472263a44d9269b1cbcb0aa351f8bd894e278b5d5667cc3f26a35b9f8fd985e4424bedbb3b77bdcc678ccbb9ed92c1730dcdd3a89c1a8766cbefa75d6eeb7e5921000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001";
 
-
 const ALICE_PROOF_5M_512: &str = "004cceceab990902f8091d5a5f862cb572e6a849b997f8cb14e01868508693021800478c2fab72d55b5577f34890f03e9cdfe47771724327f0c112dd6a1dfaaefed30068526590a7bfbef7c0a1d6320f0ecbb2d5bdc55952bfddbf166f5a0b7ea48791003eeff4492530be6e9b6e98bc24ea8411dedff40ff918195c87c6c85b1959331b";
 
 const ALICE_PROOF_5M_256: &str = "0008bc09e6166510a94621cc41b3751780fffc31e659e3ea5ad5996c8bea13ebe46900322198e8a6e67e983df51ce82d684310001ac44ef7cfef8e66f54eab5b9a87bff7";
-
 
 const PREIMAGE_5M_2048: &str = "df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59";
 

@@ -1584,8 +1584,8 @@ print(&502);
     // verifies the <a href="VDF.md#0x1_VDF">VDF</a> proof, since we are not calling <a href="TowerState.md#0x1_TowerState">TowerState</a> init.
     <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(
         challenge,
-        &difficulty,
         solution,
+        &difficulty,
         &security,
     );
     <b>assert</b>(valid, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(120105));

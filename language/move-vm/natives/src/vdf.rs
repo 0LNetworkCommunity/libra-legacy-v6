@@ -14,9 +14,6 @@ use move_vm_types::{
 use std::collections::VecDeque;
 use std::convert::TryFrom;
 use move_binary_format::errors::{PartialVMError, PartialVMResult};
-// use hex;
-// use diem_global_constants::VDF_SECURITY_PARAM;
-// const SECURITY_PARAM: u16 = 2048;
 use smallvec::smallvec;
 
 /// Rust implementation of Move's `native public fun verify(challenge: vector<u8>, difficulty: u64, alleged_solution: vector<u8>): bool`
@@ -25,7 +22,7 @@ pub fn verify(
     _ty_args: Vec<Type>,
     mut arguments: VecDeque<Value>,
 ) -> PartialVMResult<NativeResult> {
-    if arguments.len() != 3 {
+    if arguments.len() != 4 {
         let msg = format!(
             "wrong number of arguments for vdf_verify expected 4 found {}",
             arguments.len()
@@ -33,24 +30,33 @@ pub fn verify(
         return Err(PartialVMError::new(StatusCode::UNREACHABLE).with_message(msg));
     }
 
-    let alleged_solution = pop_arg!(arguments, Reference)
-        .read_ref()?
-        .value_as::<Vec<u8>>()?;
+    // pop the arguments (reverse order).
+    let security = pop_arg!(arguments, Reference)
+    .read_ref()?
+    .value_as::<u64>()?;
+
     let difficulty = pop_arg!(arguments, Reference)
-        .read_ref()?
-        .value_as::<u64>()?;
+    .read_ref()?
+    .value_as::<u64>()?;
+    
+    let solution = pop_arg!(arguments, Reference)
+    .read_ref()?
+    .value_as::<Vec<u8>>()?;
+
     let challenge = pop_arg!(arguments, Reference)
         .read_ref()?
         .value_as::<Vec<u8>>()?;
-    let security = pop_arg!(arguments, Reference)
-        .read_ref()?
-        .value_as::<u64>()?;
+
+    // refuse to try anthing with a security parameter above 2048 for DOS risk.
+    if security > 2048 {
+      return Err(PartialVMError::new(StatusCode::UNREACHABLE).with_message("VDF security parameter above threshold".to_string()));
+    }
 
     // TODO change the `cost_index` when we have our own cost table.
     let cost = native_gas(context.cost_table(), NativeCostIndex::VDF_VERIFY, 1);
 
-    let v = vdf::WesolowskiVDFParams(security as u16).new();
-    let result = v.verify(&challenge, difficulty, &alleged_solution);
+    let v = vdf::PietrzakVDFParams(security as u16).new();
+    let result = v.verify(&challenge, difficulty, &solution);
 
     let return_values = smallvec![Value::bool(result.is_ok())];
     Ok(NativeResult::ok(cost, return_values))

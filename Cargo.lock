@@ -1986,7 +1986,6 @@ dependencies = [
  "executor",
  "generate-key",
  "hex 0.4.3",
- "ol-fixtures",
  "ol-keys",
  "ol-types",
  "rand 0.8.3",
@@ -2209,7 +2208,6 @@ dependencies = [
  "diem-workspace-hack",
  "dirs 2.0.2",
  "hex 0.4.3",
- "ol-fixtures",
  "ol-keys",
  "rustyline 6.3.0",
  "serde",
@@ -4531,6 +4529,7 @@ dependencies = [
  "compiler",
  "diem-crypto",
  "diem-framework-releases",
+ "diem-global-constants",
  "diem-logger",
  "diem-transaction-builder",
  "diem-types",
@@ -4543,6 +4542,7 @@ dependencies = [
  "move-core-types",
  "move-vm-runtime",
  "move-vm-types",
+ "ol-types",
  "proptest",
  "serde_json",
 ]
@@ -5702,10 +5702,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ol-fixtures"
-version = "0.1.0"
-
-[[package]]
 name = "ol-genesis-tools"
 version = "0.1.0"
 dependencies = [
@@ -5720,7 +5716,6 @@ dependencies = [
  "gumdrop 0.8.0",
  "move-core-types",
  "ol",
- "ol-fixtures",
  "ol-keys",
  "ol-types",
  "serde",
@@ -5737,6 +5732,7 @@ version = "0.1.0"
 dependencies = [
  "diem-types",
  "diem-wallet",
+ "once_cell",
  "rpassword",
 ]
 
@@ -5758,7 +5754,6 @@ dependencies = [
  "machine-ip",
  "move-core-types",
  "num-format",
- "ol-fixtures",
  "ol-keys",
  "once_cell",
  "reqwest",
@@ -5797,7 +5792,6 @@ dependencies = [
  "dirs 2.0.2",
  "gumdrop 0.7.0",
  "ol",
- "ol-fixtures",
  "ol-keys",
  "ol-types",
  "once_cell",
@@ -8562,7 +8556,6 @@ dependencies = [
  "machine-ip",
  "move-core-types",
  "ol",
- "ol-fixtures",
  "ol-keys",
  "ol-types",
  "once_cell",
@@ -8803,7 +8796,6 @@ dependencies = [
  "hex 0.4.3",
  "move-core-types",
  "ol",
- "ol-fixtures",
  "ol-keys",
  "ol-types",
  "once_cell",
@@ -9066,6 +9058,7 @@ dependencies = [
  "diem-crypto",
  "diem-framework",
  "diem-framework-releases",
+ "diem-global-constants",
  "diem-proptest-helpers",
  "diem-state-view",
  "diem-transaction-builder",
