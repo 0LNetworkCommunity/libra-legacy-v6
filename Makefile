@@ -135,7 +135,7 @@ reset:
 
 
 backup:
-	cd ~ && rsync -av --exclude db/ --exclude logs/ ~/.0L ~/0L_backup_$(shell date +"%m-%d-%y-%T")
+	cd ~ && rsync -av --exclude db/ --exclude logs/ ~/.0L/* ~/0L_backup_$(shell date +"%m-%d-%y-%T")
 
 confirm:
 	@read -p "Continue (y/n)?" CONT; \
