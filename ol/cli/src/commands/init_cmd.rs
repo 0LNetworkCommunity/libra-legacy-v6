@@ -137,14 +137,14 @@ pub fn initialize_host_swarm(
         .unwrap()
         .join("ol/fixtures/blocks/test")
         .join(p)
-        .join("proof_0.json");
+        .join("block_0.json");
     let blocks_dir = PathBuf::new()
         .join(&cfg.workspace.node_home)
         .join(&cfg.workspace.block_dir);
     let target_file = PathBuf::new()
         .join(&cfg.workspace.node_home)
         .join(&cfg.workspace.block_dir)
-        .join("proof_0.json");
+        .join("block_0.json");
     println!("copy first proof from {:?} to {:?}", source, target_file);
     match create(blocks_dir, true) {
         Err(why) => {
