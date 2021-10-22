@@ -145,22 +145,13 @@ confirm:
 		exit 1; \
 	fi \
 
-danger-delete-all:
-	@echo THIS WILL WIPE ALL YOUR FILES in ${HOME}/.0L
-	@echo it will also make a backup at ${HOME}/backup_0L/
-	@echo the files github_token.txt, autopay_batch.json, set_layout, ./vdf_proofs/ and ./blocks/ will be returned to ${HOME}/.0L/
-	make confirm
-	make backup
-	rm -rf ${HOME}/.0L | true
-	mkdir ${HOME}/.0L/
-	make danger-restore
 
 danger-restore:
-	cp ${HOME}/backup_0L/github_token.txt ${HOME}/.0L/ | true
-	cp ${HOME}/backup_0L/autopay_batch.json ${HOME}/.0L/ | true
-	rsync -rtv ${HOME}/backup_0L/blocks/ ${HOME}/.0L/blocks | true
-	rsync -rtv ${HOME}/backup_0L/vdf_proofs/ ${HOME}/.0L/vdf_proofs | true
-	rsync -rtv ${HOME}/backup_0L/set_layout.toml ${HOME}/.0L/ | true
+	cp ${HOME}/0L_backup/github_token.txt ${HOME}/.0L/ | true
+	cp ${HOME}/0L_backup/autopay_batch.json ${HOME}/.0L/ | true
+	rsync -rtv ${HOME}/0L_backup/blocks/ ${HOME}/.0L/blocks | true
+	rsync -rtv ${HOME}/0L_backup/vdf_proofs/ ${HOME}/.0L/vdf_proofs | true
+	rsync -rtv ${HOME}/0L_backup/set_layout.toml ${HOME}/.0L/ | true
 
 
 	
