@@ -156,9 +156,10 @@ impl AppCfg {
         });
 
         // Add link to previous tower
-        default_config.profile.tower_link = add_tower(&default_config);
-
-
+        if *!IS_TEST {
+            default_config.profile.tower_link = add_tower(&default_config);
+        }
+        
         if source_path.is_some() {
             // let source_path = what_source();
             default_config.workspace.source_path = source_path.clone();

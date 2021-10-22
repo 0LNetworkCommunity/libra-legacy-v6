@@ -113,17 +113,17 @@ pub fn what_statement() -> String {
 pub fn add_tower(config: &AppCfg) -> Option<String> {
     let block = find_last_legacy_block(&config.workspace.node_home.join("blocks")).unwrap();
     let hash = hash_last_proof(&block.proof);
-    let txt = "(optional) want to add a hash to previous tower?";
+    let txt = "(optional) want to link to another tower's last hash?";
     match Confirm::new().with_prompt(txt).interact().unwrap() {
         false => None,
         true => {
           let hash_string = encode(hash);
-          let txt = format!("Use this as your tower link? {} ", &hash_string);
+          let txt = format!("Use this hash as your tower link? {} ", &hash_string);
           match Confirm::new().with_prompt(txt).interact().unwrap() {
             true => Some(hash_string),
             false => { 
               Input::new()
-                .with_prompt("Enter hash of last proof")
+                .with_prompt("Enter hash of last proof data")
                 .interact_text()
                 .ok()
             },
