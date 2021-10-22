@@ -15,6 +15,7 @@ use std::{
 };
 use txs::submit_tx::TxParams;
 
+/// name of proof files
 pub const FILENAME: &str = "proof";
 
 // writes a JSON file with the first vdf proof

@@ -11,9 +11,9 @@ use diem_json_rpc_client::AccountAddress;
 use diem_types::transaction::authenticator::AuthenticationKey;
 use diem_types::waypoint::Waypoint;
 use diem_wallet::WalletLibrary;
-use fs_extra::dir::create;
 use fs_extra::file::{copy, CopyOptions};
 use ol_keys::{scheme::KeyScheme, wallet};
+use ol_types::fixtures;
 use std::{fs, path::PathBuf};
 use url::Url;
 
@@ -130,31 +130,27 @@ pub fn initialize_host_swarm(
     source_path: &Option<PathBuf>,
 ) -> Result<(), Error> {
     let cfg = AppCfg::init_app_configs_swarm(swarm_path, node_home, source_path.clone());
-    if persona.is_some() {
-        let source = &cfg.workspace.source_path.unwrap().join(
-            "ol/fixtures/vdf_proofs/test").join(persona.unwrap()
-        ).join("proof_0.json");
-        let blocks_dir = PathBuf::new().join(
-            &cfg.workspace.node_home
-        ).join(&cfg.workspace.block_dir);
-        let target_file = PathBuf::new().join(
-            &cfg.workspace.node_home
-        ).join(&cfg.workspace.block_dir).join("proof_0.json");
-        println!("copy first block from {:?} to {:?}", source, target_file);
-        match create(blocks_dir, true) {
-            Err(why) => println!("create block dir failed: {:?}", why),
-            _ => match copy(source, target_file, &CopyOptions::new()) {
-              Err(why) => println!("copy block failed: {:?}", why),
-              _ => (),
-            }
+    let p = persona.unwrap_or("alice".to_string());
+    let source = fixtures::get_persona_block_zero_path(&p, "test");
+    let blocks_dir = PathBuf::new()
+        .join(&cfg.workspace.node_home)
+        .join(&cfg.workspace.block_dir);
+    let target_file = blocks_dir
+        .join("proof_0.json");
+    println!("copy first block from {:?} to {:?}", &source, &target_file);
+
+    if !&blocks_dir.exists() {
+        // first run, create the directory if there is none, or if the user changed the configs.
+        // note: user may have blocks but they are in a different directory than what miner.toml says.
+        fs::create_dir_all(&blocks_dir).unwrap();
+    };
+
+    match copy(&source, target_file, &CopyOptions::new()) {
+        Err(why) => {
+            println!("copy block failed: {:?}", why);
+            bail!(why)
         }
-        _ => match copy(source, target_file, &CopyOptions::new()) {
-            Err(why) => {
-                println!("copy block failed: {:?}", why);
-                bail!(why)
-            }
-            _ => Ok(()),
-        },
+        _ => Ok(()),
     }
 }
 
