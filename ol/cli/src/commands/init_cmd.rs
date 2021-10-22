@@ -147,7 +147,7 @@ pub fn initialize_host_swarm(
                 println!("copy block failed: {:?}", why);
                 bail!(why)
               },
-              _ => (),
+              _ => Ok(()),
             }
         }
     }
