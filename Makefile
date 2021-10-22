@@ -203,6 +203,12 @@ gen-make-pull:
 	--shared-backend ${GENESIS_REMOTE} \
 	--pull-request-user ${GITHUB_USER}
 
+gen-delete-fork:
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
+	--repo-name ${REPO_NAME} \
+	--repo-owner ${REPO_ORG} \
+	--shared-backend ${GENESIS_REMOTE} \
+	--delete_repo_user ${GITHUB_USER}
 
 gen-onboard:
 	cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony
