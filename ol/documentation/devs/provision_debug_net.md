@@ -44,9 +44,9 @@ For the debug-net simulation, the github token (when saved to `github_token.txt`
 - Edit the my_configs/Makefile with REPO_OWNER as your username, REPO_NAME, the desired name for the repo.
 
 # Generate Keys
-(For Testing: skip this step, this file block_0.json will be set later)
+(For Testing: skip this step, this file proof_0.json will be set later)
 
-The 0L tower creates your initial keys, and produces a first proof of your vdf tower. You need both the proof output (block_0.json) and the mnemonic to be able to participate in genesis.
+The 0L tower creates your initial keys, and produces a first proof of your vdf tower. You need both the proof output (proof_0.json) and the mnemonic to be able to participate in genesis.
 
 4. Create keys with `make keygen`. A mnemonic will be printed on the screen.
 
@@ -64,7 +64,7 @@ Check the data in `../.OL/OL.toml`. This includes a `statement` field which is a
 
 This is the proof-of-work which is submitted for inclusion in genesis. 
 
-This step can take 10-30 minutes to complete. The output is a block_0.json. This file should be copied to your my_config/ folder. Confirm it is there.
+This step can take 10-30 minutes to complete. The output is a proof_0.json. This file should be copied to your my_config/ folder. Confirm it is there.
 
 
 # Register to genesis

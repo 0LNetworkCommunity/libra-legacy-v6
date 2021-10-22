@@ -186,7 +186,7 @@ impl Node {
         // check to see no files are present
         let home_path = self.app_conf.workspace.node_home.clone();
 
-        let c_exist = home_path.join("blocks/block_0.json").exists()
+        let c_exist = home_path.join("vdf_proofs/proof_0.json").exists()
             && home_path.join("validator.node.yaml").exists()
             && home_path.join("key_store.json").exists();
         c_exist

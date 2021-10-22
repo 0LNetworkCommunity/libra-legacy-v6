@@ -304,7 +304,7 @@ fn test_mine_genesis() {
     write_genesis(&configs_fixture);
     // read file
     let block_file =
-        // TODO: make this work: let latest_block_path = &configs_fixture.chain_info.block_dir.to_string().push(format!("block_0.json"));
+        // TODO: make this work: let latest_block_path = &configs_fixture.chain_info.block_dir.to_string().push(format!("proof_0.json"));
         fs::read_to_string("./test_blocks_temp_1/proof_0.json").expect("Could not read latest block");
 
     let latest_block: VDFProof =

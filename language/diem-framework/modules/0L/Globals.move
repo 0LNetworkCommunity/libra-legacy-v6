@@ -108,7 +108,7 @@ module Globals {
         }
       } else {
         return GlobalConstants {
-          epoch_length: 60 * 60 * 24, // approx 24 hours at 1.4 blocks/sec
+          epoch_length: 60 * 60 * 24, // approx 24 hours at 1.4 vdf_proofs/sec
           max_validators_per_set: 100, // max expected for BFT limits.
           // See DiemVMConfig for gas constants:
           // Target max gas units per transaction 100000000
@@ -116,7 +116,7 @@ module Globals {
           // target transaction per sec max gas: 20
           // uses "scaled representation", since there are no decimals.
           subsidy_ceiling_gas: 8640000 * coin_scale, // subsidy amount assumes 24 hour epoch lengths. Also needs to be adjusted for coin_scale the onchain representation of human readable value.
-          vdf_difficulty: 120000000, // FYI approx 10 mins per proof on 2020 macbook pro 2.5 ghz quadcore
+          vdf_difficulty: 120000000, // FYI approx 30 mins per proof on 2020 macbook pro 2.5 ghz quadcore
           epoch_mining_thres_lower: 7, // NOTE: bootstrapping, allowance for operator error.
           epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
           epoch_slow_wallet_unlock: 1000 * coin_scale, // approx 10 years for largest accounts in genesis.

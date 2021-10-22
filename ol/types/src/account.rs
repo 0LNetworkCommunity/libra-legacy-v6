@@ -148,7 +148,7 @@ impl ValConfigs {
         println!("account manifest created, file saved to: {:?}", json_path);
     }
 
-    /// Extract the preimage and proof from a genesis proof block_0.json
+    /// Extract the preimage and proof from a genesis proof proof_0.json
     pub fn get_init_data(path: &PathBuf) -> Result<ValConfigs, std::io::Error> {
         let file = std::fs::File::open(path)?;
         let reader = std::io::BufReader::new(file);
@@ -213,7 +213,7 @@ impl UserConfigs {
             .expect("Could not write account.json");
         println!("Account manifest saved to: {:?}", json_path);
     }
-    /// Extract the preimage and proof from a genesis proof block_0.json
+    /// Extract the preimage and proof from a genesis proof proof_0.json
     pub fn get_init_data(path: &PathBuf) -> Result<UserConfigs, std::io::Error> {
         let file = std::fs::File::open(path)?;
         let reader = std::io::BufReader::new(file);

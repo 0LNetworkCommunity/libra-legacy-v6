@@ -14,7 +14,7 @@ use anyhow::{bail, Error};
 /// the port in between and testing the connectivity. 
 pub fn integration_submit_tx() {
     
-    // the miner needs to start producing block_1.json. If block_1.json is not successful, then block_2 cannot be either, because it depends on certain on-chain state from block_1 correct submission.
+    // the miner needs to start producing proof_1.json. If proof_1.json is not successful, then block_2 cannot be either, because it depends on certain on-chain state from block_1 correct submission.
     let miner_source_path = Path::new(env!("CARGO_MANIFEST_DIR"));
     let root_source_path = miner_source_path.parent().unwrap().parent().unwrap();
     let home = dirs::home_dir().unwrap();
@@ -26,7 +26,7 @@ pub fn integration_submit_tx() {
     }
 
     let node_exec = &root_source_path.join("target/debug/diem-node");
-    // TODO: Assert that block_0.json is in blocks folder.
+    // TODO: Assert that proof_0.json is in blocks folder.
     std::env::set_var("RUST_LOG", "debug");
     let mut swarm_cmd = Command::new("cargo");
     swarm_cmd.current_dir(&root_source_path.as_os_str());

@@ -47,7 +47,7 @@ script {
 use 0x1::TowerState;
 use 0x1::TestFixtures;
 
-// SIMULATES A MINER ONBOARDING PROOF (block_0.json)
+// SIMULATES A MINER ONBOARDING PROOF (proof_0.json)
 fun main(_: signer) { 
   let eve = @0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
   let oper = @0xfa72817f1b5aab94658238ddcdc08010;

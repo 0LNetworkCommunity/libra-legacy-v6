@@ -344,8 +344,8 @@ ifeq (${TEST}, y)
 	@if test -d ${DATA_PATH}; then \
 		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml; \
 	fi
-	@if test -d ${DATA_PATH}/blocks; then \
-		rm -f ${DATA_PATH}/blocks/*.json; \
+	@if test -d ${DATA_PATH}/vdf_proofs; then \
+		rm -f ${DATA_PATH}/vdf_proofs/*.json; \
 	fi
 endif
 
@@ -376,11 +376,11 @@ ifdef TEST
 	@if test ! -d ${DATA_PATH}; then \
 		echo Creating Directories \
 		mkdir ${DATA_PATH}; \
-		mkdir -p ${DATA_PATH}/blocks/; \
+		mkdir -p ${DATA_PATH}/vdf_proofs/; \
 	fi
 
-	@if test -f ${DATA_PATH}/blocks/block_0.json; then \
-		rm ${DATA_PATH}/blocks/block_0.json; \
+	@if test -f ${DATA_PATH}/vdf_proofs/proof_0.json; then \
+		rm ${DATA_PATH}/vdf_proofs/proof_0.json; \
 	fi 
 
 	@if test -f ${DATA_PATH}/0L.toml; then \
@@ -390,7 +390,7 @@ ifdef TEST
 # skip miner configuration with fixtures
 	cp ./ol/fixtures/configs/${NS}.toml ${DATA_PATH}/0L.toml
 # skip mining proof zero with fixtures
-	cp ./ol/fixtures/blocks/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
+	cp ./ol/fixtures/vdf_proofs/${NODE_ENV}/${NS}/proof_0.json ${DATA_PATH}/vdf_proofs/proof_0.json
 # place a mock autopay.json in root
 	cp ./ol/fixtures/autopay/${NS}.autopay_batch.json ${DATA_PATH}/autopay_batch.json
 # place a mock account.json in root, used as template for onboarding
@@ -503,14 +503,14 @@ clean-tags:
 	git tag -d ${TAG}
 	
 nuke-testnet:
-	@echo WIPING EVERYTHING but keeping: github_token.txt, autopay_batch.json, set_layout.toml, /blocks/block_0.json
+	@echo WIPING EVERYTHING but keeping: github_token.txt, autopay_batch.json, set_layout.toml, /vdf_proofs/proof_0.json
 
 	@if test -d ${DATA_PATH}; then \
-		cd ${DATA_PATH} && cp github_token.txt autopay_batch.json set_layout.toml blocks/block_0.json ~/; \
+		cd ${DATA_PATH} && cp github_token.txt autopay_batch.json set_layout.toml vdf_proofs/proof_0.json ~/; \
 		cd ${DATA_PATH} && rm -rf *; \
 		cd ~ && cp github_token.txt autopay_batch.json set_layout.toml ${DATA_PATH}; \
-		cd ${DATA_PATH} && mkdir blocks;\
-		cd ~ && cp block_0.json ${DATA_PATH}/blocks/; \
+		cd ${DATA_PATH} && mkdir vdf_proofs;\
+		cd ~ && cp proof_0.json ${DATA_PATH}/vdf_proofs/; \
 	fi
 	
 

@@ -12,10 +12,10 @@ You will need a few files in place before starting with genesis registration.
 
 - .0L/github_token.txt: the Github authentication token (required). [Link](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token)
 
-- .0L/blocks/block_0.json of a prexisting Delay tower (optional - you can always use the tools to start a new tower)
+- .0L/vdf_proofs/proof_0.json of a prexisting Delay tower (optional - you can always use the tools to start a new tower)
 - .0L/autopay_batch.json: autopay instructions to include in registration profile (optional)
 
-If you don't already have a mnemonic and block_0.json, see instructions to generate are below.
+If you don't already have a mnemonic and proof_0.json, see instructions to generate are below.
 
 Then using the makefile helpers you can register as such:
 
@@ -50,7 +50,7 @@ Tools are provided to a) fork the GENESIS_REPO b) write registration info ro CAN
 
 The GENESIS_REPO coordinator then has the task of manually approving all PRs.
 
-# Warning - Don't lose your Tower
+# Warning - Don't lose your old Tower
 
 If you have a Delay Tower on a node: you should back up the proofs. You will want these for your identity on a new chain.
 
@@ -64,7 +64,7 @@ You'll want a fresh ~/.0L/ folder with only your old blocks .0L/blocks, github_t
 Make sure you have all your ~/.0L/files backed up.
 
 In your ~/.0L/ folder you will want to see:
-- /blocks/
+- /blocks/ (your legacy proofs from another tower)
 - /github_token.txt
 - /autopay_batch.json
 
@@ -175,7 +175,7 @@ If the data looks incorrect, you can doublecheck `$HOME/.0L/0L.toml`, and you ma
 
 ### (Optional) link your previous tower to new genesis proof.
 
-The onboard tool will scan the files in `.0L/blocks/` for legacy files with the format block_x.json. 
+The onboard tool will scan the files in `.0L/vdf_proofs/` for legacy files with the format block_x.json. 
 It will then take the highest block, and hash the proof of it. And interactively, the onboard tool will ask if you want to include that information in your genesis block.
 ## 6. Register for genesis
 

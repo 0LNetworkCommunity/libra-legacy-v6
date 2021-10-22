@@ -17,7 +17,7 @@ pub struct UserWizardCmd {
     output_dir: Option<PathBuf>,
     #[options(help = "File to check")]
     check_file: Option<PathBuf>,
-    #[options(help = "use an existing block_0.json file and skip mining")]
+    #[options(help = "use an existing proof_0.json file and skip mining")]
     block_zero: Option<PathBuf>,
 }
 

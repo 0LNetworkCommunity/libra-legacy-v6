@@ -25,7 +25,7 @@ pub struct VDFProof {
 
 impl VDFProof {
 
-    /// Extract the preimage and proof from a genesis proof block_0.json
+    /// Extract the preimage and proof from a genesis proof proof_0.json
     pub fn get_genesis_tx_data(path: &PathBuf) -> Result<(Vec<u8>,Vec<u8>),std::io::Error> {
         let file = std::fs::File::open(path)?;
         let reader = std::io::BufReader::new(file);

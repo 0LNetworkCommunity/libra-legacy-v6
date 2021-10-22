@@ -84,7 +84,7 @@ pub fn get_persona_block_zero(persona: &str, env: &str) -> VDFProof {
   let buf = Path::new(path)
   .parent()
   .unwrap()
-  .join(format!("fixtures/blocks/{}/{}/block_0.json", env, persona));
+  .join(format!("fixtures/vdf_proofs/{}/{}/proof_0.json", env, persona));
 
   let s = fs::read_to_string(&buf).expect("could not find block file");
   serde_json::from_str(&s).expect(&format!("could not parse block from file: {:?}", &buf))
@@ -97,7 +97,7 @@ pub fn get_persona_block_one(persona: &str, env: &str) -> VDFProof {
   let buf = Path::new(path)
   .parent()
   .unwrap()
-  .join(format!("fixtures/blocks/{}/{}/block_1.json", env, persona));
+  .join(format!("fixtures/vdf_proofs/{}/{}/proof_1.json", env, persona));
 
   let s = fs::read_to_string(&buf).expect("could not find block file");
   serde_json::from_str(&s).expect(&format!("could not parse block from file: {:?}", &buf))

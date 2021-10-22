@@ -10,10 +10,10 @@ pub fn integration() {
     // PREPARE FIXTURES
     // the transactions will always abort if the fixtures are incorrect.
     // in swarm, all validators in genesis used NodeConfig.defaul() preimage and proofs.
-    // these are equivalent to fixtures/block_0.json.test.alice 
+    // these are equivalent to fixtures/proof_0.json.test.alice 
     // for the test to work:
 
-    // the miner needs to start producing block_1.json. If block_1.json is not 
+    // the miner needs to start producing proof_1.json. If proof_1.json is not 
     // successful, then block_2 cannot be either, because it depends on certain 
     // on-chain state from block_1 correct submission.
     let miner_source_path = Path::new(env!("CARGO_MANIFEST_DIR"));
@@ -24,7 +24,7 @@ pub fn integration() {
     fs::remove_dir_all(&swarm_configs_path).unwrap();
 
     let node_exec = &root_source_path.join("target/debug/diem-node");
-    // TODO: Assert that block_0.json is in blocks folder.
+    // TODO: Assert that proof_0.json is in blocks folder.
     std::env::set_var("RUST_LOG", "debug");
     let mut swarm_cmd = Command::new("cargo");
     swarm_cmd.current_dir(&root_source_path.as_os_str());
@@ -67,13 +67,6 @@ pub fn integration() {
                     .spawn()
                     .unwrap();
             init_child.wait().unwrap();
-            // // copy fixtures
-            // fs::create_dir_all(swarm_configs_path.join("blocks")).unwrap();
-            // // copy fixtures/block_0.json.test.alice -> blocks/block_0.json
-            // fs::copy(
-            //   root_source_path.join("ol/fixtures/blocks/test/alice/block_0.json"), 
-            //   swarm_configs_path.join("blocks/block_0.json")
-            // ).unwrap();
 
             // start the miner swarm test helper.
             let mut miner_cmd = Command::new("cargo");

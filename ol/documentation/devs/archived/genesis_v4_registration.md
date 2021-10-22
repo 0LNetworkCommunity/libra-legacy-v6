@@ -54,7 +54,7 @@ This step will:
 - generate keys
 - save your Github Token to ~/.0L/github_token.txt
 - generate miner configs `~/.0L/miner.toml`
-- mine the block_0.json
+- mine the proof_0.json
 
 ```
 make ceremony
