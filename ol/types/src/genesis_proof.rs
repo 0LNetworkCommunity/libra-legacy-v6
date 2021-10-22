@@ -18,7 +18,7 @@ pub struct GenesisMiningProof {
 // Default is for Swarm and testing
 impl Default for GenesisMiningProof {
     fn default() -> GenesisMiningProof {
-        // These use "alice" fixtures from ../fixtures/blocks/ and used elsewhere in the project, in both easy(stage) and hard(Prod) mode.
+        // These use "alice" fixtures from ../fixtures/vdf_proofs/ and used elsewhere in the project, in both easy(stage) and hard(Prod) mode.
         let env = if *IS_PROD {
           "prod"
         } else {

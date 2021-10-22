@@ -15,12 +15,12 @@ note: you may want to use separated `screen` instances for different purposes li
 ## Confirm the files
 
 you should have 
-- ~/.0L/blocks/block_0.json
+- ~/.0L/vdf_proofs/proof_0.json
 - ~/.0L/key_store.json
 - ~/.0L/0L.toml
 
 ## Resume the tower app
-The tower app will resume mining. The first block to be created is block_1.json (which takes as the preimage input the sha256 hash of block_0.json)
+The tower app will resume mining. The first block to be created is proof_1.json (which takes as the preimage input the sha256 hash of proof_0.json)
 
 From your `screen` instance you can run:
 ```
@@ -28,7 +28,7 @@ From your `screen` instance you can run:
 export NODE_ENV=prod
 tower -o start
 ```
-WARNING: If you don't set node env as above, you will generate a "test" proof, which takes 1 second. If that happened, delete ~/.0L/blocks/block_1.json (and any other blocks made, but NOT block_0.json) and resume with `NODE_ENV=prod`.
+WARNING: If you don't set node env as above, you will generate a "test" proof, which takes 1 second. If that happened, delete ~/.0L/vdf_proofs/proof_1.json (and any other blocks made, but NOT proof_0.json) and resume with `NODE_ENV=prod`.
 
 ## Check mining state
 

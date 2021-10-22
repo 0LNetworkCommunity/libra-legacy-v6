@@ -45,7 +45,6 @@ before and after every transaction.
 -  [Function `preburn`](#0x1_DiemAccount_preburn)
 -  [Function `extract_withdraw_capability`](#0x1_DiemAccount_extract_withdraw_capability)
 -  [Function `restore_withdraw_capability`](#0x1_DiemAccount_restore_withdraw_capability)
--  [Function `vm_make_payment`](#0x1_DiemAccount_vm_make_payment)
 -  [Function `process_community_wallets`](#0x1_DiemAccount_process_community_wallets)
 -  [Function `vm_make_payment_no_limit`](#0x1_DiemAccount_vm_make_payment_no_limit)
 -  [Function `vm_burn_from_balance`](#0x1_DiemAccount_vm_burn_from_balance)
@@ -2696,79 +2695,6 @@ Return the withdraw capability to the account it originally came from
 
 </details>
 
-<a name="0x1_DiemAccount_vm_make_payment"></a>
-
-## Function `vm_make_payment`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment">vm_make_payment</a>&lt;Token: store&gt;(payer: address, payee: address, amount: u64, metadata: vector&lt;u8&gt;, metadata_signature: vector&lt;u8&gt;, vm: &signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment">vm_make_payment</a>&lt;Token: store&gt;(
-    payer : address,
-    payee: address,
-    amount: u64,
-    metadata: vector&lt;u8&gt;,
-    metadata_signature: vector&lt;u8&gt;,
-    vm: &signer
-) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> , <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="DiemAccount.md#0x1_DiemAccount_AutopayEscrow">AutopayEscrow</a>, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>, <a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a> { //////// 0L ////////
-    <b>if</b> (<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()) <b>return</b>;
-    <b>if</b> (amount == 0) <b>return</b>;
-
-    // Check payee can receive funds in this currency.
-    <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payee)) <b>return</b>;
-    // <b>assert</b>(<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payee), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EROLE_CANT_STORE_BALANCE">EROLE_CANT_STORE_BALANCE</a>));
-
-    // Check there is a payer
-    <b>if</b> (!<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(payer)) <b>return</b>;
-    // <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(payer), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EACCOUNT">EACCOUNT</a>));
-
-    // Check the payer is in possession of withdraw token.
-    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(payer)) <b>return</b>;
-
-    <b>let</b> (max_withdraw, withdrawal_allowed) = <a href="AccountLimits.md#0x1_AccountLimits_max_withdrawal">AccountLimits::max_withdrawal</a>&lt;Token&gt;(payer);
-    <b>if</b> (!withdrawal_allowed) <b>return</b>;
-
-    // VM can extract the withdraw token.
-    <b>let</b> account = borrow_global_mut&lt;<a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>&gt;(payer);
-    <b>let</b> cap = <a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_extract">Option::extract</a>(&<b>mut</b> account.withdraw_capability);
-
-    <b>let</b> transfer_now =
-        <b>if</b> (max_withdraw &gt;= amount) {
-            amount
-        } <b>else</b> {
-            max_withdraw
-        };
-    <b>let</b> transfer_later = amount - transfer_now;
-    <b>if</b> (transfer_now &gt; 0) {
-        <a href="DiemAccount.md#0x1_DiemAccount_pay_from">pay_from</a>&lt;Token&gt;(
-            &cap,
-            payee,
-            transfer_now,
-            metadata,
-            metadata_signature
-        );
-    };
-
-    <b>if</b> (transfer_later &gt; 0) {
-        <a href="DiemAccount.md#0x1_DiemAccount_new_escrow">new_escrow</a>&lt;Token&gt;(vm, payer, payee, transfer_later);
-    };
-
-    <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">restore_withdraw_capability</a>(cap);
-}
-</code></pre>
-
-
-
-</details>
-
 <a name="0x1_DiemAccount_process_community_wallets"></a>
 
 ## Function `process_community_wallets`
@@ -3583,6 +3509,7 @@ Creating an account at address 0x0 will abort as it is a reserved address for th
         }
     );
 
+    <a href="Receipts.md#0x1_Receipts_init">Receipts::init</a>(&new_account);
     //////// 0L ////////
     // NOTE: <b>if</b> all accounts are <b>to</b> be slow set this
     // <a href="DiemAccount.md#0x1_DiemAccount_set_slow">set_slow</a>(&new_account);

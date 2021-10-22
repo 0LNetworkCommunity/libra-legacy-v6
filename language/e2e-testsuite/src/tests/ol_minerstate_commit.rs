@@ -35,7 +35,7 @@ fn miner_commit () {
     // Fixture data for the VDF proof, using easy/test difficulty
     // This assumes that it is a proof_1.json a SUBSEQUENT proof, to an already committed genesis proof.
     
-    // This test uses Alice's block_1 proof (../fixtures/block_1.json.stage.alice), assuming she has participated in a genesis ceremony.
+    // This test uses Alice's block_1 proof (../fixtures/proof_1.json.stage.alice), assuming she has participated in a genesis ceremony.
 
     let block = fixtures::get_persona_block_one("alice", "test");
     let payload = transaction_builder::encode_minerstate_commit_script_function(

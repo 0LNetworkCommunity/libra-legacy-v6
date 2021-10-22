@@ -34,7 +34,7 @@ onboard user
 
 If Alice already has a 0th proof mined for whatever reason:
 ```
-onboard user --block-zero <path/to/block_0.json>
+onboard user --block-zero <path/to/proof_0.json>
 ```
 
 IF you want the account.json to go into a different directory

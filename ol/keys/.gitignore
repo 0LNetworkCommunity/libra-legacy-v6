@@ -39,6 +39,6 @@ rls*.log
 target/
 
 #Miner
-/blocks/
-/test_blocks/
+/vdf_proofs/
+/test_vdf_proofs/
 

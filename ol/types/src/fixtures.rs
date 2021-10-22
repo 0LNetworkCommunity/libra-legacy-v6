@@ -1,6 +1,7 @@
 //! helper to get fixtures data from files in ol/fixtures folder.
 use std::{fs, path::{Path, PathBuf}};
-use crate::{block::Block, config::{AppCfg, parse_toml}};
+
+use crate::{block::VDFProof, config::{AppCfg, parse_toml}};
 
 /// get mnemonic
 pub fn get_persona_mnem(persona: &str) -> String {
@@ -78,12 +79,12 @@ pub fn get_persona_toml_configs(persona: &str) -> AppCfg {
 
 
 /// get block 0
-pub fn get_persona_block_zero(persona: &str, env: &str) -> Block {
+pub fn get_persona_block_zero(persona: &str, env: &str) -> VDFProof {
   let path= env!("CARGO_MANIFEST_DIR");
   let buf = Path::new(path)
   .parent()
   .unwrap()
-  .join(format!("fixtures/blocks/{}/{}/block_0.json", env, persona));
+  .join(format!("fixtures/vdf_proofs/{}/{}/proof_0.json", env, persona));
 
   let s = fs::read_to_string(&buf).expect("could not find block file");
   serde_json::from_str(&s).expect(&format!("could not parse block from file: {:?}", &buf))
@@ -91,12 +92,12 @@ pub fn get_persona_block_zero(persona: &str, env: &str) -> Block {
 }
 
 /// get block 0
-pub fn get_persona_block_one(persona: &str, env: &str) -> Block {
+pub fn get_persona_block_one(persona: &str, env: &str) -> VDFProof {
   let path= env!("CARGO_MANIFEST_DIR");
   let buf = Path::new(path)
   .parent()
   .unwrap()
-  .join(format!("fixtures/blocks/{}/{}/block_1.json", env, persona));
+  .join(format!("fixtures/vdf_proofs/{}/{}/proof_1.json", env, persona));
 
   let s = fs::read_to_string(&buf).expect("could not find block file");
   serde_json::from_str(&s).expect(&format!("could not parse block from file: {:?}", &buf))

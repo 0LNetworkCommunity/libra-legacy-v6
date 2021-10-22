@@ -62,7 +62,7 @@ use std::{
 };
 
 //////// 0L ////////
-use ol_types::{block::Block, account::ValConfigs};
+use ol_types::{block::VDFProof, account::ValConfigs};
 
 const CLIENT_WALLET_MNEMONIC_FILE: &str = "client.mnemonic";
 const GAS_UNIT_PRICE: u64 = 0;
@@ -457,7 +457,7 @@ impl ClientProxy {
         file.read_to_string(&mut json_string)
             .unwrap_or_else(|err| panic!("Error while reading file: [{}]", err));
 
-        let block: Block = serde_json::from_str(&json_string).expect("could not parse json file");
+        let block: VDFProof = serde_json::from_str(&json_string).expect("could not parse json file");
 
         let (sender_address, _) = self
             .get_account_address_from_parameter(space_delim_strings[1])

@@ -12,15 +12,30 @@ You will need a few files in place before starting with genesis registration.
 
 - .0L/github_token.txt: the Github authentication token (required). [Link](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token)
 
-- .0L/blocks/block_0.json of a prexisting Delay tower (optional - you can always use the tools to start a new tower)
+- .0L/vdf_proofs/proof_0.json of a prexisting Delay tower (optional - you can always use the tools to start a new tower)
 - .0L/autopay_batch.json: autopay instructions to include in registration profile (optional)
 
-If you don't already have a mnemonic and block_0.json, see instructions to generate are below.
+If you don't already have a mnemonic and proof_0.json, see instructions to generate are below.
 
 Then using the makefile helpers you can register as such:
 
 ```
-GITHUB_USER=<your_github_user> make ceremony register
+# fork the genesis registration repo
+GITHUB_USER=<your_github_user> make gen-fork-repo
+
+# mine your first proof, and config your environment.
+GITHUB_USER=<your_github_user> make gen-onboard
+
+# submit registration information to your branch
+GITHUB_USER=<your_github_user> make gen-register
+
+# make a pull request to main branch.
+GITHUB_USER=<your_github_user> make gen-make-pull
+```
+
+If you hit any errors in your config, but don't want to mine a new proof do this:
+```
+GITHUB_USER=<your_github_user> make gen-reset
 ```
 
 ## infrastructure
@@ -35,7 +50,7 @@ Tools are provided to a) fork the GENESIS_REPO b) write registration info ro CAN
 
 The GENESIS_REPO coordinator then has the task of manually approving all PRs.
 
-# Warning - Don't lose your Tower
+# Warning - Don't lose your old Tower
 
 If you have a Delay Tower on a node: you should back up the proofs. You will want these for your identity on a new chain.
 
@@ -43,19 +58,26 @@ If you have a Delay Tower on a node: you should back up the proofs. You will wan
 tar -zcvf my-tower.tar.gz ~/.0L/blocks/
 ```
 
+# Start from a clean slate.
+You'll want a fresh ~/.0L/ folder with only your old blocks .0L/blocks, github_token.txt, and your autopay_batch.json.
+
+Make sure you have all your ~/.0L/files backed up.
+
+In your ~/.0L/ folder you will want to see:
+- /blocks/ (your legacy proofs from another tower)
+- /github_token.txt
+- /autopay_batch.json
+
+There is a DANGEROUS helper that will do this for you. 1) backup the files, 2) wipe ~/.0L and 3) sync your blocks and token back. You will be prompted for Y/N at each step.
+```
+make danger-delete-all
+```
 # Registration
 
 Have these things ready:
 - A github token
 - A fun statement
 - The static IP address of your node.
-
-Assuming you have a github token, and the binaries installed, you should be able to complete registration with three steps:
-```
-onboard keygen // creates new keys, and initializes a miner.toml file
-make register // registers your data to a shared github repo
-
-```
 
 ## 0. Generate Github Token
 
@@ -107,17 +129,31 @@ IMMEDIATELY SAVE YOUR MNEMONIC TO A PASSWORD MANAGER
 
 
 ## 3. Initialize configs for node.
+
+There's a specific "onboarding" flow for genesis.
+
 This creates the files your validator needs to run 0L tools. By default files will be created in `$HOME/.0L/`.
 
 The following script does several steps:
+- Mine's the first proof. Expect this to take 30mins.
 - OL app configs: defaults to `$HOME/.0L/0L.toml` 
 - keys init: creating credentials and configs
 - fork: on github this forks the GENESIS_REPO into the CANDIDATE_REPO
 
 ```
-GITHUB_USER=<your_github_user> make ceremony
+GITHUB_USER=<your_github_user> make gen-onboard
+
+# the equivalent command is:
+cargo run -p onboard --release -- val --genesis-ceremony
 ```
 
+If you hit any errors in your config, but don't want to mine a new proof do this:
+```
+GITHUB_USER=<your_github_user> make gen-reset
+
+# the equivalent command is:
+cargo run -p onboard --release -- val --genesis-ceremony --skip-mining
+```
 ## 4. Pause and check your work ##
 Check all your configs are correct before registering is correct: `make check`. 
 
@@ -136,18 +172,11 @@ test mode:
 
 If the data looks incorrect, you can doublecheck `$HOME/.0L/0L.toml`, and you may optionally edit those.
 
-## 5. Mine your first proof (or bring first proof from elsewhere)
 
-NOTE: if you already have a puzzle tower, and you are porting it to this chain. Then skip this step, and simply copy the block_0.json into your data path (e.g. ~/.0L/blocks/block_0.json).
+### (Optional) link your previous tower to new genesis proof.
 
-```
-make genesis-miner
-```
-This will mine the 0th proof of your tower, which is needed for genesis.
-
-### (Optional) bring previous tower proof 0
-
-If you are using a mnemonic and have previously generated a tower, then you can simply add the block_0.json to .0L/blocks/. You will eventually want to include all proofs of a previous tower.
+The onboard tool will scan the files in `.0L/vdf_proofs/` for legacy files with the format block_x.json. 
+It will then take the highest block, and hash the proof of it. And interactively, the onboard tool will ask if you want to include that information in your genesis block.
 ## 6. Register for genesis
 
 The following script does several steps:
@@ -155,10 +184,18 @@ The following script does several steps:
 - pull: submitting a pull request from CANDIDATE_REPO to GENESIS_REPO
 
 ```
-GITHUB_USER=<your_github_user> make register
+GITHUB_USER=<your_github_user> make gen-register
 ```
 
-After this step check your data at `http://github.com/0LSF/experimental-genesis`
+## 6. Submit the pull request of the changes
+
+Until now all the changes were made on your fork of the genesis registration. To make a pull request to the main branch do:
+
+```
+GITHUB_USER=<your_github_user> make gen-make-pull
+```
+
+After this step check your data at `http://github.com/0LSF/genesis-registration`
 
 #### Troubleshooting:
 

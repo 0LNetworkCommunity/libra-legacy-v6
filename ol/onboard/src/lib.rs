@@ -22,5 +22,5 @@ pub mod error;
 pub mod prelude;
 pub mod entrypoint;
 pub mod manifest;
-pub mod home;
+// pub mod home;
 pub mod read_genesis;

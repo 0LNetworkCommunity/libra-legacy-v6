@@ -1,27 +1,24 @@
 //! Proof block datastructure
 
-use diem_global_constants::{VDF_SECURITY_PARAM, delay_difficulty};
-use ol_types::config::AppCfg;
-use crate::{
-    delay::*,
-    backlog,
-};
-use anyhow::{Error, bail};
-use byteorder::{LittleEndian, WriteBytesExt};
-use glob::glob;
-use hex::decode;
+use crate::{backlog, delay::*, preimage::genesis_preimage};
+use anyhow::{bail, Error};
 use diem_crypto::hash::HashValue;
-use ol_types::block::Block;
-use txs::submit_tx::TxParams;
+use diem_global_constants::{delay_difficulty, VDF_SECURITY_PARAM};
+use glob::glob;
+use ol_types::block::VDFProof;
+use ol_types::config::AppCfg;
 use std::{
     fs,
     io::{BufReader, Write},
     path::PathBuf,
     time::Instant,
 };
+use txs::submit_tx::TxParams;
+
+pub const FILENAME: &str = "proof";
 
 // writes a JSON file with the first vdf proof
-fn mine_genesis(config: &AppCfg, difficulty: u64, security: u16) -> Block {
+fn mine_genesis(config: &AppCfg, difficulty: u64, security: u16) -> VDFProof {
     println!("Mining Genesis Proof");
     let preimage = genesis_preimage(&config);
     let now = Instant::now();
@@ -29,7 +26,7 @@ fn mine_genesis(config: &AppCfg, difficulty: u64, security: u16) -> Block {
     let proof = do_delay(&preimage, difficulty, security).unwrap(); // Todo: make mine_genesis return a result.
     let elapsed_secs = now.elapsed().as_secs();
     println!("Delay: {:?} seconds", elapsed_secs);
-    let block = Block {
+    let block = VDFProof {
         height: 0u64,
         elapsed_secs,
         preimage,
@@ -42,57 +39,46 @@ fn mine_genesis(config: &AppCfg, difficulty: u64, security: u16) -> Block {
 }
 
 /// Mines genesis and writes the file
-pub fn write_genesis(config: &AppCfg) -> Block {
+pub fn write_genesis(config: &AppCfg) -> VDFProof {
     let difficulty = delay_difficulty();
     let security = VDF_SECURITY_PARAM;
     let block = mine_genesis(config, difficulty, security);
     //TODO: check for overwriting file...
     write_json(&block, &config.get_block_dir());
+    let genesis_proof_filename = &format!("{}_0.json", FILENAME);
     println!(
-        "block zero proof mined, file saved to: {:?}",
-        &config.get_block_dir().join("block_0.json")
+        "proof zero mined, file saved to: {:?}",
+        &config.get_block_dir().join(genesis_proof_filename)
     );
     block
 }
 /// Mine one block
-pub fn mine_once(config: &AppCfg) -> Result<Block, Error> {
-    let (_current_block_number, current_block_path) = parse_block_height(&config.get_block_dir());
+pub fn mine_once(config: &AppCfg) -> Result<VDFProof, Error> {
     // If there are files in path, continue mining.
-    if let Some(max_block_path) = current_block_path {
-        // current_block_path is Option type, check if destructures to Some.
-        let block_file =
-            fs::read_to_string(max_block_path).expect("Could not read latest block file in path");
+    let latest_block = get_latest_proof(config)?;
+    let preimage = HashValue::sha3_256_of(&latest_block.proof).to_vec();
+    // Otherwise this is the first time the app is run, and it needs a genesis preimage, which comes from configs.
+    let height = latest_block.height + 1;
+    // TODO: cleanup this duplication with mine_genesis_once?
+    let difficulty = delay_difficulty();
+    let security = VDF_SECURITY_PARAM;
 
-        let latest_block: Block =
-            serde_json::from_str(&block_file).expect("could not deserialize latest block");
+    let now = Instant::now();
+    let data = do_delay(&preimage, difficulty, security)?;
+    let elapsed_secs = now.elapsed().as_secs();
+    println!("Delay: {:?} seconds", elapsed_secs);
 
-        let preimage = HashValue::sha3_256_of(&latest_block.proof).to_vec();
-        // Otherwise this is the first time the app is run, and it needs a genesis preimage, which comes from configs.
-        let height = latest_block.height + 1;
-        // TODO: cleanup this duplication with mine_genesis_once?
-        let difficulty = delay_difficulty();
-        let security = VDF_SECURITY_PARAM;
+    let block = VDFProof {
+        height,
+        elapsed_secs,
+        preimage,
+        proof: data.clone(),
+        difficulty: Some(difficulty),
+        security: Some(security),
+    };
 
-        let now = Instant::now();
-        let data = do_delay(&preimage, difficulty, security)?;
-        let elapsed_secs = now.elapsed().as_secs();
-        println!("Delay: {:?} seconds", elapsed_secs);
-
-        let block = Block {
-            height,
-            elapsed_secs,
-            preimage,
-            proof: data.clone(),
-            difficulty: Some(difficulty),
-            security: Some(security),
-        };
-
-        write_json(&block, &config.get_block_dir());
-        Ok(block)
-    // Err(ErrorKind::Io.context(format!("submit_vdf_proof_tx_to_network {:?}", block_dir)).into())
-    } else {
-        bail!(format!("No files found in {:?}", &config.get_block_dir()));
-    }
+    write_json(&block, &config.get_block_dir());
+    Ok(block)
 }
 
 /// Write block to file
@@ -108,7 +94,7 @@ pub fn mine_and_submit(
 
     // If there are NO files in path, mine the genesis proof.
     if current_block_number.is_none() {
-        bail!("ERROR: Genesis block_0.json not found.");
+        bail!("ERROR: Genesis proof_0.json not found.");
     } else {
         // the max block that has been succesfully submitted to client
         let mut mining_height = current_block_number.unwrap() + 1;
@@ -116,10 +102,13 @@ pub fn mine_and_submit(
 
         // mine continuously from the last block in the file systems
         loop {
-            println!("Mining VDF Proof: Block {}", mining_height);
+            println!("Mining VDF Proof # {}", mining_height);
 
             let block = mine_once(&config)?;
-            println!("Proof mined: block_{}.json created.", block.height.to_string());
+            println!(
+                "Proof mined: proof_{}.json created.",
+                block.height.to_string()
+            );
 
             // submits backlog to client
             match backlog::process_backlog(&config, &tx_params, is_operator) {
@@ -135,7 +124,7 @@ pub fn mine_and_submit(
     }
 }
 
-fn write_json(block: &Block, blocks_dir: &PathBuf) {
+fn write_json(block: &VDFProof, blocks_dir: &PathBuf) {
     if !&blocks_dir.exists() {
         // first run, create the directory if there is none, or if the user changed the configs.
         // note: user may have blocks but they are in a different directory than what miner.toml says.
@@ -143,7 +132,8 @@ fn write_json(block: &Block, blocks_dir: &PathBuf) {
     };
     // Write the file.
     let mut latest_block_path = blocks_dir.clone();
-    latest_block_path.push(format!("block_{}.json", block.height));
+
+    latest_block_path.push(format!("{}_{}.json", FILENAME, block.height));
     //println!("{:?}", &latest_block_path);
     let mut file = fs::File::create(&latest_block_path).unwrap();
     file.write_all(serde_json::to_string(&block).unwrap().as_bytes())
@@ -156,13 +146,13 @@ pub fn parse_block_height(blocks_dir: &PathBuf) -> (Option<u64>, Option<PathBuf>
     let mut max_block_path = None;
 
     // iterate through all json files in the directory.
-    for entry in glob(&format!("{}/block_*.json", blocks_dir.display()))
+    for entry in glob(&format!("{}/{}_*.json", blocks_dir.display(), FILENAME))
         .expect("Failed to read glob pattern")
     {
         if let Ok(entry) = entry {
             let file = fs::File::open(&entry).expect("Could not open block file");
             let reader = BufReader::new(file);
-            let block: Block = serde_json::from_reader(reader).unwrap();
+            let block: VDFProof = serde_json::from_reader(reader).unwrap();
             let blocknumber = block.height;
             if max_block.is_none() {
                 max_block = Some(blocknumber);
@@ -178,12 +168,28 @@ pub fn parse_block_height(blocks_dir: &PathBuf) -> (Option<u64>, Option<PathBuf>
     (max_block, max_block_path)
 }
 
-/// Parse a block_x.json file and return a Block
-pub fn parse_block_file(path: PathBuf) -> Block {
-    let file =
-        fs::File::open(&path).expect(&format!("Could not open block file: {:?}", path.to_str()));
-    let reader = BufReader::new(file);
-    serde_json::from_reader(reader).unwrap()
+/// Parse a proof_x.json file and return a VDFProof
+pub fn parse_block_file(path: &PathBuf) -> Result<VDFProof, Error> {
+    let block_file = fs::read_to_string(path).expect("Could not read latest block file in path");
+
+    match serde_json::from_str(&block_file) {
+        Ok(v) => Ok(v),
+        Err(e) => bail!(e),
+    }
+}
+
+/// find the most recent proof on disk
+pub fn get_latest_proof(config: &AppCfg) -> Result<VDFProof, Error> {
+    let (_current_block_number, current_block_path) = parse_block_height(&config.get_block_dir());
+
+    match current_block_path {
+        // current_block_path is Option type, check if destructures to Some.
+        Some(p) => parse_block_file(&p),
+        None => bail!(format!(
+            "ERROR: cannot find a block in directory, path: {:?}",
+            &config.get_block_dir()
+        )),
+    }
 }
 
 /* ////////////// */
@@ -232,7 +238,7 @@ fn create_fixtures() {
 
         // create miner.toml
         //rename the path for actual fixtures
-        configs_fixture.workspace.block_dir = "blocks".to_string();
+        configs_fixture.workspace.block_dir = "vdf_proofs".to_string();
         let toml = toml::to_string(&configs_fixture).unwrap();
         let mut toml_path = PathBuf::from(save_to);
         toml_path.push("miner.toml");
@@ -245,6 +251,7 @@ fn create_fixtures() {
 
 #[test]
 fn test_mine_once() {
+    use hex::decode;
     // if no file is found, the block height is 0
     let mut configs_fixture = test_make_configs_fixture();
     configs_fixture.workspace.block_dir = "test_blocks_temp_2".to_owned();
@@ -254,9 +261,8 @@ fn test_mine_once() {
 
     let fixture_previous_proof = decode("0016f43606b957ab9d93046cdffa73a1e6be4f21f3848eb7b55b81756f7d31919affef388c0d92ca7d68232de4fea46884186c23ef1d6c86f63f5c586000048bce05").unwrap();
 
-    let fixture_block = Block {
-        /// Block Height
-        height: 0u64,
+    let fixture_block = VDFProof {
+        height: 0u64, // Tower height
         elapsed_secs: 0u64,
         preimage: Vec::new(),
         proof: fixture_previous_proof,
@@ -267,9 +273,9 @@ fn test_mine_once() {
     write_json(&fixture_block, &configs_fixture.get_block_dir());
     mine_once(&configs_fixture).unwrap();
     // confirm this file was written to disk.
-    let block_file = fs::read_to_string("./test_blocks_temp_2/block_1.json")
+    let block_file = fs::read_to_string("./test_blocks_temp_2/proof_1.json")
         .expect("Could not read latest block");
-    let latest_block: Block =
+    let latest_block: VDFProof =
         serde_json::from_str(&block_file).expect("could not deserialize latest block");
     // Test the file is read, and blockheight is 0
     assert_eq!(latest_block.height, 1, "Not the droid you are looking for.");
@@ -290,7 +296,6 @@ fn test_mine_genesis() {
     // if no file is found, the block height is 0
     //let blocks_dir = Path::new("./test_blocks");
     let configs_fixture = test_make_configs_fixture();
-    dbg!(&configs_fixture);
 
     //clear from sideffects.
     test_helper_clear_block_dir(&configs_fixture.get_block_dir());
@@ -299,17 +304,17 @@ fn test_mine_genesis() {
     write_genesis(&configs_fixture);
     // read file
     let block_file =
-        // TODO: make this work: let latest_block_path = &configs_fixture.chain_info.block_dir.to_string().push(format!("block_0.json"));
-        fs::read_to_string("./test_blocks_temp_1/block_0.json").expect("Could not read latest block");
+        // TODO: make this work: let latest_block_path = &configs_fixture.chain_info.block_dir.to_string().push(format!("proof_0.json"));
+        fs::read_to_string("./test_blocks_temp_1/proof_0.json").expect("Could not read latest block");
 
-    let latest_block: Block =
+    let latest_block: VDFProof =
         serde_json::from_str(&block_file).expect("could not deserialize latest block");
 
     // Test the file is read, and blockheight is 0
     assert_eq!(latest_block.height, 0, "test");
 
     // Test the expected proof is writtent to file correctly.
-    let correct_proof = "0016f43606b957ab9d93046cdffa73a1e6be4f21f3848eb7b55b81756f7d31919affef388c0d92ca7d68232de4fea46884186c23ef1d6c86f63f5c586000048bce05";
+    let correct_proof = "00292f460bffb29e5d3a7fe5fe7a560104b83a48a236a819812b33e5a3ef2ec266fff30541a78101b4e266358c965ac65830f955842c6dee22b103b50f4709a51655";
     assert_eq!(hex::encode(&latest_block.proof), correct_proof, "test");
 
     test_helper_clear_block_dir(&configs_fixture.get_block_dir());
@@ -326,7 +331,7 @@ fn test_parse_no_files() {
 fn test_parse_one_file() {
     // create a file temporarily in ./test_blocks with height 33
     let current_block_number = 33;
-    let block = Block {
+    let block = VDFProof {
         height: current_block_number,
         elapsed_secs: 0u64,
         preimage: Vec::new(),
@@ -342,7 +347,7 @@ fn test_parse_one_file() {
 
     fs::create_dir(&blocks_dir).unwrap();
     let mut latest_block_path = blocks_dir.clone();
-    latest_block_path.push(format!("block_{}.json", current_block_number));
+    latest_block_path.push(format!("proof_{}.json", current_block_number));
     let mut file = fs::File::create(&latest_block_path).unwrap();
     file.write_all(serde_json::to_string(&block).unwrap().as_bytes())
         .expect("Could not write block");
@@ -359,92 +364,8 @@ pub fn test_make_configs_fixture() -> AppCfg {
     cfg.workspace.node_home = PathBuf::from(".");
     cfg.workspace.block_dir = "test_blocks_temp_1".to_owned();
     cfg.chain_info.chain_id = "0L testnet".to_owned();
-    cfg.profile.auth_key =
-        "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".parse().unwrap();
-    cfg
-}
-
-/// Format the config file data into a fixed byte structure for easy parsing in Move/other languages
-pub fn genesis_preimage(cfg: &AppCfg) -> Vec<u8> {
-    const AUTH_KEY_BYTES: usize = 32;
-    const CHAIN_ID_BYTES: usize = 64;
-    const STATEMENT_BYTES: usize = 1008;
-
-    let mut preimage: Vec<u8> = vec![];
-
-    let mut padded_key_bytes = match decode(cfg.profile.auth_key.clone().to_string()) {
-        Err(x) => panic!("Invalid 0L Auth Key: {}", x),
-        Ok(key_bytes) => {
-            if key_bytes.len() != AUTH_KEY_BYTES {
-                panic!(
-                    "Expected a {} byte 0L Auth Key. Got {} bytes",
-                    AUTH_KEY_BYTES,
-                    key_bytes.len()
-                );
-            }
-            key_bytes
-        }
-    };
-
-    preimage.append(&mut padded_key_bytes);
-
-    let mut padded_chain_id_bytes = {
-        let mut chain_id_bytes = cfg.chain_info.chain_id.clone().into_bytes();
-
-        match chain_id_bytes.len() {
-            d if d > CHAIN_ID_BYTES => panic!(
-                "Chain Id is longer than {} bytes. Got {} bytes",
-                CHAIN_ID_BYTES,
-                chain_id_bytes.len()
-            ),
-            d if d < CHAIN_ID_BYTES => {
-                let padding_length = CHAIN_ID_BYTES - chain_id_bytes.len() as usize;
-                let mut padding_bytes: Vec<u8> = vec![0; padding_length];
-                padding_bytes.append(&mut chain_id_bytes);
-                padding_bytes
-            }
-            d if d == CHAIN_ID_BYTES => chain_id_bytes,
-            _ => unreachable!(),
-        }
-    };
-
-    preimage.append(&mut padded_chain_id_bytes);
-
-    preimage
-        .write_u64::<LittleEndian>(delay_difficulty())
+    cfg.profile.auth_key = "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
+        .parse()
         .unwrap();
-
-    let mut padded_statements_bytes = {
-        let mut statement_bytes = cfg.profile.statement.clone().into_bytes();
-
-        match statement_bytes.len() {
-            d if d > STATEMENT_BYTES => panic!(
-                "Chain Id is longer than 1008 bytes. Got {} bytes",
-                statement_bytes.len()
-            ),
-            d if d < STATEMENT_BYTES => {
-                let padding_length = STATEMENT_BYTES - statement_bytes.len() as usize;
-                let mut padding_bytes: Vec<u8> = vec![0; padding_length];
-                padding_bytes.append(&mut statement_bytes);
-                padding_bytes
-            }
-            d if d == STATEMENT_BYTES => statement_bytes,
-            _ => unreachable!(),
-        }
-    };
-
-    preimage.append(&mut padded_statements_bytes);
-
-    assert_eq!(
-        preimage.len(),
-        (
-            AUTH_KEY_BYTES // 0L Auth_Key
-            + CHAIN_ID_BYTES // chain_id
-            + 8 // iterations/difficulty
-            + STATEMENT_BYTES
-            // statement
-        ),
-        "Preimage is the incorrect byte length"
-    );
-    return preimage;
+    cfg
 }
