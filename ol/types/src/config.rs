@@ -156,7 +156,7 @@ impl AppCfg {
         });
 
         // Add link to previous tower
-        if *!IS_TEST {
+        if !*IS_TEST {
             default_config.profile.tower_link = add_tower(&default_config);
         }
         
