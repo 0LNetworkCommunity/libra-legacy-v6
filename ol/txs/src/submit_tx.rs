@@ -26,11 +26,7 @@ use diem_types::{
 use diem_wallet::WalletLibrary;
 use ol_types::{self, config::{TxCost, TxType}, fixtures};
 use reqwest::Url;
-use std::{
-    io::{stdout, Write},
-    path::PathBuf,
-    thread, time,
-};
+use std::{io::{stdout, Write}, path::PathBuf, thread, time};
 
 /// All the parameters needed for a client transaction.
 #[derive(Debug)]
@@ -341,7 +337,7 @@ pub fn get_tx_params_from_toml(
 ) -> Result<TxParams, Error> {
     // let url = config.profile.default_node.clone().unwrap();
     let (auth_key, address, wallet) = if let Some(wallet) = wallet_opt {
-        wallet::get_account_from_wallet(wallet)
+        wallet::get_account_from_wallet(wallet).unwrap()
     } else {
         wallet::get_account_from_prompt()
     };

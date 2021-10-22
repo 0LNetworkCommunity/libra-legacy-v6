@@ -5730,6 +5730,7 @@ dependencies = [
 name = "ol-keys"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "diem-types",
  "diem-wallet",
  "once_cell",
