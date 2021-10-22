@@ -8,7 +8,7 @@ script {
     use 0x1::TowerState;
     use 0x1::TestFixtures;
 
-    // SIMULATES A MINER ONBOARDING PROOF (block_0.json)
+    // SIMULATES A MINER ONBOARDING PROOF (proof_0.json)
     fun main(sender: signer) {
         TowerState::test_helper_init_miner(
             &sender,
@@ -29,7 +29,7 @@ script {
 script {
     use 0x1::TowerState;
     use 0x1::TestFixtures;
-    // SIMULATES THE SECOND PROOF OF THE MINER (block_1.json)
+    // SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
     fun main(sender: signer) {
         assert(TowerState::test_helper_get_height(@{{alice}}) == 0, 10008001);
         let height_after = 1;

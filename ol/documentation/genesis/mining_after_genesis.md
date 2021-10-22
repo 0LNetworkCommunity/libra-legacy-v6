@@ -1,6 +1,6 @@
 # Resume building tower after genesis
 
-1. copy any existing `block_x.json` files into `~/.0L/blocks/``
+1. copy any existing `block_x.json` files into `~/.0L/vdf_proofs/``
 2. build binaries
 ```
 cd libra/

@@ -105,7 +105,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Receipts.md#0x1_Receipts_write_receipt">write_receipt</a>(vm: &signer, payer: address, destination: address, value: u64): (u64, u64, u64)
+<pre><code><b>public</b> <b>fun</b> <a href="Receipts.md#0x1_Receipts_write_receipt">write_receipt</a>(sender: &signer, payer: address, destination: address, value: u64): (u64, u64, u64)
 </code></pre>
 
 
@@ -114,25 +114,35 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Receipts.md#0x1_Receipts_write_receipt">write_receipt</a>(vm: &signer, payer: address, destination: address, value: u64):(u64, u64, u64) <b>acquires</b> <a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a> {
-    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
-    // <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
+<pre><code><b>public</b> <b>fun</b> <a href="Receipts.md#0x1_Receipts_write_receipt">write_receipt</a>(sender: &signer, payer: address, destination: address, value: u64):(u64, u64, u64) <b>acquires</b> <a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a> {
+    // TODO: make a function for user <b>to</b> write own receipt.
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(sender);
+    <b>if</b> (!<b>exists</b>&lt;<a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a>&gt;(payer)) {
+      <b>return</b> (0, 0, 0)
+    };
+
     <b>let</b> r = borrow_global_mut&lt;<a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a>&gt;(payer);
-    <b>let</b> (_, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>(&r.destination, &destination);
+    <b>let</b> (found_it, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>(&r.destination, &destination);
+
+    <b>let</b> cumu = 0;
+    <b>if</b> (found_it) {
+      cumu = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&r.cumulative, i);
+    };
+    cumu = cumu + value;
+    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> r.cumulative, *&cumu);
 
     <b>let</b> timestamp = <a href="DiemTimestamp.md#0x1_DiemTimestamp_now_seconds">DiemTimestamp::now_seconds</a>();
-
-    <b>let</b> cumu = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&r.cumulative, i);
-    cumu = cumu + value;
-
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> r.last_payment_timestamp, *&timestamp);
-    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_swap_remove">Vector::swap_remove</a>(&<b>mut</b> r.last_payment_timestamp, i);
-
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> r.last_payment_value, *&value);
-    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_swap_remove">Vector::swap_remove</a>(&<b>mut</b> r.last_payment_value, i);
 
-    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> r.cumulative, *&cumu);
-    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_swap_remove">Vector::swap_remove</a>(&<b>mut</b> r.cumulative, i);
+    <b>if</b> (found_it) { // put in same index <b>if</b> the account was already there.
+      <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_swap_remove">Vector::swap_remove</a>(&<b>mut</b> r.last_payment_timestamp, i);
+      <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_swap_remove">Vector::swap_remove</a>(&<b>mut</b> r.last_payment_value, i);
+      <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_swap_remove">Vector::swap_remove</a>(&<b>mut</b> r.cumulative, i);
+    } <b>else</b> {
+      <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> r.destination, destination);
+    };
+
     (timestamp, value, cumu)
 }
 </code></pre>
@@ -157,8 +167,13 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Receipts.md#0x1_Receipts_read_receipt">read_receipt</a>(account: address, destination: address):(u64, u64, u64) <b>acquires</b> <a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a> {
+  <b>if</b> (!<b>exists</b>&lt;<a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a>&gt;(account)) {
+    <b>return</b> (0, 0, 0)
+  };
+
   <b>let</b> r = borrow_global&lt;<a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a>&gt;(account);
-  <b>let</b> (_, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>(&r.destination, &destination);
+  <b>let</b> (found_it, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>(&r.destination, &destination);
+  <b>if</b> (!found_it) <b>return</b> (0, 0, 0);
 
   <b>let</b> time = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&r.last_payment_timestamp, i);
   <b>let</b> value = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&r.last_payment_value, i);

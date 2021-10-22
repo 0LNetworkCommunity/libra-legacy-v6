@@ -18,7 +18,7 @@ fn miner_onboarding() {
     // effectively only a genesis ceremony will use this transaction.
     // Other miner onboarding will be done with the onboarding transaction.
 
-    // This test uses Alice's block_1 proof (../fixtures/block_1.json.stage.alice), assuming she has participated in a genesis ceremony.
+    // This test uses Alice's block_1 proof (../fixtures/proof_1.json.stage.alice), assuming she has participated in a genesis ceremony.
     let block = fixtures::get_persona_block_zero("alice", "test");
 
     //let sender = Account::new();

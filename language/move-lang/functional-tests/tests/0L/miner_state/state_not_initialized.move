@@ -1,4 +1,4 @@
-// Scenario: Alice is NOT a validator, and has not mined before. she tries to submit block_0.json the genesis proof without any TowerState being initialized. The tx should abort.
+// Scenario: Alice is NOT a validator, and has not mined before. she tries to submit proof_0.json the genesis proof without any TowerState being initialized. The tx should abort.
 
 //! account: dummy-prevents-genesis-reload, 100000 ,0, validator
 

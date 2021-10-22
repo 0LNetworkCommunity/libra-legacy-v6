@@ -489,10 +489,10 @@ impl DiemVM {
         let mut session = self.0.new_session(storage);
 
         let (round, timestamp, previous_vote, proposer) = block_metadata.clone().into_inner();
-        if round % 1000 == 0 {
-            println!("======== round is {}", round)
-        }
 
+        println!("========================================== {} ==========================================", round);
+
+        
         let args = serialize_values(&vec![
             MoveValue::Signer(txn_data.sender),
             MoveValue::U64(round),

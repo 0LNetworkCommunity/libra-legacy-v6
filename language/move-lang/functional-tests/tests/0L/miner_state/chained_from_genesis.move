@@ -8,7 +8,7 @@
 script {
 use 0x1::TowerState;
 use 0x1::TestFixtures;
-// SIMULATES THE SECOND PROOF OF THE MINER (block_1.json)
+// SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
 fun main(sender: signer) {
     use 0x1::Debug::print;
     print(&02100);

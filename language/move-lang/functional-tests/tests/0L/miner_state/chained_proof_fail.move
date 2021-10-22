@@ -8,7 +8,7 @@ script {
     use 0x1::TowerState;
     use 0x1::TestFixtures;
 
-    // SIMULATES A MINER 0 PROOF ADDED IN GENESIS (block_0.json)
+    // SIMULATES A MINER 0 PROOF ADDED IN GENESIS (proof_0.json)
     // The first transaction should succeed, but the second sends a valid 
     // vdf proof but is not matched to previous proof. 
     fun main(sender: signer) {
@@ -38,7 +38,7 @@ script {
     use 0x1::TowerState;
     use 0x1::TestFixtures;
 
-    // SIMULATES THE SECOND PROOF OF THE MINER (block_1.json)
+    // SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
     fun main(sender: signer) {
         assert(TowerState::test_helper_get_height(@{{alice}}) == 0, 10008001);
         let height_after = 1;

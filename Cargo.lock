@@ -5750,6 +5750,7 @@ dependencies = [
  "diem-global-constants",
  "diem-types",
  "dirs 2.0.2",
+ "glob",
  "hex 0.4.3",
  "machine-ip",
  "move-core-types",

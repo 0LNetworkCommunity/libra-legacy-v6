@@ -131,11 +131,11 @@ pub fn write_node_config_files(
     disk_storage.path = output_dir.clone().join("key_store.json");
     disk_storage.namespace = Some(namespace.to_owned());
 
-        // Write the genesis waypoint without a namespaced storage.
-    let mut safety_rules_storage = OnDiskStorageConfig::default();
-    safety_rules_storage.set_data_dir(output_dir.clone());
-    safety_rules_storage.path = output_dir.clone().join("safety_rules.json");
-    safety_rules_storage.namespace = Some(namespace.to_owned());
+    //     // Write the genesis waypoint without a namespaced storage.
+    // let mut safety_rules_storage = OnDiskStorageConfig::default();
+    // safety_rules_storage.set_data_dir(output_dir.clone());
+    // safety_rules_storage.path = output_dir.clone().join("safety_rules.json");
+    // safety_rules_storage.namespace = Some(namespace.to_owned());
 
     // Get node configs template
     let mut config = if *fullnode_only {
@@ -181,7 +181,7 @@ pub fn write_node_config_files(
         c.execution.genesis_file_location = genesis_path.clone();
 
         c.consensus.safety_rules.service = SafetyRulesService::Thread;
-        c.consensus.safety_rules.backend = SecureBackend::OnDiskStorage(safety_rules_storage);
+        c.consensus.safety_rules.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
 
         c
     };

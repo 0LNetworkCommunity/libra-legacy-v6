@@ -40,7 +40,6 @@ pub const VDF_SECURITY_PARAM: u16 = 512;
 /// Filename for 0L configs
 pub const CONFIG_FILE: &str = "0L.toml";
 
-
 // TODO: make this lazy static.
 /// Switch settings between production and testing
 pub fn delay_difficulty() -> u64 {
@@ -48,9 +47,9 @@ pub fn delay_difficulty() -> u64 {
         Ok(val) => val,
         _ => "prod".to_string() // default to "prod" if not set
     };
-    // must explicitly set env to prod to use production difficulty.
-    if node_env == "prod" {
-        return 120_000_000
+    // test settings need to be set explicitly
+    if node_env == "test" {
+        return 100 // difficulty for test suites and on local for debugging purposes.
     }
-    return 100 // difficulty for test suites and on local for debugging purposes.
+    return 120_000_000
 }

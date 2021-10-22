@@ -2,13 +2,13 @@
 #![forbid(unsafe_code)]
 
 use cli::{diem_client::DiemClient};
-use ol_types::block::Block;
+use ol_types::block::VDFProof;
 use txs::submit_tx::{TxParams, eval_tx_status};
 use std::{fs::File, path::PathBuf, thread, time};
 use ol_types::config::AppCfg;
 use crate::commit_proof::commit_proof_tx;
 use std::io::BufReader;
-use crate::block::parse_block_height;
+use crate::proof::{parse_block_height, FILENAME};
 use anyhow::{bail, Result, Error};
 use diem_json_rpc_types::views::{TowerStateResourceView};
 
@@ -34,12 +34,12 @@ pub fn process_backlog(
             let mut i = remote_height + 1;
             while i <= current_block_number {
                 let path = PathBuf::from(
-                    format!("{}/block_{}.json", blocks_dir.display(), i)
+                    format!("{}/{}_{}.json", blocks_dir.display(), FILENAME, i)
                 );
                 println!("submitting proof {}", i);
                 let file = File::open(&path)?;
                 let reader = BufReader::new(file);
-                let block: Block = serde_json::from_reader(reader)?;
+                let block: VDFProof = serde_json::from_reader(reader)?;
                 let view = commit_proof_tx(
                     &tx_params, block, is_operator
                 )?;

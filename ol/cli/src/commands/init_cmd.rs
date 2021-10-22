@@ -130,26 +130,23 @@ pub fn initialize_host_swarm(
     source_path: &Option<PathBuf>,
 ) -> Result<(), Error> {
     let cfg = AppCfg::init_app_configs_swarm(swarm_path, node_home, source_path.clone());
-    let p = persona.unwrap_or("alice".to_string());
-    let source = &cfg
-        .workspace
-        .source_path
-        .unwrap()
-        .join("ol/fixtures/blocks/test")
-        .join(p)
-        .join("block_0.json");
-    let blocks_dir = PathBuf::new()
-        .join(&cfg.workspace.node_home)
-        .join(&cfg.workspace.block_dir);
-    let target_file = PathBuf::new()
-        .join(&cfg.workspace.node_home)
-        .join(&cfg.workspace.block_dir)
-        .join("block_0.json");
-    println!("copy first proof from {:?} to {:?}", source, target_file);
-    match create(blocks_dir, true) {
-        Err(why) => {
-            println!("create block dir failed: {:?}", why);
-            bail!(why)
+    if persona.is_some() {
+        let source = &cfg.workspace.source_path.unwrap().join(
+            "ol/fixtures/vdf_proofs/test").join(persona.unwrap()
+        ).join("proof_0.json");
+        let blocks_dir = PathBuf::new().join(
+            &cfg.workspace.node_home
+        ).join(&cfg.workspace.block_dir);
+        let target_file = PathBuf::new().join(
+            &cfg.workspace.node_home
+        ).join(&cfg.workspace.block_dir).join("proof_0.json");
+        println!("copy first block from {:?} to {:?}", source, target_file);
+        match create(blocks_dir, true) {
+            Err(why) => println!("create block dir failed: {:?}", why),
+            _ => match copy(source, target_file, &CopyOptions::new()) {
+              Err(why) => println!("copy block failed: {:?}", why),
+              _ => (),
+            }
         }
         _ => match copy(source, target_file, &CopyOptions::new()) {
             Err(why) => {

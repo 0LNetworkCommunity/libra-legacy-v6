@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 use anyhow::Error;
 use cli::{diem_client::DiemClient, AccountData, AccountStatus};
-use ol_types::block::Block;
+use ol_types::block::VDFProof;
 use txs::{sign_tx::sign_tx, submit_tx::{TxParams, submit_tx}};
 use diem_json_rpc_types::views::{TransactionView};
 use diem_transaction_builder::stdlib as transaction_builder;
@@ -10,7 +10,7 @@ use diem_transaction_builder::stdlib as transaction_builder;
 /// Submit a miner transaction to the network.
 pub fn commit_proof_tx(
     tx_params: &TxParams,
-    block: Block,
+    block: VDFProof,
     is_operator: bool,
 ) -> Result<TransactionView, Error> {
 

@@ -1,5 +1,5 @@
 //! Formatters for libra account creation
-use crate::{block::Block, config::IS_TEST};
+use crate::{block::VDFProof, config::IS_TEST};
 use dialoguer::Confirm;
 use diem_crypto::x25519::PublicKey;
 use diem_types::{
@@ -23,8 +23,8 @@ use std::{fs::File, io::Write, path::PathBuf, process::exit};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 /// Configuration data necessary to initialize a validator.
 pub struct ValConfigs {
-    /// Block zero of the onboarded miner
-    pub block_zero: Block,
+    /// Proof zero of the onboarded miner
+    pub block_zero: VDFProof,
     /// Human readable name of Owner account
     pub ow_human_name: String,
     /// IP address of Operator
@@ -54,8 +54,8 @@ pub struct ValConfigs {
 #[derive(Serialize, Deserialize, Debug)]
 /// Configuration data necessary to initialize an end user.
 pub struct UserConfigs {
-    /// Block zero of the onboarded miner
-    pub block_zero: Block,
+    /// Proof zero of the onboarded miner
+    pub block_zero: VDFProof,
 }
 // TODO: Duplicated from block.rs
 fn as_hex<S>(data: &[u8], serializer: S) -> Result<S::Ok, S::Error>
@@ -77,7 +77,7 @@ where
 impl ValConfigs {
     /// New val config.
     pub fn new(
-        block: Block,
+        block: VDFProof,
         keys: KeyScheme,
         ip_address: String,
         autopay_instructions: Option<Vec<PayInstruction>>,
@@ -119,7 +119,7 @@ impl ValConfigs {
         let fn_addr_obj = fn_addr_obj.append_prod_protos(fn_pubkey, 0);
         
         Self {
-            /// Block zero of the onboarded miner
+            /// Proof zero of the onboarded miner
             block_zero: block,
             ow_human_name: owner_address.clone(),
             op_address: keys.child_1_operator.get_address().to_string(),
@@ -148,7 +148,7 @@ impl ValConfigs {
         println!("account manifest created, file saved to: {:?}", json_path);
     }
 
-    /// Extract the preimage and proof from a genesis proof block_0.json
+    /// Extract the preimage and proof from a genesis proof proof_0.json
     pub fn get_init_data(path: &PathBuf) -> Result<ValConfigs, std::io::Error> {
         let file = std::fs::File::open(path)?;
         let reader = std::io::BufReader::new(file);
@@ -196,9 +196,9 @@ impl ValConfigs {
 
 impl UserConfigs {
     /// New user configs
-    pub fn new(block: Block) -> UserConfigs {
+    pub fn new(block: VDFProof) -> UserConfigs {
         UserConfigs {
-            /// Block zero of the onboarded miner
+            /// Proof zero of the onboarded miner
             block_zero: block,
         }
     }
@@ -213,7 +213,7 @@ impl UserConfigs {
             .expect("Could not write account.json");
         println!("Account manifest saved to: {:?}", json_path);
     }
-    /// Extract the preimage and proof from a genesis proof block_0.json
+    /// Extract the preimage and proof from a genesis proof proof_0.json
     pub fn get_init_data(path: &PathBuf) -> Result<UserConfigs, std::io::Error> {
         let file = std::fs::File::open(path)?;
         let reader = std::io::BufReader::new(file);
@@ -250,7 +250,7 @@ fn test_parse_account_file() {
 fn val_config_ip_address() {
     use diem_types::network_address::encrypted::EncNetworkAddress;
 
-    let block = Block {
+    let block = VDFProof {
         height: 0u64,
         elapsed_secs: 0u64,
         preimage: Vec::new(),

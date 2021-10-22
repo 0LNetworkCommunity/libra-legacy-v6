@@ -23,10 +23,10 @@ echo:
 
 fixtures-test: 
 	cd ../onboard && NODE_ENV=test TEST=y cargo r -p onboard -- val --genesis-ceremony --autopay-file ${SOURCE}/ol/fixtures/autopay/${PERSONA}.autopay_batch.json
-	cp ${DATA_PATH}/blocks/block_0.json ${SOURCE}/ol/fixtures/blocks/test/${PERSONA}/
+	cp ${DATA_PATH}/vdf_proofs/proof_0.json ${SOURCE}/ol/fixtures/vdf_proofs/test/${PERSONA}/
 	cp ${DATA_PATH}/account.json ${SOURCE}/ol/fixtures/account/${PERSONA}.account.json
 
 fixtures-prod: 
 	cd ../onboard && NODE_ENV=prod TEST=y cargo r -p onboard -- val --genesis-ceremony --autopay-file ${SOURCE}/ol/fixtures/autopay/${PERSONA}.autopay_batch.json
-	cp ${DATA_PATH}/blocks/block_0.json ${SOURCE}/ol/fixtures/blocks/prod/${PERSONA}/
-	cp ${DATA_PATH}/blocks/block_0.json ${SOURCE}/ol/fixtures/blocks/stage/${PERSONA}/
+	cp ${DATA_PATH}/vdf_proofs/proof_0.json ${SOURCE}/ol/fixtures/vdf_proofs/prod/${PERSONA}/
+	cp ${DATA_PATH}/vdf_proofs/proof_0.json ${SOURCE}/ol/fixtures/vdf_proofs/stage/${PERSONA}/
