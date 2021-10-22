@@ -208,7 +208,7 @@ gen-delete-fork:
 	--repo-name ${REPO_NAME} \
 	--repo-owner ${REPO_ORG} \
 	--shared-backend ${GENESIS_REMOTE} \
-	--delete_repo_user ${GITHUB_USER}
+	--delete-repo-user ${GITHUB_USER}
 
 gen-onboard:
 	cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony
