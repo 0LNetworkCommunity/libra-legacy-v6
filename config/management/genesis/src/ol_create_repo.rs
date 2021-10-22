@@ -22,6 +22,8 @@ pub struct CreateGenesisRepo {
     pub repo_name: String,
     #[structopt(long)]
     pub pull_request_user: Option<String>,
+    #[structopt(long)]
+    pub delete_repo_user: Option<String>,
 }
 
 impl CreateGenesisRepo {
@@ -48,6 +50,15 @@ impl CreateGenesisRepo {
                 // Make a pull request of the the forked repo, back to the genesis coordination repository.
                 if let Some(user) = self.pull_request_user {
                     match github.make_genesis_pull_request(&config.repository_owner, &config.repository, &user) {
+                        Ok(_) => Ok("created pull request to genesis repo".to_string()),
+                        Err(e) => Err(Error::StorageWriteError(
+                            "github",
+                            "pull request",
+                            e.to_string(),
+                        )),
+                    }
+                } else if let Some(user) = self.delete_repo_user{
+                    match github.delete_own_repo(&user, &config.repository) {
                         Ok(_) => Ok("created pull request to genesis repo".to_string()),
                         Err(e) => Err(Error::StorageWriteError(
                             "github",
