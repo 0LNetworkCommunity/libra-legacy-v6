@@ -4,7 +4,7 @@
 
 use crate::{application::app_config, config::AppCfg, entrypoint, migrate};
 use abscissa_core::{Command, FrameworkError, Options, Runnable, config};
-use anyhow::Error;
+use anyhow::{Error, bail};
 use diem_genesis_tool::{init, key};
 use diem_types::waypoint::Waypoint;
 use ol_keys::{scheme::KeyScheme, wallet};
@@ -67,7 +67,8 @@ impl Runnable for InitCmd {
             let absolute = fs::canonicalize(path).unwrap();
             initialize_host_swarm(
                 absolute, swarm_node_home, entry_args.swarm_persona, &self.source_path
-            );
+            ).expect(
+              "could not initialize host with swarm configs");
             return
         }
         
@@ -123,23 +124,29 @@ pub fn initialize_host_swarm(
     node_home: PathBuf,
     persona: Option<String>,
     source_path: &Option<PathBuf>
-) {
+) -> Result<(), Error> {
     let cfg = AppCfg::init_app_configs_swarm(swarm_path, node_home, source_path.clone());
     if persona.is_some() {
         let source = &cfg.workspace.source_path.unwrap().join(
             "ol/fixtures/blocks/test").join(persona.unwrap()
-        ).join("block_0.json");
+        ).join("proof_0.json");
         let blocks_dir = PathBuf::new().join(
             &cfg.workspace.node_home
         ).join(&cfg.workspace.block_dir);
         let target_file = PathBuf::new().join(
             &cfg.workspace.node_home
-        ).join(&cfg.workspace.block_dir).join("block_0.json");
-        println!("copy first block from {:?} to {:?}", source, target_file);
+        ).join(&cfg.workspace.block_dir).join("proof_0.json");
+        println!("copy first proof from {:?} to {:?}", source, target_file);
         match create(blocks_dir, true) {
-            Err(why) => println!("create block dir failed: {:?}", why),
+            Err(why) => {
+              println!("create block dir failed: {:?}", why); 
+              bail!(why)
+            },
             _ => match copy(source, target_file, &CopyOptions::new()) {
-              Err(why) => println!("copy block failed: {:?}", why),
+              Err(why) => {
+                println!("copy block failed: {:?}", why);
+                bail!(why)
+              },
               _ => (),
             }
         }
