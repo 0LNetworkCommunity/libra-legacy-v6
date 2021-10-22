@@ -606,7 +606,6 @@ adds <code>tower</code> to list of towers
 
 
   <a href="TowerState.md#0x1_TowerState_init_miner_state">init_miner_state</a>(miner_sig, &challenge, &solution, difficulty, security);
-
   // TODO: Move this elsewhere?
   // Initialize stats for first validator set from rust genesis.
   <b>let</b> node_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig);
