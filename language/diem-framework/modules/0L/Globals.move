@@ -54,9 +54,15 @@ module Globals {
     }
 
     /// Get the current vdf_difficulty
-    public fun get_difficulty(): u64 {
+    public fun get_vdf_difficulty(): u64 {
       get_constants().vdf_difficulty
     }
+
+        /// Get the current vdf_difficulty
+    public fun get_vdf_security(): u64 {
+      512
+    }
+
 
     /// Get the mining threshold 
     public fun get_epoch_mining_thres_lower(): u64 {
@@ -85,7 +91,7 @@ module Globals {
           subsidy_ceiling_gas: 296 * coin_scale,
           vdf_difficulty: 100,
           epoch_mining_thres_lower: 1,
-          epoch_mining_thres_upper: 240, // upper bound enforced at 6 mins per proof.
+          epoch_mining_thres_upper: 1000, // upper bound unlimited
           epoch_slow_wallet_unlock: 10,
         }
       };
@@ -97,7 +103,7 @@ module Globals {
           subsidy_ceiling_gas: 8640000 * coin_scale,
           vdf_difficulty: 5000000,
           epoch_mining_thres_lower: 1,
-          epoch_mining_thres_upper: 240, // upper bound enforced at 6 mins per proof.
+          epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
           epoch_slow_wallet_unlock: 10000000,
         }
       } else {
@@ -111,8 +117,8 @@ module Globals {
           // uses "scaled representation", since there are no decimals.
           subsidy_ceiling_gas: 8640000 * coin_scale, // subsidy amount assumes 24 hour epoch lengths. Also needs to be adjusted for coin_scale the onchain representation of human readable value.
           vdf_difficulty: 5000000, // FYI approx 10 mins per proof on 2020 macbook pro 2.5 ghz quadcore
-          epoch_mining_thres_lower: 20,
-          epoch_mining_thres_upper: 240, // upper bound enforced at 6 mins per proof.
+          epoch_mining_thres_lower: 7, // NOTE: bootstrapping, allowance for operator error.
+          epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
           epoch_slow_wallet_unlock: 1000 * coin_scale, // approx 10 years for largest accounts in genesis.
         }
       }

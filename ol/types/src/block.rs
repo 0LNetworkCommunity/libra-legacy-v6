@@ -17,6 +17,10 @@ pub struct Block {
     /// VDF proof. AKA solution
     #[serde(with = "hex")]
     pub proof: Vec<u8>,
+    /// The iterations of the circuit
+    pub difficulty: Option<u64>, // option to make backwards compatible reads
+    /// the security parameter of the proof.
+    pub security: Option<u16>,
 }
 
 impl Block {
@@ -34,5 +38,15 @@ impl Block {
         let file = fs::File::open(&path).expect(&format!("Could not open block file: {:?}", path.to_str()));
         let reader = BufReader::new(file);
         serde_json::from_reader(reader).unwrap()
+    }
+
+    /// get the difficulty/iterations of the block, or assume legacy
+    pub fn difficulty(&self) -> u64 {
+      self.difficulty.unwrap_or(5_000_000) // if the block doesn't have this info, assume it's legacy block.
+    }
+
+    /// get the security param of the block, or assume legacy
+    pub fn security(&self) -> u64 {
+      self.security.unwrap_or(2048) as u64 // if the block doesn't have this info, assume it's legacy block.
     }
 }

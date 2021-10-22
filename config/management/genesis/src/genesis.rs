@@ -12,10 +12,10 @@ use diem_types::{
 };
 use std::{fs::File, io::{Read, Write}, path::PathBuf};
 use structopt::StructOpt;
-use vm_genesis::{OperatorAssignment, OperatorRegistration, GenesisMiningProof};
+use vm_genesis::{OperatorAssignment, OperatorRegistration};
 
 //////// 0L ////////
-use ol_types::account::ValConfigs;
+use ol_types::{account::ValConfigs, genesis_proof::GenesisMiningProof};
 
 /// Note, it is implicitly expected that the storage supports
 /// a namespace but one has not been set.

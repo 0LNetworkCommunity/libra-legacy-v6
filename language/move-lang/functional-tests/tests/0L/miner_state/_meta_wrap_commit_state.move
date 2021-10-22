@@ -15,9 +15,10 @@ script {
         // buildign block for other tests.
         TowerState::test_helper_init_miner(
             &sender,
-            100u64, // difficulty
             TestFixtures::easy_chal(),
-            TestFixtures::easy_sol()
+            TestFixtures::easy_sol(),
+            TestFixtures::easy_difficulty(),
+            TestFixtures::security(),
         );
 
         let height = TowerState::test_helper_get_height(@{{bob}});

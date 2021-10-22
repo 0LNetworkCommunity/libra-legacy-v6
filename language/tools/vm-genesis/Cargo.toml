@@ -33,7 +33,10 @@ diem-transaction-builder = { path = "../../../sdk/transaction-builder"}
 move-binary-format = { path = "../../move-binary-format" }
 diem-vm = { path = "../../diem-vm" }
 
+# 0L
 ol-types = {path = "../../../ol/types"}
+# tower = {path = "../../../ol/tower"}
+diem-global-constants = { path = "../../../config/global-constants"}
 
 
 [dev-dependencies]

@@ -8,3 +8,4 @@ edition = "2018"
 rpassword = "5.0"
 diem-wallet = { path = "../../testsuite/cli/diem-wallet", version = "0.1.0" }
 diem-types = { path = "../../types/" }
+once_cell = "1.7.2"

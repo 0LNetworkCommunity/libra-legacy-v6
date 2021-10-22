@@ -5,7 +5,6 @@ use crate::{application::app_config, block::write_genesis};
 /// accessors along with logging macros. Customize as you see fit.
 use abscissa_core::{Command, Options, Runnable};
 
-
 #[derive(Command, Debug, Options)]
 pub struct ZeroCmd {}
 

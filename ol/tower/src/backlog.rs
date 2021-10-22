@@ -41,7 +41,7 @@ pub fn process_backlog(
                 let reader = BufReader::new(file);
                 let block: Block = serde_json::from_reader(reader)?;
                 let view = commit_proof_tx(
-                    &tx_params, block.preimage, block.proof, is_operator
+                    &tx_params, block, is_operator
                 )?;
                 match eval_tx_status(view) {
                     Ok(_) => {},

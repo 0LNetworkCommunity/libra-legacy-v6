@@ -27,6 +27,8 @@ fun main(sender: signer) {
       &sender,
       &challenge,
       &solution,
+      TestFixtures::easy_difficulty(), // difficulty
+      TestFixtures::security(), // security
       b"leet",
       @0xfa72817f1b5aab94658238ddcdc08010,
       x"fa72817f1b5aab94658238ddcdc08010",

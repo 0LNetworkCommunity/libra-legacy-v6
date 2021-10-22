@@ -27,8 +27,8 @@ use std::{
     path::{Path, PathBuf},
   };
 use structopt::StructOpt;
-use vm_genesis::GenesisMiningProof;
 use ol_keys::scheme::KeyScheme;
+use ol_types::{ fixtures, genesis_proof::GenesisMiningProof};
 
 pub struct StorageHelper {
     temppath: diem_temppath::TempPath,
@@ -203,8 +203,6 @@ impl StorageHelper {
     // 0L: change, initialize the 0-4th accounts with a fixture mnemonics.
     // So we can reliably test miner and other transactions.
     pub fn initialize_by_idx(&self, namespace: String, idx: usize) {
-        // let mnem_alice = "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse".to_string();
-        // let mnem_alice = ol_fixtures::get_persona_mnem("alice");
 
         let partial_seed = bcs::to_bytes(&idx).unwrap();
         let mut seed = [0u8; 32];
@@ -217,30 +215,30 @@ impl StorageHelper {
         // user personas
         match idx {
         1 => {
-            let user = ol_fixtures::get_persona_mnem("alice");
+            let user = fixtures::get_persona_mnem("alice");
             dbg!("swarm 3", &user);
                         
             self.initialize_with_mnemonic_swarm(
                 namespace,
-                ol_fixtures::get_persona_mnem("alice"),
+                fixtures::get_persona_mnem("alice"),
             );
         }
         2 => {
             self.initialize_with_mnemonic_swarm(
                 namespace,
-                ol_fixtures::get_persona_mnem("bob"),
+                fixtures::get_persona_mnem("bob"),
             );
         }
         3 => {
             self.initialize_with_mnemonic_swarm(
                 namespace,
-                ol_fixtures::get_persona_mnem("carol"),
+                fixtures::get_persona_mnem("carol"),
             );
         }
         4 => {
             self.initialize_with_mnemonic_swarm(
                 namespace,
-                ol_fixtures::get_persona_mnem("dave"),
+                fixtures::get_persona_mnem("dave"),
             );
         }
         _ => {

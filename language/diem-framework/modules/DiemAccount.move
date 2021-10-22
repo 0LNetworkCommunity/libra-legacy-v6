@@ -35,7 +35,7 @@ module DiemAccount {
     use 0x1::DiemId;
     //////// 0L ////////
     use 0x1::VDF;
-    use 0x1::Globals;
+    // use 0x1::Globals;
     use 0x1::TowerState;
     use 0x1::Testnet::is_testnet;
     use 0x1::FIFO;
@@ -461,6 +461,8 @@ module DiemAccount {
         sender: &signer,
         challenge: &vector<u8>,
         solution: &vector<u8>,
+        difficulty: u64,
+        security: u64,
     ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount {
              
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
@@ -475,7 +477,7 @@ module DiemAccount {
         // this verifies the VDF proof, which we use to rate limit account creation.
         // account will not be created if this step fails.
         let new_signer = create_signer(new_account_address);
-        TowerState::init_miner_state(&new_signer, challenge, solution);
+        TowerState::init_miner_state(&new_signer, challenge, solution, difficulty, security);
         // set_slow(&new_signer);
         new_account_address
     }
@@ -495,6 +497,8 @@ module DiemAccount {
         sender: &signer,
         challenge: &vector<u8>,
         solution: &vector<u8>,
+        difficulty: u64,
+        security: u64,
         ow_human_name: vector<u8>,
         op_address: address,
         op_auth_key_prefix: vector<u8>,
@@ -511,7 +515,7 @@ module DiemAccount {
             balance<GAS>(sender_addr) > 2 * BOOTSTRAP_COIN_VALUE, 
             Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
         );
-
+        
         // Create Owner Account
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
@@ -522,6 +526,8 @@ module DiemAccount {
             sender,
             challenge,
             solution,
+            difficulty,
+            security,
             ow_human_name,
             op_address,
             op_auth_key_prefix,
@@ -539,7 +545,7 @@ module DiemAccount {
         add_currencies_for_account<GAS>(&new_signer, false);
 
         // This also verifies the VDF proof, which we use to rate limit account creation.
-        TowerState::init_miner_state(&new_signer, challenge, solution);
+        TowerState::init_miner_state(&new_signer, challenge, solution, difficulty, security);
 
         // Create OP Account
         let new_op_account = create_signer(op_address);
@@ -593,6 +599,8 @@ module DiemAccount {
         sender: &signer,
         challenge: &vector<u8>,
         solution: &vector<u8>,
+        difficulty: u64,
+        security: u64,
         ow_human_name: vector<u8>,
         op_address: address,
         op_auth_key_prefix: vector<u8>,
@@ -621,8 +629,9 @@ print(&502);
         // verifies the VDF proof, since we are not calling TowerState init.
         let valid = VDF::verify(
             challenge,
-            &Globals::get_difficulty(),
-            solution
+            solution,
+            &difficulty,
+            &security,
         );
         assert(valid, Errors::invalid_argument(120105));
         

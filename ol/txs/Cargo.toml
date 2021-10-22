@@ -39,7 +39,6 @@ diemdb = { path = "../../storage/diemdb"}
 diem-transaction-builder = { path = "../../sdk/transaction-builder" }
 move-core-types={path="../../language/move-core/types"}
 ol = {path = "../cli"}
-ol-fixtures = {path = "../../ol/fixtures"}
 ol-keys = { path = "../keys/", version = "0.1.0" }
 ol-types = {path = "../../ol/types"}
 resource-viewer = { path = "../../language/tools/resource-viewer", version = "0.1.0" }
