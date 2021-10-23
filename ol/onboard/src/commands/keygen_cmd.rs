@@ -18,7 +18,7 @@ impl Runnable for KeygenCmd {
           let (auth, addr, wallet) = wallet::get_account_from_prompt();
           println!("\n0L ACCOUNT\n");
           println!("address: {}", addr);
-          println!("long address (authentication key): {}\n", auth);
+          println!("authentication key (for account creation): {}\n", auth);
 
         } else {
           wallet::keygen();
