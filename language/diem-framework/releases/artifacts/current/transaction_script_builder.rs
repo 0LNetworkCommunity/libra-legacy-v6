@@ -1611,6 +1611,11 @@ pub enum ScriptFunctionCall {
 
     AutopayEnable {},
 
+    BalanceTransfer {
+        recipient: AccountAddress,
+        unscaled_value: u64,
+    },
+
     /// # Summary
     /// Burns the transaction fees collected in the `CoinType` currency so that the
     /// Diem association may reclaim the backing coins off-chain. May only be sent
@@ -3503,6 +3508,10 @@ impl ScriptFunctionCall {
             ),
             AutopayDisable {} => encode_autopay_disable_script_function(),
             AutopayEnable {} => encode_autopay_enable_script_function(),
+            BalanceTransfer {
+                recipient,
+                unscaled_value,
+            } => encode_balance_transfer_script_function(recipient, unscaled_value),
             BurnTxnFees { coin_type } => encode_burn_txn_fees_script_function(coin_type),
             BurnWithAmount {
                 token,
@@ -4109,6 +4118,24 @@ pub fn encode_autopay_enable_script_function() -> TransactionPayload {
         ident_str!("autopay_enable").to_owned(),
         vec![],
         vec![],
+    ))
+}
+
+pub fn encode_balance_transfer_script_function(
+    recipient: AccountAddress,
+    unscaled_value: u64,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("TransferScripts").to_owned(),
+        ),
+        ident_str!("balance_transfer").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&recipient).unwrap(),
+            bcs::to_bytes(&unscaled_value).unwrap(),
+        ],
     ))
 }
 
@@ -8100,6 +8127,19 @@ fn decode_autopay_enable_script_function(
     }
 }
 
+fn decode_balance_transfer_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::BalanceTransfer {
+            recipient: bcs::from_bytes(script.args().get(0)?).ok()?,
+            unscaled_value: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_burn_txn_fees_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -9214,6 +9254,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "AutoPayScriptsautopay_enable".to_string(),
             Box::new(decode_autopay_enable_script_function),
+        );
+        map.insert(
+            "TransferScriptsbalance_transfer".to_string(),
+            Box::new(decode_balance_transfer_script_function),
         );
         map.insert(
             "TreasuryComplianceScriptsburn_txn_fees".to_string(),
