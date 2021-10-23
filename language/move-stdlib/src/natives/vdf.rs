@@ -5,10 +5,12 @@ use diem_types::{
     transaction::authenticator::AuthenticationKey, 
     vm_status::{StatusCode}
 };
+
+use move_vm_runtime::native_functions::NativeContext;
 use move_vm_types::{
     gas_schedule::NativeCostIndex,
     loaded_data::runtime_types::Type,
-    natives::function::{native_gas, NativeContext, NativeResult},
+    natives::function::{native_gas, NativeResult},
     values::{Reference, Value},
 };
 use std::collections::VecDeque;

@@ -6,7 +6,6 @@ use move_binary_format::{
     control_flow_graph::{BlockId, ControlFlowGraph},
     file_format::{Bytecode, CodeOffset},
 };
-use move_binary_format::file_format::{Bytecode, CodeOffset};
 use std::collections::HashMap;
 
 /// Trait for finite-height abstract domains. Infinite height domains would require a more complex

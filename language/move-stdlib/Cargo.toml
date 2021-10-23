@@ -28,14 +28,16 @@ smallvec = "1.6.1"
 sha2 = "0.9.3"
 sha3 = "0.9.1"
 
-# Todo: In diem 1.3.0 this was in `language/move-vm/natives/Cargo.toml` which
+# 0L todo: In diem 1.3.0 this was in `language/move-vm/natives/Cargo.toml` which
 #       does not exist in diem 1.4.1
 ######### 0L ########
-diem-global-constants = { path = "../../../config/global-constants"}
+diem-global-constants = { path = "../../config/global-constants"}
 hex = "0.4.2"
-diem-types = { path = "../../../types"}
-vdf = { path="../../../ol/verifiable_delay/vdf"}
-rust_decimal= { version = "1.14.2", default-features = true, features = ["maths"] }
+diem-types = { path = "../../types"}
+vdf = { path="../../ol/verifiable_delay/vdf"}
+# 0L Todo: 
+# Build error: error[E0277]: `[(decimal::Decimal, u64); 6]` is not an iterator
+# rust_decimal= { version = "1.14.2", default-features = true, features = ["maths"] }
 
 [dev-dependencies]
 move-unit-test = { path = "../tools/move-unit-test" }

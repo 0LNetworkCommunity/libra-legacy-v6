@@ -57,10 +57,3 @@ pub fn flush() {
         logger.flush();
     }
 }
-
-/// Flush the global `Logger`
-pub fn flush() {
-    if let Some(logger) = LOGGER.get() {
-        logger.flush();
-    }
-}

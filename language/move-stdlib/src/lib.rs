@@ -145,7 +145,3 @@ const ERROR_DESCRIPTIONS: &[u8] = include_bytes!("../error_description.errmap");
 pub fn error_descriptions() -> &'static [u8] {
     ERROR_DESCRIPTIONS
 }
-
-//////// 0L ////////
-pub mod vdf; // todo: rename to ol_vdf
-pub mod ol_decimal;

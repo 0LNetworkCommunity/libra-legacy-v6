@@ -20,6 +20,7 @@ sha3 = "0.9.1"
 tracing = "0.1.26"
 
 bytecode-verifier = { path = "../../bytecode-verifier" }
+# diem-vm = { path = "../../../language/diem-vm" }
 diem-workspace-hack = { path = "../../../common/workspace-hack" }
 move-core-types = { path = "../../move-core/types" }
 move-vm-types = { path = "../types" }

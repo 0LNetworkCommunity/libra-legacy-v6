@@ -12,7 +12,7 @@ use crate::{
     transaction_metadata::TransactionMetadata,
 };
 use diem_crypto::HashValue;
-use diem_framework_releases::import_stdlib;
+// use diem_framework_releases::import_stdlib;
 use diem_logger::prelude::*;
 use diem_state_view::StateView;
 use diem_types::{
@@ -472,7 +472,7 @@ impl DiemVMImpl {
         block_metadata: BlockMetadata,
         txn_data: &TransactionMetadata,
         gas_status: &mut GasStatus,
-        log_context: &impl LogContext,
+        // log_context: &impl LogContext,
     ) -> Result<(), VMStatus> {
         let (round, _timestamp, _previous_vote, _proposer) = block_metadata.into_inner();
         info!("0L ===============================  round is {}", round);
@@ -490,7 +490,7 @@ impl DiemVMImpl {
                 serialize_values(&args),
                 // txn_data.sender(),
                 gas_status,
-                log_context,
+                // log_context,
             ).expect("Couldn't check upgrade");
         }
 
@@ -505,7 +505,7 @@ impl DiemVMImpl {
         block_metadata: BlockMetadata,
         txn_data: &TransactionMetadata,
         gas_status: &mut GasStatus,
-        log_context: &impl LogContext,
+        // log_context: &impl LogContext,
     ) -> Result<(), VMStatus> {
         let (round, timestamp, _previous_vote, _proposer) = block_metadata.into_inner();
         // hardcoding upgrade on round 2
@@ -526,7 +526,7 @@ impl DiemVMImpl {
                         bytes, 
                         account_config::CORE_CODE_ADDRESS, 
                         gas_status, 
-                        log_context
+                        // log_context
                     ).expect("Failed to publish module");
                     counter += 1;
                 }
@@ -543,7 +543,7 @@ impl DiemVMImpl {
                     serialize_values(&args),
                     // txn_data.sender(),
                     gas_status,
-                    log_context,
+                    // log_context,
                 ).expect("Couldn't reset payload");
                 info!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
             }

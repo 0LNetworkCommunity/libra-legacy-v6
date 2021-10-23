@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 use move_binary_format::errors::{PartialVMError, PartialVMResult};
 use move_core_types::vm_status::StatusCode;
+use move_vm_runtime::native_functions::NativeContext;
 use move_vm_types::{
     gas_schedule::NativeCostIndex,
     loaded_data::runtime_types::Type,
-    natives::function::{native_gas, NativeContext, NativeResult},
+    natives::function::{native_gas, NativeResult},
     values::Value,
 };
 use rust_decimal::{self, Decimal, MathematicalOps, RoundingStrategy, prelude::ToPrimitive};
 use smallvec::smallvec;
 use std::collections::VecDeque;
-
 
 #[derive(Debug)]
 struct MoveDecimalType {
