@@ -6,6 +6,7 @@
 
 module DiemFramework::TransactionFee {
     use 0x1::GAS::GAS; /////// 0L /////////
+    use DiemFramework::CoreAddresses;
     use DiemFramework::XDX;
     use DiemFramework::Diem::{Self, Diem, Preburn};
     use DiemFramework::Roles;
@@ -177,7 +178,7 @@ module DiemFramework::TransactionFee {
         // TODO: Return TransactionFee gracefully if there ino 0xFEE balance
         // DiemAccount::balance<Token>(0xFEE);
         let fees = borrow_global<TransactionFee<GAS>>(
-            CoreAddresses::DIEM_ROOT_ADDRESS()
+            @DiemRoot
         );
 
         let amount_collected = Diem::value<GAS>(&fees.balance);
@@ -194,7 +195,7 @@ module DiemFramework::TransactionFee {
         // TODO: Return TransactionFee gracefully if there ino 0xFEE balance
         // DiemAccount::balance<Token>(0xFEE);
         let fees = borrow_global_mut<TransactionFee<Token>>(
-            CoreAddresses::DIEM_ROOT_ADDRESS()
+            @DiemRoot
         );
 
         Diem::withdraw_all(&mut fees.balance)
@@ -210,7 +211,7 @@ module DiemFramework::TransactionFee {
         // TODO: Return TransactionFee gracefully if there ino 0xFEE balance
         // DiemAccount::balance<Token>(0xFEE);
         let fees = borrow_global_mut<TransactionFee<Token>>(
-            CoreAddresses::DIEM_ROOT_ADDRESS()
+            @DiemRoot
         );
 
         Diem::withdraw(&mut fees.balance, amount)

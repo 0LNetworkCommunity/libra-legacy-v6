@@ -1,6 +1,6 @@
 address 0x1 {
 module Bonding {
-  // use 0x1::Signer;
+  // use Std::Signer;
   use 0x1::Decimal;
   use 0x1::Debug::print;
 

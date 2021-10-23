@@ -8,18 +8,17 @@ address 0x1 {
   /// # Summary
   /// This module enables automatic payments from accounts to community wallets at epoch boundaries.
   module AutoPay { // renamed to preventhalting from state corruption
-    use 0x1::Vector;
-    use 0x1::Option::{Self,Option};
-    use 0x1::Signer;
-    use 0x1::DiemAccount;
+    use Std::Vector;
+    use Std::Option::{Self,Option};
+    use Std::Signer;
+    use DiemFramework::DiemAccount;
     use 0x1::GAS::GAS;
-    use 0x1::FixedPoint32;
-    use 0x1::CoreAddresses;
-    use 0x1::DiemConfig;
-    use 0x1::Errors;
+    use Std::FixedPoint32;
+    use DiemFramework::DiemConfig;
+    use Std::Errors;
     use 0x1::Wallet;
-    use 0x1::Roles;
-    // use 0x1::DiemTimestamp;
+    use DiemFramework::Roles;
+    // use DiemFramework::DiemTimestamp;
 
     /// Attempted to send funds to an account that does not exist
     /// Maximum value for the Payment type selection
@@ -103,7 +102,7 @@ address 0x1 {
     // Function code: 01
     public fun tick(vm: &signer): bool acquires Tick {
       Roles::assert_diem_root(vm);
-      if (exists<Tick>(CoreAddresses::DIEM_ROOT_ADDRESS())) {
+      if (exists<Tick>(@DiemRoot)) {
         // The tick is triggered at the beginning of each epoch
         let tick_state = borrow_global_mut<Tick>(Signer::address_of(vm));
         if (!tick_state.triggered) {
@@ -169,7 +168,7 @@ address 0x1 {
       // Go through all accounts in AccountList
       // This is the list of accounts which currently have autopay enabled
       let account_list = &borrow_global<AccountList>(
-        CoreAddresses::DIEM_ROOT_ADDRESS()
+        @DiemRoot
       ).accounts;
       let accounts_length = Vector::length<address>(account_list);
       let account_idx = 0;
@@ -276,7 +275,7 @@ address 0x1 {
       let addr = Signer::address_of(acc);
       // append to account list in system state 0x0
       let accounts = &mut borrow_global_mut<AccountList>(
-        CoreAddresses::DIEM_ROOT_ADDRESS()
+        @DiemRoot
       ).accounts;
       if (!Vector::contains<address>(accounts, &addr)) {
         Vector::push_back<address>(accounts, addr);
@@ -300,7 +299,7 @@ address 0x1 {
 
       // pop that account from AccountList
       let accounts = &mut borrow_global_mut<AccountList>(
-        CoreAddresses::DIEM_ROOT_ADDRESS()
+        @DiemRoot
       ).accounts;
       let (status, index) = Vector::index_of<address>(accounts, &addr);
       if (status) {
@@ -324,7 +323,7 @@ address 0x1 {
       assert(Option::is_none<u64>(&index), Errors::invalid_argument(UID_TAKEN));
 
       // TODO: This check already exists at the time of execution.
-      if (borrow_global<AccountLimitsEnable>(CoreAddresses::DIEM_ROOT_ADDRESS()).enabled) {
+      if (borrow_global<AccountLimitsEnable>(@DiemRoot).enabled) {
         assert(Wallet::is_comm(payee), Errors::invalid_argument(PAYEE_NOT_COMMUNITY_WALLET));
       };
 
@@ -379,7 +378,7 @@ address 0x1 {
     // by checking in 0x0's AccountList
     public fun is_enabled(account: address): bool acquires AccountList {
       let accounts = &borrow_global<AccountList>(
-          CoreAddresses::DIEM_ROOT_ADDRESS()
+          @DiemRoot
         ).accounts;
       Vector::contains<address>(accounts, &account)
     }

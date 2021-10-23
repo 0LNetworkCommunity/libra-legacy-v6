@@ -296,8 +296,8 @@ the miner last created a new account
 
 
 <pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_increment_stats">increment_stats</a>(miner_addr: address) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
-  <b>assert</b>(<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>()), 1301001);
-  <b>let</b> state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+  <b>assert</b>(<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a>&gt;(@VMReserved), 1301001);
+  <b>let</b> state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a>&gt;(@VMReserved);
 
   <b>if</b> (<a href="ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(miner_addr)) {
     state.validator_proofs = state.validator_proofs + 1;
@@ -330,7 +330,7 @@ the miner last created a new account
 
 <pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_epoch_reset">epoch_reset</a>(vm: &signer) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
-  <b>let</b> state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+  <b>let</b> state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a>&gt;(@VMReserved);
   state.proofs_in_epoch = 0;
   state.validator_proofs = 0;
   state.fullnode_proofs = 0;
@@ -357,7 +357,7 @@ the miner last created a new account
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_fullnode_proofs">get_fullnode_proofs</a>(): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a>{
-  <b>let</b> state = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+  <b>let</b> state = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a>&gt;(@VMReserved);
   state.fullnode_proofs
 }
 </code></pre>

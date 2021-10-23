@@ -8,18 +8,18 @@ address 0x1 {
 /// # Summary 
 /// TODO
 module TowerState {
-    use 0x1::Errors;
-    use 0x1::CoreAddresses;
+    use Std::Errors;
+    use DiemFramework::CoreAddresses;
     use 0x1::Globals;
-    use 0x1::Hash;
-    use 0x1::DiemConfig;
-    use 0x1::Signer;
+    use Std::Hash;
+    use DiemFramework::DiemConfig;
+    use Std::Signer;
     use 0x1::Stats;
     use 0x1::StagingNet;
     use 0x1::Testnet;
-    use 0x1::ValidatorConfig;
+    use DiemFramework::ValidatorConfig;
     use 0x1::VDF;
-    use 0x1::Vector;
+    use Std::Vector;
 
     const EPOCHS_UNTIL_ACCOUNT_CREATION: u64 = 6;
 
@@ -36,8 +36,8 @@ module TowerState {
     }
 
     fun increment_stats(miner_addr: address) acquires TowerStats {
-      assert(exists<TowerStats>(CoreAddresses::VM_RESERVED_ADDRESS()), 1301001);
-      let state = borrow_global_mut<TowerStats>(CoreAddresses::VM_RESERVED_ADDRESS());
+      assert(exists<TowerStats>(@VMReserved), 1301001);
+      let state = borrow_global_mut<TowerStats>(@VMReserved);
 
       if (ValidatorConfig::is_valid(miner_addr)) {
         state.validator_proofs = state.validator_proofs + 1;
@@ -51,14 +51,14 @@ module TowerState {
     // Note: Used only in tests
     public fun epoch_reset(vm: &signer) acquires TowerStats {
       CoreAddresses::assert_vm(vm);
-      let state = borrow_global_mut<TowerStats>(CoreAddresses::VM_RESERVED_ADDRESS());
+      let state = borrow_global_mut<TowerStats>(@VMReserved);
       state.proofs_in_epoch = 0;
       state.validator_proofs = 0;
       state.fullnode_proofs = 0;
     }
 
     public fun get_fullnode_proofs(): u64 acquires TowerStats{
-      let state = borrow_global<TowerStats>(CoreAddresses::VM_RESERVED_ADDRESS());
+      let state = borrow_global<TowerStats>(@VMReserved);
       state.fullnode_proofs
     }
 

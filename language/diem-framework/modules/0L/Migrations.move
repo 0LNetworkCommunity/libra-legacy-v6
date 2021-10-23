@@ -15,9 +15,9 @@ address 0x1 {
 /// 2. run the migration 
 /// 3. record that the migration has run using the `push` function
 module Migrations {
-  use 0x1::Vector;
-  use 0x1::CoreAddresses;
-  use 0x1::Option::{Self,Option};
+  use Std::Vector;
+  use DiemFramework::CoreAddresses;
+  use Std::Option::{Self,Option};
 
   /// A list of Migrations that have been 
   struct Migrations has key {
@@ -91,11 +91,11 @@ module Migrations {
 /// Module providing method to convert all wallets to "slow wallets" 
 /// migrations should have own module, since imports can cause dependency cycling.
 module MigrateWallets {
-  use 0x1::Vector;
+  use Std::Vector;
   use 0x1::Migrations;
-  use 0x1::DiemAccount;
+  use DiemFramework::DiemAccount;
   use 0x1::ValidatorUniverse;
-  use 0x1::CoreAddresses;
+  use DiemFramework::CoreAddresses;
 
   const UID: u64 = 10;
 

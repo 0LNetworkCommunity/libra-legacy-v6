@@ -2,8 +2,8 @@ address 0x1 {
 module AutoPayScripts {
 
     use 0x1::AutoPay;
-    use 0x1::Signer;
-    use 0x1::Errors;
+    use Std::Signer;
+    use Std::Errors;
 
     const EAUTOPAY_NOT_ENABLED: u64 = 01001;
 

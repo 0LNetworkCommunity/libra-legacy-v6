@@ -10,9 +10,9 @@ address 0x1 {
 /// This module provides global variables and constants that have no specific owner 
 module Globals {
     use 0x1::Testnet;
-    use 0x1::Errors;
+    use Std::Errors;
     use 0x1::StagingNet;
-    use 0x1::Diem;
+    use DiemFramework::Diem;
     use 0x1::GAS;
     
     /// Global constants determining validator settings & requirements 

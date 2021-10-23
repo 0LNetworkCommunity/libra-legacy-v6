@@ -11,8 +11,8 @@ address 0x1 {
 /// Achieves Amortized O(1) cost per operation 
 /// CAUTION: In worst case this can result in O(n) cost, adjust gas allowance accordingly 
 module FIFO {
-    use 0x1::Vector;
-    use 0x1::Errors;
+    use Std::Vector;
+    use Std::Errors;
 
     const ACCESSING_EMPTY_FIFO: u64 = 032001;
 

@@ -143,8 +143,8 @@
     k = k + 1;
   };
 
-  <b>if</b> (<b>exists</b>&lt;<a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>())) {
-    <b>let</b> d = borrow_global_mut&lt;<a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+  <b>if</b> (<b>exists</b>&lt;<a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a>&gt;(@VMReserved)) {
+    <b>let</b> d = borrow_global_mut&lt;<a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a>&gt;(@VMReserved);
     d.addr = list;
     d.deposits = deposit_vec;
     d.ratio = ratios_vec;
@@ -178,7 +178,7 @@
 
 
 <pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_get_address_list">get_address_list</a>(): vector&lt;address&gt; <b>acquires</b> <a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a> {
-  *&borrow_global&lt;<a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>()).addr
+  *&borrow_global&lt;<a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a>&gt;(@VMReserved).addr
 }
 </code></pre>
 
@@ -202,7 +202,7 @@
 
 
 <pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_get_value">get_value</a>(payee: address, value: u64): u64 <b>acquires</b> <a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a> {
-  <b>let</b> d = borrow_global&lt;<a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+  <b>let</b> d = borrow_global&lt;<a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a>&gt;(@VMReserved);
   <b>let</b> (_, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>(&d.addr, &payee);
   <b>let</b> ratio = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&d.ratio, i);
   <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(value, ratio)
@@ -362,7 +362,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Burn.md#0x1_Burn_get_ratios">get_ratios</a>(): (vector&lt;address&gt;, vector&lt;u64&gt;, vector&lt;<a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>&gt;) <b>acquires</b> <a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a> {
-  <b>let</b> d = borrow_global&lt;<a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+  <b>let</b> d = borrow_global&lt;<a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a>&gt;(@VMReserved);
   (*&d.addr, *&d.deposits, *&d.ratio)
 
 }

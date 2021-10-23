@@ -15,7 +15,7 @@ module DiemFramework::XUS {
         // tc_account: &signer, /////// 0L /////////
     ) {
         DiemTimestamp::assert_genesis();
-        Roles::assert_treasury_compliance(tc_account);
+        // Roles::assert_treasury_compliance(tc_account); /////// 0L /////////
         Roles::assert_diem_root(dr_account);
         Diem::register_SCS_currency<XUS>(
             dr_account,

@@ -984,7 +984,7 @@ module DiemFramework::Diem {
 
         // update the market cap
         assert_is_currency<CoinType>();
-        let info = borrow_global_mut<CurrencyInfo<CoinType>>(CoreAddresses::CURRENCY_INFO_ADDRESS());
+        let info = borrow_global_mut<CurrencyInfo<CoinType>>(@CurrencyInfo);
         assert(info.total_value >= (value as u128), Errors::limit_exceeded(ECURRENCY_INFO));
         info.total_value = info.total_value - (value as u128);
 
@@ -997,7 +997,7 @@ module DiemFramework::Diem {
             BurnEvent {
                 amount: value,
                 currency_code,
-                preburn_address: CoreAddresses::BURN_ADDRESS(),
+                preburn_address: @BurnAddress,
             }
         );
         // TODO: formal verfication specs
@@ -1478,7 +1478,7 @@ module DiemFramework::Diem {
     /// Updates the `to_xdx_exchange_rate` held in the `CurrencyInfo` for
     /// `FromCoinType` to the new passed-in `xdx_exchange_rate`.
     public fun update_xdx_exchange_rate<FromCoinType>(
-        dr_account:: &signer,
+        dr_account: &signer,
         xdx_exchange_rate: FixedPoint32
     ) acquires CurrencyInfo {
         Roles::assert_diem_root(dr_account); /////// 0L /////////

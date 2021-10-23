@@ -1,12 +1,12 @@
 address 0x1 {
 module ValidatorScripts {
 
-    use 0x1::DiemSystem;
-    use 0x1::Errors;
+    use DiemFramework::DiemSystem;
+    use Std::Errors;
     use 0x1::TowerState;
-    use 0x1::Signer;
+    use Std::Signer;
     use 0x1::ValidatorUniverse;
-    use 0x1::Vector;
+    use Std::Vector;
 
     const NOT_ABOVE_THRESH_JOIN: u64 = 220101;
     const NOT_ABOVE_THRESH_ADD : u64 = 220102;

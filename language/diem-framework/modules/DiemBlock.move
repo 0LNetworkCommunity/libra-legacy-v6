@@ -11,7 +11,7 @@ module DiemFramework::DiemBlock {
     use 0x1::AutoPay;
     use 0x1::Epoch;
     use 0x1::GAS::GAS;
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     use 0x1::Migrations;
     // use 0x1::Debug::print;
 

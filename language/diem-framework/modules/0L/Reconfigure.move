@@ -9,20 +9,20 @@
 
 address 0x1 {
 module EpochBoundary { // TODO: Rename to Boundary
-    use 0x1::CoreAddresses;
+    use DiemFramework::CoreAddresses;
     use 0x1::Subsidy;
     use 0x1::NodeWeight;
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
     use 0x1::TowerState;
     use 0x1::Globals;
-    use 0x1::Vector;
+    use Std::Vector;
     use 0x1::Stats;
     use 0x1::ValidatorUniverse;
     use 0x1::AutoPay;
     use 0x1::Epoch;
-    use 0x1::DiemConfig;
+    use DiemFramework::DiemConfig;
     use 0x1::Audit;
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     use 0x1::Burn;
     use 0x1::FullnodeSubsidy;
 

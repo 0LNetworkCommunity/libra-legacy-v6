@@ -35,8 +35,7 @@
 -  [Function `test_helper_check_upgrade`](#0x1_Oracle_test_helper_check_upgrade)
 
 
-<pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="DiemBlock.md#0x1_DiemBlock">0x1::DiemBlock</a>;
+<pre><code><b>use</b> <a href="DiemBlock.md#0x1_DiemBlock">0x1::DiemBlock</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Hash.md#0x1_Hash">0x1::Hash</a>;
@@ -370,7 +369,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Oracle.md#0x1_Oracle_initialize">initialize</a>(vm: &signer) {
-  <b>if</b> (<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()) {
+  <b>if</b> (<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == @DiemRoot) {
     move_to(vm, <a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a> {
       upgrade: <a href="Oracle.md#0x1_Oracle_UpgradeOracle">UpgradeOracle</a> {
           id: 1,
@@ -476,7 +475,7 @@
 
 <pre><code><b>fun</b> <a href="Oracle.md#0x1_Oracle_upgrade_handler">upgrade_handler</a> (sender: address, data: vector&lt;u8&gt;) <b>acquires</b> <a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a> {
   <b>let</b> current_height = <a href="DiemBlock.md#0x1_DiemBlock_get_current_block_height">DiemBlock::get_current_block_height</a>();
-  <b>let</b> upgrade_oracle = &<b>mut</b> borrow_global_mut&lt;<a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).upgrade;
+  <b>let</b> upgrade_oracle = &<b>mut</b> borrow_global_mut&lt;<a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a>&gt;(@DiemRoot).upgrade;
 
   // check <b>if</b> qualifies <b>as</b> a new round
   <b>let</b> is_new_round = current_height &gt; upgrade_oracle.vote_window;
@@ -524,7 +523,7 @@
 
 <pre><code><b>fun</b> <a href="Oracle.md#0x1_Oracle_upgrade_handler_hash">upgrade_handler_hash</a> (sender: address, data: vector&lt;u8&gt;) <b>acquires</b> <a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a> {
   <b>let</b> current_height = <a href="DiemBlock.md#0x1_DiemBlock_get_current_block_height">DiemBlock::get_current_block_height</a>();
-  <b>let</b> upgrade_oracle = &<b>mut</b> borrow_global_mut&lt;<a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).upgrade;
+  <b>let</b> upgrade_oracle = &<b>mut</b> borrow_global_mut&lt;<a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a>&gt;(@DiemRoot).upgrade;
 
   // check <b>if</b> qualifies <b>as</b> a new round
   <b>let</b> is_new_round = current_height &gt; upgrade_oracle.vote_window;
@@ -753,8 +752,8 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Oracle.md#0x1_Oracle_check_upgrade">check_upgrade</a>(vm: &signer) <b>acquires</b> <a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a> {
-  <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(150003));
-  <b>let</b> upgrade_oracle = &<b>mut</b> borrow_global_mut&lt;<a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).upgrade;
+  <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == @DiemRoot, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(150003));
+  <b>let</b> upgrade_oracle = &<b>mut</b> borrow_global_mut&lt;<a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a>&gt;(@DiemRoot).upgrade;
 
   <b>let</b> payload = *&upgrade_oracle.consensus.data;
   <b>let</b> validators = *&upgrade_oracle.consensus.validators;
@@ -1140,7 +1139,7 @@
 <pre><code><b>public</b> <b>fun</b> <a href="Oracle.md#0x1_Oracle_test_helper_check_upgrade">test_helper_check_upgrade</a>(): bool <b>acquires</b> <a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a> {
   <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(150004));
   <b>let</b> upgrade_oracle = &borrow_global&lt;<a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a>&gt;(
-    <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()
+    @DiemRoot
   ).upgrade;
   <b>let</b> payload = *&upgrade_oracle.consensus.data;
 

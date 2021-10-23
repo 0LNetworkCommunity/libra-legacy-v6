@@ -4,11 +4,11 @@ address 0x1 {
 /// Code to instantiate the GAS token 
 /// This is uninteresting, you may be looking for Diem.move
 module GAS {
-    use 0x1::AccountLimits;
-    use 0x1::Diem;
-    use 0x1::DiemTimestamp;
-    use 0x1::FixedPoint32;
-    use 0x1::Roles;
+    use DiemFramework::AccountLimits;
+    use DiemFramework::Diem;
+    use DiemFramework::DiemTimestamp;
+    use Std::FixedPoint32;
+    use DiemFramework::Roles;
   
     struct GAS has store { }
 

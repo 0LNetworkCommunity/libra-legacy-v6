@@ -7,9 +7,9 @@
 
 address 0x1{
     module PersistenceDemo{
-        use 0x1::Vector;
-        use 0x1::Signer;
-        use 0x1::Errors;
+        use Std::Vector;
+        use Std::Signer;
+        use Std::Errors;
         use 0x1::Testnet::is_testnet;
 
         // In Move the types for data storage are `resource struct`. Here a type 

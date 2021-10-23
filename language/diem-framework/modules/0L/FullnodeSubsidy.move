@@ -9,11 +9,11 @@
 
 address 0x1 {
   module FullnodeSubsidy {
-    use 0x1::CoreAddresses;
+    use DiemFramework::CoreAddresses;
     use 0x1::GAS::GAS;
-    use 0x1::Diem;
-    use 0x1::DiemAccount;
-    use 0x1::DiemSystem;
+    use DiemFramework::Diem;
+    use DiemFramework::DiemAccount;
+    use DiemFramework::DiemSystem;
     use 0x1::TowerState;
 
     public fun get_proof_price(one_val_subsidy: u64): u64 {

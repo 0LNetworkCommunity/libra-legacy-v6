@@ -12,7 +12,7 @@ address 0x1{
     module Cases{
         use 0x1::TowerState;
         use 0x1::Stats;
-        use 0x1::Roles;
+        use DiemFramework::Roles;
 
         const VALIDATOR_COMPLIANT: u64 = 1;
         const VALIDATOR_HALF_COMPLIANT: u64 = 2;

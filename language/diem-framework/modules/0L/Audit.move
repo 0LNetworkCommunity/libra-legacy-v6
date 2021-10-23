@@ -6,8 +6,8 @@
 
 address 0x1 {
   module Audit {
-    use 0x1::ValidatorConfig;
-    use 0x1::DiemAccount;
+    use DiemFramework::ValidatorConfig;
+    use DiemFramework::DiemAccount;
     use 0x1::GAS::GAS;
     use 0x1::AutoPay;
     use 0x1::TowerState;

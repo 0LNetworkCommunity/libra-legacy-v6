@@ -3,15 +3,14 @@ address 0x1 {
 // File Prefix for errors: 1500
 ///////////////////////////////////////////////////////////////////////////
   module Oracle {
-    use 0x1::Vector;
-    use 0x1::Signer;
-    use 0x1::Errors;
+    use Std::Vector;
+    use Std::Signer;
+    use Std::Errors;
     use 0x1::Testnet;
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
     use 0x1::Upgrade;
-    use 0x1::DiemBlock;
-    use 0x1::CoreAddresses;
-    use 0x1::Hash;
+    use DiemFramework::DiemBlock;
+    use Std::Hash;
     use 0x1::NodeWeight;
 
       //possible vote types
@@ -72,7 +71,7 @@ address 0x1 {
   
      // Function code: 01
       public fun initialize(vm: &signer) {
-        if (Signer::address_of(vm) == CoreAddresses::DIEM_ROOT_ADDRESS()) {
+        if (Signer::address_of(vm) == @DiemRoot) {
           move_to(vm, Oracles { 
             upgrade: UpgradeOracle {
                 id: 1,
@@ -139,7 +138,7 @@ address 0x1 {
       
       fun upgrade_handler (sender: address, data: vector<u8>) acquires Oracles {
         let current_height = DiemBlock::get_current_block_height();
-        let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::DIEM_ROOT_ADDRESS()).upgrade;
+        let upgrade_oracle = &mut borrow_global_mut<Oracles>(@DiemRoot).upgrade;
   
         // check if qualifies as a new round
         let is_new_round = current_height > upgrade_oracle.vote_window;
@@ -167,7 +166,7 @@ address 0x1 {
       
       fun upgrade_handler_hash (sender: address, data: vector<u8>) acquires Oracles {
         let current_height = DiemBlock::get_current_block_height();
-        let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::DIEM_ROOT_ADDRESS()).upgrade;
+        let upgrade_oracle = &mut borrow_global_mut<Oracles>(@DiemRoot).upgrade;
   
         // check if qualifies as a new round
         let is_new_round = current_height > upgrade_oracle.vote_window;
@@ -281,8 +280,8 @@ address 0x1 {
       // Function call for vm to check consensus
       // Function code: 03
       public fun check_upgrade(vm: &signer) acquires Oracles {
-        assert(Signer::address_of(vm) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(150003)); 
-        let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::DIEM_ROOT_ADDRESS()).upgrade;
+        assert(Signer::address_of(vm) == @DiemRoot, Errors::requires_role(150003)); 
+        let upgrade_oracle = &mut borrow_global_mut<Oracles>(@DiemRoot).upgrade;
   
         let payload = *&upgrade_oracle.consensus.data;
         let validators = *&upgrade_oracle.consensus.validators;
@@ -431,7 +430,7 @@ address 0x1 {
       public fun test_helper_check_upgrade(): bool acquires Oracles {
         assert(Testnet::is_testnet(), Errors::invalid_state(150004)); 
         let upgrade_oracle = &borrow_global<Oracles>(
-          CoreAddresses::DIEM_ROOT_ADDRESS()
+          @DiemRoot
         ).upgrade;
         let payload = *&upgrade_oracle.consensus.data;
 

@@ -9,21 +9,21 @@
 
 address 0x1 {
   module Subsidy {
-    use 0x1::CoreAddresses;
-    use 0x1::Errors;
+    use DiemFramework::CoreAddresses;
+    use Std::Errors;
     use 0x1::GAS::GAS;
-    use 0x1::Diem;
-    use 0x1::Signer;
-    use 0x1::DiemAccount;
-    use 0x1::Vector;
+    use DiemFramework::Diem;
+    use Std::Signer;
+    use DiemFramework::DiemAccount;
+    use Std::Vector;
     // use 0x1::Stats;
     use 0x1::ValidatorUniverse;
     use 0x1::Globals;
-    use 0x1::DiemTimestamp;
-    use 0x1::TransactionFee;
-    use 0x1::ValidatorConfig;
+    use DiemFramework::DiemTimestamp;
+    use DiemFramework::TransactionFee;
+    use DiemFramework::ValidatorConfig;
     use 0x1::TowerState;
-    use 0x1::FixedPoint32;
+    use Std::FixedPoint32;
 
     // estimated gas unit cost for proof verification divided coin scaling factor
     // Cost for verification test/easy difficulty: 1173 / 1000000
@@ -138,7 +138,7 @@ address 0x1 {
     public fun genesis(vm_sig: &signer) { // Todo: rename to "genesis_deposit" ?
       // Need to check for association or vm account
       let vm_addr = Signer::address_of(vm_sig);
-      assert(vm_addr == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190104));
+      assert(vm_addr == @DiemRoot, Errors::requires_role(190104));
 
       // Get eligible validators list
       let genesis_validators = ValidatorUniverse::get_eligible_validators(vm_sig);

@@ -7,11 +7,11 @@ address 0x1 {
 /// # Summary
 /// This module tracks the activity of the network's fullnodes 
 module FullnodeState {
-  use 0x1::CoreAddresses;
-  use 0x1::Errors;
-  use 0x1::Signer;
+  use DiemFramework::CoreAddresses;
+  use Std::Errors;
+  use Std::Signer;
   use 0x1::Testnet::is_testnet;
-  use 0x1::Roles;
+  use DiemFramework::Roles;
   
   struct FullnodeCounter has key {
     proofs_submitted_in_epoch: u64,

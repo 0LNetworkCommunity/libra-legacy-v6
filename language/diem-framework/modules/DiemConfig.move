@@ -453,7 +453,7 @@ module DiemFramework::DiemConfig {
 
     //////// 0L ////////
     public fun get_current_epoch(): u64 acquires Configuration {
-        let config_ref = borrow_global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        let config_ref = borrow_global<Configuration>(@DiemRoot);
         config_ref.epoch
     }
 
@@ -461,7 +461,7 @@ module DiemFramework::DiemConfig {
     public fun get_epoch_transfer_limit(): u64 acquires Configuration {
         // Constant to start the withdrawal limit calculation from 
         let transfer_enabled_epoch = TRANSFER_ENABLED_EPOCH;
-        let config_ref = borrow_global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        let config_ref = borrow_global<Configuration>(@DiemRoot);
         
         if (transfer_enabled_epoch > config_ref.epoch) {
           // Calculating transfer limit in multiples of epoch

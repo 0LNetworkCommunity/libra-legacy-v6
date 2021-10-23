@@ -1,12 +1,12 @@
 address 0x1 {
 module Burn {
   use 0x1::Wallet;
-  use 0x1::FixedPoint32;
-  use 0x1::Vector;
-  use 0x1::DiemAccount;
-  use 0x1::CoreAddresses;
+  use Std::FixedPoint32;
+  use Std::Vector;
+  use DiemFramework::DiemAccount;
+  use DiemFramework::CoreAddresses;
   use 0x1::GAS::GAS;
-  use 0x1::Signer;
+  use Std::Signer;
 
   struct BurnPreference has key {
     send_community: bool
@@ -52,8 +52,8 @@ module Burn {
       k = k + 1;
     };
 
-    if (exists<DepositInfo>(CoreAddresses::VM_RESERVED_ADDRESS())) {
-      let d = borrow_global_mut<DepositInfo>(CoreAddresses::VM_RESERVED_ADDRESS());
+    if (exists<DepositInfo>(@VMReserved)) {
+      let d = borrow_global_mut<DepositInfo>(@VMReserved);
       d.addr = list;
       d.deposits = deposit_vec;
       d.ratio = ratios_vec;
@@ -67,11 +67,11 @@ module Burn {
   }
 
   fun get_address_list(): vector<address> acquires DepositInfo {
-    *&borrow_global<DepositInfo>(CoreAddresses::VM_RESERVED_ADDRESS()).addr
+    *&borrow_global<DepositInfo>(@VMReserved).addr
   }
 
   fun get_value(payee: address, value: u64): u64 acquires DepositInfo {
-    let d = borrow_global<DepositInfo>(CoreAddresses::VM_RESERVED_ADDRESS());
+    let d = borrow_global<DepositInfo>(@VMReserved);
     let (_, i) = Vector::index_of(&d.addr, &payee);
     let ratio = *Vector::borrow(&d.ratio, i);
     FixedPoint32::multiply_u64(value, ratio)
@@ -134,7 +134,7 @@ module Burn {
 
   //////// GETTERS ////////
   public fun get_ratios(): (vector<address>, vector<u64>, vector<FixedPoint32::FixedPoint32>) acquires DepositInfo {
-    let d = borrow_global<DepositInfo>(CoreAddresses::VM_RESERVED_ADDRESS());
+    let d = borrow_global<DepositInfo>(@VMReserved);
     (*&d.addr, *&d.deposits, *&d.ratio)
 
   }

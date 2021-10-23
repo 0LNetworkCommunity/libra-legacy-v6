@@ -1,12 +1,12 @@
 address 0x1 {
 module Wallet {
-    use 0x1::CoreAddresses;
-    use 0x1::Vector;
-    use 0x1::Signer;
-    use 0x1::Errors;
-    use 0x1::DiemConfig;
-    use 0x1::Option::{Self,Option};
-    use 0x1::DiemSystem;
+    use DiemFramework::CoreAddresses;
+    use Std::Vector;
+    use Std::Signer;
+    use Std::Errors;
+    use DiemFramework::DiemConfig;
+    use Std::Option::{Self,Option};
+    use DiemFramework::DiemSystem;
     use 0x1::NodeWeight;
 
     const ERR_PREFIX: u64 = 023;

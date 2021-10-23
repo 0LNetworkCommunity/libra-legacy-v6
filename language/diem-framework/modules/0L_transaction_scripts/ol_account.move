@@ -8,9 +8,9 @@ address 0x1 {
 module AccountScripts {
 
     // use 0x1::Debug::print;
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     use 0x1::GAS::GAS;
-    use 0x1::ValidatorConfig;
+    use DiemFramework::ValidatorConfig;
   
     public(script) fun create_acc_user(
         sender: signer,

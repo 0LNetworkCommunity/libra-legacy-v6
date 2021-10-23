@@ -18,7 +18,7 @@ module DiemFramework::DiemSystem {
     use Std::Signer;
     use Std::Vector;
     //////// 0L ////////
-    use 0x1::FixedPoint32;
+    use Std::FixedPoint32;
     use 0x1::Stats;
     use 0x1::Cases;
     use 0x1::NodeWeight;    
@@ -654,7 +654,7 @@ module DiemFramework::DiemSystem {
     ) acquires CapabilityHolder {
         DiemTimestamp::assert_operating();
         assert(
-            Signer::address_of(account) == CoreAddresses::DIEM_ROOT_ADDRESS(),
+            Signer::address_of(account) == @DiemRoot,
             Errors::requires_role(120001)
         );
 
