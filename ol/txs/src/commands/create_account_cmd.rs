@@ -3,12 +3,12 @@
 #![allow(clippy::never_loop)]
 
 use abscissa_core::{Command, Options, Runnable};
-use ol_types::{account::UserConfigs, config::TxType};
+use ol_types::{config::TxType};
 use crate::{entrypoint, submit_tx::{tx_params_wrapper, maybe_submit}};
-use diem_types::transaction::{TransactionPayload, authenticator::AuthenticationKey};
+use diem_types::transaction::{authenticator::AuthenticationKey};
 use diem_transaction_builder::stdlib as transaction_builder;
-use std::{fs, path::PathBuf, process::exit};
-use std::io::Read;
+use std::{process::exit};
+
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
 
