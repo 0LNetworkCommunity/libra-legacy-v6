@@ -379,7 +379,7 @@ Get the constants for the current network
 
   <b>if</b> (<a href="Testnet.md#0x1_StagingNet_is_staging_net">StagingNet::is_staging_net</a>()) {
     <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
-      epoch_length: 60 * 40, // 20 mins, enough for a hard miner proof.
+      epoch_length: 60 * 40, // 40 mins, enough for a hard miner proof.
       max_validators_per_set: 100,
       subsidy_ceiling_gas: 8640000 * <a href="Globals.md#0x1_Globals_COIN_SCALING_FACTOR">COIN_SCALING_FACTOR</a>,
       vdf_difficulty: 120000000,

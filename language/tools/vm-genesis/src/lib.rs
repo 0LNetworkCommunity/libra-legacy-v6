@@ -7,7 +7,7 @@ mod genesis_context;
 pub mod genesis_gas_schedule;
 
 use anyhow::Error;
-use std::env;
+use std::{env, process::exit};
 
 use crate::{genesis_context::GenesisStateView, genesis_gas_schedule::INITIAL_GAS_SCHEDULE};
 use diem_crypto::{
@@ -47,7 +47,7 @@ use rand::prelude::*;
 use transaction_builder::encode_create_designated_dealer_script_function;
 
 //////// 0L ////////
-use ol_types::genesis_proof::GenesisMiningProof;
+use ol_types::{config::IS_PROD, genesis_proof::GenesisMiningProof};
 use diem_global_constants::{VDF_SECURITY_PARAM, delay_difficulty};
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
@@ -144,9 +144,7 @@ pub fn encode_genesis_change_set(
     //////// 0L ////////
     // println!("OK create_and_initialize_main_accounts =============== ");
 
-    let genesis_env = get_env();
-    println!("Initializing with env: {}", genesis_env);
-    if genesis_env != "prod" {
+    if !*IS_PROD {
         initialize_testnet(&mut session, &log_context);
     }
     //////// 0L end ////////
@@ -231,9 +229,7 @@ pub fn encode_recovery_genesis_changeset(
     //////// 0L ////////
     // println!("OK create_and_initialize_main_accounts =============== ");
 
-    let genesis_env = get_env();
-    println!("Initializing with env: {}", genesis_env);
-    if genesis_env != "prod" {
+    if !*IS_PROD {
         initialize_testnet(&mut session, &log_context);
     }
     //////// 0L end ////////
@@ -1073,21 +1069,26 @@ fn fund_operators(
         );
     }
 }
-//////// 0L ////////
-fn get_env() -> String {
-    match env::var("NODE_ENV") {
-        Ok(val) => val,
-        _ => "test".to_string(), // default to "test" if not set
-    }
-}
+
 
 //////// 0L ////////
 fn initialize_testnet(session: &mut Session<StateViewCache>, log_context: &impl LogContext) {
     let diem_root_address = account_config::diem_root_address();
-    let mut module_name = "Testnet";
-    if get_env() == "stage" {
-        module_name = "StagingNet";
+
+
+    let genesis_env = env::var("NODE_ENV").unwrap();
+    println!("Initializing with env: {}", genesis_env);
+    
+    //////// 0L ////////
+    let module_name = match genesis_env.as_ref() {
+        "test" => "Testnet",
+        "stage" => "StagingNet",
+        _ => {
+          println!("ERROR: env is ambiguous. Are you starting a test or staging network? Found env: {}", &genesis_env);
+          exit(1);
+        },
     };
+
     exec_function(
         session,
         log_context,
