@@ -11,7 +11,27 @@ module AccountScripts {
     use 0x1::DiemAccount;
     use 0x1::GAS::GAS;
     use 0x1::ValidatorConfig;
-  
+    use 0x1::Globals;
+
+    public(script) fun create_user_by_coin_tx(
+        sender: signer,
+        account: address,
+        authkey_prefix: vector<u8>,
+        unscaled_value: u64,
+    ) {
+        // IMPORTANT: the human representation of a value is unscaled. The user which expects to send 10 coins, will input that as an unscaled_value. This script converts it to the Move internal scale by multiplying by COIN_SCALING_FACTOR.
+        let value = unscaled_value * Globals::get_coin_scaling_factor();
+        let new_account_address = DiemAccount::create_user_account_with_coin(
+            &sender,
+            account,
+            authkey_prefix,
+            value,
+        );
+
+        // Check the account exists and the balance is 0
+        assert(DiemAccount::balance<GAS>(new_account_address) > 0, 01);
+    }
+
     public(script) fun create_acc_user(
         sender: signer,
         challenge: vector<u8>,

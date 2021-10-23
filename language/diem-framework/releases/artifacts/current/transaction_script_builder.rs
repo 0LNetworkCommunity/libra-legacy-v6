@@ -2020,6 +2020,12 @@ pub enum ScriptFunctionCall {
     /// * `Script::rotate_authentication_key_with_recovery_address`
     CreateRecoveryAddress {},
 
+    CreateUserByCoinTx {
+        account: AccountAddress,
+        authkey_prefix: Bytes,
+        unscaled_value: u64,
+    },
+
     /// # Summary
     /// Creates a Validator account. This transaction can only be sent by the Diem
     /// Root account.
@@ -3590,6 +3596,15 @@ impl ScriptFunctionCall {
                 add_all_currencies,
             ),
             CreateRecoveryAddress {} => encode_create_recovery_address_script_function(),
+            CreateUserByCoinTx {
+                account,
+                authkey_prefix,
+                unscaled_value,
+            } => encode_create_user_by_coin_tx_script_function(
+                account,
+                authkey_prefix,
+                unscaled_value,
+            ),
             CreateValidatorAccount {
                 sliding_nonce,
                 new_account_address,
@@ -4642,6 +4657,26 @@ pub fn encode_create_recovery_address_script_function() -> TransactionPayload {
         ident_str!("create_recovery_address").to_owned(),
         vec![],
         vec![],
+    ))
+}
+
+pub fn encode_create_user_by_coin_tx_script_function(
+    account: AccountAddress,
+    authkey_prefix: Vec<u8>,
+    unscaled_value: u64,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("AccountScripts").to_owned(),
+        ),
+        ident_str!("create_user_by_coin_tx").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&account).unwrap(),
+            bcs::to_bytes(&authkey_prefix).unwrap(),
+            bcs::to_bytes(&unscaled_value).unwrap(),
+        ],
     ))
 }
 
@@ -8213,6 +8248,20 @@ fn decode_create_recovery_address_script_function(
     }
 }
 
+fn decode_create_user_by_coin_tx_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::CreateUserByCoinTx {
+            account: bcs::from_bytes(script.args().get(0)?).ok()?,
+            authkey_prefix: bcs::from_bytes(script.args().get(1)?).ok()?,
+            unscaled_value: bcs::from_bytes(script.args().get(2)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_create_validator_account_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -9205,6 +9254,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "AccountAdministrationScriptscreate_recovery_address".to_string(),
             Box::new(decode_create_recovery_address_script_function),
+        );
+        map.insert(
+            "AccountScriptscreate_user_by_coin_tx".to_string(),
+            Box::new(decode_create_user_by_coin_tx_script_function),
         );
         map.insert(
             "AccountCreationScriptscreate_validator_account".to_string(),
