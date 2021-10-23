@@ -70,7 +70,7 @@ impl Runnable for ValWizardCmd {
         );
 
         if !self.skip_mining {
-          println!("\nYour first 0L proof-of-work will be mined now. Expect this to take up to 15 minutes on modern CPUs.\n");
+          println!("\nYour first 0L proof-of-work will be mined now. Expect this take at least 30 minutes on modern CPUs.\n");
         }
 
         let entry_args = entrypoint::get_args();

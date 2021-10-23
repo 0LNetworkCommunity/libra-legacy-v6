@@ -68,9 +68,11 @@ In your ~/.0L/ folder you will want to see:
 - /github_token.txt
 - /autopay_batch.json
 
-There is a DANGEROUS helper that will do this for you. 1) backup the files, 2) wipe ~/.0L and 3) sync your blocks and token back. You will be prompted for Y/N at each step.
+There are some makefiles which can help 1) backup the files, 2) wipe ~/.0L and 3) sync your blocks and token back. You will be prompted for Y/N at each step.
 ```
-make danger-delete-all
+make backup
+# if you your backup is called /0L_backup/, then you can restore with:
+make danger-restore
 ```
 # Registration
 

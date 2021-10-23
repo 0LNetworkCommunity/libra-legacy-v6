@@ -156,6 +156,7 @@ The Move modules in the Diem Framework can be bucketed in to a couple categories
 -  [`0x1::TowerState`](TowerState.md#0x1_TowerState)
 -  [`0x1::TowerStateScripts`](ol_miner_state.md#0x1_TowerStateScripts)
 -  [`0x1::TransactionFee`](TransactionFee.md#0x1_TransactionFee)
+-  [`0x1::TransferScripts`](ol_transfer.md#0x1_TransferScripts)
 -  [`0x1::TreasuryComplianceScripts`](TreasuryComplianceScripts.md#0x1_TreasuryComplianceScripts)
 -  [`0x1::Upgrade`](Upgrade.md#0x1_Upgrade)
 -  [`0x1::VASP`](VASP.md#0x1_VASP)
