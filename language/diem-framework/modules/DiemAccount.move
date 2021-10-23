@@ -1589,7 +1589,7 @@ print(&511);
 
         // value needs to be greater than boostrapping value
         assert(
-            value > BOOTSTRAP_COIN_VALUE,
+            value >= BOOTSTRAP_COIN_VALUE,
             Errors::limit_exceeded(EBELOW_MINIMUM_VALUE_BOOTSTRAP_COIN)
         );
 
@@ -1627,8 +1627,6 @@ print(&511);
     ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits {
       CoreAddresses::assert_vm(vm);
       onboarding_gas_transfer<GAS>(owner_sig, oper, BOOTSTRAP_COIN_VALUE);
-
-
     }
 
     /// Rotate the authentication key for the account under cap.account_address
