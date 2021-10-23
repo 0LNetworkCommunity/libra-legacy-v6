@@ -10,17 +10,18 @@
 //! See the `impl Configurable` below for how to specify the path to the
 //! application's configuration file.
 
-mod create_account_cmd;
-mod create_validator_cmd;
-mod oracle_upgrade_cmd;
-mod version_cmd;
 pub mod autopay_batch_cmd;
 pub mod demo_cmd;
+pub mod create_account_cmd;
+pub mod transfer_cmd;
 mod relay_cmd;
 mod valset_cmd;
 mod autopay_cmd;
 mod wallet_cmd;
 mod authkey_cmd;
+mod create_validator_cmd;
+mod oracle_upgrade_cmd;
+mod version_cmd;
 
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use ol::commands::CONFIG_FILE;
@@ -37,7 +38,8 @@ use self::{
     relay_cmd::RelayCmd,
     valset_cmd::ValSetCmd,
     wallet_cmd::WalletCmd,
-    authkey_cmd::AuthkeyCmd,    
+    authkey_cmd::AuthkeyCmd,
+    transfer_cmd::TransferCmd,   
 };
 use std::path::PathBuf;
 
@@ -51,6 +53,10 @@ pub enum TxsCmd {
     /// The `create-validator` subcommand
     #[options(help = "submit tx to create a validator from account.json file")]
     CreateValidator(CreateValidatorCmd),
+
+    /// Transfer balance between accounts
+    #[options(help = "rotate an account's authorization key")]
+    Transfer(TransferCmd),    
 
     /// The `oracle-upgrade` subcommand
     #[options(help = "submit an oracle transaction to upgrade stdlib")]
@@ -92,7 +98,7 @@ pub enum TxsCmd {
   
     /// The `authkey` subcommand to rotate an auth key (change mnemonic that controls address)
     #[options(help = "rotate an account's authorization key")]
-    Authkey(AuthkeyCmd),    
+    Authkey(AuthkeyCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

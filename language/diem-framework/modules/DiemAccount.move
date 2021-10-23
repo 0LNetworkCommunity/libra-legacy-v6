@@ -155,7 +155,6 @@ module DiemAccount {
 
     const MAX_U64: u128 = 18446744073709551615;
 
-    /////// 0L /////////
     /// The `DiemAccount` resource is not in the required state
     const EACCOUNT: u64 = 12010;
     /// Tried to deposit a coin whose value was zero
@@ -195,6 +194,10 @@ module DiemAccount {
     const EWRITESET_MANAGER: u64 = 120123;
     /// An account cannot be created at the reserved core code address of 0x1
     const ECANNOT_CREATE_AT_CORE_CODE: u64 = 120124;
+
+    //////// 0L ////////
+    const EBELOW_MINIMUM_VALUE_BOOTSTRAP_COIN: u64 = 120125;
+
     /////// 0L end /////////
 
     /// Prologue errors. These are separated out from the other errors in this
@@ -472,7 +475,7 @@ module DiemAccount {
         add_currencies_for_account<GAS>(&new_signer, false);
         make_account(new_signer, auth_key_prefix);
 
-        onboarding_gas_transfer<GAS>(sender, new_account_address);
+        onboarding_gas_transfer<GAS>(sender, new_account_address, BOOTSTRAP_COIN_VALUE);
         // Init the miner state
         // this verifies the VDF proof, which we use to rate limit account creation.
         // account will not be created if this step fails.
@@ -480,6 +483,26 @@ module DiemAccount {
         TowerState::init_miner_state(&new_signer, challenge, solution, difficulty, security);
         // set_slow(&new_signer);
         new_account_address
+    }
+
+    /////// 0L ////////
+    // Function code: 01
+    public fun create_user_account_with_coin(
+        sender: &signer,
+        new_account: address,
+        new_account_authkey_prefix: vector<u8>,
+        value: u64,
+    ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount {
+             
+        // let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
+        let new_signer = create_signer(new_account);
+        Roles::new_user_role_with_proof(&new_signer);
+        Event::publish_generator(&new_signer);
+        add_currencies_for_account<GAS>(&new_signer, false);
+        make_account(new_signer, new_account_authkey_prefix);
+
+        onboarding_gas_transfer<GAS>(sender, new_account, value);
+        new_account
     }
 
     /////// 0L ////////
@@ -576,9 +599,9 @@ module DiemAccount {
 
 
         // Transfer for owner
-        onboarding_gas_transfer<GAS>(sender, new_account_address);
+        onboarding_gas_transfer<GAS>(sender, new_account_address, BOOTSTRAP_COIN_VALUE);
         // Transfer for operator as well
-        onboarding_gas_transfer<GAS>(sender, op_address);
+        onboarding_gas_transfer<GAS>(sender, op_address, BOOTSTRAP_COIN_VALUE);
 
         let new_signer = create_signer(new_account_address);
         set_slow(&new_signer);
@@ -684,9 +707,9 @@ print(&509);
 print(&510);
         // the miner who is upgrading may have coins, but better safe...
         // Transfer for owner
-        onboarding_gas_transfer<GAS>(sender, new_account_address);
+        onboarding_gas_transfer<GAS>(sender, new_account_address, BOOTSTRAP_COIN_VALUE);
         // Transfer for operator as well
-        onboarding_gas_transfer<GAS>(sender, op_address);
+        onboarding_gas_transfer<GAS>(sender, op_address, BOOTSTRAP_COIN_VALUE);
 print(&510);
         let new_signer = create_signer(new_account_address);
         set_slow(&new_signer);
@@ -1557,19 +1580,27 @@ print(&511);
         //       using "spec schema" ?
     fun onboarding_gas_transfer<Token: store>(
         payer_sig: &signer,
-        payee: address
+        payee: address,
+        value: u64, 
     ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
         let payer_addr = Signer::address_of(payer_sig);
         let account_balance = borrow_global_mut<Balance<Token>>(payer_addr);
         let balance_coin = &mut account_balance.coin;
+
+        // value needs to be greater than boostrapping value
+        assert(
+            value >= BOOTSTRAP_COIN_VALUE,
+            Errors::limit_exceeded(EBELOW_MINIMUM_VALUE_BOOTSTRAP_COIN)
+        );
+
         // Doubly check balance exists.
         assert(
-            Diem::value(balance_coin) > BOOTSTRAP_COIN_VALUE,
+            Diem::value(balance_coin) > value,
             Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
         );
         // Should abort if the 
         let metadata = b"onboarding coin transfer";
-        let coin_to_deposit = Diem::withdraw(balance_coin, BOOTSTRAP_COIN_VALUE);
+        let coin_to_deposit = Diem::withdraw(balance_coin, value);
         deposit<Token>(
             payer_addr,
             payee,
@@ -1595,9 +1626,7 @@ print(&511);
       oper: address,
     ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits {
       CoreAddresses::assert_vm(vm);
-      onboarding_gas_transfer<GAS>(owner_sig, oper);
-
-
+      onboarding_gas_transfer<GAS>(owner_sig, oper, BOOTSTRAP_COIN_VALUE);
     }
 
     /// Rotate the authentication key for the account under cap.account_address

@@ -305,7 +305,7 @@ genesis:
 #### NODE MANAGEMENT ####
 start:
 # run in foreground. Only for testing, use a daemon for net.
-	NODE_ENV=error cargo run -p diem-node -- --config ${DATA_PATH}/validator.node.yaml
+	RUST_LOG=error cargo run -p diem-node -- --config ${DATA_PATH}/validator.node.yaml
 
 # Start a fullnode instead of a validator node
 start-full:

@@ -5,16 +5,57 @@
 
 
 
+-  [Function `create_user_by_coin_tx`](#0x1_AccountScripts_create_user_by_coin_tx)
 -  [Function `create_acc_user`](#0x1_AccountScripts_create_acc_user)
 -  [Function `create_acc_val`](#0x1_AccountScripts_create_acc_val)
 
 
 <pre><code><b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
+<b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig">0x1::ValidatorConfig</a>;
 </code></pre>
 
 
+
+<a name="0x1_AccountScripts_create_user_by_coin_tx"></a>
+
+## Function `create_user_by_coin_tx`
+
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_account.md#0x1_AccountScripts_create_user_by_coin_tx">create_user_by_coin_tx</a>(sender: signer, account: address, authkey_prefix: vector&lt;u8&gt;, unscaled_value: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_account.md#0x1_AccountScripts_create_user_by_coin_tx">create_user_by_coin_tx</a>(
+    sender: signer,
+    account: address,
+    authkey_prefix: vector&lt;u8&gt;,
+    unscaled_value: u64,
+) {
+    // IMPORTANT: the human representation of a value is unscaled. The user which expects <b>to</b> send 10 coins, will input that <b>as</b> an unscaled_value. This <b>script</b> converts it <b>to</b> the Move internal scale by multiplying by COIN_SCALING_FACTOR.
+    <b>let</b> value = unscaled_value * <a href="Globals.md#0x1_Globals_get_coin_scaling_factor">Globals::get_coin_scaling_factor</a>();
+    <b>let</b> new_account_address = <a href="DiemAccount.md#0x1_DiemAccount_create_user_account_with_coin">DiemAccount::create_user_account_with_coin</a>(
+        &sender,
+        account,
+        authkey_prefix,
+        value,
+    );
+
+    // Check the account <b>exists</b> and the balance is 0
+    <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(new_account_address) &gt; 0, 01);
+}
+</code></pre>
+
+
+
+</details>
 
 <a name="0x1_AccountScripts_create_acc_user"></a>
 
