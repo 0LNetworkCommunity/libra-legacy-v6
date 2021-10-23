@@ -101,7 +101,7 @@ module Globals {
 
       if (StagingNet::is_staging_net()) {
         return GlobalConstants {
-          epoch_length: 60 * 40, // 20 mins, enough for a hard miner proof.
+          epoch_length: 60 * 40, // 40 mins, enough for a hard miner proof.
           max_validators_per_set: 100,
           subsidy_ceiling_gas: 8640000 * COIN_SCALING_FACTOR,
           vdf_difficulty: 120000000,
