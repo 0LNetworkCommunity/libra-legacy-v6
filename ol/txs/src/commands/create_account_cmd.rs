@@ -7,7 +7,7 @@ use crate::{
     submit_tx::{maybe_submit, tx_params_wrapper},
 };
 use abscissa_core::{Command, Options, Runnable};
-use anyhow::{anyhow, Error};
+use anyhow::Error;
 use diem_transaction_builder::stdlib as transaction_builder;
 use diem_types::transaction::{SignedTransaction, authenticator::AuthenticationKey};
 use ol_types::config::TxType;
@@ -24,9 +24,16 @@ pub struct CreateAccountCmd {
 impl Runnable for CreateAccountCmd {
     fn run(&self) {
         let entry_args = entrypoint::get_args();
-        let authkey: AuthenticationKey = self.authkey.parse().unwrap();
+        let authkey = match self.authkey.parse::<AuthenticationKey>(){
+            Ok(a) => a,
+            Err(e) => {
+              println!("ERROR: could not parse this account address: {}, message: {}", self.authkey, &e.to_string());
+              exit(1);
+            },
+        };
+        
         match create_from_auth_and_coin(authkey, self.coins, entry_args.no_send, entry_args.save_path) {
-            Ok(_) => println!("Successs. Account created for authkey: {}", authkey),
+            Ok(_) => println!("Success. Account created for authkey: {}", authkey),
             Err(e) => {
               println!("ERROR: could not create account, message: {}", &e.to_string());
               exit(1);
@@ -49,7 +56,4 @@ pub fn create_from_auth_and_coin(authkey: AuthenticationKey, coins: u64, no_send
   );
 
   maybe_submit(script, &tx_params, no_send, save_path)
-    .map_err(|e| { 
-      anyhow!("ERROR: cannot send account creation transaction, message: {}", e.to_string())
-    })
 }

@@ -7,16 +7,16 @@ use crate::{
     submit_tx::{maybe_submit, tx_params_wrapper},
 };
 use abscissa_core::{Command, Options, Runnable};
-use anyhow::{anyhow, Error};
+use anyhow::Error;
 use diem_transaction_builder::stdlib as transaction_builder;
-use diem_types::transaction::{SignedTransaction, authenticator::AuthenticationKey};
+use diem_types::{account_address::AccountAddress, transaction::SignedTransaction};
 use ol_types::config::TxType;
 use std::{path::PathBuf, process::exit};
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct TransferCmd {
     #[options(short = "a", help = "the new user's long address (authentication key)")]
-    authkey: String,
+    destination_account: String,
     #[options(short = "c", help = "the amount of coins to send to new user")]
     coins: u64,
 }
@@ -24,9 +24,16 @@ pub struct TransferCmd {
 impl Runnable for TransferCmd {
     fn run(&self) {
         let entry_args = entrypoint::get_args();
-        let authkey: AuthenticationKey = self.authkey.parse().unwrap();
-        match create_from_auth_and_coin(authkey, self.coins, entry_args.no_send, entry_args.save_path) {
-            Ok(_) => println!("Successs. Account created for authkey: {}", authkey),
+        let destination = match self.destination_account.parse::<AccountAddress>(){
+            Ok(a) => a,
+            Err(e) => {
+              println!("ERROR: could not parse this account address: {}, message: {}", self.destination_account, &e.to_string());
+              exit(1);
+            },
+        };
+
+        match balance_transfer(destination, self.coins, entry_args.no_send, entry_args.save_path) {
+            Ok(_) => println!("Success. Balance transfer success: {}", self.destination_account),
             Err(e) => {
               println!("ERROR: could not create account, message: {}", &e.to_string());
               exit(1);
@@ -36,20 +43,14 @@ impl Runnable for TransferCmd {
 }
 
 /// create an account by sending coin to it
-pub fn create_from_auth_and_coin(authkey: AuthenticationKey, coins: u64, no_send: bool, save_path: Option<PathBuf>) -> Result<SignedTransaction, Error>{
+pub fn balance_transfer(destination: AccountAddress, coins: u64, no_send: bool, save_path: Option<PathBuf>) -> Result<SignedTransaction, Error>{
   let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
 
-  let account = authkey.derived_address();
-  let prefix = authkey.prefix();
   // NOTE: coins here do not have the scaling factor. Rescaling is the responsibility of the Move script. See the script in ol_accounts.move for detail.
-  let script = transaction_builder::encode_create_user_by_coin_tx_script_function(
-      account,
-      prefix.to_vec(),
+  let script = transaction_builder::encode_balance_transfer_script_function(
+      destination,
       coins,
   );
 
   maybe_submit(script, &tx_params, no_send, save_path)
-    .map_err(|e| { 
-      anyhow!("ERROR: cannot send account creation transaction, message: {}", e.to_string())
-    })
 }
