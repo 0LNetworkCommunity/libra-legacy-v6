@@ -2,77 +2,54 @@
 
 #![allow(clippy::never_loop)]
 
+use crate::{
+    entrypoint,
+    submit_tx::{maybe_submit, tx_params_wrapper},
+};
 use abscissa_core::{Command, Options, Runnable};
-use ol_types::{account::UserConfigs, config::TxType};
-use crate::{entrypoint, submit_tx::{tx_params_wrapper, maybe_submit}};
-use diem_types::transaction::{TransactionPayload, authenticator::AuthenticationKey};
+use anyhow::{anyhow, Error};
 use diem_transaction_builder::stdlib as transaction_builder;
-use std::{fs, path::PathBuf, process::exit};
-use std::io::Read;
+use diem_types::transaction::{SignedTransaction, authenticator::AuthenticationKey};
+use ol_types::config::TxType;
+use std::{path::PathBuf, process::exit};
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
-pub struct CreateAccountCmd {
-    // TODO: deprecate creation of accounts with proof
-    #[options(short = "f", help = "path of account.json")]
-    account_json_path: Option<PathBuf>,
+pub struct TransferCmd {
     #[options(short = "a", help = "the new user's long address (authentication key)")]
-    authkey: AuthenticationKey,
-    #[options(short = "c", help = "the new user's long address (authentication key)")]
+    authkey: String,
+    #[options(short = "c", help = "the amount of coins to send to new user")]
     coins: u64,
 }
 
-pub fn create_user_account_script_function(account_json_path: &str) -> TransactionPayload {
-
-    if let Some(path) = account_json_path {
-      let mut json_string = String::new();
-      let mut file = fs::File::open(account_json_path).expect("file should open read only");
-      file.read_to_string(&mut json_string)
-      .unwrap_or_else(|err| panic!("Error while reading file: [{}]", err));
-
-      let user: UserConfigs = serde_json::from_str(&json_string).expect("could not parse json file");
-      
-      transaction_builder::encode_create_acc_user_script_function(
-        user.block_zero.preimage.clone(),
-        user.block_zero.proof.clone(),
-        user.block_zero.difficulty(),
-        user.block_zero.security(),
-      );
-    } else {
-      let account = authkey.derived_address();
-      let prefix = authkey.prefix();
-      //NOTE: coins here do not have the scaling factor. Rescaling is the responsibility of the Move script.
-      // See the script in ol_accounts
-      transaction_builder::encode_create_acc_user_script_function(
-        user.block_zero.preimage.clone(),
-        user.block_zero.proof.clone(),
-        user.block_zero.difficulty(),
-        user.block_zero.security(),
-      );
-
-    }
-
-}
-
-impl Runnable for CreateAccountCmd {    
+impl Runnable for TransferCmd {
     fn run(&self) {
         let entry_args = entrypoint::get_args();
-        let account_json = self.account_json_path.to_str().unwrap();
-        let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
-
-        match maybe_submit(
-            create_user_account_script_function(account_json),
-            &tx_params,
-            entry_args.no_send,
-            entry_args.save_path,
-          ) {
+        let authkey: AuthenticationKey = self.authkey.parse().unwrap();
+        match create_from_auth_and_coin(authkey, self.coins, entry_args.no_send, entry_args.save_path) {
+            Ok(_) => println!("Successs. Account created for authkey: {}", authkey),
             Err(e) => {
-                println!(
-                    "ERROR: could not submit account creation transaction, message: \n{:?}", 
-                    &e
-                );
-                exit(1);
+              println!("ERROR: could not create account, message: {}", &e.to_string());
+              exit(1);
             },
-            _ => {}
-          }
+        }
     }
+}
+
+/// create an account by sending coin to it
+pub fn create_from_auth_and_coin(authkey: AuthenticationKey, coins: u64, no_send: bool, save_path: Option<PathBuf>) -> Result<SignedTransaction, Error>{
+  let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
+
+  let account = authkey.derived_address();
+  let prefix = authkey.prefix();
+  // NOTE: coins here do not have the scaling factor. Rescaling is the responsibility of the Move script. See the script in ol_accounts.move for detail.
+  let script = transaction_builder::encode_create_user_by_coin_tx_script_function(
+      account,
+      prefix.to_vec(),
+      coins,
+  );
+
+  maybe_submit(script, &tx_params, no_send, save_path)
+    .map_err(|e| { 
+      anyhow!("ERROR: cannot send account creation transaction, message: {}", e.to_string())
+    })
 }
