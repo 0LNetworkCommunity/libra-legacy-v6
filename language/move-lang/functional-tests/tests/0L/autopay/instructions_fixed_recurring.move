@@ -109,16 +109,13 @@ script {
 script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
-  // use 0x1::Debug::print;
   fun main(_vm: signer) {
     // alice will have paid 5% on the 10000 she received last epoch
     let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
-    // print(&ending_balance);
     assert(ending_balance == 1999600, 7357003);
 
     // check balance of recipients
     let ending_balance = DiemAccount::balance<GAS>(@{{carol}});
-    // print(&ending_balance);
     assert(ending_balance == 1000400, 7357004);
   }
 }

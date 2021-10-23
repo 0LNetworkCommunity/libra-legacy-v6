@@ -21,8 +21,6 @@ module TowerState {
     use 0x1::VDF;
     use 0x1::Vector;
 
-    use 0x1::Debug::print;
-
     const EPOCHS_UNTIL_ACCOUNT_CREATION: u64 = 6;
 
     /// A list of all miners' addresses 
@@ -176,7 +174,6 @@ module TowerState {
       difficulty: u64,
       security: u64,
     ) acquires TowerProofHistory, TowerList, TowerStats {
-      print(&001);
       // TODO: Previously in OLv3 is_genesis() returned true. 
       // How to check that this is part of genesis? is_genesis returns false here.
 
@@ -188,7 +185,6 @@ module TowerState {
       // TODO: Move this elsewhere? 
       // Initialize stats for first validator set from rust genesis. 
       let node_addr = Signer::address_of(miner_sig);
-      // print(&10003);
       Stats::init_address(vm_sig, node_addr);
     }
 
@@ -267,35 +263,29 @@ module TowerState {
       steady_state: bool
     ) acquires TowerProofHistory, TowerList, TowerStats {
       let miner_history = borrow_global<TowerProofHistory>(miner_addr);
-      print(&10010);
       assert(
         miner_history.count_proofs_in_epoch < Globals::get_epoch_mining_thres_upper(), 
         Errors::invalid_state(130108)
       );
 
-      print(&10020);
       // If not genesis proof, check hash to ensure the proof continues the chain
       if (steady_state) {
         //If not genesis proof, check hash 
         assert(&proof.challenge == &miner_history.previous_proof_hash,
         Errors::invalid_state(130109));      
       };
-      print(&10030);
 
       let valid = VDF::verify(&proof.challenge, &proof.solution, &proof.difficulty, &proof.security);
       assert(valid, Errors::invalid_argument(130110));
-      print(&10040);
 
       // add the miner to the miner list if not present
       increment_miners_list(miner_addr);
 
-      print(&10050);
       // Get a mutable ref to the current state
       let miner_history = borrow_global_mut<TowerProofHistory>(miner_addr);
 
       // update the miner proof history (result is used as seed for next proof)
       miner_history.previous_proof_hash = Hash::sha3_256(*&proof.solution);
-        print(&10050);
     
       // Increment the verified_tower_height
       if (steady_state) {
@@ -305,14 +295,10 @@ module TowerState {
         miner_history.verified_tower_height = 0;
         miner_history.count_proofs_in_epoch = 1
       };
-      print(&10060);
 
       miner_history.latest_epoch_mining = DiemConfig::get_current_epoch();
-      print(&10070);
 
       increment_stats(miner_addr);
-      print(&10080);
-
     }
 
     // Checks that the validator has been mining above the count threshold
@@ -431,7 +417,6 @@ module TowerState {
         solution: *solution,
         security,
       };
-      print(&10000);
       //submit the proof
       verify_and_update_state(Signer::address_of(miner_sig), proof, false);
     }

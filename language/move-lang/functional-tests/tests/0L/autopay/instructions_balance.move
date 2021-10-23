@@ -117,16 +117,13 @@ script {
 script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
-  // use 0x1::Debug::print;
 
   fun main(_vm: signer) {
     let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
-    // print(&ending_balance);
     assert(ending_balance == 9025001, 735711);
 
     // check balance of recipients
     let ending_balance = DiemAccount::balance<GAS>(@{{jim}});
-    // print(&ending_balance);
     assert(ending_balance == 1974999, 735712);
   }
 }

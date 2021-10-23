@@ -7,7 +7,6 @@ script {
     use 0x1::FullnodeSubsidy;
     use 0x1::DiemAccount;
     use 0x1::GAS::GAS;
-    // use 0x1::Debug::print;
 
     fun main(vm: signer) {
         let old_account_bal = DiemAccount::balance<GAS>(@{{frank}});

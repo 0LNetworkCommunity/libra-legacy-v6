@@ -88,14 +88,12 @@ script {
 script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
-  // use 0x1::Debug::print;
 
   fun main(vm: signer) {
     // send to community wallet Bob
     DiemAccount::vm_make_payment_no_limit<GAS>(@{{alice}}, @{{bob}}, 500000, x"", x"", &vm);
 
     let bal = DiemAccount::balance<GAS>(@{{bob}});
-    // print(&bal);
     assert(bal == 1500000, 7357001);
   }
 }
@@ -120,7 +118,6 @@ script {
 script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
-  // use 0x1::Debug::print;
 
   fun main(_vm: signer) {
     // should not change bob's balance
