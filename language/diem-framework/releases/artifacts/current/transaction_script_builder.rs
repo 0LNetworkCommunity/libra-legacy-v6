@@ -1612,7 +1612,7 @@ pub enum ScriptFunctionCall {
     AutopayEnable {},
 
     BalanceTransfer {
-        recipient: AccountAddress,
+        destination: AccountAddress,
         unscaled_value: u64,
     },
 
@@ -3509,9 +3509,9 @@ impl ScriptFunctionCall {
             AutopayDisable {} => encode_autopay_disable_script_function(),
             AutopayEnable {} => encode_autopay_enable_script_function(),
             BalanceTransfer {
-                recipient,
+                destination,
                 unscaled_value,
-            } => encode_balance_transfer_script_function(recipient, unscaled_value),
+            } => encode_balance_transfer_script_function(destination, unscaled_value),
             BurnTxnFees { coin_type } => encode_burn_txn_fees_script_function(coin_type),
             BurnWithAmount {
                 token,
@@ -4122,7 +4122,7 @@ pub fn encode_autopay_enable_script_function() -> TransactionPayload {
 }
 
 pub fn encode_balance_transfer_script_function(
-    recipient: AccountAddress,
+    destination: AccountAddress,
     unscaled_value: u64,
 ) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
@@ -4133,7 +4133,7 @@ pub fn encode_balance_transfer_script_function(
         ident_str!("balance_transfer").to_owned(),
         vec![],
         vec![
-            bcs::to_bytes(&recipient).unwrap(),
+            bcs::to_bytes(&destination).unwrap(),
             bcs::to_bytes(&unscaled_value).unwrap(),
         ],
     ))
@@ -8132,7 +8132,7 @@ fn decode_balance_transfer_script_function(
 ) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::BalanceTransfer {
-            recipient: bcs::from_bytes(script.args().get(0)?).ok()?,
+            destination: bcs::from_bytes(script.args().get(0)?).ok()?,
             unscaled_value: bcs::from_bytes(script.args().get(1)?).ok()?,
         })
     } else {
