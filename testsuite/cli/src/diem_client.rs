@@ -1,7 +1,7 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use anyhow::Result;
+use anyhow::{Error, Result};
 use diem_client::{
     BlockingClient, Response, WaitForTransactionError, 
     views, views::{TowerStateResourceView, OracleUpgradeStateView, TransactionView}

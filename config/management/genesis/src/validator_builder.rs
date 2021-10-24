@@ -374,17 +374,20 @@ impl ValidatorBuilder {
         let layout = Layout {
             owners: validators.iter().map(|v| v.owner()).collect(),
             operators: validators.iter().map(|v| v.operator()).collect(),
-            diem_root: DIEM_ROOT_NS.into(),
-            treasury_compliance: DIEM_ROOT_NS.into(),
+            /////// 0L /////////
+            // diem_root: DIEM_ROOT_NS.into(),
+            // treasury_compliance: DIEM_ROOT_NS.into(),
         };
         genesis_builder.set_layout(&layout)?;
         genesis_builder.set_move_modules(move_modules)?;
 
-        // Set Root and Treasury public keys
-        genesis_builder.set_root_key(Ed25519PublicKey::from(&root_keys.root_key))?;
-        genesis_builder.set_treasury_compliance_key(Ed25519PublicKey::from(
-            &root_keys.treasury_compliance_key,
-        ))?;
+        // 0L todo
+        /////// 0L /////////
+        // // Set Root and Treasury public keys
+        // genesis_builder.set_root_key(Ed25519PublicKey::from(&root_keys.root_key))?;
+        // genesis_builder.set_treasury_compliance_key(Ed25519PublicKey::from(
+        //     &root_keys.treasury_compliance_key,
+        // ))?;
 
         // Set Validator specific information
         for validator in validators {

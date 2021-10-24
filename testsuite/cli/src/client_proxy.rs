@@ -10,7 +10,7 @@ use anyhow::{bail, ensure, format_err, Error, Result};
 use compiler::Compiler;
 use diem_client::{
     stream::{StreamingClient, StreamingClientConfig},
-    views, views::{self}, StreamResult, WaitForTransactionError,
+    views, StreamResult, WaitForTransactionError,
 };
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
@@ -44,7 +44,6 @@ use diem_wallet::{io_utils, Mnemonic, WalletLibrary};
 use move_vm_test_utils::InMemoryStorage;
 use num_traits::{
     cast::{FromPrimitive, ToPrimitive},
-    identities::Zero,
 };
 use reqwest::Url;
 use rust_decimal::Decimal;
@@ -316,11 +315,11 @@ impl ClientProxy {
             println!("No user accounts");
         } else {
             for (ref index, ref account) in self.accounts.iter().enumerate() {
+                //////// 0L ////////
                 println!(
-                    "User account index: {}, address: {}, private_key: {:?}, sequence number: {}, status: {:?}",
+                    "User account index: {}, address: {}, sequence number: {}, status: {:?}",
                     index,
                     hex::encode(&account.address),
-                    //////// 0L ////////                    
                     // hex::encode(&self.wallet.get_private_key(&account.address).unwrap().to_bytes()),
                     account.sequence_number,
                     account.status,
@@ -1058,7 +1057,7 @@ impl ClientProxy {
         );
 
         if self.tc_account.is_some() {
-            let payload = transaction_builder::encode_create_parent_vasp_account_script_function(
+            let script = transaction_builder::encode_create_parent_vasp_account_script(
                 type_tag_for_currency_code(currency_code.clone()),
                 0,
                 receiver,
@@ -1077,7 +1076,7 @@ impl ClientProxy {
                     println!(">> Creating recipient account before minting from faucet");
                     // This needs to be blocking since the mint can't happen until it completes
                     self.association_transaction_with_local_tc_account(
-                        TransactionPayload::Script(payload),
+                        TransactionPayload::Script(script),
                         true,
                     )?;
                     self.accounts.get_mut(pos).unwrap().status = AccountStatus::Persisted;
@@ -1086,7 +1085,7 @@ impl ClientProxy {
                 // We can't determine the account state. So try and create the account, but
                 // if it already exists don't error.
                 let _result = self.association_transaction_with_local_tc_account(
-                    TransactionPayload::Script(payload),
+                    TransactionPayload::Script(script),
                     true,
                 );
             } // else, the account has already been created -- do nothing
@@ -1095,7 +1094,7 @@ impl ClientProxy {
         println!(">> Sending coins from faucet");
         match self.testnet_designated_dealer_account {
             Some(_) => {
-                let payload = transaction_builder::encode_peer_to_peer_with_metadata_script_function(
+                let script = transaction_builder::encode_peer_to_peer_with_metadata_script(
                     type_tag_for_currency_code(currency_code),
                     receiver,
                     num_coins,
@@ -1103,7 +1102,7 @@ impl ClientProxy {
                     vec![],
                 );
                 self.association_transaction_with_local_testnet_dd_account(
-                    TransactionPayload::Script(payload),
+                    TransactionPayload::Script(script),
                     is_blocking,
                 )
             }
@@ -1184,7 +1183,7 @@ impl ClientProxy {
         );
         match self.diem_root_account {
             Some(_) => self.association_transaction_with_local_diem_root_account(
-                TransactionPayload::Script(transaction_builder::encode_update_diem_version_script_function(
+                TransactionPayload::Script(transaction_builder::encode_update_diem_version_script(
                     self.diem_root_account.as_ref().unwrap().sequence_number,
                     space_delim_strings[1].parse::<u64>().unwrap(),
                 )),
@@ -1326,7 +1325,7 @@ impl ClientProxy {
             vec![],
         );
         let txn = self.create_txn_to_submit(
-            program
+            program,
             sender,
             max_gas_amount,    /* max_gas_amount */
             gas_unit_price,    /* gas_unit_price */

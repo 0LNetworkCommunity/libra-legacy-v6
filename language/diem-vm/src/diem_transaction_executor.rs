@@ -507,7 +507,7 @@ impl DiemVM {
             block_metadata.clone(), 
             &txn_data, 
             &mut gas_status, 
-            log_context
+            // log_context
         )?;
 
         // //////// 0L ////////
@@ -518,7 +518,7 @@ impl DiemVM {
             block_metadata.clone(), 
             &txn_data, 
             &mut gas_status, 
-            log_context
+            // log_context
         )?;
             
         SYSTEM_TRANSACTIONS_EXECUTED.inc();

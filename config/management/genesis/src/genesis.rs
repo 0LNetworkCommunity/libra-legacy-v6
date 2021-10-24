@@ -20,6 +20,8 @@ pub struct Genesis {
     pub backend: SharedBackend,
     #[structopt(long)]
     pub path: Option<PathBuf>,
+    #[structopt(long)]
+    pub layout_path: Option<PathBuf>, //////// 0L ////////
 }
 
 impl Genesis {

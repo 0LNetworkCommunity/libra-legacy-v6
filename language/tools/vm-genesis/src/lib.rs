@@ -23,7 +23,7 @@ use diem_types::{
         self,
         events::{CreateAccountEvent},
     },
-    chain_id::{ChainId, NamedChain},
+    chain_id::ChainId,
     contract_event::ContractEvent,
     on_chain_config::{VMPublishingOption, DIEM_MAX_KNOWN_VERSION},
     transaction::{
@@ -122,7 +122,7 @@ pub fn encode_genesis_change_set(
     let genesis_env = get_env();
     println!("Initializing with env: {}", genesis_env);
     if genesis_env != "prod" {
-        initialize_testnet(&mut session, &log_context);
+        initialize_testnet(&mut session);
     }
     //////// 0L end ////////
 
@@ -132,10 +132,10 @@ pub fn encode_genesis_change_set(
     //////// 0L ////////
     println!("OK create_and_initialize_owners_operators =============== ");
 
-    distribute_genesis_subsidy(&mut session, &log_context);
+    distribute_genesis_subsidy(&mut session);
     println!("OK Genesis subsidy =============== ");
 
-    fund_operators(&mut session, &log_context, &operator_assignments);
+    // fund_operators(&mut session, &operator_assignments); // 0L todo
     //////// 0L end ////////
     
     reconfigure(&mut session);
@@ -158,6 +158,9 @@ pub fn encode_genesis_change_set(
     ChangeSet::new(write_set, events)
 }
 
+// 0L todo: Double check 0L patch for this fn.
+// Reason, the diem `fn encode_genesis_change_set` which we copy and modify to
+// create this fn, changed significantly.
 //////// 0L ////////
 pub fn encode_recovery_genesis_changeset(
     val_assignments: &[ValRecover],
@@ -167,19 +170,18 @@ pub fn encode_recovery_genesis_changeset(
     // vm_publishing_option: VMPublishingOption,
     chain: u8,
 ) -> Result<ChangeSet, Error> {
-    let mut stdlib_module_tuples: Vec<(ModuleId, &Vec<u8>)> = Vec::new();
+    let mut stdlib_modules = Vec::new();
     // create a data view for move_vm
     let mut state_view = GenesisStateView::new();
-    for module in current_module_blobs() {
-        let module_id = CompiledModule::deserialize(module).unwrap().self_id();
-        state_view.add_module(&module_id, &module);
-        stdlib_module_tuples.push((module_id, module));
+    for module_bytes in current_module_blobs() {
+        let module = CompiledModule::deserialize(module_bytes).unwrap();
+        state_view.add_module(&module.self_id(), &module_bytes);
+        stdlib_modules.push(module)
     }
     let data_cache = StateViewCache::new(&state_view);
 
-    let move_vm = MoveVM::new();
+    let move_vm = MoveVM::new(diem_vm::natives::diem_natives()).unwrap();
     let mut session = move_vm.new_session(&data_cache);
-    let log_context = NoContextLog::new();
 
     //////// 0L ////////
     let xdx_ty = TypeTag::Struct(StructTag {
@@ -191,7 +193,6 @@ pub fn encode_recovery_genesis_changeset(
 
     create_and_initialize_main_accounts(
         &mut session,
-        &log_context,
         None,
         None,
         VMPublishingOption::open(),
@@ -204,34 +205,32 @@ pub fn encode_recovery_genesis_changeset(
     let genesis_env = get_env();
     println!("Initializing with env: {}", genesis_env);
     if genesis_env != "prod" {
-        initialize_testnet(&mut session, &log_context);
+        initialize_testnet(&mut session);
     }
     //////// 0L end ////////
 
     // generate the genesis WriteSet
-    //     // generate the genesis WriteSet
     recovery_owners_operators(
-        &mut session,
-        &log_context,
-        &val_assignments,
-        &operator_registrations,
-        &val_set,
+        &mut session, val_assignments, operator_registrations, val_set
     );
+
     //////// 0L ////////
-    println!("OK create_and_initialize_owners_operators =============== ");
+    println!("OK recovery_owners_operators =============== ");
 
-    // distribute_genesis_subsidy(&mut session, &log_context);
-    // println!("OK Genesis subsidy =============== ");
+    distribute_genesis_subsidy(&mut session);
+    println!("OK Genesis subsidy =============== ");
+
+    // fund_operators(&mut session, &operator_assignments); // 0L todo
     //////// 0L end ////////
-
-    reconfigure(&mut session, &log_context);
+    
+    reconfigure(&mut session);
 
     let (mut changeset1, mut events1) = session.finish().unwrap();
 
     let state_view = GenesisStateView::new();
     let data_cache = StateViewCache::new(&state_view);
     let mut session = move_vm.new_session(&data_cache);
-    publish_stdlib(&mut session, &log_context, stdlib_module_tuples);
+    publish_stdlib(&mut session, Modules::new(stdlib_modules.iter()));
     let (changeset2, events2) = session.finish().unwrap();
 
     changeset1.squash(changeset2).unwrap();
@@ -505,7 +504,7 @@ pub struct OperRecover {
 /// validator config on-chain.
 fn recovery_owners_operators(
     session: &mut Session<StateViewCache>,
-    log_context: &impl LogContext,
+    // log_context: &impl LogContext,
     val_assignments: &[ValRecover],
     operator_registrations: &[OperRecover],
     val_set: &[AccountAddress],
@@ -531,7 +530,7 @@ fn recovery_owners_operators(
             .into_script_function();
         exec_script_function(
             session,
-            log_context,
+            // log_context,
             diem_root_address,
             &create_owner_script,
         );
@@ -540,7 +539,7 @@ fn recovery_owners_operators(
         // TODO: Where's this function recover_miner_state. Lost from v4 to v5?
         // exec_function(
         //     session,
-        //     log_context,
+        //     // log_context,
         //     "TowerState",
         //     "recover_miner_state", 
         //     vec![],
@@ -552,7 +551,7 @@ fn recovery_owners_operators(
 
         exec_function(
             session,
-            log_context,
+            // log_context,
             "ValidatorUniverse",
             "genesis_helper",
             vec![],
@@ -576,7 +575,7 @@ fn recovery_owners_operators(
             .into_script_function();
         exec_script_function(
             session,
-            log_context,
+            // log_context,
             diem_root_address,
             &create_operator_script,
         );
@@ -594,7 +593,7 @@ fn recovery_owners_operators(
             .into_script_function();
         exec_script_function(
             session,
-            log_context,
+            // log_context,
             i.val_account, //TODO: check the signer is correct
             &create_operator_script,
         );
@@ -613,7 +612,7 @@ fn recovery_owners_operators(
             .into_script_function();
         exec_script_function(
             session,
-            log_context,
+            // log_context,
             i.operator_account,
             &create_operator_script,
         );
@@ -627,7 +626,7 @@ fn recovery_owners_operators(
         // // let owner_address = diem_config::utils::validator_owner_account_from_name(owner_name);
         exec_function(
             session,
-            log_context,
+            // log_context,
             "DiemSystem",
             "add_validator",
             vec![],
@@ -831,13 +830,13 @@ pub fn generate_test_genesis(
 /// Genesis subsidy to genesis set
 fn distribute_genesis_subsidy(
     session: &mut Session<StateViewCache>,
-    log_context: &impl LogContext,
+    // log_context: &impl LogContext,
 ) {
     let diem_root_address = account_config::diem_root_address();
 
     exec_function(
         session,
-        log_context,
+        // log_context,
         "Subsidy",
         "genesis",
         vec![],
@@ -845,36 +844,38 @@ fn distribute_genesis_subsidy(
     )
 }
 
-//////// 0L /////////
-fn fund_operators(
-  session: &mut Session<StateViewCache>,
-  log_context: &impl LogContext,
-  operator_assignments: &[OperatorAssignment],
-) {
-    println!("4 ======== Add owner to validator set");
-    // Add each validator to the validator set
-    for (owner_key, _owner_name, _op_assignment, _genesis_proof, operator_account) in
-        operator_assignments
-    {
-        let diem_root_address = account_config::diem_root_address();
+// 0L todo
+// //////// 0L /////////
+// fn fund_operators(
+//   session: &mut Session<StateViewCache>,
+//   // log_context: &impl LogContext,
+//   operator_assignments: &[OperatorAssignment],
+// ) {
+//     println!("4 ======== Add owner to validator set");
+//     // Add each validator to the validator set
+//     for (owner_key, _owner_name, _op_assignment, _genesis_proof, operator_account) in
+//         operator_assignments
+//     {
+//         let diem_root_address = account_config::diem_root_address();
 
-        let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
-        let owner_address = staged_owner_auth_key.derived_address();
-        // give the operator balance to be able to send txs for owner, e.g. tower-builder
-        exec_function(
-            session,
-            log_context,
-            "DiemAccount",
-            "genesis_fund_operator",
-            vec![],
-            serialize_values(&vec![
-                MoveValue::Signer(diem_root_address),
-                MoveValue::Signer(owner_address),
-                MoveValue::Address(*operator_account),
-            ]),
-        );
-    }
-}
+//         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
+//         let owner_address = staged_owner_auth_key.derived_address();
+//         // give the operator balance to be able to send txs for owner, e.g. tower-builder
+//         exec_function(
+//             session,
+//             // log_context,
+//             "DiemAccount",
+//             "genesis_fund_operator",
+//             vec![],
+//             serialize_values(&vec![
+//                 MoveValue::Signer(diem_root_address),
+//                 MoveValue::Signer(owner_address),
+//                 MoveValue::Address(*operator_account),
+//             ]),
+//         );
+//     }
+// }
+
 //////// 0L ////////
 fn get_env() -> String {
     match env::var("NODE_ENV") {
@@ -925,7 +926,9 @@ impl Default for GenesisMiningProof {
 }
 
 //////// 0L ////////
-fn initialize_testnet(session: &mut Session<StateViewCache>, log_context: &impl LogContext) {
+fn initialize_testnet(
+    session: &mut Session<StateViewCache>/*, log_context: &impl LogContext*/
+) {
     let diem_root_address = account_config::diem_root_address();
     let mut module_name = "Testnet";
     if get_env() == "stage" {
@@ -933,7 +936,7 @@ fn initialize_testnet(session: &mut Session<StateViewCache>, log_context: &impl 
     };
     exec_function(
         session,
-        log_context,
+        // log_context,
         module_name,
         "initialize",
         vec![],

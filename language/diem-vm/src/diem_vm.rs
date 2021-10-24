@@ -12,7 +12,7 @@ use crate::{
     transaction_metadata::TransactionMetadata,
 };
 use diem_crypto::HashValue;
-// use diem_framework_releases::import_stdlib;
+use diem_framework_releases::import_stdlib;
 use diem_logger::prelude::*;
 use diem_state_view::StateView;
 use diem_types::{
