@@ -135,7 +135,8 @@ pub fn encode_genesis_change_set(
     distribute_genesis_subsidy(&mut session);
     println!("OK Genesis subsidy =============== ");
 
-    // fund_operators(&mut session, &operator_assignments); // 0L todo
+    // 0L todo diem-1.4.1
+    // fund_operators(&mut session, &operator_assignments);
     //////// 0L end ////////
     
     reconfigure(&mut session);
@@ -158,7 +159,7 @@ pub fn encode_genesis_change_set(
     ChangeSet::new(write_set, events)
 }
 
-// 0L todo: Double check 0L patch for this fn.
+// 0L todo diem-1.4.1: Double check 0L patch for this fn.
 // Reason, the diem `fn encode_genesis_change_set` which we copy and modify to
 // create this fn, changed significantly.
 //////// 0L ////////
@@ -220,7 +221,8 @@ pub fn encode_recovery_genesis_changeset(
     distribute_genesis_subsidy(&mut session);
     println!("OK Genesis subsidy =============== ");
 
-    // fund_operators(&mut session, &operator_assignments); // 0L todo
+    // 0L todo diem-1.4.1
+    // fund_operators(&mut session, &operator_assignments);
     //////// 0L end ////////
     
     reconfigure(&mut session);
@@ -844,7 +846,7 @@ fn distribute_genesis_subsidy(
     )
 }
 
-// 0L todo
+// 0L todo diem-1.4.1
 // //////// 0L /////////
 // fn fund_operators(
 //   session: &mut Session<StateViewCache>,

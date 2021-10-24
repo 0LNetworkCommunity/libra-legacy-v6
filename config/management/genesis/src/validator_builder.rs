@@ -38,7 +38,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-const DIEM_ROOT_NS: &str = "diem_root";
+// 0L todo diem-1.4.1
+// const DIEM_ROOT_NS: &str = "diem_root"; /////// 0L /////////
 const OPERATOR_NS: &str = "_operator";
 const OWNER_NS: &str = "_owner";
 
@@ -216,7 +217,7 @@ impl ValidatorBuilder {
             OnDiskStorage::new(self.config_directory.join("genesis-storage.json"));
         let (genesis, waypoint) = Self::genesis_ceremony(
             &mut genesis_storage,
-            &root_keys,
+            // &root_keys, /////// 0L /////////
             &validators,
             self.move_modules,
         )?;
@@ -364,7 +365,7 @@ impl ValidatorBuilder {
 
     fn genesis_ceremony(
         genesis_storage: &mut OnDiskStorage,
-        root_keys: &RootKeys,
+        // root_keys: &RootKeys, /////// 0L /////////
         validators: &[ValidatorConfig],
         move_modules: Vec<Vec<u8>>,
     ) -> Result<(Transaction, Waypoint)> {
@@ -381,7 +382,7 @@ impl ValidatorBuilder {
         genesis_builder.set_layout(&layout)?;
         genesis_builder.set_move_modules(move_modules)?;
 
-        // 0L todo
+        // 0L todo diem-1.4.1
         /////// 0L /////////
         // // Set Root and Treasury public keys
         // genesis_builder.set_root_key(Ed25519PublicKey::from(&root_keys.root_key))?;

@@ -8,8 +8,9 @@ use crate::{
     views::{
         AccountStateWithProofView, AccountTransactionsWithProofView, AccountView,
         AccumulatorConsistencyProofView, CurrencyInfoView, EventByVersionWithProofView, EventView,
-        EventWithProofView, MetadataView, StateProofView, TransactionListView, TransactionView,
-        TransactionsWithProofsView,
+        EventWithProofView, MetadataView, StateProofView, TowerStateResourceView,
+        TransactionListView, TransactionView, TransactionsWithProofsView, 
+        OracleUpgradeStateView
     },
 };
 use anyhow::Result;
@@ -19,7 +20,7 @@ use diem_json_rpc_types::request::{
     GetAccountTransactionsParams, GetAccountTransactionsWithProofsParams,
     GetAccumulatorConsistencyProofParams, GetCurrenciesParams, GetEventByVersionWithProof,
     GetEventsParams, GetEventsWithProofsParams, GetMetadataParams, GetNetworkStatusParams,
-    GetStateProofParams, GetTransactionsParams, GetTransactionsWithProofsParams, MethodRequest,
+    GetStateProofParams, GetTowerStateParams, GetTransactionsParams, GetTransactionsWithProofsParams, MethodRequest,
     SubmitParams,
 };
 use diem_mempool::{MempoolClientSender, SubmissionStatus};
@@ -189,6 +190,13 @@ impl<'a> Handler<'a> {
             MethodRequest::GetEventByVersionWithProof(params) => {
                 serde_json::to_value(self.get_event_by_version_with_proof(params).await?)?
             }
+            //////// 0L ////////
+            MethodRequest::GetTowerStateView(params) => {
+                serde_json::to_value(self.get_miner_state(params).await?)?
+            }
+            MethodRequest::GetOracleUpgradeStateView() => {
+                serde_json::to_value(self.get_oracle_upgrade_state().await?)?
+            }            
         };
         Ok(response)
     }
@@ -427,4 +435,19 @@ impl<'a> Handler<'a> {
             version,
         )
     }
+
+    //////// 0L ////////
+    async fn get_miner_state(
+        &self,
+        params: GetTowerStateParams,
+    ) -> Result<TowerStateResourceView, JsonRpcError> {
+        data::get_miner_state(self.service.db.borrow(), self.version(), params.account)
+    }
+
+    //////// 0L ////////
+    async fn get_oracle_upgrade_state(
+        &self,
+    ) -> Result<OracleUpgradeStateView, JsonRpcError> {
+        data::get_oracle_upgrade_state(self.service.db.borrow(), self.version())
+    }    
 }

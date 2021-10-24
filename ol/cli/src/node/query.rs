@@ -9,7 +9,7 @@ use move_core_types::{
     language_storage::{StructTag, TypeTag},
 };
 use num_format::{Locale, ToFormattedString};
-use resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct, AnnotatedMoveValue};
+use diem_resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct, AnnotatedMoveValue};
 use super::node::Node;
 
 const SCALING_FACTOR: u64 = 1_000_000;
