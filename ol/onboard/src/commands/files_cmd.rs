@@ -5,6 +5,7 @@
 use std::{fs::File, io::Write, path::{PathBuf}};
 use crate::{application::app_config};
 use abscissa_core::{Command, Options, Runnable};
+use anyhow::Error;
 use diem_genesis_tool::ol_node_files;
 use diem_types::waypoint::Waypoint;
 use ol_types::config::AppCfg;
@@ -75,11 +76,11 @@ pub fn genesis_files(
 }
 
 /// fetch files from github
-pub fn get_files(
+pub fn fetch_genesis_files_from_repo(
     home_dir: PathBuf,
     github_org: &Option<String>,
     repo: &Option<String>
-) {
+) -> Result<PathBuf, Error> {
     let github_org = github_org.clone().unwrap_or("OLSF".to_string());
     let repo = repo.clone().unwrap_or("genesis-registration".to_string());
 
@@ -92,16 +93,18 @@ pub fn get_files(
 
     let w_res = reqwest::blocking::get(&format!("{}genesis_waypoint.txt", base_url));
     let w_path = &home_dir.join("genesis_waypoint");
-    let mut w_file = File::create(&w_path).expect("couldn't create file");
-    let w_content =  w_res.unwrap().text().unwrap();
-    w_file.write_all(w_content.as_bytes()).unwrap();
+    let mut w_file = File::create(&w_path)?;
+    let w_content =  w_res.unwrap().text()?;
+    w_file.write_all(w_content.as_bytes())?;
     println!("genesis waypoint fetched, file saved to: {:?}", w_path);
 
     let g_res = reqwest::blocking::get(&format!("{}genesis.blob", base_url));
+    // default path for genesis.blob
     let g_path = &home_dir.join("genesis.blob");
     let mut g_file = File::create(&g_path).expect("couldn't create file");
     let g_content =  g_res.unwrap().bytes().unwrap().to_vec(); //.text().unwrap();
-    g_file.write_all(g_content.as_slice()).unwrap();
+    g_file.write_all(g_content.as_slice())?;
 
     println!("genesis transactions fetched, file saved to: {:?}", g_path);
+    Ok(g_path.to_owned())
 }
