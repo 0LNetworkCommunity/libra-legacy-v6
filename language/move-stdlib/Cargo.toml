@@ -35,7 +35,8 @@ diem-global-constants = { path = "../../config/global-constants"}
 hex = "0.4.2"
 diem-types = { path = "../../types"}
 vdf = { path="../../ol/verifiable_delay/vdf"}
-# 0L Todo: 
+           
+# 0L todo diem-1.4.1
 # Build error: error[E0277]: `[(decimal::Decimal, u64); 6]` is not an iterator
 # rust_decimal= { version = "1.14.2", default-features = true, features = ["maths"] }
 

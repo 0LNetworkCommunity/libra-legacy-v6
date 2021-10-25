@@ -8,9 +8,10 @@ use ol_types::{
     autopay::{AutoPayResource, AutoPayView}, 
     validator_config::{ValidatorConfigResource, ValidatorConfigView}
 };
-use resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator, NullStateView};
+use diem_resource_viewer::{AnnotatedAccountStateBlob, DiemValueAnnotator};
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
+use move_vm_test_utils::InMemoryStorage;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 /// information on the owner account of this node.
@@ -172,14 +173,18 @@ impl Node {
     }
 
     /// Return a full Move-annotated account resource struct
+    /// Copied from: testsuite/cli/src/client_proxy.rs :: get_annotate_account_blob() 
     pub fn get_annotate_account_blob(
         &mut self,
-        account: AccountAddress,
+        address: AccountAddress,
     ) -> Result<(Option<AnnotatedAccountStateBlob>, Version)> {
-        let (blob, ver) = self.client.get_account_state_blob(&account)?;
+        let (blob, ver) = self.client.get_account_state_blob(&address)?;
         if let Some(account_blob) = blob {
-            let state_view = NullStateView::default();
-            let annotator = MoveValueAnnotator::new(&state_view);
+            let mut storage = InMemoryStorage::new();
+            for (blob, module) in diem_framework_releases::current_modules_with_blobs() {
+                storage.publish_or_overwrite_module(module.self_id(), blob.clone())
+            }
+            let annotator = DiemValueAnnotator::new(&storage);
             let annotate_blob =
                 annotator.view_account_state(&AccountState::try_from(&account_blob)?)?;
             Ok((Some(annotate_blob), ver))

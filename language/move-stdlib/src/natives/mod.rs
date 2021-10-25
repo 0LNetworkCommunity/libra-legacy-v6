@@ -7,7 +7,7 @@ pub mod hash;
 pub mod signer;
 pub mod vector;
 //////// 0L ////////
-/// // 0L todo
+ // 0L todo diem-1.4.1
 // pub mod vdf; // todo: rename to ol_vdf
 // pub mod ol_decimal;
 
