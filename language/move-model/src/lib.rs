@@ -3,7 +3,8 @@
 
 #![forbid(unsafe_code)]
 
-use codespan_reporting::diagnostic::{Diagnostic, Label};
+use codespan::ByteIndex;
+use codespan_reporting::diagnostic::{Diagnostic, Label, LabelStyle};
 use itertools::Itertools;
 #[allow(unused_imports)]
 use log::warn;
@@ -12,18 +13,24 @@ use std::collections::BTreeSet;
 use builder::module_builder::ModuleBuilder;
 use move_binary_format::{
     access::ModuleAccess,
-    file_format::{CompiledModule, FunctionDefinitionIndex, StructDefinitionIndex},
+    check_bounds::BoundsChecker,
+    file_format::{
+        self_module_name, AddressIdentifierIndex, CompiledModule, CompiledScript,
+        FunctionDefinition, FunctionDefinitionIndex, FunctionHandle, FunctionHandleIndex,
+        IdentifierIndex, ModuleHandle, ModuleHandleIndex, Signature, SignatureIndex,
+        StructDefinitionIndex, Visibility,
+    },
 };
-use move_core_types::account_address::AccountAddress;
+use move_core_types::{account_address::AccountAddress, identifier::Identifier};
 use move_ir_types::location::sp;
 use move_lang::{
+    self,
     compiled_unit::{self, CompiledUnit},
-    errors::Errors,
+    diagnostics::Diagnostics,
     expansion::ast::{self as E, Address, ModuleDefinition, ModuleIdent, ModuleIdent_},
-    move_continue_up_to, move_parse,
     parser::ast::{self as P, ModuleName as ParserModuleName},
-    shared::{unique_map::UniqueMap, AddressBytes, CompilationEnv, Flags},
-    Pass as MovePass, PassResult as MovePassResult,
+    shared::{unique_map::UniqueMap, AddressBytes},
+    Compiler, Flags, PASS_COMPILATION, PASS_EXPANSION, PASS_PARSER,
 };
 use num::{BigUint, Num};
 
@@ -65,38 +72,45 @@ pub fn run_model_builder_with_compilation_flags(
     flags: Flags,
 ) -> anyhow::Result<GlobalEnv> {
     let mut env = GlobalEnv::new();
-    let mut compilation_env = CompilationEnv::new(flags);
 
     // Step 1: parse the program to get comments and a separation of targets and dependencies.
-    let (files, pprog_and_comments_res) =
-        move_parse(&compilation_env, move_sources, deps_dir, None)?;
-    let (comment_map, parsed_prog) = match pprog_and_comments_res {
-        Err(errors) => {
+    let (files, comments_and_compiler_res) = Compiler::new(move_sources, deps_dir)
+        .set_flags(flags)
+        .run::<PASS_PARSER>()?;
+    let (comment_map, compiler) = match comments_and_compiler_res {
+        Err(diags) => {
             // Add source files so that the env knows how to translate locations of parse errors
             for fname in files.keys().sorted() {
                 let fsrc = &files[fname];
-                env.add_source(fname, fsrc, /* is_dep */ false);
+                env.add_source(fname.as_str(), fsrc, /* is_dep */ false);
             }
-            add_move_lang_errors(&mut env, errors);
+            add_move_lang_diagnostics(&mut env, diags);
             return Ok(env);
         }
         Ok(res) => res,
     };
+    let (compiler, parsed_prog) = compiler.into_ast();
     // Add source files for targets and dependencies
-    let dep_sources: BTreeSet<_> = parsed_prog
+    let dep_files: BTreeSet<_> = parsed_prog
         .lib_definitions
         .iter()
         .map(|def| def.file())
         .collect();
     for fname in files.keys().sorted() {
         let fsrc = &files[fname];
-        env.add_source(fname, fsrc, dep_sources.contains(fname));
+        env.add_source(fname.as_str(), fsrc, dep_files.contains(fname));
     }
 
     // Add any documentation comments found by the Move compiler to the env.
     for (fname, documentation) in comment_map {
         let file_id = env.get_file_id(fname).expect("file name defined");
-        env.add_documentation(file_id, documentation);
+        env.add_documentation(
+            file_id,
+            documentation
+                .into_iter()
+                .map(|(idx, s)| (ByteIndex(idx), s))
+                .collect(),
+        )
     }
 
     // Step 2: run the compiler up to expansion
@@ -111,56 +125,58 @@ pub fn run_model_builder_with_compilation_flags(
             lib_definitions: vec![],
         }
     };
-    let expansion_ast = match move_continue_up_to(
-        &mut compilation_env,
-        None,
-        MovePassResult::Parser(parsed_prog),
-        MovePass::Expansion,
-    ) {
-        Err(errors) => {
-            add_move_lang_errors(&mut env, errors);
+    let (compiler, expansion_ast) = match compiler.at_parser(parsed_prog).run::<PASS_EXPANSION>() {
+        Err(diags) => {
+            add_move_lang_diagnostics(&mut env, diags);
             return Ok(env);
         }
-        Ok(MovePassResult::Expansion(eprog)) => eprog,
-        Ok(_) => unreachable!(),
+        Ok(compiler) => compiler.into_ast(),
     };
     // Extract the module/script closure
+    let mut visited_addresses = BTreeSet::new();
     let mut visited_modules = BTreeSet::new();
-    for (mident, mdef) in expansion_ast.modules.key_cloned_iter() {
+    for (_, mident, mdef) in &expansion_ast.modules {
         let src_file = mdef.loc.file();
-        if !dep_sources.contains(src_file) {
-            collect_related_modules_recursive(mident, &expansion_ast.modules, &mut visited_modules);
+        if !dep_files.contains(&src_file) {
+            collect_related_modules_recursive(
+                mident,
+                &expansion_ast.modules,
+                &mut visited_addresses,
+                &mut visited_modules,
+            );
         }
     }
     for sdef in expansion_ast.scripts.values() {
         let src_file = sdef.loc.file();
-        if !dep_sources.contains(src_file) {
-            for (mident, _neighbor) in sdef.immediate_neighbors.key_cloned_iter() {
+        if !dep_files.contains(&src_file) {
+            for (_, mident, _neighbor) in &sdef.immediate_neighbors {
                 collect_related_modules_recursive(
                     mident,
                     &expansion_ast.modules,
+                    &mut visited_addresses,
                     &mut visited_modules,
                 );
             }
-        }
-    }
-    let mut visited_addresses = BTreeSet::new();
-    for mident in &visited_modules {
-        if let Address::Named(n) = &mident.value.address {
-            visited_addresses.insert(n);
+            for addr in &sdef.used_addresses {
+                if let Address::Named(n) = &addr {
+                    visited_addresses.insert(&n.value);
+                }
+            }
         }
     }
 
     // Step 3: selective compilation.
     let expansion_ast = {
+        let addresses = expansion_ast
+            .addresses
+            .filter_map(|n, val| visited_addresses.contains(n.value.as_str()).then(|| val));
         let E::Program {
-            addresses,
+            addresses: _,
             modules,
             scripts,
         } = expansion_ast;
-        let addresses = addresses.filter_map(|n, val| visited_addresses.contains(&n).then(|| val));
         let modules = modules.filter_map(|mident, mut mdef| {
-            visited_modules.contains(&mident).then(|| {
+            visited_modules.contains(&mident.value).then(|| {
                 mdef.is_source_module = true;
                 mdef
             })
@@ -172,23 +188,20 @@ pub fn run_model_builder_with_compilation_flags(
         }
     };
     // Run the compiler fully to the compiled units
-    let units = match move_continue_up_to(
-        &mut compilation_env,
-        None,
-        MovePassResult::Expansion(expansion_ast.clone()),
-        MovePass::Compilation,
-    ) {
-        Err(errors) => {
-            add_move_lang_errors(&mut env, errors);
+    let units = match compiler
+        .at_expansion(expansion_ast.clone())
+        .run::<PASS_COMPILATION>()
+    {
+        Err(diags) => {
+            add_move_lang_diagnostics(&mut env, diags);
             return Ok(env);
         }
-        Ok(MovePassResult::Compilation(units)) => units,
-        Ok(_) => unreachable!(),
+        Ok(compiler) => compiler.into_compiled_units(),
     };
     // Check for bytecode verifier errors (there should not be any)
-    let (verified_units, errors) = compiled_unit::verify_units(units);
-    if !errors.is_empty() {
-        add_move_lang_errors(&mut env, errors);
+    let (verified_units, diags) = compiled_unit::verify_units(units);
+    if !diags.is_empty() {
+        add_move_lang_diagnostics(&mut env, diags);
         return Ok(env);
     }
 
@@ -198,23 +211,34 @@ pub fn run_model_builder_with_compilation_flags(
     Ok(env)
 }
 
-fn collect_related_modules_recursive(
-    mident: ModuleIdent,
-    modules: &UniqueMap<ModuleIdent, ModuleDefinition>,
-    visited: &mut BTreeSet<ModuleIdent>,
+fn collect_used_addresses<'a>(
+    used_addresses: &'a BTreeSet<Address>,
+    visited_addresses: &mut BTreeSet<&'a str>,
 ) {
-    if visited.contains(&mident) {
+    for addr in used_addresses {
+        if let Address::Named(n) = &addr {
+            visited_addresses.insert(&n.value);
+        }
+    }
+}
+
+fn collect_related_modules_recursive<'a>(
+    mident: &'a ModuleIdent_,
+    modules: &'a UniqueMap<ModuleIdent, ModuleDefinition>,
+    visited_addresses: &mut BTreeSet<&'a str>,
+    visited_modules: &mut BTreeSet<ModuleIdent_>,
+) {
+    if visited_modules.contains(&mident) {
         return;
     }
-    let mdef = modules.get(&mident).unwrap();
-    let deps: BTreeSet<_> = mdef
-        .immediate_neighbors
-        .key_cloned_iter()
-        .map(|(mident, _neighbor)| mident)
-        .collect();
-    visited.insert(mident);
-    for next_mident in deps {
-        collect_related_modules_recursive(next_mident, modules, visited);
+    let mdef = modules.get_(mident).unwrap();
+    if let Address::Named(n) = &mident.address {
+        visited_addresses.insert(&n.value);
+    }
+    collect_used_addresses(&mdef.used_addresses, visited_addresses);
+    visited_modules.insert(mident.clone());
+    for (_, next_mident, _) in &mdef.immediate_neighbors {
+        collect_related_modules_recursive(next_mident, modules, visited_addresses, visited_modules);
     }
 }
 
@@ -259,17 +283,138 @@ pub fn run_bytecode_model_builder<'a>(
     Ok(env)
 }
 
-fn add_move_lang_errors(env: &mut GlobalEnv, errors: Errors) {
-    let mk_label = |env: &mut GlobalEnv, err: (move_ir_types::location::Loc, String)| {
-        let loc = env.to_loc(&err.0);
-        Label::new(loc.file_id(), loc.span(), err.1)
+fn add_move_lang_diagnostics(env: &mut GlobalEnv, diags: Diagnostics) {
+    let mk_label = |is_primary: bool, (loc, msg): (move_ir_types::location::Loc, String)| {
+        let style = if is_primary {
+            LabelStyle::Primary
+        } else {
+            LabelStyle::Secondary
+        };
+        let loc = env.to_loc(&loc);
+        Label::new(style, loc.file_id(), loc.span()).with_message(msg)
     };
-    for mut error in errors {
-        let primary = error.remove(0);
-        let diag = Diagnostic::new_error("", mk_label(env, primary))
-            .with_secondary_labels(error.into_iter().map(|e| mk_label(env, e)));
+    for (severity, msg, primary_label, secondary_labels) in diags.into_codespan_format() {
+        let diag = Diagnostic::new(severity)
+            .with_labels(vec![mk_label(true, primary_label)])
+            .with_message(msg)
+            .with_labels(
+                secondary_labels
+                    .into_iter()
+                    .map(|e| mk_label(false, e))
+                    .collect(),
+            );
         env.add_diag(diag);
     }
+}
+
+#[allow(deprecated)]
+fn script_into_module(compiled_script: CompiledScript) -> CompiledModule {
+    let mut script = compiled_script;
+
+    // Add the "<SELF>" identifier if it isn't present.
+    //
+    // Note: When adding an element to the table, in theory it is possible for the index
+    // to overflow. This will not be a problem if we get rid of the script/module conversion.
+    let self_ident_idx = match script
+        .identifiers
+        .iter()
+        .position(|ident| ident.as_ident_str() == self_module_name())
+    {
+        Some(idx) => IdentifierIndex::new(idx as u16),
+        None => {
+            let idx = IdentifierIndex::new(script.identifiers.len() as u16);
+            script
+                .identifiers
+                .push(Identifier::new(self_module_name().to_string()).unwrap());
+            idx
+        }
+    };
+
+    // Add a dummy adress if none exists.
+    let dummy_addr = AccountAddress::new([0xff; AccountAddress::LENGTH]);
+    let dummy_addr_idx = match script
+        .address_identifiers
+        .iter()
+        .position(|addr| addr == &dummy_addr)
+    {
+        Some(idx) => AddressIdentifierIndex::new(idx as u16),
+        None => {
+            let idx = AddressIdentifierIndex::new(script.address_identifiers.len() as u16);
+            script.address_identifiers.push(dummy_addr);
+            idx
+        }
+    };
+
+    // Add a self module handle.
+    let self_module_handle_idx = match script
+        .module_handles
+        .iter()
+        .position(|handle| handle.address == dummy_addr_idx && handle.name == self_ident_idx)
+    {
+        Some(idx) => ModuleHandleIndex::new(idx as u16),
+        None => {
+            let idx = ModuleHandleIndex::new(script.module_handles.len() as u16);
+            script.module_handles.push(ModuleHandle {
+                address: dummy_addr_idx,
+                name: self_ident_idx,
+            });
+            idx
+        }
+    };
+
+    // Find the index to the empty signature [].
+    // Create one if it doesn't exist.
+    let return_sig_idx = match script.signatures.iter().position(|sig| sig.0.is_empty()) {
+        Some(idx) => SignatureIndex::new(idx as u16),
+        None => {
+            let idx = SignatureIndex::new(script.signatures.len() as u16);
+            script.signatures.push(Signature(vec![]));
+            idx
+        }
+    };
+
+    // Create a function handle for the main function.
+    let main_handle_idx = FunctionHandleIndex::new(script.function_handles.len() as u16);
+    script.function_handles.push(FunctionHandle {
+        module: self_module_handle_idx,
+        name: self_ident_idx,
+        parameters: script.parameters,
+        return_: return_sig_idx,
+        type_parameters: script.type_parameters,
+    });
+
+    // Create a function definition for the main function.
+    let main_def = FunctionDefinition {
+        function: main_handle_idx,
+        visibility: Visibility::Script,
+        acquires_global_resources: vec![],
+        code: Some(script.code),
+    };
+
+    let module = CompiledModule {
+        version: script.version,
+        module_handles: script.module_handles,
+        self_module_handle_idx,
+        struct_handles: script.struct_handles,
+        function_handles: script.function_handles,
+        field_handles: vec![],
+        friend_decls: vec![],
+
+        struct_def_instantiations: vec![],
+        function_instantiations: script.function_instantiations,
+        field_instantiations: vec![],
+
+        signatures: script.signatures,
+
+        identifiers: script.identifiers,
+        address_identifiers: script.address_identifiers,
+        constant_pool: script.constant_pool,
+
+        struct_defs: vec![],
+        function_defs: vec![main_def],
+    };
+    BoundsChecker::verify_module(&module).expect("invalid bounds in module");
+    module
 }
 
 #[allow(deprecated)]
@@ -322,6 +467,7 @@ fn run_spec_checker(env: &mut GlobalEnv, units: Vec<CompiledUnit>, mut eprog: E:
                         attributes,
                         loc,
                         immediate_neighbors,
+                        used_addresses,
                         function_name,
                         constants,
                         function,
@@ -354,6 +500,7 @@ fn run_spec_checker(env: &mut GlobalEnv, units: Vec<CompiledUnit>, mut eprog: E:
                         loc,
                         dependency_order: usize::MAX,
                         immediate_neighbors,
+                        used_addresses,
                         is_source_module: true,
                         friends: UniqueMap::new(),
                         structs: UniqueMap::new(),
@@ -361,7 +508,7 @@ fn run_spec_checker(env: &mut GlobalEnv, units: Vec<CompiledUnit>, mut eprog: E:
                         functions,
                         specs,
                     };
-                    let module = script.into_module().1;
+                    let module = script_into_module(script);
                     (ident, expanded_module, module, source_map, function_infos)
                 }
             })

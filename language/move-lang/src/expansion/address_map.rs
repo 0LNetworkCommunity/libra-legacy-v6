@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    diag,
     parser::ast::{self as P},
     shared::{unique_map::UniqueMap, *},
     FullyCompiledProgram,
@@ -82,11 +83,13 @@ fn definition(context: &mut Context, def: &P::Definition) {
                 name
             );
             let prev_loc = prev_value.loc;
-            let prev_msg = "Previously assigned here".to_owned();
+            let prev_msg = "Address previously assigned here";
 
-            context
-                .env
-                .add_error(vec![(loc, msg), (prev_loc, prev_msg)]);
+            context.env.add_diag(diag!(
+                Declarations::InvalidAddress,
+                (loc, msg),
+                (prev_loc, prev_msg)
+            ));
         }
     }
 }

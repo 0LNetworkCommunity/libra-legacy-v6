@@ -6,11 +6,13 @@ use log::{debug, info, warn};
 
 use anyhow::bail;
 use bytecode_verifier::script_signature;
-use diem_types::transaction::{
-    ArgumentABI, ScriptABI, ScriptFunctionABI, TransactionScriptABI, TypeArgumentABI,
-};
 use heck::SnakeCase;
-use move_core_types::{identifier::IdentStr, language_storage::TypeTag};
+use move_command_line_common::files::MOVE_COMPILED_EXTENSION;
+use move_core_types::{
+    abi::{ArgumentABI, ScriptABI, ScriptFunctionABI, TransactionScriptABI, TypeArgumentABI},
+    identifier::IdentStr,
+    language_storage::TypeTag,
+};
 use move_model::{
     model::{FunctionEnv, FunctionVisibility, GlobalEnv, ModuleEnv},
     ty,
@@ -189,7 +191,7 @@ impl<'env> Abigen<'env> {
         let mut path = PathBuf::from(&self.options.compiled_script_directory);
         path.push(
             PathBuf::from(module_env.get_source_path())
-                .with_extension("mv")
+                .with_extension(MOVE_COMPILED_EXTENSION)
                 .file_name()
                 .expect("file name"),
         );

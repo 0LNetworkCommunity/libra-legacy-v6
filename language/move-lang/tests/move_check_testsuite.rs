@@ -1,53 +1,21 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use move_command_line_common::{
+    env::read_bool_env_var,
+    testing::{format_diff, read_env_update_baseline, EXP_EXT, OUT_EXT},
+};
 use move_lang::{
-    command_line::read_bool_env_var,
-    errors::*,
-    move_continue_up_to, move_parse, parser,
-    shared::{CompilationEnv, Flags},
-    unit_test, CommentMap, Pass, PassResult,
+    diagnostics::*, shared::Flags, unit_test, CommentMap, Compiler, SteppedCompiler, PASS_CFGIR,
+    PASS_PARSER,
 };
 use move_lang_test_utils::*;
 use std::{fs, path::Path};
 
-const OUT_EXT: &str = "out";
-const EXP_EXT: &str = "exp";
-const TEST_EXT: &str = "unit_test";
-
+/// Shared flag to keep any temporary results of the test
 const KEEP_TMP: &str = "KEEP";
-const UPDATE_BASELINE: &str = "UPDATE_BASELINE";
-const UB: &str = "UB";
 
-fn format_diff(expected: String, actual: String) -> String {
-    use difference::*;
-
-    let changeset = Changeset::new(&expected, &actual, "\n");
-
-    let mut ret = String::new();
-
-    for seq in changeset.diffs {
-        match &seq {
-            Difference::Same(x) => {
-                ret.push_str(x);
-                ret.push('\n');
-            }
-            Difference::Add(x) => {
-                ret.push_str("\x1B[92m");
-                ret.push_str(x);
-                ret.push_str("\x1B[0m");
-                ret.push('\n');
-            }
-            Difference::Rem(x) => {
-                ret.push_str("\x1B[91m");
-                ret.push_str(x);
-                ret.push_str("\x1B[0m");
-                ret.push('\n');
-            }
-        }
-    }
-    ret
-}
+const TEST_EXT: &str = "unit_test";
 
 fn move_check_testsuite(path: &Path) -> datatest_stable::Result<()> {
     // A test is marked that it should also be compiled in test mode by having a `path.unit_test`
@@ -73,44 +41,41 @@ fn move_check_testsuite(path: &Path) -> datatest_stable::Result<()> {
 
     let exp_path = path.with_extension(EXP_EXT);
     let out_path = path.with_extension(OUT_EXT);
-    run_test(path, &exp_path, &out_path, Flags::empty())
+    run_test(path, &exp_path, &out_path, Flags::empty())?;
+    Ok(())
 }
 
 // Runs all tests under the test/testsuite directory.
-fn run_test(
-    path: &Path,
-    exp_path: &Path,
-    out_path: &Path,
-    flags: Flags,
-) -> datatest_stable::Result<()> {
+fn run_test(path: &Path, exp_path: &Path, out_path: &Path, flags: Flags) -> anyhow::Result<()> {
     let targets: Vec<String> = vec![path.to_str().unwrap().to_owned()];
-    let deps = move_stdlib::move_stdlib_files();
+    let mut deps = move_stdlib::move_stdlib_files();
+    deps.extend(move_stdlib::unit_testing_files());
 
-    let compilation_env = CompilationEnv::new(flags);
-    let (files, pprog_and_comments_res) = move_parse(&compilation_env, &targets, &deps, None)?;
-    let errors = match move_check_for_errors(compilation_env, pprog_and_comments_res) {
-        Err(errors) | Ok(errors) => errors,
+    let (files, comments_and_compiler_res) = Compiler::new(&targets, &deps)
+        .set_flags(flags)
+        .run::<PASS_PARSER>()?;
+    let diags = match move_check_for_errors(comments_and_compiler_res) {
+        Err(diags) | Ok(diags) => diags,
     };
 
-    let has_errors = !errors.is_empty();
-    let error_buffer = if has_errors {
-        move_lang::errors::report_errors_to_buffer(files, errors)
+    let has_diags = !diags.is_empty();
+    let diag_buffer = if has_diags {
+        move_lang::diagnostics::report_diagnostics_to_buffer(&files, diags)
     } else {
         vec![]
     };
 
-    let save_errors = read_bool_env_var(KEEP_TMP);
-    let update_baseline = read_bool_env_var(UPDATE_BASELINE) || read_bool_env_var(UB);
+    let save_diags = read_bool_env_var(KEEP_TMP);
+    let update_baseline = read_env_update_baseline();
 
-    fs::write(out_path, error_buffer)?;
-    let rendered_errors = fs::read_to_string(out_path)?;
-    if !save_errors {
-        fs::remove_file(out_path)?;
+    let rendered_diags = std::str::from_utf8(&diag_buffer)?;
+    if save_diags {
+        fs::write(out_path, &diag_buffer)?;
     }
 
     if update_baseline {
-        if has_errors {
-            fs::write(exp_path, rendered_errors)?;
+        if has_diags {
+            fs::write(exp_path, rendered_diags)?;
         } else if exp_path.is_file() {
             fs::remove_file(exp_path)?;
         }
@@ -118,27 +83,30 @@ fn run_test(
     }
 
     let exp_exists = exp_path.is_file();
-    match (has_errors, exp_exists) {
+    match (has_diags, exp_exists) {
         (false, false) => Ok(()),
         (true, false) => {
-            let msg = format!("Expected success. Unexpected errors:\n{}", rendered_errors);
-            error(msg)
+            let msg = format!(
+                "Expected success. Unexpected diagnostics:\n{}",
+                rendered_diags
+            );
+            anyhow::bail!(msg)
         }
         (false, true) => {
             let msg = format!(
-                "Unexpected success. Expected errors:\n{}",
+                "Unexpected success. Expected diagnostics:\n{}",
                 fs::read_to_string(exp_path)?
             );
-            error(msg)
+            anyhow::bail!(msg)
         }
         (true, true) => {
-            let expected_errors = fs::read_to_string(exp_path)?;
-            if rendered_errors != expected_errors {
+            let expected_diags = fs::read_to_string(exp_path)?;
+            if rendered_diags != expected_diags {
                 let msg = format!(
-                    "Expected errors differ from actual errors:\n{}",
-                    format_diff(expected_errors, rendered_errors),
+                    "Expected diagnostics differ from actual diagnostics:\n{}",
+                    format_diff(expected_diags, rendered_diags),
                 );
-                error(msg)
+                anyhow::bail!(msg)
             } else {
                 Ok(())
             }
@@ -147,35 +115,18 @@ fn run_test(
 }
 
 fn move_check_for_errors(
-    mut compilation_env: CompilationEnv,
-    pprog_and_comments_res: Result<(CommentMap, parser::ast::Program), Errors>,
-) -> Result<Errors, Errors> {
-    let (_, prog) = pprog_and_comments_res?;
-    let cfgir = match move_continue_up_to(
-        &mut compilation_env,
-        None,
-        PassResult::Parser(prog),
-        Pass::CFGIR,
-    )? {
-        PassResult::CFGIR(cfgir) => cfgir,
-        _ => unreachable!(),
-    };
-
+    comments_and_compiler_res: Result<(CommentMap, SteppedCompiler<'_, PASS_PARSER>), Diagnostics>,
+) -> Result<Diagnostics, Diagnostics> {
+    let (_, compiler) = comments_and_compiler_res?;
+    let (mut compiler, cfgir) = compiler.run::<PASS_CFGIR>()?.into_ast();
+    let compilation_env = compiler.compilation_env();
     if compilation_env.flags().is_testing() {
-        unit_test::plan_builder::construct_test_plan(&mut compilation_env, &cfgir);
+        unit_test::plan_builder::construct_test_plan(compilation_env, &cfgir);
     }
 
-    compilation_env.check_errors()?;
-
-    match move_continue_up_to(
-        &mut compilation_env,
-        None,
-        PassResult::CFGIR(cfgir),
-        Pass::Compilation,
-    )? {
-        PassResult::Compilation(units) => Ok(move_lang::compiled_unit::verify_units(units).1),
-        _ => unreachable!(),
-    }
+    compilation_env.check_diags()?;
+    let units = compiler.at_cfgir(cfgir).build()?;
+    Ok(move_lang::compiled_unit::verify_units(units).1)
 }
 
 datatest_stable::harness!(move_check_testsuite, MOVE_CHECK_DIR, r".*\.move$");

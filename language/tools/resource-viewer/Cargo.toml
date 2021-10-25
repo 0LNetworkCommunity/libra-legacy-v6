@@ -11,13 +11,10 @@ edition = "2018"
 
 [dependencies]
 bcs = "0.1.2"
-diem-state-view = { path = "../../../storage/state-view" }
-diem-types = { path = "../../../types"  }
 diem-workspace-hack = { path = "../../../common/workspace-hack" }
 move-core-types = { path = "../../move-core/types" }
 move-vm-runtime = { path = "../../move-vm/runtime" }
 move-vm-types = { path = "../../move-vm/types" }
-diem-framework-releases = { path = "../../diem-framework/releases" }
 move-binary-format = { path = "../../move-binary-format" }
 serde_json = "1.0.64"
 serde = { version = "1.0.124", features = ["derive", "rc"] }

@@ -12,19 +12,15 @@
 #[cfg(test)]
 mod node_type_test;
 
-use crate::{
-    metrics::{DIEM_JELLYFISH_INTERNAL_ENCODED_BYTES, DIEM_JELLYFISH_LEAF_ENCODED_BYTES},
-    nibble_path::NibblePath,
-    ROOT_NIBBLE_HEIGHT,
-};
+use crate::metrics::{DIEM_JELLYFISH_INTERNAL_ENCODED_BYTES, DIEM_JELLYFISH_LEAF_ENCODED_BYTES};
 use anyhow::{ensure, Context, Result};
 use byteorder::{BigEndian, LittleEndian, ReadBytesExt, WriteBytesExt};
 use diem_crypto::{
     hash::{CryptoHash, SPARSE_MERKLE_PLACEHOLDER_HASH},
     HashValue,
 };
-use diem_nibble::Nibble;
 use diem_types::{
+    nibble::{nibble_path::NibblePath, Nibble, ROOT_NIBBLE_HEIGHT},
     proof::{SparseMerkleInternalNode, SparseMerkleLeafNode},
     transaction::Version,
 };
@@ -345,7 +341,9 @@ impl InternalNode {
         for (nibble, child) in self.children.iter() {
             let i = u8::from(*nibble);
             existence_bitmap |= 1u16 << i;
-            leaf_bitmap |= (child.is_leaf as u16) << i;
+            if child.is_leaf {
+                leaf_bitmap |= 1u16 << i;
+            }
         }
         // `leaf_bitmap` must be a subset of `existence_bitmap`.
         assert_eq!(existence_bitmap | leaf_bitmap, existence_bitmap);
@@ -355,13 +353,10 @@ impl InternalNode {
     /// Given a range [start, start + width), returns the sub-bitmap of that range.
     fn range_bitmaps(start: u8, width: u8, bitmaps: (u16, u16)) -> (u16, u16) {
         assert!(start < 16 && width.count_ones() == 1 && start % width == 0);
+        assert!(width <= 16 && (start + width) <= 16);
         // A range with `start == 8` and `width == 4` will generate a mask 0b0000111100000000.
-        let mask = if width == 16 {
-            0xffff
-        } else {
-            assert!(width <= 16);
-            (1 << width) - 1
-        } << start;
+        // use as converting to smaller integer types when 'width == 16'
+        let mask = (((1u32 << width) - 1) << start) as u16;
         (bitmaps.0 & mask, bitmaps.1 & mask)
     }
 
@@ -377,7 +372,7 @@ impl InternalNode {
         if range_existence_bitmap == 0 {
             // No child under this subtree
             *SPARSE_MERKLE_PLACEHOLDER_HASH
-        } else if range_existence_bitmap.count_ones() == 1 && (range_leaf_bitmap != 0 || width == 1)
+        } else if width == 1 || (range_existence_bitmap.count_ones() == 1 && range_leaf_bitmap != 0)
         {
             // Only 1 leaf child under this subtree or reach the lowest level
             let only_child_index = Nibble::from(range_existence_bitmap.trailing_zeros() as u8);
@@ -392,11 +387,15 @@ impl InternalNode {
                 .unwrap()
                 .hash
         } else {
-            let left_child = self.merkle_hash(start, width / 2, (existence_bitmap, leaf_bitmap));
+            let left_child = self.merkle_hash(
+                start,
+                width / 2,
+                (range_existence_bitmap, range_leaf_bitmap),
+            );
             let right_child = self.merkle_hash(
                 start + width / 2,
                 width / 2,
-                (existence_bitmap, leaf_bitmap),
+                (range_existence_bitmap, range_leaf_bitmap),
             );
             SparseMerkleInternalNode::new(left_child, right_child).hash()
         }
@@ -449,8 +448,8 @@ impl InternalNode {
             if range_existence_bitmap == 0 {
                 // No child in this range.
                 return (None, siblings);
-            } else if range_existence_bitmap.count_ones() == 1
-                && (range_leaf_bitmap.count_ones() == 1 || width == 1)
+            } else if width == 1
+                || (range_existence_bitmap.count_ones() == 1 && range_leaf_bitmap != 0)
             {
                 // Return the only 1 leaf child under this subtree or reach the lowest level
                 // Even this leaf child is not the n-th child, it should be returned instead of
@@ -680,8 +679,11 @@ fn serialize_u64_varint(mut num: u64, binary: &mut Vec<u8>) {
     for _ in 0..8 {
         let low_bits = num as u8 & 0x7f;
         num >>= 7;
-        let more = (num > 0) as u8;
-        binary.push(low_bits | more << 7);
+        let more = match num {
+            0 => 0u8,
+            _ => 0x80,
+        };
+        binary.push(low_bits | more);
         if more == 0 {
             return;
         }
@@ -700,9 +702,8 @@ where
     let mut num = 0u64;
     for i in 0..8 {
         let byte = reader.read_u8()?;
-        let more = (byte & 0x80) != 0;
         num |= u64::from(byte & 0x7f) << (i * 7);
-        if !more {
+        if (byte & 0x80) == 0 {
             return Ok(num);
         }
     }

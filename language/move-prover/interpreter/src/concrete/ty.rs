@@ -1,6 +1,18 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+//! The type system in move-model is a fat type system that is designed to cover all cases that can
+//! possibly appear in the whole bytecode transformation pipeline. Natually, this means that some
+//! types are no longer applicable when the Move program reaches the end of the transformation.
+//!
+//! The type system for the interpreter is a strict subset of what is offered in the move-model.
+//! In other word, it is slimmed down version of the type system in move-model and a very restricted
+//! set of types that are only applicable to the interpreter. Doing so enables us to write code in a
+//! more precise way. For example, a type argument can only be a `BaseType` and never a reference.
+//! Therefore, `BaseType` is preferred over `Type` for if a struct field/function argument holds
+//! a type argument (e.g., `struct FunctionContext {ty_args: Vec<BaseType>, ...}` is preferred over
+//! `ty_args: Vec<Type>`, as the former is more descriptive and less error prone).
+
 use std::fmt;
 
 use bytecode::stackless_bytecode::Constant;
@@ -15,6 +27,10 @@ use move_model::{
 };
 
 use crate::shared::ident::StructIdent;
+
+// avoid dependency to `move_binary_format::file_format`
+pub type TypeParameterIndex = u16;
+pub type CodeOffset = u16;
 
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub enum IntType {
@@ -56,6 +72,27 @@ pub enum BaseType {
 pub enum Type {
     Base(BaseType),
     Reference(bool, BaseType),
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
+pub enum PartialBaseType {
+    Primitive(PrimitiveType),
+    Parameter(TypeParameterIndex),
+    Vector(Box<PartialBaseType>),
+    Struct(PartialStructInstantiation),
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
+pub struct PartialStructField {
+    pub name: String,
+    pub ty: PartialBaseType,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
+pub struct PartialStructInstantiation {
+    pub ident: StructIdent,
+    pub insts: Vec<PartialBaseType>,
+    pub fields: Vec<PartialStructField>,
 }
 
 //**************************************************************************************************
@@ -120,6 +157,35 @@ impl fmt::Display for Type {
             Self::Reference(false, sub) => write!(f, "&{}", sub),
             Self::Reference(true, sub) => write!(f, "&mut {}", sub),
         }
+    }
+}
+
+impl fmt::Display for PartialBaseType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Primitive(sub) => sub.fmt(f),
+            Self::Parameter(idx) => write!(f, "#{}", idx),
+            Self::Vector(sub) => write!(f, "vector<{}>", sub),
+            Self::Struct(inst) => inst.fmt(f),
+        }
+    }
+}
+
+impl fmt::Display for PartialStructInstantiation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let inst_tokens: Vec<_> = self.insts.iter().map(|t| t.to_string()).collect();
+        let field_tokens: Vec<_> = self
+            .fields
+            .iter()
+            .map(|f| format!("{}: {}", f.name, f.ty))
+            .collect();
+        write!(
+            f,
+            "struct {}<{}> {{{}}}",
+            self.ident,
+            inst_tokens.join(", "),
+            field_tokens.join(",")
+        )
     }
 }
 
@@ -632,6 +698,52 @@ impl Type {
     }
 }
 
+impl PartialBaseType {
+    //
+    // factory
+    //
+
+    pub fn mk_bool() -> Self {
+        Self::Primitive(PrimitiveType::Bool)
+    }
+
+    pub fn mk_u8() -> Self {
+        Self::Primitive(PrimitiveType::Int(IntType::U8))
+    }
+
+    pub fn mk_u64() -> Self {
+        Self::Primitive(PrimitiveType::Int(IntType::U64))
+    }
+
+    pub fn mk_u128() -> Self {
+        Self::Primitive(PrimitiveType::Int(IntType::U128))
+    }
+
+    pub fn mk_num() -> Self {
+        Self::Primitive(PrimitiveType::Int(IntType::Num))
+    }
+
+    pub fn mk_address() -> Self {
+        Self::Primitive(PrimitiveType::Address)
+    }
+
+    pub fn mk_signer() -> Self {
+        Self::Primitive(PrimitiveType::Signer)
+    }
+
+    pub fn mk_parameter(idx: TypeParameterIndex) -> Self {
+        Self::Parameter(idx)
+    }
+
+    pub fn mk_vector(elem: Self) -> Self {
+        Self::Vector(Box::new(elem))
+    }
+
+    pub fn mk_struct(inst: PartialStructInstantiation) -> Self {
+        Self::Struct(inst)
+    }
+}
+
 //**************************************************************************************************
 // Conversion
 //**************************************************************************************************
@@ -705,6 +817,69 @@ pub fn convert_model_struct_type(
 
     // return the information for constructing the struct type
     StructInstantiation {
+        ident,
+        insts,
+        fields,
+    }
+}
+
+pub fn convert_model_partial_base_type(env: &GlobalEnv, ty: &MT::Type) -> PartialBaseType {
+    match ty {
+        MT::Type::Primitive(MT::PrimitiveType::Bool) => PartialBaseType::mk_bool(),
+        MT::Type::Primitive(MT::PrimitiveType::U8) => PartialBaseType::mk_u8(),
+        MT::Type::Primitive(MT::PrimitiveType::U64) => PartialBaseType::mk_u64(),
+        MT::Type::Primitive(MT::PrimitiveType::U128) => PartialBaseType::mk_u128(),
+        MT::Type::Primitive(MT::PrimitiveType::Num) => PartialBaseType::mk_num(),
+        MT::Type::Primitive(MT::PrimitiveType::Address) => PartialBaseType::mk_address(),
+        MT::Type::Primitive(MT::PrimitiveType::Signer) => PartialBaseType::mk_signer(),
+        MT::Type::Vector(elem) => {
+            PartialBaseType::mk_vector(convert_model_partial_base_type(env, elem))
+        }
+        MT::Type::Struct(module_id, struct_id, ty_insts) => PartialBaseType::mk_struct(
+            convert_model_partial_struct_type(env, *module_id, *struct_id, ty_insts),
+        ),
+        MT::Type::TypeParameter(index) => PartialBaseType::mk_parameter(*index),
+        _ => unreachable!(),
+    }
+}
+
+pub fn convert_model_partial_struct_type(
+    env: &GlobalEnv,
+    module_id: ModuleId,
+    struct_id: StructId,
+    ty_args: &[MT::Type],
+) -> PartialStructInstantiation {
+    // derive struct identity
+    let struct_env = env.get_struct(module_id.qualified(struct_id));
+    let ident = StructIdent::new(&struct_env);
+
+    // check type arguments
+    if cfg!(debug_assertions) {
+        assert_eq!(struct_env.get_type_parameters().len(), ty_args.len());
+        // TODO (mengxu) verify type constraints
+    }
+
+    // convert instantiations
+    let insts: Vec<_> = ty_args
+        .iter()
+        .map(|ty_arg| convert_model_partial_base_type(env, ty_arg))
+        .collect();
+
+    // collect fields
+    let fields = struct_env
+        .get_fields()
+        .map(|field_env| {
+            let field_name = env.symbol_pool().string(field_env.get_name()).to_string();
+            let field_ty = convert_model_partial_base_type(env, &field_env.get_type());
+            PartialStructField {
+                name: field_name,
+                ty: field_ty,
+            }
+        })
+        .collect();
+
+    // return the information for constructing the struct type
+    PartialStructInstantiation {
         ident,
         insts,
         fields,

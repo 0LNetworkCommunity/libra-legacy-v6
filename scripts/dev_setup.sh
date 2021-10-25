@@ -19,16 +19,18 @@ HADOLINT_VERSION=1.17.4
 SCCACHE_VERSION=0.2.16-alpha.0
 #If installing sccache from a git repp set url@revision.
 SCCACHE_GIT='https://github.com/diem/sccache.git@ef50d87a58260c30767520045e242ccdbdb965af'
+GUPPY_GIT='https://github.com/facebookincubator/cargo-guppy@39ec940f36b0a0df96a330243d127cbe2db9f919'
 KUBECTL_VERSION=1.18.6
 TERRAFORM_VERSION=0.12.26
 HELM_VERSION=3.2.4
 VAULT_VERSION=1.5.0
 Z3_VERSION=4.8.9
 CVC4_VERSION=aac53f51
-DOTNET_VERSION=3.1
-BOOGIE_VERSION=2.8.32
+DOTNET_VERSION=5.0
+BOOGIE_VERSION=2.9.0
 PYRE_CHECK_VERSION=0.0.59
 NUMPY_VERSION=1.20.1
+ALLURE_VERSION=2.15.pr1135
 
 SCRIPT_PATH="$( cd "$( dirname "$0" )" >/dev/null 2>&1 && pwd )"
 cd "$SCRIPT_PATH/.." || exit
@@ -43,6 +45,7 @@ function usage {
   echo "-y installs or updates Move prover tools: z3, cvc4, dotnet, boogie"
   echo "-s installs or updates requirements to test code-generation for Move SDKs"
   echo "-v verbose mode"
+  echo "-i installs an individual tool by name"
   echo "If no toolchain component is selected with -t, -o, -y, or -p, the behavior is as if -t had been provided."
   echo "This command must be called from the root folder of the Diem project."
 }
@@ -62,17 +65,17 @@ function update_path_and_profile {
     add_to_profile "export CARGO_HOME=\"${CARGO_HOME}\""
     add_to_profile "export PATH=\"${HOME}/bin:${CARGO_HOME}/bin:\$PATH\""
   else
-    add_to_profile "export PATH=\"${HOME}/bin:${HOME}/.cargo/bin:\$PATH\""
+    add_to_profile "export PATH=\"${HOME}/bin:${HOME}/.dotnet:${HOME}/.cargo/bin:\$PATH\""
   fi
   if [[ "$INSTALL_PROVER" == "true" ]]; then
-     add_to_profile "export DOTNET_ROOT=\$HOME/.dotnet"
-     add_to_profile "export PATH=\"${HOME}/.dotnet/tools:\$PATH\""
-     add_to_profile "export Z3_EXE=$HOME/bin/z3"
-     add_to_profile "export CVC4_EXE=$HOME/bin/cvc4"
-     add_to_profile "export BOOGIE_EXE=$HOME/.dotnet/tools/boogie"
+    add_to_profile "export DOTNET_ROOT=\$HOME/.dotnet"
+    add_to_profile "export PATH=\"${HOME}/.dotnet/tools:\$PATH\""
+    add_to_profile "export Z3_EXE=$HOME/bin/z3"
+    add_to_profile "export CVC4_EXE=$HOME/bin/cvc4"
+    add_to_profile "export BOOGIE_EXE=$HOME/.dotnet/tools/boogie"
   fi
   if [[ "$INSTALL_CODEGEN" == "true" ]] && [[ "$PACKAGE_MANAGER" == "apt-get" ]]; then
-     add_to_profile "export PATH=\$PATH:/usr/lib/golang/bin:\$GOBIN"
+    add_to_profile "export PATH=\$PATH:/usr/lib/golang/bin:\$GOBIN"
   fi
 }
 
@@ -370,6 +373,14 @@ function install_sccache {
   fi
 }
 
+function install_cargo_guppy {
+  if ! command -v cargo-guppy &> /dev/null; then
+    git_repo=$( echo "$GUPPY_GIT" | cut -d "@" -f 1 );
+    git_hash=$( echo "$GUPPY_GIT" | cut -d "@" -f 2 );
+    cargo install cargo-guppy --git "$git_repo" --rev "$git_hash";
+  fi
+}
+
 function install_grcov {
   if ! command -v grcov &> /dev/null; then
     cargo install grcov
@@ -378,30 +389,34 @@ function install_grcov {
 
 function install_dotnet {
   echo "Installing .Net"
-  if [[ "$(uname)" == "Linux" ]]; then
-      # Install various prerequisites for .dotnet. There are known bugs
-      # in the dotnet installer to warn even if they are present. We try
-      # to install anyway based on the warnings the dotnet installer creates.
-      if [ "$PACKAGE_MANAGER" == "apk" ]; then
-        install_pkg icu "$PACKAGE_MANAGER"
-        install_pkg zlib "$PACKAGE_MANAGER"
-        install_pkg libintl "$PACKAGE_MANAGER"
-        install_pkg libcurl "$PACKAGE_MANAGER"
-      elif [ "$PACKAGE_MANAGER" == "apt-get" ]; then
-        install_pkg gettext "$PACKAGE_MANAGER"
-        install_pkg zlib1g "$PACKAGE_MANAGER"
-      elif [ "$PACKAGE_MANAGER" == "yum" ] || [ "$PACKAGE_MANAGER" == "dnf" ]; then
-        install_pkg icu "$PACKAGE_MANAGER"
-        install_pkg zlib "$PACKAGE_MANAGER"
-      elif [ "$PACKAGE_MANAGER" == "pacman" ]; then
-        install_pkg icu "$PACKAGE_MANAGER"
-        install_pkg zlib "$PACKAGE_MANAGER"
-      fi
+  if [[ $("${HOME}/.dotnet/dotnet" --list-sdks | grep -c "^${DOTNET_VERSION}" || true) == "0" ]]; then
+    if [[ "$(uname)" == "Linux" ]]; then
+        # Install various prerequisites for .dotnet. There are known bugs
+        # in the dotnet installer to warn even if they are present. We try
+        # to install anyway based on the warnings the dotnet installer creates.
+        if [ "$PACKAGE_MANAGER" == "apk" ]; then
+          install_pkg icu "$PACKAGE_MANAGER"
+          install_pkg zlib "$PACKAGE_MANAGER"
+          install_pkg libintl "$PACKAGE_MANAGER"
+          install_pkg libcurl "$PACKAGE_MANAGER"
+        elif [ "$PACKAGE_MANAGER" == "apt-get" ]; then
+          install_pkg gettext "$PACKAGE_MANAGER"
+          install_pkg zlib1g "$PACKAGE_MANAGER"
+        elif [ "$PACKAGE_MANAGER" == "yum" ] || [ "$PACKAGE_MANAGER" == "dnf" ]; then
+          install_pkg icu "$PACKAGE_MANAGER"
+          install_pkg zlib "$PACKAGE_MANAGER"
+        elif [ "$PACKAGE_MANAGER" == "pacman" ]; then
+          install_pkg icu "$PACKAGE_MANAGER"
+          install_pkg zlib "$PACKAGE_MANAGER"
+        fi
+    fi
+    # Below we need to (a) set TERM variable because the .net installer expects it and it is not set
+    # in some environments (b) use bash not sh because the installer uses bash features.
+    curl -sSL https://dot.net/v1/dotnet-install.sh \
+        | TERM=linux /bin/bash -s -- --channel $DOTNET_VERSION --version latest
+  else
+    echo Dotnet already installed.
   fi
-  # Below we need to (a) set TERM variable because the .net installer expects it and it is not set
-  # in some environments (b) use bash not sh because the installer uses bash features.
-  curl -sSL https://dot.net/v1/dotnet-install.sh \
-       | TERM=linux /bin/bash -s -- --channel $DOTNET_VERSION --version latest
 }
 
 function install_boogie {
@@ -440,6 +455,7 @@ function install_z3 {
     cd "$TMPFILE" || exit
     curl -LOs "https://github.com/Z3Prover/z3/releases/download/z3-$Z3_VERSION/$Z3_PKG.zip"
     unzip -q "$Z3_PKG.zip"
+    mkdir -p "$HOME/bin"
     cp "$Z3_PKG/bin/z3" "$HOME/bin"
     chmod +x "$HOME/bin/z3"
   )
@@ -479,20 +495,27 @@ function install_cvc4 {
 }
 
 function install_golang {
-    if [[ "$PACKAGE_MANAGER" == "apt-get" ]]; then
-      if ! grep -q 'buster-backports main' /etc/apt/sources.list; then
-        (
-          echo "deb http://http.us.debian.org/debian/ buster-backports main"
-          echo "deb-src http://http.us.debian.org/debian/ buster-backports main"
-        ) | "${PRE_COMMAND[@]}" tee -a /etc/apt/sources.list
-        "${PRE_COMMAND[@]}" apt-get update
+    if [[ $(go version | grep -c "go1.14" || true) == "0" ]]; then
+      if [[ "$PACKAGE_MANAGER" == "apt-get" ]]; then
+        if ! grep -q 'buster-backports main' /etc/apt/sources.list; then
+          (
+            echo "deb http://http.us.debian.org/debian/ buster-backports main"
+            echo "deb-src http://http.us.debian.org/debian/ buster-backports main"
+          ) | "${PRE_COMMAND[@]}" tee -a /etc/apt/sources.list
+          "${PRE_COMMAND[@]}" apt-get update
+        fi
+        "${PRE_COMMAND[@]}" apt-get install -y golang-1.14-go/buster-backports
+        "${PRE_COMMAND[@]}" ln -sf /usr/lib/go-1.14 /usr/lib/golang
+      elif [[ "$PACKAGE_MANAGER" == "apk" ]]; then
+        apk --update add --no-cache git make musl-dev go
+      elif [[ "$PACKAGE_MANAGER" == "brew" ]]; then
+        failed=$(brew install go || echo "failed")
+        if [[ "$failed" == "failed" ]]; then
+          brew link --overwrite go
+        fi
+      else
+        install_pkg golang "$PACKAGE_MANAGER"
       fi
-      "${PRE_COMMAND[@]}" apt-get install -y golang-1.14-go/buster-backports
-      "${PRE_COMMAND[@]}" ln -sf /usr/lib/go-1.14 /usr/lib/golang
-    elif [[ "$PACKAGE_MANAGER" == "apk" ]]; then
-      apk --update add --no-cache git make musl-dev go
-    else
-      install_pkg golang "$PACKAGE_MANAGER"
     fi
 }
 
@@ -503,6 +526,23 @@ function install_java {
       apk --update add --no-cache  -X http://dl-cdn.alpinelinux.org/alpine/edge/community openjdk11
     else
       install_pkg java "$PACKAGE_MANAGER"
+    fi
+}
+
+function install_allure {
+    VERSION="$(allure --version || true)"
+    if [[ "$VERSION" != "${ALLURE_VERSION}" ]]; then
+      if [[ "$PACKAGE_MANAGER" == "apt-get" ]]; then
+        "${PRE_COMMAND[@]}" apt-get install default-jre -y --no-install-recommends
+        export ALLURE=${HOME}/allure_"${ALLURE_VERSION}"-1_all.deb
+        curl -sL -o "$ALLURE" "https://github.com/diem/allure2/releases/download/${ALLURE_VERSION}/allure_${ALLURE_VERSION}-1_all.deb"
+        dpkg -i "$ALLURE"
+        rm "$ALLURE"
+      elif [[ "$PACKAGE_MANAGER" == "apk" ]]; then
+        apk --update add --no-cache  -X http://dl-cdn.alpinelinux.org/alpine/edge/community openjdk11
+      else
+        echo No good way to install allure 'install_pkg allure '"$PACKAGE_MANAGER"
+      fi
     fi
 }
 
@@ -550,6 +590,7 @@ Operation tools (since -o was provided):
   * kubectl
   * helm
   * aws cli
+  * allure
 EOF
   fi
 
@@ -593,9 +634,11 @@ OPERATIONS=false;
 INSTALL_PROFILE=false;
 INSTALL_PROVER=false;
 INSTALL_CODEGEN=false;
+INSTALL_INDIVIDUAL=false;
+INSTALL_PACKAGES=();
 
 #parse args
-while getopts "btopvysh" arg; do
+while getopts "btopvysh:i:" arg; do
   case "$arg" in
     b)
       BATCH_MODE="true"
@@ -618,6 +661,11 @@ while getopts "btopvysh" arg; do
     s)
       INSTALL_CODEGEN="true"
       ;;
+    i)
+      INSTALL_INDIVIDUAL="true"
+      echo "$OPTARG"
+      INSTALL_PACKAGES+=("$OPTARG")
+      ;;
     *)
       usage;
       exit 0;
@@ -633,7 +681,8 @@ if [[ "$INSTALL_BUILD_TOOLS" == "false" ]] && \
    [[ "$OPERATIONS" == "false" ]] && \
    [[ "$INSTALL_PROFILE" == "false" ]] && \
    [[ "$INSTALL_PROVER" == "false" ]] && \
-   [[ "$INSTALL_CODEGEN" == "false" ]]; then
+   [[ "$INSTALL_CODEGEN" == "false" ]] && \
+   [[ "$INSTALL_INDIVIDUAL" == "false" ]]; then
    INSTALL_BUILD_TOOLS="true"
 fi
 
@@ -694,8 +743,7 @@ if [[ "$PACKAGE_MANAGER" == "apt-get" ]]; then
   if [[ "$BATCH_MODE" == "false" ]]; then
    echo "Installing ca-certificates......"
   fi
-  set -x
-	"${PRE_COMMAND[@]}" install_pkg ca-certificates "$PACKAGE_MANAGER"
+	install_pkg ca-certificates "$PACKAGE_MANAGER"
 fi
 
 if [[ "$INSTALL_PROFILE" == "true" ]]; then
@@ -721,6 +769,7 @@ if [[ "$INSTALL_BUILD_TOOLS" == "true" ]]; then
   rustup component add rustfmt
   rustup component add clippy
 
+  install_cargo_guppy
   install_sccache
   install_grcov
   install_pkg git "$PACKAGE_MANAGER"
@@ -746,6 +795,19 @@ if [[ "$OPERATIONS" == "true" ]]; then
   install_terraform
   install_kubectl
   install_awscli "$PACKAGE_MANAGER"
+  install_allure
+fi
+
+if [[ "$INSTALL_INDIVIDUAL" == "true" ]]; then
+  for (( i=0; i < ${#INSTALL_PACKAGES[@]}; i++ ));
+  do
+    PACKAGE=${INSTALL_PACKAGES[$i]}
+    if ! command -v "install_${PACKAGE}" &> /dev/null; then
+      install_pkg "$PACKAGE" "$PACKAGE_MANAGER"
+    else
+      "install_${PACKAGE}"
+    fi
+  done
 fi
 
 if [[ "$INSTALL_PROVER" == "true" ]]; then

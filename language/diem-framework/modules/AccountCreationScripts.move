@@ -1,7 +1,6 @@
-address 0x1 {
-module AccountCreationScripts {
-    use 0x1::DiemAccount;
-    use 0x1::SlidingNonce;
+module DiemFramework::AccountCreationScripts {
+    use DiemFramework::DiemAccount;
+    use DiemFramework::SlidingNonce;
 
     /// # Summary
     /// Creates a Child VASP account with its parent being the sending account of the transaction.
@@ -62,7 +61,7 @@ module AccountCreationScripts {
     /// * `AccountAdministrationScripts::add_recovery_rotation_capability`
     /// * `AccountAdministrationScripts::create_recovery_address`
 
-    public(script) fun create_child_vasp_account<CoinType: store>(
+    public(script) fun create_child_vasp_account<CoinType>(
         parent_vasp: signer,
         child_address: address,
         auth_key_prefix: vector<u8>,
@@ -86,9 +85,10 @@ module AccountCreationScripts {
     }
 
     spec create_child_vasp_account {
-        use 0x1::Signer;
-        use 0x1::Errors;
-        use 0x1::Roles;
+        use Std::Signer;
+        use Std::Errors;
+        use DiemFramework::DualAttestation;
+        use DiemFramework::Roles;
 
         include DiemAccount::TransactionChecks{sender: parent_vasp}; // properties checked by the prologue.
         let parent_addr = Signer::spec_address_of(parent_vasp);
@@ -98,13 +98,19 @@ module AccountCreationScripts {
         aborts_if child_initial_balance > max_u64() with Errors::LIMIT_EXCEEDED;
         include (child_initial_balance > 0) ==>
             DiemAccount::ExtractWithdrawCapAbortsIf{sender_addr: parent_addr};
+        include (child_initial_balance > 0) ==> DualAttestation::AssertPaymentOkAbortsIf<CoinType>{
+            payer: parent_addr,
+            payee: child_address,
+            metadata: x"",
+            metadata_signature: x"",
+            value: child_initial_balance
+        };
         include (child_initial_balance) > 0 ==>
             DiemAccount::PayFromAbortsIfRestricted<CoinType>{
                 cap: parent_cap,
                 payee: child_address,
                 amount: child_initial_balance,
                 metadata: x"",
-                metadata_signature: x""
             };
         include DiemAccount::CreateChildVASPAccountEnsures<CoinType>{
             parent_addr: parent_addr,
@@ -122,6 +128,8 @@ module AccountCreationScripts {
             Errors::INVALID_STATE,
             Errors::INVALID_ARGUMENT;
 
+        // TODO: fix emit specs below
+        /*
         include DiemAccount::MakeAccountEmits{new_account_address: child_address};
         include child_initial_balance > 0 ==>
             DiemAccount::PayFromEmits<CoinType>{
@@ -130,13 +138,11 @@ module AccountCreationScripts {
                 amount: child_initial_balance,
                 metadata: x"",
             };
+        */
 
         /// **Access Control:**
         /// Only Parent VASP accounts can create Child VASP accounts [[A7]][ROLE].
         include Roles::AbortsIfNotParentVasp{account: parent_vasp};
-
-        /// TODO(timeout): this currently times out
-        pragma verify = false;
     }
 
     /// # Summary
@@ -210,8 +216,8 @@ module AccountCreationScripts {
     ///   Diem root address before checking the role, and the role abort is unreachable in practice, since
     ///   only Diem root has the Diem root role.
     spec create_validator_operator_account {
-        use 0x1::Errors;
-        use 0x1::Roles;
+        use Std::Errors;
+        use DiemFramework::Roles;
 
         include DiemAccount::TransactionChecks{sender: dr_account}; // properties checked by the prologue.
         include SlidingNonce::RecordNonceAbortsIf{seq_nonce: sliding_nonce, account: dr_account};
@@ -306,8 +312,8 @@ module AccountCreationScripts {
     ///   Diem root address before checking the role, and the role abort is unreachable in practice, since
     ///   only Diem root has the Diem root role.
     spec create_validator_account {
-        use 0x1::Errors;
-        use 0x1::Roles;
+        use Std::Errors;
+        use DiemFramework::Roles;
 
         include DiemAccount::TransactionChecks{sender: dr_account}; // properties checked by the prologue.
         include SlidingNonce::RecordNonceAbortsIf{seq_nonce: sliding_nonce, account: dr_account};
@@ -377,7 +383,7 @@ module AccountCreationScripts {
     /// * `AccountAdministrationScripts::create_recovery_address`
     /// * `AccountAdministrationScripts::rotate_dual_attestation_info`
 
-    public(script) fun create_parent_vasp_account<CoinType: store>(
+    public(script) fun create_parent_vasp_account<CoinType>(
         tc_account: signer,
         sliding_nonce: u64,
         new_account_address: address,
@@ -396,8 +402,8 @@ module AccountCreationScripts {
     }
 
     spec create_parent_vasp_account {
-        use 0x1::Errors;
-        use 0x1::Roles;
+        use Std::Errors;
+        use DiemFramework::Roles;
 
         include DiemAccount::TransactionChecks{sender: tc_account}; // properties checked by the prologue.
         include SlidingNonce::RecordNonceAbortsIf{account: tc_account, seq_nonce: sliding_nonce};
@@ -469,7 +475,7 @@ module AccountCreationScripts {
     /// * `PaymentScripts::peer_to_peer_with_metadata`
     /// * `AccountAdministrationScripts::rotate_dual_attestation_info`
 
-    public(script) fun create_designated_dealer<Currency: store>(
+    public(script) fun create_designated_dealer<Currency>(
         tc_account: signer,
         sliding_nonce: u64,
         addr: address,
@@ -488,8 +494,8 @@ module AccountCreationScripts {
     }
 
     spec create_designated_dealer {
-        use 0x1::Errors;
-        use 0x1::Roles;
+        use Std::Errors;
+        use DiemFramework::Roles;
 
         include DiemAccount::TransactionChecks{sender: tc_account}; // properties checked by the prologue.
         include SlidingNonce::RecordNonceAbortsIf{account: tc_account, seq_nonce: sliding_nonce};
@@ -510,5 +516,4 @@ module AccountCreationScripts {
         /// Only the Treasury Compliance account can create Designated Dealer accounts [[A5]][ROLE].
         include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
     }
-}
 }

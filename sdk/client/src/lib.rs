@@ -40,6 +40,12 @@ cfg_async_or_blocking! {
     pub use move_deserialize::Event;
 }
 
+// This API is experimental and subject to change
+cfg_websocket! {
+    pub use error::{StreamError, StreamResult};
+    pub mod stream;
+}
+
 mod state;
 pub use state::State;
 
@@ -74,22 +80,25 @@ pub enum Method {
     GetCurrencies,
     GetNetworkStatus,
 
-
     //
     // Experimental APIs
     //
     GetStateProof,
+    GetAccumulatorConsistencyProof,
     GetAccountStateWithProof,
     GetTransactionsWithProofs,
+    GetAccountTransactionsWithProofs,
     GetEventsWithProofs,
+    GetEventByVersionWithProof,
 
     GetTowerStateView,         /////// 0L /////////
-    GetOracleUpgradeStateView, /////// 0L /////////
+    GetOracleUpgradeStateView, /////// 0L /////////    
 }
 
 cfg_async_or_blocking! {
     fn validate(
         state_manager: &state::StateManager,
+        req_state: Option<&State>,
         resp: &diem_json_rpc_types::response::JsonRpcResponse,
         ignore_stale: bool,
     ) -> Result<(u64, State, serde_json::Value)> {
@@ -105,28 +114,25 @@ cfg_async_or_blocking! {
             return Err(Error::json_rpc(err.clone()));
         }
 
-        let state = State::from_response(resp);
-        if let Err(e) = state_manager.update_state(&state) {
-            if !ignore_stale {
-                return Err(e);
-            }
-        }
+        let resp_state = State::from_response(resp);
+        state_manager.update_state(ignore_stale, req_state, &resp_state)?;
 
         // Result being empty is an acceptable response
         let result = resp.result.clone().unwrap_or(serde_json::Value::Null);
 
-        Ok((id, state, result))
+        Ok((id, resp_state, result))
     }
 
     fn validate_batch(
         state_manager: &state::StateManager,
+        req_state: Option<&State>,
         requests: &[JsonRpcRequest],
         raw_responses: Vec<diem_json_rpc_types::response::JsonRpcResponse>,
     ) -> Result<Vec<Result<Response<MethodResponse>>>> {
         let mut responses = std::collections::HashMap::new();
         for raw_response in &raw_responses {
             let id = get_id(&raw_response)?;
-            let response = validate(state_manager, &raw_response, false);
+            let response = validate(state_manager, req_state, &raw_response, false);
 
             responses.insert(id, response);
         }

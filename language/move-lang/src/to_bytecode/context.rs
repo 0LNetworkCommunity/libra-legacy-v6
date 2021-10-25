@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    errors::Error,
+    diagnostics::Diagnostic,
     expansion::ast::{Address, ModuleIdent, ModuleIdent_, SpecId},
     hlir::ast as H,
     parser::ast::{ConstantName, FunctionName, StructName, Var},
@@ -66,10 +66,7 @@ impl<'a> Context<'a> {
         dependency_orderings: &HashMap<ModuleIdent, usize>,
         struct_declarations: &HashMap<
             (ModuleIdent, StructName),
-            (
-                BTreeSet<IR::Ability>,
-                Vec<(IR::TypeVar, BTreeSet<IR::Ability>)>,
-            ),
+            (BTreeSet<IR::Ability>, Vec<IR::StructTypeParameter>),
         >,
         function_declarations: &HashMap<
             (ModuleIdent, FunctionName),
@@ -99,8 +96,8 @@ impl<'a> Context<'a> {
             let ir_name = Self::ir_module_alias(&module);
             let ir_ident = match Self::translate_module_ident_impl(addresses, module) {
                 Ok(ident) => ident,
-                Err(e) => {
-                    env.add_error(e);
+                Err(d) => {
+                    env.add_diag(d);
                     continue;
                 }
             };
@@ -152,7 +149,7 @@ impl<'a> Context<'a> {
     fn struct_dependencies(
         struct_declarations: &HashMap<
             (ModuleIdent, StructName),
-            (BTreeSet<Ability>, Vec<(IR::TypeVar, BTreeSet<IR::Ability>)>),
+            (BTreeSet<Ability>, Vec<IR::StructTypeParameter>),
         >,
         module_dependencies: &mut BTreeMap<
             ModuleIdent,
@@ -169,7 +166,7 @@ impl<'a> Context<'a> {
     fn struct_dependency(
         struct_declarations: &HashMap<
             (ModuleIdent, StructName),
-            (BTreeSet<Ability>, Vec<(IR::TypeVar, BTreeSet<IR::Ability>)>),
+            (BTreeSet<Ability>, Vec<IR::StructTypeParameter>),
         >,
         module: &ModuleIdent,
         sname: StructName,
@@ -229,8 +226,8 @@ impl<'a> Context<'a> {
     pub fn resolve_address(&mut self, loc: Loc, addr: Address, case: &str) -> Option<AddressBytes> {
         match addr.into_addr_bytes(self.addresses, loc, case) {
             Ok(addr) => Some(addr),
-            Err(e) => {
-                self.env.add_error(e);
+            Err(d) => {
+                self.env.add_diag(d);
                 None
             }
         }
@@ -239,8 +236,8 @@ impl<'a> Context<'a> {
     pub fn translate_module_ident(&mut self, ident: ModuleIdent) -> Option<IR::ModuleIdent> {
         match Self::translate_module_ident_impl(&self.addresses, ident) {
             Ok(ident) => Some(ident),
-            Err(e) => {
-                self.env.add_error(e);
+            Err(d) => {
+                self.env.add_diag(d);
                 None
             }
         }
@@ -249,7 +246,7 @@ impl<'a> Context<'a> {
     fn translate_module_ident_impl(
         addresses: &UniqueMap<Name, AddressBytes>,
         sp!(loc, ModuleIdent_ { address, module }): ModuleIdent,
-    ) -> Result<IR::ModuleIdent, Error> {
+    ) -> Result<IR::ModuleIdent, Diagnostic> {
         let address_bytes = address.into_addr_bytes(addresses, loc, "module identifier")?;
         let name = Self::translate_module_name_(module.0.value);
         Ok(IR::ModuleIdent::Qualified(IR::QualifiedModuleIdent::new(

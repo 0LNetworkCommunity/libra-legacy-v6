@@ -118,9 +118,10 @@ pub struct ConnectivityManager<TBackoff> {
 /// Different sources for peer addresses, ordered by priority (Onchain=highest,
 /// Config=lowest).
 #[repr(u8)]
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, NumVariants, Serialize)]
+#[derive(Copy, Clone, Eq, Hash, PartialEq, Ord, PartialOrd, NumVariants, Serialize)]
 pub enum DiscoverySource {
     OnChainValidatorSet,
+    File,
     Config,
 }
 
@@ -137,6 +138,7 @@ impl fmt::Display for DiscoverySource {
             "{}",
             match self {
                 DiscoverySource::OnChainValidatorSet => "OnChainValidatorSet",
+                DiscoverySource::File => "File",
                 DiscoverySource::Config => "Config",
             }
         )

@@ -11,7 +11,7 @@ use crate::{
     dataflow_domains::{AbstractDomain, JoinResult, MapDomain},
 };
 use im::ordmap::Entry;
-use move_core_types::{account_address::AccountAddress, language_storage::TypeTag};
+use move_core_types::language_storage::TypeTag;
 use move_model::{
     ast::TempIndex,
     model::{FunctionEnv, GlobalEnv},
@@ -69,7 +69,7 @@ impl<T: FootprintDomain> TrieNode<T> {
         }
     }
 
-    /// Like join, but gracefully handles `Non` data fields by treating None as Bottom
+    /// Like join, but gracefully handles `None` data fields by treating None as Bottom
     pub fn join_data_opt(&mut self, other: &Option<T>) -> JoinResult {
         Self::join_data_opt_(&mut self.data, other)
     }
@@ -77,15 +77,13 @@ impl<T: FootprintDomain> TrieNode<T> {
     pub fn join_child_data(&self, mut acc: Option<T>) -> Option<T> {
         Self::join_data_opt_(&mut acc, &self.data);
         for v in self.children.values() {
-            Self::join_data_opt_(&mut acc, &v.data);
+            acc = v.join_child_data(acc)
         }
         acc
     }
 
     pub fn get_child_data(&self) -> Option<T> {
-        let mut acc = None;
-        Self::join_data_opt_(&mut acc, &self.data);
-        acc
+        self.join_child_data(None)
     }
 
     pub fn data(&self) -> &Option<T> {
@@ -105,6 +103,16 @@ impl<T: FootprintDomain> TrieNode<T> {
         self.children.get(o)
     }
 
+    /// Return a mutable reference to the node mapped to `o` from self (if any)
+    pub fn get_offset_mut(&mut self, o: &Offset) -> Option<&mut Self> {
+        self.children.get_mut(o)
+    }
+
+    /// Removes the node mapped to `o` from self (if it exists)
+    pub fn remove_offset(&mut self, o: &Offset) -> Option<Self> {
+        self.children.remove(o)
+    }
+
     /// Return true if `self`'s keys can be converted into a compact set of concrete access paths
     /// Note: this says nothing about the `data` part of `self`
     pub fn keys_statically_known(&self) -> bool {
@@ -121,16 +129,17 @@ impl<T: FootprintDomain> TrieNode<T> {
     /// (2) Apply `sub_data` to `self.data` and (recursively) to the `data` fields of `self.children`
     pub fn substitute_footprint<F>(
         mut self,
-        actuals: &[AbsAddr],
+        actuals: &[TempIndex],
         type_actuals: &[Type],
+        func_env: &FunctionEnv,
         sub_map: &dyn AccessPathMap<AbsAddr>,
         mut sub_data: F,
     ) -> Self
     where
-        F: FnMut(&mut T, &[AbsAddr], &[Type], &dyn AccessPathMap<AbsAddr>) + Copy,
+        F: FnMut(&mut T, &[TempIndex], &[Type], &FunctionEnv, &dyn AccessPathMap<AbsAddr>) + Copy,
     {
         match &mut self.data {
-            Some(d) => sub_data(d, actuals, type_actuals, sub_map),
+            Some(d) => sub_data(d, actuals, type_actuals, func_env, sub_map),
             None => (),
         }
         let mut acc = Self::new_opt(self.data);
@@ -138,7 +147,7 @@ impl<T: FootprintDomain> TrieNode<T> {
             k.substitute_footprint(type_actuals);
             acc.children.insert_join(
                 k,
-                v.substitute_footprint(actuals, type_actuals, sub_map, sub_data),
+                v.substitute_footprint(actuals, type_actuals, func_env, sub_map, sub_data),
             );
         }
         acc
@@ -212,6 +221,10 @@ impl<T: FootprintDomain> AccessPathMap<T> for AccessPathTrie<T> {
             None => None,
         }
     }
+
+    fn remove_access_path(&mut self, ap: AccessPath) -> Option<T> {
+        self.remove_node(ap).and_then(|n| n.data)
+    }
 }
 
 impl<T: FootprintDomain> AccessPathTrie<T> {
@@ -248,6 +261,36 @@ impl<T: FootprintDomain> AccessPathTrie<T> {
             }
         }
         Some(node)
+    }
+
+    /// Removes node located at the given access path
+    /// Returns the node if it has been fully removed from the trie (i.e. it did not have any children)
+    pub fn remove_node(&mut self, ap: AccessPath) -> Option<TrieNode<T>> {
+        let mut node = self.0.get_mut(ap.root())?;
+
+        // If no offset, we want to remove the root node
+        if ap.offsets().is_empty() {
+            if node.children.is_empty() {
+                return self.0.remove(ap.root());
+            } else {
+                node.data = None;
+            }
+        // Otherwise, find the offset in the trie
+        } else {
+            let offsets_count = ap.offsets().len();
+            for offset in &ap.offsets()[0..offsets_count - 1] {
+                node = node.get_offset_mut(offset)?;
+            }
+            let last_offset = &ap.offsets()[offsets_count - 1];
+            let to_remove = node.get_offset_mut(last_offset)?;
+
+            if to_remove.children.is_empty() {
+                return node.remove_offset(last_offset);
+            } else {
+                to_remove.data = None;
+            }
+        }
+        None
     }
 
     pub fn get_child_data(&self) -> Option<T> {
@@ -378,18 +421,19 @@ impl<T: FootprintDomain> AccessPathTrie<T> {
     /// (2) Apply `sub_data` to `self.data` and (recursively) to the `data` fields of `self.children`
     pub fn substitute_footprint<F>(
         self,
-        actuals: &[AbsAddr],
+        actuals: &[TempIndex],
         type_actuals: &[Type],
+        func_env: &FunctionEnv,
         sub_map: &dyn AccessPathMap<AbsAddr>,
         sub_data: F,
     ) -> Self
     where
-        F: FnMut(&mut T, &[AbsAddr], &[Type], &dyn AccessPathMap<AbsAddr>) + Copy,
+        F: FnMut(&mut T, &[TempIndex], &[Type], &FunctionEnv, &dyn AccessPathMap<AbsAddr>) + Copy,
     {
         let mut acc = Self::default();
         for (mut k, v) in self.0.into_iter() {
-            k.substitute_footprint(actuals, type_actuals, sub_map);
-            let new_v = v.substitute_footprint(actuals, type_actuals, sub_map, sub_data);
+            k.substitute_footprint(actuals, type_actuals, func_env, sub_map);
+            let new_v = v.substitute_footprint(actuals, type_actuals, func_env, sub_map, sub_data);
             acc.insert_join(k, new_v);
         }
         acc
@@ -398,36 +442,37 @@ impl<T: FootprintDomain> AccessPathTrie<T> {
     /// Same as `substitute_footprint`, but does not change the `data` field of any node
     pub fn substitute_footprint_skip_data(
         self,
-        actuals: &[AbsAddr],
+        actuals: &[TempIndex],
         type_actuals: &[Type],
+        func_env: &FunctionEnv,
         sub_map: &dyn AccessPathMap<AbsAddr>,
     ) -> Self {
         // TODO: is there a less hacky way to do this?
-        fn no_op<T>(_: &mut T, _: &[AbsAddr], _: &[Type], _: &dyn AccessPathMap<AbsAddr>) {}
-        self.substitute_footprint(actuals, type_actuals, sub_map, no_op)
+        fn no_op<T>(
+            _: &mut T,
+            _: &[TempIndex],
+            _: &[Type],
+            _: &FunctionEnv,
+            _: &dyn AccessPathMap<AbsAddr>,
+        ) {
+        }
+        self.substitute_footprint(actuals, type_actuals, func_env, sub_map, no_op)
     }
 
     /// Substitute concrete values `actuals` and `type_actuals` into `self`
     pub fn substitute_footprint_concrete(
         self,
-        actuals: &[Option<AccountAddress>],
+        actuals: &[TempIndex],
         type_actuals: &[TypeTag],
+        func_env: &FunctionEnv,
         sub_map: &dyn AccessPathMap<AbsAddr>,
         env: &GlobalEnv,
     ) -> Self {
-        let values = actuals
-            .iter()
-            .map(|addr_opt| {
-                addr_opt
-                    .map(|addr| AbsAddr::from(&addr))
-                    .unwrap_or_default()
-            })
-            .collect::<Vec<AbsAddr>>();
         let types = type_actuals
             .iter()
             .map(|t| Type::from_type_tag(t, env))
             .collect::<Vec<Type>>();
-        self.substitute_footprint_skip_data(&values, &types, sub_map)
+        self.substitute_footprint_skip_data(actuals, &types, func_env, sub_map)
     }
 
     /// Apply `f` to each node in `self`
@@ -470,6 +515,21 @@ impl<T: FootprintDomain> AccessPathTrie<T> {
         self.iter_paths_opt(|ap, t_opt| {
             t_opt.map(|t| f(ap, t));
         })
+    }
+
+    /// Apply `f` to each (access path, data) pair encoded in `self`
+    /// and collects the result when `f` returns `Some(r)`
+    pub fn filter_map_paths<F, R>(&self, mut f: F) -> Vec<R>
+    where
+        F: FnMut(&AccessPath, &T) -> Option<R>,
+    {
+        let mut results = vec![];
+        self.iter_paths(|a, b| {
+            if let Some(r) = f(a, b) {
+                results.push(r);
+            }
+        });
+        results
     }
 
     /// Return a wrapper that of `self` that implements `Display` using `env`

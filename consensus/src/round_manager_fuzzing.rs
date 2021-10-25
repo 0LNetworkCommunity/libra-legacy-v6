@@ -18,6 +18,7 @@ use crate::{
 };
 use channel::{self, diem_channel, message_queues::QueueStyle};
 use consensus_types::proposal_msg::ProposalMsg;
+use diem_infallible::Mutex;
 use diem_types::{
     epoch_change::EpochChangeProof,
     epoch_state::EpochState,
@@ -106,7 +107,7 @@ fn create_node_for_fuzzing() -> RoundManager {
 
     // TODO: remove
     let proof = make_initial_epoch_change_proof(&signer);
-    let mut safety_rules = SafetyRules::new(test_utils::test_storage(&signer), false, false);
+    let mut safety_rules = SafetyRules::new(test_utils::test_storage(&signer), false, false, false);
     safety_rules.initialize(&proof).unwrap();
 
     // TODO: mock channels
@@ -158,7 +159,10 @@ fn create_node_for_fuzzing() -> RoundManager {
         round_state,
         proposer_election,
         proposal_generator,
-        MetricsSafetyRules::new(Box::new(safety_rules), storage.clone()),
+        Arc::new(Mutex::new(MetricsSafetyRules::new(
+            Box::new(safety_rules),
+            storage.clone(),
+        ))),
         network,
         Arc::new(MockTransactionManager::new(None)),
         storage,

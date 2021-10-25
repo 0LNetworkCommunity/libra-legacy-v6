@@ -9,6 +9,8 @@ use diem_types::{
     account_state_blob::AccountStateBlob,
     contract_event::ContractEvent,
     epoch_state::EpochState,
+    nibble::nibble_path::NibblePath,
+    on_chain_config,
     proof::accumulator::InMemoryAccumulator,
     transaction::{TransactionStatus, Version},
 };
@@ -24,6 +26,10 @@ pub struct TransactionData {
     /// applying relevant portion of write set on the map and serializing the updated map into a
     /// new blob.
     account_blobs: HashMap<AccountAddress, AccountStateBlob>,
+
+    /// Each entry in this map represents the the hash of a newly generated jellyfish node
+    /// and its corresponding nibble path.
+    jf_node_hashes: HashMap<NibblePath, HashValue>,
 
     /// The list of events emitted during this transaction.
     events: Vec<ContractEvent>,
@@ -47,6 +53,7 @@ pub struct TransactionData {
 impl TransactionData {
     pub fn new(
         account_blobs: HashMap<AccountAddress, AccountStateBlob>,
+        jf_node_hashes: HashMap<NibblePath, HashValue>,
         events: Vec<ContractEvent>,
         status: TransactionStatus,
         state_root_hash: HashValue,
@@ -56,6 +63,7 @@ impl TransactionData {
     ) -> Self {
         TransactionData {
             account_blobs,
+            jf_node_hashes,
             events,
             status,
             state_root_hash,
@@ -67,6 +75,10 @@ impl TransactionData {
 
     pub fn account_blobs(&self) -> &HashMap<AccountAddress, AccountStateBlob> {
         &self.account_blobs
+    }
+
+    pub fn jf_node_hashes(&self) -> &HashMap<NibblePath, HashValue> {
+        &self.jf_node_hashes
     }
 
     pub fn events(&self) -> &[ContractEvent] {
@@ -151,7 +163,28 @@ impl ProcessedVMOutput {
         parent_frozen_subtree_roots: Vec<HashValue>,
         parent_num_leaves: u64,
     ) -> StateComputeResult {
+        let new_epoch_event_key = on_chain_config::new_epoch_event_key();
         let txn_accu = self.executed_trees().txn_accumulator();
+
+        let mut compute_status = Vec::new();
+        let mut transaction_info_hashes = Vec::new();
+        let mut reconfig_events = Vec::new();
+
+        for txn_data in self.transaction_data() {
+            let status = txn_data.status();
+            compute_status.push(status.clone());
+            if matches!(status, TransactionStatus::Keep(_)) {
+                transaction_info_hashes.push(txn_data.txn_info_hash().expect("Txn to be kept."));
+                reconfig_events.extend(
+                    txn_data
+                        .events()
+                        .iter()
+                        .filter(|e| *e.key() == new_epoch_event_key)
+                        .cloned(),
+                )
+            }
+        }
+
         // Now that we have the root hash and execution status we can send the response to
         // consensus.
         // TODO: The VM will support a special transaction to set the validators for the
@@ -163,15 +196,9 @@ impl ProcessedVMOutput {
             parent_frozen_subtree_roots,
             parent_num_leaves,
             self.epoch_state.clone(),
-            self.transaction_data()
-                .iter()
-                .map(|txn_data| txn_data.status())
-                .cloned()
-                .collect(),
-            self.transaction_data()
-                .iter()
-                .filter_map(|x| x.txn_info_hash())
-                .collect(),
+            compute_status,
+            transaction_info_hashes,
+            reconfig_events,
         )
     }
 }

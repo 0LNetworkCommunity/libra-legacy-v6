@@ -228,6 +228,10 @@ impl LedgerInfoWithV0 {
         &self.ledger_info
     }
 
+    pub fn commit_info(&self) -> &BlockInfo {
+        self.ledger_info.commit_info()
+    }
+
     pub fn add_signature(&mut self, validator: AccountAddress, signature: Ed25519Signature) {
         self.signatures.entry(validator).or_insert(signature);
     }
@@ -245,6 +249,13 @@ impl LedgerInfoWithV0 {
         validator: &ValidatorVerifier,
     ) -> ::std::result::Result<(), VerifyError> {
         validator.batch_verify_aggregated_signatures(self.ledger_info(), self.signatures())
+    }
+
+    pub fn check_voting_power(
+        &self,
+        validator: &ValidatorVerifier,
+    ) -> ::std::result::Result<(), VerifyError> {
+        validator.check_voting_power(self.signatures.keys())
     }
 }
 

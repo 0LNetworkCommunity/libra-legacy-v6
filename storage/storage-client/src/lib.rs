@@ -11,12 +11,16 @@ use diem_secure_net::NetworkClient;
 use diem_types::{
     account_address::AccountAddress,
     account_state_blob::{AccountStateBlob, AccountStateWithProof},
-    contract_event::{ContractEvent, EventWithProof},
+    contract_event::{ContractEvent, EventByVersionWithProof, EventWithProof},
     epoch_change::EpochChangeProof,
     event::EventKey,
     ledger_info::LedgerInfoWithSignatures,
-    proof::{AccumulatorConsistencyProof, SparseMerkleProof},
-    transaction::{TransactionListWithProof, TransactionToCommit, TransactionWithProof, Version},
+    proof::SparseMerkleProof,
+    state_proof::StateProof,
+    transaction::{
+        AccountTransactionsWithProof, TransactionListWithProof, TransactionToCommit,
+        TransactionWithProof, Version,
+    },
 };
 use serde::de::DeserializeOwned;
 use std::net::SocketAddr;
@@ -120,13 +124,24 @@ impl DbReader for StorageClient {
         unimplemented!()
     }
 
-    fn get_txn_by_account(
+    fn get_account_transaction(
         &self,
         _address: AccountAddress,
         _seq_num: u64,
-        _ledger_version: u64,
-        _fetch_events: bool,
+        _include_events: bool,
+        _ledger_version: Version,
     ) -> Result<Option<TransactionWithProof>> {
+        unimplemented!()
+    }
+
+    fn get_account_transactions(
+        &self,
+        _address: AccountAddress,
+        _start_seq_num: u64,
+        _limit: u64,
+        _include_events: bool,
+        _ledger_version: Version,
+    ) -> Result<AccountTransactionsWithProof> {
         unimplemented!()
     }
 
@@ -161,14 +176,16 @@ impl DbReader for StorageClient {
         unimplemented!();
     }
 
-    fn get_state_proof(
+    fn get_event_by_version_with_proof(
         &self,
-        _known_version: u64,
-    ) -> Result<(
-        LedgerInfoWithSignatures,
-        EpochChangeProof,
-        AccumulatorConsistencyProof,
-    )> {
+        _event_key: &EventKey,
+        _version: u64,
+        _proof_version: u64,
+    ) -> Result<EventByVersionWithProof> {
+        unimplemented!()
+    }
+
+    fn get_state_proof(&self, _known_version: u64) -> Result<StateProof> {
         unimplemented!()
     }
 
@@ -176,7 +193,7 @@ impl DbReader for StorageClient {
         &self,
         _known_version: u64,
         _ledger_info: LedgerInfoWithSignatures,
-    ) -> Result<(EpochChangeProof, AccumulatorConsistencyProof)> {
+    ) -> Result<StateProof> {
         unimplemented!()
     }
 

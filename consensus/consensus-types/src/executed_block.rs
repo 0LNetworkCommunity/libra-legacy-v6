@@ -8,7 +8,11 @@ use crate::{
     vote_proposal::{MaybeSignedVoteProposal, VoteProposal},
 };
 use diem_crypto::hash::HashValue;
-use diem_types::block_info::BlockInfo;
+use diem_types::{
+    block_info::BlockInfo,
+    contract_event::ContractEvent,
+    transaction::{Transaction, TransactionStatus},
+};
 use executor_types::StateComputeResult;
 use std::fmt::{Debug, Display, Formatter};
 
@@ -98,5 +102,29 @@ impl ExecutedBlock {
             ),
             signature: self.compute_result().signature().clone(),
         }
+    }
+
+    pub fn transactions_to_commit(&self) -> Vec<Transaction> {
+        // reconfiguration suffix don't execute
+        if self.block.block_data().is_reconfiguration_suffix() {
+            return vec![];
+        }
+        itertools::zip_eq(
+            self.block.transactions_to_execute(),
+            self.state_compute_result.compute_status(),
+        )
+        .filter_map(|(txn, status)| match status {
+            TransactionStatus::Keep(_) => Some(txn),
+            _ => None,
+        })
+        .collect()
+    }
+
+    pub fn reconfig_event(&self) -> Vec<ContractEvent> {
+        // reconfiguration suffix don't count, the state compute result is carried over from parents
+        if self.block.block_data().is_reconfiguration_suffix() {
+            return vec![];
+        }
+        self.state_compute_result.reconfig_events().to_vec()
     }
 }

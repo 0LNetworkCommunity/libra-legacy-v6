@@ -1,6 +1,11 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+//! This file implements the orchestration part of the stackless bytecode interpreter and also
+//! provides outside-facing interfaces for the clients of stackless bytecode interpreter. Clients
+//! of the interpreter should never directly interact with the statement player (in `player.rs`) nor
+//! the expression evaluator (in `evaluator.rs`).
+
 use bytecode::{function_target::FunctionTarget, function_target_pipeline::FunctionTargetsHolder};
 use move_binary_format::errors::{Location, PartialVMError, PartialVMResult, VMResult};
 use move_core_types::{
@@ -16,6 +21,7 @@ use move_model::{
 use crate::{
     concrete::{
         player,
+        settings::InterpreterSettings,
         ty::{
             convert_model_base_type, BaseType, IntType, PrimitiveType, StructField,
             StructInstantiation,
@@ -28,6 +34,7 @@ use crate::{
 /// A stackless bytecode runtime in charge of pre- and post-execution checking, conversion, and
 /// monitoring. The main, step-by-step interpretation loop is delegated to the `Player` instance.
 pub struct Runtime<'env> {
+    env: &'env GlobalEnv,
     functions: &'env FunctionTargetsHolder,
 }
 
@@ -37,8 +44,8 @@ impl<'env> Runtime<'env> {
     //
 
     /// Construct a runtime with all information pre-loaded.
-    pub fn new(functions: &'env FunctionTargetsHolder) -> Self {
-        Self { functions }
+    pub fn new(env: &'env GlobalEnv, functions: &'env FunctionTargetsHolder) -> Self {
+        Self { env, functions }
     }
 
     /// Execute a function (identified by `fun_id`) with given type arguments, arguments, and a
@@ -74,11 +81,17 @@ impl<'env> Runtime<'env> {
         args: &[TypedValue],
         global_state: &mut GlobalState,
     ) -> VMResult<Vec<TypedValue>> {
+        let settings = self
+            .env
+            .get_extension::<InterpreterSettings>()
+            .unwrap_or_default();
         player::entrypoint(
             self.functions,
             fun_target,
             ty_args,
             args.to_vec(),
+            settings.no_expr_check,
+            /* level */ 1,
             global_state,
         )
         .map_err(|abort_info| abort_info.into_err())
@@ -112,11 +125,10 @@ fn check_and_convert_type_args_and_args(
         ));
     }
     let mut converted_args = vec![];
+    /////// 0L /////////
     for (i, (arg, _param)) in args.iter().zip(params.into_iter()).enumerate() {
         let local_ty = fun_env.get_local_type(i);
-
-        #[cfg(debug_assertions)]
-        assert_eq!(local_ty, _param.1);
+        debug_assert_eq!(local_ty, _param.1);
 
         // NOTE: for historical reasons, we may receive `&signer` as arguments
         // TODO (mengxu): clean this up when we no longer accept `&signer` as valid arguments
@@ -276,13 +288,14 @@ fn check_type_instantiation(
 }
 
 fn get_abilities(env: &GlobalEnv, ty: &TypeTag) -> PartialVMResult<AbilitySet> {
-    let abilities = match ty {
+    match ty {
         TypeTag::Bool | TypeTag::U8 | TypeTag::U64 | TypeTag::U128 | TypeTag::Address => {
-            AbilitySet::PRIMITIVES
+            Ok(AbilitySet::PRIMITIVES)
         }
-        TypeTag::Signer => AbilitySet::SIGNER,
+        TypeTag::Signer => Ok(AbilitySet::SIGNER),
         TypeTag::Vector(elem_ty) => AbilitySet::polymorphic_abilities(
             AbilitySet::VECTOR,
+            vec![false],
             vec![get_abilities(env, elem_ty)?],
         ),
         TypeTag::Struct(struct_tag) => {
@@ -295,13 +308,18 @@ fn get_abilities(env: &GlobalEnv, ty: &TypeTag) -> PartialVMResult<AbilitySet> {
                 ))
             })?;
             let struct_env = env.get_struct(struct_id);
+            let declared_phantom_parameters = (0..struct_env.get_type_parameters().len())
+                .map(|idx| struct_env.is_phantom_parameter(idx));
             let ty_arg_abilities = struct_tag
                 .type_params
                 .iter()
                 .map(|arg| get_abilities(env, arg))
                 .collect::<PartialVMResult<Vec<_>>>()?;
-            AbilitySet::polymorphic_abilities(struct_env.get_abilities(), ty_arg_abilities)
+            AbilitySet::polymorphic_abilities(
+                struct_env.get_abilities(),
+                declared_phantom_parameters,
+                ty_arg_abilities,
+            )
         }
-    };
-    Ok(abilities)
+    }
 }

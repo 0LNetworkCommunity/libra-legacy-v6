@@ -4,6 +4,9 @@
 use crate::{path_in_crate, save_binary};
 use log::LevelFilter;
 use move_binary_format::{compatibility::Compatibility, normalized::Module, CompiledModule};
+use move_command_line_common::files::{
+    extension_equals, find_filenames, MOVE_COMPILED_EXTENSION, MOVE_ERROR_DESC_EXTENSION,
+};
 use move_core_types::language_storage::ModuleId;
 use std::{
     collections::BTreeMap,
@@ -40,7 +43,11 @@ fn extract_old_apis(modules_path: impl AsRef<Path>) -> Option<BTreeMap<ModuleId,
     }
 
     let mut old_module_apis = BTreeMap::new();
-    for f in move_stdlib::utils::iterate_directory(&modules_path) {
+    let files = find_filenames(&[modules_path], |p| {
+        extension_equals(p, MOVE_COMPILED_EXTENSION)
+    })
+    .unwrap();
+    for f in files {
         let mut bytes = Vec::new();
         File::open(f)
             .expect("Failed to open module bytecode file")
@@ -62,7 +69,7 @@ fn build_modules(output_path: impl AsRef<Path>) -> BTreeMap<String, CompiledModu
         let mut bytes = Vec::new();
         module.serialize(&mut bytes).unwrap();
         let mut module_path = Path::join(&output_path, name);
-        module_path.set_extension(move_stdlib::COMPILED_EXTENSION);
+        module_path.set_extension(MOVE_COMPILED_EXTENSION);
         save_binary(&module_path, &bytes);
     }
 
@@ -326,7 +333,7 @@ pub fn create_release(
 
     let msg = |s: &'static str| if options.time_it { Some(s) } else { None };
 
-    if options.build_modules { /////// 0L /////////
+    if options.build_modules {
         let modules_path = output_path.join("modules");
         let mut old_module_apis = None;
         if options.check_layout_compatibility {
@@ -392,7 +399,7 @@ pub fn create_release(
         let mut err_exp_path = output_path
             .join("error_description")
             .join("error_description");
-        err_exp_path.set_extension("errmap");
+        err_exp_path.set_extension(MOVE_ERROR_DESC_EXTENSION);
         run_step(msg("Generating error explanations"), || {
             build_error_code_map(&err_exp_path)
         });
@@ -447,7 +454,8 @@ pub fn create_upgrade_payload_fn(build:  &BTreeMap<String, CompiledModule> ) {
 /// module docs.
 pub fn sync_doc_files(output_path: &str) {
     let sync = |from: &Path, to: &Path| {
-        for path in move_stdlib::utils::iterate_directory(from) {
+        for s in find_filenames(&[&from], |p| extension_equals(p, "md")).unwrap() {
+            let path = Path::new(&s);
             std::fs::copy(&path, to.join(path.strip_prefix(from).unwrap())).unwrap();
         }
     };

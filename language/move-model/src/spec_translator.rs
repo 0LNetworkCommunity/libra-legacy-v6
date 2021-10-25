@@ -231,6 +231,7 @@ impl<'a, 'b, T: ExpGenerator<'a>> SpecTranslator<'a, 'b, T> {
     pub fn translate_invariants(
         auto_trace: bool,
         builder: &'b mut T,
+        type_args: &'b [Type],
         invariants: impl Iterator<Item = &'b GlobalInvariant>,
     ) -> TranslatedSpec {
         let fun_env = builder.function_env().clone();
@@ -238,7 +239,7 @@ impl<'a, 'b, T: ExpGenerator<'a>> SpecTranslator<'a, 'b, T> {
             auto_trace,
             builder,
             fun_env: &fun_env,
-            type_args: &[],
+            type_args,
             param_substitution: Default::default(),
             ret_locals: Default::default(),
             in_post_state: false,
@@ -257,16 +258,38 @@ impl<'a, 'b, T: ExpGenerator<'a>> SpecTranslator<'a, 'b, T> {
         translator.result
     }
 
+    /// Translate one inline property. If there are any references to `old(...)` they
+    /// will be rewritten and respective memory/spec var saves will be generated.
+    pub fn translate_inline_property(builder: &'b mut T, prop: &Exp) -> (TranslatedSpec, Exp) {
+        let fun_env = builder.function_env().clone();
+        let mut translator = SpecTranslator {
+            auto_trace: false,
+            builder,
+            fun_env: &fun_env,
+            type_args: &[],
+            param_substitution: Default::default(),
+            ret_locals: Default::default(),
+            in_post_state: false,
+            shadowed: Default::default(),
+            result: Default::default(),
+            let_locals: Default::default(),
+            in_old: false,
+        };
+        let exp = translator.translate_exp(prop, false);
+        (translator.result, exp)
+    }
+
     pub fn translate_invariants_by_id(
         auto_trace: bool,
         builder: &'b mut T,
+        type_args: &'b [Type],
         inv_id_set: &BTreeSet<GlobalId>,
     ) -> TranslatedSpec {
         let global_env = builder.global_env();
         let invariants = inv_id_set
             .iter()
             .map(|inv_id| global_env.get_global_invariant(*inv_id).unwrap());
-        SpecTranslator::translate_invariants(auto_trace, builder, invariants)
+        SpecTranslator::translate_invariants(auto_trace, builder, type_args, invariants)
     }
 
     fn translate_spec(&mut self, for_call: bool) {
@@ -577,7 +600,14 @@ impl<'a, 'b, T: ExpGenerator<'a>> ExpRewriterFunctions for SpecTranslator<'a, 'b
 
     fn rewrite_temporary(&mut self, id: NodeId, idx: TempIndex) -> Option<Exp> {
         // Compute the effective index.
-        let is_mut = self.fun_env.get_local_type(idx).is_mutable_reference();
+        let local_type = if idx < self.fun_env.get_parameter_count() {
+            // if the idx is a function argument, get its original type
+            self.fun_env.get_local_type(idx)
+        } else {
+            // otherwise, get type from the builder
+            self.builder.get_local_type(idx)
+        };
+        let is_mut = local_type.is_mutable_reference();
         let effective_idx = if self.in_old || self.in_post_state && !is_mut {
             // We access a param inside of old context, or a value which might have been
             // mutated as we are in the post state. We need to create a temporary

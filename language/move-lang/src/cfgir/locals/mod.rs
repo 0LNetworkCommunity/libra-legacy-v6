@@ -5,7 +5,8 @@ pub mod state;
 
 use super::absint::*;
 use crate::{
-    errors::*,
+    diag,
+    diagnostics::{Diagnostic, Diagnostics},
     expansion::ast::{AbilitySet, ModuleIdent},
     hlir::{
         ast::*,
@@ -48,7 +49,7 @@ struct Context<'a, 'b> {
     local_types: &'a UniqueMap<Var, SingleType>,
     local_states: &'b mut LocalStates,
     signature: &'a FunctionSignature,
-    errors: Errors,
+    diags: Diagnostics,
 }
 
 impl<'a, 'b> Context<'a, 'b> {
@@ -61,17 +62,20 @@ impl<'a, 'b> Context<'a, 'b> {
             local_types,
             local_states,
             signature,
-            errors: vec![],
+            diags: Diagnostics::new(),
         }
     }
 
-    fn error(&mut self, e: Vec<(Loc, impl Into<String>)>) {
-        self.errors
-            .push(e.into_iter().map(|(loc, msg)| (loc, msg.into())).collect())
+    fn add_diag(&mut self, d: Diagnostic) {
+        self.diags.add(d)
     }
 
-    fn get_errors(self) -> Errors {
-        self.errors
+    fn extend_diags(&mut self, diags: Diagnostics) {
+        self.diags.extend(diags)
+    }
+
+    fn get_diags(self) -> Diagnostics {
+        self.diags
     }
 
     fn get_state(&self, local: &Var) -> &LocalState {
@@ -96,10 +100,10 @@ impl<'a> TransferFunctions for LocalsSafety<'a> {
         _lbl: Label,
         _idx: usize,
         cmd: &Command,
-    ) -> Errors {
+    ) -> Diagnostics {
         let mut context = Context::new(self, pre);
         command(&mut context, cmd);
-        context.get_errors()
+        context.get_diags()
     }
 }
 
@@ -115,8 +119,8 @@ pub fn verify(
 ) -> BTreeMap<Label, LocalStates> {
     let initial_state = LocalStates::initial(&signature.parameters, locals);
     let mut locals_safety = LocalsSafety::new(struct_declared_abilities, locals, signature);
-    let (final_state, es) = locals_safety.analyze_function(cfg, initial_state);
-    compilation_env.add_errors(es);
+    let (final_state, ds) = locals_safety.analyze_function(cfg, initial_state);
+    compilation_env.add_diags(ds);
     final_state
 }
 
@@ -139,7 +143,7 @@ fn command(context: &mut Context, sp!(loc, cmd_): &Command) {
 
         C::Return { exp: e, .. } => {
             exp(context, e);
-            let mut errors = Errors::new();
+            let mut diags = Diagnostics::new();
             for (local, state) in context.local_states.iter() {
                 match state {
                     LocalState::Unavailable(_) => (),
@@ -160,7 +164,7 @@ fn command(context: &mut Context, sp!(loc, cmd_): &Command) {
                                     if context.signature.is_parameter(&local) {
                                         format!("The parameter '{}' {} a value", l, verb,)
                                     } else {
-                                        format!("The local '{}' {} a value", l, verb,)
+                                        format!("The local variable '{}' {} a value", l, verb,)
                                     }
                                 }
                             };
@@ -170,14 +174,18 @@ fn command(context: &mut Context, sp!(loc, cmd_): &Command) {
                                 stmt,
                                 Ability_::Drop,
                             );
-                            let mut error = vec![(*loc, "Invalid return".into()), (available, msg)];
-                            add_drop_ability_tip(context, &mut error, ty.clone());
-                            errors.push(error);
+                            let mut diag = diag!(
+                                MoveSafety::UnusedUndroppable,
+                                (*loc, "Invalid return"),
+                                (available, msg)
+                            );
+                            add_drop_ability_tip(context, &mut diag, ty.clone());
+                            diags.add(diag);
                         }
                     }
                 }
             }
-            errors.into_iter().for_each(|error| context.error(error))
+            context.extend_diags(diags)
         }
         C::Jump { .. } => (),
         C::Break | C::Continue => panic!("ICE break/continue not translated to jumps"),
@@ -212,18 +220,19 @@ fn lvalue(context: &mut Context, sp!(loc, l_): &LValue) {
                             DisplayVar::Orig(s) => s,
                         };
                         let msg = format!(
-                            "The local {} a value due to this assignment. The value does not have \
-                             the '{}' ability and must be used before you assign to this local \
-                             again",
+                            "The variable {} a value due to this assignment. The value does not \
+                             have the '{}' ability and must be used before you assign to this \
+                             variable again",
                             verb,
                             Ability_::Drop,
                         );
-                        let mut error = vec![
-                            (*loc, format!("Invalid assignment to local '{}'", vstr)),
+                        let mut diag = diag!(
+                            MoveSafety::UnusedUndroppable,
+                            (*loc, format!("Invalid assignment to variable '{}'", vstr)),
                             (available, msg),
-                        ];
-                        add_drop_ability_tip(context, &mut error, ty.clone());
-                        context.error(error)
+                        );
+                        add_drop_ability_tip(context, &mut diag, ty.clone());
+                        context.add_diag(diag)
                     }
                 }
             }
@@ -290,14 +299,15 @@ fn use_local(context: &mut Context, loc: &Loc, local: &Var) {
                 DisplayVar::Orig(s) => s,
             };
             let msg = format!(
-                "The local {} not have a value due to this position. The local must be assigned a \
-                 value before being used",
+                "The variable {} not have a value due to this position. The variable must be \
+                 assigned a value before being used",
                 verb
             );
-            context.error(vec![
-                (*loc, format!("Invalid usage of local '{}'", vstr)),
+            context.add_diag(diag!(
+                MoveSafety::UnassignedVariable,
+                (*loc, format!("Invalid usage of variable '{}'", vstr)),
                 (unavailable, msg),
-            ])
+            ))
         }
     }
 }
@@ -306,7 +316,7 @@ fn use_local(context: &mut Context, loc: &Loc, local: &Var) {
 // Error helper
 //**************************************************************************************************
 
-fn add_drop_ability_tip(context: &Context, error: &mut Error, st: SingleType) {
+fn add_drop_ability_tip(context: &Context, diag: &mut Diagnostic, st: SingleType) {
     use N::{TypeName_ as TN, Type_ as T};
     let ty = single_type_to_naming_type(st);
     let owned_abilities;
@@ -343,7 +353,7 @@ fn add_drop_ability_tip(context: &Context, error: &mut Error, st: SingleType) {
     };
     crate::typing::core::ability_not_satisified_tips(
         &crate::typing::core::Subst::empty(),
-        error,
+        diag,
         Ability_::Drop,
         &ty,
         declared_loc_opt,

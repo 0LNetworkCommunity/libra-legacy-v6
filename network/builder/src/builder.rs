@@ -24,6 +24,7 @@ use diem_infallible::RwLock;
 use diem_logger::prelude::*;
 use diem_metrics::IntCounterVec;
 use diem_network_address_encryption::Encryptor;
+use diem_secure_storage::Storage;
 use diem_time_service::TimeService;
 use diem_types::{chain_id::ChainId, network_address::NetworkAddress};
 use network::{
@@ -39,10 +40,12 @@ use network::{
     },
     ProtocolId,
 };
-use network_simple_onchain_discovery::{
-    builder::ValidatorSetChangeListenerBuilder, gen_simple_discovery_reconfig_subscription,
+use network_discovery::{gen_simple_discovery_reconfig_subscription, DiscoveryChangeListener};
+use std::{
+    clone::Clone,
+    collections::{HashMap, HashSet},
+    sync::Arc,
 };
-use std::{clone::Clone, collections::HashMap, sync::Arc};
 use subscription_service::ReconfigSubscription;
 use tokio::runtime::Handle;
 
@@ -63,8 +66,7 @@ pub struct NetworkBuilder {
     executor: Option<Handle>,
     time_service: TimeService,
     network_context: Arc<NetworkContext>,
-
-    validator_set_listener_builder: Option<ValidatorSetChangeListenerBuilder>,
+    discovery_listeners: Option<Vec<DiscoveryChangeListener>>,
     connectivity_manager_builder: Option<ConnectivityManagerBuilder>,
     health_checker_builder: Option<HealthCheckerBuilder>,
     peer_manager_builder: PeerManagerBuilder,
@@ -114,7 +116,7 @@ impl NetworkBuilder {
             executor: None,
             time_service,
             network_context,
-            validator_set_listener_builder: None,
+            discovery_listeners: None,
             connectivity_manager_builder: None,
             health_checker_builder: None,
             peer_manager_builder,
@@ -210,43 +212,41 @@ impl NetworkBuilder {
             config.ping_failures_tolerated,
         );
 
-        // Don't turn on connectivity manager if we're a public-facing server,
-        // for example.
-        //
-        // Cases that require connectivity manager:
-        //
-        // 1) mutual authentication networks currently require connmgr to set the
-        //    trusted peers set.
-        // 2) networks with a discovery protocol need connmgr to connect to newly
-        //    discovered peers.
-        // 3) if we have seed peers, then we need connmgr to connect to them.
-        // TODO(philiphayes): could probably use a better way to specify these cases
-        // TODO:  Why not add ConnectivityManager always?
-        if config.mutual_authentication
-            || config.discovery_method != DiscoveryMethod::None
-            || !config.seed_addrs.is_empty()
-            || !config.seeds.is_empty()
-        {
-            let seeds = merge_seeds(config);
+        // Always add a connectivity manager to keep track of known peers
+        let seeds = merge_seeds(config);
 
-            network_builder.add_connectivity_manager(
-                seeds,
-                trusted_peers,
-                config.max_outbound_connections,
-                config.connection_backoff_base,
-                config.max_connection_delay_ms,
-                config.connectivity_check_interval_ms,
-                config.network_channel_size,
-                config.mutual_authentication,
+        network_builder.add_connectivity_manager(
+            seeds,
+            trusted_peers,
+            config.max_outbound_connections,
+            config.connection_backoff_base,
+            config.max_connection_delay_ms,
+            config.connectivity_check_interval_ms,
+            config.network_channel_size,
+            config.mutual_authentication,
+        );
+
+        network_builder.discovery_listeners = Some(Vec::new());
+        for discovery_method in config.discovery_methods() {
+            network_builder.add_discovery_change_listener(
+                &discovery_method,
+                pubkey,
+                config.encryptor(),
             );
         }
 
-        match &config.discovery_method {
-            DiscoveryMethod::Onchain => {
-                network_builder.add_validator_set_listener(pubkey, config.encryptor());
-            }
-            DiscoveryMethod::None => {}
-        }
+        // Ensure there are no duplicate source types
+        let set: HashSet<_> = network_builder
+            .discovery_listeners
+            .as_ref()
+            .unwrap()
+            .iter()
+            .map(|listener| listener.discovery_source())
+            .collect();
+        assert_eq!(
+            set.len(),
+            network_builder.discovery_listeners.as_ref().unwrap().len()
+        );
 
         network_builder
     }
@@ -289,12 +289,10 @@ impl NetworkBuilder {
             );
         }
 
-        if let Some(validator_set_listener_builder) = self.validator_set_listener_builder.as_mut() {
-            validator_set_listener_builder.start(executor);
-            debug!(
-                NetworkSchema::new(&self.network_context),
-                "{} Started validator set listener", self.network_context
-            );
+        if let Some(discovery_listeners) = self.discovery_listeners.take() {
+            discovery_listeners
+                .into_iter()
+                .for_each(|listener| listener.start(executor))
         }
         self
     }
@@ -362,23 +360,44 @@ impl NetworkBuilder {
         self
     }
 
-    fn add_validator_set_listener(&mut self, pubkey: PublicKey, encryptor: Encryptor) -> &mut Self {
+    fn add_discovery_change_listener(
+        &mut self,
+        discovery_method: &DiscoveryMethod,
+        pubkey: PublicKey,
+        encryptor: Encryptor<Storage>,
+    ) {
         let conn_mgr_reqs_tx = self
             .conn_mgr_reqs_tx()
-            .expect("ConnectivityManager must be installed for validator");
-        let (simple_discovery_reconfig_subscription, simple_discovery_reconfig_rx) =
-            gen_simple_discovery_reconfig_subscription();
-        self.reconfig_subscriptions
-            .push(simple_discovery_reconfig_subscription);
+            .expect("ConnectivityManager must exist");
 
-        self.validator_set_listener_builder = Some(ValidatorSetChangeListenerBuilder::create(
-            self.network_context.clone(),
-            pubkey,
-            encryptor,
-            conn_mgr_reqs_tx,
-            simple_discovery_reconfig_rx,
-        ));
-        self
+        let listener = match discovery_method {
+            DiscoveryMethod::Onchain => {
+                let (simple_discovery_reconfig_subscription, simple_discovery_reconfig_rx) =
+                    gen_simple_discovery_reconfig_subscription();
+                self.reconfig_subscriptions
+                    .push(simple_discovery_reconfig_subscription);
+                DiscoveryChangeListener::validator_set(
+                    self.network_context.clone(),
+                    conn_mgr_reqs_tx,
+                    pubkey,
+                    encryptor,
+                    simple_discovery_reconfig_rx,
+                )
+            }
+            DiscoveryMethod::File(path, interval_duration) => DiscoveryChangeListener::file(
+                self.network_context.clone(),
+                conn_mgr_reqs_tx,
+                path,
+                *interval_duration,
+                self.time_service.clone(),
+            ),
+            DiscoveryMethod::None => return,
+        };
+
+        self.discovery_listeners
+            .as_mut()
+            .expect("Can only add listeners before starting")
+            .push(listener);
     }
 
     /// Add a HealthChecker to the network.

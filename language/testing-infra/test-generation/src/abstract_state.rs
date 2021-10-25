@@ -5,7 +5,7 @@ use crate::{borrow_graph::BorrowGraph, error::VMError};
 use move_binary_format::{
     access::ModuleAccess,
     file_format::{
-        empty_module, Ability, AbilitySet, CompiledModule, CompiledModuleMut, FieldInstantiation,
+        empty_module, Ability, AbilitySet, CompiledModule, FieldInstantiation,
         FieldInstantiationIndex, FunctionHandleIndex, FunctionInstantiation,
         FunctionInstantiationIndex, Signature, SignatureIndex, SignatureToken,
         StructDefInstantiation, StructDefInstantiationIndex, StructDefinitionIndex, TableIndex,
@@ -195,8 +195,7 @@ impl CallGraph {
 }
 
 /// During the generation of a bytecode sequence, specific instantiations may need to be made, that
-/// may not yet exist in the underlying module. Instead of mutating the underlying module (which
-/// would require an into_inner followd by a freeze) in order to record these instantiations in the
+/// may not yet exist in the underlying module. Instead of mutating the underlying module in order to record these instantiations in the
 /// locals signature table, we instead build wrapper around the underlying module containing the
 /// type instantiations, and at the end materialize this updated signature pool into a module. We
 /// also need the ability to quickly determine if an instantiation has already been created, and if
@@ -394,8 +393,8 @@ impl InstantiableModule {
 
     /// Consumes self, and adds the instantiations that have been built up to the underlying
     /// module, and returns the resultant compiled module.
-    pub fn instantiate(self) -> CompiledModuleMut {
-        let mut module = self.module.into_inner();
+    pub fn instantiate(self) -> CompiledModule {
+        let mut module = self.module;
         module.signatures = self
             .sig_instance_for_offset
             .into_iter()
@@ -452,16 +451,13 @@ pub struct AbstractState {
 impl AbstractState {
     /// Create a new AbstractState with empty stack, locals, and register
     pub fn new() -> AbstractState {
+        let compiled_module = empty_module();
         AbstractState {
             stack: Vec::new(),
             instantiation: Vec::new(),
             locals: HashMap::new(),
             register: None,
-            module: InstantiableModule::new(
-                empty_module()
-                    .freeze()
-                    .expect("Empty module should pass the bounds checker"),
-            ),
+            module: InstantiableModule::new(compiled_module),
             acquires_global_resources: Vec::new(),
             aborted: false,
             control_flow_allowed: false,
@@ -473,18 +469,14 @@ impl AbstractState {
     /// Create a new AbstractState given a list of `SignatureTokens` that will be
     /// the (available) locals that the state will have, as well as the module state
     pub fn from_locals(
-        module: CompiledModuleMut,
+        module: CompiledModule,
         locals: HashMap<usize, (AbstractValue, BorrowState)>,
         instantiation: Vec<AbilitySet>,
         acquires_global_resources: Vec<StructDefinitionIndex>,
         call_graph: CallGraph,
     ) -> AbstractState {
         let locals_len = locals.len();
-        let module = InstantiableModule::new(
-            module
-                .freeze()
-                .expect("Module should pass the bounds checker"),
-        );
+        let module = InstantiableModule::new(module);
         AbstractState {
             stack: Vec::new(),
             instantiation,

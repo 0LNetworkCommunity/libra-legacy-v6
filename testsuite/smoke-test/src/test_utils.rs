@@ -82,7 +82,6 @@ pub mod diem_swarm_utils {
     use crate::test_utils::fetch_backend_storage;
     use cli::client_proxy::ClientProxy;
     use diem_config::config::{NodeConfig, SecureBackend, WaypointConfig};
-    use diem_events_fetcher::DiemEventsFetcher;
     use diem_key_manager::diem_interface::JsonRpcDiemInterface;
     use diem_operational_tool::test_helper::OperationalTool;
     use diem_secure_storage::{KVStorage, Storage};
@@ -149,14 +148,6 @@ pub mod diem_swarm_utils {
         DiemDebugger::json_rpc(swarm_rpc_endpoint.as_str()).unwrap()
     }
 
-    /// Returns a Diem Event Fetcher pointing to a node at the given node index.
-    pub fn get_diem_event_fetcher(swarm: &DiemSwarm, node_index: usize) -> DiemEventsFetcher {
-        let (node_config, _) = load_node_config(swarm, node_index);
-        let swarm_rpc_endpoint =
-            format!("http://localhost:{}", node_config.json_rpc.address.port());
-        DiemEventsFetcher::new(swarm_rpc_endpoint.as_str()).unwrap()
-    }
-
     /// Returns an operational tool pointing to a validator node at the given node index.
     pub fn get_op_tool(swarm: &DiemSwarm, node_index: usize) -> OperationalTool {
         OperationalTool::new(
@@ -172,9 +163,8 @@ pub mod diem_swarm_utils {
     }
 
     /// Loads the diem root's storage backend identified by the node index in the given swarm.
-    pub fn load_diem_root_storage(swarm: &DiemSwarm, node_index: usize) -> SecureBackend {
-        let (node_config, _) = load_node_config(swarm, node_index);
-        fetch_backend_storage(&node_config, Some("diem_root".to_string()))
+    pub fn load_diem_root_storage(swarm: &DiemSwarm, _node_index: usize) -> SecureBackend {
+        SecureBackend::OnDiskStorage(swarm.config.root_storage.clone())
     }
 
     /// Loads the node config for the validator at the specified index. Also returns the node

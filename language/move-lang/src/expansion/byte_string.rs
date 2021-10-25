@@ -1,56 +1,55 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{errors::*, parser::syntax::make_loc};
+use crate::{diag, diagnostics::Diagnostics, parser::syntax::make_loc};
 use move_ir_types::location::*;
+use move_symbol_pool::Symbol;
 
-#[derive(Default)]
 struct Context {
-    filename: &'static str,
+    filename: Symbol,
     start_offset: usize,
-    errors: Errors,
+    diags: Diagnostics,
 }
 
 impl Context {
-    fn new(filename: &'static str, start_offset: usize) -> Self {
+    fn new(filename: Symbol, start_offset: usize) -> Self {
         Self {
             filename,
             start_offset,
-            errors: Errors::new(),
+            diags: Diagnostics::new(),
         }
     }
 
     fn error(&mut self, start: usize, end: usize, err_text: String) {
-        self.errors.push(vec![(
-            make_loc(
-                self.filename,
-                self.start_offset + 2 + start, // add 2 for the beginning of the string
-                self.start_offset + 2 + end,
-            ),
-            err_text,
-        )])
+        let loc = make_loc(
+            self.filename,
+            self.start_offset + 2 + start, // add 2 for the beginning of the string
+            self.start_offset + 2 + end,
+        );
+        self.diags
+            .add(diag!(Syntax::InvalidByteString, (loc, err_text)))
     }
 
-    fn has_errors(&self) -> bool {
-        !self.errors.is_empty()
+    fn has_diags(&self) -> bool {
+        !self.diags.is_empty()
     }
 
-    fn get_errors(self) -> Errors {
-        self.errors
+    fn get_diags(self) -> Diagnostics {
+        self.diags
     }
 }
 
-pub fn decode(loc: Loc, text: &str) -> Result<Vec<u8>, Errors> {
+pub fn decode(loc: Loc, text: &str) -> Result<Vec<u8>, Diagnostics> {
     let filename = loc.file();
-    let start_offset = loc.span().start().0 as usize;
+    let start_offset = loc.start() as usize;
     let mut context = Context::new(filename, start_offset);
     let mut buffer = vec![];
     let chars: Vec<_> = text.chars().collect();
     decode_(&mut context, &mut buffer, chars);
-    if !context.has_errors() {
+    if !context.has_diags() {
         Ok(buffer)
     } else {
-        Err(context.get_errors())
+        Err(context.get_diags())
     }
 }
 

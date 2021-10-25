@@ -2,44 +2,32 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use log::LevelFilter;
+use move_command_line_common::files::{extension_equals, find_filenames, MOVE_EXTENSION};
 use std::path::PathBuf;
 
 #[cfg(test)]
 mod tests;
 pub mod utils;
 
-pub const MOVE_EXTENSION: &str = "move";
-pub const COMPILED_EXTENSION: &str = "mv";
-pub const ERROR_DESC_EXTENSION: &str = "errmap";
+pub mod natives;
 
 const MODULES_DIR: &str = "modules";
 const NURSERY_DIR: &str = "nursery";
 const DOCS_DIR: &str = "docs";
 const NURSERY_DOCS_DIR: &str = "nursery/docs";
+const ERRMAP_FILE: &str = "error_description.errmap";
 
 const REFERENCES_TEMPLATE: &str = "templates/references.md";
 const OVERVIEW_TEMPLATE: &str = "templates/overview.md";
 
-pub fn filter_move_files(dir_iter: impl Iterator<Item = PathBuf>) -> impl Iterator<Item = PathBuf> {
-    dir_iter.flat_map(|path| {
-        if path.extension()?.to_str()? == MOVE_EXTENSION {
-            Some(path)
-        } else {
-            None
-        }
-    })
-}
-
-pub fn filter_move_bytecode_files(
-    dir_iter: impl Iterator<Item = PathBuf>,
-) -> impl Iterator<Item = PathBuf> {
-    dir_iter.flat_map(|path| {
-        if path.extension()?.to_str()? == COMPILED_EXTENSION {
-            Some(path)
-        } else {
-            None
-        }
-    })
+pub fn unit_testing_files() -> Vec<String> {
+    vec![
+        path_in_crate("nursery/UnitTest.move"),
+        path_in_crate("modules/addresses.move"),
+    ]
+    .into_iter()
+    .map(|p| p.into_os_string().into_string().unwrap())
+    .collect()
 }
 
 pub fn path_in_crate<S>(relative: S) -> PathBuf
@@ -63,20 +51,18 @@ pub fn move_nursery_docs_full_path() -> String {
     format!("{}/{}", env!("CARGO_MANIFEST_DIR"), NURSERY_DOCS_DIR)
 }
 
+pub fn move_stdlib_errmap_full_path() -> String {
+    format!("{}/{}", env!("CARGO_MANIFEST_DIR"), ERRMAP_FILE)
+}
+
 pub fn move_stdlib_files() -> Vec<String> {
     let path = path_in_crate(MODULES_DIR);
-    let dirfiles = utils::iterate_directory(&path);
-    filter_move_files(dirfiles)
-        .flat_map(|path| path.into_os_string().into_string())
-        .collect()
+    find_filenames(&[path], |p| extension_equals(p, MOVE_EXTENSION)).unwrap()
 }
 
 pub fn move_nursery_files() -> Vec<String> {
     let path = path_in_crate(NURSERY_DIR);
-    let dirfiles = utils::iterate_directory(&path);
-    filter_move_files(dirfiles)
-        .flat_map(|path| path.into_os_string().into_string())
-        .collect()
+    find_filenames(&[path], |p| extension_equals(p, MOVE_EXTENSION)).unwrap()
 }
 
 pub fn build_doc(
@@ -137,3 +123,29 @@ pub fn build_nursery_doc(output_path: &str) {
         false,
     )
 }
+
+pub fn build_error_code_map(output_path: &str) {
+    let options = move_prover::cli::Options {
+        move_sources: crate::move_stdlib_files(),
+        move_deps: vec![],
+        verbosity_level: LevelFilter::Warn,
+        run_errmapgen: true,
+        errmapgen: errmapgen::ErrmapOptions {
+            output_file: output_path.to_string(),
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+    options.setup_logging_for_test();
+    move_prover::run_move_prover_errors_to_stderr(options).unwrap();
+}
+
+const ERROR_DESCRIPTIONS: &[u8] = include_bytes!("../error_description.errmap");
+
+pub fn error_descriptions() -> &'static [u8] {
+    ERROR_DESCRIPTIONS
+}
+
+//////// 0L ////////
+pub mod vdf; // todo: rename to ol_vdf
+pub mod ol_decimal;

@@ -299,7 +299,8 @@ impl<'env, 'translator> ModuleBuilder<'env, 'translator> {
                 !def.abilities.has_ability_(PA::Ability_::Drop)
             );
         let mut et = ExpTranslator::new(self);
-        let type_params = et.analyze_and_add_type_params(&def.type_parameters);
+        let type_params =
+            et.analyze_and_add_type_params(def.type_parameters.iter().map(|param| &param.name));
         et.parent.parent.define_struct(
             et.to_loc(&def.loc),
             qsym,
@@ -316,7 +317,9 @@ impl<'env, 'translator> ModuleBuilder<'env, 'translator> {
         let fun_id = FunId::new(qsym.symbol);
         let mut et = ExpTranslator::new(self);
         et.enter_scope();
-        let type_params = et.analyze_and_add_type_params(&def.signature.type_parameters);
+        let type_params = et.analyze_and_add_type_params(
+            def.signature.type_parameters.iter().map(|(name, _)| name),
+        );
         et.enter_scope();
         let params = et.analyze_and_add_params(&def.signature.parameters, true);
         let result_type = et.translate_type(&def.signature.return_type);
@@ -374,7 +377,7 @@ impl<'env, 'translator> ModuleBuilder<'env, 'translator> {
         }
         // If this is a schema spec block, process its declaration.
         if let EA::SpecBlockTarget_::Schema(name, type_params) = &block.value.target.value {
-            self.decl_ana_schema(&block, &name, &type_params);
+            self.decl_ana_schema(&block, &name, type_params.iter().map(|(name, _)| name));
         }
     }
 
@@ -394,7 +397,12 @@ impl<'env, 'translator> ModuleBuilder<'env, 'translator> {
                 name,
                 type_,
                 type_parameters,
-            } => self.decl_ana_global_var(&loc, name, type_parameters, type_),
+            } => self.decl_ana_global_var(
+                &loc,
+                name,
+                type_parameters.iter().map(|(name, _)| name),
+                type_,
+            ),
             _ => {}
         }
     }
@@ -447,7 +455,8 @@ impl<'env, 'translator> ModuleBuilder<'env, 'translator> {
         for_move_fun: bool,
     ) -> (Vec<(Symbol, Type)>, Vec<(Symbol, Type)>, Type) {
         let et = &mut ExpTranslator::new(self);
-        let type_params = et.analyze_and_add_type_params(&signature.type_parameters);
+        let type_params =
+            et.analyze_and_add_type_params(signature.type_parameters.iter().map(|(name, _)| name));
         et.enter_scope();
         let params = et.analyze_and_add_params(&signature.parameters, for_move_fun);
         let result_type = et.translate_type(&signature.return_type);
@@ -455,13 +464,15 @@ impl<'env, 'translator> ModuleBuilder<'env, 'translator> {
         (type_params, params, result_type)
     }
 
-    fn decl_ana_global_var(
+    fn decl_ana_global_var<'a, I>(
         &mut self,
         loc: &Loc,
         name: &Name,
-        type_params: &[(Name, EA::AbilitySet)],
+        type_params: I,
         type_: &EA::Type,
-    ) {
+    ) where
+        I: IntoIterator<Item = &'a Name>,
+    {
         let name = self.symbol_pool().make(name.value.as_str());
         let (type_params, type_) = {
             let et = &mut ExpTranslator::new(self);
@@ -498,16 +509,14 @@ impl<'env, 'translator> ModuleBuilder<'env, 'translator> {
         self.spec_vars.push(var_decl);
     }
 
-    fn decl_ana_schema<T>(
-        &mut self,
-        block: &EA::SpecBlock,
-        name: &Name,
-        type_params: &[(Name, T)],
-    ) {
+    fn decl_ana_schema<'a, I>(&mut self, block: &EA::SpecBlock, name: &Name, type_params: I)
+    where
+        I: IntoIterator<Item = &'a Name>,
+    {
         let qsym = self.qualified_by_module_from_name(name);
         let mut et = ExpTranslator::new(self);
         et.enter_scope();
-        let type_params = et.analyze_and_add_type_params(&type_params);
+        let type_params = et.analyze_and_add_type_params(type_params);
         // Extract local variables.
         let mut vars = vec![];
         for member in &block.value.members {
@@ -633,6 +642,7 @@ impl<'env, 'translator> ModuleBuilder<'env, 'translator> {
                     match &member.value {
                         EA::SpecBlockMember_::Condition {
                             kind,
+                            type_parameters,
                             properties,
                             exp,
                             additional_exps,
@@ -655,6 +665,7 @@ impl<'env, 'translator> ModuleBuilder<'env, 'translator> {
                                     loc,
                                     &context,
                                     kind,
+                                    type_parameters,
                                     properties,
                                     exp,
                                     additional_exps,
@@ -922,6 +933,7 @@ impl<'env, 'translator> ModuleBuilder<'env, 'translator> {
         match &member.value {
             Condition {
                 kind,
+                type_parameters,
                 properties,
                 exp,
                 additional_exps,
@@ -934,7 +946,15 @@ impl<'env, 'translator> ModuleBuilder<'env, 'translator> {
                             None
                         }
                     });
-                    self.def_ana_condition(loc, context, kind, properties, exp, additional_exps)
+                    self.def_ana_condition(
+                        loc,
+                        context,
+                        kind,
+                        type_parameters,
+                        properties,
+                        exp,
+                        additional_exps,
+                    )
                 }
             }
             Function {
@@ -1360,6 +1380,37 @@ impl<'env, 'translator> ModuleBuilder<'env, 'translator> {
                 }
             };
             cond.exp.visit(&mut visitor);
+        } else if let FunctionCode(name, _) = context {
+            // Restrict accesses to function arguments only for `old(..)` in in-spec block
+            let entry = self.parent.fun_table.get(name).expect("function defined");
+            let mut visitor = |e: &ExpData| {
+                if let ExpData::Call(_, Operation::Old, args) = e {
+                    let arg = &args[0];
+                    match args[0].as_ref() {
+                        ExpData::Temporary(_, idx) if *idx < entry.params.len() => (),
+                        _ => {
+                            let label_cond = (
+                                cond.loc.clone(),
+                                "only a function parameter is allowed in old(..) expressions \
+                                in inline spec block"
+                                    .to_owned(),
+                            );
+                            let label_exp = (
+                                self.parent.env.get_node_loc(arg.node_id()),
+                                "this expression is not a function parameter".to_owned(),
+                            );
+                            self.parent.env.diag_with_labels(
+                                Severity::Error,
+                                loc,
+                                "invalid old(..) expression in inline spec block",
+                                vec![label_cond, label_exp],
+                            );
+                            ok = false;
+                        }
+                    };
+                }
+            };
+            cond.exp.visit(&mut visitor);
         }
         ok
     }
@@ -1491,17 +1542,31 @@ impl<'env, 'translator> ModuleBuilder<'env, 'translator> {
         loc: &Loc,
         context: &SpecBlockContext,
         kind: ConditionKind,
+        type_parameters: &[(Name, EA::AbilitySet)],
         properties: PropertyBag,
         exp: &EA::Exp,
         additional_exps: &[EA::Exp],
     ) {
-        if kind == ConditionKind::Decreases {
-            self.parent
-                .error(loc, "decreases specification not supported currently");
+        if matches!(kind, ConditionKind::Decreases | ConditionKind::SucceedsIf) {
+            self.parent.error(loc, "condition kind is not supported");
             return;
         }
-        if matches!(kind, ConditionKind::SucceedsIf) {
-            self.parent.error(loc, "condition kind is not supported");
+        if !matches!(
+            kind,
+            ConditionKind::Invariant | ConditionKind::InvariantUpdate | ConditionKind::Axiom
+        ) && !type_parameters.is_empty()
+        {
+            let msg = "type parameters are not allowed here";
+            let note = "type parameters are only allowed on the following cases: \
+                `invariant<..>`, `invariant<..> update`, and `axiom<..>`.";
+            self.parent
+                .error_with_notes(loc, msg, vec![note.to_owned()]);
+            return;
+        }
+        // TODO(mengxu): add support for generic conditions
+        if !type_parameters.is_empty() {
+            self.parent
+                .error(loc, "generic specification condition is not supported");
             return;
         }
         let expected_type = self.expected_type_for_condition(&kind);
@@ -1540,7 +1605,7 @@ impl<'env, 'translator> ModuleBuilder<'env, 'translator> {
             }
             ConditionKind::Emits => {
                 // TODO: `first` is the "message" part, and `second` is the "handle" part.
-                //       `second` should have type 0x1::Event::EventHandle<T>, and `first`
+                //       `second` should have type Std::Event::EventHandle<T>, and `first`
                 //       should have type T.
                 let (_, first) = et.translate_exp_free(exp);
                 let (_, second) = et.translate_exp_free(&additional_exps[0]);
@@ -1796,6 +1861,7 @@ impl<'env, 'translator> ModuleBuilder<'env, 'translator> {
                 EA::SpecBlockMember_::Let { .. } => { /* handled above */ }
                 EA::SpecBlockMember_::Condition {
                     kind,
+                    type_parameters,
                     properties,
                     exp,
                     additional_exps,
@@ -1813,6 +1879,7 @@ impl<'env, 'translator> ModuleBuilder<'env, 'translator> {
                             &member_loc,
                             &context,
                             kind,
+                            type_parameters,
                             properties,
                             exp,
                             additional_exps,
@@ -2366,7 +2433,9 @@ impl<'env, 'translator> ModuleBuilder<'env, 'translator> {
                 // This is a match, so apply this schema to this function.
                 let type_params = {
                     let mut et = ExpTranslator::new(self);
-                    et.analyze_and_add_type_params(&matched.value.type_parameters);
+                    et.analyze_and_add_type_params(
+                        matched.value.type_parameters.iter().map(|(name, _)| name),
+                    );
                     et.get_type_params_with_name()
                 };
                 // Create a property marking this as injected.

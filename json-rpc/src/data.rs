@@ -4,26 +4,19 @@
 use crate::{
     errors::JsonRpcError,
     views::{
-        AccountStateWithProofView, AccountView, CurrencyInfoView, EventView, EventWithProofView,
-        MetadataView, StateProofView, TransactionListView, TransactionView,
+        AccountStateWithProofView, AccountTransactionsWithProofView, AccountView,
+        AccumulatorConsistencyProofView, CurrencyInfoView, EventByVersionWithProofView, EventView,
+        EventWithProofView, MetadataView, StateProofView, TransactionListView, TransactionView,
         TransactionsWithProofsView, TowerStateResourceView, OracleUpgradeStateView
     },
 };
-use anyhow::{format_err, Result};
-// use diem_client::views::TowerStateResourceView;
-use diem_crypto::HashValue;
+use anyhow::Result;
 use diem_types::{
-    account_address::AccountAddress,
-    account_config::{diem_root_address, resources::dual_attestation::Limit, AccountResource},
-    account_state::AccountState,
-    chain_id::ChainId,
-    event::EventKey,
+    account_address::AccountAddress, account_config::diem_root_address,
+    account_state::AccountState, chain_id::ChainId, event::EventKey,
     ledger_info::LedgerInfoWithSignatures,
 };
-use std::{
-    cmp::min,
-    convert::{TryFrom, TryInto},
-};
+use std::convert::{TryFrom, TryInto};
 use storage_interface::{DbReader, Order};
 
 pub fn get_account_state(
@@ -50,35 +43,16 @@ pub fn get_metadata(
     chain_id: ChainId,
     version: u64,
 ) -> Result<MetadataView, JsonRpcError> {
-    let mut script_hash_allow_list: Option<Vec<HashValue>> = None;
-    let mut module_publishing_allowed: Option<bool> = None;
-    let mut diem_version: Option<u64> = None;
-    let mut dual_attestation_limit: Option<u64> = None;
+    let accumulator_root_hash = db.get_accumulator_root_hash(version)?;
+    let timestamp = db.get_block_timestamp(version)?;
+    let mut metadata_view =
+        MetadataView::new(version, accumulator_root_hash, timestamp, chain_id.id());
     if version == ledger_version {
-        if let Some(account) = get_account_state(db, diem_root_address(), version)? {
-            if let Some(vm_publishing_option) = account.get_vm_publishing_option()? {
-                script_hash_allow_list = Some(vm_publishing_option.script_allow_list);
-
-                module_publishing_allowed = Some(vm_publishing_option.is_open_module);
-            }
-            if let Some(v) = account.get_diem_version()? {
-                diem_version = Some(v.major)
-            }
-            if let Some(limit) = account.get_resource::<Limit>()? {
-                dual_attestation_limit = Some(limit.micro_xdx_limit)
-            }
+        if let Some(diem_root) = get_account_state(db, diem_root_address(), version)? {
+            metadata_view.with_diem_root(&diem_root)?;
         }
     }
-    Ok(MetadataView {
-        version,
-        accumulator_root_hash: db.get_accumulator_root_hash(version)?,
-        timestamp: db.get_block_timestamp(version)?,
-        chain_id: chain_id.id(),
-        script_hash_allow_list,
-        module_publishing_allowed,
-        diem_version,
-        dual_attestation_limit,
-    })
+    Ok(metadata_view)
 }
 
 /// Returns account state (AccountView) by given address
@@ -132,69 +106,60 @@ pub fn get_transactions_with_proofs(
 /// Returns account transaction by account and sequence_number
 pub fn get_account_transaction(
     db: &dyn DbReader,
-    ledger_version: u64,
     account: AccountAddress,
-    sequence_number: u64,
+    seq_num: u64,
     include_events: bool,
+    ledger_version: u64,
 ) -> Result<Option<TransactionView>, JsonRpcError> {
-    let tx = db.get_txn_by_account(account, sequence_number, ledger_version, include_events)?;
-
-    if let Some(tx) = tx {
-        Ok(Some(TransactionView::try_from_tx_and_events(
-            tx.version,
-            tx.transaction,
-            tx.proof.transaction_info,
-            tx.events.unwrap_or_default(),
-        )?))
-    } else {
-        Ok(None)
-    }
+    let tx = db
+        .get_account_transaction(account, seq_num, include_events, ledger_version)?
+        .map(|tx| {
+            TransactionView::try_from_tx_and_events(
+                tx.version,
+                tx.transaction,
+                tx.proof.transaction_info,
+                tx.events.unwrap_or_default(),
+            )
+        })
+        .transpose()?;
+    Ok(tx)
 }
 
 /// Returns all account transactions
 pub fn get_account_transactions(
     db: &dyn DbReader,
+    account: AccountAddress,
+    start_seq_num: u64,
+    limit: u64,
+    include_events: bool,
     ledger_version: u64,
+) -> Result<Vec<TransactionView>, JsonRpcError> {
+    let acct_txs = db.get_account_transactions(
+        account,
+        start_seq_num,
+        limit,
+        include_events,
+        ledger_version,
+    )?;
+    let txs = TransactionListView::try_from(acct_txs)?;
+    Ok(txs.0)
+}
+
+/// Return a serialized list of an account's transactions along with a proof for
+/// each transaction.
+pub fn get_account_transactions_with_proofs(
+    db: &dyn DbReader,
     account: AccountAddress,
     start: u64,
     limit: u64,
     include_events: bool,
-) -> Result<Vec<TransactionView>, JsonRpcError> {
-    let account_state = db.get_latest_account_state(account)?.ok_or_else(|| {
-        JsonRpcError::invalid_request_with_msg(format!(
-            "could not find account by address {}",
-            account
-        ))
-    })?;
-    let account_seq = AccountResource::try_from(&account_state)?.sequence_number();
-
-    if start >= account_seq {
-        return Ok(vec![]);
-    }
-
-    let mut all_txs = vec![];
-    let end = min(
-        start
-            .checked_add(limit)
-            .ok_or_else(|| format_err!("overflow!"))?,
-        account_seq,
-    );
-
-    for seq in start..end {
-        let tx = db
-            .get_txn_by_account(account, seq, ledger_version, include_events)?
-            .ok_or_else(|| format_err!("Can not find transaction for seq {}!", seq))?;
-
-        let tx_view = TransactionView::try_from_tx_and_events(
-            tx.version,
-            tx.transaction,
-            tx.proof.transaction_info,
-            tx.events.unwrap_or_default(),
-        )?;
-        all_txs.push(tx_view);
-    }
-
-    Ok(all_txs)
+    ledger_version: u64,
+) -> Result<AccountTransactionsWithProofView, JsonRpcError> {
+    let acct_txns_with_proof =
+        db.get_account_transactions(account, start, limit, include_events, ledger_version)?;
+    Ok(AccountTransactionsWithProofView::try_from(
+        &acct_txns_with_proof,
+    )?)
 }
 
 /// Returns events by given access path
@@ -240,6 +205,18 @@ pub fn get_events_with_proofs(
     Ok(views)
 }
 
+/// Returns the latest event at or below the requested version along with proof.
+pub fn get_event_by_version_with_proof(
+    db: &dyn DbReader,
+    ledger_version: u64,
+    event_key: EventKey,
+    version: u64,
+) -> Result<EventByVersionWithProofView, JsonRpcError> {
+    let event_by_version =
+        db.get_event_by_version_with_proof(&event_key, version, ledger_version)?;
+    EventByVersionWithProofView::try_from(&event_by_version).map_err(Into::into)
+}
+
 /// Returns meta information about supported currencies
 pub fn get_currencies(
     db: &dyn DbReader,
@@ -266,10 +243,31 @@ pub fn get_network_status(_role: &str) -> Result<u64, JsonRpcError> {
 pub fn get_state_proof(
     db: &dyn DbReader,
     version: u64,
-    ledger_info: &LedgerInfoWithSignatures,
+    ledger_info: LedgerInfoWithSignatures,
 ) -> Result<StateProofView, JsonRpcError> {
-    let proofs = db.get_state_proof_with_ledger_info(version, ledger_info.clone())?;
-    StateProofView::try_from((ledger_info.clone(), proofs.0, proofs.1)).map_err(Into::into)
+    let state_proof = db.get_state_proof_with_ledger_info(version, ledger_info)?;
+    StateProofView::try_from(&state_proof).map_err(Into::into)
+}
+
+/// Returns a proof that allows a client to extend their accumulator summary from
+/// `client_known_version` (or pre-genesis if `None`) to `ledger_version`.
+///
+/// See [`DbReader::get_accumulator_consistency_proof`]
+pub fn get_accumulator_consistency_proof(
+    db: &dyn DbReader,
+    client_known_version: Option<u64>,
+    ledger_version: u64,
+) -> Result<AccumulatorConsistencyProofView, JsonRpcError> {
+    if let Some(client_known_version) = client_known_version {
+        if client_known_version > ledger_version {
+            return Err(JsonRpcError::invalid_request_with_msg(format!(
+                "client_known_version({}) should be <= ledger_version({})",
+                client_known_version, ledger_version,
+            )));
+        }
+    }
+    let proof = db.get_accumulator_consistency_proof(client_known_version, ledger_version)?;
+    AccumulatorConsistencyProofView::try_from(&proof).map_err(Into::into)
 }
 
 /// Returns the account state to the client, alongside a proof relative to the version and
@@ -294,7 +292,6 @@ pub fn get_account_state_with_proof(
     )?)
 }
 
-
 //////// 0L ////////
 /// Get miner state
 pub fn get_miner_state(
@@ -311,7 +308,8 @@ pub fn get_miner_state(
     
 }
 
-/// Get miner state
+//////// 0L ////////
+/// Get oracle upgrade state
 pub fn get_oracle_upgrade_state(
     db: &dyn DbReader,
     version: u64,

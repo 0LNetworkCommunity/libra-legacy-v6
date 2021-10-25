@@ -8,14 +8,15 @@ use diem_state_view::StateView;
 use diem_types::{
     account_address::AccountAddress,
     account_state_blob::{AccountStateBlob, AccountStateWithProof},
-    contract_event::{ContractEvent, EventWithProof},
+    contract_event::{ContractEvent, EventByVersionWithProof, EventWithProof},
     epoch_change::EpochChangeProof,
     event::EventKey,
     ledger_info::LedgerInfoWithSignatures,
-    proof::{AccumulatorConsistencyProof, SparseMerkleProof},
+    proof::SparseMerkleProof,
+    state_proof::StateProof,
     transaction::{
-        Transaction, TransactionListWithProof, TransactionOutput, TransactionToCommit,
-        TransactionWithProof, Version,
+        AccountTransactionsWithProof, Transaction, TransactionListWithProof, TransactionOutput,
+        TransactionToCommit, TransactionWithProof, Version,
     },
     vm_status::VMStatus,
 };
@@ -34,7 +35,7 @@ pub fn fuzz_execute_and_commit_chunk(
     txn_list_with_proof: TransactionListWithProof,
     verified_target_li: LedgerInfoWithSignatures,
 ) {
-    let mut executor = create_test_executor();
+    let executor = create_test_executor();
     let _events = executor.execute_and_commit_chunk(txn_list_with_proof, verified_target_li, None);
 }
 
@@ -42,7 +43,7 @@ pub fn fuzz_execute_and_commit_blocks(
     blocks: Vec<(HashValue, Vec<Transaction>)>,
     ledger_info_with_sigs: LedgerInfoWithSignatures,
 ) {
-    let mut executor = create_test_executor();
+    let executor = create_test_executor();
 
     let mut parent_block_id = *SPARSE_MERKLE_PLACEHOLDER_HASH;
     let mut block_ids = vec![];
@@ -114,6 +115,15 @@ impl DbReader for FakeDb {
         unimplemented!();
     }
 
+    fn get_event_by_version_with_proof(
+        &self,
+        _event_key: &EventKey,
+        _version: u64,
+        _proof_version: u64,
+    ) -> Result<EventByVersionWithProof> {
+        unimplemented!()
+    }
+
     fn get_latest_account_state(
         &self,
         _address: AccountAddress,
@@ -139,32 +149,36 @@ impl DbReader for FakeDb {
         Ok(Some(StartupInfo::new_for_testing()))
     }
 
-    fn get_txn_by_account(
+    fn get_account_transaction(
         &self,
         _address: AccountAddress,
         _seq_num: u64,
+        _include_events: bool,
         _ledger_version: Version,
-        _fetch_events: bool,
     ) -> Result<Option<TransactionWithProof>> {
         unimplemented!();
+    }
+
+    fn get_account_transactions(
+        &self,
+        _address: AccountAddress,
+        _start_seq_num: u64,
+        _limit: u64,
+        _include_events: bool,
+        _ledger_version: Version,
+    ) -> Result<AccountTransactionsWithProof> {
+        unimplemented!()
     }
 
     fn get_state_proof_with_ledger_info(
         &self,
         _known_version: u64,
         _ledger_info: LedgerInfoWithSignatures,
-    ) -> Result<(EpochChangeProof, AccumulatorConsistencyProof)> {
+    ) -> Result<StateProof> {
         unimplemented!();
     }
 
-    fn get_state_proof(
-        &self,
-        _known_version: u64,
-    ) -> Result<(
-        LedgerInfoWithSignatures,
-        EpochChangeProof,
-        AccumulatorConsistencyProof,
-    )> {
+    fn get_state_proof(&self, _known_version: u64) -> Result<StateProof> {
         unimplemented!();
     }
 

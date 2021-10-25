@@ -55,13 +55,13 @@
         -  [Module `0x1::AccountAdministrationScripts`](#0x1_AccountAdministrationScripts)
     -  [Payments](#@Payments_133)
         -  [Module `0x1::PaymentScripts`](#0x1_PaymentScripts)
-    -  [Validator and Validator Operator Administration](#@Validator_and_Validator_Operator_Administration_140)
+    -  [Validator and Validator Operator Administration](#@Validator_and_Validator_Operator_Administration_146)
         -  [Module `0x1::ValidatorAdministrationScripts`](#0x1_ValidatorAdministrationScripts)
-    -  [Treasury and Compliance Operations](#@Treasury_and_Compliance_Operations_171)
+    -  [Treasury and Compliance Operations](#@Treasury_and_Compliance_Operations_177)
         -  [Module `0x1::TreasuryComplianceScripts`](#0x1_TreasuryComplianceScripts)
-    -  [System Administration](#@System_Administration_237)
+    -  [System Administration](#@System_Administration_243)
         -  [Module `0x1::SystemAdministrationScripts`](#0x1_SystemAdministrationScripts)
-    -  [Index](#@Index_254)
+    -  [Index](#@Index_260)
 
 
 
@@ -794,7 +794,7 @@ This is emitted on the new Child VASPS's <code><a href="../../../../../releases/
 * <code><a href="script_documentation.md#0x1_AccountAdministrationScripts_create_recovery_address">AccountAdministrationScripts::create_recovery_address</a></code>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_AccountCreationScripts_create_child_vasp_account">create_child_vasp_account</a>&lt;CoinType: store&gt;(parent_vasp: signer, child_address: address, auth_key_prefix: vector&lt;u8&gt;, add_all_currencies: bool, child_initial_balance: u64)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_AccountCreationScripts_create_child_vasp_account">create_child_vasp_account</a>&lt;CoinType&gt;(parent_vasp: signer, child_address: address, auth_key_prefix: vector&lt;u8&gt;, add_all_currencies: bool, child_initial_balance: u64)
 </code></pre>
 
 
@@ -803,7 +803,7 @@ This is emitted on the new Child VASPS's <code><a href="../../../../../releases/
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_AccountCreationScripts_create_child_vasp_account">create_child_vasp_account</a>&lt;CoinType: store&gt;(
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_AccountCreationScripts_create_child_vasp_account">create_child_vasp_account</a>&lt;CoinType&gt;(
     parent_vasp: signer,
     child_address: address,
     auth_key_prefix: vector&lt;u8&gt;,
@@ -844,13 +844,19 @@ This is emitted on the new Child VASPS's <code><a href="../../../../../releases/
 <b>aborts_if</b> child_initial_balance &gt; max_u64() <b>with</b> <a href="_LIMIT_EXCEEDED">Errors::LIMIT_EXCEEDED</a>;
 <b>include</b> (child_initial_balance &gt; 0) ==&gt;
     <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_ExtractWithdrawCapAbortsIf">DiemAccount::ExtractWithdrawCapAbortsIf</a>{sender_addr: parent_addr};
+<b>include</b> (child_initial_balance &gt; 0) ==&gt; <a href="../../../../../releases/artifacts/current/docs/modules/DualAttestation.md#0x1_DualAttestation_AssertPaymentOkAbortsIf">DualAttestation::AssertPaymentOkAbortsIf</a>&lt;CoinType&gt;{
+    payer: parent_addr,
+    payee: child_address,
+    metadata: x"",
+    metadata_signature: x"",
+    value: child_initial_balance
+};
 <b>include</b> (child_initial_balance) &gt; 0 ==&gt;
     <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_PayFromAbortsIfRestricted">DiemAccount::PayFromAbortsIfRestricted</a>&lt;CoinType&gt;{
         cap: parent_cap,
         payee: child_address,
         amount: child_initial_balance,
         metadata: x"",
-        metadata_signature: x""
     };
 <b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_CreateChildVASPAccountEnsures">DiemAccount::CreateChildVASPAccountEnsures</a>&lt;CoinType&gt;{
     parent_addr: parent_addr,
@@ -866,14 +872,6 @@ This is emitted on the new Child VASPS's <code><a href="../../../../../releases/
     <a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a>,
     <a href="_INVALID_STATE">Errors::INVALID_STATE</a>,
     <a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
-<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_MakeAccountEmits">DiemAccount::MakeAccountEmits</a>{new_account_address: child_address};
-<b>include</b> child_initial_balance &gt; 0 ==&gt;
-    <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_PayFromEmits">DiemAccount::PayFromEmits</a>&lt;CoinType&gt;{
-        cap: parent_cap,
-        payee: child_address,
-        amount: child_initial_balance,
-        metadata: x"",
-    };
 </code></pre>
 
 
@@ -882,13 +880,6 @@ Only Parent VASP accounts can create Child VASP accounts [[A7]][ROLE].
 
 
 <pre><code><b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/Roles.md#0x1_Roles_AbortsIfNotParentVasp">Roles::AbortsIfNotParentVasp</a>{account: parent_vasp};
-</code></pre>
-
-
-TODO(timeout): this currently times out
-
-
-<pre><code><b>pragma</b> verify = <b>false</b>;
 </code></pre>
 
 
@@ -1262,7 +1253,7 @@ and the <code>rold_id</code> field being <code><a href="../../../../../releases/
 * <code><a href="script_documentation.md#0x1_AccountAdministrationScripts_rotate_dual_attestation_info">AccountAdministrationScripts::rotate_dual_attestation_info</a></code>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_AccountCreationScripts_create_parent_vasp_account">create_parent_vasp_account</a>&lt;CoinType: store&gt;(tc_account: signer, sliding_nonce: u64, new_account_address: address, auth_key_prefix: vector&lt;u8&gt;, human_name: vector&lt;u8&gt;, add_all_currencies: bool)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_AccountCreationScripts_create_parent_vasp_account">create_parent_vasp_account</a>&lt;CoinType&gt;(tc_account: signer, sliding_nonce: u64, new_account_address: address, auth_key_prefix: vector&lt;u8&gt;, human_name: vector&lt;u8&gt;, add_all_currencies: bool)
 </code></pre>
 
 
@@ -1271,7 +1262,7 @@ and the <code>rold_id</code> field being <code><a href="../../../../../releases/
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_AccountCreationScripts_create_parent_vasp_account">create_parent_vasp_account</a>&lt;CoinType: store&gt;(
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_AccountCreationScripts_create_parent_vasp_account">create_parent_vasp_account</a>&lt;CoinType&gt;(
     tc_account: signer,
     sliding_nonce: u64,
     new_account_address: address,
@@ -1404,7 +1395,7 @@ and the <code>rold_id</code> field being <code><a href="../../../../../releases/
 * <code><a href="script_documentation.md#0x1_AccountAdministrationScripts_rotate_dual_attestation_info">AccountAdministrationScripts::rotate_dual_attestation_info</a></code>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_AccountCreationScripts_create_designated_dealer">create_designated_dealer</a>&lt;Currency: store&gt;(tc_account: signer, sliding_nonce: u64, addr: address, auth_key_prefix: vector&lt;u8&gt;, human_name: vector&lt;u8&gt;, add_all_currencies: bool)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_AccountCreationScripts_create_designated_dealer">create_designated_dealer</a>&lt;Currency&gt;(tc_account: signer, sliding_nonce: u64, addr: address, auth_key_prefix: vector&lt;u8&gt;, human_name: vector&lt;u8&gt;, add_all_currencies: bool)
 </code></pre>
 
 
@@ -1413,7 +1404,7 @@ and the <code>rold_id</code> field being <code><a href="../../../../../releases/
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_AccountCreationScripts_create_designated_dealer">create_designated_dealer</a>&lt;Currency: store&gt;(
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_AccountCreationScripts_create_designated_dealer">create_designated_dealer</a>&lt;Currency&gt;(
     tc_account: signer,
     sliding_nonce: u64,
     addr: address,
@@ -1484,11 +1475,11 @@ This module holds transactions that can be used to administer accounts in the Di
 
 
 <pre><code><b>use</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
-<b>use</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId">0x1::DiemId</a>;
 <b>use</b> <a href="../../../../../releases/artifacts/current/docs/modules/DualAttestation.md#0x1_DualAttestation">0x1::DualAttestation</a>;
 <b>use</b> <a href="../../../../../releases/artifacts/current/docs/modules/RecoveryAddress.md#0x1_RecoveryAddress">0x1::RecoveryAddress</a>;
 <b>use</b> <a href="../../../../../releases/artifacts/current/docs/modules/SharedEd25519PublicKey.md#0x1_SharedEd25519PublicKey">0x1::SharedEd25519PublicKey</a>;
 <b>use</b> <a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce">0x1::SlidingNonce</a>;
+<b>use</b> <a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain">0x1::VASPDomain</a>;
 </code></pre>
 
 
@@ -1548,7 +1539,7 @@ already have a <code><a href="../../../../../releases/artifacts/current/docs/mod
 * <code><a href="script_documentation.md#0x1_PaymentScripts_peer_to_peer_with_metadata">PaymentScripts::peer_to_peer_with_metadata</a></code>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_AccountAdministrationScripts_add_currency_to_account">add_currency_to_account</a>&lt;Currency: store&gt;(account: signer)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_AccountAdministrationScripts_add_currency_to_account">add_currency_to_account</a>&lt;Currency&gt;(account: signer)
 </code></pre>
 
 
@@ -1557,7 +1548,7 @@ already have a <code><a href="../../../../../releases/artifacts/current/docs/mod
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_AccountAdministrationScripts_add_currency_to_account">add_currency_to_account</a>&lt;Currency: store&gt;(account: signer) {
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_AccountAdministrationScripts_add_currency_to_account">add_currency_to_account</a>&lt;Currency&gt;(account: signer) {
     <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_add_currency">DiemAccount::add_currency</a>&lt;Currency&gt;(&account);
 }
 </code></pre>
@@ -2554,16 +2545,16 @@ may be used as a recovery account for those accounts.
 
 </details>
 
-<a name="0x1_AccountAdministrationScripts_create_diem_id_domains"></a>
+<a name="0x1_AccountAdministrationScripts_create_vasp_domains"></a>
 
-##### Function `create_diem_id_domains`
+##### Function `create_vasp_domains`
 
 
 <a name="@Summary_129"></a>
 
 ###### Summary
 
-Publishes a <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_DiemIdDomains">DiemId::DiemIdDomains</a></code> resource under a parent VASP account.
+Publishes a <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_VASPDomains">VASPDomain::VASPDomains</a></code> resource under a parent VASP account.
 The sending account must be a parent VASP account.
 
 
@@ -2571,9 +2562,9 @@ The sending account must be a parent VASP account.
 
 ###### Technical Description
 
-Publishes a <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_DiemIdDomains">DiemId::DiemIdDomains</a></code> resource under <code>account</code>.
-The The <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_DiemIdDomains">DiemId::DiemIdDomains</a></code> resource's <code>domains</code> field is a vector
-of DiemIdDomain, and will be empty on at the end of processing this transaction.
+Publishes a <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_VASPDomains">VASPDomain::VASPDomains</a></code> resource under <code>account</code>.
+The The <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_VASPDomains">VASPDomain::VASPDomains</a></code> resource's <code>domains</code> field is a vector
+of VASPDomain, and will be empty on at the end of processing this transaction.
 
 
 <a name="@Parameters_131"></a>
@@ -2591,11 +2582,11 @@ of DiemIdDomain, and will be empty on at the end of processing this transaction.
 
 | Error Category              | Error Reason              | Description                                                                    |
 | ----------------            | --------------            | -------------                                                                  |
-| <code><a href="_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_EDIEM_ID_DOMAIN">DiemId::EDIEM_ID_DOMAIN</a></code> | A <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_DiemIdDomains">DiemId::DiemIdDomains</a></code> resource has already been published under <code>account</code>. |
+| <code><a href="_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_EVASP_DOMAINS">VASPDomain::EVASP_DOMAINS</a></code> | A <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_VASPDomains">VASPDomain::VASPDomains</a></code> resource has already been published under <code>account</code>. |
 | <code><a href="_REQUIRES_ROLE">Errors::REQUIRES_ROLE</a></code>     | <code><a href="../../../../../releases/artifacts/current/docs/modules/Roles.md#0x1_Roles_EPARENT_VASP">Roles::EPARENT_VASP</a></code>     | The sending <code>account</code> was not a parent VASP account.                           |
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_AccountAdministrationScripts_create_diem_id_domains">create_diem_id_domains</a>(account: signer)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_AccountAdministrationScripts_create_vasp_domains">create_vasp_domains</a>(account: signer)
 </code></pre>
 
 
@@ -2604,8 +2595,8 @@ of DiemIdDomain, and will be empty on at the end of processing this transaction.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_AccountAdministrationScripts_create_diem_id_domains">create_diem_id_domains</a>(account: signer) {
-    <a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_publish_diem_id_domains">DiemId::publish_diem_id_domains</a>(&account)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_AccountAdministrationScripts_create_vasp_domains">create_vasp_domains</a>(account: signer) {
+    <a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_publish_vasp_domains">VASPDomain::publish_vasp_domains</a>(&account)
 }
 </code></pre>
 
@@ -2621,8 +2612,8 @@ of DiemIdDomain, and will be empty on at the end of processing this transaction.
 <pre><code><b>let</b> vasp_addr = <a href="_spec_address_of">Signer::spec_address_of</a>(account);
 <b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_TransactionChecks">DiemAccount::TransactionChecks</a>{sender: account};
 <b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/Roles.md#0x1_Roles_AbortsIfNotParentVasp">Roles::AbortsIfNotParentVasp</a>;
-<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_PublishDiemIdDomainsAbortsIf">DiemId::PublishDiemIdDomainsAbortsIf</a> { vasp_addr };
-<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_PublishDiemIdDomainsEnsures">DiemId::PublishDiemIdDomainsEnsures</a> { vasp_addr };
+<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_PublishVASPDomainsAbortsIf">VASPDomain::PublishVASPDomainsAbortsIf</a> { vasp_addr };
+<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_PublishVASPDomainsEnsures">VASPDomain::PublishVASPDomainsEnsures</a> { vasp_addr };
 <b>aborts_with</b> [check]
     <a href="_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a>,
     <a href="_REQUIRES_ROLE">Errors::REQUIRES_ROLE</a>;
@@ -2736,9 +2727,10 @@ Successful execution of this script emits two events:
 * <code><a href="script_documentation.md#0x1_AccountCreationScripts_create_child_vasp_account">AccountCreationScripts::create_child_vasp_account</a></code>
 * <code><a href="script_documentation.md#0x1_AccountCreationScripts_create_parent_vasp_account">AccountCreationScripts::create_parent_vasp_account</a></code>
 * <code><a href="script_documentation.md#0x1_AccountAdministrationScripts_add_currency_to_account">AccountAdministrationScripts::add_currency_to_account</a></code>
+* <code><a href="script_documentation.md#0x1_PaymentScripts_peer_to_peer_by_signers">PaymentScripts::peer_to_peer_by_signers</a></code>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_PaymentScripts_peer_to_peer_with_metadata">peer_to_peer_with_metadata</a>&lt;Currency: store&gt;(payer: signer, payee: address, amount: u64, metadata: vector&lt;u8&gt;, metadata_signature: vector&lt;u8&gt;)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_PaymentScripts_peer_to_peer_with_metadata">peer_to_peer_with_metadata</a>&lt;Currency&gt;(payer: signer, payee: address, amount: u64, metadata: vector&lt;u8&gt;, metadata_signature: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -2747,7 +2739,7 @@ Successful execution of this script emits two events:
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_PaymentScripts_peer_to_peer_with_metadata">peer_to_peer_with_metadata</a>&lt;Currency: store&gt;(
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_PaymentScripts_peer_to_peer_with_metadata">peer_to_peer_with_metadata</a>&lt;Currency&gt;(
     payer: signer,
     payee: address,
     amount: u64,
@@ -2771,32 +2763,167 @@ Successful execution of this script emits two events:
 
 
 
-<pre><code><b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_TransactionChecks">DiemAccount::TransactionChecks</a>{sender: payer};
-<b>let</b> payer_addr = <a href="_spec_address_of">Signer::spec_address_of</a>(payer);
-<b>let</b> cap = <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_spec_get_withdraw_cap">DiemAccount::spec_get_withdraw_cap</a>(payer_addr);
-<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_ExtractWithdrawCapAbortsIf">DiemAccount::ExtractWithdrawCapAbortsIf</a>{sender_addr: payer_addr};
-<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_PayFromAbortsIf">DiemAccount::PayFromAbortsIf</a>&lt;Currency&gt;{cap: cap};
+<pre><code><b>include</b> <a href="script_documentation.md#0x1_PaymentScripts_PeerToPeer">PeerToPeer</a>&lt;Currency&gt;;
+<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DualAttestation.md#0x1_DualAttestation_AssertPaymentOkAbortsIf">DualAttestation::AssertPaymentOkAbortsIf</a>&lt;Currency&gt;{
+    payer: <a href="_spec_address_of">Signer::spec_address_of</a>(payer),
+    value: amount
+};
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_PaymentScripts_peer_to_peer_by_signers"></a>
+
+##### Function `peer_to_peer_by_signers`
+
+
+<a name="@Summary_140"></a>
+
+###### Summary
+
+Transfers a given number of coins in a specified currency from one account to another by multi-agent transaction.
+Transfers over a specified amount defined on-chain that are between two different VASPs, or
+other accounts that have opted-in will be subject to on-chain checks to ensure the receiver has
+agreed to receive the coins.  This transaction can be sent by any account that can hold a
+balance, and to any account that can hold a balance. Both accounts must hold balances in the
+currency being transacted.
+
+
+<a name="@Technical_Description_141"></a>
+
+###### Technical Description
+
+
+Transfers <code>amount</code> coins of type <code>Currency</code> from <code>payer</code> to <code>payee</code> with (optional) associated
+<code>metadata</code>.
+Dual attestation is not applied to this script as payee is also a signer of the transaction.
+Standardized <code>metadata</code> BCS format can be found in <code>diem_types::transaction::metadata::Metadata</code>.
+
+
+<a name="@Events_142"></a>
+
+###### Events
+
+Successful execution of this script emits two events:
+* A <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_SentPaymentEvent">DiemAccount::SentPaymentEvent</a></code> on <code>payer</code>'s <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_DiemAccount">DiemAccount::DiemAccount</a></code> <code>sent_events</code> handle; and
+* A <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_ReceivedPaymentEvent">DiemAccount::ReceivedPaymentEvent</a></code> on <code>payee</code>'s <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_DiemAccount">DiemAccount::DiemAccount</a></code> <code>received_events</code> handle.
+
+
+<a name="@Parameters_143"></a>
+
+###### Parameters
+
+| Name                 | Type         | Description                                                                                                                  |
+| ------               | ------       | -------------                                                                                                                |
+| <code>Currency</code>           | Type         | The Move type for the <code>Currency</code> being sent in this transaction. <code>Currency</code> must be an already-registered currency on-chain. |
+| <code>payer</code>              | <code>signer</code>     | The signer of the sending account that coins are being transferred from.                                                     |
+| <code>payee</code>              | <code>signer</code>     | The signer of the receiving account that the coins are being transferred to.                                                 |
+| <code>metadata</code>           | <code>vector&lt;u8&gt;</code> | Optional metadata about this payment.                                                                                        |
+
+
+<a name="@Common_Abort_Conditions_144"></a>
+
+###### Common Abort Conditions
+
+| Error Category             | Error Reason                                     | Description                                                                                                                         |
+| ----------------           | --------------                                   | -------------                                                                                                                       |
+| <code><a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_EPAYER_DOESNT_HOLD_CURRENCY">DiemAccount::EPAYER_DOESNT_HOLD_CURRENCY</a></code>       | <code>payer</code> doesn't hold a balance in <code>Currency</code>.                                                                                       |
+| <code><a href="_LIMIT_EXCEEDED">Errors::LIMIT_EXCEEDED</a></code>   | <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_EINSUFFICIENT_BALANCE">DiemAccount::EINSUFFICIENT_BALANCE</a></code>             | <code>amount</code> is greater than <code>payer</code>'s balance in <code>Currency</code>.                                                                           |
+| <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_ECOIN_DEPOSIT_IS_ZERO">DiemAccount::ECOIN_DEPOSIT_IS_ZERO</a></code>             | <code>amount</code> is zero.                                                                                                                   |
+| <code><a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_EPAYEE_DOES_NOT_EXIST">DiemAccount::EPAYEE_DOES_NOT_EXIST</a></code>             | No account exists at the <code>payee</code> address.                                                                                           |
+| <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_EPAYEE_CANT_ACCEPT_CURRENCY_TYPE">DiemAccount::EPAYEE_CANT_ACCEPT_CURRENCY_TYPE</a></code>  | An account exists at <code>payee</code>, but it does not accept payments in <code>Currency</code>.                                                        |
+| <code><a href="_INVALID_STATE">Errors::INVALID_STATE</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/AccountFreezing.md#0x1_AccountFreezing_EACCOUNT_FROZEN">AccountFreezing::EACCOUNT_FROZEN</a></code>               | The <code>payee</code> account is frozen.                                                                                                      |
+| <code><a href="_LIMIT_EXCEEDED">Errors::LIMIT_EXCEEDED</a></code>   | <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_EXCEEDS_LIMITS">DiemAccount::EWITHDRAWAL_EXCEEDS_LIMITS</a></code>        | <code>payer</code> has exceeded its daily withdrawal limits for the backing coins of XDX.                                                      |
+| <code><a href="_LIMIT_EXCEEDED">Errors::LIMIT_EXCEEDED</a></code>   | <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_EDEPOSIT_EXCEEDS_LIMITS">DiemAccount::EDEPOSIT_EXCEEDS_LIMITS</a></code>           | <code>payee</code> has exceeded its daily deposit limits for XDX.                                                                              |
+
+
+<a name="@Related_Scripts_145"></a>
+
+###### Related Scripts
+
+* <code><a href="script_documentation.md#0x1_AccountCreationScripts_create_child_vasp_account">AccountCreationScripts::create_child_vasp_account</a></code>
+* <code><a href="script_documentation.md#0x1_AccountCreationScripts_create_parent_vasp_account">AccountCreationScripts::create_parent_vasp_account</a></code>
+* <code><a href="script_documentation.md#0x1_AccountAdministrationScripts_add_currency_to_account">AccountAdministrationScripts::add_currency_to_account</a></code>
+* <code><a href="script_documentation.md#0x1_PaymentScripts_peer_to_peer_with_metadata">PaymentScripts::peer_to_peer_with_metadata</a></code>
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_PaymentScripts_peer_to_peer_by_signers">peer_to_peer_by_signers</a>&lt;Currency&gt;(payer: signer, payee: signer, amount: u64, metadata: vector&lt;u8&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_PaymentScripts_peer_to_peer_by_signers">peer_to_peer_by_signers</a>&lt;Currency&gt;(
+    payer: signer,
+    payee: signer,
+    amount: u64,
+    metadata: vector&lt;u8&gt;,
+) {
+    <b>let</b> payer_withdrawal_cap = <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_extract_withdraw_capability">DiemAccount::extract_withdraw_capability</a>(&payer);
+    <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_pay_by_signers">DiemAccount::pay_by_signers</a>&lt;Currency&gt;(
+        &payer_withdrawal_cap, &payee, amount, metadata
+    );
+    <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">DiemAccount::restore_withdraw_capability</a>(payer_withdrawal_cap);
+}
+</code></pre>
+
+
+
+</details>
+
+<details>
+<summary>Specification</summary>
+
+
+
+<pre><code><b>include</b> <a href="script_documentation.md#0x1_PaymentScripts_PeerToPeer">PeerToPeer</a>&lt;Currency&gt;{payee: <a href="_spec_address_of">Signer::spec_address_of</a>(payee)};
+</code></pre>
+
+
+
+
+<a name="0x1_PaymentScripts_PeerToPeer"></a>
+
+
+<pre><code><b>schema</b> <a href="script_documentation.md#0x1_PaymentScripts_PeerToPeer">PeerToPeer</a>&lt;Currency&gt; {
+    payer: signer;
+    payee: address;
+    amount: u64;
+    metadata: vector&lt;u8&gt;;
+    <b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_TransactionChecks">DiemAccount::TransactionChecks</a>{sender: payer};
+    <b>let</b> payer_addr = <a href="_spec_address_of">Signer::spec_address_of</a>(payer);
+    <b>let</b> cap = <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_spec_get_withdraw_cap">DiemAccount::spec_get_withdraw_cap</a>(payer_addr);
+    <b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_ExtractWithdrawCapAbortsIf">DiemAccount::ExtractWithdrawCapAbortsIf</a>{sender_addr: payer_addr};
+    <b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_PayFromAbortsIf">DiemAccount::PayFromAbortsIf</a>&lt;Currency&gt;{cap: cap};
+}
 </code></pre>
 
 
 The balances of payer and payee change by the correct amount.
 
 
-<pre><code><b>ensures</b> payer_addr != payee
-    ==&gt; <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;Currency&gt;(payer_addr)
-    == <b>old</b>(<a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;Currency&gt;(payer_addr)) - amount;
-<b>ensures</b> payer_addr != payee
-    ==&gt; <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;Currency&gt;(payee)
-    == <b>old</b>(<a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;Currency&gt;(payee)) + amount;
-<b>ensures</b> payer_addr == payee
-    ==&gt; <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;Currency&gt;(payee)
-    == <b>old</b>(<a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;Currency&gt;(payee));
-<b>aborts_with</b> [check]
-    <a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a>,
-    <a href="_INVALID_STATE">Errors::INVALID_STATE</a>,
-    <a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>,
-    <a href="_LIMIT_EXCEEDED">Errors::LIMIT_EXCEEDED</a>;
-<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_PayFromEmits">DiemAccount::PayFromEmits</a>&lt;Currency&gt;{cap: cap};
+<pre><code><b>schema</b> <a href="script_documentation.md#0x1_PaymentScripts_PeerToPeer">PeerToPeer</a>&lt;Currency&gt; {
+    <b>ensures</b> payer_addr != payee
+        ==&gt; <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;Currency&gt;(payer_addr)
+        == <b>old</b>(<a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;Currency&gt;(payer_addr)) - amount;
+    <b>ensures</b> payer_addr != payee
+        ==&gt; <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;Currency&gt;(payee)
+        == <b>old</b>(<a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;Currency&gt;(payee)) + amount;
+    <b>ensures</b> payer_addr == payee
+        ==&gt; <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;Currency&gt;(payee)
+        == <b>old</b>(<a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;Currency&gt;(payee));
+    <b>aborts_with</b> [check]
+        <a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a>,
+        <a href="_INVALID_STATE">Errors::INVALID_STATE</a>,
+        <a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>,
+        <a href="_LIMIT_EXCEEDED">Errors::LIMIT_EXCEEDED</a>;
+    <b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_PayFromEmits">DiemAccount::PayFromEmits</a>&lt;Currency&gt;{cap: cap};
+}
 </code></pre>
 
 
@@ -2805,15 +2932,10 @@ Both the payer and the payee must hold the balances of the Currency. Only Design
 Parent VASPs, and Child VASPs can hold balances [[D1]][ROLE][[D2]][ROLE][[D3]][ROLE][[D4]][ROLE][[D5]][ROLE][[D6]][ROLE][[D7]][ROLE].
 
 
-<pre><code><b>aborts_if</b> !<b>exists</b>&lt;<a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_Balance">DiemAccount::Balance</a>&lt;Currency&gt;&gt;(payer_addr) <b>with</b> <a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a>;
-<b>aborts_if</b> !<b>exists</b>&lt;<a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_Balance">DiemAccount::Balance</a>&lt;Currency&gt;&gt;(payee) <b>with</b> <a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
-</code></pre>
-
-
-TODO(timeout): this currently times out
-
-
-<pre><code><b>pragma</b> verify = <b>false</b>;
+<pre><code><b>schema</b> <a href="script_documentation.md#0x1_PaymentScripts_PeerToPeer">PeerToPeer</a>&lt;Currency&gt; {
+    <b>aborts_if</b> !<b>exists</b>&lt;<a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_Balance">DiemAccount::Balance</a>&lt;Currency&gt;&gt;(payer_addr) <b>with</b> <a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a>;
+    <b>aborts_if</b> !<b>exists</b>&lt;<a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_Balance">DiemAccount::Balance</a>&lt;Currency&gt;&gt;(payee) <b>with</b> <a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
+}
 </code></pre>
 
 
@@ -2823,7 +2945,7 @@ TODO(timeout): this currently times out
 
 ---
 
-<a name="@Validator_and_Validator_Operator_Administration_140"></a>
+<a name="@Validator_and_Validator_Operator_Administration_146"></a>
 
 ### Validator and Validator Operator Administration
 
@@ -2848,7 +2970,7 @@ TODO(timeout): this currently times out
 ##### Function `add_validator_and_reconfigure`
 
 
-<a name="@Summary_141"></a>
+<a name="@Summary_147"></a>
 
 ###### Summary
 
@@ -2857,7 +2979,7 @@ reconfiguration of the system to admit the account to the validator set for the 
 transaction can only be successfully called by the Diem Root account.
 
 
-<a name="@Technical_Description_142"></a>
+<a name="@Technical_Description_148"></a>
 
 ###### Technical Description
 
@@ -2871,7 +2993,7 @@ This transaction script will fail if the <code>validator_address</code> address 
 or does not have a <code><a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_ValidatorConfig">ValidatorConfig::ValidatorConfig</a></code> resource already published under it.
 
 
-<a name="@Parameters_143"></a>
+<a name="@Parameters_149"></a>
 
 ###### Parameters
 
@@ -2883,7 +3005,7 @@ or does not have a <code><a href="../../../../../releases/artifacts/current/docs
 | <code>validator_address</code> | <code>address</code>    | The validator account address to be added to the validator set.                                                                    |
 
 
-<a name="@Common_Abort_Conditions_144"></a>
+<a name="@Common_Abort_Conditions_150"></a>
 
 ###### Common Abort Conditions
 
@@ -2902,7 +3024,7 @@ or does not have a <code><a href="../../../../../releases/artifacts/current/docs
 | <code><a href="_LIMIT_EXCEEDED">Errors::LIMIT_EXCEEDED</a></code>   | <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemSystem.md#0x1_DiemSystem_EMAX_VALIDATORS">DiemSystem::EMAX_VALIDATORS</a></code>                | The validator set is already at its maximum size. The validator could not be added.                                                       |
 
 
-<a name="@Related_Scripts_145"></a>
+<a name="@Related_Scripts_151"></a>
 
 ###### Related Scripts
 
@@ -2989,7 +3111,7 @@ Only the Diem Root account can add Validators [[H14]][PERMISSION].
 ##### Function `register_validator_config`
 
 
-<a name="@Summary_146"></a>
+<a name="@Summary_152"></a>
 
 ###### Summary
 
@@ -2999,7 +3121,7 @@ only be successfully sent by a Validator Operator account that is already regist
 validator.
 
 
-<a name="@Technical_Description_147"></a>
+<a name="@Technical_Description_153"></a>
 
 ###### Technical Description
 
@@ -3009,7 +3131,7 @@ so the copy of this config held in the validator set will not be updated, and th
 only "locally" under the <code>validator_account</code> account address.
 
 
-<a name="@Parameters_148"></a>
+<a name="@Parameters_154"></a>
 
 ###### Parameters
 
@@ -3022,7 +3144,7 @@ only "locally" under the <code>validator_account</code> account address.
 | <code>fullnode_network_addresses</code>  | <code>vector&lt;u8&gt;</code> | New set of <code>fullnode_network_addresses</code> to be used in the updated <code><a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_ValidatorConfig">ValidatorConfig::ValidatorConfig</a></code>.              |
 
 
-<a name="@Common_Abort_Conditions_149"></a>
+<a name="@Common_Abort_Conditions_155"></a>
 
 ###### Common Abort Conditions
 
@@ -3033,7 +3155,7 @@ only "locally" under the <code>validator_account</code> account address.
 | <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_EINVALID_CONSENSUS_KEY">ValidatorConfig::EINVALID_CONSENSUS_KEY</a></code>      | <code>consensus_pubkey</code> is not a valid ed25519 public key.                                                 |
 
 
-<a name="@Related_Scripts_150"></a>
+<a name="@Related_Scripts_156"></a>
 
 ###### Related Scripts
 
@@ -3077,12 +3199,42 @@ only "locally" under the <code>validator_account</code> account address.
 
 </details>
 
+<details>
+<summary>Specification</summary>
+
+Access control rule is that only the validator operator for a validator may set
+call this, but there is an aborts_if in SetConfigAbortsIf that tests that directly.
+
+
+<pre><code><b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_TransactionChecks">DiemAccount::TransactionChecks</a>{sender: validator_operator_account};
+<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_SetConfigAbortsIf">ValidatorConfig::SetConfigAbortsIf</a> {validator_addr: validator_account};
+<b>ensures</b> <a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(validator_account);
+<b>aborts_with</b> [check]
+    <a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>,
+    <a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a>;
+</code></pre>
+
+
+**Access Control:**
+Only the Validator Operator account which has been registered with the validator can
+update the validator's configuration [[H15]][PERMISSION].
+
+
+<pre><code><b>aborts_if</b> <a href="_address_of">Signer::address_of</a>(validator_operator_account) !=
+            <a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(validator_account)
+                <b>with</b> <a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_ValidatorAdministrationScripts_remove_validator_and_reconfigure"></a>
 
 ##### Function `remove_validator_and_reconfigure`
 
 
-<a name="@Summary_151"></a>
+<a name="@Summary_157"></a>
 
 ###### Summary
 
@@ -3091,7 +3243,7 @@ of the system to remove the validator from the system. This transaction can only
 successfully called by the Diem Root account.
 
 
-<a name="@Technical_Description_152"></a>
+<a name="@Technical_Description_158"></a>
 
 ###### Technical Description
 
@@ -3102,7 +3254,7 @@ validator in the network. This transaction will fail if the validator at <code>v
 is not in the validator set.
 
 
-<a name="@Parameters_153"></a>
+<a name="@Parameters_159"></a>
 
 ###### Parameters
 
@@ -3114,7 +3266,7 @@ is not in the validator set.
 | <code>validator_address</code> | <code>address</code>    | The validator account address to be removed from the validator set.                                                                |
 
 
-<a name="@Common_Abort_Conditions_154"></a>
+<a name="@Common_Abort_Conditions_160"></a>
 
 ###### Common Abort Conditions
 
@@ -3132,7 +3284,7 @@ is not in the validator set.
 | <code><a href="_INVALID_STATE">Errors::INVALID_STATE</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemConfig.md#0x1_DiemConfig_EINVALID_BLOCK_TIME">DiemConfig::EINVALID_BLOCK_TIME</a></code>      | An invalid time value was encountered in reconfiguration. Unlikely to occur.                    |
 
 
-<a name="@Related_Scripts_155"></a>
+<a name="@Related_Scripts_161"></a>
 
 ###### Related Scripts
 
@@ -3219,7 +3371,7 @@ Only the Diem Root account can remove Validators [[H14]][PERMISSION].
 ##### Function `set_validator_config_and_reconfigure`
 
 
-<a name="@Summary_156"></a>
+<a name="@Summary_162"></a>
 
 ###### Summary
 
@@ -3228,7 +3380,7 @@ validator set with this new validator configuration.  Can only be successfully s
 Validator Operator account that is already registered with a validator.
 
 
-<a name="@Technical_Description_157"></a>
+<a name="@Technical_Description_163"></a>
 
 ###### Technical Description
 
@@ -3238,7 +3390,7 @@ trigger a reconfiguration of the system.  This reconfiguration will update the v
 on-chain with the updated <code><a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_ValidatorConfig">ValidatorConfig::ValidatorConfig</a></code>.
 
 
-<a name="@Parameters_158"></a>
+<a name="@Parameters_164"></a>
 
 ###### Parameters
 
@@ -3251,7 +3403,7 @@ on-chain with the updated <code><a href="../../../../../releases/artifacts/curre
 | <code>fullnode_network_addresses</code>  | <code>vector&lt;u8&gt;</code> | New set of <code>fullnode_network_addresses</code> to be used in the updated <code><a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_ValidatorConfig">ValidatorConfig::ValidatorConfig</a></code>.              |
 
 
-<a name="@Common_Abort_Conditions_159"></a>
+<a name="@Common_Abort_Conditions_165"></a>
 
 ###### Common Abort Conditions
 
@@ -3264,7 +3416,7 @@ on-chain with the updated <code><a href="../../../../../releases/artifacts/curre
 | <code><a href="_INVALID_STATE">Errors::INVALID_STATE</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemConfig.md#0x1_DiemConfig_EINVALID_BLOCK_TIME">DiemConfig::EINVALID_BLOCK_TIME</a></code>             | An invalid time value was encountered in reconfiguration. Unlikely to occur.                          |
 
 
-<a name="@Related_Scripts_160"></a>
+<a name="@Related_Scripts_166"></a>
 
 ###### Related Scripts
 
@@ -3369,7 +3521,7 @@ update the validator's configuration [[H15]][PERMISSION].
 ##### Function `set_validator_operator`
 
 
-<a name="@Summary_161"></a>
+<a name="@Summary_167"></a>
 
 ###### Summary
 
@@ -3379,7 +3531,7 @@ system until a reconfiguration of the system is triggered. May only be sent by a
 Validator role.
 
 
-<a name="@Technical_Description_162"></a>
+<a name="@Technical_Description_168"></a>
 
 ###### Technical Description
 
@@ -3391,7 +3543,7 @@ resource published under it. The sending <code>account</code> must be a Validato
 <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemConfig.md#0x1_DiemConfig_NewEpochEvent">DiemConfig::NewEpochEvent</a></code> and no reconfiguration of the system is initiated by this script.
 
 
-<a name="@Parameters_163"></a>
+<a name="@Parameters_169"></a>
 
 ###### Parameters
 
@@ -3402,7 +3554,7 @@ resource published under it. The sending <code>account</code> must be a Validato
 | <code>operator_account</code> | <code>address</code>    | Address of the validator operator account to be added as the <code>account</code> validator's operator. |
 
 
-<a name="@Common_Abort_Conditions_164"></a>
+<a name="@Common_Abort_Conditions_170"></a>
 
 ###### Common Abort Conditions
 
@@ -3415,7 +3567,7 @@ resource published under it. The sending <code>account</code> must be a Validato
 | <code><a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_EVALIDATOR_CONFIG">ValidatorConfig::EVALIDATOR_CONFIG</a></code>                  | A <code><a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_ValidatorConfig">ValidatorConfig::ValidatorConfig</a></code> is not published under <code>account</code>.                                                                                       |
 
 
-<a name="@Related_Scripts_165"></a>
+<a name="@Related_Scripts_171"></a>
 
 ###### Related Scripts
 
@@ -3442,8 +3594,7 @@ resource published under it. The sending <code>account</code> must be a Validato
     operator_name: vector&lt;u8&gt;,
     operator_account: address
 ) {
-    //////// 0L ////////
-    <b>assert</b>(<a href="../../../../../releases/artifacts/current/docs/modules/ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_get_human_name">ValidatorOperatorConfig::get_human_name</a>(operator_account) == operator_name, 111);
+    <b>assert</b>(<a href="../../../../../releases/artifacts/current/docs/modules/ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_get_human_name">ValidatorOperatorConfig::get_human_name</a>(operator_account) == operator_name, 0);
     <a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_set_operator">ValidatorConfig::set_operator</a>(&account, operator_account);
 }
 </code></pre>
@@ -3460,7 +3611,7 @@ resource published under it. The sending <code>account</code> must be a Validato
 <pre><code><b>let</b> account_addr = <a href="_address_of">Signer::address_of</a>(account);
 <b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_TransactionChecks">DiemAccount::TransactionChecks</a>{sender: account};
 <b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_AbortsIfNoValidatorConfig">ValidatorConfig::AbortsIfNoValidatorConfig</a>{addr: account_addr};
-<b>aborts_if</b> <a href="../../../../../releases/artifacts/current/docs/modules/ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_get_human_name">ValidatorOperatorConfig::get_human_name</a>(operator_account) != operator_name <b>with</b> 111;
+<b>aborts_if</b> <a href="../../../../../releases/artifacts/current/docs/modules/ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_get_human_name">ValidatorOperatorConfig::get_human_name</a>(operator_account) != operator_name <b>with</b> 0;
 <b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_SetOperatorAbortsIf">ValidatorConfig::SetOperatorAbortsIf</a>{validator_account: account, operator_addr: operator_account};
 <b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_SetOperatorEnsures">ValidatorConfig::SetOperatorEnsures</a>{validator_account: account, operator_addr: operator_account};
 </code></pre>
@@ -3494,7 +3645,7 @@ Only a Validator account can set its Validator Operator [[H16]][PERMISSION].
 ##### Function `set_validator_operator_with_nonce_admin`
 
 
-<a name="@Summary_166"></a>
+<a name="@Summary_172"></a>
 
 ###### Summary
 
@@ -3504,7 +3655,7 @@ system until a reconfiguration of the system is triggered. May only be sent by t
 account as a write set transaction.
 
 
-<a name="@Technical_Description_167"></a>
+<a name="@Technical_Description_173"></a>
 
 ###### Technical Description
 
@@ -3516,7 +3667,7 @@ have a <code><a href="../../../../../releases/artifacts/current/docs/modules/Val
 the system is initiated by this script.
 
 
-<a name="@Parameters_168"></a>
+<a name="@Parameters_174"></a>
 
 ###### Parameters
 
@@ -3529,7 +3680,7 @@ the system is initiated by this script.
 | <code>operator_account</code> | <code>address</code>    | Address of the validator operator account to be added as the <code>account</code> validator's operator.  |
 
 
-<a name="@Common_Abort_Conditions_169"></a>
+<a name="@Common_Abort_Conditions_175"></a>
 
 ###### Common Abort Conditions
 
@@ -3547,7 +3698,7 @@ the system is initiated by this script.
 | <code><a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_EVALIDATOR_CONFIG">ValidatorConfig::EVALIDATOR_CONFIG</a></code>                  | A <code><a href="../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig_ValidatorConfig">ValidatorConfig::ValidatorConfig</a></code> is not published under <code>account</code>.                                                                                       |
 
 
-<a name="@Related_Scripts_170"></a>
+<a name="@Related_Scripts_176"></a>
 
 ###### Related Scripts
 
@@ -3628,7 +3779,7 @@ Only a Validator account can set its Validator Operator [[H16]][PERMISSION].
 
 ---
 
-<a name="@Treasury_and_Compliance_Operations_171"></a>
+<a name="@Treasury_and_Compliance_Operations_177"></a>
 
 ### Treasury and Compliance Operations
 
@@ -3650,11 +3801,11 @@ per-transaction basis.
 <pre><code><b>use</b> <a href="../../../../../releases/artifacts/current/docs/modules/AccountFreezing.md#0x1_AccountFreezing">0x1::AccountFreezing</a>;
 <b>use</b> <a href="../../../../../releases/artifacts/current/docs/modules/Diem.md#0x1_Diem">0x1::Diem</a>;
 <b>use</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
-<b>use</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId">0x1::DiemId</a>;
 <b>use</b> <a href="../../../../../releases/artifacts/current/docs/modules/DualAttestation.md#0x1_DualAttestation">0x1::DualAttestation</a>;
 <b>use</b> <a href="">0x1::FixedPoint32</a>;
 <b>use</b> <a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce">0x1::SlidingNonce</a>;
 <b>use</b> <a href="../../../../../releases/artifacts/current/docs/modules/TransactionFee.md#0x1_TransactionFee">0x1::TransactionFee</a>;
+<b>use</b> <a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain">0x1::VASPDomain</a>;
 </code></pre>
 
 
@@ -3664,7 +3815,7 @@ per-transaction basis.
 ##### Function `cancel_burn_with_amount`
 
 
-<a name="@Summary_172"></a>
+<a name="@Summary_178"></a>
 
 ###### Summary
 
@@ -3674,7 +3825,7 @@ resource with the matching amount and returns the funds to the <code>preburn_add
 Can only be successfully sent by an account with Treasury Compliance role.
 
 
-<a name="@Technical_Description_173"></a>
+<a name="@Technical_Description_179"></a>
 
 ###### Technical Description
 
@@ -3689,7 +3840,7 @@ the entire balance held in the <code><a href="../../../../../releases/artifacts/
 before this script is called otherwise the transaction will fail.
 
 
-<a name="@Events_174"></a>
+<a name="@Events_180"></a>
 
 ###### Events
 
@@ -3701,7 +3852,7 @@ resource's <code>burn_events</code> published under <code>0xA550C18</code>.
 being <code>preburn_address</code>.
 
 
-<a name="@Parameters_175"></a>
+<a name="@Parameters_181"></a>
 
 ###### Parameters
 
@@ -3713,7 +3864,7 @@ being <code>preburn_address</code>.
 | <code>amount</code>          | <code>u64</code>     | The amount to be cancelled.                                                                                                          |
 
 
-<a name="@Common_Abort_Conditions_176"></a>
+<a name="@Common_Abort_Conditions_182"></a>
 
 ###### Common Abort Conditions
 
@@ -3728,7 +3879,7 @@ being <code>preburn_address</code>.
 | <code><a href="_INVALID_STATE">Errors::INVALID_STATE</a></code>       | <code><a href="../../../../../releases/artifacts/current/docs/modules/DualAttestation.md#0x1_DualAttestation_EPAYEE_COMPLIANCE_KEY_NOT_SET">DualAttestation::EPAYEE_COMPLIANCE_KEY_NOT_SET</a></code> | The <code>account</code> does not have a compliance key set on it but dual attestion checking was performed.                                   |
 
 
-<a name="@Related_Scripts_177"></a>
+<a name="@Related_Scripts_183"></a>
 
 ###### Related Scripts
 
@@ -3737,7 +3888,7 @@ being <code>preburn_address</code>.
 * <code><a href="script_documentation.md#0x1_TreasuryComplianceScripts_preburn">TreasuryComplianceScripts::preburn</a></code>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_cancel_burn_with_amount">cancel_burn_with_amount</a>&lt;Token: store&gt;(account: signer, preburn_address: address, amount: u64)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_cancel_burn_with_amount">cancel_burn_with_amount</a>&lt;Token&gt;(account: signer, preburn_address: address, amount: u64)
 </code></pre>
 
 
@@ -3746,7 +3897,7 @@ being <code>preburn_address</code>.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_cancel_burn_with_amount">cancel_burn_with_amount</a>&lt;Token: store&gt;(account: signer, preburn_address: address, amount: u64) {
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_cancel_burn_with_amount">cancel_burn_with_amount</a>&lt;Token&gt;(account: signer, preburn_address: address, amount: u64) {
     <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_cancel_burn">DiemAccount::cancel_burn</a>&lt;Token&gt;(&account, preburn_address, amount)
 }
 </code></pre>
@@ -3765,10 +3916,10 @@ being <code>preburn_address</code>.
 <b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/Diem.md#0x1_Diem_CancelBurnWithCapEnsures">Diem::CancelBurnWithCapEnsures</a>&lt;Token&gt;;
 <b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_DepositEnsures">DiemAccount::DepositEnsures</a>&lt;Token&gt;{payee: preburn_address};
 <b>let</b> total_preburn_value = <b>global</b>&lt;<a href="../../../../../releases/artifacts/current/docs/modules/Diem.md#0x1_Diem_CurrencyInfo">Diem::CurrencyInfo</a>&lt;Token&gt;&gt;(
-    <a href="../../../../../releases/artifacts/current/docs/modules/CoreAddresses.md#0x1_CoreAddresses_CURRENCY_INFO_ADDRESS">CoreAddresses::CURRENCY_INFO_ADDRESS</a>()
+    @CurrencyInfo
 ).preburn_value;
 <b>let</b> post post_total_preburn_value = <b>global</b>&lt;<a href="../../../../../releases/artifacts/current/docs/modules/Diem.md#0x1_Diem_CurrencyInfo">Diem::CurrencyInfo</a>&lt;Token&gt;&gt;(
-    <a href="../../../../../releases/artifacts/current/docs/modules/CoreAddresses.md#0x1_CoreAddresses_CURRENCY_INFO_ADDRESS">CoreAddresses::CURRENCY_INFO_ADDRESS</a>()
+    @CurrencyInfo
 ).preburn_value;
 <b>let</b> balance_at_addr = <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;Token&gt;(preburn_address);
 <b>let</b> post post_balance_at_addr = <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;Token&gt;(preburn_address);
@@ -3818,7 +3969,7 @@ Only the account with the burn capability can cancel burning [[H3]][PERMISSION].
 ##### Function `burn_with_amount`
 
 
-<a name="@Summary_178"></a>
+<a name="@Summary_184"></a>
 
 ###### Summary
 
@@ -3831,7 +3982,7 @@ The account that holds the preburn queue resource will normally be a Designated
 Dealer, but there are no enforced requirements that it be one.
 
 
-<a name="@Technical_Description_179"></a>
+<a name="@Technical_Description_185"></a>
 
 ###### Technical Description
 
@@ -3849,7 +4000,7 @@ under <code>preburn_address</code> immediately before this transaction, and the
 <code>to_burn</code> field of the preburn resource will have a zero value.
 
 
-<a name="@Events_180"></a>
+<a name="@Events_186"></a>
 
 ###### Events
 
@@ -3858,7 +4009,7 @@ held in the <code><a href="../../../../../releases/artifacts/current/docs/module
 <code>0xA550C18</code>.
 
 
-<a name="@Parameters_181"></a>
+<a name="@Parameters_187"></a>
 
 ###### Parameters
 
@@ -3871,7 +4022,7 @@ held in the <code><a href="../../../../../releases/artifacts/current/docs/module
 | <code>amount</code>          | <code>u64</code>     | The amount to be burned.                                                                                           |
 
 
-<a name="@Common_Abort_Conditions_182"></a>
+<a name="@Common_Abort_Conditions_188"></a>
 
 ###### Common Abort Conditions
 
@@ -3887,7 +4038,7 @@ held in the <code><a href="../../../../../releases/artifacts/current/docs/module
 | <code><a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a></code>       | <code><a href="../../../../../releases/artifacts/current/docs/modules/Diem.md#0x1_Diem_ECURRENCY_INFO">Diem::ECURRENCY_INFO</a></code>                  | The specified <code>Token</code> is not a registered currency on-chain.                                                                        |
 
 
-<a name="@Related_Scripts_183"></a>
+<a name="@Related_Scripts_189"></a>
 
 ###### Related Scripts
 
@@ -3896,7 +4047,7 @@ held in the <code><a href="../../../../../releases/artifacts/current/docs/module
 * <code><a href="script_documentation.md#0x1_TreasuryComplianceScripts_preburn">TreasuryComplianceScripts::preburn</a></code>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_burn_with_amount">burn_with_amount</a>&lt;Token: store&gt;(account: signer, sliding_nonce: u64, preburn_address: address, amount: u64)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_burn_with_amount">burn_with_amount</a>&lt;Token&gt;(account: signer, sliding_nonce: u64, preburn_address: address, amount: u64)
 </code></pre>
 
 
@@ -3905,7 +4056,7 @@ held in the <code><a href="../../../../../releases/artifacts/current/docs/module
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_burn_with_amount">burn_with_amount</a>&lt;Token: store&gt;(account: signer, sliding_nonce: u64, preburn_address: address, amount: u64) {
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_burn_with_amount">burn_with_amount</a>&lt;Token&gt;(account: signer, sliding_nonce: u64, preburn_address: address, amount: u64) {
     <a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce_record_nonce_or_abort">SlidingNonce::record_nonce_or_abort</a>(&account, sliding_nonce);
     <a href="../../../../../releases/artifacts/current/docs/modules/Diem.md#0x1_Diem_burn">Diem::burn</a>&lt;Token&gt;(&account, preburn_address, amount)
 }
@@ -3950,7 +4101,7 @@ Only the account with the burn capability can burn coins [[H3]][PERMISSION].
 ##### Function `preburn`
 
 
-<a name="@Summary_184"></a>
+<a name="@Summary_190"></a>
 
 ###### Summary
 
@@ -3960,7 +4111,7 @@ transaction may be sent by any account that holds a balance and preburn area
 in the specified currency.
 
 
-<a name="@Technical_Description_185"></a>
+<a name="@Technical_Description_191"></a>
 
 ###### Technical Description
 
@@ -3970,7 +4121,7 @@ Moves the specified <code>amount</code> of coins in <code>Token</code> currency 
 transaction in order for it to execute successfully.
 
 
-<a name="@Events_186"></a>
+<a name="@Events_192"></a>
 
 ###### Events
 
@@ -3982,7 +4133,7 @@ handle with the <code>payee</code> and <code>payer</code> fields being <code>acc
 <code>preburn_address</code> set to <code>account</code>'s address.
 
 
-<a name="@Parameters_187"></a>
+<a name="@Parameters_193"></a>
 
 ###### Parameters
 
@@ -3993,7 +4144,7 @@ handle with the <code>payee</code> and <code>payer</code> fields being <code>acc
 | <code>amount</code>  | <code>u64</code>    | The amount in <code>Token</code> to be moved to the preburn area.                                                                           |
 
 
-<a name="@Common_Abort_Conditions_188"></a>
+<a name="@Common_Abort_Conditions_194"></a>
 
 ###### Common Abort Conditions
 
@@ -4009,7 +4160,7 @@ handle with the <code>payee</code> and <code>payer</code> fields being <code>acc
 | <code><a href="_REQUIRES_ROLE">Errors::REQUIRES_ROLE</a></code>  | <code><a href="../../../../../releases/artifacts/current/docs/modules/Roles.md#0x1_Roles_EDESIGNATED_DEALER">Roles::EDESIGNATED_DEALER</a></code>                              | The <code>account</code> did not have the role of DesignatedDealer.                                |
 
 
-<a name="@Related_Scripts_189"></a>
+<a name="@Related_Scripts_195"></a>
 
 ###### Related Scripts
 
@@ -4018,7 +4169,7 @@ handle with the <code>payee</code> and <code>payer</code> fields being <code>acc
 * <code><a href="script_documentation.md#0x1_TreasuryComplianceScripts_burn_txn_fees">TreasuryComplianceScripts::burn_txn_fees</a></code>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_preburn">preburn</a>&lt;Token: store&gt;(account: signer, amount: u64)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_preburn">preburn</a>&lt;Token&gt;(account: signer, amount: u64)
 </code></pre>
 
 
@@ -4027,7 +4178,7 @@ handle with the <code>payee</code> and <code>payer</code> fields being <code>acc
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_preburn">preburn</a>&lt;Token: store&gt;(account: signer, amount: u64) {
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_preburn">preburn</a>&lt;Token&gt;(account: signer, amount: u64) {
     <b>let</b> withdraw_cap = <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_extract_withdraw_capability">DiemAccount::extract_withdraw_capability</a>(&account);
     <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_preburn">DiemAccount::preburn</a>&lt;Token&gt;(&account, &withdraw_cap, amount);
     <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">DiemAccount::restore_withdraw_capability</a>(withdraw_cap);
@@ -4066,13 +4217,6 @@ Only the account with a Preburn resource or PreburnQueue resource can preburn [[
 </code></pre>
 
 
-TODO(timeout): this currently times out
-
-
-<pre><code><b>pragma</b> verify = <b>false</b>;
-</code></pre>
-
-
 
 </details>
 
@@ -4081,7 +4225,7 @@ TODO(timeout): this currently times out
 ##### Function `burn_txn_fees`
 
 
-<a name="@Summary_190"></a>
+<a name="@Summary_196"></a>
 
 ###### Summary
 
@@ -4090,7 +4234,7 @@ Diem association may reclaim the backing coins off-chain. May only be sent
 by the Treasury Compliance account.
 
 
-<a name="@Technical_Description_191"></a>
+<a name="@Technical_Description_197"></a>
 
 ###### Technical Description
 
@@ -4103,7 +4247,7 @@ currency. Both <code>balance</code> and <code>preburn</code> fields in the
 account address will have a value of 0 after the successful execution of this script.
 
 
-<a name="@Events_192"></a>
+<a name="@Events_198"></a>
 
 ###### Events
 
@@ -4112,7 +4256,7 @@ held in the <code><a href="../../../../../releases/artifacts/current/docs/module
 <code>0xA550C18</code>.
 
 
-<a name="@Parameters_193"></a>
+<a name="@Parameters_199"></a>
 
 ###### Parameters
 
@@ -4122,7 +4266,7 @@ held in the <code><a href="../../../../../releases/artifacts/current/docs/module
 | <code>tc_account</code> | <code>signer</code> | The signer of the sending account of this transaction. Must be the Treasury Compliance account.                                                     |
 
 
-<a name="@Common_Abort_Conditions_194"></a>
+<a name="@Common_Abort_Conditions_200"></a>
 
 ###### Common Abort Conditions
 
@@ -4133,7 +4277,7 @@ held in the <code><a href="../../../../../releases/artifacts/current/docs/module
 | <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/Diem.md#0x1_Diem_ECOIN">Diem::ECOIN</a></code>                        | The collected fees in <code>CoinType</code> are zero.                  |
 
 
-<a name="@Related_Scripts_195"></a>
+<a name="@Related_Scripts_201"></a>
 
 ###### Related Scripts
 
@@ -4141,7 +4285,7 @@ held in the <code><a href="../../../../../releases/artifacts/current/docs/module
 * <code><a href="script_documentation.md#0x1_TreasuryComplianceScripts_cancel_burn_with_amount">TreasuryComplianceScripts::cancel_burn_with_amount</a></code>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_burn_txn_fees">burn_txn_fees</a>&lt;CoinType: store&gt;(tc_account: signer)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_burn_txn_fees">burn_txn_fees</a>&lt;CoinType&gt;(tc_account: signer)
 </code></pre>
 
 
@@ -4150,7 +4294,7 @@ held in the <code><a href="../../../../../releases/artifacts/current/docs/module
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_burn_txn_fees">burn_txn_fees</a>&lt;CoinType: store&gt;(tc_account: signer) {
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_burn_txn_fees">burn_txn_fees</a>&lt;CoinType&gt;(tc_account: signer) {
     <a href="../../../../../releases/artifacts/current/docs/modules/TransactionFee.md#0x1_TransactionFee_burn_fees">TransactionFee::burn_fees</a>&lt;CoinType&gt;(&tc_account);
 }
 </code></pre>
@@ -4164,7 +4308,7 @@ held in the <code><a href="../../../../../releases/artifacts/current/docs/module
 ##### Function `tiered_mint`
 
 
-<a name="@Summary_196"></a>
+<a name="@Summary_202"></a>
 
 ###### Summary
 
@@ -4173,7 +4317,7 @@ must be the Treasury Compliance account, and coins can only be minted to a Desig
 account.
 
 
-<a name="@Technical_Description_197"></a>
+<a name="@Technical_Description_203"></a>
 
 ###### Technical Description
 
@@ -4186,7 +4330,7 @@ they support. The sending <code>tc_account</code> must be the Treasury Complianc
 receiver an authorized Designated Dealer account.
 
 
-<a name="@Events_198"></a>
+<a name="@Events_204"></a>
 
 ###### Events
 
@@ -4199,7 +4343,7 @@ Dealer's address is emitted on the <code>mint_event_handle</code> in the stored 
 resource published under the <code>designated_dealer_address</code>.
 
 
-<a name="@Parameters_199"></a>
+<a name="@Parameters_205"></a>
 
 ###### Parameters
 
@@ -4213,7 +4357,7 @@ resource published under the <code>designated_dealer_address</code>.
 | <code>tier_index</code>                | <code>u64</code>     | [Deprecated] The mint tier index to use for the Designated Dealer account. Will be ignored                 |
 
 
-<a name="@Common_Abort_Conditions_200"></a>
+<a name="@Common_Abort_Conditions_206"></a>
 
 ###### Common Abort Conditions
 
@@ -4232,7 +4376,7 @@ resource published under the <code>designated_dealer_address</code>.
 | <code><a href="_LIMIT_EXCEEDED">Errors::LIMIT_EXCEEDED</a></code>      | <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_EDEPOSIT_EXCEEDS_LIMITS">DiemAccount::EDEPOSIT_EXCEEDS_LIMITS</a></code>      | The depositing of the funds would exceed the <code>account</code>'s account limits.                                                     |
 
 
-<a name="@Related_Scripts_201"></a>
+<a name="@Related_Scripts_207"></a>
 
 ###### Related Scripts
 
@@ -4241,7 +4385,7 @@ resource published under the <code>designated_dealer_address</code>.
 * <code><a href="script_documentation.md#0x1_AccountAdministrationScripts_rotate_dual_attestation_info">AccountAdministrationScripts::rotate_dual_attestation_info</a></code>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_tiered_mint">tiered_mint</a>&lt;CoinType: store&gt;(tc_account: signer, sliding_nonce: u64, designated_dealer_address: address, mint_amount: u64, tier_index: u64)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_tiered_mint">tiered_mint</a>&lt;CoinType&gt;(tc_account: signer, sliding_nonce: u64, designated_dealer_address: address, mint_amount: u64, tier_index: u64)
 </code></pre>
 
 
@@ -4250,7 +4394,7 @@ resource published under the <code>designated_dealer_address</code>.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_tiered_mint">tiered_mint</a>&lt;CoinType: store&gt;(
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_tiered_mint">tiered_mint</a>&lt;CoinType&gt;(
     tc_account: signer,
     sliding_nonce: u64,
     designated_dealer_address: address,
@@ -4305,7 +4449,7 @@ Only the Treasury Compliance account can mint [[H1]][PERMISSION].
 ##### Function `freeze_account`
 
 
-<a name="@Summary_202"></a>
+<a name="@Summary_208"></a>
 
 ###### Summary
 
@@ -4316,7 +4460,7 @@ execution of this transaction no transactions may be sent from the frozen
 account, and the frozen account may not send or receive coins.
 
 
-<a name="@Technical_Description_203"></a>
+<a name="@Technical_Description_209"></a>
 
 ###### Technical Description
 
@@ -4330,7 +4474,7 @@ accounts and vice versa.
 
 
 
-<a name="@Events_204"></a>
+<a name="@Events_210"></a>
 
 ###### Events
 
@@ -4339,7 +4483,7 @@ the <code>freeze_event_handle</code> held in the <code><a href="../../../../../r
 under <code>0xA550C18</code> with the <code>frozen_address</code> being the <code>to_freeze_account</code>.
 
 
-<a name="@Parameters_205"></a>
+<a name="@Parameters_211"></a>
 
 ###### Parameters
 
@@ -4350,7 +4494,7 @@ under <code>0xA550C18</code> with the <code>frozen_address</code> being the <cod
 | <code>to_freeze_account</code> | <code>address</code> | The account address to be frozen.                                                               |
 
 
-<a name="@Common_Abort_Conditions_206"></a>
+<a name="@Common_Abort_Conditions_212"></a>
 
 ###### Common Abort Conditions
 
@@ -4366,7 +4510,7 @@ under <code>0xA550C18</code> with the <code>frozen_address</code> being the <cod
 | <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/AccountFreezing.md#0x1_AccountFreezing_ECANNOT_FREEZE_DIEM_ROOT">AccountFreezing::ECANNOT_FREEZE_DIEM_ROOT</a></code> | <code>to_freeze_account</code> was the Diem Root account (<code>0xA550C18</code>).                              |
 
 
-<a name="@Related_Scripts_207"></a>
+<a name="@Related_Scripts_213"></a>
 
 ###### Related Scripts
 
@@ -4397,7 +4541,7 @@ under <code>0xA550C18</code> with the <code>frozen_address</code> being the <cod
 ##### Function `unfreeze_account`
 
 
-<a name="@Summary_208"></a>
+<a name="@Summary_214"></a>
 
 ###### Summary
 
@@ -4406,7 +4550,7 @@ Treasury Compliance account. After the successful execution of this transaction 
 may be sent from the previously frozen account, and coins may be sent and received.
 
 
-<a name="@Technical_Description_209"></a>
+<a name="@Technical_Description_215"></a>
 
 ###### Technical Description
 
@@ -4416,7 +4560,7 @@ account. Note that this is a per-account property so unfreezing a Parent VASP wi
 the status any of its child accounts and vice versa.
 
 
-<a name="@Events_210"></a>
+<a name="@Events_216"></a>
 
 ###### Events
 
@@ -4424,7 +4568,7 @@ Successful execution of this script will emit a <code>AccountFreezing::UnFreezeA
 the <code>unfrozen_address</code> set the <code>to_unfreeze_account</code>'s address.
 
 
-<a name="@Parameters_211"></a>
+<a name="@Parameters_217"></a>
 
 ###### Parameters
 
@@ -4435,7 +4579,7 @@ the <code>unfrozen_address</code> set the <code>to_unfreeze_account</code>'s add
 | <code>to_unfreeze_account</code> | <code>address</code> | The account address to be frozen.                                                               |
 
 
-<a name="@Common_Abort_Conditions_212"></a>
+<a name="@Common_Abort_Conditions_218"></a>
 
 ###### Common Abort Conditions
 
@@ -4448,7 +4592,7 @@ the <code>unfrozen_address</code> set the <code>to_unfreeze_account</code>'s add
 | <code><a href="_REQUIRES_ADDRESS">Errors::REQUIRES_ADDRESS</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/CoreAddresses.md#0x1_CoreAddresses_ETREASURY_COMPLIANCE">CoreAddresses::ETREASURY_COMPLIANCE</a></code>   | The sending account is not the Treasury Compliance account.                                |
 
 
-<a name="@Related_Scripts_213"></a>
+<a name="@Related_Scripts_219"></a>
 
 ###### Related Scripts
 
@@ -4479,7 +4623,7 @@ the <code>unfrozen_address</code> set the <code>to_unfreeze_account</code>'s add
 ##### Function `update_dual_attestation_limit`
 
 
-<a name="@Summary_214"></a>
+<a name="@Summary_220"></a>
 
 ###### Summary
 
@@ -4488,7 +4632,7 @@ only be sent by the Treasury Compliance account.  After this transaction all int
 payments over this limit must be checked for dual attestation.
 
 
-<a name="@Technical_Description_215"></a>
+<a name="@Technical_Description_221"></a>
 
 ###### Technical Description
 
@@ -4496,7 +4640,7 @@ Updates the <code>micro_xdx_limit</code> field of the <code><a href="../../../..
 <code>0xA550C18</code>. The amount is set in micro-XDX.
 
 
-<a name="@Parameters_216"></a>
+<a name="@Parameters_222"></a>
 
 ###### Parameters
 
@@ -4507,7 +4651,7 @@ Updates the <code>micro_xdx_limit</code> field of the <code><a href="../../../..
 | <code>new_micro_xdx_limit</code> | <code>u64</code>    | The new dual attestation limit to be used on-chain.                                             |
 
 
-<a name="@Common_Abort_Conditions_217"></a>
+<a name="@Common_Abort_Conditions_223"></a>
 
 ###### Common Abort Conditions
 
@@ -4520,7 +4664,7 @@ Updates the <code>micro_xdx_limit</code> field of the <code><a href="../../../..
 | <code><a href="_REQUIRES_ADDRESS">Errors::REQUIRES_ADDRESS</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/CoreAddresses.md#0x1_CoreAddresses_ETREASURY_COMPLIANCE">CoreAddresses::ETREASURY_COMPLIANCE</a></code>   | <code>tc_account</code> is not the Treasury Compliance account.                                       |
 
 
-<a name="@Related_Scripts_218"></a>
+<a name="@Related_Scripts_224"></a>
 
 ###### Related Scripts
 
@@ -4556,7 +4700,7 @@ Updates the <code>micro_xdx_limit</code> field of the <code><a href="../../../..
 ##### Function `update_exchange_rate`
 
 
-<a name="@Summary_219"></a>
+<a name="@Summary_225"></a>
 
 ###### Summary
 
@@ -4566,7 +4710,7 @@ transaction the updated exchange rate will be used for normalization of gas pric
 dual attestation checking.
 
 
-<a name="@Technical_Description_220"></a>
+<a name="@Technical_Description_226"></a>
 
 ###### Technical Description
 
@@ -4574,37 +4718,37 @@ Updates the on-chain exchange rate from the given <code>Currency</code> to micro
 is given by <code>new_exchange_rate_numerator/new_exchange_rate_denominator</code>.
 
 
-<a name="@Parameters_221"></a>
+<a name="@Parameters_227"></a>
 
 ###### Parameters
 
 | Name                            | Type     | Description                                                                                                                        |
 | ------                          | ------   | -------------                                                                                                                      |
 | <code>Currency</code>                      | Type     | The Move type for the <code>Currency</code> whose exchange rate is being updated. <code>Currency</code> must be an already-registered currency on-chain. |
-| <code>dm_account</code>                    | <code>signer</code> | The signer of the sending account of this transaction. Must be the Treasury Compliance account.                                    |
+| <code>tc_account</code>                    | <code>signer</code> | The signer of the sending account of this transaction. Must be the Treasury Compliance account.                                    |
 | <code>sliding_nonce</code>                 | <code>u64</code>    | The <code>sliding_nonce</code> (see: <code><a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce">SlidingNonce</a></code>) to be used for the transaction.                                                          |
 | <code>new_exchange_rate_numerator</code>   | <code>u64</code>    | The numerator for the new to micro-XDX exchange rate for <code>Currency</code>.                                                               |
 | <code>new_exchange_rate_denominator</code> | <code>u64</code>    | The denominator for the new to micro-XDX exchange rate for <code>Currency</code>.                                                             |
 
 
-<a name="@Common_Abort_Conditions_222"></a>
+<a name="@Common_Abort_Conditions_228"></a>
 
 ###### Common Abort Conditions
 
 | Error Category             | Error Reason                            | Description                                                                                |
 | ----------------           | --------------                          | -------------                                                                              |
-| <code><a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce_ESLIDING_NONCE">SlidingNonce::ESLIDING_NONCE</a></code>          | A <code><a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce">SlidingNonce</a></code> resource is not published under <code>dm_account</code>.                             |
+| <code><a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce_ESLIDING_NONCE">SlidingNonce::ESLIDING_NONCE</a></code>          | A <code><a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce">SlidingNonce</a></code> resource is not published under <code>tc_account</code>.                             |
 | <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce_ENONCE_TOO_OLD">SlidingNonce::ENONCE_TOO_OLD</a></code>          | The <code>sliding_nonce</code> is too old and it's impossible to determine if it's duplicated or not. |
 | <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce_ENONCE_TOO_NEW">SlidingNonce::ENONCE_TOO_NEW</a></code>          | The <code>sliding_nonce</code> is too far in the future.                                              |
 | <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce_ENONCE_ALREADY_RECORDED">SlidingNonce::ENONCE_ALREADY_RECORDED</a></code> | The <code>sliding_nonce</code> has been previously recorded.                                          |
-| <code><a href="_REQUIRES_ADDRESS">Errors::REQUIRES_ADDRESS</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/CoreAddresses.md#0x1_CoreAddresses_ETREASURY_COMPLIANCE">CoreAddresses::ETREASURY_COMPLIANCE</a></code>   | <code>dm_account</code> is not the Treasury Compliance account.                                       |
-| <code><a href="_REQUIRES_ROLE">Errors::REQUIRES_ROLE</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/Roles.md#0x1_Roles_ETREASURY_COMPLIANCE">Roles::ETREASURY_COMPLIANCE</a></code>           | <code>dm_account</code> is not the Treasury Compliance account.                                       |
+| <code><a href="_REQUIRES_ADDRESS">Errors::REQUIRES_ADDRESS</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/CoreAddresses.md#0x1_CoreAddresses_ETREASURY_COMPLIANCE">CoreAddresses::ETREASURY_COMPLIANCE</a></code>   | <code>tc_account</code> is not the Treasury Compliance account.                                       |
+| <code><a href="_REQUIRES_ROLE">Errors::REQUIRES_ROLE</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/Roles.md#0x1_Roles_ETREASURY_COMPLIANCE">Roles::ETREASURY_COMPLIANCE</a></code>           | <code>tc_account</code> is not the Treasury Compliance account.                                       |
 | <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="_EDENOMINATOR">FixedPoint32::EDENOMINATOR</a></code>            | <code>new_exchange_rate_denominator</code> is zero.                                                   |
 | <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="_ERATIO_OUT_OF_RANGE">FixedPoint32::ERATIO_OUT_OF_RANGE</a></code>     | The quotient is unrepresentable as a <code><a href="">FixedPoint32</a></code>.                                       |
 | <code><a href="_LIMIT_EXCEEDED">Errors::LIMIT_EXCEEDED</a></code>   | <code><a href="_ERATIO_OUT_OF_RANGE">FixedPoint32::ERATIO_OUT_OF_RANGE</a></code>     | The quotient is unrepresentable as a <code><a href="">FixedPoint32</a></code>.                                       |
 
 
-<a name="@Related_Scripts_223"></a>
+<a name="@Related_Scripts_229"></a>
 
 ###### Related Scripts
 
@@ -4612,7 +4756,7 @@ is given by <code>new_exchange_rate_numerator/new_exchange_rate_denominator</cod
 * <code><a href="script_documentation.md#0x1_TreasuryComplianceScripts_update_minting_ability">TreasuryComplianceScripts::update_minting_ability</a></code>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_update_exchange_rate">update_exchange_rate</a>&lt;Currency: store&gt;(dm_account: signer, sliding_nonce: u64, new_exchange_rate_numerator: u64, new_exchange_rate_denominator: u64)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_update_exchange_rate">update_exchange_rate</a>&lt;Currency&gt;(tc_account: signer, sliding_nonce: u64, new_exchange_rate_numerator: u64, new_exchange_rate_denominator: u64)
 </code></pre>
 
 
@@ -4621,18 +4765,18 @@ is given by <code>new_exchange_rate_numerator/new_exchange_rate_denominator</cod
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_update_exchange_rate">update_exchange_rate</a>&lt;Currency: store&gt;(
-        dm_account: signer,
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_update_exchange_rate">update_exchange_rate</a>&lt;Currency&gt;(
+        tc_account: signer,
         sliding_nonce: u64,
         new_exchange_rate_numerator: u64,
         new_exchange_rate_denominator: u64,
 ) {
-    <a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce_record_nonce_or_abort">SlidingNonce::record_nonce_or_abort</a>(&dm_account, sliding_nonce);
+    <a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce_record_nonce_or_abort">SlidingNonce::record_nonce_or_abort</a>(&tc_account, sliding_nonce);
     <b>let</b> rate = <a href="_create_from_rational">FixedPoint32::create_from_rational</a>(
             new_exchange_rate_numerator,
             new_exchange_rate_denominator,
     );
-    <a href="../../../../../releases/artifacts/current/docs/modules/Diem.md#0x1_Diem_update_xdx_exchange_rate">Diem::update_xdx_exchange_rate</a>&lt;Currency&gt;(&dm_account, rate);
+    <a href="../../../../../releases/artifacts/current/docs/modules/Diem.md#0x1_Diem_update_xdx_exchange_rate">Diem::update_xdx_exchange_rate</a>&lt;Currency&gt;(&tc_account, rate);
 }
 </code></pre>
 
@@ -4645,8 +4789,8 @@ is given by <code>new_exchange_rate_numerator/new_exchange_rate_denominator</cod
 
 
 
-<pre><code><b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_TransactionChecks">DiemAccount::TransactionChecks</a>{sender: dm_account};
-<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce_RecordNonceAbortsIf">SlidingNonce::RecordNonceAbortsIf</a>{ account: dm_account, seq_nonce: sliding_nonce };
+<pre><code><b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_TransactionChecks">DiemAccount::TransactionChecks</a>{sender: tc_account};
+<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce_RecordNonceAbortsIf">SlidingNonce::RecordNonceAbortsIf</a>{ account: tc_account, seq_nonce: sliding_nonce };
 <b>include</b> <a href="_CreateFromRationalAbortsIf">FixedPoint32::CreateFromRationalAbortsIf</a>{
        numerator: new_exchange_rate_numerator,
        denominator: new_exchange_rate_denominator
@@ -4655,6 +4799,7 @@ is given by <code>new_exchange_rate_numerator/new_exchange_rate_denominator</cod
         new_exchange_rate_numerator,
         new_exchange_rate_denominator
 );
+<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/Diem.md#0x1_Diem_UpdateXDXExchangeRateAbortsIf">Diem::UpdateXDXExchangeRateAbortsIf</a>&lt;Currency&gt;;
 <b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/Diem.md#0x1_Diem_UpdateXDXExchangeRateEnsures">Diem::UpdateXDXExchangeRateEnsures</a>&lt;Currency&gt;{xdx_exchange_rate: rate};
 <b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/Diem.md#0x1_Diem_UpdateXDXExchangeRateEmits">Diem::UpdateXDXExchangeRateEmits</a>&lt;Currency&gt;{xdx_exchange_rate: rate};
 <b>aborts_with</b> [check]
@@ -4670,7 +4815,7 @@ is given by <code>new_exchange_rate_numerator/new_exchange_rate_denominator</cod
 Only the Treasury Compliance account can update the exchange rate [[H5]][PERMISSION].
 
 
-<pre><code><b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: dm_account};
+<pre><code><b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: tc_account};
 </code></pre>
 
 
@@ -4682,7 +4827,7 @@ Only the Treasury Compliance account can update the exchange rate [[H5]][PERMISS
 ##### Function `update_minting_ability`
 
 
-<a name="@Summary_224"></a>
+<a name="@Summary_230"></a>
 
 ###### Summary
 
@@ -4691,7 +4836,7 @@ only be sent by the Treasury Compliance account.  Turning minting off for a curr
 no effect on coins already in circulation, and coins may still be removed from the system.
 
 
-<a name="@Technical_Description_225"></a>
+<a name="@Technical_Description_231"></a>
 
 ###### Technical Description
 
@@ -4701,7 +4846,7 @@ this field is set to <code><b>true</b></code> and minting of new coins in <code>
 This transaction needs to be sent by the Treasury Compliance account.
 
 
-<a name="@Parameters_226"></a>
+<a name="@Parameters_232"></a>
 
 ###### Parameters
 
@@ -4712,7 +4857,7 @@ This transaction needs to be sent by the Treasury Compliance account.
 | <code>allow_minting</code> | <code>bool</code>   | Whether to allow minting of new coins in <code>Currency</code>.                                                                                 |
 
 
-<a name="@Common_Abort_Conditions_227"></a>
+<a name="@Common_Abort_Conditions_233"></a>
 
 ###### Common Abort Conditions
 
@@ -4722,7 +4867,7 @@ This transaction needs to be sent by the Treasury Compliance account.
 | <code><a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/Diem.md#0x1_Diem_ECURRENCY_INFO">Diem::ECURRENCY_INFO</a></code>               | <code>Currency</code> is not a registered currency on-chain.    |
 
 
-<a name="@Related_Scripts_228"></a>
+<a name="@Related_Scripts_234"></a>
 
 ###### Related Scripts
 
@@ -4730,7 +4875,7 @@ This transaction needs to be sent by the Treasury Compliance account.
 * <code><a href="script_documentation.md#0x1_TreasuryComplianceScripts_update_exchange_rate">TreasuryComplianceScripts::update_exchange_rate</a></code>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_update_minting_ability">update_minting_ability</a>&lt;Currency: store&gt;(tc_account: signer, allow_minting: bool)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_update_minting_ability">update_minting_ability</a>&lt;Currency&gt;(tc_account: signer, allow_minting: bool)
 </code></pre>
 
 
@@ -4739,7 +4884,7 @@ This transaction needs to be sent by the Treasury Compliance account.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_update_minting_ability">update_minting_ability</a>&lt;Currency: store&gt;(
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_update_minting_ability">update_minting_ability</a>&lt;Currency&gt;(
     tc_account: signer,
     allow_minting: bool
 ) {
@@ -4751,28 +4896,28 @@ This transaction needs to be sent by the Treasury Compliance account.
 
 </details>
 
-<a name="0x1_TreasuryComplianceScripts_add_diem_id_domain"></a>
+<a name="0x1_TreasuryComplianceScripts_add_vasp_domain"></a>
 
-##### Function `add_diem_id_domain`
+##### Function `add_vasp_domain`
 
 
-<a name="@Summary_229"></a>
+<a name="@Summary_235"></a>
 
 ###### Summary
 
-Add a DiemID domain to parent VASP account. The transaction can only be sent by
+Add a VASP domain to parent VASP account. The transaction can only be sent by
 the Treasury Compliance account.
 
 
-<a name="@Technical_Description_230"></a>
+<a name="@Technical_Description_236"></a>
 
 ###### Technical Description
 
-Adds a <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_DiemIdDomain">DiemId::DiemIdDomain</a></code> to the <code>domains</code> field of the <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_DiemIdDomains">DiemId::DiemIdDomains</a></code> resource published under
+Adds a <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_VASPDomain">VASPDomain::VASPDomain</a></code> to the <code>domains</code> field of the <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_VASPDomains">VASPDomain::VASPDomains</a></code> resource published under
 the account at <code>address</code>.
 
 
-<a name="@Parameters_231"></a>
+<a name="@Parameters_237"></a>
 
 ###### Parameters
 
@@ -4783,7 +4928,7 @@ the account at <code>address</code>.
 | <code>domain</code>     | <code>vector&lt;u8&gt;</code> | The domain to be added.                                                                         |
 
 
-<a name="@Common_Abort_Conditions_232"></a>
+<a name="@Common_Abort_Conditions_238"></a>
 
 ###### Common Abort Conditions
 
@@ -4791,13 +4936,13 @@ the account at <code>address</code>.
 | ----------------           | --------------                           | -------------                                                                                                                          |
 | <code><a href="_REQUIRES_ROLE">Errors::REQUIRES_ROLE</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/Roles.md#0x1_Roles_ETREASURY_COMPLIANCE">Roles::ETREASURY_COMPLIANCE</a></code>            | The sending account is not the Treasury Compliance account.                                                                            |
 | <code><a href="_REQUIRES_ADDRESS">Errors::REQUIRES_ADDRESS</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/CoreAddresses.md#0x1_CoreAddresses_ETREASURY_COMPLIANCE">CoreAddresses::ETREASURY_COMPLIANCE</a></code>    | <code>tc_account</code> is not the Treasury Compliance account.                                                                                   |
-| <code><a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_EDIEM_ID_DOMAIN_MANAGER">DiemId::EDIEM_ID_DOMAIN_MANAGER</a></code>        | The <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_DiemIdDomainManager">DiemId::DiemIdDomainManager</a></code> resource is not yet published under the Treasury Compliance account.                                 |
-| <code><a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_EDIEM_ID_DOMAINS_NOT_PUBLISHED">DiemId::EDIEM_ID_DOMAINS_NOT_PUBLISHED</a></code> | <code>address</code> does not have a <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_DiemIdDomains">DiemId::DiemIdDomains</a></code> resource published under it.                                                         |
-| <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_EDOMAIN_ALREADY_EXISTS">DiemId::EDOMAIN_ALREADY_EXISTS</a></code>         | The <code>domain</code> already exists in the list of <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_DiemIdDomain">DiemId::DiemIdDomain</a></code>s  in the <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_DiemIdDomains">DiemId::DiemIdDomains</a></code> resource published under <code>address</code>. |
-| <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_EINVALID_DIEM_ID_DOMAIN">DiemId::EINVALID_DIEM_ID_DOMAIN</a></code>        | The <code>domain</code> is greater in length than <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_DOMAIN_LENGTH">DiemId::DOMAIN_LENGTH</a></code>.                                                                        |
+| <code><a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_EVASP_DOMAIN_MANAGER">VASPDomain::EVASP_DOMAIN_MANAGER</a></code>        | The <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_VASPDomainManager">VASPDomain::VASPDomainManager</a></code> resource is not yet published under the Treasury Compliance account.                                 |
+| <code><a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_EVASP_DOMAINS_NOT_PUBLISHED">VASPDomain::EVASP_DOMAINS_NOT_PUBLISHED</a></code> | <code>address</code> does not have a <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_VASPDomains">VASPDomain::VASPDomains</a></code> resource published under it.                                                         |
+| <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code>VASPDomain::EDOMAIN_ALREADY_EXISTS</code>         | The <code>domain</code> already exists in the list of <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_VASPDomain">VASPDomain::VASPDomain</a></code>s  in the <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_VASPDomains">VASPDomain::VASPDomains</a></code> resource published under <code>address</code>. |
+| <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_EINVALID_VASP_DOMAIN">VASPDomain::EINVALID_VASP_DOMAIN</a></code>        | The <code>domain</code> is greater in length than <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_DOMAIN_LENGTH">VASPDomain::DOMAIN_LENGTH</a></code>.                                                                        |
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_add_diem_id_domain">add_diem_id_domain</a>(tc_account: signer, address: address, domain: vector&lt;u8&gt;)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_add_vasp_domain">add_vasp_domain</a>(tc_account: signer, address: address, domain: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -4806,12 +4951,12 @@ the account at <code>address</code>.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_add_diem_id_domain">add_diem_id_domain</a> (
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_add_vasp_domain">add_vasp_domain</a> (
     tc_account: signer,
     address: address,
     domain: vector&lt;u8&gt;,
 ) {
-    <a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_add_diem_id_domain">DiemId::add_diem_id_domain</a>(&tc_account, address, domain);
+    <a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_add_vasp_domain">VASPDomain::add_vasp_domain</a>(&tc_account, address, domain);
 }
 </code></pre>
 
@@ -4825,9 +4970,9 @@ the account at <code>address</code>.
 
 
 <pre><code><b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount_TransactionChecks">DiemAccount::TransactionChecks</a>{sender: tc_account};
-<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_AddDiemIdDomainAbortsIf">DiemId::AddDiemIdDomainAbortsIf</a>;
-<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_AddDiemIdDomainEnsures">DiemId::AddDiemIdDomainEnsures</a>;
-<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_AddDiemIdDomainEmits">DiemId::AddDiemIdDomainEmits</a>;
+<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_AddVASPDomainAbortsIf">VASPDomain::AddVASPDomainAbortsIf</a>;
+<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_AddVASPDomainEnsures">VASPDomain::AddVASPDomainEnsures</a>;
+<b>include</b> <a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_AddVASPDomainEmits">VASPDomain::AddVASPDomainEmits</a>;
 <b>aborts_with</b> [check]
     <a href="_REQUIRES_ROLE">Errors::REQUIRES_ROLE</a>,
     <a href="_REQUIRES_ADDRESS">Errors::REQUIRES_ADDRESS</a>,
@@ -4839,28 +4984,28 @@ the account at <code>address</code>.
 
 </details>
 
-<a name="0x1_TreasuryComplianceScripts_remove_diem_id_domain"></a>
+<a name="0x1_TreasuryComplianceScripts_remove_vasp_domain"></a>
 
-##### Function `remove_diem_id_domain`
+##### Function `remove_vasp_domain`
 
 
-<a name="@Summary_233"></a>
+<a name="@Summary_239"></a>
 
 ###### Summary
 
-Remove a DiemID domain from parent VASP account. The transaction can only be sent by
+Remove a VASP domain from parent VASP account. The transaction can only be sent by
 the Treasury Compliance account.
 
 
-<a name="@Technical_Description_234"></a>
+<a name="@Technical_Description_240"></a>
 
 ###### Technical Description
 
-Removes a <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_DiemIdDomain">DiemId::DiemIdDomain</a></code> from the <code>domains</code> field of the <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_DiemIdDomains">DiemId::DiemIdDomains</a></code> resource published under
+Removes a <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_VASPDomain">VASPDomain::VASPDomain</a></code> from the <code>domains</code> field of the <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_VASPDomains">VASPDomain::VASPDomains</a></code> resource published under
 account with <code>address</code>.
 
 
-<a name="@Parameters_235"></a>
+<a name="@Parameters_241"></a>
 
 ###### Parameters
 
@@ -4871,7 +5016,7 @@ account with <code>address</code>.
 | <code>domain</code>     | <code>vector&lt;u8&gt;</code> | The domain name.                                                                                |
 
 
-<a name="@Common_Abort_Conditions_236"></a>
+<a name="@Common_Abort_Conditions_242"></a>
 
 ###### Common Abort Conditions
 
@@ -4879,13 +5024,13 @@ account with <code>address</code>.
 | ----------------           | --------------                           | -------------                                                                                                                          |
 | <code><a href="_REQUIRES_ROLE">Errors::REQUIRES_ROLE</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/Roles.md#0x1_Roles_ETREASURY_COMPLIANCE">Roles::ETREASURY_COMPLIANCE</a></code>            | The sending account is not the Treasury Compliance account.                                                                            |
 | <code><a href="_REQUIRES_ADDRESS">Errors::REQUIRES_ADDRESS</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/CoreAddresses.md#0x1_CoreAddresses_ETREASURY_COMPLIANCE">CoreAddresses::ETREASURY_COMPLIANCE</a></code>    | <code>tc_account</code> is not the Treasury Compliance account.                                                                                   |
-| <code><a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_EDIEM_ID_DOMAIN_MANAGER">DiemId::EDIEM_ID_DOMAIN_MANAGER</a></code>        | The <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_DiemIdDomainManager">DiemId::DiemIdDomainManager</a></code> resource is not yet published under the Treasury Compliance account.                                 |
-| <code><a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_EDIEM_ID_DOMAINS_NOT_PUBLISHED">DiemId::EDIEM_ID_DOMAINS_NOT_PUBLISHED</a></code> | <code>address</code> does not have a <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_DiemIdDomains">DiemId::DiemIdDomains</a></code> resource published under it.                                                         |
-| <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_EINVALID_DIEM_ID_DOMAIN">DiemId::EINVALID_DIEM_ID_DOMAIN</a></code>        | The <code>domain</code> is greater in length than <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_DOMAIN_LENGTH">DiemId::DOMAIN_LENGTH</a></code>.                                                                        |
-| <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_EDOMAIN_NOT_FOUND">DiemId::EDOMAIN_NOT_FOUND</a></code>              | The <code>domain</code> does not exist in the list of <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_DiemIdDomain">DiemId::DiemIdDomain</a></code>s  in the <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_DiemIdDomains">DiemId::DiemIdDomains</a></code> resource published under <code>address</code>. |
+| <code><a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_EVASP_DOMAIN_MANAGER">VASPDomain::EVASP_DOMAIN_MANAGER</a></code>        | The <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_VASPDomainManager">VASPDomain::VASPDomainManager</a></code> resource is not yet published under the Treasury Compliance account.                                 |
+| <code><a href="_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a></code>    | <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_EVASP_DOMAINS_NOT_PUBLISHED">VASPDomain::EVASP_DOMAINS_NOT_PUBLISHED</a></code> | <code>address</code> does not have a <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_VASPDomains">VASPDomain::VASPDomains</a></code> resource published under it.                                                         |
+| <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_EINVALID_VASP_DOMAIN">VASPDomain::EINVALID_VASP_DOMAIN</a></code>        | The <code>domain</code> is greater in length than <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_DOMAIN_LENGTH">VASPDomain::DOMAIN_LENGTH</a></code>.                                                                        |
+| <code><a href="_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_EVASP_DOMAIN_NOT_FOUND">VASPDomain::EVASP_DOMAIN_NOT_FOUND</a></code>              | The <code>domain</code> does not exist in the list of <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_VASPDomain">VASPDomain::VASPDomain</a></code>s  in the <code><a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_VASPDomains">VASPDomain::VASPDomains</a></code> resource published under <code>address</code>. |
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_remove_diem_id_domain">remove_diem_id_domain</a>(tc_account: signer, address: address, domain: vector&lt;u8&gt;)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_remove_vasp_domain">remove_vasp_domain</a>(tc_account: signer, address: address, domain: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -4894,12 +5039,12 @@ account with <code>address</code>.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_remove_diem_id_domain">remove_diem_id_domain</a> (
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="script_documentation.md#0x1_TreasuryComplianceScripts_remove_vasp_domain">remove_vasp_domain</a> (
     tc_account: signer,
     address: address,
     domain: vector&lt;u8&gt;,
 ) {
-    <a href="../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId_remove_diem_id_domain">DiemId::remove_diem_id_domain</a>(&tc_account, address, domain);
+    <a href="../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain_remove_vasp_domain">VASPDomain::remove_vasp_domain</a>(&tc_account, address, domain);
 }
 </code></pre>
 
@@ -4926,7 +5071,7 @@ account with <code>address</code>.
 
 ---
 
-<a name="@System_Administration_237"></a>
+<a name="@System_Administration_243"></a>
 
 ### System Administration
 
@@ -4953,7 +5098,7 @@ network outside of validators and validator operators.
 ##### Function `update_diem_version`
 
 
-<a name="@Summary_238"></a>
+<a name="@Summary_244"></a>
 
 ###### Summary
 
@@ -4961,7 +5106,7 @@ Updates the Diem major version that is stored on-chain and is used by the VM.  T
 transaction can only be sent from the Diem Root account.
 
 
-<a name="@Technical_Description_239"></a>
+<a name="@Technical_Description_245"></a>
 
 ###### Technical Description
 
@@ -4971,7 +5116,7 @@ than the current major version held on-chain. The VM reads this information and 
 preserve backwards compatibility with previous major versions of the VM.
 
 
-<a name="@Parameters_240"></a>
+<a name="@Parameters_246"></a>
 
 ###### Parameters
 
@@ -4982,7 +5127,7 @@ preserve backwards compatibility with previous major versions of the VM.
 | <code>major</code>         | <code>u64</code>    | The <code>major</code> version of the VM to be used from this transaction on.         |
 
 
-<a name="@Common_Abort_Conditions_241"></a>
+<a name="@Common_Abort_Conditions_247"></a>
 
 ###### Common Abort Conditions
 
@@ -5020,7 +5165,7 @@ preserve backwards compatibility with previous major versions of the VM.
 ##### Function `set_gas_constants`
 
 
-<a name="@Summary_242"></a>
+<a name="@Summary_248"></a>
 
 ###### Summary
 
@@ -5028,7 +5173,7 @@ Updates the gas constants stored on chain and used by the VM for gas
 metering. This transaction can only be sent from the Diem Root account.
 
 
-<a name="@Technical_Description_243"></a>
+<a name="@Technical_Description_249"></a>
 
 ###### Technical Description
 
@@ -5036,7 +5181,7 @@ Updates the on-chain config holding the <code><a href="../../../../../releases/a
 <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemConfig.md#0x1_DiemConfig_NewEpochEvent">DiemConfig::NewEpochEvent</a></code> to trigger a reconfiguration of the system.
 
 
-<a name="@Parameters_244"></a>
+<a name="@Parameters_250"></a>
 
 ###### Parameters
 
@@ -5057,7 +5202,7 @@ Updates the on-chain config holding the <code><a href="../../../../../releases/a
 | <code>default_account_size</code>              | <code>u64</code>    | The new default account size to use when assessing final costs for reads and writes to global storage. |
 
 
-<a name="@Common_Abort_Conditions_245"></a>
+<a name="@Common_Abort_Conditions_251"></a>
 
 ###### Common Abort Conditions
 
@@ -5122,7 +5267,7 @@ Updates the on-chain config holding the <code><a href="../../../../../releases/a
 ##### Function `initialize_diem_consensus_config`
 
 
-<a name="@Summary_246"></a>
+<a name="@Summary_252"></a>
 
 ###### Summary
 
@@ -5130,7 +5275,7 @@ Initializes the Diem consensus config that is stored on-chain.  This
 transaction can only be sent from the Diem Root account.
 
 
-<a name="@Technical_Description_247"></a>
+<a name="@Technical_Description_253"></a>
 
 ###### Technical Description
 
@@ -5138,7 +5283,7 @@ Initializes the <code><a href="../../../../../releases/artifacts/current/docs/mo
 <code>update_diem_consensus_config</code>. This doesn't emit a <code><a href="../../../../../releases/artifacts/current/docs/modules/DiemConfig.md#0x1_DiemConfig_NewEpochEvent">DiemConfig::NewEpochEvent</a></code>.
 
 
-<a name="@Parameters_248"></a>
+<a name="@Parameters_254"></a>
 
 ###### Parameters
 
@@ -5148,7 +5293,7 @@ Initializes the <code><a href="../../../../../releases/artifacts/current/docs/mo
 | <code>sliding_nonce</code> | <code>u64</code>     | The <code>sliding_nonce</code> (see: <code><a href="../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce">SlidingNonce</a></code>) to be used for this transaction. |
 
 
-<a name="@Common_Abort_Conditions_249"></a>
+<a name="@Common_Abort_Conditions_255"></a>
 
 ###### Common Abort Conditions
 
@@ -5185,7 +5330,7 @@ Initializes the <code><a href="../../../../../releases/artifacts/current/docs/mo
 ##### Function `update_diem_consensus_config`
 
 
-<a name="@Summary_250"></a>
+<a name="@Summary_256"></a>
 
 ###### Summary
 
@@ -5193,7 +5338,7 @@ Updates the Diem consensus config that is stored on-chain and is used by the Con
 transaction can only be sent from the Diem Root account.
 
 
-<a name="@Technical_Description_251"></a>
+<a name="@Technical_Description_257"></a>
 
 ###### Technical Description
 
@@ -5201,7 +5346,7 @@ Updates the <code><a href="../../../../../releases/artifacts/current/docs/module
 a reconfiguration of the system.
 
 
-<a name="@Parameters_252"></a>
+<a name="@Parameters_258"></a>
 
 ###### Parameters
 
@@ -5212,7 +5357,7 @@ a reconfiguration of the system.
 | <code>config</code>        | <code>vector&lt;u8&gt;</code>  | The serialized bytes of consensus config.                                  |
 
 
-<a name="@Common_Abort_Conditions_253"></a>
+<a name="@Common_Abort_Conditions_259"></a>
 
 ###### Common Abort Conditions
 
@@ -5246,7 +5391,7 @@ a reconfiguration of the system.
 
 
 
-<a name="@Index_254"></a>
+<a name="@Index_260"></a>
 
 ### Index
 
@@ -5255,37 +5400,22 @@ a reconfiguration of the system.
 -  [`0x1::AccountCreationScripts`](script_documentation.md#0x1_AccountCreationScripts)
 -  [`0x1::AccountFreezing`](../../../../../releases/artifacts/current/docs/modules/AccountFreezing.md#0x1_AccountFreezing)
 -  [`0x1::AccountLimits`](../../../../../releases/artifacts/current/docs/modules/AccountLimits.md#0x1_AccountLimits)
--  [`0x1::Audit`](../../../../../releases/artifacts/current/docs/modules/Audit.md#0x1_Audit)
 -  [`0x1::Authenticator`](../../../../../releases/artifacts/current/docs/modules/Authenticator.md#0x1_Authenticator)
--  [`0x1::AutoPay`](../../../../../releases/artifacts/current/docs/modules/AutoPay.md#0x1_AutoPay)
--  [`0x1::Burn`](../../../../../releases/artifacts/current/docs/modules/Burn.md#0x1_Burn)
--  [`0x1::Cases`](../../../../../releases/artifacts/current/docs/modules/Cases.md#0x1_Cases)
 -  [`0x1::ChainId`](../../../../../releases/artifacts/current/docs/modules/ChainId.md#0x1_ChainId)
 -  [`0x1::CoreAddresses`](../../../../../releases/artifacts/current/docs/modules/CoreAddresses.md#0x1_CoreAddresses)
--  [`0x1::Debug`](../../../../../releases/artifacts/current/docs/modules/Debug.md#0x1_Debug)
 -  [`0x1::DesignatedDealer`](../../../../../releases/artifacts/current/docs/modules/DesignatedDealer.md#0x1_DesignatedDealer)
 -  [`0x1::Diem`](../../../../../releases/artifacts/current/docs/modules/Diem.md#0x1_Diem)
 -  [`0x1::DiemAccount`](../../../../../releases/artifacts/current/docs/modules/DiemAccount.md#0x1_DiemAccount)
 -  [`0x1::DiemBlock`](../../../../../releases/artifacts/current/docs/modules/DiemBlock.md#0x1_DiemBlock)
 -  [`0x1::DiemConfig`](../../../../../releases/artifacts/current/docs/modules/DiemConfig.md#0x1_DiemConfig)
 -  [`0x1::DiemConsensusConfig`](../../../../../releases/artifacts/current/docs/modules/DiemConsensusConfig.md#0x1_DiemConsensusConfig)
--  [`0x1::DiemId`](../../../../../releases/artifacts/current/docs/modules/DiemId.md#0x1_DiemId)
 -  [`0x1::DiemSystem`](../../../../../releases/artifacts/current/docs/modules/DiemSystem.md#0x1_DiemSystem)
 -  [`0x1::DiemTimestamp`](../../../../../releases/artifacts/current/docs/modules/DiemTimestamp.md#0x1_DiemTimestamp)
 -  [`0x1::DiemTransactionPublishingOption`](../../../../../releases/artifacts/current/docs/modules/DiemTransactionPublishingOption.md#0x1_DiemTransactionPublishingOption)
 -  [`0x1::DiemVMConfig`](../../../../../releases/artifacts/current/docs/modules/DiemVMConfig.md#0x1_DiemVMConfig)
 -  [`0x1::DiemVersion`](../../../../../releases/artifacts/current/docs/modules/DiemVersion.md#0x1_DiemVersion)
 -  [`0x1::DualAttestation`](../../../../../releases/artifacts/current/docs/modules/DualAttestation.md#0x1_DualAttestation)
--  [`0x1::Epoch`](../../../../../releases/artifacts/current/docs/modules/Epoch.md#0x1_Epoch)
--  [`0x1::EpochBoundary`](../../../../../releases/artifacts/current/docs/modules/Reconfigure.md#0x1_EpochBoundary)
--  [`0x1::FIFO`](../../../../../releases/artifacts/current/docs/modules/FIFO.md#0x1_FIFO)
--  [`0x1::FullnodeSubsidy`](../../../../../releases/artifacts/current/docs/modules/FullnodeSubsidy.md#0x1_FullnodeSubsidy)
--  [`0x1::GAS`](../../../../../releases/artifacts/current/docs/modules/GAS.md#0x1_GAS)
 -  [`0x1::Genesis`](../../../../../releases/artifacts/current/docs/modules/Genesis.md#0x1_Genesis)
--  [`0x1::Globals`](../../../../../releases/artifacts/current/docs/modules/Globals.md#0x1_Globals)
--  [`0x1::Migrations`](../../../../../releases/artifacts/current/docs/modules/Migrations.md#0x1_Migrations)
--  [`0x1::NodeWeight`](../../../../../releases/artifacts/current/docs/modules/NodeWeight.md#0x1_NodeWeight)
--  [`0x1::Oracle`](../../../../../releases/artifacts/current/docs/modules/Oracle.md#0x1_Oracle)
 -  [`0x1::PaymentScripts`](script_documentation.md#0x1_PaymentScripts)
 -  [`0x1::RecoveryAddress`](../../../../../releases/artifacts/current/docs/modules/RecoveryAddress.md#0x1_RecoveryAddress)
 -  [`0x1::RegisteredCurrencies`](../../../../../releases/artifacts/current/docs/modules/RegisteredCurrencies.md#0x1_RegisteredCurrencies)
@@ -5293,22 +5423,14 @@ a reconfiguration of the system.
 -  [`0x1::SharedEd25519PublicKey`](../../../../../releases/artifacts/current/docs/modules/SharedEd25519PublicKey.md#0x1_SharedEd25519PublicKey)
 -  [`0x1::Signature`](../../../../../releases/artifacts/current/docs/modules/Signature.md#0x1_Signature)
 -  [`0x1::SlidingNonce`](../../../../../releases/artifacts/current/docs/modules/SlidingNonce.md#0x1_SlidingNonce)
--  [`0x1::StagingNet`](../../../../../releases/artifacts/current/docs/modules/Testnet.md#0x1_StagingNet)
--  [`0x1::Stats`](../../../../../releases/artifacts/current/docs/modules/Stats.md#0x1_Stats)
--  [`0x1::Subsidy`](../../../../../releases/artifacts/current/docs/modules/Subsidy.md#0x1_Subsidy)
 -  [`0x1::SystemAdministrationScripts`](script_documentation.md#0x1_SystemAdministrationScripts)
--  [`0x1::Testnet`](../../../../../releases/artifacts/current/docs/modules/Testnet.md#0x1_Testnet)
--  [`0x1::TowerState`](../../../../../releases/artifacts/current/docs/modules/TowerState.md#0x1_TowerState)
 -  [`0x1::TransactionFee`](../../../../../releases/artifacts/current/docs/modules/TransactionFee.md#0x1_TransactionFee)
 -  [`0x1::TreasuryComplianceScripts`](script_documentation.md#0x1_TreasuryComplianceScripts)
--  [`0x1::Upgrade`](../../../../../releases/artifacts/current/docs/modules/Upgrade.md#0x1_Upgrade)
 -  [`0x1::VASP`](../../../../../releases/artifacts/current/docs/modules/VASP.md#0x1_VASP)
--  [`0x1::VDF`](../../../../../releases/artifacts/current/docs/modules/VDF.md#0x1_VDF)
+-  [`0x1::VASPDomain`](../../../../../releases/artifacts/current/docs/modules/VASPDomain.md#0x1_VASPDomain)
 -  [`0x1::ValidatorAdministrationScripts`](script_documentation.md#0x1_ValidatorAdministrationScripts)
 -  [`0x1::ValidatorConfig`](../../../../../releases/artifacts/current/docs/modules/ValidatorConfig.md#0x1_ValidatorConfig)
 -  [`0x1::ValidatorOperatorConfig`](../../../../../releases/artifacts/current/docs/modules/ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig)
--  [`0x1::ValidatorUniverse`](../../../../../releases/artifacts/current/docs/modules/ValidatorUniverse.md#0x1_ValidatorUniverse)
--  [`0x1::Wallet`](../../../../../releases/artifacts/current/docs/modules/Wallet.md#0x1_Wallet)
 -  [`0x1::XDX`](../../../../../releases/artifacts/current/docs/modules/XDX.md#0x1_XDX)
 -  [`0x1::XUS`](../../../../../releases/artifacts/current/docs/modules/XUS.md#0x1_XUS)
 

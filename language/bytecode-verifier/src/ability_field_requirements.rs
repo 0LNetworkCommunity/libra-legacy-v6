@@ -3,10 +3,9 @@
 
 //! This module implements a checker for verifying that all of the struct's fields satisfy the
 //! abilities required by the struct's abilities
-use crate::binary_views;
-use binary_views::BinaryIndexedView;
 use move_binary_format::{
     access::ModuleAccess,
+    binary_views::BinaryIndexedView,
     errors::{verification_error, Location, PartialVMResult, VMResult},
     file_format::{AbilitySet, CompiledModule, StructFieldInformation, TableIndex},
     IndexKind,
@@ -38,7 +37,7 @@ fn verify_module_impl(module: &CompiledModule) -> PartialVMResult<()> {
             .map(|_| AbilitySet::ALL)
             .collect::<Vec<_>>();
         for field in fields {
-            let field_abilities = view.abilities(&field.signature.0, &type_parameter_abilities);
+            let field_abilities = view.abilities(&field.signature.0, &type_parameter_abilities)?;
             if !required_abilities.is_subset(field_abilities) {
                 return Err(verification_error(
                     StatusCode::FIELD_MISSING_TYPE_ABILITY,

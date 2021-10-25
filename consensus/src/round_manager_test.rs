@@ -36,6 +36,7 @@ use consensus_types::{
     vote_msg::VoteMsg,
 };
 use diem_crypto::{ed25519::Ed25519PrivateKey, HashValue, Uniform};
+use diem_infallible::Mutex;
 use diem_secure_storage::Storage;
 use diem_types::{
     epoch_state::EpochState,
@@ -53,6 +54,7 @@ use futures::{
 use network::{
     peer_manager::{conn_notifs_channel, ConnectionRequestSender, PeerManagerRequestSender},
     protocols::network::{Event, NewNetworkEvents, NewNetworkSender},
+    ProtocolId,
 };
 use safety_rules::{PersistentSafetyStorage, SafetyRulesManager};
 use std::{sync::Arc, time::Duration};
@@ -96,6 +98,20 @@ impl NodeSetup {
             Waypoint::new_epoch_boundary(&LedgerInfo::mock_genesis(Some(validator_set))).unwrap();
 
         let mut nodes = vec![];
+        // pre-initialize the mapping to avoid race conditions (peer try to broadcast to someone not added yet)
+        let shared_connections = playground.peer_protocols();
+        for signer in signers.iter().take(num_nodes) {
+            shared_connections.write().insert(
+                signer.author(),
+                vec![
+                    ProtocolId::ConsensusDirectSendJSON,
+                    ProtocolId::ConsensusDirectSend,
+                    ProtocolId::ConsensusRpc,
+                ]
+                .iter()
+                .into(),
+            );
+        }
         for (id, signer) in signers.iter().take(num_nodes).enumerate() {
             let (initial_data, storage) = MockStorage::start_for_testing((&validators).into());
 
@@ -107,7 +123,8 @@ impl NodeSetup {
                 waypoint,
                 true,
             );
-            let safety_rules_manager = SafetyRulesManager::new_local(safety_storage, false, false);
+            let safety_rules_manager =
+                SafetyRulesManager::new_local(safety_storage, false, false, false);
 
             nodes.push(Self::new(
                 playground,
@@ -143,10 +160,11 @@ impl NodeSetup {
         let (consensus_tx, consensus_rx) = diem_channel::new(QueueStyle::FIFO, 8, None);
         let (_conn_mgr_reqs_tx, conn_mgr_reqs_rx) = channel::new_test(8);
         let (_, conn_status_rx) = conn_notifs_channel::new();
-        let network_sender = ConsensusNetworkSender::new(
+        let mut network_sender = ConsensusNetworkSender::new(
             PeerManagerRequestSender::new(network_reqs_tx),
             ConnectionRequestSender::new(connection_reqs_tx),
         );
+        network_sender.initialize(playground.peer_protocols());
         let network_events = ConsensusNetworkEvents::new(consensus_rx, conn_status_rx);
         let author = signer.author();
 
@@ -197,7 +215,7 @@ impl NodeSetup {
             round_state,
             proposer_election,
             proposal_generator,
-            safety_rules,
+            Arc::new(Mutex::new(safety_rules)),
             network,
             Arc::new(MockTransactionManager::new(None)),
             storage.clone(),
@@ -868,10 +886,12 @@ fn safety_rules_crash() {
             true,
         );
 
-        node.safety_rules_manager = SafetyRulesManager::new_local(safety_storage, false, false);
+        node.safety_rules_manager =
+            SafetyRulesManager::new_local(safety_storage, false, false, false);
         let safety_rules =
             MetricsSafetyRules::new(node.safety_rules_manager.client(), node.storage.clone());
-        node.round_manager.set_safety_rules(safety_rules);
+        let safety_rules_container = Arc::new(Mutex::new(safety_rules));
+        node.round_manager.set_safety_rules(safety_rules_container);
     }
 
     timed_block_on(&mut runtime, async {

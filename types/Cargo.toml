@@ -46,7 +46,6 @@ diem-crypto = { path = "../crypto/crypto", features = ["fuzzing"] }
 move-core-types = { path = "../language/move-core/types", features = ["fuzzing"]  }
 diem-workspace-hack = { path = "../common/workspace-hack" }
 
-
 [features]
 default = []
 fuzzing = ["proptest", "proptest-derive", "diem-crypto/fuzzing", "move-core-types/fuzzing"]

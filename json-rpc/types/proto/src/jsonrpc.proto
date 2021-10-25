@@ -85,9 +85,9 @@ message AccountRole {
   repeated Amount preburn_balances = 11 [json_name="preburn_balances"];
   repeated PreburnQueue preburn_queues = 12 [json_name="preburn_queues"];
 
-  // DiemID
-  repeated string diem_id_domains = 13 [json_name="diem_id_domains"];
-  string diem_id_domain_events_key = 14 [json_name="diem_id_domain_events_key"];
+  // VASP Domain
+  repeated string vasp_domains = 13 [json_name="vasp_domains"];
+  string vasp_domain_events_key = 14 [json_name="vasp_domain_events_key"];
 }
 
 message PreburnQueue {
@@ -178,7 +178,7 @@ message EventData {
    */
   string bytes = 21;
 
-  // diemiddomain event only
+  // vaspdomain event only
   bool removed = 22 [json_name="removed"];
   string domain = 23 [json_name="domain"];
   string address = 24 [json_name="address"];
@@ -419,4 +419,36 @@ message AccountStateProof {
   string transaction_info = 2 [json_name="transaction_info"];
   // hex-encoded bcs bytes
   string transaction_info_to_account_proof = 3 [json_name="transaction_info_to_account_proof"];
+}
+
+/**
+ * This is for the experimental API get_accumulator_consistency_proof response. It is unstable and likely to be changed.
+ */
+message AccumulatorConsistencyProof {
+  // hex-encoded bcs bytes
+  string ledger_consistency_proof = 1 [json_name="ledger_consistency_proof"];
+}
+
+/**
+ * This is for the experimental API get_account_transactions_with_proofs response. It is unstable and likely to be changed.
+ */
+message AccountTransactionsWithProof {
+    // list of hex-encoded bcs bytes
+    repeated string serialized_txns_with_proofs = 1 [json_name="serialized_txns_with_proofs"];
+}
+
+/**
+ * This is for the experimental API get_events_with_proofs response. It is unstable and likely to be changed.
+ */
+message EventWithProof {
+    // hex-encoded bcs bytes
+    string event_with_proof = 1 [json_name="event_with_proof"];
+}
+
+/**
+ * This is for the experimental API get_event_by_version_with_proof response. It is unstable and likely to be changed.
+ */
+message EventByVersionWithProof {
+    EventWithProof lower_bound_incl = 1 [json_name="lower_bound_incl"];
+    EventWithProof upper_bound_excl = 2 [json_name="upper_bound_excl"];
 }

@@ -1,26 +1,27 @@
 // dep: ../../move-stdlib/modules/Signer.move
 // dep: ../../move-stdlib/modules/Vector.move
+// dep: ../../move-stdlib/modules/addresses.move
 
 // Regression test for a bug in handling generic mutual borrow, as well as parameter types of native functions.
 
 address 0x1 {
 
 module Diem {
-    use 0x1::Signer;
-    use 0x1::Vector;
+    use Std::Signer;
+    use Std::Vector;
 
     // A resource representing a fungible token
-    struct T<Token> has key, store {
+    struct T<phantom Token> has key, store {
         // The value of the token. May be zero
         value: u64,
     }
 
-    struct Info<Token> has key {
+    struct Info<phantom Token> has key {
         total_value: u128,
         preburn_value: u64,
     }
 
-    struct Preburn<Token> has key {
+    struct Preburn<phantom Token> has key {
         requests: vector<T<Token>>,
         is_approved: bool,
     }

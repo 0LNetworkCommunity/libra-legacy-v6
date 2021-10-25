@@ -12,7 +12,6 @@ use crate::{
         write_key_to_file_hex_format,
     },
 };
-use diem_client::views::VMStatusView;
 use diem_config::{
     config::{PeerRole, SecureBackend},
     network_id::NetworkId,
@@ -31,6 +30,7 @@ use diem_operational_tool::{
     keys::{EncodingType, KeyType},
     test_helper::OperationalTool,
 };
+use diem_sdk::client::views::VMStatusView;
 use diem_secure_storage::{CryptoStorage, KVStorage, Storage};
 use diem_temppath::TempPath;
 use diem_types::{
@@ -414,7 +414,6 @@ fn test_insert_waypoint() {
 
     // Get the current waypoint from storage
     let current_waypoint: Waypoint = storage.get(WAYPOINT).unwrap().value;
-    storage.get::<Waypoint>(GENESIS_WAYPOINT).unwrap_err();
 
     // Insert a new waypoint and genesis waypoint into storage
     let inserted_waypoint =

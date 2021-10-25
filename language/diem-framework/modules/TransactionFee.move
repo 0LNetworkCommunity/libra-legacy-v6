@@ -1,24 +1,21 @@
-address 0x1 {
-
 /////// 0L /////////
 ///////////////////////////////////////////////////////////////////////////
 // Functions to initialize, accumulated, and burn transaction fees.
 // File Prefix for errors: 2000
 ///////////////////////////////////////////////////////////////////////////
 
-module TransactionFee {
-    use 0x1::CoreAddresses;
-    use 0x1::Errors;
+module DiemFramework::TransactionFee {
     use 0x1::GAS::GAS; /////// 0L /////////
-    use 0x1::XDX;
-    use 0x1::Diem::{Self, Diem, Preburn};
-    use 0x1::Roles;
-    use 0x1::DiemTimestamp;
-    use 0x1::Signer;
+    use DiemFramework::XDX;
+    use DiemFramework::Diem::{Self, Diem, Preburn};
+    use DiemFramework::Roles;
+    use DiemFramework::DiemTimestamp;
+    use Std::Errors;
+    use Std::Signer;
 
     /// The `TransactionFee` resource holds a preburn resource for each
     /// fiat `CoinType` that can be collected as a transaction fee.
-    struct TransactionFee<CoinType> has key {
+    struct TransactionFee<phantom CoinType> has key {
         balance: Diem<CoinType>,
         preburn: Preburn<CoinType>,
     }
@@ -29,12 +26,12 @@ module TransactionFee {
     /// Called in genesis. Sets up the needed resources to collect transaction fees from the
     /// `TransactionFee` resource with the TreasuryCompliance account.
     public fun initialize(
-        dr_account: &signer, /////// 0L /////////
+        dr_account: &signer,
     ) {
-        DiemTimestamp::assert_genesis(); /////// 0L /////////
+        DiemTimestamp::assert_genesis();
         Roles::assert_diem_root(dr_account);
         // accept fees in all the currencies
-        add_txn_fee_currency<GAS>(dr_account); /////// 0L /////////
+        add_txn_fee_currency<GAS>(dr_account);
     }
     spec initialize {
         include DiemTimestamp::AbortsIfNotGenesis;
@@ -45,22 +42,23 @@ module TransactionFee {
     }
     spec schema AddTxnFeeCurrencyAbortsIf<CoinType> {
         include Diem::AbortsIfNoCurrency<CoinType>;
-        aborts_if exists<TransactionFee<CoinType>>(CoreAddresses::TREASURY_COMPLIANCE_ADDRESS())
+        aborts_if exists<TransactionFee<CoinType>>(@TreasuryCompliance)
             with Errors::ALREADY_PUBLISHED;
     }
 
-    public fun is_coin_initialized<CoinType: store>(): bool {
-        exists<TransactionFee<CoinType>>(CoreAddresses::TREASURY_COMPLIANCE_ADDRESS())
+    public fun is_coin_initialized<CoinType>(): bool {
+        exists<TransactionFee<CoinType>>(@TreasuryCompliance)
     }
 
     fun is_initialized(): bool {
-        is_coin_initialized<GAS>() /////// 0L /////////
+        is_coin_initialized<GAS>()
     }
 
     /// Sets up the needed transaction fee state for a given `CoinType` currency by
     /// (1) configuring `dr_account` to accept `CoinType`
     /// (2) publishing a wrapper of the `Preburn<CoinType>` resource under `dr_account`
-    public fun add_txn_fee_currency<CoinType: store>(dr_account: &signer) {
+    public fun add_txn_fee_currency<CoinType>(dr_account: &signer) {
+        Roles::assert_diem_root(dr_account); /////// 0L /////////
         Diem::assert_is_currency<CoinType>();
         assert(
             !is_coin_initialized<CoinType>(),
@@ -76,12 +74,10 @@ module TransactionFee {
     }
 
     /// Deposit `coin` into the transaction fees bucket
-    public fun pay_fee<CoinType: store>(coin: Diem<CoinType>) acquires TransactionFee {
+    public fun pay_fee<CoinType>(coin: Diem<CoinType>) acquires TransactionFee {
         DiemTimestamp::assert_operating();
         assert(is_coin_initialized<CoinType>(), Errors::not_published(ETRANSACTION_FEE));
-        let fees = borrow_global_mut<TransactionFee<CoinType>>(
-            CoreAddresses::TREASURY_COMPLIANCE_ADDRESS(),
-        );
+        let fees = borrow_global_mut<TransactionFee<CoinType>>(@TreasuryCompliance);
         Diem::deposit(&mut fees.balance, coin)
     }
 
@@ -97,27 +93,26 @@ module TransactionFee {
     /// Preburns the transaction fees collected in the `CoinType` currency.
     /// If the `CoinType` is XDX, it unpacks the coin and preburns the
     /// underlying fiat.
-    public fun burn_fees<CoinType: store>(
+    public fun burn_fees<CoinType>(
         dr_account: &signer,
     ) acquires TransactionFee {
         DiemTimestamp::assert_operating();
         Roles::assert_diem_root(dr_account); /////// 0L /////////
         assert(is_coin_initialized<CoinType>(), Errors::not_published(ETRANSACTION_FEE));
-        let tc_address = CoreAddresses::TREASURY_COMPLIANCE_ADDRESS();
         if (XDX::is_xdx<CoinType>()) {
             // TODO: Once the composition of XDX is determined fill this in to
             // unpack and burn the backing coins of the XDX coin.
             abort Errors::invalid_state(ETRANSACTION_FEE)
         } else {
             // extract fees
-            let fees = borrow_global_mut<TransactionFee<CoinType>>(tc_address);
+            let fees = borrow_global_mut<TransactionFee<CoinType>>(@TreasuryCompliance);
             let coin = Diem::withdraw_all(&mut fees.balance);
             let burn_cap = Diem::remove_burn_capability<CoinType>(dr_account);
             // burn
             Diem::burn_now(
                 coin,
                 &mut fees.preburn,
-                tc_address,
+                @TreasuryCompliance,
                 &burn_cap
             );
             Diem::publish_burn_capability(dr_account, burn_cap);
@@ -171,7 +166,7 @@ module TransactionFee {
     /// # Helper Function
 
     spec fun spec_transaction_fee<CoinType>(): TransactionFee<CoinType> {
-        borrow_global<TransactionFee<CoinType>>(CoreAddresses::TREASURY_COMPLIANCE_ADDRESS())
+        borrow_global<TransactionFee<CoinType>>(@TreasuryCompliance)
     }
 
     /////// 0L /////////
@@ -219,7 +214,5 @@ module TransactionFee {
         );
 
         Diem::withdraw(&mut fees.balance, amount)
-    }
-
-}
+    }    
 }

@@ -39,11 +39,11 @@ pub fn test_execution_with_storage_impl() -> Arc<DiemDB> {
 
     let path = diem_temppath::TempPath::new();
     path.create_as_dir().unwrap();
-    let (diem_db, db, mut executor, waypoint) = create_db_and_executor(path.path(), &genesis_txn);
+    let (diem_db, db, executor, waypoint) = create_db_and_executor(path.path(), &genesis_txn);
 
     let parent_block_id = executor.committed_block_id();
     let signer = diem_types::validator_signer::ValidatorSigner::new(
-        validators[0].owner_address,
+        validators[0].data.address,
         validators[0].key.clone(),
     );
 
@@ -235,52 +235,49 @@ pub fn test_execution_with_storage_impl() -> Arc<DiemDB> {
     let output1 = executor
         .execute_block((block1_id, block1.clone()), parent_block_id)
         .unwrap();
-    let ledger_info_with_sigs = gen_ledger_info_with_sigs(1, output1, block1_id, vec![&signer]);
-    let (_, reconfig_events) = executor
+    let ledger_info_with_sigs = gen_ledger_info_with_sigs(1, &output1, block1_id, vec![&signer]);
+    executor
         .commit_blocks(vec![block1_id], ledger_info_with_sigs)
         .unwrap();
-    assert!(
-        reconfig_events.is_empty(),
-        "expected no reconfiguration event from executor commit"
-    );
 
-    let (li, epoch_change_proof, _accumulator_consistency_proof) =
-        db.reader.get_state_proof(0).unwrap();
-    let mut trusted_state = TrustedState::from(waypoint);
-    match trusted_state.verify_and_ratchet(&li, &epoch_change_proof) {
-        Ok(TrustedStateChange::Epoch { new_state, .. }) => trusted_state = new_state,
-        _ => panic!("unexpected state change"),
-    }
-    let current_version = li.ledger_info().version();
+    let initial_accumulator = db.reader.get_accumulator_summary(0).unwrap();
+    let state_proof = db.reader.get_state_proof(0).unwrap();
+    let trusted_state = TrustedState::from_epoch_waypoint(waypoint);
+    let trusted_state =
+        match trusted_state.verify_and_ratchet(&state_proof, Some(&initial_accumulator)) {
+            Ok(TrustedStateChange::Epoch { new_state, .. }) => new_state,
+            _ => panic!("unexpected state change"),
+        };
+    let current_version = state_proof.latest_ledger_info().version();
     assert_eq!(trusted_state.version(), 9);
 
     let t1 = db
         .reader
-        .get_txn_by_account(genesis_account, 0, current_version, false)
+        .get_account_transaction(genesis_account, 0, false, current_version)
         .unwrap();
     verify_committed_txn_status(t1.as_ref(), &block1[3]).unwrap();
 
     let t2 = db
         .reader
-        .get_txn_by_account(genesis_account, 1, current_version, false)
+        .get_account_transaction(genesis_account, 1, false, current_version)
         .unwrap();
     verify_committed_txn_status(t2.as_ref(), &block1[4]).unwrap();
 
     let t3 = db
         .reader
-        .get_txn_by_account(genesis_account, 2, current_version, false)
+        .get_account_transaction(genesis_account, 2, false, current_version)
         .unwrap();
     verify_committed_txn_status(t3.as_ref(), &block1[5]).unwrap();
 
     let tn = db
         .reader
-        .get_txn_by_account(genesis_account, 3, current_version, false)
+        .get_account_transaction(genesis_account, 3, false, current_version)
         .unwrap();
     assert!(tn.is_none());
 
     let t4 = db
         .reader
-        .get_txn_by_account(account1, 0, current_version, true)
+        .get_account_transaction(account1, 0, true, current_version)
         .unwrap();
     verify_committed_txn_status(t4.as_ref(), &block1[6]).unwrap();
     // We requested the events to come back from this one, so verify that they did
@@ -288,13 +285,13 @@ pub fn test_execution_with_storage_impl() -> Arc<DiemDB> {
 
     let t5 = db
         .reader
-        .get_txn_by_account(account2, 0, current_version, false)
+        .get_account_transaction(account2, 0, false, current_version)
         .unwrap();
     verify_committed_txn_status(t5.as_ref(), &block1[7]).unwrap();
 
     let t6 = db
         .reader
-        .get_txn_by_account(account1, 1, current_version, true)
+        .get_account_transaction(account1, 1, true, current_version)
         .unwrap();
     verify_committed_txn_status(t6.as_ref(), &block1[8]).unwrap();
 
@@ -396,7 +393,7 @@ pub fn test_execution_with_storage_impl() -> Arc<DiemDB> {
 
     let account4_transaction = db
         .reader
-        .get_txn_by_account(account4, 0, current_version, true)
+        .get_account_transaction(account4, 0, true, current_version)
         .unwrap();
     assert!(account4_transaction.is_none());
 
@@ -415,28 +412,31 @@ pub fn test_execution_with_storage_impl() -> Arc<DiemDB> {
     let output2 = executor
         .execute_block((block2_id, block2.clone()), block1_id)
         .unwrap();
-    let ledger_info_with_sigs = gen_ledger_info_with_sigs(1, output2, block2_id, vec![&signer]);
+    let ledger_info_with_sigs = gen_ledger_info_with_sigs(1, &output2, block2_id, vec![&signer]);
     executor
         .commit_blocks(vec![block2_id], ledger_info_with_sigs)
         .unwrap();
 
-    let (li, epoch_change_proof, _accumulator_consistency_proof) =
-        db.reader.get_state_proof(trusted_state.version()).unwrap();
-    trusted_state
-        .verify_and_ratchet(&li, &epoch_change_proof)
+    let state_proof = db.reader.get_state_proof(trusted_state.version()).unwrap();
+    let trusted_state_change = trusted_state
+        .verify_and_ratchet(&state_proof, None)
         .unwrap();
-    let current_version = li.ledger_info().version();
+    assert!(matches!(
+        trusted_state_change,
+        TrustedStateChange::Version { .. }
+    ));
+    let current_version = state_proof.latest_ledger_info().version();
     assert_eq!(current_version, 23);
 
     let t7 = db
         .reader
-        .get_txn_by_account(account1, 2, current_version, false)
+        .get_account_transaction(account1, 2, false, current_version)
         .unwrap();
     verify_committed_txn_status(t7.as_ref(), &block2[0]).unwrap();
 
     let t20 = db
         .reader
-        .get_txn_by_account(account1, 15, current_version, false)
+        .get_account_transaction(account1, 15, false, current_version)
         .unwrap();
     verify_committed_txn_status(t20.as_ref(), &block2[13]).unwrap();
 

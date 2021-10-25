@@ -21,7 +21,7 @@ Sometimes, tuples with two elements are called "pairs" and tuples with three ele
 
 ### Examples
 
-```rust=
+```move=
 address 0x42 {
 module Example {
     // all 3 of these functions are equivalent
@@ -56,7 +56,7 @@ For tuples of any size, they can be destructured in either a `let` binding or in
 
 For example:
 
-```rust=
+```move=
 address 0x42 {
 module Example {
     // all 3 of these functions are equivalent
@@ -95,7 +95,7 @@ Along with references, tuples are the only types that have subtyping in Move. Tu
 
 For example
 
-```rust=
+```move=
 let x: &u64 = &0;
 let y: &mut u64 = &mut 1;
 
@@ -105,7 +105,7 @@ let (a, b): (&u64, &u64) = (x, y);
 // (&mut u64, &mut u64) is a subtype of (&u64, &u64)
 //   since &mut u64 is a subtype of &u64
 let (c, d): (&u64, &u64) = (y, y);
-// error! (&mut u64, &mut u64) is NOT a subtype of (&u64, &mut u64)
+// error! (&u64, &mut u64) is NOT a subtype of (&mut u64, &mut u64)
 //   since &u64 is NOT a subtype of &mut u64
 let (e, f): (&mut u64, &mut u64) = (x, y);
 ```

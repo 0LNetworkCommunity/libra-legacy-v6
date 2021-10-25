@@ -1,4 +1,4 @@
-FROM debian:buster-20210511@sha256:acf7795dc91df17e10effee064bd229580a9c34213b4dba578d64768af5d8c51 AS toolchain
+FROM debian:buster-20210721@sha256:cc58a29c333ee594f7624d968123429b26916face46169304f07580644dde6b2 AS toolchain
 
 # To use http/https proxy while building, use:
 # docker build --build-arg https_proxy=http://fwdproxy:8080 --build-arg http_proxy=http://fwdproxy:8080
@@ -20,7 +20,7 @@ COPY . /diem
 RUN IMAGE_TARGETS="release" ./docker/build-common.sh
 
 ### Production Image ###
-FROM debian:buster-20210511@sha256:acf7795dc91df17e10effee064bd229580a9c34213b4dba578d64768af5d8c51 AS prod
+FROM debian:buster-20210721@sha256:cc58a29c333ee594f7624d968123429b26916face46169304f07580644dde6b2 AS prod
 
 RUN echo "deb http://deb.debian.org/debian bullseye main" > /etc/apt/sources.list.d/bullseye.list && \
     echo "Package: *\nPin: release n=bullseye\nPin-Priority: 50" > /etc/apt/preferences.d/bullseye
@@ -44,6 +44,10 @@ COPY --from=builder /diem/target/release/db-backup-verify /usr/local/bin
 COPY --from=builder /diem/target/release/db-restore /usr/local/bin
 COPY --from=builder /diem/target/release/diem-transaction-replay /usr/local/bin
 COPY --from=builder /diem/target/release/diem-writeset-generator /usr/local/bin
+
+### Get Move modules bytecodes for genesis ceremony
+RUN mkdir -p /diem/move
+COPY --from=builder /diem/language/diem-framework/releases/artifacts/current /diem/move
 
 ARG BUILD_DATE
 ARG GIT_REV

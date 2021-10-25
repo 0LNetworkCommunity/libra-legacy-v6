@@ -8,13 +8,11 @@
 
 mod abstract_state;
 
-use crate::{
-    absint::{AbstractInterpreter, BlockInvariant, BlockPostcondition, TransferFunctions},
-    binary_views::{BinaryIndexedView, FunctionView},
-};
+use crate::absint::{AbstractInterpreter, BlockInvariant, BlockPostcondition, TransferFunctions};
 use abstract_state::{AbstractState, LocalState};
 use mirai_annotations::*;
 use move_binary_format::{
+    binary_views::{BinaryIndexedView, FunctionView},
     errors::{PartialVMError, PartialVMResult},
     file_format::{Bytecode, CodeOffset},
 };
@@ -24,7 +22,7 @@ pub(crate) fn verify<'a>(
     resolver: &BinaryIndexedView,
     function_view: &'a FunctionView<'a>,
 ) -> PartialVMResult<()> {
-    let initial_state = AbstractState::new(resolver, function_view);
+    let initial_state = AbstractState::new(resolver, function_view)?;
     let inv_map = LocalsSafetyAnalysis().analyze_function(initial_state, &function_view);
     // Report all the join failures
     for (_block_id, BlockInvariant { post, .. }) in inv_map {

@@ -1,6 +1,8 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+pub mod stream;
+
 pub mod errors;
 pub mod request;
 pub mod response;
@@ -8,8 +10,8 @@ pub mod views;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
-enum JsonRpcVersion {
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
+pub enum JsonRpcVersion {
     #[serde(rename = "2.0")]
     V2,
 }
@@ -22,6 +24,15 @@ pub enum Id {
     Number(u64),
     /// String id
     String(Box<str>),
+}
+
+impl std::fmt::Display for Id {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Id::Number(ref v) => std::fmt::Debug::fmt(v, f),
+            Id::String(ref v) => std::fmt::Debug::fmt(v, f),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Deserialize, Serialize)]
@@ -41,13 +52,16 @@ pub enum Method {
     // Experimental APIs
     //
     GetStateProof,
+    GetAccumulatorConsistencyProof,
     GetAccountStateWithProof,
     GetTransactionsWithProofs,
+    GetAccountTransactionsWithProofs,
     GetEventsWithProofs,
+    GetEventByVersionWithProof,
 
     //////// 0L ////////
     GetTowerStateView,
-    GetOracleUpgradeStateView,
+    GetOracleUpgradeStateView,    
 }
 
 impl Method {
@@ -63,14 +77,18 @@ impl Method {
             Method::GetCurrencies => "get_currencies",
             Method::GetNetworkStatus => "get_network_status",
             Method::GetStateProof => "get_state_proof",
+            Method::GetAccumulatorConsistencyProof => "get_accumulator_consistency_proof",
             Method::GetAccountStateWithProof => "get_account_state_with_proof",
             Method::GetTransactionsWithProofs => "get_transactions_with_proofs",
+            Method::GetAccountTransactionsWithProofs => "get_account_transactions_with_proofs",
             Method::GetEventsWithProofs => "get_events_with_proofs",
+            Method::GetEventByVersionWithProof => "get_event_by_version_with_proof",
 
             //////// 0L ////////
-            Method::GetTowerStateView => "get_miner_state_view", // Name is not used in json RPC, only for errors, what matters is the type name, which serde formats as snakecase.
-            
-            Method::GetOracleUpgradeStateView => "get_oracle_upgrade_state_view", 
+            // Name is not used in json RPC, only for errors, what matters 
+            // is the type name, which serde formats as snakecase.
+            Method::GetTowerStateView => "get_miner_state_view",
+            Method::GetOracleUpgradeStateView => "get_oracle_upgrade_state_view",
         }
     }
 }

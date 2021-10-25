@@ -212,6 +212,14 @@ impl HashValue {
         (self.hash[pos] >> bit) & 1 != 0
     }
 
+    /// Returns the `index`-th nibble in the bytes.
+    pub fn nibble(&self, index: usize) -> u8 {
+        assume!(index < Self::LENGTH * 2); // assumed precondition
+        let pos = index / 2;
+        let shift = if index % 2 == 0 { 4 } else { 0 };
+        (self.hash[pos] >> shift) & 0x0f
+    }
+
     /// Returns a `HashValueBitIterator` over all the bits that represent this `HashValue`.
     pub fn iter_bits(&self) -> HashValueBitIterator<'_> {
         HashValueBitIterator::new(self)
@@ -252,6 +260,18 @@ impl HashValue {
         <[u8; Self::LENGTH]>::from_hex(hex)
             .map_err(|_| HashValueParseError)
             .map(Self::new)
+    }
+
+    /// Create a hash value whose contents are just the given integer. Useful for
+    /// generating basic mock hash values.
+    ///
+    /// Ex: HashValue::from_u64(0x1234) => HashValue([0, .., 0, 0x12, 0x34])
+    #[cfg(any(test, feature = "fuzzing"))]
+    pub fn from_u64(v: u64) -> Self {
+        let mut hash = [0u8; Self::LENGTH];
+        let bytes = v.to_be_bytes();
+        hash[Self::LENGTH - bytes.len()..].copy_from_slice(&bytes[..]);
+        Self::new(hash)
     }
 }
 

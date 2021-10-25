@@ -1,18 +1,18 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+//! This file implements the information needed in the local interpretation context, i.e., the
+//! context created and updated when interpreting a single function.
+
 use std::collections::BTreeMap;
 
-use move_binary_format::{
-    errors::{Location, PartialVMError, VMError},
-    file_format::CodeOffset,
-};
+use move_binary_format::errors::{Location, PartialVMError, VMError};
 use move_core_types::vm_status::StatusCode;
 use move_model::ast::TempIndex;
 
 use crate::concrete::{
-    ty::Type,
-    value::{LocalSlot, TypedValue},
+    ty::{CodeOffset, Type},
+    value::{LocalSlot, Pointer, TypedValue},
 };
 
 #[derive(Clone, Debug)]
@@ -24,6 +24,7 @@ pub enum AbortInfo {
 }
 
 impl AbortInfo {
+    /// Convert the AbortInfo into a VMError
     pub fn into_err(self) -> VMError {
         match self {
             Self::User(status_code, location) => PartialVMError::new(StatusCode::ABORTED)
@@ -35,6 +36,7 @@ impl AbortInfo {
         }
     }
 
+    /// Retrieve the status code as a u64
     pub fn get_status_code(&self) -> u64 {
         match self {
             Self::User(status_code, _) => *status_code,
@@ -143,6 +145,15 @@ impl LocalState {
         }
     }
 
+    /// Collect the pointers of the underlying values in the local slots
+    pub fn collect_pointers(&self) -> BTreeMap<TempIndex, &Pointer> {
+        self.slots
+            .iter()
+            .enumerate()
+            .filter_map(|(idx, slot)| slot.get_content().map(|(_, ptr)| (idx, ptr)))
+            .collect()
+    }
+
     /// Mark that an abort is raised and we will be executing the abort action next
     pub fn transit_to_post_abort(&mut self, info: AbortInfo) {
         if cfg!(debug_assertions) {
@@ -156,6 +167,10 @@ impl LocalState {
             self.termination,
             TerminationStatus::Return(_) | TerminationStatus::Abort(_)
         )
+    }
+    /// Check whether we are executing in a post-abort status
+    pub fn is_post_abort(&self) -> bool {
+        matches!(self.termination, TerminationStatus::PostAbort(_))
     }
     /// Mark that the current function terminated with an abort
     pub fn terminate_with_abort(&mut self, abort_info: AbortInfo) {

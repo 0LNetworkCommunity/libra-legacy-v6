@@ -4,7 +4,7 @@
 //! new-transaction
 //! sender: freddymac
 script{
-    use 0x1::DualAttestation;
+    use DiemFramework::DualAttestation;
     fun main() {
         DualAttestation::get_cur_microdiem_limit();
     }
@@ -13,7 +13,7 @@ script{
 
 //! new-transaction
 script{
-    use 0x1::DualAttestation::{Self};
+    use DiemFramework::DualAttestation::{Self};
     fun main(not_blessed: signer) {
     let not_blessed = &not_blessed;
         DualAttestation::set_microdiem_limit(not_blessed, 99);
@@ -24,7 +24,7 @@ script{
 //! new-transaction
 //! sender: blessed
 script{
-    use 0x1::DualAttestation::{Self};
+    use DiemFramework::DualAttestation::{Self};
     fun main(not_blessed: signer) {
     let not_blessed = &not_blessed;
         DualAttestation::set_microdiem_limit(not_blessed, 1001);
@@ -32,27 +32,30 @@ script{
 }
 // check: "Keep(EXECUTED)"
 
-//! new-transaction
-//! sender: blessed
-script{
-    use 0x1::DualAttestation;
-    fun main(account: signer) {
-    let account = &account;
-        DualAttestation::publish_credential(account, account, x"");
-    }
-}
-// check: "Keep(ABORTED { code: 1283,"
+// TODO: DualAttestation::publish_credential is now a friend function
+// Make this into a unit test.
+// //! new-transaction
+// //! sender: blessed
+// script{
+//     use DiemFramework::DualAttestation;
+//     fun main(account: signer) {
+//     let account = &account;
+//         DualAttestation::publish_credential(account, account, x"");
+//     }
+// }
+// // check: "Keep(ABORTED { code: 1283,"
 
-//! new-transaction
-//! sender: blessed
-script{
-    use 0x1::DualAttestation;
-    fun main(account: signer) {
-    let account = &account;
-        DualAttestation::publish_credential(account, account, x"");
-    }
-}
-// check: "Keep(ABORTED { code: 1283,"
+// TODO: Make into unit test
+// //! new-transaction
+// //! sender: blessed
+// script{
+//     use DiemFramework::DualAttestation;
+//     fun main(account: signer) {
+//     let account = &account;
+//         DualAttestation::publish_credential(account, account, x"");
+//     }
+// }
+// // check: "Keep(ABORTED { code: 1283,"
 
 //! new-transaction
 //! sender: blessed
@@ -61,21 +64,22 @@ script{
 stdlib_script::AccountCreationScripts::create_parent_vasp_account
 // check: "Keep(EXECUTED)"
 
-//! new-transaction
-//! sender: bob
-script{
-    use 0x1::DualAttestation;
-    fun main(account: signer) {
-    let account = &account;
-        DualAttestation::publish_credential(account, account, x"");
-    }
-}
-// check: "Keep(ABORTED { code: 258,"
+// TODO: Make into unit test
+// //! new-transaction
+// //! sender: bob
+// script{
+//     use DiemFramework::DualAttestation;
+//     fun main(account: signer) {
+//     let account = &account;
+//         DualAttestation::publish_credential(account, account, x"");
+//     }
+// }
+// // check: "Keep(ABORTED { code: 258,"
 
 //! new-transaction
 //! sender: blessed
 script{
-    use 0x1::DualAttestation;
+    use DiemFramework::DualAttestation;
     fun main(account: signer) {
     let account = &account;
         DualAttestation::rotate_base_url(account, x"");
@@ -86,7 +90,7 @@ script{
 //! new-transaction
 //! sender: bob
 script{
-    use 0x1::DualAttestation;
+    use DiemFramework::DualAttestation;
     fun main(account: signer) {
     let account = &account;
         DualAttestation::rotate_base_url(account, x"");
@@ -99,7 +103,7 @@ script{
 //! new-transaction
 //! sender: blessed
 script{
-    use 0x1::DualAttestation;
+    use DiemFramework::DualAttestation;
     fun main(account: signer) {
     let account = &account;
         DualAttestation::rotate_compliance_public_key(account, x"");
@@ -110,7 +114,7 @@ script{
 //! new-transaction
 //! sender: bob
 script{
-    use 0x1::DualAttestation;
+    use DiemFramework::DualAttestation;
     fun main(account: signer) {
     let account = &account;
         DualAttestation::rotate_compliance_public_key(account, x"");
@@ -121,7 +125,7 @@ script{
 //! new-transaction
 //! sender: bob
 script{
-    use 0x1::DualAttestation;
+    use DiemFramework::DualAttestation;
     fun main(account: signer) {
     let account = &account;
         DualAttestation::initialize(account);
@@ -132,7 +136,7 @@ script{
 //! new-transaction
 //! sender: bob
 script{
-    use 0x1::DualAttestation;
+    use DiemFramework::DualAttestation;
     fun main(account: signer) {
     let account = &account;
         DualAttestation::initialize(account);
@@ -140,23 +144,24 @@ script{
 }
 // check: "Keep(ABORTED { code: 1,"
 
-//! new-transaction
-//! sender: diemroot
-//! execute-as: freddymac
-script{
-use 0x1::DualAttestation;
-fun main(dr_account: signer, freddy: signer) {
-    let dr_account = &dr_account;
-    let freddy = &freddy;
-    DualAttestation::publish_credential(freddy, dr_account, b"freddy");
-    DualAttestation::publish_credential(freddy, dr_account, b"freddy");
-}
-}
-// check: "Discard(INVALID_WRITE_SET)"
+// TODO: Make into unit test
+// //! new-transaction
+// //! sender: diemroot
+// //! execute-as: freddymac
+// script{
+// use DiemFramework::DualAttestation;
+// fun main(dr_account: signer, freddy: signer) {
+//     let dr_account = &dr_account;
+//     let freddy = &freddy;
+//     DualAttestation::publish_credential(freddy, dr_account, b"freddy");
+//     DualAttestation::publish_credential(freddy, dr_account, b"freddy");
+// }
+// }
+// // check: "Discard(INVALID_WRITE_SET)"
 
 //! new-transaction
 script{
-use 0x1::DualAttestation;
+use DiemFramework::DualAttestation;
 fun main() {
     DualAttestation::human_name(@{{freddymac}});
 }
@@ -165,7 +170,7 @@ fun main() {
 
 //! new-transaction
 script{
-use 0x1::DualAttestation;
+use DiemFramework::DualAttestation;
 fun main() {
     DualAttestation::base_url(@{{freddymac}});
 }
@@ -174,7 +179,7 @@ fun main() {
 
 //! new-transaction
 script{
-use 0x1::DualAttestation;
+use DiemFramework::DualAttestation;
 fun main() {
     DualAttestation::compliance_public_key(@{{freddymac}});
 }
@@ -183,7 +188,7 @@ fun main() {
 
 //! new-transaction
 script{
-use 0x1::DualAttestation;
+use DiemFramework::DualAttestation;
 fun main() {
     DualAttestation::expiration_date(@{{freddymac}});
 }

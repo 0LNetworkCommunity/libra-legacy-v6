@@ -79,17 +79,25 @@ mod sparse_merkle_test;
 pub mod test_utils;
 
 use crate::sparse_merkle::{
-    node::{LeafValue, Node, SubTree},
+    node::{Node, SubTree},
     updater::SubTreeUpdater,
     utils::{partition, swap_if},
 };
-use arc_swap::{ArcSwap, ArcSwapOption};
 use diem_crypto::{
     hash::{CryptoHash, SPARSE_MERKLE_PLACEHOLDER_HASH},
     HashValue,
 };
-use diem_types::proof::{SparseMerkleInternalNode, SparseMerkleLeafNode, SparseMerkleProof};
-use std::{borrow::Borrow, cmp, collections::BTreeMap, sync::Arc};
+use diem_infallible::Mutex;
+use diem_types::{
+    nibble::{nibble_path::NibblePath, ROOT_NIBBLE_HEIGHT},
+    proof::{SparseMerkleInternalNode, SparseMerkleLeafNode, SparseMerkleProof},
+};
+use std::{
+    borrow::Borrow,
+    cmp,
+    collections::{BTreeMap, BTreeSet, HashMap},
+    sync::Arc,
+};
 
 /// `AccountStatus` describes the result of querying an account from this SparseMerkleTree.
 #[derive(Debug, Eq, PartialEq)]
@@ -114,46 +122,41 @@ pub enum AccountStatus<V> {
 }
 
 /// The inner content of a sparse merkle tree, we have this so that even if a tree is dropped, the
-/// INNER of it can still live if referenced by a later version.
+/// INNER of it can still live if referenced by a previous version.
 #[derive(Debug)]
 struct Inner<V> {
-    /// Reference to the root node, initially a strong reference, and once pruned, becomes a weak
-    /// reference, allowing nodes created by this version to go away.
-    root: ArcSwap<SubTree<V>>,
-    /// Reference to the INNER base tree, needs to be a strong reference if the base is speculative
-    /// itself, so that nodes referenced in this version won't go away because the base tree is
-    /// dropped.
-    base: ArcSwapOption<Inner<V>>,
-}
-
-impl<V: CryptoHash> Inner<V> {
-    fn prune(&self) {
-        // Replace the link to the root node with a weak reference, so all nodes created by this
-        // version can be dropped. A weak link is still maintained so that if it's cached somehow,
-        // we still have access to it without resorting to the DB.
-        self.root.store(Arc::new(self.root.load().weak()));
-        // Disconnect the base tree, so that nodes created by previous versions can be dropped.
-        self.base.store(None);
-    }
+    root: SubTree<V>,
+    children: Mutex<Vec<Arc<Inner<V>>>>,
 }
 
 impl<V> Drop for Inner<V> {
     fn drop(&mut self) {
-        let mut cur = self.base.swap(None);
+        let mut q: Vec<_> = self.children.lock().drain(..).collect();
 
-        loop {
-            if let Some(arc) = cur {
-                if Arc::strong_count(&arc) == 1 {
-                    // The only ref is the one we are now holding, so it'll be dropped after we free
-                    // `arc`, which results in the chain of `base`s being dropped recursively,
-                    // and that might trigger a stack overflow. To prevent that we follow the chain
-                    // further to disconnect things beforehand.
-                    cur = arc.base.swap(None);
-                    continue;
-                }
+        while let Some(descendant) = q.pop() {
+            if Arc::strong_count(&descendant) == 1 {
+                // The only ref is the one we are now holding, so the structure will be dropped
+                // after we free the `Arc`, which results in a chain of such structures being
+                // dropped recursively and that might trigger a stack overflow. To prevent that we
+                // follow the chain further to disconnect things beforehand.
+                q.extend(descendant.children.lock().drain(..));
             }
-            break;
         }
+    }
+}
+
+impl<V> Inner<V> {
+    fn new(root: SubTree<V>) -> Arc<Self> {
+        Arc::new(Self {
+            root,
+            children: Mutex::new(Vec::new()),
+        })
+    }
+
+    fn spawn(&self, child_root: SubTree<V>) -> Arc<Self> {
+        let child = Self::new(child_root);
+        self.children.lock().push(child.clone());
+        child
     }
 }
 
@@ -178,33 +181,32 @@ where
     /// the scratch pad and the storage have identical state, so we use a single root hash to
     /// represent the entire state.
     pub fn new(root_hash: HashValue) -> Self {
-        Self::new_impl(
-            if root_hash != *SPARSE_MERKLE_PLACEHOLDER_HASH {
-                SubTree::new_unknown(root_hash)
-            } else {
-                SubTree::new_empty()
-            },
-            None,
-        )
-    }
-
-    fn new_with_base(root: SubTree<V>, base: &Self) -> Self {
-        Self::new_impl(root, Some(base.inner.clone()))
-    }
-
-    fn new_impl(root: SubTree<V>, base: Option<Arc<Inner<V>>>) -> Self {
-        let inner = Inner {
-            root: ArcSwap::from_pointee(root),
-            base: ArcSwapOption::new(base),
+        let root = if root_hash != *SPARSE_MERKLE_PLACEHOLDER_HASH {
+            SubTree::new_unknown(root_hash)
+        } else {
+            SubTree::new_empty()
         };
 
         Self {
-            inner: Arc::new(inner),
+            inner: Inner::new(root),
+        }
+    }
+
+    fn spawn(&self, child_root: SubTree<V>) -> Self {
+        Self {
+            inner: self.inner.spawn(child_root),
+        }
+    }
+
+    #[cfg(test)]
+    fn new_with_root(root: SubTree<V>) -> Self {
+        Self {
+            inner: Inner::new(root),
         }
     }
 
     fn root_weak(&self) -> SubTree<V> {
-        self.inner.root.load().weak()
+        self.inner.root.weak()
     }
 
     /// Constructs a new Sparse Merkle Tree as if we are updating the existing tree multiple
@@ -218,16 +220,110 @@ where
         &self,
         update_batch: Vec<Vec<(HashValue, &V)>>,
         proof_reader: &impl ProofRead<V>,
-    ) -> Result<(Vec<HashValue>, Self), UpdateError> {
+    ) -> Result<(Vec<(HashValue, HashMap<NibblePath, HashValue>)>, Self), UpdateError> {
         let mut current_state_tree = self.clone();
-        let mut result_hashes = Vec::with_capacity(update_batch.len());
+        let mut result = Vec::with_capacity(update_batch.len());
         for updates in update_batch {
+            // sort and dedup the accounts
+            let accounts = updates
+                .iter()
+                .map(|(account, _)| *account)
+                .collect::<BTreeSet<_>>()
+                .into_iter()
+                .collect::<Vec<_>>();
             current_state_tree = current_state_tree.batch_update(updates, proof_reader)?;
-            result_hashes.push(current_state_tree.root_hash());
+            result.push((
+                current_state_tree.root_hash(),
+                current_state_tree.generate_node_hashes(accounts),
+            ));
         }
-        Ok((result_hashes, current_state_tree))
+        Ok((result, current_state_tree))
     }
 
+    /// This is a helper function that compares an updated in-memory sparse merkle with the
+    /// current on-disk jellyfish sparse merkle to get the hashes of newly generated nodes.
+    pub fn generate_node_hashes(
+        &self,
+        // must be sorted
+        touched_accounts: Vec<HashValue>,
+    ) -> HashMap<NibblePath, HashValue> {
+        let mut node_hashes = HashMap::new();
+        let mut nibble_path = NibblePath::new(vec![]);
+        Self::collect_new_hashes(
+            touched_accounts.as_slice(),
+            self.root_weak(),
+            0, /* depth in nibble */
+            0, /* level within a nibble*/
+            &mut nibble_path,
+            &mut node_hashes,
+        );
+        node_hashes
+    }
+
+    /// Recursively generate the partial node update batch of jellyfish merkle
+    fn collect_new_hashes(
+        keys: &[HashValue],
+        subtree: SubTree<V>,
+        depth_in_nibble: usize,
+        level_within_nibble: usize,
+        cur_nibble_path: &mut NibblePath,
+        node_hashes: &mut HashMap<NibblePath, HashValue>,
+    ) {
+        assert!(depth_in_nibble <= ROOT_NIBBLE_HEIGHT);
+        if keys.is_empty() {
+            return;
+        }
+
+        if level_within_nibble == 0 {
+            if depth_in_nibble != 0 {
+                cur_nibble_path
+                    .push(NibblePath::new(keys[0].to_vec()).get_nibble(depth_in_nibble - 1));
+            }
+            node_hashes.insert(cur_nibble_path.clone(), subtree.hash());
+        }
+        match subtree.get_node_if_in_mem().expect("must exist").borrow() {
+            Node::Internal(internal_node) => {
+                let (next_nibble_depth, next_level_within_nibble) = if level_within_nibble == 3 {
+                    (depth_in_nibble + 1, 0)
+                } else {
+                    (depth_in_nibble, level_within_nibble + 1)
+                };
+                let pivot = partition(
+                    &keys.iter().map(|k| (*k, ())).collect::<Vec<_>>()[..],
+                    depth_in_nibble * 4 + level_within_nibble,
+                );
+                Self::collect_new_hashes(
+                    &keys[..pivot],
+                    internal_node.left.weak(),
+                    next_nibble_depth,
+                    next_level_within_nibble,
+                    cur_nibble_path,
+                    node_hashes,
+                );
+                Self::collect_new_hashes(
+                    &keys[pivot..],
+                    internal_node.right.weak(),
+                    next_nibble_depth,
+                    next_level_within_nibble,
+                    cur_nibble_path,
+                    node_hashes,
+                );
+            }
+            Node::Leaf(leaf_node) => {
+                assert_eq!(keys.len(), 1);
+                assert_eq!(keys[0], leaf_node.key);
+                if level_within_nibble != 0 {
+                    let mut leaf_nibble_path = cur_nibble_path.clone();
+                    leaf_nibble_path
+                        .push(NibblePath::new(keys[0].to_vec()).get_nibble(depth_in_nibble));
+                    node_hashes.insert(leaf_nibble_path, subtree.hash());
+                }
+            }
+        }
+        if level_within_nibble == 0 && depth_in_nibble != 0 {
+            cur_nibble_path.pop();
+        }
+    }
     /// Constructs a new Sparse Merkle Tree, returns the SMT root hash after each update and the
     /// final SMT root. Since the tree is immutable, existing tree remains the same and may
     /// share parts with the new, returned tree. Unlike `serial_update', intermediate trees aren't
@@ -287,7 +383,7 @@ where
             txn_id += 1;
         }
 
-        Ok((root_hashes, Self::new_with_base(root, self)))
+        Ok((root_hashes, self.spawn(root)))
     }
 
     /// Given an existing subtree node at a specific depth, recursively apply the updates.
@@ -302,7 +398,7 @@ where
         }
 
         if let SubTree::NonEmpty { root, .. } = &subtree {
-            match root.get_node_if_in_mem() {
+            match root.get_if_in_mem() {
                 Some(arc_node) => match arc_node.borrow() {
                     Node::Internal(internal_node) => {
                         let pivot = partition(updates, subtree_depth);
@@ -646,7 +742,7 @@ where
 
         let ret = match cur {
             SubTree::Empty => AccountStatus::DoesNotExist,
-            SubTree::NonEmpty { root, .. } => match root.get_node_if_in_mem() {
+            SubTree::NonEmpty { root, .. } => match root.get_if_in_mem() {
                 None => AccountStatus::Unknown,
                 Some(node) => match node.borrow() {
                     Node::Internal(_) => {
@@ -654,11 +750,11 @@ where
                     }
                     Node::Leaf(leaf_node) => {
                         if leaf_node.key == key {
-                            match &leaf_node.value {
-                                LeafValue::Value(value) => {
-                                    AccountStatus::ExistsInScratchPad(value.clone())
+                            match &leaf_node.value.data.get_if_in_mem() {
+                                Some(value) => {
+                                    AccountStatus::ExistsInScratchPad(value.as_ref().clone())
                                 }
-                                LeafValue::ValueHash(_) => AccountStatus::ExistsInDB,
+                                None => AccountStatus::ExistsInDB,
                             }
                         } else {
                             AccountStatus::DoesNotExist
@@ -693,18 +789,13 @@ where
             Ok(self.clone())
         } else {
             let root = SubTreeUpdater::update(current_root, &kvs[..], proof_reader)?;
-            Ok(Self::new_with_base(root, self))
+            Ok(self.spawn(root))
         }
     }
 
     /// Returns the root hash of this tree.
     pub fn root_hash(&self) -> HashValue {
-        self.inner.root.load().hash()
-    }
-
-    /// Mark that all the nodes created by this tree and its ancestors are persisted in the DB.
-    pub fn prune(&self) {
-        self.inner.prune()
+        self.inner.root.hash()
     }
 }
 

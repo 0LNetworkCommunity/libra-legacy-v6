@@ -1,5 +1,3 @@
-address 0x1 {
-
 /// Module defining error codes used in Move aborts throughout the framework.
 ///
 /// A `u64` error code is constructed from two values:
@@ -14,12 +12,12 @@ address 0x1 {
 ///     framework evolves.
 ///
 /// >TODO: determine what kind of stability guarantees we give about reasons/associated module.
-module Errors {
+module Std::Errors {
     /// A function to create an error from from a category and a reason.
     fun make(category: u8, reason: u64): u64 {
         (category as u64) + (reason << 8)
         /////// 0L /////////
-        // (reason as u64) // Changed error codes make to easily track them in 0L
+        // (reason as u64) // Changed error codes make to easily track them in 0L        
     }
     spec make {
         pragma opaque = true;
@@ -27,7 +25,7 @@ module Errors {
         aborts_if [abstract] false;
         ensures [abstract] result == reason; /////// 0L /////////
     }
-    
+
     /////// 0L /////////
     /// A function to create an error from from a category and a reason.
     fun make_ol(_category: u8, reason: u64): u64 {
@@ -70,7 +68,7 @@ module Errors {
     const OL_ERR: u8 = 11; /////// 0L /////////
 
     // 0L Error codes
-    const OL_TX_ERR: u8 = 12; /////// 0L /////////
+    const OL_TX_ERR: u8 = 12; /////// 0L /////////    
 
     /// A custom error category for extension points.
     const CUSTOM: u8 = 255;
@@ -154,7 +152,5 @@ module Errors {
     }
 
     /////// 0L /////////
-    public fun ol(reason: u64): u64 { make(OL_ERR, reason) }        
-}
-
+    public fun ol(reason: u64): u64 { make(OL_ERR, reason) }    
 }

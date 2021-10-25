@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    errors::*,
-    expansion::ast::{self as E, ModuleIdent},
+    diagnostics::{codes::*, Diagnostic},
+    expansion::ast::{self as E, Address, ModuleIdent},
     shared::{unique_map::UniqueMap, *},
 };
 use move_ir_types::location::*;
 use petgraph::{algo::toposort as petgraph_toposort, graphmap::DiGraphMap};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 //**************************************************************************************************
 // Entry
@@ -27,6 +27,7 @@ pub fn verify(
     let Context {
         module_neighbors,
         neighbors_by_node,
+        addresses_by_node,
         ..
     } = context;
     let graph = dependency_graph(&module_neighbors);
@@ -34,7 +35,7 @@ pub fn verify(
         Err(cycle_node) => {
             let cycle_ident = cycle_node.node_id().clone();
             let error = cycle_error(&module_neighbors, cycle_ident);
-            compilation_env.add_error(error);
+            compilation_env.add_diag(error);
         }
         Ok(ordered_ids) => {
             for (order, mident) in ordered_ids.iter().rev().enumerate() {
@@ -45,10 +46,24 @@ pub fn verify(
     for (node, neighbors) in neighbors_by_node {
         match node {
             NodeIdent::Module(mident) => {
-                modules.get_mut(&mident).unwrap().immediate_neighbors = neighbors;
+                let module = modules.get_mut(&mident).unwrap();
+                module.immediate_neighbors = neighbors;
             }
             NodeIdent::Script(sname) => {
-                scripts.get_mut(&sname).unwrap().immediate_neighbors = neighbors;
+                let script = scripts.get_mut(&sname).unwrap();
+                script.immediate_neighbors = neighbors;
+            }
+        }
+    }
+    for (node, used_addresses) in addresses_by_node {
+        match node {
+            NodeIdent::Module(mident) => {
+                let module = modules.get_mut(&mident).unwrap();
+                module.used_addresses = used_addresses;
+            }
+            NodeIdent::Script(sname) => {
+                let script = scripts.get_mut(&sname).unwrap();
+                script.used_addresses = used_addresses;
             }
         }
     }
@@ -76,6 +91,8 @@ struct Context<'a> {
     module_neighbors: BTreeMap<ModuleIdent, BTreeMap<ModuleIdent, BTreeMap<DepType, Loc>>>,
     // A summary of neighbors keyed by module or script
     neighbors_by_node: BTreeMap<NodeIdent, UniqueMap<ModuleIdent, E::Neighbor>>,
+    // All addresses used by a node
+    addresses_by_node: BTreeMap<NodeIdent, BTreeSet<Address>>,
     // The module or script we are currently exploring
     current_node: Option<NodeIdent>,
 }
@@ -86,6 +103,7 @@ impl<'a> Context<'a> {
             modules,
             module_neighbors: BTreeMap::new(),
             neighbors_by_node: BTreeMap::new(),
+            addresses_by_node: BTreeMap::new(),
             current_node: None,
         }
     }
@@ -112,8 +130,13 @@ impl<'a> Context<'a> {
             .neighbors_by_node
             .entry(current.clone())
             .or_insert_with(UniqueMap::new);
+        let current_used_addresses = self
+            .addresses_by_node
+            .entry(current.clone())
+            .or_insert_with(BTreeSet::new);
         current_neighbors.remove(&mident);
         current_neighbors.add(mident.clone(), neighbor).unwrap();
+        current_used_addresses.insert(mident.value.address.clone());
 
         match current {
             NodeIdent::Module(current_mident) => {
@@ -143,6 +166,13 @@ impl<'a> Context<'a> {
     fn add_friend(&mut self, mident: ModuleIdent, loc: Loc) {
         self.add_neighbor(mident, DepType::Friend, loc);
     }
+
+    fn add_address_usage(&mut self, address: Address) {
+        self.addresses_by_node
+            .entry(self.current_node.clone().unwrap())
+            .or_insert_with(BTreeSet::new)
+            .insert(address);
+    }
 }
 
 fn dependency_graph(
@@ -164,62 +194,66 @@ fn dependency_graph(
 fn cycle_error(
     deps: &BTreeMap<ModuleIdent, BTreeMap<ModuleIdent, BTreeMap<DepType, Loc>>>,
     cycle_ident: ModuleIdent,
-) -> Error {
+) -> Diagnostic {
     let graph = dependency_graph(deps);
+    // For printing uses, sort the cycle by location (earliest first)
     let cycle = shortest_cycle(&graph, &cycle_ident);
 
-    let mut cycle_strings: String = cycle
+    let mut cycle_info = cycle
         .windows(2)
         .map(|pair| {
             let node = pair[0];
             let neighbor = pair[1];
             let relations = deps.get(node).unwrap().get(neighbor).unwrap();
-            let verb = if relations.contains_key(&DepType::Use) {
-                "uses"
-            } else {
-                assert!(relations.contains_key(&DepType::Friend));
-                "is a friend of"
-            };
-            format!("'{}' {} ", node, verb)
+            match (
+                relations.get(&DepType::Use),
+                relations.get(&DepType::Friend),
+            ) {
+                (Some(loc), _) => (
+                    *loc,
+                    DepType::Use,
+                    format!("'{}' uses '{}'", neighbor, node),
+                    node,
+                    neighbor,
+                ),
+                (_, Some(loc)) => (
+                    *loc,
+                    DepType::Friend,
+                    format!("'{}' is a friend of '{}'", node, neighbor),
+                    node,
+                    neighbor,
+                ),
+                (None, None) => unreachable!(),
+            }
         })
-        .collect();
-    cycle_strings.push_str(&format!("'{}'", cycle.last().unwrap()));
+        .collect::<Vec<_>>();
+    debug_assert!({
+        let first_node = cycle_info.first().unwrap().3;
+        let last_neighbor = cycle_info.last().unwrap().4;
+        first_node == last_neighbor
+    });
+    let cycle_last = cycle_info.pop().unwrap();
 
-    // For printing uses, sort the cycle by location (earliest first)
-    let (dep_type, cycle_loc, node, neighbor) = best_cycle_loc(deps, cycle);
-
-    let (use_msg, cycle_msg) = match dep_type {
-        DepType::Use => (
-            format!("Invalid use of module '{}' in module '{}'.", neighbor, node),
-            format!(
-                "Using this module creates a dependency cycle: {}",
-                cycle_strings
-            ),
-        ),
-        DepType::Friend => (
-            format!("Invalid friend '{}' in module '{}'", node, neighbor),
-            format!(
-                "This friend relationship creates a dependency cycle: {}",
-                cycle_strings
-            ),
-        ),
+    let (cycle_loc, use_msg) = {
+        let (loc, dep_type, case_msg, _node, _neighbor) = cycle_last;
+        let case = match dep_type {
+            DepType::Use => "use",
+            DepType::Friend => "friend",
+        };
+        let msg = format!(
+            "{}. This '{}' relationship creates a dependency cycle.",
+            case_msg, case
+        );
+        (loc, msg)
     };
-    vec![(cycle_loc, use_msg), (cycle_loc, cycle_msg)]
-}
 
-fn best_cycle_loc<'a>(
-    deps: &'a BTreeMap<ModuleIdent, BTreeMap<ModuleIdent, BTreeMap<DepType, Loc>>>,
-    cycle: Vec<&'a ModuleIdent>,
-) -> (DepType, Loc, &'a ModuleIdent, &'a ModuleIdent) {
-    let len = cycle.len();
-    assert!(len >= 3);
-    let first = cycle[0];
-    let node = cycle[len - 2];
-    let neighbor = cycle[len - 1];
-    assert_eq!(first, neighbor);
-    let cycle_locs = deps.get(node).unwrap().get(neighbor).unwrap();
-    let (dep_type, loc) = cycle_locs.iter().next().unwrap();
-    (*dep_type, *loc, node, neighbor)
+    Diagnostic::new(
+        Declarations::InvalidModule,
+        (cycle_loc, use_msg),
+        cycle_info
+            .into_iter()
+            .map(|(loc, _dep_type, msg, _node, _neighbor)| (loc, msg)),
+    )
 }
 
 //**************************************************************************************************
@@ -387,8 +421,10 @@ fn lvalue(context: &mut Context, sp!(_loc, a_): &E::LValue) {
 }
 
 fn exp(context: &mut Context, sp!(_loc, e_): &E::Exp) {
-    use E::Exp_ as E;
+    use crate::expansion::ast::{Exp_ as E, Value_ as V};
     match e_ {
+        E::Value(sp!(_, V::Address(a))) => context.add_address_usage(a.clone()),
+
         E::Unit { .. }
         | E::UnresolvedError
         | E::Break

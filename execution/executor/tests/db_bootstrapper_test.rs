@@ -68,11 +68,20 @@ fn test_empty_db() {
         Waypoint::new_epoch_boundary(startup_info.latest_ledger_info.ledger_info()).unwrap(),
         waypoint
     );
-    let (li, epoch_change_proof, _) = db_rw.reader.get_state_proof(waypoint.version()).unwrap();
-    let trusted_state = TrustedState::from(waypoint);
-    trusted_state
-        .verify_and_ratchet(&li, &epoch_change_proof)
+
+    let initial_accumulator = db_rw
+        .reader
+        .get_accumulator_summary(waypoint.version())
         .unwrap();
+    let trusted_state = TrustedState::from_epoch_waypoint(waypoint);
+    let state_proof = db_rw
+        .reader
+        .get_state_proof(trusted_state.version())
+        .unwrap();
+    let trusted_state_change = trusted_state
+        .verify_and_ratchet(&state_proof, Some(&initial_accumulator))
+        .unwrap();
+    assert!(trusted_state_change.is_epoch_change());
 
     // `maybe_bootstrap()` does nothing on non-empty DB.
     assert!(!maybe_bootstrap::<DiemVM>(&db_rw, &genesis_txn, waypoint).unwrap());
@@ -84,12 +93,12 @@ fn execute_and_commit(txns: Vec<Transaction>, db: &DbReaderWriter, signer: &Vali
     let version = li.ledger_info().version();
     let epoch = li.ledger_info().next_block_epoch();
     let target_version = version + txns.len() as u64;
-    let mut executor = Executor::<DiemVM>::new(db.clone());
+    let executor = Executor::<DiemVM>::new(db.clone());
     let output = executor
         .execute_block((block_id, txns), executor.committed_block_id())
         .unwrap();
     assert_eq!(output.num_leaves(), target_version + 1);
-    let ledger_info_with_sigs = gen_ledger_info_with_sigs(epoch, output, block_id, vec![&signer]);
+    let ledger_info_with_sigs = gen_ledger_info_with_sigs(epoch, &output, block_id, vec![&signer]);
     executor
         .commit_blocks(vec![block_id], ledger_info_with_sigs)
         .unwrap();
@@ -254,7 +263,7 @@ fn test_pre_genesis() {
     // Create bootstrapped DB.
     let tmp_dir = TempPath::new();
     let (db, db_rw) = DbReaderWriter::wrap(DiemDB::new_for_test(&tmp_dir));
-    let signer = ValidatorSigner::new(genesis.1[0].owner_address, genesis.1[0].key.clone());
+    let signer = ValidatorSigner::new(genesis.1[0].data.address, genesis.1[0].key.clone());
     let waypoint = bootstrap_genesis::<DiemVM>(&db_rw, &genesis_txn).unwrap();
 
     // Mint for 2 demo accounts.
@@ -304,11 +313,20 @@ fn test_pre_genesis() {
     // Bootstrap DB on top of pre-genesis state.
     let waypoint = generate_waypoint::<DiemVM>(&db_rw, &genesis_txn).unwrap();
     assert!(maybe_bootstrap::<DiemVM>(&db_rw, &genesis_txn, waypoint).unwrap());
-    let (li, epoch_change_proof, _) = db_rw.reader.get_state_proof(waypoint.version()).unwrap();
-    let trusted_state = TrustedState::from(waypoint);
-    trusted_state
-        .verify_and_ratchet(&li, &epoch_change_proof)
+
+    let trusted_state = TrustedState::from_epoch_waypoint(waypoint);
+    let initial_accumulator = db_rw
+        .reader
+        .get_accumulator_summary(trusted_state.version())
         .unwrap();
+    let state_proof = db_rw
+        .reader
+        .get_state_proof(trusted_state.version())
+        .unwrap();
+    let trusted_state_change = trusted_state
+        .verify_and_ratchet(&state_proof, Some(&initial_accumulator))
+        .unwrap();
+    assert!(trusted_state_change.is_epoch_change());
 
     // Effect of bootstrapping reflected.
     assert_eq!(get_balance(&account1, &db_rw), 1000);
@@ -325,7 +343,7 @@ fn test_new_genesis() {
     let tmp_dir = TempPath::new();
     let db = DbReaderWriter::new(DiemDB::new_for_test(&tmp_dir));
     let waypoint = bootstrap_genesis::<DiemVM>(&db, &genesis_txn).unwrap();
-    let signer = ValidatorSigner::new(genesis.1[0].owner_address, genesis.1[0].key.clone());
+    let signer = ValidatorSigner::new(genesis.1[0].data.address, genesis.1[0].key.clone());
 
     // Mint for 2 demo accounts.
     let (account1, account1_key, account2, account2_key) = get_demo_accounts();
@@ -336,11 +354,17 @@ fn test_new_genesis() {
     execute_and_commit(vec![txn1, txn2, txn3, txn4], &db, &signer);
     assert_eq!(get_balance(&account1, &db), 2_000_000);
     assert_eq!(get_balance(&account2, &db), 2_000_000);
-    let (li, epoch_change_proof, _) = db.reader.get_state_proof(waypoint.version()).unwrap();
-    let trusted_state = TrustedState::from(waypoint);
-    trusted_state
-        .verify_and_ratchet(&li, &epoch_change_proof)
+
+    let trusted_state = TrustedState::from_epoch_waypoint(waypoint);
+    let initial_accumulator = db
+        .reader
+        .get_accumulator_summary(trusted_state.version())
         .unwrap();
+    let state_proof = db.reader.get_state_proof(trusted_state.version()).unwrap();
+    let trusted_state_change = trusted_state
+        .verify_and_ratchet(&state_proof, Some(&initial_accumulator))
+        .unwrap();
+    assert!(trusted_state_change.is_epoch_change());
 
     // New genesis transaction: set validator set, bump epoch and overwrite account1 balance.
     let configuration = get_configuration(&db);
@@ -375,14 +399,19 @@ fn test_new_genesis() {
     assert_eq!(waypoint.version(), 5);
 
     // Client bootable from waypoint.
-    let trusted_state = TrustedState::from(waypoint);
-    let (li, epoch_change_proof, accumulator_consistency_proof) =
-        db.reader.get_state_proof(trusted_state.version()).unwrap();
-    assert_eq!(li.ledger_info().version(), 5);
-    assert!(accumulator_consistency_proof.subtrees().is_empty());
-    trusted_state
-        .verify_and_ratchet(&li, &epoch_change_proof)
+    let trusted_state = TrustedState::from_epoch_waypoint(waypoint);
+    let initial_accumulator = db
+        .reader
+        .get_accumulator_summary(trusted_state.version())
         .unwrap();
+    let state_proof = db.reader.get_state_proof(trusted_state.version()).unwrap();
+    let trusted_state_change = trusted_state
+        .verify_and_ratchet(&state_proof, Some(&initial_accumulator))
+        .unwrap();
+    assert!(trusted_state_change.is_epoch_change());
+    let trusted_state = trusted_state_change.new_state().unwrap();
+    assert_eq!(trusted_state.version(), 5);
+    assert!(state_proof.consistency_proof().is_empty());
 
     // Effect of bootstrapping reflected.
     assert_eq!(get_balance(&account1, &db), 1_000_000);

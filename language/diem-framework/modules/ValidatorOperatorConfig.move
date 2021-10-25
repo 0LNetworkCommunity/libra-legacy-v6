@@ -1,12 +1,10 @@
-address 0x1 {
-
 /// Stores the string name of a ValidatorOperator account.
-
-module ValidatorOperatorConfig {
-    use 0x1::Errors;
-    use 0x1::Signer;
-    use 0x1::Roles;
-    use 0x1::DiemTimestamp;
+module DiemFramework::ValidatorOperatorConfig {
+    use Std::Errors;
+    use Std::Signer;
+    use DiemFramework::Roles;
+    use DiemFramework::DiemTimestamp;
+    friend DiemFramework::DiemAccount;
 
     struct ValidatorOperatorConfig has key {
         /// The human readable name of this entity. Immutable.
@@ -16,7 +14,7 @@ module ValidatorOperatorConfig {
     /// The `ValidatorOperatorConfig` was not in the required state
     const EVALIDATOR_OPERATOR_CONFIG: u64 = 0;
 
-    public fun publish(
+    public(friend) fun publish(
         validator_operator_account: &signer,
         dr_account: &signer,
         human_name: vector<u8>,
@@ -102,5 +100,4 @@ module ValidatorOperatorConfig {
             exists<ValidatorOperatorConfig>(addr);
     }
 
-}
 }

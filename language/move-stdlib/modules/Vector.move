@@ -1,5 +1,3 @@
-address 0x1 {
-
 /// A variable-sized container that can hold any type. Indexing is 0-based, and
 /// vectors are growable. This module has many native functions.
 /// Verification of modules that use this one uses model functions that are implemented
@@ -10,7 +8,7 @@ address 0x1 {
 /// >Note: We did not verify most of the
 /// Move functions here because many have loops, requiring loop invariants to prove, and
 /// the return on investment didn't seem worth it for these simple functions.
-module Vector {
+module Std::Vector {
 
     /// The index into the vector is out of bounds
     const EINDEX_OUT_OF_BOUNDS: u64 = 0;
@@ -162,6 +160,7 @@ module Vector {
     /// This is O(1), but does not preserve ordering of elements in the vector.
     /// Aborts if `i` is out of bounds.
     public fun swap_remove<Element>(v: &mut vector<Element>, i: u64): Element {
+        assert(!is_empty(v), EINDEX_OUT_OF_BOUNDS);
         let last_idx = length(v) - 1;
         swap(v, i, last_idx);
         pop_back(v)
@@ -206,5 +205,4 @@ module Vector {
         }
     }
 
-}
 }

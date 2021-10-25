@@ -1,17 +1,28 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use num::{BigUint, ToPrimitive};
-use std::collections::BTreeMap;
+//! This file implements several value representations to track values produced and consumed during
+//! the statement interpretation and expression evaluation process. The value representations are
+//! carefully designed to match the type system. In particular, `BaseValue` must match `BaseType`
+//! and `TypedValue` must match `Type` (by match, we mean each value must have a way to type it,
+//! and each type must also have a way to construct a value of this type).
+
+use num::{BigInt, ToPrimitive};
+use std::collections::{BTreeMap, BTreeSet};
 
 use move_core_types::{
     account_address::AccountAddress,
     effects::ChangeSet,
     value::{MoveStruct, MoveValue},
 };
-use move_model::ast::TempIndex;
+use move_model::ast::{MemoryLabel, TempIndex};
 
-use crate::concrete::ty::{BaseType, StructInstantiation, Type};
+use crate::{
+    concrete::ty::{
+        BaseType, PartialStructInstantiation, PrimitiveType, StructInstantiation, Type,
+    },
+    shared::ident::StructIdent,
+};
 
 //**************************************************************************************************
 // Value core
@@ -20,7 +31,7 @@ use crate::concrete::ty::{BaseType, StructInstantiation, Type};
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub enum BaseValue {
     Bool(bool),
-    Int(BigUint),
+    Int(BigInt),
     Address(AccountAddress),
     Signer(AccountAddress),
     Vector(Vec<BaseValue>),
@@ -32,15 +43,15 @@ impl BaseValue {
         Self::Bool(v)
     }
     pub fn mk_u8(v: u8) -> Self {
-        Self::Int(BigUint::from(v))
+        Self::Int(BigInt::from(v))
     }
     pub fn mk_u64(v: u64) -> Self {
-        Self::Int(BigUint::from(v))
+        Self::Int(BigInt::from(v))
     }
     pub fn mk_u128(v: u128) -> Self {
-        Self::Int(BigUint::from(v))
+        Self::Int(BigInt::from(v))
     }
-    pub fn mk_num(v: BigUint) -> Self {
+    pub fn mk_num(v: BigInt) -> Self {
         Self::Int(v)
     }
     pub fn mk_address(v: AccountAddress) -> Self {
@@ -80,13 +91,13 @@ impl BaseValue {
             _ => unreachable!(),
         }
     }
-    pub fn into_num(self) -> BigUint {
+    pub fn into_num(self) -> BigInt {
         match self {
             Self::Int(v) => v,
             _ => unreachable!(),
         }
     }
-    pub fn into_int(self) -> BigUint {
+    pub fn into_int(self) -> BigInt {
         match self {
             Self::Int(v) => v,
             _ => unreachable!(),
@@ -123,9 +134,10 @@ pub enum Pointer {
     None,
     Global(AccountAddress),
     Local(TempIndex),
-    RefWhole(TempIndex),
     RefField(TempIndex, usize),
     RefElement(TempIndex, usize),
+    ArgRef(TempIndex, Box<Pointer>),
+    RetRef(Vec<Pointer>),
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
@@ -137,6 +149,37 @@ pub struct TypedValue {
 
 #[allow(dead_code)]
 impl TypedValue {
+    pub fn fuse_base(ty: BaseType, val: BaseValue) -> Self {
+        fn type_match(ty: &BaseType, val: &BaseValue) -> bool {
+            match (ty, val) {
+                (BaseType::Primitive(PrimitiveType::Bool), BaseValue::Bool(_)) => true,
+                (BaseType::Primitive(PrimitiveType::Int(_)), BaseValue::Int(_)) => true,
+                (BaseType::Primitive(PrimitiveType::Address), BaseValue::Address(_)) => true,
+                (BaseType::Primitive(PrimitiveType::Signer), BaseValue::Signer(_)) => true,
+                (BaseType::Vector(elem_ty), BaseValue::Vector(elem_vals)) => elem_vals
+                    .iter()
+                    .all(|elem_val| type_match(elem_ty, elem_val)),
+                (BaseType::Struct(inst), BaseValue::Struct(field_vals)) => {
+                    field_vals.len() == inst.fields.len()
+                        && field_vals
+                            .iter()
+                            .zip(inst.fields.iter())
+                            .all(|(field_val, field_info)| type_match(&field_info.ty, field_val))
+                }
+                _ => false,
+            }
+        }
+
+        if cfg!(debug_assertions) {
+            assert!(type_match(&ty, &val));
+        }
+        Self {
+            ty: Type::Base(ty),
+            val,
+            ptr: Pointer::None,
+        }
+    }
+
     //
     // value creation
     //
@@ -169,7 +212,7 @@ impl TypedValue {
             ptr: Pointer::None,
         }
     }
-    pub fn mk_num(v: BigUint) -> Self {
+    pub fn mk_num(v: BigInt) -> Self {
         Self {
             ty: Type::mk_num(),
             val: BaseValue::mk_num(v),
@@ -244,7 +287,7 @@ impl TypedValue {
             ptr,
         }
     }
-    pub fn mk_ref_num(v: BigUint, is_mut: bool, ptr: Pointer) -> Self {
+    pub fn mk_ref_num(v: BigInt, is_mut: bool, ptr: Pointer) -> Self {
         Self {
             ty: Type::mk_ref_num(is_mut),
             val: BaseValue::mk_num(v),
@@ -324,13 +367,13 @@ impl TypedValue {
         }
         self.val.into_u128()
     }
-    pub fn into_num(self) -> BigUint {
+    pub fn into_num(self) -> BigInt {
         if cfg!(debug_assertions) {
             assert!(self.ty.is_num());
         }
         self.val.into_num()
     }
-    pub fn into_int(self) -> BigUint {
+    pub fn into_int(self) -> BigInt {
         if cfg!(debug_assertions) {
             assert!(self.ty.is_int());
         }
@@ -385,7 +428,7 @@ impl TypedValue {
         }
         (self.val.into_u128(), self.ty.into_ref_type().0, self.ptr)
     }
-    pub fn into_ref_num(self) -> (BigUint, bool, Pointer) {
+    pub fn into_ref_num(self) -> (BigInt, bool, Pointer) {
         if cfg!(debug_assertions) {
             assert!(self.ty.is_ref_num(None));
         }
@@ -489,6 +532,97 @@ impl TypedValue {
         }
     }
 
+    /// Wrap the pointer in the mutable reference to mark that this ref is passed in as an argument
+    pub fn box_into_mut_ref_arg(self, index: TempIndex) -> TypedValue {
+        let (ty, val, ptr) = self.decompose();
+        if cfg!(debug_assertions) {
+            assert!(ty.is_ref(Some(true)));
+        }
+        TypedValue {
+            ty,
+            val,
+            ptr: Pointer::ArgRef(index, Box::new(ptr)),
+        }
+    }
+
+    /// Unwrap the pointer from the mutable reference to its original pointer
+    pub fn unbox_from_mut_ref_arg(self) -> TypedValue {
+        let (ty, val, ptr) = self.decompose();
+        if cfg!(debug_assertions) {
+            assert!(ty.is_ref(Some(true)));
+        }
+        let unboxed_ptr = match ptr {
+            Pointer::ArgRef(_, original_ptr) => *original_ptr,
+            _ => unreachable!(),
+        };
+        TypedValue {
+            ty,
+            val,
+            ptr: unboxed_ptr,
+        }
+    }
+
+    /// Wrap the pointer in the mutable reference to mark that this ref is passed out as a return
+    pub fn box_into_mut_ref_ret(self, ptrs: &BTreeMap<TempIndex, &Pointer>) -> TypedValue {
+        fn follow_return_pointers_recursive(
+            cur: &Pointer,
+            ptrs: &BTreeMap<TempIndex, &Pointer>,
+            trace: &mut Vec<Pointer>,
+        ) {
+            match cur {
+                Pointer::ArgRef(_, _) => trace.push(cur.clone()),
+                Pointer::RefField(idx, _) | Pointer::RefElement(idx, _) => {
+                    trace.push(cur.clone());
+                    follow_return_pointers_recursive(ptrs.get(idx).unwrap(), ptrs, trace);
+                }
+                Pointer::None | Pointer::Local(_) | Pointer::Global(_) | Pointer::RetRef(_) => {
+                    unreachable!()
+                }
+            }
+        }
+
+        let (ty, val, ptr) = self.decompose();
+        if cfg!(debug_assertions) {
+            assert!(ty.is_ref(Some(true)));
+        }
+
+        let mut trace = vec![];
+        follow_return_pointers_recursive(&ptr, ptrs, &mut trace);
+        let boxed_ptr = Pointer::RetRef(trace);
+        TypedValue {
+            ty,
+            val,
+            ptr: boxed_ptr,
+        }
+    }
+
+    /// Unwrap the pointer from the mutable reference to its original pointer
+    pub fn unbox_from_mut_ref_ret(self) -> TypedValue {
+        let (ty, val, ptr) = self.decompose();
+        if cfg!(debug_assertions) {
+            assert!(ty.is_ref(Some(true)));
+        }
+        let unboxed_ptr = match ptr {
+            Pointer::RetRef(mut trace) => {
+                let sub = trace.pop().unwrap();
+                if cfg!(debug_assertions) {
+                    assert!(trace.is_empty());
+                }
+                match sub {
+                    Pointer::ArgRef(_, original_ptr) => *original_ptr,
+                    _ => unreachable!(),
+                }
+            }
+            _ => unreachable!(),
+        };
+        TypedValue {
+            ty,
+            val,
+            ptr: unboxed_ptr,
+        }
+    }
+
+    /// Retrieve an element from a vector at the given index. Return None of index out-of-bounds.
     pub fn get_vector_element(self, elem_num: usize) -> Option<TypedValue> {
         let elem_ty = self.ty.into_vector_elem();
         let val = match self.val {
@@ -507,6 +641,7 @@ impl TypedValue {
         })
     }
 
+    /// Borrow an element from a vector at the given index. Return None of index out-of-bounds.
     pub fn borrow_ref_vector_element(
         self,
         elem_num: usize,
@@ -534,6 +669,7 @@ impl TypedValue {
         })
     }
 
+    /// Push an element back to a vector
     pub fn update_ref_vector_push_back(self, elem_val: TypedValue) -> TypedValue {
         let (elem_ty, elem_val, _) = elem_val.decompose();
         let (vec_ty, vec_val, vec_ptr) = self.decompose();
@@ -550,6 +686,7 @@ impl TypedValue {
         }
     }
 
+    /// Pop an element from the back of the vector
     pub fn update_ref_vector_pop_back(self) -> Option<(TypedValue, TypedValue)> {
         let (vec_ty, vec_val, vec_ptr) = self.decompose();
         let elem_ty = vec_ty.into_ref_vector_elem(Some(true));
@@ -572,6 +709,7 @@ impl TypedValue {
         }
     }
 
+    /// Swap two elements in the vector
     pub fn update_ref_vector_swap(self, lhs: usize, rhs: usize) -> Option<TypedValue> {
         let (vec_ty, vec_val, vec_ptr) = self.decompose();
         if cfg!(debug_assertions) {
@@ -590,17 +728,14 @@ impl TypedValue {
         Some(new_vec)
     }
 
-    pub fn update_ref_vector_element(self, elem_val: TypedValue) -> TypedValue {
-        let (elem_ty, elem_val, elem_ptr) = elem_val.decompose();
+    /// Update an element in the vector, creates a new vector that contains the update
+    pub fn update_ref_vector_element(self, elem_num: usize, elem_val: TypedValue) -> TypedValue {
+        let (elem_ty, elem_val, _) = elem_val.decompose();
         let (vec_ty, vec_val, vec_ptr) = self.decompose();
         let elem = vec_ty.into_ref_vector_elem(Some(true));
         if cfg!(debug_assertions) {
             assert!(elem_ty.is_ref_of(&elem, Some(true)));
         }
-        let elem_num = match elem_ptr {
-            Pointer::RefElement(_, elem_num) => elem_num,
-            _ => unreachable!(),
-        };
         let mut elems = vec_val.into_vector();
         *elems.get_mut(elem_num).unwrap() = elem_val;
         TypedValue {
@@ -610,6 +745,7 @@ impl TypedValue {
         }
     }
 
+    /// Unpack a struct value
     pub fn unpack_struct(self) -> Vec<TypedValue> {
         let fields = self.ty.into_struct_inst().fields;
         match self.val {
@@ -626,6 +762,7 @@ impl TypedValue {
         }
     }
 
+    /// Unpack one specific field from a struct value
     pub fn unpack_struct_field(self, field_num: usize) -> TypedValue {
         let field = self.ty.into_struct_inst().fields.remove(field_num);
         let val = match self.val {
@@ -639,6 +776,7 @@ impl TypedValue {
         }
     }
 
+    /// Unpack one specific field from a struct reference
     pub fn unpack_ref_struct_field(self, field_num: usize, is_mut_opt: Option<bool>) -> TypedValue {
         let field = self
             .ty
@@ -656,6 +794,7 @@ impl TypedValue {
         }
     }
 
+    /// Borrow one specific field from a struct reference
     pub fn borrow_ref_struct_field(
         self,
         field_num: usize,
@@ -678,12 +817,12 @@ impl TypedValue {
         }
     }
 
+    /// update one specific field from a struct reference, create a new struct reference
     pub fn update_ref_struct_field(self, field_num: usize, field_val: TypedValue) -> TypedValue {
-        let (field_ty, field_val, field_ptr) = field_val.decompose();
+        let (field_ty, field_val, _) = field_val.decompose();
         let (struct_ty, struct_val, struct_ptr) = self.decompose();
         let inst = struct_ty.into_ref_struct_inst(Some(true));
         if cfg!(debug_assertions) {
-            assert!(matches!(field_ptr, Pointer::RefField(_, ref_field) if ref_field == field_num));
             assert!(field_ty.is_ref_of(&inst.fields.get(field_num).unwrap().ty, Some(true)));
         }
         let mut fields = struct_val.into_struct();
@@ -825,6 +964,11 @@ impl LocalSlot {
             val,
             ptr,
         }
+    }
+
+    /// Get the content of the slot, if any, return None of the slot does not currently hold a value
+    pub fn get_content(&self) -> Option<&(BaseValue, Pointer)> {
+        self.content.as_ref()
     }
 }
 
@@ -995,5 +1139,122 @@ impl GlobalState {
         }
 
         change_set
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Default)]
+pub struct EvalState {
+    // global resources specifically marked as saved
+    saved_memory: BTreeMap<
+        MemoryLabel,
+        BTreeMap<StructIdent, BTreeMap<StructInstantiation, BTreeMap<AccountAddress, BaseValue>>>,
+    >,
+}
+
+impl EvalState {
+    /// Collect resources of the (partial) instantiation type from the global state and save them
+    /// under the given memory label
+    pub fn save_memory(
+        &mut self,
+        label: MemoryLabel,
+        partial_inst: PartialStructInstantiation,
+        global_state: &GlobalState,
+    ) {
+        let mut per_struct_map = BTreeMap::new();
+        for (addr, state) in &global_state.accounts {
+            for (inst, val) in &state.storage {
+                if inst.ident == partial_inst.ident {
+                    per_struct_map
+                        .entry(inst.clone())
+                        .or_insert_with(BTreeMap::new)
+                        .insert(*addr, val.clone());
+                }
+            }
+        }
+        self.saved_memory
+            .entry(label)
+            .and_modify(|per_label_map| per_label_map.clear())
+            .or_insert_with(BTreeMap::new)
+            .insert(partial_inst.ident, per_struct_map);
+    }
+
+    /// Load a resource with given instantiation type from the specified address, saved by the
+    /// given memory label.
+    pub fn load_memory(
+        &self,
+        label: &MemoryLabel,
+        inst: &StructInstantiation,
+        addr: &AccountAddress,
+    ) -> Option<BaseValue> {
+        self.saved_memory
+            .get(label)
+            .and_then(|sub| sub.get(&inst.ident))
+            .and_then(|sub| sub.get(&inst))
+            .and_then(|sub| sub.get(addr))
+            .cloned()
+    }
+
+    /// Populate a global state with the resources saved by the given memmory label
+    pub fn register_memory(&self, label: &MemoryLabel, global_state: &mut GlobalState) {
+        for inst_map in self.saved_memory.get(label).unwrap().values() {
+            for (inst, account_map) in inst_map {
+                for (addr, val) in account_map {
+                    let typed_val = TypedValue {
+                        ty: Type::mk_struct(inst.clone()),
+                        val: val.clone(),
+                        ptr: Pointer::None,
+                    };
+                    let exists = global_state.put_resource(*addr, inst.clone(), typed_val);
+                    if cfg!(debug_assertions) {
+                        assert!(exists.is_none());
+                    }
+                }
+            }
+        }
+    }
+
+    /// Return all addresses in the state
+    pub fn all_addresses(&self) -> BTreeSet<AccountAddress> {
+        self.saved_memory
+            .values()
+            .map(|v1| v1.values().map(|v2| v2.values().map(|v3| v3.keys())))
+            .flatten()
+            .flatten()
+            .flatten()
+            .copied()
+            .collect()
+    }
+
+    /// Return all resources with instantiation matching
+    pub fn all_resources_by_inst(&self, inst: &StructInstantiation) -> Vec<BaseValue> {
+        let mut resources = vec![];
+        for v1 in self.saved_memory.values() {
+            match v1.get(&inst.ident) {
+                None => (),
+                Some(v2) => match v2.get(inst) {
+                    None => (),
+                    Some(v3) => {
+                        resources.extend(v3.values().cloned());
+                    }
+                },
+            }
+        }
+        resources
+    }
+
+    /// Return all resources with identity matching
+    pub fn all_resources_by_ident(&self, ident: &StructIdent) -> Vec<BaseValue> {
+        let mut resources = vec![];
+        for v1 in self.saved_memory.values() {
+            match v1.get(ident) {
+                None => (),
+                Some(v2) => {
+                    for v3 in v2.values() {
+                        resources.extend(v3.values().cloned());
+                    }
+                }
+            }
+        }
+        resources
     }
 }

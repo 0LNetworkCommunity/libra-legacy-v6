@@ -1,7 +1,7 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{config::CargoConfig, installer::install_if_needed, Result};
+use crate::{config::CargoConfig, installer::install_cargo_component_if_needed, Result};
 use anyhow::anyhow;
 use log::{info, warn};
 use std::{
@@ -76,10 +76,14 @@ pub fn stop_sccache_server() {
             if output.status.success() {
                 info!("Stopped already running sccache.");
             } else {
-                info!("Failed to stopped already running sccache.");
-                warn!("status: {}", output.status);
-                warn!("stdout: {}", String::from_utf8_lossy(&output.stdout));
-                warn!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+                let std_err = String::from_utf8_lossy(&output.stderr);
+                //sccache will fail
+                if !std_err.contains("couldn't connect to server") {
+                    warn!("Failed to stopped already running sccache.");
+                    warn!("status: {}", output.status);
+                    warn!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+                    warn!("stderr: {}", std_err);
+                }
             }
         }
         Err(error) => {
@@ -95,7 +99,11 @@ pub fn apply_sccache_if_possible(
 
     if sccache_should_run(cargo_config, true) {
         if let Some(sccache_config) = &cargo_config.sccache {
-            if !install_if_needed(cargo_config, "sccache", &sccache_config.installer) {
+            if !install_cargo_component_if_needed(
+                cargo_config,
+                "sccache",
+                &sccache_config.installer,
+            ) {
                 return Err(anyhow!("Failed to install sccache, bailing"));
             }
             stop_sccache_server();

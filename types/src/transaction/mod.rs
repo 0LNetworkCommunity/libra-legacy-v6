@@ -9,6 +9,7 @@ use crate::{
     chain_id::ChainId,
     contract_event::ContractEvent,
     ledger_info::LedgerInfo,
+    nibble::nibble_path::NibblePath,
     proof::{accumulator::InMemoryAccumulator, TransactionInfoWithProof, TransactionListProof},
     transaction::authenticator::{AccountAuthenticator, TransactionAuthenticator},
     vm_status::{DiscardedVMStatus, KeptVMStatus, StatusCode, StatusType, VMStatus},
@@ -991,6 +992,7 @@ impl Display for TransactionInfo {
 pub struct TransactionToCommit {
     transaction: Transaction,
     account_states: HashMap<AccountAddress, AccountStateBlob>,
+    jf_node_hashes: Option<HashMap<NibblePath, HashValue>>,
     events: Vec<ContractEvent>,
     gas_used: u64,
     status: KeptVMStatus,
@@ -1000,6 +1002,7 @@ impl TransactionToCommit {
     pub fn new(
         transaction: Transaction,
         account_states: HashMap<AccountAddress, AccountStateBlob>,
+        jf_node_hashes: Option<HashMap<NibblePath, HashValue>>,
         events: Vec<ContractEvent>,
         gas_used: u64,
         status: KeptVMStatus,
@@ -1007,6 +1010,7 @@ impl TransactionToCommit {
         TransactionToCommit {
             transaction,
             account_states,
+            jf_node_hashes,
             events,
             gas_used,
             status,
@@ -1019,6 +1023,10 @@ impl TransactionToCommit {
 
     pub fn account_states(&self) -> &HashMap<AccountAddress, AccountStateBlob> {
         &self.account_states
+    }
+
+    pub fn jf_node_hashes(&self) -> Option<&HashMap<NibblePath, HashValue>> {
+        self.jf_node_hashes.as_ref()
     }
 
     pub fn events(&self) -> &[ContractEvent] {
@@ -1066,6 +1074,14 @@ impl TransactionListWithProof {
     /// Creates an empty transaction list.
     pub fn new_empty() -> Self {
         Self::new(vec![], None, None, TransactionListProof::new_empty())
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.transactions.is_empty()
+    }
+
+    pub fn len(&self) -> usize {
+        self.transactions.len()
     }
 
     /// Verifies the transaction list with the proofs, both carried on `self`.
@@ -1118,19 +1134,94 @@ impl TransactionListWithProof {
         Ok(())
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.transactions.is_empty()
-    }
-
-    pub fn len(&self) -> usize {
-        self.transactions.len()
-    }
-
     fn display_option_version(version: Option<Version>) -> String {
         match version {
             Some(v) => format!("{}", v),
             None => String::from("absent"),
         }
+    }
+}
+
+/// A list of transactions under an account that are contiguous by sequence number
+/// and include proofs.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
+pub struct AccountTransactionsWithProof(pub Vec<TransactionWithProof>);
+
+impl AccountTransactionsWithProof {
+    pub fn new(txns_with_proofs: Vec<TransactionWithProof>) -> Self {
+        Self(txns_with_proofs)
+    }
+
+    pub fn new_empty() -> Self {
+        Self::new(Vec::new())
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn inner(&self) -> &[TransactionWithProof] {
+        &self.0
+    }
+
+    pub fn into_inner(self) -> Vec<TransactionWithProof> {
+        self.0
+    }
+
+    // TODO(philiphayes): this will need to change to support CRSNs
+    // (Conflict-Resistant Sequence Numbers)[https://github.com/diem/dip/blob/main/dips/dip-168.md].
+    //
+    // If we use a separate event stream under each account for sequence numbers,
+    // we'll probably need to always `include_events: true`, find the sequence
+    // number event, and use that to guarantee the response is sequential and
+    // complete.
+    /// 1. Verify all transactions are consistent with the given ledger info.
+    /// 2. All transactions were sent by `account`.
+    /// 3. The transactions are contiguous by sequence number, starting at `start_seq_num`.
+    /// 4. No more transactions than limit.
+    /// 5. Events are present when requested (and not present when not requested).
+    /// 6. Transactions are not newer than requested ledger version.
+    pub fn verify(
+        &self,
+        ledger_info: &LedgerInfo,
+        account: AccountAddress,
+        start_seq_num: u64,
+        limit: u64,
+        include_events: bool,
+        ledger_version: Version,
+    ) -> Result<()> {
+        ensure!(
+            self.len() as u64 <= limit,
+            "number of account transactions ({}) exceeded limit ({})",
+            self.len(),
+            limit,
+        );
+
+        self.0
+            .iter()
+            .enumerate()
+            .try_for_each(|(seq_num_offset, txn_with_proof)| {
+                let expected_seq_num = start_seq_num.saturating_add(seq_num_offset as u64);
+                let txn_version = txn_with_proof.version;
+
+                ensure!(
+                    include_events == txn_with_proof.events.is_some(),
+                    "unexpected events or missing events"
+                );
+                ensure!(
+                    txn_version <= ledger_version,
+                    "transaction with version ({}) greater than requested ledger version ({})",
+                    txn_version,
+                    ledger_version,
+                );
+
+                txn_with_proof.verify_user_txn(ledger_info, txn_version, account, expected_seq_num)
+            })
     }
 }
 

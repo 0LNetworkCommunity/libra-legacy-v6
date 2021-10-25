@@ -8,7 +8,6 @@
 mod restore_test;
 
 use crate::{
-    nibble_path::{NibbleIterator, NibblePath},
     node_type::{
         get_child_and_sibling_half_start, Child, Children, InternalNode, LeafNode, Node, NodeKey,
     },
@@ -19,8 +18,11 @@ use diem_crypto::{
     hash::{CryptoHash, SPARSE_MERKLE_PLACEHOLDER_HASH},
     HashValue,
 };
-use diem_nibble::Nibble;
 use diem_types::{
+    nibble::{
+        nibble_path::{NibbleIterator, NibblePath},
+        Nibble,
+    },
     proof::{SparseMerkleInternalNode, SparseMerkleRangeProof},
     transaction::Version,
 };
@@ -217,7 +219,7 @@ where
         rightmost_leaf_node_key: NodeKey,
     ) -> Result<Vec<InternalInfo<V>>> {
         ensure!(
-            rightmost_leaf_node_key.nibble_path().num_nibbles() > 0,
+            !rightmost_leaf_node_key.nibble_path().is_empty(),
             "Root node would not be written until entire restoration process has completed \
              successfully.",
         );
@@ -265,7 +267,7 @@ where
             }
 
             partial_nodes.push(internal_info);
-            if node_key.nibble_path().num_nibbles() == 0 {
+            if node_key.nibble_path().is_empty() {
                 break;
             }
             previous_child_index = node_key.nibble_path().last().map(|x| u8::from(x) as usize);
@@ -316,6 +318,7 @@ where
         for i in 0..ROOT_NIBBLE_HEIGHT {
             let child_index = u8::from(nibbles.next().expect("This nibble must exist.")) as usize;
 
+            assert!(i < self.partial_nodes.len());
             match self.partial_nodes[i].children[child_index] {
                 Some(ref child_info) => {
                     // If there exists an internal node at this position, we just continue the loop
@@ -369,7 +372,7 @@ where
         existing_leaf: LeafNode<V>,
         new_key: HashValue,
         new_value: V,
-        mut remaining_nibbles: NibbleIterator<'_>,
+        mut remaining_nibbles: NibbleIterator,
     ) {
         let num_existing_partial_nodes = self.partial_nodes.len();
 

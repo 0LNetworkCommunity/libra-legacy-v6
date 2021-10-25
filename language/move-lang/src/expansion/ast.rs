@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    errors::Error,
+    diag,
+    diagnostics::Diagnostic,
     parser::ast::{
         Ability, Ability_, BinOp, ConstantName, Field, FunctionName, ModuleName, QuantKind,
         SpecApplyPattern, SpecConditionKind, StructName, UnaryOp, Var, Visibility,
@@ -66,6 +67,7 @@ pub struct Script {
     pub attributes: Vec<Attribute>,
     pub loc: Loc,
     pub immediate_neighbors: UniqueMap<ModuleIdent, Neighbor>,
+    pub used_addresses: BTreeSet<Address>,
     pub constants: UniqueMap<ConstantName, Constant>,
     pub function_name: FunctionName,
     pub function: Function,
@@ -97,6 +99,7 @@ pub struct ModuleDefinition {
     /// `dependency_order` is initialized at `0` and set in the uses pass
     pub dependency_order: usize,
     pub immediate_neighbors: UniqueMap<ModuleIdent, Neighbor>,
+    pub used_addresses: BTreeSet<Address>,
     pub friends: UniqueMap<ModuleIdent, Friend>,
     pub structs: UniqueMap<StructName, StructDefinition>,
     pub functions: UniqueMap<FunctionName, Function>,
@@ -127,11 +130,18 @@ pub enum Neighbor {
 pub type Fields<T> = UniqueMap<Field, (usize, T)>;
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct StructTypeParameter {
+    pub is_phantom: bool,
+    pub name: Name,
+    pub constraints: AbilitySet,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct StructDefinition {
     pub attributes: Vec<Attribute>,
     pub loc: Loc,
     pub abilities: AbilitySet,
-    pub type_parameters: Vec<(Name, AbilitySet)>,
+    pub type_parameters: Vec<StructTypeParameter>,
     pub fields: StructFields,
 }
 
@@ -212,6 +222,7 @@ pub type SpecBlockTarget = Spanned<SpecBlockTarget_>;
 pub enum SpecBlockMember_ {
     Condition {
         kind: SpecConditionKind,
+        type_parameters: Vec<(Name, AbilitySet)>,
         properties: Vec<PragmaProperty>,
         exp: Exp,
         additional_exps: Vec<Exp>,
@@ -447,7 +458,7 @@ impl Address {
         addresses: &UniqueMap<Name, AddressBytes>,
         loc: Loc,
         case: &str,
-    ) -> Result<AddressBytes, Error> {
+    ) -> Result<AddressBytes, Diagnostic> {
         match self {
             Self::Anonymous(sp!(_, bytes)) => Ok(bytes),
             Self::Named(n) => match addresses.get(&n) {
@@ -455,7 +466,11 @@ impl Address {
                 None => {
                     let unable_msg = format!("Unable to fully compile and resolve {}", case);
                     let addr_msg = format!("No value specified for address '{}'", n);
-                    Err(vec![(loc, unable_msg), (n.loc, addr_msg)])
+                    Err(diag!(
+                        BytecodeGeneration::UnassignedAddress,
+                        (loc, unable_msg),
+                        (n.loc, addr_msg)
+                    ))
                 }
             },
         }
@@ -772,6 +787,7 @@ impl AstDebug for Script {
             attributes,
             loc: _loc,
             immediate_neighbors,
+            used_addresses,
             constants,
             function_name,
             function,
@@ -781,6 +797,10 @@ impl AstDebug for Script {
         for (mident, neighbor) in immediate_neighbors.key_cloned_iter() {
             w.write(&format!("{} {};", neighbor, mident));
             w.new_line();
+        }
+        for addr in used_addresses {
+            w.write(&format!("uses address {};", addr));
+            w.new_line()
         }
         for cdef in constants.key_cloned_iter() {
             cdef.ast_debug(w);
@@ -802,6 +822,7 @@ impl AstDebug for ModuleDefinition {
             is_source_module,
             dependency_order,
             immediate_neighbors,
+            used_addresses,
             friends,
             structs,
             functions,
@@ -818,6 +839,10 @@ impl AstDebug for ModuleDefinition {
         for (mident, neighbor) in immediate_neighbors.key_cloned_iter() {
             w.write(&format!("{} {};", neighbor, mident));
             w.new_line();
+        }
+        for addr in used_addresses {
+            w.write(&format!("uses address {};", addr));
+            w.new_line()
         }
         for (mident, _loc) in friends.key_cloned_iter() {
             w.write(&format!("friend {};", mident));
@@ -928,11 +953,13 @@ impl AstDebug for SpecBlockMember_ {
         match self {
             SpecBlockMember_::Condition {
                 kind,
+                type_parameters,
                 properties: _,
                 exp,
                 additional_exps,
             } => {
                 kind.ast_debug(w);
+                type_parameters.ast_debug(w);
                 exp.ast_debug(w);
                 w.list(additional_exps, ",", |w, e| {
                     e.ast_debug(w);
@@ -1149,6 +1176,16 @@ impl AstDebug for Vec<(Name, AbilitySet)> {
     }
 }
 
+impl AstDebug for Vec<StructTypeParameter> {
+    fn ast_debug(&self, w: &mut AstWriter) {
+        if !self.is_empty() {
+            w.write("<");
+            w.comma(self, |w, tp| tp.ast_debug(w));
+            w.write(">")
+        }
+    }
+}
+
 pub fn ability_constraints_ast_debug(w: &mut AstWriter, abilities: &AbilitySet) {
     if !abilities.is_empty() {
         w.write(": ");
@@ -1164,6 +1201,21 @@ impl AstDebug for (Name, AbilitySet) {
         let (n, abilities) = self;
         w.write(&n.value);
         ability_constraints_ast_debug(w, abilities)
+    }
+}
+
+impl AstDebug for StructTypeParameter {
+    fn ast_debug(&self, w: &mut AstWriter) {
+        let Self {
+            is_phantom,
+            name,
+            constraints,
+        } = self;
+        if *is_phantom {
+            w.write("phantom ");
+        }
+        w.write(&name.value);
+        ability_constraints_ast_debug(w, &constraints)
     }
 }
 

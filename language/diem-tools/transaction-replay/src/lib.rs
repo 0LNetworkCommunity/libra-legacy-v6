@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::{anyhow, bail, format_err, Result};
+use diem_resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct, DiemValueAnnotator};
+use diem_state_view::StateView;
 use diem_types::{
     access_path,
     account_address::AccountAddress,
@@ -15,15 +17,17 @@ use diem_types::{
 use diem_validator_interface::{
     DBDebuggerInterface, DebuggerStateView, DiemValidatorInterface, JsonRpcDebuggerInterface,
 };
-use diem_vm::{convert_changeset_and_events, data_cache::RemoteStorage, DiemVM, VMExecutor};
+use diem_vm::{
+    convert_changeset_and_events, data_cache::RemoteStorage, logging::AdapterLogSchema, DiemVM,
+    VMExecutor,
+};
 use move_binary_format::{errors::VMResult, file_format::CompiledModule};
-use move_cli::on_disk_state_view::OnDiskStateView;
+use move_cli::sandbox::utils::on_disk_state_view::OnDiskStateView;
 use move_core_types::{effects::ChangeSet as MoveChanges, language_storage::TypeTag};
-use move_lang::{compiled_unit::CompiledUnit, move_compile, shared::Flags};
-use move_vm_runtime::{logging::NoContextLog, move_vm::MoveVM, session::Session};
+use move_lang::{compiled_unit::CompiledUnit, Compiler, Flags};
+use move_vm_runtime::{move_vm::MoveVM, session::Session};
 use move_vm_test_utils::DeltaStorage;
 use move_vm_types::gas_schedule::GasStatus;
-use resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct, MoveValueAnnotator};
 use std::path::{Path, PathBuf};
 
 #[cfg(test)]
@@ -124,7 +128,6 @@ impl DiemDebugger {
         let state_view = DebuggerStateView::new(&*self.debugger, version + 1);
         let vm = DiemVM::new(&state_view);
         let cache = diem_vm::data_cache::StateViewCache::new(&state_view);
-        let log_context = NoContextLog::new();
         let sequence_number = match self
             .debugger
             .get_account_state_by_version(diem_root_address(), version)?
@@ -142,7 +145,12 @@ impl DiemDebugger {
         };
 
         let (_, output) = vm
-            .execute_writeset_transaction(&cache, &payload, txn_data, &log_context)
+            .execute_writeset_transaction(
+                &cache,
+                &payload,
+                txn_data,
+                &AdapterLogSchema::new(state_view.id(), 0),
+            )
             .map_err(|err| format_err!("Unexpected VM Error: {:?}", err))?;
         if save_write_set {
             self.save_write_sets(&output)?;
@@ -166,7 +174,12 @@ impl DiemDebugger {
             }
         }
         for event in o.events() {
-            state_view.save_contract_event(event.clone())?
+            state_view.save_event(
+                event.key().as_bytes(),
+                event.sequence_number(),
+                event.type_tag().clone(),
+                event.event_data().to_vec(),
+            )?
         }
         Ok(())
     }
@@ -228,7 +241,7 @@ impl DiemDebugger {
         let version = self.debugger.get_latest_version()?;
         let state_view = DebuggerStateView::new(&*self.debugger, version);
         let remote_storage = RemoteStorage::new(&state_view);
-        let annotator = MoveValueAnnotator::new(&remote_storage);
+        let annotator = DiemValueAnnotator::new(&remote_storage);
         let mut events_data = vec![];
         for event in events {
             match &event.event {
@@ -251,7 +264,7 @@ impl DiemDebugger {
     ) -> Result<Option<AnnotatedAccountStateBlob>> {
         let state_view = DebuggerStateView::new(&*self.debugger, version);
         let remote_storage = RemoteStorage::new(&state_view);
-        let annotator = MoveValueAnnotator::new(&remote_storage);
+        let annotator = DiemValueAnnotator::new(&remote_storage);
         Ok(
             match self
                 .debugger
@@ -276,7 +289,7 @@ impl DiemDebugger {
         let accounts = self.debugger.get_admin_accounts(version)?;
         let state_view = DebuggerStateView::new(&*self.debugger, version);
         let remote_storage = RemoteStorage::new(&state_view);
-        let annotator = MoveValueAnnotator::new(&remote_storage);
+        let annotator = DiemValueAnnotator::new(&remote_storage);
 
         let mut result = vec![];
         for (addr, state) in accounts.into_iter() {
@@ -309,7 +322,7 @@ impl DiemDebugger {
     where
         F: FnOnce(&mut Session<DeltaStorage<RemoteStorage<DebuggerStateView>>>) -> VMResult<()>,
     {
-        let move_vm = MoveVM::new();
+        let move_vm = MoveVM::new(diem_vm::natives::diem_natives()).unwrap();
         let state_view = DebuggerStateView::new(&*self.debugger, version);
         let state_view_storage = RemoteStorage::new(&state_view);
         let move_changes = override_changeset.unwrap_or_else(MoveChanges::new);
@@ -338,14 +351,12 @@ impl DiemDebugger {
         let is_version_ok = |version| {
             self.run_session_at_version(version, override_changeset.clone(), |session| {
                 let mut gas_status = GasStatus::new_unmetered();
-                let log_context = NoContextLog::new();
                 session.execute_script(
                     predicate.clone(),
                     vec![],
                     vec![],
                     vec![diem_root_address(), sender],
                     &mut gas_status,
-                    &log_context,
                 )
             })
             .map(|_| ())
@@ -395,16 +406,14 @@ fn is_reconfiguration(vm_output: &TransactionOutput) -> bool {
 fn compile_move_script(file_path: &str) -> Result<Vec<u8>> {
     let cur_path = file_path.to_owned();
     let targets = &vec![cur_path];
-    let (files, units_or_errors) = move_compile(
-        targets,
-        &diem_framework::diem_stdlib_files(),
-        None,
-        Flags::empty().set_sources_shadow_deps(false),
-    )?;
-    let unit = match units_or_errors {
-        Err(errors) => {
-            let error_buffer = move_lang::errors::report_errors_to_color_buffer(files, errors);
-            bail!(String::from_utf8(error_buffer).unwrap());
+    let (files, units_or_diags) = Compiler::new(targets, &diem_framework::diem_stdlib_files())
+        .set_flags(Flags::empty().set_sources_shadow_deps(false))
+        .build()?;
+    let unit = match units_or_diags {
+        Err(diags) => {
+            let diag_buffer =
+                move_lang::diagnostics::report_diagnostics_to_color_buffer(&files, diags);
+            bail!(String::from_utf8(diag_buffer).unwrap());
         }
         Ok(mut units) => {
             let len = units.len();

@@ -3,6 +3,7 @@
 
 use anyhow::anyhow;
 use itertools::Itertools;
+use move_command_line_common::env::{read_bool_env_var, read_env_var};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::process::Command;
@@ -16,7 +17,7 @@ const DEFAULT_BOOGIE_FLAGS: &[&str] = &[
     "-monomorphize",
 ];
 
-const MIN_BOOGIE_VERSION: &str = "2.8.32";
+const MIN_BOOGIE_VERSION: &str = "2.9.0";
 const MIN_Z3_VERSION: &str = "4.8.9";
 const EXPECTED_CVC4_VERSION: &str = "aac53f51";
 
@@ -96,6 +97,9 @@ pub struct BoogieOptions {
     pub num_instances: usize,
     /// Whether to run Boogie instances sequentially.
     pub sequential_task: bool,
+    /// A hard timeout for boogie execution; if the process does not terminate within
+    /// this time frame, it will be killed. Zero for no timeout.
+    pub hard_timeout_secs: u64,
     /// What vector theory to use.
     pub vector_theory: VectorTheory,
     /// Whether to generate a z3 trace file and where to put it.
@@ -104,14 +108,13 @@ pub struct BoogieOptions {
 
 impl Default for BoogieOptions {
     fn default() -> Self {
-        let get_env = |s| std::env::var(s).unwrap_or_else(|_| String::new());
         Self {
             bench_repeat: 1,
-            boogie_exe: get_env("BOOGIE_EXE"),
+            boogie_exe: read_env_var("BOOGIE_EXE"),
             use_exp_boogie: false,
-            z3_exe: get_env("Z3_EXE"),
+            z3_exe: read_env_var("Z3_EXE"),
             use_cvc4: false,
-            cvc4_exe: get_env("CVC4_EXE"),
+            cvc4_exe: read_env_var("CVC4_EXE"),
             boogie_flags: vec![],
             debug_trace: false,
             use_array_theory: false,
@@ -132,6 +135,7 @@ impl Default for BoogieOptions {
             stable_test_output: false,
             num_instances: 1,
             sequential_task: false,
+            hard_timeout_secs: 0,
             vector_theory: VectorTheory::BoogieArray,
             z3_trace_file: None,
         }
@@ -149,13 +153,19 @@ impl BoogieOptions {
     }
 
     /// Returns command line to call boogie.
-    pub fn get_boogie_command(&self, boogie_file: &str) -> Vec<String> {
+    pub fn get_boogie_command(&self, boogie_file: &str) -> anyhow::Result<Vec<String>> {
         let mut result = if self.use_exp_boogie {
             // This should have a better ux...
-            vec![std::env::var("EXP_BOOGIE_EXE").unwrap_or_else(|_| String::new())]
+            vec![read_env_var("EXP_BOOGIE_EXE")]
         } else {
             vec![self.boogie_exe.clone()]
         };
+
+        // If we don't have a boogie executable, nothing will work
+        if result.iter().all(|path| path.is_empty()) {
+            anyhow::bail!("No boogie executable set.  Please set BOOGIE_EXE");
+        }
+
         let mut add = |sl: &[&str]| result.extend(sl.iter().map(|s| (*s).to_string()));
         add(DEFAULT_BOOGIE_FLAGS);
         if self.use_cvc4 {
@@ -211,7 +221,7 @@ impl BoogieOptions {
             add(&[f.as_str()]);
         }
         add(&[boogie_file]);
-        result
+        Ok(result)
     }
 
     /// Returns name of file where to log boogie output.
@@ -223,7 +233,7 @@ impl BoogieOptions {
     pub fn adjust_timeout(&self, time: usize) -> usize {
         // If env var MVP_TEST_ON_CI is set, add 100% to the timeout for added
         // robustness against flakiness.
-        if std::env::var("MVP_TEST_ON_CI").unwrap_or_else(|_| "".into()) == "1" {
+        if read_bool_env_var("MVP_TEST_ON_CI") {
             usize::saturating_add(time, time)
         } else {
             time

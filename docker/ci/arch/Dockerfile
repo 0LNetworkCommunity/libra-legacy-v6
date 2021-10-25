@@ -1,5 +1,5 @@
 # while using circle we'll use circle's base image.
-FROM archlinux:base-devel-20210523.0.23638@sha256:d7173f9b580ecf6133f436ad5dd0f870c5cf4cd09e4fc116bc9e682e52d423a0 AS setup_ci_arch
+FROM archlinux:base-devel-20210725.0.29770@sha256:9e820c5363010c305038f1f89b8e248658ab6721d6d29602f7d3989f8769a36a AS setup_ci_arch
 
 WORKDIR /diem
 COPY rust-toolchain /diem/rust-toolchain
@@ -27,6 +27,7 @@ RUN [ -x "$(command -v shellcheck)" ] \
     && [ -x "$(command -v kubectl)" ] \
     && [ -x "$(command -v rustup)" ] \
     && [ -x "$(command -v cargo)" ] \
+    && [ -x "$(command -v cargo-guppy)" ] \
     && [ -x "$(command -v sccache)" ] \
     && [ -x "$(command -v grcov)" ] \
     && [ -x "$(command -v helm)" ] \

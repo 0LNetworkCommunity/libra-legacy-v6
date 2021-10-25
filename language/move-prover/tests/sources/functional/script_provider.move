@@ -3,7 +3,7 @@ address 0x1 {
 
 
 module ScriptProvider {
-    use 0x1::Signer;
+    use Std::Signer;
 
     spec module {
         // TODO: This file gets errors for reasons I do not understand.
@@ -12,7 +12,7 @@ module ScriptProvider {
     }
 
 
-    struct Info<T> has key {}
+    struct Info<phantom T> has key {}
 
     public fun register<T: store>(account: &signer) {
         assert(Signer::address_of(account) == @0x1, 1);

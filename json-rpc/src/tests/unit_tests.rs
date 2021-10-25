@@ -579,6 +579,22 @@ fn test_json_rpc_protocol_invalid_requests() {
             }),
         ),
         (
+            "get_event_by_version_with_proof: version is too large",
+            json!({"jsonrpc": "2.0", "method": "get_event_by_version_with_proof", "params": ["13000000000000000000000000000000000000000a550c18", version+1], "id": 1}),
+            json!({
+                "error": {
+                    "code": -32602,
+                    "message": format!("Invalid param version should be <= known latest version {}", version),
+                    "data": null
+                },
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
+            }),
+        ),
+        (
             "get_account_transaction: invalid account",
             json!({"jsonrpc": "2.0", "method": "get_account_transaction", "params": ["invalid", 1, false], "id": 1}),
             json!({
@@ -655,22 +671,6 @@ fn test_json_rpc_protocol_invalid_requests() {
             }),
         ),
         (
-            "get_account_transactions: account not found",
-            json!({"jsonrpc": "2.0", "method": "get_account_transactions", "params": ["00000000000000000000000000000033", 1, 2, false], "id": 1}),
-            json!({
-                "error": {
-                    "code": -32600,
-                    "message": "Invalid Request: could not find account by address 00000000000000000000000000000033",
-                    "data": null
-                },
-                "id": 1,
-                "jsonrpc": "2.0",
-                "diem_chain_id": ChainId::test().id(),
-                "diem_ledger_timestampusec": timestamp,
-                "diem_ledger_version": version
-            }),
-        ),
-        (
             "get_account_transactions: invalid start param",
             json!({"jsonrpc": "2.0", "method": "get_account_transactions", "params": ["e1b3d22871989e9fd9dc6814b2f4fc41", false, 2, false], "id": 1}),
             json!({
@@ -731,6 +731,52 @@ fn test_json_rpc_protocol_invalid_requests() {
             }),
         ),
         (
+            "get_account_transactions_with_proofs: start param is too big",
+            json!({"jsonrpc": "2.0", "method": "get_account_transactions_with_proofs", "params": ["0000000000000000000000000A550C18", version+1, 2, false], "id": 1}),
+            json!({
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version,
+                "result": {
+                    "serialized_txns_with_proofs": []
+                }
+            }),
+        ),
+        (
+            "get_account_transactions_with_proofs: limit is too large",
+            json!({"jsonrpc": "2.0", "method": "get_account_transactions_with_proofs", "params": ["e1b3d22871989e9fd9dc6814b2f4fc41", 1, 1001, false], "id": 1}),
+            json!({
+                "error": {
+                    "code": -32600,
+                    "message": "Invalid Request: page size = 1001, exceed limit 1000",
+                    "data": null
+                },
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
+            }),
+        ),
+        (
+            "get_account_transactions_with_proofs: ledger_version is too large",
+            json!({"jsonrpc": "2.0", "method": "get_account_transactions_with_proofs", "params": ["e1b3d22871989e9fd9dc6814b2f4fc41", 1, 5, false, version+1], "id": 1}),
+            json!({
+                "error": {
+                    "code": -32602,
+                    "message": format!("Invalid param ledger_version should be <= known latest version {}", version),
+                    "data": null
+                },
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
+            }),
+        ),
+        (
             "get_state_proof: invalid known_version",
             json!({"jsonrpc": "2.0", "method": "get_state_proof", "params": ["invalid"], "id": 1}),
             json!({
@@ -753,6 +799,38 @@ fn test_json_rpc_protocol_invalid_requests() {
                 "error": {
                     "code": -32602,
                     "message": format!("Invalid param version should be <= known latest version {}", version),
+                    "data": null
+                },
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
+            }),
+        ),
+        (
+            "get_accumulator_consistency_proof: ledger_version is too large",
+            json!({"jsonrpc": "2.0", "method": "get_accumulator_consistency_proof", "params": [5, version+1], "id": 1}),
+            json!({
+                "error": {
+                    "code": -32602,
+                    "message": format!("Invalid param ledger_version should be <= known latest version {}", version),
+                    "data": null
+                },
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
+            }),
+        ),
+        (
+            "get_accumulator_consistency_proof: client_known_version is greater than ledger_version",
+            json!({"jsonrpc": "2.0", "method": "get_accumulator_consistency_proof", "params": [version+1, version], "id": 1}),
+            json!({
+                "error": {
+                    "code": -32600,
+                    "message": format!("Invalid Request: client_known_version({}) should be <= ledger_version({})", version+1, version),
                     "data": null
                 },
                 "id": 1,

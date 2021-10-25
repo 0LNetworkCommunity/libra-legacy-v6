@@ -4,19 +4,31 @@
 use anyhow::{ensure, format_err, Error, Result};
 use diem_crypto::hash::{CryptoHash, HashValue};
 use diem_transaction_builder::{error_explain, stdlib::ScriptCall};
-use diem_types::{account_config::{
+use diem_types::{
+    account_config::{
         AccountResource, AccountRole, AdminTransactionEvent, BalanceResource, BaseUrlRotationEvent,
         BurnEvent, CancelBurnEvent, ComplianceKeyRotationEvent, CreateAccountEvent,
-        CurrencyInfoResource, DesignatedDealerPreburns, DiemIdDomainEvent, FreezingBit, MintEvent,
+        CurrencyInfoResource, DesignatedDealerPreburns, FreezingBit, Limit, MintEvent,
         NewBlockEvent, NewEpochEvent, PreburnEvent, ReceivedMintEvent, ReceivedPaymentEvent,
-        SentPaymentEvent, ToXDXExchangeRateUpdateEvent,
-    }, account_state::AccountState, account_state_blob::{AccountStateBlob, AccountStateWithProof}, contract_event::{ContractEvent, EventWithProof}, diem_id_identifier::DiemIdVaspDomainIdentifier, epoch_change::EpochChangeProof, event::EventKey, ledger_info::LedgerInfoWithSignatures, ol_oracle_upgrade_state::{OracleResource, UpgradeOracle}, proof::{
+        SentPaymentEvent, ToXDXExchangeRateUpdateEvent, VASPDomainEvent,
+    },
+    account_state::AccountState,
+    account_state_blob::{AccountStateBlob, AccountStateWithProof},
+    contract_event::{ContractEvent, EventByVersionWithProof, EventWithProof},
+    diem_id_identifier::DiemIdVaspDomainIdentifier,
+    event::EventKey,
+    ol_oracle_upgrade_state::{OracleResource, UpgradeOracle},    
+    proof::{
         AccountStateProof, AccumulatorConsistencyProof, SparseMerkleProof,
         TransactionAccumulatorProof, TransactionInfoWithProof, TransactionListProof,
-    }, transaction::{
-        Script, ScriptFunction, Transaction, TransactionArgument, TransactionInfo,
-        TransactionListWithProof, TransactionPayload,
-    }, vm_status::KeptVMStatus};
+    },
+    state_proof::StateProof,
+    transaction::{
+        AccountTransactionsWithProof, Script, ScriptFunction, Transaction, TransactionArgument,
+        TransactionInfo, TransactionListWithProof, TransactionPayload,
+    },
+    vm_status::KeptVMStatus,
+};
 use hex::FromHex;
 use move_core_types::{
     account_address::AccountAddress,
@@ -60,7 +72,7 @@ pub enum AccountRoleView {
         num_children: u64,
         compliance_key_rotation_events_key: EventKey,
         base_url_rotation_events_key: EventKey,
-        diem_id_domains: Option<Vec<DiemIdVaspDomainIdentifier>>,
+        vasp_domains: Option<Vec<DiemIdVaspDomainIdentifier>>,
     },
     #[serde(rename = "designated_dealer")]
     DesignatedDealer {
@@ -77,7 +89,7 @@ pub enum AccountRoleView {
     #[serde(rename = "treasury_compliance")]
     TreasuryCompliance {
         #[serde(skip_serializing_if = "Option::is_none")]
-        diem_id_domain_events_key: Option<EventKey>,
+        vasp_domain_events_key: Option<EventKey>,
     },
     /// The Unknown variant is deserialized by the client if it sees
     /// a variant that it doesn't know about
@@ -286,6 +298,51 @@ impl TryFrom<&EventWithProof> for EventWithProofView {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct EventByVersionWithProofView {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub lower_bound_incl: Option<EventWithProofView>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub upper_bound_excl: Option<EventWithProofView>,
+}
+
+impl TryFrom<&EventByVersionWithProofView> for EventByVersionWithProof {
+    type Error = Error;
+
+    fn try_from(view: &EventByVersionWithProofView) -> Result<Self, Self::Error> {
+        Ok(Self::new(
+            view.lower_bound_incl
+                .as_ref()
+                .map(EventWithProof::try_from)
+                .transpose()?,
+            view.upper_bound_excl
+                .as_ref()
+                .map(EventWithProof::try_from)
+                .transpose()?,
+        ))
+    }
+}
+
+impl TryFrom<&EventByVersionWithProof> for EventByVersionWithProofView {
+    type Error = Error;
+
+    fn try_from(proof: &EventByVersionWithProof) -> Result<Self, Self::Error> {
+        Ok(Self {
+            lower_bound_incl: proof
+                .lower_bound_incl
+                .as_ref()
+                .map(EventWithProofView::try_from)
+                .transpose()?,
+            upper_bound_excl: proof
+                .upper_bound_excl
+                .as_ref()
+                .map(EventWithProofView::try_from)
+                .transpose()?,
+        })
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type")]
 pub enum EventDataView {
     #[serde(rename = "burn")]
@@ -354,11 +411,11 @@ pub enum EventDataView {
         created_address: AccountAddress,
         role_id: u64,
     },
-    #[serde(rename = "diemiddomain")]
-    DiemIdDomain {
+    #[serde(rename = "vaspdomain")]
+    VASPDomain {
         // Whether a domain was added or removed
         removed: bool,
-        // Diem ID Domain string of the account
+        // VASP Domain string of the account
         domain: DiemIdVaspDomainIdentifier,
         // On-chain account address
         address: AccountAddress,
@@ -487,12 +544,12 @@ impl TryFrom<ContractEvent> for EventDataView {
             EventDataView::AdminTransaction {
                 committed_timestamp_secs: admin_transaction_event.committed_timestamp_secs(),
             }
-        } else if event.type_tag() == &TypeTag::Struct(DiemIdDomainEvent::struct_tag()) {
-            let diem_id_domain_event = DiemIdDomainEvent::try_from(&event)?;
-            EventDataView::DiemIdDomain {
-                removed: diem_id_domain_event.removed(),
-                domain: diem_id_domain_event.domain().domain().clone(),
-                address: diem_id_domain_event.address(),
+        } else if event.type_tag() == &TypeTag::Struct(VASPDomainEvent::struct_tag()) {
+            let vasp_domain_event = VASPDomainEvent::try_from(&event)?;
+            EventDataView::VASPDomain {
+                removed: vasp_domain_event.removed(),
+                domain: vasp_domain_event.domain().domain().clone(),
+                address: vasp_domain_event.address(),
             }
         } else {
             EventDataView::Unknown {
@@ -516,9 +573,42 @@ pub struct MetadataView {
     pub dual_attestation_limit: Option<u64>,
 }
 
-/////// 0L /////////
+impl MetadataView {
+    pub fn new(
+        version: u64,
+        accumulator_root_hash: HashValue,
+        timestamp: u64,
+        chain_id: u8,
+    ) -> Self {
+        Self {
+            version,
+            accumulator_root_hash,
+            timestamp,
+            chain_id,
+            script_hash_allow_list: None,
+            module_publishing_allowed: None,
+            diem_version: None,
+            dual_attestation_limit: None,
+        }
+    }
+
+    pub fn with_diem_root(&mut self, diem_root: &AccountState) -> Result<()> {
+        if let Some(vm_publishing_option) = diem_root.get_vm_publishing_option()? {
+            self.script_hash_allow_list = Some(vm_publishing_option.script_allow_list);
+            self.module_publishing_allowed = Some(vm_publishing_option.is_open_module);
+        }
+        if let Some(diem_version) = diem_root.get_diem_version()? {
+            self.diem_version = Some(diem_version.major);
+        }
+        if let Some(limit) = diem_root.get_resource::<Limit>()? {
+            self.dual_attestation_limit = Some(limit.micro_xdx_limit);
+        }
+        Ok(())
+    }
+}
+
 #[derive(Clone, PartialEq)]
-pub struct BytesView(pub Box<[u8]>);
+pub struct BytesView(pub Box<[u8]>); /////// 0L /////////
 
 impl BytesView {
     pub fn new<T: Into<Box<[u8]>>>(bytes: T) -> Self {
@@ -812,6 +902,26 @@ impl TryFrom<TransactionListWithProof> for TransactionListView {
     }
 }
 
+impl TryFrom<AccountTransactionsWithProof> for TransactionListView {
+    type Error = Error;
+
+    fn try_from(acct_txs: AccountTransactionsWithProof) -> Result<Self, Self::Error> {
+        let txs = acct_txs
+            .into_inner()
+            .into_iter()
+            .map(|tx| {
+                TransactionView::try_from_tx_and_events(
+                    tx.version,
+                    tx.transaction,
+                    tx.proof.transaction_info,
+                    tx.events.unwrap_or_default(),
+                )
+            })
+            .collect::<Result<Vec<_>>>()?;
+        Ok(TransactionListView(txs))
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct TransactionsWithProofsView {
     pub serialized_transactions: Vec<BytesView>,
@@ -905,6 +1015,38 @@ impl TryFrom<&TransactionsProofsView> for TransactionListProof {
             )?,
             transaction_infos: bcs::from_bytes(&view.transaction_infos)?,
         })
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct AccountTransactionsWithProofView {
+    pub serialized_txns_with_proofs: Vec<BytesView>,
+}
+
+impl TryFrom<&AccountTransactionsWithProof> for AccountTransactionsWithProofView {
+    type Error = Error;
+
+    fn try_from(txns: &AccountTransactionsWithProof) -> Result<Self, Self::Error> {
+        Ok(Self {
+            serialized_txns_with_proofs: txns
+                .inner()
+                .iter()
+                .map(|txn_with_proof| Ok(BytesView::new(bcs::to_bytes(txn_with_proof)?)))
+                .collect::<Result<Vec<_>>>()?,
+        })
+    }
+}
+
+impl TryFrom<&AccountTransactionsWithProofView> for AccountTransactionsWithProof {
+    type Error = Error;
+
+    fn try_from(view: &AccountTransactionsWithProofView) -> Result<Self, Self::Error> {
+        Ok(Self::new(
+            view.serialized_txns_with_proofs
+                .iter()
+                .map(|txn_bytes| bcs::from_bytes(txn_bytes.as_ref()))
+                .collect::<Result<Vec<_>, _>>()?,
+        ))
     }
 }
 
@@ -1158,10 +1300,9 @@ impl From<AccountRole> for AccountRoleView {
             AccountRole::ParentVASP {
                 vasp,
                 credential,
-                diem_id_domains,
+                vasp_domains,
             } => {
-                let domains =
-                    diem_id_domains.map(|diem_id_domains| diem_id_domains.get_domains_list());
+                let domains = vasp_domains.map(|vasp_domains| vasp_domains.get_domains_list());
                 AccountRoleView::ParentVASP {
                     human_name: credential.human_name().to_string(),
                     base_url: credential.base_url().to_string(),
@@ -1172,7 +1313,7 @@ impl From<AccountRole> for AccountRoleView {
                         .compliance_key_rotation_events()
                         .key(),
                     base_url_rotation_events_key: *credential.base_url_rotation_events().key(),
-                    diem_id_domains: domains,
+                    vasp_domains: domains,
                 }
             }
             AccountRole::DesignatedDealer {
@@ -1197,11 +1338,9 @@ impl From<AccountRole> for AccountRoleView {
                 }
             }
             AccountRole::TreasuryCompliance {
-                diem_id_domain_manager,
+                vasp_domain_manager,
             } => AccountRoleView::TreasuryCompliance {
-                diem_id_domain_events_key: Some(
-                    *diem_id_domain_manager.diem_id_domain_events().key(),
-                ),
+                vasp_domain_events_key: Some(*vasp_domain_manager.vasp_domain_events().key()),
             },
         }
     }
@@ -1243,47 +1382,52 @@ pub struct StateProofView {
     pub ledger_consistency_proof: BytesView,
 }
 
-impl
-    TryFrom<(
-        LedgerInfoWithSignatures,
-        EpochChangeProof,
-        AccumulatorConsistencyProof,
-    )> for StateProofView
-{
+impl TryFrom<&StateProof> for StateProofView {
     type Error = Error;
 
-    fn try_from(
-        (ledger_info_with_signatures, epoch_change_proof, ledger_consistency_proof): (
-            LedgerInfoWithSignatures,
-            EpochChangeProof,
-            AccumulatorConsistencyProof,
-        ),
-    ) -> Result<StateProofView, Self::Error> {
-        Ok(StateProofView {
+    fn try_from(proof: &StateProof) -> Result<Self, Self::Error> {
+        Ok(Self {
             ledger_info_with_signatures: BytesView::new(bcs::to_bytes(
-                &ledger_info_with_signatures,
+                proof.latest_ledger_info_w_sigs(),
             )?),
-            epoch_change_proof: BytesView::new(bcs::to_bytes(&epoch_change_proof)?),
-            ledger_consistency_proof: BytesView::new(bcs::to_bytes(&ledger_consistency_proof)?),
+            epoch_change_proof: BytesView::new(bcs::to_bytes(proof.epoch_changes())?),
+            ledger_consistency_proof: BytesView::new(bcs::to_bytes(&proof.consistency_proof())?),
         })
     }
 }
 
-impl TryFrom<&StateProofView>
-    for (
-        LedgerInfoWithSignatures,
-        EpochChangeProof,
-        AccumulatorConsistencyProof,
-    )
-{
+impl TryFrom<&StateProofView> for StateProof {
     type Error = Error;
 
-    fn try_from(state_proof_view: &StateProofView) -> Result<Self, Self::Error> {
-        Ok((
-            bcs::from_bytes(state_proof_view.ledger_info_with_signatures.inner())?,
-            bcs::from_bytes(state_proof_view.epoch_change_proof.inner())?,
-            bcs::from_bytes(state_proof_view.ledger_consistency_proof.inner())?,
+    fn try_from(view: &StateProofView) -> Result<Self, Self::Error> {
+        Ok(Self::new(
+            bcs::from_bytes(view.ledger_info_with_signatures.inner())?,
+            bcs::from_bytes(view.epoch_change_proof.inner())?,
+            bcs::from_bytes(view.ledger_consistency_proof.inner())?,
         ))
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct AccumulatorConsistencyProofView {
+    pub ledger_consistency_proof: BytesView,
+}
+
+impl TryFrom<&AccumulatorConsistencyProof> for AccumulatorConsistencyProofView {
+    type Error = Error;
+
+    fn try_from(proof: &AccumulatorConsistencyProof) -> Result<Self, Self::Error> {
+        Ok(Self {
+            ledger_consistency_proof: BytesView::new(bcs::to_bytes(proof)?),
+        })
+    }
+}
+
+impl TryFrom<&AccumulatorConsistencyProofView> for AccumulatorConsistencyProof {
+    type Error = Error;
+
+    fn try_from(view: &AccumulatorConsistencyProofView) -> Result<Self, Self::Error> {
+        Ok(bcs::from_bytes(view.ledger_consistency_proof.as_ref())?)
     }
 }
 
@@ -1389,7 +1533,10 @@ impl TryFrom<&AccountStateProofView> for AccountStateProof {
 
 #[cfg(test)]
 mod tests {
-    use crate::views::{AmountView, EventDataView, PreburnWithMetadataView};
+    use crate::views::{
+        AccountRoleView, AmountView, EventDataView, PreburnWithMetadataView, TransactionDataView,
+        VMStatusView,
+    };
     use diem_types::{contract_event::ContractEvent, event::EventKey};
     use move_core_types::language_storage::TypeTag;
     use serde_json::json;
@@ -1430,6 +1577,54 @@ mod tests {
                 }
             })
         );
+    }
+
+    #[test]
+    fn account_role_view_unknown() {
+        let json = json!({
+            "type": "NewVariant",
+            "new-field": 5,
+        });
+
+        let actual: AccountRoleView = serde_json::from_value(json).unwrap();
+        let expected = AccountRoleView::Unknown;
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn event_data_view_unknown() {
+        let json = json!({
+            "type": "NewVariant",
+            "new-field": 5,
+        });
+
+        let actual: EventDataView = serde_json::from_value(json).unwrap();
+        let expected = EventDataView::UnknownToClient;
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn vm_status_view_unknown() {
+        let json = json!({
+            "type": "NewVariant",
+            "new-field": 5,
+        });
+
+        let actual: VMStatusView = serde_json::from_value(json).unwrap();
+        let expected = VMStatusView::Unknown;
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn transaction_data_view_unknown() {
+        let json = json!({
+            "type": "NewVariant",
+            "new-field": 5,
+        });
+
+        let actual: TransactionDataView = serde_json::from_value(json).unwrap();
+        let expected = TransactionDataView::UnknownTransaction;
+        assert_eq!(actual, expected);
     }
 }
 
@@ -1477,7 +1672,6 @@ impl TryFrom<OracleResource> for OracleUpgradeStateView {
     }
 }
 
-
 impl TryFrom<AccountState> for OracleUpgradeStateView {
     type Error = Error;
 
@@ -1489,3 +1683,4 @@ impl TryFrom<AccountState> for OracleUpgradeStateView {
         })
     }
 }
+//////// 0L end ////////

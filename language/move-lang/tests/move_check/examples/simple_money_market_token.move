@@ -50,22 +50,22 @@ module Token {
 address 0xB055 {
 
 module OneToOneMarket {
-    use 0x1::Signer;
+    use Std::Signer;
     use 0x2::Token;
 
     struct Pool<AssetType: copy + drop> has key {
         coin: Token::Coin<AssetType>,
     }
 
-    struct DepositRecord<InputAsset: copy + drop, OutputAsset: copy + drop> has key {
+    struct DepositRecord<phantom InputAsset: copy + drop, phantom OutputAsset: copy + drop> has key {
         record: u64,
     }
 
-    struct BorrowRecord<InputAsset: copy + drop, OutputAsset: copy + drop> has key {
+    struct BorrowRecord<phantom InputAsset: copy + drop, phantom OutputAsset: copy + drop> has key {
         record: u64,
     }
 
-    struct Price<InputAsset: copy + drop, OutputAsset: copy + drop> has key {
+    struct Price<phantom InputAsset: copy + drop, phantom OutputAsset: copy + drop> has key {
         price: u64,
     }
 
@@ -177,7 +177,7 @@ address 0x70DD {
 
 module ToddNickels {
     use 0x2::Token;
-    use 0x1::Signer;
+    use Std::Signer;
 
     struct T has copy, drop, store {}
 

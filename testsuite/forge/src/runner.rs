@@ -2,13 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::*;
-use rand::SeedableRng;
+use rand::{Rng, SeedableRng};
 use std::{
     io::{self, Write},
+    num::NonZeroUsize,
     process,
 };
 use structopt::{clap::arg_enum, StructOpt};
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
+// TODO going to remove random seed once cluster deployment supports re-run genesis
+use rand::rngs::OsRng;
 
 #[derive(Debug, StructOpt)]
 #[structopt(about = "Forged in Fire")]
@@ -19,9 +22,16 @@ pub struct Options {
     #[structopt(long = "exact")]
     /// Exactly match filters rather than by substring
     filter_exact: bool,
+    #[structopt(long, default_value = "1", env = "RUST_TEST_THREADS")]
+    /// NO-OP: unsupported option, exists for compatibility with the default test harness
+    /// Number of threads used for running tests in parallel
+    test_threads: NonZeroUsize,
     #[structopt(short = "q", long)]
     /// Output minimal information
     quiet: bool,
+    #[structopt(long)]
+    /// NO-OP: unsupported option, exists for compatibility with the default test harness
+    nocapture: bool,
     #[structopt(long)]
     /// List all tests
     list: bool,
@@ -39,6 +49,12 @@ pub struct Options {
     format: Format,
 }
 
+impl Options {
+    pub fn from_args() -> Self {
+        StructOpt::from_args()
+    }
+}
+
 arg_enum! {
     #[derive(Debug, Eq, PartialEq)]
     pub enum Format {
@@ -54,9 +70,8 @@ impl Default for Format {
     }
 }
 
-pub fn forge_main<F: Factory>(tests: ForgeConfig<'_>, factory: F) -> Result<()> {
-    let options = Options::from_args();
-    let forge = Forge::new(&options, tests, factory);
+pub fn forge_main<F: Factory>(tests: ForgeConfig<'_>, factory: F, options: &Options) -> Result<()> {
+    let forge = Forge::new(options, tests, factory);
 
     if options.list {
         forge.list()?;
@@ -64,16 +79,63 @@ pub fn forge_main<F: Factory>(tests: ForgeConfig<'_>, factory: F) -> Result<()> 
         return Ok(());
     }
 
-    forge.run()
+    match forge.run() {
+        Ok(()) => Ok(()),
+        Err(_) => process::exit(101), // Exit with a non-zero exit code if tests failed
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum InitialVersion {
+    Oldest,
+    Newest,
 }
 
 pub struct ForgeConfig<'cfg> {
-    pub public_usage_tests: &'cfg [&'cfg dyn PublicUsageTest],
-    pub admin_tests: &'cfg [&'cfg dyn AdminTest],
-    pub network_tests: &'cfg [&'cfg dyn NetworkTest],
+    public_usage_tests: &'cfg [&'cfg dyn PublicUsageTest],
+    admin_tests: &'cfg [&'cfg dyn AdminTest],
+    network_tests: &'cfg [&'cfg dyn NetworkTest],
+
+    /// The initial number of validators to spawn when the test harness creates a swarm
+    initial_validator_count: NonZeroUsize,
+
+    /// The initial version to use when the test harness creates a swarm
+    initial_version: InitialVersion,
 }
 
 impl<'cfg> ForgeConfig<'cfg> {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn with_public_usage_tests(
+        mut self,
+        public_usage_tests: &'cfg [&'cfg dyn PublicUsageTest],
+    ) -> Self {
+        self.public_usage_tests = public_usage_tests;
+        self
+    }
+
+    pub fn with_admin_tests(mut self, admin_tests: &'cfg [&'cfg dyn AdminTest]) -> Self {
+        self.admin_tests = admin_tests;
+        self
+    }
+
+    pub fn with_network_tests(mut self, network_tests: &'cfg [&'cfg dyn NetworkTest]) -> Self {
+        self.network_tests = network_tests;
+        self
+    }
+
+    pub fn with_initial_validator_count(mut self, initial_validator_count: NonZeroUsize) -> Self {
+        self.initial_validator_count = initial_validator_count;
+        self
+    }
+
+    pub fn with_initial_version(mut self, initial_version: InitialVersion) -> Self {
+        self.initial_version = initial_version;
+        self
+    }
+
     pub fn number_of_tests(&self) -> usize {
         self.public_usage_tests.len() + self.admin_tests.len() + self.network_tests.len()
     }
@@ -84,6 +146,18 @@ impl<'cfg> ForgeConfig<'cfg> {
             .map(|t| t as &dyn Test)
             .chain(self.admin_tests.iter().map(|t| t as &dyn Test))
             .chain(self.network_tests.iter().map(|t| t as &dyn Test))
+    }
+}
+
+impl<'cfg> Default for ForgeConfig<'cfg> {
+    fn default() -> Self {
+        Self {
+            public_usage_tests: &[],
+            admin_tests: &[],
+            network_tests: &[],
+            initial_validator_count: NonZeroUsize::new(1).unwrap(),
+            initial_version: InitialVersion::Newest,
+        }
     }
 }
 
@@ -103,54 +177,107 @@ impl<'cfg, F: Factory> Forge<'cfg, F> {
     }
 
     pub fn list(&self) -> Result<()> {
-        for test in self.tests.all_tests() {
+        for test in self.filter_tests(self.tests.all_tests()) {
             println!("{}: test", test.name());
         }
 
         if self.options.format == Format::Pretty {
             println!();
-            println!("{} tests", self.tests.all_tests().count());
+            println!(
+                "{} tests",
+                self.filter_tests(self.tests.all_tests()).count()
+            );
         }
 
         Ok(())
     }
 
+    pub fn initial_version(&self) -> Version {
+        let versions = self.factory.versions();
+        match self.tests.initial_version {
+            InitialVersion::Oldest => versions.min(),
+            InitialVersion::Newest => versions.max(),
+        }
+        .expect("There has to be at least 1 version")
+    }
+
     pub fn run(&self) -> Result<()> {
-        let mut summary = TestSummary::new(self.tests.number_of_tests(), 0);
+        let test_count = self.filter_tests(self.tests.all_tests()).count();
+        let filtered_out = test_count.saturating_sub(self.tests.all_tests().count());
+
+        let mut summary = TestSummary::new(test_count, filtered_out);
         summary.write_starting_msg()?;
 
-        let mut rng = ::rand::rngs::StdRng::from_seed([0; 32]);
-        let mut swarm = self.factory.launch_swarm(1);
+        if test_count > 0 {
+            let initial_version = self.initial_version();
+            let mut rng = ::rand::rngs::StdRng::from_seed(OsRng.gen());
+            let mut swarm = self.factory.launch_swarm(
+                &mut rng,
+                self.tests.initial_validator_count,
+                &initial_version,
+            )?;
 
-        // Run PublicUsageTests
-        for test in self.tests.public_usage_tests {
-            let mut public_ctx =
-                PublicUsageContext::new(CoreContext::from_rng(&mut rng), swarm.public_info());
-            let result = run_test(|| test.run(&mut public_ctx));
-            summary.handle_result(test.name().to_owned(), result)?;
-        }
+            // Run PublicUsageTests
+            for test in self.filter_tests(self.tests.public_usage_tests.iter()) {
+                let mut public_ctx = PublicUsageContext::new(
+                    CoreContext::from_rng(&mut rng),
+                    swarm.chain_info().into_public_info(),
+                );
+                let result = run_test(|| test.run(&mut public_ctx));
+                summary.handle_result(test.name().to_owned(), result)?;
+            }
 
-        // Run AdminTests
-        for test in self.tests.admin_tests {
-            let mut admin_ctx =
-                AdminContext::new(CoreContext::from_rng(&mut rng), swarm.admin_info());
-            let result = run_test(|| test.run(&mut admin_ctx));
-            summary.handle_result(test.name().to_owned(), result)?;
-        }
+            // Run AdminTests
+            for test in self.filter_tests(self.tests.admin_tests.iter()) {
+                let mut admin_ctx =
+                    AdminContext::new(CoreContext::from_rng(&mut rng), swarm.chain_info());
+                let result = run_test(|| test.run(&mut admin_ctx));
+                summary.handle_result(test.name().to_owned(), result)?;
+            }
 
-        for test in self.tests.network_tests {
-            let mut network_ctx = NetworkContext::new(CoreContext::from_rng(&mut rng), &mut *swarm);
-            let result = run_test(|| test.run(&mut network_ctx));
-            summary.handle_result(test.name().to_owned(), result)?;
+            for test in self.filter_tests(self.tests.network_tests.iter()) {
+                let report = TestReport::new();
+                let mut network_ctx =
+                    NetworkContext::new(CoreContext::from_rng(&mut rng), &mut *swarm, report);
+                let result = run_test(|| test.run(&mut network_ctx));
+                summary.handle_result(test.name().to_owned(), result)?;
+            }
         }
 
         summary.write_summary()?;
 
-        if !summary.success() {
-            process::exit(101);
+        if summary.success() {
+            Ok(())
+        } else {
+            Err(anyhow::anyhow!("Tests Failed"))
         }
+    }
 
-        Ok(())
+    fn filter_tests<'a, T: Test, I: Iterator<Item = T> + 'a>(
+        &'a self,
+        tests: I,
+    ) -> impl Iterator<Item = T> + 'a {
+        tests
+            // Filter by ignored
+            .filter(
+                move |test| match (self.options.include_ignored, self.options.ignored) {
+                    (true, _) => true, // Don't filter anything
+                    (false, true) => test.ignored(),
+                    (false, false) => !test.ignored(),
+                },
+            )
+            // Filter by test name
+            .filter(move |test| {
+                if let Some(filter) = &self.options.filter {
+                    if self.options.filter_exact {
+                        test.name() == &filter[..]
+                    } else {
+                        test.name().contains(&filter[..])
+                    }
+                } else {
+                    true
+                }
+            })
     }
 }
 

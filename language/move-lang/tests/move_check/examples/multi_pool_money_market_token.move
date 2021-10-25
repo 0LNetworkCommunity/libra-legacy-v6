@@ -70,7 +70,7 @@ module Token {
 address 0x3 {
 
 module OneToOneMarket {
-    use 0x1::Signer;
+    use Std::Signer;
     use 0x2::Map;
     use 0x2::Token;
 
@@ -78,17 +78,17 @@ module OneToOneMarket {
         coin: Token::Coin<AssetType>,
     }
 
-    struct DepositRecord<InputAsset: copy + drop, OutputAsset: copy + drop> has key {
+    struct DepositRecord<phantom InputAsset: copy + drop, phantom OutputAsset: copy + drop> has key {
         // pool owner => amount
         record: Map::T<address, u64>
     }
 
-    struct BorrowRecord<InputAsset: copy + drop, OutputAsset: copy + drop> has key {
+    struct BorrowRecord<phantom InputAsset: copy + drop, phantom OutputAsset: copy + drop> has key {
         // pool owner => amount
         record: Map::T<address, u64>
     }
 
-    struct Price<InputAsset: copy + drop, OutputAsset: copy + drop> has key {
+    struct Price<phantom InputAsset: copy + drop, phantom OutputAsset: copy + drop> has key {
         price: u64,
     }
 
@@ -213,7 +213,7 @@ address 0x70DD {
 
 module ToddNickels {
     use 0x2::Token;
-    use 0x1::Signer;
+    use Std::Signer;
 
     struct T has copy, drop, store {}
 

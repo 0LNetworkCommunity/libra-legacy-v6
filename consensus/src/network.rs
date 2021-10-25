@@ -15,16 +15,21 @@ use consensus_types::{
     sync_info::SyncInfo,
     vote_msg::VoteMsg,
 };
+use diem_infallible::RwLock;
 use diem_logger::prelude::*;
 use diem_metrics::monitor;
 use diem_types::{
     account_address::AccountAddress, epoch_change::EpochChangeProof,
-    validator_verifier::ValidatorVerifier,
+    validator_verifier::ValidatorVerifier, PeerId,
 };
 use futures::{channel::oneshot, stream::select, SinkExt, Stream, StreamExt};
-use network::protocols::{network::Event, rpc::error::RpcError};
+use network::protocols::{
+    network::Event, rpc::error::RpcError, wire::handshake::v1::SupportedProtocols,
+};
 use std::{
+    collections::HashMap,
     mem::{discriminant, Discriminant},
+    sync::Arc,
     time::Duration,
 };
 
@@ -137,6 +142,27 @@ impl NetworkSender {
         }
     }
 
+    /// Tries to send msg to given recipients.
+    pub async fn send(&self, msg: ConsensusMsg, recipients: Vec<Author>) {
+        let mut network_sender = self.network_sender.clone();
+        let mut self_sender = self.self_sender.clone();
+        for peer in recipients {
+            if self.author == peer {
+                let self_msg = Event::Message(self.author, msg.clone());
+                if let Err(err) = self_sender.send(self_msg).await {
+                    error!(error = ?err, "Error delivering a self msg");
+                }
+                continue;
+            }
+            if let Err(e) = network_sender.send_to(peer, msg.clone()) {
+                error!(
+                    remote_peer = peer,
+                    error = ?e, "Failed to send a msg to peer",
+                );
+            }
+        }
+    }
+
     /// Sends the vote to the chosen recipients (typically that would be the recipients that
     /// we believe could serve as proposers in the next round). The recipients on the receiving
     /// end are going to be notified about a new vote in the vote queue.
@@ -146,51 +172,21 @@ impl NetworkSender {
     /// out. It does not give indication about when the message is delivered to the recipients,
     /// as well as there is no indication about the network failures.
     pub async fn send_vote(&self, vote_msg: VoteMsg, recipients: Vec<Author>) {
-        let mut network_sender = self.network_sender.clone();
-        let mut self_sender = self.self_sender.clone();
         let msg = ConsensusMsg::VoteMsg(Box::new(vote_msg));
-        for peer in recipients {
-            if self.author == peer {
-                let self_msg = Event::Message(self.author, msg.clone());
-                if let Err(err) = self_sender.send(self_msg).await {
-                    error!(error = ?err, "Error delivering a self vote");
-                }
-                continue;
-            }
-            if let Err(e) = network_sender.send_to(peer, msg.clone()) {
-                error!(
-                    remote_peer = peer,
-                    error = ?e, "Failed to send a vote to peer",
-                );
-            }
-        }
+        self.send(msg, recipients).await
     }
 
     /// Sends the given sync info to the given author.
     /// The future is fulfilled as soon as the message is added to the internal network channel
     /// (does not indicate whether the message is delivered or sent out).
-    pub fn send_sync_info(&self, sync_info: SyncInfo, recipient: Author) {
+    pub async fn send_sync_info(&self, sync_info: SyncInfo, recipient: Author) {
         let msg = ConsensusMsg::SyncInfo(Box::new(sync_info));
-        let mut network_sender = self.network_sender.clone();
-        if let Err(e) = network_sender.send_to(recipient, msg) {
-            warn!(
-                remote_peer = recipient,
-                error = "Failed to send a sync info msg to peer {:?}",
-                "{:?}",
-                e
-            );
-        }
+        self.send(msg, vec![recipient]).await
     }
 
     pub async fn notify_epoch_change(&mut self, proof: EpochChangeProof) {
         let msg = ConsensusMsg::EpochChangeProof(Box::new(proof));
-        let self_msg = Event::Message(self.author, msg);
-        if let Err(e) = self.self_sender.send(self_msg).await {
-            warn!(
-                error = "Failed to notify to self an epoch change",
-                "{:?}", e
-            );
-        }
+        self.send(msg, vec![self.author]).await
     }
 }
 
@@ -201,6 +197,7 @@ pub struct NetworkTask {
     >,
     block_retrieval_tx: diem_channel::Sender<AccountAddress, IncomingBlockRetrievalRequest>,
     all_events: Box<dyn Stream<Item = Event<ConsensusMsg>> + Send + Unpin>,
+    connections: Arc<RwLock<HashMap<PeerId, SupportedProtocols>>>,
 }
 
 impl NetworkTask {
@@ -208,6 +205,7 @@ impl NetworkTask {
     pub fn new(
         network_events: ConsensusNetworkEvents,
         self_receiver: channel::Receiver<Event<ConsensusMsg>>,
+        connections: Arc<RwLock<HashMap<PeerId, SupportedProtocols>>>,
     ) -> (NetworkTask, NetworkReceivers) {
         let (consensus_messages_tx, consensus_messages) =
             diem_channel::new(QueueStyle::LIFO, 1, Some(&counters::CONSENSUS_CHANNEL_MSGS));
@@ -222,6 +220,7 @@ impl NetworkTask {
                 consensus_messages_tx,
                 block_retrieval_tx,
                 all_events,
+                connections,
             },
             NetworkReceivers {
                 consensus_messages,
@@ -275,9 +274,13 @@ impl NetworkTask {
                 },
                 Event::NewPeer(metadata) => {
                     debug!(remote_peer = metadata.remote_peer_id, "Peer connected");
+                    self.connections
+                        .write()
+                        .insert(metadata.remote_peer_id, metadata.application_protocols);
                 }
                 Event::LostPeer(metadata) => {
                     debug!(remote_peer = metadata.remote_peer_id, "Peer disconnected");
+                    self.connections.write().remove(&metadata.remote_peer_id);
                 }
             }
         }

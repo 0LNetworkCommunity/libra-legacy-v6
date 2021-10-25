@@ -13,9 +13,6 @@ publish = false
 anyhow = "1.0.38"
 once_cell = "1.7.2"
 rand = "0.8.3"
-# //////// 0L ////////
-hex = "0.4"
-serde = { version = "1.0.116", features = ["rc"], default-features = false }
 
 bytecode-verifier = { path = "../../bytecode-verifier" }
 bcs = "0.1.2"
@@ -24,6 +21,7 @@ diem-crypto = { path = "../../../crypto/crypto" }
 diem-state-view = { path = "../../../storage/state-view" }
 diem-types = { path = "../../../types" }
 diem-workspace-hack = { path = "../../../common/workspace-hack" }
+move-bytecode-utils = { path = "../move-bytecode-utils" }
 move-core-types = { path = "../../move-core/types" }
 move-vm-runtime = { path = "../../move-vm/runtime"}
 move-vm-types = { path = "../../move-vm/types" }
@@ -33,8 +31,10 @@ diem-transaction-builder = { path = "../../../sdk/transaction-builder"}
 move-binary-format = { path = "../../move-binary-format" }
 diem-vm = { path = "../../diem-vm" }
 
+# //////// 0L ////////
+hex = "0.4"
+serde = { version = "1.0.116", features = ["rc"], default-features = false }
 ol-types = {path = "../../../ol/types"}
-
 
 [dev-dependencies]
 proptest = "1.0.0"

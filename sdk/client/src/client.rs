@@ -11,8 +11,10 @@ use crate::{
     error::WaitForTransactionError,
     move_deserialize::{self, Event},
     views::{
-        AccountStateWithProofView, AccountView, CurrencyInfoView, EventView, EventWithProofView,
-        MetadataView, StateProofView, TransactionView, TransactionsWithProofsView,
+        AccountStateWithProofView, AccountTransactionsWithProofView, AccountView,
+        AccumulatorConsistencyProofView, CurrencyInfoView, EventByVersionWithProofView, EventView,
+        EventWithProofView, MetadataView, StateProofView, TransactionView,
+        TransactionsWithProofsView,
     },
     Error, Result, Retry, State,
 };
@@ -93,8 +95,8 @@ impl Client {
         timeout: Option<Duration>,
         delay: Option<Duration>,
     ) -> Result<Response<TransactionView>, WaitForTransactionError> {
-        const DEFAULT_TIMEOUT: Duration = Duration::from_secs(5);
-        const DEFAULT_DELAY: Duration = Duration::from_millis(50);
+        const DEFAULT_TIMEOUT: Duration = Duration::from_secs(60);
+        const DEFAULT_DELAY: Duration = Duration::from_millis(500);
 
         let start = std::time::Instant::now();
         while start.elapsed() < timeout.unwrap_or(DEFAULT_TIMEOUT) {
@@ -235,6 +237,18 @@ impl Client {
             .await
     }
 
+    pub async fn get_accumulator_consistency_proof(
+        &self,
+        client_known_version: Option<u64>,
+        ledger_version: Option<u64>,
+    ) -> Result<Response<AccumulatorConsistencyProofView>> {
+        self.send(MethodRequest::get_accumulator_consistency_proof(
+            client_known_version,
+            ledger_version,
+        ))
+        .await
+    }
+
     pub async fn get_account_state_with_proof(
         &self,
         address: AccountAddress,
@@ -263,6 +277,24 @@ impl Client {
         .await
     }
 
+    pub async fn get_account_transactions_with_proofs(
+        &self,
+        address: AccountAddress,
+        start_seq: u64,
+        limit: u64,
+        include_events: bool,
+        ledger_version: Option<u64>,
+    ) -> Result<Response<AccountTransactionsWithProofView>> {
+        self.send(MethodRequest::get_account_transactions_with_proofs(
+            address,
+            start_seq,
+            limit,
+            include_events,
+            ledger_version,
+        ))
+        .await
+    }
+
     pub async fn get_events_with_proofs(
         &self,
         key: EventKey,
@@ -270,6 +302,15 @@ impl Client {
         limit: u64,
     ) -> Result<Response<Vec<EventWithProofView>>> {
         self.send(MethodRequest::get_events_with_proofs(key, start_seq, limit))
+            .await
+    }
+
+    pub async fn get_event_by_version_with_proof(
+        &self,
+        key: EventKey,
+        version: Option<u64>,
+    ) -> Result<Response<EventByVersionWithProofView>> {
+        self.send(MethodRequest::get_event_by_version_with_proof(key, version))
             .await
     }
 
@@ -326,9 +367,10 @@ impl Client {
         request: &JsonRpcRequest,
         ignore_stale: bool,
     ) -> Result<Response<T>> {
+        let req_state = self.last_known_state();
         let resp: diem_json_rpc_types::response::JsonRpcResponse = self.send_impl(&request).await?;
 
-        let (id, state, result) = validate(&self.state, &resp, ignore_stale)?;
+        let (id, state, result) = validate(&self.state, req_state.as_ref(), &resp, ignore_stale)?;
 
         if request.id() != id {
             return Err(Error::rpc_response("invalid response id"));
@@ -343,11 +385,12 @@ impl Client {
         requests: Vec<MethodRequest>,
     ) -> Result<Vec<Result<Response<MethodResponse>>>> {
         let request: Vec<JsonRpcRequest> = requests.into_iter().map(JsonRpcRequest::new).collect();
+        let req_state = self.last_known_state();
         let resp: BatchResponse = self.send_impl(&request).await?;
 
         let resp = resp.success()?;
 
-        validate_batch(&self.state, &request, resp)
+        validate_batch(&self.state, req_state.as_ref(), &request, resp)
     }
 
     async fn send_impl<S: Serialize, T: DeserializeOwned>(&self, payload: &S) -> Result<T> {

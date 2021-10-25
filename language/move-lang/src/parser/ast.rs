@@ -3,6 +3,7 @@
 
 use crate::shared::{ast_debug::*, AddressBytes, Identifier, Name, TName, ADDRESS_LENGTH};
 use move_ir_types::location::*;
+use move_symbol_pool::Symbol;
 use std::{fmt, hash::Hash};
 
 macro_rules! new_name {
@@ -189,12 +190,19 @@ new_name!(StructName);
 pub type ResourceLoc = Option<Loc>;
 
 #[derive(Debug, PartialEq, Clone)]
+pub struct StructTypeParameter {
+    pub is_phantom: bool,
+    pub name: Name,
+    pub constraints: Vec<Ability>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub struct StructDefinition {
     pub attributes: Vec<Attributes>,
     pub loc: Loc,
     pub abilities: Vec<Ability>,
     pub name: StructName,
-    pub type_parameters: Vec<(Name, Vec<Ability>)>,
+    pub type_parameters: Vec<StructTypeParameter>,
     pub fields: StructFields,
 }
 
@@ -324,6 +332,7 @@ pub type SpecApplyFragment = Spanned<SpecApplyFragment_>;
 pub enum SpecBlockMember_ {
     Condition {
         kind: SpecConditionKind,
+        type_parameters: Vec<(Name, Vec<Ability>)>,
         properties: Vec<PragmaProperty>,
         exp: Exp,
         additional_exps: Vec<Exp>,
@@ -495,6 +504,8 @@ pub enum BinOp_ {
     // Bool ops
     // ==>
     Implies, // spec only
+    // <==>
+    Iff,
     // &&
     And,
     // ||
@@ -687,7 +698,7 @@ impl LeadingNameAccess_ {
 }
 
 impl Definition {
-    pub fn file(&self) -> &'static str {
+    pub fn file(&self) -> Symbol {
         match self {
             Definition::Module(m) => m.loc.file(),
             Definition::Address(a) => a.loc.file(),
@@ -783,6 +794,7 @@ impl BinOp_ {
     pub const LE: &'static str = "<=";
     pub const GE: &'static str = ">=";
     pub const IMPLIES: &'static str = "==>";
+    pub const IFF: &'static str = "<==>";
     pub const RANGE: &'static str = "..";
 
     pub fn symbol(&self) -> &'static str {
@@ -807,6 +819,7 @@ impl BinOp_ {
             B::Le => B::LE,
             B::Ge => B::GE,
             B::Implies => B::IMPLIES,
+            B::Iff => B::IFF,
             B::Range => B::RANGE,
         }
     }
@@ -827,13 +840,14 @@ impl BinOp_ {
             | B::Le
             | B::Ge
             | B::Range
-            | B::Implies => true,
+            | B::Implies
+            | B::Iff => true,
         }
     }
 
     pub fn is_spec_only(&self) -> bool {
         use BinOp_ as B;
-        matches!(self, B::Range | B::Implies)
+        matches!(self, B::Range | B::Implies | B::Iff)
     }
 }
 
@@ -1235,11 +1249,13 @@ impl AstDebug for SpecBlockMember_ {
         match self {
             SpecBlockMember_::Condition {
                 kind,
+                type_parameters,
                 properties: _,
                 exp,
                 additional_exps,
             } => {
                 kind.ast_debug(w);
+                type_parameters.ast_debug(w);
                 exp.ast_debug(w);
                 w.list(additional_exps, ",", |w, e| {
                     e.ast_debug(w);
@@ -1451,13 +1467,42 @@ impl AstDebug for (Name, Vec<Ability>) {
     fn ast_debug(&self, w: &mut AstWriter) {
         let (n, abilities) = self;
         w.write(&n.value);
-        if !abilities.is_empty() {
-            w.write(": ");
-            w.list(abilities, "+", |w, ab| {
-                ab.ast_debug(w);
-                false
-            })
+        ability_constraints_ast_debug(w, abilities);
+    }
+}
+
+impl AstDebug for Vec<StructTypeParameter> {
+    fn ast_debug(&self, w: &mut AstWriter) {
+        if !self.is_empty() {
+            w.write("<");
+            w.comma(self, |w, tp| tp.ast_debug(w));
+            w.write(">");
         }
+    }
+}
+
+impl AstDebug for StructTypeParameter {
+    fn ast_debug(&self, w: &mut AstWriter) {
+        let Self {
+            is_phantom,
+            name,
+            constraints,
+        } = self;
+        if *is_phantom {
+            w.write("phantom ");
+        }
+        w.write(&name.value);
+        ability_constraints_ast_debug(w, &constraints);
+    }
+}
+
+fn ability_constraints_ast_debug(w: &mut AstWriter, abilities: &[Ability]) {
+    if !abilities.is_empty() {
+        w.write(": ");
+        w.list(abilities, "+", |w, ab| {
+            ab.ast_debug(w);
+            false
+        })
     }
 }
 

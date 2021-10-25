@@ -17,45 +17,35 @@ use ir_to_bytecode::{
 use move_binary_format::file_format::{CompiledModule, CompiledScript};
 use move_core_types::account_address::AccountAddress;
 use move_ir_types::location::Loc;
-use std::mem;
+use move_symbol_pool::Symbol;
 
 /// An API for the compiler. Supports setting custom options.
 #[derive(Clone, Debug)]
-pub struct Compiler {
+pub struct Compiler<'a> {
     /// The address used as the sender for the compiler.
     pub address: AccountAddress,
-    /// Skip stdlib dependencies if true.
-    pub skip_stdlib_deps: bool,
     /// Extra dependencies to compile with.
-    pub extra_deps: Vec<CompiledModule>,
+    pub deps: Vec<&'a CompiledModule>,
 }
 
-impl Compiler {
-    pub fn new(
-        address: AccountAddress,
-        skip_stdlib_deps: bool,
-        extra_deps: Vec<CompiledModule>,
-    ) -> Self {
-        Self {
-            address,
-            skip_stdlib_deps,
-            extra_deps,
-        }
+impl<'a> Compiler<'a> {
+    pub fn new(address: AccountAddress, deps: Vec<&'a CompiledModule>) -> Self {
+        Self { address, deps }
     }
 
     /// Compiles into a `CompiledScript` where the bytecode hasn't been serialized.
     pub fn into_compiled_script_and_source_map(
-        mut self,
-        file_name: &str,
+        self,
+        file_name: Symbol,
         code: &str,
     ) -> Result<(CompiledScript, SourceMap<Loc>)> {
-        let (compiled_script, source_map, _) = self.compile_script(file_name, code)?;
+        let (compiled_script, source_map) = self.compile_script(file_name, code)?;
         Ok((compiled_script, source_map))
     }
 
     /// Compiles the script into a serialized form.
-    pub fn into_script_blob(mut self, file_name: &str, code: &str) -> Result<Vec<u8>> {
-        let compiled_script = self.compile_script(file_name, code)?.0;
+    pub fn into_script_blob(self, file_name: &str, code: &str) -> Result<Vec<u8>> {
+        let compiled_script = self.compile_script(Symbol::from(file_name), code)?.0;
 
         let mut serialized_script = Vec::<u8>::new();
         compiled_script.serialize(&mut serialized_script)?;
@@ -63,13 +53,13 @@ impl Compiler {
     }
 
     /// Compiles the module.
-    pub fn into_compiled_module(mut self, file_name: &str, code: &str) -> Result<CompiledModule> {
-        Ok(self.compile_mod(file_name, code)?.0)
+    pub fn into_compiled_module(self, file_name: &str, code: &str) -> Result<CompiledModule> {
+        Ok(self.compile_mod(Symbol::from(file_name), code)?.0)
     }
 
     /// Compiles the module into a serialized form.
-    pub fn into_module_blob(mut self, file_name: &str, code: &str) -> Result<Vec<u8>> {
-        let compiled_module = self.compile_mod(file_name, code)?.0;
+    pub fn into_module_blob(self, file_name: &str, code: &str) -> Result<Vec<u8>> {
+        let compiled_module = self.compile_mod(Symbol::from(file_name), code)?.0;
 
         let mut serialized_module = Vec::<u8>::new();
         compiled_module.serialize(&mut serialized_module)?;
@@ -77,35 +67,24 @@ impl Compiler {
     }
 
     fn compile_script(
-        &mut self,
-        file_name: &str,
+        self,
+        file_name: Symbol,
         code: &str,
-    ) -> Result<(CompiledScript, SourceMap<Loc>, Vec<CompiledModule>)> {
+    ) -> Result<(CompiledScript, SourceMap<Loc>)> {
         let parsed_script = parse_script(file_name, code)?;
-        let deps = self.deps();
-        let (compiled_script, source_map) = compile_script(None, parsed_script, &deps)?;
-        Ok((compiled_script, source_map, deps))
+        let (compiled_script, source_map) =
+            compile_script(None, parsed_script, self.deps.iter().map(|d| &**d))?;
+        Ok((compiled_script, source_map))
     }
 
     fn compile_mod(
-        &mut self,
-        file_name: &str,
+        self,
+        file_name: Symbol,
         code: &str,
-    ) -> Result<(CompiledModule, SourceMap<Loc>, Vec<CompiledModule>)> {
+    ) -> Result<(CompiledModule, SourceMap<Loc>)> {
         let parsed_module = parse_module(file_name, code)?;
-        let deps = self.deps();
-        let (compiled_module, source_map) = compile_module(self.address, parsed_module, &deps)?;
-        Ok((compiled_module, source_map, deps))
-    }
-
-    fn deps(&mut self) -> Vec<CompiledModule> {
-        let extra_deps = mem::replace(&mut self.extra_deps, vec![]);
-        if self.skip_stdlib_deps {
-            extra_deps
-        } else {
-            let mut deps: Vec<CompiledModule> = diem_framework_releases::current_modules().to_vec();
-            deps.extend(extra_deps);
-            deps
-        }
+        let (compiled_module, source_map) =
+            compile_module(self.address, parsed_module, self.deps.iter().map(|d| &**d))?;
+        Ok((compiled_module, source_map))
     }
 }

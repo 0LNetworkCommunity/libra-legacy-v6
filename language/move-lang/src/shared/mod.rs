@@ -1,7 +1,10 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{command_line as cli, errors::Errors};
+use crate::{
+    command_line as cli,
+    diagnostics::{Diagnostic, Diagnostics},
+};
 use move_ir_types::location::*;
 use petgraph::{algo::astar as petgraph_astar, graphmap::DiGraphMap};
 use std::{
@@ -77,9 +80,11 @@ impl AddressBytes {
             Err(_) => {
                 // TODO the kind of error is in an unstable nightly API
                 // But currently the only way this should fail is if the number is too long
-                return Err("Invalid address literal. The numeric value is too large. \
-                    The maximum size is 16 bytes"
-                    .to_owned());
+                return Err(
+                    "Invalid address literal. The numeric value is too large. The maximum size is \
+                     16 bytes"
+                        .to_owned(),
+                );
             }
         };
         Ok(AddressBytes(decoded))
@@ -226,7 +231,7 @@ pub fn shortest_cycle<'a, T: Ord + Hash>(
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CompilationEnv {
     flags: Flags,
-    errors: Errors,
+    diags: Diagnostics,
     // TODO(tzakian): Remove the global counter and use this counter instead
     // pub counter: u64,
 }
@@ -235,30 +240,29 @@ impl CompilationEnv {
     pub fn new(flags: Flags) -> Self {
         Self {
             flags,
-            errors: Vec::new(),
+            diags: Diagnostics::new(),
         }
     }
 
-    pub fn add_error(&mut self, e: Vec<(Loc, impl Into<String>)>) {
-        self.errors
-            .push(e.into_iter().map(|(loc, msg)| (loc, msg.into())).collect())
+    pub fn add_diag(&mut self, diag: Diagnostic) {
+        self.diags.add(diag)
     }
 
-    pub fn add_errors(&mut self, es: Errors) {
-        self.errors.extend(es)
+    pub fn add_diags(&mut self, diags: Diagnostics) {
+        self.diags.extend(diags)
     }
 
-    pub fn has_errors(&self) -> bool {
-        !self.errors.is_empty()
+    pub fn has_diags(&self) -> bool {
+        !self.diags.is_empty()
     }
 
-    pub fn count_errors(&self) -> usize {
-        self.errors.len()
+    pub fn count_diags(&self) -> usize {
+        self.diags.len()
     }
 
-    pub fn check_errors(&mut self) -> Result<(), Errors> {
-        if self.has_errors() {
-            Err(std::mem::take(&mut self.errors))
+    pub fn check_diags(&mut self) -> Result<(), Diagnostics> {
+        if self.has_diags() {
+            Err(std::mem::take(&mut self.diags))
         } else {
             Ok(())
         }
@@ -343,6 +347,10 @@ impl Flags {
             no_shadow: !sources_shadow_deps,
             ..self
         }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self == &Self::empty()
     }
 
     pub fn is_testing(&self) -> bool {

@@ -8,7 +8,11 @@ use bytecode_verifier::{dependencies, verify_module, verify_script};
 use compiler::{util, Compiler};
 use ir_to_bytecode::parser::{parse_module, parse_script};
 use move_binary_format::{errors::VMError, file_format::CompiledModule};
+use move_command_line_common::files::{
+    MOVE_COMPILED_EXTENSION, MOVE_IR_EXTENSION, SOURCE_MAP_EXTENSION,
+};
 use move_core_types::account_address::AccountAddress;
+use move_symbol_pool::Symbol;
 use std::{
     fs,
     io::Write,
@@ -25,9 +29,6 @@ struct Args {
     /// Account address used for publishing
     #[structopt(short = "a", long = "address")]
     pub address: String,
-    /// Do not automatically compile stdlib dependencies
-    #[structopt(long = "no-stdlib")]
-    pub no_stdlib: bool,
     /// Do not automatically run the bytecode verifier
     #[structopt(long = "no-verify")]
     pub no_verify: bool,
@@ -35,10 +36,10 @@ struct Args {
     #[structopt(parse(from_os_str))]
     pub source_path: PathBuf,
     /// Instead of compiling the source, emit a dependency list of the compiled source
-    #[structopt(short = "-l", long = "list-dependencies")]
+    #[structopt(short = "l", long = "list-dependencies")]
     pub list_dependencies: bool,
     /// Path to the list of modules that we want to link with
-    #[structopt(long = "deps")]
+    #[structopt(short = "d", long = "deps")]
     pub deps_path: Option<String>,
 
     #[structopt(long = "src-map")]
@@ -79,9 +80,9 @@ fn main() {
         }
     };
     let source_path = Path::new(&args.source_path);
-    let mvir_extension = "mvir";
-    let mv_extension = "mv";
-    let source_map_extension = "mvsm";
+    let mvir_extension = MOVE_IR_EXTENSION;
+    let mv_extension = MOVE_COMPILED_EXTENSION;
+    let source_map_extension = SOURCE_MAP_EXTENSION;
     let extension = source_path
         .extension()
         .expect("Missing file extension for input source file");
@@ -93,7 +94,7 @@ fn main() {
         std::process::exit(1);
     }
 
-    let file_name = args.source_path.as_path().as_os_str().to_str().unwrap();
+    let file_name = Symbol::from(args.source_path.as_path().as_os_str().to_str().unwrap());
 
     if args.list_dependencies {
         let source = fs::read_to_string(args.source_path.clone()).expect("Unable to read file");
@@ -111,7 +112,7 @@ fn main() {
         return;
     }
 
-    let deps = {
+    let deps_owned = {
         if let Some(path) = args.deps_path {
             let deps = fs::read_to_string(path).expect("Unable to read dependency file");
             let deps_list: Vec<Vec<u8>> =
@@ -125,20 +126,15 @@ fn main() {
                     module
                 })
                 .collect()
-        } else if args.no_stdlib {
-            vec![]
         } else {
-            diem_framework_releases::current_modules().to_vec()
+            vec![]
         }
     };
+    let deps = deps_owned.iter().collect::<Vec<_>>();
 
     if !args.module_input {
         let source = fs::read_to_string(args.source_path.clone()).expect("Unable to read file");
-        let compiler = Compiler {
-            address,
-            skip_stdlib_deps: args.no_stdlib,
-            extra_deps: deps,
-        };
+        let compiler = Compiler { address, deps };
         let (compiled_script, source_map) = compiler
             .into_compiled_script_and_source_map(file_name, &source)
             .expect("Failed to compile script");
@@ -161,9 +157,9 @@ fn main() {
         write_output(&source_path.with_extension(mv_extension), &script);
     } else {
         let (compiled_module, source_map) =
-            util::do_compile_module(&args.source_path, address, &deps);
+            util::do_compile_module(&args.source_path, address, &deps_owned);
         let compiled_module = if !args.no_verify {
-            do_verify_module(compiled_module, &deps)
+            do_verify_module(compiled_module, &deps_owned)
         } else {
             compiled_module
         };

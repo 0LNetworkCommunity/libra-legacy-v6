@@ -1,0 +1,20 @@
+[package]
+name = "diem-resource-viewer"
+version = "0.1.0"
+authors = ["Diem Association <opensource@diem.com>"]
+description = "Diem resource viewer"
+repository = "https://github.com/diem/diem"
+homepage = "https://diem.com"
+license = "Apache-2.0"
+publish = false
+edition = "2018"
+
+[dependencies]
+diem-workspace-hack = { path = "../../../common/workspace-hack" }
+resource-viewer = { path = "../resource-viewer" }
+diem-types = { path = "../../../types"  }
+move-core-types = { path = "../../move-core/types" }
+move-vm-runtime = { path = "../../move-vm/runtime" }
+move-binary-format = { path = "../../move-binary-format" }
+
+anyhow = "1.0.38"

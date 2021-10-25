@@ -66,11 +66,10 @@ fun Counter::call_increment1($t0|s: &mut Counter::S) {
      var $t1: &mut Counter::S
      var $t2: &mut u64
      # Accesses:
+     # Formal(0): Read
      # Formal(0)/f: ReadWrite
      #
      # Locals:
-     # Formal(0): Formal(0)
-     # Formal(0)/f: Formal(0)/f
      #
   0: $t1 := move($t0)
   1: $t2 := borrow_field<Counter::S>.f($t1)
@@ -84,10 +83,11 @@ fun Counter::call_increment2($t0|a: address) {
      var $t1: address
      var $t2: &mut Counter::S
      # Accesses:
+     # Formal(0): Read
+     # Formal(0)/0x1::Counter::S: Read
      # Formal(0)/0x1::Counter::S/f: ReadWrite
      #
      # Locals:
-     # Formal(0): Formal(0)
      #
   0: $t1 := copy($t0)
   1: $t2 := borrow_global<Counter::S>($t1)
@@ -128,11 +128,10 @@ fun Counter::increment2($t0|s: &mut Counter::S) {
      var $t6: &mut Counter::S
      var $t7: &mut u64
      # Accesses:
+     # Formal(0): Read
      # Formal(0)/f: ReadWrite
      #
      # Locals:
-     # Formal(0): Formal(0)
-     # Formal(0)/f: Formal(0)/f
      #
   0: $t1 := copy($t0)
   1: $t2 := borrow_field<Counter::S>.f($t1)

@@ -6,9 +6,9 @@
 //! - All signer arguments are occur before non-signer arguments
 //! - All types non-signer arguments have a type that is valid for constants
 //! - Has an empty return type
-use crate::binary_views::BinaryIndexedView;
 use move_binary_format::{
     access::ModuleAccess,
+    binary_views::BinaryIndexedView,
     errors::{Location, PartialVMError, PartialVMResult, VMResult},
     file_format::{
         CompiledModule, CompiledScript, SignatureIndex, SignatureToken, TableIndex, Visibility,
@@ -21,7 +21,7 @@ use move_core_types::{identifier::IdentStr, vm_status::StatusCode};
 /// This function checks the extra requirements on the signature of the main function of a script.
 pub fn verify_script(script: &CompiledScript) -> VMResult<()> {
     let resolver = &BinaryIndexedView::Script(script);
-    let parameters = script.as_inner().parameters;
+    let parameters = script.parameters;
     let return_type_opt = None;
     verify_main_signature_impl(resolver, parameters, return_type_opt)
         .map_err(|e| e.finish(Location::Script))

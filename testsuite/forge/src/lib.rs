@@ -14,5 +14,8 @@ pub use runner::*;
 mod backend;
 pub use backend::*;
 
-mod tx_emitter;
-pub use tx_emitter::*;
+mod txn_emitter;
+pub use txn_emitter::*;
+
+mod report;
+pub use report::*;

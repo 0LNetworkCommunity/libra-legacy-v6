@@ -16,7 +16,7 @@ use diem_metrics::metric_server;
 use diem_time_service::TimeService;
 use diem_types::{
     account_config::diem_root_address, account_state::AccountState, chain_id::ChainId,
-    move_resource::MoveStorage, PeerId,
+    move_resource::MoveStorage,
 };
 use diem_vm::DiemVM;
 use diemdb::DiemDB;
@@ -73,17 +73,6 @@ pub fn start(config: &NodeConfig, log_file: Option<PathBuf>) {
     // Let's now log some important information, since the logger is set up
     info!(config = config, "Loaded DiemNode config");
 
-    if config.metrics.enabled {
-        for network in &config.full_node_networks {
-            let peer_id = network.peer_id();
-            setup_metrics(peer_id, &config);
-        }
-
-        if let Some(network) = config.validator_network.as_ref() {
-            let peer_id = network.peer_id();
-            setup_metrics(peer_id, &config);
-        }
-    }
     if fail::has_failpoints() {
         warn!("Failpoints is enabled");
         if let Some(failpoints) = &config.failpoints {
@@ -103,15 +92,10 @@ pub fn start(config: &NodeConfig, log_file: Option<PathBuf>) {
     }
 }
 
-fn setup_metrics(peer_id: PeerId, config: &NodeConfig) {
-    diem_metrics::dump_all_metrics_to_file_periodically(
-        &config.metrics.dir(),
-        &format!("{}.metrics", peer_id),
-        config.metrics.collection_interval_ms,
-    );
-}
-
-pub fn load_test_environment(config_path: Option<PathBuf>, random_ports: bool) {
+pub fn load_test_environment<R>(config_path: Option<PathBuf>, random_ports: bool, rng: R)
+where
+    R: ::rand::RngCore + ::rand::CryptoRng,
+{
     // Either allocate a temppath or reuse the passed in path and make sure the directory exists
     let config_temp_path = diem_temppath::TempPath::new();
     let config_path = config_path.unwrap_or_else(|| config_temp_path.as_ref().to_path_buf());
@@ -126,18 +110,22 @@ pub fn load_test_environment(config_path: Option<PathBuf>, random_ports: bool) {
     maybe_config.push("validator_node_template.yaml");
     let template = NodeConfig::load_config(maybe_config)
         .unwrap_or_else(|_| NodeConfig::default_for_validator());
-    let builder =
-        diem_genesis_tool::config_builder::ValidatorBuilder::new(1, template, &config_path)
-            .randomize_first_validator_ports(random_ports);
+    let builder = diem_genesis_tool::validator_builder::ValidatorBuilder::new(
+        &config_path,
+        diem_framework_releases::current_module_blobs().to_vec(),
+    )
+    .template(template)
+    .randomize_first_validator_ports(random_ports);
     let test_config =
-        diem_genesis_tool::swarm_config::SwarmConfig::build(&builder, &config_path).unwrap();
+        diem_genesis_tool::swarm_config::SwarmConfig::build_with_rng(&builder, &config_path, rng)
+            .unwrap();
 
     // Prepare log file since we cannot automatically route logs to stderr
     let mut log_file = config_path.clone();
     log_file.push("validator.log");
 
     // Build a waypoint file so that clients / docker can grab it easily
-    let mut waypoint_file_path = config_path.clone();
+    let mut waypoint_file_path = config_path;
     waypoint_file_path.push("waypoint.txt");
     std::io::Write::write_all(
         &mut std::fs::File::create(&waypoint_file_path).unwrap(),
@@ -151,11 +139,15 @@ pub fn load_test_environment(config_path: Option<PathBuf>, random_ports: bool) {
     println!("\tConfig path: {:?}", test_config.config_files[0]);
     println!("\tDiem root key path: {:?}", test_config.diem_root_key_path);
     println!("\tWaypoint: {}", test_config.waypoint);
+    // Configure json rpc to bind on 0.0.0.0
     let mut config = NodeConfig::load(&test_config.config_files[0]).unwrap();
     config.json_rpc.address = format!("0.0.0.0:{}", config.json_rpc.address.port())
         .parse()
         .unwrap();
     println!("\tJSON-RPC endpoint: {}", config.json_rpc.address);
+    config.json_rpc.stream_rpc.enabled = true;
+    println!("\tStream-RPC enabled!");
+
     println!(
         "\tFullNode network: {}",
         config.full_node_networks[0].listen_address
@@ -321,10 +313,18 @@ pub fn setup_environment(node_config: &NodeConfig, logger: Option<Arc<Logger>>) 
         network_configs.push(network_config);
     }
 
-    let mut network_builders = Vec::new();
-
     // Instantiate every network and collect the requisite endpoints for state_sync, mempool, and consensus.
     for (idx, network_config) in network_configs.into_iter().enumerate() {
+        debug!("Creating runtime for {}", network_config.network_id);
+        let runtime = Builder::new_multi_thread()
+            .thread_name(format!("network-{}", network_config.network_id))
+            .enable_all()
+            .build()
+            .expect("Failed to start runtime. Won't be able to start networking.");
+
+        // Entering here gives us a runtime to instantiate all the pieces of the builder
+        let _enter = runtime.enter();
+
         // Perform common instantiation steps
         let mut network_builder = NetworkBuilder::create(
             chain_id,
@@ -369,30 +369,11 @@ pub fn setup_environment(node_config: &NodeConfig, logger: Option<Arc<Logger>>) 
 
         reconfig_subscriptions.append(network_builder.reconfig_subscriptions());
 
-        network_builders.push(network_builder);
-    }
-
-    // Build the configured networks.
-    for network_builder in &mut network_builders {
         let network_context = network_builder.network_context();
-        debug!("Creating runtime for {}", network_context);
-        let runtime = Builder::new_multi_thread()
-            .thread_name(format!("network-{}", network_context.network_id()))
-            .enable_all()
-            .build()
-            .expect("Failed to start runtime. Won't be able to start networking.");
         network_builder.build(runtime.handle().clone());
-        network_runtimes.push(runtime);
-        debug!(
-            "Network built for network context: {}",
-            network_builder.network_context()
-        );
-    }
-
-    // Start the configured networks.
-    // TODO:  Collect all component starts at the end of this function
-    for network_builder in &mut network_builders {
         network_builder.start();
+        debug!("Network built for network context: {}", network_context);
+        network_runtimes.push(runtime);
     }
 
     // TODO set up on-chain discovery network based on UpstreamConfig.fallback_network

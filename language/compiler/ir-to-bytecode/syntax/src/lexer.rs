@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::syntax::ParseError;
-use codespan::{ByteIndex, Span};
 use move_ir_types::location::*;
+use move_symbol_pool::Symbol;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Tok {
@@ -123,7 +123,7 @@ impl Tok {
 
 pub struct Lexer<'input> {
     pub spec_mode: bool,
-    file: &'static str,
+    file: Symbol,
     text: &'input str,
     prev_end: usize,
     cur_start: usize,
@@ -132,7 +132,7 @@ pub struct Lexer<'input> {
 }
 
 impl<'input> Lexer<'input> {
-    pub fn new(file: &'static str, s: &'input str) -> Lexer<'input> {
+    pub fn new(file: Symbol, s: &'input str) -> Lexer<'input> {
         Lexer {
             spec_mode: false, // read tokens without trailing punctuation during specs.
             file,
@@ -152,7 +152,7 @@ impl<'input> Lexer<'input> {
         &self.text[self.cur_start..self.cur_end]
     }
 
-    pub fn file_name(&self) -> &'static str {
+    pub fn file_name(&self) -> Symbol {
         self.file
     }
 
@@ -343,8 +343,8 @@ impl<'input> Lexer<'input> {
             '[' => (Tok::LSquare, 1), // for vector specs
             ']' => (Tok::RSquare, 1), // for vector specs
             _ => {
-                let idx = ByteIndex(start_offset as u32);
-                let location = Loc::new(self.file_name(), Span::new(idx, idx));
+                let idx = start_offset as u32;
+                let location = Loc::new(self.file_name(), idx, idx);
                 return Err(ParseError::InvalidToken { location });
             }
         };

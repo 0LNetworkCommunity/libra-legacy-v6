@@ -22,7 +22,7 @@ diem-state-view = { path = "../../../storage/state-view" }
 diem-types = { path = "../../../types", features = ["fuzzing"] }
 diem-writeset-generator = { path = "../../diem-tools/writeset-transaction-generator" }
 move-core-types = { path = "../../move-core/types" }
-move-vm-runtime = { path = "../../move-vm/runtime", features = ["debug_module"] }
+move-vm-runtime = { path = "../../move-vm/runtime" }
 move-vm-types = { path = "../../move-vm/types" }
 move-binary-format = { path = "../../move-binary-format" }
 vm-genesis = { path = "../../tools/vm-genesis" }
@@ -31,14 +31,10 @@ proptest = "1.0.0"
 proptest-derive = "0.3.0"
 diem-proptest-helpers = { path = "../../../common/proptest-helpers" }
 diem-config = { path = "../../../config" }
-diem-framework = { path = "../../diem-framework" }
 diem-framework-releases = { path = "../../diem-framework/releases" }
 diem-workspace-hack = { path = "../../../common/workspace-hack" }
 diem-transaction-builder = { path = "../../../sdk/transaction-builder" }
+move-command-line-common = { path = "../../move-command-line-common" }
 hex = "0.4.3"
-structopt = "0.3.21"
-walkdir = "2.3.1"
-bytecode-interpreter = { path = "../../move-prover/interpreter" }
-move-model = { path = "../../move-model" }
 # //////// 0L ////////
 include_dir = "0.6.0"

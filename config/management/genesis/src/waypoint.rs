@@ -40,13 +40,7 @@ impl CreateWaypoint {
 
         let genesis = genesis_helper.execute()?;
 
-        let path = TempPath::new();
-        let diemdb = DiemDB::open(&path, false, None, RocksdbConfig::default())
-            .map_err(|e| Error::UnexpectedError(e.to_string()))?;
-        let db_rw = DbReaderWriter::new(diemdb);
-
-        db_bootstrapper::generate_waypoint::<DiemVM>(&db_rw, &genesis)
-            .map_err(|e| Error::UnexpectedError(e.to_string()))
+        create_genesis_waypoint(&genesis)
     }
 
     //////// 0L ////////
@@ -59,4 +53,14 @@ impl CreateWaypoint {
       db_bootstrapper::generate_waypoint::<DiemVM>(&db_rw, &gen_tx)
           .map_err(|e| Error::UnexpectedError(e.to_string()))
     }
+}
+
+pub fn create_genesis_waypoint(genesis: &Transaction) -> Result<Waypoint, Error> {
+    let path = TempPath::new();
+    let diemdb = DiemDB::open(&path, false, None, RocksdbConfig::default())
+        .map_err(|e| Error::UnexpectedError(e.to_string()))?;
+    let db_rw = DbReaderWriter::new(diemdb);
+
+    db_bootstrapper::generate_waypoint::<DiemVM>(&db_rw, &genesis)
+        .map_err(|e| Error::UnexpectedError(e.to_string()))
 }

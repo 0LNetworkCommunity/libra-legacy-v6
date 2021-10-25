@@ -1,10 +1,10 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::logging::AdapterLogSchema;
 use diem_logger::prelude::*;
 use move_binary_format::errors::VMError;
 use move_core_types::vm_status::{known_locations, StatusCode, VMStatus};
-use move_vm_runtime::logging::LogContext;
 
 /// Error codes that can be emitted by the prologue. These have special significance to the VM when
 /// they are raised during the prologue.
@@ -41,10 +41,9 @@ fn error_split(code: u64) -> (u8, u64) {
 /// `UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION`
 pub fn convert_prologue_error(
     error: VMError,
-    log_context: &impl LogContext,
+    log_context: &AdapterLogSchema,
 ) -> Result<(), VMStatus> {
     let status = error.into_vm_status();
-
     Err(match status {
         VMStatus::Executed => VMStatus::Executed,
         VMStatus::MoveAbort(location, code)
@@ -99,6 +98,7 @@ pub fn convert_prologue_error(
                     );
 
                     // TODO: Improve error reporting for devs https://github.com/OLSF/libra/issues/760
+                    
                     return Err(VMStatus::Error(
                         StatusCode::UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION,
                     ));
@@ -122,10 +122,9 @@ pub fn convert_prologue_error(
 /// `UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION`
 pub fn convert_epilogue_error(
     error: VMError,
-    log_context: &impl LogContext,
+    log_context: &AdapterLogSchema,
 ) -> Result<(), VMStatus> {
     let status = error.into_vm_status();
-
     Err(match status {
         VMStatus::Executed => VMStatus::Executed,
         VMStatus::MoveAbort(location, code)
@@ -171,10 +170,9 @@ pub fn convert_epilogue_error(
 pub fn expect_only_successful_execution(
     error: VMError,
     function_name: &str,
-    log_context: &impl LogContext,
+    log_context: &AdapterLogSchema,
 ) -> Result<(), VMStatus> {
     let status = error.into_vm_status();
-
     Err(match status {
         VMStatus::Executed => VMStatus::Executed,
 
@@ -186,6 +184,7 @@ pub fn expect_only_successful_execution(
                 function_name,
                 status,
             );
+
             // TODO: Improve error reporting for devs https://github.com/OLSF/libra/issues/760
 
             VMStatus::Error(StatusCode::UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION)

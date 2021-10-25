@@ -1,37 +1,41 @@
 //! account: bob, 0,0, address
 //! account: validatorvivian, 10000000XUS, 0, validator
 
-//! new-transaction
-script {
-use 0x1::DesignatedDealer;
-use 0x1::XUS::XUS;
-fun main(account: signer) {
-    let account = &account;
-    DesignatedDealer::publish_designated_dealer_credential<XUS>(
-        account, account, false
-    );
-}
-}
-// check: "Keep(ABORTED { code: 258,"
+// TODO: Commented out because DesignatedDealer::publish_designated_dealer_credential
+// is now a friend, so not accessible.  Keeping the code because it will soon become
+// a unit test.
+// //! new-transaction
+// script {
+// use DiemFramework::DesignatedDealer;
+// use DiemFramework::XUS::XUS;
+// fun main(account: signer) {
+//     let account = &account;
+//     DesignatedDealer::publish_designated_dealer_credential<XUS>(
+//         account, account, false
+//     );
+// }
+// }
+// // check: "Keep(ABORTED { code: 258,"
+
+// TODO: friend function problem
+// //! new-transaction
+// //! sender: blessed
+// script {
+// use DiemFramework::DesignatedDealer;
+// use DiemFramework::XUS::XUS;
+// fun main(account: signer) {
+//     let account = &account;
+//     DesignatedDealer::publish_designated_dealer_credential<XUS>(
+//         account, account, false
+//     );
+// }
+// }
+// // check: "Keep(ABORTED { code: 1539,"
 
 //! new-transaction
-//! sender: blessed
 script {
-use 0x1::DesignatedDealer;
-use 0x1::XUS::XUS;
-fun main(account: signer) {
-    let account = &account;
-    DesignatedDealer::publish_designated_dealer_credential<XUS>(
-        account, account, false
-    );
-}
-}
-// check: "Keep(ABORTED { code: 1539,"
-
-//! new-transaction
-script {
-use 0x1::DesignatedDealer;
-use 0x1::XUS::XUS;
+use DiemFramework::DesignatedDealer;
+use DiemFramework::XUS::XUS;
 fun main(account: signer) {
     let account = &account;
     DesignatedDealer::add_currency<XUS>(account, account);
@@ -42,8 +46,8 @@ fun main(account: signer) {
 //! new-transaction
 //! sender: blessed
 script {
-use 0x1::DesignatedDealer;
-use 0x1::XUS::XUS;
+use DiemFramework::DesignatedDealer;
+use DiemFramework::XUS::XUS;
 fun main(account: signer) {
     let account = &account;
     DesignatedDealer::add_currency<XUS>(account, account);
@@ -55,7 +59,6 @@ fun main(account: signer) {
 //! sender: blessed
 //! type-args: 0x1::XUS::XUS
 //! args: 0, {{bob}}, {{bob::auth_key}}, x"", false
-
 stdlib_script::AccountCreationScripts::create_designated_dealer
 // check: CreateAccountEvent
 // check: "Keep(EXECUTED)"
@@ -64,9 +67,9 @@ stdlib_script::AccountCreationScripts::create_designated_dealer
 //! new-transaction
 //! sender: blessed
 script {
-use 0x1::DesignatedDealer;
-use 0x1::XUS::XUS;
-use 0x1::Diem;
+use DiemFramework::DesignatedDealer;
+use DiemFramework::XUS::XUS;
+use DiemFramework::Diem;
 fun main(account: signer) {
     let account = &account;
     Diem::destroy_zero(
@@ -79,9 +82,9 @@ fun main(account: signer) {
 //! new-transaction
 //! sender: blessed
 script {
-    use 0x1::DiemAccount;
-    use 0x1::XUS::XUS;
-    use 0x1::Diem;
+    use DiemFramework::DiemAccount;
+    use DiemFramework::XUS::XUS;
+    use DiemFramework::Diem;
     fun main(tc_account: signer) {
     let tc_account = &tc_account;
         DiemAccount::tiered_mint<XUS>(
@@ -101,9 +104,9 @@ script {
 //! sender: blessed
 //! expiration-time: 95000000001
 script {
-    use 0x1::DiemAccount;
-    use 0x1::XUS::XUS;
-    use 0x1::Diem;
+    use DiemFramework::DiemAccount;
+    use DiemFramework::XUS::XUS;
+    use DiemFramework::Diem;
     fun main(tc_account: signer) {
     let tc_account = &tc_account;
         DiemAccount::tiered_mint<XUS>(

@@ -6,7 +6,7 @@ use colored::{control, Colorize};
 use move_binary_format::errors::{Location, VMError, VMResult};
 use move_core_types::{effects::ChangeSet, language_storage::ModuleId};
 use move_lang::{
-    errors,
+    diagnostics::{self, Diagnostic},
     unit_test::{ModuleTestPlan, TestPlan},
 };
 use std::{
@@ -33,6 +33,8 @@ pub enum FailureReason {
         stackless_vm_return_values: Box<VMResult<Vec<Vec<u8>>>>,
         stackless_vm_change_set: Box<VMResult<ChangeSet>>,
     },
+    // Property checking failed
+    Property(String),
     // The test failed for some unknown reason. This shouldn't be encountered
     Unknown(String),
 }
@@ -109,6 +111,10 @@ impl FailureReason {
         }
     }
 
+    pub fn property(details: String) -> Self {
+        FailureReason::Property(details)
+    }
+
     pub fn unknown() -> Self {
         FailureReason::Unknown("ITE: An unknown error was reported.".to_string())
     }
@@ -138,11 +144,11 @@ impl TestFailure {
                     "{}. Expected test to abort with {} but instead it aborted with {} here",
                     message, expected_code, other_code,
                 );
-                Self::report_abort(test_plan, base_message, &self.vm_error)
+                Self::report_error_with_location(test_plan, base_message, &self.vm_error)
             }
             FailureReason::Aborted(message, code) => {
                 let base_message = format!("{} but it aborted with {} here", message, code);
-                Self::report_abort(test_plan, base_message, &self.vm_error)
+                Self::report_error_with_location(test_plan, base_message, &self.vm_error)
             }
             FailureReason::Mismatch {
                 move_vm_return_values,
@@ -163,14 +169,20 @@ impl TestFailure {
                     stackless_vm_change_set
                 )
             }
+            FailureReason::Property(message) => message.clone(),
             FailureReason::Unknown(message) => {
                 format!(
-                    "{}. VMError (if there is one) is: {}",
+                    "{} Location: {}\nVMError (if there is one): {}",
                     message,
+                    TestFailure::report_error_with_location(
+                        test_plan,
+                        "".to_string(),
+                        &self.vm_error
+                    ),
                     self.vm_error
                         .as_ref()
                         .map(|err| format!("{:#?}", err))
-                        .unwrap_or_else(|| "".to_string())
+                        .unwrap_or_else(|| "".to_string()),
                 )
             }
         };
@@ -191,15 +203,15 @@ impl TestFailure {
         }
     }
 
-    fn report_abort(
+    fn report_error_with_location(
         test_plan: &TestPlan,
         base_message: String,
         vm_error: &Option<VMError>,
     ) -> String {
-        let report_error = if control::SHOULD_COLORIZE.should_colorize() {
-            errors::report_errors_to_color_buffer
+        let report_diagnostics = if control::SHOULD_COLORIZE.should_colorize() {
+            diagnostics::report_diagnostics_to_color_buffer
         } else {
-            errors::report_errors_to_buffer
+            diagnostics::report_diagnostics_to_buffer
         };
 
         let vm_error = match vm_error {
@@ -209,7 +221,7 @@ impl TestFailure {
 
         match vm_error.location() {
             Location::Module(module_id) => {
-                let errors = vm_error
+                let diags = vm_error
                     .offsets()
                     .iter()
                     .filter_map(|(fdef_idx, offset)| {
@@ -221,14 +233,16 @@ impl TestFailure {
                             .ok()?;
                         let loc = function_source_map.get_code_location(*offset)?;
                         let msg = format!("In this function in {}", format_module_id(module_id));
-                        Some(vec![
+                        // TODO(tzakian) maybe migrate off of move-langs diagnostics?
+                        Some(Diagnostic::new(
+                            diagnostics::codes::Tests::TestFailed,
                             (loc, base_message.clone()),
-                            (function_source_map.decl_location, msg),
-                        ])
+                            vec![(function_source_map.decl_location, msg)],
+                        ))
                     })
-                    .collect::<Vec<_>>();
+                    .collect();
 
-                String::from_utf8(report_error(test_plan.files.clone(), errors)).unwrap()
+                String::from_utf8(report_diagnostics(&test_plan.files, diags)).unwrap()
             }
             _ => base_message,
         }

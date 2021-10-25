@@ -3,11 +3,14 @@
 
 #![forbid(unsafe_code)]
 
+pub mod builder;
 pub mod command;
 mod genesis;
 pub mod key;  //////// 0L /////////
 pub mod waypoint;  //////// 0L /////////
 pub mod layout;
+mod move_modules;
+pub mod validator_builder;
 mod validator_config;
 mod validator_operator;
 mod verify;
@@ -22,7 +25,7 @@ pub mod ol_create_repo;
 #[cfg(any(test, feature = "testing"))]
 pub mod config_builder;
 //////// 0L /////////
-// #[cfg(any(test, feature = "testing"))]
+// #[cfg(test)]
 // This was previously only for tests 0L uses for init key_store.json.
 pub mod storage_helper;
 #[cfg(any(test, feature = "testing"))]

@@ -1,67 +1,91 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use codespan::Span;
+use move_symbol_pool::Symbol;
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::{
     cmp::Ordering,
     fmt,
     hash::{Hash, Hasher},
+    ops::Range,
 };
 
 //**************************************************************************************************
 // Loc
 //**************************************************************************************************
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+/// An index into a file.
+/// Much like the `codespan` crate, a `u32` is used here to for space efficiency.
+/// However, this assumes no file is larger than 4GB, so this might become a `usize` in the future
+/// if the space concerns turn out to not be an issue.
+pub type ByteIndex = u32;
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, Hash)]
+/// The `Loc` struct is used to define a location in a file; where the file is considered to be a
+/// vector of bytes, and the range for a given `Loc` is defined by start and end index into that
+/// byte vector
 pub struct Loc {
-    file: &'static str,
-    span: Span,
+    /// The file the location points to
+    file: Symbol,
+    /// The start byte index into file
+    start: ByteIndex,
+    /// The end byte index into file
+    end: ByteIndex,
 }
+
 impl Loc {
-    pub fn new(file: &'static str, span: Span) -> Loc {
-        Loc { file, span }
+    pub fn new(file: Symbol, start: ByteIndex, end: ByteIndex) -> Loc {
+        Loc { file, start, end }
     }
 
-    pub fn file(self) -> &'static str {
+    pub fn file(self) -> Symbol {
         self.file
     }
 
-    pub fn span(self) -> Span {
-        self.span
+    pub fn start(self) -> ByteIndex {
+        self.start
+    }
+
+    pub fn end(self) -> ByteIndex {
+        self.end
+    }
+
+    pub fn usize_range(self) -> Range<usize> {
+        Range {
+            start: self.start as usize,
+            end: self.end as usize,
+        }
     }
 }
 
 impl PartialOrd for Loc {
     fn partial_cmp(&self, other: &Loc) -> Option<Ordering> {
-        let file_ord = self.file.partial_cmp(other.file)?;
-        if file_ord != Ordering::Equal {
-            return Some(file_ord);
-        }
-
-        let start_ord = self.span.start().partial_cmp(&other.span.start())?;
-        if start_ord != Ordering::Equal {
-            return Some(start_ord);
-        }
-
-        self.span.end().partial_cmp(&other.span.end())
+        Some(self.cmp(other))
     }
 }
 
 impl Ord for Loc {
     fn cmp(&self, other: &Loc) -> Ordering {
-        self.file.cmp(other.file).then_with(|| {
-            self.span
-                .start()
-                .cmp(&other.span.start())
-                .then_with(|| self.span.end().cmp(&other.span.end()))
-        })
+        let file_ord = self.file.cmp(&other.file);
+        if file_ord != Ordering::Equal {
+            return file_ord;
+        }
+
+        let start_ord = self.start.cmp(&other.start);
+        if start_ord != Ordering::Equal {
+            return start_ord;
+        }
+
+        self.end.cmp(&other.end)
     }
 }
 
 //**************************************************************************************************
 // Spanned
 //**************************************************************************************************
+
+static NO_LOC_FILE: Lazy<Symbol> = Lazy::new(|| Symbol::from(""));
 
 #[derive(Copy, Clone)]
 pub struct Spanned<T> {
@@ -74,11 +98,10 @@ impl<T> Spanned<T> {
         Spanned { loc, value }
     }
 
-    const NO_LOC_FILE: &'static str = "";
     pub fn unsafe_no_loc(value: T) -> Spanned<T> {
         Spanned {
             value,
-            loc: Loc::new(Self::NO_LOC_FILE, Span::default()),
+            loc: Loc::new(*NO_LOC_FILE, 0, 0),
         }
     }
 }

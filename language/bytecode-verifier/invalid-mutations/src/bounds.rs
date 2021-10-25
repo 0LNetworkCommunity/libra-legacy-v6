@@ -1,13 +1,11 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use diem_proptest_helpers::pick_slice_idxs;
 use move_binary_format::{
     errors::{bounds_error, PartialVMError},
     file_format::{
-        AddressIdentifierIndex, CompiledModule, CompiledModuleMut, FunctionHandleIndex,
-        IdentifierIndex, ModuleHandleIndex, SignatureIndex, StructDefinitionIndex,
-        StructHandleIndex, TableIndex,
+        AddressIdentifierIndex, CompiledModule, FunctionHandleIndex, IdentifierIndex,
+        ModuleHandleIndex, SignatureIndex, StructDefinitionIndex, StructHandleIndex, TableIndex,
     },
     internals::ModuleIndex,
     views::{ModuleView, SignatureTokenView},
@@ -161,7 +159,7 @@ impl AsRef<PropIndex> for OutOfBoundsMutation {
 }
 
 pub struct ApplyOutOfBoundsContext {
-    module: CompiledModuleMut,
+    module: CompiledModule,
     // This is an Option because it gets moved out in apply before apply_one is called. Rust
     // doesn't let you call another con-consuming method after a partial move out.
     mutations: Option<Vec<OutOfBoundsMutation>>,
@@ -175,13 +173,13 @@ impl ApplyOutOfBoundsContext {
         let sig_structs: Vec<_> = Self::sig_structs(&module).collect();
 
         Self {
-            module: module.into_inner(),
+            module,
             mutations: Some(mutations),
             sig_structs,
         }
     }
 
-    pub fn apply(mut self) -> (CompiledModuleMut, Vec<PartialVMError>) {
+    pub fn apply(mut self) -> (CompiledModule, Vec<PartialVMError>) {
         // This is a map from (source kind, dest kind) to the actual mutations -- this is done to
         // figure out how many mutations to do for a particular pair, which is required for
         // pick_slice_idxs below.
@@ -220,7 +218,7 @@ impl ApplyOutOfBoundsContext {
         };
         // Any signature can be a destination, not just the ones that have structs in them.
         let dst_count = self.module.kind_count(dst_kind);
-        let to_mutate = pick_slice_idxs(src_count, &mutations);
+        let to_mutate = crate::helpers::pick_slice_idxs(src_count, &mutations);
 
         mutations
             .iter()

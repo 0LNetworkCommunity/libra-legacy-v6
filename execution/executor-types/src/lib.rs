@@ -9,7 +9,9 @@ pub use error::Error;
 use anyhow::Result;
 use diem_crypto::{
     ed25519::Ed25519Signature,
-    hash::{TransactionAccumulatorHasher, SPARSE_MERKLE_PLACEHOLDER_HASH},
+    hash::{
+        TransactionAccumulatorHasher, ACCUMULATOR_PLACEHOLDER_HASH, SPARSE_MERKLE_PLACEHOLDER_HASH,
+    },
     HashValue,
 };
 use diem_types::{
@@ -30,12 +32,12 @@ use storage_interface::TreeState;
 type SparseMerkleProof = diem_types::proof::SparseMerkleProof<AccountStateBlob>;
 type SparseMerkleTree = scratchpad::SparseMerkleTree<AccountStateBlob>;
 
-pub trait ChunkExecutor: Send {
+pub trait ChunkExecutor: Send + Sync {
     /// Verifies the transactions based on the provided proofs and ledger info. If the transactions
     /// are valid, executes them and commits immediately if execution results match the proofs.
     /// Returns a vector of reconfiguration events in the chunk
     fn execute_and_commit_chunk(
-        &mut self,
+        &self,
         txn_list_with_proof: TransactionListWithProof,
         // Target LI that has been verified independently: the proofs are relative to this version.
         verified_target_li: LedgerInfoWithSignatures,
@@ -45,16 +47,16 @@ pub trait ChunkExecutor: Send {
     ) -> Result<Vec<ContractEvent>>;
 }
 
-pub trait BlockExecutor: Send {
+pub trait BlockExecutor: Send + Sync {
     /// Get the latest committed block id
-    fn committed_block_id(&mut self) -> Result<HashValue, Error>;
+    fn committed_block_id(&self) -> Result<HashValue, Error>;
 
     /// Reset the internal state including cache with newly fetched latest committed block from storage.
-    fn reset(&mut self) -> Result<(), Error>;
+    fn reset(&self) -> Result<(), Error>;
 
     /// Executes a block.
     fn execute_block(
-        &mut self,
+        &self,
         block: (HashValue, Vec<Transaction>),
         parent_block_id: HashValue,
     ) -> Result<StateComputeResult, Error>;
@@ -68,20 +70,16 @@ pub trait BlockExecutor: Send {
     /// and only `C` and `E` have signatures, we will send `A`, `B` and `C` in the first batch,
     /// then `D` and `E` later in the another batch.
     /// Commits a block and all its ancestors in a batch manner.
-    ///
-    /// Returns `Ok(Result<Vec<Transaction>, Vec<ContractEvents>)` if successful,
-    /// where Vec<Transaction> is a vector of transactions that were kept from the submitted blocks, and
-    /// Vec<ContractEvents> is a vector of reconfiguration events in the submitted blocks
     fn commit_blocks(
-        &mut self,
+        &self,
         block_ids: Vec<HashValue>,
         ledger_info_with_sigs: LedgerInfoWithSignatures,
-    ) -> Result<(Vec<Transaction>, Vec<ContractEvent>), Error>;
+    ) -> Result<(), Error>;
 }
 
 pub trait TransactionReplayer: Send {
     fn replay_chunk(
-        &mut self,
+        &self,
         first_version: Version,
         txns: Vec<Transaction>,
         txn_infos: Vec<TransactionInfo>,
@@ -128,6 +126,8 @@ pub struct StateComputeResult {
 
     /// The signature of the VoteProposal corresponding to this block.
     signature: Option<Ed25519Signature>,
+
+    reconfig_events: Vec<ContractEvent>,
 }
 
 impl StateComputeResult {
@@ -140,6 +140,7 @@ impl StateComputeResult {
         epoch_state: Option<EpochState>,
         compute_status: Vec<TransactionStatus>,
         transaction_info_hashes: Vec<HashValue>,
+        reconfig_events: Vec<ContractEvent>,
     ) -> Self {
         Self {
             root_hash,
@@ -150,8 +151,35 @@ impl StateComputeResult {
             epoch_state,
             compute_status,
             transaction_info_hashes,
+            reconfig_events,
             signature: None,
         }
+    }
+
+    /// generate a new dummy state compute result with a given root hash.
+    /// this function is used in RandomComputeResultStateComputer to assert that the compute
+    /// function is really called.
+    pub fn new_dummy_with_root_hash(root_hash: HashValue) -> Self {
+        Self {
+            root_hash,
+            frozen_subtree_roots: vec![],
+            num_leaves: 0,
+            parent_frozen_subtree_roots: vec![],
+            parent_num_leaves: 0,
+            epoch_state: None,
+            compute_status: vec![],
+            transaction_info_hashes: vec![],
+            reconfig_events: vec![],
+            signature: None,
+        }
+    }
+
+    /// generate a new dummy state compute result with ACCUMULATOR_PLACEHOLDER_HASH as the root hash.
+    /// this function is used in ordering_state_computer as a dummy state compute result,
+    /// where the real compute result is generated after ordering_state_computer.commit pushes
+    /// the blocks and the finality proof to the execution phase.
+    pub fn new_dummy() -> Self {
+        StateComputeResult::new_dummy_with_root_hash(*ACCUMULATOR_PLACEHOLDER_HASH)
     }
 }
 
@@ -204,6 +232,10 @@ impl StateComputeResult {
 
     pub fn has_reconfiguration(&self) -> bool {
         self.epoch_state.is_some()
+    }
+
+    pub fn reconfig_events(&self) -> &[ContractEvent] {
+        &self.reconfig_events
     }
 
     pub fn signature(&self) -> &Option<Ed25519Signature> {

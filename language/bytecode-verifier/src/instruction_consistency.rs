@@ -4,9 +4,9 @@
 //! This module defines the transfer functions for verifying type safety of a procedure body.
 //! It does not utilize control flow, but does check each block independently
 
-use crate::binary_views::BinaryIndexedView;
 use move_binary_format::{
     access::ModuleAccess,
+    binary_views::BinaryIndexedView,
     errors::{Location, PartialVMError, PartialVMResult, VMResult},
     file_format::{
         Bytecode, CodeOffset, CodeUnit, CompiledModule, CompiledScript, FieldHandleIndex,
@@ -52,7 +52,7 @@ impl<'a> InstructionConsistency<'a> {
             resolver: BinaryIndexedView::Script(script),
             current_function: None,
         };
-        checker.check_instructions(&script.as_inner().code)
+        checker.check_instructions(&script.code)
     }
 
     fn check_instructions(&self, code: &CodeUnit) -> PartialVMResult<()> {

@@ -1,9 +1,9 @@
 // A test case which reproduces a performance/non-termination problem. See the spec of fun create for details.
 
 module 0x42::Test {
-    use 0x1::BCS;
-    use 0x1::Signer;
-    use 0x1::Vector;
+    use Std::BCS;
+    use Std::Signer;
+    use Std::Vector;
 
     spec module {
         fun eq_append<Element>(v: vector<Element>, v1: vector<Element>, v2: vector<Element>): bool {
@@ -13,7 +13,7 @@ module 0x42::Test {
         }
     }
 
-    struct EventHandle<T: copy + drop + store> has copy, drop, store {
+    struct EventHandle<phantom T: copy + drop + store> has copy, drop, store {
         // Total number of events emitted to this event stream.
         counter: u64,
         // A globally unique ID for this event stream.

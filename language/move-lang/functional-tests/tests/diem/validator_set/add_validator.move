@@ -5,8 +5,8 @@
 
 //! sender: bob
 script {
-    use 0x1::DiemSystem;
-    use 0x1::ValidatorConfig;
+    use DiemFramework::DiemSystem;
+    use DiemFramework::ValidatorConfig;
     fun main() {
         // test bob is a validator
         assert(ValidatorConfig::is_valid(@{{bob}}) == true, 98);
@@ -18,7 +18,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-use 0x1::DiemAccount;
+use DiemFramework::DiemAccount;
 fun main(creator: signer) {
     let creator = &creator;
 //    DiemAccount::create_validator_account(
@@ -37,22 +37,24 @@ fun main(creator: signer) {
 stdlib_script::AccountCreationScripts::create_validator_account
 // check: "Keep(EXECUTED)"
 
-//! new-transaction
-//! sender: diemroot
-//! execute-as: alex
-script {
-use 0x1::ValidatorConfig;
-fun main(dr_account: signer, alex_signer: signer) {
-    let dr_account = &dr_account;
-    let alex_signer = &alex_signer;
-    ValidatorConfig::publish(alex_signer, dr_account, b"alex");
-}
-}
-// check: "Discard(INVALID_WRITE_SET)"
+// TODO: ValidatorConfig::publish is now a friend function.
+// Make this into a unit test.
+// //! new-transaction
+// //! sender: diemroot
+// //! execute-as: alex
+// script {
+// use DiemFramework::ValidatorConfig;
+// fun main(dr_account: signer, alex_signer: signer) {
+//     let dr_account = &dr_account;
+//     let alex_signer = &alex_signer;
+//     ValidatorConfig::publish(alex_signer, dr_account, b"alex");
+// }
+// }
+// // check: "Discard(INVALID_WRITE_SET)"
 
 //! new-transaction
 script {
-use 0x1::ValidatorConfig;
+use DiemFramework::ValidatorConfig;
 fun main() {
     let _ = ValidatorConfig::get_config(@{{alex}});
 }

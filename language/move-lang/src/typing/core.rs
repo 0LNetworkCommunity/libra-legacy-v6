@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    errors::*,
+    diag,
+    diagnostics::{codes::NameResolution, Diagnostic},
     expansion::ast::{AbilitySet, ModuleIdent},
     naming::ast::{
-        self as N, BuiltinTypeName_, FunctionSignature, StructDefinition, TParam, TParamID, TVar,
-        Type, TypeName, TypeName_, Type_,
+        self as N, BuiltinTypeName_, FunctionSignature, StructDefinition, StructTypeParameter,
+        TParam, TParamID, TVar, Type, TypeName, TypeName_, Type_,
     },
     parser::ast::{Ability_, ConstantName, Field, FunctionName, StructName, Var, Visibility},
     shared::{unique_map::UniqueMap, *},
@@ -245,10 +246,10 @@ impl<'env> Context<'env> {
     pub fn get_local(&mut self, loc: Loc, verb: &str, var: &Var) -> Type {
         match self.get_local_(var) {
             None => {
-                self.env.add_error(vec![(
-                    loc,
-                    format!("Invalid {}. Unbound local '{}'", verb, var),
-                )]);
+                self.env.add_diag(diag!(
+                    NameResolution::UnboundVariable,
+                    (loc, format!("Invalid {}. Unbound variable '{}'", verb, var)),
+                ));
                 self.error_type(loc)
             }
             Some(t) => t,
@@ -346,7 +347,7 @@ impl<'env> Context<'env> {
             .expect("ICE should have failed in naming")
     }
 
-    fn struct_tparams(&self, m: &ModuleIdent, n: &StructName) -> &Vec<TParam> {
+    pub fn struct_tparams(&self, m: &ModuleIdent, n: &StructName) -> &Vec<StructTypeParameter> {
         &self.struct_definition(m, n).type_parameters
     }
 
@@ -546,10 +547,19 @@ pub fn infer_abilities(context: &Context, subst: &Subst, ty: Type) -> AbilitySet
         T::UnresolvedError | T::Anything => AbilitySet::all(loc),
         T::Param(TParam { abilities, .. }) | T::Apply(Some(abilities), _, _) => abilities,
         T::Apply(None, n, ty_args) => {
-            let declared_abilities = match &n.value {
-                TypeName_::Multiple(_) => AbilitySet::collection(loc),
-                TypeName_::Builtin(b) => b.value.declared_abilities(b.loc),
-                TypeName_::ModuleType(m, n) => context.struct_declared_abilities(&m, &n).clone(),
+            let (declared_abilities, ty_args) = match &n.value {
+                TypeName_::Multiple(_) => (AbilitySet::collection(loc), ty_args),
+                TypeName_::Builtin(b) => (b.value.declared_abilities(b.loc), ty_args),
+                TypeName_::ModuleType(m, n) => {
+                    let declared_abilities = context.struct_declared_abilities(&m, &n).clone();
+                    let non_phantom_ty_args = ty_args
+                        .into_iter()
+                        .zip(context.struct_tparams(&m, &n))
+                        .filter(|(_, param)| !param.is_phantom)
+                        .map(|(arg, _)| arg)
+                        .collect::<Vec<_>>();
+                    (declared_abilities, non_phantom_ty_args)
+                }
             };
             let ty_args_abilities = ty_args
                 .into_iter()
@@ -623,7 +633,7 @@ pub fn make_struct_type(
             let constraints = sdef
                 .type_parameters
                 .iter()
-                .map(|tp| (loc, tp.abilities.clone()))
+                .map(|tp| (loc, tp.param.abilities.clone()))
                 .collect();
             let ty_args = make_tparams(context, loc, TVarCase::Base, constraints);
             (sp(loc, Type_::Apply(None, tn, ty_args.clone())), ty_args)
@@ -667,8 +677,14 @@ pub fn make_field_types(
     ty_args: Vec<Type>,
 ) -> N::StructFields {
     let sdef = context.struct_definition(m, n);
-    let tparam_subst =
-        &make_tparam_subst(&context.struct_definition(m, n).type_parameters, ty_args);
+    let tparam_subst = &make_tparam_subst(
+        context
+            .struct_definition(m, n)
+            .type_parameters
+            .iter()
+            .map(|tp| &tp.param),
+        ty_args,
+    );
     match &sdef.fields {
         N::StructFields::Native(loc) => N::StructFields::Native(*loc),
         N::StructFields::Defined(m) => {
@@ -692,28 +708,33 @@ pub fn make_field_type(
     let fields_map = match &sdef.fields {
         N::StructFields::Native(nloc) => {
             let nloc = *nloc;
-            context.env.add_error(vec![
-                (
-                    loc,
-                    format!("Unbound field '{}' for native struct '{}::{}'", field, m, n),
-                ),
-                (nloc, "Declared 'native' here".into()),
-            ]);
+            let msg = format!("Unbound field '{}' for native struct '{}::{}'", field, m, n);
+            context.env.add_diag(diag!(
+                NameResolution::UnboundField,
+                (loc, msg),
+                (nloc, "Struct declared 'native' here")
+            ));
             return context.error_type(loc);
         }
         N::StructFields::Defined(m) => m,
     };
     match fields_map.get(field).cloned() {
         None => {
-            context.env.add_error(vec![(
-                loc,
-                format!("Unbound field '{}' in '{}::{}'", field, m, n),
-            )]);
+            context.env.add_diag(diag!(
+                NameResolution::UnboundField,
+                (loc, format!("Unbound field '{}' in '{}::{}'", field, m, n)),
+            ));
             context.error_type(loc)
         }
         Some((_, field_ty)) => {
-            let tparam_subst =
-                &make_tparam_subst(&context.struct_definition(m, n).type_parameters, ty_args);
+            let tparam_subst = &make_tparam_subst(
+                context
+                    .struct_definition(m, n)
+                    .type_parameters
+                    .iter()
+                    .map(|tp| &tp.param),
+                ty_args,
+            );
             subst_tparams(tparam_subst, field_ty)
         }
     }
@@ -744,9 +765,11 @@ pub fn make_constant_type(
         };
         let internal_msg = "Constants are internal to their module, and cannot can be accessed \
                             outside of their module";
-        context
-            .env
-            .add_error(vec![(loc, msg), (defined_loc, internal_msg.into())]);
+        context.env.add_diag(diag!(
+            TypeSafety::Visibility,
+            (loc, msg),
+            (defined_loc, internal_msg)
+        ));
     }
 
     signature
@@ -823,10 +846,11 @@ pub fn make_function_type(
                 Visibility::SCRIPT,
                 Visibility::FRIEND
             );
-            context.env.add_error(vec![
+            context.env.add_diag(diag!(
+                TypeSafety::Visibility,
                 (loc, format!("Invalid call to '{}::{}'", m, f)),
                 (defined_loc, internal_msg),
-            ])
+            ));
         }
         Visibility::Script(_) if context.is_in_script_context() => (),
         Visibility::Script(vis_loc) => {
@@ -835,10 +859,11 @@ pub fn make_function_type(
                  or a '{}' function",
                 Visibility::SCRIPT
             );
-            context.env.add_error(vec![
+            context.env.add_diag(diag!(
+                TypeSafety::ScriptContext,
                 (loc, format!("Invalid call to '{}::{}'", m, f)),
                 (vis_loc, internal_msg),
-            ])
+            ));
         }
         Visibility::Friend(_) if in_current_module || context.current_module_is_a_friend_of(m) => {}
         Visibility::Friend(vis_loc) => {
@@ -846,10 +871,11 @@ pub fn make_function_type(
                 "This function can only be called from a 'friend' of module '{}'",
                 m
             );
-            context.env.add_error(vec![
+            context.env.add_diag(diag!(
+                TypeSafety::Visibility,
                 (loc, format!("Invalid call to '{}::{}'", m, f)),
                 (vis_loc, internal_msg),
-            ])
+            ));
         }
         Visibility::Public(_) => (),
     };
@@ -927,10 +953,10 @@ fn solve_ability_constraint(
             Some(s) => s.clone(),
             None => format!("'{}' constraint not satisifed", constraint),
         };
-        let mut error = vec![(loc, constraint_msg)];
+        let mut diag = diag!(AbilitySafety::Constraint, (loc, constraint_msg));
         ability_not_satisified_tips(
             &context.subst,
-            &mut error,
+            &mut diag,
             constraint.value,
             &ty,
             declared_loc_opt,
@@ -943,18 +969,18 @@ fn solve_ability_constraint(
 
         // is none if it is from a user constraint and not a part of the type system
         if given_msg_opt.is_none() {
-            error.push((
+            diag.add_secondary_label((
                 constraint.loc,
                 format!("'{}' constraint declared here", constraint),
             ));
         }
-        context.env.add_error(error)
+        context.env.add_diag(diag)
     }
 }
 
 pub fn ability_not_satisified_tips<'a>(
     subst: &Subst,
-    error: &mut Error,
+    diag: &mut Diagnostic,
     constraint: Ability_,
     ty: &Type,
     declared_loc_opt: Option<Loc>,
@@ -966,13 +992,13 @@ pub fn ability_not_satisified_tips<'a>(
         "The type {} does not have the ability '{}'",
         ty_str, constraint
     );
-    error.push((ty.loc, ty_msg));
+    diag.add_secondary_label((ty.loc, ty_msg));
     match (
         declared_loc_opt,
         declared_abilities.has_ability_(constraint),
     ) {
         // Type was not given the ability
-        (Some(dloc), false) => error.push((
+        (Some(dloc), false) => diag.add_secondary_label((
             dloc,
             format!(
                 "To satisfy the constraint, the '{}' ability would need to be added here",
@@ -984,7 +1010,7 @@ pub fn ability_not_satisified_tips<'a>(
         // Type has the ability but a type argument causes it to fail
         (_, true) => {
             let requirement = constraint.requires();
-            let mut error_added = false;
+            let mut label_added = false;
             for (ty_arg, ty_arg_abilities) in ty_args {
                 if !ty_arg_abilities.has_ability_(requirement) {
                     let ty_arg_str = error_format(ty_arg, &subst);
@@ -996,12 +1022,12 @@ pub fn ability_not_satisified_tips<'a>(
                         constraint = constraint,
                         requirement = requirement,
                     );
-                    error.push((ty_arg.loc, msg));
-                    error_added = true;
+                    diag.add_secondary_label((ty_arg.loc, msg));
+                    label_added = true;
                     break;
                 }
             }
-            assert!(error_added)
+            assert!(label_added)
         }
     }
 }
@@ -1045,18 +1071,16 @@ fn solve_implicitly_copyable_constraint(
     let ty = unfold_type(&context.subst, ty);
     let tloc = ty.loc;
     if !is_implicitly_copyable(&context.subst, &ty) {
-        let ty_str = error_format(&ty, &context.subst);
-        context.env.add_error(vec![
+        let ty_msg = format!(
+            "The type {} is not implicitly copyable. Implicit copies are limited to simple \
+             primitive values",
+            error_format(&ty, &context.subst),
+        );
+        context.env.add_diag(diag!(
+            AbilitySafety::ImplicitlyCopyable,
             (loc, format!("{} {}", msg, fix)),
-            (
-                tloc,
-                format!(
-                    "The type {} is not implicitly copyable. Implicit copies are limited to \
-                     simple primitive values",
-                    ty_str
-                ),
-            ),
-        ])
+            (tloc, ty_msg),
+        ))
     }
 }
 
@@ -1071,7 +1095,7 @@ fn solve_builtin_type_constraint(
     use Type_::*;
     let t = unfold_type(&context.subst, ty);
     let tloc = t.loc;
-    let tmsg = || {
+    let mk_tmsg = || {
         let set_msg = if builtin_set.is_empty() {
             "the operation is not yet supported on any type".to_string()
         } else {
@@ -1097,11 +1121,12 @@ fn solve_builtin_type_constraint(
             assert!(args.is_empty());
         }
         _ => {
-            let error = vec![
+            let tmsg = mk_tmsg();
+            context.env.add_diag(diag!(
+                TypeSafety::BuiltinOperation,
                 (loc, format!("Invalid argument to '{}'", op)),
-                (tloc, tmsg()),
-            ];
-            context.env.add_error(error)
+                (tloc, tmsg)
+            ))
         }
     }
 }
@@ -1115,7 +1140,11 @@ fn solve_base_type_constraint(context: &mut Context, loc: Loc, msg: String, ty: 
         Unit | Ref(_, _) | Apply(_, sp!(_, Multiple(_)), _) => {
             let tystr = error_format(ty, &context.subst);
             let tmsg = format!("Expected a single non-reference type, but found: {}", tystr);
-            context.env.add_error(vec![(loc, msg), (tyloc, tmsg)])
+            context.env.add_diag(diag!(
+                TypeSafety::ExpectedBaseType,
+                (loc, msg),
+                (tyloc, tmsg)
+            ))
         }
         UnresolvedError | Anything | Param(_) | Apply(_, _, _) => (),
     }
@@ -1128,12 +1157,15 @@ fn solve_single_type_constraint(context: &mut Context, loc: Loc, msg: String, ty
     match unfolded_ {
         Var(_) => unreachable!(),
         Unit | Apply(_, sp!(_, Multiple(_)), _) => {
-            let tystr = error_format(ty, &context.subst);
             let tmsg = format!(
                 "Expected a single type, but found expression list type: {}",
-                tystr
+                error_format(ty, &context.subst)
             );
-            context.env.add_error(vec![(loc, msg), (tyloc, tmsg)])
+            context.env.add_diag(diag!(
+                TypeSafety::ExpectedSingleType,
+                (loc, msg),
+                (tyloc, tmsg)
+            ))
         }
         UnresolvedError | Anything | Ref(_, _) | Param(_) | Apply(_, _, _) => (),
     }
@@ -1166,10 +1198,18 @@ pub fn best_loc(subst: &Subst, sp!(loc, t_): &Type) -> Loc {
     }
 }
 
-pub fn make_tparam_subst(tps: &[TParam], args: Vec<Type>) -> TParamSubst {
+pub fn make_tparam_subst<'a, I1, I2>(tps: I1, args: I2) -> TParamSubst
+where
+    I1: IntoIterator<Item = &'a TParam>,
+    I1::IntoIter: ExactSizeIterator,
+    I2: IntoIterator<Item = Type>,
+    I2::IntoIter: ExactSizeIterator,
+{
+    let tps = tps.into_iter();
+    let args = args.into_iter();
     assert!(tps.len() == args.len());
     let mut subst = TParamSubst::new();
-    for (tp, arg) in tps.iter().zip(args) {
+    for (tp, arg) in tps.zip(args) {
         let old_val = subst.insert(tp.id, arg);
         assert!(old_val.is_none())
     }
@@ -1253,7 +1293,7 @@ fn instantiate_apply(
         sp!(_, N::TypeName_::ModuleType(m, s)) => {
             debug_assert!(abilities_opt.is_none(), "ICE instantiated expanded type");
             let tps = context.struct_tparams(m, s);
-            tps.iter().map(|tp| tp.abilities.clone()).collect()
+            tps.iter().map(|tp| tp.param.abilities.clone()).collect()
         }
     };
 
@@ -1316,15 +1356,18 @@ fn check_type_argument_arity<F: FnOnce() -> String>(
     let args_len = ty_args.len();
     let arity = tparam_constraints.len();
     if args_len != arity {
-        context.env.add_error(vec![(
-            loc,
-            format!(
-                "Invalid instantiation of '{}'. Expected {} type argument(s) but got {}",
-                name_f(),
-                arity,
-                args_len
-            ),
-        )])
+        let code = if args_len < arity {
+            NameResolution::TooFewTypeArguments
+        } else {
+            NameResolution::TooManyTypeArguments
+        };
+        let msg = format!(
+            "Invalid instantiation of '{}'. Expected {} type argument(s) but got {}",
+            name_f(),
+            arity,
+            args_len
+        );
+        context.env.add_diag(diag!(code, (loc, msg)));
     }
 
     while ty_args.len() > arity {
@@ -1462,13 +1505,23 @@ fn join_impl(
                 join_tvar(subst, case, *loc1, *id1, *loc2, *id2)
             }
         }
-        (sp!(loc, Var(id)), other) | (other, sp!(loc, Var(id))) if subst.get(*id).is_none() => {
+        (sp!(loc, Var(id)), other) if subst.get(*id).is_none() => {
             if join_bind_tvar(&mut subst, *loc, *id, other.clone())? {
                 Ok((subst, sp(*loc, Var(*id))))
             } else {
                 Err(TypingError::Incompatible(
                     Box::new(sp(*loc, Var(*id))),
                     Box::new(other.clone()),
+                ))
+            }
+        }
+        (other, sp!(loc, Var(id))) if subst.get(*id).is_none() => {
+            if join_bind_tvar(&mut subst, *loc, *id, other.clone())? {
+                Ok((subst, sp(*loc, Var(*id))))
+            } else {
+                Err(TypingError::Incompatible(
+                    Box::new(other.clone()),
+                    Box::new(sp(*loc, Var(*id))),
                 ))
             }
         }

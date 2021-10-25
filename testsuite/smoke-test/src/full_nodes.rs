@@ -3,11 +3,11 @@
 
 use crate::{smoke_test_environment::SmokeTestEnvironment, test_utils::compare_balances};
 use cli::client_proxy::{ClientProxy, IndexAndSequence};
-use diem_client::AccountAddress;
 use diem_config::{
-    config::{NodeConfig, Peer, PeerRole, HANDSHAKE_VERSION},
+    config::{DiscoveryMethod, NodeConfig, Peer, PeerRole, HANDSHAKE_VERSION},
     network_id::NetworkId,
 };
+use diem_sdk::client::AccountAddress;
 use diem_types::{
     account_config::{testnet_dd_account_address, treasury_compliance_account_address},
     network_address::{NetworkAddress, Protocol},
@@ -300,6 +300,7 @@ fn test_private_full_node() {
     let user_network = user_config.full_node_networks.first_mut().unwrap();
     // Disallow fallbacks to VFNs
     user_network.max_outbound_connections = 1;
+    user_network.discovery_method = DiscoveryMethod::None;
 
     // The secret sauce, add the user as a downstream to the seeds
     add_node_to_seeds(

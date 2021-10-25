@@ -8,6 +8,7 @@ use crate::{
     model::{GlobalEnv, ModuleId, StructEnv, StructId},
     symbol::{Symbol, SymbolPool},
 };
+use move_binary_format::normalized::Type as MType;
 use move_core_types::language_storage::{StructTag, TypeTag};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -63,17 +64,11 @@ pub struct Substitution {
     subs: BTreeMap<u16, Type>,
 }
 
-/// Represents an type error resulting from unification.
-pub struct TypeError {
-    pub message: String,
-}
-
-impl TypeError {
-    fn new(msg: impl Into<String>) -> Self {
-        TypeError {
-            message: msg.into(),
-        }
-    }
+/// Represents an error resulting from type unification.
+pub enum TypeUnificationError {
+    TypeMismatch(Type, Type),
+    ArityMismatch(String, usize, usize),
+    CyclicSubstitution(Type, Type),
 }
 
 impl PrimitiveType {
@@ -86,16 +81,16 @@ impl PrimitiveType {
         }
     }
 
-    /// Attempt to convert this type into a language_storage::TypeTag
-    pub fn into_type_tag(self) -> Option<TypeTag> {
+    /// Attempt to convert this type into a normalized::Type
+    pub fn into_normalized_type(self) -> Option<MType> {
         use PrimitiveType::*;
         Some(match self {
-            Bool => TypeTag::Bool,
-            U8 => TypeTag::U8,
-            U64 => TypeTag::U64,
-            U128 => TypeTag::U128,
-            Address => TypeTag::Address,
-            Signer => TypeTag::Signer,
+            Bool => MType::Bool,
+            U8 => MType::U8,
+            U64 => MType::U64,
+            U128 => MType::U128,
+            Address => MType::Address,
+            Signer => MType::Signer,
             Num | Range | TypeValue | EventStore => return None,
         })
     }
@@ -129,6 +124,11 @@ impl Type {
     /// Determines whether this type is a struct.
     pub fn is_struct(&self) -> bool {
         matches!(self, Type::Struct(..))
+    }
+
+    /// Determines whether this type is a vector
+    pub fn is_vector(&self) -> bool {
+        matches!(self, Type::Vector(..))
     }
 
     /// Determines whether this is a struct, or a vector of structs, or a reference to any of
@@ -314,7 +314,10 @@ impl Type {
             Type::TypeDomain(et) => {
                 Type::TypeDomain(Box::new(et.replace(params, subs, type_local_subs)))
             }
-            Type::ResourceDomain(..) | Type::Primitive(..) | Type::Error => self.clone(),
+            Type::ResourceDomain(mid, sid, args_opt) => {
+                Type::ResourceDomain(*mid, *sid, args_opt.as_ref().map(|args| replace_vec(args)))
+            }
+            Type::Primitive(..) | Type::Error => self.clone(),
         }
     }
 
@@ -391,45 +394,42 @@ impl Type {
         }
     }
 
-    pub fn into_struct_tag(self, env: &GlobalEnv) -> Option<StructTag> {
+    /// Attempt to convert this type into a normalized::Type
+    pub fn into_struct_type(self, env: &GlobalEnv) -> Option<MType> {
         use Type::*;
-        if self.is_open() {
-            None
-        } else {
-            Some (
-                match self {
-		    Struct(mid, sid, ts) =>
-                        env.get_struct_tag(mid, sid, &ts)
-                            .expect("Invariant violation: struct type argument contains incomplete, tuple, reference, or spec type"),
+        Some(match self {
+            Struct(mid, sid, ts) => env.get_struct_type(mid, sid, &ts),
+            _ => return None,
+        })
+    }
 
-                    _ => return None
-		}
-	    )
-        }
+    /// Attempt to convert this type into a normalized::Type
+    pub fn into_normalized_type(self, env: &GlobalEnv) -> Option<MType> {
+        use Type::*;
+        Some (
+                match self {
+                    Primitive(p) => p.into_normalized_type().expect("Invariant violation: unexpected spec primitive"),
+                    Struct(mid, sid, ts) =>
+                        env.get_struct_type(mid, sid, &ts),
+                    Vector(et) => MType::Vector(
+                        Box::new(et.into_normalized_type(env)
+                                 .expect("Invariant violation: vector type argument contains incomplete, tuple, reference, or spec type"))
+                    ),
+                    TypeParameter(idx) => MType::TypeParameter(idx as u16),
+                    Tuple(..) | Error | Fun(..) | TypeDomain(..) | ResourceDomain(..) | TypeLocal(..) | Var(..) | Reference(..) =>
+                        return None
+                }
+            )
+    }
+
+    /// Attempt to convert this type into a language_storage::StructTag
+    pub fn into_struct_tag(self, env: &GlobalEnv) -> Option<StructTag> {
+        self.into_struct_type(env)?.into_struct_tag()
     }
 
     /// Attempt to convert this type into a language_storage::TypeTag
     pub fn into_type_tag(self, env: &GlobalEnv) -> Option<TypeTag> {
-        use Type::*;
-        if self.is_open() || self.is_reference() || self.is_spec() {
-            None
-        } else {
-            Some (
-                match self {
-                    Primitive(p) => p.into_type_tag().expect("Invariant violation: unexpected spec primitive"),
-                    Struct(mid, sid, ts) =>TypeTag::Struct(
-                        env.get_struct_tag(mid, sid, &ts)
-                            .expect("Invariant violation: struct type argument contains incomplete, tuple, reference, or spec type")
-                    ),
-                    Vector(et) => TypeTag::Vector(
-                        Box::new(et.into_type_tag(env)
-                                 .expect("Invariant violation: vector type argument contains incomplete, tuple, reference, or spec type"))
-                    ),
-                    Tuple(..) | Error | Fun(..) | TypeDomain(..) | ResourceDomain(..) | TypeParameter(..) | TypeLocal(..) | Var(..) | Reference(..) =>
-                        return None
-                }
-            )
-        }
+        self.into_normalized_type(env)?.into_type_tag()
     }
 
     /// Create a `Type` from `t`
@@ -505,12 +505,14 @@ impl Type {
     }
 }
 
-/// A parameter for type unification, indicating whether the outest types are allowed for
-/// co-variance. Types used in instantiations are always unified in `Variance::Disallow`
-/// mode, that is, co-variance is not allowed.
+/// A parameter for type unification that specifies the type compatibility rules to follow.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Variance {
+    /// Co-variance is allowed in all depths of the recursive type unification process
     Allow,
+    /// Co-variance is only allowed for the outermost type unification round
+    Shallow,
+    /// Co-variance is not allowed at all
     Disallow,
 }
 
@@ -532,26 +534,51 @@ impl Substitution {
         t.replace(None, Some(self), None)
     }
 
+    /// Return either a shallow or deep substitution of the type variable.
+    ///
+    /// If deep substitution is requested, follow down the substitution chain until either
+    /// - `Some(ty)` when the final type is not a type variable or
+    /// - `None` when the final type variable does not have a substitution
+    pub fn get_substitution(&self, var: u16, shallow: bool) -> Option<Type> {
+        match self.subs.get(&var) {
+            None => None,
+            Some(Type::Var(next_var)) => {
+                if shallow {
+                    Some(Type::Var(*next_var))
+                } else {
+                    self.get_substitution(*next_var, false)
+                }
+            }
+            Some(subst_ty) => Some(subst_ty.clone()),
+        }
+    }
+
     /// Unify two types, returning the unified type.
     ///
     /// This currently implements the following notion of type compatibility:
     ///
-    /// - References are dropped (i.e. &T and T are compatible)
-    /// - All integer types are compatible if co-variance is allowed.
+    /// - 1) References are dropped (i.e. &T and T are compatible)
+    /// - 2) All integer types are compatible if co-variance is allowed.
+    /// - 3) With the joint effect of 1) and 2), if (P, Q) is compatible under co-variance,
+    ///      (&P, Q), (P, &Q), and (&P, &Q) are all compatible under co-variance.
+    /// - 4) If in two tuples (P1, P2, ..., Pn) and (Q1, Q2, ..., Qn), all (Pi, Qi) pairs are
+    ///      compatible under co-variance, then the two tuples are compatible under co-variance.
     ///
     /// The substitution will be refined by variable assignments as needed to perform
     /// unification. If unification fails, the substitution will be in some intermediate state;
     /// to implement transactional unification, the substitution must be cloned before calling
     /// this.
-    ///
-    /// The passed `display_context` is needed for visualization of types on unification errors.
-    pub fn unify<'a>(
+    pub fn unify(
         &mut self,
-        display_context: &'a TypeDisplayContext<'a>,
         variance: Variance,
         t1: &Type,
         t2: &Type,
-    ) -> Result<Type, TypeError> {
+    ) -> Result<Type, TypeUnificationError> {
+        // Derive the variance level for recursion
+        let sub_variance = match variance {
+            Variance::Allow => Variance::Allow,
+            Variance::Shallow | Variance::Disallow => Variance::Disallow,
+        };
         // If any of the arguments is a reference, drop it for unification, but ensure
         // it is put back since we need to maintain this information for later phases.
         if let Type::Reference(is_mut, bt1) = t1 {
@@ -563,38 +590,29 @@ impl Substitution {
             };
             return Ok(Type::Reference(
                 *is_mut,
-                Box::new(self.unify(display_context, Variance::Disallow, bt1.as_ref(), t2)?),
+                Box::new(self.unify(sub_variance, bt1.as_ref(), t2)?),
             ));
         }
         if let Type::Reference(is_mut, bt2) = t2 {
             return Ok(Type::Reference(
                 *is_mut,
-                Box::new(self.unify(display_context, Variance::Disallow, t1, bt2.as_ref())?),
+                Box::new(self.unify(sub_variance, t1, bt2.as_ref())?),
             ));
         }
 
         // Substitute or assign variables.
-        if let Some(rt) =
-            self.try_substitute_or_assign(display_context, variance, false, &t1, &t2)?
-        {
+        if let Some(rt) = self.try_substitute_or_assign(variance, false, &t1, &t2)? {
             return Ok(rt);
         }
-        if let Some(rt) =
-            self.try_substitute_or_assign(display_context, variance, true, &t2, &t1)?
-        {
+        if let Some(rt) = self.try_substitute_or_assign(variance, true, &t2, &t1)? {
             return Ok(rt);
         }
 
         // Accept any error type.
-        if t1 == &Type::Error {
+        if matches!(t1, Type::Error) {
             return Ok(t2.clone());
         }
-        if t2 == &Type::Error {
-            return Ok(t1.clone());
-        }
-
-        // All number types are compatible if variance is allowed.
-        if variance == Variance::Allow && t1.is_number() && t2.is_number() {
+        if matches!(t2, Type::Error) {
             return Ok(t1.clone());
         }
 
@@ -604,6 +622,13 @@ impl Substitution {
                 if p1 == p2 {
                     return Ok(t1.clone());
                 }
+                // All integer types are compatible if co-variance is allowed.
+                if matches!(variance, Variance::Allow | Variance::Shallow)
+                    && t1.is_number()
+                    && t2.is_number()
+                {
+                    return Ok(Type::Primitive(PrimitiveType::Num));
+                }
             }
             (Type::TypeParameter(idx1), Type::TypeParameter(idx2)) => {
                 if idx1 == idx2 {
@@ -612,7 +637,7 @@ impl Substitution {
             }
             (Type::Tuple(ts1), Type::Tuple(ts2)) => {
                 return Ok(Type::Tuple(self.unify_vec(
-                    display_context,
+                    sub_variance,
                     ts1,
                     ts2,
                     "tuples",
@@ -620,8 +645,8 @@ impl Substitution {
             }
             (Type::Fun(ts1, r1), Type::Fun(ts2, r2)) => {
                 return Ok(Type::Fun(
-                    self.unify_vec(display_context, ts1, ts2, "functions")?,
-                    Box::new(self.unify(display_context, Variance::Disallow, &*r1, &*r2)?),
+                    self.unify_vec(sub_variance, ts1, ts2, "functions")?,
+                    Box::new(self.unify(sub_variance, &*r1, &*r2)?),
                 ));
             }
             (Type::Struct(m1, s1, ts1), Type::Struct(m2, s2, ts2)) => {
@@ -629,22 +654,20 @@ impl Substitution {
                     return Ok(Type::Struct(
                         *m1,
                         *s1,
-                        self.unify_vec(display_context, ts1, ts2, "structs")?,
+                        self.unify_vec(sub_variance, ts1, ts2, "structs")?,
                     ));
                 }
             }
             (Type::Vector(e1), Type::Vector(e2)) => {
                 return Ok(Type::Vector(Box::new(self.unify(
-                    display_context,
-                    Variance::Disallow,
+                    sub_variance,
                     &*e1,
                     &*e2,
                 )?)));
             }
             (Type::TypeDomain(e1), Type::TypeDomain(e2)) => {
                 return Ok(Type::TypeDomain(Box::new(self.unify(
-                    display_context,
-                    Variance::Disallow,
+                    sub_variance,
                     &*e1,
                     &*e2,
                 )?)));
@@ -656,33 +679,30 @@ impl Substitution {
             }
             _ => {}
         }
-
-        Err(TypeError::new(format!(
-            "expected `{}` but found `{}`",
-            self.specialize(&t2).display(display_context),
-            self.specialize(&t1).display(display_context),
-        )))
+        Err(TypeUnificationError::TypeMismatch(
+            self.specialize(t1),
+            self.specialize(t2),
+        ))
     }
 
     /// Helper to unify two type vectors.
-    fn unify_vec<'a>(
+    fn unify_vec(
         &mut self,
-        display_context: &'a TypeDisplayContext<'a>,
+        variance: Variance,
         ts1: &[Type],
         ts2: &[Type],
         item_name: &str,
-    ) -> Result<Vec<Type>, TypeError> {
+    ) -> Result<Vec<Type>, TypeUnificationError> {
         if ts1.len() != ts2.len() {
-            return Err(TypeError::new(format!(
-                "{} have different arity ({} != {})",
-                item_name,
+            return Err(TypeUnificationError::ArityMismatch(
+                item_name.to_owned(),
                 ts1.len(),
-                ts2.len()
-            )));
+                ts2.len(),
+            ));
         }
         let mut rs = vec![];
         for i in 0..ts1.len() {
-            rs.push(self.unify(display_context, Variance::Disallow, &ts1[i], &ts2[i])?);
+            rs.push(self.unify(variance, &ts1[i], &ts2[i])?);
         }
         Ok(rs)
     }
@@ -691,20 +711,19 @@ impl Substitution {
     /// was performed, None if not.
     fn try_substitute_or_assign(
         &mut self,
-        display_context: &TypeDisplayContext,
         variance: Variance,
         swapped: bool,
         t1: &Type,
         t2: &Type,
-    ) -> Result<Option<Type>, TypeError> {
+    ) -> Result<Option<Type>, TypeUnificationError> {
         if let Type::Var(v1) = t1 {
             if let Some(s1) = self.subs.get(&v1).cloned() {
                 return if swapped {
                     // Place the type terms in the right order again, so we
                     // get the 'expected vs actual' direction right.
-                    Ok(Some(self.unify(display_context, variance, t2, &s1)?))
+                    Ok(Some(self.unify(variance, t2, &s1)?))
                 } else {
-                    Ok(Some(self.unify(display_context, variance, &s1, t2)?))
+                    Ok(Some(self.unify(variance, &s1, t2)?))
                 };
             }
             let is_t1_var = |t: &Type| {
@@ -725,10 +744,10 @@ impl Substitution {
             } else {
                 // It is not clear to me whether this can ever occur given we do no global
                 // unification with recursion, but to be on the save side, we have it.
-                Err(TypeError::new(&format!(
-                    "[internal] type unification cycle check failed ({:?} =?= {:?})",
-                    t1, t2
-                )))
+                Err(TypeUnificationError::CyclicSubstitution(
+                    self.specialize(t1),
+                    self.specialize(t2),
+                ))
             }
         } else {
             Ok(None)
@@ -739,6 +758,231 @@ impl Substitution {
 impl Default for Substitution {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+/// The type unification algorithm implemented in the `Substitution` struct only accepts `Type::Var`
+/// as type variables. `Type::TypeParameter` and `Type::TypeLocal` are treated as concrete types
+/// in the unification process.
+///
+/// However, in some use cases, we might need to designate types other than `Type::Var` as type
+/// variables. For example, to see whether a generic struct `S<T>` can be instantiated as `S<bool>`
+/// where `T` is of type `Type::TypeParameter`, we still perform type unification over `S<T>` and
+/// `S<bool>` but this time, we need to convert the `T` from `Type::TypeParameter` into `Type::Var`
+/// first before re-using the algorithm in `Substitution`.
+///
+/// Similarly, in the monomorphization use case, we need to check whether a property over `S<t>`
+/// can be reduced to `S<u64>` where `t` is a `Type::TypeLocal`. We need a conversion from
+/// `Type::TypeLocal` to `Type::Var` as well.
+///
+/// TODO: we might remove `Type::TypeLocal` when
+/// 1) we have generic invariant (i.e., `invariant<T>`) as a replacement of universal quantification
+///    over type and
+/// 2) we cannot find much practical value for existential quantification over type (one dummy
+///    example is: `exists t: type: global<Config<T>>(0x1) == global<Config<T>>(0x2)`)
+///
+/// This is why we need `TypeUnificationAdapter`. The adapter takes care of
+/// 1) converting a `Type::TypeParameter` and `Type::TypeLocal` into type variables `Type::Var`,
+/// 2) invoking the type unification algorithm on the adapted types, and
+/// 3) subsequently mapping the type unification results back to the corresponding
+///    `Type::TypeParameter` and `Type::TypeLocal`.
+pub struct TypeUnificationAdapter {
+    type_vars_map: BTreeMap<u16, (bool, Type)>,
+    types_adapted_lhs: Vec<Type>,
+    types_adapted_rhs: Vec<Type>,
+}
+
+impl TypeUnificationAdapter {
+    /// Initialize the context for the type unifier.
+    ///
+    /// - If `treat_type_param_as_var` is set, all `Type::TypeParameter` in the types are converted
+    ///   to `Type::Var` before unification.
+    /// - If `treat_type_local_as_var` is set, all `Type::TypeLocal` in the types are converted
+    ///   to `Type::Var` before unification.
+    ///
+    /// It is OK if the `lhs_types` or `rhs_types` already contains some `Type::Var`. These type
+    /// variables will participate in the type unification, together with new type variables created
+    /// for `TypeParameter` and `TypeLocal`.
+    fn new<'a, I>(
+        lhs_types: I,
+        rhs_types: I,
+        treat_type_param_as_var: bool,
+        treat_type_local_as_var: bool,
+    ) -> Self
+    where
+        I: Iterator<Item = &'a Type> + Clone,
+    {
+        // find the starting index for new type vars
+        let mut count = 0;
+        for ty in lhs_types.clone().chain(rhs_types.clone()) {
+            ty.visit(&mut |t| {
+                if let Type::Var(idx) = t {
+                    if idx >= &count {
+                        count = *idx + 1;
+                    }
+                }
+            });
+        }
+
+        // assign indices for type vars
+        let mut type_param_vars = BTreeMap::new();
+        let mut type_local_vars = BTreeMap::new();
+        let mut type_vars_map = BTreeMap::new();
+        for (ty, is_lhs) in lhs_types
+            .clone()
+            .map(|t| (t, true))
+            .chain(rhs_types.clone().map(|t| (t, false)))
+        {
+            ty.visit(&mut |t| {
+                let var_created = match t {
+                    Type::TypeParameter(param_idx) if treat_type_param_as_var => {
+                        type_param_vars.entry(*param_idx).or_insert(count) == &count
+                    }
+                    Type::TypeLocal(local_sym) if treat_type_local_as_var => {
+                        type_local_vars.entry(*local_sym).or_insert(count) == &count
+                    }
+                    _ => false,
+                };
+                if var_created {
+                    type_vars_map.insert(count, (is_lhs, t.clone()));
+                    count += 1;
+                }
+            });
+        }
+
+        // prepare for substitutions
+        let type_param_subst = match type_param_vars.keys().max() {
+            None => vec![],
+            Some(max_param_idx) => (0..=*max_param_idx)
+                .map(|i| match type_param_vars.get(&i) {
+                    None => Type::TypeParameter(i),
+                    Some(var_idx) => Type::Var(*var_idx),
+                })
+                .collect(),
+        };
+        let type_local_subst: BTreeMap<_, _> = type_local_vars
+            .into_iter()
+            .map(|(sym, var_idx)| (sym, Type::Var(var_idx)))
+            .collect();
+
+        // do the adaptation
+        let param_subst_opt = if treat_type_param_as_var {
+            Some(type_param_subst.as_slice())
+        } else {
+            None
+        };
+        let local_subst_opt = if treat_type_local_as_var {
+            Some(&type_local_subst)
+        } else {
+            None
+        };
+        let types_adapted_lhs = lhs_types
+            .map(|t| t.replace(param_subst_opt, None, local_subst_opt))
+            .collect();
+        let types_adapted_rhs = rhs_types
+            .map(|t| t.replace(param_subst_opt, None, local_subst_opt))
+            .collect();
+
+        Self {
+            type_vars_map,
+            types_adapted_lhs,
+            types_adapted_rhs,
+        }
+    }
+
+    /// Create a TypeUnificationAdapter with the goal of unifying one pair of types
+    pub fn new_one(
+        lhs_type: &Type,
+        rhs_type: &Type,
+        treat_type_param_as_var: bool,
+        treat_type_local_as_var: bool,
+    ) -> Self {
+        Self::new(
+            std::iter::once(lhs_type),
+            std::iter::once(rhs_type),
+            treat_type_param_as_var,
+            treat_type_local_as_var,
+        )
+    }
+
+    /// Create a TypeUnificationAdapter with the goal of unifying two type tuples
+    pub fn new_vec(
+        lhs_types: &[Type],
+        rhs_types: &[Type],
+        treat_type_param_as_var: bool,
+        treat_type_local_as_var: bool,
+    ) -> Self {
+        Self::new(
+            lhs_types.iter(),
+            rhs_types.iter(),
+            treat_type_param_as_var,
+            treat_type_local_as_var,
+        )
+    }
+
+    /// Consume the TypeUnificationAdapter and produce the unification result. If type unification
+    /// is successful, return a pair of maps that correspond to the substitutions performed on the
+    /// LHS and RHS respectively. If the LHS and RHS cannot unify, None is returned.
+    pub fn unify(
+        self,
+        variance: Variance,
+        shallow_subst: bool,
+    ) -> Option<(BTreeMap<Type, Type>, BTreeMap<Type, Type>)> {
+        let mut subst = Substitution::new();
+        match subst.unify_vec(
+            variance,
+            &self.types_adapted_lhs,
+            &self.types_adapted_rhs,
+            "",
+        ) {
+            Ok(_) => {
+                let mut subst_lhs = BTreeMap::new();
+                let mut subst_rhs = BTreeMap::new();
+                for (var_idx, (is_lhs, ty)) in &self.type_vars_map {
+                    let subst_ty = match subst.get_substitution(*var_idx, shallow_subst) {
+                        None => continue,
+                        Some(Type::Var(subst_var_idx)) => {
+                            match self.type_vars_map.get(&subst_var_idx) {
+                                None => Type::Var(subst_var_idx),
+                                Some((_, subst_ty)) => subst_ty.clone(),
+                            }
+                        }
+                        Some(subst_ty) => subst_ty.clone(),
+                    };
+                    if *is_lhs {
+                        subst_lhs.insert(ty.clone(), subst_ty);
+                    } else {
+                        subst_rhs.insert(ty.clone(), subst_ty);
+                    }
+                }
+                Some((subst_lhs, subst_rhs))
+            }
+            Err(_) => None,
+        }
+    }
+}
+
+impl TypeUnificationError {
+    pub fn message(&self, display_context: &TypeDisplayContext) -> String {
+        match self {
+            TypeUnificationError::TypeMismatch(t1, t2) => {
+                format!(
+                    "expected `{}` but found `{}`",
+                    t2.display(display_context),
+                    t1.display(display_context),
+                )
+            }
+            TypeUnificationError::ArityMismatch(item, a1, a2) => {
+                format!("{} have different arity ({} != {})", item, a1, a2)
+            }
+            TypeUnificationError::CyclicSubstitution(t1, t2) => {
+                format!(
+                    "[internal] type unification cycle check failed ({} =?= {})",
+                    t1.display(display_context),
+                    t2.display(display_context),
+                )
+            }
+        }
     }
 }
 

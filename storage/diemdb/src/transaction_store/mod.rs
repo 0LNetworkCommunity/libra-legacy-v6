@@ -14,7 +14,7 @@ use diem_types::{
     block_metadata::BlockMetadata,
     transaction::{Transaction, Version},
 };
-use schemadb::{SchemaIterator, DB};
+use schemadb::{ReadOptions, SchemaIterator, DB};
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -28,7 +28,7 @@ impl TransactionStore {
     }
 
     /// Gets the version of a transaction by the sender `address` and `sequence_number`.
-    pub fn lookup_transaction_by_account(
+    pub fn get_account_transaction_version(
         &self,
         address: AccountAddress,
         sequence_number: u64,
@@ -46,6 +46,35 @@ impl TransactionStore {
         Ok(None)
     }
 
+    /// Gets an iterator that yields `(sequence_number, version)` for each
+    /// transaction sent by an account, starting at `start_seq_num`, and returning
+    /// at most `num_versions` results with `version <= ledger_version`.
+    ///
+    /// Guarantees that the returned sequence numbers are sequential, i.e.,
+    /// `seq_num_{i} + 1 = seq_num_{i+1}`.
+    pub fn get_account_transaction_version_iter(
+        &self,
+        address: AccountAddress,
+        start_seq_num: u64,
+        num_versions: u64,
+        ledger_version: Version,
+    ) -> Result<AccountTransactionVersionIter> {
+        let mut iter = self
+            .db
+            .iter::<TransactionByAccountSchema>(ReadOptions::default())?;
+        iter.seek(&(address, start_seq_num))?;
+        Ok(AccountTransactionVersionIter {
+            inner: iter,
+            address,
+            expected_next_seq_num: start_seq_num,
+            end_seq_num: start_seq_num
+                .checked_add(num_versions)
+                .ok_or_else(|| format_err!("too many transactions requested"))?,
+            prev_version: None,
+            ledger_version,
+        })
+    }
+
     /// Get signed transaction given `version`
     pub fn get_transaction(&self, version: Version) -> Result<Transaction> {
         self.db
@@ -59,14 +88,14 @@ impl TransactionStore {
         start_version: Version,
         num_transactions: usize,
     ) -> Result<TransactionIter> {
-        let mut iter = self.db.iter::<TransactionSchema>(Default::default())?;
+        let mut iter = self.db.iter::<TransactionSchema>(ReadOptions::default())?;
         iter.seek(&start_version)?;
         Ok(TransactionIter {
             inner: iter,
             expected_next_version: start_version,
             end_version: start_version
                 .checked_add(num_transactions as u64)
-                .ok_or_else(|| format_err!("Too many transactions requested."))?,
+                .ok_or_else(|| format_err!("too many transactions requested"))?,
         })
     }
 
@@ -144,6 +173,85 @@ impl<'a> TransactionIter<'a> {
 
 impl<'a> Iterator for TransactionIter<'a> {
     type Item = Result<Transaction>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.next_impl().transpose()
+    }
+}
+
+// TODO(philiphayes): this will need to change to support CRSNs
+// (Conflict-Resistant Sequence Numbers)[https://github.com/diem/dip/blob/main/dips/dip-168.md].
+//
+// It depends on the implementation details, but we'll probably index by _requested_
+// transaction sequence number rather than committed account sequence number.
+// This would mean the property: `seq_num_{i+1} == seq_num_{i} + 1` would no longer
+// be guaranteed and the check should be removed.
+//
+// This index would also no longer iterate over an account's transactions in
+// committed order, meaning the outer method would need to overread by
+// `CRSN_WINDOW_SIZE`, sort by version, and take only `limit` entries to get
+// at most `limit` transactions in committed order. Alternatively, add another
+// index for scanning an accounts transactions in committed order, e.g.,
+// `(AccountAddress, Version) -> SeqNum`.
+
+pub struct AccountTransactionVersionIter<'a> {
+    inner: SchemaIterator<'a, TransactionByAccountSchema>,
+    address: AccountAddress,
+    expected_next_seq_num: u64,
+    end_seq_num: u64,
+    prev_version: Option<Version>,
+    ledger_version: Version,
+}
+
+impl<'a> AccountTransactionVersionIter<'a> {
+    fn next_impl(&mut self) -> Result<Option<(u64, Version)>> {
+        if self.expected_next_seq_num >= self.end_seq_num {
+            return Ok(None);
+        }
+
+        Ok(match self.inner.next().transpose()? {
+            Some(((address, seq_num), version)) => {
+                // No more transactions sent by this account.
+                if address != self.address {
+                    return Ok(None);
+                }
+
+                // Ensure seq_num_{i+1} == seq_num_{i} + 1
+                ensure!(
+                    seq_num == self.expected_next_seq_num,
+                    "DB corruption: account transactions sequence numbers are not contiguous: \
+                     actual: {}, expected: {}",
+                    seq_num,
+                    self.expected_next_seq_num,
+                );
+
+                // Ensure version_{i+1} > version_{i}
+                if let Some(prev_version) = self.prev_version {
+                    ensure!(
+                        prev_version < version,
+                        "DB corruption: account transaction versions are not strictly increasing: \
+                         previous version: {}, current version: {}",
+                        prev_version,
+                        version,
+                    );
+                }
+
+                // No more transactions (in this view of the ledger).
+                if version > self.ledger_version {
+                    return Ok(None);
+                }
+
+                self.expected_next_seq_num += 1;
+                self.prev_version = Some(version);
+                Some((seq_num, version))
+            }
+            None => None,
+        })
+    }
+}
+
+impl<'a> Iterator for AccountTransactionVersionIter<'a> {
+    type Item = Result<(u64, Version)>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.next_impl().transpose()

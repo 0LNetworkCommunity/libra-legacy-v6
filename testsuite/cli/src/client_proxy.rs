@@ -8,23 +8,25 @@ use crate::{
 };
 use anyhow::{bail, ensure, format_err, Error, Result};
 use compiler::Compiler;
-use diem_client::{WaitForTransactionError, views::{self}};
+use diem_client::{
+    stream::{StreamingClient, StreamingClientConfig},
+    views, views::{self}, StreamResult, WaitForTransactionError,
+};
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
     test_utils::KeyPair,
 };
 use diem_json_rpc_client::views::{TowerStateResourceView, OracleUpgradeStateView};
 use diem_logger::prelude::{error, info};
+use diem_resource_viewer::{AnnotatedAccountStateBlob, DiemValueAnnotator};
 use diem_temppath::TempPath;
 use diem_transaction_builder::stdlib as transaction_builder;
 use diem_types::{
     access_path::AccessPath,
     account_address::AccountAddress,
     account_config::{
-        diem_root_address, from_currency_code_string, testnet_dd_account_address,        
-        treasury_compliance_account_address, type_tag_for_currency_code,
-        // ACCOUNT_RECEIVED_EVENT_PATH, ACCOUNT_SENT_EVENT_PATH,
-        GAS_NAME, XUS_NAME,
+        diem_root_address, from_currency_code_string, testnet_dd_account_address,
+        treasury_compliance_account_address, type_tag_for_currency_code, GAS_NAME, XUS_NAME,
     },
     account_state::AccountState,
     chain_id::ChainId,
@@ -39,11 +41,12 @@ use diem_types::{
     write_set::{WriteOp, WriteSetMut},
 };
 use diem_wallet::{io_utils, Mnemonic, WalletLibrary};
+use move_vm_test_utils::InMemoryStorage;
 use num_traits::{
     cast::{FromPrimitive, ToPrimitive},
+    identities::Zero,
 };
 use reqwest::Url;
-use resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator, NullStateView};
 use rust_decimal::Decimal;
 use std::{
     collections::HashMap,
@@ -116,12 +119,13 @@ pub struct ClientProxy {
     /// do not print '.' when waiting for signed transaction
     pub quiet_wait: bool,
     /// Wallet library managing user accounts.
-    wallet: WalletLibrary,
+    pub wallet: WalletLibrary,
     /// Whether to sync with validator on wallet recovery.
     sync_on_wallet_recovery: bool,
     /// temp files (alive for duration of program)
     temp_files: Vec<PathBuf>,
-    // invariant self.address_to_ref_id.values().iter().all(|i| i < self.accounts.len())
+    /// Host of the node that client connects to
+    pub url: Url,
 }
 
 impl ClientProxy {
@@ -135,7 +139,7 @@ impl ClientProxy {
         sync_on_wallet_recovery: bool,
         faucet_url: Option<String>,
         mnemonic_file: Option<String>,
-        mnemonic_string: Option<String>, //////// 0L ////////
+        mnemonic_string: Option<String>, //////// 0L ////////        
         waypoint: Waypoint,
         quiet_wait: bool,
     ) -> Result<Self> {
@@ -220,7 +224,21 @@ impl ClientProxy {
             sync_on_wallet_recovery,
             temp_files: vec![],
             quiet_wait,
+            url,
         })
+    }
+
+    /// Gets a websocket client for the same node `DiemClient` connects to
+    pub async fn streaming_client(
+        &self,
+        config: Option<StreamingClientConfig>,
+    ) -> StreamResult<StreamingClient> {
+        let mut url = self.url.clone();
+        url.set_scheme("ws").expect("Could not set scheme");
+        // Path from /json-rpc/src/stream_rpc/transport/websocket.rs#L43
+        url.set_path("/v1/stream/ws");
+        println!("ws_url: {}", &url);
+        StreamingClient::new(url, config.unwrap_or_default(), None).await
     }
 
     /// Gets account data for the indexed address
@@ -269,7 +287,7 @@ impl ClientProxy {
                     sender_account_address
                 )
             })?)
-    }
+    }   
 
     /// Returns the account index that should be used by user to reference this account
     pub fn create_next_account(&mut self, sync_with_validator: bool) -> Result<AddressAndIndex> {
@@ -298,11 +316,11 @@ impl ClientProxy {
             println!("No user accounts");
         } else {
             for (ref index, ref account) in self.accounts.iter().enumerate() {
-                //////// 0L ////////
                 println!(
-                    "User account index: {}, address: {}, sequence number: {}, status: {:?}",
+                    "User account index: {}, address: {}, private_key: {:?}, sequence number: {}, status: {:?}",
                     index,
                     hex::encode(&account.address),
+                    //////// 0L ////////                    
                     // hex::encode(&self.wallet.get_private_key(&account.address).unwrap().to_bytes()),
                     account.sequence_number,
                     account.status,
@@ -906,7 +924,7 @@ impl ClientProxy {
         &mut self, _space_delim_strings: &[&str]
     ) -> Result<Option<OracleUpgradeStateView>> {
         self.client.get_oracle_upgrade_state()
-    }
+    }    
 
     /// Get the latest sequence number from validator for the account specified.
     pub fn get_sequence_number(&mut self, space_delim_strings: &[&str]) -> Result<u64> {
@@ -990,12 +1008,14 @@ impl ClientProxy {
             None
         };
 
+        /////// 0L /////////
+        // Todo: Check if we still need this patch in diem 1.4
         let program = transaction_builder::encode_add_currency_to_account_script_function(
             type_tag_for_currency_code(currency_code),
         );
 
         let txn = self.create_txn_to_submit(
-            program,
+            program, /////// 0L /////////
             &sender,
             max_gas_amount,    /* max_gas_amount */
             gas_unit_price,    /* gas_unit_price */
@@ -1016,7 +1036,7 @@ impl ClientProxy {
         let (receiver, receiver_auth_key_opt) =
             self.get_account_address_from_parameter(space_delim_strings[1])?;
         let receiver_auth_key = receiver_auth_key_opt.ok_or_else(|| {
-            //////// 0L ////////
+            //////// 0L ////////            
             format_err!("Need authentication key to create new account via minting from faucet")
         })?;
         let mint_currency = space_delim_strings[3];
@@ -1057,7 +1077,7 @@ impl ClientProxy {
                     println!(">> Creating recipient account before minting from faucet");
                     // This needs to be blocking since the mint can't happen until it completes
                     self.association_transaction_with_local_tc_account(
-                        payload,
+                        TransactionPayload::Script(payload),
                         true,
                     )?;
                     self.accounts.get_mut(pos).unwrap().status = AccountStatus::Persisted;
@@ -1066,7 +1086,7 @@ impl ClientProxy {
                 // We can't determine the account state. So try and create the account, but
                 // if it already exists don't error.
                 let _result = self.association_transaction_with_local_tc_account(
-                    payload,
+                    TransactionPayload::Script(payload),
                     true,
                 );
             } // else, the account has already been created -- do nothing
@@ -1083,7 +1103,7 @@ impl ClientProxy {
                     vec![],
                 );
                 self.association_transaction_with_local_testnet_dd_account(
-                    payload,
+                    TransactionPayload::Script(payload),
                     is_blocking,
                 )
             }
@@ -1132,8 +1152,7 @@ impl ClientProxy {
 
             let compiler = Compiler {
                 address: diem_types::account_config::CORE_CODE_ADDRESS,
-                skip_stdlib_deps: false,
-                extra_deps: vec![],
+                deps: diem_framework_releases::current_modules().iter().collect(),
             };
             compiler
                 .into_script_blob("file_name", &code)
@@ -1165,10 +1184,10 @@ impl ClientProxy {
         );
         match self.diem_root_account {
             Some(_) => self.association_transaction_with_local_diem_root_account(
-                transaction_builder::encode_update_diem_version_script_function(
+                TransactionPayload::Script(transaction_builder::encode_update_diem_version_script_function(
                     self.diem_root_account.as_ref().unwrap().sequence_number,
                     space_delim_strings[1].parse::<u64>().unwrap(),
-                ),
+                )),
                 is_blocking,
             ),
             None => unimplemented!(),
@@ -1307,7 +1326,7 @@ impl ClientProxy {
             vec![],
         );
         let txn = self.create_txn_to_submit(
-            program,
+            program
             sender,
             max_gas_amount,    /* max_gas_amount */
             gas_unit_price,    /* gas_unit_price */
@@ -1335,7 +1354,7 @@ impl ClientProxy {
     ) -> Result<RawTransaction> {
         let currency_code = from_currency_code_string(&coin_currency)
             .map_err(|_| format_err!("Invalid currency code {} specified", coin_currency))?;
-        let program = transaction_builder::encode_peer_to_peer_with_metadata_script_function(
+        let program = transaction_builder::encode_peer_to_peer_with_metadata_script(
             type_tag_for_currency_code(currency_code),
             receiver_address,
             num_coins,
@@ -1344,7 +1363,7 @@ impl ClientProxy {
         );
 
         Ok(create_unsigned_txn(
-            program,
+            TransactionPayload::Script(program),
             sender_address,
             sender_sequence_number,
             max_gas_amount.unwrap_or(MAX_GAS_AMOUNT),
@@ -1815,8 +1834,11 @@ impl ClientProxy {
     ) -> Result<(Option<AnnotatedAccountStateBlob>, Version)> {
         let (blob, ver) = self.client.get_account_state_blob(&address)?;
         if let Some(account_blob) = blob {
-            let state_view = NullStateView::default();
-            let annotator = MoveValueAnnotator::new(&state_view);
+            let mut storage = InMemoryStorage::new();
+            for (blob, module) in diem_framework_releases::current_modules_with_blobs() {
+                storage.publish_or_overwrite_module(module.self_id(), blob.clone())
+            }
+            let annotator = DiemValueAnnotator::new(&storage);
             let annotate_blob =
                 annotator.view_account_state(&AccountState::try_from(&account_blob)?)?;
             Ok((Some(annotate_blob), ver))

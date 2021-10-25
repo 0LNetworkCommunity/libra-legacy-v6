@@ -5,26 +5,16 @@ use anyhow::{bail, Result};
 use diem_types::transaction::ScriptFunction;
 use include_dir::{include_dir, Dir};
 use move_binary_format::file_format::CompiledModule;
+use move_command_line_common::files::{
+    extension_equals, MOVE_COMPILED_EXTENSION, MOVE_ERROR_DESC_EXTENSION,
+};
 use once_cell::sync::Lazy;
 use std::{convert::TryFrom, path::PathBuf};
-
-use bytecode_verifier::verify_module; //////// 0L ////////
 
 pub mod legacy;
 
 #[cfg(test)]
 mod tests;
-
-//////// 0L ////////
-// for Upgrade oracle
-/// The output path under which staged files will be put
-pub const STAGED_OUTPUT_PATH: &str = "staged";
-/// The file name for the staged stdlib
-pub const STAGED_STDLIB_NAME: &str = "stdlib";
-/// The extension for staged files
-pub const STAGED_EXTENSION: &str = "mv";
-//////// 0L end ////////
-
 
 /// The compiled library needs to be included in the Rust binary due to Docker deployment issues.
 const RELEASES_DIR: Dir = include_dir!("artifacts");
@@ -54,12 +44,8 @@ pub fn load_modules_from_release(release_name: &str) -> Result<Vec<Vec<u8>>> {
             let mut modules = modules_dir
                 .files()
                 .iter()
-                .flat_map(|file| match file.path().extension() {
-                    Some(ext) if ext == "mv" => {
-                        Some((file.path().file_name(), file.contents().to_vec()))
-                    }
-                    _ => None,
-                })
+                .filter(|file| extension_equals(file.path(), MOVE_COMPILED_EXTENSION))
+                .map(|file| (file.path().file_name(), file.contents().to_vec()))
                 .collect::<Vec<_>>();
 
             modules.sort_by(|(name1, _), (name2, _)| name1.cmp(name2));
@@ -75,7 +61,7 @@ pub fn load_error_descriptions_from_release(release_name: &str) -> Result<Vec<u8
     let mut errmap_path = PathBuf::from(release_name);
     errmap_path.push("error_description");
     errmap_path.push("error_description");
-    errmap_path.set_extension("errmap");
+    errmap_path.set_extension(MOVE_ERROR_DESC_EXTENSION);
 
     match RELEASES_DIR.get_file(errmap_path) {
         Some(file) => Ok(file.contents().to_vec()),
@@ -129,43 +115,3 @@ pub fn name_for_script(bytes: &[u8]) -> Result<String> {
             .map_err(|err| err.into())
     }
 }
-
-
-//////// 0L ////////
-// Update stdlib with a byte string, used as part of the upgrade oracle
-pub fn import_stdlib(lib_bytes: &Vec<u8>) -> Vec<CompiledModule> {
-    let modules : Vec<CompiledModule> = bcs::from_bytes::<Vec<Vec<u8>>>(lib_bytes)
-        .unwrap_or(vec![]) // set as empty array if err occurred
-        .into_iter()
-        .map(|bytes| CompiledModule::deserialize(&bytes).unwrap())
-        .collect();
-
-    // verify the compiled module
-    let mut verified_modules = vec![];
-    for module in modules {
-        verify_module(&module).expect("stdlib module failed to verify");
-        // DependencyChecker::verify_module(&module, &verified_modules)
-        //     .expect("stdlib module dependency failed to verify");
-        verified_modules.push(module)
-    }
-    verified_modules
-}
-
-
-// //////// 0L ////////
-// pub fn create_upgrade_payload() {
-//   let mut module_path = PathBuf::from(STAGED_OUTPUT_PATH);
-//   module_path.push(STAGED_STDLIB_NAME);
-//   module_path.set_extension(STAGED_EXTENSION);
-//   let modules: Vec<Vec<u8>> = build_stdlib()
-//       .values().into_iter()
-//       .map(|compiled_module| {
-//           let mut ser = Vec::new();
-//           compiled_module.serialize(&mut ser).unwrap();
-//           ser
-//       })
-//       .collect();
-//   let bytes = bcs::to_bytes(&modules).unwrap();
-//   let mut module_file = File::create(module_path).unwrap();
-//   module_file.write_all(&bytes).unwrap();
-// }

@@ -25,6 +25,7 @@ pub const VALIDATOR_NETWORK_KEY: &str = "validator_network";
 pub const SAFETY_DATA: &str = "safety_data";
 pub const WAYPOINT: &str = "waypoint";
 pub const GENESIS_WAYPOINT: &str = "genesis-waypoint";
+pub const MOVE_MODULES: &str = "move-modules";
 
 //////// 0L ////////
 pub const NODE_HOME: &str = ".0L/";

@@ -105,8 +105,10 @@ pub struct AccessPath {
 // Abstract domain operations
 
 /// Trait for a domain that can be viewed as a partial map from access paths to values
+/// and values can be deleted using their access paths
 pub trait AccessPathMap<T: AbstractDomain> {
     fn get_access_path(&self, ap: AccessPath) -> Option<&T>;
+    fn remove_access_path(&mut self, ap: AccessPath) -> Option<T>;
 }
 
 /// Trait for an abstract domain that can represent footprint values
@@ -209,15 +211,16 @@ impl AbsAddr {
     /// `ap` in `sub_map`
     pub fn substitute_footprint(
         &mut self,
-        actuals: &[AbsAddr],
+        actuals: &[TempIndex],
         type_actuals: &[Type],
+        func_env: &FunctionEnv,
         sub_map: &dyn AccessPathMap<AbsAddr>,
     ) {
         let mut acc = SetDomain::default();
         for a in self.iter() {
             match a {
                 Addr::Footprint(ap) => {
-                    acc.join(&ap.substitute_footprint(actuals, type_actuals, sub_map));
+                    acc.join(&ap.substitute_footprint(actuals, type_actuals, func_env, sub_map));
                 }
                 c => {
                     acc.insert(c.clone());
@@ -251,8 +254,11 @@ impl AbsAddr {
                     extended_ap.add_offset(offset.clone());
                     extended_aps.insert(Addr::Footprint(extended_ap));
                 }
-                Addr::Constant(_) => {
-                    panic!("Type error: address constant as base")
+                Addr::Constant(c) => {
+                    panic!(
+                        "Type error: address constant {:?} as base for offset {:?}",
+                        c, offset
+                    )
                 }
             }
         }
@@ -348,12 +354,13 @@ impl GlobalKey {
     /// `ap` in `sub_map`.
     pub fn substitute_footprint(
         &mut self,
-        actuals: &[AbsAddr],
+        actuals: &[TempIndex],
         type_actuals: &[Type],
+        func_env: &FunctionEnv,
         sub_map: &dyn AccessPathMap<AbsAddr>,
     ) {
         self.addr
-            .substitute_footprint(actuals, type_actuals, sub_map);
+            .substitute_footprint(actuals, type_actuals, func_env, sub_map);
         self.ty.substitute_footprint(type_actuals);
     }
 
@@ -427,12 +434,13 @@ impl Root {
     /// Bind free type variables to `type_actuals`.
     pub fn substitute_footprint(
         &mut self,
-        actuals: &[AbsAddr],
+        actuals: &[TempIndex],
         type_actuals: &[Type],
+        func_env: &FunctionEnv,
         sub_map: &dyn AccessPathMap<AbsAddr>,
     ) {
         match self {
-            Self::Global(g) => g.substitute_footprint(actuals, type_actuals, sub_map),
+            Self::Global(g) => g.substitute_footprint(actuals, type_actuals, func_env, sub_map),
             Self::Formal(_) | Self::Local(_) | Self::Return(_) => (),
         }
     }
@@ -469,10 +477,20 @@ impl Offset {
                 // we conflate address and signer, so this can happen
                 s.get_type()
             }
-            _ => panic!(
-                "Invalid base type {:?} for offset {:?} in get_type",
-                base, self
-            ),
+            (Type::Error, _) => {
+                // couldn't infer the type of `base`. propagate the error
+                Type::Error
+            }
+            _ => {
+                panic!(
+                    "get_type warning: Invalid base type {} for offset {:?} in get_type",
+                    base.display(&move_model::ty::TypeDisplayContext::WithEnv {
+                        env,
+                        type_param_names: None
+                    }),
+                    self,
+                )
+            }
         }
     }
 
@@ -600,7 +618,7 @@ impl AccessPath {
                                     struct_type.clone(),
                                 ));
                                 let mut new_offsets = vec![];
-                                for v in self.offsets.iter().skip(0) {
+                                for v in self.offsets[1..].iter() {
                                     new_offsets.push(v.clone())
                                 }
                                 acc.insert(Addr::footprint(AccessPath::new(root, new_offsets)));
@@ -621,30 +639,53 @@ impl AccessPath {
     /// Bind free type variables to `type_actuals`.
     pub fn substitute_footprint(
         &self,
-        actuals: &[AbsAddr],
+        actuals: &[TempIndex],
         type_actuals: &[Type],
+        func_env: &FunctionEnv,
         sub_map: &dyn AccessPathMap<AbsAddr>,
     ) -> AbsAddr {
-        let mut acc = AbsAddr::default();
+        let mut new_offsets = self.offsets.clone();
+        new_offsets.iter_mut().for_each(|o| {
+            o.substitute_footprint(type_actuals);
+        });
         match &self.root {
             Root::Formal(i) => {
-                acc.join(&self.prepend_addrs(&actuals[*i]));
+                let temp_index = actuals[*i];
+                let caller_root = Root::from_index(temp_index, func_env);
+                let mut results = AbsAddr::default();
+
+                // In this loop, we lookup the access path in the submap,
+                // starting with the root of the caller and adding the
+                // offsets of the current access path.
+                // When a result is found, we accumulate to results
+                // We need to try with the offsets to handle cases such as
+                // Formal(1): { data: None, children: { Field(0): { data: Footprint(AccessPath { root: Formal(0), offsets: [] }) } }
+                // where simply reading Formal(1) would yield None
+                // but Formal(1)/0 gives the mapping to Formal(0)
+                for i in 0..=new_offsets.len() {
+                    let caller_offsets = Vec::from(&new_offsets[0..i]);
+                    let ap = AccessPath::new(caller_root.clone(), caller_offsets.clone());
+                    if let Some(addrs) = sub_map.get_access_path(ap) {
+                        // We need to adjust the offset from the current access path
+                        // to avoid duplicating it (i.e. Formal(0)/0/0 instead of Formal(0)/0)
+                        let callee_offsets = Vec::from(&new_offsets[i..new_offsets.len()]);
+                        let new_addrs =
+                            AccessPath::new(self.root.clone(), callee_offsets).prepend_addrs(addrs);
+                        results.join(&new_addrs);
+                    }
+                }
+                results
             }
             Root::Global(g) => {
                 let mut new_g = g.clone();
-                new_g.substitute_footprint(actuals, type_actuals, sub_map);
-                let mut new_offsets = self.offsets.clone();
-                new_offsets.iter_mut().for_each(|o| {
-                    o.substitute_footprint(type_actuals);
-                });
-                acc.insert(Addr::footprint(AccessPath::new(
+                new_g.substitute_footprint(actuals, type_actuals, func_env, sub_map);
+                AbsAddr::singleton(Addr::footprint(AccessPath::new(
                     Root::Global(new_g),
                     new_offsets,
-                )));
+                )))
             }
-            Root::Local(_) | Root::Return(_) => (),
+            Root::Local(_) | Root::Return(_) => AbsAddr::default(),
         }
-        acc
     }
 
     /// Return true if `self` can be converted to a compact set of concrete access paths.
@@ -843,10 +884,18 @@ impl<'a> fmt::Display for OffsetDisplay<'a> {
                         .get_identifier()
                         .as_str(),
                 ),
-                _ => panic!(
-                    "Invalid base type {:?} for field offset {:?}",
-                    self.base_type, self.offset
-                ),
+                Type::Error => {
+                    // this happens when we are trying to print an access path rooted in a stackless
+                    // bytecode-generated local. we do not know the type of this local, so we cannot
+                    // infer the type of its fields either. just print the index
+                    write!(f, "{}", *fld)
+                }
+                _ => {
+                    panic!(
+                        "Warning: Invalid base type {:?} for field offset {:?}",
+                        self.base_type, self.offset
+                    );
+                }
             },
             VectorIndex => f.write_str("[_]"),
             Global(g) => write!(f, "{}", g.display(self.env)),

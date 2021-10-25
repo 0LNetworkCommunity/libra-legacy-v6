@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    errors::*,
+    diag,
+    diagnostics::Diagnostics,
     expansion::ast::{ModuleIdent, ModuleIdent_, SpecId},
     hlir::ast as H,
     parser::ast::{FunctionName, ModuleName, Var},
@@ -10,6 +11,10 @@ use crate::{
 };
 use bytecode_source_map::source_map::SourceMap;
 use move_binary_format::file_format as F;
+use move_core_types::{
+    account_address::AccountAddress, identifier::Identifier as MoveCoreIdentifier,
+    language_storage::ModuleId,
+};
 use move_ir_types::location::*;
 use std::collections::BTreeMap;
 
@@ -91,6 +96,20 @@ impl CompiledModuleIdent {
         };
         sp(loc, ModuleIdent_::new(address, module_name))
     }
+
+    pub fn into_module_id(self) -> (Option<Name>, ModuleId) {
+        let Self {
+            loc: _,
+            address_name,
+            address_bytes,
+            module_name,
+        } = self;
+        let id = ModuleId::new(
+            AccountAddress::new(address_bytes.into_bytes()),
+            MoveCoreIdentifier::new(module_name.0.value).unwrap(),
+        );
+        (address_name, id)
+    }
 }
 
 impl CompiledUnit {
@@ -133,7 +152,7 @@ impl CompiledUnit {
         }
     }
 
-    pub fn verify(self) -> (Self, Errors) {
+    pub fn verify(self) -> (Self, Diagnostics) {
         match self {
             CompiledUnit::Module {
                 ident,
@@ -171,39 +190,39 @@ impl CompiledUnit {
     }
 }
 
-fn verify_module(loc: Loc, cm: F::CompiledModule) -> (F::CompiledModule, Errors) {
+fn verify_module(loc: Loc, cm: F::CompiledModule) -> (F::CompiledModule, Diagnostics) {
     match move_bytecode_verifier::verifier::verify_module(&cm) {
-        Ok(_) => (cm, vec![]),
+        Ok(_) => (cm, Diagnostics::new()),
         Err(e) => (
             cm,
-            vec![vec![(
-                loc,
-                format!("ICE failed bytecode verifier: {:#?}", e),
-            )]],
+            Diagnostics::from(vec![diag!(
+                Bug::BytecodeVerification,
+                (loc, format!("ICE failed bytecode verifier: {:#?}", e)),
+            )]),
         ),
     }
 }
 
-fn verify_script(loc: Loc, cs: F::CompiledScript) -> (F::CompiledScript, Errors) {
+fn verify_script(loc: Loc, cs: F::CompiledScript) -> (F::CompiledScript, Diagnostics) {
     match move_bytecode_verifier::verifier::verify_script(&cs) {
-        Ok(_) => (cs, vec![]),
+        Ok(_) => (cs, Diagnostics::new()),
         Err(e) => (
             cs,
-            vec![vec![(
-                loc,
-                format!("ICE failed bytecode verifier: {:#?}", e),
-            )]],
+            Diagnostics::from(vec![diag!(
+                Bug::BytecodeVerification,
+                (loc, format!("ICE failed bytecode verifier: {:#?}", e)),
+            )]),
         ),
     }
 }
 
-pub fn verify_units(units: Vec<CompiledUnit>) -> (Vec<CompiledUnit>, Errors) {
+pub fn verify_units(units: Vec<CompiledUnit>) -> (Vec<CompiledUnit>, Diagnostics) {
     let mut new_units = vec![];
-    let mut errors = vec![];
+    let mut diags = Diagnostics::new();
     for unit in units {
-        let (unit, es) = unit.verify();
+        let (unit, ds) = unit.verify();
         new_units.push(unit);
-        errors.extend(es);
+        diags.extend(ds);
     }
-    (new_units, errors)
+    (new_units, diags)
 }

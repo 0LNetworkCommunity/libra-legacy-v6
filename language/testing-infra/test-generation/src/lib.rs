@@ -19,25 +19,29 @@ use crate::config::{Args, EXECUTE_UNVERIFIED_MODULE, RUN_ON_VM};
 use bytecode_generator::BytecodeGenerator;
 use bytecode_verifier::verify_module;
 use crossbeam_channel::{bounded, unbounded, Receiver, Sender};
-use diem_logger::{debug, error, info};
-use diem_state_view::StateView;
-use diem_types::{account_address::AccountAddress, vm_status::StatusCode};
-use diem_vm::DiemVM;
 use getrandom::getrandom;
-use language_e2e_tests::executor::FakeExecutor;
 use module_generation::generate_module;
 use move_binary_format::{
     access::ModuleAccess,
     file_format::{
-        AbilitySet, CompiledModule, CompiledModuleMut, FunctionDefinitionIndex, SignatureToken,
-        StructHandleIndex,
+        AbilitySet, CompiledModule, FunctionDefinitionIndex, SignatureToken, StructHandleIndex,
     },
 };
-use move_core_types::{language_storage::TypeTag, value::MoveValue, vm_status::VMStatus};
-use move_vm_runtime::logging::NoContextLog;
+use move_core_types::{
+    account_address::AccountAddress,
+    effects::ChangeSet,
+    language_storage::TypeTag,
+    value::MoveValue,
+    vm_status::{StatusCode, VMStatus},
+};
+use move_lang::{compiled_unit::CompiledUnit, Compiler};
+use move_vm_runtime::{data_cache::MoveStorage, move_vm::MoveVM};
+use move_vm_test_utils::{DeltaStorage, InMemoryStorage};
 use move_vm_types::gas_schedule::GasStatus;
+use once_cell::sync::Lazy;
 use rand::{rngs::StdRng, Rng, SeedableRng};
 use std::{fs, io::Write, panic, thread};
+use tracing::{debug, error, info};
 
 /// This function calls the Bytecode verifier to test it
 fn run_verifier(module: CompiledModule) -> Result<CompiledModule, String> {
@@ -49,6 +53,23 @@ fn run_verifier(module: CompiledModule) -> Result<CompiledModule, String> {
         Err(err) => Err(format!("Verifier panic: {:#?}", err)),
     }
 }
+
+static STORAGE_WITH_MOVE_STDLIB: Lazy<InMemoryStorage> = Lazy::new(|| {
+    let mut storage = InMemoryStorage::new();
+    let (_, compiled_units) = Compiler::new(&move_stdlib::move_stdlib_files(), &[])
+        .build_and_report()
+        .unwrap();
+    let compiled_modules = compiled_units.into_iter().map(|unit| match unit {
+        CompiledUnit::Module { module, .. } => module,
+        CompiledUnit::Script { .. } => panic!("Unexpected Script in stdlib"),
+    });
+    for module in compiled_modules {
+        let mut blob = vec![];
+        module.serialize(&mut blob).unwrap();
+        storage.publish_or_overwrite_module(module.self_id(), blob);
+    }
+    storage
+});
 
 /// This function runs a verified module in the VM runtime
 fn run_vm(module: CompiledModule) -> Result<(), VMStatus> {
@@ -76,23 +97,22 @@ fn run_vm(module: CompiledModule) -> Result<(), VMStatus> {
         })
         .collect();
 
-    let executor = FakeExecutor::from_genesis_file();
     execute_function_in_module(
         module,
         entry_idx,
         vec![],
         main_args,
-        executor.get_state_view(),
+        &*STORAGE_WITH_MOVE_STDLIB,
     )
 }
 
 /// Execute the first function in a module
-fn execute_function_in_module<S: StateView>(
+fn execute_function_in_module(
     module: CompiledModule,
     idx: FunctionDefinitionIndex,
     ty_args: Vec<TypeTag>,
     args: Vec<Vec<u8>>,
-    state_view: &S,
+    storage: &impl MoveStorage,
 ) -> Result<(), VMStatus> {
     let module_id = module.self_id();
     let entry_name = {
@@ -101,33 +121,22 @@ fn execute_function_in_module<S: StateView>(
         module.identifier_at(entry_name_idx)
     };
     {
-        let diem_vm = DiemVM::new(state_view);
+        let vm = MoveVM::new(move_stdlib::natives::all_natives(
+            AccountAddress::from_hex_literal("0x1").unwrap(),
+        ))
+        .unwrap();
 
-        let internals = diem_vm.internals();
+        let mut changeset = ChangeSet::new();
+        let mut blob = vec![];
+        module.serialize(&mut blob).unwrap();
+        changeset.publish_or_overwrite_module(module_id.clone(), blob);
+        let delta_storage = DeltaStorage::new(storage, &changeset);
+        let mut sess = vm.new_session(&delta_storage);
 
-        let log_context = NoContextLog::new();
-        internals.with_txn_data_cache(state_view, |mut txn_context| {
-            let sender = AccountAddress::random();
-            let mut mod_blob = vec![];
-            module
-                .serialize(&mut mod_blob)
-                .expect("Module serialization error");
-            let mut gas_status = GasStatus::new_unmetered();
-            txn_context
-                .publish_module(mod_blob, sender, &mut gas_status, &log_context)
-                .map_err(|e| e.into_vm_status())?;
-            txn_context
-                .execute_function(
-                    &module_id,
-                    &entry_name,
-                    ty_args,
-                    args,
-                    &mut gas_status,
-                    &log_context,
-                )
-                .map_err(|e| e.into_vm_status())?;
-            Ok(())
-        })
+        let mut gas_status = GasStatus::new_unmetered();
+        sess.execute_function(&module_id, entry_name, ty_args, args, &mut gas_status)?;
+
+        Ok(())
     }
 }
 
@@ -178,7 +187,7 @@ pub enum Status {
     Valid,
 }
 
-fn bytecode_module(rng: &mut StdRng, module: CompiledModuleMut) -> CompiledModuleMut {
+fn bytecode_module(rng: &mut StdRng, module: CompiledModule) -> CompiledModule {
     let mut generated_module = BytecodeGenerator::new(rng).generate_module(module.clone());
     // Module generation can retry under certain circumstances
     while generated_module.is_none() {
@@ -190,7 +199,7 @@ fn bytecode_module(rng: &mut StdRng, module: CompiledModuleMut) -> CompiledModul
 pub fn module_frame_generation(
     num_iters: Option<u64>,
     seed: [u8; 32],
-    sender: Sender<CompiledModuleMut>,
+    sender: Sender<CompiledModule>,
     stats: Receiver<Status>,
 ) {
     let mut verification_failures: u128 = 0;
@@ -199,7 +208,7 @@ pub fn module_frame_generation(
 
     let generation_options = config::module_generation_settings();
     let mut rng = StdRng::from_seed(seed);
-    let mut module = generate_module(&mut rng, generation_options.clone()).into_inner();
+    let mut module = generate_module(&mut rng, generation_options.clone());
     // Either get the number of iterations provided by the user, or iterate "infinitely"--up to
     // u128::MAX number of times.
     let iters = num_iters
@@ -207,7 +216,7 @@ pub fn module_frame_generation(
         .unwrap_or_else(|| std::u128::MAX);
 
     while generated < iters && sender.send(module).is_ok() {
-        module = generate_module(&mut rng, generation_options.clone()).into_inner();
+        module = generate_module(&mut rng, generation_options.clone());
         generated += 1;
         while let Ok(stat) = stats.try_recv() {
             match stat {
@@ -251,7 +260,7 @@ pub fn bytecode_generation(
     output_path: Option<String>,
     tid: u64,
     mut rng: StdRng,
-    receiver: Receiver<CompiledModuleMut>,
+    receiver: Receiver<CompiledModule>,
     stats: Sender<Status>,
 ) {
     while let Ok(module) = receiver.recv() {
@@ -260,7 +269,6 @@ pub fn bytecode_generation(
         let module = bytecode_module(&mut rng, module);
 
         debug!("Done...Running module on verifier...");
-        let module = module.freeze().expect("generated module failed to freeze.");
         let verified_module = match run_verifier(module.clone()) {
             Ok(verified_module) => {
                 status = Status::ExecutionFailure;
@@ -399,8 +407,10 @@ pub fn abilities(
         TypeParameter(idx) => constraints[*idx as usize],
         Vector(ty) => AbilitySet::polymorphic_abilities(
             AbilitySet::VECTOR,
-            vec![abilities(module, ty, constraints)].into_iter(),
-        ),
+            vec![false],
+            vec![abilities(module, ty, constraints)],
+        )
+        .unwrap(),
         Struct(idx) => {
             let sh = module.struct_handle_at(*idx);
             sh.abilities
@@ -408,10 +418,17 @@ pub fn abilities(
         StructInstantiation(idx, type_args) => {
             let sh = module.struct_handle_at(*idx);
             let declared_abilities = sh.abilities;
-            let type_argument_abilities = type_args
+            let declared_phantom_parameters =
+                sh.type_parameters.iter().map(|param| param.is_phantom);
+            let type_arguments = type_args
                 .iter()
-                .map(|ty| abilities(module, ty, constraints));
-            AbilitySet::polymorphic_abilities(declared_abilities, type_argument_abilities)
+                .map(|arg| abilities(module, arg, constraints));
+            AbilitySet::polymorphic_abilities(
+                declared_abilities,
+                declared_phantom_parameters,
+                type_arguments,
+            )
+            .unwrap()
         }
     }
 }

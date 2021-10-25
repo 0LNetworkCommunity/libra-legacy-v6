@@ -16,10 +16,12 @@ bytecode-source-map = { path = "../compiler/bytecode-source-map" }
 move-ir-types = { path = "../move-ir/types" }
 move-core-types = { path = "../move-core/types" }
 disassembler = { path = "../tools/disassembler" }
+move-command-line-common = { path = "../move-command-line-common" }
+move-symbol-pool = { path = "../move-symbol-pool" }
 
 # external dependencies
-codespan = "0.8.0"
-codespan-reporting = "0.8.0"
+codespan = "0.11.1"
+codespan-reporting = "0.11.1"
 internment = { version = "0.5.0", features = [ "arc"] }
 itertools = "0.10.0"
 log = "0.4.14"

@@ -12,9 +12,11 @@ edition = "2018"
 [dependencies]
 fail = "0.4.0"
 futures = "0.3.12"
+hex = "0.4.3"
 jemallocator = { version = "0.3.2", features = ["profiling", "unprefixed_malloc_on_supported_platforms"] }
+rand = "0.8.3"
 structopt = "0.3.21"
-tokio = { version = "1.3.0", features = ["full"] }
+tokio = { version = "1.8.1", features = ["full"] }
 tokio-stream = "0.1.4"
 
 backup-service = { path = "../storage/backup/backup-service" }
@@ -25,6 +27,7 @@ executor = { path = "../execution/executor" }
 executor-types = { path = "../execution/executor-types" }
 diem-config = { path = "../config" }
 diem-crypto = { path = "../crypto/crypto" }
+diem-framework-releases = { path = "../language/diem-framework/releases" }
 diem-genesis-tool = {path = "../config/management/genesis", features = ["testing"] }
 diem-json-rpc = { path = "../json-rpc" }
 diem-logger = { path = "../common/logger" }

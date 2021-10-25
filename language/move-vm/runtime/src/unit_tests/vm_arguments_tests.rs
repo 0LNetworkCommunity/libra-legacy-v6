@@ -3,17 +3,16 @@
 
 use std::collections::HashMap;
 
-use crate::{data_cache::MoveStorage, logging::NoContextLog, move_vm::MoveVM};
+use crate::{data_cache::MoveStorage, move_vm::MoveVM};
 use move_binary_format::{
     errors::{PartialVMResult, VMResult},
     file_format::{
-        empty_module, AbilitySet, AddressIdentifierIndex, Bytecode, CodeUnit, CompiledModuleMut,
-        CompiledScriptMut, FieldDefinition, FunctionDefinition, FunctionHandle,
-        FunctionHandleIndex, IdentifierIndex, ModuleHandle, ModuleHandleIndex, Signature,
-        SignatureIndex, SignatureToken, StructDefinition, StructFieldInformation, StructHandle,
-        StructHandleIndex, TableIndex, TypeSignature, Visibility,
+        empty_module, AbilitySet, AddressIdentifierIndex, Bytecode, CodeUnit, CompiledModule,
+        CompiledScript, FieldDefinition, FunctionDefinition, FunctionHandle, FunctionHandleIndex,
+        IdentifierIndex, ModuleHandle, ModuleHandleIndex, Signature, SignatureIndex,
+        SignatureToken, StructDefinition, StructFieldInformation, StructHandle, StructHandleIndex,
+        TableIndex, TypeSignature, Visibility,
     },
-    CompiledModule,
 };
 use move_core_types::{
     account_address::AccountAddress,
@@ -39,7 +38,7 @@ fn make_script(parameters: Signature) -> Vec<u8> {
             SignatureIndex((signatures.len() - 1) as TableIndex)
         }
     };
-    CompiledScriptMut {
+    CompiledScript {
         version: move_binary_format::file_format_common::VERSION_MAX,
         module_handles: vec![],
         struct_handles: vec![],
@@ -84,7 +83,7 @@ fn make_script_with_non_linking_structs(parameters: Signature) -> Vec<u8> {
             SignatureIndex((signatures.len() - 1) as TableIndex)
         }
     };
-    CompiledScriptMut {
+    CompiledScript {
         version: move_binary_format::file_format_common::VERSION_MAX,
         module_handles: vec![ModuleHandle {
             address: AddressIdentifierIndex(0),
@@ -154,7 +153,7 @@ fn make_module_with_function(
             SignatureIndex((signatures.len() - 1) as TableIndex)
         }
     };
-    let module = CompiledModuleMut {
+    let module = CompiledModule {
         version: move_binary_format::file_format_common::VERSION_MAX,
         self_module_handle_idx: ModuleHandleIndex(0),
         module_handles: vec![ModuleHandle {
@@ -207,9 +206,7 @@ fn make_module_with_function(
                 code: vec![Bytecode::LdU64(0), Bytecode::Abort],
             }),
         }],
-    }
-    .freeze()
-    .unwrap();
+    };
     (module, function_name)
 }
 
@@ -257,19 +254,11 @@ fn call_script_with_args_ty_args_signers(
     ty_args: Vec<TypeTag>,
     signers: Vec<AccountAddress>,
 ) -> VMResult<()> {
-    let move_vm = MoveVM::new();
+    let move_vm = MoveVM::new(vec![]).unwrap();
     let remote_view = RemoteStore::new();
-    let log_context = NoContextLog::new();
     let mut session = move_vm.new_session(&remote_view);
     let mut gas_status = GasStatus::new_unmetered();
-    session.execute_script(
-        script,
-        ty_args,
-        args,
-        signers,
-        &mut gas_status,
-        &log_context,
-    )
+    session.execute_script(script, ty_args, args, signers, &mut gas_status)
 }
 
 fn call_script(script: Vec<u8>, args: Vec<Vec<u8>>) -> VMResult<()> {
@@ -283,11 +272,10 @@ fn call_script_function_with_args_ty_args_signers(
     ty_args: Vec<TypeTag>,
     signers: Vec<AccountAddress>,
 ) -> VMResult<()> {
-    let move_vm = MoveVM::new();
+    let move_vm = MoveVM::new(vec![]).unwrap();
     let mut remote_view = RemoteStore::new();
     let id = module.self_id();
     remote_view.add_module(module);
-    let log_context = NoContextLog::new();
     let mut session = move_vm.new_session(&remote_view);
     let mut gas_status = GasStatus::new_unmetered();
     session.execute_script_function(
@@ -297,7 +285,6 @@ fn call_script_function_with_args_ty_args_signers(
         args,
         signers,
         &mut gas_status,
-        &log_context,
     )?;
     Ok(())
 }
@@ -755,25 +742,16 @@ fn check_script_function() {
 
 #[test]
 fn call_missing_item() {
-    let module = empty_module().freeze().unwrap();
+    let module = empty_module();
     let id = &module.self_id();
     let function_name = IdentStr::new("foo").unwrap();
     // mising module
-    let move_vm = MoveVM::new();
+    let move_vm = MoveVM::new(vec![]).unwrap();
     let mut remote_view = RemoteStore::new();
-    let log_context = NoContextLog::new();
     let mut session = move_vm.new_session(&remote_view);
     let mut gas_status = GasStatus::new_unmetered();
     let error = session
-        .execute_script_function(
-            id,
-            function_name,
-            vec![],
-            vec![],
-            vec![],
-            &mut gas_status,
-            &log_context,
-        )
+        .execute_script_function(id, function_name, vec![], vec![], vec![], &mut gas_status)
         .err()
         .unwrap();
     assert_eq!(error.major_status(), StatusCode::LINKER_ERROR);
@@ -783,15 +761,7 @@ fn call_missing_item() {
     remote_view.add_module(module);
     let mut session = move_vm.new_session(&remote_view);
     let error = session
-        .execute_script_function(
-            id,
-            function_name,
-            vec![],
-            vec![],
-            vec![],
-            &mut gas_status,
-            &log_context,
-        )
+        .execute_script_function(id, function_name, vec![], vec![], vec![], &mut gas_status)
         .err()
         .unwrap();
     assert_eq!(

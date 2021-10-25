@@ -1,5 +1,3 @@
-address 0x1 {
-
 /// The ValidatorConfig resource holds information about a validator. Information
 /// is published and updated by Diem root in a `Self::ValidatorConfig` in preparation for
 /// later inclusion (by functions in DiemConfig) in a `DiemConfig::DiemConfig<DiemSystem>`
@@ -11,14 +9,15 @@ address 0x1 {
 // File Prefix for errors: 2200
 ///////////////////////////////////////////////////////////////////////////
 
-module ValidatorConfig {
-    use 0x1::DiemTimestamp;
-    use 0x1::Errors;
-    use 0x1::Option::{Self, Option};
-    use 0x1::Signature;
-    use 0x1::Signer;
-    use 0x1::Roles;
-    use 0x1::ValidatorOperatorConfig;
+module DiemFramework::ValidatorConfig {
+    use DiemFramework::DiemTimestamp;
+    use Std::Errors;
+    use DiemFramework::Signature;
+    use DiemFramework::Roles;
+    use DiemFramework::ValidatorOperatorConfig;
+    use Std::Option::{Self, Option};
+    use Std::Signer;
+    friend DiemFramework::DiemAccount;
 
     struct Config has copy, drop, store {
         consensus_pubkey: vector<u8>,
@@ -53,7 +52,7 @@ module ValidatorConfig {
     /// Publishes a mostly empty ValidatorConfig struct. Eventually, it
     /// will have critical info such as keys, network addresses for validators,
     /// and the address of the validator operator.
-    public fun publish(
+    public(friend) fun publish(
         validator_account: &signer,
         dr_account: &signer,
         human_name: vector<u8>,
@@ -92,7 +91,8 @@ module ValidatorConfig {
     /// will have critical info such as keys, network addresses for validators,
     /// and the address of the validator operator.
     /// Permissions: PUBLIC, ANYONE, SIGNER
-    /// Needs to be a signer, is called from DiemAccount, which can create a signer. Otherwise, not callable publicly, and can only grant role to the signer's address.
+    /// Needs to be a signer, is called from DiemAccount, which can create a signer. 
+    /// Otherwise, not callable publicly, and can only grant role to the signer's address.
     public fun publish_with_proof(
         validator_account: &signer,
         human_name: vector<u8>,
@@ -457,5 +457,4 @@ module ValidatorConfig {
     spec fun spec_has_operator(addr: address): bool {
         Option::is_some(global<ValidatorConfig>(addr).operator_account)
     }
-}
 }

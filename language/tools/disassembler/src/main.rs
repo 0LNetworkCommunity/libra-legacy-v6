@@ -8,7 +8,13 @@ use bytecode_source_map::{
     utils::{remap_owned_loc_to_loc, source_map_from_file, OwnedLoc},
 };
 use disassembler::disassembler::{Disassembler, DisassemblerOptions};
-use move_binary_format::file_format::{CompiledModule, CompiledScript};
+use move_binary_format::{
+    binary_views::BinaryIndexedView,
+    file_format::{CompiledModule, CompiledScript},
+};
+use move_command_line_common::files::{
+    MOVE_COMPILED_EXTENSION, MOVE_EXTENSION, SOURCE_MAP_EXTENSION,
+};
 use move_coverage::coverage_map::CoverageMap;
 use move_ir_types::location::Spanned;
 use std::{fs, path::Path};
@@ -55,9 +61,9 @@ struct Args {
 fn main() {
     let args = Args::from_args();
 
-    let move_extension = "move";
-    let mv_bytecode_extension = "mv";
-    let source_map_extension = "mvsm";
+    let move_extension = MOVE_EXTENSION;
+    let mv_bytecode_extension = MOVE_COMPILED_EXTENSION;
+    let source_map_extension = SOURCE_MAP_EXTENSION;
 
     let source_path = Path::new(&args.bytecode_file_path);
     let extension = source_path
@@ -88,19 +94,23 @@ fn main() {
 
     // TODO: make source mapping work with the Move source language
     let no_loc = Spanned::unsafe_no_loc(()).loc;
+    let module: CompiledModule;
+    let script: CompiledScript;
+    let bytecode = if args.is_script {
+        script = CompiledScript::deserialize(&bytecode_bytes)
+            .expect("Script blob can't be deserialized");
+        BinaryIndexedView::Script(&script)
+    } else {
+        module = CompiledModule::deserialize(&bytecode_bytes)
+            .expect("Module blob can't be deserialized");
+        BinaryIndexedView::Module(&module)
+    };
+
     let mut source_mapping = {
-        let bytecode = if args.is_script {
-            CompiledScript::deserialize(&bytecode_bytes)
-                .expect("Script blob can't be deserialized")
-                .into_module()
-                .1
-        } else {
-            CompiledModule::deserialize(&bytecode_bytes).expect("Module blob can't be deserialized")
-        };
         if let Ok(s) = source_map {
             SourceMapping::new(s, bytecode)
         } else {
-            SourceMapping::new_from_module(bytecode, no_loc)
+            SourceMapping::new_from_view(bytecode, no_loc)
                 .expect("Unable to build dummy source mapping")
         }
     };

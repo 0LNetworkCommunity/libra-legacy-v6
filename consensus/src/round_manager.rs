@@ -24,8 +24,10 @@ use crate::{
 use anyhow::{bail, ensure, Context, Result};
 use consensus_types::{
     block::Block,
+    block_data::BlockData,
     block_retrieval::{BlockRetrievalResponse, BlockRetrievalStatus},
     common::{Author, Round},
+    experimental::{commit_decision::CommitDecision, commit_vote::CommitVote},
     proposal_msg::ProposalMsg,
     quorum_cert::QuorumCert,
     sync_info::SyncInfo,
@@ -33,7 +35,8 @@ use consensus_types::{
     vote::Vote,
     vote_msg::VoteMsg,
 };
-use diem_infallible::checked;
+use core::sync::atomic::Ordering;
+use diem_infallible::{checked, Mutex};
 use diem_logger::prelude::*;
 use diem_types::{epoch_state::EpochState, validator_verifier::ValidatorVerifier};
 use fail::fail_point;
@@ -41,7 +44,10 @@ use fail::fail_point;
 use safety_rules::ConsensusState;
 use safety_rules::TSafetyRules;
 use serde::Serialize;
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::{atomic::AtomicU64, Arc},
+    time::Duration,
+};
 use termion::color::*;
 
 #[derive(Serialize, Clone)]
@@ -49,6 +55,8 @@ pub enum UnverifiedEvent {
     ProposalMsg(Box<ProposalMsg>),
     VoteMsg(Box<VoteMsg>),
     SyncInfo(Box<SyncInfo>),
+    CommitVote(Box<CommitVote>),
+    CommitDecision(Box<CommitDecision>),
 }
 
 impl UnverifiedEvent {
@@ -66,6 +74,14 @@ impl UnverifiedEvent {
                 s.verify(validator)?;
                 VerifiedEvent::SyncInfo(s)
             }
+            UnverifiedEvent::CommitVote(cv) => {
+                cv.verify(validator)?;
+                VerifiedEvent::CommitVote(cv)
+            }
+            UnverifiedEvent::CommitDecision(cd) => {
+                cd.verify(validator)?;
+                VerifiedEvent::CommitDecision(cd)
+            }
         })
     }
 
@@ -74,6 +90,8 @@ impl UnverifiedEvent {
             UnverifiedEvent::ProposalMsg(p) => p.epoch(),
             UnverifiedEvent::VoteMsg(v) => v.epoch(),
             UnverifiedEvent::SyncInfo(s) => s.epoch(),
+            UnverifiedEvent::CommitVote(cv) => cv.epoch(),
+            UnverifiedEvent::CommitDecision(cd) => cd.epoch(),
         }
     }
 }
@@ -84,15 +102,20 @@ impl From<ConsensusMsg> for UnverifiedEvent {
             ConsensusMsg::ProposalMsg(m) => UnverifiedEvent::ProposalMsg(m),
             ConsensusMsg::VoteMsg(m) => UnverifiedEvent::VoteMsg(m),
             ConsensusMsg::SyncInfo(m) => UnverifiedEvent::SyncInfo(m),
+            ConsensusMsg::CommitVoteMsg(m) => UnverifiedEvent::CommitVote(m),
+            ConsensusMsg::CommitDecisionMsg(m) => UnverifiedEvent::CommitDecision(m),
             _ => unreachable!("Unexpected conversion"),
         }
     }
 }
 
+#[derive(Debug)]
 pub enum VerifiedEvent {
     ProposalMsg(Box<ProposalMsg>),
     VoteMsg(Box<VoteMsg>),
     SyncInfo(Box<SyncInfo>),
+    CommitVote(Box<CommitVote>),
+    CommitDecision(Box<CommitDecision>),
 }
 
 #[cfg(test)]
@@ -185,11 +208,14 @@ pub struct RoundManager {
     round_state: RoundState,
     proposer_election: Box<dyn ProposerElection + Send + Sync>,
     proposal_generator: ProposalGenerator,
-    safety_rules: MetricsSafetyRules,
+    safety_rules: Arc<Mutex<MetricsSafetyRules>>,
     network: NetworkSender,
     txn_manager: Arc<dyn TxnManager>,
     storage: Arc<dyn PersistentLivenessStorage>,
     sync_only: bool,
+    back_pressure: Arc<AtomicU64>,
+    decoupled_execution: bool,
+    back_pressure_limit: u64,
 }
 
 impl RoundManager {
@@ -199,12 +225,14 @@ impl RoundManager {
         round_state: RoundState,
         proposer_election: Box<dyn ProposerElection + Send + Sync>,
         proposal_generator: ProposalGenerator,
-        safety_rules: MetricsSafetyRules,
+        safety_rules: Arc<Mutex<MetricsSafetyRules>>,
         network: NetworkSender,
         txn_manager: Arc<dyn TxnManager>,
         storage: Arc<dyn PersistentLivenessStorage>,
         sync_only: bool,
     ) -> Self {
+        // when decoupled execution is false,
+        // the counter is still static.
         counters::OP_COUNTERS
             .gauge("sync_only")
             .set(sync_only as i64);
@@ -219,6 +247,40 @@ impl RoundManager {
             txn_manager,
             storage,
             sync_only,
+            back_pressure: Arc::new(AtomicU64::new(0)), // dummy value
+            decoupled_execution: false,
+            back_pressure_limit: 1, // arbitrary dummy value
+        }
+    }
+
+    pub fn new_with_decoupled_execution(
+        epoch_state: EpochState,
+        block_store: Arc<BlockStore>,
+        round_state: RoundState,
+        proposer_election: Box<dyn ProposerElection + Send + Sync>,
+        proposal_generator: ProposalGenerator,
+        safety_rules: Arc<Mutex<MetricsSafetyRules>>,
+        network: NetworkSender,
+        txn_manager: Arc<dyn TxnManager>,
+        storage: Arc<dyn PersistentLivenessStorage>,
+        sync_only: bool,
+        back_pressure: Arc<AtomicU64>,
+        back_pressure_limit: u64,
+    ) -> Self {
+        Self {
+            epoch_state,
+            block_store,
+            round_state,
+            proposer_election,
+            proposal_generator,
+            safety_rules,
+            network,
+            txn_manager,
+            storage,
+            sync_only,
+            back_pressure,
+            decoupled_execution: true,
+            back_pressure_limit,
         }
     }
 
@@ -260,11 +322,26 @@ impl RoundManager {
             .proposer_election
             .is_valid_proposer(self.proposal_generator.author(), new_round_event.round)
         {
-            let proposal_msg =
-                ConsensusMsg::ProposalMsg(Box::new(self.generate_proposal(new_round_event).await?));
+            let proposal_msg = Box::new(self.generate_proposal(new_round_event).await?);
             let mut network = self.network.clone();
-            network.broadcast(proposal_msg).await;
-            counters::PROPOSALS_COUNT.inc();
+            if Self::should_inject_reconfiguration_error(proposal_msg.proposal().block_data()) {
+                // We send the proposal to half of the validators to force a timeout.
+                let mut half_peers: Vec<_> = self
+                    .epoch_state
+                    .verifier
+                    .get_ordered_account_addresses_iter()
+                    .collect();
+                half_peers.truncate(half_peers.len() / 2);
+                network
+                    .send(ConsensusMsg::ProposalMsg(proposal_msg), half_peers)
+                    .await;
+                return Err(anyhow::anyhow!("Injected error in reconfiguration suffix"));
+            } else {
+                network
+                    .broadcast(ConsensusMsg::ProposalMsg(proposal_msg))
+                    .await;
+                counters::PROPOSALS_COUNT.inc();
+            }
         }
         Ok(())
     }
@@ -278,10 +355,11 @@ impl RoundManager {
             .proposal_generator
             .generate_proposal(new_round_event.round)
             .await?;
-        let signed_proposal = self.safety_rules.sign_proposal(proposal)?;
+        let signature = self.safety_rules.lock().sign_proposal(&proposal)?;
+        let signed_proposal =
+            Block::new_proposal_from_block_data_and_signature(proposal, signature);
         observe_block(signed_proposal.timestamp_usecs(), BlockStage::SIGNED);
         debug!(self.new_log(LogEvent::Propose), "{}", signed_proposal);
-        // return proposal
         Ok(ProposalMsg::new(
             signed_proposal,
             self.block_store.sync_info(),
@@ -335,7 +413,9 @@ impl RoundManager {
                 self.new_log(LogEvent::HelpPeerSync).remote_peer(author),
                 "Remote peer has stale state {}, send it back {}", sync_info, local_sync_info,
             );
-            self.network.send_sync_info(local_sync_info.clone(), author);
+            self.network
+                .send_sync_info(local_sync_info.clone(), author)
+                .await;
         }
         if sync_info.has_newer_certificates(&local_sync_info) {
             debug!(
@@ -418,6 +498,27 @@ impl RoundManager {
         Ok(())
     }
 
+    fn sync_only(&self) -> bool {
+        if self.decoupled_execution {
+            let back_pressure = self.back_pressure.load(Ordering::SeqCst);
+            let root_round = self.block_store.root().round();
+            let sync_or_not =
+                self.sync_only || root_round > self.back_pressure_limit + back_pressure;
+
+            counters::OP_COUNTERS
+                .gauge("sync_only")
+                .set(sync_or_not as i64);
+
+            counters::OP_COUNTERS
+                .gauge("back_pressure")
+                .set((root_round - back_pressure) as i64);
+
+            sync_or_not
+        } else {
+            self.sync_only
+        }
+    }
+
     /// The replica broadcasts a "timeout vote message", which includes the round signature, which
     /// can be aggregated to a TimeoutCertificate.
     /// The timeout vote message can be one of the following three options:
@@ -431,7 +532,7 @@ impl RoundManager {
             return Ok(());
         }
 
-        if self.sync_only {
+        if self.sync_only() {
             self.network
                 .broadcast(ConsensusMsg::SyncInfo(Box::new(
                     self.block_store.sync_info(),
@@ -459,6 +560,7 @@ impl RoundManager {
             let timeout = timeout_vote.timeout();
             let signature = self
                 .safety_rules
+                .lock()
                 .sign_timeout(&timeout)
                 .context("[RoundManager] SafetyRules signs timeout")?;
             timeout_vote.add_timeout_signature(signature);
@@ -551,16 +653,19 @@ impl RoundManager {
             .block_store
             .execute_and_insert_block(proposed_block)
             .context("[RoundManager] Failed to execute_and_insert the block")?;
-        // notify mempool about failed txn
-        let compute_result = executed_block.compute_result();
-        if let Err(e) = self
-            .txn_manager
-            .notify(executed_block.block(), compute_result)
-            .await
-        {
-            error!(
-                error = ?e, "[RoundManager] Failed to notify mempool of rejected txns",
-            );
+
+        if !self.decoupled_execution {
+            // notify mempool about failed txn
+            let compute_result = executed_block.compute_result();
+            if let Err(e) = self
+                .txn_manager
+                .notify(executed_block.block(), compute_result)
+                .await
+            {
+                error!(
+                    error = ?e, "[RoundManager] Failed to notify mempool of rejected txns",
+                );
+            }
         }
 
         // Short circuit if already voted.
@@ -571,13 +676,14 @@ impl RoundManager {
         );
 
         ensure!(
-            !self.sync_only,
+            !self.sync_only(),
             "[RoundManager] sync_only flag is set, stop voting"
         );
 
         let maybe_signed_vote_proposal = executed_block.maybe_signed_vote_proposal();
         let vote = self
             .safety_rules
+            .lock()
             .construct_and_sign_vote(&maybe_signed_vote_proposal)
             .context(format!(
                 "[RoundManager] SafetyRules {}Rejected{} {}",
@@ -757,11 +863,11 @@ impl RoundManager {
     /// Inspect the current consensus state.
     #[cfg(test)]
     pub fn consensus_state(&mut self) -> ConsensusState {
-        self.safety_rules.consensus_state().unwrap()
+        self.safety_rules.lock().consensus_state().unwrap()
     }
 
     #[cfg(test)]
-    pub fn set_safety_rules(&mut self, safety_rules: MetricsSafetyRules) {
+    pub fn set_safety_rules(&mut self, safety_rules: Arc<Mutex<MetricsSafetyRules>>) {
         self.safety_rules = safety_rules
     }
 
@@ -777,5 +883,26 @@ impl RoundManager {
         LogSchema::new(event)
             .round(self.round_state.current_round())
             .epoch(self.epoch_state.epoch)
+    }
+
+    /// Given R1 <- B2 if R1 has the reconfiguration txn, we inject error on B2 if R1.round + 1 = B2.round
+    /// Direct suffix is checked by parent.has_reconfiguration && !parent.parent.has_reconfiguration
+    ///
+    /// It's only enabled with fault injection (failpoints feature).
+    #[allow(unused_variables)]
+    fn should_inject_reconfiguration_error(block_data: &BlockData) -> bool {
+        #[cfg(feature = "failpoints")]
+        {
+            let direct_suffix = block_data.is_reconfiguration_suffix()
+                && !block_data
+                    .quorum_cert()
+                    .parent_block()
+                    .has_reconfiguration();
+            let continuous_round =
+                block_data.round() == block_data.quorum_cert().certified_block().round() + 1;
+            direct_suffix && continuous_round
+        }
+        #[cfg(not(feature = "failpoints"))]
+        false
     }
 }

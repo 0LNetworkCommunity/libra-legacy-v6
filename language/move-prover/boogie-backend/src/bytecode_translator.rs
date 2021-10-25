@@ -11,7 +11,7 @@ use log::{debug, info, log, warn, Level};
 
 use bytecode::{
     function_target::FunctionTarget,
-    function_target_pipeline::FunctionTargetsHolder,
+    function_target_pipeline::{FunctionTargetsHolder, VerificationFlavor},
     mono_analysis,
     stackless_bytecode::{BorrowEdge, BorrowNode, Bytecode, Constant, HavocKind, Operation},
 };
@@ -43,7 +43,7 @@ use codespan::LineIndex;
 use move_model::{
     ast::TempIndex,
     model::{Loc, NodeId},
-    ty::BOOL_TYPE,
+    ty::{TypeDisplayContext, BOOL_TYPE},
 };
 
 pub struct BoogieTranslator<'env> {
@@ -424,18 +424,20 @@ impl<'env> FunctionTranslator<'env> {
                     attribs.push(format!("{{:random_seed {}}} ", seed));
                 };
 
-                if *flavor == "inconsistency" {
-                    attribs.push(format!(
-                        "{{:msg_if_verifies \"inconsistency_detected{}\"}} ",
-                        self.loc_str(&fun_target.get_loc())
-                    ));
-                }
-
-                if flavor.is_empty() {
-                    ("$verify".to_string(), attribs.join(""))
-                } else {
-                    (format!("$verify_{}", flavor), attribs.join(""))
-                }
+                let suffix = match flavor {
+                    VerificationFlavor::Regular => "$verify".to_string(),
+                    VerificationFlavor::Instantiated(_) => {
+                        format!("$verify_{}", flavor)
+                    }
+                    VerificationFlavor::Inconsistency => {
+                        attribs.push(format!(
+                            "{{:msg_if_verifies \"inconsistency_detected{}\"}} ",
+                            self.loc_str(&fun_target.get_loc())
+                        ));
+                        format!("$verify_{}", flavor)
+                    }
+                };
+                (suffix, attribs.join(""))
             }
         };
         writer.set_location(&fun_target.get_loc());
@@ -501,6 +503,7 @@ impl<'env> FunctionTranslator<'env> {
         let writer = self.parent.writer;
         let fun_target = self.fun_target;
         let variant = &fun_target.data.variant;
+        let instantiation = &fun_target.data.type_args;
         let env = fun_target.global_env();
 
         // Be sure to set back location to the whole function definition as a default.
@@ -508,6 +511,24 @@ impl<'env> FunctionTranslator<'env> {
 
         emitln!(writer, "{");
         writer.indent();
+
+        // Print instantiation information
+        if !instantiation.is_empty() {
+            let display_ctxt = TypeDisplayContext::WithEnv {
+                env,
+                type_param_names: None,
+            };
+            emitln!(writer, "// function instantiation");
+            for (ty_var, ty_inst) in instantiation {
+                emitln!(
+                    writer,
+                    "// #{} := {};",
+                    ty_var,
+                    ty_inst.display(&display_ctxt)
+                );
+            }
+            emitln!(writer, "");
+        }
 
         // Generate local variable declarations. They need to appear first in boogie.
         emitln!(writer, "// declare local variables");
@@ -702,6 +723,7 @@ impl<'env> FunctionTranslator<'env> {
         // Translate the bytecode instruction.
         match bytecode {
             SaveMem(_, label, mem) => {
+                let mem = &mem.to_owned().instantiate(self.type_inst);
                 let snapshot = boogie_resource_memory_name(env, mem, &Some(*label));
                 let current = boogie_resource_memory_name(env, mem, &None);
                 emitln!(writer, "{} := {};", snapshot, current);

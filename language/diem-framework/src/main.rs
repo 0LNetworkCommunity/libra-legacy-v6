@@ -105,9 +105,7 @@ fn main() {
         .value_of("output")
         .unwrap_or("releases/artifacts/current");
 
-    release::create_release(
-        &Path::new(output_path), &options
-    );
+    release::create_release(&Path::new(output_path), &options);
 
     // Sync the generated docs for the modules and docs to their old locations to maintain
     // documentation locations.

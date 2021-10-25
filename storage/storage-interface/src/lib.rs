@@ -8,16 +8,20 @@ use diem_types::{
     account_address::AccountAddress,
     account_state::AccountState,
     account_state_blob::{AccountStateBlob, AccountStateWithProof},
-    contract_event::{ContractEvent, EventWithProof},
+    contract_event::{ContractEvent, EventByVersionWithProof, EventWithProof},
     epoch_change::EpochChangeProof,
     epoch_state::EpochState,
     event::EventKey,
     ledger_info::LedgerInfoWithSignatures,
     move_resource::MoveStorage,
-    proof::{definition::LeafCount, AccumulatorConsistencyProof, SparseMerkleProof},
+    proof::{
+        definition::LeafCount, AccumulatorConsistencyProof, SparseMerkleProof,
+        TransactionAccumulatorSummary,
+    },
+    state_proof::StateProof,
     transaction::{
-        TransactionInfo, TransactionListWithProof, TransactionToCommit, TransactionWithProof,
-        Version,
+        AccountTransactionsWithProof, TransactionInfo, TransactionListWithProof,
+        TransactionToCommit, TransactionWithProof, Version,
     },
 };
 use itertools::Itertools;
@@ -210,6 +214,15 @@ pub trait DbReader: Send + Sync {
     /// ../diemdb/struct.DiemDB.html#method.get_block_timestamp
     fn get_block_timestamp(&self, version: u64) -> Result<u64>;
 
+    /// Returns the [`NewBlockEvent`] for the block containing the requested
+    /// `version` and proof that the block actually contains the `version`.
+    fn get_event_by_version_with_proof(
+        &self,
+        event_key: &EventKey,
+        event_version: u64,
+        proof_version: u64,
+    ) -> Result<EventByVersionWithProof>;
+
     /// Gets the version of the last transaction committed before timestamp,
     /// a commited block at or after the required timestamp must exist (otherwise it's possible
     /// the next block committed as a timestamp smaller than the one in the request).
@@ -250,13 +263,28 @@ pub trait DbReader: Send + Sync {
     /// ../diemdb/struct.DiemDB.html#method.get_startup_info
     fn get_startup_info(&self) -> Result<Option<StartupInfo>>;
 
-    fn get_txn_by_account(
+    /// Returns a transaction that is the `seq_num`-th one associated with the given account. If
+    /// the transaction with given `seq_num` doesn't exist, returns `None`.
+    fn get_account_transaction(
         &self,
         address: AccountAddress,
         seq_num: u64,
+        include_events: bool,
         ledger_version: Version,
-        fetch_events: bool,
     ) -> Result<Option<TransactionWithProof>>;
+
+    /// Returns the list of transactions sent by an account with `address` starting
+    /// at sequence number `seq_num`. Will return no more than `limit` transactions.
+    /// Will ignore transactions with `txn.version > ledger_version`. Optionally
+    /// fetch events for each transaction when `fetch_events` is `true`.
+    fn get_account_transactions(
+        &self,
+        address: AccountAddress,
+        seq_num: u64,
+        limit: u64,
+        include_events: bool,
+        ledger_version: Version,
+    ) -> Result<AccountTransactionsWithProof>;
 
     /// Returns proof of new state for a given ledger info with signatures relative to version known
     /// to client
@@ -264,17 +292,10 @@ pub trait DbReader: Send + Sync {
         &self,
         known_version: u64,
         ledger_info: LedgerInfoWithSignatures,
-    ) -> Result<(EpochChangeProof, AccumulatorConsistencyProof)>;
+    ) -> Result<StateProof>;
 
     /// Returns proof of new state relative to version known to client
-    fn get_state_proof(
-        &self,
-        known_version: u64,
-    ) -> Result<(
-        LedgerInfoWithSignatures,
-        EpochChangeProof,
-        AccumulatorConsistencyProof,
-    )>;
+    fn get_state_proof(&self, known_version: u64) -> Result<StateProof>;
 
     /// Returns the account state corresponding to the given version and account address with proof
     /// based on `ledger_version`
@@ -326,6 +347,44 @@ pub trait DbReader: Send + Sync {
     /// Caller must guarantee the version is not greater than the latest version.
     fn get_accumulator_root_hash(&self, _version: Version) -> Result<HashValue> {
         unimplemented!()
+    }
+
+    /// Gets an [`AccumulatorConsistencyProof`] starting from `client_known_version`
+    /// (or pre-genesis if `None`) until `ledger_version`.
+    ///
+    /// In other words, if the client has an accumulator summary for
+    /// `client_known_version`, they can use the result from this API to efficiently
+    /// extend their accumulator to `ledger_version` and prove that the new accumulator
+    /// is consistent with their old accumulator. By consistent, we mean that by
+    /// appending the actual `ledger_version - client_known_version` transactions
+    /// to the old accumulator summary you get the new accumulator summary.
+    ///
+    /// If the client is starting up for the first time and has no accumulator
+    /// summary yet, they can call this with `client_known_version=None`, i.e.,
+    /// pre-genesis, to get the complete accumulator summary up to `ledger_version`.
+    fn get_accumulator_consistency_proof(
+        &self,
+        _client_known_version: Option<Version>,
+        _ledger_version: Version,
+    ) -> Result<AccumulatorConsistencyProof> {
+        unimplemented!()
+    }
+
+    /// A convenience function for building a [`TransactionAccumulatorSummary`]
+    /// at the given `ledger_version`.
+    ///
+    /// Note: this is roughly equivalent to calling
+    /// `DbReader::get_accumulator_consistency_proof(None, ledger_version)`.
+    fn get_accumulator_summary(
+        &self,
+        ledger_version: Version,
+    ) -> Result<TransactionAccumulatorSummary> {
+        let genesis_consistency_proof =
+            self.get_accumulator_consistency_proof(None, ledger_version)?;
+        TransactionAccumulatorSummary::try_from_genesis_proof(
+            genesis_consistency_proof,
+            ledger_version,
+        )
     }
 }
 

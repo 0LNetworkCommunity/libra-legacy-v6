@@ -55,14 +55,14 @@ use crate::{
     system_store::SystemStore,
     transaction_store::TransactionStore,
 };
-use anyhow::{ensure, Result};
+use anyhow::{ensure, format_err, Result};
 use diem_config::config::RocksdbConfig;
 use diem_crypto::hash::{CryptoHash, HashValue, SPARSE_MERKLE_PLACEHOLDER_HASH};
 use diem_logger::prelude::*;
 use diem_types::{
     account_address::AccountAddress,
     account_state_blob::{AccountStateBlob, AccountStateWithProof},
-    contract_event::{ContractEvent, EventWithProof},
+    contract_event::{ContractEvent, EventByVersionWithProof, EventWithProof},
     epoch_change::EpochChangeProof,
     event::EventKey,
     ledger_info::LedgerInfoWithSignatures,
@@ -70,9 +70,10 @@ use diem_types::{
         AccountStateProof, AccumulatorConsistencyProof, EventProof, SparseMerkleProof,
         TransactionListProof,
     },
+    state_proof::StateProof,
     transaction::{
-        TransactionInfo, TransactionListWithProof, TransactionToCommit, TransactionWithProof,
-        Version, PRE_GENESIS_VERSION,
+        AccountTransactionsWithProof, TransactionInfo, TransactionListWithProof,
+        TransactionToCommit, TransactionWithProof, Version, PRE_GENESIS_VERSION,
     },
 };
 use itertools::{izip, zip_eq};
@@ -538,9 +539,17 @@ impl DiemDB {
             .iter()
             .map(|txn_to_commit| txn_to_commit.account_states().clone())
             .collect::<Vec<_>>();
-        let state_root_hashes =
-            self.state_store
-                .put_account_state_sets(account_state_sets, first_version, &mut cs)?;
+
+        let node_hashes = txns_to_commit
+            .iter()
+            .map(|txn_to_commit| txn_to_commit.jf_node_hashes())
+            .collect::<Option<Vec<_>>>();
+        let state_root_hashes = self.state_store.put_account_state_sets(
+            account_state_sets,
+            node_hashes,
+            first_version,
+            &mut cs,
+        )?;
 
         // Event updates. Gather event accumulator root hashes.
         let event_root_hashes = zip_eq(first_version..=last_version, txns_to_commit)
@@ -628,22 +637,49 @@ impl DbReader for DiemDB {
         })
     }
 
-    /// Returns a transaction that is the `seq_num`-th one associated with the given account. If
-    /// the transaction with given `seq_num` doesn't exist, returns `None`.
-    fn get_txn_by_account(
+    fn get_account_transaction(
         &self,
         address: AccountAddress,
         seq_num: u64,
+        include_events: bool,
         ledger_version: Version,
-        fetch_events: bool,
     ) -> Result<Option<TransactionWithProof>> {
-        gauged_api("get_txn_by_account", || {
+        gauged_api("get_account_transaction", || {
             self.transaction_store
-                .lookup_transaction_by_account(address, seq_num, ledger_version)?
-                .map(|version| {
-                    self.get_transaction_with_proof(version, ledger_version, fetch_events)
+                .get_account_transaction_version(address, seq_num, ledger_version)?
+                .map(|txn_version| {
+                    self.get_transaction_with_proof(txn_version, ledger_version, include_events)
                 })
                 .transpose()
+        })
+    }
+
+    fn get_account_transactions(
+        &self,
+        address: AccountAddress,
+        start_seq_num: u64,
+        limit: u64,
+        include_events: bool,
+        ledger_version: Version,
+    ) -> Result<AccountTransactionsWithProof> {
+        gauged_api("get_account_transactions", || {
+            error_if_too_many_requested(limit, MAX_LIMIT)?;
+
+            let txns_with_proofs = self
+                .transaction_store
+                .get_account_transaction_version_iter(
+                    address,
+                    start_seq_num,
+                    limit,
+                    ledger_version,
+                )?
+                .map(|result| {
+                    let (_seq_num, txn_version) = result?;
+                    self.get_transaction_with_proof(txn_version, ledger_version, include_events)
+                })
+                .collect::<Result<Vec<_>>>()?;
+
+            Ok(AccountTransactionsWithProof::new(txns_with_proofs))
         })
     }
 
@@ -727,16 +763,10 @@ impl DbReader for DiemDB {
         known_version: Option<u64>,
     ) -> Result<Vec<EventWithProof>> {
         gauged_api("get_events_with_proofs", || {
-            let version;
-            if let Some(v) = known_version {
-                version = v
-            } else {
-                version = self
-                    .ledger_store
-                    .get_latest_ledger_info()?
-                    .ledger_info()
-                    .version();
-            }
+            let version = match known_version {
+                Some(version) => version,
+                None => self.get_latest_version()?,
+            };
             let events =
                 self.get_events_with_proof_by_event_key(event_key, start, order, limit, version)?;
             Ok(events)
@@ -754,7 +784,7 @@ impl DbReader for DiemDB {
         &self,
         known_version: u64,
         ledger_info_with_sigs: LedgerInfoWithSignatures,
-    ) -> Result<(EpochChangeProof, AccumulatorConsistencyProof)> {
+    ) -> Result<StateProof> {
         gauged_api("get_state_proof_with_ledger_info", || {
             let ledger_info = ledger_info_with_sigs.ledger_info();
             ensure!(
@@ -764,38 +794,48 @@ impl DbReader for DiemDB {
                 ledger_info.version(),
             );
             let known_epoch = self.ledger_store.get_epoch(known_version)?;
-            let epoch_change_proof = if known_epoch < ledger_info.next_block_epoch() {
-                let (ledger_infos_with_sigs, more) = self
-                    .get_epoch_ending_ledger_infos(known_epoch, ledger_info.next_block_epoch())?;
+            let end_epoch = ledger_info.next_block_epoch();
+            let epoch_change_proof = if known_epoch < end_epoch {
+                let (ledger_infos_with_sigs, more) =
+                    self.get_epoch_ending_ledger_infos(known_epoch, end_epoch)?;
                 EpochChangeProof::new(ledger_infos_with_sigs, more)
             } else {
                 EpochChangeProof::new(vec![], /* more = */ false)
             };
 
-            let ledger_consistency_proof = self
+            // Only return a consistency proof up to the verifiable end LI. If a
+            // client still needs to sync more epoch change LI's, then they cannot
+            // verify the latest LI nor verify a consistency proof up to the latest
+            // LI. If the client needs more epochs, we just return the consistency
+            // proof up to the last epoch change LI.
+            let verifiable_li = if epoch_change_proof.more {
+                epoch_change_proof
+                    .ledger_info_with_sigs
+                    .last()
+                    .ok_or_else(|| format_err!(
+                        "No epoch changes despite claiming the client needs to sync more epochs: known_epoch={}, end_epoch={}",
+                        known_epoch, end_epoch,
+                    ))?
+                    .ledger_info()
+            } else {
+                ledger_info
+            };
+
+            let consistency_proof = self
                 .ledger_store
-                .get_consistency_proof(known_version, ledger_info.version())?;
-            Ok((epoch_change_proof, ledger_consistency_proof))
+                .get_consistency_proof(Some(known_version), verifiable_li.version())?;
+            Ok(StateProof::new(
+                ledger_info_with_sigs,
+                epoch_change_proof,
+                consistency_proof,
+            ))
         })
     }
 
-    fn get_state_proof(
-        &self,
-        known_version: u64,
-    ) -> Result<(
-        LedgerInfoWithSignatures,
-        EpochChangeProof,
-        AccumulatorConsistencyProof,
-    )> {
+    fn get_state_proof(&self, known_version: u64) -> Result<StateProof> {
         gauged_api("get_state_proof", || {
             let ledger_info_with_sigs = self.ledger_store.get_latest_ledger_info()?;
-            let (epoch_change_proof, ledger_consistency_proof) = self
-                .get_state_proof_with_ledger_info(known_version, ledger_info_with_sigs.clone())?;
-            Ok((
-                ledger_info_with_sigs,
-                epoch_change_proof,
-                ledger_consistency_proof,
-            ))
+            self.get_state_proof_with_ledger_info(known_version, ledger_info_with_sigs)
         })
     }
 
@@ -898,6 +938,85 @@ impl DbReader for DiemDB {
         })
     }
 
+    fn get_event_by_version_with_proof(
+        &self,
+        event_key: &EventKey,
+        event_version: u64,
+        proof_version: u64,
+    ) -> Result<EventByVersionWithProof> {
+        gauged_api("get_event_by_version_with_proof", || {
+            let latest_version = self.get_latest_version()?;
+            ensure!(
+                proof_version <= latest_version,
+                "cannot construct proofs for a version that doesn't exist yet: proof_version: {}, latest_version: {}",
+                proof_version, latest_version,
+            );
+            ensure!(
+                event_version <= proof_version,
+                "event_version {} must be <= proof_version {}",
+                event_version,
+                proof_version,
+            );
+
+            // Get the latest sequence number of an event at or before the
+            // requested event_version.
+            let maybe_seq_num = self
+                .event_store
+                .get_latest_sequence_number(event_version, &event_key)?;
+
+            let (lower_bound_incl, upper_bound_excl) = if let Some(seq_num) = maybe_seq_num {
+                // We need to request the surrounding events (surrounding
+                // as in E_i.version <= event_version < E_{i+1}.version) in order
+                // to prove that there are no intermediate events, i.e.,
+                // E_j, where E_i.version < E_j.version <= event_version.
+                //
+                // This limit also works for the case where `event_version` is
+                // after the latest event, since the upper bound will just be None.
+                let limit = 2;
+
+                let events = self.get_events_with_proof_by_event_key(
+                    &event_key,
+                    seq_num,
+                    Order::Ascending,
+                    limit,
+                    proof_version,
+                )?;
+
+                let mut events_iter = events.into_iter();
+                let lower_bound_incl = events_iter.next();
+                let upper_bound_excl = events_iter.next();
+                assert_eq!(events_iter.len(), 0);
+
+                (lower_bound_incl, upper_bound_excl)
+            } else {
+                // Since there is no event at or before `event_version`, we need to
+                // show that either (1.) there are no events or (2.) events start
+                // at some later version.
+                let seq_num = 0;
+                let limit = 1;
+
+                let events = self.get_events_with_proof_by_event_key(
+                    &event_key,
+                    seq_num,
+                    Order::Ascending,
+                    limit,
+                    proof_version,
+                )?;
+
+                let mut events_iter = events.into_iter();
+                let upper_bound_excl = events_iter.next();
+                assert_eq!(events_iter.len(), 0);
+
+                (None, upper_bound_excl)
+            };
+
+            Ok(EventByVersionWithProof::new(
+                lower_bound_incl,
+                upper_bound_excl,
+            ))
+        })
+    }
+
     fn get_last_version_before_timestamp(
         &self,
         timestamp: u64,
@@ -918,6 +1037,17 @@ impl DbReader for DiemDB {
     fn get_accumulator_root_hash(&self, version: Version) -> Result<HashValue> {
         gauged_api("get_accumulator_root_hash", || {
             self.ledger_store.get_root_hash(version)
+        })
+    }
+
+    fn get_accumulator_consistency_proof(
+        &self,
+        client_known_version: Option<Version>,
+        ledger_version: Version,
+    ) -> Result<AccumulatorConsistencyProof> {
+        gauged_api("get_accumulator_consistency_proof", || {
+            self.ledger_store
+                .get_consistency_proof(client_known_version, ledger_version)
         })
     }
 }

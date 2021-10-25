@@ -1,15 +1,12 @@
-address 0x1 {
-
 /// Publishes configuration information for validators, and issues reconfiguration events
 /// to synchronize configuration changes for the validators.
-
-module DiemConfig {
-    use 0x1::CoreAddresses;
-    use 0x1::Errors;
-    use 0x1::Event;
-    use 0x1::DiemTimestamp;
-    use 0x1::Signer;
-    use 0x1::Roles;
+module DiemFramework::DiemConfig {
+    use DiemFramework::CoreAddresses;
+    use DiemFramework::DiemTimestamp;
+    use DiemFramework::Roles;
+    use Std::Errors;
+    use Std::Event;
+    use Std::Signer;
     use 0x1::Testnet;
 
     /// A generic singleton resource that holds a value of a specific type.
@@ -36,7 +33,7 @@ module DiemConfig {
     }
 
     /// Accounts with this privilege can modify DiemConfig<TypeName> under Diem root address.
-    struct ModifyConfigCapability<TypeName> has key, store {}
+    struct ModifyConfigCapability<phantom TypeName> has key, store {}
 
     /// Reconfiguration disabled if this resource occurs under LibraRoot.
     struct DisableReconfiguration has key {}
@@ -62,7 +59,7 @@ module DiemConfig {
     ) {
         DiemTimestamp::assert_genesis();
         CoreAddresses::assert_diem_root(dr_account);
-        assert(!exists<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS()), Errors::already_published(ECONFIGURATION));
+        assert(!exists<Configuration>(@DiemRoot), Errors::already_published(ECONFIGURATION));
         move_to<Configuration>(
             dr_account,
             Configuration {
@@ -76,7 +73,7 @@ module DiemConfig {
         pragma opaque;
         include InitializeAbortsIf;
         include InitializeEnsures;
-        modifies global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        modifies global<Configuration>(@DiemRoot);
         modifies global<Event::EventHandleGenerator>(Signer::spec_address_of(dr_account));
     }
     spec schema InitializeAbortsIf {
@@ -87,7 +84,7 @@ module DiemConfig {
     }
     spec schema InitializeEnsures {
         ensures spec_has_config();
-        let post post_config = global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        let post post_config = global<Configuration>(@DiemRoot);
         ensures post_config.epoch == 0;
         ensures post_config.last_reconfiguration_time == 0;
     }
@@ -96,7 +93,7 @@ module DiemConfig {
     /// Returns a copy of `Config` value stored under `addr`.
     public fun get<Config: copy + drop + store>(): Config
     acquires DiemConfig {
-        let addr = CoreAddresses::DIEM_ROOT_ADDRESS();
+        let addr = @DiemRoot;
         assert(exists<DiemConfig<Config>>(addr), Errors::not_published(EDIEM_CONFIG));
         *&borrow_global<DiemConfig<Config>>(addr).payload
     }
@@ -106,7 +103,7 @@ module DiemConfig {
         ensures result == get<Config>();
     }
     spec schema AbortsIfNotPublished<Config> {
-        aborts_if !exists<DiemConfig<Config>>(CoreAddresses::DIEM_ROOT_ADDRESS()) with Errors::NOT_PUBLISHED;
+        aborts_if !exists<DiemConfig<Config>>(@DiemRoot) with Errors::NOT_PUBLISHED;
     }
 
     /// Set a config item to a new value with the default capability stored under config address and trigger a
@@ -118,7 +115,7 @@ module DiemConfig {
         // Next should always be true if properly initialized.
         assert(exists<ModifyConfigCapability<Config>>(signer_address), Errors::requires_capability(EMODIFY_CAPABILITY));
 
-        let addr = CoreAddresses::DIEM_ROOT_ADDRESS();
+        let addr = @DiemRoot;
         assert(exists<DiemConfig<Config>>(addr), Errors::not_published(EDIEM_CONFIG));
         let config = borrow_global_mut<DiemConfig<Config>>(addr);
         config.payload = payload;
@@ -129,8 +126,8 @@ module DiemConfig {
         /// TODO: turned off verification until we solve the
         /// generic type/specific invariant issue
         pragma opaque, verify = false;
-        modifies global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
-        modifies global<DiemConfig<Config>>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        modifies global<Configuration>(@DiemRoot);
+        modifies global<DiemConfig<Config>>(@DiemRoot);
         include SetAbortsIf<Config>;
         include SetEnsures<Config>;
     }
@@ -162,7 +159,7 @@ module DiemConfig {
         _cap: &ModifyConfigCapability<Config>,
         payload: Config
     ) acquires DiemConfig, Configuration {
-        let addr = CoreAddresses::DIEM_ROOT_ADDRESS();
+        let addr = @DiemRoot;
         assert(exists<DiemConfig<Config>>(addr), Errors::not_published(EDIEM_CONFIG));
         let config = borrow_global_mut<DiemConfig<Config>>(addr);
         config.payload = payload;
@@ -172,10 +169,10 @@ module DiemConfig {
         /// TODO: turned off verification until we solve the
         /// generic type/specific invariant issue
         pragma opaque, verify = false;
-        modifies global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        modifies global<Configuration>(@DiemRoot);
         include AbortsIfNotPublished<Config>;
         include ReconfigureAbortsIf;
-        modifies global<DiemConfig<Config>>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        modifies global<DiemConfig<Config>>(@DiemRoot);
         include SetEnsures<Config>;
         include ReconfigureEmits;
     }
@@ -184,7 +181,7 @@ module DiemConfig {
     /// This function should only be used for offline WriteSet generation purpose and should never be invoked on chain.
     fun disable_reconfiguration(dr_account: &signer) {
         assert(
-            Signer::address_of(dr_account) == CoreAddresses::DIEM_ROOT_ADDRESS(),
+            Signer::address_of(dr_account) == @DiemRoot,
             Errors::requires_address(EDIEM_CONFIG)
         );
         Roles::assert_diem_root(dr_account);
@@ -196,7 +193,7 @@ module DiemConfig {
     /// This function should only be used for offline WriteSet generation purpose and should never be invoked on chain.
     fun enable_reconfiguration(dr_account: &signer) acquires DisableReconfiguration {
         assert(
-            Signer::address_of(dr_account) == CoreAddresses::DIEM_ROOT_ADDRESS(),
+            Signer::address_of(dr_account) == @DiemRoot,
             Errors::requires_address(EDIEM_CONFIG)
         );
         Roles::assert_diem_root(dr_account);
@@ -206,7 +203,7 @@ module DiemConfig {
     }
 
     fun reconfiguration_enabled(): bool {
-        !exists<DisableReconfiguration>(CoreAddresses::DIEM_ROOT_ADDRESS())
+        !exists<DisableReconfiguration>(@DiemRoot)
     }
 
     /// Publishes a new config.
@@ -229,13 +226,13 @@ module DiemConfig {
         /// TODO: turned off verification until we solve the
         /// generic type/specific invariant issue
         pragma opaque, verify = false;
-        modifies global<DiemConfig<Config>>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        modifies global<DiemConfig<Config>>(@DiemRoot);
         include Roles::AbortsIfNotDiemRoot{account: dr_account};
         include AbortsIfPublished<Config>;
         include SetEnsures<Config>;
     }
     spec schema AbortsIfPublished<Config> {
-        aborts_if exists<DiemConfig<Config>>(CoreAddresses::DIEM_ROOT_ADDRESS()) with Errors::ALREADY_PUBLISHED;
+        aborts_if exists<DiemConfig<Config>>(@DiemRoot) with Errors::ALREADY_PUBLISHED;
     }
 
     /// Publish a new config item. Only Diem root can modify such config.
@@ -254,8 +251,8 @@ module DiemConfig {
     }
     spec publish_new_config {
         pragma opaque;
-        modifies global<DiemConfig<Config>>(CoreAddresses::DIEM_ROOT_ADDRESS());
-        modifies global<ModifyConfigCapability<Config>>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        modifies global<DiemConfig<Config>>(@DiemRoot);
+        modifies global<ModifyConfigCapability<Config>>(@DiemRoot);
         include PublishNewConfigAbortsIf<Config>;
         include PublishNewConfigEnsures<Config>;
     }
@@ -281,7 +278,7 @@ module DiemConfig {
     }
     spec reconfigure {
         pragma opaque;
-        modifies global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        modifies global<Configuration>(@DiemRoot);
         include Roles::AbortsIfNotDiemRoot{account: dr_account};
         include ReconfigureAbortsIf;
     }
@@ -294,7 +291,7 @@ module DiemConfig {
             return ()
         };
 
-        let config_ref = borrow_global_mut<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        let config_ref = borrow_global_mut<Configuration>(@DiemRoot);
         let current_time = DiemTimestamp::now_microseconds();
 
         // Do not do anything if a reconfiguration event is already emitted within this transaction.
@@ -329,10 +326,10 @@ module DiemConfig {
     }
     spec reconfigure_ {
         pragma opaque;
-        modifies global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        modifies global<Configuration>(@DiemRoot);
         ensures old(spec_has_config()) == spec_has_config();
-        let config = global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
-        let post post_config = global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        let config = global<Configuration>(@DiemRoot);
+        let post post_config = global<Configuration>(@DiemRoot);
         let now = DiemTimestamp::spec_now_microseconds();
         let post post_now = DiemTimestamp::spec_now_microseconds();
 
@@ -354,7 +351,7 @@ module DiemConfig {
     /// of callers, and which are therefore marked as `concrete` to be only verified against the implementation.
     /// These conditions are unlikely to happen in reality, and excluding them avoids formal noise.
     spec schema InternalReconfigureAbortsIf {
-        let config = global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        let config = global<Configuration>(@DiemRoot);
         let current_time = DiemTimestamp::spec_now_microseconds();
         aborts_if [concrete] current_time < config.last_reconfiguration_time with Errors::INVALID_STATE;
         aborts_if [concrete] config.epoch == MAX_U64
@@ -362,7 +359,7 @@ module DiemConfig {
     }
     /// This schema is to be used by callers of `reconfigure`
     spec schema ReconfigureAbortsIf {
-        let config = global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        let config = global<Configuration>(@DiemRoot);
         let current_time = DiemTimestamp::spec_now_microseconds();
         aborts_if DiemTimestamp::is_operating()
             && reconfiguration_enabled()
@@ -372,8 +369,8 @@ module DiemConfig {
                 with Errors::INVALID_STATE;
     }
     spec schema ReconfigureEmits {
-        let config = global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
-        let post post_config = global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        let config = global<Configuration>(@DiemRoot);
+        let post post_config = global<Configuration>(@DiemRoot);
         let post now = DiemTimestamp::spec_now_microseconds();
         let post msg = NewEpochEvent {
             epoch: post_config.epoch,
@@ -385,8 +382,8 @@ module DiemConfig {
     /// Emit a `NewEpochEvent` event. This function will be invoked by genesis directly to generate the very first
     /// reconfiguration event.
     fun emit_genesis_reconfiguration_event() acquires Configuration {
-        assert(exists<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS()), Errors::not_published(ECONFIGURATION));
-        let config_ref = borrow_global_mut<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        assert(exists<Configuration>(@DiemRoot), Errors::not_published(ECONFIGURATION));
+        let config_ref = borrow_global_mut<Configuration>(@DiemRoot);
         assert(config_ref.epoch == 0 && config_ref.last_reconfiguration_time == 0, Errors::invalid_state(ECONFIGURATION));
         config_ref.epoch = 1;
 
@@ -398,7 +395,7 @@ module DiemConfig {
         );
     }
     spec emit_genesis_reconfiguration_event {
-        let post config = global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        let post config = global<Configuration>(@DiemRoot);
         let post handle = config.events;
         let post msg = NewEpochEvent {
                 epoch: config.epoch,
@@ -422,7 +419,7 @@ module DiemConfig {
         /// Configurations are only stored at the diem root address.
         invariant
             forall config_address: address, config_type: type where exists<DiemConfig<config_type>>(config_address):
-                config_address == CoreAddresses::DIEM_ROOT_ADDRESS();
+                config_address == @DiemRoot;
 
         /// After genesis, no new configurations are added.
         invariant update
@@ -435,22 +432,22 @@ module DiemConfig {
 
         /// If `ModifyConfigCapability<Config>` is published, it is persistent.
         invariant update forall config_type: type
-            where old(exists<ModifyConfigCapability<config_type>>(CoreAddresses::DIEM_ROOT_ADDRESS())):
-                exists<ModifyConfigCapability<config_type>>(CoreAddresses::DIEM_ROOT_ADDRESS());
+            where old(exists<ModifyConfigCapability<config_type>>(@DiemRoot)):
+                exists<ModifyConfigCapability<config_type>>(@DiemRoot);
     }
 
     /// # Helper Functions
     spec module {
         fun spec_has_config(): bool {
-            exists<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS())
+            exists<Configuration>(@DiemRoot)
         }
 
         fun spec_is_published<Config>(): bool {
-            exists<DiemConfig<Config>>(CoreAddresses::DIEM_ROOT_ADDRESS())
+            exists<DiemConfig<Config>>(@DiemRoot)
         }
 
         fun spec_get_config<Config>(): Config {
-            global<DiemConfig<Config>>(CoreAddresses::DIEM_ROOT_ADDRESS()).payload
+            global<DiemConfig<Config>>(@DiemRoot).payload
         }
     }
 
@@ -460,6 +457,7 @@ module DiemConfig {
         config_ref.epoch
     }
 
+    //////// 0L ////////
     public fun get_epoch_transfer_limit(): u64 acquires Configuration {
         // Constant to start the withdrawal limit calculation from 
         let transfer_enabled_epoch = TRANSFER_ENABLED_EPOCH;
@@ -474,14 +472,12 @@ module DiemConfig {
         
     }
 
+    //////// 0L ////////
     public fun check_transfer_enabled(): bool acquires Configuration {
         if(Testnet::is_testnet()){
             true
         } else {
             get_current_epoch() > TRANSFER_ENABLED_EPOCH
         }
-    }    
-    //////// 0L end ////////
-
-}
+    }
 }

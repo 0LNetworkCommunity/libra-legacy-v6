@@ -1,14 +1,13 @@
-address 0x1 {
-
 /// This module defines the coin type XUS and its initialization function.
-module XUS {
-    use 0x1::AccountLimits;
-    use 0x1::Diem;
-    use 0x1::DiemTimestamp;
-    use 0x1::FixedPoint32;
+module DiemFramework::XUS {
+    use DiemFramework::AccountLimits;
+    use DiemFramework::Diem;
+    use DiemFramework::DiemTimestamp;
+    use DiemFramework::Roles;
+    use Std::FixedPoint32;
 
     /// The type tag representing the `XUS` currency on-chain.
-    struct XUS has store { }
+    struct XUS { }
 
     /// Registers the `XUS` cointype. This can only be called from genesis.
     public fun initialize(
@@ -16,10 +15,12 @@ module XUS {
         // tc_account: &signer, /////// 0L /////////
     ) {
         DiemTimestamp::assert_genesis();
+        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_diem_root(dr_account);
         Diem::register_SCS_currency<XUS>(
             dr_account,
             // tc_account, /////// 0L /////////
-            FixedPoint32::create_from_rational(1, 1), // exchange rate to GAS
+            FixedPoint32::create_from_rational(1, 1), // exchange rate to XDX
             1000000, // scaling_factor = 10^6
             100,     // fractional_part = 10^2
             b"XUS"
@@ -27,7 +28,7 @@ module XUS {
         AccountLimits::publish_unrestricted_limits<XUS>(dr_account);
     }
     spec initialize {
-        use 0x1::Roles;
+        use DiemFramework::Roles;
         include Diem::RegisterSCSCurrencyAbortsIf<XUS>{
             currency_code: b"XUS",
             scaling_factor: 1000000
@@ -51,8 +52,6 @@ module XUS {
 
     /// # Persistence of Resources
     spec module {
-        use 0x1::CoreAddresses;
-
         /// After genesis, XUS is registered.
         invariant DiemTimestamp::is_operating() ==> Diem::is_currency<XUS>();
 
@@ -60,12 +59,11 @@ module XUS {
         /// AccountLimits::publish_unrestricted_limits, but we can't prove the condition there because
         /// it does not hold for all types (but does hold for XUS).
         invariant DiemTimestamp::is_operating()
-            ==> exists<AccountLimits::LimitsDefinition<XUS>>(CoreAddresses::DIEM_ROOT_ADDRESS());
+            ==> exists<AccountLimits::LimitsDefinition<XUS>>(@DiemRoot);
 
         /// `LimitsDefinition<XUS>` is not published at any other address
         invariant forall addr: address where exists<AccountLimits::LimitsDefinition<XUS>>(addr):
-            addr == CoreAddresses::DIEM_ROOT_ADDRESS();
+            addr == @DiemRoot;
 
     }
-}
 }

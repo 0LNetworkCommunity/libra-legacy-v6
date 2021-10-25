@@ -5,12 +5,13 @@ use super::{context::*, remove_fallthrough_jumps};
 use crate::{
     cfgir::ast as G,
     compiled_unit::*,
+    diag,
     expansion::ast::{AbilitySet, Address, ModuleIdent, ModuleIdent_, SpecId, Value_},
     hlir::{
         ast::{self as H},
         translate::{display_var, DisplayVar},
     },
-    naming::ast::{BuiltinTypeName_, TParam},
+    naming::ast::{BuiltinTypeName_, StructTypeParameter, TParam},
     parser::ast::{
         Ability, Ability_, BinOp, BinOp_, ConstantName, Field, FunctionName, StructName, UnaryOp,
         UnaryOp_, Var, Visibility,
@@ -36,13 +37,7 @@ fn extract_decls(
     prog: &G::Program,
 ) -> (
     HashMap<ModuleIdent, usize>,
-    HashMap<
-        (ModuleIdent, StructName),
-        (
-            BTreeSet<IR::Ability>,
-            Vec<(IR::TypeVar, BTreeSet<IR::Ability>)>,
-        ),
-    >,
+    HashMap<(ModuleIdent, StructName), (BTreeSet<IR::Ability>, Vec<IR::StructTypeParameter>)>,
     HashMap<
         (ModuleIdent, FunctionName),
         (BTreeSet<(ModuleIdent, StructName)>, IR::FunctionSignature),
@@ -78,7 +73,7 @@ fn extract_decls(
             mdef.structs.key_cloned_iter().map(move |(s, sdef)| {
                 let key = (m.clone(), s);
                 let abilities = abilities(&sdef.abilities);
-                let type_parameters = type_parameters(sdef.type_parameters.clone());
+                let type_parameters = struct_type_parameters(sdef.type_parameters.clone());
                 (key, (abilities, type_parameters))
             })
         })
@@ -167,10 +162,7 @@ fn module(
     dependency_orderings: &HashMap<ModuleIdent, usize>,
     struct_declarations: &HashMap<
         (ModuleIdent, StructName),
-        (
-            BTreeSet<IR::Ability>,
-            Vec<(IR::TypeVar, BTreeSet<IR::Ability>)>,
-        ),
+        (BTreeSet<IR::Ability>, Vec<IR::StructTypeParameter>),
     >,
     function_declarations: &HashMap<
         (ModuleIdent, FunctionName),
@@ -241,7 +233,10 @@ fn module(
     {
         Ok(res) => res,
         Err(e) => {
-            compilation_env.add_error(vec![(ident_loc, format!("ICE. IR ERROR: {}", e))]);
+            compilation_env.add_diag(diag!(
+                Bug::BytecodeGeneration,
+                (ident_loc, format!("IR ERROR: {}", e))
+            ));
             return None;
         }
     };
@@ -264,10 +259,7 @@ fn script(
     dependency_orderings: &HashMap<ModuleIdent, usize>,
     struct_declarations: &HashMap<
         (ModuleIdent, StructName),
-        (
-            BTreeSet<IR::Ability>,
-            Vec<(IR::TypeVar, BTreeSet<IR::Ability>)>,
-        ),
+        (BTreeSet<IR::Ability>, Vec<IR::StructTypeParameter>),
     >,
     function_declarations: &HashMap<
         (ModuleIdent, FunctionName),
@@ -300,7 +292,10 @@ fn script(
     {
         Ok(res) => res,
         Err(e) => {
-            compilation_env.add_error(vec![(loc, format!("IR ERROR: {}", e))]);
+            compilation_env.add_diag(diag!(
+                Bug::BytecodeGeneration,
+                (loc, format!("IR ERROR: {}", e))
+            ));
             return None;
         }
     };
@@ -319,7 +314,7 @@ fn module_function_infos(
     source_map: &SourceMap<Loc>,
     collected_function_infos: &CollectedInfos,
 ) -> UniqueMap<FunctionName, FunctionInfo> {
-    UniqueMap::maybe_from_iter((0..compile_module.as_inner().function_defs.len()).map(|i| {
+    UniqueMap::maybe_from_iter((0..compile_module.function_defs.len()).map(|i| {
         let idx = F::FunctionDefinitionIndex(i as F::TableIndex);
         function_info_map(compile_module, source_map, collected_function_infos, idx)
     }))
@@ -332,7 +327,7 @@ fn function_info_map(
     collected_function_infos: &CollectedInfos,
     idx: F::FunctionDefinitionIndex,
 ) -> (FunctionName, FunctionInfo) {
-    let module = compile_module.as_inner();
+    let module = compile_module;
     let handle_idx = module.function_defs[idx.0 as usize].function;
     let name_idx = module.function_handles[handle_idx.0 as usize].name;
     let name = module.identifiers[name_idx.0 as usize]
@@ -441,7 +436,7 @@ fn struct_def(
     let loc = s.loc();
     let name = context.struct_definition_name(m, s);
     let abilities = abilities(&abs);
-    let type_formals = type_parameters(tys);
+    let type_formals = struct_type_parameters(tys);
     let fields = struct_fields(context, loc, fields);
     sp(
         loc,
@@ -576,7 +571,7 @@ fn function_signature(context: &mut Context, sig: H::FunctionSignature) -> IR::F
         .into_iter()
         .map(|(v, st)| (var(v), single_type(context, st)))
         .collect();
-    let type_parameters = type_parameters(sig.type_parameters);
+    let type_parameters = fun_type_parameters(sig.type_parameters);
     IR::FunctionSignature {
         return_type,
         formals,
@@ -738,9 +733,19 @@ fn abilities(set: &AbilitySet) -> BTreeSet<IR::Ability> {
     set.iter().map(ability).collect()
 }
 
-fn type_parameters(tps: Vec<TParam>) -> Vec<(IR::TypeVar, BTreeSet<IR::Ability>)> {
+fn fun_type_parameters(tps: Vec<TParam>) -> Vec<(IR::TypeVar, BTreeSet<IR::Ability>)> {
     tps.into_iter()
         .map(|tp| (type_var(tp.user_specified_name), abilities(&tp.abilities)))
+        .collect()
+}
+
+fn struct_type_parameters(tps: Vec<StructTypeParameter>) -> Vec<IR::StructTypeParameter> {
+    tps.into_iter()
+        .map(|StructTypeParameter { is_phantom, param }| {
+            let name = type_var(param.user_specified_name);
+            let constraints = abilities(&param.abilities);
+            (is_phantom, name, constraints)
+        })
         .collect()
 }
 
@@ -1123,7 +1128,7 @@ fn binary_op(code: &mut IR::BytecodeBlock, sp!(loc, op_): BinOp) {
             O::Le => B::Le,
             O::Ge => B::Ge,
 
-            O::Range | O::Implies => panic!("specification operator unexpected"),
+            O::Range | O::Implies | O::Iff => panic!("specification operator unexpected"),
         },
     ));
 }

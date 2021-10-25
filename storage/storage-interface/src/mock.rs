@@ -11,12 +11,15 @@ use diem_types::{
     account_config::AccountResource,
     account_state::AccountState,
     account_state_blob::{AccountStateBlob, AccountStateWithProof},
-    contract_event::{ContractEvent, EventWithProof},
+    contract_event::{ContractEvent, EventByVersionWithProof, EventWithProof},
     epoch_change::EpochChangeProof,
     event::{EventHandle, EventKey},
     ledger_info::LedgerInfoWithSignatures,
-    proof::{AccumulatorConsistencyProof, SparseMerkleProof},
-    transaction::{TransactionListWithProof, TransactionWithProof, Version},
+    proof::SparseMerkleProof,
+    state_proof::StateProof,
+    transaction::{
+        AccountTransactionsWithProof, TransactionListWithProof, TransactionWithProof, Version,
+    },
 };
 use move_core_types::move_resource::MoveResource;
 use std::convert::TryFrom;
@@ -66,6 +69,15 @@ impl DbReader for MockDbReader {
         unimplemented!()
     }
 
+    fn get_event_by_version_with_proof(
+        &self,
+        _event_key: &EventKey,
+        _version: u64,
+        _proof_version: u64,
+    ) -> Result<EventByVersionWithProof> {
+        unimplemented!()
+    }
+
     fn get_block_timestamp(&self, _version: u64) -> Result<u64> {
         unimplemented!()
     }
@@ -86,13 +98,24 @@ impl DbReader for MockDbReader {
         unimplemented!()
     }
 
-    fn get_txn_by_account(
+    fn get_account_transaction(
         &self,
         _address: AccountAddress,
         _seq_num: u64,
+        _include_events: bool,
         _ledger_version: Version,
-        _fetch_events: bool,
     ) -> Result<Option<TransactionWithProof>> {
+        unimplemented!()
+    }
+
+    fn get_account_transactions(
+        &self,
+        _address: AccountAddress,
+        _start_seq_num: u64,
+        _limit: u64,
+        _include_events: bool,
+        _ledger_version: Version,
+    ) -> Result<AccountTransactionsWithProof> {
         unimplemented!()
     }
 
@@ -100,18 +123,11 @@ impl DbReader for MockDbReader {
         &self,
         _known_version: u64,
         _ledger_info: LedgerInfoWithSignatures,
-    ) -> Result<(EpochChangeProof, AccumulatorConsistencyProof)> {
+    ) -> Result<StateProof> {
         unimplemented!()
     }
 
-    fn get_state_proof(
-        &self,
-        _known_version: u64,
-    ) -> Result<(
-        LedgerInfoWithSignatures,
-        EpochChangeProof,
-        AccumulatorConsistencyProof,
-    )> {
+    fn get_state_proof(&self, _known_version: u64) -> Result<StateProof> {
         unimplemented!()
     }
 

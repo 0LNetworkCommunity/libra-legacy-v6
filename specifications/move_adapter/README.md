@@ -197,16 +197,52 @@ apply to all transactions and others are specific to the type of payload.
 To ensure consistent error handling, the checks should be performed in the
 order specified here.
 
+### Signature Verification
+
+The adapter performs signature verification for any transaction, regardless of
+the payload. The adapter checks if the sender and secondary signers' signatures in
+the `SignedTransaction` are consistent with their public keys and the content of the
+transaction. If not, this check fails with an `INVALID_SIGNATURE` status code.
+
+```rust
+pub enum TransactionAuthenticator {
+    /// Single signature
+    Ed25519 {
+        public_key: Ed25519PublicKey,
+        signature: Ed25519Signature,
+    },
+    /// K-of-N multisignature
+    MultiEd25519 {
+        public_key: MultiEd25519PublicKey,
+        signature: MultiEd25519Signature,
+    },
+    /// Multi-agent transaction.
+    MultiAgent {
+        sender: AccountAuthenticator,
+        secondary_signer_addresses: Vec<AccountAddress>,
+        secondary_signers: Vec<AccountAuthenticator>,
+    },
+}
+```
+
+The `TransactionAuthenticator` stored in the `SignedTransaction` is responsible for
+performing this check:
+* If the transaction is single-agent, then only the sender's signature is included
+and checked against the `RawTransaction` content.
+* If the transaction is multi-agent, then both the primary signer (sender) and the
+secondary signers' signatures are included and checked against a struct containing both
+the `RawTransaction` and a vector of secondary signers' addresses. The addresses have
+to be in the same order as
+the signatures.
+
+Note that comparing the transaction's public keys against the sender and secondary
+signer accounts' authorization keys is done separately in [Move code](#Prologue-Checks).
+
+
 ### General Checks
 
-The adapter performs the following steps for any transaction, regardless of
+Besides signature verification, the adapter performs the following steps for any transaction, regardless of
 the payload:
-
-* Check if the sender and secondary signers' signatures in the `SignedTransaction`
-is consistent with their public keys and the `RawTransaction` content. If not,
-this check fails with an `INVALID_SIGNATURE` status code. Note that comparing the
-transaction's public keys against the sender and secondary signer accounts' authorization
-keys is done separately in [Move code](#Prologue-Checks).
 
 * If secondary signers exist, check that all signers including the sender and secondary
 signers have distinct account addresses. If not, validation fails with a
@@ -279,7 +315,7 @@ Move VM with gas metering disabled. Each kind of transaction payload has a
 corresponding prologue function that is used for validation. These prologue
 functions are defined in the `DiemAccount` module of the Diem Framework:
 
-* `ScriptFunction` and `Script`: The prologue function is `script_prologue`.
+* Single-agent `ScriptFunction` and `Script`: The prologue function is `script_prologue`.
 In addition to the common checks listed below, it also calls the `is_script_allowed`
 function in the `DiemTransactionPublishingOption` module to determine if the script
 should be allowed. A script sent by an account with `has_diem_root_role` is always
@@ -289,6 +325,19 @@ script bytecode is on the list of allowed scripts published at
 `ScriptFunction` payloads, for which the adapter uses an empty vector in place
 of the script hash, are always allowed. If the script is not allowed, validation
 fails with an `UNKNOWN_SCRIPT` status code.
+
+* Multi-agent `ScriptFunction` and `Script`: The prologue function is `multi_agent_script_prologue`.
+In addition to the common checks listed below, it also performs the following checks:
+    * Check that the number of secondary signer addresses provided is the same
+      as the number of secondary signer public key hashes provided. If not,
+      validation fails with a `SECONDARY_KEYS_ADDRESSES_COUNT_MISMATCH` status code.
+    * For each secondary signer, check if the secondary signer has an account,
+      and if not, validation fails with a `SENDING_ACCOUNT_DOES_NOT_EXIST` status code.
+    * For each secondary signer, check that the hash of the secondary signer's
+      public key (from the `authenticator` in the `SignedTransaction`) matches
+      the authentication key in the secondary signer's account. If not, validation
+      fails with an `INVALID_AUTH_KEY` status code.
+
 
 * `Module`: The prologue function is `module_prologue`. In addition to the
 common checks listed below, it also calls the `is_module_allowed` function in
@@ -316,17 +365,6 @@ transaction sender's account is frozen. If so, the status code is set to
 * Check that the hash of the transaction's public key (from the `authenticator`
 in the `SignedTransaction`) matches the authentication key in the sender's
 account. If not, validation fails with an `INVALID_AUTH_KEY` status code.
-
-* If secondary signers exist for the transaction, perform the following checks:
-    * Check that the number of secondary signer addresses provided is the same
-      as the number of secondary signer public key hashes provided. If not,
-      validation fails with a `SECONDARY_KEYS_ADDRESSES_COUNT_MISMATCH` status code.
-    * For each secondary signer, check if the secondary signer has an account,
-      and if not, validation fails with a `SENDING_ACCOUNT_DOES_NOT_EXIST` status code.
-    * For each secondary signer, check that the hash of the secondary signer's
-      public key (from the `authenticator` in the `SignedTransaction`) matches
-      the authentication key in the secondary signer's account. If not, validation
-      fails with an `INVALID_AUTH_KEY` status code.
 
 * The transaction sender must be able to pay the maximum transaction fee. The
 maximum fee is the product of the transaction's `max_gas_amount` and
@@ -859,7 +897,6 @@ pub fn publish_module(
     module: Vec<u8>,
     sender: AccountAddress,
     gas_status: &mut GasStatus,
-    log_context: &impl LogContext,
 ) -> VMResult<()>;
 ```
 
@@ -905,7 +942,6 @@ pub fn execute_script(
     args: Vec<Vec<u8>>,
     senders: Vec<AccountAddress>,
     gas_status: &mut GasStatus,
-    log_context: &impl LogContext,
 ) -> VMResult<()>;
 ```
 
@@ -956,7 +992,6 @@ pub fn execute_script_function(
     args: Vec<Vec<u8>>,
     senders: Vec<AccountAddress>,
     gas_status: &mut GasStatus,
-    log_context: &impl LogContext,
 ) -> VMResult<()>;
 ```
 
@@ -988,7 +1023,6 @@ pub fn execute_function(
     ty_args: Vec<TypeTag>,
     args: Vec<Vec<u8>>,
     gas_status: &mut GasStatus,
-    log_context: &impl LogContext,
 ) -> VMResult<()>;
 ```
 

@@ -13,6 +13,7 @@ publish = false
 bytecode-verifier = { path = "../bytecode-verifier" }
 abigen = { path = "../move-prover/abigen" }
 docgen = { path = "../move-prover/docgen" }
+move-command-line-common = { path = "../move-command-line-common" }
 errmapgen = { path = "../move-prover/errmapgen" }
 move-lang = { path = "../move-lang" }
 move-prover = { path = "../move-prover" }
@@ -23,6 +24,8 @@ move-binary-format = { path = "../move-binary-format" }
 transaction-builder-generator = { path = "../transaction-builder/generator" }
 move-stdlib = { path = "../move-stdlib" }
 move-core-types = { path = "../move-core/types" }
+move-vm-types = { path = "../move-vm/types" }
+move-vm-runtime = { path = "../move-vm/runtime" }
 
 bcs = "0.1.2"
 anyhow = "1.0.38"
@@ -32,9 +35,12 @@ rayon = "1.5.0"
 sha2 = "0.9.3"
 walkdir = "2.3.1"
 once_cell = "1.7.2"
+smallvec = "1.6.1"
 
 [dev-dependencies]
 datatest-stable = "0.1.1"
+move-unit-test = { path = "../tools/move-unit-test" }
+diem-vm = { path = "../diem-vm" }
 
 tempfile = "3.2.0"
 dir-diff = "0.3.2"

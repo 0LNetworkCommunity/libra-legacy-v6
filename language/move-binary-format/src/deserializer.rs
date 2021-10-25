@@ -1,7 +1,7 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{errors::*, file_format::*, file_format_common::*};
+use crate::{check_bounds::BoundsChecker, errors::*, file_format::*, file_format_common::*};
 use move_core_types::{
     account_address::AccountAddress, identifier::Identifier, vm_status::StatusCode,
 };
@@ -10,12 +10,11 @@ use std::{collections::HashSet, convert::TryInto, io::Read};
 impl CompiledScript {
     /// Deserializes a &[u8] slice into a `CompiledScript` instance.
     pub fn deserialize(binary: &[u8]) -> BinaryLoaderResult<Self> {
-        let deserialized = CompiledScriptMut::deserialize_no_check_bounds(binary)?;
-        deserialized.freeze()
+        let script = CompiledScript::deserialize_no_check_bounds(binary)?;
+        BoundsChecker::verify_script(&script)?;
+        Ok(script)
     }
-}
 
-impl CompiledScriptMut {
     // exposed as a public function to enable testing the deserializer
     #[doc(hidden)]
     pub fn deserialize_no_check_bounds(binary: &[u8]) -> BinaryLoaderResult<Self> {
@@ -26,12 +25,11 @@ impl CompiledScriptMut {
 impl CompiledModule {
     /// Deserialize a &[u8] slice into a `CompiledModule` instance.
     pub fn deserialize(binary: &[u8]) -> BinaryLoaderResult<Self> {
-        let deserialized = CompiledModuleMut::deserialize_no_check_bounds(binary)?;
-        deserialized.freeze()
+        let module = CompiledModule::deserialize_no_check_bounds(binary)?;
+        BoundsChecker::verify_module(&module)?;
+        Ok(module)
     }
-}
 
-impl CompiledModuleMut {
     // exposed as a public function to enable testing the deserializer
     pub fn deserialize_no_check_bounds(binary: &[u8]) -> BinaryLoaderResult<Self> {
         deserialize_compiled_module(binary)
@@ -80,10 +78,9 @@ fn read_uleb_internal<T>(cursor: &mut VersionedCursor, max: u64) -> BinaryLoader
 where
     u64: TryInto<T>,
 {
-    /////// 0L /////////
-    let x = cursor.read_uleb128_as_u64().map_err(|e| {
-        println!("Error: Bad Uleb");
-        dbg!(e);
+    let x = cursor.read_uleb128_as_u64().map_err(|_| {
+        println!("Error: Bad Uleb"); /////// 0L /////////
+        dbg!(e); /////// 0L /////////
         PartialVMError::new(StatusCode::MALFORMED).with_message("Bad Uleb".to_string())
     })?;
     if x > max {
@@ -251,7 +248,7 @@ fn load_local_index(cursor: &mut VersionedCursor) -> BinaryLoaderResult<u8> {
 }
 
 /// Module internal function that manages deserialization of transactions.
-fn deserialize_compiled_script(binary: &[u8]) -> BinaryLoaderResult<CompiledScriptMut> {
+fn deserialize_compiled_script(binary: &[u8]) -> BinaryLoaderResult<CompiledScript> {
     let binary_len = binary.len();
     let mut cursor = VersionedCursor::new(binary)?;
     let table_count = load_table_count(&mut cursor)?;
@@ -266,7 +263,7 @@ fn deserialize_compiled_script(binary: &[u8]) -> BinaryLoaderResult<CompiledScri
         content_len as usize,
     )?;
 
-    let mut script = CompiledScriptMut {
+    let mut script = CompiledScript {
         version: cursor.version(),
         type_parameters: load_ability_sets(
             &mut cursor,
@@ -282,7 +279,7 @@ fn deserialize_compiled_script(binary: &[u8]) -> BinaryLoaderResult<CompiledScri
 }
 
 /// Module internal function that manages deserialization of modules.
-fn deserialize_compiled_module(binary: &[u8]) -> BinaryLoaderResult<CompiledModuleMut> {
+fn deserialize_compiled_module(binary: &[u8]) -> BinaryLoaderResult<CompiledModule> {
     let binary_len = binary.len();
     let mut cursor = VersionedCursor::new(binary)?;
     let table_count = load_table_count(&mut cursor)?;
@@ -297,7 +294,7 @@ fn deserialize_compiled_module(binary: &[u8]) -> BinaryLoaderResult<CompiledModu
         content_len as usize,
     )?;
 
-    let mut module = CompiledModuleMut {
+    let mut module = CompiledModule {
         version: cursor.version(),
         self_module_handle_idx: load_module_handle_index(&mut cursor)?,
         ..Default::default()
@@ -392,7 +389,7 @@ trait CommonTables {
     fn get_constant_pool(&mut self) -> &mut ConstantPool;
 }
 
-impl CommonTables for CompiledScriptMut {
+impl CommonTables for CompiledScript {
     fn get_module_handles(&mut self) -> &mut Vec<ModuleHandle> {
         &mut self.module_handles
     }
@@ -426,7 +423,7 @@ impl CommonTables for CompiledScriptMut {
     }
 }
 
-impl CommonTables for CompiledModuleMut {
+impl CommonTables for CompiledModule {
     fn get_module_handles(&mut self) -> &mut Vec<ModuleHandle> {
         &mut self.module_handles
     }
@@ -460,9 +457,9 @@ impl CommonTables for CompiledModuleMut {
     }
 }
 
-/// Builds and returns a `CompiledScriptMut`.
+/// Builds and returns a `CompiledScript`.
 fn build_compiled_script(
-    script: &mut CompiledScriptMut,
+    script: &mut CompiledScript,
     binary: &VersionedBinary,
     tables: &[Table],
 ) -> BinaryLoaderResult<()> {
@@ -471,9 +468,9 @@ fn build_compiled_script(
     Ok(())
 }
 
-/// Builds and returns a `CompiledModuleMut`.
+/// Builds and returns a `CompiledModule`.
 fn build_compiled_module(
-    module: &mut CompiledModuleMut,
+    module: &mut CompiledModule,
     binary: &VersionedBinary,
     tables: &[Table],
 ) -> BinaryLoaderResult<()> {
@@ -533,11 +530,11 @@ fn build_common_tables(
     Ok(())
 }
 
-/// Builds tables related to a `CompiledModuleMut`.
+/// Builds tables related to a `CompiledModule`.
 fn build_module_tables(
     binary: &VersionedBinary,
     tables: &[Table],
-    module: &mut CompiledModuleMut,
+    module: &mut CompiledModule,
 ) -> BinaryLoaderResult<()> {
     for table in tables {
         match table.kind {
@@ -574,11 +571,11 @@ fn build_module_tables(
     Ok(())
 }
 
-/// Builds tables related to a `CompiledScriptMut`.
+/// Builds tables related to a `CompiledScript`.
 fn build_script_tables(
     _binary: &VersionedBinary,
     tables: &[Table],
-    _script: &mut CompiledScriptMut,
+    _script: &mut CompiledScript,
 ) -> BinaryLoaderResult<()> {
     for table in tables {
         match table.kind {
@@ -636,8 +633,7 @@ fn load_struct_handles(
         let module = load_module_handle_index(&mut cursor)?;
         let name = load_identifier_index(&mut cursor)?;
         let abilities = load_ability_set(&mut cursor, AbilitySetPosition::StructHandle)?;
-        let type_parameters =
-            load_ability_sets(&mut cursor, AbilitySetPosition::StructTypeParameters)?;
+        let type_parameters = load_struct_type_parameters(&mut cursor)?;
         struct_handles.push(StructHandle {
             module,
             name,
@@ -1053,6 +1049,33 @@ fn load_ability_sets(
     Ok(kinds)
 }
 
+fn load_struct_type_parameters(
+    cursor: &mut VersionedCursor,
+) -> BinaryLoaderResult<Vec<StructTypeParameter>> {
+    let len = load_type_parameter_count(cursor)?;
+    let mut type_params = Vec::with_capacity(len);
+    for _ in 0..len {
+        type_params.push(load_struct_type_parameter(cursor)?);
+    }
+    Ok(type_params)
+}
+
+fn load_struct_type_parameter(
+    cursor: &mut VersionedCursor,
+) -> BinaryLoaderResult<StructTypeParameter> {
+    let constraints = load_ability_set(cursor, AbilitySetPosition::StructTypeParameters)?;
+    let is_phantom = if cursor.version() < VERSION_3 {
+        false
+    } else {
+        let byte: u8 = read_uleb_internal(cursor, 1)?;
+        byte != 0
+    };
+    Ok(StructTypeParameter {
+        constraints,
+        is_phantom,
+    })
+}
+
 /// Builds the `StructDefinition` table.
 fn load_struct_defs(
     binary: &VersionedBinary,
@@ -1183,7 +1206,7 @@ fn load_function_def(cursor: &mut VersionedCursor) -> BinaryLoaderResult<Functio
             };
             (vis, flags)
         }
-        VERSION_2 => {
+        VERSION_2 | VERSION_3 => {
             // NOTE: changes compared with VERSION_1
             // - in VERSION_1: the flags is a byte compositing both the visibility info and whether
             //                 the function is a native function

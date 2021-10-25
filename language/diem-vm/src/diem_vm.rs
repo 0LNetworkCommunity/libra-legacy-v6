@@ -4,26 +4,29 @@
 use crate::{
     access_path_cache::AccessPathCache,
     counters::*,
-    data_cache::RemoteStorage, 
+    data_cache::RemoteStorage,
     errors::{convert_epilogue_error, convert_prologue_error, expect_only_successful_execution},
+    logging::AdapterLogSchema,
+    natives::diem_natives,
     system_module_names::*,
     transaction_metadata::TransactionMetadata,
 };
 use diem_crypto::HashValue;
+use diem_framework_releases::import_stdlib;
 use diem_logger::prelude::*;
 use diem_state_view::StateView;
 use diem_types::{
-    account_config, 
-    block_metadata::BlockMetadata, 
-    contract_event::ContractEvent, 
-    event::EventKey, 
+    account_config,
+    block_metadata::BlockMetadata,
+    contract_event::ContractEvent,
+    event::EventKey,
+    ol_upgrade_payload::UpgradePayloadResource,    
     on_chain_config::{
         ConfigStorage, DiemVersion, OnChainConfig, VMConfig, VMPublishingOption, DIEM_VERSION_3,
-    }, 
-    transaction::{TransactionOutput, TransactionStatus}, 
-    ol_upgrade_payload::UpgradePayloadResource, 
-    vm_status::{KeptVMStatus, StatusCode, VMStatus}, 
-    write_set::{WriteOp, WriteSet, WriteSetMut}
+    },
+    transaction::{TransactionOutput, TransactionStatus},
+    vm_status::{KeptVMStatus, StatusCode, VMStatus},
+    write_set::{WriteOp, WriteSet, WriteSetMut},
 };
 use fail::fail_point;
 use move_binary_format::errors::Location;
@@ -36,14 +39,11 @@ use move_core_types::{
     value::{serialize_values, MoveValue},
 };
 use move_vm_runtime::{
-    data_cache::MoveStorage,
-    logging::{expect_no_verification_errors, LogContext},
-    move_vm::MoveVM,
+    data_cache::MoveStorage, logging::expect_no_verification_errors, move_vm::MoveVM,
     session::Session,
 };
 use move_vm_types::gas_schedule::{calculate_intrinsic_gas, GasStatus};
 use std::{convert::TryFrom, sync::Arc};
-use diem_framework_releases::import_stdlib;
 
 #[derive(Clone)]
 /// A wrapper to make VMRuntime standalone and thread safe.
@@ -57,7 +57,8 @@ pub struct DiemVMImpl {
 impl DiemVMImpl {
     #[allow(clippy::new_without_default)]
     pub fn new<S: StateView>(state: &S) -> Self {
-        let inner = MoveVM::new();
+        let inner = MoveVM::new(diem_natives())
+            .expect("should be able to create Move VM; check if there are duplicated natives");
         let mut vm = Self {
             move_vm: Arc::new(inner),
             on_chain_config: None,
@@ -73,7 +74,8 @@ impl DiemVMImpl {
         on_chain_config: VMConfig,
         publishing_option: VMPublishingOption,
     ) -> Self {
-        let inner = MoveVM::new();
+        let inner = MoveVM::new(diem_natives())
+            .expect("should be able to create Move VM; check if there are duplicated natives");
         Self {
             move_vm: Arc::new(inner),
             on_chain_config: Some(on_chain_config),
@@ -89,7 +91,7 @@ impl DiemVMImpl {
 
     pub(crate) fn publishing_option(
         &self,
-        log_context: &impl LogContext,
+        log_context: &AdapterLogSchema,
     ) -> Result<&VMPublishingOption, VMStatus> {
         self.publishing_option.as_ref().ok_or_else(|| {
             log_context.alert();
@@ -107,7 +109,7 @@ impl DiemVMImpl {
         self.publishing_option = VMPublishingOption::fetch_config(data_cache);
     }
 
-    pub fn get_gas_schedule(&self, log_context: &impl LogContext) -> Result<&CostTable, VMStatus> {
+    pub fn get_gas_schedule(&self, log_context: &AdapterLogSchema) -> Result<&CostTable, VMStatus> {
         self.on_chain_config
             .as_ref()
             .map(|config| &config.gas_schedule)
@@ -129,7 +131,7 @@ impl DiemVMImpl {
     pub fn check_gas(
         &self,
         txn_data: &TransactionMetadata,
-        log_context: &impl LogContext,
+        log_context: &AdapterLogSchema,
     ) -> Result<(), VMStatus> {
         let gas_constants = &self.get_gas_schedule(log_context)?.gas_constants;
         let raw_bytes_len = txn_data.transaction_size;
@@ -216,7 +218,7 @@ impl DiemVMImpl {
         session: &mut Session<S>,
         txn_data: &TransactionMetadata,
         account_currency_symbol: &IdentStr,
-        log_context: &impl LogContext,
+        log_context: &AdapterLogSchema,
     ) -> Result<(), VMStatus> {
         let gas_currency_ty =
             account_config::type_tag_for_currency_code(account_currency_symbol.to_owned());
@@ -271,10 +273,9 @@ impl DiemVMImpl {
                 vec![gas_currency_ty],
                 serialize_values(&args),
                 &mut gas_status,
-                log_context,
             )
             .map(|_return_vals| ())
-            .map_err(|err| expect_no_verification_errors(err, log_context))
+            .map_err(expect_no_verification_errors)
             .or_else(|err| convert_prologue_error(err, log_context))
     }
 
@@ -285,7 +286,7 @@ impl DiemVMImpl {
         session: &mut Session<S>,
         txn_data: &TransactionMetadata,
         account_currency_symbol: &IdentStr,
-        log_context: &impl LogContext,
+        log_context: &AdapterLogSchema,
     ) -> Result<(), VMStatus> {
         let gas_currency_ty =
             account_config::type_tag_for_currency_code(account_currency_symbol.to_owned());
@@ -311,10 +312,9 @@ impl DiemVMImpl {
                     MoveValue::U8(chain_id.id()),
                 ]),
                 &mut gas_status,
-                log_context,
             )
             .map(|_return_vals| ())
-            .map_err(|err| expect_no_verification_errors(err, log_context))
+            .map_err(expect_no_verification_errors)
             .or_else(|err| convert_prologue_error(err, log_context))
     }
 
@@ -326,7 +326,7 @@ impl DiemVMImpl {
         gas_status: &mut GasStatus,
         txn_data: &TransactionMetadata,
         account_currency_symbol: &IdentStr,
-        log_context: &impl LogContext,
+        log_context: &AdapterLogSchema,
     ) -> Result<(), VMStatus> {
         fail_point!("move_adapter::run_success_epilogue", |_| {
             Err(VMStatus::Error(
@@ -353,10 +353,9 @@ impl DiemVMImpl {
                     MoveValue::U64(gas_remaining),
                 ]),
                 gas_status,
-                log_context,
             )
             .map(|_return_vals| ())
-            .map_err(|err| expect_no_verification_errors(err, log_context))
+            .map_err(expect_no_verification_errors)
             .or_else(|err| convert_epilogue_error(err, log_context))
     }
 
@@ -368,7 +367,7 @@ impl DiemVMImpl {
         gas_status: &mut GasStatus,
         txn_data: &TransactionMetadata,
         account_currency_symbol: &IdentStr,
-        log_context: &impl LogContext,
+        log_context: &AdapterLogSchema,
     ) -> Result<(), VMStatus> {
         let gas_currency_ty =
             account_config::type_tag_for_currency_code(account_currency_symbol.to_owned());
@@ -389,10 +388,9 @@ impl DiemVMImpl {
                     MoveValue::U64(gas_remaining),
                 ]),
                 gas_status,
-                log_context,
             )
             .map(|_return_vals| ())
-            .map_err(|err| expect_no_verification_errors(err, log_context))
+            .map_err(expect_no_verification_errors)
             .or_else(|e| {
                 expect_only_successful_execution(e, USER_EPILOGUE_NAME.as_str(), log_context)
             })
@@ -404,7 +402,7 @@ impl DiemVMImpl {
         &self,
         session: &mut Session<S>,
         txn_data: &TransactionMetadata,
-        log_context: &impl LogContext,
+        log_context: &AdapterLogSchema,
     ) -> Result<(), VMStatus> {
         let txn_sequence_number = txn_data.sequence_number();
         let txn_public_key = txn_data.authentication_key_preimage().to_vec();
@@ -425,10 +423,9 @@ impl DiemVMImpl {
                     MoveValue::U8(chain_id.id()),
                 ]),
                 &mut gas_status,
-                log_context,
             )
             .map(|_return_vals| ())
-            .map_err(|err| expect_no_verification_errors(err, log_context))
+            .map_err(expect_no_verification_errors)
             .or_else(|err| convert_prologue_error(err, log_context))
     }
 
@@ -439,7 +436,7 @@ impl DiemVMImpl {
         session: &mut Session<S>,
         txn_data: &TransactionMetadata,
         should_trigger_reconfiguration: bool,
-        log_context: &impl LogContext,
+        log_context: &AdapterLogSchema,
     ) -> Result<(), VMStatus> {
         let mut gas_status = GasStatus::new_unmetered();
         session
@@ -453,10 +450,9 @@ impl DiemVMImpl {
                     MoveValue::Bool(should_trigger_reconfiguration),
                 ]),
                 &mut gas_status,
-                log_context,
             )
             .map(|_return_vals| ())
-            .map_err(|err| expect_no_verification_errors(err, log_context))
+            .map_err(expect_no_verification_errors)
             .or_else(|e| {
                 expect_only_successful_execution(e, WRITESET_EPILOGUE_NAME.as_str(), log_context)
             })
@@ -554,9 +550,10 @@ impl DiemVMImpl {
         }
 
         Ok(())
-      }
+    }
 }
 
+//////// 0L ////////
 fn get_upgrade_payload<S: MoveStorage>(
     remote_cache: &S,
 ) -> Result<UpgradePayloadResource, VMStatus> {
@@ -587,7 +584,7 @@ impl<'a> DiemVMInternals<'a> {
     }
 
     /// Returns the internal gas schedule if it has been loaded, or an error if it hasn't.
-    pub fn gas_schedule(self, log_context: &impl LogContext) -> Result<&'a CostTable, VMStatus> {
+    pub fn gas_schedule(self, log_context: &AdapterLogSchema) -> Result<&'a CostTable, VMStatus> {
         self.0.get_gas_schedule(log_context)
     }
 

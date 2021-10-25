@@ -3,10 +3,16 @@
 
 use crate::error::{MempoolError, StateSyncError};
 use anyhow::Result;
-use consensus_types::{block::Block, common::Payload};
+use consensus_types::{block::Block, common::Payload, executed_block::ExecutedBlock};
 use diem_crypto::HashValue;
 use diem_types::ledger_info::LedgerInfoWithSignatures;
 use executor_types::{Error as ExecutionError, StateComputeResult};
+use std::sync::Arc;
+
+pub type StateComputerCommitCallBackType = Box<dyn FnOnce(&[Arc<ExecutedBlock>]) + Send + Sync>;
+pub fn empty_state_computer_call_back() -> StateComputerCommitCallBackType {
+    Box::new(|_| {})
+}
 
 /// Retrieves and updates the status of transactions on demand (e.g., via talking with Mempool)
 #[async_trait::async_trait]
@@ -51,8 +57,9 @@ pub trait StateComputer: Send + Sync {
     /// Send a successful commit. A future is fulfilled when the state is finalized.
     async fn commit(
         &self,
-        block_ids: Vec<HashValue>,
+        blocks: &[Arc<ExecutedBlock>],
         finality_proof: LedgerInfoWithSignatures,
+        callback: StateComputerCommitCallBackType,
     ) -> Result<(), ExecutionError>;
 
     /// Best effort state synchronization to the given target LedgerInfo.

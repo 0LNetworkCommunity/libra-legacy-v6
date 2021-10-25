@@ -3,12 +3,14 @@
 
 use crate::persistent_liveness_storage::PersistentLivenessStorage;
 use consensus_types::{
-    block::Block, block_data::BlockData, timeout::Timeout, vote::Vote,
-    vote_proposal::MaybeSignedVoteProposal,
+    block_data::BlockData, timeout::Timeout, vote::Vote, vote_proposal::MaybeSignedVoteProposal,
 };
 use diem_crypto::ed25519::Ed25519Signature;
 use diem_metrics::monitor;
-use diem_types::epoch_change::EpochChangeProof;
+use diem_types::{
+    epoch_change::EpochChangeProof,
+    ledger_info::{LedgerInfo, LedgerInfoWithSignatures},
+};
 use safety_rules::{ConsensusState, Error, TSafetyRules};
 use std::sync::Arc;
 
@@ -40,6 +42,20 @@ impl MetricsSafetyRules {
             })?;
         self.initialize(&proofs)
     }
+
+    fn retry<T, F: FnMut(&mut Box<dyn TSafetyRules + Send + Sync>) -> Result<T, Error>>(
+        &mut self,
+        mut f: F,
+    ) -> Result<T, Error> {
+        let result = f(&mut self.inner);
+        match result {
+            Err(Error::NotInitialized(_)) | Err(Error::IncorrectEpoch(_, _)) => {
+                self.perform_initialize()?;
+                f(&mut self.inner)
+            }
+            _ => result,
+        }
+    }
 }
 
 impl TSafetyRules for MetricsSafetyRules {
@@ -55,36 +71,27 @@ impl TSafetyRules for MetricsSafetyRules {
         &mut self,
         vote_proposal: &MaybeSignedVoteProposal,
     ) -> Result<Vote, Error> {
-        let mut result = monitor!(
-            "safety_rules",
-            self.inner.construct_and_sign_vote(vote_proposal)
-        );
-
-        if let Err(Error::NotInitialized(_res)) = result {
-            self.perform_initialize()?;
-            result = monitor!(
-                "safety_rules",
-                self.inner.construct_and_sign_vote(vote_proposal)
-            );
-        }
-        result
+        self.retry(|inner| monitor!("safety_rules", inner.construct_and_sign_vote(vote_proposal)))
     }
 
-    fn sign_proposal(&mut self, block_data: BlockData) -> Result<Block, Error> {
-        let mut result = monitor!("safety_rules", self.inner.sign_proposal(block_data.clone()));
-        if let Err(Error::NotInitialized(_res)) = result {
-            self.perform_initialize()?;
-            result = monitor!("safety_rules", self.inner.sign_proposal(block_data));
-        }
-        result
+    fn sign_proposal(&mut self, block_data: &BlockData) -> Result<Ed25519Signature, Error> {
+        self.retry(|inner| monitor!("safety_rules", inner.sign_proposal(block_data)))
     }
 
     fn sign_timeout(&mut self, timeout: &Timeout) -> Result<Ed25519Signature, Error> {
-        let mut result = monitor!("safety_rules", self.inner.sign_timeout(timeout));
-        if let Err(Error::NotInitialized(_res)) = result {
-            self.perform_initialize()?;
-            result = monitor!("safety_rules", self.inner.sign_timeout(timeout));
-        }
-        result
+        self.retry(|inner| monitor!("safety_rules", inner.sign_timeout(timeout)))
+    }
+
+    fn sign_commit_vote(
+        &mut self,
+        ledger_info: LedgerInfoWithSignatures,
+        new_ledger_info: LedgerInfo,
+    ) -> Result<Ed25519Signature, Error> {
+        self.retry(|inner| {
+            monitor!(
+                "safety_rules",
+                inner.sign_commit_vote(ledger_info.clone(), new_ledger_info.clone())
+            )
+        })
     }
 }

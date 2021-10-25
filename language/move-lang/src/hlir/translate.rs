@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    diag,
     expansion::ast::{AbilitySet, Fields, ModuleIdent, Value_},
     hlir::ast::{self as H, Block},
     naming::ast as N,
@@ -398,7 +399,12 @@ fn type_name(_context: &Context, sp!(loc, ntn_): N::TypeName) -> H::TypeName {
     use H::TypeName_ as HT;
     use N::TypeName_ as NT;
     let tn_ = match ntn_ {
-        NT::Multiple(_) => panic!("ICE type constraints failed {}:{}", loc.file(), loc.span()),
+        NT::Multiple(_) => panic!(
+            "ICE type constraints failed {}:{}-{}",
+            loc.file(),
+            loc.start(),
+            loc.end()
+        ),
         NT::Builtin(bt) => HT::Builtin(bt),
         NT::ModuleType(m, s) => HT::ModuleType(m, s),
     };
@@ -416,7 +422,12 @@ fn base_type(context: &Context, sp!(loc, nb_): N::Type) -> H::BaseType {
     use H::BaseType_ as HB;
     use N::Type_ as NT;
     let b_ = match nb_ {
-        NT::Var(_) => panic!("ICE tvar not expanded: {}:{}", loc.file(), loc.span()),
+        NT::Var(_) => panic!(
+            "ICE tvar not expanded: {}:{}-{}",
+            loc.file(),
+            loc.start(),
+            loc.end()
+        ),
         NT::Apply(None, n, tys) => {
             crate::shared::ast_debug::print_verbose(&NT::Apply(None, n, tys));
             panic!("ICE kind not expanded: {:#?}", loc)
@@ -426,7 +437,12 @@ fn base_type(context: &Context, sp!(loc, nb_): N::Type) -> H::BaseType {
         NT::UnresolvedError => HB::UnresolvedError,
         NT::Anything => HB::Unreachable,
         NT::Ref(_, _) | NT::Unit => {
-            panic!("ICE type constraints failed {}:{}", loc.file(), loc.span())
+            panic!(
+                "ICE type constraints failed {}:{}-{}",
+                loc.file(),
+                loc.start(),
+                loc.end()
+            )
         }
     };
     sp(loc, b_)
@@ -1231,7 +1247,7 @@ fn exp_impl(
             HE::Spec(u, used_locals)
         }
         TE::UnresolvedError => {
-            assert!(context.env.has_errors());
+            assert!(context.env.has_diags());
             HE::UnresolvedError
         }
 
@@ -1676,11 +1692,12 @@ fn check_trailing_unit(context: &mut Context, block: &mut Block) {
             let unreachable_msg = "Any code after this expression will not be reached";
             let info_msg = "A trailing ';' in an expression block implicitly adds a '()' value \
                         after the semicolon. That '()' value will not be reachable";
-            $context.env.add_error(vec![
+            $context.env.add_diag(diag!(
+                UnusedItem::TrailingSemi,
                 ($uloc, semi_msg),
                 ($loc, unreachable_msg),
                 ($uloc, info_msg),
-            ]);
+            ));
             block.pop_back();
         }};
     }
@@ -1776,7 +1793,6 @@ fn check_unused_locals(
         .as_ref()
         .expect("ICE Signature should always be defined when checking a function body");
     let mut unused = BTreeSet::new();
-    let mut errors = Vec::new();
     // report unused locals
     for (v, _) in locals
         .key_cloned_iter()
@@ -1796,14 +1812,14 @@ fn check_unused_locals(
             // unused local variable; mark for removal
             unused.insert(v);
             format!(
-                "Unused local '{0}'. Consider removing or prefixing with an underscore: '_{0}'",
+                "Unused local variable '{0}'. Consider removing or prefixing with an underscore: \
+                 '_{0}'",
                 vstr
             )
         };
-        errors.push((loc, msg));
-    }
-    for error in errors {
-        context.env.add_error(vec![error]);
+        context
+            .env
+            .add_diag(diag!(UnusedItem::Variable, (loc, msg)));
     }
     for v in &unused {
         locals.remove(v);

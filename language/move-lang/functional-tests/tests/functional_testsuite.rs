@@ -7,13 +7,10 @@ use functional_tests::{
     compiler::{Compiler, ScriptOrModule},
     testsuite,
 };
+use move_command_line_common::env::read_bool_env_var;
 use move_lang::{
-    self,
-    command_line::read_bool_env_var,
-    compiled_unit::CompiledUnit,
-    errors,
-    shared::{CompilationEnv, Flags},
-    FullyCompiledProgram,
+    self, compiled_unit::CompiledUnit, diagnostics, Compiler as MoveCompiler, Flags,
+    FullyCompiledProgram, PASS_COMPILATION,
 };
 use once_cell::sync::Lazy;
 use std::{fmt, io::Write, path::Path};
@@ -41,28 +38,16 @@ impl<'a> MoveSourceCompiler<'a> {
         &self,
         targets: &[String],
     ) -> anyhow::Result<(
-        errors::FilesSourceText,
-        Result<Vec<CompiledUnit>, errors::Errors>,
+        diagnostics::FilesSourceText,
+        Result<Vec<CompiledUnit>, diagnostics::Diagnostics>,
     )> {
-        let mut compilation_env = CompilationEnv::new(Flags::empty());
-        let (files, pprog_and_comments_res) =
-            move_lang::move_parse(&compilation_env, targets, &self.deps, None)?;
-        let (_comments, pprog) = match pprog_and_comments_res {
-            Err(errors) => return Ok((files, Err(errors))),
-            Ok(res) => res,
-        };
-
-        let result = match move_lang::move_continue_up_to(
-            &mut compilation_env,
-            Some(&self.pre_compiled_deps),
-            move_lang::PassResult::Parser(pprog),
-            move_lang::Pass::Compilation,
-        ) {
-            Ok(move_lang::PassResult::Compilation(units)) => Ok(units),
-            Ok(_) => unreachable!(),
-            Err(errors) => Err(errors),
-        };
-        Ok((files, result))
+        let (files, comments_and_compiler_res) = MoveCompiler::new(targets, &self.deps)
+            .set_pre_compiled_lib(&self.pre_compiled_deps)
+            .run::<PASS_COMPILATION>()?;
+        match comments_and_compiler_res {
+            Err(diags) => Ok((files, Err(diags))),
+            Ok((_comments, move_compiler)) => Ok((files, Ok(move_compiler.into_compiled_units()))),
+        }
     }
 }
 
@@ -90,23 +75,23 @@ impl<'a> Compiler for MoveSourceCompiler<'a> {
         let cur_path = cur_file.path().to_str().unwrap().to_owned();
 
         let targets = &vec![cur_path.clone()];
-        let (mut files, units_or_errors) = self.move_compile_with_stdlib(targets)?;
-        let unit = match units_or_errors {
-            Err(errors) => {
+        let (mut files, units_or_diags) = self.move_compile_with_stdlib(targets)?;
+        let unit = match units_or_diags {
+            Err(diags) => {
                 for (file_name, text) in &self.pre_compiled_deps.files {
                     // TODO This is bad. Rethink this when errors are redone
                     if !files.contains_key(file_name) {
-                        files.insert(&**file_name, text.clone());
+                        files.insert(*file_name, text.clone());
                     }
                 }
 
-                let error_buffer = if read_bool_env_var(testsuite::PRETTY) {
-                    move_lang::errors::report_errors_to_color_buffer(files, errors)
+                let diags_buffer = if read_bool_env_var(move_command_line_common::testing::PRETTY) {
+                    diagnostics::report_diagnostics_to_color_buffer(&files, diags)
                 } else {
-                    move_lang::errors::report_errors_to_buffer(files, errors)
+                    diagnostics::report_diagnostics_to_buffer(&files, diags)
                 };
                 return Err(
-                    MoveSourceCompilerError(String::from_utf8(error_buffer).unwrap()).into(),
+                    MoveSourceCompilerError(String::from_utf8(diags_buffer).unwrap()).into(),
                 );
             }
             Ok(mut units) => {
@@ -135,17 +120,17 @@ impl<'a> Compiler for MoveSourceCompiler<'a> {
 }
 
 static DIEM_PRECOMPILED_STDLIB: Lazy<FullyCompiledProgram> = Lazy::new(|| {
-    let program_res = move_lang::move_construct_pre_compiled_lib(
-        &mut CompilationEnv::new(Flags::empty().set_sources_shadow_deps(false)),
+    let program_res = move_lang::construct_pre_compiled_lib(
         &diem_framework::diem_stdlib_files(),
         None,
+        Flags::empty().set_sources_shadow_deps(false),
     )
     .unwrap();
     match program_res {
         Ok(stdlib) => stdlib,
-        Err((files, errors)) => {
+        Err((files, diags)) => {
             eprintln!("!!!Standard library failed to compile!!!");
-            errors::report_errors(files, errors)
+            diagnostics::report_diagnostics(&files, diags)
         }
     }
 });

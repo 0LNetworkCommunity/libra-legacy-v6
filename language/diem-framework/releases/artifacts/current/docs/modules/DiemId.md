@@ -21,8 +21,7 @@ Module managing Diem ID.
 -  [Function `tc_domain_manager_exists`](#0x1_DiemId_tc_domain_manager_exists)
 
 
-<pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
+<pre><code><b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event">0x1::Event</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
@@ -523,7 +522,7 @@ different lowercase and uppercase format gets added.
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> account_domains.domains, <b>copy</b> diem_id_domain);
 
     <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_emit_event">Event::emit_event</a>(
-        &<b>mut</b> borrow_global_mut&lt;<a href="DiemId.md#0x1_DiemId_DiemIdDomainManager">DiemIdDomainManager</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_TREASURY_COMPLIANCE_ADDRESS">CoreAddresses::TREASURY_COMPLIANCE_ADDRESS</a>()).diem_id_domain_events,
+        &<b>mut</b> borrow_global_mut&lt;<a href="DiemId.md#0x1_DiemId_DiemIdDomainManager">DiemIdDomainManager</a>&gt;(@TreasuryCompliance).diem_id_domain_events,
         <a href="DiemId.md#0x1_DiemId_DiemIdDomainEvent">DiemIdDomainEvent</a> {
             removed: <b>false</b>,
             domain: diem_id_domain,
@@ -589,7 +588,7 @@ different lowercase and uppercase format gets added.
 <pre><code><b>schema</b> <a href="DiemId.md#0x1_DiemId_AddDiemIdDomainEmits">AddDiemIdDomainEmits</a> {
     address: address;
     domain: vector&lt;u8&gt;;
-    <b>let</b> handle = <b>global</b>&lt;<a href="DiemId.md#0x1_DiemId_DiemIdDomainManager">DiemIdDomainManager</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_TREASURY_COMPLIANCE_ADDRESS">CoreAddresses::TREASURY_COMPLIANCE_ADDRESS</a>()).diem_id_domain_events;
+    <b>let</b> handle = <b>global</b>&lt;<a href="DiemId.md#0x1_DiemId_DiemIdDomainManager">DiemIdDomainManager</a>&gt;(@TreasuryCompliance).diem_id_domain_events;
     <b>let</b> msg = <a href="DiemId.md#0x1_DiemId_DiemIdDomainEvent">DiemIdDomainEvent</a> {
         removed: <b>false</b>,
         domain: <a href="DiemId.md#0x1_DiemId_DiemIdDomain">DiemIdDomain</a> { domain },
@@ -642,7 +641,7 @@ Remove a DiemIdDomain from a parent VASP's DiemIdDomains resource.
     };
 
     <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_emit_event">Event::emit_event</a>(
-        &<b>mut</b> borrow_global_mut&lt;<a href="DiemId.md#0x1_DiemId_DiemIdDomainManager">DiemIdDomainManager</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_TREASURY_COMPLIANCE_ADDRESS">CoreAddresses::TREASURY_COMPLIANCE_ADDRESS</a>()).diem_id_domain_events,
+        &<b>mut</b> borrow_global_mut&lt;<a href="DiemId.md#0x1_DiemId_DiemIdDomainManager">DiemIdDomainManager</a>&gt;(@TreasuryCompliance).diem_id_domain_events,
         <a href="DiemId.md#0x1_DiemId_DiemIdDomainEvent">DiemIdDomainEvent</a> {
             removed: <b>true</b>,
             domain: diem_id_domain,
@@ -709,7 +708,7 @@ Remove a DiemIdDomain from a parent VASP's DiemIdDomains resource.
     tc_account: signer;
     address: address;
     domain: vector&lt;u8&gt;;
-    <b>let</b> handle = <b>global</b>&lt;<a href="DiemId.md#0x1_DiemId_DiemIdDomainManager">DiemIdDomainManager</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_TREASURY_COMPLIANCE_ADDRESS">CoreAddresses::TREASURY_COMPLIANCE_ADDRESS</a>()).diem_id_domain_events;
+    <b>let</b> handle = <b>global</b>&lt;<a href="DiemId.md#0x1_DiemId_DiemIdDomainManager">DiemIdDomainManager</a>&gt;(@TreasuryCompliance).diem_id_domain_events;
     <b>let</b> msg = <a href="DiemId.md#0x1_DiemId_DiemIdDomainEvent">DiemIdDomainEvent</a> {
         removed: <b>true</b>,
         domain: <a href="DiemId.md#0x1_DiemId_DiemIdDomain">DiemIdDomain</a> { domain },
@@ -797,7 +796,7 @@ Remove a DiemIdDomain from a parent VASP's DiemIdDomains resource.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="DiemId.md#0x1_DiemId_tc_domain_manager_exists">tc_domain_manager_exists</a>(): bool {
-    <b>exists</b>&lt;<a href="DiemId.md#0x1_DiemId_DiemIdDomainManager">DiemIdDomainManager</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_TREASURY_COMPLIANCE_ADDRESS">CoreAddresses::TREASURY_COMPLIANCE_ADDRESS</a>())
+    <b>exists</b>&lt;<a href="DiemId.md#0x1_DiemId_DiemIdDomainManager">DiemIdDomainManager</a>&gt;(@TreasuryCompliance)
 }
 </code></pre>
 
@@ -811,7 +810,7 @@ Remove a DiemIdDomain from a parent VASP's DiemIdDomains resource.
 
 
 <pre><code><b>aborts_if</b> <b>false</b>;
-<b>ensures</b> result == <b>exists</b>&lt;<a href="DiemId.md#0x1_DiemId_DiemIdDomainManager">DiemIdDomainManager</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_TREASURY_COMPLIANCE_ADDRESS">CoreAddresses::TREASURY_COMPLIANCE_ADDRESS</a>());
+<b>ensures</b> result == <b>exists</b>&lt;<a href="DiemId.md#0x1_DiemId_DiemIdDomainManager">DiemIdDomainManager</a>&gt;(@TreasuryCompliance);
 </code></pre>
 
 

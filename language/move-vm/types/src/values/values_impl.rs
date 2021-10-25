@@ -110,21 +110,21 @@ enum ReferenceImpl {
 }
 
 // A reference to a signer. Clients can attempt a cast to this struct if they are
-// expecting a Signer on the stavk or as an argument.
+// expecting a Signer on the stack or as an argument.
 #[derive(Debug)]
 pub struct SignerRef(ContainerRef);
 
 // A reference to a vector. This is an alias for a ContainerRef for now but we may change
 // it once Containers are restructured.
 // It's used from vector native functions to get a reference to a vector and operate on that.
-// There is an impl for VecotrRef which implements the API private to this module.
+// There is an impl for VectorRef which implements the API private to this module.
 #[derive(Debug)]
 pub struct VectorRef(ContainerRef);
 
 // A vector. This is an alias for a Container for now but we may change
 // it once Containers are restructured.
 // It's used from vector native functions to get a vector and operate on that.
-// There is an impl for Vecotr which implements the API private to this module.
+// There is an impl for Vector which implements the API private to this module.
 #[derive(Debug)]
 pub struct Vector(Container);
 
@@ -139,7 +139,7 @@ pub struct Vector(Container);
  *
  *   They are opaque to an external caller by design -- no knowledge about the internal
  *   representation is given and they can only be manipulated via the public methods,
- *   which is to ensure no arbitratry invalid states can be created unless some crucial
+ *   which is to ensure no arbitrary invalid states can be created unless some crucial
  *   internal invariants are violated.
  *
  **************************************************************************************/
@@ -148,7 +148,7 @@ pub struct Vector(Container);
 #[derive(Debug)]
 pub struct StructRef(ContainerRef);
 
-/// A generic Move reference that offers two functinalities: read_ref & write_ref.
+/// A generic Move reference that offers two functionalities: read_ref & write_ref.
 #[derive(Debug)]
 pub struct Reference(ReferenceImpl);
 
@@ -1533,11 +1533,7 @@ pub const INDEX_OUT_OF_BOUNDS: u64 = NFE_VECTOR_ERROR_BASE + 1;
 pub const POP_EMPTY_VEC: u64 = NFE_VECTOR_ERROR_BASE + 2;
 pub const DESTROY_NON_EMPTY_VEC: u64 = NFE_VECTOR_ERROR_BASE + 3;
 
-fn check_elem_layout(
-    _context: &impl NativeContext,
-    ty: &Type,
-    v: &Container,
-) -> PartialVMResult<()> {
+fn check_elem_layout(ty: &Type, v: &Container) -> PartialVMResult<()> {
     match (ty, v) {
         (Type::U8, Container::VecU8(_))
         | (Type::U64, Container::VecU64(_))
@@ -1549,6 +1545,7 @@ fn check_elem_layout(
         (Type::Vector(_), Container::Vec(_)) => Ok(()),
 
         (Type::Struct(_), Container::Vec(_))
+        | (Type::Signer, Container::Vec(_))
         | (Type::StructInstantiation(_, _), Container::Vec(_)) => Ok(()),
 
         (Type::Reference(_), _) | (Type::MutableReference(_), _) | (Type::TyParam(_), _) => Err(
@@ -1575,9 +1572,9 @@ fn check_elem_layout(
 }
 
 impl VectorRef {
-    pub fn len(&self, type_param: &Type, context: &impl NativeContext) -> PartialVMResult<Value> {
+    pub fn len(&self, type_param: &Type) -> PartialVMResult<Value> {
         let c = self.0.container();
-        check_elem_layout(context, type_param, c)?;
+        check_elem_layout(type_param, c)?;
 
         let len = match c {
             Container::VecU8(r) => r.borrow().len(),
@@ -1592,14 +1589,9 @@ impl VectorRef {
         Ok(Value::u64(len as u64))
     }
 
-    pub fn push_back(
-        &self,
-        e: Value,
-        type_param: &Type,
-        context: &impl NativeContext,
-    ) -> PartialVMResult<()> {
+    pub fn push_back(&self, e: Value, type_param: &Type) -> PartialVMResult<()> {
         let c = self.0.container();
-        check_elem_layout(context, type_param, c)?;
+        check_elem_layout(type_param, c)?;
 
         match c {
             Container::VecU8(r) => r.borrow_mut().push(e.value_as()?),
@@ -1621,10 +1613,9 @@ impl VectorRef {
         idx: usize,
         cost: InternalGasUnits<GasCarrier>,
         type_param: &Type,
-        context: &impl NativeContext,
     ) -> PartialVMResult<NativeResult> {
         let c = self.0.container();
-        check_elem_layout(context, type_param, c)?;
+        check_elem_layout(type_param, c)?;
         if idx >= c.len() {
             return Ok(NativeResult::err(cost, INDEX_OUT_OF_BOUNDS));
         }
@@ -1638,10 +1629,9 @@ impl VectorRef {
         &self,
         cost: InternalGasUnits<GasCarrier>,
         type_param: &Type,
-        context: &impl NativeContext,
     ) -> PartialVMResult<NativeResult> {
         let c = self.0.container();
-        check_elem_layout(context, type_param, c)?;
+        check_elem_layout(type_param, c)?;
 
         macro_rules! err_pop_empty_vec {
             () => {
@@ -1690,10 +1680,9 @@ impl VectorRef {
         idx2: usize,
         cost: InternalGasUnits<GasCarrier>,
         type_param: &Type,
-        context: &impl NativeContext,
     ) -> PartialVMResult<NativeResult> {
         let c = self.0.container();
-        check_elem_layout(context, type_param, c)?;
+        check_elem_layout(type_param, c)?;
 
         macro_rules! swap {
             ($v: expr) => {{
@@ -1726,7 +1715,6 @@ impl Vector {
     pub fn empty(
         cost: InternalGasUnits<GasCarrier>,
         type_param: &Type,
-        _context: &impl NativeContext,
     ) -> PartialVMResult<NativeResult> {
         let container = match type_param {
             Type::U8 => Value::vector_u8(iter::empty::<u8>()),
@@ -1756,9 +1744,8 @@ impl Vector {
         self,
         cost: InternalGasUnits<GasCarrier>,
         type_param: &Type,
-        context: &impl NativeContext,
     ) -> PartialVMResult<NativeResult> {
-        check_elem_layout(context, type_param, &self.0)?;
+        check_elem_layout(type_param, &self.0)?;
 
         let is_empty = match &self.0 {
             Container::VecU8(r) => r.borrow().is_empty(),
@@ -2326,7 +2313,7 @@ pub mod debug {
  *   is to involve an explicit representation of the type layout.
  *
  **************************************************************************************/
-use crate::{loaded_data::runtime_types::Type, natives::function::NativeContext};
+use crate::loaded_data::runtime_types::Type;
 use serde::{
     de::Error as DeError,
     ser::{Error as SerError, SerializeSeq, SerializeTuple},

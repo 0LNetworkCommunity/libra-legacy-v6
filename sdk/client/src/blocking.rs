@@ -11,8 +11,9 @@ use crate::{
     error::WaitForTransactionError,
     move_deserialize::{self, Event},
     views::{
-        AccountStateWithProofView, AccountView, CurrencyInfoView, EventView, 
-        EventWithProofView, MetadataView, StateProofView, TransactionView, 
+        AccountStateWithProofView, AccountTransactionsWithProofView, AccountView,
+        AccumulatorConsistencyProofView, CurrencyInfoView, EventByVersionWithProofView, EventView,
+        EventWithProofView, MetadataView, StateProofView, TransactionView,
         TransactionsWithProofsView, TowerStateResourceView, OracleUpgradeStateView,
     },
     Error, Result, Retry, State,
@@ -88,8 +89,8 @@ impl BlockingClient {
         timeout: Option<Duration>,
         delay: Option<Duration>,
     ) -> Result<Response<TransactionView>, WaitForTransactionError> {
-        const DEFAULT_TIMEOUT: Duration = Duration::from_secs(5);
-        const DEFAULT_DELAY: Duration = Duration::from_millis(50);
+        const DEFAULT_TIMEOUT: Duration = Duration::from_secs(60);
+        const DEFAULT_DELAY: Duration = Duration::from_millis(500);
 
         let start = std::time::Instant::now();
         while start.elapsed() < timeout.unwrap_or(DEFAULT_TIMEOUT) {
@@ -163,8 +164,8 @@ impl BlockingClient {
     pub fn get_oracle_upgrade_state(&self) 
     -> Result<Response<Option<OracleUpgradeStateView>>> {
         self.send(MethodRequest::get_oracle_upgrade_state())
-    }    
-
+    }
+    
     pub fn get_transactions(
         &self,
         start_seq: u64,
@@ -231,6 +232,17 @@ impl BlockingClient {
         self.send(MethodRequest::get_state_proof(from_version))
     }
 
+    pub fn get_accumulator_consistency_proof(
+        &self,
+        client_known_version: Option<u64>,
+        ledger_version: Option<u64>,
+    ) -> Result<Response<AccumulatorConsistencyProofView>> {
+        self.send(MethodRequest::get_accumulator_consistency_proof(
+            client_known_version,
+            ledger_version,
+        ))
+    }
+
     pub fn get_account_state_with_proof(
         &self,
         address: AccountAddress,
@@ -257,6 +269,23 @@ impl BlockingClient {
         ))
     }
 
+    pub fn get_account_transactions_with_proofs(
+        &self,
+        address: AccountAddress,
+        start_seq: u64,
+        limit: u64,
+        include_events: bool,
+        ledger_version: Option<u64>,
+    ) -> Result<Response<AccountTransactionsWithProofView>> {
+        self.send(MethodRequest::get_account_transactions_with_proofs(
+            address,
+            start_seq,
+            limit,
+            include_events,
+            ledger_version,
+        ))
+    }
+
     pub fn get_events_with_proofs(
         &self,
         key: EventKey,
@@ -264,6 +293,14 @@ impl BlockingClient {
         limit: u64,
     ) -> Result<Response<Vec<EventWithProofView>>> {
         self.send(MethodRequest::get_events_with_proofs(key, start_seq, limit))
+    }
+
+    pub fn get_event_by_version_with_proof(
+        &self,
+        key: EventKey,
+        version: Option<u64>,
+    ) -> Result<Response<EventByVersionWithProofView>> {
+        self.send(MethodRequest::get_event_by_version_with_proof(key, version))
     }
 
     /// Return the events of type `T` that have been emitted to `event_key` since `start_seq`, with a max of `limit`
@@ -315,9 +352,10 @@ impl BlockingClient {
         request: &JsonRpcRequest,
         ignore_stale: bool,
     ) -> Result<Response<T>> {
+        let req_state = self.last_known_state();
         let resp: diem_json_rpc_types::response::JsonRpcResponse = self.send_impl(&request)?;
 
-        let (id, state, result) = validate(&self.state, &resp, ignore_stale)?;
+        let (id, state, result) = validate(&self.state, req_state.as_ref(), &resp, ignore_stale)?;
 
         if request.id() != id {
             return Err(Error::rpc_response("invalid response id"));
@@ -332,11 +370,12 @@ impl BlockingClient {
         requests: Vec<MethodRequest>,
     ) -> Result<Vec<Result<Response<MethodResponse>>>> {
         let request: Vec<JsonRpcRequest> = requests.into_iter().map(JsonRpcRequest::new).collect();
+        let req_state = self.last_known_state();
         let resp: BatchResponse = self.send_impl(&request)?;
 
         let resp = resp.success()?;
 
-        validate_batch(&self.state, &request, resp)
+        validate_batch(&self.state, req_state.as_ref(), &request, resp)
     }
 
     // Executes the specified request method using the given parameters by contacting the JSON RPC

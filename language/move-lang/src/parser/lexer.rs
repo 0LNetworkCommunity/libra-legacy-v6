@@ -1,10 +1,15 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{errors::*, parser::syntax::make_loc, FileCommentMap, MatchedFileCommentMap};
-use codespan::{ByteIndex, Span};
+use crate::{
+    diag,
+    diagnostics::{Diagnostic, Diagnostics},
+    parser::syntax::make_loc,
+    FileCommentMap, MatchedFileCommentMap,
+};
 use move_ir_types::location::Loc;
-use std::{collections::BTreeMap, fmt};
+use move_symbol_pool::Symbol;
+use std::fmt;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Tok {
@@ -39,6 +44,7 @@ pub enum Tok {
     Equal,
     EqualEqual,
     EqualEqualGreater,
+    LessEqualEqualGreater,
     Greater,
     GreaterEqual,
     GreaterGreater,
@@ -112,6 +118,7 @@ impl fmt::Display for Tok {
             Equal => "=",
             EqualEqual => "==",
             EqualEqualGreater => "==>",
+            LessEqualEqualGreater => "<==>",
             Greater => ">",
             GreaterEqual => ">=",
             GreaterGreater => ">>",
@@ -155,7 +162,7 @@ impl fmt::Display for Tok {
 
 pub struct Lexer<'input> {
     text: &'input str,
-    file: &'static str,
+    file: Symbol,
     doc_comments: FileCommentMap,
     matched_doc_comments: MatchedFileCommentMap,
     prev_end: usize,
@@ -165,16 +172,12 @@ pub struct Lexer<'input> {
 }
 
 impl<'input> Lexer<'input> {
-    pub fn new(
-        text: &'input str,
-        file: &'static str,
-        doc_comments: BTreeMap<Span, String>,
-    ) -> Lexer<'input> {
+    pub fn new(text: &'input str, file: Symbol, doc_comments: FileCommentMap) -> Lexer<'input> {
         Lexer {
             text,
             file,
             doc_comments,
-            matched_doc_comments: BTreeMap::new(),
+            matched_doc_comments: MatchedFileCommentMap::new(),
             prev_end: 0,
             cur_start: 0,
             cur_end: 0,
@@ -190,7 +193,7 @@ impl<'input> Lexer<'input> {
         &self.text[self.cur_start..self.cur_end]
     }
 
-    pub fn file_name(&self) -> &'static str {
+    pub fn file_name(&self) -> Symbol {
         self.file
     }
 
@@ -204,7 +207,7 @@ impl<'input> Lexer<'input> {
 
     // Look ahead to the next token after the current one and return it without advancing
     // the state of the lexer.
-    pub fn lookahead(&self) -> Result<Tok, Error> {
+    pub fn lookahead(&self) -> Result<Tok, Diagnostic> {
         let text = self.text[self.cur_end..].trim_start();
         let offset = self.text.len() - text.len();
         let (tok, _) = find_token(self.file, text, offset)?;
@@ -213,7 +216,7 @@ impl<'input> Lexer<'input> {
 
     // Look ahead to the next two tokens after the current one and return them without advancing
     // the state of the lexer.
-    pub fn lookahead2(&self) -> Result<(Tok, Tok), Error> {
+    pub fn lookahead2(&self) -> Result<(Tok, Tok), Diagnostic> {
         let text = self.text[self.cur_end..].trim_start();
         let offset = self.text.len() - text.len();
         let (first, length) = find_token(self.file, text, offset)?;
@@ -237,7 +240,7 @@ impl<'input> Lexer<'input> {
         let mut matched = vec![];
         let merged = self
             .doc_comments
-            .range(Span::new(start, start)..Span::new(end, end))
+            .range((start, start)..(end, end))
             .map(|(span, s)| {
                 matched.push(*span);
                 s.clone()
@@ -247,23 +250,22 @@ impl<'input> Lexer<'input> {
         for span in matched {
             self.doc_comments.remove(&span);
         }
-        self.matched_doc_comments.insert(ByteIndex(end), merged);
+        self.matched_doc_comments.insert(end, merged);
     }
 
     // At the end of parsing, checks whether there are any unmatched documentation comments,
     // producing errors if so. Otherwise returns a map from file position to associated
     // documentation.
-    pub fn check_and_get_doc_comments(&mut self) -> Result<MatchedFileCommentMap, Errors> {
+    pub fn check_and_get_doc_comments(&mut self) -> Result<MatchedFileCommentMap, Diagnostics> {
+        let msg = "documentation comment cannot be matched to a language item";
         let errors = self
             .doc_comments
             .iter()
-            .map(|(span, _)| {
-                vec![(
-                    Loc::new(self.file, *span),
-                    "documentation comment cannot be matched to a language item".to_string(),
-                )]
+            .map(|((start, end), _)| {
+                let loc = Loc::new(self.file, *start, *end);
+                diag!(Syntax::InvalidDocComment, (loc, msg))
             })
-            .collect::<Errors>();
+            .collect::<Diagnostics>();
         if errors.is_empty() {
             Ok(std::mem::take(&mut self.matched_doc_comments))
         } else {
@@ -271,7 +273,7 @@ impl<'input> Lexer<'input> {
         }
     }
 
-    pub fn advance(&mut self) -> Result<(), Error> {
+    pub fn advance(&mut self) -> Result<(), Diagnostic> {
         self.prev_end = self.cur_end;
         let text = self.text[self.cur_end..].trim_start();
         self.cur_start = self.text.len() - text.len();
@@ -291,7 +293,7 @@ impl<'input> Lexer<'input> {
 }
 
 // Find the next token and its length without changing the state of the lexer.
-fn find_token(file: &'static str, text: &str, start_offset: usize) -> Result<(Tok, usize), Error> {
+fn find_token(file: Symbol, text: &str, start_offset: usize) -> Result<(Tok, usize), Diagnostic> {
     let c: char = match text.chars().next() {
         Some(next_char) => next_char,
         None => {
@@ -313,15 +315,21 @@ fn find_token(file: &'static str, text: &str, start_offset: usize) -> Result<(To
             }
         }
         'A'..='Z' | 'a'..='z' | '_' => {
-            if text.starts_with("x\"") || text.starts_with("b\"") {
+            let is_hex = text.starts_with("x\"");
+            if is_hex || text.starts_with("b\"") {
                 let line = &text.lines().next().unwrap()[2..];
                 match get_string_len(line) {
                     Some(last_quote) => (Tok::ByteStringValue, 2 + last_quote + 1),
                     None => {
-                        return Err(vec![(
-                            make_loc(file, start_offset, start_offset + line.len() + 2),
-                            "Missing closing quote (\") after byte string".to_string(),
-                        )])
+                        let loc = make_loc(file, start_offset, start_offset + line.len() + 2);
+                        return Err(diag!(
+                            if is_hex {
+                                Syntax::InvalidHexString
+                            } else {
+                                Syntax::InvalidByteString
+                            },
+                            (loc, "Missing closing quote (\") after byte string")
+                        ));
                     }
                 }
             } else {
@@ -362,7 +370,9 @@ fn find_token(file: &'static str, text: &str, start_offset: usize) -> Result<(To
             }
         }
         '<' => {
-            if text.starts_with("<=") {
+            if text.starts_with("<==>") {
+                (Tok::LessEqualEqualGreater, 4)
+            } else if text.starts_with("<=") {
                 (Tok::LessEqual, 2)
             } else if text.starts_with("<<") {
                 (Tok::LessLess, 2)
@@ -411,7 +421,10 @@ fn find_token(file: &'static str, text: &str, start_offset: usize) -> Result<(To
         '@' => (Tok::AtSign, 1),
         _ => {
             let loc = make_loc(file, start_offset, start_offset);
-            return Err(vec![(loc, format!("Invalid character: '{}'", c))]);
+            return Err(diag!(
+                Syntax::InvalidCharacter,
+                (loc, format!("Invalid character: '{}'", c))
+            ));
         }
     };
 

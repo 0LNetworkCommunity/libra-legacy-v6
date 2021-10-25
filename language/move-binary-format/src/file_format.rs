@@ -28,7 +28,6 @@
 
 use crate::{
     access::ModuleAccess,
-    check_bounds::BoundsChecker,
     errors::{PartialVMError, PartialVMResult},
     file_format_common,
     internals::ModuleIndex,
@@ -41,13 +40,13 @@ use move_core_types::{
     language_storage::ModuleId,
     vm_status::StatusCode,
 };
-use num_variants::NumVariants;
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest::{collection::vec, prelude::*, strategy::BoxedStrategy};
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
 use ref_cast::RefCast;
 use std::ops::BitOr;
+use variant_count::VariantCount;
 
 /// Generic index into one of the tables in the binary format.
 pub type TableIndex = u16;
@@ -249,8 +248,25 @@ pub struct StructHandle {
     /// For any instantiation of this type, the abilities of this type are predicated on
     /// that ability being satisfied for all type parameters.
     pub abilities: AbilitySet,
-    /// The type formals (identified by their index into the vec) and their constraints
-    pub type_parameters: Vec<AbilitySet>,
+    /// The type formals (identified by their index into the vec)
+    pub type_parameters: Vec<StructTypeParameter>,
+}
+
+impl StructHandle {
+    pub fn type_param_constraints(&self) -> impl ExactSizeIterator<Item = AbilitySet> + '_ {
+        self.type_parameters.iter().map(|param| param.constraints)
+    }
+}
+
+/// A type parameter used in the declaration of a struct.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
+#[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
+#[cfg_attr(any(test, feature = "fuzzing"), proptest(no_params))]
+pub struct StructTypeParameter {
+    /// The type parameter constraints.
+    pub constraints: AbilitySet,
+    /// Whether the parameter is declared as phantom.
+    pub is_phantom: bool,
 }
 
 /// A `FunctionHandle` is a reference to a function. It is composed by a
@@ -647,23 +663,42 @@ impl AbilitySet {
     }
 
     /// For a polymorphic type, its actual abilities correspond to its declared abilities but
-    /// predicated on its type arguments having that ability. For `Key`, instead of needing
-    /// the same ability, the type arguments need `Store`
-    pub fn polymorphic_abilities(
+    /// predicated on its non-phantom type arguments having that ability. For `Key`, instead of needing
+    /// the same ability, the type arguments need `Store`.
+    pub fn polymorphic_abilities<I1, I2>(
         declared_abilities: Self,
-        type_argument_abilities: impl IntoIterator<Item = Self>,
-    ) -> Self {
+        declared_phantom_parameters: I1,
+        type_arguments: I2,
+    ) -> PartialVMResult<Self>
+    where
+        I1: IntoIterator<Item = bool>,
+        I2: IntoIterator<Item = Self>,
+        I1::IntoIter: ExactSizeIterator,
+        I2::IntoIter: ExactSizeIterator,
+    {
+        let declared_phantom_parameters = declared_phantom_parameters.into_iter();
+        let type_arguments = type_arguments.into_iter();
+
+        if declared_phantom_parameters.len() != type_arguments.len() {
+            return Err(
+                PartialVMError::new(StatusCode::VERIFIER_INVARIANT_VIOLATION).with_message(
+                    "the length of `declared_phantom_parameters` doesn't match the length of `type_arguments`".to_string(),
+                ),
+            );
+        }
+
         // Conceptually this is performing the following operation:
         // For any ability 'a' in `declared_abilities`
         // 'a' is in the result only if
-        //   for all 'ti' in `type_argument_abilities`, a.required() is a subset of ti
+        //   for all (abi_i, is_phantom_i) in `type_arguments` s.t. !is_phantom then a.required() is a subset of abi_i
         //
         // So to do this efficiently, we can determine the required_by set for each ti
         // and intersect them together along with the declared abilities
         // This only works because for any ability y, |y.requires()| == 1
-        type_argument_abilities
-            .into_iter()
-            .map(|ty_arg_abilities| {
+        let abs = type_arguments
+            .zip(declared_phantom_parameters)
+            .filter(|(_, is_phantom)| !is_phantom)
+            .map(|(ty_arg_abilities, _)| {
                 ty_arg_abilities
                     .into_iter()
                     .map(|a| a.required_by())
@@ -671,7 +706,8 @@ impl AbilitySet {
             })
             .fold(declared_abilities, |acc, ty_arg_abilities| {
                 acc.intersect(ty_arg_abilities)
-            })
+            });
+        Ok(abs)
     }
 
     pub fn from_u8(byte: u8) -> Option<Self> {
@@ -1051,10 +1087,9 @@ pub struct CodeUnit {
 ///
 /// Bytecodes operate on a stack machine and each bytecode has side effect on the stack and the
 /// instruction stream.
-#[derive(Clone, Hash, Eq, NumVariants, PartialEq)]
+#[derive(Clone, Hash, Eq, VariantCount, PartialEq)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
 #[cfg_attr(any(test, feature = "fuzzing"), proptest(no_params))]
-#[num_variants = "NUM_INSTRUCTIONS"]
 pub enum Bytecode {
     /// Pop and discard the value at the top of the stack.
     /// The value on the stack must be an copyable type.
@@ -1592,20 +1627,13 @@ impl Bytecode {
     }
 }
 
-// Note that this doesn't derive either `Arbitrary` or `Default` while `CompiledScriptMut` does.
-// That's because a CompiledScript is guaranteed to be valid while a CompiledScriptMut isn't.
 /// Contains the main function to execute and its dependencies.
 ///
 /// A CompiledScript does not have definition tables because it can only have a `main(args)`.
 /// A CompiledScript defines the constant pools (string, address, signatures, etc.), the handle
 /// tables (external code references) and it has a `main` definition.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct CompiledScript(CompiledScriptMut);
-
-/// A mutable version of `CompiledScript`. Converting to a `CompiledScript` requires this to pass
-/// the bounds checker.
 #[derive(Clone, Default, Eq, PartialEq, Debug)]
-pub struct CompiledScriptMut {
+pub struct CompiledScript {
     /// Version number found during deserialization
     pub version: u32,
     /// Handles to all modules referenced.
@@ -1637,172 +1665,6 @@ pub struct CompiledScriptMut {
 impl CompiledScript {
     /// Returns the index of `main` in case a script is converted to a module.
     pub const MAIN_INDEX: FunctionDefinitionIndex = FunctionDefinitionIndex(0);
-
-    /// Returns a reference to the inner `CompiledScriptMut`.
-    pub fn as_inner(&self) -> &CompiledScriptMut {
-        &self.0
-    }
-
-    /// Converts this instance into the inner `CompiledScriptMut`. Converting back to a
-    /// `CompiledScript` would require it to be verified again.
-    pub fn into_inner(self) -> CompiledScriptMut {
-        self.0
-    }
-
-    /// Converts a `CompiledScript` into a `CompiledModule` for code that wants a uniform view of
-    /// both.
-    ///
-    /// If a `CompiledScript` has been bounds checked, the corresponding `CompiledModule` can be
-    /// assumed to pass the bounds checker as well.
-    #[allow(deprecated)]
-    pub fn into_module(self) -> (ScriptConversionInfo, CompiledModule) {
-        let (info, m) = self.0.into_module();
-        (info, CompiledModule(m))
-    }
-}
-
-pub struct ScriptConversionInfo {
-    // If a dummy address was added.
-    added_dummy_addr: bool,
-    // If an empty signature was added.
-    added_dummy_sig: bool,
-    // If the <SELF> identifier was added.
-    added_self_ident: bool,
-    // If a self module handle was added.
-    added_self_module_handle: bool,
-}
-
-impl CompiledScriptMut {
-    /// Converts this instance into `CompiledScript` after verifying it for basic internal
-    /// consistency. This includes bounds checks but no others.
-    #[allow(deprecated)]
-    pub fn freeze(self) -> PartialVMResult<CompiledScript> {
-        let (info, fake_module) = self.into_module();
-        Ok(fake_module.freeze()?.into_script(info))
-    }
-
-    /// Converts a `CompiledScriptMut` to a `CompiledModule` for code that wants a uniform view
-    /// of both.
-    ///
-    /// This also produces a `ScriptConversionInfo`, which will be required to convert the
-    /// module back into a script.
-    ///
-    /// TODO: rewrite things that depend on this and get this removed.
-    #[deprecated(
-        note = "This function is deprecated and will be removed soon. Please do not introduce new dependencies."
-    )]
-    pub fn into_module(mut self) -> (ScriptConversionInfo, CompiledModuleMut) {
-        // Add the "<SELF>" identifier if it isn't present.
-        //
-        // Note: When adding an element to the table, in theory it is possible for the index
-        // to overflow. This will not be a problem if we get rid of the script/module conversion.
-        let (added_self_ident, self_ident_idx) = match self
-            .identifiers
-            .iter()
-            .position(|ident| ident.as_ident_str() == self_module_name())
-        {
-            Some(idx) => (false, IdentifierIndex::new(idx as u16)),
-            None => {
-                let idx = IdentifierIndex::new(self.identifiers.len() as u16);
-                self.identifiers
-                    .push(Identifier::new(self_module_name().to_string()).unwrap());
-                (true, idx)
-            }
-        };
-
-        // Add a dummy adress if none exists.
-        let dummy_addr = AccountAddress::new([0xff; AccountAddress::LENGTH]);
-        let (added_dummy_addr, dummy_addr_idx) = match self
-            .address_identifiers
-            .iter()
-            .position(|addr| addr == &dummy_addr)
-        {
-            Some(idx) => (false, AddressIdentifierIndex::new(idx as u16)),
-            None => {
-                let idx = AddressIdentifierIndex::new(self.address_identifiers.len() as u16);
-                self.address_identifiers.push(dummy_addr);
-                (true, idx)
-            }
-        };
-
-        // Add a self module handle.
-        let (added_self_module_handle, self_module_handle_idx) =
-            match self.module_handles.iter().position(|handle| {
-                handle.address == dummy_addr_idx && handle.name == self_ident_idx
-            }) {
-                Some(idx) => (false, ModuleHandleIndex::new(idx as u16)),
-                None => {
-                    let idx = ModuleHandleIndex::new(self.module_handles.len() as u16);
-                    self.module_handles.push(ModuleHandle {
-                        address: dummy_addr_idx,
-                        name: self_ident_idx,
-                    });
-                    (true, idx)
-                }
-            };
-
-        // Find the index to the empty signature [].
-        // Create one if it doesn't exist.
-        let (added_dummy_sig, return_sig_idx) =
-            match self.signatures.iter().position(|sig| sig.0.is_empty()) {
-                Some(idx) => (false, SignatureIndex::new(idx as u16)),
-                None => {
-                    let idx = SignatureIndex::new(self.signatures.len() as u16);
-                    self.signatures.push(Signature(vec![]));
-                    (true, idx)
-                }
-            };
-
-        // Create a function handle for the main function.
-        let main_handle_idx = FunctionHandleIndex::new(self.function_handles.len() as u16);
-        self.function_handles.push(FunctionHandle {
-            module: self_module_handle_idx,
-            name: self_ident_idx,
-            parameters: self.parameters,
-            return_: return_sig_idx,
-            type_parameters: self.type_parameters,
-        });
-
-        // Create a function definition for the main function.
-        let main_def = FunctionDefinition {
-            function: main_handle_idx,
-            visibility: Visibility::Public,
-            acquires_global_resources: vec![],
-            code: Some(self.code),
-        };
-
-        let info = ScriptConversionInfo {
-            added_dummy_addr,
-            added_dummy_sig,
-            added_self_ident,
-            added_self_module_handle,
-        };
-
-        let m = CompiledModuleMut {
-            version: self.version,
-            module_handles: self.module_handles,
-            self_module_handle_idx,
-            struct_handles: self.struct_handles,
-            function_handles: self.function_handles,
-            field_handles: vec![],
-            friend_decls: vec![],
-
-            struct_def_instantiations: vec![],
-            function_instantiations: self.function_instantiations,
-            field_instantiations: vec![],
-
-            signatures: self.signatures,
-
-            identifiers: self.identifiers,
-            address_identifiers: self.address_identifiers,
-            constant_pool: self.constant_pool,
-
-            struct_defs: vec![],
-            function_defs: vec![main_def],
-        };
-
-        (info, m)
-    }
 }
 
 /// A `CompiledModule` defines the structure of a module which is the unit of published code.
@@ -1811,13 +1673,8 @@ impl CompiledScriptMut {
 /// It is a unit of code that can be used by transactions or other modules.
 ///
 /// A module is published as a single entry and it is retrieved as a single blob.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct CompiledModule(CompiledModuleMut);
-
-/// A mutable version of `CompiledModule`. Converting to a `CompiledModule` requires this to pass
-/// the bounds checker.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
-pub struct CompiledModuleMut {
+pub struct CompiledModule {
     /// Version number found during deserialization
     pub version: u32,
     /// Handle to self.
@@ -1860,7 +1717,7 @@ pub struct CompiledModuleMut {
 // Need a custom implementation of Arbitrary because as of proptest-derive 0.1.1, the derivation
 // doesn't work for structs with more than 10 fields.
 #[cfg(any(test, feature = "fuzzing"))]
-impl Arbitrary for CompiledScriptMut {
+impl Arbitrary for CompiledScript {
     type Strategy = BoxedStrategy<Self>;
     /// The size of the compiled script.
     type Parameters = usize;
@@ -1891,7 +1748,7 @@ impl Arbitrary for CompiledScriptMut {
                     code,
                 )| {
                     // TODO actual constant generation
-                    CompiledScriptMut {
+                    CompiledScript {
                         version: file_format_common::VERSION_MAX,
                         module_handles,
                         struct_handles,
@@ -1912,7 +1769,7 @@ impl Arbitrary for CompiledScriptMut {
 }
 
 #[cfg(any(test, feature = "fuzzing"))]
-impl Arbitrary for CompiledModuleMut {
+impl Arbitrary for CompiledModule {
     type Strategy = BoxedStrategy<Self>;
     /// The size of the compiled module.
     type Parameters = usize;
@@ -1946,7 +1803,7 @@ impl Arbitrary for CompiledModuleMut {
                     (struct_defs, function_defs),
                 )| {
                     // TODO actual constant generation
-                    CompiledModuleMut {
+                    CompiledModule {
                         version: file_format_common::VERSION_MAX,
                         module_handles,
                         struct_handles,
@@ -1970,9 +1827,17 @@ impl Arbitrary for CompiledModuleMut {
     }
 }
 
-impl CompiledModuleMut {
+impl CompiledModule {
     /// Returns the count of a specific `IndexKind`
     pub fn kind_count(&self, kind: IndexKind) -> usize {
+        precondition!(!matches!(
+            kind,
+            IndexKind::LocalPool
+                | IndexKind::CodeDefinition
+                | IndexKind::FieldDefinition
+                | IndexKind::TypeParameter
+                | IndexKind::MemberCount
+        ));
         match kind {
             IndexKind::ModuleHandle => self.module_handles.len(),
             IndexKind::StructHandle => self.struct_handles.len(),
@@ -1997,40 +1862,6 @@ impl CompiledModuleMut {
         }
     }
 
-    /// Converts this instance into `CompiledModule` after verifying it for basic internal
-    /// consistency. This includes bounds checks but no others.
-    pub fn freeze(self) -> PartialVMResult<CompiledModule> {
-        // Impossible to access self_id for location as it might not be safe due to bounds failing
-        BoundsChecker::verify(&self)?;
-        Ok(CompiledModule(self))
-    }
-}
-
-impl CompiledModule {
-    /// Returns a reference to the inner `CompiledModuleMut`.
-    pub fn as_inner(&self) -> &CompiledModuleMut {
-        &self.0
-    }
-
-    /// Converts this instance into the inner `CompiledModuleMut`. Converting back to a
-    /// `CompiledModule` would require it to be verified again.
-    pub fn into_inner(self) -> CompiledModuleMut {
-        self.0
-    }
-
-    /// Returns the number of items of a specific `IndexKind`.
-    pub fn kind_count(&self, kind: IndexKind) -> usize {
-        precondition!(!matches!(
-            kind,
-            IndexKind::LocalPool
-                | IndexKind::CodeDefinition
-                | IndexKind::FieldDefinition
-                | IndexKind::TypeParameter
-                | IndexKind::MemberCount
-        ));
-        self.as_inner().kind_count(kind)
-    }
-
     /// Returns the code key of `module_handle`
     pub fn module_id_for_handle(&self, module_handle: &ModuleHandle) -> ModuleId {
         ModuleId::new(
@@ -2043,56 +1874,11 @@ impl CompiledModule {
     pub fn self_id(&self) -> ModuleId {
         self.module_id_for_handle(self.self_handle())
     }
-
-    /// This function should only be called on an instance of CompiledModule obtained by invoking
-    /// into_module on some instance of CompiledScript. This function is the inverse of
-    /// into_module, i.e., script.into_module().into_script() == script.
-    #[deprecated(
-        note = "This function is deprecated and will be removed soon. Please do not introduce new dependencies."
-    )]
-    pub fn into_script(self, conv_info: ScriptConversionInfo) -> CompiledScript {
-        let mut inner = self.into_inner();
-        precondition!(!inner.function_defs.is_empty());
-        let main = inner.function_defs.pop().unwrap();
-
-        if conv_info.added_dummy_addr {
-            inner.address_identifiers.pop().unwrap();
-        }
-        if conv_info.added_dummy_sig {
-            inner.signatures.pop().unwrap();
-        }
-        if conv_info.added_self_ident {
-            inner.identifiers.pop().unwrap();
-        }
-        if conv_info.added_self_module_handle {
-            inner.module_handles.pop().unwrap();
-        }
-        let main_handle = inner.function_handles.pop().unwrap();
-
-        CompiledScript(CompiledScriptMut {
-            version: inner.version,
-            module_handles: inner.module_handles,
-            struct_handles: inner.struct_handles,
-            function_handles: inner.function_handles,
-
-            function_instantiations: inner.function_instantiations,
-
-            signatures: inner.signatures,
-
-            identifiers: inner.identifiers,
-            address_identifiers: inner.address_identifiers,
-            constant_pool: inner.constant_pool,
-
-            type_parameters: main_handle.type_parameters,
-            parameters: main_handle.parameters,
-            code: main.code.unwrap(),
-        })
-    }
 }
 
 /// Return the simplest module that will pass the bounds checker
-pub fn empty_module() -> CompiledModuleMut {
-    CompiledModuleMut {
+pub fn empty_module() -> CompiledModule {
+    CompiledModule {
         version: file_format_common::VERSION_MAX,
         module_handles: vec![ModuleHandle {
             address: AddressIdentifierIndex(0),
@@ -2122,7 +1908,7 @@ pub fn empty_module() -> CompiledModuleMut {
 /// //     foo() {
 /// //     }
 /// // }
-pub fn basic_test_module() -> CompiledModuleMut {
+pub fn basic_test_module() -> CompiledModule {
     let mut m = empty_module();
 
     m.function_handles.push(FunctionHandle {
@@ -2141,7 +1927,7 @@ pub fn basic_test_module() -> CompiledModuleMut {
         acquires_global_resources: vec![],
         code: Some(CodeUnit {
             locals: SignatureIndex(0),
-            code: vec![],
+            code: vec![Bytecode::Ret],
         }),
     });
 
@@ -2167,34 +1953,9 @@ pub fn basic_test_module() -> CompiledModuleMut {
     m
 }
 
-/// Create a dummy module to wrap the bytecode program in local@code
-pub fn dummy_procedure_module(code: Vec<Bytecode>) -> CompiledModule {
-    let mut module = empty_module();
-    let code_unit = CodeUnit {
-        code,
-        ..Default::default()
-    };
-    let fun_def = FunctionDefinition {
-        code: Some(code_unit),
-        ..Default::default()
-    };
-
-    let fun_handle = FunctionHandle {
-        module: ModuleHandleIndex(0),
-        name: IdentifierIndex(0),
-        parameters: SignatureIndex(0),
-        return_: SignatureIndex(0),
-        type_parameters: vec![],
-    };
-
-    module.function_handles.push(fun_handle);
-    module.function_defs.push(fun_def);
-    module.freeze().unwrap()
-}
-
 /// Return a simple script that contains only a return in the main()
-pub fn empty_script() -> CompiledScriptMut {
-    CompiledScriptMut {
+pub fn empty_script() -> CompiledScript {
+    CompiledScript {
         version: file_format_common::VERSION_MAX,
         module_handles: vec![],
         struct_handles: vec![],
@@ -2215,4 +1976,8 @@ pub fn empty_script() -> CompiledScriptMut {
             code: vec![Bytecode::Ret],
         },
     }
+}
+
+pub fn basic_test_script() -> CompiledScript {
+    empty_script()
 }

@@ -7,8 +7,8 @@ use move_binary_format::{
     access::ModuleAccess,
     file_format::{
         Ability, AbilitySet, CompiledModule, FunctionDefinition, ModuleHandle, SignatureToken,
-        StructDefinition, StructFieldInformation, StructHandleIndex, TypeParameterIndex,
-        Visibility,
+        StructDefinition, StructFieldInformation, StructHandleIndex, StructTypeParameter,
+        TypeParameterIndex, Visibility,
     },
 };
 use move_core_types::language_storage::ModuleId;
@@ -29,9 +29,10 @@ macro_rules! push {
 /// Generate the text for the "interface" file of a compiled module. This "interface" is the
 /// publically visible contents of the CompiledModule, represented in source language syntax
 /// Additionally, it returns the module id (address+name) of the module that was deserialized
-pub fn write_to_string(compiled_module_file_input_path: &str) -> Result<(ModuleId, String)> {
-    let mut out = String::new();
-
+pub fn write_file_to_string(
+    named_address_mapping: &BTreeMap<ModuleId, String>,
+    compiled_module_file_input_path: &str,
+) -> Result<(ModuleId, String)> {
     let file_contents = fs::read(compiled_module_file_input_path)?;
     let module = CompiledModule::deserialize(&file_contents).map_err(|e| {
         anyhow!(
@@ -40,16 +41,33 @@ pub fn write_to_string(compiled_module_file_input_path: &str) -> Result<(ModuleI
             e
         )
     })?;
+    write_module_to_string(named_address_mapping, &module)
+}
+
+pub fn write_module_to_string(
+    named_address_mapping: &BTreeMap<ModuleId, String>,
+    module: &CompiledModule,
+) -> Result<(ModuleId, String)> {
+    let mut out = String::new();
 
     let id = module.self_id();
+    if let Some(addr_name) = named_address_mapping.get(&id) {
+        push_line!(
+            out,
+            format!(
+                "address {} = {};",
+                addr_name,
+                AddressBytes::new(id.address().to_u8())
+            )
+        );
+    }
     push_line!(
         out,
-        format!("address {} {{", AddressBytes::new(id.address().to_u8()),)
+        format!("module {} {{", write_module_id(named_address_mapping, &id))
     );
-    push_line!(out, format!("module {} {{", id.name()));
     push_line!(out, "");
 
-    let mut context = Context::new(&module);
+    let mut context = Context::new(module);
     let mut members = vec![];
 
     for fdecl in module.friend_decls() {
@@ -87,26 +105,19 @@ pub fn write_to_string(compiled_module_file_input_path: &str) -> Result<(ModuleI
 
     let has_uses = !context.uses.is_empty();
     for (module_id, alias) in context.uses {
-        if module_id.name().as_str() == alias {
-            push_line!(
-                out,
-                format!(
-                    "    use {}::{};",
-                    AddressBytes::new(module_id.address().to_u8()),
-                    module_id.name()
-                )
-            );
+        let use_ = if module_id.name().as_str() == alias {
+            format!(
+                "    use {};",
+                write_module_id(named_address_mapping, &module_id),
+            )
         } else {
-            push_line!(
-                out,
-                format!(
-                    "    use {}::{} as {};",
-                    AddressBytes::new(module_id.address().to_u8()),
-                    module_id.name(),
-                    alias
-                )
-            );
-        }
+            format!(
+                "    use {} as {};",
+                write_module_id(named_address_mapping, &module_id),
+                alias
+            )
+        };
+        push_line!(out, use_);
     }
     if has_uses {
         push_line!(out, "");
@@ -115,7 +126,6 @@ pub fn write_to_string(compiled_module_file_input_path: &str) -> Result<(ModuleI
     if !members.is_empty() {
         push_line!(out, members.join("\n"));
     }
-    push_line!(out, "}");
     push_line!(out, "}");
     Ok((id, out))
 }
@@ -134,18 +144,42 @@ impl<'a> Context<'a> {
             counts: BTreeMap::new(),
         }
     }
+
+    fn module_alias(&mut self, module_id: ModuleId) -> &String {
+        let module_name = module_id.name().to_owned().into_string();
+        let counts = &mut self.counts;
+        self.uses.entry(module_id).or_insert_with(|| {
+            let count = *counts
+                .entry(module_name.clone())
+                .and_modify(|c| *c += 1)
+                .or_insert(0);
+            if count == 0 {
+                module_name
+            } else {
+                format!("{}_{}", module_name, count)
+            }
+        })
+    }
 }
 
 const DISCLAIMER: &str =
     "// NOTE: Functions are 'native' for simplicity. They may or may not be native in actuality.";
 
+fn write_module_id(named_address_mapping: &BTreeMap<ModuleId, String>, id: &ModuleId) -> String {
+    format!(
+        "{}::{}",
+        named_address_mapping
+            .get(id)
+            .cloned()
+            .unwrap_or_else(|| format!("{}", AddressBytes::new(id.address().to_u8()))),
+        id.name(),
+    )
+}
+
 fn write_friend_decl(ctx: &mut Context, fdecl: &ModuleHandle) -> String {
     format!(
-        "    friend {}::{};",
-        ctx.module
-            .address_identifier_at(fdecl.address)
-            .short_str_lossless(),
-        ctx.module.identifier_at(fdecl.name),
+        "    friend {};",
+        ctx.module_alias(ctx.module.module_id_for_handle(fdecl))
     )
 }
 
@@ -159,7 +193,7 @@ fn write_struct_def(ctx: &mut Context, sdef: &StructDefinition) -> String {
         format!(
             "    struct {}{}{} {{",
             ctx.module.identifier_at(shandle.name),
-            write_type_parameters(&shandle.type_parameters),
+            write_struct_type_parameters(&shandle.type_parameters),
             write_ability_modifiers(shandle.abilities),
         )
     );
@@ -194,7 +228,7 @@ fn write_function_def(ctx: &mut Context, fdef: &FunctionDefinition) -> String {
         "    native {}fun {}{}({}){};",
         write_visibility(fdef.visibility),
         ctx.module.identifier_at(fhandle.name),
-        write_type_parameters(&fhandle.type_parameters),
+        write_fun_type_parameters(&fhandle.type_parameters),
         write_parameters(ctx, parameters),
         write_return_type(ctx, return_)
     )
@@ -247,7 +281,28 @@ fn write_ability(ab: Ability) -> String {
     .to_string()
 }
 
-fn write_type_parameters(tps: &[AbilitySet]) -> String {
+fn write_struct_type_parameters(tps: &[StructTypeParameter]) -> String {
+    if tps.is_empty() {
+        return "".to_string();
+    }
+
+    let tp_and_constraints = tps
+        .iter()
+        .enumerate()
+        .map(|(idx, ty_param)| {
+            format!(
+                "{}{}{}",
+                if ty_param.is_phantom { "phantom " } else { "" },
+                write_type_parameter(idx as TypeParameterIndex),
+                write_ability_constraint(ty_param.constraints),
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(", ");
+    format!("<{}>", tp_and_constraints)
+}
+
+fn write_fun_type_parameters(tps: &[AbilitySet]) -> String {
     if tps.is_empty() {
         return "".to_string();
     }
@@ -321,20 +376,8 @@ fn write_struct_handle_type(ctx: &mut Context, idx: StructHandleIndex) -> String
     let struct_handle = ctx.module.struct_handle_at(idx);
     let struct_module_handle = ctx.module.module_handle_at(struct_handle.module);
     let struct_module_id = ctx.module.module_id_for_handle(struct_module_handle);
-    let struct_module_name = struct_module_id.name().to_string();
+    let module_alias = ctx.module_alias(struct_module_id).clone();
 
-    let counts = &mut ctx.counts;
-    let module_alias = ctx.uses.entry(struct_module_id).or_insert_with(|| {
-        let count = *counts
-            .entry(struct_module_name.clone())
-            .and_modify(|c| *c += 1)
-            .or_insert(0);
-        if count == 0 {
-            struct_module_name
-        } else {
-            format!("{}_{}", struct_module_name, count)
-        }
-    });
     format!(
         "{}::{}",
         module_alias,

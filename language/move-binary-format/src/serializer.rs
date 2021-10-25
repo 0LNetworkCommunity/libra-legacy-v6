@@ -15,7 +15,27 @@ impl CompiledScript {
     /// Serializes a `CompiledScript` into a binary. The mutable `Vec<u8>` will contain the
     /// binary blob on return.
     pub fn serialize(&self, binary: &mut Vec<u8>) -> Result<()> {
-        self.as_inner().serialize(binary)
+        let mut binary_data = BinaryData::from(binary.clone());
+        let mut ser = ScriptSerializer::new(VERSION_MAX);
+        let mut temp = BinaryData::new();
+
+        ser.common.serialize_common_tables(&mut temp, self)?;
+        if temp.len() > TABLE_CONTENT_SIZE_MAX as usize {
+            bail!(
+                "table content size ({}) cannot exceed ({})",
+                temp.len(),
+                TABLE_CONTENT_SIZE_MAX
+            );
+        }
+        ser.common.serialize_header(&mut binary_data)?;
+        ser.common.serialize_table_indices(&mut binary_data)?;
+
+        binary_data.extend(temp.as_inner())?;
+
+        ser.serialize_main(&mut binary_data, self)?;
+
+        *binary = binary_data.into_inner();
+        Ok(())
     }
 }
 
@@ -151,49 +171,9 @@ fn serialize_local_index(binary: &mut BinaryData, idx: u8) -> Result<()> {
     write_as_uleb128(binary, idx, LOCAL_INDEX_MAX)
 }
 
-impl CompiledScriptMut {
-    /// Serializes this into a binary format.
-    ///
-    /// This is intended mainly for test code. Production code will typically use
-    /// [`CompiledScript::serialize`].
-    pub fn serialize(&self, binary: &mut Vec<u8>) -> Result<()> {
-        let mut binary_data = BinaryData::from(binary.clone());
-        let mut ser = ScriptSerializer::new(VERSION_MAX);
-        let mut temp = BinaryData::new();
-
-        ser.common.serialize_common_tables(&mut temp, self)?;
-        if temp.len() > TABLE_CONTENT_SIZE_MAX as usize {
-            bail!(
-                "table content size ({}) cannot exceed ({})",
-                temp.len(),
-                TABLE_CONTENT_SIZE_MAX
-            );
-        }
-        ser.common.serialize_header(&mut binary_data)?;
-        ser.common.serialize_table_indices(&mut binary_data)?;
-
-        binary_data.extend(temp.as_inner())?;
-
-        ser.serialize_main(&mut binary_data, self)?;
-
-        *binary = binary_data.into_inner();
-        Ok(())
-    }
-}
-
 impl CompiledModule {
     /// Serializes a `CompiledModule` into a binary. The mutable `Vec<u8>` will contain the
     /// binary blob on return.
-    pub fn serialize(&self, binary: &mut Vec<u8>) -> Result<()> {
-        self.as_inner().serialize(binary)
-    }
-}
-
-impl CompiledModuleMut {
-    /// Serializes this into a binary format.
-    ///
-    /// This is intended mainly for test code. Production code will typically use
-    /// [`CompiledModule::serialize`].
     pub fn serialize(&self, binary: &mut Vec<u8>) -> Result<()> {
         let mut binary_data = BinaryData::from(binary.clone());
         let mut ser = ModuleSerializer::new(VERSION_MAX);
@@ -305,7 +285,7 @@ trait CommonTables {
     fn get_signatures(&self) -> &[Signature];
 }
 
-impl CommonTables for CompiledScriptMut {
+impl CommonTables for CompiledScript {
     fn get_module_handles(&self) -> &[ModuleHandle] {
         &self.module_handles
     }
@@ -339,7 +319,7 @@ impl CommonTables for CompiledScriptMut {
     }
 }
 
-impl CommonTables for CompiledModuleMut {
+impl CommonTables for CompiledModule {
     fn get_module_handles(&self) -> &[ModuleHandle] {
         &self.module_handles
     }
@@ -394,7 +374,26 @@ fn serialize_struct_handle(binary: &mut BinaryData, struct_handle: &StructHandle
     serialize_module_handle_index(binary, &struct_handle.module)?;
     serialize_identifier_index(binary, &struct_handle.name)?;
     serialize_ability_set(binary, struct_handle.abilities)?;
-    serialize_ability_sets(binary, &struct_handle.type_parameters)
+    serialize_type_parameters(binary, &struct_handle.type_parameters)
+}
+
+fn serialize_type_parameters(
+    binary: &mut BinaryData,
+    type_parameters: &[StructTypeParameter],
+) -> Result<()> {
+    serialize_type_parameter_count(binary, type_parameters.len())?;
+    for type_param in type_parameters {
+        serialize_type_parameter(binary, type_param)?;
+    }
+    Ok(())
+}
+
+fn serialize_type_parameter(
+    binary: &mut BinaryData,
+    type_param: &StructTypeParameter,
+) -> Result<()> {
+    serialize_ability_set(binary, type_param.constraints)?;
+    write_as_uleb128(binary, type_param.is_phantom as u8, 1u64)
 }
 
 /// Serializes a `FunctionHandle`.
@@ -1111,11 +1110,7 @@ impl ModuleSerializer {
         }
     }
 
-    fn serialize_tables(
-        &mut self,
-        binary: &mut BinaryData,
-        module: &CompiledModuleMut,
-    ) -> Result<()> {
+    fn serialize_tables(&mut self, binary: &mut BinaryData, module: &CompiledModule) -> Result<()> {
         self.common.serialize_common_tables(binary, module)?;
         self.serialize_struct_definitions(binary, &module.struct_defs)?;
         self.serialize_struct_def_instantiations(binary, &module.struct_def_instantiations)?;
@@ -1276,11 +1271,7 @@ impl ScriptSerializer {
     }
 
     /// Serializes the main function.
-    fn serialize_main(
-        &mut self,
-        binary: &mut BinaryData,
-        script: &CompiledScriptMut,
-    ) -> Result<()> {
+    fn serialize_main(&mut self, binary: &mut BinaryData, script: &CompiledScript) -> Result<()> {
         serialize_ability_sets(binary, &script.type_parameters)?;
         serialize_signature_index(binary, &script.parameters)?;
         serialize_code_unit(binary, &script.code)?;

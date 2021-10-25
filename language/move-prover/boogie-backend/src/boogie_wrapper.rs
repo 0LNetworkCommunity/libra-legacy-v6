@@ -7,7 +7,7 @@ use std::{collections::BTreeMap, fs, num::ParseIntError, option::Option::None};
 
 use anyhow::anyhow;
 use codespan::{ByteIndex, ColumnIndex, LineIndex, Location, Span};
-use codespan_reporting::diagnostic::{Diagnostic, Label, Severity};
+use codespan_reporting::diagnostic::{Diagnostic, Label};
 use itertools::Itertools;
 use log::{debug, info, warn};
 use num::BigInt;
@@ -90,11 +90,23 @@ pub enum TraceEntry {
     Exp(NodeId, ModelValue),
 }
 
+// Error message matching
+static VERIFICATION_DIAG_STARTS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)^assert_failed\((?P<args>[^)]*)\): (?P<msg>.*)$").unwrap());
+
+static INCONCLUSIVE_DIAG_STARTS: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"(?m)^.*\((?P<line>\d+),(?P<col>\d+)\).*Verification(?P<str>.*)(inconclusive|out of resource|timed out).*$")
+        .unwrap()
+});
+
+static INCONSISTENCY_DIAG_STARTS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)^inconsistency_detected\((?P<args>[^)]*)\)").unwrap());
+
 impl<'env> BoogieWrapper<'env> {
     /// Calls boogie on the given file. On success, returns a struct representing the analyzed
     /// output of boogie.
     pub fn call_boogie(&self, boogie_file: &str) -> anyhow::Result<BoogieOutput> {
-        let args = self.options.get_boogie_command(boogie_file);
+        let args = self.options.get_boogie_command(boogie_file)?;
         info!("running solver");
         debug!("command line: {}", args.iter().join(" "));
         let task = RunBoogieWithSeeds {
@@ -110,13 +122,29 @@ impl<'env> BoogieWrapper<'env> {
             task,
             self.options.num_instances,
             self.options.sequential_task,
+            self.options.hard_timeout_secs,
         );
         let output = match output_res {
-            Err(err) => panic!(
-                "cannot execute boogie `{}`: {}",
-                self.options.get_boogie_command("")[0],
-                err
-            ),
+            Err(err) => {
+                if err.kind() == std::io::ErrorKind::TimedOut {
+                    let err = BoogieError {
+                        kind: BoogieErrorKind::Internal,
+                        loc: self.env.unknown_loc(),
+                        message: format!(
+                            "Boogie execution exceeded hard timeout of {}s",
+                            self.options.hard_timeout_secs
+                        ),
+                        execution_trace: vec![],
+                        model: None,
+                    };
+                    return Ok(BoogieOutput {
+                        errors: vec![err],
+                        all_output: "".to_string(),
+                    });
+                } else {
+                    panic!("cannot execute boogie `{:?}`: {}", args, err)
+                }
+            }
             Ok(out) => out,
         };
         if self.options.num_instances > 1 {
@@ -203,8 +231,10 @@ impl<'env> BoogieWrapper<'env> {
     /// Helper to add a boogie error as a codespan Diagnostic.
     fn add_error(&self, error: &BoogieError) {
         // Create the error
-        let label = Label::new(error.loc.file_id(), error.loc.span(), "");
-        let mut diag = Diagnostic::new(Severity::Error, error.message.clone(), label);
+        let label = Label::primary(error.loc.file_id(), error.loc.span());
+        let mut diag = Diagnostic::error()
+            .with_message(error.message.clone())
+            .with_labels(vec![label]);
 
         // Now add trace diagnostics.
         if error.kind.is_from_verification() && !error.execution_trace.is_empty() {
@@ -307,11 +337,11 @@ impl<'env> BoogieWrapper<'env> {
                 } else {
                     "".to_string()
                 };
-                diag.secondary_labels = vec![Label::new(
+                diag = diag.with_labels(vec![Label::secondary(
                     abort_loc.file_id(),
                     abort_loc.span(),
-                    &format!("abort happened here{}", code),
-                )];
+                )
+                .with_message(&format!("abort happened here{}", code))]);
             }
             diag = diag.with_notes(display);
         }
@@ -355,18 +385,6 @@ impl<'env> BoogieWrapper<'env> {
 
     /// Extracts verification errors from Boogie output.
     fn extract_verification_errors(&self, out: &str) -> Vec<BoogieError> {
-        // Need to add any diag which is not processed by this function (like
-        // inconclusive) to this list so its not reported as unexpected boogie
-        // output.
-        const OTHER_DIAG_START: &[&str] = &[
-            "inconclusive",
-            "out of resource",
-            "timed out",
-            "inconsistency_detected",
-        ];
-        static VERIFICATION_DIAG_STARTS: Lazy<Regex> = Lazy::new(|| {
-            Regex::new(r"(?m)^assert_failed\((?P<args>[^)]*)\): (?P<msg>.*)$").unwrap()
-        });
         let mut errors = vec![];
         let mut at = 0;
         while let Some(cap) = VERIFICATION_DIAG_STARTS.captures(&out[at..]) {
@@ -374,7 +392,12 @@ impl<'env> BoogieWrapper<'env> {
             at = usize::saturating_add(at, cap.get(0).unwrap().end());
             let msg = cap.name("msg").unwrap().as_str();
 
-            if !inbetween.is_empty() && !OTHER_DIAG_START.iter().any(|s| inbetween.starts_with(s)) {
+            // Filter diags that we know and will be processed later (e.g., inconclusive).
+            // Other unknown diags will be reported as unexpected boogie output.
+            if !inbetween.is_empty()
+                && !INCONCLUSIVE_DIAG_STARTS.is_match(inbetween)
+                && !INCONSISTENCY_DIAG_STARTS.is_match(inbetween)
+            {
                 // This is unexpected text and we report it as an internal error
                 errors.push(BoogieError {
                     kind: BoogieErrorKind::Internal,
@@ -574,10 +597,7 @@ impl<'env> BoogieWrapper<'env> {
 
     /// Extracts inconclusive (timeout) errors.
     fn extract_inconclusive_errors(&self, out: &str) -> Vec<BoogieError> {
-        let diag_re =
-            Regex::new(r"(?m)^.*\((?P<line>\d+),(?P<col>\d+)\).*Verification(?P<str>.*)(inconclusive|out of resource|timed out).*$")
-                .unwrap();
-        diag_re
+        INCONCLUSIVE_DIAG_STARTS
             .captures_iter(&out)
             .filter_map(|cap| {
                 let str = cap.name("str").unwrap().as_str();
@@ -614,8 +634,7 @@ impl<'env> BoogieWrapper<'env> {
 
     /// Extracts inconsistency errors.
     fn extract_inconsistency_errors(&self, out: &str) -> Vec<BoogieError> {
-        let diag_re = Regex::new(r"(?m)^inconsistency_detected\((?P<args>[^)]*)\)").unwrap();
-        diag_re
+        INCONSISTENCY_DIAG_STARTS
             .captures_iter(&out)
             .map(|cap| {
                 let args = cap.name("args").unwrap().as_str();

@@ -1,8 +1,9 @@
 [grcov.installer]
-version = "0.6.1"
+version = "0.8.0"
 
 [system-tests]
 smoke-test = { path = "smoke-test" }
+jsonrpc-integration-tests = { path = "json-rpc/integration-tests" }
 
 [cargo.sccache]
 bucket = "ci-artifacts.diem.com"
@@ -68,6 +69,11 @@ workspace-path = "crypto/crypto"
 name = "diem-crypto-derive"
 version = "0.1.0"
 workspace-path = "crypto/crypto-derive"
+
+[[hakari.omitted-packages]]
+name = "bytecode-interpreter-crypto"
+version = "0.1.0"
+workspace-path = "language/move-prover/interpreter/crypto"
 
 # Also exclude the devtools packages since they get compiled with a different set of options.
 [[hakari.omitted-packages]]
@@ -142,6 +148,10 @@ lazy_static = "use once_cell::sync::Lazy instead"
 criterion = "criterion is only for benchmarks"
 proptest = "proptest is only for testing and fuzzing"
 
+[workspace.direct-dep-dups]
+allow = [
+]
+
 [workspace.overlay]
 features = ["fuzzing"]
 
@@ -166,6 +176,7 @@ members = [
     "cli",
     "cluster-test",
     "diem-documentation-tool",
+    "diem-e2e-tests-replay",
     "diem-fuzz",
     "diem-fuzzer",
     "diem-json-rpc-client",
@@ -174,6 +185,7 @@ members = [
     "diem-retrier",
     "diem-smoke-test-attribute",
     "diem-swarm",
+    "diem-transaction-benchmarks",
     "diem-wallet",
     "diemdb-benchmark",
     "executor-benchmark",
@@ -183,6 +195,7 @@ members = [
     "generate-format",
     "invalid-mutations",
     "ir-testsuite",
+    "jsonrpc-integration-tests",
     "jsonrpc-types-proto",
     "language-benchmarks",
     "language-e2e-tests",
@@ -211,13 +224,24 @@ members = [
 ]
 
 [workspace.move-to-diem-deps]
+# By default, all crates in the language directory are considered Move crates
+# and are forbidden from depending on any Diem crates.
+#
+# Adding a crate's name to this list will mark it as a Diem crate so that the
+# linter will not impose said restriction on it.
+#
+# Note: if your crate is indeed a Move crate and you are getting the linter
+# yelling at you, you should redesign your crate and properly remove that
+# dependency, instead of adding the crate to this list and silencing the lint.
 diem_crates_in_language = [
+    "diem-e2e-tests-replay",
     "diem-framework",
     "diem-framework-releases",
     "diem-events-fetcher",
     "diem-read-write-set",
     "diem-validator-interface",
     "diem-transaction-replay",
+    "diem-transaction-benchmarks",
     "diem-writeset-generator",
     "diem-vm",
     "language-e2e-testsuite",
@@ -230,46 +254,19 @@ diem_crates_in_language = [
     "transaction-builder",
     "transaction-builder-generator",
     "move-lang-functional-tests",
+    "diem-resource-viewer",
+    "df-cli",
 ]
+# A special set of diem crates Move crates are allowed to depend on.
+#
+# You should not add new entries to this list unless you have a rare justifiable
+# reason. (read: Just don't.)
+#
+# Particularly, please do not abuse this to silence the lint when it complains
+# about Move crates depending on Diem ones. Again, you should instead fix
+# the design of your crate so it doesn't have to depend on Diem.
 exclude = [
     "diem-workspace-hack",
-]
-# This is a list of existing move to diem dependencies that we plan to eliminate over time.
-# You should refrain from adding new entries to this list in general.
-existing_deps = [
-    # Tier 0 - essential components that must be included in the first batch of crates getting
-    #          moved to the new repo
-    ["move-lang", "diem-framework"],                          # sanity check to ensure that the diem-framework compiles
-    ["invalid-mutations", "diem-proptest-helpers"],           # pick_slice_idxs
-    ["bytecode-verifier-tests", "diem-framework-releases"],
-    ["bytecode-interpreter", "diem-crypto"],                  # implementation of native functions
-    ["compiler", "diem-framework-releases"],
-    ["move-vm-natives", "diem-crypto"],
-    ["move-vm-runtime", "diem-logger"],
-    ["move-vm-runtime", "diem-crypto"],                       # using `HashValue` as keys in the script cache
-    ["abigen", "diem-types"],                                 # ABI types
-    ["move-cli", "vm-genesis"],
-    ["move-cli", "diem-vm"],
-    ["move-cli", "diem-types"],                               # `ContractEvent`
-    ["move-cli", "diem-framework"],
-    ["move-cli", "diem-framework-releases"],
-    ["move-binary-format", "num-variants"],                   # counting the number of bytecodes
-
-    # Tier 1 - crates that can wait a little bit longer?
-    ["language-benchmarks", "language-e2e-tests"],
-    ["language-benchmarks", "diem-vm"],
-    ["language-benchmarks", "diem-types"],
-    ["language-benchmarks", "diem-state-view"],
-    ["test-generation", "language-e2e-tests"],
-    ["test-generation", "diem-vm"],
-    ["test-generation", "diem-types"],
-    ["test-generation", "diem-state-view"],
-    ["test-generation", "diem-logger"],
-    ["test-generation", "diem-config"],
-    ["resource-viewer", "diem-framework-releases"],
-    ["resource-viewer", "diem-types"],
-    ["resource-viewer", "diem-state-view"],
-    ["move-explain", "diem-framework-releases"],
 ]
 
 # Interesting subsets of the workspace, These are used for generating and

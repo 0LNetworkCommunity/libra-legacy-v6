@@ -8,13 +8,14 @@ use crate::{
 use anyhow::{bail, format_err, Result};
 use bytecode_source_map::source_map::SourceMap;
 use move_binary_format::{
+    check_bounds::BoundsChecker,
     errors::Location as VMErrorLocation,
     file_format::{
-        Ability, AbilitySet, Bytecode, CodeOffset, CodeUnit, CompiledModule, CompiledModuleMut,
-        CompiledScript, CompiledScriptMut, Constant, FieldDefinition, FunctionDefinition,
-        FunctionSignature, ModuleHandle, Signature, SignatureToken, StructDefinition,
-        StructDefinitionIndex, StructFieldInformation, StructHandleIndex, TableIndex,
-        TypeParameterIndex, TypeSignature, Visibility,
+        Ability, AbilitySet, Bytecode, CodeOffset, CodeUnit, CompiledModule, CompiledScript,
+        Constant, FieldDefinition, FunctionDefinition, FunctionSignature, ModuleHandle, Signature,
+        SignatureToken, StructDefinition, StructDefinitionIndex, StructFieldInformation,
+        StructHandleIndex, StructTypeParameter, TableIndex, TypeParameterIndex, TypeSignature,
+        Visibility,
     },
     file_format_common::VERSION_MAX,
 };
@@ -70,7 +71,7 @@ macro_rules! record_src_loc {
         )?;
     }};
     (struct_type_formals: $context:expr, $var:expr) => {
-        for (ty_var, _) in $var.iter() {
+        for (_, ty_var, _) in $var.iter() {
             let source_name = (ty_var.value.clone().into_inner(), ty_var.loc);
             $context.source_map.add_struct_type_parameter_mapping(
                 $context.current_struct_definition_index(),
@@ -461,7 +462,7 @@ pub fn compile_script<'a>(
         _compiled_deps,
         source_map,
     ) = context.materialize_pools();
-    let compiled_script = CompiledScriptMut {
+    let script = CompiledScript {
         version: VERSION_MAX,
         module_handles,
         struct_handles,
@@ -476,12 +477,13 @@ pub fn compile_script<'a>(
         parameters: parameters_sig_idx,
         code,
     };
-    compiled_script
-        .freeze()
-        .map_err(|e| {
-            InternalCompilerError::BoundsCheckErrors(e.finish(VMErrorLocation::Undefined)).into()
-        })
-        .map(|frozen_script| (frozen_script, source_map))
+    match BoundsChecker::verify_script(&script) {
+        Ok(()) => Ok((script, source_map)),
+        Err(e) => Err(InternalCompilerError::BoundsCheckErrors(
+            e.finish(VMErrorLocation::Undefined),
+        )
+        .into()),
+    }
 }
 
 /// Compile a module.
@@ -523,7 +525,7 @@ pub fn compile_module<'a>(
             module: self_name.clone(),
             name: s.value.name.clone(),
         };
-        let type_parameters = type_parameter_kinds(&s.value.type_formals);
+        let type_parameters = struct_type_parameters(&s.value.type_formals);
         context.declare_struct_handle_index(ident, abilities, type_parameters)?;
     }
 
@@ -560,7 +562,7 @@ pub fn compile_module<'a>(
         _compiled_deps,
         source_map,
     ) = context.materialize_pools();
-    let compiled_module = CompiledModuleMut {
+    let module = CompiledModule {
         version: VERSION_MAX,
         module_handles,
         self_module_handle_idx,
@@ -578,12 +580,13 @@ pub fn compile_module<'a>(
         struct_defs,
         function_defs,
     };
-    compiled_module
-        .freeze()
-        .map_err(|e| {
-            InternalCompilerError::BoundsCheckErrors(e.finish(VMErrorLocation::Undefined)).into()
-        })
-        .map(|frozen_module| (frozen_module, source_map))
+    match BoundsChecker::verify_module(&module) {
+        Ok(()) => Ok((module, source_map)),
+        Err(e) => Err(InternalCompilerError::BoundsCheckErrors(
+            e.finish(VMErrorLocation::Undefined),
+        )
+        .into()),
+    }
 }
 
 // Note: DO NOT try to recover from this function as it zeros out the `outer_contexts` dependencies
@@ -614,7 +617,7 @@ fn compile_explicit_dependency_declarations(
             } = struct_dep;
             let sname = QualifiedStructIdent::new(mname.clone(), name);
             let ability_set = abilities(&abs);
-            let kinds = type_parameter_kinds(&tys);
+            let kinds = struct_type_parameters(&tys);
             context.declare_struct_handle_index(sname, ability_set, kinds)?;
         }
         for function_dep in functions {
@@ -640,7 +643,7 @@ fn compile_explicit_dependency_declarations(
             compiled_deps,
             _source_map,
         ) = context.materialize_pools();
-        let compiled_module = CompiledModuleMut {
+        let compiled_module = CompiledModule {
             version: VERSION_MAX,
             module_handles,
             self_module_handle_idx,
@@ -657,9 +660,8 @@ fn compile_explicit_dependency_declarations(
             constant_pool,
             struct_defs: vec![],
             function_defs: vec![],
-        }
-        .freeze()
-        .map_err(|e| {
+        };
+        BoundsChecker::verify_module(&compiled_module).map_err(|e| {
             InternalCompilerError::BoundsCheckErrors(e.finish(VMErrorLocation::Undefined))
         })?;
         dependencies_acc = compiled_deps;
@@ -716,11 +718,11 @@ fn compile_imports(
     Ok(())
 }
 
-fn type_parameter_indexes(
-    ast_tys: &[(TypeVar, BTreeSet<ast::Ability>)],
+fn type_parameter_indexes<'a>(
+    ast_tys: impl IntoIterator<Item = &'a TypeVar>,
 ) -> Result<HashMap<TypeVar_, TypeParameterIndex>> {
     let mut m = HashMap::new();
-    for (idx, (ty_var, _)) in ast_tys.iter().enumerate() {
+    for (idx, ty_var) in ast_tys.into_iter().enumerate() {
         if idx > TABLE_MAX_SIZE {
             bail!("Too many type parameters")
         }
@@ -745,8 +747,14 @@ fn make_type_argument_subst(
     Ok(subst)
 }
 
-fn type_parameter_kinds(ast_tys: &[(TypeVar, BTreeSet<ast::Ability>)]) -> Vec<AbilitySet> {
-    ast_tys.iter().map(|(_, abs)| abilities(abs)).collect()
+fn struct_type_parameters(ast_tys: &[ast::StructTypeParameter]) -> Vec<StructTypeParameter> {
+    ast_tys
+        .iter()
+        .map(|(is_phantom, _, abs)| StructTypeParameter {
+            constraints: abilities(abs),
+            is_phantom: *is_phantom,
+        })
+        .collect()
 }
 
 fn abilities(abilities: &BTreeSet<ast::Ability>) -> AbilitySet {
@@ -824,7 +832,7 @@ fn function_signature(
     context: &mut Context,
     f: &ast::FunctionSignature,
 ) -> Result<FunctionSignature> {
-    let m = type_parameter_indexes(&f.type_formals)?;
+    let m = type_parameter_indexes(f.type_formals.iter().map(|formal| &formal.0))?;
     let return_ = compile_types(context, &m, &f.return_type)?;
     let parameters = f
         .formals
@@ -857,7 +865,7 @@ fn compile_structs(
         let sh_idx = context.struct_handle_index(sident.clone())?;
         record_src_loc!(struct_decl: context, s.loc);
         record_src_loc!(struct_type_formals: context, &s.value.type_formals);
-        let m = type_parameter_indexes(&s.value.type_formals)?;
+        let m = type_parameter_indexes(s.value.type_formals.iter().map(|formal| &formal.1))?;
         let sd_idx = context.declare_struct_definition_index(s.value.name)?;
         let field_information = compile_fields(context, &m, sh_idx, sd_idx, s.value.fields)?;
         struct_defs.push(StructDefinition {
@@ -914,7 +922,13 @@ fn compile_function_body_impl(
 ) -> Result<Option<CodeUnit>> {
     Ok(match ast_function.body {
         FunctionBody::Move { locals, code } => {
-            let m = type_parameter_indexes(&ast_function.signature.type_formals)?;
+            let m = type_parameter_indexes(
+                ast_function
+                    .signature
+                    .type_formals
+                    .iter()
+                    .map(|formal| &formal.0),
+            )?;
             Some(compile_function_body(
                 context,
                 m,
@@ -924,7 +938,13 @@ fn compile_function_body_impl(
             )?)
         }
         FunctionBody::Bytecode { locals, code } => {
-            let m = type_parameter_indexes(&ast_function.signature.type_formals)?;
+            let m = type_parameter_indexes(
+                ast_function
+                    .signature
+                    .type_formals
+                    .iter()
+                    .map(|formal| &formal.0),
+            )?;
             Some(compile_function_body_bytecode(
                 context,
                 m,

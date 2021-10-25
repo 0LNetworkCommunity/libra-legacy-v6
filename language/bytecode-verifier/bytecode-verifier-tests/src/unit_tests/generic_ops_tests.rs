@@ -10,8 +10,8 @@ use move_core_types::{
 // Make a Module with 2 structs and 2 resources with one field each, and 2 functions.
 // One of the struct/resource and one of the function is generic, the other "normal".
 // Also make a test function whose body will be filled by given test cases.
-fn make_module() -> CompiledModuleMut {
-    CompiledModuleMut {
+fn make_module() -> CompiledModule {
+    CompiledModule {
         version: move_binary_format::file_format_common::VERSION_MAX,
         module_handles: vec![
             // only self module
@@ -46,7 +46,10 @@ fn make_module() -> CompiledModuleMut {
                 module: ModuleHandleIndex(0),
                 name: IdentifierIndex(2),
                 abilities: AbilitySet::PRIMITIVES,
-                type_parameters: vec![AbilitySet::PRIMITIVES],
+                type_parameters: vec![StructTypeParameter {
+                    constraints: AbilitySet::PRIMITIVES,
+                    is_phantom: false,
+                }],
             },
             StructHandle {
                 module: ModuleHandleIndex(0),
@@ -58,7 +61,10 @@ fn make_module() -> CompiledModuleMut {
                 module: ModuleHandleIndex(0),
                 name: IdentifierIndex(4),
                 abilities: AbilitySet::EMPTY | Ability::Key,
-                type_parameters: vec![AbilitySet::PRIMITIVES],
+                type_parameters: vec![StructTypeParameter {
+                    constraints: AbilitySet::PRIMITIVES,
+                    is_phantom: false,
+                }],
             },
         ],
         struct_defs: vec![
@@ -188,9 +194,8 @@ fn generic_call_to_non_generic_func() {
         type_parameters: SignatureIndex(2),
     });
     module.signatures.push(Signature(vec![SignatureToken::U64]));
-    let err =
-        InstructionConsistency::verify_module(&module.freeze().expect("module must be valid"))
-            .expect_err("CallGeneric to non generic function must fail");
+    let err = InstructionConsistency::verify_module(&module)
+        .expect_err("CallGeneric to non generic function must fail");
     assert_eq!(
         err.major_status(),
         StatusCode::GENERIC_MEMBER_OPCODE_MISMATCH
@@ -205,9 +210,8 @@ fn non_generic_call_to_generic_func() {
         locals: SignatureIndex(0),
         code: vec![Bytecode::Call(FunctionHandleIndex(1)), Bytecode::Ret],
     });
-    let err =
-        InstructionConsistency::verify_module(&module.freeze().expect("module must be valid"))
-            .expect_err("Call to generic function must fail");
+    let err = InstructionConsistency::verify_module(&module)
+        .expect_err("Call to generic function must fail");
     assert_eq!(
         err.major_status(),
         StatusCode::GENERIC_MEMBER_OPCODE_MISMATCH
@@ -234,9 +238,8 @@ fn generic_pack_on_non_generic_struct() {
             type_parameters: SignatureIndex(2),
         });
     module.signatures.push(Signature(vec![SignatureToken::U64]));
-    let err =
-        InstructionConsistency::verify_module(&module.freeze().expect("module must be valid"))
-            .expect_err("PackGeneric to non generic struct must fail");
+    let err = InstructionConsistency::verify_module(&module)
+        .expect_err("PackGeneric to non generic struct must fail");
     assert_eq!(
         err.major_status(),
         StatusCode::GENERIC_MEMBER_OPCODE_MISMATCH
@@ -256,9 +259,8 @@ fn non_generic_pack_on_generic_struct() {
             Bytecode::Ret,
         ],
     });
-    let err =
-        InstructionConsistency::verify_module(&module.freeze().expect("module must be valid"))
-            .expect_err("Pack to generic struct must fail");
+    let err = InstructionConsistency::verify_module(&module)
+        .expect_err("Pack to generic struct must fail");
     assert_eq!(
         err.major_status(),
         StatusCode::GENERIC_MEMBER_OPCODE_MISMATCH
@@ -286,9 +288,8 @@ fn generic_unpack_on_non_generic_struct() {
             type_parameters: SignatureIndex(2),
         });
     module.signatures.push(Signature(vec![SignatureToken::U64]));
-    let err =
-        InstructionConsistency::verify_module(&module.freeze().expect("module must be valid"))
-            .expect_err("UnpackGeneric to non generic struct must fail");
+    let err = InstructionConsistency::verify_module(&module)
+        .expect_err("UnpackGeneric to non generic struct must fail");
     assert_eq!(
         err.major_status(),
         StatusCode::GENERIC_MEMBER_OPCODE_MISMATCH
@@ -316,9 +317,8 @@ fn non_generic_unpack_on_generic_struct() {
             type_parameters: SignatureIndex(2),
         });
     module.signatures.push(Signature(vec![SignatureToken::U64]));
-    let err =
-        InstructionConsistency::verify_module(&module.freeze().expect("module must be valid"))
-            .expect_err("Unpack to generic struct must fail");
+    let err = InstructionConsistency::verify_module(&module)
+        .expect_err("Unpack to generic struct must fail");
     assert_eq!(
         err.major_status(),
         StatusCode::GENERIC_MEMBER_OPCODE_MISMATCH
@@ -348,9 +348,8 @@ fn generic_mut_borrow_field_on_non_generic_struct() {
         field: 0,
     });
     module.signatures.push(Signature(vec![SignatureToken::U64]));
-    let err =
-        InstructionConsistency::verify_module(&module.freeze().expect("module must be valid"))
-            .expect_err("MutBorrowFieldGeneric to non generic struct must fail");
+    let err = InstructionConsistency::verify_module(&module)
+        .expect_err("MutBorrowFieldGeneric to non generic struct must fail");
     assert_eq!(
         err.major_status(),
         StatusCode::GENERIC_MEMBER_OPCODE_MISMATCH
@@ -382,9 +381,8 @@ fn non_generic_mut_borrow_field_on_generic_struct() {
         field: 0,
     });
     module.signatures.push(Signature(vec![SignatureToken::U64]));
-    let err =
-        InstructionConsistency::verify_module(&module.freeze().expect("module must be valid"))
-            .expect_err("MutBorrowField to generic struct must fail");
+    let err = InstructionConsistency::verify_module(&module)
+        .expect_err("MutBorrowField to generic struct must fail");
     assert_eq!(
         err.major_status(),
         StatusCode::GENERIC_MEMBER_OPCODE_MISMATCH
@@ -414,9 +412,8 @@ fn generic_borrow_field_on_non_generic_struct() {
         field: 0,
     });
     module.signatures.push(Signature(vec![SignatureToken::U64]));
-    let err =
-        InstructionConsistency::verify_module(&module.freeze().expect("module must be valid"))
-            .expect_err("ImmBorrowFieldGeneric to non generic struct must fail");
+    let err = InstructionConsistency::verify_module(&module)
+        .expect_err("ImmBorrowFieldGeneric to non generic struct must fail");
     assert_eq!(
         err.major_status(),
         StatusCode::GENERIC_MEMBER_OPCODE_MISMATCH
@@ -448,9 +445,8 @@ fn non_generic_borrow_field_on_generic_struct() {
         field: 0,
     });
     module.signatures.push(Signature(vec![SignatureToken::U64]));
-    let err =
-        InstructionConsistency::verify_module(&module.freeze().expect("module must be valid"))
-            .expect_err("ImmBorrowField to generic struct must fail");
+    let err = InstructionConsistency::verify_module(&module)
+        .expect_err("ImmBorrowField to generic struct must fail");
     assert_eq!(
         err.major_status(),
         StatusCode::GENERIC_MEMBER_OPCODE_MISMATCH
@@ -480,9 +476,8 @@ fn generic_mut_borrow_global_to_non_generic_struct() {
             type_parameters: SignatureIndex(2),
         });
     module.signatures.push(Signature(vec![SignatureToken::U64]));
-    let err =
-        InstructionConsistency::verify_module(&module.freeze().expect("module must be valid"))
-            .expect_err("MutBorrowGlobalGeneric to non generic function must fail");
+    let err = InstructionConsistency::verify_module(&module)
+        .expect_err("MutBorrowGlobalGeneric to non generic function must fail");
     assert_eq!(
         err.major_status(),
         StatusCode::GENERIC_MEMBER_OPCODE_MISMATCH
@@ -505,9 +500,8 @@ fn non_generic_mut_borrow_global_to_generic_struct() {
             Bytecode::Ret,
         ],
     });
-    let err =
-        InstructionConsistency::verify_module(&module.freeze().expect("module must be valid"))
-            .expect_err("MutBorrowGlobal to generic function must fail");
+    let err = InstructionConsistency::verify_module(&module)
+        .expect_err("MutBorrowGlobal to generic function must fail");
     assert_eq!(
         err.major_status(),
         StatusCode::GENERIC_MEMBER_OPCODE_MISMATCH
@@ -537,9 +531,8 @@ fn generic_immut_borrow_global_to_non_generic_struct() {
             type_parameters: SignatureIndex(2),
         });
     module.signatures.push(Signature(vec![SignatureToken::U64]));
-    let err =
-        InstructionConsistency::verify_module(&module.freeze().expect("module must be valid"))
-            .expect_err("ImmBorrowGlobalGeneric to non generic function must fail");
+    let err = InstructionConsistency::verify_module(&module)
+        .expect_err("ImmBorrowGlobalGeneric to non generic function must fail");
     assert_eq!(
         err.major_status(),
         StatusCode::GENERIC_MEMBER_OPCODE_MISMATCH
@@ -562,9 +555,8 @@ fn non_generic_immut_borrow_global_to_generic_struct() {
             Bytecode::Ret,
         ],
     });
-    let err =
-        InstructionConsistency::verify_module(&module.freeze().expect("module must be valid"))
-            .expect_err("ImmBorrowGlobal to generic function must fail");
+    let err = InstructionConsistency::verify_module(&module)
+        .expect_err("ImmBorrowGlobal to generic function must fail");
     assert_eq!(
         err.major_status(),
         StatusCode::GENERIC_MEMBER_OPCODE_MISMATCH
@@ -591,9 +583,8 @@ fn generic_exists_to_non_generic_struct() {
             type_parameters: SignatureIndex(2),
         });
     module.signatures.push(Signature(vec![SignatureToken::U64]));
-    let err =
-        InstructionConsistency::verify_module(&module.freeze().expect("module must be valid"))
-            .expect_err("ExistsGeneric to non generic function must fail");
+    let err = InstructionConsistency::verify_module(&module)
+        .expect_err("ExistsGeneric to non generic function must fail");
     assert_eq!(
         err.major_status(),
         StatusCode::GENERIC_MEMBER_OPCODE_MISMATCH
@@ -613,9 +604,8 @@ fn non_generic_exists_to_generic_struct() {
             Bytecode::Ret,
         ],
     });
-    let err =
-        InstructionConsistency::verify_module(&module.freeze().expect("module must be valid"))
-            .expect_err("Exists to generic function must fail");
+    let err = InstructionConsistency::verify_module(&module)
+        .expect_err("Exists to generic function must fail");
     assert_eq!(
         err.major_status(),
         StatusCode::GENERIC_MEMBER_OPCODE_MISMATCH
@@ -646,9 +636,8 @@ fn generic_move_from_to_non_generic_struct() {
             type_parameters: SignatureIndex(2),
         });
     module.signatures.push(Signature(vec![SignatureToken::U64]));
-    let err =
-        InstructionConsistency::verify_module(&module.freeze().expect("module must be valid"))
-            .expect_err("MoveFromGeneric to non generic function must fail");
+    let err = InstructionConsistency::verify_module(&module)
+        .expect_err("MoveFromGeneric to non generic function must fail");
     assert_eq!(
         err.major_status(),
         StatusCode::GENERIC_MEMBER_OPCODE_MISMATCH
@@ -679,9 +668,8 @@ fn non_generic_move_from_to_generic_struct() {
             type_parameters: SignatureIndex(2),
         });
     module.signatures.push(Signature(vec![SignatureToken::U64]));
-    let err =
-        InstructionConsistency::verify_module(&module.freeze().expect("module must be valid"))
-            .expect_err("MoveFrom to generic function must fail");
+    let err = InstructionConsistency::verify_module(&module)
+        .expect_err("MoveFrom to generic function must fail");
     assert_eq!(
         err.major_status(),
         StatusCode::GENERIC_MEMBER_OPCODE_MISMATCH
@@ -709,9 +697,8 @@ fn generic_move_to_on_non_generic_struct() {
             type_parameters: SignatureIndex(2),
         });
     module.signatures.push(Signature(vec![SignatureToken::U64]));
-    let err =
-        InstructionConsistency::verify_module(&module.freeze().expect("module must be valid"))
-            .expect_err("MoveToGeneric to non generic struct must fail");
+    let err = InstructionConsistency::verify_module(&module)
+        .expect_err("MoveToGeneric to non generic struct must fail");
     assert_eq!(
         err.major_status(),
         StatusCode::GENERIC_MEMBER_OPCODE_MISMATCH
@@ -739,9 +726,8 @@ fn non_generic_move_to_on_generic_struct() {
             type_parameters: SignatureIndex(2),
         });
     module.signatures.push(Signature(vec![SignatureToken::U64]));
-    let err =
-        InstructionConsistency::verify_module(&module.freeze().expect("module must be valid"))
-            .expect_err("MoveTo to generic struct must fail");
+    let err = InstructionConsistency::verify_module(&module)
+        .expect_err("MoveTo to generic struct must fail");
     assert_eq!(
         err.major_status(),
         StatusCode::GENERIC_MEMBER_OPCODE_MISMATCH

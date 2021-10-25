@@ -26,9 +26,7 @@ use diem_types::{
     access_path::AccessPath,
     account_config::{AccountResource, BalanceResource, CORE_CODE_ADDRESS},
     block_metadata::{new_block_event_key, BlockMetadata, NewBlockEvent},
-    on_chain_config::{
-        DiemVersion, OnChainConfig, VMPublishingOption, ValidatorSet, DIEM_MAX_KNOWN_VERSION,
-    },
+    on_chain_config::{DiemVersion, OnChainConfig, VMPublishingOption, ValidatorSet},
     transaction::{
         ChangeSet, SignedTransaction, Transaction, TransactionOutput, TransactionStatus,
         VMValidatorResult,
@@ -44,7 +42,7 @@ use move_core_types::{
     identifier::Identifier,
     language_storage::{ModuleId, TypeTag},
 };
-use move_vm_runtime::{logging::NoContextLog, move_vm::MoveVM};
+use move_vm_runtime::move_vm::MoveVM;
 use move_vm_types::gas_schedule::GasStatus;
 
 static RNG_SEED: [u8; 32] = [9u8; 32];
@@ -148,35 +146,33 @@ impl FakeExecutor {
         self.executed_output = Some(GoldenOutputs::new(&file_name));
 
         // NOTE: tracing is only available when
-        //  - the e2e test outputs a golden file,
-        //  - the environment variable is properly set, and
-        //  - the diem version is at the latest version
+        //  - the e2e test outputs a golden file, and
+        //  - the environment variable is properly set
         if let Some(env_trace_dir) = env::var_os(ENV_TRACE_DIR) {
-            let diem_version = DiemVersion::fetch_config(&self.data_store);
-            if diem_version.map_or(false, |version| version == DIEM_MAX_KNOWN_VERSION) {
-                let trace_dir = Path::new(&env_trace_dir).join(file_name);
-                if trace_dir.exists() {
-                    fs::remove_dir_all(&trace_dir).expect("Failed to clean up the trace directory");
-                }
-                fs::create_dir_all(&trace_dir).expect("Failed to create the trace directory");
-                let mut name_file = OpenOptions::new()
-                    .write(true)
-                    .create_new(true)
-                    .open(trace_dir.join(TRACE_FILE_NAME))
-                    .unwrap();
-                name_file.write_all(test_name.as_bytes()).unwrap();
-                for sub_dir in &[
-                    TRACE_DIR_META,
-                    TRACE_DIR_DATA,
-                    TRACE_DIR_INPUT,
-                    TRACE_DIR_OUTPUT,
-                ] {
-                    fs::create_dir(trace_dir.join(sub_dir)).unwrap_or_else(|err| {
-                        panic!("Failed to create <trace>/{} directory: {}", sub_dir, err)
-                    });
-                }
-                self.trace_dir = Some(trace_dir);
+            let diem_version = DiemVersion::fetch_config(&self.data_store).map_or(0, |v| v.major);
+
+            let trace_dir = Path::new(&env_trace_dir).join(file_name);
+            if trace_dir.exists() {
+                fs::remove_dir_all(&trace_dir).expect("Failed to clean up the trace directory");
             }
+            fs::create_dir_all(&trace_dir).expect("Failed to create the trace directory");
+            let mut name_file = OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(trace_dir.join(TRACE_FILE_NAME))
+                .unwrap();
+            write!(name_file, "{}::{}", test_name, diem_version).unwrap();
+            for sub_dir in &[
+                TRACE_DIR_META,
+                TRACE_DIR_DATA,
+                TRACE_DIR_INPUT,
+                TRACE_DIR_OUTPUT,
+            ] {
+                fs::create_dir(trace_dir.join(sub_dir)).unwrap_or_else(|err| {
+                    panic!("Failed to create <trace>/{} directory: {}", sub_dir, err)
+                });
+            }
+            self.trace_dir = Some(trace_dir);
         }
     }
 
@@ -502,10 +498,9 @@ impl FakeExecutor {
     ) {
         let write_set = {
             let mut gas_status = GasStatus::new_unmetered();
-            let vm = MoveVM::new();
+            let vm = MoveVM::new(diem_vm::natives::diem_natives()).unwrap();
             let remote_view = RemoteStorage::new(&self.data_store);
             let mut session = vm.new_session(&remote_view);
-            let log_context = NoContextLog::new();
             session
                 .execute_function(
                     &Self::module(module_name),
@@ -513,7 +508,6 @@ impl FakeExecutor {
                     type_params,
                     args,
                     &mut gas_status,
-                    &log_context,
                 )
                 .unwrap_or_else(|e| {
                     panic!(
@@ -539,10 +533,9 @@ impl FakeExecutor {
         args: Vec<Vec<u8>>,
     ) -> Result<WriteSet, VMStatus> {
         let mut gas_status = GasStatus::new_unmetered();
-        let vm = MoveVM::new();
+        let vm = MoveVM::new(diem_vm::natives::diem_natives()).unwrap();
         let remote_view = RemoteStorage::new(&self.data_store);
         let mut session = vm.new_session(&remote_view);
-        let log_context = NoContextLog::new();
         session
             .execute_function(
                 &Self::module(module_name),
@@ -550,7 +543,6 @@ impl FakeExecutor {
                 type_params,
                 args,
                 &mut gas_status,
-                &log_context,
             )
             .map_err(|e| e.into_vm_status())?;
         let (changeset, events) = session.finish().expect("Failed to generate txn effects");

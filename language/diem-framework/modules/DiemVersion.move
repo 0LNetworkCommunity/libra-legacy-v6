@@ -1,12 +1,10 @@
-address 0x1 {
 /// Maintains the version number for the Diem blockchain. The version is stored in a
 /// DiemConfig, and may be updated by Diem root.
-module DiemVersion {
-    use 0x1::CoreAddresses;
-    use 0x1::Errors;
-    use 0x1::DiemConfig::{Self, DiemConfig};
-    use 0x1::DiemTimestamp;
-    use 0x1::Roles;
+module DiemFramework::DiemVersion {
+    use DiemFramework::DiemConfig::{Self, DiemConfig};
+    use DiemFramework::DiemTimestamp;
+    use DiemFramework::Roles;
+    use Std::Errors;
 
     struct DiemVersion has copy, drop, store {
         major: u64,
@@ -16,14 +14,12 @@ module DiemVersion {
     const EINVALID_MAJOR_VERSION_NUMBER: u64 = 0;
 
     /// Publishes the DiemVersion config. Must be called during Genesis.
-    public fun initialize(
-        dr_account: &signer,
-    ) {
+    public fun initialize(dr_account: &signer, initial_version: u64) {
         DiemTimestamp::assert_genesis();
         Roles::assert_diem_root(dr_account);
         DiemConfig::publish_new_config<DiemVersion>(
             dr_account,
-            DiemVersion { major: 1 },
+            DiemVersion { major: initial_version },
         );
     }
     spec initialize {
@@ -32,7 +28,7 @@ module DiemVersion {
 
         include DiemTimestamp::AbortsIfNotGenesis;
         include DiemConfig::PublishNewConfigAbortsIf<DiemVersion>;
-        include DiemConfig::PublishNewConfigEnsures<DiemVersion>{payload: DiemVersion { major: 1 }};
+        include DiemConfig::PublishNewConfigEnsures<DiemVersion>{payload: DiemVersion { major: initial_version }};
     }
 
     /// Allows Diem root to update the major version to a larger version.
@@ -79,8 +75,8 @@ module DiemVersion {
     /// Only "set" can modify the DiemVersion config [[H10]][PERMISSION]
     spec schema DiemVersionRemainsSame {
         ensures old(DiemConfig::spec_is_published<DiemVersion>()) ==>
-            global<DiemConfig<DiemVersion>>(CoreAddresses::DIEM_ROOT_ADDRESS()) ==
-                old(global<DiemConfig<DiemVersion>>(CoreAddresses::DIEM_ROOT_ADDRESS()));
+            global<DiemConfig<DiemVersion>>(@DiemRoot) ==
+                old(global<DiemConfig<DiemVersion>>(@DiemRoot));
     }
     spec module {
         apply DiemVersionRemainsSame to * except set;
@@ -89,7 +85,7 @@ module DiemVersion {
     spec module {
         /// The permission "UpdateDiemProtocolVersion" is granted to DiemRoot [[H10]][PERMISSION].
         invariant [global, isolated] forall addr: address where exists<DiemConfig<DiemVersion>>(addr):
-            addr == CoreAddresses::DIEM_ROOT_ADDRESS();
+            addr == @DiemRoot;
     }
 
     /// # Other Invariants
@@ -99,5 +95,4 @@ module DiemVersion {
             old(DiemConfig::get<DiemVersion>().major) <= DiemConfig::get<DiemVersion>().major;
     }
 
-}
 }

@@ -1,9 +1,10 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
+use move_binary_format::{
     binary_views::FunctionView,
     control_flow_graph::{BlockId, ControlFlowGraph},
+    file_format::{Bytecode, CodeOffset},
 };
 use move_binary_format::file_format::{Bytecode, CodeOffset};
 use std::collections::HashMap;

@@ -1,5 +1,3 @@
-address 0x1 {
-
 /// Maintains information about the set of validators used during consensus.
 /// Provides functions to add, remove, and update validators in the
 /// validator set.
@@ -10,21 +8,20 @@ address 0x1 {
 /////// 0L /////////
 // Error Code file prefix: 1200
 
-module DiemSystem {
-    use 0x1::CoreAddresses;
-    use 0x1::Errors;
-    use 0x1::DiemConfig::{Self, ModifyConfigCapability};
-    use 0x1::Option::{Self, Option};
-    use 0x1::Signer;
-    use 0x1::ValidatorConfig;
-    use 0x1::Vector;
-    use 0x1::Roles;
-    use 0x1::DiemTimestamp;
+module DiemFramework::DiemSystem {
+    use DiemFramework::DiemConfig::{Self, ModifyConfigCapability};
+    use DiemFramework::ValidatorConfig;
+    use DiemFramework::Roles;
+    use DiemFramework::DiemTimestamp;
+    use Std::Errors;
+    use Std::Option::{Self, Option};
+    use Std::Signer;
+    use Std::Vector;
     //////// 0L ////////
     use 0x1::FixedPoint32;
     use 0x1::Stats;
     use 0x1::Cases;
-    use 0x1::NodeWeight;
+    use 0x1::NodeWeight;    
 
     /// Information about a Validator Owner.
     struct ValidatorInfo has copy, drop, store {
@@ -117,13 +114,13 @@ module DiemSystem {
             },
         );
         assert(
-            !exists<CapabilityHolder>(CoreAddresses::DIEM_ROOT_ADDRESS()),
+            !exists<CapabilityHolder>(@DiemRoot),
             Errors::already_published(ECAPABILITY_HOLDER)
         );
         move_to(dr_account, CapabilityHolder { cap })
     }
     spec initialize_validator_set {
-        modifies global<DiemConfig::DiemConfig<DiemSystem>>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        modifies global<DiemConfig::DiemConfig<DiemSystem>>(@DiemRoot);
         include DiemTimestamp::AbortsIfNotGenesis;
         include Roles::AbortsIfNotDiemRoot{account: dr_account};
         let dr_addr = Signer::spec_address_of(dr_account);
@@ -141,23 +138,23 @@ module DiemSystem {
     fun set_diem_system_config(value: DiemSystem) acquires CapabilityHolder {
         DiemTimestamp::assert_operating();
         assert(
-            exists<CapabilityHolder>(CoreAddresses::DIEM_ROOT_ADDRESS()),
+            exists<CapabilityHolder>(@DiemRoot),
             Errors::not_published(ECAPABILITY_HOLDER)
         );
         // Updates the DiemConfig<DiemSystem> and emits a reconfigure event.
         DiemConfig::set_with_capability_and_reconfigure<DiemSystem>(
-            &borrow_global<CapabilityHolder>(CoreAddresses::DIEM_ROOT_ADDRESS()).cap,
+            &borrow_global<CapabilityHolder>(@DiemRoot).cap,
             value
         )
     }
     spec set_diem_system_config {
         pragma opaque;
-        modifies global<DiemConfig::DiemConfig<DiemSystem>>(CoreAddresses::DIEM_ROOT_ADDRESS());
-        modifies global<DiemConfig::Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        modifies global<DiemConfig::DiemConfig<DiemSystem>>(@DiemRoot);
+        modifies global<DiemConfig::Configuration>(@DiemRoot);
         include DiemTimestamp::AbortsIfNotOperating;
         include DiemConfig::ReconfigureAbortsIf;
         /// `payload` is the only field of DiemConfig, so next completely specifies it.
-        ensures global<DiemConfig::DiemConfig<DiemSystem>>(CoreAddresses::DIEM_ROOT_ADDRESS()).payload == value;
+        ensures global<DiemConfig::DiemConfig<DiemSystem>>(@DiemRoot).payload == value;
         include DiemConfig::ReconfigureEmits;
     }
 
@@ -202,7 +199,7 @@ module DiemSystem {
         set_diem_system_config(diem_system_config);
     }
     spec add_validator {
-        modifies global<DiemConfig::DiemConfig<DiemSystem>>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        modifies global<DiemConfig::DiemConfig<DiemSystem>>(@DiemRoot);
         include AddValidatorAbortsIf;
         include AddValidatorEnsures;
         include DiemConfig::ReconfigureEmits;
@@ -258,7 +255,7 @@ module DiemSystem {
         set_diem_system_config(diem_system_config);
     }
     spec remove_validator {
-        modifies global<DiemConfig::DiemConfig<DiemSystem>>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        modifies global<DiemConfig::DiemConfig<DiemSystem>>(@DiemRoot);
         include RemoveValidatorAbortsIf;
         include RemoveValidatorEnsures;
         include DiemConfig::ReconfigureEmits;
@@ -313,8 +310,8 @@ module DiemSystem {
         pragma opaque;
         // TODO(timeout): this started timing out after recent refactoring. Investigate.
         pragma verify = false;
-        modifies global<DiemConfig::Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
-        modifies global<DiemConfig::DiemConfig<DiemSystem>>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        modifies global<DiemConfig::Configuration>(@DiemRoot);
+        modifies global<DiemConfig::DiemConfig<DiemSystem>>(@DiemRoot);
         include ValidatorConfig::AbortsIfGetOperator{addr: validator_addr};
         include UpdateConfigAndReconfigureAbortsIf;
         include UpdateConfigAndReconfigureEnsures;
@@ -570,7 +567,7 @@ module DiemSystem {
         /// which grants the right to modify it to certain functions in this module.
         invariant DiemTimestamp::is_operating() ==>
             DiemConfig::spec_is_published<DiemSystem>() &&
-            exists<CapabilityHolder>(CoreAddresses::DIEM_ROOT_ADDRESS());
+            exists<CapabilityHolder>(@DiemRoot);
     }
 
     /// # Access Control
@@ -643,9 +640,11 @@ module DiemSystem {
     ///////// 0L //////////
     // This function takes in a set of top n validators and updates the validator set.
     // NewEpochEvent event will be fired.
-    // The Association, the VM, the validator operator or the validator from the current validator set
+    // The Association, the VM, the validator operator or the validator from 
+    // the current validator set
     // are authorized to update the set of validator infos and add/remove validators
-    // Tests for this method are written in move-lang/functional-tests/0L/reconfiguration/bulk_update.move
+    // Tests for this method are written in 
+    // move-lang/functional-tests/0L/reconfiguration/bulk_update.move
 
     // TODO: Has this been superceded by update_config_and_reconfigure ?
     // Function code:01
@@ -654,10 +653,15 @@ module DiemSystem {
         new_validators: vector<address>
     ) acquires CapabilityHolder {
         DiemTimestamp::assert_operating();
-        assert(Signer::address_of(account) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(120001));
+        assert(
+            Signer::address_of(account) == CoreAddresses::DIEM_ROOT_ADDRESS(),
+            Errors::requires_role(120001)
+        );
 
-        // Either check for each validator and add/remove them or clear the current list and append the list.
-        // The first way might be computationally expensive, so I choose to go with second approach.
+        // Either check for each validator and add/remove them or clear 
+        // the current list and append the list.
+        // The first way might be computationally expensive, so I choose to
+        // go with second approach.
 
         // Clear all the current validators  ==> Intialize new validators
         let next_epoch_validators = Vector::empty();
@@ -669,7 +673,10 @@ module DiemSystem {
             let account_address = *(Vector::borrow<address>(&new_validators, index));
 
             // A prospective validator must have a validator config resource
-            assert(ValidatorConfig::is_valid(account_address), Errors::invalid_argument(EINVALID_PROSPECTIVE_VALIDATOR));
+            assert(
+                ValidatorConfig::is_valid(account_address),
+                Errors::invalid_argument(EINVALID_PROSPECTIVE_VALIDATOR)
+            );
                         
             if (!is_validator(account_address)) {
                 add_validator(account, account_address);
@@ -683,7 +690,8 @@ module DiemSystem {
                 last_config_update_time: DiemTimestamp::now_microseconds(),
             });
 
-            // NOTE: This was move to redeem. Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
+            // NOTE: This was move to redeem. Update the 
+            // ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
             // ValidatorUniverse::update_validator_epoch_count(account_address);
             index = index + 1;
         };
@@ -697,7 +705,8 @@ module DiemSystem {
         // Next, let us get the current validator set for the current parameters
         let outgoing_validator_set = get_diem_system_config();
 
-        // We create a new Validator set using scheme from outgoingValidatorset and update the validator set.
+        // We create a new Validator set using scheme from outgoingValidatorset
+        // and update the validator set.
         let updated_validator_set = DiemSystem {
             scheme: outgoing_validator_set.scheme,
             validators: next_epoch_validators,
@@ -710,7 +719,9 @@ module DiemSystem {
     /////// 0L /////////
     //get_compliant_val_votes
     //Function code:02
-    public fun get_fee_ratio(vm: &signer, height_start: u64, height_end: u64): (vector<address>, vector<FixedPoint32::FixedPoint32>) {
+    public fun get_fee_ratio(
+        vm: &signer, height_start: u64, height_end: u64
+    ): (vector<address>, vector<FixedPoint32::FixedPoint32>) {
         let validators = &get_diem_system_config().validators;
 
         let compliant_nodes = Vector::empty<address>();
@@ -738,7 +749,10 @@ module DiemSystem {
              k = k + 1;
         };
 
-        assert(Vector::length(&compliant_nodes) == Vector::length(&fee_ratios),Errors::invalid_argument(120002) );
+        assert(
+            Vector::length(&compliant_nodes) == Vector::length(&fee_ratios),
+            Errors::invalid_argument(120002)
+        );
 
         (compliant_nodes, fee_ratios)
     }
@@ -771,7 +785,5 @@ module DiemSystem {
             i = i + 1;
         };
         nodes 
-    }
-
-}
+    }    
 }
