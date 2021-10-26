@@ -100,7 +100,6 @@ impl StorageHelper {
             .import_private_key(EXECUTION_KEY, keys.child_5_executor.get_private_key())
             .unwrap();
         storage
-            // 0L todo diem-1.4.1
             .set(SAFETY_DATA, SafetyData::new(0, 0, 0, 0, None))
             .unwrap();
         storage.set(WAYPOINT, Waypoint::default()).unwrap();
@@ -163,7 +162,7 @@ impl StorageHelper {
             .import_private_key(EXECUTION_KEY, keys.child_5_executor.get_private_key())
             .unwrap();
         storage_oper
-            .set(SAFETY_DATA, SafetyData::new(0, 0, 0, 0, None)) // 0L todo diem-1.4.1
+            .set(SAFETY_DATA, SafetyData::new(0, 0, 0, 0, None))
             .unwrap();
 
         let mut encryptor = diem_network_address_encryption::Encryptor::new(storage_oper);

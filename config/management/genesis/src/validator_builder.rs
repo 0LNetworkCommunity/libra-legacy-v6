@@ -38,7 +38,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-// 0L todo diem-1.4.1
+// 0L todo diem-1.4.1 - new patch, needs review
 // const DIEM_ROOT_NS: &str = "diem_root"; /////// 0L /////////
 const OPERATOR_NS: &str = "_operator";
 const OWNER_NS: &str = "_owner";
@@ -382,7 +382,7 @@ impl ValidatorBuilder {
         genesis_builder.set_layout(&layout)?;
         genesis_builder.set_move_modules(move_modules)?;
 
-        // 0L todo diem-1.4.1
+        // 0L todo diem-1.4.1 - new patch, needs review
         /////// 0L /////////
         // // Set Root and Treasury public keys
         // genesis_builder.set_root_key(Ed25519PublicKey::from(&root_keys.root_key))?;

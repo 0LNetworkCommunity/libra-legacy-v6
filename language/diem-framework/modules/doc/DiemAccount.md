@@ -2879,7 +2879,7 @@ vm_make_payment on the other hand considers payment limits.
         <a href="DiemAccount.md#0x1_DiemAccount_withdraw_from">withdraw_from</a>(&cap, payee, amount, <b>copy</b> metadata),
         metadata,
         metadata_signature,
-        <b>false</b> // 0L todo
+        <b>false</b> // 0L todo diem-1.4.1
     );
     <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">restore_withdraw_capability</a>(cap);
 }
@@ -3219,7 +3219,7 @@ As <code>payee</code> is also signer of the transaction, no metadata signature i
         coin_to_deposit,
         metadata,
         b"",
-        <b>false</b> // 0L todo
+        <b>false</b> // 0L todo diem-1.4.1
     );
 }
 </code></pre>
@@ -5897,7 +5897,7 @@ Create a Validator Operator account
         to_deposit,
         metadata,
         metadata_signature,
-        <b>false</b> // 0L todo
+        <b>false</b> // 0L todo diem-1.4.1
     );
 }
 </code></pre>
