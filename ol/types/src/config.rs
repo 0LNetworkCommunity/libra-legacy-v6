@@ -549,19 +549,16 @@ pub fn get_swarm_backup_service_url(
     Ok(url)
 }
 
+#[derive(Serialize, Deserialize)]
+struct EpochJSON {
+  epoch: u64,
+  wp: Waypoint,
+}
 /// fetch initial waypoint information from a clean state.
 pub fn bootstrap_waypoint_from_upstream(url: &Url) -> Result<(u64, Waypoint), Error> {
-    let g_res = reqwest::blocking::get(&url.to_string());
-    let string = g_res.unwrap().text().unwrap();
-    let json: serde_json::Value = string.parse().unwrap();
-    let epoch = json.get("epoch").unwrap().as_u64().unwrap();
-    let waypoint = json
-        .get("waypoint")
-        .unwrap()
-        .as_str()
-        .unwrap()
-        .parse()
-        .unwrap();
+    let g_res = reqwest::blocking::get(&url.to_string())?;
 
-    Ok((epoch, waypoint))
+    let res: EpochJSON = serde_json::from_str(&g_res.text()?)?;
+
+    Ok((res.epoch, res.wp))
 }
