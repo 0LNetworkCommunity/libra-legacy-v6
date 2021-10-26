@@ -547,22 +547,20 @@ pub fn get_swarm_backup_service_url(
     Ok(url)
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct EpochJSON {
   epoch: u64,
-  wp: Waypoint,
+  waypoint: Waypoint,
 }
 /// fetch initial waypoint information from a clean state.
 pub fn bootstrap_waypoint_from_upstream(url: &mut Url) -> Result<(u64, Waypoint), Error> {
     url.set_port(Some(3030)).unwrap();
-    url.join("epoch.json").unwrap();
-    dbg!(&url);
-    let g_res = reqwest::blocking::get(&url.to_string())?;
-    dbg!(&g_res.status());
+    let epoch_url = url.join("epoch.json").unwrap();
+    let g_res = reqwest::blocking::get(&epoch_url.to_string())?;
     if g_res.status().is_success() {
-      let res: EpochJSON = serde_json::from_str(&g_res.text()?)?;
-
-      return Ok((res.epoch, res.wp))
+      let txt = g_res.text()?;
+      let epoch: EpochJSON = serde_json::from_str(&txt)?;
+      return Ok((epoch.epoch, epoch.waypoint))
     }
     bail!("fetching remote JSON-rpc failed with status: {:?}, response: {:?}", g_res.status(), g_res.text());
 }
