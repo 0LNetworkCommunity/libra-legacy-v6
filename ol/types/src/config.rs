@@ -176,9 +176,7 @@ impl AppCfg {
           if let Some(url) = upstream_peer {
               default_config.profile.upstream_nodes = Some(vec![url.to_owned()]);
               let mut web_monitor_url = url.clone();
-              web_monitor_url.set_port(Some(3030)).unwrap();
-              let epoch_url = &web_monitor_url.join("epoch.json").unwrap();
-              let (e, w) = bootstrap_waypoint_from_upstream(epoch_url).unwrap();
+              let (e, w) = bootstrap_waypoint_from_upstream(&mut web_monitor_url).unwrap();
               default_config.chain_info.base_epoch = Some(e);
               default_config.chain_info.base_waypoint = Some(w);
           } else {
@@ -555,7 +553,9 @@ struct EpochJSON {
   wp: Waypoint,
 }
 /// fetch initial waypoint information from a clean state.
-pub fn bootstrap_waypoint_from_upstream(url: &Url) -> Result<(u64, Waypoint), Error> {
+pub fn bootstrap_waypoint_from_upstream(url: &mut Url) -> Result<(u64, Waypoint), Error> {
+    url.set_port(Some(3030)).unwrap();
+    url.join("epoch.json").unwrap();
     let g_res = reqwest::blocking::get(&url.to_string())?;
 
     let res: EpochJSON = serde_json::from_str(&g_res.text()?)?;
