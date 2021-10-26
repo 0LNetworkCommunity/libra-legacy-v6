@@ -1611,6 +1611,11 @@ pub enum ScriptFunctionCall {
 
     AutopayEnable {},
 
+    BalanceTransfer {
+        destination: AccountAddress,
+        unscaled_value: u64,
+    },
+
     /// # Summary
     /// Burns the transaction fees collected in the `CoinType` currency so that the
     /// Diem association may reclaim the backing coins off-chain. May only be sent
@@ -2019,6 +2024,12 @@ pub enum ScriptFunctionCall {
     /// * `Script::add_recovery_rotation_capability`
     /// * `Script::rotate_authentication_key_with_recovery_address`
     CreateRecoveryAddress {},
+
+    CreateUserByCoinTx {
+        account: AccountAddress,
+        authkey_prefix: Bytes,
+        unscaled_value: u64,
+    },
 
     /// # Summary
     /// Creates a Validator account. This transaction can only be sent by the Diem
@@ -3497,6 +3508,10 @@ impl ScriptFunctionCall {
             ),
             AutopayDisable {} => encode_autopay_disable_script_function(),
             AutopayEnable {} => encode_autopay_enable_script_function(),
+            BalanceTransfer {
+                destination,
+                unscaled_value,
+            } => encode_balance_transfer_script_function(destination, unscaled_value),
             BurnTxnFees { coin_type } => encode_burn_txn_fees_script_function(coin_type),
             BurnWithAmount {
                 token,
@@ -3590,6 +3605,15 @@ impl ScriptFunctionCall {
                 add_all_currencies,
             ),
             CreateRecoveryAddress {} => encode_create_recovery_address_script_function(),
+            CreateUserByCoinTx {
+                account,
+                authkey_prefix,
+                unscaled_value,
+            } => encode_create_user_by_coin_tx_script_function(
+                account,
+                authkey_prefix,
+                unscaled_value,
+            ),
             CreateValidatorAccount {
                 sliding_nonce,
                 new_account_address,
@@ -4094,6 +4118,24 @@ pub fn encode_autopay_enable_script_function() -> TransactionPayload {
         ident_str!("autopay_enable").to_owned(),
         vec![],
         vec![],
+    ))
+}
+
+pub fn encode_balance_transfer_script_function(
+    destination: AccountAddress,
+    unscaled_value: u64,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("TransferScripts").to_owned(),
+        ),
+        ident_str!("balance_transfer").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&destination).unwrap(),
+            bcs::to_bytes(&unscaled_value).unwrap(),
+        ],
     ))
 }
 
@@ -4642,6 +4684,26 @@ pub fn encode_create_recovery_address_script_function() -> TransactionPayload {
         ident_str!("create_recovery_address").to_owned(),
         vec![],
         vec![],
+    ))
+}
+
+pub fn encode_create_user_by_coin_tx_script_function(
+    account: AccountAddress,
+    authkey_prefix: Vec<u8>,
+    unscaled_value: u64,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("AccountScripts").to_owned(),
+        ),
+        ident_str!("create_user_by_coin_tx").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&account).unwrap(),
+            bcs::to_bytes(&authkey_prefix).unwrap(),
+            bcs::to_bytes(&unscaled_value).unwrap(),
+        ],
     ))
 }
 
@@ -8065,6 +8127,19 @@ fn decode_autopay_enable_script_function(
     }
 }
 
+fn decode_balance_transfer_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::BalanceTransfer {
+            destination: bcs::from_bytes(script.args().get(0)?).ok()?,
+            unscaled_value: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_burn_txn_fees_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -8208,6 +8283,20 @@ fn decode_create_recovery_address_script_function(
 ) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
         Some(ScriptFunctionCall::CreateRecoveryAddress {})
+    } else {
+        None
+    }
+}
+
+fn decode_create_user_by_coin_tx_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::CreateUserByCoinTx {
+            account: bcs::from_bytes(script.args().get(0)?).ok()?,
+            authkey_prefix: bcs::from_bytes(script.args().get(1)?).ok()?,
+            unscaled_value: bcs::from_bytes(script.args().get(2)?).ok()?,
+        })
     } else {
         None
     }
@@ -9167,6 +9256,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_autopay_enable_script_function),
         );
         map.insert(
+            "TransferScriptsbalance_transfer".to_string(),
+            Box::new(decode_balance_transfer_script_function),
+        );
+        map.insert(
             "TreasuryComplianceScriptsburn_txn_fees".to_string(),
             Box::new(decode_burn_txn_fees_script_function),
         );
@@ -9205,6 +9298,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "AccountAdministrationScriptscreate_recovery_address".to_string(),
             Box::new(decode_create_recovery_address_script_function),
+        );
+        map.insert(
+            "AccountScriptscreate_user_by_coin_tx".to_string(),
+            Box::new(decode_create_user_by_coin_tx_script_function),
         );
         map.insert(
             "AccountCreationScriptscreate_validator_account".to_string(),

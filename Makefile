@@ -135,7 +135,7 @@ reset:
 
 
 backup:
-	cd ~ && rsync -av --exclude db/ --exclude logs/ ~/.0L ~/0L_backup_$(shell date +"%m-%d-%y-%T")
+	cd ~ && rsync -av --exclude db/ --exclude logs/ ~/.0L/* ~/0L_backup_$(shell date +"%m-%d-%y-%T")
 
 confirm:
 	@read -p "Continue (y/n)?" CONT; \
@@ -145,22 +145,13 @@ confirm:
 		exit 1; \
 	fi \
 
-danger-delete-all:
-	@echo THIS WILL WIPE ALL YOUR FILES in ${HOME}/.0L
-	@echo it will also make a backup at ${HOME}/backup_0L/
-	@echo the files github_token.txt, autopay_batch.json, set_layout, ./vdf_proofs/ and ./blocks/ will be returned to ${HOME}/.0L/
-	make confirm
-	make backup
-	rm -rf ${HOME}/.0L | true
-	mkdir ${HOME}/.0L/
-	make danger-restore
 
 danger-restore:
-	cp ${HOME}/backup_0L/github_token.txt ${HOME}/.0L/ | true
-	cp ${HOME}/backup_0L/autopay_batch.json ${HOME}/.0L/ | true
-	rsync -rtv ${HOME}/backup_0L/blocks/ ${HOME}/.0L/blocks | true
-	rsync -rtv ${HOME}/backup_0L/vdf_proofs/ ${HOME}/.0L/vdf_proofs | true
-	rsync -rtv ${HOME}/backup_0L/set_layout.toml ${HOME}/.0L/ | true
+	cp ${HOME}/0L_backup/github_token.txt ${HOME}/.0L/ | true
+	cp ${HOME}/0L_backup/autopay_batch.json ${HOME}/.0L/ | true
+	rsync -rtv ${HOME}/0L_backup/blocks/ ${HOME}/.0L/blocks | true
+	rsync -rtv ${HOME}/0L_backup/vdf_proofs/ ${HOME}/.0L/vdf_proofs | true
+	rsync -rtv ${HOME}/0L_backup/set_layout.toml ${HOME}/.0L/ | true
 
 
 	
@@ -212,6 +203,12 @@ gen-make-pull:
 	--shared-backend ${GENESIS_REMOTE} \
 	--pull-request-user ${GITHUB_USER}
 
+gen-delete-fork:
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
+	--repo-name ${REPO_NAME} \
+	--repo-owner ${REPO_ORG} \
+	--shared-backend ${GENESIS_REMOTE} \
+	--delete-repo-user ${GITHUB_USER}
 
 gen-onboard:
 	cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony
@@ -308,7 +305,7 @@ genesis:
 #### NODE MANAGEMENT ####
 start:
 # run in foreground. Only for testing, use a daemon for net.
-	NODE_ENV=error cargo run -p diem-node -- --config ${DATA_PATH}/validator.node.yaml
+	RUST_LOG=error cargo run -p diem-node -- --config ${DATA_PATH}/validator.node.yaml
 
 # Start a fullnode instead of a validator node
 start-full:
