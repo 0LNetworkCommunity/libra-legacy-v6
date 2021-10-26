@@ -1,6 +1,6 @@
 //! Configs for all 0L apps.
 
-use anyhow::Error;
+use anyhow::{Error, bail};
 use dirs;
 use diem_config::config::NodeConfig;
 use diem_global_constants::{CONFIG_FILE, NODE_HOME};
@@ -556,9 +556,13 @@ struct EpochJSON {
 pub fn bootstrap_waypoint_from_upstream(url: &mut Url) -> Result<(u64, Waypoint), Error> {
     url.set_port(Some(3030)).unwrap();
     url.join("epoch.json").unwrap();
+    dbg!(&url);
     let g_res = reqwest::blocking::get(&url.to_string())?;
+    dbg!(&g_res.status());
+    if g_res.status().is_success() {
+      let res: EpochJSON = serde_json::from_str(&g_res.text()?)?;
 
-    let res: EpochJSON = serde_json::from_str(&g_res.text()?)?;
-
-    Ok((res.epoch, res.wp))
+      return Ok((res.epoch, res.wp))
+    }
+    bail!("fetching remote JSON-rpc failed with status: {:?}, response: {:?}", g_res.status(), g_res.text());
 }
