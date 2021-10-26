@@ -135,8 +135,7 @@ pub fn encode_genesis_change_set(
     distribute_genesis_subsidy(&mut session);
     println!("OK Genesis subsidy =============== ");
 
-    // 0L todo diem-1.4.1
-    // fund_operators(&mut session, &operator_assignments);
+    fund_operators(&mut session, validators);
     //////// 0L end ////////
     
     reconfigure(&mut session);
@@ -162,6 +161,7 @@ pub fn encode_genesis_change_set(
 // 0L todo diem-1.4.1: Double check 0L patch for this fn.
 // Reason, the diem `fn encode_genesis_change_set` which we copy and modify to
 // create this fn, changed significantly.
+// Fn body is mostly updated, need to update the fn signature also.
 //////// 0L ////////
 pub fn encode_recovery_genesis_changeset(
     val_assignments: &[ValRecover],
@@ -222,7 +222,7 @@ pub fn encode_recovery_genesis_changeset(
     println!("OK Genesis subsidy =============== ");
 
     // 0L todo diem-1.4.1
-    // fund_operators(&mut session, &operator_assignments);
+    // fund_operators(&mut session, validators);
     //////// 0L end ////////
     
     reconfigure(&mut session);
@@ -846,37 +846,55 @@ fn distribute_genesis_subsidy(
     )
 }
 
-// 0L todo diem-1.4.1
-// //////// 0L /////////
-// fn fund_operators(
-//   session: &mut Session<StateViewCache>,
-//   // log_context: &impl LogContext,
-//   operator_assignments: &[OperatorAssignment],
-// ) {
-//     println!("4 ======== Add owner to validator set");
-//     // Add each validator to the validator set
-//     for (owner_key, _owner_name, _op_assignment, _genesis_proof, operator_account) in
-//         operator_assignments
-//     {
-//         let diem_root_address = account_config::diem_root_address();
+// 0L todo diem-1.4.1 - updated patch, needs review
+//////// 0L /////////
+fn fund_operators(
+  session: &mut Session<StateViewCache>,
+  // log_context: &impl LogContext,
+  validators: &[Validator],
+) {
+    println!("======== Fund operators");
 
-//         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
-//         let owner_address = staged_owner_auth_key.derived_address();
-//         // give the operator balance to be able to send txs for owner, e.g. tower-builder
-//         exec_function(
-//             session,
-//             // log_context,
-//             "DiemAccount",
-//             "genesis_fund_operator",
-//             vec![],
-//             serialize_values(&vec![
-//                 MoveValue::Signer(diem_root_address),
-//                 MoveValue::Signer(owner_address),
-//                 MoveValue::Address(*operator_account),
-//             ]),
-//         );
-//     }
-// }
+    for v in validators {
+        let diem_root_address = account_config::diem_root_address();
+        // give the operator balance to be able to send txs for owner, e.g. tower-builder
+        exec_function(
+            session,
+            // log_context,
+            "DiemAccount",
+            "genesis_fund_operator",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(diem_root_address),
+                MoveValue::Signer(v.address),
+                MoveValue::Address(v.operator_address),
+            ]),
+        );
+    }
+
+    // Old (diem 1.3.0 patch) - to remove after review
+    //
+    // // Add each validator to the validator set
+    // for (owner_key, _owner_name, _op_assignment, _genesis_proof, operator_account) in
+    //     operator_assignments
+    // {
+    //     let diem_root_address = account_config::diem_root_address();
+
+    //     // give the operator balance to be able to send txs for owner, e.g. tower-builder
+    //     exec_function(
+    //         session,
+    //         // log_context,
+    //         "DiemAccount",
+    //         "genesis_fund_operator",
+    //         vec![],
+    //         serialize_values(&vec![
+    //             MoveValue::Signer(diem_root_address),
+    //             MoveValue::Signer(owner_address),
+    //             MoveValue::Address(*operator_account),
+    //         ]),
+    //     );
+    // }
+}
 
 //////// 0L ////////
 fn get_env() -> String {

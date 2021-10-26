@@ -204,7 +204,9 @@ impl VMRuntime {
         let compiled_module = match CompiledModule::deserialize(&module) {
             Ok(module) => module,
             Err(err) => {
-                // 0L todo: diem 1.4.1
+                // 0L todo diem 1.4.1 - log_context seems to be not used anymore in new diem code, 
+                //                      so it is commented here and in (many) other 
+                //                      dependant places, should we remove all of them?
                 // warn!(*log_context, "[VM] module deserialization failed {:?}", err);
                 return Err(err.finish(Location::Undefined));
             }
