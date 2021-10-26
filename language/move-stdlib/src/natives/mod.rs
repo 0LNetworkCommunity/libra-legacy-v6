@@ -7,9 +7,8 @@ pub mod hash;
 pub mod signer;
 pub mod vector;
 //////// 0L ////////
- // 0L todo diem-1.4.1
-// pub mod vdf; // todo: rename to ol_vdf
-// pub mod ol_decimal;
+pub mod ol_vdf;
+pub mod ol_decimal;
 
 #[cfg(feature = "testing")]
 pub mod unit_test;

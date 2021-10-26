@@ -11,6 +11,7 @@ use move_vm_types::{
     gas_schedule::NativeCostIndex,
     loaded_data::runtime_types::Type,
     natives::function::{native_gas, NativeResult},
+    pop_arg,
     values::{Reference, Value},
 };
 use std::collections::VecDeque;
@@ -23,7 +24,7 @@ use smallvec::smallvec;
 
 /// Rust implementation of Move's `native public fun verify(challenge: vector<u8>, difficulty: u64, alleged_solution: vector<u8>): bool`
 pub fn verify(
-    context: &impl NativeContext,
+    context: &NativeContext,
     _ty_args: Vec<Type>,
     mut arguments: VecDeque<Value>,
 ) -> PartialVMResult<NativeResult> {
@@ -62,7 +63,7 @@ pub fn verify(
 // Extracts the first 32 bits of the vdf challenge which is the auth_key
 // Auth Keys can be turned into an AccountAddress type, to be serialized to a move address type.
 pub fn extract_address_from_challenge(
-    context: &impl NativeContext,
+    context: &NativeContext,
     _ty_args: Vec<Type>,
     mut arguments: VecDeque<Value>,
 ) -> PartialVMResult<NativeResult> {

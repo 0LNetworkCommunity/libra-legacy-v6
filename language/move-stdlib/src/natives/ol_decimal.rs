@@ -7,6 +7,7 @@ use move_vm_types::{
     gas_schedule::NativeCostIndex,
     loaded_data::runtime_types::Type,
     natives::function::{native_gas, NativeResult},
+    pop_arg,
     values::Value,
 };
 use rust_decimal::{self, Decimal, MathematicalOps, RoundingStrategy, prelude::ToPrimitive};
@@ -44,7 +45,7 @@ impl MoveDecimalType {
 }
 
 pub fn native_decimal_demo(
-    context: &impl NativeContext,
+    context: &NativeContext,
     _ty_args: Vec<Type>,
     mut arguments: VecDeque<Value>,
 ) -> PartialVMResult<NativeResult> {
@@ -78,7 +79,7 @@ pub fn native_decimal_demo(
 }
 
 pub fn native_decimal_single(
-    context: &impl NativeContext,
+    context: &NativeContext,
     _ty_args: Vec<Type>,
     mut arguments: VecDeque<Value>,
 ) -> PartialVMResult<NativeResult> {
@@ -120,7 +121,7 @@ pub fn native_decimal_single(
 }
 
 pub fn native_decimal_pair(
-    context: &impl NativeContext,
+    context: &NativeContext,
     _ty_args: Vec<Type>,
     mut arguments: VecDeque<Value>,
 ) -> PartialVMResult<NativeResult> {
@@ -227,11 +228,9 @@ fn sanity() {
   let two = Decimal::from_i128_with_scale(2, 0);
 
   let neg_one = Decimal::from_i128_with_scale(-1, 0);
-  let res = two.checked_mul(neg_one).unwrap();
+  let _res = two.checked_mul(neg_one).unwrap();
   // dbg!(&res);
   // dbg!(&res.mantissa());
-
-
 }
 
 #[test]
@@ -249,7 +248,7 @@ fn test_irrational() {
     // dbg!(&i.to_string());
     // assert_eq!(dec.to_u128(), Some(m.int));
 
-    let new_m = MoveDecimalType::from_decimal(i);
+    let _new_m = MoveDecimalType::from_decimal(i);
     // dbg!(&new_m);
     // assert_eq!(m.int, new_m.int);
 

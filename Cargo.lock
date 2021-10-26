@@ -5296,6 +5296,7 @@ dependencies = [
  "move-unit-test",
  "move-vm-runtime",
  "move-vm-types",
+ "rust_decimal",
  "sha2 0.9.3",
  "sha3 0.9.1",
  "smallvec 1.6.1",
@@ -7169,9 +7170,9 @@ dependencies = [
 
 [[package]]
 name = "rust_decimal"
-version = "1.17.0"
+version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "353775f96a1f400edcca737f843cb201af3645912e741e64456a257c770173e8"
+checksum = "c5446d1cf2dfe2d6367c8b27f2082bdf011e60e76fa1fcd140047f535156d6e7"
 dependencies = [
  "arrayvec 0.5.2",
  "num-traits",
