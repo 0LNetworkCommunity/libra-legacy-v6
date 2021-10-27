@@ -35,12 +35,12 @@ pub struct ProcInfo {
 pub struct Node {
     /// 0L configs
     pub app_conf: AppCfg,
-    /// node conf
-    pub node_conf: NodeConfig,    
     /// diemclient for connecting
     pub client: DiemClient,
     /// vitals
     pub vitals: Vitals,
+    /// node conf
+    pub node_conf: Option<NodeConfig>,    
     /// TODO: deduplicate these
     chain_state: Option<AccountState>,
     miner_state: Option<TowerStateResourceView>,
@@ -57,7 +57,7 @@ impl Node {
 
         let node_conf = NodeConfig::load(
             conf.workspace.node_home.join(node_yaml)
-        ).unwrap();
+        ).ok();
 
         return Self {
             client,
