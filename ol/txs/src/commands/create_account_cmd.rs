@@ -33,7 +33,7 @@ impl Runnable for CreateAccountCmd {
         };
         
         match create_from_auth_and_coin(authkey, self.coins, entry_args.no_send, entry_args.save_path) {
-            Ok(_) => println!("Success. Account created for authkey: {}", authkey),
+            Ok(_) => println!("Success: Account created for authkey: {}", authkey),
             Err(e) => {
               println!("ERROR: could not create account, message: {}", &e.to_string());
               exit(1);

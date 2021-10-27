@@ -6,8 +6,6 @@
 
 address 0x1 {
 module AccountScripts {
-
-    // use 0x1::Debug::print;
     use 0x1::DiemAccount;
     use 0x1::GAS::GAS;
     use 0x1::ValidatorConfig;

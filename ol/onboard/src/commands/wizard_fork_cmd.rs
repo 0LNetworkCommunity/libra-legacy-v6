@@ -136,7 +136,7 @@ impl Runnable for ForkCmd {
         // fetching the genesis files from genesis-archive, will override the path for prebuilt genesis.
         let mut prebuilt_genesis_path = self.prebuilt_genesis.clone();
         if self.fetch_git_genesis {
-            files_cmd::get_files(home_path.clone(), &self.github_org, &self.repo);
+            files_cmd::fetch_genesis_files_from_repo(home_path.clone(), &self.github_org, &self.repo).unwrap();
             status_ok!(
                 "\nDownloaded genesis files",
                 "\n...........................\n"

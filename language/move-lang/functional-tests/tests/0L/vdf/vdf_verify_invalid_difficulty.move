@@ -4,7 +4,6 @@
 script{
   use 0x1::VDF;
   use 0x1::TestFixtures;
-  use 0x1::Debug::print;
   fun main() {
     // this tests the happy case, that a proof is submitted with all three 
     // correct parameters.
@@ -24,7 +23,6 @@ script{
       &TestFixtures::security()
     );
     
-    print(&res);
     assert(res == false, 1);
   }
 }

@@ -236,16 +236,11 @@ script {
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
     use 0x1::DiemConfig;
-    use 0x1::Debug::print;
 
     fun main(_account: signer) {
         // We are in a new epoch.
 
         // Check the validator set is at expected size
-
-        print(&7357666);
-        print(&DiemSystem::validator_set_size());
-        
         assert(DiemSystem::validator_set_size() == 5, 7357000180110);
         assert(DiemSystem::is_validator(@{{dave}}) == false, 7357000180111);            
         assert(DiemAccount::balance<GAS>(@{{dave}}) == 949991, 7357000180112);

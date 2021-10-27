@@ -92,13 +92,17 @@ pub fn write_node_config_files(
             genesis_path = path.to_owned();
         }
         None => {
+          // building a genesis file requires a set_layout path. The default is for genesis to use a local set_layout file. Once a genesis occurs, the canonical chain can store the genesis information to github repo for future verification and creating a genesis blob.
             let genesis_waypoint = match layout_path {
                 Some(layout_path) => storage_helper
                     .build_genesis_with_layout(chain_id, &remote, &genesis_path, &layout_path)
                     .unwrap(),
-                None => storage_helper
+                None => {
+                  println!("attempting to get a set_layout file from the genesis repo");
+                  storage_helper
                     .build_genesis_from_github(chain_id, &remote, &genesis_path)
-                    .unwrap(),
+                    .unwrap()
+                },
             };
 
             // for genesis cases, need to insert the waypoint in the key_store.json
@@ -110,32 +114,11 @@ pub fn write_node_config_files(
         }
     };
 
-    // if *rebuild_genesis {
-    //     // Create genesis blob from repo and saves waypoint
-    //     // Create genesis blob from repo and saves waypoint
-    //     let genesis_waypoint = storage_helper
-    //         .build_genesis_from_github(chain_id, &remote, &genesis_path)
-    //         .unwrap();
-
-    //     // for genesis cases, need to insert the waypoint in the key_store.json
-    //     storage_helper
-    //         .insert_waypoint(&namespace, genesis_waypoint)
-    //         .unwrap();
-
-    //     way_opt = Some(genesis_waypoint);
-    // }
-
     // Write the genesis waypoint without a namespaced storage.
     let mut disk_storage = OnDiskStorageConfig::default();
     disk_storage.set_data_dir(output_dir.clone());
     disk_storage.path = output_dir.clone().join("key_store.json");
     disk_storage.namespace = Some(namespace.to_owned());
-
-    //     // Write the genesis waypoint without a namespaced storage.
-    // let mut safety_rules_storage = OnDiskStorageConfig::default();
-    // safety_rules_storage.set_data_dir(output_dir.clone());
-    // safety_rules_storage.path = output_dir.clone().join("safety_rules.json");
-    // safety_rules_storage.namespace = Some(namespace.to_owned());
 
     // Get node configs template
     let mut config = if *fullnode_only {

@@ -42,11 +42,11 @@ impl Runnable for FnWizardCmd {
 
         // TODO: fetch epoch backup info from epoch archive, or build genesis.
         if !self.skip_fetch_genesis {
-            files_cmd::get_files(
+            files_cmd::fetch_genesis_files_from_repo(
                 output_path,
                 &self.github_org,
                 &self.repo,
-            );
+            ).unwrap();
             status_ok!("\nGenesis OK", "\n...........................\n");
         }
 

@@ -10,7 +10,6 @@ script {
     use 0x1::TowerState;
     use 0x1::Burn;
     use 0x1::Audit;
-    use 0x1::Debug::print;
     use 0x1::AutoPay;
 
     fun main(sender: signer) {
@@ -20,18 +19,10 @@ script {
         TowerState::test_helper_mock_mining(&sender, 5);
         // set alice burn preferences as sending to community wallets.
         Burn::set_send_community(&sender);
-        print(&@0x1);
         // validator needs to qualify for next epoch for the burn to register
         Audit::test_helper_make_passing(&sender);
-        print(&AutoPay::is_enabled(@{{alice}}));
-
-
-        print(&Audit::val_audit_passing(@{{alice}}));
 
         AutoPay::enable_autopay(&sender);
-        print(&AutoPay::is_enabled(@{{alice}}));
-        print(&Audit::val_audit_passing(@{{alice}}));
-
     }
 }
 //check: EXECUTED
@@ -131,12 +122,10 @@ script {
 script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
-  use 0x1::Debug::print;
 
   fun main(_vm: signer) {
     // bob's community wallet increased after epoch change.
     let bal = DiemAccount::balance<GAS>(@{{bob}});
-    print(&bal);
     assert(bal == 2100399, 7357004);
   }
 }
