@@ -2,10 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{
-    entrypoint,
-    submit_tx::{maybe_submit, tx_params_wrapper},
-};
+use crate::{entrypoint, submit_tx::{TxParams, maybe_submit, tx_params_wrapper}};
 use abscissa_core::{Command, Options, Runnable};
 use anyhow::Error;
 use diem_transaction_builder::stdlib as transaction_builder;
@@ -31,8 +28,10 @@ impl Runnable for CreateAccountCmd {
               exit(1);
             },
         };
-        
-        match create_from_auth_and_coin(authkey, self.coins, entry_args.no_send, entry_args.save_path) {
+        let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
+
+
+        match create_from_auth_and_coin(authkey, self.coins, tx_params, entry_args.no_send, entry_args.save_path) {
             Ok(_) => println!("Success: Account created for authkey: {}", authkey),
             Err(e) => {
               println!("ERROR: could not create account, message: {}", &e.to_string());
@@ -43,8 +42,7 @@ impl Runnable for CreateAccountCmd {
 }
 
 /// create an account by sending coin to it
-pub fn create_from_auth_and_coin(authkey: AuthenticationKey, coins: u64, no_send: bool, save_path: Option<PathBuf>) -> Result<SignedTransaction, Error>{
-  let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
+pub fn create_from_auth_and_coin(authkey: AuthenticationKey, coins: u64, tx_params: TxParams, no_send: bool, save_path: Option<PathBuf>) -> Result<SignedTransaction, Error>{
 
   let account = authkey.derived_address();
   let prefix = authkey.prefix();
@@ -57,3 +55,4 @@ pub fn create_from_auth_and_coin(authkey: AuthenticationKey, coins: u64, no_send
 
   maybe_submit(script, &tx_params, no_send, save_path)
 }
+
