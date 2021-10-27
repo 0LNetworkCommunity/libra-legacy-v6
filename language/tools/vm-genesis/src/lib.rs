@@ -161,7 +161,7 @@ pub fn encode_genesis_change_set(
 // 0L todo diem-1.4.1: Double check 0L patch for this fn.
 // Reason, the diem `fn encode_genesis_change_set` which we copy and modify to
 // create this fn, changed significantly.
-// Fn body is mostly updated, need to update the fn signature also.
+// Fn body is mostly updated, but need to update the fn signature also.
 //////// 0L ////////
 pub fn encode_recovery_genesis_changeset(
     val_assignments: &[ValRecover],

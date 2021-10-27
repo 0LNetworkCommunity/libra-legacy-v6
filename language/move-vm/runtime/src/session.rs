@@ -105,7 +105,7 @@ impl<'r, 'l, S: MoveStorage> Session<'r, 'l, S> {
         module: Vec<u8>,
         sender: AccountAddress,
         gas_status: &mut GasStatus,                
-        // log_context: &impl LogContext, // 0L todo: diem 1.4.1
+        // log_context: &impl LogContext, // 0L todo diem 1.4.1
     ) -> VMResult<()> {
         self.runtime.revise_module(
             module,
