@@ -164,14 +164,12 @@ script {
   use 0x1::Oracle;
   use 0x1::Vector;
   use 0x1::Hash;
-  //use 0x1::Debug::print;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       //already voted, must ensure vote not counted again
       let id = 2;
       let data = b"bello";
       let hash = Hash::sha2_256(data);
-      //print(&hash);
       Oracle::handler(&sender, id, hash);
       let vec = Oracle::test_helper_query_oracle_votes();
       let e = Vector::length<address>(&vec);
@@ -236,13 +234,11 @@ script {
   use 0x1::Vector;
   use 0x1::Upgrade;
   use 0x1::Hash;
-  //use 0x1::Debug::print;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       let id = 2;
       let data = b"hello";
       let hash = Hash::sha2_256(data);
-      //print(&hash);
       Oracle::handler(&sender, id, hash);
       let vec = Oracle::test_helper_query_oracle_votes();
       let e = *Vector::borrow<address>(&vec, 5);

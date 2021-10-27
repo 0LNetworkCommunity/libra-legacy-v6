@@ -7,7 +7,6 @@ script {
     use 0x1::DiemAccount;
     use 0x1::GAS::GAS;
     use 0x1::ValidatorConfig;
-    // use 0x1::Debug::print;
 
     fun main(_account: signer) {
         let num_validators = DiemSystem::validator_set_size();

@@ -78,10 +78,8 @@ module EpochBoundary { // TODO: Rename to Boundary
             // Not sure if the performance hit at epoch boundary is worth the refactor. 
             if (TowerState::node_above_thresh(addr)) {
               let count = TowerState::get_count_in_epoch(addr);
-              // print(&count);
 
               let miner_subsidy = count * proof_price;
-              // print(&miner_subsidy);
               FullnodeSubsidy::distribute_fullnode_subsidy(vm, addr, miner_subsidy);
             };
 
@@ -94,15 +92,12 @@ module EpochBoundary { // TODO: Rename to Boundary
     ) {
         // Process outgoing validators:
         // Distribute Transaction fees and subsidy payments to all outgoing validators
-        // print(&03240);
         
         if (Vector::is_empty<address>(&outgoing_compliant_set)) return;
 
-        // print(&03241);
         if (subsidy_units > 0) {
             Subsidy::process_subsidy(vm, subsidy_units, &outgoing_compliant_set);
         };
-        // print(&03241);
 
         Subsidy::process_fees(vm, &outgoing_compliant_set);
     }
@@ -135,22 +130,16 @@ module EpochBoundary { // TODO: Rename to Boundary
 
         let burn_value = 1000000; // TODO: switch to a variable cost, as above.
 
-        // print(&03250);
-
         let i = 0;
         while (i < Vector::length<address>(&top_accounts)) {
-            // print(&03251);
-
             let addr = *Vector::borrow(&top_accounts, i);
             let mined_last_epoch = TowerState::node_above_thresh(addr);
-            // print(&mined_last_epoch);
-            // TODO: temporary until jail-refactor merge.
+            // TODO: temporary until jailing is enabled.
             if (
                 !Vector::contains(&jailed_set, &addr) && 
                 mined_last_epoch &&
                 Audit::val_audit_passing(addr)
             ) {
-            //print(&03252);
                 Vector::push_back(&mut proposed_set, addr);
                 Burn::epoch_start_burn(vm, addr, burn_value);
             };
@@ -165,7 +154,6 @@ module EpochBoundary { // TODO: Rename to Boundary
         // at least 6 nodes and 6 rounds. If we reach an epoch boundary with 
         // at least 6 rounds, we would have at least 2/3rd of the validator 
         // set with at least 66% liveliness. 
-        // print(&03270);
         proposed_set
     }
 

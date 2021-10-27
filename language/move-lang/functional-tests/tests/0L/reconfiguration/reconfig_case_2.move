@@ -172,13 +172,10 @@ script {
 script {
     use 0x1::DiemSystem;
     use 0x1::DiemConfig;
-    use 0x1::Debug::print;
 
     fun main(_account: signer) {
         // We are in a new epoch.
         assert(DiemConfig::get_current_epoch() == 2, 7357008007008);
-        print(&73571111);
-        print(&DiemSystem::validator_set_size());
         // Tests on initial size of validators 
         assert(DiemSystem::validator_set_size() == 5, 7357008007009);
         assert(DiemSystem::is_validator(@{{frank}}) == false, 7357008007010);

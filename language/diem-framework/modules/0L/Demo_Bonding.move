@@ -1,6 +1,6 @@
+// DEMOWARE: this is to test the Decimal implementation for curved bonding cases.
 address 0x1 {
 module Bonding {
-  // use 0x1::Signer;
   use 0x1::Decimal;
   use 0x1::Debug::print;
 
