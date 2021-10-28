@@ -32,6 +32,8 @@ use 0x1::Roles;
         &sender,
         &challenge,
         &solution,
+        TestFixtures::easy_difficulty(), // difficulty
+        TestFixtures::security(), // security
         b"leet",
         @0xfa72817f1b5aab94658238ddcdc08010,
         x"fa72817f1b5aab94658238ddcdc08010",
@@ -92,7 +94,6 @@ script {
   use 0x1::EpochBoundary;
   use 0x1::TowerState;
   use 0x1::Testnet;
-  use 0x1::Debug::print;
   use 0x1::Cases;
   
   fun main(vm: signer) {
@@ -107,7 +108,6 @@ script {
       let new_account_bal = DiemAccount::balance<GAS>(eve);
 
       assert(old_account_bal == 1000000, 7357001);
-      print(&new_account_bal);
 
       // eve did not mine or validator in last epoch, case != 1. So there wont be a reward 
       assert(Cases::get_case(&vm, @{{bob}}, 0, 100) != 1, 7357002);

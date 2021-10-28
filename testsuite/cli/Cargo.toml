@@ -45,6 +45,8 @@ compiler = { path = "../../language/compiler" }
 #//////// 0L ////////
 diem-json-rpc-client = { path = "../../client/json-rpc" }
 ol-keys = { path = "../../ol/keys",  version = "0.1.0" }
+ol-types = { path = "../../ol/types",  version = "0.1.0" }
+
 rpassword = "5.0"
 serde_json = "1.0.59"
 

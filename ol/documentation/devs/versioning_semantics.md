@@ -10,7 +10,7 @@ e.g
 When all changes to Rust and Move are backwards compatible, and no changes to the Stdlib data structures were made which could affect Stdlib or downstream user created modules.
 
 ## MINOR version
-When there are backward compatible changes to VM and libra-node. The libra-node can be simply reloaded. However the Stdlib requires an on-chain data migration to run during the update process. This is likely if resource structs in the Stdlib in Move are added, or existing ones modified.
+When there are backward compatible changes to VM and diem-node. The diem-node can be simply reloaded. However the Stdlib requires an on-chain data migration to run during the update process. This is likely if resource structs in the Stdlib in Move are added, or existing ones modified.
 
 
 ## MAJOR version

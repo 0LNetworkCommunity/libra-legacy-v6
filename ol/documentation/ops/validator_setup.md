@@ -6,6 +6,14 @@
 - A fixed IP address of the machine
 - Recommended specs: 250G harddrive, 4 cores
 
+
+You need to open ports 6179, 6180, 8080, 3030 on the host
+
+- 6179, 6180 should be open to all, it's for consensus and uses noise encryption.
+- 3030 is for your web dashboard, so could just be your home ip if it's fixed.
+- 8080 is for json RPC, you may not need this unless you want to send tx from a client to that node.
+
+
 ### High-level steps
 1. Install binaries.
 2. Generate a public mining/validator key and associated mneumonic.
@@ -15,8 +23,8 @@
 4. Start your node in *fullnode* mode. 
 5. Allow your *fullnode* to sync up with the network. Depending on how old the snapshot obtained from `ol restore` is
    may take a while (1 hr or more). To check the state of the sync run `db-backup one-shot query node-state`.
-6. Start the miner which will produce and submit VDF proofs to the chain. 
-   **note** if your node is not fully synced and if you have not been onboarded yet, you will see errors from the miner 
+6. Start the tower app which will produce and submit VDF proofs to the chain. 
+   **note** if your node is not fully synced and if you have not been onboarded yet, you will see errors from the tower app 
    until your node has caught up to the current state and you have been onboarded.
 5. Restart your node in *validator* mode. You will join in the next epoch if you have been on boarded by an active validator.
 8. Run `ol explorer` to see the state of the network, you should see your validators public key in the list of validators. 
@@ -27,7 +35,7 @@ These instructions target Ubuntu.
 
 1.1. Set up an Ubuntu host with `ssh` access, e.g. in a cloud service provider. 
 1.2.  Associate a static IP  with your host, this will be tied to you account, and will be set in your `account.json` file.
-1.3. You'll want to use `tmux` to persist the terminal session for build, as well as for running the nodes and miner. 
+1.3. You'll want to use `tmux` to persist the terminal session for build, as well as for running the nodes and tower app. 
 
 tmux
 ```
@@ -158,7 +166,7 @@ inside the `tmux` session start the node in fullnode mode.
 mkdir ~/.0L/logs
 
 #start node 
-libra-node --config ~/.0L/fullnode.node.yaml  >> ~/.0L/logs/node.log 2>&1
+diem-node --config ~/.0L/fullnode.node.yaml  >> ~/.0L/logs/node.log 2>&1
 ```
 
 4.2. Check your logs. `tail -f ~/.0L/logs/node.log`
@@ -178,16 +186,16 @@ This command will tell you the sync state of a RUNNING local node: `db-backup on
 
 Before you start: You will need your mnemonic.
 
-5.1. Run the miner within its own `tmux` session:
+5.1. Run the tower app within its own `tmux` session:
 ```
-tmux new -s miner 
-# to reconnect to the tmux miner session
-tmux attach -t miner
+tmux new -s tower 
+# to reconnect to the tmux tower session
+tmux attach -t tower
 ```
 
-5.2. From inside the `tmux` session, start the miner and enter your mnemonic:  
+5.2. From inside the `tmux` session, start the tower app:  
 ```
-miner start >> ~/.0L/logs/miner.log 2>&1
+tower -o start >> ~/.0L/logs/tower.log 2>&1
 ``` 
 
 ## 6. Restart node in `validator` mode
@@ -204,10 +212,10 @@ Restarting your node in validator mode inside a `tmux` session.
 Again, there may be an issue with file descriptors, increase with `ulimit -n 100000` before starting node
 
 ```
-# stop libra-node daemon
+# stop diem node daemon
 make stop
 # and just in case, stop all processes
-killall libra-node
+killall diem-node
 ```
 
 start a `tmux` session
@@ -220,10 +228,10 @@ ulimit -n 100000
 ```
 then restart node with
 ```
-libra-node --config  ~/.0L/validator.node.yaml >> ~/.0L/logs/validator.log 2>&1
+diem-node --config  ~/.0L/validator.node.yaml >> ~/.0L/logs/validator.log 2>&1
 ```
 
-6.2 Restart the miner after your validator is running, refer to [Step 5](#5-start-producing-delay-proofs-delay-mining) - ctrl+ C and restart it. 
+6.2 Restart the tower app after your validator is running, refer to [Step 5](#5-start-producing-delay-proofs-delay-mining) - ctrl+ C and restart it. 
 
 Once you have been on boarded you should see you public key in the list of validators. Run the explorer to view:
 ```

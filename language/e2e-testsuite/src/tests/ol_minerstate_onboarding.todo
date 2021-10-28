@@ -1,0 +1,71 @@
+// Copyright (c) 0lsf
+// SPDX-License-Identifier: Apache-2.0
+
+use diem_global_constants::{VDF_SECURITY_PARAM, delay_difficulty};
+use diem_transaction_builder::stdlib as transaction_builder;
+use diem_types::{transaction::TransactionStatus, vm_status::KeptVMStatus, PeerId};
+use hex;
+use language_e2e_tests::{account::AccountData, executor::FakeExecutor};
+
+#[test]
+#[ignore]
+fn miner_onboarding() {
+    let mut executor = FakeExecutor::from_genesis_file();
+
+    // test data for the VDF proof, using easy/test difficulty
+    // This assumes that it is a FIRST Proof, (genesis proof)
+    // and it doesn't need to match a previously sent proof.
+    // effectively only a genesis ceremony will use this transaction.
+    // Other miner onboarding will be done with the onboarding transaction.
+
+    // This test uses Alice's block_1 proof (../fixtures/proof_1.json.stage.alice), assuming she has participated in a genesis ceremony.
+    let block = fixtures::get_persona_block_zero("alice", "test");
+
+    //let sender = Account::new();
+    let sequence = 1;
+    let sender = AccountData::new(1_000_000, sequence);
+    let receiver = AccountData::new(100_000, 10);
+    executor.add_account_data(&sender);
+    executor.add_account_data(&receiver);
+
+    let payload = transaction_builder::encode_minerstate_helper_script_function();
+    let txn_help = sender.account()
+        .transaction()
+        .payload(payload)
+        .sequence_number(sequence)
+        .sign();
+
+    let output = executor.execute_and_apply(txn_help);
+    assert_eq!(
+        output.status(),
+        &TransactionStatus::Keep(KeptVMStatus::Executed)
+    );
+    println!("Helper executed successfully");
+
+
+    let payload = transaction_builder::encode_create_acc_val_script_function(
+        block.preimage,
+        block.proof,
+        block.difficulty.unwrap(),
+        block.security.unwrap(),
+        "3DC18D1CF61FAAC6AC70E3A63F062E4B".as_bytes().to_vec(),
+        PeerId::from_hex_literal("0x0E04E58B354EF058D08DD493F2352454").unwrap(),
+        "ecc59a4a0963f65b5eceb0fffa01ea99".as_bytes().to_vec(),
+        "cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d".as_bytes().to_vec(),
+        "134.122.115.12".as_bytes().to_vec(),
+        "134.122.115.12".as_bytes().to_vec(),
+        "3DC18D1CF61FAAC6AC70E3A63F062E4B-oper".as_bytes().to_vec()
+    );
+
+    let txn = sender.account()
+        .transaction()
+        .payload(payload)
+        .sequence_number(sequence+1)
+        .sign();
+    
+    let output = executor.execute_transaction(txn);
+    assert_eq!(
+        output.status(),
+        &TransactionStatus::Keep(KeptVMStatus::Executed)
+    );
+}

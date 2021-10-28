@@ -10,10 +10,10 @@ use diem_genesis_tool::ol_node_files;
 use diem_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use diem_wallet::WalletLibrary;
 use ol::{commands::init_cmd, config::AppCfg};
-use ol_fixtures::get_test_genesis_blob;
 use ol_keys::{scheme::KeyScheme, wallet};
-use ol_types::block::Block;
+use ol_types::block::VDFProof;
 use ol_types::config::IS_TEST;
+use ol_types::fixtures;
 use ol_types::{account::ValConfigs, config::TxType, pay_instruction::PayInstruction};
 use reqwest::Url;
 use std::fs;
@@ -70,7 +70,7 @@ impl Runnable for ValWizardCmd {
         );
 
         if !self.skip_mining {
-          println!("\nYour first 0L proof-of-work will be mined now. Expect this to take up to 15 minutes on modern CPUs.\n");
+          println!("\nYour first 0L proof-of-work will also be mined now. Expect this take at least 30 minutes on modern CPUs.\n");
         }
 
         let entry_args = entrypoint::get_args();
@@ -136,57 +136,15 @@ impl Runnable for ValWizardCmd {
         init_cmd::initialize_validator(&wallet, &app_config, base_waypoint, *&self.genesis_ceremony).expect("could not initialize validator key_store.json");
         status_ok!("\nKey file written", "\n...........................\n");
 
+
+        // Retrieve the genesis block and build a number of node configuration files. Note: In genesis all node files are created through multiple steps in config/management/genesis, this should be skipped
         if !self.genesis_ceremony {
-            // fetching the genesis files from genesis-archive, will override the path for prebuilt genesis.
-            let mut prebuilt_genesis_path = self.prebuilt_genesis.clone();
-            if self.fetch_git_genesis {
-                files_cmd::get_files(home_path.clone(), &self.github_org, &self.repo);
-                status_ok!(
-                    "\nDownloaded genesis files",
-                    "\n...........................\n"
-                );
-
-                prebuilt_genesis_path = Some(home_path.join("genesis.blob"));
-            } else if self.ci {
-                fs::copy(
-                    get_test_genesis_blob().as_os_str(),
-                    home_path.join("genesis.blob"),
-                )
-                .unwrap();
-                prebuilt_genesis_path = Some(home_path.join("genesis.blob"));
-                status_ok!(
-                    "\nUsing test genesis.blob",
-                    "\n...........................\n"
-                );
-            }
-
-            let home_dir = app_config.workspace.node_home.to_owned();
-            // 0L convention is for the namespace of the operator to be appended by '-oper'
-            let namespace = app_config.profile.auth_key.clone().to_string() + "-oper";
-
-            // TODO: use node_config to get the seed peers and then write upstream_node vec in 0L.toml from that.
-            ol_node_files::write_node_config_files(
-                home_dir.clone(),
-                self.chain_id.unwrap_or(1),
-                &self.github_org.clone().unwrap_or("OLSF".to_string()),
-                &self
-                    .repo
-                    .clone()
-                    .unwrap_or("genesis-registration".to_string()),
-                &namespace,
-                &prebuilt_genesis_path,
-                &false,
-                base_waypoint,
-                &None,
-            )
-            .unwrap();
-
-            status_ok!("\nNode config written", "\n...........................\n");
+          get_genesis_and_make_node_files(self, home_path, base_waypoint, &app_config);
         }
 
         if !self.skip_mining {
-            // Mine Block
-            tower::block::write_genesis(&app_config);
+            // Mine Proof
+            tower::proof::write_genesis(&app_config);
             status_ok!(
                 "\nGenesis proof complete",
                 "\n...........................\n"
@@ -205,14 +163,18 @@ impl Runnable for ValWizardCmd {
             "\nAccount manifest written",
             "\n...........................\n"
         );
+      
 
         status_info!(
-            "Your validator node and miner app are now configured.", 
-            &format!(
+            "Success", "Your validator node and miner app are now configured.\n");
+
+
+        if !self.genesis_ceremony {
+            println!(
                 "\nStart your node with `ol start`, and then ask someone with GAS to do this transaction `txs create-validator -u http://{}`",
                 &app_config.profile.ip
-            )
-        );
+            );
+        }
     }
 }
 
@@ -292,7 +254,7 @@ pub fn write_account_json(
     let cfg = wizard_config.unwrap_or(app_config().clone());
     let json_path = json_path.clone().unwrap_or(cfg.workspace.node_home.clone());
     let keys = KeyScheme::new(&wallet);
-    let block = Block::parse_block_file(cfg.get_block_dir().join("block_0.json").to_owned());
+    let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned());
 
     ValConfigs::new(
         block,
@@ -302,4 +264,69 @@ pub fn write_account_json(
         autopay_signed,
     )
     .create_manifest(json_path);
+}
+
+fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, base_waypoint: Option<Waypoint>, app_config: &AppCfg) {
+  // The default behavior is to fetch the genesis from a github repo.
+  // if this is not possible then the user should have set a prebuilt genesis path.
+
+    // in case of CI copy
+   let genesis_blob_path =  if cmd.ci {
+          fs::copy(
+              fixtures::get_test_genesis_blob().as_os_str(),
+              home_path.join("genesis.blob"),
+          )
+          .unwrap();
+
+          status_ok!(
+              "\nUsing test genesis.blob",
+              "\n...........................\n"
+          );
+          Some(home_path.join("genesis.blob"))
+    } else if cmd.prebuilt_genesis.is_some(){
+      // user can override with a prebuilt genesis locally.
+      cmd.prebuilt_genesis.clone()
+      // Some(p.to_owned())
+  } else {
+  // default behavior: fetching the genesis files from genesis-archive, unless overrideen
+  match files_cmd::fetch_genesis_files_from_repo(home_path.clone(), &cmd.github_org, &cmd.repo) {
+    Ok(path) => {
+      status_ok!(
+          "\nDownloaded genesis files",
+          "\n...........................\n"
+      );
+      Some(path)
+      
+    },
+    Err(_) => {
+      println!("ERROR: could not get a genesis.blob from Github repo. You can override this behavior with --prebuilt-genesis <path/to/genesis.blob>. Exiting");
+      exit(1);
+
+    },
+}
+  };
+
+
+  let home_dir = app_config.workspace.node_home.to_owned();
+  // 0L convention is for the namespace of the operator to be appended by '-oper'
+  let namespace = app_config.profile.auth_key.clone().to_string() + "-oper";
+
+  // TODO: use node_config to get the seed peers and then write upstream_node vec in 0L.toml from that.
+  ol_node_files::write_node_config_files(
+      home_dir.clone(),
+      cmd.chain_id.unwrap_or(1),
+      &cmd.github_org.clone().unwrap_or("OLSF".to_string()),
+      &cmd
+          .repo
+          .clone()
+          .unwrap_or("genesis-registration".to_string()),
+      &namespace,
+      &genesis_blob_path,
+      &false,
+      base_waypoint,
+      &None,
+  )
+  .unwrap();
+
+  status_ok!("\nNode config written", "\n...........................\n");
 }

@@ -127,14 +127,14 @@ pub fn initialize_host_swarm(
     let cfg = AppCfg::init_app_configs_swarm(swarm_path, node_home, source_path.clone());
     if persona.is_some() {
         let source = &cfg.workspace.source_path.unwrap().join(
-            "ol/fixtures/blocks/test").join(persona.unwrap()
-        ).join("block_0.json");
+            "ol/fixtures/vdf_proofs/test").join(persona.unwrap()
+        ).join("proof_0.json");
         let blocks_dir = PathBuf::new().join(
             &cfg.workspace.node_home
         ).join(&cfg.workspace.block_dir);
         let target_file = PathBuf::new().join(
             &cfg.workspace.node_home
-        ).join(&cfg.workspace.block_dir).join("block_0.json");
+        ).join(&cfg.workspace.block_dir).join("proof_0.json");
         println!("copy first block from {:?} to {:?}", source, target_file);
         match create(blocks_dir, true) {
             Err(why) => println!("create block dir failed: {:?}", why),

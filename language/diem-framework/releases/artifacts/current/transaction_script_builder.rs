@@ -1611,6 +1611,11 @@ pub enum ScriptFunctionCall {
 
     AutopayEnable {},
 
+    BalanceTransfer {
+        destination: AccountAddress,
+        unscaled_value: u64,
+    },
+
     /// # Summary
     /// Burns the transaction fees collected in the `CoinType` currency so that the
     /// Diem association may reclaim the backing coins off-chain. May only be sent
@@ -1767,11 +1772,15 @@ pub enum ScriptFunctionCall {
     CreateAccUser {
         challenge: Bytes,
         solution: Bytes,
+        difficulty: u64,
+        security: u64,
     },
 
     CreateAccVal {
         challenge: Bytes,
         solution: Bytes,
+        difficulty: u64,
+        security: u64,
         ow_human_name: Bytes,
         op_address: AccountAddress,
         op_auth_key_prefix: Bytes,
@@ -2016,6 +2025,12 @@ pub enum ScriptFunctionCall {
     /// * `Script::rotate_authentication_key_with_recovery_address`
     CreateRecoveryAddress {},
 
+    CreateUserByCoinTx {
+        account: AccountAddress,
+        authkey_prefix: Bytes,
+        unscaled_value: u64,
+    },
+
     /// # Summary
     /// Creates a Validator account. This transaction can only be sent by the Diem
     /// Root account.
@@ -2210,12 +2225,16 @@ pub enum ScriptFunctionCall {
     MinerstateCommit {
         challenge: Bytes,
         solution: Bytes,
+        difficulty: u64,
+        security: u64,
     },
 
     MinerstateCommitByOperator {
         owner_address: AccountAddress,
         challenge: Bytes,
         solution: Bytes,
+        difficulty: u64,
+        security: u64,
     },
 
     MinerstateHelper {},
@@ -3489,6 +3508,10 @@ impl ScriptFunctionCall {
             ),
             AutopayDisable {} => encode_autopay_disable_script_function(),
             AutopayEnable {} => encode_autopay_enable_script_function(),
+            BalanceTransfer {
+                destination,
+                unscaled_value,
+            } => encode_balance_transfer_script_function(destination, unscaled_value),
             BurnTxnFees { coin_type } => encode_burn_txn_fees_script_function(coin_type),
             BurnWithAmount {
                 token,
@@ -3509,10 +3532,14 @@ impl ScriptFunctionCall {
             CreateAccUser {
                 challenge,
                 solution,
-            } => encode_create_acc_user_script_function(challenge, solution),
+                difficulty,
+                security,
+            } => encode_create_acc_user_script_function(challenge, solution, difficulty, security),
             CreateAccVal {
                 challenge,
                 solution,
+                difficulty,
+                security,
                 ow_human_name,
                 op_address,
                 op_auth_key_prefix,
@@ -3523,6 +3550,8 @@ impl ScriptFunctionCall {
             } => encode_create_acc_val_script_function(
                 challenge,
                 solution,
+                difficulty,
+                security,
                 ow_human_name,
                 op_address,
                 op_auth_key_prefix,
@@ -3576,6 +3605,15 @@ impl ScriptFunctionCall {
                 add_all_currencies,
             ),
             CreateRecoveryAddress {} => encode_create_recovery_address_script_function(),
+            CreateUserByCoinTx {
+                account,
+                authkey_prefix,
+                unscaled_value,
+            } => encode_create_user_by_coin_tx_script_function(
+                account,
+                authkey_prefix,
+                unscaled_value,
+            ),
             CreateValidatorAccount {
                 sliding_nonce,
                 new_account_address,
@@ -3611,15 +3649,23 @@ impl ScriptFunctionCall {
             MinerstateCommit {
                 challenge,
                 solution,
-            } => encode_minerstate_commit_script_function(challenge, solution),
+                difficulty,
+                security,
+            } => {
+                encode_minerstate_commit_script_function(challenge, solution, difficulty, security)
+            }
             MinerstateCommitByOperator {
                 owner_address,
                 challenge,
                 solution,
+                difficulty,
+                security,
             } => encode_minerstate_commit_by_operator_script_function(
                 owner_address,
                 challenge,
                 solution,
+                difficulty,
+                security,
             ),
             MinerstateHelper {} => encode_minerstate_helper_script_function(),
             OlDelegateVote { dest } => encode_ol_delegate_vote_script_function(dest),
@@ -4075,6 +4121,24 @@ pub fn encode_autopay_enable_script_function() -> TransactionPayload {
     ))
 }
 
+pub fn encode_balance_transfer_script_function(
+    destination: AccountAddress,
+    unscaled_value: u64,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("TransferScripts").to_owned(),
+        ),
+        ident_str!("balance_transfer").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&destination).unwrap(),
+            bcs::to_bytes(&unscaled_value).unwrap(),
+        ],
+    ))
+}
+
 /// # Summary
 /// Burns the transaction fees collected in the `CoinType` currency so that the
 /// Diem association may reclaim the backing coins off-chain. May only be sent
@@ -4266,6 +4330,8 @@ pub fn encode_cancel_burn_with_amount_script_function(
 pub fn encode_create_acc_user_script_function(
     challenge: Vec<u8>,
     solution: Vec<u8>,
+    difficulty: u64,
+    security: u64,
 ) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
@@ -4277,6 +4343,8 @@ pub fn encode_create_acc_user_script_function(
         vec![
             bcs::to_bytes(&challenge).unwrap(),
             bcs::to_bytes(&solution).unwrap(),
+            bcs::to_bytes(&difficulty).unwrap(),
+            bcs::to_bytes(&security).unwrap(),
         ],
     ))
 }
@@ -4284,6 +4352,8 @@ pub fn encode_create_acc_user_script_function(
 pub fn encode_create_acc_val_script_function(
     challenge: Vec<u8>,
     solution: Vec<u8>,
+    difficulty: u64,
+    security: u64,
     ow_human_name: Vec<u8>,
     op_address: AccountAddress,
     op_auth_key_prefix: Vec<u8>,
@@ -4302,6 +4372,8 @@ pub fn encode_create_acc_val_script_function(
         vec![
             bcs::to_bytes(&challenge).unwrap(),
             bcs::to_bytes(&solution).unwrap(),
+            bcs::to_bytes(&difficulty).unwrap(),
+            bcs::to_bytes(&security).unwrap(),
             bcs::to_bytes(&ow_human_name).unwrap(),
             bcs::to_bytes(&op_address).unwrap(),
             bcs::to_bytes(&op_auth_key_prefix).unwrap(),
@@ -4615,6 +4687,26 @@ pub fn encode_create_recovery_address_script_function() -> TransactionPayload {
     ))
 }
 
+pub fn encode_create_user_by_coin_tx_script_function(
+    account: AccountAddress,
+    authkey_prefix: Vec<u8>,
+    unscaled_value: u64,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("AccountScripts").to_owned(),
+        ),
+        ident_str!("create_user_by_coin_tx").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&account).unwrap(),
+            bcs::to_bytes(&authkey_prefix).unwrap(),
+            bcs::to_bytes(&unscaled_value).unwrap(),
+        ],
+    ))
+}
+
 /// # Summary
 /// Creates a Validator account. This transaction can only be sent by the Diem
 /// Root account.
@@ -4890,6 +4982,8 @@ pub fn encode_leave_script_function() -> TransactionPayload {
 pub fn encode_minerstate_commit_script_function(
     challenge: Vec<u8>,
     solution: Vec<u8>,
+    difficulty: u64,
+    security: u64,
 ) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
@@ -4901,6 +4995,8 @@ pub fn encode_minerstate_commit_script_function(
         vec![
             bcs::to_bytes(&challenge).unwrap(),
             bcs::to_bytes(&solution).unwrap(),
+            bcs::to_bytes(&difficulty).unwrap(),
+            bcs::to_bytes(&security).unwrap(),
         ],
     ))
 }
@@ -4909,6 +5005,8 @@ pub fn encode_minerstate_commit_by_operator_script_function(
     owner_address: AccountAddress,
     challenge: Vec<u8>,
     solution: Vec<u8>,
+    difficulty: u64,
+    security: u64,
 ) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
@@ -4921,6 +5019,8 @@ pub fn encode_minerstate_commit_by_operator_script_function(
             bcs::to_bytes(&owner_address).unwrap(),
             bcs::to_bytes(&challenge).unwrap(),
             bcs::to_bytes(&solution).unwrap(),
+            bcs::to_bytes(&difficulty).unwrap(),
+            bcs::to_bytes(&security).unwrap(),
         ],
     ))
 }
@@ -8027,6 +8127,19 @@ fn decode_autopay_enable_script_function(
     }
 }
 
+fn decode_balance_transfer_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::BalanceTransfer {
+            destination: bcs::from_bytes(script.args().get(0)?).ok()?,
+            unscaled_value: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_burn_txn_fees_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -8075,6 +8188,8 @@ fn decode_create_acc_user_script_function(
         Some(ScriptFunctionCall::CreateAccUser {
             challenge: bcs::from_bytes(script.args().get(0)?).ok()?,
             solution: bcs::from_bytes(script.args().get(1)?).ok()?,
+            difficulty: bcs::from_bytes(script.args().get(2)?).ok()?,
+            security: bcs::from_bytes(script.args().get(3)?).ok()?,
         })
     } else {
         None
@@ -8088,13 +8203,15 @@ fn decode_create_acc_val_script_function(
         Some(ScriptFunctionCall::CreateAccVal {
             challenge: bcs::from_bytes(script.args().get(0)?).ok()?,
             solution: bcs::from_bytes(script.args().get(1)?).ok()?,
-            ow_human_name: bcs::from_bytes(script.args().get(2)?).ok()?,
-            op_address: bcs::from_bytes(script.args().get(3)?).ok()?,
-            op_auth_key_prefix: bcs::from_bytes(script.args().get(4)?).ok()?,
-            op_consensus_pubkey: bcs::from_bytes(script.args().get(5)?).ok()?,
-            op_validator_network_addresses: bcs::from_bytes(script.args().get(6)?).ok()?,
-            op_fullnode_network_addresses: bcs::from_bytes(script.args().get(7)?).ok()?,
-            op_human_name: bcs::from_bytes(script.args().get(8)?).ok()?,
+            difficulty: bcs::from_bytes(script.args().get(2)?).ok()?,
+            security: bcs::from_bytes(script.args().get(3)?).ok()?,
+            ow_human_name: bcs::from_bytes(script.args().get(4)?).ok()?,
+            op_address: bcs::from_bytes(script.args().get(5)?).ok()?,
+            op_auth_key_prefix: bcs::from_bytes(script.args().get(6)?).ok()?,
+            op_consensus_pubkey: bcs::from_bytes(script.args().get(7)?).ok()?,
+            op_validator_network_addresses: bcs::from_bytes(script.args().get(8)?).ok()?,
+            op_fullnode_network_addresses: bcs::from_bytes(script.args().get(9)?).ok()?,
+            op_human_name: bcs::from_bytes(script.args().get(10)?).ok()?,
         })
     } else {
         None
@@ -8166,6 +8283,20 @@ fn decode_create_recovery_address_script_function(
 ) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
         Some(ScriptFunctionCall::CreateRecoveryAddress {})
+    } else {
+        None
+    }
+}
+
+fn decode_create_user_by_coin_tx_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::CreateUserByCoinTx {
+            account: bcs::from_bytes(script.args().get(0)?).ok()?,
+            authkey_prefix: bcs::from_bytes(script.args().get(1)?).ok()?,
+            unscaled_value: bcs::from_bytes(script.args().get(2)?).ok()?,
+        })
     } else {
         None
     }
@@ -8259,6 +8390,8 @@ fn decode_minerstate_commit_script_function(
         Some(ScriptFunctionCall::MinerstateCommit {
             challenge: bcs::from_bytes(script.args().get(0)?).ok()?,
             solution: bcs::from_bytes(script.args().get(1)?).ok()?,
+            difficulty: bcs::from_bytes(script.args().get(2)?).ok()?,
+            security: bcs::from_bytes(script.args().get(3)?).ok()?,
         })
     } else {
         None
@@ -8273,6 +8406,8 @@ fn decode_minerstate_commit_by_operator_script_function(
             owner_address: bcs::from_bytes(script.args().get(0)?).ok()?,
             challenge: bcs::from_bytes(script.args().get(1)?).ok()?,
             solution: bcs::from_bytes(script.args().get(2)?).ok()?,
+            difficulty: bcs::from_bytes(script.args().get(3)?).ok()?,
+            security: bcs::from_bytes(script.args().get(4)?).ok()?,
         })
     } else {
         None
@@ -9121,6 +9256,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_autopay_enable_script_function),
         );
         map.insert(
+            "TransferScriptsbalance_transfer".to_string(),
+            Box::new(decode_balance_transfer_script_function),
+        );
+        map.insert(
             "TreasuryComplianceScriptsburn_txn_fees".to_string(),
             Box::new(decode_burn_txn_fees_script_function),
         );
@@ -9159,6 +9298,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "AccountAdministrationScriptscreate_recovery_address".to_string(),
             Box::new(decode_create_recovery_address_script_function),
+        );
+        map.insert(
+            "AccountScriptscreate_user_by_coin_tx".to_string(),
+            Box::new(decode_create_user_by_coin_tx_script_function),
         );
         map.insert(
             "AccountCreationScriptscreate_validator_account".to_string(),

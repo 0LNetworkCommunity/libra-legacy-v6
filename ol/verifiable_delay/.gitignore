@@ -39,7 +39,7 @@ rls*.log
 target/
 
 #miner output
-blocks/
+vdf_proofs/
 
 #Mac files
 .DS_Store

@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 use anyhow::Error;
 use cli::{diem_client::DiemClient, AccountData, AccountStatus};
+use ol_types::block::VDFProof;
 use txs::{sign_tx::sign_tx, submit_tx::{TxParams, submit_tx}};
 use diem_json_rpc_types::views::{TransactionView};
 use diem_transaction_builder::stdlib as transaction_builder;
@@ -9,8 +10,7 @@ use diem_transaction_builder::stdlib as transaction_builder;
 /// Submit a miner transaction to the network.
 pub fn commit_proof_tx(
     tx_params: &TxParams,
-    preimage: Vec<u8>,
-    proof: Vec<u8>,
+    block: VDFProof,
     is_operator: bool,
 ) -> Result<TransactionView, Error> {
 
@@ -28,11 +28,20 @@ pub fn commit_proof_tx(
 
     let script = if is_operator {
         transaction_builder::encode_minerstate_commit_by_operator_script_function(
-            tx_params.owner_address.clone(), preimage, proof
+            tx_params.owner_address.clone(), 
+            block.preimage.clone(), 
+            block.proof.clone(),
+            block.difficulty(),
+            block.security(),
         )
     } else {
         // if owner sending with mnemonic
-        transaction_builder::encode_minerstate_commit_script_function(preimage, proof)
+        transaction_builder::encode_minerstate_commit_script_function(
+          block.preimage.clone(), 
+          block.proof.clone(),
+          block.difficulty(),
+          block.security(),
+        )
     };
 
     let signed_tx = sign_tx(script, tx_params, sequence_number, chain_id)?;

@@ -489,8 +489,10 @@ impl DiemVM {
         let mut session = self.0.new_session(storage);
 
         let (round, timestamp, previous_vote, proposer) = block_metadata.clone().into_inner();
-        if round % 1000 == 0 {println!("======== round is {}", round)}
 
+        println!("========================================== {} ==========================================", round);
+
+        
         let args = serialize_values(&vec![
             MoveValue::Signer(txn_data.sender),
             MoveValue::U64(round),
@@ -514,25 +516,27 @@ impl DiemVM {
             })?;
 
         //////// 0L ////////
-        // Consensus checking for oracle outcome
-        self.0.tick_oracle_consensus(
-            &mut session, 
-            block_metadata.clone(), 
-            &txn_data, 
-            &mut gas_status, 
-            log_context
-        )?;
+        if round == 2 {
+            // Consensus checking for oracle outcome
+            self.0.tick_oracle_consensus(
+                &mut session,
+                block_metadata.clone(),
+                &txn_data,
+                &mut gas_status,
+                log_context,
+            )?;
 
-        // //////// 0L ////////
-        // Apply upgrade for Upgrade oracle
-        self.0.apply_stdlib_upgrade(
-            &mut session, 
-            &storage, 
-            block_metadata.clone(), 
-            &txn_data, 
-            &mut gas_status, 
-            log_context
-        )?;
+            //////// 0L ////////
+            // Apply upgrade for Upgrade oracle
+            self.0.apply_stdlib_upgrade(
+                &mut session,
+                &storage,
+                block_metadata.clone(),
+                &txn_data,
+                &mut gas_status,
+                log_context,
+            )?;
+        }
 
         SYSTEM_TRANSACTIONS_EXECUTED.inc();
 

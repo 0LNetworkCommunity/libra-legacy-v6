@@ -8,17 +8,15 @@ script {
     use 0x1::TowerState;
     use 0x1::TestFixtures;
 
-    // SIMULATES A MINER ONBOARDING PROOF (block_0.json)
+    // SIMULATES A MINER ONBOARDING PROOF (proof_0.json)
     fun main(sender: signer) {
-        let difficulty = 100;
         let height_after = 0;
-
-        // return solution
         TowerState::test_helper_init_miner(
             &sender,
-            difficulty,
-            TestFixtures::alice_0_easy_chal(),
-            TestFixtures::alice_0_easy_sol()
+            TestFixtures::easy_chal(),
+            TestFixtures::easy_sol(),
+            TestFixtures::easy_difficulty(),
+            TestFixtures::security(),
         );
         //above test function was updated to set height to 1 for oracle E2E test, need to reset to 0 here. 
         TowerState::test_helper_set_weight(&sender, 0);

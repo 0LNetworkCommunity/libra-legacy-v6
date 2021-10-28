@@ -7,8 +7,7 @@ mod genesis_context;
 pub mod genesis_gas_schedule;
 
 use anyhow::Error;
-use serde::{Deserialize, Serialize};
-use std::env;
+use std::{env, process::exit};
 
 use crate::{genesis_context::GenesisStateView, genesis_gas_schedule::INITIAL_GAS_SCHEDULE};
 use diem_crypto::{
@@ -48,7 +47,8 @@ use rand::prelude::*;
 use transaction_builder::encode_create_designated_dealer_script_function;
 
 //////// 0L ////////
-use ol_types::account::ValConfigs;
+use ol_types::{config::IS_PROD, genesis_proof::GenesisMiningProof};
+use diem_global_constants::{VDF_SECURITY_PARAM, delay_difficulty};
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
@@ -142,11 +142,9 @@ pub fn encode_genesis_change_set(
         chain_id,
     );
     //////// 0L ////////
-    println!("OK create_and_initialize_main_accounts =============== ");
+    // println!("OK create_and_initialize_main_accounts =============== ");
 
-    let genesis_env = get_env();
-    println!("Initializing with env: {}", genesis_env);
-    if genesis_env != "prod" {
+    if !*IS_PROD {
         initialize_testnet(&mut session, &log_context);
     }
     //////// 0L end ////////
@@ -159,10 +157,10 @@ pub fn encode_genesis_change_set(
         &operator_registrations,
     );
     //////// 0L ////////
-    println!("OK create_and_initialize_owners_operators =============== ");
+    // println!("OK create_and_initialize_owners_operators =============== ");
 
     distribute_genesis_subsidy(&mut session, &log_context);
-    println!("OK Genesis subsidy =============== ");
+    // println!("OK Genesis subsidy =============== ");
 
     fund_operators(&mut session, &log_context, &operator_assignments);
     //////// 0L end ////////
@@ -229,11 +227,9 @@ pub fn encode_recovery_genesis_changeset(
         ChainId::new(chain),
     );
     //////// 0L ////////
-    println!("OK create_and_initialize_main_accounts =============== ");
+    // println!("OK create_and_initialize_main_accounts =============== ");
 
-    let genesis_env = get_env();
-    println!("Initializing with env: {}", genesis_env);
-    if genesis_env != "prod" {
+    if !*IS_PROD {
         initialize_testnet(&mut session, &log_context);
     }
     //////// 0L end ////////
@@ -248,7 +244,7 @@ pub fn encode_recovery_genesis_changeset(
         &val_set,
     );
     //////// 0L ////////
-    println!("OK create_and_initialize_owners_operators =============== ");
+    // println!("OK create_and_initialize_owners_operators =============== ");
 
     // distribute_genesis_subsidy(&mut session, &log_context);
     // println!("OK Genesis subsidy =============== ");
@@ -490,12 +486,12 @@ fn create_and_initialize_owners_operators(
     // key prefix and account address. Internally move then computes the auth key as auth key
     // prefix || address. Because of this, the initial auth key will be invalid as we produce the
     // account address from the name and not the public key.
-    println!("0 ======== Create Owner Accounts");
+    // println!("0 ======== Create Owner Accounts");
     for (owner_key, owner_name, _op_assignment, genesis_proof, _operator) in operator_assignments {
         // TODO: Remove. Temporary Authkey for genesis, because accounts are being created from human names.
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
-        dbg!(owner_address);
+        println!("initializing owner: {}", owner_address);
         // let staged_owner_auth_key = diem_config::utils::default_validator_owner_auth_key_from_name(owner_name);
         //TODO: why does this need to be derived from human name?
         // let owner_address = staged_owner_auth_key.derived_address();
@@ -533,6 +529,7 @@ fn create_and_initialize_owners_operators(
         );
 
         // Submit mining proof
+        // Todo this should use the 0L Block type.
         let preimage = hex::decode(&genesis_proof.preimage).unwrap();
         let proof = hex::decode(&genesis_proof.proof).unwrap();
         exec_function(
@@ -546,6 +543,8 @@ fn create_and_initialize_owners_operators(
                 MoveValue::Signer(owner_address),
                 MoveValue::vector_u8(preimage),
                 MoveValue::vector_u8(proof),
+                MoveValue::U64(delay_difficulty()), // TODO: make this part of genesis registration
+                MoveValue::U64(VDF_SECURITY_PARAM.into()),
             ]),
         );
 
@@ -589,7 +588,7 @@ fn create_and_initialize_owners_operators(
         );
     }
 
-    println!("1 ======== Create OP Accounts");
+    // println!("1 ======== Create OP Accounts");
     // Create accounts for each validator operator
     for (operator_key, operator_name, _, _) in operator_registrations {
         let operator_auth_key = AuthenticationKey::ed25519(&operator_key);
@@ -611,7 +610,7 @@ fn create_and_initialize_owners_operators(
         );
     }
 
-    println!("2 ======== Link owner to OP");
+    // println!("2 ======== Link owner to OP");
     // Authorize an operator for a validator/owner
     for (owner_key, _owner_name, op_assignment_script, _genesis_proof, _operator) in
         operator_assignments
@@ -622,14 +621,14 @@ fn create_and_initialize_owners_operators(
         exec_script_function(session, log_context, owner_address, op_assignment_script);
     }
 
-    println!("3 ======== OP sends network info to Owner config");
+    // println!("3 ======== OP sends network info to Owner config");
     // Set the validator operator configs for each owner
     for (operator_key, _, registration, _account) in operator_registrations {
         let operator_account = account_address::from_public_key(operator_key);
         exec_script_function(session, log_context, operator_account, registration);
     }
 
-    println!("4 ======== Add owner to validator set");
+    // println!("4 ======== Add owner to validator set");
     // Add each validator to the validator set
     for (owner_key, _owner_name, _op_assignment, _genesis_proof, _operator_account) in
         operator_assignments
@@ -711,7 +710,7 @@ fn recovery_owners_operators(
     // key prefix and account address. Internally move then computes the auth key as auth key
     // prefix || address. Because of this, the initial auth key will be invalid as we produce the
     // account address from the name and not the public key.
-    println!("0 ======== Create Owner Accounts");
+    // println!("0 ======== Create Owner Accounts");
     for i in val_assignments {
         println!("account: {:?}", i.val_account);
         // TODO: why does this need to be derived from human name?
@@ -731,7 +730,7 @@ fn recovery_owners_operators(
             &create_owner_script,
         );
 
-        println!("======== recover miner state");
+        // println!("======== recover miner state");
         // TODO: Where's this function recover_miner_state. Lost from v4 to v5?
         // exec_function(
         //     session,
@@ -758,7 +757,7 @@ fn recovery_owners_operators(
         );
     }
 
-    println!("1 ======== Create OP Accounts");
+    // println!("1 ======== Create OP Accounts");
     // Create accounts for each validator operator
     for i in operator_registrations {
         let create_operator_script =
@@ -777,7 +776,7 @@ fn recovery_owners_operators(
         );
     }
 
-    println!("2 ======== Link owner to OP");
+    // println!("2 ======== Link owner to OP");
     // Authorize an operator for a validator/owner
     for i in val_assignments {
         let create_operator_script =
@@ -795,7 +794,7 @@ fn recovery_owners_operators(
         );
     }
 
-    println!("3 ======== OP sends network info to Owner config");
+    // println!("3 ======== OP sends network info to Owner config");
     // Set the validator operator configs for each owner
     for i in operator_registrations {
         let create_operator_script =
@@ -814,7 +813,7 @@ fn recovery_owners_operators(
         );
     }
 
-    println!("4 ======== Add owner to validator set");
+    // println!("4 ======== Add owner to validator set");
     // Add each validator to the validator set
     for i in val_set {
         // let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
@@ -1046,7 +1045,7 @@ fn fund_operators(
   log_context: &impl LogContext,
   operator_assignments: &[OperatorAssignment],
 ) {
-    println!("4 ======== Add owner to validator set");
+    // println!("4 ======== Add owner to validator set");
     // Add each validator to the validator set
     for (owner_key, _owner_name, _op_assignment, _genesis_proof, operator_account) in
         operator_assignments
@@ -1070,62 +1069,26 @@ fn fund_operators(
         );
     }
 }
-//////// 0L ////////
-fn get_env() -> String {
-    match env::var("NODE_ENV") {
-        Ok(val) => val,
-        _ => "test".to_string(), // default to "test" if not set
-    }
-}
 
-//////// 0L ////////
-// 0L Change: Necessary for genesis transaction.
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct GenesisMiningProof {
-    pub preimage: String,
-    pub proof: String,
-    pub profile: Option<ValConfigs>,
-}
-
-//////// 0L ////////
-impl Default for GenesisMiningProof {
-    fn default() -> GenesisMiningProof {
-        // These use "alice" fixtures from ../fixtures and used elsewhere in the project, in both easy(stage) and hard(Prod) mode.
-
-        let easy_preimage = "87515d94a244235a1433d7117bc0cb154c613c2f4b1e67ca8d98a542ee3f59f5000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000304c20746573746e65746400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000050726f74657374732072616765206163726f737320746865206e6174696f6e".to_owned();
-
-        let easy_proof = "002c4dc1276a8a58ea88fc9974c847f14866420cbc62e5712baf1ae26b6c38a393c4acba3f72d8653e4b2566c84369601bdd1de5249233f60391913b59f0b7f797f66897de17fb44a6024570d2f60e6c5c08e3156d559fbd901fad0f1343e0109a9083e661e5d7f8c1cc62e815afeee31d04af8b8f31c39a5f4636af2b468bf59a0010f48d79e7475be62e7007d71b7355944f8164e761cd9aca671a4066114e1382fbe98834fe32cf494d01f31d1b98e3ef6bffa543928810535a063c7bbf491c472263a44d9269b1cbcb0aa351f8bd894e278b5d5667cc3f26a35b9f8fd985e4424bedbb3b77bdcc678ccbb9ed92c1730dcdd3a89c1a8766cbefa75d6eeb7e5921000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001".to_owned();
-
-        //NOTE: this is same as easy_preimage
-        // let hard_preimage = easy_preimage.to_owned();
-        let hard_preimage = "87515d94a244235a1433d7117bc0cb154c613c2f4b1e67ca8d98a542ee3f59f5000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000304c20746573746e6574404b4c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000050726f74657374732072616765206163726f737320746865206e6174696f6e".to_owned();
-
-        let hard_proof =  "001725678f78425dac39e394fc07698dd8fc891dfba0822cecc5d21434dacde903f508c1e12844eb4b97a598653cc6d03524335edf51b43f090199288488b537fd977cc5f53069f609a2f758f121e887f28f0fc1150aa5649255f8b7caea9edf6228640358d1a4fe43ddb6ad6ce1c3a6a28166e2f0b7e7310e80bfbb1db85e096000065a89b7f44ebc495d70db6034fd529a80e0b5bb74ace62cffb89f4e16e54f93e4a0063ca3651dd8486b466607973a51aacb0c66213e64e0b7bf291c64d81ed4a517a0abe58da4ae46f6191c808d9ba7c636cee404ed02248794db3fab6e5e4ab517f6f3fa12f39fb88fb5a143b5d9c16a31e3c3e173deb11494f792b52a67a70034a065c665b1ef05921a6a8ac4946365d61b2b4d5b86a607ba73659863d774c3fc7c2372f5b6c8b5ae068d4e20aac5e42b501bf441569d377f70e8f87db8a6f9b1eadb813880dbeb89872121849df312383f4d8007747ae76e66e5a13d9457af173ebb0c5eb9c39ee1ac5cef94aa75e1d5286349c88051c36507960de1f37377ffddc80a66578b437ac2a6d04fc7a595075b978bd844919d03ffe9db5b6440b753273c498aa2a139de42188d278d1ce1e3ddfdd99a97a64907e1cdf30d1c55dfc7262cd3175eb1f268ee2a91576fcd6bd644031413f55e42c510d08a81e747de36c0a6c9019d219571ea6851f43a551d6012a5317cc52992a72c270c1570419665".to_owned();
-
-        if get_env() == "test" {
-            return GenesisMiningProof {
-                preimage: easy_preimage,
-                proof: easy_proof,
-                profile: None,
-            };
-        } else {
-            return GenesisMiningProof {
-                preimage: hard_preimage,
-                proof: hard_proof,
-                profile: None,
-            };
-        }
-    }
-}
 
 //////// 0L ////////
 fn initialize_testnet(session: &mut Session<StateViewCache>, log_context: &impl LogContext) {
     let diem_root_address = account_config::diem_root_address();
-    let mut module_name = "Testnet";
-    if get_env() == "stage" {
-        module_name = "StagingNet";
+
+
+    let genesis_env = env::var("NODE_ENV").unwrap();
+    println!("Initializing with env: {}", genesis_env);
+    
+    //////// 0L ////////
+    let module_name = match genesis_env.as_ref() {
+        "test" => "Testnet",
+        "stage" => "StagingNet",
+        _ => {
+          println!("ERROR: env is ambiguous. Are you starting a test or staging network? Found env: {}", &genesis_env);
+          exit(1);
+        },
     };
+
     exec_function(
         session,
         log_context,

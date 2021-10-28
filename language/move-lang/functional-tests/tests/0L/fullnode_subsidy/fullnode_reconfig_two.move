@@ -8,16 +8,16 @@
 //! sender: bob
 script {
     use 0x1::TowerState;
-    use 0x1::Globals;
     use 0x1::TestFixtures;
 
     fun main(sender: signer) {
         // add one proof and init the state.
         TowerState::test_helper_init_miner(
             &sender,
-            Globals::get_difficulty(),
-            TestFixtures::alice_0_easy_chal(),
-            TestFixtures::alice_0_easy_sol()
+            TestFixtures::easy_chal(),
+            TestFixtures::easy_sol(),
+            TestFixtures::easy_difficulty(),
+            TestFixtures::security(),
         );
     }
 }
@@ -26,16 +26,16 @@ script {
 //! sender: carol
 script {
     use 0x1::TowerState;
-    use 0x1::Globals;
     use 0x1::TestFixtures;
 
     fun main(sender: signer) {
         // add one proof and init the state.
         TowerState::test_helper_init_miner(
             &sender,
-            Globals::get_difficulty(),
-            TestFixtures::alice_0_easy_chal(),
-            TestFixtures::alice_0_easy_sol()
+            TestFixtures::easy_chal(),
+            TestFixtures::easy_sol(),
+            TestFixtures::easy_difficulty(),
+            TestFixtures::security(),
         );
     }
 }
@@ -117,21 +117,14 @@ script {
 script {
     use 0x1::DiemSystem;
     use 0x1::TowerState;
-    use 0x1::Debug::print;
 
     fun main(sender: signer) {
         // Tests on initial size of validators
         assert(DiemSystem::is_validator(@{{alice}}), 735706);
         assert(!DiemSystem::is_validator(@{{bob}}), 735707);
         
-        print(&TowerState::get_count_in_epoch(@{{bob}}));
-
         // bring bob to 10 proofs. (Note: alice has one proof as a fullnode from genesis, so it will total 11 fullnode proofs.);
         TowerState::test_helper_mock_mining(&sender, 10);
-
-        // assert(TowerState::get_count_in_epoch(@{{bob}}) == 1, 7357300101041000);
-        print(&TowerState::get_count_in_epoch(@{{bob}}));
-        print(&TowerState::get_fullnode_proofs());
     }
 }
 // check: EXECUTED
@@ -168,7 +161,6 @@ script {
     use 0x1::DiemAccount;
     use 0x1::Subsidy;
     use 0x1::Globals;
-    // use 0x1::Debug::print;
 
     fun main(_vm: signer) {
         // We are in a new epoch.

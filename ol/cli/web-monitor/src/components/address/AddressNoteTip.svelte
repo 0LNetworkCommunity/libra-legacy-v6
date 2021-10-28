@@ -1,3 +1,3 @@
-<a target="_blank" href="https://github.com/OLSF/libra/wiki/How-to-Config-Web-Monitor-Account-Dictionary" uk-tooltip="click and learn how to add notes to addresses">
+<a target="_blank" href="https://github.com/OLSF/libra/blob/main/ol/documentation/ops/web_monitor_account_dictionary.md">
     <span uk-icon="icon: info"></span>
 </a>

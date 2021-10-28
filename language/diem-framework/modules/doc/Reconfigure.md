@@ -117,10 +117,8 @@
         // Not sure <b>if</b> the performance hit at epoch boundary is worth the refactor.
         <b>if</b> (<a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr)) {
           <b>let</b> count = <a href="TowerState.md#0x1_TowerState_get_count_in_epoch">TowerState::get_count_in_epoch</a>(addr);
-          // print(&count);
 
           <b>let</b> miner_subsidy = count * proof_price;
-          // print(&miner_subsidy);
           <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_distribute_fullnode_subsidy">FullnodeSubsidy::distribute_fullnode_subsidy</a>(vm, addr, miner_subsidy);
         };
 
@@ -153,15 +151,12 @@
 ) {
     // Process outgoing validators:
     // Distribute Transaction fees and subsidy payments <b>to</b> all outgoing validators
-    // print(&03240);
 
     <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_is_empty">Vector::is_empty</a>&lt;address&gt;(&outgoing_compliant_set)) <b>return</b>;
 
-    // print(&03241);
     <b>if</b> (subsidy_units &gt; 0) {
         <a href="Subsidy.md#0x1_Subsidy_process_subsidy">Subsidy::process_subsidy</a>(vm, subsidy_units, &outgoing_compliant_set);
     };
-    // print(&03241);
 
     <a href="Subsidy.md#0x1_Subsidy_process_fees">Subsidy::process_fees</a>(vm, &outgoing_compliant_set);
 }
@@ -214,22 +209,16 @@
 
     <b>let</b> burn_value = 1000000; // TODO: switch <b>to</b> a variable cost, <b>as</b> above.
 
-    // print(&03250);
-
     <b>let</b> i = 0;
     <b>while</b> (i &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&top_accounts)) {
-        // print(&03251);
-
         <b>let</b> addr = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&top_accounts, i);
         <b>let</b> mined_last_epoch = <a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr);
-        // print(&mined_last_epoch);
-        // TODO: temporary until jail-refactor merge.
+        // TODO: temporary until jailing is enabled.
         <b>if</b> (
             !<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&jailed_set, &addr) &&
             mined_last_epoch &&
             <a href="Audit.md#0x1_Audit_val_audit_passing">Audit::val_audit_passing</a>(addr)
         ) {
-        //print(&03252);
             <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> proposed_set, addr);
             <a href="Burn.md#0x1_Burn_epoch_start_burn">Burn::epoch_start_burn</a>(vm, addr, burn_value);
         };
@@ -244,7 +233,6 @@
     // at least 6 nodes and 6 rounds. If we reach an epoch boundary <b>with</b>
     // at least 6 rounds, we would have at least 2/3rd of the validator
     // set <b>with</b> at least 66% liveliness.
-    // print(&03270);
     proposed_set
 }
 </code></pre>

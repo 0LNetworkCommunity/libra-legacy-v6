@@ -1,6 +1,6 @@
 //! Key generation
 use std::env;
-
+use once_cell::sync::Lazy;
 use diem_wallet::{Mnemonic, WalletLibrary};
 use diem_types::{
   account_address::AccountAddress,
@@ -59,19 +59,14 @@ pub fn get_account_from_prompt()
   -> (AuthenticationKey, AccountAddress, WalletLibrary) {
 
     println!("Enter your 0L mnemonic:");
-
-    match env::var("NODE_ENV") {
-      Ok(val) => {
-        let maybe_env_mnem = env::var("MNEM");
-        
-        // if we are in debugging or CI mode
-        if val != "prod" && maybe_env_mnem.is_ok() {
-          println!("Debugging mode, using mnemonic from env variable, $MNEM");
-          return get_account_from_mnem(maybe_env_mnem.unwrap().trim().to_string())
-        }
-      },
-      _ => {}, // default to "prod" if not set
-    };
+      
+    // if we are in debugging or CI mode
+    if let Some(mnem) = env::var("MNEM").ok() {
+      if *IS_TEST {
+        println!("Debugging mode, using mnemonic from env variable, $MNEM");
+        return get_account_from_mnem(mnem.trim().to_string())
+      }
+    }
     
     let read = rpassword::read_password_from_tty(Some("\u{1F511} "));
     get_account_from_mnem(read.unwrap().trim().to_string())
@@ -105,3 +100,11 @@ fn wallet() {
     // Expect this to be zero before we haven't populated the address map in the repo
     assert!(vec_addresses.len() == 1);
 }
+
+
+// TODO: this is duplicated with ol/types/config because of a dependency cycle. Move to Global constants?
+/// check this is CI environment
+pub static IS_TEST: Lazy<bool> = Lazy::new(|| {
+    // assume default if NODE_ENV=prod and TEST=y.
+    std::env::var("TEST").unwrap_or("n".to_string()) != "n".to_string() 
+});

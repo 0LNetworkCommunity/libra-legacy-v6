@@ -49,7 +49,6 @@ machine-ip = "0.2.1"
 ol = { path = "../cli"}
 txs = { path = "../txs"}
 ol-types = { path = "../../ol/types"}
-ol-fixtures = { path = "../../ol/fixtures"}
 
 [dependencies.abscissa_core]
 version = "0.5.2"

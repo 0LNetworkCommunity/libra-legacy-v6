@@ -5,7 +5,6 @@
 script {
   use 0x1::Bonding;
   use 0x1::Signer;
-  use 0x1::Debug::print;
 
   fun main(sender: signer) {
     let coin = 10;
@@ -20,9 +19,7 @@ script {
     Bonding::test_bond_to_mint(&sender, addr, 100);
 
     let (reserve, supply) = Bonding::get_curve_state(addr);
-    print(&reserve);
-    print(&supply);
-
+    
     assert(reserve == 110, 735701);
     assert(supply == 331, 735701);
   }

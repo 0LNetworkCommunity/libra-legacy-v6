@@ -137,19 +137,41 @@ reset-safety:
 	jq -r '.["${ACC}-oper/safety_data"].value = { "epoch": 0, "last_voted_round": 0, "preferred_round": 0, "last_vote": null }' ${DATA_PATH}/key_store.json > ${DATA_PATH}/temp_key_store && mv ${DATA_PATH}/temp_key_store ${DATA_PATH}/key_store.json
 
 
-
-
 backup:
-	cd ~ && rsync -av --exclude db/ --exclude logs/ ~/.0L ~/0L_backup_$(shell date +"%m-%d-%y")
+	cd ~ && rsync -av --exclude db/ --exclude logs/ ~/.0L/* ~/0L_backup_$(shell date +"%m-%d-%y-%T")
+
+confirm:
+	@read -p "Continue (y/n)?" CONT; \
+	if [ "$$CONT" = "y" ]; then \
+		echo "deleting...."; \
+	else \
+		exit 1; \
+	fi \
+
+
+danger-restore:
+	cp ${HOME}/0L_backup/github_token.txt ${HOME}/.0L/ | true
+	cp ${HOME}/0L_backup/autopay_batch.json ${HOME}/.0L/ | true
+	rsync -rtv ${HOME}/0L_backup/blocks/ ${HOME}/.0L/blocks | true
+	rsync -rtv ${HOME}/0L_backup/vdf_proofs/ ${HOME}/.0L/vdf_proofs | true
+	rsync -rtv ${HOME}/0L_backup/set_layout.toml ${HOME}/.0L/ | true
+
+
+	
+
 
 clear-prod-db:
 	@echo WIPING DB
+	make confirm
 	rm -rf ${DATA_PATH}/db | true
 
 reset-safety:
 	@echo CLEARING SAFETY RULES IN KEY_STORE.JSON
 	jq -r '.["${ACC}-oper/safety_data"].value = { "epoch": 0, "last_voted_round": 0, "preferred_round": 0, "last_vote": null }' ${DATA_PATH}/key_store.json > ${DATA_PATH}/temp_key_store && mv ${DATA_PATH}/temp_key_store ${DATA_PATH}/key_store.json
 	
+
+move-test:
+	cd language/move-lang/functional-tests/ && cargo t 0L
 #### GENESIS BACKEND SETUP ####
 init-backend: 
 	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
@@ -184,22 +206,20 @@ gen-make-pull:
 	--shared-backend ${GENESIS_REMOTE} \
 	--pull-request-user ${GITHUB_USER}
 
-genesis-miner:
-	cargo run -p tower -- zero
-
+gen-delete-fork:
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
+	--repo-name ${REPO_NAME} \
+	--repo-owner ${REPO_ORG} \
+	--shared-backend ${GENESIS_REMOTE} \
+	--delete-repo-user ${GITHUB_USER}
 
 gen-onboard:
-		cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony --skip-mining
+	cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony
 
-ceremony: gen-fork-repo gen-onboard		
+gen-reset:
+	cargo run -p onboard ${CARGO_ARGS} -- val --genesis-ceremony --skip-mining
 
-# cargo run -p tower ${CARGO_ARGS} -- zero
-
-register:
-# export ACC=$(shell toml get ${DATA_PATH}/0L.toml profile.account)
-# @echo Initializing from ${DATA_PATH}/0L.toml with account:
-# @echo ${ACC}
-# make init
+gen-register:
 
 	@echo the OPER initializes local accounts and submit pubkeys to github
 	ACC=${ACC}-oper make oper-key
@@ -213,10 +233,8 @@ register:
 	@echo OPER send signed transaction with configurations for *OWNER* account
 	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
 
-ifeq (${TEST}, y)
 	@echo Making pull request to genesis coordination repo
 	make gen-make-pull
-endif
 
 init-test:
 	echo ${MNEM} | head -c -1 | cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
@@ -226,15 +244,15 @@ init:
 # OWNER does this
 # Submits proofs to shared storage
 add-proofs:
-	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  mining \
-	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- mining \
+	--path-to-genesis-pow ${DATA_PATH}/vdf_proofs/proof_0.json \
   --path-to-account-json ${DATA_PATH}/account.json \
 	--shared-backend ${REMOTE}
 
 # OPER does this
 # Submits operator key to github, and creates local OPERATOR_ACCOUNT
 oper-key:
-	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  operator-key \
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- operator-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
@@ -290,7 +308,7 @@ genesis:
 #### NODE MANAGEMENT ####
 start:
 # run in foreground. Only for testing, use a daemon for net.
-	cargo run -p diem-node -- --config ${DATA_PATH}/validator.node.yaml
+	RUST_LOG=error cargo run -p diem-node -- --config ${DATA_PATH}/validator.node.yaml
 
 # Start a fullnode instead of a validator node
 start-full:
@@ -326,8 +344,8 @@ ifeq (${TEST}, y)
 	@if test -d ${DATA_PATH}; then \
 		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml; \
 	fi
-	@if test -d ${DATA_PATH}/blocks; then \
-		rm -f ${DATA_PATH}/blocks/*.json; \
+	@if test -d ${DATA_PATH}/vdf_proofs; then \
+		rm -f ${DATA_PATH}/vdf_proofs/*.json; \
 	fi
 endif
 
@@ -358,11 +376,11 @@ ifdef TEST
 	@if test ! -d ${DATA_PATH}; then \
 		echo Creating Directories \
 		mkdir ${DATA_PATH}; \
-		mkdir -p ${DATA_PATH}/blocks/; \
+		mkdir -p ${DATA_PATH}/vdf_proofs/; \
 	fi
 
-	@if test -f ${DATA_PATH}/blocks/block_0.json; then \
-		rm ${DATA_PATH}/blocks/block_0.json; \
+	@if test -f ${DATA_PATH}/vdf_proofs/proof_0.json; then \
+		rm ${DATA_PATH}/vdf_proofs/proof_0.json; \
 	fi 
 
 	@if test -f ${DATA_PATH}/0L.toml; then \
@@ -372,7 +390,7 @@ ifdef TEST
 # skip miner configuration with fixtures
 	cp ./ol/fixtures/configs/${NS}.toml ${DATA_PATH}/0L.toml
 # skip mining proof zero with fixtures
-	cp ./ol/fixtures/blocks/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
+	cp ./ol/fixtures/vdf_proofs/${NODE_ENV}/${NS}/proof_0.json ${DATA_PATH}/vdf_proofs/proof_0.json
 # place a mock autopay.json in root
 	cp ./ol/fixtures/autopay/${NS}.autopay_batch.json ${DATA_PATH}/autopay_batch.json
 # place a mock account.json in root, used as template for onboarding
@@ -424,7 +442,7 @@ wipe:
 	srm ~/.bash_history
 
 stop:
-	service diem-node stop
+	systemctl --user stop diem-node.service
 
 debug:
 	make smoke-onboard <<< $$'${MNEM}'
@@ -485,14 +503,14 @@ clean-tags:
 	git tag -d ${TAG}
 	
 nuke-testnet:
-	@echo WIPING EVERYTHING but keeping: github_token.txt, autopay_batch.json, set_layout.toml, /blocks/block_0.json
+	@echo WIPING EVERYTHING but keeping: github_token.txt, autopay_batch.json, set_layout.toml, /vdf_proofs/proof_0.json
 
 	@if test -d ${DATA_PATH}; then \
-		cd ${DATA_PATH} && cp github_token.txt autopay_batch.json set_layout.toml blocks/block_0.json ~/; \
+		cd ${DATA_PATH} && cp github_token.txt autopay_batch.json set_layout.toml vdf_proofs/proof_0.json ~/; \
 		cd ${DATA_PATH} && rm -rf *; \
 		cd ~ && cp github_token.txt autopay_batch.json set_layout.toml ${DATA_PATH}; \
-		cd ${DATA_PATH} && mkdir blocks;\
-		cd ~ && cp block_0.json ${DATA_PATH}/blocks/; \
+		cd ${DATA_PATH} && mkdir vdf_proofs;\
+		cd ~ && cp proof_0.json ${DATA_PATH}/vdf_proofs/; \
 	fi
 	
 

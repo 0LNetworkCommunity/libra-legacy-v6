@@ -21,7 +21,8 @@ pub mod commands;
 pub mod entrypoint;
 pub mod error;
 
-pub mod block;
+pub mod proof;
 pub mod delay;
 pub mod backlog;
 pub mod commit_proof;
+pub mod preimage;

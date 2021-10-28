@@ -14,7 +14,7 @@ use diem_types::waypoint::Waypoint;
 use diem_wallet::WalletLibrary;
 use ol::{commands::init_cmd, config::AppCfg};
 use ol_keys::{scheme::KeyScheme, wallet};
-use ol_types::block::Block;
+use ol_types::block::VDFProof;
 use ol_types::config::IS_TEST;
 use ol_types::{account::ValConfigs, config::TxType, pay_instruction::PayInstruction};
 use reqwest::Url;
@@ -65,7 +65,7 @@ impl Runnable for ForkCmd {
         status_info!("\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys, run the standalone keygen tool with 'onboard keygen'.");
 
         if !self.skip_mining {
-          println!("\nYour first 0L proof-of-work will be mined now. Expect this to take up to 15 minutes on modern CPUs.\n");
+          println!("\nYour first 0L proof-of-work will be mined now. Expect this take at least 30 minutes on modern CPUs.\n");
         }
 
         let entry_args = entrypoint::get_args();
@@ -136,7 +136,7 @@ impl Runnable for ForkCmd {
         // fetching the genesis files from genesis-archive, will override the path for prebuilt genesis.
         let mut prebuilt_genesis_path = self.prebuilt_genesis.clone();
         if self.fetch_git_genesis {
-            files_cmd::get_files(home_path.clone(), &self.github_org, &self.repo);
+            files_cmd::fetch_genesis_files_from_repo(home_path.clone(), &self.github_org, &self.repo).unwrap();
             status_ok!(
                 "\nDownloaded genesis files",
                 "\n...........................\n"
@@ -171,8 +171,8 @@ impl Runnable for ForkCmd {
         status_ok!("\nNode config written", "\n...........................\n");
 
         if !self.skip_mining {
-            // Mine Block
-            tower::block::write_genesis(&app_config);
+            // Mine Proof
+            tower::proof::write_genesis(&app_config);
             status_ok!(
                 "\nGenesis proof complete",
                 "\n...........................\n"
@@ -268,7 +268,7 @@ pub fn write_account_json(
     let cfg = wizard_config.unwrap_or(app_config().clone());
     let json_path = json_path.clone().unwrap_or(cfg.workspace.node_home.clone());
     let keys = KeyScheme::new(&wallet);
-    let block = Block::parse_block_file(cfg.get_block_dir().join("block_0.json").to_owned());
+    let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned());
 
     ValConfigs::new(
         block,

@@ -27,6 +27,8 @@ fun main(alice_sig: signer) {
       &alice_sig,
       &challenge,
       &solution,
+      TestFixtures::easy_difficulty(),
+      TestFixtures::security(),
       b"leet",
       @0xfa72817f1b5aab94658238ddcdc08010,
       x"fa72817f1b5aab94658238ddcdc08010",
@@ -45,15 +47,16 @@ script {
 use 0x1::TowerState;
 use 0x1::TestFixtures;
 
-// SIMULATES A MINER ONBOARDING PROOF (block_0.json)
+// SIMULATES A MINER ONBOARDING PROOF (proof_0.json)
 fun main(_: signer) { 
   let eve = @0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
   let oper = @0xfa72817f1b5aab94658238ddcdc08010;
 
     let proof = TowerState::create_proof_blob(
       TestFixtures::eve_1_easy_chal(),
-      100, // difficulty
       TestFixtures::eve_1_easy_sol(),
+      TestFixtures::easy_difficulty(), // difficulty
+      TestFixtures::security(), // security
     );
     TowerState::test_helper_operator_submits(
       oper,

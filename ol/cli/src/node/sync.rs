@@ -4,7 +4,6 @@ use super::node::Node;
 use crate::node::client::*;
 use anyhow::{anyhow, bail, Error};
 use backup_cli::utils::backup_service_client::{BackupServiceClient, BackupServiceClientOpt};
-
 use diemdb::backup::backup_handler::DbState;
 use tokio::runtime::Runtime;
 
@@ -42,8 +41,8 @@ impl Node {
         // let config = &self.app_conf;
         let waypoint = &self.waypoint().unwrap();
 
-        let remote_client = default_remote_client(&self.app_conf, *waypoint)
-            .expect("cannot connect to upstream node");
+        let remote_client = find_a_remote_jsonrpc(&self.app_conf, *waypoint)
+          .map_err(|e| { println!("cannot connect to upstream node"); e })?;
 
         if let Some(local_db) = self.get_db_state() {
             s.remote_height = match remote_client.get_metadata(){

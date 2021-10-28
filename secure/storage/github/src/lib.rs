@@ -260,6 +260,24 @@ impl Client {
         }
     }
 
+    ///////// 0L ////////
+    pub fn delete_own_repo(&self, forked_repo_owner: &str, forked_repo_name: &str) -> Result<(), Error> {
+        let json = json!({});
+
+        let api_path = format!("https://api.github.com/repos/{}/{}", forked_repo_owner, forked_repo_name);
+        let resp = self
+            .upgrade_request(ureq::delete(&api_path))
+            .send_json(json);
+
+        match resp.status() {
+            200 => Ok(()),
+            201 => Ok(()),
+            202 => Ok(()),
+            _ => Err(resp.into()),
+        }
+    }
+
+
 
     
     ///////// 0L ////////

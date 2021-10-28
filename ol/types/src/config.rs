@@ -20,7 +20,7 @@ use std::{
     str::FromStr
 };
 
-use crate::dialogue::{what_home, what_ip, what_statement};
+use crate::dialogue::{add_tower, what_home, what_ip, what_statement};
 
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
 
@@ -39,16 +39,11 @@ pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
     }
 });
 
+// TODO: this is duplicated in ol/keys/wallet due to dependency cycle. Move to Global constants?
 /// check this is CI environment
 pub static IS_TEST: Lazy<bool> = Lazy::new(|| {
     // assume default if NODE_ENV=prod and TEST=y.
-    if std::env::var("NODE_ENV").unwrap_or("prod".to_string()) != "prod".to_string() 
-       && std::env::var("TEST").unwrap_or("n".to_string()) != "n".to_string() 
-    {
-        true
-    } else {
-        false
-    }
+    std::env::var("TEST").unwrap_or("n".to_string()) != "n".to_string() 
 });
 
 /// MinerApp Configuration
@@ -151,6 +146,7 @@ impl AppCfg {
             None => what_statement(),
         };
 
+
         default_config.profile.ip = match ip {
             Some(i) => i,
             None => what_ip().unwrap(),
@@ -159,6 +155,11 @@ impl AppCfg {
             what_home(None, None)
         });
 
+        // Add link to previous tower
+        if !*IS_TEST {
+            default_config.profile.tower_link = add_tower(&default_config);
+        }
+        
         if source_path.is_some() {
             // let source_path = what_source();
             default_config.workspace.source_path = source_path.clone();
@@ -345,7 +346,7 @@ impl Default for Workspace {
         Self {
             node_home: dirs::home_dir().unwrap().join(NODE_HOME),
             source_path: None,
-            block_dir: "blocks".to_owned(),
+            block_dir: "vdf_proofs".to_owned(),
             db_path: default_db_path(),
             stdlib_bin_path: None,
         }
@@ -370,7 +371,7 @@ pub struct ChainInfo {
 impl Default for ChainInfo {
     fn default() -> Self {
         Self {
-            chain_id: "experimental".to_owned(),
+            chain_id: "1".to_string(),
             base_epoch: Some(0),
             // Mock Waypoint. Miner complains without.
             base_waypoint: Waypoint::from_str(BASE_WAYPOINT).ok(),
@@ -398,6 +399,9 @@ pub struct Profile {
 
     /// Other nodes to connect for fallback connections
     pub upstream_nodes: Option<Vec<Url>>,
+
+    /// Link to another delay tower.
+    pub tower_link: Option<String>,
 }
 
 impl Default for Profile {
@@ -409,6 +413,7 @@ impl Default for Profile {
             ip: "0.0.0.0".parse().unwrap(),
             default_node: Some("http://localhost:8080".parse().expect("parse url")),
             upstream_nodes: Some(vec!["http://localhost:8080".parse().expect("parse url")]),
+            tower_link: None,
         }
     }
 }

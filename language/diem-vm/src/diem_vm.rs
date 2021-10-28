@@ -473,31 +473,25 @@ impl DiemVMImpl {
     pub(crate) fn tick_oracle_consensus<S: MoveStorage> (
         &self,
         session: &mut Session<S>,
-        block_metadata: BlockMetadata,
+        _block_metadata: BlockMetadata,
         txn_data: &TransactionMetadata,
         gas_status: &mut GasStatus,
         log_context: &impl LogContext,
     ) -> Result<(), VMStatus> {
-        let (round, _timestamp, _previous_vote, _proposer) = block_metadata.into_inner();
-        info!("0L ===============================  round is {}", round);
-        // hardcoding consensus checking on round 2
-        if round == 2 {
-            info!("0L ==== stdlib upgrade: checking for stdlib upgrade");
-            // tick Oracle::check_upgrade
-            let args = vec![
-                MoveValue::Signer(txn_data.sender),
-            ];
-            session.execute_function(
-                &ORACLE_MODULE,
-                &CHECK_UPGRADE,
-                vec![],
-                serialize_values(&args),
-                // txn_data.sender(),
-                gas_status,
-                log_context,
-            ).expect("Couldn't check upgrade");
-        }
-
+        info!("0L ==== stdlib upgrade: checking for stdlib upgrade");
+        // tick Oracle::check_upgrade
+        let args = vec![
+            MoveValue::Signer(txn_data.sender),
+        ];
+        session.execute_function(
+            &ORACLE_MODULE,
+            &CHECK_UPGRADE,
+            vec![],
+            serialize_values(&args),
+            // txn_data.sender(),
+            gas_status,
+            log_context,
+        ).map_err(|e| { info!("Couldn't check upgrade"); e } )?;
         Ok(())
     }
 

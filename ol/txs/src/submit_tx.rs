@@ -24,10 +24,7 @@ use diem_types::{
 };
 
 use diem_wallet::WalletLibrary;
-use ol_types::{
-    self,
-    config::{TxCost, TxType},
-};
+use ol_types::{self, config::{TxCost, TxType}, fixtures};
 use reqwest::Url;
 use std::{
     io::{stdout, Write},
@@ -254,7 +251,7 @@ pub fn get_tx_params_from_swarm(
     is_operator: bool,
 ) -> Result<TxParams, Error> {
     let (url, waypoint) = ol_types::config::get_swarm_rpc_url(swarm_path);
-    let mnem = ol_fixtures::get_persona_mnem(&swarm_persona.as_str());
+    let mnem = fixtures::get_persona_mnem(&swarm_persona.as_str());
     let keys = KeyScheme::new_from_mnemonic(mnem);
 
     let keypair = if is_operator {

@@ -29,8 +29,10 @@ pub fn create_validator_script_function(new_account: &ValConfigs) -> Transaction
     let new_account = new_account.to_owned();
 
     transaction_builder::encode_create_acc_val_script_function(
-        new_account.block_zero.preimage,
-        new_account.block_zero.proof,
+        new_account.block_zero.preimage.clone(),
+        new_account.block_zero.proof.clone(),
+        new_account.block_zero.difficulty(),
+        new_account.block_zero.security(),
         new_account.ow_human_name.as_bytes().to_vec(),
         new_account.op_address.parse().unwrap(),
         new_account.op_auth_key_prefix,

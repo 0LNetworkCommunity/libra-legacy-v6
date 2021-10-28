@@ -44,27 +44,27 @@ For the debug-net simulation, the github token (when saved to `github_token.txt`
 - Edit the my_configs/Makefile with REPO_OWNER as your username, REPO_NAME, the desired name for the repo.
 
 # Generate Keys
-(For Testing: skip this step, this file block_0.json will be set later)
+(For Testing: skip this step, this file proof_0.json will be set later)
 
-The 0L miner creates your initial keys, and produces a first proof of your vdf tower. You need both the proof output (block_0.json) and the mnemonic to be able to participate in genesis.
+The 0L tower creates your initial keys, and produces a first proof of your vdf tower. You need both the proof output (proof_0.json) and the mnemonic to be able to participate in genesis.
 
 4. Create keys with `make keygen`. A mnemonic will be printed on the screen.
 
 DO NOT SAVE THE MNEMONIC TO A FILE. Write it down. Use a password manager. This will be the last time you will see the mnemonic. 
 
-The 0L auth key (public key) and account will be printed as well. The auth_key will be included in your miner.toml config file.
+The 0L auth key (public key) and account will be printed as well. The auth_key will be included in your key_store.json config file.
 
 If you type the mnemonic in the shell for any reason, clear your shell history thoroughly. (See commands in `make wipe`)
 
-# Mine first proof
+# Create first delay tower proof
 
-5. The first proof can be created with `make miner`. It will subsequently ask you for your mnemonic (from previous step).
+5. The first proof can be created with `make tower`. It will subsequently ask you for your mnemonic (from previous step).
 
-Check the data in `../miner/miner.toml`. This includes a `statement` field which is an optional and free statement, anyone can add to their genesis proof. This will be included in the VDF preimage, which will be submitted to genesis block. It is hex-encoded but not encrypted and readable for all eternity.
+Check the data in `../.OL/OL.toml`. This includes a `statement` field which is an optional and free statement, anyone can add to their genesis proof. This will be included in the VDF preimage, which will be submitted to genesis block. It is hex-encoded but not encrypted and readable for all eternity.
 
 This is the proof-of-work which is submitted for inclusion in genesis. 
 
-This step can take 10-30 minutes to complete. The output is a block_0.json. This file should be copied to your my_config/ folder. Confirm it is there.
+This step can take 10-30 minutes to complete. The output is a proof_0.json. This file should be copied to your my_config/ folder. Confirm it is there.
 
 
 # Register to genesis
@@ -119,17 +119,17 @@ After EVERY validator has registered, each validator can build genesis locally.
 - for testing run with `make genesis ENV=test TEST=y`, etc.
 
 11. Start the network with `make start`.
-- After you confirm the network starts. Stop libra-node (ctrl+c), and proceed to start a daemon, to keep the libra-node running and restarting in background.
+- After you confirm the network starts. Stop diem-node (ctrl+c), and proceed to start a daemon, to keep the diem-node running and restarting in background.
 
 (For testing: do this on each machine for each persona).
 
-# Make libra-node run in background
+# Make diem-node run in background
 
 12. Install and start the systemd daemon configs with `make daemon`.
 - NOTE: These instructions are for systemd targeted at debian/ubuntu.
 
 
-This will pause for a couple of seconds and then show the status of daemon, and then tail the logs of libra-node.
+This will pause for a couple of seconds and then show the status of daemon, and then tail the logs of diem-node.
 You can exit the logs with `ctrl+c`, it will not affect the running node.
 
 

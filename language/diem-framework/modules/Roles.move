@@ -148,11 +148,11 @@ module Roles {
         grant_role(new_account, USER_ID);
     }
 
+    // TODO: spec
     // spec new_user_role_with_proof {
     //     include GrantRole{addr: Signer::address_of(new_account), role_id: USER_ID};
     // }
 
-    use 0x1::Debug::print;
 
     //////// 0L ////////
     /// upgrades a user role to validator role
@@ -160,17 +160,13 @@ module Roles {
         new_account: &signer, 
         vm: &signer,
     ) acquires RoleId {
-        print(&600);
         assert_diem_root(vm);
         let addr = Signer::address_of(new_account);
         // grant_role(new_account, USER_ID);
         let role = borrow_global_mut<RoleId>(addr);
-        print(role);
         assert(role.role_id == USER_ID, EROLE_ID);
         role.role_id = VALIDATOR_ROLE_ID;
     }
-
-
 
 
     //////// 0L ////////

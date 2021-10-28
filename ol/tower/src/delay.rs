@@ -1,38 +1,24 @@
 //! MinerApp delay module
 #![forbid(unsafe_code)]
-
+use anyhow::{Error, bail};
 /// Functions for running the VDF.
-use vdf::{VDFParams, WesolowskiVDFParams, VDF};
-use std::env;
-use diem_global_constants::VDF_SECURITY_PARAM;
-
-/// Switch settings between production and testing
-pub fn delay_difficulty() -> u64 {
-    let node_env = match env::var("NODE_ENV") {
-        Ok(val) => val,
-        _ => "prod".to_string() // default to "prod" if not set
-    };
-    // must explicitly set env to prod to use production difficulty.
-    if node_env == "prod" {
-        return 5000000
-    }
-    return 100 // difficulty for test suites and on local for debugging purposes.
-}
+use vdf::{PietrzakVDFParams, VDF, VDFParams};
 
 /// Runs the VDF
-pub fn do_delay(preimage: &[u8]) -> Vec<u8> {
-    let delay_length = delay_difficulty();
+pub fn do_delay(preimage: &[u8], difficulty: u64, security: u16) -> Result<Vec<u8>, Error> {
     // Functions for running the VDF.
-    let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(VDF_SECURITY_PARAM).new();
-    vdf.solve(preimage, delay_length)
-        .expect("iterations should have been valiated earlier")
+    let vdf: vdf::PietrzakVDF = PietrzakVDFParams(security).new();
+    match vdf.solve(preimage, difficulty) {
+        Ok(proof) => Ok(proof),
+        Err(e) => bail!(format!("ERROR: cannot solve VDF, message {:?}", e)),
+    }
 }
 
 /// Verifies a proof
-pub fn verify(preimage: &[u8], proof: &[u8]) -> bool{
-    let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(VDF_SECURITY_PARAM).new();
+pub fn verify(preimage: &[u8], proof: &[u8], difficulty: u64, security: u16) -> bool{
+    let vdf: vdf::PietrzakVDF = PietrzakVDFParams(security).new();
     
-    match vdf.verify(preimage, delay_difficulty(), proof) {
+    match vdf.verify(preimage, difficulty, proof) {
        Ok(_) => true,
        Err(e) => {
         println!("Proof is not valid. {:?}", e);

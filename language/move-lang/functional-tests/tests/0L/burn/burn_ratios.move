@@ -64,20 +64,17 @@ script {
     assert(Vector::length(&ratios) == 2, 7357005);
 
     let bob_deposits_indexed = *Vector::borrow<u64>(&deps, 0);
-    // print(&bob_deposits_indexed);
     assert(bob_deposits_indexed == 1100500, 7357006);
     let carol_deposits_indexed = *Vector::borrow<u64>(&deps, 1);
     assert(carol_deposits_indexed == 1904500, 7357007);
 
     let bob_mult = *Vector::borrow<FixedPoint32::FixedPoint32>(&ratios, 0);
     let pct_bob = FixedPoint32::multiply_u64(100, bob_mult);
-    // print(&pct_bob);
     // ratio for bob's community wallet.
     assert(pct_bob == 36, 7357008);
 
     let carol_mult = *Vector::borrow<FixedPoint32::FixedPoint32>(&ratios, 1);
     let pct_carol = FixedPoint32::multiply_u64(100, carol_mult);
-    // print(&pct_carol);
     // ratio for carol's community wallet.
     assert(pct_carol == 63, 7357009);
   }

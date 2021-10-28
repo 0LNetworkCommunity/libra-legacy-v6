@@ -13,10 +13,13 @@ This module provides global variables and constants that have no specific owner
 
 -  [Summary](#@Summary_0)
 -  [Struct `GlobalConstants`](#0x1_Globals_GlobalConstants)
+-  [Constants](#@Constants_1)
 -  [Function `get_epoch_length`](#0x1_Globals_get_epoch_length)
 -  [Function `get_max_validators_per_set`](#0x1_Globals_get_max_validators_per_set)
+-  [Function `get_coin_scaling_factor`](#0x1_Globals_get_coin_scaling_factor)
 -  [Function `get_subsidy_ceiling_gas`](#0x1_Globals_get_subsidy_ceiling_gas)
--  [Function `get_difficulty`](#0x1_Globals_get_difficulty)
+-  [Function `get_vdf_difficulty`](#0x1_Globals_get_vdf_difficulty)
+-  [Function `get_vdf_security`](#0x1_Globals_get_vdf_security)
 -  [Function `get_epoch_mining_thres_lower`](#0x1_Globals_get_epoch_mining_thres_lower)
 -  [Function `get_epoch_mining_thres_upper`](#0x1_Globals_get_epoch_mining_thres_upper)
 -  [Function `get_unlock`](#0x1_Globals_get_unlock)
@@ -103,6 +106,20 @@ epoch by a miner to remain compliant
 
 </details>
 
+<a name="@Constants_1"></a>
+
+## Constants
+
+
+<a name="0x1_Globals_COIN_SCALING_FACTOR"></a>
+
+
+
+<pre><code><b>const</b> <a href="Globals.md#0x1_Globals_COIN_SCALING_FACTOR">COIN_SCALING_FACTOR</a>: u64 = 1000000;
+</code></pre>
+
+
+
 <a name="0x1_Globals_get_epoch_length"></a>
 
 ## Function `get_epoch_length`
@@ -153,6 +170,31 @@ Get max validator per epoch
 
 </details>
 
+<a name="0x1_Globals_get_coin_scaling_factor"></a>
+
+## Function `get_coin_scaling_factor`
+
+Get the epoch length
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_coin_scaling_factor">get_coin_scaling_factor</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_coin_scaling_factor">get_coin_scaling_factor</a>(): u64 {
+   <a href="Globals.md#0x1_Globals_COIN_SCALING_FACTOR">COIN_SCALING_FACTOR</a>
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_Globals_get_subsidy_ceiling_gas"></a>
 
 ## Function `get_subsidy_ceiling_gas`
@@ -178,14 +220,14 @@ Get max validator per epoch
 
 </details>
 
-<a name="0x1_Globals_get_difficulty"></a>
+<a name="0x1_Globals_get_vdf_difficulty"></a>
 
-## Function `get_difficulty`
+## Function `get_vdf_difficulty`
 
 Get the current vdf_difficulty
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_difficulty">get_difficulty</a>(): u64
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_vdf_difficulty">get_vdf_difficulty</a>(): u64
 </code></pre>
 
 
@@ -194,8 +236,33 @@ Get the current vdf_difficulty
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_difficulty">get_difficulty</a>(): u64 {
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_vdf_difficulty">get_vdf_difficulty</a>(): u64 {
   <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>().vdf_difficulty
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Globals_get_vdf_security"></a>
+
+## Function `get_vdf_security`
+
+Get the current vdf_difficulty
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_vdf_security">get_vdf_security</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_vdf_security">get_vdf_security</a>(): u64 {
+  512
 }
 </code></pre>
 
@@ -295,45 +362,45 @@ Get the constants for the current network
 
 
 <pre><code><b>fun</b> <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>(): <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
-  <b>let</b> coin_scale = 1000000; // <a href="Diem.md#0x1_Diem_scaling_factor">Diem::scaling_factor</a>&lt;GAS::T&gt;();
-  <b>assert</b>(coin_scale == <a href="Diem.md#0x1_Diem_scaling_factor">Diem::scaling_factor</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(070001));
+  // <b>let</b> coin_scale = 1000000; // <a href="Diem.md#0x1_Diem_scaling_factor">Diem::scaling_factor</a>&lt;GAS::T&gt;();
+  <b>assert</b>(<a href="Globals.md#0x1_Globals_COIN_SCALING_FACTOR">COIN_SCALING_FACTOR</a> == <a href="Diem.md#0x1_Diem_scaling_factor">Diem::scaling_factor</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(070001));
 
   <b>if</b> (<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()) {
     <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
       epoch_length: 60, // seconds
       max_validators_per_set: 100,
-      subsidy_ceiling_gas: 296 * coin_scale,
+      subsidy_ceiling_gas: 296 * <a href="Globals.md#0x1_Globals_COIN_SCALING_FACTOR">COIN_SCALING_FACTOR</a>,
       vdf_difficulty: 100,
       epoch_mining_thres_lower: 1,
-      epoch_mining_thres_upper: 240, // upper bound enforced at 6 mins per proof.
+      epoch_mining_thres_upper: 1000, // upper bound unlimited
       epoch_slow_wallet_unlock: 10,
     }
   };
 
   <b>if</b> (<a href="Testnet.md#0x1_StagingNet_is_staging_net">StagingNet::is_staging_net</a>()) {
     <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
-      epoch_length: 60 * 20, // 20 mins, enough for a hard miner proof.
+      epoch_length: 60 * 40, // 40 mins, enough for a hard miner proof.
       max_validators_per_set: 100,
-      subsidy_ceiling_gas: 8640000 * coin_scale,
-      vdf_difficulty: 5000000,
+      subsidy_ceiling_gas: 8640000 * <a href="Globals.md#0x1_Globals_COIN_SCALING_FACTOR">COIN_SCALING_FACTOR</a>,
+      vdf_difficulty: 120000000,
       epoch_mining_thres_lower: 1,
-      epoch_mining_thres_upper: 240, // upper bound enforced at 6 mins per proof.
+      epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
       epoch_slow_wallet_unlock: 10000000,
     }
   } <b>else</b> {
     <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
-      epoch_length: 60 * 60 * 24, // approx 24 hours at 1.4 blocks/sec
+      epoch_length: 60 * 60 * 24, // approx 24 hours at 1.4 vdf_proofs/sec
       max_validators_per_set: 100, // max expected for BFT limits.
       // See <a href="DiemVMConfig.md#0x1_DiemVMConfig">DiemVMConfig</a> for gas constants:
       // Target max gas units per transaction 100000000
       // target max block time: 2 secs
       // target transaction per sec max gas: 20
       // uses "scaled representation", since there are no decimals.
-      subsidy_ceiling_gas: 8640000 * coin_scale, // subsidy amount assumes 24 hour epoch lengths. Also needs <b>to</b> be adjusted for coin_scale the onchain representation of human readable value.
-      vdf_difficulty: 5000000, // FYI approx 10 mins per proof on 2020 macbook pro 2.5 ghz quadcore
-      epoch_mining_thres_lower: 20,
-      epoch_mining_thres_upper: 240, // upper bound enforced at 6 mins per proof.
-      epoch_slow_wallet_unlock: 1000 * coin_scale, // approx 10 years for largest accounts in genesis.
+      subsidy_ceiling_gas: 8640000 * <a href="Globals.md#0x1_Globals_COIN_SCALING_FACTOR">COIN_SCALING_FACTOR</a>, // subsidy amount assumes 24 hour epoch lengths. Also needs <b>to</b> be adjusted for coin_scale the onchain representation of human readable value.
+      vdf_difficulty: 120000000, // FYI approx 30 mins per proof on 2020 macbook pro 2.5 ghz quadcore
+      epoch_mining_thres_lower: 7, // NOTE: bootstrapping, allowance for operator error.
+      epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
+      epoch_slow_wallet_unlock: 1000 * <a href="Globals.md#0x1_Globals_COIN_SCALING_FACTOR">COIN_SCALING_FACTOR</a>, // approx 10 years for largest accounts in genesis.
     }
   }
 }

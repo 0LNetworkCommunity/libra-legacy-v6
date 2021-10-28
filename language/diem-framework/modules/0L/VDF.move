@@ -5,11 +5,16 @@
 
 address 0x1 {
   module VDF {
+
+      // verifies a VDF proof with security parameters.
       native public fun verify(
         challenge: &vector<u8>,
+        solution: &vector<u8>,
         difficulty: &u64,
-        alleged_solution: &vector<u8>
+        security: &u64,
       ): bool;
+
+      // For the 0th proof of a Delay Tower, this is used to check the tower belongs to an authorization key and address.
       native public fun extract_address_from_challenge(challenge: &vector<u8>): (address, vector<u8>);
   }
 }

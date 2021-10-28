@@ -30,7 +30,11 @@ use 0x1::TowerState;
 fun main(eve_sig: signer) {
     let eve_sig = &eve_sig;
     TowerState::init_miner_state(
-        eve_sig, &TestFixtures::easy_chal(), &TestFixtures::easy_sol()
+        eve_sig,
+        &TestFixtures::easy_chal(),
+        &TestFixtures::easy_sol(),
+        TestFixtures::easy_difficulty(), // difficulty
+        TestFixtures::security(), // security
     );
     // FullnodeState::init(eve_sig);
 
