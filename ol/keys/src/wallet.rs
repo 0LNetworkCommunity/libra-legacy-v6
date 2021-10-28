@@ -49,8 +49,8 @@ pub fn keygen() -> (AuthenticationKey, AccountAddress, WalletLibrary, String) {
 pub fn get_account_from_mnem(
     mnemonic_string: String,
 ) -> Result<(AuthenticationKey, AccountAddress, WalletLibrary), anyhow::Error> {
-    let mut wallet = WalletLibrary::new_from_mnemonic(Mnemonic::from(&mnemonic_string).unwrap());
-    let (auth_key, _) = wallet.new_address().expect("Could not generate address");
+    let mut wallet = WalletLibrary::new_from_mnemonic(Mnemonic::from(&mnemonic_string)?);
+    let (auth_key, _) = wallet.new_address()?;
     let account = auth_key.derived_address();
     Ok((auth_key, account, wallet))
 }
