@@ -44,6 +44,7 @@ impl Runnable for WalletCmd {
     }
 }
 
+/// set the account type as slow, or community.
 pub fn set_wallet_type(type_int: u8, tx_params: TxParams, no_send: bool, save_path: Option<PathBuf>) -> Result<SignedTransaction, Error>{
    maybe_submit(
       transaction_builder::encode_set_wallet_type_script_function(type_int),
