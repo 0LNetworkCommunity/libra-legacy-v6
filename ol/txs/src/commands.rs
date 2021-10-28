@@ -14,10 +14,11 @@ pub mod autopay_batch_cmd;
 pub mod demo_cmd;
 pub mod create_account_cmd;
 pub mod transfer_cmd;
+pub mod wallet_cmd;
+
 mod relay_cmd;
 mod valset_cmd;
 mod autopay_cmd;
-mod wallet_cmd;
 mod authkey_cmd;
 mod create_validator_cmd;
 mod oracle_upgrade_cmd;
