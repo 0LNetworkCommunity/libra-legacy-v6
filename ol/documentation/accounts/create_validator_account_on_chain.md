@@ -24,26 +24,3 @@ If it is not reachable, the `file` option below is possible.
 If there is an issue with sequence_number being out of sync. It's like that an automated transaction (like `tower`), got a transaction sent concurrently. Retry the transaction.
 
 
-
-## With file:
-
-a. Copy the `account.json` to your local node.
-
-b. Sumbit tx with `txs` app:
-
-```
-txs create-validator -f <path/to/json>
-```
-
-
-# New End User Accounts
-
-## With file:
-
-a. Copy the `account.json` to your local node.
-
-b. Sumbit tx with `txs` app:
-
-```
-txs create-user -f <path/to/json>
-```
