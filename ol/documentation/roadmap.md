@@ -2,17 +2,6 @@
 
 ### V.5.0.0 + 
 
-
-1. Merge Upstream 1.3.0
-   1. Package 0L changes as a module
-   1. Regex libra->diem
-
-1. Packaging of non-stdlib smart contract (module) - Documentation (AD)
-
-1. Audit (JM)
-   1. Audit of v5 Move contracts.
-   1. Formal verification of access control to functions.
-
 ###  Future
 
 1. Cross chain prototype (ZM)
@@ -75,3 +64,14 @@
 1. Genesis from archive
    1. create a genesis blob from epoch snapshot
    1. modify snapshot to update state before saving genesis.
+  
+### v5.0.0
+1. Merge Upstream 1.3.0
+   1. Package 0L changes as a module
+   1. Regex libra->diem
+
+1. Packaging of non-stdlib smart contract (module) - Documentation (AD)
+
+1. Audit (JM)
+   1. Audit of v5 Move contracts.
+   1. Formal verification of access control to functions.
