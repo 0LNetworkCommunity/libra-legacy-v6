@@ -1,14 +1,13 @@
-# TOC
-
+# 0L Documentation
 ## CLI
 [CLI Cheatsheet](cli_cheatsheet.md)
 
 ## Running Tower, i.e Mining.
 
-[Run Tower app](tower_mining_VDF_proofs.md)
+[Start Tower app](node-ops/tower_mining_VDF_proofs.md)
 
 ## Syncing your node
-[Sync your node from at an advanced epoch](node-ops/syncing_your_node.md)
+[Sync your node from to an advanced epoch](node-ops/syncing_your_node.md)
 
 ## Fullnode Operations
 [Starting a Fullnode](node-ops/start_a_full_node.md)
@@ -27,3 +26,5 @@
 [update_validator_to_operator_mapping.md](node-ops/validators/update_validator_to_operator_mapping.md)
 
 # Network Upgrades
+
+[Hot network upgrades](network-upgrades/stdlib_hot_upgrade.md)
