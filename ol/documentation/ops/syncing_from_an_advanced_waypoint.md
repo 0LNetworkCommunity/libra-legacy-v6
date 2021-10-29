@@ -49,9 +49,6 @@ Restore a specific epoch
 ol restore --epoch <integer>
 ```
 
-
-``
-
 ## Hard Mode: If you are not using the `ol` tools
 
 ### Restore Epoch Waypoint

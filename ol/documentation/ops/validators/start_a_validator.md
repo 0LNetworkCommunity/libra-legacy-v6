@@ -1,6 +1,4 @@
 # Validator Setup
-
-
 ## Requirements 
 - A unix host machine, e.g Linux Ubuntu 20.4
 - A fixed IP address of the machine

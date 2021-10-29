@@ -1,10 +1,10 @@
-# Mining VDF proofs
+# Running Tower: ie. Mining VDF proofs
 
 These instructions are to run the 0L `tower` app. This creates VDF proof of work, and submits to the chain sequentially.
 
 This documentation uses screen as terminal multiplexer, sure you can also use tmux or run it in a normal terminal session. 
 
-## Start a `screen` instance
+## Start a `screen` or `tmux` instance
 
 Make `screen` work for backgrounding and resuming sessions:
 ```
