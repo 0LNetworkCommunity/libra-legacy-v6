@@ -5,7 +5,7 @@ use abscissa_core::{status_ok};
 use diem_global_constants::{GENESIS_WAYPOINT, WAYPOINT};
 use once_cell::sync::Lazy;
 use reqwest;
-use anyhow::Error;
+use anyhow::{Error, bail, anyhow};
 use glob::glob;
 use serde::{Serialize, Deserialize};
 use std::{fs::{self, File}, io::{self}, path::{PathBuf}, process::Command};
@@ -297,6 +297,12 @@ pub fn restore_epoch(
         &format!("{}/**/epoch_ending.manifest", restore_path)
     ).expect("Failed to read glob pattern").next().unwrap()?;
     
+    if !manifest_path.exists() {
+      let msg = format!("manifest path does not exist at: {:?}", &manifest_path);
+      println!("{}", &msg);
+      bail!(msg);
+    }
+
     let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
 
     let mut child = Command::new("db-restore")
@@ -310,9 +316,10 @@ pub fn restore_epoch(
         .arg(restore_path)
         .stdout(stdio_cfg)
         .spawn()
-        .expect("failed to execute child");
+        .map_err(|_| {anyhow!("ERROR: could not find the db-restore executable, is it installed?")})?;
+        // .expect("failed to execute child");
 
-    let ecode = child.wait().expect("failed to wait on child");
+    let ecode = child.wait()?;
 
     assert!(ecode.success());
     
