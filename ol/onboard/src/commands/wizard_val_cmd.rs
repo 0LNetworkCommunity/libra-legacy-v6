@@ -144,11 +144,18 @@ impl Runnable for ValWizardCmd {
 
         if !self.skip_mining {
             // Mine Proof
-            tower::proof::write_genesis(&app_config);
-            status_ok!(
-                "\nGenesis proof complete",
-                "\n...........................\n"
-            );
+            match tower::proof::write_genesis(&app_config){
+                Ok(_) => {
+                  status_ok!(
+                      "\nGenesis proof complete",
+                      "\n...........................\n"
+                  );
+                },
+                Err(e) => {
+                  println!("ERROR: could not write genesis tower proof, message: {:?}", &e.to_string())
+                },
+            };
+
         }
 
         // Write account manifest
