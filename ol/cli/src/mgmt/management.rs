@@ -7,11 +7,7 @@ use crate::{
 use anyhow::Error;
 use ol_types::config::IS_PROD;
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::HashSet,
-    fs::{self, File},
-    process::{Command, Stdio},
-};
+use std::{collections::HashSet, fs::{self, File}, process::{Command, Stdio, exit}};
 const BINARY_NODE: &str = "diem-node";
 const BINARY_MINER: &str = "tower";
 
@@ -191,7 +187,14 @@ impl Node {
                 "failed to run 'ol', is it installed?",
             )
         } else {
-            let project_root = self.app_conf.workspace.source_path.clone().unwrap();
+            let project_root = match self.app_conf.workspace.source_path.clone(){
+                Some(p) => p,
+                None => {
+                  println!("ERROR: can't start web-monitor in dev mode. It doesn't seem like you have workspace.source_path set in 0L.toml. Exiting.");
+                  exit(1);
+                },
+            };
+
             let debug_bin = project_root.join("target/debug/ol");
             let bin_str = debug_bin.to_str().unwrap();
 
