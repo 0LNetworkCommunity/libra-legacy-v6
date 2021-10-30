@@ -1,7 +1,7 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use anyhow::{ensure, format_err, Error, Result};
+use anyhow::{Error, Result, bail, ensure, format_err};
 use diem_crypto::hash::{CryptoHash, HashValue};
 use diem_transaction_builder::{error_explain, stdlib::ScriptCall};
 use diem_types::{account_config::{
@@ -1449,7 +1449,7 @@ impl TryFrom<AccountState> for TowerStateResourceView {
     type Error = Error;
 
     fn try_from(state: AccountState) -> Result<TowerStateResourceView, Error> {
-        let m = state.get_miner_state()?.unwrap();
+      if let Some(m) = state.get_miner_state()? {
         Ok(TowerStateResourceView {
             previous_proof_hash: BytesView::from( m.previous_proof_hash),
             verified_tower_height: m.verified_tower_height, // user's latest verified_tower_height
@@ -1459,6 +1459,9 @@ impl TryFrom<AccountState> for TowerStateResourceView {
             contiguous_epochs_validating_and_mining: m.contiguous_epochs_validating_and_mining,
             epochs_since_last_account_creation: m.epochs_since_last_account_creation
         })
+      } else {
+        bail!("could not get tower state")
+      }
     }
 }
 
@@ -1482,10 +1485,14 @@ impl TryFrom<AccountState> for OracleUpgradeStateView {
     type Error = Error;
 
     fn try_from(state: AccountState) -> Result<OracleUpgradeStateView, Self::Error> {
-        let m = state.get_oracle_state()?.unwrap();
-        // TODO: duplication UpgradeResource is the same as OracleUpgradeStateView
-        Ok(OracleUpgradeStateView {
-            upgrade: m.upgrade,
-        })
+        if let Some(m) = state.get_oracle_state()? {
+          // TODO: duplication UpgradeResource is the same as OracleUpgradeStateView
+          Ok(OracleUpgradeStateView {
+              upgrade: m.upgrade,
+          })
+        } else {
+          Err(Error::msg("could not get upgrade oracle data"))
+        }
+
     }
 }

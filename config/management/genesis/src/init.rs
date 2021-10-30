@@ -16,14 +16,16 @@ pub struct Init {
 
 impl Init {
     pub fn execute(self) -> Result<String, Error> {
-        let mnemonic_str = get_account_from_prompt().2.mnemonic();
+
+        let (_, _, wallet) = get_account_from_prompt();
+
         let path: PathBuf;
         if self.path.is_some() {
             path = self.path.unwrap();
         } else { 
             path = dirs::home_dir().unwrap().join(NODE_HOME);
         }
-        let keys = KeyScheme::new_from_mnemonic(mnemonic_str);
+        let keys = KeyScheme::new(&wallet);
         key_store_init(&path, &self.namespace.clone(), keys, true);
 
         Ok("Keys Generated".to_string())

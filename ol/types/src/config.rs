@@ -1,6 +1,6 @@
 //! Configs for all 0L apps.
 
-use anyhow::Error;
+use anyhow::{Error, bail};
 use dirs;
 use diem_config::config::NodeConfig;
 use diem_global_constants::{CONFIG_FILE, NODE_HOME};
@@ -176,9 +176,7 @@ impl AppCfg {
           if let Some(url) = upstream_peer {
               default_config.profile.upstream_nodes = Some(vec![url.to_owned()]);
               let mut web_monitor_url = url.clone();
-              web_monitor_url.set_port(Some(3030)).unwrap();
-              let epoch_url = &web_monitor_url.join("epoch.json").unwrap();
-              let (e, w) = bootstrap_waypoint_from_upstream(epoch_url).unwrap();
+              let (e, w) = bootstrap_waypoint_from_upstream(&mut web_monitor_url).unwrap();
               default_config.chain_info.base_epoch = Some(e);
               default_config.chain_info.base_waypoint = Some(w);
           } else {
@@ -549,19 +547,20 @@ pub fn get_swarm_backup_service_url(
     Ok(url)
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct EpochJSON {
+  epoch: u64,
+  waypoint: Waypoint,
+}
 /// fetch initial waypoint information from a clean state.
-pub fn bootstrap_waypoint_from_upstream(url: &Url) -> Result<(u64, Waypoint), Error> {
-    let g_res = reqwest::blocking::get(&url.to_string());
-    let string = g_res.unwrap().text().unwrap();
-    let json: serde_json::Value = string.parse().unwrap();
-    let epoch = json.get("epoch").unwrap().as_u64().unwrap();
-    let waypoint = json
-        .get("waypoint")
-        .unwrap()
-        .as_str()
-        .unwrap()
-        .parse()
-        .unwrap();
-
-    Ok((epoch, waypoint))
+pub fn bootstrap_waypoint_from_upstream(url: &mut Url) -> Result<(u64, Waypoint), Error> {
+    url.set_port(Some(3030)).unwrap();
+    let epoch_url = url.join("epoch.json").unwrap();
+    let g_res = reqwest::blocking::get(&epoch_url.to_string())?;
+    if g_res.status().is_success() {
+      let txt = g_res.text()?;
+      let epoch: EpochJSON = serde_json::from_str(&txt)?;
+      return Ok((epoch.epoch, epoch.waypoint))
+    }
+    bail!("fetching remote JSON-rpc failed with status: {:?}, response: {:?}", g_res.status(), g_res.text());
 }

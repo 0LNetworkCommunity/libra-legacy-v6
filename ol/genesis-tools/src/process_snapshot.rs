@@ -68,7 +68,7 @@ async fn accounts_from_snapshot_backup(
 
 fn get_alice_authkey_for_swarm() -> Vec<u8> {
     let mnemonic_string = fixtures::get_persona_mnem("alice");
-    let account_details = get_account_from_mnem(mnemonic_string);
+    let account_details = get_account_from_mnem(mnemonic_string).unwrap();
     account_details.0.to_vec()
 }
 
