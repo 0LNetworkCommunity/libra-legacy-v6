@@ -188,8 +188,6 @@ module TowerState {
       Stats::init_address(vm_sig, node_addr);
     }
 
- use 0x1::Debug::print;
-
     /// This function is called to submit proofs to the chain 
     /// Function index: 01
     /// Permissions: PUBLIC, ANYONE
@@ -201,14 +199,10 @@ module TowerState {
       let miner_addr = Signer::address_of(miner_sign);
 
       // This may be the 0th proof of an end user that hasn't had tower state initialized
-      print(&100);
       if (!is_init(miner_addr)) {
-        print(&110);
         init_miner_state(miner_sign, &proof.challenge, &proof.solution, proof.difficulty, proof.security);
         return
       };
-      print(&120);
-
 
       // Skip this check on local tests, we need tests to send different difficulties.
       if (!Testnet::is_testnet()){
@@ -216,7 +210,6 @@ module TowerState {
         let difficulty_constant = Globals::get_vdf_difficulty();
         assert(&proof.difficulty == &difficulty_constant, Errors::invalid_argument(130102));
       };
-      print(&130);
       // Process the proof
       verify_and_update_state(miner_addr, proof, true);
     }
@@ -398,11 +391,9 @@ module TowerState {
       security: u64
     ) acquires TowerProofHistory, TowerList, TowerStats {
       
-      print(&111);
       // NOTE Only Signer can update own state.
       // Should only happen once.
       assert(!exists<TowerProofHistory>(Signer::address_of(miner_sig)), Errors::requires_role(130111));
-      print(&112);
       // DiemAccount calls this.
       // Exception is DiemAccount which can simulate a Signer.
       // Initialize TowerProofHistory object and give to miner account
@@ -415,7 +406,6 @@ module TowerState {
         contiguous_epochs_validating_and_mining: 0u64,
         epochs_since_last_account_creation: 0u64,
       });
-      print(&113);
       // create the initial proof submission
       let proof = Proof {
         challenge: *challenge,
@@ -423,11 +413,8 @@ module TowerState {
         solution: *solution,
         security,
       };
-      print(&114);
       //submit the proof
       verify_and_update_state(Signer::address_of(miner_sig), proof, false);
-      print(&115);
-
     }
 
 

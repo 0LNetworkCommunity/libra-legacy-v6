@@ -60,7 +60,6 @@ TODO
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
@@ -642,14 +641,10 @@ Permissions: PUBLIC, ANYONE
   <b>let</b> miner_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sign);
 
   // This may be the 0th proof of an end user that hasn't had tower state initialized
-  print(&100);
   <b>if</b> (!<a href="TowerState.md#0x1_TowerState_is_init">is_init</a>(miner_addr)) {
-    print(&110);
     <a href="TowerState.md#0x1_TowerState_init_miner_state">init_miner_state</a>(miner_sign, &proof.challenge, &proof.solution, proof.difficulty, proof.security);
     <b>return</b>
   };
-  print(&120);
-
 
   // Skip this check on local tests, we need tests <b>to</b> send different difficulties.
   <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
@@ -657,7 +652,6 @@ Permissions: PUBLIC, ANYONE
     <b>let</b> difficulty_constant = <a href="Globals.md#0x1_Globals_get_vdf_difficulty">Globals::get_vdf_difficulty</a>();
     <b>assert</b>(&proof.difficulty == &difficulty_constant, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130102));
   };
-  print(&130);
   // Process the proof
   <a href="TowerState.md#0x1_TowerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);
 }
@@ -941,11 +935,9 @@ Checks to see if miner submitted enough proofs to be considered compliant
   security: u64
 ) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
 
-  print(&111);
   // NOTE Only <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a> can <b>update</b> own state.
   // Should only happen once.
   <b>assert</b>(!<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig)), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(130111));
-  print(&112);
   // <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> calls this.
   // Exception is <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> which can simulate a <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a>.
   // Initialize <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> object and give <b>to</b> miner account
@@ -958,7 +950,6 @@ Checks to see if miner submitted enough proofs to be considered compliant
     contiguous_epochs_validating_and_mining: 0u64,
     epochs_since_last_account_creation: 0u64,
   });
-  print(&113);
   // create the initial proof submission
   <b>let</b> proof = <a href="TowerState.md#0x1_TowerState_Proof">Proof</a> {
     challenge: *challenge,
@@ -966,11 +957,8 @@ Checks to see if miner submitted enough proofs to be considered compliant
     solution: *solution,
     security,
   };
-  print(&114);
   //submit the proof
   <a href="TowerState.md#0x1_TowerState_verify_and_update_state">verify_and_update_state</a>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig), proof, <b>false</b>);
-  print(&115);
-
 }
 </code></pre>
 
