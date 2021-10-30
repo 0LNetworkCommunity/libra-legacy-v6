@@ -5,15 +5,32 @@
 
 
 
+-  [Constants](#@Constants_0)
 -  [Function `create_user_by_coin_tx`](#0x1_AccountScripts_create_user_by_coin_tx)
 -  [Function `create_acc_user`](#0x1_AccountScripts_create_acc_user)
 -  [Function `create_acc_val`](#0x1_AccountScripts_create_acc_val)
 
 
 <pre><code><b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
+<b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
+<b>use</b> <a href="VDF.md#0x1_VDF">0x1::VDF</a>;
 <b>use</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig">0x1::ValidatorConfig</a>;
+</code></pre>
+
+
+
+<a name="@Constants_0"></a>
+
+## Constants
+
+
+<a name="0x1_AccountScripts_ACCOUNT_ALREADY_EXISTS"></a>
+
+
+
+<pre><code><b>const</b> <a href="ol_account.md#0x1_AccountScripts_ACCOUNT_ALREADY_EXISTS">ACCOUNT_ALREADY_EXISTS</a>: u64 = 0;
 </code></pre>
 
 
@@ -39,6 +56,9 @@
     authkey_prefix: vector&lt;u8&gt;,
     unscaled_value: u64,
 ) {
+    // check <b>if</b> the account already <b>exists</b>.
+    <b>assert</b>(!<a href="DiemAccount.md#0x1_DiemAccount_exists_at">DiemAccount::exists_at</a>(account), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="ol_account.md#0x1_AccountScripts_ACCOUNT_ALREADY_EXISTS">ACCOUNT_ALREADY_EXISTS</a>));
+
     // IMPORTANT: the human representation of a value is unscaled. The user which expects <b>to</b> send 10 coins, will input that <b>as</b> an unscaled_value. This <b>script</b> converts it <b>to</b> the Move internal scale by multiplying by COIN_SCALING_FACTOR.
     <b>let</b> value = unscaled_value * <a href="Globals.md#0x1_Globals_get_coin_scaling_factor">Globals::get_coin_scaling_factor</a>();
     <b>let</b> new_account_address = <a href="DiemAccount.md#0x1_DiemAccount_create_user_account_with_coin">DiemAccount::create_user_account_with_coin</a>(
@@ -125,7 +145,13 @@
     op_fullnode_network_addresses: vector&lt;u8&gt;,
     op_human_name: vector&lt;u8&gt;,
 ) {
-    <b>let</b> new_account_address = <a href="DiemAccount.md#0x1_DiemAccount_create_validator_account_with_proof">DiemAccount::create_validator_account_with_proof</a>(
+
+  // check <b>if</b> this account <b>exists</b>
+  <b>let</b> (new_account_address, _) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(&challenge);
+  <b>assert</b>(!<a href="DiemAccount.md#0x1_DiemAccount_exists_at">DiemAccount::exists_at</a>(new_account_address), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="ol_account.md#0x1_AccountScripts_ACCOUNT_ALREADY_EXISTS">ACCOUNT_ALREADY_EXISTS</a>));
+
+
+  <a href="DiemAccount.md#0x1_DiemAccount_create_validator_account_with_proof">DiemAccount::create_validator_account_with_proof</a>(
         &sender,
         &challenge,
         &solution,
