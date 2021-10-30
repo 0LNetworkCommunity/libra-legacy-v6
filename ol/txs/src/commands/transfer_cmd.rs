@@ -30,7 +30,7 @@ impl Runnable for TransferCmd {
             },
         };
 
-        match balance_transfer(destination, self.coins, entry_args.no_send, entry_args.save_path) {
+        match balance_transfer(destination, self.coins, entry_args.save_path) {
             Ok(_) => println!("Success. Balance transfer success: {}", self.destination_account),
             Err(e) => {
               println!("ERROR: could not create account, message: {:?}", &e);
@@ -41,7 +41,7 @@ impl Runnable for TransferCmd {
 }
 
 /// create an account by sending coin to it
-pub fn balance_transfer(destination: AccountAddress, coins: u64, no_send: bool, save_path: Option<PathBuf>) -> Result<TransactionView, TxError>{
+pub fn balance_transfer(destination: AccountAddress, coins: u64, save_path: Option<PathBuf>) -> Result<TransactionView, TxError>{
   let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
 
   // NOTE: coins here do not have the scaling factor. Rescaling is the responsibility of the Move script. See the script in ol_accounts.move for detail.
@@ -50,5 +50,5 @@ pub fn balance_transfer(destination: AccountAddress, coins: u64, no_send: bool, 
       coins,
   );
 
-  maybe_submit(script, &tx_params, no_send, save_path)
+  maybe_submit(script, &tx_params, save_path)
 }

@@ -73,7 +73,6 @@ pub struct TxError {
 pub fn maybe_submit(
     script: TransactionPayload,
     tx_params: &TxParams,
-    no_send: bool,
     save_path: Option<PathBuf>,
 ) -> Result<TransactionView, TxError> {
     let mut client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint)
@@ -83,10 +82,6 @@ pub fn maybe_submit(
     if let Some(path) = save_path {
         // TODO: This will not work with batch operations like autopay_batch, last one will overwrite the file.
         save_tx(txn.clone(), path);
-    }
-
-    if no_send {
-        // return Ok(txn);
     }
 
     match submit_tx(client, txn.clone(), &mut account_data) {
@@ -130,7 +125,13 @@ pub fn batch_wrapper(
             None
         };
 
-        maybe_submit(s, tx_params, no_send, new_path).unwrap();
+        if no_send {
+          save_dont_send_tx(s.clone(), tx_params, new_path).unwrap();
+        } else {
+          maybe_submit(s, tx_params,  new_path).unwrap();
+        }
+
+        
         // TODO: handle saving of batches to file.
     });
 }

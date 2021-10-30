@@ -19,9 +19,9 @@ impl Runnable for DemoCmd {
     fn run(&self) {
         let entry_args = entrypoint::get_args();
         let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
+
         match demo_tx(
           &tx_params,
-          entry_args.no_send,
           entry_args.save_path
         ) {
             Ok(r) => {
@@ -37,12 +37,13 @@ impl Runnable for DemoCmd {
 
 /// a no-op tx to test transactions
 pub fn demo_tx(
-  tx_params: &TxParams, no_send: bool, save_path: Option<PathBuf>
+  tx_params: &TxParams, save_path: Option<PathBuf>
 ) -> Result<TransactionView, TxError> {
+  let script = transaction_builder::encode_demo_e2e_script_function(42);
+
   maybe_submit(
-    transaction_builder::encode_demo_e2e_script_function(42),
+    script,
     &tx_params,
-    no_send,
     save_path
   )
 }

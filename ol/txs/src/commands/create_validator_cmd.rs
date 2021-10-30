@@ -88,7 +88,6 @@ impl Runnable for CreateValidatorCmd {
                 match maybe_submit(
                     create_validator_script_function(&new_account),
                     &tx_params,
-                    entry_args.no_send,
                     entry_args.save_path,
                 ){
                   Ok(_) => { 

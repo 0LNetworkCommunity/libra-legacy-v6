@@ -34,7 +34,6 @@ impl Runnable for WalletCmd {
         match maybe_submit(
           transaction_builder::encode_set_wallet_type_script_function(type_int),
           &tx_params,
-          entry_args.no_send,
           entry_args.save_path
         ) {
             Err(e) => {
