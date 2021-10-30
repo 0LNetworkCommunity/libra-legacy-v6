@@ -75,7 +75,7 @@ impl Node {
         return Self {
             client,
             app_conf: conf.clone(),
-            node_conf,
+            node_conf: Some(node_conf),
             vitals: Vitals {
                 host_state: HostState::new(),
                 account_view: OwnerAccountView::new(conf.profile.account),
