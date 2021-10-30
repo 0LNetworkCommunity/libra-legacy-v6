@@ -61,11 +61,15 @@ pub struct TxParams {
 }
 
 #[derive(Debug)]
+/// a transaction error type specific to ol txs
 pub struct TxError {
-  err: Option<Error>,
-  tx_view: Option<TransactionView>
+  /// the actual error type
+  pub err: Option<Error>,
+  /// transaction view if the transaction got that far
+  pub tx_view: Option<TransactionView>
 }
 
+/// wrapper for sending a transaction.
 pub fn maybe_submit(
     script: TransactionPayload,
     tx_params: &TxParams,
@@ -93,6 +97,23 @@ pub fn maybe_submit(
         Err(e) => Err(TxError { err: Some(e), tx_view: None })
     }
 }
+
+/// wrapper for saving a transction without sending
+pub fn save_dont_send_tx(
+    script: TransactionPayload,
+    tx_params: &TxParams,
+    save_path: Option<PathBuf>,
+) -> Result<SignedTransaction, Error> {
+    let mut client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint)?;
+
+    let (_account_data, txn) = stage(script, tx_params, &mut client);
+    if let Some(path) = save_path {
+        // TODO: This will not work with batch operations like autopay_batch, last one will overwrite the file.
+        save_tx(txn.clone(), path);
+    }
+    Ok(txn)
+}
+
 /// convenience for wrapping multiple transactions
 pub fn batch_wrapper(
     batch: Vec<TransactionPayload>,
