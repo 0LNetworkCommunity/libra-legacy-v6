@@ -60,34 +60,20 @@ pub struct TxParams {
     pub chain_id: ChainId,
 }
 
-// pub struct TxParams {
-//     /// Sender's 0L authkey, may be the operator.
-//     pub sender_auth_key: AuthenticationKey,
-//     /// User's operator sender account if different than the owner account, used to send transactions
-//     pub sender_address: AccountAddress,
-//     /// User's 0L owner address, where the mining proofs go to.
-//     pub owner_address: AccountAddress,
-//     /// Url
-//     pub url: Url,
-//     /// waypoint
-//     pub waypoint: Waypoint,
-//     /// KeyPair
-//     pub keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey>,
-//     /// User's Maximum gas_units willing to run. Different than coin.
-//     pub max_gas_unit_for_tx: u64,
-//     /// User's GAS Coin price to submit transaction.
-//     pub coin_price_per_unit: u64,
-//     /// User's transaction timeout.
-//     pub user_tx_timeout: u64, // for compatibility with UTC's timestamp.
-// }
-/// wrapper which checks entry point arguments before submitting tx, possibly saving the tx script
+#[derive(Debug)]
+pub struct TxError {
+  err: Option<Error>,
+  tx_view: Option<TransactionView>
+}
+
 pub fn maybe_submit(
     script: TransactionPayload,
     tx_params: &TxParams,
     no_send: bool,
     save_path: Option<PathBuf>,
-) -> Result<SignedTransaction, Error> {
-    let mut client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+) -> Result<TransactionView, TxError> {
+    let mut client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint)
+    .map_err(|e|{ TxError{err: Some(e), tx_view: None } })?;
 
     let (mut account_data, txn) = stage(script, tx_params, &mut client);
     if let Some(path) = save_path {
@@ -96,15 +82,15 @@ pub fn maybe_submit(
     }
 
     if no_send {
-        return Ok(txn);
+        // return Ok(txn);
     }
 
     match submit_tx(client, txn.clone(), &mut account_data) {
-        Ok(res) => match eval_tx_status(res) {
-            Ok(_) => Ok(txn),
-            Err(e) => Err(e),
+        Ok(res) => match eval_tx_status(&res) {
+            Ok(_) => Ok(res),
+            Err(e) => Err(TxError { err: Some(e), tx_view: Some(res) }),
         },
-        Err(e) => Err(e),
+        Err(e) => Err(TxError { err: Some(e), tx_view: None })
     }
 }
 /// convenience for wrapping multiple transactions
@@ -456,7 +442,7 @@ pub fn wait_for_tx(
 }
 
 /// Evaluate the response of a submitted txs transaction.
-pub fn eval_tx_status(result: TransactionView) -> Result<(), Error> {
+pub fn eval_tx_status(result: &TransactionView) -> Result<(), Error> {
     match result.vm_status == VMStatusView::Executed {
         true => {
             println!("\nSuccess: transaction executed");
@@ -464,7 +450,7 @@ pub fn eval_tx_status(result: TransactionView) -> Result<(), Error> {
         }
         false => {
             println!("Transaction failed");
-            let msg = format!("Rejected with code:{:?}", result.vm_status);
+            let msg = format!("Rejected with code: {:?}", result.vm_status);
             Err(Error::msg(msg))
         }
     }

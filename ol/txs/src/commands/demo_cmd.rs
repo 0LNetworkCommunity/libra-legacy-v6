@@ -3,9 +3,10 @@
 #![allow(clippy::never_loop)]
 
 use abscissa_core::{Command, Options, Runnable};
+use diem_json_rpc_types::views::TransactionView;
 use diem_transaction_builder::stdlib as transaction_builder;
 use ol_types::config::TxType;
-use crate::{entrypoint, submit_tx::{TxParams, maybe_submit, tx_params_wrapper}};
+use crate::{entrypoint, submit_tx::{TxError, TxParams, maybe_submit, tx_params_wrapper}};
 use std::process::exit;
 use std::path::PathBuf;
 use anyhow::Error;
@@ -37,7 +38,7 @@ impl Runnable for DemoCmd {
 /// a no-op tx to test transactions
 pub fn demo_tx(
   tx_params: &TxParams, no_send: bool, save_path: Option<PathBuf>
-) -> Result<SignedTransaction, Error> {
+) -> Result<TransactionView, TxError> {
   maybe_submit(
     transaction_builder::encode_demo_e2e_script_function(42),
     &tx_params,

@@ -2,12 +2,10 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{
-    entrypoint,
-    submit_tx::{maybe_submit, tx_params_wrapper},
-};
+use crate::{entrypoint, submit_tx::{TxError, maybe_submit, tx_params_wrapper}};
 use abscissa_core::{Command, Options, Runnable};
 use anyhow::Error;
+use diem_json_rpc_types::views::TransactionView;
 use diem_transaction_builder::stdlib as transaction_builder;
 use diem_types::{account_address::AccountAddress, transaction::SignedTransaction};
 use ol_types::config::TxType;
@@ -35,7 +33,7 @@ impl Runnable for TransferCmd {
         match balance_transfer(destination, self.coins, entry_args.no_send, entry_args.save_path) {
             Ok(_) => println!("Success. Balance transfer success: {}", self.destination_account),
             Err(e) => {
-              println!("ERROR: could not create account, message: {}", &e.to_string());
+              println!("ERROR: could not create account, message: {:?}", &e);
               exit(1);
             },
         }
@@ -43,7 +41,7 @@ impl Runnable for TransferCmd {
 }
 
 /// create an account by sending coin to it
-pub fn balance_transfer(destination: AccountAddress, coins: u64, no_send: bool, save_path: Option<PathBuf>) -> Result<SignedTransaction, Error>{
+pub fn balance_transfer(destination: AccountAddress, coins: u64, no_send: bool, save_path: Option<PathBuf>) -> Result<TransactionView, TxError>{
   let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
 
   // NOTE: coins here do not have the scaling factor. Rescaling is the responsibility of the Move script. See the script in ol_accounts.move for detail.
