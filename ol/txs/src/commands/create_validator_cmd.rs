@@ -102,8 +102,8 @@ impl Runnable for CreateValidatorCmd {
                         VMStatusView::OutOfGas => {
                           println!("looks like you're out of gas, message: {:?}", &view.vm_status);
                         },
-                        VMStatusView::MoveAbort { location, abort_code, explanation } => {
-                          if (location.contains("AccountScripts") && abort_code == &0) {
+                        VMStatusView::MoveAbort { location, abort_code, explanation: _ } => {
+                          if location.contains("AccountScripts") && abort_code == &0 {
                             println!("This account already exists on chain");
                           } else {
                             println!("transaction error, message: {:?}", &view.vm_status);

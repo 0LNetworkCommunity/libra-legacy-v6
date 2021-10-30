@@ -9,8 +9,8 @@ use ol_types::config::TxType;
 use crate::{entrypoint, submit_tx::{TxError, TxParams, maybe_submit, tx_params_wrapper}};
 use std::process::exit;
 use std::path::PathBuf;
-use anyhow::Error;
-use diem_types::transaction::SignedTransaction;
+
+
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct DemoCmd {}

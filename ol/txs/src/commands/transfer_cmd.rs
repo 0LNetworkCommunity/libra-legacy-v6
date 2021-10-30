@@ -4,10 +4,10 @@
 
 use crate::{entrypoint, submit_tx::{TxError, maybe_submit, tx_params_wrapper}};
 use abscissa_core::{Command, Options, Runnable};
-use anyhow::Error;
+
 use diem_json_rpc_types::views::TransactionView;
 use diem_transaction_builder::stdlib as transaction_builder;
-use diem_types::{account_address::AccountAddress, transaction::SignedTransaction};
+use diem_types::{account_address::AccountAddress};
 use ol_types::config::TxType;
 use std::{path::PathBuf, process::exit};
 /// `CreateAccount` subcommand
