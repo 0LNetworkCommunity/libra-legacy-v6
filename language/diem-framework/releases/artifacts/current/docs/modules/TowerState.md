@@ -647,8 +647,10 @@ Permissions: PUBLIC, ANYONE
   <b>let</b> miner_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sign);
 
   // Abort <b>if</b> not initialized.
-  <b>assert</b>(<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(130101));
-
+  // <b>assert</b>(<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(130101));
+  <b>if</b> (!<a href="TowerState.md#0x1_TowerState_is_init">is_init</a>(miner_addr)) {
+    <a href="TowerState.md#0x1_TowerState_init_miner_state">init_miner_state</a>(miner_sign, &proof.challenge, &proof.solution, proof.difficulty, proof.security);
+  };
   // Get vdf difficulty constant. Will be different in tests than in production.
   <b>let</b> difficulty_constant = <a href="Globals.md#0x1_Globals_get_vdf_difficulty">Globals::get_vdf_difficulty</a>();
 
@@ -691,7 +693,8 @@ Permissions: PUBLIC, ANYONE
 
   // Get address, assumes the sender is the signer.
   <b>assert</b>(<a href="ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(miner_addr) == <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(operator_sig), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(130103));
-  // Abort <b>if</b> not initialized.
+
+  // Abort <b>if</b> not initialized. Assumes the validator Owner account already has submitted the 0th miner proof in onboarding.
   <b>assert</b>(<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(130104));
 
   // <b>return</b> early <b>if</b> difficulty and security are not correct.
@@ -737,6 +740,7 @@ Permissions: PUBLIC, ANYONE
   proof: <a href="TowerState.md#0x1_TowerState_Proof">Proof</a>,
   steady_state: bool
 ) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
+
   <b>let</b> miner_history = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr);
   <b>assert</b>(
     miner_history.count_proofs_in_epoch &lt; <a href="Globals.md#0x1_Globals_get_epoch_mining_thres_upper">Globals::get_epoch_mining_thres_upper</a>(),

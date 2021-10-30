@@ -204,9 +204,10 @@ module TowerState {
       // Get address, assumes the sender is the signer.
       let miner_addr = Signer::address_of(miner_sign);
 
-      // Abort if not initialized.
-      assert(exists<TowerProofHistory>(miner_addr), Errors::not_published(130101));
-
+      // This may be the 0th proof of an end user that hasn't had tower state initialized
+      if (!is_init(miner_addr)) {
+        init_miner_state(miner_sign, &proof.challenge, &proof.solution, proof.difficulty, proof.security);
+      };
       // Get vdf difficulty constant. Will be different in tests than in production.
       let difficulty_constant = Globals::get_vdf_difficulty();
 
@@ -233,7 +234,8 @@ module TowerState {
       
       // Get address, assumes the sender is the signer.
       assert(ValidatorConfig::get_operator(miner_addr) == Signer::address_of(operator_sig), Errors::requires_role(130103));
-      // Abort if not initialized.
+      
+      // Abort if not initialized. Assumes the validator Owner account already has submitted the 0th miner proof in onboarding.
       assert(exists<TowerProofHistory>(miner_addr), Errors::not_published(130104));
 
       // return early if difficulty and security are not correct.
@@ -262,6 +264,7 @@ module TowerState {
       proof: Proof,
       steady_state: bool
     ) acquires TowerProofHistory, TowerList, TowerStats {
+
       let miner_history = borrow_global<TowerProofHistory>(miner_addr);
       assert(
         miner_history.count_proofs_in_epoch < Globals::get_epoch_mining_thres_upper(), 
