@@ -2,6 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
+use anyhow::Error;
 use diem_global_constants::{VDF_SECURITY_PARAM, delay_difficulty};
 use ol_keys::wallet;
 use ol_types::block::VDFProof;
@@ -29,12 +30,15 @@ impl Runnable for UserWizardCmd {
         if let Some(file) = &self.check_file {
             check(file.to_path_buf());
         } else {
-            wizard(path, &self.block_zero);
+            match wizard(path, &self.block_zero){
+                Ok(_) => println!("Success: user account configured"),
+                Err(e) => println!("ERROR: could not configure user, message: {:?}", e.to_string()),
+            };
         }
     }
 }
 
-fn wizard(path: PathBuf, block_zero: &Option<PathBuf>) {
+fn wizard(path: PathBuf, block_zero: &Option<PathBuf>) -> Result<(), Error>{
     let mut app_cfg = AppCfg::default();
     
     let (authkey, account, _) = wallet::get_account_from_prompt();
@@ -49,11 +53,12 @@ fn wizard(path: PathBuf, block_zero: &Option<PathBuf>) {
     if let Some(block_path) = block_zero {
         block = VDFProof::parse_block_file(block_path.to_owned());
     } else {
-        block = write_genesis(&app_cfg);
+        block = write_genesis(&app_cfg)?;
     }
 
     // Create Manifest
     account::UserConfigs::new(block).create_manifest(path);
+    Ok(())
 }
 
 /// Checks the format of the account manifest, including vdf proof

@@ -2,7 +2,7 @@
 
 use super::node::Node;
 use crate::node::client::*;
-use anyhow::{anyhow, bail, Error};
+use anyhow::{bail, Error};
 use backup_cli::utils::backup_service_client::{BackupServiceClient, BackupServiceClientOpt};
 use diemdb::backup::backup_handler::DbState;
 use tokio::runtime::Runtime;
@@ -41,20 +41,20 @@ impl Node {
         // let config = &self.app_conf;
         let waypoint = &self.waypoint().unwrap();
 
-        let remote_client = find_a_remote_jsonrpc(&self.app_conf, *waypoint)
-          .map_err(|e| { println!("cannot connect to upstream node"); e })?;
+        let remote_client = find_a_remote_jsonrpc(&self.app_conf, *waypoint).map_err(|e| {
+            println!("cannot connect to upstream node");
+            e
+        })?;
 
-        if let Some(local_db) = self.get_db_state() {
-            s.remote_height = match remote_client.get_metadata(){
-                Ok(m) => m.version,
-                Err(_) => 404,
-            };
-            s.sync_height = local_db.synced_version;
-            s.sync_delay = s.remote_height as i64 - s.sync_height as i64;
-            s.is_synced = s.sync_delay < 1000;
-            return Ok(s);
-        }
-        Err(anyhow!("Cannot get local db state"))
+        let local_db = self.get_db_state()?;
+        s.remote_height = match remote_client.get_metadata() {
+            Ok(m) => m.version,
+            Err(_) => 404,
+        };
+        s.sync_height = local_db.synced_version;
+        s.sync_delay = s.remote_height as i64 - s.sync_height as i64;
+        s.is_synced = s.sync_delay < 1000;
+        Ok(s)
     }
 
     // /// check if node is synced
@@ -62,15 +62,21 @@ impl Node {
     //   self.check_sync()
     // }
     /// get local sync block height
-    pub fn get_db_state(&self) -> Option<DbState> {
+    pub fn get_db_state(&self) -> Result<DbState, Error> {
         // if is swarm need to get the backup_service_address: "127.0.0.1:44867" from the NodeConfig in swarm_temp/0/node.yaml
-        let url_string = format!("http://{}", self.node_conf.storage.backup_service_address);
-        let bk = BackupServiceClientOpt {
-            address: url_string
-        };
-        let client = BackupServiceClient::new_with_opt(bk);
+        if let Some(cfg) = &self.node_conf {
+            let url_string = format!("http://{}", cfg.storage.backup_service_address);
+            let bk = BackupServiceClientOpt {
+                address: url_string,
+            };
+            let client = BackupServiceClient::new_with_opt(bk);
 
-        let rt = Runtime::new().unwrap();
-        rt.block_on(client.get_db_state()).unwrap()
+            let rt = Runtime::new().unwrap();
+            match rt.block_on(client.get_db_state())? {
+                Some(db) => return Ok(db),
+                None => {}
+            }
+        }
+        bail!("could not load backup_service_address from config.yaml")
     }
 }

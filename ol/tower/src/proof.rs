@@ -40,26 +40,29 @@ fn mine_genesis(config: &AppCfg, difficulty: u64, security: u16) -> VDFProof {
 }
 
 /// Mines genesis and writes the file
-pub fn write_genesis(config: &AppCfg) -> VDFProof {
+pub fn write_genesis(config: &AppCfg) -> Result<VDFProof, Error> {
     let difficulty = delay_difficulty();
     let security = VDF_SECURITY_PARAM;
     let block = mine_genesis(config, difficulty, security);
     //TODO: check for overwriting file...
-    write_json(&block, &config.get_block_dir());
+    write_json(&block, &config.get_block_dir())?;
     let genesis_proof_filename = &format!("{}_0.json", FILENAME);
     println!(
         "proof zero mined, file saved to: {:?}",
         &config.get_block_dir().join(genesis_proof_filename)
     );
-    block
+    Ok(block)
 }
 /// Mine one block
 pub fn mine_once(config: &AppCfg) -> Result<VDFProof, Error> {
     // If there are files in path, continue mining.
-    let latest_block = get_latest_proof(config)?;
-    let preimage = HashValue::sha3_256_of(&latest_block.proof).to_vec();
-    // Otherwise this is the first time the app is run, and it needs a genesis preimage, which comes from configs.
-    let height = latest_block.height + 1;
+    // let latest_block = ?;
+    let (preimage, height) = match get_latest_proof(config) {
+      Ok(latest_block) => (HashValue::sha3_256_of(&latest_block.proof).to_vec(), latest_block.height + 1 ),
+      // Otherwise this is the first time the app is run, and it needs a genesis preimage, which comes from configs.
+      Err(_) => return write_genesis(config)
+    };
+
     // TODO: cleanup this duplication with mine_genesis_once?
     let difficulty = delay_difficulty();
     let security = VDF_SECURITY_PARAM;
@@ -78,7 +81,7 @@ pub fn mine_once(config: &AppCfg) -> Result<VDFProof, Error> {
         security: Some(security),
     };
 
-    write_json(&block, &config.get_block_dir());
+    write_json(&block, &config.get_block_dir())?;
     Ok(block)
 }
 
@@ -125,20 +128,17 @@ pub fn mine_and_submit(
     }
 }
 
-fn write_json(block: &VDFProof, blocks_dir: &PathBuf) {
+fn write_json(block: &VDFProof, blocks_dir: &PathBuf) -> Result<(), std::io::Error> {
     if !&blocks_dir.exists() {
         // first run, create the directory if there is none, or if the user changed the configs.
         // note: user may have blocks but they are in a different directory than what miner.toml says.
-        fs::create_dir(&blocks_dir).unwrap();
+        fs::create_dir(&blocks_dir)?;
     };
     // Write the file.
     let mut latest_block_path = blocks_dir.clone();
-
     latest_block_path.push(format!("{}_{}.json", FILENAME, block.height));
-    //println!("{:?}", &latest_block_path);
-    let mut file = fs::File::create(&latest_block_path).unwrap();
-    file.write_all(serde_json::to_string(&block).unwrap().as_bytes())
-        .expect("Could not write block");
+    let mut file = fs::File::create(&latest_block_path)?;
+    file.write_all(serde_json::to_string(&block)?.as_bytes())
 }
 
 /// parse the existing blocks in the miner's path. This function receives any path. Note: the path is configured in miner.toml which abscissa Configurable parses, see commands.rs.
