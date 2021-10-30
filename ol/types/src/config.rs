@@ -1,6 +1,6 @@
 //! Configs for all 0L apps.
 
-use anyhow::Error;
+use anyhow::{Error, bail};
 use dirs;
 use diem_config::config::NodeConfig;
 use diem_global_constants::{CONFIG_FILE, NODE_HOME};
@@ -551,9 +551,12 @@ pub fn get_swarm_backup_service_url(
 
 /// fetch initial waypoint information from a clean state.
 pub fn bootstrap_waypoint_from_upstream(url: &Url) -> Result<(u64, Waypoint), Error> {
-    let g_res = reqwest::blocking::get(&url.to_string());
-    let string = g_res.unwrap().text().unwrap();
-    let json: serde_json::Value = string.parse().unwrap();
+    let g_res = reqwest::blocking::get(&url.to_string())?;
+    if !g_res.status().is_success() {
+      bail!("could not connect to upstream peer to get bootstrap waypoint, is {} online?", &url.to_string());
+    }
+    let string = g_res.text()?;
+    let json: serde_json::Value = string.parse()?;
     let epoch = json.get("epoch").unwrap().as_u64().unwrap();
     let waypoint = json
         .get("waypoint")
