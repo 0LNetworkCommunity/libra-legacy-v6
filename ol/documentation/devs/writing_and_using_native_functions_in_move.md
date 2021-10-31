@@ -5,14 +5,14 @@ Move is very limited in what functionality it provides us. Sometimes, it's conve
 ## Implementing native functions in 0L
 
 ### Step 1
-Start by declaring the native function in the corresponding move module. For example, in `language/stdlib/modules/OL/vdf.move`:
+Start by declaring the native function in the corresponding move module. For example, in `language/diem-framework/modules/0L/VDF.move`:
 ```
 native public fun verify(challenge: &vector<u8>, difficulty: &u64, alleged_solution: &vector<u8>): bool;
 ```
 This can be used in move code just like any other function defined in move.
 
 ### Step 2
-The rust implementation of the native function should be written in `language/move-vm/natives/src/filename.rs` where your function will be written in the file `filename.rs`. For example, see `language/move-vm/natives/src/vdf.rs` and the verify function. The function's inputs and output must be wrapped in a certain format to allow them to be sent between rust and move. Otherwise, the body of the function can be written in rust as normal.
+The rust implementation of the native function should be written in `language/move-vm/natives/src/<filename>.rs` where your function will be written in the file `<filename>.rs`. For example, see `language/move-vm/natives/src/vdf.rs` and the verify function. The function's inputs and output must be wrapped in a certain format to allow them to be sent between rust and move. Otherwise, the body of the function can be written in rust as normal.
 
 #### Accepting Inputs
 As seen in the example files, the inputs of the function will be `context: &impl NativeContext, ty_args: Vec<Type>, mut arguments: VecDeque<Value>`. Where `ty_args` will be a vector of currency type tags from move. For example, a native function corresponding to the move function `fun pay<LBR, GAS>()` would require `ty_args` to be a size two vector containing the currency tags for `LBR` and `GAS`. Similarly, `arguments` will be a vector of arguments of a type which allows interfacing between move and rust. These inputs can be popped from the vector and parsed as shown below. Once parsed, they can be used as desired normally in rust.
@@ -37,10 +37,10 @@ To manage gas for native functions, the `CostTable` object (defined in `language
 
 
 As of writing this guide, all tests are performed using the `zero_cost_schedule` in `move-vm`. The steps described are for this environment.
-1. Increment the total number of native functions by increasing the constant `NUMBER_OF_NATIVE_FUNCTIONS` in `language/vm/src/file_format.rs`. 
+1. Increment the total number of native functions by increasing the constant `NUMBER_OF_NATIVE_FUNCTIONS` in `language/move-binary-format/src/file_format.rs`. 
 > What does this do? `zero_cost_schedule` is initialized for native functions by making a table of length `NUMBER_OF_NATIVE_FUNCTIONS` with entries of zero. By increasing the size of this table (and the global constant for anywhere else it's used), you will avoid index_out_of_bounds errors since the `CostTable` is actually big enough.
 2. At the bottom of `language/move-vm/types/src/gas_schedule.rs`, add another entry to the enum which holds the indices for native functions. This will make it easier to access the proper table entry without having to remember the index.
-3. In `language/tools/vm-genesis/src/genesis_gas_schedule.rs`, add another elemen to the vector e.g. `(N::VDF_VERIFY, GasCost::new(1000000, 1))`.
+3. In `language/move-vm/types/src/gas_schedule.rs`, add another elemen to the vector e.g. `(N::VDF_VERIFY, GasCost::new(1000000, 1))`.
 4. Calculate cost within your native function by calling `cost = native_gas(context.cost_table(), NativeCostIndex::YOUR_ENUM_ENTRY, 1);` where `native_gas` is imported with `use move_vm_types::natives::function::native_gas`.
 
 The final return value  the computed gas values can be combined with the vector of return values and output from the native function with `NativeResult::ok(gas_cost, vec_of_ret_vals)`.
@@ -48,17 +48,17 @@ The final return value  the computed gas values can be combined with the vector 
 ### Step 3
 Finally, once the native function is written in rust, you must tell move how and where to find the actual code. This section deals with the declarations that must be made in various `lib` files so that move will know where to look for the native functions you've written.
 
-1. In `language/move-vm/natives/src/lib.rs`, add a line to add `pub mod filename` where `filename` is the name of your rust file which contains the native function.
-2. In `language/move-vm/runtime/src/native_functions.rs`
-   - Import the file you just created at the top with `use move_vm_natives::filename`.
-   - Add an entry to the enum `NativeFunction` with any name you choose such as `NameInEnum`.
-   - In the `resolve` function for `NativeFunction`, add a line in the `match case`: `(&CORE_CODE_ADDRESS, "MoveModuleName", "desired_move_fcn_name") => NameInEnum` where `MoveModuleName` is the module in which the function is to be defined, `desired_move_fcn_name` is the name the function should have in your move module.
-   - In the `dispatch` function for `NativeFunction`, add a line in the `match self`: `Self::NameInEnum => filename::desired_move_fcn_name(ctx, t, v)`. You don't need to define `ctx, t,` or `v` as they represent the rust inputs (context, type vec, arguments).
+In `language/move-stdlib/src/natives/mod.rs`:
+1. Add a line to add `pub mod filename` where `filename` is the name of your rust file which contains the native function.
+2. Add your fns e.g. `("VDF", "verify", ol_vdf::native_verify),` into the `const NATIVES: &[(&str, &str, NativeFunction)] = &[` array
+        
+
 
 
 Now your function should work!
 
 
 Final Notes:
+- In case of problems, check how the move std lib. native modules/fns are written e.g. `vector::empty()` or the 0L native modules/fns e.g. `ol_vdf, ol_decimal`.
 - Be careful when using `assert` statements in rust. While `Transaction::assert(false, 0)` in move just causes the transaction to abort, an `assert!(false)` in rust will cause panick and will fail functional tests. When possible, asserts, checks, and confirmations should be done in move-space.
 - Be careful when passing variables to/from rust/move regarding ownership. It's best practice to borrow move variables without taking ownership when possible.
