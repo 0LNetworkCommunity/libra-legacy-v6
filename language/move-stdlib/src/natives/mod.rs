@@ -55,6 +55,9 @@ pub fn all_natives(move_std_addr: AccountAddress) -> NativeFunctionTable {
         /////// 0L /////////
         ("VDF", "verify", ol_vdf::native_verify),
         ("VDF", "extract_address_from_challenge", ol_vdf::native_extract_address_from_challenge),
+        ("Decimal", "decimal_demo", ol_decimal::native_decimal_demo),
+        ("Decimal", "decimal_single", ol_decimal::native_decimal_single),
+        ("Decimal", "decimal_pair", ol_decimal::native_decimal_pair),
     ];
     NATIVES
         .iter()
