@@ -553,14 +553,21 @@ struct EpochJSON {
   waypoint: Waypoint,
 }
 /// fetch initial waypoint information from a clean state.
-pub fn bootstrap_waypoint_from_upstream(url: &mut Url) -> Result<(u64, Waypoint), Error> {
-    url.set_port(Some(3030)).unwrap();
-    let epoch_url = url.join("epoch.json").unwrap();
-    let g_res = reqwest::blocking::get(&epoch_url.to_string())?;
-    if g_res.status().is_success() {
-      let txt = g_res.text()?;
-      let epoch: EpochJSON = serde_json::from_str(&txt)?;
-      return Ok((epoch.epoch, epoch.waypoint))
+pub fn bootstrap_waypoint_from_upstream(url: &Url) -> Result<(u64, Waypoint), Error> {
+    let g_res = reqwest::blocking::get(&url.to_string())?;
+    if !g_res.status().is_success() {
+      bail!("could not connect to upstream peer to get bootstrap waypoint, is {} online?", &url.to_string());
     }
-    bail!("fetching remote JSON-rpc failed with status: {:?}, response: {:?}", g_res.status(), g_res.text());
+    let string = g_res.text()?;
+    let json: serde_json::Value = string.parse()?;
+    let epoch = json.get("epoch").unwrap().as_u64().unwrap();
+    let waypoint = json
+        .get("waypoint")
+        .unwrap()
+        .as_str()
+        .unwrap()
+        .parse()
+        .unwrap();
+
+    Ok((epoch, waypoint))
 }

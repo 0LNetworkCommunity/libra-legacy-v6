@@ -30,7 +30,6 @@ impl Runnable for AuthkeyCmd {
             maybe_submit(
                 payload,
                 &tx_params,
-                entry_args.no_send,
                 entry_args.save_path,
             )
             .unwrap();

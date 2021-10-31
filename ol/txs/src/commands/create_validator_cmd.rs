@@ -9,6 +9,7 @@ use crate::{
     submit_tx::{tx_params_wrapper, maybe_submit},
 };
 use abscissa_core::{Command, Options, Runnable};
+use diem_json_rpc_types::views::VMStatusView;
 use diem_transaction_builder::stdlib as transaction_builder;
 use diem_types::transaction::TransactionPayload;
 use ol_types::{account::ValConfigs, config::TxType};
@@ -84,13 +85,37 @@ impl Runnable for CreateValidatorCmd {
         match new_account.check_autopay() {
             Ok(_) => {
                 println!("Sending account creation transaction");
-                maybe_submit(
+                match maybe_submit(
                     create_validator_script_function(&new_account),
                     &tx_params,
-                    entry_args.no_send,
                     entry_args.save_path,
-                )
-                .unwrap();
+                ){
+                  Ok(_) => { 
+                    println!("Account created on chain");
+                  },
+                  Err(e) => {
+                    println!("ERROR: creating account fails with:");
+                    if let Some(view) = e.tx_view {
+                      match &view.vm_status {
+                        // diem_json_rpc_types::views::VMStatusView::Executed => todo!(),
+                        VMStatusView::OutOfGas => {
+                          println!("looks like you're out of gas, message: {:?}", &view.vm_status);
+                        },
+                        VMStatusView::MoveAbort { location, abort_code, explanation: _ } => {
+                          if location.contains("AccountScripts") && abort_code == &0 {
+                            println!("This account already exists on chain");
+                          } else {
+                            println!("transaction error, message: {:?}", &view.vm_status);
+                          }
+                        },
+                        _ => println!("transaction error, message: {:?}", &view.vm_status),
+                    }
+                    }
+                    println!("exiting.");
+                    exit(1)
+                  }
+                  
+                }
 
                 println!(
                     "\nRelaying previously signed transactions from: {:?}\n", 

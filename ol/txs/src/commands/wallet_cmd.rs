@@ -4,10 +4,9 @@
 
 use std::{path::PathBuf, process::exit};
 use abscissa_core::{Command, Options, Runnable};
-use anyhow::Error;
-use diem_types::transaction::SignedTransaction;
+use diem_json_rpc_types::views::TransactionView;
 use ol_types::config::TxType;
-use crate::{entrypoint, submit_tx::{TxParams, maybe_submit, tx_params_wrapper}};
+use crate::{entrypoint, submit_tx::{TxError, TxParams, maybe_submit, tx_params_wrapper}};
 use diem_transaction_builder::stdlib as transaction_builder;
 
 /// `CreateAccount` subcommand
@@ -33,7 +32,7 @@ impl Runnable for WalletCmd {
 
         let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
 
-        match set_wallet_type(type_int, tx_params, entry_args.no_send, entry_args.save_path) {
+        match set_wallet_type(type_int, tx_params,  entry_args.save_path) {
             Ok(_) => println!("Success: wallet type set"),
             Err(e) => {
               println!("ERROR: could not submit wallet type transaction, message: \n{:?}", &e);
@@ -45,11 +44,10 @@ impl Runnable for WalletCmd {
 }
 
 /// set the account type as slow, or community.
-pub fn set_wallet_type(type_int: u8, tx_params: TxParams, no_send: bool, save_path: Option<PathBuf>) -> Result<SignedTransaction, Error>{
+pub fn set_wallet_type(type_int: u8, tx_params: TxParams, save_path: Option<PathBuf>) -> Result<TransactionView, TxError>{
    maybe_submit(
       transaction_builder::encode_set_wallet_type_script_function(type_int),
       &tx_params,
-      no_send,
       save_path,
     )
 }

@@ -189,32 +189,27 @@ module TowerState {
     }
 
     /// This function is called to submit proofs to the chain 
-    /// Note, the sender of this transaction can differ from the signer, 
-    /// to facilitate onboarding
     /// Function index: 01
     /// Permissions: PUBLIC, ANYONE
     public fun commit_state(
       miner_sign: &signer,
       proof: Proof
     ) acquires TowerProofHistory, TowerList, TowerStats {
-
-      // NOTE: Does not check that the Sender is the Signer.
-      // Which we must skip for the onboarding transaction.
-
       // Get address, assumes the sender is the signer.
       let miner_addr = Signer::address_of(miner_sign);
 
-      // Abort if not initialized.
-      assert(exists<TowerProofHistory>(miner_addr), Errors::not_published(130101));
-
-      // Get vdf difficulty constant. Will be different in tests than in production.
-      let difficulty_constant = Globals::get_vdf_difficulty();
+      // This may be the 0th proof of an end user that hasn't had tower state initialized
+      if (!is_init(miner_addr)) {
+        init_miner_state(miner_sign, &proof.challenge, &proof.solution, proof.difficulty, proof.security);
+        return
+      };
 
       // Skip this check on local tests, we need tests to send different difficulties.
       if (!Testnet::is_testnet()){
+        // Get vdf difficulty constant. Will be different in tests than in production.
+        let difficulty_constant = Globals::get_vdf_difficulty();
         assert(&proof.difficulty == &difficulty_constant, Errors::invalid_argument(130102));
       };
-      
       // Process the proof
       verify_and_update_state(miner_addr, proof, true);
     }
@@ -233,7 +228,8 @@ module TowerState {
       
       // Get address, assumes the sender is the signer.
       assert(ValidatorConfig::get_operator(miner_addr) == Signer::address_of(operator_sig), Errors::requires_role(130103));
-      // Abort if not initialized.
+      
+      // Abort if not initialized. Assumes the validator Owner account already has submitted the 0th miner proof in onboarding.
       assert(exists<TowerProofHistory>(miner_addr), Errors::not_published(130104));
 
       // return early if difficulty and security are not correct.
@@ -262,6 +258,7 @@ module TowerState {
       proof: Proof,
       steady_state: bool
     ) acquires TowerProofHistory, TowerList, TowerStats {
+
       let miner_history = borrow_global<TowerProofHistory>(miner_addr);
       assert(
         miner_history.count_proofs_in_epoch < Globals::get_epoch_mining_thres_upper(), 
@@ -409,7 +406,6 @@ module TowerState {
         contiguous_epochs_validating_and_mining: 0u64,
         epochs_since_last_account_creation: 0u64,
       });
-
       // create the initial proof submission
       let proof = Proof {
         challenge: *challenge,

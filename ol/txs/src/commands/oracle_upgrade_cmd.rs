@@ -69,7 +69,6 @@ impl Runnable for OracleUpgradeCmd {
         match maybe_submit(
           script,
           &tx_params,
-          entry_args.no_send,
           entry_args.save_path
         ) {
             Err(e) => {
