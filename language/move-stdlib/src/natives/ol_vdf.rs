@@ -23,8 +23,8 @@ use diem_global_constants::VDF_SECURITY_PARAM;
 use smallvec::smallvec;
 
 /// Rust implementation of Move's `native public fun verify(challenge: vector<u8>, difficulty: u64, alleged_solution: vector<u8>): bool`
-pub fn verify(
-    context: &NativeContext,
+pub fn native_verify(
+    context: &mut NativeContext,
     _ty_args: Vec<Type>,
     mut arguments: VecDeque<Value>,
 ) -> PartialVMResult<NativeResult> {
@@ -62,8 +62,8 @@ pub fn verify(
 
 // Extracts the first 32 bits of the vdf challenge which is the auth_key
 // Auth Keys can be turned into an AccountAddress type, to be serialized to a move address type.
-pub fn extract_address_from_challenge(
-    context: &NativeContext,
+pub fn native_extract_address_from_challenge(
+    context: &mut NativeContext,
     _ty_args: Vec<Type>,
     mut arguments: VecDeque<Value>,
 ) -> PartialVMResult<NativeResult> {

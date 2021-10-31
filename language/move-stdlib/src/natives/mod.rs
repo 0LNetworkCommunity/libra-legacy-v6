@@ -52,6 +52,9 @@ pub fn all_natives(move_std_addr: AccountAddress) -> NativeFunctionTable {
             "create_signers_for_testing",
             unit_test::native_create_signers_for_testing,
         ),
+        /////// 0L /////////
+        ("VDF", "verify", ol_vdf::native_verify),
+        ("VDF", "extract_address_from_challenge", ol_vdf::native_extract_address_from_challenge),
     ];
     NATIVES
         .iter()
