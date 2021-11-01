@@ -195,7 +195,7 @@ impl PayInstruction {
         
         InstructionType::PercentOfBalance => {
           format!(
-            "Instruction {uid}: {note}\nSend {percent_balance:.2?}% of your total balance every day {times} (until epoch {epoch_ending}) to address: {destination}?",
+            "Instruction {uid}: {note}\nSends {percent_balance:.2?}% of total balance every day {times} (until epoch {epoch_ending}) to address: {destination}?",
             uid = &self.uid.unwrap(),
             percent_balance = *&self.value_move.unwrap() as f64 /100f64,
             times = times,
@@ -206,7 +206,7 @@ impl PayInstruction {
         },
         InstructionType::PercentOfChange => {
             format!(
-              "Instruction {uid}: {note}\nSend {percent_balance:.2?}% of new incoming funds every day {times} (until epoch {epoch_ending}) to address: {destination}?",
+              "Instruction {uid}: {note}\nSends {percent_balance:.2?}% of new incoming funds every day {times} (until epoch {epoch_ending}) to address: {destination}?",
               uid = &self.uid.unwrap(),
               percent_balance = *&self.value_move.unwrap() as f64 /100f64,
               times = times,

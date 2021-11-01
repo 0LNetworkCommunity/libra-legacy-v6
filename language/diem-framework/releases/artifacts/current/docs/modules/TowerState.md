@@ -620,8 +620,6 @@ adds <code>tower</code> to list of towers
 ## Function `commit_state`
 
 This function is called to submit proofs to the chain
-Note, the sender of this transaction can differ from the signer,
-to facilitate onboarding
 Function index: 01
 Permissions: PUBLIC, ANYONE
 
@@ -639,24 +637,21 @@ Permissions: PUBLIC, ANYONE
   miner_sign: &signer,
   proof: <a href="TowerState.md#0x1_TowerState_Proof">Proof</a>
 ) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
-
-  // NOTE: Does not check that the Sender is the <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a>.
-  // Which we must skip for the onboarding transaction.
-
   // Get address, assumes the sender is the signer.
   <b>let</b> miner_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sign);
 
-  // Abort <b>if</b> not initialized.
-  <b>assert</b>(<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(130101));
-
-  // Get vdf difficulty constant. Will be different in tests than in production.
-  <b>let</b> difficulty_constant = <a href="Globals.md#0x1_Globals_get_vdf_difficulty">Globals::get_vdf_difficulty</a>();
+  // This may be the 0th proof of an end user that hasn't had tower state initialized
+  <b>if</b> (!<a href="TowerState.md#0x1_TowerState_is_init">is_init</a>(miner_addr)) {
+    <a href="TowerState.md#0x1_TowerState_init_miner_state">init_miner_state</a>(miner_sign, &proof.challenge, &proof.solution, proof.difficulty, proof.security);
+    <b>return</b>
+  };
 
   // Skip this check on local tests, we need tests <b>to</b> send different difficulties.
   <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
+    // Get vdf difficulty constant. Will be different in tests than in production.
+    <b>let</b> difficulty_constant = <a href="Globals.md#0x1_Globals_get_vdf_difficulty">Globals::get_vdf_difficulty</a>();
     <b>assert</b>(&proof.difficulty == &difficulty_constant, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130102));
   };
-
   // Process the proof
   <a href="TowerState.md#0x1_TowerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);
 }
@@ -691,7 +686,8 @@ Permissions: PUBLIC, ANYONE
 
   // Get address, assumes the sender is the signer.
   <b>assert</b>(<a href="ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(miner_addr) == <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(operator_sig), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(130103));
-  // Abort <b>if</b> not initialized.
+
+  // Abort <b>if</b> not initialized. Assumes the validator Owner account already has submitted the 0th miner proof in onboarding.
   <b>assert</b>(<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(130104));
 
   // <b>return</b> early <b>if</b> difficulty and security are not correct.
@@ -737,6 +733,7 @@ Permissions: PUBLIC, ANYONE
   proof: <a href="TowerState.md#0x1_TowerState_Proof">Proof</a>,
   steady_state: bool
 ) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
+
   <b>let</b> miner_history = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr);
   <b>assert</b>(
     miner_history.count_proofs_in_epoch &lt; <a href="Globals.md#0x1_Globals_get_epoch_mining_thres_upper">Globals::get_epoch_mining_thres_upper</a>(),
@@ -953,7 +950,6 @@ Checks to see if miner submitted enough proofs to be considered compliant
     contiguous_epochs_validating_and_mining: 0u64,
     epochs_since_last_account_creation: 0u64,
   });
-
   // create the initial proof submission
   <b>let</b> proof = <a href="TowerState.md#0x1_TowerState_Proof">Proof</a> {
     challenge: *challenge,

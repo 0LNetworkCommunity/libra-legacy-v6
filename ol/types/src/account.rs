@@ -14,7 +14,7 @@ use diem_types::{
 };
 
 use crate::pay_instruction::PayInstruction;
-use anyhow;
+use anyhow::{self, bail};
 use hex::{decode, encode};
 use ol_keys::scheme::KeyScheme;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
@@ -159,6 +159,9 @@ impl ValConfigs {
 
     /// check correctness of autopay
     pub fn check_autopay(&self) -> Result<(), anyhow::Error> {
+       if *&self.autopay_signed.is_none() {
+        bail!("could not find signed transactions on this autopay file.");
+       }
         self.autopay_instructions
             .clone()
             .expect("could not find autopay instructions")
@@ -175,20 +178,23 @@ impl ValConfigs {
                     }
                   } 
                 }
-                let signed = self.autopay_signed.clone().unwrap();
-                let tx = signed.iter().nth(i).unwrap();
-                let payload = tx.clone().into_raw_transaction().into_payload();
-                if let TransactionPayload::Script(s) = payload {
-                    match instr.check_instruction_match_tx(s.clone()) {
-                        Ok(_) => {}
-                        Err(e) => {
+ 
+                if let Some(signed) = &self.autopay_signed {
+                  let tx = signed.iter().nth(i).unwrap();
+                  let payload = tx.clone().into_raw_transaction().into_payload();
+                  if let TransactionPayload::Script(s) = payload {
+                      match instr.check_instruction_match_tx(s.clone()) {
+                          Ok(_) => {}
+                          Err(e) => {
+                            // TODO: should this panic?
                             panic!(
-                            "autopay instruction does not match signed tx args, {:?}, error: {}",
-                            instr, e
-                        );
-                        }
-                    }
-                };
+                                "autopay instruction does not match signed tx args, {:?}, error: {}",
+                                instr, e
+                            );
+                          }
+                      }
+                  };
+                }
             });
         Ok(())
     }
