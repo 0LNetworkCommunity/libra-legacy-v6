@@ -453,7 +453,7 @@ module DiemAccount {
         difficulty: u64,
         security: u64,
     ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount {
-             
+        // TODO: extract address_duplicated with TowerState::init_miner_state
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
         Roles::new_user_role_with_proof(&new_signer);
@@ -479,8 +479,6 @@ module DiemAccount {
         new_account_authkey_prefix: vector<u8>,
         value: u64,
     ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount {
-             
-        // let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account);
         Roles::new_user_role_with_proof(&new_signer);
         Event::publish_generator(&new_signer);
