@@ -1,6 +1,6 @@
 //! Configs for all 0L apps.
 
-use anyhow::{Error, bail};
+use anyhow::{Error, bail, anyhow};
 use dirs;
 use diem_config::config::NodeConfig;
 use diem_global_constants::{CONFIG_FILE, NODE_HOME};
@@ -65,7 +65,7 @@ pub fn parse_toml(path: String) -> Result<AppCfg, Error> {
     let mut config_toml = String::new();
     let mut file = File::open(&path)?;
     file.read_to_string(&mut config_toml)
-        .unwrap_or_else(|err| panic!("Error while reading config: [{}]", err));
+        .map_err(|err| anyhow!("Error while reading config: [{}]", err))?;
 
     let cfg: AppCfg = toml::from_str(&config_toml).unwrap();
     Ok(cfg)
@@ -560,14 +560,19 @@ pub fn bootstrap_waypoint_from_upstream(url: &Url) -> Result<(u64, Waypoint), Er
     }
     let string = g_res.text()?;
     let json: serde_json::Value = string.parse()?;
-    let epoch = json.get("epoch").unwrap().as_u64().unwrap();
-    let waypoint = json
-        .get("waypoint")
-        .unwrap()
-        .as_str()
-        .unwrap()
-        .parse()
-        .unwrap();
+    if let Some(epoch) = json.get("epoch").unwrap().as_u64() {
+      let waypoint = json
+          .get("waypoint")
+          .unwrap()
+          .as_str()
+          .unwrap()
+          .parse()?;
+      Ok((epoch, waypoint))
+    } else {
+      bail!("could not get 'epoch' from {}", &url.to_string())
+    }
+    
 
-    Ok((epoch, waypoint))
+
+    
 }
