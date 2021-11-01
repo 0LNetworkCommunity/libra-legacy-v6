@@ -64,8 +64,7 @@ pub struct AppCfg {
 pub fn parse_toml(path: String) -> Result<AppCfg, Error> {
     let mut config_toml = String::new();
     let mut file = File::open(&path)?;
-    file.read_to_string(&mut config_toml)
-        .unwrap_or_else(|err| panic!("Error while reading config: [{}]", err));
+    file.read_to_string(&mut config_toml)?;
 
     let cfg: AppCfg = toml::from_str(&config_toml).unwrap();
     Ok(cfg)
