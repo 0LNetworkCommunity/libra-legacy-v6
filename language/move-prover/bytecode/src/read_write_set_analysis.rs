@@ -743,6 +743,9 @@ fn call_native_function(
         (m, f) => {
             panic!("Unsupported native function {:?}::{:?}", m, f)
         }
+        /////// 0L /////////
+        // 0L todo diem 1.4.1
+        // Add ol_vdf and ol_decimal here?
     }
 }
 

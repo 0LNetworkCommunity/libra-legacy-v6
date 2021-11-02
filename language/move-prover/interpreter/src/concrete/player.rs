@@ -310,6 +310,9 @@ impl<'env> FunctionContext<'env> {
                 let res = self.native_diem_account_create_signer(dummy_state.del_value(0));
                 Ok(vec![res])
             }
+            /////// 0L /////////            
+            // 0L todo diem 1.4.1
+            // Add ol_vdf and ol_decimal here?            
             _ => unreachable!(),
         }
     }
