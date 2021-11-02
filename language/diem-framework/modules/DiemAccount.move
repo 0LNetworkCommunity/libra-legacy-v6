@@ -2870,10 +2870,9 @@ print(&511);
         Roles::new_validator_role(dr_account, &new_account);
         Event::publish_generator(&new_account);
         ValidatorConfig::publish(&new_account, dr_account, human_name);
-        add_currencies_for_account<GAS>(&new_account, false); /////// 0L /////////
         make_account(&new_account, auth_key_prefix);
-
         /////// 0L /////////
+        add_currencies_for_account<GAS>(&new_account, false);
         let new_account = create_signer(new_account_address);
         set_slow(&new_account);        
     }
@@ -2918,8 +2917,8 @@ print(&511);
         Roles::new_validator_operator_role(dr_account, &new_account);
         Event::publish_generator(&new_account);
         ValidatorOperatorConfig::publish(&new_account, dr_account, human_name);
+        make_account(&new_account, auth_key_prefix);
         add_currencies_for_account<GAS>(&new_account, false); /////// 0L /////////
-        make_account(&new_account, auth_key_prefix)
     }
 
     spec create_validator_operator_account {
