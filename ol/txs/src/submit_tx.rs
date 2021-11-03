@@ -111,25 +111,27 @@ pub fn batch_wrapper(
     tx_params: &TxParams,
     no_send: bool,
     save_path: Option<PathBuf>,
-) {
-    batch.into_iter().enumerate().for_each(|(i, s)| {
+) -> Result<(), Error> {
+    batch
+    .into_iter()
+    .enumerate()
+    .for_each(|(i, s)| {
         // TODO: format path for batch scripts
 
-        let new_path = if save_path.is_some() {
-            Some(save_path.clone().unwrap().join(i.to_string()))
-        } else {
-            None
+        let new_path = match &save_path {
+            Some(p) => Some(p.join(i.to_string())),
+            None => None,
         };
 
+        // TODO: handle saving of batches to file.
         if no_send {
           save_dont_send_tx(s.clone(), tx_params, new_path).unwrap();
         } else {
           maybe_submit(s, tx_params,  new_path).unwrap();
         }
-
         
-        // TODO: handle saving of batches to file.
     });
+    Ok(())
 }
 
 fn stage(
