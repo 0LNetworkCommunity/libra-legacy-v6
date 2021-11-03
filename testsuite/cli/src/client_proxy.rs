@@ -8,10 +8,7 @@ use crate::{
 };
 use anyhow::{bail, ensure, format_err, Error, Result};
 use compiler::Compiler;
-use diem_client::{
-    views::{self},
-    WaitForTransactionError,
-};
+use diem_client::{WaitForTransactionError, views::{self, WaypointView}};
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
     test_utils::KeyPair,

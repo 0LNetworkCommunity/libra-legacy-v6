@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::{/*bail,*/ ensure, Error, Result};
-use diem_client::{BlockingClient, Response, WaitForTransactionError, views, views::{TowerStateResourceView, OracleUpgradeStateView, TransactionView}};
+use diem_client::{BlockingClient, Response, WaitForTransactionError, views, views::{OracleUpgradeStateView, TowerStateResourceView, TransactionView, WaypointView}};
 use diem_logger::prelude::info;
 use diem_types::{
     account_address::AccountAddress,
@@ -95,7 +95,7 @@ impl DiemClient {
 
       ///////// 0L ////////
     /// Get waypoint
-    pub fn get_waypoint(&self) -> Result<Option<Waypoint>> {
+    pub fn get_waypoint_state(&self) -> Result<Option<WaypointView>> {
         self.client
             .get_waypoint()
             .map_err(Into::into)
