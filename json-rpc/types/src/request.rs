@@ -84,6 +84,7 @@ pub enum MethodRequest {
     //////// 0L ////////
     GetTowerStateView(GetTowerStateParams),
     GetOracleUpgradeStateView(),
+    GetWaypointView(),
 }
 
 impl MethodRequest {
@@ -125,6 +126,10 @@ impl MethodRequest {
             Method::GetOracleUpgradeStateView => {
                 MethodRequest::GetOracleUpgradeStateView()
             }
+
+            Method::GetWaypointView => {
+                MethodRequest::GetWaypointView()
+            }
             
 
 
@@ -150,7 +155,9 @@ impl MethodRequest {
             MethodRequest::GetEventsWithProofs(_) => Method::GetEventsWithProofs,
             ///////// 0L ////////
             MethodRequest::GetTowerStateView(_) =>  Method::GetTowerStateView, 
-            MethodRequest::GetOracleUpgradeStateView() =>  Method::GetOracleUpgradeStateView,        }
+            MethodRequest::GetOracleUpgradeStateView() =>  Method::GetOracleUpgradeStateView,
+            MethodRequest::GetWaypointView() => Method::GetWaypointView,
+          }
     }
 }
 

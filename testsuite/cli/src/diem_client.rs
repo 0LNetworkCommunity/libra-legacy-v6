@@ -93,6 +93,15 @@ impl DiemClient {
             .map(Response::into_inner)
     }
 
+      ///////// 0L ////////
+    /// Get waypoint
+    pub fn get_waypoint(&self) -> Result<Option<Waypoint>> {
+        self.client
+            .get_waypoint()
+            .map_err(Into::into)
+            .map(Response::into_inner)
+    }
+
     pub fn get_account_state_blob(
         &self,
         account: &AccountAddress,

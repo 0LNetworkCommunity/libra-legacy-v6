@@ -837,6 +837,15 @@ impl ClientProxy {
         self.client.get_oracle_upgrade_state()
     }
 
+    //////// 0L ////////
+    /// Query waypoint
+    pub fn query_waypoint(
+        &mut self,
+    ) -> Result<Option<WaypointView>> {
+        self.client.get_waypoint_state()
+    }
+
+
     /// Get the latest sequence number from validator for the account specified.
     pub fn get_sequence_number(&mut self, space_delim_strings: &[&str]) -> Result<u64> {
         ensure!(

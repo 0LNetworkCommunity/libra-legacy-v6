@@ -417,11 +417,16 @@ impl DiemSwarm {
     ) -> Result<DiemSwarm> {
         let swarm_config_dir = Self::setup_config_dir(&config_dir);
         info!("logs for {:?} at {:?}", fn_type, swarm_config_dir);
+        dbg!("!!!!!!!!!!!!! FULLNODE !!!!!!!!!!!!!!!!!");
+
+        dbg!(&fn_type);
+        dbg!(&template.is_some());
 
         let node_config = template.unwrap_or_else(|| match fn_type {
             FullnodeType::ValidatorFullnode => NodeConfig::default_for_validator_full_node(),
             FullnodeType::PublicFullnode(_) => NodeConfig::default_for_public_full_node(),
         });
+        dbg!(&node_config);
 
         let config_path = &swarm_config_dir.as_ref().to_path_buf();
         let builder = FullnodeBuilder::new(
@@ -435,6 +440,9 @@ impl DiemSwarm {
             FullnodeType::ValidatorFullnode => NodeType::ValidatorFullNode,
             FullnodeType::PublicFullnode(_) => NodeType::PublicFullNode,
         };
+
+        dbg!(&config.config_files);
+
         Ok(Self {
             label,
             diem_node_bin_path: diem_node_bin_path.to_path_buf(),
@@ -455,7 +463,8 @@ impl DiemSwarm {
         info!("logs for validator at {:?}", swarm_config_dir);
 
         let node_config = template.unwrap_or_else(NodeConfig::default_for_validator);
-
+        dbg!("////////////// VALIDATOR /////////////");
+        dbg!(&node_config);
         let config_path = &swarm_config_dir.as_ref().to_path_buf();
         let builder = ValidatorBuilder::new(num_nodes, node_config, &swarm_config_dir);
         let config = SwarmConfig::build(&builder, config_path)?;

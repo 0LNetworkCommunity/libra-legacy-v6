@@ -48,6 +48,7 @@ pub enum Method {
     //////// 0L ////////
     GetTowerStateView,
     GetOracleUpgradeStateView,
+    GetWaypointView,
 }
 
 impl Method {
@@ -70,7 +71,8 @@ impl Method {
             //////// 0L ////////
             Method::GetTowerStateView => "get_miner_state_view", // Name is not used in json RPC, only for errors, what matters is the type name, which serde formats as snakecase.
             
-            Method::GetOracleUpgradeStateView => "get_oracle_upgrade_state_view", 
+            Method::GetOracleUpgradeStateView => "get_oracle_upgrade_state_view",
+            Method::GetWaypointView => "get_waypoint_view", 
         }
     }
 }
