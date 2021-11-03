@@ -7,7 +7,7 @@ use crate::{
     save_tx::save_tx,
     sign_tx::sign_tx,
 };
-use anyhow::{Error, anyhow, bail};
+use anyhow::{Error, anyhow};
 use cli::{diem_client::DiemClient, AccountData, AccountStatus};
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
@@ -73,8 +73,8 @@ pub struct TxError {
     pub tx_view: Option<TransactionView>,
 }
 
-impl From<anyhow::Error> for TxError {
-    fn from(e: anyhow::Error) -> Self {
+impl From<Error> for TxError {
+    fn from(e: Error) -> Self {
         TxError{ err: Some(e), tx_view: None }
     }
 }
@@ -145,6 +145,7 @@ pub fn batch_wrapper(
         };
 
         // TODO: handle saving of batches to file.
+        // The user may be expecting the batch transaction to be atomic.
         if no_send {
             save_dont_send_tx(s.clone(), tx_params, new_path).unwrap();
         } else {
@@ -159,13 +160,7 @@ fn stage(
     tx_params: &TxParams,
     client: &mut DiemClient,
 ) -> Result<(AccountData, SignedTransaction), TxError> {
-    // let mut client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
     match client.get_metadata() {
-        _ => {
-            let msg = format!("ERROR: could not get chain metadata, cannot send tx");
-            println!("{}", &msg);
-            Err(anyhow!(msg).into())
-        }
         Ok(meta) => {
             if let Some(av) = client.get_account(&tx_params.signer_address)? {
                 let sequence_number = av.sequence_number;
@@ -189,7 +184,12 @@ fn stage(
             } else {
               Err(anyhow!("cannot get account_state from chain").into())
             }
-        }
+        },
+        _ => {
+            let msg = format!("ERROR: could not get chain metadata, cannot send tx");
+            println!("{}", &msg);
+            Err(anyhow!(msg).into())
+        },
     }
 }
 
@@ -199,7 +199,6 @@ pub fn submit_tx(
     txn: SignedTransaction,
     mut _signer_account_data: &mut AccountData,
 ) -> Result<TransactionView, Error> {
-    // let mut client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
     // Submit the transaction with diem_client
     match client.submit_transaction(&txn) {
         Ok(_) => match wait_for_tx(txn.sender(), txn.sequence_number(), &mut client) {
@@ -262,7 +261,7 @@ pub fn tx_params(
     }, 
      _ => {
         if is_operator {
-            get_oper_params(&config, tx_type, url, waypoint)
+            get_oper_params(&config, tx_type, url, waypoint)?
         } else {
             // Get from 0L.toml e.g. ~/.0L/0L.toml, or use Profile::default()
             get_tx_params_from_toml(
@@ -330,10 +329,7 @@ pub fn get_oper_params(
     tx_type: TxType,
     url: Url,
     wp: Option<Waypoint>,
-    // // url_opt overrides all node configs, takes precedence over use_backup_url
-    // url_opt: Option<Url>,
-    // upstream_url: bool,
-) -> TxParams {
+) -> Result<TxParams, Error> {
     let orig_storage = Storage::OnDiskStorage(OnDiskStorage::new(
         config.workspace.node_home.join("key_store.json").to_owned(),
     ));
@@ -350,10 +346,13 @@ pub fn get_oper_params(
     let pubkey = &keypair.public_key; // keys.child_0_owner.get_public();
     let auth_key = AuthenticationKey::ed25519(pubkey);
 
-    let waypoint = wp.unwrap_or_else(|| config.get_waypoint(None).unwrap());
+    let waypoint = match wp {
+        Some(w) => w,
+        None => config.get_waypoint(None)?,
+    };
 
     let tx_cost = config.tx_configs.get_cost(tx_type);
-    TxParams {
+    Ok(TxParams {
         auth_key,
         signer_address: auth_key.derived_address(),
         owner_address: config.profile.account, // address of sender
@@ -362,7 +361,7 @@ pub fn get_oper_params(
         keypair,
         tx_cost,
         chain_id: ChainId::new(1),
-    }
+    })
 }
 
 /// Gets transaction params from the 0L project root.
@@ -374,15 +373,16 @@ pub fn get_tx_params_from_toml(
     wp: Option<Waypoint>,
     is_swarm: bool,
 ) -> Result<TxParams, Error> {
-    // let url = config.profile.default_node.clone().unwrap();
     let (auth_key, address, wallet) = if let Some(wallet) = wallet_opt {
         wallet::get_account_from_wallet(wallet)?
     } else {
         wallet::get_account_from_prompt()
     };
 
-    let waypoint = wp.unwrap_or_else(|| config.get_waypoint(None).unwrap());
-
+    let waypoint = match wp {
+        Some(w) => w,
+        None => config.get_waypoint(None)?,
+    };
     let keys = KeyScheme::new_from_mnemonic(wallet.mnemonic());
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
     let tx_cost = config.tx_configs.get_cost(tx_type);
@@ -420,8 +420,10 @@ pub fn get_tx_params_from_keypair(
     use_upstream_url: bool,
     is_swarm: bool,
 ) -> Result<TxParams, Error> {
-    let waypoint = wp.unwrap_or_else(|| config.get_waypoint(None).unwrap());
-
+    let waypoint = match wp {
+        Some(w) => w,
+        None => config.get_waypoint(None)?,
+    };
     let chain_id = if is_swarm {
         ChainId::new(4)
     } else {

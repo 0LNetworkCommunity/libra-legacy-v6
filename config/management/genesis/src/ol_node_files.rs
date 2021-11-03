@@ -217,7 +217,7 @@ pub fn write_node_config_files(
 
 
 /// Save node configs to files
-pub fn save_node_yaml_files(output_dir: PathBuf) {
+pub fn save_node_yaml_files(_output_dir: PathBuf) {
 
 }
 
