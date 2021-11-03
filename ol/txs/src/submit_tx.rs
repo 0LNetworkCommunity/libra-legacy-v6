@@ -248,20 +248,19 @@ pub fn tx_params(
     use_upstream_url: bool,
     wallet_opt: Option<&WalletLibrary>,
 ) -> Result<TxParams, Error> {
-    let url = if url_opt.is_some() {
-        url_opt.unwrap()
-    } else {
+    let url = url_opt.unwrap_or_else(|| {
         config.what_url(use_upstream_url)
-    };
+    });
 
-    let mut tx_params: TxParams = if swarm_path.is_some() {
+    let mut tx_params: TxParams = match swarm_path {
+    Some(s) => {
         get_tx_params_from_swarm(
-            swarm_path.clone().expect("needs a valid swarm temp dir"),
+            s,
             swarm_persona.expect("need a swarm 'persona' with credentials in fixtures."),
             is_operator,
-        )
-        .unwrap()
-    } else {
+        )?
+    }, 
+     _ => {
         if is_operator {
             get_oper_params(&config, tx_type, url, waypoint)
         } else {
@@ -273,13 +272,13 @@ pub fn tx_params(
                 url,
                 waypoint,
                 swarm_path.as_ref().is_some(),
-            )
-            .unwrap()
+            )?
         }
+      }
     };
 
-    if waypoint.is_some() {
-        tx_params.waypoint = waypoint.unwrap();
+    if let Some(w) = waypoint {
+        tx_params.waypoint = w
     }
 
     Ok(tx_params)
@@ -377,7 +376,7 @@ pub fn get_tx_params_from_toml(
 ) -> Result<TxParams, Error> {
     // let url = config.profile.default_node.clone().unwrap();
     let (auth_key, address, wallet) = if let Some(wallet) = wallet_opt {
-        wallet::get_account_from_wallet(wallet).unwrap()
+        wallet::get_account_from_wallet(wallet)?
     } else {
         wallet::get_account_from_prompt()
     };
