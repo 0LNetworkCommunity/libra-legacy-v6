@@ -1,0 +1,39 @@
+name: Build app for OSs
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  publish:
+    name: Publish for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: carpe
+            asset_name: carpe-linux-amd64
+          - os: windows-latest
+            artifact_name: carpe.exe
+            asset_name: carpe-windows-amd64
+          - os: macos-latest
+            artifact_name: carpe
+            asset_name: carpe-macos-amd64
+
+    steps:
+      - uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: stable
+          components: rustfmt
+      - uses: actions/checkout@v1
+      - name: Build
+        run: yarn tauri build
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v1-release
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/${{ matrix.artifact_name }}
+          asset_name: ${{ matrix.asset_name }}
+          tag: ${{ github.ref }}

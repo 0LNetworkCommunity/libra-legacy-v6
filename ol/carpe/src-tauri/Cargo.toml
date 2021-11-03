@@ -1,0 +1,46 @@
+[package]
+authors = [ "OLSF" ]
+default-run = "app"
+description = "a light miner for the 0L protocol"
+edition = "2018"
+license = "MIT"
+name = "app"
+repository = "https://github.com/OLSF/carpe"
+version = "0.1.0"
+
+[build-dependencies]
+tauri-build = { version = "1.0.0-beta.4" }
+
+[dependencies]
+tauri = { version = "1.0.0-beta.8", features = ["api-all"] }
+serde = { version = "1.0", features = [ "serde_derive" ] }
+serde_json = "1.0"
+url = { version = "^2.1", features = [ "serde" ] }
+sysinfo = "0.16.4"
+ctrlc = { version = "3.1.6", default-features = false }
+dirs = "4.0.0"
+keyring = "0.10.1"
+anyhow = "1.0.38"
+hex = "0.4.3"
+rand = "0.8.4"
+tokio = { version = "1.3.0", features = ["full"] }
+
+# Diem things
+cli = { path = "../../../testsuite/cli/" }
+diem-wallet = { path = "../../../testsuite/cli/diem-wallet"}
+diem-types = { path = "../../../types/" }
+diem-crypto = { path = "../../../crypto/crypto" }
+diem-config = { path = "../../../config"}
+diem-json-rpc-types  = { path = "../../../json-rpc/types" }
+
+# 0L things
+ol = { path = "../../cli/"}
+tower = { path = "../../tower/"}
+onboard = { path = "../../onboard/"}
+txs = { path = "../../txs/"}
+ol-types = { path = "../../types/"}
+ol-keys = { path = "../../keys/"}
+
+[features]
+custom-protocol = [ "tauri/custom-protocol" ]
+default = [ "custom-protocol" ]
