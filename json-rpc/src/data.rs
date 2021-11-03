@@ -6,20 +6,14 @@ use crate::{
     views::{
         AccountStateWithProofView, AccountView, CurrencyInfoView, EventView, EventWithProofView,
         MetadataView, StateProofView, TransactionListView, TransactionView,
-        TransactionsWithProofsView, TowerStateResourceView, OracleUpgradeStateView
+        TransactionsWithProofsView, TowerStateResourceView, OracleUpgradeStateView, WaypointView
     },
 };
 use anyhow::{format_err, Result};
+// use diem_client::views::WaypointView;
 // use diem_client::views::TowerStateResourceView;
 use diem_crypto::HashValue;
-use diem_types::{
-    account_address::AccountAddress,
-    account_config::{diem_root_address, resources::dual_attestation::Limit, AccountResource},
-    account_state::AccountState,
-    chain_id::ChainId,
-    event::EventKey,
-    ledger_info::LedgerInfoWithSignatures,
-};
+use diem_types::{account_address::AccountAddress, account_config::{diem_root_address, resources::dual_attestation::Limit, AccountResource}, account_state::AccountState, chain_id::ChainId, event::EventKey, ledger_info::LedgerInfoWithSignatures, waypoint::Waypoint};
 use std::{
     cmp::min,
     convert::{TryFrom, TryInto},
@@ -320,4 +314,11 @@ pub fn get_oracle_upgrade_state(
         Some(s) =>  OracleUpgradeStateView::try_from(s).map_err(Into::into),
         None => Err(JsonRpcError::internal_error("No account state found".to_owned())),
     }
+}
+
+/// Get waypoint
+pub fn get_waypoint(
+    ledger_info: &LedgerInfoWithSignatures,
+) -> Result<WaypointView, JsonRpcError> {
+    Ok(Waypoint::new_any(ledger_info.ledger_info()).try_into()?)
 }
