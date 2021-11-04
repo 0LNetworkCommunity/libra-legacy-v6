@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! Protocol used to ensure peer liveness
@@ -31,16 +31,18 @@ use crate::{
 };
 use bytes::Bytes;
 use channel::message_queues::QueueStyle;
+use diem_config::network_id::NetworkContext;
+use diem_logger::prelude::*;
+use diem_metrics::IntCounterVec;
+use diem_time_service::{TimeService, TimeServiceTrait};
+use diem_types::PeerId;
 use futures::{
     channel::oneshot,
-    stream::{FusedStream, FuturesUnordered, Stream, StreamExt},
+    stream::{FuturesUnordered, StreamExt},
 };
-use libra_config::network_id::NetworkContext;
-use libra_logger::prelude::*;
-use libra_metrics::IntCounterVec;
-use libra_types::PeerId;
-use rand::{rngs::SmallRng, seq::SliceRandom, Rng, SeedableRng};
+use rand::{rngs::SmallRng, Rng, SeedableRng};
 use serde::{Deserialize, Serialize};
+use short_hex_str::AsShortHexStr;
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
 pub mod builder;
@@ -132,11 +134,10 @@ pub struct Ping(u32);
 pub struct Pong(u32);
 
 /// The actor performing health checks by running the Ping protocol
-pub struct HealthChecker<TTicker> {
+pub struct HealthChecker {
     network_context: Arc<NetworkContext>,
-    /// Ticker to trigger ping to a random peer. In production, the ticker is likely to be
-    /// fixed duration interval timer.
-    ticker: TTicker,
+    /// A handle to a time service for easily mocking time-related operations.
+    time_service: TimeService,
     /// Channel to send requests to Network layer.
     network_tx: HealthCheckerNetworkSender,
     /// Channel to receive notifications from Network layer about new/lost connections.
@@ -146,7 +147,9 @@ pub struct HealthChecker<TTicker> {
     connected: HashMap<PeerId, (u64, u64)>,
     /// Random-number generator.
     rng: SmallRng,
-    /// Ping timmeout duration.
+    /// Time we wait between each set of pings.
+    ping_interval: Duration,
+    /// Ping timeout duration.
     ping_timeout: Duration,
     /// Number of successive ping failures we tolerate before declaring a node as unhealthy and
     /// disconnecting from it. In the future, this can be replaced with a more general failure
@@ -156,26 +159,25 @@ pub struct HealthChecker<TTicker> {
     round: u64,
 }
 
-impl<TTicker> HealthChecker<TTicker>
-where
-    TTicker: Stream + FusedStream + Unpin,
-{
+impl HealthChecker {
     /// Create new instance of the [`HealthChecker`] actor.
     pub fn new(
         network_context: Arc<NetworkContext>,
-        ticker: TTicker,
+        time_service: TimeService,
         network_tx: HealthCheckerNetworkSender,
         network_rx: HealthCheckerNetworkEvents,
+        ping_interval: Duration,
         ping_timeout: Duration,
         ping_failures_tolerated: u64,
     ) -> Self {
         HealthChecker {
             network_context,
-            ticker,
+            time_service,
             network_tx,
             network_rx,
             connected: HashMap::new(),
             rng: SmallRng::from_entropy(),
+            ping_interval,
             ping_timeout,
             ping_failures_tolerated,
             round: 0,
@@ -188,86 +190,95 @@ where
             NetworkSchema::new(&self.network_context),
             "{} Health checker actor started", self.network_context
         );
+
+        let ticker = self.time_service.interval(self.ping_interval);
+        tokio::pin!(ticker);
+
         loop {
             futures::select! {
-                event = self.network_rx.select_next_some() => {
+                maybe_event = self.network_rx.next() => {
+                    // Shutdown the HealthChecker when this network instance shuts
+                    // down. This happens when the `PeerManager` drops.
+                    let event = match maybe_event {
+                        Some(event) => event,
+                        None => break,
+                    };
+
                     match event {
-                        Event::NewPeer(peer_id, _origin) => {
-                            self.connected.insert(peer_id, (self.round, 0));
-                        },
-                        Event::LostPeer(peer_id, _origin) => {
-                            self.connected.remove(&peer_id);
-                        },
+                        Event::NewPeer(metadata) => {
+                            self.connected.insert(metadata.remote_peer_id, (self.round, 0));
+                        }
+                        Event::LostPeer(metadata) => {
+                            self.connected.remove(&metadata.remote_peer_id);
+                        }
                         Event::RpcRequest(peer_id, msg, res_tx) => {
                             match msg {
-                            HealthCheckerMsg::Ping(ping) => self.handle_ping_request(peer_id, ping, res_tx),
-                            _ => {
-                                warn!(
-                                    SecurityEvent::InvalidHealthCheckerMsg,
-                                    NetworkSchema::new(&self.network_context)
-                                        .remote_peer(&peer_id),
-                                    rpc_message = msg,
-                                    "{} Unexpected RPC message from {}",
-                                    self.network_context,
-                                    peer_id
-                                );
-                            },
+                                HealthCheckerMsg::Ping(ping) => self.handle_ping_request(peer_id, ping, res_tx),
+                                _ => {
+                                    warn!(
+                                        SecurityEvent::InvalidHealthCheckerMsg,
+                                        NetworkSchema::new(&self.network_context).remote_peer(&peer_id),
+                                        rpc_message = msg,
+                                        "{} Unexpected RPC message from {}",
+                                        self.network_context,
+                                        peer_id
+                                    );
+                                    debug_assert!(false, "Unexpected rpc request");
+                                }
                             };
                         }
                         Event::Message(peer_id, msg) => {
                             error!(
                                 SecurityEvent::InvalidNetworkEventHC,
-                                NetworkSchema::new(&self.network_context)
-                                    .remote_peer(&peer_id),
+                                NetworkSchema::new(&self.network_context).remote_peer(&peer_id),
                                 "{} Unexpected direct send from {} msg {:?}",
                                 self.network_context,
                                 peer_id,
                                 msg,
                             );
                             debug_assert!(false, "Unexpected network event");
-                        },
+                        }
                     }
                 }
-                _ = self.ticker.select_next_some() => {
+                _ = ticker.select_next_some() => {
                     self.round += 1;
-                    match self.sample_random_peer() {
-                        Some(peer_id) => {
-                            let nonce = self.sample_nonce();
-                            trace!( //////// 0L ////////
-                                NetworkSchema::new(&self.network_context),
-                                round = self.round,
-                                "{} Will ping: {} for round: {} nonce: {}",
-                                self.network_context, peer_id.short_str(),
-                                self.round,
-                                nonce
-                            );
 
-                            tick_handlers.push(
-                                Self::ping_peer(
-                                    self.network_context.clone(),
-                                    self.network_tx.clone(),
-                                    peer_id,
-                                    self.round,
-                                    nonce,
-                                    self.ping_timeout.clone()));
-                        }
-                        None => {
-                            trace!( //////// 0L ////////
-                                NetworkSchema::new(&self.network_context),
-                                round = self.round,
-                                "{} No connected peer to ping round: {}",
-                                self.network_context,
-                                self.round
-                            );
-                        }
+                    if self.connected.is_empty() {
+                        trace!(
+                            NetworkSchema::new(&self.network_context),
+                            round = self.round,
+                            "{} No connected peer to ping round: {}",
+                            self.network_context,
+                            self.round
+                        );
+                        continue
+                    }
+
+                    for &peer_id in self.connected.keys() {
+                        let nonce = self.rng.gen::<u32>();
+                        trace!(
+                            NetworkSchema::new(&self.network_context),
+                            round = self.round,
+                            "{} Will ping: {} for round: {} nonce: {}",
+                            self.network_context,
+                            peer_id.short_str(),
+                            self.round,
+                            nonce
+                        );
+
+                        tick_handlers.push(Self::ping_peer(
+                            self.network_context.clone(),
+                            self.network_tx.clone(),
+                            peer_id,
+                            self.round,
+                            nonce,
+                            self.ping_timeout,
+                        ));
                     }
                 }
                 res = tick_handlers.select_next_some() => {
                     let (peer_id, round, nonce, ping_result) = res;
                     self.handle_ping_response(peer_id, round, nonce, ping_result).await;
-                }
-                complete => {
-                    break;
                 }
             }
         }
@@ -283,7 +294,7 @@ where
         ping: Ping,
         res_tx: oneshot::Sender<Result<Bytes, RpcError>>,
     ) {
-        let message = match lcs::to_bytes(&HealthCheckerMsg::Pong(Pong(ping.0))) {
+        let message = match bcs::to_bytes(&HealthCheckerMsg::Pong(Pong(ping.0))) {
             Ok(msg) => msg,
             Err(e) => {
                 warn!(
@@ -294,7 +305,7 @@ where
                 return;
             }
         };
-        trace!( //////// 0L ////////
+        trace!(
             NetworkSchema::new(&self.network_context).remote_peer(&peer_id),
             "{} Sending Pong response to peer: {} with nonce: {}",
             self.network_context,
@@ -314,7 +325,7 @@ where
         match ping_result {
             Ok(pong) => {
                 if pong.0 == req_nonce {
-                    trace!( //////// 0L ////////
+                    trace!(
                         NetworkSchema::new(&self.network_context).remote_peer(&peer_id),
                         rount = round,
                         "{} Ping successful for peer: {} round: {}",
@@ -404,7 +415,7 @@ where
         nonce: u32,
         ping_timeout: Duration,
     ) -> (PeerId, u64, u32, Result<Pong, RpcError>) {
-        trace!( //////// 0L ////////
+        trace!(
             NetworkSchema::new(&network_context).remote_peer(&peer_id),
             round = round,
             "{} Sending Ping request to peer: {} for round: {} nonce: {}",
@@ -421,14 +432,5 @@ where
                 _ => Err(RpcError::InvalidRpcResponse),
             });
         (peer_id, round, nonce, res_pong_msg)
-    }
-
-    fn sample_random_peer(&mut self) -> Option<PeerId> {
-        let peers: Vec<_> = self.connected.keys().cloned().collect();
-        peers.choose(&mut self.rng).cloned()
-    }
-
-    fn sample_nonce(&mut self) -> u32 {
-        self.rng.gen::<u32>()
     }
 }

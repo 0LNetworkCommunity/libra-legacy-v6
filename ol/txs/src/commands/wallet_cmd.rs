@@ -2,11 +2,12 @@
 
 #![allow(clippy::never_loop)]
 
-use std::process::exit;
-
+use std::{path::PathBuf, process::exit};
 use abscissa_core::{Command, Options, Runnable};
+use diem_json_rpc_types::views::TransactionView;
 use ol_types::config::TxType;
-use crate::{entrypoint, submit_tx::{tx_params_wrapper, maybe_submit}};
+use crate::{entrypoint, submit_tx::{TxError, TxParams, maybe_submit, tx_params_wrapper}};
+use diem_transaction_builder::stdlib as transaction_builder;
 
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -17,11 +18,9 @@ pub struct WalletCmd {
     slow: bool,
 }
 
-
 impl Runnable for WalletCmd {    
     fn run(&self) {
         let entry_args = entrypoint::get_args();
-
         let type_int = if self.community {
           1u8
         } else if self.slow {
@@ -32,17 +31,23 @@ impl Runnable for WalletCmd {
         };
 
         let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
-        match maybe_submit(
-          transaction_builder::encode_set_wallet_type_script(type_int),
-          &tx_params,
-          entry_args.no_send,
-          entry_args.save_path
-        ) {
+
+        match set_wallet_type(type_int, tx_params,  entry_args.save_path) {
+            Ok(_) => println!("Success: wallet type set"),
             Err(e) => {
               println!("ERROR: could not submit wallet type transaction, message: \n{:?}", &e);
               exit(1);
-            },
-            _ => {}
+            }
         }
+                    
     }
+}
+
+/// set the account type as slow, or community.
+pub fn set_wallet_type(type_int: u8, tx_params: TxParams, save_path: Option<PathBuf>) -> Result<TransactionView, TxError>{
+   maybe_submit(
+      transaction_builder::encode_set_wallet_type_script_function(type_int),
+      &tx_params,
+      save_path,
+    )
 }

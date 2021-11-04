@@ -21,7 +21,7 @@ MNEM="talent sunset lizard pill fame nuclear spy noodle basket okay critic grow 
 
 NUM_NODES = 2
 
-START_TEXT = "To run the Libra CLI client"
+START_TEXT = "To run the Diem CLI client"
 
 ifndef SUCCESS_TEXT
 SUCCESS_TEXT = "transaction executed"
@@ -33,32 +33,34 @@ endif
 
 export
 
-test: swarm check-swarm set-community send-tx check-tx  check-autopay check-transfer stop
+test-wrapper: swarm check-swarm set-community send-tx check-tx check-autopay check-transfer stop
 
 test-percent-bal:
-	AUTOPAY_FILE=alice.autopay_batch.json make -f ${MAKE_FILE} test
+	AUTOPAY_FILE=alice.autopay_batch.json make -f ${MAKE_FILE} test-wrapper
 
 test-fixed-once:
-	AUTOPAY_FILE=alice.fixed_once.autopay_batch.json make -f ${MAKE_FILE} test
+	AUTOPAY_FILE=alice.fixed_once.autopay_batch.json make -f ${MAKE_FILE} test-wrapper
 
-test-all:
-	export AUTOPAY_FILE=all.autopay_batch.json SUCCESS_TEXT="'with sequence number: 7'" && make -f ${MAKE_FILE} test
+test:
+# tests all types of txs
+	export AUTOPAY_FILE=all.autopay_batch.json SUCCESS_TEXT="'with sequence number: 6'" && make -f ${MAKE_FILE} test-wrapper
 
 swarm:
 	@echo Building Swarm
 	rm -rf ${SWARM_TEMP}
 	mkdir ${SWARM_TEMP}
-	cd ${SOURCE_PATH} && cargo build -p libra-node -p cli
-	cd ${SOURCE_PATH} && cargo run -p libra-swarm -- --libra-node ${SOURCE_PATH}/target/debug/libra-node -c ${SWARM_TEMP} -n ${NUM_NODES} &> ${LOG} &
+	cd ${SOURCE_PATH} && cargo build -p diem-node -p cli
+	cd ${SOURCE_PATH} && cargo run -p diem-swarm -- --diem-node ${SOURCE_PATH}/target/debug/diem-node -c ${SWARM_TEMP} -n ${NUM_NODES} &> ${LOG} &
 
 stop:
-	killall libra-swarm libra-node miner ol txs cli | true
+	killall diem-swarm diem-node tower ol txs cli | true
 
 init:
 	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}
 
-tx:
+tx: balance
 	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} autopay-batch -f ${SOURCE_PATH}/ol/fixtures/autopay/${AUTOPAY_FILE}
+	
 
 set-community:
 	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona bob wallet -c
@@ -106,9 +108,11 @@ check-autopay:
 
 
 check-transfer:
-# swarm accounts start with a balance of 4
+# swarm accounts start with a balance of 10, but go below that with gas tx costs.
+# all tests above push the balance back up to 10, 11 or 15
+
 	@while [[ ${NOW} -le ${END} ]] ; do \
-			if PERSONA=alice make -f ${MAKE_FILE} balance-bob | grep -e '5'; then \
+			if PERSONA=alice make -f ${MAKE_FILE} balance-bob | grep -e '10' -e '11' -e '15'; then \
 				echo TX SUCCESS ; \
 				break ; \
 			else \

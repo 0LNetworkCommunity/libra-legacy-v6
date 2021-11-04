@@ -1,13 +1,13 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     core_mempool::{CoreMempool, TimelineState},
     shared_mempool::{peer_manager::PeerManager, tasks, types::SharedMempool},
 };
-use libra_config::config::NodeConfig;
-use libra_infallible::{Mutex, RwLock};
-use libra_types::transaction::SignedTransaction;
+use diem_config::config::NodeConfig;
+use diem_infallible::{Mutex, RwLock};
+use diem_types::transaction::SignedTransaction;
 use proptest::{
     arbitrary::any,
     prelude::*,
@@ -17,7 +17,6 @@ use std::{collections::HashMap, sync::Arc};
 use storage_interface::mock::MockDbReader;
 use vm_validator::mocks::mock_vm_validator::MockVMValidator;
 
-/// Proptest strategy for fuzzing input to mempool incoming transactions endpoint
 pub fn mempool_incoming_transactions_strategy(
 ) -> impl Strategy<Value = (Vec<SignedTransaction>, TimelineState)> {
     (
@@ -29,12 +28,10 @@ pub fn mempool_incoming_transactions_strategy(
     )
 }
 
-/// Test that takes in fuzzer-generated inputs to mempool's `process_incoming_transactions_impl` endpoint
 pub fn test_mempool_process_incoming_transactions_impl(
     txns: Vec<SignedTransaction>,
     timeline_state: TimelineState,
 ) {
-    // set up mock Shared Mempool
     let config = NodeConfig::default();
     let mock_db = MockDbReader;
     let vm_validator = Arc::new(RwLock::new(MockVMValidator));
@@ -44,7 +41,7 @@ pub fn test_mempool_process_incoming_transactions_impl(
         network_senders: HashMap::new(),
         db: Arc::new(mock_db),
         validator: vm_validator,
-        peer_manager: Arc::new(PeerManager::new(config.mempool, config.upstream)),
+        peer_manager: Arc::new(PeerManager::new(config.base.role, config.mempool)),
         subscribers: vec![],
     };
 

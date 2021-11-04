@@ -3,7 +3,7 @@ error:
    ┌── tests/move_check/locals/unused_resource_explicit_return.move:5:13 ───
    │
  5 │         let r = R{};
-   │             ^ Unused assignment or binding for local 'r'. Consider removing or replacing it with '_'
+   │             ^ Unused assignment or binding for local 'r'. Consider removing, replacing with '_', or prefixing with '_' (e.g., '_r')
    │
 
 error: 
@@ -14,7 +14,13 @@ error:
    │         ^^^^^^^^^ Invalid return
    ·
  5 │         let r = R{};
-   │             - The local 'r' still contains a resource value due to this assignment. The resource must be consumed before the function returns
+   │             - The local 'r' still contains a value. The value does not have the 'drop' ability and must be consumed before the function returns
+   ·
+ 5 │         let r = R{};
+   │                 --- The type '0x8675309::M::R' does not have the ability 'drop'
+   ·
+ 2 │     struct R {}
+   │            - To satisfy the constraint, the 'drop' ability would need to be added here
    │
 
 error: 
@@ -25,7 +31,13 @@ error:
     │                     ^^^^^^^^^ Invalid return
     ·
  10 │         let r = R {};
-    │             - The local 'r' still contains a resource value due to this assignment. The resource must be consumed before the function returns
+    │             - The local 'r' still contains a value. The value does not have the 'drop' ability and must be consumed before the function returns
+    ·
+ 10 │         let r = R {};
+    │                 ---- The type '0x8675309::M::R' does not have the ability 'drop'
+    ·
+  2 │     struct R {}
+    │            - To satisfy the constraint, the 'drop' ability would need to be added here
     │
 
 error: 
@@ -36,7 +48,13 @@ error:
     │                             ^^^^^^^^^ Invalid return
     ·
  16 │         let r = R{};
-    │             - The local 'r' still contains a resource value due to this assignment. The resource must be consumed before the function returns
+    │             - The local 'r' still contains a value. The value does not have the 'drop' ability and must be consumed before the function returns
+    ·
+ 16 │         let r = R{};
+    │                 --- The type '0x8675309::M::R' does not have the ability 'drop'
+    ·
+  2 │     struct R {}
+    │            - To satisfy the constraint, the 'drop' ability would need to be added here
     │
 
 error: 
@@ -47,7 +65,13 @@ error:
     │                        ^^^^^^^^^ Invalid return
     ·
  22 │         let r = R {};
-    │             - The local 'r' still contains a resource value due to this assignment. The resource must be consumed before the function returns
+    │             - The local 'r' still contains a value. The value does not have the 'drop' ability and must be consumed before the function returns
+    ·
+ 22 │         let r = R {};
+    │                 ---- The type '0x8675309::M::R' does not have the ability 'drop'
+    ·
+  2 │     struct R {}
+    │            - To satisfy the constraint, the 'drop' ability would need to be added here
     │
 
 error: 
@@ -55,7 +79,7 @@ error:
     ┌── tests/move_check/locals/unused_resource_explicit_return.move:28:13 ───
     │
  28 │         let r = R{};
-    │             ^ Unused assignment or binding for local 'r'. Consider removing or replacing it with '_'
+    │             ^ Unused assignment or binding for local 'r'. Consider removing, replacing with '_', or prefixing with '_' (e.g., '_r')
     │
 
 error: 
@@ -66,7 +90,13 @@ error:
     │                ^^^^^^^^^ Invalid return
     ·
  28 │         let r = R{};
-    │             - The local 'r' still contains a resource value due to this assignment. The resource must be consumed before the function returns
+    │             - The local 'r' still contains a value. The value does not have the 'drop' ability and must be consumed before the function returns
+    ·
+ 28 │         let r = R{};
+    │                 --- The type '0x8675309::M::R' does not have the ability 'drop'
+    ·
+  2 │     struct R {}
+    │            - To satisfy the constraint, the 'drop' ability would need to be added here
     │
 
 error: 
@@ -74,7 +104,7 @@ error:
     ┌── tests/move_check/locals/unused_resource_explicit_return.move:33:13 ───
     │
  33 │         let x = &R{};
-    │             ^ Unused assignment or binding for local 'x'. Consider removing or replacing it with '_'
+    │             ^ Unused assignment or binding for local 'x'. Consider removing, replacing with '_', or prefixing with '_' (e.g., '_x')
     │
 
 error: 
@@ -85,7 +115,13 @@ error:
     │         ^^^^^^^^^ Invalid return
     ·
  33 │         let x = &R{};
-    │                  --- The resource is created but not used. The resource must be consumed before the function returns
+    │                  --- The value is created but not used. The value does not have the 'drop' ability and must be consumed before the function returns
+    ·
+ 33 │         let x = &R{};
+    │                  --- The type '0x8675309::M::R' does not have the ability 'drop'
+    ·
+  2 │     struct R {}
+    │            - To satisfy the constraint, the 'drop' ability would need to be added here
     │
 
 error: 
@@ -96,6 +132,12 @@ error:
     │         ^^^^^^^^^ Invalid return
     ·
  37 │     fun t6<T>(_x: R) {
-    │               -- The parameter '_x' still contains a resource value. The resource must be consumed before the function returns
+    │               -- The parameter '_x' still contains a value. The value does not have the 'drop' ability and must be consumed before the function returns
+    ·
+ 37 │     fun t6<T>(_x: R) {
+    │                   - The type '0x8675309::M::R' does not have the ability 'drop'
+    ·
+  2 │     struct R {}
+    │            - To satisfy the constraint, the 'drop' ability would need to be added here
     │
 

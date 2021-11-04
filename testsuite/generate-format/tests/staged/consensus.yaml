@@ -9,6 +9,22 @@ AccountAddress:
     TUPLEARRAY:
       CONTENT: U8
       SIZE: 16
+AccountAuthenticator:
+  ENUM:
+    0:
+      Ed25519:
+        STRUCT:
+          - public_key:
+              TYPENAME: Ed25519PublicKey
+          - signature:
+              TYPENAME: Ed25519Signature
+    1:
+      MultiEd25519:
+        STRUCT:
+          - public_key:
+              TYPENAME: MultiEd25519PublicKey
+          - signature:
+              TYPENAME: MultiEd25519Signature
 Block:
   STRUCT:
     - block_data:
@@ -186,6 +202,12 @@ LedgerInfoWithV0:
 Module:
   STRUCT:
     - code: BYTES
+ModuleId:
+  STRUCT:
+    - address:
+        TYPENAME: AccountAddress
+    - name:
+        TYPENAME: Identifier
 MultiEd25519PublicKey:
   NEWTYPESTRUCT: BYTES
 MultiEd25519Signature:
@@ -224,6 +246,17 @@ Script:
     - args:
         SEQ:
           TYPENAME: TransactionArgument
+ScriptFunction:
+  STRUCT:
+    - module:
+        TYPENAME: ModuleId
+    - function:
+        TYPENAME: Identifier
+    - ty_args:
+        SEQ:
+          TYPENAME: TypeTag
+    - args:
+        SEQ: BYTES
 SignedTransaction:
   STRUCT:
     - raw_txn:
@@ -316,6 +349,17 @@ TransactionAuthenticator:
               TYPENAME: MultiEd25519PublicKey
           - signature:
               TYPENAME: MultiEd25519Signature
+    2:
+      MultiAgent:
+        STRUCT:
+          - sender:
+              TYPENAME: AccountAuthenticator
+          - secondary_signer_addresses:
+              SEQ:
+                TYPENAME: AccountAddress
+          - secondary_signers:
+              SEQ:
+                TYPENAME: AccountAuthenticator
 TransactionPayload:
   ENUM:
     0:
@@ -330,6 +374,10 @@ TransactionPayload:
       Module:
         NEWTYPE:
           TYPENAME: Module
+    3:
+      ScriptFunction:
+        NEWTYPE:
+          TYPENAME: ScriptFunction
 TypeTag:
   ENUM:
     0:

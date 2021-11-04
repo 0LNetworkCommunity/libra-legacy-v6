@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -11,9 +11,9 @@ use crate::{
     tx_emitter::EmitJobRequest,
 };
 use async_trait::async_trait;
+use diem_infallible::duration_since_epoch;
+use diem_logger::info;
 use futures::future::try_join_all;
-use libra_infallible::duration_since_epoch;
-use libra_logger::info;
 use rand::Rng;
 use std::{
     collections::HashSet,
@@ -48,7 +48,7 @@ impl ExperimentParam for TwinValidatorsParams {
         let mut twin_validators = vec![];
         let mut rnd = rand::thread_rng();
         for _i in 0..self.pair {
-            twin_validators.push(instances.remove(rnd.gen_range(1, instances.len())));
+            twin_validators.push(instances.remove(rnd.gen_range(1..instances.len())));
         }
         Self::E {
             instances,
@@ -103,7 +103,7 @@ impl Experiment for TwinValidators {
         }
         let instances = self.instances.clone();
         let emit_job_request =
-            EmitJobRequest::for_instances(instances, context.global_emit_job_request, 0);
+            EmitJobRequest::for_instances(instances, context.global_emit_job_request, 0, 0);
         info!("Starting txn generation");
         let stats = context
             .tx_emitter
@@ -118,15 +118,15 @@ impl Experiment for TwinValidators {
         info!("Stopping origin validators");
         let futures: Vec<_> = origin_instances.iter().map(|ic| ic.stop()).collect();
         try_join_all(futures).await?;
-        time::delay_for(Duration::from_secs(10)).await;
+        time::sleep(Duration::from_secs(10)).await;
         info!("Stopping twin validators");
         let futures: Vec<_> = new_instances.iter().map(|ic| ic.stop()).collect();
         try_join_all(futures).await?;
-        time::delay_for(Duration::from_secs(10)).await;
+        time::sleep(Duration::from_secs(10)).await;
         info!("Restarting origin validators");
         let futures: Vec<_> = origin_instances.iter().map(|ic| ic.start()).collect();
         try_join_all(futures).await?;
-        time::delay_for(Duration::from_secs(10)).await;
+        time::sleep(Duration::from_secs(10)).await;
 
         for inst in origin_instances.iter() {
             info!("Waiting for origin node to be up: {}", inst);

@@ -1,12 +1,12 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{common::strip, config::global::Config as GlobalConfig, errors::*, evaluator::Stage};
+use crate::{config::global::Config as GlobalConfig, errors::*, evaluator::Stage};
 use language_e2e_tests::account::Account;
 use move_core_types::{
     account_address::AccountAddress,
     language_storage::TypeTag,
-    parser::{parse_transaction_arguments, parse_type_tags},
+    parser::{parse_string_list, parse_transaction_arguments, parse_type_tags},
     transaction_argument::TransactionArgument,
 };
 use std::{collections::BTreeSet, str::FromStr};
@@ -22,6 +22,7 @@ pub enum Argument {
 pub enum Entry {
     DisableStages(Vec<Stage>),
     Sender(String),
+    SecondarySigners(Vec<String>),
     TypeArguments(Vec<TypeTag>),
     Arguments(Vec<Argument>),
     MaxGas(u64),
@@ -40,20 +41,24 @@ impl FromStr for Entry {
 
     fn from_str(s: &str) -> Result<Self> {
         let s = s.split_whitespace().collect::<String>();
-        let s = strip(&s, "//!")
+        let s = &s
+            .strip_prefix("//!")
             .ok_or_else(|| ErrorKind::Other("txn config entry must start with //!".to_string()))?
             .trim_start();
 
-        if let Some(s) = strip(s, "sender:") {
+        if let Some(s) = s.strip_prefix("sender:") {
             if s.is_empty() {
                 return Err(ErrorKind::Other("sender cannot be empty".to_string()).into());
             }
             return Ok(Entry::Sender(s.to_ascii_lowercase()));
         }
-        if let Some(s) = strip(s, "type-args:") {
+        if let Some(s) = s.strip_prefix("secondary-signers:") {
+            return Ok(Entry::SecondarySigners(parse_string_list(s)?));
+        }
+        if let Some(s) = s.strip_prefix("type-args:") {
             return Ok(Entry::TypeArguments(parse_type_tags(s)?));
         }
-        if let Some(s) = strip(s, "args:") {
+        if let Some(s) = s.strip_prefix("args:") {
             return Ok(Entry::Arguments(
                 parse_transaction_arguments(s)?
                     .into_iter()
@@ -61,7 +66,7 @@ impl FromStr for Entry {
                     .collect(),
             ));
         }
-        if let Some(s) = strip(s, "no-run:") {
+        if let Some(s) = s.strip_prefix("no-run:") {
             let res: Result<Vec<_>> = s
                 .split(',')
                 .map(|s| s.trim())
@@ -70,31 +75,31 @@ impl FromStr for Entry {
                 .collect();
             return Ok(Entry::DisableStages(res?));
         }
-        if let Some(s) = strip(s, "max-gas:") {
+        if let Some(s) = s.strip_prefix("max-gas:") {
             return Ok(Entry::MaxGas(s.parse::<u64>()?));
         }
-        if let Some(s) = strip(s, "gas-price:") {
+        if let Some(s) = s.strip_prefix("gas-price:") {
             return Ok(Entry::GasPrice(s.parse::<u64>()?));
         }
-        if let Some(s) = strip(s, "gas-currency:") {
+        if let Some(s) = s.strip_prefix("gas-currency:") {
             return Ok(Entry::GasCurrencyCode(s.to_owned()));
         }
-        if let Some(s) = strip(s, "sequence-number:") {
+        if let Some(s) = s.strip_prefix("sequence-number:") {
             return Ok(Entry::SequenceNumber(s.parse::<u64>()?));
         }
-        if let Some(s) = strip(s, "expiration-time:") {
+        if let Some(s) = s.strip_prefix("expiration-time:") {
             return Ok(Entry::ExpirationTime(s.parse::<u64>()?));
         }
-        if let Some(s) = strip(s, "execute-as:") {
+        if let Some(s) = s.strip_prefix("execute-as:") {
             return Ok(Entry::ExecuteAs(s.to_ascii_lowercase()));
         }
-        if let Some(s) = strip(s, "show-gas:") {
+        if let Some(s) = s.strip_prefix("show-gas:") {
             return Ok(Entry::ShowGas(s.trim_end().parse()?));
         }
-        if let Some(s) = strip(s, "show-writeset:") {
+        if let Some(s) = s.strip_prefix("show-writeset:") {
             return Ok(Entry::ShowWriteSet(s.trim_end().parse()?));
         }
-        if let Some(s) = strip(s, "show-events:") {
+        if let Some(s) = s.strip_prefix("show-events:") {
             return Ok(Entry::ShowEvents(s.trim_end().parse()?));
         }
 
@@ -131,6 +136,7 @@ impl Entry {
 pub struct Config<'a> {
     pub disabled_stages: BTreeSet<Stage>,
     pub sender: &'a Account,
+    pub secondary_signers: Vec<&'a Account>,
     pub ty_args: Vec<TypeTag>,
     pub args: Vec<TransactionArgument>,
     pub max_gas: Option<u64>,
@@ -149,6 +155,7 @@ impl<'a> Config<'a> {
     pub fn build(config: &'a GlobalConfig, entries: &[Entry]) -> Result<Self> {
         let mut disabled_stages = BTreeSet::new();
         let mut sender = None;
+        let mut secondary_signers = None;
         let mut ty_args = None;
         let mut args = None;
         let mut max_gas = None;
@@ -166,6 +173,16 @@ impl<'a> Config<'a> {
                 Entry::Sender(name) => match sender {
                     None => sender = Some(config.get_account_for_name(name)?),
                     _ => return Err(ErrorKind::Other("sender already set".to_string()).into()),
+                },
+                Entry::SecondarySigners(secondary_signer_names) => match secondary_signers {
+                    None => {
+                        let secondary_accounts = secondary_signer_names
+                            .iter()
+                            .map(|name| config.get_account_for_name(name))
+                            .collect::<Result<Vec<&Account>>>()?;
+                        secondary_signers = Some(secondary_accounts);
+                    }
+                    _ => bail!("transaction type arguments already set"),
                 },
                 Entry::TypeArguments(ty_args_) => match ty_args {
                     None => {
@@ -269,10 +286,10 @@ impl<'a> Config<'a> {
                 },
             }
         }
-
         Ok(Self {
             disabled_stages,
             sender: sender.unwrap_or_else(|| config.accounts.get("default").unwrap().account()),
+            secondary_signers: secondary_signers.unwrap_or_else(Vec::new),
             ty_args: ty_args.unwrap_or_else(Vec::new),
             args: args.unwrap_or_else(Vec::new),
             max_gas,
@@ -281,9 +298,9 @@ impl<'a> Config<'a> {
             sequence_number,
             expiration_timestamp_secs,
             execute_as,
-            show_gas: show_gas.unwrap_or_else(|| false),
-            show_writeset: show_writeset.unwrap_or_else(|| false),
-            show_events: show_events.unwrap_or_else(|| false),
+            show_gas: show_gas.unwrap_or(false),
+            show_writeset: show_writeset.unwrap_or(false),
+            show_events: show_events.unwrap_or(false),
         })
     }
 

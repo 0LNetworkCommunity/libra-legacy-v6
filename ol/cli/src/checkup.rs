@@ -3,7 +3,7 @@
 /// Shows hints if any field is missing or if config entries point to a wrong place
 /// 
 
-use libra_global_constants::{CONFIG_FILE, NODE_HOME};
+use diem_global_constants::{CONFIG_FILE, NODE_HOME};
 
 use regex::Regex;
 use std::path::PathBuf;
@@ -101,7 +101,7 @@ fn check_block_dir(config_file: &PathBuf, node_home: &PathBuf) {
 }
 
 /// check if database dir exists and is writable
-/// print some info about existing sst files in subdirs consensusdb and libradb
+/// print some info about existing sst files in subdirs consensusdb and diemdb
 fn check_db_dir(config_file: &PathBuf) {
     let maybe_dbdir = get_setting(&config_file, "workspace", "db_path");
     if maybe_dbdir.is_none() {
@@ -117,11 +117,11 @@ fn check_db_dir(config_file: &PathBuf) {
                 println!("CRITICAL: directory {:?} is not writable for current user", dbdir_path);
             } else {
                 let consensusdb_path = dbdir_path.join("consensusdb");
-                let libradb_path = dbdir_path.join("libradb");
+                let diemdb_path = dbdir_path.join("diemdb");
                 let num_sst_files_consensus = get_num_files_matching(&consensusdb_path, Regex::new(r".sst$").unwrap());
                 println!("INFO: your consensus db ({:?}) contains {:?} sst-files", consensusdb_path, num_sst_files_consensus);  
-                let num_sst_files_libradb = get_num_files_matching(&libradb_path, Regex::new(r".sst$").unwrap());
-                println!("INFO: your libradb ({:?}) contains {:?} sst-files", libradb_path, num_sst_files_libradb);  
+                let num_sst_files_diemdb = get_num_files_matching(&diemdb_path, Regex::new(r".sst$").unwrap());
+                println!("INFO: your diemdb ({:?}) contains {:?} sst-files", diemdb_path, num_sst_files_diemdb);  
             }
         }
     } 

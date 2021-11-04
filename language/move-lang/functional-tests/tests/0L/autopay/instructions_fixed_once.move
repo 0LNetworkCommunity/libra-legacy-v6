@@ -1,6 +1,7 @@
-//! account: bob, 10000GAS, 0, validator
-//! account: alice, 10000GAS, 0 
-//! account: carol, 10000GAS, 0 
+// Todo: These GAS values have no effect, all accounts start with 1M GAS
+//! account: bob,   1000000GAS, 0, validator
+//! account: alice, 1000000GAS, 0 
+//! account: carol, 1000000GAS, 0 
 
 // test runs various autopay instruction types to ensure they are being executed as expected
 
@@ -10,8 +11,8 @@ script {
     use 0x1::Wallet;
     use 0x1::Vector;
 
-    fun main(sender: &signer) {
-      Wallet::set_comm(sender);
+    fun main(sender: signer) {
+      Wallet::set_comm(&sender);
       let list = Wallet::get_comm_list();
       assert(Vector::length(&list) == 1, 7357001);
     }
@@ -19,48 +20,25 @@ script {
 
 // check: EXECUTED
 
-//! new-transaction
-//! sender: libraroot
-script {
-    use 0x1::AccountLimits;
-    use 0x1::CoreAddresses;
-    use 0x1::GAS::GAS;
-    fun main(account: &signer) {
-        AccountLimits::update_limits_definition<GAS>(account, CoreAddresses::LIBRA_ROOT_ADDRESS(), 0, 10000, 0, 1);
-    }
-}
-// check: "Keep(EXECUTED)"
-
-//! new-transaction
-//! sender: libraroot
-//! execute-as: alice
-script {
-use 0x1::AccountLimits;
-use 0x1::GAS::GAS;
-  fun main(lr: &signer, alice_account: &signer) {
-      AccountLimits::publish_unrestricted_limits<GAS>(alice_account);
-      AccountLimits::update_limits_definition<GAS>(lr, {{alice}}, 0, 10000, 0, 1);
-      AccountLimits::publish_window<GAS>(lr, alice_account, {{alice}});
-  }
-}
-// check: "Keep(EXECUTED)"
-
 // alice commits to paying carol 500 GAS at the next tick
 //! new-transaction
 //! sender: alice
 script {
-  use 0x1::AutoPay2;
+  use 0x1::AutoPay;
   use 0x1::Signer;
-  fun main(sender: &signer) {
-    AutoPay2::enable_autopay(sender);
-    assert(AutoPay2::is_enabled(Signer::address_of(sender)), 0);
+  fun main(sender: signer) {
+    let sender = &sender;
+    AutoPay::enable_autopay(sender);
+    assert(AutoPay::is_enabled(Signer::address_of(sender)), 0);
     
     // note: end epoch does not matter here as long as it is after the next epoch
-    AutoPay2::create_instruction(sender, 1, 3, {{carol}}, 200, 500);
+    AutoPay::create_instruction(sender, 1, 3, @{{carol}}, 200, 500);
 
-    let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(Signer::address_of(sender), 1);
+    let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(
+        Signer::address_of(sender), 1
+    );
     assert(type == 3, 1);
-    assert(payee == {{carol}}, 1);
+    assert(payee == @{{carol}}, 1);
     assert(end_epoch == 200, 1);
     assert(percentage == 500, 1);
   }
@@ -89,20 +67,20 @@ script {
 ///////////////////////////////////////////////////
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
-  use 0x1::LibraAccount;
+  use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
-  use 0x1::AutoPay2;
-  fun main(_vm: &signer) {
+  use 0x1::AutoPay;
+  fun main(_vm: signer) {
 
-    let ending_balance = LibraAccount::balance<GAS>({{alice}});
-    assert(ending_balance == 9500, 7357006);
+    let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
+    assert(ending_balance == 999500, 7357002);
     
     //Confirm the one-shot instruction was deleted
-    let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction({{alice}}, 1);
+    let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(@{{alice}}, 1);
     assert(type == 0, 1);
-    assert(payee == 0x0, 1);
+    assert(payee == @0x0, 1);
     assert(end_epoch == 0, 1);
     assert(percentage == 0, 1);
   }
@@ -137,18 +115,18 @@ script {
 ///////////////////////////////////////////////////
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
-  use 0x1::LibraAccount;
+  use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
-  fun main(_vm: &signer) {
+  fun main(_vm: signer) {
     // no change, one-shot instruction is finished
-    let ending_balance = LibraAccount::balance<GAS>({{alice}});
-    assert(ending_balance == 9500, 7357006);
+    let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
+    assert(ending_balance == 999500, 7357003);
 
     // check balance of recipients
-    let ending_balance = LibraAccount::balance<GAS>({{carol}});
-    assert(ending_balance == 10500, 7357006);
+    let ending_balance = DiemAccount::balance<GAS>(@{{carol}});
+    assert(ending_balance == 1000500, 7357004);
   }
 }
 // check: EXECUTED

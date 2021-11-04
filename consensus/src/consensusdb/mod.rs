@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #[cfg(test)]
@@ -15,10 +15,10 @@ use crate::{
 };
 use anyhow::Result;
 use consensus_types::{block::Block, quorum_cert::QuorumCert};
-use libra_crypto::HashValue;
-use libra_logger::prelude::*;
+use diem_crypto::HashValue;
+use diem_logger::prelude::*;
 use schema::{BLOCK_CF_NAME, QC_CF_NAME, SINGLE_ENTRY_CF_NAME};
-use schemadb::{ReadOptions, SchemaBatch, DB, DEFAULT_CF_NAME};
+use schemadb::{Options, ReadOptions, SchemaBatch, DB, DEFAULT_CF_NAME};
 use std::{collections::HashMap, iter::Iterator, path::Path, time::Instant};
 
 pub struct ConsensusDB {
@@ -36,7 +36,10 @@ impl ConsensusDB {
 
         let path = db_root_path.as_ref().join("consensusdb");
         let instant = Instant::now();
-        let db = DB::open(path.clone(), "consensus", column_families)
+        let mut opts = Options::default();
+        opts.create_if_missing(true);
+        opts.create_missing_column_families(true);
+        let db = DB::open(path.clone(), "consensus", column_families, &opts)
             .expect("ConsensusDB open failed; unable to continue");
 
         info!(
@@ -106,12 +109,10 @@ impl ConsensusDB {
         let mut batch = SchemaBatch::new();
         block_data
             .iter()
-            .map(|block| batch.put::<BlockSchema>(&block.id(), block))
-            .collect::<Result<()>>()?;
+            .try_for_each(|block| batch.put::<BlockSchema>(&block.id(), block))?;
         qc_data
             .iter()
-            .map(|qc| batch.put::<QCSchema>(&qc.certified_block().id(), qc))
-            .collect::<Result<()>>()?;
+            .try_for_each(|qc| batch.put::<QCSchema>(&qc.certified_block().id(), qc))?;
         self.commit(batch)
     }
 
@@ -123,13 +124,10 @@ impl ConsensusDB {
             return Err(anyhow::anyhow!("Consensus block ids is empty!").into());
         }
         let mut batch = SchemaBatch::new();
-        block_ids
-            .iter()
-            .map(|hash| {
-                batch.delete::<BlockSchema>(hash)?;
-                batch.delete::<QCSchema>(hash)
-            })
-            .collect::<Result<_>>()?;
+        block_ids.iter().try_for_each(|hash| {
+            batch.delete::<BlockSchema>(hash)?;
+            batch.delete::<QCSchema>(hash)
+        })?;
         self.commit(batch)
     }
 

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -6,12 +6,14 @@ use crate::{
     spec_language_ast::{Condition, Invariant, SyntheticDefinition},
 };
 use anyhow::Result;
-use libra_types::account_address::AccountAddress;
-use move_core_types::{identifier::Identifier, language_storage::ModuleId, value::MoveValue};
+use move_core_types::{
+    account_address::AccountAddress, identifier::Identifier, language_storage::ModuleId,
+    value::MoveValue,
+};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::{HashSet, VecDeque},
+    collections::{BTreeSet, HashSet, VecDeque},
     fmt,
 };
 
@@ -83,6 +85,8 @@ pub struct QualifiedModuleIdent {
 pub struct ModuleDefinition {
     /// name of the module
     pub name: ModuleName,
+    /// the module's friends
+    pub friends: Vec<ModuleIdent>,
     /// the module's dependencies
     pub imports: Vec<ImportDefinition>,
     /// Explicit declaration of dependencies. If not provided, will be inferred based on given
@@ -152,22 +156,21 @@ pub struct TypeVar_(String);
 pub type TypeVar = Spanned<TypeVar_>;
 
 //**************************************************************************************************
-// Kinds
+// Abilities
 //**************************************************************************************************
 
-// TODO: This enum is completely equivalent to vm::file_format::Kind.
-//       Should we just use vm::file_format::Kind or replace both with a common one?
-/// The kind of a type. Analogous to `vm::file_format::Kind`.
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum Kind {
-    /// Represents the super set of all types.
-    All,
-    /// `Resource` types must follow move semantics and various resource safety rules.
-    Resource,
-    /// `Copyable` types do not need to follow the `Resource` rules.
-    Copyable,
+/// The abilities of a type. Analogous to `move_binary_format::file_format::Ability`.
+#[derive(Debug, Clone, Eq, Copy, Hash, Ord, PartialEq, PartialOrd)]
+pub enum Ability {
+    /// Allows values of types with this ability to be copied
+    Copy,
+    /// Allows values of types with this ability to be dropped or if left in a local at return
+    Drop,
+    /// Allows values of types with this ability to exist inside a struct in global storage
+    Store,
+    /// Allows the type to serve as a key for global storage operations
+    Key,
 }
-
 //**************************************************************************************************
 // Types
 //**************************************************************************************************
@@ -229,13 +232,12 @@ pub struct StructName(String);
 /// A Move struct
 #[derive(Clone, Debug, PartialEq)]
 pub struct StructDefinition_ {
-    /// The struct will have kind resource if `is_nominal_resource` is true
-    /// and will be dependent on it's type arguments otherwise
-    pub is_nominal_resource: bool,
+    /// The declared abilities for the struct
+    pub abilities: BTreeSet<Ability>,
     /// Human-readable name for the struct that also serves as a nominal type
     pub name: StructName,
-    /// Kind constraints of the type parameters
-    pub type_formals: Vec<(TypeVar, Kind)>,
+    /// Constraints of the type parameters
+    pub type_formals: Vec<(TypeVar, BTreeSet<Ability>)>,
     /// the fields each instance has
     pub fields: StructDefinitionFields,
     /// the invariants for this struct
@@ -247,13 +249,12 @@ pub type StructDefinition = Spanned<StructDefinition_>;
 /// An explicit struct dependency
 #[derive(Clone, Debug, PartialEq)]
 pub struct StructDependency {
-    /// The struct will have kind resource if `is_nominal_resource` is true
-    /// and will be dependent on it's type arguments otherwise
-    pub is_nominal_resource: bool,
+    /// The declared abilities for the struct
+    pub abilities: BTreeSet<Ability>,
     /// Human-readable name for the struct that also serves as a nominal type
     pub name: StructName,
-    /// Kind constraints of the type parameters
-    pub type_formals: Vec<(TypeVar, Kind)>,
+    /// Constraints of the type parameters
+    pub type_formals: Vec<(TypeVar, BTreeSet<Ability>)>,
 }
 
 /// The fields of a Move struct definition
@@ -299,8 +300,8 @@ pub struct FunctionSignature {
     pub formals: Vec<(Var, Type)>,
     /// Optional return types
     pub return_type: Vec<Type>,
-    /// Possibly-empty list of (TypeVar, Kind) pairs.s.
-    pub type_formals: Vec<(TypeVar, Kind)>,
+    /// Possibly-empty list of type parameters and their constraints
+    pub type_formals: Vec<(TypeVar, BTreeSet<Ability>)>,
 }
 
 /// An explicit function dependency
@@ -318,6 +319,12 @@ pub enum FunctionVisibility {
     /// The procedure can be invoked anywhere
     /// `public`
     Public,
+    /// The procedure can only be invoked from a script context
+    /// `public(script)`
+    Script,
+    /// The procedure can be invoked internally as well as by modules in the friend list
+    /// `public(friend)`
+    Friend,
     /// The procedure can be invoked only internally
     /// `<no modifier>`
     Internal,
@@ -344,7 +351,7 @@ pub enum FunctionBody {
 /// A Move function/procedure
 #[derive(PartialEq, Debug, Clone)]
 pub struct Function_ {
-    /// The visibility (public or internal)
+    /// The visibility
     pub visibility: FunctionVisibility,
     /// The type signature
     pub signature: FunctionSignature,
@@ -777,7 +784,7 @@ impl QualifiedModuleIdent {
     /// Creates a new fully qualified module identifier from the module name and the address at
     /// which it is published
     pub fn new(name: ModuleName, address: AccountAddress) -> Self {
-        QualifiedModuleIdent { address, name }
+        QualifiedModuleIdent { name, address }
     }
 
     /// Accessor for the name of the fully qualified module identifier
@@ -806,6 +813,7 @@ impl ModuleDefinition {
     /// Does not verify the correctness of any internal properties of its elements
     pub fn new(
         name: impl ToString,
+        friends: Vec<ModuleIdent>,
         imports: Vec<ImportDefinition>,
         explicit_dependency_declarations: Vec<ModuleDependency>,
         structs: Vec<StructDefinition>,
@@ -815,6 +823,7 @@ impl ModuleDefinition {
     ) -> Result<Self> {
         Ok(ModuleDefinition {
             name: ModuleName::new(name.to_string()),
+            friends,
             imports,
             explicit_dependency_declarations,
             structs,
@@ -828,6 +837,13 @@ impl ModuleDefinition {
     pub fn get_external_deps(&self) -> Vec<ModuleId> {
         get_external_deps(self.imports.as_slice())
     }
+}
+
+impl Ability {
+    pub const COPY: &'static str = "copy";
+    pub const DROP: &'static str = "drop";
+    pub const STORE: &'static str = "store";
+    pub const KEY: &'static str = "key";
 }
 
 impl Type {
@@ -921,20 +937,19 @@ impl StructName {
 }
 
 impl StructDefinition_ {
-    /// Creates a new StructDefinition from the resource kind (true if resource), the string
-    /// representation of the name, and the user specified fields, a map from their names to their
-    /// types
+    /// Creates a new StructDefinition from the abilities, the string representation of the name,
+    /// and the user specified fields, a map from their names to their types
     /// Does not verify the correctness of any internal properties, e.g. doesn't check that the
     /// fields do not have reference types
     pub fn move_declared(
-        is_nominal_resource: bool,
+        abilities: BTreeSet<Ability>,
         name: impl ToString,
-        type_formals: Vec<(TypeVar, Kind)>,
+        type_formals: Vec<(TypeVar, BTreeSet<Ability>)>,
         fields: Fields<Type>,
         invariants: Vec<Invariant>,
     ) -> Result<Self> {
         Ok(StructDefinition_ {
-            is_nominal_resource,
+            abilities,
             name: StructName::new(name.to_string()),
             type_formals,
             fields: StructDefinitionFields::Move { fields },
@@ -942,16 +957,15 @@ impl StructDefinition_ {
         })
     }
 
-    /// Creates a new StructDefinition from the resource kind (true if resource), the string
-    /// representation of the name, and the user specified fields, a map from their names to their
-    /// types
+    /// Creates a new StructDefinition from the abilities, the string representation of the name,
+    /// and the user specified fields, a map from their names to their types
     pub fn native(
-        is_nominal_resource: bool,
-        name: impl std::string::ToString,
-        type_formals: Vec<(TypeVar, Kind)>,
+        abilities: BTreeSet<Ability>,
+        name: impl ToString,
+        type_formals: Vec<(TypeVar, BTreeSet<Ability>)>,
     ) -> Result<Self> {
         Ok(StructDefinition_ {
-            is_nominal_resource,
+            abilities,
             name: StructName::new(name.to_string()),
             type_formals,
             fields: StructDefinitionFields::Native,
@@ -999,7 +1013,7 @@ impl FunctionSignature {
     pub fn new(
         formals: Vec<(Var, Type)>,
         return_type: Vec<Type>,
-        type_parameters: Vec<(TypeVar, Kind)>,
+        type_parameters: Vec<(TypeVar, BTreeSet<Ability>)>,
     ) -> Self {
         FunctionSignature {
             formals,
@@ -1016,7 +1030,7 @@ impl Function_ {
         visibility: FunctionVisibility,
         formals: Vec<(Var, Type)>,
         return_type: Vec<Type>,
-        type_parameters: Vec<(TypeVar, Kind)>,
+        type_parameters: Vec<(TypeVar, BTreeSet<Ability>)>,
         acquires: Vec<StructName>,
         specifications: Vec<Condition>,
         body: FunctionBody,
@@ -1269,18 +1283,26 @@ impl fmt::Display for TypeVar_ {
     }
 }
 
-impl fmt::Display for Kind {
+impl fmt::Display for Ability {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "{}",
             match self {
-                Kind::All => "all",
-                Kind::Resource => "resource",
-                Kind::Copyable => "copyable",
+                Ability::Copy => Ability::COPY,
+                Ability::Drop => Ability::DROP,
+                Ability::Store => Ability::STORE,
+                Ability::Key => Ability::KEY,
             }
         )
     }
+}
+
+fn format_constraints(set: &BTreeSet<Ability>) -> String {
+    set.iter()
+        .map(|a| format!("{}", a))
+        .collect::<Vec<_>>()
+        .join(" + ")
 }
 
 impl fmt::Display for ScriptOrModule {
@@ -1404,11 +1426,11 @@ impl fmt::Display for StructDependency {
         write!(
             f,
             "StructDep({} {}{}",
-            if self.is_nominal_resource {
-                "resource"
-            } else {
-                ""
-            },
+            self.abilities
+                .iter()
+                .map(|a| format!("{}", a))
+                .collect::<Vec<_>>()
+                .join(" "),
             &self.name,
             format_type_formals(&self.type_formals)
         )
@@ -1548,13 +1570,13 @@ fn format_type_actuals(tys: &[Type]) -> String {
     }
 }
 
-fn format_type_formals(formals: &[(TypeVar, Kind)]) -> String {
+fn format_type_formals(formals: &[(TypeVar, BTreeSet<Ability>)]) -> String {
     if formals.is_empty() {
         "".to_string()
     } else {
         let formatted = formals
             .iter()
-            .map(|(tv, k)| format!("{}: {}", tv.value, k))
+            .map(|(tv, abilities)| format!("{}: {}", tv.value, format_constraints(abilities)))
             .collect::<Vec<_>>();
         format!("<{}>", intersperse(&formatted, ", "))
     }

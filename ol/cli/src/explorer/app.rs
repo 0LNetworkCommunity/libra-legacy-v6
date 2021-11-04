@@ -3,8 +3,8 @@
 use crate::node::chain_view;
 use crate::node::node::Node;
 use super::TabsState;
-use libra_json_rpc_client::views::TransactionView;
-use libra_types::{account_state::AccountState};
+use diem_json_rpc_client::views::TransactionView;
+use diem_types::{account_state::AccountState};
 
 /// struct for fullnode list
 pub struct Server<'a> {

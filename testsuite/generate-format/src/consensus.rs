@@ -1,13 +1,13 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use libra_crypto::{
+use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     multi_ed25519::{MultiEd25519PublicKey, MultiEd25519Signature},
     traits::{SigningKey, Uniform},
 };
-use libra_crypto_derive::{CryptoHasher, LCSCryptoHash};
-use libra_types::{contract_event, event, transaction, write_set};
+use diem_crypto_derive::{BCSCryptoHash, CryptoHasher};
+use diem_types::{contract_event, event, transaction, write_set};
 use move_core_types::language_storage;
 use rand::{rngs::StdRng, SeedableRng};
 use serde::{Deserialize, Serialize};
@@ -18,13 +18,13 @@ pub fn output_file() -> Option<&'static str> {
     Some("tests/staged/consensus.yaml")
 }
 
-/// This aims at signing canonically serializable LCS data
-#[derive(CryptoHasher, LCSCryptoHash, Serialize, Deserialize)]
-struct TestLibraCrypto(String);
+/// This aims at signing canonically serializable BCS data
+#[derive(CryptoHasher, BCSCryptoHash, Serialize, Deserialize)]
+struct TestDiemCrypto(String);
 
 /// Record sample values for crypto types used by consensus.
 fn trace_crypto_values(tracer: &mut Tracer, samples: &mut Samples) -> Result<()> {
-    let message = TestLibraCrypto("Hello, World".to_string());
+    let message = TestDiemCrypto("Hello, World".to_string());
 
     let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
     let private_key = Ed25519PrivateKey::generate(&mut rng);
@@ -41,7 +41,7 @@ fn trace_crypto_values(tracer: &mut Tracer, samples: &mut Samples) -> Result<()>
 /// Create a registry for consensus types.
 pub fn get_registry() -> Result<Registry> {
     let mut tracer =
-        Tracer::new(TracerConfig::default().is_human_readable(lcs::is_human_readable()));
+        Tracer::new(TracerConfig::default().is_human_readable(bcs::is_human_readable()));
     let mut samples = Samples::new();
     // 1. Record samples for types with custom deserializers.
     trace_crypto_values(&mut tracer, &mut samples)?;
@@ -58,6 +58,7 @@ pub fn get_registry() -> Result<Registry> {
     tracer.trace_type::<transaction::TransactionArgument>(&samples)?;
     tracer.trace_type::<transaction::TransactionPayload>(&samples)?;
     tracer.trace_type::<transaction::WriteSetPayload>(&samples)?;
+    tracer.trace_type::<transaction::authenticator::AccountAuthenticator>(&samples)?;
     tracer.trace_type::<transaction::authenticator::TransactionAuthenticator>(&samples)?;
     tracer.trace_type::<write_set::WriteOp>(&samples)?;
 

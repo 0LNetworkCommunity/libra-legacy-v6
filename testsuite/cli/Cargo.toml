@@ -1,55 +1,60 @@
 [package]
 name = "cli"
 version = "0.1.0"
-authors = ["Libra Association <opensource@libra.org>"]
-description = "Libra client"
-repository = "https://github.com/libra/libra"
-homepage = "https://libra.org"
+authors = ["Diem Association <opensource@diem.com>"]
+description = "Diem client"
+repository = "https://github.com/diem/diem"
+homepage = "https://diem.com"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0.33"
+anyhow = "1.0.38"
 chrono = "0.4.19"
-hex = "0.4.2"
-proptest = { version = "0.10.1", optional = true }
-rustyline = "6.3.0"
-rust_decimal = "1.8.1"
-num-traits = "0.2.12"
-once_cell = "1.4.1"
-reqwest = { version = "0.10.8", features = ["blocking", "json"] }
-serde = { version = "1.0.116", features = ["derive"] }
-structopt = "0.3.18"
+hex = "0.4.3"
+proptest = { version = "1.0.0", optional = true }
+rustyline = "8.0.0"
+rust_decimal = "1.10.3"
+num-traits = "0.2.14"
+once_cell = "1.7.2"
+reqwest = { version = "0.11.2", features = ["blocking", "json"] }
+serde = { version = "1.0.124", features = ["derive"] }
+structopt = "0.3.21"
+tokio = { version = "1.3.0", features = ["full"] }
 walkdir = "2.3.1"
 
-libra-config = { path = "../../config", version = "0.1.0" }
-generate-key = { path = "../../config/generate-key", version = "0.1.0" }
-crash-handler = { path = "../../common/crash-handler", version = "0.1.0" }
-libra-crypto = { path = "../../crypto/crypto", version = "0.1.0" }
-lcs = { path = "../../common/lcs", version = "0.1.0", package = "libra-canonical-serialization" }
-libra-wallet = { path = "libra-wallet", version = "0.1.0" }
-libra-json-rpc-client = { path = "../../client/json-rpc", version = "0.1.0" }
-libra-logger =  { path = "../../common/logger", version = "0.1.0" }
-libra-metrics = { path = "../../common/metrics", version = "0.1.0" }
-libra-network-address = { path = "../../network/network-address", version = "0.1.0" }
-libra-types = { path = "../../types", version = "0.1.0" }
-libra-temppath = { path = "../../common/temppath/", version = "0.1.0" }
-libra-workspace-hack = { path = "../../common/workspace-hack", version = "0.1.0" }
-resource-viewer = { path = "../../language/tools/resource-viewer", version = "0.1.0" }
-compiled-stdlib = { path = "../../language/stdlib/compiled",  version = "0.1.0" }
-transaction-builder = { path = "../../language/transaction-builder", version = "0.1.0" }
-compiler = { path = "../../language/compiler",  version = "0.1.0" }
+diem-config = { path = "../../config" }
+generate-key = { path = "../../config/generate-key" }
+crash-handler = { path = "../../common/crash-handler" }
+diem-crypto = { path = "../../crypto/crypto" }
+bcs = "0.1.2"
+diem-wallet = { path = "diem-wallet" }
+diem-client = { path = "../../sdk/client" }
+diem-infallible = { path = "../../common/infallible" }
+diem-logger =  { path = "../../common/logger" }
+diem-metrics = { path = "../../common/metrics" }
+diem-types = { path = "../../types" }
+diem-temppath = { path = "../../common/temppath/" }
+diem-workspace-hack = { path = "../../common/workspace-hack" }
+resource-viewer = { path = "../../language/tools/resource-viewer" }
+diem-framework = { path = "../../language/diem-framework" }
+diem-framework-releases = { path = "../../language/diem-framework/releases" }
+diem-transaction-builder = { path = "../../sdk/transaction-builder" }
+compiler = { path = "../../language/compiler" }
 #//////// 0L ////////
-serde_json = "1.0.59"
-rpassword = "5.0"
+diem-json-rpc-client = { path = "../../client/json-rpc" }
 ol-keys = { path = "../../ol/keys",  version = "0.1.0" }
+ol-types = { path = "../../ol/types",  version = "0.1.0" }
+
+rpassword = "5.0"
+serde_json = "1.0.59"
 
 [dev-dependencies]
-proptest = "0.10.1"
+proptest = "1.0.0"
 
-libra-types = { path = "../../types", version = "0.1.0", features = ["fuzzing"] }
+diem-types = { path = "../../types", features = ["fuzzing"] }
 
 [features]
 default = []
-fuzzing = ["proptest", "libra-crypto/fuzzing", "libra-types/fuzzing"]
+fuzzing = ["proptest", "diem-crypto/fuzzing", "diem-types/fuzzing"]

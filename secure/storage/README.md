@@ -1,13 +1,13 @@
 ---
 id: secure_storage
 title: Secure Storage
-custom_edit_url: https://github.com/libra/libra/edit/master/secure/storage/README.md
+custom_edit_url: https://github.com/diem/diem/edit/main/secure/storage/README.md
 ---
 # Secure Storage
 
-Secure storage provides a secure, persistent data store for sensitive data in the Libra
+Secure storage provides a secure, persistent data store for sensitive data in the Diem
 blockchain. Examples of sensitive data here include information required for safety and
-identity within Libra, such as cryptographic keys and consensus safety rules, as well as
+identity within Diem, such as cryptographic keys and consensus safety rules, as well as
 run-time configuration data.
 
 ## Overview
@@ -30,7 +30,7 @@ both `KVStorage` and `CryptoStorage`:
 Github repository.
 - `Vault`: The Vault secure storage implementation uses the Vault Storage Engine (an engine
 offered by HashiCorp: https://www.vaultproject.io/). The Vault secure storage implementation
-is the one primarily used in production environments by nodes in the Libra blockchain.
+is the one primarily used in production environments by nodes in the Diem blockchain.
 - `InMemory`: The InMemory secure storage implementation provides a simple in-memory storage
 engine. This engine should only be used for testing, as it does not offer any persistence, or
 security (i.e., data is simply held in DRAM and may be lost on a crash, or restart).
@@ -41,8 +41,8 @@ storage, on-disk should not be used in production environments as it provides no
 guarantees (e.g., encryption before writing to disk). Moreover, OnDisk storage does not
 currently support concurrent data accesses.
 
-In addition, this crate also offers a `NamespacedStorage` wrapper around secure storage
-implementations. Using the NamespacedStorage wrapper, different entities can share the
+In addition, this crate also offers a `Namespaced` wrapper around secure storage
+implementations. Using the Namespaced wrapper, different entities can share the
 same secure storage instance, under different namespaces, providing an abstraction that
 each entity has its own secure storage backend.
 

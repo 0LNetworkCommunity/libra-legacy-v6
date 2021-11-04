@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use generate_format::Corpus;
@@ -23,7 +23,7 @@ fn analyze_serde_formats() {
         // Test that the definitions in all corpus are unique and pass the linter.
         for (key, value) in registry {
             assert_eq!(
-                generate_format::lint_lcs_format(&value),
+                generate_format::lint_bcs_format(&value),
                 Ok(()),
                 "In corpus {}: lint error while analyzing {}",
                 corpus.to_string(),

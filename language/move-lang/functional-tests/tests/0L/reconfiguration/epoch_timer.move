@@ -20,14 +20,15 @@
 //////////////////////////////////////////////
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 
 script {
     use 0x1::Epoch;
-    use 0x1::LibraTimestamp;
+    use 0x1::DiemTimestamp;
+    
     fun main(){
       // the new epoch has reset the timer.
-      assert(LibraTimestamp::now_seconds() == 61, 7357008002001);
+      assert(DiemTimestamp::now_seconds() == 61, 7357008002001);
       assert(!Epoch::epoch_finished(), 7357008002002);
     }
 }

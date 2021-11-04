@@ -1,4 +1,4 @@
-module X {
+module {{default}}::X {
     public fun error(): bool {
         abort 42
     }
@@ -20,5 +20,7 @@ fun main() {
     vfalse && X::error();
     vfalse && { let r = X::error(); r };
     { let x = vfalse; x} && X::error();
+    true || { abort 0 };
+    { true } || (abort 0);
 }
 }

@@ -1,18 +1,19 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     access_path::AccessPath,
     account_config::constants::{
-        libra_root_address, type_tag_for_currency_code, CORE_CODE_ADDRESS,
+        diem_root_address, type_tag_for_currency_code, CORE_CODE_ADDRESS, DIEM_MODULE_IDENTIFIER,
     },
     event::EventHandle,
 };
 use anyhow::Result;
 use move_core_types::{
+    ident_str,
     identifier::{IdentStr, Identifier},
     language_storage::{ResourceKey, StructTag},
-    move_resource::MoveResource,
+    move_resource::{MoveResource, MoveStructType},
 };
 use serde::{Deserialize, Serialize};
 
@@ -21,7 +22,7 @@ use serde::{Deserialize, Serialize};
 pub struct CurrencyInfoResource {
     total_value: u128,
     preburn_value: u64,
-    to_lbr_exchange_rate: u64,
+    to_xdx_exchange_rate: u64,
     is_synthetic: bool,
     scaling_factor: u64,
     fractional_part: u64,
@@ -34,16 +35,18 @@ pub struct CurrencyInfoResource {
     exchange_rate_update_events: EventHandle,
 }
 
-impl MoveResource for CurrencyInfoResource {
-    const MODULE_NAME: &'static str = "Libra";
-    const STRUCT_NAME: &'static str = "CurrencyInfo";
+impl MoveStructType for CurrencyInfoResource {
+    const MODULE_NAME: &'static IdentStr = DIEM_MODULE_IDENTIFIER;
+    const STRUCT_NAME: &'static IdentStr = ident_str!("CurrencyInfo");
 }
+
+impl MoveResource for CurrencyInfoResource {}
 
 impl CurrencyInfoResource {
     pub fn new(
         total_value: u128,
         preburn_value: u64,
-        to_lbr_exchange_rate: u64,
+        to_xdx_exchange_rate: u64,
         is_synthetic: bool,
         scaling_factor: u64,
         fractional_part: u64,
@@ -58,7 +61,7 @@ impl CurrencyInfoResource {
         Self {
             total_value,
             preburn_value,
-            to_lbr_exchange_rate,
+            to_xdx_exchange_rate,
             is_synthetic,
             scaling_factor,
             fractional_part,
@@ -92,13 +95,14 @@ impl CurrencyInfoResource {
         self.fractional_part
     }
 
+
     pub fn exchange_rate(&self) -> f32 {
         // Exchange rates are represented as 32|32 fixed-point numbers on-chain, so we divide by the scaling
         // factor (2^32) of the number to arrive at the floating point representation of the number.
-        (self.to_lbr_exchange_rate as f32) / 2f32.powf(32f32)
+        (self.to_xdx_exchange_rate as f32) / 2f32.powf(32f32)
     }
 
-    pub fn convert_to_lbr(&self, amount: u64) -> u64 {
+    pub fn convert_to_xdx(&self, amount: u64) -> u64 {
         (self.exchange_rate() * (amount as f32)) as u64
     }
 
@@ -113,14 +117,14 @@ impl CurrencyInfoResource {
 
     pub fn resource_path_for(currency_code: Identifier) -> AccessPath {
         let resource_key = ResourceKey::new(
-            libra_root_address(),
+            diem_root_address(),
             CurrencyInfoResource::struct_tag_for(currency_code),
         );
-        AccessPath::resource_access_path(&resource_key)
+        AccessPath::resource_access_path(resource_key)
     }
 
     pub fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
-        lcs::from_bytes(bytes).map_err(Into::into)
+        bcs::from_bytes(bytes).map_err(Into::into)
     }
 
     pub fn mint_events(&self) -> &EventHandle {
@@ -141,5 +145,20 @@ impl CurrencyInfoResource {
 
     pub fn exchange_rate_update_events(&self) -> &EventHandle {
         &self.exchange_rate_update_events
+    }
+
+
+    ///////// 0L //////// 
+    
+    pub fn to_xdx_exchange_rate(&self) -> u64 {
+        self.to_xdx_exchange_rate
+    }
+    
+    pub fn can_mint(&self) -> bool {
+        self.can_mint
+    }
+
+    pub fn is_synthetic(&self) -> bool {
+        self.is_synthetic
     }
 }

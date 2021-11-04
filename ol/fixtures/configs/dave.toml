@@ -2,11 +2,11 @@
 node_home = "/root/.0L/"
 source_path = "/root/libra"
 block_dir = "blocks"
-stdlib_bin_path = "/root/libra/language/stdlib/staged/stdlib.mv"
+stdlib_bin_path = "/root/libra/language/diem-framework/staged/stdlib.mv"
 db_path = "/root/.0L/db"
 
 [profile]
-account = "9E6BB3A75E9618FBA057E86E69338C94"
+account = "9e6bb3a75e9618fba057e86e69338c94"
 auth_key = "9a6e2193488991b62dd28b47d60dd03b9e6bb3a75e9618fba057e86e69338c94"
 ip = "104.131.32.62"
 statement = "Protests rage across the nation"

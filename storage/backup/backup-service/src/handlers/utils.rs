@@ -1,14 +1,12 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::Result;
 use bytes::Bytes;
+use diem_logger::prelude::*;
+use diem_metrics::{register_histogram_vec, register_int_counter_vec, HistogramVec, IntCounterVec};
+use diemdb::backup::backup_handler::BackupHandler;
 use hyper::Body;
-use libra_logger::prelude::*;
-use libra_metrics::{
-    register_histogram_vec, register_int_counter_vec, HistogramVec, IntCounterVec,
-};
-use libradb::backup::backup_handler::BackupHandler;
 use once_cell::sync::Lazy;
 use serde::Serialize;
 use std::{convert::Infallible, future::Future};
@@ -16,7 +14,7 @@ use warp::{reply::Response, Rejection, Reply};
 
 pub(super) static LATENCY_HISTOGRAM: Lazy<HistogramVec> = Lazy::new(|| {
     register_histogram_vec!(
-        "libra_backup_service_latency_s",
+        "diem_backup_service_latency_s",
         "Backup service endpoint latency.",
         &["endpoint", "status"]
     )
@@ -25,21 +23,21 @@ pub(super) static LATENCY_HISTOGRAM: Lazy<HistogramVec> = Lazy::new(|| {
 
 pub(super) static THROUGHPUT_COUNTER: Lazy<IntCounterVec> = Lazy::new(|| {
     register_int_counter_vec!(
-        "libra_backup_service_sent_bytes",
+        "diem_backup_service_sent_bytes",
         "Backup service throughput in bytes.",
         &["endpoint"]
     )
     .unwrap()
 });
 
-pub(super) fn reply_with_lcs_bytes<R: Serialize>(
+pub(super) fn reply_with_bcs_bytes<R: Serialize>(
     endpoint: &str,
     record: &R,
 ) -> Result<Box<dyn Reply>> {
-    let bytes = lcs::to_bytes(record)?;
+    let bytes = bcs::to_bytes(record)?;
     THROUGHPUT_COUNTER
         .with_label_values(&[endpoint])
-        .inc_by(bytes.len() as i64);
+        .inc_by(bytes.len() as u64);
     Ok(Box::new(bytes))
 }
 
@@ -58,7 +56,7 @@ impl BytesSender {
         self.inner.send_data(chunk).await?;
         THROUGHPUT_COUNTER
             .with_label_values(&[self.endpoint])
-            .inc_by(n_bytes as i64);
+            .inc_by(n_bytes as u64);
         Ok(())
     }
 
@@ -71,7 +69,7 @@ pub(super) fn reply_with_async_channel_writer<G, F>(
     backup_handler: &BackupHandler,
     endpoint: &'static str,
     get_channel_writer: G,
-) -> Result<Box<dyn Reply>>
+) -> Box<dyn Reply>
 where
     G: FnOnce(BackupHandler, BytesSender) -> F,
     F: Future<Output = ()> + Send + 'static,
@@ -81,15 +79,15 @@ where
     let bh = backup_handler.clone();
     tokio::spawn(get_channel_writer(bh, sender));
 
-    Ok(Box::new(Response::new(body)))
+    Box::new(Response::new(body))
 }
 
-pub(super) async fn send_size_prefixed_lcs_bytes<I, R>(iter_res: Result<I>, mut sender: BytesSender)
+pub(super) async fn send_size_prefixed_bcs_bytes<I, R>(iter_res: Result<I>, mut sender: BytesSender)
 where
     I: Iterator<Item = Result<R>>,
     R: Serialize,
 {
-    send_size_prefixed_lcs_bytes_impl(iter_res, &mut sender)
+    send_size_prefixed_bcs_bytes_impl(iter_res, &mut sender)
         .await
         .unwrap_or_else(|e| {
             warn!("Failed writing to output http body: {:?}", e);
@@ -97,7 +95,7 @@ where
         });
 }
 
-async fn send_size_prefixed_lcs_bytes_impl<I, R>(
+async fn send_size_prefixed_bcs_bytes_impl<I, R>(
     iter_res: Result<I>,
     sender: &mut BytesSender,
 ) -> Result<()>
@@ -107,7 +105,7 @@ where
 {
     for record_res in iter_res? {
         let record = record_res?;
-        let record_bytes = lcs::to_bytes(&record)?;
+        let record_bytes = bcs::to_bytes(&record)?;
         let size_bytes = (record_bytes.len() as u32).to_be_bytes();
         sender.send_data(Bytes::from(size_bytes.to_vec())).await?;
         sender.send_data(Bytes::from(record_bytes)).await?;

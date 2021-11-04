@@ -1,8 +1,8 @@
-module M {
+module {{default}}::M {
     use 0x1::Vector;
 
-    struct Foo {}
-    resource struct Bar {}
+    struct Foo has drop {}
+    struct Bar {}
 
     fun test_natives<T>(x1: T, x2: T): (T, T) {
         let v: vector<T> = Vector::empty();
@@ -25,7 +25,7 @@ module M {
         test_natives<u64>(1u64, 2u64);
         test_natives<u128>(1u128, 2u128);
         test_natives<bool>(true, false);
-        test_natives<address>(0x1, 0x2);
+        test_natives<address>(@0x1, @0x2);
 
         test_natives<vector<u8>>(Vector::empty(), Vector::empty());
 

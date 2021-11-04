@@ -1,11 +1,11 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     backup_types::{
         epoch_ending::restore::EpochHistoryRestoreController,
         state_snapshot::restore::{StateSnapshotRestoreController, StateSnapshotRestoreOpt},
-        transaction::restore::{TransactionRestoreController, TransactionRestoreOpt},
+        transaction::restore::TransactionRestoreBatchController,
     },
     metadata,
     metadata::cache::MetadataCacheOpt,
@@ -13,26 +13,32 @@ use crate::{
         VERIFY_COORDINATOR_FAIL_TS, VERIFY_COORDINATOR_START_TS, VERIFY_COORDINATOR_SUCC_TS,
     },
     storage::BackupStorage,
-    utils::{unix_timestamp_sec, GlobalRestoreOptions, RestoreRunMode},
+    utils::{unix_timestamp_sec, GlobalRestoreOptions, RestoreRunMode, TrustedWaypointOpt},
 };
 use anyhow::Result;
-use libra_logger::prelude::*;
-use libra_types::transaction::Version;
+use diem_logger::prelude::*;
+use diem_types::transaction::Version;
 use std::sync::Arc;
 
 pub struct VerifyCoordinator {
     storage: Arc<dyn BackupStorage>,
     metadata_cache_opt: MetadataCacheOpt,
+    trusted_waypoints_opt: TrustedWaypointOpt,
+    concurrent_downloads: usize,
 }
 
 impl VerifyCoordinator {
     pub fn new(
         storage: Arc<dyn BackupStorage>,
         metadata_cache_opt: MetadataCacheOpt,
+        trusted_waypoints_opt: TrustedWaypointOpt,
+        concurrent_downloads: usize,
     ) -> Result<Self> {
         Ok(Self {
             storage,
             metadata_cache_opt,
+            trusted_waypoints_opt,
+            concurrent_downloads,
         })
     }
 
@@ -57,9 +63,12 @@ impl VerifyCoordinator {
     }
 
     async fn run_impl(self) -> Result<()> {
-        let metadata_view =
-            metadata::cache::sync_and_load(&self.metadata_cache_opt, Arc::clone(&self.storage))
-                .await?;
+        let metadata_view = metadata::cache::sync_and_load(
+            &self.metadata_cache_opt,
+            Arc::clone(&self.storage),
+            self.concurrent_downloads,
+        )
+        .await?;
         let ver_max = Version::max_value();
         let state_snapshot = metadata_view.select_state_snapshot(ver_max)?;
         let transactions = metadata_view.select_transaction_backups(ver_max)?;
@@ -67,7 +76,9 @@ impl VerifyCoordinator {
 
         let global_opt = GlobalRestoreOptions {
             target_version: ver_max,
+            trusted_waypoints: Arc::new(self.trusted_waypoints_opt.verify()?),
             run_mode: Arc::new(RestoreRunMode::Verify),
+            concurrent_downloads: self.concurrent_downloads,
         };
 
         let epoch_history = Arc::new(
@@ -97,19 +108,16 @@ impl VerifyCoordinator {
             .await?;
         }
 
-        for backup in transactions {
-            TransactionRestoreController::new(
-                TransactionRestoreOpt {
-                    manifest_handle: backup.manifest,
-                    replay_from_version: None,
-                },
-                global_opt.clone(),
-                Arc::clone(&self.storage),
-                Some(Arc::clone(&epoch_history)),
-            )
-            .run()
-            .await?;
-        }
+        let txn_manifests = transactions.into_iter().map(|b| b.manifest).collect();
+        TransactionRestoreBatchController::new(
+            global_opt,
+            self.storage,
+            txn_manifests,
+            None, /* replay_from_version */
+            Some(epoch_history),
+        )
+        .run()
+        .await?;
 
         Ok(())
     }

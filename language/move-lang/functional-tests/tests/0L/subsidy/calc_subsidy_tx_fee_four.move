@@ -12,7 +12,7 @@
 //! block-time: 1
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
   
   use 0x1::Subsidy;
@@ -20,16 +20,17 @@ script {
   use 0x1::Stats;
   use 0x1::TransactionFee;
   use 0x1::GAS::GAS;
-  use 0x1::Libra;
-  use 0x1::Debug::print;
+  use 0x1::Diem;
+  use 0x1::Globals;
   
-  fun main(vm: &signer) {
+  fun main(vm: signer) {
     // check the case of a network density of 4 active validators.
 
-    let validators = Vector::singleton<address>({{alice}});
-    Vector::push_back(&mut validators, {{bob}});
-    Vector::push_back(&mut validators, {{carol}});
-    Vector::push_back(&mut validators, {{dave}});
+    let vm = &vm;
+    let validators = Vector::singleton<address>(@{{alice}});
+    Vector::push_back(&mut validators, @{{bob}});
+    Vector::push_back(&mut validators, @{{carol}});
+    Vector::push_back(&mut validators, @{{dave}});
 
     // create mock validator stats for full epoch
     let i = 0;
@@ -37,10 +38,20 @@ script {
       Stats::process_set_votes(vm, &validators);
       i = i + 1;
     };
+    let mock_tx_fees = 100000000;
+    TransactionFee::pay_fee(Diem::mint<GAS>(vm, mock_tx_fees));
 
-    TransactionFee::pay_fee(Libra::mint<GAS>(vm, 100000000));
-    print(&Subsidy::calculate_subsidy(vm, 0, 15));
-    assert(Subsidy::calculate_subsidy(vm, 0, 15) == 196000000, 7357190101021000);
+    let guaranteed_minimum = Subsidy::subsidy_curve(
+      Globals::get_subsidy_ceiling_gas(),
+      4,
+      Globals::get_max_validators_per_set(),
+    );
+
+    let expected_subsidy = guaranteed_minimum - mock_tx_fees;
+
+    // deducts gas from txs from subsidy.
+    let (subsidy, _) = Subsidy::calculate_subsidy(vm, 4);
+    assert(subsidy == expected_subsidy, 7357190101021000);
 
     }
 }

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This specification describes several common data structures used across various Libra Payment Network (LPN) specifications.
+This specification describes several common data structures used across various Diem Payment Network (LPN) specifications.
 
 ## Terminology
 
@@ -11,11 +11,11 @@ This specification describes several common data structures used across various 
 
 ## Data structures
 
-Similar to all other LPN specifications, we use Rust to describe all data structures below such that serialization is implemented by serializing each field in sequential order according to the LCS specification.
+Similar to all other LPN specifications, we use Rust to describe all data structures below such that serialization is implemented by serializing each field in sequential order according to the BCS specification.
 
 ### AccountAddress
 
-This represents a 128-bit Libra account address.
+This represents a 128-bit Diem account address.
 
 ```rust
 struct AccountAddress([u8; 16]);
@@ -119,7 +119,7 @@ struct LedgerInfoWithV0 {
 Fields:
 
 * `ledger_info` contains the ledger state at a given transaction version
-* `signatures` is a sorted map by account addresses that map to ed25519 signatures over the LCS hash value of `ledger_info`. The signatures must have >2f voting power from validator accounts in order to be considered committed by the consensus specification.
+* `signatures` is a sorted map by account addresses that map to ed25519 signatures over the BCS hash value of `ledger_info`. The signatures must have >2f voting power from validator accounts in order to be considered committed by the consensus specification.
 
 ### ContractEvent
 

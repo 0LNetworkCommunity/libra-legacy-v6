@@ -1,29 +1,35 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    access_path::Path,
     account_address::AccountAddress,
     account_config::{
-        type_tag_for_currency_code, AccountResource, AccountRole, BalanceResource, ChainIdResource,
-        ChildVASP, Credential, CurrencyInfoResource, DesignatedDealer, FreezingBit, ParentVASP,
-        PreburnResource, ACCOUNT_RECEIVED_EVENT_PATH, ACCOUNT_SENT_EVENT_PATH,
+        currency_code_from_type_tag, AccountResource, AccountRole, BalanceResource,
+        ChainIdResource, ChildVASP, Credential, CurrencyInfoResource, DesignatedDealer,
+        DesignatedDealerPreburns, DiemIdDomainManager, DiemIdDomains, FreezingBit, ParentVASP,
+        PreburnQueueResource, PreburnResource,
     },
-    block_metadata::{LibraBlockResource, NEW_BLOCK_EVENT_PATH},
-    event::EventHandle,
-    libra_timestamp::LibraTimestampResource,
+    block_metadata::DiemBlockResource,
+    diem_timestamp::DiemTimestampResource,
+    ol_miner_state::TowerStateResource,
+    ol_oracle_upgrade_state::OracleResource,
+    ol_upgrade_payload::UpgradePayloadResource,
+    ol_validators_stats::ValidatorsStatsResource,
     on_chain_config::{
-        ConfigurationResource, LibraVersion, OnChainConfig, RegisteredCurrencies,
+        ConfigurationResource, DiemVersion, OnChainConfig, RegisteredCurrencies,
         VMPublishingOption, ValidatorSet,
     },
-    upgrade_payload::UpgradePayloadResource,
     validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource},
-    validators_stats::ValidatorsStatsResource,
 };
-use anyhow::{bail, format_err, Error, Result};
-use move_core_types::{identifier::Identifier, move_resource::MoveResource};
+use anyhow::{format_err, Error, Result};
+use move_core_types::{
+    identifier::Identifier,
+    language_storage::{StructTag, CORE_CODE_ADDRESS},
+    move_resource::MoveResource,
+};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{collections::btree_map::BTreeMap, convert::TryFrom, fmt};
-use std::fmt::Formatter;
 
 #[derive(Default, Deserialize, PartialEq, Serialize)]
 pub struct AccountState(BTreeMap<Vec<u8>, Vec<u8>>);
@@ -36,96 +42,124 @@ impl AccountState {
     }
 
     pub fn get_account_resource(&self) -> Result<Option<AccountResource>> {
-        self.get_resource(&AccountResource::resource_path())
+        self.get_resource::<AccountResource>()
     }
 
-    pub fn get_balance_resources(
-        &self,
-        currency_codes: &[Identifier],
-    ) -> Result<BTreeMap<Identifier, BalanceResource>> {
-        currency_codes
-            .iter()
-            .filter_map(|currency_code| {
-                let currency_type_tag = type_tag_for_currency_code(currency_code.to_owned());
-                // TODO: update this to use BalanceResource::resource_path once that takes type
-                // parameters
-                self.get_resource(&BalanceResource::access_path_for(currency_type_tag))
-                    .transpose()
-                    .map(|balance| balance.map(|b| (currency_code.to_owned(), b)))
+    pub fn get_balance_resources(&self) -> Result<BTreeMap<Identifier, BalanceResource>> {
+        self.get_resources_with_type::<BalanceResource>()
+            .map(|maybe_resource| {
+                let (struct_tag, resource) = maybe_resource?;
+                let currency_code = collect_exactly_one(struct_tag.type_params.into_iter())
+                    .ok_or_else(|| format_err!("expected one currency_code type tag"))
+                    .and_then(currency_code_from_type_tag)?;
+                Ok((currency_code, resource))
             })
             .collect()
     }
 
-    pub fn get_preburn_balances(
-        &self,
-        currency_codes: &[Identifier],
-    ) -> Result<BTreeMap<Identifier, PreburnResource>> {
-        currency_codes
-            .iter()
-            .filter_map(|currency_code| {
-                let currency_type_tag = type_tag_for_currency_code(currency_code.to_owned());
-                // TODO: update this to use PreburnResource::resource_path once that takes type
-                // parameters
-                self.get_resource(&PreburnResource::access_path_for(currency_type_tag))
-                    .transpose()
-                    .map(|preburn_balance| preburn_balance.map(|b| (currency_code.to_owned(), b)))
+    pub fn get_preburn_balances(&self) -> Result<BTreeMap<Identifier, PreburnResource>> {
+        self.get_resources_with_type::<PreburnResource>()
+            .map(|maybe_resource| {
+                let (struct_tag, resource) = maybe_resource?;
+                let currency_code = collect_exactly_one(struct_tag.type_params.into_iter())
+                    .ok_or_else(|| format_err!("expected one currency_code type tag"))
+                    .and_then(currency_code_from_type_tag)?;
+                Ok((currency_code, resource))
+            })
+            .collect()
+    }
+
+    pub fn get_preburn_queue_balances(&self) -> Result<BTreeMap<Identifier, PreburnQueueResource>> {
+        self.get_resources_with_type::<PreburnQueueResource>()
+            .map(|maybe_resource| {
+                let (struct_tag, resource) = maybe_resource?;
+                let currency_code = collect_exactly_one(struct_tag.type_params.into_iter())
+                    .ok_or_else(|| format_err!("expected one currency_code type tag"))
+                    .and_then(currency_code_from_type_tag)?;
+                Ok((currency_code, resource))
             })
             .collect()
     }
 
     pub fn get_chain_id_resource(&self) -> Result<Option<ChainIdResource>> {
-        self.get_resource(&ChainIdResource::resource_path())
+        self.get_resource::<ChainIdResource>()
     }
 
     pub fn get_configuration_resource(&self) -> Result<Option<ConfigurationResource>> {
-        self.get_resource(&ConfigurationResource::resource_path())
+        self.get_resource::<ConfigurationResource>()
     }
 
-    pub fn get_libra_timestamp_resource(&self) -> Result<Option<LibraTimestampResource>> {
-        self.get_resource(&LibraTimestampResource::resource_path())
+    pub fn get_diem_timestamp_resource(&self) -> Result<Option<DiemTimestampResource>> {
+        self.get_resource::<DiemTimestampResource>()
     }
 
     pub fn get_validator_config_resource(&self) -> Result<Option<ValidatorConfigResource>> {
-        self.get_resource(&ValidatorConfigResource::resource_path())
+        self.get_resource::<ValidatorConfigResource>()
     }
 
     pub fn get_validator_operator_config_resource(
         &self,
     ) -> Result<Option<ValidatorOperatorConfigResource>> {
-        self.get_resource(&ValidatorOperatorConfigResource::resource_path())
+        self.get_resource::<ValidatorOperatorConfigResource>()
     }
 
     pub fn get_freezing_bit(&self) -> Result<Option<FreezingBit>> {
-        self.get_resource(&FreezingBit::resource_path())
+        self.get_resource::<FreezingBit>()
     }
 
-    pub fn get_account_role(&self, currency_codes: &[Identifier]) -> Result<Option<AccountRole>> {
+    pub fn get_account_role(&self) -> Result<Option<AccountRole>> {
         if self.0.contains_key(&ParentVASP::resource_path()) {
             match (
-                self.get_resource(&ParentVASP::resource_path()),
-                self.get_resource(&Credential::resource_path()),
+                self.get_resource::<ParentVASP>(),
+                self.get_resource::<Credential>(),
+                self.get_resource::<DiemIdDomains>(),
             ) {
-                (Ok(Some(vasp)), Ok(Some(credential))) => {
-                    Ok(Some(AccountRole::ParentVASP { vasp, credential }))
+                (Ok(Some(vasp)), Ok(Some(credential)), Ok(diem_id_domains)) => {
+                    Ok(Some(AccountRole::ParentVASP {
+                        vasp,
+                        credential,
+                        diem_id_domains,
+                    }))
                 }
                 _ => Ok(None),
             }
         } else if self.0.contains_key(&ChildVASP::resource_path()) {
-            self.get_resource(&ChildVASP::resource_path())
+            self.get_resource::<ChildVASP>()
                 .map(|r_opt| r_opt.map(AccountRole::ChildVASP))
         } else if self.0.contains_key(&DesignatedDealer::resource_path()) {
             match (
-                self.get_resource(&Credential::resource_path()),
-                self.get_preburn_balances(&currency_codes),
-                self.get_resource(&DesignatedDealer::resource_path()),
+                self.get_resource::<Credential>(),
+                self.get_preburn_balances(),
+                self.get_preburn_queue_balances(),
+                self.get_resource::<DesignatedDealer>(),
             ) {
-                (Ok(Some(dd_credential)), Ok(preburn_balances), Ok(Some(designated_dealer))) => {
+                (
+                    Ok(Some(dd_credential)),
+                    Ok(preburn_balances),
+                    Ok(preburn_queues),
+                    Ok(Some(designated_dealer)),
+                ) => {
+                    let preburn_balances =
+                        if preburn_balances.is_empty() && !preburn_queues.is_empty() {
+                            DesignatedDealerPreburns::PreburnQueue(preburn_queues)
+                        } else if !preburn_balances.is_empty() && preburn_queues.is_empty() {
+                            DesignatedDealerPreburns::Preburn(preburn_balances)
+                        } else {
+                            return Ok(None);
+                        };
                     Ok(Some(AccountRole::DesignatedDealer {
                         dd_credential,
                         preburn_balances,
                         designated_dealer,
                     }))
                 }
+                _ => Ok(None),
+            }
+        } else if self.0.contains_key(&DiemIdDomainManager::resource_path()) {
+            match self.get_resource::<DiemIdDomainManager>() {
+                Ok(Some(diem_id_domain_manager)) => Ok(Some(AccountRole::TreasuryCompliance {
+                    diem_id_domain_manager,
+                })),
                 _ => Ok(None),
             }
         } else {
@@ -135,11 +169,11 @@ impl AccountState {
     }
 
     pub fn get_validator_set(&self) -> Result<Option<ValidatorSet>> {
-        self.get_resource(&ValidatorSet::CONFIG_ID.access_path().path)
+        self.get_config::<ValidatorSet>()
     }
 
-    pub fn get_libra_version(&self) -> Result<Option<LibraVersion>> {
-        self.get_resource(&LibraVersion::CONFIG_ID.access_path().path)
+    pub fn get_diem_version(&self) -> Result<Option<DiemVersion>> {
+        self.get_config::<DiemVersion>()
     }
 
     pub fn get_vm_publishing_option(&self) -> Result<Option<VMPublishingOption>> {
@@ -151,8 +185,7 @@ impl AccountState {
     }
 
     pub fn get_registered_currency_info_resources(&self) -> Result<Vec<CurrencyInfoResource>> {
-        let path = RegisteredCurrencies::CONFIG_ID.access_path().path;
-        let currencies: Option<RegisteredCurrencies> = self.get_resource(&path)?;
+        let currencies: Option<RegisteredCurrencies> = self.get_config()?;
         match currencies {
             Some(currencies) => {
                 let codes = currencies.currency_codes();
@@ -160,7 +193,7 @@ impl AccountState {
                 for code in codes {
                     let access_path = CurrencyInfoResource::resource_path_for(code.clone());
                     let info: CurrencyInfoResource = self
-                        .get_resource(&access_path.path)?
+                        .get_resource_impl(&access_path.path)?
                         .ok_or_else(|| format_err!("currency info resource not found: {}", code))?;
                     resources.push(info);
                 }
@@ -170,47 +203,42 @@ impl AccountState {
         }
     }
 
-    pub fn get_libra_block_resource(&self) -> Result<Option<LibraBlockResource>> {
-        self.get_resource(&LibraBlockResource::resource_path())
+    pub fn get_diem_block_resource(&self) -> Result<Option<DiemBlockResource>> {
+        self.get_resource::<DiemBlockResource>()
+    }
+
+    //////// 0L ////////
+    /// miner state
+    pub fn get_miner_state(&self) -> Result<Option<TowerStateResource>> {
+        self.get_resource()
+    }
+
+    //////// 0L ////////
+    /// oracle state
+    pub fn get_oracle_state(&self) -> Result<Option<OracleResource>> {
+        self.get_resource()
     }
 
     //////// 0L ////////
     // for upgrade
     pub fn get_upgrade_payload_resource(&self) -> Result<Option<UpgradePayloadResource>> {
-        self.get_resource(&UpgradePayloadResource::resource_path())
+        self.get_resource_impl(&UpgradePayloadResource::resource_path())
     }
 
     //////// 0L ////////
     /// validators stats
     pub fn get_validators_stats(&self) -> Result<Option<ValidatorsStatsResource>> {
-        self.get_resource(&ValidatorsStatsResource::resource_path())
-    }
-
-    pub fn get_event_handle_by_query_path(&self, query_path: &[u8]) -> Result<Option<EventHandle>> {
-        let event_handle = if *ACCOUNT_RECEIVED_EVENT_PATH == query_path {
-            self.get_account_resource()?
-                .map(|account_resource| account_resource.received_events().clone())
-        } else if *ACCOUNT_SENT_EVENT_PATH == query_path {
-            self.get_account_resource()?
-                .map(|account_resource| account_resource.sent_events().clone())
-        } else if *NEW_BLOCK_EVENT_PATH == query_path {
-            self.get_libra_block_resource()?
-                .map(|libra_block_resource| libra_block_resource.new_block_events().clone())
-        } else {
-            bail!("Unrecognized query path: {:?}", query_path);
-        };
-
-        Ok(event_handle)
+        self.get_resource()
     }
 
     pub fn get(&self, key: &[u8]) -> Option<&Vec<u8>> {
         self.0.get(key)
     }
 
-    pub fn get_resource<T: DeserializeOwned>(&self, key: &[u8]) -> Result<Option<T>> {
+    pub fn get_resource_impl<T: DeserializeOwned>(&self, key: &[u8]) -> Result<Option<T>> {
         self.0
             .get(key)
-            .map(|bytes| lcs::from_bytes(bytes))
+            .map(|bytes| bcs::from_bytes(bytes))
             .transpose()
             .map_err(Into::into)
     }
@@ -226,19 +254,72 @@ impl AccountState {
     pub fn iter(&self) -> impl std::iter::Iterator<Item = (&Vec<u8>, &Vec<u8>)> {
         self.0.iter()
     }
+
+    pub fn get_config<T: OnChainConfig>(&self) -> Result<Option<T>> {
+        self.get_resource_impl(&T::CONFIG_ID.access_path().path)
+    }
+
+    pub fn get_resource<T: MoveResource>(&self) -> Result<Option<T>> {
+        self.get_resource_impl(&T::struct_tag().access_vector())
+    }
+
+    /// Return an iterator over the module values stored under this account
+    pub fn get_modules(&self) -> impl Iterator<Item = &Vec<u8>> {
+        self.0.iter().filter_map(
+            |(k, v)| match Path::try_from(k).expect("Invalid access path") {
+                Path::Code(_) => Some(v),
+                Path::Resource(_) => None,
+            },
+        )
+    }
+
+    /// Return an iterator over all resources stored under this account.
+    ///
+    /// Note that resource access [`Path`]s that fail to deserialize will be
+    /// silently ignored.
+    pub fn get_resources(&self) -> impl Iterator<Item = (StructTag, &[u8])> {
+        self.0.iter().filter_map(|(k, v)| match Path::try_from(k) {
+            Ok(Path::Resource(struct_tag)) => Some((struct_tag, v.as_ref())),
+            Ok(Path::Code(_)) | Err(_) => None,
+        })
+    }
+
+    /// Given a particular `MoveResource`, return an iterator with all instances
+    /// of that resource (there may be multiple with different generic type parameters).
+    pub fn get_resources_with_type<T: MoveResource>(
+        &self,
+    ) -> impl Iterator<Item = Result<(StructTag, T)>> + '_ {
+        self.get_resources().filter_map(|(struct_tag, bytes)| {
+            let matches_resource = struct_tag.address == CORE_CODE_ADDRESS
+                && struct_tag.module.as_ref() == T::MODULE_NAME
+                && struct_tag.name.as_ref() == T::STRUCT_NAME;
+            if matches_resource {
+                match bcs::from_bytes::<T>(bytes) {
+                    Ok(resource) => Some(Ok((struct_tag, resource))),
+                    Err(err) => Some(Err(format_err!(
+                        "failed to deserialize resource: '{}', error: {:?}",
+                        struct_tag,
+                        err
+                    ))),
+                }
+            } else {
+                None
+            }
+        })
+    }
 }
 
 impl fmt::Debug for AccountState {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // TODO: add support for other types of resources
         let account_resource_str = self
             .get_account_resource()
             .map(|account_resource_opt| format!("{:#?}", account_resource_opt))
             .unwrap_or_else(|e| format!("parse error: {:#?}", e));
 
-        let libra_timestamp_str = self
-            .get_libra_timestamp_resource()
-            .map(|libra_timestamp_opt| format!("{:#?}", libra_timestamp_opt))
+        let diem_timestamp_str = self
+            .get_diem_timestamp_resource()
+            .map(|diem_timestamp_opt| format!("{:#?}", diem_timestamp_opt))
             .unwrap_or_else(|e| format!("parse: {:#?}", e));
 
         let validator_config_str = self
@@ -255,11 +336,11 @@ impl fmt::Debug for AccountState {
             f,
             "{{ \n \
              AccountResource {{ {} }} \n \
-             LibraTimestamp {{ {} }} \n \
+             DiemTimestamp {{ {} }} \n \
              ValidatorConfig {{ {} }} \n \
              ValidatorSet {{ {} }} \n \
              }}",
-            account_resource_str, libra_timestamp_str, validator_config_str, validator_set_str,
+            account_resource_str, diem_timestamp_str, validator_config_str, validator_set_str,
         )
     }
 }
@@ -273,13 +354,23 @@ impl TryFrom<(&AccountResource, &BalanceResource)> for AccountState {
         let mut btree_map: BTreeMap<Vec<u8>, Vec<u8>> = BTreeMap::new();
         btree_map.insert(
             AccountResource::resource_path(),
-            lcs::to_bytes(account_resource)?,
+            bcs::to_bytes(account_resource)?,
         );
         btree_map.insert(
             BalanceResource::resource_path(),
-            lcs::to_bytes(balance_resource)?,
+            bcs::to_bytes(balance_resource)?,
         );
 
         Ok(Self(btree_map))
+    }
+}
+
+/// If an iterator contains exactly one item, then return it. Otherwise return
+/// `None` if there are no items or more than one items.
+fn collect_exactly_one<T>(iter: impl Iterator<Item = T>) -> Option<T> {
+    let mut iter = iter.fuse();
+    match (iter.next(), iter.next()) {
+        (Some(item), None) => Some(item),
+        _ => None,
     }
 }

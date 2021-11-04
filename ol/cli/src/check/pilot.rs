@@ -28,7 +28,7 @@ pub fn maybe_restore_db(mut node: &mut Node, verbose: bool) -> &mut Node {
             }
         } else {
             if verbose {
-                println!("DB: WARN: libraDB is not bootstrapped. Database needs a valid set of transactions to boot. Attempting `ol restore` to fetch backups from archive.");
+                println!("DB: WARN: diemDB is not bootstrapped. Database needs a valid set of transactions to boot. Attempting `ol restore` to fetch backups from archive.");
             }
             mgmt::restore::fast_forward_db(true, None).unwrap();
             node.vitals.host_state.onboard_state = OnboardState::DbBootstrapOk;
@@ -84,8 +84,8 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
             node.vitals.host_state.account_state = AccountState::ExistsOnChain;
             if !node.vitals.items.account_created {
                 node.vitals.host_state.account_state = AccountState::None;
-              if verbose {
-                  println!(".. Account: Owner account does NOT exist on chain. Was the account creation transaction submitted?");
+                if verbose {
+                    println!(".. Account: Owner account does NOT exist on chain. Was the account creation transaction submitted?");
               }
             }
         }
@@ -123,12 +123,12 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
 
     //////// MINER RULES ///////
     if node.vitals.items.miner_running {
-        node.vitals.host_state.miner_state = MinerState::Mining;
+        node.vitals.host_state.miner_state = TowerState::Mining;
         if verbose {
             println!("Miner: miner is running")
         }
     } else {
-        node.vitals.host_state.miner_state = MinerState::Stopped;
+        node.vitals.host_state.miner_state = TowerState::Stopped;
         if verbose {
             println!("Miner: WARN: is NOT running");
         }
@@ -152,7 +152,7 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
                         println!(".... Miner: attempting to start miner.");
                     }
                     node.start_miner(verbose);
-                    node.vitals.host_state.miner_state = MinerState::Mining;
+                    node.vitals.host_state.miner_state = TowerState::Mining;
                 } else {
                     if verbose {
                         println!(".... Account: Owner account does NOT exist on chain. Was the account creation transaction submitted?")

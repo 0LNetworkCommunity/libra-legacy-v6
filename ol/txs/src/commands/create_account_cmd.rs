@@ -2,60 +2,58 @@
 
 #![allow(clippy::never_loop)]
 
+use crate::{entrypoint, submit_tx::{TxError, TxParams, maybe_submit, tx_params_wrapper}};
 use abscissa_core::{Command, Options, Runnable};
-use ol_types::config::TxType;
-use crate::{entrypoint, submit_tx::{tx_params_wrapper, maybe_submit}};
-use libra_types::{transaction::{Script}};
-use std::{fs, path::PathBuf, process::exit};
 
+use diem_json_rpc_types::views::TransactionView;
+use diem_transaction_builder::stdlib as transaction_builder;
+use diem_types::transaction::{authenticator::AuthenticationKey};
+use ol_types::config::TxType;
+use std::{path::PathBuf, process::exit};
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct CreateAccountCmd {
-    #[options(short = "f", help = "path of account.json")]
-    account_json_path: PathBuf,
+    #[options(short = "a", help = "the new user's long address (authentication key)")]
+    authkey: String,
+    #[options(short = "c", help = "the amount of coins to send to new user")]
+    coins: u64,
 }
 
-pub fn create_user_account_script(account_json_path: &str) -> Script {
-    let file = fs::File::open(account_json_path)
-        .expect("file should open read only");
-    let json: serde_json::Value = serde_json::from_reader(file)
-        .expect("file should be proper JSON");
-    let block = json.get("block_zero")
-        .expect("file should have block_zero and preimage key");
-
-    let preimage = block
-        .as_object().unwrap()
-        .get("preimage").unwrap()
-        .as_str().unwrap();
-    
-    let pre_hex = hex::decode(preimage).unwrap();
-
-    let proof = block
-        .as_object().unwrap()
-        .get("proof").unwrap()
-        .as_str().unwrap();
-    
-    let proof_hex = hex::decode(proof).unwrap();
-    transaction_builder::encode_create_acc_user_script(pre_hex, proof_hex)
-}
-
-impl Runnable for CreateAccountCmd {    
+impl Runnable for CreateAccountCmd {
     fn run(&self) {
         let entry_args = entrypoint::get_args();
-        let account_json = self.account_json_path.to_str().unwrap();
-        let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
-        
-        match maybe_submit(
-          create_user_account_script(account_json),
-          &tx_params,
-          entry_args.no_send,
-          entry_args.save_path,
-        ) {
+        let authkey = match self.authkey.parse::<AuthenticationKey>(){
+            Ok(a) => a,
             Err(e) => {
-              println!("ERROR: could not submit account creation transaction, message: \n{:?}", &e);
+              println!("ERROR: could not parse this account address: {}, message: {}", self.authkey, &e.to_string());
               exit(1);
             },
-            _ => {}
+        };
+        let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
+
+
+        match create_from_auth_and_coin(authkey, self.coins, tx_params, entry_args.save_path) {
+            Ok(_) => println!("Success: Account created for authkey: {}", authkey),
+            Err(e) => {
+              println!("ERROR: could not create account, message: {:?}", &e);
+              exit(1);
+            },
         }
     }
 }
+
+/// create an account by sending coin to it
+pub fn create_from_auth_and_coin(authkey: AuthenticationKey, coins: u64, tx_params: TxParams, save_path: Option<PathBuf>) -> Result<TransactionView, TxError>{
+
+  let account = authkey.derived_address();
+  let prefix = authkey.prefix();
+  // NOTE: coins here do not have the scaling factor. Rescaling is the responsibility of the Move script. See the script in ol_accounts.move for detail.
+  let script = transaction_builder::encode_create_user_by_coin_tx_script_function(
+      account,
+      prefix.to_vec(),
+      coins,
+  );
+
+  maybe_submit(script, &tx_params, save_path)
+}
+

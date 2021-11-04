@@ -1,4 +1,9 @@
-module TestGlobalVars {
+module 0x42::TestGlobalVars {
+
+    /*
+    TODO(refactoring): this test is deactivated until we have ported this (or a similar) feature, or decided to
+      drop it in which case the test should be removed.
+
     spec module {
         pragma verify = true;
     }
@@ -10,7 +15,7 @@ module TestGlobalVars {
     resource struct T {
       i: u64,
     }
-    spec struct T {
+    spec T {
       invariant pack sum_of_T = sum_of_T + i;
       invariant unpack sum_of_T = sum_of_T - i;
     }
@@ -22,14 +27,14 @@ module TestGlobalVars {
     fun pack_correct(): T {
         T {i: 2}
     }
-    spec fun pack_correct {
+    spec pack_correct {
         ensures sum_of_T == old(sum_of_T) + 2;
     }
 
     fun pack_incorrect(): T {
         T {i: 2}
     }
-    spec fun pack_incorrect {
+    spec pack_incorrect {
         ensures sum_of_T == old(sum_of_T) + 1;
         ensures result.i == 2;
     }
@@ -43,7 +48,7 @@ module TestGlobalVars {
         let T {i: x} = t;
         x
     }
-    spec fun unpack_correct {
+    spec unpack_correct {
         ensures sum_of_T == old(sum_of_T) - old(t.i);
         ensures result == old(t.i);
     }
@@ -52,7 +57,7 @@ module TestGlobalVars {
         let T {i: x} = t;
         x
     }
-    spec fun unpack_incorrect {
+    spec unpack_incorrect {
         ensures sum_of_T == old(sum_of_T);
         ensures result == old(t.i);
     }
@@ -64,7 +69,7 @@ module TestGlobalVars {
     fun update_valid_still_mutating(t: &mut T) {
         t.i = t.i + 3;
     }
-    spec fun update_valid_still_mutating {
+    spec update_valid_still_mutating {
         // sum should not change because we have not ended mutating t
         ensures sum_of_T == old(sum_of_T);
     }
@@ -74,7 +79,7 @@ module TestGlobalVars {
         update_valid_still_mutating(&mut t);
         t
     }
-    spec fun update_correct {
+    spec update_correct {
         // sum should change because we have ended mutating t
         ensures sum_of_T == old(sum_of_T) + 3;
     }
@@ -84,7 +89,7 @@ module TestGlobalVars {
         update_valid_still_mutating(&mut t);
         t
     }
-    spec fun update_incorrect {
+    spec update_incorrect {
         // sum should change because we have ended mutating t
         ensures sum_of_T == old(sum_of_T);
     }
@@ -102,7 +107,7 @@ module TestGlobalVars {
         let T {i: _} = t;
         r
     }
-    spec fun combi_correct {
+    spec combi_correct {
         ensures sum_of_T == old(sum_of_T) + 2 + 3 - 3 + 4 - 2;
     }
 
@@ -114,7 +119,7 @@ module TestGlobalVars {
         let T {i: _} = t;
         r
     }
-    spec fun combi_incorrect {
+    spec combi_incorrect {
         ensures sum_of_T == old(sum_of_T) + 2;
     }
 
@@ -126,7 +131,7 @@ module TestGlobalVars {
     resource struct S {
       x: u64
     }
-    spec struct S {
+    spec S {
         global sum_of_S: u64;
         // If there are no update invariants, unpack and pack is used during mutation.
         invariant pack sum_of_S = sum_of_S + x;
@@ -139,7 +144,7 @@ module TestGlobalVars {
         r.x = 2;
         s
     }
-    spec fun update_S_correct {
+    spec update_S_correct {
         ensures sum_of_S == old(sum_of_S) + 2;
     }
 
@@ -149,7 +154,9 @@ module TestGlobalVars {
         r.x = 2;
         s
     }
-    spec fun update_S_incorrect {
+    spec update_S_incorrect {
         ensures sum_of_S == old(sum_of_S) + 1;
     }
+
+    */
 }

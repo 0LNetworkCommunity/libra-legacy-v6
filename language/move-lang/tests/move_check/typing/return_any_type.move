@@ -1,5 +1,5 @@
-module M {
-    resource struct Coin {}
+module 0x8675309::M {
+    struct Coin {}
 
     fun t0() {
         0 + (return ());

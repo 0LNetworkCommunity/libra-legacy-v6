@@ -1,5 +1,5 @@
-module M {
-    resource struct T {}
+module {{default}}::M {
+    struct T {}
     public fun new(): T {
         T{}
     }

@@ -1,14 +1,13 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::metadata::{
     EpochEndingBackupMeta, Metadata, StateSnapshotBackupMeta, TransactionBackupMeta,
 };
 use anyhow::{anyhow, ensure, Result};
+use diem_types::transaction::Version;
 use itertools::Itertools;
-use libra_types::transaction::Version;
-use std::{fmt::Display, str::FromStr};
-use std::fmt::Formatter;
+use std::{fmt, str::FromStr};
 
 pub struct MetadataView {
     epoch_ending_backups: Vec<EpochEndingBackupMeta>,
@@ -131,8 +130,8 @@ pub struct BackupStorageState {
     pub latest_transaction_version: Option<Version>,
 }
 
-impl Display for BackupStorageState {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for BackupStorageState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "latest_epoch_ending_epoch: {}, latest_state_snapshot_version: {}, latest_transaction_version: {}",

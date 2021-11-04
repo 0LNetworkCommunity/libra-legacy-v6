@@ -9,7 +9,8 @@ use crate::{
     submit_tx::{maybe_submit, tx_params_wrapper},
 };
 use abscissa_core::{Command, Options, Runnable};
-use libra_types::transaction::authenticator::AuthenticationKey;
+use diem_types::transaction::authenticator::AuthenticationKey;
+use diem_transaction_builder::stdlib as transaction_builder;
 use ol_types::config::TxType;
 
 #[derive(Command, Debug, Default, Options)]
@@ -24,11 +25,11 @@ impl Runnable for AuthkeyCmd {
             let entry_args = entrypoint::get_args();
             let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
 
-            let script = transaction_builder::encode_rotate_authentication_key_script(key.to_vec());
+            use transaction_builder::encode_rotate_authentication_key_script_function;
+            let payload = encode_rotate_authentication_key_script_function(key.to_vec());
             maybe_submit(
-                script,
+                payload,
                 &tx_params,
-                entry_args.no_send,
                 entry_args.save_path,
             )
             .unwrap();

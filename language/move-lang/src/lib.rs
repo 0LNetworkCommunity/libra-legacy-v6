@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -17,9 +17,9 @@ pub mod ir_translation;
 pub mod naming;
 pub mod parser;
 pub mod shared;
-pub mod test_utils;
 mod to_bytecode;
 pub mod typing;
+pub mod unit_test;
 
 use anyhow::anyhow;
 use codespan::{ByteIndex, Span};
@@ -27,7 +27,7 @@ use compiled_unit::CompiledUnit;
 use errors::*;
 use move_ir_types::location::*;
 use parser::syntax::parse_file_string;
-use shared::Address;
+use shared::{CompilationEnv, Flags};
 use std::{
     collections::{BTreeMap, BTreeSet, HashMap},
     fs,
@@ -44,9 +44,57 @@ pub const MOVE_COMPILED_EXTENSION: &str = "mv";
 pub const MOVE_COMPILED_INTERFACES_DIR: &str = "mv_interfaces";
 pub const SOURCE_MAP_EXTENSION: &str = "mvsm";
 
+#[macro_export]
+macro_rules! unwrap_or_report_errors {
+    ($files:ident, $res:ident) => {{
+        match $res {
+            Ok(t) => t,
+            Err(errors) => {
+                assert!(!errors.is_empty());
+                $crate::errors::report_errors($files, errors)
+            }
+        }
+    }};
+}
+
 //**************************************************************************************************
 // Entry
 //**************************************************************************************************
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Pass {
+    Parser,
+    Expansion,
+    Naming,
+    Typing,
+    HLIR,
+    CFGIR,
+    Compilation,
+}
+
+#[derive(Debug)]
+pub enum PassResult {
+    Parser(parser::ast::Program),
+    Expansion(expansion::ast::Program),
+    Naming(naming::ast::Program),
+    Typing(typing::ast::Program),
+    HLIR(hlir::ast::Program),
+    CFGIR(cfgir::ast::Program),
+    Compilation(Vec<CompiledUnit>),
+}
+
+#[derive(Clone)]
+pub struct FullyCompiledProgram {
+    // TODO don't store this...
+    pub files: FilesSourceText,
+    pub parser: parser::ast::Program,
+    pub expansion: expansion::ast::Program,
+    pub naming: naming::ast::Program,
+    pub typing: typing::ast::Program,
+    pub hlir: hlir::ast::Program,
+    pub cfgir: cfgir::ast::Program,
+    pub compiled: Vec<CompiledUnit>,
+}
 
 /// Given a set of targets and a set of dependencies
 /// - Checks the targets with the dependencies (targets can be dependencies of other targets)
@@ -56,90 +104,190 @@ pub const SOURCE_MAP_EXTENSION: &str = "mvsm";
 pub fn move_check(
     targets: &[String],
     deps: &[String],
-    sender_opt: Option<Address>,
     interface_files_dir_opt: Option<String>,
-) -> anyhow::Result<()> {
-    let (files, errors) = move_check_no_report(targets, deps, sender_opt, interface_files_dir_opt)?;
-    if !errors.is_empty() {
-        errors::report_errors(files, errors)
-    }
-    Ok(())
+    flags: Flags,
+) -> anyhow::Result<(FilesSourceText, Result<(), Errors>)> {
+    let mut compilation_env = CompilationEnv::new(flags);
+    let (files, pprog_and_comments_res) =
+        move_parse(&compilation_env, targets, deps, interface_files_dir_opt)?;
+    let (_comments, pprog) = match pprog_and_comments_res {
+        Err(errors) => return Ok((files, Err(errors))),
+        Ok(res) => res,
+    };
+
+    let result = match move_continue_up_to(
+        &mut compilation_env,
+        None,
+        PassResult::Parser(pprog),
+        Pass::CFGIR,
+    ) {
+        Ok(PassResult::CFGIR(_)) => Ok(()),
+        Ok(_) => unreachable!(),
+        Err(errors) => Err(errors),
+    };
+    Ok((files, result))
 }
 
-/// Move check but it returns the errors instead of reporting them to stderr
-pub fn move_check_no_report(
+/// Similar to move_check but it reports it's errors to stderr
+pub fn move_check_and_report(
     targets: &[String],
     deps: &[String],
-    sender_opt: Option<Address>,
     interface_files_dir_opt: Option<String>,
-) -> anyhow::Result<(FilesSourceText, Errors)> {
-    let mut deps = deps.to_vec();
-    generate_interface_files_for_deps(&mut deps, interface_files_dir_opt)?;
-    let (files, pprog_and_comments_res) = parse_program(targets, &deps)?;
-    let pprog_res = pprog_and_comments_res.map(|(pprog, _)| pprog);
-    match check_program(pprog_res, sender_opt) {
-        Err(errors) => Ok((files, errors)),
-        Ok(_) => Ok((files, vec![])),
-    }
+    flags: Flags,
+) -> anyhow::Result<FilesSourceText> {
+    let (files, errors_result) = move_check(targets, deps, interface_files_dir_opt, flags)?;
+    unwrap_or_report_errors!(files, errors_result);
+    Ok(files)
 }
 
 /// Given a set of targets and a set of dependencies
 /// - Checks the targets with the dependencies (targets can be dependencies of other targets)
 /// - Compiles the targets to Move bytecode
-/// Does not run the Move bytecode verifier on the compiled targets, as the Move front end should
+/// - Does not run the Move bytecode verifier on the compiled targets, as the Move front end should
 ///   be more restrictive
 pub fn move_compile(
     targets: &[String],
     deps: &[String],
-    sender_opt: Option<Address>,
     interface_files_dir_opt: Option<String>,
-) -> anyhow::Result<(FilesSourceText, Vec<CompiledUnit>)> {
-    let (files, compiled_units_or_errors) =
-        move_compile_no_report(targets, deps, sender_opt, interface_files_dir_opt)?;
-    match compiled_units_or_errors {
-        Err(errors) => errors::report_errors(files, errors),
-        Ok(compiled_units) => Ok((files, compiled_units)),
-    }
-}
-
-/// Move compile but it returns the errors instead of reporting them to stderr
-pub fn move_compile_no_report(
-    targets: &[String],
-    deps: &[String],
-    sender_opt: Option<Address>,
-    interface_files_dir_opt: Option<String>,
+    flags: Flags,
 ) -> anyhow::Result<(FilesSourceText, Result<Vec<CompiledUnit>, Errors>)> {
-    let mut deps = deps.to_vec();
-    generate_interface_files_for_deps(&mut deps, interface_files_dir_opt)?;
-    let (files, pprog_and_comments_res) = parse_program(targets, &deps)?;
-    let pprog_res = pprog_and_comments_res.map(|(pprog, _)| pprog);
-    Ok(match compile_program(pprog_res, sender_opt) {
-        Err(errors) => (files, Err(errors)),
-        Ok(units) => (files, Ok(units)),
-    })
+    let mut compilation_env = CompilationEnv::new(flags);
+    let (files, pprog_and_comments_res) =
+        move_parse(&compilation_env, targets, deps, interface_files_dir_opt)?;
+    let (_comments, pprog) = match pprog_and_comments_res {
+        Err(errors) => return Ok((files, Err(errors))),
+        Ok(res) => res,
+    };
+
+    let result = match move_continue_up_to(
+        &mut compilation_env,
+        None,
+        PassResult::Parser(pprog),
+        Pass::Compilation,
+    ) {
+        Ok(PassResult::Compilation(units)) => Ok(units),
+        Ok(_) => unreachable!(),
+        Err(errors) => Err(errors),
+    };
+    Ok((files, result))
 }
 
-/// Move compile up to expansion phase, returning errors instead of reporting them to stderr.
-///
-/// This also returns a map containing documentation comments for each source in `targets`.
-pub fn move_compile_to_expansion_no_report(
+/// Similar to move_compile but it reports it's errors to stderr
+pub fn move_compile_and_report(
     targets: &[String],
     deps: &[String],
-    sender_opt: Option<Address>,
+    interface_files_dir_opt: Option<String>,
+    flags: Flags,
+) -> anyhow::Result<(FilesSourceText, Vec<CompiledUnit>)> {
+    let (files, units_res) = move_compile(targets, deps, interface_files_dir_opt, flags)?;
+    let units = unwrap_or_report_errors!(files, units_res);
+    Ok((files, units))
+}
+
+/// Given a set of targets and a set of dependencies, produces a `parser::ast::Program` along side a
+/// `CommentMap`. The `sender_opt` is returned for ease of use with `PassResult::Parser`
+pub fn move_parse(
+    compilation_env: &CompilationEnv,
+    targets: &[String],
+    deps: &[String],
     interface_files_dir_opt: Option<String>,
 ) -> anyhow::Result<(
     FilesSourceText,
-    Result<(expansion::ast::Program, CommentMap), Errors>,
+    Result<(CommentMap, parser::ast::Program), Errors>,
 )> {
     let mut deps = deps.to_vec();
     generate_interface_files_for_deps(&mut deps, interface_files_dir_opt)?;
-    let (files, pprog_and_comments_res) = parse_program(targets, &deps)?;
-    let res = pprog_and_comments_res.and_then(|(pprog, comment_map)| {
-        let (eprog, errors) = expansion::translate::program(pprog, sender_opt);
-        check_errors(errors)?;
-        Ok((eprog, comment_map))
-    });
-    Ok((files, res))
+    let (files, pprog_and_comments_res) = parse_program(compilation_env, targets, &deps)?;
+    let result = pprog_and_comments_res.map(|(pprog, comments)| (comments, pprog));
+    Ok((files, result))
+}
+
+/// Given a set of dependencies, precompile them and save the ASTs so that they can be used again
+/// to compile against without having to recompile these dependencies
+pub fn move_construct_pre_compiled_lib(
+    compilation_env: &mut CompilationEnv,
+    deps: &[String],
+    interface_files_dir_opt: Option<String>,
+) -> anyhow::Result<Result<FullyCompiledProgram, (FilesSourceText, Errors)>> {
+    let (files, pprog_and_comments_res) =
+        move_parse(compilation_env, &[], deps, interface_files_dir_opt)?;
+    let (_comments, pprog) = match pprog_and_comments_res {
+        Err(errors) => return Ok(Err((files, errors))),
+        Ok(res) => res,
+    };
+
+    let start = PassResult::Parser(pprog);
+    let mut parser = None;
+    let mut expansion = None;
+    let mut naming = None;
+    let mut typing = None;
+    let mut hlir = None;
+    let mut cfgir = None;
+    let mut compiled = None;
+
+    let save_result = |cur: &PassResult, env: &CompilationEnv| match cur {
+        PassResult::Parser(prog) => {
+            assert!(parser.is_none());
+            parser = Some(prog.clone())
+        }
+        PassResult::Expansion(eprog) => {
+            if env.has_errors() {
+                return;
+            }
+            assert!(expansion.is_none());
+            expansion = Some(eprog.clone())
+        }
+        PassResult::Naming(nprog) => {
+            if env.has_errors() {
+                return;
+            }
+            assert!(naming.is_none());
+            naming = Some(nprog.clone())
+        }
+        PassResult::Typing(tprog) => {
+            assert!(typing.is_none());
+            typing = Some(tprog.clone())
+        }
+        PassResult::HLIR(hprog) => {
+            if env.has_errors() {
+                return;
+            }
+            assert!(hlir.is_none());
+            hlir = Some(hprog.clone());
+        }
+        PassResult::CFGIR(cprog) => {
+            assert!(cfgir.is_none());
+            cfgir = Some(cprog.clone());
+        }
+        PassResult::Compilation(units) => {
+            assert!(compiled.is_none());
+            compiled = Some(units.clone())
+        }
+    };
+    match run(compilation_env, None, start, Pass::Compilation, save_result) {
+        Err(errors) => Ok(Err((files, errors))),
+        Ok(_) => Ok(Ok(FullyCompiledProgram {
+            files,
+            parser: parser.unwrap(),
+            expansion: expansion.unwrap(),
+            naming: naming.unwrap(),
+            typing: typing.unwrap(),
+            hlir: hlir.unwrap(),
+            cfgir: cfgir.unwrap(),
+            compiled: compiled.unwrap(),
+        })),
+    }
+}
+
+/// Runs the compiler from a previous result until a stopping point.
+/// The stopping point is inclusive, meaning the pass specified by `until: Pass` will be run
+pub fn move_continue_up_to(
+    compilation_env: &mut CompilationEnv,
+    pre_compiled_lib: Option<&FullyCompiledProgram>,
+    pass: PassResult,
+    until: Pass,
+) -> Result<PassResult, Errors> {
+    run(compilation_env, pre_compiled_lib, pass, until, |_, _| ())
 }
 
 //**************************************************************************************************
@@ -300,10 +448,11 @@ pub fn generate_interface_files(
             continue;
         }
 
-        let mut tmp = NamedTempFile::new()?;
+        std::fs::create_dir_all(&addr_dir)?;
+
+        let mut tmp = NamedTempFile::new_in(addr_dir)?;
         tmp.write_all(interface_contents.as_bytes())?;
 
-        std::fs::create_dir_all(addr_dir)?;
         // it's possible some files exist but not others due to multithreaded environments
         // Check for the file existing and then safely move the tmp file there if
         // it does not
@@ -317,27 +466,27 @@ pub fn generate_interface_files(
 }
 
 fn has_compiled_module_magic_number(path: &str) -> bool {
-    use move_vm::file_format_common::BinaryConstants;
+    use move_binary_format::file_format_common::BinaryConstants;
     let mut file = match File::open(path) {
         Err(_) => return false,
         Ok(f) => f,
     };
-    let mut magic = [0u8; BinaryConstants::LIBRA_MAGIC_SIZE];
+    let mut magic = [0u8; BinaryConstants::DIEM_MAGIC_SIZE];
     let num_bytes_read = match file.read(&mut magic) {
         Err(_) => return false,
         Ok(n) => n,
     };
-    num_bytes_read == BinaryConstants::LIBRA_MAGIC_SIZE && magic == BinaryConstants::LIBRA_MAGIC
+    num_bytes_read == BinaryConstants::DIEM_MAGIC_SIZE && magic == BinaryConstants::DIEM_MAGIC
 }
 
-fn path_to_string(path: &Path) -> anyhow::Result<String> {
+pub fn path_to_string(path: &Path) -> anyhow::Result<String> {
     match path.to_str() {
         Some(p) => Ok(p.to_string()),
         None => Err(anyhow!("non-Unicode file name")),
     }
 }
 
-fn extension_equals(path: &Path, target_ext: &str) -> bool {
+pub fn extension_equals(path: &Path, target_ext: &str) -> bool {
     match path.extension().and_then(|s| s.to_str()) {
         Some(extension) => extension == target_ext,
         None => false,
@@ -348,26 +497,103 @@ fn extension_equals(path: &Path, target_ext: &str) -> bool {
 // Translations
 //**************************************************************************************************
 
-fn check_program(
-    prog: Result<parser::ast::Program, Errors>,
-    sender_opt: Option<Address>,
-) -> Result<cfgir::ast::Program, Errors> {
-    let (eprog, errors) = expansion::translate::program(prog?, sender_opt);
-    let (nprog, errors) = naming::translate::program(eprog, errors);
-    let (tprog, errors) = typing::translate::program(nprog, errors);
-    check_errors(errors)?;
-    let (hprog, errors) = hlir::translate::program(tprog);
-    let (cprog, errors) = cfgir::translate::program(errors, hprog);
-    check_errors(errors)?;
-    Ok(cprog)
+impl PassResult {
+    pub fn equivalent_pass(&self) -> Pass {
+        match self {
+            PassResult::Parser(_) => Pass::Parser,
+            PassResult::Expansion(_) => Pass::Expansion,
+            PassResult::Naming(_) => Pass::Naming,
+            PassResult::Typing(_) => Pass::Typing,
+            PassResult::HLIR(_) => Pass::HLIR,
+            PassResult::CFGIR(_) => Pass::CFGIR,
+            PassResult::Compilation(_) => Pass::Compilation,
+        }
+    }
 }
 
-fn compile_program(
-    prog: Result<parser::ast::Program, Errors>,
-    sender_opt: Option<Address>,
-) -> Result<Vec<CompiledUnit>, Errors> {
-    let cprog = check_program(prog, sender_opt)?;
-    to_bytecode::translate::program(cprog)
+fn run(
+    compilation_env: &mut CompilationEnv,
+    pre_compiled_lib: Option<&FullyCompiledProgram>,
+    cur: PassResult,
+    until: Pass,
+    mut result_check: impl FnMut(&PassResult, &CompilationEnv),
+) -> Result<PassResult, Errors> {
+    result_check(&cur, compilation_env);
+    if cur.equivalent_pass() >= until {
+        return Ok(cur);
+    }
+
+    match cur {
+        PassResult::Parser(prog) => {
+            let prog = parser::sources_shadow_deps::program(compilation_env, prog);
+            let prog = parser::merge_spec_modules::program(compilation_env, prog);
+            let prog = unit_test::filter_test_members::program(compilation_env, prog);
+            let eprog = expansion::translate::program(compilation_env, pre_compiled_lib, prog);
+            run(
+                compilation_env,
+                pre_compiled_lib,
+                PassResult::Expansion(eprog),
+                until,
+                result_check,
+            )
+        }
+        PassResult::Expansion(eprog) => {
+            let nprog = naming::translate::program(compilation_env, pre_compiled_lib, eprog);
+            run(
+                compilation_env,
+                pre_compiled_lib,
+                PassResult::Naming(nprog),
+                until,
+                result_check,
+            )
+        }
+        PassResult::Naming(nprog) => {
+            let tprog = typing::translate::program(compilation_env, pre_compiled_lib, nprog);
+            compilation_env.check_errors()?;
+            run(
+                compilation_env,
+                pre_compiled_lib,
+                PassResult::Typing(tprog),
+                until,
+                result_check,
+            )
+        }
+        PassResult::Typing(tprog) => {
+            let hprog = hlir::translate::program(compilation_env, pre_compiled_lib, tprog);
+            run(
+                compilation_env,
+                pre_compiled_lib,
+                PassResult::HLIR(hprog),
+                until,
+                result_check,
+            )
+        }
+        PassResult::HLIR(hprog) => {
+            let cprog = cfgir::translate::program(compilation_env, pre_compiled_lib, hprog);
+            compilation_env.check_errors()?;
+            run(
+                compilation_env,
+                pre_compiled_lib,
+                PassResult::CFGIR(cprog),
+                until,
+                result_check,
+            )
+        }
+        PassResult::CFGIR(cprog) => {
+            let compiled_units =
+                to_bytecode::translate::program(compilation_env, pre_compiled_lib, cprog);
+            compilation_env.check_errors()?;
+            assert!(until == Pass::Compilation);
+            run(
+                compilation_env,
+                pre_compiled_lib,
+                PassResult::Compilation(compiled_units),
+                Pass::Compilation,
+                result_check,
+            )
+        }
+        PassResult::Compilation(_) => unreachable!("ICE Pass::Compilation is >= all passes"),
+    }
 }
 
 //**************************************************************************************************
@@ -375,6 +601,7 @@ fn compile_program(
 //**************************************************************************************************
 
 fn parse_program(
+    compilation_env: &CompilationEnv,
     targets: &[String],
     deps: &[String],
 ) -> anyhow::Result<(
@@ -385,11 +612,11 @@ fn parse_program(
         .iter()
         .map(|s| leak_str(s))
         .collect::<Vec<&'static str>>();
-    let deps = find_move_filenames(deps, true)?
+    let mut deps = find_move_filenames(deps, true)?
         .iter()
         .map(|s| leak_str(s))
         .collect::<Vec<&'static str>>();
-    check_targets_deps_dont_intersect(&targets, &deps)?;
+    ensure_targets_deps_dont_intersect(compilation_env, &targets, &mut deps)?;
     let mut files: FilesSourceText = HashMap::new();
     let mut source_definitions = Vec::new();
     let mut source_comments = CommentMap::new();
@@ -410,30 +637,45 @@ fn parse_program(
     }
 
     let res = if errors.is_empty() {
-        Ok((
-            parser::ast::Program {
-                source_definitions,
-                lib_definitions,
-            },
-            source_comments,
-        ))
+        let pprog = parser::ast::Program {
+            source_definitions,
+            lib_definitions,
+        };
+        Ok((pprog, source_comments))
     } else {
         Err(errors)
     };
     Ok((files, res))
 }
 
-fn check_targets_deps_dont_intersect(
+fn ensure_targets_deps_dont_intersect(
+    compilation_env: &CompilationEnv,
     targets: &[&'static str],
-    deps: &[&'static str],
+    deps: &mut Vec<&'static str>,
 ) -> anyhow::Result<()> {
-    let target_set = targets.iter().collect::<BTreeSet<_>>();
-    let dep_set = deps.iter().collect::<BTreeSet<_>>();
+    /// Canonicalize a file path.
+    fn canonicalize(path: &str) -> String {
+        match std::fs::canonicalize(path) {
+            Ok(s) => s.to_string_lossy().to_string(),
+            Err(_) => path.to_owned(),
+        }
+    }
+    let target_set = targets
+        .iter()
+        .map(|s| canonicalize(s))
+        .collect::<BTreeSet<_>>();
+    let dep_set = deps
+        .iter()
+        .map(|s| canonicalize(s))
+        .collect::<BTreeSet<_>>();
     let intersection = target_set.intersection(&dep_set).collect::<Vec<_>>();
     if intersection.is_empty() {
         return Ok(());
     }
-
+    if compilation_env.flags().sources_shadow_deps() {
+        deps.retain(|fname| !intersection.contains(&&canonicalize(fname)));
+        return Ok(());
+    }
     let all_files = intersection
         .into_iter()
         .map(|s| format!("    {}", s))

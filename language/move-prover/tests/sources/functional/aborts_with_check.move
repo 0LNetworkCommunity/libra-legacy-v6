@@ -1,4 +1,8 @@
-module TestAbortsWithCheck {
+module 0x42::TestAbortsWithCheck {
+
+    /*
+    TODO(refactoring): this test is deactivated until we have ported this (or a similar) feature, or decided to
+      drop it in which case the test should be removed.
 
     fun aborts_with_check(x: u64, y: u64): u64 {
         if (x == 1) {
@@ -9,7 +13,7 @@ module TestAbortsWithCheck {
         };
         x
     }
-    spec fun aborts_with_check {
+    spec aborts_with_check {
         aborts_if x == 1 with 2;
         aborts_if y == 2 with 3;
         aborts_with [check] 2, 3;
@@ -25,10 +29,11 @@ module TestAbortsWithCheck {
         };
         x
     }
-    spec fun aborts_with_check_missing_incorrect {
+    spec aborts_with_check_missing_incorrect {
         aborts_if x == 1 with 2;
         aborts_if y == 2 with 3;
         aborts_with [check] 2;
         ensures result == x;
     }
+    */
 }

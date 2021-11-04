@@ -1,6 +1,6 @@
 //! dictionary to associate notes to account addresses
 
-use libra_types::account_address::AccountAddress;
+use diem_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
 use std::{path::Path, fs::File};
 use super::node::Node;
@@ -42,7 +42,7 @@ impl AccountDictionary {
     pub fn get_note_for_address(&self, address: AccountAddress) -> String {
         match self.accounts.iter().find(| entry | entry.address == address ) {
             Some(found) => found.note.clone(),
-            None => String::from("?")
+            None => String::from("")
         }
     }
 }

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -6,12 +6,12 @@ use crate::{
     common_transactions::rotate_key_txn,
     gas_costs,
 };
-use libra_crypto::{
-    ed25519::{self, Ed25519PrivateKey, Ed25519PublicKey},
+use diem_crypto::{
+    ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     test_utils::KeyPair,
 };
-use libra_proptest_helpers::Index;
-use libra_types::{
+use diem_proptest_helpers::Index;
+use diem_types::{
     transaction::{authenticator::AuthenticationKey, SignedTransaction, TransactionStatus},
     vm_status::{KeptVMStatus, StatusCode},
 };
@@ -23,7 +23,9 @@ use proptest_derive::Arbitrary;
 #[proptest(no_params)]
 pub struct RotateKeyGen {
     sender: Index,
-    #[proptest(strategy = "ed25519::keypair_strategy()")]
+    #[proptest(
+        strategy = "diem_crypto::test_utils::uniform_keypair_strategy_with_perturbation(0)"
+    )]
     new_keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey>,
 }
 

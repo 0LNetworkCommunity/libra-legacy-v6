@@ -1,11 +1,11 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 
+use proxy::Proxy;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::env;
 use thiserror::Error;
 
 /// Request timeout for github operations
@@ -16,8 +16,8 @@ const URL: &str = "https://api.github.com";
 
 #[derive(Debug, Error, PartialEq)]
 pub enum Error {
-    #[error("Http error: {1}")]
-    HttpError(u16, String),
+    #[error("Http error, status code: {0}, status text: {1}, body: {2}")]
+    HttpError(u16, String, String),
     #[error("Internal error: {0}")]
     InternalError(String),
     #[error("Missing field {0}")]
@@ -36,7 +36,18 @@ impl From<std::io::Error> for Error {
 
 impl From<ureq::Response> for Error {
     fn from(resp: ureq::Response) -> Self {
-        Error::HttpError(resp.status(), resp.status_line().into())
+        if let Some(e) = resp.synthetic_error() {
+            // Local error
+            Error::InternalError(e.to_string())
+        } else {
+            // Clear the buffer
+            let status = resp.status();
+            let status_text = resp.status_text().to_string();
+            match resp.into_string() {
+                Ok(body) => Error::HttpError(status, status_text, body),
+                Err(e) => Error::InternalError(e.to_string()),
+            }
+        }
     }
 }
 
@@ -53,16 +64,18 @@ impl From<serde_json::Error> for Error {
 /// repository. The tooling is intended to be used to exchange data in an authenticated fashion
 /// across multiple peers.
 pub struct Client {
-    repository: String,
+    branch: String,
     owner: String,
+    repository: String,
     token: String,
 }
 
 impl Client {
-    pub fn new(owner: String, repository: String, token: String) -> Self {
+    pub fn new(owner: String, repository: String, branch: String, token: String) -> Self {
         Self {
-            repository,
+            branch,
             owner,
+            repository,
             token,
         }
     }
@@ -77,8 +90,10 @@ impl Client {
         };
 
         let resp = self
-            .upgrade_request(ureq::delete(&self.url(path)))
-            .send_json(json!({ "message": "libra-secure", "sha": hash }));
+            .upgrade_request(ureq::delete(&self.post_url(path)))
+            .send_json(
+                json!({ "branch": self.branch.to_string(), "message": "diem-secure", "sha": hash }),
+            );
 
         match resp.status() {
             200 => Ok(()),
@@ -88,7 +103,7 @@ impl Client {
 
     /// Recursively delete all files, which as a by product will delete all folders
     pub fn delete_directory(&self, path: &str) -> Result<(), Error> {
-        let files = self.get_directory(path)?;
+        let files = self.get_directory(path.trim_end_matches('/'))?;
         for file in files {
             if file.ends_with('/') {
                 self.delete_directory(&file[..file.len() - 1])?;
@@ -153,16 +168,16 @@ impl Client {
     pub fn put(&self, path: &str, content: &str) -> Result<(), Error> {
         let json = match self.get_sha(path) {
             Ok(hash) => {
-                json!({ "content": content, "message": format!("[libra-management] {}", path), "sha": hash })
+                json!({ "branch": self.branch.to_string(), "content": content, "message": format!("[diem-management] {}", path), "sha": hash })
             }
             Err(Error::NotFound(_)) => {
-                json!({ "content": content, "message": format!("[libra-management] {}", path) })
+                json!({ "branch": self.branch.to_string(), "content": content, "message": format!("[diem-management] {}", path) })
             }
             Err(e) => return Err(e),
         };
 
         let resp = self
-            .upgrade_request(ureq::put(&self.url(path)))
+            .upgrade_request(ureq::put(&self.post_url(path)))
             .send_json(json);
 
         match resp.status() {
@@ -178,20 +193,19 @@ impl Client {
             .set("Authorization", &format!("token {}", self.token))
             .set(ACCEPT_HEADER, ACCEPT_VALUE)
             .timeout_connect(TIMEOUT);
-        match env::var("https_proxy") {
-            Ok(proxy) => request
-                .set_proxy(
-                    ureq::Proxy::new(proxy)
-                        .expect("Unable to parse https_proxy environment variable"),
-                )
-                .build(),
-            Err(_e) => request,
+
+        let proxy = Proxy::new();
+        let host = request.get_host().expect("unable to get the host");
+        let proxy_url = proxy.https(&host);
+        if let Some(proxy_url) = proxy_url {
+            request.set_proxy(ureq::Proxy::new(proxy_url).expect("Unable to parse proxy_url"));
         }
+        request
     }
 
     /// Get can read files or directories, this makes it easier to use
     fn get_internal(&self, path: &str) -> Result<Vec<GetResponse>, Error> {
-        let resp = self.upgrade_request(ureq::get(&self.url(path))).call();
+        let resp = self.upgrade_request(ureq::get(&self.get_url(path))).call();
         match resp.status() {
             200 => {
                 let resp = resp.into_string()?;
@@ -228,11 +242,105 @@ impl Client {
             )))
         }
     }
+    
+    ///////// 0L ////////
+    pub fn fork_genesis_repo(&self, genesis_repo_owner: &str, genesis_repo_name: &str) -> Result<(), Error> {
+        let json = json!({});
 
-    fn url(&self, path: &str) -> String {
+        let api_path = format!("https://api.github.com/repos/{}/{}/forks", genesis_repo_owner, genesis_repo_name);
+        let resp = self
+            .upgrade_request(ureq::post(&api_path))
+            .send_json(json);
+
+        match resp.status() {
+            200 => Ok(()),
+            201 => Ok(()),
+            202 => Ok(()),
+            _ => Err(resp.into()),
+        }
+    }
+
+    ///////// 0L ////////
+    pub fn delete_own_repo(&self, forked_repo_owner: &str, forked_repo_name: &str) -> Result<(), Error> {
+        let json = json!({});
+
+        let api_path = format!("https://api.github.com/repos/{}/{}", forked_repo_owner, forked_repo_name);
+        let resp = self
+            .upgrade_request(ureq::delete(&api_path))
+            .send_json(json);
+
+        match resp.status() {
+            200 => Ok(()),
+            201 => Ok(()),
+            202 => Ok(()),
+            _ => Err(resp.into()),
+        }
+    }
+
+
+
+    
+    ///////// 0L ////////
+    pub fn make_genesis_pull_request(&self, genesis_repo_owner: &str, genesis_repo_name: &str, pull_username: &str) -> Result<(), Error> {
+        // TODO: optionally fetch from token.
+        // let pull_username = self.get_authenticated_user().expect("could not get username associated with this gitub token");
+        let head = format!("{}:master", pull_username);
+        let json = json!({"head": &head, "base": "master", "title": pull_username});
+        let api_path = format!("https://api.github.com/repos/{}/{}/pulls", genesis_repo_owner, genesis_repo_name);
+
+        let resp = self
+            .upgrade_request(ureq::post(&api_path))
+            .send_json(json);
+
+        match resp.status() {
+            200 => Ok(()),
+            201 => Ok(()),
+            _ => Err(resp.into()),
+        }
+    }
+
+        ///////// 0L ////////
+    pub fn get_authenticated_user(&self) -> Result<String, Error> {
+
+        // let head = format!("{}:master", pull_username);
+        // let json = json!({"head": &head, "base": "master", "title": pull_username});
+        let api_path = "https://api.github.com/user";
+
+        dbg!(api_path);
+
+        let resp = self.upgrade_request(ureq::get(api_path)).call();
+        
+        #[derive(Deserialize)]
+        struct Test {
+          login: String
+        }
+
+        match resp.status() {
+            200 => {
+              let d: Test = resp.into_json_deserialize().unwrap();
+              Ok(d.login)
+            },
+            _ => Err(resp.into()),
+        }
+
+      // dbg!(&resp.into_json());
+      // Ok(())
+    }
+
+
+    // https://api.github.com/user
+
+    fn post_url(&self, path: &str) -> String {
         format!(
             "{}/repos/{}/{}/contents/{}",
             URL, self.owner, self.repository, path
+        )
+    }
+
+    fn get_url(&self, path: &str) -> String {
+        format!(
+            "{}/repos/{}/{}/contents/{}?ref={}",
+            URL, self.owner, self.repository, path, self.branch
         )
     }
 }
@@ -266,6 +374,8 @@ mod tests {
 
     const OWNER: &str = "OWNER";
     const REPOSITORY: &str = "REPOSITORY";
+    // This framework will not create branches, it must already exist!
+    const BRANCH: &str = "BRANCH";
     const TOKEN: &str = "TOKEN";
 
     #[ignore]
@@ -277,7 +387,7 @@ mod tests {
         let value2 = "world";
         let value2_encoded = base64::encode(&value2);
 
-        let github = Client::new(OWNER.into(), REPOSITORY.into(), TOKEN.into());
+        let github = Client::new(OWNER.into(), REPOSITORY.into(), BRANCH.into(), TOKEN.into());
 
         // Try a create
         github.get_file(path).unwrap_err();
@@ -310,7 +420,7 @@ mod tests {
         let value2 = "world";
         let value2_encoded = base64::encode(&value2);
 
-        let github = Client::new(OWNER.into(), REPOSITORY.into(), TOKEN.into());
+        let github = Client::new(OWNER.into(), REPOSITORY.into(), BRANCH.into(), TOKEN.into());
 
         // Initialize two directories with a file each
         github.put(path1, &value1_encoded).unwrap();
@@ -349,7 +459,7 @@ mod tests {
         let value = "hello";
         let value_encoded = base64::encode(&value);
 
-        let github = Client::new(OWNER.into(), REPOSITORY.into(), TOKEN.into());
+        let github = Client::new(OWNER.into(), REPOSITORY.into(), BRANCH.into(), TOKEN.into());
 
         github.put(file0, &value_encoded).unwrap();
         github.put(file1, &value_encoded).unwrap();
@@ -370,9 +480,9 @@ mod tests {
     #[ignore]
     #[test]
     fn test_branches() {
-        let github = Client::new(OWNER.into(), REPOSITORY.into(), TOKEN.into());
+        let github = Client::new(OWNER.into(), REPOSITORY.into(), BRANCH.into(), TOKEN.into());
         let branches = github.get_branches().unwrap();
         assert!(!branches.is_empty());
-        assert!(branches.iter().any(|b| b == "master"));
+        assert!(branches.iter().any(|b| b == BRANCH));
     }
 }

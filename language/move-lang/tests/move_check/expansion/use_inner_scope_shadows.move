@@ -1,8 +1,8 @@
 address 0x2 {
 module M {
-    struct S1 { b: bool }
-    struct S2 { u: u64 }
-    struct S3 { a: address }
+    struct S1 has drop { b: bool }
+    struct S2 has drop { u: u64 }
+    struct S3 has drop { a: address }
     fun check(): bool {
         false
     }
@@ -19,7 +19,7 @@ module M {
         t(0) + 1;
         S2 { b: false };
         Foo { u: 0 };
-        T { a: 0x0 }
+        T { a: @0x0 }
     }
 
     fun t2<T>(x: T) {
@@ -29,14 +29,14 @@ module M {
             t(0) + 1;
             S2 { b: false };
             Foo { u: 0 };
-            T { a: 0x0 }
+            T { a: @0x0 }
         };
         check() && true;
         num(0) + 1;
         t2<T>(x);
         S1 { b: false };
         S2 { u: 0 };
-        S3 { a: 0x0 };
+        S3 { a: @0x0 };
     }
 }
 }

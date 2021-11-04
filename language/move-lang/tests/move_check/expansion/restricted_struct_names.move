@@ -1,6 +1,6 @@
-module M {
+module 0x8675309::M {
     struct address {}
-    resource struct signer {}
+    struct signer {}
     struct u8 {}
     struct u64 {}
     struct u128 {}

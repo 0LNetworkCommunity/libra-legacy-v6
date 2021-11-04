@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -8,7 +8,7 @@ mod executor_test;
 #[cfg(any(test, feature = "fuzzing"))]
 pub mod fuzzing;
 mod logging;
-mod metrics;
+pub mod metrics;
 #[cfg(test)]
 mod mock_vm;
 mod speculation_cache;
@@ -19,44 +19,42 @@ pub mod db_bootstrapper;
 use crate::{
     logging::{LogEntry, LogSchema},
     metrics::{
-        LIBRA_EXECUTOR_COMMIT_BLOCKS_SECONDS, LIBRA_EXECUTOR_ERRORS,
-        LIBRA_EXECUTOR_EXECUTE_AND_COMMIT_CHUNK_SECONDS, LIBRA_EXECUTOR_EXECUTE_BLOCK_SECONDS,
-        LIBRA_EXECUTOR_SAVE_TRANSACTIONS_SECONDS, LIBRA_EXECUTOR_TRANSACTIONS_SAVED,
-        LIBRA_EXECUTOR_VM_EXECUTE_BLOCK_SECONDS,
+        DIEM_EXECUTOR_COMMIT_BLOCKS_SECONDS, DIEM_EXECUTOR_ERRORS,
+        DIEM_EXECUTOR_EXECUTE_AND_COMMIT_CHUNK_SECONDS, DIEM_EXECUTOR_EXECUTE_BLOCK_SECONDS,
+        DIEM_EXECUTOR_SAVE_TRANSACTIONS_SECONDS, DIEM_EXECUTOR_TRANSACTIONS_SAVED,
+        DIEM_EXECUTOR_VM_EXECUTE_BLOCK_SECONDS,
     },
     speculation_cache::SpeculationCache,
     types::{ProcessedVMOutput, TransactionData},
 };
 use anyhow::{bail, ensure, format_err, Result};
-use executor_types::{
-    BlockExecutor, ChunkExecutor, Error, ExecutedTrees, ProofReader, StateComputeResult,
-    TransactionReplayer,
-};
-use fail::fail_point;
-use libra_crypto::{
+use diem_crypto::{
     hash::{CryptoHash, EventAccumulatorHasher, TransactionAccumulatorHasher},
     HashValue,
 };
-use libra_logger::prelude::*;
-use libra_state_view::StateViewId;
-use libra_trace::prelude::*;
-use libra_types::{
-    account_address::AccountAddress,
+use diem_logger::prelude::*;
+use diem_state_view::StateViewId;
+use diem_types::{
+    account_address::{AccountAddress, HashAccountAddress},
     account_state::AccountState,
     account_state_blob::AccountStateBlob,
     contract_event::ContractEvent,
     epoch_state::EpochState,
     ledger_info::LedgerInfoWithSignatures,
     on_chain_config,
-    proof::{accumulator::InMemoryAccumulator, SparseMerkleProof},
+    proof::accumulator::InMemoryAccumulator,
     transaction::{
         Transaction, TransactionInfo, TransactionListWithProof, TransactionOutput,
         TransactionPayload, TransactionStatus, TransactionToCommit, Version,
     },
     write_set::{WriteOp, WriteSet},
 };
-use libra_vm::VMExecutor;
-use scratchpad::SparseMerkleTree;
+use diem_vm::VMExecutor;
+use executor_types::{
+    BlockExecutor, ChunkExecutor, Error, ExecutedTrees, ProofReader, StateComputeResult,
+    TransactionReplayer,
+};
+use fail::fail_point;
 use std::{
     collections::{hash_map, HashMap, HashSet},
     convert::TryFrom,
@@ -64,6 +62,8 @@ use std::{
     sync::Arc,
 };
 use storage_interface::{state_view::VerifiedStateView, DbReaderWriter, TreeState};
+
+type SparseMerkleProof = diem_types::proof::SparseMerkleProof<AccountStateBlob>;
 
 /// `Executor` implements all functionalities the execution module needs to provide.
 pub struct Executor<V> {
@@ -262,36 +262,53 @@ where
         // transactions that will be discarded, we will compute its in-memory Sparse Merkle Tree
         // (it will be identical to the previous one).
         let mut txn_data = vec![];
-        let mut current_state_tree = Arc::clone(parent_trees.state_tree());
         // The hash of each individual TransactionInfo object. This will not include the
         // transactions that will be discarded, since they do not go into the transaction
         // accumulator.
         let mut txn_info_hashes = vec![];
-        let mut next_epoch_state = None;
 
         let proof_reader = ProofReader::new(account_to_proof);
         let new_epoch_event_key = on_chain_config::new_epoch_event_key();
-        for (vm_output, txn) in itertools::zip_eq(vm_outputs.into_iter(), transactions.iter()) {
-            if next_epoch_state.is_some() {
-                txn_data.push(TransactionData::new(
-                    HashMap::new(),
-                    vec![],
-                    TransactionStatus::Retry,
-                    Arc::clone(&current_state_tree),
-                    Arc::new(InMemoryAccumulator::<EventAccumulatorHasher>::default()),
-                    0,
-                    None,
-                ));
-                continue;
-            }
-            let (blobs, state_tree) = process_write_set(
-                txn,
-                &mut account_to_state,
-                &proof_reader,
-                vm_output.write_set().clone(),
-                &current_state_tree,
-            )?;
 
+        let new_epoch_marker = vm_outputs
+            .iter()
+            .enumerate()
+            .find(|(_, output)| {
+                output
+                    .events()
+                    .iter()
+                    .any(|event| *event.key() == new_epoch_event_key)
+            })
+            // Off by one for exclusive index.
+            .map(|(idx, _)| idx + 1);
+        let transaction_count = new_epoch_marker.unwrap_or(vm_outputs.len());
+
+        let txn_blobs = itertools::zip_eq(vm_outputs.iter(), transactions.iter())
+            .take(transaction_count)
+            .map(|(vm_output, txn)| {
+                process_write_set(txn, &mut account_to_state, vm_output.write_set().clone())
+            })
+            .collect::<Result<Vec<_>>>()?;
+
+        let (txn_state_roots, current_state_tree) = parent_trees
+            .state_tree()
+            .serial_update(
+                txn_blobs
+                    .iter()
+                    .map(|m| {
+                        m.iter()
+                            .map(|(account, value)| (account.hash(), value))
+                            .collect::<Vec<_>>()
+                    })
+                    .collect(),
+                &proof_reader,
+            )
+            .map_err(|e| format_err!("Failed to update state tree. err: {:?}", e))?;
+
+        for ((vm_output, txn), (state_tree_hash, blobs)) in itertools::zip_eq(
+            itertools::zip_eq(vm_outputs.into_iter(), transactions.iter()).take(transaction_count),
+            itertools::zip_eq(txn_state_roots, txn_blobs),
+        ) {
             let event_tree = {
                 let event_hashes: Vec<_> =
                     vm_output.events().iter().map(CryptoHash::hash).collect();
@@ -309,7 +326,7 @@ where
                     // transaction itself, the state root hash as well as the event root hash.
                     let txn_info = TransactionInfo::new(
                         txn.hash(),
-                        state_tree.root_hash(),
+                        state_tree_hash,
                         event_tree.root_hash(),
                         vm_output.gas_used(),
                         status.clone(),
@@ -326,7 +343,7 @@ where
                              Transaction: {:?}. Status: {:?}.",
                             txn, status,
                         );
-                        LIBRA_EXECUTOR_ERRORS.inc();
+                        DIEM_EXECUTOR_ERRORS.inc();
                     }
                 }
                 TransactionStatus::Retry => (),
@@ -336,50 +353,60 @@ where
                 blobs,
                 vm_output.events().to_vec(),
                 vm_output.status().clone(),
-                Arc::clone(&state_tree),
+                state_tree_hash,
                 Arc::new(event_tree),
                 vm_output.gas_used(),
                 txn_info_hash,
             ));
-            current_state_tree = state_tree;
-
-            // check for change in validator set
-            next_epoch_state = if vm_output
-                .events()
-                .iter()
-                .any(|event| *event.key() == new_epoch_event_key)
-            {
-                let validator_set = account_to_state
-                    .get(&on_chain_config::config_address())
-                    .map(|state| {
-                        state
-                            .get_validator_set()?
-                            .ok_or_else(|| format_err!("ValidatorSet does not exist"))
-                    })
-                    .ok_or_else(|| format_err!("ValidatorSet account does not exist"))??;
-                let configuration = account_to_state
-                    .get(&on_chain_config::config_address())
-                    .map(|state| {
-                        state
-                            .get_configuration_resource()?
-                            .ok_or_else(|| format_err!("Configuration does not exist"))
-                    })
-                    .ok_or_else(|| format_err!("Association account does not exist"))??;
-                Some(EpochState {
-                    epoch: configuration.epoch(),
-                    verifier: (&validator_set).into(),
-                })
-            } else {
-                None
-            }
         }
+
+        // check for change in validator set
+        let next_epoch_state = if new_epoch_marker.is_some() {
+            // Pad the rest of transactions
+            txn_data.resize(
+                transactions.len(),
+                TransactionData::new(
+                    HashMap::new(),
+                    vec![],
+                    TransactionStatus::Retry,
+                    current_state_tree.root_hash(),
+                    Arc::new(InMemoryAccumulator::<EventAccumulatorHasher>::default()),
+                    0,
+                    None,
+                ),
+            );
+
+            let validator_set = account_to_state
+                .get(&on_chain_config::config_address())
+                .map(|state| {
+                    state
+                        .get_validator_set()?
+                        .ok_or_else(|| format_err!("ValidatorSet does not exist"))
+                })
+                .ok_or_else(|| format_err!("ValidatorSet account does not exist"))??;
+            let configuration = account_to_state
+                .get(&on_chain_config::config_address())
+                .map(|state| {
+                    state
+                        .get_configuration_resource()?
+                        .ok_or_else(|| format_err!("Configuration does not exist"))
+                })
+                .ok_or_else(|| format_err!("Association account does not exist"))??;
+            Some(EpochState {
+                epoch: configuration.epoch(),
+                verifier: (&validator_set).into(),
+            })
+        } else {
+            None
+        };
 
         let current_transaction_accumulator =
             parent_trees.txn_accumulator().append(&txn_info_hashes);
+
         Ok(ProcessedVMOutput::new(
             txn_data,
             ExecutedTrees::new_copy(
-                current_state_tree,
+                Arc::new(current_state_tree),
                 Arc::new(current_transaction_accumulator),
             ),
             next_epoch_state,
@@ -482,7 +509,9 @@ where
                 TransactionStatus::Keep(recorded_status) => recorded_status.clone(),
                 status @ TransactionStatus::Discard(_) => bail!(
                     "The transaction at version {}, got the status of 'Discard': {:?}",
-                    first_version + i as u64,
+                    first_version
+                        .checked_add(i as u64)
+                        .ok_or_else(|| format_err!("version + i overflows"))?,
                     status
                 ),
                 TransactionStatus::Retry => {
@@ -544,7 +573,11 @@ where
         ensure!(
             txns_to_retry.is_empty(),
             "The transaction at version {} got the status of 'Retry'",
-            num_txns - txns_to_retry.len() + first_version as usize,
+            num_txns
+                .checked_sub(txns_to_retry.len())
+                .ok_or_else(|| format_err!("integer overflow occurred"))?
+                .checked_add(first_version as usize)
+                .ok_or_else(|| format_err!("integer overflow occurred"))?,
         );
 
         Ok((processed_vm_output, txns_to_commit, events))
@@ -561,7 +594,7 @@ impl<V: VMExecutor> ChunkExecutor for Executor<V> {
         // carrying any epoch change LI.
         epoch_change_li: Option<LedgerInfoWithSignatures>,
     ) -> Result<Vec<ContractEvent>> {
-        let _timer = LIBRA_EXECUTOR_EXECUTE_AND_COMMIT_CHUNK_SECONDS.start_timer();
+        let _timer = DIEM_EXECUTOR_EXECUTE_AND_COMMIT_CHUNK_SECONDS.start_timer();
         // 1. Update the cache in executor to be consistent with latest synced state.
         self.reset_cache()?;
 
@@ -662,7 +695,10 @@ impl<V: VMExecutor> TransactionReplayer for Executor<V> {
     }
 
     fn expecting_version(&self) -> Version {
-        self.cache.synced_trees().version().map_or(0, |v| v + 1)
+        self.cache
+            .synced_trees()
+            .version()
+            .map_or(0, |v| v.checked_add(1).expect("Integer overflow occurred"))
     }
 }
 
@@ -723,7 +759,7 @@ impl<V: VMExecutor> BlockExecutor for Executor<V> {
                 "execute_block"
             );
 
-            let _timer = LIBRA_EXECUTOR_EXECUTE_BLOCK_SECONDS.start_timer();
+            let _timer = DIEM_EXECUTOR_EXECUTE_BLOCK_SECONDS.start_timer();
 
             let parent_block_executed_trees = self.get_executed_trees(parent_block_id)?;
 
@@ -733,8 +769,7 @@ impl<V: VMExecutor> BlockExecutor for Executor<V> {
             );
 
             let vm_outputs = {
-                trace_code_block!("executor::execute_block", {"block", block_id});
-                let _timer = LIBRA_EXECUTOR_VM_EXECUTE_BLOCK_SECONDS.start_timer();
+                let _timer = DIEM_EXECUTOR_VM_EXECUTE_BLOCK_SECONDS.start_timer();
                 fail_point!("executor::vm_execute_block", |_| {
                     Err(Error::from(anyhow::anyhow!(
                         "Injected error in vm_execute_block"
@@ -743,7 +778,6 @@ impl<V: VMExecutor> BlockExecutor for Executor<V> {
                 V::execute_block(transactions.clone(), &state_view).map_err(anyhow::Error::from)?
             };
 
-            trace_code_block!("executor::process_vm_outputs", {"block", block_id});
             let status: Vec<_> = vm_outputs
                 .iter()
                 .map(TransactionOutput::status)
@@ -784,7 +818,7 @@ impl<V: VMExecutor> BlockExecutor for Executor<V> {
         block_ids: Vec<HashValue>,
         ledger_info_with_sigs: LedgerInfoWithSignatures,
     ) -> Result<(Vec<Transaction>, Vec<ContractEvent>), Error> {
-        let _timer = LIBRA_EXECUTOR_COMMIT_BLOCKS_SECONDS.start_timer();
+        let _timer = DIEM_EXECUTOR_COMMIT_BLOCKS_SECONDS.start_timer();
         let block_id_to_commit = ledger_info_with_sigs.ledger_info().consensus_block_id();
 
         info!(
@@ -883,8 +917,8 @@ impl<V: VMExecutor> BlockExecutor for Executor<V> {
 
         let num_txns_to_commit = txns_to_commit.len() as u64;
         {
-            let _timer = LIBRA_EXECUTOR_SAVE_TRANSACTIONS_SECONDS.start_timer();
-            LIBRA_EXECUTOR_TRANSACTIONS_SAVED.observe(num_txns_to_commit as f64);
+            let _timer = DIEM_EXECUTOR_SAVE_TRANSACTIONS_SECONDS.start_timer();
+            DIEM_EXECUTOR_TRANSACTIONS_SAVED.observe(num_txns_to_commit as f64);
 
             assert_eq!(first_version_to_commit, num_txns_in_li - num_txns_to_commit);
             fail_point!("executor::commit_blocks", |_| {
@@ -899,18 +933,16 @@ impl<V: VMExecutor> BlockExecutor for Executor<V> {
             )?;
         }
 
-        // Prune the tree.
-        for block in blocks {
-            for txn_data in block.output().transaction_data() {
-                txn_data.prune_state_tree();
-            }
-        }
         // Calculate committed transactions and reconfig events now that commit has succeeded
         let mut committed_txns = vec![];
         let mut reconfig_events = vec![];
         for txn in txns_to_commit.iter() {
             committed_txns.push(txn.transaction().clone());
             reconfig_events.append(&mut Self::extract_reconfig_events(txn.events().to_vec()));
+        }
+
+        for block in blocks {
+            block.output().executed_trees().state_tree().prune()
         }
 
         self.cache.prune(
@@ -925,18 +957,12 @@ impl<V: VMExecutor> BlockExecutor for Executor<V> {
 }
 
 /// For all accounts modified by this transaction, find the previous blob and update it based
-/// on the write set. Returns the blob value of all these accounts as well as the newly
-/// constructed state tree.
+/// on the write set. Returns the blob value of all these accounts.
 pub fn process_write_set(
     transaction: &Transaction,
     account_to_state: &mut HashMap<AccountAddress, AccountState>,
-    proof_reader: &ProofReader,
     write_set: WriteSet,
-    previous_state_tree: &SparseMerkleTree,
-) -> Result<(
-    HashMap<AccountAddress, AccountStateBlob>,
-    Arc<SparseMerkleTree>,
-)> {
+) -> Result<HashMap<AccountAddress, AccountStateBlob>> {
     let mut updated_blobs = HashMap::new();
 
     // Find all addresses this transaction touches while processing each write op.
@@ -958,7 +984,9 @@ pub fn process_write_set(
                         bail!("Write set should be a subset of read set.")
                     }
                     Transaction::UserTransaction(txn) => match txn.payload() {
-                        TransactionPayload::Module(_) | TransactionPayload::Script(_) => {
+                        TransactionPayload::Module(_)
+                        | TransactionPayload::Script(_)
+                        | TransactionPayload::ScriptFunction(_) => {
                             bail!("Write set should be a subset of read set.")
                         }
                         TransactionPayload::WriteSet(_) => (),
@@ -978,19 +1006,8 @@ pub fn process_write_set(
         let account_blob = AccountStateBlob::try_from(account_state)?;
         updated_blobs.insert(addr, account_blob);
     }
-    let state_tree = Arc::new(
-        previous_state_tree
-            .update(
-                updated_blobs
-                    .iter()
-                    .map(|(addr, value)| (addr.hash(), value.clone()))
-                    .collect(),
-                proof_reader,
-            )
-            .expect("Failed to update state tree."),
-    );
 
-    Ok((updated_blobs, state_tree))
+    Ok(updated_blobs)
 }
 
 fn update_account_state(account_state: &mut AccountState, path: Vec<u8>, write_op: WriteOp) {

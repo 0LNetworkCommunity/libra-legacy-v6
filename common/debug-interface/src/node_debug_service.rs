@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! Debug interface to access information in a specific node.
 
-use libra_logger::{info, json_log, Filter, Logger};
+use diem_logger::{info, json_log, Filter, Logger};
 use std::{net::SocketAddr, sync::Arc};
 use tokio::runtime::{Builder, Runtime};
 use warp::Filter as _;
@@ -15,16 +15,15 @@ pub struct NodeDebugService {
 
 impl NodeDebugService {
     pub fn new(address: SocketAddr, logger: Option<Arc<Logger>>) -> Self {
-        let runtime = Builder::new()
+        let runtime = Builder::new_multi_thread()
             .thread_name("nodedebug")
-            .threaded_scheduler()
             .enable_all()
             .build()
             .expect("[rpc] failed to create runtime");
 
         // GET /metrics
         let metrics =
-            warp::path("metrics").map(|| warp::reply::json(&libra_metrics::get_all_metrics()));
+            warp::path("metrics").map(|| warp::reply::json(&diem_metrics::get_all_metrics()));
 
         // GET /events
         let events = warp::path("events").map(|| warp::reply::json(&json_log::pop_last_entries()));
@@ -68,8 +67,9 @@ impl NodeDebugService {
 
         let routes = log.or(warp::get().and(metrics.or(events)));
 
-        let server = runtime.enter(move || warp::serve(routes).bind(address));
-        runtime.handle().spawn(server);
+        runtime
+            .handle()
+            .spawn(async move { warp::serve(routes).bind(address).await });
 
         Self { runtime }
     }

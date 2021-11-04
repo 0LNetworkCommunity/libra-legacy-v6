@@ -7,13 +7,9 @@ use crate::{
 use anyhow::Error;
 use ol_types::config::IS_PROD;
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::HashSet,
-    fs::{self, File},
-    process::{Command, Stdio},
-};
-const BINARY_NODE: &str = "libra-node";
-const BINARY_MINER: &str = "miner";
+use std::{collections::HashSet, fs::{self, File}, process::{Command, Stdio, exit}};
+const BINARY_NODE: &str = "diem-node";
+const BINARY_MINER: &str = "tower";
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 /// What kind of node are we starting
@@ -90,7 +86,7 @@ impl Node {
                 NODE,
                 args.as_slice(),
                 "node",
-                "failed to run 'libra-node', is it installed?",
+                "failed to run 'diem-node', is it installed?",
             )
         } else {
             let project_root = self.app_conf.workspace.source_path.clone().unwrap();
@@ -98,7 +94,7 @@ impl Node {
             let bin_str = debug_bin.to_str().unwrap();
             let args = vec!["--config", &config_file_name];
             if verbose {
-                println!("Starting 'libra-node' with args: {:?}", args.join(" "));
+                println!("Starting 'diem-node' with args: {:?}", args.join(" "));
             }
             spawn_process(
                 bin_str,
@@ -191,7 +187,14 @@ impl Node {
                 "failed to run 'ol', is it installed?",
             )
         } else {
-            let project_root = self.app_conf.workspace.source_path.clone().unwrap();
+            let project_root = match self.app_conf.workspace.source_path.clone(){
+                Some(p) => p,
+                None => {
+                  println!("ERROR: can't start web-monitor in dev mode. It doesn't seem like you have workspace.source_path set in 0L.toml. Exiting.");
+                  exit(1);
+                },
+            };
+
             let debug_bin = project_root.join("target/debug/ol");
             let bin_str = debug_bin.to_str().unwrap();
 

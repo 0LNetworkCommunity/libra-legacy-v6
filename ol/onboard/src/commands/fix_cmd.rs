@@ -7,22 +7,23 @@ use std::fs;
 use crate::{commands::wizard_val_cmd::write_account_json, prelude::app_config};
 use super::wizard_val_cmd::get_autopay_batch;
 use abscissa_core::{Command, Options, Runnable, status_info, time::{DateTime, Utc}};
-use libra_genesis_tool::key;
-use libra_types::waypoint::Waypoint;
-// use libra_genesis_tool::keyscheme::KeyScheme;
 use ol_keys::wallet;
 use ol::config::AppCfg;
 use ol_types::pay_instruction::{InstructionType, PayInstruction, write_batch_file};
+use diem_genesis_tool::key;
+use diem_types::waypoint::Waypoint;
 
 /// `fix` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct FixCmd {
-    #[options(help = "waypoint to set")]
-    waypoint: Option<Waypoint>,
-    #[options(help = "migrate account json")]
-    account: bool,
-    #[options(help = "fix operator key")]
-    operator: bool,
+  #[options(help = "waypoint to set")]
+  waypoint: Option<Waypoint>,
+
+  #[options(help = "migrate account json")]
+  account: bool,
+
+  #[options(help = "fix operator key")]
+  operator: bool,  
 }
 
 impl Runnable for FixCmd {
@@ -31,13 +32,13 @@ impl Runnable for FixCmd {
         status_info!("\nOnboard fix", "migrating account.json");
         let cfg = app_config();
         let home_dir = &cfg.workspace.node_home;
-        let namespace = &cfg.profile.auth_key;
+        let namespace = cfg.profile.auth_key.to_string();
         // set the waypoint
         if let Some(w) = self.waypoint {
-          key::set_waypoint(home_dir, namespace, w);
+          key::set_waypoint(home_dir, &namespace, w);
         }
         if self.operator {
-          key::set_operator_key(home_dir, namespace);
+          key::set_operator_key(home_dir, &namespace);
         }
 
         if self.account {
@@ -59,7 +60,8 @@ pub fn migrate_account_json(cfg: &AppCfg) {
         &home_path,
         &cfg,
         &wallet,
-        false, // TODO: Do we need swarm case for this?
+        false,
+        false // TODO: Do we need swarm case for this?
     );
 
     let account_json_path = cfg.workspace.node_home.clone().join("account.json");
@@ -84,7 +86,6 @@ pub fn migrate_account_json(cfg: &AppCfg) {
         autopay_signed,
     );
 }
-
 
 /// migrate autopay.json for archive purposes
 pub fn migrate_autopay_json_format(cfg: &AppCfg, instructions: Vec<PayInstruction>) {

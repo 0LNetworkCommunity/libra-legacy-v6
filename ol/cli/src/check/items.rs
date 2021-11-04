@@ -37,7 +37,7 @@ pub struct Items {
   /// has operator account set
   pub has_operator_set: bool,
   /// has operator positive balance
-  pub has_operator_positive_balance: bool,
+  pub has_operator_positive_balance: bool,  
 }
 
 impl Default for Items {
@@ -57,7 +57,7 @@ impl Default for Items {
       node_mode: None,
       has_autopay: false,
       has_operator_set: false,
-      has_operator_positive_balance: false,
+      has_operator_positive_balance: false,      
     }
   }
 }

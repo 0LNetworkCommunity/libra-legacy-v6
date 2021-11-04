@@ -1,5 +1,5 @@
 module M {
-    struct S<T: copyable> { b: bool }
+    struct S<T: copy + drop> { b: bool }
 
     foo<T>() {
         let x: Self.S<T>;
@@ -7,4 +7,4 @@ module M {
     }
 }
 
-// check: CONSTRAINT_KIND_MISMATCH
+// check: CONSTRAINT_NOT_SATISFIED

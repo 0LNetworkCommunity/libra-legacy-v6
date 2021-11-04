@@ -1,8 +1,7 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
-#![deny(missing_docs)]
 // Increase recursion limit to allow for use of select! macro.
 #![recursion_limit = "1024"]
 

@@ -2,25 +2,25 @@
 
 ## Abstract
 
-This document describes the spec of a Libra node's state synchronizer component,
+This document describes the spec of a Diem node's state synchronizer component,
 which is responsible for synchronizing a node's local ledger to the latest state in
-the Libra Payment Network.
+the Diem Payment Network.
 
 This document is organized as follows:
 
 1. Overview: high-level outline of the the state synchronizer design and
 functionality.
 2. Sync Protocols: specify technical requirements of various sync protocols
-recognized in the Libra Network.
-3. Network Protocol: the State Synchronizer LibraNet protocol used to participate
-as a node in the Libra Network
+recognized in the Diem Network.
+3. Network Protocol: the State Synchronizer DiemNet protocol used to participate
+as a node in the Diem Network
 4. Abstracted Modules: external components that state synchronizer interfaces with
 
 
 ## Overview
 
 State Synchronizer is a system component that is responsible for syncing ledger
-state among peers in the Libra Payment Network. Using state sync, a Libra node
+state among peers in the Diem Payment Network. Using state sync, a Diem node
 can discover and update to a more recent ledger state if available with the following
 general flow:
 1. A node sends a [`GetChunkRequest`](#getchunkrequest) to a remote peer
@@ -44,7 +44,7 @@ they rely only on the state synchronizer to discover and sync to a more recent
 ledger state.
 
 3. [Waypoint sync](#waypoint-sync): When a node starts up, it can specify a waypoint
-to sync its local state to - see section 3.4 in [this paper](https://github.com/libra/libra/blob/master/documentation/tech-papers/lbft-verification/lbft-verification.pdf) for more context and
+to sync its local state to - see section 3.4 in [this paper](https://github.com/diem/diem/blob/main/documentation/tech-papers/lbft-verification/lbft-verification.pdf) for more context and
 motivation for waypoint sync, as this specification primarily focuses on
 the technical requirements for the waypoint sync protocol. Waypoint sync
 happens at node initialization and must be completed before the node participates
@@ -58,7 +58,7 @@ for the technical requirements for each of these sync protocols.
 ## Sync Protocols
 
 This section describes the technical requirements for the sync protocols
-supported in the Libra Network.
+supported in the Diem Network.
 
 For each sync protocol, we specify:
 * requester: specs for the node requesting sync
@@ -275,12 +275,12 @@ specification.
 
 ```rust
 /// Sends `message` to `recipient`
-fn send_to(recipient: PeerId, message: StateSynchronizerMsg)
+fn send_to(recipient: PeerId, message: StateSyncMessage)
 ```
 
 ### Consensus
 
-State synchronizer processes consensus's  [`StateComputer::sync_to` calls](https://github.com/libra/libra/tree/master/specifications/consensus#statecomputer)
+State synchronizer processes consensus's  [`StateComputer::sync_to` calls](https://github.com/diem/diem/tree/main/specifications/consensus#statecomputer)
 by going through the [validator sync protocol](#validator-sync), and notifies
 consensus once the ledger state has reached the version in the ledger info
 in consensus' request.
@@ -295,7 +295,7 @@ Implementing and coordinating this interaction is an implementation detail.
 
 ### Execution
 
-State synchronizer uses execution's [`ChunkExecutor` interface](https://github.com/libra/libra/tree/master/specifications/trusted_computing_base/execution_correctness#executor-interface)
+State synchronizer uses execution's [`ChunkExecutor` interface](https://github.com/diem/diem/tree/main/specifications/trusted_computing_base/execution_correctness#executor-interface)
 to execute and store transactions to storage
 
 ### Storage

@@ -1,5 +1,5 @@
 //! new-transaction
-module Test {
+module {{default}}::Test {
     struct T { b: bool }
 
     public fun new_t(): T {
@@ -17,4 +17,4 @@ fun main() {
     Test { b: _ } = t;
 }
 }
-// check: MoveSourceCompilerError
+// check: "Unbound type" "in current scope"

@@ -1,50 +1,84 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! Support for running the VM to execute and verify transactions.
 
+use serde::Serialize;
+use std::{
+    env,
+    fs::{self, OpenOptions},
+    io::Write,
+    path::{Path, PathBuf},
+};
+
 use crate::{
     account::{Account, AccountData},
     data_store::{FakeDataStore, GENESIS_CHANGE_SET, GENESIS_CHANGE_SET_FRESH},
+    golden_outputs::GoldenOutputs,
+    keygen::KeyGen,
 };
-use compiled_stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
-use libra_crypto::HashValue;
-use libra_state_view::StateView;
-use libra_types::{
+use diem_crypto::HashValue;
+use diem_framework_releases::{
+    current_module_blobs, current_modules, legacy::transaction_scripts::LegacyStdlibScript,
+};
+use diem_state_view::StateView;
+use diem_types::{
     access_path::AccessPath,
     account_config::{AccountResource, BalanceResource, CORE_CODE_ADDRESS},
     block_metadata::{new_block_event_key, BlockMetadata, NewBlockEvent},
-    on_chain_config::{OnChainConfig, VMPublishingOption, ValidatorSet},
+    on_chain_config::{
+        DiemVersion, OnChainConfig, VMPublishingOption, ValidatorSet, DIEM_MAX_KNOWN_VERSION,
+    },
     transaction::{
-        SignedTransaction, Transaction, TransactionOutput, TransactionStatus, VMValidatorResult,
+        ChangeSet, SignedTransaction, Transaction, TransactionOutput, TransactionStatus,
+        VMValidatorResult,
     },
     vm_status::{KeptVMStatus, VMStatus},
     write_set::WriteSet,
 };
-use libra_vm::{
-    data_cache::RemoteStorage, txn_effects_to_writeset_and_events, LibraVM, LibraVMValidator,
-    VMExecutor, VMValidator,
+use diem_vm::{
+    convert_changeset_and_events, data_cache::RemoteStorage, DiemVM, DiemVMValidator, VMExecutor,
+    VMValidator,
 };
 use move_core_types::{
-    account_address::AccountAddress,
-    gas_schedule::{GasAlgebra, GasUnits},
     identifier::Identifier,
     language_storage::{ModuleId, TypeTag},
 };
 use move_vm_runtime::{logging::NoContextLog, move_vm::MoveVM};
-use move_vm_types::{
-    gas_schedule::{zero_cost_schedule, CostStrategy},
-    values::Value,
-};
-use vm::CompiledModule;
+use move_vm_types::gas_schedule::GasStatus;
+
+static RNG_SEED: [u8; 32] = [9u8; 32];
+
+pub const RELEASE_1_1_GENESIS: &[u8] =
+    include_bytes!("../genesis-release-1-1/release-1-1-genesis.blob");
+pub const RELEASE_1_1_GENESIS_PRIVKEY: &[u8] =
+    include_bytes!("../genesis-release-1-1/release-1-1-privkey.blob");
+pub const RELEASE_1_1_GENESIS_PUBKEY: &[u8] =
+    include_bytes!("../genesis-release-1-1/release-1-1-pubkey.blob");
+
+const ENV_TRACE_DIR: &str = "TRACE";
+
+/// Directory structure of the trace dir
+pub const TRACE_FILE_NAME: &str = "name";
+pub const TRACE_FILE_ERROR: &str = "error";
+pub const TRACE_DIR_META: &str = "meta";
+pub const TRACE_DIR_DATA: &str = "data";
+pub const TRACE_DIR_INPUT: &str = "input";
+pub const TRACE_DIR_OUTPUT: &str = "output";
+
+/// Maps block number N to the index of the input and output transactions
+pub type TraceSeqMapping = (usize, Vec<usize>, Vec<usize>);
 
 /// Provides an environment to run a VM instance.
 ///
-/// This struct is a mock in-memory implementation of the Libra executor.
+/// This struct is a mock in-memory implementation of the Diem executor.
 #[derive(Debug)]
 pub struct FakeExecutor {
     data_store: FakeDataStore,
     block_time: u64,
+    executed_output: Option<GoldenOutputs>,
+    trace_dir: Option<PathBuf>,
+    rng: KeyGen,
 }
 
 impl FakeExecutor {
@@ -53,9 +87,18 @@ impl FakeExecutor {
         let mut executor = FakeExecutor {
             data_store: FakeDataStore::default(),
             block_time: 0,
+            executed_output: None,
+            trace_dir: None,
+            rng: KeyGen::from_seed(RNG_SEED),
         };
         executor.apply_write_set(write_set);
         executor
+    }
+
+    /// Create an executor from a saved genesis blob
+    pub fn from_saved_genesis(saved_genesis_blob: &[u8]) -> Self {
+        let change_set = bcs::from_bytes::<ChangeSet>(saved_genesis_blob).unwrap();
+        Self::from_genesis(change_set.write_set())
     }
 
     /// Creates an executor from the genesis file GENESIS_FILE_LOCATION
@@ -70,9 +113,9 @@ impl FakeExecutor {
 
     pub fn allowlist_genesis() -> Self {
         Self::custom_genesis(
-            stdlib_modules(StdLibOptions::Compiled).to_vec(),
+            current_module_blobs(),
             None,
-            VMPublishingOption::locked(StdlibScript::allowlist()),
+            VMPublishingOption::locked(LegacyStdlibScript::allowlist()),
         )
     }
 
@@ -84,11 +127,7 @@ impl FakeExecutor {
             panic!("Allowlisted transactions are not supported as a publishing option")
         }
 
-        Self::custom_genesis(
-            stdlib_modules(StdLibOptions::Compiled).to_vec(),
-            None,
-            publishing_options,
-        )
+        Self::custom_genesis(current_module_blobs(), None, publishing_options)
     }
 
     /// Creates an executor in which no genesis state has been applied yet.
@@ -96,6 +135,48 @@ impl FakeExecutor {
         FakeExecutor {
             data_store: FakeDataStore::default(),
             block_time: 0,
+            executed_output: None,
+            trace_dir: None,
+            rng: KeyGen::from_seed(RNG_SEED),
+        }
+    }
+
+    pub fn set_golden_file(&mut self, test_name: &str) {
+        // 'test_name' includes ':' in the names, lets re-write these to be '_'s so that these
+        // files can persist on windows machines.
+        let file_name = test_name.replace(':', "_");
+        self.executed_output = Some(GoldenOutputs::new(&file_name));
+
+        // NOTE: tracing is only available when
+        //  - the e2e test outputs a golden file,
+        //  - the environment variable is properly set, and
+        //  - the diem version is at the latest version
+        if let Some(env_trace_dir) = env::var_os(ENV_TRACE_DIR) {
+            let diem_version = DiemVersion::fetch_config(&self.data_store);
+            if diem_version.map_or(false, |version| version == DIEM_MAX_KNOWN_VERSION) {
+                let trace_dir = Path::new(&env_trace_dir).join(file_name);
+                if trace_dir.exists() {
+                    fs::remove_dir_all(&trace_dir).expect("Failed to clean up the trace directory");
+                }
+                fs::create_dir_all(&trace_dir).expect("Failed to create the trace directory");
+                let mut name_file = OpenOptions::new()
+                    .write(true)
+                    .create_new(true)
+                    .open(trace_dir.join(TRACE_FILE_NAME))
+                    .unwrap();
+                name_file.write_all(test_name.as_bytes()).unwrap();
+                for sub_dir in &[
+                    TRACE_DIR_META,
+                    TRACE_DIR_DATA,
+                    TRACE_DIR_INPUT,
+                    TRACE_DIR_OUTPUT,
+                ] {
+                    fs::create_dir(trace_dir.join(sub_dir)).unwrap_or_else(|err| {
+                        panic!("Failed to create <trace>/{} directory: {}", sub_dir, err)
+                    });
+                }
+                self.trace_dir = Some(trace_dir);
+            }
         }
     }
 
@@ -103,16 +184,19 @@ impl FakeExecutor {
     /// initialization done.
     pub fn stdlib_only_genesis() -> Self {
         let mut genesis = Self::no_genesis();
-        for module in stdlib_modules(StdLibOptions::Compiled) {
+        let blobs = current_module_blobs();
+        let modules = current_modules();
+        assert!(blobs.len() == modules.len());
+        for (module, bytes) in modules.iter().zip(blobs) {
             let id = module.self_id();
-            genesis.add_module(&id, module);
+            genesis.add_module(&id, bytes.to_vec());
         }
         genesis
     }
 
     /// Creates fresh genesis from the stdlib modules passed in.
     pub fn custom_genesis(
-        genesis_modules: Vec<CompiledModule>,
+        genesis_modules: &[Vec<u8>],
         validator_accounts: Option<usize>,
         publishing_options: VMPublishingOption,
     ) -> Self {
@@ -124,12 +208,27 @@ impl FakeExecutor {
         Self::from_genesis(genesis.0.write_set())
     }
 
+    /// Create one instance of [`AccountData`] without saving it to data store.
+    pub fn create_raw_account(&mut self) -> Account {
+        Account::new_from_seed(&mut self.rng)
+    }
+
+    /// Create one instance of [`AccountData`] without saving it to data store.
+    pub fn create_raw_account_data(&mut self, balance: u64, seq_num: u64) -> AccountData {
+        AccountData::new_from_seed(&mut self.rng, balance, seq_num)
+    }
+
+    /// Create one instance of [`AccountData`] with XDX balance without saving it to data store.
+    pub fn create_xdx_raw_account_data(&mut self, balance: u64, seq_num: u64) -> AccountData {
+        AccountData::new_xdx_from_seed(&mut self.rng, balance, seq_num)
+    }
+
     /// Creates a number of [`Account`] instances all with the same balance and sequence number,
     /// and publishes them to this executor's data store.
     pub fn create_accounts(&mut self, size: usize, balance: u64, seq_num: u64) -> Vec<Account> {
         let mut accounts: Vec<Account> = Vec::with_capacity(size);
         for _i in 0..size {
-            let account_data = AccountData::new(balance, seq_num);
+            let account_data = AccountData::new_from_seed(&mut self.rng, balance, seq_num);
             self.add_account_data(&account_data);
             accounts.push(account_data.into_account());
         }
@@ -149,8 +248,8 @@ impl FakeExecutor {
     /// Adds a module to this executor's data store.
     ///
     /// Does not do any sort of verification on the module.
-    pub fn add_module(&mut self, module_id: &ModuleId, module: &CompiledModule) {
-        self.data_store.add_module(module_id, module)
+    pub fn add_module(&mut self, module_id: &ModuleId, module_blob: Vec<u8>) {
+        self.data_store.add_module(module_id, module_blob)
     }
 
     /// Reads the resource [`Value`] for an account from this executor's data store.
@@ -159,7 +258,7 @@ impl FakeExecutor {
         let data_blob = StateView::get(&self.data_store, &ap)
             .expect("account must exist in data store")
             .unwrap_or_else(|| panic!("Can't fetch account resource for {}", account.address()));
-        lcs::from_bytes(data_blob.as_slice()).ok()
+        bcs::from_bytes(data_blob.as_slice()).ok()
     }
 
     /// Reads the balance resource value for an account from this executor's data store with the
@@ -173,7 +272,7 @@ impl FakeExecutor {
         StateView::get(&self.data_store, &ap)
             .unwrap_or_else(|_| panic!("account {:?} must exist in data store", account.address()))
             .map(|data_blob| {
-                lcs::from_bytes(data_blob.as_slice()).expect("Failure decoding balance resource")
+                bcs::from_bytes(data_blob.as_slice()).expect("Failure decoding balance resource")
             })
     }
 
@@ -185,12 +284,11 @@ impl FakeExecutor {
         &self,
         txn_block: Vec<SignedTransaction>,
     ) -> Result<Vec<TransactionOutput>, VMStatus> {
-        LibraVM::execute_block(
+        self.execute_transaction_block(
             txn_block
                 .into_iter()
                 .map(Transaction::UserTransaction)
                 .collect(),
-            &self.data_store,
         )
     }
 
@@ -200,7 +298,7 @@ impl FakeExecutor {
         &self,
         txn_block: Vec<SignedTransaction>,
     ) -> Result<Vec<(VMStatus, TransactionOutput)>, VMStatus> {
-        LibraVM::execute_block_and_keep_vm_status(
+        DiemVM::execute_block_and_keep_vm_status(
             txn_block
                 .into_iter()
                 .map(Transaction::UserTransaction)
@@ -234,7 +332,47 @@ impl FakeExecutor {
         &self,
         txn_block: Vec<Transaction>,
     ) -> Result<Vec<TransactionOutput>, VMStatus> {
-        LibraVM::execute_block(txn_block, &self.data_store)
+        let mut trace_map = TraceSeqMapping::default();
+
+        // dump serialized transaction details before execution, if tracing
+        if let Some(trace_dir) = &self.trace_dir {
+            let trace_data_dir = trace_dir.join(TRACE_DIR_DATA);
+            trace_map.0 = Self::trace(trace_data_dir.as_path(), self.get_state_view());
+            let trace_input_dir = trace_dir.join(TRACE_DIR_INPUT);
+            for txn in &txn_block {
+                let input_seq = Self::trace(trace_input_dir.as_path(), txn);
+                trace_map.1.push(input_seq);
+            }
+        }
+
+        let output = DiemVM::execute_block(txn_block, &self.data_store);
+        if let Some(logger) = &self.executed_output {
+            logger.log(format!("{:?}\n", output).as_str());
+        }
+
+        // dump serialized transaction output after execution, if tracing
+        if let Some(trace_dir) = &self.trace_dir {
+            match &output {
+                Ok(results) => {
+                    let trace_output_dir = trace_dir.join(TRACE_DIR_OUTPUT);
+                    for res in results {
+                        let output_seq = Self::trace(trace_output_dir.as_path(), res);
+                        trace_map.2.push(output_seq);
+                    }
+                }
+                Err(e) => {
+                    let mut error_file = OpenOptions::new()
+                        .write(true)
+                        .create_new(true)
+                        .open(trace_dir.join(TRACE_FILE_ERROR))
+                        .unwrap();
+                    error_file.write_all(e.to_string().as_bytes()).unwrap();
+                }
+            }
+            let trace_meta_dir = trace_dir.join(TRACE_DIR_META);
+            Self::trace(trace_meta_dir.as_path(), &trace_map);
+        }
+        output
     }
 
     pub fn execute_transaction(&self, txn: SignedTransaction) -> TransactionOutput {
@@ -247,6 +385,21 @@ impl FakeExecutor {
             .expect("A block with one transaction should have one output")
     }
 
+    fn trace<P: AsRef<Path>, T: Serialize>(dir: P, item: &T) -> usize {
+        let dir = dir.as_ref();
+        let seq = fs::read_dir(dir).expect("Unable to read trace dir").count();
+        let bytes = bcs::to_bytes(item)
+            .unwrap_or_else(|err| panic!("Failed to serialize the trace item: {:?}", err));
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(dir.join(seq.to_string()))
+            .expect("Unable to create a trace file");
+        file.write_all(&bytes)
+            .expect("Failed to write to the trace file");
+        seq
+    }
+
     /// Get the blob for the associated AccessPath
     pub fn read_from_access_path(&self, path: &AccessPath) -> Option<Vec<u8>> {
         StateView::get(&self.data_store, path).unwrap()
@@ -254,7 +407,7 @@ impl FakeExecutor {
 
     /// Verifies the given transaction by running it through the VM verifier.
     pub fn verify_transaction(&self, txn: SignedTransaction) -> VMValidatorResult {
-        let vm = LibraVMValidator::new(self.get_state_view());
+        let vm = DiemVMValidator::new(self.get_state_view());
         vm.validate_transaction(txn, &self.data_store)
     }
 
@@ -285,7 +438,7 @@ impl FakeExecutor {
         // check if we emit the expected event, there might be more events for transaction fees
         let event = output.events()[0].clone();
         assert_eq!(event.key(), &new_block_event_key());
-        assert!(lcs::from_bytes::<NewBlockEvent>(event.event_data()).is_ok());
+        assert!(bcs::from_bytes::<NewBlockEvent>(event.event_data()).is_ok());
         self.apply_write_set(output.write_set());
     }
 
@@ -320,9 +473,9 @@ impl FakeExecutor {
         // check if we emit the expected event, there might be more events for transaction fees
         let event = output.events()[0].clone();
 
-        assert!(lcs::from_bytes::<NewBlockEvent>(event.event_data()).is_ok());
+        assert!(bcs::from_bytes::<NewBlockEvent>(event.event_data()).is_ok());
         self.apply_write_set(output.write_set());
-    }
+    }    
 
     fn module(name: &str) -> ModuleId {
         ModuleId::new(CORE_CODE_ADDRESS, Identifier::new(name).unwrap())
@@ -345,12 +498,10 @@ impl FakeExecutor {
         module_name: &str,
         function_name: &str,
         type_params: Vec<TypeTag>,
-        args: Vec<Value>,
-        sender: &AccountAddress,
+        args: Vec<Vec<u8>>,
     ) {
         let write_set = {
-            let cost_table = zero_cost_schedule();
-            let mut cost_strategy = CostStrategy::system(&cost_table, GasUnits::new(100_000_000));
+            let mut gas_status = GasStatus::new_unmetered();
             let vm = MoveVM::new();
             let remote_view = RemoteStorage::new(&self.data_store);
             let mut session = vm.new_session(&remote_view);
@@ -361,8 +512,7 @@ impl FakeExecutor {
                     &Self::name(function_name),
                     type_params,
                     args,
-                    *sender,
-                    &mut cost_strategy,
+                    &mut gas_status,
                     &log_context,
                 )
                 .unwrap_or_else(|e| {
@@ -373,9 +523,9 @@ impl FakeExecutor {
                         e.into_vm_status()
                     )
                 });
-            let effects = session.finish().expect("Failed to generate txn effects");
-            let (writeset, _events) =
-                txn_effects_to_writeset_and_events(effects).expect("Failed to generate writeset");
+            let (changeset, events) = session.finish().expect("Failed to generate txn effects");
+            let (writeset, _events) = convert_changeset_and_events(changeset, events)
+                .expect("Failed to generate writeset");
             writeset
         };
         self.data_store.add_write_set(&write_set);
@@ -386,11 +536,9 @@ impl FakeExecutor {
         module_name: &str,
         function_name: &str,
         type_params: Vec<TypeTag>,
-        args: Vec<Value>,
-        sender: &AccountAddress,
+        args: Vec<Vec<u8>>,
     ) -> Result<WriteSet, VMStatus> {
-        let cost_table = zero_cost_schedule();
-        let mut cost_strategy = CostStrategy::system(&cost_table, GasUnits::new(100_000_000));
+        let mut gas_status = GasStatus::new_unmetered();
         let vm = MoveVM::new();
         let remote_view = RemoteStorage::new(&self.data_store);
         let mut session = vm.new_session(&remote_view);
@@ -401,14 +549,13 @@ impl FakeExecutor {
                 &Self::name(function_name),
                 type_params,
                 args,
-                *sender,
-                &mut cost_strategy,
+                &mut gas_status,
                 &log_context,
             )
             .map_err(|e| e.into_vm_status())?;
-        let effects = session.finish().expect("Failed to generate txn effects");
+        let (changeset, events) = session.finish().expect("Failed to generate txn effects");
         let (writeset, _events) =
-            txn_effects_to_writeset_and_events(effects).expect("Failed to generate writeset");
+            convert_changeset_and_events(changeset, events).expect("Failed to generate writeset");
         Ok(writeset)
     }
 }

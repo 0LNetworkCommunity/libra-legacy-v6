@@ -2,15 +2,14 @@
 
 #![allow(clippy::never_loop)]
 
-use std::{fs::File, path::{PathBuf}};
-
-use crate::{application::app_config};
+use crate::application::app_config;
 use abscissa_core::{Command, Options, Runnable};
-use libra_genesis_tool::node_files;
-use libra_types::waypoint::Waypoint;
-use std::io::Write;
-
+use anyhow::{bail, Error};
+use diem_genesis_tool::ol_node_files;
+use diem_types::waypoint::Waypoint;
 use ol_types::config::AppCfg;
+use std::{fs::File, io::Write, path::PathBuf};
+
 /// `files` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct FilesCmd {
@@ -19,15 +18,14 @@ pub struct FilesCmd {
     #[options(help = "github org of genesis repo")]
     github_org: Option<String>,
     #[options(help = "repo with with genesis transactions")]
-    repo: Option<String>,   
-    #[options(help = "build genesis from ceremony repo")]
-    rebuild_genesis: bool, 
+    repo: Option<String>,
+    #[options(help = "use a genesis file instead of building")]
+    prebuilt_genesis: Option<PathBuf>,
     #[options(help = "only make fullnode config files")]
     fullnode_only: bool,
     #[options(help = "optional waypoint")]
     waypoint: Option<Waypoint>,
 }
-
 
 impl Runnable for FilesCmd {
     /// Print version message
@@ -38,67 +36,101 @@ impl Runnable for FilesCmd {
             &self.chain_id,
             &self.github_org,
             &self.repo,
-            &self.rebuild_genesis,
+            &self.prebuilt_genesis,
             &self.fullnode_only,
             self.waypoint,
-        ) 
+        )
     }
 }
 
 /// create genesis files
-fn genesis_files(
+pub fn genesis_files(
     miner_config: &AppCfg,
     chain_id: &Option<u8>,
     github_org: &Option<String>,
     repo: &Option<String>,
-    rebuild_genesis: &bool,
+    prebuilt_genesis: &Option<PathBuf>,
     fullnode_only: &bool,
     way_opt: Option<Waypoint>,
 ) {
     let home_dir = miner_config.workspace.node_home.to_owned();
     // 0L convention is for the namespace of the operator to be appended by '-oper'
-    let namespace = miner_config.profile.auth_key.clone() + "-oper";
-    
-    node_files::write_node_config_files(
-        home_dir.clone(), 
+    let namespace = miner_config.profile.auth_key.clone().to_string() + "-oper";
+
+    ol_node_files::write_node_config_files(
+        home_dir.clone(),
         chain_id.unwrap_or(1),
         &github_org.clone().unwrap_or("OLSF".to_string()),
         &repo.clone().unwrap_or("experimetal-genesis".to_string()),
         &namespace,
-        rebuild_genesis,
+        prebuilt_genesis,
         fullnode_only,
-        way_opt
-    ).unwrap();
+        way_opt,
+        &None,
+    )
+    .unwrap();
 
-    println!("validator configurations initialized, file saved to: {:?}", &home_dir.join("validator.node.yaml"));
-
+    println!(
+        "validator configurations initialized, file saved to: {:?}",
+        &home_dir.join("validator.node.yaml")
+    );
 }
 
 /// fetch files from github
-pub fn get_files(
+pub fn fetch_genesis_files_from_repo(
     home_dir: PathBuf,
     github_org: &Option<String>,
-    repo: &Option<String>
-) {
+    repo: &Option<String>,
+) -> Result<PathBuf, Error> {
     let github_org = github_org.clone().unwrap_or("OLSF".to_string());
-    let repo = repo.clone().unwrap_or("genesis-archive".to_string());
+    let repo = repo.clone().unwrap_or("genesis-registration".to_string());
 
+    let base_url = format!(
+        "https://raw.githubusercontent.com/{github_org}/{repo}/main/genesis/",
+        github_org = github_org,
+        repo = repo
+    );
 
-    let base_url = format!("https://raw.githubusercontent.com/{github_org}/{repo}/main/genesis/", github_org=github_org, repo=repo);
+    // let w_res = reqwest::blocking::get(&format!("{}genesis_waypoint.txt", base_url));
+    // let w_path = &home_dir.join("genesis_waypoint");
+    // let mut w_file = File::create(&w_path)?;
+    // let w_content =  w_res.unwrap().text()?;
+    // w_file.write_all(w_content.as_bytes())?;
+    // println!("genesis waypoint fetched, file saved to: {:?}", w_path);
 
-    let w_res = reqwest::blocking::get(&format!("{}genesis_waypoint", base_url));
+    let g_res = reqwest::blocking::get(&format!("{}genesis_waypoint.txt", base_url))?;
+    match g_res.status().is_success() {
+        true => {
+            let g_content = g_res.bytes().unwrap().to_vec();
+            // default path for genesis.blob
+            let g_path = &home_dir.join("genesis_waypoint.txt");
+            let mut g_file = File::create(&g_path).expect("couldn't create file");
+            g_file.write_all(g_content.as_slice())?;
 
-    let w_path = &home_dir.join("genesis_waypoint");
-    let mut w_file = File::create(&w_path).expect("couldn't create file");
-    let w_content =  w_res.unwrap().text().unwrap();
-    w_file.write_all(w_content.as_bytes()).unwrap();
-    println!("genesis waypoint fetched, file saved to: {:?}", w_path);
+            println!("genesis_waypoint.txt fetched, file saved to: {:?}", g_path);
+        }
+        _ => {
+            bail!("Cannot fetch genesis_waypoint.txt from Github repo: {}", base_url);
+        }
+    };
 
-    let g_res = reqwest::blocking::get(&format!("{}genesis.blob", base_url));
-    let g_path = &home_dir.join("genesis.blob");
-    let mut g_file = File::create(&g_path).expect("couldn't create file");
-    let g_content =  g_res.unwrap().bytes().unwrap().to_vec(); //.text().unwrap();
-    g_file.write_all(g_content.as_slice()).unwrap();
+    let g_res = reqwest::blocking::get(&format!("{}genesis.blob", base_url))?;
+    match g_res.status().is_success() {
+        true => {
+            let g_content = g_res.bytes().unwrap().to_vec();
 
-    println!("genesis transactions fetched, file saved to: {:?}", g_path);
+            // default path for genesis.blob
+            let g_path = &home_dir.join("genesis.blob");
+            let mut g_file = File::create(&g_path).expect("couldn't create file");
+            g_file.write_all(g_content.as_slice())?;
+
+            println!("genesis.blob fetched, file saved to: {:?}", g_path);
+            return Ok(g_path.to_owned());
+        }
+        _ => {
+            bail!("Cannot fetch genesis.blob from Github repo: {}", base_url);
+        }
+    };
+
+    
 }

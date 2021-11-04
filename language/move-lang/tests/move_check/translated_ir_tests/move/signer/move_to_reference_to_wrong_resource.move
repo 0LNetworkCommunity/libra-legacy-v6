@@ -1,6 +1,6 @@
-module M {
-    resource struct R { f: bool }
-    resource struct X { f: bool }
+module 0x8675309::M {
+    struct R has key { f: bool }
+    struct X has key { f: bool }
     fun t0(s: &signer) {
         move_to<R>(s, X { f: false })
     }
@@ -9,9 +9,9 @@ module M {
 
 //! new-transaction
 
-module N {
-    resource struct R<T> { f: T }
-    resource struct X<T> { f: T }
+module 0x8675309::N {
+    struct R<T> has key { f: T }
+    struct X<T> has key { f: T }
     fun t0(s: &signer) {
         () = move_to<X<bool>>(s, R { f: false })
     }

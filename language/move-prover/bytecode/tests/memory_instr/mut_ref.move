@@ -1,27 +1,27 @@
 address 0x1 {
 module TestMutRefs {
-    struct T { value: u64 }
+    struct T has copy, drop { value: u64 }
 
     // Resource to track the sum of values in T
-    resource struct TSum {
+    struct TSum has key {
         sum: u64
     }
 
     public fun new(x: u64): T acquires TSum {
-        let r = borrow_global_mut<TSum>(0x0);
+        let r = borrow_global_mut<TSum>(@0x0);
         r.sum = r.sum + x;
         T{value: x}
     }
 
     public fun delete(x: T) acquires TSum {
-        let r = borrow_global_mut<TSum>(0x0);
+        let r = borrow_global_mut<TSum>(@0x0);
         let T{value: v} = x;
         r.sum = r.sum - v;
     }
 
     public fun increment(x: &mut T) acquires TSum {
         x.value = x.value + 1;
-        let r = borrow_global_mut<TSum>(0x0);
+        let r = borrow_global_mut<TSum>(@0x0);
         r.sum = r.sum + 1;
     }
 
@@ -31,13 +31,13 @@ module TestMutRefs {
 
     public fun decrement_invalid(x: &mut T) acquires TSum {
         x.value = x.value - 1;
-        let r = borrow_global_mut<TSum>(0x0);
+        let r = borrow_global_mut<TSum>(@0x0);
         r.sum = r.sum - 1;
     }
 
     fun private_decrement(x: &mut T) acquires TSum {
         x.value = x.value - 1;
-        let r = borrow_global_mut<TSum>(0x0);
+        let r = borrow_global_mut<TSum>(@0x0);
         r.sum = r.sum - 1;
     }
 

@@ -1,7 +1,7 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-//! Noise is a [protocol framework](https://noiseprotocol.org/) which we use in Libra to
+//! Noise is a [protocol framework](https://noiseprotocol.org/) which we use in Diem to
 //! encrypt and authenticate communications between nodes of the network.
 //!
 //! This file implements a stripped-down version of Noise_IK_25519_AESGCM_SHA256.
@@ -13,10 +13,10 @@
 //! Usage example:
 //!
 //! ```
-//! use libra_crypto::{noise, x25519, traits::*};
+//! use diem_crypto::{noise, x25519, traits::*};
 //! use rand::prelude::*;
 //!
-//! # fn main() -> Result<(), libra_crypto::noise::NoiseError> {
+//! # fn main() -> Result<(), diem_crypto::noise::NoiseError> {
 //! let mut rng = rand::thread_rng();
 //! let initiator_static = x25519::PrivateKey::generate(&mut rng);
 //! let responder_static = x25519::PrivateKey::generate(&mut rng);
@@ -55,6 +55,7 @@
 //! # }
 //! ```
 //!
+#![allow(clippy::integer_arithmetic)]
 
 use crate::{hash::HashValue, hkdf::Hkdf, traits::Uniform as _, x25519};
 use aes_gcm::{
@@ -181,7 +182,11 @@ fn hash(data: &[u8]) -> Vec<u8> {
 
 fn hkdf(ck: &[u8], dh_output: Option<&[u8]>) -> Result<(Vec<u8>, Vec<u8>), NoiseError> {
     let dh_output = dh_output.unwrap_or_else(|| &[]);
-    let hkdf_output = Hkdf::<sha2::Sha256>::extract_then_expand(Some(ck), dh_output, None, 64);
+    let hkdf_output = if dh_output.is_empty() {
+        Hkdf::<sha2::Sha256>::extract_then_expand_no_ikm(Some(ck), None, 64)
+    } else {
+        Hkdf::<sha2::Sha256>::extract_then_expand(Some(ck), dh_output, None, 64)
+    };
 
     let hkdf_output = hkdf_output.map_err(|_| NoiseError::Hkdf)?;
     let (k1, k2) = hkdf_output.split_at(32);
@@ -635,10 +640,7 @@ impl NoiseSession {
 
     /// encrypts a message for the other peers (post-handshake)
     /// the function encrypts in place, and returns the authentication tag as result
-    pub fn write_message_in_place<'a>(
-        &mut self,
-        message: &'a mut [u8],
-    ) -> Result<Vec<u8>, NoiseError> {
+    pub fn write_message_in_place(&mut self, message: &mut [u8]) -> Result<Vec<u8>, NoiseError> {
         // checks
         if !self.valid {
             return Err(NoiseError::SessionClosed);

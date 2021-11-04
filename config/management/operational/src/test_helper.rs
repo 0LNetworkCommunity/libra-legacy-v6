@@ -1,21 +1,29 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     account_resource::SimplifiedAccountResource,
     command::{Command, CommandName},
+    keys::{load_key, EncodingType, KeyType},
     validator_config::DecryptedValidatorConfig,
     validator_set::DecryptedValidatorInfo,
     TransactionContext,
 };
-use libra_config::config;
-use libra_crypto::{ed25519::Ed25519PublicKey, x25519};
-use libra_management::{error::Error, secure_backend::DISK};
-use libra_network_address::NetworkAddress;
-use libra_types::{account_address::AccountAddress, chain_id::ChainId, waypoint::Waypoint};
+use diem_config::{config, config::Peer};
+use diem_crypto::{ed25519::Ed25519PublicKey, x25519};
+use diem_management::{error::Error, secure_backend::DISK};
+use diem_types::{
+    account_address::AccountAddress, chain_id::ChainId, network_address::NetworkAddress,
+    waypoint::Waypoint, PeerId,
+};
+use itertools::Itertools;
+use std::{
+    collections::{HashMap, HashSet},
+    path::Path,
+};
 use structopt::StructOpt;
 
-const TOOL_NAME: &str = "libra-operational-tool";
+const TOOL_NAME: &str = "diem-operational-tool";
 
 /// A helper to test the operational tool in tests
 pub struct OperationalTool {
@@ -26,6 +34,13 @@ pub struct OperationalTool {
 impl OperationalTool {
     pub fn new(host: String, chain_id: ChainId) -> OperationalTool {
         OperationalTool { host, chain_id }
+    }
+
+    pub fn test() -> OperationalTool {
+        OperationalTool {
+            host: "localhost".to_string(),
+            chain_id: ChainId::test(),
+        }
     }
 
     pub fn account_resource(
@@ -65,12 +80,11 @@ impl OperationalTool {
         name: &str,
         path_to_key: &str,
         backend: &config::SecureBackend,
-        disable_validate: bool, //////// 0L ////////
+        disable_validate: bool,
         command_name: CommandName,
         execute: fn(Command) -> Result<(TransactionContext, AccountAddress), Error>,
     ) -> Result<(TransactionContext, AccountAddress), Error> {
         let args = format!(
-            //////// 0L ////////
             "
                 {command}
                 --name {name}
@@ -86,7 +100,6 @@ impl OperationalTool {
             host = self.host,
             chain_id = self.chain_id.id(),
             backend_args = backend_args(backend)?,
-            //////// 0L ////////
             disable_validate = optional_flag("disable-validate", disable_validate),
         );
 
@@ -99,13 +112,13 @@ impl OperationalTool {
         name: &str,
         path_to_key: &str,
         backend: &config::SecureBackend,
-        disable_validate: bool, //////// 0L ////////
+        disable_validate: bool,
     ) -> Result<(TransactionContext, AccountAddress), Error> {
         self.create_account(
             name,
             path_to_key,
             backend,
-            disable_validate, //////// 0L ////////
+            disable_validate,
             CommandName::CreateValidator,
             |cmd| cmd.create_validator(),
         )
@@ -116,13 +129,13 @@ impl OperationalTool {
         name: &str,
         path_to_key: &str,
         backend: &config::SecureBackend,
-        disable_validate: bool, //////// 0L ////////
+        disable_validate: bool,
     ) -> Result<(TransactionContext, AccountAddress), Error> {
         self.create_account(
             name,
             path_to_key,
             backend,
-            disable_validate, //////// 0L ////////
+            disable_validate,
             CommandName::CreateValidatorOperator,
             |cmd| cmd.create_validator_operator(),
         )
@@ -132,6 +145,8 @@ impl OperationalTool {
         &self,
         key_name: &str,
         key_file: &str,
+        key_type: KeyType,
+        encoding: EncodingType,
         backend: &config::SecureBackend,
         command_name: CommandName,
         execute: fn(Command) -> Result<(), Error>,
@@ -141,11 +156,15 @@ impl OperationalTool {
                 {command}
                 --key-name {key_name}
                 --key-file {key_file}
+                --key-type {key_type:?}
+                --encoding {encoding:?}
                 --validator-backend {backend_args}
             ",
             command = command(TOOL_NAME, command_name),
             key_name = key_name,
             key_file = key_file,
+            key_type = key_type,
+            encoding = encoding,
             backend_args = backend_args(backend)?,
         );
 
@@ -157,11 +176,15 @@ impl OperationalTool {
         &self,
         key_name: &str,
         key_file: &str,
+        key_type: KeyType,
+        encoding: EncodingType,
         backend: &config::SecureBackend,
     ) -> Result<(), Error> {
         self.extract_key(
             key_name,
             key_file,
+            key_type,
+            encoding,
             backend,
             CommandName::ExtractPublicKey,
             |cmd| cmd.extract_public_key(),
@@ -172,24 +195,110 @@ impl OperationalTool {
         &self,
         key_name: &str,
         key_file: &str,
+        key_type: KeyType,
+        encoding: EncodingType,
         backend: &config::SecureBackend,
     ) -> Result<(), Error> {
         self.extract_key(
             key_name,
             key_file,
+            key_type,
+            encoding,
             backend,
             CommandName::ExtractPrivateKey,
             |cmd| cmd.extract_private_key(),
         )
     }
 
+    pub fn extract_peer_from_file(
+        &self,
+        key_file: &Path,
+        encoding: EncodingType,
+    ) -> Result<HashMap<PeerId, Peer>, Error> {
+        let args = format!(
+            "
+                {command}
+                --key-file {key_file}
+                --encoding {encoding:?}
+            ",
+            command = command(TOOL_NAME, CommandName::ExtractPeerFromFile),
+            key_file = key_file.to_str().unwrap(),
+            encoding = encoding
+        );
+
+        let command = Command::from_iter(args.split_whitespace());
+        command.extract_peer_from_file()
+    }
+
+    pub fn extract_peer_from_storage(
+        &self,
+        key_name: &str,
+        backend: &config::SecureBackend,
+    ) -> Result<HashMap<PeerId, Peer>, Error> {
+        let args = format!(
+            "
+                {command}
+                --key-name {key_name}
+                --validator-backend {backend_args}
+            ",
+            command = command(TOOL_NAME, CommandName::ExtractPeerFromStorage),
+            key_name = key_name,
+            backend_args = backend_args(backend)?,
+        );
+
+        let command = Command::from_iter(args.split_whitespace());
+        command.extract_peer_from_storage()
+    }
+
+    pub fn extract_peers_from_keys(
+        &self,
+        keys: HashSet<x25519::PublicKey>,
+        output_file: &Path,
+    ) -> Result<HashMap<PeerId, Peer>, Error> {
+        let args = format!(
+            "
+                {command}
+                --keys {keys}
+                --output-file {output_file}
+            ",
+            command = command(TOOL_NAME, CommandName::ExtractPeersFromKeys),
+            keys = keys.iter().join(","),
+            output_file = output_file.to_str().unwrap(),
+        );
+
+        let command = Command::from_iter(args.split_whitespace());
+        command.extract_peers_from_keys()
+    }
+
+    pub fn generate_key(
+        &self,
+        key_type: KeyType,
+        key_file: &Path,
+        encoding: EncodingType,
+    ) -> Result<x25519::PrivateKey, Error> {
+        let args = format!(
+            "
+                {command}
+                --key-type {key_type:?}
+                --key-file {key_file}
+                --encoding {encoding:?}
+            ",
+            command = command(TOOL_NAME, CommandName::GenerateKey),
+            key_type = key_type,
+            key_file = key_file.to_str().unwrap(),
+            encoding = encoding,
+        );
+        let command = Command::from_iter(args.split_whitespace());
+        command.generate_key()?;
+        load_key(key_file.to_path_buf(), encoding)
+    }
+
     pub fn insert_waypoint(
         &self,
         waypoint: Waypoint,
-        backend: &config::SecureBackend,        
-        set_genesis: bool, //////// 0L ////////
+        backend: &config::SecureBackend,
+        set_genesis: bool,
     ) -> Result<(), Error> {
-        //////// 0L ////////
         let args = format!(
             "
                 {command}
@@ -200,7 +309,6 @@ impl OperationalTool {
             command = command(TOOL_NAME, CommandName::InsertWaypoint),
             waypoint = waypoint,
             backend_args = backend_args(backend)?,
-            //////// 0L ////////            
             set_genesis = optional_flag("set-genesis", set_genesis),
         );
         let command = Command::from_iter(args.split_whitespace());
@@ -226,7 +334,6 @@ impl OperationalTool {
         command.print_account()
     }
 
-    //////// 0L ////////
     pub fn print_key(
         &self,
         key_name: &str,
@@ -265,7 +372,6 @@ impl OperationalTool {
         command.print_waypoint()
     }
 
-    //////// 0L ////////    
     pub fn set_validator_config(
         &self,
         validator_address: Option<NetworkAddress>,
@@ -303,11 +409,10 @@ impl OperationalTool {
     fn rotate_key<T>(
         &self,
         backend: &config::SecureBackend,
-        disable_validate: bool, //////// 0L ////////
+        disable_validate: bool,
         name: CommandName,
         execute: fn(Command) -> Result<T, Error>,
     ) -> Result<T, Error> {
-        //////// 0L ////////
         let args = format!(
             "
                 {command}
@@ -318,16 +423,14 @@ impl OperationalTool {
             ",
             command = command(TOOL_NAME, name),
             host = self.host,
-            chain_id = self.chain_id.id(),            
+            chain_id = self.chain_id.id(),
             backend_args = backend_args(backend)?,
-            //////// 0L ////////
             disable_validate = optional_flag("disable-validate", disable_validate),
         );
         let command = Command::from_iter(args.split_whitespace());
         execute(command)
     }
 
-    //////// 0L ////////    
     pub fn rotate_consensus_key(
         &self,
         backend: &config::SecureBackend,
@@ -341,7 +444,6 @@ impl OperationalTool {
         )
     }
 
-    //////// 0L ////////    
     pub fn rotate_operator_key(
         &self,
         backend: &config::SecureBackend,
@@ -355,7 +457,6 @@ impl OperationalTool {
         )
     }
 
-    //////// 0L ////////
     pub fn rotate_operator_key_with_custom_validation(
         &self,
         backend: &config::SecureBackend,
@@ -385,7 +486,6 @@ impl OperationalTool {
         command.rotate_operator_key()
     }
 
-    //////// 0L ////////    
     pub fn rotate_validator_network_key(
         &self,
         backend: &config::SecureBackend,
@@ -399,7 +499,6 @@ impl OperationalTool {
         )
     }
 
-    //////// 0L ////////    
     pub fn rotate_fullnode_network_key(
         &self,
         backend: &config::SecureBackend,
@@ -417,7 +516,7 @@ impl OperationalTool {
         &self,
         account_address: AccountAddress,
         sequence_number: u64,
-    ) -> Result<TransactionContext, Error> {  //////// 0L ////////
+    ) -> Result<TransactionContext, Error> {
         let args = format!(
             "
                 {command}
@@ -440,9 +539,8 @@ impl OperationalTool {
         name: &str,
         account_address: AccountAddress,
         backend: &config::SecureBackend,
-        disable_validate: bool, //////// 0L ////////
+        disable_validate: bool,
     ) -> Result<TransactionContext, Error> {
-        //////// 0L ////////
         let args = format!(
             "
                 {command}
@@ -459,7 +557,6 @@ impl OperationalTool {
             chain_id = self.chain_id.id(),
             account_address = account_address,
             backend_args = backend_args(backend)?,
-            //////// 0L ////////            
             disable_validate = optional_flag("disable-validate", disable_validate),
         );
 
@@ -470,19 +567,25 @@ impl OperationalTool {
     pub fn validator_config(
         &self,
         account_address: AccountAddress,
-        backend: &config::SecureBackend,
+        backend: Option<&config::SecureBackend>,
     ) -> Result<DecryptedValidatorConfig, Error> {
+        let validator_backend = if let Some(backend) = backend {
+            Some(backend_args(backend)?)
+        } else {
+            None
+        };
+
         let args = format!(
             "
                 {command}
                 --json-server {json_server}
                 --account-address {account_address}
-                --validator-backend {backend_args}
+                {validator_backend}
             ",
             command = command(TOOL_NAME, CommandName::ValidatorConfig),
             json_server = self.host,
             account_address = account_address,
-            backend_args = backend_args(backend)?,
+            validator_backend = optional_arg("validator-backend", validator_backend),
         );
 
         let command = Command::from_iter(args.split_whitespace());
@@ -492,26 +595,31 @@ impl OperationalTool {
     pub fn validator_set(
         &self,
         account_address: Option<AccountAddress>,
-        backend: &config::SecureBackend,
+        backend: Option<&config::SecureBackend>,
     ) -> Result<Vec<DecryptedValidatorInfo>, Error> {
+        let validator_backend = if let Some(backend) = backend {
+            Some(backend_args(backend)?)
+        } else {
+            None
+        };
+
         let args = format!(
             "
                 {command}
                 {account_address}
                 --json-server {json_server}
-                --validator-backend {backend_args}
+                {validator_backend}
             ",
             command = command(TOOL_NAME, CommandName::ValidatorSet),
             json_server = self.host,
             account_address = optional_arg("account-address", account_address),
-            backend_args = backend_args(backend)?,
+            validator_backend = optional_arg("validator-backend", validator_backend),
         );
 
         let command = Command::from_iter(args.split_whitespace());
         command.validator_set()
     }
 
-    //////// 0L ////////
     fn validator_operation<T>(
         &self,
         account_address: AccountAddress,
@@ -540,7 +648,6 @@ impl OperationalTool {
         execute(command)
     }
 
-    //////// 0L ////////
     pub fn add_validator(
         &self,
         account_address: AccountAddress,
@@ -556,7 +663,6 @@ impl OperationalTool {
         )
     }
 
-    //////// 0L ////////
     pub fn remove_validator(
         &self,
         account_address: AccountAddress,
@@ -586,7 +692,6 @@ fn optional_arg<T: std::fmt::Display>(name: &'static str, maybe_value: Option<T>
     }
 }
 
-//////// 0L ////////
 /// Allow flags to be optional
 fn optional_flag(flag: &'static str, enable_flag: bool) -> String {
     if enable_flag {

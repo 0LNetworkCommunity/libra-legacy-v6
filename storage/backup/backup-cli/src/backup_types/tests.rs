@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -15,13 +15,15 @@ use crate::{
     storage::{local_fs::LocalFs, BackupStorage},
     utils::{
         backup_service_client::BackupServiceClient, test_utils::start_local_backup_service,
-        GlobalBackupOpt, GlobalRestoreOpt, GlobalRestoreOptions,
+        ConcurrentDownloadsOpt, GlobalBackupOpt, GlobalRestoreOpt, GlobalRestoreOptions,
+        RocksdbOpt, TrustedWaypointOpt,
     },
 };
+use diem_config::config::RocksdbConfig;
+use diem_temppath::TempPath;
+use diem_types::transaction::Version;
+use diemdb::DiemDB;
 use executor_test_helpers::integration_test_impl::test_execution_with_storage_impl;
-use libra_temppath::TempPath;
-use libra_types::transaction::Version;
-use libradb::LibraDB;
 use proptest::prelude::*;
 use std::{convert::TryInto, sync::Arc};
 use storage_interface::DbReader;
@@ -29,7 +31,7 @@ use tokio::time::Duration;
 
 #[derive(Debug)]
 struct TestData {
-    db: Arc<LibraDB>,
+    db: Arc<DiemDB>,
     txn_start_ver: Version,
     state_snapshot_ver: Option<Version>,
     target_ver: Version,
@@ -66,7 +68,7 @@ fn test_end_to_end_impl(d: TestData) {
     let backup_dir = TempPath::new();
     backup_dir.create_as_dir().unwrap();
     let store: Arc<dyn BackupStorage> = Arc::new(LocalFs::new(backup_dir.path().to_path_buf()));
-    let (mut rt, port) = start_local_backup_service(Arc::clone(&d.db));
+    let (rt, port) = start_local_backup_service(Arc::clone(&d.db));
     let client = Arc::new(BackupServiceClient::new(format!(
         "http://localhost:{}",
         port
@@ -109,6 +111,9 @@ fn test_end_to_end_impl(d: TestData) {
         dry_run: false,
         db_dir: Some(tgt_db_dir.path().to_path_buf()),
         target_version: Some(d.target_ver),
+        trusted_waypoints: TrustedWaypointOpt::default(),
+        rocksdb_opt: RocksdbOpt::default(),
+        concurernt_downloads: ConcurrentDownloadsOpt::default(),
     }
     .try_into()
     .unwrap();
@@ -144,17 +149,28 @@ fn test_end_to_end_impl(d: TestData) {
     .unwrap();
 
     // Check
-    let tgt_db = LibraDB::open(
+    let tgt_db = DiemDB::open(
         &tgt_db_dir,
         false, /* read_only */
         None,  /* pruner */
+        RocksdbConfig::default(),
     )
     .unwrap();
     assert_eq!(
-        d.db.get_transactions(d.txn_start_ver, num_txns_to_backup, d.target_ver, false)
-            .unwrap(),
+        d.db.get_transactions(
+            d.txn_start_ver,
+            num_txns_to_backup,
+            d.target_ver,
+            true /* fetch_events */
+        )
+        .unwrap(),
         tgt_db
-            .get_transactions(d.txn_start_ver, num_txns_to_backup, d.target_ver, false)
+            .get_transactions(
+                d.txn_start_ver,
+                num_txns_to_backup,
+                d.target_ver,
+                true /* fetch_events */
+            )
             .unwrap()
     );
     if let Some(state_snapshot_ver) = d.state_snapshot_ver {

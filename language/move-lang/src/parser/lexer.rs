@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{errors::*, parser::syntax::make_loc, FileCommentMap, MatchedFileCommentMap};
@@ -9,11 +9,8 @@ use std::{collections::BTreeMap, fmt};
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Tok {
     EOF,
-    AddressValue,
     NumValue,
-    U8Value,
-    U64Value,
-    U128Value,
+    NumTypedValue,
     ByteStringValue,
     IdentifierValue,
     Exclaim,
@@ -52,8 +49,6 @@ pub enum Tok {
     Break,
     Continue,
     Copy,
-    Copyable,
-    Define,
     Else,
     False,
     If,
@@ -64,7 +59,6 @@ pub enum Tok {
     Move,
     Native,
     Public,
-    Resource,
     Return,
     Spec,
     Struct,
@@ -78,6 +72,9 @@ pub enum Tok {
     Fun,
     Script,
     Const,
+    Friend,
+    NumSign,
+    AtSign,
 }
 
 impl fmt::Display for Tok {
@@ -85,11 +82,8 @@ impl fmt::Display for Tok {
         use Tok::*;
         let s = match *self {
             EOF => "[end-of-file]",
-            AddressValue => "[Address]",
             NumValue => "[Num]",
-            U8Value => "[U8]",
-            U64Value => "[U64]",
-            U128Value => "[U128]",
+            NumTypedValue => "[NumTyped]",
             ByteStringValue => "[ByteString]",
             IdentifierValue => "[Identifier]",
             Exclaim => "!",
@@ -128,8 +122,6 @@ impl fmt::Display for Tok {
             Break => "break",
             Continue => "continue",
             Copy => "copy",
-            Copyable => "copyable",
-            Define => "define",
             Else => "else",
             False => "false",
             If => "if",
@@ -140,7 +132,6 @@ impl fmt::Display for Tok {
             Move => "move",
             Native => "native",
             Public => "public",
-            Resource => "resource",
             Return => "return",
             Spec => "spec",
             Struct => "struct",
@@ -154,6 +145,9 @@ impl fmt::Display for Tok {
             Fun => "fun",
             Script => "script",
             Const => "const",
+            Friend => "friend",
+            NumSign => "#",
+            AtSign => "@",
         };
         fmt::Display::fmt(s, formatter)
     }
@@ -307,15 +301,15 @@ fn find_token(file: &'static str, text: &str, start_offset: usize) -> Result<(To
     let (tok, len) = match c {
         '0'..='9' => {
             if text.starts_with("0x") && text.len() > 2 {
-                let hex_len = get_hex_digits_len(&text[2..]);
+                let (tok, hex_len) = get_hex_number(&text[2..]);
                 if hex_len == 0 {
                     // Fall back to treating this as a "0" token.
                     (Tok::NumValue, 1)
                 } else {
-                    (Tok::AddressValue, 2 + hex_len)
+                    (tok, 2 + hex_len)
                 }
             } else {
-                get_decimal_number(&text)
+                get_decimal_number(text)
             }
         }
         'A'..='Z' | 'a'..='z' | '_' => {
@@ -413,6 +407,8 @@ fn find_token(file: &'static str, text: &str, start_offset: usize) -> Result<(To
         '^' => (Tok::Caret, 1),
         '{' => (Tok::LBrace, 1),
         '}' => (Tok::RBrace, 1),
+        '#' => (Tok::NumSign, 1),
+        '@' => (Tok::AtSign, 1),
         _ => {
             let loc = make_loc(file, start_offset, start_offset);
             return Err(vec![(loc, format!("Invalid character: '{}'", c))]);
@@ -428,40 +424,40 @@ fn find_token(file: &'static str, text: &str, start_offset: usize) -> Result<(To
 // checks on the first character.
 fn get_name_len(text: &str) -> usize {
     text.chars()
-        .position(|c| match c {
-            'a'..='z' | 'A'..='Z' | '_' | '0'..='9' => false,
-            _ => true,
-        })
+        .position(|c| !matches!(c, 'a'..='z' | 'A'..='Z' | '_' | '0'..='9'))
         .unwrap_or_else(|| text.len())
 }
 
 fn get_decimal_number(text: &str) -> (Tok, usize) {
-    let len = text
+    let num_text_len = text
         .chars()
-        .position(|c| match c {
-            '0'..='9' => false,
-            _ => true,
-        })
+        .position(|c| !matches!(c, '0'..='9'))
         .unwrap_or_else(|| text.len());
-    let rest = &text[len..];
-    if rest.starts_with("u8") {
-        (Tok::U8Value, len + 2)
-    } else if rest.starts_with("u64") {
-        (Tok::U64Value, len + 3)
-    } else if rest.starts_with("u128") {
-        (Tok::U128Value, len + 4)
-    } else {
-        (Tok::NumValue, len)
-    }
+    get_number_maybe_with_suffix(text, num_text_len)
 }
 
 // Return the length of the substring containing characters in [0-9a-fA-F].
-fn get_hex_digits_len(text: &str) -> usize {
-    text.find(|c| match c {
-        'a'..='f' | 'A'..='F' | '0'..='9' => false,
-        _ => true,
-    })
-    .unwrap_or_else(|| text.len())
+fn get_hex_number(text: &str) -> (Tok, usize) {
+    let num_text_len = text
+        .find(|c| !matches!(c, 'a'..='f' | 'A'..='F' | '0'..='9'))
+        .unwrap_or_else(|| text.len());
+    get_number_maybe_with_suffix(text, num_text_len)
+}
+
+// Given the text for a number literal and the length for the characters that match to the number
+// portion, checks for a typed suffix.
+fn get_number_maybe_with_suffix(text: &str, num_text_len: usize) -> (Tok, usize) {
+    let rest = &text[num_text_len..];
+    if rest.starts_with("u8") {
+        (Tok::NumTypedValue, num_text_len + 2)
+    } else if rest.starts_with("u64") {
+        (Tok::NumTypedValue, num_text_len + 3)
+    } else if rest.starts_with("u128") {
+        (Tok::NumTypedValue, num_text_len + 4)
+    } else {
+        // No typed suffix
+        (Tok::NumValue, num_text_len)
+    }
 }
 
 // Return the length of the quoted string, or None if there is no closing quote.
@@ -491,11 +487,10 @@ fn get_name_token(name: &str) -> Tok {
         "const" => Tok::Const,
         "continue" => Tok::Continue,
         "copy" => Tok::Copy,
-        "copyable" => Tok::Copyable,
-        "define" => Tok::Define,
         "else" => Tok::Else,
         "false" => Tok::False,
         "fun" => Tok::Fun,
+        "friend" => Tok::Friend,
         "if" => Tok::If,
         "invariant" => Tok::Invariant,
         "let" => Tok::Let,
@@ -504,7 +499,6 @@ fn get_name_token(name: &str) -> Tok {
         "move" => Tok::Move,
         "native" => Tok::Native,
         "public" => Tok::Public,
-        "resource" => Tok::Resource,
         "return" => Tok::Return,
         "script" => Tok::Script,
         "spec" => Tok::Spec,

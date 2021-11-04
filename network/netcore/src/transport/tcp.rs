@@ -1,16 +1,19 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! TCP Transport
-use crate::{compat::IoCompat, transport::Transport};
+use crate::transport::Transport;
+use diem_types::{
+    network_address::{parse_dns_tcp, parse_ip_tcp, parse_tcp, IpFilter, NetworkAddress},
+    PeerId,
+};
 use futures::{
-    future::{self, Future},
+    future::{self, Either, Future},
     io::{AsyncRead, AsyncWrite},
     ready,
     stream::Stream,
 };
-use libra_network_address::{parse_dns_tcp, parse_ip_tcp, IpFilter, NetworkAddress};
-use libra_types::PeerId;
+use proxy::Proxy;
 use std::{
     convert::TryFrom,
     fmt::Debug,
@@ -18,42 +21,27 @@ use std::{
     net::SocketAddr,
     pin::Pin,
     task::{Context, Poll},
-    time::Duration,
 };
-use tokio::net::{lookup_host, TcpListener, TcpStream};
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::{lookup_host, TcpListener, TcpStream},
+};
+use tokio_util::compat::Compat;
+use url::Url;
 
 /// Transport to build TCP connections
 #[derive(Debug, Clone, Default)]
 pub struct TcpTransport {
-    /// Size of the recv buffer size to set for opened sockets, or `None` to keep default.
-    pub recv_buffer_size: Option<usize>,
-    /// Size of the send buffer size to set for opened sockets, or `None` to keep default.
-    pub send_buffer_size: Option<usize>,
     /// TTL to set for opened sockets, or `None` to keep default.
     pub ttl: Option<u32>,
-    /// Keep alive duration to set for opened sockets, or `None` to keep default.
-    #[allow(clippy::option_option)]
-    pub keepalive: Option<Option<Duration>>,
     /// `TCP_NODELAY` to set for opened sockets, or `None` to keep default.
     pub nodelay: Option<bool>,
 }
 
 impl TcpTransport {
     fn apply_config(&self, stream: &TcpStream) -> ::std::io::Result<()> {
-        if let Some(size) = self.recv_buffer_size {
-            stream.set_recv_buffer_size(size)?;
-        }
-
-        if let Some(size) = self.send_buffer_size {
-            stream.set_send_buffer_size(size)?;
-        }
-
         if let Some(ttl) = self.ttl {
             stream.set_ttl(ttl)?;
-        }
-
-        if let Some(keepalive) = self.keepalive {
-            stream.set_keepalive(keepalive)?;
         }
 
         if let Some(nodelay) = self.nodelay {
@@ -82,6 +70,7 @@ impl Transport for TcpTransport {
         }
 
         let listener = ::std::net::TcpListener::bind((ipaddr, port))?;
+        listener.set_nonblocking(true)?;
         let listener = TcpListener::try_from(listener)?;
         let listen_addr = NetworkAddress::from(listener.local_addr()?);
 
@@ -105,8 +94,37 @@ impl Transport for TcpTransport {
             .or_else(|| parse_dns_tcp(protos).map(|_| ()))
             .ok_or_else(|| invalid_addr_error(&addr))?;
 
+        let proxy = Proxy::new();
+
+        let proxy_addr = {
+            use diem_types::network_address::Protocol::*;
+
+            let addr = match protos.first() {
+                Some(Ip4(ip)) => proxy.https(&ip.to_string()),
+                Some(Ip6(ip)) => proxy.https(&ip.to_string()),
+                Some(Dns(name)) | Some(Dns4(name)) | Some(Dns6(name)) => proxy.https(name.as_ref()),
+                _ => None,
+            };
+
+            addr.and_then(|https_proxy| Url::parse(&https_proxy).ok())
+                .and_then(|url| {
+                    if url.has_host() && url.scheme() == "http" {
+                        Some(format!(
+                            "{}:{}",
+                            url.host().unwrap(),
+                            url.port_or_known_default().unwrap()
+                        ))
+                    } else {
+                        None
+                    }
+                })
+        };
+
         let f: Pin<Box<dyn Future<Output = io::Result<TcpStream>> + Send + 'static>> =
-            Box::pin(resolve_and_connect(addr));
+            Box::pin(match proxy_addr {
+                Some(proxy_addr) => Either::Left(connect_via_proxy(proxy_addr, addr)),
+                None => Either::Right(resolve_and_connect(addr)),
+            });
 
         Ok(TcpOutbound {
             inner: f,
@@ -116,21 +134,19 @@ impl Transport for TcpTransport {
 }
 
 /// Try to lookup the dns name, then filter addrs according to the `IpFilter`.
-fn resolve_with_filter<'a>(
+async fn resolve_with_filter(
     ip_filter: IpFilter,
-    dns_name: &'a str,
+    dns_name: &str,
     port: u16,
-) -> impl Future<Output = io::Result<impl Iterator<Item = SocketAddr> + 'a>> + 'a {
-    async move {
-        Ok(lookup_host((dns_name, port))
-            .await?
-            .filter(move |socketaddr| ip_filter.matches(socketaddr.ip())))
-    }
+) -> io::Result<impl Iterator<Item = SocketAddr> + '_> {
+    Ok(lookup_host((dns_name, port))
+        .await?
+        .filter(move |socketaddr| ip_filter.matches(socketaddr.ip())))
 }
 
 /// Note: we need to take ownership of this `NetworkAddress` (instead of just
 /// borrowing the `&[Protocol]` slice) so this future can be `Send + 'static`.
-async fn resolve_and_connect(addr: NetworkAddress) -> io::Result<TcpStream> {
+pub async fn resolve_and_connect(addr: NetworkAddress) -> io::Result<TcpStream> {
     let protos = addr.as_slice();
 
     if let Some(((ipaddr, port), _addr_suffix)) = parse_ip_tcp(protos) {
@@ -165,6 +181,43 @@ async fn resolve_and_connect(addr: NetworkAddress) -> io::Result<TcpStream> {
     }
 }
 
+async fn connect_via_proxy(proxy_addr: String, addr: NetworkAddress) -> io::Result<TcpStream> {
+    let protos = addr.as_slice();
+
+    if let Some(((host, port), _addr_suffix)) = parse_tcp(protos) {
+        let mut stream = TcpStream::connect(proxy_addr).await?;
+        let mut buffer = [0; 4096];
+        let mut read = 0;
+
+        stream
+            .write_all(&format!("CONNECT {0}:{1} HTTP/1.0\r\n\r\n", host, port).into_bytes())
+            .await?;
+
+        loop {
+            let len = stream.read(&mut buffer[read..]).await?;
+            read += len;
+            let msg = &buffer[..read];
+
+            if len == 0 {
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    format!(
+                        "HTTP proxy CONNECT failed: {}",
+                        String::from_utf8_lossy(&msg)
+                    ),
+                ));
+            } else if msg.len() >= 16
+                && (msg.starts_with(b"HTTP/1.1 200") || msg.starts_with(b"HTTP/1.0 200"))
+                && msg.ends_with(b"\r\n\r\n")
+            {
+                return Ok(stream);
+            }
+        }
+    } else {
+        Err(invalid_addr_error(&addr))
+    }
+}
+
 fn invalid_addr_error(addr: &NetworkAddress) -> io::Error {
     io::Error::new(
         io::ErrorKind::InvalidInput,
@@ -181,23 +234,19 @@ pub struct TcpListenerStream {
 impl Stream for TcpListenerStream {
     type Item = io::Result<(future::Ready<io::Result<TcpSocket>>, NetworkAddress)>;
 
-    fn poll_next(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<Self::Item>> {
-        match Pin::new(&mut self.inner.incoming()).poll_next(context) {
-            Poll::Ready(Some(Ok(socket))) => {
+    fn poll_next(self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<Self::Item>> {
+        match self.inner.poll_accept(context) {
+            Poll::Ready(Ok((socket, addr))) => {
                 if let Err(e) = self.config.apply_config(&socket) {
                     return Poll::Ready(Some(Err(e)));
                 }
-                let dialer_addr = match socket.peer_addr() {
-                    Ok(addr) => NetworkAddress::from(addr),
-                    Err(e) => return Poll::Ready(Some(Err(e))),
-                };
+                let dialer_addr = NetworkAddress::from(addr);
                 Poll::Ready(Some(Ok((
                     future::ready(Ok(TcpSocket::new(socket))),
                     dialer_addr,
                 ))))
             }
-            Poll::Ready(Some(Err(e))) => Poll::Ready(Some(Err(e))),
-            Poll::Ready(None) => Poll::Ready(None),
+            Poll::Ready(Err(e)) => Poll::Ready(Some(Err(e))),
             Poll::Pending => Poll::Pending,
         }
     }
@@ -228,13 +277,15 @@ impl Future for TcpOutbound {
 //TODO Probably should add some tests for this
 #[derive(Debug)]
 pub struct TcpSocket {
-    inner: IoCompat<TcpStream>,
+    inner: Compat<TcpStream>,
 }
 
 impl TcpSocket {
-    fn new(socket: TcpStream) -> Self {
+    pub fn new(socket: TcpStream) -> Self {
+        use tokio_util::compat::TokioAsyncReadCompatExt;
+
         Self {
-            inner: IoCompat::new(socket),
+            inner: socket.compat(),
         }
     }
 }
@@ -271,12 +322,12 @@ impl AsyncWrite for TcpSocket {
 mod test {
     use super::*;
     use crate::transport::{ConnectionOrigin, Transport, TransportExt};
+    use diem_types::PeerId;
     use futures::{
         future::{join, FutureExt},
         io::{AsyncReadExt, AsyncWriteExt},
         stream::StreamExt,
     };
-    use libra_types::PeerId;
     use tokio::runtime::Runtime;
 
     #[tokio::test]
@@ -326,7 +377,7 @@ mod test {
 
     #[test]
     fn test_resolve_with_filter() {
-        let mut rt = Runtime::new().unwrap();
+        let rt = Runtime::new().unwrap();
 
         // note: we only lookup "localhost", which is not really a DNS name, but
         // should always resolve to something and keep this test from being flaky.

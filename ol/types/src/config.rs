@@ -1,10 +1,10 @@
 //! Configs for all 0L apps.
 
-use anyhow::Error;
+use anyhow::{Error, bail};
 use dirs;
-use libra_config::config::NodeConfig;
-use libra_global_constants::{CONFIG_FILE, NODE_HOME};
-use libra_types::{
+use diem_config::config::NodeConfig;
+use diem_global_constants::{CONFIG_FILE, NODE_HOME};
+use diem_types::{
     account_address::AccountAddress, transaction::authenticator::AuthenticationKey,
     waypoint::Waypoint,
 };
@@ -12,9 +12,15 @@ use once_cell::sync::Lazy;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::{fs::{self, File}, io::{Read, Write}, net::Ipv4Addr, path::PathBuf, process::exit, str::FromStr};
+use std::{
+    fs::{self, File}, 
+    io::{Read, Write}, 
+    net::Ipv4Addr, 
+    path::PathBuf, 
+    str::FromStr
+};
 
-use crate::dialogue::{what_home, what_ip, what_statement};
+use crate::dialogue::{add_tower, what_home, what_ip, what_statement};
 
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
 
@@ -23,7 +29,7 @@ pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
     match std::env::var("NODE_ENV") {
         Ok(val) => {
             match val.as_str() {
-                "prod" => true, 
+                "prod" => true,
                 // if anything else is set by user is false
                 _ => false,
             }
@@ -33,16 +39,11 @@ pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
     }
 });
 
+// TODO: this is duplicated in ol/keys/wallet due to dependency cycle. Move to Global constants?
 /// check this is CI environment
 pub static IS_TEST: Lazy<bool> = Lazy::new(|| {
     // assume default if NODE_ENV=prod and TEST=y.
-    if std::env::var("NODE_ENV").unwrap_or("prod".to_string()) != "prod".to_string()
-        && std::env::var("TEST").unwrap_or("n".to_string()) != "n".to_string()
-    {
-        true
-    } else {
-        false
-    }
+    std::env::var("TEST").unwrap_or("n".to_string()) != "n".to_string() 
 });
 
 /// MinerApp Configuration
@@ -62,20 +63,22 @@ pub struct AppCfg {
 /// Get a AppCfg object from toml file
 pub fn parse_toml(path: String) -> Result<AppCfg, Error> {
     let mut config_toml = String::new();
-
     let mut file = File::open(&path)?;
-
     file.read_to_string(&mut config_toml)
-            .unwrap_or_else(|err| panic!("Error while reading config: [{}]", err));
+        .unwrap_or_else(|err| panic!("Error while reading config: [{}]", err));
 
     let cfg: AppCfg = toml::from_str(&config_toml).unwrap();
     Ok(cfg)
-} 
+}
 
 impl AppCfg {
-    /// Gets the dynamic waypoint from libra node's key_store.json
-    pub fn get_waypoint(&self, swarm_path_opt: Option<PathBuf>) -> Result<Waypoint, Error> {
-        let err_msg = Error::msg("Could not get waypoint from cli, key_store.json, nor 0L.toml.");
+    /// Gets the dynamic waypoint from diem node's key_store.json
+    pub fn get_waypoint(
+        &self, swarm_path_opt: Option<PathBuf>
+    ) -> Result<Waypoint, Error> {
+        let err_msg = Error::msg(
+            "Could not get waypoint from cli, key_store.json, nor 0L.toml."
+        );
 
         if let Some(path) = swarm_path_opt {
             return Ok(get_swarm_rpc_url(path).1);
@@ -83,11 +86,13 @@ impl AppCfg {
 
         match fs::File::open(self.get_key_store_path()) {
             Ok(file) => {
-                let json: serde_json::Value =
-                    serde_json::from_reader(file).expect("could not parse JSON in key_store.json");
+                let json: serde_json::Value = serde_json::from_reader(
+                    file
+                ).expect("could not parse JSON in key_store.json");
                 match ajson::get(&json.to_string(), "*/waypoint.value") {
                     Some(value) => value.to_string().parse(),
-                    // If nothing is found in key_store.json fallback to base_waypoint in toml
+                    // If nothing is found in key_store.json fallback 
+                    // to base_waypoint in toml
                     _ => match self.chain_info.base_waypoint {
                         Some(w) => Ok(w),
                         None => Err(err_msg),
@@ -128,32 +133,39 @@ impl AppCfg {
         base_waypoint: &Option<Waypoint>,
         source_path: &Option<PathBuf>,
         statement: Option<String>,
-        ip: Option<Ipv4Addr>,
+        ip: Option<Ipv4Addr>,        
     ) -> AppCfg {
         // TODO: Check if configs exist and warn on overwrite.
         let mut default_config = AppCfg::default();
-        default_config.profile.auth_key = authkey.to_string();
+        default_config.profile.auth_key = authkey;
         default_config.profile.account = account;
 
-                // Get statement which goes into genesis block
+        // Get statement which goes into genesis block
         default_config.profile.statement = match statement {
             Some(s) => s,
             None => what_statement(),
         };
 
+
         default_config.profile.ip = match ip {
             Some(i) => i,
             None => what_ip().unwrap(),
         };
-
         default_config.workspace.node_home = config_path.clone().unwrap_or_else(||{
             what_home(None, None)
         });
 
+        // Add link to previous tower
+        if !*IS_TEST {
+            default_config.profile.tower_link = add_tower(&default_config);
+        }
+        
         if source_path.is_some() {
-          // let source_path = what_source();
-          default_config.workspace.source_path = source_path.clone();
-          default_config.workspace.stdlib_bin_path = Some(source_path.as_ref().unwrap().join("language/stdlib/staged/stdlib.mv"));
+            // let source_path = what_source();
+            default_config.workspace.source_path = source_path.clone();
+            default_config.workspace.stdlib_bin_path = Some(
+                source_path.as_ref().unwrap().join("language/diem-framework/staged/stdlib.mv")
+            );
         }
 
         // override from args
@@ -164,81 +176,67 @@ impl AppCfg {
           if let Some(url) = upstream_peer {
               default_config.profile.upstream_nodes = Some(vec![url.to_owned()]);
               let mut web_monitor_url = url.clone();
-              web_monitor_url.set_port(Some(3030)).unwrap();
-              let epoch_url = &web_monitor_url.join("epoch.json").unwrap();
-              let (e, w) = bootstrap_waypoint_from_upstream(epoch_url).unwrap();
+              let (e, w) = bootstrap_waypoint_from_upstream(&mut web_monitor_url).unwrap();
               default_config.chain_info.base_epoch = Some(e);
-              default_config.chain_info.base_waypoint = Some(w)
+              default_config.chain_info.base_waypoint = Some(w);
           } else {
-            println!("ERROR: Trying to get a starting epoch, and waypoint for configs. Either pass --epoch and --waypoint as CLI args, or provide a URL to fetch this data from --upstream-peer or --template-url");
-            exit(1);
+            default_config.chain_info.base_epoch = None;
+            default_config.chain_info.base_waypoint = None;
+            println!("WARN: No --epoch or --waypoint or upstream --url passed. This should only be done at genesis. If that's not correct either pass --epoch and --waypoint as CLI args, or provide a URL to fetch this data from --upstream-peer or --template-url");
+            // exit(1);
           }
         }
 
         // skip questionnaire if CI
         if *IS_TEST {
-            AppCfg::save_file(&default_config);
+            default_config.save_file();
 
             return default_config;
         }
-
-
-
         fs::create_dir_all(&default_config.workspace.node_home).unwrap();
-
-
-
-        AppCfg::save_file(&default_config);
+        default_config.save_file();
 
         default_config
     }
 
-    /// Save swarm default configs to swarm path
-    /// swarm_path points to the swarm_temp directory
-    /// node_home to the directory of the current swarm persona
-    pub fn init_app_configs_swarm(swarm_path: PathBuf, node_home: PathBuf, source_path: Option<PathBuf>) -> AppCfg {
+  /// Save swarm default configs to swarm path
+  /// swarm_path points to the swarm_temp directory
+  /// node_home to the directory of the current swarm persona
+  pub fn init_app_configs_swarm(
+      swarm_path: PathBuf, node_home: PathBuf, source_path: Option<PathBuf>
+    ) -> AppCfg{
         // println!("init_swarm_config: {:?}", swarm_path); already logged in commands.rs
         let host_config = AppCfg::make_swarm_configs(swarm_path, node_home, source_path);
-        AppCfg::save_file(&host_config);
+        host_config.save_file();
         host_config
-    }
+  }
 
-    fn save_file(host_config: &AppCfg) {
-        let toml = toml::to_string(host_config).unwrap();
-        let home_path = host_config.workspace.node_home.clone();
-        // create home path if doesn't exist, usually only in dev/ci environments.
-        fs::create_dir_all(&home_path).expect("could not create 0L home directory");
-        let toml_path = home_path.join(CONFIG_FILE);
-        let file = fs::File::create(&toml_path);
-        file.unwrap()
-            .write(&toml.as_bytes())
-            .expect("Could not write toml file");
-        println!(
-            "\nhost configs initialized, file saved to: {:?}",
-            &toml_path
-        );
-    }
 
-    /// get configs from swarm
-    /// swarm_path points to the swarm_temp directory
-    /// node_home to the directory of the current swarm persona
-    pub fn make_swarm_configs(swarm_path: PathBuf, node_home: PathBuf, source_path: Option<PathBuf>) -> AppCfg {
+  /// get configs from swarm
+  /// swarm_path points to the swarm_temp directory
+  /// node_home to the directory of the current swarm persona
+  pub fn make_swarm_configs(
+      swarm_path: PathBuf, node_home: PathBuf, source_path: Option<PathBuf>
+    ) -> AppCfg {
         let config_path = swarm_path.join(&node_home).join("node.yaml");
-        let config = NodeConfig::load(&config_path)
-            .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &config_path));
+        let config = NodeConfig::load(&config_path).unwrap_or_else(
+            |_| panic!("Failed to load NodeConfig from file: {:?}", &config_path)
+        );
 
-        let url =
-            Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str())
-                .unwrap();
+        let url = Url::parse(
+            format!("http://localhost:{}", config.json_rpc.address.port()).as_str()
+        ).unwrap();
 
         // upstream configs
         let upstream_config_path = swarm_path.join(&node_home).join("node.yaml");
-        let upstream_config = NodeConfig::load(&upstream_config_path).unwrap_or_else(|_| {
-            panic!(
-                "Failed to load NodeConfig from file: {:?}",
-                &upstream_config_path
-            )
-        });
+        let upstream_config = NodeConfig::load(&upstream_config_path)
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to load NodeConfig from file: {:?}",
+                    &upstream_config_path
+                )
+            }
+        );
         let upstream_url = Url::parse(
             format!(
                 "http://localhost:{}",
@@ -285,6 +283,23 @@ impl AppCfg {
                 .expect("no url provided in config toml")
         }
     }
+
+    /// save the config file to 0L.toml to the workspace home path
+    pub fn save_file(&self) {
+        let toml = toml::to_string(&self).unwrap();
+        let home_path = &self.workspace.node_home.clone();
+        // create home path if doesn't exist, usually only in dev/ci environments.
+        fs::create_dir_all(&home_path).expect("could not create 0L home directory");
+        let toml_path = home_path.join(CONFIG_FILE);
+        let file = fs::File::create(&toml_path);
+        file.unwrap()
+            .write(&toml.as_bytes())
+            .expect("Could not write toml file");
+        println!(
+            "\nhost configs initialized, file saved to: {:?}",
+            &toml_path
+        );
+    }
 }
 
 /// Default configuration settings.
@@ -306,7 +321,7 @@ impl Default for AppCfg {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 /// #[serde(deny_unknown_fields)]
 pub struct Workspace {
-    /// home directory of the libra node, may be the same as miner.
+    /// home directory of the diem node, may be the same as miner.
     pub node_home: PathBuf,
     /// Directory of source code (for developer tests only)
     pub source_path: Option<PathBuf>,
@@ -315,7 +330,8 @@ pub struct Workspace {
     /// Directory for the database
     #[serde(default = "default_db_path")]
     pub db_path: PathBuf,
-    /// Path to which stdlib binaries for upgrades get built typically /language/stdlib/staged/stdlib.mv
+    /// Path to which stdlib binaries for upgrades get built typically 
+    /// /language/diem-framework/staged/stdlib.mv
     pub stdlib_bin_path: Option<PathBuf>,
 }
 
@@ -328,7 +344,7 @@ impl Default for Workspace {
         Self {
             node_home: dirs::home_dir().unwrap().join(NODE_HOME),
             source_path: None,
-            block_dir: "blocks".to_owned(),
+            block_dir: "vdf_proofs".to_owned(),
             db_path: default_db_path(),
             stdlib_bin_path: None,
         }
@@ -353,7 +369,7 @@ pub struct ChainInfo {
 impl Default for ChainInfo {
     fn default() -> Self {
         Self {
-            chain_id: "experimental".to_owned(),
+            chain_id: "1".to_string(),
             base_epoch: Some(0),
             // Mock Waypoint. Miner complains without.
             base_waypoint: Waypoint::from_str(BASE_WAYPOINT).ok(),
@@ -368,7 +384,7 @@ pub struct Profile {
     pub account: AccountAddress,
 
     /// Miner Authorization Key for 0L Blockchain. Note: not the same as public key, nor account.
-    pub auth_key: String,
+    pub auth_key: AuthenticationKey,
 
     /// An opportunity for the Miner to write a message on their genesis block.
     pub statement: String,
@@ -381,17 +397,21 @@ pub struct Profile {
 
     /// Other nodes to connect for fallback connections
     pub upstream_nodes: Option<Vec<Url>>,
+
+    /// Link to another delay tower.
+    pub tower_link: Option<String>,
 }
 
 impl Default for Profile {
     fn default() -> Self {
         Self {
-            auth_key: "".to_owned(),
             account: AccountAddress::from_hex_literal("0x0").unwrap(),
+            auth_key: AuthenticationKey::from_str("0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
             statement: "Protests rage across the nation".to_owned(),
             ip: "0.0.0.0".parse().unwrap(),
             default_node: Some("http://localhost:8080".parse().expect("parse url")),
             upstream_nodes: Some(vec!["http://localhost:8080".parse().expect("parse url")]),
+            tower_link: None,
         }
     }
 }
@@ -399,7 +419,7 @@ impl Default for Profile {
 /// Transaction types
 pub enum TxType {
     /// critical txs
-    Critial,
+    Critical,
     /// management txs
     Mgmt,
     /// miner txs
@@ -434,7 +454,7 @@ impl TxConfigs {
     pub fn get_cost(&self, tx_type: TxType) -> TxCost {
         let ref baseline = self.baseline_cost.clone();
         let cost = match tx_type {
-            TxType::Critial => self.critical_txs_cost.as_ref().unwrap_or_else(|| baseline),
+            TxType::Critical => self.critical_txs_cost.as_ref().unwrap_or_else(|| baseline),
             TxType::Mgmt => self
                 .management_txs_cost
                 .as_ref()
@@ -499,32 +519,47 @@ fn default_cheap_txs_cost() -> Option<TxCost> {
 /// Get swarm configs from swarm files, swarm must be running
 pub fn get_swarm_rpc_url(mut swarm_path: PathBuf) -> (Url, Waypoint) {
     swarm_path.push("0/node.yaml");
-    let config = NodeConfig::load(&swarm_path)
-        .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path));
+    let config = NodeConfig::load(&swarm_path).unwrap_or_else(
+        |_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path)
+    );
 
-    let url = Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str())
-        .unwrap();
+    let url = Url::parse(
+        format!("http://localhost:{}", config.json_rpc.address.port()).as_str()
+    ).unwrap();
     let waypoint = config.base.waypoint.waypoint();
 
     (url, waypoint)
 }
 
 /// Get swarm configs from swarm files, swarm must be running
-pub fn get_swarm_backup_service_url(mut swarm_path: PathBuf, swarm_id: u8) -> Result<Url, Error> {
+pub fn get_swarm_backup_service_url(
+    mut swarm_path: PathBuf, swarm_id: u8
+) -> Result<Url, Error> {
     swarm_path.push(format!("{}/node.yaml", swarm_id));
-    let config = NodeConfig::load(&swarm_path)
-        .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path));
+    let config = NodeConfig::load(&swarm_path).unwrap_or_else(
+        |_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path)
+    );
 
-    let url =
-        Url::parse(format!("http://localhost:{}", config.storage.address.port()).as_str()).unwrap();
+    let url = Url::parse(
+        format!("http://localhost:{}", config.storage.address.port()).as_str()
+    ).unwrap();
+
     Ok(url)
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct EpochJSON {
+  epoch: u64,
+  waypoint: Waypoint,
+}
 /// fetch initial waypoint information from a clean state.
 pub fn bootstrap_waypoint_from_upstream(url: &Url) -> Result<(u64, Waypoint), Error> {
-    let g_res = reqwest::blocking::get(&url.to_string());
-    let string = g_res.unwrap().text().unwrap();
-    let json: serde_json::Value = string.parse().unwrap();
+    let g_res = reqwest::blocking::get(&url.to_string())?;
+    if !g_res.status().is_success() {
+      bail!("could not connect to upstream peer to get bootstrap waypoint, is {} online?", &url.to_string());
+    }
+    let string = g_res.text()?;
+    let json: serde_json::Value = string.parse()?;
     let epoch = json.get("epoch").unwrap().as_u64().unwrap();
     let waypoint = json
         .get("waypoint")

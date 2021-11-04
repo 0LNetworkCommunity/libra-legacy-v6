@@ -1,8 +1,11 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    block_storage::{BlockReader, BlockRetriever, BlockStore},
+    block_storage::{
+        tracing::{observe_block, BlockStage},
+        BlockReader, BlockRetriever, BlockStore,
+    },
     counters,
     error::VerifyError,
     liveness::{
@@ -30,11 +33,10 @@ use consensus_types::{
     vote::Vote,
     vote_msg::VoteMsg,
 };
+use diem_infallible::checked;
+use diem_logger::prelude::*;
+use diem_types::{epoch_state::EpochState, validator_verifier::ValidatorVerifier};
 use fail::fail_point;
-use libra_infallible::duration_since_epoch;
-use libra_logger::prelude::*;
-use libra_trace::prelude::*;
-use libra_types::{epoch_state::EpochState, validator_verifier::ValidatorVerifier};
 #[cfg(test)]
 use safety_rules::ConsensusState;
 use safety_rules::TSafetyRules;
@@ -213,8 +215,8 @@ impl RoundManager {
             proposer_election,
             proposal_generator,
             safety_rules,
-            txn_manager,
             network,
+            txn_manager,
             storage,
             sync_only,
         }
@@ -277,9 +279,7 @@ impl RoundManager {
             .generate_proposal(new_round_event.round)
             .await?;
         let signed_proposal = self.safety_rules.sign_proposal(proposal)?;
-        self.txn_manager.trace_transactions(&signed_proposal);
-        trace_edge!("parent_proposal", {"block", signed_proposal.parent_id()}, {"block", signed_proposal.id()});
-        trace_event!("round_manager::generate_proposal", {"block", signed_proposal.id()});
+        observe_block(signed_proposal.timestamp_usecs(), BlockStage::SIGNED);
         debug!(self.new_log(LogEvent::Propose), "{}", signed_proposal);
         // return proposal
         Ok(ProposalMsg::new(
@@ -295,7 +295,11 @@ impl RoundManager {
         fail_point!("consensus::process_proposal_msg", |_| {
             Err(anyhow::anyhow!("Injected error in process_proposal_msg"))
         });
-        trace_event!("round_manager::pre_process_proposal", {"block", proposal_msg.proposal().id()});
+
+        observe_block(
+            proposal_msg.proposal().timestamp_usecs(),
+            BlockStage::RECEIVED,
+        );
         if self
             .ensure_round_and_sync_up(
                 proposal_msg.proposal().round(),
@@ -403,9 +407,14 @@ impl RoundManager {
             "{}", sync_info
         );
         // To avoid a ping-pong cycle between two peers that move forward together.
-        self.ensure_round_and_sync_up(sync_info.highest_round() + 1, &sync_info, peer, false)
-            .await
-            .context("[RoundManager] Failed to process sync info msg")?;
+        self.ensure_round_and_sync_up(
+            checked!((sync_info.highest_round()) + 1)?,
+            &sync_info,
+            peer,
+            false,
+        )
+        .await
+        .context("[RoundManager] Failed to process sync info msg")?;
         Ok(())
     }
 
@@ -489,6 +498,13 @@ impl RoundManager {
         let author = proposal
             .author()
             .expect("Proposal should be verified having an author");
+
+        info!(
+            self.new_log(LogEvent::ReceiveProposal).remote_peer(author),
+            block_hash = proposal.id(),
+            block_parent_hash = proposal.quorum_cert().certified_block().id(),
+        );
+
         ensure!(
             self.proposer_election.is_valid_proposal(&proposal),
             "[RoundManager] Proposer {} for block {} is not a valid proposer for this round",
@@ -506,17 +522,9 @@ impl RoundManager {
             self.round_state.current_round_deadline(),
         );
 
+        observe_block(proposal.timestamp_usecs(), BlockStage::SYNCED);
+
         let proposal_round = proposal.round();
-
-        debug!(
-            self.new_log(LogEvent::ReceiveProposal).remote_peer(author),
-            "{}", proposal
-        );
-
-        if let Some(time_to_receival) = duration_since_epoch().checked_sub(block_time_since_epoch) {
-            counters::CREATION_TO_RECEIVAL_S.observe_duration(time_to_receival);
-        }
-
         let vote = self
             .execute_and_vote(proposal)
             .await
@@ -539,7 +547,6 @@ impl RoundManager {
     /// * save the updated state to consensus DB
     /// * return a VoteMsg with the LedgerInfo to be committed in case the vote gathers QC.
     async fn execute_and_vote(&mut self, proposed_block: Block) -> anyhow::Result<Vote> {
-        trace_code_block!("round_manager::execute_and_vote", {"block", proposed_block.id()});
         let executed_block = self
             .block_store
             .execute_and_insert_block(proposed_block)
@@ -578,6 +585,7 @@ impl RoundManager {
                 Fg(Reset),
                 executed_block.block()
             ))?;
+        observe_block(executed_block.block().timestamp_usecs(), BlockStage::VOTED);
 
         self.storage
             .save_vote(&vote)
@@ -596,7 +604,6 @@ impl RoundManager {
         fail_point!("consensus::process_vote_msg", |_| {
             Err(anyhow::anyhow!("Injected error in process_vote_msg"))
         });
-        trace_code_block!("round_manager::process_vote", {"block", vote_msg.proposed_block_id()});
         // Check whether this validator is a valid recipient of the vote.
         if self
             .ensure_round_and_sync_up(
@@ -621,11 +628,17 @@ impl RoundManager {
     /// 2) call process_certificates(), which will start a new round in return.
     async fn process_vote(&mut self, vote: &Vote) -> anyhow::Result<()> {
         let round = vote.vote_data().proposed().round();
-        debug!(
+
+        info!(
             self.new_log(LogEvent::ReceiveVote)
                 .remote_peer(vote.author()),
-            "{}", vote
+            vote = %vote,
+            vote_epoch = vote.vote_data().proposed().epoch(),
+            vote_round = vote.vote_data().proposed().round(),
+            vote_id = vote.vote_data().proposed().id(),
+            vote_state = vote.vote_data().proposed().executed_state_id(),
         );
+
         if !vote.is_timeout() {
             // Unlike timeout votes regular votes are sent to the leaders of the next round only.
             let next_round = round + 1;
@@ -652,15 +665,6 @@ impl RoundManager {
             .insert_vote(vote, &self.epoch_state.verifier)
         {
             VoteReceptionResult::NewQuorumCertificate(qc) => {
-                // Note that the block might not be present locally, in which case we cannot calculate
-                // time between block creation and qc
-                if let Some(time_to_qc) = self.block_store.get_block(block_id).and_then(|block| {
-                    duration_since_epoch()
-                        .checked_sub(Duration::from_micros(block.timestamp_usecs()))
-                }) {
-                    counters::CREATION_TO_QC_S.observe_duration(time_to_qc);
-                }
-
                 self.new_qc_aggregated(qc, vote.author()).await
             }
             VoteReceptionResult::NewTimeoutCertificate(tc) => self.new_tc_aggregated(tc).await,
@@ -673,6 +677,10 @@ impl RoundManager {
         qc: Arc<QuorumCert>,
         preferred_peer: Author,
     ) -> anyhow::Result<()> {
+        observe_block(
+            qc.certified_block().timestamp_usecs(),
+            BlockStage::QC_AGGREGATED,
+        );
         let result = self
             .block_store
             .insert_quorum_cert(&qc, &mut self.create_block_retriever(preferred_peer))
@@ -722,12 +730,12 @@ impl RoundManager {
         }
 
         let response = Box::new(BlockRetrievalResponse::new(status, blocks));
-        lcs::to_bytes(&ConsensusMsg::BlockRetrievalResponse(response))
+        bcs::to_bytes(&ConsensusMsg::BlockRetrievalResponse(response))
             .and_then(|bytes| {
                 request
                     .response_sender
                     .send(Ok(bytes.into()))
-                    .map_err(|e| lcs::Error::Custom(format!("{:?}", e)))
+                    .map_err(|e| bcs::Error::Custom(format!("{:?}", e)))
             })
             .context("[RoundManager] Failed to process block retrieval")
     }

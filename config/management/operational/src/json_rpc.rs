@@ -1,24 +1,26 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::TransactionContext;
-use libra_management::error::Error;
-use libra_secure_json_rpc::{JsonRpcClient, VMStatusView};
-use libra_types::{
+use diem_client::{views::VMStatusView, BlockingClient};
+use diem_management::error::Error;
+use diem_types::{
     account_address::AccountAddress, account_config, account_config::AccountResource,
-    account_state::AccountState, transaction::SignedTransaction,
-    validator_config::ValidatorConfigResource, validator_info::ValidatorInfo,
+    account_state::AccountState, account_state_blob::AccountStateBlob,
+    transaction::SignedTransaction, validator_config::ValidatorConfigResource,
+    validator_info::ValidatorInfo,
 };
+use std::convert::TryFrom;
 
 /// A wrapper around JSON RPC for error handling
 pub struct JsonRpcClientWrapper {
-    client: JsonRpcClient,
+    client: BlockingClient,
 }
 
 impl JsonRpcClientWrapper {
     pub fn new(host: String) -> JsonRpcClientWrapper {
         JsonRpcClientWrapper {
-            client: JsonRpcClient::new(host),
+            client: BlockingClient::new(host),
         }
     }
 
@@ -27,7 +29,7 @@ impl JsonRpcClientWrapper {
         transaction: SignedTransaction,
     ) -> Result<TransactionContext, Error> {
         self.client
-            .submit_transaction(transaction.clone())
+            .submit(&transaction)
             .map_err(|e| Error::JsonRpcWriteError("transaction", e.to_string()))?;
         Ok(TransactionContext::new(
             transaction.sender(),
@@ -36,9 +38,22 @@ impl JsonRpcClientWrapper {
     }
 
     pub fn account_state(&self, account: AccountAddress) -> Result<AccountState, Error> {
-        self.client
-            .get_account_state(account, None)
-            .map_err(|e| Error::JsonRpcReadError("account-state", e.to_string()))
+        let account_state = self
+            .client
+            .get_account_state_with_proof(account, None, None)
+            .map_err(|e| Error::JsonRpcReadError("account-state", e.to_string()))?
+            .into_inner();
+
+        let blob = account_state.blob.ok_or_else(|| {
+            Error::JsonRpcReadError("account-state", "No Validator set".to_string())
+        })?;
+        let account_state_blob = AccountStateBlob::from(
+            bcs::from_bytes::<Vec<u8>>(&blob)
+                .map_err(|e| Error::JsonRpcReadError("account-state", e.to_string()))?,
+        );
+        let account_state = AccountState::try_from(&account_state_blob)
+            .map_err(|e| Error::JsonRpcReadError("account-state", e.to_string()))?;
+        Ok(account_state)
     }
 
     pub fn validator_config(
@@ -52,7 +67,7 @@ impl JsonRpcClientWrapper {
     }
 
     /// This method returns all validator infos currently registered in the validator set of the
-    /// Libra blockchain. If account is specified, only a single validator info is returned: the
+    /// Diem blockchain. If account is specified, only a single validator info is returned: the
     /// one that matches the given account.
     pub fn validator_set(
         &self,
@@ -106,8 +121,8 @@ impl JsonRpcClientWrapper {
         sequence_number: u64,
     ) -> Result<Option<VMStatusView>, Error> {
         self.client
-            .get_transaction_status(account, sequence_number)
-            .map(|maybe_txn_status| maybe_txn_status.map(|status| status.vm_status))
+            .get_account_transaction(account, sequence_number, false)
+            .map(|maybe_txn_status| maybe_txn_status.into_inner().map(|status| status.vm_status))
             .map_err(|e| Error::JsonRpcReadError("transaction-status", e.to_string()))
     }
 }

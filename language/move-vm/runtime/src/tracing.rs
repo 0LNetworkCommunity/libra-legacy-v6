@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #[cfg(debug_assertions)]
@@ -6,15 +6,17 @@ use crate::debug::DebugContext;
 
 #[cfg(debug_assertions)]
 use ::{
-    libra_infallible::Mutex,
+    move_binary_format::file_format::Bytecode,
     move_vm_types::values::Locals,
     once_cell::sync::Lazy,
     std::{
         env,
         fs::{File, OpenOptions},
         io::Write,
+        process,
+        sync::Mutex,
+        thread,
     },
-    vm::file_format::Bytecode,
 };
 
 #[cfg(debug_assertions)] //////// 0L ////////
@@ -68,12 +70,22 @@ pub(crate) fn trace<L: LogContext>(
     interp: &Interpreter<L>,
 ) {
     if *TRACING_ENABLED {
-        let f = &mut *LOGGING_FILE.lock();
-        writeln!(f, "{},{},{:?}", function_desc.pretty_string(), pc, instr).unwrap();
+        let f = &mut *LOGGING_FILE.lock().unwrap();
+        writeln!(
+            f,
+            "{}-{:?},{},{},{:?}",
+            process::id(),
+            thread::current().id(),
+            function_desc.pretty_string(),
+            pc,
+            instr,
+        )
+        .unwrap();
     }
     if *DEBUGGING_ENABLED {
         DEBUG_CONTEXT
             .lock()
+            .unwrap()
             .debug_loop(function_desc, locals, pc, instr, loader, interp);
     }
 }

@@ -1,17 +1,17 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 
 use anyhow::Result;
-use libra_crypto::HashValue;
-use libra_infallible::Mutex;
-use libra_logger::warn;
-use libra_secure_net::NetworkClient;
-use libra_types::{
+use diem_crypto::HashValue;
+use diem_infallible::Mutex;
+use diem_logger::warn;
+use diem_secure_net::NetworkClient;
+use diem_types::{
     account_address::AccountAddress,
     account_state_blob::{AccountStateBlob, AccountStateWithProof},
-    contract_event::ContractEvent,
+    contract_event::{ContractEvent, EventWithProof},
     epoch_change::EpochChangeProof,
     event::EventKey,
     ledger_info::LedgerInfoWithSignatures,
@@ -43,7 +43,7 @@ impl StorageClient {
     }
 
     fn request<T: DeserializeOwned>(&self, input: StorageRequest) -> std::result::Result<T, Error> {
-        let input_message = lcs::to_bytes(&input)?;
+        let input_message = bcs::to_bytes(&input)?;
         let result = loop {
             match self.process_one_message(&input_message) {
                 Err(err) => warn!(
@@ -54,14 +54,20 @@ impl StorageClient {
                 Ok(value) => break value,
             }
         };
-        lcs::from_bytes(&result)?
+        bcs::from_bytes(&result)?
     }
 
     pub fn get_account_state_with_proof_by_version(
         &self,
         address: AccountAddress,
         version: Version,
-    ) -> std::result::Result<(Option<AccountStateBlob>, SparseMerkleProof), Error> {
+    ) -> std::result::Result<
+        (
+            Option<AccountStateBlob>,
+            SparseMerkleProof<AccountStateBlob>,
+        ),
+        Error,
+    > {
         self.request(StorageRequest::GetAccountStateWithProofByVersionRequest(
             Box::new(GetAccountStateWithProofByVersionRequest::new(
                 address, version,
@@ -90,7 +96,10 @@ impl DbReader for StorageClient {
         &self,
         address: AccountAddress,
         version: u64,
-    ) -> Result<(Option<AccountStateBlob>, SparseMerkleProof)> {
+    ) -> Result<(
+        Option<AccountStateBlob>,
+        SparseMerkleProof<AccountStateBlob>,
+    )> {
         Ok(Self::get_account_state_with_proof_by_version(
             self, address, version,
         )?)
@@ -139,6 +148,17 @@ impl DbReader for StorageClient {
         _limit: u64,
     ) -> Result<Vec<(u64, ContractEvent)>> {
         unimplemented!()
+    }
+
+    fn get_events_with_proofs(
+        &self,
+        _event_key: &EventKey,
+        _start: u64,
+        _order: Order,
+        _limit: u64,
+        _known_version: Option<u64>,
+    ) -> Result<Vec<EventWithProof>> {
+        unimplemented!();
     }
 
     fn get_state_proof(

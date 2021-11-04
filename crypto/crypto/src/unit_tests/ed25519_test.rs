@@ -1,11 +1,7 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
-#[cfg(any(feature = "vanilla-u64", feature = "vanilla-u32"))]
-use vanilla_curve25519_dalek as curve25519_dalek;
-#[cfg(any(feature = "vanilla-u64", feature = "vanilla-u32"))]
-use vanilla_ed25519_dalek as ed25519_dalek;
 
-use crate as libra_crypto;
+use crate as diem_crypto;
 use crate::{
     ed25519::{
         Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature, ED25519_PRIVATE_KEY_LENGTH,
@@ -22,13 +18,13 @@ use core::{
 };
 use ed25519_dalek::ed25519::signature::{Signature as _, Verifier as _};
 
+use diem_crypto_derive::{BCSCryptoHash, CryptoHasher};
 use digest::Digest;
-use libra_crypto_derive::{CryptoHasher, LCSCryptoHash};
 use proptest::{collection::vec, prelude::*};
 use serde::{Deserialize, Serialize};
 use sha2::Sha512;
 
-#[derive(CryptoHasher, LCSCryptoHash, Serialize, Deserialize)]
+#[derive(CryptoHasher, BCSCryptoHash, Serialize, Deserialize)]
 struct CryptoHashable(pub usize);
 
 // Takes a point in eight_torsion and finds its order
@@ -155,7 +151,7 @@ proptest! {
         // Check the cofactored equation (modulo 8) before conversion to dalek formats //
         /////////////////////////////////////////////////////////////////////////////////
         let mut eight_scalar_bytes = [0u8;32];
-        eight_scalar_bytes[..8].copy_from_slice(&(8 as usize).to_le_bytes());
+        eight_scalar_bytes[..8].copy_from_slice(&(8_usize).to_le_bytes());
         let eight_scalar = curve25519_dalek::scalar::Scalar::from_bits(eight_scalar_bytes);
 
         let r_candidate_point = curve25519_dalek::edwards::EdwardsPoint::vartime_double_scalar_mul_basepoint(&k, &(mixed_pub_point.neg().mul_by_cofactor()), &(s * eight_scalar));
@@ -279,12 +275,11 @@ proptest! {
     fn test_pub_key_deserialization(bits in any::<[u8; 32]>()){
         let pt_deser = curve25519_dalek::edwards::CompressedEdwardsY(bits).decompress();
         let pub_key = Ed25519PublicKey::try_from(&bits[..]);
-        let check = match (pt_deser, pub_key) {
-            (Some(_), Ok(_)) => true, // we agree with Dalek,
-            (Some(_), Err(CryptoMaterialError::SmallSubgroupError)) => true, // dalek does not detect pubkeys in a small subgroup,
-            (None, Err(CryptoMaterialError::DeserializationError)) => true, // we agree on point decompression failures,
-                _ => false
-        };
+        let check = matches!((pt_deser, pub_key),
+            (Some(_), Ok(_)) // we agree with Dalek,
+            | (Some(_), Err(CryptoMaterialError::SmallSubgroupError)) // dalek does not detect pubkeys in a small subgroup,
+            | (None, Err(CryptoMaterialError::DeserializationError)) // we agree on point decompression failures,
+        );
         prop_assert!(check);
     }
 

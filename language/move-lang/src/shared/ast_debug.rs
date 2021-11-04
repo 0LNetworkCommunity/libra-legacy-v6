@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 /// Simple trait used for pretty printing the various AST
@@ -105,13 +105,26 @@ impl AstWriter {
     }
 
     pub fn annotate<F: FnOnce(&mut AstWriter), Annot: AstDebug>(&mut self, f: F, annot: &Annot) {
+        self.annotate_gen(f, annot, |w, annot| annot.ast_debug(w))
+    }
+
+    pub fn annotate_gen<
+        F: FnOnce(&mut AstWriter),
+        Annot,
+        FAnnot: FnOnce(&mut AstWriter, &Annot),
+    >(
+        &mut self,
+        f: F,
+        annot: &Annot,
+        annot_writer: FAnnot,
+    ) {
         if self.verbose {
             self.write("(");
         }
         f(self);
         if self.verbose {
             self.write(": ");
-            annot.ast_debug(self);
+            annot_writer(self, annot);
             self.write(")");
         }
     }

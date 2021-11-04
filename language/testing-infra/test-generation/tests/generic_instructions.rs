@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 extern crate test_generation;
+use move_binary_format::file_format::SignatureToken;
 use test_generation::{abstract_state::AbstractState, transitions::Subst};
-use vm::file_format::SignatureToken;
 
 //---------------------------------------------------------------------------
 // Substitution tests

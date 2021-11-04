@@ -2,12 +2,11 @@
 
 #![allow(clippy::never_loop)]
 
-use ol_types::{block::Block, config::AppCfg};
-// use libra_genesis_tool::keyscheme::KeyScheme;
+use ol_types::{block::VDFProof, config::AppCfg};
 use ol_keys::scheme::KeyScheme;
 
-use libra_types::transaction::SignedTransaction;
-use libra_wallet::WalletLibrary;
+use diem_types::transaction::SignedTransaction;
+use diem_wallet::WalletLibrary;
 use ol_types::{account::ValConfigs, pay_instruction::PayInstruction};
 use std::path::PathBuf;
 use crate::prelude::app_config;
@@ -29,7 +28,7 @@ pub fn write_manifest(
     );
 
     let keys = KeyScheme::new(&wallet);
-    let block = Block::parse_block_file(cfg.get_block_dir().join("block_0.json").to_owned());
+    let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned());
 
     ValConfigs::new(
         block,

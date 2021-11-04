@@ -1,7 +1,7 @@
-module M {
-    resource struct Coin {}
-    struct R<T:resource>  { r: T }
-    struct S<T:copyable> { c: T }
+module 0x8675309::M {
+    struct Coin {}
+    struct R<T: key>  { r: T }
+    struct S<T: drop> has drop { c: T }
 
     fun t0() {
         R {r:_ } = R { r: 0 };

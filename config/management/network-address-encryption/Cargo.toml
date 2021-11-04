@@ -1,27 +1,26 @@
 [package]
-name = "libra-network-address-encryption"
+name = "diem-network-address-encryption"
 version = "0.1.0"
-authors = ["Libra Association <opensource@libra.org>"]
+authors = ["Diem Association <opensource@diem.com>"]
 description = "Encryption library for network addresses"
-repository = "https://github.com/libra/libra"
-homepage = "https://libra.org"
+repository = "https://github.com/diem/diem"
+homepage = "https://diem.com"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
 
 [dependencies]
 base64 = "0.13.0"
-serde = { version = "1.0.116", features = ["rc"], default-features = false }
-thiserror = "1.0.21"
+serde = { version = "1.0.124", features = ["rc"], default-features = false }
+thiserror = "1.0.24"
 
-lcs = { path = "../../../common/lcs", version = "0.1.0", package = "libra-canonical-serialization" }
-libra-global-constants = { path = "../../../config/global-constants", version = "0.1.0"}
-libra-infallible = { path = "../../../common/infallible", version = "0.1.0" }
-libra-logger = { path = "../../../common/logger", version = "0.1.0" }
-libra-network-address = { path = "../../../network/network-address", version = "0.1.0" }
-libra-secure-storage = { path = "../../../secure/storage", version = "0.1.0" }
-libra-workspace-hack = { path = "../../../common/workspace-hack", version = "0.1.0" }
-move-core-types = { path = "../../../language/move-core/types", version = "0.1.0" }
+bcs = "0.1.2"
+diem-global-constants = { path = "../../global-constants"}
+diem-infallible = { path = "../../../common/infallible" }
+diem-logger = { path = "../../../common/logger" }
+diem-secure-storage = { path = "../../../secure/storage" }
+diem-types = { path = "../../../types" }
+diem-workspace-hack = { path = "../../../common/workspace-hack" }
 
 [dev-dependencies]
-rand = "0.7.3"
+rand = "0.8.3"

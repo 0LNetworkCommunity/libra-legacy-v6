@@ -1,12 +1,11 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module defines the transfer functions for verifying type safety of a procedure body.
 //! It does not utilize control flow, but does check each block independently
 
 use crate::binary_views::BinaryIndexedView;
-use libra_types::vm_status::StatusCode;
-use vm::{
+use move_binary_format::{
     access::ModuleAccess,
     errors::{Location, PartialVMError, PartialVMResult, VMResult},
     file_format::{
@@ -14,6 +13,7 @@ use vm::{
         FunctionDefinitionIndex, FunctionHandleIndex, StructDefinitionIndex, TableIndex,
     },
 };
+use move_core_types::vm_status::StatusCode;
 
 pub struct InstructionConsistency<'a> {
     resolver: BinaryIndexedView<'a>,

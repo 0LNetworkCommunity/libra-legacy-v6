@@ -1,17 +1,16 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use super::*;
-use crate::{mock_tree_store::MockTreeStore, nibble_path::NibblePath, node_type::Node, NodeKey};
-use libra_crypto::HashValue;
-use libra_types::account_state_blob::AccountStateBlob;
+use crate::{
+    mock_tree_store::MockTreeStore, nibble_path::NibblePath, node_type::Node,
+    test_helper::ValueBlob, NodeKey,
+};
+use diem_crypto::HashValue;
 
-fn random_leaf_with_key(next_version: Version) -> (Node, NodeKey) {
+fn random_leaf_with_key(next_version: Version) -> (Node<ValueBlob>, NodeKey) {
     let address = HashValue::random();
-    let node = Node::new_leaf(
-        address,
-        AccountStateBlob::from(HashValue::random().to_vec()),
-    );
+    let node = Node::new_leaf(address, ValueBlob::from(HashValue::random().to_vec()));
     let node_key = NodeKey::new(next_version, NibblePath::new(address.to_vec()));
     (node, node_key)
 }
