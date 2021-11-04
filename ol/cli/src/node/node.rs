@@ -6,7 +6,6 @@ use cli::diem_client::DiemClient;
 use diem_config::config::{NodeConfig, RocksdbConfig};
 use diemdb::DiemDB;
 use std::path::PathBuf;
-use std::process::exit;
 use std::{process::Command, str};
 use sysinfo::SystemExt;
 use sysinfo::{ProcessExt, ProcessStatus};
@@ -59,14 +58,14 @@ impl Node {
         let node_conf = match NodeConfig::load(
             conf.workspace.node_home.join(node_yaml)
         ) {
-            Ok(c) => c,
+            Ok(c) => Some(c),
             Err(_) => {
               println!("Warn: could not find a validator config file, trying fullnode");
               match NodeConfig::load(conf.workspace.node_home.join("fullnode.node.yaml")) {
-                Ok(c) => c,
+                Ok(c) => Some(c),
                 Err(_) => {
-                  println!("ERROR: could not find any *.node.yaml file, exiting.");
-                  exit(1);
+                  println!("ERROR: could not find any *.node.yaml file. Will start without knowing the Node configs");
+                  None
                 }
               }
             }
@@ -75,7 +74,7 @@ impl Node {
         return Self {
             client,
             app_conf: conf.clone(),
-            node_conf: Some(node_conf),
+            node_conf: node_conf,
             vitals: Vitals {
                 host_state: HostState::new(),
                 account_view: OwnerAccountView::new(conf.profile.account),

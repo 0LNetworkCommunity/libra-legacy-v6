@@ -1,23 +1,23 @@
 //! Configs for all 0L apps.
 
-use anyhow::{Error, bail};
-use dirs;
+use anyhow::{bail, Error};
 use diem_config::config::NodeConfig;
 use diem_global_constants::{CONFIG_FILE, NODE_HOME};
 use diem_types::{
     account_address::AccountAddress, transaction::authenticator::AuthenticationKey,
     waypoint::Waypoint,
 };
+use dirs;
 use once_cell::sync::Lazy;
-use reqwest::Url;
+use reqwest::{blocking::Client, Url};
 use serde::{Deserialize, Serialize};
-use serde_json;
+use serde_json::{self, json};
 use std::{
-    fs::{self, File}, 
-    io::{Read, Write}, 
-    net::Ipv4Addr, 
-    path::PathBuf, 
-    str::FromStr
+    fs::{self, File},
+    io::{Read, Write},
+    net::Ipv4Addr,
+    path::PathBuf,
+    str::FromStr,
 };
 
 use crate::dialogue::{add_tower, what_home, what_ip, what_statement};
@@ -43,7 +43,7 @@ pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
 /// check this is CI environment
 pub static IS_TEST: Lazy<bool> = Lazy::new(|| {
     // assume default if NODE_ENV=prod and TEST=y.
-    std::env::var("TEST").unwrap_or("n".to_string()) != "n".to_string() 
+    std::env::var("TEST").unwrap_or("n".to_string()) != "n".to_string()
 });
 
 /// MinerApp Configuration
@@ -64,8 +64,7 @@ pub struct AppCfg {
 pub fn parse_toml(path: String) -> Result<AppCfg, Error> {
     let mut config_toml = String::new();
     let mut file = File::open(&path)?;
-    file.read_to_string(&mut config_toml)
-        .unwrap_or_else(|err| panic!("Error while reading config: [{}]", err));
+    file.read_to_string(&mut config_toml)?;
 
     let cfg: AppCfg = toml::from_str(&config_toml).unwrap();
     Ok(cfg)
@@ -73,12 +72,8 @@ pub fn parse_toml(path: String) -> Result<AppCfg, Error> {
 
 impl AppCfg {
     /// Gets the dynamic waypoint from diem node's key_store.json
-    pub fn get_waypoint(
-        &self, swarm_path_opt: Option<PathBuf>
-    ) -> Result<Waypoint, Error> {
-        let err_msg = Error::msg(
-            "Could not get waypoint from cli, key_store.json, nor 0L.toml."
-        );
+    pub fn get_waypoint(&self, swarm_path_opt: Option<PathBuf>) -> Result<Waypoint, Error> {
+        let err_msg = Error::msg("Could not get waypoint from cli, key_store.json, nor 0L.toml.");
 
         if let Some(path) = swarm_path_opt {
             return Ok(get_swarm_rpc_url(path).1);
@@ -86,12 +81,11 @@ impl AppCfg {
 
         match fs::File::open(self.get_key_store_path()) {
             Ok(file) => {
-                let json: serde_json::Value = serde_json::from_reader(
-                    file
-                ).expect("could not parse JSON in key_store.json");
+                let json: serde_json::Value =
+                    serde_json::from_reader(file).expect("could not parse JSON in key_store.json");
                 match ajson::get(&json.to_string(), "*/waypoint.value") {
                     Some(value) => value.to_string().parse(),
-                    // If nothing is found in key_store.json fallback 
+                    // If nothing is found in key_store.json fallback
                     // to base_waypoint in toml
                     _ => match self.chain_info.base_waypoint {
                         Some(w) => Ok(w),
@@ -133,7 +127,7 @@ impl AppCfg {
         base_waypoint: &Option<Waypoint>,
         source_path: &Option<PathBuf>,
         statement: Option<String>,
-        ip: Option<Ipv4Addr>,        
+        ip: Option<Ipv4Addr>,
     ) -> AppCfg {
         // TODO: Check if configs exist and warn on overwrite.
         let mut default_config = AppCfg::default();
@@ -146,45 +140,46 @@ impl AppCfg {
             None => what_statement(),
         };
 
-
         default_config.profile.ip = match ip {
             Some(i) => i,
             None => what_ip().unwrap(),
         };
-        default_config.workspace.node_home = config_path.clone().unwrap_or_else(||{
-            what_home(None, None)
-        });
+        default_config.workspace.node_home =
+            config_path.clone().unwrap_or_else(|| what_home(None, None));
 
         // Add link to previous tower
         if !*IS_TEST {
             default_config.profile.tower_link = add_tower(&default_config);
         }
-        
+
         if source_path.is_some() {
             // let source_path = what_source();
             default_config.workspace.source_path = source_path.clone();
             default_config.workspace.stdlib_bin_path = Some(
-                source_path.as_ref().unwrap().join("language/diem-framework/staged/stdlib.mv")
+                source_path
+                    .as_ref()
+                    .unwrap()
+                    .join("language/diem-framework/staged/stdlib.mv"),
             );
         }
 
         // override from args
-        if base_epoch.is_some() && base_waypoint.is_some(){
+        if base_epoch.is_some() && base_waypoint.is_some() {
             default_config.chain_info.base_epoch = *base_epoch;
             default_config.chain_info.base_waypoint = *base_waypoint;
         } else {
-          if let Some(url) = upstream_peer {
-              default_config.profile.upstream_nodes = Some(vec![url.to_owned()]);
-              let mut web_monitor_url = url.clone();
-              let (e, w) = bootstrap_waypoint_from_upstream(&mut web_monitor_url).unwrap();
-              default_config.chain_info.base_epoch = Some(e);
-              default_config.chain_info.base_waypoint = Some(w);
-          } else {
-            default_config.chain_info.base_epoch = None;
-            default_config.chain_info.base_waypoint = None;
-            println!("WARN: No --epoch or --waypoint or upstream --url passed. This should only be done at genesis. If that's not correct either pass --epoch and --waypoint as CLI args, or provide a URL to fetch this data from --upstream-peer or --template-url");
-            // exit(1);
-          }
+            if let Some(url) = upstream_peer {
+                default_config.profile.upstream_nodes = Some(vec![url.to_owned()]);
+                let mut web_monitor_url = url.clone();
+                let (e, w) = bootstrap_waypoint_from_upstream(&mut web_monitor_url).unwrap();
+                default_config.chain_info.base_epoch = Some(e);
+                default_config.chain_info.base_waypoint = Some(w);
+            } else {
+                default_config.chain_info.base_epoch = None;
+                default_config.chain_info.base_waypoint = None;
+                println!("WARN: No --epoch or --waypoint or upstream --url passed. This should only be done at genesis. If that's not correct either pass --epoch and --waypoint as CLI args, or provide a URL to fetch this data from --upstream-peer or --template-url");
+                // exit(1);
+            }
         }
 
         // skip questionnaire if CI
@@ -199,44 +194,44 @@ impl AppCfg {
         default_config
     }
 
-  /// Save swarm default configs to swarm path
-  /// swarm_path points to the swarm_temp directory
-  /// node_home to the directory of the current swarm persona
-  pub fn init_app_configs_swarm(
-      swarm_path: PathBuf, node_home: PathBuf, source_path: Option<PathBuf>
-    ) -> AppCfg{
+    /// Save swarm default configs to swarm path
+    /// swarm_path points to the swarm_temp directory
+    /// node_home to the directory of the current swarm persona
+    pub fn init_app_configs_swarm(
+        swarm_path: PathBuf,
+        node_home: PathBuf,
+        source_path: Option<PathBuf>,
+    ) -> AppCfg {
         // println!("init_swarm_config: {:?}", swarm_path); already logged in commands.rs
         let host_config = AppCfg::make_swarm_configs(swarm_path, node_home, source_path);
         host_config.save_file();
         host_config
-  }
+    }
 
-
-  /// get configs from swarm
-  /// swarm_path points to the swarm_temp directory
-  /// node_home to the directory of the current swarm persona
-  pub fn make_swarm_configs(
-      swarm_path: PathBuf, node_home: PathBuf, source_path: Option<PathBuf>
+    /// get configs from swarm
+    /// swarm_path points to the swarm_temp directory
+    /// node_home to the directory of the current swarm persona
+    pub fn make_swarm_configs(
+        swarm_path: PathBuf,
+        node_home: PathBuf,
+        source_path: Option<PathBuf>,
     ) -> AppCfg {
         let config_path = swarm_path.join(&node_home).join("node.yaml");
-        let config = NodeConfig::load(&config_path).unwrap_or_else(
-            |_| panic!("Failed to load NodeConfig from file: {:?}", &config_path)
-        );
+        let config = NodeConfig::load(&config_path)
+            .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &config_path));
 
-        let url = Url::parse(
-            format!("http://localhost:{}", config.json_rpc.address.port()).as_str()
-        ).unwrap();
+        let url =
+            Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str())
+                .unwrap();
 
         // upstream configs
         let upstream_config_path = swarm_path.join(&node_home).join("node.yaml");
-        let upstream_config = NodeConfig::load(&upstream_config_path)
-            .unwrap_or_else(|_| {
-                panic!(
-                    "Failed to load NodeConfig from file: {:?}",
-                    &upstream_config_path
-                )
-            }
-        );
+        let upstream_config = NodeConfig::load(&upstream_config_path).unwrap_or_else(|_| {
+            panic!(
+                "Failed to load NodeConfig from file: {:?}",
+                &upstream_config_path
+            )
+        });
         let upstream_url = Url::parse(
             format!(
                 "http://localhost:{}",
@@ -330,7 +325,7 @@ pub struct Workspace {
     /// Directory for the database
     #[serde(default = "default_db_path")]
     pub db_path: PathBuf,
-    /// Path to which stdlib binaries for upgrades get built typically 
+    /// Path to which stdlib binaries for upgrades get built typically
     /// /language/diem-framework/staged/stdlib.mv
     pub stdlib_bin_path: Option<PathBuf>,
 }
@@ -406,7 +401,10 @@ impl Default for Profile {
     fn default() -> Self {
         Self {
             account: AccountAddress::from_hex_literal("0x0").unwrap(),
-            auth_key: AuthenticationKey::from_str("0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
+            auth_key: AuthenticationKey::from_str(
+                "0000000000000000000000000000000000000000000000000000000000000000",
+            )
+            .unwrap(),
             statement: "Protests rage across the nation".to_owned(),
             ip: "0.0.0.0".parse().unwrap(),
             default_node: Some("http://localhost:8080".parse().expect("parse url")),
@@ -519,55 +517,80 @@ fn default_cheap_txs_cost() -> Option<TxCost> {
 /// Get swarm configs from swarm files, swarm must be running
 pub fn get_swarm_rpc_url(mut swarm_path: PathBuf) -> (Url, Waypoint) {
     swarm_path.push("0/node.yaml");
-    let config = NodeConfig::load(&swarm_path).unwrap_or_else(
-        |_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path)
-    );
+    let config = NodeConfig::load(&swarm_path)
+        .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path));
 
-    let url = Url::parse(
-        format!("http://localhost:{}", config.json_rpc.address.port()).as_str()
-    ).unwrap();
+    let url = Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str())
+        .unwrap();
     let waypoint = config.base.waypoint.waypoint();
 
     (url, waypoint)
 }
 
 /// Get swarm configs from swarm files, swarm must be running
-pub fn get_swarm_backup_service_url(
-    mut swarm_path: PathBuf, swarm_id: u8
-) -> Result<Url, Error> {
+pub fn get_swarm_backup_service_url(mut swarm_path: PathBuf, swarm_id: u8) -> Result<Url, Error> {
     swarm_path.push(format!("{}/node.yaml", swarm_id));
-    let config = NodeConfig::load(&swarm_path).unwrap_or_else(
-        |_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path)
-    );
+    let config = NodeConfig::load(&swarm_path)
+        .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path));
 
-    let url = Url::parse(
-        format!("http://localhost:{}", config.storage.address.port()).as_str()
-    ).unwrap();
+    let url =
+        Url::parse(format!("http://localhost:{}", config.storage.address.port()).as_str()).unwrap();
 
     Ok(url)
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 struct EpochJSON {
-  epoch: u64,
-  waypoint: Waypoint,
+    epoch: u64,
+    waypoint: Waypoint,
 }
 /// fetch initial waypoint information from a clean state.
-pub fn bootstrap_waypoint_from_upstream(url: &Url) -> Result<(u64, Waypoint), Error> {
-    let g_res = reqwest::blocking::get(&url.to_string())?;
-    if !g_res.status().is_success() {
-      bail!("could not connect to upstream peer to get bootstrap waypoint, is {} online?", &url.to_string());
+pub fn bootstrap_waypoint_from_upstream(url: &mut Url) -> Result<(u64, Waypoint), Error> {
+    url.set_port(Some(3030)).unwrap();
+    let epoch_url = url.join("epoch.json").unwrap();
+    let g_res = reqwest::blocking::get(&epoch_url.to_string())?;
+    if g_res.status().is_success() {
+        let txt = g_res.text()?;
+        let epoch: EpochJSON = serde_json::from_str(&txt)?;
+        return Ok((epoch.epoch, epoch.waypoint));
     }
-    let string = g_res.text()?;
-    let json: serde_json::Value = string.parse()?;
-    let epoch = json.get("epoch").unwrap().as_u64().unwrap();
-    let waypoint = json
-        .get("waypoint")
-        .unwrap()
-        .as_str()
-        .unwrap()
-        .parse()
-        .unwrap();
+    bail!(
+        "fetching remote JSON-rpc failed with status: {:?}, response: {:?}",
+        g_res.status(),
+        g_res.text()
+    );
+}
 
-    Ok((epoch, waypoint))
+#[derive(Serialize, Deserialize, Debug)]
+struct WaypointRpc {
+    result: Option<serde_json::Value>,
+}
+// get the waypoint from a fullnode
+pub fn bootstrap_waypoint_from_rpc(url: Url) -> Result<Waypoint, Error> {
+    let method = "get_waypoint_view";
+    let params = json!([]);
+    let request = json!({"jsonrpc": "2.0", "method": method, "params": params, "id": 1});
+    let client = Client::new();
+    let resp = client.post(url.as_str()).json(&request).send()?;
+
+    // let json: WaypointRpc = serde_json::from_value(resp.json().unwrap()).unwrap();
+    let parsed: serde_json::Value = resp.json()?;
+    match &parsed["result"] {
+        serde_json::Value::Object(r) => {
+            if let serde_json::Value::String(waypoint) = &r["waypoint"] {
+                let w: Waypoint = waypoint.parse()?;
+                return Ok(w);
+            }
+        }
+        _ => {}
+    }
+
+    bail!("could not get waypoint from json-rpc, url: {:?} ", url)
+}
+
+#[test]
+
+fn test() {
+    let w = bootstrap_waypoint_from_rpc(Url::parse("http://35.184.98.21:8080").unwrap()).unwrap();
+    dbg!(&w);
 }

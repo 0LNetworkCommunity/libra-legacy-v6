@@ -10,7 +10,7 @@ use crate::{
     },
     Error, State,
 };
-use diem_json_rpc_types::views::{EventWithProofView, TransactionsWithProofsView};
+use diem_json_rpc_types::views::{EventWithProofView, TransactionsWithProofsView, WaypointView};
 use serde_json::Value;
 
 #[derive(Debug)]
@@ -65,13 +65,15 @@ pub enum MethodResponse {
     GetEvents(Vec<EventView>),
     GetCurrencies(Vec<CurrencyInfoView>),
     GetNetworkStatus(u64),    
-    GetTowerStateView(TowerStateResourceView),         //////// 0L ////////
-    GetOracleUpgradeStateView(OracleUpgradeStateView), //////// 0L ////////
-
     GetStateProof(StateProofView),
     GetAccountStateWithProof(AccountStateWithProofView),
     GetTransactionsWithProofs(Option<TransactionsWithProofsView>),
     GetEventsWithProofs(Vec<EventWithProofView>),
+
+    GetTowerStateView(TowerStateResourceView),         //////// 0L ////////
+    GetOracleUpgradeStateView(OracleUpgradeStateView), //////// 0L ////////
+    GetWaypointView(WaypointView), //////// 0L ////////
+
 }
 
 impl MethodResponse {
@@ -100,6 +102,9 @@ impl MethodResponse {
             }
             Method::GetOracleUpgradeStateView => {
                 MethodResponse::GetOracleUpgradeStateView(serde_json::from_value(json)?)
+            }
+            Method::GetWaypointView => {
+                MethodResponse::GetWaypointView(serde_json::from_value(json)?)
             }            
             //////// 0L end ////////
             Method::GetStateProof => MethodResponse::GetStateProof(serde_json::from_value(json)?),
@@ -128,14 +133,18 @@ impl MethodResponse {
             MethodResponse::GetEvents(_) => Method::GetEvents,
             MethodResponse::GetCurrencies(_) => Method::GetCurrencies,
             MethodResponse::GetNetworkStatus(_) => Method::GetNetworkStatus,  
-            /////// 0L /////////          
-            MethodResponse::GetTowerStateView(_) => Method::GetTowerStateView,
-            MethodResponse::GetOracleUpgradeStateView(_) => Method::GetOracleUpgradeStateView,
-            //////// 0L end ////////
             MethodResponse::GetStateProof(_) => Method::GetStateProof,
             MethodResponse::GetAccountStateWithProof(_) => Method::GetAccountStateWithProof,
             MethodResponse::GetTransactionsWithProofs(_) => Method::GetTransactionsWithProofs,
             MethodResponse::GetEventsWithProofs(_) => Method::GetEventsWithProofs,
+
+                        /////// 0L /////////          
+            MethodResponse::GetTowerStateView(_) => Method::GetTowerStateView,
+            
+            MethodResponse::GetOracleUpgradeStateView(_) => Method::GetOracleUpgradeStateView,
+            
+            MethodResponse::GetWaypointView(_) => Method::GetWaypointView,
+            //////// 0L end ////////
         }
     }
 

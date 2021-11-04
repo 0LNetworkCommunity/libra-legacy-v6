@@ -8,10 +8,7 @@ use crate::{
 };
 use anyhow::{bail, ensure, format_err, Error, Result};
 use compiler::Compiler;
-use diem_client::{
-    views::{self},
-    WaitForTransactionError,
-};
+use diem_client::{WaitForTransactionError, views::{self, WaypointView}};
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
     test_utils::KeyPair,
@@ -836,6 +833,15 @@ impl ClientProxy {
     ) -> Result<Option<OracleUpgradeStateView>> {
         self.client.get_oracle_upgrade_state()
     }
+
+    //////// 0L ////////
+    /// Query waypoint
+    pub fn query_waypoint(
+        &mut self,
+    ) -> Result<Option<WaypointView>> {
+        self.client.get_waypoint_state()
+    }
+
 
     /// Get the latest sequence number from validator for the account specified.
     pub fn get_sequence_number(&mut self, space_delim_strings: &[&str]) -> Result<u64> {
