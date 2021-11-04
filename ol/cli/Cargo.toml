@@ -5,8 +5,6 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-tui = "0.14.0"
-termion = "1.5"
 bitflags = "1.0"
 cassowary = "0.3"
 unicode-segmentation = "1.2"

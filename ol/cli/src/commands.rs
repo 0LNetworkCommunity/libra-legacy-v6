@@ -18,7 +18,6 @@ mod restore_cmd;
 mod onboard_cmd;
 mod query_cmd;
 mod health_cmd;
-mod explorer_cmd;
 mod pilot_cmd;
 mod start_cmd;
 
@@ -36,7 +35,6 @@ use self::{
 };
 
 use crate::entrypoint;
-use crate::commands::explorer_cmd::ExplorerCMD;
 use crate::config::AppCfg;
 use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
@@ -84,10 +82,6 @@ pub enum OlCliCmd {
     /// The `health` subcommand
     #[options(help = "run healthcheck on the account, node, and displays some network information")]
     Health(HealthCmd),
-
-    /// The `explorer` subcommand
-    #[options(help = "watch a block explorer monitor in terminal")]
-    Explorer(ExplorerCMD),
 
     /// The `pilot` subcommand, for explorer
     #[options(help = "run pilot command, which triggers needed services")]
