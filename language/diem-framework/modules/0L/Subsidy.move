@@ -15,9 +15,9 @@ address 0x1 {
     use DiemFramework::Diem;
     use Std::Signer;
     use DiemFramework::DiemAccount;
+    use DiemFramework::DiemSystem;
     use Std::Vector;
     // use 0x1::Stats;
-    use 0x1::ValidatorUniverse;
     use 0x1::Globals;
     use DiemFramework::DiemTimestamp;
     use DiemFramework::TransactionFee;
@@ -133,22 +133,19 @@ address 0x1 {
       guaranteed_minimum
     }
 
-    // Todo: Can be private, used only in tests
     // Function code: 04 Prefix: 190104
     public fun genesis(vm_sig: &signer) { // Todo: rename to "genesis_deposit" ?
       // Need to check for association or vm account
       let vm_addr = Signer::address_of(vm_sig);
       assert(vm_addr == @DiemRoot, Errors::requires_role(190104));
 
-      // Get eligible validators list
-      let genesis_validators = ValidatorUniverse::get_eligible_validators(vm_sig);
-      let len = Vector::length(&genesis_validators);
       // ten coins for validator, sufficient for first epoch of transactions,
       // and an extra which the validator will send to operator.
       let subsidy = 11000000; // todo: 10 or 11? comment says different 
       let i = 0;
-      while (i < len) {
-        let node_address = *(Vector::borrow<address>(&genesis_validators, i));
+      let val_set_size = DiemSystem::validator_set_size();
+      while (i < val_set_size) {
+        let node_address = DiemSystem::get_ith_validator_address(i);
         let old_validator_bal = DiemAccount::balance<GAS>(node_address);
         
         let minted_coins = Diem::mint<GAS>(vm_sig, *&subsidy);
