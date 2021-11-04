@@ -629,15 +629,33 @@ module DiemAccount {
         let new_signer = create_signer(new_account_address);
 
         assert(exists_at(new_account_address), Errors::not_published(EACCOUNT));
-        assert(TowerState::is_init(new_account_address), 120104);
+        // assert(TowerState::is_init(new_account_address), 120104);
         // verifies the VDF proof, since we are not calling TowerState init.
-        let valid = VDF::verify(
-            challenge,
-            solution,
-            &difficulty,
-            &security,
-        );
-        assert(valid, Errors::invalid_argument(120105));
+
+        // if the account already has a tower started just verify the block zero submitted
+        if (TowerState::is_init(new_account_address)) {
+          let valid = VDF::verify(
+              challenge,
+              solution,
+              &difficulty,
+              &security,
+          );
+
+          assert(valid, Errors::invalid_argument(120105));
+        } else {
+          // otherwise initialize this TowerState with a block 0.
+
+          let proof = TowerState::create_proof_blob(
+            *challenge,
+            *solution,
+            *&difficulty,
+            *&security,
+          );
+
+          TowerState::commit_state(&new_signer, proof);
+        };
+
+        
         
         // TODO: Perhaps this needs to be moved to the epoch boundary, so that it is only the VM which can escalate these privileges.
         // Upgrade the user
