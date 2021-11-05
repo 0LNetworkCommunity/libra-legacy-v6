@@ -66,6 +66,7 @@ pub fn parse_toml(path: String) -> Result<AppCfg, Error> {
     let mut file = File::open(&path)?;
     file.read_to_string(&mut config_toml)?;
 
+
     let cfg: AppCfg = toml::from_str(&config_toml).unwrap();
     Ok(cfg)
 }
@@ -584,13 +585,6 @@ pub fn bootstrap_waypoint_from_rpc(url: Url) -> Result<Waypoint, Error> {
         }
         _ => {}
     }
-
     bail!("could not get waypoint from json-rpc, url: {:?} ", url)
 }
 
-#[test]
-
-fn test() {
-    let w = bootstrap_waypoint_from_rpc(Url::parse("http://35.184.98.21:8080").unwrap()).unwrap();
-    dbg!(&w);
-}

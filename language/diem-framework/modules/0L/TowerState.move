@@ -200,6 +200,10 @@ module TowerState {
 
       // This may be the 0th proof of an end user that hasn't had tower state initialized
       if (!is_init(miner_addr)) {
+        // check proof belongs to user.
+        let (addr_in_proof, _) = VDF::extract_address_from_challenge(&proof.challenge);
+        assert(addr_in_proof == Signer::address_of(miner_sign), Errors::requires_role(130112));
+
         init_miner_state(miner_sign, &proof.challenge, &proof.solution, proof.difficulty, proof.security);
         return
       };
@@ -413,6 +417,8 @@ module TowerState {
         solution: *solution,
         security,
       };
+
+
       //submit the proof
       verify_and_update_state(Signer::address_of(miner_sig), proof, false);
     }
@@ -433,10 +439,10 @@ module TowerState {
 
       // Calling native function to do this parsing in rust
       // The auth_key must be at least 32 bytes long
-      assert(Vector::length(challenge) >= 32, Errors::invalid_argument(130112));
+      assert(Vector::length(challenge) >= 32, Errors::invalid_argument(130113));
       let (parsed_address, _auth_key) = VDF::extract_address_from_challenge(challenge);
       // Confirm the address is corect and included in challenge
-      assert(new_account_address == parsed_address, Errors::requires_address(130113));
+      assert(new_account_address == parsed_address, Errors::requires_address(130114));
     }
 
     // Get latest epoch mined by node on given address
