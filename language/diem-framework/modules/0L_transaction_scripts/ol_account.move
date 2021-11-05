@@ -73,7 +73,7 @@ module AccountScripts {
 
       // check if this account exists
       let (new_account_address, _) = VDF::extract_address_from_challenge(&challenge);
-      assert(!DiemAccount::exists_at(new_account_address), Errors::invalid_state(ACCOUNT_ALREADY_EXISTS));
+      // assert(!DiemAccount::exists_at(new_account_address), Errors::invalid_state(ACCOUNT_ALREADY_EXISTS));
 
 
       DiemAccount::create_validator_account_with_proof(
