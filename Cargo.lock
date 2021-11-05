@@ -5663,7 +5663,6 @@ dependencies = [
  "dirs 2.0.2",
  "fs_extra",
  "futures",
- "gag",
  "glob",
  "gumdrop 0.7.0",
  "handlebars",
