@@ -16,7 +16,7 @@ use diem_types::{account_config::{
     }, transaction::{
         Script, ScriptFunction, Transaction, TransactionArgument, TransactionInfo,
         TransactionListWithProof, TransactionPayload,
-    }, vm_status::KeptVMStatus};
+    }, vm_status::KeptVMStatus, waypoint::Waypoint};
 use hex::FromHex;
 use move_core_types::{
     account_address::AccountAddress,
@@ -1494,5 +1494,21 @@ impl TryFrom<AccountState> for OracleUpgradeStateView {
           Err(Error::msg("could not get upgrade oracle data"))
         }
 
+    }
+}
+
+
+//////// 0L ////////
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct WaypointView {
+    pub waypoint: Waypoint,
+}
+
+impl TryFrom<Waypoint> for WaypointView {
+    type Error = Error;
+    fn try_from(w: Waypoint) -> Result<WaypointView, Self::Error> {
+      Ok(WaypointView {
+            waypoint: w,
+        })
     }
 }

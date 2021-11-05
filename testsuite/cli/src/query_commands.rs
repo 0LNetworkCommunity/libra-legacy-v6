@@ -25,6 +25,7 @@ impl Command for QueryCommand {
             Box::new(QueryCommandGetTxnByRange {}),
             Box::new(QueryCommandGetEvent {}),
             Box::new(QueryCommandGetLatestAccountResources {}),
+            Box::new(QueryWaypoint {}), ///////// 0L /////////
         ];
 
         subcommand_execute(&params[0], commands, client, &params[1..]);
@@ -242,6 +243,37 @@ impl Command for QueryCommandGetEvent {
                 println!("Last event state: {:#?}", last_event_state);
             }
             Err(e) => report_error("Error getting events by access path", e),
+        }
+    }
+}
+
+
+//////// 0L ///////
+/// 
+pub struct QueryWaypoint {}
+
+impl Command for QueryWaypoint {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["waypoint", "w"]
+    }
+
+    fn get_params_help(&self) -> &'static str {
+        "Usage: query waypoint"
+    }
+
+    fn get_description(&self) -> &'static str {
+        "query latest waypoint"
+    }
+
+    fn execute(&self, client: &mut ClientProxy, _params: &[&str]) {
+        match client.query_waypoint() {
+            Ok(view) => {
+                match view {
+                    Some(o)=>println!("{:?}", o),
+                    None=> println!("Nothing found")
+                }
+            },
+            Err(e) => println!("{}", e),
         }
     }
 }

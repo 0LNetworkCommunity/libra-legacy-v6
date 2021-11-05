@@ -1992,6 +1992,7 @@ dependencies = [
  "rustyline 6.3.0",
  "serde",
  "serde_json",
+ "serde_yaml",
  "storage-interface",
  "structopt 0.3.21",
  "thiserror",

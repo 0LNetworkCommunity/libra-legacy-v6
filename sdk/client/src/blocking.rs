@@ -18,6 +18,7 @@ use crate::{
     Error, Result, Retry, State,
 };
 use diem_crypto::{hash::CryptoHash, HashValue};
+use diem_json_rpc_types::views::WaypointView;
 use diem_types::{
     account_address::AccountAddress,
     event::EventKey,
@@ -163,7 +164,13 @@ impl BlockingClient {
     pub fn get_oracle_upgrade_state(&self) 
     -> Result<Response<Option<OracleUpgradeStateView>>> {
         self.send(MethodRequest::get_oracle_upgrade_state())
-    }    
+    }
+
+    /////// 0L /////////
+    pub fn get_waypoint(&self) 
+    -> Result<Response<Option<WaypointView>>> {
+        self.send(MethodRequest::get_waypoint_state())
+    }
 
     pub fn get_transactions(
         &self,

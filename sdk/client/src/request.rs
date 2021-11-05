@@ -34,6 +34,7 @@ pub enum MethodRequest {
     //////// 0L ////////
     GetTowerStateView((AccountAddress,)), // this is the format for passing a list of params
     GetOracleUpgradeStateView(),
+    GetWaypointView(),
 }
 
 impl MethodRequest {
@@ -67,6 +68,12 @@ impl MethodRequest {
     pub fn get_oracle_upgrade_state() -> Self {
         Self::GetOracleUpgradeStateView()
     }
+
+    /////// 0L /////////
+    pub fn get_waypoint_state() -> Self {
+        Self::GetWaypointView()
+    }
+
 
     pub fn get_transactions(start_seq: u64, limit: u64, include_events: bool) -> Self {
         Self::GetTransactions(start_seq, limit, include_events)
@@ -146,6 +153,8 @@ impl MethodRequest {
             /////// 0L /////////
             MethodRequest::GetTowerStateView(_) => Method::GetTowerStateView,
             MethodRequest::GetOracleUpgradeStateView() => Method::GetOracleUpgradeStateView,
+            MethodRequest::GetWaypointView() => Method::GetWaypointView,
+            
         }
     }
 }
