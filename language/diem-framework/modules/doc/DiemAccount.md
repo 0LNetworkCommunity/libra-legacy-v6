@@ -1393,7 +1393,7 @@ Initialize this module. This is only callable from genesis.
     difficulty: u64,
     security: u64,
 ):address <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>, <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> {
-
+    // TODO: extract address_duplicated <b>with</b> <a href="TowerState.md#0x1_TowerState_init_miner_state">TowerState::init_miner_state</a>
     <b>let</b> (new_account_address, auth_key_prefix) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(challenge);
     <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
     <a href="Roles.md#0x1_Roles_new_user_role_with_proof">Roles::new_user_role_with_proof</a>(&new_signer);
@@ -1437,8 +1437,6 @@ Initialize this module. This is only callable from genesis.
     new_account_authkey_prefix: vector&lt;u8&gt;,
     value: u64,
 ):address <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>, <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> {
-
-    // <b>let</b> (new_account_address, auth_key_prefix) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(challenge);
     <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account);
     <a href="Roles.md#0x1_Roles_new_user_role_with_proof">Roles::new_user_role_with_proof</a>(&new_signer);
     <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_signer);
@@ -1609,15 +1607,33 @@ Initialize this module. This is only callable from genesis.
     <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
 
     <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(new_account_address), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EACCOUNT">EACCOUNT</a>));
-    <b>assert</b>(<a href="TowerState.md#0x1_TowerState_is_init">TowerState::is_init</a>(new_account_address), 120104);
+    // <b>assert</b>(<a href="TowerState.md#0x1_TowerState_is_init">TowerState::is_init</a>(new_account_address), 120104);
     // verifies the <a href="VDF.md#0x1_VDF">VDF</a> proof, since we are not calling <a href="TowerState.md#0x1_TowerState">TowerState</a> init.
-    <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(
-        challenge,
-        solution,
-        &difficulty,
-        &security,
-    );
-    <b>assert</b>(valid, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(120105));
+
+    // <b>if</b> the account already has a tower started just verify the block zero submitted
+    <b>if</b> (<a href="TowerState.md#0x1_TowerState_is_init">TowerState::is_init</a>(new_account_address)) {
+      <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(
+          challenge,
+          solution,
+          &difficulty,
+          &security,
+      );
+
+      <b>assert</b>(valid, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(120105));
+    } <b>else</b> {
+      // otherwise initialize this <a href="TowerState.md#0x1_TowerState">TowerState</a> <b>with</b> a block 0.
+
+      <b>let</b> proof = <a href="TowerState.md#0x1_TowerState_create_proof_blob">TowerState::create_proof_blob</a>(
+        *challenge,
+        *solution,
+        *&difficulty,
+        *&security,
+      );
+
+      <a href="TowerState.md#0x1_TowerState_commit_state">TowerState::commit_state</a>(&new_signer, proof);
+    };
+
+
 
     // TODO: Perhaps this needs <b>to</b> be moved <b>to</b> the epoch boundary, so that it is only the VM which can escalate these privileges.
     // <a href="Upgrade.md#0x1_Upgrade">Upgrade</a> the user
