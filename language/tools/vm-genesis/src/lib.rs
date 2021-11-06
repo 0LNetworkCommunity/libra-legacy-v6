@@ -416,7 +416,6 @@ fn _create_and_initialize_testnet_minting( //////// 0L ////////
     );
 }
 
-//////// 0L ////////
 /// Creates and initializes each validator owner and validator operator. This method creates all
 /// the required accounts, sets the validator operators for each validator owner, and sets the
 /// validator config on-chain.
@@ -426,7 +425,7 @@ fn create_and_initialize_owners_operators(
 ) {
     let diem_root_address = account_config::diem_root_address();
 
-    println!("0 ======== Create Owner Accounts");
+    println!("0 ======== Create Owner and Operator Accounts"); //////// 0L ////////
 
     let mut owners = vec![];
     let mut owner_names = vec![];
@@ -448,7 +447,75 @@ fn create_and_initialize_owners_operators(
         operator_auth_keys.push(MoveValue::vector_u8(v.operator_auth_key.to_vec()));
         validator_network_addresses.push(MoveValue::vector_u8(v.network_address.clone()));
         full_node_network_addresses.push(MoveValue::vector_u8(v.full_node_network_address.clone()));
+
+        //////// 0L ////////
+        // Submit mining proof
+        let preimage = hex::decode(&v.genesis_mining_proof.preimage).unwrap();
+        let proof = hex::decode(&v.genesis_mining_proof.proof).unwrap();
+        exec_function(
+            session,
+            "TowerState",
+            "genesis_helper",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(diem_root_address),
+                MoveValue::Signer(v.address),
+                MoveValue::vector_u8(preimage),
+                MoveValue::vector_u8(proof),
+            ]),
+        );
+
+        //////// 0L ////////
+        // submit any transactions for user e.g. Autopay
+        if let Some(profile) = &v.genesis_mining_proof.profile {
+            match &profile.autopay_instructions {
+                Some(list) => {
+                    list.into_iter().for_each(|ins| {
+                        let autopay_instruction =
+                            transaction_builder::encode_autopay_create_instruction_script_function(
+                                ins.uid.unwrap(),
+                                ins.type_move.unwrap(),
+                                ins.destination,
+                                ins.duration_epochs.unwrap(),
+                                ins.value_move.unwrap(),
+                            )
+                            .into_script_function();
+                        exec_script_function(
+                            session,
+                            v.address,
+                            &autopay_instruction,
+                        );
+                    });
+                }
+                None => {}
+            }
+        }
+
+        //////// 0L ////////
+        exec_function(
+            session,
+            "ValidatorUniverse",
+            "genesis_helper",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(diem_root_address),
+                MoveValue::Signer(v.address),
+            ]),
+        );
+
+        //////// 0L ////////
+        // enable oracle upgrade delegation for all genesis nodes.
+        exec_function(
+            session,
+            "Oracle",
+            "enable_delegation",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(v.address),
+            ]),
+        );        
     }
+
     exec_function(
         session,
         GENESIS_MODULE_NAME,
@@ -766,6 +833,8 @@ pub struct Validator {
     pub network_address: Vec<u8>,
     /// `NetworkAddress` for the validator's full node
     pub full_node_network_address: Vec<u8>,
+    //////// 0L ////////
+    pub genesis_mining_proof: GenesisMiningProof, // proof of work
 }
 
 pub struct TestValidator {
@@ -803,6 +872,7 @@ impl TestValidator {
             operator_auth_key,
             network_address,
             full_node_network_address,
+            genesis_mining_proof: GenesisMiningProof::default(),
         };
         Self { key, data }
     }

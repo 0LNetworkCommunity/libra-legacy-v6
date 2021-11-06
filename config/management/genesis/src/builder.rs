@@ -15,7 +15,7 @@ use diem_types::{
         authenticator::AuthenticationKey, ScriptFunction, Transaction, TransactionPayload,
     },
 };
-use vm_genesis::Validator;
+use vm_genesis::{GenesisMiningProof, Validator};
 
 pub struct GenesisBuilder<S> {
     storage: S,
@@ -159,6 +159,7 @@ impl<S: KVStorage> GenesisBuilder<S> {
                 operator_auth_key,
                 network_address,
                 full_node_network_address,
+                genesis_mining_proof: GenesisMiningProof::default(), //////// 0L ////////
             })
         }
         Ok(validators)
