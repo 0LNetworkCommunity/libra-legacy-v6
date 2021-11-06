@@ -1,21 +1,22 @@
 use std::{fmt::Debug, fs, path::PathBuf};
 
-use diem_config::{
-    config::OnDiskStorageConfig,
-    config::SafetyRulesService,
-    config::{DiscoveryMethod, NetworkConfig, NodeConfig, Peer, PeerRole, PeerSet, SecureBackend},
-    config::{Identity, UpstreamConfig, WaypointConfig},
-    network_id::NetworkId,
-};
+use diem_config::{config::OnDiskStorageConfig, config::SafetyRulesService, config::{DiscoveryMethod, NetworkConfig, NodeConfig, Peer, PeerRole, PeerSet, SecureBackend}, config::{Identity, WaypointConfig}, network_id::NetworkId};
 use diem_crypto::x25519::PublicKey;
 use ol_types::account::ValConfigs;
-
-use crate::seeds::Seeds;
+use serde::{Deserialize, Serialize};
 use crate::storage_helper::StorageHelper;
-use diem_global_constants::{FULLNODE_NETWORK_KEY, OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
+use diem_global_constants::{OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
 use diem_management::{config::ConfigPath, error::Error, secure_backend::ValidatorBackend};
 use diem_types::{chain_id::ChainId, waypoint::Waypoint, PeerId};
 use structopt::StructOpt;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum NodeType {
+    Validator,
+    ValidatorFullNode,
+    PublicFullNode,
+}
+
 /// Prints the public information within a store
 #[derive(Debug, StructOpt)]
 pub struct Files {
@@ -46,6 +47,8 @@ pub struct Files {
     layout_path: Option<PathBuf>,
 }
 
+
+
 impl Files {
     pub fn execute(self) -> Result<NodeConfig, Error> {
         write_node_config_files(
@@ -58,7 +61,9 @@ impl Files {
             &self.fullnode_only,
             self.waypoint,
             &self.layout_path,
-        )
+        ).map_err(|e| {
+          Error::ConfigError(format!("Could not write node config files, message: {}", e.to_string()))
+        })
     }
 }
 
@@ -70,9 +75,9 @@ pub fn write_node_config_files(
     namespace: &str,
     prebuilt_genesis: &Option<PathBuf>,
     fullnode_only: &bool,
-    way_opt: Option<Waypoint>,
+    _way_opt: Option<Waypoint>,
     layout_path: &Option<PathBuf>,
-) -> Result<NodeConfig, Error> {
+) -> Result<NodeConfig, anyhow::Error> {
     // TODO: Do we need github token path with public repo?
     let github_token_path = output_dir.join("github_token.txt");
     let chain_id = ChainId::new(chain_id);
@@ -95,135 +100,47 @@ pub fn write_node_config_files(
         storage_helper,
         chain_id,
         namespace,
-    )
-    .map_err(|e| { Error::ConfigError(format!("Could not set genesis data, message: {}", e.to_string()))})?;
-    // let mut genesis_path = output_dir.join("genesis.blob");
-    // match prebuilt_genesis {
-    //     Some(path) => {
-    //         // TODO: insert waypoint
-    //         genesis_path = path.to_owned();
-    //     }
-    //     None => {
-    //       // building a genesis file requires a set_layout path. The default is for genesis to use a local set_layout file. Once a genesis occurs, the canonical chain can store the genesis information to github repo for future verification and creating a genesis blob.
-    //         let genesis_waypoint = match layout_path {
-    //             Some(layout_path) => storage_helper
-    //                 .build_genesis_with_layout(chain_id, &remote, &genesis_path, &layout_path)
-    //                 .unwrap(),
-    //             None => {
-    //               println!("attempting to get a set_layout file from the genesis repo");
-    //               storage_helper
-    //                 .build_genesis_from_github(chain_id, &remote, &genesis_path)
-    //                 .unwrap()
-    //             },
-    //         };
+    )?;
+    // .map_err(|e| { Error::ConfigError(format!("Could not set genesis data, message: {}", e.to_string()))})?;
 
-    //         // for genesis cases, need to insert the waypoint in the key_store.json
-    //         storage_helper
-    //             .insert_waypoint(&namespace, genesis_waypoint)
-    //             .unwrap();
-
-    //         way_opt = Some(genesis_waypoint);
-    //     }
-    // };
-
-    // Write the genesis waypoint without a namespaced storage.
+    // make the key_store storage interface for disk.
     let mut disk_storage = OnDiskStorageConfig::default();
     disk_storage.set_data_dir(output_dir.clone());
     disk_storage.path = output_dir.clone().join("key_store.json");
     disk_storage.namespace = Some(namespace.to_owned());
 
     // Get node configs template
-    let mut config = if *fullnode_only {
-        let mut c = NodeConfig::default_for_public_full_node();
-        c.base.waypoint = WaypointConfig::FromConfig(way_opt.unwrap_or_default());
+    let config = if *fullnode_only {
+        let mut n = make_fullnode_cfg(output_dir.clone(), genesis_waypoint)?;
+        write_yaml(output_dir.clone(), &mut n, NodeType::PublicFullNode)?;
+        n
 
-        c.execution.sign_vote_proposal = false;
-        c.execution.genesis_file_location = PathBuf::from("/");
-        c
     } else {
-        let mut c = NodeConfig::default();
-
-        // Note skip setting namepace for later.
-        c.base.waypoint =
-            WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
-
-        // If validator configs set val network configs
-        let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
-
-        // NOTE: Using configs as described in cluster tests:
-        // testsuite/cluster-test/src/cluster_swarm/configs/validator.yaml
-        network.discovery_method = DiscoveryMethod::Onchain;
-        network.mutual_authentication = true;
-        network.identity = Identity::from_storage(
-            VALIDATOR_NETWORK_KEY.to_string(),
-            OWNER_ACCOUNT.to_string(),
-            SecureBackend::OnDiskStorage(disk_storage.clone()),
-        );
-        network.network_address_key_backend =
-            Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
-
-        c.validator_network = Some(network.clone());
-
-        c.json_rpc.address = "0.0.0.0:8080".parse().unwrap();
-        // NOTE: for future reference, seed addresses are not necessary
-        // for setting a validator if on-chain discovery is used.
-
-        // Consensus
-        c.base.waypoint =
-            WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
-
-        c.execution.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
-        c.execution.genesis_file_location = genesis_path.clone();
-
-        c.consensus.safety_rules.service = SafetyRulesService::Thread;
-        c.consensus.safety_rules.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
-
-        c
+        let mut n = make_validator_cfg(output_dir.clone(), disk_storage.clone(), genesis_path.clone())?;
+        write_yaml(output_dir.clone(), &mut n, NodeType::Validator)?;
+        n
     };
 
-    config.set_data_dir(output_dir.clone());
+    Ok(config)
+}
 
-    ///////// FULL NODE CONFIGS ////////
-    let mut fn_network = NetworkConfig::network_with_id(NetworkId::Public);
+fn write_yaml(output_dir: PathBuf, config: &mut NodeConfig, role: NodeType) -> Result<(), anyhow::Error> {
 
-    fn_network.seed_addrs = Seeds::new(genesis_path.clone())
-        .get_network_peers_info()
-        .expect("Could not get seed peers");
-
-    fn_network.discovery_method = DiscoveryMethod::Onchain;
-    fn_network.listen_address = "/ip4/0.0.0.0/tcp/6179".parse().unwrap();
-    fn_network.identity = Identity::from_storage(
-        FULLNODE_NETWORK_KEY.to_string(),
-        OWNER_ACCOUNT.to_string(),
-        SecureBackend::OnDiskStorage(disk_storage.clone()),
-    );
-    config.full_node_networks = vec![fn_network];
-
-    // NOTE: for future reference, "upstream" is not necessary for validator settings.
-    config.upstream = UpstreamConfig {
-        networks: vec![NetworkId::Public],
+    let filename = match role {
+        NodeType::Validator => "validator.node.yaml",
+        NodeType::ValidatorFullNode =>"vfn.node.yaml",
+        NodeType::PublicFullNode => "fullnode.node.yaml",
     };
-
-    // Prune window for state snapshots
-    config.storage.prune_window = Some(20_000);
-
-    // Write yaml
-    let yaml_path = if *fullnode_only {
-        output_dir.join("fullnode.node.yaml")
-    } else {
-        output_dir.join("validator.node.yaml")
-    };
-
-    fs::create_dir_all(&output_dir).expect("Unable to create output directory");
-    config
-        .save(&yaml_path)
-        .expect("Unable to save node configs");
+      
+    let yaml_path = output_dir.join(filename);
+    fs::create_dir_all(&output_dir)?;
+    config.save(&yaml_path)?;
 
     println!(
         "validator configurations initialized, file saved to: {:?}",
         &yaml_path
     );
-    Ok(config)
+    Ok(())
 }
 
 fn update_genesis_data(
@@ -267,6 +184,55 @@ fn update_genesis_data(
     }
 }
 
+fn make_validator_cfg(
+  output_dir: PathBuf,
+  disk_storage: OnDiskStorageConfig,
+  genesis_path: PathBuf,
+ ) -> Result<NodeConfig, anyhow::Error> {
+
+        let mut c = NodeConfig::default();
+        c.set_data_dir(output_dir);
+        // Note skip setting namepace for later.
+        c.base.waypoint =
+            WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
+
+        // If validator configs set val network configs
+        let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
+
+        // NOTE: Using configs as described in cluster tests:
+        // testsuite/cluster-test/src/cluster_swarm/configs/validator.yaml
+        network.discovery_method = DiscoveryMethod::Onchain;
+        network.mutual_authentication = true;
+        network.identity = Identity::from_storage(
+            VALIDATOR_NETWORK_KEY.to_string(),
+            OWNER_ACCOUNT.to_string(),
+            SecureBackend::OnDiskStorage(disk_storage.clone()),
+        );
+        network.network_address_key_backend =
+            Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
+
+        c.validator_network = Some(network.clone());
+
+        c.json_rpc.address = "0.0.0.0:8080".parse().unwrap();
+        // NOTE: for future reference, seed addresses are not necessary
+        // for setting a validator if on-chain discovery is used.
+
+        // Consensus
+        c.base.waypoint =
+            WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
+
+        c.execution.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
+        c.execution.genesis_file_location = genesis_path.clone();
+
+        c.consensus.safety_rules.service = SafetyRulesService::Thread;
+        c.consensus.safety_rules.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
+
+        c.storage.prune_window = Some(20_000);
+
+        Ok(c)
+
+}
+
 /// Save node configs to files
 pub fn save_node_yaml_files(output_dir: PathBuf) {}
 
@@ -278,7 +244,28 @@ pub fn make_fullnode_cfg(
     let mut n = default_for_public_fullnode()?;
     n.set_data_dir(home_path);
     n.base.waypoint = WaypointConfig::FromConfig(waypoint);
+
+    n.storage.prune_window = Some(20_000);
+
+    // Write yaml
     Ok(n)
+
+
+        // ///////// FULL NODE CONFIGS ////////
+    // let mut fn_network = NetworkConfig::network_with_id(NetworkId::Public);
+
+    // fn_network.seed_addrs = Seeds::new(genesis_path.clone())
+    //     .get_network_peers_info()
+    //     .expect("Could not get seed peers");
+
+    // fn_network.discovery_method = DiscoveryMethod::Onchain;
+    // fn_network.listen_address = "/ip4/0.0.0.0/tcp/6179".parse().unwrap();
+    // fn_network.identity = Identity::from_storage(
+    //     FULLNODE_NETWORK_KEY.to_string(),
+    //     OWNER_ACCOUNT.to_string(),
+    //     SecureBackend::OnDiskStorage(disk_storage.clone()),
+    // );
+    // config.full_node_networks = vec![fn_network];
 }
 
 /// make the fullnode NodeConfig
@@ -304,6 +291,8 @@ pub fn make_vfn_cfg(
     let net = &mut n.full_node_networks[0];
     net.seeds = seeds;
     n.full_node_networks = vec![net.to_owned()];
+
+    n.storage.prune_window = Some(20_000);
 
     Ok(n)
 }
