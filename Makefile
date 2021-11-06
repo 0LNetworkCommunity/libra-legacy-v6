@@ -376,6 +376,11 @@ ifdef TEST
 		mkdir -p ${DATA_PATH}/vdf_proofs/; \
 	fi
 
+	@if test ! -d ${DATA_PATH}/vdf_proofs; then \
+		echo Creating Directories \
+		mkdir -p ${DATA_PATH}/vdf_proofs/; \
+	fi
+
 	@if test -f ${DATA_PATH}/vdf_proofs/proof_0.json; then \
 		rm ${DATA_PATH}/vdf_proofs/proof_0.json; \
 	fi 
