@@ -1,12 +1,20 @@
 use std::{fmt::Debug, fs, path::PathBuf};
 
-use diem_config::{config::OnDiskStorageConfig, config::SafetyRulesService, config::{DiscoveryMethod, NetworkConfig, NodeConfig, Peer, PeerSet, SecureBackend}, config::{Identity, UpstreamConfig, WaypointConfig}, network_id::NetworkId};
+use diem_config::{
+    config::OnDiskStorageConfig,
+    config::SafetyRulesService,
+    config::{DiscoveryMethod, NetworkConfig, NodeConfig, Peer, PeerRole, PeerSet, SecureBackend},
+    config::{Identity, UpstreamConfig, WaypointConfig},
+    network_id::NetworkId,
+};
+use diem_crypto::x25519::PublicKey;
+use ol_types::account::ValConfigs;
 
 use crate::seeds::Seeds;
 use crate::storage_helper::StorageHelper;
 use diem_global_constants::{FULLNODE_NETWORK_KEY, OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
 use diem_management::{config::ConfigPath, error::Error, secure_backend::ValidatorBackend};
-use diem_types::{chain_id::ChainId, waypoint::Waypoint};
+use diem_types::{chain_id::ChainId, waypoint::Waypoint, PeerId};
 use structopt::StructOpt;
 /// Prints the public information within a store
 #[derive(Debug, StructOpt)]
@@ -62,7 +70,7 @@ pub fn write_node_config_files(
     namespace: &str,
     prebuilt_genesis: &Option<PathBuf>,
     fullnode_only: &bool,
-    mut way_opt: Option<Waypoint>,
+    way_opt: Option<Waypoint>,
     layout_path: &Option<PathBuf>,
 ) -> Result<NodeConfig, Error> {
     // TODO: Do we need github token path with public repo?
@@ -79,34 +87,44 @@ pub fn write_node_config_files(
 
     let storage_helper = StorageHelper::get_with_path(output_dir.clone());
 
-    let mut genesis_path = output_dir.join("genesis.blob");
-    match prebuilt_genesis {
-        Some(path) => {
-            // TODO: insert waypoint
-            genesis_path = path.to_owned();
-        }
-        None => {
-          // building a genesis file requires a set_layout path. The default is for genesis to use a local set_layout file. Once a genesis occurs, the canonical chain can store the genesis information to github repo for future verification and creating a genesis blob.
-            let genesis_waypoint = match layout_path {
-                Some(layout_path) => storage_helper
-                    .build_genesis_with_layout(chain_id, &remote, &genesis_path, &layout_path)
-                    .unwrap(),
-                None => {
-                  println!("attempting to get a set_layout file from the genesis repo");
-                  storage_helper
-                    .build_genesis_from_github(chain_id, &remote, &genesis_path)
-                    .unwrap()
-                },
-            };
+    let (genesis_path, genesis_waypoint) = update_genesis_data(
+        &output_dir,
+        prebuilt_genesis,
+        remote,
+        layout_path,
+        storage_helper,
+        chain_id,
+        namespace,
+    )
+    .map_err(|e| { Error::ConfigError(format!("Could not set genesis data, message: {}", e.to_string()))})?;
+    // let mut genesis_path = output_dir.join("genesis.blob");
+    // match prebuilt_genesis {
+    //     Some(path) => {
+    //         // TODO: insert waypoint
+    //         genesis_path = path.to_owned();
+    //     }
+    //     None => {
+    //       // building a genesis file requires a set_layout path. The default is for genesis to use a local set_layout file. Once a genesis occurs, the canonical chain can store the genesis information to github repo for future verification and creating a genesis blob.
+    //         let genesis_waypoint = match layout_path {
+    //             Some(layout_path) => storage_helper
+    //                 .build_genesis_with_layout(chain_id, &remote, &genesis_path, &layout_path)
+    //                 .unwrap(),
+    //             None => {
+    //               println!("attempting to get a set_layout file from the genesis repo");
+    //               storage_helper
+    //                 .build_genesis_from_github(chain_id, &remote, &genesis_path)
+    //                 .unwrap()
+    //             },
+    //         };
 
-            // for genesis cases, need to insert the waypoint in the key_store.json
-            storage_helper
-                .insert_waypoint(&namespace, genesis_waypoint)
-                .unwrap();
+    //         // for genesis cases, need to insert the waypoint in the key_store.json
+    //         storage_helper
+    //             .insert_waypoint(&namespace, genesis_waypoint)
+    //             .unwrap();
 
-            way_opt = Some(genesis_waypoint);
-        }
-    };
+    //         way_opt = Some(genesis_waypoint);
+    //     }
+    // };
 
     // Write the genesis waypoint without a namespaced storage.
     let mut disk_storage = OnDiskStorageConfig::default();
@@ -207,40 +225,87 @@ pub fn write_node_config_files(
     );
     Ok(config)
 }
- 
 
+fn update_genesis_data(
+    output_dir: &PathBuf,
+    prebuilt_genesis: &Option<PathBuf>,
+    remote: String,
+    layout_path: &Option<PathBuf>,
+    storage_helper: StorageHelper,
+    chain_id: ChainId,
+    namespace: &str,
+) -> Result<(PathBuf, Waypoint), anyhow::Error> {
+    let genesis_path = output_dir.join("genesis.blob");
+    match prebuilt_genesis {
+        Some(path) => {
+            // TODO: insert waypoint
+            let wp: Waypoint = fs::read_to_string(&path.parent().unwrap().join("genesis_waypoint.txt"))?.parse()?;
+            Ok((path.to_owned(), wp))
+        }
+        None => {
+            // building a genesis file requires a set_layout path. The default is for genesis to use a local set_layout file. Once a genesis occurs, the canonical chain can store the genesis information to github repo for future verification and creating a genesis blob.
+            let genesis_waypoint = match layout_path {
+                Some(layout_path) => storage_helper
+                    .build_genesis_with_layout(chain_id, &remote, &genesis_path, &layout_path)
+                    .unwrap(),
+                None => {
+                    println!("attempting to get a set_layout file from the genesis repo");
+                    storage_helper
+                        .build_genesis_from_github(chain_id, &remote, &genesis_path)
+                        .unwrap()
+                }
+            };
+
+            // for genesis cases, need to insert the waypoint in the key_store.json
+            storage_helper
+                .insert_waypoint(&namespace, genesis_waypoint)
+                .unwrap();
+            
+            Ok((genesis_path, genesis_waypoint))
+            // way_opt = Some(genesis_waypoint);
+        }
+    }
+}
 
 /// Save node configs to files
-pub fn save_node_yaml_files(output_dir: PathBuf) {
-
-}
+pub fn save_node_yaml_files(output_dir: PathBuf) {}
 
 /// make the fullnode NodeConfig
 pub fn make_fullnode_cfg(
-  home_path: PathBuf,
-  waypoint: Waypoint,
+    home_path: PathBuf,
+    waypoint: Waypoint,
 ) -> Result<NodeConfig, anyhow::Error> {
-  let mut n = default_for_public_fullnode()?;
-  n.set_data_dir(home_path);
-  n.base.waypoint = WaypointConfig::FromConfig(waypoint);
-  Ok(n)
+    let mut n = default_for_public_fullnode()?;
+    n.set_data_dir(home_path);
+    n.base.waypoint = WaypointConfig::FromConfig(waypoint);
+    Ok(n)
 }
 
 /// make the fullnode NodeConfig
 pub fn make_vfn_cfg(
-  home_path: PathBuf,
-  waypoint: Waypoint,
+    home_path: PathBuf,
+    waypoint: Waypoint,
+    validator_addr: PeerId,
+    ip_addresss: &str,
+    fn_net_pubkey: PublicKey,
 ) -> Result<NodeConfig, anyhow::Error> {
-  let mut n = default_for_vfn()?;
-  n.set_data_dir(home_path);
-  n.base.waypoint = WaypointConfig::FromConfig(waypoint);
+    let mut n = default_for_vfn()?;
 
-  // random identity
+    // Set base properties
+    n.set_data_dir(home_path);
+    n.base.waypoint = WaypointConfig::FromConfig(waypoint);
 
-  //
+    // create the vfn network info.
+    let val_peer_data = validator_peer_data(ip_addresss, fn_net_pubkey)?;
+    // The seed address for the VFN can only be the Validator's address.
+    let mut seeds = PeerSet::default();
+    seeds.insert(validator_addr, val_peer_data);
 
+    let net = &mut n.full_node_networks[0];
+    net.seeds = seeds;
+    n.full_node_networks = vec![net.to_owned()];
 
-  Ok(n)
+    Ok(n)
 }
 
 // pub fn get_storage_obj(output_dir: PathBuf, namespace: &str) -> Result<OnDiskStorageConfig, Error>{
@@ -269,7 +334,6 @@ pub fn make_vfn_cfg(
 //             Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
 // }
 
-
 // /// make the validator config settings.
 // pub fn make_vfn_settings() -> Result<NetworkConfig, Error>{
 //   todo!()
@@ -282,44 +346,45 @@ pub fn make_vfn_cfg(
 // todo!()
 // }
 
-
 pub fn default_for_public_fullnode() -> Result<NodeConfig, anyhow::Error> {
-    let path_str= env!("CARGO_MANIFEST_DIR");
+    let path_str = env!("CARGO_MANIFEST_DIR");
     let path = PathBuf::from(path_str)
-    .parent()
-    .unwrap()
-    .parent()
-    .unwrap()
-    .parent()
-    .unwrap()
-    .join("ol/util/node_templates/fullnode.node.yaml");
-    
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .join("ol/util/node_templates/fullnode.node.yaml");
+
     let contents = fs::read_to_string(&path)?;
     let n: NodeConfig = serde_yaml::from_str(&contents)?;
 
     Ok(n)
 }
-
 
 pub fn default_for_vfn() -> Result<NodeConfig, anyhow::Error> {
-    let path_str= env!("CARGO_MANIFEST_DIR");
+    let path_str = env!("CARGO_MANIFEST_DIR");
     let path = PathBuf::from(path_str)
-    .parent()
-    .unwrap()
-    .parent()
-    .unwrap()
-    .parent()
-    .unwrap()
-    .join("ol/util/node_templates/vfn.node.yaml");
-    
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .join("ol/util/node_templates/vfn.node.yaml");
+
     let contents = fs::read_to_string(&path)?;
     let n: NodeConfig = serde_yaml::from_str(&contents)?;
 
     Ok(n)
 }
 
-pub fn validator_peer_data() -> Result<Peer, anyhow::Error> {
-  
+pub fn validator_peer_data(ip_address: &str, pubkey: PublicKey) -> Result<Peer, anyhow::Error> {
+    let role = PeerRole::Validator;
+    let val_addr = ValConfigs::make_vfn_addr(ip_address, pubkey);
+    let p = Peer::from_addrs(role, vec![val_addr]);
+    Ok(p)
 }
 
 // pub fn default_for_validator() -> Self {
@@ -334,12 +399,12 @@ pub fn validator_peer_data() -> Result<Peer, anyhow::Error> {
 
 #[test]
 fn test_default_for_public_fullnode() {
-  let n = default_for_public_fullnode();
-  dbg!(&n);
+    let n = default_for_public_fullnode();
+    dbg!(&n);
 }
 
-#[test]
-fn test_default_for_vfn() {
-  let n = default_for_vfn();
-  dbg!(&n);
-}
+// #[test]
+// fn test_default_for_vfn() {
+//   let n = default_for_vfn();
+//   dbg!(&n);
+// }
