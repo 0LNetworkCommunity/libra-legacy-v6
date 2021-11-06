@@ -4,8 +4,8 @@
 //! sender: diemroot
 script {
   use 0x1::GAS::GAS;
-  use 0x1::Diem;
-  use 0x1::DiemAccount;
+  use DiemFramework::Diem;
+  use DiemFramework::DiemAccount;
     
   fun main(vm: signer) {
     let cap = Diem::market_cap<GAS>();

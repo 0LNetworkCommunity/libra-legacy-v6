@@ -28,13 +28,11 @@ module Decimal {
     const ROUND_MID_TO_EVEN: u8 = 0; // This is the default in the rust_decimal lib.
     const ROUND_MID_FROM_ZERO: u8 = 1;
 
+    native public fun demo(sign: bool, int: u128, scale: u8): (bool, u128, u8);
 
+    native public fun single(op_id: u8, sign: bool, int: u128, scale: u8): (bool, u128, u8);
 
-    native public fun decimal_demo(sign: bool, int: u128, scale: u8): (bool, u128, u8);
-
-    native public fun single_op(op_id: u8, sign: bool, int: u128, scale: u8): (bool, u128, u8);
-
-    native public fun pair_op(
+    native public fun pair(
       op_id: u8,
       rounding_strategy_id: u8,
       // left number
@@ -63,7 +61,7 @@ module Decimal {
 
     /////// SUGAR /////////
     public fun trunc(d: &Decimal): Decimal {
-      let (sign, int, scale) = single_op(TRUNC, *&d.sign, *&d.int, *&d.scale);
+      let (sign, int, scale) = single(TRUNC, *&d.sign, *&d.int, *&d.scale);
       return Decimal {
         sign: sign,
         int: int,
@@ -72,7 +70,7 @@ module Decimal {
     }
 
     public fun sqrt(d: &Decimal): Decimal {
-      let (sign, int, scale) = single_op(SQRT, *&d.sign, *&d.int, *&d.scale);
+      let (sign, int, scale) = single(SQRT, *&d.sign, *&d.int, *&d.scale);
       return Decimal {
         sign: sign,
         int: int,
@@ -81,7 +79,7 @@ module Decimal {
     }
 
     public fun add(l: &Decimal, r: &Decimal): Decimal {
-      let (sign, int, scale) = pair_op(ADD, ROUND_MID_TO_EVEN, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+      let (sign, int, scale) = pair(ADD, ROUND_MID_TO_EVEN, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
       return Decimal {
         sign: sign,
         int: int,
@@ -90,7 +88,7 @@ module Decimal {
     }
 
     public fun sub(l: &Decimal, r: &Decimal): Decimal {
-      let (sign, int, scale) = pair_op(SUB, ROUND_MID_TO_EVEN, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+      let (sign, int, scale) = pair(SUB, ROUND_MID_TO_EVEN, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
       return Decimal {
         sign: sign,
         int: int,
@@ -98,7 +96,7 @@ module Decimal {
       }
     }
     public fun mul(l: &Decimal, r: &Decimal): Decimal {
-      let (sign, int, scale) = pair_op(MUL, ROUND_MID_TO_EVEN, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+      let (sign, int, scale) = pair(MUL, ROUND_MID_TO_EVEN, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
       return Decimal {
         sign: sign,
         int: int,
@@ -107,7 +105,7 @@ module Decimal {
     }
 
      public fun div(l: &Decimal, r: &Decimal): Decimal {
-      let (sign, int, scale) = pair_op(DIV, ROUND_MID_TO_EVEN, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+      let (sign, int, scale) = pair(DIV, ROUND_MID_TO_EVEN, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
       return Decimal {
         sign: sign,
         int: int,
@@ -117,7 +115,7 @@ module Decimal {
 
 
     public fun rescale(l: &Decimal, r: &Decimal): Decimal {
-      let (sign, int, scale) = pair_op(0, ROUND_MID_TO_EVEN, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+      let (sign, int, scale) = pair(0, ROUND_MID_TO_EVEN, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
       return Decimal {
         sign: sign,
         int: int,
@@ -126,7 +124,7 @@ module Decimal {
     }
 
     public fun round(l: &Decimal, r: &Decimal, strategy: u8): Decimal {
-      let (sign, int, scale) = pair_op(ROUND, strategy, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+      let (sign, int, scale) = pair(ROUND, strategy, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
       return Decimal {
         sign: sign,
         int: int,
@@ -136,7 +134,7 @@ module Decimal {
 
 
     public fun power(l: &Decimal, r: &Decimal): Decimal {
-      let (sign, int, scale) = pair_op(POW, ROUND_MID_TO_EVEN, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+      let (sign, int, scale) = pair(POW, ROUND_MID_TO_EVEN, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
       return Decimal {
         sign: sign,
         int: int,

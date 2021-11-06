@@ -44,7 +44,7 @@ impl MoveDecimalType {
     }
 }
 
-pub fn native_decimal_demo(
+pub fn native_demo(
     context: &mut NativeContext,
     _ty_args: Vec<Type>,
     mut arguments: VecDeque<Value>,
@@ -78,7 +78,7 @@ pub fn native_decimal_demo(
     ))
 }
 
-pub fn native_decimal_single(
+pub fn native_single(
     context: &mut NativeContext,
     _ty_args: Vec<Type>,
     mut arguments: VecDeque<Value>,
@@ -120,7 +120,7 @@ pub fn native_decimal_single(
     ))
 }
 
-pub fn native_decimal_pair(
+pub fn native_pair(
     context: &mut NativeContext,
     _ty_args: Vec<Type>,
     mut arguments: VecDeque<Value>,
