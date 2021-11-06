@@ -457,13 +457,12 @@ module DiemFramework::DiemAccount {
         challenge: &vector<u8>,
         solution: &vector<u8>,
     ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount {
-             
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
         Roles::new_user_role_with_proof(&new_signer);
         Event::publish_generator(&new_signer);
-        add_currencies_for_account<GAS>(&new_signer, false);
         make_account(&new_signer, auth_key_prefix);
+        add_currencies_for_account<GAS>(&new_signer, false);
 
         onboarding_gas_transfer<GAS>(sender, new_account_address);
         // Init the miner state
@@ -538,7 +537,6 @@ module DiemFramework::DiemAccount {
         Roles::new_validator_role_with_proof(&new_signer, &create_signer(@DiemRoot));
         Event::publish_generator(&new_signer);
         ValidatorConfig::publish_with_proof(&new_signer, ow_human_name);
-        add_currencies_for_account<GAS>(&new_signer, false);
 
         // This also verifies the VDF proof, which we use to rate limit account creation.
         TowerState::init_miner_state(&new_signer, challenge, solution);
@@ -548,7 +546,6 @@ module DiemFramework::DiemAccount {
         Roles::new_validator_operator_role_with_proof(&new_op_account);
         Event::publish_generator(&new_op_account);
         ValidatorOperatorConfig::publish_with_proof(&new_op_account, op_human_name);
-        add_currencies_for_account<GAS>(&new_op_account, false);
         // Link owner to OP
         ValidatorConfig::set_operator(&new_signer, op_address);
         // OP sends network info to Owner config"
@@ -567,6 +564,10 @@ module DiemFramework::DiemAccount {
         make_account(&new_signer, auth_key_prefix);
         make_account(&new_op_account, op_auth_key_prefix);
 
+        // These must be done after make_account()
+        add_currencies_for_account<GAS>(&new_signer, false);
+        add_currencies_for_account<GAS>(&new_op_account, false);
+    
         TowerState::reset_rate_limit(sender);
 
 
@@ -649,8 +650,6 @@ print(&503);
         Event::publish_generator(&new_op_account);
         ValidatorOperatorConfig::publish_with_proof(&new_op_account, op_human_name);
 print(&506);
-        add_currencies_for_account<GAS>(&new_op_account, false);
-
         // Link owner to OP
         ValidatorConfig::set_operator(&new_signer, op_address);
         // OP sends network info to Owner config"
@@ -671,6 +670,7 @@ print(&507);
         // make_account(new_signer, auth_key_prefix);
 print(&508);
         make_account(&new_op_account, op_auth_key_prefix);
+        add_currencies_for_account<GAS>(&new_op_account, false);
 print(&509);
 
         TowerState::reset_rate_limit(sender);
