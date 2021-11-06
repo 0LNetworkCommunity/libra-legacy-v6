@@ -7,7 +7,7 @@
 //! sender: diemroot
 script {
     use 0x1::Stats;
-    use 0x1::Vector;
+    use Std::Vector;
 
     fun main(vm: signer){
       let vm = &vm;

@@ -6,11 +6,11 @@
 //! execute-as: alice
 script {
     use 0x1::Audit;
-    use 0x1::ValidatorConfig;
+    use DiemFramework::ValidatorConfig;
     use 0x1::AutoPay;
     use 0x1::TowerState;
     use 0x1::GAS::GAS;
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     use 0x1::Testnet;
     
     fun main(vm: signer, alice_account: signer) {

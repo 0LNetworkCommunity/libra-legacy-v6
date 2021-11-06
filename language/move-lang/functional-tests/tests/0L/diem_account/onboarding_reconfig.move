@@ -6,8 +6,8 @@
 //! new-transaction
 //! sender: alice
 script {
-  use 0x1::DiemAccount;
-  use 0x1::ValidatorConfig;
+  use DiemFramework::DiemAccount;
+  use DiemFramework::ValidatorConfig;
   use 0x1::TestFixtures;
   use 0x1::VDF;
   use 0x1::TowerState;
@@ -83,14 +83,14 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
     use 0x1::EpochBoundary;
-    use 0x1::Vector;
+    use Std::Vector;
     use 0x1::TowerState;
     use 0x1::Stats;
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     use 0x1::GAS::GAS;
-    use 0x1::ValidatorConfig;
+    use DiemFramework::ValidatorConfig;
 
     fun main(vm: signer) {
         let vm = &vm;
@@ -144,9 +144,9 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
     use 0x1::ValidatorUniverse;
-    use 0x1::Vector;
+    use Std::Vector;
     fun main(vm: signer) {
         // Tests on initial size of validators
         // New validator is not in this set.
@@ -165,16 +165,16 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
     use 0x1::EpochBoundary;
-    use 0x1::Vector;
+    use Std::Vector;
     use 0x1::TowerState;
     use 0x1::Stats;
     use 0x1::ValidatorUniverse;
     use 0x1::AutoPay;
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     use 0x1::GAS::GAS;
-    use 0x1::ValidatorConfig;    
+    use DiemFramework::ValidatorConfig;    
 
     fun main(vm: signer) {
         let vm = &vm;
@@ -238,9 +238,9 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
     use 0x1::ValidatorUniverse;
-    use 0x1::Vector;
+    use Std::Vector;
     fun main(vm: signer) {
         // Tests on initial size of validators
         assert(DiemSystem::validator_set_size() == 6, 7357000200301);

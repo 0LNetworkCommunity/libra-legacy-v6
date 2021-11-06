@@ -6,8 +6,8 @@ address 0x2 {
 module NonFungibleToken {
     use 0x2::SimpleSortedLinkedList;
     use 0x1::Option::{Self, Option};
-    use 0x1::Signer;
-    use 0x1::Vector;
+    use Std::Signer;
+    use Std::Vector;
 
     const NFT_PUBLISHER: address = @0x2;
 
@@ -115,7 +115,7 @@ module TestNft {
 module MoveNft {
     use {{nftservice}}::NonFungibleToken::{Self, NonFungibleToken};
     use {{nftservice}}::TestNft::TestNft;
-    use 0x1::Signer;
+    use Std::Signer;
 
     resource struct MoveNft {
         nft: NonFungibleToken<TestNft>

@@ -9,7 +9,7 @@
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
     use 0x1::MinerState;
     use 0x1::Globals;
     // use 0x1::GAS::GAS;
@@ -60,7 +60,7 @@ script {
 script {  
     // use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     use 0x1::Subsidy;
     use 0x1::Globals;
     use 0x1::Debug::print;

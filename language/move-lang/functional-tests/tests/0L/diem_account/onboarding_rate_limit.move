@@ -4,12 +4,12 @@
 //! new-transaction
 //! sender: alice
 script {
-  use 0x1::DiemAccount;
+  use DiemFramework::DiemAccount;
   use 0x1::GAS::GAS;
   use 0x1::TestFixtures;
-  use 0x1::Signer;
+  use Std::Signer;
   use 0x1::VDF;
-  use 0x1::ValidatorConfig;
+  use DiemFramework::ValidatorConfig;
   use 0x1::Roles;
   use 0x1::TowerState;
 

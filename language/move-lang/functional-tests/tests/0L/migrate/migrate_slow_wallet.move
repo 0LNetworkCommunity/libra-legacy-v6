@@ -7,7 +7,7 @@
 //! sender: diemroot
 script {
     use 0x1::MigrateWallets;
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     fun main(vm: signer) { // alice's signer type added in tx.
       MigrateWallets::migrate_slow_wallets(&vm);
       assert(DiemAccount::is_slow(@{{alice}}), 7357001);

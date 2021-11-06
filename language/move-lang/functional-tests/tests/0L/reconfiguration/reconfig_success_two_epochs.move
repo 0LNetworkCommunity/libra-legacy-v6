@@ -99,9 +99,9 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Vector;
+    use Std::Vector;
     use 0x1::Stats;
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
 
     fun main(vm: signer) {
         assert(DiemSystem::validator_set_size() == 6, 7357008013007);
@@ -222,7 +222,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Vector;
+    use Std::Vector;
     use 0x1::Stats;
 
     fun main(vm: signer) {
@@ -261,8 +261,8 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemSystem;
-    use 0x1::DiemConfig;
+    use DiemFramework::DiemSystem;
+    use DiemFramework::DiemConfig;
 
     fun main(_account: signer) {
         assert(DiemSystem::validator_set_size() == 6, 73570080130014);

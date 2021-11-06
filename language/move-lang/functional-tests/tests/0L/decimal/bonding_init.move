@@ -4,7 +4,7 @@
 //! sender: alices_app
 script {
   use 0x1::Bonding;
-  use 0x1::Signer;
+  use Std::Signer;
   // use 0x1::Debug::print;
 
   fun main(sender: signer) {

@@ -4,17 +4,17 @@ script {
     use 0x1::XUS;
     use 0x1::DualAttestation;
     use 0x1::XDX;
-    use 0x1::Diem;
-    use 0x1::DiemAccount;
+    use DiemFramework::Diem;
+    use DiemFramework::DiemAccount;
     use 0x1::DiemBlock;
-    use 0x1::DiemConfig;
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemConfig;
+    use DiemFramework::DiemSystem;
     use 0x1::DiemTimestamp;
     use 0x1::DiemTransactionPublishingOption;
     use 0x1::DiemVersion;
     use 0x1::TransactionFee;
     use 0x1::DiemVMConfig;
-    use 0x1::Vector;
+    use Std::Vector;
 
     fun initialize(
         dr_account: signer,

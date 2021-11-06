@@ -2,8 +2,8 @@
 
 //! new-transaction
 module {{default}}::M {
-    use 0x1::Event::{destroy_handle, emit_event, EventHandle, new_event_handle};
-    use 0x1::Signer::address_of;
+    use Std::Event::{destroy_handle, emit_event, EventHandle, new_event_handle};
+    use Std::Signer::address_of;
 
     struct MyEvent<T: copy + drop + store> has key {
         e: EventHandle<T>

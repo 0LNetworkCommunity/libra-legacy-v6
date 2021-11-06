@@ -5,11 +5,11 @@
 //! execute-as: alice
 script {
     use 0x1::Audit;
-    use 0x1::ValidatorConfig;
+    use DiemFramework::ValidatorConfig;
     use 0x1::AutoPay;
     use 0x1::TowerState;
     use 0x1::GAS::GAS;
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     
     fun main(_: signer, alice_account: signer) {
         // Test audit function val_audit_passing satisfying all conditions

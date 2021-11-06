@@ -3,7 +3,7 @@
 //! new-transaction
 //! sender: bob
 script {
-  use 0x1::DiemAccount;
+  use DiemFramework::DiemAccount;
   use 0x1::TestFixtures;
   use 0x1::GAS::GAS;
 

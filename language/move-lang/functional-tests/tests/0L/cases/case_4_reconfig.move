@@ -20,9 +20,9 @@
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     use 0x1::GAS::GAS;
-    use 0x1::ValidatorConfig;
+    use DiemFramework::ValidatorConfig;
 
     fun main(sender: signer) {
         // tranfer enough coins to operators
@@ -147,11 +147,11 @@ script {
 //! sender: diemroot
 script {
     
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
     use 0x1::TowerState;
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     // use 0x1::FullnodeState;
 
 
@@ -175,7 +175,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Vector;
+    use Std::Vector;
     use 0x1::Stats;
     // use 0x1::FullnodeState;
     // This is the the epoch boundary.
@@ -231,11 +231,11 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
-    use 0x1::DiemAccount;
-    use 0x1::DiemConfig;
+    use DiemFramework::DiemAccount;
+    use DiemFramework::DiemConfig;
     use 0x1::Debug::print;
 
     fun main(_account: signer) {

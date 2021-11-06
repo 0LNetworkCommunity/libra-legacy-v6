@@ -52,8 +52,8 @@ script {
 //! sender: diemroot
 script {
     use 0x1::Stats;
-    use 0x1::Vector;
-    use 0x1::DiemSystem;
+    use Std::Vector;
+    use DiemFramework::DiemSystem;
 
     fun main(vm: signer) {
         let voters = Vector::singleton<address>(@{{alice}});
@@ -91,8 +91,8 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemSystem;
-    use 0x1::DiemConfig;
+    use DiemFramework::DiemSystem;
+    use DiemFramework::DiemConfig;
 
     fun main(_account: signer) {
         // We are in a new epoch.

@@ -5,8 +5,8 @@
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::DiemAccount;
-    use 0x1::Vector;
+    use DiemFramework::DiemAccount;
+    use Std::Vector;
 
     fun main(_sender: signer) {
       let list = DiemAccount::get_slow_list();

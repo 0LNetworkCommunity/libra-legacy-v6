@@ -6,7 +6,7 @@
 //! execute-as: alice
 script {
     use 0x1::Audit;
-    use 0x1::ValidatorConfig;
+    use DiemFramework::ValidatorConfig;
     use 0x1::AutoPay;
     use 0x1::TowerState;
     

@@ -4,7 +4,7 @@
 //! sender: diemroot
 script {
   use 0x1::GAS::GAS;
-  use 0x1::Diem;
+  use DiemFramework::Diem;
     
   fun main(vm: signer) {
     let coin = Diem::mint<GAS>(&vm, 10);

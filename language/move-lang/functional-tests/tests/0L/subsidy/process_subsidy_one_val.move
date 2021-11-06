@@ -41,10 +41,10 @@ script {
 script {
   // 
   // use 0x1::Subsidy;
-  use 0x1::Vector;
+  use Std::Vector;
   use 0x1::Stats;
   use 0x1::GAS::GAS;
-  use 0x1::DiemAccount;
+  use DiemFramework::DiemAccount;
   use 0x1::Cases;
 
   fun main(vm: signer) {
@@ -80,8 +80,8 @@ script {
 script {
   use 0x1::Subsidy;
   use 0x1::GAS::GAS;
-  use 0x1::DiemAccount;
-  use 0x1::DiemSystem;
+  use DiemFramework::DiemAccount;
+  use DiemFramework::DiemSystem;
 
   fun main(vm: signer) {
     let (validators, _) = DiemSystem::get_fee_ratio(&vm, 0, 15);

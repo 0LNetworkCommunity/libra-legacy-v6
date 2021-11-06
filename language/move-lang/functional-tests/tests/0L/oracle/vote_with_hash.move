@@ -31,7 +31,7 @@ script {
 //! sender: alice
 script {
   use 0x1::Oracle;
-  use 0x1::Vector;
+  use Std::Vector;
   use 0x1::Upgrade;
   fun main(sender: signer){
       let id = 1;
@@ -53,7 +53,7 @@ script {
 //! sender: bob
 script {
   use 0x1::Oracle;
-  use 0x1::Vector;
+  use Std::Vector;
   use 0x1::Upgrade;
   fun main(sender: signer){
       let id = 1;
@@ -74,7 +74,7 @@ script {
 //! sender: carol
 script {
   use 0x1::Oracle;
-  use 0x1::Vector;
+  use Std::Vector;
   use 0x1::Upgrade;
   use 0x1::Hash;
   fun main(sender: signer){
@@ -110,7 +110,7 @@ script {
 //! sender: dave
 script {
   use 0x1::Oracle;
-  use 0x1::Vector;
+  use Std::Vector;
   use 0x1::Upgrade;
   fun main(sender: signer){
       let id = 1;
@@ -142,7 +142,7 @@ script {
 //! sender: eve
 script {
   use 0x1::Oracle;
-  use 0x1::Vector;
+  use Std::Vector;
   use 0x1::Upgrade;
   use 0x1::Hash;
   //use 0x1::Debug::print;

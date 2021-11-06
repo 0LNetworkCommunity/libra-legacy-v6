@@ -6,7 +6,7 @@
 //! sender: alice
 script {
     use 0x1::Oracle;
-    use 0x1::Vector;
+    use Std::Vector;
     use 0x1::Upgrade;
 
     fun main(sender: signer){

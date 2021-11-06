@@ -111,7 +111,7 @@ script {
 //! sender: alice
 script {
   use 0x1::Oracle;
-  use 0x1::Vector;
+  use Std::Vector;
   use 0x1::Upgrade;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
@@ -136,7 +136,7 @@ script {
 //! sender: bob
 script {
   use 0x1::Oracle;
-  use 0x1::Vector;
+  use Std::Vector;
   use 0x1::Upgrade;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
@@ -162,7 +162,7 @@ script {
 //! sender: thomas
 script {
   use 0x1::Oracle;
-  use 0x1::Vector;
+  use Std::Vector;
   use 0x1::Hash;
   //use 0x1::Debug::print;
   fun main(sender: signer){
@@ -187,7 +187,7 @@ script {
 //! sender: lucy
 script {
   use 0x1::Oracle;
-  use 0x1::Vector;
+  use Std::Vector;
   use 0x1::Upgrade;
   use 0x1::Hash;
   fun main(sender: signer){
@@ -214,7 +214,7 @@ script {
 //! sender: jim
 script {
   use 0x1::Oracle;
-  use 0x1::Vector;
+  use Std::Vector;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       let id = 1;
@@ -233,7 +233,7 @@ script {
 //! sender: charlie
 script {
   use 0x1::Oracle;
-  use 0x1::Vector;
+  use Std::Vector;
   use 0x1::Upgrade;
   use 0x1::Hash;
   //use 0x1::Debug::print;
@@ -272,7 +272,7 @@ script {
 // //! sender: diemroot
 // script {
 //   use 0x1::Upgrade;
-//   use 0x1::Vector;
+//   use Std::Vector;
 //   fun main(){
 //     let (upgraded_version, payload, voters, height) = Upgrade::retrieve_latest_history();
 

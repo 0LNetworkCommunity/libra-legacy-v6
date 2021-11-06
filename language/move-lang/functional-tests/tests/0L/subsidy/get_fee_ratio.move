@@ -24,10 +24,10 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-  use 0x1::Vector;
+  use Std::Vector;
   use 0x1::Stats;
-  use 0x1::FixedPoint32;
-  use 0x1::DiemSystem;
+  use Std::FixedPoint32;
+  use DiemFramework::DiemSystem;
 
   fun main(vm: signer) {
     // check the case of a network density of 4 active validators.

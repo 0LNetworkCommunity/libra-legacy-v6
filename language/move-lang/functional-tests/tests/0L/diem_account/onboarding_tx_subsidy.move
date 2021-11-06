@@ -9,7 +9,7 @@ use 0x1::GAS::GAS;
 use 0x1::TowerState;
 use 0x1::NodeWeight;
 use 0x1::TestFixtures;
-use 0x1::ValidatorConfig;
+use DiemFramework::ValidatorConfig;
 use 0x1::Roles;
 
 // Test Prefix: 1301
@@ -87,7 +87,7 @@ use 0x1::Roles;
 //! new-transaction
 //! sender: diemroot
 script {
-  use 0x1::DiemAccount;
+  use DiemFramework::DiemAccount;
   use 0x1::GAS::GAS;
   use 0x1::EpochBoundary;
   use 0x1::TowerState;

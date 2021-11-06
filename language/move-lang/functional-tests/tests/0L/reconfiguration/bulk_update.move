@@ -14,8 +14,8 @@
 //! sender: diemroot
 script {
     
-    use 0x1::DiemSystem;
-    use 0x1::Vector;
+    use DiemFramework::DiemSystem;
+    use Std::Vector;
     use 0x1::ValidatorUniverse;
 
     fun main(vm: signer) {

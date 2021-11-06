@@ -6,7 +6,7 @@
 //! new-transaction
 //! sender: diemroot
 script {
-  use 0x1::DiemAccount;
+  use DiemFramework::DiemAccount;
   use 0x1::GAS::GAS;
 
   fun main(vm: signer) {
@@ -28,7 +28,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-  use 0x1::DiemAccount;
+  use DiemFramework::DiemAccount;
   use 0x1::GAS::GAS;
 
   fun main(vm: signer) {

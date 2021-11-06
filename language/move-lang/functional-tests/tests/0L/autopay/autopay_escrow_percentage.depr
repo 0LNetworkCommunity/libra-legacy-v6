@@ -77,9 +77,9 @@ fun main(lr: signer, bob_account: signer) {
 //! sender: alice
 script {
   use 0x1::AutoPay2;
-  use 0x1::Signer;
+  use Std::Signer;
   use 0x1::GAS::GAS;
-  use 0x1::DiemAccount;
+  use DiemFramework::DiemAccount;
   fun main(sender: signer) {
     let sender = &sender;
     AutoPay2::enable_autopay(sender);
@@ -105,7 +105,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-  use 0x1::DiemAccount;
+  use DiemFramework::DiemAccount;
   use 0x1::GAS::GAS;
   use 0x1::Debug::print;
   use {{default}}::Holder;
@@ -149,7 +149,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-  use 0x1::DiemAccount;
+  use DiemFramework::DiemAccount;
   use 0x1::GAS::GAS;
   use {{default}}::Holder;
   fun main(_vm: signer) {
@@ -186,7 +186,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-  use 0x1::DiemAccount;
+  use DiemFramework::DiemAccount;
   use 0x1::GAS::GAS;
   use {{default}}::Holder;
   fun main(_vm: signer) {

@@ -6,10 +6,10 @@
 //! sender: bob
 script {
     use 0x1::Wallet;
-    use 0x1::Vector;
+    use Std::Vector;
     use 0x1::GAS::GAS;
-    use 0x1::Signer;
-    use 0x1::DiemAccount;
+    use Std::Signer;
+    use DiemFramework::DiemAccount;
 
     fun main(sender: signer) {
       Wallet::set_comm(&sender);
@@ -26,10 +26,10 @@ script {
 //! sender: carol
 script {
     use 0x1::Wallet;
-    use 0x1::Vector;
+    use Std::Vector;
     use 0x1::GAS::GAS;
-    use 0x1::Signer;
-    use 0x1::DiemAccount;
+    use Std::Signer;
+    use DiemFramework::DiemAccount;
 
     fun main(sender: signer) {
       Wallet::set_comm(&sender);
@@ -45,11 +45,11 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-  use 0x1::DiemAccount;
+  use DiemFramework::DiemAccount;
   use 0x1::GAS::GAS;
   use 0x1::Burn;
-  use 0x1::Vector;
-  use 0x1::FixedPoint32;
+  use Std::Vector;
+  use Std::FixedPoint32;
 
   fun main(vm: signer) {
     // send to community wallet Bob

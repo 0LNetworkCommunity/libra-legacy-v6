@@ -9,7 +9,7 @@
 //! sender: alice
 script {
   use 0x1::AutoPay;
-  use 0x1::Signer;
+  use Std::Signer;
   fun main(sender: signer) {
     let sender = &sender;    
     AutoPay::enable_autopay(sender);
@@ -42,7 +42,7 @@ script {
 //! sender: bob
 script {
     use 0x1::Wallet;
-    use 0x1::Vector;
+    use Std::Vector;
 
     fun main(sender: signer) {
       Wallet::set_comm(&sender);
@@ -58,7 +58,7 @@ script {
 //! sender: diemroot
 script {
   use 0x1::AutoPay;
-  use 0x1::DiemAccount;
+  use DiemFramework::DiemAccount;
   use 0x1::GAS::GAS;
   fun main(sender: signer) {
     let alice_balance = DiemAccount::balance<GAS>(@{{alice}});

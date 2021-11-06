@@ -4,7 +4,7 @@
 //! sender: diemroot
 script {
     use 0x1::TransactionFee;
-    use 0x1::Diem;
+    use DiemFramework::Diem;
     use 0x1::GAS::GAS;
 
     fun main(vm: signer) {

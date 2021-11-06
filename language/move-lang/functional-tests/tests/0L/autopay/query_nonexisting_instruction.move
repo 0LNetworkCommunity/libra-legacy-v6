@@ -8,7 +8,7 @@
 //! sender: shashank
 script {
   use 0x1::AutoPay;
-  use 0x1::Signer;
+  use Std::Signer;
   fun main(sender: signer) {
     let sender = &sender;
     AutoPay::enable_autopay(sender);

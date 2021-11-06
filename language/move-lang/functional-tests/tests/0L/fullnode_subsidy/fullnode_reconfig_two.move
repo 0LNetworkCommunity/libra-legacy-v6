@@ -63,11 +63,11 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
     use 0x1::TowerState;
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
 
     fun main(sender: signer) {
         // Tests on initial size of validators
@@ -91,7 +91,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Vector;
+    use Std::Vector;
     use 0x1::Stats;
 
     // This is the the epoch boundary.
@@ -115,7 +115,7 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
     use 0x1::TowerState;
     use 0x1::Debug::print;
 
@@ -165,7 +165,7 @@ script {
 script {  
     // use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     use 0x1::Subsidy;
     use 0x1::Globals;
     // use 0x1::Debug::print;

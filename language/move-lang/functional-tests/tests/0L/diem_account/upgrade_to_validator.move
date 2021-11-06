@@ -3,7 +3,7 @@
 //! new-transaction
 //! sender: bob
 script {
-  use 0x1::DiemAccount;
+  use DiemFramework::DiemAccount;
   use 0x1::TestFixtures;
   use 0x1::GAS::GAS;
 
@@ -81,7 +81,7 @@ use 0x1::EpochBoundary;
 use 0x1::DiemAccount;
 use 0x1::GAS::GAS;
 use 0x1::ValidatorUniverse;
-use 0x1::ValidatorConfig;
+use DiemFramework::ValidatorConfig;
 
 fun main(vm: signer) {
   let eve_addr = @0x3DC18D1CF61FAAC6AC70E3A63F062E4B;

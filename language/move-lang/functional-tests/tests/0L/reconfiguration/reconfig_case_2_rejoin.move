@@ -21,9 +21,9 @@
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     use 0x1::GAS::GAS;
-    use 0x1::ValidatorConfig;
+    use DiemFramework::ValidatorConfig;
 
     fun main(sender: signer) {
         // Transfer enough coins to operators
@@ -143,8 +143,8 @@ script {
 //! sender: diemroot
 script {
     use 0x1::Stats;
-    use 0x1::Vector;
-    use 0x1::DiemSystem;
+    use Std::Vector;
+    use DiemFramework::DiemSystem;
 
     fun main(vm: signer) {
         let voters = Vector::singleton<address>(@{{alice}});
@@ -181,8 +181,8 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemSystem;
-    use 0x1::DiemConfig;
+    use DiemFramework::DiemSystem;
+    use DiemFramework::DiemConfig;
 
     fun main(_account: signer) {
         // We are in a new epoch.
@@ -198,8 +198,8 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemSystem;
-    use 0x1::DiemConfig;
+    use DiemFramework::DiemSystem;
+    use DiemFramework::DiemConfig;
     fun main(_account: signer) {
         // We are in a new epoch.
         assert(DiemConfig::get_current_epoch() == 2, 7357008006011);
@@ -216,7 +216,7 @@ script {
 script {
     // use 0x1::EpochBoundary;
     use 0x1::Cases;
-    use 0x1::Vector;
+    use Std::Vector;
     use 0x1::Stats;
 
     fun main(vm: signer) {
@@ -350,8 +350,8 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemSystem;
-    use 0x1::DiemConfig;
+    use DiemFramework::DiemSystem;
+    use DiemFramework::DiemConfig;
 
     fun main(_account: signer) {
         assert(DiemConfig::get_current_epoch() == 3, 7357008006020);

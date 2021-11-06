@@ -22,9 +22,9 @@ stdlib_script::ValidatorScripts::leave
 script {
     // use 0x1::TowerState;
     use 0x1::Stats;
-    use 0x1::Vector;
+    use Std::Vector;
     // use 0x1::EpochBoundary;
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
 
     fun main(vm: signer) {
         // todo: change name to Mock epochs
@@ -65,8 +65,8 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemSystem;
-    use 0x1::DiemConfig;
+    use DiemFramework::DiemSystem;
+    use DiemFramework::DiemConfig;
 
     fun main(_account: signer) {
         // We are in a new epoch.
@@ -84,7 +84,7 @@ script {
 //! sender: diemroot
 script {
     // use 0x1::EpochBoundary;
-    use 0x1::Vector;
+    use Std::Vector;
     use 0x1::Stats;
     
     fun main(vm: signer) {
@@ -118,8 +118,8 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemSystem;
-    use 0x1::DiemConfig;
+    use DiemFramework::DiemSystem;
+    use DiemFramework::DiemConfig;
     fun main(_account: signer) {
         assert(DiemConfig::get_current_epoch() == 3, 7357008011008);
 
@@ -164,8 +164,8 @@ stdlib_script::ValidatorScripts::join
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemSystem;
-    use 0x1::DiemConfig;
+    use DiemFramework::DiemSystem;
+    use DiemFramework::DiemConfig;
     fun main(_account: signer) {
         assert(DiemConfig::get_current_epoch() == 4, 7357008011010);
 

@@ -16,11 +16,11 @@
 script {
   
   use 0x1::Subsidy;
-  use 0x1::Vector;
+  use Std::Vector;
   use 0x1::Stats;
   use 0x1::TransactionFee;
   use 0x1::GAS::GAS;
-  use 0x1::Diem;
+  use DiemFramework::Diem;
   use 0x1::Globals;
   
   fun main(vm: signer) {

@@ -9,7 +9,7 @@
 //! sender: alice
 script {
   use 0x1::AutoPay;
-  use 0x1::Signer;
+  use Std::Signer;
   fun main(sender: signer) {
     let sender = &sender;
     AutoPay::enable_autopay(sender);
@@ -47,7 +47,7 @@ script {
 //! sender: alice
 script {
   use 0x1::AutoPay;
-  use 0x1::Signer;
+  use Std::Signer;
   fun main(sender: signer) {
     let sender = &sender;
     AutoPay::delete_instruction(sender, 1);

@@ -7,7 +7,7 @@
 //! sender: alice
 script {
     use 0x1::Wallet;
-    use 0x1::Vector;
+    use Std::Vector;
 
     fun main(sender: signer) {
       Wallet::set_comm(&sender);
@@ -62,7 +62,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     use 0x1::GAS::GAS;
     fun main(_vm: signer) {
       let bob_balance = DiemAccount::balance<GAS>(@{{bob}});

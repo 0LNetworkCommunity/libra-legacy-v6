@@ -17,11 +17,11 @@
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
     use 0x1::TowerState;
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
 
     fun main(sender: signer) {
         // Tests on initial size of validators
@@ -45,7 +45,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Vector;
+    use Std::Vector;
     use 0x1::Stats;
 
     // This is the the epoch boundary.
@@ -77,8 +77,8 @@ script {
 //! sender: diemroot
 script {
     use 0x1::Cases;
-    use 0x1::Vector;
-    use 0x1::DiemSystem;
+    use Std::Vector;
+    use DiemFramework::DiemSystem;
     
     fun main(vm: signer) {
         // We are in a new epoch.
@@ -113,7 +113,7 @@ script {
 script {  
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     use 0x1::Subsidy;
     use 0x1::Globals;
 

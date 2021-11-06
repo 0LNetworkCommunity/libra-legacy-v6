@@ -27,7 +27,7 @@ script {
 //! sender: alice
 script {
     use 0x1::Wallet;
-    use 0x1::Vector;
+    use Std::Vector;
 
     fun main(sender: signer) {
       Wallet::set_comm(&sender);

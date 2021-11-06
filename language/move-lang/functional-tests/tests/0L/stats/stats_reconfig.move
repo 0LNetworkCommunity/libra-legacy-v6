@@ -7,7 +7,7 @@
 //! sender: diemroot
 script {
     use 0x1::Stats;
-    use 0x1::Vector;
+    use Std::Vector;
 
     fun main(vm: signer){
       // Check that after a reconfig the counter is reset, and archived in history.

@@ -4,7 +4,7 @@
 //! sender: diemroot
 script {
   // use 0x1::Debug::print;
-  use 0x1::DiemAccount;
+  use DiemFramework::DiemAccount;
   use 0x1::GAS::GAS;
   fun main(_: signer) {
     // need to remove testnet for this test, since testnet does not ratelimit account creation.

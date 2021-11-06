@@ -12,7 +12,7 @@
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Vector;
+    use Std::Vector;
     use 0x1::Stats;
 
     // Assumes an epoch changed at round 15

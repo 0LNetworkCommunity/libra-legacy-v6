@@ -13,7 +13,7 @@
 //! sender: diemroot
 script {
     
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
     use 0x1::NodeWeight;
     fun main(_account: signer) {
         // Tests on initial size of validators 
@@ -29,7 +29,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Vector;
+    use Std::Vector;
     use 0x1::Stats;
 
     fun main(vm: signer) {
@@ -63,7 +63,7 @@ script {
 //! sender: diemroot
 script {
     
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
     use 0x1::NodeWeight;
     fun main(_account: signer) {
         // Tests on initial size of validators 

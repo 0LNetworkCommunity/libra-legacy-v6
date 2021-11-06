@@ -5,7 +5,7 @@
 //! sender: diemroot
 script {
     use 0x1::FullnodeSubsidy;
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     use 0x1::GAS::GAS;
     // use 0x1::Debug::print;
 

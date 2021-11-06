@@ -3,7 +3,7 @@
 //! sender: blessed
 script {
     use 0x1::XUS::XUS;
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     use 0x1::DiemId;
 
     fun main(account: signer) {
@@ -19,7 +19,7 @@ script {
 //! new-transaction
 //! sender: blessed
 script{
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     use 0x1::DiemId;
 
     fun main(tc_account: signer) {
@@ -41,7 +41,7 @@ script{
 //! new-transaction
 //! sender: blessed
 script{
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     use 0x1::DiemId;
 
     fun main(tc_account: signer) {
@@ -62,7 +62,7 @@ script{
 //! new-transaction
 //! sender: blessed
 script{
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     use 0x1::DiemId;
 
     fun main(tc_account: signer) {
@@ -84,7 +84,7 @@ script{
 //! new-transaction
 //! sender: blessed
 script{
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     use 0x1::DiemId;
 
     fun main(tc_account: signer) {

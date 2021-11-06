@@ -40,10 +40,10 @@ script {
 script {
   // 
   // use 0x1::Subsidy;
-  use 0x1::Vector;
+  use Std::Vector;
   use 0x1::Stats;  
   use 0x1::GAS::GAS;
-  use 0x1::DiemAccount;
+  use DiemFramework::DiemAccount;
   use 0x1::Cases;
 
   fun main(vm: signer) {
@@ -77,11 +77,11 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemAccount;
+    use DiemFramework::DiemAccount;
     use 0x1::GAS::GAS;
     use 0x1::Subsidy;
     use 0x1::TransactionFee;
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
 
     fun main(vm: signer) {
         let vm = &vm;

@@ -7,7 +7,7 @@
 //! sender: diemroot
 script {
     
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
     use 0x1::NodeWeight;
     use 0x1::ValidatorUniverse;
     fun main(_account: signer) {
