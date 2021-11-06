@@ -6,7 +6,7 @@
 //! new-transaction
 //! sender: diemroot
 script {
-use 0x1::DiemAccount;
+use DiemFramework::DiemAccount;
 fun main(vm: signer) {
     DiemAccount::slow_wallet_epoch_drip(&vm, 100);
     assert(DiemAccount::unlocked_amount(@{{alice}}) == 100, 735701);
@@ -23,7 +23,7 @@ fun main(vm: signer) {
 //! sender: alice
 script {
 use 0x1::GAS::GAS;
-use 0x1::DiemAccount;
+use DiemFramework::DiemAccount;
 
 fun main(account: signer) {
     assert(DiemAccount::balance<GAS>(@{{bob}}) == 10, 735702);

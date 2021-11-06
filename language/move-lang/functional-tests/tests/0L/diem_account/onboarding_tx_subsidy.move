@@ -4,13 +4,13 @@
 //! sender: bob
 script {
 use 0x1::VDF;
-use 0x1::DiemAccount;
+use DiemFramework::DiemAccount;
 use 0x1::GAS::GAS;
 use 0x1::TowerState;
 use 0x1::NodeWeight;
 use 0x1::TestFixtures;
 use DiemFramework::ValidatorConfig;
-use 0x1::Roles;
+use DiemFramework::Roles;
 
 // Test Prefix: 1301
 

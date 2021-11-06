@@ -4,7 +4,7 @@
 //! sender: diemroot
 script {
     use DiemFramework::DiemSystem;
-    // use 0x1::DiemAccount;
+    // use DiemFramework::DiemAccount;
     // use 0x1::GAS::GAS;
     use 0x1::TrustedAccounts;
     use Std::Vector;

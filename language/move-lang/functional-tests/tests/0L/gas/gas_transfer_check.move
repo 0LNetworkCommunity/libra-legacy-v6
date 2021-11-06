@@ -6,7 +6,7 @@
 //! sender: alice
 //! gas-currency: GAS
 script {
-use 0x1::DiemAccount;
+use DiemFramework::DiemAccount;
 use 0x1::GAS::GAS;
 use 0x1::Testnet;
 fun main(account: signer) {
@@ -29,7 +29,7 @@ fun main(account: signer) {
 // //! gas-currency: GAS
 // script {
 // use 0x1::Diem;
-// use 0x1::DiemAccount;
+// use DiemFramework::DiemAccount;
 // use 0x1::GAS;
 // ;
 // fun main(account: signer) {

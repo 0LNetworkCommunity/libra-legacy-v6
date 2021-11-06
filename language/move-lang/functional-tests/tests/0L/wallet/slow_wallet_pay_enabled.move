@@ -6,7 +6,7 @@
 //! new-transaction
 //! sender: diemroot
 script {
-use 0x1::DiemAccount;
+use DiemFramework::DiemAccount;
 use 0x1::DiemConfig;
 use 0x1::Testnet;
 use 0x1::EpochBoundary;
@@ -27,7 +27,7 @@ fun main(vm: signer) {
 
 script {
 use 0x1::GAS::GAS;
-use 0x1::DiemAccount;
+use DiemFramework::DiemAccount;
 fun main(_account: signer) {
     assert(DiemAccount::unlocked_amount(@{{alice}}) == 0, 735703);
     assert(DiemAccount::balance<GAS>(@{{bob}}) == 10, 735704);
@@ -42,7 +42,7 @@ fun main(_account: signer) {
 //! sender: alice
 script {
 use 0x1::GAS::GAS;
-use 0x1::DiemAccount;
+use DiemFramework::DiemAccount;
 fun main(account: signer) {
 
     let with_cap = DiemAccount::extract_withdraw_capability(&account);

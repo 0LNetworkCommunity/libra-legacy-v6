@@ -33,7 +33,7 @@ script {
 //! sender: bob
 script {
 // use 0x1::VDF;
-use 0x1::DiemAccount;
+use DiemFramework::DiemAccount;
 // use 0x1::TowerState;
 use 0x1::TestFixtures;
 // use 0x1::Vector;
@@ -78,7 +78,7 @@ fun main(sender: signer) {
 //! sender: diemroot
 script {
 use 0x1::EpochBoundary;
-use 0x1::DiemAccount;
+use DiemFramework::DiemAccount;
 use 0x1::GAS::GAS;
 use 0x1::ValidatorUniverse;
 use DiemFramework::ValidatorConfig;

@@ -10,7 +10,7 @@ script {
   use Std::Signer;
   use 0x1::VDF;
   use DiemFramework::ValidatorConfig;
-  use 0x1::Roles;
+  use DiemFramework::Roles;
   use 0x1::TowerState;
 
   fun main(sender: signer) {

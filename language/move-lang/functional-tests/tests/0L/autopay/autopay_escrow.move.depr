@@ -37,7 +37,7 @@ script {
 script {
 use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
-use 0x1::DiemAccount;
+use DiemFramework::DiemAccount;
 use {{default}}::Holder;
 fun main(lr: signer, alice_account: signer) {
     AccountLimits::publish_unrestricted_limits<GAS>(&alice_account);
@@ -54,7 +54,7 @@ fun main(lr: signer, alice_account: signer) {
 script {
 use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
-use 0x1::DiemAccount;
+use DiemFramework::DiemAccount;
 use {{default}}::Holder;
 fun main(lr: signer, bob_account: signer) {
     AccountLimits::publish_unrestricted_limits<GAS>(&bob_account);
@@ -71,7 +71,7 @@ fun main(lr: signer, bob_account: signer) {
 script {
 use 0x1::AccountLimits;
 use 0x1::GAS::GAS;
-use 0x1::DiemAccount;
+use DiemFramework::DiemAccount;
 use {{default}}::Holder;
 fun main(lr: signer, greg_account: signer) {
     AccountLimits::publish_unrestricted_limits<GAS>(&greg_account);

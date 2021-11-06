@@ -8,7 +8,7 @@
 //! sender: carol
 script {
 use 0x1::GAS::GAS;
-use 0x1::DiemAccount;
+use DiemFramework::DiemAccount;
 
 fun main(account: signer) {
     assert(DiemAccount::balance<GAS>(@{{bob}}) == 10, 735701);

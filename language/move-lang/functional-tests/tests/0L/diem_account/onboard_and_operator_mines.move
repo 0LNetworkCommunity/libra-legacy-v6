@@ -9,7 +9,7 @@ script {
 use 0x1::VDF;
 use 0x1::TestFixtures;
 use 0x1::TowerState;
-use 0x1::DiemAccount;
+use DiemFramework::DiemAccount;
 
 // Test Prefix: 1301
 

@@ -10,7 +10,7 @@ script {
   use 0x1::NodeWeight;
   use 0x1::TestFixtures;
   use DiemFramework::ValidatorConfig;
-  use 0x1::Roles;
+  use DiemFramework::Roles;
   use 0x1::ValidatorUniverse;
 
   // Test Prefix: 1301

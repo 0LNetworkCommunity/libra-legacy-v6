@@ -8,7 +8,7 @@ script{
 use 0x1::ValidatorUniverse;
 use 0x1::Vector;
 // use 0x1::TestFixtures;
-// use 0x1::DiemAccount;
+// use DiemFramework::DiemAccount;
 
 fun main(vm: signer) {
     let len = Vector::length<address>(

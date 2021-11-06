@@ -10,7 +10,7 @@
 //! sender: carol
 script {
 use 0x1::GAS::GAS;
-use 0x1::DiemAccount;
+use DiemFramework::DiemAccount;
 
 fun main(account: signer) {
     assert(DiemAccount::balance<GAS>(@{{bob}}) == 10, 735701);
@@ -30,7 +30,7 @@ fun main(account: signer) {
 //! sender: alice
 script {
 use 0x1::GAS::GAS;
-use 0x1::DiemAccount;
+use DiemFramework::DiemAccount;
 fun main(account: signer) {
     assert(DiemAccount::unlocked_amount(@{{alice}}) == 0, 735701);
 
