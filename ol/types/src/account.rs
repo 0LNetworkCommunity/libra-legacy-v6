@@ -2,16 +2,7 @@
 use crate::{block::VDFProof, config::IS_TEST};
 use dialoguer::Confirm;
 use diem_crypto::x25519::PublicKey;
-use diem_types::{
-    account_address::AccountAddress,
-    network_address::{
-        encrypted::{
-            TEST_SHARED_VAL_NETADDR_KEY, TEST_SHARED_VAL_NETADDR_KEY_VERSION,
-        },
-        NetworkAddress,
-    },
-    transaction::{SignedTransaction, TransactionPayload},
-};
+use diem_types::{account_address::AccountAddress, network_address::{NetworkAddress, encrypted::{EncNetworkAddress, TEST_SHARED_VAL_NETADDR_KEY, TEST_SHARED_VAL_NETADDR_KEY_VERSION}}, transaction::{SignedTransaction, TransactionPayload}};
 
 use crate::pay_instruction::PayInstruction;
 use anyhow::{self, bail};
@@ -84,44 +75,26 @@ impl ValConfigs {
         autopay_signed: Option<Vec<SignedTransaction>>,
     ) -> Self {
 
-      let owner_address = keys.child_0_owner.get_address().to_string();
+        let owner_address_string = keys.child_0_owner.get_address().to_string();
         
-        // Create the list of validator addresses
-        let val_network_string = format!("/ip4/{}/tcp/6180", ip_address);
-        let val_addr_obj: NetworkAddress = val_network_string
-            .parse()
-            .expect("could not parse validator network address");
         let val_pubkey =
             PublicKey::from_ed25519_public_bytes(&keys.child_2_val_network.get_public().to_bytes())
                 .unwrap();
-        let val_addr_obj = val_addr_obj.append_prod_protos(val_pubkey, 0);
-        let encrypted_addr = vec![val_addr_obj
-            .encrypt(
-                &TEST_SHARED_VAL_NETADDR_KEY,        //shared_val_netaddr_key: &Key,
-                TEST_SHARED_VAL_NETADDR_KEY_VERSION, //key_version: KeyVersion,
-                &owner_address
-                    .parse::<AccountAddress>()
-                    .expect("unable to parse account address"), // account: &AccountAddress,
-                0,
-                0,
-            )
-            .expect("unable to encrypt network address")];
+        let encrypted_addr = ValConfigs::make_val_network_addr(&owner_address_string, &ip_address, val_pubkey);
 
-        // Create the list of fullnode addresses
-        let fullnode_network_string = format!("/ip4/{}/tcp/6179", ip_address);
-        let fn_addr_obj: NetworkAddress = fullnode_network_string
-            .parse()
-            .expect("could not parse fullnode network address");
+        // Create the list of VFN fullnode addresses. Usually only one
+        // This is the VFN (validator fullnode) address information which the validator will use
+        // to connect to its fullnode.
         let fn_pubkey = PublicKey::from_ed25519_public_bytes(
             &keys.child_3_fullnode_network.get_public().to_bytes(),
         )
         .unwrap();
-        let fn_addr_obj = fn_addr_obj.append_prod_protos(fn_pubkey, 0);
+        let fn_addr_obj = ValConfigs::make_vfn_addr(&ip_address, fn_pubkey);
         
         Self {
             /// Proof zero of the onboarded miner
             block_zero: block,
-            ow_human_name: owner_address.clone(),
+            ow_human_name: owner_address_string.clone(),
             op_address: keys.child_1_operator.get_address().to_string(),
             op_auth_key_prefix: keys
                 .child_1_operator
@@ -132,7 +105,7 @@ impl ValConfigs {
             op_validator_network_addresses: bcs::to_bytes(&encrypted_addr).unwrap(),
             op_fullnode_network_addresses: bcs::to_bytes(&vec![&fn_addr_obj]).unwrap(),
             op_fullnode_network_addresses_string: fn_addr_obj.to_owned(),
-            op_human_name: format!("{}-oper", owner_address),
+            op_human_name: format!("{}-oper", owner_address_string),
             autopay_instructions,
             autopay_signed,
         }
@@ -155,6 +128,37 @@ impl ValConfigs {
         let configs: ValConfigs =
             serde_json::from_reader(reader).expect("init_configs.json should deserialize");
         return Ok(configs);
+    }
+
+    /// create the encrypted network address for use on the validator network.
+    pub fn make_val_network_addr(owner_address_string: &str, ip_address: &str, val_pubkey: PublicKey) -> EncNetworkAddress {
+              // Create the list of validator addresses
+        let val_network_string = format!("/ip4/{}/tcp/6180", ip_address);
+        let val_addr_obj: NetworkAddress = val_network_string
+            .parse()
+            .expect("could not parse validator network address");
+        let val_addr_obj = val_addr_obj.append_prod_protos(val_pubkey, 0);
+        val_addr_obj
+            .encrypt(
+              // NOTE: 0L is not setting an encrypted network key initially.
+                &TEST_SHARED_VAL_NETADDR_KEY,
+                TEST_SHARED_VAL_NETADDR_KEY_VERSION,
+                &owner_address_string
+                    .parse::<AccountAddress>()
+                    .expect("unable to parse account address"),
+                0,
+                0,
+            )
+            .expect("unable to encrypt network address")
+    }
+
+    /// format the fullnode address which the validator's VFN will use.
+    pub fn make_vfn_addr(ip_address: &str, fn_pubkey: PublicKey) -> NetworkAddress {
+        let fullnode_network_string = format!("/ip4/{}/tcp/6179", ip_address);
+        let fn_addr_obj: NetworkAddress = fullnode_network_string
+            .parse()
+            .expect("could not parse fullnode network address");
+        fn_addr_obj.append_prod_protos(fn_pubkey, 0)
     }
 
     /// check correctness of autopay

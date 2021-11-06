@@ -1,12 +1,6 @@
 use std::{fmt::Debug, fs, path::PathBuf};
 
-use diem_config::{
-    config::OnDiskStorageConfig,
-    config::SafetyRulesService,
-    config::{DiscoveryMethod, NetworkConfig, NodeConfig, SecureBackend},
-    config::{Identity, UpstreamConfig, WaypointConfig},
-    network_id::NetworkId,
-};
+use diem_config::{config::OnDiskStorageConfig, config::SafetyRulesService, config::{DiscoveryMethod, NetworkConfig, NodeConfig, Peer, PeerSet, SecureBackend}, config::{Identity, UpstreamConfig, WaypointConfig}, network_id::NetworkId};
 
 use crate::seeds::Seeds;
 use crate::storage_helper::StorageHelper;
@@ -232,6 +226,23 @@ pub fn make_fullnode_cfg(
   Ok(n)
 }
 
+/// make the fullnode NodeConfig
+pub fn make_vfn_cfg(
+  home_path: PathBuf,
+  waypoint: Waypoint,
+) -> Result<NodeConfig, anyhow::Error> {
+  let mut n = default_for_vfn()?;
+  n.set_data_dir(home_path);
+  n.base.waypoint = WaypointConfig::FromConfig(waypoint);
+
+  // random identity
+
+  //
+
+
+  Ok(n)
+}
+
 // pub fn get_storage_obj(output_dir: PathBuf, namespace: &str) -> Result<OnDiskStorageConfig, Error>{
 //       // Write the genesis waypoint without a namespaced storage.
 //     let mut disk_storage = OnDiskStorageConfig::default();
@@ -305,6 +316,10 @@ pub fn default_for_vfn() -> Result<NodeConfig, anyhow::Error> {
     let n: NodeConfig = serde_yaml::from_str(&contents)?;
 
     Ok(n)
+}
+
+pub fn validator_peer_data() -> Result<Peer, anyhow::Error> {
+  
 }
 
 // pub fn default_for_validator() -> Self {

@@ -1,8 +1,8 @@
-# base:
-#     data_dir: "path/to/data"
-#     role: "full_node"
-#     waypoint:
-#       from_config: "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2"
+base:
+    data_dir: "path/to/data"
+    role: "full_node"
+    waypoint:
+      from_config: "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2"
 
 execution:
     genesis_file_location: "/home/node/.0L/genesis.blob"
