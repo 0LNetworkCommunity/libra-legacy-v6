@@ -221,6 +221,17 @@ pub fn save_node_yaml_files(output_dir: PathBuf) {
 
 }
 
+/// make the fullnode NodeConfig
+pub fn make_fullnode_cfg(
+  home_path: PathBuf,
+  waypoint: Waypoint,
+) -> Result<NodeConfig, anyhow::Error> {
+  let mut n = default_for_public_fullnode()?;
+  n.set_data_dir(home_path);
+  n.base.waypoint = WaypointConfig::FromConfig(waypoint);
+  Ok(n)
+}
+
 // pub fn get_storage_obj(output_dir: PathBuf, namespace: &str) -> Result<OnDiskStorageConfig, Error>{
 //       // Write the genesis waypoint without a namespaced storage.
 //     let mut disk_storage = OnDiskStorageConfig::default();
@@ -261,7 +272,7 @@ pub fn save_node_yaml_files(output_dir: PathBuf) {
 // }
 
 
-pub fn default_for_public_full_node() {
+pub fn default_for_public_fullnode() -> Result<NodeConfig, anyhow::Error> {
     let path_str= env!("CARGO_MANIFEST_DIR");
     let path = PathBuf::from(path_str)
     .parent()
@@ -271,15 +282,29 @@ pub fn default_for_public_full_node() {
     .parent()
     .unwrap()
     .join("ol/util/node_templates/fullnode.node.yaml");
-
-    dbg!(&path);
-    // let contents = std::include_str!(&path.to_string());
     
-    let contents = fs::read_to_string(&path).expect("could not find mnemonic file");
+    let contents = fs::read_to_string(&path)?;
+    let n: NodeConfig = serde_yaml::from_str(&contents)?;
 
-    let n: NodeConfig = serde_yaml::from_str(&contents).unwrap();
+    Ok(n)
+}
 
-    dbg!(&n);
+
+pub fn default_for_vfn() -> Result<NodeConfig, anyhow::Error> {
+    let path_str= env!("CARGO_MANIFEST_DIR");
+    let path = PathBuf::from(path_str)
+    .parent()
+    .unwrap()
+    .parent()
+    .unwrap()
+    .parent()
+    .unwrap()
+    .join("ol/util/node_templates/vfn.node.yaml");
+    
+    let contents = fs::read_to_string(&path)?;
+    let n: NodeConfig = serde_yaml::from_str(&contents)?;
+
+    Ok(n)
 }
 
 // pub fn default_for_validator() -> Self {
@@ -293,6 +318,13 @@ pub fn default_for_public_full_node() {
 // }
 
 #[test]
-fn test() {
-  default_for_public_full_node();
+fn test_default_for_public_fullnode() {
+  let n = default_for_public_fullnode();
+  dbg!(&n);
+}
+
+#[test]
+fn test_default_for_vfn() {
+  let n = default_for_vfn();
+  dbg!(&n);
 }
