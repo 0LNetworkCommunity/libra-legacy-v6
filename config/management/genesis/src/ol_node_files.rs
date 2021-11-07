@@ -11,11 +11,11 @@ use diem_config::{
 use diem_crypto::{ed25519::Ed25519PublicKey, x25519::PublicKey};
 use diem_global_constants::{FULLNODE_NETWORK_KEY, OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
 use diem_management::{config::ConfigPath, error::Error, secure_backend::ValidatorBackend};
-use diem_types::{chain_id::ChainId, waypoint::Waypoint, PeerId, account_address::AccountAddress};
+use diem_types::{chain_id::ChainId, waypoint::Waypoint, account_address::AccountAddress};
 use ol_types::account::ValConfigs;
 use serde::{Deserialize, Serialize};
 use structopt::StructOpt;
-use diem_secure_storage::{KVStorage,CryptoStorage};
+use diem_secure_storage::{CryptoStorage};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum NodeType {
@@ -281,7 +281,7 @@ fn make_validator_cfg(
 }
 
 /// Save node configs to files
-pub fn save_node_yaml_files(output_dir: PathBuf) {}
+pub fn save_node_yaml_files(_output_dir: PathBuf) {}
 
 /// make the fullnode NodeConfig
 pub fn make_fullnode_cfg(
