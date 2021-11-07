@@ -1,6 +1,7 @@
-use std::{fmt::Debug, fs, path::PathBuf};
+use std::{fmt::Debug, fs, net::Ipv4Addr, path::PathBuf};
 
 use crate::storage_helper::StorageHelper;
+use anyhow::bail;
 use diem_config::{
     config::OnDiskStorageConfig,
     config::SafetyRulesService,
@@ -52,6 +53,8 @@ pub struct Files {
     waypoint: Option<Waypoint>,
     #[structopt(long, verbatim_doc_comment)]
     layout_path: Option<PathBuf>,
+    #[structopt(long, verbatim_doc_comment)]
+    val_ip_address: Option<Ipv4Addr>,
 }
 
 impl Files {
@@ -66,6 +69,7 @@ impl Files {
             &self.fullnode_only,
             self.waypoint,
             &self.layout_path,
+            self.val_ip_address,
         )
         .map_err(|e| {
             Error::ConfigError(format!(
@@ -86,10 +90,9 @@ pub fn write_node_config_files(
     fullnode_only: &bool,
     _way_opt: Option<Waypoint>,
     layout_path: &Option<PathBuf>,
+    val_ip_address: Option<Ipv4Addr>,
     
 ) -> Result<NodeConfig, anyhow::Error> {
-    let val_ip_address = "todo";
-
     // TODO: Do we need github token path with public repo?
     let github_token_path = output_dir.join("github_token.txt");
     let chain_id = ChainId::new(chain_id);
@@ -113,7 +116,6 @@ pub fn write_node_config_files(
         chain_id,
         namespace,
     )?;
-    // .map_err(|e| { Error::ConfigError(format!("Could not set genesis data, message: {}", e.to_string()))})?;
 
     // make the key_store storage interface for disk.
     let mut disk_storage = OnDiskStorageConfig::default();
@@ -127,19 +129,26 @@ pub fn write_node_config_files(
         write_yaml(output_dir.clone(), &mut n, NodeType::PublicFullNode)?;
         n
     } else {
+        // fullnode configs, only used for rescuing a validator node that's out of validator set.
         let mut fullnode = make_fullnode_cfg(output_dir.clone(), genesis_waypoint)?;
         write_yaml(output_dir.clone(), &mut fullnode, NodeType::PublicFullNode)?;
+        
+        // vfn configs
+        if let Some(ip_address) = val_ip_address {
+          let storage_helper = StorageHelper::get_with_path(output_dir.clone());
+          let mut vfn = make_vfn_cfg(
+            output_dir.clone(),
+            genesis_waypoint,
+            ip_address,
+            namespace,
+            storage_helper, 
+          )?;
+          write_yaml(output_dir.clone(), &mut vfn, NodeType::PublicFullNode)?;
+        } else {
+          bail!("VFN settings requires a val_ip_address");
+        }
 
-        let storage_helper = StorageHelper::get_with_path(output_dir.clone());
-        let mut vfn = make_vfn_cfg(
-          output_dir.clone(),
-          genesis_waypoint,
-          val_ip_address,
-          namespace,
-          storage_helper, 
-
-        )?;
-        write_yaml(output_dir.clone(), &mut vfn, NodeType::PublicFullNode)?;
+        // validator configs
 
         let mut n = make_validator_cfg(
             output_dir.clone(),
@@ -321,7 +330,7 @@ pub fn make_vfn_cfg(
     home_path: PathBuf,
     waypoint: Waypoint,
     // validator_addr: PeerId,
-    ip_address: &str,
+    ip_address: Ipv4Addr,
     namespace: &str,
     storage_helper: StorageHelper,
     // fn_net_pubkey: PublicKey,
@@ -350,7 +359,7 @@ pub fn make_vfn_cfg(
     Ok(n)
 }
 
-fn make_vfn_peer_set(val_vfn_net_pubkey: Ed25519PublicKey, ip_address: &str) -> Result<PeerSet, Error>{
+fn make_vfn_peer_set(val_vfn_net_pubkey: Ed25519PublicKey, ip_address: Ipv4Addr) -> Result<PeerSet, Error>{
     let bytes = val_vfn_net_pubkey.to_bytes();
     let validator_vfn_net_addr = AccountAddress::from_identity_public_key(bytes.into());
 
@@ -363,9 +372,9 @@ fn make_vfn_peer_set(val_vfn_net_pubkey: Ed25519PublicKey, ip_address: &str) -> 
     Ok(seeds)
 }
 
-pub fn validator_upstream_peer_data(ip_address: &str, pubkey: PublicKey) -> Result<Peer, Error> {
+pub fn validator_upstream_peer_data(ip_address: Ipv4Addr, pubkey: PublicKey) -> Result<Peer, Error> {
     let role = PeerRole::Validator;
-    let val_addr = ValConfigs::make_vfn_addr(ip_address, pubkey);
+    let val_addr = ValConfigs::make_vfn_addr(&ip_address.to_string(), pubkey);
     let p = Peer::from_addrs(role, vec![val_addr]);
     Ok(p)
 }

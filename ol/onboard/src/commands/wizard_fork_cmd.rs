@@ -89,7 +89,7 @@ impl Runnable for ForkCmd {
           dbg!(&wp);
         }
 
-        let app_config = AppCfg::init_app_configs(
+        let cfg = AppCfg::init_app_configs(
             authkey,
             account,
             &Some(upstream.clone()),
@@ -100,8 +100,8 @@ impl Runnable for ForkCmd {
             None,
             None,
         );
-        let home_path = &app_config.workspace.node_home;
-        let base_waypoint = app_config.chain_info.base_waypoint.clone();
+        let home_path = &cfg.workspace.node_home;
+        let base_waypoint = cfg.chain_info.base_waypoint.clone();
         dbg!(&base_waypoint);
 
         status_ok!("\nApp configs written", "\n...........................\n");
@@ -120,7 +120,7 @@ impl Runnable for ForkCmd {
             &self.template_url,
             &self.autopay_file,
             home_path,
-            &app_config,
+            &cfg,
             &wallet,
             entry_args.swarm_path.as_ref().is_some(),
         );
@@ -130,7 +130,7 @@ impl Runnable for ForkCmd {
         );
 
         // Initialize Validator Keys
-        init_cmd::initialize_validator(&wallet, &app_config, base_waypoint, false).unwrap();
+        init_cmd::initialize_validator(&wallet, &cfg, base_waypoint, false).unwrap();
         status_ok!("\nKey file written", "\n...........................\n");
 
         // fetching the genesis files from genesis-archive, will override the path for prebuilt genesis.
@@ -147,9 +147,10 @@ impl Runnable for ForkCmd {
         }
 
 
-        let home_dir = app_config.workspace.node_home.to_owned();
+        let home_dir = cfg.workspace.node_home.to_owned();
         // 0L convention is for the namespace of the operator to be appended by '-oper'
-        let namespace = app_config.profile.auth_key.clone().to_string() + "-oper";
+        let namespace = cfg.profile.auth_key.clone().to_string() + "-oper";
+        let val_ip_address = cfg.profile.ip;
 
         // TODO: use node_config to get the seed peers and then write upstream_node vec in 0L.toml from that.
         ol_node_files::write_node_config_files(
@@ -165,6 +166,7 @@ impl Runnable for ForkCmd {
             &false,
             base_waypoint,
             &None,
+            Some(val_ip_address),
         )
         .unwrap();
 
@@ -172,7 +174,7 @@ impl Runnable for ForkCmd {
 
         if !self.skip_mining {
             // Mine Proof
-            match tower::proof::write_genesis(&app_config){
+            match tower::proof::write_genesis(&cfg){
                 Ok(_) => {
                   status_ok!(
                       "\nGenesis proof complete",
@@ -189,7 +191,7 @@ impl Runnable for ForkCmd {
         write_account_json(
             &self.output_path,
             wallet,
-            Some(app_config.clone()),
+            Some(cfg.clone()),
             autopay_batch,
             autopay_signed,
         );
@@ -198,7 +200,7 @@ impl Runnable for ForkCmd {
             "\n...........................\n"
         );
 
-        status_info!("Your validator node and miner app are now configured.", &format!("\nStart your node with `ol start`, and then ask someone with GAS to do this transaction `txs create-validator -u http://{}`", &app_config.profile.ip));
+        status_info!("Your validator node and miner app are now configured.", &format!("\nStart your node with `ol start`, and then ask someone with GAS to do this transaction `txs create-validator -u http://{}`", &cfg.profile.ip));
     }
 }
 

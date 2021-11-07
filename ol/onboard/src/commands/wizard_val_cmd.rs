@@ -273,7 +273,7 @@ pub fn write_account_json(
     .create_manifest(json_path);
 }
 
-fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, base_waypoint: Option<Waypoint>, app_config: &AppCfg) {
+fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, base_waypoint: Option<Waypoint>, cfg: &AppCfg) {
   // The default behavior is to fetch the genesis from a github repo.
   // if this is not possible then the user should have set a prebuilt genesis path.
 
@@ -314,10 +314,10 @@ fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, base
   };
 
 
-  let home_dir = app_config.workspace.node_home.to_owned();
+  let home_dir = cfg.workspace.node_home.to_owned();
   // 0L convention is for the namespace of the operator to be appended by '-oper'
-  let namespace = app_config.profile.auth_key.clone().to_string() + "-oper";
-
+  let namespace = cfg.profile.auth_key.clone().to_string() + "-oper";
+  let val_ip_address = cfg.profile.ip;
   // TODO: use node_config to get the seed peers and then write upstream_node vec in 0L.toml from that.
   ol_node_files::write_node_config_files(
       home_dir.clone(),
@@ -332,6 +332,7 @@ fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, base
       &false,
       base_waypoint,
       &None,
+      Some(val_ip_address),
   )
   .unwrap();
 

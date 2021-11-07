@@ -45,7 +45,7 @@ impl Runnable for FilesCmd {
 
 /// create genesis files
 pub fn genesis_files(
-    miner_config: &AppCfg,
+    cfg: &AppCfg,
     chain_id: &Option<u8>,
     github_org: &Option<String>,
     repo: &Option<String>,
@@ -53,9 +53,10 @@ pub fn genesis_files(
     fullnode_only: &bool,
     way_opt: Option<Waypoint>,
 ) {
-    let home_dir = miner_config.workspace.node_home.to_owned();
+    let home_dir = cfg.workspace.node_home.to_owned();
     // 0L convention is for the namespace of the operator to be appended by '-oper'
-    let namespace = miner_config.profile.auth_key.clone().to_string() + "-oper";
+    let namespace = cfg.profile.auth_key.clone().to_string() + "-oper";
+    let val_ip_address = cfg.profile.ip;
 
     ol_node_files::write_node_config_files(
         home_dir.clone(),
@@ -67,6 +68,7 @@ pub fn genesis_files(
         fullnode_only,
         way_opt,
         &None,
+        Some(val_ip_address),
     )
     .unwrap();
 

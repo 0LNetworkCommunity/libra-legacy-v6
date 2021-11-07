@@ -67,6 +67,7 @@ impl Runnable for FnWizardCmd {
             &true,
             self.waypoint,
             &None,
+            None,
         ).unwrap();
         status_ok!("\nNode config OK", "\n...........................\n");
     }
