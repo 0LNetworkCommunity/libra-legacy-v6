@@ -466,7 +466,7 @@ dev-join: clear fix fix-genesis dev-wizard
 
 dev-wizard:
 #  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
-	MNEM='${MNEM}' cargo run -p onboard -- val --prebuilt-genesis ${DATA_PATH}/genesis.blob --skip-mining --chain-id 1 --upstream-peer http://64.225.2.108
+	MNEM='${MNEM}' cargo run -p onboard -- val --prebuilt-genesis ${DATA_PATH}/genesis.blob --skip-mining --chain-id 1 --genesis-ceremony
 
 #### DEVNET RESTART ####
 # usually do this on Alice, which has the dev-epoch-archive repo, and dev-genesis

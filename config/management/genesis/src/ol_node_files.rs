@@ -10,13 +10,13 @@ use diem_config::{
     network_id::NetworkId,
 };
 use diem_crypto::{ed25519::Ed25519PublicKey, x25519::PublicKey};
-use diem_global_constants::{FULLNODE_NETWORK_KEY, OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
+use diem_global_constants::{FULLNODE_NETWORK_KEY, GENESIS_WAYPOINT, OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
 use diem_management::{config::ConfigPath, error::Error, secure_backend::ValidatorBackend};
 use diem_types::{chain_id::ChainId, waypoint::Waypoint, account_address::AccountAddress};
 use ol_types::account::ValConfigs;
 use serde::{Deserialize, Serialize};
 use structopt::StructOpt;
-use diem_secure_storage::{CryptoStorage};
+use diem_secure_storage::{CryptoStorage, KVStorage};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum NodeType {
@@ -107,7 +107,7 @@ pub fn write_node_config_files(
 
     let storage_helper = StorageHelper::get_with_path(output_dir.clone());
 
-    let (genesis_path, genesis_waypoint) = update_genesis_data(
+    let (_genesis_path, _genesis_waypoint) = make_genesis_file(
         &output_dir,
         prebuilt_genesis,
         remote,
@@ -117,31 +117,45 @@ pub fn write_node_config_files(
         namespace,
     )?;
 
-    // make the key_store storage interface for disk.
-    let mut disk_storage = OnDiskStorageConfig::default();
-    disk_storage.set_data_dir(output_dir.clone());
-    disk_storage.path = output_dir.clone().join("key_store.json");
-    disk_storage.namespace = Some(namespace.to_owned());
+    make_node_yaml(
+      output_dir,
+      val_ip_address,
+      namespace,
+      *fullnode_only
+    )
+}
 
-    // Get node configs template
-    let config = if *fullnode_only {
-        let mut n = make_fullnode_cfg(output_dir.clone(), genesis_waypoint)?;
+fn get_default_keystore_helper(output_dir: PathBuf) -> StorageHelper {
+  StorageHelper::get_with_path(output_dir.join("key_store.json"))
+}
+/// Make all the node configurations needed
+pub fn make_node_yaml(
+  output_dir: PathBuf,
+  val_ip_address: Option<Ipv4Addr>,
+  namespace: &str,
+  fullnode_only: bool,
+) -> Result<NodeConfig, anyhow::Error>{
+    // get the key_store storage interface for disk.
+    let storage_helper = get_default_keystore_helper(output_dir.clone());
+    let s = storage_helper.storage(namespace.to_owned());
+    let gw = s.get::<Waypoint>(GENESIS_WAYPOINT)?.value;
+      // Get node configs template
+    let config = if fullnode_only {
+        let mut n = make_fullnode_cfg(output_dir.clone(), gw)?;
         write_yaml(output_dir.clone(), &mut n, NodeType::PublicFullNode)?;
         n
     } else {
         // fullnode configs, only used for rescuing a validator node that's out of validator set.
-        let mut fullnode = make_fullnode_cfg(output_dir.clone(), genesis_waypoint)?;
+        let mut fullnode = make_fullnode_cfg(output_dir.clone(), gw)?;
         write_yaml(output_dir.clone(), &mut fullnode, NodeType::PublicFullNode)?;
         
         // vfn configs
         if let Some(ip_address) = val_ip_address {
-          let storage_helper = StorageHelper::get_with_path(output_dir.clone());
           let mut vfn = make_vfn_cfg(
             output_dir.clone(),
-            genesis_waypoint,
+            gw,
             ip_address,
             namespace,
-            storage_helper, 
           )?;
           write_yaml(output_dir.clone(), &mut vfn, NodeType::PublicFullNode)?;
         } else {
@@ -152,15 +166,14 @@ pub fn write_node_config_files(
 
         let mut n = make_validator_cfg(
             output_dir.clone(),
-            disk_storage.clone(),
-            genesis_path.clone(),
+            namespace,
         )?;
         write_yaml(output_dir.clone(), &mut n, NodeType::Validator)?;
         n
     };
-
     Ok(config)
 }
+
 
 fn write_yaml(
     output_dir: PathBuf,
@@ -184,7 +197,7 @@ fn write_yaml(
     Ok(())
 }
 
-fn update_genesis_data(
+fn make_genesis_file(
     output_dir: &PathBuf,
     prebuilt_genesis: &Option<PathBuf>,
     remote: String,
@@ -229,15 +242,18 @@ fn update_genesis_data(
 
 fn make_validator_cfg(
     output_dir: PathBuf,
-    disk_storage: OnDiskStorageConfig,
-    genesis_path: PathBuf,
+    namespace: &str,
 ) -> Result<NodeConfig, anyhow::Error> {
     // TODO: make the validator node have mutual authentication with VFN.
     // for that it will need to get the Peer object of the VFN after the identity has been created
     // by default the VFN identity is random.
+    let mut disk_storage = OnDiskStorageConfig::default();
+    disk_storage.set_data_dir(output_dir.clone());
+    disk_storage.path = output_dir.clone().join("key_store.json");
+    disk_storage.namespace = Some(namespace.to_owned());
 
     let mut c = default_for_validator()?;
-    c.set_data_dir(output_dir);
+    c.set_data_dir(output_dir.clone());
     // Note skip setting namepace for later.
     c.base.waypoint =
         WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
@@ -263,7 +279,7 @@ fn make_validator_cfg(
         WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
 
     c.execution.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
-    c.execution.genesis_file_location = genesis_path.clone();
+    c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
 
     c.consensus.safety_rules.service = SafetyRulesService::Thread;
     c.consensus.safety_rules.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
@@ -327,18 +343,18 @@ pub fn make_fullnode_cfg(
 
 /// make the fullnode NodeConfig
 pub fn make_vfn_cfg(
-    home_path: PathBuf,
+    output_dir: PathBuf,
     waypoint: Waypoint,
     // validator_addr: PeerId,
     ip_address: Ipv4Addr,
     namespace: &str,
-    storage_helper: StorageHelper,
     // fn_net_pubkey: PublicKey,
 ) -> Result<NodeConfig, anyhow::Error> {
     let mut n = default_for_vfn()?;
 
+    let storage_helper = get_default_keystore_helper(output_dir.clone());
     // Set base properties
-    n.set_data_dir(home_path);
+    n.set_data_dir(output_dir);
     n.base.waypoint = WaypointConfig::FromConfig(waypoint);
 
     let storage = storage_helper.storage(namespace.to_string());

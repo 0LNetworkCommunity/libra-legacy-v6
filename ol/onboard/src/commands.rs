@@ -1,5 +1,6 @@
 //! MinerApp Subcommands
 pub mod files_cmd;
+pub mod node_files_cmd;
 pub mod version_cmd;
 pub mod wizard_fn_cmd;
 pub mod wizard_user_cmd;
@@ -8,12 +9,14 @@ pub mod wizard_fork_cmd;
 pub mod keygen_cmd;
 pub mod fix_cmd;
 
+
 use self::{
     version_cmd::VersionCmd, wizard_fn_cmd::FnWizardCmd, wizard_user_cmd::UserWizardCmd,
     wizard_val_cmd::ValWizardCmd,
     keygen_cmd::KeygenCmd,
     fix_cmd::FixCmd,
-    wizard_fork_cmd::ForkCmd
+    wizard_fork_cmd::ForkCmd,
+    node_files_cmd::NodeFilesCmd,
 
 };
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
@@ -54,9 +57,12 @@ pub enum WizCmd {
     #[options(help = "migrate account.json")]
     Fix(FixCmd),
 
-        /// The `fork` subcommand
+    /// The `fork` subcommand
     #[options(help = "create configs for a fork, from genesis")]
     Fork(ForkCmd),
+
+    #[options(help = "create configs for a fork, from genesis")]
+    NodeFiles(NodeFilesCmd),
     
 }
 
