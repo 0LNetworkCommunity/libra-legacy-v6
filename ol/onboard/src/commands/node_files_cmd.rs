@@ -4,11 +4,11 @@
 
 use crate::application::app_config;
 use abscissa_core::{Command, Options, Runnable};
-use anyhow::{bail, Error};
+
 use diem_genesis_tool::ol_node_files;
-use diem_types::waypoint::Waypoint;
-use ol_types::config::AppCfg;
-use std::{fs::File, io::Write, path::PathBuf};
+
+
+
 
 /// `files` subcommand
 #[derive(Command, Debug, Default, Options)]

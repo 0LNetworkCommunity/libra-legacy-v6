@@ -61,6 +61,7 @@ pub enum WizCmd {
     #[options(help = "create configs for a fork, from genesis")]
     Fork(ForkCmd),
 
+    /// The `node files` subcommand
     #[options(help = "create configs for a fork, from genesis")]
     NodeFiles(NodeFilesCmd),
     
