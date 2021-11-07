@@ -8,7 +8,7 @@ use diem_config::{
     config::{Identity, WaypointConfig},
     network_id::NetworkId,
 };
-use diem_crypto::x25519::PublicKey;
+use diem_crypto::{ed25519::Ed25519PublicKey, x25519::PublicKey};
 use diem_global_constants::{FULLNODE_NETWORK_KEY, OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
 use diem_management::{config::ConfigPath, error::Error, secure_backend::ValidatorBackend};
 use diem_types::{chain_id::ChainId, waypoint::Waypoint, PeerId, account_address::AccountAddress};
@@ -269,10 +269,13 @@ fn make_validator_cfg(
         SecureBackend::OnDiskStorage(disk_storage.clone()),
     );
 
+    // TODO: clean this up using an iter
+    let vfn_net = &mut c.full_node_networks[0];
+    vfn_net.identity = id_for_vfn_network;
+    c.full_node_networks = vec![vfn_net.to_owned()];
     
     // NOTE: Validator does not have public JSON RPC enabled. Only for localhost queries
     // this is set with the NodeConfig defaults.
-    
 
     Ok(c)
 }
@@ -285,6 +288,8 @@ pub fn make_fullnode_cfg(
     home_path: PathBuf,
     waypoint: Waypoint,
 ) -> Result<NodeConfig, anyhow::Error> {
+    // TODO: how to add seed peers?
+
     let mut n = default_for_public_fullnode()?;
     n.set_data_dir(home_path);
     n.base.waypoint = WaypointConfig::FromConfig(waypoint);
@@ -316,7 +321,7 @@ pub fn make_vfn_cfg(
     home_path: PathBuf,
     waypoint: Waypoint,
     // validator_addr: PeerId,
-    ip_addresss: &str,
+    ip_address: &str,
     namespace: &str,
     storage_helper: StorageHelper,
     // fn_net_pubkey: PublicKey,
@@ -328,65 +333,42 @@ pub fn make_vfn_cfg(
     n.base.waypoint = WaypointConfig::FromConfig(waypoint);
 
     let storage = storage_helper.storage(namespace.to_string());
-    let validator_addr: AccountAddress = storage.get::<String>(OWNER_ACCOUNT)?.value.parse()?;
-    let fn_net_pubkey = storage.get_public_key(FULLNODE_NETWORK_KEY)?.public_key;
-    let bytes = fn_net_pubkey.to_bytes();
-    // let fn_net_pubkey = validators_id_for_vfn_network.
-    // create the vfn network info.
-    let val_peer_data = validator_peer_data(ip_addresss, bytes.into())?;
-    // The seed address for the VFN can only be the Validator's address.
-    let mut seeds = PeerSet::default();
-    seeds.insert(validator_addr, val_peer_data);
 
+    // set the Validator as the Seed peer for the VFN network
+    // TODO: The validator address, Is it a namespace or is it used for authentication?
+    // let validator_addr: AccountAddress = storage.get::<String>(OWNER_ACCOUNT)?.value.parse()?;
+    let val_vfn_net_pubkey = storage.get_public_key(FULLNODE_NETWORK_KEY)?.public_key;
+    let seeds = make_vfn_peer_set(val_vfn_net_pubkey, ip_address)?;
+
+    // update the template (instead of creating from default)
     let net = &mut n.full_node_networks[0];
     net.seeds = seeds;
     n.full_node_networks = vec![net.to_owned()];
 
     n.storage.prune_window = Some(20_000);
 
-
-
-
     Ok(n)
 }
 
-// pub fn get_storage_obj(output_dir: PathBuf, namespace: &str) -> Result<OnDiskStorageConfig, Error>{
-//       // Write the genesis waypoint without a namespaced storage.
-//     let mut disk_storage = OnDiskStorageConfig::default();
-//     disk_storage.set_data_dir(output_dir.clone());
-//     disk_storage.path = output_dir.clone().join("key_store.json");
-//     disk_storage.namespace = Some(namespace.to_owned());
-// }
+fn make_vfn_peer_set(val_vfn_net_pubkey: Ed25519PublicKey, ip_address: &str) -> Result<PeerSet, Error>{
+    let bytes = val_vfn_net_pubkey.to_bytes();
+    let validator_vfn_net_addr = AccountAddress::from_identity_public_key(bytes.into());
 
-// /// make the validator config settings.
-// pub fn make_validator_settings() -> Result<NetworkConfig, Error>{
-//         // If validator configs set val network configs
-//         let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
+    // let fn_net_pubkey = validators_id_for_vfn_network.
+    // create the vfn network info.
+    let val_peer_data = validator_upstream_peer_data(ip_address, bytes.into())?;
+    // The seed address for the VFN can only be the Validator's address.
+    let mut seeds = PeerSet::default();
+    seeds.insert(validator_vfn_net_addr, val_peer_data);
+    Ok(seeds)
+}
 
-//         // NOTE: Using configs as described in cluster tests:
-//         // testsuite/cluster-test/src/cluster_swarm/configs/validator.yaml
-//         network.discovery_method = DiscoveryMethod::Onchain;
-//         network.mutual_authentication = true;
-//         network.identity = Identity::from_storage(
-//             VALIDATOR_NETWORK_KEY.to_string(),
-//             OWNER_ACCOUNT.to_string(),
-//             SecureBackend::OnDiskStorage(disk_storage.clone()),
-//         );
-//         network.network_address_key_backend =
-//             Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
-// }
-
-// /// make the validator config settings.
-// pub fn make_vfn_settings() -> Result<NetworkConfig, Error>{
-//   todo!()
-//   // create a new identity
-
-// }
-
-// /// make the validator config settings.
-// pub fn make_fullnode_settings() -> Result<NetworkConfig, Error>{
-// todo!()
-// }
+pub fn validator_upstream_peer_data(ip_address: &str, pubkey: PublicKey) -> Result<Peer, Error> {
+    let role = PeerRole::Validator;
+    let val_addr = ValConfigs::make_vfn_addr(ip_address, pubkey);
+    let p = Peer::from_addrs(role, vec![val_addr]);
+    Ok(p)
+}
 
 pub fn default_for_public_fullnode() -> Result<NodeConfig, anyhow::Error> {
     let path_str = env!("CARGO_MANIFEST_DIR");
@@ -438,32 +420,3 @@ pub fn default_for_validator() -> Result<NodeConfig, anyhow::Error> {
 
     Ok(n)
 }
-
-pub fn validator_peer_data(ip_address: &str, pubkey: PublicKey) -> Result<Peer, anyhow::Error> {
-    let role = PeerRole::Validator;
-    let val_addr = ValConfigs::make_vfn_addr(ip_address, pubkey);
-    let p = Peer::from_addrs(role, vec![val_addr]);
-    Ok(p)
-}
-
-// pub fn default_for_validator() -> Self {
-//     let contents = std::include_str!("test_data/validator.yaml");
-//     NodeConfig::default_config(contents, "default_for_validator")
-// }
-
-// pub fn default_for_validator_full_node() -> Self {
-//     let contents = std::include_str!("test_data/validator_full_node.yaml");
-//     NodeConfig::default_config(contents, "default_for_validator_full_node")
-// }
-
-#[test]
-fn test_default_for_public_fullnode() {
-    let n = default_for_public_fullnode();
-    dbg!(&n);
-}
-
-// #[test]
-// fn test_default_for_vfn() {
-//   let n = default_for_vfn();
-//   dbg!(&n);
-// }
