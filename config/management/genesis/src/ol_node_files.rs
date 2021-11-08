@@ -305,24 +305,22 @@ fn make_validator_cfg(
     Ok(c)
 }
 
-/// Save node configs to files
-pub fn save_node_yaml_files(_output_dir: PathBuf) {}
-
 /// make the fullnode NodeConfig
 pub fn make_fullnode_cfg(
-    home_path: PathBuf,
+    output_dir: PathBuf,
     waypoint: Waypoint,
 ) -> Result<NodeConfig, anyhow::Error> {
     // TODO: how to add seed peers?
 
-    let mut n = default_for_public_fullnode()?;
-    n.set_data_dir(home_path);
-    n.base.waypoint = WaypointConfig::FromConfig(waypoint);
+    let mut c = default_for_public_fullnode()?;
+    c.set_data_dir(output_dir.clone());
+    c.base.waypoint = WaypointConfig::FromConfig(waypoint);
+    c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
 
-    n.storage.prune_window = Some(20_000);
+    c.storage.prune_window = Some(20_000);
 
     // Write yaml
-    Ok(n)
+    Ok(c)
 
     // ///////// FULL NODE CONFIGS ////////
     // let mut fn_network = NetworkConfig::network_with_id(NetworkId::Public);
@@ -350,12 +348,13 @@ pub fn make_vfn_cfg(
     namespace: &str,
     // fn_net_pubkey: PublicKey,
 ) -> Result<NodeConfig, anyhow::Error> {
-    let mut n = default_for_vfn()?;
+    let mut c = default_for_vfn()?;
 
     let storage_helper = get_default_keystore_helper(output_dir.clone());
     // Set base properties
-    n.set_data_dir(output_dir);
-    n.base.waypoint = WaypointConfig::FromConfig(waypoint);
+    c.set_data_dir(output_dir.clone());
+    c.base.waypoint = WaypointConfig::FromConfig(waypoint);
+    c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
 
     let storage = storage_helper.storage(namespace.to_string());
 
@@ -366,13 +365,13 @@ pub fn make_vfn_cfg(
     let seeds = make_vfn_peer_set(val_vfn_net_pubkey, ip_address)?;
 
     // update the template (instead of creating from default)
-    let net = &mut n.full_node_networks[0];
+    let net = &mut c.full_node_networks[0];
     net.seeds = seeds;
-    n.full_node_networks = vec![net.to_owned()];
+    c.full_node_networks = vec![net.to_owned()];
 
-    n.storage.prune_window = Some(20_000);
+    c.storage.prune_window = Some(20_000);
 
-    Ok(n)
+    Ok(c)
 }
 
 fn make_vfn_peer_set(val_vfn_net_pubkey: Ed25519PublicKey, ip_address: Ipv4Addr) -> Result<PeerSet, Error>{
