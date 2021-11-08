@@ -453,7 +453,7 @@ module DiemAccount {
         difficulty: u64,
         security: u64,
     ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount {
-             
+        // TODO: extract address_duplicated with TowerState::init_miner_state
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
         Roles::new_user_role_with_proof(&new_signer);
@@ -479,8 +479,6 @@ module DiemAccount {
         new_account_authkey_prefix: vector<u8>,
         value: u64,
     ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount {
-             
-        // let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account);
         Roles::new_user_role_with_proof(&new_signer);
         Event::publish_generator(&new_signer);
@@ -629,15 +627,33 @@ module DiemAccount {
         let new_signer = create_signer(new_account_address);
 
         assert(exists_at(new_account_address), Errors::not_published(EACCOUNT));
-        assert(TowerState::is_init(new_account_address), 120104);
+        // assert(TowerState::is_init(new_account_address), 120104);
         // verifies the VDF proof, since we are not calling TowerState init.
-        let valid = VDF::verify(
-            challenge,
-            solution,
-            &difficulty,
-            &security,
-        );
-        assert(valid, Errors::invalid_argument(120105));
+
+        // if the account already has a tower started just verify the block zero submitted
+        if (TowerState::is_init(new_account_address)) {
+          let valid = VDF::verify(
+              challenge,
+              solution,
+              &difficulty,
+              &security,
+          );
+
+          assert(valid, Errors::invalid_argument(120105));
+        } else {
+          // otherwise initialize this TowerState with a block 0.
+
+          let proof = TowerState::create_proof_blob(
+            *challenge,
+            *solution,
+            *&difficulty,
+            *&security,
+          );
+
+          TowerState::commit_state(&new_signer, proof);
+        };
+
+        
         
         // TODO: Perhaps this needs to be moved to the epoch boundary, so that it is only the VM which can escalate these privileges.
         // Upgrade the user

@@ -642,6 +642,10 @@ Permissions: PUBLIC, ANYONE
 
   // This may be the 0th proof of an end user that hasn't had tower state initialized
   <b>if</b> (!<a href="TowerState.md#0x1_TowerState_is_init">is_init</a>(miner_addr)) {
+    // check proof belongs <b>to</b> user.
+    <b>let</b> (addr_in_proof, _) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(&proof.challenge);
+    <b>assert</b>(addr_in_proof == <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sign), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(130112));
+
     <a href="TowerState.md#0x1_TowerState_init_miner_state">init_miner_state</a>(miner_sign, &proof.challenge, &proof.solution, proof.difficulty, proof.security);
     <b>return</b>
   };
@@ -957,6 +961,8 @@ Checks to see if miner submitted enough proofs to be considered compliant
     solution: *solution,
     security,
   };
+
+
   //submit the proof
   <a href="TowerState.md#0x1_TowerState_verify_and_update_state">verify_and_update_state</a>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig), proof, <b>false</b>);
 }
@@ -993,10 +999,10 @@ Checks to see if miner submitted enough proofs to be considered compliant
 
   // Calling <b>native</b> function <b>to</b> do this parsing in rust
   // The auth_key must be at least 32 bytes long
-  <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(challenge) &gt;= 32, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130112));
+  <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(challenge) &gt;= 32, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130113));
   <b>let</b> (parsed_address, _auth_key) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(challenge);
   // Confirm the address is corect and included in challenge
-  <b>assert</b>(new_account_address == parsed_address, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_address">Errors::requires_address</a>(130113));
+  <b>assert</b>(new_account_address == parsed_address, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_address">Errors::requires_address</a>(130114));
 }
 </code></pre>
 

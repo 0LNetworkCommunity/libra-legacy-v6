@@ -376,6 +376,11 @@ ifdef TEST
 		mkdir -p ${DATA_PATH}/vdf_proofs/; \
 	fi
 
+	@if test ! -d ${DATA_PATH}/vdf_proofs; then \
+		echo Creating Directories \
+		mkdir -p ${DATA_PATH}/vdf_proofs/; \
+	fi
+
 	@if test -f ${DATA_PATH}/vdf_proofs/proof_0.json; then \
 		rm ${DATA_PATH}/vdf_proofs/proof_0.json; \
 	fi 
@@ -472,7 +477,7 @@ dev-wizard:
 # usually do this on Alice, which has the dev-epoch-archive repo, and dev-genesis
 
 # Do the ceremony: and also save the genesis fixtures, needs to happen before fix.
-dev-register: clear fix dev-wizard register
+dev-register: clear fix dev-wizard gen-register
 # Do a dev genesis on each node after EVERY NODE COMPLETED registration.
 dev-genesis: genesis dev-save-genesis fix-genesis
 
