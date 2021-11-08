@@ -18,6 +18,10 @@ use serde::{Deserialize, Serialize};
 use structopt::StructOpt;
 use diem_secure_storage::{CryptoStorage, KVStorage};
 
+const _DEFAULT_VAL_PORT: u64 = 6180;
+const DEFAULT_VFN_PORT: u64 = 7180;
+const DEFAULT_PUB_PORT: u64 = 8180;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum NodeType {
     Validator,
@@ -252,7 +256,9 @@ fn make_validator_cfg(
     disk_storage.path = output_dir.clone().join("key_store.json");
     disk_storage.namespace = Some(namespace.to_owned());
 
-    let mut c = default_for_validator()?;
+    // let mut c = default_for_validator()?;
+    let mut c = NodeConfig::default();
+
     c.set_data_dir(output_dir.clone());
     // Note skip setting namepace for later.
     c.base.waypoint =
@@ -287,6 +293,7 @@ fn make_validator_cfg(
     c.storage.prune_window = Some(20_000);
 
     // VFN Settings of the FullNode
+    // the validator only participates in 1 fullnode network, it's own VFN.
 
     let id_for_vfn_network = Identity::from_storage(
         FULLNODE_NETWORK_KEY.to_string(),
@@ -294,8 +301,8 @@ fn make_validator_cfg(
         SecureBackend::OnDiskStorage(disk_storage.clone()),
     );
 
-    // TODO: clean this up using an iter
-    let vfn_net = &mut c.full_node_networks[0];
+    let mut vfn_net = NetworkConfig::network_with_id(NetworkId::Private("vfn".to_string()));
+    vfn_net.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_VFN_PORT).parse()?;
     vfn_net.identity = id_for_vfn_network;
     c.full_node_networks = vec![vfn_net.to_owned()];
     
@@ -316,7 +323,17 @@ pub fn make_fullnode_cfg(
     c.set_data_dir(output_dir.clone());
     c.base.waypoint = WaypointConfig::FromConfig(waypoint);
     c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
+    
 
+    // Public fullnodes only connect to one network. Public fullnode.
+    let mut pub_network = NetworkConfig::network_with_id(NetworkId::Public);
+    pub_network.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_PUB_PORT).parse()?;
+    c.full_node_networks = vec![pub_network];
+
+    // Public fullnodes have JSON RPC enabled to the public (0.0.0.0), so that the validator does not need to do so.
+    c.json_rpc.address = "0.0.0.0:8080".parse()?;
+    
+    // prune window exists to prevent state snapshots from taking up too much space.
     c.storage.prune_window = Some(20_000);
 
     // Write yaml
@@ -348,7 +365,8 @@ pub fn make_vfn_cfg(
     namespace: &str,
     // fn_net_pubkey: PublicKey,
 ) -> Result<NodeConfig, anyhow::Error> {
-    let mut c = default_for_vfn()?;
+    // let mut c = default_for_vfn()?;
+    let mut c = NodeConfig::default();
 
     let storage_helper = get_default_keystore_helper(output_dir.clone());
     // Set base properties
@@ -358,6 +376,12 @@ pub fn make_vfn_cfg(
 
     let storage = storage_helper.storage(namespace.to_string());
 
+    // A VFN has two fullnode networks it participates in.
+    // 1. A private network with the Validator.
+    // 2. the fullnode network. The fullnode network cannot exist unless the VFN briges the validators to the public.
+    // Private Fullnode Network named "vfn" - but could be any name the validator and vfn agreed on
+    let mut vfn_network = NetworkConfig::network_with_id(NetworkId::Private("vfn".to_string()));
+
     // set the Validator as the Seed peer for the VFN network
     // TODO: The validator address, Is it a namespace or is it used for authentication?
     // let validator_addr: AccountAddress = storage.get::<String>(OWNER_ACCOUNT)?.value.parse()?;
@@ -365,9 +389,19 @@ pub fn make_vfn_cfg(
     let seeds = make_vfn_peer_set(val_vfn_net_pubkey, ip_address)?;
 
     // update the template (instead of creating from default)
-    let net = &mut c.full_node_networks[0];
-    net.seeds = seeds;
-    c.full_node_networks = vec![net.to_owned()];
+    // let net = &mut c.full_node_networks[0];
+    vfn_network.seeds = seeds;
+    vfn_network.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_VFN_PORT).parse()?;
+    
+    // Public fullnode network
+    let mut pub_network = NetworkConfig::network_with_id(NetworkId::Public);
+    pub_network.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_PUB_PORT).parse()?;
+
+
+    // VFNs have JSON RPC enabled to the public (0.0.0.0), so that the validator does not need to do so.
+    c.json_rpc.address = "0.0.0.0:8080".parse()?;
+
+    c.full_node_networks = vec![vfn_network, pub_network];
 
     c.storage.prune_window = Some(20_000);
 
@@ -411,7 +445,7 @@ pub fn default_for_public_fullnode() -> Result<NodeConfig, anyhow::Error> {
     Ok(n)
 }
 
-pub fn default_for_vfn() -> Result<NodeConfig, anyhow::Error> {
+pub fn test_default_for_vfn() -> Result<NodeConfig, anyhow::Error> {
     let path_str = env!("CARGO_MANIFEST_DIR");
     let path = PathBuf::from(path_str)
         .parent()
@@ -428,7 +462,7 @@ pub fn default_for_vfn() -> Result<NodeConfig, anyhow::Error> {
     Ok(n)
 }
 
-pub fn default_for_validator() -> Result<NodeConfig, anyhow::Error> {
+pub fn test_default_for_validator() -> Result<NodeConfig, anyhow::Error> {
     let path_str = env!("CARGO_MANIFEST_DIR");
     let path = PathBuf::from(path_str)
         .parent()
@@ -446,7 +480,7 @@ pub fn default_for_validator() -> Result<NodeConfig, anyhow::Error> {
 }
  
 
-pub fn default_for_public_full_node() {
+pub fn test_default_for_public_full_node() {
     let path_str= env!("CARGO_MANIFEST_DIR");
     let path = PathBuf::from(path_str)
     .parent()
