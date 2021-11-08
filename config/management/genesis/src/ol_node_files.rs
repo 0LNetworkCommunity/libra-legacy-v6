@@ -447,52 +447,6 @@ pub fn default_for_validator() -> Result<NodeConfig, anyhow::Error> {
 }
  
 
-
-/// Save node configs to files
-pub fn save_node_yaml_files(_output_dir: PathBuf) {
-
-}
-
-// pub fn get_storage_obj(output_dir: PathBuf, namespace: &str) -> Result<OnDiskStorageConfig, Error>{
-//       // Write the genesis waypoint without a namespaced storage.
-//     let mut disk_storage = OnDiskStorageConfig::default();
-//     disk_storage.set_data_dir(output_dir.clone());
-//     disk_storage.path = output_dir.clone().join("key_store.json");
-//     disk_storage.namespace = Some(namespace.to_owned());
-// }
-
-// /// make the validator config settings.
-// pub fn make_validator_settings() -> Result<NetworkConfig, Error>{
-//         // If validator configs set val network configs
-//         let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
-
-//         // NOTE: Using configs as described in cluster tests:
-//         // testsuite/cluster-test/src/cluster_swarm/configs/validator.yaml
-//         network.discovery_method = DiscoveryMethod::Onchain;
-//         network.mutual_authentication = true;
-//         network.identity = Identity::from_storage(
-//             VALIDATOR_NETWORK_KEY.to_string(),
-//             OWNER_ACCOUNT.to_string(),
-//             SecureBackend::OnDiskStorage(disk_storage.clone()),
-//         );
-//         network.network_address_key_backend =
-//             Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
-// }
-
-
-// /// make the validator config settings.
-// pub fn make_vfn_settings() -> Result<NetworkConfig, Error>{
-//   todo!()
-//   // create a new identity
-
-// }
-
-// /// make the validator config settings.
-// pub fn make_fullnode_settings() -> Result<NetworkConfig, Error>{
-// todo!()
-// }
-
-
 pub fn default_for_public_full_node() {
     let path_str= env!("CARGO_MANIFEST_DIR");
     let path = PathBuf::from(path_str)
