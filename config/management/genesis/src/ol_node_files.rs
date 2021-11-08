@@ -10,7 +10,7 @@ use diem_config::{
     network_id::NetworkId,
 };
 use diem_crypto::{ed25519::Ed25519PublicKey, x25519::PublicKey};
-use diem_global_constants::{FULLNODE_NETWORK_KEY, GENESIS_WAYPOINT, OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
+use diem_global_constants::{DEFAULT_PUB_PORT, DEFAULT_VFN_PORT, FULLNODE_NETWORK_KEY, GENESIS_WAYPOINT, OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
 use diem_management::{config::ConfigPath, error::Error, secure_backend::ValidatorBackend};
 use diem_types::{chain_id::ChainId, waypoint::Waypoint, account_address::AccountAddress};
 use ol_types::account::ValConfigs;
@@ -18,9 +18,7 @@ use serde::{Deserialize, Serialize};
 use structopt::StructOpt;
 use diem_secure_storage::{CryptoStorage, KVStorage};
 
-const _DEFAULT_VAL_PORT: u64 = 6180;
-const DEFAULT_VFN_PORT: u64 = 7180;
-const DEFAULT_PUB_PORT: u64 = 8180;
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum NodeType {

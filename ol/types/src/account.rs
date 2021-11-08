@@ -133,7 +133,7 @@ impl ValConfigs {
     /// create the encrypted network address for use on the validator network.
     pub fn make_val_network_addr(owner_address_string: &str, ip_address: &str, val_pubkey: PublicKey) -> EncNetworkAddress {
               // Create the list of validator addresses
-        let val_network_string = format!("/ip4/{}/tcp/6180", ip_address);
+        let val_network_string = format!("/ip4/{}/tcp/{}", ip_address, DEFAULT_VAL_PORT);
         let val_addr_obj: NetworkAddress = val_network_string
             .parse()
             .expect("could not parse validator network address");
@@ -154,7 +154,7 @@ impl ValConfigs {
 
     /// format the fullnode address which the validator's VFN will use.
     pub fn make_vfn_addr(ip_address: &str, fn_pubkey: PublicKey) -> NetworkAddress {
-        let fullnode_network_string = format!("/ip4/{}/tcp/6179", ip_address);
+        let fullnode_network_string = format!("/ip4/{}/tcp/{}", ip_address, DEFAULT_VFN_PORT);
         let fn_addr_obj: NetworkAddress = fullnode_network_string
             .parse()
             .expect("could not parse fullnode network address");
