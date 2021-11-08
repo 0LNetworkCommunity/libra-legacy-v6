@@ -2,6 +2,7 @@
 use crate::{block::VDFProof, config::IS_TEST};
 use dialoguer::Confirm;
 use diem_crypto::x25519::PublicKey;
+use diem_global_constants::{DEFAULT_VAL_PORT, DEFAULT_VFN_PORT};
 use diem_types::{account_address::AccountAddress, network_address::{NetworkAddress, encrypted::{EncNetworkAddress, TEST_SHARED_VAL_NETADDR_KEY, TEST_SHARED_VAL_NETADDR_KEY_VERSION}}, transaction::{SignedTransaction, TransactionPayload}};
 
 use crate::pay_instruction::PayInstruction;
@@ -102,7 +103,7 @@ impl ValConfigs {
                 .prefix()
                 .to_vec(),
             op_consensus_pubkey: keys.child_4_consensus.get_public().to_bytes().to_vec(),
-            op_validator_network_addresses: bcs::to_bytes(&encrypted_addr).unwrap(),
+            op_validator_network_addresses: bcs::to_bytes(&vec![encrypted_addr]).unwrap(),
             op_fullnode_network_addresses: bcs::to_bytes(&vec![&fn_addr_obj]).unwrap(),
             op_fullnode_network_addresses_string: fn_addr_obj.to_owned(),
             op_human_name: format!("{}-oper", owner_address_string),
@@ -274,7 +275,7 @@ fn val_config_ip_address() {
 
     let val = ValConfigs::new(block, eve_keys, "161.35.13.169".to_string(), None, None);
 
-    let correct_fn_hex = "012d0400a1230da9052318072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800".to_owned();
+    let correct_fn_hex = "012d0400a1230da9050c1c072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800".to_owned();
     assert_eq!(encode(&val.op_fullnode_network_addresses), correct_fn_hex);
 
     let correct_hex = "010000000000000000000000003e250c102074e46ce6160d0efb958f48e4ba3b5a5ac468080135881b885f9baef0da93a2a0b993823448da4d8bf0414d9acd8fea5b664688b864b54c8ec8ae".to_owned();
