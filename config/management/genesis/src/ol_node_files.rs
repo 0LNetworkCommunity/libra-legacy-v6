@@ -126,7 +126,7 @@ pub fn write_node_config_files(
 }
 
 fn get_default_keystore_helper(output_dir: PathBuf) -> StorageHelper {
-  StorageHelper::get_with_path(output_dir.join("key_store.json"))
+  StorageHelper::get_with_path(output_dir)
 }
 /// Make all the node configurations needed
 pub fn make_node_yaml(
@@ -157,7 +157,7 @@ pub fn make_node_yaml(
             ip_address,
             namespace,
           )?;
-          write_yaml(output_dir.clone(), &mut vfn, NodeType::PublicFullNode)?;
+          write_yaml(output_dir.clone(), &mut vfn, NodeType::ValidatorFullNode)?;
         } else {
           bail!("VFN settings requires a val_ip_address");
         }

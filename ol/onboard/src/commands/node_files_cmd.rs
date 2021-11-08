@@ -7,10 +7,7 @@ use abscissa_core::{Command, Options, Runnable};
 
 use diem_genesis_tool::ol_node_files;
 
-
-
-
-/// `files` subcommand
+/// `node-files` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct NodeFilesCmd {
     #[options(help = "only make fullnode config files")]
@@ -23,7 +20,7 @@ impl Runnable for NodeFilesCmd {
         let cfg = app_config().to_owned();
         let home_dir = cfg.workspace.node_home.to_owned();
         // 0L convention is for the namespace of the operator to be appended by '-oper'
-        let namespace = cfg.profile.auth_key.clone().to_string() + "-oper";
+        let namespace = cfg.profile.account.clone().to_string().to_lowercase() + "-oper";
         let val_ip_address = cfg.profile.ip;
 
         match ol_node_files::make_node_yaml(
