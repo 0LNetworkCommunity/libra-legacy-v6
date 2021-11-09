@@ -32,10 +32,17 @@ You need to open ports 6179, 6180, 8080, 3030 on the host
 These instructions target Ubuntu.
 
 1.1. Set up an Ubuntu host with `ssh` access, e.g. in a cloud service provider. 
-1.2.  Associate a static IP  with your host, this will be tied to you account, and will be set in your `account.json` file.
-1.3. You'll want to use `tmux` to persist the terminal session for build, as well as for running the nodes and tower app. 
 
-tmux
+1.2.  Associate a static IP  with your host, this will be tied to you account, and will be set in your `account.json` file.
+
+1.3. You'll want to use `tmux` to persist the terminal session for build, as well as for running the nodes and tower app. Also this setup requires `git` and `make`, which might be installed already on your host. If not, perform the following steps now:
+
+```
+sudo apt install tmux git make
+```
+
+It is recommended to perform the following steps inside tmux:
+
 ```
 # start a new tmux session
 tmux new -s build
@@ -45,17 +52,17 @@ tmux attach -t build
 ```
 to detach from the `tmux` session `Ctrl-b d`
 
-1.3. Clone this repo: 
+1.4. Clone this repo: 
 
 `git clone https://github.com/OLSF/libra.git`
 
-1.4. Config dependencies: 
+1.5. Config dependencies: 
 
 using make or running the `ol/utils/setup.sh` script directly
 
 using make
 ```
-sudo apt install make
+cd </path/to/libra/source/>
 make deps
 ```
 
@@ -74,18 +81,15 @@ To configure your current shell, run:
 source $HOME/.cargo/env
 ```
 
-or reset your terminal
-```
-reset
-```
 
 For more details: (../devs/OS_dependencies.md)
 
-1.5. Build the source and install binaries:
-This takes a while, run inside `tmux` in case your session gets disconnected 
+1.6. Build the source and install binaries:
+This takes a while, run inside `tmux` to avoid your session gets disconnected 
 ```
 cd </path/to/libra/source/> 
 make bins && make install
+source $HOME/.bashrc
 ```
 
 ## 2. Generate an account
@@ -102,7 +106,7 @@ to place in your first proof.
 
 ```
 # start wizard
-onboard val -u http://<ip-address>:3030
+onboard val -u http://<ip-address-of-the-one-who-onboards-you>:3030
 
 # without template, note: assumes an autopay_batch.json is in the project root.
 onboard val
