@@ -41,7 +41,7 @@ These instructions target Ubuntu.
 sudo apt install tmux git make
 ```
 
-It is recommended to perform the following steps inside tmux:
+It is recommended to perform the steps from 1.4 onwards inside tmux. Short tmux intruction:
 
 ```
 # start a new tmux session
