@@ -2,13 +2,7 @@ use std::{fmt::Debug, fs, net::Ipv4Addr, path::PathBuf};
 
 use crate::storage_helper::StorageHelper;
 use anyhow::bail;
-use diem_config::{
-    config::OnDiskStorageConfig,
-    config::SafetyRulesService,
-    config::{DiscoveryMethod, NetworkConfig, NodeConfig, Peer, PeerRole, PeerSet, SecureBackend},
-    config::{Identity, WaypointConfig},
-    network_id::NetworkId,
-};
+use diem_config::{config::OnDiskStorageConfig, config::SafetyRulesService, config::{DiscoveryMethod, NetworkConfig, NodeConfig, Peer, PeerRole, PeerSet, RoleType, SecureBackend}, config::{Identity, WaypointConfig}, network_id::NetworkId};
 use diem_crypto::{ed25519::Ed25519PublicKey, x25519::PublicKey};
 use diem_global_constants::{DEFAULT_PUB_PORT, DEFAULT_VFN_PORT, FULLNODE_NETWORK_KEY, GENESIS_WAYPOINT, OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
 use diem_management::{config::ConfigPath, error::Error, secure_backend::ValidatorBackend};
@@ -261,7 +255,7 @@ fn make_validator_cfg(
     // Note skip setting namepace for later.
     c.base.waypoint =
         WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
-
+    c.base.role = RoleType::Validator;
     // If validator configs set val network configs
     let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
 
@@ -320,6 +314,7 @@ pub fn make_fullnode_cfg(
     let mut c = default_for_public_fullnode()?;
     c.set_data_dir(output_dir.clone());
     c.base.waypoint = WaypointConfig::FromConfig(waypoint);
+    c.base.role = RoleType::FullNode;
     c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
     
 
@@ -370,6 +365,7 @@ pub fn make_vfn_cfg(
     // Set base properties
     c.set_data_dir(output_dir.clone());
     c.base.waypoint = WaypointConfig::FromConfig(waypoint);
+    c.base.role = RoleType::FullNode;
     c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
 
     let storage = storage_helper.storage(namespace.to_string());
