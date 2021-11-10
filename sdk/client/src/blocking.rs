@@ -31,8 +31,14 @@ use std::time::Duration;
 // In order to avoid needing to publish the proxy crate to crates.io we simply include the small
 // library in inline by making it a module instead of a dependency. 'src/proxy.rs' is a symlink to
 // '../../../common/proxy/src/lib.rs'
+/////// 0L /////////
+#[cfg(target_family = "unix")]
 #[path = "proxy.rs"]
 mod proxy;
+#[cfg(target_family = "windows")]
+#[path = "ol_proxy_win.rs"]
+mod ol_proxy_win;
+use ol_proxy_win as proxy;
 
 const REQUEST_TIMEOUT: u64 = 10_000;
 
