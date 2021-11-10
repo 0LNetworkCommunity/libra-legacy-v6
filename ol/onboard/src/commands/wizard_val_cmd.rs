@@ -2,7 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use super::files_cmd;
+use super::genesis_files_cmd;
 use crate::entrypoint;
 use crate::prelude::app_config;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
@@ -296,7 +296,7 @@ fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, base
       // Some(p.to_owned())
   } else {
   // default behavior: fetching the genesis files from genesis-archive, unless overrideen
-  match files_cmd::fetch_genesis_files_from_repo(home_path.clone(), &cmd.github_org, &cmd.repo) {
+  match genesis_files_cmd::fetch_genesis_files_from_repo(home_path.clone(), &cmd.github_org, &cmd.repo) {
     Ok(path) => {
       status_ok!(
           "\nDownloaded genesis files",

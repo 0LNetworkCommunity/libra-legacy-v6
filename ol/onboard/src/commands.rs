@@ -1,5 +1,5 @@
 //! MinerApp Subcommands
-pub mod files_cmd;
+pub mod genesis_files_cmd;
 pub mod node_files_cmd;
 pub mod version_cmd;
 pub mod wizard_fn_cmd;
@@ -17,6 +17,7 @@ use self::{
     fix_cmd::FixCmd,
     wizard_fork_cmd::ForkCmd,
     node_files_cmd::NodeFilesCmd,
+    genesis_files_cmd::GenesisFilesCmd,
 
 };
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
@@ -63,8 +64,12 @@ pub enum WizCmd {
     Fork(ForkCmd),
 
     /// The `node files` subcommand
-    #[options(help = "create configs for a fork, from genesis")]
+    #[options(help = "create all the node.yaml files needed for node ops")]
     NodeFiles(NodeFilesCmd),
+
+    /// The `genesis files` subcommand
+    #[options(help = "fetch genesis.blob from a github repo")]
+    GenesisFiles(GenesisFilesCmd),
     
 }
 

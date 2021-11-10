@@ -6,7 +6,7 @@ use abscissa_core::{Command, Options, Runnable, status_info, status_ok};
 use diem_genesis_tool::ol_node_files;
 use diem_types::waypoint::Waypoint;
 use std::{path::PathBuf};
-use super::{files_cmd};
+use super::{genesis_files_cmd};
 use crate::{application::app_config};
 /// `fullnode-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -42,7 +42,7 @@ impl Runnable for FnWizardCmd {
 
         // TODO: fetch epoch backup info from epoch archive, or build genesis.
         if !self.skip_fetch_genesis {
-            files_cmd::fetch_genesis_files_from_repo(
+            genesis_files_cmd::fetch_genesis_files_from_repo(
                 output_path,
                 &self.github_org,
                 &self.repo,

@@ -8,11 +8,11 @@ use anyhow::{bail, Error};
 use diem_genesis_tool::ol_node_files;
 use diem_types::waypoint::Waypoint;
 use ol_types::config::AppCfg;
-use std::{fs::File, io::Write, path::PathBuf};
+use std::{fs::File, io::Write, path::PathBuf, process::exit};
 
 /// `files` subcommand
 #[derive(Command, Debug, Default, Options)]
-pub struct FilesCmd {
+pub struct GenesisFilesCmd {
     #[options(help = "id of the chain")]
     chain_id: Option<u8>,
     #[options(help = "github org of genesis repo")]
@@ -27,19 +27,31 @@ pub struct FilesCmd {
     waypoint: Option<Waypoint>,
 }
 
-impl Runnable for FilesCmd {
+impl Runnable for GenesisFilesCmd {
     /// Print version message
     fn run(&self) {
         let miner_configs = app_config().to_owned();
-        genesis_files(
-            &miner_configs.clone(),
-            &self.chain_id,
+        let home = miner_configs.clone().workspace.node_home;
+        if *&self.github_org.is_none() || *&self.repo.is_none()  {
+          println!("must pass a --github-org and --repo in order to fetch genesis.blob. Exiting.");
+          exit(1);
+        }
+        
+        match fetch_genesis_files_from_repo(
+        // genesis_files(
+            home.clone(),
+        //     &self.chain_id,
             &self.github_org,
             &self.repo,
-            &self.prebuilt_genesis,
-            &self.fullnode_only,
-            self.waypoint,
-        )
+        //     &self.prebuilt_genesis,
+        //     &self.fullnode_only,
+        //     self.waypoint,
+        ) {
+            Ok(_) => println!("Success. Files genesis.blob and genesis_waypoint.txs were fetched from {}/{}, and saved to {:?}",&self.github_org.as_ref().unwrap(), &self.repo.as_ref().unwrap(), &home),
+            Err(e) => {
+              println!("ERROR: could not fetch genesis files from repo, message: {}", e.to_string())
+            },
+        }
     }
 }
 
