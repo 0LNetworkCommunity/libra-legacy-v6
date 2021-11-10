@@ -27,6 +27,13 @@ pub struct Seeds {
 }
 
 impl Seeds {
+    pub fn execute(self) -> Result<String, Error> {
+
+     let peers = &self.get_network_peers_info()?;
+     dbg!(peers);
+     Ok("ok".to_string())
+    }
+
     pub fn new(genesis_path: PathBuf) -> Self {
       Self {
         genesis_path,

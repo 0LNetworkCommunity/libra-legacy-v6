@@ -39,7 +39,9 @@ pub enum Command {
     #[structopt(about = "Includes proof of work to the validator registrations")]
     Mining(crate::ol_mining::Mining),
     #[structopt(about = "Creates own repo for submitting genesis info")]
-    CreateRepo(crate::ol_create_repo::CreateGenesisRepo),   
+    CreateRepo(crate::ol_create_repo::CreateGenesisRepo),
+    #[structopt(about = "Shows seed peers in a genesis blob")]
+    GenesisSeedPeers(crate::seeds::Seeds),  
 }
 
 #[derive(Debug, PartialEq)]
@@ -60,6 +62,8 @@ pub enum CommandName {
     Files,
     Mining,
     CreateRepo, 
+    GenesisSeedPeers,
+
 }
 
 impl From<&Command> for CommandName {
@@ -80,7 +84,9 @@ impl From<&Command> for CommandName {
             Command::Init(_) => CommandName::Init,
             Command::Files(_) => CommandName::Files,
             Command::Mining(_) => CommandName::Mining,  
-            Command::CreateRepo(_) => CommandName::CreateRepo,          
+            Command::CreateRepo(_) => CommandName::CreateRepo,  
+            Command::GenesisSeedPeers(_) => CommandName::GenesisSeedPeers,  
+            
         }
     }
 }
@@ -104,6 +110,7 @@ impl std::fmt::Display for CommandName {
             CommandName::Files => "files",
             CommandName::Mining => "mining",
             CommandName::CreateRepo => "create-repo",
+            CommandName::GenesisSeedPeers => "genesis-seed-peers",
         };
         write!(f, "{}", name)
     }
@@ -132,6 +139,7 @@ impl Command {
             Command::Files(_) => self.files().map(|_| "Success!".to_string()),
             Command::Mining(_) => self.mining(),
             Command::CreateRepo(_) => self.create_repo(),
+            Command::GenesisSeedPeers(_) => self.genesis_seed_peers(),
 
         }
     }
@@ -196,6 +204,9 @@ impl Command {
     }
     pub fn create_repo(self) -> Result<String, Error> {
         execute_command!(self, Command::CreateRepo, CommandName::CreateRepo)
+    }
+    pub fn genesis_seed_peers(self) -> Result<String, Error> {
+        execute_command!(self, Command::GenesisSeedPeers, CommandName::GenesisSeedPeers)
     }
 }
 
