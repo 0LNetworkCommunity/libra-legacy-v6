@@ -380,6 +380,7 @@ pub fn make_vfn_cfg(
     // TODO: The validator address, Is it a namespace or is it used for authentication?
     // let validator_addr: AccountAddress = storage.get::<String>(OWNER_ACCOUNT)?.value.parse()?;
     let val_vfn_net_pubkey = storage.get_public_key(FULLNODE_NETWORK_KEY)?.public_key;
+    dbg!(&val_vfn_net_pubkey);
     let seeds = make_vfn_peer_set(val_vfn_net_pubkey, ip_address)?;
 
     // update the template (instead of creating from default)

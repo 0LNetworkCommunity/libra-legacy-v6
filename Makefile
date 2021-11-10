@@ -298,7 +298,9 @@ genesis:
 	--namespace ${ACC}-oper \
 	--repo ${REPO_NAME} \
 	--github-org ${REPO_ORG} \
-  --layout-path ${DATA_PATH}/set_layout.toml
+  --layout-path ${DATA_PATH}/set_layout.toml \
+	--val-ip-address ${IP}
+
 
 	sha256sum ${DATA_PATH}/genesis.blob
 
@@ -452,7 +454,7 @@ debug:
 
 ##### DEVNET TESTS #####
 
-devnet: clear fix fix-genesis dev-wizard start
+devnet: clear fix fix-genesis dev-wizard clear-prod-db reset-safety genesis start
 # runs a smoke test from fixtures. 
 # Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 # This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
