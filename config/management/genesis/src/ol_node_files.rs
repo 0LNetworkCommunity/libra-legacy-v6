@@ -8,7 +8,7 @@ use diem_config::{
     network_id::NetworkId,
 };
 
-use crate::seeds::Seeds;
+use crate::{seeds::Seeds, waypoint};
 use crate::storage_helper::StorageHelper;
 use diem_global_constants::{FULLNODE_NETWORK_KEY, OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
 use diem_management::{config::ConfigPath, error::Error, secure_backend::ValidatorBackend};
@@ -68,7 +68,7 @@ pub fn write_node_config_files(
     namespace: &str,
     prebuilt_genesis: &Option<PathBuf>,
     fullnode_only: &bool,
-    mut way_opt: Option<Waypoint>,
+    way_opt: Option<Waypoint>, // TODO: deprecated
     layout_path: &Option<PathBuf>,
 ) -> Result<NodeConfig, Error> {
     // TODO: Do we need github token path with public repo?
@@ -86,14 +86,16 @@ pub fn write_node_config_files(
     let storage_helper = StorageHelper::get_with_path(output_dir.clone());
 
     let mut genesis_path = output_dir.join("genesis.blob");
-    match prebuilt_genesis {
+
+    let genesis_waypoint = match prebuilt_genesis {
         Some(path) => {
             // TODO: insert waypoint
             genesis_path = path.to_owned();
+            waypoint::extract_waypoint_from_file(&genesis_path)?
         }
         None => {
           // building a genesis file requires a set_layout path. The default is for genesis to use a local set_layout file. Once a genesis occurs, the canonical chain can store the genesis information to github repo for future verification and creating a genesis blob.
-            let genesis_waypoint = match layout_path {
+             match layout_path {
                 Some(layout_path) => storage_helper
                     .build_genesis_with_layout(chain_id, &remote, &genesis_path, &layout_path)
                     .unwrap(),
@@ -103,16 +105,13 @@ pub fn write_node_config_files(
                     .build_genesis_from_github(chain_id, &remote, &genesis_path)
                     .unwrap()
                 },
-            };
-
-            // for genesis cases, need to insert the waypoint in the key_store.json
-            storage_helper
-                .insert_waypoint(&namespace, genesis_waypoint)
-                .unwrap();
-
-            way_opt = Some(genesis_waypoint);
+            }
         }
     };
+    
+    storage_helper
+      .insert_waypoint(&namespace, genesis_waypoint)
+      .unwrap();
 
     // Write the genesis waypoint without a namespaced storage.
     let mut disk_storage = OnDiskStorageConfig::default();

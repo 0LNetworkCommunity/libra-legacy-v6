@@ -6,7 +6,6 @@ use super::files_cmd;
 
 use crate::entrypoint;
 use crate::prelude::app_config;
-use crate::read_genesis::gen_tx_from_blob;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use diem_genesis_tool::{ol_node_files, waypoint};
 use diem_types::transaction::SignedTransaction;
@@ -84,8 +83,7 @@ impl Runnable for ForkCmd {
 
         let mut wp = self.waypoint.clone();
         if let Some(path) = &self.prebuilt_genesis {
-          let tx = gen_tx_from_blob(path).unwrap();
-          wp = Some(waypoint::CreateWaypoint::extract_waypoint(tx).unwrap());
+          wp = Some(waypoint::extract_waypoint_from_file(path).unwrap());
           dbg!(&wp);
         }
 
