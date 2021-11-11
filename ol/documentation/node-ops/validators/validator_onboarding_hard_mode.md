@@ -62,13 +62,13 @@ using make or running the `ol/utils/setup.sh` script directly
 
 using make
 ```
-cd </path/to/libra/source/>
+cd </path/to/libra-source/>
 make deps
 ```
 
 or run the script directly
 ```
-cd </path/to/libra/source/> && . ol/util/setup.sh
+cd </path/to/libra-source/> && . ol/util/setup.sh
 ```
 
 After `rust` and `cargo` are installed you are prompted to set a `PATH` environment variable. 
@@ -87,7 +87,7 @@ For more details: (../devs/OS_dependencies.md)
 1.6. Build the source and install binaries:
 This takes a while, run inside `tmux` to avoid your session gets disconnected 
 ```
-cd </path/to/libra/source/> 
+cd </path/to/libra-source/> 
 make bins && make install
 source $HOME/.bashrc
 ```
@@ -112,7 +112,7 @@ onboard val -u http://<ip-address-of-the-one-who-onboards-you>:3030
 onboard val
 ```
 
-2.3. Send the generated `~/.0L/account.json` to someone that has GAS and can execute the account creation transaction for you.
+2.3. Send the generated `~/.0L/account.json` to someone that has GAS (the one who wants to onboard you) and can execute the account creation transaction for you.
 
 **If you are onboaring someone and receive the `account.json` [see](#onboarder-instructions)**  
 
@@ -246,7 +246,7 @@ ol explorer
 If you are onboarding someone and have received their `account.json` file
 1. Copy the `account.json` to your local node.
 2. Submit a tx with `txs` app:
-   `txs create-validator <path/to/account.json>
+   `txs create-validator --account-file <path/to/account.json>
 
 Troubleshooting: If there is an issue with sequence_number out of sync. Retry the transaction.
 
