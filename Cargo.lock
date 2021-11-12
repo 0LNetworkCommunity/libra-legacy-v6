@@ -1951,6 +1951,7 @@ dependencies = [
  "diemdb",
  "dirs 2.0.2",
  "executor",
+ "generate-key",
  "hex 0.4.3",
  "ol-keys",
  "ol-types",
