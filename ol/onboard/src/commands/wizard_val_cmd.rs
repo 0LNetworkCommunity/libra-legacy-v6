@@ -133,6 +133,7 @@ impl Runnable for ValWizardCmd {
         );
 
         // Initialize Validator Keys
+        // this also sets a genesis waypoint if one was provide, e.g. from an upstream peer.
         init_cmd::initialize_validator(&wallet, &app_config, base_waypoint, *&self.genesis_ceremony).expect("could not initialize validator key_store.json");
         status_ok!("\nKey file written", "\n...........................\n");
 
@@ -316,7 +317,8 @@ fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, base
 
   let home_dir = app_config.workspace.node_home.to_owned();
   // 0L convention is for the namespace of the operator to be appended by '-oper'
-  let namespace = app_config.profile.account.clone().to_string() + "-oper";
+  // this needs to be the same namespace as in initialize_validator
+  let namespace = app_config.profile.account.to_hex() + "-oper";
 
   // TODO: use node_config to get the seed peers and then write upstream_node vec in 0L.toml from that.
   ol_node_files::write_node_config_files(
