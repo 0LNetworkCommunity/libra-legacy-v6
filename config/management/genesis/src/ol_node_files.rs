@@ -24,9 +24,9 @@ pub struct Files {
     #[structopt(long)]
     namespace: String,
     #[structopt(long)]
-    github_org: String,
+    github_org: Option<String>,
     #[structopt(long)]
-    repo: String,
+    repo: Option<String>,
     #[structopt(long)]
     chain_id: u8,
     /// If specified, compares the internal state to that of a
@@ -49,8 +49,8 @@ impl Files {
         write_node_config_files(
             self.data_path,
             self.chain_id,
-            &self.github_org,
-            &self.repo,
+            self.github_org,
+            self.repo,
             &self.namespace,
             &None,
             &self.fullnode_only,
@@ -63,8 +63,8 @@ impl Files {
 pub fn write_node_config_files(
     output_dir: PathBuf,
     chain_id: u8,
-    github_org: &str,
-    repo: &str,
+    github_org: Option<String>,
+    repo: Option<String>,
     namespace: &str,
     prebuilt_genesis: &Option<PathBuf>,
     fullnode_only: &bool,
@@ -75,27 +75,26 @@ pub fn write_node_config_files(
     let github_token_path = output_dir.join("github_token.txt");
     let chain_id = ChainId::new(chain_id);
 
-    let remote = format!(
-        "backend=github;repository_owner={github_org};repository={repo};token={path};namespace={ns}",
-        repo=&repo,
-        github_org=&github_org,
-        path=github_token_path.to_str().unwrap(),
-        ns=&namespace
-    );
-
     let storage_helper = StorageHelper::get_with_path(output_dir.clone());
 
     let mut genesis_path = output_dir.join("genesis.blob");
 
     let genesis_waypoint = match prebuilt_genesis {
         Some(path) => {
-            // TODO: insert waypoint
             genesis_path = path.to_owned();
             waypoint::extract_waypoint_from_file(&genesis_path)?
         }
         None => {
           // building a genesis file requires a set_layout path. The default is for genesis to use a local set_layout file. Once a genesis occurs, the canonical chain can store the genesis information to github repo for future verification and creating a genesis blob.
-             match layout_path {
+            if *&repo.is_some() && *&github_org.is_some() {
+              let remote = format!(
+                  "backend=github;repository_owner={github_org};repository={repo};token={path};namespace={ns}",
+                  repo=&repo.unwrap(),
+                  github_org=&github_org.unwrap(),
+                  path=github_token_path.to_str().unwrap(),
+                  ns=&namespace
+              );
+              match layout_path {
                 Some(layout_path) => storage_helper
                     .build_genesis_with_layout(chain_id, &remote, &genesis_path, &layout_path)
                     .unwrap(),
@@ -105,6 +104,9 @@ pub fn write_node_config_files(
                     .build_genesis_from_github(chain_id, &remote, &genesis_path)
                     .unwrap()
                 },
+              }
+            } else {
+              return Err(Error::ConfigError(format!("ERROR: to build genesis from repo you need to pass --github-org and --repo")))
             }
         }
     };

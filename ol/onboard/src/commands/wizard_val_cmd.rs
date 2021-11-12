@@ -322,11 +322,8 @@ fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, base
   ol_node_files::write_node_config_files(
       home_dir.clone(),
       cmd.chain_id.unwrap_or(1),
-      &cmd.github_org.clone(),
-      &cmd
-          .repo
-          .clone(),
-
+      cmd.github_org.clone(),
+      cmd.repo.clone(),
       &namespace,
       &genesis_blob_path,
       &false,

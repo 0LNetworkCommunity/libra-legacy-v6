@@ -153,11 +153,8 @@ impl Runnable for ForkCmd {
         ol_node_files::write_node_config_files(
             home_dir.clone(),
             self.chain_id.unwrap_or(1),
-            &self.github_org.clone().unwrap_or("OLSF".to_string()),
-            &self
-                .repo
-                .clone()
-                .unwrap_or("experimental-genesis".to_string()),
+            self.github_org.clone(),
+            self.repo.clone(),
             &namespace,
             &prebuilt_genesis_path,
             &false,

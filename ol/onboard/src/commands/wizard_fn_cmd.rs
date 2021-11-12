@@ -23,8 +23,8 @@ pub struct FnWizardCmd {
     prebuilt_genesis: Option<PathBuf>,
     #[options(help = "skip fetching genesis blob")]
     skip_fetch_genesis: bool,
-    #[options(help = "optional waypoint")]
-    waypoint: Option<Waypoint>,
+    // #[options(help = "optional waypoint")]
+    // waypoint: Option<Waypoint>,
 }
 
 impl Runnable for FnWizardCmd {
@@ -57,15 +57,12 @@ impl Runnable for FnWizardCmd {
         ol_node_files::write_node_config_files(
             home_dir.clone(),
             self.chain_id.unwrap_or(1),
-            &self.github_org.clone().unwrap_or("OLSF".to_string()),
-            &self
-                .repo
-                .clone()
-                .unwrap_or("experimental-genesis".to_string()),
+            self.github_org.clone(),
+            self.repo.clone(),
             &namespace,
             &self.prebuilt_genesis,
             &true,
-            self.waypoint,
+            None,
             &None,
         ).unwrap();
         status_ok!("\nNode config OK", "\n...........................\n");
