@@ -148,7 +148,7 @@
 
   // check <b>if</b> this account <b>exists</b>
   <b>let</b> (new_account_address, _) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(&challenge);
-  <b>assert</b>(!<a href="DiemAccount.md#0x1_DiemAccount_exists_at">DiemAccount::exists_at</a>(new_account_address), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="ol_account.md#0x1_AccountScripts_ACCOUNT_ALREADY_EXISTS">ACCOUNT_ALREADY_EXISTS</a>));
+  // <b>assert</b>(!<a href="DiemAccount.md#0x1_DiemAccount_exists_at">DiemAccount::exists_at</a>(new_account_address), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="ol_account.md#0x1_AccountScripts_ACCOUNT_ALREADY_EXISTS">ACCOUNT_ALREADY_EXISTS</a>));
 
 
   <a href="DiemAccount.md#0x1_DiemAccount_create_validator_account_with_proof">DiemAccount::create_validator_account_with_proof</a>(
