@@ -1,6 +1,8 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{fs::File, io::Read, path::PathBuf};
+
 use diem_config::config::RocksdbConfig;
 use diem_management::{config::ConfigPath, error::Error, secure_backend::SharedBackend};
 use diem_temppath::TempPath;
@@ -25,7 +27,7 @@ pub struct CreateWaypoint {
     #[structopt(long)]
     genesis_path: Option<std::path::PathBuf>,
     #[structopt(long)]
-    layout_path: Option<std::path::PathBuf>,   
+    layout_path: Option<std::path::PathBuf>,
 }
 
 impl CreateWaypoint {
@@ -33,8 +35,8 @@ impl CreateWaypoint {
         let genesis_helper = crate::genesis::Genesis {
             config: self.config,
             chain_id: self.chain_id,
-            backend: self.shared_backend,            
-            path: self.genesis_path, //////// 0L ////////
+            backend: self.shared_backend,
+            path: self.genesis_path,       //////// 0L ////////
             layout_path: self.layout_path, //////// 0L ////////
         };
 
@@ -48,15 +50,37 @@ impl CreateWaypoint {
         db_bootstrapper::generate_waypoint::<DiemVM>(&db_rw, &genesis)
             .map_err(|e| Error::UnexpectedError(e.to_string()))
     }
+}
 
-    //////// 0L ////////
-    pub fn extract_waypoint(gen_tx: Transaction) -> Result<Waypoint, Error> {
-      let path = TempPath::new();
-      let libradb =
-          DiemDB::open(&path, false, None, RocksdbConfig::default()).map_err(|e| Error::UnexpectedError(e.to_string()))?;
-      let db_rw = DbReaderWriter::new(libradb);
+//////// 0L ////////
 
-      db_bootstrapper::generate_waypoint::<DiemVM>(&db_rw, &gen_tx)
-          .map_err(|e| Error::UnexpectedError(e.to_string()))
-    }
+pub fn extract_waypoint_from_file(genesis_path: &PathBuf) -> Result<Waypoint, Error> {
+    let mut file = File::open(genesis_path)
+        .map_err(|_| Error::UnexpectedError("cannot open genesis.blob file".to_string()))?;
+
+    let mut buffer = vec![];
+    file.read_to_end(&mut buffer)
+        .map_err(|_| Error::UnexpectedError("cannot open genesis.blob file".to_string()))?;
+
+    let gen_tx: Transaction = bcs::from_bytes(&buffer)
+        .map_err(|_| Error::UnexpectedError("cannot open genesis.blob file".to_string()))?;
+
+    let path = TempPath::new();
+    let libradb = DiemDB::open(&path, false, None, RocksdbConfig::default())
+        .map_err(|e| Error::UnexpectedError(e.to_string()))?;
+    let db_rw = DbReaderWriter::new(libradb);
+
+    db_bootstrapper::generate_waypoint::<DiemVM>(&db_rw, &gen_tx)
+        .map_err(|e| Error::UnexpectedError(e.to_string()))
+}
+
+//////// 0L ////////
+pub fn extract_waypoint(gen_tx: Transaction) -> Result<Waypoint, Error> {
+    let path = TempPath::new();
+    let libradb = DiemDB::open(&path, false, None, RocksdbConfig::default())
+        .map_err(|e| Error::UnexpectedError(e.to_string()))?;
+    let db_rw = DbReaderWriter::new(libradb);
+
+    db_bootstrapper::generate_waypoint::<DiemVM>(&db_rw, &gen_tx)
+        .map_err(|e| Error::UnexpectedError(e.to_string()))
 }
