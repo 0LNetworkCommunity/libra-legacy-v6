@@ -197,6 +197,13 @@ module TowerState {
     ) acquires TowerProofHistory, TowerList, TowerStats {
       // Get address, assumes the sender is the signer.
       let miner_addr = Signer::address_of(miner_sign);
+      
+      // Skip this check on local tests, we need tests to send different difficulties.
+      if (!Testnet::is_testnet()){
+        // Get vdf difficulty constant. Will be different in tests than in production.
+        let difficulty_constant = Globals::get_vdf_difficulty();
+        assert(&proof.difficulty == &difficulty_constant, Errors::invalid_argument(130102));
+      };
 
       // This may be the 0th proof of an end user that hasn't had tower state initialized
       if (!is_init(miner_addr)) {
@@ -208,12 +215,7 @@ module TowerState {
         return
       };
 
-      // Skip this check on local tests, we need tests to send different difficulties.
-      if (!Testnet::is_testnet()){
-        // Get vdf difficulty constant. Will be different in tests than in production.
-        let difficulty_constant = Globals::get_vdf_difficulty();
-        assert(&proof.difficulty == &difficulty_constant, Errors::invalid_argument(130102));
-      };
+
       // Process the proof
       verify_and_update_state(miner_addr, proof, true);
     }
