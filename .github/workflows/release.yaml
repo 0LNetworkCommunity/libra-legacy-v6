@@ -25,6 +25,8 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '14'
+      - name: Rustup MUSL
+        run: rustup target add x86_64-unknown-linux-musl
       - name: Build
         run:  RUSTC_WRAPPER=sccache make bins
       - name: Upload binaries to github.com/release
