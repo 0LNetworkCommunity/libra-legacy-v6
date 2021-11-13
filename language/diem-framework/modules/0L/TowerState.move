@@ -21,7 +21,7 @@ module TowerState {
     use 0x1::VDF;
     use 0x1::Vector;
 
-    const EPOCHS_UNTIL_ACCOUNT_CREATION: u64 = 6;
+    const EPOCHS_UNTIL_ACCOUNT_CREATION: u64 = 13;
 
     /// A list of all miners' addresses 
     // reset at epoch boundary
