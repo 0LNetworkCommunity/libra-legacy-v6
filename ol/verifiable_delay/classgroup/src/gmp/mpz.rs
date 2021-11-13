@@ -29,7 +29,7 @@ pub type mp_bitcnt_t = c_ulong;
 pub type mpz_srcptr = *const mpz_struct;
 pub type mpz_ptr = *mut mpz_struct;
 
-#[link(name = "gmp", kind = "static")]
+#[link(name = "gmp")]
 extern "C" {
     static __gmp_bits_per_limb: c_int;
     fn __gmpz_init(x: mpz_ptr);

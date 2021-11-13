@@ -24,7 +24,7 @@ use libc::{c_int, c_long, c_ulong, c_void, size_t};
 // pub use c_ulong;
 use std::usize;
 // We use the unsafe versions to avoid unecessary allocations.
-#[link(name = "gmp", kind = "static")]
+#[link(name = "gmp")]
 extern "C" {
     fn __gmpz_gcdext(gcd: *mut Mpz, s: *mut Mpz, t: *mut Mpz, a: *const Mpz, b: *const Mpz);
     fn __gmpz_gcd(rop: *mut Mpz, op1: *const Mpz, op2: *const Mpz);
