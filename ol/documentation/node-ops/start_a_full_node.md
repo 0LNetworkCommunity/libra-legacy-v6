@@ -19,7 +19,7 @@ These instructions target Ubuntu.
 ```
 cd </path/to/libra/source/>
 
-. ol/util/setup.sh` 
+. ol/util/setup.sh 
 ```
 
 For more details: (../devs/OS_dependencies.md)
