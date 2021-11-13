@@ -10,7 +10,6 @@ use crate::commit_proof::commit_proof_tx;
 use std::io::BufReader;
 use crate::proof::{parse_block_height, FILENAME};
 use anyhow::{bail, Result, Error};
-use diem_json_rpc_types::views::{TowerStateResourceView};
 
 /// Submit a backlog of blocks that may have been mined while network is offline. 
 /// Likely not more than 1. 
@@ -75,7 +74,7 @@ pub fn get_remote_tower_height(tx_params: &TxParams) -> Result<i128, Error> {
                 bail!("Info: Received response but no remote state found. Exiting.")
             }
         } },
-        Err(e) => {
+        Err( _ ) => {
             // error info returned -> tower is not yet on chain, so the height is 0
             Ok(-1)
         },
