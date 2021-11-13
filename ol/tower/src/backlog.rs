@@ -18,8 +18,9 @@ pub fn process_backlog(
     config: &AppCfg, tx_params: &TxParams, is_operator: bool
 ) -> Result<(), Error> {
     // Getting remote miner state
-    let remote_state = get_remote_state(tx_params)?;
-    let remote_height = remote_state.verified_tower_height;
+    //let remote_state = get_remote_state(tx_params)?;
+    //let remote_height = remote_state.verified_tower_height;
+    let remote_height = get_remote_tower_height(tx_params).unwrap();
 
     println!("Remote tower height: {}", remote_height);
     // Getting local state height
@@ -28,11 +29,11 @@ pub fn process_backlog(
     let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
     if let Some(current_block_number) = current_block_number {
         println!("Local tower height: {:?}", current_block_number);
-        if current_block_number > remote_height { 
+        if i128::from(current_block_number) > remote_height { 
             println!("Backlog: resubmitting missing proofs.");
 
             let mut i = remote_height + 1;
-            while i <= current_block_number {
+            while i <= current_block_number.into() {
                 let path = PathBuf::from(
                     format!("{}/{}_{}.json", blocks_dir.display(), FILENAME, i)
                 );
@@ -57,8 +58,8 @@ pub fn process_backlog(
     Ok(())
 }
 
-/// returns remote node state given tx_params
-pub fn get_remote_state(tx_params: &TxParams) -> Result<TowerStateResourceView, Error> {
+/// returns remote tower height
+pub fn get_remote_tower_height(tx_params: &TxParams) -> Result<i128, Error> {
     let client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
     println!("Fetching remote tower height: {}, {}", 
         tx_params.url.clone(), tx_params.owner_address.clone()
@@ -66,8 +67,8 @@ pub fn get_remote_state(tx_params: &TxParams) -> Result<TowerStateResourceView, 
     let remote_state = client.get_miner_state(&tx_params.owner_address);
     match remote_state {
         Ok( s ) => { match s {
-            Some(state) => {
-                Ok(state)
+            Some(remote_state) => {
+                Ok(remote_state.verified_tower_height.into())
             },
             None => {
                 println!("Info: Received response but no remote state found. Exiting.");
@@ -75,8 +76,9 @@ pub fn get_remote_state(tx_params: &TxParams) -> Result<TowerStateResourceView, 
             }
         } },
         Err(e) => {
-            println!("Error fetching remote state: {:?}", e);
-            bail!("Error fetching remote state: {:?}", e)
+            // error info returned -> tower is not yet on chain, so the height is 0
+            Ok(-1)
         },
     }
 }
+
