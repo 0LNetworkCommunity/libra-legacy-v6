@@ -87,7 +87,7 @@ bins: stdlib
 # Build and install genesis tool, diem-node, and tower
 # NOTE: stdlib is built for cli bindings
 
-	cargo build -p diem-node -p tower -p backup-cli -p ol -p txs -p onboard ${CARGO_ARGS}
+	cargo build -p diem-node -p tower -p backup-cli -p ol -p txs -p onboard ${CARGO_ARGS} --target x86_64-unknown-linux-musl
 
 stdlib:
 # cargo run ${CARGO_ARGS} -p diem-framework
