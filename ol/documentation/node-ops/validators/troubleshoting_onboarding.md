@@ -1,10 +1,17 @@
 ## Documentation on Past Issues and Possible solutions
 
+## Debugging
+
+1. Check your node log.
+If you are using `ol start`, then all of your logs for each 0L service will be in ~/.0L/logs.
+You can for example: `tail -f ~/.0L/logs/node.log` to follow the logs of the node.
+
 ## Issues
 1. [Validator logs show "Too many open files" or "File descriptor limit exceeded" error and tower app is stopped](#issue-1)
 2. [Tower start: Epochs not consecutive](#issue-2)
 3. [DB should open](#issue-3)
 4. [Tower start: EOF error](#issue-4)
+4. [Diem-node Crash: Unable to read peer id KeyNotSet](#issue-5)
 
 ## <a id="issue-1"></a> Issue "Too many open files"
 ### Validator logs show "Too many open files" or "File descriptor limit exceeded" error and tower app is stopped
@@ -70,4 +77,18 @@ Location: tower/src/block.rs:....
 ```
 **Solution:** Check if the last block proof created is empty. If so, remove the file and start the tower app again. This is after the node is caught up on the network. 
 
+## <a id="issue-4"></a> Issue: Diem-node crash: Unable to read peer id KeyNotSet
+
+**Problem:** There is a mismatch in the namespace used for the key_store.json and validator.node.yaml. If they don't match then the diem-node will panic. This is an error introduced in v5.0.2.
+
+```
+panicked at 'Unable to read peer id KeyNotSet(".../owner-account")
+```
+**Solution:** You could manually change those files so that the namespace matches. Alternatively you could just regenerate the validator node files from the onboarding tool, but with different arguments (since mining was already done, and likely the autopay file has changes).
+
+First upgrade to v5.0.3 or more. Either pull the source or use the install script in: [easy mode](./validator_onboarding_easy_mode.md)
+
+```
+onboard val --skip-mining --upstream_peer <http for reference peer>
+```
 
