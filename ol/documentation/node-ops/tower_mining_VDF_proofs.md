@@ -23,10 +23,10 @@ you should have
 If yes, continue with "Start the tower app".
 If not, probably you do not have an account yet. Let's create one now:
 
-Generate new keys and account: `onboard keygen`. Run as many times as you like, and choose a mnemonic. 
+Generate new keys and account by using the following command: `onboard keygen`. Run as many times as you like, and choose a mnemonic. 
 **Mnemonic and keys are not saved anywhere, write them down now**. 
 
-Send the generated `authkey` to someone that has GAS (the one who wants to onboard you) and can execute the account creation transaction for you. This person has to send e.g. 1 GAS to you by the following command:
+Send the generated `authkey` to someone that has GAS (the one who wants to onboard you). This person has to send e.g. 1 GAS to you by the following command:
 
 ```
 txs create-account --authkey ..........   --coins 1 
@@ -38,7 +38,7 @@ Only after this, continue with the following steps:
 # create 0L.toml file:
 cd $HOME/.0L
 ol init -u http://<ip-of-a-fullnode>:8080
-# the following command will create take about 30-40 minutes to create the first proof and account.json:
+# the following will take about 30-40 minutes to create the first proof and account.json:
 onboard user
 ```
 
