@@ -185,6 +185,10 @@ You might see some network errors due to drops, but should again see round numbe
 
 This command will tell you the sync state of a RUNNING local node: `db-backup one-shot query node-state`
 
+While waiting for the sync to complete, it is a good opportunity, to set up the web monitor (but you can also do it any time later). Please follow the instructions here:
+
+[Set up web monitor](web_monitor.md) 
+
 ## 5. Start producing delay proofs ("delay mining") 
 
 Before you start: You will need your mnemonic.
