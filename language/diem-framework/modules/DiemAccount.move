@@ -516,6 +516,7 @@ module DiemAccount {
     ):address acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWalletList { //////// 0L ////////
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
+        // check the validator is in set before creating
         assert(DiemSystem::is_validator(sender_addr), Errors::limit_exceeded(120101));
         assert(TowerState::can_create_val_account(sender_addr), Errors::limit_exceeded(120102));
         // Check there's enough balance for bootstrapping both operator and validator account

@@ -19,10 +19,10 @@ These instructions target Ubuntu.
 ```
 cd </path/to/libra/source/>
 
-. ol/util/setup.sh 
+. ol/util/setup.sh
 ```
 
-For more details: (../devs/OS_dependencies.md)
+More details in: [syncing_your_node.md](syncing_your_node.md)
 
 1.5. Build the source and install binaries:
 
