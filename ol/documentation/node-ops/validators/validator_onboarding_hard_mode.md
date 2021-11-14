@@ -249,4 +249,3 @@ If you are onboarding someone and have received their `account.json` file
    `txs create-validator --account-file <path/to/account.json>
 
 Troubleshooting: If there is an issue with sequence_number out of sync. Retry the transaction.
-
