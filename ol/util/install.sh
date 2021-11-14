@@ -1,4 +1,4 @@
-apps=("db-backup" "db-backup-verify" "db-restore" "libra-node" "miner" "ol" "onboard" "stdlib" "txs")
+apps=("db-backup" "db-backup-verify" "db-restore" "diem-node" "tower" "ol" "onboard" "txs")
 
 for n in ${apps[@]}; do \
   curl  --progress-bar --create-dirs -o ~/bin/$n -L https://github.com/OLSF/libra/releases/latest/download/$n ; \
