@@ -1,22 +1,32 @@
 # 0L
-### A reference implementation of a neutral replicated state machine
 
+A reference implementation of a neutral replicated state machine. Forked from the Libra/Diem technologies.
+# TL;DR
 
-Join a network with a [validator node](ol/documentation/node-ops/validators/validator_onboarding_easy_mode.md), to secure the state machine.
+#### Run *Carpe*  our desktop wallet and miner. [Anyone with a laptop can mine and make 0L Gas Coins. Download for Windows and Mac here.](https://github.com/OLSF/carpe)
 
-Run a [fullnode](./ol/documentation/node-ops/tower_mining_VDF_proofs.md), to keep a copy of the state machine.
+#### Join a network with a [validator node](ol/documentation/node-ops/validators/validator_onboarding_easy_mode.md), to secure the state machine and earn transaction fees.
+
+# Welcome
+
+We live 24/7 on Discord [join us there](https://discord.gg/AzCp63pggW).
+
+### Weekly community meetings on Discord video channel.
+
+- WEDS 15:00 GMT / 8:00 US PT / Weds 11:00 US ET / 17:00 CET / 23:00 CST / 1:00 AEST (THURS)
+
+### Monthly town hall meetings, last thursday of every month also on Discord:
+
+- THUR (last monthly) 15:00 GMT / 8:00 US PT / Weds 11:00 US ET / 17:00 CET / 23:00 CST / 1:00 AEST (FRI)
+
+# Documentation
+
+Read our documentation [here](ol/documentation/README.md).
+
+Skip straight to [toubleshooting onboarding a node to network.](ol/documentation/node-ops/validators/troubleshoting_onboarding.md)
 
 Contribute to [issues](https://github.com/OLSF/libra/issues).
 
-Join [discord chat](https://discord.gg/AzCp63pggW).
-
-Weekly community meetings on Discord video channel.
-
-WEDS 15:00 GMT / 8:00 US PT / Weds 11:00 US ET / 17:00 CET / 23:00 CST / 1:00 AEST (THURS)
-
-Monthly town hall meetings, last thursday of every month also on Discord:
-
-THUR (last monthly) 15:00 GMT / 8:00 US PT / Weds 11:00 US ET / 17:00 CET / 23:00 CST / 1:00 AEST (FRI)
 
 # 0L's Tech Stack
 
