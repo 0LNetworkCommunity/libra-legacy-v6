@@ -10,4 +10,6 @@ pub mod error_explain;
 pub mod stdlib;
 #[cfg(target_family = "windows")]
 pub mod ol_stdlib_win;
+
+#[cfg(target_family = "windows")]
 pub use ol_stdlib_win as stdlib;

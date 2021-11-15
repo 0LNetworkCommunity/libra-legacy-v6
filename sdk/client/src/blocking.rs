@@ -38,6 +38,9 @@ mod proxy;
 #[cfg(target_family = "windows")]
 #[path = "ol_proxy_win.rs"]
 mod ol_proxy_win;
+
+#[cfg(target_family = "windows")]
+#[path = "ol_proxy_win.rs"]
 use ol_proxy_win as proxy;
 
 const REQUEST_TIMEOUT: u64 = 10_000;
