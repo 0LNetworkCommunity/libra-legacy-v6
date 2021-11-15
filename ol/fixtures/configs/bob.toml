@@ -1,7 +1,7 @@
 [workspace]
 node_home = "/root/.0L/"
 source_path = "/root/libra"
-block_dir = "blocks"
+block_dir = "vdf_proofs"
 stdlib_bin_path = "/root/libra/language/diem-framework/staged/stdlib.mv"
 db_path = "/root/.0L/db"
 

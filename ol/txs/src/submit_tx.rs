@@ -7,9 +7,8 @@ use crate::{
     save_tx::save_tx,
     sign_tx::sign_tx,
 };
-use anyhow::Error;
+use anyhow::{Error, anyhow};
 use cli::{diem_client::DiemClient, AccountData, AccountStatus};
-use ol_keys::{wallet, scheme::KeyScheme};
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     test_utils::KeyPair,
@@ -22,9 +21,14 @@ use diem_types::{
     chain_id::ChainId,
     transaction::{authenticator::AuthenticationKey, SignedTransaction, TransactionPayload},
 };
+use ol_keys::{scheme::KeyScheme, wallet};
 
 use diem_wallet::WalletLibrary;
-use ol_types::{self, config::{TxCost, TxType}, fixtures};
+use ol_types::{
+    self,
+    config::{TxCost, TxType},
+    fixtures,
+};
 use reqwest::Url;
 use std::{
     io::{stdout, Write},
@@ -60,102 +64,133 @@ pub struct TxParams {
     pub chain_id: ChainId,
 }
 
-// pub struct TxParams {
-//     /// Sender's 0L authkey, may be the operator.
-//     pub sender_auth_key: AuthenticationKey,
-//     /// User's operator sender account if different than the owner account, used to send transactions
-//     pub sender_address: AccountAddress,
-//     /// User's 0L owner address, where the mining proofs go to.
-//     pub owner_address: AccountAddress,
-//     /// Url
-//     pub url: Url,
-//     /// waypoint
-//     pub waypoint: Waypoint,
-//     /// KeyPair
-//     pub keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey>,
-//     /// User's Maximum gas_units willing to run. Different than coin.
-//     pub max_gas_unit_for_tx: u64,
-//     /// User's GAS Coin price to submit transaction.
-//     pub coin_price_per_unit: u64,
-//     /// User's transaction timeout.
-//     pub user_tx_timeout: u64, // for compatibility with UTC's timestamp.
-// }
-/// wrapper which checks entry point arguments before submitting tx, possibly saving the tx script
+#[derive(Debug)]
+/// a transaction error type specific to ol txs
+pub struct TxError {
+    /// the actual error type
+    pub err: Option<Error>,
+    /// transaction view if the transaction got that far
+    pub tx_view: Option<TransactionView>,
+}
+
+impl From<Error> for TxError {
+    fn from(e: Error) -> Self {
+        TxError{ err: Some(e), tx_view: None }
+    }
+}
+
+/// wrapper for sending a transaction.
 pub fn maybe_submit(
     script: TransactionPayload,
     tx_params: &TxParams,
-    no_send: bool,
     save_path: Option<PathBuf>,
-) -> Result<SignedTransaction, Error> {
-    let mut client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+) -> Result<TransactionView, TxError> {
+    let mut client =
+        DiemClient::new(tx_params.url.clone(), tx_params.waypoint).map_err(|e| TxError {
+            err: Some(e),
+            tx_view: None,
+        })?;
 
-    let (mut account_data, txn) = stage(script, tx_params, &mut client);
+    let (mut account_data, txn) = stage(script, tx_params, &mut client)?;
     if let Some(path) = save_path {
         // TODO: This will not work with batch operations like autopay_batch, last one will overwrite the file.
         save_tx(txn.clone(), path);
     }
 
-    if no_send {
-        return Ok(txn);
-    }
-
     match submit_tx(client, txn.clone(), &mut account_data) {
-        Ok(res) => match eval_tx_status(res) {
-            Ok(_) => Ok(txn),
-            Err(e) => Err(e),
+        Ok(res) => match eval_tx_status(&res) {
+            Ok(_) => Ok(res),
+            Err(e) => Err(TxError {
+                err: Some(e),
+                tx_view: Some(res),
+            }),
         },
-        Err(e) => Err(e),
+        Err(e) => Err(TxError {
+            err: Some(e),
+            tx_view: None,
+        }),
     }
 }
+
+/// wrapper for saving a transction without sending
+pub fn save_dont_send_tx(
+    script: TransactionPayload,
+    tx_params: &TxParams,
+    save_path: Option<PathBuf>,
+) -> Result<SignedTransaction, TxError> {
+    let mut client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint)
+    .map_err(|e| { TxError { err: Some(e), tx_view:  None }})?;
+
+    let (_account_data, txn) = stage(script, tx_params, &mut client)?;
+    if let Some(path) = save_path {
+        // TODO: This will not work with batch operations like autopay_batch, last one will overwrite the file.
+        save_tx(txn.clone(), path);
+    }
+    Ok(txn)
+}
+
 /// convenience for wrapping multiple transactions
 pub fn batch_wrapper(
     batch: Vec<TransactionPayload>,
     tx_params: &TxParams,
     no_send: bool,
     save_path: Option<PathBuf>,
-) {
+) -> Result<(), Error> {
     batch.into_iter().enumerate().for_each(|(i, s)| {
         // TODO: format path for batch scripts
 
-        let new_path = if save_path.is_some() {
-            Some(save_path.clone().unwrap().join(i.to_string()))
-        } else {
-            None
+        let new_path = match &save_path {
+            Some(p) => Some(p.join(i.to_string())),
+            None => None,
         };
 
-        maybe_submit(s, tx_params, no_send, new_path).unwrap();
         // TODO: handle saving of batches to file.
+        // The user may be expecting the batch transaction to be atomic.
+        if no_send {
+            save_dont_send_tx(s.clone(), tx_params, new_path).unwrap();
+        } else {
+            maybe_submit(s, tx_params, new_path).unwrap();
+        }
     });
+    Ok(())
 }
 
 fn stage(
     script: TransactionPayload,
     tx_params: &TxParams,
     client: &mut DiemClient,
-) -> (AccountData, SignedTransaction) {
-    // let mut client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+) -> Result<(AccountData, SignedTransaction), TxError> {
+    match client.get_metadata() {
+        Ok(meta) => {
+            if let Some(av) = client.get_account(&tx_params.signer_address)? {
+                let sequence_number = av.sequence_number;
+                // Sign the transaction script
+                let txn = sign_tx(
+                  script,
+                  tx_params,
+                  sequence_number,
+                  ChainId::new(meta.chain_id)
+                )?;
 
-    let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
-    let account_state = client
-        .get_account(&tx_params.signer_address)
-        .unwrap();
-
-    let sequence_number = match account_state {
-        Some(av) => av.sequence_number,
-        None => 0,
-    };
-    // Sign the transaction script
-    let txn = sign_tx(script, tx_params, sequence_number, chain_id).unwrap();
-
-    // Get account_data struct
-    let signer_account_data = AccountData {
-        address: tx_params.signer_address,
-        authentication_key: Some(tx_params.auth_key.to_vec()),
-        key_pair: Some(tx_params.keypair.clone()),
-        sequence_number,
-        status: AccountStatus::Persisted,
-    };
-    (signer_account_data, txn)
+                // Get account_data struct
+                let signer_account_data = AccountData {
+                    address: tx_params.signer_address,
+                    authentication_key: Some(tx_params.auth_key.to_vec()),
+                    key_pair: Some(tx_params.keypair.clone()),
+                    sequence_number,
+                    status: AccountStatus::Persisted,
+                };
+                Ok((signer_account_data, txn))
+            } else {
+              Err(anyhow!("cannot get account_state from chain").into())
+            }
+        },
+        _ => {
+            let msg = format!("ERROR: could not get chain metadata, cannot send tx");
+            println!("{}", &msg);
+            Err(anyhow!(msg).into())
+        },
+    }
 }
 
 /// Submit a transaction to the network.
@@ -164,7 +199,6 @@ pub fn submit_tx(
     txn: SignedTransaction,
     mut _signer_account_data: &mut AccountData,
 ) -> Result<TransactionView, Error> {
-    // let mut client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
     // Submit the transaction with diem_client
     match client.submit_transaction(&txn) {
         Ok(_) => match wait_for_tx(txn.sender(), txn.sequence_number(), &mut client) {
@@ -213,32 +247,37 @@ pub fn tx_params(
     use_upstream_url: bool,
     wallet_opt: Option<&WalletLibrary>,
 ) -> Result<TxParams, Error> {
-    let url = if url_opt.is_some() {
-        url_opt.unwrap()
-    } else {
+    let url = url_opt.unwrap_or_else(|| {
         config.what_url(use_upstream_url)
-    };
+    });
 
-    let mut tx_params: TxParams = if swarm_path.is_some() {
+    let mut tx_params: TxParams = match swarm_path {
+    Some(s) => {
         get_tx_params_from_swarm(
-            swarm_path.clone().expect("needs a valid swarm temp dir"),
+            s,
             swarm_persona.expect("need a swarm 'persona' with credentials in fixtures."),
             is_operator,
-        )
-        .unwrap()
-    } else {
+        )?
+    }, 
+     _ => {
         if is_operator {
-            get_oper_params( &config, tx_type, url, waypoint)
+            get_oper_params(&config, tx_type, url, waypoint)?
         } else {
             // Get from 0L.toml e.g. ~/.0L/0L.toml, or use Profile::default()
             get_tx_params_from_toml(
-                config.clone(), tx_type, wallet_opt, url, waypoint, swarm_path.as_ref().is_some()
-            ).unwrap()
+                config.clone(),
+                tx_type,
+                wallet_opt,
+                url,
+                waypoint,
+                swarm_path.as_ref().is_some(),
+            )?
         }
+      }
     };
 
-    if waypoint.is_some() {
-        tx_params.waypoint = waypoint.unwrap();
+    if let Some(w) = waypoint {
+        tx_params.waypoint = w
     }
 
     Ok(tx_params)
@@ -290,20 +329,14 @@ pub fn get_oper_params(
     tx_type: TxType,
     url: Url,
     wp: Option<Waypoint>,
-
-    // // url_opt overrides all node configs, takes precedence over use_backup_url
-    // url_opt: Option<Url>,
-    // upstream_url: bool,
-) -> TxParams {
+) -> Result<TxParams, Error> {
     let orig_storage = Storage::OnDiskStorage(OnDiskStorage::new(
         config.workspace.node_home.join("key_store.json").to_owned(),
     ));
-    let storage = Storage::NamespacedStorage(
-        Namespaced::new(
-            format!("{}-oper", &config.profile.account.to_hex()),
-            Box::new(orig_storage),
-        )
-    );
+    let storage = Storage::NamespacedStorage(Namespaced::new(
+        format!("{}-oper", &config.profile.account.to_hex()),
+        Box::new(orig_storage),
+    ));
     // export_private_key_for_version
     let privkey = storage
         .export_private_key(OPERATOR_KEY)
@@ -313,12 +346,13 @@ pub fn get_oper_params(
     let pubkey = &keypair.public_key; // keys.child_0_owner.get_public();
     let auth_key = AuthenticationKey::ed25519(pubkey);
 
-    let waypoint = wp.unwrap_or_else(|| {
-        config.get_waypoint(None).unwrap()
-    });
+    let waypoint = match wp {
+        Some(w) => w,
+        None => config.get_waypoint(None)?,
+    };
 
     let tx_cost = config.tx_configs.get_cost(tx_type);
-    TxParams {
+    Ok(TxParams {
         auth_key,
         signer_address: auth_key.derived_address(),
         owner_address: config.profile.account, // address of sender
@@ -327,7 +361,7 @@ pub fn get_oper_params(
         keypair,
         tx_cost,
         chain_id: ChainId::new(1),
-    }
+    })
 }
 
 /// Gets transaction params from the 0L project root.
@@ -339,17 +373,16 @@ pub fn get_tx_params_from_toml(
     wp: Option<Waypoint>,
     is_swarm: bool,
 ) -> Result<TxParams, Error> {
-    // let url = config.profile.default_node.clone().unwrap();
     let (auth_key, address, wallet) = if let Some(wallet) = wallet_opt {
-        wallet::get_account_from_wallet(wallet)
+        wallet::get_account_from_wallet(wallet)?
     } else {
         wallet::get_account_from_prompt()
     };
 
-    let waypoint = wp.unwrap_or_else(|| {
-        config.get_waypoint(None).unwrap()
-    });
-
+    let waypoint = match wp {
+        Some(w) => w,
+        None => config.get_waypoint(None)?,
+    };
     let keys = KeyScheme::new_from_mnemonic(wallet.mnemonic());
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
     let tx_cost = config.tx_configs.get_cost(tx_type);
@@ -360,7 +393,7 @@ pub fn get_tx_params_from_toml(
         // main net id
         ChainId::new(1)
     };
-    
+
     let tx_params = TxParams {
         auth_key,
         signer_address: address,
@@ -378,7 +411,6 @@ pub fn get_tx_params_from_toml(
     Ok(tx_params)
 }
 
-
 /// Gets transaction params from the 0L project root.
 pub fn get_tx_params_from_keypair(
     config: AppCfg,
@@ -388,11 +420,10 @@ pub fn get_tx_params_from_keypair(
     use_upstream_url: bool,
     is_swarm: bool,
 ) -> Result<TxParams, Error> {
-
-    let waypoint = wp.unwrap_or_else(|| {
-        config.get_waypoint(None).unwrap()
-    });
-
+    let waypoint = match wp {
+        Some(w) => w,
+        None => config.get_waypoint(None)?,
+    };
     let chain_id = if is_swarm {
         ChainId::new(4)
     } else {
@@ -414,7 +445,6 @@ pub fn get_tx_params_from_keypair(
     Ok(tx_params)
 }
 
-
 /// Wait for the response from the diem RPC.
 pub fn wait_for_tx(
     signer_address: AccountAddress,
@@ -428,7 +458,7 @@ pub fn wait_for_tx(
 
     const MAX_ITERATIONS: u8 = 120;
 
-    let mut iter = 0;    
+    let mut iter = 0;
     loop {
         thread::sleep(time::Duration::from_millis(3_000));
         // prevent all the logging the client does while
@@ -448,15 +478,15 @@ pub fn wait_for_tx(
         }
         iter += 1;
 
-        if iter==MAX_ITERATIONS {
+        if iter == MAX_ITERATIONS {
             println!("Timeout waiting for response");
             return None;
-        }        
+        }
     }
 }
 
 /// Evaluate the response of a submitted txs transaction.
-pub fn eval_tx_status(result: TransactionView) -> Result<(), Error> {
+pub fn eval_tx_status(result: &TransactionView) -> Result<(), Error> {
     match result.vm_status == VMStatusView::Executed {
         true => {
             println!("\nSuccess: transaction executed");
@@ -464,7 +494,7 @@ pub fn eval_tx_status(result: TransactionView) -> Result<(), Error> {
         }
         false => {
             println!("Transaction failed");
-            let msg = format!("Rejected with code:{:?}", result.vm_status);
+            let msg = format!("Rejected with code: {:?}", result.vm_status);
             Err(Error::msg(msg))
         }
     }

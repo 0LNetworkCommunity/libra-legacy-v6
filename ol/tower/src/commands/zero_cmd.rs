@@ -13,6 +13,9 @@ impl Runnable for ZeroCmd {
     fn run(&self) {
         // Assumes the app has already been initialized.
         let miner_config = app_config().clone();
-        write_genesis(&miner_config);
+        match write_genesis(&miner_config) {
+            Ok(_) => println!("Success. Proof zero mined"),
+            Err(e) =>  println!("ERROR: could not mine proof zero, message: {:?}", &e.to_string()),
+        }
     }
 }

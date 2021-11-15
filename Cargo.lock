@@ -1992,6 +1992,7 @@ dependencies = [
  "rustyline 6.3.0",
  "serde",
  "serde_json",
+ "serde_yaml",
  "storage-interface",
  "structopt 0.3.21",
  "thiserror",
@@ -5662,7 +5663,6 @@ dependencies = [
  "dirs 2.0.2",
  "fs_extra",
  "futures",
- "gag",
  "glob",
  "gumdrop 0.7.0",
  "handlebars",
@@ -5688,12 +5688,10 @@ dependencies = [
  "sm",
  "storage-interface",
  "sysinfo",
- "termion",
  "thiserror",
  "tokio 1.11.0",
  "tokio-stream",
  "toml",
- "tui",
  "unicode-segmentation",
  "unicode-width",
  "url",
@@ -5730,6 +5728,7 @@ dependencies = [
 name = "ol-keys"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "diem-types",
  "diem-wallet",
  "once_cell",

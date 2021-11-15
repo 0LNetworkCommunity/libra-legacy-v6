@@ -35,12 +35,12 @@ pub struct ProcInfo {
 pub struct Node {
     /// 0L configs
     pub app_conf: AppCfg,
-    /// node conf
-    pub node_conf: NodeConfig,    
     /// diemclient for connecting
     pub client: DiemClient,
     /// vitals
     pub vitals: Vitals,
+    /// node conf
+    pub node_conf: Option<NodeConfig>,    
     /// TODO: deduplicate these
     chain_state: Option<AccountState>,
     miner_state: Option<TowerStateResourceView>,
@@ -55,14 +55,26 @@ impl Node {
             "validator.node.yaml"
         };
 
-        let node_conf = NodeConfig::load(
+        let node_conf = match NodeConfig::load(
             conf.workspace.node_home.join(node_yaml)
-        ).unwrap();
+        ) {
+            Ok(c) => Some(c),
+            Err(_) => {
+              println!("Warn: could not find a validator config file, trying fullnode");
+              match NodeConfig::load(conf.workspace.node_home.join("fullnode.node.yaml")) {
+                Ok(c) => Some(c),
+                Err(_) => {
+                  println!("ERROR: could not find any *.node.yaml file. Will start without knowing the Node configs");
+                  None
+                }
+              }
+            }
+        };
 
         return Self {
             client,
             app_conf: conf.clone(),
-            node_conf,
+            node_conf: node_conf,
             vitals: Vitals {
                 host_state: HostState::new(),
                 account_view: OwnerAccountView::new(conf.profile.account),

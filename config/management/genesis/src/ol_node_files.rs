@@ -8,7 +8,7 @@ use diem_config::{
     network_id::NetworkId,
 };
 
-use crate::seeds::Seeds;
+use crate::{seeds::Seeds, waypoint};
 use crate::storage_helper::StorageHelper;
 use diem_global_constants::{FULLNODE_NETWORK_KEY, OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
 use diem_management::{config::ConfigPath, error::Error, secure_backend::ValidatorBackend};
@@ -24,9 +24,9 @@ pub struct Files {
     #[structopt(long)]
     namespace: String,
     #[structopt(long)]
-    github_org: String,
+    github_org: Option<String>,
     #[structopt(long)]
-    repo: String,
+    repo: Option<String>,
     #[structopt(long)]
     chain_id: u8,
     /// If specified, compares the internal state to that of a
@@ -49,8 +49,8 @@ impl Files {
         write_node_config_files(
             self.data_path,
             self.chain_id,
-            &self.github_org,
-            &self.repo,
+            self.github_org,
+            self.repo,
             &self.namespace,
             &None,
             &self.fullnode_only,
@@ -63,37 +63,38 @@ impl Files {
 pub fn write_node_config_files(
     output_dir: PathBuf,
     chain_id: u8,
-    github_org: &str,
-    repo: &str,
+    github_org: Option<String>,
+    repo: Option<String>,
     namespace: &str,
     prebuilt_genesis: &Option<PathBuf>,
     fullnode_only: &bool,
-    mut way_opt: Option<Waypoint>,
+    way_opt: Option<Waypoint>, // TODO: deprecated
     layout_path: &Option<PathBuf>,
 ) -> Result<NodeConfig, Error> {
     // TODO: Do we need github token path with public repo?
     let github_token_path = output_dir.join("github_token.txt");
     let chain_id = ChainId::new(chain_id);
 
-    let remote = format!(
-        "backend=github;repository_owner={github_org};repository={repo};token={path};namespace={ns}",
-        repo=&repo,
-        github_org=&github_org,
-        path=github_token_path.to_str().unwrap(),
-        ns=&namespace
-    );
-
     let storage_helper = StorageHelper::get_with_path(output_dir.clone());
 
     let mut genesis_path = output_dir.join("genesis.blob");
-    match prebuilt_genesis {
+
+    let genesis_waypoint = match prebuilt_genesis {
         Some(path) => {
-            // TODO: insert waypoint
             genesis_path = path.to_owned();
+            waypoint::extract_waypoint_from_file(&genesis_path)?
         }
         None => {
           // building a genesis file requires a set_layout path. The default is for genesis to use a local set_layout file. Once a genesis occurs, the canonical chain can store the genesis information to github repo for future verification and creating a genesis blob.
-            let genesis_waypoint = match layout_path {
+            if *&repo.is_some() && *&github_org.is_some() {
+              let remote = format!(
+                  "backend=github;repository_owner={github_org};repository={repo};token={path};namespace={ns}",
+                  repo=&repo.unwrap(),
+                  github_org=&github_org.unwrap(),
+                  path=github_token_path.to_str().unwrap(),
+                  ns=&namespace
+              );
+              match layout_path {
                 Some(layout_path) => storage_helper
                     .build_genesis_with_layout(chain_id, &remote, &genesis_path, &layout_path)
                     .unwrap(),
@@ -103,16 +104,16 @@ pub fn write_node_config_files(
                     .build_genesis_from_github(chain_id, &remote, &genesis_path)
                     .unwrap()
                 },
-            };
-
-            // for genesis cases, need to insert the waypoint in the key_store.json
-            storage_helper
-                .insert_waypoint(&namespace, genesis_waypoint)
-                .unwrap();
-
-            way_opt = Some(genesis_waypoint);
+              }
+            } else {
+              return Err(Error::ConfigError(format!("ERROR: to build genesis from repo you need to pass --github-org and --repo")))
+            }
         }
     };
+    
+    // storage_helper
+    //   .insert_waypoint(&namespace, genesis_waypoint)
+    //   .unwrap();
 
     // Write the genesis waypoint without a namespaced storage.
     let mut disk_storage = OnDiskStorageConfig::default();
@@ -212,4 +213,87 @@ pub fn write_node_config_files(
         &yaml_path
     );
     Ok(config)
+}
+ 
+
+
+/// Save node configs to files
+pub fn save_node_yaml_files(_output_dir: PathBuf) {
+
+}
+
+// pub fn get_storage_obj(output_dir: PathBuf, namespace: &str) -> Result<OnDiskStorageConfig, Error>{
+//       // Write the genesis waypoint without a namespaced storage.
+//     let mut disk_storage = OnDiskStorageConfig::default();
+//     disk_storage.set_data_dir(output_dir.clone());
+//     disk_storage.path = output_dir.clone().join("key_store.json");
+//     disk_storage.namespace = Some(namespace.to_owned());
+// }
+
+// /// make the validator config settings.
+// pub fn make_validator_settings() -> Result<NetworkConfig, Error>{
+//         // If validator configs set val network configs
+//         let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
+
+//         // NOTE: Using configs as described in cluster tests:
+//         // testsuite/cluster-test/src/cluster_swarm/configs/validator.yaml
+//         network.discovery_method = DiscoveryMethod::Onchain;
+//         network.mutual_authentication = true;
+//         network.identity = Identity::from_storage(
+//             VALIDATOR_NETWORK_KEY.to_string(),
+//             OWNER_ACCOUNT.to_string(),
+//             SecureBackend::OnDiskStorage(disk_storage.clone()),
+//         );
+//         network.network_address_key_backend =
+//             Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
+// }
+
+
+// /// make the validator config settings.
+// pub fn make_vfn_settings() -> Result<NetworkConfig, Error>{
+//   todo!()
+//   // create a new identity
+
+// }
+
+// /// make the validator config settings.
+// pub fn make_fullnode_settings() -> Result<NetworkConfig, Error>{
+// todo!()
+// }
+
+
+pub fn default_for_public_full_node() {
+    let path_str= env!("CARGO_MANIFEST_DIR");
+    let path = PathBuf::from(path_str)
+    .parent()
+    .unwrap()
+    .parent()
+    .unwrap()
+    .parent()
+    .unwrap()
+    .join("ol/util/node_templates/fullnode.node.yaml");
+
+    dbg!(&path);
+    // let contents = std::include_str!(&path.to_string());
+    
+    let contents = fs::read_to_string(&path).expect("could not find mnemonic file");
+
+    let n: NodeConfig = serde_yaml::from_str(&contents).unwrap();
+
+    dbg!(&n);
+}
+
+// pub fn default_for_validator() -> Self {
+//     let contents = std::include_str!("test_data/validator.yaml");
+//     NodeConfig::default_config(contents, "default_for_validator")
+// }
+
+// pub fn default_for_validator_full_node() -> Self {
+//     let contents = std::include_str!("test_data/validator_full_node.yaml");
+//     NodeConfig::default_config(contents, "default_for_validator_full_node")
+// }
+
+#[test]
+fn test() {
+  default_for_public_full_node();
 }

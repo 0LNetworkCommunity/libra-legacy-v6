@@ -61,7 +61,10 @@ impl Runnable for AutopayBatchCmd {
             &self.autopay_batch_file, Some(epoch), start_id
         ).unwrap();
         let scripts = process_instructions(instructions);
-        batch_wrapper(scripts, &tx_params, entry_args.no_send, entry_args.save_path)
+        match batch_wrapper(scripts, &tx_params, entry_args.no_send, entry_args.save_path){
+            Ok(_) => {},
+            Err(e) => println!("ERROR: could not batch transactions, message: {:?}", e),
+        }
     }
 }
 

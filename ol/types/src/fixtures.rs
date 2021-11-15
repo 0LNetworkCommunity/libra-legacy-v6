@@ -79,6 +79,17 @@ pub fn get_persona_toml_configs(persona: &str) -> AppCfg {
 
 
 /// get block 0
+pub fn get_persona_block_zero_path(persona: &str, env: &str) -> PathBuf {
+  let path= env!("CARGO_MANIFEST_DIR");
+  Path::new(path)
+  .parent()
+  .unwrap()
+  .join(format!("fixtures/vdf_proofs/{}/{}/proof_0.json", env, persona))
+
+}
+
+
+/// get block 0
 pub fn get_persona_block_zero(persona: &str, env: &str) -> VDFProof {
   let path= env!("CARGO_MANIFEST_DIR");
   let buf = Path::new(path)

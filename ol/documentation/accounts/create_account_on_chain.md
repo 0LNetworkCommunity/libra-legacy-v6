@@ -15,10 +15,6 @@ Alice:
 # if you don't have a mnemonic
 onboard keygen
 
-#if you ALREADY have a mnemonic buy you need to discover your Auth Key. Find out with:
-onboard keygen -w
->enter the mnemonic
-
 # send your `auth key` to Bob so he can complete tx
 
 ```
@@ -30,7 +26,7 @@ Needs to send a minimum of 1 GAS coin so that Alice's account gets created.
 txs create-user -a <alice's auth key> -c <how many coins to send to alice>
 
 # check that the account was created:
-ol -a <alice's ACCOUNT> query --balance 
+ol query --balance -a <alice's ACCOUNT>
 ```
 
 ## Alice: Create account configurations
@@ -47,9 +43,6 @@ If you already have a mnemonic, and misplaced your account `address` or `authent
 # use keygen with --whoami, or -w
 
 onboard keygen -whoami
-> enter your mnemonic now
-
-# you will see the print out of account and authkey
 ```
 ## Alice: tell Bob your authkey
 
@@ -62,12 +55,13 @@ Send the onboarding transaction
 txs create-user -a <alice's auth key> -c <how many coins to send to alice>
 ```
 
+
 ## Alice or Bob: Confirm the account was created
 
 If the account creation was successful anyone should be able to see Alice's balance (of 1 GAS) with the following command.
 
 ```
-ol -a <alice's ACCOUNT> query --balance 
+ol query --balance -a <alice's ACCOUNT>
 ```
 
 ## Alice: Set Slow Wallet, or Community Wallet

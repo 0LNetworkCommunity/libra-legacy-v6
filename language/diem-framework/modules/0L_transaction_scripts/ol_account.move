@@ -10,6 +10,10 @@ module AccountScripts {
     use 0x1::GAS::GAS;
     use 0x1::ValidatorConfig;
     use 0x1::Globals;
+    use 0x1::VDF;
+    use 0x1::Errors;
+
+    const ACCOUNT_ALREADY_EXISTS: u64 = 0;
 
     public(script) fun create_user_by_coin_tx(
         sender: signer,
@@ -17,6 +21,9 @@ module AccountScripts {
         authkey_prefix: vector<u8>,
         unscaled_value: u64,
     ) {
+        // check if the account already exists.
+        assert(!DiemAccount::exists_at(account), Errors::invalid_state(ACCOUNT_ALREADY_EXISTS));
+
         // IMPORTANT: the human representation of a value is unscaled. The user which expects to send 10 coins, will input that as an unscaled_value. This script converts it to the Move internal scale by multiplying by COIN_SCALING_FACTOR.
         let value = unscaled_value * Globals::get_coin_scaling_factor();
         let new_account_address = DiemAccount::create_user_account_with_coin(
@@ -63,7 +70,13 @@ module AccountScripts {
         op_fullnode_network_addresses: vector<u8>,
         op_human_name: vector<u8>,
     ) {
-        let new_account_address = DiemAccount::create_validator_account_with_proof(
+
+      // check if this account exists
+      let (new_account_address, _) = VDF::extract_address_from_challenge(&challenge);
+      // assert(!DiemAccount::exists_at(new_account_address), Errors::invalid_state(ACCOUNT_ALREADY_EXISTS));
+
+
+      DiemAccount::create_validator_account_with_proof(
             &sender,
             &challenge,
             &solution,

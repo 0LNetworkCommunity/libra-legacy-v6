@@ -16,13 +16,21 @@ These instructions target Ubuntu.
 
 1.4. Config dependencies: 
 
-`cd </path/to/libra/source/> && . ol/util/setup.sh` 
+```
+cd </path/to/libra/source/>
 
-For more details: (../devs/OS_dependencies.md)
+. ol/util/setup.sh
+```
+
+More details in: [syncing_your_node.md](syncing_your_node.md)
 
 1.5. Build the source and install binaries:
 
-`cd </path/to/libra/source/> && make bins`
+```
+cd </path/to/libra/source/>
+
+make bins install
+```
 
 ## 2. Catch-up to the network state, with a `fullnode`
 
@@ -32,4 +40,4 @@ You do not need an account for this step, you are simply syncing the database.
 
 2.2. `diem-node --config $HOME/.0L/fullnode.node.yaml`
 
-**You can start the next steps while your node is catching up**
+More details in: [syncing_your_node.md](syncing_your_node.md)

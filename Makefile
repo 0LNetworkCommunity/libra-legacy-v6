@@ -379,6 +379,11 @@ ifdef TEST
 		mkdir -p ${DATA_PATH}/vdf_proofs/; \
 	fi
 
+	@if test ! -d ${DATA_PATH}/vdf_proofs; then \
+		echo Creating Directories \
+		mkdir -p ${DATA_PATH}/vdf_proofs/; \
+	fi
+
 	@if test -f ${DATA_PATH}/vdf_proofs/proof_0.json; then \
 		rm ${DATA_PATH}/vdf_proofs/proof_0.json; \
 	fi 
@@ -469,13 +474,13 @@ dev-join: clear fix fix-genesis dev-wizard
 
 dev-wizard:
 #  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
-	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --genesis-ceremony --chain-id 1 --github-org OLSF --repo dev-genesis --upstream-peer http://161.35.13.169:8080
+	MNEM='${MNEM}' cargo run -p onboard -- val --prebuilt-genesis ${DATA_PATH}/genesis.blob --skip-mining --chain-id 1 --genesis-ceremony
 
 #### DEVNET RESTART ####
 # usually do this on Alice, which has the dev-epoch-archive repo, and dev-genesis
 
 # Do the ceremony: and also save the genesis fixtures, needs to happen before fix.
-dev-register: clear fix dev-wizard register
+dev-register: clear fix dev-wizard gen-register
 # Do a dev genesis on each node after EVERY NODE COMPLETED registration.
 dev-genesis: genesis dev-save-genesis fix-genesis
 

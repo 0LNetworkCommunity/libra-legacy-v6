@@ -8,7 +8,7 @@ use crate::{
     views::{
         AccountStateWithProofView, AccountView, CurrencyInfoView, EventView, EventWithProofView,
         MetadataView, TowerStateResourceView, OracleUpgradeStateView, StateProofView,
-        TransactionListView, TransactionView, TransactionsWithProofsView,
+        TransactionListView, TransactionView, TransactionsWithProofsView, WaypointView
     },
 };
 use anyhow::Result;
@@ -84,6 +84,7 @@ impl JsonRpcService {
 
         self.db.get_latest_ledger_info()
     }
+
 
     pub fn chain_id(&self) -> ChainId {
         self.chain_id
@@ -188,6 +189,9 @@ impl<'a> Handler<'a> {
             }
             MethodRequest::GetOracleUpgradeStateView() => {
                 serde_json::to_value(self.get_oracle_upgrade_state().await?)?
+            }
+            MethodRequest::GetWaypointView() => {
+                serde_json::to_value(self.get_waypoint().await?)?
             }
         };
         Ok(response)
@@ -384,5 +388,11 @@ impl<'a> Handler<'a> {
         &self,
     ) -> Result<OracleUpgradeStateView, JsonRpcError> {
         data::get_oracle_upgrade_state(self.service.db.borrow(), self.version())
+    }
+
+    async fn get_waypoint(
+        &self,
+    ) -> Result<WaypointView, JsonRpcError> {
+        data::get_waypoint(self.ledger_info)
     }
 }

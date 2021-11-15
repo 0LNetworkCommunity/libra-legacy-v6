@@ -41,7 +41,6 @@ impl Runnable for ValSetCmd {
             script,
             // transaction_builder::encode_demo_e2e_script(42),
             &tx_params,
-            entry_args.no_send,
             entry_args.save_path,
         ) {
             Err(e) => {

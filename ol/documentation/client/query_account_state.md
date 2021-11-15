@@ -1,15 +1,15 @@
 # Debugging Account state and balances
 
-Use libra client with
+Use the "toy" client with
 
 ```
 cargo run --bin cli -- -u http://localhost:<port> --waypoint <waypoint>
 ```
 
-Note the `auth_key` of the tower app in question.
+Note the `account` of the tower app in question.
 Then in the libra shell:
 ```
-query account_state <auth_key>
+query account_state <account>
 ```
 
 and you will see a result like this:
@@ -76,7 +76,9 @@ Latest account state is:
             "00000000000000005942d356f114089d4a46f2f3b0b15b52",
         ),
         delegated_key_rotation_capability: false,
-        delegated_withdrawal_capability: false,
+        delegated_wi
+        
+        thdrawal_capability: false,
         role: Empty,
     },
 )

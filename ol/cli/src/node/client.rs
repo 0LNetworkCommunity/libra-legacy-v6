@@ -35,16 +35,22 @@ pub fn get_client() -> Option<DiemClient> {
     let waypoint = config
         .get_waypoint(entry_args.swarm_path)
         .expect("could not get waypoint");
-    for url in config.profile.upstream_nodes.as_ref().unwrap() {
-        let client = DiemClient::new(url.clone(), waypoint).unwrap();
-        // TODO: What's the better way to check we can connect to client?
-        let metadata = client.get_metadata();
-        dbg!(&metadata);
-        if metadata.is_ok() {
-            // found a connect-able upstream node
-            return Some(client);
-        }
+    if let Some(vec_urs) = config.profile.upstream_nodes.as_ref() {
+      for url in vec_urs {
+          match DiemClient::new(url.clone(), waypoint){
+            Ok(client) => { 
+              // TODO: What's the better way to check we can connect to client?
+                let metadata = client.get_metadata();
+                if metadata.is_ok() {
+                    // found a connect-able upstream node
+                    return Some(client);
+                }
+            },
+            Err(_) => {},
+        };
+      }
     }
+
 
     None
 }
@@ -80,8 +86,11 @@ pub fn find_a_remote_jsonrpc(config: &AppCfg, waypoint: Waypoint) -> Result<Diem
                     },
                 }
             });
-            let url_clean = url.unwrap().to_owned(); 
-            return make_client(Some(url_clean), waypoint);
+            
+            if let Some(url_clean) = url {
+              return make_client(Some(url_clean.to_owned()), waypoint);
+            }; 
+            
     }
     Err(Error::msg(
         "There are no URLs in the list of upstream_nodes in 0L.toml",
@@ -122,11 +131,10 @@ pub fn pick_client(swarm_path: Option<PathBuf>, config: &mut AppCfg) -> Result<D
     let remote_client = find_a_remote_jsonrpc(config, waypoint.clone())?;
     // compares to an upstream random remote client. If it is synced, use the local client as the default
     let mut node = Node::new(local_client, config, is_swarm);
-    match node.check_sync()?.is_synced {
+    match node.check_sync()?
+    .is_synced {
       true => Ok(node.client),
       false => Ok(remote_client),
-        // match sync.is_synced {
-        //     
-        // }
+
     }
 }
