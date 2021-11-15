@@ -2,9 +2,9 @@
 ### A reference implementation of a neutral replicated state machine
 
 
-Join a network with a [validator node](https://github.com/OLSF/libra/blob/main/ol/documentation/ops/validator_onboarding_guide_easy_mode.md), to secure the state machine.
+Join a network with a [validator node](ol/documentation/node-ops/validators/validator_onboarding_easy_mode.md), to secure the state machine.
 
-Run a [fullnode](https://github.com/OLSF/libra/blob/main/ol/documentation/ops/mining_VDF_proofs.md), to keep a copy of the state machine.
+Run a [fullnode](./ol/documentation/node-ops/tower_mining_VDF_proofs.md), to keep a copy of the state machine.
 
 Contribute to [issues](https://github.com/OLSF/libra/issues).
 
