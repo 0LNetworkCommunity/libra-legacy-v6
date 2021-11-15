@@ -102,7 +102,7 @@ In our changes we made it such that an online Github repo acted as a gathering p
 
 ### Delay Towers
 
-We've written about this extensively here: <link>. We needed a way to choose what validators were allowed to operate in a validator set. We did this without Proof of Stake. In short, Delay Towers prove sequential proofs of elapsed time. This can be considered a "heavy" identity, enough for the BFT requirements of there being a durable identity, which is not cheap. This was a significant amount of research and experimentation.
+We've written about this extensively [in ol/documentation/delay_towers/](./ol/documentation/delay_towers/delay_towers_0.md). We needed a way to choose what validators were allowed to operate in a validator set. We did this without Proof of Stake. In short, Delay Towers prove sequential proofs of elapsed time. This can be considered a "heavy" identity, enough for the BFT requirements of there being a durable identity, which is not cheap. This was a significant amount of research and experimentation.
 
 See the long form paper here: https://siasky.net/IAA8rbRgFQLQVnGVWLf5RP0j2MLV7KsxcThqeOlp1pn2_Q
 
