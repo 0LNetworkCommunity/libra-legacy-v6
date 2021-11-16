@@ -6,7 +6,9 @@ I will need Bob to help onboard me. He already has an account on chain, with GAS
 
 When Bob sends me money for the first time, my account is created.
 
-Note: For the onboarding transaction the address will not suffice. Bob needs to send a transfer to Alice's `authentication key` which can be thought of as a long address.
+For the onboarding transaction the address will not suffice. Bob needs to send a transfer to Alice's `authentication key` which can be thought of as a long address.
+
+Note: Bob (who is helping alice) needs to have at least 2 gas coin in his account. Since he will need at least 1 coin to send to Alice. But the system will not allow your account to get to be below 1 gas (as a safety feature). See more below.
 
 ## TL;DR
 
@@ -86,3 +88,16 @@ txs wallet --slow
 
 #### Tx Sequence number
 If there is an issue with sequence_number being out of sync. It's like that an automated transaction (like `miner`), got a transaction sent concurrently. Retry the transaction.
+
+#### Create user from Carpe, DiemAccount error 12015
+
+Issue: Users trying to onboard other users without having enough balance.
+
+
+If your balance is below 2 gas coins, you can’t onboard people. This will likely happen if you are new to the network, on your first day. 
+
+Onboarding another account means transferring 1 coin to the new account.
+
+This is because the system doesn't let you transfer funds if it pushed your account balance below 1 coin. This is a safety feature because you want accounts to have a minimum amount to do account management transactions.
+
+The solution is to mine, and wait until next epoch, then you’ll have enough to onboard many others others.
