@@ -56,7 +56,7 @@ pub enum TxsCmd {
     CreateValidator(CreateValidatorCmd),
 
     /// Transfer balance between accounts
-    #[options(help = "rotate an account's authorization key")]
+    #[options(help = "transfer funds between accounts")]
     Transfer(TransferCmd),    
 
     /// The `oracle-upgrade` subcommand
