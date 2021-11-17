@@ -98,7 +98,7 @@ fn sse_vitals(data: Vitals) -> Result<Event, Error> {
 
 /// Fetch updated static web files from release, for web-monitor.
 pub fn update_web(home_path: &PathBuf) {
-    let file_name = "web-monitor.zip";
+    let file_name = "web-monitor.tar.gz";
     let url = &format!(
         "https://github.com/OLSF/libra/releases/latest/download/{}",
         file_name
