@@ -1,0 +1,3 @@
+#!/bin/bash
+# Todo (nourspace): allow passing --url, --verbose, and maybe other flags as env vars
+~/bin/ol --config "${OL_CONFIG}" "$@" --verbose
