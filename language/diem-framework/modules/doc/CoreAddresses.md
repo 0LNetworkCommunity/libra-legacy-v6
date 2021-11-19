@@ -94,7 +94,7 @@ accounts on-chain.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">DIEM_ROOT_ADDRESS</a>(): address {
-    @0x0 //////// 0L ////////
+    @0x0 //////// 0L //////// // A.K.A. OttO :)
 }
 </code></pre>
 
