@@ -52,6 +52,9 @@ module EpochBoundary { // TODO: Rename to Boundary
             DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock());
             // update_validator_withdrawal_limit(vm);
         };
+
+        do_migrations(vm);
+
         reset_counters(vm, proposed_set, height_now)
     }
 
@@ -177,5 +180,12 @@ module EpochBoundary { // TODO: Rename to Boundary
         AutoPay::reconfig_reset_tick(vm);
         Epoch::reset_timer(vm, height_now);
     }
+
+    use 0x1::MigrateInitDelegation;
+    fun do_migrations(vm: &signer) {
+      // these need to run on an upgrade where a new data structure is introduced.
+      MigrateInitDelegation::do_it(vm);
+    }
+
 }
 }

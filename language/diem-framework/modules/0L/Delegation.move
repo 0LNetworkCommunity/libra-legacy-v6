@@ -17,7 +17,7 @@ module Delegation {
     use 0x1::Signer;
     
     struct AllTribes has key, copy, drop, store {
-      teams_by_elder: vector<address>, // the team is identified by its captain.
+      tribes_by_elder: vector<address>, // the team is identified by its captain.
 
     }
 
@@ -41,7 +41,7 @@ module Delegation {
       move_to<AllTribes>(
         sender, 
         AllTribes {
-          teams_by_elder: Vector::empty()
+          tribes_by_elder: Vector::empty()
         }
       );
     }
@@ -66,6 +66,20 @@ module Delegation {
           tribal_tower_height_this_epoch: 0,
         }
       );
+    }
+
+
+    public fun get_all_tribes(): vector<address> acquires AllTribes {
+      if (exists<AllTribes>(CoreAddresses::VM_RESERVED_ADDRESS())) {
+        let list = borrow_global<AllTribes>(CoreAddresses::VM_RESERVED_ADDRESS());
+        return *&list.tribes_by_elder
+      } else {
+        Vector::empty<address>()
+      }
+    }
+
+    public fun vm_is_init(): bool {
+      exists<AllTribes>(CoreAddresses::VM_RESERVED_ADDRESS())
     }
 }
 }

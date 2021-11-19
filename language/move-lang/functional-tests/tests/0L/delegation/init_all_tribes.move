@@ -14,6 +14,7 @@ script {
   fun main(vm: signer) {
     // assumes no tx fees were paid
     Delegation::vm_init(&vm);
+    assert(Delegation::vm_is_init(), 0);
   }
 }
 // check: EXECUTED
