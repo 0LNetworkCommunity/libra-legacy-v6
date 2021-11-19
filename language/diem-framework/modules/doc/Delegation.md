@@ -182,18 +182,18 @@
   // check vm has initialized the <b>struct</b>, otherwise exit early.
   <b>if</b> (!<b>exists</b>&lt;<a href="Delegation.md#0x1_Delegation_AllTribes">AllTribes</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>())) {
     <b>return</b>
-  };
+};
 
 move_to&lt;<a href="Delegation.md#0x1_Delegation_Tribe">Tribe</a>&gt;(
-  sender,
-  <a href="Delegation.md#0x1_Delegation_Tribe">Tribe</a> {
-    elder: <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender), // A validator account.
-    tribe_name, // A validator account.
-    members: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;(),
-    operator_pct_bonus, // the percentage of the rewards that the captain proposes <b>to</b> go <b>to</b> the validator operator.
-    tribal_tower_height_this_epoch: 0,
-  }
-);
+    sender,
+    <a href="Delegation.md#0x1_Delegation_Tribe">Tribe</a> {
+      elder: <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender), // A validator account.
+      tribe_name, // A validator account.
+      members: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;(),
+      operator_pct_bonus, // the percentage of the rewards that the captain proposes <b>to</b> go <b>to</b> the validator operator.
+      tribal_tower_height_this_epoch: 0,
+    }
+  );
 }
 </code></pre>
 

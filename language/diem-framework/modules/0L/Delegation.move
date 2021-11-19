@@ -11,11 +11,10 @@
 ///////////////////////////////////////////////////////////////////////////
 
 address 0x1 {
-  
-  module Delegation {
-  use 0x1::CoreAddresses;
-  use 0x1::Vector;
-  use 0x1::Signer;
+module Delegation {
+    use 0x1::CoreAddresses;
+    use 0x1::Vector;
+    use 0x1::Signer;
     
     struct AllTribes has key, copy, drop, store {
       teams_by_elder: vector<address>, // the team is identified by its captain.
@@ -37,15 +36,15 @@ address 0x1 {
 
     }
 
-  public fun vm_init(sender: &signer) {
-    CoreAddresses::assert_vm(sender);
-    move_to<AllTribes>(
-      sender, 
-      AllTribes {
-        teams_by_elder: Vector::empty()
-      }
-    );
-  }
+    public fun vm_init(sender: &signer) {
+      CoreAddresses::assert_vm(sender);
+      move_to<AllTribes>(
+        sender, 
+        AllTribes {
+          teams_by_elder: Vector::empty()
+        }
+      );
+    }
 
 
     public fun elder_init(sender: &signer, tribe_name: vector<u8>, operator_pct_bonus: u64) {
@@ -55,18 +54,18 @@ address 0x1 {
       // check vm has initialized the struct, otherwise exit early.
       if (!exists<AllTribes>(CoreAddresses::VM_RESERVED_ADDRESS())) {
         return
-      };
+    };
 
     move_to<Tribe>(
-      sender, 
-      Tribe {
-        elder: Signer::address_of(sender), // A validator account.
-        tribe_name, // A validator account.
-        members: Vector::empty<address>(),
-        operator_pct_bonus, // the percentage of the rewards that the captain proposes to go to the validator operator.
-        tribal_tower_height_this_epoch: 0,
-      }
-    );
+        sender, 
+        Tribe {
+          elder: Signer::address_of(sender), // A validator account.
+          tribe_name, // A validator account.
+          members: Vector::empty<address>(),
+          operator_pct_bonus, // the percentage of the rewards that the captain proposes to go to the validator operator.
+          tribal_tower_height_this_epoch: 0,
+        }
+      );
     }
-  }
+}
 }
