@@ -22,8 +22,6 @@ cd </path/to/libra/source/>
 . ol/util/setup.sh
 ```
 
-More details in: [syncing_your_node.md](syncing_your_node.md)
-
 1.5. Build the source and install binaries:
 
 ```
@@ -38,6 +36,14 @@ You do not need an account for this step, you are simply syncing the database.
 
 2.1. Restore from most recent backup in epoch-archive: `ol restore`
 
-2.2. `diem-node --config $HOME/.0L/fullnode.node.yaml`
+2.2. Run the node (remember to do it in a `screen` or `tmux` session): `diem-node --config $HOME/.0L/fullnode.node.yaml`
+
 
 More details in: [syncing_your_node.md](syncing_your_node.md)
+
+## 3. Set up web monitor
+
+Optionally you can set up the web monitor to have easy access to server status via your web browser:
+
+[Set up web monitor](validators/web_monitor.md) 
+
