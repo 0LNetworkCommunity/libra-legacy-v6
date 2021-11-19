@@ -92,6 +92,11 @@ make bins && make install
 source $HOME/.bashrc
 ```
 
+1.7. Fetch the web server files
+```
+ol serve --update
+```
+
 ## 2. Generate an account
 
 [In-depth guide](Account-creation-for-validators.md) 
