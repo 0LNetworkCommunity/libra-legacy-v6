@@ -78,9 +78,13 @@ module Delegation {
       }
     }
 
+    public fun elder_is_init(elder: address): bool {
+      exists<Tribe>(elder)
+    }
+
     // NOTE: This cannot halt, the EpochBoundary will call this.
     public fun get_operator_bonus(elder: address):u64 acquires Tribe {
-      if (exists<Tribe>(elder)) {
+      if (elder_is_init(elder)) {
         let s = borrow_global_mut<Tribe>(elder);
         return *&s.operator_pct_bonus
       } else {
