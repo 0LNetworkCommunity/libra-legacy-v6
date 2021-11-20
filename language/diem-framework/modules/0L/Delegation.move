@@ -15,6 +15,9 @@ module Delegation {
     use 0x1::CoreAddresses;
     use 0x1::Vector;
     use 0x1::Signer;
+    use 0x1::DiemAccount;
+
+    const ENOT_SLOW_WALLET: u64 = 1010;
     
     struct AllTribes has key, copy, drop, store {
       tribes_by_elder: vector<address>, // the team is identified by its captain.
@@ -30,7 +33,7 @@ module Delegation {
     }
 
     // this struct is stored in the member's account
-    struct Member has copy, drop, store {
+    struct Member has key, copy, drop, store {
       my_tribe_elder: address, // by address of elder
       mining_above_threshold: bool, // if the mining the user has done is above the system threshold to count toward delegation.
 
@@ -68,7 +71,30 @@ module Delegation {
       );
     }
 
+    public fun join_tribe(sender: &signer, my_tribe_elder: address) acquires Member {
+      let addr = Signer::address_of(sender);
 
+      // needs to check if this is a slow wallet.
+      // ask user to resubmit if not a slow wallet, so they are explicitly setting it, no surprises, no tears.
+
+     assert(DiemAccount::is_slow(addr), ENOT_SLOW_WALLET);
+        
+
+      // bob wants to switch to a different tribe.
+      if (exists<Member>(addr)) {
+        let s = borrow_global_mut<Member>(addr);
+        s.my_tribe_elder = my_tribe_elder;
+        // TODO: Do we need to reset mining_above_threshold if they are switching?
+      } else { // first time joining a tribe.
+        move_to<Member>(sender, Member {
+          my_tribe_elder,
+          mining_above_threshold: false,
+        }) 
+      }
+    }
+
+
+    //////// GETTERS ////////
     public fun get_all_tribes(): vector<address> acquires AllTribes {
       if (exists<AllTribes>(CoreAddresses::VM_RESERVED_ADDRESS())) {
         let list = borrow_global<AllTribes>(CoreAddresses::VM_RESERVED_ADDRESS());
