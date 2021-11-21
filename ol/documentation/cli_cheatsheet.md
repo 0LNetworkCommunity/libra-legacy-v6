@@ -94,7 +94,7 @@ More insights into the txs command can be found in
 https://github.com/OLSF/libra/tree/main/ol/txs
 
 
-## Using the Diem  client
+# Using the Diem  client
 
 This assumes you are running this command on your node.
 
@@ -104,9 +104,9 @@ Start the client with:
 cargo run -p cli -- -u http://localhost:8080 --waypoint <use any waypoint within last 100 epochs> --chain-id 1
 ```
 
-### common commands
+## common commands
 
-Check your Tower state:
+### Check your Tower state:
 
 ```
 > node miner_state <address>
