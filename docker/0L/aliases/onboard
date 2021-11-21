@@ -1,3 +1,0 @@
-#!/bin/bash
-# Todo (nourspace): allow passing --url, --verbose?, and maybe other flags as env vars
-~/bin/onboard --config "${OL_CONFIG}" "$@" --verbose
