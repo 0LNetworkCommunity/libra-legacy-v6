@@ -1,0 +1,10 @@
+version: '3'
+
+tasks:
+  self:
+    - '{{ .CLI_ARGS }}'
+
+  onboard:val:
+    cmds:
+      - '# Onboarding validator!'
+      - onboard val {{.CLI_ARGS}}

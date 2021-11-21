@@ -1,0 +1,31 @@
+version: '3'
+
+vars:
+  IMAGE: "openlibra"
+  
+tasks:
+
+  docker:build:
+    desc: Build docker image
+    cmds:
+      - docker build -t {{.IMAGE}} .
+
+  docker:shell:
+    desc: "Start a shell in node"
+    cmds:
+      - docker run --rm -it {{.IMAGE}} /bin/bash
+
+  node:
+    desc: "Pass commands to 0L node. Example: task node -- COMMAND ARGS"
+    cmds:
+      - docker run --rm -it {{.IMAGE}} self -- {{.CLI_ARGS}}
+
+  node:onboard:val:
+    cmds:
+      - '# Onboarding validator!'
+      - docker run --rm -it {{.IMAGE}} onboard:val -- {{.CLI_ARGS}}
+
+  node:account.json:
+    cmds:
+      - 'Retriving account.json'
+      - docker cp .....
