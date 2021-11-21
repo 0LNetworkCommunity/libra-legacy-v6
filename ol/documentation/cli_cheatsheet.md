@@ -106,6 +106,17 @@ cargo run -p cli -- -u http://localhost:8080 --waypoint <use any waypoint within
 
 ## common commands
 
+
+### Check all resources on an account:
+
+```
+> query account_resource <address>
+
+or
+
+> q ar <address>
+```
+
 ### Check your Tower state:
 
 ```
