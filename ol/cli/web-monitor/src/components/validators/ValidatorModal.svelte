@@ -18,8 +18,8 @@
     }
     function can_create_account(validator) {
         console.log(validator.epochs_since_last_account_creation);
-        const epochs_to_wait = 14; // TODO fetch #days from the chain
-        if (validator.epochs_since_last_account_creation >= epochs_to_wait) {
+        const epochs_to_wait = 13; // TODO fetch #days from the chain (EPOCHS_UNTIL_ACCOUNT_CREATION)
+        if (validator.epochs_since_last_account_creation > epochs_to_wait) {
             return "Yes";
         }
 

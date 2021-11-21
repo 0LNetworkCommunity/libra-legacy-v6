@@ -20549,46 +20549,46 @@ var app = (function () {
     			attr_dev(button, "class", "uk-modal-close-default");
     			attr_dev(button, "type", "button");
     			attr_dev(button, "uk-close", "");
-    			add_location(button, file$8, 40, 10, 1358);
+    			add_location(button, file$8, 40, 10, 1389);
     			attr_dev(h2, "class", "uk-modal-title uk-text-muted");
-    			add_location(h2, file$8, 41, 10, 1440);
-    			add_location(th0, file$8, 45, 20, 1597);
-    			add_location(th1, file$8, 46, 20, 1627);
-    			add_location(tr0, file$8, 44, 16, 1572);
-    			add_location(thead, file$8, 43, 12, 1548);
+    			add_location(h2, file$8, 41, 10, 1471);
+    			add_location(th0, file$8, 45, 20, 1628);
+    			add_location(th1, file$8, 46, 20, 1658);
+    			add_location(tr0, file$8, 44, 16, 1603);
+    			add_location(thead, file$8, 43, 12, 1579);
     			attr_dev(td0, "class", "uk-table-expand");
-    			add_location(td0, file$8, 51, 18, 1739);
-    			add_location(td1, file$8, 52, 18, 1806);
-    			add_location(tr1, file$8, 50, 16, 1716);
-    			add_location(td2, file$8, 55, 20, 1906);
+    			add_location(td0, file$8, 51, 18, 1770);
+    			add_location(td1, file$8, 52, 18, 1837);
+    			add_location(tr1, file$8, 50, 16, 1747);
+    			add_location(td2, file$8, 55, 20, 1937);
     			attr_dev(td3, "class", "uk-text-break");
-    			add_location(td3, file$8, 56, 20, 1960);
-    			add_location(tr2, file$8, 54, 16, 1881);
-    			add_location(td4, file$8, 59, 20, 2079);
-    			add_location(td5, file$8, 60, 20, 2134);
-    			add_location(tr3, file$8, 58, 16, 2054);
-    			add_location(td6, file$8, 63, 20, 2231);
-    			add_location(td7, file$8, 64, 20, 2289);
-    			add_location(tr4, file$8, 62, 16, 2206);
-    			add_location(td8, file$8, 67, 20, 2402);
-    			add_location(td9, file$8, 68, 20, 2448);
-    			add_location(tr5, file$8, 66, 16, 2377);
-    			add_location(td10, file$8, 71, 20, 2554);
-    			add_location(td11, file$8, 72, 20, 2613);
-    			add_location(tr6, file$8, 70, 16, 2529);
-    			add_location(td12, file$8, 75, 20, 2719);
-    			add_location(td13, file$8, 76, 20, 2767);
-    			add_location(tr7, file$8, 74, 16, 2694);
-    			add_location(tbody, file$8, 49, 12, 1692);
+    			add_location(td3, file$8, 56, 20, 1991);
+    			add_location(tr2, file$8, 54, 16, 1912);
+    			add_location(td4, file$8, 59, 20, 2110);
+    			add_location(td5, file$8, 60, 20, 2165);
+    			add_location(tr3, file$8, 58, 16, 2085);
+    			add_location(td6, file$8, 63, 20, 2262);
+    			add_location(td7, file$8, 64, 20, 2320);
+    			add_location(tr4, file$8, 62, 16, 2237);
+    			add_location(td8, file$8, 67, 20, 2433);
+    			add_location(td9, file$8, 68, 20, 2479);
+    			add_location(tr5, file$8, 66, 16, 2408);
+    			add_location(td10, file$8, 71, 20, 2585);
+    			add_location(td11, file$8, 72, 20, 2644);
+    			add_location(tr6, file$8, 70, 16, 2560);
+    			add_location(td12, file$8, 75, 20, 2750);
+    			add_location(td13, file$8, 76, 20, 2798);
+    			add_location(tr7, file$8, 74, 16, 2725);
+    			add_location(tbody, file$8, 49, 12, 1723);
     			attr_dev(table, "class", "uk-table");
-    			add_location(table, file$8, 42, 10, 1511);
+    			add_location(table, file$8, 42, 10, 1542);
     			attr_dev(div0, "id", "validator-modal-body");
     			attr_dev(div0, "class", "uk-modal-dialog uk-modal-body svelte-zc3fmg");
-    			add_location(div0, file$8, 39, 6, 1278);
+    			add_location(div0, file$8, 39, 6, 1309);
     			attr_dev(div1, "id", div1_id_value = /*id*/ ctx[1] ? /*id*/ ctx[1] : "validator-modal");
     			attr_dev(div1, "uk-modal", "");
     			attr_dev(div1, "class", "svelte-zc3fmg");
-    			add_location(div1, file$8, 38, 2, 1222);
+    			add_location(div1, file$8, 38, 2, 1253);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div1, anchor);
@@ -20778,9 +20778,9 @@ var app = (function () {
 
     function can_create_account(validator) {
     	console.log(validator.epochs_since_last_account_creation);
-    	const epochs_to_wait = 14; // TODO fetch #days from the chain
+    	const epochs_to_wait = 13; // TODO fetch #days from the chain (EPOCHS_UNTIL_ACCOUNT_CREATION)
 
-    	if (validator.epochs_since_last_account_creation >= epochs_to_wait) {
+    	if (validator.epochs_since_last_account_creation > epochs_to_wait) {
     		return "Yes";
     	}
 
