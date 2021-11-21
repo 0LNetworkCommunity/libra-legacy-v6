@@ -12,7 +12,19 @@
         let config = validator.validator_config;
         return config && (config.operator_has_balance != null)
             ? config.operator_has_balance
+                ? "Yes"
+                : "No"
             : "Not Found";
+    }
+    function can_create_account(validator) {
+        console.log(validator.epochs_since_last_account_creation);
+        const epochs_to_wait = 14; // TODO fetch #days from the chain
+        if (validator.epochs_since_last_account_creation >= epochs_to_wait) {
+            return "Yes";
+        }
+
+        let diff = epochs_to_wait - validator.epochs_since_last_account_creation;
+        return "No (" + diff + " epoch" + (diff == 1 ? "" : "s") + " to enable)";
     }
 </script>
 
@@ -61,8 +73,8 @@
                     <td>{has_operator_balance(validator)}</td>
                 </tr>
                 <tr>
-                  <td>can create account</td>
-                  <td>{validator.epochs_since_last_account_creation > 7}</td> <!--TODO move to the serve side?-->
+                    <td>can create account</td>
+                    <td>{can_create_account(validator)}</td>
                 </tr>
             </tbody>
           </table>
