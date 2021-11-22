@@ -2,11 +2,13 @@
 // 0L Module
 // Teams 
 ///////////////////////////////////////////////////////////////////////////
-// Used for coordinating "tribes", equivalent to delegation 
-// Tribes are teams which engage in work.
+// Used for coordinating "Teams", equivalent to delegation
+// Teams are groups which engage in work.
 // some of that work is automated such as validation.
-// Trive members can share in a validator's rewards, but can also be used for coordinating
-// other activity, like projects and bounties
+// A Team has a collective "consensus weight", which is used for voting in consensus
+// but also for stdlib upgrades.
+// Team members can share in a validator's rewards, but can also be used for coordinating
+// other activity, like projects and bounties.
 // File Prefix for errors: TBD
 ///////////////////////////////////////////////////////////////////////////
 
@@ -19,59 +21,59 @@ module Delegation {
 
     const ENOT_SLOW_WALLET: u64 = 1010;
     
-    struct AllTribes has key, copy, drop, store {
-      tribes_by_elder: vector<address>, // the team is identified by its captain.
+    struct AllTeams has key, copy, drop, store {
+      teams_list: vector<address>, // the team is identified by its captain.
 
     }
 
-    struct Tribe has key, copy, drop, store {
-      elder: address, // A validator account.
-      tribe_name: vector<u8>, // A validator account.
+    struct Team has key, copy, drop, store {
+      captain: address, // A validator account.
+      team_name: vector<u8>, // A validator account.
       members: vector<address>,
-      operator_pct_bonus: u64, // the percentage of the rewards that the captain proposes to go to the validator operator.
+      operator_pct_reward: u64, // the percentage of the rewards that the captain proposes to go to the validator operator.
       tribal_tower_height_this_epoch: u64,
     }
 
     // this struct is stored in the member's account
     struct Member has key, copy, drop, store {
-      my_tribe_elder: address, // by address of elder
+      captain_address: address, // by address of captain
       mining_above_threshold: bool, // if the mining the user has done is above the system threshold to count toward delegation.
 
     }
 
     public fun vm_init(sender: &signer) {
       CoreAddresses::assert_vm(sender);
-      move_to<AllTribes>(
+      move_to<AllTeams>(
         sender, 
-        AllTribes {
-          tribes_by_elder: Vector::empty()
+        AllTeams {
+          teams_list: Vector::empty()
         }
       );
     }
 
 
-    public fun elder_init(sender: &signer, tribe_name: vector<u8>, operator_pct_bonus: u64) {
-      // An Elder, who is already a validator account, stores the Tribe struct on their account.
+    public fun team_init(sender: &signer, team_name: vector<u8>, operator_pct_reward: u64) {
+      // An "captain", who is already a validator account, stores the Team struct on their account.
       // the AllTeams struct is saved in the 0x0 account, and needs to be initialized before this is called.
 
       // check vm has initialized the struct, otherwise exit early.
-      if (!exists<AllTribes>(CoreAddresses::VM_RESERVED_ADDRESS())) {
+      if (!exists<AllTeams>(CoreAddresses::VM_RESERVED_ADDRESS())) {
         return
     };
 
-    move_to<Tribe>(
+    move_to<Team>(
         sender, 
-        Tribe {
-          elder: Signer::address_of(sender), // A validator account.
-          tribe_name, // A validator account.
+        Team {
+          captain: Signer::address_of(sender), // A validator account.
+          team_name, // A validator account.
           members: Vector::empty<address>(),
-          operator_pct_bonus, // the percentage of the rewards that the captain proposes to go to the validator operator.
+          operator_pct_reward, // the percentage of the rewards that the captain proposes to go to the validator operator.
           tribal_tower_height_this_epoch: 0,
         }
       );
     }
 
-    public fun join_tribe(sender: &signer, my_tribe_elder: address) acquires Member {
+    public fun join_team(sender: &signer, captain_address: address) acquires Member {
       let addr = Signer::address_of(sender);
 
       // needs to check if this is a slow wallet.
@@ -80,14 +82,14 @@ module Delegation {
      assert(DiemAccount::is_slow(addr), ENOT_SLOW_WALLET);
         
 
-      // bob wants to switch to a different tribe.
+      // bob wants to switch to a different Team.
       if (exists<Member>(addr)) {
         let s = borrow_global_mut<Member>(addr);
-        s.my_tribe_elder = my_tribe_elder;
+        s.captain_address = captain_address;
         // TODO: Do we need to reset mining_above_threshold if they are switching?
-      } else { // first time joining a tribe.
+      } else { // first time joining a Team.
         move_to<Member>(sender, Member {
-          my_tribe_elder,
+          captain_address,
           mining_above_threshold: false,
         }) 
       }
@@ -95,31 +97,32 @@ module Delegation {
 
 
     //////// GETTERS ////////
-    public fun get_all_tribes(): vector<address> acquires AllTribes {
-      if (exists<AllTribes>(CoreAddresses::VM_RESERVED_ADDRESS())) {
-        let list = borrow_global<AllTribes>(CoreAddresses::VM_RESERVED_ADDRESS());
-        return *&list.tribes_by_elder
+
+    public fun get_all_teams(): vector<address> acquires AllTeams {
+      if (exists<AllTeams>(CoreAddresses::VM_RESERVED_ADDRESS())) {
+        let list = borrow_global<AllTeams>(CoreAddresses::VM_RESERVED_ADDRESS());
+        return *&list.teams_list
       } else {
         Vector::empty<address>()
       }
     }
 
-    public fun elder_is_init(elder: address): bool {
-      exists<Tribe>(elder)
+    public fun team_is_init(captain: address): bool {
+      exists<Team>(captain)
     }
 
-    // NOTE: This cannot halt, the EpochBoundary will call this.
-    public fun get_operator_bonus(elder: address):u64 acquires Tribe {
-      if (elder_is_init(elder)) {
-        let s = borrow_global_mut<Tribe>(elder);
-        return *&s.operator_pct_bonus
+    // NOTE: Important! The EpochBoundary will call this. This function cannot abort, must not halt consensus.
+    public fun get_operator_reward(captain: address):u64 acquires Team {
+      if (team_is_init(captain)) {
+        let s = borrow_global_mut<Team>(captain);
+        return *&s.operator_pct_reward
       } else {
         0
       }
     }
 
     public fun vm_is_init(): bool {
-      exists<AllTribes>(CoreAddresses::VM_RESERVED_ADDRESS())
+      exists<AllTeams>(CoreAddresses::VM_RESERVED_ADDRESS())
     }
 }
 }
