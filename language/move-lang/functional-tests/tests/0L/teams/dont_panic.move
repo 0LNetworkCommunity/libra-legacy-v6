@@ -12,10 +12,10 @@
 //! sender: alice
 script {
   
-  use 0x1::Delegation;
+  use 0x1::Teams;
 
   fun main(alice: signer) {
-    Delegation::team_init(&alice, b"this is my tribe", 50); // 50% fee
+    Teams::team_init(&alice, b"this is my tribe", 50); // 50% fee
   }
 }
 // check: EXECUTED
@@ -25,12 +25,12 @@ script {
 //! sender: alice
 script {
   
-  use 0x1::Delegation;
+  use 0x1::Teams;
   use 0x1::Signer;
 
   fun main(alice: signer) {
     let addr = Signer::address_of(&alice);
-    let a = Delegation::get_operator_reward(addr); // 50% fee
+    let a = Teams::get_operator_reward(addr); // 50% fee
     assert(a == 0, 735701)
   }
 }

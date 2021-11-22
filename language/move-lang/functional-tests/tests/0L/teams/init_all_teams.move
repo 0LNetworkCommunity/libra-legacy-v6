@@ -9,12 +9,12 @@
 //! sender: diemroot
 script {
   
-  use 0x1::Delegation;
+  use 0x1::Teams;
 
   fun main(vm: signer) {
     // assumes no tx fees were paid
-    Delegation::vm_init(&vm);
-    assert(Delegation::vm_is_init(), 0);
+    Teams::vm_init(&vm);
+    assert(Teams::vm_is_init(), 0);
   }
 }
 // check: EXECUTED

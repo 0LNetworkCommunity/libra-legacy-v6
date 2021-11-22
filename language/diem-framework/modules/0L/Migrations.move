@@ -86,47 +86,4 @@ module Migrations {
     Option::none<Job>()
   }
 }
-
-// /// # Summary 
-// /// Module providing method to convert all wallets to "slow wallets" 
-// /// migrations should have own module, since imports can cause dependency cycling.
-// module MigrateWallets {
-//   use 0x1::Vector;
-//   use 0x1::Migrations;
-//   use 0x1::DiemAccount;
-//   use 0x1::ValidatorUniverse;
-//   use 0x1::CoreAddresses;
-
-//   const UID: u64 = 10;
-
-//   // Migration to migrate all wallets to be slow wallets
-//   public fun migrate_slow_wallets(vm: &signer) {
-//     CoreAddresses::assert_diem_root(vm);
-//     if (!Migrations::has_run(UID)) {
-//       let vec_addr = ValidatorUniverse::get_eligible_validators(vm);
-//       // TODO: how to get other accounts?
-
-//       // tag all accounts as slow wallets
-//       let len = Vector::length<address>(&vec_addr);
-//       let i = 0;
-//       while (i < len) {
-//         let addr = *Vector::borrow<address>(&vec_addr, i);
-//         DiemAccount::vm_migrate_slow_wallet(vm, addr);
-//         i = i + 1;
-//       };
-//       Migrations::push(vm, UID, b"MigrateWallets");
-//     };
-//   }
-
-  module MigrateInitDelegation {
-    use 0x1::Delegation;
-    use 0x1::Migrations;
-    const UID: u64 = 101;
-    public fun do_it(vm: &signer) {
-      if (!Migrations::has_run(UID)) {
-        Delegation::vm_init(vm);
-        Migrations::push(vm, UID, b"MigrateInitDelegation");
-      }
-    }
-  }
 }

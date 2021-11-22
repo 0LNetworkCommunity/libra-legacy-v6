@@ -2,15 +2,15 @@
 
 
 address 0x1 {
-module DelegationScripts {
-    use 0x1::Delegation;
+module TeamsScripts {
+    use 0x1::Teams;
 
     public(script) fun create_team(
         sender: signer,
         team_name: vector<u8>,
         operator_pct_reward: u64,
     ) {
-      Delegation::team_init(&sender, team_name, operator_pct_reward);
+      Teams::team_init(&sender, team_name, operator_pct_reward);
     }
 }
 }
