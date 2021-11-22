@@ -541,7 +541,21 @@ module TowerState {
       0 
     }
 
-
+    // get the collective tower height by iterating through a list of addresses.
+    // TODO: make this compute lazily. When Node is above threshold should count towards Team state.
+    public fun collective_tower_height(members: &vector<address>): u64 acquires TowerProofHistory {
+      // count the collective tower height of valid towers.
+      let collective = 0;
+      let i = 0;
+      while (i < Vector::length(members)) {
+        let addr = Vector::borrow(members, i);
+        let one_height = tower_for_teams(*addr);
+        if (one_height > 0) {
+          collective = collective + one_height;
+        }
+      };
+      collective 
+    }
 
     //////////////////
     // TEST HELPERS //
