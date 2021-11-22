@@ -31,6 +31,11 @@ The Teams implementation facilitates "delegation" of consensus votes in BFT cons
 
 A Member once they have joined a Team, will be assigning their Account Weight to the Team. The account weight is an algorithm based on the height of an active Delay Tower [link](../delay_towers/delay_towers_0.md).
 
+The tower must:
+- be active, meaning it's above the minimum threshold per epoch. Initially 7 proofs or more need to be produced per epoch.
+- be of certain minimum height, meaning it cannot have just been created. Initially towers of 7 days will be counted.
+
+No double dipping. When a Member chooses to receive Team rewards, they do not receive the Identity Subsidy from the system pool for identity.
 # Labor and other rewards
 Teams also allow for other rewards to potentially be shared. 0L is not explicit about this. But it is possible for a Team to pool effort together in order to share in a bounty, or other reward.
 
