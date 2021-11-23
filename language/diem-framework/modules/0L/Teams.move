@@ -84,8 +84,14 @@ module Teams {
 
       // bob wants to switch to a different Team.
       if (exists<Member>(addr)) {
-        let s = borrow_global_mut<Member>(addr);
-        s.captain_address = captain_address;
+        let member_state = borrow_global_mut<Member>(addr);
+        // update the membership list of the former captain
+        let former_captain_state = borrow_global_mut<Team>(member_state.captain_address);
+        let (is_found, idx) = Vector::index_of(&former_captain_state.members, &addr);
+        if (is_found) {
+          Vector::remove(&mut former_captain_state.members, idx);
+          member_state.captain_address = captain_address;
+        };        
         // TODO: Do we need to reset mining_above_threshold if they are switching?
       } else { // first time joining a Team.
         move_to<Member>(sender, Member {

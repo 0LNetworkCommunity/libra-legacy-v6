@@ -77,23 +77,6 @@ script {
 // check: EXECUTED
 
 
-// 4. VM mocks Alice validator as a CASE 1 and reconfigures and checks the rewards
-
-//! new-transaction
-//! sender: diemroot
-script {
-  
-  use 0x1::Teams;
-  use 0x1::DiemAccount;
-
-  fun main(eve: signer) {
-    DiemAccount::set_slow(&eve);
-    Teams::join_team(&eve, @{{alice}}); // alice's account is the ID of the tribe 
-  }
-}
-// check: EXECUTED
-
-
 //! new-transaction
 //! sender: diemroot
 script {

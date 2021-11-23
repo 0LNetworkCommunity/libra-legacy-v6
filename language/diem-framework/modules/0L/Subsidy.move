@@ -101,22 +101,25 @@ address 0x1 {
 
     public fun split_subsidy_to_team(vm: &signer, members: &vector<address>, value_to_members: u64) {
       let collective_height = TowerState::collective_tower_height(members);
-      print(&02);
+      print(&22222);
       print(members);
       print(&collective_height);
       let i = 0;
-      while (i > Vector::length(members)) {
+      while (i < Vector::length(members)) {
         let addr = Vector::borrow(members, i);
         let one_height = TowerState::tower_for_teams(*addr);
+        print(&one_height);
         if (one_height > 0) {
           let pct = FixedPoint32::divide_u64(
             one_height,
             FixedPoint32::create_from_rational(collective_height, 1)
           );
+          print(&2222201);
           print(&pct);
 
-          let payment = value_to_members * pct;
-          let minted_coins = Diem::mint<GAS>(vm, payment);
+          let payment_to_this_member = value_to_members * pct;
+          print(&payment_to_this_member);
+          let minted_coins = Diem::mint<GAS>(vm, payment_to_this_member);
           DiemAccount::vm_deposit_with_metadata<GAS>(
               vm,
               *addr,
@@ -124,6 +127,7 @@ address 0x1 {
               b"team consensus payment",
               b""
           );
+          i = i + 1;
         }
       }
     }
