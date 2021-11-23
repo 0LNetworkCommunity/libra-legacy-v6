@@ -73,7 +73,7 @@ module Teams {
       );
     }
 
-    public fun join_team(sender: &signer, captain_address: address) acquires Member {
+    public fun join_team(sender: &signer, captain_address: address) acquires Member, Team {
       let addr = Signer::address_of(sender);
 
       // needs to check if this is a slow wallet.
@@ -91,8 +91,10 @@ module Teams {
         move_to<Member>(sender, Member {
           captain_address,
           mining_above_threshold: false,
-        }) 
-      }
+        });
+      };
+      let captain_state = borrow_global_mut<Team>(captain_address);
+      Vector::push_back<address>(&mut captain_state.members, addr);
     }
 
 

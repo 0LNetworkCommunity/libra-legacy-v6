@@ -106,9 +106,12 @@ script {
     use 0x1::Debug::print;
     use 0x1::GAS::GAS;
     use 0x1::TransactionFee;
+    use 0x1::Teams;
 
     fun main(sender: signer) {
         let sender = &sender;
+        let members = Teams::get_team_members(@{{alice}});
+        print(&members);
 
         let captain_balance = DiemAccount::balance<GAS>(@{{alice}});
         print(&captain_balance);

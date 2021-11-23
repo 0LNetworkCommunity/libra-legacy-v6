@@ -56,8 +56,6 @@ script {
         let collective = TowerState::collective_tower_height(&members);
         print(&collective);
         assert(collective == 1000, 735705);
-
-
     }
 }
 //check: EXECUTED
