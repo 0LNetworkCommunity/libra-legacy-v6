@@ -21,7 +21,7 @@ module TowerState {
     use 0x1::VDF;
     use 0x1::Vector;
 
-    const EPOCHS_UNTIL_ACCOUNT_CREATION: u64 = 13;
+    const EPOCHS_UNTIL_ACCOUNT_CREATION: u64 = 14;
 
     /// A list of all miners' addresses 
     // reset at epoch boundary
@@ -516,7 +516,7 @@ module TowerState {
       if (exists<TowerProofHistory>(node_addr)) { 
         return 
           borrow_global<TowerProofHistory>(node_addr).epochs_since_last_account_creation 
-          > EPOCHS_UNTIL_ACCOUNT_CREATION
+          >= EPOCHS_UNTIL_ACCOUNT_CREATION
       };
       false 
     }
