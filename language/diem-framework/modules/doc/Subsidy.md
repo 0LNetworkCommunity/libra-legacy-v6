@@ -7,6 +7,8 @@
 
 -  [Constants](#@Constants_0)
 -  [Function `process_subsidy`](#0x1_Subsidy_process_subsidy)
+-  [Function `check_team_and_pay`](#0x1_Subsidy_check_team_and_pay)
+-  [Function `split_subsidy_to_team`](#0x1_Subsidy_split_subsidy_to_team)
 -  [Function `calculate_subsidy`](#0x1_Subsidy_calculate_subsidy)
 -  [Function `subsidy_curve`](#0x1_Subsidy_subsidy_curve)
 -  [Function `genesis`](#0x1_Subsidy_genesis)
@@ -23,6 +25,7 @@
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
+<b>use</b> <a href="Teams.md#0x1_Teams">0x1::Teams</a>;
 <b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
 <b>use</b> <a href="TransactionFee.md#0x1_TransactionFee">0x1::TransactionFee</a>;
 <b>use</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig">0x1::ValidatorConfig</a>;
@@ -78,21 +81,111 @@
 
   <b>let</b> i = 0;
   <b>while</b> (i &lt; len) {
-    <b>let</b> node_address = *(<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(outgoing_set, i));
+    <b>let</b> node_address = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(outgoing_set, i);
     // Transfer gas from vm address <b>to</b> validator
-    <b>let</b> minted_coins = <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, subsidy_granted);
+    <a href="Subsidy.md#0x1_Subsidy_check_team_and_pay">check_team_and_pay</a>(vm, node_address, subsidy_granted);
+
+    // refund operator tx fees for mining
+    <a href="Subsidy.md#0x1_Subsidy_refund_operator_tx_fees">refund_operator_tx_fees</a>(vm, *node_address);
+    i = i + 1;
+  };
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Subsidy_check_team_and_pay"></a>
+
+## Function `check_team_and_pay`
+
+
+
+<pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_check_team_and_pay">check_team_and_pay</a>(vm: &signer, captain_address: &address, subsidy_granted: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_check_team_and_pay">check_team_and_pay</a>(vm: &signer, captain_address: &address, subsidy_granted: u64) {
+    // this is a solo validator. Exists during transition <b>to</b> delegation mode. This is a fallback condition <b>to</b> keep the node from halting
+    <b>let</b> captain_value = subsidy_granted;
+    <b>if</b> (<a href="Teams.md#0x1_Teams_team_is_init">Teams::team_is_init</a>(*captain_address)) {
+      // split captain reward and send <b>to</b> captain.
+      <b>let</b> captain_pct = <a href="Teams.md#0x1_Teams_get_operator_reward">Teams::get_operator_reward</a>(*captain_address);
+
+      // split off the captain value
+      captain_value = <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(
+        subsidy_granted,
+        <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(captain_pct, 100)
+      );
+
+      <b>let</b> value_to_members = subsidy_granted - captain_value;
+      // get team members
+      <b>let</b> members = <a href="Teams.md#0x1_Teams_get_team_members">Teams::get_team_members</a>(*captain_address);
+      // split the team subsidy
+      <a href="Subsidy.md#0x1_Subsidy_split_subsidy_to_team">split_subsidy_to_team</a>(vm, &members, value_to_members);
+    };
+
+    <b>let</b> captain_coins = <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, captain_value);
+    // payment <b>to</b> captain
     <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">DiemAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
       vm,
-      node_address,
-      minted_coins,
+      *captain_address,
+      captain_coins,
       b"validator subsidy",
       b""
     );
+}
+</code></pre>
 
-    // refund operator tx fees for mining
-    <a href="Subsidy.md#0x1_Subsidy_refund_operator_tx_fees">refund_operator_tx_fees</a>(vm, node_address);
-    i = i + 1;
-  };
+
+
+</details>
+
+<a name="0x1_Subsidy_split_subsidy_to_team"></a>
+
+## Function `split_subsidy_to_team`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_split_subsidy_to_team">split_subsidy_to_team</a>(vm: &signer, members: &vector&lt;address&gt;, value_to_members: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_split_subsidy_to_team">split_subsidy_to_team</a>(vm: &signer, members: &vector&lt;address&gt;, value_to_members: u64) {
+  <b>let</b> collective = <a href="TowerState.md#0x1_TowerState_collective_tower_height">TowerState::collective_tower_height</a>(members);
+
+  <b>let</b> i = 0;
+  <b>while</b> (i &gt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(members)) {
+    <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(members, i);
+    <b>let</b> one_height = <a href="TowerState.md#0x1_TowerState_tower_for_teams">TowerState::tower_for_teams</a>(*addr);
+    <b>if</b> (one_height &gt; 0) {
+      <b>let</b> pct = <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_divide_u64">FixedPoint32::divide_u64</a>(
+        one_height,
+        <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(collective, 1)
+      );
+
+      <b>let</b> payment = value_to_members * pct;
+      <b>let</b> minted_coins = <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, payment);
+      <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">DiemAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+          vm,
+          *addr,
+          minted_coins,
+          b"team consensus payment",
+          b""
+      );
+    }
+  }
 }
 </code></pre>
 

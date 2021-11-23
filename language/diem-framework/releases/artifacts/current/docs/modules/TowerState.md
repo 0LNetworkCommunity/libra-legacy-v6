@@ -43,6 +43,8 @@ TODO
 -  [Function `get_epochs_mining`](#0x1_TowerState_get_epochs_mining)
 -  [Function `get_count_in_epoch`](#0x1_TowerState_get_count_in_epoch)
 -  [Function `can_create_val_account`](#0x1_TowerState_can_create_val_account)
+-  [Function `tower_for_teams`](#0x1_TowerState_tower_for_teams)
+-  [Function `collective_tower_height`](#0x1_TowerState_collective_tower_height)
 -  [Function `test_helper_init_miner`](#0x1_TowerState_test_helper_init_miner)
 -  [Function `test_helper_operator_submits`](#0x1_TowerState_test_helper_operator_submits)
 -  [Function `test_helper_mock_mining`](#0x1_TowerState_test_helper_mock_mining)
@@ -60,6 +62,7 @@ TODO
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
@@ -282,6 +285,15 @@ the miner last created a new account
 
 
 <pre><code><b>const</b> <a href="TowerState.md#0x1_TowerState_EPOCHS_UNTIL_ACCOUNT_CREATION">EPOCHS_UNTIL_ACCOUNT_CREATION</a>: u64 = 13;
+</code></pre>
+
+
+
+<a name="0x1_TowerState_TEAM_MEMBER_TOWER_MIN"></a>
+
+
+
+<pre><code><b>const</b> <a href="TowerState.md#0x1_TowerState_TEAM_MEMBER_TOWER_MIN">TEAM_MEMBER_TOWER_MIN</a>: u64 = 336;
 </code></pre>
 
 
@@ -1203,6 +1215,77 @@ Public Getters ///
 
 </details>
 
+<a name="0x1_TowerState_tower_for_teams"></a>
+
+## Function `tower_for_teams`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_tower_for_teams">tower_for_teams</a>(node_addr: address): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_tower_for_teams">tower_for_teams</a>(node_addr: address): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
+  // For a Member's tower height <b>to</b> be counted for a Team for delegation purposes
+  // it must be an active tower (doing work above threshold in an epoch)
+  // and it must not be a new tower, it needs <b>to</b> have a minimum of 7 days equivalent height.
+  <b>if</b> (<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(node_addr)) {
+    <b>let</b> s = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(node_addr);
+    print(s);
+    <b>if</b> (
+      s.count_proofs_in_epoch &gt; <a href="Globals.md#0x1_Globals_get_epoch_mining_thres_lower">Globals::get_epoch_mining_thres_lower</a>()
+      && s.verified_tower_height &gt; <a href="TowerState.md#0x1_TowerState_TEAM_MEMBER_TOWER_MIN">TEAM_MEMBER_TOWER_MIN</a>
+    ) {
+      <b>return</b> s.verified_tower_height
+    };
+  };
+  0
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_collective_tower_height"></a>
+
+## Function `collective_tower_height`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_collective_tower_height">collective_tower_height</a>(members: &vector&lt;address&gt;): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_collective_tower_height">collective_tower_height</a>(members: &vector&lt;address&gt;): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
+  // count the collective tower height of valid towers.
+  <b>let</b> collective = 0;
+  <b>let</b> i = 0;
+  <b>while</b> (i &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(members)) {
+    <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(members, i);
+    <b>let</b> one_height = <a href="TowerState.md#0x1_TowerState_tower_for_teams">tower_for_teams</a>(*addr);
+    <b>if</b> (one_height &gt; 0) {
+      collective = collective + one_height;
+    }
+  };
+  collective
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_TowerState_test_helper_init_miner"></a>
 
 ## Function `test_helper_init_miner`
@@ -1326,6 +1409,8 @@ Public Getters ///
   <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   <b>let</b> state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(addr);
   state.count_proofs_in_epoch = count;
+  state.verified_tower_height = count;
+
   <b>let</b> i = 0;
   <b>while</b> (i &lt; count) {
     <a href="TowerState.md#0x1_TowerState_increment_stats">increment_stats</a>(addr);
@@ -1360,7 +1445,7 @@ Public Getters ///
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
   <b>let</b> state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(addr);
   state.count_proofs_in_epoch = count;
-
+  state.verified_tower_height = count;
   <b>let</b> i = 0;
   <b>while</b> (i &lt; count) {
     <a href="TowerState.md#0x1_TowerState_increment_stats">increment_stats</a>(addr);

@@ -10,6 +10,7 @@
 -  [Function `process_validators`](#0x1_EpochBoundary_process_validators)
 -  [Function `propose_new_set`](#0x1_EpochBoundary_propose_new_set)
 -  [Function `reset_counters`](#0x1_EpochBoundary_reset_counters)
+-  [Function `do_migrations`](#0x1_EpochBoundary_do_migrations)
 
 
 <pre><code><b>use</b> <a href="Audit.md#0x1_Audit">0x1::Audit</a>;
@@ -23,6 +24,7 @@
 <b>use</b> <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy">0x1::FullnodeSubsidy</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
+<b>use</b> <a href="Teams.md#0x1_MigrateInitDelegation">0x1::MigrateInitDelegation</a>;
 <b>use</b> <a href="NodeWeight.md#0x1_NodeWeight">0x1::NodeWeight</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="Subsidy.md#0x1_Subsidy">0x1::Subsidy</a>;
@@ -39,7 +41,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64)
 </code></pre>
 
 
@@ -48,7 +50,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) {
+<pre><code><b>public</b> <b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) {
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
 
     <b>let</b> height_start = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>(vm);
@@ -61,18 +63,21 @@
     <b>let</b> (subsidy_units, nominal_subsidy_per) =
         <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, compliant_nodes_count);
 
-    <a href="Reconfigure.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm, nominal_subsidy_per);
+    <a href="EpochBoundary.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm, nominal_subsidy_per);
 
-    <a href="Reconfigure.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm, subsidy_units, outgoing_compliant_set);
+    <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm, subsidy_units, outgoing_compliant_set);
 
-    <b>let</b> proposed_set = <a href="Reconfigure.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm, height_start, height_now);
+    <b>let</b> proposed_set = <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm, height_start, height_now);
 
     // Update all slow wallet limits
     <b>if</b> (<a href="DiemConfig.md#0x1_DiemConfig_check_transfer_enabled">DiemConfig::check_transfer_enabled</a>()) {
         <a href="DiemAccount.md#0x1_DiemAccount_slow_wallet_epoch_drip">DiemAccount::slow_wallet_epoch_drip</a>(vm, <a href="Globals.md#0x1_Globals_get_unlock">Globals::get_unlock</a>());
         // update_validator_withdrawal_limit(vm);
     };
-    <a href="Reconfigure.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, proposed_set, height_now)
+
+    <a href="EpochBoundary.md#0x1_EpochBoundary_do_migrations">do_migrations</a>(vm);
+
+    <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, proposed_set, height_now)
 }
 </code></pre>
 
@@ -86,7 +91,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm: &signer, nominal_subsidy_per_node: u64)
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm: &signer, nominal_subsidy_per_node: u64)
 </code></pre>
 
 
@@ -95,7 +100,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm: &signer, nominal_subsidy_per_node: u64) {
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm: &signer, nominal_subsidy_per_node: u64) {
     // Fullnode subsidy
     // <b>loop</b> through validators and pay full node subsidies.
     // Should happen before transactionfees get distributed.
@@ -137,7 +142,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector&lt;address&gt;)
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector&lt;address&gt;)
 </code></pre>
 
 
@@ -146,7 +151,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_process_validators">process_validators</a>(
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(
     vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector&lt;address&gt;
 ) {
     // Process outgoing validators:
@@ -172,7 +177,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;address&gt;
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;address&gt;
 </code></pre>
 
 
@@ -181,7 +186,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;address&gt; {
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;address&gt; {
     // Propose upcoming validator set:
     // Step 1: Sort Top N eligible validators
     // Step 2: Jail non-performing validators
@@ -247,7 +252,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, height_now: u64)
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, height_now: u64)
 </code></pre>
 
 
@@ -256,7 +261,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, height_now: u64) {
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, height_now: u64) {
 
     // Reset <a href="Stats.md#0x1_Stats">Stats</a>
     <a href="Stats.md#0x1_Stats_reconfig">Stats::reconfig</a>(vm, &proposed_set);
@@ -275,6 +280,31 @@
     // reset counters
     <a href="AutoPay.md#0x1_AutoPay_reconfig_reset_tick">AutoPay::reconfig_reset_tick</a>(vm);
     <a href="Epoch.md#0x1_Epoch_reset_timer">Epoch::reset_timer</a>(vm, height_now);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_EpochBoundary_do_migrations"></a>
+
+## Function `do_migrations`
+
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_do_migrations">do_migrations</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_do_migrations">do_migrations</a>(vm: &signer) {
+  // these need <b>to</b> run on an upgrade <b>where</b> a new data structure is introduced.
+  <a href="Teams.md#0x1_MigrateInitDelegation_do_it">MigrateInitDelegation::do_it</a>(vm);
 }
 </code></pre>
 

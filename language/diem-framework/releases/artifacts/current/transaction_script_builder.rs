@@ -2025,6 +2025,11 @@ pub enum ScriptFunctionCall {
     /// * `Script::rotate_authentication_key_with_recovery_address`
     CreateRecoveryAddress {},
 
+    CreateTeam {
+        team_name: Bytes,
+        operator_pct_reward: u64,
+    },
+
     CreateUserByCoinTx {
         account: AccountAddress,
         authkey_prefix: Bytes,
@@ -3605,6 +3610,10 @@ impl ScriptFunctionCall {
                 add_all_currencies,
             ),
             CreateRecoveryAddress {} => encode_create_recovery_address_script_function(),
+            CreateTeam {
+                team_name,
+                operator_pct_reward,
+            } => encode_create_team_script_function(team_name, operator_pct_reward),
             CreateUserByCoinTx {
                 account,
                 authkey_prefix,
@@ -4684,6 +4693,24 @@ pub fn encode_create_recovery_address_script_function() -> TransactionPayload {
         ident_str!("create_recovery_address").to_owned(),
         vec![],
         vec![],
+    ))
+}
+
+pub fn encode_create_team_script_function(
+    team_name: Vec<u8>,
+    operator_pct_reward: u64,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("TeamsScripts").to_owned(),
+        ),
+        ident_str!("create_team").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&team_name).unwrap(),
+            bcs::to_bytes(&operator_pct_reward).unwrap(),
+        ],
     ))
 }
 
@@ -8288,6 +8315,17 @@ fn decode_create_recovery_address_script_function(
     }
 }
 
+fn decode_create_team_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::CreateTeam {
+            team_name: bcs::from_bytes(script.args().get(0)?).ok()?,
+            operator_pct_reward: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_create_user_by_coin_tx_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -9298,6 +9336,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "AccountAdministrationScriptscreate_recovery_address".to_string(),
             Box::new(decode_create_recovery_address_script_function),
+        );
+        map.insert(
+            "TeamsScriptscreate_team".to_string(),
+            Box::new(decode_create_team_script_function),
         );
         map.insert(
             "AccountScriptscreate_user_by_coin_tx".to_string(),

@@ -23,7 +23,7 @@ This module defines a struct storing the metadata of the block and new block eve
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
-<b>use</b> <a href="Reconfigure.md#0x1_EpochBoundary">0x1::EpochBoundary</a>;
+<b>use</b> <a href="EpochBoundary.md#0x1_EpochBoundary">0x1::EpochBoundary</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event">0x1::Event</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
@@ -280,7 +280,7 @@ The runtime always runs this before executing the transactions in a block.
       // TODO: We don't need <b>to</b> pass block height <b>to</b> EpochBoundaryOL.
       // It should <b>use</b> the <a href="DiemBlock.md#0x1_DiemBlock_BlockMetadata">BlockMetadata</a>. But there's a circular reference
       // there when we try.
-      <a href="Reconfigure.md#0x1_EpochBoundary_reconfigure">EpochBoundary::reconfigure</a>(&vm, <a href="DiemBlock.md#0x1_DiemBlock_get_current_block_height">get_current_block_height</a>());
+      <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">EpochBoundary::reconfigure</a>(&vm, <a href="DiemBlock.md#0x1_DiemBlock_get_current_block_height">get_current_block_height</a>());
     };
 }
 </code></pre>
