@@ -552,9 +552,10 @@ module TowerState {
         let one_height = tower_for_teams(*addr);
         if (one_height > 0) {
           collective = collective + one_height;
-        }
+        };
+        i = i + 1;
       };
-      collective 
+      collective
     }
 
     //////////////////

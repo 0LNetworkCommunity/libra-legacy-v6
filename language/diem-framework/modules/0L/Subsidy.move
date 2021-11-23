@@ -62,21 +62,26 @@ address 0x1 {
         i = i + 1;
       };
     }
+    use 0x1::Debug::print;
 
     fun check_team_and_pay(vm: &signer, captain_address: &address, subsidy_granted: u64) {
       // this is a solo validator. Exists during transition to delegation mode. This is a fallback condition to keep the node from halting
       let captain_value = subsidy_granted;
+      print(&subsidy_granted);
       if (Teams::team_is_init(*captain_address)) {
         // split captain reward and send to captain.
         let captain_pct = Teams::get_operator_reward(*captain_address);
-
+        print(&captain_pct);
         // split off the captain value
         captain_value = FixedPoint32::multiply_u64(
           subsidy_granted,
           FixedPoint32::create_from_rational(captain_pct, 100) 
         );
+        print(&captain_value);
 
         let value_to_members = subsidy_granted - captain_value;
+        print(&value_to_members);
+
         // get team members
         let members = Teams::get_team_members(*captain_address);
         // split the team subsidy
@@ -95,8 +100,9 @@ address 0x1 {
     }
 
     public fun split_subsidy_to_team(vm: &signer, members: &vector<address>, value_to_members: u64) {
-      let collective = TowerState::collective_tower_height(members);
-
+      let collective_height = TowerState::collective_tower_height(members);
+      print(&02);
+      print(&collective_height);
       let i = 0;
       while (i > Vector::length(members)) {
         let addr = Vector::borrow(members, i);
@@ -104,8 +110,9 @@ address 0x1 {
         if (one_height > 0) {
           let pct = FixedPoint32::divide_u64(
             one_height,
-            FixedPoint32::create_from_rational(collective, 1)
+            FixedPoint32::create_from_rational(collective_height, 1)
           );
+          print(&pct);
 
           let payment = value_to_members * pct;
           let minted_coins = Diem::mint<GAS>(vm, payment);
