@@ -2,6 +2,7 @@
 //! account: bob, 1000000GAS // the slow wallet
 //! account: carol, 0GAS     // the community wallet
 
+// Community wallets cannot use the slow wallet transfer scripts
 
 //! new-transaction
 //! sender: bob
@@ -33,7 +34,6 @@ script {
 }
 // check: EXECUTED
 
-
 //! new-transaction
 //! sender: carol
 script {
@@ -49,4 +49,4 @@ script {
     
   }
 }
-// check: EXECUTED
+// check: ABORTED
