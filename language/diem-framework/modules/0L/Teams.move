@@ -116,9 +116,16 @@ module Teams {
       if (team_is_init(captain)) {
         let s = borrow_global_mut<Team>(captain);
         return *&s.operator_pct_reward
-      } else {
-        0
-      }
+      };
+      0
+    }
+    // find the team members
+    public fun get_team_members(captain: address):vector<address> acquires Team {
+      if (team_is_init(captain)) {
+        let s = borrow_global_mut<Team>(captain);
+        return *&s.members
+      };
+      Vector::empty<address>()
     }
 
     public fun vm_is_init(): bool {

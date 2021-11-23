@@ -64,24 +64,32 @@ address 0x1 {
     }
 
     fun check_team_and_pay(vm: &signer, captain_address: &address, subsidy_granted: u64) {
-        // this is a solo validator. Exists during transition to delegation mode.
-        if (!Teams::team_is_init(*captain_address)) {
-          let minted_coins = Diem::mint<GAS>(vm, subsidy_granted);
-          DiemAccount::vm_deposit_with_metadata<GAS>(
-            vm,
-            *captain_address,
-            minted_coins,
-            b"validator subsidy",
-            b""
+        // this is a solo validator. Exists during transition to delegation mode. This is a fallback condition to keep the node from halting
+        let captain_coins = Diem::mint<GAS>(vm, subsidy_granted);
+        if (Teams::team_is_init(*captain_address)) {
+          // split captain reward and send to captain.
+          let captain_pct = Teams::get_operator_reward(*captain_address);
+          let captain_value = FixedPoint32::multiply_u64(
+            subsidy_granted,
+            FixedPoint32::create_from_rational(captain_pct, 100) 
           );
-        }
+          captain_coins = Diem::mint<GAS>(vm, captain_value);
 
+          let value_to_members = subsidy_granted - captain_value;
+          // get team members
+          let members = Teams::get_team_members(*captain_address);
+          // split the team subsidy
+          split_subsidy_to_team(vm, &members, value_to_members);
+        };
 
-        // else
-        // split captain reward and send to captain.
-        // get team members
-        // split the team subsidy
-
+        // payment to captain
+        DiemAccount::vm_deposit_with_metadata<GAS>(
+          vm,
+          *captain_address,
+          captain_coins,
+          b"validator subsidy",
+          b""
+        );
     }
 
     public fun split_subsidy_to_team(vm: &signer, members: &vector<address>, value_to_members: u64) {
@@ -100,12 +108,12 @@ address 0x1 {
           let payment = value_to_members * pct;
           let minted_coins = Diem::mint<GAS>(vm, payment);
           DiemAccount::vm_deposit_with_metadata<GAS>(
-                vm,
-                *addr,
-                minted_coins,
-                b"team consensus payment",
-                b""
-            );
+              vm,
+              *addr,
+              minted_coins,
+              b"team consensus payment",
+              b""
+          );
         }
       }
     }
