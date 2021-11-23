@@ -197,6 +197,11 @@ module DiemAccount {
 
     //////// 0L ////////
     const EBELOW_MINIMUM_VALUE_BOOTSTRAP_COIN: u64 = 120125;
+    const EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET: u64 = 120126;
+    const EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE: u64 = 120127;
+    const EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT: u64 = 120128;
+
+
 
     /////// 0L end /////////
 
@@ -1216,14 +1221,14 @@ module DiemAccount {
         let community_wallets = Wallet::get_comm_list();
         assert(
             !Vector::contains(&community_wallets, &sender_addr), 
-            Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
+            Errors::limit_exceeded(EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET)
         );
         /////// 0L /////////
         if (!DiemConfig::check_transfer_enabled()) {
             // only VM can make TXs if transfers are not enabled.
             assert(
                 sender_addr == CoreAddresses::DIEM_ROOT_ADDRESS(), 
-                Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
+                Errors::limit_exceeded(EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE)
             );
         };
         // Abort if we already extracted the unique withdraw capability for this account.
@@ -1476,7 +1481,7 @@ module DiemAccount {
         if (is_slow(*&cap.account_address)) {
           assert(
                 amount < unlocked_amount(*&cap.account_address),
-                Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
+                Errors::limit_exceeded(EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT)
             );
 
         };
