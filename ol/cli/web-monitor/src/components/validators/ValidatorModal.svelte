@@ -62,7 +62,7 @@
                 </tr>
                 <tr>
                   <td>can create account</td>
-                  <td>{validator.epochs_since_last_account_creation > 7}</td> <!--TODO move to the serve side?-->
+                  <td>{validator.epochs_since_last_account_creation > 13}</td> <!--TODO move to the serve side?-->
                 </tr>
             </tbody>
           </table>
