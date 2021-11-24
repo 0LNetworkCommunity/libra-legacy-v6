@@ -36,6 +36,6 @@ script {
 
 //! new-transaction
 //! sender: carol
-//! args: @{{bob}}, 1, b"thanks for your service"
+//! args: {{bob}}, 1, b"thanks for your service"
 stdlib_script::TransferScripts::community_transfer
 // check: "Keep(EXECUTED)"
