@@ -104,7 +104,7 @@ check-transfer:
 
 # check for the memo field of the community transfer
 	@while [[ ${NOW} -le ${END} ]] ; do \
-			if PERSONA=carol make -f ${MAKE_FILE} resources | grep -e "68656c6c6f"; then \
+			if PERSONA=carol make -f ${MAKE_FILE} resources | grep -e "expire_epoch"; then \
 				echo TX SUCCESS ; \
 				break ; \
 			else \
