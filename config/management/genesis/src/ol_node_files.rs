@@ -79,7 +79,7 @@ pub fn write_node_config_files(
 
     let mut genesis_path = output_dir.join("genesis.blob");
 
-    match prebuilt_genesis {
+    let genesis_waypoint = match prebuilt_genesis {
         Some(path) => {
             genesis_path = path.to_owned();
             waypoint::extract_waypoint_from_file(&genesis_path)?
@@ -111,9 +111,9 @@ pub fn write_node_config_files(
         }
     };
     
-    // storage_helper
-    //   .insert_waypoint(&namespace, genesis_waypoint)
-    //   .unwrap();
+    storage_helper
+      .insert_waypoint(&namespace, genesis_waypoint)
+      .unwrap();
 
     // Write the genesis waypoint without a namespaced storage.
     let mut disk_storage = OnDiskStorageConfig::default();
