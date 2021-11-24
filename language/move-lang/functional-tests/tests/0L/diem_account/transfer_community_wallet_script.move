@@ -1,6 +1,6 @@
 //! account: alice, 1000GAS, 0, validator
-//! account: bob, 1000000GAS // the slow wallet
-//! account: carol, 0GAS     // the community wallet
+//! account: bob, 0GAS // the slow wallet
+//! account: carol, 1000000000GAS     // the community wallet
 
 // Community wallets cannot use the slow wallet transfer scripts
 
@@ -36,6 +36,6 @@ script {
 
 //! new-transaction
 //! sender: carol
-//! args: 13
-stdlib_script::DemoScripts::demo_e2e
+//! args: @{{bob}}, 1, b"thanks for your service"
+stdlib_script::TransferScripts::community_transfer
 // check: "Keep(EXECUTED)"

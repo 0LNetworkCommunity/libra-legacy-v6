@@ -79,7 +79,7 @@ pub fn write_node_config_files(
 
     let mut genesis_path = output_dir.join("genesis.blob");
 
-    let genesis_waypoint = match prebuilt_genesis {
+    match prebuilt_genesis {
         Some(path) => {
             genesis_path = path.to_owned();
             waypoint::extract_waypoint_from_file(&genesis_path)?

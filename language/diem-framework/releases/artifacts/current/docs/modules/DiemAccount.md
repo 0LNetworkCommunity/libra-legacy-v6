@@ -126,6 +126,7 @@ before and after every transaction.
 <b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="DiemId.md#0x1_DiemId">0x1::DiemId</a>;
+<b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
 <b>use</b> <a href="DiemTransactionPublishingOption.md#0x1_DiemTransactionPublishingOption">0x1::DiemTransactionPublishingOption</a>;
 <b>use</b> <a href="DualAttestation.md#0x1_DualAttestation">0x1::DualAttestation</a>;
@@ -944,6 +945,33 @@ The withdrawal of funds would have exceeded the the account's limits
 
 
 
+<a name="0x1_DiemAccount_EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET"></a>
+
+
+
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET">EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET</a>: u64 = 120126;
+</code></pre>
+
+
+
+<a name="0x1_DiemAccount_EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT"></a>
+
+
+
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT">EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT</a>: u64 = 120128;
+</code></pre>
+
+
+
+<a name="0x1_DiemAccount_EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE"></a>
+
+
+
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE">EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE</a>: u64 = 120127;
+</code></pre>
+
+
+
 <a name="0x1_DiemAccount_EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED"></a>
 
 The <code><a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">WithdrawCapability</a></code> for this account has already been extracted
@@ -1483,6 +1511,8 @@ Initialize this module. This is only callable from genesis.
 ):address <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>, <a href="DiemAccount.md#0x1_DiemAccount_SlowWalletList">SlowWalletList</a> { //////// 0L ////////
     <b>let</b> sender_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
     // Rate limit spam accounts.
+    // check the validator is in set before creating
+    <b>assert</b>(<a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(sender_addr), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(120101));
     <b>assert</b>(<a href="TowerState.md#0x1_TowerState_can_create_val_account">TowerState::can_create_val_account</a>(sender_addr), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(120102));
     // Check there's enough balance for bootstrapping both operator and validator account
     <b>assert</b>(
@@ -2619,14 +2649,14 @@ the sender's account balance.
     <b>let</b> community_wallets = <a href="Wallet.md#0x1_Wallet_get_comm_list">Wallet::get_comm_list</a>();
     <b>assert</b>(
         !<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&community_wallets, &sender_addr),
-        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_EXCEEDS_LIMITS">EWITHDRAWAL_EXCEEDS_LIMITS</a>)
+        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET">EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET</a>)
     );
     /////// 0L /////////
     <b>if</b> (!<a href="DiemConfig.md#0x1_DiemConfig_check_transfer_enabled">DiemConfig::check_transfer_enabled</a>()) {
         // only VM can make TXs <b>if</b> transfers are not enabled.
         <b>assert</b>(
             sender_addr == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(),
-            <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_EXCEEDS_LIMITS">EWITHDRAWAL_EXCEEDS_LIMITS</a>)
+            <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE">EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE</a>)
         );
     };
     // Abort <b>if</b> we already extracted the unique withdraw capability for this account.
@@ -2939,7 +2969,7 @@ subject to the dual attestation protocol
     <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&cap.account_address)) {
       <b>assert</b>(
             amount &lt; <a href="DiemAccount.md#0x1_DiemAccount_unlocked_amount">unlocked_amount</a>(*&cap.account_address),
-            <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_EXCEEDS_LIMITS">EWITHDRAWAL_EXCEEDS_LIMITS</a>)
+            <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT">EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT</a>)
         );
 
     };

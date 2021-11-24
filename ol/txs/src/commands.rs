@@ -15,6 +15,8 @@ pub mod demo_cmd;
 pub mod create_account_cmd;
 pub mod transfer_cmd;
 pub mod wallet_cmd;
+pub mod community_pay_cmd;
+
 
 mod relay_cmd;
 mod valset_cmd;
@@ -41,6 +43,7 @@ use self::{
     wallet_cmd::WalletCmd,
     authkey_cmd::AuthkeyCmd,
     transfer_cmd::TransferCmd,   
+    community_pay_cmd::CommunityPayCmd,
 };
 use std::path::PathBuf;
 
@@ -59,6 +62,10 @@ pub enum TxsCmd {
     #[options(help = "transfer funds between accounts")]
     Transfer(TransferCmd),    
 
+    /// Community payment proposal tx
+    #[options(help = "create a community wallet payment proposal")]
+    CommunityPay(CommunityPayCmd),
+    
     /// The `oracle-upgrade` subcommand
     #[options(help = "submit an oracle transaction to upgrade stdlib")]
     OracleUpgrade(OracleUpgradeCmd),    
