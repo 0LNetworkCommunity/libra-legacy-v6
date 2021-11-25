@@ -128,7 +128,7 @@ script {
         print(&team_member_balance);
         assert(captain_balance < team_member_balance, 735702);
         assert(captain_balance == 27431999, 735703);
-        assert(team_member_balance == 294820500, 735704);
+        assert(team_member_balance == 266400001, 735704);
 
     }
 }

@@ -110,15 +110,15 @@ address 0x1 {
         let one_height = TowerState::tower_for_teams(*addr);
         print(&one_height);
         if (one_height > 0) {
-          let pct = FixedPoint32::divide_u64(
-            one_height,
-            FixedPoint32::create_from_rational(collective_height, 1)
+          let payment_to_this_member = FixedPoint32::multiply_u64(
+            value_to_members,
+            FixedPoint32::create_from_rational(one_height, collective_height)
           );
           print(&2222201);
-          print(&pct);
-
-          let payment_to_this_member = value_to_members * pct;
           print(&payment_to_this_member);
+
+          // let payment_to_this_member = value_to_members * pct;
+          // print(&payment_to_this_member);
           let minted_coins = Diem::mint<GAS>(vm, payment_to_this_member);
           DiemAccount::vm_deposit_with_metadata<GAS>(
               vm,
