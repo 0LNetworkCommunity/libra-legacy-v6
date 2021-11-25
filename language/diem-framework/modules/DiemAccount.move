@@ -1367,7 +1367,7 @@ module DiemAccount {
               continue
             };
             vm_make_payment_no_limit<GAS>(payer, payee, value, description, b"", vm);
-            Wallet::reset_rejection_counter(vm, payer);
+            Wallet::mark_processed(vm, t);
             i = i + 1;
         };
     }

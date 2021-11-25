@@ -240,6 +240,32 @@ module Wallet {
     
   }
 
+    // private function. Once vetoed, the CommunityWallet transaction is 
+  // removed from proposed list.
+  public fun mark_processed(vm: &signer, t: TimedTransfer) acquires CommunityTransfers, CommunityFreeze {
+    CoreAddresses::assert_vm(vm);
+
+    let c = borrow_global_mut<CommunityTransfers>(@0x0);
+    let list = *&c.proposed;
+    let len = Vector::length(&list);
+    let i = 0;
+    while (i < len) {
+      let search = *Vector::borrow<TimedTransfer>(&list, i);
+      if (search.uid == t.uid) {
+        Vector::remove<TimedTransfer>(&mut c.proposed, i);
+        Vector::push_back(&mut c.approved, search);
+      };
+
+      i = i + 1;
+    };
+    
+  }
+
+  fun reset_rejection_counter(vm: &signer, wallet: address) acquires CommunityFreeze {
+    CoreAddresses::assert_diem_root(vm);
+    borrow_global_mut<CommunityFreeze>(wallet).consecutive_rejections = 0;
+  }
+
   // private function to tally vetos.
   // checks if a voter is in the validator set.
   // tallies everytime called. Only counts votes in the validator set.
@@ -311,10 +337,6 @@ module Wallet {
       return pending
     }
 
-    public fun reset_rejection_counter(vm: &signer, wallet: address) acquires CommunityFreeze {
-      CoreAddresses::assert_diem_root(vm);
-      borrow_global_mut<CommunityFreeze>(wallet).consecutive_rejections = 0;
-    }
 
     // Private function to freeze a community wallet
     // community wallets get frozen if 3 consecutive attempts to transfer are rejected.
