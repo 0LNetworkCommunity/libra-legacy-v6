@@ -35,7 +35,7 @@ impl Runnable for CommunityPayCmd {
         };
 
         match community_payment_proposal(destination, self.coins.clone(), self.memo.clone(), entry_args.save_path) {
-            Ok(_) => println!("Success. Balance transfer success: {}", self.destination_account),
+            Ok(_) => println!("Success: community payment proposed for 3 epochs(days) from now: {}", self.destination_account),
             Err(e) => {
               println!("ERROR: could not create community transfer proposal, message: {:?}", &e);
               exit(1);

@@ -31,7 +31,7 @@ impl Runnable for TransferCmd {
         };
 
         match balance_transfer(destination, self.coins, entry_args.save_path) {
-            Ok(_) => println!("Success. Balance transfer success: {}", self.destination_account),
+            Ok(_) => println!("Success: Balance transfer posted: {}", self.destination_account),
             Err(e) => {
               println!("ERROR: execute balance transfer message: {:?}", &e);
               exit(1);
