@@ -483,15 +483,31 @@ module DiemAccount {
         new_account: address,
         new_account_authkey_prefix: vector<u8>,
         value: u64,
-    ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount {
+    ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount, SlowWallet {
         let new_signer = create_signer(new_account);
         Roles::new_user_role_with_proof(&new_signer);
         Event::publish_generator(&new_signer);
         add_currencies_for_account<GAS>(&new_signer, false);
         make_account(new_signer, new_account_authkey_prefix);
 
-        onboarding_gas_transfer<GAS>(sender, new_account, value);
-        new_account
+        if (value <= BOOTSTRAP_COIN_VALUE) {
+            onboarding_gas_transfer<GAS>(sender, new_account, value);
+            new_account
+        }
+        else {
+            let with_cap = extract_withdraw_capability(sender);
+            pay_from<GAS>(
+                &with_cap,
+                new_account,
+                value,
+                b"account generation", 
+                b"",
+            );
+            restore_withdraw_capability(with_cap);
+            new_account
+        }
+
+        
     }
 
     /////// 0L ////////

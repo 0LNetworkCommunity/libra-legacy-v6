@@ -83,8 +83,14 @@
     <b>let</b> sender_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(&sender);
     <b>assert</b>(<a href="Wallet.md#0x1_Wallet_is_comm">Wallet::is_comm</a>(sender_addr), 0);
 
+    // confirm the destination account has a slow wallet
+    // TODO: this check only happens in this <b>script</b> since there's
+    // a circular dependecy issue <b>with</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> and <a href="Wallet.md#0x1_Wallet">Wallet</a> which impedes
+    // checking in <a href="Wallet.md#0x1_Wallet">Wallet</a> <b>module</b>
+    <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_is_slow">DiemAccount::is_slow</a>(destination), 1);
+
     <b>let</b> uid = <a href="Wallet.md#0x1_Wallet_new_timed_transfer">Wallet::new_timed_transfer</a>(&sender, destination, value, memo);
-    <b>assert</b>(<a href="Wallet.md#0x1_Wallet_transfer_is_proposed">Wallet::transfer_is_proposed</a>(uid), 1);
+    <b>assert</b>(<a href="Wallet.md#0x1_Wallet_transfer_is_proposed">Wallet::transfer_is_proposed</a>(uid), 2);
 }
 </code></pre>
 
