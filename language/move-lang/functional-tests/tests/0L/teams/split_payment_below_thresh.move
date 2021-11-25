@@ -102,7 +102,7 @@ script {
         let captain_balance = DiemAccount::balance<GAS>(@{{alice}});
         print(&captain_balance);
         // mock mining above threshold
-        TowerState::test_helper_mock_mining_vm(sender, @{{alice}}, 500);
+        TowerState::test_helper_mock_mining_vm(sender, @{{alice}}, 500); // alice above thresh
 
         // mock votes above threshold
         let voters = Vector::singleton<address>(@{{alice}});
@@ -116,8 +116,8 @@ script {
         // check alice is a case 1 valdator
         assert(Cases::get_case(sender, @{{alice}}, 0 , 15) == 1, 735701);
         
-        // Also need to mock the team member's mining
-        TowerState::test_helper_mock_mining_vm(sender, @{{eve}}, member_tower_minimum_const + 1);
+        // Mock BELOW THRESHOLD
+        TowerState::test_helper_mock_mining_vm(sender, @{{eve}}, member_tower_minimum_const - 10); // below threshold
         
         let txn_fee_amount = TransactionFee::get_amount_to_distribute(sender);
 
@@ -131,11 +131,10 @@ script {
 
         let team_member_balance = DiemAccount::balance<GAS>(@{{eve}});
         print(&team_member_balance);
-        assert(captain_balance < team_member_balance, 735702);
 
         // note: rounding of 1
         assert(captain_balance == 99999, 735703);
-        assert(team_member_balance == 900001, 735704);
+        assert(team_member_balance == 0, 735704);
 
     }
 }
