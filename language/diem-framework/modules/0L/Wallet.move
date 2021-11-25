@@ -160,34 +160,6 @@ module Wallet {
       Vector::push_back<TimedTransfer>(&mut transfers.proposed, t);
       return transfers.max_uid
     }
-
-    // Todo: Can be private, used only in tests
-    // Utlity to query a CommunityWallet transfer wallet.
-    // Note: does not need to be a public function, except for use in tests.
-    public fun find(
-      uid: u64,
-      type_of: u8
-    ): (Option<TimedTransfer>, u64) acquires CommunityTransfers {
-      let c = borrow_global<CommunityTransfers>(@0x0);
-      let list = if (type_of == 0) {
-        &c.proposed
-      } else if (type_of == 1) {
-        &c.approved
-      } else {
-        &c.rejected
-      };
-
-      let len = Vector::length(list);
-      let i = 0;
-      while (i < len) {
-        let t = *Vector::borrow<TimedTransfer>(list, i);
-        if (t.uid == uid) {
-          return (Option::some<TimedTransfer>(t), i)
-        };
-        i = i + 1;
-      };
-      (Option::none<TimedTransfer>(), 0)
-    }
   
   // A validator casts a vote to veto a proposed/pending transaction 
   // by a community wallet.
@@ -242,7 +214,7 @@ module Wallet {
 
     // private function. Once vetoed, the CommunityWallet transaction is 
   // removed from proposed list.
-  public fun mark_processed(vm: &signer, t: TimedTransfer) acquires CommunityTransfers, CommunityFreeze {
+  public fun mark_processed(vm: &signer, t: TimedTransfer) acquires CommunityTransfers {
     CoreAddresses::assert_vm(vm);
 
     let c = borrow_global_mut<CommunityTransfers>(@0x0);
@@ -261,7 +233,7 @@ module Wallet {
     
   }
 
-  fun reset_rejection_counter(vm: &signer, wallet: address) acquires CommunityFreeze {
+  public fun reset_rejection_counter(vm: &signer, wallet: address) acquires CommunityFreeze {
     CoreAddresses::assert_diem_root(vm);
     borrow_global_mut<CommunityFreeze>(wallet).consecutive_rejections = 0;
   }
@@ -335,6 +307,39 @@ module Wallet {
         i = i + 1;
       };
       return pending
+    }
+
+
+    public fun list_transfers(type_of: u8): vector<TimedTransfer> acquires CommunityTransfers {
+      let c = borrow_global<CommunityTransfers>(@0x0);
+      if (type_of == 0) {
+        *&c.proposed
+      } else if (type_of == 1) {
+        *&c.approved
+      } else {
+        *&c.rejected
+      }
+    }
+
+        // Todo: Can be private, used only in tests
+    // Utlity to query a CommunityWallet transfer wallet.
+    // Note: does not need to be a public function, except for use in tests.
+    public fun find(
+      uid: u64,
+      type_of: u8
+    ): (Option<TimedTransfer>, u64) acquires CommunityTransfers {
+      let list = &list_transfers(type_of);
+
+      let len = Vector::length(list);
+      let i = 0;
+      while (i < len) {
+        let t = *Vector::borrow<TimedTransfer>(list, i);
+        if (t.uid == uid) {
+          return (Option::some<TimedTransfer>(t), i)
+        };
+        i = i + 1;
+      };
+      (Option::none<TimedTransfer>(), 0)
     }
 
 

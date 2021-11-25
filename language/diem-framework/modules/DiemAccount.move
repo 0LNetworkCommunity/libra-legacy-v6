@@ -1361,13 +1361,14 @@ module DiemAccount {
             let t: Wallet::TimedTransfer = *Vector::borrow(&v, i);
             // TODO: Is this the best way to access a struct property from 
             // outside a module?
-            let (payer, payee, value, description) = Wallet::get_tx_args(t);
+            let (payer, payee, value, description) = Wallet::get_tx_args(*&t);
             if (Wallet::is_frozen(payer)) {
               i = i + 1;
               continue
             };
             vm_make_payment_no_limit<GAS>(payer, payee, value, description, b"", vm);
             Wallet::mark_processed(vm, t);
+            Wallet::reset_rejection_counter(vm, payer);
             i = i + 1;
         };
     }
