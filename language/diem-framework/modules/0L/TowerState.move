@@ -516,7 +516,7 @@ module TowerState {
       if (exists<TowerProofHistory>(node_addr)) { 
         return 
           borrow_global<TowerProofHistory>(node_addr).epochs_since_last_account_creation 
-          > EPOCHS_UNTIL_ACCOUNT_CREATION
+          >= EPOCHS_UNTIL_ACCOUNT_CREATION
       };
       false 
     }

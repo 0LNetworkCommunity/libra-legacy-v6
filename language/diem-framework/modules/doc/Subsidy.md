@@ -17,6 +17,7 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
@@ -112,34 +113,47 @@
 
 
 <pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_check_team_and_pay">check_team_and_pay</a>(vm: &signer, captain_address: &address, subsidy_granted: u64) {
-    // this is a solo validator. Exists during transition <b>to</b> delegation mode. This is a fallback condition <b>to</b> keep the node from halting
-    <b>let</b> captain_value = subsidy_granted;
-    <b>if</b> (<a href="Teams.md#0x1_Teams_team_is_init">Teams::team_is_init</a>(*captain_address)) {
-      // split captain reward and send <b>to</b> captain.
-      <b>let</b> captain_pct = <a href="Teams.md#0x1_Teams_get_operator_reward">Teams::get_operator_reward</a>(*captain_address);
-
-      // split off the captain value
-      captain_value = <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(
-        subsidy_granted,
-        <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(captain_pct, 100)
-      );
-
-      <b>let</b> value_to_members = subsidy_granted - captain_value;
-      // get team members
-      <b>let</b> members = <a href="Teams.md#0x1_Teams_get_team_members">Teams::get_team_members</a>(*captain_address);
-      // split the team subsidy
-      <a href="Subsidy.md#0x1_Subsidy_split_subsidy_to_team">split_subsidy_to_team</a>(vm, &members, value_to_members);
-    };
-
-    <b>let</b> captain_coins = <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, captain_value);
-    // payment <b>to</b> captain
-    <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">DiemAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
-      vm,
-      *captain_address,
-      captain_coins,
-      b"validator subsidy",
-      b""
+  // this is a solo validator. Exists during transition <b>to</b> delegation mode. This is a fallback condition <b>to</b> keep the node from halting
+  print(&100000);
+  <b>let</b> captain_value = subsidy_granted;
+  print(&subsidy_granted);
+  <b>if</b> (<a href="Teams.md#0x1_Teams_team_is_init">Teams::team_is_init</a>(*captain_address)) {
+    print(&100100);
+    // split captain reward and send <b>to</b> captain.
+    <b>let</b> captain_pct = <a href="Teams.md#0x1_Teams_get_operator_reward">Teams::get_operator_reward</a>(*captain_address);
+    print(&captain_pct);
+    // split off the captain value
+    captain_value = <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(
+      subsidy_granted,
+      <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(captain_pct, 100)
     );
+    print(&100200);
+    print(&captain_value);
+
+    <b>let</b> value_to_members = subsidy_granted - captain_value;
+    print(&value_to_members);
+
+    // get team members
+    <b>let</b> members = <a href="Teams.md#0x1_Teams_get_team_members">Teams::get_team_members</a>(*captain_address);
+    // split the team subsidy
+    print(&100300);
+    <a href="Subsidy.md#0x1_Subsidy_split_subsidy_to_team">split_subsidy_to_team</a>(vm, &members, value_to_members);
+  };
+  print(&100400);
+  print(&captain_value);
+  <b>let</b> captain_coins = <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, captain_value);
+
+  <b>let</b> pre_balance = <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*captain_address);
+  print(&pre_balance);
+
+  // payment <b>to</b> captain
+  <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">DiemAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+    vm,
+    *captain_address,
+    captain_coins,
+    b"validator subsidy",
+    b""
+  );
 }
 </code></pre>
 
@@ -163,20 +177,30 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_split_subsidy_to_team">split_subsidy_to_team</a>(vm: &signer, members: &vector&lt;address&gt;, value_to_members: u64) {
-  <b>let</b> collective = <a href="TowerState.md#0x1_TowerState_collective_tower_height">TowerState::collective_tower_height</a>(members);
-
+  <b>let</b> collective_height = <a href="TowerState.md#0x1_TowerState_collective_tower_height">TowerState::collective_tower_height</a>(members);
+  print(&100310);
+  print(members);
+  print(&collective_height);
+  print(&value_to_members);
   <b>let</b> i = 0;
-  <b>while</b> (i &gt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(members)) {
+  <b>while</b> (i &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(members)) {
     <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(members, i);
     <b>let</b> one_height = <a href="TowerState.md#0x1_TowerState_tower_for_teams">TowerState::tower_for_teams</a>(*addr);
+    print(&100320);
+    print(&one_height);
     <b>if</b> (one_height &gt; 0) {
-      <b>let</b> pct = <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_divide_u64">FixedPoint32::divide_u64</a>(
-        one_height,
-        <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(collective, 1)
+      <b>let</b> payment_to_this_member = <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(
+        value_to_members,
+        <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(one_height, collective_height)
       );
+      print(&100330);
+      print(&payment_to_this_member);
 
-      <b>let</b> payment = value_to_members * pct;
-      <b>let</b> minted_coins = <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, payment);
+      // <b>let</b> payment_to_this_member = value_to_members * pct;
+      // print(&payment_to_this_member);
+      <b>let</b> minted_coins = <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, payment_to_this_member);
+      <b>let</b> pre_balance = <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*addr);
+      print(&pre_balance);
       <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">DiemAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
           vm,
           *addr,
@@ -184,7 +208,8 @@
           b"team consensus payment",
           b""
       );
-    }
+    };
+    i = i + 1;
   }
 }
 </code></pre>

@@ -1205,7 +1205,7 @@ Public Getters ///
   <b>if</b> (<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(node_addr)) {
     <b>return</b>
       borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(node_addr).epochs_since_last_account_creation
-      &gt; <a href="TowerState.md#0x1_TowerState_EPOCHS_UNTIL_ACCOUNT_CREATION">EPOCHS_UNTIL_ACCOUNT_CREATION</a>
+      &gt;= <a href="TowerState.md#0x1_TowerState_EPOCHS_UNTIL_ACCOUNT_CREATION">EPOCHS_UNTIL_ACCOUNT_CREATION</a>
   };
   <b>false</b>
 }
@@ -1276,7 +1276,8 @@ Public Getters ///
     <b>let</b> one_height = <a href="TowerState.md#0x1_TowerState_tower_for_teams">tower_for_teams</a>(*addr);
     <b>if</b> (one_height &gt; 0) {
       collective = collective + one_height;
-    }
+    };
+    i = i + 1;
   };
   collective
 }

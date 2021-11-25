@@ -8,16 +8,16 @@ Here's a quick reference to the policies implemented at genesis, with further di
 
 - Rewards are paid at the end of each "Epoch", daily at 16:00 UTC.
 
-- The majority of the rewards will go to Validator Nodes, you'll need a cloud host to be successful at this (you can't do this with a laptop, and you need to be somewhat technical).Transaction fees are the principal source of rewards, but they can be augmented by Guaranteed Minimum subsidies.
+- The majority of the rewards will go to Validator Nodes, you'll need a cloud host to be successful at this (you can't do this with a laptop, and you need to be somewhat technical). Transaction fees are the principal source of rewards, but they can be augmented by Guaranteed Minimum subsidies.
 
-- End Users (who are not Validator odes), can receive an Identity Subsidy for creating durable identities through Delay Towers. This is a system "mining pool".
+- End Users (who are not Validator nodes), can receive an Identity Subsidy for creating durable identities through Delay Towers. This is a system "mining pool".
 
 
 ## Requirements
 
 - We do not do Proof of Stake, instead preventing Sybil accounts is done through Delay Towers, a sybil resistance technique we invented.
 
-- It uses Proofs of elapsed time which are done by the `tower` app on cloud machines, or the `carpe` desktop all for end users
+- It uses Proofs of elapsed time which are done by the `tower` app on cloud machines, or the `carpe` desktop all for end users.
  
 - Validators are required to build Delay Towers, they must produce 6 delay proofs per day in order to gain admission to the validator set, and also to remain.
 
@@ -68,14 +68,15 @@ The reward pool for all miners is exactly the equivalent of one Validator Node's
 - Community wallets are optional settings which allow greater transparency, and also allow owners of the account to help prevent fraud. This designation of wallet is useful for anyone wishing to set up a program for the community benefit.
 And it also appoints all addresses in the validator set to be observers of the wallet, and they can slow down transactions by vertoing. With sufficient Vetoes the transaction gets rejected. 
 
-- CommunityWallets can only make transfers to Slow Wallets.
+- Community wallets can only make transfers to Slow Wallets.
 
 ## Autopay Sponsoring Programs in the Community
 - Autopay aims to make it trivially easy for early coin holders to send to development programs within the community. 
 At this stage of the network Autopay can only send to wallets tagged CommunityWallets, this is a benefit of being a community wallet.
 
-- At time of writing, there are approx 12 programs that have elected to use CommunityWallets. 
-Background
+- At time of writing, there are approx 12 programs that have elected to use Community Wallets. 
+
+# Background
 
 - Like most smart contract platforms, the 0L System requires spending of credits (GAS Coins) for running smart contract computations on the system. These resources are allocated according to specific rules encoded in the core logic of the system.
 
@@ -99,7 +100,7 @@ For easy comprehension by prospective validators the schedule is a straight line
 
 This Auction aims to ensure the network always pays for security when it needs it, but does not overpay when it is not necessary to do so. It will appear generous at times, and miserly at others, but it should attract the necessary users.
 
-Note, these allocation rules make some assumptions about BFT, that there is a super majority of honest actors and that the most committed validators are included in the validator set (proof of weight from Delay Towers)
+Note, these allocation rules make some assumptions about BFT, that there is a super majority of honest actors and that the most committed validators are included in the validator set (proof of weight from Delay Towers).
 
 
 # Identity Subsidy
@@ -115,7 +116,7 @@ To balance the needs of validators, and exploits possible, miners thus share the
 # Transferring Credits
 Transfers of credits are unlimited for End User accounts (plain accounts). If an End User is running  a "miner" and creating a tower, those credits are freely transferable.
 
-There two categories of accounts that have opt-in rules for transfers
+There two categories of accounts that have opt-in rules for transfers:
 
 ## Community Wallets
 These are wallets that have elected to have community oversight. If a person or entity would like to increase the credibility of that wallet (e.g to create a program), they may opt to have the transfers be slowed down or ultimately rejected. More details here:
@@ -130,4 +131,4 @@ Since transferring credits by early users can cause undesirable effects (e.g. cr
 
 The exception is transferring credits to Community Wallets. Those transfers are unlimited. 
 
-There are accounts that have elected to have restricted transferability. Those are designated Slow Wallets. To join a Validator Set a prospective user must have a  Slow Wallet.
+There are accounts that have elected to have restricted transferability. Those are designated Slow Wallets. To join a Validator Set a prospective user must have a Slow Wallet.
