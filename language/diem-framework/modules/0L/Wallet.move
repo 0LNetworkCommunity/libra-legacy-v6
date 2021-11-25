@@ -15,6 +15,8 @@ module Wallet {
     const APPROVED: u8 = 1;
     const REJECTED: u8 = 2;
 
+    const EIS_NOT_SLOW_WALLET: u64 = 0231010;
+
     //////// COMMUNITY WALLETS ////////
 
     struct CommunityWalletList has key {
@@ -122,6 +124,12 @@ module Wallet {
     public fun new_timed_transfer(
       sender: &signer, payee: address, value: u64, description: vector<u8>
     ): u64 acquires CommunityTransfers, CommunityWalletList {
+      // firstly check if payee is a slow wallet
+      // TODO: This function should check if the account is a slow wallet before sending
+      // but there's a circular dependency with DiemAccount which has the slow wallet struct.
+      // curretly we move that check to the transaction script to initialize the payment.
+      // assert(DiemAccount::is_slow(payee), EIS_NOT_SLOW_WALLET);
+
       let sender_addr = Signer::address_of(sender);
       let list = get_comm_list();
       assert(
