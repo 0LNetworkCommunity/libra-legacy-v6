@@ -289,9 +289,8 @@ module Wallet {
   // Utility to list CommunityWallet transfers due, by epoch. Anyone can call this.
   // This is used by VM in DiemAccount at epoch boundaries to process the wallet transfers.
   public fun list_tx_by_epoch(epoch: u64): vector<TimedTransfer> acquires CommunityTransfers {
-      let c = borrow_global_mut<CommunityTransfers>(@0x0);
-      // reset approved list
-      c.approved = Vector::empty<TimedTransfer>();
+      let c = borrow_global<CommunityTransfers>(@0x0);
+
       // loop proposed list
       let pending = Vector::empty<TimedTransfer>();
       let len = Vector::length(&c.proposed);
@@ -301,8 +300,6 @@ module Wallet {
         if (t.expire_epoch == epoch) {
           
           Vector::push_back<TimedTransfer>(&mut pending, *t);
-          // TODO: clear the freeze count on community wallet
-          // add to approved list
         };
         i = i + 1;
       };
