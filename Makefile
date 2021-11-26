@@ -455,7 +455,7 @@ debug:
 
 ##### DEVNET TESTS #####
 
-devnet: clear fix fix-genesis dev-wizard start
+devnet: clear fix dev-wizard dev-genesis start
 # runs a smoke test from fixtures. 
 # Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 # This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
