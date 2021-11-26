@@ -37,7 +37,19 @@ impl Runnable for CommunityPayCmd {
         match community_payment_proposal(destination, self.coins.clone(), self.memo.clone(), entry_args.save_path) {
             Ok(_) => println!("Success: community payment proposed for 3 epochs(days) from now: {}", self.destination_account),
             Err(e) => {
-              println!("ERROR: could not create community transfer proposal, message: {:?}", &e);
+              println!("ERROR: could not create community transfer proposal:");
+              if let Some(loc) = &e.location {
+                if loc.contains("TransferScripts") {
+                match e.abort_code {
+                    Some(0) => println!("this account is not a community wallet\n"),
+                    Some(1) => println!("destination account is not a slow wallet\n"),
+                    _ => println!("misc error, could not propose the tx: {:?}\n", &e),
+                  }
+                } else {
+                  println!("misc error, could not propose the tx: {:?}\n", &e)
+                }
+              };
+
               exit(1);
             },
         }

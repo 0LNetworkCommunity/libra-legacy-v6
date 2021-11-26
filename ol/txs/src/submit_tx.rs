@@ -71,11 +71,15 @@ pub struct TxError {
     pub err: Option<Error>,
     /// transaction view if the transaction got that far
     pub tx_view: Option<TransactionView>,
+    /// Move module or script where error occurred
+    pub location: Option<String>,
+    /// Move abort code used in error
+    pub abort_code: Option<u64>,
 }
 
 impl From<Error> for TxError {
     fn from(e: Error) -> Self {
-        TxError{ err: Some(e), tx_view: None }
+        TxError{ err: Some(e), tx_view: None, location: None, abort_code: None }
     }
 }
 
@@ -89,6 +93,8 @@ pub fn maybe_submit(
         DiemClient::new(tx_params.url.clone(), tx_params.waypoint).map_err(|e| TxError {
             err: Some(e),
             tx_view: None,
+            location: None,
+            abort_code: None,
         })?;
 
     let (mut account_data, txn) = stage(script, tx_params, &mut client)?;
@@ -98,16 +104,12 @@ pub fn maybe_submit(
     }
 
     match submit_tx(client, txn.clone(), &mut account_data) {
-        Ok(res) => match eval_tx_status(&res) {
-            Ok(_) => Ok(res),
-            Err(e) => Err(TxError {
-                err: Some(e),
-                tx_view: Some(res),
-            }),
-        },
+        Ok(res) => eval_tx_status(res),
         Err(e) => Err(TxError {
             err: Some(e),
             tx_view: None,
+            location: None,
+            abort_code: None,
         }),
     }
 }
@@ -119,7 +121,13 @@ pub fn save_dont_send_tx(
     save_path: Option<PathBuf>,
 ) -> Result<SignedTransaction, TxError> {
     let mut client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint)
-    .map_err(|e| { TxError { err: Some(e), tx_view:  None }})?;
+    .map_err(|e| { TxError { 
+      err: Some(e),
+      tx_view:  None,
+      location: None,
+      abort_code: None,
+      }
+    })?;
 
     let (_account_data, txn) = stage(script, tx_params, &mut client)?;
     if let Some(path) = save_path {
@@ -486,17 +494,33 @@ pub fn wait_for_tx(
 }
 
 /// Evaluate the response of a submitted txs transaction.
-pub fn eval_tx_status(result: &TransactionView) -> Result<(), Error> {
-    match result.vm_status == VMStatusView::Executed {
-        true => {
+pub fn eval_tx_status(result: TransactionView) -> Result<TransactionView, TxError> {
+    match &result.vm_status {
+        VMStatusView::Executed => {
             println!("\nSuccess: transaction executed");
-            Ok(())
-        }
-        false => {
+            Ok(result)
+        },
+        VMStatusView::MoveAbort {location, abort_code, explanation: _ } => {
             println!("Transaction failed");
+            Err(TxError{
+                err: Some(Error::msg(format!("Rejected with code: {:?}", result.vm_status))),
+                tx_view: Some(result.clone()),
+                location: Some(location.to_string()),
+                abort_code: Some(*abort_code),
+            })
+            // let msg = format!("Rejected with code: {:?}", result.vm_status);
+            // let e = Error::msg(msg);
+            // Err(e.context(result.vm_status.clone()))
+        },
+        _ => {
             let msg = format!("Rejected with code: {:?}", result.vm_status);
             let e = Error::msg(msg);
-            Err(e.context(result.vm_status.clone()))
+            Err(TxError{
+                err: Some(e),
+                tx_view: Some(result),
+                location: None,
+                abort_code: None,
+            })
         }
     }
 }
