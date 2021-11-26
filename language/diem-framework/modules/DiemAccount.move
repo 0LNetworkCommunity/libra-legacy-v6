@@ -490,10 +490,12 @@ module DiemAccount {
         add_currencies_for_account<GAS>(&new_signer, false);
         make_account(new_signer, new_account_authkey_prefix);
 
+        // if the initial coin sent is the minimum amount, don't check transfer limits.
         if (value <= BOOTSTRAP_COIN_VALUE) {
             onboarding_gas_transfer<GAS>(sender, new_account, value);
             new_account
         }
+        // otherwise, if the onboarder wants to send more, then it must respect the transfer limits.
         else {
             let with_cap = extract_withdraw_capability(sender);
             pay_from<GAS>(
