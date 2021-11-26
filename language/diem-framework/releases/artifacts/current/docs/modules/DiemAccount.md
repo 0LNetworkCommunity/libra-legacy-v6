@@ -1471,10 +1471,12 @@ Initialize this module. This is only callable from genesis.
     <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_signer, <b>false</b>);
     <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_signer, new_account_authkey_prefix);
 
+    // <b>if</b> the initial coin sent is the minimum amount, don't check transfer limits.
     <b>if</b> (value &lt;= <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>) {
         <a href="DiemAccount.md#0x1_DiemAccount_onboarding_gas_transfer">onboarding_gas_transfer</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender, new_account, value);
         new_account
     }
+    // otherwise, <b>if</b> the onboarder wants <b>to</b> send more, then it must respect the transfer limits.
     <b>else</b> {
         <b>let</b> with_cap = <a href="DiemAccount.md#0x1_DiemAccount_extract_withdraw_capability">extract_withdraw_capability</a>(sender);
         <a href="DiemAccount.md#0x1_DiemAccount_pay_from">pay_from</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(

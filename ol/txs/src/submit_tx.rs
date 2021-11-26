@@ -495,7 +495,8 @@ pub fn eval_tx_status(result: &TransactionView) -> Result<(), Error> {
         false => {
             println!("Transaction failed");
             let msg = format!("Rejected with code: {:?}", result.vm_status);
-            Err(Error::msg(msg))
+            let e = Error::msg(msg);
+            Err(e.context(result.vm_status.clone()))
         }
     }
 }

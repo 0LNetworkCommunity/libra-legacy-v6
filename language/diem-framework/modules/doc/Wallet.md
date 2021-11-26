@@ -753,9 +753,8 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_list_tx_by_epoch">list_tx_by_epoch</a>(epoch: u64): vector&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt; <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a> {
-    <b>let</b> c = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>&gt;(@0x0);
-    // reset approved list
-    c.approved = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;();
+    <b>let</b> c = borrow_global&lt;<a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>&gt;(@0x0);
+
     // <b>loop</b> proposed list
     <b>let</b> pending = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;();
     <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&c.proposed);
@@ -765,8 +764,6 @@
       <b>if</b> (t.expire_epoch == epoch) {
 
         <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(&<b>mut</b> pending, *t);
-        // TODO: clear the freeze count on community wallet
-        // add <b>to</b> approved list
       };
       i = i + 1;
     };
