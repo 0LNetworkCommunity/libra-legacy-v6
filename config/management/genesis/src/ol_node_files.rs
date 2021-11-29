@@ -111,9 +111,9 @@ pub fn write_node_config_files(
         }
     };
     
-    // storage_helper
-    //   .insert_waypoint(&namespace, genesis_waypoint)
-    //   .unwrap();
+    storage_helper
+      .insert_waypoint(&namespace, genesis_waypoint)
+      .unwrap();
 
     // Write the genesis waypoint without a namespaced storage.
     let mut disk_storage = OnDiskStorageConfig::default();

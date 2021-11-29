@@ -1,4 +1,4 @@
-//! `CreateAccount` subcommand
+//! `autopay-batch` subcommand
 
 #![allow(clippy::never_loop)]
 

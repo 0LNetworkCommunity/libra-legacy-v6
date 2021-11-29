@@ -281,7 +281,7 @@ the miner last created a new account
 
 
 
-<pre><code><b>const</b> <a href="TowerState.md#0x1_TowerState_EPOCHS_UNTIL_ACCOUNT_CREATION">EPOCHS_UNTIL_ACCOUNT_CREATION</a>: u64 = 6;
+<pre><code><b>const</b> <a href="TowerState.md#0x1_TowerState_EPOCHS_UNTIL_ACCOUNT_CREATION">EPOCHS_UNTIL_ACCOUNT_CREATION</a>: u64 = 14;
 </code></pre>
 
 
@@ -640,6 +640,13 @@ Permissions: PUBLIC, ANYONE
   // Get address, assumes the sender is the signer.
   <b>let</b> miner_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sign);
 
+  // Skip this check on local tests, we need tests <b>to</b> send different difficulties.
+  <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
+    // Get vdf difficulty constant. Will be different in tests than in production.
+    <b>let</b> difficulty_constant = <a href="Globals.md#0x1_Globals_get_vdf_difficulty">Globals::get_vdf_difficulty</a>();
+    <b>assert</b>(&proof.difficulty == &difficulty_constant, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130102));
+  };
+
   // This may be the 0th proof of an end user that hasn't had tower state initialized
   <b>if</b> (!<a href="TowerState.md#0x1_TowerState_is_init">is_init</a>(miner_addr)) {
     // check proof belongs <b>to</b> user.
@@ -650,12 +657,7 @@ Permissions: PUBLIC, ANYONE
     <b>return</b>
   };
 
-  // Skip this check on local tests, we need tests <b>to</b> send different difficulties.
-  <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
-    // Get vdf difficulty constant. Will be different in tests than in production.
-    <b>let</b> difficulty_constant = <a href="Globals.md#0x1_Globals_get_vdf_difficulty">Globals::get_vdf_difficulty</a>();
-    <b>assert</b>(&proof.difficulty == &difficulty_constant, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130102));
-  };
+
   // Process the proof
   <a href="TowerState.md#0x1_TowerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);
 }
@@ -1191,7 +1193,7 @@ Public Getters ///
   <b>if</b> (<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(node_addr)) {
     <b>return</b>
       borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(node_addr).epochs_since_last_account_creation
-      &gt; <a href="TowerState.md#0x1_TowerState_EPOCHS_UNTIL_ACCOUNT_CREATION">EPOCHS_UNTIL_ACCOUNT_CREATION</a>
+      &gt;= <a href="TowerState.md#0x1_TowerState_EPOCHS_UNTIL_ACCOUNT_CREATION">EPOCHS_UNTIL_ACCOUNT_CREATION</a>
   };
   <b>false</b>
 }
