@@ -1,0 +1,80 @@
+version: "3.8"
+services:
+  debug:
+    image: nourspace/openlibra:latest
+    container_name: 0l-debug
+    restart: "no"
+    network_mode: host
+    volumes:
+      - node_data:/root/.0L
+    entrypoint: [ "bash" ]
+    ports:
+      - 16179:6179
+      - 16180:6180
+      - 18080:8080
+      - 13030:3030
+    ulimits:
+      nproc: 100000
+      nofile: 100000
+
+  fullnode:
+    image: nourspace/openlibra:latest
+    container_name: 0l-fullnode
+    restart: "always"
+    network_mode: host
+    volumes:
+      - node_data:/root/.0L
+    entrypoint: ""
+    command:
+      [
+        "diem-node",
+        "--config",
+        "/root/.0L/fullnode.node.yaml"
+      ]
+    ports:
+      - 6179:6179
+      - 6180:6180
+      - 8080:8080
+    ulimits:
+      nproc: 100000
+      nofile: 100000
+
+  tower:
+    image: nourspace/openlibra:latest
+    container_name: 0l-tower
+    restart: "always"
+    network_mode: host
+    volumes:
+      - node_data:/root/.0L
+    # once fullnode is synced
+    #entrypoint: [ "tower", "--verbose", "start" ]
+    entrypoint: [ "tower", "--use-upstream-url", "--verbose", "start" ]
+    ulimits:
+      nproc: 100000
+      nofile: 100000
+    environment:
+      NODE_ENV: "prod"
+      TEST: "y"
+      MNEM: "$MNEM"
+
+  monitor:
+    image: nourspace/openlibra:latest
+    container_name: 0l-monitor
+    restart: "always"
+    network_mode: host
+    volumes:
+      - node_data:/root/.0L
+    entrypoint: [ "ol", "serve" ]
+    ports:
+      - 3030:3030
+    ulimits:
+      nproc: 100000
+      nofile: 100000
+
+volumes:
+  node_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /root/.0L/
