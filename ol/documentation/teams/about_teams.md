@@ -7,9 +7,13 @@ The idea of teams is to scale up the forming of social groups. This is relevant 
 
 The outcome of a successful Teams implementation is that validator nodes in the network become Decentralized Autonomous Organizations (DAOs).
 
-Teams are opt-in, self-assembled groups. People can move freely between teams. What team you are on signals a number of things, but importantly it shows support for a captain and their activities (do they successfully operate nodes, do they participate in network governance, do they provide work and input actively to a network). The network will not enforce a percentage share between Captains and Members. This is a market, and we'll let the market decide what is appropriate.
+Teams are opt-in, self-assembled groups. People can move freely between teams. What team you are on signals a number of things, but importantly it shows support for a "team captain" and their activities: do they successfully operate nodes, do they participate in network governance, do they provide work and input actively to a network. 
 
-Teams will be rolled out in phases. [See the rollout plan](./teams_rollout.md)
+For consensus purposes, Teams mean that end user desktop miners (using Carpe), are now included in the security model, with the pooling of delay tower heights. They also share in the rewards of the validator node (operated by a Captain). More below
+
+The network will not enforce a percentage share between Captains and Members. This is a market, and we'll let the market decide what is appropriate. The network will however bias toward decentralizations, and ratchet-up the threshold for a collective tower hight that a validator node is required to have to enter consensus.
+
+Teams would be rolled out in phases. [See the rollout plan](./teams_rollout.md)
 ## Definitions
 
 Team: a list of addresses. These addresses map to individuals, institutions, or DAO. The address may be a standard account or a multisig.
@@ -46,10 +50,9 @@ Teams also allow for other rewards to potentially be shared. 0L is not explicit 
 
 The vote weight for upgrade vote counting is the same as consensus voting, i.e., the Team Weight will count toward upgrade votes.
 
-
 # Difficulty Ratchet
 
-Difficulty adjustments of Delay Towers can either create centralization, or decentralization. To maximize credible neutrality of the platform, the difficulty adjustment should bias towards each Team (validator position) having thousands of Members. If there was no "difficulty adjustment" to the collective Tower Height, it would be possible for a single entity, to have a Team of 1, and not share any rewards. On the other extreme the difficulty adjustment may be too difficult, and very few Teams pass the threshold, and thus the network has fewer nodes, and less security (and less credible neutrality).
+Difficulty adjustments of Delay Towers can either create centralization, or decentralization. To maximize credible neutrality of the platform, the difficulty adjustment should bias towards each Team (validator position) having thousands of Members. If there was no "difficulty adjustment" to the collective Tower Height, it would be possible for a single entity to have a Team of one, and not share any rewards. On the other extreme the difficulty adjustment may be too difficult, and very few Teams pass the threshold, and thus the network has fewer nodes, and less security (and less credible neutrality).
 
 The Difficulty Ratchet, monotonically increases the difficulty to keep pace with the height of delay towers being built accross the network.
 
@@ -60,7 +63,6 @@ The first "ratchet" is to increase the difficulty above the level which a single
 The network will not enforce a percentage share between Captains and Members. This is a market, and we'll let the market decide what is appropriate.
 
 The subsequent automated ratcheting, will nominally keep pace with tower creation but also bias towards more towers participating in a single validator. If all Captains in the network are on average able to keep a high share of the pool (e.g 90%) with few "members", then this is a sign that the difficulty needs to increase to bias toward more towers. Thus the ratchet increases most when the average share of the pool to Members is low. 
-
 
 # Account Transactions
 
