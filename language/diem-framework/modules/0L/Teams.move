@@ -27,11 +27,11 @@ module Teams {
     }
 
     struct Team has key, copy, drop, store {
-      captain: address, // A validator account.
+      captain: address, // A validator account. TODO this is redundant, since it is stored in the validator account. But placed here for future-proofing.
       team_name: vector<u8>, // A validator account.
       members: vector<address>,
       operator_pct_reward: u64, // the percentage of the rewards that the captain proposes to go to the validator operator.
-      tribal_tower_height_this_epoch: u64,
+      collective_tower_height_this_epoch: u64,
     }
 
     // this struct is stored in the member's account
@@ -68,7 +68,7 @@ module Teams {
           team_name, // A validator account.
           members: Vector::empty<address>(),
           operator_pct_reward, // the percentage of the rewards that the captain proposes to go to the validator operator.
-          tribal_tower_height_this_epoch: 0,
+          collective_tower_height_this_epoch: 0,
         }
       );
     }

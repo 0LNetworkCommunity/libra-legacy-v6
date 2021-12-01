@@ -1,6 +1,7 @@
 //! 'query'
 use std::collections::BTreeMap;
 
+use anyhow::{bail, Error};
 use hex::decode;
 use diem_json_rpc_client::{AccountAddress, views::{BytesView, EventView, TransactionView}};
 use move_binary_format::{file_format::{Ability, AbilitySet}};
@@ -195,6 +196,20 @@ impl Node {
             }
         }
     }
+
+    /// get a move struct
+    pub fn get_move_struct(&mut self, account: AccountAddress, module_name: String, struct_name: String) -> Result<AnnotatedMoveStruct, Error> {
+      match self.get_annotate_account_blob(account) {
+          Ok((Some(r), _)) => {
+            match get_struct_from_state(&r, module_name, struct_name.clone()) {
+                Some(a) => Ok(a.to_owned()),
+                None => bail!("Could not find struct {} in resource", &struct_name),
+            }
+          },
+          Err(e) => bail!("Error querying account resource. Message: {:#?}", e),
+          _ => bail!("Error, cannot find account state for {:#?}", account),
+      }
+    }
 }
 
 
@@ -284,15 +299,23 @@ pub fn find_value_from_state(
     struct_name: String,
     key_name: String,
 ) -> Option<&AnnotatedMoveValue> {
-    match blob.0.values().find(|&s| {
-        s.type_.module.as_ref().to_string() == module_name
-        && s.type_.name.as_ref().to_string() == struct_name
-    }) {
+    match get_struct_from_state(blob, module_name, struct_name){
         Some(s) => find_value_in_struct(s, key_name),
         None => None,
     }
 }
 
+/// return an annotated struct
+pub fn get_struct_from_state(
+    blob: &AnnotatedAccountStateBlob,
+    module_name: String,
+    struct_name: String,
+) -> Option<&AnnotatedMoveStruct> {
+    blob.0.values().find(|&s| {
+        s.type_.module.as_ref().to_string() == module_name
+        && s.type_.name.as_ref().to_string() == struct_name
+    })
+}
 
 /// test fixtures
 pub fn test_fixture_blob() -> AnnotatedAccountStateBlob {
@@ -319,6 +342,12 @@ pub fn test_fixture_struct() -> AnnotatedMoveStruct {
         type_: module_tag.clone(),
         value: vec![(key, value)],
     }
+}
+
+/// test query team
+pub fn test_tean_resource() -> Team {
+
+
 }
 
 #[test]
