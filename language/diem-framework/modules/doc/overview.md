@@ -152,7 +152,7 @@ The Move modules in the Diem Framework can be bucketed in to a couple categories
 -  [`0x1::Subsidy`](Subsidy.md#0x1_Subsidy)
 -  [`0x1::SystemAdministrationScripts`](SystemAdministrationScripts.md#0x1_SystemAdministrationScripts)
 -  [`0x1::Teams`](Teams.md#0x1_Teams)
--  [`0x1::TeamsScripts`](ol_delegation.md#0x1_TeamsScripts)
+-  [`0x1::TeamsScripts`](ol_teams.md#0x1_TeamsScripts)
 -  [`0x1::TestFixtures`](TestFixtures.md#0x1_TestFixtures)
 -  [`0x1::Testnet`](Testnet.md#0x1_Testnet)
 -  [`0x1::TowerState`](TowerState.md#0x1_TowerState)

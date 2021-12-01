@@ -2225,6 +2225,10 @@ pub enum ScriptFunctionCall {
 
     Join {},
 
+    JoinTeam {
+        captain: AccountAddress,
+    },
+
     Leave {},
 
     MinerstateCommit {
@@ -3654,6 +3658,7 @@ impl ScriptFunctionCall {
                 encode_initialize_diem_consensus_config_script_function(sliding_nonce)
             }
             Join {} => encode_join_script_function(),
+            JoinTeam { captain } => encode_join_team_script_function(captain),
             Leave {} => encode_leave_script_function(),
             MinerstateCommit {
                 challenge,
@@ -4991,6 +4996,18 @@ pub fn encode_join_script_function() -> TransactionPayload {
         ident_str!("join").to_owned(),
         vec![],
         vec![],
+    ))
+}
+
+pub fn encode_join_team_script_function(captain: AccountAddress) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("TeamsScripts").to_owned(),
+        ),
+        ident_str!("join_team").to_owned(),
+        vec![],
+        vec![bcs::to_bytes(&captain).unwrap()],
     ))
 }
 
@@ -8413,6 +8430,16 @@ fn decode_join_script_function(payload: &TransactionPayload) -> Option<ScriptFun
     }
 }
 
+fn decode_join_team_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::JoinTeam {
+            captain: bcs::from_bytes(script.args().get(0)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_leave_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
         Some(ScriptFunctionCall::Leave {})
@@ -9368,6 +9395,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "ValidatorScriptsjoin".to_string(),
             Box::new(decode_join_script_function),
+        );
+        map.insert(
+            "TeamsScriptsjoin_team".to_string(),
+            Box::new(decode_join_team_script_function),
         );
         map.insert(
             "ValidatorScriptsleave".to_string(),

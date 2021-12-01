@@ -23,6 +23,8 @@ mod authkey_cmd;
 mod create_validator_cmd;
 mod oracle_upgrade_cmd;
 mod version_cmd;
+mod join_team_cmd;
+mod create_team_cmd;
 
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use ol::commands::CONFIG_FILE;
@@ -40,7 +42,9 @@ use self::{
     valset_cmd::ValSetCmd,
     wallet_cmd::WalletCmd,
     authkey_cmd::AuthkeyCmd,
-    transfer_cmd::TransferCmd,   
+    transfer_cmd::TransferCmd,
+    join_team_cmd::JoinTeamCmd,
+    create_team_cmd::CreateTeamCmd,
 };
 use std::path::PathBuf;
 
@@ -100,6 +104,14 @@ pub enum TxsCmd {
     /// The `authkey` subcommand to rotate an auth key (change mnemonic that controls address)
     #[options(help = "rotate an account's authorization key")]
     Authkey(AuthkeyCmd),
+
+    /// Create team
+    #[options(help = "create a team (must be an existing validator)")]
+    CreateTeam(CreateTeamCmd),
+
+    /// Submit TX to join a team
+    #[options(help = "join or switch to a team")]
+    JoinTeam(JoinTeamCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

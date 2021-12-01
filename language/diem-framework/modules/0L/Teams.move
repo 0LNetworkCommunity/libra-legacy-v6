@@ -18,6 +18,7 @@ module Teams {
     use 0x1::Vector;
     use 0x1::Signer;
     use 0x1::DiemAccount;
+    use 0x1::ValidatorUniverse;
 
     const ENOT_SLOW_WALLET: u64 = 1010;
     
@@ -53,6 +54,8 @@ module Teams {
 
 
     public fun team_init(sender: &signer, team_name: vector<u8>, operator_pct_reward: u64) {
+
+      assert(ValidatorUniverse::is_in_universe(Signer::address_of(sender)), 201301001);
       // An "captain", who is already a validator account, stores the Team struct on their account.
       // the AllTeams struct is saved in the 0x0 account, and needs to be initialized before this is called.
 
