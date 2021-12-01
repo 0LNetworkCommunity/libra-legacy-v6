@@ -9,6 +9,7 @@ use move_core_types::{
     identifier::Identifier,
     language_storage::{StructTag, TypeTag},
 };
+use diem_types::ol_teams_state::TeamsResource;
 use num_format::{Locale, ToFormattedString};
 use resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct, AnnotatedMoveValue};
 use super::node::Node;
@@ -64,7 +65,13 @@ pub enum QueryType {
       sent_or_received: bool,
       /// what event sequence number to start querying from, if DB does not have all.
       seq_start: Option<u64>,
+    },
+    /// Get a team at this address (captain addres)
+    Team {
+      /// account of team captain
+      account: AccountAddress,
     }
+
 }
 
 /// Get data from a client, with a query type. Will connect to local only if in sync.
@@ -193,6 +200,11 @@ impl Node {
                     }
                 };
                 print
+            },
+            Team { account} => {
+                let team = self.get_teams_resource(account).unwrap();
+
+                format!("TEAM: {:?}", team)
             }
         }
     }
@@ -210,6 +222,21 @@ impl Node {
           _ => bail!("Error, cannot find account state for {:#?}", account),
       }
     }
+
+    /// test query team
+    pub fn get_teams_resource(&mut self, address: AccountAddress) -> Result<TeamsResource, Error> {
+      match self.get_account_state(address) {
+        Ok(a) => {
+          match a.get_resource::<TeamsResource>() {
+              Ok(Some(t)) => return Ok(t),
+              _ => {}
+          }
+        },
+        _ => {},
+      };
+
+      bail!("cannot find Teams resource on account");
+  }
 }
 
 
@@ -344,11 +371,7 @@ pub fn test_fixture_struct() -> AnnotatedMoveStruct {
     }
 }
 
-/// test query team
-pub fn test_tean_resource() -> Team {
 
-
-}
 
 #[test]
 fn test_find_annotated_move_value() {
