@@ -43,7 +43,7 @@ pub fn process_backlog(
                 let view = commit_proof_tx(
                     &tx_params, block, is_operator
                 )?;
-                match eval_tx_status(&view) {
+                match eval_tx_status(view) {
                     Ok(_) => {},
                     Err(e) => {
                       println!("WARN: could not fetch TX status, continuing to next block in backlog after 30 seconds. Message: {:?} ", e);

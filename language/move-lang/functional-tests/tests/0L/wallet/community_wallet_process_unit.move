@@ -1,5 +1,8 @@
 
 // Todo: These GAS values have no effect, all accounts start with 1M GAS
+
+//! account: dummy, 1000000GAS, 0, validator
+
 //! account: alice, 1000000GAS, 0
 //! account: bob,   1000000GAS, 0
 
@@ -30,6 +33,8 @@ script {
 script {
     use 0x1::DiemAccount;
     use 0x1::GAS::GAS;
+    use 0x1::Wallet;
+    use 0x1::Vector;
 
     fun main(vm: signer) {
       let bob_balance = DiemAccount::balance<GAS>(@{{bob}});
@@ -39,6 +44,16 @@ script {
 
       let bob_balance = DiemAccount::balance<GAS>(@{{bob}});
       assert(bob_balance == 1000100, 7357005);
+
+      // assert the community wallet queue has moved the pending transfer to the completed
+      let list: vector<Wallet::TimedTransfer> = Wallet::list_transfers(0);
+      assert(Vector::length(&list) == 0, 7357006);
+
+      let list: vector<Wallet::TimedTransfer> = Wallet::list_transfers(1);
+      assert(Vector::length(&list) == 1, 7357007);
+
+      let list: vector<Wallet::TimedTransfer> = Wallet::list_transfers(2);
+      assert(Vector::length(&list) == 0, 7357008);
     }
 }
 
