@@ -29,7 +29,7 @@ script {
     use 0x1::TowerState;
 
     fun main(vm: signer) {
-      TowerState::epoch_reset(&vm);
+      TowerState::test_epoch_reset(&vm);
     }
 }
 
