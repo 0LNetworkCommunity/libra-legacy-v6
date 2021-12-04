@@ -55,7 +55,7 @@ script {
         // assert(DiemSystem::validator_set_size() == 5, 7357300101011000);
         assert(DiemSystem::is_validator(@{{alice}}) == true, 735701);
 
-        assert(TowerState::get_count_in_epoch(@{{alice}}) == 1, 735702);
+        assert(TowerState::get_count_in_epoch(@{{alice}}) == 0, 735702);
         assert(DiemAccount::balance<GAS>(@{{alice}}) == 1000000, 735703);
         assert(NodeWeight::proof_of_weight(@{{alice}}) == 0, 735704);
 

@@ -7,7 +7,6 @@
 script {
     use 0x1::TowerState;
     use 0x1::TestFixtures;
-    use 0x1::Debug::print;
 
     // SIMULATES A MINER ONBOARDING PROOF (proof_0.json)
     fun main(sender: signer) {
@@ -26,8 +25,8 @@ script {
 
         assert(verified_tower_height_after == height_after, 10008001);
 
-        let compliant = TowerState::get_epochs_compliant(@{{alice}});
-        print(&compliant);
+        // From genesis the validator will have 1 epochs compliant?
+        assert(TowerState::get_epochs_compliant(@{{alice}}) == 1, 735701);
     }
 }
 // check: EXECUTED
@@ -38,7 +37,6 @@ script {
 script {
     use 0x1::TowerState;
     use 0x1::TestFixtures;
-    use 0x1::Debug::print;
 
     // SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
     fun main(sender: signer) {
@@ -55,9 +53,6 @@ script {
 
         let verified_height = TowerState::test_helper_get_height(@{{alice}});
         assert(verified_height == height_after, 10008002);
-
-        let compliant = TowerState::get_epochs_compliant(@{{alice}});
-        print(&compliant);
     }
 }
 // check: EXECUTED
@@ -67,24 +62,13 @@ script {
 //! sender: diemroot
 script {
     use 0x1::EpochBoundary;
+    use 0x1::TowerState;
 
     // SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
     fun main(vm: signer) {
       EpochBoundary::reconfigure(&vm, 100);
+      
+      // no change from before epoch boundary
+      assert(TowerState::get_epochs_compliant(@{{alice}}) == 1, 735701);
     }
 }
-
-//! new-transaction
-//! sender: alice
-script {
-    use 0x1::TowerState;
-    // use 0x1::Debug::print;
-
-    // SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
-    fun main(_: signer) {
-        let compliant = TowerState::get_epochs_compliant(@{{alice}});
-        assert(compliant == 1, 735701);
-        // print(&compliant);
-    }
-}
-// check: EXECUTED

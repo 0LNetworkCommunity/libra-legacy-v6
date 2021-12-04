@@ -20,8 +20,6 @@ module TowerState {
     use 0x1::VDF;
     use 0x1::Vector;
 
-    use 0x1::Debug::print;
-
     const EPOCHS_UNTIL_ACCOUNT_CREATION: u64 = 14;
 
     /// A list of all miners' addresses 
@@ -307,8 +305,7 @@ module TowerState {
       // The goal of update_metrics is to confirm that a miner participated in consensus during
       // an epoch, but also that there were mining proofs submitted in that epoch.
       CoreAddresses::assert_diem_root(account);
-      print(&401);
-      print(&miner_addr);
+
       // Tower may not have been initialized. 
       // Simply return in this case (don't abort)
       if(!is_init(miner_addr)) { return };
@@ -317,12 +314,9 @@ module TowerState {
       // Account may not have any proofs submitted in epoch, since 
       // the resource was last emptied.
       let passed = node_above_thresh(miner_addr);
-      print(&passed);
       let miner_history = borrow_global_mut<TowerProofHistory>(miner_addr);
-      print(miner_history);
       // Update statistics.
       if (passed) {
-        print(&40101);
           // let this_epoch = DiemConfig::get_current_epoch();
           // miner_history.latest_epoch_mining = this_epoch; // TODO: Don't need this
           miner_history.epochs_validating_and_mining 
@@ -332,14 +326,12 @@ module TowerState {
           miner_history.epochs_since_last_account_creation 
             = miner_history.epochs_since_last_account_creation + 1u64;
       } else {
-        print(&40102);
         // didn't meet the threshold, reset this count
         miner_history.contiguous_epochs_validating_and_mining = 0;
       };
 
       // This is the end of the epoch, reset the count of proofs
       miner_history.count_proofs_in_epoch = 0u64;
-      print(miner_history);
     }
 
     /// Checks to see if miner submitted enough proofs to be considered compliant
@@ -350,8 +342,7 @@ module TowerState {
     // Used at epoch boundary by vm to reset all validator's statistics.
     // Permissions: PUBLIC, ONLY VM.
     public fun reconfig(vm: &signer, outgoing_validators: &vector<address>) acquires TowerProofHistory, TowerList {
-      print(&444444);
-      print(outgoing_validators);
+      
       // Check permissions
       CoreAddresses::assert_diem_root(vm);
 
@@ -491,7 +482,6 @@ module TowerState {
     public fun get_count_in_epoch(miner_addr: address): u64 acquires TowerProofHistory {
       if (exists<TowerProofHistory>(miner_addr)) {
         let s = borrow_global<TowerProofHistory>(miner_addr);
-        print(&DiemConfig::get_current_epoch());
         if (s.latest_epoch_mining == DiemConfig::get_current_epoch()) {
           return s.count_proofs_in_epoch
         };
