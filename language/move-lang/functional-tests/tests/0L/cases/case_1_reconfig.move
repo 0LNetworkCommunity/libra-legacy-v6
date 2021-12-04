@@ -116,6 +116,7 @@ script {
     use 0x1::DiemAccount;
     use 0x1::Subsidy;
     use 0x1::Globals;
+    use 0x1::TowerState;
 
     fun main(_vm: signer) {
         // We are in a new epoch.
@@ -133,7 +134,11 @@ script {
         let ending_balance = starting_balance + expected_subsidy - operator_refund;
 
         assert(DiemAccount::balance<GAS>(@{{alice}}) == ending_balance, 7357000180113);  
-        assert(NodeWeight::proof_of_weight(@{{alice}}) == 0, 7357000180114);  
+        assert(NodeWeight::proof_of_weight(@{{alice}}) == 0, 7357000180114);
+
+        // Case 1, increments the epochs_validating_and_mining, which is used for rate-limiting onboarding
+        assert(TowerState::get_epochs_compliant(@{{alice}}) == 1, 7357000180115);  
+
     }
 }
 //check: EXECUTED

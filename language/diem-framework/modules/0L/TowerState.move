@@ -493,7 +493,7 @@ module TowerState {
     // Returns number of epochs user successfully mined AND validated
     // Permissions: PUBLIC, ANYONE
     // TODO: Rename
-    public fun get_epochs_mining(node_addr: address): u64 acquires TowerProofHistory {
+    public fun get_epochs_compliant(node_addr: address): u64 acquires TowerProofHistory {
       if (exists<TowerProofHistory>(node_addr)) {
         return borrow_global<TowerProofHistory>(node_addr).epochs_validating_and_mining
       };
