@@ -78,12 +78,13 @@ script {
 //! sender: alice
 script {
     use 0x1::TowerState;
-    use 0x1::Debug::print;
+    // use 0x1::Debug::print;
 
     // SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
     fun main(_: signer) {
         let compliant = TowerState::get_epochs_compliant(@{{alice}});
-        print(&compliant);
+        assert(compliant == 1, 735701);
+        // print(&compliant);
     }
 }
 // check: EXECUTED

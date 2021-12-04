@@ -22,6 +22,7 @@ script {
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
+    use 0x1::Debug::print;
 
     fun main(sender: signer) {
         // Tests on initial size of validators
@@ -36,6 +37,9 @@ script {
         // Alice continues to mine after genesis.
         // This test is adapted from chained_from_genesis.move
         TowerState::test_helper_mock_mining(&sender, 5);
+        let a = TowerState::get_epochs_compliant(@{{alice}});
+        print(&a);
+
         assert(TowerState::get_count_in_epoch(@{{alice}}) == 5, 7357300101071000);
     }
 }
@@ -137,7 +141,7 @@ script {
         assert(NodeWeight::proof_of_weight(@{{alice}}) == 0, 7357000180114);
 
         // Case 1, increments the epochs_validating_and_mining, which is used for rate-limiting onboarding
-        assert(TowerState::get_epochs_compliant(@{{alice}}) == 1, 7357000180115);  
+        assert(TowerState::get_epochs_compliant(@{{alice}}) == 0, 7357000180115);  
 
     }
 }

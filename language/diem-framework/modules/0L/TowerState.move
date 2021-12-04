@@ -21,6 +21,8 @@ module TowerState {
     use 0x1::VDF;
     use 0x1::Vector;
 
+    use 0x1::Debug::print;
+
     const EPOCHS_UNTIL_ACCOUNT_CREATION: u64 = 14;
 
     /// A list of all miners' addresses 
@@ -314,7 +316,8 @@ module TowerState {
       // The goal of update_metrics is to confirm that a miner participated in consensus during
       // an epoch, but also that there were mining proofs submitted in that epoch.
       CoreAddresses::assert_diem_root(account);
-
+      print(&401);
+      print(&miner_addr);
       // Tower may not have been initialized. 
       // Simply return in this case (don't abort)
       if(!is_init(miner_addr)) { return };
@@ -324,11 +327,11 @@ module TowerState {
       // the resource was last emptied.
       let passed = node_above_thresh(miner_addr);
       let miner_history = borrow_global_mut<TowerProofHistory>(miner_addr);
-      
+      print(miner_history);
       // Update statistics.
       if (passed) {
           let this_epoch = DiemConfig::get_current_epoch();
-          miner_history.latest_epoch_mining = this_epoch;
+          miner_history.latest_epoch_mining = this_epoch; // TODO: Don't need this
           miner_history.epochs_validating_and_mining 
             = miner_history.epochs_validating_and_mining + 1u64;
           miner_history.contiguous_epochs_validating_and_mining 
@@ -342,6 +345,43 @@ module TowerState {
 
       // This is the end of the epoch, reset the count of proofs
       miner_history.count_proofs_in_epoch = 0u64;
+      print(miner_history);
+    }
+
+    // resets the miner statistics
+    // TODO: this is too much work for resetting counting proofs in epoch.
+    fun update_miner_metrics(account: &signer, miner_addr: address) acquires TowerProofHistory {
+      // The goal of update_metrics is to confirm that a miner participated in consensus during
+      // an epoch, but also that there were mining proofs submitted in that epoch.
+      CoreAddresses::assert_diem_root(account);
+
+      // Tower may not have been initialized. 
+      // Simply return in this case (don't abort)
+      if(!is_init(miner_addr)) { return };
+
+      // Check that there was mining and validating in period.
+      // Account may not have any proofs submitted in epoch, since 
+      // the resource was last emptied.
+      // let passed = node_above_thresh(miner_addr);
+      let miner_history = borrow_global_mut<TowerProofHistory>(miner_addr);
+      
+      // // Update statistics.
+      // if (passed) {
+      //     let this_epoch = DiemConfig::get_current_epoch();
+      //     miner_history.latest_epoch_mining = this_epoch;
+      //     miner_history.epochs_validating_and_mining 
+      //       = miner_history.epochs_validating_and_mining + 1u64;
+      //     miner_history.contiguous_epochs_validating_and_mining 
+      //       = miner_history.contiguous_epochs_validating_and_mining + 1u64;
+      //     miner_history.epochs_since_last_account_creation 
+      //       = miner_history.epochs_since_last_account_creation + 1u64;
+      // } else {
+      //   // didn't meet the threshold, reset this count
+      //   miner_history.contiguous_epochs_validating_and_mining = 0;
+      // };
+
+      // This is the end of the epoch, reset the count of proofs
+      miner_history.count_proofs_in_epoch = 0u64;
     }
 
     /// Checks to see if miner submitted enough proofs to be considered compliant
@@ -352,28 +392,40 @@ module TowerState {
 
     // Used at end of epoch with reconfig bulk_update the TowerState with the vector of validators from current epoch.
     // Permissions: PUBLIC, ONLY VM.
-    public fun reconfig(vm: &signer, migrate_eligible_validators: &vector<address>) acquires TowerProofHistory, TowerList {
+    public fun reconfig(vm: &signer, outgoing_validators: &vector<address>) acquires TowerProofHistory, TowerList {
+      print(&444444);
+      print(outgoing_validators);
       // Check permissions
       CoreAddresses::assert_diem_root(vm);
 
-      // check TowerList exists, or use eligible_validators to initialize.
-      // Migration on hot upgrade
+      // safety
       if (!exists<TowerList>(@0x0)) {
-        move_to<TowerList>(vm, TowerList {
-          list: *migrate_eligible_validators
-        });
+        return
       };
-
+      
       let towerlist_state = borrow_global_mut<TowerList>(@0x0);
 
       // Get list of validators from ValidatorUniverse
       // let eligible_validators = ValidatorUniverse::get_eligible_validators(vm);
 
-      // Iterate through validators and call update_metrics for each validator that had proofs this epoch
-      let size = Vector::length<address>(& *&towerlist_state.list); //TODO: These references are weird
+      // Iterate through miners and call update_metrics for each
+      let miners_len = Vector::length<address>(& *&towerlist_state.list); //TODO: These references are weird
       let i = 0;
-      while (i < size) {
+      while (i < miners_len) {
           let val = Vector::borrow(&towerlist_state.list, i); 
+
+          // For testing: don't call update_metrics unless there is account state for the address.
+          if (exists<TowerProofHistory>(*val)){
+              update_miner_metrics(vm, *val);
+          };
+          i = i + 1;
+      };
+
+      // Iterate through validators and call update_metrics for each validator that had proofs this epoch
+      let vals_len = Vector::length<address>(outgoing_validators); //TODO: These references are weird
+      let i = 0;
+      while (i < vals_len) {
+          let val = Vector::borrow(outgoing_validators, i); 
 
           // For testing: don't call update_metrics unless there is account state for the address.
           if (exists<TowerProofHistory>(*val)){
@@ -381,6 +433,8 @@ module TowerState {
           };
           i = i + 1;
       };
+
+
 
       //reset miner list
       towerlist_state.list = Vector::empty<address>();
