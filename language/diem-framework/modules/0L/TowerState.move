@@ -5,8 +5,7 @@
 ///////////////////////////////////////////////////////////////////
 
 address 0x1 {
-/// # Summary 
-/// TODO
+
 module TowerState {
     use 0x1::Errors;
     use 0x1::CoreAddresses;
@@ -174,7 +173,6 @@ module TowerState {
       // In rust the vm_genesis creates a Signer for the miner. 
       // So the SENDER is not the same and the Signer.
 
-
       init_miner_state(miner_sig, &challenge, &solution, difficulty, security);
       // TODO: Move this elsewhere? 
       // Initialize stats for first validator set from rust genesis. 
@@ -211,7 +209,6 @@ module TowerState {
 
       lazy_reset_count_in_epoch(miner_sign);
 
-
       // Process the proof
       verify_and_update_state(miner_addr, proof, true);
     }
@@ -230,11 +227,10 @@ module TowerState {
       
       // Get address, assumes the sender is the signer.
       assert(ValidatorConfig::get_operator(miner_addr) == Signer::address_of(operator_sig), Errors::requires_role(130103));
-      
       // Abort if not initialized. Assumes the validator Owner account already has submitted the 0th miner proof in onboarding.
       assert(exists<TowerProofHistory>(miner_addr), Errors::not_published(130104));
 
-      // return early if difficulty and security are not correct.
+      // Return early if difficulty and security are not correct.
       // Check vdf difficulty constant. Will be different in tests than in production.
       // Skip this check on local tests, we need tests to send differentdifficulties.
       if (!Testnet::is_testnet()){
@@ -260,12 +256,13 @@ module TowerState {
       proof: Proof,
       steady_state: bool
     ) acquires TowerProofHistory, TowerList, TowerStats {
-
-      let miner_history = borrow_global<TowerProofHistory>(miner_addr);
+      
       assert(
         get_count_in_epoch(miner_addr) < Globals::get_epoch_mining_thres_upper(), 
         Errors::invalid_state(130108)
       );
+
+      let miner_history = borrow_global<TowerProofHistory>(miner_addr);
 
       // If not genesis proof, check hash to ensure the proof continues the chain
       if (steady_state) {
@@ -345,34 +342,12 @@ module TowerState {
       print(miner_history);
     }
 
-    // // resets the miner statistics
-    // // TODO: this is too much work for resetting counting proofs in epoch.
-    // fun update_miner_metrics(account: &signer, miner_addr: address) acquires TowerProofHistory {
-    //   // The goal of update_metrics is to confirm that a miner participated in consensus during
-    //   // an epoch, but also that there were mining proofs submitted in that epoch.
-    //   CoreAddresses::assert_diem_root(account);
-
-    //   // Tower may not have been initialized. 
-    //   // Simply return in this case (don't abort)
-    //   if(!is_init(miner_addr)) { return };
-
-    //   // Check that there was mining and validating in period.
-    //   // Account may not have any proofs submitted in epoch, since 
-    //   // the resource was last emptied.
-    //   // let passed = node_above_thresh(miner_addr);
-    //   let miner_history = borrow_global_mut<TowerProofHistory>(miner_addr);
-
-    //   // This is the end of the epoch, reset the count of proofs
-    //   miner_history.count_proofs_in_epoch = 0u64;
-    // }
-
     /// Checks to see if miner submitted enough proofs to be considered compliant
     public fun node_above_thresh(miner_addr: address): bool acquires TowerProofHistory {
-      let miner_history = borrow_global<TowerProofHistory>(miner_addr);
       get_count_in_epoch(miner_addr) >= Globals::get_epoch_mining_thres_lower()
     }
 
-    // Used at end of epoch with reconfig bulk_update the TowerState with the vector of validators from current epoch.
+    // Used at epoch boundary by vm to reset all validator's statistics.
     // Permissions: PUBLIC, ONLY VM.
     public fun reconfig(vm: &signer, outgoing_validators: &vector<address>) acquires TowerProofHistory, TowerList {
       print(&444444);
@@ -435,7 +410,6 @@ module TowerState {
         security,
       };
 
-
       //submit the proof
       verify_and_update_state(Signer::address_of(miner_sig), proof, false);
     }
@@ -478,8 +452,6 @@ module TowerState {
       let state = borrow_global_mut<TowerProofHistory>(Signer::address_of(miner));
       state.epochs_since_last_account_creation = 0;
     }
-
-
 
     //////////////////////
     /// Public Getters ///
@@ -595,7 +567,7 @@ module TowerState {
       state.validator_proofs = 0;
       state.fullnode_proofs = 0;
     }
-    
+
     // Function index: 11
     // provides a different method to submit from the operator for use in tests 
     // where the operator cannot sign a transaction
