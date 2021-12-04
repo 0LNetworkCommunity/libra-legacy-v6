@@ -656,11 +656,12 @@ module TowerState {
       *&state.verified_tower_height
     }
 
-    // public fun test_helper_get_count(account: &signer): u64 acquires TowerProofHistory {
-    //     assert(Testnet::is_testnet(), 130115014011);
-    //     let addr = Signer::address_of(account);
-    //     borrow_global<TowerProofHistory>(addr).count_proofs_in_epoch
-    // }
+    // TODO: remove this and replace tests with get_count_in_epoch
+    public fun test_helper_get_count(account: &signer): u64 acquires TowerProofHistory {
+        assert(Testnet::is_testnet(), 130115014011);
+        let addr = Signer::address_of(account);
+        get_count_in_epoch(addr)
+    }
 
     // Function code: 16
     public fun test_helper_get_contiguous_vm(vm: &signer, miner_addr: address): u64 acquires TowerProofHistory {
