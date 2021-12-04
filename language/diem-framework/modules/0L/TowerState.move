@@ -217,6 +217,8 @@ module TowerState {
         return
       };
 
+      lazy_reset_count_in_epoch(miner_sign);
+
 
       // Process the proof
       verify_and_update_state(miner_addr, proof, true);
@@ -326,12 +328,14 @@ module TowerState {
       // Account may not have any proofs submitted in epoch, since 
       // the resource was last emptied.
       let passed = node_above_thresh(miner_addr);
+      print(&passed);
       let miner_history = borrow_global_mut<TowerProofHistory>(miner_addr);
       print(miner_history);
       // Update statistics.
       if (passed) {
-          let this_epoch = DiemConfig::get_current_epoch();
-          miner_history.latest_epoch_mining = this_epoch; // TODO: Don't need this
+        print(&40101);
+          // let this_epoch = DiemConfig::get_current_epoch();
+          // miner_history.latest_epoch_mining = this_epoch; // TODO: Don't need this
           miner_history.epochs_validating_and_mining 
             = miner_history.epochs_validating_and_mining + 1u64;
           miner_history.contiguous_epochs_validating_and_mining 
@@ -339,6 +343,7 @@ module TowerState {
           miner_history.epochs_since_last_account_creation 
             = miner_history.epochs_since_last_account_creation + 1u64;
       } else {
+        print(&40102);
         // didn't meet the threshold, reset this count
         miner_history.contiguous_epochs_validating_and_mining = 0;
       };
@@ -364,21 +369,6 @@ module TowerState {
       // the resource was last emptied.
       // let passed = node_above_thresh(miner_addr);
       let miner_history = borrow_global_mut<TowerProofHistory>(miner_addr);
-      
-      // // Update statistics.
-      // if (passed) {
-      //     let this_epoch = DiemConfig::get_current_epoch();
-      //     miner_history.latest_epoch_mining = this_epoch;
-      //     miner_history.epochs_validating_and_mining 
-      //       = miner_history.epochs_validating_and_mining + 1u64;
-      //     miner_history.contiguous_epochs_validating_and_mining 
-      //       = miner_history.contiguous_epochs_validating_and_mining + 1u64;
-      //     miner_history.epochs_since_last_account_creation 
-      //       = miner_history.epochs_since_last_account_creation + 1u64;
-      // } else {
-      //   // didn't meet the threshold, reset this count
-      //   miner_history.contiguous_epochs_validating_and_mining = 0;
-      // };
 
       // This is the end of the epoch, reset the count of proofs
       miner_history.count_proofs_in_epoch = 0u64;
@@ -387,7 +377,7 @@ module TowerState {
     /// Checks to see if miner submitted enough proofs to be considered compliant
     public fun node_above_thresh(miner_addr: address): bool acquires TowerProofHistory {
       let miner_history = borrow_global<TowerProofHistory>(miner_addr);
-      miner_history.count_proofs_in_epoch > Globals::get_epoch_mining_thres_lower()
+      miner_history.count_proofs_in_epoch >= Globals::get_epoch_mining_thres_lower()
     }
 
     // Used at end of epoch with reconfig bulk_update the TowerState with the vector of validators from current epoch.
@@ -397,29 +387,6 @@ module TowerState {
       print(outgoing_validators);
       // Check permissions
       CoreAddresses::assert_diem_root(vm);
-
-      // safety
-      if (!exists<TowerList>(@0x0)) {
-        return
-      };
-      
-      let towerlist_state = borrow_global_mut<TowerList>(@0x0);
-
-      // Get list of validators from ValidatorUniverse
-      // let eligible_validators = ValidatorUniverse::get_eligible_validators(vm);
-
-      // Iterate through miners and call update_metrics for each
-      let miners_len = Vector::length<address>(& *&towerlist_state.list); //TODO: These references are weird
-      let i = 0;
-      while (i < miners_len) {
-          let val = Vector::borrow(&towerlist_state.list, i); 
-
-          // For testing: don't call update_metrics unless there is account state for the address.
-          if (exists<TowerProofHistory>(*val)){
-              update_miner_metrics(vm, *val);
-          };
-          i = i + 1;
-      };
 
       // Iterate through validators and call update_metrics for each validator that had proofs this epoch
       let vals_len = Vector::length<address>(outgoing_validators); //TODO: These references are weird
@@ -434,10 +401,12 @@ module TowerState {
           i = i + 1;
       };
 
-
-
-      //reset miner list
-      towerlist_state.list = Vector::empty<address>();
+      // safety
+      if (exists<TowerList>(@0x0)) {
+        //reset miner list
+        let towerlist_state = borrow_global_mut<TowerList>(@0x0);
+        towerlist_state.list = Vector::empty<address>();
+      };
     }
 
     // Function to initialize miner state
@@ -557,9 +526,22 @@ module TowerState {
     // returns the number of proofs for a miner in the current epoch
     public fun get_count_in_epoch(miner_addr: address): u64 acquires TowerProofHistory {
       if (exists<TowerProofHistory>(miner_addr)) {
-        return borrow_global<TowerProofHistory>(miner_addr).count_proofs_in_epoch
+        let s = borrow_global<TowerProofHistory>(miner_addr);
+        print(&DiemConfig::get_current_epoch());
+        if (s.latest_epoch_mining == DiemConfig::get_current_epoch()) {
+          return s.count_proofs_in_epoch
+        };
       };
       0
+    }
+
+    // lazily reset proofs_in_epoch intead of looping through list.
+    fun lazy_reset_count_in_epoch(miner_sig: &signer) acquires TowerProofHistory {
+      let miner_addr = Signer::address_of(miner_sig);
+      let s = borrow_global_mut<TowerProofHistory>(miner_addr);
+      if (s.latest_epoch_mining < DiemConfig::get_current_epoch()) {
+        s.count_proofs_in_epoch = 0;
+      };
     }
 
     // Returns if the miner is above the account creation rate-limit
@@ -654,15 +636,7 @@ module TowerState {
     public fun test_helper_mock_mining(sender: &signer,  count: u64) acquires TowerProofHistory, TowerStats {
       assert(Testnet::is_testnet(), Errors::invalid_state(130118));
       let addr = Signer::address_of(sender);
-      let state = borrow_global_mut<TowerProofHistory>(addr);
-      state.count_proofs_in_epoch = count;
-      let i = 0;
-      while (i < count) {
-        increment_stats(addr);
-        i = i + 1;
-      }
-      
-      // FullnodeState::mock_proof(sender, count);
+      danger_mock_mining(addr, count);
     }
 
     // Function code: 13
@@ -670,15 +644,24 @@ module TowerState {
     public fun test_helper_mock_mining_vm(vm: &signer, addr: address, count: u64) acquires TowerProofHistory, TowerStats {
       assert(Testnet::is_testnet(), Errors::invalid_state(130120));
       CoreAddresses::assert_diem_root(vm);
+      danger_mock_mining(addr, count)
+    }
+
+    fun danger_mock_mining(addr: address, count: u64) acquires TowerProofHistory, TowerStats {
+      // again for safety
+      assert(Testnet::is_testnet(), Errors::invalid_state(130118));
+
       let state = borrow_global_mut<TowerProofHistory>(addr);
       state.count_proofs_in_epoch = count;
-
+      state.latest_epoch_mining = DiemConfig::get_current_epoch();
       let i = 0;
       while (i < count) {
         increment_stats(addr);
         i = i + 1;
       }
     }
+
+
 
     // Permissions: PUBLIC, VM, TESTING 
     // Get the vm to trigger a reconfig for testing

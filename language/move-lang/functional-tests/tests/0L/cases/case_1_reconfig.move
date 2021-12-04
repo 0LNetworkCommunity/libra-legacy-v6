@@ -30,7 +30,7 @@ script {
         assert(DiemSystem::is_validator(@{{alice}}) == true, 7357300101021000);
         assert(DiemSystem::is_validator(@{{eve}}) == true, 7357300101031000);
 
-        assert(TowerState::get_count_in_epoch(@{{alice}}) == 1, 7357300101041000);
+        assert(TowerState::get_count_in_epoch(@{{alice}}) == 0, 7357300101041000);
         assert(DiemAccount::balance<GAS>(@{{alice}}) == 1000000, 7357300101051000);
         assert(NodeWeight::proof_of_weight(@{{alice}}) == 0, 7357300101051000);
 
@@ -41,6 +41,8 @@ script {
         print(&a);
 
         assert(TowerState::get_count_in_epoch(@{{alice}}) == 5, 7357300101071000);
+        assert(TowerState::node_above_thresh(@{{alice}}), 7357300101081000);
+
     }
 }
 // check: EXECUTED
@@ -141,7 +143,7 @@ script {
         assert(NodeWeight::proof_of_weight(@{{alice}}) == 0, 7357000180114);
 
         // Case 1, increments the epochs_validating_and_mining, which is used for rate-limiting onboarding
-        assert(TowerState::get_epochs_compliant(@{{alice}}) == 0, 7357000180115);  
+        assert(TowerState::get_epochs_compliant(@{{alice}}) == 1, 7357000180115);  
 
     }
 }
