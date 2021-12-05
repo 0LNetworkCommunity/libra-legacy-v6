@@ -71,6 +71,17 @@ An autopay batch of instrucitons has this Json file format.
 
 The autopay types are `PercentOfBalance, PercentOfChange, FixedRecurring, FixedOnce`
 
+### Cancel Previous Autopay tx's
+
+Disabling autopay will cancel all of the accounts previous autopay transactions. Once disabling and reenabling, the account will have no autopay instuctions set.
+
+```
+txs autopay --disable
+```
+
+```
+txs autopay --enable
+```
 ### Get Payment Events Received
 account: the address to query.
 events-received: a bool, to check incoming txs.
