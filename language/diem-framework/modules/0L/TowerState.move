@@ -205,8 +205,6 @@ module TowerState {
         return
       };
 
-      lazy_reset_count_in_epoch(miner_sign);
-
       // Process the proof
       verify_and_update_state(miner_addr, proof, true);
     }
@@ -254,7 +252,9 @@ module TowerState {
       proof: Proof,
       steady_state: bool
     ) acquires TowerProofHistory, TowerList, TowerStats {
-      
+      // instead of looping through all miners at end of epcoh the stats are only reset when the miner submits a new proof.
+      lazy_reset_count_in_epoch(miner_addr);
+
       assert(
         get_count_in_epoch(miner_addr) < Globals::get_epoch_mining_thres_upper(), 
         Errors::invalid_state(130108)
@@ -490,8 +490,8 @@ module TowerState {
     }
 
     // lazily reset proofs_in_epoch intead of looping through list.
-    fun lazy_reset_count_in_epoch(miner_sig: &signer) acquires TowerProofHistory {
-      let miner_addr = Signer::address_of(miner_sig);
+    // danger: this is a private function. Do not make public.
+    fun lazy_reset_count_in_epoch(miner_addr: address) acquires TowerProofHistory {
       let s = borrow_global_mut<TowerProofHistory>(miner_addr);
       if (s.latest_epoch_mining < DiemConfig::get_current_epoch()) {
         s.count_proofs_in_epoch = 0;
