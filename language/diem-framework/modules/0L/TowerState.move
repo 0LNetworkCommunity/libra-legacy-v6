@@ -518,7 +518,7 @@ module TowerState {
     // Initiates a miner for a testnet
     // Function index: 10
     // Permissions: PUBLIC, SIGNER, TEST ONLY
-    public fun test_helper_init_miner(
+    public fun test_helper_init_val(
         miner_sig: &signer,
         challenge: vector<u8>,
         solution: vector<u8>,

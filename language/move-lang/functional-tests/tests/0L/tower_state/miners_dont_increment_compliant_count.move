@@ -10,9 +10,7 @@ script {
 
     // SIMULATES A MINER ONBOARDING PROOF (proof_0.json)
     fun main(sender: signer) {
-        let height_after = 0;
-
-        TowerState::test_helper_init_miner(
+        TowerState::test_helper_init_val(
             &sender,
             TestFixtures::alice_0_easy_chal(),
             TestFixtures::alice_0_easy_sol(),
@@ -21,11 +19,9 @@ script {
         );
 
         // check for initialized TowerState
-        let verified_tower_height_after = TowerState::test_helper_get_height(@{{alice}});
+        assert(TowerState::test_helper_get_height(@{{alice}}) == 0, 10008001);
 
-        assert(verified_tower_height_after == height_after, 10008001);
-
-        // From genesis the validator will have 1 epochs compliant?
+        // Note: test helper mocks init of a VALIDATOR, not end-user account
         assert(TowerState::get_epochs_compliant(@{{alice}}) == 1, 735701);
     }
 }

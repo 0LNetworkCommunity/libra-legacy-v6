@@ -12,7 +12,7 @@ script {
 
     fun main(sender: signer) {
         // add one proof and init the state.
-        TowerState::test_helper_init_miner(
+        TowerState::test_helper_init_val(
             &sender,
             TestFixtures::easy_chal(),
             TestFixtures::easy_sol(),
@@ -30,7 +30,7 @@ script {
 
     fun main(sender: signer) {
         // add one proof and init the state.
-        TowerState::test_helper_init_miner(
+        TowerState::test_helper_init_val(
             &sender,
             TestFixtures::easy_chal(),
             TestFixtures::easy_sol(),
