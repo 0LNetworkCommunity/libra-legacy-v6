@@ -15,10 +15,6 @@ We live 24/7 on Discord [join us there](https://discord.gg/AzCp63pggW).
 
 - WEDS 15:00 GMT / 8:00 US PT / Weds 11:00 US ET / 17:00 CET / 23:00 CST / 1:00 AEST (THURS)
 
-### Monthly town hall meetings, first thursday of every month also on Discord:
-
-- THUR (first thursday) 15:00 GMT / 8:00 US PT / Weds 11:00 US ET / 17:00 CET / 23:00 CST / 1:00 AEST (FRI)
-
 # Documentation
 
 Read our documentation [here](ol/documentation/README.md).
