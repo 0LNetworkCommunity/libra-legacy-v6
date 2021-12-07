@@ -1229,9 +1229,7 @@ module DiemAccount {
     public fun extract_withdraw_capability(
         sender: &signer
     ): WithdrawCapability acquires DiemAccount {
-        //////// 0L //////// Transfers disabled by default
-        //////// 0L //////// Transfers of 10 GAS 
-        //////// 0L //////// enabled when epoch is 1000
+
         let sender_addr = Signer::address_of(sender);
 
         /////// 0L /////////
@@ -1242,6 +1240,8 @@ module DiemAccount {
             Errors::limit_exceeded(EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET)
         );
         /////// 0L /////////
+        // Slow wallet transfers disabled by default, enabled when epoch is 1000
+        // At that point slow wallets receive 1,000 coins unlocked per day.
         if (is_slow(sender_addr) && !DiemConfig::check_transfer_enabled() ) {
           // if transfers are not enabled for slow wallets
           // then the tx should fail
