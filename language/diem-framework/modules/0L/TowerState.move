@@ -430,8 +430,7 @@ module TowerState {
     // Get latest epoch mined by node on given address
     // Permissions: public ony VM can call this function.
     // Function code: 09
-    public fun get_miner_latest_epoch(vm: &signer, addr: address): u64 acquires TowerProofHistory {
-      CoreAddresses::assert_diem_root(vm);
+    public fun get_miner_latest_epoch(addr: address): u64 acquires TowerProofHistory {
       let addr_state = borrow_global<TowerProofHistory>(addr);
       *&addr_state.latest_epoch_mining
     }
@@ -651,6 +650,14 @@ module TowerState {
         assert(Testnet::is_testnet(), 130115014011);
         let addr = Signer::address_of(account);
         get_count_in_epoch(addr)
+    }
+
+    public fun test_helper_get_nominal_count(miner_addr: address): u64 acquires TowerProofHistory {
+      assert(Testnet::is_testnet(), Errors::invalid_state(130123));
+      assert(exists<TowerProofHistory>(miner_addr), Errors::not_published(130124));
+
+      let state = borrow_global<TowerProofHistory>(miner_addr);
+      *&state.count_proofs_in_epoch
     }
 
     // Function code: 16
