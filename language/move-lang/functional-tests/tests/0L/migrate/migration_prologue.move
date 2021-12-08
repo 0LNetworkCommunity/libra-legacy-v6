@@ -45,7 +45,7 @@ script {
 script {
     use 0x1::TowerState;
     fun main(_: signer) {
-
+      
       assert(TowerState::test_get_liftime_proofs() == 111, 735701);
     }
 }

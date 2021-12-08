@@ -132,10 +132,8 @@ module TowerState {
     public fun init_miner_list_and_stats(vm: &signer) {
       init_miner_list(vm);
 
-      ////////////////////////
-      // TODO: uncomment this when the migration is complete so we don't need to mock the migration in tests. We don't initialize here because we need to test migration in Migrations.move.
-      // init_tower_counter(vm, 0, 0, 0); 
-      ////////////////////////
+      // Note: for testing migration we need to destroy this struct, see test_danger_destroy_tower_counter
+      init_tower_counter(vm, 0, 0, 0); 
     }
 
     /// returns true if miner at `addr` has been initialized 
@@ -598,6 +596,8 @@ module TowerState {
       (0,0,0)
     }
 
+
+
     //////////////////
     // TEST HELPERS //
     //////////////////
@@ -801,6 +801,26 @@ module TowerState {
       
       let s = borrow_global<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS());
       s.lifetime_proofs
+    }
+
+    public fun test_danger_destroy_tower_counter(vm: &signer) acquires TowerCounter {
+      assert(Testnet::is_testnet(), Errors::invalid_state(130113));
+      CoreAddresses::assert_vm(vm);
+      assert(exists<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS()), Errors::invalid_state(130115));
+        
+        // We destroy the data resource for sender
+        // move_from and then destructure
+
+        let TowerCounter {
+          lifetime_proofs: _,
+          lifetime_validator_proofs: _,
+          lifetime_fullnode_proofs: _,
+          proofs_in_epoch: _,
+          validator_proofs_in_epoch: _,
+          fullnode_proofs_in_epoch: _,
+          validator_proofs_in_epoch_above_thresh: _,
+          fullnode_proofs_in_epoch_above_thresh: _,
+       } = move_from<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS());
     }
 }
 }
