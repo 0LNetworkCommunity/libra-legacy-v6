@@ -2,7 +2,7 @@
 //! account: bob, 1000000GAS, 0
 
 
-// Bob is an end-user running th Carpe app, and submitting miner proofs.
+// Bob is an end-user running the Carpe app, and submitting miner proofs.
 // He is the only one in the epoch submitting proofs. He should get the entirety of the Identity Subsidy pool avaialable (one validator's worth)
 
 //  0. Initialize Bob's miner state with a first proof
