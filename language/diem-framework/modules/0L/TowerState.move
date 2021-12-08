@@ -20,7 +20,6 @@ module TowerState {
     use 0x1::ValidatorConfig;
     use 0x1::VDF;
     use 0x1::Vector;
-    use 0x1::Debug::print;
 
     const EPOCHS_UNTIL_ACCOUNT_CREATION: u64 = 14;
 
@@ -787,13 +786,11 @@ module TowerState {
     public fun test_mock_depr_tower_stats(vm: &signer) {
       assert(Testnet::is_testnet(), Errors::invalid_state(130113));
       CoreAddresses::assert_vm(vm);
-      print(&1111);
       move_to<TowerStats>(vm, TowerStats{
         proofs_in_epoch: 111,
         validator_proofs: 222,
         fullnode_proofs: 333,
       });
-      print(&102)
     }
 
     public fun test_get_liftime_proofs(): u64 acquires TowerCounter {
