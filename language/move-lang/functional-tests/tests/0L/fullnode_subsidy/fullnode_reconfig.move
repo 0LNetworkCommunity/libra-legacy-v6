@@ -2,6 +2,10 @@
 //! account: bob, 1000000GAS, 0
 
 
+// Bob is an end-user running th Carpe app, and submitting miner proofs.
+// He is the only one in the epoch submitting proofs. He should get the entirety of the Identity Subsidy pool avaialable (one validator's worth)
+
+//  0. Initialize Bob's miner state with a first proof
 
 //! new-transaction
 //! sender: bob
@@ -21,26 +25,13 @@ script {
 }
 
 
-// Clear the clocks
-
-//! new-transaction
-//! sender: diemroot
-script {
-    use 0x1::TowerState;
-
-    fun main(vm: signer) {
-      TowerState::epoch_reset(&vm);
-    }
-}
-
+// 2. Make sure there are validator subsidies available.
+// so we need Alice to be a Case 1 validator so that there is a subsidy to be paid to validator set.
 
 //! block-prologue
 //! proposer: alice
 //! block-time: 1
 //! NewBlockEvent
-
-// First, Make Alice a Case 1 validator so that there is a subsidy to be paid to validator set.
-
 //! new-transaction
 //! sender: alice
 script {
@@ -61,6 +52,7 @@ script {
 
         // Alice continues to mine after genesis.
         // This test is adapted from chained_from_genesis.move
+        // NOTE: these proofs do not count to fullnode proofs in epoch since Alice is a validator
         TowerState::test_helper_mock_mining(&sender, 5);
         assert(TowerState::get_count_in_epoch(@{{alice}}) == 5, 735705);
 
@@ -68,6 +60,7 @@ script {
 }
 // check: EXECUTED
 
+// 3. continue mocking Alice as a compliant validator
 
 //! new-transaction
 //! sender: diemroot
@@ -75,7 +68,6 @@ script {
     use 0x1::Vector;
     use 0x1::Stats;
 
-    // This is the the epoch boundary.
     fun main(vm: signer) {
         let voters = Vector::empty<address>();
         Vector::push_back<address>(&mut voters, @{{alice}});
@@ -92,19 +84,41 @@ script {
 //check: EXECUTED
 
 
+// 4. Mock Bob (the end-user) submitting proofs above threshold.
 
 //! new-transaction
 //! sender: bob
 script {
     use 0x1::DiemSystem;
     use 0x1::TowerState;
+    use 0x1::Debug::print;
+    use 0x1::GAS::GAS;
+    use 0x1::DiemAccount;
+
 
     fun main(sender: signer) {
-        // Tests on initial size of validators
+        // confirm bob is not a validator
         assert(DiemSystem::is_validator(@{{alice}}), 735706);
         assert(!DiemSystem::is_validator(@{{bob}}), 735707);
         // bring bob to 10 proofs. (Note: alice has one proof as a fullnode from genesis, so it will total 11 fullnode proofs.);
+
+        print(&TowerState::get_fullnode_proofs_in_epoch());
+        print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());
+
+        // both Alice and Bob have a fullnode proof (Alice has one from Genesis)
+        assert(TowerState::get_fullnode_proofs_in_epoch() == 2, 735708);
+        // there should be no proofs above threshold at this point.
+        assert(TowerState::get_fullnode_proofs_in_epoch_above_thresh() == 0, 735709);
+
         TowerState::test_helper_mock_mining(&sender, 10);
+
+        // Since the threshold in test suite is 1 proof, all the 10 are counted above threshold.
+        assert(TowerState::get_fullnode_proofs_in_epoch_above_thresh() == 10, 735710);
+
+        print(&DiemAccount::balance<GAS>(@{{bob}}));
+        print(&DiemAccount::balance<GAS>(@{{alice}}));
+
+        
     }
 }
 // check: EXECUTED
@@ -128,22 +142,29 @@ script {
     use 0x1::DiemAccount;
     use 0x1::Subsidy;
     use 0x1::Globals;
+    use 0x1::Debug::print;
 
     fun main(_vm: signer) {
         // We are in a new epoch.
 
+        // we expect that Bob receives the share that one validator would get.
         let expected_subsidy = Subsidy::subsidy_curve(
           Globals::get_subsidy_ceiling_gas(),
-          0,
+          1, // alice is the only validator (but below 4 the reward is the same in testnet: 296000000)
           Globals::get_max_validators_per_set(),
         );
 
-        let starting_balance = 1000000;
+        let bob_starting_balance = 1000000;
 
-        let ending_balance = starting_balance + expected_subsidy;
+        print(&expected_subsidy);
+
+        let ending_balance = bob_starting_balance + expected_subsidy;
+
+        print(&DiemAccount::balance<GAS>(@{{bob}}));
+        print(&DiemAccount::balance<GAS>(@{{alice}}));
 
         // bob gets the whole subsidy
-        assert(DiemAccount::balance<GAS>(@{{bob}}) == ending_balance, 7357000180113);  
+        assert(DiemAccount::balance<GAS>(@{{bob}}) == ending_balance, 735711);  
     }
 }
 //check: EXECUTED

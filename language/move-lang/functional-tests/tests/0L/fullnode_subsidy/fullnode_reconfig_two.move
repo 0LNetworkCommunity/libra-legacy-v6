@@ -42,15 +42,15 @@ script {
 
 // Clear the clocks
 
-//! new-transaction
-//! sender: diemroot
-script {
-    use 0x1::TowerState;
+// //! new-transaction
+// //! sender: diemroot
+// script {
+//     use 0x1::TowerState;
 
-    fun main(vm: signer) {
-      TowerState::epoch_reset(&vm);
-    }
-}
+//     fun main(vm: signer) {
+//       TowerState::epoch_reset(&vm);
+//     }
+// }
 
 
 //! block-prologue

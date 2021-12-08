@@ -31,6 +31,6 @@ script {
 
     fun main(vm: signer) {
       TowerState::epoch_reset(&vm);
-      assert(TowerState::get_fullnode_proofs() == 0, 7257);
+      assert(TowerState::get_fullnode_proofs_in_epoch() == 0, 7257);
     }
 }

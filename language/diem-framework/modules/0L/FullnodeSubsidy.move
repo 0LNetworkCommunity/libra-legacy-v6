@@ -17,7 +17,8 @@ address 0x1 {
     use 0x1::TowerState;
 
     public fun get_proof_price(one_val_subsidy: u64): u64 {
-      let global_proofs = TowerState::get_fullnode_proofs();
+
+      let global_proofs = TowerState::get_fullnode_proofs_in_epoch_above_thresh();
 
       // proof price is simple, miners divide the equivalent of one compliant 
       // validator's subsidy.

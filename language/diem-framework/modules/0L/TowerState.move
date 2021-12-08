@@ -483,10 +483,12 @@ module TowerState {
       if (ValidatorConfig::is_valid(miner_addr)) {
         state.validator_proofs_in_epoch = state.validator_proofs_in_epoch + 1;
         state.lifetime_validator_proofs = state.lifetime_validator_proofs + 1;
+        // only proofs above threshold are counted here. The preceding proofs are not counted;
         if (above) { state.validator_proofs_in_epoch_above_thresh = state.validator_proofs_in_epoch_above_thresh + 1; }
       } else {
         state.fullnode_proofs_in_epoch = state.fullnode_proofs_in_epoch + 1;
         state.lifetime_fullnode_proofs = state.lifetime_fullnode_proofs + 1;
+        // Preceding proofs before threshold was met are not counted to payment.
         if (above) { state.fullnode_proofs_in_epoch_above_thresh = state.fullnode_proofs_in_epoch_above_thresh + 1; }
       };
       
@@ -565,12 +567,12 @@ module TowerState {
       false 
     }
 
-    public fun get_fullnode_proofs(): u64 acquires TowerCounter{
+    public fun get_fullnode_proofs_in_epoch(): u64 acquires TowerCounter{
       let state = borrow_global<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS());
       state.fullnode_proofs_in_epoch
     }
 
-    public fun get_fullnode_proofs_above_thresh(): u64 acquires TowerCounter{
+    public fun get_fullnode_proofs_in_epoch_above_thresh(): u64 acquires TowerCounter{
       let state = borrow_global<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS());
       state.fullnode_proofs_in_epoch_above_thresh
     }
