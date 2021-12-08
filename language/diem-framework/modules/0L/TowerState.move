@@ -20,6 +20,7 @@ module TowerState {
     use 0x1::ValidatorConfig;
     use 0x1::VDF;
     use 0x1::Vector;
+    use 0x1::Debug::print;
 
     const EPOCHS_UNTIL_ACCOUNT_CREATION: u64 = 14;
 
@@ -96,14 +97,14 @@ module TowerState {
       }); 
     }
 
-    /// Create an empty miner stats 
-    fun init_miner_stats(vm: &signer) {
-      move_to<TowerStats>(vm, TowerStats {
-        proofs_in_epoch: 0u64,
-        validator_proofs: 0u64,
-        fullnode_proofs: 0u64,
-      });
-    }
+    // /// Create an empty miner stats 
+    // fun init_miner_stats(vm: &signer) {
+    //   move_to<TowerStats>(vm, TowerStats {
+    //     proofs_in_epoch: 0u64,
+    //     validator_proofs: 0u64,
+    //     fullnode_proofs: 0u64,
+    //   });
+    // }
 
     /// Create an empty miner stats 
     public fun init_tower_counter(
@@ -112,22 +113,29 @@ module TowerState {
       lifetime_validator_proofs: u64,
       lifetime_fullnode_proofs: u64,
     ) {
-      move_to<TowerCounter>(vm, TowerCounter {
-        lifetime_proofs,
-        lifetime_validator_proofs,
-        lifetime_fullnode_proofs,
-        proofs_in_epoch: 0,
-        validator_proofs_in_epoch: 0,
-        fullnode_proofs_in_epoch: 0,
-        validator_proofs_in_epoch_above_thresh: 0,
-        fullnode_proofs_in_epoch_above_thresh: 0,
-      });
+      if (!exists<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS())) {
+        move_to<TowerCounter>(vm, TowerCounter {
+          lifetime_proofs,
+          lifetime_validator_proofs,
+          lifetime_fullnode_proofs,
+          proofs_in_epoch: 0,
+          validator_proofs_in_epoch: 0,
+          fullnode_proofs_in_epoch: 0,
+          validator_proofs_in_epoch_above_thresh: 0,
+          fullnode_proofs_in_epoch_above_thresh: 0,
+        });
+      }
+
     }
 
     /// Create empty miners list and stats
     public fun init_miner_list_and_stats(vm: &signer) {
       init_miner_list(vm);
-      init_tower_counter(vm, 0, 0, 0); // NOTE: This is from genesis. But in mainnet there is a migration in Migrations.move.
+
+      ////////////////////////
+      // TODO: uncomment this when the migration is complete so we don't need to mock the migration in tests. We don't initialize here because we need to test migration in Migrations.move.
+      // init_tower_counter(vm, 0, 0, 0); 
+      ////////////////////////
     }
 
     /// returns true if miner at `addr` has been initialized 
@@ -582,6 +590,14 @@ module TowerState {
       (s.lifetime_proofs, s.lifetime_validator_proofs, s.lifetime_fullnode_proofs)
     }
 
+    public fun danger_migrate_get_lifetime_proof_count(): (u64, u64, u64) acquires TowerStats{
+      if (exists<TowerStats>(CoreAddresses::VM_RESERVED_ADDRESS())) {
+        let s = borrow_global<TowerStats>(CoreAddresses::VM_RESERVED_ADDRESS());
+        return (s.proofs_in_epoch, s.validator_proofs, s.fullnode_proofs)
+      };
+      (0,0,0)
+    }
+
     //////////////////
     // TEST HELPERS //
     //////////////////
@@ -766,6 +782,25 @@ module TowerState {
       let addr = Signer::address_of(account);
       let state = borrow_global_mut<TowerProofHistory>(addr);
       state.verified_tower_height = weight;
+    }
+
+    public fun test_mock_depr_tower_stats(vm: &signer) {
+      assert(Testnet::is_testnet(), Errors::invalid_state(130113));
+      CoreAddresses::assert_vm(vm);
+      print(&1111);
+      move_to<TowerStats>(vm, TowerStats{
+        proofs_in_epoch: 111,
+        validator_proofs: 222,
+        fullnode_proofs: 333,
+      });
+      print(&102)
+    }
+
+    public fun test_get_liftime_proofs(): u64 acquires TowerCounter {
+      assert(Testnet::is_testnet(), Errors::invalid_state(130113));
+      
+      let s = borrow_global<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS());
+      s.lifetime_proofs
     }
 }
 }

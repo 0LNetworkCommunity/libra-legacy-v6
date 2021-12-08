@@ -15,6 +15,7 @@ module DiemBlock {
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
     use 0x1::Migrations;
+    use 0x1::MigrateTowerCounter;
 
     struct BlockMetadata has key {
         /// Height of the current block
@@ -93,7 +94,16 @@ module DiemBlock {
             // tick is reset at end of previous epoch
             DiemAccount::process_escrow<GAS>(&vm);
             AutoPay::process_autopay(&vm);
-        };        
+        };       
+
+        // Do any pending migrations
+        // TODO: should this be round 2 (when upgrade writeset happens). May be a on off-by-one.
+        if (round == 3){
+          // safety. Maybe init Migration struct
+          Migrations::init(&vm);
+          // Migration UID 1
+          MigrateTowerCounter::migrate_tower_counter(&vm);
+        };    
 
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(CoreAddresses::DIEM_ROOT_ADDRESS());
         DiemTimestamp::update_global_time(&vm, proposer, timestamp);
@@ -111,8 +121,7 @@ module DiemBlock {
         //////// 0L ////////
         // EPOCH BOUNDARY
         if (Epoch::epoch_finished()) {
-          // Run migrations
-          Migrations::init(&vm);
+
           // TODO: We don't need to pass block height to EpochBoundaryOL. 
           // It should use the BlockMetadata. But there's a circular reference 
           // there when we try.

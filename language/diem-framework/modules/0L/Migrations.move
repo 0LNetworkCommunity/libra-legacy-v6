@@ -99,7 +99,7 @@ module MigrateTowerCounter {
   public fun migrate_tower_counter(vm: &signer) {
     CoreAddresses::assert_diem_root(vm);
     if (!Migrations::has_run(UID)) {
-      let (global, val, fn) = TowerState::get_lifetime_proof_count();
+      let (global, val, fn) = TowerState::danger_migrate_get_lifetime_proof_count();
       TowerState::init_tower_counter(vm, global, val, fn);
       Migrations::push(vm, UID, b"MigrateTowerCounter");
     };
