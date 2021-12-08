@@ -28,63 +28,19 @@ script {
 // 2. Make sure there are validator subsidies available.
 // so we need Alice to be a Case 1 validator so that there is a subsidy to be paid to validator set.
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 1
-//! NewBlockEvent
-//! new-transaction
-//! sender: alice
-script {
-    use 0x1::DiemSystem;
-    use 0x1::TowerState;
-    use 0x1::NodeWeight;
-    use 0x1::GAS::GAS;
-    use 0x1::DiemAccount;
-
-    fun main(sender: signer) {
-        // Tests on initial size of validators
-        // assert(DiemSystem::validator_set_size() == 5, 7357300101011000);
-        assert(DiemSystem::is_validator(@{{alice}}) == true, 735701);
-
-        assert(TowerState::get_count_in_epoch(@{{alice}}) == 1, 735702);
-        assert(DiemAccount::balance<GAS>(@{{alice}}) == 1000000, 735703);
-        assert(NodeWeight::proof_of_weight(@{{alice}}) == 0, 735704);
-
-        // Alice continues to mine after genesis.
-        // This test is adapted from chained_from_genesis.move
-        // NOTE: these proofs do not count to fullnode proofs in epoch since Alice is a validator
-        TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(@{{alice}}) == 5, 735705);
-
-    }
-}
-// check: EXECUTED
-
-// 3. continue mocking Alice as a compliant validator
-
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Vector;
-    use 0x1::Stats;
+    use 0x1::Mock;
 
     fun main(vm: signer) {
-        let voters = Vector::empty<address>();
-        Vector::push_back<address>(&mut voters, @{{alice}});
-
-        // Overwrite the statistics to mock that all have been validating.
-        let i = 1;
-        while (i < 16) {
-            // Mock the validator doing work for 15 blocks, and stats being updated.
-            Stats::process_set_votes(&vm, &voters);
-            i = i + 1;
-        };
+      Mock::mock_case_1(&vm, @{{alice}});
     }
 }
 //check: EXECUTED
 
 
-// 4. Mock Bob (the end-user) submitting proofs above threshold.
+// 3. Mock Bob (the end-user) submitting proofs above threshold.
 
 //! new-transaction
 //! sender: bob
