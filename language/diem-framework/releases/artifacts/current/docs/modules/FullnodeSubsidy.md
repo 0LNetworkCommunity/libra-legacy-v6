@@ -44,8 +44,12 @@
   // Note <b>to</b> rascals: I know what you're thinking, but for the same effort
   // you'll put into that idea, it would be more profitable <b>to</b> just run
   // a validator node.
-
-  one_val_subsidy/global_proofs
+  <b>if</b> (global_proofs &gt; 0) {
+    one_val_subsidy/global_proofs
+  }
+  <b>else</b> {
+    0
+  }
 }
 </code></pre>
 

@@ -335,7 +335,7 @@ the miner last created a new account
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_epoch_reset">epoch_reset</a>(vm: &signer) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
-  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
   <b>let</b> state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
   state.proofs_in_epoch = 0;
   state.validator_proofs = 0;

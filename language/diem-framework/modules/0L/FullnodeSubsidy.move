@@ -26,8 +26,12 @@ address 0x1 {
       // Note to rascals: I know what you're thinking, but for the same effort
       // you'll put into that idea, it would be more profitable to just run
       // a validator node.
-
-      one_val_subsidy/global_proofs
+      if (global_proofs > 0) {
+        one_val_subsidy/global_proofs
+      }
+      else {
+        0
+      }
     }
 
     public fun distribute_fullnode_subsidy(
