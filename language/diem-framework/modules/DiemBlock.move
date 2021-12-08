@@ -16,6 +16,7 @@ module DiemBlock {
     use 0x1::DiemAccount;
     use 0x1::Migrations;
     use 0x1::MigrateTowerCounter;
+    use 0x1::Debug::print;
 
     struct BlockMetadata has key {
         /// Height of the current block
@@ -79,11 +80,13 @@ module DiemBlock {
         // Operational constraint: can only be invoked by the VM.
         CoreAddresses::assert_vm(&vm);
 
+        print(&22222);
         // Authorization
         assert(
             proposer == CoreAddresses::VM_RESERVED_ADDRESS() || DiemSystem::is_validator(proposer),
             Errors::requires_address(EVM_OR_VALIDATOR)
         );
+        print(&201);
         //////// 0L ////////
         // increment stats        
         Stats::process_set_votes(&vm, &previous_block_votes);
@@ -95,7 +98,7 @@ module DiemBlock {
             DiemAccount::process_escrow<GAS>(&vm);
             AutoPay::process_autopay(&vm);
         };       
-
+print(&202);
         // Do any pending migrations
         // TODO: should this be round 2 (when upgrade writeset happens). May be a on off-by-one.
         if (round == 3){
@@ -104,7 +107,7 @@ module DiemBlock {
           // Migration UID 1
           MigrateTowerCounter::migrate_tower_counter(&vm);
         };    
-
+print(&203);
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(CoreAddresses::DIEM_ROOT_ADDRESS());
         DiemTimestamp::update_global_time(&vm, proposer, timestamp);
         block_metadata_ref.height = block_metadata_ref.height + 1;
@@ -117,7 +120,7 @@ module DiemBlock {
                 time_microseconds: timestamp,
             }
         );
-
+print(&203);
         //////// 0L ////////
         // EPOCH BOUNDARY
         if (Epoch::epoch_finished()) {

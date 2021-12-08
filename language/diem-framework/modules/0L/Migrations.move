@@ -93,16 +93,27 @@ module MigrateTowerCounter {
   use 0x1::TowerState;
   use 0x1::Migrations;
   use 0x1::CoreAddresses;
+  use 0x1::Debug::print;
 
   const UID:u64 = 1;
   // Migration to migrate all wallets to be slow wallets
   public fun migrate_tower_counter(vm: &signer) {
+    print(&444444);
     CoreAddresses::assert_diem_root(vm);
+    print(&401);
     if (!Migrations::has_run(UID)) {
+      print(&40101);
       let (global, val, fn) = TowerState::danger_migrate_get_lifetime_proof_count();
+      print(&40102);
       TowerState::init_tower_counter(vm, global, val, fn);
+      print(&40103);
       Migrations::push(vm, UID, b"MigrateTowerCounter");
+      print(&40104);
+
     };
+
+    print(&402);
+
   }
 
 }
