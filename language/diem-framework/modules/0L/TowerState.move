@@ -358,7 +358,7 @@ module TowerState {
 
     // Used at end of epoch with reconfig bulk_update the TowerState with the vector of validators from current epoch.
     // Permissions: PUBLIC, ONLY VM.
-    public fun reconfig(vm: &signer, migrate_eligible_validators: &vector<address>) acquires TowerProofHistory, TowerList {
+    public fun reconfig(vm: &signer, migrate_eligible_validators: &vector<address>) acquires TowerProofHistory, TowerList, TowerCounter {
       // Check permissions
       CoreAddresses::assert_diem_root(vm);
 
@@ -390,6 +390,8 @@ module TowerState {
 
       //reset miner list
       towerlist_state.list = Vector::empty<address>();
+
+      epoch_reset(vm);
     }
 
     // Function to initialize miner state
