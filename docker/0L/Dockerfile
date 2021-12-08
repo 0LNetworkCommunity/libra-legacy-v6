@@ -34,13 +34,10 @@ WORKDIR /libra
 
 # Clone main branch of this repo
 # Fixme(nourspace): depending where these tools are hosted, we might not need to pull
-RUN git clone -b main --single-branch https://github.com/OLSF/libra.git /libra
+RUN git clone -b feature/nspace-0l-docker --single-branch https://github.com/nourspace/libra.git /libra
 
 # Build 0L binaries
 RUN RUSTC_WRAPPER=sccache make bins
-
-# Download web files
-RUN make web-files
 
 # Production image
 # Todo(nourspace): find a smaller base image
@@ -51,7 +48,6 @@ RUN apt-get update && apt-get install -y \
   curl \
   libssl1.1 \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
-
 
 ENV OL_DIR="/root/.0L" \
   PATH="/root/.0L/bin:${PATH}"
@@ -75,11 +71,8 @@ COPY --from=builder [ \
   "${OL_DIR}/bin/" \
 ]
 
-# Copy web-files
-COPY --from=builder ["/root/.0L/web-monitor", "${OL_DIR}/web-monitor"]
-
-# Fixme (noursapce): unzip can't be used with tars
-# RUN ol serve --update
+# Download web-files
+RUN ol serve --update
 
 # Download Task binary
 RUN sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -b /usr/local/bin
