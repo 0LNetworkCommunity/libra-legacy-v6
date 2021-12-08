@@ -879,7 +879,7 @@ Checks to see if miner submitted enough proofs to be considered compliant
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_reconfig">reconfig</a>(vm: &signer, migrate_eligible_validators: &vector&lt;address&gt;) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_reconfig">reconfig</a>(vm: &signer, migrate_eligible_validators: &vector&lt;address&gt;) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
   // Check permissions
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
 
@@ -911,6 +911,8 @@ Checks to see if miner submitted enough proofs to be considered compliant
 
   //reset miner list
   towerlist_state.list = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
+
+  <a href="TowerState.md#0x1_TowerState_epoch_reset">epoch_reset</a>(vm);
 }
 </code></pre>
 
