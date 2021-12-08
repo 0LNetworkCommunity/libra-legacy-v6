@@ -2,12 +2,13 @@
 // use futures::StreamExt;
 use ol_types::config::IS_PROD;
 use serde_json::json;
-use std::{fs, path::PathBuf, process::Command, thread, time::Duration};
+use std::{fs, path::PathBuf, process::Command, thread, time::Duration, io};
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 use warp::{sse::Event, Filter};
 use serde_json::Error;
 use futures::StreamExt;
+use reqwest;
 
 use crate::{cache::Vitals, check::runner, node::node::Node};
 
@@ -99,29 +100,30 @@ fn sse_vitals(data: Vitals) -> Result<Event, Error> {
 /// Fetch updated static web files from release, for web-monitor.
 pub fn update_web(home_path: &PathBuf) {
     let file_name = "web-monitor.tar.gz";
+    let dir_name = "web-monitor/";
     let url = &format!(
         "https://github.com/OLSF/libra/releases/latest/download/{}",
         file_name
     );
     println!("Fetching web files from, {}", url);
     let zip_path = home_path.join(file_name).to_str().unwrap().to_owned();
+    let dir_path = home_path.join(dir_name).to_str().unwrap().to_owned();
+    fs::create_dir_all(&dir_path).expect("cannot create web files directory");
     dbg!(&zip_path);
-    let mut child = Command::new("curl")
-        .arg("-L")
-        .arg("--progress-bar")
-        .arg(format!("-o {:?}", &zip_path))
-        .arg(url)
+    dbg!(&dir_path);
+    let mut resp = reqwest::blocking::get(url).expect("failed to fetch web files from github");
+    let mut out = fs::File::create(&zip_path).expect("cannot create web files zip");
+    io::copy(&mut resp, &mut out).expect("failed to write to web files zip");
+    println!("fetched web files from github, copied to {:?}", &zip_path);
+    let mut child = Command::new("tar")
+        .arg("-xf")
+        .arg(&zip_path)
+        .arg("-C")
+        .arg(&dir_path)
         .spawn()
-        .expect("failed to fetch web files from github");
+        .expect(&format!("failed to unzip {:?} into {:?}", &zip_path, &dir_path));
 
-    match child.wait() {
-        Ok(_) => {
-            Command::new("unzip")
-                .arg("-o")
-                .arg(&zip_path)
-                .spawn()
-                .expect("failed to unzip web files");
-        }
-        _ => {}
-    }
+    let ecode = child.wait().expect("failed to wait on child");
+    assert!(ecode.success());
+
 }
