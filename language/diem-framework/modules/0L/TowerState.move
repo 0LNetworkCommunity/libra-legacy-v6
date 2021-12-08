@@ -48,7 +48,7 @@ module TowerState {
       state.proofs_in_epoch = state.proofs_in_epoch + 1;
     }
 
-    // Note: Used only in tests
+    // fullnode proofs in the epoch used to calculate fullnode subsidy. 
     public fun epoch_reset(vm: &signer) acquires TowerStats {
       CoreAddresses::assert_vm(vm);
       let state = borrow_global_mut<TowerStats>(CoreAddresses::VM_RESERVED_ADDRESS());
