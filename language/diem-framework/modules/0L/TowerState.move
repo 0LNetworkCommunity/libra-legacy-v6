@@ -358,7 +358,7 @@ module TowerState {
     /// Checks to see if miner submitted enough proofs to be considered compliant
     public fun node_above_thresh(miner_addr: address): bool acquires TowerProofHistory {
       let miner_history = borrow_global<TowerProofHistory>(miner_addr);
-      miner_history.count_proofs_in_epoch > Globals::get_epoch_mining_thres_lower()
+      miner_history.count_proofs_in_epoch >= Globals::get_epoch_mining_thres_lower()
     }
 
     // Used at end of epoch with reconfig bulk_update the TowerState with the vector of validators from current epoch.
@@ -559,6 +559,14 @@ module TowerState {
       0
     }
 
+    // returns the number of proofs for a miner in the current epoch in EXCESS Of the the threshold
+    public fun get_count_above_thresh_in_epoch(miner_addr: address): u64 acquires TowerProofHistory {
+      if (exists<TowerProofHistory>(miner_addr)) {
+        return borrow_global<TowerProofHistory>(miner_addr).count_proofs_in_epoch - Globals::get_epoch_mining_thres_lower()
+      };
+      0
+    }
+
     // Returns if the miner is above the account creation rate-limit
     // Permissions: PUBLIC, ANYONE
     public fun can_create_val_account(node_addr: address): bool acquires TowerProofHistory {
@@ -570,6 +578,11 @@ module TowerState {
           >= EPOCHS_UNTIL_ACCOUNT_CREATION
       };
       false 
+    }
+
+    public fun get_validator_proofs_in_epoch(): u64 acquires TowerCounter{
+      let state = borrow_global<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS());
+      state.validator_proofs_in_epoch
     }
 
     public fun get_fullnode_proofs_in_epoch(): u64 acquires TowerCounter{
@@ -676,11 +689,15 @@ module TowerState {
     public fun test_helper_mock_mining(sender: &signer,  count: u64) acquires TowerProofHistory, TowerCounter {
       assert(Testnet::is_testnet(), Errors::invalid_state(130118));
       let addr = Signer::address_of(sender);
-      let state = borrow_global_mut<TowerProofHistory>(addr);
-      state.count_proofs_in_epoch = count;
+
+
       let i = 0;
       while (i < count) {
         increment_stats(addr);
+        let state = borrow_global_mut<TowerProofHistory>(addr);
+        // mock verify_and_update
+        state.verified_tower_height = state.verified_tower_height + 1;
+        state.count_proofs_in_epoch = state.count_proofs_in_epoch + 1;
         i = i + 1;
       }
       

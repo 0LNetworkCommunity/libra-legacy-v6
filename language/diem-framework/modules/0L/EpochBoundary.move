@@ -77,7 +77,7 @@ module EpochBoundary { // TODO: Rename to Boundary
             // TODO: this call is repeated in propose_new_set. 
             // Not sure if the performance hit at epoch boundary is worth the refactor. 
             if (TowerState::node_above_thresh(addr)) {
-              let count = TowerState::get_count_in_epoch(addr);
+              let count = TowerState::get_count_above_thresh_in_epoch(addr);
 
               let miner_subsidy = count * proof_price;
               FullnodeSubsidy::distribute_fullnode_subsidy(vm, addr, miner_subsidy);

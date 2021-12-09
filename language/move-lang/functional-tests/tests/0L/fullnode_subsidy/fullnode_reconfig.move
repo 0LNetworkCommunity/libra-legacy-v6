@@ -66,8 +66,17 @@ script {
         // there should be no proofs above threshold at this point.
         assert(TowerState::get_fullnode_proofs_in_epoch_above_thresh() == 0, 735709);
 
-        TowerState::test_helper_mock_mining(&sender, 10);
+        // Bob already has one proof above where we initialized the account, and is above threshold.
+        // bob needs one more to be above threshold before the subsequent proofs are counted.
+        // adding 10 more here (which are all above threshold).
+        TowerState::test_helper_mock_mining(&sender, 11);
+        print(&TowerState::get_fullnode_proofs_in_epoch());
+        print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());
 
+        print(&TowerState::get_count_in_epoch(@{{bob}}));
+        print(&TowerState::get_count_above_thresh_in_epoch(@{{bob}}));
+
+        
         // Since the threshold in test suite is 1 proof, all the 10 are counted above threshold.
         assert(TowerState::get_fullnode_proofs_in_epoch_above_thresh() == 10, 735710);
 
