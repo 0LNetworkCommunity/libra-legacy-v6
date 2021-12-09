@@ -11,6 +11,7 @@ use move_vm_types::{
 };
 use smallvec::smallvec;
 use std::{collections::VecDeque, convert::TryFrom};
+//use ethers::Signature;
 
 pub fn native_eth_signature_recover(
     context: &impl NativeContext,
@@ -42,11 +43,13 @@ pub fn native_eth_signature_verify(
     mut arguments: VecDeque<Value>,
 ) -> PartialVMResult<NativeResult> {
     debug_assert!(_ty_args.is_empty());
-    debug_assert!(arguments.len() == 3);
+    debug_assert!(arguments.len() == 1);
 
     let msg = pop_arg!(arguments, Vec<u8>);
+/*
     let pubkey = pop_arg!(arguments, Vec<u8>);
     let signature = pop_arg!(arguments, Vec<u8>);
+*/
 
     let cost = native_gas(
         context.cost_table(),
@@ -54,22 +57,9 @@ pub fn native_eth_signature_verify(
         msg.len(),
     );
 
-    let sig = match ed25519::Ed25519Signature::try_from(signature.as_slice()) {
-        Ok(sig) => sig,
-        Err(_) => {
-            return Ok(NativeResult::ok(cost, smallvec![Value::bool(false)]));
-        }
-    };
-    let pk = match ed25519::Ed25519PublicKey::try_from(pubkey.as_slice()) {
-        Ok(pk) => pk,
-        Err(_) => {
-            return Ok(NativeResult::ok(cost, smallvec![Value::bool(false)]));
-        }
-    };
 
-    let verify_result = sig.verify_arbitrary_msg(msg.as_slice(), &pk).is_ok();
     Ok(NativeResult::ok(
         cost,
-        smallvec![Value::bool(verify_result)],
+        smallvec![Value::bool(true)],
     ))
 }
