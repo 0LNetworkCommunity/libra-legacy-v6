@@ -381,7 +381,7 @@ impl<'a> Handler<'a> {
         &self,
         params: GetTowerStateParams,
     ) -> Result<TowerStateResourceView, JsonRpcError> {
-        data::get_miner_state(self.service.db.borrow(), self.version(), params.account)
+        data::get_miner_state(self.service.db.borrow(), self.version(), params.account, &self.ledger_info)
     }
 
     async fn get_oracle_upgrade_state(
