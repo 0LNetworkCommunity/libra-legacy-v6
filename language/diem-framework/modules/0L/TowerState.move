@@ -562,7 +562,9 @@ module TowerState {
     // returns the number of proofs for a miner in the current epoch in EXCESS Of the the threshold
     public fun get_count_above_thresh_in_epoch(miner_addr: address): u64 acquires TowerProofHistory {
       if (exists<TowerProofHistory>(miner_addr)) {
-        return borrow_global<TowerProofHistory>(miner_addr).count_proofs_in_epoch - Globals::get_epoch_mining_thres_lower()
+        if (borrow_global<TowerProofHistory>(miner_addr).count_proofs_in_epoch > Globals::get_epoch_mining_thres_lower()) {
+          return borrow_global<TowerProofHistory>(miner_addr).count_proofs_in_epoch - Globals::get_epoch_mining_thres_lower()
+        }
       };
       0
     }
@@ -722,10 +724,12 @@ module TowerState {
     // Permissions: PUBLIC, VM, TESTING 
     // Get the vm to trigger a reconfig for testing
     // Function code: 14
-    public fun test_helper_mock_reconfig(account: &signer, miner_addr: address) acquires TowerProofHistory{
+    public fun test_helper_mock_reconfig(account: &signer, miner_addr: address) acquires TowerProofHistory, TowerCounter {
       CoreAddresses::assert_diem_root(account);
       assert(Testnet::is_testnet(), Errors::invalid_state(130122));
       update_metrics(account, miner_addr);
+      epoch_reset(account);
+      
     }
 
     // Get weight of validator identified by address
