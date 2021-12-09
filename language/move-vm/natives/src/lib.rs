@@ -17,3 +17,4 @@ pub mod vector;
 pub mod vdf;
 pub mod ol_decimal;
 pub mod ol_hash;
+pub mod ol_eth_signature;
