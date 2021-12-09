@@ -45,8 +45,8 @@ script {
       Mock::mock_case_1(&vm, @{{gertie}});
 
       // Mock the end-users submitting proofs above threshold.
-
-      TowerState::test_helper_mock_mining_vm(&vm, @{{bob}}, 10);
+      // Add 11: make it so that +1 gets above threshold so that 10 are counted as above thresh.
+      TowerState::test_helper_mock_mining_vm(&vm, @{{bob}}, 11);
     }
 }
 //check: EXECUTED

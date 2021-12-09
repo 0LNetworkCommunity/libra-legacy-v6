@@ -71,15 +71,23 @@ script {
 script {
     use 0x1::Mock;
     use 0x1::TowerState;
+    use 0x1::Debug::print;
 
     fun main(vm: signer) {
-      Mock::mock_case_1(&vm, @{{alice}});
 
       // Mock the end-users submitting proofs above threshold.
-
-      TowerState::test_helper_mock_mining_vm(&vm, @{{bob}}, 10);
-      TowerState::test_helper_mock_mining_vm(&vm, @{{carol}}, 10);
+      // Add 11: make it so that +1 gets above threshold so that 10 are counted as above thresh.
+      TowerState::test_helper_mock_mining_vm(&vm, @{{bob}}, 11);
+      TowerState::test_helper_mock_mining_vm(&vm, @{{carol}}, 11);
       TowerState::test_helper_mock_mining_vm(&vm, @{{dave}}, 1);
+
+      print(&TowerState::get_fullnode_proofs_in_epoch());
+      print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());
+      print(&TowerState::get_count_in_epoch(@{{bob}}));
+      print(&TowerState::get_count_above_thresh_in_epoch(@{{bob}}));
+
+      Mock::mock_case_1(&vm, @{{alice}});
+
     }
 }
 //check: EXECUTED
@@ -105,9 +113,14 @@ script {
     use 0x1::Subsidy;
     use 0x1::Globals;
     use 0x1::Debug::print;
+    use 0x1::TowerState;
 
     fun main(_vm: signer) {
         // We are in a new epoch.
+        print(&TowerState::get_fullnode_proofs_in_epoch());
+        print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());
+        print(&TowerState::get_count_in_epoch(@{{bob}}));
+        print(&TowerState::get_count_above_thresh_in_epoch(@{{bob}}));
 
         // we expect that Bob receives the share that one validator would get.
         let expected_subsidy = Subsidy::subsidy_curve(
@@ -119,11 +132,15 @@ script {
         let starting_balance = 1000000;
 
         print(&expected_subsidy);
+        let each = expected_subsidy/2;
+        print(&each);
 
         let ending_balance = starting_balance + expected_subsidy/2;
 
-        print(&DiemAccount::balance<GAS>(@{{bob}}));
         print(&DiemAccount::balance<GAS>(@{{alice}}));
+
+        print(&DiemAccount::balance<GAS>(@{{bob}}));
+        print(&DiemAccount::balance<GAS>(@{{carol}}));
 
         // bob and carol share half the identity subsidy
         assert(DiemAccount::balance<GAS>(@{{bob}}) == ending_balance, 735711);

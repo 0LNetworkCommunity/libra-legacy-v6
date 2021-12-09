@@ -51,8 +51,10 @@ script {
       Mock::mock_case_2(&vm, @{{gertie}});
 
       // Mock the end-users submitting proofs above threshold.
+      // Mock the end-users submitting proofs above threshold.
+      // Add 12: make it so that +1 gets above threshold so that *11* are counted as above thresh.
       // USING 11 in this case because of rounding. 11 is a factor of the validator subsidy for this case.
-      TowerState::test_helper_mock_mining_vm(&vm, @{{bob}}, 11);
+      TowerState::test_helper_mock_mining_vm(&vm, @{{bob}}, 12);
     }
 }
 //check: EXECUTED

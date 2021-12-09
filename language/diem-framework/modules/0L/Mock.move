@@ -12,8 +12,8 @@ module Mock {
       // can only apply this to a validator
       assert(DiemSystem::is_validator(addr) == true, 777701);
       // mock mining for the address
+      // the validator would already have 1 proof from genesis
       TowerState::test_helper_mock_mining_vm(vm, addr, 5);
-      assert(TowerState::get_count_in_epoch(addr) == 5, 777702);
 
       // mock the consensus votes for the address
       let voters = Vector::empty<address>();

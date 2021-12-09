@@ -711,12 +711,14 @@ module TowerState {
     public fun test_helper_mock_mining_vm(vm: &signer, addr: address, count: u64) acquires TowerProofHistory, TowerCounter {
       assert(Testnet::is_testnet(), Errors::invalid_state(130120));
       CoreAddresses::assert_diem_root(vm);
-      let state = borrow_global_mut<TowerProofHistory>(addr);
-      state.count_proofs_in_epoch = count;
 
       let i = 0;
       while (i < count) {
         increment_stats(addr);
+        let state = borrow_global_mut<TowerProofHistory>(addr);
+        // mock verify_and_update
+        state.verified_tower_height = state.verified_tower_height + 1;
+        state.count_proofs_in_epoch = state.count_proofs_in_epoch + 1;
         i = i + 1;
       }
     }
