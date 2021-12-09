@@ -12,7 +12,7 @@ script {
 
     fun main(sender: signer) {
         // add one proof and init the state.
-        TowerState::test_helper_init_miner(
+        TowerState::test_helper_init_val(
             &sender,
             TestFixtures::easy_chal(),
             TestFixtures::easy_sol(),
@@ -30,7 +30,7 @@ script {
 
     fun main(sender: signer) {
         // add one proof and init the state.
-        TowerState::test_helper_init_miner(
+        TowerState::test_helper_init_val(
             &sender,
             TestFixtures::easy_chal(),
             TestFixtures::easy_sol(),
@@ -48,7 +48,7 @@ script {
     use 0x1::TowerState;
 
     fun main(vm: signer) {
-      TowerState::epoch_reset(&vm);
+      TowerState::test_epoch_reset(&vm);
     }
 }
 
@@ -74,7 +74,7 @@ script {
         // assert(DiemSystem::validator_set_size() == 5, 7357300101011000);
         assert(DiemSystem::is_validator(@{{alice}}) == true, 735701);
 
-        assert(TowerState::get_count_in_epoch(@{{alice}}) == 1, 735702);
+        assert(TowerState::get_count_in_epoch(@{{alice}}) == 0, 735702);
         assert(DiemAccount::balance<GAS>(@{{alice}}) == 1000000, 735703);
         assert(NodeWeight::proof_of_weight(@{{alice}}) == 0, 735704);
 
