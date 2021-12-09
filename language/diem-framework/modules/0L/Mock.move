@@ -38,8 +38,9 @@ module Mock {
       // can only apply this to a validator
       assert(DiemSystem::is_validator(addr) == true, 777704);
       // mock mining for the address
+      // insufficient number of proofs
       TowerState::test_helper_mock_mining_vm(vm, addr, 0);
-      assert(TowerState::get_count_in_epoch(addr) == 0, 777705);
+      // assert(TowerState::get_count_in_epoch(addr) == 0, 777705);
 
       // mock the consensus votes for the address
       let voters = Vector::empty<address>();
