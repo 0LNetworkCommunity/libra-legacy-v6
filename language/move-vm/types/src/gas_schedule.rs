@@ -319,4 +319,5 @@ pub enum NativeCostIndex {
     VDF_VERIFY = 18,
     VDF_PARSE = 19,
     DECIMAL = 20,
+    KECCAK_256 = 21,
 }

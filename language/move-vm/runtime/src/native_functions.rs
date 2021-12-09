@@ -7,7 +7,9 @@ use move_core_types::{
     account_address::AccountAddress, gas_schedule::CostTable, language_storage::CORE_CODE_ADDRESS,
     value::MoveTypeLayout, vm_status::StatusType,
 };
-use move_vm_natives::{account, bcs, debug, event, hash, signature, signer, vector, vdf, ol_decimal}; //////// 0L ////////
+use move_vm_natives::{
+    account, bcs, debug, event, hash, ol_decimal, ol_hash, signature, signer, vdf, vector,
+}; //////// 0L ////////
 use move_vm_types::{
     data_store::DataStore,
     gas_schedule::GasStatus,
@@ -47,10 +49,11 @@ pub(crate) enum NativeFunction {
     DestroySigner,
     //////// 0L ////////
     VDFVerify,
-    RedeemAuthKeyParse,   
+    RedeemAuthKeyParse,
     DecimalDemo,
     DecimalSingle,
     DecimalPair,
+    HashKeccak256,
 }
 
 impl NativeFunction {
@@ -89,6 +92,7 @@ impl NativeFunction {
             (&CORE_CODE_ADDRESS, "Decimal", "decimal_demo") => DecimalDemo,
             (&CORE_CODE_ADDRESS, "Decimal", "single_op") => DecimalSingle,
             (&CORE_CODE_ADDRESS, "Decimal", "pair_op") => DecimalPair,
+            (&CORE_CODE_ADDRESS, "XHash", "keccak_256") => HashKeccak256,
 
             _ => return None,
         })
@@ -129,6 +133,7 @@ impl NativeFunction {
             Self::DecimalDemo => ol_decimal::native_decimal_demo(ctx, t, v),
             Self::DecimalSingle => ol_decimal::native_decimal_single(ctx, t, v),
             Self::DecimalPair => ol_decimal::native_decimal_pair(ctx, t, v),
+            Self::HashKeccak256 => ol_hash::native_keccak_256(ctx, t, v),
         };
         debug_assert!(match &result {
             Err(e) => e.major_status().status_type() == StatusType::InvariantViolation,
