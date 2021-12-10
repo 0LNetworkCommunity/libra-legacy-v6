@@ -945,6 +945,33 @@ The withdrawal of funds would have exceeded the the account's limits
 
 
 
+<a name="0x1_DiemAccount_EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET"></a>
+
+
+
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET">EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET</a>: u64 = 120126;
+</code></pre>
+
+
+
+<a name="0x1_DiemAccount_EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT"></a>
+
+
+
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT">EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT</a>: u64 = 120128;
+</code></pre>
+
+
+
+<a name="0x1_DiemAccount_EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE"></a>
+
+
+
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE">EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE</a>: u64 = 120127;
+</code></pre>
+
+
+
 <a name="0x1_DiemAccount_EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED"></a>
 
 The <code><a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">WithdrawCapability</a></code> for this account has already been extracted
@@ -1444,10 +1471,12 @@ Initialize this module. This is only callable from genesis.
     <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_signer, <b>false</b>);
     <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_signer, new_account_authkey_prefix);
 
+    // <b>if</b> the initial coin sent is the minimum amount, don't check transfer limits.
     <b>if</b> (value &lt;= <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>) {
         <a href="DiemAccount.md#0x1_DiemAccount_onboarding_gas_transfer">onboarding_gas_transfer</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender, new_account, value);
         new_account
     }
+    // otherwise, <b>if</b> the onboarder wants <b>to</b> send more, then it must respect the transfer limits.
     <b>else</b> {
         <b>let</b> with_cap = <a href="DiemAccount.md#0x1_DiemAccount_extract_withdraw_capability">extract_withdraw_capability</a>(sender);
         <a href="DiemAccount.md#0x1_DiemAccount_pay_from">pay_from</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
@@ -2638,14 +2667,14 @@ the sender's account balance.
     <b>let</b> community_wallets = <a href="Wallet.md#0x1_Wallet_get_comm_list">Wallet::get_comm_list</a>();
     <b>assert</b>(
         !<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&community_wallets, &sender_addr),
-        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_EXCEEDS_LIMITS">EWITHDRAWAL_EXCEEDS_LIMITS</a>)
+        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET">EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET</a>)
     );
     /////// 0L /////////
     <b>if</b> (!<a href="DiemConfig.md#0x1_DiemConfig_check_transfer_enabled">DiemConfig::check_transfer_enabled</a>()) {
         // only VM can make TXs <b>if</b> transfers are not enabled.
         <b>assert</b>(
             sender_addr == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(),
-            <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_EXCEEDS_LIMITS">EWITHDRAWAL_EXCEEDS_LIMITS</a>)
+            <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE">EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE</a>)
         );
     };
     // Abort <b>if</b> we already extracted the unique withdraw capability for this account.
@@ -2782,12 +2811,13 @@ Return the withdraw capability to the account it originally came from
         <b>let</b> t: <a href="Wallet.md#0x1_Wallet_TimedTransfer">Wallet::TimedTransfer</a> = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&v, i);
         // TODO: Is this the best way <b>to</b> access a <b>struct</b> property from
         // outside a <b>module</b>?
-        <b>let</b> (payer, payee, value, description) = <a href="Wallet.md#0x1_Wallet_get_tx_args">Wallet::get_tx_args</a>(t);
+        <b>let</b> (payer, payee, value, description) = <a href="Wallet.md#0x1_Wallet_get_tx_args">Wallet::get_tx_args</a>(*&t);
         <b>if</b> (<a href="Wallet.md#0x1_Wallet_is_frozen">Wallet::is_frozen</a>(payer)) {
           i = i + 1;
           <b>continue</b>
         };
         <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(payer, payee, value, description, b"", vm);
+        <a href="Wallet.md#0x1_Wallet_mark_processed">Wallet::mark_processed</a>(vm, t);
         <a href="Wallet.md#0x1_Wallet_reset_rejection_counter">Wallet::reset_rejection_counter</a>(vm, payer);
         i = i + 1;
     };
@@ -2958,7 +2988,7 @@ subject to the dual attestation protocol
     <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&cap.account_address)) {
       <b>assert</b>(
             amount &lt; <a href="DiemAccount.md#0x1_DiemAccount_unlocked_amount">unlocked_amount</a>(*&cap.account_address),
-            <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_EXCEEDS_LIMITS">EWITHDRAWAL_EXCEEDS_LIMITS</a>)
+            <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT">EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT</a>)
         );
 
     };

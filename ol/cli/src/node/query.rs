@@ -1,6 +1,7 @@
 //! 'query'
 use std::collections::BTreeMap;
 
+use anyhow::{bail, Error};
 use hex::decode;
 use diem_json_rpc_client::{AccountAddress, views::{BytesView, EventView, TransactionView}};
 use move_binary_format::{file_format::{Ability, AbilitySet}};
@@ -8,6 +9,7 @@ use move_core_types::{
     identifier::Identifier,
     language_storage::{StructTag, TypeTag},
 };
+use diem_types::ol_teams_state::TeamsResource;
 use num_format::{Locale, ToFormattedString};
 use resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct, AnnotatedMoveValue};
 use super::node::Node;
@@ -63,7 +65,13 @@ pub enum QueryType {
       sent_or_received: bool,
       /// what event sequence number to start querying from, if DB does not have all.
       seq_start: Option<u64>,
+    },
+    /// Get a team at this address (captain addres)
+    Team {
+      /// account of team captain
+      account: AccountAddress,
     }
+
 }
 
 /// Get data from a client, with a query type. Will connect to local only if in sync.
@@ -192,9 +200,43 @@ impl Node {
                     }
                 };
                 print
+            },
+            Team { account} => {
+                let team = self.get_teams_resource(account).unwrap();
+
+                format!("TEAM: {:?}", team)
             }
         }
     }
+
+    /// get a move struct
+    pub fn get_move_struct(&mut self, account: AccountAddress, module_name: String, struct_name: String) -> Result<AnnotatedMoveStruct, Error> {
+      match self.get_annotate_account_blob(account) {
+          Ok((Some(r), _)) => {
+            match get_struct_from_state(&r, module_name, struct_name.clone()) {
+                Some(a) => Ok(a.to_owned()),
+                None => bail!("Could not find struct {} in resource", &struct_name),
+            }
+          },
+          Err(e) => bail!("Error querying account resource. Message: {:#?}", e),
+          _ => bail!("Error, cannot find account state for {:#?}", account),
+      }
+    }
+
+    /// test query team
+    pub fn get_teams_resource(&mut self, address: AccountAddress) -> Result<TeamsResource, Error> {
+      match self.get_account_state(address) {
+        Ok(a) => {
+          match a.get_resource::<TeamsResource>() {
+              Ok(Some(t)) => return Ok(t),
+              _ => {}
+          }
+        },
+        _ => {},
+      };
+
+      bail!("cannot find Teams resource on account");
+  }
 }
 
 
@@ -284,15 +326,23 @@ pub fn find_value_from_state(
     struct_name: String,
     key_name: String,
 ) -> Option<&AnnotatedMoveValue> {
-    match blob.0.values().find(|&s| {
-        s.type_.module.as_ref().to_string() == module_name
-        && s.type_.name.as_ref().to_string() == struct_name
-    }) {
+    match get_struct_from_state(blob, module_name, struct_name){
         Some(s) => find_value_in_struct(s, key_name),
         None => None,
     }
 }
 
+/// return an annotated struct
+pub fn get_struct_from_state(
+    blob: &AnnotatedAccountStateBlob,
+    module_name: String,
+    struct_name: String,
+) -> Option<&AnnotatedMoveStruct> {
+    blob.0.values().find(|&s| {
+        s.type_.module.as_ref().to_string() == module_name
+        && s.type_.name.as_ref().to_string() == struct_name
+    })
+}
 
 /// test fixtures
 pub fn test_fixture_blob() -> AnnotatedAccountStateBlob {
@@ -320,6 +370,8 @@ pub fn test_fixture_struct() -> AnnotatedMoveStruct {
         value: vec![(key, value)],
     }
 }
+
+
 
 #[test]
 fn test_find_annotated_move_value() {

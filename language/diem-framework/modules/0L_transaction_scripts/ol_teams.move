@@ -12,5 +12,12 @@ module TeamsScripts {
     ) {
       Teams::team_init(&sender, team_name, operator_pct_reward);
     }
+
+    public(script) fun join_team(
+        sender: signer,
+        captain: address,
+    ) {
+      Teams::join_team(&sender, captain);
+    }
 }
 }

@@ -18,6 +18,7 @@ module Teams {
     use 0x1::Vector;
     use 0x1::Signer;
     use 0x1::DiemAccount;
+    use 0x1::ValidatorUniverse;
 
     const ENOT_SLOW_WALLET: u64 = 1010;
     
@@ -27,11 +28,11 @@ module Teams {
     }
 
     struct Team has key, copy, drop, store {
-      captain: address, // A validator account.
+      captain: address, // A validator account. TODO this is redundant, since it is stored in the validator account. But placed here for future-proofing.
       team_name: vector<u8>, // A validator account.
       members: vector<address>,
       operator_pct_reward: u64, // the percentage of the rewards that the captain proposes to go to the validator operator.
-      tribal_tower_height_this_epoch: u64,
+      collective_tower_height_this_epoch: u64,
     }
 
     // this struct is stored in the member's account
@@ -53,6 +54,8 @@ module Teams {
 
 
     public fun team_init(sender: &signer, team_name: vector<u8>, operator_pct_reward: u64) {
+
+      assert(ValidatorUniverse::is_in_universe(Signer::address_of(sender)), 201301001);
       // An "captain", who is already a validator account, stores the Team struct on their account.
       // the AllTeams struct is saved in the 0x0 account, and needs to be initialized before this is called.
 
@@ -68,7 +71,7 @@ module Teams {
           team_name, // A validator account.
           members: Vector::empty<address>(),
           operator_pct_reward, // the percentage of the rewards that the captain proposes to go to the validator operator.
-          tribal_tower_height_this_epoch: 0,
+          collective_tower_height_this_epoch: 0,
         }
       );
     }

@@ -1769,6 +1769,12 @@ pub enum ScriptFunctionCall {
         amount: u64,
     },
 
+    CommunityTransfer {
+        destination: AccountAddress,
+        unscaled_value: u64,
+        memo: Bytes,
+    },
+
     CreateAccUser {
         challenge: Bytes,
         solution: Bytes,
@@ -2224,6 +2230,10 @@ pub enum ScriptFunctionCall {
     },
 
     Join {},
+
+    JoinTeam {
+        captain: AccountAddress,
+    },
 
     Leave {},
 
@@ -3534,6 +3544,11 @@ impl ScriptFunctionCall {
                 preburn_address,
                 amount,
             } => encode_cancel_burn_with_amount_script_function(token, preburn_address, amount),
+            CommunityTransfer {
+                destination,
+                unscaled_value,
+                memo,
+            } => encode_community_transfer_script_function(destination, unscaled_value, memo),
             CreateAccUser {
                 challenge,
                 solution,
@@ -3654,6 +3669,7 @@ impl ScriptFunctionCall {
                 encode_initialize_diem_consensus_config_script_function(sliding_nonce)
             }
             Join {} => encode_join_script_function(),
+            JoinTeam { captain } => encode_join_team_script_function(captain),
             Leave {} => encode_leave_script_function(),
             MinerstateCommit {
                 challenge,
@@ -4336,6 +4352,26 @@ pub fn encode_cancel_burn_with_amount_script_function(
     ))
 }
 
+pub fn encode_community_transfer_script_function(
+    destination: AccountAddress,
+    unscaled_value: u64,
+    memo: Vec<u8>,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("TransferScripts").to_owned(),
+        ),
+        ident_str!("community_transfer").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&destination).unwrap(),
+            bcs::to_bytes(&unscaled_value).unwrap(),
+            bcs::to_bytes(&memo).unwrap(),
+        ],
+    ))
+}
+
 pub fn encode_create_acc_user_script_function(
     challenge: Vec<u8>,
     solution: Vec<u8>,
@@ -4991,6 +5027,18 @@ pub fn encode_join_script_function() -> TransactionPayload {
         ident_str!("join").to_owned(),
         vec![],
         vec![],
+    ))
+}
+
+pub fn encode_join_team_script_function(captain: AccountAddress) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("TeamsScripts").to_owned(),
+        ),
+        ident_str!("join_team").to_owned(),
+        vec![],
+        vec![bcs::to_bytes(&captain).unwrap()],
     ))
 }
 
@@ -8208,6 +8256,20 @@ fn decode_cancel_burn_with_amount_script_function(
     }
 }
 
+fn decode_community_transfer_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::CommunityTransfer {
+            destination: bcs::from_bytes(script.args().get(0)?).ok()?,
+            unscaled_value: bcs::from_bytes(script.args().get(1)?).ok()?,
+            memo: bcs::from_bytes(script.args().get(2)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_create_acc_user_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -8408,6 +8470,16 @@ fn decode_initialize_diem_consensus_config_script_function(
 fn decode_join_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
         Some(ScriptFunctionCall::Join {})
+    } else {
+        None
+    }
+}
+
+fn decode_join_team_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::JoinTeam {
+            captain: bcs::from_bytes(script.args().get(0)?).ok()?,
+        })
     } else {
         None
     }
@@ -9310,6 +9382,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_cancel_burn_with_amount_script_function),
         );
         map.insert(
+            "TransferScriptscommunity_transfer".to_string(),
+            Box::new(decode_community_transfer_script_function),
+        );
+        map.insert(
             "AccountScriptscreate_acc_user".to_string(),
             Box::new(decode_create_acc_user_script_function),
         );
@@ -9368,6 +9444,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "ValidatorScriptsjoin".to_string(),
             Box::new(decode_join_script_function),
+        );
+        map.insert(
+            "TeamsScriptsjoin_team".to_string(),
+            Box::new(decode_join_team_script_function),
         );
         map.insert(
             "ValidatorScriptsleave".to_string(),

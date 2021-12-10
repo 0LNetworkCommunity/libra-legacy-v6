@@ -1493,7 +1493,6 @@ impl TryFrom<AccountState> for OracleUpgradeStateView {
         } else {
           Err(Error::msg("could not get upgrade oracle data"))
         }
-
     }
 }
 
