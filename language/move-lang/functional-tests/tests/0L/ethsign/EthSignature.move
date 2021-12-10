@@ -44,8 +44,8 @@ script{
         // negative : bad data
         let invalid_data = b"hello";
         // recover
-        assert(EthSignature::recover(copy valid_pubkey, copy invalid_data) == copy zero_pubkey, 1001);
+        assert(EthSignature::recover(copy valid_pubkey, copy invalid_data) == copy zero_pubkey, 1009);
         // verify
-        assert(!EthSignature::verify(copy valid_signature, copy valid_pubkey, invalid_data), 1009);
+        assert(!EthSignature::verify(copy valid_signature, copy valid_pubkey, invalid_data), 1010);
     }
 }
