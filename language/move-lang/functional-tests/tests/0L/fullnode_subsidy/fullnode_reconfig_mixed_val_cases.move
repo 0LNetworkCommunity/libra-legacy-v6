@@ -42,19 +42,28 @@ script {
     use 0x1::TowerState;
 
     fun main(vm: signer) {
+      TowerState::test_epoch_reset_counter(&vm);
+      TowerState::test_helper_mock_reconfig(&vm, @{{alice}});
+      TowerState::test_helper_mock_reconfig(&vm, @{{bob}});
+      TowerState::test_helper_mock_reconfig(&vm, @{{carol}});
+      TowerState::test_helper_mock_reconfig(&vm, @{{dave}});
+      TowerState::test_helper_mock_reconfig(&vm, @{{eve}});
+      TowerState::test_helper_mock_reconfig(&vm, @{{frank}});
+      TowerState::test_helper_mock_reconfig(&vm, @{{gertie}});
+
       Mock::mock_case_1(&vm, @{{alice}});
       Mock::mock_case_1(&vm, @{{carol}});
       Mock::mock_case_1(&vm, @{{dave}});
       Mock::mock_case_1(&vm, @{{eve}});
       Mock::mock_case_1(&vm, @{{frank}});
-      // gertie will not be a case 2.
+      // gertie will BE CASE 2
       Mock::mock_case_2(&vm, @{{gertie}});
 
       // Mock the end-users submitting proofs above threshold.
-      // Mock the end-users submitting proofs above threshold.
-      // Add 12: make it so that +1 gets above threshold so that *11* are counted as above thresh.
-      // USING 11 in this case because of rounding. 11 is a factor of the validator subsidy for this case.
-      TowerState::test_helper_mock_mining_vm(&vm, @{{bob}}, 12);
+      // Add 13: make it so that +2 gets above threshold 
+      // Using 11 in this case because its a factor of the resulting validator payment
+      // and doesnt cause rounding issues.
+      TowerState::test_helper_mock_mining_vm(&vm, @{{bob}}, 13);
     }
 }
 //check: EXECUTED

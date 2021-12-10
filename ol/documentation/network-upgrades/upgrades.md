@@ -22,3 +22,9 @@ Typically most upgrades will be #1, policy upgrades. These upgrades do not halt 
 #4 upgrades are effectively network forks, where the previous network is abandoned. A state backup is created by each validator, and processed with the same tools to create a new genesis which preserve some or all of the previous account state. Diem-node then gets updated and all validators can do the genesis of the new network.
 
 See: [what is the workflow for upgrading a network](./upgrade-workflow.md)
+
+## When things go wrong
+
+The policy of a network update that goes bad is to restore to the last known epoch which will not cause the same issue. For a hot upgrade for intances is the state snapshot of the epoch in which an abort sequence can reasonably be issued.
+
+Daily snapshots of the epoch are available on the repo: `github.com/olsf/epoch-archive`

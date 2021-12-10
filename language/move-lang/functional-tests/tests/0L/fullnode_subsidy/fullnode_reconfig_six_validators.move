@@ -37,6 +37,16 @@ script {
     use 0x1::TowerState;
 
     fun main(vm: signer) {
+      TowerState::test_epoch_reset_counter(&vm);
+      TowerState::test_helper_mock_reconfig(&vm, @{{alice}});
+      TowerState::test_helper_mock_reconfig(&vm, @{{bob}});
+      TowerState::test_helper_mock_reconfig(&vm, @{{carol}});
+      TowerState::test_helper_mock_reconfig(&vm, @{{dave}});
+      TowerState::test_helper_mock_reconfig(&vm, @{{eve}});
+      TowerState::test_helper_mock_reconfig(&vm, @{{frank}});
+      TowerState::test_helper_mock_reconfig(&vm, @{{gertie}});
+
+
       Mock::mock_case_1(&vm, @{{alice}});
       Mock::mock_case_1(&vm, @{{carol}});
       Mock::mock_case_1(&vm, @{{dave}});
@@ -45,8 +55,8 @@ script {
       Mock::mock_case_1(&vm, @{{gertie}});
 
       // Mock the end-users submitting proofs above threshold.
-      // Add 11: make it so that +1 gets above threshold so that 10 are counted as above thresh.
-      TowerState::test_helper_mock_mining_vm(&vm, @{{bob}}, 11);
+      // Add 12: make it so that +2 gets above threshold so that 10 are counted as above thresh.
+      TowerState::test_helper_mock_mining_vm(&vm, @{{bob}}, 12);
     }
 }
 //check: EXECUTED
