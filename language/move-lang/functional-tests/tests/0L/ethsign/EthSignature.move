@@ -22,6 +22,5 @@ script{
         sign = x"b91467e570a6466aa9e9876cbcd013baba02900b8979d43fe208a4a4f339f5fd6007e74cd82e037b800186422fc2da167c747ef045e5d18a5f5d4300f8e1a0291c";
         let res = EthSignature::verify(sign, pubkey, data);
         assert(res == true, 1);
-
     }
 }

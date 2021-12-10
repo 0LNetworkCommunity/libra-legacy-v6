@@ -1,7 +1,6 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use diem_crypto::{ed25519, traits::*};
 use move_binary_format::errors::PartialVMResult;
 use move_vm_types::{
     gas_schedule::NativeCostIndex,
@@ -11,7 +10,6 @@ use move_vm_types::{
 };
 use smallvec::smallvec;
 use std::{collections::VecDeque, convert::TryFrom};
-use ethers::core::types::{H160, Signature}; 
 
 pub fn native_eth_signature_recover(
     context: &impl NativeContext,
