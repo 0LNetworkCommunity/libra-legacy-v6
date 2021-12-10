@@ -86,4 +86,39 @@ module Migrations {
     Option::none<Job>()
   }
 }
+
+/// # Summary 
+/// Module to migrate the tower statistics from TowerState to TowerCounter
+module MigrateTowerCounter {
+  use 0x1::TowerState;
+  use 0x1::Migrations;
+  use 0x1::CoreAddresses;
+
+  const UID:u64 = 1;
+  // Migration to migrate all wallets to be slow wallets
+  public fun migrate_tower_counter(vm: &signer) {
+    CoreAddresses::assert_diem_root(vm);
+    if (!Migrations::has_run(UID)) {
+      let (global, val, fn) = TowerState::danger_migrate_get_lifetime_proof_count();
+      TowerState::init_tower_counter(vm, global, val, fn);
+      Migrations::push(vm, UID, b"MigrateTowerCounter");
+    };
+  }
+
+}
+
+// Module for initializing Teams on a hot upgrade of stdlib.
+// since the system is likely operating and Teams are introduced as an upgrade, the structs need to be initalized.
+
+module MigrateInitDelegation {
+  use 0x1::Teams;
+  use 0x1::Migrations;
+  const UID: u64 = 2;
+  public fun do_it(vm: &signer) {
+    if (!Migrations::has_run(UID)) {
+      Teams::vm_init(vm);
+      Migrations::push(vm, UID, b"MigrateInitTeams");
+    }
+  }
+}
 }

@@ -11,20 +11,20 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "^17.0.0",
     "@rollup/plugin-node-resolve": "^11.0.0",
-    "@rollup/plugin-typescript": "^8.2.0",
-    "@tsconfig/svelte": "^1.0.0",
-    "rollup": "^2.3.4",
+    "@rollup/plugin-typescript": "^8.3.0",
+    "@tsconfig/svelte": "^1.0.13",
+    "rollup": "^2.60.2",
     "rollup-plugin-css-only": "^3.1.0",
     "rollup-plugin-svelte": "^7.0.0",
     "rollup-plugin-terser": "^7.0.0",
-    "svelte": "^3.0.0",
-    "svelte-check": "^1.0.0",
-    "svelte-preprocess": "^4.0.0",
-    "tslib": "^2.0.0",
-    "typescript": "^4.0.0"
+    "svelte": "^3.44.2",
+    "svelte-check": "^1.6.0",
+    "svelte-preprocess": "^4.9.8",
+    "tslib": "^2.3.1",
+    "typescript": "^4.5.2"
   },
   "dependencies": {
     "lodash": "^4.17.21",
-    "sirv-cli": "^1.0.0"
+    "sirv-cli": "^1.0.14"
   }
 }

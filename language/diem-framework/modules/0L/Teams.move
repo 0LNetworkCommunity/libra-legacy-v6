@@ -143,20 +143,5 @@ module Teams {
       exists<AllTeams>(CoreAddresses::VM_RESERVED_ADDRESS())
     }
 }
-
-// Module for initializing Teams on a hot upgrade of stdlib.
-// since the system is likely operating and Teams are introduced as an upgrade, the structs need to be initalized.
-
-module MigrateInitDelegation {
-  use 0x1::Teams;
-  use 0x1::Migrations;
-  const UID: u64 = 101;
-  public fun do_it(vm: &signer) {
-    if (!Migrations::has_run(UID)) {
-      Teams::vm_init(vm);
-      Migrations::push(vm, UID, b"MigrateInitTeams");
-    }
-  }
-}
 }
 

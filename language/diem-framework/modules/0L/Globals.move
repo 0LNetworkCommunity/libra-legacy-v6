@@ -93,7 +93,7 @@ module Globals {
           max_validators_per_set: 100,
           subsidy_ceiling_gas: 296 * COIN_SCALING_FACTOR,
           vdf_difficulty: 100,
-          epoch_mining_thres_lower: 1,
+          epoch_mining_thres_lower: 2, //many tests depend on two proofs because the test harness already gives one at genesis to validators
           epoch_mining_thres_upper: 1000, // upper bound unlimited
           epoch_slow_wallet_unlock: 10,
         }
@@ -105,7 +105,7 @@ module Globals {
           max_validators_per_set: 100,
           subsidy_ceiling_gas: 8640000 * COIN_SCALING_FACTOR,
           vdf_difficulty: 120000000,
-          epoch_mining_thres_lower: 1,
+          epoch_mining_thres_lower: 1, // in testnet, staging, we don't want to wait too long between proofs.
           epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
           epoch_slow_wallet_unlock: 10000000,
         }

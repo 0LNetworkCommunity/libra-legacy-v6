@@ -2,7 +2,7 @@
 
 use std::{env, io::Write, process::Stdio};
 use abscissa_core::{status_ok};
-use diem_global_constants::{GENESIS_WAYPOINT, WAYPOINT};
+use diem_global_constants::WAYPOINT;
 use once_cell::sync::Lazy;
 use reqwest;
 use anyhow::{Error, bail, anyhow};
@@ -46,7 +46,7 @@ pub fn fast_forward_db(verbose: bool, epoch: Option<u64>) -> Result<(), Error>{
     println!("fetching latest epoch backup from epoch archive");
     backup.fetch_backup(verbose)?;
 
-    println!("\nSetting waypoint key_store.json being updated");
+    println!("\nSetting waypoint in key_store.json");
     backup.set_waypoint()?;
 
     println!("\nRestoring db from archive to home path");
@@ -79,10 +79,10 @@ env!("CARGO_PKG_VERSION"),
 #[derive(Debug)]
 pub struct Backup {
     version_number: u64,
-    zip_url: String,
+    archive_url: String,
     home_path: PathBuf,
     restore_path: PathBuf,
-    zip_path: PathBuf,
+    archive_path: PathBuf,
     waypoint: Option<Waypoint>,
     node_namespace: String,
 }
@@ -91,11 +91,11 @@ impl Backup {
     /// Creates a backup info instance
     pub fn new(epoch: Option<u64>) -> Self {
         let conf = app_config().to_owned();
-        let (restore_epoch, zip_url) = if let Some(e) = epoch {
-          (e, get_zip_url(e).unwrap())
+        let (restore_epoch, archive_url) = if let Some(e) = epoch {
+          (e, get_archive_url(e).unwrap())
         } else {
-          get_highest_epoch_zip().expect(
-            &format!("could not find a zip backup at url: {}", GITHUB_REPO.clone())
+          get_highest_epoch_archive().expect(
+            &format!("could not find an archive tar.gz backup at url: {}", GITHUB_REPO.clone())
           )
         };
 
@@ -106,46 +106,35 @@ impl Backup {
 
         Backup {
             version_number: restore_epoch,
-            zip_url,
+            archive_url,
             home_path: conf.workspace.node_home.clone(),
             restore_path: restore_path.clone(),
-            zip_path: conf.workspace.node_home.join(format!("restore/restore-{}.zip", restore_epoch)),
+            archive_path: conf.workspace.node_home.join(format!("restore/restore-{}.tar.gz", restore_epoch)),
             waypoint: None,
-            node_namespace: format!("{}-oper", conf.profile.auth_key.clone()),
+            node_namespace: format!("{}-oper", conf.profile.account.clone().to_hex()), // NOTE: needs to match namespace used in ol/onboard and config/management/genesis
         }
     }
     /// Fetch backups
     pub fn fetch_backup(&self, verbose: bool) -> Result<(), Error> {    
-      let mut resp = reqwest::blocking::get(&self.zip_url).expect(
+      let mut resp = reqwest::blocking::get(&self.archive_url).expect(
         "epoch archive http request failed"
       );
-      let mut out = File::create(&self.zip_path).expect("cannot create archive zip");
-      io::copy(&mut resp, &mut out).expect("failed to write to archive zip");
-      println!("fetched archive zip, copied to {:?}", &self.home_path.join("restore/"));      
+      let mut out = File::create(&self.archive_path).expect("cannot create tar.gz archive");
+      io::copy(&mut resp, &mut out).expect("failed to write to tar.gz archive");
+      println!("fetched archive file, copied to {:?}", &self.home_path.join("restore/"));      
       
       let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
       let restore_dir = &self.home_path.join("restore/");
 
-      // replace zip for tar
-      // tar -xf archive.tar.gz -C
       let mut child = Command::new("tar")
       .arg("-xf")
-      .arg(&self.zip_path)
+      .arg(&self.archive_path)
       .arg("-C")
       .arg(restore_dir)
       .stdout(stdio_cfg)
       .spawn()
-      .expect(&format!("failed to unzip {:?} into {:?}", &self.zip_path, restore_dir));
+      .expect(&format!("failed to extract archive {:?} into {:?}", &self.archive_path, restore_dir));
 
-
-      // let mut child = Command::new("unzip")
-      // .arg("-o")
-      // .arg(&self.zip_path)
-      // .arg("-d")
-      // .arg(restore_dir)
-      // .stdout(stdio_cfg)
-      // .spawn()
-      // .expect(&format!("failed to unzip {:?} into {:?}", &self.zip_path, restore_dir));
 
       let ecode = child.wait().expect("failed to wait on child");
 
@@ -207,7 +196,7 @@ impl Backup {
                 Box::new(storage),
             )
         );
-        ns_storage.set(GENESIS_WAYPOINT, waypoint)?;
+        // ns_storage.set(GENESIS_WAYPOINT, waypoint)?;
         ns_storage.set(WAYPOINT, waypoint)?;
 
         println!("waypoint retrieve, updated key_store.json");
@@ -242,7 +231,7 @@ impl Backup {
 }
 
 
-fn get_highest_epoch_zip() -> Result<(u64, String), Error> {
+fn get_highest_epoch_archive() -> Result<(u64, String), Error> {
     let client = reqwest::blocking::Client::builder()
     .user_agent(APP_USER_AGENT)
     .build()?;
@@ -278,7 +267,7 @@ fn get_highest_epoch_zip() -> Result<(u64, String), Error> {
     )
 }
 
-fn get_zip_url(epoch: u64) -> Result<String, Error> {
+fn get_archive_url(epoch: u64) -> Result<String, Error> {
     Ok( 
       format!(
         "https://raw.githubusercontent.com/{owner}/{repo}/main/{epoch}.tar.gz",

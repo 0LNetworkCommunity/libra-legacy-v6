@@ -295,10 +295,11 @@ pub fn get_miner_state(
     db: &dyn DbReader,
     version: u64,
     account: AccountAddress,
-    // ledger_info: &LedgerInfoWithSignatures,
+    ledger_info: &LedgerInfoWithSignatures,
 ) -> Result<TowerStateResourceView, JsonRpcError> {
+    let epoch = ledger_info.ledger_info().epoch();
     match get_account_state(db, account, version)? {
-        Some(s) => TowerStateResourceView::try_from(s).map_err(Into::into),
+        Some(s) => TowerStateResourceView::from_state_and_epoch(s, epoch).map_err(Into::into),
         None => Err(JsonRpcError::internal_error("No account state found".to_owned())),
     }
 }
