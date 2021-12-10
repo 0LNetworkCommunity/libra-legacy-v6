@@ -22,6 +22,7 @@ script {
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
+    use 0x1::Debug::print;
 
     fun main(sender: signer) {
         // Tests on initial size of validators
@@ -29,14 +30,19 @@ script {
         assert(DiemSystem::is_validator(@{{alice}}) == true, 7357300101021000);
         assert(DiemSystem::is_validator(@{{eve}}) == true, 7357300101031000);
 
-        assert(TowerState::get_count_in_epoch(@{{alice}}) == 1, 7357300101041000);
+        assert(TowerState::get_count_in_epoch(@{{alice}}) == 0, 7357300101041000);
         assert(DiemAccount::balance<GAS>(@{{alice}}) == 1000000, 7357300101051000);
         assert(NodeWeight::proof_of_weight(@{{alice}}) == 0, 7357300101051000);
 
         // Alice continues to mine after genesis.
         // This test is adapted from chained_from_genesis.move
         TowerState::test_helper_mock_mining(&sender, 5);
+        let a = TowerState::get_epochs_compliant(@{{alice}});
+        print(&a);
+
         assert(TowerState::get_count_in_epoch(@{{alice}}) == 5, 7357300101071000);
+        assert(TowerState::node_above_thresh(@{{alice}}), 7357300101081000);
+
     }
 }
 // check: EXECUTED
@@ -116,6 +122,7 @@ script {
     use 0x1::DiemAccount;
     use 0x1::Subsidy;
     use 0x1::Globals;
+    use 0x1::TowerState;
 
     fun main(_vm: signer) {
         // We are in a new epoch.
@@ -133,7 +140,11 @@ script {
         let ending_balance = starting_balance + expected_subsidy - operator_refund;
 
         assert(DiemAccount::balance<GAS>(@{{alice}}) == ending_balance, 7357000180113);  
-        assert(NodeWeight::proof_of_weight(@{{alice}}) == 0, 7357000180114);  
+        assert(NodeWeight::proof_of_weight(@{{alice}}) == 0, 7357000180114);
+
+        // Case 1, increments the epochs_validating_and_mining, which is used for rate-limiting onboarding
+        assert(TowerState::get_epochs_compliant(@{{alice}}) == 1, 7357000180115);  
+
     }
 }
 //check: EXECUTED

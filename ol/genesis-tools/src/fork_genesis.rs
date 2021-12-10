@@ -116,16 +116,6 @@ pub fn migrate_account(legacy: &LegacyRecovery) -> Result<WriteSetMut, Error> {
     // Restore Miner State
 
     if let Some(m) = &legacy.miner_state {
-        // TODO: confirm no transformation is needed since the serialization remains the same.
-        //   let new = TowerStateResource {
-        //     previous_proof_hash: m.previous_proof_hash,
-        //     verified_tower_height: m.verified_tower_height,
-        //     latest_epoch_mining: m.latest_epoch_mining,
-        //     count_proofs_in_epoch: m.count_proofs_in_epoch,
-        //     epochs_validating_and_mining: m.epochs_validating_and_mining,
-        //     contiguous_epochs_validating_and_mining: m.contiguous_epochs_validating_and_mining,
-        //     epochs_since_last_account_creation: m.epochs_since_last_account_creation,
-        // };
         write_set_mut.push((
             AccessPath::new(account, TowerStateResource::resource_path()),
             WriteOp::Value(bcs::to_bytes(&m).unwrap()),

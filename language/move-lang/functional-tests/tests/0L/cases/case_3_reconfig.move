@@ -17,6 +17,8 @@
 //! block-time: 1
 //! NewBlockEvent
 
+// 1. Set up validator accounts correctly. Test harness was not giving enough gas to operator accounts. TODO: check if this is still true 20211204
+
 //! new-transaction
 //! sender: diemroot
 script {
@@ -41,6 +43,8 @@ script {
     }
 }
 //check: EXECUTED
+
+// 2. Mock mining on all accounts.
 
 //! new-transaction
 //! sender: alice
@@ -137,6 +141,8 @@ script {
 }
 //check: EXECUTED
 
+// 3. Test that Carol the Case 3, has correct fixtures
+
 //! new-transaction
 //! sender: diemroot
 script {
@@ -144,15 +150,8 @@ script {
     use 0x1::TowerState;
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
-    // use 0x1::FullnodeState;
     
     fun main(_vm: signer) {
-        // This is not an onboarding case, steady state.
-        // FullnodeState::test_set_fullnode_fixtures(
-        //     &vm, @{{carol}}, 0, 0, 0, 200, 200, 1000000
-        // );
-
-        // Tests on initial size of validators 
         assert(DiemSystem::validator_set_size() == 6, 7357000180101);
         assert(DiemSystem::is_validator(@{{carol}}) == true, 7357000180102);
         assert(TowerState::test_helper_get_height(@{{carol}}) == 0, 7357000180104);
@@ -162,18 +161,14 @@ script {
 }
 // check: EXECUTED
 
+// 4. process consensus votes
+
 //! new-transaction
 //! sender: diemroot
 script {
     use 0x1::Vector;
     use 0x1::Stats;
-    // use 0x1::FullnodeState;
-    // This is the the epoch boundary.
     fun main(vm: signer) {
-        // This is not an onboarding case, steady state.
-        // FullnodeState::test_set_fullnode_fixtures(
-        //     &vm, @{{carol}}, 0, 0, 0, 200, 200, 1000000
-        // );
 
         let voters = Vector::empty<address>();
         Vector::push_back<address>(&mut voters, @{{alice}});
@@ -194,6 +189,8 @@ script {
         };
     }
 }
+
+// 4. Check carol would be considered a Case 3 at the end of epoch
 
 //! new-transaction
 //! sender: diemroot
@@ -226,6 +223,7 @@ script {
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
     use 0x1::DiemConfig;
+    use 0x1::TowerState;
 
     fun main(_account: signer) {
         // We are in a new epoch.
@@ -236,6 +234,10 @@ script {
         assert(DiemAccount::balance<GAS>(@{{carol}}) == 949991, 7357000180112);
         assert(NodeWeight::proof_of_weight(@{{carol}}) == 0, 7357000180113);  
         assert(DiemConfig::get_current_epoch() == 2, 7357000180114);
+
+        // Case 3 does not increment epochs_validating and mining (while case 1 does);
+        assert(TowerState::get_epochs_compliant(@{{alice}}) == 1, 7357000180115);  
+        assert(TowerState::get_epochs_compliant(@{{carol}}) == 0, 7357000180115);  
     }
 }
 //check: EXECUTED
