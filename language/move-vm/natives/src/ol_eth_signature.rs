@@ -19,10 +19,6 @@ pub fn native_eth_signature_recover(
     debug_assert!(_ty_args.is_empty());
     debug_assert!(arguments.len() == 2);
 
-    //let ten_millis = time::Duration::from_millis(4000);
-
-    //thread::sleep(ten_millis);
-
     let msg_bytes = pop_arg!(arguments, Vec<u8>);
     let sig_bytes = pop_arg!(arguments, Vec<u8>);
 
@@ -35,14 +31,14 @@ pub fn native_eth_signature_recover(
     let sig = match ethers::core::types::Signature::try_from(sig_bytes.as_slice()) {
         Ok(sig) => sig,
         Err(_) => {
-            return Ok(NativeResult::ok(cost, smallvec![Value::bool(false)]));
+            return Ok(NativeResult::ok(cost, smallvec![Value::vector_u8(vec![0; 20])]));
         }
     };
 
     let pubkey = match sig.recover(msg_bytes.as_slice()) {
         Ok(pubkey) => pubkey,
         Err(_) => {
-            return Ok(NativeResult::ok(cost, smallvec![Value::bool(false)]));
+            return Ok(NativeResult::ok(cost, smallvec![Value::vector_u8(vec![0; 20])]));
         }
     };
 
@@ -77,9 +73,12 @@ pub fn native_eth_signature_verify(
         }
     };
 
+println!("AAAAA before!");
     let pubkey = ethers::core::types::H160::from_slice(pubkey_bytes.as_slice());
+println!("AAAAAA after!");
 
     let verify_result = sig.verify(msg_bytes.as_slice(),pubkey).is_ok();
+    println!("AAAAAA re: {}", verify_result);
     Ok(NativeResult::ok(
         cost,
         smallvec![Value::bool(verify_result)],
