@@ -46,6 +46,12 @@ Teams also allow for other rewards to potentially be shared. 0L is not explicit 
 
 The vote weight for upgrade vote counting is the same as consensus voting, i.e., the Team Weight will count toward upgrade votes.
 
+## Proxying of votes
+Only the Team Captain's vote is counted. Here's the thinking:
+
+The core function of "delegation" is that you are proxying your votes to someone with better knowledge and more active participation.  The assumption here is that getting quorum on upgrades is difficult when you have plebiscite votes. And sometimes upgrades need to happen fast (like security upgrades). 
+
+If you disagree about how your team captain votes you should switch teams, leave the team, write your congressmen, or start another team. These are low cost and low friction actions.
 
 # Difficulty Ratchet
 
