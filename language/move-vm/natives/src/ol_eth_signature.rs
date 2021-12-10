@@ -31,14 +31,20 @@ pub fn native_eth_signature_recover(
     let sig = match ethers::core::types::Signature::try_from(sig_bytes.as_slice()) {
         Ok(sig) => sig,
         Err(_) => {
-            return Ok(NativeResult::ok(cost, smallvec![Value::vector_u8(vec![0; 20])]));
+            return Ok(NativeResult::ok(
+                cost,
+                smallvec![Value::vector_u8(vec![0u8; 20])],
+            ));
         }
     };
 
     let pubkey = match sig.recover(msg_bytes.as_slice()) {
         Ok(pubkey) => pubkey,
         Err(_) => {
-            return Ok(NativeResult::ok(cost, smallvec![Value::vector_u8(vec![0; 20])]));
+            return Ok(NativeResult::ok(
+                cost,
+                smallvec![Value::vector_u8(vec![0u8; 20])],
+            ));
         }
     };
 
@@ -67,7 +73,7 @@ pub fn native_eth_signature_verify(
     );
 
     if pubkey_bytes.len() != 20 {
-            return Ok(NativeResult::ok(cost, smallvec![Value::bool(false)]));
+        return Ok(NativeResult::ok(cost, smallvec![Value::bool(false)]));
     }
 
     let sig = match ethers::core::types::Signature::try_from(sig_bytes.as_slice()) {
@@ -79,7 +85,7 @@ pub fn native_eth_signature_verify(
 
     let pubkey = ethers::core::types::H160::from_slice(pubkey_bytes.as_slice());
 
-    let verify_result = sig.verify(msg_bytes.as_slice(),pubkey).is_ok();
+    let verify_result = sig.verify(msg_bytes.as_slice(), pubkey).is_ok();
     Ok(NativeResult::ok(
         cost,
         smallvec![Value::bool(verify_result)],

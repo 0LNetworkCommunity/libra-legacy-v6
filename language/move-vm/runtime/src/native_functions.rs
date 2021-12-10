@@ -8,7 +8,8 @@ use move_core_types::{
     value::MoveTypeLayout, vm_status::StatusType,
 };
 use move_vm_natives::{
-    account, bcs, debug, event, hash, ol_decimal, ol_hash, ol_eth_signature, signature, signer, vdf, vector,
+    account, bcs, debug, event, hash, ol_decimal, ol_eth_signature, ol_hash, signature, signer,
+    vdf, vector,
 }; //////// 0L ////////
 use move_vm_types::{
     data_store::DataStore,
