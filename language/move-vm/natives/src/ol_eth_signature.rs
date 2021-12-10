@@ -66,6 +66,10 @@ pub fn native_eth_signature_verify(
         msg_bytes.len(),
     );
 
+    if pubkey_bytes.len() != 20 {
+            return Ok(NativeResult::ok(cost, smallvec![Value::bool(false)]));
+    }
+
     let sig = match ethers::core::types::Signature::try_from(sig_bytes.as_slice()) {
         Ok(sig) => sig,
         Err(_) => {
@@ -73,12 +77,9 @@ pub fn native_eth_signature_verify(
         }
     };
 
-println!("AAAAA before!");
     let pubkey = ethers::core::types::H160::from_slice(pubkey_bytes.as_slice());
-println!("AAAAAA after!");
 
     let verify_result = sig.verify(msg_bytes.as_slice(),pubkey).is_ok();
-    println!("AAAAAA re: {}", verify_result);
     Ok(NativeResult::ok(
         cost,
         smallvec![Value::bool(verify_result)],
