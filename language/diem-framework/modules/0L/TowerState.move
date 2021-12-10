@@ -648,12 +648,18 @@ module TowerState {
     }
 
     // Note: Used only in tests
-    public fun test_epoch_reset(vm: &signer) acquires TowerStats {
+    public fun test_epoch_reset_counter(vm: &signer) acquires TowerCounter {
+      assert(Testnet::is_testnet(), Errors::invalid_state(130118));
       CoreAddresses::assert_vm(vm);
-      let state = borrow_global_mut<TowerStats>(CoreAddresses::VM_RESERVED_ADDRESS());
+      let state = borrow_global_mut<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS());
+      state.lifetime_proofs = 0;
+      state.lifetime_validator_proofs = 0;
+      state.lifetime_fullnode_proofs = 0;
       state.proofs_in_epoch = 0;
-      state.validator_proofs = 0;
-      state.fullnode_proofs = 0;
+      state.validator_proofs_in_epoch = 0;
+      state.fullnode_proofs_in_epoch = 0;
+      state.validator_proofs_in_epoch_above_thresh = 0;
+      state.fullnode_proofs_in_epoch_above_thresh = 0;
     }
 
     // Function index: 11

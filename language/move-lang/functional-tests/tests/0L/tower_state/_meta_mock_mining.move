@@ -26,13 +26,13 @@ script {
         print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());
         assert(TowerState::get_fullnode_proofs_in_epoch_above_thresh() == 0, 735702);
 
-        // Total count of proofs will be 1 from genesis + 5 mocked
+        // Total count of proofs is forced with the mock_mining
 
         print(&TowerState::get_count_in_epoch(@{{alice}}));
-        assert(TowerState::get_count_in_epoch(@{{alice}}) == 6, 735703);
+        assert(TowerState::get_count_in_epoch(@{{alice}}) == 5, 735703);
 
         print(&TowerState::get_count_above_thresh_in_epoch(@{{alice}}));
-        assert(TowerState::get_count_above_thresh_in_epoch(@{{alice}}) == 4, 735703);
+        assert(TowerState::get_count_above_thresh_in_epoch(@{{alice}}) == 3, 735704);
 
 
     }
@@ -90,9 +90,9 @@ script {
         print(&TowerState::get_count_above_thresh_in_epoch(@{{bob}}));
         assert(TowerState::get_count_above_thresh_in_epoch(@{{bob}}) == 0, 735703);
 
-        // Add 5 more proofs to the original
+        // Total count of proofs is forced with the mock_mining
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(@{{bob}}) == 6, 73570001);
+        assert(TowerState::get_count_in_epoch(@{{bob}}) == 5, 73570001);
 
  
         print(&TowerState::get_fullnode_proofs_in_epoch());
@@ -102,13 +102,12 @@ script {
         print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());
         assert(TowerState::get_fullnode_proofs_in_epoch_above_thresh() == 4, 735702);
 
-        // Total count of proofs will be 1 from genesis + 5 mocked
-
+        // Total count of proofs is forced with the mock_mining
         print(&TowerState::get_count_in_epoch(@{{bob}}));
-        assert(TowerState::get_count_in_epoch(@{{bob}}) == 6, 735703);
+        assert(TowerState::get_count_in_epoch(@{{bob}}) == 5, 735703);
 
         print(&TowerState::get_count_above_thresh_in_epoch(@{{bob}}));
-        assert(TowerState::get_count_above_thresh_in_epoch(@{{bob}}) == 4, 735703);
+        assert(TowerState::get_count_above_thresh_in_epoch(@{{bob}}) == 3, 735703);
     }
 }
 //check: EXECUTED

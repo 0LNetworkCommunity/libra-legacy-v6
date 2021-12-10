@@ -154,9 +154,8 @@ script {
     fun main(_vm: signer) {
         assert(DiemSystem::validator_set_size() == 6, 7357000180101);
         assert(DiemSystem::is_validator(@{{carol}}) == true, 7357000180102);
-        assert(TowerState::test_helper_get_height(@{{carol}}) == 0, 7357000180104);
+        assert(TowerState::test_helper_get_height(@{{carol}}) == 5, 7357000180104);
         assert(DiemAccount::balance<GAS>(@{{carol}}) == 949991, 7357000180106);
-        assert(TowerState::test_helper_get_height(@{{carol}}) == 0, 7357000180108);
     }
 }
 // check: EXECUTED
@@ -232,7 +231,7 @@ script {
         assert(DiemSystem::validator_set_size() == 5, 7357000180110);
         assert(DiemSystem::is_validator(@{{carol}}) == false, 7357000180111);
         assert(DiemAccount::balance<GAS>(@{{carol}}) == 949991, 7357000180112);
-        assert(NodeWeight::proof_of_weight(@{{carol}}) == 0, 7357000180113);  
+        assert(NodeWeight::proof_of_weight(@{{carol}}) == 5, 7357000180113);  
         assert(DiemConfig::get_current_epoch() == 2, 7357000180114);
 
         // Case 3 does not increment epochs_validating and mining (while case 1 does);
