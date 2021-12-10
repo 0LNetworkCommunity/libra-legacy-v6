@@ -88,33 +88,20 @@ module Migrations {
 }
 
 /// # Summary 
-/// Module providing method to convert all wallets to "slow wallets" 
-/// migrations should have own module, since imports can cause dependency cycling.
-module MigrateWallets {
-  use 0x1::Vector;
+/// Module to migrate the tower statistics from TowerState to TowerCounter
+module MigrateTowerCounter {
+  use 0x1::TowerState;
   use 0x1::Migrations;
-  use 0x1::DiemAccount;
-  use 0x1::ValidatorUniverse;
   use 0x1::CoreAddresses;
 
-  const UID: u64 = 10;
-
+  const UID:u64 = 1;
   // Migration to migrate all wallets to be slow wallets
-  public fun migrate_slow_wallets(vm: &signer) {
+  public fun migrate_tower_counter(vm: &signer) {
     CoreAddresses::assert_diem_root(vm);
     if (!Migrations::has_run(UID)) {
-      let vec_addr = ValidatorUniverse::get_eligible_validators(vm);
-      // TODO: how to get other accounts?
-
-      // tag all accounts as slow wallets
-      let len = Vector::length<address>(&vec_addr);
-      let i = 0;
-      while (i < len) {
-        let addr = *Vector::borrow<address>(&vec_addr, i);
-        DiemAccount::vm_migrate_slow_wallet(vm, addr);
-        i = i + 1;
-      };
-      Migrations::push(vm, UID, b"MigrateWallets");
+      let (global, val, fn) = TowerState::danger_migrate_get_lifetime_proof_count();
+      TowerState::init_tower_counter(vm, global, val, fn);
+      Migrations::push(vm, UID, b"MigrateTowerCounter");
     };
   }
 
