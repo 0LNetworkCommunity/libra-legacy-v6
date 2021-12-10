@@ -935,6 +935,15 @@ Tried to create a balance for an account whose role does not allow holding balan
 
 
 
+<a name="0x1_DiemAccount_ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE"></a>
+
+
+
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE">ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE</a>: u64 = 120127;
+</code></pre>
+
+
+
 <a name="0x1_DiemAccount_EWITHDRAWAL_EXCEEDS_LIMITS"></a>
 
 The withdrawal of funds would have exceeded the the account's limits
@@ -959,15 +968,6 @@ The withdrawal of funds would have exceeded the the account's limits
 
 
 <pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT">EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT</a>: u64 = 120128;
-</code></pre>
-
-
-
-<a name="0x1_DiemAccount_EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE"></a>
-
-
-
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE">EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE</a>: u64 = 120127;
 </code></pre>
 
 
@@ -2657,9 +2657,7 @@ the sender's account balance.
 <pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_extract_withdraw_capability">extract_withdraw_capability</a>(
     sender: &signer
 ): <a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">WithdrawCapability</a> <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> {
-    //////// 0L //////// Transfers disabled by default
-    //////// 0L //////// Transfers of 10 <a href="GAS.md#0x1_GAS">GAS</a>
-    //////// 0L //////// enabled when epoch is 1000
+
     <b>let</b> sender_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
 
     /////// 0L /////////
@@ -2670,11 +2668,14 @@ the sender's account balance.
         <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET">EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET</a>)
     );
     /////// 0L /////////
-    <b>if</b> (!<a href="DiemConfig.md#0x1_DiemConfig_check_transfer_enabled">DiemConfig::check_transfer_enabled</a>()) {
-        // only VM can make TXs <b>if</b> transfers are not enabled.
+    // Slow wallet transfers disabled by default, enabled when epoch is 1000
+    // At that point slow wallets receive 1,000 coins unlocked per day.
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(sender_addr) && !<a href="DiemConfig.md#0x1_DiemConfig_check_transfer_enabled">DiemConfig::check_transfer_enabled</a>() ) {
+      // <b>if</b> transfers are not enabled for slow wallets
+      // then the tx should fail
         <b>assert</b>(
-            sender_addr == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(),
-            <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE">EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE</a>)
+            <b>false</b>,
+            <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE">ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE</a>)
         );
     };
     // Abort <b>if</b> we already extracted the unique withdraw capability for this account.

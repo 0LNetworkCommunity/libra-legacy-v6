@@ -111,7 +111,7 @@
 <pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_miner_state.md#0x1_TowerStateScripts_minerstate_helper">minerstate_helper</a>(sender: signer) {
     <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 01);
 
-    <a href="TowerState.md#0x1_TowerState_test_helper_init_miner">TowerState::test_helper_init_miner</a>(
+    <a href="TowerState.md#0x1_TowerState_test_helper_init_val">TowerState::test_helper_init_val</a>(
         &sender,
         <a href="TestFixtures.md#0x1_TestFixtures_alice_0_easy_chal">TestFixtures::alice_0_easy_chal</a>(),
         <a href="TestFixtures.md#0x1_TestFixtures_alice_0_easy_sol">TestFixtures::alice_0_easy_sol</a>(),

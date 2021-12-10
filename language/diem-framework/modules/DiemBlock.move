@@ -125,7 +125,7 @@ module DiemBlock {
           MigrateTowerCounter::migrate_tower_counter(&vm);
 
           // Migration UID 2
-          MigrateInitDelegation::do_it(vm);
+          MigrateInitDelegation::do_it(&vm);
         };    
 
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(CoreAddresses::DIEM_ROOT_ADDRESS());

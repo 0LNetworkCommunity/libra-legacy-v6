@@ -1,41 +1,165 @@
 
-<a name="0x1_MigrateInitDelegation"></a>
+<a name="0x1_Teams"></a>
 
-# Module `0x1::MigrateInitDelegation`
+# Module `0x1::Teams`
 
 
 
+-  [Resource `AllTeams`](#0x1_Teams_AllTeams)
+-  [Resource `Team`](#0x1_Teams_Team)
+-  [Resource `Member`](#0x1_Teams_Member)
 -  [Constants](#@Constants_0)
--  [Function `do_it`](#0x1_MigrateInitDelegation_do_it)
+-  [Function `vm_init`](#0x1_Teams_vm_init)
+-  [Function `team_init`](#0x1_Teams_team_init)
+-  [Function `join_team`](#0x1_Teams_join_team)
+-  [Function `get_all_teams`](#0x1_Teams_get_all_teams)
+-  [Function `team_is_init`](#0x1_Teams_team_is_init)
+-  [Function `get_operator_reward`](#0x1_Teams_get_operator_reward)
+-  [Function `get_team_members`](#0x1_Teams_get_team_members)
+-  [Function `vm_is_init`](#0x1_Teams_vm_is_init)
 
 
-<pre><code><b>use</b> <a href="Migrations.md#0x1_Migrations">0x1::Migrations</a>;
-<b>use</b> <a href="Teams.md#0x1_Teams">0x1::Teams</a>;
+<pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
+<b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
+<b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
+<b>use</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
 
+
+<a name="0x1_Teams_AllTeams"></a>
+
+## Resource `AllTeams`
+
+
+
+<pre><code><b>struct</b> <a href="Teams.md#0x1_Teams_AllTeams">AllTeams</a> has <b>copy</b>, drop, store, key
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>teams_list: vector&lt;address&gt;</code>
+</dt>
+<dd>
+
+</dd>
+</dl>
+
+
+</details>
+
+<a name="0x1_Teams_Team"></a>
+
+## Resource `Team`
+
+
+
+<pre><code><b>struct</b> <a href="Teams.md#0x1_Teams_Team">Team</a> has <b>copy</b>, drop, store, key
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>captain: address</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>team_name: vector&lt;u8&gt;</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>members: vector&lt;address&gt;</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>operator_pct_reward: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>collective_tower_height_this_epoch: u64</code>
+</dt>
+<dd>
+
+</dd>
+</dl>
+
+
+</details>
+
+<a name="0x1_Teams_Member"></a>
+
+## Resource `Member`
+
+
+
+<pre><code><b>struct</b> <a href="Teams.md#0x1_Teams_Member">Member</a> has <b>copy</b>, drop, store, key
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>captain_address: address</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>mining_above_threshold: bool</code>
+</dt>
+<dd>
+
+</dd>
+</dl>
+
+
+</details>
 
 <a name="@Constants_0"></a>
 
 ## Constants
 
 
-<a name="0x1_MigrateInitDelegation_UID"></a>
+<a name="0x1_Teams_ENOT_SLOW_WALLET"></a>
 
 
 
-<pre><code><b>const</b> <a href="Teams.md#0x1_MigrateInitDelegation_UID">UID</a>: u64 = 101;
+<pre><code><b>const</b> <a href="Teams.md#0x1_Teams_ENOT_SLOW_WALLET">ENOT_SLOW_WALLET</a>: u64 = 1010;
 </code></pre>
 
 
 
-<a name="0x1_MigrateInitDelegation_do_it"></a>
+<a name="0x1_Teams_vm_init"></a>
 
-## Function `do_it`
+## Function `vm_init`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_MigrateInitDelegation_do_it">do_it</a>(vm: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_vm_init">vm_init</a>(sender: &signer)
 </code></pre>
 
 
@@ -44,11 +168,240 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_MigrateInitDelegation_do_it">do_it</a>(vm: &signer) {
-  <b>if</b> (!<a href="Migrations.md#0x1_Migrations_has_run">Migrations::has_run</a>(<a href="Teams.md#0x1_MigrateInitDelegation_UID">UID</a>)) {
-    <a href="Teams.md#0x1_Teams_vm_init">Teams::vm_init</a>(vm);
-    <a href="Migrations.md#0x1_Migrations_push">Migrations::push</a>(vm, <a href="Teams.md#0x1_MigrateInitDelegation_UID">UID</a>, b"MigrateInitTeams");
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_vm_init">vm_init</a>(sender: &signer) {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(sender);
+  move_to&lt;<a href="Teams.md#0x1_Teams_AllTeams">AllTeams</a>&gt;(
+    sender,
+    <a href="Teams.md#0x1_Teams_AllTeams">AllTeams</a> {
+      teams_list: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>()
+    }
+  );
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Teams_team_init"></a>
+
+## Function `team_init`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_team_init">team_init</a>(sender: &signer, team_name: vector&lt;u8&gt;, operator_pct_reward: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_team_init">team_init</a>(sender: &signer, team_name: vector&lt;u8&gt;, operator_pct_reward: u64) {
+
+  <b>assert</b>(<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_is_in_universe">ValidatorUniverse::is_in_universe</a>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender)), 201301001);
+  // An "captain", who is already a validator account, stores the <a href="Teams.md#0x1_Teams_Team">Team</a> <b>struct</b> on their account.
+  // the <a href="Teams.md#0x1_Teams_AllTeams">AllTeams</a> <b>struct</b> is saved in the 0x0 account, and needs <b>to</b> be initialized before this is called.
+
+  // check vm has initialized the <b>struct</b>, otherwise exit early.
+  <b>if</b> (!<b>exists</b>&lt;<a href="Teams.md#0x1_Teams_AllTeams">AllTeams</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>())) {
+    <b>return</b>
+};
+
+move_to&lt;<a href="Teams.md#0x1_Teams_Team">Team</a>&gt;(
+    sender,
+    <a href="Teams.md#0x1_Teams_Team">Team</a> {
+      captain: <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender), // A validator account.
+      team_name, // A validator account.
+      members: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;(),
+      operator_pct_reward, // the percentage of the rewards that the captain proposes <b>to</b> go <b>to</b> the validator operator.
+      collective_tower_height_this_epoch: 0,
+    }
+  );
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Teams_join_team"></a>
+
+## Function `join_team`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_join_team">join_team</a>(sender: &signer, captain_address: address)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_join_team">join_team</a>(sender: &signer, captain_address: address) <b>acquires</b> <a href="Teams.md#0x1_Teams_Member">Member</a>, <a href="Teams.md#0x1_Teams_Team">Team</a> {
+  <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+
+  // needs <b>to</b> check <b>if</b> this is a slow wallet.
+  // ask user <b>to</b> resubmit <b>if</b> not a slow wallet, so they are explicitly setting it, no surprises, no tears.
+
+ <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_is_slow">DiemAccount::is_slow</a>(addr), <a href="Teams.md#0x1_Teams_ENOT_SLOW_WALLET">ENOT_SLOW_WALLET</a>);
+
+
+  // bob wants <b>to</b> switch <b>to</b> a different <a href="Teams.md#0x1_Teams_Team">Team</a>.
+  <b>if</b> (<b>exists</b>&lt;<a href="Teams.md#0x1_Teams_Member">Member</a>&gt;(addr)) {
+    <b>let</b> member_state = borrow_global_mut&lt;<a href="Teams.md#0x1_Teams_Member">Member</a>&gt;(addr);
+    // <b>update</b> the membership list of the former captain
+    <b>let</b> former_captain_state = borrow_global_mut&lt;<a href="Teams.md#0x1_Teams_Team">Team</a>&gt;(member_state.captain_address);
+    <b>let</b> (is_found, idx) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>(&former_captain_state.members, &addr);
+    <b>if</b> (is_found) {
+      <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>(&<b>mut</b> former_captain_state.members, idx);
+      member_state.captain_address = captain_address;
+    };
+    // TODO: Do we need <b>to</b> reset mining_above_threshold <b>if</b> they are switching?
+  } <b>else</b> { // first time joining a <a href="Teams.md#0x1_Teams_Team">Team</a>.
+    move_to&lt;<a href="Teams.md#0x1_Teams_Member">Member</a>&gt;(sender, <a href="Teams.md#0x1_Teams_Member">Member</a> {
+      captain_address,
+      mining_above_threshold: <b>false</b>,
+    });
+  };
+  <b>let</b> captain_state = borrow_global_mut&lt;<a href="Teams.md#0x1_Teams_Team">Team</a>&gt;(captain_address);
+  <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(&<b>mut</b> captain_state.members, addr);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Teams_get_all_teams"></a>
+
+## Function `get_all_teams`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_get_all_teams">get_all_teams</a>(): vector&lt;address&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_get_all_teams">get_all_teams</a>(): vector&lt;address&gt; <b>acquires</b> <a href="Teams.md#0x1_Teams_AllTeams">AllTeams</a> {
+  <b>if</b> (<b>exists</b>&lt;<a href="Teams.md#0x1_Teams_AllTeams">AllTeams</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>())) {
+    <b>let</b> list = borrow_global&lt;<a href="Teams.md#0x1_Teams_AllTeams">AllTeams</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+    <b>return</b> *&list.teams_list
+  } <b>else</b> {
+    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;()
   }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Teams_team_is_init"></a>
+
+## Function `team_is_init`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_team_is_init">team_is_init</a>(captain: address): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_team_is_init">team_is_init</a>(captain: address): bool {
+  <b>exists</b>&lt;<a href="Teams.md#0x1_Teams_Team">Team</a>&gt;(captain)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Teams_get_operator_reward"></a>
+
+## Function `get_operator_reward`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_get_operator_reward">get_operator_reward</a>(captain: address): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_get_operator_reward">get_operator_reward</a>(captain: address):u64 <b>acquires</b> <a href="Teams.md#0x1_Teams_Team">Team</a> {
+  <b>if</b> (<a href="Teams.md#0x1_Teams_team_is_init">team_is_init</a>(captain)) {
+    <b>let</b> s = borrow_global_mut&lt;<a href="Teams.md#0x1_Teams_Team">Team</a>&gt;(captain);
+    <b>return</b> *&s.operator_pct_reward
+  };
+  0
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Teams_get_team_members"></a>
+
+## Function `get_team_members`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_get_team_members">get_team_members</a>(captain: address): vector&lt;address&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_get_team_members">get_team_members</a>(captain: address):vector&lt;address&gt; <b>acquires</b> <a href="Teams.md#0x1_Teams_Team">Team</a> {
+  <b>if</b> (<a href="Teams.md#0x1_Teams_team_is_init">team_is_init</a>(captain)) {
+    <b>let</b> s = borrow_global_mut&lt;<a href="Teams.md#0x1_Teams_Team">Team</a>&gt;(captain);
+    <b>return</b> *&s.members
+  };
+  <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;()
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Teams_vm_is_init"></a>
+
+## Function `vm_is_init`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_vm_is_init">vm_is_init</a>(): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_vm_is_init">vm_is_init</a>(): bool {
+  <b>exists</b>&lt;<a href="Teams.md#0x1_Teams_AllTeams">AllTeams</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>())
 }
 </code></pre>
 

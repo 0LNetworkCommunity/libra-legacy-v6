@@ -4,6 +4,8 @@
 # Module `0x1::DiemBlock`
 
 This module defines a struct storing the metadata of the block and new block events.
+it also contains all of the block prologue logic which is called from the Rust executor.
+For 0L the following changes are applied to the block prologue
 
 
 -  [Resource `BlockMetadata`](#0x1_DiemBlock_BlockMetadata)
@@ -27,6 +29,8 @@ This module defines a struct storing the metadata of the block and new block eve
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event">0x1::Event</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
+<b>use</b> <a href="Migrations.md#0x1_MigrateInitDelegation">0x1::MigrateInitDelegation</a>;
+<b>use</b> <a href="Migrations.md#0x1_MigrateTowerCounter">0x1::MigrateTowerCounter</a>;
 <b>use</b> <a href="Migrations.md#0x1_Migrations">0x1::Migrations</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 </code></pre>
@@ -241,12 +245,12 @@ The runtime always runs this before executing the transactions in a block.
     <a href="DiemTimestamp.md#0x1_DiemTimestamp_assert_operating">DiemTimestamp::assert_operating</a>();
     // Operational constraint: can only be invoked by the VM.
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(&vm);
-
     // Authorization
     <b>assert</b>(
         proposer == <a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>() || <a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(proposer),
         <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_address">Errors::requires_address</a>(<a href="DiemBlock.md#0x1_DiemBlock_EVM_OR_VALIDATOR">EVM_OR_VALIDATOR</a>)
     );
+
     //////// 0L ////////
     // increment stats
     <a href="Stats.md#0x1_Stats_process_set_votes">Stats::process_set_votes</a>(&vm, &previous_block_votes);
@@ -257,6 +261,18 @@ The runtime always runs this before executing the transactions in a block.
         // tick is reset at end of previous epoch
         <a href="DiemAccount.md#0x1_DiemAccount_process_escrow">DiemAccount::process_escrow</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&vm);
         <a href="AutoPay.md#0x1_AutoPay_process_autopay">AutoPay::process_autopay</a>(&vm);
+    };
+
+    // Do any pending migrations
+    // TODO: should this be round 2 (when upgrade writeset happens). May be a on off-by-one.
+    <b>if</b> (round == 3){
+      // safety. Maybe init Migration <b>struct</b>
+      <a href="Migrations.md#0x1_Migrations_init">Migrations::init</a>(&vm);
+      // Migration UID 1
+      <a href="Migrations.md#0x1_MigrateTowerCounter_migrate_tower_counter">MigrateTowerCounter::migrate_tower_counter</a>(&vm);
+
+      // Migration UID 2
+      <a href="Migrations.md#0x1_MigrateInitDelegation_do_it">MigrateInitDelegation::do_it</a>(&vm);
     };
 
     <b>let</b> block_metadata_ref = borrow_global_mut&lt;<a href="DiemBlock.md#0x1_DiemBlock_BlockMetadata">BlockMetadata</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
@@ -275,8 +291,7 @@ The runtime always runs this before executing the transactions in a block.
     //////// 0L ////////
     // EPOCH BOUNDARY
     <b>if</b> (<a href="Epoch.md#0x1_Epoch_epoch_finished">Epoch::epoch_finished</a>()) {
-      // Run migrations
-      <a href="Migrations.md#0x1_Migrations_init">Migrations::init</a>(&vm);
+
       // TODO: We don't need <b>to</b> pass block height <b>to</b> EpochBoundaryOL.
       // It should <b>use</b> the <a href="DiemBlock.md#0x1_DiemBlock_BlockMetadata">BlockMetadata</a>. But there's a circular reference
       // there when we try.

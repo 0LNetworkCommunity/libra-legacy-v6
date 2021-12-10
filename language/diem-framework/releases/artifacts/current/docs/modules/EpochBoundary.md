@@ -10,7 +10,6 @@
 -  [Function `process_validators`](#0x1_EpochBoundary_process_validators)
 -  [Function `propose_new_set`](#0x1_EpochBoundary_propose_new_set)
 -  [Function `reset_counters`](#0x1_EpochBoundary_reset_counters)
--  [Function `do_migrations`](#0x1_EpochBoundary_do_migrations)
 
 
 <pre><code><b>use</b> <a href="Audit.md#0x1_Audit">0x1::Audit</a>;
@@ -24,12 +23,10 @@
 <b>use</b> <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy">0x1::FullnodeSubsidy</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
-<b>use</b> <a href="Teams.md#0x1_MigrateInitDelegation">0x1::MigrateInitDelegation</a>;
 <b>use</b> <a href="NodeWeight.md#0x1_NodeWeight">0x1::NodeWeight</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="Subsidy.md#0x1_Subsidy">0x1::Subsidy</a>;
 <b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
-<b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
@@ -65,7 +62,7 @@
 
     <a href="EpochBoundary.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm, nominal_subsidy_per);
 
-    <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm, subsidy_units, outgoing_compliant_set);
+    <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm, subsidy_units, *&outgoing_compliant_set);
 
     <b>let</b> proposed_set = <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm, height_start, height_now);
 
@@ -74,10 +71,7 @@
         <a href="DiemAccount.md#0x1_DiemAccount_slow_wallet_epoch_drip">DiemAccount::slow_wallet_epoch_drip</a>(vm, <a href="Globals.md#0x1_Globals_get_unlock">Globals::get_unlock</a>());
         // update_validator_withdrawal_limit(vm);
     };
-
-    <a href="EpochBoundary.md#0x1_EpochBoundary_do_migrations">do_migrations</a>(vm);
-
-    <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, proposed_set, height_now)
+    <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, proposed_set, outgoing_compliant_set, height_now)
 }
 </code></pre>
 
@@ -121,7 +115,7 @@
         // TODO: this call is repeated in propose_new_set.
         // Not sure <b>if</b> the performance hit at epoch boundary is worth the refactor.
         <b>if</b> (<a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr)) {
-          <b>let</b> count = <a href="TowerState.md#0x1_TowerState_get_count_in_epoch">TowerState::get_count_in_epoch</a>(addr);
+          <b>let</b> count = <a href="TowerState.md#0x1_TowerState_get_count_above_thresh_in_epoch">TowerState::get_count_above_thresh_in_epoch</a>(addr);
 
           <b>let</b> miner_subsidy = count * proof_price;
           <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_distribute_fullnode_subsidy">FullnodeSubsidy::distribute_fullnode_subsidy</a>(vm, addr, miner_subsidy);
@@ -252,7 +246,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, height_now: u64)
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, outgoing_compliant: vector&lt;address&gt;, height_now: u64)
 </code></pre>
 
 
@@ -261,15 +255,13 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, height_now: u64) {
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, outgoing_compliant: vector&lt;address&gt;, height_now: u64) {
 
     // Reset <a href="Stats.md#0x1_Stats">Stats</a>
     <a href="Stats.md#0x1_Stats_reconfig">Stats::reconfig</a>(vm, &proposed_set);
 
-    // Migrate <a href="TowerState.md#0x1_TowerState">TowerState</a> list from elegible: in case there is no minerlist
-    // <b>struct</b>, <b>use</b> eligible for migrate_eligible_validators
-    <b>let</b> eligible = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm);
-    <a href="TowerState.md#0x1_TowerState_reconfig">TowerState::reconfig</a>(vm, &eligible);
+    // Migrate <a href="TowerState.md#0x1_TowerState">TowerState</a> list from elegible.
+    <a href="TowerState.md#0x1_TowerState_reconfig">TowerState::reconfig</a>(vm, &outgoing_compliant);
 
     // Reconfigure the network
     <a href="DiemSystem.md#0x1_DiemSystem_bulk_update_validators">DiemSystem::bulk_update_validators</a>(vm, proposed_set);
@@ -280,31 +272,6 @@
     // reset counters
     <a href="AutoPay.md#0x1_AutoPay_reconfig_reset_tick">AutoPay::reconfig_reset_tick</a>(vm);
     <a href="Epoch.md#0x1_Epoch_reset_timer">Epoch::reset_timer</a>(vm, height_now);
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_EpochBoundary_do_migrations"></a>
-
-## Function `do_migrations`
-
-
-
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_do_migrations">do_migrations</a>(vm: &signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_do_migrations">do_migrations</a>(vm: &signer) {
-  // these need <b>to</b> run on an upgrade <b>where</b> a new data structure is introduced.
-  <a href="Teams.md#0x1_MigrateInitDelegation_do_it">MigrateInitDelegation::do_it</a>(vm);
 }
 </code></pre>
 
