@@ -5,7 +5,8 @@
 // Bob is an end-user running the Carpe app, and submitting miner proofs.
 // He is the only one in the epoch submitting proofs. He should get the entirety of the Identity Subsidy pool avaialable (one validator's worth)
 
-//  0. Initialize Bob's miner state with a first proof
+
+// 1. Initialize Bob's miner state with a first proof
 
 //! new-transaction
 //! sender: bob
@@ -25,19 +26,39 @@ script {
 }
 
 
-// 2. Make sure there are validator subsidies available.
-// so we need Alice to be a Case 1 validator so that there is a subsidy to be paid to validator set.
+
+
+// 1. Reset all counters and make sure there are validator subsidies available.
+// We need Alice to be a Case 1 validator so that there is a subsidy to be paid to validator set.
 
 //! new-transaction
 //! sender: diemroot
 script {
     use 0x1::Mock;
+    use 0x1::TowerState;
+    use 0x1::DiemAccount;
+    use 0x1::NodeWeight;
+    use 0x1::GAS::GAS;
 
     fun main(vm: signer) {
+      // Test suite makes all validators have 1 fullnode proof when starting.
+      // need to reset to avoid confusion.
+      TowerState::test_epoch_reset_counter(&vm);
+      TowerState::test_helper_mock_reconfig(&vm, @{{alice}});
+      TowerState::test_helper_mock_reconfig(&vm, @{{bob}});
+
+      // make alice a compliant validator, and mine 10 proofs
       Mock::mock_case_1(&vm, @{{alice}});
+      assert(TowerState::get_count_in_epoch(@{{alice}}) == 10, 735701);
+      // print(&TowerState::get_count_in_epoch(@{{alice}}));
+      assert(DiemAccount::balance<GAS>(@{{alice}}) == 1000000, 735704);
+      assert(NodeWeight::proof_of_weight(@{{alice}}) == 10, 735705);
     }
 }
 //check: EXECUTED
+
+
+
 
 
 // 3. Mock Bob (the end-user) submitting proofs above threshold.
@@ -45,35 +66,27 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::DiemSystem;
+    // use 0x1::DiemSystem;
     use 0x1::TowerState;
     use 0x1::Debug::print;
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
+    // use 0x1::NodeWeight;
 
 
     fun main(sender: signer) {
-        // confirm bob is not a validator
-        assert(DiemSystem::is_validator(@{{alice}}), 735706);
-        assert(!DiemSystem::is_validator(@{{bob}}), 735707);
-        // bring bob to 10 proofs. (Note: alice has one proof as a fullnode from genesis, so it will total 11 fullnode proofs.);
-
         print(&TowerState::get_fullnode_proofs_in_epoch());
         print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());
         
-        assert(TowerState::get_count_in_epoch(@{{alice}}) == 0, 735702);
-        assert(DiemAccount::balance<GAS>(@{{alice}}) == 1000000, 735703);
-        assert(NodeWeight::proof_of_weight(@{{alice}}) == 0, 735704);
 
-        // both Alice and Bob have a fullnode proof (Alice has one from Genesis)
-        assert(TowerState::get_fullnode_proofs_in_epoch() == 2, 735708);
+        // Bob has one proof from init above
+        assert(TowerState::get_fullnode_proofs_in_epoch() == 0, 735706);
         // there should be no proofs above threshold at this point.
-        assert(TowerState::get_fullnode_proofs_in_epoch_above_thresh() == 0, 735709);
+        assert(TowerState::get_fullnode_proofs_in_epoch_above_thresh() == 0, 735707);
 
-        // Bob already has one proof above where we initialized the account, and is above threshold.
-        // bob needs one more to be above threshold before the subsequent proofs are counted.
+        // Bob needs to beabove threshold (two) before the subsequent proofs are counted.
         // adding 10 more here (which are all above threshold).
-        TowerState::test_helper_mock_mining(&sender, 11);
+        TowerState::test_helper_mock_mining(&sender, 12);
         print(&TowerState::get_fullnode_proofs_in_epoch());
         print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());
 
@@ -82,7 +95,7 @@ script {
 
         
         // Since the threshold in test suite is 1 proof, all the 10 are counted above threshold.
-        assert(TowerState::get_fullnode_proofs_in_epoch_above_thresh() == 10, 735710);
+        assert(TowerState::get_fullnode_proofs_in_epoch_above_thresh() == 10, 735708);
 
         print(&DiemAccount::balance<GAS>(@{{bob}}));
         print(&DiemAccount::balance<GAS>(@{{alice}}));

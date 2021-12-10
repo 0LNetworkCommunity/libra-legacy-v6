@@ -21,7 +21,7 @@ script {
     use 0x1::TestFixtures;
 
     fun main(sender: signer) {
-        TowerState::test_helper_init_miner(
+        TowerState::test_helper_init_val(
             &sender,
             TestFixtures::easy_chal(),
             TestFixtures::easy_sol(),
