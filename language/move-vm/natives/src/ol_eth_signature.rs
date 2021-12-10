@@ -11,7 +11,7 @@ use move_vm_types::{
 };
 use smallvec::smallvec;
 use std::{collections::VecDeque, convert::TryFrom};
-use ethers::core::types::Signature; 
+use ethers::core::types::{H160, Signature}; 
 
 use std::{thread, time};
 
@@ -27,8 +27,8 @@ pub fn native_eth_signature_recover(
 
     //thread::sleep(ten_millis);
 
-    let sig_bytes = pop_arg!(arguments, Vec<u8>);
     let msg_bytes = pop_arg!(arguments, Vec<u8>);
+    let sig_bytes = pop_arg!(arguments, Vec<u8>);
 
     let cost = native_gas(
         context.cost_table(),
@@ -43,8 +43,8 @@ pub fn native_eth_signature_recover(
         }
     };
 
-    let pub_key = match sig.recover(&msg_bytes[..]) {
-        Ok(pub_key) => pub_key,
+    let pubkey = match sig.recover(&msg_bytes[..]) {
+        Ok(pubkey) => pubkey,
         Err(_) => {
             return Ok(NativeResult::ok(cost, smallvec![Value::bool(false)]));
         }
@@ -52,7 +52,7 @@ pub fn native_eth_signature_recover(
 
     Ok(NativeResult::ok(
         cost,
-        smallvec![Value::vector_u8(pub_key.as_bytes().to_vec())],
+        smallvec![Value::vector_u8(pubkey.as_bytes().to_vec())],
     ))
 }
 
@@ -64,18 +64,31 @@ pub fn native_eth_signature_verify(
     debug_assert!(_ty_args.is_empty());
     debug_assert!(arguments.len() == 1);
 
-    let msg = pop_arg!(arguments, Vec<u8>);
-/*
-    let pubkey = pop_arg!(arguments, Vec<u8>);
-    let signature = pop_arg!(arguments, Vec<u8>);
-*/
+    let msg_bytes = pop_arg!(arguments, Vec<u8>);
+    let pubkey_bytes = pop_arg!(arguments, Vec<u8>);
+    let sig_bytes = pop_arg!(arguments, Vec<u8>);
 
     let cost = native_gas(
         context.cost_table(),
         NativeCostIndex::ETH_SIGNATURE_VERIFY,
-        msg.len(),
+        msg_bytes.len(),
     );
 
+    let sig = match ethers::core::types::Signature::try_from(&sig_bytes[..]) {
+        Ok(sig) => sig,
+        Err(_) => {
+            return Ok(NativeResult::ok(cost, smallvec![Value::bool(false)]));
+        }
+    };
+
+    let pubkey = ethers::core::types::H160::from_slice(&pubkey_bytes[..]);
+
+    let result = match sig.verify(&msg_bytes[..],pubkey) {
+        Ok(result) => result,
+        Err(_) => {
+            return Ok(NativeResult::ok(cost, smallvec![Value::bool(false)]));
+        }
+    };
 
     Ok(NativeResult::ok(
         cost,
