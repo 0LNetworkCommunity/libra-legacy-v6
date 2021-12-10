@@ -10,20 +10,19 @@ script {
 
     // SIMULATES A MINER ONBOARDING PROOF (proof_0.json)
     fun main(sender: signer) {
-        let height_after = 0;
-
         TowerState::test_helper_init_val(
             &sender,
-            TestFixtures::alice_0_hard_chal(),
-            TestFixtures::alice_0_hard_sol(),
-            TestFixtures::hard_difficulty(),
+            TestFixtures::alice_0_easy_chal(),
+            TestFixtures::alice_0_easy_sol(),
+            TestFixtures::easy_difficulty(),
             TestFixtures::security(),
         );
 
         // check for initialized TowerState
-        let verified_tower_height_after = TowerState::test_helper_get_height(@{{alice}});
+        assert(TowerState::test_helper_get_height(@{{alice}}) == 0, 10008001);
 
-        assert(verified_tower_height_after == height_after, 10008001);
+        // Note: test helper mocks init of a VALIDATOR, not end-user account
+        assert(TowerState::get_epochs_compliant(@{{alice}}) == 1, 735701);
     }
 }
 // check: EXECUTED
@@ -41,9 +40,9 @@ script {
         let height_after = 1;
         
         let proof = TowerState::create_proof_blob(
-            TestFixtures::alice_1_hard_chal(),
-            TestFixtures::alice_1_hard_sol(),
-            TestFixtures::hard_difficulty(),
+            TestFixtures::alice_1_easy_chal(),
+            TestFixtures::alice_1_easy_sol(),
+            TestFixtures::easy_difficulty(),
             TestFixtures::security(),
         );
         TowerState::commit_state(&sender, proof);
@@ -53,3 +52,19 @@ script {
     }
 }
 // check: EXECUTED
+
+
+//! new-transaction
+//! sender: diemroot
+script {
+    use 0x1::EpochBoundary;
+    use 0x1::TowerState;
+
+    // SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
+    fun main(vm: signer) {
+      EpochBoundary::reconfigure(&vm, 100);
+      
+      // no change from before epoch boundary
+      assert(TowerState::get_epochs_compliant(@{{alice}}) == 1, 735701);
+    }
+}

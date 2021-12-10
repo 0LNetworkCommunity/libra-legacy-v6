@@ -1,6 +1,6 @@
 # Common CLI Commands
 
-The 0L tooling look for configurations in `~/.0L/0L.toml` by default.
+The 0L tooling looks for configurations in `~/.0L/0L.toml` by default.
 
 If your config file is in a different place, then for any app you can explicitly call the config file. Such as:
 
@@ -8,18 +8,18 @@ If your config file is in a different place, then for any app you can explicitly
 
 ## Transactions
 
-The `txs` app will need to connect to a fullnode to send a tx. This may be a localhost or a remote.
+The `txs` app will need to connect to a full node to send a tx. This may be localhost or a remote.
 
-The default node is set in the parameters of your `0L.toml`. There's also a list of upstream_nodes which can be used if instcructed explicitly in commandline.
+The default node is set in the parameters of your `0L.toml`. There's also a list of upstream_nodes that can be used if instructed explicitly in the command line.
 
 ```
 default_node = "http://localhost:8080/"
 upstream_nodes = ["http://localhost:8080/"]
 ```
 
-There are two options if you want to change behavior from command line:
+There are two options if you want to change behavior from the command line:
 
-### Using the list of upstream node from 0L.toml upstream_nodes
+### Using the list of the upstream node from 0L.toml upstream_nodes
 ```
 txs --use-upstream-url <transaction subcommand>
 ```
@@ -45,16 +45,16 @@ txs oracle-upgrade -f <path to stdlib.mv>
 
 ### Batch
 
-Autopay txs are submitted in batch format based on a JSON file.
+Autopay txs are submitted in a batch format based on a JSON file.
 
 ```
 txs autopay-batch -f <path to autopay batch file>
 ```
 
-An autopay batch of instrucitons has this Json file format.
+An autopay batch of instructions has this JSON file format.
 ```
 {
-  "_readme": "Template for doing ongoing donations as a percentage of new daily inflow to wallet. Use two decimals for percentages e.g. 12.34 means 12.34%",
+  "_readme": "Template for doing ongoing donations as a percentage of new daily inflow to a wallet. Use two decimals for percentages e.g. 12.34 means 12.34%",
   "autopay_instructions": [
     {
       "note": "engineering fund, iqlusion, https://github.com/iqlusioninc/0L-iqlusion-engineering-fund",
@@ -73,7 +73,7 @@ The autopay types are `PercentOfBalance, PercentOfChange, FixedRecurring, FixedO
 
 ### Cancel Previous Autopay tx's
 
-Disabling autopay will cancel all of the accounts previous autopay transactions. Once disabling and reenabling, the account will have no autopay instuctions set.
+Disabling autopay will cancel all of the accounts previous autopay instructions. Once disabling and reenabled, the account will have no autopay instructions set.
 
 ```
 txs autopay --disable
@@ -85,16 +85,16 @@ txs autopay --enable
 ### Get Payment Events Received
 account: the address to query.
 events-received: a bool, to check incoming txs.
-txs-height: Starting event number/nonce. Note: Not all nodes will have the full event list in database. e.g. those nodes restoring from an epoch archive.
+txs-height: Starting event number/nonce. Note: Not all nodes will have the full event list in the database. e.g. those nodes restoring from an epoch archive.
 
-For example querying the iqlusion Engineering program:
+For example, querying the Iqlusion Engineering program:
 ```
 ol --account c906f67f626683b77145d1f20c1a753b query --events-received --txs-height 10
 ```
 
 ## Query a Move struct in an account
 
-For example getting the transaction fees accumulated in an epoch.
+For example, getting the transaction fees accumulated in an epoch.
 ```
 ol --account 00000000000000000000000000000000 query --move-state --move-module TransactionFee --move-struct TransactionFee --move-value balance
 ```

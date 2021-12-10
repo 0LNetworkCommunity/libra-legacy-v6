@@ -105,7 +105,7 @@ module Globals {
           max_validators_per_set: 100,
           subsidy_ceiling_gas: 8640000 * COIN_SCALING_FACTOR,
           vdf_difficulty: 120000000,
-          epoch_mining_thres_lower: 1,
+          epoch_mining_thres_lower: 1, // in testnet, staging, we don't want to wait too long between proofs.
           epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
           epoch_slow_wallet_unlock: 10000000,
         }

@@ -14,7 +14,7 @@ script {
     use 0x1::TestFixtures;
 
     fun main(sender: signer) {
-        TowerState::test_helper_init_miner(
+        TowerState::test_helper_init_val(
             &sender,
             TestFixtures::easy_chal(),
             TestFixtures::easy_sol(),
@@ -60,6 +60,10 @@ script {
 
         print(&TowerState::get_fullnode_proofs_in_epoch());
         print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());
+        
+        assert(TowerState::get_count_in_epoch(@{{alice}}) == 0, 735702);
+        assert(DiemAccount::balance<GAS>(@{{alice}}) == 1000000, 735703);
+        assert(NodeWeight::proof_of_weight(@{{alice}}) == 0, 735704);
 
         // both Alice and Bob have a fullnode proof (Alice has one from Genesis)
         assert(TowerState::get_fullnode_proofs_in_epoch() == 2, 735708);
