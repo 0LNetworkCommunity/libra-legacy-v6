@@ -13,8 +13,8 @@ script {
         // TowerState::init_miner_state(sender);
         TowerState::test_helper_mock_mining(&sender, 5);
         // assert(TowerState::get_count_in_epoch(@{{alice}}) == 5, 73570001);
-        // assert(TowerState::get_epochs_mining(@{{alice}}) == 1, 73570002);
-        print(&TowerState::get_epochs_mining(@{{alice}}) );
+        // assert(TowerState::get_epochs_compliant(@{{alice}}) == 1, 73570002);
+        print(&TowerState::get_epochs_compliant(@{{alice}}) );
 
         // alice, a validator, has one fullnode proof from genesis
         // NOTE: this causes an off-by-one issue in counting fullnode proofs for genesis cases ONLY.
@@ -48,7 +48,7 @@ script {
     
     fun main(sender: signer) {
         TowerState::test_helper_mock_reconfig(&sender, @{{alice}});
-        // assert(TowerState::get_epochs_mining(@{{alice}}) == 1, 73570002);
+        // assert(TowerState::get_epochs_compliant(@{{alice}}) == 1, 73570002);
     }
 }
 //check: EXECUTED
@@ -65,7 +65,7 @@ script {
 
     fun main(sender: signer) {
         // init bob an end user from carpe
-        TowerState::test_helper_init_miner(
+        TowerState::test_helper_init_val(
             &sender,
             TestFixtures::easy_chal(),
             TestFixtures::easy_sol(),
@@ -74,8 +74,7 @@ script {
         );
 
         // alice, a validator, has one fullnode proof from genesis
-        // NOTE: this causes an off-by-one issue in counting fullnode proofs for genesis cases ONLY.
-        // so we don't handle it.
+        // NOTE: this causes an off-by-one issue in counting fullnode proofs for genesis cases ONLY so we don't handle it.
         print(&TowerState::get_fullnode_proofs_in_epoch());
         assert(TowerState::get_fullnode_proofs_in_epoch() == 1, 735701);
 
@@ -113,5 +112,4 @@ script {
     }
 }
 //check: EXECUTED
-
 

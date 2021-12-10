@@ -272,6 +272,8 @@ module TowerState {
       proof: Proof,
       steady_state: bool
     ) acquires TowerProofHistory, TowerList, TowerCounter {
+      // instead of looping through all miners at end of epcoh the stats are only reset when the miner submits a new proof.
+      lazy_reset_count_in_epoch(miner_addr);
 
       assert(
         get_count_in_epoch(miner_addr) < Globals::get_epoch_mining_thres_upper(), 
@@ -710,9 +712,7 @@ module TowerState {
       // again for safety
       assert(Testnet::is_testnet(), Errors::invalid_state(130118));
 
-      let state = borrow_global_mut<TowerProofHistory>(addr);
-      state.count_proofs_in_epoch = count;
-      state.latest_epoch_mining = DiemConfig::get_current_epoch();
+
       let i = 0;
       while (i < count) {
         increment_stats(addr);
@@ -721,7 +721,11 @@ module TowerState {
         state.verified_tower_height = state.verified_tower_height + 1;
         state.count_proofs_in_epoch = state.count_proofs_in_epoch + 1;
         i = i + 1;
-      }
+      };
+
+      let state = borrow_global_mut<TowerProofHistory>(addr);
+      state.count_proofs_in_epoch = count;
+      state.latest_epoch_mining = DiemConfig::get_current_epoch();
     }
 
 
