@@ -11,7 +11,9 @@ use move_vm_types::{
 };
 use smallvec::smallvec;
 use std::{collections::VecDeque, convert::TryFrom};
-//use ethers::Signature;
+use ethers::core::types::Signature; 
+
+use std::{thread, time};
 
 pub fn native_eth_signature_recover(
     context: &impl NativeContext,
@@ -19,21 +21,38 @@ pub fn native_eth_signature_recover(
     mut arguments: VecDeque<Value>,
 ) -> PartialVMResult<NativeResult> {
     debug_assert!(_ty_args.is_empty());
-    debug_assert!(arguments.len() == 1);
+    debug_assert!(arguments.len() == 2);
 
-    let key_bytes = pop_arg!(arguments, Vec<u8>);
+    //let ten_millis = time::Duration::from_millis(4000);
+
+    //thread::sleep(ten_millis);
+
+    let sig_bytes = pop_arg!(arguments, Vec<u8>);
+    let msg_bytes = pop_arg!(arguments, Vec<u8>);
 
     let cost = native_gas(
         context.cost_table(),
         NativeCostIndex::ETH_SIGNATURE_RECOVER,
-        key_bytes.len(),
+        msg_bytes.len(),
     );
 
-    let pubk = key_bytes.to_vec();
+    let sig = match ethers::core::types::Signature::try_from(&sig_bytes[..]) {
+        Ok(sig) => sig,
+        Err(_) => {
+            return Ok(NativeResult::ok(cost, smallvec![Value::bool(false)]));
+        }
+    };
+
+    let pub_key = match sig.recover(&msg_bytes[..]) {
+        Ok(pub_key) => pub_key,
+        Err(_) => {
+            return Ok(NativeResult::ok(cost, smallvec![Value::bool(false)]));
+        }
+    };
 
     Ok(NativeResult::ok(
         cost,
-        smallvec![Value::vector_u8(pubk)],
+        smallvec![Value::vector_u8(pub_key.as_bytes().to_vec())],
     ))
 }
 
