@@ -99,8 +99,6 @@ ol serve --update
 
 ## 2. Generate an account
 
-[In-depth guide](Account-creation-for-validators.md) 
-
 Before you start: have the static IP address you wish to associate with your validator, and a fun personal statement 
 to place in your first proof.
 

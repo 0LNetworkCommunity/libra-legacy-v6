@@ -198,7 +198,7 @@ module DiemAccount {
     //////// 0L ////////
     const EBELOW_MINIMUM_VALUE_BOOTSTRAP_COIN: u64 = 120125;
     const EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET: u64 = 120126;
-    const EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE: u64 = 120127;
+    const ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE: u64 = 120127;
     const EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT: u64 = 120128;
 
 
@@ -1229,9 +1229,7 @@ module DiemAccount {
     public fun extract_withdraw_capability(
         sender: &signer
     ): WithdrawCapability acquires DiemAccount {
-        //////// 0L //////// Transfers disabled by default
-        //////// 0L //////// Transfers of 10 GAS 
-        //////// 0L //////// enabled when epoch is 1000
+
         let sender_addr = Signer::address_of(sender);
 
         /////// 0L /////////
@@ -1242,11 +1240,14 @@ module DiemAccount {
             Errors::limit_exceeded(EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET)
         );
         /////// 0L /////////
-        if (!DiemConfig::check_transfer_enabled()) {
-            // only VM can make TXs if transfers are not enabled.
+        // Slow wallet transfers disabled by default, enabled when epoch is 1000
+        // At that point slow wallets receive 1,000 coins unlocked per day.
+        if (is_slow(sender_addr) && !DiemConfig::check_transfer_enabled() ) {
+          // if transfers are not enabled for slow wallets
+          // then the tx should fail
             assert(
-                sender_addr == CoreAddresses::DIEM_ROOT_ADDRESS(), 
-                Errors::limit_exceeded(EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE)
+                false, 
+                Errors::limit_exceeded(ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE)
             );
         };
         // Abort if we already extracted the unique withdraw capability for this account.

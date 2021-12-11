@@ -1,3 +1,5 @@
+# Hot Upgrades
+
 ## Summary
 Hot upgrades to 0L Move framework (AKA "stdlib") require no halting of the network and are achieved with the Upgrade Oracle. This can be done when there are non-breaking changes to the vm (in Rust), and the stdlib (Move) has migrations in place in case of schema changes.
 

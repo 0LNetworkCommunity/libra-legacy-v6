@@ -8,7 +8,7 @@
 
 
 address 0x1 {
-module EpochBoundary { // TODO: Rename to Boundary
+module EpochBoundary {
     use 0x1::CoreAddresses;
     use 0x1::Subsidy;
     use 0x1::NodeWeight;
@@ -17,7 +17,6 @@ module EpochBoundary { // TODO: Rename to Boundary
     use 0x1::Globals;
     use 0x1::Vector;
     use 0x1::Stats;
-    use 0x1::ValidatorUniverse;
     use 0x1::AutoPay;
     use 0x1::Epoch;
     use 0x1::DiemConfig;
@@ -43,7 +42,7 @@ module EpochBoundary { // TODO: Rename to Boundary
         
         process_fullnodes(vm, nominal_subsidy_per);
         
-        process_validators(vm, subsidy_units, outgoing_compliant_set);
+        process_validators(vm, subsidy_units, *&outgoing_compliant_set);
         
         let proposed_set = propose_new_set(vm, height_start, height_now);
         
@@ -52,7 +51,7 @@ module EpochBoundary { // TODO: Rename to Boundary
             DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock());
             // update_validator_withdrawal_limit(vm);
         };
-        reset_counters(vm, proposed_set, height_now)
+        reset_counters(vm, proposed_set, outgoing_compliant_set, height_now)
     }
 
     // process fullnode subsidy
@@ -77,7 +76,7 @@ module EpochBoundary { // TODO: Rename to Boundary
             // TODO: this call is repeated in propose_new_set. 
             // Not sure if the performance hit at epoch boundary is worth the refactor. 
             if (TowerState::node_above_thresh(addr)) {
-              let count = TowerState::get_count_in_epoch(addr);
+              let count = TowerState::get_count_above_thresh_in_epoch(addr);
 
               let miner_subsidy = count * proof_price;
               FullnodeSubsidy::distribute_fullnode_subsidy(vm, addr, miner_subsidy);
@@ -157,15 +156,13 @@ module EpochBoundary { // TODO: Rename to Boundary
         proposed_set
     }
 
-    fun reset_counters(vm: &signer, proposed_set: vector<address>, height_now: u64) {
+    fun reset_counters(vm: &signer, proposed_set: vector<address>, outgoing_compliant: vector<address>, height_now: u64) {
 
         // Reset Stats
         Stats::reconfig(vm, &proposed_set);
 
-        // Migrate TowerState list from elegible: in case there is no minerlist 
-        // struct, use eligible for migrate_eligible_validators
-        let eligible = ValidatorUniverse::get_eligible_validators(vm);
-        TowerState::reconfig(vm, &eligible);
+        // Migrate TowerState list from elegible.
+        TowerState::reconfig(vm, &outgoing_compliant);
 
         // Reconfigure the network
         DiemSystem::bulk_update_validators(vm, proposed_set);

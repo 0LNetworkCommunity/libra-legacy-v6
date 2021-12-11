@@ -136,6 +136,7 @@ script {
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
+    use 0x1::TowerState;
 
     fun main(_account: signer) {
         // We are in a new epoch.
@@ -150,6 +151,9 @@ script {
         assert(DiemAccount::balance<GAS>(@{{bob}}) == 949991, 7357000180112);  
 
         //case 2 does not increment weight.
-        assert(NodeWeight::proof_of_weight(@{{bob}}) == 0, 7357000180113);  
+        assert(NodeWeight::proof_of_weight(@{{bob}}) == 0, 7357000180113);
+
+        //case 2 does not increment epochs_validating and mining.
+        assert(TowerState::get_epochs_compliant(@{{bob}}) == 0, 7357000180114);  
     }
 }
