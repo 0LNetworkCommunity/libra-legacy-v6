@@ -2,7 +2,6 @@ Each Network upgrade is previously tested in Devnet (aka Rex net). The following
 
 - [ ] ol: web monitor starts
 - [ ] tower: miner tx submit
-- [ ] ol: user account creation
 - [ ] txs: set community wallet
 - [ ] confirm autopay values
 - [ ] txs: create end user account "eve"
