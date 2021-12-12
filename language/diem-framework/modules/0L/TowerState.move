@@ -28,29 +28,25 @@ module TowerState {
       list: vector<address>
     }
 
+    /// To use in migration, and in future upgrade to deprecate.
     struct TowerStats has key {
       proofs_in_epoch: u64,
       validator_proofs: u64,
       fullnode_proofs: u64,
     }
 
-    fun increment_stats(miner_addr: address) acquires TowerStats {
-      assert(exists<TowerStats>(CoreAddresses::VM_RESERVED_ADDRESS()), 1301001);
-      let state = borrow_global_mut<TowerStats>(CoreAddresses::VM_RESERVED_ADDRESS());
-
-      if (ValidatorConfig::is_valid(miner_addr)) {
-        state.validator_proofs = state.validator_proofs + 1;
-      } else {
-        state.fullnode_proofs = state.fullnode_proofs + 1;
-      };
-      
-      state.proofs_in_epoch = state.proofs_in_epoch + 1;
+    /// The struct to store the global count of proofs in 0x0
+    struct TowerCounter has key {
+      lifetime_proofs: u64,
+      lifetime_validator_proofs: u64,
+      lifetime_fullnode_proofs: u64,
+      proofs_in_epoch: u64,
+      validator_proofs_in_epoch: u64,
+      fullnode_proofs_in_epoch: u64,
+      validator_proofs_in_epoch_above_thresh: u64,
+      fullnode_proofs_in_epoch_above_thresh: u64,
     }
 
-    public fun get_fullnode_proofs(): u64 acquires TowerStats{
-      let state = borrow_global<TowerStats>(CoreAddresses::VM_RESERVED_ADDRESS());
-      state.fullnode_proofs
-    }
 
     /// Struct to store information about a VDF proof submitted
     /// `challenge`: the seed for the proof 
@@ -99,19 +95,43 @@ module TowerState {
       }); 
     }
 
+    // /// Create an empty miner stats 
+    // fun init_miner_stats(vm: &signer) {
+    //   move_to<TowerStats>(vm, TowerStats {
+    //     proofs_in_epoch: 0u64,
+    //     validator_proofs: 0u64,
+    //     fullnode_proofs: 0u64,
+    //   });
+    // }
+
     /// Create an empty miner stats 
-    fun init_miner_stats(vm: &signer) {
-      move_to<TowerStats>(vm, TowerStats {
-        proofs_in_epoch: 0u64,
-        validator_proofs: 0u64,
-        fullnode_proofs: 0u64,
-      });
+    public fun init_tower_counter(
+      vm: &signer,
+      lifetime_proofs: u64,
+      lifetime_validator_proofs: u64,
+      lifetime_fullnode_proofs: u64,
+    ) {
+      if (!exists<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS())) {
+        move_to<TowerCounter>(vm, TowerCounter {
+          lifetime_proofs,
+          lifetime_validator_proofs,
+          lifetime_fullnode_proofs,
+          proofs_in_epoch: 0,
+          validator_proofs_in_epoch: 0,
+          fullnode_proofs_in_epoch: 0,
+          validator_proofs_in_epoch_above_thresh: 0,
+          fullnode_proofs_in_epoch_above_thresh: 0,
+        });
+      }
+
     }
 
     /// Create empty miners list and stats
     public fun init_miner_list_and_stats(vm: &signer) {
       init_miner_list(vm);
-      init_miner_stats(vm);
+
+      // Note: for testing migration we need to destroy this struct, see test_danger_destroy_tower_counter
+      init_tower_counter(vm, 0, 0, 0); 
     }
 
     /// returns true if miner at `addr` has been initialized 
@@ -164,7 +184,7 @@ module TowerState {
       solution: vector<u8>,
       difficulty: u64,
       security: u64,
-    ) acquires TowerProofHistory, TowerList, TowerStats {
+    ) acquires TowerProofHistory, TowerList, TowerCounter {
       // TODO: Previously in OLv3 is_genesis() returned true. 
       // How to check that this is part of genesis? is_genesis returns false here.
 
@@ -184,7 +204,7 @@ module TowerState {
     public fun commit_state(
       miner_sign: &signer,
       proof: Proof
-    ) acquires TowerProofHistory, TowerList, TowerStats {
+    ) acquires TowerProofHistory, TowerList, TowerCounter {
       // Get address, assumes the sender is the signer.
       let miner_addr = Signer::address_of(miner_sign);
       
@@ -217,7 +237,7 @@ module TowerState {
       operator_sig: &signer,
       miner_addr: address,
       proof: Proof
-    ) acquires TowerProofHistory, TowerList, TowerStats {
+    ) acquires TowerProofHistory, TowerList, TowerCounter {
 
       // Check the signer is in fact an operator delegated by the owner.
       
@@ -251,7 +271,7 @@ module TowerState {
       miner_addr: address,
       proof: Proof,
       steady_state: bool
-    ) acquires TowerProofHistory, TowerList, TowerStats {
+    ) acquires TowerProofHistory, TowerList, TowerCounter {
       // instead of looping through all miners at end of epcoh the stats are only reset when the miner submits a new proof.
       lazy_reset_count_in_epoch(miner_addr);
 
@@ -341,8 +361,7 @@ module TowerState {
 
     // Used at epoch boundary by vm to reset all validator's statistics.
     // Permissions: PUBLIC, ONLY VM.
-    public fun reconfig(vm: &signer, outgoing_validators: &vector<address>) acquires TowerProofHistory, TowerList {
-      
+    public fun reconfig(vm: &signer, outgoing_validators: &vector<address>) acquires TowerProofHistory, TowerList, TowerCounter {
       // Check permissions
       CoreAddresses::assert_diem_root(vm);
 
@@ -359,6 +378,7 @@ module TowerState {
           i = i + 1;
       };
 
+      epoch_reset(vm);
       // safety
       if (exists<TowerList>(@0x0)) {
         //reset miner list
@@ -376,7 +396,7 @@ module TowerState {
       solution: &vector<u8>,
       difficulty: u64,
       security: u64
-    ) acquires TowerProofHistory, TowerList, TowerStats {
+    ) acquires TowerProofHistory, TowerList, TowerCounter {
       
       // NOTE Only Signer can update own state.
       // Should only happen once.
@@ -443,6 +463,46 @@ module TowerState {
       state.epochs_since_last_account_creation = 0;
     }
 
+    fun increment_stats(miner_addr: address) acquires TowerProofHistory, TowerCounter {
+      // safety. Don't cause VM to halt
+      if (!exists<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS())) return;
+
+      let above = node_above_thresh(miner_addr);
+
+      let state = borrow_global_mut<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS());
+
+      if (ValidatorConfig::is_valid(miner_addr)) {
+        state.validator_proofs_in_epoch = state.validator_proofs_in_epoch + 1;
+        state.lifetime_validator_proofs = state.lifetime_validator_proofs + 1;
+        // only proofs above threshold are counted here. The preceding proofs are not counted;
+        if (above) { state.validator_proofs_in_epoch_above_thresh = state.validator_proofs_in_epoch_above_thresh + 1; }
+      } else {
+        state.fullnode_proofs_in_epoch = state.fullnode_proofs_in_epoch + 1;
+        state.lifetime_fullnode_proofs = state.lifetime_fullnode_proofs + 1;
+        // Preceding proofs before threshold was met are not counted to payment.
+        if (above) { state.fullnode_proofs_in_epoch_above_thresh = state.fullnode_proofs_in_epoch_above_thresh + 1; }
+      };
+      
+      state.proofs_in_epoch = state.proofs_in_epoch + 1;
+      state.lifetime_proofs = state.lifetime_proofs + 1;
+    }
+
+    /// Reset the tower counter at the end of epoch.
+    public fun epoch_reset(vm: &signer) acquires TowerCounter {
+      CoreAddresses::assert_vm(vm);
+      if (!exists<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS())) return;
+
+      let state = borrow_global_mut<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS());
+      state.proofs_in_epoch = 0;
+      state.validator_proofs_in_epoch = 0;
+      state.fullnode_proofs_in_epoch = 0;
+      state.validator_proofs_in_epoch_above_thresh = 0;
+      state.fullnode_proofs_in_epoch_above_thresh = 0;
+    }
+
+
+
+
     //////////////////////
     /// Public Getters ///
     /////////////////////
@@ -488,6 +548,15 @@ module TowerState {
       0
     }
 
+    // returns the number of proofs for a miner in the current epoch in EXCESS Of the the threshold
+    public fun get_count_above_thresh_in_epoch(miner_addr: address): u64 acquires TowerProofHistory {
+      if (exists<TowerProofHistory>(miner_addr)) {
+        if (borrow_global<TowerProofHistory>(miner_addr).count_proofs_in_epoch > Globals::get_epoch_mining_thres_lower()) {
+          return borrow_global<TowerProofHistory>(miner_addr).count_proofs_in_epoch - Globals::get_epoch_mining_thres_lower()
+        }
+      };
+      0
+    }
     // lazily reset proofs_in_epoch intead of looping through list.
     // danger: this is a private function. Do not make public.
     fun lazy_reset_count_in_epoch(miner_addr: address) acquires TowerProofHistory {
@@ -510,6 +579,36 @@ module TowerState {
       false 
     }
 
+    public fun get_validator_proofs_in_epoch(): u64 acquires TowerCounter{
+      let state = borrow_global<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS());
+      state.validator_proofs_in_epoch
+    }
+
+    public fun get_fullnode_proofs_in_epoch(): u64 acquires TowerCounter{
+      let state = borrow_global<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS());
+      state.fullnode_proofs_in_epoch
+    }
+
+    public fun get_fullnode_proofs_in_epoch_above_thresh(): u64 acquires TowerCounter{
+      let state = borrow_global<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS());
+      state.fullnode_proofs_in_epoch_above_thresh
+    }
+
+    public fun get_lifetime_proof_count(): (u64, u64, u64) acquires TowerCounter{
+      let s = borrow_global<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS());
+      (s.lifetime_proofs, s.lifetime_validator_proofs, s.lifetime_fullnode_proofs)
+    }
+
+    public fun danger_migrate_get_lifetime_proof_count(): (u64, u64, u64) acquires TowerStats{
+      if (exists<TowerStats>(CoreAddresses::VM_RESERVED_ADDRESS())) {
+        let s = borrow_global<TowerStats>(CoreAddresses::VM_RESERVED_ADDRESS());
+        return (s.proofs_in_epoch, s.validator_proofs, s.fullnode_proofs)
+      };
+      (0,0,0)
+    }
+
+
+
     //////////////////
     // TEST HELPERS //
     //////////////////
@@ -523,7 +622,7 @@ module TowerState {
         solution: vector<u8>,
         difficulty: u64,
         security: u64,
-      ) acquires TowerProofHistory, TowerList, TowerStats {
+      ) acquires TowerProofHistory, TowerList, TowerCounter {
         assert(Testnet::is_testnet(), 130102014010);
 
         move_to<TowerProofHistory>(miner_sig, TowerProofHistory {
@@ -549,12 +648,18 @@ module TowerState {
     }
 
     // Note: Used only in tests
-    public fun test_epoch_reset(vm: &signer) acquires TowerStats {
+    public fun test_epoch_reset_counter(vm: &signer) acquires TowerCounter {
+      assert(Testnet::is_testnet(), Errors::invalid_state(130118));
       CoreAddresses::assert_vm(vm);
-      let state = borrow_global_mut<TowerStats>(CoreAddresses::VM_RESERVED_ADDRESS());
+      let state = borrow_global_mut<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS());
+      state.lifetime_proofs = 0;
+      state.lifetime_validator_proofs = 0;
+      state.lifetime_fullnode_proofs = 0;
       state.proofs_in_epoch = 0;
-      state.validator_proofs = 0;
-      state.fullnode_proofs = 0;
+      state.validator_proofs_in_epoch = 0;
+      state.fullnode_proofs_in_epoch = 0;
+      state.validator_proofs_in_epoch_above_thresh = 0;
+      state.fullnode_proofs_in_epoch_above_thresh = 0;
     }
 
     // Function index: 11
@@ -567,7 +672,7 @@ module TowerState {
                               // differ slightly from api
       miner_addr: address,
       proof: Proof
-    ) acquires TowerProofHistory, TowerList, TowerStats {
+    ) acquires TowerProofHistory, TowerList, TowerCounter {
       assert(Testnet::is_testnet(), 130102014010);
       
       // Get address, assumes the sender is the signer.
@@ -595,32 +700,38 @@ module TowerState {
 
     // Function code: 12
     // Use in testing to mock mining without producing proofs
-    public fun test_helper_mock_mining(sender: &signer,  count: u64) acquires TowerProofHistory, TowerStats {
+    public fun test_helper_mock_mining(sender: &signer,  count: u64) acquires TowerProofHistory, TowerCounter {
       assert(Testnet::is_testnet(), Errors::invalid_state(130118));
       let addr = Signer::address_of(sender);
-      danger_mock_mining(addr, count);
+      danger_mock_mining(addr, count)
     }
 
     // Function code: 13
     // mocks mining for an arbitrary account from the vm 
-    public fun test_helper_mock_mining_vm(vm: &signer, addr: address, count: u64) acquires TowerProofHistory, TowerStats {
+    public fun test_helper_mock_mining_vm(vm: &signer, addr: address, count: u64) acquires TowerProofHistory, TowerCounter {
       assert(Testnet::is_testnet(), Errors::invalid_state(130120));
       CoreAddresses::assert_diem_root(vm);
       danger_mock_mining(addr, count)
     }
 
-    fun danger_mock_mining(addr: address, count: u64) acquires TowerProofHistory, TowerStats {
+    fun danger_mock_mining(addr: address, count: u64) acquires TowerProofHistory, TowerCounter {
       // again for safety
       assert(Testnet::is_testnet(), Errors::invalid_state(130118));
+
+
+      let i = 0;
+      while (i < count) {
+        increment_stats(addr);
+        let state = borrow_global_mut<TowerProofHistory>(addr);
+        // mock verify_and_update
+        state.verified_tower_height = state.verified_tower_height + 1;
+        state.count_proofs_in_epoch = state.count_proofs_in_epoch + 1;
+        i = i + 1;
+      };
 
       let state = borrow_global_mut<TowerProofHistory>(addr);
       state.count_proofs_in_epoch = count;
       state.latest_epoch_mining = DiemConfig::get_current_epoch();
-      let i = 0;
-      while (i < count) {
-        increment_stats(addr);
-        i = i + 1;
-      }
     }
 
 
@@ -628,9 +739,11 @@ module TowerState {
     // Permissions: PUBLIC, VM, TESTING 
     // Get the vm to trigger a reconfig for testing
     // Function code: 14
-    public fun test_helper_mock_reconfig(account: &signer, miner_addr: address) acquires TowerProofHistory{
+    public fun test_helper_mock_reconfig(account: &signer, miner_addr: address) acquires TowerProofHistory, TowerCounter {
       CoreAddresses::assert_diem_root(account);
       assert(Testnet::is_testnet(), Errors::invalid_state(130122));
+      // update_metrics(account, miner_addr);
+      epoch_reset(account);
       update_epoch_metrics_vals(account, miner_addr);
     }
 
@@ -714,5 +827,44 @@ module TowerState {
       let state = borrow_global_mut<TowerProofHistory>(addr);
       state.verified_tower_height = weight;
     }
+
+    public fun test_mock_depr_tower_stats(vm: &signer) {
+      assert(Testnet::is_testnet(), Errors::invalid_state(130113));
+      CoreAddresses::assert_vm(vm);
+      move_to<TowerStats>(vm, TowerStats{
+        proofs_in_epoch: 111,
+        validator_proofs: 222,
+        fullnode_proofs: 333,
+      });
+    }
+
+    public fun test_get_liftime_proofs(): u64 acquires TowerCounter {
+      assert(Testnet::is_testnet(), Errors::invalid_state(130113));
+      
+      let s = borrow_global<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS());
+      s.lifetime_proofs
+    }
+
+    public fun test_danger_destroy_tower_counter(vm: &signer) acquires TowerCounter {
+      assert(Testnet::is_testnet(), Errors::invalid_state(130113));
+      CoreAddresses::assert_vm(vm);
+      assert(exists<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS()), Errors::invalid_state(130115));
+        
+        // We destroy the data resource for sender
+        // move_from and then destructure
+
+        let TowerCounter {
+          lifetime_proofs: _,
+          lifetime_validator_proofs: _,
+          lifetime_fullnode_proofs: _,
+          proofs_in_epoch: _,
+          validator_proofs_in_epoch: _,
+          fullnode_proofs_in_epoch: _,
+          validator_proofs_in_epoch_above_thresh: _,
+          fullnode_proofs_in_epoch_above_thresh: _,
+       } = move_from<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS());
+    }
 }
 }
+
+
