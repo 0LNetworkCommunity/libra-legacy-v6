@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   debug:
-    image: nourspace/openlibra:latest
+    image: "${OL_IMAGE}"
     container_name: 0l-debug
     restart: "no"
     network_mode: "host"
@@ -19,7 +19,7 @@ services:
       nofile: 100000
 
   fullnode:
-    image: nourspace/openlibra:latest
+    image: "${OL_IMAGE}"
     container_name: 0l-fullnode
     restart: "always"
     network_mode: "host"
@@ -42,7 +42,7 @@ services:
       nofile: 100000
 
   validator:
-    image: nourspace/openlibra:latest
+    image: "${OL_IMAGE}"
     container_name: 0l-validator
     restart: "always"
     network_mode: "host"
@@ -65,27 +65,30 @@ services:
       nofile: 100000
 
   tower:
-    image: nourspace/openlibra:latest
+    image: "${OL_IMAGE}"
     container_name: 0l-tower
     restart: "always"
     network_mode: "host"
     pid: "host"
     volumes:
       - node_data:/root/.0L
-    # once fullnode/validator are synced
+    # Todo (nourspace): find a way to toggle these modes using flags or env vars
+    # mode 1: initial start uses upstream as fullnode/validator are not yet synced
+    entrypoint: [ "tower", "--use-upstream-url", "--verbose", "start" ]
+    # mode 2: fullnode/validator are synced
     #entrypoint: [ "tower", "--verbose", "start" ]
-    # initial start uses upstream
-    #entrypoint: [ "tower", "--use-upstream-url", "--verbose", "start" ]
+    # mode 3: run as operator while in validator mode
+    #entrypoint: [ "tower", "--is-operator", "--verbose", "start" ]
     ulimits:
       nproc: 100000
       nofile: 100000
     environment:
       NODE_ENV: "prod"
       TEST: "y"
-      MNEM: "$MNEM"
+      MNEM: "${OL_MNEM}"
 
   monitor:
-    image: nourspace/openlibra:latest
+    image: "${OL_IMAGE}"
     container_name: 0l-monitor
     restart: "always"
     network_mode: "host"
@@ -105,4 +108,4 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: /root/.0L/
+      device: "${OL_DATA_DIR}"
