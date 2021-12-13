@@ -33,6 +33,8 @@ FROM toolchain as builder
 WORKDIR /libra
 
 # Clone main branch of this repo
+ARG TAG=5.0.5
+# Todo (nourspace): use TAG argument to pull the release branch
 # Fixme(nourspace): depending where these tools are hosted, we might not need to pull
 RUN git clone -b feature/nspace-0l-docker --single-branch https://github.com/nourspace/libra.git /libra
 
@@ -49,16 +51,13 @@ RUN apt-get update && apt-get install -y \
   libssl1.1 \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-ENV OL_DIR="/root/.0L" \
-  PATH="/root/.0L/bin:${PATH}"
+ENV PATH="/0L/bin:${PATH}" \
+  # Capture backtrace on error
+  RUST_BACKTRACE="1"
 
-WORKDIR /root/.0L
-
-# Fixme(nourspace): user better logging method Create logs dir
-RUN mkdir /root/.0L/logs
+WORKDIR /0L
 
 # Copy binaries from builder
-RUN mkdir -p /0L/bin
 COPY --from=builder [ \
   "/libra/target/release/tower", \
   "/libra/target/release/diem-node", \
@@ -68,18 +67,5 @@ COPY --from=builder [ \
   "/libra/target/release/ol", \
   "/libra/target/release/txs", \
   "/libra/target/release/onboard", \
-  "${OL_DIR}/bin/" \
+  "/0L/bin/" \
 ]
-
-# Download web-files
-RUN ol serve --update
-
-# Download Task binary
-RUN sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -b /usr/local/bin
-
-COPY Taskfile.node.yml Taskfile.yml
-
-ENTRYPOINT [ "task" ]
-
-# Capture backtrace on error
-ENV RUST_BACKTRACE 1

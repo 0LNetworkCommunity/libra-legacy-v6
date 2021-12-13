@@ -1,29 +1,30 @@
 version: '3'
 
 vars:
-  IMAGE: "openlibra"
+  IMAGE: "nourspace/0l"
+  TAG: "5.0.5"
   
 tasks:
 
   docker:build:
     desc: Build docker image
     cmds:
-      - docker build -t {{.IMAGE}} .
+      - docker build --build-arg TAG={{.TAG}} --tag {{.IMAGE}}:{{.TAG}} .
+
+  docker:push:
+    desc: Push docker image
+    cmds:
+      - docker push {{.IMAGE}}:{{.TAG}}
 
   docker:shell:
     desc: "Start a shell in node"
     cmds:
-      - docker run --rm -it {{.IMAGE}} /bin/bash
+      - docker run --rm -it {{.IMAGE}}:{{.TAG}} /bin/bash
 
-  node:
-    desc: "Pass commands to 0L node. Example: task node -- COMMAND ARGS"
-    cmds:
-      - docker run --rm -it {{.IMAGE}} self -- {{.CLI_ARGS}}
-
-  node:onboard:val:
+  onboard:val:
     cmds:
       - '# Onboarding validator!'
-      - docker run --rm -it {{.IMAGE}} onboard:val -- {{.CLI_ARGS}}
+      - docker run --rm -it {{.IMAGE}}:{{.TAG}} onboard:val -- {{.CLI_ARGS}}
 
   node:account.json:
     cmds:
