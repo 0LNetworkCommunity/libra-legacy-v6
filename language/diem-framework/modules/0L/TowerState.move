@@ -184,7 +184,7 @@ module TowerState {
       solution: vector<u8>,
       difficulty: u64,
       security: u64,
-    ) acquires TowerProofHistory, TowerList, TowerCounter {
+    ) acquires TowerProofHistory, TowerList, TowerCounter, TowerTeamsThresholds  {
       // TODO: Previously in OLv3 is_genesis() returned true. 
       // How to check that this is part of genesis? is_genesis returns false here.
 
@@ -204,7 +204,7 @@ module TowerState {
     public fun commit_state(
       miner_sign: &signer,
       proof: Proof
-    ) acquires TowerProofHistory, TowerList, TowerCounter {
+    ) acquires TowerProofHistory, TowerList, TowerCounter, TowerTeamsThresholds {
       // Get address, assumes the sender is the signer.
       let miner_addr = Signer::address_of(miner_sign);
       
@@ -237,7 +237,7 @@ module TowerState {
       operator_sig: &signer,
       miner_addr: address,
       proof: Proof
-    ) acquires TowerProofHistory, TowerList, TowerCounter {
+    ) acquires TowerProofHistory, TowerList, TowerCounter, TowerTeamsThresholds{
 
       // Check the signer is in fact an operator delegated by the owner.
       
@@ -271,7 +271,7 @@ module TowerState {
       miner_addr: address,
       proof: Proof,
       steady_state: bool
-    ) acquires TowerProofHistory, TowerList, TowerCounter {
+    ) acquires TowerProofHistory, TowerList, TowerCounter, TowerTeamsThresholds {
       // instead of looping through all miners at end of epcoh the stats are only reset when the miner submits a new proof.
       lazy_reset_count_in_epoch(miner_addr);
 
@@ -396,7 +396,7 @@ module TowerState {
       solution: &vector<u8>,
       difficulty: u64,
       security: u64
-    ) acquires TowerProofHistory, TowerList, TowerCounter {
+    ) acquires TowerProofHistory, TowerList, TowerCounter, TowerTeamsThresholds{
       
       // NOTE Only Signer can update own state.
       // Should only happen once.
@@ -463,7 +463,7 @@ module TowerState {
       state.epochs_since_last_account_creation = 0;
     }
 
-    fun increment_stats(miner_addr: address) acquires TowerProofHistory, TowerCounter {
+    fun increment_stats(miner_addr: address) acquires TowerProofHistory, TowerCounter, TowerTeamsThresholds, TowerList {
       // safety. Don't cause VM to halt
       if (!exists<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS())) return;
 
@@ -480,11 +480,19 @@ module TowerState {
         state.fullnode_proofs_in_epoch = state.fullnode_proofs_in_epoch + 1;
         state.lifetime_fullnode_proofs = state.lifetime_fullnode_proofs + 1;
         // Preceding proofs before threshold was met are not counted to payment.
-        if (above) { state.fullnode_proofs_in_epoch_above_thresh = state.fullnode_proofs_in_epoch_above_thresh + 1; }
+        if (above) { state.fullnode_proofs_in_epoch_above_thresh = state.fullnode_proofs_in_epoch_above_thresh + 1; };
+
       };
-      
+
       state.proofs_in_epoch = state.proofs_in_epoch + 1;
       state.lifetime_proofs = state.lifetime_proofs + 1;
+
+      // do the lazy evaluation of the thresholds on every miner commit.
+      // TODO: this only applies to fullnode/miners, no need to run every time a validator runs.
+      // but the resource is still being borrowed until now.
+      // the user pays for this calculation.
+      lazy_update_teams_member_threshold();
+
     }
 
     /// Reset the tower counter at the end of epoch.
@@ -531,6 +539,9 @@ module TowerState {
     fun lazy_update_teams_member_threshold(): u64 acquires TowerTeamsThresholds, TowerCounter, TowerList {
       // minimum threshold should be 2 weeks of proofs
       let threshold = 50 * 14; // 50 proofs per day.
+
+
+      // TODO: the actual calculation.
 
       // Get total tower height from TowerCounter
       let _c = get_fullnode_proofs_in_epoch();
@@ -748,7 +759,7 @@ module TowerState {
         solution: vector<u8>,
         difficulty: u64,
         security: u64,
-      ) acquires TowerProofHistory, TowerList, TowerCounter {
+      ) acquires TowerProofHistory, TowerList, TowerCounter, TowerTeamsThresholds {
         assert(Testnet::is_testnet(), 130102014010);
 
         move_to<TowerProofHistory>(miner_sig, TowerProofHistory {
@@ -798,7 +809,7 @@ module TowerState {
                               // differ slightly from api
       miner_addr: address,
       proof: Proof
-    ) acquires TowerProofHistory, TowerList, TowerCounter {
+    ) acquires TowerProofHistory, TowerList, TowerCounter, TowerTeamsThresholds {
       assert(Testnet::is_testnet(), 130102014010);
       
       // Get address, assumes the sender is the signer.
@@ -826,7 +837,7 @@ module TowerState {
 
     // Function code: 12
     // Use in testing to mock mining without producing proofs
-    public fun test_helper_mock_mining(sender: &signer,  count: u64) acquires TowerProofHistory, TowerCounter {
+    public fun test_helper_mock_mining(sender: &signer,  count: u64) acquires TowerProofHistory, TowerCounter, TowerList, TowerTeamsThresholds {
       assert(Testnet::is_testnet(), Errors::invalid_state(130118));
       let addr = Signer::address_of(sender);
       danger_mock_mining(addr, count)
@@ -835,13 +846,13 @@ module TowerState {
     
     // Function code: 13member_threshold_epoch: u64,
     // mocks mining for an arbitrary account from the vm 
-    public fun test_helper_mock_mining_vm(vm: &signer, addr: address, count: u64) acquires TowerProofHistory, TowerCounter {
+    public fun test_helper_mock_mining_vm(vm: &signer, addr: address, count: u64) acquires TowerProofHistory, TowerCounter, TowerList, TowerTeamsThresholds {
       assert(Testnet::is_testnet(), Errors::invalid_state(130120));
       CoreAddresses::assert_diem_root(vm);
       danger_mock_mining(addr, count)
     }
 
-    fun danger_mock_mining(addr: address, count: u64) acquires TowerProofHistory, TowerCounter {
+    fun danger_mock_mining(addr: address, count: u64) acquires TowerProofHistory, TowerCounter, TowerList, TowerTeamsThresholds {
       // again for safety
       assert(Testnet::is_testnet(), Errors::invalid_state(130118));
 
