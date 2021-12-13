@@ -34,6 +34,7 @@
 -  [Function `epoch_reset`](#0x1_TowerState_epoch_reset)
 -  [Function `init_team_thresholds`](#0x1_TowerState_init_team_thresholds)
 -  [Function `lazy_update_teams_member_threshold`](#0x1_TowerState_lazy_update_teams_member_threshold)
+-  [Function `increment_sorted_towers`](#0x1_TowerState_increment_sorted_towers)
 -  [Function `epoch_boundary_reset_team_thresh`](#0x1_TowerState_epoch_boundary_reset_team_thresh)
 -  [Function `get_miner_list`](#0x1_TowerState_get_miner_list)
 -  [Function `get_tower_height`](#0x1_TowerState_get_tower_height)
@@ -381,6 +382,12 @@ For Teams Implementation  ///
 </dd>
 <dt>
 <code>member_threshold_next_epoch_lazy: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>sorted_towers: vector&lt;u64&gt;</code>
 </dt>
 <dd>
 
@@ -1208,6 +1215,7 @@ Reset the tower counter at the end of epoch.
       <a href="TowerState.md#0x1_TowerState_TowerTeamsThresholds">TowerTeamsThresholds</a> {
         member_threshold: 0,
         member_threshold_next_epoch_lazy: 0,
+        sorted_towers: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u64&gt;(),
       }
     );
   }
@@ -1248,6 +1256,60 @@ Reset the tower counter at the end of epoch.
   s.member_threshold_next_epoch_lazy = threshold;
 
   threshold
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_increment_sorted_towers"></a>
+
+## Function `increment_sorted_towers`
+
+
+
+<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_increment_sorted_towers">increment_sorted_towers</a>(height: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_increment_sorted_towers">increment_sorted_towers</a>(height: u64) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerTeamsThresholds">TowerTeamsThresholds</a> {
+  <b>let</b> s = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerTeamsThresholds">TowerTeamsThresholds</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+
+  <b>let</b> v = *&s.sorted_towers;
+  <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&v);
+  <b>if</b> (len == 0) {
+    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> v, height);
+    <b>return</b>
+  };
+
+  <b>let</b> new_list = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u64&gt;();
+
+  <b>let</b> i = 0;
+  <b>while</b> (i &lt; len) {
+
+    // pop off the lowest numbers
+    <b>let</b> n = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_pop_back">Vector::pop_back</a>(&<b>mut</b> v);
+    // push back the heighet first
+    <b>if</b> (n &gt; height) {
+      // push n
+      <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> v, n);
+      <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> v, height);
+    } <b>else</b> <b>if</b> (n &lt;= height) {
+      <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> v, height);
+      <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> v, n);
+    };
+
+    i = i + 1;
+  };
+
+  <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_reverse">Vector::reverse</a>&lt;u64&gt;(&<b>mut</b> new_list);
+  s.sorted_towers = new_list;
 }
 </code></pre>
 

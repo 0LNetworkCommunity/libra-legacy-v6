@@ -508,6 +508,7 @@ module TowerState {
     struct TowerTeamsThresholds has key {
       member_threshold: u64,
       member_threshold_next_epoch_lazy: u64,
+      sorted_towers: vector<u64>,
     }
 
     public fun init_team_thresholds(vm: &signer) {
@@ -518,6 +519,7 @@ module TowerState {
           TowerTeamsThresholds {
             member_threshold: 0,
             member_threshold_next_epoch_lazy: 0,
+            sorted_towers: Vector::empty<u64>(),
           }
         );
       }
@@ -541,6 +543,41 @@ module TowerState {
       s.member_threshold_next_epoch_lazy = threshold;
 
       threshold
+    }
+
+    // TODO: do we want to use this? Would be better to sort at the end of the epoch.
+    fun increment_sorted_towers(height: u64) acquires TowerTeamsThresholds {
+      let s = borrow_global_mut<TowerTeamsThresholds>(CoreAddresses::VM_RESERVED_ADDRESS());
+
+      let v = *&s.sorted_towers;
+      let len = Vector::length(&v);
+      if (len == 0) {
+        Vector::push_back(&mut v, height);
+        return
+      };
+
+      let new_list = Vector::empty<u64>();
+
+      let i = 0;
+      while (i < len) {
+      
+        // pop off the lowest numbers
+        let n = Vector::pop_back(&mut v);
+        // push back the heighet first
+        if (n > height) {
+          // push n 
+          Vector::push_back(&mut v, n);
+          Vector::push_back(&mut v, height);
+        } else if (n <= height) {
+          Vector::push_back(&mut v, height);
+          Vector::push_back(&mut v, n);
+        };
+
+        i = i + 1;
+      };
+
+      Vector::reverse<u64>(&mut new_list);
+      s.sorted_towers = new_list;
     }
 
     // set's the current epoch's threshold, and resets the lazy counter for next epoch.
