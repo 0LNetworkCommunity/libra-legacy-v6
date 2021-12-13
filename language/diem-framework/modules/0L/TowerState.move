@@ -501,6 +501,58 @@ module TowerState {
     }
 
 
+    //////////////////////
+    /// For Teams Implementation  ///
+    /////////////////////
+
+    struct TowerTeamsThresholds has key {
+      member_threshold: u64,
+      member_threshold_next_epoch_lazy: u64,
+    }
+
+    public fun init_team_thresholds(vm: &signer) {
+      CoreAddresses::assert_vm(vm);
+      if (!exists<TowerTeamsThresholds>(CoreAddresses::VM_RESERVED_ADDRESS())) {
+        move_to<TowerTeamsThresholds>(
+          vm, 
+          TowerTeamsThresholds {
+            member_threshold: 0,
+            member_threshold_next_epoch_lazy: 0,
+          }
+        );
+      }
+    }
+    // During epoch A, calculate thresholds for epoch B
+    // lazily calculate the new threshold on each miner submission
+    // DANGER
+    // private module which accesses system state.
+    fun lazy_update_teams_member_threshold(): u64 acquires TowerTeamsThresholds, TowerCounter, TowerList {
+      // minimum threshold should be 2 weeks of proofs
+      let threshold = 50 * 14; // 50 proofs per day.
+
+      // Get total tower height from TowerCounter
+      let _c = get_fullnode_proofs_in_epoch();
+
+      // Get total number of miners
+      let _m = Vector::length<address>(&get_miner_list());
+
+      let s = borrow_global_mut<TowerTeamsThresholds>(CoreAddresses::VM_RESERVED_ADDRESS());
+
+      s.member_threshold_next_epoch_lazy = threshold;
+
+      threshold
+    }
+
+    // set's the current epoch's threshold, and resets the lazy counter for next epoch.
+    fun epoch_boundary_reset_team_thresh(vm: &signer) acquires TowerTeamsThresholds {
+      CoreAddresses::assert_vm(vm);
+      if (exists<TowerTeamsThresholds>(CoreAddresses::VM_RESERVED_ADDRESS())) {
+        let s = borrow_global_mut<TowerTeamsThresholds>(CoreAddresses::VM_RESERVED_ADDRESS());
+        s.member_threshold = s.member_threshold_next_epoch_lazy;
+        // TODO: do we actually need to reset this? Won't the lazy_update_teams_member_threshold correctly adjust for this.
+        s.member_threshold_next_epoch_lazy = 0;
+      }
+    }
 
 
     //////////////////////
@@ -744,7 +796,7 @@ module TowerState {
     }
 
     
-    // Function code: 13
+    // Function code: 13member_threshold_epoch: u64,
     // mocks mining for an arbitrary account from the vm 
     public fun test_helper_mock_mining_vm(vm: &signer, addr: address, count: u64) acquires TowerProofHistory, TowerCounter {
       assert(Testnet::is_testnet(), Errors::invalid_state(130120));

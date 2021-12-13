@@ -10,6 +10,7 @@
 -  [Resource `TowerCounter`](#0x1_TowerState_TowerCounter)
 -  [Struct `Proof`](#0x1_TowerState_Proof)
 -  [Resource `TowerProofHistory`](#0x1_TowerState_TowerProofHistory)
+-  [Resource `TowerTeamsThresholds`](#0x1_TowerState_TowerTeamsThresholds)
 -  [Constants](#@Constants_0)
 -  [Function `init_miner_list`](#0x1_TowerState_init_miner_list)
 -  [Function `init_tower_counter`](#0x1_TowerState_init_tower_counter)
@@ -31,6 +32,9 @@
 -  [Function `reset_rate_limit`](#0x1_TowerState_reset_rate_limit)
 -  [Function `increment_stats`](#0x1_TowerState_increment_stats)
 -  [Function `epoch_reset`](#0x1_TowerState_epoch_reset)
+-  [Function `init_team_thresholds`](#0x1_TowerState_init_team_thresholds)
+-  [Function `lazy_update_teams_member_threshold`](#0x1_TowerState_lazy_update_teams_member_threshold)
+-  [Function `epoch_boundary_reset_team_thresh`](#0x1_TowerState_epoch_boundary_reset_team_thresh)
 -  [Function `get_miner_list`](#0x1_TowerState_get_miner_list)
 -  [Function `get_tower_height`](#0x1_TowerState_get_tower_height)
 -  [Function `get_epochs_compliant`](#0x1_TowerState_get_epochs_compliant)
@@ -343,6 +347,40 @@ the miner last created a new account
 </dd>
 <dt>
 <code>epochs_since_last_account_creation: u64</code>
+</dt>
+<dd>
+
+</dd>
+</dl>
+
+
+</details>
+
+<a name="0x1_TowerState_TowerTeamsThresholds"></a>
+
+## Resource `TowerTeamsThresholds`
+
+For Teams Implementation  ///
+
+
+<pre><code><b>struct</b> <a href="TowerState.md#0x1_TowerState_TowerTeamsThresholds">TowerTeamsThresholds</a> has key
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>member_threshold: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>member_threshold_next_epoch_lazy: u64</code>
 </dt>
 <dd>
 
@@ -1140,6 +1178,106 @@ Reset the tower counter at the end of epoch.
   state.fullnode_proofs_in_epoch = 0;
   state.validator_proofs_in_epoch_above_thresh = 0;
   state.fullnode_proofs_in_epoch_above_thresh = 0;
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_init_team_thresholds"></a>
+
+## Function `init_team_thresholds`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_init_team_thresholds">init_team_thresholds</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_init_team_thresholds">init_team_thresholds</a>(vm: &signer) {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  <b>if</b> (!<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerTeamsThresholds">TowerTeamsThresholds</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>())) {
+    move_to&lt;<a href="TowerState.md#0x1_TowerState_TowerTeamsThresholds">TowerTeamsThresholds</a>&gt;(
+      vm,
+      <a href="TowerState.md#0x1_TowerState_TowerTeamsThresholds">TowerTeamsThresholds</a> {
+        member_threshold: 0,
+        member_threshold_next_epoch_lazy: 0,
+      }
+    );
+  }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_lazy_update_teams_member_threshold"></a>
+
+## Function `lazy_update_teams_member_threshold`
+
+
+
+<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_lazy_update_teams_member_threshold">lazy_update_teams_member_threshold</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_lazy_update_teams_member_threshold">lazy_update_teams_member_threshold</a>(): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerTeamsThresholds">TowerTeamsThresholds</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a> {
+  // minimum threshold should be 2 weeks of proofs
+  <b>let</b> threshold = 50 * 14; // 50 proofs per day.
+
+  // Get total tower height from <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>
+  <b>let</b> _c = <a href="TowerState.md#0x1_TowerState_get_fullnode_proofs_in_epoch">get_fullnode_proofs_in_epoch</a>();
+
+  // Get total number of miners
+  <b>let</b> _m = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&<a href="TowerState.md#0x1_TowerState_get_miner_list">get_miner_list</a>());
+
+  <b>let</b> s = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerTeamsThresholds">TowerTeamsThresholds</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+
+  s.member_threshold_next_epoch_lazy = threshold;
+
+  threshold
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_epoch_boundary_reset_team_thresh"></a>
+
+## Function `epoch_boundary_reset_team_thresh`
+
+
+
+<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_epoch_boundary_reset_team_thresh">epoch_boundary_reset_team_thresh</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_epoch_boundary_reset_team_thresh">epoch_boundary_reset_team_thresh</a>(vm: &signer) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerTeamsThresholds">TowerTeamsThresholds</a> {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  <b>if</b> (<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerTeamsThresholds">TowerTeamsThresholds</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>())) {
+    <b>let</b> s = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerTeamsThresholds">TowerTeamsThresholds</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+    s.member_threshold = s.member_threshold_next_epoch_lazy;
+    // TODO: do we actually need <b>to</b> reset this? Won't the lazy_update_teams_member_threshold correctly adjust for this.
+    s.member_threshold_next_epoch_lazy = 0;
+  }
 }
 </code></pre>
 

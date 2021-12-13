@@ -12,10 +12,14 @@
 -  [Function `vm_init`](#0x1_Teams_vm_init)
 -  [Function `team_init`](#0x1_Teams_team_init)
 -  [Function `join_team`](#0x1_Teams_join_team)
+-  [Function `lazy_assign_member_to_teams`](#0x1_Teams_lazy_assign_member_to_teams)
+-  [Function `ratchet_collective_threshold`](#0x1_Teams_ratchet_collective_threshold)
 -  [Function `get_all_teams`](#0x1_Teams_get_all_teams)
 -  [Function `team_is_init`](#0x1_Teams_team_is_init)
+-  [Function `member_is_init`](#0x1_Teams_member_is_init)
 -  [Function `get_operator_reward`](#0x1_Teams_get_operator_reward)
 -  [Function `get_team_members`](#0x1_Teams_get_team_members)
+-  [Function `is_member_above`](#0x1_Teams_is_member_above)
 -  [Function `vm_is_init`](#0x1_Teams_vm_is_init)
 
 
@@ -50,6 +54,18 @@
 <dd>
 
 </dd>
+<dt>
+<code>collective_threshold_epoch: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>member_threshold_epoch: u64</code>
+</dt>
+<dd>
+
+</dd>
 </dl>
 
 
@@ -78,12 +94,6 @@
 
 </dd>
 <dt>
-<code>team_name: vector&lt;u8&gt;</code>
-</dt>
-<dd>
-
-</dd>
-<dt>
 <code>members: vector&lt;address&gt;</code>
 </dt>
 <dd>
@@ -97,6 +107,30 @@
 </dd>
 <dt>
 <code>collective_tower_height_this_epoch: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>team_name: vector&lt;u8&gt;</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>description: vector&lt;u8&gt;</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>count_all_members: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>count_active: u64</code>
 </dt>
 <dd>
 
@@ -173,7 +207,9 @@
   move_to&lt;<a href="Teams.md#0x1_Teams_AllTeams">AllTeams</a>&gt;(
     sender,
     <a href="Teams.md#0x1_Teams_AllTeams">AllTeams</a> {
-      teams_list: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>()
+      teams_list: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+      collective_threshold_epoch: 0,
+      member_threshold_epoch: 0,
     }
   );
 }
@@ -213,10 +249,15 @@ move_to&lt;<a href="Teams.md#0x1_Teams_Team">Team</a>&gt;(
     sender,
     <a href="Teams.md#0x1_Teams_Team">Team</a> {
       captain: <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender), // A validator account.
-      team_name, // A validator account.
       members: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;(),
       operator_pct_reward, // the percentage of the rewards that the captain proposes <b>to</b> go <b>to</b> the validator operator.
       collective_tower_height_this_epoch: 0,
+
+      team_name, // A validator account.
+      description: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u8&gt;(), // TODO: Change this
+      count_all_members: 0,
+      count_active: 0,
+
     }
   );
 }
@@ -247,7 +288,7 @@ move_to&lt;<a href="Teams.md#0x1_Teams_Team">Team</a>&gt;(
   // needs <b>to</b> check <b>if</b> this is a slow wallet.
   // ask user <b>to</b> resubmit <b>if</b> not a slow wallet, so they are explicitly setting it, no surprises, no tears.
 
- <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_is_slow">DiemAccount::is_slow</a>(addr), <a href="Teams.md#0x1_Teams_ENOT_SLOW_WALLET">ENOT_SLOW_WALLET</a>);
+  <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_is_slow">DiemAccount::is_slow</a>(addr), <a href="Teams.md#0x1_Teams_ENOT_SLOW_WALLET">ENOT_SLOW_WALLET</a>);
 
 
   // bob wants <b>to</b> switch <b>to</b> a different <a href="Teams.md#0x1_Teams_Team">Team</a>.
@@ -269,6 +310,71 @@ move_to&lt;<a href="Teams.md#0x1_Teams_Team">Team</a>&gt;(
   };
   <b>let</b> captain_state = borrow_global_mut&lt;<a href="Teams.md#0x1_Teams_Team">Team</a>&gt;(captain_address);
   <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(&<b>mut</b> captain_state.members, addr);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Teams_lazy_assign_member_to_teams"></a>
+
+## Function `lazy_assign_member_to_teams`
+
+
+
+<pre><code><b>fun</b> <a href="Teams.md#0x1_Teams_lazy_assign_member_to_teams">lazy_assign_member_to_teams</a>(_miner: address): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="Teams.md#0x1_Teams_lazy_assign_member_to_teams">lazy_assign_member_to_teams</a>(_miner: address): u64 {
+
+  0
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Teams_ratchet_collective_threshold"></a>
+
+## Function `ratchet_collective_threshold`
+
+
+
+<pre><code><b>fun</b> <a href="Teams.md#0x1_Teams_ratchet_collective_threshold">ratchet_collective_threshold</a>(vm: &signer, current_epoch: u64): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="Teams.md#0x1_Teams_ratchet_collective_threshold">ratchet_collective_threshold</a>(vm: &signer, current_epoch: u64): u64 <b>acquires</b> <a href="Teams.md#0x1_Teams_AllTeams">AllTeams</a> {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+
+  <b>let</b> ratchet = 10; //todo
+
+  <b>let</b> s = borrow_global_mut&lt;<a href="Teams.md#0x1_Teams_AllTeams">AllTeams</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+
+  // safety mechanism, no single account should have enough tower height <b>to</b> be able <b>to</b> enter validator set.
+  // the minimum threshold should be 1 + the maximum number of proofs able <b>to</b> be mined from start of network
+  <b>let</b> min_thresh = current_epoch * 72;
+  <b>if</b> (s.collective_threshold_epoch &lt; min_thresh) {
+    s.collective_threshold_epoch = min_thresh;
+  };
+
+  s.collective_threshold_epoch = s.collective_threshold_epoch + ratchet;
+
+  *&s.collective_threshold_epoch
+
 }
 </code></pre>
 
@@ -329,6 +435,30 @@ move_to&lt;<a href="Teams.md#0x1_Teams_Team">Team</a>&gt;(
 
 </details>
 
+<a name="0x1_Teams_member_is_init"></a>
+
+## Function `member_is_init`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_member_is_init">member_is_init</a>(member: address): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_member_is_init">member_is_init</a>(member: address): bool {
+  <b>exists</b>&lt;<a href="Teams.md#0x1_Teams_Member">Member</a>&gt;(member)
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_Teams_get_operator_reward"></a>
 
 ## Function `get_operator_reward`
@@ -378,6 +508,34 @@ move_to&lt;<a href="Teams.md#0x1_Teams_Team">Team</a>&gt;(
     <b>return</b> *&s.members
   };
   <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;()
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Teams_is_member_above"></a>
+
+## Function `is_member_above`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_is_member_above">is_member_above</a>(member: address): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_is_member_above">is_member_above</a>(member: address):bool <b>acquires</b> <a href="Teams.md#0x1_Teams_Member">Member</a> {
+  <b>if</b> (<a href="Teams.md#0x1_Teams_member_is_init">member_is_init</a>(member)) {
+    <b>let</b> s = borrow_global_mut&lt;<a href="Teams.md#0x1_Teams_Member">Member</a>&gt;(member);
+    <b>return</b> s.mining_above_threshold
+  };
+  <b>false</b>
 }
 </code></pre>
 
