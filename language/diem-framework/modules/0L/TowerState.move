@@ -132,6 +132,8 @@ module TowerState {
 
       // Note: for testing migration we need to destroy this struct, see test_danger_destroy_tower_counter
       init_tower_counter(vm, 0, 0, 0); 
+
+      init_team_thresholds(vm);
     }
 
     /// returns true if miner at `addr` has been initialized 

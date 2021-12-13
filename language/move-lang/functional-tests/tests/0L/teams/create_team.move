@@ -9,13 +9,14 @@
 script {
   
   use 0x1::Teams;
-  use 0x1::EpochBoundary;
+  // use 0x1::EpochBoundary;
+  use 0x1::MigrateInitDelegation;
 
   fun main(vm: signer) {
     // nothing is initialized yet
     assert(!Teams::vm_is_init(), 735701);
     assert(!Teams::team_is_init(@{{alice}}), 735702);
-    EpochBoundary::reconfigure(&vm, 0);
+    MigrateInitDelegation::do_it(&vm);
   }
 }
 // check: EXECUTED
@@ -38,7 +39,6 @@ script {
     assert(Teams::team_is_init(@{{alice}}), 735703);
     assert(Teams::get_operator_reward(@{{alice}}) == 10, 735704);
 
-    
   }
 }
 // check: EXECUTED

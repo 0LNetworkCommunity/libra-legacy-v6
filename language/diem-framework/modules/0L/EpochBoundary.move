@@ -24,18 +24,22 @@ module EpochBoundary {
     use 0x1::DiemAccount;
     use 0x1::Burn;
     use 0x1::FullnodeSubsidy;
+    use 0x1::Teams;
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
     public fun reconfigure(vm: &signer, height_now: u64) {
         CoreAddresses::assert_vm(vm);
 
+        // for safety maybe ititialize any structs that may not have been created in migration.
+        safety_init(vm);
+
         let height_start = Epoch::get_timer_height_start(vm);
         
         let (outgoing_compliant_set, _) = 
             DiemSystem::get_fee_ratio(vm, height_start, height_now);
 
-        // NOTE: This is "nominal" because it doesn't check
+        // NOTE: This is the "nominal" award to a miner. We haven't yet checked if the miner is above threshold
         let compliant_nodes_count = Vector::length(&outgoing_compliant_set);
         let (subsidy_units, nominal_subsidy_per) = 
             Subsidy::calculate_subsidy(vm, compliant_nodes_count);
@@ -52,6 +56,11 @@ module EpochBoundary {
             // update_validator_withdrawal_limit(vm);
         };
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now)
+    }
+
+    fun safety_init(vm: &signer) {
+      Teams::vm_init(vm);
+
     }
 
     // process fullnode subsidy

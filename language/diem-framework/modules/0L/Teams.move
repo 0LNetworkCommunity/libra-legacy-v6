@@ -53,14 +53,16 @@ module Teams {
 
     public fun vm_init(sender: &signer) {
       CoreAddresses::assert_vm(sender);
-      move_to<AllTeams>(
-        sender, 
-        AllTeams {
-          teams_list: Vector::empty(),
-          collective_threshold_epoch: 0,
-          member_threshold_epoch: 0,
-        }
-      );
+      if (!exists<AllTeams>(CoreAddresses::VM_RESERVED_ADDRESS())) {
+        move_to<AllTeams>(
+          sender, 
+          AllTeams {
+            teams_list: Vector::empty(),
+            collective_threshold_epoch: 0,
+            member_threshold_epoch: 0,
+          }
+        );
+      }
     }
 
 
