@@ -21,6 +21,8 @@ module Teams {
     use 0x1::DiemAccount;
     use 0x1::ValidatorUniverse;
     use 0x1::Decimal;
+    use 0x1::Testnet;
+    use 0x1::Errors;
 
     const ENOT_SLOW_WALLET: u64 = 1010;
     
@@ -29,7 +31,6 @@ module Teams {
       collective_threshold_epoch: u64,
       member_threshold_epoch: u64,
       tower_height_rms: u64,
-
     }
 
     struct Team has key, copy, drop, store {
@@ -98,7 +99,11 @@ module Teams {
       );
     }
 
-    public fun join_team(sender: &signer, captain_address: address) acquires Member, Team {
+
+    // a member states his team's preference.
+    // the member only actually joins a team for the purposes of calculating rewards
+    // when they do enough mining in a period
+    public fun join_team(sender: &signer, captain_address: address) acquires Member {
       let addr = Signer::address_of(sender);
 
       // needs to check if this is a slow wallet.
@@ -111,12 +116,7 @@ module Teams {
       if (exists<Member>(addr)) {
         let member_state = borrow_global_mut<Member>(addr);
         // update the membership list of the former captain
-        let former_captain_state = borrow_global_mut<Team>(member_state.captain_address);
-        let (is_found, idx) = Vector::index_of(&former_captain_state.members, &addr);
-        if (is_found) {
-          Vector::remove(&mut former_captain_state.members, idx);
-          member_state.captain_address = captain_address;
-        };        
+        member_state.captain_address = captain_address;
         // TODO: Do we need to reset mining_above_threshold if they are switching?
       } else { // first time joining a Team.
         move_to<Member>(sender, Member {
@@ -124,17 +124,34 @@ module Teams {
           mining_above_threshold: false,
         });
       };
-      let captain_state = borrow_global_mut<Team>(captain_address);
-      Vector::push_back<address>(&mut captain_state.members, addr);
     }
 
     // triggered on Epoch B each time the miner submits a new proof.
     // as the epoch progresses and a miner's epoch proof count is above the threshold
     // then assign the member to the team's list for payment at the end of the epoch.
     // assign members to teams, and return the threshold that they had to clear.
-    fun lazy_assign_member_to_teams(_miner: address): u64 {
-      
-      0
+    public fun maybe_activate_member_to_team(miner_sig: &signer) acquires Member, Team, AllTeams {
+      let miner_addr = Signer::address_of(miner_sig);
+
+      // check if user has a team preference
+      if (!exists<Member>(miner_addr)) { return };
+
+      let member_state = borrow_global<Member>(miner_addr);
+
+      // Find the user team preference.
+      let all_teams = borrow_global<AllTeams>(CoreAddresses::VM_RESERVED_ADDRESS());
+      let miner_height = TowerState::get_tower_height(miner_addr);
+      if (miner_height > all_teams.member_threshold_epoch) {
+        let team_state = borrow_global_mut<Team>(member_state.captain_address);
+
+        let v = *&team_state.members;
+        let already_there = Vector::contains<address>(&v, &miner_addr);
+
+        if (!already_there) {
+          Vector::push_back(&mut v, miner_addr);
+          team_state.members = v;
+        }
+      }
     }
 
     use 0x1::Debug::print;
@@ -150,7 +167,7 @@ module Teams {
       let i = 0;
       while (i < len)  {
         let addr = Vector::borrow(&miner_list, i);
-        let count = TowerState::get_count_in_epoch(*addr);
+        let count = TowerState::get_tower_height(*addr);
 
         sum_squares = sum_squares + (count*count);
         i = i + 1;
@@ -164,40 +181,38 @@ module Teams {
       let rms = Decimal::sqrt(&d);
 
       let trunc = Decimal::trunc(&rms);
-      let (_, int, dec) = Decimal::unwrap(&trunc);
+      let (_, int, frac) = Decimal::unwrap(&trunc);
 
       print(&int);
-      print(&dec);
+      print(&frac);
 
-      // let rms = 10;
-      let s = borrow_global_mut<AllTeams>(CoreAddresses::VM_RESERVED_ADDRESS());
-      s.tower_height_rms = (int as u64);
-      
-      *&s.tower_height_rms
+      // after truncation the fractional part should be 0
+      if (frac > 0) { return 0 };
+
+      if (int > 0) {
+        // let rms = 10;
+        let s = borrow_global_mut<AllTeams>(CoreAddresses::VM_RESERVED_ADDRESS());
+        s.tower_height_rms = (int as u64);
+        
+        return *&s.tower_height_rms
+      };
+
+      0
     }
 
+    // take a % of RMS and set the threshold
+    public fun set_threshold_as_pct_rms(vm: &signer): u64 acquires AllTeams {
+      
+      CoreAddresses::assert_vm(vm);
 
+      let s = borrow_global_mut<AllTeams>(CoreAddresses::VM_RESERVED_ADDRESS());
+      // TODO: decide the final threshold. Using 25% of RMS for simplicity
+      let thresh = s.tower_height_rms / 4;
 
-    // // During epoch A, calculate thresholds for epoch B
-    // // lazily calculate the new threshold on each miner submission
-    // // DANGER
-    // // private module which accesses system state.
-    // fun lazy_update_teams_member_threshold(): u64 acquires AllTeams {
-    //   // minimum threshold should be 2 weeks of proofs
-    //   let threshold = 50 * 14; // 50 proofs per day.
+      s.member_threshold_epoch = thresh;
 
-    //   // Get total tower height from TowerCounter
-    //   let _c = TowerState::get_fullnode_proofs_in_epoch();
-
-    //   // Get total number of miners
-    //   let _m = Vector::length<address>(&TowerState::get_miner_list());
-
-    //   let s = borrow_global_mut<AllTeams>(CoreAddresses::VM_RESERVED_ADDRESS());
-
-    //   s.member_threshold_epoch = threshold;
-
-    //   threshold
-    // }
+      *&s.member_threshold_epoch
+    }
 
     // at the end of each epoch iterate through list of validator set
     // check what the average value of captain rewards is
@@ -259,17 +274,34 @@ module Teams {
       Vector::empty<address>()
     }
 
-    // A member who selected to be part of a captain_team, but has not mined above threshold.
-    public fun is_member_above(member: address):bool acquires Member {
-      if (member_is_init(member)) {
-        let s = borrow_global_mut<Member>(member);
-        return s.mining_above_threshold
+    // Is this miner above the individual tower height threshold
+    public fun is_member_above_thresh(miner: address):bool acquires AllTeams {
+      let c = TowerState::get_tower_height(miner);
+      (c > get_member_thresh())
+    }
+
+    // what is this epoch's threshold that needs to be met
+    public fun get_member_thresh():u64 acquires AllTeams {
+      if (exists<AllTeams>(CoreAddresses::VM_RESERVED_ADDRESS())) {
+        let s = borrow_global_mut<AllTeams>(CoreAddresses::VM_RESERVED_ADDRESS());
+        return *&s.member_threshold_epoch
       };
-      false
+      0
     }
 
     public fun vm_is_init(): bool {
       exists<AllTeams>(CoreAddresses::VM_RESERVED_ADDRESS())
+    }
+
+
+    //////// TEST HELPERS ////////
+
+    public fun test_helper_set_thresh(vm: &signer,  thresh: u64) acquires AllTeams {
+      assert(Testnet::is_testnet(), Errors::invalid_state(130118));
+      CoreAddresses::assert_vm(vm);
+      
+      let s = borrow_global_mut<AllTeams>(CoreAddresses::VM_RESERVED_ADDRESS());
+      s.member_threshold_epoch = thresh;
     }
 }
 }

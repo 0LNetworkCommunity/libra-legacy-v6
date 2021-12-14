@@ -19,6 +19,7 @@ module TowerState {
     use 0x1::ValidatorConfig;
     use 0x1::VDF;
     use 0x1::Vector;
+    // use 0x1::Decimal;
 
     const EPOCHS_UNTIL_ACCOUNT_CREATION: u64 = 13;
     const TEAM_MEMBER_TOWER_MIN: u64 = 336; // 7 days * 30mins proofs
@@ -133,7 +134,7 @@ module TowerState {
       // Note: for testing migration we need to destroy this struct, see test_danger_destroy_tower_counter
       init_tower_counter(vm, 0, 0, 0); 
 
-      init_team_thresholds(vm);
+      // init_team_thresholds(vm);
     }
 
     /// returns true if miner at `addr` has been initialized 
@@ -186,7 +187,7 @@ module TowerState {
       solution: vector<u8>,
       difficulty: u64,
       security: u64,
-    ) acquires TowerProofHistory, TowerList, TowerCounter, TowerTeamsThresholds  {
+    ) acquires TowerProofHistory, TowerList, TowerCounter  {
       // TODO: Previously in OLv3 is_genesis() returned true. 
       // How to check that this is part of genesis? is_genesis returns false here.
 
@@ -206,7 +207,7 @@ module TowerState {
     public fun commit_state(
       miner_sign: &signer,
       proof: Proof
-    ) acquires TowerProofHistory, TowerList, TowerCounter, TowerTeamsThresholds {
+    ) acquires TowerProofHistory, TowerList, TowerCounter {
       // Get address, assumes the sender is the signer.
       let miner_addr = Signer::address_of(miner_sign);
       
@@ -239,7 +240,7 @@ module TowerState {
       operator_sig: &signer,
       miner_addr: address,
       proof: Proof
-    ) acquires TowerProofHistory, TowerList, TowerCounter, TowerTeamsThresholds{
+    ) acquires TowerProofHistory, TowerList, TowerCounter{
 
       // Check the signer is in fact an operator delegated by the owner.
       
@@ -273,7 +274,7 @@ module TowerState {
       miner_addr: address,
       proof: Proof,
       steady_state: bool
-    ) acquires TowerProofHistory, TowerList, TowerCounter, TowerTeamsThresholds {
+    ) acquires TowerProofHistory, TowerList, TowerCounter {
       // instead of looping through all miners at end of epcoh the stats are only reset when the miner submits a new proof.
       lazy_reset_count_in_epoch(miner_addr);
 
@@ -398,7 +399,7 @@ module TowerState {
       solution: &vector<u8>,
       difficulty: u64,
       security: u64
-    ) acquires TowerProofHistory, TowerList, TowerCounter, TowerTeamsThresholds{
+    ) acquires TowerProofHistory, TowerList, TowerCounter{
       
       // NOTE Only Signer can update own state.
       // Should only happen once.
@@ -465,7 +466,7 @@ module TowerState {
       state.epochs_since_last_account_creation = 0;
     }
 
-    fun increment_stats(miner_addr: address) acquires TowerProofHistory, TowerCounter, TowerTeamsThresholds, TowerList {
+    fun increment_stats(miner_addr: address) acquires TowerProofHistory, TowerCounter {
       // safety. Don't cause VM to halt
       if (!exists<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS())) return;
 
@@ -489,12 +490,6 @@ module TowerState {
       state.proofs_in_epoch = state.proofs_in_epoch + 1;
       state.lifetime_proofs = state.lifetime_proofs + 1;
 
-      // do the lazy evaluation of the thresholds on every miner commit.
-      // TODO: this only applies to fullnode/miners, no need to run every time a validator runs.
-      // but the resource is still being borrowed until now.
-      // the user pays for this calculation.
-      lazy_update_teams_member_threshold();
-
     }
 
     /// Reset the tower counter at the end of epoch.
@@ -511,98 +506,157 @@ module TowerState {
     }
 
 
-    //////////////////////
-    /// For Teams Implementation  ///
-    /////////////////////
+    // /////////////////////////////////
+    // /// For Teams Implementation  ///
+    // /////////////////////////////////
 
-    struct TowerTeamsThresholds has key {
-      member_threshold: u64,
-      member_threshold_next_epoch_lazy: u64,
-      sorted_towers: vector<u64>,
-    }
+    // struct TowerTeamsThresholds has key {
+    //   tower_height_rms: u64,
+    //   member_threshold: u64,
+    // }
 
-    public fun init_team_thresholds(vm: &signer) {
-      CoreAddresses::assert_vm(vm);
-      if (!exists<TowerTeamsThresholds>(CoreAddresses::VM_RESERVED_ADDRESS())) {
-        move_to<TowerTeamsThresholds>(
-          vm, 
-          TowerTeamsThresholds {
-            member_threshold: 0,
-            member_threshold_next_epoch_lazy: 0,
-            sorted_towers: Vector::empty<u64>(),
-          }
-        );
-      }
-    }
-    // During epoch A, calculate thresholds for epoch B
-    // lazily calculate the new threshold on each miner submission
-    // DANGER
-    // private module which accesses system state.
-    fun lazy_update_teams_member_threshold(): u64 acquires TowerTeamsThresholds, TowerCounter, TowerList {
-      // minimum threshold should be 2 weeks of proofs
-      let threshold = 50 * 14; // 50 proofs per day.
+    // public fun init_team_thresholds(vm: &signer) {
+    //   CoreAddresses::assert_vm(vm);
+    //   if (!exists<TowerTeamsThresholds>(CoreAddresses::VM_RESERVED_ADDRESS())) {
+    //     move_to<TowerTeamsThresholds>(
+    //       vm, 
+    //       TowerTeamsThresholds {
+    //         tower_height_rms: 0,
+    //         member_threshold: 0,
+    //       }
+    //     );
+    //   }
+    // }
 
 
-      // TODO: the actual calculation.
+    // public fun set_rms(vm: &signer): u64 acquires TowerTeamsThresholds, TowerList, TowerProofHistory {
+    //   CoreAddresses::assert_vm(vm);
+    //   let miner_list = get_miner_list();
+    //   let len = Vector::length<address>(&miner_list);
 
-      // Get total tower height from TowerCounter
-      let _c = get_fullnode_proofs_in_epoch();
+    //   // 1. sum the squares
+    //   let sum_squares = 0;
 
-      // Get total number of miners
-      let _m = Vector::length<address>(&get_miner_list());
+    //   let i = 0;
+    //   while (i < len)  {
+    //     let addr = Vector::borrow(&miner_list, i);
+    //     let count = get_count_in_epoch(*addr);
 
-      let s = borrow_global_mut<TowerTeamsThresholds>(CoreAddresses::VM_RESERVED_ADDRESS());
+    //     sum_squares = sum_squares + (count*count);
+    //     i = i + 1;
+    //   };
 
-      s.member_threshold_next_epoch_lazy = threshold;
+    //   // 2. divide by len
+    //   let divided = sum_squares / len;
 
-      threshold
-    }
+    //   // 3. take square root
+    //   let d = Decimal::new(true, (divided as u128) , 0);
+    //   let rms = Decimal::sqrt(&d);
 
-    // TODO: do we want to use this? Would be better to sort at the end of the epoch.
-    fun increment_sorted_towers(height: u64) acquires TowerTeamsThresholds {
-      let s = borrow_global_mut<TowerTeamsThresholds>(CoreAddresses::VM_RESERVED_ADDRESS());
+    //   let trunc = Decimal::trunc(&rms);
+    //   let (_, int, frac) = Decimal::unwrap(&trunc);
 
-      let v = *&s.sorted_towers;
-      let len = Vector::length(&v);
-      if (len == 0) {
-        Vector::push_back(&mut v, height);
-        return
-      };
+    //   print(&int);
+    //   print(&frac);
 
-      let new_list = Vector::empty<u64>();
+    //   // after truncation the fractional part should be 0
+    //   if (frac > 0) { return 0 };
 
-      let i = 0;
-      while (i < len) {
+    //   if (int > 0) {
+    //     // let rms = 10;
+    //     let s = borrow_global_mut<TowerTeamsThresholds>(CoreAddresses::VM_RESERVED_ADDRESS());
+    //     s.tower_height_rms = (int as u64);
+        
+    //     return *&s.tower_height_rms
+    //   };
+
+    //   0
+    // }
+
+    // // take a % of RMS and set the threshold
+    // public fun set_threshold_as_pct_rms(vm: &signer): u64 acquires TowerTeamsThresholds {
       
-        // pop off the lowest numbers
-        let n = Vector::pop_back(&mut v);
-        // push back the heighet first
-        if (n > height) {
-          // push n 
-          Vector::push_back(&mut v, n);
-          Vector::push_back(&mut v, height);
-        } else if (n <= height) {
-          Vector::push_back(&mut v, height);
-          Vector::push_back(&mut v, n);
-        };
+    //   CoreAddresses::assert_vm(vm);
 
-        i = i + 1;
-      };
+    //   let s = borrow_global_mut<TowerTeamsThresholds>(CoreAddresses::VM_RESERVED_ADDRESS());
+    //   // TODO: decide the final threshold. Using 25% of RMS for simplicity
+    //   let thresh = s.tower_height_rms / 4;
 
-      Vector::reverse<u64>(&mut new_list);
-      s.sorted_towers = new_list;
-    }
+    //   s.member_threshold = thresh;
 
-    // set's the current epoch's threshold, and resets the lazy counter for next epoch.
-    fun epoch_boundary_reset_team_thresh(vm: &signer) acquires TowerTeamsThresholds {
-      CoreAddresses::assert_vm(vm);
-      if (exists<TowerTeamsThresholds>(CoreAddresses::VM_RESERVED_ADDRESS())) {
-        let s = borrow_global_mut<TowerTeamsThresholds>(CoreAddresses::VM_RESERVED_ADDRESS());
-        s.member_threshold = s.member_threshold_next_epoch_lazy;
-        // TODO: do we actually need to reset this? Won't the lazy_update_teams_member_threshold correctly adjust for this.
-        s.member_threshold_next_epoch_lazy = 0;
-      }
-    }
+    //   *&s.member_threshold
+    // }
+
+
+    // // During epoch A, calculate thresholds for epoch B
+    // // lazily calculate the new threshold on each miner submission
+    // // DANGER
+    // // private module which accesses system state.
+    // fun lazy_update_teams_member_threshold(): u64 acquires TowerTeamsThresholds, TowerCounter, TowerList {
+    //   // minimum threshold should be 2 weeks of proofs
+    //   let threshold = 50 * 14; // 50 proofs per day.
+
+
+    //   // TODO: the actual calculation.
+
+    //   // Get total tower height from TowerCounter
+    //   let _c = get_fullnode_proofs_in_epoch();
+
+    //   // Get total number of miners
+    //   let _m = Vector::length<address>(&get_miner_list());
+
+    //   let s = borrow_global_mut<TowerTeamsThresholds>(CoreAddresses::VM_RESERVED_ADDRESS());
+
+    //   s.member_threshold_next_epoch_lazy = threshold;
+
+    //   threshold
+    // }
+
+    // // TODO: do we want to use this? Would be better to sort at the end of the epoch.
+    // fun increment_sorted_towers(height: u64) acquires TowerTeamsThresholds {
+    //   let s = borrow_global_mut<TowerTeamsThresholds>(CoreAddresses::VM_RESERVED_ADDRESS());
+
+    //   let v = *&s.sorted_towers;
+    //   let len = Vector::length(&v);
+    //   if (len == 0) {
+    //     Vector::push_back(&mut v, height);
+    //     return
+    //   };
+
+    //   let new_list = Vector::empty<u64>();
+
+    //   let i = 0;
+    //   while (i < len) {
+      
+    //     // pop off the lowest numbers
+    //     let n = Vector::pop_back(&mut v);
+    //     // push back the heighet first
+    //     if (n > height) {
+    //       // push n 
+    //       Vector::push_back(&mut v, n);
+    //       Vector::push_back(&mut v, height);
+    //     } else if (n <= height) {
+    //       Vector::push_back(&mut v, height);
+    //       Vector::push_back(&mut v, n);
+    //     };
+
+    //     i = i + 1;
+    //   };
+
+    //   Vector::reverse<u64>(&mut new_list);
+    //   s.sorted_towers = new_list;
+    // }
+
+    // // set's the current epoch's threshold, and resets the lazy counter for next epoch.
+    // fun epoch_boundary_reset_team_thresh(vm: &signer) acquires TowerTeamsThresholds {
+    //   CoreAddresses::assert_vm(vm);
+    //   if (exists<TowerTeamsThresholds>(CoreAddresses::VM_RESERVED_ADDRESS())) {
+    //     let s = borrow_global_mut<TowerTeamsThresholds>(CoreAddresses::VM_RESERVED_ADDRESS());
+    //     s.member_threshold = s.member_threshold_next_epoch_lazy;
+    //     // TODO: do we actually need to reset this? Won't the lazy_update_teams_member_threshold correctly adjust for this.
+    //     s.member_threshold_next_epoch_lazy = 0;
+    //   }
+    // }
 
 
     //////////////////////
@@ -761,7 +815,7 @@ module TowerState {
         solution: vector<u8>,
         difficulty: u64,
         security: u64,
-      ) acquires TowerProofHistory, TowerList, TowerCounter, TowerTeamsThresholds {
+      ) acquires TowerProofHistory, TowerList, TowerCounter {
         assert(Testnet::is_testnet(), 130102014010);
 
         move_to<TowerProofHistory>(miner_sig, TowerProofHistory {
@@ -811,7 +865,7 @@ module TowerState {
                               // differ slightly from api
       miner_addr: address,
       proof: Proof
-    ) acquires TowerProofHistory, TowerList, TowerCounter, TowerTeamsThresholds {
+    ) acquires TowerProofHistory, TowerList, TowerCounter {
       assert(Testnet::is_testnet(), 130102014010);
       
       // Get address, assumes the sender is the signer.
@@ -839,7 +893,7 @@ module TowerState {
 
     // Function code: 12
     // Use in testing to mock mining without producing proofs
-    public fun test_helper_mock_mining(sender: &signer,  count: u64) acquires TowerProofHistory, TowerCounter, TowerList, TowerTeamsThresholds {
+    public fun test_helper_mock_mining(sender: &signer,  count: u64) acquires TowerProofHistory, TowerCounter {
       assert(Testnet::is_testnet(), Errors::invalid_state(130118));
       let addr = Signer::address_of(sender);
       danger_mock_mining(addr, count)
@@ -848,13 +902,13 @@ module TowerState {
     
     // Function code: 13member_threshold_epoch: u64,
     // mocks mining for an arbitrary account from the vm 
-    public fun test_helper_mock_mining_vm(vm: &signer, addr: address, count: u64) acquires TowerProofHistory, TowerCounter, TowerList, TowerTeamsThresholds {
+    public fun test_helper_mock_mining_vm(vm: &signer, addr: address, count: u64) acquires TowerProofHistory, TowerCounter {
       assert(Testnet::is_testnet(), Errors::invalid_state(130120));
       CoreAddresses::assert_diem_root(vm);
       danger_mock_mining(addr, count)
     }
 
-    fun danger_mock_mining(addr: address, count: u64) acquires TowerProofHistory, TowerCounter, TowerList, TowerTeamsThresholds {
+    fun danger_mock_mining(addr: address, count: u64) acquires TowerProofHistory, TowerCounter {
       // again for safety
       assert(Testnet::is_testnet(), Errors::invalid_state(130118));
 

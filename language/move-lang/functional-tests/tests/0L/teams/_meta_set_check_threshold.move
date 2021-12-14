@@ -118,5 +118,8 @@ script {
     fun main(vm: signer) {
       let rms = Teams::find_rms_of_towers(&vm);
       assert(rms == 8, 735701);
+
+      let thresh = Teams::set_threshold_as_pct_rms(&vm);
+      assert(thresh == 2, 735702);
     }
 }
