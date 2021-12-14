@@ -1093,6 +1093,8 @@ pub enum TransactionDataView {
         script_bytes: BytesView,
         script: ScriptView,
     },
+    #[serde(rename = "statecheckpoint")]
+    StateCheckpoint {},
     #[serde(rename = "unknown")]
     #[serde(other)]
     UnknownTransaction,
@@ -1178,6 +1180,7 @@ impl From<Transaction> for TransactionDataView {
                     script,
                 }
             }
+            Transaction::StateCheckpoint => TransactionDataView::StateCheckpoint {},
         }
     }
 }
