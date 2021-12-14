@@ -13,6 +13,7 @@
 -  [Function `team_init`](#0x1_Teams_team_init)
 -  [Function `join_team`](#0x1_Teams_join_team)
 -  [Function `lazy_assign_member_to_teams`](#0x1_Teams_lazy_assign_member_to_teams)
+-  [Function `find_rms_of_towers`](#0x1_Teams_find_rms_of_towers)
 -  [Function `ratchet_collective_threshold`](#0x1_Teams_ratchet_collective_threshold)
 -  [Function `get_all_teams`](#0x1_Teams_get_all_teams)
 -  [Function `team_is_init`](#0x1_Teams_team_is_init)
@@ -24,8 +25,11 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
+<b>use</b> <a href="Decimal.md#0x1_Decimal">0x1::Decimal</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
+<b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
@@ -62,6 +66,12 @@
 </dd>
 <dt>
 <code>member_threshold_epoch: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>tower_height_rms: u64</code>
 </dt>
 <dd>
 
@@ -204,14 +214,17 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_vm_init">vm_init</a>(sender: &signer) {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(sender);
-  move_to&lt;<a href="Teams.md#0x1_Teams_AllTeams">AllTeams</a>&gt;(
-    sender,
-    <a href="Teams.md#0x1_Teams_AllTeams">AllTeams</a> {
-      teams_list: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
-      collective_threshold_epoch: 0,
-      member_threshold_epoch: 0,
-    }
-  );
+  <b>if</b> (!<b>exists</b>&lt;<a href="Teams.md#0x1_Teams_AllTeams">AllTeams</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>())) {
+    move_to&lt;<a href="Teams.md#0x1_Teams_AllTeams">AllTeams</a>&gt;(
+      sender,
+      <a href="Teams.md#0x1_Teams_AllTeams">AllTeams</a> {
+        teams_list: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+        collective_threshold_epoch: 0,
+        member_threshold_epoch: 0,
+        tower_height_rms: 0,
+      }
+    );
+  }
 }
 </code></pre>
 
@@ -334,6 +347,61 @@ move_to&lt;<a href="Teams.md#0x1_Teams_Team">Team</a>&gt;(
 
 <pre><code><b>fun</b> <a href="Teams.md#0x1_Teams_lazy_assign_member_to_teams">lazy_assign_member_to_teams</a>(_miner: address): u64 {
 
+  0
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Teams_find_rms_of_towers"></a>
+
+## Function `find_rms_of_towers`
+
+
+
+<pre><code><b>fun</b> <a href="Teams.md#0x1_Teams_find_rms_of_towers">find_rms_of_towers</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="Teams.md#0x1_Teams_find_rms_of_towers">find_rms_of_towers</a>(): u64 <b>acquires</b> <a href="Teams.md#0x1_Teams_AllTeams">AllTeams</a> {
+  <b>let</b> miner_list = <a href="TowerState.md#0x1_TowerState_get_miner_list">TowerState::get_miner_list</a>();
+  <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&miner_list);
+
+  // 1. sum the squares
+  <b>let</b> sum_squares = 0;
+
+  <b>let</b> i = 0;
+  <b>while</b> (i &lt; len)  {
+    <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&miner_list, i);
+    <b>let</b> count = <a href="TowerState.md#0x1_TowerState_get_count_in_epoch">TowerState::get_count_in_epoch</a>(*addr);
+
+    sum_squares = sum_squares + (count*count);
+    i = i + 1;
+  };
+
+  // 2. divide by len
+  <b>let</b> divided = sum_squares / len;
+
+  // 3. take square root
+  <b>let</b> d = <a href="Decimal.md#0x1_Decimal_new">Decimal::new</a>(<b>true</b>, (divided <b>as</b> u128) , 0);
+  <b>let</b> rms = <a href="Decimal.md#0x1_Decimal_sqrt">Decimal::sqrt</a>(&d);
+
+  <b>let</b> trunc = <a href="Decimal.md#0x1_Decimal_trunc">Decimal::trunc</a>(&rms);
+  <b>let</b> (_, int, dec) = <a href="Decimal.md#0x1_Decimal_unwrap">Decimal::unwrap</a>(&trunc);
+
+  print(&int);
+  print(&dec);
+
+  // <b>let</b> rms = 10;
+  <b>let</b> s = borrow_global_mut&lt;<a href="Teams.md#0x1_Teams_AllTeams">AllTeams</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+  s.tower_height_rms = (int <b>as</b> u64);
   0
 }
 </code></pre>

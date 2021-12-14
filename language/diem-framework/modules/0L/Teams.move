@@ -15,11 +15,12 @@
 address 0x1 {
 module Teams {
     use 0x1::CoreAddresses;
-    // use 0x1::TowerState;
+    use 0x1::TowerState;
     use 0x1::Vector;
     use 0x1::Signer;
     use 0x1::DiemAccount;
     use 0x1::ValidatorUniverse;
+    use 0x1::Decimal;
 
     const ENOT_SLOW_WALLET: u64 = 1010;
     
@@ -27,6 +28,8 @@ module Teams {
       teams_list: vector<address>, // the team is identified by its captain.
       collective_threshold_epoch: u64,
       member_threshold_epoch: u64,
+      tower_height_rms: u64,
+
     }
 
     struct Team has key, copy, drop, store {
@@ -60,6 +63,7 @@ module Teams {
             teams_list: Vector::empty(),
             collective_threshold_epoch: 0,
             member_threshold_epoch: 0,
+            tower_height_rms: 0,
           }
         );
       }
@@ -132,6 +136,46 @@ module Teams {
       
       0
     }
+
+    use 0x1::Debug::print;
+
+    public fun find_rms_of_towers(vm: &signer): u64 acquires AllTeams {
+      CoreAddresses::assert_vm(vm);
+      let miner_list = TowerState::get_miner_list();
+      let len = Vector::length<address>(&miner_list);
+
+      // 1. sum the squares
+      let sum_squares = 0;
+
+      let i = 0;
+      while (i < len)  {
+        let addr = Vector::borrow(&miner_list, i);
+        let count = TowerState::get_count_in_epoch(*addr);
+
+        sum_squares = sum_squares + (count*count);
+        i = i + 1;
+      };
+
+      // 2. divide by len
+      let divided = sum_squares / len;
+
+      // 3. take square root
+      let d = Decimal::new(true, (divided as u128) , 0);
+      let rms = Decimal::sqrt(&d);
+
+      let trunc = Decimal::trunc(&rms);
+      let (_, int, dec) = Decimal::unwrap(&trunc);
+
+      print(&int);
+      print(&dec);
+
+      // let rms = 10;
+      let s = borrow_global_mut<AllTeams>(CoreAddresses::VM_RESERVED_ADDRESS());
+      s.tower_height_rms = (int as u64);
+      0
+    }
+
+
 
     // // During epoch A, calculate thresholds for epoch B
     // // lazily calculate the new threshold on each miner submission

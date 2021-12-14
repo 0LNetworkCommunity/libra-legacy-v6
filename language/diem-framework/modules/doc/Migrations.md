@@ -11,6 +11,7 @@
 
 <pre><code><b>use</b> <a href="Migrations.md#0x1_Migrations">0x1::Migrations</a>;
 <b>use</b> <a href="Teams.md#0x1_Teams">0x1::Teams</a>;
+<b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
 </code></pre>
 
 
@@ -47,6 +48,8 @@
 <pre><code><b>public</b> <b>fun</b> <a href="Migrations.md#0x1_MigrateInitDelegation_do_it">do_it</a>(vm: &signer) {
   <b>if</b> (!<a href="Migrations.md#0x1_Migrations_has_run">Migrations::has_run</a>(<a href="Migrations.md#0x1_MigrateInitDelegation_UID">UID</a>)) {
     <a href="Teams.md#0x1_Teams_vm_init">Teams::vm_init</a>(vm);
+    // also initialize relevant state in <a href="TowerState.md#0x1_TowerState">TowerState</a>
+    <a href="TowerState.md#0x1_TowerState_init_team_thresholds">TowerState::init_team_thresholds</a>(vm);
     <a href="Migrations.md#0x1_Migrations_push">Migrations::push</a>(vm, <a href="Migrations.md#0x1_MigrateInitDelegation_UID">UID</a>, b"MigrateInitTeams");
   }
 }

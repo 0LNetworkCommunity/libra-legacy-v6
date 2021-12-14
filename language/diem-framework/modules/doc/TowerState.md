@@ -511,6 +511,8 @@ Create empty miners list and stats
 
   // Note: for testing migration we need <b>to</b> destroy this <b>struct</b>, see test_danger_destroy_tower_counter
   <a href="TowerState.md#0x1_TowerState_init_tower_counter">init_tower_counter</a>(vm, 0, 0, 0);
+
+  <a href="TowerState.md#0x1_TowerState_init_team_thresholds">init_team_thresholds</a>(vm);
 }
 </code></pre>
 

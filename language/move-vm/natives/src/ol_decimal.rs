@@ -43,6 +43,10 @@ impl MoveDecimalType {
     }
 }
 
+fn error_zero() -> Decimal {
+  Decimal::from_i128_with_scale(0, 0)
+}
+
 pub fn native_decimal_demo(
     context: &impl NativeContext,
     _ty_args: Vec<Type>,
@@ -96,7 +100,12 @@ pub fn native_decimal_single(
     let dec = m.into_decimal();
 
     let result = match op_id {
-        100 => dec.sqrt().unwrap().normalize(),
+        100 => {
+          match dec.sqrt() {
+            Some(d) => d.normalize(),
+            None => error_zero(),
+          }
+        },
         101 => dec.trunc(),
         _ => return Err(PartialVMError::new(StatusCode::INDEX_OUT_OF_BOUNDS)),
     };
@@ -159,20 +168,29 @@ pub fn native_decimal_pair(
     
     let result = match op_id {
         0 => {
-            dec_left.rescale(dec_right.trunc().to_u32().unwrap());
-            dec_left
+            match dec_right.trunc().to_u32() {
+                Some(d) =>  {
+                  dec_left.rescale(d);
+                  dec_left
+                },
+                None => error_zero(),
+              }
         }
-        1 => dec_left.checked_add(dec_right).unwrap().normalize(),
-        2 => dec_left.checked_sub(dec_right).unwrap().normalize(),
-        3 => dec_left.checked_mul(dec_right).unwrap().normalize(),
-        4 => dec_left.checked_div(dec_right).unwrap().normalize(),
+        1 => dec_left.checked_add(dec_right).unwrap_or(error_zero()).normalize(),
+        2 => dec_left.checked_sub(dec_right).unwrap_or(error_zero()).normalize(),
+        3 => dec_left.checked_mul(dec_right).unwrap_or(error_zero()).normalize(),
+        4 => dec_left.checked_div(dec_right).unwrap_or(error_zero()).normalize(),
         5 => {
-            let pow = dec_right.to_f64().unwrap();
-            dec_left.powf(pow).normalize()
+             match dec_right.to_f64() {
+                Some(pow) => dec_left.powf(pow).normalize(),
+                None => error_zero(),
+            }
         },
         6 => {
-            // let pow = dec_right.to_f64().unwrap();
-            dec_left.round_dp_with_strategy(dec_right.trunc().to_u32().unwrap(), strategy)
+            match dec_right.trunc().to_u32() {
+                Some(t) => dec_left.round_dp_with_strategy(t, strategy),
+                None => error_zero(),
+            }
         },
         _ => return Err(PartialVMError::new(StatusCode::INDEX_OUT_OF_BOUNDS)),
     };

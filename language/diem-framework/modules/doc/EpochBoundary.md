@@ -6,6 +6,7 @@
 
 
 -  [Function `reconfigure`](#0x1_EpochBoundary_reconfigure)
+-  [Function `safety_init`](#0x1_EpochBoundary_safety_init)
 -  [Function `process_fullnodes`](#0x1_EpochBoundary_process_fullnodes)
 -  [Function `process_validators`](#0x1_EpochBoundary_process_validators)
 -  [Function `propose_new_set`](#0x1_EpochBoundary_propose_new_set)
@@ -26,6 +27,7 @@
 <b>use</b> <a href="NodeWeight.md#0x1_NodeWeight">0x1::NodeWeight</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="Subsidy.md#0x1_Subsidy">0x1::Subsidy</a>;
+<b>use</b> <a href="Teams.md#0x1_Teams">0x1::Teams</a>;
 <b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
@@ -50,12 +52,15 @@
 <pre><code><b>public</b> <b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) {
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
 
+    // for safety maybe ititialize any structs that may not have been created in migration.
+    <a href="EpochBoundary.md#0x1_EpochBoundary_safety_init">safety_init</a>(vm);
+
     <b>let</b> height_start = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>(vm);
 
     <b>let</b> (outgoing_compliant_set, _) =
         <a href="DiemSystem.md#0x1_DiemSystem_get_fee_ratio">DiemSystem::get_fee_ratio</a>(vm, height_start, height_now);
 
-    // NOTE: This is "nominal" because it doesn't check
+    // NOTE: This is the "nominal" award <b>to</b> a miner. We haven't yet checked <b>if</b> the miner is above threshold
     <b>let</b> compliant_nodes_count = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&outgoing_compliant_set);
     <b>let</b> (subsidy_units, nominal_subsidy_per) =
         <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, compliant_nodes_count);
@@ -72,6 +77,31 @@
         // update_validator_withdrawal_limit(vm);
     };
     <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, proposed_set, outgoing_compliant_set, height_now)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_EpochBoundary_safety_init"></a>
+
+## Function `safety_init`
+
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_safety_init">safety_init</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_safety_init">safety_init</a>(vm: &signer) {
+  <a href="Teams.md#0x1_Teams_vm_init">Teams::vm_init</a>(vm);
+
 }
 </code></pre>
 
