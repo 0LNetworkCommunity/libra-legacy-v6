@@ -8,7 +8,21 @@
 // Bob, Carol, Dave are end-users running the Carpe app, and submitting miner proofs.
 // He is the only one in the epoch submitting proofs. He should get the entirety of the Identity Subsidy pool avaialable (one validator's worth)
 
+
+//! new-transaction
+//! sender: diemroot
+script {
+    use 0x1::Teams;
+
+    fun main(vm: signer) {
+      Teams::vm_init(&vm);
+      // assert(rms == 8, 7357);
+    }
+}
+
+
 //  0. Initialize Bob's miner state with a first proof
+
 
 //! new-transaction
 //! sender: bob
@@ -103,6 +117,6 @@ script {
 
     fun main(vm: signer) {
       let rms = Teams::find_rms_of_towers(&vm);
-      assert(rms == 8, 7357);
+      assert(rms == 8, 735701);
     }
 }

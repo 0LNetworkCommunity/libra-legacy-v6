@@ -172,7 +172,8 @@ module Teams {
       // let rms = 10;
       let s = borrow_global_mut<AllTeams>(CoreAddresses::VM_RESERVED_ADDRESS());
       s.tower_height_rms = (int as u64);
-      0
+      
+      *&s.tower_height_rms
     }
 
 
