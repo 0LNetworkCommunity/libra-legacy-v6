@@ -519,13 +519,13 @@ impl DiemVMImpl {
                     let mut bytes = vec![];
                     module
                         .serialize(&mut bytes)
-                        .expect("Failed to serialize module");
+                        .map_err(|e| { info!("Failed to serialize module: {}", e); VMStatus::Error(StatusCode::STDLIB_UPGRADE_ERROR) })?;
                     session.revise_module(
                         bytes, 
                         account_config::CORE_CODE_ADDRESS, 
                         gas_status, 
                         log_context
-                    ).expect("Failed to publish module");
+                    ).map_err(|e| { info!("Failed to publish module: {}", e); VMStatus::Error(StatusCode::STDLIB_UPGRADE_ERROR) })?;
                     counter += 1;
                 }
                 info!("0L ==== stdlib upgrade: published {} modules", counter);
@@ -542,7 +542,7 @@ impl DiemVMImpl {
                     // txn_data.sender(),
                     gas_status,
                     log_context,
-                ).expect("Couldn't reset payload");
+                ).map_err(|e| { info!("Couldn't reset payload: {}", e); VMStatus::Error(StatusCode::STDLIB_UPGRADE_ERROR) })?;
                 info!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
             }
         }
