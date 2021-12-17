@@ -513,7 +513,8 @@ impl DiemVMImpl {
                 info!("0L ==== stdlib upgrade: upgrade payload elected in previous epoch");
 
                 // publish the agreed stdlib
-                let new_stdlib = import_stdlib(&payload);
+                let new_stdlib = import_stdlib(&payload)
+                    .map_err(|e| { info!("Failed to import stdlib: {}", e); VMStatus::Error(StatusCode::STDLIB_UPGRADE_ERROR) })?;
                 let mut counter = 0;
                 for module in new_stdlib {
                     let mut bytes = vec![];

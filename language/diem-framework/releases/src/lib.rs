@@ -8,7 +8,10 @@ use move_binary_format::file_format::CompiledModule;
 use once_cell::sync::Lazy;
 use std::{convert::TryFrom, path::PathBuf};
 
-use bytecode_verifier::verify_module; //////// 0L ////////
+use bytecode_verifier::verify_module;
+use diem_types::vm_status::{VMStatus, StatusCode};
+
+//////// 0L ////////
 
 pub mod legacy;
 
@@ -133,22 +136,23 @@ pub fn name_for_script(bytes: &[u8]) -> Result<String> {
 
 //////// 0L ////////
 // Update stdlib with a byte string, used as part of the upgrade oracle
-pub fn import_stdlib(lib_bytes: &Vec<u8>) -> Vec<CompiledModule> {
-    let modules : Vec<CompiledModule> = bcs::from_bytes::<Vec<Vec<u8>>>(lib_bytes)
-        .unwrap_or(vec![]) // set as empty array if err occurred
+pub fn import_stdlib(lib_bytes: &Vec<u8>) -> Result<Vec<CompiledModule>, VMStatus>{
+    let modules = bcs::from_bytes::<Vec<Vec<u8>>>(lib_bytes)
+        .map_err(|_| VMStatus::Error(StatusCode::CODE_DESERIALIZATION_ERROR))?
         .into_iter()
-        .map(|bytes| CompiledModule::deserialize(&bytes).unwrap())
-        .collect();
+        .map(|bytes| CompiledModule::deserialize(&bytes)
+            .map_err(|_| VMStatus::Error(StatusCode::CODE_DESERIALIZATION_ERROR)))
+        .collect::<Result<Vec<CompiledModule>, VMStatus>>()?;
 
     // verify the compiled module
     let mut verified_modules = vec![];
     for module in modules {
-        verify_module(&module).expect("stdlib module failed to verify");
+        verify_module(&module)?;
         // DependencyChecker::verify_module(&module, &verified_modules)
         //     .expect("stdlib module dependency failed to verify");
         verified_modules.push(module)
     }
-    verified_modules
+    Ok(verified_modules)
 }
 
 
