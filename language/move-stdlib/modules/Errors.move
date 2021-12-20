@@ -147,10 +147,10 @@ module Errors {
 
     /////// 0L /////////
     public fun ol_tx(reason: u64): u64 { make(OL_TX_ERR, reason) }
-    spec custom {
+    spec ol_tx {
         pragma opaque = true;
         aborts_if false;
-        ensures result == CUSTOM;
+        ensures result == OL_TX_ERR;
     }
 
     /////// 0L /////////
