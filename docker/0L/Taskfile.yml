@@ -2,7 +2,7 @@ version: '3'
 
 vars:
   IMAGE: "nourspace/0l"
-  TAG: "5.0.5"
+  TAG: "v5.0.6"
   
 tasks:
 

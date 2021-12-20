@@ -32,11 +32,10 @@ FROM toolchain as builder
 
 WORKDIR /libra
 
-# Clone main branch of this repo
-ARG TAG=5.0.5
-# Todo (nourspace): use TAG argument to pull the release branch
+# Clone given release tag or branch of this repo
+ARG TAG=v5.0.6
 # Fixme(nourspace): depending where these tools are hosted, we might not need to pull
-RUN git clone -b feature/nspace-0l-docker --single-branch https://github.com/nourspace/libra.git /libra
+RUN git clone --branch ${TAG} --depth 1 https://github.com/OLSF/libra.git /libra
 
 # Build 0L binaries
 RUN RUSTC_WRAPPER=sccache make bins
