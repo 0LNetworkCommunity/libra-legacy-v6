@@ -54,7 +54,7 @@ pub(crate) fn execute_broadcast<V>(
 {
     let peer_manager = &smp.peer_manager.clone();
     peer_manager.execute_broadcast(peer.clone(), backoff, smp);
-    let schedule_backoff = peer_manager.is_backoff_mode(&peer);[]
+    let schedule_backoff = peer_manager.is_backoff_mode(&peer);
 
     let interval_ms = if schedule_backoff {
         smp.config.shared_mempool_backoff_interval_ms
