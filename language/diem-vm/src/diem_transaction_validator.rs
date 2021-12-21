@@ -1,8 +1,5 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
-
-use std::backtrace::Backtrace;
-
 use crate::{
     counters::*, create_access_path, data_cache::StateViewCache, diem_vm::DiemVMImpl,
     transaction_metadata::TransactionMetadata, VMValidator,
@@ -26,6 +23,7 @@ use move_core_types::{
 use move_vm_runtime::{data_cache::MoveStorage, logging::LogContext, session::Session};
 
 use crate::logging::AdapterLogSchema;
+
 
 #[derive(Clone)]
 pub struct DiemVMValidator(DiemVMImpl);
@@ -103,12 +101,11 @@ impl VMValidator for DiemVMValidator {
 
         match status {
           Some(StatusCode::SEQUENCE_NUMBER_TOO_NEW) => {
-            let bt = Backtrace::capture();
-            dbg!(&bt);
 
             dbg!(&txn.sequence_number());
             dbg!(&txn.sender());
-          },
+            panic!();
+          }
           _ => {}
         }
         // Increment the counter for transactions verified.

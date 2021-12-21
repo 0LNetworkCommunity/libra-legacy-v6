@@ -32,6 +32,7 @@ serde = { version = "1.0.124", default-features = false }
 
 diem-framework-releases = { path = "../diem-framework/releases"}
 
+
 [dev-dependencies]
 proptest = "1.0.0"
 
