@@ -1,6 +1,8 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use std::backtrace::Backtrace;
+
 use crate::{
     counters::*, create_access_path, data_cache::StateViewCache, diem_vm::DiemVMImpl,
     transaction_metadata::TransactionMetadata, VMValidator,
@@ -72,7 +74,7 @@ impl VMValidator for DiemVMValidator {
         let _timer = TXN_VALIDATION_SECONDS.start_timer();
         let txn_sender = transaction.sender();
         let log_context = AdapterLogSchema::new(state_view.id(), 0);
-
+        
         let txn = if let Ok(t) = transaction.check_signature() {
             t
         } else {
@@ -82,6 +84,8 @@ impl VMValidator for DiemVMValidator {
         let remote_cache = StateViewCache::new(state_view);
         let account_role = get_account_role(txn_sender, &remote_cache);
         let mut session = self.0.new_session(&remote_cache);
+        
+        
 
         let (status, normalized_gas_price) = match validate_signature_checked_transaction(
             &self.0,
@@ -97,6 +101,16 @@ impl VMValidator for DiemVMValidator {
             Err(err) => (Some(err.status_code()), 0),
         };
 
+        match status {
+          Some(StatusCode::SEQUENCE_NUMBER_TOO_NEW) => {
+            let bt = Backtrace::capture();
+            dbg!(&bt);
+
+            dbg!(&txn.sequence_number());
+            dbg!(&txn.sender());
+          },
+          _ => {}
+        }
         // Increment the counter for transactions verified.
         let counter_label = match status {
             None => "success",
@@ -180,9 +194,9 @@ pub(crate) fn validate_signature_checked_transaction<S: MoveStorage>(
     if let Err(err) = prologue_status {
         // Accept "future" sequence numbers during the validation phase so that multiple
         // transactions from the same account can be in mempool together.
-        if !allow_too_new || err.status_code() != StatusCode::SEQUENCE_NUMBER_TOO_NEW {
+        // if !allow_too_new || err.status_code() != StatusCode::SEQUENCE_NUMBER_TOO_NEW {
             return Err(err);
-        }
+        // }
     }
     Ok((normalized_gas_price, currency_code))
 }

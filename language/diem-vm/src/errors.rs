@@ -68,6 +68,13 @@ pub fn convert_prologue_error(
                 (INVALID_ARGUMENT, ESEQUENCE_NUMBER_TOO_OLD) => StatusCode::SEQUENCE_NUMBER_TOO_OLD,
                 // Sequence number too new
                 (INVALID_ARGUMENT, ESEQUENCE_NUMBER_TOO_NEW) => StatusCode::SEQUENCE_NUMBER_TOO_NEW,
+                // // 0L debugging
+                (235, 3) => {
+                  dbg!("0L debugging sequence number");
+                  dbg!(&code);
+                  StatusCode::SEQUENCE_NUMBER_TOO_NEW
+                },
+
                 // Sequence number too new
                 (INVALID_ARGUMENT, EACCOUNT_DOES_NOT_EXIST) => {
                     StatusCode::SENDING_ACCOUNT_DOES_NOT_EXIST
