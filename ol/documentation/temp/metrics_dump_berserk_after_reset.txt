@@ -1,0 +1,952 @@
+# HELP consensus_duration Histogram values for consensus
+# TYPE consensus_duration histogram
+consensus_duration_bucket{op="execute_block",le="0.005"} 0
+consensus_duration_bucket{op="execute_block",le="0.01"} 0
+consensus_duration_bucket{op="execute_block",le="0.025"} 0
+consensus_duration_bucket{op="execute_block",le="0.05"} 0
+consensus_duration_bucket{op="execute_block",le="0.1"} 0
+consensus_duration_bucket{op="execute_block",le="0.25"} 0
+consensus_duration_bucket{op="execute_block",le="0.5"} 0
+consensus_duration_bucket{op="execute_block",le="1"} 0
+consensus_duration_bucket{op="execute_block",le="2.5"} 0
+consensus_duration_bucket{op="execute_block",le="5"} 0
+consensus_duration_bucket{op="execute_block",le="10"} 0
+consensus_duration_bucket{op="execute_block",le="+Inf"} 0
+consensus_duration_sum{op="execute_block"} 0
+consensus_duration_count{op="execute_block"} 0
+# HELP consensus_gauge Gauges for consensus
+# TYPE consensus_gauge gauge
+consensus_gauge{op="execute_block_running"} 1
+# HELP diem_connections Number of current connections and their direction
+# TYPE diem_connections gauge
+diem_connections{direction="inbound",network_id="Public",peer_id="ecaf65ad",role_type="validator"} 0
+diem_connections{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator"} 6
+# HELP diem_consensus_current_epoch_validators The number of validators in the current epoch
+# TYPE diem_consensus_current_epoch_validators gauge
+diem_consensus_current_epoch_validators 51
+# HELP diem_consensus_epoch Current epoch num
+# TYPE diem_consensus_epoch gauge
+diem_consensus_epoch 57
+# HELP diem_consensus_num_blocks_in_tree Counter for the number of blocks in the block tree (including the root).
+# TYPE diem_consensus_num_blocks_in_tree gauge
+diem_consensus_num_blocks_in_tree 1
+# HELP diem_consensus_pending_round_timeouts Count of the pending outbound round timeouts
+# TYPE diem_consensus_pending_round_timeouts gauge
+diem_consensus_pending_round_timeouts 0
+# HELP diem_consensus_pending_self_messages Count of the pending messages sent to itself in the channel
+# TYPE diem_consensus_pending_self_messages gauge
+diem_consensus_pending_self_messages 0
+# HELP diem_core_mempool_gc_event_count Number of times the periodic garbage-collection event occurs, regardless of how many txns were actually removed
+# TYPE diem_core_mempool_gc_event_count counter
+diem_core_mempool_gc_event_count{type="system_ttl"} 1
+# HELP diem_core_mempool_index_size Size of a core mempool index
+# TYPE diem_core_mempool_index_size gauge
+diem_core_mempool_index_size{index="expiration"} 0
+diem_core_mempool_index_size{index="parking_lot"} 0
+diem_core_mempool_index_size{index="priority"} 0
+diem_core_mempool_index_size{index="system_ttl"} 0
+diem_core_mempool_index_size{index="timeline"} 0
+# HELP diem_executor_execute_block_seconds The total time spent in seconds of block execution in Diem executor 
+# TYPE diem_executor_execute_block_seconds histogram
+diem_executor_execute_block_seconds_bucket{le="0.005"} 0
+diem_executor_execute_block_seconds_bucket{le="0.01"} 0
+diem_executor_execute_block_seconds_bucket{le="0.025"} 0
+diem_executor_execute_block_seconds_bucket{le="0.05"} 0
+diem_executor_execute_block_seconds_bucket{le="0.1"} 0
+diem_executor_execute_block_seconds_bucket{le="0.25"} 0
+diem_executor_execute_block_seconds_bucket{le="0.5"} 0
+diem_executor_execute_block_seconds_bucket{le="1"} 0
+diem_executor_execute_block_seconds_bucket{le="2.5"} 0
+diem_executor_execute_block_seconds_bucket{le="5"} 0
+diem_executor_execute_block_seconds_bucket{le="10"} 0
+diem_executor_execute_block_seconds_bucket{le="+Inf"} 0
+diem_executor_execute_block_seconds_sum 0
+diem_executor_execute_block_seconds_count 0
+# HELP diem_executor_vm_execute_block_seconds The time spent in seconds of vm block execution in Diem executor
+# TYPE diem_executor_vm_execute_block_seconds histogram
+diem_executor_vm_execute_block_seconds_bucket{le="0.005"} 0
+diem_executor_vm_execute_block_seconds_bucket{le="0.01"} 0
+diem_executor_vm_execute_block_seconds_bucket{le="0.025"} 0
+diem_executor_vm_execute_block_seconds_bucket{le="0.05"} 0
+diem_executor_vm_execute_block_seconds_bucket{le="0.1"} 0
+diem_executor_vm_execute_block_seconds_bucket{le="0.25"} 0
+diem_executor_vm_execute_block_seconds_bucket{le="0.5"} 0
+diem_executor_vm_execute_block_seconds_bucket{le="1"} 0
+diem_executor_vm_execute_block_seconds_bucket{le="2.5"} 0
+diem_executor_vm_execute_block_seconds_bucket{le="5"} 0
+diem_executor_vm_execute_block_seconds_bucket{le="10"} 0
+diem_executor_vm_execute_block_seconds_bucket{le="+Inf"} 0
+diem_executor_vm_execute_block_seconds_sum 0
+diem_executor_vm_execute_block_seconds_count 0
+# HELP diem_mempool_active_upstream_peers_count Number of active upstream peers for the node of this mempool
+# TYPE diem_mempool_active_upstream_peers_count gauge
+diem_mempool_active_upstream_peers_count{network="Public"} 6
+# HELP diem_mempool_bounded_executor_spawn_latency Time it takes for mempool's coordinator to spawn async tasks
+# TYPE diem_mempool_bounded_executor_spawn_latency histogram
+diem_mempool_bounded_executor_spawn_latency_bucket{stage="spawn",task="reconfig",le="0.005"} 1
+diem_mempool_bounded_executor_spawn_latency_bucket{stage="spawn",task="reconfig",le="0.01"} 1
+diem_mempool_bounded_executor_spawn_latency_bucket{stage="spawn",task="reconfig",le="0.025"} 1
+diem_mempool_bounded_executor_spawn_latency_bucket{stage="spawn",task="reconfig",le="0.05"} 1
+diem_mempool_bounded_executor_spawn_latency_bucket{stage="spawn",task="reconfig",le="0.1"} 1
+diem_mempool_bounded_executor_spawn_latency_bucket{stage="spawn",task="reconfig",le="0.25"} 1
+diem_mempool_bounded_executor_spawn_latency_bucket{stage="spawn",task="reconfig",le="0.5"} 1
+diem_mempool_bounded_executor_spawn_latency_bucket{stage="spawn",task="reconfig",le="1"} 1
+diem_mempool_bounded_executor_spawn_latency_bucket{stage="spawn",task="reconfig",le="2.5"} 1
+diem_mempool_bounded_executor_spawn_latency_bucket{stage="spawn",task="reconfig",le="5"} 1
+diem_mempool_bounded_executor_spawn_latency_bucket{stage="spawn",task="reconfig",le="10"} 1
+diem_mempool_bounded_executor_spawn_latency_bucket{stage="spawn",task="reconfig",le="+Inf"} 1
+diem_mempool_bounded_executor_spawn_latency_sum{stage="spawn",task="reconfig"} 0.000034975
+diem_mempool_bounded_executor_spawn_latency_count{stage="spawn",task="reconfig"} 1
+# HELP diem_mempool_main_loop Duration of the each run of the event loop
+# TYPE diem_mempool_main_loop histogram
+diem_mempool_main_loop_bucket{le="0.005"} 21
+diem_mempool_main_loop_bucket{le="0.01"} 26
+diem_mempool_main_loop_bucket{le="0.025"} 39
+diem_mempool_main_loop_bucket{le="0.05"} 41
+diem_mempool_main_loop_bucket{le="0.1"} 41
+diem_mempool_main_loop_bucket{le="0.25"} 41
+diem_mempool_main_loop_bucket{le="0.5"} 41
+diem_mempool_main_loop_bucket{le="1"} 41
+diem_mempool_main_loop_bucket{le="2.5"} 41
+diem_mempool_main_loop_bucket{le="5"} 42
+diem_mempool_main_loop_bucket{le="10"} 42
+diem_mempool_main_loop_bucket{le="+Inf"} 42
+diem_mempool_main_loop_sum 4.856298421000003
+diem_mempool_main_loop_count 42
+# HELP diem_mempool_upstream_network The preference of the network mempool is broadcasting to
+# TYPE diem_mempool_upstream_network gauge
+diem_mempool_upstream_network 0
+# HELP diem_metrics Number of metrics in certain states
+# TYPE diem_metrics counter
+diem_metrics{type="families_over_1000"} 0
+diem_metrics{type="total"} 174
+diem_metrics{type="total_bytes"} 63425
+# HELP diem_network_connection_upgrade_time_seconds Time to complete a new inbound or outbound connection upgrade
+# TYPE diem_network_connection_upgrade_time_seconds histogram
+diem_network_connection_upgrade_time_seconds_bucket{direction="inbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="0.005"} 1
+diem_network_connection_upgrade_time_seconds_bucket{direction="inbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="0.01"} 1
+diem_network_connection_upgrade_time_seconds_bucket{direction="inbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="0.025"} 1
+diem_network_connection_upgrade_time_seconds_bucket{direction="inbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="0.05"} 1
+diem_network_connection_upgrade_time_seconds_bucket{direction="inbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="0.1"} 1
+diem_network_connection_upgrade_time_seconds_bucket{direction="inbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="0.25"} 1
+diem_network_connection_upgrade_time_seconds_bucket{direction="inbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="0.5"} 1
+diem_network_connection_upgrade_time_seconds_bucket{direction="inbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="1"} 1
+diem_network_connection_upgrade_time_seconds_bucket{direction="inbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="2.5"} 1
+diem_network_connection_upgrade_time_seconds_bucket{direction="inbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="5"} 1
+diem_network_connection_upgrade_time_seconds_bucket{direction="inbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="10"} 1
+diem_network_connection_upgrade_time_seconds_bucket{direction="inbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="+Inf"} 1
+diem_network_connection_upgrade_time_seconds_sum{direction="inbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed"} 0.000215477
+diem_network_connection_upgrade_time_seconds_count{direction="inbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed"} 1
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="0.005"} 0
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="0.01"} 1
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="0.025"} 1
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="0.05"} 2
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="0.1"} 2
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="0.25"} 2
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="0.5"} 2
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="1"} 2
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="2.5"} 2
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="5"} 2
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="10"} 2
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed",le="+Inf"} 2
+diem_network_connection_upgrade_time_seconds_sum{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed"} 0.047120102999999997
+diem_network_connection_upgrade_time_seconds_count{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="failed"} 2
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="succeeded",le="0.005"} 0
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="succeeded",le="0.01"} 0
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="succeeded",le="0.025"} 2
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="succeeded",le="0.05"} 2
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="succeeded",le="0.1"} 3
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="succeeded",le="0.25"} 5
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="succeeded",le="0.5"} 6
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="succeeded",le="1"} 6
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="succeeded",le="2.5"} 6
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="succeeded",le="5"} 6
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="succeeded",le="10"} 6
+diem_network_connection_upgrade_time_seconds_bucket{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="succeeded",le="+Inf"} 6
+diem_network_connection_upgrade_time_seconds_sum{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="succeeded"} 0.6728493520000001
+diem_network_connection_upgrade_time_seconds_count{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator",state="succeeded"} 6
+# HELP diem_network_inbound_rpc_handler_latency_seconds Inbound RPC request application handler latency in seconds
+# TYPE diem_network_inbound_rpc_handler_latency_seconds histogram
+diem_network_inbound_rpc_handler_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="0.005"} 1
+diem_network_inbound_rpc_handler_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="0.01"} 1
+diem_network_inbound_rpc_handler_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="0.025"} 1
+diem_network_inbound_rpc_handler_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="0.05"} 1
+diem_network_inbound_rpc_handler_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="0.1"} 1
+diem_network_inbound_rpc_handler_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="0.25"} 1
+diem_network_inbound_rpc_handler_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="0.5"} 1
+diem_network_inbound_rpc_handler_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="1"} 1
+diem_network_inbound_rpc_handler_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="2.5"} 1
+diem_network_inbound_rpc_handler_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="5"} 1
+diem_network_inbound_rpc_handler_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="10"} 1
+diem_network_inbound_rpc_handler_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="+Inf"} 1
+diem_network_inbound_rpc_handler_latency_seconds_sum{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator"} 0.000857779
+diem_network_inbound_rpc_handler_latency_seconds_count{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator"} 1
+# HELP diem_network_key_mismatch Gauge of whether the network key mismatches onchain state
+# TYPE diem_network_key_mismatch gauge
+diem_network_key_mismatch{network_id="Public",peer_id="ecaf65ad",role_type="validator"} 0
+diem_network_key_mismatch{network_id="Validator",peer_id="ecaf65ad",role_type="validator"} 0
+# HELP diem_network_outbound_rpc_request_latency_seconds Outbound RPC request latency in seconds
+# TYPE diem_network_outbound_rpc_request_latency_seconds histogram
+diem_network_outbound_rpc_request_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="0.005"} 2
+diem_network_outbound_rpc_request_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="0.01"} 2
+diem_network_outbound_rpc_request_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="0.025"} 2
+diem_network_outbound_rpc_request_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="0.05"} 3
+diem_network_outbound_rpc_request_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="0.1"} 5
+diem_network_outbound_rpc_request_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="0.25"} 5
+diem_network_outbound_rpc_request_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="0.5"} 5
+diem_network_outbound_rpc_request_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="1"} 5
+diem_network_outbound_rpc_request_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="2.5"} 5
+diem_network_outbound_rpc_request_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="5"} 5
+diem_network_outbound_rpc_request_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="10"} 5
+diem_network_outbound_rpc_request_latency_seconds_bucket{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator",le="+Inf"} 5
+diem_network_outbound_rpc_request_latency_seconds_sum{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator"} 0.15407354699999998
+diem_network_outbound_rpc_request_latency_seconds_count{network_id="Public",peer_id="ecaf65ad",protocol_id="HealthCheckerRpc",role_type="validator"} 5
+# HELP diem_network_peer_connected Indicates if we are connected to a particular peer
+# TYPE diem_network_peer_connected gauge
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="012338b5",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="048ccb33",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="1c03e956",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="252f0b55",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="304a03c0",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="34e5adde",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="355ae7b5",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="41524781",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="44bffceb",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="46a7a744",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="49d3c586",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="59c62629",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="5abedec6",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="64b21681",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="69a385e1",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="6a9f0fa0",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="70a016df",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="71cd7dac",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="756d518d",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="7756310e",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="779fd01d",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="7e56b29c",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="7ec16859",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="8421cb22",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="84417cef",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="9401af0f",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="987be6e8",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="987d7486",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="a6be3ad5",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="aa7b724a",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="b1471dc5",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="b295da22",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="b5b5ba58",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="ba28f081",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="bcb79d7c",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="bdb8ad37",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="c051bd51",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="c0a1f4d4",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="c44a5062",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="ccb020e3",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="d0d62ae2",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="d1281de2",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="d1c9ce93",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="d67f3ff2",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="e2640233",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="e4e9fb27",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="e57cf27b",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="e77ddb76",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="ea10ea06",role_type="validator"} 0
+diem_network_peer_connected{network_id="Validator",peer_id="ecaf65ad",remote_peer_id="ec96dec1",role_type="validator"} 0
+# HELP diem_network_pending_connection_handler_notifications Number of pending connection handler notifications
+# TYPE diem_network_pending_connection_handler_notifications gauge
+diem_network_pending_connection_handler_notifications 0
+# HELP diem_network_pending_connection_upgrades Number of concurrent inbound or outbound connections we're currently negotiating
+# TYPE diem_network_pending_connection_upgrades gauge
+diem_network_pending_connection_upgrades{direction="inbound",network_id="Public",peer_id="ecaf65ad",role_type="validator"} 0
+diem_network_pending_connection_upgrades{direction="outbound",network_id="Public",peer_id="ecaf65ad",role_type="validator"} 2
+# HELP diem_network_pending_connectivity_manager_requests Number of pending connectivity manager requests
+# TYPE diem_network_pending_connectivity_manager_requests gauge
+diem_network_pending_connectivity_manager_requests 0
+# HELP diem_network_pending_health_check_events Number of pending health check events by state
+# TYPE diem_network_pending_health_check_events counter
+diem_network_pending_health_check_events{state="dequeued"} 1
+diem_network_pending_health_check_events{state="enqueued"} 1
+# HELP diem_network_pending_network_notifications Number of pending inbound network notifications by state
+# TYPE diem_network_pending_network_notifications counter
+diem_network_pending_network_notifications{state="dequeued"} 1
+diem_network_pending_network_notifications{state="enqueued"} 1
+# HELP diem_network_pending_peer_manager_dial_requests Number of pending peer manager dial requests
+# TYPE diem_network_pending_peer_manager_dial_requests gauge
+diem_network_pending_peer_manager_dial_requests 0
+# HELP diem_network_pending_peer_manager_requests Number of pending peer manager requests by state
+# TYPE diem_network_pending_peer_manager_requests counter
+diem_network_pending_peer_manager_requests{state="dequeued"} 5
+diem_network_pending_peer_manager_requests{state="enqueued"} 5
+# HELP diem_network_pending_requests Number of pending outbound network requests by state
+# TYPE diem_network_pending_requests counter
+diem_network_pending_requests{state="dequeued"} 5
+diem_network_pending_requests{state="enqueued"} 5
+# HELP diem_network_pending_wire_messages Number of pending wire messages
+# TYPE diem_network_pending_wire_messages gauge
+diem_network_pending_wire_messages 0
+# HELP diem_network_rpc_bytes Number of RPC bytes transferred
+# TYPE diem_network_rpc_bytes counter
+diem_network_rpc_bytes{network_id="Public",peer_id="ecaf65ad",role_type="validator",state="received",type="request"} 5
+diem_network_rpc_bytes{network_id="Public",peer_id="ecaf65ad",role_type="validator",state="received",type="response"} 25
+diem_network_rpc_bytes{network_id="Public",peer_id="ecaf65ad",role_type="validator",state="sent",type="request"} 25
+diem_network_rpc_bytes{network_id="Public",peer_id="ecaf65ad",role_type="validator",state="sent",type="response"} 5
+# HELP diem_network_rpc_messages Number of RPC messages
+# TYPE diem_network_rpc_messages counter
+diem_network_rpc_messages{network_id="Public",peer_id="ecaf65ad",role_type="validator",state="received",type="request"} 1
+diem_network_rpc_messages{network_id="Public",peer_id="ecaf65ad",role_type="validator",state="received",type="response"} 5
+diem_network_rpc_messages{network_id="Public",peer_id="ecaf65ad",role_type="validator",state="sent",type="request"} 5
+diem_network_rpc_messages{network_id="Public",peer_id="ecaf65ad",role_type="validator",state="sent",type="response"} 1
+# HELP diem_rocksdb_properties rocksdb integer properties
+# TYPE diem_rocksdb_properties gauge
+diem_rocksdb_properties{cf_name="default",property_name="diem_rocksdb_all_memtables_size_bytes"} 2048
+diem_rocksdb_properties{cf_name="default",property_name="diem_rocksdb_block_cache_usage_bytes"} 20216
+diem_rocksdb_properties{cf_name="default",property_name="diem_rocksdb_cf_size_bytes"} 186481
+diem_rocksdb_properties{cf_name="default",property_name="diem_rocksdb_live_sst_files_size_bytes"} 200381
+diem_rocksdb_properties{cf_name="default",property_name="diem_rocksdb_num_running_compactions"} 0
+diem_rocksdb_properties{cf_name="default",property_name="diem_rocksdb_num_running_flushes"} 0
+diem_rocksdb_properties{cf_name="epoch_by_version",property_name="diem_rocksdb_all_memtables_size_bytes"} 2048
+diem_rocksdb_properties{cf_name="epoch_by_version",property_name="diem_rocksdb_block_cache_usage_bytes"} 0
+diem_rocksdb_properties{cf_name="epoch_by_version",property_name="diem_rocksdb_cf_size_bytes"} 47260
+diem_rocksdb_properties{cf_name="epoch_by_version",property_name="diem_rocksdb_live_sst_files_size_bytes"} 47260
+diem_rocksdb_properties{cf_name="epoch_by_version",property_name="diem_rocksdb_num_running_compactions"} 0
+diem_rocksdb_properties{cf_name="epoch_by_version",property_name="diem_rocksdb_num_running_flushes"} 0
+diem_rocksdb_properties{cf_name="event",property_name="diem_rocksdb_all_memtables_size_bytes"} 2048
+diem_rocksdb_properties{cf_name="event",property_name="diem_rocksdb_block_cache_usage_bytes"} 0
+diem_rocksdb_properties{cf_name="event",property_name="diem_rocksdb_cf_size_bytes"} 1235572235
+diem_rocksdb_properties{cf_name="event",property_name="diem_rocksdb_live_sst_files_size_bytes"} 1235572235
+diem_rocksdb_properties{cf_name="event",property_name="diem_rocksdb_num_running_compactions"} 0
+diem_rocksdb_properties{cf_name="event",property_name="diem_rocksdb_num_running_flushes"} 0
+diem_rocksdb_properties{cf_name="event_accumulator",property_name="diem_rocksdb_all_memtables_size_bytes"} 2048
+diem_rocksdb_properties{cf_name="event_accumulator",property_name="diem_rocksdb_block_cache_usage_bytes"} 0
+diem_rocksdb_properties{cf_name="event_accumulator",property_name="diem_rocksdb_cf_size_bytes"} 604148835
+diem_rocksdb_properties{cf_name="event_accumulator",property_name="diem_rocksdb_live_sst_files_size_bytes"} 604148835
+diem_rocksdb_properties{cf_name="event_accumulator",property_name="diem_rocksdb_num_running_compactions"} 0
+diem_rocksdb_properties{cf_name="event_accumulator",property_name="diem_rocksdb_num_running_flushes"} 0
+diem_rocksdb_properties{cf_name="event_by_key",property_name="diem_rocksdb_all_memtables_size_bytes"} 2048
+diem_rocksdb_properties{cf_name="event_by_key",property_name="diem_rocksdb_block_cache_usage_bytes"} 0
+diem_rocksdb_properties{cf_name="event_by_key",property_name="diem_rocksdb_cf_size_bytes"} 106123377
+diem_rocksdb_properties{cf_name="event_by_key",property_name="diem_rocksdb_live_sst_files_size_bytes"} 106147227
+diem_rocksdb_properties{cf_name="event_by_key",property_name="diem_rocksdb_num_running_compactions"} 0
+diem_rocksdb_properties{cf_name="event_by_key",property_name="diem_rocksdb_num_running_flushes"} 0
+diem_rocksdb_properties{cf_name="event_by_version",property_name="diem_rocksdb_all_memtables_size_bytes"} 2048
+diem_rocksdb_properties{cf_name="event_by_version",property_name="diem_rocksdb_block_cache_usage_bytes"} 0
+diem_rocksdb_properties{cf_name="event_by_version",property_name="diem_rocksdb_cf_size_bytes"} 115951151
+diem_rocksdb_properties{cf_name="event_by_version",property_name="diem_rocksdb_live_sst_files_size_bytes"} 115973815
+diem_rocksdb_properties{cf_name="event_by_version",property_name="diem_rocksdb_num_running_compactions"} 0
+diem_rocksdb_properties{cf_name="event_by_version",property_name="diem_rocksdb_num_running_flushes"} 0
+diem_rocksdb_properties{cf_name="jellyfish_merkle_node",property_name="diem_rocksdb_all_memtables_size_bytes"} 2048
+diem_rocksdb_properties{cf_name="jellyfish_merkle_node",property_name="diem_rocksdb_block_cache_usage_bytes"} 0
+diem_rocksdb_properties{cf_name="jellyfish_merkle_node",property_name="diem_rocksdb_cf_size_bytes"} 106007899414
+diem_rocksdb_properties{cf_name="jellyfish_merkle_node",property_name="diem_rocksdb_live_sst_files_size_bytes"} 106296604053
+diem_rocksdb_properties{cf_name="jellyfish_merkle_node",property_name="diem_rocksdb_num_running_compactions"} 0
+diem_rocksdb_properties{cf_name="jellyfish_merkle_node",property_name="diem_rocksdb_num_running_flushes"} 0
+diem_rocksdb_properties{cf_name="ledger_counters",property_name="diem_rocksdb_all_memtables_size_bytes"} 2048
+diem_rocksdb_properties{cf_name="ledger_counters",property_name="diem_rocksdb_block_cache_usage_bytes"} 0
+diem_rocksdb_properties{cf_name="ledger_counters",property_name="diem_rocksdb_cf_size_bytes"} 388724541
+diem_rocksdb_properties{cf_name="ledger_counters",property_name="diem_rocksdb_live_sst_files_size_bytes"} 388724541
+diem_rocksdb_properties{cf_name="ledger_counters",property_name="diem_rocksdb_num_running_compactions"} 0
+diem_rocksdb_properties{cf_name="ledger_counters",property_name="diem_rocksdb_num_running_flushes"} 0
+diem_rocksdb_properties{cf_name="stale_node_index",property_name="diem_rocksdb_all_memtables_size_bytes"} 2048
+diem_rocksdb_properties{cf_name="stale_node_index",property_name="diem_rocksdb_block_cache_usage_bytes"} 16910
+diem_rocksdb_properties{cf_name="stale_node_index",property_name="diem_rocksdb_cf_size_bytes"} 5626087
+diem_rocksdb_properties{cf_name="stale_node_index",property_name="diem_rocksdb_live_sst_files_size_bytes"} 5626087
+diem_rocksdb_properties{cf_name="stale_node_index",property_name="diem_rocksdb_num_running_compactions"} 0
+diem_rocksdb_properties{cf_name="stale_node_index",property_name="diem_rocksdb_num_running_flushes"} 0
+diem_rocksdb_properties{cf_name="transaction",property_name="diem_rocksdb_all_memtables_size_bytes"} 2048
+diem_rocksdb_properties{cf_name="transaction",property_name="diem_rocksdb_block_cache_usage_bytes"} 0
+diem_rocksdb_properties{cf_name="transaction",property_name="diem_rocksdb_cf_size_bytes"} 4219784597
+diem_rocksdb_properties{cf_name="transaction",property_name="diem_rocksdb_live_sst_files_size_bytes"} 4219784597
+diem_rocksdb_properties{cf_name="transaction",property_name="diem_rocksdb_num_running_compactions"} 0
+diem_rocksdb_properties{cf_name="transaction",property_name="diem_rocksdb_num_running_flushes"} 0
+diem_rocksdb_properties{cf_name="transaction_accumulator",property_name="diem_rocksdb_all_memtables_size_bytes"} 2048
+diem_rocksdb_properties{cf_name="transaction_accumulator",property_name="diem_rocksdb_block_cache_usage_bytes"} 57976
+diem_rocksdb_properties{cf_name="transaction_accumulator",property_name="diem_rocksdb_cf_size_bytes"} 1174719395
+diem_rocksdb_properties{cf_name="transaction_accumulator",property_name="diem_rocksdb_live_sst_files_size_bytes"} 1174719395
+diem_rocksdb_properties{cf_name="transaction_accumulator",property_name="diem_rocksdb_num_running_compactions"} 0
+diem_rocksdb_properties{cf_name="transaction_accumulator",property_name="diem_rocksdb_num_running_flushes"} 0
+diem_rocksdb_properties{cf_name="transaction_by_account",property_name="diem_rocksdb_all_memtables_size_bytes"} 2048
+diem_rocksdb_properties{cf_name="transaction_by_account",property_name="diem_rocksdb_block_cache_usage_bytes"} 0
+diem_rocksdb_properties{cf_name="transaction_by_account",property_name="diem_rocksdb_cf_size_bytes"} 14692628
+diem_rocksdb_properties{cf_name="transaction_by_account",property_name="diem_rocksdb_live_sst_files_size_bytes"} 14696804
+diem_rocksdb_properties{cf_name="transaction_by_account",property_name="diem_rocksdb_num_running_compactions"} 0
+diem_rocksdb_properties{cf_name="transaction_by_account",property_name="diem_rocksdb_num_running_flushes"} 0
+diem_rocksdb_properties{cf_name="transaction_info",property_name="diem_rocksdb_all_memtables_size_bytes"} 2048
+diem_rocksdb_properties{cf_name="transaction_info",property_name="diem_rocksdb_block_cache_usage_bytes"} 16980
+diem_rocksdb_properties{cf_name="transaction_info",property_name="diem_rocksdb_cf_size_bytes"} 1518032612
+diem_rocksdb_properties{cf_name="transaction_info",property_name="diem_rocksdb_live_sst_files_size_bytes"} 1518032612
+diem_rocksdb_properties{cf_name="transaction_info",property_name="diem_rocksdb_num_running_compactions"} 0
+diem_rocksdb_properties{cf_name="transaction_info",property_name="diem_rocksdb_num_running_flushes"} 0
+# HELP diem_safety_rules_latency Time to perform an operation
+# TYPE diem_safety_rules_latency histogram
+diem_safety_rules_latency_bucket{field="consensus_state",source="internal",le="0.005"} 1
+diem_safety_rules_latency_bucket{field="consensus_state",source="internal",le="0.01"} 1
+diem_safety_rules_latency_bucket{field="consensus_state",source="internal",le="0.025"} 1
+diem_safety_rules_latency_bucket{field="consensus_state",source="internal",le="0.05"} 1
+diem_safety_rules_latency_bucket{field="consensus_state",source="internal",le="0.1"} 1
+diem_safety_rules_latency_bucket{field="consensus_state",source="internal",le="0.25"} 1
+diem_safety_rules_latency_bucket{field="consensus_state",source="internal",le="0.5"} 1
+diem_safety_rules_latency_bucket{field="consensus_state",source="internal",le="1"} 1
+diem_safety_rules_latency_bucket{field="consensus_state",source="internal",le="2.5"} 1
+diem_safety_rules_latency_bucket{field="consensus_state",source="internal",le="5"} 1
+diem_safety_rules_latency_bucket{field="consensus_state",source="internal",le="10"} 1
+diem_safety_rules_latency_bucket{field="consensus_state",source="internal",le="+Inf"} 1
+diem_safety_rules_latency_sum{field="consensus_state",source="internal"} 0.004718896
+diem_safety_rules_latency_count{field="consensus_state",source="internal"} 1
+diem_safety_rules_latency_bucket{field="execution",source="get",le="0.005"} 1
+diem_safety_rules_latency_bucket{field="execution",source="get",le="0.01"} 1
+diem_safety_rules_latency_bucket{field="execution",source="get",le="0.025"} 1
+diem_safety_rules_latency_bucket{field="execution",source="get",le="0.05"} 1
+diem_safety_rules_latency_bucket{field="execution",source="get",le="0.1"} 1
+diem_safety_rules_latency_bucket{field="execution",source="get",le="0.25"} 1
+diem_safety_rules_latency_bucket{field="execution",source="get",le="0.5"} 1
+diem_safety_rules_latency_bucket{field="execution",source="get",le="1"} 1
+diem_safety_rules_latency_bucket{field="execution",source="get",le="2.5"} 1
+diem_safety_rules_latency_bucket{field="execution",source="get",le="5"} 1
+diem_safety_rules_latency_bucket{field="execution",source="get",le="10"} 1
+diem_safety_rules_latency_bucket{field="execution",source="get",le="+Inf"} 1
+diem_safety_rules_latency_sum{field="execution",source="get"} 0.001453221
+diem_safety_rules_latency_count{field="execution",source="get"} 1
+diem_safety_rules_latency_bucket{field="owner_account",source="get",le="0.005"} 1
+diem_safety_rules_latency_bucket{field="owner_account",source="get",le="0.01"} 1
+diem_safety_rules_latency_bucket{field="owner_account",source="get",le="0.025"} 1
+diem_safety_rules_latency_bucket{field="owner_account",source="get",le="0.05"} 1
+diem_safety_rules_latency_bucket{field="owner_account",source="get",le="0.1"} 1
+diem_safety_rules_latency_bucket{field="owner_account",source="get",le="0.25"} 1
+diem_safety_rules_latency_bucket{field="owner_account",source="get",le="0.5"} 1
+diem_safety_rules_latency_bucket{field="owner_account",source="get",le="1"} 1
+diem_safety_rules_latency_bucket{field="owner_account",source="get",le="2.5"} 1
+diem_safety_rules_latency_bucket{field="owner_account",source="get",le="5"} 1
+diem_safety_rules_latency_bucket{field="owner_account",source="get",le="10"} 1
+diem_safety_rules_latency_bucket{field="owner_account",source="get",le="+Inf"} 1
+diem_safety_rules_latency_sum{field="owner_account",source="get"} 0.000847082
+diem_safety_rules_latency_count{field="owner_account",source="get"} 1
+diem_safety_rules_latency_bucket{field="safety_data",source="get",le="0.005"} 1
+diem_safety_rules_latency_bucket{field="safety_data",source="get",le="0.01"} 1
+diem_safety_rules_latency_bucket{field="safety_data",source="get",le="0.025"} 1
+diem_safety_rules_latency_bucket{field="safety_data",source="get",le="0.05"} 1
+diem_safety_rules_latency_bucket{field="safety_data",source="get",le="0.1"} 1
+diem_safety_rules_latency_bucket{field="safety_data",source="get",le="0.25"} 1
+diem_safety_rules_latency_bucket{field="safety_data",source="get",le="0.5"} 1
+diem_safety_rules_latency_bucket{field="safety_data",source="get",le="1"} 1
+diem_safety_rules_latency_bucket{field="safety_data",source="get",le="2.5"} 1
+diem_safety_rules_latency_bucket{field="safety_data",source="get",le="5"} 1
+diem_safety_rules_latency_bucket{field="safety_data",source="get",le="10"} 1
+diem_safety_rules_latency_bucket{field="safety_data",source="get",le="+Inf"} 1
+diem_safety_rules_latency_sum{field="safety_data",source="get"} 0.001011634
+diem_safety_rules_latency_count{field="safety_data",source="get"} 1
+diem_safety_rules_latency_bucket{field="waypoint",source="get",le="0.005"} 2
+diem_safety_rules_latency_bucket{field="waypoint",source="get",le="0.01"} 2
+diem_safety_rules_latency_bucket{field="waypoint",source="get",le="0.025"} 2
+diem_safety_rules_latency_bucket{field="waypoint",source="get",le="0.05"} 2
+diem_safety_rules_latency_bucket{field="waypoint",source="get",le="0.1"} 2
+diem_safety_rules_latency_bucket{field="waypoint",source="get",le="0.25"} 2
+diem_safety_rules_latency_bucket{field="waypoint",source="get",le="0.5"} 2
+diem_safety_rules_latency_bucket{field="waypoint",source="get",le="1"} 2
+diem_safety_rules_latency_bucket{field="waypoint",source="get",le="2.5"} 2
+diem_safety_rules_latency_bucket{field="waypoint",source="get",le="5"} 2
+diem_safety_rules_latency_bucket{field="waypoint",source="get",le="10"} 2
+diem_safety_rules_latency_bucket{field="waypoint",source="get",le="+Inf"} 2
+diem_safety_rules_latency_sum{field="waypoint",source="get"} 0.001789719
+diem_safety_rules_latency_count{field="waypoint",source="get"} 2
+# HELP diem_safety_rules_queries Outcome of calling into LSR
+# TYPE diem_safety_rules_queries counter
+diem_safety_rules_queries{method="consensus_state",result="request"} 1
+diem_safety_rules_queries{method="consensus_state",result="success"} 1
+# HELP diem_schemadb_batch_commit_bytes Diem schemadb schema batch commit size in bytes
+# TYPE diem_schemadb_batch_commit_bytes histogram
+diem_schemadb_batch_commit_bytes_bucket{db_name="consensus",le="0.005"} 0
+diem_schemadb_batch_commit_bytes_bucket{db_name="consensus",le="0.01"} 0
+diem_schemadb_batch_commit_bytes_bucket{db_name="consensus",le="0.025"} 0
+diem_schemadb_batch_commit_bytes_bucket{db_name="consensus",le="0.05"} 0
+diem_schemadb_batch_commit_bytes_bucket{db_name="consensus",le="0.1"} 0
+diem_schemadb_batch_commit_bytes_bucket{db_name="consensus",le="0.25"} 0
+diem_schemadb_batch_commit_bytes_bucket{db_name="consensus",le="0.5"} 0
+diem_schemadb_batch_commit_bytes_bucket{db_name="consensus",le="1"} 0
+diem_schemadb_batch_commit_bytes_bucket{db_name="consensus",le="2.5"} 0
+diem_schemadb_batch_commit_bytes_bucket{db_name="consensus",le="5"} 0
+diem_schemadb_batch_commit_bytes_bucket{db_name="consensus",le="10"} 0
+diem_schemadb_batch_commit_bytes_bucket{db_name="consensus",le="+Inf"} 2
+diem_schemadb_batch_commit_bytes_sum{db_name="consensus"} 238
+diem_schemadb_batch_commit_bytes_count{db_name="consensus"} 2
+# HELP diem_schemadb_batch_commit_latency_seconds Diem schemadb schema batch commit latency in seconds
+# TYPE diem_schemadb_batch_commit_latency_seconds histogram
+diem_schemadb_batch_commit_latency_seconds_bucket{db_name="consensus",le="0.005"} 2
+diem_schemadb_batch_commit_latency_seconds_bucket{db_name="consensus",le="0.01"} 2
+diem_schemadb_batch_commit_latency_seconds_bucket{db_name="consensus",le="0.025"} 2
+diem_schemadb_batch_commit_latency_seconds_bucket{db_name="consensus",le="0.05"} 2
+diem_schemadb_batch_commit_latency_seconds_bucket{db_name="consensus",le="0.1"} 2
+diem_schemadb_batch_commit_latency_seconds_bucket{db_name="consensus",le="0.25"} 2
+diem_schemadb_batch_commit_latency_seconds_bucket{db_name="consensus",le="0.5"} 2
+diem_schemadb_batch_commit_latency_seconds_bucket{db_name="consensus",le="1"} 2
+diem_schemadb_batch_commit_latency_seconds_bucket{db_name="consensus",le="2.5"} 2
+diem_schemadb_batch_commit_latency_seconds_bucket{db_name="consensus",le="5"} 2
+diem_schemadb_batch_commit_latency_seconds_bucket{db_name="consensus",le="10"} 2
+diem_schemadb_batch_commit_latency_seconds_bucket{db_name="consensus",le="+Inf"} 2
+diem_schemadb_batch_commit_latency_seconds_sum{db_name="consensus"} 0.0059479830000000004
+diem_schemadb_batch_commit_latency_seconds_count{db_name="consensus"} 2
+# HELP diem_schemadb_get_bytes Diem schemadb get call returned data size in bytes
+# TYPE diem_schemadb_get_bytes histogram
+diem_schemadb_get_bytes_bucket{cf_name="jellyfish_merkle_node",le="0.005"} 0
+diem_schemadb_get_bytes_bucket{cf_name="jellyfish_merkle_node",le="0.01"} 0
+diem_schemadb_get_bytes_bucket{cf_name="jellyfish_merkle_node",le="0.025"} 0
+diem_schemadb_get_bytes_bucket{cf_name="jellyfish_merkle_node",le="0.05"} 0
+diem_schemadb_get_bytes_bucket{cf_name="jellyfish_merkle_node",le="0.1"} 0
+diem_schemadb_get_bytes_bucket{cf_name="jellyfish_merkle_node",le="0.25"} 0
+diem_schemadb_get_bytes_bucket{cf_name="jellyfish_merkle_node",le="0.5"} 0
+diem_schemadb_get_bytes_bucket{cf_name="jellyfish_merkle_node",le="1"} 0
+diem_schemadb_get_bytes_bucket{cf_name="jellyfish_merkle_node",le="2.5"} 0
+diem_schemadb_get_bytes_bucket{cf_name="jellyfish_merkle_node",le="5"} 0
+diem_schemadb_get_bytes_bucket{cf_name="jellyfish_merkle_node",le="10"} 0
+diem_schemadb_get_bytes_bucket{cf_name="jellyfish_merkle_node",le="+Inf"} 499
+diem_schemadb_get_bytes_sum{cf_name="jellyfish_merkle_node"} 6278620
+diem_schemadb_get_bytes_count{cf_name="jellyfish_merkle_node"} 499
+diem_schemadb_get_bytes_bucket{cf_name="single_entry",le="0.005"} 1
+diem_schemadb_get_bytes_bucket{cf_name="single_entry",le="0.01"} 1
+diem_schemadb_get_bytes_bucket{cf_name="single_entry",le="0.025"} 1
+diem_schemadb_get_bytes_bucket{cf_name="single_entry",le="0.05"} 1
+diem_schemadb_get_bytes_bucket{cf_name="single_entry",le="0.1"} 1
+diem_schemadb_get_bytes_bucket{cf_name="single_entry",le="0.25"} 1
+diem_schemadb_get_bytes_bucket{cf_name="single_entry",le="0.5"} 1
+diem_schemadb_get_bytes_bucket{cf_name="single_entry",le="1"} 1
+diem_schemadb_get_bytes_bucket{cf_name="single_entry",le="2.5"} 1
+diem_schemadb_get_bytes_bucket{cf_name="single_entry",le="5"} 1
+diem_schemadb_get_bytes_bucket{cf_name="single_entry",le="10"} 1
+diem_schemadb_get_bytes_bucket{cf_name="single_entry",le="+Inf"} 2
+diem_schemadb_get_bytes_sum{cf_name="single_entry"} 412
+diem_schemadb_get_bytes_count{cf_name="single_entry"} 2
+diem_schemadb_get_bytes_bucket{cf_name="transaction_accumulator",le="0.005"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_accumulator",le="0.01"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_accumulator",le="0.025"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_accumulator",le="0.05"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_accumulator",le="0.1"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_accumulator",le="0.25"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_accumulator",le="0.5"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_accumulator",le="1"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_accumulator",le="2.5"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_accumulator",le="5"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_accumulator",le="10"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_accumulator",le="+Inf"} 140
+diem_schemadb_get_bytes_sum{cf_name="transaction_accumulator"} 4480
+diem_schemadb_get_bytes_count{cf_name="transaction_accumulator"} 140
+diem_schemadb_get_bytes_bucket{cf_name="transaction_info",le="0.005"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_info",le="0.01"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_info",le="0.025"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_info",le="0.05"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_info",le="0.1"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_info",le="0.25"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_info",le="0.5"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_info",le="1"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_info",le="2.5"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_info",le="5"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_info",le="10"} 0
+diem_schemadb_get_bytes_bucket{cf_name="transaction_info",le="+Inf"} 4
+diem_schemadb_get_bytes_sum{cf_name="transaction_info"} 432
+diem_schemadb_get_bytes_count{cf_name="transaction_info"} 4
+# HELP diem_schemadb_get_latency_seconds Diem schemadb get latency in seconds
+# TYPE diem_schemadb_get_latency_seconds histogram
+diem_schemadb_get_latency_seconds_bucket{cf_name="jellyfish_merkle_node",le="0.005"} 488
+diem_schemadb_get_latency_seconds_bucket{cf_name="jellyfish_merkle_node",le="0.01"} 488
+diem_schemadb_get_latency_seconds_bucket{cf_name="jellyfish_merkle_node",le="0.025"} 489
+diem_schemadb_get_latency_seconds_bucket{cf_name="jellyfish_merkle_node",le="0.05"} 489
+diem_schemadb_get_latency_seconds_bucket{cf_name="jellyfish_merkle_node",le="0.1"} 499
+diem_schemadb_get_latency_seconds_bucket{cf_name="jellyfish_merkle_node",le="0.25"} 499
+diem_schemadb_get_latency_seconds_bucket{cf_name="jellyfish_merkle_node",le="0.5"} 499
+diem_schemadb_get_latency_seconds_bucket{cf_name="jellyfish_merkle_node",le="1"} 499
+diem_schemadb_get_latency_seconds_bucket{cf_name="jellyfish_merkle_node",le="2.5"} 499
+diem_schemadb_get_latency_seconds_bucket{cf_name="jellyfish_merkle_node",le="5"} 499
+diem_schemadb_get_latency_seconds_bucket{cf_name="jellyfish_merkle_node",le="10"} 499
+diem_schemadb_get_latency_seconds_bucket{cf_name="jellyfish_merkle_node",le="+Inf"} 499
+diem_schemadb_get_latency_seconds_sum{cf_name="jellyfish_merkle_node"} 1.071634031
+diem_schemadb_get_latency_seconds_count{cf_name="jellyfish_merkle_node"} 499
+diem_schemadb_get_latency_seconds_bucket{cf_name="single_entry",le="0.005"} 2
+diem_schemadb_get_latency_seconds_bucket{cf_name="single_entry",le="0.01"} 2
+diem_schemadb_get_latency_seconds_bucket{cf_name="single_entry",le="0.025"} 2
+diem_schemadb_get_latency_seconds_bucket{cf_name="single_entry",le="0.05"} 2
+diem_schemadb_get_latency_seconds_bucket{cf_name="single_entry",le="0.1"} 2
+diem_schemadb_get_latency_seconds_bucket{cf_name="single_entry",le="0.25"} 2
+diem_schemadb_get_latency_seconds_bucket{cf_name="single_entry",le="0.5"} 2
+diem_schemadb_get_latency_seconds_bucket{cf_name="single_entry",le="1"} 2
+diem_schemadb_get_latency_seconds_bucket{cf_name="single_entry",le="2.5"} 2
+diem_schemadb_get_latency_seconds_bucket{cf_name="single_entry",le="5"} 2
+diem_schemadb_get_latency_seconds_bucket{cf_name="single_entry",le="10"} 2
+diem_schemadb_get_latency_seconds_bucket{cf_name="single_entry",le="+Inf"} 2
+diem_schemadb_get_latency_seconds_sum{cf_name="single_entry"} 0.000447987
+diem_schemadb_get_latency_seconds_count{cf_name="single_entry"} 2
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_accumulator",le="0.005"} 140
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_accumulator",le="0.01"} 140
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_accumulator",le="0.025"} 140
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_accumulator",le="0.05"} 140
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_accumulator",le="0.1"} 140
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_accumulator",le="0.25"} 140
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_accumulator",le="0.5"} 140
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_accumulator",le="1"} 140
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_accumulator",le="2.5"} 140
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_accumulator",le="5"} 140
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_accumulator",le="10"} 140
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_accumulator",le="+Inf"} 140
+diem_schemadb_get_latency_seconds_sum{cf_name="transaction_accumulator"} 0.007859266
+diem_schemadb_get_latency_seconds_count{cf_name="transaction_accumulator"} 140
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_info",le="0.005"} 4
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_info",le="0.01"} 4
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_info",le="0.025"} 4
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_info",le="0.05"} 4
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_info",le="0.1"} 4
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_info",le="0.25"} 4
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_info",le="0.5"} 4
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_info",le="1"} 4
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_info",le="2.5"} 4
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_info",le="5"} 4
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_info",le="10"} 4
+diem_schemadb_get_latency_seconds_bucket{cf_name="transaction_info",le="+Inf"} 4
+diem_schemadb_get_latency_seconds_sum{cf_name="transaction_info"} 0.000849031
+diem_schemadb_get_latency_seconds_count{cf_name="transaction_info"} 4
+# HELP diem_schemadb_iter_bytes Diem schemadb iter size in bytess
+# TYPE diem_schemadb_iter_bytes histogram
+diem_schemadb_iter_bytes_bucket{cf_name="block",le="0.005"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="block",le="0.01"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="block",le="0.025"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="block",le="0.05"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="block",le="0.1"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="block",le="0.25"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="block",le="0.5"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="block",le="1"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="block",le="2.5"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="block",le="5"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="block",le="10"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="block",le="+Inf"} 4
+diem_schemadb_iter_bytes_sum{cf_name="block"} 10068
+diem_schemadb_iter_bytes_count{cf_name="block"} 4
+diem_schemadb_iter_bytes_bucket{cf_name="default",le="0.005"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="default",le="0.01"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="default",le="0.025"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="default",le="0.05"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="default",le="0.1"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="default",le="0.25"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="default",le="0.5"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="default",le="1"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="default",le="2.5"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="default",le="5"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="default",le="10"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="default",le="+Inf"} 1
+diem_schemadb_iter_bytes_sum{cf_name="default"} 5504
+diem_schemadb_iter_bytes_count{cf_name="default"} 1
+diem_schemadb_iter_bytes_bucket{cf_name="quorum_certificate",le="0.005"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="quorum_certificate",le="0.01"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="quorum_certificate",le="0.025"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="quorum_certificate",le="0.05"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="quorum_certificate",le="0.1"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="quorum_certificate",le="0.25"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="quorum_certificate",le="0.5"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="quorum_certificate",le="1"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="quorum_certificate",le="2.5"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="quorum_certificate",le="5"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="quorum_certificate",le="10"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="quorum_certificate",le="+Inf"} 6
+diem_schemadb_iter_bytes_sum{cf_name="quorum_certificate"} 10446
+diem_schemadb_iter_bytes_count{cf_name="quorum_certificate"} 6
+diem_schemadb_iter_bytes_bucket{cf_name="stale_node_index",le="0.005"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="stale_node_index",le="0.01"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="stale_node_index",le="0.025"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="stale_node_index",le="0.05"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="stale_node_index",le="0.1"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="stale_node_index",le="0.25"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="stale_node_index",le="0.5"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="stale_node_index",le="1"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="stale_node_index",le="2.5"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="stale_node_index",le="5"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="stale_node_index",le="10"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="stale_node_index",le="+Inf"} 1
+diem_schemadb_iter_bytes_sum{cf_name="stale_node_index"} 17
+diem_schemadb_iter_bytes_count{cf_name="stale_node_index"} 1
+diem_schemadb_iter_bytes_bucket{cf_name="transaction_info",le="0.005"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="transaction_info",le="0.01"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="transaction_info",le="0.025"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="transaction_info",le="0.05"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="transaction_info",le="0.1"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="transaction_info",le="0.25"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="transaction_info",le="0.5"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="transaction_info",le="1"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="transaction_info",le="2.5"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="transaction_info",le="5"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="transaction_info",le="10"} 0
+diem_schemadb_iter_bytes_bucket{cf_name="transaction_info",le="+Inf"} 10
+diem_schemadb_iter_bytes_sum{cf_name="transaction_info"} 1160
+diem_schemadb_iter_bytes_count{cf_name="transaction_info"} 10
+# HELP diem_schemadb_iter_latency_seconds Diem schemadb iter latency in seconds
+# TYPE diem_schemadb_iter_latency_seconds histogram
+diem_schemadb_iter_latency_seconds_bucket{cf_name="block",le="0.005"} 5
+diem_schemadb_iter_latency_seconds_bucket{cf_name="block",le="0.01"} 5
+diem_schemadb_iter_latency_seconds_bucket{cf_name="block",le="0.025"} 5
+diem_schemadb_iter_latency_seconds_bucket{cf_name="block",le="0.05"} 5
+diem_schemadb_iter_latency_seconds_bucket{cf_name="block",le="0.1"} 5
+diem_schemadb_iter_latency_seconds_bucket{cf_name="block",le="0.25"} 5
+diem_schemadb_iter_latency_seconds_bucket{cf_name="block",le="0.5"} 5
+diem_schemadb_iter_latency_seconds_bucket{cf_name="block",le="1"} 5
+diem_schemadb_iter_latency_seconds_bucket{cf_name="block",le="2.5"} 5
+diem_schemadb_iter_latency_seconds_bucket{cf_name="block",le="5"} 5
+diem_schemadb_iter_latency_seconds_bucket{cf_name="block",le="10"} 5
+diem_schemadb_iter_latency_seconds_bucket{cf_name="block",le="+Inf"} 5
+diem_schemadb_iter_latency_seconds_sum{cf_name="block"} 0.004951531
+diem_schemadb_iter_latency_seconds_count{cf_name="block"} 5
+diem_schemadb_iter_latency_seconds_bucket{cf_name="default",le="0.005"} 0
+diem_schemadb_iter_latency_seconds_bucket{cf_name="default",le="0.01"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="default",le="0.025"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="default",le="0.05"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="default",le="0.1"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="default",le="0.25"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="default",le="0.5"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="default",le="1"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="default",le="2.5"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="default",le="5"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="default",le="10"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="default",le="+Inf"} 1
+diem_schemadb_iter_latency_seconds_sum{cf_name="default"} 0.0056712
+diem_schemadb_iter_latency_seconds_count{cf_name="default"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="quorum_certificate",le="0.005"} 7
+diem_schemadb_iter_latency_seconds_bucket{cf_name="quorum_certificate",le="0.01"} 7
+diem_schemadb_iter_latency_seconds_bucket{cf_name="quorum_certificate",le="0.025"} 7
+diem_schemadb_iter_latency_seconds_bucket{cf_name="quorum_certificate",le="0.05"} 7
+diem_schemadb_iter_latency_seconds_bucket{cf_name="quorum_certificate",le="0.1"} 7
+diem_schemadb_iter_latency_seconds_bucket{cf_name="quorum_certificate",le="0.25"} 7
+diem_schemadb_iter_latency_seconds_bucket{cf_name="quorum_certificate",le="0.5"} 7
+diem_schemadb_iter_latency_seconds_bucket{cf_name="quorum_certificate",le="1"} 7
+diem_schemadb_iter_latency_seconds_bucket{cf_name="quorum_certificate",le="2.5"} 7
+diem_schemadb_iter_latency_seconds_bucket{cf_name="quorum_certificate",le="5"} 7
+diem_schemadb_iter_latency_seconds_bucket{cf_name="quorum_certificate",le="10"} 7
+diem_schemadb_iter_latency_seconds_bucket{cf_name="quorum_certificate",le="+Inf"} 7
+diem_schemadb_iter_latency_seconds_sum{cf_name="quorum_certificate"} 0.0010180319999999999
+diem_schemadb_iter_latency_seconds_count{cf_name="quorum_certificate"} 7
+diem_schemadb_iter_latency_seconds_bucket{cf_name="stale_node_index",le="0.005"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="stale_node_index",le="0.01"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="stale_node_index",le="0.025"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="stale_node_index",le="0.05"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="stale_node_index",le="0.1"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="stale_node_index",le="0.25"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="stale_node_index",le="0.5"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="stale_node_index",le="1"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="stale_node_index",le="2.5"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="stale_node_index",le="5"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="stale_node_index",le="10"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="stale_node_index",le="+Inf"} 1
+diem_schemadb_iter_latency_seconds_sum{cf_name="stale_node_index"} 0.00014014
+diem_schemadb_iter_latency_seconds_count{cf_name="stale_node_index"} 1
+diem_schemadb_iter_latency_seconds_bucket{cf_name="transaction_info",le="0.005"} 10
+diem_schemadb_iter_latency_seconds_bucket{cf_name="transaction_info",le="0.01"} 10
+diem_schemadb_iter_latency_seconds_bucket{cf_name="transaction_info",le="0.025"} 10
+diem_schemadb_iter_latency_seconds_bucket{cf_name="transaction_info",le="0.05"} 10
+diem_schemadb_iter_latency_seconds_bucket{cf_name="transaction_info",le="0.1"} 10
+diem_schemadb_iter_latency_seconds_bucket{cf_name="transaction_info",le="0.25"} 10
+diem_schemadb_iter_latency_seconds_bucket{cf_name="transaction_info",le="0.5"} 10
+diem_schemadb_iter_latency_seconds_bucket{cf_name="transaction_info",le="1"} 10
+diem_schemadb_iter_latency_seconds_bucket{cf_name="transaction_info",le="2.5"} 10
+diem_schemadb_iter_latency_seconds_bucket{cf_name="transaction_info",le="5"} 10
+diem_schemadb_iter_latency_seconds_bucket{cf_name="transaction_info",le="10"} 10
+diem_schemadb_iter_latency_seconds_bucket{cf_name="transaction_info",le="+Inf"} 10
+diem_schemadb_iter_latency_seconds_sum{cf_name="transaction_info"} 0.000828402
+diem_schemadb_iter_latency_seconds_count{cf_name="transaction_info"} 10
+# HELP diem_secure_net_events Outcome of secure net events
+# TYPE diem_secure_net_events counter
+diem_secure_net_events{method="connect",mode="client",result="query",service="execution"} 1
+diem_secure_net_events{method="connect",mode="client",result="query",service="storage"} 1
+diem_secure_net_events{method="connect",mode="client",result="success",service="execution"} 1
+diem_secure_net_events{method="connect",mode="client",result="success",service="storage"} 1
+diem_secure_net_events{method="connect",mode="server",result="query",service="execution"} 1
+diem_secure_net_events{method="connect",mode="server",result="query",service="safety-rules"} 1
+diem_secure_net_events{method="connect",mode="server",result="query",service="storage"} 1
+diem_secure_net_events{method="connect",mode="server",result="success",service="execution"} 1
+diem_secure_net_events{method="connect",mode="server",result="success",service="storage"} 1
+diem_secure_net_events{method="read",mode="client",result="query",service="execution"} 1
+diem_secure_net_events{method="read",mode="client",result="query",service="storage"} 97
+diem_secure_net_events{method="read",mode="client",result="success",service="storage"} 97
+diem_secure_net_events{method="read",mode="server",result="query",service="execution"} 1
+diem_secure_net_events{method="read",mode="server",result="query",service="safety-rules"} 1
+diem_secure_net_events{method="read",mode="server",result="query",service="storage"} 98
+diem_secure_net_events{method="read",mode="server",result="success",service="execution"} 1
+diem_secure_net_events{method="read",mode="server",result="success",service="storage"} 97
+diem_secure_net_events{method="write",mode="client",result="query",service="execution"} 1
+diem_secure_net_events{method="write",mode="client",result="query",service="storage"} 97
+diem_secure_net_events{method="write",mode="client",result="success",service="execution"} 1
+diem_secure_net_events{method="write",mode="client",result="success",service="storage"} 97
+diem_secure_net_events{method="write",mode="server",result="query",service="storage"} 97
+diem_secure_net_events{method="write",mode="server",result="success",service="storage"} 97
+# HELP diem_shared_mempool_events Number of network events received by shared mempool
+# TYPE diem_shared_mempool_events counter
+diem_shared_mempool_events{event="new_peer"} 6
+# HELP diem_simple_onchain_discovery_counts Histogram of busy time of spent in event processing loop
+# TYPE diem_simple_onchain_discovery_counts counter
+diem_simple_onchain_discovery_counts{metric="new_nodes",network_id="Public",peer_id="ecaf65ad",role_type="validator"} 1
+diem_simple_onchain_discovery_counts{metric="new_nodes",network_id="Validator",peer_id="ecaf65ad",role_type="validator"} 1
+# HELP diem_state_sync_active_upstream_peers Number of upstream peers that are currently active
+# TYPE diem_state_sync_active_upstream_peers gauge
+diem_state_sync_active_upstream_peers{network="Public"} 6
+# HELP diem_state_sync_main_loop Duration of the each run of the event loop
+# TYPE diem_state_sync_main_loop histogram
+diem_state_sync_main_loop_bucket{le="0.005"} 5
+diem_state_sync_main_loop_bucket{le="0.01"} 6
+diem_state_sync_main_loop_bucket{le="0.025"} 7
+diem_state_sync_main_loop_bucket{le="0.05"} 8
+diem_state_sync_main_loop_bucket{le="0.1"} 44
+diem_state_sync_main_loop_bucket{le="0.25"} 59
+diem_state_sync_main_loop_bucket{le="0.5"} 59
+diem_state_sync_main_loop_bucket{le="1"} 59
+diem_state_sync_main_loop_bucket{le="2.5"} 59
+diem_state_sync_main_loop_bucket{le="5"} 59
+diem_state_sync_main_loop_bucket{le="10"} 59
+diem_state_sync_main_loop_bucket{le="+Inf"} 59
+diem_state_sync_main_loop_sum 5.099306022
+diem_state_sync_main_loop_count 59
+# HELP diem_state_sync_multicast_level Max network preference of the networks state sync is sending chunk requests to
+# TYPE diem_state_sync_multicast_level gauge
+diem_state_sync_multicast_level 0
+# HELP diem_storage_api_latency_seconds Diem storage api latency in seconds
+# TYPE diem_storage_api_latency_seconds histogram
+diem_storage_api_latency_seconds_bucket{api_name="get_account_state_with_proof_by_version",result="Ok",le="0.005"} 93
+diem_storage_api_latency_seconds_bucket{api_name="get_account_state_with_proof_by_version",result="Ok",le="0.01"} 94
+diem_storage_api_latency_seconds_bucket{api_name="get_account_state_with_proof_by_version",result="Ok",le="0.025"} 95
+diem_storage_api_latency_seconds_bucket{api_name="get_account_state_with_proof_by_version",result="Ok",le="0.05"} 95
+diem_storage_api_latency_seconds_bucket{api_name="get_account_state_with_proof_by_version",result="Ok",le="0.1"} 103
+diem_storage_api_latency_seconds_bucket{api_name="get_account_state_with_proof_by_version",result="Ok",le="0.25"} 105
+diem_storage_api_latency_seconds_bucket{api_name="get_account_state_with_proof_by_version",result="Ok",le="0.5"} 105
+diem_storage_api_latency_seconds_bucket{api_name="get_account_state_with_proof_by_version",result="Ok",le="1"} 105
+diem_storage_api_latency_seconds_bucket{api_name="get_account_state_with_proof_by_version",result="Ok",le="2.5"} 105
+diem_storage_api_latency_seconds_bucket{api_name="get_account_state_with_proof_by_version",result="Ok",le="5"} 105
+diem_storage_api_latency_seconds_bucket{api_name="get_account_state_with_proof_by_version",result="Ok",le="10"} 105
+diem_storage_api_latency_seconds_bucket{api_name="get_account_state_with_proof_by_version",result="Ok",le="+Inf"} 105
+diem_storage_api_latency_seconds_sum{api_name="get_account_state_with_proof_by_version",result="Ok"} 1.1375501149999998
+diem_storage_api_latency_seconds_count{api_name="get_account_state_with_proof_by_version",result="Ok"} 105
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_ledger_info",result="Ok",le="0.005"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_ledger_info",result="Ok",le="0.01"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_ledger_info",result="Ok",le="0.025"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_ledger_info",result="Ok",le="0.05"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_ledger_info",result="Ok",le="0.1"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_ledger_info",result="Ok",le="0.25"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_ledger_info",result="Ok",le="0.5"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_ledger_info",result="Ok",le="1"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_ledger_info",result="Ok",le="2.5"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_ledger_info",result="Ok",le="5"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_ledger_info",result="Ok",le="10"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_ledger_info",result="Ok",le="+Inf"} 1
+diem_storage_api_latency_seconds_sum{api_name="get_latest_ledger_info",result="Ok"} 0.000311189
+diem_storage_api_latency_seconds_count{api_name="get_latest_ledger_info",result="Ok"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_state_root",result="Ok",le="0.005"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_state_root",result="Ok",le="0.01"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_state_root",result="Ok",le="0.025"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_state_root",result="Ok",le="0.05"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_state_root",result="Ok",le="0.1"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_state_root",result="Ok",le="0.25"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_state_root",result="Ok",le="0.5"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_state_root",result="Ok",le="1"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_state_root",result="Ok",le="2.5"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_state_root",result="Ok",le="5"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_state_root",result="Ok",le="10"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_state_root",result="Ok",le="+Inf"} 1
+diem_storage_api_latency_seconds_sum{api_name="get_latest_state_root",result="Ok"} 0.000495683
+diem_storage_api_latency_seconds_count{api_name="get_latest_state_root",result="Ok"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_transaction_info_option",result="Ok",le="0.005"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_transaction_info_option",result="Ok",le="0.01"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_transaction_info_option",result="Ok",le="0.025"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_transaction_info_option",result="Ok",le="0.05"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_transaction_info_option",result="Ok",le="0.1"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_transaction_info_option",result="Ok",le="0.25"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_transaction_info_option",result="Ok",le="0.5"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_transaction_info_option",result="Ok",le="1"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_transaction_info_option",result="Ok",le="2.5"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_transaction_info_option",result="Ok",le="5"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_transaction_info_option",result="Ok",le="10"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_transaction_info_option",result="Ok",le="+Inf"} 4
+diem_storage_api_latency_seconds_sum{api_name="get_latest_transaction_info_option",result="Ok"} 0.001827654
+diem_storage_api_latency_seconds_count{api_name="get_latest_transaction_info_option",result="Ok"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_tree_state",result="Ok",le="0.005"} 0
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_tree_state",result="Ok",le="0.01"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_tree_state",result="Ok",le="0.025"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_tree_state",result="Ok",le="0.05"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_tree_state",result="Ok",le="0.1"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_tree_state",result="Ok",le="0.25"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_tree_state",result="Ok",le="0.5"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_tree_state",result="Ok",le="1"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_tree_state",result="Ok",le="2.5"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_tree_state",result="Ok",le="5"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_tree_state",result="Ok",le="10"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_latest_tree_state",result="Ok",le="+Inf"} 1
+diem_storage_api_latency_seconds_sum{api_name="get_latest_tree_state",result="Ok"} 0.005339791
+diem_storage_api_latency_seconds_count{api_name="get_latest_tree_state",result="Ok"} 1
+diem_storage_api_latency_seconds_bucket{api_name="get_startup_info",result="Ok",le="0.005"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_startup_info",result="Ok",le="0.01"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_startup_info",result="Ok",le="0.025"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_startup_info",result="Ok",le="0.05"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_startup_info",result="Ok",le="0.1"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_startup_info",result="Ok",le="0.25"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_startup_info",result="Ok",le="0.5"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_startup_info",result="Ok",le="1"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_startup_info",result="Ok",le="2.5"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_startup_info",result="Ok",le="5"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_startup_info",result="Ok",le="10"} 4
+diem_storage_api_latency_seconds_bucket{api_name="get_startup_info",result="Ok",le="+Inf"} 4
+diem_storage_api_latency_seconds_sum{api_name="get_startup_info",result="Ok"} 0.009743602
+diem_storage_api_latency_seconds_count{api_name="get_startup_info",result="Ok"} 4
+# HELP diem_storage_deletes Diem storage delete calls
+# TYPE diem_storage_deletes counter
+diem_storage_deletes{cf_name="block"} 3
+diem_storage_deletes{cf_name="quorum_certificate"} 3
+diem_storage_deletes{cf_name="single_entry"} 1
+# HELP diem_storage_other_timers_seconds Various timers below public API level.
+# TYPE diem_storage_other_timers_seconds histogram
+diem_storage_other_timers_seconds_bucket{name="update_rocksdb_properties",le="0.005"} 0
+diem_storage_other_timers_seconds_bucket{name="update_rocksdb_properties",le="0.01"} 0
+diem_storage_other_timers_seconds_bucket{name="update_rocksdb_properties",le="0.025"} 0
+diem_storage_other_timers_seconds_bucket{name="update_rocksdb_properties",le="0.05"} 0
+diem_storage_other_timers_seconds_bucket{name="update_rocksdb_properties",le="0.1"} 1
+diem_storage_other_timers_seconds_bucket{name="update_rocksdb_properties",le="0.25"} 1
+diem_storage_other_timers_seconds_bucket{name="update_rocksdb_properties",le="0.5"} 1
+diem_storage_other_timers_seconds_bucket{name="update_rocksdb_properties",le="1"} 1
+diem_storage_other_timers_seconds_bucket{name="update_rocksdb_properties",le="2.5"} 1
+diem_storage_other_timers_seconds_bucket{name="update_rocksdb_properties",le="5"} 1
+diem_storage_other_timers_seconds_bucket{name="update_rocksdb_properties",le="10"} 1
+diem_storage_other_timers_seconds_bucket{name="update_rocksdb_properties",le="+Inf"} 1
+diem_storage_other_timers_seconds_sum{name="update_rocksdb_properties"} 0.050964367
+diem_storage_other_timers_seconds_count{name="update_rocksdb_properties"} 1
+# HELP diem_storage_prune_window Diem storage prune window
+# TYPE diem_storage_prune_window gauge
+diem_storage_prune_window 200000
+# HELP diem_storage_pruner_least_readable_state_version Diem storage pruner least readable state version
+# TYPE diem_storage_pruner_least_readable_state_version gauge
+diem_storage_pruner_least_readable_state_version 12927020
+# HELP diem_struct_log_count Count of the struct logs.
+# TYPE diem_struct_log_count counter
+diem_struct_log_count 391
+# HELP diem_struct_log_processed_count Count of the struct logs received by the sender.
+# TYPE diem_struct_log_processed_count counter
+diem_struct_log_processed_count 391
+# HELP simple_onchain_discovery_event_processing_loop_busy_duration_s Histogram of busy time of spent in event processing loop
+# TYPE simple_onchain_discovery_event_processing_loop_busy_duration_s histogram
+simple_onchain_discovery_event_processing_loop_busy_duration_s_bucket{le="0.005"} 0
+simple_onchain_discovery_event_processing_loop_busy_duration_s_bucket{le="0.01"} 0
+simple_onchain_discovery_event_processing_loop_busy_duration_s_bucket{le="0.025"} 1
+simple_onchain_discovery_event_processing_loop_busy_duration_s_bucket{le="0.05"} 1
+simple_onchain_discovery_event_processing_loop_busy_duration_s_bucket{le="0.1"} 2
+simple_onchain_discovery_event_processing_loop_busy_duration_s_bucket{le="0.25"} 2
+simple_onchain_discovery_event_processing_loop_busy_duration_s_bucket{le="0.5"} 2
+simple_onchain_discovery_event_processing_loop_busy_duration_s_bucket{le="1"} 2
+simple_onchain_discovery_event_processing_loop_busy_duration_s_bucket{le="2.5"} 2
+simple_onchain_discovery_event_processing_loop_busy_duration_s_bucket{le="5"} 2
+simple_onchain_discovery_event_processing_loop_busy_duration_s_bucket{le="10"} 2
+simple_onchain_discovery_event_processing_loop_busy_duration_s_bucket{le="+Inf"} 2
+simple_onchain_discovery_event_processing_loop_busy_duration_s_sum 0.089925797
+simple_onchain_discovery_event_processing_loop_busy_duration_s_count 2
+# HELP simple_onchain_discovery_event_processing_loop_idle_duration_s Histogram of idle time of spent in event processing loop
+# TYPE simple_onchain_discovery_event_processing_loop_idle_duration_s histogram
+simple_onchain_discovery_event_processing_loop_idle_duration_s_bucket{le="0.005"} 0
+simple_onchain_discovery_event_processing_loop_idle_duration_s_bucket{le="0.01"} 0
+simple_onchain_discovery_event_processing_loop_idle_duration_s_bucket{le="0.025"} 0
+simple_onchain_discovery_event_processing_loop_idle_duration_s_bucket{le="0.05"} 0
+simple_onchain_discovery_event_processing_loop_idle_duration_s_bucket{le="0.1"} 0
+simple_onchain_discovery_event_processing_loop_idle_duration_s_bucket{le="0.25"} 0
+simple_onchain_discovery_event_processing_loop_idle_duration_s_bucket{le="0.5"} 0
+simple_onchain_discovery_event_processing_loop_idle_duration_s_bucket{le="1"} 0
+simple_onchain_discovery_event_processing_loop_idle_duration_s_bucket{le="2.5"} 2
+simple_onchain_discovery_event_processing_loop_idle_duration_s_bucket{le="5"} 2
+simple_onchain_discovery_event_processing_loop_idle_duration_s_bucket{le="10"} 2
+simple_onchain_discovery_event_processing_loop_idle_duration_s_bucket{le="+Inf"} 2
+simple_onchain_discovery_event_processing_loop_idle_duration_s_sum 2.11751483
+simple_onchain_discovery_event_processing_loop_idle_duration_s_count 2

@@ -75,6 +75,7 @@ impl Mempool {
             .unwrap_or_default();
 
         if is_rejected {
+            dbg!("!!!!!!!!!! MEMPOOL TX REJECTED !!!!!!!!!!");
             // TODO: Why does the sequence number have to be greater than the current to reject?
             if sequence_number >= current_seq_number {
                 self.transactions

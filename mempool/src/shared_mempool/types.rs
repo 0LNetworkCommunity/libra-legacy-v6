@@ -47,6 +47,7 @@ where
     pub subscribers: Vec<UnboundedSender<SharedMempoolNotification>>,
 }
 
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum SharedMempoolNotification {
     PeerStateChange,

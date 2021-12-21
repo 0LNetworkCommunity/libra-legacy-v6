@@ -101,10 +101,10 @@ impl VMValidator for DiemVMValidator {
 
         match status {
           Some(StatusCode::SEQUENCE_NUMBER_TOO_NEW) => {
+            dbg!("SEQUENCE_NUMBER_TOO_NEW");
 
             dbg!(&txn.sequence_number());
             dbg!(&txn.sender());
-            panic!();
           }
           _ => {}
         }
