@@ -351,7 +351,7 @@ pub(crate) async fn process_state_sync_request(
         counters::COMMIT_STATE_SYNC_LABEL,
         req.transactions.len(),
     );
-    commit_txns(&mempool, req.transactions, req.block_timestamp_usecs, false).await;
+    commit_txns(&mempool, req.transactions, req.block_timestamp_usecs).await;
     let result = if req.callback.send(Ok(CommitResponse::success())).is_err() {
         error!(LogSchema::event_log(
             LogEntry::StateSyncCommit,
@@ -401,7 +401,7 @@ pub(crate) async fn process_consensus_request(mempool: &Mutex<CoreMempool>, req:
                 counters::COMMIT_CONSENSUS_LABEL,
                 transactions.len(),
             );
-            commit_txns(mempool, transactions, 0, true).await;
+            reject_txns(mempool, transactions).await;
             (
                 ConsensusResponse::CommitResponse(),
                 callback,
@@ -423,10 +423,30 @@ pub(crate) async fn process_consensus_request(mempool: &Mutex<CoreMempool>, req:
     counters::mempool_service_latency(counter_label, result, latency);
 }
 
+/// Commits txns and GCs mempool
 async fn commit_txns(
     mempool: &Mutex<CoreMempool>,
     transactions: Vec<CommittedTransaction>,
     block_timestamp_usecs: u64,
+) {
+    remove_txns(mempool, transactions, false).await;
+    if block_timestamp_usecs > 0 {
+        mempool.lock().gc_by_expiration_time(Duration::from_micros(block_timestamp_usecs));
+    }
+}
+
+/// Reject all txns for the associated account
+async fn reject_txns(
+    mempool: &Mutex<CoreMempool>,
+    transactions: Vec<CommittedTransaction>,
+) {
+    remove_txns(mempool, transactions, true).await;
+}
+
+/// Removes txns from the local mempool
+async fn remove_txns(
+    mempool: &Mutex<CoreMempool>,
+    transactions: Vec<CommittedTransaction>,
     is_rejected: bool,
 ) {
     let mut pool = mempool.lock();
@@ -437,10 +457,6 @@ async fn commit_txns(
             transaction.sequence_number,
             is_rejected,
         );
-    }
-
-    if block_timestamp_usecs > 0 {
-        pool.gc_by_expiration_time(Duration::from_micros(block_timestamp_usecs));
     }
 }
 
