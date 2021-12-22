@@ -3,6 +3,7 @@
 
 //! account: alice, 1000000, 0, validator
 //! account: bob, 1000000, 0, validator
+//! account: carol, 1000000, 0
 
 
 ///// DEMO 1: Happy case, the State resource is initialized to Alice's account, 
@@ -20,18 +21,21 @@ script {
     // This sender argument was populated by the test harness with a random 
     // address for `alice`, which can be accessed with sender variable or 
     // the helper `{alice}`
-    fun main(sender: signer){ // alice's signer type added in tx.
-      PersistenceDemo::initialize(&sender);
+    fun main(alice: signer){ // alice's signer type added in tx.
+    //script stuff
+      PersistenceDemo::initialize(&alice);
+      PersistenceDemo::add_stuff(&alice);
 
-      PersistenceDemo::add_stuff(&sender);
-      assert(PersistenceDemo::length(&sender) == 3, 0);
-      assert(PersistenceDemo::contains(&sender, 1), 1);
+    // our checks
+      assert(PersistenceDemo::length(&alice) == 3, 0);
+      assert(PersistenceDemo::contains(&alice, 1), 1);
     }
 }
 
 ///// The tags with `check` matches to a string in the VM output. Here we are 
 ///// checking for a correct execution.
-// check: EXECUTED
+
+//! check: EXECUTED
 
 ///// DEMO 2: Abort if an `assert` fails.
 ///// This will fail because length is actually 3

@@ -217,7 +217,8 @@ where
     counters::PROCESS_TXN_BREAKDOWN_LATENCY
         .with_label_values(&[counters::FETCH_SEQ_NUM_LABEL])
         .observe(storage_read_latency.as_secs_f64() / transactions.len() as f64);
-
+      
+    //////// 0L ////////
     let transactions: Vec<_> = transactions
         .into_iter()
         .enumerate()
@@ -227,13 +228,15 @@ where
                     return Some((t, sequence_number));
                 } else if t.sequence_number() > sequence_number{
                     statuses.push((
+        
                         t,
                         (
                             MempoolStatus::new(MempoolStatusCode::VmError),
                             Some(DiscardedVMStatus::SEQUENCE_NUMBER_TOO_NEW),
                         ),
                     ));
-                }else {
+                } else {
+                      //////// end 0L ////////
                     statuses.push((
                         t,
                         (
@@ -255,6 +258,7 @@ where
             None
         })
         .collect();
+
 
     // Track latency: VM validation
     let vm_validation_timer = counters::PROCESS_TXN_BREAKDOWN_LATENCY
