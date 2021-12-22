@@ -223,9 +223,17 @@ where
         .enumerate()
         .filter_map(|(idx, t)| {
             if let Ok(sequence_number) = seq_numbers[idx] {
-                if t.sequence_number() >= sequence_number {
+                if t.sequence_number() == sequence_number {
                     return Some((t, sequence_number));
-                } else {
+                } else if t.sequence_number() > sequence_number{
+                    statuses.push((
+                        t,
+                        (
+                            MempoolStatus::new(MempoolStatusCode::VmError),
+                            Some(DiscardedVMStatus::SEQUENCE_NUMBER_TOO_NEW),
+                        ),
+                    ));
+                }else {
                     statuses.push((
                         t,
                         (
