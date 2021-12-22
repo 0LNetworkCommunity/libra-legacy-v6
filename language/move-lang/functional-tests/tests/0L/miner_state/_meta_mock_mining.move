@@ -4,7 +4,7 @@
 //! sender: alice
 script {
     use 0x1::TowerState;
-    // use 0x1::Signer;
+    // use Std::Signer;
 
     fun main(sender: signer) {
         // TowerState::init_miner_state(sender);

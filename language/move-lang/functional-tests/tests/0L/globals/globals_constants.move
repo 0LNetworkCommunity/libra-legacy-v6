@@ -4,7 +4,7 @@
 script {
 use 0x1::Globals;
 use 0x1::Testnet;
-use 0x1::DiemSystem;
+use DiemFramework::DiemSystem;
 
     fun main(_sender: signer) {
         assert(DiemSystem::is_validator(@{{alice}}) == true, 98);

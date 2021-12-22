@@ -3,7 +3,7 @@
 //! new-transaction
 //! sender: alice
 script {
-use 0x1::DiemSystem;
+use DiemFramework::DiemSystem;
 use 0x1::TowerState;
 
     fun main(_sender: signer) {

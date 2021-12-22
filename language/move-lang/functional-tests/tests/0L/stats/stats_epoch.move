@@ -91,7 +91,7 @@ script {
 //! sender: diemroot
 script {
     use 0x1::Stats;
-    // use 0x1::Vector;
+    // use Std::Vector;
     fun main(vm: signer) {
       let vm = &vm;
       // Testing that reconfigure reset the counter for current epoch.

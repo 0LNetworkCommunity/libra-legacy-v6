@@ -18,7 +18,7 @@ fun main(bob: signer) {
 //! sender: diemroot
 script{
 use 0x1::ValidatorUniverse;
-use 0x1::Vector;
+use Std::Vector;
 
 fun main(vm: signer) {
     let len = Vector::length<address>(

@@ -24,7 +24,7 @@
 
 script {
     use 0x1::Epoch;
-    use 0x1::DiemTimestamp;
+    use DiemFramework::DiemTimestamp;
     
     fun main(){
       // the new epoch has reset the timer.

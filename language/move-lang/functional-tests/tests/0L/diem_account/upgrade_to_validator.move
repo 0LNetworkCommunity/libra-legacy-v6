@@ -36,7 +36,7 @@ script {
 use DiemFramework::DiemAccount;
 // use 0x1::TowerState;
 use 0x1::TestFixtures;
-// use 0x1::Vector;
+// use Std::Vector;
 
 
 // Test Prefix: 1301

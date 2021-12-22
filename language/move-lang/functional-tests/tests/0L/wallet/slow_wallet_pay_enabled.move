@@ -7,7 +7,7 @@
 //! sender: diemroot
 script {
 use DiemFramework::DiemAccount;
-use 0x1::DiemConfig;
+use DiemFramework::DiemConfig;
 use 0x1::Testnet;
 use 0x1::EpochBoundary;
 fun main(vm: signer) {

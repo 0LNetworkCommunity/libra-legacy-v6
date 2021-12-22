@@ -6,7 +6,7 @@
 //! sender: diemroot
 script{
 use 0x1::ValidatorUniverse;
-use 0x1::Vector;
+use Std::Vector;
 // use 0x1::TestFixtures;
 // use DiemFramework::DiemAccount;
 

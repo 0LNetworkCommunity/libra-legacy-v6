@@ -163,7 +163,7 @@ script {
 script {
   use 0x1::Oracle;
   use Std::Vector;
-  use 0x1::Hash;
+  use Std::Hash;
   //use 0x1::Debug::print;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
@@ -189,7 +189,7 @@ script {
   use 0x1::Oracle;
   use Std::Vector;
   use 0x1::Upgrade;
-  use 0x1::Hash;
+  use Std::Hash;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       let id = 2;
@@ -235,7 +235,7 @@ script {
   use 0x1::Oracle;
   use Std::Vector;
   use 0x1::Upgrade;
-  use 0x1::Hash;
+  use Std::Hash;
   //use 0x1::Debug::print;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {

@@ -3,7 +3,7 @@
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::TransactionFee;
+    use DiemFramework::TransactionFee;
     use DiemFramework::Diem;
     use 0x1::GAS::GAS;
 

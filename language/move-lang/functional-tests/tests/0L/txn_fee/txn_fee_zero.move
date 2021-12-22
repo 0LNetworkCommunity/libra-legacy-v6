@@ -80,7 +80,7 @@ script {
     use DiemFramework::DiemAccount;
     use 0x1::GAS::GAS;
     use 0x1::Subsidy;
-    use 0x1::TransactionFee;
+    use DiemFramework::TransactionFee;
     use DiemFramework::DiemSystem;
 
     fun main(vm: signer) {

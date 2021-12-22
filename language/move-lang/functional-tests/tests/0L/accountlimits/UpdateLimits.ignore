@@ -9,7 +9,7 @@
 // //! new-transaction
 // //! sender: diemroot
 // script {
-//   use 0x1::DiemTimestamp;
+//   use DiemFramework::DiemTimestamp;
 //   use DiemFramework::DiemConfig;
 //   fun main() {
 //     let time = DiemTimestamp::now_seconds();
@@ -30,7 +30,7 @@
 // //! new-transaction
 // //! sender: alice
 // script {
-//   use 0x1::DiemTimestamp;
+//   use DiemFramework::DiemTimestamp;
 //   use DiemFramework::DiemAccount;
 //   use DiemFramework::DiemConfig;
 //   use 0x1::AccountLimits;

@@ -18,7 +18,7 @@ script {
   use 0x1::Subsidy;
   use Std::Vector;
   use 0x1::Stats;
-  use 0x1::TransactionFee;
+  use DiemFramework::TransactionFee;
   use 0x1::GAS::GAS;
   use DiemFramework::Diem;
   use 0x1::Globals;
