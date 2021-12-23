@@ -11,7 +11,7 @@ use move_vm_types::{
     natives::function::{native_gas, NativeContext, NativeResult},
     values::{Reference, Value},
 };
-use std::collections::VecDeque;
+use std::{collections::VecDeque, time::Instant};
 use std::convert::TryFrom;
 use move_binary_format::errors::{PartialVMError, PartialVMResult};
 use smallvec::smallvec;
@@ -22,6 +22,9 @@ pub fn verify(
     _ty_args: Vec<Type>,
     mut arguments: VecDeque<Value>,
 ) -> PartialVMResult<NativeResult> {
+    // temporary logging.
+    let start_time = Instant::now();
+
     if arguments.len() != 4 {
         let msg = format!(
             "wrong number of arguments for vdf_verify expected 4 found {}",
@@ -59,6 +62,11 @@ pub fn verify(
     let result = v.verify(&challenge, difficulty, &solution);
 
     let return_values = smallvec![Value::bool(result.is_ok())];
+
+    // temporary logging
+    let latency = start_time.elapsed();
+    dbg!("vdf verification latency", &latency);
+
     Ok(NativeResult::ok(cost, return_values))
 }
 

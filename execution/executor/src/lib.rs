@@ -59,7 +59,7 @@ use std::{
     collections::{hash_map, HashMap, HashSet},
     convert::TryFrom,
     marker::PhantomData,
-    sync::Arc,
+    sync::Arc, time::Instant,
 };
 use storage_interface::{state_view::VerifiedStateView, DbReaderWriter, TreeState};
 
@@ -605,22 +605,39 @@ impl<V: VMExecutor> ChunkExecutor for Executor<V> {
                 .num_txns_in_request(txn_list_with_proof.transactions.len()),
             "sync_request_received",
         );
-
+        
+        // temp time the transaction execution.
+        let start_time = Instant::now();
         // 2. Verify input transaction list.
         let (transactions, transaction_infos) =
             self.verify_chunk(txn_list_with_proof, &verified_target_li)?;
+        
+        let latency = start_time.elapsed();
+        dbg!("verify_chunk latency", &latency);
 
         // 3. Execute transactions.
+        
+        // temp time the transaction execution.
+        let start_time = Instant::now();
+
         let first_version = self.cache.synced_trees().txn_accumulator().num_leaves();
         let (output, txns_to_commit, reconfig_events) =
             self.execute_chunk(first_version, transactions, transaction_infos)?;
 
+        let latency = start_time.elapsed();
+        dbg!("execute_chunk latency", &latency);
+
+
+        // temp time the transaction execution.
+        let start_time = Instant::now();
+        
         // 4. Commit to DB.
         let ledger_info_to_commit =
             Self::find_chunk_li(verified_target_li, epoch_change_li, &output)?;
         if ledger_info_to_commit.is_none() && txns_to_commit.is_empty() {
             return Ok(reconfig_events);
         }
+
         fail_point!("executor::commit_chunk", |_| {
             Err(anyhow::anyhow!("Injected error in commit_chunk"))
         });
@@ -629,6 +646,9 @@ impl<V: VMExecutor> ChunkExecutor for Executor<V> {
             first_version,
             ledger_info_to_commit.as_ref(),
         )?;
+
+        let latency = start_time.elapsed();
+        dbg!("save_transactions latency", &latency);
 
         // 5. Cache maintenance.
         let output_trees = output.executed_trees().clone();
