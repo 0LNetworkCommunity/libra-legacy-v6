@@ -150,10 +150,13 @@ pub fn write_node_config_files(
         );
         network.network_address_key_backend =
             Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
+        
+        network.ping_failures_tolerated = 100_000;
 
         c.validator_network = Some(network.clone());
 
-        c.json_rpc.address = "0.0.0.0:8080".parse().unwrap();
+        // Do not keeep json-rpc open on validator nodes.
+        c.json_rpc.address = "127.0.0.1:8080".parse().unwrap();
         // NOTE: for future reference, seed addresses are not necessary
         // for setting a validator if on-chain discovery is used.
 
@@ -186,6 +189,8 @@ pub fn write_node_config_files(
         OWNER_ACCOUNT.to_string(),
         SecureBackend::OnDiskStorage(disk_storage.clone()),
     );
+    fn_network.ping_failures_tolerated = 100_000;
+
     config.full_node_networks = vec![fn_network];
 
     // NOTE: for future reference, "upstream" is not necessary for validator settings.
@@ -194,7 +199,7 @@ pub fn write_node_config_files(
     };
 
     // Prune window for state snapshots
-    config.storage.prune_window = Some(20_000);
+    config.storage.prune_window = Some(100_000);
 
     // Write yaml
     let yaml_path = if *fullnode_only {
