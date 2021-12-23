@@ -770,7 +770,6 @@ impl DiemVM {
 
             match &txn {
                 PreprocessedTransaction::UserTransaction(t) => {
-                  dbg!(&t.payload());
                   dbg!(&t.sequence_number());
                 },
                 _ => {},
