@@ -43,7 +43,7 @@ use move_vm_types::gas_schedule::GasStatus;
 use rayon::prelude::*;
 use std::{
     collections::HashSet,
-    convert::{AsMut, AsRef},
+    convert::{AsMut, AsRef}, time::Instant,
 };
 
 pub struct DiemVM(DiemVMImpl);
@@ -760,8 +760,17 @@ impl DiemVM {
                 debug!(log_context, "Retry after reconfiguration");
                 continue;
             };
+
+            
+            // temp time the transaction execution.
+            let start_time = Instant::now();
+            
             let (vm_status, output, sender) =
                 self.execute_single_transaction(&txn, data_cache, &log_context)?;
+            dbg!("tx sender", &sender);
+            let latency = start_time.elapsed();
+            dbg!("single tx latency", &latency);
+
             if !output.status().is_discarded() {
                 data_cache.push_write_set(output.write_set());
             } else {
