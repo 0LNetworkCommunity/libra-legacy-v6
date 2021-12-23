@@ -767,6 +767,13 @@ impl DiemVM {
             
             let (vm_status, output, sender) =
                 self.execute_single_transaction(&txn, data_cache, &log_context)?;
+
+            match &txn {
+                PreprocessedTransaction::UserTransaction(t) => {
+                  dbg!(&t.sequence_number());
+                },
+                _ => {},
+            };
             dbg!("tx sender", &sender);
             let latency = start_time.elapsed();
             dbg!("single tx latency", &latency);
