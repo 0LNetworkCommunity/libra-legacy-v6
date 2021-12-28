@@ -148,7 +148,7 @@ fn verify_module_impl<'a>(
     dependencies: impl IntoIterator<Item = &'a CompiledModule>,
 ) -> PartialVMResult<()> {
     let context = &Context::module(module, dependencies);
-    dbg!(&module.self_id());
+    // dbg!(&module.self_id());
     
     verify_imported_modules(context)?;
     verify_imported_structs(context)?;
@@ -182,7 +182,7 @@ fn verify_imported_modules(context: &Context) -> PartialVMResult<()> {
 
         let module_id = context.resolver.module_id_for_handle(module_handle);
         
-        dbg!(&module_id);
+        // dbg!(&module_id);
 
         if Some(ModuleHandleIndex(idx as u16)) != self_module
             && !context.dependency_map.contains_key(&module_id)

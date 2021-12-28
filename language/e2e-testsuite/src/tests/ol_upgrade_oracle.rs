@@ -230,10 +230,10 @@ fn set_up_validators(
 }
 
 // hardcoding a sender with seq_num = 1
-fn test_foo (sender: &Account, executor: &mut FakeExecutor, should_pass: bool) {
+fn test_foo(sender: &Account, executor: &mut FakeExecutor, should_pass: bool) {
   // NOTE: See documentation here: ol/documentation/devs/e2e_upgrade_test.md
 
-  // Construct a valid and signed tx script.
+  // A helper transaction to trigger Upgrade::foo() which only exists after an upgrade.
   let txn = upgrade_foo_tx(sender, 3);
 
   // Force the test runner to create a new block before running the test.
@@ -288,7 +288,7 @@ fn test_successful_upgrade_txs() {
   let diem_root = Account::new_diem_root();
   let accounts = set_up_validators(&mut executor, diem_root);
 
-  executor.new_custom_block(2);
+  executor.new_custom_block(1);
 
   // Construct a valid and signed tx script.
   let txn_0 = oracle_helper_tx(&accounts.get(0).unwrap(), 3);
@@ -298,7 +298,7 @@ fn test_successful_upgrade_txs() {
     Ok(KeptVMStatus::Executed)
   );
 
-  executor.new_custom_block(2);
+  executor.new_custom_block(1);
   let txn_1 = oracle_helper_tx(&accounts.get(1).unwrap(), 3);
   let output = executor.execute_and_apply(txn_1);
   assert_eq!(
@@ -306,7 +306,7 @@ fn test_successful_upgrade_txs() {
     Ok(KeptVMStatus::Executed)
   );
 
-  executor.new_custom_block(2);
+  executor.new_custom_block(1);
   let txn_2 = oracle_helper_tx(&accounts.get(2).unwrap(), 3);
   let output = executor.execute_and_apply(txn_2);
   assert_eq!(
@@ -314,13 +314,21 @@ fn test_successful_upgrade_txs() {
     Ok(KeptVMStatus::Executed)
   );
   
-
+  println!("upgrade test setup complete");
   // verify that the foo transaction should fail w/o the updated stdlib
   test_foo(&accounts.get(3).unwrap(), &mut executor, false);
 
+  println!("Upgrade::foo() is not found, as expected");
+
   // The creation of these blocks update the stdlib
+  // TODO: why do we need to set round 2 twice?
+  executor.new_custom_block(1);
+  println!("round 1");
+
   executor.new_custom_block(2);
-  executor.new_custom_block(2);
+
+  println!("round 2");
+
 
   // verify that the foo transaction should pass with the updated stdlib
   test_foo(&accounts.get(4).unwrap(), &mut executor, true);
