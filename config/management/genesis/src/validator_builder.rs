@@ -221,6 +221,7 @@ impl ValidatorBuilder {
             &validators,
             self.move_modules,
         )?;
+        dbg!(&genesis);
 
         // Insert Genesis and Waypoint into each validator
         for validator in &mut validators {
@@ -233,6 +234,8 @@ impl ValidatorBuilder {
                 StorageWrapper::new("validator", validator_storage),
                 Some(validator.config.execution.genesis_file_location.as_path()),
             )?;
+
+            
 
             anyhow::ensure!(
                 output.split("match").count() == 5,
@@ -363,7 +366,8 @@ impl ValidatorBuilder {
         Ok(())
     }
 
-    fn genesis_ceremony(
+    fn 
+    genesis_ceremony(
         genesis_storage: &mut OnDiskStorage,
         // root_keys: &RootKeys, /////// 0L /////////
         validators: &[ValidatorConfig],
