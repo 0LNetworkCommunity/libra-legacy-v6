@@ -13,7 +13,9 @@ pub mod ol_decimal;
 #[cfg(feature = "testing")]
 pub mod unit_test;
 
-#[cfg(feature = "testing")]
+// #[cfg(feature = "testing")]
+//////// 0L ////////
+// 0L needs these to be compiled normally to use in `swarm` and integration tests.
 pub mod debug;
 
 use move_core_types::{account_address::AccountAddress, identifier::Identifier};
@@ -38,9 +40,13 @@ pub fn all_natives(move_std_addr: AccountAddress) -> NativeFunctionTable {
         ("Vector", "pop_back", vector::native_pop),
         ("Vector", "destroy_empty", vector::native_destroy_empty),
         ("Vector", "swap", vector::native_swap),
-        #[cfg(feature = "testing")]
+        // #[cfg(feature = "testing")]
+        //////// 0L ////////
+        // 0L needs these to be compiled normally to use in `swarm` and integration tests.
         ("Debug", "print", debug::native_print),
-        #[cfg(feature = "testing")]
+        // #[cfg(feature = "testing")]
+        //////// 0L ////////
+        // 0L needs these to be compiled normally to use in `swarm` and integration tests.
         (
             "Debug",
             "print_stack_trace",
