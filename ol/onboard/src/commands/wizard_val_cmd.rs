@@ -134,7 +134,7 @@ impl Runnable for ValWizardCmd {
 
         // Initialize Validator Keys
         // this also sets a genesis waypoint if one was provide, e.g. from an upstream peer.
-        init_cmd::initialize_validator(&wallet, &app_config, base_waypoint, *&self.genesis_ceremony).expect("could not initialize validator key_store.json");
+        init_cmd::initialize_val_key_store(&wallet, &app_config, base_waypoint, *&self.genesis_ceremony).expect("could not initialize validator key_store.json");
         status_ok!("\nKey file written", "\n...........................\n");
 
 

@@ -55,40 +55,40 @@ impl Runnable for GenesisFilesCmd {
     }
 }
 
-/// create genesis files
-pub fn genesis_files(
-    cfg: &AppCfg,
-    chain_id: &Option<u8>,
-    github_org: &Option<String>,
-    repo: &Option<String>,
-    prebuilt_genesis: &Option<PathBuf>,
-    fullnode_only: &bool,
-    way_opt: Option<Waypoint>,
-) {
-    let home_dir = cfg.workspace.node_home.to_owned();
-    // 0L convention is for the namespace of the operator to be appended by '-oper'
-    let namespace = cfg.profile.auth_key.clone().to_string() + "-oper";
-    let val_ip_address = cfg.profile.ip;
+// /// create genesis files
+// pub fn genesis_files(
+//     cfg: &AppCfg,
+//     chain_id: &Option<u8>,
+//     github_org: &Option<String>,
+//     repo: &Option<String>,
+//     prebuilt_genesis: &Option<PathBuf>,
+//     fullnode_only: &bool,
+//     way_opt: Option<Waypoint>,
+// ) {
+//     let home_dir = cfg.workspace.node_home.to_owned();
+//     // 0L convention is for the namespace of the operator to be appended by '-oper'
+//     let namespace = cfg.profile.auth_key.clone().to_string() + "-oper";
+//     let val_ip_address = cfg.profile.ip;
 
-    ol_node_files::write_node_config_files(
-        home_dir.clone(),
-        chain_id.unwrap_or(1),
-        github_org.clone(),
-        repo.clone(),
-        &namespace,
-        prebuilt_genesis,
-        fullnode_only,
-        way_opt,
-        &None,
-        Some(val_ip_address),
-    )
-    .unwrap();
+//     ol_node_files::write_node_config_files(
+//         home_dir.clone(),
+//         chain_id.unwrap_or(1),
+//         github_org.clone(),
+//         repo.clone(),
+//         &namespace,
+//         prebuilt_genesis,
+//         fullnode_only,
+//         way_opt,
+//         &None,
+//         Some(val_ip_address),
+//     )
+//     .unwrap();
 
-    println!(
-        "validator configurations initialized, file saved to: {:?}",
-        &home_dir.join("validator.node.yaml")
-    );
-}
+//     println!(
+//         "validator configurations initialized, file saved to: {:?}",
+//         &home_dir.join("validator.node.yaml")
+//     );
+// }
 
 /// fetch files from github
 pub fn fetch_genesis_files_from_repo(

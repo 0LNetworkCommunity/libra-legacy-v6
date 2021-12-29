@@ -2,8 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::checkup;
-use crate::{application::app_config, config::AppCfg, entrypoint, migrate};
+use crate::{application::app_config, config::AppCfg, entrypoint};
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use anyhow::{bail, Error};
 use diem_genesis_tool::{init, key};
@@ -25,13 +24,27 @@ pub struct InitCmd {
     path: Option<PathBuf>,
     /// An upstream peer to use in 0L.toml
     #[options(help = "An upstream peer to use in 0L.toml")]
+    // TODO: rename to json_rpc_peer
     upstream_peer: Option<Url>,
-    /// Skip app configs
-    #[options(help = "Skip app configs")]
-    skip_app: bool,
-    /// Skip validator init
-    #[options(help = "Skip validator init")]
-    skip_val: bool,
+    /// Create the 0L.toml file for 0L apps
+    #[options(help = "Create the 0L.toml file for 0L apps")]
+    app: bool,
+
+    /// Create validator yaml file configuration
+    #[options(help = "Create validator yaml file configuration")]
+    val: bool,
+
+    /// Create validator yaml file configuration
+    #[options(help = "Create vfn.node.yaml file configuration")]
+    vfn: bool,
+
+    /// Create fullnode.node.yaml file configuration
+    #[options(help = "Create fullnode.node.yaml file configuration")]
+    fullnode: bool,
+
+    /// Init key store file for validator
+    #[options(help = "Init key store file for validator")]
+    key_store: bool,
     /// run checkup on config file
     #[options(help = "Check config file and give hints if something seems wrong")]
     checkup: bool,
@@ -49,36 +62,12 @@ pub struct InitCmd {
 impl Runnable for InitCmd {
     /// Print version message
     fn run(&self) {
-        if *&self.checkup {
-            // check 0L.toml file
-            checkup::checkup(self.path.to_owned());
-            return;
-        };
 
-        if *&self.fix {
-            // fix 0L.toml file
-            migrate::migrate(self.path.to_owned());
-            return;
-        };
-
-        let entry_args = entrypoint::get_args();
-        if let Some(path) = entry_args.swarm_path {
-            let swarm_node_home = entrypoint::get_node_home();
-            let absolute = fs::canonicalize(path).unwrap();
-            initialize_host_swarm(
-                absolute,
-                swarm_node_home,
-                entry_args.swarm_persona,
-                &self.source_path,
-            )
-            .expect("could not initialize host with swarm configs");
-            return;
-        }
 
         let (authkey, account, wallet) = wallet::get_account_from_prompt();
         // start with a default value, or read from file if already initialized
         let mut app_cfg = app_config().to_owned();
-        if !self.skip_app {
+        if self.app {
             app_cfg = initialize_app_cfg(
                 authkey,
                 account,
@@ -91,9 +80,24 @@ impl Runnable for InitCmd {
             .unwrap()
         };
 
-        if !self.skip_val {
-            initialize_validator(&wallet, &app_cfg, self.waypoint, false).unwrap()
+        if self.key_store {
+            initialize_val_key_store(&wallet, &app_cfg, self.waypoint, false).unwrap()
         };
+
+      // this tool also initializes users for swarm and tests.
+      let entry_args = entrypoint::get_args();
+        if let Some(path) = entry_args.swarm_path {
+            let swarm_node_home = entrypoint::get_node_home();
+            let absolute = fs::canonicalize(path).unwrap();
+            initialize_host_swarm(
+                absolute,
+                swarm_node_home,
+                entry_args.swarm_persona,
+                &self.source_path,
+            )
+            .expect("could not initialize host with swarm configs");
+            return;
+        }
     }
 }
 
@@ -155,7 +159,7 @@ pub fn initialize_host_swarm(
 }
 
 /// Initializes the necessary validator config files: genesis.blob, key_store.json
-pub fn initialize_validator(
+pub fn initialize_val_key_store(
     wallet: &WalletLibrary,
     miner_config: &AppCfg,
     way_opt: Option<Waypoint>,

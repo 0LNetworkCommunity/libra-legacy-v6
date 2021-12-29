@@ -2,17 +2,27 @@ use std::{fmt::Debug, fs, net::Ipv4Addr, path::PathBuf};
 
 use crate::storage_helper::StorageHelper;
 use anyhow::bail;
-use diem_config::{config::OnDiskStorageConfig, config::SafetyRulesService, config::{DiscoveryMethod, NetworkConfig, NodeConfig, Peer, PeerRole, PeerSet, RoleType, SecureBackend}, config::{Identity, WaypointConfig}, network_id::NetworkId};
+use diem_config::{
+    config::OnDiskStorageConfig,
+    config::SafetyRulesService,
+    config::{
+        DiscoveryMethod, NetworkConfig, NodeConfig, Peer, PeerRole, PeerSet, RoleType,
+        SecureBackend,
+    },
+    config::{Identity, WaypointConfig},
+    network_id::NetworkId,
+};
 use diem_crypto::{ed25519::Ed25519PublicKey, x25519::PublicKey};
-use diem_global_constants::{DEFAULT_PUB_PORT, DEFAULT_VFN_PORT, FULLNODE_NETWORK_KEY, GENESIS_WAYPOINT, OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
+use diem_global_constants::{
+    DEFAULT_PUB_PORT, DEFAULT_VFN_PORT, FULLNODE_NETWORK_KEY, GENESIS_WAYPOINT, OWNER_ACCOUNT,
+    VALIDATOR_NETWORK_KEY,
+};
 use diem_management::{config::ConfigPath, error::Error, secure_backend::ValidatorBackend};
-use diem_types::{chain_id::ChainId, waypoint::Waypoint, account_address::AccountAddress};
+use diem_secure_storage::{CryptoStorage, KVStorage};
+use diem_types::{account_address::AccountAddress, chain_id::ChainId, waypoint::Waypoint};
 use ol_types::account::ValConfigs;
 use serde::{Deserialize, Serialize};
 use structopt::StructOpt;
-use diem_secure_storage::{CryptoStorage, KVStorage};
-
-
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum NodeType {
@@ -76,6 +86,20 @@ impl Files {
     }
 }
 
+
+fn format_github_remote(repo: String, github_org: String, github_token_path: PathBuf, namespace: String) -> String {
+
+    format!(
+        "backend=github;repository_owner={github_org};repository={repo};token={path};namespace={ns}",
+        repo=&repo,
+        github_org=&github_org,
+        path=github_token_path.to_str().unwrap(),
+        ns=&namespace
+    )
+
+}
+
+
 pub fn write_node_config_files(
     output_dir: PathBuf,
     chain_id: u8,
@@ -87,47 +111,49 @@ pub fn write_node_config_files(
     _way_opt: Option<Waypoint>,
     layout_path: &Option<PathBuf>,
     val_ip_address: Option<Ipv4Addr>,
-    
 ) -> Result<NodeConfig, anyhow::Error> {
     // TODO: Do we need github token path with public repo?
-    let github_token_path = output_dir.join("github_token.txt");
     let chain_id = ChainId::new(chain_id);
 
     let storage_helper = StorageHelper::get_with_path(output_dir.clone());
 
-    let (_genesis_path, _genesis_waypoint) = make_genesis_file(
-        &output_dir,
-        prebuilt_genesis,
-        remote,
-        layout_path,
-        storage_helper,
-        chain_id,
-        namespace,
-    )?;
+    if repo.is_some() && github_org.is_some() {
+      let remote = format_github_remote(
+        repo.unwrap(),
+        github_org.unwrap(),
+        output_dir.join("github_token.txt"),
+        namespace.to_owned(),
+      );
 
-    make_node_yaml(
-      output_dir,
-      val_ip_address,
-      namespace,
-      *fullnode_only
-    )
+      let (_genesis_path, _genesis_waypoint) = make_genesis_file(
+          &output_dir,
+          prebuilt_genesis,
+          remote,
+          layout_path,
+          storage_helper,
+          chain_id,
+          namespace,
+      )?;
+    }
+
+    make_node_yaml(output_dir, val_ip_address, namespace, *fullnode_only)
 }
 
 fn get_default_keystore_helper(output_dir: PathBuf) -> StorageHelper {
-  StorageHelper::get_with_path(output_dir)
+    StorageHelper::get_with_path(output_dir)
 }
 /// Make all the node configurations needed
 pub fn make_node_yaml(
-  output_dir: PathBuf,
-  val_ip_address: Option<Ipv4Addr>,
-  namespace: &str,
-  fullnode_only: bool,
-) -> Result<NodeConfig, anyhow::Error>{
+    output_dir: PathBuf,
+    val_ip_address: Option<Ipv4Addr>,
+    namespace: &str,
+    fullnode_only: bool,
+) -> Result<NodeConfig, anyhow::Error> {
     // get the key_store storage interface for disk.
     let storage_helper = get_default_keystore_helper(output_dir.clone());
     let s = storage_helper.storage(namespace.to_owned());
     let gw = s.get::<Waypoint>(GENESIS_WAYPOINT)?.value;
-      // Get node configs template
+    // Get node configs template
     let config = if fullnode_only {
         let mut n = make_fullnode_cfg(output_dir.clone(), gw)?;
         write_yaml(output_dir.clone(), &mut n, NodeType::PublicFullNode)?;
@@ -136,32 +162,23 @@ pub fn make_node_yaml(
         // fullnode configs, only used for rescuing a validator node that's out of validator set.
         let mut fullnode = make_fullnode_cfg(output_dir.clone(), gw)?;
         write_yaml(output_dir.clone(), &mut fullnode, NodeType::PublicFullNode)?;
-        
+
         // vfn configs
         if let Some(ip_address) = val_ip_address {
-          let mut vfn = make_vfn_cfg(
-            output_dir.clone(),
-            gw,
-            ip_address,
-            namespace,
-          )?;
-          write_yaml(output_dir.clone(), &mut vfn, NodeType::ValidatorFullNode)?;
+            let mut vfn = make_vfn_cfg(output_dir.clone(), gw, ip_address, namespace)?;
+            write_yaml(output_dir.clone(), &mut vfn, NodeType::ValidatorFullNode)?;
         } else {
-          bail!("VFN settings requires a val_ip_address");
+            bail!("VFN settings requires a val_ip_address");
         }
 
         // validator configs
 
-        let mut n = make_validator_cfg(
-            output_dir.clone(),
-            namespace,
-        )?;
+        let mut n = make_validator_cfg(output_dir.clone(), namespace)?;
         write_yaml(output_dir.clone(), &mut n, NodeType::Validator)?;
         n
     };
     Ok(config)
 }
-
 
 fn write_yaml(
     output_dir: PathBuf,
@@ -228,10 +245,7 @@ fn make_genesis_file(
     }
 }
 
-fn make_validator_cfg(
-    output_dir: PathBuf,
-    namespace: &str,
-) -> Result<NodeConfig, anyhow::Error> {
+fn make_validator_cfg(output_dir: PathBuf, namespace: &str) -> Result<NodeConfig, anyhow::Error> {
     // TODO: make the validator node have mutual authentication with VFN.
     // for that it will need to get the Peer object of the VFN after the identity has been created
     // by default the VFN identity is random.
@@ -289,7 +303,7 @@ fn make_validator_cfg(
     vfn_net.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_VFN_PORT).parse()?;
     vfn_net.identity = id_for_vfn_network;
     c.full_node_networks = vec![vfn_net.to_owned()];
-    
+
     // NOTE: Validator does not have public JSON RPC enabled. Only for localhost queries
     // this is set with the NodeConfig defaults.
 
@@ -308,7 +322,6 @@ pub fn make_fullnode_cfg(
     c.base.waypoint = WaypointConfig::FromConfig(waypoint);
     c.base.role = RoleType::FullNode;
     c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
-    
 
     // Public fullnodes only connect to one network. Public fullnode.
     let mut pub_network = NetworkConfig::network_with_id(NetworkId::Public);
@@ -317,7 +330,7 @@ pub fn make_fullnode_cfg(
 
     // Public fullnodes have JSON RPC enabled to the public (0.0.0.0), so that the validator does not need to do so.
     c.json_rpc.address = "0.0.0.0:8080".parse()?;
-    
+
     // prune window exists to prevent state snapshots from taking up too much space.
     c.storage.prune_window = Some(20_000);
 
@@ -379,11 +392,10 @@ pub fn make_vfn_cfg(
     // let net = &mut c.full_node_networks[0];
     vfn_network.seeds = seeds;
     vfn_network.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_VFN_PORT).parse()?;
-    
+
     // Public fullnode network
     let mut pub_network = NetworkConfig::network_with_id(NetworkId::Public);
     pub_network.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_PUB_PORT).parse()?;
-
 
     // VFNs have JSON RPC enabled to the public (0.0.0.0), so that the validator does not need to do so.
     c.json_rpc.address = "0.0.0.0:8080".parse()?;
@@ -395,7 +407,10 @@ pub fn make_vfn_cfg(
     Ok(c)
 }
 
-fn make_vfn_peer_set(val_vfn_net_pubkey: Ed25519PublicKey, ip_address: Ipv4Addr) -> Result<PeerSet, Error>{
+fn make_vfn_peer_set(
+    val_vfn_net_pubkey: Ed25519PublicKey,
+    ip_address: Ipv4Addr,
+) -> Result<PeerSet, Error> {
     let bytes = val_vfn_net_pubkey.to_bytes();
     let validator_vfn_net_addr = AccountAddress::from_identity_public_key(bytes.into());
 
@@ -408,7 +423,10 @@ fn make_vfn_peer_set(val_vfn_net_pubkey: Ed25519PublicKey, ip_address: Ipv4Addr)
     Ok(seeds)
 }
 
-pub fn validator_upstream_peer_data(ip_address: Ipv4Addr, pubkey: PublicKey) -> Result<Peer, Error> {
+pub fn validator_upstream_peer_data(
+    ip_address: Ipv4Addr,
+    pubkey: PublicKey,
+) -> Result<Peer, Error> {
     let role = PeerRole::Validator;
     let val_addr = ValConfigs::make_vfn_addr(&ip_address.to_string(), pubkey);
     let p = Peer::from_addrs(role, vec![val_addr]);
@@ -465,22 +483,21 @@ pub fn test_default_for_validator() -> Result<NodeConfig, anyhow::Error> {
 
     Ok(n)
 }
- 
 
 pub fn test_default_for_public_full_node() {
-    let path_str= env!("CARGO_MANIFEST_DIR");
+    let path_str = env!("CARGO_MANIFEST_DIR");
     let path = PathBuf::from(path_str)
-    .parent()
-    .unwrap()
-    .parent()
-    .unwrap()
-    .parent()
-    .unwrap()
-    .join("ol/util/node_templates/fullnode.node.yaml");
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .join("ol/util/node_templates/fullnode.node.yaml");
 
     dbg!(&path);
     // let contents = std::include_str!(&path.to_string());
-    
+
     let contents = fs::read_to_string(&path).expect("could not find mnemonic file");
 
     let n: NodeConfig = serde_yaml::from_str(&contents).unwrap();
@@ -500,5 +517,5 @@ pub fn test_default_for_public_full_node() {
 
 #[test]
 fn test() {
-  default_for_public_full_node();
+    default_for_public_full_node();
 }
