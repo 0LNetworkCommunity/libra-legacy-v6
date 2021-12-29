@@ -1,4 +1,4 @@
-//! `CreateAccount` subcommand
+//! `create-account` subcommand
 
 #![allow(clippy::never_loop)]
 

@@ -125,7 +125,7 @@ impl StorageHelper {
             // Data needed for testnet, swarm, and genesis ceremony.
             let mut storage_root = self.storage("root".to_owned());
             let dummy_root = Ed25519PrivateKey::from_encoded_string(
-                "8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010"
+                "8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010" // protests rage accross the nation
             ).unwrap();
 
             storage_root

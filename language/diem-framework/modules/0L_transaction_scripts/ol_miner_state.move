@@ -45,7 +45,7 @@ use 0x1::Testnet;
     public(script) fun minerstate_helper(sender: signer) {
         assert(Testnet::is_testnet(), 01);
         
-        TowerState::test_helper_init_miner(
+        TowerState::test_helper_init_val(
             &sender,
             TestFixtures::alice_0_easy_chal(),
             TestFixtures::alice_0_easy_sol(),

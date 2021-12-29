@@ -1,4 +1,4 @@
-//! `CreateAccount` subcommand
+//! `create-validator` subcommand
 
 #![allow(clippy::never_loop)]
 

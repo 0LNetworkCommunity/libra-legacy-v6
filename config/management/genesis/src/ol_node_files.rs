@@ -31,9 +31,9 @@ pub struct Files {
     #[structopt(long)]
     namespace: String,
     #[structopt(long)]
-    github_org: String,
+    github_org: Option<String>,
     #[structopt(long)]
-    repo: String,
+    repo: Option<String>,
     #[structopt(long)]
     chain_id: u8,
     /// If specified, compares the internal state to that of a
@@ -58,8 +58,8 @@ impl Files {
         write_node_config_files(
             self.data_path,
             self.chain_id,
-            &self.github_org,
-            &self.repo,
+            self.github_org,
+            self.repo,
             &self.namespace,
             &None,
             &self.fullnode_only,
@@ -79,8 +79,8 @@ impl Files {
 pub fn write_node_config_files(
     output_dir: PathBuf,
     chain_id: u8,
-    github_org: &str,
-    repo: &str,
+    github_org: Option<String>,
+    repo: Option<String>,
     namespace: &str,
     prebuilt_genesis: &Option<PathBuf>,
     fullnode_only: &bool,
@@ -92,14 +92,6 @@ pub fn write_node_config_files(
     // TODO: Do we need github token path with public repo?
     let github_token_path = output_dir.join("github_token.txt");
     let chain_id = ChainId::new(chain_id);
-
-    let remote = format!(
-        "backend=github;repository_owner={github_org};repository={repo};token={path};namespace={ns}",
-        repo=&repo,
-        github_org=&github_org,
-        path=github_token_path.to_str().unwrap(),
-        ns=&namespace
-    );
 
     let storage_helper = StorageHelper::get_with_path(output_dir.clone());
 

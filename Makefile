@@ -133,6 +133,9 @@ mv-bin:
 reset:
 	onboard val --skip-mining --upstream-peer http://167.172.248.37/ --source-path ~/libra
 
+reset-safety:
+	jq -r '.["${ACC}-oper/safety_data"].value = { "epoch": 0, "last_voted_round": 0, "preferred_round": 0, "last_vote": null }' ${DATA_PATH}/key_store.json > ${DATA_PATH}/temp_key_store && mv ${DATA_PATH}/temp_key_store ${DATA_PATH}/key_store.json
+
 
 backup:
 	cd ~ && rsync -av --exclude db/ --exclude logs/ ~/.0L/* ~/0L_backup_$(shell date +"%m-%d-%y-%T")
@@ -454,7 +457,7 @@ debug:
 
 ##### DEVNET TESTS #####
 
-devnet: clear fix fix-genesis dev-wizard genesis start
+devnet: clear fix dev-wizard dev-genesis start
 # runs a smoke test from fixtures. 
 # Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 # This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'

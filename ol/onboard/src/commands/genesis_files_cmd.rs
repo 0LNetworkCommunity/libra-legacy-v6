@@ -73,8 +73,8 @@ pub fn genesis_files(
     ol_node_files::write_node_config_files(
         home_dir.clone(),
         chain_id.unwrap_or(1),
-        &github_org.clone().unwrap_or("OLSF".to_string()),
-        &repo.clone().unwrap_or("experimetal-genesis".to_string()),
+        github_org.clone(),
+        repo.clone(),
         &namespace,
         prebuilt_genesis,
         fullnode_only,

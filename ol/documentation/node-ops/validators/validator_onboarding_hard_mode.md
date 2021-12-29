@@ -32,10 +32,17 @@ You need to open ports 6179, 6180, 8080, 3030 on the host
 These instructions target Ubuntu.
 
 1.1. Set up an Ubuntu host with `ssh` access, e.g. in a cloud service provider. 
-1.2.  Associate a static IP  with your host, this will be tied to you account, and will be set in your `account.json` file.
-1.3. You'll want to use `tmux` to persist the terminal session for build, as well as for running the nodes and tower app. 
 
-tmux
+1.2.  Associate a static IP  with your host, this will be tied to you account, and will be set in your `account.json` file.
+
+1.3. You'll want to use `tmux` to persist the terminal session for build, as well as for running the nodes and tower app. Also this setup requires `git` and `make`, which might be installed already on your host. If not, perform the following steps now:
+
+```
+sudo apt install tmux git make
+```
+
+It is recommended to perform the steps from 1.4 onwards inside tmux. Short tmux intruction:
+
 ```
 # start a new tmux session
 tmux new -s build
@@ -45,23 +52,23 @@ tmux attach -t build
 ```
 to detach from the `tmux` session `Ctrl-b d`
 
-1.3. Clone this repo: 
+1.4. Clone this repo: 
 
 `git clone https://github.com/OLSF/libra.git`
 
-1.4. Config dependencies: 
+1.5. Config dependencies: 
 
 using make or running the `ol/utils/setup.sh` script directly
 
 using make
 ```
-sudo apt install make
+cd </path/to/libra-source/>
 make deps
 ```
 
 or run the script directly
 ```
-cd </path/to/libra/source/> && . ol/util/setup.sh
+cd </path/to/libra-source/> && . ol/util/setup.sh
 ```
 
 After `rust` and `cargo` are installed you are prompted to set a `PATH` environment variable. 
@@ -74,23 +81,23 @@ To configure your current shell, run:
 source $HOME/.cargo/env
 ```
 
-or reset your terminal
-```
-reset
-```
 
 For more details: (../devs/OS_dependencies.md)
 
-1.5. Build the source and install binaries:
-This takes a while, run inside `tmux` in case your session gets disconnected 
+1.6. Build the source and install binaries:
+This takes a while, run inside `tmux` to avoid your session gets disconnected 
 ```
-cd </path/to/libra/source/> 
+cd </path/to/libra-source/> 
 make bins && make install
+source $HOME/.bashrc
+```
+
+1.7. Fetch the web server files
+```
+ol serve --update
 ```
 
 ## 2. Generate an account
-
-[In-depth guide](Account-creation-for-validators.md) 
 
 Before you start: have the static IP address you wish to associate with your validator, and a fun personal statement 
 to place in your first proof.
@@ -102,13 +109,13 @@ to place in your first proof.
 
 ```
 # start wizard
-onboard val -u http://<ip-address>:3030
+onboard val -u http://<ip-address-of-the-one-who-onboards-you>:3030
 
 # without template, note: assumes an autopay_batch.json is in the project root.
 onboard val
 ```
 
-2.3. Send the generated `~/.0L/account.json` to someone that has GAS and can execute the account creation transaction for you.
+2.3. Send the generated `~/.0L/account.json` to someone that has GAS (the one who wants to onboard you) and can execute the account creation transaction for you.
 
 **If you are onboaring someone and receive the `account.json` [see](#onboarder-instructions)**  
 
@@ -181,6 +188,10 @@ You might see some network errors due to drops, but should again see round numbe
 
 This command will tell you the sync state of a RUNNING local node: `db-backup one-shot query node-state`
 
+While waiting for the sync to complete, it is a good opportunity, to set up the web monitor (but you can also do it any time later). Please follow the instructions here:
+
+[Set up web monitor](web_monitor.md) 
+
 ## 5. Start producing delay proofs ("delay mining") 
 
 Before you start: You will need your mnemonic.
@@ -232,9 +243,9 @@ diem-node --config  ~/.0L/validator.node.yaml >> ~/.0L/logs/validator.log 2>&1
 
 6.2 Restart the tower app after your validator is running, refer to [Step 5](#5-start-producing-delay-proofs-delay-mining) - ctrl+ C and restart it. 
 
-Once you have been on boarded you should see you public key in the list of validators. Run the explorer to view:
+Once you have been on boarded you should see you public key in the list of validators. Run the web monitor to view:
 ```
-ol explorer
+ol serve -c
 ```
 ---
 
@@ -242,7 +253,6 @@ ol explorer
 If you are onboarding someone and have received their `account.json` file
 1. Copy the `account.json` to your local node.
 2. Submit a tx with `txs` app:
-   `txs create-validator <path/to/account.json>
+   `txs create-validator --account-file <path/to/account.json>
 
 Troubleshooting: If there is an issue with sequence_number out of sync. Retry the transaction.
-

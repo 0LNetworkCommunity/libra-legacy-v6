@@ -75,9 +75,12 @@ impl Mempool {
             .unwrap_or_default();
 
         if is_rejected {
+            // TODO: Why does the sequence number have to be greater than the current to reject?
             if sequence_number >= current_seq_number {
                 self.transactions
                     .reject_transaction(&sender, sequence_number);
+            } else {
+                warn!("Sequence number of rejected txn is in past {}:{}", sender, sequence_number);
             }
         } else {
             // update current cached sequence number for account
