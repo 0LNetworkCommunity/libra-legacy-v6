@@ -6,7 +6,7 @@ use crate::{application::app_config, config::AppCfg, entrypoint, node::{client, 
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use anyhow::{bail, Error};
 use dialoguer::Confirm;
-use diem_genesis_tool::{init, key};
+use diem_genesis_tool::{init, key, ol_node_files};
 use diem_json_rpc_client::AccountAddress;
 use diem_types::transaction::authenticator::AuthenticationKey;
 use diem_types::waypoint::Waypoint;
@@ -26,7 +26,7 @@ pub struct InitCmd {
     /// An upstream peer to use in 0L.toml
     #[options(help = "An upstream peer to use in 0L.toml")]
     // TODO: rename to json_rpc_peer
-    upstream_peer: Option<Url>,
+    rpc_peer: Option<Url>,
     /// Create the 0L.toml file for 0L apps
     #[options(help = "Create the 0L.toml file for 0L apps")]
     app: bool,
@@ -47,8 +47,6 @@ pub struct InitCmd {
     #[options(help = "Get seed fullnode peers from chain")]
     seed_peer: bool,
 
-
-
     /// Init key store file for validator
     #[options(help = "Init key store file for validator")]
     key_store: bool,
@@ -58,8 +56,13 @@ pub struct InitCmd {
     /// fix the config file
     #[options(help = "Fix config file, and migrate any missing fields")]
     fix: bool,
+
     /// Set a waypoint in config files
-    #[options(help = "Set a waypoint in config files")]
+    #[options(help = "Set from CLI or get waypoint from chain")]
+    update_waypoint: bool,
+
+    /// Set a waypoint in config files
+    #[options(help = "Manually set a waypoint. ")]
     waypoint: Option<Waypoint>,
     /// Path to source code, for devs
     #[options(help = "Path to source code, for devs")]
@@ -74,10 +77,47 @@ impl Runnable for InitCmd {
         let entry_args = entrypoint::get_args();
         let is_swarm = *&entry_args.swarm_path.is_some();
 
+        if self.update_waypoint {
+          // TODO: will need to update the key_store.json file with waypoint info.
+          if let Some(w) = self.waypoint {
+              app_cfg.chain_info.base_waypoint = Some(w);
+              app_cfg.save_file();
+              return;
+          };
+          let client = match client::pick_client(entry_args.swarm_path.clone(), &mut app_cfg){
+              Ok(c) => c,
+              Err(e) => {
+                println!("Could not connect to a fullnode with JSON API, exiting. Message: {:?}", e);
+                exit(1);
+              },
+          };
 
+          let mut node = Node::new(client, &app_cfg, is_swarm);
+
+          match node.waypoint() {
+            Ok(w) =>  {
+              app_cfg.chain_info.base_waypoint = Some(w);
+              app_cfg.save_file();
+              return;
+
+            },
+            Err(e) => {
+               println!("Could not find a waypoint, exiting. Message: {:?}", e);
+              exit(1);
+            },
+        }
+        }
+        // fetch a list of seed peers from the current on chain discovery
         // doesn't need mnemonic
         if self.seed_peer {
-          let client = client::pick_client(entry_args.swarm_path.clone(), &mut app_cfg).unwrap();
+          let client = match client::pick_client(entry_args.swarm_path.clone(), &mut app_cfg){
+              Ok(c) => c,
+              Err(e) => {
+                println!("Could not connect to a fullnode with JSON API, exiting. Message: {:?}", e);
+                exit(1);
+              },
+          };
+
           let mut node = Node::new(client, &app_cfg, is_swarm);
 
           match node.refresh_fullnode_seeds() {
@@ -107,8 +147,38 @@ impl Runnable for InitCmd {
         };
         }
 
+        // create files for VFN
+        if self.vfn {
+          println!("Creating vfn.node.yaml file.");
 
+          let namespace = app_cfg.profile.account.to_hex() + "-oper";
+          let output_dir = app_cfg.workspace.node_home;
+          let val_ip_address = app_cfg.profile.ip;
+          let gen_wp = app_cfg.chain_info.base_waypoint;
+          
+          ol_node_files::make_vfn_file(output_dir, val_ip_address, gen_wp.unwrap_or_default(), &namespace);
+          return;
+
+        }
+
+        // Can also initializes users for swarm and tests.
+        if let Some(path) = entry_args.swarm_path {
+            let swarm_node_home = entrypoint::get_node_home();
+            let absolute = fs::canonicalize(path).unwrap();
+            initialize_host_swarm(
+                absolute,
+                swarm_node_home,
+                entry_args.swarm_persona,
+                &self.source_path,
+            )
+            .expect("could not initialize host with swarm configs");
+            return;
+        }
+
+        
+        /////////// Everything below requires mnemonic ////////
         let (authkey, account, wallet) = wallet::get_account_from_prompt();
+
         // now we can modify the 0L.toml from template.
         if self.app {
             // note this will overwrite the 0L.toml
@@ -122,7 +192,7 @@ impl Runnable for InitCmd {
                     app_cfg = initialize_app_cfg(
                         authkey,
                         account,
-                        &self.upstream_peer,
+                        &self.rpc_peer,
                         &self.path,
                         &None, // TODO: probably need an epoch option here.
                         &self.waypoint,
@@ -132,28 +202,15 @@ impl Runnable for InitCmd {
                 }
                 _ => panic!("Creating 0L.toml aborted"),
             };
+            return;
         };
+
 
         if self.key_store {
-            initialize_val_key_store(&wallet, &app_cfg, self.waypoint, false).unwrap()
+            initialize_val_key_store(&wallet, &app_cfg, self.waypoint, false).unwrap();
+            return;
         };
 
-
-
-        // this tool also initializes users for swarm and tests.
-
-        if let Some(path) = entry_args.swarm_path {
-            let swarm_node_home = entrypoint::get_node_home();
-            let absolute = fs::canonicalize(path).unwrap();
-            initialize_host_swarm(
-                absolute,
-                swarm_node_home,
-                entry_args.swarm_persona,
-                &self.source_path,
-            )
-            .expect("could not initialize host with swarm configs");
-            return;
-        }
     }
 }
 
@@ -161,7 +218,7 @@ impl Runnable for InitCmd {
 pub fn initialize_app_cfg(
     authkey: AuthenticationKey,
     account: AccountAddress,
-    upstream_peer: &Option<Url>,
+    rpc_peer: &Option<Url>,
     path: &Option<PathBuf>,
     epoch_opt: &Option<u64>,
     wp_opt: &Option<Waypoint>,
@@ -170,7 +227,7 @@ pub fn initialize_app_cfg(
     let cfg = AppCfg::init_app_configs(
         authkey,
         account,
-        upstream_peer,
+        rpc_peer,
         path,
         epoch_opt,
         wp_opt,

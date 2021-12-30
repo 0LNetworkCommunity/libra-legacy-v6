@@ -17,11 +17,12 @@ use diem_global_constants::{
     VALIDATOR_NETWORK_KEY,
 };
 use diem_management::{config::ConfigPath, error::Error, secure_backend::ValidatorBackend};
-use diem_secure_storage::CryptoStorage;
+use diem_secure_storage::{CryptoStorage, KVStorage};
 use diem_types::{account_address::AccountAddress, chain_id::ChainId, waypoint::Waypoint};
 use ol_types::account::ValConfigs;
 use serde::{Deserialize, Serialize};
 use structopt::StructOpt;
+use diem_crypto::x25519::PrivateKey;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum NodeType {
@@ -176,9 +177,10 @@ pub fn make_all_profiles_yaml(
 pub fn make_val_file(
     output_dir: PathBuf,
     // val_ip_address: Ipv4Addr,
-    vfn_ip_address: Option<Ipv4Addr>,
+    _vfn_ip_address: Option<Ipv4Addr>,
     namespace: &str,
 ) -> Result<NodeConfig, anyhow::Error> {
+  // TODO: The validator's connection to VFN should be restricted to the vfn_ip_address
     let mut val = make_validator_cfg(output_dir.clone(), namespace)?;
     write_yaml(output_dir.clone(), &mut val, NodeType::Validator)?;
     Ok(val)
@@ -289,16 +291,16 @@ pub fn make_fullnode_cfg(
     c.base.waypoint = WaypointConfig::FromConfig(waypoint);
     c.base.role = RoleType::FullNode;
     c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
-
-    // Public fullnodes only connect to one network. Public fullnode.
-    let mut pub_network = NetworkConfig::network_with_id(NetworkId::Public);
-    pub_network.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_PUB_PORT).parse()?;
-
+    
+    // prune window exists to prevent state snapshots from taking up too much space.
+    c.storage.prune_window = Some(100_000);
+    
     // Public fullnodes have JSON RPC enabled to the public (0.0.0.0), so that the validator does not need to do so.
     c.json_rpc.address = "0.0.0.0:8080".parse()?;
 
-    // prune window exists to prevent state snapshots from taking up too much space.
-    c.storage.prune_window = Some(100_000);
+    // Public fullnodes only connect to one network. Public fullnodes network.
+    let mut pub_network = NetworkConfig::network_with_id(NetworkId::Public);
+    pub_network.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_PUB_PORT).parse()?;
 
     if let Some(seeds) = seed_addr {
       pub_network.seed_addrs  = seeds;
@@ -356,21 +358,21 @@ fn make_validator_cfg(output_dir: PathBuf, namespace: &str) -> Result<NodeConfig
 
     c.storage.prune_window = Some(100_000);
 
-    // // VFN Settings of the FullNode
-    // // the validator only participates in 1 fullnode network, it's own VFN.
-
-    // let id_for_vfn_network = Identity::from_storage(
-    //     VALIDATOR_NETWORK_KEY.to_string(),
-    //     OWNER_ACCOUNT.to_string(),
-    //     SecureBackend::OnDiskStorage(disk_storage.clone()),
-    // );
-
+    //////////////// CREATE CONFIGS FOR CONNECTING TO VFN PRIVATE NETWORK ////////////////
+    // this is the only fullnode network a validator should connect to, so to be isolated from public.
+    
+    // TODO: The validator's connection to VFN should be restricted to the vfn_ip_address
     let mut vfn_net = NetworkConfig::network_with_id(NetworkId::Private("vfn".to_string()));
     vfn_net.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_VFN_PORT).parse()?;
     
-    // use same ID as Validator for the private VfN network
+    // This ID is how the Validator node identifies themselves on their private VFN network.
+    // same ID as being used in the validator network.
     vfn_net.identity = network_id;
     c.full_node_networks = vec![vfn_net.to_owned()];
+
+    // pick the order of the networks to connect to if the Validator network is not reachable.
+    // TODO: Does this work for when the validator is not in the validator set? This has not worked int he past.
+    c.upstream.networks = vec![NetworkId::Private("vfn".to_owned()), NetworkId::Public];
 
     // NOTE: Validator does not have public JSON RPC enabled. Only for localhost queries
     // this is set with the NodeConfig defaults.
@@ -378,20 +380,13 @@ fn make_validator_cfg(output_dir: PathBuf, namespace: &str) -> Result<NodeConfig
     Ok(c)
 }
 
-
-
-
-
 /// make the fullnode NodeConfig
 pub fn make_vfn_cfg(
     output_dir: PathBuf,
     waypoint: Waypoint,
-    // validator_addr: PeerId,
     val_ip_address: Ipv4Addr,
     namespace: &str,
-    // fn_net_pubkey: PublicKey,
 ) -> Result<NodeConfig, anyhow::Error> {
-    // let mut c = default_for_vfn()?;
     let mut c = NodeConfig::default();
 
     let storage_helper = get_default_keystore_helper(output_dir.clone());
@@ -402,53 +397,81 @@ pub fn make_vfn_cfg(
     c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
 
     let storage = storage_helper.storage(namespace.to_string());
+    c.storage.prune_window = Some(100_000);
+
+    
+    //////////////// IDENTITY OF NODE  ////////////////
+    // the VFN announces itself as the owner address, but uses FULLNODE private key to authenticate.
+
+    // NOTE: WE ARE CHOSING TO HAVE THE FULLNODE NETWORK PRIVATE KEY UNECRPYTED IN THE CONFIG FILE
+    // this is preferable to the VFN also storing the key_store.json on the host
+    // which is equally insecure, and contains many more keys.
+
+    let fullnode_private_key = storage.export_private_key(FULLNODE_NETWORK_KEY)?;
+    // make the fullnode discoverable by the account address of the validator owner.
+    let owner_address_as_fn_id = storage.get(OWNER_ACCOUNT)?.value;
+    
+    let p = PrivateKey::from_ed25519_private_bytes(&fullnode_private_key.to_bytes())?;
+    let id_of_vfn_node = Identity::from_config(p, owner_address_as_fn_id);
 
     // A VFN has two fullnode networks it participates in.
     // 1. A private network with the Validator.
     // 2. the fullnode network. The fullnode network cannot exist unless the VFN briges the validators to the public.
+    
+    //////////////// CREATE CONFIGS FOR CONNECTING TO VFN PRIVATE NETWORK ////////////////
+
     // Private Fullnode Network named "vfn" - but could be any name the validator and vfn agreed on
     let mut vfn_network = NetworkConfig::network_with_id(NetworkId::Private("vfn".to_string()));
-
+    vfn_network.identity = id_of_vfn_node.clone();
     // set the Validator as the Seed peer for the VFN network
     // need to get their ID and IP address
     let val_vfn_net_pubkey = storage.get_public_key(VALIDATOR_NETWORK_KEY )?.public_key;
     dbg!(&val_vfn_net_pubkey);
-    let seeds = make_vfn_peer_set(val_vfn_net_pubkey, val_ip_address)?;
+    let seeds = make_vfn_peer_set(owner_address_as_fn_id, val_vfn_net_pubkey, val_ip_address)?;
 
     // The seed for the VFN is the validator's ID on the private network.
     vfn_network.seeds = seeds;
+
+    // TODO: This should be restricted to receiving connections from a known peer.
     vfn_network.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_VFN_PORT).parse()?;
 
-    // Public fullnode network
+
+    //////////////// CREATE CONFIGS FOR CONNECTING TO PUBLIC FULLNODES ////////////////
+
+    // Public fullnode network template
     let mut pub_network = NetworkConfig::network_with_id(NetworkId::Public);
+    
+    // using the same ID on both private vfn network as well as public network.
+    pub_network.identity = id_of_vfn_node;
+
+    // this port accepts connections from unknown peers.
     pub_network.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_PUB_PORT).parse()?;
 
     // NOTE: VFNs do not serve JSON RPC Requests.
 
     c.full_node_networks = vec![vfn_network, pub_network];
 
-    c.storage.prune_window = Some(20_000);
+    // pick the order of the networks to connect to if the VFN network is not reachable.
+    c.upstream.networks = vec![NetworkId::Public];
 
     Ok(c)
 }
 
 fn make_vfn_peer_set(
+    validator_account: AccountAddress,
     val_vfn_net_pubkey: Ed25519PublicKey,
     ip_address: Ipv4Addr,
 ) -> Result<PeerSet, Error> {
     let bytes = val_vfn_net_pubkey.to_bytes();
-    let validator_vfn_net_addr = AccountAddress::from_identity_public_key(bytes.into());
-
-    // let fn_net_pubkey = validators_id_for_vfn_network.
     // create the vfn network info.
-    let val_peer_data = validator_upstream_peer_data(ip_address, bytes.into())?;
+    let val_peer_data = make_validator_network_protocol(ip_address, bytes.into())?;
     // The seed address for the VFN can only be the Validator's address.
     let mut seeds = PeerSet::default();
-    seeds.insert(validator_vfn_net_addr, val_peer_data);
+    seeds.insert(validator_account, val_peer_data);
     Ok(seeds)
 }
 
-pub fn validator_upstream_peer_data(
+pub fn make_validator_network_protocol(
     ip_address: Ipv4Addr,
     pubkey: PublicKey,
 ) -> Result<Peer, Error> {
@@ -457,7 +480,6 @@ pub fn validator_upstream_peer_data(
     let p = Peer::from_addrs(role, vec![val_addr]);
     Ok(p)
 }
-
 
 
 pub fn default_for_public_fullnode() -> Result<NodeConfig, anyhow::Error> {
