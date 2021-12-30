@@ -68,15 +68,31 @@ We will create a user called `node` which has no password (can only be accessed 
 sudo useradd node -m -s /bin/bash
 ```
 
+You can then access that account via `sudo su node`. Or setup ssh keys under `/home/node/.ssh/authorized_keys`.
+
+1.6. Install Rust on the `node` user
+```
+sudo su node
+
+# you are now in the node user
+curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
+
+# restart your bash instance to pickup the cargo paths
+. ~/.bashrc
+
+# install some command-line tools
+cargo install toml-cli
+```
+
 ## Create Binaries
 It is recommended to perform the steps from 1.4 onwards inside tmux. Short tmux intruction:
 
 ```
 # start a new tmux session
-tmux new -s build
+tmux
 
 # to rejoin the session
-tmux attach -t build
+tmux a
 ```
 to detach from the `tmux` session use key stroke: `Ctrl-b` then `d`
 
