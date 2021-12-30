@@ -116,7 +116,7 @@ pub fn write_node_config_files(
         namespace,
     )?;
 
-    update_genesis_waypoint_in_key_store(&output_dir, namespace, genesis_waypoint);
+    update_genesis_waypoint_in_key_store(&output_dir, namespace, genesis_waypoint.clone());
 
     // fullnodes need seed peers, try to extract from the genesis file as a starting place.
     let seeds: Option<SeedAddresses> = if let Some(p) = seed_peers_path {
@@ -127,7 +127,14 @@ pub fn write_node_config_files(
 
     let vfn_ip_address = val_ip_address.clone();
     // This next step depends on genesis waypoint existing in key_store.
-    make_all_profiles_yaml(output_dir, val_ip_address, vfn_ip_address, seeds, namespace, *fullnode_only)
+    make_all_profiles_yaml(
+      output_dir,
+      val_ip_address.expect("missing an ip address for validator"),
+      vfn_ip_address, 
+      seeds,
+      namespace, 
+      genesis_waypoint
+    )
 }
 
 fn get_default_keystore_helper(output_dir: PathBuf) -> StorageHelper {
@@ -149,40 +156,18 @@ fn update_genesis_waypoint_in_key_store(
 /// Make all the node configurations needed
 pub fn make_all_profiles_yaml(
     output_dir: PathBuf,
-    val_ip_address: Option<Ipv4Addr>,
+    val_ip_address: Ipv4Addr,
     vfn_ip_address: Option<Ipv4Addr>,
     seed_addr: Option<SeedAddresses>,
     namespace: &str,
-    fullnode_only: bool,
+    genesis_waypoint: Waypoint,
+    // _fullnode_only: bool,
 ) -> Result<NodeConfig, anyhow::Error> {
-    // get the key_store storage interface for disk.
-    let storage_helper = get_default_keystore_helper(output_dir.clone());
-    let s = storage_helper.storage(namespace.to_owned());
-    let gw = s.get::<Waypoint>(GENESIS_WAYPOINT)?.value;
-    // Get node configs template
-    let config = if fullnode_only {
-        let mut n = make_fullnode_cfg(output_dir.clone(), seed_addr, gw)?;
-        write_yaml(output_dir.clone(), &mut n, NodeType::PublicFullNode)?;
-        n
-    } else {
-        // fullnode configs, only used for rescuing a validator node that's out of validator set.
-        let mut fullnode = make_fullnode_cfg(output_dir.clone(), seed_addr, gw)?;
-        write_yaml(output_dir.clone(), &mut fullnode, NodeType::PublicFullNode)?;
 
-        // vfn configs
-        if let Some(ip_address) = val_ip_address {
-            let mut vfn = make_vfn_cfg(output_dir.clone(), gw, ip_address, namespace)?;
-            write_yaml(output_dir.clone(), &mut vfn, NodeType::ValidatorFullNode)?;
-        } else {
-            bail!("VFN settings requires a val_ip_address");
-        }
 
-        // validator configs
-
-        let mut n = make_validator_cfg(output_dir.clone(), namespace)?;
-        write_yaml(output_dir.clone(), &mut n, NodeType::Validator)?;
-        n
-    };
+    let config = make_val_file(output_dir.clone(), vfn_ip_address, namespace)?;
+    make_vfn_file(output_dir.clone(), val_ip_address, genesis_waypoint, namespace)?;
+    make_fullnode_file(output_dir.clone(), seed_addr, genesis_waypoint)?;
 
     Ok(config)
     
@@ -191,12 +176,13 @@ pub fn make_all_profiles_yaml(
 // helper to write a new validator.node.yaml file.
 pub fn make_val_file(
     output_dir: PathBuf,
-    val_ip_address: Option<Ipv4Addr>,
+    // val_ip_address: Ipv4Addr,
     vfn_ip_address: Option<Ipv4Addr>,
     namespace: &str,
-) -> Result<(), anyhow::Error> {
+) -> Result<NodeConfig, anyhow::Error> {
     let mut val = make_validator_cfg(output_dir.clone(), namespace)?;
-    write_yaml(output_dir.clone(), &mut val, NodeType::Validator)
+    write_yaml(output_dir.clone(), &mut val, NodeType::Validator);
+    Ok(val)
 }
 
 // helper to write a new validator.node.yaml file.
@@ -213,10 +199,8 @@ pub fn make_vfn_file(
 // helper to write a new validator.node.yaml file.
 pub fn make_fullnode_file(
     output_dir: PathBuf,
-    val_ip_address: Ipv4Addr,
     seed_addr: Option<SeedAddresses>,
     gen_wp: Waypoint,
-    namespace: &str,
 ) -> Result<(), anyhow::Error> {
     let mut n = make_fullnode_cfg(output_dir.clone(), seed_addr, gen_wp)?;
     write_yaml(output_dir.clone(), &mut n, NodeType::PublicFullNode)
@@ -338,7 +322,7 @@ fn make_validator_cfg(output_dir: PathBuf, namespace: &str) -> Result<NodeConfig
     c.consensus.safety_rules.service = SafetyRulesService::Thread;
     c.consensus.safety_rules.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
 
-    c.storage.prune_window = Some(20_000);
+    c.storage.prune_window = Some(100_000);
 
     // VFN Settings of the FullNode
     // the validator only participates in 1 fullnode network, it's own VFN.
