@@ -24,7 +24,7 @@ pub struct MempoolConfig {
 impl Default for MempoolConfig {
     fn default() -> MempoolConfig {
         MempoolConfig {
-            shared_mempool_tick_interval_ms: 50,
+            shared_mempool_tick_interval_ms: 50, // TODO: Seems too fast.
             shared_mempool_backoff_interval_ms: 30_000,
             shared_mempool_batch_size: 100,
             shared_mempool_ack_timeout_ms: 2_000,
@@ -32,7 +32,7 @@ impl Default for MempoolConfig {
             max_broadcasts_per_peer: 1,
             mempool_snapshot_interval_secs: 180,
             capacity: 1_000_000,
-            capacity_per_user: 100,
+            capacity_per_user: 3, // no reason for a given user to be ablet to submit more than tree txs to mempool.
             default_failovers: 3,
             system_transaction_timeout_secs: 600,
             system_transaction_gc_interval_ms: 60_000,

@@ -278,73 +278,6 @@ fn make_genesis_file(
     }
 }
 
-fn make_validator_cfg(output_dir: PathBuf, namespace: &str) -> Result<NodeConfig, anyhow::Error> {
-    // TODO: make the validator node have mutual authentication with VFN.
-    // for that it will need to get the Peer object of the VFN after the identity has been created
-    // by default the VFN identity is random.
-    let mut disk_storage = OnDiskStorageConfig::default();
-    disk_storage.set_data_dir(output_dir.clone());
-    disk_storage.path = output_dir.clone().join("key_store.json");
-    disk_storage.namespace = Some(namespace.to_owned());
-
-    // let mut c = default_for_validator()?;
-    let mut c = NodeConfig::default();
-
-    c.set_data_dir(output_dir.clone());
-    // Note skip setting namepace for later.
-    c.base.waypoint =
-        WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
-    c.base.role = RoleType::Validator;
-    // If validator configs set val network configs
-    let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
-
-    // NOTE: Using configs as described in cluster tests:
-    // testsuite/cluster-test/src/cluster_swarm/configs/validator.yaml
-    network.discovery_method = DiscoveryMethod::Onchain;
-    network.mutual_authentication = true;
-    network.identity = Identity::from_storage(
-        VALIDATOR_NETWORK_KEY.to_string(),
-        OWNER_ACCOUNT.to_string(),
-        SecureBackend::OnDiskStorage(disk_storage.clone()),
-    );
-    network.network_address_key_backend = Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
-
-    c.validator_network = Some(network.clone());
-
-    // Consensus
-    c.base.waypoint =
-        WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
-
-    c.execution.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
-    c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
-
-    c.consensus.safety_rules.service = SafetyRulesService::Thread;
-    c.consensus.safety_rules.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
-
-    c.storage.prune_window = Some(100_000);
-
-    // VFN Settings of the FullNode
-    // the validator only participates in 1 fullnode network, it's own VFN.
-
-    let id_for_vfn_network = Identity::from_storage(
-        FULLNODE_NETWORK_KEY.to_string(),
-        OWNER_ACCOUNT.to_string(),
-        SecureBackend::OnDiskStorage(disk_storage.clone()),
-    );
-
-    let mut vfn_net = NetworkConfig::network_with_id(NetworkId::Private("vfn".to_string()));
-    vfn_net.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_VFN_PORT).parse()?;
-    vfn_net.identity = id_for_vfn_network;
-    c.full_node_networks = vec![vfn_net.to_owned()];
-
-    // NOTE: Validator does not have public JSON RPC enabled. Only for localhost queries
-    // this is set with the NodeConfig defaults.
-
-    Ok(c)
-}
-
-
-
 /// make the fullnode NodeConfig
 pub fn make_fullnode_cfg(
     output_dir: PathBuf,
@@ -375,6 +308,79 @@ pub fn make_fullnode_cfg(
 
     Ok(c)
 }
+
+fn make_validator_cfg(output_dir: PathBuf, namespace: &str) -> Result<NodeConfig, anyhow::Error> {
+    // TODO: make the validator node have mutual authentication with VFN.
+    // for that it will need to get the Peer object of the VFN after the identity has been created
+    // by default the VFN identity is random.
+    let mut disk_storage = OnDiskStorageConfig::default();
+    disk_storage.set_data_dir(output_dir.clone());
+    disk_storage.path = output_dir.clone().join("key_store.json");
+    disk_storage.namespace = Some(namespace.to_owned());
+
+    // let mut c = default_for_validator()?;
+    let mut c = NodeConfig::default();
+
+    c.set_data_dir(output_dir.clone());
+    // Note skip setting namepace for later.
+    c.base.waypoint =
+        WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
+    c.base.role = RoleType::Validator;
+    // If validator configs set val network configs
+    let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
+
+    let network_id = Identity::from_storage(
+        VALIDATOR_NETWORK_KEY.to_string(),
+        OWNER_ACCOUNT.to_string(),
+        SecureBackend::OnDiskStorage(disk_storage.clone()),
+    );
+    // NOTE: Using configs as described in cluster tests:
+    // testsuite/cluster-test/src/cluster_swarm/configs/validator.yaml
+    network.discovery_method = DiscoveryMethod::Onchain;
+    network.mutual_authentication = true;
+    network.identity = network_id.clone(); // will also use for VFN.
+
+    network.network_address_key_backend = Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
+
+    c.validator_network = Some(network.clone());
+
+    // Consensus
+    c.base.waypoint =
+        WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
+
+    c.execution.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
+    c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
+
+    c.consensus.safety_rules.service = SafetyRulesService::Thread;
+    c.consensus.safety_rules.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
+
+    c.storage.prune_window = Some(100_000);
+
+    // // VFN Settings of the FullNode
+    // // the validator only participates in 1 fullnode network, it's own VFN.
+
+    // let id_for_vfn_network = Identity::from_storage(
+    //     VALIDATOR_NETWORK_KEY.to_string(),
+    //     OWNER_ACCOUNT.to_string(),
+    //     SecureBackend::OnDiskStorage(disk_storage.clone()),
+    // );
+
+    let mut vfn_net = NetworkConfig::network_with_id(NetworkId::Private("vfn".to_string()));
+    vfn_net.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_VFN_PORT).parse()?;
+    
+    // use same ID as Validator for the private VfN network
+    vfn_net.identity = network_id;
+    c.full_node_networks = vec![vfn_net.to_owned()];
+
+    // NOTE: Validator does not have public JSON RPC enabled. Only for localhost queries
+    // this is set with the NodeConfig defaults.
+
+    Ok(c)
+}
+
+
+
+
 
 /// make the fullnode NodeConfig
 pub fn make_vfn_cfg(
@@ -410,8 +416,7 @@ pub fn make_vfn_cfg(
     dbg!(&val_vfn_net_pubkey);
     let seeds = make_vfn_peer_set(val_vfn_net_pubkey, ip_address)?;
 
-    // update the template (instead of creating from default)
-    // let net = &mut c.full_node_networks[0];
+    // The seed for the VFN is the validator's ID on the private network.
     vfn_network.seeds = seeds;
     vfn_network.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_VFN_PORT).parse()?;
 

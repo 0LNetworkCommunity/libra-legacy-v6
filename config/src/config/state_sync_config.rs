@@ -40,7 +40,7 @@ impl Default for StateSyncConfig {
             mempool_commit_timeout_ms: 5_000,
             multicast_timeout_ms: 30_000,
             sync_request_timeout_ms: 60_000,
-            tick_interval_ms: 100,
+            tick_interval_ms: 1000,
         }
     }
 }
