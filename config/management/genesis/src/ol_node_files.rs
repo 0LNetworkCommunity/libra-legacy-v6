@@ -1,7 +1,6 @@
 use std::{fmt::Debug, fs, net::Ipv4Addr, path::PathBuf, process::exit};
 
-use crate::{storage_helper::StorageHelper, seeds::{SeedAddresses, Seeds}};
-use anyhow::bail;
+use crate::{storage_helper::StorageHelper, seeds::SeedAddresses};
 use diem_config::{
     config::OnDiskStorageConfig,
     config::SafetyRulesService,
@@ -14,11 +13,11 @@ use diem_config::{
 };
 use diem_crypto::{ed25519::Ed25519PublicKey, x25519::PublicKey};
 use diem_global_constants::{
-    DEFAULT_PUB_PORT, DEFAULT_VFN_PORT, FULLNODE_NETWORK_KEY, GENESIS_WAYPOINT, OWNER_ACCOUNT,
+    DEFAULT_PUB_PORT, DEFAULT_VFN_PORT, FULLNODE_NETWORK_KEY, OWNER_ACCOUNT,
     VALIDATOR_NETWORK_KEY,
 };
 use diem_management::{config::ConfigPath, error::Error, secure_backend::ValidatorBackend};
-use diem_secure_storage::{CryptoStorage, KVStorage};
+use diem_secure_storage::CryptoStorage;
 use diem_types::{account_address::AccountAddress, chain_id::ChainId, waypoint::Waypoint};
 use ol_types::account::ValConfigs;
 use serde::{Deserialize, Serialize};
@@ -95,7 +94,7 @@ pub fn write_node_config_files(
     repo: Option<String>,
     namespace: &str,
     prebuilt_genesis: &Option<PathBuf>,
-    fullnode_only: &bool,
+    _fullnode_only: &bool,
     seed_peers_path: Option<PathBuf>,
     layout_path: &Option<PathBuf>,
     val_ip_address: Option<Ipv4Addr>,
@@ -105,7 +104,7 @@ pub fn write_node_config_files(
 
     let storage_helper = StorageHelper::get_with_path(output_dir.clone());
 
-    let (genesis_path, genesis_waypoint) = make_genesis_file(
+    let (_genesis_path, genesis_waypoint) = make_genesis_file(
         &output_dir,
         prebuilt_genesis,
         &repo,
@@ -181,7 +180,7 @@ pub fn make_val_file(
     namespace: &str,
 ) -> Result<NodeConfig, anyhow::Error> {
     let mut val = make_validator_cfg(output_dir.clone(), namespace)?;
-    write_yaml(output_dir.clone(), &mut val, NodeType::Validator);
+    write_yaml(output_dir.clone(), &mut val, NodeType::Validator)?;
     Ok(val)
 }
 
