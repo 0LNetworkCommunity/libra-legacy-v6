@@ -84,7 +84,14 @@ impl Runnable for InitCmd {
             Ok(s) => {
               match serde_yaml::to_string(&s) {
                 Ok(y) => {
-                  std::fs::write(&app_cfg.workspace.node_home.join("seed_fullnodes.yaml"), &y);
+                  let path = app_cfg.workspace.node_home.join("seed_fullnodes.yaml");
+                  match std::fs::write(&path, &y){
+                    Ok(_) => println!("seed_fullnodes.yaml file written to: {:?}", &path),
+                    Err(e) => {
+                      println!("Could not write yaml file, exiting. Message: {:?}", e);
+                      exit(1);
+                    },
+                };
                 },
                 Err(e) => {
                   println!("Could not serialize yaml, exiting. Message: {:?}", e);

@@ -274,7 +274,7 @@ pub fn write_account_json(
     .create_manifest(json_path);
 }
 
-fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, base_waypoint: Option<Waypoint>, cfg: &AppCfg) {
+fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, _base_waypoint: Option<Waypoint>, cfg: &AppCfg) {
   // The default behavior is to fetch the genesis from a github repo.
   // if this is not possible then the user should have set a prebuilt genesis path.
 
@@ -330,7 +330,7 @@ fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, base
       &namespace,
       &genesis_blob_path,
       &false,
-      base_waypoint,
+      None,
       &None,
       Some(val_ip_address),
   )

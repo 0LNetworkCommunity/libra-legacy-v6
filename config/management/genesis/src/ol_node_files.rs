@@ -1,6 +1,6 @@
 use std::{fmt::Debug, fs, net::Ipv4Addr, path::PathBuf, process::exit};
 
-use crate::{storage_helper::StorageHelper, seeds::SeedAddresses};
+use crate::{storage_helper::StorageHelper, seeds::{SeedAddresses, Seeds}};
 use anyhow::bail;
 use diem_config::{
     config::OnDiskStorageConfig,
@@ -61,6 +61,8 @@ pub struct Files {
     layout_path: Option<PathBuf>,
     #[structopt(long, verbatim_doc_comment)]
     val_ip_address: Option<Ipv4Addr>,
+    #[structopt(long, verbatim_doc_comment)]
+    seed_peers_path: Option<PathBuf>,
 }
 
 impl Files {
@@ -73,7 +75,7 @@ impl Files {
             &self.namespace,
             &None,
             &self.fullnode_only,
-            self.waypoint,
+            self.seed_peers_path,
             &self.layout_path,
             self.val_ip_address,
         )
@@ -94,7 +96,7 @@ pub fn write_node_config_files(
     namespace: &str,
     prebuilt_genesis: &Option<PathBuf>,
     fullnode_only: &bool,
-    _way_opt: Option<Waypoint>,
+    seed_peers_path: Option<PathBuf>,
     layout_path: &Option<PathBuf>,
     val_ip_address: Option<Ipv4Addr>,
 ) -> Result<NodeConfig, anyhow::Error> {
@@ -103,7 +105,7 @@ pub fn write_node_config_files(
 
     let storage_helper = StorageHelper::get_with_path(output_dir.clone());
 
-    let (_genesis_path, genesis_waypoint) = make_genesis_file(
+    let (genesis_path, genesis_waypoint) = make_genesis_file(
         &output_dir,
         prebuilt_genesis,
         &repo,
@@ -116,9 +118,16 @@ pub fn write_node_config_files(
 
     update_genesis_waypoint_in_key_store(&output_dir, namespace, genesis_waypoint);
 
+    // fullnodes need seed peers, try to extract from the genesis file as a starting place.
+    let seeds: Option<SeedAddresses> = if let Some(p) = seed_peers_path {
+      let file_string = fs::read_to_string(&p)?;
+      let yaml: SeedAddresses = serde_yaml::from_str(&file_string)?;
+      Some(yaml)
+    } else { None };
+
     let vfn_ip_address = val_ip_address.clone();
     // This next step depends on genesis waypoint existing in key_store.
-    make_all_profiles_yaml(output_dir, val_ip_address, vfn_ip_address, namespace, *fullnode_only)
+    make_all_profiles_yaml(output_dir, val_ip_address, vfn_ip_address, seeds, namespace, *fullnode_only)
 }
 
 fn get_default_keystore_helper(output_dir: PathBuf) -> StorageHelper {
@@ -142,6 +151,7 @@ pub fn make_all_profiles_yaml(
     output_dir: PathBuf,
     val_ip_address: Option<Ipv4Addr>,
     vfn_ip_address: Option<Ipv4Addr>,
+    seed_addr: Option<SeedAddresses>,
     namespace: &str,
     fullnode_only: bool,
 ) -> Result<NodeConfig, anyhow::Error> {
@@ -151,12 +161,12 @@ pub fn make_all_profiles_yaml(
     let gw = s.get::<Waypoint>(GENESIS_WAYPOINT)?.value;
     // Get node configs template
     let config = if fullnode_only {
-        let mut n = make_fullnode_cfg(output_dir.clone(), None, gw)?;
+        let mut n = make_fullnode_cfg(output_dir.clone(), seed_addr, gw)?;
         write_yaml(output_dir.clone(), &mut n, NodeType::PublicFullNode)?;
         n
     } else {
         // fullnode configs, only used for rescuing a validator node that's out of validator set.
-        let mut fullnode = make_fullnode_cfg(output_dir.clone(), None, gw)?;
+        let mut fullnode = make_fullnode_cfg(output_dir.clone(), seed_addr, gw)?;
         write_yaml(output_dir.clone(), &mut fullnode, NodeType::PublicFullNode)?;
 
         // vfn configs
@@ -358,8 +368,6 @@ pub fn make_fullnode_cfg(
     seed_addr: Option<SeedAddresses>,
     waypoint: Waypoint,
 ) -> Result<NodeConfig, anyhow::Error> {
-    // TODO: how to add seed peers?
-
     let mut c = default_for_public_fullnode()?;
     c.set_data_dir(output_dir.clone());
     c.base.waypoint = WaypointConfig::FromConfig(waypoint);
@@ -374,31 +382,13 @@ pub fn make_fullnode_cfg(
     c.json_rpc.address = "0.0.0.0:8080".parse()?;
 
     // prune window exists to prevent state snapshots from taking up too much space.
-    c.storage.prune_window = Some(20_000);
-
-
-
-    // ///////// FULL NODE CONFIGS ////////
-    // let mut fn_network = NetworkConfig::network_with_id(NetworkId::Public);
+    c.storage.prune_window = Some(100_000);
 
     if let Some(seeds) = seed_addr {
       pub_network.seed_addrs  = seeds;
     }
 
     c.full_node_networks = vec![pub_network];
-
-    // fn_network.seed_addrs = Seeds::new(genesis_path.clone())
-    //     .get_network_peers_info()
-    //     .expect("Could not get seed peers");
-
-    // fn_network.discovery_method = DiscoveryMethod::Onchain;
-    // fn_network.listen_address = "/ip4/0.0.0.0/tcp/6179".parse().unwrap();
-    // fn_network.identity = Identity::from_storage(
-    //     FULLNODE_NETWORK_KEY.to_string(),
-    //     OWNER_ACCOUNT.to_string(),
-    //     SecureBackend::OnDiskStorage(disk_storage.clone()),
-    // );
-    // config.full_node_networks = vec![fn_network];
 
     Ok(c)
 }

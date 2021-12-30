@@ -159,7 +159,7 @@ impl Runnable for ForkCmd {
             &namespace,
             &prebuilt_genesis_path,
             &false,
-            base_waypoint,
+            None,
             &None,
             Some(val_ip_address),
         )

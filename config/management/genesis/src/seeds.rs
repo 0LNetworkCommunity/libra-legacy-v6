@@ -63,9 +63,8 @@ impl Seeds {
             .map_err(|e| Error::UnexpectedError(format!("ValidatorSet issue {}", e.to_string())))?
             .ok_or_else(|| Error::UnexpectedError("ValidatorSet does not exist".into()))?;
 
-        let info = validator_set.payload();
         let mut seed_addr = SeedAddresses::default();
-
+        let info = validator_set.payload();
         for info in info.iter() {
             let seed_pubkey = info.config().consensus_public_key.clone();
             //NOTE: This usually expects a x25519 key
