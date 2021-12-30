@@ -387,7 +387,7 @@ pub fn make_vfn_cfg(
     output_dir: PathBuf,
     waypoint: Waypoint,
     // validator_addr: PeerId,
-    ip_address: Ipv4Addr,
+    val_ip_address: Ipv4Addr,
     namespace: &str,
     // fn_net_pubkey: PublicKey,
 ) -> Result<NodeConfig, anyhow::Error> {
@@ -410,11 +410,10 @@ pub fn make_vfn_cfg(
     let mut vfn_network = NetworkConfig::network_with_id(NetworkId::Private("vfn".to_string()));
 
     // set the Validator as the Seed peer for the VFN network
-    // TODO: The validator address, Is it a namespace or is it used for authentication?
-    // let validator_addr: AccountAddress = storage.get::<String>(OWNER_ACCOUNT)?.value.parse()?;
-    let val_vfn_net_pubkey = storage.get_public_key(FULLNODE_NETWORK_KEY)?.public_key;
+    // need to get their ID and IP address
+    let val_vfn_net_pubkey = storage.get_public_key(VALIDATOR_NETWORK_KEY )?.public_key;
     dbg!(&val_vfn_net_pubkey);
-    let seeds = make_vfn_peer_set(val_vfn_net_pubkey, ip_address)?;
+    let seeds = make_vfn_peer_set(val_vfn_net_pubkey, val_ip_address)?;
 
     // The seed for the VFN is the validator's ID on the private network.
     vfn_network.seeds = seeds;
@@ -424,8 +423,7 @@ pub fn make_vfn_cfg(
     let mut pub_network = NetworkConfig::network_with_id(NetworkId::Public);
     pub_network.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_PUB_PORT).parse()?;
 
-    // VFNs have JSON RPC enabled to the public (0.0.0.0), so that the validator does not need to do so.
-    c.json_rpc.address = "0.0.0.0:8080".parse()?;
+    // NOTE: VFNs do not serve JSON RPC Requests.
 
     c.full_node_networks = vec![vfn_network, pub_network];
 
