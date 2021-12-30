@@ -32,20 +32,22 @@ pub struct InitCmd {
     app: bool,
 
     /// Create validator yaml file configuration
-    #[options(help = "Create validator yaml file configuration")]
+    #[options(help = "Create validator.node.yaml file configuration")]
     val: bool,
 
     /// Create validator yaml file configuration
     #[options(help = "Create vfn.node.yaml file configuration")]
     vfn: bool,
 
+    /// Create fullnode.node.yaml file configuration
+    #[options(help = "Create fullnode.node.yaml file configuration")]
+    fullnode: bool,
+
     /// Search and get seed peers from chain
     #[options(help = "Get seed fullnode peers from chain")]
     seed_peer: bool,
 
-    /// Create fullnode.node.yaml file configuration
-    #[options(help = "Create fullnode.node.yaml file configuration")]
-    fullnode: bool,
+
 
     /// Init key store file for validator
     #[options(help = "Init key store file for validator")]
@@ -69,11 +71,13 @@ impl Runnable for InitCmd {
     fn run(&self) {
         // start with a default value, or read from file if already initialized
         let mut app_cfg = app_config().to_owned();
+        let entry_args = entrypoint::get_args();
+        let is_swarm = *&entry_args.swarm_path.is_some();
 
+
+        // doesn't need mnemonic
         if self.seed_peer {
-          let args = entrypoint::get_args();
-          let is_swarm = *&args.swarm_path.is_some();
-          let client = client::pick_client(args.swarm_path, &mut app_cfg).unwrap();
+          let client = client::pick_client(entry_args.swarm_path.clone(), &mut app_cfg).unwrap();
           let mut node = Node::new(client, &app_cfg, is_swarm);
 
           match node.refresh_fullnode_seeds() {
@@ -94,15 +98,10 @@ impl Runnable for InitCmd {
               exit(1);
             },
         };
-          
-
-          
-
         }
 
+
         let (authkey, account, wallet) = wallet::get_account_from_prompt();
-
-
         // now we can modify the 0L.toml from template.
         if self.app {
             // note this will overwrite the 0L.toml
@@ -132,8 +131,10 @@ impl Runnable for InitCmd {
             initialize_val_key_store(&wallet, &app_cfg, self.waypoint, false).unwrap()
         };
 
+
+
         // this tool also initializes users for swarm and tests.
-        let entry_args = entrypoint::get_args();
+
         if let Some(path) = entry_args.swarm_path {
             let swarm_node_home = entrypoint::get_node_home();
             let absolute = fs::canonicalize(path).unwrap();
