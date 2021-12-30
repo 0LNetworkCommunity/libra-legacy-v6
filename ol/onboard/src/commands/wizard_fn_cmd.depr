@@ -51,21 +51,27 @@ impl Runnable for FnWizardCmd {
         }
 
         let home_dir = cfg.workspace.node_home.to_owned();
-        // 0L convention is for the namespace of the operator to be appended by '-oper'
-        let namespace = cfg.profile.auth_key.clone().to_string() + "-oper";
-        
-        ol_node_files::write_node_config_files(
-            home_dir.clone(),
-            self.chain_id.unwrap_or(1),
-            self.github_org.clone(),
-            self.repo.clone(),
-            &namespace,
-            &self.prebuilt_genesis,
-            &true,
-            None,
-            &None,
-            None,
-        ).unwrap();
+      
+        let wp: Waypoint = fs::read_to_string(&home_dir.join("genesis_waypoint.txt"))?
+        .parse()?;
+
+       ol_node_files::make_fullnode_file(
+         home_dir.clone(),
+         None,
+         wp
+       );
+        // ol_node_files::write_node_config_files(
+        //     home_dir.clone(),
+        //     self.chain_id.unwrap_or(1),
+        //     self.github_org.clone(),
+        //     self.repo.clone(),
+        //     &namespace,
+        //     &self.prebuilt_genesis,
+        //     &true,
+        //     None,
+        //     &None,
+        //     None,
+        // ).unwrap();
         status_ok!("\nNode config OK", "\n...........................\n");
     }
 }

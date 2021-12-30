@@ -151,7 +151,7 @@ impl Runnable for ForkCmd {
         let val_ip_address = cfg.profile.ip;
 
         // TODO: use node_config to get the seed peers and then write upstream_node vec in 0L.toml from that.
-        ol_node_files::write_node_config_files(
+        ol_node_files::onboard_helper_all_files(
             home_dir.clone(),
             self.chain_id.unwrap_or(1),
             self.github_org.clone(),

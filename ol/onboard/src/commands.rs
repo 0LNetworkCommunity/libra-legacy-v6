@@ -1,7 +1,7 @@
 //! MinerApp Subcommands
 pub mod genesis_files_cmd;
 pub mod version_cmd;
-pub mod wizard_fn_cmd;
+// pub mod wizard_fn_cmd;
 pub mod wizard_user_cmd;
 pub mod wizard_val_cmd;
 pub mod wizard_fork_cmd;
@@ -10,7 +10,7 @@ pub mod fix_cmd;
 
 
 use self::{
-    version_cmd::VersionCmd, wizard_fn_cmd::FnWizardCmd, wizard_user_cmd::UserWizardCmd,
+    version_cmd::VersionCmd, wizard_user_cmd::UserWizardCmd,
     wizard_val_cmd::ValWizardCmd,
     keygen_cmd::KeygenCmd,
     fix_cmd::FixCmd,
@@ -45,9 +45,9 @@ pub enum WizCmd {
     #[options(help = "create all files for validator onboarding")]
     Val(ValWizardCmd),
 
-    /// The `fullnode` subcommand
-    #[options(help = "create all files for fullnode config")]
-    Fullnode(FnWizardCmd),
+    // /// The `fullnode` subcommand
+    // #[options(help = "create all files for fullnode config")]
+    // Fullnode(FnWizardCmd),
 
     /// The `keygen` subcommand
     #[options(help = "create new account and mnemonic")]

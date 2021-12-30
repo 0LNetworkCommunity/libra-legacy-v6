@@ -66,7 +66,7 @@ pub struct Files {
 
 impl Files {
     pub fn execute(self) -> Result<NodeConfig, Error> {
-        write_node_config_files(
+        onboard_helper_all_files(
             self.data_path,
             self.chain_id,
             self.github_org,
@@ -87,7 +87,7 @@ impl Files {
     }
 }
 
-pub fn write_node_config_files(
+pub fn onboard_helper_all_files(
     output_dir: PathBuf,
     chain_id: u8,
     github_org: Option<String>,
