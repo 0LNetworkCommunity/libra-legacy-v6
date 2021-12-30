@@ -12,7 +12,7 @@ use diem_genesis_tool::seeds::SeedAddresses;
 
 impl Node {
     /// refresh the fullnode peers, and save to file
-    pub fn refresh_fullnode_seeds(&mut self, output: PathBuf) -> Result<SeedAddresses, Error> {
+    pub fn refresh_fullnode_seeds(&mut self) -> Result<SeedAddresses, Error> {
         let mut seed_addr = SeedAddresses::default();
 
         if let Some(account_state) = &self.chain_state {

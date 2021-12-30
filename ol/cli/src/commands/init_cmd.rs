@@ -2,7 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{application::app_config, config::AppCfg, entrypoint};
+use crate::{application::app_config, config::AppCfg, entrypoint, node::{client, node::Node}};
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use anyhow::{bail, Error};
 use dialoguer::Confirm;
@@ -16,7 +16,7 @@ use ol_keys::{scheme::KeyScheme, wallet};
 use ol_types::fixtures;
 use std::{fs, path::PathBuf};
 use url::Url;
-
+use std::process::exit;
 /// `init` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct InitCmd {
@@ -38,6 +38,10 @@ pub struct InitCmd {
     /// Create validator yaml file configuration
     #[options(help = "Create vfn.node.yaml file configuration")]
     vfn: bool,
+
+    /// Search and get seed peers from chain
+    #[options(help = "Get seed fullnode peers from chain")]
+    seed_peer: bool,
 
     /// Create fullnode.node.yaml file configuration
     #[options(help = "Create fullnode.node.yaml file configuration")]
@@ -63,10 +67,42 @@ pub struct InitCmd {
 impl Runnable for InitCmd {
     /// Print version message
     fn run(&self) {
-        let (authkey, account, wallet) = wallet::get_account_from_prompt();
-
         // start with a default value, or read from file if already initialized
         let mut app_cfg = app_config().to_owned();
+
+        if self.seed_peer {
+          let args = entrypoint::get_args();
+          let is_swarm = *&args.swarm_path.is_some();
+          let client = client::pick_client(args.swarm_path, &mut app_cfg).unwrap();
+          let mut node = Node::new(client, &app_cfg, is_swarm);
+
+          match node.refresh_fullnode_seeds() {
+            Ok(s) => {
+              match serde_yaml::to_string(&s) {
+                Ok(y) => {
+                  std::fs::write(&app_cfg.workspace.node_home.join("seed_fullnodes.yaml"), &y);
+                },
+                Err(e) => {
+                  println!("Could not serialize yaml, exiting. Message: {:?}", e);
+                  exit(1);
+                },
+            }
+              // return
+            },
+            Err(e) => {
+              println!("Could not fetch seed peers from chain, exiting. Message: {:?}", e);
+              exit(1);
+            },
+        };
+          
+
+          
+
+        }
+
+        let (authkey, account, wallet) = wallet::get_account_from_prompt();
+
+
         // now we can modify the 0L.toml from template.
         if self.app {
             // note this will overwrite the 0L.toml
