@@ -14,7 +14,7 @@ use std::{
 
 use crate::verify::compute_genesis;
 
-type SeedAddresses = HashMap<PeerId, Vec<NetworkAddress>>; 
+pub type SeedAddresses = HashMap<PeerId, Vec<NetworkAddress>>; 
 
 // NOTE: Deprecated for use on validator config. Kept here for reference.
 

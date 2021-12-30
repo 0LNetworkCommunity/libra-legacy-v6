@@ -1,4 +1,4 @@
-use std::{fmt::Debug, fs, net::Ipv4Addr, path::PathBuf};
+use std::{fmt::Debug, fs, net::Ipv4Addr, path::PathBuf, process::exit};
 
 use crate::storage_helper::StorageHelper;
 use anyhow::bail;
@@ -86,20 +86,6 @@ impl Files {
     }
 }
 
-
-fn format_github_remote(repo: String, github_org: String, github_token_path: PathBuf, namespace: String) -> String {
-
-    format!(
-        "backend=github;repository_owner={github_org};repository={repo};token={path};namespace={ns}",
-        repo=&repo,
-        github_org=&github_org,
-        path=github_token_path.to_str().unwrap(),
-        ns=&namespace
-    )
-
-}
-
-
 pub fn write_node_config_files(
     output_dir: PathBuf,
     chain_id: u8,
@@ -117,35 +103,45 @@ pub fn write_node_config_files(
 
     let storage_helper = StorageHelper::get_with_path(output_dir.clone());
 
-    if repo.is_some() && github_org.is_some() {
-      let remote = format_github_remote(
-        repo.unwrap(),
-        github_org.unwrap(),
-        output_dir.join("github_token.txt"),
-        namespace.to_owned(),
-      );
+    let (_genesis_path, genesis_waypoint) = make_genesis_file(
+        &output_dir,
+        prebuilt_genesis,
+        &repo,
+        &github_org,
+        layout_path,
+        storage_helper,
+        chain_id,
+        namespace,
+    )?;
 
-      let (_genesis_path, _genesis_waypoint) = make_genesis_file(
-          &output_dir,
-          prebuilt_genesis,
-          remote,
-          layout_path,
-          storage_helper,
-          chain_id,
-          namespace,
-      )?;
-    }
+    update_genesis_waypoint_in_key_store(&output_dir, namespace, genesis_waypoint);
 
-    make_node_yaml(output_dir, val_ip_address, namespace, *fullnode_only)
+    let vfn_ip_address = val_ip_address.clone();
+    // This next step depends on genesis waypoint existing in key_store.
+    make_all_profiles_yaml(output_dir, val_ip_address, vfn_ip_address, namespace, *fullnode_only)
 }
 
 fn get_default_keystore_helper(output_dir: PathBuf) -> StorageHelper {
     StorageHelper::get_with_path(output_dir)
 }
+
+fn update_genesis_waypoint_in_key_store(
+    output_dir: &PathBuf,
+    namespace: &str,
+    genesis_waypoint: Waypoint,
+) {
+    let storage_helper = StorageHelper::get_with_path(output_dir.clone());
+    // for genesis cases, need to insert the waypoint in the key_store.json
+    storage_helper
+        .insert_waypoint(namespace, genesis_waypoint)
+        .unwrap();
+}
+
 /// Make all the node configurations needed
-pub fn make_node_yaml(
+pub fn make_all_profiles_yaml(
     output_dir: PathBuf,
     val_ip_address: Option<Ipv4Addr>,
+    vfn_ip_address: Option<Ipv4Addr>,
     namespace: &str,
     fullnode_only: bool,
 ) -> Result<NodeConfig, anyhow::Error> {
@@ -177,8 +173,44 @@ pub fn make_node_yaml(
         write_yaml(output_dir.clone(), &mut n, NodeType::Validator)?;
         n
     };
+
     Ok(config)
+    
 }
+
+// helper to write a new validator.node.yaml file.
+pub fn make_val_file(
+    output_dir: PathBuf,
+    val_ip_address: Option<Ipv4Addr>,
+    vfn_ip_address: Option<Ipv4Addr>,
+    namespace: &str,
+) -> Result<(), anyhow::Error> {
+    let mut val = make_validator_cfg(output_dir.clone(), namespace)?;
+    write_yaml(output_dir.clone(), &mut val, NodeType::Validator)
+}
+
+// helper to write a new validator.node.yaml file.
+pub fn make_vfn_file(
+    output_dir: PathBuf,
+    val_ip_address: Ipv4Addr,
+    gen_wp: Waypoint,
+    namespace: &str,
+) -> Result<(), anyhow::Error> {
+    let mut vfn = make_vfn_cfg(output_dir.clone(), gen_wp, val_ip_address, namespace)?;
+    write_yaml(output_dir.clone(), &mut vfn, NodeType::ValidatorFullNode)
+}
+
+// helper to write a new validator.node.yaml file.
+pub fn make_fullnode_file(
+    output_dir: PathBuf,
+    val_ip_address: Ipv4Addr,
+    gen_wp: Waypoint,
+    namespace: &str,
+) -> Result<(), anyhow::Error> {
+    let mut n = make_fullnode_cfg(output_dir.clone(), gen_wp)?;
+    write_yaml(output_dir.clone(), &mut n, NodeType::PublicFullNode)
+}
+
 
 fn write_yaml(
     output_dir: PathBuf,
@@ -202,10 +234,12 @@ fn write_yaml(
     Ok(())
 }
 
+// we need to both write the genesis file and return the waypoint so we can set it in the key_store.json
 fn make_genesis_file(
     output_dir: &PathBuf,
     prebuilt_genesis: &Option<PathBuf>,
-    remote: String,
+    repo: &Option<String>,
+    github_org: &Option<String>,
     layout_path: &Option<PathBuf>,
     storage_helper: StorageHelper,
     chain_id: ChainId,
@@ -221,26 +255,31 @@ fn make_genesis_file(
             Ok((path.to_owned(), wp))
         }
         None => {
-            // building a genesis file requires a set_layout path. The default is for genesis to use a local set_layout file. Once a genesis occurs, the canonical chain can store the genesis information to github repo for future verification and creating a genesis blob.
-            let genesis_waypoint = match layout_path {
-                Some(layout_path) => storage_helper
-                    .build_genesis_with_layout(chain_id, &remote, &genesis_path, &layout_path)
-                    .unwrap(),
-                None => {
-                    println!("attempting to get a set_layout file from the genesis repo");
-                    storage_helper
-                        .build_genesis_from_github(chain_id, &remote, &genesis_path)
-                        .unwrap()
-                }
-            };
-
-            // for genesis cases, need to insert the waypoint in the key_store.json
-            storage_helper
-                .insert_waypoint(&namespace, genesis_waypoint)
-                .unwrap();
-
-            Ok((genesis_path, genesis_waypoint))
-            // way_opt = Some(genesis_waypoint);
+            if repo.is_some() && github_org.is_some() {
+                let remote = format!(
+                    "backend=github;repository_owner={github_org};repository={repo};token={path};namespace={ns}",
+                    repo = repo.as_ref().unwrap(),
+                    github_org = github_org.as_ref().unwrap(),
+                    path = output_dir.join("github_token.txt").to_str().unwrap(),
+                    ns = &namespace
+                );
+                // building a genesis file requires a set_layout path. The default is for genesis to use a local set_layout file. Once a genesis occurs, the canonical chain can store the genesis information to github repo for future verification and creating a genesis blob.
+                let genesis_waypoint = match layout_path {
+                    Some(layout_path) => storage_helper
+                        .build_genesis_with_layout(chain_id, &remote, &genesis_path, &layout_path)
+                        .unwrap(),
+                    None => {
+                        println!("attempting to get a set_layout file from the genesis repo");
+                        storage_helper
+                            .build_genesis_from_github(chain_id, &remote, &genesis_path)
+                            .unwrap()
+                    }
+                };
+                Ok((genesis_path, genesis_waypoint))
+            } else {
+                println!("Expected either a prebuilt genesis file, or github repo and org to build a new genesis, exiting.");
+                exit(1);
+            }
         }
     }
 }
@@ -309,6 +348,8 @@ fn make_validator_cfg(output_dir: PathBuf, namespace: &str) -> Result<NodeConfig
 
     Ok(c)
 }
+
+
 
 /// make the fullnode NodeConfig
 pub fn make_fullnode_cfg(
@@ -432,6 +473,8 @@ pub fn validator_upstream_peer_data(
     let p = Peer::from_addrs(role, vec![val_addr]);
     Ok(p)
 }
+
+
 
 pub fn default_for_public_fullnode() -> Result<NodeConfig, anyhow::Error> {
     let path_str = env!("CARGO_MANIFEST_DIR");

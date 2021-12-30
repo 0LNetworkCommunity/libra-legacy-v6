@@ -1,6 +1,5 @@
 //! MinerApp Subcommands
 pub mod genesis_files_cmd;
-pub mod node_files_cmd;
 pub mod version_cmd;
 pub mod wizard_fn_cmd;
 pub mod wizard_user_cmd;
@@ -16,7 +15,6 @@ use self::{
     keygen_cmd::KeygenCmd,
     fix_cmd::FixCmd,
     wizard_fork_cmd::ForkCmd,
-    node_files_cmd::NodeFilesCmd,
     genesis_files_cmd::GenesisFilesCmd,
 
 };
@@ -62,10 +60,6 @@ pub enum WizCmd {
     /// The `fork` subcommand
     #[options(help = "create configs for a fork, from genesis")]
     Fork(ForkCmd),
-
-    /// The `node files` subcommand
-    #[options(help = "create all the node.yaml files needed for node ops")]
-    NodeFiles(NodeFilesCmd),
 
     /// The `genesis files` subcommand
     #[options(help = "fetch genesis.blob from a github repo")]

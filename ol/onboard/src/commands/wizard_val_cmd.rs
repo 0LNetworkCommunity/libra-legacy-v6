@@ -319,7 +319,7 @@ fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, base
   // 0L convention is for the namespace of the operator to be appended by '-oper'
   let val_ip_address = cfg.profile.ip;
   // this needs to be the same namespace as in initialize_validator
-  let namespace = app_config.profile.account.to_hex() + "-oper";
+  let namespace = cfg.profile.account.to_hex() + "-oper";
 
   // TODO: use node_config to get the seed peers and then write upstream_node vec in 0L.toml from that.
   ol_node_files::write_node_config_files(

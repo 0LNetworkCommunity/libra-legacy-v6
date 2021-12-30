@@ -5653,6 +5653,7 @@ dependencies = [
  "cli",
  "clokwerk",
  "crossterm",
+ "dialoguer",
  "diem-config",
  "diem-genesis-tool",
  "diem-global-constants",

@@ -5,6 +5,7 @@
 use crate::{application::app_config, config::AppCfg, entrypoint};
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use anyhow::{bail, Error};
+use dialoguer::Confirm;
 use diem_genesis_tool::{init, key};
 use diem_json_rpc_client::AccountAddress;
 use diem_types::transaction::authenticator::AuthenticationKey;
@@ -62,30 +63,41 @@ pub struct InitCmd {
 impl Runnable for InitCmd {
     /// Print version message
     fn run(&self) {
-
-
         let (authkey, account, wallet) = wallet::get_account_from_prompt();
+
         // start with a default value, or read from file if already initialized
         let mut app_cfg = app_config().to_owned();
+        // now we can modify the 0L.toml from template.
         if self.app {
-            app_cfg = initialize_app_cfg(
-                authkey,
-                account,
-                &self.upstream_peer,
-                &self.path,
-                &None, // TODO: probably need an epoch option here.
-                &self.waypoint,
-                &self.source_path,
-            )
-            .unwrap()
+            // note this will overwrite the 0L.toml
+            // check the user wants to do this.
+            match Confirm::new()
+                .with_prompt("This will overwrite an 0L.toml file if it exists. Proceed?")
+                .interact()
+                .unwrap()
+            {
+                true => {
+                    app_cfg = initialize_app_cfg(
+                        authkey,
+                        account,
+                        &self.upstream_peer,
+                        &self.path,
+                        &None, // TODO: probably need an epoch option here.
+                        &self.waypoint,
+                        &self.source_path,
+                    )
+                    .unwrap()
+                }
+                _ => panic!("Creating 0L.toml aborted"),
+            };
         };
 
         if self.key_store {
             initialize_val_key_store(&wallet, &app_cfg, self.waypoint, false).unwrap()
         };
 
-      // this tool also initializes users for swarm and tests.
-      let entry_args = entrypoint::get_args();
+        // this tool also initializes users for swarm and tests.
+        let entry_args = entrypoint::get_args();
         if let Some(path) = entry_args.swarm_path {
             let swarm_node_home = entrypoint::get_node_home();
             let absolute = fs::canonicalize(path).unwrap();
@@ -139,8 +151,7 @@ pub fn initialize_host_swarm(
     let blocks_dir = PathBuf::new()
         .join(&cfg.workspace.node_home)
         .join(&cfg.workspace.block_dir);
-    let target_file = blocks_dir
-        .join("proof_0.json");
+    let target_file = blocks_dir.join("proof_0.json");
     println!("copy first block from {:?} to {:?}", &source, &target_file);
 
     if !&blocks_dir.exists() {
