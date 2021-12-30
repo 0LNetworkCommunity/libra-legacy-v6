@@ -1,6 +1,6 @@
 use std::{fmt::Debug, fs, net::Ipv4Addr, path::PathBuf, process::exit};
 
-use crate::storage_helper::StorageHelper;
+use crate::{storage_helper::StorageHelper, seeds::SeedAddresses};
 use anyhow::bail;
 use diem_config::{
     config::OnDiskStorageConfig,
@@ -151,12 +151,12 @@ pub fn make_all_profiles_yaml(
     let gw = s.get::<Waypoint>(GENESIS_WAYPOINT)?.value;
     // Get node configs template
     let config = if fullnode_only {
-        let mut n = make_fullnode_cfg(output_dir.clone(), gw)?;
+        let mut n = make_fullnode_cfg(output_dir.clone(), None, gw)?;
         write_yaml(output_dir.clone(), &mut n, NodeType::PublicFullNode)?;
         n
     } else {
         // fullnode configs, only used for rescuing a validator node that's out of validator set.
-        let mut fullnode = make_fullnode_cfg(output_dir.clone(), gw)?;
+        let mut fullnode = make_fullnode_cfg(output_dir.clone(), None, gw)?;
         write_yaml(output_dir.clone(), &mut fullnode, NodeType::PublicFullNode)?;
 
         // vfn configs
@@ -204,10 +204,11 @@ pub fn make_vfn_file(
 pub fn make_fullnode_file(
     output_dir: PathBuf,
     val_ip_address: Ipv4Addr,
+    seed_addr: Option<SeedAddresses>,
     gen_wp: Waypoint,
     namespace: &str,
 ) -> Result<(), anyhow::Error> {
-    let mut n = make_fullnode_cfg(output_dir.clone(), gen_wp)?;
+    let mut n = make_fullnode_cfg(output_dir.clone(), seed_addr, gen_wp)?;
     write_yaml(output_dir.clone(), &mut n, NodeType::PublicFullNode)
 }
 
@@ -354,6 +355,7 @@ fn make_validator_cfg(output_dir: PathBuf, namespace: &str) -> Result<NodeConfig
 /// make the fullnode NodeConfig
 pub fn make_fullnode_cfg(
     output_dir: PathBuf,
+    seed_addr: Option<SeedAddresses>,
     waypoint: Waypoint,
 ) -> Result<NodeConfig, anyhow::Error> {
     // TODO: how to add seed peers?
@@ -367,7 +369,6 @@ pub fn make_fullnode_cfg(
     // Public fullnodes only connect to one network. Public fullnode.
     let mut pub_network = NetworkConfig::network_with_id(NetworkId::Public);
     pub_network.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_PUB_PORT).parse()?;
-    c.full_node_networks = vec![pub_network];
 
     // Public fullnodes have JSON RPC enabled to the public (0.0.0.0), so that the validator does not need to do so.
     c.json_rpc.address = "0.0.0.0:8080".parse()?;
@@ -375,11 +376,16 @@ pub fn make_fullnode_cfg(
     // prune window exists to prevent state snapshots from taking up too much space.
     c.storage.prune_window = Some(20_000);
 
-    // Write yaml
-    Ok(c)
+
 
     // ///////// FULL NODE CONFIGS ////////
     // let mut fn_network = NetworkConfig::network_with_id(NetworkId::Public);
+
+    if let Some(seeds) = seed_addr {
+      pub_network.seed_addrs  = seeds;
+    }
+
+    c.full_node_networks = vec![pub_network];
 
     // fn_network.seed_addrs = Seeds::new(genesis_path.clone())
     //     .get_network_peers_info()
@@ -393,6 +399,8 @@ pub fn make_fullnode_cfg(
     //     SecureBackend::OnDiskStorage(disk_storage.clone()),
     // );
     // config.full_node_networks = vec![fn_network];
+
+    Ok(c)
 }
 
 /// make the fullnode NodeConfig
