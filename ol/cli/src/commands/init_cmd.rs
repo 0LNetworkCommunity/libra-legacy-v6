@@ -2,7 +2,12 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{application::app_config, config::AppCfg, entrypoint, node::{client, node::Node}};
+use crate::{
+    application::app_config,
+    config::AppCfg,
+    entrypoint,
+    node::{client, node::Node},
+};
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use anyhow::{bail, Error};
 use dialoguer::Confirm;
@@ -14,9 +19,9 @@ use diem_wallet::WalletLibrary;
 use fs_extra::file::{copy, CopyOptions};
 use ol_keys::{scheme::KeyScheme, wallet};
 use ol_types::fixtures;
+use std::process::exit;
 use std::{fs, path::PathBuf};
 use url::Url;
-use std::process::exit;
 /// `init` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct InitCmd {
@@ -78,87 +83,152 @@ impl Runnable for InitCmd {
         let is_swarm = *&entry_args.swarm_path.is_some();
 
         if self.update_waypoint {
-          // TODO: will need to update the key_store.json file with waypoint info.
-          if let Some(w) = self.waypoint {
-              app_cfg.chain_info.base_waypoint = Some(w);
-              app_cfg.save_file();
-              return;
-          };
-          let client = match client::pick_client(entry_args.swarm_path.clone(), &mut app_cfg){
-              Ok(c) => c,
-              Err(e) => {
-                println!("Could not connect to a fullnode with JSON API, exiting. Message: {:?}", e);
-                exit(1);
-              },
-          };
+            // TODO: will need to update the key_store.json file with waypoint info.
+            if let Some(w) = self.waypoint {
+                app_cfg.chain_info.base_waypoint = Some(w);
+                app_cfg.save_file();
+                return;
+            };
+            let client = match client::pick_client(entry_args.swarm_path.clone(), &mut app_cfg) {
+                Ok(c) => c,
+                Err(e) => {
+                    println!(
+                        "Could not connect to a fullnode with JSON API, exiting. Message: {:?}",
+                        e
+                    );
+                    exit(1);
+                }
+            };
 
-          let mut node = Node::new(client, &app_cfg, is_swarm);
+            let mut node = Node::new(client, &app_cfg, is_swarm);
 
-          match node.waypoint() {
-            Ok(w) =>  {
-              app_cfg.chain_info.base_waypoint = Some(w);
-              app_cfg.save_file();
-              return;
-
-            },
-            Err(e) => {
-               println!("Could not find a waypoint, exiting. Message: {:?}", e);
-              exit(1);
-            },
-        }
+            match node.waypoint() {
+                Ok(w) => {
+                    app_cfg.chain_info.base_waypoint = Some(w);
+                    app_cfg.save_file();
+                    return;
+                }
+                Err(e) => {
+                    println!("Could not find a waypoint, exiting. Message: {:?}", e);
+                    exit(1);
+                }
+            }
         }
         // fetch a list of seed peers from the current on chain discovery
         // doesn't need mnemonic
         if self.seed_peer {
-          let client = match client::pick_client(entry_args.swarm_path.clone(), &mut app_cfg){
-              Ok(c) => c,
-              Err(e) => {
-                println!("Could not connect to a fullnode with JSON API, exiting. Message: {:?}", e);
-                exit(1);
-              },
-          };
-
-          let mut node = Node::new(client, &app_cfg, is_swarm);
-
-          match node.refresh_fullnode_seeds() {
-            Ok(s) => {
-              match serde_yaml::to_string(&s) {
-                Ok(y) => {
-                  let path = app_cfg.workspace.node_home.join("seed_fullnodes.yaml");
-                  match std::fs::write(&path, &y){
-                    Ok(_) => println!("seed_fullnodes.yaml file written to: {:?}", &path),
-                    Err(e) => {
-                      println!("Could not write yaml file, exiting. Message: {:?}", e);
-                      exit(1);
-                    },
-                };
-                },
+            let client = match client::pick_client(entry_args.swarm_path.clone(), &mut app_cfg) {
+                Ok(c) => c,
                 Err(e) => {
-                  println!("Could not serialize yaml, exiting. Message: {:?}", e);
-                  exit(1);
-                },
-            }
-              // return
-            },
-            Err(e) => {
-              println!("Could not fetch seed peers from chain, exiting. Message: {:?}", e);
-              exit(1);
-            },
-        };
+                    println!(
+                        "Could not connect to a fullnode with JSON API, exiting. Message: {:?}",
+                        e
+                    );
+                    exit(1);
+                }
+            };
+
+            let mut node = Node::new(client, &app_cfg, is_swarm);
+
+            match node.refresh_fullnode_seeds() {
+                Ok(s) => {
+                    match serde_yaml::to_string(&s) {
+                        Ok(y) => {
+                            let path = app_cfg.workspace.node_home.join("seed_fullnodes.yaml");
+                            match std::fs::write(&path, &y) {
+                                Ok(_) => {
+                                    println!("seed_fullnodes.yaml file written to: {:?}", &path)
+                                }
+                                Err(e) => {
+                                    println!(
+                                        "Could not write yaml file, exiting. Message: {:?}",
+                                        e
+                                    );
+                                    exit(1);
+                                }
+                            };
+                        }
+                        Err(e) => {
+                            println!("Could not serialize yaml, exiting. Message: {:?}", e);
+                            exit(1);
+                        }
+                    }
+                    // return
+                }
+                Err(e) => {
+                    println!(
+                        "Could not fetch seed peers from chain, exiting. Message: {:?}",
+                        e
+                    );
+                    exit(1);
+                }
+            };
         }
 
         // create files for VFN
         if self.vfn {
-          println!("Creating vfn.node.yaml file.");
+            println!("Creating vfn.node.yaml file.");
 
-          let namespace = app_cfg.profile.account.to_hex() + "-oper";
-          let output_dir = app_cfg.workspace.node_home;
-          let val_ip_address = app_cfg.profile.ip;
-          let gen_wp = app_cfg.chain_info.base_waypoint;
-          
-          ol_node_files::make_vfn_file(output_dir, val_ip_address, gen_wp.unwrap_or_default(), &namespace);
-          return;
+            let namespace = app_cfg.profile.account.to_hex() + "-oper";
+            let output_dir = app_cfg.workspace.node_home;
+            let val_ip_address = app_cfg.profile.ip;
+            let gen_wp = app_cfg.chain_info.base_waypoint;
 
+            match ol_node_files::make_vfn_file(
+                output_dir,
+                val_ip_address,
+                gen_wp.unwrap_or_default(),
+                &namespace,
+            ) {
+                Ok(_) => {}
+                Err(e) => {
+                    println!("Could not create file, exiting. Message: {:?}", e);
+                    exit(1);
+                }
+            };
+            return;
+        }
+
+        // create files for val
+        if self.val {
+            println!("Creating validator.node.yaml file. This assumes you have a key_store.json. If you do not, run this command again with --key-store");
+
+            // TODO: check we can open key-store file
+
+            let namespace = app_cfg.profile.account.to_hex() + "-oper";
+            let output_dir = app_cfg.workspace.node_home;
+
+            match ol_node_files::make_val_file(output_dir, None, &namespace) {
+                Ok(_) => {}
+                Err(e) => {
+                    println!("Could not create file, exiting. Message: {:?}", e);
+                    exit(1);
+                }
+            };
+            return;
+        }
+
+        // create files for public fullnode
+        if self.fullnode {
+            println!("Creating fullnode.node.yaml file.");
+
+            // TODO: check we can open key-store file
+
+            let namespace = app_cfg.profile.account.to_hex() + "-oper";
+            let output_dir = app_cfg.workspace.node_home;
+            let gen_wp = app_cfg.chain_info.base_waypoint;
+
+            // TODO: get seed addresses from file optionally
+            // let seed = SeedAddresses::read_from_file(seed_peers_path);
+
+            match ol_node_files::make_fullnode_file(output_dir, None, gen_wp.unwrap_or_default()) {
+                Ok(_) => {}
+                Err(e) => {
+                    println!("Could not create file, exiting. Message: {:?}", e);
+                    exit(1);
+                }
+            };
+            return;
         }
 
         // Can also initializes users for swarm and tests.
@@ -175,7 +245,6 @@ impl Runnable for InitCmd {
             return;
         }
 
-        
         /////////// Everything below requires mnemonic ////////
         let (authkey, account, wallet) = wallet::get_account_from_prompt();
 
@@ -205,12 +274,11 @@ impl Runnable for InitCmd {
             return;
         };
 
-
+        // TODO: this should happen before --val since the user may want to do two operations in one command. But we'll need to authenticate them for this step. --val doesn't neet authentication.
         if self.key_store {
             initialize_val_key_store(&wallet, &app_cfg, self.waypoint, false).unwrap();
             return;
         };
-
     }
 }
 

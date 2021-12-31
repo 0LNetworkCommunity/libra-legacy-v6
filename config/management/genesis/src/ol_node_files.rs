@@ -320,7 +320,6 @@ fn make_validator_cfg(output_dir: PathBuf, namespace: &str) -> Result<NodeConfig
     disk_storage.path = output_dir.clone().join("key_store.json");
     disk_storage.namespace = Some(namespace.to_owned());
 
-    // let mut c = default_for_validator()?;
     let mut c = NodeConfig::default();
 
     c.set_data_dir(output_dir.clone());
@@ -360,7 +359,7 @@ fn make_validator_cfg(output_dir: PathBuf, namespace: &str) -> Result<NodeConfig
 
     //////////////// CREATE CONFIGS FOR CONNECTING TO VFN PRIVATE NETWORK ////////////////
     // this is the only fullnode network a validator should connect to, so to be isolated from public.
-    
+
     // TODO: The validator's connection to VFN should be restricted to the vfn_ip_address
     let mut vfn_net = NetworkConfig::network_with_id(NetworkId::Private("vfn".to_string()));
     vfn_net.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_VFN_PORT).parse()?;

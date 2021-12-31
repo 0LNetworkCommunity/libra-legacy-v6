@@ -9,7 +9,7 @@ use structopt::StructOpt;
 use std::{
     convert::TryFrom,
     collections::{HashMap},
-    path::{PathBuf},
+    path::{PathBuf}, fs,
 };
 
 use crate::verify::compute_genesis;
@@ -39,6 +39,17 @@ impl Seeds {
         genesis_path,
       }
     }
+
+    pub fn read_from_file(seed_peers_path: PathBuf) -> Result<SeedAddresses, Error>  {
+
+        let file_string = fs::read_to_string(seed_peers_path)
+        .map_err(|e| Error::ConfigError(e.to_string()))?;
+        let yaml: SeedAddresses = serde_yaml::from_str(&file_string)
+        .map_err(|e| Error::ConfigError(e.to_string()))?;
+        Ok(yaml)
+    }
+
+
 
     pub fn get_network_peers_info(&self)->Result<SeedAddresses, Error> {
         let db_path = TempPath::new();
