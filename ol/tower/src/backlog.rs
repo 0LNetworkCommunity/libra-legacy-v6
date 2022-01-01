@@ -53,7 +53,7 @@ pub fn process_backlog(
             while i <= current_block_number.into() && j < remaining_proofs_in_epoch {
                 let path =
                     PathBuf::from(format!("{}/{}_{}.json", blocks_dir.display(), FILENAME, i));
-                info!("submitting proof {}", i);
+                info!("submitting proof {}, in this backlog: {}", i, j);
                 let file = File::open(&path)?;
                 let reader = BufReader::new(file);
                 let block: VDFProof = serde_json::from_reader(reader)?;
