@@ -39,6 +39,7 @@ toml = "0.5.6"
 reqwest = { version = "0.11.2", features = ["blocking", "json"], default_features = false }
 diem-global-constants = { path = "../../config/global-constants"}
 dirs = "2.0.2"
+diem-client = { path = "../../sdk/client" }
 diem-genesis-tool = { path = "../../config/management/genesis" }
 diem-management = { path = "../../config/management" }
 diem-transaction-builder = { path = "../../sdk/transaction-builder" }

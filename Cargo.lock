@@ -8555,6 +8555,7 @@ dependencies = [
  "classgroup",
  "cli",
  "criterion",
+ "diem-client",
  "diem-config",
  "diem-crypto",
  "diem-genesis-tool",

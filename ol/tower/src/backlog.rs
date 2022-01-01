@@ -5,11 +5,12 @@ use crate::commit_proof::commit_proof_tx;
 use crate::proof::{parse_block_height, FILENAME};
 use anyhow::{bail, Error, Result};
 use cli::diem_client::DiemClient;
+use diem_client::views::TowerStateResourceView;
 use diem_logger::prelude::*;
 use ol_types::block::VDFProof;
 use ol_types::config::AppCfg;
 use std::io::BufReader;
-use std::{fs::File, path::PathBuf};
+use std::{cmp::max, fs::File, path::PathBuf};
 use txs::epoch::get_epoch;
 use txs::submit_tx::{eval_tx_status, TxParams};
 
@@ -45,7 +46,7 @@ pub fn process_backlog(
     let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
     if let Some(current_block_number) = current_block_number {
         info!("Local tower height: {:?}", current_block_number);
-        if i128::from(current_block_number) > remote_height {
+        if i128::from(current_block_number) > remote_height as i128 {
             info!("Backlog: resubmitting missing proofs.");
 
             let mut i = remote_height + 1;
