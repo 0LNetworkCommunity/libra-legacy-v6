@@ -62,7 +62,7 @@ pub fn process_backlog(
                 match eval_tx_status(view) {
                     Ok(_) => {}
                     Err(e) => {
-                        warn!("WARN: could not fetch TX status, continuing to next block in backlog after 30 seconds. Message: {:?} ", e);
+                        warn!("WARN: could not fetch TX status. Message: {:?} ", e);
                         break;
                     }
                 };
