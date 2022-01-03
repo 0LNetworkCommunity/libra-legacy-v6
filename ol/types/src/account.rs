@@ -275,7 +275,8 @@ fn val_config_ip_address() {
 
     let val = ValConfigs::new(block, eve_keys, "161.35.13.169".to_string(), None, None);
 
-    let correct_fn_hex = "012d0400a1230da9050c1c072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800".to_owned();
+    let correct_fn_hex = "012d0400a1230da9052318072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800".to_owned();
+
     assert_eq!(encode(&val.op_fullnode_network_addresses), correct_fn_hex);
 
     let correct_hex = "010000000000000000000000003e250c102074e46ce6160d0efb958f48e4ba3b5a5ac468080135881b885f9baef0da93a2a0b993823448da4d8bf0414d9acd8fea5b664688b864b54c8ec8ae".to_owned();
