@@ -1,16 +1,20 @@
 //! 'query'
 use std::collections::BTreeMap;
 
+use super::node::Node;
+use anyhow::Error;
+use diem_json_rpc_client::{
+    views::{BytesView, EventView, TransactionView},
+    AccountAddress,
+};
 use hex::decode;
-use diem_json_rpc_client::{AccountAddress, views::{BytesView, EventView, TransactionView}};
-use move_binary_format::{file_format::{Ability, AbilitySet}};
+use move_binary_format::file_format::{Ability, AbilitySet};
 use move_core_types::{
     identifier::Identifier,
     language_storage::{StructTag, TypeTag},
 };
 use num_format::{Locale, ToFormattedString};
 use resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct, AnnotatedMoveValue};
-use super::node::Node;
 
 const SCALING_FACTOR: u64 = 1_000_000;
 
@@ -33,14 +37,14 @@ pub enum QueryType {
     },
     /// get a move value from account blob
     MoveValue {
-      /// account to query txs of
-      account: AccountAddress,
-      /// move module name
-      module_name: String,
-      /// move struct name
-      struct_name: String,
-      /// move key name
-      key_name: String,
+        /// account to query txs of
+        account: AccountAddress,
+        /// move module name
+        module_name: String,
+        /// move struct name
+        struct_name: String,
+        /// move key name
+        key_name: String,
     },
     /// How far behind the local is from the upstream nodes
     SyncDelay,
@@ -57,49 +61,51 @@ pub enum QueryType {
     },
     /// Get events
     Events {
-      /// account to query events
-      account: AccountAddress,
-      /// switch for sent or received events.
-      sent_or_received: bool,
-      /// what event sequence number to start querying from, if DB does not have all.
-      seq_start: Option<u64>,
-    }
+        /// account to query events
+        account: AccountAddress,
+        /// switch for sent or received events.
+        sent_or_received: bool,
+        /// what event sequence number to start querying from, if DB does not have all.
+        seq_start: Option<u64>,
+    },
 }
 
 /// Get data from a client, with a query type. Will connect to local only if in sync.
 impl Node {
     /// run a query
-    pub fn query(&mut self, query_type: QueryType) -> String {
+    // TODO: Make query accept and return a generic, instead of return formatted string.
+    // that would make it more general purpose.
+    pub fn query(&mut self, query_type: QueryType) -> Result<String, Error> {
         use QueryType::*;
-        match query_type {
+        let print = match query_type {
             Balance { account } => {
                 // TODO: get scaling factor from chain.
                 match self.client.get_account(&account) {
                     Ok(Some(account_view)) => {
-                        for av in account_view.balances.iter() {
-                            if av.currency == "GAS" {
-                                let amount = av.amount as f64; // / SCALING_FACTOR as f64;
-                                return amount.to_string();
-                                // return amount.to_formatted_string(&Locale::en);
+                        match account_view
+                            .balances
+                            .iter()
+                            .find(|av| av.currency == "GAS")
+                        {
+                            Some(av) => {
+                                let a = av.amount as f64;
+                                a.to_string()
                             }
+                            _ => "No GAS found on account".to_owned(),
                         }
-                        return "No GAS found on account".to_owned();
                     }
                     Ok(None) => format!("No account {} found on chain, account", account),
                     Err(e) => format!("Chain query error: {:?}", e),
                 }
             }
-            BlockHeight => {
-                let (chain, _) = self.refresh_chain_info();
-                chain.unwrap().height.to_string()
-            }
+            BlockHeight => self.refresh_chain_info()?.0.height.to_string(),
             Epoch => {
-                let (chain, _) = self.refresh_chain_info();
+                let c = self.refresh_chain_info()?;
 
                 format!(
                     "{} - WAYPOINT: {}",
-                    chain.clone().unwrap().epoch.to_string(),
-                    &chain.unwrap().waypoint.unwrap().to_string()
+                    &c.0.epoch.to_string(),
+                    &c.0.waypoint.unwrap_or_default().to_string()
                 )
             }
             SyncDelay => match self.check_sync() {
@@ -116,26 +122,30 @@ impl Node {
                     Err(e) => format!("Error querying account resource. Message: {:#?}", e),
                     _ => format!("Error, cannot find account state for {:#?}", account),
                 }
-            },
-            MoveValue { account, module_name, struct_name, key_name } => {
+            }
+            MoveValue {
+                account,
+                module_name,
+                struct_name,
+                key_name,
+            } => {
                 // account
                 match self.get_annotate_account_blob(account) {
                     Ok((Some(r), _)) => {
-                      let value = find_value_from_state(&r, module_name, struct_name, key_name);
-                      format!("{:#?}", value)
-                    },
+                        let value = find_value_from_state(&r, module_name, struct_name, key_name);
+                        format!("{:#?}", value)
+                    }
                     Err(e) => format!("Error querying account resource. Message: {:#?}", e),
                     _ => format!("Error, cannot find account state for {:#?}", account),
                 }
-            },
+            }
             Txs {
                 account,
                 txs_height,
                 txs_count,
                 txs_type,
             } => {
-                let (chain, _) = self.refresh_chain_info();
-                let current_height = chain.unwrap().height;
+                let current_height = self.refresh_chain_info()?.0.height;
                 let query_height = if current_height > 100_000 {
                     current_height - 100_000
                 } else {
@@ -154,23 +164,20 @@ impl Node {
 
                 if let Some(t) = txs_type {
                     use diem_json_rpc_client::views::TransactionDataView;
-                    let filter: Vec<TransactionView> = txs.into_iter()
-                        .filter(|tv|{
-                            match &tv.transaction {
-                                TransactionDataView::UserTransaction {  
-                                    script, .. 
-                                } => {
-                                    return  script.r#type == t;
-                                },
-                                _ => false
+                    let filter: Vec<TransactionView> = txs
+                        .into_iter()
+                        .filter(|tv| match &tv.transaction {
+                            TransactionDataView::UserTransaction { script, .. } => {
+                                return script.r#type == t;
                             }
+                            _ => false,
                         })
                         .collect();
-                        format!("{:#?}", filter)
+                    format!("{:#?}", filter)
                 } else {
                     format!("{:#?}", txs)
                 }
-            },
+            }
             Events {
                 account,
                 sent_or_received,
@@ -178,78 +185,80 @@ impl Node {
             } => {
                 // TODO: should borrow and not create a new client.
                 let mut print = "Events \n".to_string();
-                let handles = self
-                .get_payment_event_handles(account)
-                .unwrap();
+                let handles = self.get_payment_event_handles(account).unwrap();
 
-                
                 if let Some((sent_handle, received_handle)) = handles {
                     for evt in self.get_handle_events(&sent_handle, seq_start).unwrap() {
-                        if sent_or_received { print.push_str(&format_event_view(evt)) }
+                        if sent_or_received {
+                            print.push_str(&format_event_view(evt))
+                        }
                     }
                     for evt in self.get_handle_events(&received_handle, seq_start).unwrap() {
-                        if !sent_or_received { print.push_str(&format_event_view(evt)) }
+                        if !sent_or_received {
+                            print.push_str(&format_event_view(evt))
+                        }
                     }
                 };
                 print
             }
-        }
+        };
+        Ok(print)
     }
 }
 
-
 fn format_event_view(e: EventView) -> String {
+    // TODO: make this more idiomatic.
 
-  // TODO: make this more idiomatic.
-
-  use diem_json_rpc_client::views::EventDataView::*;
-  let (a, s, r, BytesView(m), ..) = match e.data {
-    ReceivedPayment { amount, sender, receiver, metadata } => {
-      (amount, sender, receiver,  metadata)
-    },
-    SentPayment { amount, receiver, sender, metadata } => {
-      (amount, sender, receiver,  metadata)
-    },
-    _ => { 
-        panic!(
+    use diem_json_rpc_client::views::EventDataView::*;
+    let (a, s, r, BytesView(m), ..) = match e.data {
+        ReceivedPayment {
+            amount,
+            sender,
+            receiver,
+            metadata,
+        } => (amount, sender, receiver, metadata),
+        SentPayment {
+            amount,
+            receiver,
+            sender,
+            metadata,
+        } => (amount, sender, receiver, metadata),
+        _ => {
+            panic!(
             "trying to parse a payment event type, but event is not a ReceivedPayment or SentPayment"
         )
-    }
-  };
-  let scaled = a.amount / SCALING_FACTOR;
-  dbg!(&m);
-  format!(
-    "id: {:?}, sender: {:?}, recipient: {:?}, amount: {:?}, metadata: {:?}\n",
-    e.sequence_number,
-    s.to_string(),
-    r.to_string(),
-    scaled.to_formatted_string(&Locale::en),
-    String::from_utf8_lossy(&decode(m).unwrap_or(vec![])),
-  )
+        }
+    };
+    let scaled = a.amount / SCALING_FACTOR;
+    dbg!(&m);
+    format!(
+        "id: {:?}, sender: {:?}, recipient: {:?}, amount: {:?}, metadata: {:?}\n",
+        e.sequence_number,
+        s.to_string(),
+        r.to_string(),
+        scaled.to_formatted_string(&Locale::en),
+        String::from_utf8_lossy(&decode(m).unwrap_or(vec![])),
+    )
 }
 
 /// check if the vec of value, is actually of other structs
-pub fn is_vec_of_struct(
-  move_val: &Vec<AnnotatedMoveValue>,
-) -> bool {
+pub fn is_vec_of_struct(move_val: &Vec<AnnotatedMoveValue>) -> bool {
     if let Some(e) = move_val.first() {
-      match e {
-        AnnotatedMoveValue::Struct(_) => return true,
-        _ => return false
-      }
+        match e {
+            AnnotatedMoveValue::Struct(_) => return true,
+            _ => return false,
+        }
     }
     false
 }
 
 /// get last vec
-pub fn get_last_stuct_in_vec(
-  move_val: &Vec<AnnotatedMoveValue>,
-) -> bool {
+pub fn get_last_stuct_in_vec(move_val: &Vec<AnnotatedMoveValue>) -> bool {
     if let Some(e) = move_val.first() {
-      match e {
-        AnnotatedMoveValue::Struct(_) => return true,
-        _ => return false
-      }
+        match e {
+            AnnotatedMoveValue::Struct(_) => return true,
+            _ => return false,
+        }
     }
     false
 }
@@ -257,17 +266,18 @@ pub fn get_last_stuct_in_vec(
 // Ability to query Move types by walking an account blob. This is for structs which we may not have an equivalent type created in rust. For structs the core platform uses we have mappings available e.g. ol/types/src/miner_state.rs. This solves querying for resource structs that may be created by third parties.
 
 /// check if the vec of value, is actually of other structs
-pub fn unwrap_val_to_struct(
-  move_val: &AnnotatedMoveValue,
-) -> Option<&AnnotatedMoveStruct> {
-  match move_val {
-    AnnotatedMoveValue::Struct(s) => Some(s),
-    _ => None
-  }
+pub fn unwrap_val_to_struct(move_val: &AnnotatedMoveValue) -> Option<&AnnotatedMoveStruct> {
+    match move_val {
+        AnnotatedMoveValue::Struct(s) => Some(s),
+        _ => None,
+    }
 }
 
 /// find the value in a struct
-pub fn find_value_in_struct(s: &AnnotatedMoveStruct, key_name: String) -> Option<&AnnotatedMoveValue> {
+pub fn find_value_in_struct(
+    s: &AnnotatedMoveStruct,
+    key_name: String,
+) -> Option<&AnnotatedMoveValue> {
     match s
         .value
         .iter()
@@ -286,13 +296,12 @@ pub fn find_value_from_state(
 ) -> Option<&AnnotatedMoveValue> {
     match blob.0.values().find(|&s| {
         s.type_.module.as_ref().to_string() == module_name
-        && s.type_.name.as_ref().to_string() == struct_name
+            && s.type_.name.as_ref().to_string() == struct_name
     }) {
         Some(s) => find_value_in_struct(s, key_name),
         None => None,
     }
 }
-
 
 /// test fixtures
 pub fn test_fixture_blob() -> AnnotatedAccountStateBlob {
