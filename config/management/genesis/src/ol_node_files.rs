@@ -11,7 +11,7 @@ use diem_config::{
     config::{Identity, WaypointConfig},
     network_id::NetworkId,
 };
-use diem_crypto::{ed25519::Ed25519PublicKey, x25519::PublicKey};
+use diem_crypto::x25519::PublicKey;
 use diem_global_constants::{
     DEFAULT_PUB_PORT, DEFAULT_VFN_PORT, FULLNODE_NETWORK_KEY, OWNER_ACCOUNT,
     VALIDATOR_NETWORK_KEY,
@@ -406,10 +406,10 @@ pub fn make_vfn_cfg(
     // this is preferable to the VFN also storing the key_store.json on the host
     // which is equally insecure, and contains many more keys.
 
-    let fullnode_private_key = storage.export_private_key(FULLNODE_NETWORK_KEY)?;
     // make the fullnode discoverable by the account address of the validator owner.
     let owner_address_as_fn_id = storage.get(OWNER_ACCOUNT)?.value;
-    
+    let fullnode_private_key = storage.export_private_key(FULLNODE_NETWORK_KEY)?;
+
     let p = PrivateKey::from_ed25519_private_bytes(&fullnode_private_key.to_bytes())?;
     let id_of_vfn_node = Identity::from_config(p, owner_address_as_fn_id);
 
@@ -424,9 +424,12 @@ pub fn make_vfn_cfg(
     vfn_network.identity = id_of_vfn_node.clone();
     // set the Validator as the Seed peer for the VFN network
     // need to get their ID and IP address
-    let val_vfn_net_pubkey = storage.get_public_key(VALIDATOR_NETWORK_KEY )?.public_key;
-    dbg!(&val_vfn_net_pubkey);
-    let seeds = make_vfn_peer_set(owner_address_as_fn_id, val_vfn_net_pubkey, val_ip_address)?;
+
+    let val_net_private_key = storage.export_private_key(VALIDATOR_NETWORK_KEY)?;
+
+    let p = PrivateKey::from_ed25519_private_bytes(&val_net_private_key.to_bytes())?;
+    
+    let seeds = make_vfn_peer_set(owner_address_as_fn_id, p.public_key(), val_ip_address)?;
 
     // The seed for the VFN is the validator's ID on the private network.
     vfn_network.seeds = seeds;
@@ -458,12 +461,11 @@ pub fn make_vfn_cfg(
 
 fn make_vfn_peer_set(
     validator_account: AccountAddress,
-    val_vfn_net_pubkey: Ed25519PublicKey,
+    val_vfn_net_pubkey: PublicKey,
     ip_address: Ipv4Addr,
 ) -> Result<PeerSet, Error> {
-    let bytes = val_vfn_net_pubkey.to_bytes();
     // create the vfn network info.
-    let val_peer_data = make_validator_network_protocol(ip_address, bytes.into())?;
+    let val_peer_data = make_validator_network_protocol(ip_address, val_vfn_net_pubkey)?;
     // The seed address for the VFN can only be the Validator's address.
     let mut seeds = PeerSet::default();
     seeds.insert(validator_account, val_peer_data);

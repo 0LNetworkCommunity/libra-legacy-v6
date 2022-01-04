@@ -213,8 +213,6 @@ impl Runnable for InitCmd {
             println!("Creating fullnode.node.yaml file.");
 
             // TODO: check we can open key-store file
-
-            let namespace = app_cfg.profile.account.to_hex() + "-oper";
             let output_dir = app_cfg.workspace.node_home;
             let gen_wp = app_cfg.chain_info.base_waypoint;
 
@@ -258,7 +256,7 @@ impl Runnable for InitCmd {
                 .unwrap()
             {
                 true => {
-                    app_cfg = initialize_app_cfg(
+                    initialize_app_cfg(
                         authkey,
                         account,
                         &self.rpc_peer,
