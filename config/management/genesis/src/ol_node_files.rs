@@ -290,7 +290,7 @@ pub fn make_fullnode_cfg(
     c.set_data_dir(output_dir.clone());
     c.base.waypoint = WaypointConfig::FromConfig(waypoint);
     c.base.role = RoleType::FullNode;
-    c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
+    // c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
     
     // prune window exists to prevent state snapshots from taking up too much space.
     c.storage.prune_window = Some(100_000);
@@ -350,7 +350,7 @@ fn make_validator_cfg(output_dir: PathBuf, namespace: &str) -> Result<NodeConfig
         WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
 
     c.execution.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
-    c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
+    // c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
 
     c.consensus.safety_rules.service = SafetyRulesService::Thread;
     c.consensus.safety_rules.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
@@ -393,35 +393,41 @@ pub fn make_vfn_cfg(
     c.set_data_dir(output_dir.clone());
     c.base.waypoint = WaypointConfig::FromConfig(waypoint);
     c.base.role = RoleType::FullNode;
-    c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
+    // c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
 
     let storage = storage_helper.storage(namespace.to_string());
     c.storage.prune_window = Some(100_000);
 
     
+
+    //////////////// CREATE CONFIGS FOR CONNECTING TO VFN PRIVATE NETWORK ////////////////
+
+    // Private Fullnode Network named "vfn" - but could be any name the validator and vfn agreed on
+    let mut vfn_network = NetworkConfig::network_with_id(NetworkId::Private("vfn".to_string()));
     //////////////// IDENTITY OF NODE  ////////////////
     // the VFN announces itself as the owner address, but uses FULLNODE private key to authenticate.
+    // make the fullnode discoverable by the account address of the validator owner.
+    let owner_address_as_fn_id = storage.get(OWNER_ACCOUNT)?.value;
+    
+    // TODO: determine if we want deterministic identity. Seems to not work with VFN, for now allowing the network configs to generate random ID for VFN.
 
     // NOTE: WE ARE CHOSING TO HAVE THE FULLNODE NETWORK PRIVATE KEY UNECRPYTED IN THE CONFIG FILE
     // this is preferable to the VFN also storing the key_store.json on the host
     // which is equally insecure, and contains many more keys.
 
-    // make the fullnode discoverable by the account address of the validator owner.
-    let owner_address_as_fn_id = storage.get(OWNER_ACCOUNT)?.value;
-    let fullnode_private_key = storage.export_private_key(FULLNODE_NETWORK_KEY)?;
 
-    let p = PrivateKey::from_ed25519_private_bytes(&fullnode_private_key.to_bytes())?;
-    let id_of_vfn_node = Identity::from_config(p, owner_address_as_fn_id);
+    // let fullnode_private_key = storage.export_private_key(FULLNODE_NETWORK_KEY)?;
+
+    // let p = PrivateKey::from_ed25519_private_bytes(&fullnode_private_key.to_bytes())?;
+    // let id_of_vfn_node = Identity::from_config(p, owner_address_as_fn_id);
 
     // A VFN has two fullnode networks it participates in.
     // 1. A private network with the Validator.
     // 2. the fullnode network. The fullnode network cannot exist unless the VFN briges the validators to the public.
-    
-    //////////////// CREATE CONFIGS FOR CONNECTING TO VFN PRIVATE NETWORK ////////////////
 
-    // Private Fullnode Network named "vfn" - but could be any name the validator and vfn agreed on
-    let mut vfn_network = NetworkConfig::network_with_id(NetworkId::Private("vfn".to_string()));
-    vfn_network.identity = id_of_vfn_node.clone();
+    // vfn_network.identity = id_of_vfn_node.clone();
+
+
     // set the Validator as the Seed peer for the VFN network
     // need to get their ID and IP address
 
@@ -437,14 +443,14 @@ pub fn make_vfn_cfg(
     // TODO: This should be restricted to receiving connections from a known peer.
     vfn_network.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_VFN_PORT).parse()?;
 
-
     //////////////// CREATE CONFIGS FOR CONNECTING TO PUBLIC FULLNODES ////////////////
 
     // Public fullnode network template
     let mut pub_network = NetworkConfig::network_with_id(NetworkId::Public);
     
+    // TODO: decide if we want deterministic addresses for public network.
     // using the same ID on both private vfn network as well as public network.
-    pub_network.identity = id_of_vfn_node;
+    // pub_network.identity = id_of_vfn_node;
 
     // this port accepts connections from unknown peers.
     pub_network.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_PUB_PORT).parse()?;
