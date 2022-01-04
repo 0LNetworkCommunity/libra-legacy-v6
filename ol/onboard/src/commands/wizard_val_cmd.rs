@@ -322,7 +322,7 @@ fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, _bas
   let namespace = cfg.profile.account.to_hex() + "-oper";
 
   // TODO: use node_config to get the seed peers and then write upstream_node vec in 0L.toml from that.
-  ol_node_files::onboard_helper_all_files(
+  match ol_node_files::onboard_helper_all_files(
       home_dir.clone(),
       cmd.chain_id.unwrap_or(1),
       cmd.github_org.clone(),
@@ -333,8 +333,13 @@ fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, _bas
       None,
       &None,
       Some(val_ip_address),
-  )
-  .unwrap();
+  ) {
+    Ok(n) => {},
+    Err(e) => {
+      println!("Cannot create validator, exiting. Messsage: {:?}", &e);
+      exit(1);
+    },
+};
 
   status_ok!("\nNode config written", "\n...........................\n");
 }
