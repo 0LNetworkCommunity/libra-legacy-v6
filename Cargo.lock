@@ -1730,7 +1730,7 @@ dependencies = [
 
 [[package]]
 name = "diem-config"
-version = "0.1.0"
+version = "5.0.8"
 dependencies = [
  "bcs",
  "diem-crypto",
