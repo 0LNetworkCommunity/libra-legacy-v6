@@ -23,7 +23,7 @@ impl Runnable for IpAddrUpdateCmd {
         let entry_args = entrypoint::get_args();
         let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
 
-        match demo_tx(
+        match update_ipaddr(
           &tx_params,
           entry_args.save_path
         ) {
