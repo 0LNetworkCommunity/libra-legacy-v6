@@ -31,7 +31,7 @@ impl Runnable for IpAddrUpdateCmd {
               println!("{:?}", &r);
             },
             Err(e) => {
-              println!("ERROR: could not submit demo transaction, message: \n{:?}", &e);
+              println!("ERROR: could not update on-chain ip address: {:?}", &e);
               exit(1);
             },
         }
