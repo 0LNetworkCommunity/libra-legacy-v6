@@ -104,7 +104,7 @@ pub fn onboard_helper_all_files(
     let chain_id = ChainId::new(chain_id);
 
     let storage_helper = StorageHelper::get_with_path(output_dir.clone());
-    dbg!(&storage_helper);
+    dbg!("get_with_path success");
 
     let (_genesis_path, genesis_waypoint) = make_genesis_file(
         &output_dir,
