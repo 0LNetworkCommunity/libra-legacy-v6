@@ -104,6 +104,7 @@ pub fn onboard_helper_all_files(
     let chain_id = ChainId::new(chain_id);
 
     let storage_helper = StorageHelper::get_with_path(output_dir.clone());
+    dbg!(&storage_helper);
 
     let (_genesis_path, genesis_waypoint) = make_genesis_file(
         &output_dir,
@@ -116,7 +117,11 @@ pub fn onboard_helper_all_files(
         namespace,
     )?;
 
+    dbg!(&genesis_waypoint);
+
+
     update_genesis_waypoint_in_key_store(&output_dir, namespace, genesis_waypoint.clone());
+    dbg!("update_genesis_waypoint_in_key_store success");
 
     // fullnodes need seed peers, try to extract from the genesis file as a starting place.
     let seeds: Option<SeedAddresses> = if let Some(p) = seed_peers_path {
@@ -124,6 +129,8 @@ pub fn onboard_helper_all_files(
       let yaml: SeedAddresses = serde_yaml::from_str(&file_string)?;
       Some(yaml)
     } else { None };
+
+    dbg!(&seeds);
 
     let vfn_ip_address = val_ip_address.clone();
     // This next step depends on genesis waypoint existing in key_store.
@@ -166,8 +173,11 @@ pub fn make_all_profiles_yaml(
 
 
     let config = make_val_file(output_dir.clone(), vfn_ip_address, namespace)?;
+    dbg!(&config);
     make_vfn_file(output_dir.clone(), val_ip_address, genesis_waypoint, namespace)?;
+    dbg!("make_vfn_file success");
     make_fullnode_file(output_dir.clone(), seed_addr, genesis_waypoint)?;
+    dbg!("make_fullnode_file success");
 
     Ok(config)
     
