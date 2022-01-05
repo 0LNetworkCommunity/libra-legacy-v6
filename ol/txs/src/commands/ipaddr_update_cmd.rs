@@ -38,7 +38,7 @@ impl Runnable for IpAddrUpdateCmd {
     }
 }
 
-/// a no-op tx to test transactions
+/// perform tx to update validator's registered ip address on-chain
 pub fn update_ipaddr(
   tx_params: &TxParams, save_path: Option<PathBuf>
 ) -> Result<TransactionView, TxError> {
