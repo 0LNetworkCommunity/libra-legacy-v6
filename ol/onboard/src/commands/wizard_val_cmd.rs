@@ -285,7 +285,10 @@ fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, _bas
               home_path.join("genesis.blob"),
           )
           .unwrap();
-
+          
+          // make file fixture
+          fs::write(home_path.join("genesis_waypoint.txt"), "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2");
+          
           status_ok!(
               "\nUsing test genesis.blob",
               "\n...........................\n"

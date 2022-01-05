@@ -254,10 +254,13 @@ fn make_genesis_file(
     let genesis_path = output_dir.join("genesis.blob");
     match prebuilt_genesis {
         Some(path) => {
+          dbg!(&path);
             // TODO: insert waypoint
+            let gen_wp_path = path.parent().unwrap().join("genesis_waypoint.txt");
             let wp: Waypoint =
-                fs::read_to_string(&path.parent().unwrap().join("genesis_waypoint.txt"))?
-                    .parse()?;
+                fs::read_to_string(&gen_wp_path)?
+                    .parse().map_err(|_| anyhow::anyhow!("cannot parse genesis_waypoint.txt"))?;
+            dbg!(&wp);
             Ok((path.to_owned(), wp))
         }
         None => {
@@ -272,13 +275,11 @@ fn make_genesis_file(
                 // building a genesis file requires a set_layout path. The default is for genesis to use a local set_layout file. Once a genesis occurs, the canonical chain can store the genesis information to github repo for future verification and creating a genesis blob.
                 let genesis_waypoint = match layout_path {
                     Some(layout_path) => storage_helper
-                        .build_genesis_with_layout(chain_id, &remote, &genesis_path, &layout_path)
-                        .unwrap(),
+                        .build_genesis_with_layout(chain_id, &remote, &genesis_path, &layout_path)?,
                     None => {
                         println!("attempting to get a set_layout file from the genesis repo");
                         storage_helper
-                            .build_genesis_from_github(chain_id, &remote, &genesis_path)
-                            .unwrap()
+                            .build_genesis_from_github(chain_id, &remote, &genesis_path)?
                     }
                 };
                 Ok((genesis_path, genesis_waypoint))
