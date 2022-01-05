@@ -39,6 +39,10 @@ pub const VDF_SECURITY_PARAM: u16 = 512;
 
 /// Filename for 0L configs
 pub const CONFIG_FILE: &str = "0L.toml";
+pub const DEFAULT_VAL_PORT: u64 = 6180;
+pub const DEFAULT_VFN_PORT: u64 = 6179;
+pub const DEFAULT_PUB_PORT: u64 = 6178;
+
 
 // TODO: make this lazy static.
 /// Switch settings between production and testing

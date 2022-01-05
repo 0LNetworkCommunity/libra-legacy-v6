@@ -2,11 +2,16 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::checkup;
-use crate::{application::app_config, config::AppCfg, entrypoint, migrate};
+use crate::{
+    application::app_config,
+    config::AppCfg,
+    entrypoint,
+    node::{client, node::Node},
+};
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use anyhow::{bail, Error};
-use diem_genesis_tool::{init, key};
+use dialoguer::Confirm;
+use diem_genesis_tool::{init, key, ol_node_files};
 use diem_json_rpc_client::AccountAddress;
 use diem_types::transaction::authenticator::AuthenticationKey;
 use diem_types::waypoint::Waypoint;
@@ -14,9 +19,9 @@ use diem_wallet::WalletLibrary;
 use fs_extra::file::{copy, CopyOptions};
 use ol_keys::{scheme::KeyScheme, wallet};
 use ol_types::fixtures;
+use std::process::exit;
 use std::{fs, path::PathBuf};
 use url::Url;
-
 /// `init` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct InitCmd {
@@ -25,21 +30,44 @@ pub struct InitCmd {
     path: Option<PathBuf>,
     /// An upstream peer to use in 0L.toml
     #[options(help = "An upstream peer to use in 0L.toml")]
-    upstream_peer: Option<Url>,
-    /// Skip app configs
-    #[options(help = "Skip app configs")]
-    skip_app: bool,
-    /// Skip validator init
-    #[options(help = "Skip validator init")]
-    skip_val: bool,
+    // TODO: rename to json_rpc_peer
+    rpc_peer: Option<Url>,
+    /// Create the 0L.toml file for 0L apps
+    #[options(help = "Create the 0L.toml file for 0L apps")]
+    app: bool,
+
+    /// Create validator yaml file configuration
+    #[options(help = "Create validator.node.yaml file configuration")]
+    val: bool,
+
+    /// Create validator yaml file configuration
+    #[options(help = "Create vfn.node.yaml file configuration")]
+    vfn: bool,
+
+    /// Create fullnode.node.yaml file configuration
+    #[options(help = "Create fullnode.node.yaml file configuration")]
+    fullnode: bool,
+
+    /// Search and get seed peers from chain
+    #[options(help = "Get seed fullnode peers from chain")]
+    seed_peer: bool,
+
+    /// Init key store file for validator
+    #[options(help = "Init key store file for validator")]
+    key_store: bool,
     /// run checkup on config file
     #[options(help = "Check config file and give hints if something seems wrong")]
     checkup: bool,
     /// fix the config file
     #[options(help = "Fix config file, and migrate any missing fields")]
     fix: bool,
+
     /// Set a waypoint in config files
-    #[options(help = "Set a waypoint in config files")]
+    #[options(help = "Set from CLI or get waypoint from chain")]
+    update_waypoint: bool,
+
+    /// Set a waypoint in config files
+    #[options(help = "Manually set a waypoint. ")]
     waypoint: Option<Waypoint>,
     /// Path to source code, for devs
     #[options(help = "Path to source code, for devs")]
@@ -49,19 +77,159 @@ pub struct InitCmd {
 impl Runnable for InitCmd {
     /// Print version message
     fn run(&self) {
-        if *&self.checkup {
-            // check 0L.toml file
-            checkup::checkup(self.path.to_owned());
-            return;
-        };
-
-        if *&self.fix {
-            // fix 0L.toml file
-            migrate::migrate(self.path.to_owned());
-            return;
-        };
-
+        // start with a default value, or read from file if already initialized
+        let mut app_cfg = app_config().to_owned();
         let entry_args = entrypoint::get_args();
+        let is_swarm = *&entry_args.swarm_path.is_some();
+
+        if self.update_waypoint {
+            // TODO: will need to update the key_store.json file with waypoint info.
+            if let Some(w) = self.waypoint {
+                app_cfg.chain_info.base_waypoint = Some(w);
+                app_cfg.save_file();
+                return;
+            };
+            let client = match client::pick_client(entry_args.swarm_path.clone(), &mut app_cfg) {
+                Ok(c) => c,
+                Err(e) => {
+                    println!(
+                        "Could not connect to a fullnode with JSON API, exiting. Message: {:?}",
+                        e
+                    );
+                    exit(1);
+                }
+            };
+
+            let mut node = Node::new(client, &app_cfg, is_swarm);
+
+            match node.waypoint() {
+                Ok(w) => {
+                    app_cfg.chain_info.base_waypoint = Some(w);
+                    app_cfg.save_file();
+                    return;
+                }
+                Err(e) => {
+                    println!("Could not find a waypoint, exiting. Message: {:?}", e);
+                    exit(1);
+                }
+            }
+        }
+        // fetch a list of seed peers from the current on chain discovery
+        // doesn't need mnemonic
+        if self.seed_peer {
+            let client = match client::pick_client(entry_args.swarm_path.clone(), &mut app_cfg) {
+                Ok(c) => c,
+                Err(e) => {
+                    println!(
+                        "Could not connect to a fullnode with JSON API, exiting. Message: {:?}",
+                        e
+                    );
+                    exit(1);
+                }
+            };
+
+            let mut node = Node::new(client, &app_cfg, is_swarm);
+
+            match node.refresh_fullnode_seeds() {
+                Ok(s) => {
+                    match serde_yaml::to_string(&s) {
+                        Ok(y) => {
+                            let path = app_cfg.workspace.node_home.join("seed_fullnodes.yaml");
+                            match std::fs::write(&path, &y) {
+                                Ok(_) => {
+                                    println!("seed_fullnodes.yaml file written to: {:?}", &path)
+                                }
+                                Err(e) => {
+                                    println!(
+                                        "Could not write yaml file, exiting. Message: {:?}",
+                                        e
+                                    );
+                                    exit(1);
+                                }
+                            };
+                        }
+                        Err(e) => {
+                            println!("Could not serialize yaml, exiting. Message: {:?}", e);
+                            exit(1);
+                        }
+                    }
+                    // return
+                }
+                Err(e) => {
+                    println!(
+                        "Could not fetch seed peers from chain, exiting. Message: {:?}",
+                        e
+                    );
+                    exit(1);
+                }
+            };
+        }
+
+        // create files for VFN
+        if self.vfn {
+            println!("Creating vfn.node.yaml file.");
+
+            let namespace = app_cfg.profile.account.to_hex() + "-oper";
+            let output_dir = app_cfg.workspace.node_home;
+            let val_ip_address = app_cfg.profile.ip;
+            let gen_wp = app_cfg.chain_info.base_waypoint;
+
+            match ol_node_files::make_vfn_file(
+                output_dir,
+                val_ip_address,
+                gen_wp.unwrap_or_default(),
+                &namespace,
+            ) {
+                Ok(_) => {}
+                Err(e) => {
+                    println!("Could not create file, exiting. Message: {:?}", e);
+                    exit(1);
+                }
+            };
+            return;
+        }
+
+        // create files for val
+        if self.val {
+            println!("Creating validator.node.yaml file. This assumes you have a key_store.json. If you do not, run this command again with --key-store");
+
+            // TODO: check we can open key-store file
+
+            let namespace = app_cfg.profile.account.to_hex() + "-oper";
+            let output_dir = app_cfg.workspace.node_home;
+
+            match ol_node_files::make_val_file(output_dir, None, &namespace) {
+                Ok(_) => {}
+                Err(e) => {
+                    println!("Could not create file, exiting. Message: {:?}", e);
+                    exit(1);
+                }
+            };
+            return;
+        }
+
+        // create files for public fullnode
+        if self.fullnode {
+            println!("Creating fullnode.node.yaml file.");
+
+            // TODO: check we can open key-store file
+            let output_dir = app_cfg.workspace.node_home;
+            let gen_wp = app_cfg.chain_info.base_waypoint;
+
+            // TODO: get seed addresses from file optionally
+            // let seed = SeedAddresses::read_from_file(seed_peers_path);
+
+            match ol_node_files::make_fullnode_file(output_dir, None, gen_wp.unwrap_or_default()) {
+                Ok(_) => {}
+                Err(e) => {
+                    println!("Could not create file, exiting. Message: {:?}", e);
+                    exit(1);
+                }
+            };
+            return;
+        }
+
+        // Can also initializes users for swarm and tests.
         if let Some(path) = entry_args.swarm_path {
             let swarm_node_home = entrypoint::get_node_home();
             let absolute = fs::canonicalize(path).unwrap();
@@ -75,24 +243,39 @@ impl Runnable for InitCmd {
             return;
         }
 
+        /////////// Everything below requires mnemonic ////////
         let (authkey, account, wallet) = wallet::get_account_from_prompt();
-        // start with a default value, or read from file if already initialized
-        let mut app_cfg = app_config().to_owned();
-        if !self.skip_app {
-            app_cfg = initialize_app_cfg(
-                authkey,
-                account,
-                &self.upstream_peer,
-                &self.path,
-                &None, // TODO: probably need an epoch option here.
-                &self.waypoint,
-                &self.source_path,
-            )
-            .unwrap()
+
+        // now we can modify the 0L.toml from template.
+        if self.app {
+            // note this will overwrite the 0L.toml
+            // check the user wants to do this.
+            match Confirm::new()
+                .with_prompt("This will overwrite an 0L.toml file if it exists. Proceed?")
+                .interact()
+                .unwrap()
+            {
+                true => {
+                    initialize_app_cfg(
+                        authkey,
+                        account,
+                        &self.rpc_peer,
+                        &self.path,
+                        &None, // TODO: probably need an epoch option here.
+                        &self.waypoint,
+                        &self.source_path,
+                    )
+                    .unwrap()
+                }
+                _ => panic!("Creating 0L.toml aborted"),
+            };
+            return;
         };
 
-        if !self.skip_val {
-            initialize_validator(&wallet, &app_cfg, self.waypoint, false).unwrap()
+        // TODO: this should happen before --val since the user may want to do two operations in one command. But we'll need to authenticate them for this step. --val doesn't neet authentication.
+        if self.key_store {
+            initialize_val_key_store(&wallet, &app_cfg, self.waypoint, false).unwrap();
+            return;
         };
     }
 }
@@ -101,7 +284,7 @@ impl Runnable for InitCmd {
 pub fn initialize_app_cfg(
     authkey: AuthenticationKey,
     account: AccountAddress,
-    upstream_peer: &Option<Url>,
+    rpc_peer: &Option<Url>,
     path: &Option<PathBuf>,
     epoch_opt: &Option<u64>,
     wp_opt: &Option<Waypoint>,
@@ -110,7 +293,7 @@ pub fn initialize_app_cfg(
     let cfg = AppCfg::init_app_configs(
         authkey,
         account,
-        upstream_peer,
+        rpc_peer,
         path,
         epoch_opt,
         wp_opt,
@@ -135,8 +318,7 @@ pub fn initialize_host_swarm(
     let blocks_dir = PathBuf::new()
         .join(&cfg.workspace.node_home)
         .join(&cfg.workspace.block_dir);
-    let target_file = blocks_dir
-        .join("proof_0.json");
+    let target_file = blocks_dir.join("proof_0.json");
     println!("copy first block from {:?} to {:?}", &source, &target_file);
 
     if !&blocks_dir.exists() {
@@ -155,7 +337,7 @@ pub fn initialize_host_swarm(
 }
 
 /// Initializes the necessary validator config files: genesis.blob, key_store.json
-pub fn initialize_validator(
+pub fn initialize_val_key_store(
     wallet: &WalletLibrary,
     miner_config: &AppCfg,
     way_opt: Option<Waypoint>,
