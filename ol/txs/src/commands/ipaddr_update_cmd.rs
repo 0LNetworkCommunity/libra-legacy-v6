@@ -21,7 +21,7 @@ pub struct IpAddrUpdateCmd {
 impl Runnable for IpAddrUpdateCmd {
     fn run(&self) {
         let entry_args = entrypoint::get_args();
-        let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
+        let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
 
         match update_ipaddr(
           &tx_params,
