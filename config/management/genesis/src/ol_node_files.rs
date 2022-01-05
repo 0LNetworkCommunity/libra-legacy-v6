@@ -13,7 +13,7 @@ use diem_config::{
 };
 use diem_crypto::x25519::PublicKey;
 use diem_global_constants::{
-    DEFAULT_PUB_PORT, DEFAULT_VFN_PORT, FULLNODE_NETWORK_KEY, OWNER_ACCOUNT,
+    DEFAULT_PUB_PORT, DEFAULT_VFN_PORT, OWNER_ACCOUNT,
     VALIDATOR_NETWORK_KEY,
 };
 use diem_management::{config::ConfigPath, error::Error, secure_backend::ValidatorBackend};
@@ -104,7 +104,6 @@ pub fn onboard_helper_all_files(
     let chain_id = ChainId::new(chain_id);
 
     let storage_helper = StorageHelper::get_with_path(output_dir.clone());
-    dbg!("get_with_path success");
 
     let (_genesis_path, genesis_waypoint) = make_genesis_file(
         &output_dir,
@@ -117,11 +116,8 @@ pub fn onboard_helper_all_files(
         namespace,
     )?;
 
-    dbg!(&genesis_waypoint);
-
 
     update_genesis_waypoint_in_key_store(&output_dir, namespace, genesis_waypoint.clone());
-    dbg!("update_genesis_waypoint_in_key_store success");
 
     // fullnodes need seed peers, try to extract from the genesis file as a starting place.
     let seeds: Option<SeedAddresses> = if let Some(p) = seed_peers_path {
@@ -129,8 +125,6 @@ pub fn onboard_helper_all_files(
       let yaml: SeedAddresses = serde_yaml::from_str(&file_string)?;
       Some(yaml)
     } else { None };
-
-    dbg!(&seeds);
 
     let vfn_ip_address = val_ip_address.clone();
     // This next step depends on genesis waypoint existing in key_store.
@@ -173,11 +167,8 @@ pub fn make_all_profiles_yaml(
 
 
     let config = make_val_file(output_dir.clone(), vfn_ip_address, namespace)?;
-    dbg!(&config);
     make_vfn_file(output_dir.clone(), val_ip_address, genesis_waypoint, namespace)?;
-    dbg!("make_vfn_file success");
     make_fullnode_file(output_dir.clone(), seed_addr, genesis_waypoint)?;
-    dbg!("make_fullnode_file success");
 
     Ok(config)
     
@@ -254,13 +245,11 @@ fn make_genesis_file(
     let genesis_path = output_dir.join("genesis.blob");
     match prebuilt_genesis {
         Some(path) => {
-          dbg!(&path);
             // TODO: insert waypoint
             let gen_wp_path = path.parent().unwrap().join("genesis_waypoint.txt");
             let wp: Waypoint =
                 fs::read_to_string(&gen_wp_path)?
                     .parse().map_err(|_| anyhow::anyhow!("cannot parse genesis_waypoint.txt"))?;
-            dbg!(&wp);
             Ok((path.to_owned(), wp))
         }
         None => {
@@ -561,15 +550,11 @@ pub fn test_default_for_public_full_node() {
         .parent()
         .unwrap()
         .join("ol/util/node_templates/fullnode.node.yaml");
-
-    dbg!(&path);
     // let contents = std::include_str!(&path.to_string());
 
     let contents = fs::read_to_string(&path).expect("could not find mnemonic file");
 
-    let n: NodeConfig = serde_yaml::from_str(&contents).unwrap();
-
-    dbg!(&n);
+    let _n: NodeConfig = serde_yaml::from_str(&contents).unwrap();
 }
 
 // pub fn default_for_validator() -> Self {
