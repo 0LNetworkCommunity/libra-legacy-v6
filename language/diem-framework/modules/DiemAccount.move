@@ -197,6 +197,11 @@ module DiemAccount {
 
     //////// 0L ////////
     const EBELOW_MINIMUM_VALUE_BOOTSTRAP_COIN: u64 = 120125;
+    const EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET: u64 = 120126;
+    const ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE: u64 = 120127;
+    const EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT: u64 = 120128;
+
+
 
     /////// 0L end /////////
 
@@ -478,15 +483,33 @@ module DiemAccount {
         new_account: address,
         new_account_authkey_prefix: vector<u8>,
         value: u64,
-    ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount {
+    ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount, SlowWallet {
         let new_signer = create_signer(new_account);
         Roles::new_user_role_with_proof(&new_signer);
         Event::publish_generator(&new_signer);
         add_currencies_for_account<GAS>(&new_signer, false);
         make_account(new_signer, new_account_authkey_prefix);
 
-        onboarding_gas_transfer<GAS>(sender, new_account, value);
-        new_account
+        // if the initial coin sent is the minimum amount, don't check transfer limits.
+        if (value <= BOOTSTRAP_COIN_VALUE) {
+            onboarding_gas_transfer<GAS>(sender, new_account, value);
+            new_account
+        }
+        // otherwise, if the onboarder wants to send more, then it must respect the transfer limits.
+        else {
+            let with_cap = extract_withdraw_capability(sender);
+            pay_from<GAS>(
+                &with_cap,
+                new_account,
+                value,
+                b"account generation", 
+                b"",
+            );
+            restore_withdraw_capability(with_cap);
+            new_account
+        }
+
+        
     }
 
     /////// 0L ////////
@@ -1206,9 +1229,7 @@ module DiemAccount {
     public fun extract_withdraw_capability(
         sender: &signer
     ): WithdrawCapability acquires DiemAccount {
-        //////// 0L //////// Transfers disabled by default
-        //////// 0L //////// Transfers of 10 GAS 
-        //////// 0L //////// enabled when epoch is 1000
+
         let sender_addr = Signer::address_of(sender);
 
         /////// 0L /////////
@@ -1216,14 +1237,17 @@ module DiemAccount {
         let community_wallets = Wallet::get_comm_list();
         assert(
             !Vector::contains(&community_wallets, &sender_addr), 
-            Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
+            Errors::limit_exceeded(EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET)
         );
         /////// 0L /////////
-        if (!DiemConfig::check_transfer_enabled()) {
-            // only VM can make TXs if transfers are not enabled.
+        // Slow wallet transfers disabled by default, enabled when epoch is 1000
+        // At that point slow wallets receive 1,000 coins unlocked per day.
+        if (is_slow(sender_addr) && !DiemConfig::check_transfer_enabled() ) {
+          // if transfers are not enabled for slow wallets
+          // then the tx should fail
             assert(
-                sender_addr == CoreAddresses::DIEM_ROOT_ADDRESS(), 
-                Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
+                false, 
+                Errors::limit_exceeded(ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE)
             );
         };
         // Abort if we already extracted the unique withdraw capability for this account.
@@ -1356,12 +1380,13 @@ module DiemAccount {
             let t: Wallet::TimedTransfer = *Vector::borrow(&v, i);
             // TODO: Is this the best way to access a struct property from 
             // outside a module?
-            let (payer, payee, value, description) = Wallet::get_tx_args(t);
+            let (payer, payee, value, description) = Wallet::get_tx_args(*&t);
             if (Wallet::is_frozen(payer)) {
               i = i + 1;
               continue
             };
             vm_make_payment_no_limit<GAS>(payer, payee, value, description, b"", vm);
+            Wallet::mark_processed(vm, t);
             Wallet::reset_rejection_counter(vm, payer);
             i = i + 1;
         };
@@ -1476,7 +1501,7 @@ module DiemAccount {
         if (is_slow(*&cap.account_address)) {
           assert(
                 amount < unlocked_amount(*&cap.account_address),
-                Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
+                Errors::limit_exceeded(EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT)
             );
 
         };

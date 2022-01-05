@@ -4,7 +4,7 @@
 
 There are a lot of things to configure to set up an 0L validator. Easy Mode makes assumptions. 
 
-You can optionally do [Hard Mode](validator_onboarding_guide_hard_mode.md), and build from source, and write your own config files.
+You can optionally do [Hard Mode](validator_onboarding_hard_mode.md), and build from source, and write your own config files.
 
 ### Things you will need:
 

@@ -31,7 +31,7 @@ NUM_NODES = 2
 
 ifndef PREV_VERSION
 #TODO: decide how to programmatically tell the tests what version is in production.
-PREV_VERSION = $(shell git branch --show-current)
+PREV_VERSION = v5.0.4
 endif
 
 ifndef BRANCH_NAME

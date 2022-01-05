@@ -4,12 +4,14 @@
 //! sender: alice
 script {    
     use 0x1::TowerState;
+    use 0x1::Debug::print;
 
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
         TowerState::test_helper_mock_mining(&sender, 5);
+        print(&TowerState::get_count_in_epoch(@{{alice}}));
         assert(TowerState::get_count_in_epoch(@{{alice}}) == 5, 7357300101011000);
     }
 }

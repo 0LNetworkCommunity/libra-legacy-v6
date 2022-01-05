@@ -99,8 +99,6 @@ ol serve --update
 
 ## 2. Generate an account
 
-[In-depth guide](Account-creation-for-validators.md) 
-
 Before you start: have the static IP address you wish to associate with your validator, and a fun personal statement 
 to place in your first proof.
 
@@ -245,9 +243,9 @@ diem-node --config  ~/.0L/validator.node.yaml >> ~/.0L/logs/validator.log 2>&1
 
 6.2 Restart the tower app after your validator is running, refer to [Step 5](#5-start-producing-delay-proofs-delay-mining) - ctrl+ C and restart it. 
 
-Once you have been on boarded you should see you public key in the list of validators. Run the explorer to view:
+Once you have been on boarded you should see you public key in the list of validators. Run the web monitor to view:
 ```
-ol explorer
+ol serve -c
 ```
 ---
 

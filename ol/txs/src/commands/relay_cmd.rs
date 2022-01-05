@@ -1,4 +1,4 @@
-//! `CreateAccount` subcommand
+//! `relay` subcommand
 
 #![allow(clippy::never_loop)]
 
