@@ -16,7 +16,6 @@ byteorder = "1"
 diem-global-constants = { path = "../../config/global-constants", version = "0.1.0"}
 dirs = "2.0.2"
 machine-ip = "0.2.1"
-rustyline = "6.2.0"
 ajson = "0.2.3"
 diem-crypto = { path = "../../crypto/crypto/" }
 toml = "0.5.6"

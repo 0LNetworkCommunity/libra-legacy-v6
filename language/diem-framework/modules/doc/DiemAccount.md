@@ -1464,7 +1464,7 @@ Initialize this module. This is only callable from genesis.
     new_account: address,
     new_account_authkey_prefix: vector&lt;u8&gt;,
     value: u64,
-):address <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>, <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>, <a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a> {
+):address <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>, <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> {
     <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account);
     <a href="Roles.md#0x1_Roles_new_user_role_with_proof">Roles::new_user_role_with_proof</a>(&new_signer);
     <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_signer);

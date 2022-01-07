@@ -93,7 +93,12 @@ fn main() {
     let base_path = std::path::Path::new(&exec_path)
         .parent()
         .unwrap()
-        .join("../../language/diem-framework");
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .join("language")
+        .join("diem-framework"); //////// 0L //////// was causing windows compile problems.
     std::env::set_current_dir(&base_path).expect("failed to change directory");
 
     #[cfg(debug_assertions)]
@@ -103,7 +108,7 @@ fn main() {
 
     let output_path = matches
         .value_of("output")
-        .unwrap_or("releases/artifacts/current");
+        .unwrap_or("releases/artifacts/current"); // TODO: this will break on Windows
 
     release::create_release(
         &Path::new(output_path), &options

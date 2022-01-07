@@ -565,6 +565,10 @@ pub fn bootstrap_waypoint_from_upstream(url: &mut Url) -> Result<(u64, Waypoint)
 struct WaypointRpc {
     result: Option<serde_json::Value>,
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> carpe-build
 /// get the waypoint from a fullnode
 pub fn bootstrap_waypoint_from_rpc(url: Url) -> Result<Waypoint, Error> {
     let method = "get_waypoint_view";

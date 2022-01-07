@@ -640,6 +640,16 @@ Permissions: PUBLIC, ANYONE
   // Get address, assumes the sender is the signer.
   <b>let</b> miner_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sign);
 
+  // This may be the 0th proof of an end user that hasn't had tower state initialized
+  <b>if</b> (!<a href="TowerState.md#0x1_TowerState_is_init">is_init</a>(miner_addr)) {
+    // check proof belongs <b>to</b> user.
+    <b>let</b> (addr_in_proof, _) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(&proof.challenge);
+    <b>assert</b>(addr_in_proof == <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sign), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(130112));
+
+    <a href="TowerState.md#0x1_TowerState_init_miner_state">init_miner_state</a>(miner_sign, &proof.challenge, &proof.solution, proof.difficulty, proof.security);
+    <b>return</b>
+  };
+
   // Skip this check on local tests, we need tests <b>to</b> send different difficulties.
   <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
     // Get vdf difficulty constant. Will be different in tests than in production.
