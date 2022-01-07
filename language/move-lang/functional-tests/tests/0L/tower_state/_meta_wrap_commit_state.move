@@ -13,7 +13,7 @@ script {
     fun main(sender: signer) {
         // Testing that state can be initialized, and a proof submitted as if it were genesis.
         // buildign block for other tests.
-        TowerState::test_helper_init_miner(
+        TowerState::test_helper_init_val(
             &sender,
             TestFixtures::easy_chal(),
             TestFixtures::easy_sol(),

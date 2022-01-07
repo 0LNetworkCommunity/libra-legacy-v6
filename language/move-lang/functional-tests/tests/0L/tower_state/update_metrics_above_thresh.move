@@ -10,7 +10,7 @@ script {
 
     // SIMULATES A MINER ONBOARDING PROOF (proof_0.json)
     fun main(sender: signer) {
-        TowerState::test_helper_init_miner(
+        TowerState::test_helper_init_val(
             &sender,
             TestFixtures::alice_0_easy_chal(),
             TestFixtures::alice_0_easy_sol(),

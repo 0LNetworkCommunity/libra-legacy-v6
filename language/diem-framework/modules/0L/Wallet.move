@@ -15,6 +15,8 @@ module Wallet {
     const APPROVED: u8 = 1;
     const REJECTED: u8 = 2;
 
+    const EIS_NOT_SLOW_WALLET: u64 = 0231010;
+
     //////// COMMUNITY WALLETS ////////
 
     struct CommunityWalletList has key {
@@ -122,6 +124,12 @@ module Wallet {
     public fun new_timed_transfer(
       sender: &signer, payee: address, value: u64, description: vector<u8>
     ): u64 acquires CommunityTransfers, CommunityWalletList {
+      // firstly check if payee is a slow wallet
+      // TODO: This function should check if the account is a slow wallet before sending
+      // but there's a circular dependency with DiemAccount which has the slow wallet struct.
+      // curretly we move that check to the transaction script to initialize the payment.
+      // assert(DiemAccount::is_slow(payee), EIS_NOT_SLOW_WALLET);
+
       let sender_addr = Signer::address_of(sender);
       let list = get_comm_list();
       assert(
@@ -151,34 +159,6 @@ module Wallet {
 
       Vector::push_back<TimedTransfer>(&mut transfers.proposed, t);
       return transfers.max_uid
-    }
-
-    // Todo: Can be private, used only in tests
-    // Utlity to query a CommunityWallet transfer wallet.
-    // Note: does not need to be a public function, except for use in tests.
-    public fun find(
-      uid: u64,
-      type_of: u8
-    ): (Option<TimedTransfer>, u64) acquires CommunityTransfers {
-      let c = borrow_global<CommunityTransfers>(@0x0);
-      let list = if (type_of == 0) {
-        &c.proposed
-      } else if (type_of == 1) {
-        &c.approved
-      } else {
-        &c.rejected
-      };
-
-      let len = Vector::length(list);
-      let i = 0;
-      while (i < len) {
-        let t = *Vector::borrow<TimedTransfer>(list, i);
-        if (t.uid == uid) {
-          return (Option::some<TimedTransfer>(t), i)
-        };
-        i = i + 1;
-      };
-      (Option::none<TimedTransfer>(), 0)
     }
   
   // A validator casts a vote to veto a proposed/pending transaction 
@@ -232,6 +212,32 @@ module Wallet {
     
   }
 
+    // private function. Once vetoed, the CommunityWallet transaction is 
+  // removed from proposed list.
+  public fun mark_processed(vm: &signer, t: TimedTransfer) acquires CommunityTransfers {
+    CoreAddresses::assert_vm(vm);
+
+    let c = borrow_global_mut<CommunityTransfers>(@0x0);
+    let list = *&c.proposed;
+    let len = Vector::length(&list);
+    let i = 0;
+    while (i < len) {
+      let search = *Vector::borrow<TimedTransfer>(&list, i);
+      if (search.uid == t.uid) {
+        Vector::remove<TimedTransfer>(&mut c.proposed, i);
+        Vector::push_back(&mut c.approved, search);
+      };
+
+      i = i + 1;
+    };
+    
+  }
+
+  public fun reset_rejection_counter(vm: &signer, wallet: address) acquires CommunityFreeze {
+    CoreAddresses::assert_diem_root(vm);
+    borrow_global_mut<CommunityFreeze>(wallet).consecutive_rejections = 0;
+  }
+
   // private function to tally vetos.
   // checks if a voter is in the validator set.
   // tallies everytime called. Only counts votes in the validator set.
@@ -283,9 +289,8 @@ module Wallet {
   // Utility to list CommunityWallet transfers due, by epoch. Anyone can call this.
   // This is used by VM in DiemAccount at epoch boundaries to process the wallet transfers.
   public fun list_tx_by_epoch(epoch: u64): vector<TimedTransfer> acquires CommunityTransfers {
-      let c = borrow_global_mut<CommunityTransfers>(@0x0);
-      // reset approved list
-      c.approved = Vector::empty<TimedTransfer>();
+      let c = borrow_global<CommunityTransfers>(@0x0);
+
       // loop proposed list
       let pending = Vector::empty<TimedTransfer>();
       let len = Vector::length(&c.proposed);
@@ -295,18 +300,45 @@ module Wallet {
         if (t.expire_epoch == epoch) {
           
           Vector::push_back<TimedTransfer>(&mut pending, *t);
-          // TODO: clear the freeze count on community wallet
-          // add to approved list
         };
         i = i + 1;
       };
       return pending
     }
 
-    public fun reset_rejection_counter(vm: &signer, wallet: address) acquires CommunityFreeze {
-      CoreAddresses::assert_diem_root(vm);
-      borrow_global_mut<CommunityFreeze>(wallet).consecutive_rejections = 0;
+
+    public fun list_transfers(type_of: u8): vector<TimedTransfer> acquires CommunityTransfers {
+      let c = borrow_global<CommunityTransfers>(@0x0);
+      if (type_of == 0) {
+        *&c.proposed
+      } else if (type_of == 1) {
+        *&c.approved
+      } else {
+        *&c.rejected
+      }
     }
+
+        // Todo: Can be private, used only in tests
+    // Utlity to query a CommunityWallet transfer wallet.
+    // Note: does not need to be a public function, except for use in tests.
+    public fun find(
+      uid: u64,
+      type_of: u8
+    ): (Option<TimedTransfer>, u64) acquires CommunityTransfers {
+      let list = &list_transfers(type_of);
+
+      let len = Vector::length(list);
+      let i = 0;
+      while (i < len) {
+        let t = *Vector::borrow<TimedTransfer>(list, i);
+        if (t.uid == uid) {
+          return (Option::some<TimedTransfer>(t), i)
+        };
+        i = i + 1;
+      };
+      (Option::none<TimedTransfer>(), 0)
+    }
+
 
     // Private function to freeze a community wallet
     // community wallets get frozen if 3 consecutive attempts to transfer are rejected.

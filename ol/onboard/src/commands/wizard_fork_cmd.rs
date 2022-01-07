@@ -2,11 +2,10 @@
 
 #![allow(clippy::never_loop)]
 
-use super::files_cmd;
+use super::genesis_files_cmd;
 
 use crate::entrypoint;
 use crate::prelude::app_config;
-use crate::read_genesis::gen_tx_from_blob;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use diem_genesis_tool::{ol_node_files, waypoint};
 use diem_types::transaction::SignedTransaction;
@@ -84,12 +83,11 @@ impl Runnable for ForkCmd {
 
         let mut wp = self.waypoint.clone();
         if let Some(path) = &self.prebuilt_genesis {
-          let tx = gen_tx_from_blob(path).unwrap();
-          wp = Some(waypoint::CreateWaypoint::extract_waypoint(tx).unwrap());
+          wp = Some(waypoint::extract_waypoint_from_file(path).unwrap());
           dbg!(&wp);
         }
 
-        let app_config = AppCfg::init_app_configs(
+        let cfg = AppCfg::init_app_configs(
             authkey,
             account,
             &Some(upstream.clone()),
@@ -100,8 +98,8 @@ impl Runnable for ForkCmd {
             None,
             None,
         );
-        let home_path = &app_config.workspace.node_home;
-        let base_waypoint = app_config.chain_info.base_waypoint.clone();
+        let home_path = &cfg.workspace.node_home;
+        let base_waypoint = cfg.chain_info.base_waypoint.clone();
         dbg!(&base_waypoint);
 
         status_ok!("\nApp configs written", "\n...........................\n");
@@ -120,7 +118,7 @@ impl Runnable for ForkCmd {
             &self.template_url,
             &self.autopay_file,
             home_path,
-            &app_config,
+            &cfg,
             &wallet,
             entry_args.swarm_path.as_ref().is_some(),
         );
@@ -130,13 +128,13 @@ impl Runnable for ForkCmd {
         );
 
         // Initialize Validator Keys
-        init_cmd::initialize_validator(&wallet, &app_config, base_waypoint, false).unwrap();
+        init_cmd::initialize_val_key_store(&wallet, &cfg, base_waypoint, false).unwrap();
         status_ok!("\nKey file written", "\n...........................\n");
 
         // fetching the genesis files from genesis-archive, will override the path for prebuilt genesis.
         let mut prebuilt_genesis_path = self.prebuilt_genesis.clone();
         if self.fetch_git_genesis {
-            files_cmd::fetch_genesis_files_from_repo(home_path.clone(), &self.github_org, &self.repo).unwrap();
+            genesis_files_cmd::fetch_genesis_files_from_repo(home_path.clone(), &self.github_org, &self.repo).unwrap();
             status_ok!(
                 "\nDownloaded genesis files",
                 "\n...........................\n"
@@ -147,24 +145,23 @@ impl Runnable for ForkCmd {
         }
 
 
-        let home_dir = app_config.workspace.node_home.to_owned();
+        let home_dir = cfg.workspace.node_home.to_owned();
         // 0L convention is for the namespace of the operator to be appended by '-oper'
-        let namespace = app_config.profile.auth_key.clone().to_string() + "-oper";
+        let namespace = cfg.profile.auth_key.clone().to_string() + "-oper";
+        let val_ip_address = cfg.profile.ip;
 
         // TODO: use node_config to get the seed peers and then write upstream_node vec in 0L.toml from that.
-        ol_node_files::write_node_config_files(
+        ol_node_files::onboard_helper_all_files(
             home_dir.clone(),
             self.chain_id.unwrap_or(1),
-            &self.github_org.clone().unwrap_or("OLSF".to_string()),
-            &self
-                .repo
-                .clone()
-                .unwrap_or("experimental-genesis".to_string()),
+            self.github_org.clone(),
+            self.repo.clone(),
             &namespace,
             &prebuilt_genesis_path,
             &false,
-            base_waypoint,
+            None,
             &None,
+            Some(val_ip_address),
         )
         .unwrap();
 
@@ -172,7 +169,7 @@ impl Runnable for ForkCmd {
 
         if !self.skip_mining {
             // Mine Proof
-            match tower::proof::write_genesis(&app_config){
+            match tower::proof::write_genesis(&cfg){
                 Ok(_) => {
                   status_ok!(
                       "\nGenesis proof complete",
@@ -189,7 +186,7 @@ impl Runnable for ForkCmd {
         write_account_json(
             &self.output_path,
             wallet,
-            Some(app_config.clone()),
+            Some(cfg.clone()),
             autopay_batch,
             autopay_signed,
         );
@@ -198,7 +195,7 @@ impl Runnable for ForkCmd {
             "\n...........................\n"
         );
 
-        status_info!("Your validator node and miner app are now configured.", &format!("\nStart your node with `ol start`, and then ask someone with GAS to do this transaction `txs create-validator -u http://{}`", &app_config.profile.ip));
+        status_info!("Your validator node and miner app are now configured.", &format!("\nStart your node with `ol start`, and then ask someone with GAS to do this transaction `txs create-validator -u http://{}`", &cfg.profile.ip));
     }
 }
 

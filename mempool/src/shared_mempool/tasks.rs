@@ -217,15 +217,26 @@ where
     counters::PROCESS_TXN_BREAKDOWN_LATENCY
         .with_label_values(&[counters::FETCH_SEQ_NUM_LABEL])
         .observe(storage_read_latency.as_secs_f64() / transactions.len() as f64);
-
+      
+    //////// 0L ////////
     let transactions: Vec<_> = transactions
         .into_iter()
         .enumerate()
         .filter_map(|(idx, t)| {
             if let Ok(sequence_number) = seq_numbers[idx] {
-                if t.sequence_number() >= sequence_number {
+                if t.sequence_number() == sequence_number {
                     return Some((t, sequence_number));
+                } else if t.sequence_number() > sequence_number{
+                    statuses.push((
+        
+                        t,
+                        (
+                            MempoolStatus::new(MempoolStatusCode::VmError),
+                            Some(DiscardedVMStatus::SEQUENCE_NUMBER_TOO_NEW),
+                        ),
+                    ));
                 } else {
+                      //////// end 0L ////////
                     statuses.push((
                         t,
                         (
@@ -247,6 +258,7 @@ where
             None
         })
         .collect();
+
 
     // Track latency: VM validation
     let vm_validation_timer = counters::PROCESS_TXN_BREAKDOWN_LATENCY
@@ -351,7 +363,7 @@ pub(crate) async fn process_state_sync_request(
         counters::COMMIT_STATE_SYNC_LABEL,
         req.transactions.len(),
     );
-    commit_txns(&mempool, req.transactions, req.block_timestamp_usecs, false).await;
+    commit_txns(&mempool, req.transactions, req.block_timestamp_usecs).await;
     let result = if req.callback.send(Ok(CommitResponse::success())).is_err() {
         error!(LogSchema::event_log(
             LogEntry::StateSyncCommit,
@@ -401,7 +413,7 @@ pub(crate) async fn process_consensus_request(mempool: &Mutex<CoreMempool>, req:
                 counters::COMMIT_CONSENSUS_LABEL,
                 transactions.len(),
             );
-            commit_txns(mempool, transactions, 0, true).await;
+            reject_txns(mempool, transactions).await;
             (
                 ConsensusResponse::CommitResponse(),
                 callback,
@@ -423,10 +435,30 @@ pub(crate) async fn process_consensus_request(mempool: &Mutex<CoreMempool>, req:
     counters::mempool_service_latency(counter_label, result, latency);
 }
 
+/// Commits txns and GCs mempool
 async fn commit_txns(
     mempool: &Mutex<CoreMempool>,
     transactions: Vec<CommittedTransaction>,
     block_timestamp_usecs: u64,
+) {
+    remove_txns(mempool, transactions, false).await;
+    if block_timestamp_usecs > 0 {
+        mempool.lock().gc_by_expiration_time(Duration::from_micros(block_timestamp_usecs));
+    }
+}
+
+/// Reject all txns for the associated account
+async fn reject_txns(
+    mempool: &Mutex<CoreMempool>,
+    transactions: Vec<CommittedTransaction>,
+) {
+    remove_txns(mempool, transactions, true).await;
+}
+
+/// Removes txns from the local mempool
+async fn remove_txns(
+    mempool: &Mutex<CoreMempool>,
+    transactions: Vec<CommittedTransaction>,
     is_rejected: bool,
 ) {
     let mut pool = mempool.lock();
@@ -437,10 +469,6 @@ async fn commit_txns(
             transaction.sequence_number,
             is_rejected,
         );
-    }
-
-    if block_timestamp_usecs > 0 {
-        pool.gc_by_expiration_time(Duration::from_micros(block_timestamp_usecs));
     }
 }
 

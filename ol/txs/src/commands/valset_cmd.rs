@@ -1,4 +1,4 @@
-//! `CreateAccount` subcommand
+//! `val-set` subcommand
 
 #![allow(clippy::never_loop)]
 

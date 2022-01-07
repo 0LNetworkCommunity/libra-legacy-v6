@@ -46,6 +46,8 @@ Example autopay_batch.json file (with test data for account, don't use it like t
 
 ### Disable AutoPay on your node
 
+Disabling autopay will disable Autopay and cancel all of the previous autopay transactions.   
+
 ```
 txs autopay --disable
 ```
