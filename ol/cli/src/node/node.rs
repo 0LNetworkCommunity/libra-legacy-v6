@@ -42,7 +42,7 @@ pub struct Node {
     /// node conf
     pub node_conf: Option<NodeConfig>,    
     /// TODO: deduplicate these
-    chain_state: Option<AccountState>,
+    pub chain_state: Option<AccountState>,
     miner_state: Option<TowerStateResourceView>,
 }
 

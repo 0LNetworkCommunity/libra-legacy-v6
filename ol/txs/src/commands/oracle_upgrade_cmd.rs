@@ -1,4 +1,4 @@
-//! `OracleUpgrade` subcommand
+//! `oracle-upgrade` subcommand
 
 #![allow(clippy::never_loop)]
 

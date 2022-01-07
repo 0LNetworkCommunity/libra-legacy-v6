@@ -79,9 +79,9 @@ impl Node {
                         self.vitals.account_view.address
                     );
                 self.vitals.account_view.operator_account = operator;
-                if operator.is_some() {
+                if let Some(a) = operator {
                     self.vitals.account_view.operator_balance = 
-                        self.get_account_balance(operator.unwrap());
+                        self.get_account_balance(a);
                 }
                 Some(&self.vitals.account_view)
             }
@@ -149,7 +149,10 @@ impl Node {
 
     /// Query if valid account has balance greater than zero
     pub fn has_positive_balance(&mut self, address: AccountAddress) -> bool {
-        self.get_account_balance(address).unwrap() > 0.0
+        match self.get_account_balance(address) {
+            Some(v) => v > 0.0,
+            None => false,
+        }
     }
 
     /// Get operator account addres from validator
@@ -192,7 +195,11 @@ impl Node {
     pub fn get_account_state(&mut self, address: AccountAddress) -> Result<AccountState, Error> {
         let (blob, _ver) = self.client.get_account_state_blob(&address)?;
         if let Some(account_blob) = blob {
-            Ok(AccountState::try_from(&account_blob).unwrap())
+            match AccountState::try_from(&account_blob) {
+                Ok(a) =>  Ok(a),
+                Err(e) => Err(Error::msg(format!("could not fetch account state. Message: {:?}", e))),
+            }
+            
         } else {
             Err(Error::msg("connection to client"))
         }

@@ -4,7 +4,7 @@
 
 There are a lot of things to configure to set up an 0L validator. Easy Mode makes assumptions. 
 
-You can optionally do [Hard Mode](validator_onboarding_guide_hard_mode.md), and build from source, and write your own config files.
+You can optionally do [Hard Mode](validator_onboarding_hard_mode.md), and build from source, and write your own config files.
 
 ### Things you will need:
 
@@ -65,9 +65,12 @@ Your `tower` app will produce a proof which is needed to create an account. This
 The `start` subcommand will run `pilot` app which continuously checks node and tower state and changes nodes. 
 
 ```
+# Restore from the latest epoch snapshot instead of syncing the entire chain
+> ol restore
+
 # start all 0L services and restore chain from archive
 
-> ol start --restore
+> ol start
 
 # press <ctrl+b> then <d> to detach from tmux without stopping the app. Reattach with `tmux a`
 ```

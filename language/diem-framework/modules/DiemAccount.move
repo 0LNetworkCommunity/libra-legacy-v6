@@ -35,7 +35,7 @@ module DiemAccount {
     use 0x1::DiemId;
     //////// 0L ////////
     use 0x1::VDF;
-    // use 0x1::Globals;
+    use 0x1::DiemSystem;
     use 0x1::TowerState;
     use 0x1::Testnet::is_testnet;
     use 0x1::FIFO;
@@ -197,6 +197,11 @@ module DiemAccount {
 
     //////// 0L ////////
     const EBELOW_MINIMUM_VALUE_BOOTSTRAP_COIN: u64 = 120125;
+    const EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET: u64 = 120126;
+    const ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE: u64 = 120127;
+    const EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT: u64 = 120128;
+
+
 
     /////// 0L end /////////
 
@@ -453,7 +458,7 @@ module DiemAccount {
         difficulty: u64,
         security: u64,
     ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount {
-             
+        // TODO: extract address_duplicated with TowerState::init_miner_state
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
         Roles::new_user_role_with_proof(&new_signer);
@@ -478,17 +483,33 @@ module DiemAccount {
         new_account: address,
         new_account_authkey_prefix: vector<u8>,
         value: u64,
-    ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount {
-             
-        // let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
+    ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount, SlowWallet {
         let new_signer = create_signer(new_account);
         Roles::new_user_role_with_proof(&new_signer);
         Event::publish_generator(&new_signer);
         add_currencies_for_account<GAS>(&new_signer, false);
         make_account(new_signer, new_account_authkey_prefix);
 
-        onboarding_gas_transfer<GAS>(sender, new_account, value);
-        new_account
+        // if the initial coin sent is the minimum amount, don't check transfer limits.
+        if (value <= BOOTSTRAP_COIN_VALUE) {
+            onboarding_gas_transfer<GAS>(sender, new_account, value);
+            new_account
+        }
+        // otherwise, if the onboarder wants to send more, then it must respect the transfer limits.
+        else {
+            let with_cap = extract_withdraw_capability(sender);
+            pay_from<GAS>(
+                &with_cap,
+                new_account,
+                value,
+                b"account generation", 
+                b"",
+            );
+            restore_withdraw_capability(with_cap);
+            new_account
+        }
+
+        
     }
 
     /////// 0L ////////
@@ -518,6 +539,8 @@ module DiemAccount {
     ):address acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWalletList { //////// 0L ////////
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
+        // check the validator is in set before creating
+        assert(DiemSystem::is_validator(sender_addr), Errors::limit_exceeded(120101));
         assert(TowerState::can_create_val_account(sender_addr), Errors::limit_exceeded(120102));
         // Check there's enough balance for bootstrapping both operator and validator account
         assert(
@@ -629,15 +652,33 @@ module DiemAccount {
         let new_signer = create_signer(new_account_address);
 
         assert(exists_at(new_account_address), Errors::not_published(EACCOUNT));
-        assert(TowerState::is_init(new_account_address), 120104);
+        // assert(TowerState::is_init(new_account_address), 120104);
         // verifies the VDF proof, since we are not calling TowerState init.
-        let valid = VDF::verify(
-            challenge,
-            solution,
-            &difficulty,
-            &security,
-        );
-        assert(valid, Errors::invalid_argument(120105));
+
+        // if the account already has a tower started just verify the block zero submitted
+        if (TowerState::is_init(new_account_address)) {
+          let valid = VDF::verify(
+              challenge,
+              solution,
+              &difficulty,
+              &security,
+          );
+
+          assert(valid, Errors::invalid_argument(120105));
+        } else {
+          // otherwise initialize this TowerState with a block 0.
+
+          let proof = TowerState::create_proof_blob(
+            *challenge,
+            *solution,
+            *&difficulty,
+            *&security,
+          );
+
+          TowerState::commit_state(&new_signer, proof);
+        };
+
+        
         
         // TODO: Perhaps this needs to be moved to the epoch boundary, so that it is only the VM which can escalate these privileges.
         // Upgrade the user
@@ -1188,9 +1229,7 @@ module DiemAccount {
     public fun extract_withdraw_capability(
         sender: &signer
     ): WithdrawCapability acquires DiemAccount {
-        //////// 0L //////// Transfers disabled by default
-        //////// 0L //////// Transfers of 10 GAS 
-        //////// 0L //////// enabled when epoch is 1000
+
         let sender_addr = Signer::address_of(sender);
 
         /////// 0L /////////
@@ -1198,14 +1237,17 @@ module DiemAccount {
         let community_wallets = Wallet::get_comm_list();
         assert(
             !Vector::contains(&community_wallets, &sender_addr), 
-            Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
+            Errors::limit_exceeded(EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET)
         );
         /////// 0L /////////
-        if (!DiemConfig::check_transfer_enabled()) {
-            // only VM can make TXs if transfers are not enabled.
+        // Slow wallet transfers disabled by default, enabled when epoch is 1000
+        // At that point slow wallets receive 1,000 coins unlocked per day.
+        if (is_slow(sender_addr) && !DiemConfig::check_transfer_enabled() ) {
+          // if transfers are not enabled for slow wallets
+          // then the tx should fail
             assert(
-                sender_addr == CoreAddresses::DIEM_ROOT_ADDRESS(), 
-                Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
+                false, 
+                Errors::limit_exceeded(ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE)
             );
         };
         // Abort if we already extracted the unique withdraw capability for this account.
@@ -1338,12 +1380,13 @@ module DiemAccount {
             let t: Wallet::TimedTransfer = *Vector::borrow(&v, i);
             // TODO: Is this the best way to access a struct property from 
             // outside a module?
-            let (payer, payee, value, description) = Wallet::get_tx_args(t);
+            let (payer, payee, value, description) = Wallet::get_tx_args(*&t);
             if (Wallet::is_frozen(payer)) {
               i = i + 1;
               continue
             };
             vm_make_payment_no_limit<GAS>(payer, payee, value, description, b"", vm);
+            Wallet::mark_processed(vm, t);
             Wallet::reset_rejection_counter(vm, payer);
             i = i + 1;
         };
@@ -1458,7 +1501,7 @@ module DiemAccount {
         if (is_slow(*&cap.account_address)) {
           assert(
                 amount < unlocked_amount(*&cap.account_address),
-                Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
+                Errors::limit_exceeded(EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT)
             );
 
         };

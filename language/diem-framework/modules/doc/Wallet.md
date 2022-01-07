@@ -16,13 +16,15 @@
 -  [Function `set_comm`](#0x1_Wallet_set_comm)
 -  [Function `vm_remove_comm`](#0x1_Wallet_vm_remove_comm)
 -  [Function `new_timed_transfer`](#0x1_Wallet_new_timed_transfer)
--  [Function `find`](#0x1_Wallet_find)
 -  [Function `veto`](#0x1_Wallet_veto)
 -  [Function `reject`](#0x1_Wallet_reject)
+-  [Function `mark_processed`](#0x1_Wallet_mark_processed)
+-  [Function `reset_rejection_counter`](#0x1_Wallet_reset_rejection_counter)
 -  [Function `tally_veto`](#0x1_Wallet_tally_veto)
 -  [Function `calculate_proportional_voting_threshold`](#0x1_Wallet_calculate_proportional_voting_threshold)
 -  [Function `list_tx_by_epoch`](#0x1_Wallet_list_tx_by_epoch)
--  [Function `reset_rejection_counter`](#0x1_Wallet_reset_rejection_counter)
+-  [Function `list_transfers`](#0x1_Wallet_list_transfers)
+-  [Function `find`](#0x1_Wallet_find)
 -  [Function `maybe_freeze`](#0x1_Wallet_maybe_freeze)
 -  [Function `get_tx_args`](#0x1_Wallet_get_tx_args)
 -  [Function `get_tx_epoch`](#0x1_Wallet_get_tx_epoch)
@@ -272,6 +274,15 @@
 
 
 
+<a name="0x1_Wallet_EIS_NOT_SLOW_WALLET"></a>
+
+
+
+<pre><code><b>const</b> <a href="Wallet.md#0x1_Wallet_EIS_NOT_SLOW_WALLET">EIS_NOT_SLOW_WALLET</a>: u64 = 231010;
+</code></pre>
+
+
+
 <a name="0x1_Wallet_ERR_PREFIX"></a>
 
 
@@ -455,6 +466,12 @@
 <pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_new_timed_transfer">new_timed_transfer</a>(
   sender: &signer, payee: address, value: u64, description: vector&lt;u8&gt;
 ): u64 <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>, <a href="Wallet.md#0x1_Wallet_CommunityWalletList">CommunityWalletList</a> {
+  // firstly check <b>if</b> payee is a slow wallet
+  // TODO: This function should check <b>if</b> the account is a slow wallet before sending
+  // but there's a circular dependency <b>with</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> which has the slow wallet <b>struct</b>.
+  // curretly we <b>move</b> that check <b>to</b> the transaction <b>script</b> <b>to</b> initialize the payment.
+  // <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_is_slow">DiemAccount::is_slow</a>(payee), <a href="Wallet.md#0x1_Wallet_EIS_NOT_SLOW_WALLET">EIS_NOT_SLOW_WALLET</a>);
+
   <b>let</b> sender_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   <b>let</b> list = <a href="Wallet.md#0x1_Wallet_get_comm_list">get_comm_list</a>();
   <b>assert</b>(
@@ -484,51 +501,6 @@
 
   <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(&<b>mut</b> transfers.proposed, t);
   <b>return</b> transfers.max_uid
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_Wallet_find"></a>
-
-## Function `find`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_find">find</a>(uid: u64, type_of: u8): (<a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">Wallet::TimedTransfer</a>&gt;, u64)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_find">find</a>(
-  uid: u64,
-  type_of: u8
-): (<a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option">Option</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;, u64) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a> {
-  <b>let</b> c = borrow_global&lt;<a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>&gt;(@0x0);
-  <b>let</b> list = <b>if</b> (type_of == 0) {
-    &c.proposed
-  } <b>else</b> <b>if</b> (type_of == 1) {
-    &c.approved
-  } <b>else</b> {
-    &c.rejected
-  };
-
-  <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(list);
-  <b>let</b> i = 0;
-  <b>while</b> (i &lt; len) {
-    <b>let</b> t = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(list, i);
-    <b>if</b> (t.uid == uid) {
-      <b>return</b> (<a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_some">Option::some</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(t), i)
-    };
-    i = i + 1;
-  };
-  (<a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_none">Option::none</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(), 0)
 }
 </code></pre>
 
@@ -613,6 +585,70 @@
     i = i + 1;
   };
 
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Wallet_mark_processed"></a>
+
+## Function `mark_processed`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_mark_processed">mark_processed</a>(vm: &signer, t: <a href="Wallet.md#0x1_Wallet_TimedTransfer">Wallet::TimedTransfer</a>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_mark_processed">mark_processed</a>(vm: &signer, t: <a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a> {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+
+  <b>let</b> c = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>&gt;(@0x0);
+  <b>let</b> list = *&c.proposed;
+  <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&list);
+  <b>let</b> i = 0;
+  <b>while</b> (i &lt; len) {
+    <b>let</b> search = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(&list, i);
+    <b>if</b> (search.uid == t.uid) {
+      <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(&<b>mut</b> c.proposed, i);
+      <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> c.approved, search);
+    };
+
+    i = i + 1;
+  };
+
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Wallet_reset_rejection_counter"></a>
+
+## Function `reset_rejection_counter`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_reset_rejection_counter">reset_rejection_counter</a>(vm: &signer, wallet: address)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_reset_rejection_counter">reset_rejection_counter</a>(vm: &signer, wallet: address) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a> {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+  borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a>&gt;(wallet).consecutive_rejections = 0;
 }
 </code></pre>
 
@@ -717,9 +753,8 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_list_tx_by_epoch">list_tx_by_epoch</a>(epoch: u64): vector&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt; <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a> {
-    <b>let</b> c = borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>&gt;(@0x0);
-    // reset approved list
-    c.approved = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;();
+    <b>let</b> c = borrow_global&lt;<a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>&gt;(@0x0);
+
     // <b>loop</b> proposed list
     <b>let</b> pending = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;();
     <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&c.proposed);
@@ -729,8 +764,6 @@
       <b>if</b> (t.expire_epoch == epoch) {
 
         <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(&<b>mut</b> pending, *t);
-        // TODO: clear the freeze count on community wallet
-        // add <b>to</b> approved list
       };
       i = i + 1;
     };
@@ -742,13 +775,13 @@
 
 </details>
 
-<a name="0x1_Wallet_reset_rejection_counter"></a>
+<a name="0x1_Wallet_list_transfers"></a>
 
-## Function `reset_rejection_counter`
+## Function `list_transfers`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_reset_rejection_counter">reset_rejection_counter</a>(vm: &signer, wallet: address)
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_list_transfers">list_transfers</a>(type_of: u8): vector&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">Wallet::TimedTransfer</a>&gt;
 </code></pre>
 
 
@@ -757,9 +790,53 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_reset_rejection_counter">reset_rejection_counter</a>(vm: &signer, wallet: address) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a> {
-  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
-  borrow_global_mut&lt;<a href="Wallet.md#0x1_Wallet_CommunityFreeze">CommunityFreeze</a>&gt;(wallet).consecutive_rejections = 0;
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_list_transfers">list_transfers</a>(type_of: u8): vector&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt; <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a> {
+  <b>let</b> c = borrow_global&lt;<a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a>&gt;(@0x0);
+  <b>if</b> (type_of == 0) {
+    *&c.proposed
+  } <b>else</b> <b>if</b> (type_of == 1) {
+    *&c.approved
+  } <b>else</b> {
+    *&c.rejected
+  }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Wallet_find"></a>
+
+## Function `find`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_find">find</a>(uid: u64, type_of: u8): (<a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">Wallet::TimedTransfer</a>&gt;, u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Wallet.md#0x1_Wallet_find">find</a>(
+  uid: u64,
+  type_of: u8
+): (<a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option">Option</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;, u64) <b>acquires</b> <a href="Wallet.md#0x1_Wallet_CommunityTransfers">CommunityTransfers</a> {
+  <b>let</b> list = &<a href="Wallet.md#0x1_Wallet_list_transfers">list_transfers</a>(type_of);
+
+  <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(list);
+  <b>let</b> i = 0;
+  <b>while</b> (i &lt; len) {
+    <b>let</b> t = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(list, i);
+    <b>if</b> (t.uid == uid) {
+      <b>return</b> (<a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_some">Option::some</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(t), i)
+    };
+    i = i + 1;
+  };
+  (<a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_none">Option::none</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">TimedTransfer</a>&gt;(), 0)
 }
 </code></pre>
 

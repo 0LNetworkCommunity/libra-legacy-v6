@@ -12,7 +12,7 @@ script {
     fun main(sender: signer) {
         let height_after = 0;
 
-        TowerState::test_helper_init_miner(
+        TowerState::test_helper_init_val(
             &sender,
             TestFixtures::alice_0_hard_chal(),
             TestFixtures::alice_0_hard_sol(),

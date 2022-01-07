@@ -94,6 +94,7 @@ pub struct BaseConfig {
     data_dir: PathBuf,
     pub role: RoleType,
     pub waypoint: WaypointConfig,
+    config_version: String, ///////// 0L ////////
 }
 
 impl Default for BaseConfig {
@@ -102,6 +103,7 @@ impl Default for BaseConfig {
             data_dir: PathBuf::from("/opt/diem/data"),
             role: RoleType::Validator,
             waypoint: WaypointConfig::None,
+            config_version:  env!("CARGO_PKG_VERSION").to_owned(), //////// 0L ////////
         }
     }
 }

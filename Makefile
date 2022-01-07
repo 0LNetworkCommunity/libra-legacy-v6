@@ -133,7 +133,6 @@ mv-bin:
 reset:
 	onboard val --skip-mining --upstream-peer http://167.172.248.37/ --source-path ~/libra
 
-
 backup:
 	cd ~ && rsync -av --exclude db/ --exclude logs/ ~/.0L/* ~/0L_backup_$(shell date +"%m-%d-%y-%T")
 
@@ -298,7 +297,9 @@ genesis:
 	--namespace ${ACC}-oper \
 	--repo ${REPO_NAME} \
 	--github-org ${REPO_ORG} \
-  --layout-path ${DATA_PATH}/set_layout.toml
+  --layout-path ${DATA_PATH}/set_layout.toml \
+	--val-ip-address ${IP}
+
 
 	sha256sum ${DATA_PATH}/genesis.blob
 
@@ -376,6 +377,11 @@ ifdef TEST
 		mkdir -p ${DATA_PATH}/vdf_proofs/; \
 	fi
 
+	@if test ! -d ${DATA_PATH}/vdf_proofs; then \
+		echo Creating Directories \
+		mkdir -p ${DATA_PATH}/vdf_proofs/; \
+	fi
+
 	@if test -f ${DATA_PATH}/vdf_proofs/proof_0.json; then \
 		rm ${DATA_PATH}/vdf_proofs/proof_0.json; \
 	fi 
@@ -447,7 +453,7 @@ debug:
 
 ##### DEVNET TESTS #####
 
-devnet: clear fix fix-genesis dev-wizard start
+devnet: clear fix dev-wizard dev-genesis start
 # runs a smoke test from fixtures. 
 # Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 # This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
@@ -466,13 +472,13 @@ dev-join: clear fix fix-genesis dev-wizard
 
 dev-wizard:
 #  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
-	MNEM='${MNEM}' cargo run -p onboard -- val --prebuilt-genesis ${DATA_PATH}/genesis.blob --skip-mining --chain-id 1 --upstream-peer http://64.225.2.108
+	MNEM='${MNEM}' cargo run -p onboard -- val --prebuilt-genesis ${DATA_PATH}/genesis.blob --skip-mining --chain-id 1 --genesis-ceremony
 
 #### DEVNET RESTART ####
 # usually do this on Alice, which has the dev-epoch-archive repo, and dev-genesis
 
 # Do the ceremony: and also save the genesis fixtures, needs to happen before fix.
-dev-register: clear fix dev-wizard register
+dev-register: clear fix dev-wizard gen-register
 # Do a dev genesis on each node after EVERY NODE COMPLETED registration.
 dev-genesis: genesis dev-save-genesis fix-genesis
 

@@ -1,4 +1,4 @@
-//! `CreateAccount` subcommand
+//! `autopay-batch` subcommand
 
 #![allow(clippy::never_loop)]
 
@@ -49,7 +49,7 @@ impl Runnable for AutopayBatchCmd {
             },
         };
         println!("Latest Autopay id: {:?}", &start_id);
-        node.refresh_chain_info();
+        node.refresh_chain_info().unwrap();
         let epoch = node.vitals.chain_view.unwrap().epoch;
         println!("The current epoch is: {}\n", epoch);
         
@@ -61,7 +61,10 @@ impl Runnable for AutopayBatchCmd {
             &self.autopay_batch_file, Some(epoch), start_id
         ).unwrap();
         let scripts = process_instructions(instructions);
-        batch_wrapper(scripts, &tx_params, entry_args.no_send, entry_args.save_path)
+        match batch_wrapper(scripts, &tx_params, entry_args.no_send, entry_args.save_path){
+            Ok(_) => {},
+            Err(e) => println!("ERROR: could not batch transactions, message: {:?}", e),
+        }
     }
 }
 
