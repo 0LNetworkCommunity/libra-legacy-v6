@@ -1,4 +1,5 @@
 //! `chain_info`
+use anyhow::{Error, bail};
 use chrono::Utc;
 use diem_json_rpc_client::views::{OracleUpgradeStateView};
 use diem_types::{
@@ -105,7 +106,7 @@ pub struct ValsConfigStats {
 impl Node {
   // TODO: this should return a result and no functions below should use unwrap()
   /// fetch state from system address 0x0
-  pub fn refresh_chain_info(&mut self) -> (Option<ChainView>, Option<Vec<ValidatorView>>) {
+  pub fn refresh_chain_info(&mut self) -> Result<(ChainView, Vec<ValidatorView>), Error> {
     // let mut client = client::pick_client();
     let (blob, _version) = match self.client
       .get_account_state_blob(&AccountAddress::ZERO) {
@@ -243,10 +244,10 @@ impl Node {
             
       self.vitals.chain_view = Some(cs.clone());
 
-      return (Some(cs), Some(validators));
+      return Ok((cs, validators));
     }
 
-    (None, None)
+    bail!("could not get chain info")
   }
 
   /// Get all percentage recurring payees stats
