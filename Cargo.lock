@@ -1788,31 +1788,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "crossterm"
-version = "0.19.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c36c10130df424b2f3552fcc2ddcd9b28a27b1e54b358b45874f88d1ca6888c"
-dependencies = [
- "bitflags 1.3.2",
- "crossterm_winapi",
- "lazy_static",
- "libc",
- "mio",
- "parking_lot",
- "signal-hook 0.1.17",
- "winapi 0.3.9",
-]
-
-[[package]]
-name = "crossterm_winapi"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0da8964ace4d3e4a044fd027919b2237000b24315a37c916f61809f1ff2140b9"
-dependencies = [
- "winapi 0.3.9",
-]
-
-[[package]]
 name = "crunchy"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2389,7 +2364,6 @@ dependencies = [
  "ol-keys",
  "ol-types",
  "rand 0.8.4",
- "rustyline 6.3.0",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -6722,8 +6696,6 @@ dependencies = [
  "byteorder",
  "chrono",
  "cli",
- "clokwerk",
- "crossterm",
  "dialoguer",
  "diem-config",
  "diem-genesis-tool",
@@ -6755,11 +6727,9 @@ dependencies = [
  "reqwest",
  "resource-viewer",
  "rocksdb 0.15.0",
- "rustyline 6.3.0",
  "serde",
  "serde_json",
  "serde_yaml",
- "sm",
  "storage-interface",
  "sysinfo",
  "thiserror",
@@ -8590,7 +8560,7 @@ dependencies = [
  "num 0.3.1",
  "rand 0.8.4",
  "serde",
- "sha2 0.9.3",
+ "sha2",
  "zbus",
  "zbus_macros",
  "zvariant",
