@@ -97,3 +97,28 @@ pub fn get_remote_state(tx_params: &TxParams) -> Result<TowerStateResourceView, 
         }
     }
 }
+
+/// returns remote tower height
+pub fn get_remote_tower_height(tx_params: &TxParams) -> Result<i128, Error> {
+    let client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+    info!(
+        "Fetching remote tower height: {}, {}",
+        tx_params.url.clone(),
+        tx_params.owner_address.clone()
+    );
+    let remote_state = client.get_miner_state(&tx_params.owner_address);
+    match remote_state {
+        Ok(s) => match s {
+            Some(remote_state) => Ok(remote_state.verified_tower_height.into()),
+            None => {
+                static MSG: &str = "Info: Received response but no remote state found. Exiting.";
+                info!("{}", MSG);
+                bail!(MSG)
+            }
+        },
+        Err(_) => {
+            // error info returned -> tower is not yet on chain, so the height is 0
+            Ok(-1)
+        }
+    }
+}
