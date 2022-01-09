@@ -435,7 +435,11 @@ pub fn make_vfn_cfg(
 
     let p = PrivateKey::from_ed25519_private_bytes(&val_net_private_key.to_bytes())?;
     
-    let seeds = make_vfn_peer_set(owner_address_as_fn_id, p.public_key(), val_ip_address)?;
+    let seeds = encode_validator_seed_for_vfn_discovery(
+      owner_address_as_fn_id, 
+      p.public_key(), 
+      val_ip_address
+    )?;
 
     // The seed for the VFN is the validator's ID on the private network.
     vfn_network.seeds = seeds;
@@ -465,27 +469,23 @@ pub fn make_vfn_cfg(
     Ok(c)
 }
 
-fn make_vfn_peer_set(
+// Create the seed discovery information, so that the VFN can find the Validator.
+// The validator announces itsef with the validator's VALIDATOR_NETWORK_KEY, so we need to construct the noise protocol with it. (NOT the VFN identity)
+fn encode_validator_seed_for_vfn_discovery(
     validator_account: AccountAddress,
-    val_vfn_net_pubkey: PublicKey,
+    val_net_pubkey: PublicKey,
     ip_address: Ipv4Addr,
 ) -> Result<PeerSet, Error> {
-    // create the vfn network info.
-    let val_peer_data = make_validator_network_protocol(ip_address, val_vfn_net_pubkey)?;
+    // construct seed peer info, using the validator's ID it uses on the private network VALIDATOR_NETWORK_KEY
+
+    let role = PeerRole::Validator;
+    let val_addr = ValConfigs::make_unencrypted_addr(&ip_address, val_net_pubkey, NetworkId::Private("vfn".to_owned()));
+    let val_peer_data = Peer::from_addrs(role, vec![val_addr]);
+
     // The seed address for the VFN can only be the Validator's address.
     let mut seeds = PeerSet::default();
     seeds.insert(validator_account, val_peer_data);
     Ok(seeds)
-}
-
-pub fn make_validator_network_protocol(
-    ip_address: Ipv4Addr,
-    pubkey: PublicKey,
-) -> Result<Peer, Error> {
-    let role = PeerRole::Validator;
-    let val_addr = ValConfigs::make_fullnode_unencrypted_addr(&ip_address, pubkey);
-    let p = Peer::from_addrs(role, vec![val_addr]);
-    Ok(p)
 }
 
 
