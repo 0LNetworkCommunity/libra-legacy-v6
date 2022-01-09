@@ -79,7 +79,7 @@ impl Runnable for ForkCmd {
             })
         });
         upstream.set_port(Some(8080)).unwrap();
-        println!("Setting upstream peer URL to: {:?}", &upstream);
+        println!("Setting JSON RPC peer URL to: {:?}", &upstream);
 
         let mut wp = self.waypoint.clone();
         if let Some(path) = &self.prebuilt_genesis {

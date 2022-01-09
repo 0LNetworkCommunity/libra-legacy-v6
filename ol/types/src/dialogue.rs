@@ -7,7 +7,10 @@ use glob::glob;
 use hex::encode;
 use std::{fs, net::Ipv4Addr, path::PathBuf};
 
-use crate::{block::VDFProof, config::{AppCfg, IS_TEST}};
+use crate::{
+    block::VDFProof,
+    config::{AppCfg, IS_TEST},
+};
 
 /// interact with user to get the home path for files
 pub fn what_home(swarm_path: Option<PathBuf>, swarm_persona: Option<String>) -> PathBuf {
@@ -64,16 +67,19 @@ pub fn what_source() -> Option<PathBuf> {
 
 /// interact with user to get ip address
 pub fn what_ip() -> Result<Ipv4Addr, Error> {
-    let system_ip = match machine_ip::get() {
-        Some(ip) => ip.to_string(),
-        None => "127.0.0.1".to_string(),
-    };
-    let ip = system_ip
-        .parse::<Ipv4Addr>()
-        .expect("Could not parse IP address: {:?}");
+    // get from external source since many cloud providers show different interfaces for `machine_ip`
+    let resp = reqwest::blocking::get("https://ifconfig.me")?;
+    let ip_str = resp.text()?;
+
+    let system_ip = ip_str
+      .parse::<Ipv4Addr>()
+      .unwrap_or_else(|_| match machine_ip::get() {
+          Some(ip) => ip.to_string().parse().unwrap(),
+          None => "127.0.0.1".parse().unwrap(),
+      });
 
     if *IS_TEST {
-        return Ok(ip);
+        return Ok("127.0.0.1".parse().unwrap());
     }
 
     let txt = &format!(
@@ -81,7 +87,7 @@ pub fn what_ip() -> Result<Ipv4Addr, Error> {
         system_ip
     );
     let ip = match Confirm::new().with_prompt(txt).interact().unwrap() {
-        true => ip,
+        true => system_ip,
         false => {
             let input: String = Input::new()
                 .with_prompt("Enter the IP address of the node")
@@ -98,15 +104,14 @@ pub fn what_ip() -> Result<Ipv4Addr, Error> {
 
 /// interact with user to get ip address
 pub fn what_vfn_ip() -> Result<Ipv4Addr, Error> {
-
     if *IS_TEST {
         return Ok("0.0.0.0".parse::<Ipv4Addr>()?);
     }
 
     let input: String = Input::new()
-      .with_prompt("Enter the IP address of the node")
-      .interact_text()?;
-    
+        .with_prompt("Enter the IP address of the node")
+        .interact_text()?;
+
     let ip = input.parse::<Ipv4Addr>()?;
 
     Ok(ip)
@@ -132,30 +137,29 @@ pub fn add_tower(config: &AppCfg) -> Option<String> {
     match Confirm::new().with_prompt(txt).interact().unwrap() {
         false => None,
         true => {
-          if let Some(block) = find_last_legacy_block(&legacy_blocks_path).ok() {
-            let hash = hash_last_proof(&block.proof);
-            let hash_string = encode(hash);
-            let txt = format!("Use this hash as your tower link? {} ", &hash_string);
-            match Confirm::new().with_prompt(txt).interact().unwrap() {
-              true => Some(hash_string),
-              false => { 
+            if let Some(block) = find_last_legacy_block(&legacy_blocks_path).ok() {
+                let hash = hash_last_proof(&block.proof);
+                let hash_string = encode(hash);
+                let txt = format!("Use this hash as your tower link? {} ", &hash_string);
+                match Confirm::new().with_prompt(txt).interact().unwrap() {
+                    true => Some(hash_string),
+                    false => Input::new()
+                        .with_prompt("Enter hash of last proof data")
+                        .interact_text()
+                        .ok(),
+                }
+            } else {
+                println!(
+                    "could not find any legacy proofs in usual location: {:?}",
+                    &legacy_blocks_path
+                );
                 Input::new()
-                  .with_prompt("Enter hash of last proof data")
-                  .interact_text()
-                  .ok()
-              },
+                    .with_prompt("Enter hash of last proof data")
+                    .interact_text()
+                    .ok()
             }
-          } else {
-            println!("could not find any legacy proofs in usual location: {:?}", &legacy_blocks_path);
-            Input::new()
-            .with_prompt("Enter hash of last proof data")
-            .interact_text()
-            .ok()
-
-          }
-
+        }
     }
-  }
 }
 /// returns node_home
 /// usually something like "/root/.0L"
@@ -197,7 +201,7 @@ fn find_last_legacy_block(blocks_dir: &PathBuf) -> Result<VDFProof, Error> {
             }
         }
     }
-    
+
     if let Some(p) = max_block_path {
         let b = fs::read_to_string(p).expect("Could not read latest block file in path");
         match serde_json::from_str(&b) {
@@ -208,6 +212,6 @@ fn find_last_legacy_block(blocks_dir: &PathBuf) -> Result<VDFProof, Error> {
         bail!("cannot find a legacy block in: {:?}", blocks_dir)
     }
 }
-fn hash_last_proof(proof: &Vec<u8>) -> Vec<u8>{
-  HashValue::sha3_256_of(proof).to_vec()
+fn hash_last_proof(proof: &Vec<u8>) -> Vec<u8> {
+    HashValue::sha3_256_of(proof).to_vec()
 }
