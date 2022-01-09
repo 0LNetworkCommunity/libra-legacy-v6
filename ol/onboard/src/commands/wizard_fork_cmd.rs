@@ -97,7 +97,12 @@ impl Runnable for ForkCmd {
             &self.source_path,
             None,
             None,
-        );
+        )
+        .unwrap_or_else(|e| {
+          println!("could not create app configs, exiting. Message: {:?}", &e);
+          exit(1);
+        });
+        
         let home_path = &cfg.workspace.node_home;
         let base_waypoint = cfg.chain_info.base_waypoint.clone();
         dbg!(&base_waypoint);

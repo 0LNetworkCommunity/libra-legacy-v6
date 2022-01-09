@@ -102,7 +102,12 @@ impl Runnable for ValWizardCmd {
             &self.source_path,
             None,
             None,
-        );
+        )
+        .unwrap_or_else(|e| {
+          println!("could not create app configs, exiting. Message: {:?}", &e);
+          exit(1);
+        });
+
         let home_path = &app_config.workspace.node_home;
         let base_waypoint = app_config.chain_info.base_waypoint.clone();
 
@@ -134,7 +139,11 @@ impl Runnable for ValWizardCmd {
 
         // Initialize Validator Keys
         // this also sets a genesis waypoint if one was provide, e.g. from an upstream peer.
-        init_cmd::initialize_val_key_store(&wallet, &app_config, base_waypoint, *&self.genesis_ceremony).expect("could not initialize validator key_store.json");
+        init_cmd::initialize_val_key_store(&wallet, &app_config, base_waypoint, *&self.genesis_ceremony)
+        .unwrap_or_else(|e| {
+          println!("could not initialize validator key_store.json, exiting. Message: {:?}", &e);
+          exit(1);
+        });
         status_ok!("\nKey file written", "\n...........................\n");
 
 
@@ -209,7 +218,10 @@ pub fn get_autopay_batch(
         Some(starting_epoch.clone()),
         None,
     )
-    .unwrap();
+    .unwrap_or_else(|e| {
+      println!("could not parse autopay instructions, exiting. Message: {:?}", &e);
+      exit(1);
+    });
 
     if is_genesis { return (Some(instr_vec), None ) }
 
@@ -224,7 +236,11 @@ pub fn get_autopay_batch(
         None,
         is_swarm,
     )
-    .unwrap();
+    .unwrap_or_else(|e| {
+      println!("could not get tx params from 0L.toml, exiting. Message: {:?}", &e);
+      exit(1);
+    });
+
     let tx_expiration_sec = if *IS_TEST {
         // creating fixtures here, so give it near infinite expiry
         100 * 360 * 24 * 60 * 60
@@ -241,13 +257,29 @@ pub fn get_autopay_batch(
 pub fn save_template(url: &Url, home_path: &PathBuf) -> PathBuf {
     let g_res = reqwest::blocking::get(&url.to_string());
     let g_path = home_path.join("template.json");
-    let mut g_file = File::create(&g_path).expect("couldn't create file");
+    let mut g_file = File::create(&g_path)
+    .unwrap_or_else(|e| {
+      println!("couldn't create file, exiting. Message: {:?}", &e);
+      exit(1);
+    });
+
     let g_content = g_res
-        .unwrap()
+        .unwrap_or_else(|e| {
+          println!("could not parse http request to peer, exiting. Message: {:?}", &e);
+          exit(1);
+        })
         .bytes()
-        .expect("cannot connect to upstream node")
-        .to_vec(); //.text().unwrap();
-    g_file.write_all(g_content.as_slice()).unwrap();
+        .unwrap_or_else(|e| {
+          println!("cannot connect to upstream node, exiting. Message: {:?}", &e);
+          exit(1);
+        })
+        .to_vec();
+    g_file.write_all(g_content.as_slice())
+    .unwrap_or_else(|e| {
+      println!("could not write files, exiting. Message: {:?}", &e);
+      exit(1);
+    });
+
     g_path
 }
 
@@ -285,10 +317,15 @@ fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, _bas
               fixtures::get_test_genesis_blob().as_os_str(),
               home_path.join("genesis.blob"),
           )
-          .unwrap();
+          .unwrap_or_else(|e| {
+            println!("could not copy genesis.blob file, exiting. Message: {:?}", &e);
+            exit(1);
+          });
           
           // make file fixture
-          fs::write(home_path.join("genesis_waypoint.txt"), "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2").expect("could write genesis_waypoint.txt");
+          fs::write(home_path.join("genesis_waypoint.txt"), "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2")
+          
+          .expect("could write genesis_waypoint.txt");
           
           status_ok!(
               "\nUsing test genesis.blob",

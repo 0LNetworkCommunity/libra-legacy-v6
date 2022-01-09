@@ -28,10 +28,11 @@ pub struct InitCmd {
     /// home path for app config
     #[options(help = "home path for app config")]
     path: Option<PathBuf>,
+
     /// An upstream peer to use in 0L.toml
     #[options(help = "An upstream peer to use in 0L.toml")]
-    // TODO: rename to json_rpc_peer
     rpc_peer: Option<Url>,
+
     /// Create the 0L.toml file for 0L apps
     #[options(help = "Create the 0L.toml file for 0L apps")]
     app: bool,
@@ -55,9 +56,11 @@ pub struct InitCmd {
     /// Init key store file for validator
     #[options(help = "Init key store file for validator")]
     key_store: bool,
+
     /// run checkup on config file
     #[options(help = "Check config file and give hints if something seems wrong")]
     checkup: bool,
+
     /// fix the config file
     #[options(help = "Fix config file, and migrate any missing fields")]
     fix: bool,
@@ -69,6 +72,7 @@ pub struct InitCmd {
     /// Set a waypoint in config files
     #[options(help = "Manually set a waypoint. ")]
     waypoint: Option<Waypoint>,
+
     /// Path to source code, for devs
     #[options(help = "Path to source code, for devs")]
     source_path: Option<PathBuf>,
@@ -239,7 +243,10 @@ impl Runnable for InitCmd {
                 entry_args.swarm_persona,
                 &self.source_path,
             )
-            .expect("could not initialize host with swarm configs");
+            .unwrap_or_else(|e| {
+              println!("could not initialize host with swarm configs, exiting. Message: {:?}", &e);
+              exit(1);
+            });
             return;
         }
 
@@ -253,21 +260,25 @@ impl Runnable for InitCmd {
             match Confirm::new()
                 .with_prompt("This will overwrite an 0L.toml file if it exists. Proceed?")
                 .interact()
-                .unwrap()
             {
-                true => {
-                    initialize_app_cfg(
-                        authkey,
-                        account,
-                        &self.rpc_peer,
-                        &self.path,
-                        &None, // TODO: probably need an epoch option here.
-                        &self.waypoint,
-                        &self.source_path,
-                    )
-                    .unwrap()
-                }
-                _ => panic!("Creating 0L.toml aborted"),
+                Ok(t) => {
+                  if t {
+                      initialize_app_cfg(
+                          authkey,
+                          account,
+                          &self.rpc_peer,
+                          &self.path,
+                          &None, // TODO: probably need an epoch option here.
+                          &self.waypoint,
+                          &self.source_path,
+                      )
+                      .unwrap_or_else(|e| {
+                        println!("could not initialize app configs 0L.toml, exiting. Message: {:?}", &e);
+                        exit(1);
+                      });
+                  }
+                },
+                Err(_) => {},
             };
             return;
         };
@@ -300,7 +311,11 @@ pub fn initialize_app_cfg(
         source_path,
         None,
         None,
-    );
+    )
+    .unwrap_or_else(|e| {
+      println!("could not create app configs, exiting. Message: {:?}", &e);
+      exit(1);
+    });
     Ok(cfg)
 }
 
@@ -324,7 +339,11 @@ pub fn initialize_host_swarm(
     if !&blocks_dir.exists() {
         // first run, create the directory if there is none, or if the user changed the configs.
         // note: user may have blocks but they are in a different directory than what miner.toml says.
-        fs::create_dir_all(&blocks_dir).unwrap();
+        fs::create_dir_all(&blocks_dir)
+        .unwrap_or_else(|e| {
+          println!("could not create directory for vdf proofs, exiting. Message: {:?}", &e);
+          exit(1);
+        })
     };
 
     match copy(&source, target_file, &CopyOptions::new()) {

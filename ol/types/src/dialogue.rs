@@ -96,6 +96,22 @@ pub fn what_ip() -> Result<Ipv4Addr, Error> {
     Ok(ip)
 }
 
+/// interact with user to get ip address
+pub fn what_vfn_ip() -> Result<Ipv4Addr, Error> {
+
+    if *IS_TEST {
+        return Ok("0.0.0.0".parse::<Ipv4Addr>()?);
+    }
+
+    let input: String = Input::new()
+      .with_prompt("Enter the IP address of the node")
+      .interact_text()?;
+    
+    let ip = input.parse::<Ipv4Addr>()?;
+
+    Ok(ip)
+}
+
 /// interact with user to get a statement
 pub fn what_statement() -> String {
     if *IS_TEST {
