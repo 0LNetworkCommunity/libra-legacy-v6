@@ -411,23 +411,6 @@ pub fn make_vfn_cfg(
     
     // TODO: determine if we want deterministic identity. Seems to not work with VFN, for now allowing the network configs to generate random ID for VFN.
 
-    // NOTE: WE ARE CHOSING TO HAVE THE FULLNODE NETWORK PRIVATE KEY UNECRPYTED IN THE CONFIG FILE
-    // this is preferable to the VFN also storing the key_store.json on the host
-    // which is equally insecure, and contains many more keys.
-
-
-    // let fullnode_private_key = storage.export_private_key(FULLNODE_NETWORK_KEY)?;
-
-    // let p = PrivateKey::from_ed25519_private_bytes(&fullnode_private_key.to_bytes())?;
-    // let id_of_vfn_node = Identity::from_config(p, owner_address_as_fn_id);
-
-    // A VFN has two fullnode networks it participates in.
-    // 1. A private network with the Validator.
-    // 2. the fullnode network. The fullnode network cannot exist unless the VFN briges the validators to the public.
-
-    // vfn_network.identity = id_of_vfn_node.clone();
-
-
     // set the Validator as the Seed peer for the VFN network
     // need to get their ID and IP address
 
