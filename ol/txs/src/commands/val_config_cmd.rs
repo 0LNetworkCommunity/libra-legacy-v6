@@ -5,13 +5,10 @@
 use abscissa_core::{Command, Options, Runnable};
 use diem_json_rpc_types::views::TransactionView;
 use diem_transaction_builder::stdlib as transaction_builder;
-use diem_types::network_address::encrypted::EncNetworkAddress;
 use ol_keys::{wallet, scheme::KeyScheme};
 use ol_types::{config::TxType, account::ValConfigs};
-use crate::{entrypoint, submit_tx::{TxError, TxParams, maybe_submit, tx_params_wrapper}};
+use crate::submit_tx::{TxError, TxParams, maybe_submit, tx_params_wrapper};
 use std::{process::exit, net::Ipv4Addr};
-use std::path::PathBuf;
-
 
 /// `IpAddrUpdate` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -24,7 +21,7 @@ pub struct ValConfigCmd {
 
 impl Runnable for ValConfigCmd {
     fn run(&self) {
-        let entry_args = entrypoint::get_args();
+        // let _entry_args = entrypoint::get_args();
         let (_, _, w) = wallet::get_account_from_prompt();
 
         let val_cfg = ValConfigs::new(
