@@ -388,6 +388,9 @@ pub struct Profile {
     /// ip address of this node. May be different from transaction URL.
     pub ip: Ipv4Addr,
 
+    /// ip address of the validator fullnodee
+    pub vfn_ip: Ipv4Addr,
+
     /// Node URL and and port to submit transactions. Defaults to localhost:8080
     pub default_node: Option<Url>,
 
@@ -408,6 +411,7 @@ impl Default for Profile {
             .unwrap(),
             statement: "Protests rage across the nation".to_owned(),
             ip: "0.0.0.0".parse().unwrap(),
+            vfn_ip: "0.0.0.0".parse().unwrap(),
             default_node: Some("http://localhost:8080".parse().expect("parse url")),
             upstream_nodes: Some(vec!["http://localhost:8080".parse().expect("parse url")]),
             tower_link: None,

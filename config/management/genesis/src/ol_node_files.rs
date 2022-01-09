@@ -483,7 +483,7 @@ pub fn make_validator_network_protocol(
     pubkey: PublicKey,
 ) -> Result<Peer, Error> {
     let role = PeerRole::Validator;
-    let val_addr = ValConfigs::make_vfn_addr(&ip_address.to_string(), pubkey);
+    let val_addr = ValConfigs::make_fullnode_unencrypted_addr(&ip_address, pubkey);
     let p = Peer::from_addrs(role, vec![val_addr]);
     Ok(p)
 }
