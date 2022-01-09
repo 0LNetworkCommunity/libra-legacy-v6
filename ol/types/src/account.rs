@@ -29,8 +29,6 @@ pub struct ValConfigs {
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
     pub op_consensus_pubkey: Vec<u8>,
 
-
-
     /// Key validator will use for network connections
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
     pub op_validator_network_addresses: Vec<u8>,
@@ -303,9 +301,9 @@ fn val_config_ip_address() {
     let eve_keys = KeyScheme::new_from_mnemonic("recall october regret kite undo choice outside season business wall quit arrest vacant arrow giggle vote ghost winter hawk soft cheap decide exhaust spare".to_string());
     let eve_account = eve_keys.derived_address();
 
-    let val = ValConfigs::new(block, eve_keys, "161.35.13.169".to_string(), None, None);
+    let val = ValConfigs::new(Some(block), eve_keys, "161.35.13.169".parse().unwrap(), "161.35.13.169".parse().unwrap(), None, None);
 
-    let correct_fn_hex = "012d0400a1230da9052318072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800".to_owned();
+    let correct_fn_hex = "012d0400a1230da9052218072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800".to_owned();
 
     assert_eq!(encode(&val.op_fullnode_network_addresses), correct_fn_hex);
 
