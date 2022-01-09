@@ -15,7 +15,6 @@ mod version;
 mod mgmt_cmd;
 mod serve_cmd;
 mod restore_cmd;
-mod onboard_cmd;
 mod query_cmd;
 mod health_cmd;
 mod pilot_cmd;
@@ -28,7 +27,6 @@ use self::{
     mgmt_cmd::MgmtCmd,
     serve_cmd::ServeCmd,
     restore_cmd::RestoreCmd,
-    onboard_cmd::OnboardCmd,
     query_cmd::QueryCmd,
     health_cmd::HealthCmd,
     pilot_cmd::PilotCmd,
@@ -72,11 +70,7 @@ pub enum OlCliCmd {
     /// The `restore` subcommand
     #[options(help = "restore the database from the epoch-archive repository")]
     Restore(RestoreCmd), 
-
-    /// The `onboard` subcommand
-    #[options(help = "onboarding validator actions")]
-    Onboard(OnboardCmd),        
-
+     
     /// The `query` subcommand
     #[options(help = "run simple queries through subcommands, prints the value to stdout")]
     Query(QueryCmd), 
