@@ -404,12 +404,18 @@ pub fn make_vfn_cfg(
 
     // Private Fullnode Network named "vfn" - but could be any name the validator and vfn agreed on
     let mut vfn_network = NetworkConfig::network_with_id(NetworkId::Private("vfn".to_string()));
-    //////////////// IDENTITY OF NODE  ////////////////
+    //////////////// IDENTITY OF THE VFN FOR PUBLIC NETWORK  ////////////////
     // the VFN announces itself as the owner address, but uses FULLNODE private key to authenticate.
     // make the fullnode discoverable by the account address of the validator owner.
     let owner_address_as_fn_id = storage.get(OWNER_ACCOUNT)?.value;
     
-    // TODO: determine if we want deterministic identity. Seems to not work with VFN, for now allowing the network configs to generate random ID for VFN.
+    // TODO: determine if we want deterministic identity for the PRIVATE NETWORK. 
+
+    // A VFN has two fullnode networks it participates in.
+    // 1. A private network with the Validator.
+    // 2. the fullnode network. The fullnode network cannot exist unless the VFN briges the validators to the public.
+
+    // vfn_network.identity = // KEYS ARE RANDOMLY SET IF UNDEFINED
 
     // set the Validator as the Seed peer for the VFN network
     // need to get their ID and IP address
@@ -435,9 +441,17 @@ pub fn make_vfn_cfg(
     // Public fullnode network template
     let mut pub_network = NetworkConfig::network_with_id(NetworkId::Public);
     
-    // TODO: decide if we want deterministic addresses for public network.
-    // using the same ID on both private vfn network as well as public network.
-    // pub_network.identity = id_of_vfn_node;
+    ////////////////// IDENTITY OF NODE FOR THE PUBLIC FULLNODE NETWORK /////////////////////////
+    // NOTE: WE ARE CHOSING TO HAVE THE FULLNODE NETWORK PRIVATE KEY UNECRPYTED IN THE CONFIG FILE
+    // this is preferable to the VFN also storing the key_store.json on the host
+    // which is equally insecure, and contains many more keys.
+
+    let fullnode_private_key = storage.export_private_key(FULLNODE_NETWORK_KEY)?;
+
+    let p = PrivateKey::from_ed25519_private_bytes(&fullnode_private_key.to_bytes())?;
+    let id_of_vfn_node = Identity::from_config(p, owner_address_as_fn_id);
+
+    pub_network.identity = id_of_vfn_node;
 
     // this port accepts connections from unknown peers.
     pub_network.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_PUB_PORT).parse()?;
