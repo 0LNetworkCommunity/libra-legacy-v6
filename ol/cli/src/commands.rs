@@ -20,6 +20,7 @@ mod query_cmd;
 mod health_cmd;
 mod pilot_cmd;
 mod start_cmd;
+mod whoami_cmd;
 
 use self::{
     init_cmd::InitCmd,
@@ -32,6 +33,7 @@ use self::{
     health_cmd::HealthCmd,
     pilot_cmd::PilotCmd,
     start_cmd::StartCmd,
+    whoami_cmd::WhoamiCmd,
 };
 
 use crate::entrypoint;
@@ -90,6 +92,10 @@ pub enum OlCliCmd {
     /// The `start` subcommand
     #[options(help = "start 0L services")]
     Start(StartCmd),
+    
+    /// The `whoami` subcommand
+    #[options(help = "show public keys and network protocols")]
+    Whoami(WhoamiCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.
