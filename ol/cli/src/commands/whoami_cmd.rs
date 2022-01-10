@@ -2,9 +2,10 @@
 
 #![allow(clippy::never_loop)]
 
-use std::path::PathBuf;
+use std::{net::Ipv4Addr, path::PathBuf, process::exit};
 
 use abscissa_core::{Command, Options, Runnable};
+use anyhow::{anyhow, Error};
 use diem_config::{config::NodeConfig, network_id::NetworkId};
 use diem_crypto::x25519;
 use ol_keys::{scheme::KeyScheme, wallet};
@@ -23,10 +24,13 @@ impl Runnable for WhoamiCmd {
     /// Print version message
     fn run(&self) {
         let app_cfg = app_config().to_owned();
-
+        
         if let Some(f) = &self.check_yaml {
-          display_id_in_file(f);
-          return
+            display_id_in_file(f).unwrap_or_else(|e| {
+                println!("error reading yaml file: {:?}", &e);
+                exit(1);
+            });
+            return;
         }
 
         let (auth, addr, wallet) = wallet::get_account_from_prompt();
@@ -87,24 +91,83 @@ impl Runnable for WhoamiCmd {
     }
 }
 
-fn display_id_in_file(yaml_path: &PathBuf) {
-  let node_conf = NodeConfig::load(&yaml_path).unwrap();
-
-    println!("ACTUAL CONFIGS IN {:?}\n", yaml_path.as_os_str());
+fn display_id_in_file(yaml_path: &PathBuf) -> Result<(), Error> {
+    let node_conf = NodeConfig::load(&yaml_path).map_err(|e| {
+        anyhow!(
+            "could not read the node config file {:?}, message: {:?} ",
+            &yaml_path,
+            &e
+        )
+    })?;
+    let ip = get_my_ip()?;
+    println!("\n ACTUAL NETWORK IDs IN {:?}\n", yaml_path.as_os_str());
     println!("----- noise protocol addresses -----\n");
 
-    println!("Validator (encrypted) address on VALIDATOR network\n");
-    let val_net = &node_conf.validator_network.unwrap();
-    let peer_id = &val_net.peer_id();
-    let priv_key = &val_net.identity_key();
-    let pub_key = priv_key.public_key();
-    let addr = ValConfigs::make_unencrypted_addr(&"0.0.0.0".parse().unwrap(), pub_key, NetworkId::Validator);
-    println!("{:?}\n", &addr);
+    if let Some(val_net) = &node_conf.validator_network {
+        let peer_id = &val_net.peer_id();
+        let priv_key = &val_net.identity_key();
+        let pub_key = priv_key.public_key();
+        let addr = ValConfigs::make_unencrypted_addr(
+            &ip,
+            pub_key,
+            NetworkId::Validator,
+        );
+        println!("Address (encrypted) on VALIDATOR network\n");
+        println!("{:?}:\n", &peer_id);
+        println!("{:?}\n", &addr);
+    };
 
-    // println!("Validator address on PRIVATE VFN Network\n");
-    // println!("{}\n", val_cfg.op_val_net_addr_for_vfn);
+    node_conf.full_node_networks.into_iter().for_each(|n| {
+        match n.network_id {
+            NetworkId::Validator => {
+                println!(
+                    "Something is wrong, there should be no validator config in full_node_networks"
+                );
+            }
+            NetworkId::Public => {
+                println!("Address on PUBLIC fullnode network\n");
 
-    // println!("VFN address on PUBLIC fullnode network\n");
-    // println!("{}\n", val_cfg.op_vfn_net_addr_for_public);
+                let peer_id = &n.peer_id();
+                let priv_key = &n.identity_key();
+                let pub_key = priv_key.public_key();
+                let addr = ValConfigs::make_unencrypted_addr(
+                    &ip,
+                    pub_key,
+                    NetworkId::Validator,
+                );
+                println!("{:?}:\n", &peer_id);
+                println!("{:?}\n", &addr);
+            }
+            NetworkId::Private(_) => {
+                println!("Address on PRIVATE VFN Network\n");
 
+                let peer_id = &n.peer_id();
+                let priv_key = &n.identity_key();
+                let pub_key = priv_key.public_key();
+                let addr = ValConfigs::make_unencrypted_addr(
+                    &ip,
+                    pub_key,
+                    NetworkId::Validator,
+                );
+                println!("{:?}:\n", &peer_id);
+                println!("{:?}\n", &addr);
+            }
+        };
+    });
+
+    Ok(())
+}
+
+fn get_my_ip() -> Result<Ipv4Addr, Error> {
+   Ok( match reqwest::blocking::get("https://ifconfig.me") {
+        Ok(resp) => {
+            let ip_str = resp.text()?;
+            ip_str.parse()?
+        }
+        Err(_) => {
+            println!("couldn't detect external IP address, using 0.0.0.0 for display");
+            "0.0.0.0".parse()?
+        }
+    }
+  )
 }
