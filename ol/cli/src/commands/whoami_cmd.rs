@@ -2,72 +2,109 @@
 
 #![allow(clippy::never_loop)]
 
+use std::path::PathBuf;
+
 use abscissa_core::{Command, Options, Runnable};
-use ol_keys::{wallet, scheme::KeyScheme};
+use diem_config::{config::NodeConfig, network_id::NetworkId};
 use diem_crypto::x25519;
+use ol_keys::{scheme::KeyScheme, wallet};
 use ol_types::account::ValConfigs;
 
 use crate::prelude::app_config;
 
 /// `version` subcommand
 #[derive(Command, Debug, Default, Options)]
-pub struct WhoamiCmd {}
+pub struct WhoamiCmd {
+    #[options(short = "c", help = "check a local file for the IDs published")]
+    check_yaml: Option<PathBuf>,
+}
 
 impl Runnable for WhoamiCmd {
     /// Print version message
     fn run(&self) {
-          let app_cfg = app_config().to_owned();
+        let app_cfg = app_config().to_owned();
 
-          let (auth, addr, wallet) = wallet::get_account_from_prompt();
+        if let Some(f) = &self.check_yaml {
+          display_id_in_file(f);
+          return
+        }
 
-          let val_cfg = ValConfigs::new(
-            None, 
-            KeyScheme::new(&wallet), 
-            app_cfg.profile.ip, 
+        let (auth, addr, wallet) = wallet::get_account_from_prompt();
+
+        let val_cfg = ValConfigs::new(
+            None,
+            KeyScheme::new(&wallet),
+            app_cfg.profile.ip,
             app_cfg.profile.vfn_ip,
-            None, 
-            None
-          );
+            None,
+            None,
+        );
 
-          println!("\n0L ACCOUNT\n");
-          println!("address: {}", addr);
-          println!("authentication key (for account creation): {}\n", auth);
+        println!("\n0L ACCOUNT\n");
+        println!("address: {}", addr);
+        println!("authentication key (for account creation): {}\n", auth);
 
-          let scheme = KeyScheme::new(&wallet);
-          println!("----- pub ed25519 keys -----\n");
-          println!("key 0: {}\n", scheme.child_0_owner.get_public());
-          println!("key 1: {}\n", scheme.child_1_operator.get_public());
-          println!("key 2: {}\n", scheme.child_2_val_network.get_public());
-          println!("key 3: {}\n", scheme.child_3_fullnode_network.get_public());
-          println!("key 4: {}\n", scheme.child_4_consensus.get_public());
-          println!("key 5: {}\n", scheme.child_5_executor.get_public());
+        let scheme = KeyScheme::new(&wallet);
+        println!("----- pub ed25519 keys -----\n");
+        println!("key 0: {}\n", scheme.child_0_owner.get_public());
+        println!("key 1: {}\n", scheme.child_1_operator.get_public());
+        println!("key 2: {}\n", scheme.child_2_val_network.get_public());
+        println!("key 3: {}\n", scheme.child_3_fullnode_network.get_public());
+        println!("key 4: {}\n", scheme.child_4_consensus.get_public());
+        println!("key 5: {}\n", scheme.child_5_executor.get_public());
 
-          println!("----- pub x25519 network keys -----\n");
-          // println!("0 key: {}\n", hex::encode());
+        println!("----- pub x25519 network keys -----\n");
+        // println!("0 key: {}\n", hex::encode());
 
-          let val_net_priv = scheme.child_2_val_network.get_private_key().to_bytes();
+        let val_net_priv = scheme.child_2_val_network.get_private_key().to_bytes();
 
-          let key = x25519::PrivateKey::from_ed25519_private_bytes(&val_net_priv)
-                    .expect("Unable to convert key");
-          println!("key 3 - validator network key: {:?}\n", key.public_key().to_string());
+        let key = x25519::PrivateKey::from_ed25519_private_bytes(&val_net_priv)
+            .expect("Unable to convert key");
+        println!(
+            "key 3 - validator network key: {:?}\n",
+            key.public_key().to_string()
+        );
 
-          let fn_net_priv = scheme.child_3_fullnode_network.get_private_key().to_bytes();
+        let fn_net_priv = scheme.child_3_fullnode_network.get_private_key().to_bytes();
 
-          let key = x25519::PrivateKey::from_ed25519_private_bytes(&fn_net_priv)
-                    .expect("Unable to convert key");
-          println!("key 3 - fullnode network key: {:?}\n", &key.public_key().to_string());
-          
-          
-          println!("----- noise protocol addresses -----\n");
-          
-          println!("Validator (encrypted) address on VALIDATOR network\n");
-          println!("{}\n", val_cfg.op_val_net_addr_for_vals);
+        let key = x25519::PrivateKey::from_ed25519_private_bytes(&fn_net_priv)
+            .expect("Unable to convert key");
+        println!(
+            "key 3 - fullnode network key: {:?}\n",
+            &key.public_key().to_string()
+        );
 
-          println!("Validator address on PRIVATE VFN Network\n");
-          println!("{}\n", val_cfg.op_val_net_addr_for_vfn);
+        println!("----- noise protocol addresses -----\n");
 
+        println!("Validator (encrypted) address on VALIDATOR network\n");
+        println!("{}\n", val_cfg.op_val_net_addr_for_vals);
 
-          println!("VFN address on PUBLIC fullnode network\n");
-          println!("{}\n", val_cfg.op_vfn_net_addr_for_public);
-  }
+        println!("Validator address on PRIVATE VFN Network\n");
+        println!("{}\n", val_cfg.op_val_net_addr_for_vfn);
+
+        println!("VFN address on PUBLIC fullnode network\n");
+        println!("{}\n", val_cfg.op_vfn_net_addr_for_public);
+    }
+}
+
+fn display_id_in_file(yaml_path: &PathBuf) {
+  let node_conf = NodeConfig::load(&yaml_path).unwrap();
+
+    println!("ACTUAL CONFIGS IN {:?}\n", yaml_path.as_os_str());
+    println!("----- noise protocol addresses -----\n");
+
+    println!("Validator (encrypted) address on VALIDATOR network\n");
+    let val_net = &node_conf.validator_network.unwrap();
+    let peer_id = &val_net.peer_id();
+    let priv_key = &val_net.identity_key();
+    let pub_key = priv_key.public_key();
+    let addr = ValConfigs::make_unencrypted_addr(&"0.0.0.0".parse().unwrap(), pub_key, NetworkId::Validator);
+    println!("{:?}\n", &addr);
+
+    // println!("Validator address on PRIVATE VFN Network\n");
+    // println!("{}\n", val_cfg.op_val_net_addr_for_vfn);
+
+    // println!("VFN address on PUBLIC fullnode network\n");
+    // println!("{}\n", val_cfg.op_vfn_net_addr_for_public);
+
 }

@@ -17,6 +17,9 @@ pub struct ValConfigCmd {
     val_ip: Option<Ipv4Addr>,
     #[options(short = "f", help = "the fullnode of the validator's ip address")]
     fn_ip: Option<Ipv4Addr>,
+    #[options(short = "g", help = "get the on-chain configs currently published")]
+    get_on_chain: bool,
+
 }
 
 impl Runnable for ValConfigCmd {
