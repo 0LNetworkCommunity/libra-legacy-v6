@@ -5,9 +5,11 @@
 use abscissa_core::{Command, Options, Runnable};
 use diem_json_rpc_types::views::TransactionView;
 use diem_transaction_builder::stdlib as transaction_builder;
+use diem_types::account_address::AccountAddress;
+use ol::{node::{client, node::Node}, config::AppCfg};
 use ol_keys::{wallet, scheme::KeyScheme};
 use ol_types::{config::TxType, account::ValConfigs};
-use crate::submit_tx::{TxError, TxParams, maybe_submit, tx_params_wrapper};
+use crate::{submit_tx::{TxError, TxParams, maybe_submit, tx_params_wrapper}, prelude::app_config};
 use std::{process::exit, net::Ipv4Addr};
 
 /// `IpAddrUpdate` subcommand
@@ -24,6 +26,12 @@ pub struct ValConfigCmd {
 
 impl Runnable for ValConfigCmd {
     fn run(&self) {
+        let cfg = app_config().clone();
+
+        if *&self.get_on_chain {          
+          get_val_configs(cfg.profile.account, cfg);
+          return
+        }
         // let _entry_args = entrypoint::get_args();
         let (_, _, w) = wallet::get_account_from_prompt();
 
@@ -72,4 +80,27 @@ pub fn update_onchain_configs(
     &tx_params,
     None // TODO: if people want to save tx for relaying elsewhere, unlikely.
   )
+}
+
+fn get_val_configs(account: AccountAddress, mut cfg: AppCfg) {
+  
+  // let account = 
+  //   if args.account.is_some() { args.account.unwrap() }
+  //   else { cfg.profile.account };
+    
+  let client = client::pick_client(
+    None, &mut cfg
+  ).unwrap_or_else(|e| {
+    println!("ERROR: Cannot connect to a client. Message: {}", e);
+    exit(1);
+  });
+  let mut node = Node::new(client, &cfg, false);
+
+  if let Some(c) = node.get_validator_config( 
+    account) {
+      if let Some(cr)  = c.val.config {
+        println!("validator configs");
+        dbg!(&cr.consensus_pubkey);
+      }
+    }
 }

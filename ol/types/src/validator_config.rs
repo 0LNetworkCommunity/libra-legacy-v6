@@ -28,9 +28,12 @@ pub struct ValidatorConfigResource {
 /// Struct that represents a Config resource
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct ConfigResource {
-    consensus_pubkey: Vec<u8>,
-    validator_network_addresses: Vec<u8>,
-    fullnode_network_addresses: Vec<u8>,
+    ///
+    pub consensus_pubkey: Vec<u8>,
+    ///
+    pub validator_network_addresses: Vec<u8>,
+    ///
+    pub fullnode_network_addresses: Vec<u8>,
 }
 
 impl MoveStructType for ValidatorConfigResource {
@@ -70,6 +73,7 @@ impl ValidatorConfigResource {
     ///
     pub fn get_view(&self) -> ValidatorConfigView {
         ValidatorConfigView {
+            val: self.clone(),
             operator_account: self.operator_account.clone(),
             operator_has_balance: None
         }
@@ -79,6 +83,8 @@ impl ValidatorConfigResource {
 /// Struct that represents a view for Validator Config view
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidatorConfigView {
+    ///
+    pub val: ValidatorConfigResource,
     ///
     pub operator_account: Option<AccountAddress>,
     ///

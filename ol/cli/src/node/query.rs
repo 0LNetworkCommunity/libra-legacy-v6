@@ -122,7 +122,7 @@ impl Node {
                     Err(e) => format!("Error querying account resource. Message: {:#?}", e),
                     _ => format!("Error, cannot find account state for {:#?}", account),
                 }
-            }
+            },
             MoveValue {
                 account,
                 module_name,
