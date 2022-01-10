@@ -14,7 +14,7 @@ use diem_config::{
 use diem_crypto::x25519::PublicKey;
 use diem_global_constants::{
     DEFAULT_PUB_PORT, DEFAULT_VFN_PORT, OWNER_ACCOUNT,
-    VALIDATOR_NETWORK_KEY,
+    VALIDATOR_NETWORK_KEY, FULLNODE_NETWORK_KEY,
 };
 use diem_management::{config::ConfigPath, error::Error, secure_backend::ValidatorBackend};
 use diem_secure_storage::{CryptoStorage, KVStorage};
