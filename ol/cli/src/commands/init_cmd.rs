@@ -97,8 +97,7 @@ impl Runnable for InitCmd {
         let mut app_cfg = app_config().to_owned();
         let entry_args = entrypoint::get_args();
         let is_swarm = *&entry_args.swarm_path.is_some();
-        // TODO: namespace creator exisists somewhere.
-        let namespace = format!("{}-oper", &app_cfg.profile.account.to_string());
+
 
         if self.update_waypoint {
             // TODO: will need to update the key_store.json file with waypoint info.
@@ -122,8 +121,8 @@ impl Runnable for InitCmd {
 
             match node.waypoint() {
                 Ok(w) => {
-                    key::set_waypoint(&app_cfg.workspace.node_home, &namespace, w);
-                    key::set_genesis_waypoint(&app_cfg.workspace.node_home, &namespace, w);
+                    key::set_waypoint(&app_cfg.workspace.node_home, &app_cfg.profile.account.to_string(), w);
+                    key::set_genesis_waypoint(&app_cfg.workspace.node_home, &app_cfg.profile.account.to_string(), w);
 
                     app_cfg.chain_info.base_waypoint = Some(w);
                     app_cfg.save_file();
