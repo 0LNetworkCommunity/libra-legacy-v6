@@ -1,6 +1,6 @@
 [package]
 name = "tower"
-version = "5.0.8"
+version = "5.0.9"
 edition = "2018"
 authors = ["0L contributors"]
 description = "0L tower"
