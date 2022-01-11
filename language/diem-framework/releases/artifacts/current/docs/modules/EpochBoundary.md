@@ -27,7 +27,6 @@
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="Subsidy.md#0x1_Subsidy">0x1::Subsidy</a>;
 <b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
-<b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
@@ -39,7 +38,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64)
 </code></pre>
 
 
@@ -48,7 +47,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) {
+<pre><code><b>public</b> <b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) {
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
 
     <b>let</b> height_start = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>(vm);
@@ -61,18 +60,18 @@
     <b>let</b> (subsidy_units, nominal_subsidy_per) =
         <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, compliant_nodes_count);
 
-    <a href="Reconfigure.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm, nominal_subsidy_per);
+    <a href="EpochBoundary.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm, nominal_subsidy_per);
 
-    <a href="Reconfigure.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm, subsidy_units, outgoing_compliant_set);
+    <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm, subsidy_units, *&outgoing_compliant_set);
 
-    <b>let</b> proposed_set = <a href="Reconfigure.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm, height_start, height_now);
+    <b>let</b> proposed_set = <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm, height_start, height_now);
 
     // Update all slow wallet limits
     <b>if</b> (<a href="DiemConfig.md#0x1_DiemConfig_check_transfer_enabled">DiemConfig::check_transfer_enabled</a>()) {
         <a href="DiemAccount.md#0x1_DiemAccount_slow_wallet_epoch_drip">DiemAccount::slow_wallet_epoch_drip</a>(vm, <a href="Globals.md#0x1_Globals_get_unlock">Globals::get_unlock</a>());
         // update_validator_withdrawal_limit(vm);
     };
-    <a href="Reconfigure.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, proposed_set, height_now)
+    <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, proposed_set, outgoing_compliant_set, height_now)
 }
 </code></pre>
 
@@ -86,7 +85,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm: &signer, nominal_subsidy_per_node: u64)
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm: &signer, nominal_subsidy_per_node: u64)
 </code></pre>
 
 
@@ -95,7 +94,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm: &signer, nominal_subsidy_per_node: u64) {
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm: &signer, nominal_subsidy_per_node: u64) {
     // Fullnode subsidy
     // <b>loop</b> through validators and pay full node subsidies.
     // Should happen before transactionfees get distributed.
@@ -116,7 +115,7 @@
         // TODO: this call is repeated in propose_new_set.
         // Not sure <b>if</b> the performance hit at epoch boundary is worth the refactor.
         <b>if</b> (<a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr)) {
-          <b>let</b> count = <a href="TowerState.md#0x1_TowerState_get_count_in_epoch">TowerState::get_count_in_epoch</a>(addr);
+          <b>let</b> count = <a href="TowerState.md#0x1_TowerState_get_count_above_thresh_in_epoch">TowerState::get_count_above_thresh_in_epoch</a>(addr);
 
           <b>let</b> miner_subsidy = count * proof_price;
           <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_distribute_fullnode_subsidy">FullnodeSubsidy::distribute_fullnode_subsidy</a>(vm, addr, miner_subsidy);
@@ -137,7 +136,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector&lt;address&gt;)
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector&lt;address&gt;)
 </code></pre>
 
 
@@ -146,7 +145,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_process_validators">process_validators</a>(
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(
     vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector&lt;address&gt;
 ) {
     // Process outgoing validators:
@@ -172,7 +171,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;address&gt;
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;address&gt;
 </code></pre>
 
 
@@ -181,7 +180,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;address&gt; {
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;address&gt; {
     // Propose upcoming validator set:
     // Step 1: Sort Top N eligible validators
     // Step 2: Jail non-performing validators
@@ -247,7 +246,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, height_now: u64)
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, outgoing_compliant: vector&lt;address&gt;, height_now: u64)
 </code></pre>
 
 
@@ -256,15 +255,13 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Reconfigure.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, height_now: u64) {
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;address&gt;, outgoing_compliant: vector&lt;address&gt;, height_now: u64) {
 
     // Reset <a href="Stats.md#0x1_Stats">Stats</a>
     <a href="Stats.md#0x1_Stats_reconfig">Stats::reconfig</a>(vm, &proposed_set);
 
-    // Migrate <a href="TowerState.md#0x1_TowerState">TowerState</a> list from elegible: in case there is no minerlist
-    // <b>struct</b>, <b>use</b> eligible for migrate_eligible_validators
-    <b>let</b> eligible = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm);
-    <a href="TowerState.md#0x1_TowerState_reconfig">TowerState::reconfig</a>(vm, &eligible);
+    // Migrate <a href="TowerState.md#0x1_TowerState">TowerState</a> list from elegible.
+    <a href="TowerState.md#0x1_TowerState_reconfig">TowerState::reconfig</a>(vm, &outgoing_compliant);
 
     // Reconfigure the network
     <a href="DiemSystem.md#0x1_DiemSystem_bulk_update_validators">DiemSystem::bulk_update_validators</a>(vm, proposed_set);
