@@ -9,7 +9,7 @@ use anyhow::{anyhow, Error};
 use diem_config::{config::NodeConfig, network_id::NetworkId};
 use diem_crypto::x25519;
 use ol_keys::{scheme::KeyScheme, wallet};
-use ol_types::account::ValConfigs;
+use ol_types::{account::ValConfigs};
 
 use crate::prelude::app_config;
 
@@ -99,10 +99,12 @@ fn display_id_in_file(yaml_path: &PathBuf) -> Result<(), Error> {
             &e
         )
     })?;
-    let ip = get_my_ip()?;
 
-    // TODO: fetch this from 0L.toml
-    let vfn_ip: Ipv4Addr = "0.0.0.0".parse().unwrap();
+    println!("We will use this machines external IP for display. Note that if you move this file the IP will display differently on another machine. ");
+    let ip = get_my_ip().unwrap_or_else(|_| {
+      println!("could not get external IP, using 0.0.0.0 for display");
+      "0.0.0.0".parse().unwrap()
+    });
 
     println!("\n ACTUAL NETWORK IDs IN {:?}\n", yaml_path.as_os_str());
     println!("----- noise protocol addresses -----\n");
@@ -135,7 +137,7 @@ fn display_id_in_file(yaml_path: &PathBuf) -> Result<(), Error> {
                 let priv_key = &n.identity_key();
                 let pub_key = priv_key.public_key();
                 let addr = ValConfigs::make_unencrypted_addr(
-                    &vfn_ip,
+                    &ip,
                     pub_key,
                     NetworkId::Validator,
                 );
@@ -149,7 +151,7 @@ fn display_id_in_file(yaml_path: &PathBuf) -> Result<(), Error> {
                 let priv_key = &n.identity_key();
                 let pub_key = priv_key.public_key();
                 let addr = ValConfigs::make_unencrypted_addr(
-                    &vfn_ip,
+                    &ip,
                     pub_key,
                     NetworkId::Private("vfn".to_string()),
                 );
