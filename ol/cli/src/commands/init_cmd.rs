@@ -389,13 +389,13 @@ pub fn initialize_val_key_store(
     let home_dir = &app_cfg.workspace.node_home;
     let keys = KeyScheme::new(wallet);
     let namespace = app_cfg.format_oper_namespace();
+    let way = way_opt.unwrap_or("0:c12c01d2ac6deb028567c9a9c816ca3fe53fab9c461e4eab2f89125f975b63c3".parse().unwrap());
+
     init::key_store_init(home_dir, &namespace, keys, is_genesis);
     key::set_operator_key(home_dir, &namespace);
-    key::set_owner_key(home_dir, &namespace);
-    if let Some(way) = way_opt {
-        key::set_genesis_waypoint(home_dir, &namespace, way);
-        key::set_waypoint(home_dir, &namespace, way);
-    }
+    key::set_owner_key(home_dir, &namespace, app_cfg.profile.account);
+    key::set_genesis_waypoint(home_dir, &namespace, way.clone());
+    key::set_waypoint(home_dir, &namespace, way);
 
     Ok(())
 }
