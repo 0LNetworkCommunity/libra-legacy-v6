@@ -82,6 +82,9 @@ impl Runnable for InitCmd {
     /// Print version message
     fn run(&self) {
 
+        // TODO: This has no effect. This command will not load if the 0L.toml is malformed.
+        // this is an Abscissa issue.
+        // even with serde deny_unknown disabled the app will crash.
         if self.app_cfg_path.is_some() && self.fix {
             match fix_missing_fields(self.app_cfg_path.as_ref().unwrap().to_owned()) {
                 Ok(_) => println!("0L.toml has up-to-date schema"),
@@ -89,7 +92,7 @@ impl Runnable for InitCmd {
             };
             return;
         }
-        
+
         // start with a default value, or read from file if already initialized
         let mut app_cfg = app_config().to_owned();
         let entry_args = entrypoint::get_args();

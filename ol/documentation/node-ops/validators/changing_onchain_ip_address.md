@@ -32,6 +32,12 @@ Your node.yaml could be malformed. You'll want to check that the IDs used in the
 ```
 ol whoami --check-yaml <path/to/node.yaml>
 ```
+If YOUR node.yaml file does not match what your `ol whoami` shows you may need to redo the node configs.
+
+```
+ol init --val
+ol inti --vfn
+```
 
 ## Update the on-chain configs
 
