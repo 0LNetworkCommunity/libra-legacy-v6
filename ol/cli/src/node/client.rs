@@ -93,7 +93,7 @@ pub fn find_a_remote_jsonrpc(config: &AppCfg, waypoint: Waypoint) -> Result<Diem
             
     }
     Err(Error::msg(
-        "There are no URLs in the list of upstream_nodes in 0L.toml",
+        "Cannot connect to any JSON RPC peers in the list of upstream_nodes in 0L.toml",
     ))
 }
 

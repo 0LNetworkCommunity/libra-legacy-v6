@@ -2,7 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use super::files_cmd;
+use super::genesis_files_cmd;
 use crate::entrypoint;
 use crate::prelude::app_config;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
@@ -134,7 +134,7 @@ impl Runnable for ValWizardCmd {
 
         // Initialize Validator Keys
         // this also sets a genesis waypoint if one was provide, e.g. from an upstream peer.
-        init_cmd::initialize_validator(&wallet, &app_config, base_waypoint, *&self.genesis_ceremony).expect("could not initialize validator key_store.json");
+        init_cmd::initialize_val_key_store(&wallet, &app_config, base_waypoint, *&self.genesis_ceremony).expect("could not initialize validator key_store.json");
         status_ok!("\nKey file written", "\n...........................\n");
 
 
@@ -274,7 +274,7 @@ pub fn write_account_json(
     .create_manifest(json_path);
 }
 
-fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, base_waypoint: Option<Waypoint>, app_config: &AppCfg) {
+fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, _base_waypoint: Option<Waypoint>, cfg: &AppCfg) {
   // The default behavior is to fetch the genesis from a github repo.
   // if this is not possible then the user should have set a prebuilt genesis path.
 
@@ -285,7 +285,10 @@ fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, base
               home_path.join("genesis.blob"),
           )
           .unwrap();
-
+          
+          // make file fixture
+          fs::write(home_path.join("genesis_waypoint.txt"), "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2");
+          
           status_ok!(
               "\nUsing test genesis.blob",
               "\n...........................\n"
@@ -297,7 +300,7 @@ fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, base
       // Some(p.to_owned())
   } else {
   // default behavior: fetching the genesis files from genesis-archive, unless overrideen
-  match files_cmd::fetch_genesis_files_from_repo(home_path.clone(), &cmd.github_org, &cmd.repo) {
+  match genesis_files_cmd::fetch_genesis_files_from_repo(home_path.clone(), &cmd.github_org, &cmd.repo) {
     Ok(path) => {
       status_ok!(
           "\nDownloaded genesis files",
@@ -315,13 +318,14 @@ fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, base
   };
 
 
-  let home_dir = app_config.workspace.node_home.to_owned();
+  let home_dir = cfg.workspace.node_home.to_owned();
   // 0L convention is for the namespace of the operator to be appended by '-oper'
+  let val_ip_address = cfg.profile.ip;
   // this needs to be the same namespace as in initialize_validator
-  let namespace = app_config.profile.account.to_hex() + "-oper";
+  let namespace = cfg.profile.account.to_hex() + "-oper";
 
   // TODO: use node_config to get the seed peers and then write upstream_node vec in 0L.toml from that.
-  ol_node_files::write_node_config_files(
+  match ol_node_files::onboard_helper_all_files(
       home_dir.clone(),
       cmd.chain_id.unwrap_or(1),
       cmd.github_org.clone(),
@@ -329,10 +333,16 @@ fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, base
       &namespace,
       &genesis_blob_path,
       &false,
-      base_waypoint,
+      None,
       &None,
-  )
-  .unwrap();
+      Some(val_ip_address),
+  ) {
+    Ok(n) => {},
+    Err(e) => {
+      println!("Cannot create validator, exiting. Messsage: {:?}", &e);
+      exit(1);
+    },
+};
 
   status_ok!("\nNode config written", "\n...........................\n");
 }

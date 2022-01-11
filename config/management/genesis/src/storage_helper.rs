@@ -164,7 +164,7 @@ impl StorageHelper {
         storage_oper
             .set(SAFETY_DATA, SafetyData::new(0, 0, 0, None))
             .unwrap();
-
+        
         let mut encryptor = diem_network_address_encryption::Encryptor::new(storage_oper);
         encryptor.initialize().unwrap();
 

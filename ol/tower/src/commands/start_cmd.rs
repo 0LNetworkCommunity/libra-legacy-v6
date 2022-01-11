@@ -6,7 +6,6 @@ use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use ol_types::config::AppCfg;
 use ol_types::config::TxType;
 use std::process::exit;
-use diem_logger::prelude::FileWriter;
 use txs::submit_tx::tx_params;
 use diem_logger::{Level, Logger};
 
