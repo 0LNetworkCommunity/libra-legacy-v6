@@ -147,7 +147,7 @@ fn display_id_in_file(yaml_path: &PathBuf) -> Result<(), Error> {
                 let addr = ValConfigs::make_unencrypted_addr(
                     &ip,
                     pub_key,
-                    NetworkId::Validator,
+                    NetworkId::Private("vfn"),
                 );
                 println!("{:?}:\n", &peer_id);
                 println!("{:?}\n", &addr);
