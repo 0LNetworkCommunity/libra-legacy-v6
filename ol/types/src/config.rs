@@ -112,6 +112,11 @@ impl AppCfg {
         }
     }
 
+    /// format the standard namespace for 0L validator
+    pub fn format_oper_namespace(&self) -> String {
+      format!("{}-oper", self.profile.account.to_hex())
+    }
+
     /// Get where the block/proofs are stored.
     pub fn get_block_dir(&self) -> PathBuf {
         let mut home = self.workspace.node_home.clone();

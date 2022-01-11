@@ -130,7 +130,7 @@ impl ValConfigs {
             op_val_net_addr_for_vals: val_addr_for_val_net.to_owned(),
             op_val_net_addr_for_vfn: val_addr_for_vfn_net.to_owned(),
             op_vfn_net_addr_for_public: vfn_addr_obj.to_owned(),
-            op_human_name: format!("{}-oper", owner_address),
+            op_human_name: format!("{}-oper", owner_address), //NOTE: This must match  ol/types/src/config.rs format_oper_namespace
             autopay_instructions,
             autopay_signed,
         }

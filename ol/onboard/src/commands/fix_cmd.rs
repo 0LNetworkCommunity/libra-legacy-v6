@@ -32,7 +32,7 @@ impl Runnable for FixCmd {
         status_info!("\nOnboard fix", "migrating account.json");
         let cfg = app_config();
         let home_dir = &cfg.workspace.node_home;
-        let namespace = cfg.profile.auth_key.to_string();
+        let namespace = cfg.format_oper_namespace();
         // set the waypoint
         if let Some(w) = self.waypoint {
           key::set_waypoint(home_dir, &namespace, w);

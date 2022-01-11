@@ -189,7 +189,7 @@ impl Runnable for InitCmd {
         if self.vfn {
             println!("Creating vfn.node.yaml file.");
 
-            let namespace = app_cfg.profile.account.to_hex() + "-oper";
+            let namespace = app_cfg.format_oper_namespace();
             let output_dir = app_cfg.workspace.node_home;
             let val_ip_address = app_cfg.profile.ip;
             let gen_wp = app_cfg.chain_info.base_waypoint;
@@ -215,7 +215,7 @@ impl Runnable for InitCmd {
 
             // TODO: check we can open key-store file
 
-            let namespace = app_cfg.profile.account.to_hex() + "-oper";
+            let namespace = app_cfg.format_oper_namespace();
             let output_dir = app_cfg.workspace.node_home;
 
             match ol_node_files::make_val_file(output_dir, None, &namespace) {
@@ -382,13 +382,13 @@ pub fn initialize_host_swarm(
 /// Initializes the necessary validator config files: genesis.blob, key_store.json
 pub fn initialize_val_key_store(
     wallet: &WalletLibrary,
-    miner_config: &AppCfg,
+    app_cfg: &AppCfg,
     way_opt: Option<Waypoint>,
     is_genesis: bool,
 ) -> Result<(), Error> {
-    let home_dir = &miner_config.workspace.node_home;
+    let home_dir = &app_cfg.workspace.node_home;
     let keys = KeyScheme::new(wallet);
-    let namespace = miner_config.profile.account.to_hex(); // same format as serializer for 0L/toml
+    let namespace = app_cfg.format_oper_namespace();
     init::key_store_init(home_dir, &namespace, keys, is_genesis);
     key::set_operator_key(home_dir, &namespace);
     key::set_owner_key(home_dir, &namespace);
