@@ -14,6 +14,10 @@ use move_core_types::{
 use serde::{Deserialize, Serialize};
 use move_core_types::account_address::AccountAddress;
 
+
+//// TODO THIS IS DUPLICATED WITH types/src/validator_config.rs
+/// Please rename.
+
 /// Struct that represents a Validator Config resource
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidatorConfigResource {
@@ -73,7 +77,6 @@ impl ValidatorConfigResource {
     ///
     pub fn get_view(&self) -> ValidatorConfigView {
         ValidatorConfigView {
-            val: self.clone(),
             operator_account: self.operator_account.clone(),
             operator_has_balance: None
         }
@@ -83,8 +86,6 @@ impl ValidatorConfigResource {
 /// Struct that represents a view for Validator Config view
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidatorConfigView {
-    ///
-    pub val: ValidatorConfigResource,
     ///
     pub operator_account: Option<AccountAddress>,
     ///

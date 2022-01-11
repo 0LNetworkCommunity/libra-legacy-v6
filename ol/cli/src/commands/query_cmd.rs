@@ -62,7 +62,10 @@ pub struct QueryCmd {
     move_struct: Option<String>,
 
     #[options(help = "move value name")]
-    move_value: Option<String>,    
+    move_value: Option<String>,
+    
+    #[options(help = "Get a validator's on-chain config")]
+    val_config: bool,
 }
 
 impl Runnable for QueryCmd {
@@ -133,6 +136,13 @@ impl Runnable for QueryCmd {
                 txs_type: self.txs_type.to_owned(),
               };
             display = "TRANSACTIONS";
+        }
+        else if self.val_config {
+            query_type = 
+              QueryType::ValConfig {
+                account,
+              };
+            display = "VALIDATOR CONFIGS";
         }
 
         match node.query(query_type) {

@@ -139,7 +139,6 @@ impl Node {
                         view.operator_has_balance = 
                             Some(self.has_positive_balance(operator.unwrap()))
                     }
-                    view.val = res;
                     Some(view)
                 },
                 Ok(None) => None,

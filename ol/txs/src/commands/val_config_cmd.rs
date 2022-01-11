@@ -19,19 +19,12 @@ pub struct ValConfigCmd {
     val_ip: Option<Ipv4Addr>,
     #[options(short = "f", help = "the fullnode of the validator's ip address")]
     fn_ip: Option<Ipv4Addr>,
-    #[options(short = "g", help = "get the on-chain configs currently published")]
-    get_on_chain: bool,
-
 }
 
 impl Runnable for ValConfigCmd {
     fn run(&self) {
         let cfg = app_config().clone();
 
-        if *&self.get_on_chain {          
-          get_val_configs(cfg.profile.account, cfg);
-          return
-        }
         // let _entry_args = entrypoint::get_args();
         let (_, _, w) = wallet::get_account_from_prompt();
 
@@ -68,6 +61,23 @@ pub fn update_onchain_configs(
   val_cfg: ValConfigs,
 
 ) -> Result<TransactionView, TxError> {
+
+    format!("New consensus pubkey: {} \n 
+      New validator network addresses: {}, \n
+      New vfn fullnode network addresses: {}", 
+      val_cfg.op_consensus_pubkey,
+      val_cfg.op_validator_network_addresses,
+      val_cfg.op_fullnode_network_addresses,
+    );
+
+    match Confirm::new().with_prompt("Do you want to submit a TX to update your on-chain configs? Warning: malformed keys and addresses may make your node drop out of consensus.").interact().unwrap() {
+    true => {},
+    _ =>  {
+      print!("Validator configuration aborted.");
+      exit(1);
+    }
+  } 
+
   let script = transaction_builder::encode_register_validator_config_script_function(
       val_cfg.ow_human_name,
       val_cfg.op_consensus_pubkey,
@@ -80,27 +90,4 @@ pub fn update_onchain_configs(
     &tx_params,
     None // TODO: if people want to save tx for relaying elsewhere, unlikely.
   )
-}
-
-fn get_val_configs(account: AccountAddress, mut cfg: AppCfg) {
-  
-  // let account = 
-  //   if args.account.is_some() { args.account.unwrap() }
-  //   else { cfg.profile.account };
-    
-  let client = client::pick_client(
-    None, &mut cfg
-  ).unwrap_or_else(|e| {
-    println!("ERROR: Cannot connect to a client. Message: {}", e);
-    exit(1);
-  });
-  let mut node = Node::new(client, &cfg, false);
-
-  if let Some(c) = node.get_validator_config( 
-    account) {
-      if let Some(cr)  = c.val.config {
-        println!("validator configs");
-        dbg!(&cr.consensus_pubkey);
-      }
-    }
 }
