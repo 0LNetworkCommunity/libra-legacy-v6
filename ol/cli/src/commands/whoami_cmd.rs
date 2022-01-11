@@ -65,7 +65,7 @@ impl Runnable for WhoamiCmd {
         let key = x25519::PrivateKey::from_ed25519_private_bytes(&val_net_priv)
             .expect("Unable to convert key");
         println!(
-            "key 3 - validator network key: {:?}\n",
+            "validator network key: {:?}\n",
             key.public_key().to_string()
         );
 
@@ -74,7 +74,7 @@ impl Runnable for WhoamiCmd {
         let key = x25519::PrivateKey::from_ed25519_private_bytes(&fn_net_priv)
             .expect("Unable to convert key");
         println!(
-            "key 3 - fullnode network key: {:?}\n",
+            "fullnode network key: {:?}\n",
             &key.public_key().to_string()
         );
 
@@ -100,6 +100,10 @@ fn display_id_in_file(yaml_path: &PathBuf) -> Result<(), Error> {
         )
     })?;
     let ip = get_my_ip()?;
+
+    // TODO: fetch this from 0L.toml
+    let vfn_ip: Ipv4Addr = "0.0.0.0".parse().unwrap();
+
     println!("\n ACTUAL NETWORK IDs IN {:?}\n", yaml_path.as_os_str());
     println!("----- noise protocol addresses -----\n");
 
@@ -145,9 +149,9 @@ fn display_id_in_file(yaml_path: &PathBuf) -> Result<(), Error> {
                 let priv_key = &n.identity_key();
                 let pub_key = priv_key.public_key();
                 let addr = ValConfigs::make_unencrypted_addr(
-                    &ip,
+                    &vfn_ip,
                     pub_key,
-                    NetworkId::Private("vfn"),
+                    NetworkId::Private("vfn".to_string()),
                 );
                 println!("{:?}:\n", &peer_id);
                 println!("{:?}\n", &addr);
