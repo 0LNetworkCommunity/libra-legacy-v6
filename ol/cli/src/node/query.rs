@@ -68,6 +68,11 @@ pub enum QueryType {
         /// what event sequence number to start querying from, if DB does not have all.
         seq_start: Option<u64>,
     },
+    /// get the validator's on-chain configuration, including network discovery addresses
+    ValConfig { 
+      /// the account of the validator
+      account: AccountAddress 
+    }
 }
 
 /// Get data from a client, with a query type. Will connect to local only if in sync.
@@ -122,7 +127,7 @@ impl Node {
                     Err(e) => format!("Error querying account resource. Message: {:#?}", e),
                     _ => format!("Error, cannot find account state for {:#?}", account),
                 }
-            }
+            },
             MoveValue {
                 account,
                 module_name,
@@ -201,6 +206,40 @@ impl Node {
                 };
                 print
             }
+            ValConfig { account } => {
+                // account
+                match self.get_account_state(account) {
+                    Ok(a) => {
+                      if let Some(cr) = a.get_validator_config_resource()?{
+                        
+                        let val_addr = cr.clone().validator_config.unwrap().validator_network_addresses()?;
+                        
+                        let val_decrypted = val_addr
+                          .first()
+                          .unwrap()
+                          .clone()
+                          .decrypt(
+                            &diem_types::network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY,
+                            &account, 
+                            0
+                          )?;
+
+                        format!("\n
+                            consensus pubkey: {:?}\n
+                            validator network addr: {:?}\n
+                            fullnode network addr: {:?}\n
+                            ", 
+                          cr.clone().validator_config.unwrap().consensus_public_key.to_string(),
+                          val_decrypted,
+                          cr.validator_config.unwrap().fullnode_network_addresses()?,
+                        )
+                      } else {
+                        format!("No validator configs cound at: {}", account)
+                      }
+                    },
+                    Err(_) => format!("No validator configs cound at: {}", account),
+                }
+            },
         };
         Ok(print)
     }

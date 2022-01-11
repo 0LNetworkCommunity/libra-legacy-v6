@@ -20,7 +20,7 @@ use std::{
     str::FromStr,
 };
 
-use crate::dialogue::{add_tower, what_home, what_ip, what_statement};
+use crate::dialogue::{add_tower, what_home, what_ip, what_statement, what_vfn_ip};
 
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
 
@@ -129,7 +129,7 @@ impl AppCfg {
         source_path: &Option<PathBuf>,
         statement: Option<String>,
         ip: Option<Ipv4Addr>,
-    ) -> AppCfg {
+    ) -> Result<AppCfg, Error> {
         // TODO: Check if configs exist and warn on overwrite.
         let mut default_config = AppCfg::default();
         default_config.profile.auth_key = authkey;
@@ -145,6 +145,12 @@ impl AppCfg {
             Some(i) => i,
             None => what_ip().unwrap(),
         };
+
+        default_config.profile.vfn_ip = match ip {
+            Some(i) => i,
+            None => what_vfn_ip().unwrap(),
+        };
+
         default_config.workspace.node_home =
             config_path.clone().unwrap_or_else(|| what_home(None, None));
 
@@ -187,12 +193,12 @@ impl AppCfg {
         if *IS_TEST {
             default_config.save_file();
 
-            return default_config;
+            return Ok(default_config);
         }
         fs::create_dir_all(&default_config.workspace.node_home).unwrap();
         default_config.save_file();
 
-        default_config
+        Ok(default_config)
     }
 
     /// Save swarm default configs to swarm path
@@ -388,6 +394,9 @@ pub struct Profile {
     /// ip address of this node. May be different from transaction URL.
     pub ip: Ipv4Addr,
 
+    /// ip address of the validator fullnodee
+    pub vfn_ip: Ipv4Addr,
+
     /// Node URL and and port to submit transactions. Defaults to localhost:8080
     pub default_node: Option<Url>,
 
@@ -408,6 +417,7 @@ impl Default for Profile {
             .unwrap(),
             statement: "Protests rage across the nation".to_owned(),
             ip: "0.0.0.0".parse().unwrap(),
+            vfn_ip: "0.0.0.0".parse().unwrap(),
             default_node: Some("http://localhost:8080".parse().expect("parse url")),
             upstream_nodes: Some(vec!["http://localhost:8080".parse().expect("parse url")]),
             tower_link: None,

@@ -79,7 +79,7 @@ impl Runnable for ForkCmd {
             })
         });
         upstream.set_port(Some(8080)).unwrap();
-        println!("Setting upstream peer URL to: {:?}", &upstream);
+        println!("Setting JSON RPC peer URL to: {:?}", &upstream);
 
         let mut wp = self.waypoint.clone();
         if let Some(path) = &self.prebuilt_genesis {
@@ -97,7 +97,12 @@ impl Runnable for ForkCmd {
             &self.source_path,
             None,
             None,
-        );
+        )
+        .unwrap_or_else(|e| {
+          println!("could not create app configs, exiting. Message: {:?}", &e);
+          exit(1);
+        });
+        
         let home_path = &cfg.workspace.node_home;
         let base_waypoint = cfg.chain_info.base_waypoint.clone();
         dbg!(&base_waypoint);
@@ -274,9 +279,10 @@ pub fn write_account_json(
     let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned());
 
     ValConfigs::new(
-        block,
+        Some(block),
         keys,
-        cfg.profile.ip.to_string(),
+        cfg.profile.ip,
+        cfg.profile.vfn_ip,
         autopay_batch,
         autopay_signed,
     )

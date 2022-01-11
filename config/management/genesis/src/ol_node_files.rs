@@ -14,7 +14,7 @@ use diem_config::{
 use diem_crypto::x25519::PublicKey;
 use diem_global_constants::{
     DEFAULT_PUB_PORT, DEFAULT_VFN_PORT, OWNER_ACCOUNT,
-    VALIDATOR_NETWORK_KEY,
+    VALIDATOR_NETWORK_KEY, FULLNODE_NETWORK_KEY,
 };
 use diem_management::{config::ConfigPath, error::Error, secure_backend::ValidatorBackend};
 use diem_secure_storage::{CryptoStorage, KVStorage};
@@ -404,29 +404,18 @@ pub fn make_vfn_cfg(
 
     // Private Fullnode Network named "vfn" - but could be any name the validator and vfn agreed on
     let mut vfn_network = NetworkConfig::network_with_id(NetworkId::Private("vfn".to_string()));
-    //////////////// IDENTITY OF NODE  ////////////////
+    //////////////// IDENTITY OF THE VFN FOR PUBLIC NETWORK  ////////////////
     // the VFN announces itself as the owner address, but uses FULLNODE private key to authenticate.
     // make the fullnode discoverable by the account address of the validator owner.
     let owner_address_as_fn_id = storage.get(OWNER_ACCOUNT)?.value;
     
-    // TODO: determine if we want deterministic identity. Seems to not work with VFN, for now allowing the network configs to generate random ID for VFN.
-
-    // NOTE: WE ARE CHOSING TO HAVE THE FULLNODE NETWORK PRIVATE KEY UNECRPYTED IN THE CONFIG FILE
-    // this is preferable to the VFN also storing the key_store.json on the host
-    // which is equally insecure, and contains many more keys.
-
-
-    // let fullnode_private_key = storage.export_private_key(FULLNODE_NETWORK_KEY)?;
-
-    // let p = PrivateKey::from_ed25519_private_bytes(&fullnode_private_key.to_bytes())?;
-    // let id_of_vfn_node = Identity::from_config(p, owner_address_as_fn_id);
+    // TODO: determine if we want deterministic identity for the PRIVATE NETWORK. 
 
     // A VFN has two fullnode networks it participates in.
     // 1. A private network with the Validator.
     // 2. the fullnode network. The fullnode network cannot exist unless the VFN briges the validators to the public.
 
-    // vfn_network.identity = id_of_vfn_node.clone();
-
+    // vfn_network.identity = // KEYS ARE RANDOMLY SET IF UNDEFINED
 
     // set the Validator as the Seed peer for the VFN network
     // need to get their ID and IP address
@@ -435,7 +424,11 @@ pub fn make_vfn_cfg(
 
     let p = PrivateKey::from_ed25519_private_bytes(&val_net_private_key.to_bytes())?;
     
-    let seeds = make_vfn_peer_set(owner_address_as_fn_id, p.public_key(), val_ip_address)?;
+    let seeds = encode_validator_seed_for_vfn_discovery(
+      owner_address_as_fn_id, 
+      p.public_key(), 
+      val_ip_address
+    )?;
 
     // The seed for the VFN is the validator's ID on the private network.
     vfn_network.seeds = seeds;
@@ -448,9 +441,17 @@ pub fn make_vfn_cfg(
     // Public fullnode network template
     let mut pub_network = NetworkConfig::network_with_id(NetworkId::Public);
     
-    // TODO: decide if we want deterministic addresses for public network.
-    // using the same ID on both private vfn network as well as public network.
-    // pub_network.identity = id_of_vfn_node;
+    ////////////////// IDENTITY OF NODE FOR THE PUBLIC FULLNODE NETWORK /////////////////////////
+    // NOTE: WE ARE CHOSING TO HAVE THE FULLNODE NETWORK PRIVATE KEY UNECRPYTED IN THE CONFIG FILE
+    // this is preferable to the VFN also storing the key_store.json on the host
+    // which is equally insecure, and contains many more keys.
+
+    let fullnode_private_key = storage.export_private_key(FULLNODE_NETWORK_KEY)?;
+
+    let p = PrivateKey::from_ed25519_private_bytes(&fullnode_private_key.to_bytes())?;
+    let id_of_vfn_node = Identity::from_config(p, owner_address_as_fn_id);
+
+    pub_network.identity = id_of_vfn_node;
 
     // this port accepts connections from unknown peers.
     pub_network.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_PUB_PORT).parse()?;
@@ -465,27 +466,23 @@ pub fn make_vfn_cfg(
     Ok(c)
 }
 
-fn make_vfn_peer_set(
+// Create the seed discovery information, so that the VFN can find the Validator.
+// The validator announces itsef with the validator's VALIDATOR_NETWORK_KEY, so we need to construct the noise protocol with it. (NOT the VFN identity)
+fn encode_validator_seed_for_vfn_discovery(
     validator_account: AccountAddress,
-    val_vfn_net_pubkey: PublicKey,
+    val_net_pubkey: PublicKey,
     ip_address: Ipv4Addr,
 ) -> Result<PeerSet, Error> {
-    // create the vfn network info.
-    let val_peer_data = make_validator_network_protocol(ip_address, val_vfn_net_pubkey)?;
+    // construct seed peer info, using the validator's ID it uses on the private network VALIDATOR_NETWORK_KEY
+
+    let role = PeerRole::Validator;
+    let val_addr = ValConfigs::make_unencrypted_addr(&ip_address, val_net_pubkey, NetworkId::Private("vfn".to_owned()));
+    let val_peer_data = Peer::from_addrs(role, vec![val_addr]);
+
     // The seed address for the VFN can only be the Validator's address.
     let mut seeds = PeerSet::default();
     seeds.insert(validator_account, val_peer_data);
     Ok(seeds)
-}
-
-pub fn make_validator_network_protocol(
-    ip_address: Ipv4Addr,
-    pubkey: PublicKey,
-) -> Result<Peer, Error> {
-    let role = PeerRole::Validator;
-    let val_addr = ValConfigs::make_vfn_addr(&ip_address.to_string(), pubkey);
-    let p = Peer::from_addrs(role, vec![val_addr]);
-    Ok(p)
 }
 
 

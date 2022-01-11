@@ -1474,38 +1474,6 @@ impl TowerStateResourceView {
   }
 }
 
-// impl TryFrom<AccountState> for TowerStateResourceView {
-//     type Error = Error;
-
-//     fn try_from(state: AccountState) -> Result<TowerStateResourceView, Error> {
-//       let this_epoch = match state.get_configuration_resource()?{
-//           Some(cr) => cr.epoch(),
-//           None => bail!("cannot get epoch data from account state"),
-//       };
-
-//       let mut actual_count_proofs_in_epoch = 0;
-//       if let Some(m) = state.get_miner_state()? {
-//         if m.latest_epoch_mining == this_epoch {
-//          actual_count_proofs_in_epoch =  m.count_proofs_in_epoch;
-//         }
-
-//         Ok(TowerStateResourceView {
-//             previous_proof_hash: BytesView::from( m.previous_proof_hash),
-//             verified_tower_height: m.verified_tower_height, // user's latest verified_tower_height
-//             latest_epoch_mining: m.latest_epoch_mining,
-//             count_proofs_in_epoch: m.count_proofs_in_epoch,
-//             epochs_validating_and_mining: m.epochs_validating_and_mining,
-//             contiguous_epochs_validating_and_mining: m.contiguous_epochs_validating_and_mining,
-//             epochs_since_last_account_creation: m.epochs_since_last_account_creation,
-//             // the proof count adjusted for lazy computation
-//             actual_count_proofs_in_epoch,
-//         })
-//       } else {
-//         bail!("could not get tower state")
-//       }
-//     }
-// }
-
 //////// 0L ////////
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct OracleUpgradeStateView {

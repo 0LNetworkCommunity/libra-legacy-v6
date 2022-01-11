@@ -5655,6 +5655,7 @@ dependencies = [
  "crossterm",
  "dialoguer",
  "diem-config",
+ "diem-crypto",
  "diem-genesis-tool",
  "diem-global-constants",
  "diem-json-rpc-client",

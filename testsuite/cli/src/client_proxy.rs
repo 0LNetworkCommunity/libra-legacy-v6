@@ -634,12 +634,17 @@ impl ClientProxy {
         let sender = self.accounts.get(sender_ref_id).unwrap();
         let sequence_number = sender.sequence_number;
 
+        let block = match val_configs.block_zero {
+            Some(b) => b,
+            None => bail!("no block zero found in account.json"),
+        };
+        // if val_configs.block_zero.is_none() { bail!("no block zero found in account.json") };
         let program = transaction_builder::encode_create_acc_val_script_function(
-            val_configs.block_zero.preimage.clone(),
-            val_configs.block_zero.proof.clone(),
-            val_configs.block_zero.difficulty(),
-            val_configs.block_zero.security(),
-            val_configs.ow_human_name.as_bytes().to_vec(),
+            block.preimage.clone(),
+            block.proof.clone(),
+            block.difficulty(),
+            block.security(),
+            val_configs.ow_human_name.to_string().as_bytes().to_vec(),
             val_configs.op_address.parse().expect("could not parse address in op_address"),
             val_configs.op_auth_key_prefix,
             val_configs.op_consensus_pubkey,
