@@ -18,17 +18,13 @@ use diem_types::waypoint::Waypoint;
 use diem_wallet::WalletLibrary;
 use fs_extra::file::{copy, CopyOptions};
 use ol_keys::{scheme::KeyScheme, wallet};
-use ol_types::fixtures;
+use ol_types::{config::fix_missing_fields, fixtures};
 use std::process::exit;
 use std::{fs, path::PathBuf};
 use url::Url;
 /// `init` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct InitCmd {
-    /// home path for app config
-    #[options(help = "home path for app config")]
-    path: Option<PathBuf>,
-
     /// An upstream peer to use in 0L.toml
     #[options(help = "An upstream peer to use in 0L.toml")]
     rpc_peer: Option<Url>,
@@ -36,6 +32,10 @@ pub struct InitCmd {
     /// Create the 0L.toml file for 0L apps
     #[options(help = "Create the 0L.toml file for 0L apps")]
     app: bool,
+
+    /// home path for app config
+    #[options(help = "home path for app config")]
+    app_cfg_path: Option<PathBuf>,
 
     /// Create validator yaml file configuration
     #[options(help = "Create validator.node.yaml file configuration")]
@@ -81,6 +81,15 @@ pub struct InitCmd {
 impl Runnable for InitCmd {
     /// Print version message
     fn run(&self) {
+
+        if self.app_cfg_path.is_some() && self.fix {
+            match fix_missing_fields(self.app_cfg_path.as_ref().unwrap().to_owned()) {
+                Ok(_) => println!("0L.toml has up-to-date schema"),
+                Err(e) => println!("could not update 0L.toml schema, exiting. Message: {:?}", e),
+            };
+            return;
+        }
+        
         // start with a default value, or read from file if already initialized
         let mut app_cfg = app_config().to_owned();
         let entry_args = entrypoint::get_args();
@@ -244,8 +253,11 @@ impl Runnable for InitCmd {
                 &self.source_path,
             )
             .unwrap_or_else(|e| {
-              println!("could not initialize host with swarm configs, exiting. Message: {:?}", &e);
-              exit(1);
+                println!(
+                    "could not initialize host with swarm configs, exiting. Message: {:?}",
+                    &e
+                );
+                exit(1);
             });
             return;
         }
@@ -262,23 +274,26 @@ impl Runnable for InitCmd {
                 .interact()
             {
                 Ok(t) => {
-                  if t {
-                      initialize_app_cfg(
-                          authkey,
-                          account,
-                          &self.rpc_peer,
-                          &self.path,
-                          &None, // TODO: probably need an epoch option here.
-                          &self.waypoint,
-                          &self.source_path,
-                      )
-                      .unwrap_or_else(|e| {
-                        println!("could not initialize app configs 0L.toml, exiting. Message: {:?}", &e);
-                        exit(1);
-                      });
-                  }
-                },
-                Err(_) => {},
+                    if t {
+                        initialize_app_cfg(
+                            authkey,
+                            account,
+                            &self.rpc_peer,
+                            &self.app_cfg_path,
+                            &None, // TODO: probably need an epoch option here.
+                            &self.waypoint,
+                            &self.source_path,
+                        )
+                        .unwrap_or_else(|e| {
+                            println!(
+                                "could not initialize app configs 0L.toml, exiting. Message: {:?}",
+                                &e
+                            );
+                            exit(1);
+                        });
+                    }
+                }
+                Err(_) => {}
             };
             return;
         };
@@ -313,8 +328,8 @@ pub fn initialize_app_cfg(
         None,
     )
     .unwrap_or_else(|e| {
-      println!("could not create app configs, exiting. Message: {:?}", &e);
-      exit(1);
+        println!("could not create app configs, exiting. Message: {:?}", &e);
+        exit(1);
     });
     Ok(cfg)
 }
@@ -339,10 +354,12 @@ pub fn initialize_host_swarm(
     if !&blocks_dir.exists() {
         // first run, create the directory if there is none, or if the user changed the configs.
         // note: user may have blocks but they are in a different directory than what miner.toml says.
-        fs::create_dir_all(&blocks_dir)
-        .unwrap_or_else(|e| {
-          println!("could not create directory for vdf proofs, exiting. Message: {:?}", &e);
-          exit(1);
+        fs::create_dir_all(&blocks_dir).unwrap_or_else(|e| {
+            println!(
+                "could not create directory for vdf proofs, exiting. Message: {:?}",
+                &e
+            );
+            exit(1);
         })
     };
 

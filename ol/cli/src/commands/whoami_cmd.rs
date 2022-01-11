@@ -39,7 +39,7 @@ impl Runnable for WhoamiCmd {
             None,
             KeyScheme::new(&wallet),
             app_cfg.profile.ip,
-            app_cfg.profile.vfn_ip,
+            app_cfg.profile.vfn_ip.unwrap_or("0.0.0.0".parse().unwrap()),
             None,
             None,
         );

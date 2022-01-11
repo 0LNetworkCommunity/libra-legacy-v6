@@ -61,14 +61,22 @@ pub struct AppCfg {
 }
 
 /// Get a AppCfg object from toml file
-pub fn parse_toml(path: String) -> Result<AppCfg, Error> {
-    let mut config_toml = String::new();
+pub fn parse_toml(path: PathBuf) -> Result<AppCfg, Error> {
+    // let mut config_toml = path.to_str().unwrap().to_owned()).expect("could not parse app config from file");
+    let mut toml_buf = "".to_string();
     let mut file = File::open(&path)?;
-    file.read_to_string(&mut config_toml)?;
+    file.read_to_string(&mut toml_buf)?;
 
 
-    let cfg: AppCfg = toml::from_str(&config_toml).unwrap();
+    let cfg: AppCfg = toml::from_str(&toml_buf)?;
     Ok(cfg)
+}
+
+/// Get a AppCfg object from toml file
+pub fn fix_missing_fields(path: PathBuf) -> Result<(), Error> {
+    let cfg: AppCfg = parse_toml(path)?;
+    cfg.save_file();
+    Ok(())
 }
 
 impl AppCfg {
@@ -147,8 +155,8 @@ impl AppCfg {
         };
 
         default_config.profile.vfn_ip = match ip {
-            Some(i) => i,
-            None => what_vfn_ip().unwrap(),
+            Some(i) => Some(i),
+            None => what_vfn_ip().ok(),
         };
 
         default_config.workspace.node_home =
@@ -355,7 +363,7 @@ impl Default for Workspace {
 
 /// Information about the Chain to mined for
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
+// #[serde(deny_unknown_fields)]
 pub struct ChainInfo {
     /// Chain that this work is being committed to
     pub chain_id: String,
@@ -380,7 +388,7 @@ impl Default for ChainInfo {
 }
 /// Miner profile to commit this work chain to a particular identity
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
+// #[serde(deny_unknown_fields)]
 pub struct Profile {
     /// The 0L account for the Miner and prospective validator. This is derived from auth_key
     pub account: AccountAddress,
@@ -395,7 +403,7 @@ pub struct Profile {
     pub ip: Ipv4Addr,
 
     /// ip address of the validator fullnodee
-    pub vfn_ip: Ipv4Addr,
+    pub vfn_ip: Option<Ipv4Addr>,
 
     /// Node URL and and port to submit transactions. Defaults to localhost:8080
     pub default_node: Option<Url>,
@@ -417,7 +425,7 @@ impl Default for Profile {
             .unwrap(),
             statement: "Protests rage across the nation".to_owned(),
             ip: "0.0.0.0".parse().unwrap(),
-            vfn_ip: "0.0.0.0".parse().unwrap(),
+            vfn_ip: "0.0.0.0".parse().ok(),
             default_node: Some("http://localhost:8080".parse().expect("parse url")),
             upstream_nodes: Some(vec!["http://localhost:8080".parse().expect("parse url")]),
             tower_link: None,
@@ -477,7 +485,7 @@ impl TxConfigs {
 
 /// Transaction preferences for a given type of transaction
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
+// #[serde(deny_unknown_fields)]
 pub struct TxCost {
     /// Max gas units to pay per transaction
     pub max_gas_unit_for_tx: u64, // gas UNITS of computation
