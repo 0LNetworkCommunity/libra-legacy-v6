@@ -46,4 +46,7 @@ After displaying the new configs, you will be asked to confirm the changes.
 
 ```
 txs val-config --val_ip <IP> --vfn-ip <OTHER/IP>
+
+# check if those changes persisted and if they are able to be read.
+ol query --val-config
 ```
