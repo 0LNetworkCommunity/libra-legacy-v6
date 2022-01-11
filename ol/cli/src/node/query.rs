@@ -225,7 +225,7 @@ impl Node {
                           )?;
 
                         format!("\n
-                            pubkey: {:?}\n
+                            consensus pubkey: {:?}\n
                             validator network addr: {:?}\n
                             fullnode network addr: {:?}\n
                             ", 
