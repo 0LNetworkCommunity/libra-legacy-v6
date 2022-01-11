@@ -2,6 +2,11 @@
 
 Changing the IP address of your node so that validators and fullnodes can discover your node.
 
+YOUR NODE WILL NOT BE REACHABLE FOR CONSENSUS IF:
+
+- The IDs in your yaml file diverge from what your mnemonic produces.
+- The IDs in your yaml file diverge from the on-chain configs.
+
 ## Check your current on-chain configs
 
 Use the query cli to print out your current on-chain configs.

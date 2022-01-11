@@ -3,13 +3,12 @@
 #![allow(clippy::never_loop)]
 
 use abscissa_core::{Command, Options, Runnable};
+use dialoguer::Confirm;
 use diem_json_rpc_types::views::TransactionView;
 use diem_transaction_builder::stdlib as transaction_builder;
-use diem_types::account_address::AccountAddress;
-use ol::{node::{client, node::Node}, config::AppCfg};
 use ol_keys::{wallet, scheme::KeyScheme};
 use ol_types::{config::TxType, account::ValConfigs};
-use crate::{submit_tx::{TxError, TxParams, maybe_submit, tx_params_wrapper}, prelude::app_config};
+use crate::submit_tx::{TxError, TxParams, maybe_submit, tx_params_wrapper};
 use std::{process::exit, net::Ipv4Addr};
 
 /// `IpAddrUpdate` subcommand
@@ -18,13 +17,17 @@ pub struct ValConfigCmd {
     #[options(short = "v", help = "the validator's new ip address")]
     val_ip: Option<Ipv4Addr>,
     #[options(short = "f", help = "the fullnode of the validator's ip address")]
-    fn_ip: Option<Ipv4Addr>,
+    vfn_ip: Option<Ipv4Addr>,
 }
 
 impl Runnable for ValConfigCmd {
     fn run(&self) {
-        let cfg = app_config().clone();
+        println!("You will be asked to confirm the tx after viewing the new configurations.");
 
+        if self.val_ip.is_none() || self.vfn_ip.is_none() {
+          println!("You must provide IP addresses for --val-ip and --vfn-ip, exiting.");
+          exit(1);
+        }
         // let _entry_args = entrypoint::get_args();
         let (_, _, w) = wallet::get_account_from_prompt();
 
@@ -32,10 +35,29 @@ impl Runnable for ValConfigCmd {
           None, 
           KeyScheme::new(&w), 
           self.val_ip.expect("neeed a validator ip address"), 
-          self.fn_ip.expect("neeed a fn ip address"), 
+          self.vfn_ip.expect("neeed a fn ip address"), 
           None, 
           None
         );
+
+      let txt = format!("New consensus pubkey: {} \n 
+        New validator network addresses: {}, \n
+        New vfn fullnode network addresses: {}", 
+        hex::encode(&val_cfg.op_consensus_pubkey),
+        val_cfg.op_val_net_addr_for_vals.to_string(),
+        val_cfg.op_vfn_net_addr_for_public.to_string(),
+      );
+
+      println!("{}", &txt);
+
+      match Confirm::new().with_prompt("\nDo you want to submit a TX to update your on-chain configs? Warning: malformed keys and addresses may make your node drop out of consensus.").interact().unwrap() {
+      true => {},
+      _ =>  {
+        print!("Validator configuration aborted.");
+        exit(1);
+      }
+    } 
+
 
         let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
 
@@ -62,21 +84,6 @@ pub fn update_onchain_configs(
 
 ) -> Result<TransactionView, TxError> {
 
-    format!("New consensus pubkey: {} \n 
-      New validator network addresses: {}, \n
-      New vfn fullnode network addresses: {}", 
-      val_cfg.op_consensus_pubkey,
-      val_cfg.op_validator_network_addresses,
-      val_cfg.op_fullnode_network_addresses,
-    );
-
-    match Confirm::new().with_prompt("Do you want to submit a TX to update your on-chain configs? Warning: malformed keys and addresses may make your node drop out of consensus.").interact().unwrap() {
-    true => {},
-    _ =>  {
-      print!("Validator configuration aborted.");
-      exit(1);
-    }
-  } 
 
   let script = transaction_builder::encode_register_validator_config_script_function(
       val_cfg.ow_human_name,
