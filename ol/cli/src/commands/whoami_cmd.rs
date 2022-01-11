@@ -135,7 +135,7 @@ fn display_id_in_file(yaml_path: &PathBuf) -> Result<(), Error> {
                 let priv_key = &n.identity_key();
                 let pub_key = priv_key.public_key();
                 let addr = ValConfigs::make_unencrypted_addr(
-                    &ip,
+                    &vfn_ip,
                     pub_key,
                     NetworkId::Validator,
                 );
