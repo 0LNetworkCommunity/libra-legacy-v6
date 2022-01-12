@@ -18,17 +18,13 @@ use diem_types::waypoint::Waypoint;
 use diem_wallet::WalletLibrary;
 use fs_extra::file::{copy, CopyOptions};
 use ol_keys::{scheme::KeyScheme, wallet};
-use ol_types::fixtures;
+use ol_types::{config::fix_missing_fields, fixtures};
 use std::process::exit;
 use std::{fs, path::PathBuf};
 use url::Url;
 /// `init` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct InitCmd {
-    /// home path for app config
-    #[options(help = "home path for app config")]
-    path: Option<PathBuf>,
-
     /// An upstream peer to use in 0L.toml
     #[options(help = "An upstream peer to use in 0L.toml")]
     rpc_peer: Option<Url>,
@@ -36,6 +32,10 @@ pub struct InitCmd {
     /// Create the 0L.toml file for 0L apps
     #[options(help = "Create the 0L.toml file for 0L apps")]
     app: bool,
+
+    /// home path for app config
+    #[options(help = "home path for app config")]
+    app_cfg_path: Option<PathBuf>,
 
     /// Create validator yaml file configuration
     #[options(help = "Create validator.node.yaml file configuration")]
@@ -81,10 +81,23 @@ pub struct InitCmd {
 impl Runnable for InitCmd {
     /// Print version message
     fn run(&self) {
+
+        // TODO: This has no effect. This command will not load if the 0L.toml is malformed.
+        // this is an Abscissa issue.
+        // even with serde deny_unknown disabled the app will crash.
+        if self.app_cfg_path.is_some() && self.fix {
+            match fix_missing_fields(self.app_cfg_path.as_ref().unwrap().to_owned()) {
+                Ok(_) => println!("0L.toml has up-to-date schema"),
+                Err(e) => println!("could not update 0L.toml schema, exiting. Message: {:?}", e),
+            };
+            return;
+        }
+
         // start with a default value, or read from file if already initialized
         let mut app_cfg = app_config().to_owned();
         let entry_args = entrypoint::get_args();
         let is_swarm = *&entry_args.swarm_path.is_some();
+
 
         if self.update_waypoint {
             // TODO: will need to update the key_store.json file with waypoint info.
@@ -108,6 +121,9 @@ impl Runnable for InitCmd {
 
             match node.waypoint() {
                 Ok(w) => {
+                    key::set_waypoint(&app_cfg.workspace.node_home, &app_cfg.profile.account.to_string(), w);
+                    key::set_genesis_waypoint(&app_cfg.workspace.node_home, &app_cfg.profile.account.to_string(), w);
+
                     app_cfg.chain_info.base_waypoint = Some(w);
                     app_cfg.save_file();
                     return;
@@ -173,7 +189,7 @@ impl Runnable for InitCmd {
         if self.vfn {
             println!("Creating vfn.node.yaml file.");
 
-            let namespace = app_cfg.profile.account.to_hex() + "-oper";
+            let namespace = app_cfg.format_oper_namespace();
             let output_dir = app_cfg.workspace.node_home;
             let val_ip_address = app_cfg.profile.ip;
             let gen_wp = app_cfg.chain_info.base_waypoint;
@@ -199,7 +215,7 @@ impl Runnable for InitCmd {
 
             // TODO: check we can open key-store file
 
-            let namespace = app_cfg.profile.account.to_hex() + "-oper";
+            let namespace = app_cfg.format_oper_namespace();
             let output_dir = app_cfg.workspace.node_home;
 
             match ol_node_files::make_val_file(output_dir, None, &namespace) {
@@ -244,8 +260,11 @@ impl Runnable for InitCmd {
                 &self.source_path,
             )
             .unwrap_or_else(|e| {
-              println!("could not initialize host with swarm configs, exiting. Message: {:?}", &e);
-              exit(1);
+                println!(
+                    "could not initialize host with swarm configs, exiting. Message: {:?}",
+                    &e
+                );
+                exit(1);
             });
             return;
         }
@@ -262,23 +281,26 @@ impl Runnable for InitCmd {
                 .interact()
             {
                 Ok(t) => {
-                  if t {
-                      initialize_app_cfg(
-                          authkey,
-                          account,
-                          &self.rpc_peer,
-                          &self.path,
-                          &None, // TODO: probably need an epoch option here.
-                          &self.waypoint,
-                          &self.source_path,
-                      )
-                      .unwrap_or_else(|e| {
-                        println!("could not initialize app configs 0L.toml, exiting. Message: {:?}", &e);
-                        exit(1);
-                      });
-                  }
-                },
-                Err(_) => {},
+                    if t {
+                        initialize_app_cfg(
+                            authkey,
+                            account,
+                            &self.rpc_peer,
+                            &self.app_cfg_path,
+                            &None, // TODO: probably need an epoch option here.
+                            &self.waypoint,
+                            &self.source_path,
+                        )
+                        .unwrap_or_else(|e| {
+                            println!(
+                                "could not initialize app configs 0L.toml, exiting. Message: {:?}",
+                                &e
+                            );
+                            exit(1);
+                        });
+                    }
+                }
+                Err(_) => {}
             };
             return;
         };
@@ -313,8 +335,8 @@ pub fn initialize_app_cfg(
         None,
     )
     .unwrap_or_else(|e| {
-      println!("could not create app configs, exiting. Message: {:?}", &e);
-      exit(1);
+        println!("could not create app configs, exiting. Message: {:?}", &e);
+        exit(1);
     });
     Ok(cfg)
 }
@@ -339,10 +361,12 @@ pub fn initialize_host_swarm(
     if !&blocks_dir.exists() {
         // first run, create the directory if there is none, or if the user changed the configs.
         // note: user may have blocks but they are in a different directory than what miner.toml says.
-        fs::create_dir_all(&blocks_dir)
-        .unwrap_or_else(|e| {
-          println!("could not create directory for vdf proofs, exiting. Message: {:?}", &e);
-          exit(1);
+        fs::create_dir_all(&blocks_dir).unwrap_or_else(|e| {
+            println!(
+                "could not create directory for vdf proofs, exiting. Message: {:?}",
+                &e
+            );
+            exit(1);
         })
     };
 
@@ -358,20 +382,20 @@ pub fn initialize_host_swarm(
 /// Initializes the necessary validator config files: genesis.blob, key_store.json
 pub fn initialize_val_key_store(
     wallet: &WalletLibrary,
-    miner_config: &AppCfg,
+    app_cfg: &AppCfg,
     way_opt: Option<Waypoint>,
     is_genesis: bool,
 ) -> Result<(), Error> {
-    let home_dir = &miner_config.workspace.node_home;
+    let home_dir = &app_cfg.workspace.node_home;
     let keys = KeyScheme::new(wallet);
-    let namespace = miner_config.profile.account.to_hex(); // same format as serializer for 0L/toml
+    let namespace = app_cfg.format_oper_namespace();
+    let way = way_opt.unwrap_or("0:c12c01d2ac6deb028567c9a9c816ca3fe53fab9c461e4eab2f89125f975b63c3".parse().unwrap());
+
     init::key_store_init(home_dir, &namespace, keys, is_genesis);
     key::set_operator_key(home_dir, &namespace);
-    key::set_owner_key(home_dir, &namespace);
-    if let Some(way) = way_opt {
-        key::set_genesis_waypoint(home_dir, &namespace, way);
-        key::set_waypoint(home_dir, &namespace, way);
-    }
+    key::set_owner_key(home_dir, &namespace, app_cfg.profile.account);
+    key::set_genesis_waypoint(home_dir, &namespace, way.clone());
+    key::set_waypoint(home_dir, &namespace, way);
 
     Ok(())
 }

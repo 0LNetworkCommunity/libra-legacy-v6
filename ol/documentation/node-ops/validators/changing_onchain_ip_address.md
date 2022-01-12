@@ -32,6 +32,12 @@ Your node.yaml could be malformed. You'll want to check that the IDs used in the
 ```
 ol whoami --check-yaml <path/to/node.yaml>
 ```
+If YOUR node.yaml file does not match what your `ol whoami` shows you may need to redo the node configs.
+
+```
+ol init --val
+ol inti --vfn
+```
 
 ## Update the on-chain configs
 
@@ -39,5 +45,9 @@ You will need to have two IP addresses 1) The validator IP, and 2) the VFN valid
 After displaying the new configs, you will be asked to confirm the changes.
 
 ```
-txs val-config --val_ip <IP> --vfn-ip <OTHER/IP>
+# send tx. Note the `-o` which means you are sending this from the "operator" account.
+txs -o val-config --val_ip <IP> --vfn-ip <OTHER/IP>
+
+# check if those changes persisted and if they are able to be read.
+ol query --val-config
 ```

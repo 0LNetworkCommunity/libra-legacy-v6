@@ -119,7 +119,7 @@ impl StorageHelper {
         &self, namespace: String, keys: KeyScheme, is_genesis: bool
     ) {
         let mut storage_owner = self.storage(namespace.clone());
-        let mut storage_oper = self.storage(namespace.clone() + "-oper");
+        let mut storage_oper = self.storage(namespace.clone());
 
         if is_genesis {
             // Data needed for testnet, swarm, and genesis ceremony.
@@ -138,7 +138,6 @@ impl StorageHelper {
                 .import_private_key(OWNER_KEY, keys.child_0_owner.get_private_key())
                 .unwrap();
         }
-        // storage_oper.set(OWNER_ACCOUNT, peer_id).unwrap();
 
         storage_oper
             .import_private_key(OPERATOR_KEY, keys.child_1_operator.get_private_key())

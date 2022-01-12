@@ -300,7 +300,7 @@ pub fn write_account_json(
         Some(block),
         keys,
         cfg.profile.ip,
-        cfg.profile.vfn_ip,
+        cfg.profile.vfn_ip.unwrap_or("0.0.0.0".parse().unwrap()),
         autopay_batch,
         autopay_signed,
     )

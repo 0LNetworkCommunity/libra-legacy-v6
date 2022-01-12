@@ -9,7 +9,7 @@ use anyhow::{anyhow, Error};
 use diem_config::{config::NodeConfig, network_id::NetworkId};
 use diem_crypto::x25519;
 use ol_keys::{scheme::KeyScheme, wallet};
-use ol_types::account::ValConfigs;
+use ol_types::{account::ValConfigs};
 
 use crate::prelude::app_config;
 
@@ -39,7 +39,7 @@ impl Runnable for WhoamiCmd {
             None,
             KeyScheme::new(&wallet),
             app_cfg.profile.ip,
-            app_cfg.profile.vfn_ip,
+            app_cfg.profile.vfn_ip.unwrap_or("0.0.0.0".parse().unwrap()),
             None,
             None,
         );
@@ -50,22 +50,21 @@ impl Runnable for WhoamiCmd {
 
         let scheme = KeyScheme::new(&wallet);
         println!("----- pub ed25519 keys -----\n");
-        println!("key 0: {}\n", scheme.child_0_owner.get_public());
-        println!("key 1: {}\n", scheme.child_1_operator.get_public());
-        println!("key 2: {}\n", scheme.child_2_val_network.get_public());
-        println!("key 3: {}\n", scheme.child_3_fullnode_network.get_public());
-        println!("key 4: {}\n", scheme.child_4_consensus.get_public());
-        println!("key 5: {}\n", scheme.child_5_executor.get_public());
+        println!("key 0 Owner: {}\n", scheme.child_0_owner.get_public());
+        println!("key 1 Operator: {}\n", scheme.child_1_operator.get_public());
+        println!("key 2 Val Network: {}\n", scheme.child_2_val_network.get_public());
+        println!("key 3 Pub FN Network: {}\n", scheme.child_3_fullnode_network.get_public());
+        println!("key 4 Consensus: {}\n", scheme.child_4_consensus.get_public());
+        println!("key 5 Executor: {}\n", scheme.child_5_executor.get_public());
 
         println!("----- pub x25519 network keys -----\n");
-        // println!("0 key: {}\n", hex::encode());
 
         let val_net_priv = scheme.child_2_val_network.get_private_key().to_bytes();
 
         let key = x25519::PrivateKey::from_ed25519_private_bytes(&val_net_priv)
             .expect("Unable to convert key");
         println!(
-            "key 3 - validator network key: {:?}\n",
+            "validator network key: {:?}\n",
             key.public_key().to_string()
         );
 
@@ -74,7 +73,7 @@ impl Runnable for WhoamiCmd {
         let key = x25519::PrivateKey::from_ed25519_private_bytes(&fn_net_priv)
             .expect("Unable to convert key");
         println!(
-            "key 3 - fullnode network key: {:?}\n",
+            "fullnode network key: {:?}\n",
             &key.public_key().to_string()
         );
 
@@ -99,7 +98,13 @@ fn display_id_in_file(yaml_path: &PathBuf) -> Result<(), Error> {
             &e
         )
     })?;
-    let ip = get_my_ip()?;
+
+    println!("We will use this machines external IP for display. Note that if you move this file the IP will display differently on another machine. ");
+    let ip = get_my_ip().unwrap_or_else(|_| {
+      println!("could not get external IP, using 0.0.0.0 for display");
+      "0.0.0.0".parse().unwrap()
+    });
+
     println!("\n ACTUAL NETWORK IDs IN {:?}\n", yaml_path.as_os_str());
     println!("----- noise protocol addresses -----\n");
 
@@ -147,7 +152,7 @@ fn display_id_in_file(yaml_path: &PathBuf) -> Result<(), Error> {
                 let addr = ValConfigs::make_unencrypted_addr(
                     &ip,
                     pub_key,
-                    NetworkId::Validator,
+                    NetworkId::Private("vfn".to_string()),
                 );
                 println!("{:?}:\n", &peer_id);
                 println!("{:?}\n", &addr);
