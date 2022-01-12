@@ -2,7 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use super::files_cmd;
+use super::genesis_files_cmd;
 use crate::entrypoint;
 use crate::prelude::app_config;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
@@ -102,7 +102,12 @@ impl Runnable for ValWizardCmd {
             &self.source_path,
             None,
             None,
-        );
+        )
+        .unwrap_or_else(|e| {
+          println!("could not create app configs, exiting. Message: {:?}", &e);
+          exit(1);
+        });
+
         let home_path = &app_config.workspace.node_home;
         let base_waypoint = app_config.chain_info.base_waypoint.clone();
 
@@ -134,7 +139,11 @@ impl Runnable for ValWizardCmd {
 
         // Initialize Validator Keys
         // this also sets a genesis waypoint if one was provide, e.g. from an upstream peer.
-        init_cmd::initialize_validator(&wallet, &app_config, base_waypoint, *&self.genesis_ceremony).expect("could not initialize validator key_store.json");
+        init_cmd::initialize_val_key_store(&wallet, &app_config, base_waypoint, *&self.genesis_ceremony)
+        .unwrap_or_else(|e| {
+          println!("could not initialize validator key_store.json, exiting. Message: {:?}", &e);
+          exit(1);
+        });
         status_ok!("\nKey file written", "\n...........................\n");
 
 
@@ -209,7 +218,10 @@ pub fn get_autopay_batch(
         Some(starting_epoch.clone()),
         None,
     )
-    .unwrap();
+    .unwrap_or_else(|e| {
+      println!("could not parse autopay instructions, exiting. Message: {:?}", &e);
+      exit(1);
+    });
 
     if is_genesis { return (Some(instr_vec), None ) }
 
@@ -224,7 +236,11 @@ pub fn get_autopay_batch(
         None,
         is_swarm,
     )
-    .unwrap();
+    .unwrap_or_else(|e| {
+      println!("could not get tx params from 0L.toml, exiting. Message: {:?}", &e);
+      exit(1);
+    });
+
     let tx_expiration_sec = if *IS_TEST {
         // creating fixtures here, so give it near infinite expiry
         100 * 360 * 24 * 60 * 60
@@ -241,13 +257,29 @@ pub fn get_autopay_batch(
 pub fn save_template(url: &Url, home_path: &PathBuf) -> PathBuf {
     let g_res = reqwest::blocking::get(&url.to_string());
     let g_path = home_path.join("template.json");
-    let mut g_file = File::create(&g_path).expect("couldn't create file");
+    let mut g_file = File::create(&g_path)
+    .unwrap_or_else(|e| {
+      println!("couldn't create file, exiting. Message: {:?}", &e);
+      exit(1);
+    });
+
     let g_content = g_res
-        .unwrap()
+        .unwrap_or_else(|e| {
+          println!("could not parse http request to peer, exiting. Message: {:?}", &e);
+          exit(1);
+        })
         .bytes()
-        .expect("cannot connect to upstream node")
-        .to_vec(); //.text().unwrap();
-    g_file.write_all(g_content.as_slice()).unwrap();
+        .unwrap_or_else(|e| {
+          println!("cannot connect to upstream node, exiting. Message: {:?}", &e);
+          exit(1);
+        })
+        .to_vec();
+    g_file.write_all(g_content.as_slice())
+    .unwrap_or_else(|e| {
+      println!("could not write files, exiting. Message: {:?}", &e);
+      exit(1);
+    });
+
     g_path
 }
 
@@ -265,16 +297,17 @@ pub fn write_account_json(
     let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned());
 
     ValConfigs::new(
-        block,
+        Some(block),
         keys,
-        cfg.profile.ip.to_string(),
+        cfg.profile.ip,
+        cfg.profile.vfn_ip.unwrap_or("0.0.0.0".parse().unwrap()),
         autopay_batch,
         autopay_signed,
     )
     .create_manifest(json_path);
 }
 
-fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, base_waypoint: Option<Waypoint>, app_config: &AppCfg) {
+fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, _base_waypoint: Option<Waypoint>, cfg: &AppCfg) {
   // The default behavior is to fetch the genesis from a github repo.
   // if this is not possible then the user should have set a prebuilt genesis path.
 
@@ -284,8 +317,16 @@ fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, base
               fixtures::get_test_genesis_blob().as_os_str(),
               home_path.join("genesis.blob"),
           )
-          .unwrap();
-
+          .unwrap_or_else(|e| {
+            println!("could not copy genesis.blob file, exiting. Message: {:?}", &e);
+            exit(1);
+          });
+          
+          // make file fixture
+          fs::write(home_path.join("genesis_waypoint.txt"), "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2")
+          
+          .expect("could write genesis_waypoint.txt");
+          
           status_ok!(
               "\nUsing test genesis.blob",
               "\n...........................\n"
@@ -297,7 +338,7 @@ fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, base
       // Some(p.to_owned())
   } else {
   // default behavior: fetching the genesis files from genesis-archive, unless overrideen
-  match files_cmd::fetch_genesis_files_from_repo(home_path.clone(), &cmd.github_org, &cmd.repo) {
+  match genesis_files_cmd::fetch_genesis_files_from_repo(home_path.clone(), &cmd.github_org, &cmd.repo) {
     Ok(path) => {
       status_ok!(
           "\nDownloaded genesis files",
@@ -315,13 +356,14 @@ fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, base
   };
 
 
-  let home_dir = app_config.workspace.node_home.to_owned();
+  let home_dir = cfg.workspace.node_home.to_owned();
   // 0L convention is for the namespace of the operator to be appended by '-oper'
+  let val_ip_address = cfg.profile.ip;
   // this needs to be the same namespace as in initialize_validator
-  let namespace = app_config.profile.account.to_hex() + "-oper";
+  let namespace = cfg.profile.account.to_hex() + "-oper";
 
   // TODO: use node_config to get the seed peers and then write upstream_node vec in 0L.toml from that.
-  ol_node_files::write_node_config_files(
+  match ol_node_files::onboard_helper_all_files(
       home_dir.clone(),
       cmd.chain_id.unwrap_or(1),
       cmd.github_org.clone(),
@@ -329,10 +371,16 @@ fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, base
       &namespace,
       &genesis_blob_path,
       &false,
-      base_waypoint,
+      None,
       &None,
-  )
-  .unwrap();
+      Some(val_ip_address),
+  ) {
+    Ok(_) => {},
+    Err(e) => {
+      println!("Cannot create validator, exiting. Messsage: {:?}", &e);
+      exit(1);
+    },
+};
 
   status_ok!("\nNode config written", "\n...........................\n");
 }

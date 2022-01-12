@@ -383,7 +383,7 @@ impl HealthChecker {
                         // ConnectivityManager or the remote peer to re-establish the connection.
                         *failures += 1;
                         if *failures > self.ping_failures_tolerated {
-                            info!(
+                            error!(
                                 NetworkSchema::new(&self.network_context).remote_peer(&peer_id),
                                 "{} Disconnecting from peer: {}",
                                 self.network_context,

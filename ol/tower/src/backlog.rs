@@ -10,6 +10,7 @@ use crate::commit_proof::commit_proof_tx;
 use std::io::BufReader;
 use crate::proof::{parse_block_height, FILENAME};
 use anyhow::{bail, Result, Error};
+use diem_logger::prelude::*;
 
 /// Submit a backlog of blocks that may have been mined while network is offline. 
 /// Likely not more than 1. 
@@ -21,32 +22,32 @@ pub fn process_backlog(
     //let remote_height = remote_state.verified_tower_height;
     let remote_height = get_remote_tower_height(tx_params).unwrap();
 
-    println!("Remote tower height: {}", remote_height);
+    info!("Remote tower height: {}", remote_height);
     // Getting local state height
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
     let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
     if let Some(current_block_number) = current_block_number {
-        println!("Local tower height: {:?}", current_block_number);
-        if i128::from(current_block_number) > remote_height { 
-            println!("Backlog: resubmitting missing proofs.");
+        info!("Local tower height: {:?}", current_block_number);
+        if i128::from(current_block_number) > remote_height {
+            info!("Backlog: resubmitting missing proofs.");
 
             let mut i = remote_height + 1;
             while i <= current_block_number.into() {
                 let path = PathBuf::from(
                     format!("{}/{}_{}.json", blocks_dir.display(), FILENAME, i)
                 );
-                println!("submitting proof {}", i);
+                info!("submitting proof {}", i);
                 let file = File::open(&path)?;
                 let reader = BufReader::new(file);
                 let block: VDFProof = serde_json::from_reader(reader)?;
                 let view = commit_proof_tx(
                     &tx_params, block, is_operator
                 )?;
-                match eval_tx_status(&view) {
+                match eval_tx_status(view) {
                     Ok(_) => {},
                     Err(e) => {
-                      println!("WARN: could not fetch TX status, continuing to next block in backlog after 30 seconds. Message: {:?} ", e);
+                      warn!("WARN: could not fetch TX status, continuing to next block in backlog after 30 seconds. Message: {:?} ", e);
                       thread::sleep(time::Duration::from_millis(30_000));
                     },
                 };
@@ -60,7 +61,7 @@ pub fn process_backlog(
 /// returns remote tower height
 pub fn get_remote_tower_height(tx_params: &TxParams) -> Result<i128, Error> {
     let client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
-    println!("Fetching remote tower height: {}, {}", 
+    info!("Fetching remote tower height: {}, {}",
         tx_params.url.clone(), tx_params.owner_address.clone()
     );
     let remote_state = client.get_miner_state(&tx_params.owner_address);
@@ -70,8 +71,9 @@ pub fn get_remote_tower_height(tx_params: &TxParams) -> Result<i128, Error> {
                 Ok(remote_state.verified_tower_height.into())
             },
             None => {
-                println!("Info: Received response but no remote state found. Exiting.");
-                bail!("Info: Received response but no remote state found. Exiting.")
+                static MSG: &str = "Info: Received response but no remote state found. Exiting.";
+                info!("{}", MSG);
+                bail!(MSG)
             }
         } },
         Err( _ ) => {

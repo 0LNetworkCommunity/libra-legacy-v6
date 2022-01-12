@@ -31,9 +31,10 @@ pub fn write_manifest(
     let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned());
 
     ValConfigs::new(
-        block,
+        Some(block),
         keys,  
-        cfg.profile.ip.to_string(),
+        cfg.profile.ip,
+        cfg.profile.vfn_ip.unwrap_or("0.0.0.0".parse().unwrap()),
         autopay_batch,
         autopay_signed,
     ).create_manifest(miner_home);

@@ -15,6 +15,8 @@ pub mod demo_cmd;
 pub mod create_account_cmd;
 pub mod transfer_cmd;
 pub mod wallet_cmd;
+pub mod community_pay_cmd;
+pub mod val_config_cmd;
 
 mod relay_cmd;
 mod valset_cmd;
@@ -41,6 +43,9 @@ use self::{
     wallet_cmd::WalletCmd,
     authkey_cmd::AuthkeyCmd,
     transfer_cmd::TransferCmd,   
+    community_pay_cmd::CommunityPayCmd,
+    val_config_cmd::ValConfigCmd,
+
 };
 use std::path::PathBuf;
 
@@ -59,6 +64,10 @@ pub enum TxsCmd {
     #[options(help = "transfer funds between accounts")]
     Transfer(TransferCmd),    
 
+    /// Community payment proposal tx
+    #[options(help = "create a community wallet payment proposal")]
+    CommunityPay(CommunityPayCmd),
+    
     /// The `oracle-upgrade` subcommand
     #[options(help = "submit an oracle transaction to upgrade stdlib")]
     OracleUpgrade(OracleUpgradeCmd),    
@@ -100,6 +109,10 @@ pub enum TxsCmd {
     /// The `authkey` subcommand to rotate an auth key (change mnemonic that controls address)
     #[options(help = "rotate an account's authorization key")]
     Authkey(AuthkeyCmd),
+
+    /// The `val-config` subcommand updates validator configuration on chain.
+    #[options(help = "update the validator and operators on-chain configs (e.g. discovery)")]
+    ValConfig(ValConfigCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

@@ -1,4 +1,4 @@
-//! `CreateAccount` subcommand
+//! `transfer` subcommand
 
 #![allow(clippy::never_loop)]
 
@@ -13,7 +13,7 @@ use std::{path::PathBuf, process::exit};
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct TransferCmd {
-    #[options(short = "a", help = "the new user's long address (authentication key)")]
+    #[options(short = "a", help = "the new user's address")]
     destination_account: String,
     #[options(short = "c", help = "the amount of coins to send to new user")]
     coins: u64,
@@ -31,9 +31,9 @@ impl Runnable for TransferCmd {
         };
 
         match balance_transfer(destination, self.coins, entry_args.save_path) {
-            Ok(_) => println!("Success. Balance transfer success: {}", self.destination_account),
+            Ok(_) => println!("Success: Balance transfer posted: {}", self.destination_account),
             Err(e) => {
-              println!("ERROR: could not create account, message: {:?}", &e);
+              println!("ERROR: execute balance transfer message: {:?}", &e);
               exit(1);
             },
         }

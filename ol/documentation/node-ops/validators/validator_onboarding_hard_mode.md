@@ -1,17 +1,28 @@
 # Validator Setup
 ## Requirements 
-- A unix host machine, e.g Linux Ubuntu 20.4
-- A fixed IP address of the machine
-- Recommended specs: 250G harddrive, 4 cores
+- TWO unix hosts, one for Validator Node, and one for the Private Fullnode ("VFN").
+0L code targets Ubuntu 20.4
+- Recommended specs: 
+  - Validator: 250G harddrive, 8 core CPU, 16G RaM
+  - VFN: 100G storage, 2 core CPU, 8G RAM
+- Separate static IP addresses for the machines, or appropriate DNS mapping.
 
 
-You need to open ports 6179, 6180, 8080, 3030 on the host
+# Firewall
 
-- 6179, 6180 should be open to all, it's for consensus and uses noise encryption.
-- 3030 is for your web dashboard, so could just be your home ip if it's fixed.
-- 8080 is for json RPC, you may not need this unless you want to send tx from a client to that node.
+Validator:
+You need to open ports 6179, 6180, 3030
 
+- 6180 should be open on all interfacess `0.0.0.0/0`, it's for consensus and uses noise encryption.
+- 6179 is for the private validator fullnode network ("VFN"), the firewall should only allow the IP of the fullnode to access this port.
+- 3030 is for your `web-monitor` dashboard, so could just be your home IP if it's fixed.
 
+VFN:
+Note: this node does not serve transactions, and does not participate in consensus, it relays data out of the validator node, and transactions into the validator.
+
+You will need port 6178, and 6179 open 
+- 6179 is for the private validator fullnode network ("VFN"), it should only ollow traffic from the Validator node IP address above.
+- 6178 is for the the PUBLIC fullnode network. This is how the public nodes that will be serving JSON-RPC on the network will receive data and submit transactions to the network.
 ### High-level steps
 1. Install binaries.
 2. Generate a public mining/validator key and associated mneumonic.
@@ -27,79 +38,87 @@ You need to open ports 6179, 6180, 8080, 3030 on the host
 5. Restart your node in *validator* mode. You will join in the next epoch if you have been on boarded by an active validator.
 8. Run `ol explorer` to see the state of the network, you should see your validators public key in the list of validators. 
 
-## 1. Set up a host (build binaries)
+## 1. Set up a host
 
 These instructions target Ubuntu.
 
 1.1. Set up an Ubuntu host with `ssh` access, e.g. in a cloud service provider. 
 
-1.2.  Associate a static IP  with your host, this will be tied to you account, and will be set in your `account.json` file.
+1.2.  Associate a static IP  with your host, this will be tied to you account. This address will be shared on the chain, so that other nodes will be able to find you through the peer discovery mechanism.
 
-1.3. You'll want to use `tmux` to persist the terminal session for build, as well as for running the nodes and tower app. Also this setup requires `git` and `make`, which might be installed already on your host. If not, perform the following steps now:
+1.3. 0L binaries should be run in a linux user that has very narrow permissions. Before you can create binaries you'll need some tools installed blobally by `sudo` and likely in root.
+A helpful script to install dependencies exists here: github.com/OLSF/libra/main/ol/util/setup.sh 
+
+You can run it with a curl bash:
+```
+curl -sL https://raw.githubusercontent.com/OLSF/libra/main/ol/util/setup.sh | bash
+```
+
+1.4. You'll want to use `tmux` to persist the terminal session for build, as well as for running the nodes and tower app. Also this setup requires `git` and `make`, which might be installed already on your host. If not, perform the following steps now:
 
 ```
-sudo apt install tmux git make
+sudo apt install -y git vim zip unzip jq build-essential cmake clang llvm libgmp-dev secure-delete pkg-config libssl-dev lld
+
 ```
 
+1.5. Create the linux user that will run the 0L services.
+
+We will create a user called `node` which has no password (can only be accessed initially by sudo).
+```
+sudo useradd node -m -s /bin/bash
+```
+
+You can then access that account via `sudo su node`. Or setup ssh keys under `/home/node/.ssh/authorized_keys`.
+
+1.6. Install Rust on the `node` user
+```
+sudo su node
+
+# you are now in the node user
+curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
+
+# restart your bash instance to pickup the cargo paths
+. ~/.bashrc
+
+# install some command-line tools
+cargo install toml-cli
+```
+
+## Create Binaries
 It is recommended to perform the steps from 1.4 onwards inside tmux. Short tmux intruction:
 
 ```
 # start a new tmux session
-tmux new -s build
+tmux
 
 # to rejoin the session
-tmux attach -t build
+tmux a
 ```
-to detach from the `tmux` session `Ctrl-b d`
+to detach from the `tmux` session use key stroke: `Ctrl-b` then `d`
 
-1.4. Clone this repo: 
+1.6. Clone this repo: 
 
 `git clone https://github.com/OLSF/libra.git`
-
-1.5. Config dependencies: 
-
-using make or running the `ol/utils/setup.sh` script directly
-
-using make
-```
-cd </path/to/libra-source/>
-make deps
-```
-
-or run the script directly
-```
-cd </path/to/libra-source/> && . ol/util/setup.sh
-```
-
-After `rust` and `cargo` are installed you are prompted to set a `PATH` environment variable. 
-Follow those instructions or reset your terminal.   
-
-![rust config instructions](rust-config-output.png)  
-
-To configure your current shell, run:
-```
-source $HOME/.cargo/env
-```
 
 
 For more details: (../devs/OS_dependencies.md)
 
-1.6. Build the source and install binaries:
+1.7. Build the source and install binaries:
 This takes a while, run inside `tmux` to avoid your session gets disconnected 
+
 ```
 cd </path/to/libra-source/> 
-make bins && make install
-source $HOME/.bashrc
+make bins install
 ```
 
 1.7. Fetch the web server files
 ```
 ol serve --update
+
+# alternatively
+make web-files
 ```
-
-## 2. Generate an account
-
-[In-depth guide](Account-creation-for-validators.md) 
+## 2. Generate account keys
 
 Before you start: have the static IP address you wish to associate with your validator, and a fun personal statement 
 to place in your first proof.
@@ -245,9 +264,9 @@ diem-node --config  ~/.0L/validator.node.yaml >> ~/.0L/logs/validator.log 2>&1
 
 6.2 Restart the tower app after your validator is running, refer to [Step 5](#5-start-producing-delay-proofs-delay-mining) - ctrl+ C and restart it. 
 
-Once you have been on boarded you should see you public key in the list of validators. Run the explorer to view:
+Once you have been on boarded you should see you public key in the list of validators. Run the web monitor to view:
 ```
-ol explorer
+ol serve -c
 ```
 ---
 
@@ -258,3 +277,18 @@ If you are onboarding someone and have received their `account.json` file
    `txs create-validator --account-file <path/to/account.json>
 
 Troubleshooting: If there is an issue with sequence_number out of sync. Retry the transaction.
+
+
+### Troubleshooting
+
+#### cargo or rust are not installed
+
+After `rust` and `cargo` are installed you are prompted to set a `PATH` environment variable. 
+Follow those instructions or reset your terminal.   
+
+![rust config instructions](rust-config-output.png)  
+
+To configure your current shell, run:
+```
+source $HOME/.cargo/env
+```
