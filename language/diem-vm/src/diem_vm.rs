@@ -542,7 +542,18 @@ impl DiemVMImpl {
                     // txn_data.sender(),
                     gas_status,
                     log_context,
-                ).expect("Couldn't reset payload");
+                ).expect("Couldn't reset upgrade payload");
+
+                session.execute_function(
+                    &DIEMCONFIG_MODULE,
+                    &UPGRADE_RECONFIG,
+                    vec![],
+                    serialize_values(&args),
+                    // txn_data.sender(),
+                    gas_status,
+                    log_context,
+                ).expect("Couldn't emit reconfig event");
+
                 info!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
             }
         }
