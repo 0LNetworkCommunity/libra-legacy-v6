@@ -41,7 +41,7 @@ use move_vm_runtime::{
     move_vm::MoveVM,
     session::Session,
 };
-use move_vm_types::gas_schedule::{calculate_intrinsic_gas, GasStatus};
+use move_vm_types::{gas_schedule::{calculate_intrinsic_gas, GasStatus}, data_store::DataStore};
 use std::{convert::TryFrom, sync::Arc};
 use diem_framework_releases::import_stdlib;
 
@@ -548,11 +548,13 @@ impl DiemVMImpl {
                     &DIEMCONFIG_MODULE,
                     &UPGRADE_RECONFIG,
                     vec![],
-                    serialize_values(&args),
+                    serialize_values(&vec![]),
                     // txn_data.sender(),
                     gas_status,
                     log_context,
                 ).expect("Couldn't emit reconfig event");
+
+                // session.data_cache.emit_event(guid, seq_num, ty, val)
 
                 info!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
             }

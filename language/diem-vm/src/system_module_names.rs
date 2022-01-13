@@ -45,8 +45,9 @@ pub static CHECK_UPGRADE: Lazy<Identifier> =
     Lazy::new(|| Identifier::new("check_upgrade").unwrap());
 static UPGRADE_MODULE_NAME: Lazy<Identifier> =
     Lazy::new(|| Identifier::new("Upgrade").unwrap());
+
 static DIEMCONFIG_MODULE_NAME: Lazy<Identifier> =
-    Lazy::new(|| Identifier::new("Upgrade").unwrap());
+    Lazy::new(|| Identifier::new("DiemConfig").unwrap());
 
 pub static RESET_PAYLOAD: Lazy<Identifier> =
     Lazy::new(|| Identifier::new("reset_payload").unwrap());
