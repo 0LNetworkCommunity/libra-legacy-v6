@@ -5,7 +5,7 @@ address 0x1 {
 
 module DiemConfig {
     friend 0x1::Upgrade;
-    
+
     use 0x1::CoreAddresses;
     use 0x1::Errors;
     use 0x1::Event;

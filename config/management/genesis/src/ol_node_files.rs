@@ -350,7 +350,7 @@ fn make_validator_cfg(output_dir: PathBuf, namespace: &str) -> Result<NodeConfig
         WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
 
     c.execution.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
-    // c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
+    c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
 
     c.consensus.safety_rules.service = SafetyRulesService::Thread;
     c.consensus.safety_rules.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
