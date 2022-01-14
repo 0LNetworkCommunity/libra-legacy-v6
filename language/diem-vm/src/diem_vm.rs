@@ -13,7 +13,7 @@ use diem_crypto::HashValue;
 use diem_logger::prelude::*;
 use diem_state_view::StateView;
 use diem_types::{
-    account_config::self, 
+    account_config::{self, NewEpochEvent}, 
     block_metadata::BlockMetadata, 
     contract_event::ContractEvent, 
     event::EventKey, 
@@ -33,7 +33,7 @@ use move_core_types::{
     gas_schedule::{CostTable, GasAlgebra, GasCarrier, GasUnits, InternalGasUnits},
     identifier::IdentStr,
     language_storage::ModuleId,
-    value::{serialize_values, MoveValue},
+    value::{serialize_values, MoveValue, MoveTypeLayout},
 };
 use move_vm_runtime::{
     data_cache::MoveStorage,
@@ -41,7 +41,7 @@ use move_vm_runtime::{
     move_vm::MoveVM,
     session::Session,
 };
-use move_vm_types::{gas_schedule::{calculate_intrinsic_gas, GasStatus}, data_store::DataStore};
+use move_vm_types::{gas_schedule::{calculate_intrinsic_gas, GasStatus}, data_store::DataStore, values::Value, loaded_data::runtime_types::Type};
 use std::{convert::TryFrom, sync::Arc};
 use diem_framework_releases::import_stdlib;
 
@@ -531,23 +531,29 @@ impl DiemVMImpl {
                 println!("0L ==== stdlib upgrade: published {} modules", counter);
 
                 // reset the UpgradePayload
-                let args = vec![
-                    MoveValue::Signer(txn_data.sender),
-                ];
-                session.execute_function(
-                    &UPGRADE_MODULE,
-                    &UPGRADE_RECONFIG,
-                    vec![],
-                    serialize_values(&args),
-                    gas_status,
-                    log_context,
-                ).expect("Couldn't reset upgrade payload");
+                // let args = vec![
+                //     MoveValue::Signer(txn_data.sender),
+                // ];
+                // session.execute_function(
+                //     &UPGRADE_MODULE,
+                //     &UPGRADE_RECONFIG,
+                //     vec![],
+                //     serialize_values(&args),
+                //     gas_status,
+                //     log_context,
+                // ).expect("Couldn't reset upgrade payload");
 
                 // WIP rust trigger event.
-                // session.data_cache.emit_event(guid, seq_num, ty, val);
                 // let e = NewEpochEvent {
                 //     epoch: 0,
                 // };
+                
+                // let b = bcs::to_bytes(&e).unwrap();
+                // let layout: MoveTypeLayout = bcs::from_bytes(&b).unwrap();
+                // let val  = Value::simple_deserialize(&b, &layout).unwrap();
+
+                // session.data_cache.emit_event("".as_bytes().to_vec(), 0, Type::Struct(1), val);
+
 
                 println!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
             }
