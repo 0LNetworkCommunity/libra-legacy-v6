@@ -16,7 +16,7 @@ pub mod create_account_cmd;
 pub mod transfer_cmd;
 pub mod wallet_cmd;
 pub mod community_pay_cmd;
-
+pub mod val_config_cmd;
 
 mod relay_cmd;
 mod valset_cmd;
@@ -48,6 +48,8 @@ use self::{
     join_team_cmd::JoinTeamCmd,
     create_team_cmd::CreateTeamCmd,
     community_pay_cmd::CommunityPayCmd,
+    val_config_cmd::ValConfigCmd,
+
 };
 use std::path::PathBuf;
 
@@ -112,13 +114,9 @@ pub enum TxsCmd {
     #[options(help = "rotate an account's authorization key")]
     Authkey(AuthkeyCmd),
 
-    /// Create team
-    #[options(help = "create a team (must be an existing validator)")]
-    CreateTeam(CreateTeamCmd),
-
-    /// Submit TX to join a team
-    #[options(help = "join or switch to a team")]
-    JoinTeam(JoinTeamCmd),
+    /// The `val-config` subcommand updates validator configuration on chain.
+    #[options(help = "update the validator and operators on-chain configs (e.g. discovery)")]
+    ValConfig(ValConfigCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

@@ -13,7 +13,9 @@
   "op_consensus_pubkey": "cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d",
   "op_validator_network_addresses": "010000000000000000000000003e250c1024b483cfe6160d0efb958f48e4ba3b5a5ac468080135881b885f9baef0da93a2a0b993823448da4d8bf041b65fc96b964444b6db1ffa24fb327882",
   "op_fullnode_network_addresses": "012d0400a5e36a0a052318072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800",
-  "op_fullnode_network_addresses_string": "/ip4/165.227.106.10/tcp/6179/ln-noise-ik/29fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f/ln-handshake/0",
+  "op_val_net_addr_for_vals": "/ip4/165.227.106.10/tcp/6180/ln-noise-ik/f808c5a63ca491431daeb017e6d6c834963d2c3f0c6dfcd1bd3fdf9d7dcfc767/ln-handshake/0",
+  "op_val_net_addr_for_vfn": "/ip4/165.227.106.10/tcp/6179/ln-noise-ik/f808c5a63ca491431daeb017e6d6c834963d2c3f0c6dfcd1bd3fdf9d7dcfc767/ln-handshake/0",
+  "op_vfn_net_addr_for_public": "/ip4/0.0.0.0/tcp/6178/ln-noise-ik/493847429420549694a18a82bc9b1b1ce21948bbf1cd4c5cee9ece0fb8ead50a/ln-handshake/0",
   "op_human_name": "3DC18D1CF61FAAC6AC70E3A63F062E4B-oper",
   "autopay_instructions": [
     {

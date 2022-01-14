@@ -133,10 +133,6 @@ mv-bin:
 reset:
 	onboard val --skip-mining --upstream-peer http://167.172.248.37/ --source-path ~/libra
 
-reset-safety:
-	jq -r '.["${ACC}-oper/safety_data"].value = { "epoch": 0, "last_voted_round": 0, "preferred_round": 0, "last_vote": null }' ${DATA_PATH}/key_store.json > ${DATA_PATH}/temp_key_store && mv ${DATA_PATH}/temp_key_store ${DATA_PATH}/key_store.json
-
-
 backup:
 	cd ~ && rsync -av --exclude db/ --exclude logs/ ~/.0L/* ~/0L_backup_$(shell date +"%m-%d-%y-%T")
 
@@ -301,7 +297,9 @@ genesis:
 	--namespace ${ACC}-oper \
 	--repo ${REPO_NAME} \
 	--github-org ${REPO_ORG} \
-  --layout-path ${DATA_PATH}/set_layout.toml
+  --layout-path ${DATA_PATH}/set_layout.toml \
+	--val-ip-address ${IP}
+
 
 	sha256sum ${DATA_PATH}/genesis.blob
 

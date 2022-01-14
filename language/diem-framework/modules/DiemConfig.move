@@ -324,6 +324,7 @@ module DiemConfig {
             },
         );
     }
+
     spec fun spec_reconfigure_omitted(): bool {
        DiemTimestamp::is_genesis() || DiemTimestamp::spec_now_microseconds() == 0 || !reconfiguration_enabled()
     }
@@ -382,6 +383,24 @@ module DiemConfig {
         emits msg to handle if (!spec_reconfigure_omitted() && now != config.last_reconfiguration_time);
     }
 
+    /// Emit a `NewEpochEvent` event but DO NOT increment the EPOCH.
+    /// this is used only in upgrade scenarios.
+    fun upgrade_reconfig() acquires Configuration {
+    
+        assert(exists<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS()), Errors::not_published(ECONFIGURATION));
+        let config_ref = borrow_global_mut<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        
+        // Don't increment
+        // config_ref.epoch = 1;
+
+        Event::emit_event<NewEpochEvent>(
+            &mut config_ref.events,
+            NewEpochEvent {
+                epoch: config_ref.epoch,
+            },
+        );
+    }
+
     /// Emit a `NewEpochEvent` event. This function will be invoked by genesis directly to generate the very first
     /// reconfiguration event.
     fun emit_genesis_reconfiguration_event() acquires Configuration {
@@ -397,6 +416,7 @@ module DiemConfig {
             },
         );
     }
+
     spec emit_genesis_reconfiguration_event {
         let post config = global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
         let post handle = config.events;

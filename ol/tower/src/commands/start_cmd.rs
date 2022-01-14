@@ -7,6 +7,7 @@ use ol_types::config::AppCfg;
 use ol_types::config::TxType;
 use std::process::exit;
 use txs::submit_tx::tx_params;
+use diem_logger::{Level, Logger};
 
 /// `start` subcommand
 #[derive(Command, Default, Debug, Options)]
@@ -35,6 +36,15 @@ impl Runnable for StartCmd {
             use_upstream_url,
             ..
         } = entrypoint::get_args();
+
+        // Setup logger
+        let mut logger = Logger::new();
+        logger
+            .channel_size(1024)
+            .is_async(true)
+            .level(Level::Info)
+            .read_env();
+        logger.build();
 
         // config reading respects swarm setup
         // so also cfg.get_waypoint will return correct data
