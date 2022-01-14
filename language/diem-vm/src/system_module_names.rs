@@ -31,12 +31,12 @@ pub static UPGRADE_MODULE: Lazy<ModuleId> = Lazy::new(|| {
     )
 });
 
-pub static DIEMCONFIG_MODULE: Lazy<ModuleId> = Lazy::new(|| {
-    ModuleId::new(
-        account_config::CORE_CODE_ADDRESS,
-        DIEMCONFIG_MODULE_NAME.clone(),
-    )
-});
+// pub static DIEMCONFIG_MODULE: Lazy<ModuleId> = Lazy::new(|| {
+//     ModuleId::new(
+//         account_config::CORE_CODE_ADDRESS,
+//         DIEMCONFIG_MODULE_NAME.clone(),
+//     )
+// });
 
 // Oracles
 static ORACLE_MODULE_NAME: Lazy<Identifier> =
@@ -46,11 +46,11 @@ pub static CHECK_UPGRADE: Lazy<Identifier> =
 static UPGRADE_MODULE_NAME: Lazy<Identifier> =
     Lazy::new(|| Identifier::new("Upgrade").unwrap());
 
-static DIEMCONFIG_MODULE_NAME: Lazy<Identifier> =
-    Lazy::new(|| Identifier::new("DiemConfig").unwrap());
+// static DIEMCONFIG_MODULE_NAME: Lazy<Identifier> =
+//     Lazy::new(|| Identifier::new("DiemConfig").unwrap());
 
-pub static RESET_PAYLOAD: Lazy<Identifier> =
-    Lazy::new(|| Identifier::new("reset_payload").unwrap());
+// pub static RESET_PAYLOAD: Lazy<Identifier> =
+//     Lazy::new(|| Identifier::new("reset_payload").unwrap());
 
 pub static UPGRADE_RECONFIG: Lazy<Identifier> =
     Lazy::new(|| Identifier::new("upgrade_reconfig").unwrap());

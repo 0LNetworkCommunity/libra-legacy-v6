@@ -13,7 +13,7 @@ use diem_crypto::HashValue;
 use diem_logger::prelude::*;
 use diem_state_view::StateView;
 use diem_types::{
-    account_config, 
+    account_config::self, 
     block_metadata::BlockMetadata, 
     contract_event::ContractEvent, 
     event::EventKey, 
@@ -41,7 +41,7 @@ use move_vm_runtime::{
     move_vm::MoveVM,
     session::Session,
 };
-use move_vm_types::{gas_schedule::{calculate_intrinsic_gas, GasStatus}, data_store::DataStore};
+use move_vm_types::gas_schedule::{calculate_intrinsic_gas, GasStatus};
 use std::{convert::TryFrom, sync::Arc};
 use diem_framework_releases::import_stdlib;
 
@@ -536,7 +536,7 @@ impl DiemVMImpl {
                 ];
                 session.execute_function(
                     &UPGRADE_MODULE,
-                    &RESET_PAYLOAD,
+                    &UPGRADE_RECONFIG,
                     vec![],
                     serialize_values(&args),
                     // txn_data.sender(),
@@ -544,17 +544,22 @@ impl DiemVMImpl {
                     log_context,
                 ).expect("Couldn't reset upgrade payload");
 
-                session.execute_function(
-                    &DIEMCONFIG_MODULE,
-                    &UPGRADE_RECONFIG,
-                    vec![],
-                    serialize_values(&vec![]),
-                    // txn_data.sender(),
-                    gas_status,
-                    log_context,
-                ).expect("Couldn't emit reconfig event");
+                // session.execute_function(
+                //     &DIEMCONFIG_MODULE,
+                //     &UPGRADE_RECONFIG,
+                //     vec![],
+                //     serialize_values(&vec![]),
+                //     // txn_data.sender(),
+                //     gas_status,
+                //     log_context,
+                // ).expect("Couldn't emit reconfig event");
+                
 
-                // session.data_cache.emit_event(guid, seq_num, ty, val)
+                // WIP rust trigger event.
+                // session.data_cache.emit_event(guid, seq_num, ty, val);
+                // let e = NewEpochEvent {
+                //     epoch: 0,
+                // };
 
                 info!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
             }
