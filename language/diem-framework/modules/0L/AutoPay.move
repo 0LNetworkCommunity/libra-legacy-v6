@@ -301,6 +301,10 @@ address 0x1 {
       ).accounts;
       if (!Vector::contains<address>(accounts, &addr)) {
         Vector::push_back<address>(accounts, *&addr);
+
+      };
+
+      if (!exists<UserAutoPay>(*&addr)) {
         // Initialize the instructions UserAutoPay on user account state 
         move_to<UserAutoPay>(acc, UserAutoPay { 
           payments: Vector::empty<Payment>(),
@@ -419,6 +423,10 @@ address 0x1 {
         let payment = Vector::borrow(payments, Option::extract<u64>(&mut index));
         return (payment.in_type, payment.payee, payment.end_epoch, payment.amt)
       }
+    }
+
+    public fun get_enabled(): vector<address> acquires AccountList {
+     *&borrow_global<AccountList>(CoreAddresses::VM_RESERVED_ADDRESS()).accounts
     }
 
     //////////////////////
