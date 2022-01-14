@@ -70,6 +70,7 @@ address 0x1 {
     // List of payments. Each account will own their own copy of this struct
     struct Data has key {
       payments: vector<Payment>,
+      prev_bal: u64,
     }
 
     // One copy of this struct will be created. It will be stored in 0x0.
@@ -188,14 +189,21 @@ address 0x1 {
       Roles::assert_diem_root(vm);
 
       // Get the payment list from the account
-      let payments = &mut borrow_global_mut<Data>(*account_addr).payments;
+      let my_autopay_state = borrow_global_mut<Data>(*account_addr);
+      let payments = &mut my_autopay_state.payments;
       let payments_len = Vector::length<Payment>(payments);
       let payments_idx = 0;
+      let pre_run_bal = DiemAccount::balance<GAS>(*account_addr);
+
+      let bal_change_since_last_run = if (pre_run_bal > my_autopay_state.prev_bal) {
+        pre_run_bal - my_autopay_state.prev_bal
+      } else { 0 };
+
       // go through the pledges 
       while (payments_idx < payments_len) {
         let payment = Vector::borrow_mut<Payment>(payments, payments_idx);
         // Make a payment if one is required/allowed
-        let delete_payment = process_autopay_payment(vm, account_addr, payment);
+        let delete_payment = process_autopay_payment(vm, account_addr, payment, bal_change_since_last_run);
         // Delete any expired payments and increment idx (or decrement list size)
         if (delete_payment == true) {
           Vector::remove<Payment>(payments, payments_idx);
@@ -205,6 +213,9 @@ address 0x1 {
           payments_idx = payments_idx + 1;
         };
       };
+
+      my_autopay_state.prev_bal = DiemAccount::balance<GAS>(*account_addr);
+
     }
 
     // Make any payment required by the autopay instruction given
@@ -213,6 +224,7 @@ address 0x1 {
       vm: &signer, 
       account_addr: &address,
       payment: &mut Payment,
+      bal_change_since_last_run: u64,
     ): bool {
       // check payees are community wallets, only community wallets are allowed
       // to receive autopay (bypassing account limits)
@@ -238,9 +250,9 @@ address 0x1 {
             FixedPoint32::create_from_rational(payment.amt, 10000)
           )
         } else if (payment.in_type == PERCENT_OF_CHANGE) {
-          if (account_bal > payment.prev_bal) {
+          if (bal_change_since_last_run > 0 ) {
             FixedPoint32::multiply_u64(
-              account_bal - payment.prev_bal, 
+              bal_change_since_last_run, 
               FixedPoint32::create_from_rational(payment.amt, 10000)
             )
           } else {
@@ -279,9 +291,12 @@ address 0x1 {
         CoreAddresses::DIEM_ROOT_ADDRESS()
       ).accounts;
       if (!Vector::contains<address>(accounts, &addr)) {
-        Vector::push_back<address>(accounts, addr);
+        Vector::push_back<address>(accounts, *&addr);
         // Initialize the instructions Data on user account state 
-        move_to<Data>(acc, Data { payments: Vector::empty<Payment>() });
+        move_to<Data>(acc, Data { 
+          payments: Vector::empty<Payment>(),
+          prev_bal: DiemAccount::balance<GAS>(addr),
+        });
       };
 
       // Initialize Escrow data
@@ -296,7 +311,7 @@ address 0x1 {
 
       // We destroy the data resource for sender
       let sender_data = move_from<Data>(addr);
-      let Data { payments: _ } = sender_data;
+      let Data { payments: _ , prev_bal: _ } = sender_data;
 
       // pop that account from AccountList
       let accounts = &mut borrow_global_mut<AccountList>(
