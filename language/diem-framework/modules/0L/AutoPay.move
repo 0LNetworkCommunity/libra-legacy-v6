@@ -270,6 +270,7 @@ address 0x1 {
               );
         };
 
+        // TODO: this would be deprecated.
         payment.prev_bal = DiemAccount::balance<GAS>(*account_addr);
       };
 
