@@ -391,7 +391,7 @@ module DiemConfig {
         let config_ref = borrow_global_mut<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
         
         // Don't increment
-        // config_ref.epoch = 1;
+        config_ref.epoch = config_ref.epoch + 1;
 
         Event::emit_event<NewEpochEvent>(
             &mut config_ref.events,
