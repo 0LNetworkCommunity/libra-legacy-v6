@@ -478,7 +478,7 @@ impl DiemVMImpl {
         gas_status: &mut GasStatus,
         log_context: &impl LogContext,
     ) -> Result<(), VMStatus> {
-        info!("0L ==== stdlib upgrade: checking for stdlib upgrade");
+        println!("0L ==== stdlib upgrade: checking for stdlib upgrade");
         // tick Oracle::check_upgrade
         let args = vec![
             MoveValue::Signer(txn_data.sender),
@@ -510,7 +510,7 @@ impl DiemVMImpl {
         if round==2 {
             let payload = get_upgrade_payload(remote_cache)?.payload;
             if payload.len() > 0 {
-                info!("0L ==== stdlib upgrade: upgrade payload elected in previous epoch");
+                println!("0L ==== stdlib upgrade: upgrade payload elected in previous epoch");
 
                 // publish the agreed stdlib
                 let new_stdlib = import_stdlib(&payload);
@@ -528,7 +528,7 @@ impl DiemVMImpl {
                     ).expect("Failed to publish module");
                     counter += 1;
                 }
-                info!("0L ==== stdlib upgrade: published {} modules", counter);
+                println!("0L ==== stdlib upgrade: published {} modules", counter);
 
                 // reset the UpgradePayload
                 let args = vec![
@@ -539,21 +539,9 @@ impl DiemVMImpl {
                     &UPGRADE_RECONFIG,
                     vec![],
                     serialize_values(&args),
-                    // txn_data.sender(),
                     gas_status,
                     log_context,
                 ).expect("Couldn't reset upgrade payload");
-
-                // session.execute_function(
-                //     &DIEMCONFIG_MODULE,
-                //     &UPGRADE_RECONFIG,
-                //     vec![],
-                //     serialize_values(&vec![]),
-                //     // txn_data.sender(),
-                //     gas_status,
-                //     log_context,
-                // ).expect("Couldn't emit reconfig event");
-                
 
                 // WIP rust trigger event.
                 // session.data_cache.emit_event(guid, seq_num, ty, val);
@@ -561,7 +549,7 @@ impl DiemVMImpl {
                 //     epoch: 0,
                 // };
 
-                info!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
+                println!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
             }
         }
 
