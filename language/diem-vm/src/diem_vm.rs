@@ -544,6 +544,8 @@ impl DiemVMImpl {
                     log_context,
                 ).expect("Couldn't trigger upgrade reconfig event");
 
+                println!("0L ==== successfully triggered upgrade reconfig event");
+
                 println!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
             }
         }
