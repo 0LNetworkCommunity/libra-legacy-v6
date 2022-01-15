@@ -39,9 +39,9 @@ pub static CHECK_UPGRADE: Lazy<Identifier> =
 static UPGRADE_MODULE_NAME: Lazy<Identifier> =
     Lazy::new(|| Identifier::new("Upgrade").unwrap());
 
-// TODO: this will be deprecated in 5.0.11
-pub static RESET_PAYLOAD: Lazy<Identifier> =
-    Lazy::new(|| Identifier::new("reset_payload").unwrap());
+// // TODO: this will be deprecated in 5.0.11
+// pub static RESET_PAYLOAD: Lazy<Identifier> =
+//     Lazy::new(|| Identifier::new("reset_payload").unwrap());
 
 pub static UPGRADE_RECONFIG: Lazy<Identifier> =
     Lazy::new(|| Identifier::new("upgrade_reconfig").unwrap());

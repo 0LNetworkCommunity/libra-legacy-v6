@@ -531,38 +531,18 @@ impl DiemVMImpl {
 
                 println!("0L ==== stdlib upgrade: published {} modules", counter);
 
-                // TODO: This will be deprecated in v5.0.11, see below.
+                // trigger a reconfiguration of type Upgrade
                 let args = vec![
                     MoveValue::Signer(txn_data.sender),
                 ];
                 session.execute_function(
                     &UPGRADE_MODULE,
-                    &RESET_PAYLOAD,
+                    &UPGRADE_RECONFIG,
                     vec![],
                     serialize_values(&args),
-                    // txn_data.sender(),
                     gas_status,
                     log_context,
-                ).expect("Couldn't reset payload");
-                info!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
-
-                ///////////////////////////////////////////
-
-                // ENABLE THIS CODE ON V5.0.11
-                // trigger a reconfiguration of type Upgrade
-                // let args = vec![
-                //     MoveValue::Signer(txn_data.sender),
-                // ];
-                // session.execute_function(
-                //     &UPGRADE_MODULE,
-                //     &UPGRADE_RECONFIG,
-                //     vec![],
-                //     serialize_values(&args),
-                //     gas_status,
-                //     log_context,
-                // ).expect("Couldn't trigger upgrade reconfig event");
-
-                ///////////////////////////////////////////
+                ).expect("Couldn't trigger upgrade reconfig event");
 
                 println!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
             }
