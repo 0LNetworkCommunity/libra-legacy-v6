@@ -528,9 +528,23 @@ impl DiemVMImpl {
                     ).expect("Failed to publish module");
                     counter += 1;
                 }
-                println!("0L ==== stdlib upgrade: published {} modules", counter);
 
-                // reset the UpgradePayload
+                // TODO: This will be deprecated in v5.0.11, see below.
+                session.execute_function(
+                    &UPGRADE_MODULE,
+                    &RESET_PAYLOAD,
+                    vec![],
+                    serialize_values(&args),
+                    // txn_data.sender(),
+                    gas_status,
+                    log_context,
+                ).expect("Couldn't reset payload");
+                info!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
+
+                ///////////////////////////////////////////
+
+                // ENABLE THIS CODE ON V5.0.11
+                // trigger a reconfiguration of type Upgrade
                 // let args = vec![
                 //     MoveValue::Signer(txn_data.sender),
                 // ];
@@ -541,19 +555,9 @@ impl DiemVMImpl {
                 //     serialize_values(&args),
                 //     gas_status,
                 //     log_context,
-                // ).expect("Couldn't reset upgrade payload");
+                // ).expect("Couldn't trigger upgrade reconfig event");
 
-                // WIP rust trigger event.
-                // let e = NewEpochEvent {
-                //     epoch: 0,
-                // };
-                
-                // let b = bcs::to_bytes(&e).unwrap();
-                // let layout: MoveTypeLayout = bcs::from_bytes(&b).unwrap();
-                // let val  = Value::simple_deserialize(&b, &layout).unwrap();
-
-                // session.data_cache.emit_event("".as_bytes().to_vec(), 0, Type::Struct(1), val);
-
+                ///////////////////////////////////////////
 
                 println!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
             }
