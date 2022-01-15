@@ -13,7 +13,7 @@ use diem_crypto::HashValue;
 use diem_logger::prelude::*;
 use diem_state_view::StateView;
 use diem_types::{
-    account_config::{self, NewEpochEvent}, 
+    account_config, 
     block_metadata::BlockMetadata, 
     contract_event::ContractEvent, 
     event::EventKey, 
@@ -33,7 +33,7 @@ use move_core_types::{
     gas_schedule::{CostTable, GasAlgebra, GasCarrier, GasUnits, InternalGasUnits},
     identifier::IdentStr,
     language_storage::ModuleId,
-    value::{serialize_values, MoveValue, MoveTypeLayout},
+    value::{serialize_values, MoveValue},
 };
 use move_vm_runtime::{
     data_cache::MoveStorage,
@@ -41,7 +41,7 @@ use move_vm_runtime::{
     move_vm::MoveVM,
     session::Session,
 };
-use move_vm_types::{gas_schedule::{calculate_intrinsic_gas, GasStatus}, data_store::DataStore, values::Value, loaded_data::runtime_types::Type};
+use move_vm_types::gas_schedule::{calculate_intrinsic_gas, GasStatus};
 use std::{convert::TryFrom, sync::Arc};
 use diem_framework_releases::import_stdlib;
 
@@ -528,6 +528,8 @@ impl DiemVMImpl {
                     ).expect("Failed to publish module");
                     counter += 1;
                 }
+
+                println!("0L ==== stdlib upgrade: published {} modules", counter);
 
                 // TODO: This will be deprecated in v5.0.11, see below.
                 let args = vec![
