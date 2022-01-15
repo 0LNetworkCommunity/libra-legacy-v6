@@ -530,6 +530,9 @@ impl DiemVMImpl {
                 }
 
                 // TODO: This will be deprecated in v5.0.11, see below.
+                let args = vec![
+                    MoveValue::Signer(txn_data.sender),
+                ];
                 session.execute_function(
                     &UPGRADE_MODULE,
                     &RESET_PAYLOAD,
