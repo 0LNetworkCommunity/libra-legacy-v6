@@ -536,8 +536,8 @@ impl DiemVM {
                 log_context,
             ) {
                 Ok(_) => {},
-                Err(_) => {
-                  println!("aborting upgrade");
+                Err(e) => {
+                  println!("0L ==== stdlib upgrade: aborting. Message: {:?}", &e);
                 },
             };
         }
