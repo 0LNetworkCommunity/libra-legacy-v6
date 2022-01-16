@@ -41,7 +41,7 @@ use move_vm_runtime::{
     move_vm::MoveVM,
     session::Session,
 };
-use move_vm_types::{gas_schedule::{calculate_intrinsic_gas, GasStatus}, data_store::DataStore};
+use move_vm_types::gas_schedule::{calculate_intrinsic_gas, GasStatus};
 use std::{convert::TryFrom, sync::Arc};
 use diem_framework_releases::import_stdlib;
 
@@ -478,7 +478,7 @@ impl DiemVMImpl {
         gas_status: &mut GasStatus,
         log_context: &impl LogContext,
     ) -> Result<(), VMStatus> {
-        info!("0L ==== stdlib upgrade: checking for stdlib upgrade");
+        println!("0L ==== stdlib upgrade: checking for stdlib upgrade");
         // tick Oracle::check_upgrade
         let args = vec![
             MoveValue::Signer(txn_data.sender),
@@ -510,7 +510,7 @@ impl DiemVMImpl {
         if round==2 {
             let payload = get_upgrade_payload(remote_cache)?.payload;
             if payload.len() > 0 {
-                info!("0L ==== stdlib upgrade: upgrade payload elected in previous epoch");
+                println!("0L ==== stdlib upgrade: upgrade payload elected in previous epoch");
 
                 // publish the agreed stdlib
                 let new_stdlib = import_stdlib(&payload);
@@ -528,9 +528,10 @@ impl DiemVMImpl {
                     ).expect("Failed to publish module");
                     counter += 1;
                 }
-                info!("0L ==== stdlib upgrade: published {} modules", counter);
 
-                // reset the UpgradePayload
+                println!("0L ==== stdlib upgrade: published {} modules", counter);
+
+                // TODO: This will be deprecated in v5.0.11, see below.
                 let args = vec![
                     MoveValue::Signer(txn_data.sender),
                 ];
@@ -542,21 +543,28 @@ impl DiemVMImpl {
                     // txn_data.sender(),
                     gas_status,
                     log_context,
-                ).expect("Couldn't reset upgrade payload");
-
-                session.execute_function(
-                    &DIEMCONFIG_MODULE,
-                    &UPGRADE_RECONFIG,
-                    vec![],
-                    serialize_values(&vec![]),
-                    // txn_data.sender(),
-                    gas_status,
-                    log_context,
-                ).expect("Couldn't emit reconfig event");
-
-                // session.data_cache.emit_event(guid, seq_num, ty, val)
-
+                ).expect("Couldn't reset payload");
                 info!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
+
+                ///////////////////////////////////////////
+
+                // ENABLE THIS CODE ON V5.0.11
+                // trigger a reconfiguration of type Upgrade
+                // let args = vec![
+                //     MoveValue::Signer(txn_data.sender),
+                // ];
+                // session.execute_function(
+                //     &UPGRADE_MODULE,
+                //     &UPGRADE_RECONFIG,
+                //     vec![],
+                //     serialize_values(&args),
+                //     gas_status,
+                //     log_context,
+                // ).expect("Couldn't trigger upgrade reconfig event");
+
+                ///////////////////////////////////////////
+
+                println!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
             }
         }
 
