@@ -14,6 +14,10 @@ use move_core_types::{
 use serde::{Deserialize, Serialize};
 use move_core_types::account_address::AccountAddress;
 
+
+//// TODO THIS IS DUPLICATED WITH types/src/validator_config.rs
+/// Please rename.
+
 /// Struct that represents a Validator Config resource
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidatorConfigResource {
@@ -28,9 +32,12 @@ pub struct ValidatorConfigResource {
 /// Struct that represents a Config resource
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct ConfigResource {
-    consensus_pubkey: Vec<u8>,
-    validator_network_addresses: Vec<u8>,
-    fullnode_network_addresses: Vec<u8>,
+    ///
+    pub consensus_pubkey: Vec<u8>,
+    ///
+    pub validator_network_addresses: Vec<u8>,
+    ///
+    pub fullnode_network_addresses: Vec<u8>,
 }
 
 impl MoveStructType for ValidatorConfigResource {

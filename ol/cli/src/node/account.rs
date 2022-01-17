@@ -133,6 +133,7 @@ impl Node {
             ) {
                 Ok(Some(res)) => {
                     let mut view = res.get_view();
+                    
                     let operator = view.operator_account;
                     if operator.is_some() {
                         view.operator_has_balance = 

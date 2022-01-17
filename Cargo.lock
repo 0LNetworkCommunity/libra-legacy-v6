@@ -1032,6 +1032,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "clokwerk"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a99373edf782eec8fde0d52bd2f60e4ae5eaca31f1d2cf5aec68243849a37a9"
+dependencies = [
+ "chrono",
+]
+
+[[package]]
 name = "cluster-test"
 version = "0.1.0"
 dependencies = [
@@ -1696,7 +1705,7 @@ dependencies = [
 
 [[package]]
 name = "diem-config"
-version = "5.0.8"
+version = "5.0.9"
 dependencies = [
  "bcs",
  "diem-crypto",
@@ -2150,7 +2159,7 @@ dependencies = [
 
 [[package]]
 name = "diem-management"
-version = "5.0.8"
+version = "5.0.9"
 dependencies = [
  "anyhow",
  "bcs",
@@ -2264,7 +2273,7 @@ dependencies = [
 
 [[package]]
 name = "diem-node"
-version = "5.0.8"
+version = "5.0.9"
 dependencies = [
  "backup-service",
  "consensus",
@@ -5595,12 +5604,13 @@ dependencies = [
 
 [[package]]
 name = "ol"
-version = "5.0.8"
+version = "5.0.9"
 dependencies = [
  "abscissa_core",
  "abscissa_tokio",
  "ajson",
  "anyhow",
+ "async-stream",
  "backup-cli",
  "bcs",
  "bitflags",
@@ -5608,9 +5618,9 @@ dependencies = [
  "chrono",
  "cli",
  "clokwerk",
- "crossterm",
  "dialoguer",
  "diem-config",
+ "diem-crypto",
  "diem-genesis-tool",
  "diem-global-constants",
  "diem-json-rpc-client",
@@ -5624,6 +5634,7 @@ dependencies = [
  "futures",
  "glob",
  "gumdrop 0.7.0",
+ "handlebars",
  "hex 0.4.3",
  "machine-ip",
  "move-binary-format",
@@ -5736,7 +5747,7 @@ dependencies = [
 
 [[package]]
 name = "onboard"
-version = "5.0.8"
+version = "5.0.9"
 dependencies = [
  "abscissa_core",
  "anyhow",
@@ -5761,7 +5772,7 @@ dependencies = [
  "serde_json",
  "thiserror",
  "toml",
- "tower 5.0.8",
+ "tower 5.0.9",
  "txs",
  "wait-timeout",
  "zip",
@@ -7616,6 +7627,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "sm"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d8e4a3f3651a411045a4324773afcf10d11919a90c006b94a4178da1d18e5769"
+dependencies = [
+ "sm_macro",
+]
+
+[[package]]
+name = "sm_macro"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba245bc9067435452e4d8b9af04509929a9e99ce7273c82c2b8551e7f09ee861"
+dependencies = [
+ "proc-macro2 0.4.30",
+ "quote 0.6.13",
+ "syn 0.15.44",
+]
+
+[[package]]
 name = "smallvec"
 version = "0.6.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8486,7 +8517,7 @@ dependencies = [
 
 [[package]]
 name = "tower"
-version = "5.0.8"
+version = "5.0.9"
 dependencies = [
  "abscissa_core",
  "ajson",
@@ -8710,7 +8741,7 @@ dependencies = [
 
 [[package]]
 name = "txs"
-version = "5.0.8"
+version = "5.0.9"
 dependencies = [
  "abscissa_core",
  "ajson",

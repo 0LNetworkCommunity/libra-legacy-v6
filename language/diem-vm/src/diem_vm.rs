@@ -478,7 +478,7 @@ impl DiemVMImpl {
         gas_status: &mut GasStatus,
         log_context: &impl LogContext,
     ) -> Result<(), VMStatus> {
-        info!("0L ==== stdlib upgrade: checking for stdlib upgrade");
+        println!("0L ==== stdlib upgrade: checking for stdlib upgrade");
         // tick Oracle::check_upgrade
         let args = vec![
             MoveValue::Signer(txn_data.sender),
@@ -510,7 +510,7 @@ impl DiemVMImpl {
         if round==2 {
             let payload = get_upgrade_payload(remote_cache)?.payload;
             if payload.len() > 0 {
-                info!("0L ==== stdlib upgrade: upgrade payload elected in previous epoch");
+                println!("0L ==== stdlib upgrade: upgrade payload elected in previous epoch");
 
                 // publish the agreed stdlib
                 let new_stdlib = import_stdlib(&payload);
@@ -528,9 +528,10 @@ impl DiemVMImpl {
                     ).expect("Failed to publish module");
                     counter += 1;
                 }
-                info!("0L ==== stdlib upgrade: published {} modules", counter);
 
-                // reset the UpgradePayload
+                println!("0L ==== stdlib upgrade: published {} modules", counter);
+
+                // TODO: This will be deprecated in v5.0.11, see below.
                 let args = vec![
                     MoveValue::Signer(txn_data.sender),
                 ];
@@ -544,6 +545,26 @@ impl DiemVMImpl {
                     log_context,
                 ).expect("Couldn't reset payload");
                 info!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
+
+                ///////////////////////////////////////////
+
+                // ENABLE THIS CODE ON V5.0.11
+                // trigger a reconfiguration of type Upgrade
+                // let args = vec![
+                //     MoveValue::Signer(txn_data.sender),
+                // ];
+                // session.execute_function(
+                //     &UPGRADE_MODULE,
+                //     &UPGRADE_RECONFIG,
+                //     vec![],
+                //     serialize_values(&args),
+                //     gas_status,
+                //     log_context,
+                // ).expect("Couldn't trigger upgrade reconfig event");
+
+                ///////////////////////////////////////////
+
+                println!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
             }
         }
 

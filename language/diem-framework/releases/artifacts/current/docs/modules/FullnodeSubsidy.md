@@ -35,7 +35,8 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_get_proof_price">get_proof_price</a>(one_val_subsidy: u64): u64 {
-  <b>let</b> global_proofs = <a href="TowerState.md#0x1_TowerState_get_fullnode_proofs">TowerState::get_fullnode_proofs</a>();
+
+  <b>let</b> global_proofs = <a href="TowerState.md#0x1_TowerState_get_fullnode_proofs_in_epoch_above_thresh">TowerState::get_fullnode_proofs_in_epoch_above_thresh</a>();
 
   // proof price is simple, miners divide the equivalent of one compliant
   // validator's subsidy.
@@ -44,8 +45,11 @@
   // Note <b>to</b> rascals: I know what you're thinking, but for the same effort
   // you'll put into that idea, it would be more profitable <b>to</b> just run
   // a validator node.
+  <b>if</b> (global_proofs &gt; 0) {
+    <b>return</b> one_val_subsidy/global_proofs
+  };
 
-  one_val_subsidy/global_proofs
+  0
 }
 </code></pre>
 
