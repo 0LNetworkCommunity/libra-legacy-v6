@@ -38,14 +38,9 @@ pub static CHECK_UPGRADE: Lazy<Identifier> =
     Lazy::new(|| Identifier::new("check_upgrade").unwrap());
 static UPGRADE_MODULE_NAME: Lazy<Identifier> =
     Lazy::new(|| Identifier::new("Upgrade").unwrap());
-
-// TODO: this will be deprecated in 5.0.11
-pub static RESET_PAYLOAD: Lazy<Identifier> =
-    Lazy::new(|| Identifier::new("reset_payload").unwrap());
-
 pub static UPGRADE_RECONFIG: Lazy<Identifier> =
     Lazy::new(|| Identifier::new("upgrade_reconfig").unwrap());
-//////// 0L end ////////    
+//////// 0L end ////////
 
 // Names for special functions and structs
 pub const SCRIPT_PROLOGUE_NAME: &IdentStr = ident_str!("script_prologue");

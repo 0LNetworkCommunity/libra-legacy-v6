@@ -513,56 +513,52 @@ impl DiemVMImpl {
                 println!("0L ==== stdlib upgrade: upgrade payload elected in previous epoch");
 
                 // publish the agreed stdlib
-                let new_stdlib = import_stdlib(&payload);
+                let new_stdlib = import_stdlib(&payload)
+                    .map_err(|_|{ 
+                        println!("faliled to import stdlib"); 
+                        VMStatus::Error(StatusCode::STDLIB_UPGRADE_ERROR)
+                      })?;
                 let mut counter = 0;
                 for module in new_stdlib {
                     let mut bytes = vec![];
                     module
                         .serialize(&mut bytes)
-                        .expect("Failed to serialize module");
+                        .map_err(|_|{ 
+                          println!("faliled to serialize stdlib"); 
+                          VMStatus::Error(StatusCode::STDLIB_UPGRADE_ERROR)
+                        })?;
                     session.revise_module(
                         bytes, 
                         account_config::CORE_CODE_ADDRESS, 
                         gas_status, 
                         log_context
-                    ).expect("Failed to publish module");
+                    ).map_err(|_|{ 
+                      println!("faliled to publish module");
+                      VMStatus::Error(StatusCode::STDLIB_UPGRADE_ERROR)
+                    })?;
+
                     counter += 1;
                 }
 
                 println!("0L ==== stdlib upgrade: published {} modules", counter);
 
-                // TODO: This will be deprecated in v5.0.11, see below.
+                // trigger a reconfiguration of type Upgrade
                 let args = vec![
                     MoveValue::Signer(txn_data.sender),
                 ];
                 session.execute_function(
                     &UPGRADE_MODULE,
-                    &RESET_PAYLOAD,
+                    &UPGRADE_RECONFIG,
                     vec![],
                     serialize_values(&args),
-                    // txn_data.sender(),
                     gas_status,
                     log_context,
-                ).expect("Couldn't reset payload");
-                info!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
+                ).map_err(|_|{ 
+                  println!("Couldn't trigger upgrade reconfig event");
+                  VMStatus::Error(StatusCode::STDLIB_UPGRADE_ERROR)
+                })?;
 
-                ///////////////////////////////////////////
-
-                // ENABLE THIS CODE ON V5.0.11
-                // trigger a reconfiguration of type Upgrade
-                // let args = vec![
-                //     MoveValue::Signer(txn_data.sender),
-                // ];
-                // session.execute_function(
-                //     &UPGRADE_MODULE,
-                //     &UPGRADE_RECONFIG,
-                //     vec![],
-                //     serialize_values(&args),
-                //     gas_status,
-                //     log_context,
-                // ).expect("Couldn't trigger upgrade reconfig event");
-
-                ///////////////////////////////////////////
+                println!("0L ==== successfully triggered upgrade reconfig event");
 
                 println!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
             }
