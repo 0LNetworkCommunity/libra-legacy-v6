@@ -3,7 +3,7 @@
 - TWO unix hosts, one for Validator Node, and one for the Private Fullnode ("VFN").
 0L code targets Ubuntu 20.4
 - Recommended specs: 
-  - Validator: 250G harddrive, 8 core CPU, 16G RaM
+  - Validator: 250G harddrive, 8 core CPU, 16G RAM
   - VFN: 100G storage, 2 core CPU, 8G RAM
 - Separate static IP addresses for the machines, or appropriate DNS mapping.
 
