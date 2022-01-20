@@ -350,7 +350,8 @@ You might see some network errors due to drops, but should again see round numbe
 This command will tell you the sync state of a RUNNING local node: `db-backup one-shot query node-state`
 
 
-> :bangbang: *You must be onboarded by a existing validator to continue*
+> :bangbang: **You must be onboarded by an existing validator to continue**
+>
 > To become a validator a user must display an intention to contribute to the ecosystem. 
 > This can be done by many different ways like building tools, helping out the ecosystem and more.
 >  If you would like to contribute reach out the the Hustle Karma channel in [Discord](https://discord.gg/cfXd9Ngk). When a validator is ready to 
