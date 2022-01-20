@@ -237,6 +237,8 @@ tower -o start >> ~/.0L/logs/tower.log 2>&1
 
 6.1 Follow [step 1](#1.-Set-up-a-host) to set up a new host and install binaries
 
+6.2 Fast Forward to the latest snapshot by following [step 3](#3.-Fast-forward-to-the-most-recent-state-snapshot)
+
 ### Return to validator machine 
 
 6.2 Update validator 0L.toml file
@@ -315,26 +317,26 @@ yourusername soft    nproc          100000
 yourusername hard    nproc          100000
 yourusername soft    nofile         100000
 ```
-start your fullnode in a `tmux` session.
+start your VFN in a `tmux` session.
 
 ```
-tmux new -s fullnode
+tmux new -s vfn
 
 # verify your file handlers have been increased
 ulimit -n
 100000
 ```
 
-inside the `tmux` session start the node in fullnode mode. 
+inside the `tmux` session start the VFN in VFN mode. 
 ```
 # create log directory 
 mkdir ~/.0L/logs
 
 # start node 
-diem-node --config ~/.0L/fullnode.node.yaml  >> ~/.0L/logs/node.log 2>&1
+diem-node --config ~/.0L/vfn.node.yaml  >> ~/.0L/logs/node.log 2>&1
 ```
 
-# 6.6 Check your logs. `tail -f ~/.0L/logs/node.log`
+6.6 Check your logs. `tail -f ~/.0L/logs/node.log`
 
 When the sync is ongoing, you'd see something like this:
 
