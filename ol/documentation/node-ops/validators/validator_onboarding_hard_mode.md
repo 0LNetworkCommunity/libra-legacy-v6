@@ -349,6 +349,12 @@ You might see some network errors due to drops, but should again see round numbe
 
 This command will tell you the sync state of a RUNNING local node: `db-backup one-shot query node-state`
 
+<div class="alert alert-block alert-success">
+:bangbang: | This is important
+:---: | :---
+
+<div>
+
 
 ## 7. Restart validator node in `validator` mode
 
