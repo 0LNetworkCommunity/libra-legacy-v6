@@ -21,6 +21,7 @@ use diem_types::{
     chain_id::ChainId,
     transaction::{authenticator::AuthenticationKey, SignedTransaction, TransactionPayload},
 };
+use ol::node::client::find_a_remote_jsonrpc;
 use ol_keys::{scheme::KeyScheme, wallet};
 
 use diem_wallet::WalletLibrary;
@@ -243,6 +244,7 @@ pub fn tx_params_wrapper(tx_type: TxType) -> Result<TxParams, Error> {
     )
 }
 
+// TODO: This could just be the constructor.
 /// tx_parameters format
 pub fn tx_params(
     config: AppCfg,
@@ -525,7 +527,64 @@ pub fn eval_tx_status(result: TransactionView) -> Result<TransactionView, TxErro
     }
 }
 
+
+// pub fn pick_an_upstream() {
+//   find_a_remote_jsonrpc(
+//     cfg,
+//     cfg.clone().chain_info.base_waypoint.ok_or(CarpeError::misc("could not load base_waypoint"))?
+//   )
+// }
+
+
+
 impl TxParams {
+    pub fn new(
+      config: AppCfg,
+      url_opt: Option<Url>,
+      waypoint: Option<Waypoint>,
+      swarm_path: Option<PathBuf>,
+      swarm_persona: Option<String>,
+      tx_type: TxType,
+      is_operator: bool,
+      use_upstream_url: bool,
+      wallet_opt: Option<&WalletLibrary>,
+  ) -> Result<Self, Error> {
+      let url = url_opt.unwrap_or_else(|| {
+          config.what_url(use_upstream_url)
+      });
+
+      let mut tx_params: TxParams = match swarm_path {
+      Some(s) => {
+          get_tx_params_from_swarm(
+              s,
+              swarm_persona.expect("need a swarm 'persona' with credentials in fixtures."),
+              is_operator,
+          )?
+      }, 
+      _ => {
+          if is_operator {
+              get_oper_params(&config, tx_type, url, waypoint)?
+          } else {
+              // Get from 0L.toml e.g. ~/.0L/0L.toml, or use Profile::default()
+              get_tx_params_from_toml(
+                  config.clone(),
+                  tx_type,
+                  wallet_opt,
+                  url,
+                  waypoint,
+                  swarm_path.as_ref().is_some(),
+              )?
+          }
+        }
+      };
+
+      if let Some(w) = waypoint {
+          tx_params.waypoint = w
+      }
+
+      Ok(tx_params)
+  }
+
     /// creates params for unit tests
     pub fn test_fixtures() -> TxParams {
         // This mnemonic is hard coded into the swarm configs. see configs/config_builder
