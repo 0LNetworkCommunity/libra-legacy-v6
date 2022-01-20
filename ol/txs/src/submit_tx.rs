@@ -23,8 +23,7 @@ use diem_types::{
 
 use ol_types::{
     self,
-    config::{TxCost, TxType},
-    fixtures,
+    config::TxType,
 };
 
 use std::{

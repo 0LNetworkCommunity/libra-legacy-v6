@@ -28,9 +28,7 @@ use ol_types::{
 };
 use reqwest::Url;
 use std::{
-    io::{stdout, Write},
     path::PathBuf,
-    thread, time,
 };
 
 /// All the parameters needed for a client transaction.
@@ -61,7 +59,9 @@ pub struct TxParams {
     pub chain_id: ChainId,
 }
 
-
+/// Find a url to use for connecting a client.
+/// The default behavior is to search a randomized list of upsteam_peers in 0L.toml
+/// can optionally be forced to use the first peer on that list.
 pub fn what_url(config: &AppCfg, use_first_upstream: bool) -> Result<Url, Error> {
     if let Some(url_list) = &config.profile.upstream_nodes {
         // get the first in the list of upstreams
@@ -80,6 +80,7 @@ pub fn what_url(config: &AppCfg, use_first_upstream: bool) -> Result<Url, Error>
 }
 
 impl TxParams {
+    /// wrapper to initialize tx params in all cases
     pub fn new(
       config: AppCfg,
       url_opt: Option<Url>,
