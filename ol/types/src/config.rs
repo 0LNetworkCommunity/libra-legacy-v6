@@ -281,23 +281,23 @@ impl AppCfg {
 
         cfg
     }
-    /// choose a node to connect to, either localhost or upstream
-    pub fn what_url(&self, use_upstream_url: bool) -> Url {
-        if use_upstream_url {
-            self.profile
-                .upstream_nodes
-                .clone()
-                .unwrap()
-                .into_iter()
-                .next()
-                .expect("no backup url provided in config toml")
-        } else {
-            self.profile
-                .default_node
-                .clone()
-                .expect("no url provided in config toml")
-        }
-    }
+    // /// choose a node to connect to, either localhost or upstream
+    // pub fn what_url(&self, use_upstream_url: bool) -> Url {
+    //     if use_upstream_url {
+    //         self.profile
+    //             .upstream_nodes
+    //             .clone()
+    //             .unwrap()
+    //             .into_iter()
+    //             .next()
+    //             .expect("no backup url provided in config toml")
+    //     } else {
+    //         self.profile
+    //             .default_node
+    //             .clone()
+    //             .expect("no url provided in config toml")
+    //     }
+    // }
 
     /// save the config file to 0L.toml to the workspace home path
     pub fn save_file(&self) {
