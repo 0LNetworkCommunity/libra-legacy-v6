@@ -356,6 +356,7 @@ This command will tell you the sync state of a RUNNING local node: `db-backup on
 > This can be done by many different ways like building tools, helping out the ecosystem and more.
 >  If you would like to contribute reach out the the Hustle Karma channel in [Discord](https://discord.gg/cfXd9Ngk). When a validator is ready to 
 > onboard you they can do it by the following command:
+>
 > ```txs create-validator -u http://[your-ip-address]```
 
 
