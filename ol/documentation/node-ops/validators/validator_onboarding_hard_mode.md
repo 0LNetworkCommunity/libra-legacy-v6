@@ -8,7 +8,7 @@
 - Separate static IP addresses for the machines, or appropriate DNS mapping.
 
 
-# Firewall
+## Firewall
 
 Validator:
 You need to open ports 6179, 6180, 3030
@@ -23,7 +23,7 @@ Note: this node does not serve transactions, and does not participate in consens
 You will need port 6178, and 6179 open 
 - 6179 is for the private validator fullnode network ("VFN"), it should only ollow traffic from the Validator node IP address above.
 - 6178 is for the the PUBLIC fullnode network. This is how the public nodes that will be serving JSON-RPC on the network will receive data and submit transactions to the network.
-### High-level steps
+## High-level steps
 1. Set up a host - Install binaries.
 2. Generate a public mining/validator key and associated mneumonic.
 2.1 Generate and share you `account.json` file with someone who has gas and can execute the onboarding transaction for you.
@@ -86,7 +86,7 @@ curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
 cargo install toml-cli
 ```
 
-## Create Binaries
+### Create Binaries
 It is recommended to perform the steps from 1.4 onwards inside tmux. Short tmux intruction:
 
 ```
@@ -184,7 +184,7 @@ start your fullnode in a `tmux` session.
 ```
 tmux new -s fullnode
 
-## verify your file handlers have been increased
+# verify your file handlers have been increased
 ulimit -n
 100000
 ```
@@ -233,11 +233,11 @@ tower -o start >> ~/.0L/logs/tower.log 2>&1
 ``` 
 
 
-## 6. Create VFN configs, and deploy the VFN.
+## 6. Create VFN config and deploy the VFN.
 
-6.1 Follow [step 1](#1. Set up a host) to set up a new host and install binaries
+6.1 Follow [step 1](#1.-Set-up-a-host) to set up a new host and install binaries
 
-#### Return to validator machine 
+### Return to validator machine 
 
 6.2 Update validator 0L.toml file
 
@@ -253,7 +253,7 @@ ip = "127.0.0.1"
 vfn_ip = "x.y.z.0"
 ```
 
-6.3 Recreate your VFN configs on validator, and deploy on VFN.
+6.3 Create your VFN configs on validator, and deploy on VFN.
 
 ```
 # On your validator (or wherever your key_store.json lives)
@@ -293,13 +293,14 @@ ol query --val-config
 run this before starting your `tmux` session.
 ```
 
-#### Return to VFN 
+### Return to VFN 
 
 6.5 Configure and start VFN 
+```
 # increase file d
 escriptors
 ulimit -n 100000
-# check that they have been increased
+#### check that they have been increased
 ulimit -n
 100000
 ```
@@ -319,7 +320,7 @@ start your fullnode in a `tmux` session.
 ```
 tmux new -s fullnode
 
-## verify your file handlers have been increased
+# verify your file handlers have been increased
 ulimit -n
 100000
 ```
@@ -333,7 +334,7 @@ mkdir ~/.0L/logs
 diem-node --config ~/.0L/fullnode.node.yaml  >> ~/.0L/logs/node.log 2>&1
 ```
 
-#### 6.6 Check your logs. `tail -f ~/.0L/logs/node.log`
+# 6.6 Check your logs. `tail -f ~/.0L/logs/node.log`
 
 When the sync is ongoing, you'd see something like this:
 
