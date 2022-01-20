@@ -36,7 +36,7 @@ You will need port 6178, and 6179 open
    **note** if your node is not fully synced and if you have not been onboarded yet, you will see errors from the tower app 
    until your node has caught up to the current state and you have been onboarded.
 6. Create VFN configs, and deploy the VFN.
-7. Check and update your on-chain configuration
+6.. Check and update your on-chain configuration
 8. Restart your node in *validator* mode. You will join in the next epoch if you have been on boarded by an active validator.
 9. View [ol explorer](https://0lexplorer.io/) to see the state of the network, you should see your validators public key in the list of validators. 
 
@@ -216,7 +216,7 @@ While waiting for the sync to complete, it is a good opportunity, to set up the 
 [Set up web monitor](web_monitor.md) 
 
 
-## 5. Start producing delay proofs ("delay mining") 
+## 5. Start producing delay proofs on validator ("delay mining") 
 
 Before you start: You will need your mnemonic.
 
@@ -233,11 +233,13 @@ tower -o start >> ~/.0L/logs/tower.log 2>&1
 ``` 
 
 
-### 6. Create VFN configs, and deploy the VFN.
+## 6. Create VFN configs, and deploy the VFN.
 
-6.1 Follow step no. 1 to install binaries
+6.1 Follow [step 1](#1. Set up a host) to set up a new host and install binaries
 
-6.2 #### Update validator 0L.toml file
+#### Return to validator machine 
+
+6.2 Update validator 0L.toml file
 
 Under `profile` include a `vfn_ip` field, with the IP address. This will simplify and correctly display networking addresses for the info helpers.
 
@@ -251,17 +253,17 @@ ip = "127.0.0.1"
 vfn_ip = "x.y.z.0"
 ```
 
-#### 6.3 Recreate your VFN configs on validator, and deploy on VFN.
+6.3 Recreate your VFN configs on validator, and deploy on VFN.
 
 ```
 # On your validator (or wherever your key_store.json lives)
 # create settings for the VFN, private fullnode
 ol init --vfn
 
-# now copy the vfn.node.yaml file to your fullnode
+# now copy the vfn.node.yaml file to your VFN machine
 ```
 
-#### 6.4 Check and update your on-chain configuration on validator node
+6.4 Check and update your on-chain configuration on validator node
 
 More details here:
 [Check and change your on-chain config](../documentation/node-ops/validators/changing_onchain_ip_address.md)
@@ -291,8 +293,9 @@ ol query --val-config
 run this before starting your `tmux` session.
 ```
 
+#### Return to VFN 
 
-#### 6.5 Configure and start VFN 
+6.5 Configure and start VFN 
 # increase file d
 escriptors
 ulimit -n 100000
@@ -326,7 +329,7 @@ inside the `tmux` session start the node in fullnode mode.
 # create log directory 
 mkdir ~/.0L/logs
 
-#start node 
+# start node 
 diem-node --config ~/.0L/fullnode.node.yaml  >> ~/.0L/logs/node.log 2>&1
 ```
 
