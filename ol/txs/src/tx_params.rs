@@ -2,24 +2,20 @@
 #![forbid(unsafe_code)]
 use crate::{
     config::AppCfg,
-    entrypoint::{self, EntryPointTxsCmd},
-    prelude::app_config,
-    save_tx::save_tx,
-    sign_tx::sign_tx,
 };
-use anyhow::{Error, anyhow, bail};
-use cli::{diem_client::DiemClient, AccountData, AccountStatus};
+use anyhow::{Error, bail};
+
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     test_utils::KeyPair,
 };
 use diem_global_constants::OPERATOR_KEY;
-use diem_json_rpc_types::views::{TransactionView, VMStatusView};
+
 use diem_secure_storage::{CryptoStorage, Namespaced, OnDiskStorage, Storage};
 use diem_types::{account_address::AccountAddress, waypoint::Waypoint};
 use diem_types::{
     chain_id::ChainId,
-    transaction::{authenticator::AuthenticationKey, SignedTransaction, TransactionPayload},
+    transaction::{authenticator::AuthenticationKey},
 };
 use ol::node::client::find_a_remote_jsonrpc;
 use ol_keys::{scheme::KeyScheme, wallet};
