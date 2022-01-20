@@ -349,11 +349,14 @@ You might see some network errors due to drops, but should again see round numbe
 
 This command will tell you the sync state of a RUNNING local node: `db-backup one-shot query node-state`
 
-<div class="alert alert-block alert-success">
-:bangbang: | This is important
-:---: | :---
 
-<div>
+> :bangbang: *You must be onboarded by a existing validator to continue*
+> To become a validator a user must display an intention to contribute to the ecosystem. 
+> This can be done by many different ways like building tools, helping out the ecosystem and more.
+>  If you would like to contribute reach out the the Hustle Karma channel in [Discord](https://discord.gg/cfXd9Ngk). When a validator is ready to 
+> onboard you they can do it by the following command:
+> `txs create-validator -u http://[your-ip-address]`
+
 
 
 ## 7. Restart validator node in `validator` mode
