@@ -89,7 +89,7 @@ impl TxParams {
       swarm_persona: Option<String>,
       tx_type: TxType,
       is_operator: bool,
-      use_first_upstream: bool,
+      use_first_url: bool,
       wallet_opt: Option<&WalletLibrary>,
   ) -> Result<Self, Error> {
       
@@ -97,7 +97,7 @@ impl TxParams {
       // default behavior is to try all upstreams in upstream_nodes, and pick the first that can give metadata
       let url = match url_opt {
           Some(u) => u,
-          None => what_url(&config, use_first_upstream)?,
+          None => what_url(&config, use_first_url)?,
       };
 
       let mut tx_params: TxParams = match swarm_path {

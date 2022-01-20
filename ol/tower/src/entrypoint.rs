@@ -48,9 +48,9 @@ where
     #[options(short = "u", help = "URL to send tx")]    
     pub url: Option<Url>,
 
-    /// Use the upstream URL in configs for sending transaction
-    #[options(help = "Use the upstream URL in configs for sending transaction")]
-    pub use_upstream_url: bool,
+    /// Force using the first peer in the list of rpc peers
+    #[options(short = "f", help = "Don't search for peers, use the the first upstream URL in upstream_peers")]
+    pub use_first_url: bool,
 
     /// Override waypoint to connect to
     #[options(short = "w", help = "waypoint to connect to")]
