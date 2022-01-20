@@ -33,7 +33,7 @@ impl Runnable for StartCmd {
             swarm_path,
             swarm_persona,
             is_operator,
-            use_upstream_url,
+            use_first_url,
             ..
         } = entrypoint::get_args();
 
@@ -70,7 +70,7 @@ impl Runnable for StartCmd {
             swarm_persona,
             TxType::Miner,
             is_operator,
-            use_upstream_url,
+            use_first_url,
             None,
         )
         .expect("could not get tx parameters");
