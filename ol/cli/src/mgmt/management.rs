@@ -294,14 +294,14 @@ impl Node {
         }
     }
 
-    // fn get_process(&self, proc_name: &str) -> Option<HostProcess> {
-    //     match proc_name {
-    //         "node" => self.vitals.node_proc.clone(),
-    //         "miner" => self.vitals.node_proc.clone(),
-    //         "monitor" => self.vitals.monitor_proc.clone(),
-    //         _ => None,
-    //     }
-    // }
+    fn get_process(&self, proc_name: &str) -> Option<HostProcess> {
+        match proc_name {
+            "node" => self.vitals.node_proc.clone(),
+            "tower" => self.vitals.miner_proc.clone(),
+            "monitor" => self.vitals.monitor_proc.clone(),
+            _ => None,
+        }
+    }
 
     /// Kill all the processes that are running
     pub fn kill_zombies(&self, name: &str) {
