@@ -83,11 +83,6 @@ impl TxParams {
     ) -> Result<Self, Error> {
         // unless overriding with a URL, or explicitly selecting the first node from list
         // default behavior is to try all upstreams in upstream_nodes, and pick the first that can give metadata
-        let url = match url_opt {
-            Some(u) => u,
-            None => what_url(&config, use_first_url)?,
-        };
-
         let mut tx_params: TxParams = match swarm_path {
             Some(s) => Self::get_tx_params_from_swarm(
                 s,
@@ -95,6 +90,11 @@ impl TxParams {
                 is_operator,
             )?,
             _ => {
+                let url = match url_opt {
+                    Some(u) => u,
+                    None => what_url(&config, use_first_url)?,
+                };
+
                 if is_operator {
                     Self::get_oper_params(&config, tx_type, url, waypoint)?
                 } else {

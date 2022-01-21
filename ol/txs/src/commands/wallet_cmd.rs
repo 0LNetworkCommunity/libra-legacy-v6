@@ -34,7 +34,10 @@ impl Runnable for WalletCmd {
           exit(1);
         };
 
-        let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
+        let tx_params = tx_params_wrapper(TxType::Cheap).unwrap_or_else(|e|{
+          println!("Failed to create transaction parameters, exiting. Message: {:?}", e.to_string());
+          exit(1);
+        });
 
         match set_wallet_type(type_int, tx_params,  entry_args.save_path) {
             Ok(_) => println!("Success: wallet type set"),
