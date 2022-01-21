@@ -189,7 +189,7 @@ impl AppCfg {
             default_config.chain_info.base_waypoint = *base_waypoint;
         } else {
             if let Some(url) = upstream_peer {
-                default_config.profile.upstream_nodes = Some(vec![url.to_owned()]);
+                default_config.profile.upstream_nodes = vec![url.to_owned()];
                 let mut web_monitor_url = url.clone();
                 let (e, w) = bootstrap_waypoint_from_upstream(&mut web_monitor_url).unwrap();
                 default_config.chain_info.base_epoch = Some(e);
@@ -272,7 +272,7 @@ impl AppCfg {
         cfg.workspace.source_path = source_path;
         cfg.chain_info.base_waypoint = Some(config.base.waypoint.waypoint());
         cfg.profile.account = "4C613C2F4B1E67CA8D98A542EE3F59F5".parse().unwrap(); // alice
-        cfg.profile.upstream_nodes = Some(vec![upstream_url]);
+        cfg.profile.upstream_nodes = vec![upstream_url];
 
         cfg
     }
@@ -409,7 +409,7 @@ pub struct Profile {
     // pub default_node: Option<Url>,
 
     /// Other nodes to connect for fallback connections
-    pub upstream_nodes: Option<Vec<Url>>,
+    pub upstream_nodes: Vec<Url>,
 
     /// Link to another delay tower.
     pub tower_link: Option<String>,
@@ -427,7 +427,7 @@ impl Default for Profile {
             ip: "0.0.0.0".parse().unwrap(),
             vfn_ip: "0.0.0.0".parse().ok(),
             // default_node: Some("http://localhost:8080".parse().expect("parse url")),
-            upstream_nodes: Some(vec!["http://localhost:8080".parse().expect("parse url")]),
+            upstream_nodes: vec!["http://localhost:8080".parse().expect("parse url")],
             tower_link: None,
         }
     }
