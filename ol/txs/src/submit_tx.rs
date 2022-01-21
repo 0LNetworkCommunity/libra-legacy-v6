@@ -1,68 +1,64 @@
 //! Txs App submit_tx module
 #![forbid(unsafe_code)]
 use crate::{
-    config::AppCfg,
     entrypoint::{self, EntryPointTxsCmd},
     prelude::app_config,
     save_tx::save_tx,
-    sign_tx::sign_tx,
+    sign_tx::sign_tx, tx_params::TxParams,
 };
 use anyhow::{Error, anyhow};
 use cli::{diem_client::DiemClient, AccountData, AccountStatus};
-use diem_crypto::{
-    ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
-    test_utils::KeyPair,
-};
-use diem_global_constants::OPERATOR_KEY;
+
+
 use diem_json_rpc_types::views::{TransactionView, VMStatusView};
-use diem_secure_storage::{CryptoStorage, Namespaced, OnDiskStorage, Storage};
-use diem_types::{account_address::AccountAddress, waypoint::Waypoint};
+
+use diem_types::{account_address::AccountAddress};
 use diem_types::{
     chain_id::ChainId,
-    transaction::{authenticator::AuthenticationKey, SignedTransaction, TransactionPayload},
+    transaction::{SignedTransaction, TransactionPayload},
 };
-use ol_keys::{scheme::KeyScheme, wallet};
 
-use diem_wallet::WalletLibrary;
+
+
+
 use ol_types::{
     self,
-    config::{TxCost, TxType},
-    fixtures,
+    config::TxType,
 };
-use reqwest::Url;
+
 use std::{
     io::{stdout, Write},
     path::PathBuf,
     thread, time,
 };
 
-/// All the parameters needed for a client transaction.
-#[derive(Debug)]
-pub struct TxParams {
-    /// User's 0L authkey used in mining.
-    pub auth_key: AuthenticationKey,
-    /// Address of the signer of transaction, e.g. owner's operator
-    pub signer_address: AccountAddress,
-    /// Optional field for Miner, for operator to send owner
-    // TODO: refactor so that this is not par of the TxParams type
-    pub owner_address: AccountAddress,
-    /// Url
-    pub url: Url,
-    /// waypoint
-    pub waypoint: Waypoint,
-    /// KeyPair
-    pub keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey>,
-    /// tx cost and timeout info
-    pub tx_cost: TxCost,
-    // /// User's Maximum gas_units willing to run. Different than coin.
-    // pub max_gas_unit_for_tx: u64,
-    // /// User's GAS Coin price to submit transaction.
-    // pub coin_price_per_unit: u64,
-    // /// User's transaction timeout.
-    // pub user_tx_timeout: u64, // for compatibility with UTC's timestamp.
-    /// Chain id
-    pub chain_id: ChainId,
-}
+// /// All the parameters needed for a client transaction.
+// #[derive(Debug)]
+// pub struct TxParams {
+//     /// User's 0L authkey used in mining.
+//     pub auth_key: AuthenticationKey,
+//     /// Address of the signer of transaction, e.g. owner's operator
+//     pub signer_address: AccountAddress,
+//     /// Optional field for Miner, for operator to send owner
+//     // TODO: refactor so that this is not par of the TxParams type
+//     pub owner_address: AccountAddress,
+//     /// Url
+//     pub url: Url,
+//     /// waypoint
+//     pub waypoint: Waypoint,
+//     /// KeyPair
+//     pub keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey>,
+//     /// tx cost and timeout info
+//     pub tx_cost: TxCost,
+//     // /// User's Maximum gas_units willing to run. Different than coin.
+//     // pub max_gas_unit_for_tx: u64,
+//     // /// User's GAS Coin price to submit transaction.
+//     // pub coin_price_per_unit: u64,
+//     // /// User's transaction timeout.
+//     // pub user_tx_timeout: u64, // for compatibility with UTC's timestamp.
+//     /// Chain id
+//     pub chain_id: ChainId,
+// }
 
 #[derive(Debug)]
 /// a transaction error type specific to ol txs
@@ -226,11 +222,11 @@ pub fn tx_params_wrapper(tx_type: TxType) -> Result<TxParams, Error> {
         swarm_path,
         swarm_persona,
         is_operator,
-        use_upstream_url,
+        use_first_url,
         ..
     } = entrypoint::get_args();
     let app_config = app_config().clone();
-    tx_params(
+    TxParams::new(
         app_config,
         url,
         waypoint,
@@ -238,220 +234,176 @@ pub fn tx_params_wrapper(tx_type: TxType) -> Result<TxParams, Error> {
         swarm_persona,
         tx_type,
         is_operator,
-        use_upstream_url,
+        use_first_url,
         None,
     )
 }
 
-/// tx_parameters format
-pub fn tx_params(
-    config: AppCfg,
-    url_opt: Option<Url>,
-    waypoint: Option<Waypoint>,
-    swarm_path: Option<PathBuf>,
-    swarm_persona: Option<String>,
-    tx_type: TxType,
-    is_operator: bool,
-    use_upstream_url: bool,
-    wallet_opt: Option<&WalletLibrary>,
-) -> Result<TxParams, Error> {
-    let url = url_opt.unwrap_or_else(|| {
-        config.what_url(use_upstream_url)
-    });
+// // TODO: This could just be the constructor.
+// /// tx_parameters format
+// pub fn tx_params(
+//     config: AppCfg,
+//     url_opt: Option<Url>,
+//     waypoint: Option<Waypoint>,
+//     swarm_path: Option<PathBuf>,
+//     swarm_persona: Option<String>,
+//     tx_type: TxType,
+//     is_operator: bool,
+//     use_upstream_url: bool,
+//     wallet_opt: Option<&WalletLibrary>,
+// ) -> Result<TxParams, Error> {
+//     let url = url_opt.unwrap_or_else(|| {
+//         config.what_url(use_upstream_url)
+//     });
 
-    let mut tx_params: TxParams = match swarm_path {
-    Some(s) => {
-        get_tx_params_from_swarm(
-            s,
-            swarm_persona.expect("need a swarm 'persona' with credentials in fixtures."),
-            is_operator,
-        )?
-    }, 
-     _ => {
-        if is_operator {
-            get_oper_params(&config, tx_type, url, waypoint)?
-        } else {
-            // Get from 0L.toml e.g. ~/.0L/0L.toml, or use Profile::default()
-            get_tx_params_from_toml(
-                config.clone(),
-                tx_type,
-                wallet_opt,
-                url,
-                waypoint,
-                swarm_path.as_ref().is_some(),
-            )?
-        }
-      }
-    };
+//     let mut tx_params: TxParams = match swarm_path {
+//     Some(s) => {
+//         get_tx_params_from_swarm(
+//             s,
+//             swarm_persona.expect("need a swarm 'persona' with credentials in fixtures."),
+//             is_operator,
+//         )?
+//     }, 
+//      _ => {
+//         if is_operator {
+//             get_oper_params(&config, tx_type, url, waypoint)?
+//         } else {
+//             // Get from 0L.toml e.g. ~/.0L/0L.toml, or use Profile::default()
+//             get_tx_params_from_toml(
+//                 config.clone(),
+//                 tx_type,
+//                 wallet_opt,
+//                 url,
+//                 waypoint,
+//                 swarm_path.as_ref().is_some(),
+//             )?
+//         }
+//       }
+//     };
 
-    if let Some(w) = waypoint {
-        tx_params.waypoint = w
-    }
+// //     if let Some(w) = waypoint {
+// //         tx_params.waypoint = w
+// //     }
 
-    Ok(tx_params)
-}
+// //     Ok(tx_params)
+// // }
 
-/// Extract params from a local running swarm
-pub fn get_tx_params_from_swarm(
-    swarm_path: PathBuf,
-    swarm_persona: String,
-    is_operator: bool,
-) -> Result<TxParams, Error> {
-    let (url, waypoint) = ol_types::config::get_swarm_rpc_url(swarm_path);
-    let mnem = fixtures::get_persona_mnem(&swarm_persona.as_str());
-    let keys = KeyScheme::new_from_mnemonic(mnem);
+// /// Extract params from a local running swarm
+// pub fn get_tx_params_from_swarm(
+//     swarm_path: PathBuf,
+//     swarm_persona: String,
+//     is_operator: bool,
+// ) -> Result<TxParams, Error> {
+//     let (url, waypoint) = ol_types::config::get_swarm_rpc_url(swarm_path);
+//     let mnem = fixtures::get_persona_mnem(&swarm_persona.as_str());
+//     let keys = KeyScheme::new_from_mnemonic(mnem);
 
-    let keypair = if is_operator {
-        KeyPair::from(keys.child_1_operator.get_private_key())
-    } else {
-        KeyPair::from(keys.child_0_owner.get_private_key())
-    };
+//     let keypair = if is_operator {
+//         KeyPair::from(keys.child_1_operator.get_private_key())
+//     } else {
+//         KeyPair::from(keys.child_0_owner.get_private_key())
+//     };
 
-    let pubkey = keys.child_0_owner.get_public();
-    let auth_key = AuthenticationKey::ed25519(&pubkey);
-    let address = auth_key.derived_address();
+//     let pubkey = keys.child_0_owner.get_public();
+//     let auth_key = AuthenticationKey::ed25519(&pubkey);
+//     let address = auth_key.derived_address();
 
-    let tx_params = TxParams {
-        auth_key,
-        signer_address: address,
-        owner_address: address,
-        url,
-        waypoint,
-        keypair,
-        tx_cost: TxCost {
-            max_gas_unit_for_tx: 100_000,
-            coin_price_per_unit: 1, // in micro_gas
-            user_tx_timeout: 5_000,
-        },
+//     let tx_params = TxParams {
+//         auth_key,
+//         signer_address: address,
+//         owner_address: address,
+//         url,
+//         waypoint,
+//         keypair,
+//         tx_cost: TxCost {
+//             max_gas_unit_for_tx: 100_000,
+//             coin_price_per_unit: 1, // in micro_gas
+//             user_tx_timeout: 5_000,
+//         },
 
-        chain_id: ChainId::new(4),
-    };
+//         chain_id: ChainId::new(4),
+//     };
 
-    println!("Info: Got tx params from swarm");
-    Ok(tx_params)
-}
+//     println!("Info: Got tx params from swarm");
+//     Ok(tx_params)
+// }
 
-/// Form tx parameters struct
-pub fn get_oper_params(
-    config: &AppCfg,
-    tx_type: TxType,
-    url: Url,
-    wp: Option<Waypoint>,
-) -> Result<TxParams, Error> {
-    let orig_storage = Storage::OnDiskStorage(OnDiskStorage::new(
-        config.workspace.node_home.join("key_store.json").to_owned(),
-    ));
-    let storage = Storage::NamespacedStorage(Namespaced::new(
-        format!("{}-oper", &config.profile.account.to_hex()),
-        Box::new(orig_storage),
-    ));
-    // export_private_key_for_version
-    let privkey = storage
-        .export_private_key(OPERATOR_KEY)
-        .expect("could not parse operator key in key_store.json");
+// /// Form tx parameters struct
+// pub fn get_oper_params(
+//     config: &AppCfg,
+//     tx_type: TxType,
+//     url: Url,
+//     wp: Option<Waypoint>,
+// ) -> Result<TxParams, Error> {
+//     let orig_storage = Storage::OnDiskStorage(OnDiskStorage::new(
+//         config.workspace.node_home.join("key_store.json").to_owned(),
+//     ));
+//     let storage = Storage::NamespacedStorage(Namespaced::new(
+//         format!("{}-oper", &config.profile.account.to_hex()),
+//         Box::new(orig_storage),
+//     ));
+//     // export_private_key_for_version
+//     let privkey = storage
+//         .export_private_key(OPERATOR_KEY)
+//         .expect("could not parse operator key in key_store.json");
 
-    let keypair = KeyPair::from(privkey);
-    let pubkey = &keypair.public_key; // keys.child_0_owner.get_public();
-    let auth_key = AuthenticationKey::ed25519(pubkey);
+//     let keypair = KeyPair::from(privkey);
+//     let pubkey = &keypair.public_key; // keys.child_0_owner.get_public();
+//     let auth_key = AuthenticationKey::ed25519(pubkey);
 
-    let waypoint = match wp {
-        Some(w) => w,
-        None => config.get_waypoint(None)?,
-    };
+//     let waypoint = match wp {
+//         Some(w) => w,
+//         None => config.get_waypoint(None)?,
+//     };
 
-    let tx_cost = config.tx_configs.get_cost(tx_type);
-    Ok(TxParams {
-        auth_key,
-        signer_address: auth_key.derived_address(),
-        owner_address: config.profile.account, // address of sender
-        url,
-        waypoint,
-        keypair,
-        tx_cost,
-        chain_id: ChainId::new(1),
-    })
-}
+//     let tx_cost = config.tx_configs.get_cost(tx_type);
+//     Ok(TxParams {
+//         auth_key,
+//         signer_address: auth_key.derived_address(),
+//         owner_address: config.profile.account, // address of sender
+//         url,
+//         waypoint,
+//         keypair,
+//         tx_cost,
+//         chain_id: ChainId::new(1),
+//     })
+// }
 
-/// Gets transaction params from the 0L project root.
-pub fn get_tx_params_from_toml(
-    config: AppCfg,
-    tx_type: TxType,
-    wallet_opt: Option<&WalletLibrary>,
-    url: Url,
-    wp: Option<Waypoint>,
-    is_swarm: bool,
-) -> Result<TxParams, Error> {
-    let (auth_key, address, wallet) = if let Some(wallet) = wallet_opt {
-        wallet::get_account_from_wallet(wallet)?
-    } else {
-        wallet::get_account_from_prompt()
-    };
 
-    let waypoint = match wp {
-        Some(w) => w,
-        None => config.get_waypoint(None)?,
-    };
-    let keys = KeyScheme::new_from_mnemonic(wallet.mnemonic());
-    let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
-    let tx_cost = config.tx_configs.get_cost(tx_type);
 
-    let chain_id = if is_swarm {
-        ChainId::new(4)
-    } else {
-        // main net id
-        ChainId::new(1)
-    };
+// /// Gets transaction params from the 0L project root.
+// pub fn get_tx_params_from_keypair(
+//     config: AppCfg,
+//     tx_type: TxType,
+//     keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey>,
+//     wp: Option<Waypoint>,
+//     use_first_upstream: bool,
+//     is_swarm: bool,
+// ) -> Result<TxParams, Error> {
+//     let waypoint = match wp {
+//         Some(w) => w,
+//         None => config.get_waypoint(None)?,
+//     };
+//     let chain_id = if is_swarm {
+//         ChainId::new(4)
+//     } else {
+//         // main net id
+//         ChainId::new(1)
+//     };
 
-    let tx_params = TxParams {
-        auth_key,
-        signer_address: address,
-        owner_address: address,
-        url,
-        waypoint,
-        keypair,
-        tx_cost: tx_cost.to_owned(),
-        // max_gas_unit_for_tx: config.tx_configs.management_txs.max_gas_unit_for_tx,
-        // coin_price_per_unit: config.tx_configs.management_txs.coin_price_per_unit, // in micro_gas
-        // user_tx_timeout: config.tx_configs.management_txs.user_tx_timeout,
-        chain_id,
-    };
+//     let tx_params = TxParams {
+//         auth_key: config.profile.auth_key,
+//         signer_address: config.profile.account,
+//         owner_address: config.profile.account,
+//         url: what_url(&config, use_first_upstream)?,
+//         waypoint,
+//         keypair,
+//         tx_cost: config.tx_configs.get_cost(tx_type),
+//         chain_id,
+//     };
 
-    Ok(tx_params)
-}
-
-/// Gets transaction params from the 0L project root.
-pub fn get_tx_params_from_keypair(
-    config: AppCfg,
-    tx_type: TxType,
-    keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey>,
-    wp: Option<Waypoint>,
-    use_upstream_url: bool,
-    is_swarm: bool,
-) -> Result<TxParams, Error> {
-    let waypoint = match wp {
-        Some(w) => w,
-        None => config.get_waypoint(None)?,
-    };
-    let chain_id = if is_swarm {
-        ChainId::new(4)
-    } else {
-        // main net id
-        ChainId::new(1)
-    };
-
-    let tx_params = TxParams {
-        auth_key: config.profile.auth_key,
-        signer_address: config.profile.account,
-        owner_address: config.profile.account,
-        url: config.what_url(use_upstream_url),
-        waypoint,
-        keypair,
-        tx_cost: config.tx_configs.get_cost(tx_type),
-        chain_id,
-    };
-
-    Ok(tx_params)
-}
+//     Ok(tx_params)
+// }
 
 /// Wait for the response from the diem RPC.
 pub fn wait_for_tx(
@@ -525,36 +477,152 @@ pub fn eval_tx_status(result: TransactionView) -> Result<TransactionView, TxErro
     }
 }
 
-impl TxParams {
-    /// creates params for unit tests
-    pub fn test_fixtures() -> TxParams {
-        // This mnemonic is hard coded into the swarm configs. see configs/config_builder
-        // let mnem_path = format!("./fixtures/mnemonic/{}.mnem", persona);
-        let mnemonic = "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse".to_string();
-        let keys = KeyScheme::new_from_mnemonic(mnemonic);
-        let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
-        let pubkey = keys.child_0_owner.get_public();
-        let signer_auth_key = AuthenticationKey::ed25519(&pubkey);
-        let signer_address = signer_auth_key.derived_address();
 
-        let url = Url::parse("http://localhost:8080").unwrap();
-        let waypoint: Waypoint =
-            "0:732ea2e1c3c5ee892da11abcd1211f22c06b5cf75fd6d47a9492c21dbfc32a46"
-                .parse()
-                .unwrap();
+// pub fn what_url(config: &AppCfg, use_first_upstream: bool) -> Result<Url, Error> {
+//     if let Some(url_list) = &config.profile.upstream_nodes {
+//         // get the first in the list of upstreams
+//       if use_first_upstream {
+//         Ok(url_list[0].to_owned())
+//       } else {
+//         if let Some(w) = config.chain_info.base_waypoint {
+//           Ok(find_a_remote_jsonrpc(&config, w)?.url()?)
+//         } else {
+//           bail!("no base_waypoint provided in 0L.toml")
+//         }
+//       }
+//     } else {
+//       bail!("no upstream_nodes configured in 0L.toml")
+//     }
+// }
 
-        TxParams {
-            auth_key: signer_auth_key,
-            signer_address,
-            owner_address: signer_address,
-            url,
-            waypoint,
-            keypair,
-            tx_cost: TxCost::new(5_000),
-            // max_gas_unit_for_tx: 5_000,
-            // coin_price_per_unit: 1, // in micro_gas
-            // user_tx_timeout: 5_000,
-            chain_id: ChainId::new(4), // swarm/testnet
-        }
-    }
-}
+// impl TxParams {
+//     pub fn new(
+//       config: AppCfg,
+//       url_opt: Option<Url>,
+//       waypoint: Option<Waypoint>,
+//       swarm_path: Option<PathBuf>,
+//       swarm_persona: Option<String>,
+//       tx_type: TxType,
+//       is_operator: bool,
+//       use_first_upstream: bool,
+//       wallet_opt: Option<&WalletLibrary>,
+//   ) -> Result<Self, Error> {
+      
+//       // unless overriding with a URL, or explicitly selecting the first node from list
+//       // default behavior is to try all upstreams in upstream_nodes, and pick the first that can give metadata
+//       let url = match url_opt {
+//           Some(u) => u,
+//           None => what_url(&config, use_first_upstream)?,
+//       };
+
+//       let mut tx_params: TxParams = match swarm_path {
+//       Some(s) => {
+//           get_tx_params_from_swarm(
+//               s,
+//               swarm_persona.expect("need a swarm 'persona' with credentials in fixtures."),
+//               is_operator,
+//           )?
+//       }, 
+//       _ => {
+//           if is_operator {
+//               get_oper_params(&config, tx_type, url, waypoint)?
+//           } else {
+//               // Get from 0L.toml e.g. ~/.0L/0L.toml, or use Profile::default()
+//               Self::get_tx_params_from_toml(
+//                   config.clone(),
+//                   tx_type,
+//                   wallet_opt,
+//                   url,
+//                   waypoint,
+//                   swarm_path.as_ref().is_some(),
+//               )?
+//           }
+//         }
+//       };
+
+//       if let Some(w) = waypoint {
+//           tx_params.waypoint = w
+//       }
+
+//       Ok(tx_params)
+//   }
+
+//   /// Gets transaction params from the 0L project root.
+// pub fn get_tx_params_from_toml(
+//     config: AppCfg,
+//     tx_type: TxType,
+//     wallet_opt: Option<&WalletLibrary>,
+//     url: Url,
+//     wp: Option<Waypoint>,
+//     is_swarm: bool,
+// ) -> Result<Self, Error> {
+//     let (auth_key, address, wallet) = if let Some(wallet) = wallet_opt {
+//         wallet::get_account_from_wallet(wallet)?
+//     } else {
+//         wallet::get_account_from_prompt()
+//     };
+
+//     let waypoint = match wp {
+//         Some(w) => w,
+//         None => config.get_waypoint(None)?,
+//     };
+//     let keys = KeyScheme::new_from_mnemonic(wallet.mnemonic());
+//     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
+//     let tx_cost = config.tx_configs.get_cost(tx_type);
+
+//     let chain_id = if is_swarm {
+//         ChainId::new(4)
+//     } else {
+//         // main net id
+//         ChainId::new(1)
+//     };
+
+//     let tx_params = TxParams {
+//         auth_key,
+//         signer_address: address,
+//         owner_address: address,
+//         url,
+//         waypoint,
+//         keypair,
+//         tx_cost: tx_cost.to_owned(),
+//         // max_gas_unit_for_tx: config.tx_configs.management_txs.max_gas_unit_for_tx,
+//         // coin_price_per_unit: config.tx_configs.management_txs.coin_price_per_unit, // in micro_gas
+//         // user_tx_timeout: config.tx_configs.management_txs.user_tx_timeout,
+//         chain_id,
+//     };
+
+//     Ok(tx_params)
+// }
+
+//     /// creates params for unit tests
+//     pub fn test_fixtures() -> TxParams {
+//         // This mnemonic is hard coded into the swarm configs. see configs/config_builder
+//         // let mnem_path = format!("./fixtures/mnemonic/{}.mnem", persona);
+//         let mnemonic = "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse".to_string();
+//         let keys = KeyScheme::new_from_mnemonic(mnemonic);
+//         let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
+//         let pubkey = keys.child_0_owner.get_public();
+//         let signer_auth_key = AuthenticationKey::ed25519(&pubkey);
+//         let signer_address = signer_auth_key.derived_address();
+
+//         let url = Url::parse("http://localhost:8080").unwrap();
+//         let waypoint: Waypoint =
+//             "0:732ea2e1c3c5ee892da11abcd1211f22c06b5cf75fd6d47a9492c21dbfc32a46"
+//                 .parse()
+//                 .unwrap();
+
+//         TxParams {
+//             auth_key: signer_auth_key,
+//             signer_address,
+//             owner_address: signer_address,
+//             url,
+//             waypoint,
+//             keypair,
+//             tx_cost: TxCost::new(5_000),
+//             // max_gas_unit_for_tx: 5_000,
+//             // coin_price_per_unit: 1, // in micro_gas
+//             // user_tx_timeout: 5_000,
+//             chain_id: ChainId::new(4), // swarm/testnet
+//         }
+//     }
+// }

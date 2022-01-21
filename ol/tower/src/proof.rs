@@ -13,7 +13,7 @@ use std::{
     path::PathBuf,
     time::Instant,
 };
-use txs::submit_tx::TxParams;
+use txs::tx_params::TxParams;
 
 /// name of the proof files
 pub const FILENAME: &str = "proof";

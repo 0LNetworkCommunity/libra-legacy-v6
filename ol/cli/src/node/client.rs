@@ -63,7 +63,7 @@ pub fn find_a_remote_jsonrpc(config: &AppCfg, waypoint: Waypoint) -> Result<Diem
         let url = list.choose_multiple(&mut rng, len)
             .into_iter()
             .find(|&remote_url| {
-                println!("trying upstream url: {}", &remote_url);
+                // println!("trying upstream url: {}", &remote_url);
                 match make_client(Some(remote_url.to_owned()), waypoint) {
                     Ok(c) => {
                       match c.get_metadata(){
@@ -97,22 +97,15 @@ pub fn find_a_remote_jsonrpc(config: &AppCfg, waypoint: Waypoint) -> Result<Diem
     ))
 }
 
-/// get client type with defaults from toml for local node
-pub fn default_local_client(config: &AppCfg, waypoint: Waypoint) -> Result<DiemClient, Error> {
-    let local_url = config
-        .profile
-        .default_node
-        .clone()
-        .expect("could not get url from configs");
+/// the default client will be the first option in the list.
+pub fn default_local_rpc(waypoint: Waypoint) -> Result<DiemClient, Error> {
 
-    make_client(Some(local_url.clone()), waypoint)
+    make_client("127.0.0.1".parse().ok(), waypoint)
 }
 
 /// connect a swarm client
-pub fn swarm_test_client(config: &mut AppCfg, swarm_path: PathBuf) -> Result<DiemClient, Error> {
+pub fn swarm_test_client(swarm_path: PathBuf) -> Result<DiemClient, Error> {
     let (url, waypoint) = ol_types::config::get_swarm_rpc_url(swarm_path.clone());
-    config.profile.default_node = Some(url.clone());
-    config.profile.upstream_nodes = Some(vec![url.clone()]);
 
     make_client(Some(url.clone()), waypoint)
 }
@@ -121,12 +114,12 @@ pub fn swarm_test_client(config: &mut AppCfg, swarm_path: PathBuf) -> Result<Die
 pub fn pick_client(swarm_path: Option<PathBuf>, config: &mut AppCfg) -> Result<DiemClient, Error> {
     let is_swarm = *&swarm_path.is_some();
     if let Some(path) = swarm_path {
-        return swarm_test_client(config, path);
+        return swarm_test_client( path);
     };
     let waypoint = config.get_waypoint(swarm_path)?;
 
     // check if is in sync
-    let local_client = default_local_client(config, waypoint.clone())?;
+    let local_client = default_local_rpc(waypoint.clone())?;
 
     let remote_client = find_a_remote_jsonrpc(config, waypoint.clone())?;
     // compares to an upstream random remote client. If it is synced, use the local client as the default

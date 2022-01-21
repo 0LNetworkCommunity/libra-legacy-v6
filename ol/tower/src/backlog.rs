@@ -3,7 +3,8 @@
 
 use cli::{diem_client::DiemClient};
 use ol_types::block::VDFProof;
-use txs::submit_tx::{TxParams, eval_tx_status};
+use txs::submit_tx::eval_tx_status;
+use txs::tx_params::TxParams;
 use std::{fs::File, path::PathBuf, thread, time};
 use ol_types::config::AppCfg;
 use crate::commit_proof::commit_proof_tx;

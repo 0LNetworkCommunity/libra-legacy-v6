@@ -5,8 +5,8 @@ use crate::{entrypoint::EntryPointTxsCmd, prelude::*};
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use ol_types::config::AppCfg;
 use ol_types::config::TxType;
+use txs::tx_params::TxParams;
 use std::process::exit;
-use txs::submit_tx::tx_params;
 use diem_logger::{Level, Logger};
 
 /// `start` subcommand
@@ -33,7 +33,7 @@ impl Runnable for StartCmd {
             swarm_path,
             swarm_persona,
             is_operator,
-            use_upstream_url,
+            use_first_url,
             ..
         } = entrypoint::get_args();
 
@@ -62,7 +62,7 @@ impl Runnable for StartCmd {
             waypoint
         };
 
-        let tx_params = tx_params(
+        let tx_params = TxParams::new(
             cfg.clone(),
             url,
             waypoint,
@@ -70,7 +70,7 @@ impl Runnable for StartCmd {
             swarm_persona,
             TxType::Miner,
             is_operator,
-            use_upstream_url,
+            use_first_url,
             None,
         )
         .expect("could not get tx parameters");

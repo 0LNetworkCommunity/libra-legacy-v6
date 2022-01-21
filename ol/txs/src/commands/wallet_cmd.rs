@@ -6,7 +6,11 @@ use std::{path::PathBuf, process::exit};
 use abscissa_core::{Command, Options, Runnable};
 use diem_json_rpc_types::views::TransactionView;
 use ol_types::config::TxType;
-use crate::{entrypoint, submit_tx::{TxError, TxParams, maybe_submit, tx_params_wrapper}};
+use crate::{
+  entrypoint,
+  submit_tx::{TxError, maybe_submit, tx_params_wrapper},
+  tx_params::TxParams,
+};
 use diem_transaction_builder::stdlib as transaction_builder;
 
 /// `CreateAccount` subcommand

@@ -240,10 +240,6 @@ impl AppCfg {
         let config = NodeConfig::load(&config_path)
             .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &config_path));
 
-        let url =
-            Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str())
-                .unwrap();
-
         // upstream configs
         let upstream_config_path = swarm_path.join(&node_home).join("node.yaml");
         let upstream_config = NodeConfig::load(&upstream_config_path).unwrap_or_else(|_| {
@@ -276,28 +272,27 @@ impl AppCfg {
         cfg.workspace.source_path = source_path;
         cfg.chain_info.base_waypoint = Some(config.base.waypoint.waypoint());
         cfg.profile.account = "4C613C2F4B1E67CA8D98A542EE3F59F5".parse().unwrap(); // alice
-        cfg.profile.default_node = Some(url);
         cfg.profile.upstream_nodes = Some(vec![upstream_url]);
 
         cfg
     }
-    /// choose a node to connect to, either localhost or upstream
-    pub fn what_url(&self, use_upstream_url: bool) -> Url {
-        if use_upstream_url {
-            self.profile
-                .upstream_nodes
-                .clone()
-                .unwrap()
-                .into_iter()
-                .next()
-                .expect("no backup url provided in config toml")
-        } else {
-            self.profile
-                .default_node
-                .clone()
-                .expect("no url provided in config toml")
-        }
-    }
+    // /// choose a node to connect to, either localhost or upstream
+    // pub fn what_url(&self, use_upstream_url: bool) -> Url {
+    //     if use_upstream_url {
+    //         self.profile
+    //             .upstream_nodes
+    //             .clone()
+    //             .unwrap()
+    //             .into_iter()
+    //             .next()
+    //             .expect("no backup url provided in config toml")
+    //     } else {
+    //         self.profile
+    //             .default_node
+    //             .clone()
+    //             .expect("no url provided in config toml")
+    //     }
+    // }
 
     /// save the config file to 0L.toml to the workspace home path
     pub fn save_file(&self) {
@@ -410,8 +405,8 @@ pub struct Profile {
     /// ip address of the validator fullnodee
     pub vfn_ip: Option<Ipv4Addr>,
 
-    /// Node URL and and port to submit transactions. Defaults to localhost:8080
-    pub default_node: Option<Url>,
+    // /// Node URL and and port to submit transactions. Defaults to localhost:8080
+    // pub default_node: Option<Url>,
 
     /// Other nodes to connect for fallback connections
     pub upstream_nodes: Option<Vec<Url>>,
@@ -431,7 +426,7 @@ impl Default for Profile {
             statement: "Protests rage across the nation".to_owned(),
             ip: "0.0.0.0".parse().unwrap(),
             vfn_ip: "0.0.0.0".parse().ok(),
-            default_node: Some("http://localhost:8080".parse().expect("parse url")),
+            // default_node: Some("http://localhost:8080".parse().expect("parse url")),
             upstream_nodes: Some(vec!["http://localhost:8080".parse().expect("parse url")]),
             tower_link: None,
         }

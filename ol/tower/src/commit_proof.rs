@@ -3,7 +3,11 @@
 use anyhow::Error;
 use cli::{diem_client::DiemClient, AccountData, AccountStatus};
 use ol_types::block::VDFProof;
-use txs::{sign_tx::sign_tx, submit_tx::{TxParams, submit_tx}};
+use txs::{
+  sign_tx::sign_tx,
+  submit_tx::submit_tx,
+  tx_params::TxParams,
+};
 use diem_json_rpc_types::views::{TransactionView};
 use diem_transaction_builder::stdlib as transaction_builder;
 
