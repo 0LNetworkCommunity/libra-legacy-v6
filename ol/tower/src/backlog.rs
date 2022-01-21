@@ -14,7 +14,7 @@ use anyhow::{bail, Result, Error};
 use diem_logger::prelude::*;
 
 
-const MAX_PROOFS_PER_EPOCH: u64 = 72;
+pub const MAX_PROOFS_PER_EPOCH: u64 = 72;
 
 /// Submit a backlog of blocks that may have been mined while network is offline. 
 /// Likely not more than 1. 
