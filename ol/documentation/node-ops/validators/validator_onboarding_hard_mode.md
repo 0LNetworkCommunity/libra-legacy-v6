@@ -131,15 +131,6 @@ mount
 ls /root
 ```
 
-Mount `/proc` **[in sandbox]**:
-```
-# note: if you reboot the machine you will need to redo this
-mount none /proc -t proc
-# check mounts again
-mount
-# should give: none on /proc type proc (rw,relatime)
-```
-
 Configure source list for apt **[in sandbox]**:
 ```
 cat <<EOT > /etc/apt/sources.list
@@ -151,6 +142,15 @@ EOT
 Update apt index **[in sandbox]**:
 ```
 apt update
+```
+
+Mount `/proc` and populate `/dev` **[in sandbox]**:
+```
+# note: if you reboot the machine you will need to redo this
+mount none /proc -t proc
+
+apt install makedev
+mount devpts /dev/pts -t devpts
 ```
 
 Prepare build tooling **[in sandbox]**:
