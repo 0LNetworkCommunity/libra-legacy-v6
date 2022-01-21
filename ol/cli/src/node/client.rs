@@ -70,17 +70,17 @@ pub fn find_a_remote_jsonrpc(config: &AppCfg, waypoint: Waypoint) -> Result<Diem
                         if m.version > 0 {
                             true
                         } else {
-                            println!("can make client but could not get blockchain height > 0");
+                            println!("can make client to {:?}, but could not get blockchain height > 0", remote_url);
                             false
                         }
                     }
                     Err(e) => {
-                        println!("can make client but could not get metadata {:?}", e);
+                        println!("can make client for {:?} but could not get metadata, message: {:?}", remote_url, e);
                         false
                     }
                 },
                 Err(e) => {
-                    println!("could not make client {:?}", e);
+                    println!("could not make client for {:?}, message: {:?}", remote_url, e);
                     false
                 }
             }
