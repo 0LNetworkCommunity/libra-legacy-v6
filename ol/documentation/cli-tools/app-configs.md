@@ -43,11 +43,11 @@ vfn_ip = "0.0.0.0"
 
 When using 0L tools you have the option of having one or more upstream nodes for your tools to get data and submit transactions.
 
-`upstream_nodes` it contains the endpoint addresses of fullnodes which have the JSON RPC enabled (port `8080` by default).
+`upstream_nodes` contains the endpoint addresses of fullnodes which have the JSON RPC enabled (port `8080` by default).
 
-`upstream_nodes` is a list. The default behavior of the 0L tools is to RANDOMLY pick a URL from the list, and check if it is alive. The list feature exists for Carpe primarily, where random selection is important for balancing load across fullnodes, and testing all URLs at this time of submitting txs increases reliability for end users.
+`upstream_nodes` is a list. The default behavior of the 0L tools is to RANDOMLY pick a URL from the list, and check if it is alive. The list feature exists for Carpe primarily, where random selection is important for balancing load across fullnodes. Testing all URLs at the time of submitting txs increases reliability for end-users.
 
-For Validators and Fullnode operators which want more control, have many options for configuration.
+For Validators and Fullnode operators which want more control, there are other options for configuration.
 
 1. only include a single node in this array
 1. set the URL at runtime
@@ -66,7 +66,7 @@ upstream_nodes = ["http://x.y.z.a:8080/"]
 You can explicitly set the URL when running the CLI command.
 `txs --url ...`
 
-### Force use first URL
+### Force using the first URL
 1. You usually have a list of URLs you want to submit to. But there is one you use more often, or have more control over (e.g. localhost).
 
 You can explicitly set the URL when running the CLI command.
