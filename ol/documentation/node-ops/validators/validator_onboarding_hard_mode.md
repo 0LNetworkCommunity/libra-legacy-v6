@@ -1,4 +1,6 @@
 # Validator Setup
+
+
 ## Requirements 
 - TWO unix hosts, one for Validator Node, and one for the Private Fullnode ("VFN").
 0L code targets Ubuntu 20.4
@@ -8,7 +10,7 @@
 - Separate static IP addresses for the machines, or appropriate DNS mapping.
 
 
-# Firewall
+## Firewall settings
 
 Validator:
 You need to open ports 6179, 6180, 3030
@@ -23,8 +25,9 @@ Note: this node does not serve transactions, and does not participate in consens
 You will need port 6178, and 6179 open 
 - 6179 is for the private validator fullnode network ("VFN"), it should only ollow traffic from the Validator node IP address above.
 - 6178 is for the the PUBLIC fullnode network. This is how the public nodes that will be serving JSON-RPC on the network will receive data and submit transactions to the network.
-### High-level steps
-1. Install binaries.
+
+## High-level steps
+1. Setup linux node(s) and install the 0L binaries.
 2. Generate a public mining/validator key and associated mneumonic.
 3. Generate and share you `account.json` file with someone who has gas and can execute the onboarding transaction for you.
 
@@ -40,52 +43,42 @@ You will need port 6178, and 6179 open
 
 ## 1. Set up a host
 
-These instructions target Ubuntu.
+### 1.1. Install Ubuntu linux host machine
+These instructions target Ubuntu 20.4 LTS (codename: Focal Fossa).
 
-1.1. Set up an Ubuntu host with `ssh` access, e.g. in a cloud service provider. 
+Set up an Ubuntu host with `ssh` and root access, e.g. in a cloud service provider. 
 
-1.2.  Associate a static IP  with your host, this will be tied to you account. This address will be shared on the chain, so that other nodes will be able to find you through the peer discovery mechanism.
+Associate a static IP  with your host, this will be tied to you account. This address will be shared on the chain, so that other nodes will be able to find you through the peer discovery mechanism.
 
-1.3. 0L binaries should be run in a linux user that has very narrow permissions. Before you can create binaries you'll need some tools installed blobally by `sudo` and likely in root.
-A helpful script to install dependencies exists here: github.com/OLSF/libra/main/ol/util/setup.sh 
+### 1.2. Create linux service user
 
-You can run it with a curl bash:
-```
-curl -sL https://raw.githubusercontent.com/OLSF/libra/main/ol/util/setup.sh | bash
-```
-
-1.4. You'll want to use `tmux` to persist the terminal session for build, as well as for running the nodes and tower app. Also this setup requires `git` and `make`, which might be installed already on your host. If not, perform the following steps now:
-
-```
-sudo apt install -y git vim zip unzip jq build-essential cmake clang llvm libgmp-dev secure-delete pkg-config libssl-dev lld
-
-```
-
-1.5. Create the linux user that will run the 0L services.
+*Motivation*: 0L binaries should be run in a linux user that has very narrow permissions.
 
 We will create a user called `node` which has no password (can only be accessed initially by sudo).
 ```
+# create user with home directory /home/node
 sudo useradd node -m -s /bin/bash
 ```
 
-You can then access that account via `sudo su node`. Or setup ssh keys under `/home/node/.ssh/authorized_keys`.
+You can then access that account ...
+* using `sudo su - node` (as root/sudo user)
+* ssh as node user (requires you to put your ssh public keys in `/home/node/.ssh/authorized_keys`)
 
-1.6. Install Rust on the `node` user
+### 1.3. Choose build option
+
+Tutorial provides two options:
+* Build binaries inside a chroot sandbox environment
+* Build binaries on host
+
+Either way you will end up with the binaries installed in `/home/node/bin` directory:
 ```
-sudo su node
-
-# you are now in the node user
-curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
-
-# restart your bash instance to pickup the cargo paths
-. ~/.bashrc
-
-# install some command-line tools
-cargo install toml-cli
+ls /home/node/bin
+# db-backup  db-backup-verify  db-restore  diem-node  ol  onboard  tower  txs
 ```
 
-## Create Binaries
-It is recommended to perform the steps from 1.4 onwards inside tmux. Short tmux intruction:
+It is recommended to perform the build steps inside tmux.
+
+Short tmux introduction:
 
 ```
 # start a new tmux session
@@ -96,14 +89,140 @@ tmux a
 ```
 to detach from the `tmux` session use key stroke: `Ctrl-b` then `d`
 
-1.6. Clone this repo: 
+
+### 1.4. Build binaries inside a chroot sandbox environment (Option 1)
+Build the binaries in a sandbox environment on an Ubuntu host.
+
+This will keep the host small, secure and maintainable and allows to upgrade Ubuntu packages for runtime and build independently!
+
+When following this tutorial you **have to be aware** of the environments (host or sandbox) you are currently working in!
+
+#### Requirements
+You need root access to the Ubuntu host to work with `chroot`. You might want to read more about chroot here: https://help.ubuntu.com/lts/installation-guide/armhf/apds04.html.
+
+Install `debootstrap` package using apt **[on host]**:
+```
+# as root
+apt install debootstrap
+```
+
+Create empty directory which will become the root (`/`) of the sandbox system; needs at least 8 GB free disk space **[on host]**:
+```
+# feel free to choose a different directory
+mkdir /opt/ubuntu-build-0L
+```
+
+Populate chroot directory **[on host]**:
+```
+# should take few minutes
+debootstrap --arch amd64 focal /opt/ubuntu-build-0L
+```
+
+Enter (aka chroot) into the sandbox system **[on host]**:
+```
+LANG=C.UTF-8 chroot /opt/ubuntu-build-0L /bin/bash
+```
+
+(optional) Look around in the sandbox - you should see a blank linux environment **[in sandbox]**:
+```
+# mount should give an error
+mount
+# root directory is almost empty
+ls /root
+```
+
+Mount `/proc` **[in sandbox]**:
+```
+# note: if you reboot the machine you will need to redo this
+mount none /proc -t proc
+# check mounts again
+mount
+# should give: none on /proc type proc (rw,relatime)
+```
+
+Configure source list for apt **[in sandbox]**:
+```
+cat <<EOT > /etc/apt/sources.list
+deb http://archive.ubuntu.com/ubuntu focal main universe
+deb http://security.ubuntu.com/ubuntu focal-security main universe
+EOT
+```
+
+Update apt index **[in sandbox]**:
+```
+apt update
+```
+
+Prepare build tooling **[in sandbox]**:
+```
+# this steps are slightly modified version of this: https://raw.githubusercontent.com/OLSF/libra/main/ol/util/setup.sh
+
+apt install -y curl git tmux jq build-essential cmake clang llvm libgmp-dev pkg-config libssl-dev lld
+
+curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
+source $HOME/.cargo/env
+
+# should take few minutes
+cargo install toml-cli sccache
+export RUSTC_WRAPPER=sccache
+```
+
+Clone the source code from GitHub and execute build **[in sandbox]**:
+```
+# as root
+cd /usr/local/src
+git clone https://github.com/OLSF/libra.git
+cd libra
+# should take apprx 15 minutes
+make bins
+
+# copy binaries over to `/root/bin`
+# binaries: db-backup, db-backup-verify, db-restore, diem-node, ol, onboard, tower, txs
+make install
+```
+
+Done. Now exit the sandbox and grab the binaries **[in sandbox/on host]**:
+```
+# get out of sandbox back to the host
+exit
+# inspect binaries
+ls -l /opt/ubuntu-build-0L/root/bin
+# create tar archive
+cd /opt/ubuntu-build-0L/root && tar cfz /tmp/binaries0L.tgz bin
+```
+
+We are **done**! The binaries are now build and ready and can be found in `/tmp/binaries0L.tgz`
+
+Install the binaries in home directory of `node` user **[on host]**:
+```
+# become node use
+su - node
+# double-check
+id
+
+mkdir $HOME/bin
+tar xfz /tmp/binaries0L.tgz --directory=$HOME
+# inspect
+ls /home/node/bin
+```
+
+(optional) Remove the build sandbox **[on host]**:
+```
+umount /opt/ubuntu-build-0L/proc
+rm -rf /opt/ubuntu-build-0L
+```
+
+
+### 1.5. Build binaries directly on host  (Option 2)
+
+Clone this repo: 
 
 `git clone https://github.com/OLSF/libra.git`
 
 
 For more details: (../devs/OS_dependencies.md)
 
-1.7. Build the source and install binaries:
+Build the source and install binaries:
 This takes a while, run inside `tmux` to avoid your session gets disconnected 
 
 ```
@@ -111,12 +230,9 @@ cd </path/to/libra-source/>
 make bins install
 ```
 
-1.7. Fetch the web server files
+### 1.6. Fetch the web server files
 ```
 ol serve --update
-
-# alternatively
-make web-files
 ```
 ## 2. Generate account keys
 
