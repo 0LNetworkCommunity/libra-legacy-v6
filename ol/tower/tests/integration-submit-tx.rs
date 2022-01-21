@@ -4,7 +4,7 @@
 use std::{fs, path::{Path}, process::{Command, Stdio}, thread, time::{self, Duration}};
 use diem_config::config::NodeConfig;
 use ol::config::AppCfg;
-use txs::submit_tx::{TxParams, get_tx_params_from_swarm};
+use txs::tx_params::TxParams;
 use anyhow::{bail, Error};
 
 #[test]
@@ -93,7 +93,7 @@ pub fn integration_submit_tx() {
             thread::sleep(test_timeout);
 
             // TODO: make these paths references
-            let tx_params = get_tx_params_from_swarm(swarm_configs_path.clone(), "alice".to_owned(), false).unwrap();// TO write logic
+            let tx_params = TxParams::get_tx_params_from_swarm(swarm_configs_path.clone(), "alice".to_owned(), false).unwrap();// TO write logic
             let config =  AppCfg::init_app_configs_swarm(swarm_configs_path.clone(), 
                                     swarm_configs_path.join("0"), Some(root_source_path.clone().to_path_buf()));
 
