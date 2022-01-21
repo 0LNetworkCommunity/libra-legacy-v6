@@ -13,7 +13,8 @@ use crate::proof::{parse_block_height, FILENAME};
 use anyhow::{bail, Result, Error};
 use diem_logger::prelude::*;
 
-
+/// max proofs that can be submitted in an epoch
+// TODO: make this a query to chain.
 pub const MAX_PROOFS_PER_EPOCH: u64 = 72;
 
 /// Submit a backlog of blocks that may have been mined while network is offline. 
