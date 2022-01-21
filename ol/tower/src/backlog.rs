@@ -13,6 +13,9 @@ use crate::proof::{parse_block_height, FILENAME};
 use anyhow::{bail, Result, Error};
 use diem_logger::prelude::*;
 
+
+const MAX_PROOFS_PER_EPOCH: u64 = 72;
+
 /// Submit a backlog of blocks that may have been mined while network is offline. 
 /// Likely not more than 1. 
 pub fn process_backlog(
@@ -21,24 +24,35 @@ pub fn process_backlog(
     // Getting remote miner state
     //let remote_state = get_remote_state(tx_params)?;
     //let remote_height = remote_state.verified_tower_height;
-    let remote_height = get_remote_tower_height(tx_params).unwrap();
+    let (remote_height, proofs_in_epoch) = get_remote_tower_height(tx_params).unwrap();
 
     info!("Remote tower height: {}", remote_height);
     // Getting local state height
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
     let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
-    if let Some(current_block_number) = current_block_number {
-        info!("Local tower height: {:?}", current_block_number);
-        if i128::from(current_block_number) > remote_height {
-            info!("Backlog: resubmitting missing proofs.");
+    if let Some(current_proof_number) = current_block_number {
+        info!("Local tower height: {:?}", current_proof_number);
+        if current_proof_number > remote_height {
 
             let mut i = remote_height + 1;
-            while i <= current_block_number.into() {
+
+            // use i64 for safety
+            if !(proofs_in_epoch < MAX_PROOFS_PER_EPOCH) {
+              info!("Backlog: Maximum number of proofs sent this epoch {}, exiting.", MAX_PROOFS_PER_EPOCH);
+              return Ok(())
+            }
+
+            info!("Backlog: resubmitting missing proofs.");
+
+            let remaining_in_epoch = MAX_PROOFS_PER_EPOCH - proofs_in_epoch;
+            let mut submitted_now = 1u64;
+
+            while i <= current_proof_number.into() && submitted_now < remaining_in_epoch {
                 let path = PathBuf::from(
                     format!("{}/{}_{}.json", blocks_dir.display(), FILENAME, i)
                 );
-                info!("submitting proof {}", i);
+                info!("submitting proof {}, in this backlog: {}", i, submitted_now);
                 let file = File::open(&path)?;
                 let reader = BufReader::new(file);
                 let block: VDFProof = serde_json::from_reader(reader)?;
@@ -53,34 +67,22 @@ pub fn process_backlog(
                     },
                 };
                 i = i + 1;
+                submitted_now = submitted_now + 1;
             }
         }
     }
     Ok(())
 }
 
-/// returns remote tower height
-pub fn get_remote_tower_height(tx_params: &TxParams) -> Result<i128, Error> {
+/// returns remote tower height and current proofs in epoch
+pub fn get_remote_tower_height(tx_params: &TxParams) -> Result<(u64, u64), Error> {
     let client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
     info!("Fetching remote tower height: {}, {}",
         tx_params.url.clone(), tx_params.owner_address.clone()
     );
-    let remote_state = client.get_miner_state(&tx_params.owner_address);
-    match remote_state {
-        Ok( s ) => { match s {
-            Some(remote_state) => {
-                Ok(remote_state.verified_tower_height.into())
-            },
-            None => {
-                static MSG: &str = "Info: Received response but no remote state found. Exiting.";
-                info!("{}", MSG);
-                bail!(MSG)
-            }
-        } },
-        Err( _ ) => {
-            // error info returned -> tower is not yet on chain, so the height is 0
-            Ok(-1)
-        },
+    let tower_state = client.get_miner_state(&tx_params.owner_address);
+    match tower_state {
+        Ok(Some(s)) => Ok((s.verified_tower_height, s.actual_count_proofs_in_epoch)),     
+        _ => bail!("Info: Received response but no remote state found. Exiting.")
     }
 }
-
