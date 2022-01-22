@@ -204,7 +204,7 @@ fn get_node_port() -> u16 {
 }
 
 fn check_node_sync(tx_params: &TxParams, config: &AppCfg) -> Result<(), Error> {
-    let remote_height = tower::backlog::get_remote_tower_height(&tx_params).unwrap();
+    let (remote_height, _) = tower::backlog::get_remote_tower_height(&tx_params).unwrap();
     println!("Remote tower height: {}", remote_height);
 
     let mut blocks_dir = config.workspace.node_home.clone();
@@ -214,7 +214,7 @@ fn check_node_sync(tx_params: &TxParams, config: &AppCfg) -> Result<(), Error> {
     println!("Local tower height: {}", current_block_number);
 
     // The client can be in sync with local or -1 wrt local. 
-    if (i128::from(current_block_number) != remote_height) && i128::from(current_block_number - 1)!= remote_height {
+    if (current_block_number != remote_height) && (current_block_number - 1) != remote_height {
         bail!("Block heights don't match: Miner: {}, Remote: {}", current_block_number, remote_height)
     }
     Ok(())
