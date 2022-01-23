@@ -999,6 +999,7 @@ dependencies = [
  "bcs",
  "chrono",
  "compiler",
+ "crash-handler",
  "diem-client",
  "diem-config",
  "diem-crypto",
