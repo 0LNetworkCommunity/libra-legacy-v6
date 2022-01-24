@@ -30,7 +30,6 @@ module Genesis {
     use 0x1::TowerState;
     use 0x1::Wallet;
     use 0x1::Migrations;
-    use 0x1::MigrateAutoPayBal;
 
     /// Initializes the Diem framework.
     fun initialize(
@@ -118,7 +117,6 @@ module Genesis {
         Wallet::init(dm_account);
         DiemAccount::vm_init_slow(dm_account);
         Migrations::init(dm_account);
-        MigrateAutoPayBal::do_it(dm_account);
 
         // After we have called this function, all invariants which are guarded by
         // `DiemTimestamp::is_operating() ==> ...` will become active and a verification condition.

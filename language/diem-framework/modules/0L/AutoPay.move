@@ -19,7 +19,6 @@ address 0x1 {
     use 0x1::Errors;
     use 0x1::Wallet;
     use 0x1::Roles;
-    use 0x1::Migrations;
     // use 0x1::DiemTimestamp;
 
     /// Attempted to send funds to an account that does not exist
@@ -37,8 +36,6 @@ address 0x1 {
     const FIXED_ONCE: u8 = 3;
 
     const MAX_NUMBER_OF_INSTRUCTIONS: u64 = 30;
-
-    const AUTOPAY_UPGRADE_UID:u64 = 2;
 
     // Can't give more than 100.00%
     const MAX_PERCENTAGE: u64 = 10000;
@@ -118,7 +115,7 @@ address 0x1 {
       if (exists<Tick>(CoreAddresses::DIEM_ROOT_ADDRESS())) {
         // The tick is triggered at the beginning of each epoch
         let tick_state = borrow_global_mut<Tick>(Signer::address_of(vm));
-        if (!tick_state.triggered && Migrations::has_run(AUTOPAY_UPGRADE_UID)) {
+        if (!tick_state.triggered) {
           tick_state.triggered = true;
           return true
         };
