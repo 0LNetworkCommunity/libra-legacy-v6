@@ -134,6 +134,8 @@ progress:
 				i=$$(($$i + 1)); \
 			else \
 				echo ERROR, txs not successful ; \
+				cat ${LOG};\
+				cat ${SWARM_TEMP}/logs/0.log;\
 				exit 1 ; \
 			fi ; \
 			echo "Sleeping for 1 min" ; \

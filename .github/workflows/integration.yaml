@@ -45,15 +45,5 @@ jobs:
         run: sudo chmod -R 777 language/*
       - name: UPGRADE
         run: BRANCH_NAME=${{ steps.branch-name.outputs.current_branch }} RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-upgrade.mk test
-      - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v2.3.1
-        with:
-          # Artifact name
-          name: UPGRADE_NODE_LOG
-          # A file, directory or wildcard pattern that describes what to upload
-          path: $HOME/.0L/swarm_temp/logs/0.log
-          # The desired behavior if no files are found using the provided path.
-          warn: Output a warning but do not fail the action
-          retention-days: 1
 
 
