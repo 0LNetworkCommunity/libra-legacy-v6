@@ -20,6 +20,7 @@ use num_format::{Locale, ToFormattedString};
 pub struct AutoPayResource {
     ///
     pub payment: Vec<Payment>,
+    pub prev_bal: u64,
 }
 
 /// Struct that represents a view for AutoPay resource
