@@ -30,8 +30,9 @@ MNEM="talent sunset lizard pill fame nuclear spy noodle basket okay critic grow 
 NUM_NODES = 2
 
 ifndef PREV_VERSION
-#TODO: decide how to programmatically tell the tests what version is in production.
-PREV_VERSION = v5.0.4
+#TODO: decide how to programmatically tell the tests what version is in production. 
+#This needs to be updated after every chain upgrade
+PREV_VERSION = v5.0.10
 endif
 
 ifndef BRANCH_NAME
