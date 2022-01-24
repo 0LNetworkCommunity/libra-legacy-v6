@@ -196,11 +196,6 @@ address 0x1 {
     ) acquires UserAutoPay {
       Roles::assert_diem_root(vm);
 
-      
-      if (!exists<UserAutoPay>(*account_addr)) {
-        //this really shouldn't happen, but it's possible if the upgrade process hasn't run yet
-        return
-      };
       // Get the payment list from the account
       let my_autopay_state = borrow_global_mut<UserAutoPay>(*account_addr);
       let payments = &mut my_autopay_state.payments;
