@@ -3,7 +3,7 @@
 
 use crate::commit_proof::commit_proof_tx;
 use crate::proof::{parse_block_height, FILENAME};
-use anyhow::{bail, Error, Result};
+use anyhow::{anyhow, bail, Error, Result};
 use cli::diem_client::DiemClient;
 use diem_logger::prelude::*;
 use ol_types::block::VDFProof;
@@ -45,7 +45,7 @@ pub fn process_backlog(
                     "Backlog: Maximum number of proofs sent this epoch {}, exiting.",
                     MAX_PROOFS_PER_EPOCH
                 );
-                return Ok(());
+                return Err(anyhow!("cannot submit more proofs than allowed in epoch, aborting backlog.").into());
             }
 
             info!("Backlog: resubmitting missing proofs.");
