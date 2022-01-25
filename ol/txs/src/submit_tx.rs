@@ -206,7 +206,7 @@ fn stage(
             } else {
               let msg = format!("ERROR: cannot get account_state from chain");
               println!("{}", &msg);
-              let e: TxError = anyhow!(msg).into();
+              let mut e: TxError = anyhow!(msg).into();
               e.abort_code = Some(PROLOGUE_EACCOUNT_DNE);
               Err(e)
             }
@@ -214,7 +214,7 @@ fn stage(
         _ => {
             let msg = format!("ERROR: could not get chain metadata, cannot send tx");
             println!("{}", &msg);
-            let e: TxError = anyhow!(msg).into();
+            let mut e: TxError = anyhow!(msg).into();
             e.abort_code = Some(404);
             Err(e)
         },
