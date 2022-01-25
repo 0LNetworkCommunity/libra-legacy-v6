@@ -26,3 +26,4 @@ pub mod delay;
 pub mod backlog;
 pub mod commit_proof;
 pub mod preimage;
+pub mod tower_errors;

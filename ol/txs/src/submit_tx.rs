@@ -32,7 +32,7 @@ use std::{
     thread, time,
 };
 
-// /// All the parameters needed for a client transaction.
+// REFERENCE: All the parameters needed for a client transaction.
 // #[derive(Debug)]
 // pub struct TxParams {
 //     /// User's 0L authkey used in mining.
@@ -59,6 +59,24 @@ use std::{
 //     /// Chain id
 //     pub chain_id: ChainId,
 // }
+
+// REFERENCE:
+// DiemAccount.move defines the following prologue errors
+
+    // const PROLOGUE_EACCOUNT_FROZEN: u64 = 1000;
+    // const PROLOGUE_EINVALID_ACCOUNT_AUTH_KEY: u64 = 1001;
+    // const PROLOGUE_ESEQUENCE_NUMBER_TOO_OLD: u64 = 1002;
+    // const PROLOGUE_ESEQUENCE_NUMBER_TOO_NEW: u64 = 1003;
+    const PROLOGUE_EACCOUNT_DNE: u64 = 1004;
+    // const PROLOGUE_ECANT_PAY_GAS_DEPOSIT: u64 = 1005;
+    // const PROLOGUE_ETRANSACTION_EXPIRED: u64 = 1006;
+    // const PROLOGUE_EBAD_CHAIN_ID: u64 = 1007;
+    // const PROLOGUE_ESCRIPT_NOT_ALLOWED: u64 = 1008;
+    // const PROLOGUE_EMODULE_NOT_ALLOWED: u64 = 1009;
+    // const PROLOGUE_EINVALID_WRITESET_SENDER: u64 = 1010;
+    // const PROLOGUE_ESEQUENCE_NUMBER_TOO_BIG: u64 = 1011;
+    // const PROLOGUE_EBAD_TRANSACTION_FEE_CURRENCY: u64 = 1012;
+    // const PROLOGUE_ESECONDARY_KEYS_ADDRESSES_COUNT_MISMATCH: u64 = 1013;
 
 #[derive(Debug)]
 /// a transaction error type specific to ol txs
@@ -186,13 +204,19 @@ fn stage(
                 };
                 Ok((signer_account_data, txn))
             } else {
-              Err(anyhow!("cannot get account_state from chain").into())
+              let msg = format!("ERROR: cannot get account_state from chain");
+              println!("{}", &msg);
+              let mut e: TxError = anyhow!(msg).into();
+              e.abort_code = Some(PROLOGUE_EACCOUNT_DNE);
+              Err(e)
             }
         },
         _ => {
             let msg = format!("ERROR: could not get chain metadata, cannot send tx");
             println!("{}", &msg);
-            Err(anyhow!(msg).into())
+            let mut e: TxError = anyhow!(msg).into();
+            e.abort_code = Some(404);
+            Err(e)
         },
     }
 }
