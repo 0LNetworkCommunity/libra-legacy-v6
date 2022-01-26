@@ -18,9 +18,6 @@ use diem_types::{
     transaction::{SignedTransaction, TransactionPayload},
 };
 
-
-
-
 use ol_types::{
     self,
     config::TxType,
