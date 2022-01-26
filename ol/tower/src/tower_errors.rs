@@ -29,16 +29,42 @@ pub enum TowerError {
 impl fmt::Display for TowerError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            TowerError::Unknown => write!(f, "Unknown"),
-            TowerError::Other(vmv) => write!(f, "Other: {}", &vmv.to_string()),
-            TowerError::NoClientCx => write!(f, "NoClientCx"),
-            TowerError::AccountDNE => write!(f, "AccountDNE"),
-            TowerError::OutOfGas => write!(f, "OutOfGas"),
-            TowerError::TooManyProofs => write!(f, "TooManyProofs"),
-            TowerError::Discontinuity => write!(f, "Discontinuity"),
-            TowerError::Invalid => write!(f, "Invalid"),
+            TowerError::Unknown => write!(f, "Unknown: {}", TowerError::Unknown.value()),
+            TowerError::Other(vmv) => write!(f, "Other: {}, {}", TowerError::Other(vmv.to_owned()).value(), &vmv.to_string()),
+            TowerError::NoClientCx => write!(f, "Cannot Connect to client: {}", TowerError::NoClientCx.value()),
+            TowerError::AccountDNE => write!(f, "Account does not exist: {}", TowerError::AccountDNE.value()),
+            TowerError::OutOfGas => write!(f, "Account out of gas, or price insufficient: {}", TowerError::OutOfGas.value()),
+            TowerError::TooManyProofs => write!(f, "Too many proofs submitted in epoch: {}", TowerError::TooManyProofs.value()),
+            TowerError::Discontinuity => write!(f, "Proof submitted does not match previous: {}", TowerError::Discontinuity.value()),
+            TowerError::Invalid => write!(f, "VDF Proof is invalid, cannot verify: {}", TowerError::Invalid.value()),
         }
     }
+}
+
+impl TowerError {
+    fn value(&self) -> u64 {
+      match *self {
+        //
+        TowerError::Unknown => 100,
+        //
+        TowerError::Other(_) => 101,
+        // 404 defined in txs::submit_tx.rs
+        TowerError::NoClientCx => 404,      
+        // 1004 defined in txs::submit_tx.rs and DiemAccount.move 
+        TowerError::AccountDNE => 1004,
+        // 1005 defined in DiemAccount.move 
+        TowerError::OutOfGas => 1005,
+        // 130108 defined in TowerState.move   
+        TowerError::TooManyProofs => 130108, 
+        // 130109 defined in TowerState.move
+        TowerError::Discontinuity => 130109, 
+        // 130110 defined in TowerState.move
+        TowerError::Invalid => 130110,  
+      }
+     
+    }
+
+
 }
 
 /// get the Tower Error from TxError
