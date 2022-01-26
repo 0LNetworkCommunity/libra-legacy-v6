@@ -3,6 +3,7 @@
 use diem_json_rpc_types::views::VMStatusView;
 use serde::{Serialize, Deserialize};
 use txs::submit_tx::TxError;
+use std::fmt;
 
 /// Common errors in Tower transaction submission
 #[derive(Debug, Serialize, Deserialize)]
@@ -23,6 +24,21 @@ pub enum TowerError {
     Discontinuity, 
     /// 130110 defined in TowerState.move
     Invalid,       
+}
+
+impl fmt::Display for TowerError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TowerError::Unknown => write!(f, "Unknown"),
+            TowerError::Other(vmv) => write!(f, "Other: {}", &vmv.to_string()),
+            TowerError::NoClientCx => write!(f, "NoClientCx"),
+            TowerError::AccountDNE => write!(f, "AccountDNE"),
+            TowerError::OutOfGas => write!(f, "OutOfGas"),
+            TowerError::TooManyProofs => write!(f, "TooManyProofs"),
+            TowerError::Discontinuity => write!(f, "Discontinuity"),
+            TowerError::Invalid => write!(f, "Invalid"),
+        }
+    }
 }
 
 /// get the Tower Error from TxError
