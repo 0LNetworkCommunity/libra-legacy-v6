@@ -14,6 +14,8 @@ pub enum TowerError {
     Other(VMStatusView),
     ///
     AppConfigs,
+    ///
+    ProverError,
     /// 404 defined in txs::submit_tx.rs
     NoClientCx,      
     /// 1004 defined in txs::submit_tx.rs and DiemAccount.move 
@@ -34,7 +36,7 @@ impl fmt::Display for TowerError {
             TowerError::Unknown => write!(f, "Unknown: {}", TowerError::Unknown.value()),
             TowerError::Other(vmv) => write!(f, "Other: {}, {}", TowerError::Other(vmv.to_owned()).value(), &vmv.to_string()),
             TowerError::AppConfigs => write!(f, "App configuration file issue: {}", TowerError::AppConfigs.value()),
-
+            TowerError::ProverError => write!(f, "Cannot create: {}", TowerError::ProverError.value()),
             TowerError::NoClientCx => write!(f, "Cannot Connect to client: {}", TowerError::NoClientCx.value()),
             TowerError::AccountDNE => write!(f, "Account does not exist: {}", TowerError::AccountDNE.value()),
             TowerError::OutOfGas => write!(f, "Account out of gas, or price insufficient: {}", TowerError::OutOfGas.value()),
@@ -46,14 +48,17 @@ impl fmt::Display for TowerError {
 }
 
 impl TowerError {
-    fn value(&self) -> u64 {
+    /// get numeric representation
+    pub fn value(&self) -> u64 {
       match *self {
         //
-        TowerError::Unknown => 100, // TODO: find a common error code
+        TowerError::Unknown => 100,
         //
         TowerError::Other(_) => 101,
         //
         TowerError::AppConfigs => 103,
+        //
+        TowerError::ProverError => 104,
         // 404 defined in txs::submit_tx.rs
         TowerError::NoClientCx => 404,
         // 1004 defined in txs::submit_tx.rs and DiemAccount.move 
