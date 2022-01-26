@@ -1,10 +1,11 @@
 //! TowerError
 
 use diem_json_rpc_types::views::VMStatusView;
+use serde::{Serialize, Deserialize};
 use txs::submit_tx::TxError;
 
 /// Common errors in Tower transaction submission
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum TowerError {
     ///
     Unknown,
