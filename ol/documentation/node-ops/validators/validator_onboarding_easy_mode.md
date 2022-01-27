@@ -9,10 +9,31 @@ You can optionally do [Hard Mode](validator_onboarding_hard_mode.md), and build 
 ### Things you will need:
 
 - A cloud virtual machine running Linux Ubuntu 20.4, with 16GB Ram, and 4 Cores.
+- A user on that machine named `node`
 
 Settings for the host:
 - You need to set a *static* IP address for that host.
 - You need to open ports 6179, 6180, 8080, 3030 on the host
+
+# 0. Prepare environment
+> Note: easy mode probably shouldn't require these steps, but will fail otherwise.
+
+### Create the linux user that will run the 0L services.
+
+We will create a user called `node` which has no password (can only be accessed initially by sudo).
+```
+sudo useradd node -m -s /bin/bash
+```
+### Become the `node` user
+```
+sudo su node
+
+# you are now in the node user
+```
+
+### Clone this repo: 
+
+`git clone https://github.com/OLSF/libra.git`
 
 
 # 1. Install binaries
