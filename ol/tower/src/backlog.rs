@@ -1,6 +1,7 @@
 //! Miner resubmit backlog transactions module
 #![forbid(unsafe_code)]
 
+use crate::EPOCH_MINING_THRES_UPPER;
 use crate::commit_proof::commit_proof_tx;
 use crate::proof::{parse_block_height, FILENAME};
 use anyhow::{anyhow, bail, Error, Result};
@@ -13,9 +14,6 @@ use std::{fs::File, path::PathBuf};
 use txs::submit_tx::{eval_tx_status, TxError};
 use txs::tx_params::TxParams;
 
-/// max proofs that can be submitted in an epoch
-// TODO: make this a query to chain.
-pub const MAX_PROOFS_PER_EPOCH: u64 = 72;
 
 /// Submit a backlog of blocks that may have been mined while network is offline.
 /// Likely not more than 1.
@@ -40,17 +38,17 @@ pub fn process_backlog(
             let mut i = remote_height + 1;
 
             // use i64 for safety
-            if !(proofs_in_epoch < MAX_PROOFS_PER_EPOCH) {
+            if !(proofs_in_epoch < EPOCH_MINING_THRES_UPPER) {
                 info!(
                     "Backlog: Maximum number of proofs sent this epoch {}, exiting.",
-                    MAX_PROOFS_PER_EPOCH
+                    EPOCH_MINING_THRES_UPPER
                 );
                 return Err(anyhow!("cannot submit more proofs than allowed in epoch, aborting backlog.").into());
             }
 
             info!("Backlog: resubmitting missing proofs.");
 
-            let remaining_in_epoch = MAX_PROOFS_PER_EPOCH - proofs_in_epoch;
+            let remaining_in_epoch = EPOCH_MINING_THRES_UPPER - proofs_in_epoch;
             let mut submitted_now = 1u64;
 
             while i <= current_proof_number.into() && submitted_now < remaining_in_epoch {
