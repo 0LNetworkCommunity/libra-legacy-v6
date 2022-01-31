@@ -16,10 +16,11 @@ use ol_types::config::IS_TEST;
 use ol_types::fixtures;
 use ol_types::{account::ValConfigs, config::TxType, pay_instruction::PayInstruction};
 use reqwest::Url;
+use txs::tx_params::TxParams;
 use std::fs;
 use std::process::exit;
 use std::{fs::File, io::Write, path::PathBuf};
-use txs::{commands::autopay_batch_cmd, submit_tx};
+use txs::commands::autopay_batch_cmd;
 
 /// `validator wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -227,12 +228,11 @@ pub fn get_autopay_batch(
 
 
     let script_vec = autopay_batch_cmd::process_instructions(instr_vec.clone());
-    let url = cfg.what_url(false);
-    let mut tx_params = submit_tx::get_tx_params_from_toml(
+    let mut tx_params = TxParams::get_tx_params_from_toml(
         cfg.to_owned(),
         TxType::Miner,
         Some(wallet),
-        url,
+        "http://0.0.0.0".parse().unwrap(), // this doesn't matter for onboarding autopay signatures.
         None,
         is_swarm,
     )

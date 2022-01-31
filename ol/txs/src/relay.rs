@@ -5,7 +5,8 @@ use std::path::PathBuf;
 
 use crate::{
   save_tx,
-  submit_tx::{tx_params_wrapper, wait_for_tx, TxParams},
+  submit_tx::{tx_params_wrapper, wait_for_tx},
+  tx_params::TxParams,
 };
 use anyhow::Error;
 use cli::diem_client::DiemClient;

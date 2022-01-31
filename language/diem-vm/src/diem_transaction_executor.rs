@@ -527,14 +527,19 @@ impl DiemVM {
 
             //////// 0L ////////
             // Apply upgrade for Upgrade oracle
-            self.0.apply_stdlib_upgrade(
+            match self.0.apply_stdlib_upgrade(
                 &mut session,
                 &storage,
                 block_metadata.clone(),
                 &txn_data,
                 &mut gas_status,
                 log_context,
-            )?;
+            ) {
+                Ok(_) => {},
+                Err(e) => {
+                  println!("0L ==== stdlib upgrade: aborting. Message: {:?}", &e);
+                },
+            };
         }
 
         SYSTEM_TRANSACTIONS_EXECUTED.inc();
