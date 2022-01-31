@@ -13,7 +13,7 @@ use std::{
     path::PathBuf,
     time::Instant,
 };
-use txs::submit_tx::TxParams;
+use txs::tx_params::TxParams;
 
 /// name of the proof files
 pub const FILENAME: &str = "proof";
@@ -119,7 +119,7 @@ pub fn mine_and_submit(
                 Ok(()) => println!("Success: Proof committed to chain"),
                 Err(e) => {
                     // don't stop on tx errors
-                    println!("ERROR: Failed fetching remote state, message: {}", e);
+                    println!("ERROR: Failed processing backlog, message: {:?}", e);
                 }
             }
 

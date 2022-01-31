@@ -220,6 +220,12 @@ impl DiemClient {
         }
     }
 
+    /// get url
+    pub fn url(&self) -> Result<Url, Error> {
+        Ok(self.client.url())
+    }
+    //////// end 0L ////////
+
     /// LedgerInfo corresponding to the latest epoch change.
     pub(crate) fn latest_epoch_change_li(&self) -> Option<&LedgerInfoWithSignatures> {
         self.latest_epoch_change_li.as_ref()
