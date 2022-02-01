@@ -5,7 +5,7 @@ use diem_types::{
   transaction::{helpers::create_user_txn, SignedTransaction, TransactionPayload},
 };
 
-use crate::submit_tx::TxParams;
+use crate::tx_params::TxParams;
 use anyhow::Error;
 
 /// sign a raw transaction script, and return a SignedTransaction
