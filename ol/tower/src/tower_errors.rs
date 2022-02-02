@@ -25,7 +25,7 @@ pub enum TowerError {
     /// 1005 defined in DiemAccount.move 
     OutOfGas,
     /// 130102 defined in TowerState.move
-    WrongDifficulty
+    WrongDifficulty,
     /// 130108 defined in TowerState.move   
     TooManyProofs, 
     /// 130109 defined in TowerState.move
@@ -45,6 +45,7 @@ impl fmt::Display for TowerError {
             TowerError::NoClientCx => write!(f, "Cannot Connect to client: {}", TowerError::NoClientCx.value()),
             TowerError::AccountDNE => write!(f, "Account does not exist: {}", TowerError::AccountDNE.value()),
             TowerError::OutOfGas => write!(f, "Account out of gas, or price insufficient: {}", TowerError::OutOfGas.value()),
+            TowerError::WrongDifficulty => write!(f, "Wrong VDF difficulty being used: {}", TowerError::WrongDifficulty.value()),
             TowerError::TooManyProofs => write!(f, "Too many proofs submitted in epoch: {}", TowerError::TooManyProofs.value()),
             TowerError::Discontinuity => write!(f, "Proof submitted does not match previous: {}", TowerError::Discontinuity.value()),
             TowerError::Invalid => write!(f, "VDF Proof is invalid, cannot verify: {}", TowerError::Invalid.value()),
