@@ -14,7 +14,6 @@ use std::{fs::File, path::PathBuf};
 use txs::submit_tx::{eval_tx_status, TxError};
 use txs::tx_params::TxParams;
 
-
 /// Submit a backlog of blocks that may have been mined while network is offline.
 /// Likely not more than 1.
 pub fn process_backlog(

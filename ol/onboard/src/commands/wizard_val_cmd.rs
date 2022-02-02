@@ -232,7 +232,7 @@ pub fn get_autopay_batch(
         cfg.to_owned(),
         TxType::Miner,
         Some(wallet),
-        "0.0.0.0".parse().unwrap(), // this doesn't matter for onboarding autopay signatures.
+        "http://0.0.0.0".parse().unwrap(), // this doesn't matter for onboarding autopay signatures.
         None,
         is_swarm,
     )
