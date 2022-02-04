@@ -286,7 +286,8 @@ pub fn make_fullnode_cfg(
     seed_addr: Option<SeedAddresses>,
     waypoint: Waypoint,
 ) -> Result<NodeConfig, anyhow::Error> {
-    let mut c = default_for_public_fullnode()?;
+    let mut c = NodeConfig::default();
+
     c.set_data_dir(output_dir.clone());
     c.base.waypoint = WaypointConfig::FromConfig(waypoint);
     c.base.role = RoleType::FullNode;
@@ -350,7 +351,7 @@ fn make_validator_cfg(output_dir: PathBuf, namespace: &str) -> Result<NodeConfig
         WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
 
     c.execution.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
-    // c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
+    c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
 
     c.consensus.safety_rules.service = SafetyRulesService::Thread;
     c.consensus.safety_rules.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
@@ -484,85 +485,6 @@ fn encode_validator_seed_for_vfn_discovery(
     seeds.insert(validator_account, val_peer_data);
     Ok(seeds)
 }
-
-
-pub fn default_for_public_fullnode() -> Result<NodeConfig, anyhow::Error> {
-    let path_str = env!("CARGO_MANIFEST_DIR");
-    let path = PathBuf::from(path_str)
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .join("ol/util/node_templates/fullnode.node.yaml");
-
-    let contents = fs::read_to_string(&path)?;
-    let n: NodeConfig = serde_yaml::from_str(&contents)?;
-
-    Ok(n)
-}
-
-pub fn test_default_for_vfn() -> Result<NodeConfig, anyhow::Error> {
-    let path_str = env!("CARGO_MANIFEST_DIR");
-    let path = PathBuf::from(path_str)
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .join("ol/util/node_templates/vfn.node.yaml");
-
-    let contents = fs::read_to_string(&path)?;
-    let n: NodeConfig = serde_yaml::from_str(&contents)?;
-
-    Ok(n)
-}
-
-pub fn test_default_for_validator() -> Result<NodeConfig, anyhow::Error> {
-    let path_str = env!("CARGO_MANIFEST_DIR");
-    let path = PathBuf::from(path_str)
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .join("ol/util/node_templates/validator.node.yaml");
-
-    let contents = fs::read_to_string(&path)?;
-    let n: NodeConfig = serde_yaml::from_str(&contents)?;
-
-    Ok(n)
-}
-
-pub fn test_default_for_public_full_node() {
-    let path_str = env!("CARGO_MANIFEST_DIR");
-    let path = PathBuf::from(path_str)
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .join("ol/util/node_templates/fullnode.node.yaml");
-    // let contents = std::include_str!(&path.to_string());
-
-    let contents = fs::read_to_string(&path).expect("could not find mnemonic file");
-
-    let _n: NodeConfig = serde_yaml::from_str(&contents).unwrap();
-}
-
-// pub fn default_for_validator() -> Self {
-//     let contents = std::include_str!("test_data/validator.yaml");
-//     NodeConfig::default_config(contents, "default_for_validator")
-// }
-
-// pub fn default_for_validator_full_node() -> Self {
-//     let contents = std::include_str!("test_data/validator_full_node.yaml");
-//     NodeConfig::default_config(contents, "default_for_validator_full_node")
-// }
 
 #[test]
 fn test() {

@@ -7,7 +7,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fe438c63458706e03479442743baae6c88256498e6431708f6dfc520a26515d3"
 dependencies = [
  "lazy_static",
- "regex",
+ "regex", 
 ]
 
 [[package]]
@@ -1730,7 +1730,7 @@ dependencies = [
 
 [[package]]
 name = "diem-config"
-version = "5.0.9"
+version = "5.0.11"
 dependencies = [
  "bcs",
  "diem-crypto",
@@ -2187,7 +2187,7 @@ dependencies = [
 
 [[package]]
 name = "diem-management"
-version = "5.0.9"
+version = "5.0.11"
 dependencies = [
  "anyhow",
  "bcs",
@@ -2306,7 +2306,7 @@ dependencies = [
 
 [[package]]
 name = "diem-node"
-version = "5.0.9"
+version = "5.0.11"
 dependencies = [
  "backup-service",
  "consensus",
@@ -5637,7 +5637,7 @@ dependencies = [
 
 [[package]]
 name = "ol"
-version = "5.0.9"
+version = "5.0.11"
 dependencies = [
  "abscissa_core",
  "abscissa_tokio",
@@ -5783,7 +5783,7 @@ dependencies = [
 
 [[package]]
 name = "onboard"
-version = "5.0.9"
+version = "5.0.11"
 dependencies = [
  "abscissa_core",
  "anyhow",
@@ -5808,7 +5808,7 @@ dependencies = [
  "serde_json",
  "thiserror",
  "toml",
- "tower 5.0.9",
+ "tower 5.0.11",
  "txs",
  "wait-timeout",
  "zip",
@@ -8566,7 +8566,7 @@ dependencies = [
 
 [[package]]
 name = "tower"
-version = "5.0.9"
+version = "5.0.11"
 dependencies = [
  "abscissa_core",
  "ajson",
@@ -8790,7 +8790,7 @@ dependencies = [
 
 [[package]]
 name = "txs"
-version = "5.0.9"
+version = "5.0.11"
 dependencies = [
  "abscissa_core",
  "ajson",

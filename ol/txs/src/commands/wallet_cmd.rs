@@ -6,7 +6,11 @@ use std::{path::PathBuf, process::exit};
 use abscissa_core::{Command, Options, Runnable};
 use diem_json_rpc_types::views::TransactionView;
 use ol_types::config::TxType;
-use crate::{entrypoint, submit_tx::{TxError, TxParams, maybe_submit, tx_params_wrapper}};
+use crate::{
+  entrypoint,
+  submit_tx::{TxError, maybe_submit, tx_params_wrapper},
+  tx_params::TxParams,
+};
 use diem_transaction_builder::stdlib as transaction_builder;
 
 /// `CreateAccount` subcommand
@@ -30,7 +34,10 @@ impl Runnable for WalletCmd {
           exit(1);
         };
 
-        let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
+        let tx_params = tx_params_wrapper(TxType::Cheap).unwrap_or_else(|e|{
+          println!("Failed to create transaction parameters, exiting. Message: {:?}", e.to_string());
+          exit(1);
+        });
 
         match set_wallet_type(type_int, tx_params,  entry_args.save_path) {
             Ok(_) => println!("Success: wallet type set"),

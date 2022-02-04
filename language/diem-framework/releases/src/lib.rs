@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::{bail, Result};
-use diem_types::transaction::ScriptFunction;
+use diem_types::{transaction::ScriptFunction, vm_status::{StatusCode, VMStatus}};
 use include_dir::{include_dir, Dir};
 use move_binary_format::file_format::CompiledModule;
 use once_cell::sync::Lazy;
@@ -133,22 +133,24 @@ pub fn name_for_script(bytes: &[u8]) -> Result<String> {
 
 //////// 0L ////////
 // Update stdlib with a byte string, used as part of the upgrade oracle
-pub fn import_stdlib(lib_bytes: &Vec<u8>) -> Vec<CompiledModule> {
-    let modules : Vec<CompiledModule> = bcs::from_bytes::<Vec<Vec<u8>>>(lib_bytes)
-        .unwrap_or(vec![]) // set as empty array if err occurred
+pub fn import_stdlib(lib_bytes: &Vec<u8>) -> Result<Vec<CompiledModule>> {
+    let modules : Vec<CompiledModule> = bcs::from_bytes::<Vec<Vec<u8>>>(lib_bytes)? // set as empty array if err occurred
         .into_iter()
-        .map(|bytes| CompiledModule::deserialize(&bytes).unwrap())
+        .filter_map(|bytes| CompiledModule::deserialize(&bytes).ok())
         .collect();
 
     // verify the compiled module
     let mut verified_modules = vec![];
     for module in modules {
-        verify_module(&module).expect("stdlib module failed to verify");
+        verify_module(&module)
+        .map_err(|_| VMStatus::Error(StatusCode::CODE_DESERIALIZATION_ERROR))?;
+
+        // TODO: Do we still need to run dependency checker?
         // DependencyChecker::verify_module(&module, &verified_modules)
         //     .expect("stdlib module dependency failed to verify");
         verified_modules.push(module)
     }
-    verified_modules
+    Ok(verified_modules)
 }
 
 

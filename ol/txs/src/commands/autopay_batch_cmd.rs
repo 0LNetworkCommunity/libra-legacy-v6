@@ -11,7 +11,8 @@ use crate::{
     entrypoint, 
     prelude::app_config, 
     sign_tx::sign_tx, 
-    submit_tx::{tx_params_wrapper, batch_wrapper, TxParams}
+    submit_tx::{tx_params_wrapper, batch_wrapper},
+    tx_params::TxParams,
 };
 use dialoguer::Confirm;
 use std::{path::PathBuf, process::exit};

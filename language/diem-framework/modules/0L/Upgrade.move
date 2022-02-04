@@ -43,9 +43,22 @@ module Upgrade {
         temp.payload = payload;
     }
 
+    use 0x1::Epoch;
+    use 0x1::DiemConfig;
+
+    // private. Can only be called by the VM
+    fun upgrade_reconfig(vm: &signer) acquires UpgradePayload {
+        CoreAddresses::assert_vm(vm);
+        reset_payload(vm);
+        let new_epoch_height = Epoch::get_timer_height_start(vm) + 2; // This is janky, but there's no other way to get the current block height, unless the prologue gives it to us. The upgrade reconfigure happens on round 2, so we'll increment the new start by 2 from previous.
+        Epoch::reset_timer(vm, new_epoch_height);
+        DiemConfig::upgrade_reconfig(vm);
+
+    }
+
         // Function code: 03
-    public fun reset_payload(account: &signer) acquires UpgradePayload {
-        assert(Signer::address_of(account) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(210003)); 
+    fun reset_payload(vm: &signer) acquires UpgradePayload {
+        CoreAddresses::assert_vm(vm);
         assert(exists<UpgradePayload>(CoreAddresses::DIEM_ROOT_ADDRESS()), Errors::not_published(210003)); 
         let temp = borrow_global_mut<UpgradePayload>(CoreAddresses::DIEM_ROOT_ADDRESS());
         temp.payload = Vector::empty<u8>();

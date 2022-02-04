@@ -251,36 +251,6 @@ impl Node {
         Ok(print)
     }
 
-    /// get a move struct
-    pub fn get_move_struct(&mut self, account: AccountAddress, module_name: String, struct_name: String) -> Result<AnnotatedMoveStruct, Error> {
-      match self.get_annotate_account_blob(account) {
-          Ok((Some(r), _)) => {
-            match get_struct_from_state(&r, module_name, struct_name.clone()) {
-                Some(a) => Ok(a.to_owned()),
-                None => bail!("Could not find struct {} in resource", &struct_name),
-            }
-          },
-          Err(e) => bail!("Error querying account resource. Message: {:#?}", e),
-          _ => bail!("Error, cannot find account state for {:#?}", account),
-      }
-    }
-
-    /// test query team
-    pub fn get_teams_resource(&mut self, address: AccountAddress) -> Result<TeamsResource, Error> {
-      match self.get_account_state(address) {
-        Ok(a) => {
-          match a.get_resource::<TeamsResource>() {
-              Ok(Some(t)) => return Ok(t),
-              _ => {}
-          }
-        },
-        _ => {},
-      };
-
-      bail!("cannot find Teams resource on account");
-  }
-}
-
 fn format_event_view(e: EventView) -> String {
     // TODO: make this more idiomatic.
 

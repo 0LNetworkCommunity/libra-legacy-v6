@@ -2,7 +2,11 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{entrypoint, submit_tx::{TxError, TxParams, maybe_submit, tx_params_wrapper}};
+use crate::{
+  entrypoint, 
+  submit_tx::{TxError, maybe_submit, tx_params_wrapper},
+  tx_params::TxParams,
+};
 use abscissa_core::{Command, Options, Runnable};
 
 use diem_json_rpc_types::views::TransactionView;

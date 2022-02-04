@@ -5,7 +5,7 @@ use std::convert::TryFrom;
 use cli::diem_client::DiemClient;
 use diem_types::{account_address::AccountAddress, account_state::AccountState};
 
-use crate::submit_tx::TxParams;
+use crate::tx_params::TxParams;
 
 /// convenience to get the epoch
 pub fn get_epoch(tx_params: &TxParams) -> u64 {
