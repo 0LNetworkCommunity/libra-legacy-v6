@@ -32,7 +32,7 @@ script {
     use 0x1::TowerState;
     use 0x1::TestFixtures;
     use 0x1::DiemAccount;
-    use 0x1::Vector;
+    // use 0x1::Vector;
 
     fun main(sender: signer) {
       TowerState::test_helper_init_val(
