@@ -63,7 +63,6 @@ pub fn find_a_remote_jsonrpc(config: &AppCfg, waypoint: Waypoint) -> Result<Diem
         .choose_multiple(&mut rng, len)
         .into_iter()
         .find(|&remote_url| {
-            // println!("trying upstream url: {}", &remote_url);
             match make_client(Some(remote_url.to_owned()), waypoint) {
                 Ok(c) => match c.get_metadata() {
                     Ok(m) => {
