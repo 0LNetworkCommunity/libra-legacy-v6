@@ -129,10 +129,14 @@ to place in your first proof.
 2.2. Run the validator onboarding wizard inside a `tmux` session, and answer questions: 
 
 ```
-# start wizard
+# start wizard with template
 onboard val -u http://<ip-address-of-the-one-who-onboards-you>:3030
 
-# without template, note: assumes an autopay_batch.json is in the project root.
+# note, this person needs to be already running a validator, ask in the discord for their ip address. If you navigate to <ip-address>:3030, you should be able to see their validator node's health.
+
+OR
+
+# start wizard without template, note: assumes an autopay_batch.json is in the project root.
 onboard val
 ```
 
@@ -269,6 +273,12 @@ Once you have been on boarded you should see you public key in the list of valid
 ol serve -c
 ```
 ---
+
+## Onboarder Troubleshooting
+If you are having troubles onboarding, please see whether they match any of the issues here:
+[troubleshooting onboarding](../../node-ops/validators/troubleshoting_onboarding.md)
+
+
 
 ## Onboarder instructions
 If you are onboarding someone and have received their `account.json` file
