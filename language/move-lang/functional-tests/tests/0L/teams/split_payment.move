@@ -61,6 +61,7 @@ script {
 
   fun main(eve: signer) {
     DiemAccount::set_slow(&eve);
+
     Teams::join_team(&eve, @{{alice}}); // alice's account is the ID of the tribe 
 
     // eve initializes miner state, will later mine
@@ -71,6 +72,8 @@ script {
         TestFixtures::easy_difficulty(),
         TestFixtures::security(),
     );
+    TowerState::test_helper_mock_mining(&eve, 5);
+    Teams::maybe_activate_member_to_team(&eve);
 
   }
 }
