@@ -15,12 +15,16 @@ use diem_logger::prelude::*;
 /// Submit a backlog of blocks that may have been mined while network is offline. 
 /// Likely not more than 1. 
 pub fn process_backlog(
-    config: &AppCfg, tx_params: &TxParams, is_operator: bool
+    config: &AppCfg, tx_params: &TxParams, is_operator: bool, ignore_remote: bool
 ) -> Result<(), Error> {
     // Getting remote miner state
     //let remote_state = get_remote_state(tx_params)?;
     //let remote_height = remote_state.verified_tower_height;
-    let remote_height = get_remote_tower_height(tx_params).unwrap();
+    let mut remote_height = -1;
+
+    if !ignore_remote {
+        get_remote_tower_height(tx_params).unwrap();
+    }
 
     info!("Remote tower height: {}", remote_height);
     // Getting local state height

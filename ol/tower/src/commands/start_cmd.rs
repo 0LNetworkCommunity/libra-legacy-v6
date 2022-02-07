@@ -22,6 +22,10 @@ pub struct StartCmd {
     /// don't process backlog
     #[options(short = "s", help = "Skip backlog")]
     skip_backlog: bool,
+
+    /// don't perform remote check
+    #[options(short = "n", help = "No remote check")]
+    no_remote: bool,
 }
 
 impl Runnable for StartCmd {
@@ -78,7 +82,7 @@ impl Runnable for StartCmd {
         // Check for, and submit backlog proofs.
         if !self.skip_backlog {
             // TODO: remove is_operator from signature, since tx_params has it.
-            match backlog::process_backlog(&cfg, &tx_params, is_operator) {
+            match backlog::process_backlog(&cfg, &tx_params, is_operator, self.no_remote) {
                 Ok(()) => status_ok!("Backlog:", "backlog committed to chain"),
                 Err(e) => {
                     println!("WARN: Failed fetching remote state: {}", e);
