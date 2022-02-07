@@ -115,7 +115,7 @@ pub fn mine_and_submit(
             );
 
             // submits backlog to client
-            match backlog::process_backlog(&config, &tx_params, is_operator, false) {
+            match backlog::process_backlog(&config, &tx_params, is_operator) {
                 Ok(()) => println!("Success: Proof committed to chain"),
                 Err(e) => {
                     // don't stop on tx errors
