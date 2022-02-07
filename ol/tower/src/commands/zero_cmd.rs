@@ -83,24 +83,21 @@ impl Runnable for ZeroCmd {
         let mut blocks_dir = cfg.workspace.node_home.clone();
         blocks_dir.push(&cfg.workspace.block_dir);
 
-        let path =
-            PathBuf::from(format!("{}/{}_0.json", blocks_dir.display(), FILENAME));
+        let path = PathBuf::from(
+            format!("{}/{}_0.json", blocks_dir.display(), FILENAME)
+        );
         info!("submitting proof 0");
-        let file = File::open(&path).map_err(|e| Error::from(e));
-
+        let file = File::open(&path);
         let reader = BufReader::new(file);
-        let block: VDFProof =
-            serde_json::from_reader(reader).map_err(|e| Error::from(e));
-
-        let view = commit_proof_tx(&tx_params, block, is_operator);
+        let block: VDFProof = serde_json::from_reader(reader);
+        let view = commit_proof_tx(
+            &tx_params, block, is_operator
+        )?;
         match eval_tx_status(view) {
-            Ok(_) => { info!("proof 0 submitted"); }
+            Ok(_) => {},
             Err(e) => {
-                warn!(
-                            "WARN: could not fetch TX status, aborting. Message: {:?} ",
-                            e
-                        );
-            }
+                warn!("WARN: could not fetch TX status, continuing to next block in backlog after 30 seconds. Message: {:?} ", e);
+            },
         };
     }
 }
