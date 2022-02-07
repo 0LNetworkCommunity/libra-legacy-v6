@@ -163,8 +163,7 @@ ol restore
 **note**: temporarily: as of v4.2.8 you'll need to increase your host's file descriptors. Fix is in the works. For now:
 run this before starting your `tmux` session.
 ```
-# increase file d
-escriptors
+# increase file descriptors
 ulimit -n 100000
 # check that they have been increased
 ulimit -n
