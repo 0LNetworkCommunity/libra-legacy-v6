@@ -117,6 +117,14 @@ pub enum TxsCmd {
     /// The `val-config` subcommand updates validator configuration on chain.
     #[options(help = "update the validator and operators on-chain configs (e.g. discovery)")]
     ValConfig(ValConfigCmd),
+
+    /// The `join-team`subcommand for users to join a Team
+    #[options(help = "a non-validator account can join a Team")]
+    JoinTeam(JoinTeamCmd),
+
+    /// The `create-team` subcommand for validators to create a Team
+    #[options(help = "a account can create a Team and becomes its Captain")]
+    CreateTeam(CreateTeamCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

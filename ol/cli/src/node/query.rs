@@ -2,7 +2,7 @@
 use std::collections::BTreeMap;
 
 use super::node::Node;
-use anyhow::Error;
+use anyhow::{Error, bail};
 use diem_json_rpc_client::{
     views::{BytesView, EventView, TransactionView},
     AccountAddress,
@@ -73,7 +73,12 @@ pub enum QueryType {
     ValConfig { 
       /// the account of the validator
       account: AccountAddress 
-    }
+    },
+    /// query the Teams resource on a validator/Captain account.
+    Team { 
+      /// the account of the validator
+      account: AccountAddress 
+    },
 
 }
 
@@ -212,7 +217,7 @@ impl Node {
                 let team = self.get_teams_resource(account).unwrap();
 
                 format!("TEAM: {:?}", team)
-            }
+            },
             ValConfig { account } => {
                 // account
                 match self.get_account_state(account) {
@@ -250,6 +255,16 @@ impl Node {
         };
         Ok(print)
     }
+
+    /// test query team
+    pub fn get_teams_resource(&mut self, address: AccountAddress) -> Result<TeamsResource, Error> {
+      let a = self.get_account_state(address)?;
+      if let Some(tr) = a.get_resource::<TeamsResource>()? {
+        return Ok(tr)
+      }
+      bail!("cannot get Teams resource on account {}", address);
+  } 
+}
 
 fn format_event_view(e: EventView) -> String {
     // TODO: make this more idiomatic.
