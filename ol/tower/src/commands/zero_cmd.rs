@@ -1,19 +1,21 @@
 //! `zero` subcommand - example of how to write a subcommand
 
-/// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
-/// accessors along with logging macros. Customize as you see fit.
-use abscissa_core::{Command, Options, Runnable};
-use anyhow::{anyhow, bail, Error, Result};
-use diem_logger::prelude::*;
-use ol_types::block::VDFProof;
-use std::{fs::File, path::PathBuf};
+use abscissa_core::{Command, config, FrameworkError, Options, Runnable};
+use diem_logger::{Level, Logger};
+use ol_types::config::AppCfg;
+use ol_types::config::TxType;
+use std::{fs::File, path::PathBuf, process::exit, thread, time};
 use std::io::BufReader;
-use txs::submit_tx::{eval_tx_status, TxError};
-use txs::tx_params::TxParams;
+use txs::submit_tx::{eval_tx_status, TxParams};
 
-use crate::{application::app_config, proof::write_genesis};
+use crate::{backlog, entrypoint, proof::*};
+use crate::{entrypoint::EntryPointTxsCmd, prelude::*};
 use crate::commit_proof::commit_proof_tx;
-use crate::proof::{FILENAME, parse_block_height};
+use crate::proof::{parse_block_height, FILENAME};
+
+use anyhow::{bail, Result, Error};
+use diem_logger::prelude::*;
+
 
 #[derive(Command, Debug, Options)]
 pub struct ZeroCmd {}
