@@ -20,18 +20,11 @@ pub fn process_backlog(
     config: &AppCfg,
     tx_params: &TxParams,
     is_operator: bool,
-    avoid_remote: bool,
 ) -> Result<(), TxError> {
     // Getting remote miner state
     //let remote_state = get_remote_state(tx_params)?;
     //let remote_height = remote_state.verified_tower_height;
-
-    let mut remote_height = -1;
-    let mut proofs_in_epoch = 0;
-
-    if !avoid_remote {
-        (remote_height, proofs_in_epoch) = get_remote_tower_height(tx_params).unwrap();
-    }
+    let (remote_height, proofs_in_epoch) = get_remote_tower_height(tx_params).unwrap();
 
     info!("Remote tower height: {}", remote_height);
     // Getting local state height
