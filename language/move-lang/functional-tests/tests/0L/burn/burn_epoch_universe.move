@@ -1,8 +1,7 @@
 //! account: alice, 10000000GAS, 0, validator
 //! account: bob, 1000000GAS
-//! account: carol, 1000000GAS
 
-// Alice is CASE 2 validator
+// Alice is CASE 4 validator, and falls out of validator set
 
 //! new-transaction
 //! sender: diemroot
@@ -19,68 +18,12 @@ script {
         //     i = i + 1;
         // };
 
+        // did not send any votes. 
+
         assert(Cases::get_case(&sender, @{{alice}}, 0 , 15) == 4, 7357300103011000);
     }
 }
 //check: EXECUTED
-
-
-//! new-transaction
-//! sender: bob
-script {
-    use 0x1::Wallet;
-    use 0x1::Vector;
-    use 0x1::GAS::GAS;
-    use 0x1::Signer;
-    use 0x1::DiemAccount;
-
-    fun main(sender: signer) {
-      Wallet::set_comm(&sender);
-      let bal = DiemAccount::balance<GAS>(Signer::address_of(&sender));
-      DiemAccount::init_cumulative_deposits(&sender, bal);
-      let list = Wallet::get_comm_list();
-      assert(Vector::length(&list) == 1, 7357001);
-    }
-}
-
-// check: EXECUTED
-
-//! new-transaction
-//! sender: carol
-script {
-    use 0x1::Wallet;
-    use 0x1::Vector;
-    use 0x1::GAS::GAS;
-    use 0x1::Signer;
-    use 0x1::DiemAccount;
-
-    fun main(sender: signer) {
-      Wallet::set_comm(&sender);
-      let bal = DiemAccount::balance<GAS>(Signer::address_of(&sender));
-      DiemAccount::init_cumulative_deposits(&sender, bal);
-      let list = Wallet::get_comm_list();
-      assert(Vector::length(&list) == 2, 7357002);
-    }
-}
-
-// check: EXECUTED
-
-//! new-transaction
-//! sender: diemroot
-script {
-  use 0x1::DiemAccount;
-  use 0x1::GAS::GAS;
-
-  fun main(vm: signer) {
-    // send to community wallet Bob
-    DiemAccount::vm_make_payment_no_limit<GAS>(@{{alice}}, @{{bob}}, 500000, x"", x"", &vm);
-
-    let bal = DiemAccount::balance<GAS>(@{{bob}});
-    assert(bal == 1500000, 7357001);
-  }
-}
-// check: EXECUTED
-
 
 
 //////////////////////////////////////////////
@@ -100,15 +43,21 @@ script {
 script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
+  use 0x1::Diem;
   use 0x1::Debug::print;
 
   fun main(_vm: signer) {
-    let bal_alice = DiemAccount::balance<GAS>(@{{alice}});
-    print(&bal_alice);
+    let new_cap = Diem::market_cap<GAS>();
+    let val_plus_oper_start = 10000000u128 + 1000000u128; //10M + 1M
+    let burn = 1000000u128; //1M
+    let subsidy = 0u128;
+    print(&new_cap);
+
+    assert(new_cap == (val_plus_oper_start + subsidy - burn), 7357002);
 
     // should not change bob's balance, since Alice did not opt to seend to community index.
-    let bal = DiemAccount::balance<GAS>(@{{bob}});
-    assert(bal == 1500000, 7357002);
+    let bal = DiemAccount::balance<GAS>(@{{alice}});
+    assert(bal == (10000000 - (burn as u64)), 7357003);
   }
 }
 
