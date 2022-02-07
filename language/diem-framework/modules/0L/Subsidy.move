@@ -50,15 +50,21 @@ address 0x1 {
       if (subsidy_units > len && subsidy_units > 0 ) { // arithmetic safety check
         subsidy_granted = subsidy_units/len;
       } else { return };
-
+      
       let i = 0;
       while (i < len) {
         let node_address = Vector::borrow<address>(outgoing_set, i);
+        let b = DiemAccount::balance<GAS>(*node_address);
+        print(&b);
         // Transfer gas from vm address to validator
         check_team_and_pay(vm, node_address, subsidy_granted);
 
+        let b = DiemAccount::balance<GAS>(*node_address);
+        print(&b);
         // refund operator tx fees for mining
         refund_operator_tx_fees(vm, *node_address);
+        let b = DiemAccount::balance<GAS>(*node_address);
+        print(&b);
         i = i + 1;
       };
     }

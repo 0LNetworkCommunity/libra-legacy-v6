@@ -1,48 +1,25 @@
 //! account: alice, 10000000GAS, 0, validator
-//! account: bob, 0GAS
-//! account: carol, 0GAS
+//! account: bob, 1000000GAS
+//! account: carol, 1000000GAS
 
-// Tests that Alice burns the cost-to-exist on every epoch, (is NOT sending to community index)
-
-//! new-transaction
-//! sender: alice
-script {    
-    use 0x1::TowerState;
-    use 0x1::Diem;
-    use 0x1::Debug::print;
-    use 0x1::GAS::GAS;
-
-    fun main(sender: signer) {
-        // Alice is the only one that can update her mining stats. 
-        // Hence this first transaction.
-        let new_cap = Diem::market_cap<GAS>();   
-        print(&new_cap);
-
-        TowerState::test_helper_mock_mining(&sender, 5);
-        
-        // alice's preferences are set to always burn
-    }
-}
-//check: EXECUTED
+// Alice is CASE 2 validator
 
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Stats;
-    use 0x1::Vector;
     use 0x1::Cases;
 
     fun main(sender: signer) {
-        let sender = &sender;
-        let voters = Vector::singleton<address>(@{{alice}});
-        let i = 1;
-        while (i < 16) {
-            // Mock the validator doing work for 15 blocks, and stats being updated.
-            Stats::process_set_votes(sender, &voters);
-            i = i + 1;
-        };
+        // let sender = &sender;
+        // let voters = Vector::singleton<address>(@{{alice}});
+        // let i = 1;
+        // while (i < 16) {
+        //     // Mock the validator doing work for 15 blocks, and stats being updated.
+        //     Stats::process_set_votes(sender, &voters);
+        //     i = i + 1;
+        // };
 
-        assert(Cases::get_case(sender, @{{alice}}, 0 , 15) == 1, 7357300103011000);
+        assert(Cases::get_case(&sender, @{{alice}}, 0 , 15) == 4, 7357300103011000);
     }
 }
 //check: EXECUTED
@@ -96,10 +73,10 @@ script {
 
   fun main(vm: signer) {
     // send to community wallet Bob
-    DiemAccount::vm_make_payment_no_limit<GAS>(@{{alice}}, @{{bob}}, 1000000, x"", x"", &vm);
+    DiemAccount::vm_make_payment_no_limit<GAS>(@{{alice}}, @{{bob}}, 500000, x"", x"", &vm);
 
     let bal = DiemAccount::balance<GAS>(@{{bob}});
-    assert(bal == 1000000, 7357001);
+    assert(bal == 1500000, 7357001);
   }
 }
 // check: EXECUTED
@@ -123,20 +100,15 @@ script {
 script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
-  use 0x1::Diem;
   use 0x1::Debug::print;
 
   fun main(_vm: signer) {
-    let new_cap = Diem::market_cap<GAS>();
-    let _alice_start = 10000000; //10M
-    let _burn = 1000000; //1M
-    print(&new_cap);
-
     let bal_alice = DiemAccount::balance<GAS>(@{{alice}});
     print(&bal_alice);
+
     // should not change bob's balance, since Alice did not opt to seend to community index.
     let bal = DiemAccount::balance<GAS>(@{{bob}});
-    assert(bal == 1000000, 7357002);
+    assert(bal == 1500000, 7357002);
   }
 }
 

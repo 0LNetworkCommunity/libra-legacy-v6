@@ -1,19 +1,32 @@
 # Teams
 
+Teams is part of a policy goal of having a plural and distributed group of people be able to select the most appropriate validators to operate and steward the network.
+
 The idea of teams is to scale up the forming of social groups. This is relevant in several domains:
 - consensus
 - labor
 - governance
 
-The outcome of a successful Teams implementation is that validator nodes in the network become Decentralized Autonomous Organizations (DAOs).
+The outcome of a successful Teams implementation is that validator nodes in the network become Decentralized Autonomous Organizations (DAOs). 
 
-Teams are opt-in, self-assembled groups. People can move freely between teams. What team you are on signals a number of things, but importantly it shows support for a "team captain" and their activities: do they successfully operate nodes, do they participate in network governance, do they provide work and input actively to a network. 
-
-For consensus purposes, Teams mean that end user desktop miners (using Carpe), are now included in the security model, with the pooling of delay tower heights. They also share in the rewards of the validator node (operated by a Captain). More below
-
-The network will not enforce a percentage share between Captains and Members. This is a market, and we'll let the market decide what is appropriate. The network will however bias toward decentralizations, and ratchet-up the threshold for a collective tower hight that a validator node is required to have to enter consensus.
+For consensus purposes, Teams mean that end user desktop miners (using Carpe), are now included in the security model, with the pooling of delay tower heights. They also share in the rewards of the validator node (operated by a Captain). More below.
 
 Teams would be rolled out in phases. [See the rollout plan](./teams_rollout.md)
+## Goals
+
+- Opt-in and permissionlesss
+Teams are opt-in, self-assembled groups. People can move freely between teams. What team you are on signals a number of things, but importantly it shows support for a "team captain" and their activities: do they successfully operate nodes, do they participate in network governance, do they provide work and input actively to a network. 
+
+
+- Market dynamics
+The network will not enforce a percentage share between Captains and Members. This is a market, and we'll let the market decide what is appropriate.
+
+- Bias to decentralization
+The network will however bias toward decentralization, and ratchet-up the threshold for a collective tower hight that a validator node is required to have to enter consensus.
+
+- Don't penalize individuals
+Proof of Work sybil resistance schemes, have known sybil attack scenarios. There is always a race between the individual miners (Human teams) and organizations with access to cheap computation (Synthetic teams). Usually well resourced organizations win. A design goal of Teams is to allow individual miners to join without penalty, but also slow down the rate a synthetic team can gain rewards. This is a problem that is not solvable, but workable within constraints. VDF proofs and delay have some favorable qualities, but does not solve all issues. The Teams design makes the race between Human and Sythetic teams explicit. With that algorithm will evolve as the game plays out.
+
 ## Definitions
 
 Team: a list of addresses. These addresses map to individuals, institutions, or DAO. The address may be a standard account or a multisig.
@@ -30,6 +43,10 @@ Captain Reward: an integer. This is the percentage fee that a Captain takes for 
 
 ## Consensus
 BFT type consesus has an upper-bound on number of physical nodes on the network. Between propagating transaction to mempool, and subsequently blocks, and state synchronization, a BFT networks performance begins to drop off dramatically after a count of 100 nodes in the network. A "delegation" scheme is required for BFT networks if they want to have credible neutrality (censorship resistance, political decentralization).
+
+a) Delegation in BFT always exists. Its preferable to make it explicit and  in-band, otherwise it becomes an opaque game.
+b) You can choose between traditional proof of stake (which we don't think works), or something native to 0L's invention of permissionless Delay Towers.
+c) There's an opportunity to rethink proof of stake for scale and plural participation. That's what the Teams experiment begins to do.
 
 The Teams implementation facilitates "delegation" of consensus votes in BFT consensus. As in many proof-of-stake networks a single phisical consensus node ("validator"), may have many "delegators" which assign their voting power (stake) to an operator. While the security model is different, the economocs resemble "mining pools" on proof-of-work blockchains, where variable reward rates can be shared amongst many in order to smooth the economic rewards per user.
 

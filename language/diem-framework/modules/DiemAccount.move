@@ -1445,6 +1445,7 @@ module DiemAccount {
         restore_withdraw_capability(cap);
     }
     
+    use 0x1::Debug::print;
     //////// 0L ////////
     /// VM can burn from an account's balance for administrative purposes (e.g. at epoch boundaries)
     public fun vm_burn_from_balance<Token: store>(
@@ -1478,6 +1479,7 @@ module DiemAccount {
         let account = borrow_global_mut<DiemAccount>(addr);
         let cap = Option::extract(&mut account.withdraw_capability);
         let coin = withdraw_from<Token>(&cap, addr, amount, copy metadata);
+        print(&666666666666666);
         Diem::vm_burn_this_coin<Token>(vm, coin);
         restore_withdraw_capability(cap);
     }
