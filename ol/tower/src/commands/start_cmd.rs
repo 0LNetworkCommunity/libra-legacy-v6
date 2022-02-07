@@ -85,7 +85,7 @@ impl Runnable for StartCmd {
         if !self.skip_backlog {
             // TODO: remove is_operator from signature, since tx_params has it.
             println!("processing backlog");
-            match backlog::process_backlog(&cfg, &tx_params, is_operator, !self.no_remote) {
+            match backlog::process_backlog(&cfg, &tx_params, is_operator, self.no_remote) {
                 Ok(()) => status_ok!("Backlog:", "backlog committed to chain"),
                 Err(e) => {
                     println!("WARN: Failed processing backlog: {:?}", e);
