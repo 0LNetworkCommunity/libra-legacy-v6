@@ -28,6 +28,8 @@ pub fn process_backlog(
     let mut remote_height = 0u64;
     let mut proofs_in_epoch = 0u64;
 
+    info!("ignore_remote: {}", ignore_remote);
+
     if !ignore_remote {
         let (rem_remote_height, rem_proofs_in_epoch) = get_remote_tower_height(tx_params).unwrap();
 

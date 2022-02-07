@@ -79,9 +79,12 @@ impl Runnable for StartCmd {
         )
         .expect("could not get tx parameters");
 
+        println!("no remote: {}", self.no_remote);
+
         // Check for, and submit backlog proofs.
         if !self.skip_backlog {
             // TODO: remove is_operator from signature, since tx_params has it.
+            println!("processing backlog");
             match backlog::process_backlog(&cfg, &tx_params, is_operator, !self.no_remote) {
                 Ok(()) => status_ok!("Backlog:", "backlog committed to chain"),
                 Err(e) => {
@@ -94,6 +97,8 @@ impl Runnable for StartCmd {
 
         if !self.backlog_only {
             // Steady state.
+            println!("starting to mine");
+
             let result = mine_and_submit(&cfg, tx_params, is_operator);
             match result {
                 Ok(_val) => {}
