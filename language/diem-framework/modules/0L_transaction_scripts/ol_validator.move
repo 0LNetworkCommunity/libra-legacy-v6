@@ -59,26 +59,26 @@ module ValidatorScripts {
         };
     }
 
-    public(script) fun leave(validator: signer) {
-        let addr = Signer::address_of(&validator);
-        if (ValidatorUniverse::is_in_universe(addr)) {
-            ValidatorUniverse::remove_self(&validator);
-        };
-    }
+    // public(script) fun leave(validator: signer) {
+    //     let addr = Signer::address_of(&validator);
+    //     if (ValidatorUniverse::is_in_universe(addr)) {
+    //         ValidatorUniverse::remove_self(&validator);
+    //     };
+    // }
 
-    public(script) fun val_add_self(validator: signer) {
-        let validator = &validator;
-        let addr = Signer::address_of(validator);
-        // if is above threshold continue, or raise error.
-        assert(
-            TowerState::node_above_thresh(addr), 
-            Errors::invalid_state(NOT_ABOVE_THRESH_ADD)
-        );
-        // if is not in universe, add back
-        if (!ValidatorUniverse::is_in_universe(addr)) {
-            ValidatorUniverse::add_self(validator);
-        };
-    }    
+    // public(script) fun val_add_self(validator: signer) {
+    //     let validator = &validator;
+    //     let addr = Signer::address_of(validator);
+    //     // if is above threshold continue, or raise error.
+    //     assert(
+    //         TowerState::node_above_thresh(addr), 
+    //         Errors::invalid_state(NOT_ABOVE_THRESH_ADD)
+    //     );
+    //     // if is not in universe, add back
+    //     if (!ValidatorUniverse::is_in_universe(addr)) {
+    //         ValidatorUniverse::add_self(validator);
+    //     };
+    // }    
 
 }
 }

@@ -19,7 +19,6 @@ pub mod community_pay_cmd;
 pub mod val_config_cmd;
 
 mod relay_cmd;
-mod valset_cmd;
 mod autopay_cmd;
 mod authkey_cmd;
 mod create_validator_cmd;
@@ -41,7 +40,6 @@ use self::{
     autopay_cmd::AutopayCmd,
     demo_cmd::DemoCmd,
     relay_cmd::RelayCmd,
-    valset_cmd::ValSetCmd,
     wallet_cmd::WalletCmd,
     authkey_cmd::AuthkeyCmd,
     transfer_cmd::TransferCmd,
@@ -101,10 +99,6 @@ pub enum TxsCmd {
      /// The `relay` subcommand
     #[options(help = "submit a saved transaction from file")]
     Relay(RelayCmd),
-
-    /// The `valset` subcommand
-    #[options(help = "join or leave the validator universe, i.e. candidate for validator set")]
-    ValSet(ValSetCmd),
 
     /// The `wallet` subcommand
     #[options(help = "set a wallet type to the address")]
