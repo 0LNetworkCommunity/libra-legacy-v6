@@ -1,10 +1,11 @@
 //! `zero` subcommand - example of how to write a subcommand
 
 use abscissa_core::{Command, config, FrameworkError, Options, Runnable};
+use anyhow::{bail, Error, Result};
 use diem_logger::{Level, Logger};
+use ol_types::block::VDFProof;
 use ol_types::config::AppCfg;
 use ol_types::config::TxType;
-use ol_types::block::VDFProof;
 use std::{fs::File, path::PathBuf, process::exit, thread, time};
 use std::io::BufReader;
 use txs::submit_tx::{eval_tx_status, TxParams};
@@ -12,10 +13,7 @@ use txs::submit_tx::{eval_tx_status, TxParams};
 use crate::{backlog, entrypoint, proof::*};
 use crate::{entrypoint::EntryPointTxsCmd, prelude::*};
 use crate::commit_proof::commit_proof_tx;
-use crate::proof::{parse_block_height, FILENAME};
-
-use anyhow::{bail, Result, Error};
-
+use crate::proof::{FILENAME, parse_block_height};
 
 #[derive(Command, Debug, Options)]
 pub struct ZeroCmd {}
@@ -29,7 +27,7 @@ impl Runnable for ZeroCmd {
             swarm_path,
             swarm_persona,
             is_operator,
-            use_first_url,
+            use_upstream_url,
             ..
         } = entrypoint::get_args();
 
@@ -58,7 +56,7 @@ impl Runnable for ZeroCmd {
             waypoint
         };
 
-        let tx_params = TxParams::new(
+        let tx_params = tx_params(
             cfg.clone(),
             url,
             waypoint,
@@ -66,9 +64,10 @@ impl Runnable for ZeroCmd {
             swarm_persona,
             TxType::Miner,
             is_operator,
-            use_first_url,
+            use_upstream_url,
             None,
-        ).expect("could not get tx parameters");
+        )
+            .expect("could not get tx parameters");
 
         // Assumes the app has already been initialized.
         let miner_config = app_config().clone();
